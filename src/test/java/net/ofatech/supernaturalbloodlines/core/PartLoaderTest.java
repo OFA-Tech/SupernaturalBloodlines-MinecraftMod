@@ -9,6 +9,7 @@ import java.lang.reflect.Modifier;
 import java.util.EnumSet;
 import java.util.Set;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
 import org.junit.jupiter.api.Test;
 
 class PartLoaderTest {
@@ -53,7 +54,7 @@ class PartLoaderTest {
     @Test
     void everyInitClassResolvesWithInitMethod() throws Exception {
         for (Part p : Part.values()) {
-            Method m = Class.forName(p.initClass()).getMethod("init", IEventBus.class);
+            Method m = Class.forName(p.initClass()).getMethod("init", IEventBus.class, ModContainer.class);
             assertTrue(Modifier.isStatic(m.getModifiers()), p + " init must be static");
             assertEquals(void.class, m.getReturnType(), p + " init must return void");
         }

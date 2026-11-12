@@ -48,12 +48,29 @@ class VampireMappingTest {
     }
 
     @Test
-    void parseSkipsBadEntriesAndMapsMinusOneToMax() {
-        VampireMapping p = VampireMapping.parse(
-                "tensura:human", List.of("a:b=3", "a:c=-1", "junk", "a:d=x", "a:e=0", "=4"), MAX);
+    void levelNeverExceedsMax() {
+        VampireMapping p = VampireMapping.parse("tensura:human", List.of("a:b=99"), MAX).mapping();
+        assertEquals(OptionalInt.of(MAX), p.levelForRace("a:b", 0));
+        assertEquals(OptionalInt.of(MAX), m.levelForRace("tensura:vampire_lord", 30));
+    }
+
+    @Test
+    void parseRejectsBadEntriesAndMapsMinusOneToMax() {
+        VampireMapping.Parsed parsed = VampireMapping.parse(
+                "my:cure", List.of("a:b=3", "a:c=-1", "junk", "a:d=x", "a:e=0", "=4", "a:f=-2"), MAX);
+        VampireMapping p = parsed.mapping();
+        assertEquals(List.of("junk", "a:d=x", "a:e=0", "=4", "a:f=-2"), parsed.rejected());
+        assertEquals("my:cure", p.cureRace());
+        assertEquals(Optional.of("my:cure"), p.raceOnCure("a:b"));
         assertEquals(OptionalInt.of(3), p.levelForRace("a:b", 0));
         assertEquals(OptionalInt.of(MAX), p.levelForRace("a:c", 0));
-        assertTrue(p.levelForRace("a:d", 0).isEmpty());
-        assertTrue(p.levelForRace("a:e", 0).isEmpty());
+        assertTrue(p.levelForRace("junk", 0).isEmpty());
+        assertTrue(p.levelForRace("", 0).isEmpty());
+    }
+
+    @Test
+    void defaultsRejectNothing() {
+        assertTrue(VampireMapping.parse(VampireMapping.DEFAULT_CURE_RACE, VampireMapping.DEFAULT_FLOORS, MAX)
+                .rejected().isEmpty());
     }
 }

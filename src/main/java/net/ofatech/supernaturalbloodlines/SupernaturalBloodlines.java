@@ -33,6 +33,6 @@ public final class SupernaturalBloodlines {
         for (Part p : Part.values()) {
             LOGGER.info("Part {}: {}", p, PartLoader.status(p, mods::isLoaded, switches::contains));
         }
-        PartLoader.initAll(parts, modBus);
+        PartLoader.initAll(parts, modBus, container);
     }
 }

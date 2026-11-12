@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 
 public final class PartLoader {
@@ -38,10 +39,10 @@ public final class PartLoader {
         return "enabled";
     }
 
-    public static void initAll(Set<Part> parts, IEventBus bus) {
+    public static void initAll(Set<Part> parts, IEventBus bus, ModContainer container) {
         for (Part p : parts) {
             try {
-                Class.forName(p.initClass()).getMethod("init", IEventBus.class).invoke(null, bus);
+                Class.forName(p.initClass()).getMethod("init", IEventBus.class, ModContainer.class).invoke(null, bus, container);
             } catch (ReflectiveOperationException | LinkageError e) {
                 SupernaturalBloodlines.LOGGER.error("Part {} failed to initialise, skipping it", p, e);
             }
