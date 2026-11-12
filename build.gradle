@@ -189,6 +189,10 @@ dependencies {
     compileOnly("software.bernie.geckolib:geckolib-neoforge-1.21.1:${geckolib_version}") { transitive = false }
     compileOnly("net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1:${smartbrainlib_version}") { transitive = false }
 
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
     if (linkedRuntime) {
         localRuntime("de.teamlapen.vampirism:Vampirism:${vampirism_version}") { transitive = false }
         localRuntime("net.favouriteless.enchanted:enchanted-neoforge-1.21.1:${enchanted_version}") { transitive = false }
@@ -244,6 +248,10 @@ publishing {
             url "file://${project.projectDir}/repo"
         }
     }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
 
 tasks.withType(JavaCompile).configureEach {
