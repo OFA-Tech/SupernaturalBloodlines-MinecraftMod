@@ -144,6 +144,12 @@ neoForge {
             sourceSet(sourceSets.main)
         }
     }
+
+    // puts NeoForge on the test classpath (PartLoader/Config reference its classes)
+    unitTest {
+        enable()
+        testedMod = mods."${mod_id}"
+    }
 }
 
 // Sets up a dependency configuration called 'localRuntime'.

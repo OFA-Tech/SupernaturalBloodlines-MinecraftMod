@@ -4,8 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.EnumSet;
 import java.util.Set;
+import net.neoforged.bus.api.IEventBus;
 import org.junit.jupiter.api.Test;
 
 class PartLoaderTest {
@@ -38,6 +41,22 @@ class PartLoaderTest {
         Set<Part> parts = PartLoader.enabledParts(id -> !id.equals("werewolves"), p -> true);
         assertTrue(parts.contains(Part.SPECIES));
         assertTrue(parts.contains(Part.ARTIFACTS));
+    }
+
+    @Test
+    void vampirismAndEnchantedOnly() {
+        Set<String> loaded = Set.of("vampirism", "enchanted");
+        assertEquals(EnumSet.of(Part.VAMPIRISM_ENCHANTED, Part.SPECIES, Part.ARTIFACTS),
+                PartLoader.enabledParts(loaded::contains, p -> true));
+    }
+
+    @Test
+    void everyInitClassResolvesWithInitMethod() throws Exception {
+        for (Part p : Part.values()) {
+            Method m = Class.forName(p.initClass()).getMethod("init", IEventBus.class);
+            assertTrue(Modifier.isStatic(m.getModifiers()), p + " init must be static");
+            assertEquals(void.class, m.getReturnType(), p + " init must return void");
+        }
     }
 
     @Test

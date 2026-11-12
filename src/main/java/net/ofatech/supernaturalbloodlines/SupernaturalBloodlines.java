@@ -23,9 +23,10 @@ public final class SupernaturalBloodlines {
 
         ModList mods = ModList.get();
         // Config.COMMON is not loaded yet at construction, so read the file directly (see Config)
-        Set<Part> parts = PartLoader.enabledParts(mods::isLoaded, Config::partEnabledEarly);
+        Set<Part> switches = Config.enabledSwitchesEarly();
+        Set<Part> parts = PartLoader.enabledParts(mods::isLoaded, switches::contains);
         for (Part p : Part.values()) {
-            LOGGER.info("Part {}: {}", p, PartLoader.status(p, mods::isLoaded, Config::partEnabledEarly));
+            LOGGER.info("Part {}: {}", p, PartLoader.status(p, mods::isLoaded, switches::contains));
         }
         PartLoader.initAll(parts, modBus);
     }
