@@ -5,6 +5,7 @@ import de.teamlapen.vampirism.api.entity.factions.IFactionPlayerHandler;
 import de.teamlapen.vampirism.api.entity.factions.IPlayableFaction;
 import de.teamlapen.werewolves.api.WReference;
 import io.github.manasmods.manascore.race.api.RaceAPI;
+import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
 import io.github.manasmods.manascore.skill.api.SkillAPI;
 import io.github.manasmods.tensura.data.existence.EntityExistenceData;
 import io.github.manasmods.tensura.registry.data.TensuraCustomData;
@@ -25,6 +26,7 @@ import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 public final class WerewolvesGameTests {
     private static final String NS = SupernaturalBloodlines.MODID;
     private static final ResourceLocation GODWOLF_SENSE = ResourceLocation.parse("tensura:godwolf_sense");
+    private static final String GRANTED = "supernaturalbloodlines:granted";
 
     private WerewolvesGameTests() {
     }
@@ -76,8 +78,32 @@ public final class WerewolvesGameTests {
         helper.assertTrue(!hasGodwolfSense(p), "godwolf_sense at level 1");
         helper.assertTrue(handler(p).setFactionAndLevel(wolf, max), "could not reach the max werewolf level");
         helper.assertTrue(hasGodwolfSense(p), "no godwolf_sense at werewolf level " + max);
+
+        // Tensura's free-of-charge switch is one-shot (it removes it itself), and our own mark stays
+        var tag = SkillAPI.getSkillsFrom(p).getSkill(GODWOLF_SENSE).orElseThrow().getTag();
+        helper.assertTrue(tag != null && tag.getBoolean(GRANTED), "the granted skill carries no grant mark: " + tag);
+        helper.assertTrue(!tag.contains("NoMagiculeCost"), "NoMagiculeCost stayed on the skill: " + tag);
+
         handler(p).setFactionAndLevel(null, 0);
         helper.assertTrue(!hasGodwolfSense(p), "godwolf_sense stayed after leaving the werewolves");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void skillTheWerewolfAlreadyHadIsNotRemoved(GameTestHelper helper) {
+        IPlayableFaction<?> wolf = WReference.WEREWOLF_FACTION;
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:human");
+        ManasSkillInstance own = SkillAPI.getSkillRegistry().get(GODWOLF_SENSE).createDefaultInstance();
+        own.getOrCreateTag().putBoolean("NoMagiculeCost", true);
+        helper.assertTrue(SkillAPI.getSkillsFrom(p).learnSkill(own), "could not give the player the skill first");
+
+        handler(p).setFactionAndLevel(wolf, wolf.getHighestReachableLevel());
+        handler(p).setFactionAndLevel(wolf, 1);
+        helper.assertTrue(hasGodwolfSense(p), "a skill the player had before was removed by a level drop");
+        handler(p).setFactionAndLevel(wolf, wolf.getHighestReachableLevel());
+        handler(p).setFactionAndLevel(null, 0);
+        helper.assertTrue(hasGodwolfSense(p), "a skill the player had before was removed on leaving");
         helper.succeed();
     }
 

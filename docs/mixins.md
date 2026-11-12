@@ -1,6 +1,6 @@
 # Mixins
 
-Every mixin must be listed here. Aim for 0 to 2; use `require = 0` and a config switch.
+Every mixin must be listed here. Budget: at most 3 for the whole mod (this mod uses 3, all in the vampirism_tensura part); use `require = 0` and a config switch.
 
 All mixins below live in `supernaturalbloodlines.tensura.mixins.json`. `TensuraMixinPlugin` applies the whole config only when Tensura and Vampirism are installed and `parts.vampirismTensura` is not `false` in `supernaturalbloodlines-common.toml` (read from the file, because COMMON configs load after mixins). Otherwise nothing is touched.
 

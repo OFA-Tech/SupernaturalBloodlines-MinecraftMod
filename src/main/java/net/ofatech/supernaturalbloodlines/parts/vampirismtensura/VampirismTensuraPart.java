@@ -15,8 +15,10 @@ public final class VampirismTensuraPart {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, VampireSyncConfig.SPEC, VampireSyncConfig.FILE);
-        VampireSync.register();
+        // Architectury calls SET_RACE listeners in registration order: a hunter whose new race is undead has to leave
+        // the hunters before VampireSync tries to make them a vampire (it refuses while they are still a hunter)
         FactionRaceRules.register();
+        VampireSync.register();
         HolyDamageBridge.register();
         boolean werewolves = ModList.get().isLoaded("werewolves");
         if (werewolves) {

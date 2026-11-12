@@ -384,6 +384,67 @@ public final class VampirismTensuraGameTests {
         helper.succeed();
     }
 
+    /**
+     * With Tensura's tags no vampire-line race is undead, so the order only matters for a pack that maps an undead race
+     * (here tensura:wight) to a vampire level. The hunter has to leave first, or the vampire sync is refused while they
+     * are still a hunter and they end up with no faction at all.
+     */
+    @SuppressWarnings("unchecked")
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void hunterBecomingUndeadVampireLineRaceBecomesVampire(GameTestHelper helper) throws Exception {
+        var floors = (net.neoforged.neoforge.common.ModConfigSpec.ConfigValue<List<? extends String>>)
+                reflectStatic(net.ofatech.supernaturalbloodlines.parts.vampirismtensura.VampireSyncConfig.class, "RACE_LEVEL_FLOOR");
+        List<String> original = new ArrayList<>(floors.get());
+        List<String> withWight = new ArrayList<>(original);
+        withWight.add("tensura:wight=1");
+        floors.set(withWight);
+        try {
+            ServerPlayer p = TestPlayers.create(helper);
+            setRace(p, "tensura:human");
+            handler(p).setFactionAndLevel(VReference.HUNTER_FACTION, 2);
+            setRace(p, "tensura:wight");
+            helper.assertTrue(isVampire(p) && handler(p).getCurrentLevel() >= 1,
+                    "a hunter that became a mapped undead race is " + handler(p).getCurrentFaction() + " " + handler(p).getCurrentLevel());
+        } finally {
+            floors.set(original);
+        }
+        helper.succeed();
+    }
+
+    private static Object reflectStatic(Class<?> c, String field) throws ReflectiveOperationException {
+        var f = c.getDeclaredField(field);
+        f.setAccessible(true);
+        return f.get(null);
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void bloodlessBiteTellsTheBiter(GameTestHelper helper) {
+        List<String> told = new ArrayList<>();
+        ServerPlayer biter = new net.neoforged.neoforge.common.util.FakePlayer(helper.getLevel(),
+                new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "biter")) {
+            @Override
+            public void displayClientMessage(net.minecraft.network.chat.Component message, boolean overlay) {
+                told.add((overlay ? "bar:" : "chat:") + message.getString());
+            }
+        };
+        handler(biter).setFactionAndLevel(VReference.VAMPIRE_FACTION, 5);
+        biter.moveTo(helper.absoluteVec(new Vec3(1.5, 2, 1.5)), 0, 0);
+        IVampirePlayer vampire = VampirismAPI.vampirePlayer(biter);
+
+        var server = helper.getLevel().getServer();
+        boolean pvp = server.isPvpAllowed();
+        server.setPvpAllowed(true);
+        try {
+            vampire.determineBiteType(victimBehind(helper, "tensura:human"));
+            helper.assertTrue(told.isEmpty(), "control: a bite on a human told the biter " + told);
+            vampire.determineBiteType(victimBehind(helper, "tensura:slime"));
+        } finally {
+            server.setPvpAllowed(pvp);
+        }
+        helper.assertTrue(told.size() == 1 && told.get(0).startsWith("bar:"), "the biter was told " + told);
+        helper.succeed();
+    }
+
     private static DamageSource tensuraHoly(GameTestHelper helper) {
         return helper.getLevel().damageSources().source(TensuraDamageTypes.HOLY_DAMAGE);
     }

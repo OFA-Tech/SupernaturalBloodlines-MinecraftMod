@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class WerewolfSkillGrants {
     private static final String NO_MAGICULE_COST = "NoMagiculeCost";
+    private static final String GRANTED = "supernaturalbloodlines:granted";
 
     private WerewolfSkillGrants() {}
 
@@ -55,11 +56,15 @@ public final class WerewolfSkillGrants {
                 if (skills.getSkill(id).isEmpty()) {
                     // Tensura charges max magicule for a learned skill and vetoes it without enough; this tag is its own "free" switch
                     ManasSkillInstance instance = skill.createDefaultInstance();
+                    // (Tensura removes that tag itself while it unlocks, so it is one-shot; the grant mark below stays)
                     instance.getOrCreateTag().putBoolean(NO_MAGICULE_COST, true);
+                    instance.getOrCreateTag().putBoolean(GRANTED, true);
                     skills.learnSkill(instance);
                 }
             } else if (grant.reachedAt(oldLevel, oldMax)) {
-                skills.forgetSkill(id);
+                // only a skill this class granted is taken back, never one the player had from somewhere else
+                skills.getSkill(id).filter(held -> held.getTag() != null && held.getTag().getBoolean(GRANTED))
+                        .ifPresent(skills::forgetSkill);
             }
         }
     }

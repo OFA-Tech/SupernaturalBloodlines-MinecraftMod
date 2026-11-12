@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class FactionRaceRules {
     public static final String HUNTER_LEFT = "supernaturalbloodlines.vampirism_tensura.hunter_left";
+    public static final String BITE_BLOODLESS = "supernaturalbloodlines.vampirism_tensura.bite_bloodless";
     public static final ResourceLocation WEREWOLF_FACTION_ID = ResourceLocation.parse("werewolves:werewolf");
 
     private static final TagKey<ManasRace> UNDEAD = raceTag("undead");

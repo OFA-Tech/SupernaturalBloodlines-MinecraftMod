@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.mixin.tensura;
 
 import de.teamlapen.vampirism.api.entity.player.vampire.IVampirePlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.FactionRaceRules;
@@ -16,6 +17,10 @@ public abstract class VampirePlayerBiteMixin {
     @Inject(method = "determineBiteType", at = @At("HEAD"), cancellable = true, require = 0)
     private void supernaturalbloodlines$bloodlessVictim(LivingEntity victim, CallbackInfoReturnable<IVampirePlayer.BITE_TYPE> cir) {
         if (victim instanceof Player p && FactionRaceRules.isBloodless(p)) {
+            Player biter = ((IVampirePlayer) (Object) this).getRepresentingPlayer();
+            if (!biter.level().isClientSide) {
+                biter.displayClientMessage(Component.translatable(FactionRaceRules.BITE_BLOODLESS), true);
+            }
             cir.setReturnValue(IVampirePlayer.BITE_TYPE.NONE);
         }
     }
