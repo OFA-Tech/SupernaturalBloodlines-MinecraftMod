@@ -10,6 +10,7 @@ import java.util.Set;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.VampireSyncConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,7 @@ public final class Config {
             b.define(p.configKey(), true);
         }
         b.pop();
+        VampireSyncConfig.define(b);
         COMMON = b.build();
     }
 
