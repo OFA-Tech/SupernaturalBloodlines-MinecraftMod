@@ -11,6 +11,7 @@ import io.github.manasmods.manascore.race.api.ManasRaceInstance;
 import io.github.manasmods.manascore.race.api.RaceAPI;
 import io.github.manasmods.manascore.race.api.RaceEvents;
 import java.util.OptionalInt;
+import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,10 +25,16 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
  * Tensura vampire line -> Vampirism level floor, and a cure -> Tensura race reset.
  * Joining Vampirism never changes the Tensura race (R20).
  */
-final class VampireSync {
+public final class VampireSync {
     private static final String CHANNEL = "vampire_sync";
+    private static final AtomicInteger HANDLED = new AtomicInteger();
 
     private VampireSync() {}
+
+    /** How many player race/faction changes the sync acted on (past the player, server and species checks). For tests. */
+    public static int handledCount() {
+        return HANDLED.get();
+    }
 
     static void register() {
         RaceEvents.SET_RACE.register(VampireSync::onSetRace);
@@ -38,6 +45,7 @@ final class VampireSync {
     private static EventResult onSetRace(ManasRaceInstance oldRace, LivingEntity entity, ManasRaceInstance newRace,
                                          boolean flag, Changeable<Boolean> changeable, Changeable<MutableComponent> message) {
         if (newRace != null && entity instanceof ServerPlayer p && !p.level().isClientSide && isSyncable(p)) {
+            HANDLED.incrementAndGet();
             ReentrancyGuard.run(p.getUUID(), CHANNEL, () -> raiseToRaceFloor(p, newRace.getRaceId().toString()));
         }
         return EventResult.pass();
@@ -62,6 +70,7 @@ final class VampireSync {
                 || event.getOldFaction() != VReference.VAMPIRE_FACTION || event.getCurrentFaction() == VReference.VAMPIRE_FACTION) {
             return;
         }
+        HANDLED.incrementAndGet();
         ReentrancyGuard.run(p.getUUID(), CHANNEL, () -> {
             String current = RaceAPI.getRaceFrom(p).getRace().map(r -> r.getRaceId().toString()).orElse(null);
             VampireSyncConfig.mapping(VReference.VAMPIRE_FACTION.getHighestReachableLevel()).raceOnCure(current)

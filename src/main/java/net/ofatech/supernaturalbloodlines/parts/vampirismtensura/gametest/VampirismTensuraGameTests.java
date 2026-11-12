@@ -25,6 +25,7 @@ import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
+import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.VampireSync;
 
 /**
  * Registered by the part itself (RegisterGameTestsEvent), so these only exist when the part is enabled.
@@ -199,10 +200,40 @@ public final class VampirismTensuraGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void mobRaceChangeIgnored(GameTestHelper helper) {
         ServerPlayer bystander = TestPlayers.create(helper);
+        ServerPlayer hunter = TestPlayers.create(helper);
+        setRace(bystander, "tensura:elf");
+        handler(bystander).setFactionAndLevel(VReference.VAMPIRE_FACTION, 3);
+        handler(hunter).setFactionAndLevel(VReference.HUNTER_FACTION, 2);
         Mob mob = helper.spawn(EntityType.ZOMBIE, 1, 2, 1);
+
+        int before = VampireSync.handledCount();
         setRace(mob, "tensura:vampire_lord");
+        helper.assertTrue(VampireSync.handledCount() == before, "the sync acted on a mob race change");
         helper.assertTrue("tensura:vampire_lord".equals(race(mob)), "the mob race was not set: " + race(mob));
-        helper.assertTrue(handler(bystander).getCurrentFaction() == null, "a player joined because of a mob race");
+        helper.assertTrue(isVampire(bystander) && handler(bystander).getCurrentLevel() == 3, "a vampire player's level changed");
+        helper.assertTrue("tensura:elf".equals(race(bystander)), "a player race changed: " + race(bystander));
+        helper.assertTrue(handler(hunter).getCurrentFaction() == VReference.HUNTER_FACTION && handler(hunter).getCurrentLevel() == 2,
+                "a hunter changed");
+
+        // control: the same change on a player is counted, so the check above can fail
+        setRace(hunter, "tensura:vampire_lord");
+        helper.assertTrue(VampireSync.handledCount() == before + 1, "the sync did not count a player race change");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void sameFactionRaceChangeRaisesLevel(GameTestHelper helper) {
+        ServerPlayer lord = TestPlayers.create(helper);
+        handler(lord).setFactionAndLevel(VReference.VAMPIRE_FACTION, 3);
+        setRace(lord, "tensura:vampire_lord");
+        helper.assertTrue(isVampire(lord) && handler(lord).getCurrentLevel() == 7,
+                "vampire_lord at level 3: vampire=" + isVampire(lord) + " level=" + handler(lord).getCurrentLevel());
+
+        ServerPlayer overcomer = TestPlayers.create(helper);
+        handler(overcomer).setFactionAndLevel(VReference.VAMPIRE_FACTION, 3);
+        setRace(overcomer, "tensura:vampire_overcomer");
+        helper.assertTrue(isVampire(overcomer) && handler(overcomer).getCurrentLevel() == 7,
+                "vampire_overcomer at level 3: vampire=" + isVampire(overcomer) + " level=" + handler(overcomer).getCurrentLevel());
         helper.succeed();
     }
 
