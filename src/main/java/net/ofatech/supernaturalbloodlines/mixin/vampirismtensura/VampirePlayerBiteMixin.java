@@ -1,4 +1,4 @@
-package net.ofatech.supernaturalbloodlines.mixin.tensura;
+package net.ofatech.supernaturalbloodlines.mixin.vampirismtensura;
 
 import de.teamlapen.vampirism.api.entity.player.vampire.IVampirePlayer;
 import net.minecraft.network.chat.Component;

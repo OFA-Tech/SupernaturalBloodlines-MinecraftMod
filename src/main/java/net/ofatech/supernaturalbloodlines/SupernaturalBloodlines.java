@@ -8,6 +8,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.ofatech.supernaturalbloodlines.core.Config;
+import net.ofatech.supernaturalbloodlines.core.EarlySwitches;
 import net.ofatech.supernaturalbloodlines.core.Part;
 import net.ofatech.supernaturalbloodlines.core.PartLoader;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
@@ -27,8 +28,8 @@ public final class SupernaturalBloodlines {
         ModNetwork.register(modBus);
 
         ModList mods = ModList.get();
-        // Config.COMMON is not loaded yet at construction, so read the file directly (see Config)
-        Set<Part> switches = Config.enabledSwitchesEarly();
+        // Config.COMMON is not loaded yet at construction, so read the file directly (see EarlySwitches)
+        Set<Part> switches = EarlySwitches.enabled();
         Set<Part> parts = PartLoader.enabledParts(mods::isLoaded, switches::contains);
         for (Part p : Part.values()) {
             LOGGER.info("Part {}: {}", p, PartLoader.status(p, mods::isLoaded, switches::contains));

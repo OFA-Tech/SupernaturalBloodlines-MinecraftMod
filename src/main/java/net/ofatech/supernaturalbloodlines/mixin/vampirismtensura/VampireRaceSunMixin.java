@@ -1,4 +1,4 @@
-package net.ofatech.supernaturalbloodlines.mixin.tensura;
+package net.ofatech.supernaturalbloodlines.mixin.vampirismtensura;
 
 import io.github.manasmods.tensura.race.vampire.VampireRace;
 import net.minecraft.world.entity.LivingEntity;

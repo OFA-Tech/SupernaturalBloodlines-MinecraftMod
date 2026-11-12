@@ -49,9 +49,9 @@ description='''
 ${mod_description}
 '''
 
-# Applied only when Tensura and Vampirism are present and the vampirismTensura switch is on (see TensuraMixinPlugin).
+# Applied only when the vampirism_tensura part is possible (Vampirism and Tensura present) and its switch is on (see VampirismTensuraMixinPlugin; one mixin config and one plugin per part).
 [[mixins]]
-config="${mod_id}.tensura.mixins.json"
+config="${mod_id}.vampirism_tensura.mixins.json"
 
 # The [[accessTransformers]] block allows you to declare where your AT file is.
 # If this block is omitted, a fallback attempt will be made to load an AT from META-INF/accesstransformer.cfg

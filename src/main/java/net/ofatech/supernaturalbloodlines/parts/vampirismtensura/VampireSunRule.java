@@ -5,7 +5,7 @@ import de.teamlapen.vampirism.api.VampirismAPI;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
-/** Called from the Tensura sun mixins (mixin.tensura). Vampirism's own sun damage is not touched. */
+/** Called from the Tensura sun mixins (mixin.vampirismtensura). Vampirism's own sun damage is not touched. */
 public final class VampireSunRule {
     private VampireSunRule() {}
 
