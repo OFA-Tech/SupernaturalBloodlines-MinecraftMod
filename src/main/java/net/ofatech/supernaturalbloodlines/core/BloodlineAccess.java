@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.core;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -43,16 +44,15 @@ public final class BloodlineAccess {
         BloodlineState before = get(p);
         p.setData(ModAttachments.BLOODLINE, s);
         BloodlineSyncPayload payload = new BloodlineSyncPayload(p.getId(), s);
-        // The payload is registered as required, so every tracker has the channel; only the subject can be a
-        // fake/mock player without a real connection.
+        // fake/mock players have no connection channel; sending to them would throw
         if (canReceive(p)) {
             PacketDistributor.sendToPlayer(p, payload);
         }
-        try {
-            PacketDistributor.sendToPlayersTrackingEntity(p, payload);
-        } catch (UnsupportedOperationException e) {
-            // a tracker without the channel (a fake/mock player); the state is already stored, so do not fail the change
-            SupernaturalBloodlines.LOGGER.debug("Bloodline sync skipped for a tracker without the channel: {}", e.getMessage());
+        // one send per tracker, so a fake tracker cannot stop the real ones
+        for (ServerPlayer tracker : ((ServerLevel) p.level()).getChunkSource().chunkMap.getPlayersWatching(p)) {
+            if (tracker != p && canReceive(tracker)) {
+                PacketDistributor.sendToPlayer(tracker, payload);
+            }
         }
         notifyListeners(LISTENERS, p, p.getUUID(), before, s);
     }

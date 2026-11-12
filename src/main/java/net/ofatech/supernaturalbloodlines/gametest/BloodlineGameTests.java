@@ -102,6 +102,12 @@ public final class BloodlineGameTests {
         dispatcher.execute("supernaturalbloodlines debug event @s RITE_OF_IMMORTALITY", op);
         helper.assertTrue(BloodlineAccess.get(player).species() == Species.ORIGINAL,
                 "species after RITE_OF_IMMORTALITY was " + BloodlineAccess.get(player).species());
+
+        // a refusal (the default context has no hunter faction) returns 0 and leaves the state alone
+        helper.assertTrue(dispatcher.execute("supernaturalbloodlines debug event @s RITE_OF_THE_FIVE", op) == 0,
+                "a refused event should return 0");
+        helper.assertTrue(BloodlineAccess.get(player).species() == Species.ORIGINAL,
+                "a refused event changed the species to " + BloodlineAccess.get(player).species());
         helper.succeed();
     }
 }

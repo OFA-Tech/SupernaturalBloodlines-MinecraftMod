@@ -84,7 +84,7 @@ public final class DebugCommand {
         Outcome out = BloodlineAccess.applyEvent(p, event, BloodlineContext.defaults().withGameTime(p.level().getGameTime()));
         String note = " (debug context: faction NONE, human-like)";
         if (out.refused()) {
-            c.getSource().sendSuccess(() -> Component.literal(event + " refused: " + out.refusalKey() + note), false);
+            c.getSource().sendFailure(Component.translatable(out.refusalKey()).append(note));
             return 0;
         }
         c.getSource().sendSuccess(() -> Component.literal(event + " applied: " + out.state() + ", actions "
