@@ -48,7 +48,12 @@ public final class BloodlineAccess {
         if (canReceive(p)) {
             PacketDistributor.sendToPlayer(p, payload);
         }
-        PacketDistributor.sendToPlayersTrackingEntity(p, payload);
+        try {
+            PacketDistributor.sendToPlayersTrackingEntity(p, payload);
+        } catch (UnsupportedOperationException e) {
+            // a tracker without the channel (a fake/mock player); the state is already stored, so do not fail the change
+            SupernaturalBloodlines.LOGGER.debug("Bloodline sync skipped for a tracker without the channel: {}", e.getMessage());
+        }
         notifyListeners(LISTENERS, p, p.getUUID(), before, s);
     }
 

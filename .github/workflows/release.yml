@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      # secrets cannot be tested in a step-level `if`, so map them to env first
+      CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+      CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build
+        run: ./gradlew build --console=plain
+
+      - name: Attach the jar to a GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/libs/supernaturalbloodlines-*.jar
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+
+      # Runs only when the repository has the CURSEFORGE_TOKEN secret and the CURSEFORGE_PROJECT_ID variable.
+      - name: Upload to CurseForge
+        if: ${{ env.CURSEFORGE_TOKEN != '' && env.CURSEFORGE_PROJECT_ID != '' }}
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: build/libs/supernaturalbloodlines-*.jar
+          loaders: neoforge
+          game-versions: 1.21.1
+          java: 21

@@ -1,1 +1,21 @@
-{}
+{
+  "supernaturalbloodlines.refusal.not_human_like": "Your race cannot take a bloodline.",
+  "supernaturalbloodlines.refusal.has_faction": "You already belong to a faction.",
+  "supernaturalbloodlines.refusal.has_species": "You already carry a bloodline.",
+  "supernaturalbloodlines.refusal.original_cap": "The world already has as many Originals as it allows.",
+  "supernaturalbloodlines.refusal.siphoner_hybrid": "A siphoner cannot become a hybrid.",
+  "supernaturalbloodlines.refusal.no_gene": "You do not carry the werewolf gene.",
+  "supernaturalbloodlines.refusal.not_original": "Only an Original can do this.",
+  "supernaturalbloodlines.refusal.original_cure": "An Original cannot be cured this way.",
+  "supernaturalbloodlines.refusal.vampire_no_magic": "A vampire cannot take up magic.",
+  "supernaturalbloodlines.refusal.not_hunter": "Only a hunter can do this.",
+  "supernaturalbloodlines.refusal.five_full": "The Five are already complete.",
+  "supernaturalbloodlines.refusal.no_alpha": "There is no Alpha for this.",
+  "supernaturalbloodlines.refusal.not_werewolf": "Only a werewolf can do this.",
+  "supernaturalbloodlines.refusal.no_pack": "That Alpha has no pack.",
+  "supernaturalbloodlines.refusal.true_alpha_blue_eyes": "Your eyes have turned blue; you can never be a True Alpha.",
+  "supernaturalbloodlines.refusal.true_alpha_level": "Your werewolf level is too low to become a True Alpha.",
+  "supernaturalbloodlines.refusal.true_alpha_beta_days": "You have not been a Beta long enough to become a True Alpha.",
+  "supernaturalbloodlines.refusal.true_alpha_defender_kills": "You have not defended your pack enough to become a True Alpha.",
+  "supernaturalbloodlines.refusal.true_alpha_stole_spark": "A stolen spark cannot make a True Alpha."
+}
