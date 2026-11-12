@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.core;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
@@ -22,12 +23,14 @@ import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 
-/** The one door to a player's bloodline state: read it, change it (synced), and listen for species changes. */
+/** The one door to a player's bloodline state: read it, change it (synced), and listen for species, lineage and rank changes. */
 public final class BloodlineAccess {
     public record BloodlineChange(BloodlineState before, BloodlineState after) {
     }
 
     static final int MAX_DRAINED = 16;
+
+    private static final String GUARD_KEY = "core:bloodline_listeners";
 
     private static final List<BiConsumer<ServerPlayer, BloodlineChange>> LISTENERS = new CopyOnWriteArrayList<>();
     // changes made by listeners while a player's fan-out is running; only exists during the outer call
@@ -43,15 +46,15 @@ public final class BloodlineAccess {
     public static void set(ServerPlayer p, BloodlineState s) {
         BloodlineState before = get(p);
         p.setData(ModAttachments.BLOODLINE, s);
-        BloodlineSyncPayload payload = new BloodlineSyncPayload(p.getId(), s);
         // fake/mock players have no connection channel; sending to them would throw
         if (canReceive(p)) {
-            PacketDistributor.sendToPlayer(p, payload);
+            PacketDistributor.sendToPlayer(p, new BloodlineSyncPayload(p.getId(), clientView(s, true)));
         }
         // one send per tracker, so a fake tracker cannot stop the real ones
+        BloodlineSyncPayload others = new BloodlineSyncPayload(p.getId(), clientView(s, false));
         for (ServerPlayer tracker : ((ServerLevel) p.level()).getChunkSource().chunkMap.getPlayersWatching(p)) {
             if (tracker != p && canReceive(tracker)) {
-                PacketDistributor.sendToPlayer(tracker, payload);
+                PacketDistributor.sendToPlayer(tracker, others);
             }
         }
         notifyListeners(LISTENERS, p, p.getUUID(), before, s);
@@ -60,8 +63,23 @@ public final class BloodlineAccess {
     /** Applies the rules and stores the result. Faction actions in the Outcome are left to the parts. */
     public static Outcome applyEvent(ServerPlayer p, BloodlineEvent e, BloodlineContext c) {
         Outcome out = BloodlineRules.apply(get(p), e, c);
-        set(p, out.state());
+        if (!out.state().equals(get(p))) {
+            set(p, out.state());
+        }
         return out;
+    }
+
+    /**
+     * What a client may know: the hidden gene stays on the server, and only the subject sees their own sire.
+     * Build every payload through this, so a new send path cannot leak.
+     */
+    public static BloodlineState clientView(BloodlineState s, boolean viewerIsSubject) {
+        BloodlineState.Builder b = s.toBuilder().pendingSire(null)
+                .wolf(s.wolf().toBuilder().latentGene(false).geneRolled(false).build());
+        if (!viewerIsSubject) {
+            b.sire(null);
+        }
+        return b.build();
     }
 
     public static void addListener(BiConsumer<ServerPlayer, BloodlineChange> l) {
@@ -75,17 +93,18 @@ public final class BloodlineAccess {
     /** Sends {@code subject}'s state to {@code to}. */
     public static void sendTo(ServerPlayer to, Player subject) {
         if (canReceive(to)) {
-            PacketDistributor.sendToPlayer(to, new BloodlineSyncPayload(subject.getId(), get(subject)));
+            PacketDistributor.sendToPlayer(to, new BloodlineSyncPayload(subject.getId(), clientView(get(subject), to == subject)));
         }
     }
 
     // Mock/fake players and clients without the mod have no channel for the payload; sending would throw.
     private static boolean canReceive(ServerPlayer p) {
-        return p.connection != null && p.connection.hasChannel(BloodlineSyncPayload.TYPE);
+        return !(p instanceof FakePlayer) && p.connection != null && p.connection.hasChannel(BloodlineSyncPayload.TYPE);
     }
 
     /**
-     * Listeners hear about species changes only, not about thirst ticks and the like. A change made by a
+     * Listeners hear about changes of species, wolf lineage or wolf rank only, not about thirst ticks, granted
+     * skills and the like. A change made by a
      * listener is queued, not fanned out in place: the outer call finishes the current change for every
      * listener, then drains the queue in order, so each listener sees every change and the last one is final.
      * At most {@link #MAX_DRAINED} queued changes are drained per outer call (listeners that flip forever);
@@ -94,11 +113,12 @@ public final class BloodlineAccess {
      */
     static <P> void notifyListeners(List<BiConsumer<P, BloodlineChange>> listeners, P player, UUID playerId,
                                     BloodlineState before, BloodlineState after) {
-        if (before.species() == after.species()) {
+        if (before.species() == after.species() && before.wolf().lineage() == after.wolf().lineage()
+                && before.wolf().rank() == after.wolf().rank()) {
             return;
         }
         BloodlineChange change = new BloodlineChange(before, after);
-        boolean outer = ReentrancyGuard.run(playerId, "bloodline", () -> {
+        boolean outer = ReentrancyGuard.run(playerId, GUARD_KEY, () -> {
             Deque<BloodlineChange> queue = new ArrayDeque<>();
             PENDING.get().put(playerId, queue);
             try {
