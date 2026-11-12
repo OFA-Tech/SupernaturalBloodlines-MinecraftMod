@@ -23,3 +23,6 @@ jobs:
 
       - name: Build and test with Gradle
         run: ./gradlew build test --console=plain
+
+      - name: Run GameTests
+        run: ./gradlew runGameTestServer --console=plain

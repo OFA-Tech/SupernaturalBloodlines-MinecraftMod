@@ -24,13 +24,13 @@ public final class BloodlineGameTests {
 
     @GameTest(template = "empty")
     public static void bloodlineSurvivesSaveLoad(GameTestHelper helper) {
-        ServerPlayer saved = helper.makeMockServerPlayerInLevel();
+        ServerPlayer saved = TestPlayers.create(helper);
         saved.setData(ModAttachments.BLOODLINE, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
 
         CompoundTag nbt = new CompoundTag();
         saved.saveWithoutId(nbt);
 
-        ServerPlayer loaded = helper.makeMockServerPlayerInLevel();
+        ServerPlayer loaded = TestPlayers.create(helper);
         helper.assertTrue(BloodlineAccess.get(loaded).species() == Species.NONE, "fresh player should start as NONE");
         loaded.load(nbt);
         helper.assertTrue(BloodlineAccess.get(loaded).species() == Species.WITCH,
@@ -44,7 +44,7 @@ public final class BloodlineGameTests {
 
     @GameTest(template = "empty")
     public static void debugSetSurvivesSaveLoad(GameTestHelper helper) throws CommandSyntaxException {
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        ServerPlayer player = TestPlayers.create(helper);
         MinecraftServer server = helper.getLevel().getServer();
 
         server.getCommands().performPrefixedCommand(asOp(player), "supernaturalbloodlines debug set @s WITCH");
@@ -60,7 +60,7 @@ public final class BloodlineGameTests {
 
         CompoundTag nbt = new CompoundTag();
         player.saveWithoutId(nbt);
-        ServerPlayer reloaded = helper.makeMockServerPlayerInLevel();
+        ServerPlayer reloaded = TestPlayers.create(helper);
         reloaded.load(nbt);
         helper.assertTrue(BloodlineAccess.get(reloaded).species() == Species.WITCH,
                 "species after reload was " + BloodlineAccess.get(reloaded).species());
@@ -72,7 +72,7 @@ public final class BloodlineGameTests {
 
     @GameTest(template = "empty")
     public static void debugBadInputGivesErrorNotCrash(GameTestHelper helper) throws CommandSyntaxException {
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        ServerPlayer player = TestPlayers.create(helper);
         MinecraftServer server = helper.getLevel().getServer();
         CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
         CommandSourceStack op = asOp(player);
