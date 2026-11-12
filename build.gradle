@@ -27,7 +27,46 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    maven {
+        name = 'Maxanier'
+        url = 'https://maven.maxanier.de/releases'
+        content { includeGroupAndSubgroups 'de.teamlapen' }
+    }
+    maven {
+        name = 'Paube'
+        url = 'https://maven.paube.de/releases'
+        content { includeGroupAndSubgroups 'de.teamlapen' }
+    }
+    maven {
+        name = 'Favouriteless'
+        url = 'https://maven.favouriteless.dev/releases'
+        content { includeGroupAndSubgroups 'net.favouriteless' }
+    }
+    maven {
+        name = 'CurseMaven'
+        url = 'https://cursemaven.com'
+        content { includeGroup 'curse.maven' }
+    }
+    maven {
+        name = 'Architectury'
+        url = 'https://maven.architectury.dev'
+        content { includeGroup 'dev.architectury' }
+    }
+    maven {
+        name = 'GeckoLib'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        content { includeGroup 'software.bernie.geckolib' }
+    }
+    maven {
+        name = 'SmartBrainLib'
+        url = 'https://dl.cloudsmith.io/public/tslat/sbl/maven/'
+        content { includeGroup 'net.tslat.smartbrainlib' }
+    }
+    maven {
+        name = 'MinecraftForge'
+        url = 'https://maven.minecraftforge.net'
+        content { includeGroup 'com.github.glitchfiend' }
+    }
 }
 
 base {
@@ -105,6 +144,12 @@ neoForge {
             sourceSet(sourceSets.main)
         }
     }
+
+    // puts NeoForge on the test classpath (PartLoader/Config reference its classes)
+    unitTest {
+        enable()
+        testedMod = mods."${mod_id}"
+    }
 }
 
 // Sets up a dependency configuration called 'localRuntime'.
@@ -115,28 +160,60 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
+// Linked mods. compileOnly always; localRuntime unless switched off:
+//   -PnoLinkedMods  drop every linked mod from the run classpath
+//   -PnoWerewolves  drop only Werewolves   (-PnoCurios is reserved, no-op for now)
+// transitive=false everywhere: published POMs point at repos/versions we do not use.
+def linkedRuntime = !project.hasProperty('noLinkedMods')
+def werewolvesRuntime = linkedRuntime && !project.hasProperty('noWerewolves')
+
+// ManasCore ships its real modules as jar-in-jar; FML unpacks them at runtime, but Gradle only sees the outer jar.
+configurations.create('manascoreOuter') { transitive = false }
+configurations.compileOnly.extendsFrom configurations.manascoreOuter
+configurations.testCompileOnly.extendsFrom configurations.compileOnly
+def extractManascoreModules = tasks.register('extractManascoreModules', Sync) {
+    from({ configurations.manascoreOuter.files.collect { zipTree(it) } }) {
+        include 'META-INF/jars/*.jar'
+        eachFile { path = name }
+        includeEmptyDirs = false
+    }
+    into layout.buildDirectory.dir('manascore-modules')
+}
+
 dependencies {
-    // Example optional mod dependency with JEI
-    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
-    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
-    // compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
-    // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
-    // localRuntime "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
+    // Vampirism: API for compile, full jar for runtime (teamlapenlib is bundled inside it)
+    compileOnly("de.teamlapen.vampirism:Vampirism:${vampirism_version}:api") { transitive = false }
+    // Werewolves has no API classifier
+    compileOnly("de.teamlapen.werewolves:Werewolves:${werewolves_version}") { transitive = false }
+    compileOnly("net.favouriteless.enchanted:enchanted-neoforge-1.21.1:${enchanted_version}") { transitive = false }
+    // Tensura and ManasCore (CurseForge only)
+    compileOnly("curse.maven:tensura-reincarnated-643695:${tensura_file_id}") { transitive = false }
+    manascoreOuter("curse.maven:manascore-619025:${manascore_file_id}")
+    compileOnly(fileTree(layout.buildDirectory.dir('manascore-modules')) { builtBy extractManascoreModules })
+    // Tensura and ManasCore need these on the compile classpath to resolve supertypes
+    compileOnly("dev.architectury:architectury-neoforge:${architectury_version}") { transitive = false }
+    compileOnly("software.bernie.geckolib:geckolib-neoforge-1.21.1:${geckolib_version}") { transitive = false }
+    compileOnly("net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1:${smartbrainlib_version}") { transitive = false }
 
-    // Example mod dependency using a mod jar from ./libs with a flat dir repository
-    // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
-    // The group id is ignored when searching -- in this case, it is "blank"
-    // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    // Example mod dependency using a file as dependency
-    // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
-
-    // Example project dependency using a sister or child project:
-    // implementation project(":myproject")
-
-    // For more info:
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
+    if (linkedRuntime) {
+        localRuntime("de.teamlapen.vampirism:Vampirism:${vampirism_version}") { transitive = false }
+        localRuntime("net.favouriteless.enchanted:enchanted-neoforge-1.21.1:${enchanted_version}") { transitive = false }
+        localRuntime("net.favouriteless.stateobserver:stateobserver-neoforge-1.21.1:${stateobserver_version}") { transitive = false }
+        localRuntime("net.favouriteless.modopedia:modopedia-neoforge-1.21.1:${modopedia_version}") { transitive = false }
+        localRuntime("curse.maven:tensura-reincarnated-643695:${tensura_file_id}") { transitive = false }
+        localRuntime("curse.maven:manascore-619025:${manascore_file_id}") { transitive = false }
+        localRuntime("dev.architectury:architectury-neoforge:${architectury_version}") { transitive = false }
+        localRuntime("software.bernie.geckolib:geckolib-neoforge-1.21.1:${geckolib_version}") { transitive = false }
+        localRuntime("net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1:${smartbrainlib_version}") { transitive = false }
+        localRuntime("com.github.glitchfiend:TerraBlender-neoforge:${terrablender_version}") { transitive = false }
+    }
+    if (werewolvesRuntime) {
+        localRuntime("de.teamlapen.werewolves:Werewolves:${werewolves_version}") { transitive = false }
+    }
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
@@ -177,6 +254,10 @@ publishing {
             url "file://${project.projectDir}/repo"
         }
     }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
 
 tasks.withType(JavaCompile).configureEach {
