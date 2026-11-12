@@ -53,6 +53,26 @@ class BloodlineStateTest {
     }
 
     @Test
+    void malformedFieldFallsBackToItsDefaultInsteadOfFailing() {
+        BloodlineState s = decode("{\"species\":\"HYBRID\",\"sire\":\"not-a-uuid\",\"thirst\":\"lots\","
+                + "\"mark_kills\":7,\"wolf\":{\"rank\":\"BETA\",\"pack_alpha\":42,\"defender_kills\":\"x\"}}");
+        assertEquals(Species.HYBRID, s.species());
+        assertNull(s.sire());
+        assertEquals(20, s.thirst());
+        assertEquals(7, s.markKills());
+        assertEquals(WolfState.Rank.BETA, s.wolf().rank());
+        assertNull(s.wolf().packAlpha());
+        assertEquals(0, s.wolf().defenderKills());
+    }
+
+    @Test
+    void thirstIsClampedToZeroToTwenty() {
+        assertEquals(20, BloodlineState.NONE.toBuilder().thirst(99).build().thirst());
+        assertEquals(0, BloodlineState.NONE.toBuilder().thirst(-5).build().thirst());
+        assertEquals(20, decode("{\"thirst\":500}").thirst());
+    }
+
+    @Test
     void speciesChangeStampsTurnedAt() {
         Outcome o = BloodlineRules.apply(BloodlineState.NONE, BloodlineEvent.RITE_OF_IMMORTALITY,
                 BloodlineContext.defaults().withGameTime(500));

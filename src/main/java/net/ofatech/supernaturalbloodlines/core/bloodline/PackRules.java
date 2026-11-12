@@ -22,7 +22,8 @@ public final class PackRules {
                     ? ok(w.toBuilder().rank(Rank.BETA).packAlpha(c.otherAlpha()).betaSince(c.gameTime()).build())
                     : ok(w);
             case TRUE_ALPHA_EARNED -> trueAlpha(w, c);
-            case KILLED_INNOCENT -> ok(w.toBuilder().killedInnocent(true).build());
+            // Only a werewolf's eyes turn blue; the caller sends GENE_AWAKENED first when a kill awakens a human.
+            case KILLED_INNOCENT -> isWerewolf(w) ? ok(w.toBuilder().killedInnocent(true).build()) : ok(w);
             case DEFENDER_KILL -> ok(w.toBuilder().defenderKills(w.defenderKills() + 1).build());
         };
     }
@@ -105,13 +106,17 @@ public final class PackRules {
 
     // R91: checked in the order blue eyes, level, beta days, defender kills, spark.
     private static PackOutcome trueAlpha(WolfState w, PackContext c) {
+        if (!isWerewolf(w)) {
+            return refuse(w, "not_werewolf");
+        }
         if (w.rank() == Rank.TRUE_ALPHA) {
             return ok(w);
         }
         if (w.killedInnocent()) {
             return refuse(w, "true_alpha_blue_eyes");
         }
-        if (c.werewolfLevel() < c.maxLevel()) {
+        // A maxLevel of 0 means the caller did not supply the cap: never grant on an empty check.
+        if (c.maxLevel() <= 0 || c.werewolfLevel() < c.maxLevel()) {
             return refuse(w, "true_alpha_level");
         }
         if (w.betaSince() <= 0 || c.gameTime() - w.betaSince() < c.betaDaysTicks()) {

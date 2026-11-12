@@ -172,6 +172,26 @@ class PackRulesTest {
     }
 
     @Test
+    void trueAlphaIsRefusedForANonWerewolf() {
+        WolfState human = eligible().toBuilder().lineage(Lineage.NONE).rank(Rank.NONE).build();
+        assertRefused(PackRules.apply(human, TRUE_ALPHA_EARNED, ctx()), human, "not_werewolf");
+    }
+
+    @Test
+    void trueAlphaIsRefusedWhenTheLevelCapWasNotSupplied() {
+        PackContext noCap = new PackContext(ALPHA, 0, 1_000_000, 0, DAYS_30, 300, true);
+        assertRefused(PackRules.apply(eligible(), TRUE_ALPHA_EARNED, noCap), eligible(), "true_alpha_level");
+        assertRefused(PackRules.apply(eligible(), TRUE_ALPHA_EARNED,
+                new PackContext(ALPHA, 99, 1_000_000, PackContext.defaults().maxLevel(), DAYS_30, 300, true)),
+                eligible(), "true_alpha_level");
+    }
+
+    @Test
+    void innocentKillOnAHumanDoesNotTurnEyesBlue() {
+        assertEquals(WolfState.NONE, PackRules.apply(WolfState.NONE, KILLED_INNOCENT, ctx()).state());
+    }
+
+    @Test
     void sparkGivenUpDropsToBeta() {
         WolfState alpha = wolf(Lineage.BITTEN, Rank.ALPHA);
         PackOutcome o = PackRules.apply(alpha, SPARK_GIVEN_UP, ctx());

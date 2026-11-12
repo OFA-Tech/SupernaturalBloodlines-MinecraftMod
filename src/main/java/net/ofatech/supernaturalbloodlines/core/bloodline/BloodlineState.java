@@ -10,8 +10,9 @@ import java.util.UUID;
 /**
  * A player's species layer. Pure data: the rules live in {@link BloodlineRules}.
  *
- * @param turnedAt        game time the current species began; 0 = unset
- * @param thirst          0 to 20
+ * @param turnedAt        game time the current species began; 0 = unset (also what a species-less state holds,
+ *                        and what a species change at game time 0 would stamp)
+ * @param thirst          0 to 20, clamped by the constructor
  * @param previousRace    unused since the race is kept (R100); always null, kept for save compatibility
  * @param hybridCurseBound werewolf side sealed until the Rite of the Moon (R24a)
  */
@@ -25,22 +26,22 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
             0, 0, 20, null, 0, false, 0, false, WolfState.NONE);
 
     public static final Codec<BloodlineState> CODEC = RecordCodecBuilder.create(i -> i.group(
-            BloodlineCodecs.enumByName(Species.class, Species.NONE).optionalFieldOf("species", Species.NONE).forGetter(BloodlineState::species),
-            Codec.BOOL.optionalFieldOf("witch_layer", false).forGetter(BloodlineState::witchLayer),
-            BloodlineCodecs.UUID_CODEC.optionalFieldOf("sire").forGetter(s -> Optional.ofNullable(s.sire())),
-            Codec.BOOL.optionalFieldOf("in_transition", false).forGetter(BloodlineState::inTransition),
-            Codec.BOOL.optionalFieldOf("unstable", false).forGetter(BloodlineState::unstable),
-            Codec.LONG.optionalFieldOf("transition_ticks_left", 0L).forGetter(BloodlineState::transitionTicksLeft),
-            BloodlineCodecs.UUID_CODEC.optionalFieldOf("pending_sire").forGetter(s -> Optional.ofNullable(s.pendingSire())),
-            Codec.INT.optionalFieldOf("siphoned_power", 0).forGetter(BloodlineState::siphonedPower),
-            Codec.LONG.optionalFieldOf("turned_at", 0L).forGetter(BloodlineState::turnedAt),
-            Codec.INT.optionalFieldOf("thirst", 20).forGetter(BloodlineState::thirst),
-            Codec.STRING.optionalFieldOf("previous_race").forGetter(s -> Optional.ofNullable(s.previousRace())),
-            Codec.INT.optionalFieldOf("mark_kills", 0).forGetter(BloodlineState::markKills),
-            Codec.BOOL.optionalFieldOf("hunter_curse", false).forGetter(BloodlineState::hunterCurse),
-            Codec.LONG.optionalFieldOf("last_vampire_kill", 0L).forGetter(BloodlineState::lastVampireKill),
-            Codec.BOOL.optionalFieldOf("hybrid_curse_bound", false).forGetter(BloodlineState::hybridCurseBound),
-            WolfState.CODEC.optionalFieldOf("wolf", WolfState.NONE).forGetter(BloodlineState::wolf)
+            BloodlineCodecs.enumByName(Species.class, Species.NONE).lenientOptionalFieldOf("species", Species.NONE).forGetter(BloodlineState::species),
+            Codec.BOOL.lenientOptionalFieldOf("witch_layer", false).forGetter(BloodlineState::witchLayer),
+            BloodlineCodecs.UUID_CODEC.lenientOptionalFieldOf("sire").forGetter(s -> Optional.ofNullable(s.sire())),
+            Codec.BOOL.lenientOptionalFieldOf("in_transition", false).forGetter(BloodlineState::inTransition),
+            Codec.BOOL.lenientOptionalFieldOf("unstable", false).forGetter(BloodlineState::unstable),
+            Codec.LONG.lenientOptionalFieldOf("transition_ticks_left", 0L).forGetter(BloodlineState::transitionTicksLeft),
+            BloodlineCodecs.UUID_CODEC.lenientOptionalFieldOf("pending_sire").forGetter(s -> Optional.ofNullable(s.pendingSire())),
+            Codec.INT.lenientOptionalFieldOf("siphoned_power", 0).forGetter(BloodlineState::siphonedPower),
+            Codec.LONG.lenientOptionalFieldOf("turned_at", 0L).forGetter(BloodlineState::turnedAt),
+            Codec.INT.lenientOptionalFieldOf("thirst", 20).forGetter(BloodlineState::thirst),
+            Codec.STRING.lenientOptionalFieldOf("previous_race").forGetter(s -> Optional.ofNullable(s.previousRace())),
+            Codec.INT.lenientOptionalFieldOf("mark_kills", 0).forGetter(BloodlineState::markKills),
+            Codec.BOOL.lenientOptionalFieldOf("hunter_curse", false).forGetter(BloodlineState::hunterCurse),
+            Codec.LONG.lenientOptionalFieldOf("last_vampire_kill", 0L).forGetter(BloodlineState::lastVampireKill),
+            Codec.BOOL.lenientOptionalFieldOf("hybrid_curse_bound", false).forGetter(BloodlineState::hybridCurseBound),
+            WolfState.CODEC.lenientOptionalFieldOf("wolf", WolfState.NONE).forGetter(BloodlineState::wolf)
     ).apply(i, (species, witch, sire, inTransition, unstable, ticks, pending, power, turnedAt, thirst, prev,
                 markKills, curse, lastKill, bound, wolf) -> new BloodlineState(species, witch, sire.orElse(null),
             inTransition, unstable, ticks, pending.orElse(null), power, turnedAt, thirst, prev.orElse(null),
@@ -48,6 +49,7 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
 
     public BloodlineState {
         species = species == null ? Species.NONE : species;
+        thirst = Math.max(0, Math.min(20, thirst));
         wolf = wolf == null ? WolfState.NONE : wolf;
     }
 

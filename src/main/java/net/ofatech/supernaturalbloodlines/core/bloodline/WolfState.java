@@ -24,16 +24,16 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
             new WolfState(Lineage.NONE, Rank.NONE, false, false, false, null, 0, 0, false, Set.of());
 
     public static final Codec<WolfState> CODEC = RecordCodecBuilder.create(i -> i.group(
-            BloodlineCodecs.enumByName(Lineage.class, Lineage.NONE).optionalFieldOf("lineage", Lineage.NONE).forGetter(WolfState::lineage),
-            BloodlineCodecs.enumByName(Rank.class, Rank.NONE).optionalFieldOf("rank", Rank.NONE).forGetter(WolfState::rank),
-            Codec.BOOL.optionalFieldOf("gene_rolled", false).forGetter(WolfState::geneRolled),
-            Codec.BOOL.optionalFieldOf("latent_gene", false).forGetter(WolfState::latentGene),
-            Codec.BOOL.optionalFieldOf("killed_innocent", false).forGetter(WolfState::killedInnocent),
-            BloodlineCodecs.UUID_CODEC.optionalFieldOf("pack_alpha").forGetter(w -> Optional.ofNullable(w.packAlpha())),
-            Codec.LONG.optionalFieldOf("beta_since", 0L).forGetter(WolfState::betaSince),
-            Codec.INT.optionalFieldOf("defender_kills", 0).forGetter(WolfState::defenderKills),
-            Codec.BOOL.optionalFieldOf("stole_spark", false).forGetter(WolfState::stoleSpark),
-            Codec.STRING.listOf().optionalFieldOf("granted_skills", java.util.List.of())
+            BloodlineCodecs.enumByName(Lineage.class, Lineage.NONE).lenientOptionalFieldOf("lineage", Lineage.NONE).forGetter(WolfState::lineage),
+            BloodlineCodecs.enumByName(Rank.class, Rank.NONE).lenientOptionalFieldOf("rank", Rank.NONE).forGetter(WolfState::rank),
+            Codec.BOOL.lenientOptionalFieldOf("gene_rolled", false).forGetter(WolfState::geneRolled),
+            Codec.BOOL.lenientOptionalFieldOf("latent_gene", false).forGetter(WolfState::latentGene),
+            Codec.BOOL.lenientOptionalFieldOf("killed_innocent", false).forGetter(WolfState::killedInnocent),
+            BloodlineCodecs.UUID_CODEC.lenientOptionalFieldOf("pack_alpha").forGetter(w -> Optional.ofNullable(w.packAlpha())),
+            Codec.LONG.lenientOptionalFieldOf("beta_since", 0L).forGetter(WolfState::betaSince),
+            Codec.INT.lenientOptionalFieldOf("defender_kills", 0).forGetter(WolfState::defenderKills),
+            Codec.BOOL.lenientOptionalFieldOf("stole_spark", false).forGetter(WolfState::stoleSpark),
+            Codec.STRING.listOf().lenientOptionalFieldOf("granted_skills", java.util.List.of())
                     .forGetter(w -> {
                         var sorted = new ArrayList<>(w.grantedSkills());
                         Collections.sort(sorted);

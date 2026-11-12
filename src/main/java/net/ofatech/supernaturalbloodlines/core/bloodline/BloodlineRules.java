@@ -60,13 +60,23 @@ public final class BloodlineRules {
         return b;
     }
 
-    /** Back to no species: layer-specific data goes with it. */
+    /** Back to no species: layer-specific data goes with it, and so does any transition in progress. */
     private static BloodlineState.Builder becomeNone(BloodlineState s, BloodlineContext c) {
-        return to(s, Species.NONE, c).sire(null).witchLayer(false).markKills(0).lastVampireKill(0);
+        return clearTransition(to(s, Species.NONE, c).sire(null).witchLayer(false).markKills(0).lastVampireKill(0));
     }
 
     private static BloodlineState.Builder clearTransition(BloodlineState.Builder b) {
         return b.inTransition(false).unstable(false).transitionTicksLeft(0).pendingSire(null);
+    }
+
+    /** The Teen Wolf layer reset; the hidden gene is a human trait and stays (it must not be re-rolled). */
+    private static WolfState clearedWolf(WolfState w) {
+        return WolfState.NONE.toBuilder().geneRolled(w.geneRolled()).latentGene(w.latentGene()).build();
+    }
+
+    /** Leaving the werewolf side: no wolf rank and no half-done hybrid transition. */
+    private static BloodlineState.Builder leaveWerewolf(BloodlineState s, BloodlineState.Builder b) {
+        return clearTransition(b).wolf(clearedWolf(s.wolf()));
     }
 
     private static boolean isHybridType(Species sp) {
@@ -131,15 +141,16 @@ public final class BloodlineRules {
     // ---- Werewolf gene and the Rite of the Moon ----
 
     private static Outcome riteOfTheMoon(BloodlineState s, BloodlineContext c) {
+        boolean gene = s.wolf().latentGene();
         if (s.species() == Species.ORIGINAL) { // R35: an Original hybrid needs the gene
-            return c.latentGene()
+            return gene
                     ? Outcome.of(to(s, Species.ORIGINAL_HYBRID, c).hybridCurseBound(false).build(), Action.LEAVE_FACTION, Action.JOIN_WEREWOLF)
                     : Outcome.refuse(s, "no_gene");
         }
         if (isHybridType(s.species()) && s.hybridCurseBound()) {
             return Outcome.of(s.toBuilder().hybridCurseBound(false).build());
         }
-        return unchanged(s);
+        return Outcome.refuse(s, gene ? "not_original" : "no_gene");
     }
 
     /** R24 (gene awakened by a kill, needs the gene) and R12/R35 (the lineage rite gives it): a bound hybrid. */
@@ -154,10 +165,16 @@ public final class BloodlineRules {
         } else {
             return unchanged(s); // humans are PackRules' business
         }
-        if (needsGene && !c.latentGene()) {
+        if (needsGene && !s.wolf().latentGene()) {
             return Outcome.refuse(s, "no_gene");
         }
-        return Outcome.of(to(s, target, c).hybridCurseBound(true).build(), Action.LEAVE_FACTION, Action.JOIN_WEREWOLF);
+        // R90: a hybrid made this way counts as born. The lineage rite is what gives the gene.
+        WolfState.Builder wolf = s.wolf().toBuilder().geneRolled(true).latentGene(true);
+        if (s.wolf().lineage() == WolfState.Lineage.NONE) {
+            wolf.lineage(WolfState.Lineage.BORN).rank(WolfState.Rank.OMEGA);
+        }
+        return Outcome.of(to(s, target, c).hybridCurseBound(true).wolf(wolf.build()).build(),
+                Action.LEAVE_FACTION, Action.JOIN_WEREWOLF);
     }
 
     // ---- Cures ----
@@ -171,28 +188,36 @@ public final class BloodlineRules {
         if (isOriginal(s.species())) {
             return Outcome.refuse(s, "original_cure"); // R34
         }
-        BaseFaction side = silverMoon ? BaseFaction.WEREWOLF : BaseFaction.VAMPIRE;
-        Outcome left = Outcome.of(dropLayer(s, c), Action.LEAVE_FACTION);
+        return silverMoon ? silverMoon(s, c) : cleansingBlood(s, c);
+    }
+
+    /** Hybrid -> plain werewolf (NONE), tribrid -> witch, heretic -> siphoner; the sire bond goes with the layer. */
+    private static Outcome cleansingBlood(BloodlineState s, BloodlineContext c) {
         return switch (s.species()) {
-            case HYBRID, TRIBRID -> silverMoon ? left : Outcome.of(dropLayer(s, c));
-            case HERETIC -> silverMoon ? unchanged(s) : left;
-            case NONE, WITCH, SIPHONER -> c.faction() == side ? left : unchanged(s);
+            case HYBRID -> Outcome.of(to(s, Species.NONE, c).sire(null).build());
+            case TRIBRID -> Outcome.of(to(s, Species.WITCH, c).witchLayer(true).sire(null).build());
+            case HERETIC -> Outcome.of(to(s, Species.SIPHONER, c).build(), Action.LEAVE_FACTION);
+            case NONE, WITCH, SIPHONER -> c.faction() == BaseFaction.VAMPIRE
+                    ? Outcome.of(s, Action.LEAVE_FACTION) : unchanged(s);
             default -> unchanged(s);
         };
     }
 
-    /** Hybrid -> plain werewolf (NONE), tribrid -> witch, heretic -> siphoner; the sire bond goes with the layer. */
-    private static BloodlineState dropLayer(BloodlineState s, BloodlineContext c) {
+    /** Every success clears the wolf layer (the gene stays) and any transition. Hybrid-types become plain vampires. */
+    private static Outcome silverMoon(BloodlineState s, BloodlineContext c) {
         return switch (s.species()) {
-            case TRIBRID -> to(s, Species.WITCH, c).witchLayer(true).sire(null).build();
-            case HERETIC -> to(s, Species.SIPHONER, c).build();
-            case HYBRID -> to(s, Species.NONE, c).sire(null).build();
-            default -> s;
+            case HYBRID -> Outcome.of(leaveWerewolf(s, to(s, Species.NONE, c)).build(), Action.LEAVE_FACTION, Action.JOIN_VAMPIRE);
+            case TRIBRID -> Outcome.of(leaveWerewolf(s, to(s, Species.NONE, c).witchLayer(false)).build(), // R61
+                    Action.LEAVE_FACTION, Action.JOIN_VAMPIRE);
+            case NONE, WITCH, SIPHONER -> c.faction() == BaseFaction.WEREWOLF
+                    ? Outcome.of(leaveWerewolf(s, s.toBuilder()).build(), Action.LEAVE_FACTION) : unchanged(s);
+            default -> unchanged(s);
         };
     }
 
     private static Outcome drankTheCure(BloodlineState s, BloodlineContext c) {
-        BloodlineState cured = becomeNone(s, c).hunterCurse(false).build();
+        BloodlineState cured = becomeNone(s, c).hunterCurse(false).siphonedPower(0).thirst(20)
+                .wolf(clearedWolf(s.wolf())).build();
         boolean leaves = c.faction() == BaseFaction.VAMPIRE || c.faction() == BaseFaction.WEREWOLF
                 || switch (s.species()) {
                     case ORIGINAL, ORIGINAL_HYBRID, HYBRID, TRIBRID, HERETIC -> true;
@@ -201,13 +226,19 @@ public final class BloodlineRules {
         return leaves ? Outcome.of(cured, Action.LEAVE_FACTION) : Outcome.of(cured);
     }
 
-    /** Any other way out of the base faction (command, Vampirism UI): the layer goes to match. */
+    /**
+     * Any other way out of the base faction (command, Vampirism UI): the layer goes to match. {@code c.faction()}
+     * is the faction being left; it is what tells a plain werewolf (or witch-werewolf) from a plain vampire.
+     * A werewolf-based state also loses its wolf layer and any transition.
+     */
     private static Outcome leftBaseFaction(BloodlineState s, BloodlineContext c) {
         return switch (s.species()) {
             case HERETIC -> Outcome.of(to(s, Species.SIPHONER, c).build());
-            case TRIBRID -> Outcome.of(to(s, Species.WITCH, c).witchLayer(true).sire(null).build());
-            case ORIGINAL, ORIGINAL_HYBRID, HYBRID, POTENTIAL, HUNTER_OF_THE_FIVE -> Outcome.of(becomeNone(s, c).build());
-            default -> unchanged(s);
+            case TRIBRID -> Outcome.of(leaveWerewolf(s, to(s, Species.WITCH, c).witchLayer(true).sire(null)).build());
+            case ORIGINAL, POTENTIAL, HUNTER_OF_THE_FIVE -> Outcome.of(becomeNone(s, c).build());
+            case ORIGINAL_HYBRID, HYBRID -> Outcome.of(leaveWerewolf(s, becomeNone(s, c)).build());
+            case NONE, WITCH, SIPHONER -> c.faction() == BaseFaction.WEREWOLF
+                    ? Outcome.of(leaveWerewolf(s, s.toBuilder()).build()) : unchanged(s);
         };
     }
 
@@ -238,11 +269,11 @@ public final class BloodlineRules {
         if (c.faction() != BaseFaction.HUNTER) {
             return Outcome.refuse(s, "not_hunter");
         }
+        if (s.species() != Species.NONE) {
+            return Outcome.refuse(s, "has_species");
+        }
         if (c.fiveCount() >= c.maxFive()) {
             return Outcome.refuse(s, "five_full");
-        }
-        if (s.species() != Species.NONE && s.species() != Species.POTENTIAL) {
-            return unchanged(s);
         }
         // The instinct timer (R84) starts now, otherwise a fresh mark would start out weakened.
         return Outcome.of(to(s, Species.HUNTER_OF_THE_FIVE, c).markKills(0).lastVampireKill(c.gameTime()).build());

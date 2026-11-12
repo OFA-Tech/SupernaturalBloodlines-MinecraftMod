@@ -21,6 +21,10 @@ class BloodlineRulesTest {
         return BloodlineState.NONE.toBuilder().species(species).build();
     }
 
+    private static BloodlineState gene(BloodlineState s) {
+        return s.toBuilder().wolf(s.wolf().toBuilder().geneRolled(true).latentGene(true).build()).build();
+    }
+
     private static Outcome run(BloodlineState s, BloodlineEvent e, BloodlineContext c) {
         return BloodlineRules.apply(s, e, c);
     }
@@ -195,7 +199,7 @@ class BloodlineRulesTest {
 
     @Test
     void originalRiteOfMoonNeedsGene() {
-        Outcome o = run(st(Species.ORIGINAL), RITE_OF_THE_MOON, ctx().withLatentGene(true));
+        Outcome o = run(gene(st(Species.ORIGINAL)), RITE_OF_THE_MOON, ctx());
         assertEquals(Species.ORIGINAL_HYBRID, o.state().species());
         assertFalse(o.state().hybridCurseBound());
         assertEquals(List.of(Action.LEAVE_FACTION, Action.JOIN_WEREWOLF), o.actions());
@@ -227,8 +231,8 @@ class BloodlineRulesTest {
 
     @Test
     void vampireGeneAwakensBoundHybrid() {
-        BloodlineState s = BloodlineState.NONE.toBuilder().sire(U).build();
-        Outcome o = run(s, GENE_AWAKENED_AS_VAMPIRE, ctx().withFaction(BaseFaction.VAMPIRE).withLatentGene(true).withGameTime(77));
+        BloodlineState s = gene(BloodlineState.NONE.toBuilder().sire(U).build());
+        Outcome o = run(s, GENE_AWAKENED_AS_VAMPIRE, ctx().withFaction(BaseFaction.VAMPIRE).withGameTime(77));
         assertEquals(Species.HYBRID, o.state().species());
         assertTrue(o.state().hybridCurseBound());
         assertEquals(U, o.state().sire());
@@ -238,9 +242,29 @@ class BloodlineRulesTest {
 
     @Test
     void originalGeneAwakensBoundOriginalHybrid() {
-        Outcome o = run(st(Species.ORIGINAL), GENE_AWAKENED_AS_VAMPIRE, ctx().withFaction(BaseFaction.VAMPIRE).withLatentGene(true));
+        Outcome o = run(gene(st(Species.ORIGINAL)), GENE_AWAKENED_AS_VAMPIRE, ctx().withFaction(BaseFaction.VAMPIRE));
         assertEquals(Species.ORIGINAL_HYBRID, o.state().species());
         assertTrue(o.state().hybridCurseBound());
+    }
+
+    @Test
+    void geneAwakeningMakesTheWolfLayerBornOmega() {
+        BloodlineContext vampire = ctx().withFaction(BaseFaction.VAMPIRE);
+        for (Species sp : List.of(Species.NONE, Species.ORIGINAL)) {
+            WolfState w = run(gene(st(sp)), GENE_AWAKENED_AS_VAMPIRE, vampire).state().wolf();
+            assertEquals(WolfState.Lineage.BORN, w.lineage(), sp.name());
+            assertEquals(WolfState.Rank.OMEGA, w.rank(), sp.name());
+            assertTrue(w.latentGene());
+        }
+    }
+
+    @Test
+    void lineageAwakeningMakesTheWolfLayerBornOmegaAndGivesTheGene() {
+        WolfState w = run(st(Species.ORIGINAL), RITE_OF_LINEAGE_AWAKEN, ctx().withFaction(BaseFaction.VAMPIRE)).state().wolf();
+        assertEquals(WolfState.Lineage.BORN, w.lineage());
+        assertEquals(WolfState.Rank.OMEGA, w.rank());
+        assertTrue(w.latentGene());
+        assertTrue(w.geneRolled());
     }
 
     @Test
@@ -252,13 +276,13 @@ class BloodlineRulesTest {
     @Test
     void hereticCannotBecomeHybrid() {
         BloodlineState s = st(Species.HERETIC);
-        assertRefused(run(s, GENE_AWAKENED_AS_VAMPIRE, ctx().withFaction(BaseFaction.VAMPIRE).withLatentGene(true)), s, "siphoner_hybrid");
+        assertRefused(run(gene(s), GENE_AWAKENED_AS_VAMPIRE, ctx().withFaction(BaseFaction.VAMPIRE)), gene(s), "siphoner_hybrid");
         assertRefused(run(s, RITE_OF_LINEAGE_AWAKEN, ctx().withFaction(BaseFaction.VAMPIRE)), s, "siphoner_hybrid");
     }
 
     @Test
     void geneOnHumanDoesNotMakeHybrid() {
-        assertNoChange(run(BloodlineState.NONE, GENE_AWAKENED_AS_VAMPIRE, ctx().withLatentGene(true)), BloodlineState.NONE);
+        assertNoChange(run(gene(BloodlineState.NONE), GENE_AWAKENED_AS_VAMPIRE, ctx()), gene(BloodlineState.NONE));
     }
 
     @Test
@@ -269,12 +293,17 @@ class BloodlineRulesTest {
             assertFalse(o.state().hybridCurseBound());
             assertEquals(sp, o.state().species());
             assertFalse(o.refused());
+            assertTrue(o.actions().isEmpty());
         }
     }
 
     @Test
-    void moonRiteOnUnboundHybridDoesNothing() {
-        assertNoChange(run(st(Species.HYBRID), RITE_OF_THE_MOON, ctx()), st(Species.HYBRID));
+    void moonRiteIsRefusedWhereItDoesNothing() {
+        BloodlineState vampire = st(Species.NONE);
+        assertRefused(run(vampire, RITE_OF_THE_MOON, ctx().withFaction(BaseFaction.VAMPIRE)), vampire, "no_gene");
+        assertRefused(run(gene(vampire), RITE_OF_THE_MOON, ctx().withFaction(BaseFaction.VAMPIRE)), gene(vampire), "not_original");
+        assertRefused(run(st(Species.HYBRID), RITE_OF_THE_MOON, ctx()), st(Species.HYBRID), "no_gene");
+        assertRefused(run(gene(st(Species.HYBRID)), RITE_OF_THE_MOON, ctx()), gene(st(Species.HYBRID)), "not_original");
     }
 
     // ---- Cures ----
@@ -311,16 +340,75 @@ class BloodlineRulesTest {
         assertEquals(List.of(Action.LEAVE_FACTION), o.actions());
     }
 
+    private static final WolfState ALPHA_WOLF = new WolfState(WolfState.Lineage.BITTEN, WolfState.Rank.ALPHA, true, true,
+            true, U, 400L, 55, true, java.util.Set.of("skill"));
+
+    private static BloodlineState inTransitionWerewolf(Species sp) {
+        return st(sp).toBuilder().witchLayer(sp == Species.WITCH).inTransition(true).transitionTicksLeft(500)
+                .pendingSire(U).wolf(ALPHA_WOLF).build();
+    }
+
+    private static void assertWolfLayerGone(BloodlineState s) {
+        assertEquals(WolfState.Lineage.NONE, s.wolf().lineage());
+        assertEquals(WolfState.Rank.NONE, s.wolf().rank());
+        assertNull(s.wolf().packAlpha());
+        assertEquals(0, s.wolf().betaSince());
+        assertEquals(0, s.wolf().defenderKills());
+        assertFalse(s.wolf().stoleSpark());
+        assertFalse(s.wolf().killedInnocent());
+        assertTrue(s.wolf().grantedSkills().isEmpty());
+        assertTrue(s.wolf().geneRolled());
+        assertTrue(s.wolf().latentGene());
+    }
+
+    private static void assertTransitionGone(BloodlineState s) {
+        assertFalse(s.inTransition());
+        assertFalse(s.unstable());
+        assertEquals(0, s.transitionTicksLeft());
+        assertNull(s.pendingSire());
+    }
+
     @Test
-    void silverMoonCuresLycanthropy() {
-        assertEquals(List.of(Action.LEAVE_FACTION),
-                run(BloodlineState.NONE, RITE_OF_THE_SILVER_MOON, ctx().withFaction(BaseFaction.WEREWOLF)).actions());
-        Outcome hybrid = run(st(Species.HYBRID).toBuilder().sire(U).build(), RITE_OF_THE_SILVER_MOON, ctx().withFaction(BaseFaction.WEREWOLF));
-        assertEquals(Species.NONE, hybrid.state().species());
-        assertNull(hybrid.state().sire());
-        assertEquals(List.of(Action.LEAVE_FACTION), hybrid.actions());
-        Outcome tribrid = run(st(Species.TRIBRID).toBuilder().witchLayer(true).build(), RITE_OF_THE_SILVER_MOON, ctx().withFaction(BaseFaction.WEREWOLF));
-        assertEquals(Species.WITCH, tribrid.state().species());
+    void silverMoonMakesAHybridAPlainVampire() {
+        BloodlineState s = inTransitionWerewolf(Species.HYBRID).toBuilder().sire(U).hybridCurseBound(true).build();
+        Outcome o = run(s, RITE_OF_THE_SILVER_MOON, ctx().withFaction(BaseFaction.WEREWOLF));
+        assertEquals(Species.NONE, o.state().species());
+        assertEquals(U, o.state().sire());
+        assertFalse(o.state().hybridCurseBound());
+        assertEquals(List.of(Action.LEAVE_FACTION, Action.JOIN_VAMPIRE), o.actions());
+        assertWolfLayerGone(o.state());
+        assertTransitionGone(o.state());
+    }
+
+    @Test
+    void silverMoonMakesATribridAPlainVampireWithoutMagic() {
+        BloodlineState s = inTransitionWerewolf(Species.TRIBRID).toBuilder().witchLayer(true).sire(U).build();
+        Outcome o = run(s, RITE_OF_THE_SILVER_MOON, ctx().withFaction(BaseFaction.WEREWOLF));
+        assertEquals(Species.NONE, o.state().species());
+        assertFalse(o.state().witchLayer());
+        assertEquals(U, o.state().sire());
+        assertEquals(List.of(Action.LEAVE_FACTION, Action.JOIN_VAMPIRE), o.actions());
+        assertWolfLayerGone(o.state());
+    }
+
+    @Test
+    void silverMoonOnWerewolfInTransitionClearsTransitionAndWolfLayer() {
+        for (Species sp : List.of(Species.NONE, Species.WITCH, Species.SIPHONER)) {
+            Outcome o = run(inTransitionWerewolf(sp), RITE_OF_THE_SILVER_MOON, ctx().withFaction(BaseFaction.WEREWOLF));
+            assertEquals(sp, o.state().species());
+            assertEquals(List.of(Action.LEAVE_FACTION), o.actions());
+            assertTransitionGone(o.state());
+            assertWolfLayerGone(o.state());
+        }
+        Outcome o = run(inTransitionWerewolf(Species.NONE), RITE_OF_THE_SILVER_MOON, ctx().withFaction(BaseFaction.WEREWOLF));
+        assertNoChange(run(o.state(), DRANK_DOPPELGANGER_BLOOD, ctx()), o.state());
+        assertNoChange(run(o.state(), TRANSITION_TIMEOUT, ctx()), o.state());
+    }
+
+    @Test
+    void silverMoonOnPlainHumanOrVampireDoesNothing() {
+        assertNoChange(run(BloodlineState.NONE, RITE_OF_THE_SILVER_MOON, ctx()), BloodlineState.NONE);
+        assertNoChange(run(BloodlineState.NONE, RITE_OF_THE_SILVER_MOON, ctx().withFaction(BaseFaction.VAMPIRE)), BloodlineState.NONE);
     }
 
     @Test
@@ -341,12 +429,16 @@ class BloodlineRulesTest {
 
     @Test
     void cureRemovesEverythingEvenOriginal() {
-        BloodlineState s = st(Species.ORIGINAL_HYBRID).toBuilder().sire(U).hybridCurseBound(true).turnedAt(5).build();
+        BloodlineState s = st(Species.ORIGINAL_HYBRID).toBuilder().sire(U).hybridCurseBound(true).turnedAt(5)
+                .markKills(3).hunterCurse(true).witchLayer(true).build();
         Outcome o = run(s, DRANK_THE_CURE, ctx().withFaction(BaseFaction.WEREWOLF));
         assertEquals(Species.NONE, o.state().species());
         assertNull(o.state().sire());
         assertFalse(o.state().hybridCurseBound());
         assertEquals(0, o.state().turnedAt());
+        assertEquals(0, o.state().markKills());
+        assertFalse(o.state().hunterCurse());
+        assertFalse(o.state().witchLayer());
         assertEquals(List.of(Action.LEAVE_FACTION), o.actions());
     }
 
@@ -355,6 +447,30 @@ class BloodlineRulesTest {
         WolfState wolf = WolfState.NONE.toBuilder().geneRolled(true).latentGene(true).build();
         BloodlineState s = st(Species.HYBRID).toBuilder().wolf(wolf).build();
         assertEquals(wolf, run(s, DRANK_THE_CURE, ctx().withFaction(BaseFaction.WEREWOLF)).state().wolf());
+    }
+
+    @Test
+    void cureClearsTheTeenWolfLayerButKeepsTheGene() {
+        BloodlineState s = BloodlineState.NONE.toBuilder().wolf(ALPHA_WOLF).build();
+        Outcome o = run(s, DRANK_THE_CURE, ctx().withFaction(BaseFaction.WEREWOLF));
+        assertWolfLayerGone(o.state());
+        assertEquals(List.of(Action.LEAVE_FACTION), o.actions());
+    }
+
+    @Test
+    void cureClearsATransitionInProgress() {
+        Outcome o = run(inTransitionWerewolf(Species.NONE), DRANK_THE_CURE, ctx().withFaction(BaseFaction.WEREWOLF));
+        assertTransitionGone(o.state());
+        assertNoChange(run(o.state(), DRANK_DOPPELGANGER_BLOOD, ctx()), o.state());
+        assertNoChange(run(o.state(), TRANSITION_TIMEOUT, ctx()), o.state());
+    }
+
+    @Test
+    void cureResetsSiphonedPowerAndThirst() {
+        BloodlineState s = st(Species.HERETIC).toBuilder().siphonedPower(300).thirst(3).build();
+        Outcome o = run(s, DRANK_THE_CURE, ctx().withFaction(BaseFaction.VAMPIRE));
+        assertEquals(0, o.state().siphonedPower());
+        assertEquals(20, o.state().thirst());
     }
 
     @Test
@@ -380,6 +496,27 @@ class BloodlineRulesTest {
         assertEquals(Species.NONE, run(st(Species.ORIGINAL), LEFT_BASE_FACTION, ctx()).state().species());
         assertEquals(Species.WITCH, run(st(Species.TRIBRID).toBuilder().witchLayer(true).build(), LEFT_BASE_FACTION, ctx()).state().species());
         assertEquals(Species.NONE, run(st(Species.HUNTER_OF_THE_FIVE).toBuilder().markKills(3).build(), LEFT_BASE_FACTION, ctx()).state().species());
+    }
+
+    @Test
+    void leavingBaseFactionOnWerewolfBasedStatesClearsWolfLayerAndTransition() {
+        BloodlineContext werewolf = ctx().withFaction(BaseFaction.WEREWOLF);
+        for (Species sp : List.of(Species.NONE, Species.WITCH, Species.SIPHONER, Species.HYBRID, Species.ORIGINAL_HYBRID, Species.TRIBRID)) {
+            Outcome o = run(inTransitionWerewolf(sp), LEFT_BASE_FACTION, werewolf);
+            assertWolfLayerGone(o.state());
+            assertTransitionGone(o.state());
+            assertTrue(o.actions().isEmpty());
+        }
+        Outcome plain = run(inTransitionWerewolf(Species.NONE), LEFT_BASE_FACTION, werewolf);
+        assertNoChange(run(plain.state(), DRANK_DOPPELGANGER_BLOOD, ctx()), plain.state());
+        assertNoChange(run(plain.state(), TRANSITION_TIMEOUT, ctx()), plain.state());
+        assertEquals(Species.WITCH, run(inTransitionWerewolf(Species.WITCH), LEFT_BASE_FACTION, werewolf).state().species());
+    }
+
+    @Test
+    void leavingBaseFactionAsPlainVampireKeepsTheWolfLayer() {
+        BloodlineState s = BloodlineState.NONE.toBuilder().wolf(ALPHA_WOLF).build();
+        assertNoChange(run(s, LEFT_BASE_FACTION, ctx().withFaction(BaseFaction.VAMPIRE)), s);
     }
 
     @Test
@@ -432,6 +569,15 @@ class BloodlineRulesTest {
         assertEquals(Species.HUNTER_OF_THE_FIVE, o.state().species());
         assertEquals(0, o.state().markKills());
         assertEquals(300, o.state().lastVampireKill());
+    }
+
+    @Test
+    void refusalFiveAlreadyHasSpecies() {
+        BloodlineContext hunter = ctx().withFaction(BaseFaction.HUNTER);
+        for (Species sp : List.of(Species.HUNTER_OF_THE_FIVE, Species.POTENTIAL)) {
+            BloodlineState s = st(sp).toBuilder().markKills(4).build();
+            assertRefused(run(s, RITE_OF_THE_FIVE, hunter), s, "has_species");
+        }
     }
 
     @Test
