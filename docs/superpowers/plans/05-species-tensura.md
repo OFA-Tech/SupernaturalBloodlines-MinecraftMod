@@ -64,7 +64,7 @@ Sires become Tensura owners of their sired, and can **name** them through Tensur
 ### Task 2: Species layer (skills, attributes, EP, undead treatment)
 
 **Files:**
-- Create: `parts/speciestensura/SpeciesLayer.java`, `parts/speciestensura/LayerSpec.java` (`record LayerSpec(List<String> skills, double maxMagiculeBonus, double maxAuraBonus, boolean treatAsUndead)`, plus a config map `species_tensura.layers` with defaults below), `parts/speciestensura/UndeadTreatment.java` (an event or a `mixin/tensura/RaceUtilsMixin.java`), and a `SpeciesTensuraPart.init` that registers the Tensura `Supernatural` predicate (races tagged `tensura:daemon` or `tensura:undead`) and installs the `TensuraHumanLikeCheck` into plan 4's `SpeciesEligibility`
+- Create: `parts/speciestensura/SpeciesLayer.java`, `parts/speciestensura/LayerSpec.java` (`record LayerSpec(List<String> skills, double maxMagiculeBonus, double maxAuraBonus, boolean treatAsUndead)`, plus a config map `species_tensura.layers` with defaults below), `parts/speciestensura/UndeadTreatment.java` (an event or a `mixin/speciestensura/RaceUtilsMixin.java`), and a `SpeciesTensuraPart.init` that registers the Tensura `Supernatural` predicate (races tagged `tensura:daemon` or `tensura:undead`) and installs the `TensuraHumanLikeCheck` into plan 4's `SpeciesEligibility`
 - Modify: `docs/mixins.md`
 
 **Interfaces:**
@@ -84,6 +84,8 @@ Sires become Tensura owners of their sired, and can **name** them through Tensur
 
 - **On every listener change and on login:** compute the target layer, grant the missing skills (tracked), forget tracked skills no longer in the layer, and set the attribute modifiers `supernaturalbloodlines:layer_magicule` / `layer_aura` on `TensuraAttributes.MAX_MAGICULE` / `MAX_AURA`.
 - **`UndeadTreatment`:** Tensura's undead and holy-exposure checks return true for players whose layer has `treatAsUndead`.
+- **Plan 01 interplay:** `FactionRaceRules` (plan 01) must exempt vampire-type species from the undead/daemon werewolf-join denial and hunter ejection (R103); `VampireSync` already skips species players.
+- **Holy stacking:** `HolyDamageBridge` must not stack with the species `treatAsUndead` holy treatment; make it skip players whose layer has `treatAsUndead`, or document the intended stacking.
 
 - [ ] **Step 1:** Write the GameTests:
   - `originalElfKeepsRaceAndGetsSkills`
@@ -97,7 +99,7 @@ Sires become Tensura owners of their sired, and can **name** them through Tensur
 ### Task 3: Evolution bonus and apex races
 
 **Files:**
-- Create: `parts/speciestensura/apex/ApexRace.java` (one class extending `TensuraRace`, configured by `record ApexSpec(String id, double health, double attack, double speed, List<String> intrinsicSkills, boolean undead)`), `parts/speciestensura/apex/ApexRaces.java` (registration + `Optional<ResourceLocation> apexFor(Species)`), `parts/speciestensura/apex/ApexOffer.java` (the evolution-options hook from Task 1; an event or `mixin/tensura/EvolutionOptionsMixin.java` with `require = 0` and config `apex_evolutions_enabled`), and `parts/speciestensura/apex/EvolutionBoost.java`
+- Create: `parts/speciestensura/apex/ApexRace.java` (one class extending `TensuraRace`, configured by `record ApexSpec(String id, double health, double attack, double speed, List<String> intrinsicSkills, boolean undead)`), `parts/speciestensura/apex/ApexRaces.java` (registration + `Optional<ResourceLocation> apexFor(Species)`), `parts/speciestensura/apex/ApexOffer.java` (the evolution-options hook from Task 1; an event or `mixin/speciestensura/EvolutionOptionsMixin.java` with `require = 0` and config `apex_evolutions_enabled`), and `parts/speciestensura/apex/EvolutionBoost.java`
 - Create the race tags under `data/tensura/tags/manascore_race/races/`: `human_like.json` (all apex races) and `undead.json` (primordial_vampire, primordial_hybrid, moonblood_hybrid, void_siphon, tribrid_ascendant)
 - Create the lang entries
 

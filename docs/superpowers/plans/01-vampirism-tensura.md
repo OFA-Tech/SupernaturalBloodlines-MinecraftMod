@@ -19,8 +19,8 @@
   - `tensura:vampire` → level ≥ 1
   - `tensura:vampire_overcomer` and `tensura:vampire_lord` → level ≥ 7
   - `tensura:divine_vampire` → maximum vampire level
-- Join race default: `tensura:vampire`.
-- Werewolf parts load only if `ModList.isLoaded("werewolves")`, inside a nested class.
+- ~~Join race default: `tensura:vampire`.~~ Superseded by R20 (joining Vampirism never changes the race; no `join_race` option).
+- Werewolf parts load only if `ModList.isLoaded("werewolves")`, and no Werewolves class is linked from main code (the faction is matched by id).
 
 ## Review Focus
 
@@ -101,7 +101,7 @@
 ### Task 4: No double sun burn
 
 **Files:**
-- Create: either `parts/vampirismtensura/SunBurnFix.java` (if Task 1 found a Tensura config switch or an event), or `mixin/tensura/VampireRaceSunMixin.java` plus `supernaturalbloodlines.tensura.mixins.json`, registered in `neoforge.mods.toml` and loaded only when the part is on via a mixin plugin `IMixinConfigPlugin.shouldApplyMixin` → `LoadingModList.get().getModFileById("tensura") != null`.
+- Create: either `parts/vampirismtensura/SunBurnFix.java` (if Task 1 found a Tensura config switch or an event), or `mixin/vampirismtensura/VampireRaceSunMixin.java` plus `supernaturalbloodlines.vampirism_tensura.mixins.json`, registered in `neoforge.mods.toml` and loaded only when the part is on via the per-part mixin plugin `VampirismTensuraMixinPlugin` (all `Part.requiredMods()` present and the part switch on).
 - Modify: `docs/mixins.md`, if a mixin is used.
 
 **Interfaces:**

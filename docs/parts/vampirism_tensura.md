@@ -70,13 +70,13 @@ The race tags live in the ManasCore race registry folder `tags/manascore_race/ra
 ### Werewolves 2.0.3.4
 
 - Faction accessor: `de.teamlapen.werewolves.api.WReference.WEREWOLF_FACTION` (`IPlayableFaction<IWerewolfPlayer>`, mutable static; `IWerewolfPlayer` is in package `de.teamlapen.werewolves.api.entities.player`, **plural** `entities`). Mod id constant `WReference.MODID`.
-- Test "is a werewolf" with `handler.isInFaction(WReference.WEREWOLF_FACTION)` or `handler.getCurrentFaction() == WReference.WEREWOLF_FACTION`; keep every `WReference` / Werewolves reference in a nested class loaded only after `ModList.get().isLoaded("werewolves")`.
+- Match the werewolf faction by id (`FactionRaceRules.WEREWOLF_FACTION_ID` = `werewolves:werewolf`, compared with `faction.getID()`), so no `WReference` / Werewolves class is linked from the main code. Only the GameTests that need `WReference` (`WerewolvesGameTests`) link it, and they are registered only when Werewolves is loaded.
 - The jar publishes no `api` classifier, so compile uses the full jar (see `docs/dependencies.md`).
 
 ### Consequences for the next tasks
 
 - Task 5 sun burn: one mixin on `VampireRace.shouldBurn` (and decide about `RaceUtils.isUnderSun` for the debuffs); no Tensura config option exists.
-- R20: no Vampirism -> Tensura race write anywhere. `FactionLevelChanged` with `getOldFaction() == vampire` and `getCurrentFaction() != vampire` is the cure signal (current is `null` on leaving, verified); there is no dedicated event.
+- R20: only the cure writes the race. `FactionLevelChanged` with `getOldFaction() == vampire` and `getCurrentFaction() != vampire` is the cure signal (current is `null` on leaving, verified); there is no dedicated event.
 - Command-set factions (`/vampirism level`) arrive through the same `FactionLevelChanged`, so the sync listener is the single entry point; guard writes with `ReentrancyGuard`.
 - `CanJoinFaction.setBehavior(DENY)` is the hunter/werewolf denial hook; `FactionLevelChangePre` is the cancellable fallback.
 
@@ -103,4 +103,5 @@ The race tags live in the ManasCore race registry folder `tags/manascore_race/ra
 - Granted werewolf skills carry the instance tag `supernaturalbloodlines:granted`; only a held instance with that mark is forgotten, so a skill the player had from elsewhere survives a level drop or leaving (`skillTheWerewolfAlreadyHadIsNotRemoved`).
 - Tensura's `NoMagiculeCost` tag is one-shot: its `UNLOCK_SKILL` handler reads it, removes it and goes on (bytecode, `AbilityHandler`), and `werewolfMaxLevelGetsGodwolfSense` asserts it is gone after the grant. Nothing extra to clean up.
 - `FactionRaceRules` is registered before `VampireSync`, so a hunter who gets an undead race leaves the hunters before the vampire sync tries to join them. With Tensura's own tags no vampire-line race is undead (`tensura:vampire` is not in `tensura:undead`), so this only matters for a config that maps an undead race (e.g. `tensura:wight=1`); a hunter turning into a plain vampire-line race is still refused by `VampireSync` (`hunterIsNotMadeAVampire`).
+- **Known gap (part switch off):** the data files (`entity_existence` EP and the `entity_blood` entries) are gated only on the mods being loaded (`neoforge:conditions` `mod_loaded`), so they still apply when `parts.vampirismTensura=false`. The code (listeners, mixins) is off. A `part_enabled` load condition is to be added in core later.
 - A refused bite on a bloodless player shows the biter the action-bar message `supernaturalbloodlines.vampirism_tensura.bite_bloodless` (server side only).
