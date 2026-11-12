@@ -34,22 +34,51 @@ class BloodlineListenerTest {
     }
 
     @Test
-    void listenerThatFlipsSpeciesDoesNotRecurse() {
+    void nestedChangeIsQueuedAndEveryListenerSeesTheFinalState() {
+        UUID id = UUID.randomUUID();
+        List<BloodlineAccess.BloodlineChange> l1 = new ArrayList<>();
+        List<BloodlineAccess.BloodlineChange> l2 = new ArrayList<>();
+        List<BiConsumer<Object, BloodlineAccess.BloodlineChange>> listeners = new ArrayList<>();
+        // L1 stands in for a part calling set() from its listener: A -> B, then B -> A
+        listeners.add((p, c) -> {
+            l1.add(c);
+            if (c.after().species() == Species.WITCH) {
+                BloodlineAccess.notifyListeners(listeners, p, id, c.after(), NONE);
+            }
+        });
+        listeners.add((p, c) -> l2.add(c));
+
+        BloodlineAccess.notifyListeners(listeners, null, id, NONE, WITCH);
+
+        List<BloodlineAccess.BloodlineChange> expected = List.of(
+                new BloodlineAccess.BloodlineChange(NONE, WITCH), new BloodlineAccess.BloodlineChange(WITCH, NONE));
+        assertEquals(expected, l1);
+        assertEquals(expected, l2);
+        assertEquals(NONE, l2.get(l2.size() - 1).after());
+
+        // the guard is released afterwards
+        BloodlineAccess.notifyListeners(listeners, null, id, NONE, SIPHONER);
+        assertEquals(3, l2.size());
+    }
+
+    @Test
+    void permanentlyFlippingListenerStopsAtTheCap() {
         UUID id = UUID.randomUUID();
         List<BloodlineAccess.BloodlineChange> seen = new ArrayList<>();
         List<BiConsumer<Object, BloodlineAccess.BloodlineChange>> listeners = new ArrayList<>();
-        // stands in for a part calling set() from its listener: A -> B -> A
         listeners.add((p, c) -> {
             seen.add(c);
             BloodlineState flipped = c.after().species() == Species.WITCH ? NONE : WITCH;
             BloodlineAccess.notifyListeners(listeners, p, id, c.after(), flipped);
         });
-        BloodlineAccess.notifyListeners(listeners, null, id, NONE, WITCH);
-        assertEquals(1, seen.size());
 
-        // the guard is released afterwards
-        BloodlineAccess.notifyListeners(listeners, null, id, WITCH, SIPHONER);
-        assertEquals(2, seen.size());
+        BloodlineAccess.notifyListeners(listeners, null, id, NONE, WITCH);
+
+        assertEquals(1 + BloodlineAccess.MAX_DRAINED, seen.size());
+        // and a later, unrelated change still notifies (queue and guard were cleaned up)
+        int before = seen.size();
+        BloodlineAccess.notifyListeners(List.of((p, c) -> seen.add(c)), null, id, NONE, SIPHONER);
+        assertEquals(before + 1, seen.size());
     }
 
     @Test

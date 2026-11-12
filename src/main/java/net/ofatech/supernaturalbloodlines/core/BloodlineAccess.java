@@ -12,7 +12,11 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Outcome;
 import net.ofatech.supernaturalbloodlines.core.network.BloodlineSyncPayload;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
@@ -22,7 +26,11 @@ public final class BloodlineAccess {
     public record BloodlineChange(BloodlineState before, BloodlineState after) {
     }
 
+    static final int MAX_DRAINED = 16;
+
     private static final List<BiConsumer<ServerPlayer, BloodlineChange>> LISTENERS = new CopyOnWriteArrayList<>();
+    // changes made by listeners while a player's fan-out is running; only exists during the outer call
+    private static final ThreadLocal<Map<UUID, Deque<BloodlineChange>>> PENDING = ThreadLocal.withInitial(HashMap::new);
 
     private BloodlineAccess() {
     }
@@ -72,8 +80,11 @@ public final class BloodlineAccess {
     }
 
     /**
-     * Listeners hear about species changes only, not about thirst ticks and the like. A listener that changes
-     * the species again still stores and syncs, but its nested change does not fan out (no A -> B -> A loop).
+     * Listeners hear about species changes only, not about thirst ticks and the like. A change made by a
+     * listener is queued, not fanned out in place: the outer call finishes the current change for every
+     * listener, then drains the queue in order, so each listener sees every change and the last one is final.
+     * At most {@link #MAX_DRAINED} queued changes are drained per outer call (listeners that flip forever);
+     * the state is already stored, so only the extra notifications are dropped.
      * A throwing listener is logged and does not stop the others.
      */
     static <P> void notifyListeners(List<BiConsumer<P, BloodlineChange>> listeners, P player, UUID playerId,
@@ -82,14 +93,37 @@ public final class BloodlineAccess {
             return;
         }
         BloodlineChange change = new BloodlineChange(before, after);
-        ReentrancyGuard.run(playerId, "bloodline", () -> {
-            for (BiConsumer<P, BloodlineChange> l : listeners) {
-                try {
-                    l.accept(player, change);
-                } catch (RuntimeException e) {
-                    SupernaturalBloodlines.LOGGER.error("Bloodline listener failed", e);
+        boolean outer = ReentrancyGuard.run(playerId, "bloodline", () -> {
+            Deque<BloodlineChange> queue = new ArrayDeque<>();
+            PENDING.get().put(playerId, queue);
+            try {
+                deliver(listeners, player, change);
+                int drained = 0;
+                while (!queue.isEmpty()) {
+                    if (drained++ >= MAX_DRAINED) {
+                        SupernaturalBloodlines.LOGGER.error(
+                                "Bloodline listeners keep changing the species of {}; dropped {} queued notifications",
+                                playerId, queue.size());
+                        break;
+                    }
+                    deliver(listeners, player, queue.poll());
                 }
+            } finally {
+                PENDING.get().remove(playerId);
             }
         });
+        if (!outer) {
+            PENDING.get().get(playerId).add(change);
+        }
+    }
+
+    private static <P> void deliver(List<BiConsumer<P, BloodlineChange>> listeners, P player, BloodlineChange change) {
+        for (BiConsumer<P, BloodlineChange> l : listeners) {
+            try {
+                l.accept(player, change);
+            } catch (RuntimeException e) {
+                SupernaturalBloodlines.LOGGER.error("Bloodline listener failed", e);
+            }
+        }
     }
 }
