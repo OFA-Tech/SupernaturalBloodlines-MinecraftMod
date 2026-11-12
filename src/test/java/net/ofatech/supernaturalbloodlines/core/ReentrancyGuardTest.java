@@ -8,34 +8,32 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class ReentrancyGuardTest {
     @Test
     void nestedCallIsBlocked() {
         UUID p = UUID.randomUUID();
-        AtomicBoolean innerRan = new AtomicBoolean();
-        boolean[] inner = new boolean[1];
-        boolean outer = ReentrancyGuard.run(p, "sync", () ->
-                inner[0] = ReentrancyGuard.run(p, "sync", () -> innerRan.set(true)));
-        assertTrue(outer);
-        assertFalse(inner[0]);
-        assertFalse(innerRan.get());
+        AtomicBoolean inner = new AtomicBoolean(true);
+        assertTrue(ReentrancyGuard.run(p, "sync", () ->
+                inner.set(ReentrancyGuard.run(p, "sync", () -> fail("inner action must not run")))));
+        assertFalse(inner.get());
     }
 
     @Test
     void differentPlayersRunIndependently() {
-        boolean[] inner = new boolean[1];
+        AtomicBoolean inner = new AtomicBoolean();
         ReentrancyGuard.run(UUID.randomUUID(), "sync", () ->
-                inner[0] = ReentrancyGuard.run(UUID.randomUUID(), "sync", () -> { }));
-        assertTrue(inner[0]);
+                inner.set(ReentrancyGuard.run(UUID.randomUUID(), "sync", () -> { })));
+        assertTrue(inner.get());
     }
 
     @Test
     void differentChannelsRunIndependently() {
         UUID p = UUID.randomUUID();
-        boolean[] inner = new boolean[1];
-        ReentrancyGuard.run(p, "a", () -> inner[0] = ReentrancyGuard.run(p, "b", () -> { }));
-        assertTrue(inner[0]);
+        AtomicBoolean inner = new AtomicBoolean();
+        ReentrancyGuard.run(p, "a", () -> inner.set(ReentrancyGuard.run(p, "b", () -> { })));
+        assertTrue(inner.get());
     }
 
     @Test

@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.core;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
@@ -12,6 +13,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.Outcome;
 import net.ofatech.supernaturalbloodlines.core.network.BloodlineSyncPayload;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 
@@ -32,10 +34,14 @@ public final class BloodlineAccess {
     public static void set(ServerPlayer p, BloodlineState s) {
         BloodlineState before = get(p);
         p.setData(ModAttachments.BLOODLINE, s);
+        BloodlineSyncPayload payload = new BloodlineSyncPayload(p.getId(), s);
+        // The payload is registered as required, so every tracker has the channel; only the subject can be a
+        // fake/mock player without a real connection.
         if (canReceive(p)) {
-            PacketDistributor.sendToPlayersTrackingEntityAndSelf(p, new BloodlineSyncPayload(p.getId(), s));
+            PacketDistributor.sendToPlayer(p, payload);
         }
-        notifyListeners(LISTENERS, p, before, s);
+        PacketDistributor.sendToPlayersTrackingEntity(p, payload);
+        notifyListeners(LISTENERS, p, p.getUUID(), before, s);
     }
 
     /** Applies the rules and stores the result. Faction actions in the Outcome are left to the parts. */
@@ -65,15 +71,25 @@ public final class BloodlineAccess {
         return p.connection != null && p.connection.hasChannel(BloodlineSyncPayload.TYPE);
     }
 
-    /** Listeners hear about species changes only, not about thirst ticks and the like. */
-    static <P> void notifyListeners(List<BiConsumer<P, BloodlineChange>> listeners, P player,
+    /**
+     * Listeners hear about species changes only, not about thirst ticks and the like. A listener that changes
+     * the species again still stores and syncs, but its nested change does not fan out (no A -> B -> A loop).
+     * A throwing listener is logged and does not stop the others.
+     */
+    static <P> void notifyListeners(List<BiConsumer<P, BloodlineChange>> listeners, P player, UUID playerId,
                                     BloodlineState before, BloodlineState after) {
         if (before.species() == after.species()) {
             return;
         }
         BloodlineChange change = new BloodlineChange(before, after);
-        for (BiConsumer<P, BloodlineChange> l : listeners) {
-            l.accept(player, change);
-        }
+        ReentrancyGuard.run(playerId, "bloodline", () -> {
+            for (BiConsumer<P, BloodlineChange> l : listeners) {
+                try {
+                    l.accept(player, change);
+                } catch (RuntimeException e) {
+                    SupernaturalBloodlines.LOGGER.error("Bloodline listener failed", e);
+                }
+            }
+        });
     }
 }
