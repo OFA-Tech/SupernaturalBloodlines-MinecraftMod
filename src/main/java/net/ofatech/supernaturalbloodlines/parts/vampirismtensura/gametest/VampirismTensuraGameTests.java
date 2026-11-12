@@ -226,9 +226,9 @@ public final class VampirismTensuraGameTests {
         handler(hunter).setFactionAndLevel(VReference.HUNTER_FACTION, 2);
         Mob mob = helper.spawn(EntityType.ZOMBIE, 1, 2, 1);
 
-        int before = VampireSync.handledCount();
+        int before = VampireSync.gatePassCount();
         setRace(mob, "tensura:vampire_lord");
-        helper.assertTrue(VampireSync.handledCount() == before, "the sync acted on a mob race change");
+        helper.assertTrue(VampireSync.gatePassCount() == before, "the sync gate passed a mob race change");
         helper.assertTrue("tensura:vampire_lord".equals(race(mob)), "the mob race was not set: " + race(mob));
         helper.assertTrue(isVampire(bystander) && handler(bystander).getCurrentLevel() == 3, "a vampire player's level changed");
         helper.assertTrue("tensura:elf".equals(race(bystander)), "a player race changed: " + race(bystander));
@@ -237,7 +237,7 @@ public final class VampirismTensuraGameTests {
 
         // control: the same change on a player is counted, so the check above can fail
         setRace(hunter, "tensura:vampire_lord");
-        helper.assertTrue(VampireSync.handledCount() == before + 1, "the sync did not count a player race change");
+        helper.assertTrue(VampireSync.gatePassCount() == before + 1, "the sync gate did not pass a player race change");
         helper.succeed();
     }
 
@@ -297,7 +297,6 @@ public final class VampirismTensuraGameTests {
     }
 
     private static List<String> sunTest(GameTestHelper helper, ServerPlayer p, List<String> damage) throws Exception {
-        helper.getLevel().setDayTime(6000);
         p.moveTo(helper.absoluteVec(new Vec3(1.5, 2, 1.5)));
         helper.assertTrue(helper.getLevel().canSeeSky(p.blockPosition()), "no sky above the test player at " + p.blockPosition());
         Consumer<LivingIncomingDamageEvent> recorder = ev -> {
@@ -315,7 +314,19 @@ public final class VampirismTensuraGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void factionVampireTakesOnlyVampirismSunDamage(GameTestHelper helper) throws Exception {
+    public static void factionVampireTakesOnlyVampirismSunDamage(GameTestHelper helper) {
+        // isDay() reads the sky brightness the level recomputes each tick, so set the time now and run the body later
+        helper.getLevel().setDayTime(6000);
+        helper.runAfterDelay(1, () -> {
+            try {
+                factionVampireSunBody(helper);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private static void factionVampireSunBody(GameTestHelper helper) throws Exception {
         ServerPlayer faction = TestPlayers.createVulnerable(helper);
         setRace(faction, "tensura:vampire");
         handler(faction).setFactionAndLevel(VReference.VAMPIRE_FACTION, 10);

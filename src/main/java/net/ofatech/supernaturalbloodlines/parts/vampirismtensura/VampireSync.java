@@ -27,13 +27,13 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
  */
 public final class VampireSync {
     private static final String CHANNEL = "vampire_sync";
-    private static final AtomicInteger HANDLED = new AtomicInteger();
+    private static final AtomicInteger GATE_PASSES = new AtomicInteger();
 
     private VampireSync() {}
 
-    /** How many player race/faction changes the sync acted on (past the player, server and species checks). For tests. */
-    public static int handledCount() {
-        return HANDLED.get();
+    /** How many player race/faction changes passed the sync gate (player, server side, not a species player); the mapping may still do nothing. For tests. */
+    public static int gatePassCount() {
+        return GATE_PASSES.get();
     }
 
     static void register() {
@@ -45,7 +45,7 @@ public final class VampireSync {
     private static EventResult onSetRace(ManasRaceInstance oldRace, LivingEntity entity, ManasRaceInstance newRace,
                                          boolean flag, Changeable<Boolean> changeable, Changeable<MutableComponent> message) {
         if (newRace != null && entity instanceof ServerPlayer p && !p.level().isClientSide && isSyncable(p)) {
-            HANDLED.incrementAndGet();
+            GATE_PASSES.incrementAndGet();
             ReentrancyGuard.run(p.getUUID(), CHANNEL, () -> raiseToRaceFloor(p, newRace.getRaceId().toString()));
         }
         return EventResult.pass();
@@ -70,7 +70,7 @@ public final class VampireSync {
                 || event.getOldFaction() != VReference.VAMPIRE_FACTION || event.getCurrentFaction() == VReference.VAMPIRE_FACTION) {
             return;
         }
-        HANDLED.incrementAndGet();
+        GATE_PASSES.incrementAndGet();
         ReentrancyGuard.run(p.getUUID(), CHANNEL, () -> {
             String current = RaceAPI.getRaceFrom(p).getRace().map(r -> r.getRaceId().toString()).orElse(null);
             VampireSyncConfig.mapping(VReference.VAMPIRE_FACTION.getHighestReachableLevel()).raceOnCure(current)
