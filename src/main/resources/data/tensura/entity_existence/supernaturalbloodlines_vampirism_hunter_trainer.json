@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "vampirism"}],
+  "type": "vampirism:hunter_trainer",
+  "max_aura": 2000,
+  "max_magicule": 600,
+  "min_aura": 1500,
+  "min_magicule": 300,
+  "spiritualHealth": 100
+}

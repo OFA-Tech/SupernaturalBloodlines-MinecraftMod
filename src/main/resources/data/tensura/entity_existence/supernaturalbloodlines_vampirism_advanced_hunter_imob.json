@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "vampirism"}],
+  "type": "vampirism:advanced_hunter_imob",
+  "max_aura": 3500,
+  "max_magicule": 1000,
+  "min_aura": 2500,
+  "min_magicule": 500,
+  "spiritualHealth": 140
+}

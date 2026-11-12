@@ -11,17 +11,18 @@ Checklist (from the design, section 3). Tick items as they ship.
 - [x] Sun burn: Tensura's own vampire burn is disabled for faction vampires. Tensura has no config switch for it (verified), so this is a mixin on `VampireRace.shouldBurn`, plus one on `RaceUtils.isUnderSun` for the Weakness/Slowness/Mining Fatigue debuffs (Task 4 decision: Vampirism's sun handling wins). Both listed in `docs/mixins.md`.
 
 **Hunters**
-- [ ] `CanJoinFaction` returns DENY for hunters whose race has the tags `tensura:undead` or `daemon`.
-- [ ] A hunter whose race becomes undead or daemon leaves the hunter faction, with a chat message.
+- [x] `CanJoinFaction` returns DENY for hunters whose race has the tags `tensura:undead` or `daemon`.
+- [x] A hunter whose race becomes undead or daemon leaves the hunter faction, with a chat message.
 
 **Werewolves (when installed)**
-- [ ] Joining is denied for the race tags `tensura:undead`, `daemon` and `no_blood`.
-- [ ] Werewolf levels grant configured Tensura skills (default `tensura:godwolf_sense` at max level).
+- [x] Joining is denied for the race tags `tensura:undead`, `daemon` and `no_blood`.
+- [x] Werewolf levels grant configured Tensura skills (default `tensura:godwolf_sense` at max level).
 
 **Other**
-- [ ] Holy damage both ways: check that `vampirism:holy_water` counts as Tensura holy damage; make Tensura holy damage hurt Vampirism vampires as holy water does.
-- [ ] Bloodless races can't be bitten: cancel the bite for the tag `tensura:no_blood`, and blood 0 for Tensura bloodless mobs (data map).
-- [ ] EP for Vampirism and Werewolves mobs (data `entity_existence`).
+- [x] Holy damage both ways: `vampirism:holy_water` already counts as Tensura holy damage (no tag needed, pinned by `holyWaterCountsAsTensuraHoly`); Tensura holy damage hurts Vampirism vampires x`tensura_holy_vs_vampire` (default 1.5).
+- [x] Bloodless races can't be bitten: `tensura:no_blood` race tag (mixin, see below), and blood 0 for Tensura bloodless mobs (data map).
+- [x] EP for Vampirism and Werewolves mobs (data `entity_existence`).
+- [ ] **Manual check pending** (Task 5 Step 3): `runClient`, spawn a Vampirism vampire and a werewolf, open Tensura's analysis and see their EP. Replaced by the GameTests `vampirismMobsHaveEp` / `werewolfMobsHaveEp` (registry contents), which do not prove the analysis screen.
 
 
 ## Hook points (verified)
@@ -85,3 +86,14 @@ The race tags live in the ManasCore race registry folder `tags/manascore_race/ra
 - /vampirism level none @s (the command) leaves the faction and goes through the same FactionLevelChanged; /vampirism level <faction> <level> [player] sets one.
 - The sync tests (parts/vampirismtensura/gametest/) are registered from VampirismTensuraPart.init through RegisterGameTestsEvent, not @GameTestHolder, so they exist only when the part is enabled (the holder scan would load them without Vampirism/Tensura).
 - Because SET_RACE fires before the change, another listener that vetoes the race change after ours would leave the faction raised without the race; accepted.
+
+### Task 5 findings (GameTest-verified)
+
+- **Bite blocking path: mixin.** None of the preferred routes exists. `BloodDrinkEvent` is not cancellable and fires after the victim has already lost food (`VampirePlayer.onBite`), so `setAmount(0)` is not a refusal. The bite starts from the custom packet `ServerboundStartFeedingPacket` -> `VampirePlayer.biteEntity`, with no NeoForge interaction event in front. A player victim has no blood data map or capability to override (`entity_blood` covers mobs only). So one `require = 0` mixin on `VampirePlayer.determineBiteType` returns `BITE_TYPE.NONE` for a victim player with the race tag `tensura:no_blood` (`VampirePlayerBiteMixin`, listed in `docs/mixins.md`; the mod now has 3 mixins). Bloodless **mobs** use the data map.
+- Race tags are ManasCore race tags: `ManasRaceInstance.is(TagKey.create(RaceAPI.getRaceRegistryKey(), tensura:undead))`. `tensura:no_blood` (race) already contains `#tensura:undead`, so ghoul is bloodless; `daemon` is not in it.
+- The Werewolves faction is matched by id (`werewolves:werewolf`, pinned by `werewolfFactionIdMatchesTheRule`), so `FactionRaceRules` and `WerewolfSkillGrants` link no Werewolves class. `WerewolfSkillGrants` is still registered only when Werewolves is loaded, and the tests that link `WReference` are in `WerewolvesGameTests`, registered only then (22 tests without Werewolves, 26 with).
+- Tensura charges a learned skill's magicule cost from max magicule and vetoes it (`UNLOCK_SKILL`, `AbilityHandler`) when there is not enough, so a plain `learnSkill` fails for a low-magicule player (and for a FakePlayer). The grant sets the instance tag `NoMagiculeCost` (Tensura's own switch, removed by Tensura after the event).
+- Skills are removed only when a level drop or leaving crosses a grant's threshold (so a skill the player had from another source is not stripped by an unrelated level change).
+- The GameTest server has PvP off and Vampirism refuses to bite a player then; the bite test turns it on for its duration.
+- Vampirism's `entity_blood` file is at `data/vampirism/data_maps/entity_type/entity_blood.json` and merges per entry with ours (cow stays 10). Entries take `neoforge:conditions`. We list the 34 Tensura entities of the entity-type tag `tensura:no_blood` (Tensura namespace only, so vanilla undead are untouched) with blood 0 under `neoforge:mod_loaded tensura`; `bloodlessEntitiesHaveNoBlood` fails if the tag gains a Tensura entity we lack.
+- Tensura's `entity_existence` is a datapack registry (`TensuraCustomData.ENTITY_EXISTENCE`), files at `data/<ns>/entity_existence/<name>.json` with the fields `type`, `min/max_aura`, `min/max_magicule`, `spiritualHealth`, optional `abilities`/`evolution`. Ours are `data/tensura/entity_existence/supernaturalbloodlines_<mod>_<entity>.json` with `neoforge:conditions` (`mod_loaded` vampirism / werewolves), which load cleanly with Werewolves absent. The EP numbers are first guesses scaled against Tensura's zombie (1400 magicule), skeleton, orc and lesser daemon; tune after playtesting.

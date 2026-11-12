@@ -1,0 +1,140 @@
+{
+  "values": {
+    "tensura:akash": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:aqua_frog": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:arch_daemon": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:army_wasp": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:beast_gnome": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:black_spider": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:bone_golem": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:charybdis": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:clone": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:elemental_colossus": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:evil_centipede": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:evil_centipede_body": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:feathered_serpent": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:giant_ant": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:greater_daemon": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:hell_caterpillar": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:hell_moth": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:ifrit": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:ifrit_clone": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:knight_spider": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:lesser_daemon": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:megalodon": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:metal_slime": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:phantaspore": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:salamander": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:skeleton": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:slime": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:supermassive_slime": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:sylphide": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:training_dummy": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:undine": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:war_gnome": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:winged_cat": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    },
+    "tensura:zombie": {
+      "blood": 0,
+      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+    }
+  }
+}

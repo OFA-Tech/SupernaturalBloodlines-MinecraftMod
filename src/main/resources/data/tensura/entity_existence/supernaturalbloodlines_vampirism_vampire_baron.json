@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "vampirism"}],
+  "type": "vampirism:vampire_baron",
+  "max_aura": 4000,
+  "max_magicule": 18000,
+  "min_aura": 3000,
+  "min_magicule": 12000,
+  "spiritualHealth": 300
+}
