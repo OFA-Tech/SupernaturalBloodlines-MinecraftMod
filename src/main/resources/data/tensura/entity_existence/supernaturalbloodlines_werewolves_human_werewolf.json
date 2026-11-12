@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "werewolves"}],
+  "type": "werewolves:human_werewolf",
+  "max_aura": 600,
+  "max_magicule": 300,
+  "min_aura": 300,
+  "min_magicule": 100,
+  "spiritualHealth": 60
+}

@@ -1,6 +1,15 @@
 # Mixins
 
-Every mixin must be listed here. Aim for 0 to 2; use `require = 0` and a config switch.
+Every mixin must be listed here. Budget: at most 3 per part, each `require = 0`, gated by that part's switch.
 
-| Mixin | Target | Why | Config switch |
-|---|---|---|---|
+Convention: one mixin config and one `IMixinConfigPlugin` per part. The config is `supernaturalbloodlines.<part_key>.mixins.json` (the part key in snake_case), the plugin is `<Part>MixinPlugin` in `net.ofatech.supernaturalbloodlines.mixin`, and the mixin classes live in `mixin.<part>` (no separator, like the part package). The plugin applies the config only when all of `Part.requiredMods()` are installed and the part's switch is on (read through `EarlySwitches`, from the toml file, because COMMON configs load after mixins). Otherwise nothing is touched.
+
+## vampirism_tensura (3 of 3)
+
+Config `supernaturalbloodlines.vampirism_tensura.mixins.json`, plugin `VampirismTensuraMixinPlugin`, package `mixin.vampirismtensura`. Applies only when Vampirism and Tensura are installed and `parts.vampirismTensura` is not `false` in `supernaturalbloodlines-common.toml`. The plugin logs one line saying whether the mixins were applied.
+
+| Part | Mixin | Target | Why | Config switch |
+|---|---|---|---|---|
+| vampirism_tensura | `VampireRaceSunMixin` | `VampireRace.shouldBurn(LivingEntity)` (HEAD, returns false) | Tensura has no config option for its vampire burn (checked in `VampireConfig`). A player in the Vampirism vampire faction already takes Vampirism's sun damage, so Tensura's fire would be a second burn. Also called from `GhoulRace`/`WightRace`, so it is gated on "player is in the Vampirism vampire faction" (`VampireSunRule`). Skipping `shouldBurn` also skips the helmet damage. | `parts.vampirismTensura` |
+| vampirism_tensura | `VampirePlayerBiteMixin` | `VampirePlayer.determineBiteType(LivingEntity)` in Vampirism (HEAD, returns `BITE_TYPE.NONE`; string target, because only the Vampirism api jar is on the compile classpath) | A vampire must not bite a player whose Tensura race has the race tag `tensura:no_blood`. Checked first: `BloodDrinkEvent` is not cancellable (`setAmount(0)` only changes what the biter gets, the victim has already lost food by then), the bite starts from a custom network packet (`ServerboundStartFeedingPacket`), not a NeoForge interaction event, and the player blood value has no data map or capability to override (the `entity_blood` data map only covers mobs). Only fires when the victim is a player with a bloodless race. | `parts.vampirismTensura` |
+| vampirism_tensura | `RaceUtilsSunMixin` | `RaceUtils.isUnderSun(LivingEntity)` (HEAD, returns false) | `VampireRace.onTick` adds Weakness, Slowness and Mining Fatigue (amplifier 3) whenever `isUnderSun` is true, before it ever calls `shouldBurn`. Faction vampires skip them too: Vampirism's sun handling wins (its own sun damage, nausea and weakness by level). The same method gates Tensura's bat form under sun, so a faction vampire may use it by day. Only faction-vampire players are affected; the night/moon-phase branch of `onTick` is unchanged. | `parts.vampirismTensura` |

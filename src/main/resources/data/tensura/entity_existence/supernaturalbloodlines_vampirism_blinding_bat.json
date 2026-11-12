@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "vampirism"}],
+  "type": "vampirism:blinding_bat",
+  "max_aura": 20,
+  "max_magicule": 20,
+  "min_aura": 20,
+  "min_magicule": 20,
+  "spiritualHealth": 20
+}

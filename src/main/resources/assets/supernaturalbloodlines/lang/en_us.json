@@ -17,5 +17,7 @@
   "supernaturalbloodlines.refusal.true_alpha_level": "Your werewolf level is too low to become a True Alpha.",
   "supernaturalbloodlines.refusal.true_alpha_beta_days": "You have not been a Beta long enough to become a True Alpha.",
   "supernaturalbloodlines.refusal.true_alpha_defender_kills": "You have not defended your pack enough to become a True Alpha.",
-  "supernaturalbloodlines.refusal.true_alpha_stole_spark": "A stolen spark cannot make a True Alpha."
+  "supernaturalbloodlines.refusal.true_alpha_stole_spark": "A stolen spark cannot make a True Alpha.",
+  "supernaturalbloodlines.vampirism_tensura.hunter_left": "Your new nature cannot stand beside the hunters. You have left their ranks.",
+  "supernaturalbloodlines.vampirism_tensura.bite_bloodless": "There is no blood in them to drink."
 }

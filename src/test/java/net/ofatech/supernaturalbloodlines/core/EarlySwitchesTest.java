@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-class ConfigTest {
+class EarlySwitchesTest {
     @TempDir
     Path dir;
 
@@ -19,24 +19,24 @@ class ConfigTest {
 
     @Test
     void missingFileIsEnabled() {
-        assertTrue(Config.partEnabled(dir.resolve("none.toml"), Part.SPECIES));
+        assertTrue(EarlySwitches.partEnabled(dir.resolve("none.toml"), Part.SPECIES));
     }
 
     @Test
     void falseSwitchDisablesOnlyThatPart() throws IOException {
         Path f = write("[parts]\nspecies = false\nartifacts = true\n");
-        assertFalse(Config.partEnabled(f, Part.SPECIES));
-        assertTrue(Config.partEnabled(f, Part.ARTIFACTS));
-        assertTrue(Config.partEnabled(f, Part.VAMPIRISM_TENSURA));
+        assertFalse(EarlySwitches.partEnabled(f, Part.SPECIES));
+        assertTrue(EarlySwitches.partEnabled(f, Part.ARTIFACTS));
+        assertTrue(EarlySwitches.partEnabled(f, Part.VAMPIRISM_TENSURA));
     }
 
     @Test
     void nonBooleanIsEnabled() throws IOException {
-        assertTrue(Config.partEnabled(write("[parts]\nspecies = \"no\"\n"), Part.SPECIES));
+        assertTrue(EarlySwitches.partEnabled(write("[parts]\nspecies = \"no\"\n"), Part.SPECIES));
     }
 
     @Test
     void garbageIsEnabled() throws IOException {
-        assertTrue(Config.partEnabled(write("[parts\n = = \u0000 {{{"), Part.SPECIES));
+        assertTrue(EarlySwitches.partEnabled(write("[parts\n = = \u0000 {{{"), Part.SPECIES));
     }
 }
