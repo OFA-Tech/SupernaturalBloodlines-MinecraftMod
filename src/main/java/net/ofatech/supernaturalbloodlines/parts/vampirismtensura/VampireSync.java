@@ -10,6 +10,7 @@ import io.github.manasmods.manascore.network.api.util.Changeable;
 import io.github.manasmods.manascore.race.api.ManasRaceInstance;
 import io.github.manasmods.manascore.race.api.RaceAPI;
 import io.github.manasmods.manascore.race.api.RaceEvents;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.network.chat.MutableComponent;
@@ -23,7 +24,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 
 /**
  * Tensura vampire line -> Vampirism level floor, and a cure -> Tensura race reset.
- * Joining Vampirism never changes the Tensura race (R20).
+ * Joining Vampirism keeps the Tensura race (R20), except an exact human becomes tensura:vampire (R20a).
  */
 public final class VampireSync {
     private static final String CHANNEL = "vampire_sync";
@@ -66,15 +67,21 @@ public final class VampireSync {
     }
 
     private static void onFactionLevelChanged(PlayerFactionEvent.FactionLevelChanged event) {
-        if (!(event.getPlayer().getPlayer() instanceof ServerPlayer p) || p.level().isClientSide || !isSyncable(p)
-                || event.getOldFaction() != VReference.VAMPIRE_FACTION || event.getCurrentFaction() == VReference.VAMPIRE_FACTION) {
+        if (!(event.getPlayer().getPlayer() instanceof ServerPlayer p) || p.level().isClientSide || !isSyncable(p)) {
+            return;
+        }
+        boolean wasVampire = event.getOldFaction() == VReference.VAMPIRE_FACTION;
+        boolean isVampire = event.getCurrentFaction() == VReference.VAMPIRE_FACTION;
+        if (wasVampire == isVampire) {
             return;
         }
         GATE_PASSES.incrementAndGet();
         ReentrancyGuard.run(p.getUUID(), CHANNEL, () -> {
             String current = RaceAPI.getRaceFrom(p).getRace().map(r -> r.getRaceId().toString()).orElse(null);
-            VampireSyncConfig.mapping(VReference.VAMPIRE_FACTION.getHighestReachableLevel()).raceOnCure(current)
-                    .ifPresent(cure -> RaceAPI.getRaceFrom(p).setRace(ResourceLocation.parse(cure), false));
+            Optional<String> target = isVampire
+                    ? VampireMapping.raceOnJoin(current)
+                    : VampireSyncConfig.mapping(VReference.VAMPIRE_FACTION.getHighestReachableLevel()).raceOnCure(current);
+            target.ifPresent(race -> RaceAPI.getRaceFrom(p).setRace(ResourceLocation.parse(race), false));
         });
     }
 

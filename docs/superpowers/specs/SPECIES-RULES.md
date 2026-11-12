@@ -1,6 +1,6 @@
 # Species rules (source of truth; the owner patches these by id)
 
-Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and R101 were patched. Where the design or a plan disagrees, this file wins.
+Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and R101 were patched. R20a (2026-11-12) was added. Where the design or a plan disagrees, this file wins.
 
 ## General
 - **R1.** Only players whose Tensura race is tagged `human_like` can take a show species or become one of the Five. Without Tensura, everyone qualifies.
@@ -17,6 +17,7 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 
 ## Vampires
 - **R20.** You become one through Vampirism's normal infection. **The Tensura race is kept**: you get the vampire layer, and Tensura is told you're vampiric (see R100). Tensura's own vampire line (ghoul → vampire → overcomer/lord → divine) still joins the Vampirism vampire faction with a level floor (vampire 1, overcomer/lord 7, divine max). A cure resets the race to human **only** if the race is in Tensura's vampire line.
+- **R20a (2026-11-12).** When a player with no bloodline species joins the Vampirism vampire faction and their Tensura race is **exactly** `tensura:human`, the race is set to `tensura:vampire`, automatically. Every other race is kept, as R20 says (an elf stays an elf). Not configurable.
 - **R21.** Sun damage comes only from Vampirism. A Sun Ring bound to the wearer blocks it.
 - **R22.** Cured by the *Rite of Cleansing Blood* or The Cure.
 - **R23.** From level 10, can compel villagers and lesser vampire mobs.

@@ -133,6 +133,19 @@ public final class VampirismTensuraGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void humanJoiningVampiresBecomesTensuraVampire(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:human");
+        helper.assertTrue(handler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 3), "could not join the vampire faction");
+        helper.assertTrue("tensura:vampire".equals(race(p)), "race after joining was " + race(p));
+        helper.assertTrue(isVampire(p) && handler(p).getCurrentLevel() == 3,
+                "faction/level changed: " + handler(p).getCurrentFaction() + " " + handler(p).getCurrentLevel());
+        handler(p).setFactionAndLevel(null, 0);
+        helper.assertTrue("tensura:human".equals(race(p)), "cure after the join left race " + race(p));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void settingTensuraVampireLordJoinsAtSeven(GameTestHelper helper) {
         ServerPlayer lord = TestPlayers.create(helper);
         setRace(lord, "tensura:vampire_lord");

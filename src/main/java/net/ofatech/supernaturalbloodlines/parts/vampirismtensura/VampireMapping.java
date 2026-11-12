@@ -11,7 +11,9 @@ import org.jetbrains.annotations.Nullable;
 /** Pure Tensura-race to Vampirism-level mapping. No game classes, so it is unit-testable. */
 public record VampireMapping(String cureRace, Map<String, Integer> floors, int maxLevel) {
     public static final String GHOUL = "tensura:ghoul";
-    public static final String DEFAULT_CURE_RACE = "tensura:human";
+    public static final String HUMAN = "tensura:human";
+    public static final String JOIN_RACE = "tensura:vampire";
+    public static final String DEFAULT_CURE_RACE = HUMAN;
     public static final List<String> DEFAULT_FLOORS = List.of(
             "tensura:vampire=1",
             "tensura:vampire_overcomer=7",
@@ -36,6 +38,11 @@ public record VampireMapping(String cureRace, Map<String, Integer> floors, int m
             return Optional.of(cureRace);
         }
         return Optional.empty();
+    }
+
+    /** R20a: only an exact human moves to the Tensura vampire line when joining Vampirism; every other race is kept. */
+    public static Optional<String> raceOnJoin(@Nullable String currentRace) {
+        return HUMAN.equals(currentRace) ? Optional.of(JOIN_RACE) : Optional.empty();
     }
 
     public static VampireMapping defaults(int maxLevel) {

@@ -48,6 +48,28 @@ class VampireMappingTest {
     }
 
     @Test
+    void humanMovesToVampire() {
+        assertEquals(Optional.of("tensura:vampire"), VampireMapping.raceOnJoin("tensura:human"));
+    }
+
+    @Test
+    void elfKeepsRace() {
+        assertTrue(VampireMapping.raceOnJoin("tensura:elf").isEmpty());
+    }
+
+    @Test
+    void nullRaceKeepsRace() {
+        assertTrue(VampireMapping.raceOnJoin(null).isEmpty());
+    }
+
+    @Test
+    void vampireLineKeepsRace() {
+        assertTrue(VampireMapping.raceOnJoin("tensura:ghoul").isEmpty());
+        assertTrue(VampireMapping.raceOnJoin("tensura:vampire").isEmpty());
+        assertTrue(VampireMapping.raceOnJoin("tensura:vampire_lord").isEmpty());
+    }
+
+    @Test
     void overMaxFloorIsClampedToMax() {
         VampireMapping p = VampireMapping.parse("tensura:human", List.of("x=99"), MAX).mapping();
         assertEquals(OptionalInt.of(MAX), p.levelForRace("x", 3));

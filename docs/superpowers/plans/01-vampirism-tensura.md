@@ -14,6 +14,7 @@
 
 - Everything in foundation's Global Constraints.
 - **R20 (round 3): the Tensura race is never changed by joining Vampirism.** Only Tensura's own vampire line syncs *into* the Vampirism faction (level floor). A cure resets the race to `cure_race` (default `tensura:human`) only if the race is in Tensura's vampire line. Vampirism level-ups never evolve the race.
+- **R20a (2026-11-12): one exception.** A player whose Tensura race is exactly `tensura:human` and who joins the Vampirism vampire faction is set to `tensura:vampire`, automatically (`VampireMapping.raceOnJoin`, not configurable). Every other race is kept.
 - Default mapping:
   - `tensura:ghoul` → no faction change
   - `tensura:vampire` → level ≥ 1
@@ -83,7 +84,7 @@
 **Interfaces:**
 - Consumes `VampireMapping`, `ReentrancyGuard.run`, and the hook signatures from Task 1.
 - Produces the listeners:
-  - **On `PlayerFactionEvent.FactionLevelChanged`:** joining the vampire faction doesn't change the race (R20). Leaving it → `raceOnCure`.
+  - **On `PlayerFactionEvent.FactionLevelChanged`:** joining the vampire faction keeps the race (R20) except exact `tensura:human` -> `tensura:vampire` (R20a, `raceOnJoin`). Leaving it → `raceOnCure`.
   - **On `RaceEvents.SET_RACE`, server and players only:** call `levelForRace`; then `setFactionAndLevel(vampireFaction, level)`, but only if `canJoin` allows it or the player is already a vampire.
 - Species (plan 5) overrides this. The sync skips players whose `BloodlineAccess.get(p).species()` is not NONE.
 

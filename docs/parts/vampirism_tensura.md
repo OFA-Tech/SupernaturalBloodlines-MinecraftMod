@@ -5,7 +5,7 @@ Requires: `vampirism`, `tensura`. Werewolves is optional. Package: `net.ofatech.
 Checklist (from the design, section 3). Tick items as they ship.
 
 **Unified vampire**
-- [x] Vampirism -> Tensura: **nothing** (R20). Joining the vampire faction never changes the Tensura race; there is no `join_race` option.
+- [x] Vampirism -> Tensura (R20, R20a): joining the vampire faction keeps the Tensura race, except that a player whose race is exactly `tensura:human` becomes `tensura:vampire`, automatically. An elf stays an elf. Not configurable; there is no `join_race` option.
 - [x] Tensura → Vampirism: a Tensura race in the vampire line joins the faction at the mapped level (`ghoul` no faction; `vampire` level 1 or the current level if higher; `vampire_overcomer` and `vampire_lord` at least level 7; `divine_vampire` max level).
 - [x] Leaving the faction (cure) sets the race to `cure_race` (default `tensura:human`), only if the current race is in the Tensura vampire line (R20).
 - [x] Sun burn: Tensura's own vampire burn is disabled for faction vampires. Tensura has no config switch for it (verified), so this is a mixin on `VampireRace.shouldBurn`, plus one on `RaceUtils.isUnderSun` for the Weakness/Slowness/Mining Fatigue debuffs (Task 4 decision: Vampirism's sun handling wins). Both listed in `docs/mixins.md`.
@@ -76,7 +76,7 @@ The race tags live in the ManasCore race registry folder `tags/manascore_race/ra
 ### Consequences for the next tasks
 
 - Task 5 sun burn: one mixin on `VampireRace.shouldBurn` (and decide about `RaceUtils.isUnderSun` for the debuffs); no Tensura config option exists.
-- R20: only the cure writes the race. `FactionLevelChanged` with `getOldFaction() == vampire` and `getCurrentFaction() != vampire` is the cure signal (current is `null` on leaving, verified); there is no dedicated event.
+- R20, R20a: only the cure and the human join write the race (inside the `vampire_sync` guard). `FactionLevelChanged` with `getOldFaction() == vampire` and `getCurrentFaction() != vampire` is the cure signal (current is `null` on leaving, verified); old != vampire and current == vampire is the join signal (`VampireMapping.raceOnJoin`); there is no dedicated event.
 - Command-set factions (`/vampirism level`) arrive through the same `FactionLevelChanged`, so the sync listener is the single entry point; guard writes with `ReentrancyGuard`.
 - `CanJoinFaction.setBehavior(DENY)` is the hunter/werewolf denial hook; `FactionLevelChangePre` is the cancellable fallback.
 
