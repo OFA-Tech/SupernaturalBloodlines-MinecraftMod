@@ -7,7 +7,7 @@ import net.neoforged.neoforge.common.util.FakePlayerFactory;
 
 import java.util.UUID;
 
-final class TestPlayers {
+public final class TestPlayers {
     private TestPlayers() {
     }
 
@@ -15,7 +15,7 @@ final class TestPlayers {
      * A player in the test level that never fires the login event. {@code makeMockServerPlayerInLevel} does, and
      * other mods then send packets to its mock connection, which throws.
      */
-    static ServerPlayer create(GameTestHelper helper) {
+    public static ServerPlayer create(GameTestHelper helper) {
         UUID id = UUID.randomUUID();
         return FakePlayerFactory.get(helper.getLevel(), new GameProfile(id, "test-" + id.toString().substring(0, 8)));
     }
