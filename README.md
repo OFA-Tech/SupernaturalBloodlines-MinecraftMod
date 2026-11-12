@@ -8,21 +8,21 @@ Each feature set is an optional **part** that turns on only when the mods it nee
 
 ## Parts
 
-| Part | Required mods | Checklist |
-|---|---|---|
-| `enchanted_tensura` | enchanted, tensura | [docs/parts/enchanted_tensura.md](docs/parts/enchanted_tensura.md) |
-| `vampirism_enchanted` | vampirism, enchanted | [docs/parts/vampirism_enchanted.md](docs/parts/vampirism_enchanted.md) |
-| `vampirism_tensura` | vampirism, tensura | [docs/parts/vampirism_tensura.md](docs/parts/vampirism_tensura.md) |
-| `species` | vampirism, enchanted | [docs/parts/species.md](docs/parts/species.md) |
-| `species_tensura` | vampirism, enchanted, tensura (and the `species` part) | [docs/parts/species_tensura.md](docs/parts/species_tensura.md) |
-| `artifacts` | vampirism, enchanted | [docs/parts/artifacts.md](docs/parts/artifacts.md) |
+| Part | Config key | Required mods | Checklist |
+|---|---|---|---|
+| `ENCHANTED_TENSURA` | `enchantedTensura` | enchanted, tensura | [docs/parts/enchanted_tensura.md](docs/parts/enchanted_tensura.md) |
+| `VAMPIRISM_ENCHANTED` | `vampirismEnchanted` | vampirism, enchanted | [docs/parts/vampirism_enchanted.md](docs/parts/vampirism_enchanted.md) |
+| `VAMPIRISM_TENSURA` | `vampirismTensura` | vampirism, tensura | [docs/parts/vampirism_tensura.md](docs/parts/vampirism_tensura.md) |
+| `SPECIES` | `species` | vampirism, enchanted | [docs/parts/species.md](docs/parts/species.md) |
+| `SPECIES_TENSURA` | `speciesTensura` | vampirism, enchanted, tensura (and the `species` part) | [docs/parts/species_tensura.md](docs/parts/species_tensura.md) |
+| `ARTIFACTS` | `artifacts` | vampirism, enchanted | [docs/parts/artifacts.md](docs/parts/artifacts.md) |
 
 Werewolves and Curios are optional extras inside parts. Each part also has a switch in the common config. Details: [docs/parts.md](docs/parts.md).
 
 ## Install
 
 1. Install NeoForge 21.1.x for Minecraft 1.21.1 (Java 21).
-2. Put the mod jar in `mods/` on the server and on every client (both sides need it).
+2. Put the mod jar in `mods/` on the server and on every client (both sides need it). The server and the clients must have the same part switches and the same linked mods.
 3. Add the mods for the parts you want, at the tested versions:
    - Tensura: Reincarnated `2.0.1` and ManasCore `4.0.x`
    - Vampirism `1.10.13`

@@ -11,6 +11,8 @@ A part is an optional feature set. It is enabled when every mod it requires is i
 | `SPECIES_TENSURA` | `speciesTensura` | vampirism, enchanted, tensura | `SPECIES` | [species_tensura](parts/species_tensura.md) |
 | `ARTIFACTS` | `artifacts` | vampirism, enchanted | | [artifacts](parts/artifacts.md) |
 
+The server and clients need the same part switches and the same linked mods.
+
 Werewolves and Curios are optional extras inside parts; the pure rules in `core` never import them.
 
 ## Debug commands

@@ -34,7 +34,7 @@ It ships on CurseForge too, so it must also work when only some of the linked mo
 ## Anti-goals (a failure even if it "works")
 
 - Copying code, assets or JSON from Tensura (All Rights Reserved), Enchanted (All Rights Reserved), Vampirism or Werewolves.
-- Using show character or family names (Klaus, Mikaelson, Petrova and so on) in content, items or text. Use generic names ("Original's blood", "doppelgänger blood").
+- Using show character or family names (any character or family name from the shows) in content, items or text. Use generic names ("Original's blood", "doppelgänger blood").
 - Crashing or erroring when any optional mod is absent.
 - Two systems fighting over the same player state, for example double sun damage or infinite sync loops.
 - Heavy per-tick work. The pack targets low-end PCs.
@@ -271,7 +271,7 @@ Layers on existing factions. Show-inspired rules, generic names.
 | witch | joins the vampire faction (sanguinare) | becomes a plain vampire, loses the witch layer |
 | siphoner | joins the vampire faction | heretic |
 | Original vampire | completes the Rite of the Moon | Original hybrid |
-| vampire (plain) with the hidden gene | kills a villager or player (the Klaus rule) | hybrid with the werewolf side **bound** (no wolf forms); joins the werewolf faction, keeps the vampire layer; sire unchanged |
+| vampire (plain) with the hidden gene | kills a villager or player (the hybrid-awakening rule) | hybrid with the werewolf side **bound** (no wolf forms); joins the werewolf faction, keeps the vampire layer; sire unchanged |
 | Original with the hidden gene | kills a villager or player | Original hybrid, bound |
 | bound hybrid / Original hybrid | completes the Rite of the Moon | unbound (wolf forms allowed) |
 | hybrid / Original hybrid / tribrid | Rite of Cleansing Blood | loses the vampire traits → plain werewolf (+ witch layer for a tribrid → witch werewolf) |

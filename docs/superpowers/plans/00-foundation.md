@@ -22,7 +22,7 @@
   - enchanted `[4.2.7,4.3)`
 - No linked mod's jar, code or assets in the repo. Dependencies come from Maven or CurseMaven only; compileOnly + runtime for dev.
 - Classes that reference another mod live only in `parts.<part>` packages, and nothing outside a part imports them.
-- No show character names (Klaus, Mikaelson, Petrova …) in any text.
+- No show character names (any character or family name from the shows) in any text.
 - No secrets in the repo; CurseForge upload uses the `CURSEFORGE_TOKEN` GitHub secret.
 
 ## Review Focus
@@ -203,7 +203,7 @@
   - `roundTripsThroughCodec`: every field survives `CODEC` encode/decode with `JsonOps`.
   - `unknownSpeciesDecodesToNone`: JSON `{"species":"DRAGON"}` decodes to species NONE.
   - `speciesChangeStampsTurnedAt`: an Immortality outcome with `gameTime` 500 → `turnedAt` 500.
-- Add the GameTest `listenerNotifiedOnSpeciesChangeOnly` to Task 5: setting the same species twice notifies once.
+- Add the GameTest `listenerNotifiedOnSpeciesLineageOrRankChangeOnly` to Task 5: setting the same species twice notifies once; a change of `wolf().lineage()` or `wolf().rank()` notifies; a change of `grantedSkills` or other fields does not. Also add `clientViewHidesTheGeneAndOthersSeeNoSire`: payloads are built through `BloodlineAccess.clientView` (hidden gene, `geneRolled` and `pendingSire` cleared; `sire` cleared for trackers other than the subject).
 - [ ] **Step 2b:** Write `PackRulesTest` for the pure `core/bloodline/PackRules.java`:
   - Signature: `static PackOutcome apply(WolfState w, PackEvent e, PackContext c)`
   - `enum PackEvent { GENE_AWAKENED, RITE_OF_LINEAGE_AWAKEN, BITTEN_BY_ALPHA, BITTEN_BY_WILD, JOINED_PACK, LEFT_PACK, KILLED_ALPHA, SPARK_INHERITED, SPARK_GIVEN_UP, TRUE_ALPHA_EARNED, KILLED_INNOCENT, DEFENDER_KILL }`
@@ -238,7 +238,7 @@
   - `static BloodlineState get(Player p)`
   - `static void set(ServerPlayer p, BloodlineState s)`, which stores the state and sends a `BloodlineSyncPayload` to the player and to everyone tracking them
   - `static Outcome applyEvent(ServerPlayer p, BloodlineEvent e, BloodlineContext c)`, which applies the rules, stores the result, and returns the Outcome. It does not execute faction actions; the parts do that.
-  - `static void addListener(BiConsumer<ServerPlayer, BloodlineChange> l)`, with `record BloodlineChange(BloodlineState before, BloodlineState after)`. `set` and `applyEvent` notify the listeners after storing, only when the species changed. Plans 4 and 5 use this.
+  - `static void addListener(BiConsumer<ServerPlayer, BloodlineChange> l)`, with `record BloodlineChange(BloodlineState before, BloodlineState after)`. `set` and `applyEvent` notify the listeners after storing, only when the species, `wolf().lineage()` or `wolf().rank()` changed (not for `grantedSkills` or other fields). Plans 4 and 5 use this.
 - **`ReentrancyGuard`:** `static boolean run(UUID player, String channel, Runnable action)`. Returns false and skips the action when the same player and channel is already running.
 
 - [ ] **Step 1:** Write `ReentrancyGuardTest`:

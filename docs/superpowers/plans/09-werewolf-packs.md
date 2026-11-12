@@ -26,7 +26,7 @@
 
 - **An Alpha killed by their own Beta** steals correctly. The rest of the pack goes to the new Alpha; the old Alpha becomes an Omega and leaves the pack. Pinned by `betaKillingOwnAlphaTakesPack`.
 - **Pack data with an offline Alpha:** Betas keep the pack, but the bonus needs the Alpha online and near. Pinned by `bonusNeedsAlphaOnlineAndNear`.
-- **The gene awakens while the player is a vampire** (the Klaus rule): they become a bound hybrid, switching to the werewolf faction with the vampire layer kept. A hunter's gene stays latent. Pinned by `vampireWithGeneBecomesBoundHybrid` and `geneDoesNotAwakenAsHunter`.
+- **The gene awakens while the player is a vampire** (the hybrid-awakening rule): they become a bound hybrid, switching to the werewolf faction with the vampire layer kept. A hunter's gene stays latent. Pinned by `vampireWithGeneBecomesBoundHybrid` and `geneDoesNotAwakenAsHunter`.
 - **Eclipse plus a server restart mid-eclipse:** it must end at dawn and not persist forever. Pinned by `eclipseEndsAtDawnAfterReload`.
 - **A Beta bitten again by another Alpha** must not switch packs silently. They stay until they `/pack leave`. Pinned by `secondBiteDoesNotSwitchPack`.
 
@@ -42,12 +42,12 @@
   - `ActionEvent.ActionActivatedEvent` cancel behaviour
   - the four-legged form unlock skill
   - the full-moon forced-shift location
-- Create: `parts/species/pack/GeneHandler.java`, `parts/species/pack/PackAccess.java` (helpers: `static WolfState wolf(Player)` and `static void applyPack(ServerPlayer, PackEvent, PackContext)`, which store through `BloodlineAccess.set`), and the rites `rite_of_lineage_reveal.json` (power 3000; the factory `supernaturalbloodlines:lineage` with `mode: reveal` prints the gene result to the target) and `rite_of_lineage_awaken.json` (power 9000, `mode: awaken`).
+- Create: `parts/species/pack/GeneHandler.java`, `parts/species/pack/PackAccess.java` (helpers: `static WolfState wolf(Player)` and `static void applyPack(ServerPlayer, PackEvent, PackContext)`, which store through `BloodlineAccess.set`; **`PackRules` knows neither species nor faction, so `PackAccess` must check the species and faction before calling it**, for example no `BITTEN` lineage for vampires), and the rites `rite_of_lineage_reveal.json` (power 3000; the factory `supernaturalbloodlines:lineage` with `mode: reveal` prints the gene result to the target) and `rite_of_lineage_awaken.json` (power 9000, `mode: awaken`).
 
 **Interfaces:**
 - **On first login** (`geneRolled == false`): roll `latentGene` with `latent_gene_chance` and set `geneRolled = true`.
 - **On `LivingDeathEvent`**, when the killer is a player with `latentGene`, no faction, and the victim is a villager or a player: apply GENE_AWAKENED, then `joinFaction(werewolf)`.
-- **Klaus rule (R24 / R35b):** when the killer is in the **vampire** faction (plain vampire or ORIGINAL) and has `latentGene`, apply `BloodlineEvent.GENE_AWAKENED_AS_VAMPIRE` instead, then `OutcomeExecutor.run` (leave vampire → join werewolf; species HYBRID or ORIGINAL_HYBRID, bound). Set lineage BORN.
+- **Hybrid-awakening rule (R24 / R35b):** when the killer is in the **vampire** faction (plain vampire or ORIGINAL) and has `latentGene`, apply `BloodlineEvent.GENE_AWAKENED_AS_VAMPIRE` instead, then `OutcomeExecutor.run` (leave vampire → join werewolf; species HYBRID or ORIGINAL_HYBRID, bound). Set lineage BORN.
 - **While `hybridCurseBound`:** Werewolves form actions are cancelled (`ActionEvent.ActionActivatedEvent`) and the message `supernaturalbloodlines.hybrid_curse.bound` is shown. The *Rite of the Moon* clears it. Hunters, vampires and werewolves all treat the player as a hybrid (R2).
 - **Other factions:** a hunter with the gene doesn't awaken (the gene stays latent).
 
