@@ -3,8 +3,11 @@ package net.ofatech.supernaturalbloodlines.gametest;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 
+import java.lang.reflect.Field;
 import java.util.UUID;
 
 public final class TestPlayers {
@@ -18,5 +21,25 @@ public final class TestPlayers {
     public static ServerPlayer create(GameTestHelper helper) {
         UUID id = UUID.randomUUID();
         return FakePlayerFactory.get(helper.getLevel(), new GameProfile(id, "test-" + id.toString().substring(0, 8)));
+    }
+
+    /** Like {@link #create}, but it takes damage (a plain FakePlayer is invulnerable, so no damage event ever fires). */
+    public static ServerPlayer createVulnerable(GameTestHelper helper) {
+        UUID id = UUID.randomUUID();
+        ServerPlayer p = new FakePlayer(helper.getLevel(), new GameProfile(id, "test-" + id.toString().substring(0, 8))) {
+            @Override
+            public boolean isInvulnerableTo(DamageSource source) {
+                return false;
+            }
+        };
+        try {
+            // the 60 tick respawn protection only counts down in tick(), which a FakePlayer never runs
+            Field f = ServerPlayer.class.getDeclaredField("spawnInvulnerableTime");
+            f.setAccessible(true);
+            f.setInt(p, 0);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+        return p;
     }
 }

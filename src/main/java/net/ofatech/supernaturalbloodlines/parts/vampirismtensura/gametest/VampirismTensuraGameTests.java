@@ -8,6 +8,8 @@ import dev.architectury.event.EventResult;
 import io.github.manasmods.manascore.race.api.ManasRaceInstance;
 import io.github.manasmods.manascore.race.api.RaceEvents;
 import io.github.manasmods.manascore.race.api.RaceAPI;
+import io.github.manasmods.tensura.race.vampire.VampireRace;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -15,9 +17,12 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
@@ -235,6 +240,90 @@ public final class VampirismTensuraGameTests {
         helper.assertTrue(isVampire(overcomer) && handler(overcomer).getCurrentLevel() == 7,
                 "vampire_overcomer at level 3: vampire=" + isVampire(overcomer) + " level=" + handler(overcomer).getCurrentLevel());
         helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void tensuraBurnIsOffOnlyForFactionVampires(GameTestHelper helper) {
+        ServerPlayer faction = TestPlayers.create(helper);
+        setRace(faction, "tensura:vampire");
+        handler(faction).setFactionAndLevel(VReference.VAMPIRE_FACTION, 5);
+        helper.assertTrue(!VampireRace.shouldBurn(faction), "a faction vampire still burns under Tensura");
+
+        // a Tensura vampire who is in another faction (the sync never moves a hunter) keeps Tensura's burn
+        ServerPlayer hunter = TestPlayers.create(helper);
+        handler(hunter).setFactionAndLevel(VReference.HUNTER_FACTION, 2);
+        setRace(hunter, "tensura:vampire");
+        helper.assertTrue(VampireRace.shouldBurn(hunter), "a Tensura-only vampire no longer burns");
+
+        ServerPlayer none = TestPlayers.create(helper);
+        helper.assertTrue(VampireRace.shouldBurn(none), "a player without a faction no longer burns");
+        helper.succeed();
+    }
+
+    private static void tickSun(ServerPlayer p, int ticks) throws Exception {
+        Object factionPlayer = handler(p).getCurrentFactionPlayer().orElse(null);
+        Method vampirismUpdate = null;
+        for (Class<?> c = factionPlayer == null ? null : factionPlayer.getClass(); c != null && vampirismUpdate == null; c = c.getSuperclass()) {
+            try {
+                vampirismUpdate = c.getDeclaredMethod("onUpdate");
+                vampirismUpdate.setAccessible(true);
+            } catch (NoSuchMethodException ignored) {
+                // keep climbing
+            }
+        }
+        for (int i = 0; i < ticks; i++) {
+            p.tickCount++;
+            p.invulnerableTime = 0;
+            if (vampirismUpdate != null) {
+                vampirismUpdate.invoke(factionPlayer);
+            }
+            RaceAPI.getRaceFrom(p).getRace().ifPresent(inst -> inst.getRace().onTick(inst, p));
+        }
+    }
+
+    private static List<String> sunTest(GameTestHelper helper, ServerPlayer p, List<String> damage) throws Exception {
+        helper.getLevel().setDayTime(6000);
+        p.moveTo(helper.absoluteVec(new Vec3(1.5, 2, 1.5)));
+        helper.assertTrue(helper.getLevel().canSeeSky(p.blockPosition()), "no sky above the test player at " + p.blockPosition());
+        Consumer<LivingIncomingDamageEvent> recorder = ev -> {
+            if (ev.getEntity() == p) {
+                damage.add(ev.getSource().getMsgId());
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(recorder);
+        try {
+            tickSun(p, 200);
+        } finally {
+            NeoForge.EVENT_BUS.unregister(recorder);
+        }
+        return damage;
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void factionVampireTakesOnlyVampirismSunDamage(GameTestHelper helper) throws Exception {
+        ServerPlayer faction = TestPlayers.createVulnerable(helper);
+        setRace(faction, "tensura:vampire");
+        handler(faction).setFactionAndLevel(VReference.VAMPIRE_FACTION, 10);
+        List<String> damage = new ArrayList<>();
+        sunTest(helper, faction, damage);
+        helper.assertTrue(!damage.isEmpty(), "Vampirism's own sun damage never applied (hp=" + faction.getHealth() + ")");
+        helper.assertTrue(damage.stream().allMatch("sun"::equals), "damage taken in the sun: " + damage);
+        helper.assertTrue(faction.getRemainingFireTicks() <= 0, "Tensura set a faction vampire on fire");
+        helper.assertTrue(!hasTensuraSunDebuff(faction), "Tensura's sun debuffs hit a faction vampire");
+
+        // control: the same sun hurts a Tensura-only vampire the Tensura way, so the check above can fail
+        ServerPlayer plain = TestPlayers.create(helper);
+        handler(plain).setFactionAndLevel(VReference.HUNTER_FACTION, 2);
+        setRace(plain, "tensura:vampire");
+        sunTest(helper, plain, new ArrayList<>());
+        helper.assertTrue(plain.getRemainingFireTicks() > 0 && hasTensuraSunDebuff(plain),
+                "control: Tensura's burn did not run (fire=" + plain.getRemainingFireTicks() + ")");
+        helper.succeed();
+    }
+
+    private static boolean hasTensuraSunDebuff(ServerPlayer p) {
+        var slow = p.getEffect(MobEffects.MOVEMENT_SLOWDOWN);
+        return slow != null && slow.getAmplifier() == 3;
     }
 
     @GameTest(template = "empty", templateNamespace = NS)

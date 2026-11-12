@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "net.ofatech.supernaturalbloodlines.mixin.tensura",
+  "plugin": "net.ofatech.supernaturalbloodlines.mixin.TensuraMixinPlugin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "RaceUtilsSunMixin",
+    "VampireRaceSunMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

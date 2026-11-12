@@ -8,7 +8,7 @@ Checklist (from the design, section 3). Tick items as they ship.
 - [x] Vampirism -> Tensura: **nothing** (R20). Joining the vampire faction never changes the Tensura race; there is no `join_race` option.
 - [x] Tensura → Vampirism: a Tensura race in the vampire line joins the faction at the mapped level (`ghoul` no faction; `vampire` level 1 or the current level if higher; `vampire_overcomer` and `vampire_lord` at least level 7; `divine_vampire` max level).
 - [x] Leaving the faction (cure) sets the race to `cure_race` (default `tensura:human`), only if the current race is in the Tensura vampire line (R20).
-- [ ] Sun burn: Tensura's own vampire burn is disabled for faction vampires. Tensura has no config switch for it (verified), so this is one mixin on `VampireRace.shouldBurn`, listed in `docs/mixins.md`.
+- [x] Sun burn: Tensura's own vampire burn is disabled for faction vampires. Tensura has no config switch for it (verified), so this is a mixin on `VampireRace.shouldBurn`, plus one on `RaceUtils.isUnderSun` for the Weakness/Slowness/Mining Fatigue debuffs (Task 4 decision: Vampirism's sun handling wins). Both listed in `docs/mixins.md`.
 
 **Hunters**
 - [ ] `CanJoinFaction` returns DENY for hunters whose race has the tags `tensura:undead` or `daemon`.
