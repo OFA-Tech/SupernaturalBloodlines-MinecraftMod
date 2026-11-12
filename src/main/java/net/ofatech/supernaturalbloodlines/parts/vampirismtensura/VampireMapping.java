@@ -21,14 +21,14 @@ public record VampireMapping(String cureRace, Map<String, Integer> floors, int m
     /** A mapping plus the config entries that could not be used. */
     public record Parsed(VampireMapping mapping, List<String> rejected) {}
 
-    /** Empty when the race has no faction level (not in the line, or ghoul); else max(floor, current), at most maxLevel. */
+    /** Empty when the race has no faction level (not in the line, or ghoul); else max(min(floor, maxLevel), current). */
     public OptionalInt levelForRace(String raceId, int currentLevel) {
         Integer floor = floors.get(raceId);
         if (floor == null) {
             return OptionalInt.empty();
         }
-        int f = floor == -1 ? maxLevel : floor;
-        return OptionalInt.of(Math.min(Math.max(f, currentLevel), maxLevel));
+        int f = floor == -1 ? maxLevel : Math.min(floor, maxLevel);
+        return OptionalInt.of(Math.max(f, currentLevel));
     }
 
     public Optional<String> raceOnCure(@Nullable String currentRace) {

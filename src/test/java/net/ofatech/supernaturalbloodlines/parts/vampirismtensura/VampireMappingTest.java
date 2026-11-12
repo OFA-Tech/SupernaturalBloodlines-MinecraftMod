@@ -48,10 +48,15 @@ class VampireMappingTest {
     }
 
     @Test
-    void levelNeverExceedsMax() {
-        VampireMapping p = VampireMapping.parse("tensura:human", List.of("a:b=99"), MAX).mapping();
-        assertEquals(OptionalInt.of(MAX), p.levelForRace("a:b", 0));
-        assertEquals(OptionalInt.of(MAX), m.levelForRace("tensura:vampire_lord", 30));
+    void overMaxFloorIsClampedToMax() {
+        VampireMapping p = VampireMapping.parse("tensura:human", List.of("x=99"), MAX).mapping();
+        assertEquals(OptionalInt.of(MAX), p.levelForRace("x", 3));
+    }
+
+    @Test
+    void currentAboveMaxIsNotLowered() {
+        assertEquals(OptionalInt.of(20), m.levelForRace("tensura:vampire_lord", 20));
+        assertEquals(OptionalInt.of(20), VampireMapping.defaults(14).levelForRace("tensura:vampire_lord", 20));
     }
 
     @Test
