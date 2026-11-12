@@ -207,6 +207,22 @@ class BloodlineRulesTest {
     }
 
     @Test
+    void moonRiteOnOriginalMakesTheWolfLayerBornOmega() {
+        WolfState w = run(gene(st(Species.ORIGINAL)), RITE_OF_THE_MOON, ctx()).state().wolf();
+        assertEquals(WolfState.Lineage.BORN, w.lineage());
+        assertEquals(WolfState.Rank.OMEGA, w.rank());
+        assertTrue(w.latentGene());
+    }
+
+    @Test
+    void moonRiteOnOriginalKeepsAnExistingLineage() {
+        WolfState existing = WolfState.NONE.toBuilder().lineage(WolfState.Lineage.BITTEN).rank(WolfState.Rank.BETA)
+                .geneRolled(true).latentGene(true).build();
+        WolfState w = run(st(Species.ORIGINAL).toBuilder().wolf(existing).build(), RITE_OF_THE_MOON, ctx()).state().wolf();
+        assertEquals(existing, w);
+    }
+
+    @Test
     void lineageAwakenOnOriginalMakesBoundOriginalHybrid() {
         Outcome o = run(st(Species.ORIGINAL), RITE_OF_LINEAGE_AWAKEN, ctx().withFaction(BaseFaction.VAMPIRE));
         assertEquals(Species.ORIGINAL_HYBRID, o.state().species());
@@ -573,11 +589,21 @@ class BloodlineRulesTest {
 
     @Test
     void refusalFiveAlreadyHasSpecies() {
-        BloodlineContext hunter = ctx().withFaction(BaseFaction.HUNTER);
-        for (Species sp : List.of(Species.HUNTER_OF_THE_FIVE, Species.POTENTIAL)) {
-            BloodlineState s = st(sp).toBuilder().markKills(4).build();
-            assertRefused(run(s, RITE_OF_THE_FIVE, hunter), s, "has_species");
-        }
+        BloodlineState s = st(Species.HUNTER_OF_THE_FIVE).toBuilder().markKills(4).build();
+        assertRefused(run(s, RITE_OF_THE_FIVE, ctx().withFaction(BaseFaction.HUNTER)), s, "has_species");
+        BloodlineState witch = st(Species.WITCH);
+        assertRefused(run(witch, RITE_OF_THE_FIVE, ctx().withFaction(BaseFaction.HUNTER)), witch, "has_species");
+    }
+
+    @Test
+    void riteOfTheFiveAcceptsAPotential() {
+        BloodlineContext hunter = ctx().withFaction(BaseFaction.HUNTER).withFiveCount(4).withGameTime(600);
+        Outcome o = run(st(Species.POTENTIAL).toBuilder().markKills(2).build(), RITE_OF_THE_FIVE, hunter);
+        assertFalse(o.refused());
+        assertEquals(Species.HUNTER_OF_THE_FIVE, o.state().species());
+        assertEquals(0, o.state().markKills());
+        assertEquals(600, o.state().turnedAt());
+        assertRefused(run(st(Species.POTENTIAL), RITE_OF_THE_FIVE, hunter.withFiveCount(5)), st(Species.POTENTIAL), "five_full");
     }
 
     @Test

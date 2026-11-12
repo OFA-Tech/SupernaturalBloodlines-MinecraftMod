@@ -144,7 +144,8 @@ public final class BloodlineRules {
         boolean gene = s.wolf().latentGene();
         if (s.species() == Species.ORIGINAL) { // R35: an Original hybrid needs the gene
             return gene
-                    ? Outcome.of(to(s, Species.ORIGINAL_HYBRID, c).hybridCurseBound(false).build(), Action.LEAVE_FACTION, Action.JOIN_WEREWOLF)
+                    ? Outcome.of(to(s, Species.ORIGINAL_HYBRID, c).hybridCurseBound(false).wolf(born(s.wolf())).build(),
+                            Action.LEAVE_FACTION, Action.JOIN_WEREWOLF)
                     : Outcome.refuse(s, "no_gene");
         }
         if (isHybridType(s.species()) && s.hybridCurseBound()) {
@@ -168,13 +169,16 @@ public final class BloodlineRules {
         if (needsGene && !s.wolf().latentGene()) {
             return Outcome.refuse(s, "no_gene");
         }
-        // R90: a hybrid made this way counts as born. The lineage rite is what gives the gene.
-        WolfState.Builder wolf = s.wolf().toBuilder().geneRolled(true).latentGene(true);
-        if (s.wolf().lineage() == WolfState.Lineage.NONE) {
-            wolf.lineage(WolfState.Lineage.BORN).rank(WolfState.Rank.OMEGA);
-        }
-        return Outcome.of(to(s, target, c).hybridCurseBound(true).wolf(wolf.build()).build(),
+        // The lineage rite is what gives the gene.
+        WolfState wolf = born(s.wolf().toBuilder().geneRolled(true).latentGene(true).build());
+        return Outcome.of(to(s, target, c).hybridCurseBound(true).wolf(wolf).build(),
                 Action.LEAVE_FACTION, Action.JOIN_WEREWOLF);
+    }
+
+    /** R90: a hybrid made by an awakening counts as born. An existing lineage is kept. */
+    private static WolfState born(WolfState w) {
+        return w.lineage() == WolfState.Lineage.NONE
+                ? w.toBuilder().lineage(WolfState.Lineage.BORN).rank(WolfState.Rank.OMEGA).build() : w;
     }
 
     // ---- Cures ----
@@ -269,7 +273,7 @@ public final class BloodlineRules {
         if (c.faction() != BaseFaction.HUNTER) {
             return Outcome.refuse(s, "not_hunter");
         }
-        if (s.species() != Species.NONE) {
+        if (s.species() != Species.NONE && s.species() != Species.POTENTIAL) {
             return Outcome.refuse(s, "has_species");
         }
         if (c.fiveCount() >= c.maxFive()) {
