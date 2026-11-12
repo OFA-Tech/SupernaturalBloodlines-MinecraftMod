@@ -10,6 +10,8 @@ import net.neoforged.fml.config.ModConfig;
 import net.ofatech.supernaturalbloodlines.core.Config;
 import net.ofatech.supernaturalbloodlines.core.Part;
 import net.ofatech.supernaturalbloodlines.core.PartLoader;
+import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
+import net.ofatech.supernaturalbloodlines.core.network.ModNetwork;
 import org.slf4j.Logger;
 
 @Mod(SupernaturalBloodlines.MODID)
@@ -20,6 +22,9 @@ public final class SupernaturalBloodlines {
     public SupernaturalBloodlines(IEventBus modBus, ModContainer container) {
         LOGGER.info("Supernatural Bloodlines loading");
         container.registerConfig(ModConfig.Type.COMMON, Config.COMMON);
+
+        ModAttachments.register(modBus);
+        ModNetwork.register(modBus);
 
         ModList mods = ModList.get();
         // Config.COMMON is not loaded yet at construction, so read the file directly (see Config)
