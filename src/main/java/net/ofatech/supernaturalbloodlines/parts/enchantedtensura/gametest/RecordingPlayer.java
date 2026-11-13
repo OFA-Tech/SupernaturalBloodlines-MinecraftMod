@@ -10,7 +10,7 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import net.neoforged.neoforge.common.util.FakePlayer;
 
 /** A FakePlayer drops every message it is sent; this one keeps the translation keys so a test can read them. */
-final class RecordingPlayer extends FakePlayer {
+public final class RecordingPlayer extends FakePlayer {
     private final List<String> keys = new ArrayList<>();
     private final List<String> actionBarKeys = new ArrayList<>();
 
@@ -18,15 +18,15 @@ final class RecordingPlayer extends FakePlayer {
         super(helper.getLevel(), new GameProfile(id, "test-" + id.toString().substring(0, 8)));
     }
 
-    static RecordingPlayer create(GameTestHelper helper) {
+    public static RecordingPlayer create(GameTestHelper helper) {
         return new RecordingPlayer(helper, UUID.randomUUID());
     }
 
-    boolean received(String key) {
+    public boolean received(String key) {
         return keys.contains(key);
     }
 
-    boolean receivedOnActionBar(String key) {
+    public boolean receivedOnActionBar(String key) {
         return actionBarKeys.contains(key);
     }
 

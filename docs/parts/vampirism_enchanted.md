@@ -7,10 +7,10 @@ Checklist (from the design, section 2). Tick items as they ship.
 - [x] Plant parity (data): Enchanted garlic is accepted where Vampirism garlic is (tags, `c:crops/garlic`). Recipes and the cauldron colour only: the garlic crop's effect and the diffusers do not read the tag. See "Data (Task 2)".
 - [x] Plant parity (data): Enchanted wolfsbane counts as Werewolves' wolfsbane. Werewolves has no tag and its recipes name the item, so this is two 1:1 conversion recipes, not a tag. See "Data (Task 2)".
 - [x] Altar power from Vampirism and Werewolves plants and blocks.
-- [ ] Rite of Cleansing Blood: cures vampirism by leaving the faction.
-- [ ] Rite of the Silver Moon: cures lycanthropy; only when Werewolves is installed.
+- [x] Rite of Cleansing Blood: cures vampirism by leaving the faction. See "Faction rites (Task 3)".
+- [x] Rite of the Silver Moon: cures lycanthropy; only when Werewolves is installed. See "Faction rites (Task 3)".
 - [ ] Blood Offering: uses Vampirism blood bottles as power.
-- [ ] A custom rite factory that calls `IFactionPlayerHandler` (used by all rites above).
+- [x] A custom rite factory that calls `IFactionPlayerHandler` (used by all rites above): `supernaturalbloodlines:faction_rite`.
 - [ ] Silver Poppet: protects against silver and werewolf bites, when Werewolves is installed.
 - [ ] Sun Poppet: absorbs one sun-damage tick burst for vampires.
 - [x] Blood values for Enchanted mobs (data map).
@@ -86,3 +86,13 @@ Left out: potted variants, saplings and logs (Enchanted counts logs and leaves t
 **Blood** (added to the one `data/vampirism/data_maps/entity_type/entity_blood.json`, entries before the Tensura ones): `enchanted:familiar_cat` 3 (= `minecraft:cat`), `enchanted:mandrake` 0 (a root monster; Vampirism never auto-calculates blood for monsters, so this entry only pins the intent). Test `enchantedMobsHaveBlood`.
 
 Runs on this branch: `build`, `runGameTestServer` (65 tests), `-PnoWerewolves` (60), `-PnoLinkedMods` (5), `-PpartsOff=vampirismEnchanted` (61), all passing.
+
+
+## Faction rites (Task 3)
+
+Code: `parts/vampirismenchanted/rite/` (`FactionRiteFactory`, `RiteTargets`), `werewolves/WerewolfFaction` (the only Werewolves-linking class, called behind `ModList.isLoaded("werewolves")`). Rites: `cleansing_blood` (garlic + holy water + golden apple, power 4000) and `silver_moon` (2 silver ingots + wolfsbane, power 4000, also `mod_loaded werewolves`), both `enchanted:medium_circle` of `enchanted:ritual_chalk`.
+
+- **Factory** `supernaturalbloodlines:faction_rite`: codec `event` (a `BloodlineEvent`, any case), `faction` (`vampire`|`werewolf`), optional `requires_full_moon`. On start: target = `RiteTargets.centrePlayerOrCaster(rite, params, level)` (the closest player in the 1x2x1 column on the centre block, else the caster; `params` was added to the planned signature because Enchanted keeps the caster id private), full moon check (`level.getMoonPhase() == 0`, Enchanted's `time` field is a time-of-day range and has no moon phase), faction check, `BloodlineAccess.applyEvent` with the target's real faction and game time, then the Outcome actions (all `LEAVE_FACTION` first, then the joins; `KILL_PLAYER` is ignored with a debug log). Failures use `cancel()`, so Enchanted gives the ingredients back; the caster gets the message on the action bar (`supernaturalbloodlines.rite.wrong_faction`, `.needs_full_moon`, or the refusal key).
+- **The faction check is skipped for ORIGINAL, ORIGINAL_HYBRID, HYBRID, TRIBRID and HERETIC**: those are decided by `BloodlineRules` (a hybrid is a werewolf-faction player, and Cleansing Blood has to turn it into a plain werewolf; an Original gets `original_cure`).
+- **The silver moon does not need night**, only moon phase 0 (the whole full-moon day).
+- GameTests: `VampirismEnchantedGameTests` (`ritesLoad`, `cleansingCuresPlainVampire`, `cureRiteOnNonVampireFails`, `cureRiteRespectsBloodlineOutcome`, `cleansingTargetsThePlayerOnTheCircle`) and, only with Werewolves, `VampirismEnchantedWerewolfGameTests` (`silverMoonCuresPlainWerewolf`, `silverMoonOnHybridMakesPlainVampire`, `silverMoonOutsideFullMoonIsRefused`, `silverMoonOnNonWerewolfFails`, `cleansingKeepsHybridAWerewolf`). They start the real rite JSON with `RiteType.create(...).start()`; the chalk circle and item matching on a real altar are not proven (manual check pending).
