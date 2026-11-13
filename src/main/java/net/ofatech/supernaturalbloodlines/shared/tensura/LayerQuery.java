@@ -1,6 +1,8 @@
 package net.ofatech.supernaturalbloodlines.shared.tensura;
 
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -9,34 +11,43 @@ import net.minecraft.world.entity.player.Player;
  */
 public final class LayerQuery {
     private static volatile Predicate<Player> treatedAsUndead = p -> false;
-    private static volatile Predicate<Player> vampireTypeSpecies = p -> false;
+    private static volatile BiPredicate<Player, ResourceLocation> apexVampireType = (p, race) -> false;
 
     private LayerQuery() {}
 
-    public static void install(Predicate<Player> treatedAsUndeadBySpecies, Predicate<Player> isVampireTypeSpecies) {
+    public static void install(Predicate<Player> treatedAsUndeadBySpecies, BiPredicate<Player, ResourceLocation> isApexVampireType) {
         treatedAsUndead = treatedAsUndeadBySpecies;
-        vampireTypeSpecies = isVampireTypeSpecies;
+        apexVampireType = isApexVampireType;
     }
 
-    /** For tests of vampirism_tensura alone: runs the body as if species_tensura were off. */
+    /**
+     * For tests of vampirism_tensura's own rules: runs the body with both answers false, as when species_tensura is
+     * off. Tensura's own undead checks (the species_tensura mixin) are not affected.
+     */
     public static void runWithoutLayer(Runnable body) {
         Predicate<Player> undead = treatedAsUndead;
-        Predicate<Player> vampire = vampireTypeSpecies;
-        install(p -> false, p -> false);
+        BiPredicate<Player, ResourceLocation> apex = apexVampireType;
+        install(p -> false, (p, race) -> false);
         try {
             body.run();
         } finally {
-            install(undead, vampire);
+            install(undead, apex);
         }
     }
 
-    /** The player's layer makes Tensura treat them as undead (so Tensura's own holy handling already applies). */
+    /**
+     * The player's layer makes Tensura treat them as undead (so Tensura's own holy handling already applies), and the
+     * hook into Tensura is really in place.
+     */
     public static boolean treatedAsUndeadBySpecies(Player p) {
         return treatedAsUndead.test(p);
     }
 
-    /** A vampire-type species (R103: exempt from the undead/daemon denial for hunters and werewolves). */
-    public static boolean isVampireTypeSpecies(Player p) {
-        return vampireTypeSpecies.test(p);
+    /**
+     * R103: {@code raceId} is an apex race and the player's species is vampire-type, so the undead/daemon denial for
+     * hunters and werewolves does not apply to that race. Pass the race the player has, or is about to get.
+     */
+    public static boolean isApexVampireType(Player p, ResourceLocation raceId) {
+        return apexVampireType.test(p, raceId);
     }
 }

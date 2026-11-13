@@ -70,12 +70,9 @@ public final class SpeciesLayer {
         return SpeciesTensuraConfig.undeadTreatment() && spec(p).treatAsUndead();
     }
 
-    /** Species that count as vampires for R103 (not the config: this is what the species is, not what it gets). */
-    public static boolean isVampireTypeSpecies(Player p) {
-        return switch (BloodlineAccess.get(p).species()) {
-            case ORIGINAL, ORIGINAL_HYBRID, HYBRID, HERETIC, TRIBRID -> true;
-            default -> false;
-        };
+    /** R103 (see {@link ApexRule}): an apex race of ours on a vampire-type species. */
+    public static boolean isApexVampireType(Player p, ResourceLocation raceId) {
+        return ApexRule.isApexVampire(BloodlineAccess.get(p).species(), raceId.getNamespace());
     }
 
     /** Idempotent: makes the player's skills and attributes match their layer. */

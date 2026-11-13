@@ -28,6 +28,7 @@ import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesLayer;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.TensuraHumanLikeCheck;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.HolyDamageBridge;
+import net.ofatech.supernaturalbloodlines.shared.tensura.LayerQuery;
 
 /** Registered by the part itself (RegisterGameTestsEvent), so these only exist when species_tensura is enabled. */
 @PrefixGameTestTemplate(false)
@@ -204,22 +205,40 @@ public final class SpeciesLayerGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void vampireTypeSpeciesIsNotEjectedFromHunters(GameTestHelper helper) {
+    public static void undeadRaceStillEjectsAVampireTypeSpeciesFromTheHunters(GameTestHelper helper) {
         ServerPlayer plain = TestPlayers.create(helper);
         VampirismAPI.factionPlayerHandler(plain).setFactionAndLevel(VReference.HUNTER_FACTION, 2);
         setRace(plain, "tensura:ghoul");
         helper.assertTrue(VampirismAPI.factionPlayerHandler(plain).getCurrentFaction() != VReference.HUNTER_FACTION,
                 "control: a hunter turned undead stayed a hunter");
 
+        // R103: only an apex race is the exception, a Tensura ghoul is not, whatever the species
         ServerPlayer original = TestPlayers.create(helper);
         species(original, Species.ORIGINAL);
         VampirismAPI.factionPlayerHandler(original).setFactionAndLevel(VReference.HUNTER_FACTION, 2);
         setRace(original, "tensura:ghoul");
-        helper.assertTrue(VampirismAPI.factionPlayerHandler(original).getCurrentFaction() == VReference.HUNTER_FACTION,
-                "a vampire-type species was ejected from the hunters (R103)");
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(original).getCurrentFaction() != VReference.HUNTER_FACTION,
+                "an Original with a Tensura undead race was not ejected from the hunters");
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void apexExemptionNeedsAnApexRaceAndAVampireTypeSpecies(GameTestHelper helper) {
+        ResourceLocation apex = ResourceLocation.parse("supernaturalbloodlines:primordial_vampire");
+        ResourceLocation ghoul = ResourceLocation.parse("tensura:ghoul");
+        for (Species s : new Species[] {Species.ORIGINAL, Species.ORIGINAL_HYBRID, Species.HYBRID, Species.HERETIC, Species.TRIBRID}) {
+            ServerPlayer p = TestPlayers.create(helper);
+            species(p, s);
+            helper.assertTrue(LayerQuery.isApexVampireType(p, apex), s + " with an apex race is not exempt");
+            helper.assertTrue(!LayerQuery.isApexVampireType(p, ghoul), s + " with a Tensura race is exempt");
+        }
+        for (Species s : new Species[] {Species.NONE, Species.WITCH, Species.SIPHONER, Species.HUNTER_OF_THE_FIVE}) {
+            ServerPlayer p = TestPlayers.create(helper);
+            species(p, s);
+            helper.assertTrue(!LayerQuery.isApexVampireType(p, apex), s + " is exempt");
+        }
+        helper.succeed();
+    }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void humanLikeCheckFollowsTheLines(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.create(helper);

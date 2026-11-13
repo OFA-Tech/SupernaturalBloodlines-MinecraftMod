@@ -67,7 +67,7 @@ public final class FactionRaceRules {
             }
         } else if (WEREWOLF_FACTION_ID.equals(event.getFactionToJoin().getID())
                 && (isUndeadOrDaemon(race) || race != null && race.is(NO_BLOOD))
-                && !LayerQuery.isVampireTypeSpecies(p)) { // R103: the vampire-type species are the exception
+                && !(race != null && LayerQuery.isApexVampireType(p, race.getRaceId()))) { // R103: apex races of vampire-type species
             event.setBehavior(PlayerFactionEvent.CanJoinFaction.Behavior.DENY);
         }
     }
@@ -77,7 +77,7 @@ public final class FactionRaceRules {
     private static EventResult onSetRace(ManasRaceInstance oldRace, LivingEntity entity, ManasRaceInstance newRace,
                                          boolean flag, Changeable<Boolean> changeable, Changeable<MutableComponent> message) {
         if (entity instanceof ServerPlayer p && !p.level().isClientSide && isUndeadOrDaemon(newRace)
-                && !LayerQuery.isVampireTypeSpecies(p)) {
+                && !LayerQuery.isApexVampireType(p, newRace.getRaceId())) { // R103
             IFactionPlayerHandler handler = VampirismAPI.factionPlayerHandler(p);
             if (handler.getCurrentFaction() == VReference.HUNTER_FACTION) {
                 handler.leaveFaction(false);
