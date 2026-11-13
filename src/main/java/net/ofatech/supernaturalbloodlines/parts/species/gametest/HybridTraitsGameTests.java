@@ -6,7 +6,12 @@ import de.teamlapen.werewolves.api.WReference;
 import de.teamlapen.werewolves.core.ModActions;
 import java.util.List;
 import java.util.UUID;
+import net.favouriteless.enchanted.common.blocks.entity.AltarBlockEntity;
+import net.favouriteless.enchanted.common.blocks.entity.GoldChalkBlockEntity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.world.entity.monster.Zombie;
+import net.ofatech.supernaturalbloodlines.parts.species.witch.Siphoning;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -511,6 +516,39 @@ public final class HybridTraitsGameTests {
             assertDamage(helper, sire, hybrid.damageSources().playerAttack(hybrid), "a cured hybrid");
         } finally {
             reset(hybrid);
+        }
+        helper.succeed();
+    }
+
+    /** A tribrid is a hybrid (speed and damage), a witch (cheaper rites on an altar) and a siphoner (drains creatures). */
+    @GameTest(template = "empty", templateNamespace = NS, batch = "tribrid_cost")
+    public static void tribridHasHybridTraitsAndWitchBonus(GameTestHelper helper) {
+        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
+        AltarBlockEntity altar = WitchGameTests.altar(helper, base, 5000);
+        BlockPos chalkPos = base.offset(0, 0, -2);
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(1, 1, 1));
+        zombie.setNoAi(true);
+        RecordingPlayer tribrid = RecordingPlayer.create(helper);
+        BloodlineAccess.set(tribrid, species(Species.TRIBRID).toBuilder().witchLayer(true).build());
+        GoldChalkBlockEntity chalk = WitchGameTests.chalk(helper, chalkPos, tribrid.getUUID(), base);
+        WitchGameTests.put(helper, tribrid, chalkPos);
+        try {
+            HybridTraits.sync(tribrid, 1 + FULL);
+            helper.assertTrue(amount(tribrid, Attributes.MOVEMENT_SPEED, 0.02) && amount(tribrid, Attributes.ATTACK_DAMAGE, 2.0),
+                    "hybrid traits: " + modifier(tribrid, Attributes.MOVEMENT_SPEED) + " / " + modifier(tribrid, Attributes.ATTACK_DAMAGE));
+            helper.assertTrue(chalk.tryConsumePower(1000), "the altar did not pay");
+            helper.assertTrue(WitchGameTests.power(altar) == 4250, "a tribrid pays 750 of 1000, altar left with " + WitchGameTests.power(altar));
+            helper.assertTrue(Siphoning.siphonEntity(tribrid, zombie), "the zombie gave a tribrid nothing, health " + zombie.getHealth()
+                    + ", invulnerableTime " + zombie.invulnerableTime + ", last " + zombie.getLastDamageSource());
+            BlockPos stone = base.offset(6, 0, 0);
+            helper.getLevel().setBlock(stone, net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.PartBlocks.BLOOD_STONE.get().defaultBlockState(),
+                    net.minecraft.world.level.block.Block.UPDATE_ALL);
+            tribrid.setShiftKeyDown(true);
+            helper.assertTrue(WitchGameTests.click(tribrid, stone).isCanceled(), "a tribrid's sneak click on altar power was not taken");
+            helper.assertTrue(BloodlineAccess.get(tribrid).siphonedPower() == 2 * Siphoning.GAIN, "siphoned " + BloodlineAccess.get(tribrid).siphonedPower());
+        } finally {
+            remove(helper, tribrid);
+            BloodlineAccess.set(tribrid, BloodlineState.NONE);
         }
         helper.succeed();
     }

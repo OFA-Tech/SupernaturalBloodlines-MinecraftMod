@@ -203,8 +203,15 @@ public final class SpeciesGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void doppelgangerRiteOnlyExistsWithWerewolves(GameTestHelper helper) {
-        boolean present = net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport.type(helper, "doppelganger_blood") != null;
-        helper.assertTrue(present == ModList.get().isLoaded("werewolves"), "doppelganger_blood rite present: " + present);
+        boolean werewolves = ModList.get().isLoaded("werewolves");
+        for (String hybrid : java.util.List.of("doppelganger_blood", "hybrid_blood", "rite_of_the_moon")) {
+            boolean present = net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport.type(helper, hybrid) != null;
+            helper.assertTrue(present == werewolves, hybrid + " rite present: " + present + ", werewolves loaded: " + werewolves);
+        }
+        for (String always : java.util.List.of("immortality", "original_blood", "ancestral_calling")) {
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport.type(helper, always) != null,
+                    always + " rite is missing (werewolves loaded: " + werewolves + ")");
+        }
         helper.succeed();
     }
 

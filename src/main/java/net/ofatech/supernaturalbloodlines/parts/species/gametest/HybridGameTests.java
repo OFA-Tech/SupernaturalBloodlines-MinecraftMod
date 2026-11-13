@@ -284,6 +284,61 @@ public final class HybridGameTests {
         helper.succeed();
     }
 
+    // ---- witches and siphoners ----
+
+    /** A witch werewolf keeps the witch layer through the transition and ends it as a tribrid, not a plain hybrid. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void witchWerewolfCompletingTransitionBecomesTribrid(GameTestHelper helper) {
+        ServerPlayer dying = wolf(helper);
+        ServerPlayer p = wolf(helper);
+        UUID sire = UUID.randomUUID();
+        BloodlineState witch = BloodlineState.NONE.toBuilder().species(Species.WITCH).witchLayer(true).build();
+        try {
+            BloodlineAccess.set(dying, witch);
+            drinkOriginalBlood(helper, dying, sire);
+            killByAnything(helper, dying);
+            BloodlineState s = BloodlineAccess.get(dying);
+            helper.assertTrue(s.inTransition() && s.species() == Species.WITCH && sire.equals(s.pendingSire()),
+                    "the witch did not enter the transition as a witch: " + s);
+
+            BloodlineAccess.set(p, s);
+            ItemStack bottle = new ItemStack(SpeciesRegistries.DOPPELGANGER_BLOOD.get());
+            p.setItemInHand(InteractionHand.MAIN_HAND, bottle.finishUsingItem(helper.getLevel(), p));
+            s = BloodlineAccess.get(p);
+            helper.assertTrue(s.species() == Species.TRIBRID, "species is " + s.species() + ", state " + s);
+            helper.assertTrue(sire.equals(s.sire()) && s.witchLayer(), "sire " + s.sire() + ", witch layer " + s.witchLayer());
+            helper.assertTrue(!s.inTransition() && s.pendingSire() == null && s.transitionTicksLeft() == 0, "transition left behind: " + s);
+            helper.assertTrue(handler(p).getCurrentFaction() == WReference.WEREWOLF_FACTION, "left the werewolf faction");
+        } finally {
+            reset(dying);
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    /** A siphoner may not take the hybrid path (R: siphoner_hybrid): the dose does nothing and the species stays. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void siphonerWerewolfCannotStartTransition(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper);
+        BloodlineState siphoner = BloodlineState.NONE.toBuilder().species(Species.SIPHONER).siphonedPower(300).build();
+        try {
+            BloodlineAccess.set(p, siphoner);
+            drinkOriginalBlood(helper, p, UUID.randomUUID());
+            killByAnything(helper, p);
+            BloodlineState s = BloodlineAccess.get(p);
+            helper.assertTrue(!s.inTransition() && s.pendingSire() == null && s.transitionTicksLeft() == 0, "a siphoner entered the transition: " + s);
+            helper.assertTrue(s.species() == Species.SIPHONER, "species is " + s.species());
+            // and the rules say why
+            var out = net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineRules.apply(siphoner,
+                    net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent.DIED_WITH_ORIGINAL_BLOOD,
+                    net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext.of(p, UUID.randomUUID()));
+            helper.assertTrue("supernaturalbloodlines.refusal.siphoner_hybrid".equals(out.refusalKey()), "refusal is " + out.refusalKey());
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
     // ---- death and respawn ----
 
     @GameTest(template = "empty", templateNamespace = NS)

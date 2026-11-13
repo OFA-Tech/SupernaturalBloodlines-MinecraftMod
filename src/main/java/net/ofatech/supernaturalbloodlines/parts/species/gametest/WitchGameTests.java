@@ -57,7 +57,7 @@ public final class WitchGameTests {
         return BloodlineState.NONE.toBuilder().species(s).witchLayer(s == Species.WITCH).siphonedPower(siphoned).build();
     }
 
-    private static void set(Object target, String field, Object value) {
+    static void set(Object target, String field, Object value) {
         try {
             Field f = target.getClass().getDeclaredField(field);
             f.setAccessible(true);
@@ -67,7 +67,7 @@ public final class WitchGameTests {
         }
     }
 
-    private static double power(AltarBlockEntity altar) {
+    static double power(AltarBlockEntity altar) {
         try {
             Field f = AltarBlockEntity.class.getDeclaredField("power");
             f.setAccessible(true);
@@ -77,7 +77,7 @@ public final class WitchGameTests {
         }
     }
 
-    private static AltarBlockEntity altar(GameTestHelper helper, BlockPos base, double power) {
+    static AltarBlockEntity altar(GameTestHelper helper, BlockPos base, double power) {
         ServerLevel level = helper.getLevel();
         for (int x = 0; x < 3; x++) {
             for (int z = 0; z < 2; z++) {
@@ -93,7 +93,7 @@ public final class WitchGameTests {
     }
 
     /** A gold chalk with a floor, cast by {@code caster}, linked to the altars (none = no altar at all). */
-    private static GoldChalkBlockEntity chalk(GameTestHelper helper, BlockPos pos, UUID caster, BlockPos... altars) {
+    static GoldChalkBlockEntity chalk(GameTestHelper helper, BlockPos pos, UUID caster, BlockPos... altars) {
         ServerLevel level = helper.getLevel();
         level.setBlock(pos.below(), Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
         level.setBlock(pos, EBlocks.GOLDEN_CHALK.get().defaultBlockState(), Block.UPDATE_CLIENTS);
@@ -106,7 +106,7 @@ public final class WitchGameTests {
         return chalk;
     }
 
-    private static void put(GameTestHelper helper, ServerPlayer p, BlockPos at) {
+    static void put(GameTestHelper helper, ServerPlayer p, BlockPos at) {
         p.setPos(Vec3.atBottomCenterOf(at).add(0, 1, 0));
         helper.getLevel().addNewPlayer(p);
     }
@@ -408,7 +408,7 @@ public final class WitchGameTests {
 
     // ---- siphoning ----
 
-    private static PlayerInteractEvent.RightClickBlock click(ServerPlayer p, BlockPos pos) {
+    static PlayerInteractEvent.RightClickBlock click(ServerPlayer p, BlockPos pos) {
         var e = new PlayerInteractEvent.RightClickBlock(p, InteractionHand.MAIN_HAND, pos,
                 new BlockHitResult(Vec3.atCenterOf(pos), net.minecraft.core.Direction.UP, pos, false));
         NeoForge.EVENT_BUS.post(e);
@@ -567,6 +567,31 @@ public final class WitchGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void siphonerJoiningVampireBecomesHeretic(GameTestHelper helper) {
         joinsVampires(helper, Species.SIPHONER, Species.HERETIC);
+        helper.succeed();
+    }
+
+    /** A siphoner who joins the vampires becomes a heretic and still siphons blocks and creatures (and keeps the witch bonus). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void hereticKeepsSiphoning(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos stone = helper.absolutePos(new BlockPos(0, 1, 0));
+        level.setBlock(stone, PartBlocks.BLOOD_STONE.get().defaultBlockState(), Block.UPDATE_ALL);
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(2, 1, 1));
+        zombie.setNoAi(true);
+        RecordingPlayer p = player(Species.SIPHONER, 0, helper);
+        try {
+            VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
+            helper.assertTrue(BloodlineAccess.get(p).species() == Species.HERETIC, "species is " + BloodlineAccess.get(p).species());
+            p.setShiftKeyDown(true);
+            helper.assertTrue(click(p, stone).isCanceled(), "a heretic's sneak click on altar power was not taken");
+            helper.assertTrue(BloodlineAccess.get(p).siphonedPower() == Siphoning.GAIN, "block: siphoned " + BloodlineAccess.get(p).siphonedPower());
+            helper.assertTrue(Siphoning.siphonEntity(p, zombie), "the zombie gave a heretic nothing, health " + zombie.getHealth());
+            helper.assertTrue(BloodlineAccess.get(p).siphonedPower() == 2 * Siphoning.GAIN, "creature: siphoned " + BloodlineAccess.get(p).siphonedPower());
+            helper.assertTrue(WitchAltarBonus.hasBonus(Species.HERETIC), "a heretic lost the witch bonus");
+        } finally {
+            VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
+            BloodlineAccess.set(p, BloodlineState.NONE);
+        }
         helper.succeed();
     }
 }
