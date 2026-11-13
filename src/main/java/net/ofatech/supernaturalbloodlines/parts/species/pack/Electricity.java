@@ -38,7 +38,7 @@ public final class Electricity {
         });
         // a bolt does nothing to its surroundings in its own tick, so the scan runs once, when it appears
         NeoForge.EVENT_BUS.addListener((EntityJoinLevelEvent e) -> {
-            if (e.getEntity() instanceof LightningBolt bolt && e.getLevel() instanceof ServerLevel) {
+            if (e.getEntity() instanceof LightningBolt bolt && !bolt.visualOnly && e.getLevel() instanceof ServerLevel) {
                 for (LivingEntity near : candidates.apply(bolt)) {
                     if (near.distanceToSqr(bolt) <= STRIKE_RANGE * STRIKE_RANGE) {
                         shockIfSupernatural(near);

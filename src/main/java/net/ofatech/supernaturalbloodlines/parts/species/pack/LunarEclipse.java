@@ -31,8 +31,9 @@ import org.jetbrains.annotations.VisibleForTesting;
  */
 public final class LunarEclipse {
     public static final long NONE = -1;
-    public static final long DUSK = 13000;
-    public static final long DAWN = 23000;
+    // Werewolves' own full-moon window (Helper.isFullMoon): the time of day is after 12786 and before 23216 on the phase-0 day
+    public static final long DUSK = 12786;
+    public static final long DAWN = 23216;
     public static final String START_MESSAGE = "supernaturalbloodlines.eclipse.start";
     public static final String END_MESSAGE = "supernaturalbloodlines.eclipse.end";
     private static final String NAME = "supernaturalbloodlines_eclipse";
@@ -110,7 +111,7 @@ public final class LunarEclipse {
         long timeOfDay = time % 24000L;
         if (d.eclipseNight != NONE && !isActive(d, time)) {
             stop(server);
-        } else if (d.eclipseNight == NONE && d.rolledNight != day && timeOfDay >= DUSK && timeOfDay < DAWN
+        } else if (d.eclipseNight == NONE && d.rolledNight != day && timeOfDay > DUSK && timeOfDay < DAWN
                 && server.overworld().getMoonPhase() == 0 && !players.apply(server).isEmpty()) {
             d.rolledNight = day;
             d.setDirty();

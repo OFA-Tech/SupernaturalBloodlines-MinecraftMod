@@ -1,21 +1,28 @@
 package net.ofatech.supernaturalbloodlines.parts.species.gametest;
 
 import de.teamlapen.vampirism.api.VampirismAPI;
+import de.teamlapen.vampirism.api.entity.player.IFactionPlayer;
 import de.teamlapen.vampirism.api.entity.player.actions.IAction;
+import de.teamlapen.vampirism.api.entity.player.actions.IActionHandler;
 import de.teamlapen.vampirism.api.event.ActionEvent;
 import de.teamlapen.werewolves.api.WReference;
+import de.teamlapen.werewolves.api.entities.player.IWerewolfPlayer;
 import de.teamlapen.werewolves.core.ModActions;
+import de.teamlapen.werewolves.util.FormHelper;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -40,11 +47,13 @@ import net.ofatech.supernaturalbloodlines.parts.species.item.ShockedEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.Taser;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.Electricity;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.FormBlocks;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.LunarEclipse;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackBonus;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.RankEffects;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.shared.werewolves.ForcedShift;
+import net.ofatech.supernaturalbloodlines.shared.werewolves.MoonControl;
 
 /** Plan 9, task 5: the lunar eclipse and electricity (Shocked, the Taser). Werewolves only. */
 @PrefixGameTestTemplate(false)
@@ -92,6 +101,7 @@ public final class EclipseElectricityGameTests {
         EclipsePayload.overrideSpy(null);
         SireCall.overridePlayerLookup(null);
         AlphaRoar.overridePlayers(null);
+        AlphaRoar.reset();
         server.overworld().setDayTime(dayTime);
     }
 
@@ -141,11 +151,15 @@ public final class EclipseElectricityGameTests {
             helper.assertFalse(formCancelled(alpha, ModActions.BEAST_FORM.get(), false), "control: the Alpha could not shift at will");
             helper.assertFalse(formCancelled(plain, ModActions.BEAST_FORM.get(), true), "control: the full moon's shift was cancelled");
             helper.assertTrue(attackModifier(alpha, RankEffects.MODIFIER_ID) > 0, "control: the Alpha has no rank perk");
+            helper.assertTrue(attackModifier(plain, RankEffects.MODIFIER_ID) < 0, "control: the Omega has no penalty");
             PackBonus.tick(alpha);
             helper.assertTrue(attackModifier(alpha, PackBonus.MODIFIER_ID) > 0, "control: the Alpha has no pack bonus");
 
             betas.forEach(ServerPlayer::removeAllEffects);
             helper.assertTrue(LunarEclipse.start(server), "the eclipse did not start");
+            helper.assertTrue(AlphaRoar.roar(alpha, 777) != null, "the Alpha roared in the eclipse");
+            helper.assertFalse(plain.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN), "a refused roar slowed a wolf");
+            helper.assertTrue(attackModifier(plain, RankEffects.MODIFIER_ID) < 0, "the Omega lost the penalty in the eclipse: " + attackModifier(plain, RankEffects.MODIFIER_ID));
             helper.assertFalse(LunarEclipse.start(server), "a second start counted as a start");
             helper.assertTrue(LunarEclipse.active(server), "the eclipse is not active");
             helper.assertTrue(seen.contains("alpha:true"), "the clients were not told: " + seen);
@@ -167,6 +181,7 @@ public final class EclipseElectricityGameTests {
             helper.assertFalse(LunarEclipse.active(server), "the eclipse is still active");
             helper.assertTrue(seen.contains("alpha:false"), "the clients were not told it ended: " + seen);
             helper.assertFalse(formCancelled(alpha, ModActions.BEAST_FORM.get(), false), "the Alpha could not shift after the eclipse");
+            helper.assertTrue(AlphaRoar.roar(alpha, 778) == null, "the Alpha could not roar after the eclipse (the refusal spent the cooldown?)");
             helper.assertTrue(attackModifier(alpha, RankEffects.MODIFIER_ID) > 0, "the rank perk did not come back");
             PackBonus.tick(alpha);
             helper.assertTrue(attackModifier(alpha, PackBonus.MODIFIER_ID) > 0, "the pack bonus did not come back");
@@ -276,6 +291,103 @@ public final class EclipseElectricityGameTests {
         helper.succeed();
     }
 
+    // ---- a form that is already on ----
+
+    /** The real Werewolves activation (the form action through the player's action handler). */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static IAction.PERM lastPerm;
+    private static String tried = "";
+
+    /** The first of the form actions the wolf may use (which ones depend on the level and the skills). */
+    private static boolean activateAnyForm(ServerPlayer p) {
+        tried = "";
+        for (IAction<?> form : List.of(ModActions.HUMAN_FORM.get(), ModActions.SURVIVAL_FORM.get(), ModActions.BEAST_FORM.get())) {
+            if (activate(p, form)) {
+                return true;
+            }
+            tried += form.getClass().getSimpleName() + "=" + lastPerm + " ";
+        }
+        return false;
+    }
+
+
+    private static boolean activate(ServerPlayer p, IAction<?> action) {
+        IFactionPlayer<?> fp = VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow();
+        IActionHandler handler = fp.getActionHandler();
+        handler.unlockActions(List.of(action));
+        lastPerm = handler.toggleAction((IAction) action, new IAction.ActivationContext() {
+            @Override
+            public Optional<BlockPos> targetBlock() {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<Entity> targetEntity() {
+                return Optional.empty();
+            }
+        });
+        return lastPerm == IAction.PERM.ALLOWED;
+    }
+
+    private static boolean formOn(ServerPlayer p) {
+        return FormHelper.isFormActionActive((IWerewolfPlayer) VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow());
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void eclipseDropsAnActiveForm(GameTestHelper helper) {
+        MinecraftServer server = helper.getLevel().getServer();
+        long before = server.overworld().getDayTime();
+        server.overworld().setDayTime(FULL_MOON_DAY * 24000 + NIGHT);
+        ServerPlayer shifted = wolf(helper, Rank.OMEGA, 1, 1.5);
+        ServerPlayer ticked = wolf(helper, Rank.OMEGA, 1, 3.5);
+        ServerPlayer human = wolf(helper, Rank.OMEGA, 1, 5.5);
+        online(shifted, ticked, human);
+        MoonControl.overrideMoonBound(false);
+        try {
+            helper.assertTrue(activateAnyForm(shifted), "control: the wolf could not shift: " + tried);
+            helper.assertTrue(activateAnyForm(ticked), "control: the second wolf could not shift: " + tried);
+            helper.assertTrue(formOn(shifted) && formOn(ticked), "control: no form is on");
+            helper.assertFalse(FormBlocks.sweep(shifted), "a form was dropped without a block");
+            helper.assertTrue(formOn(shifted), "the sweep dropped the form without a block");
+
+            LunarEclipse.start(server);
+            helper.assertTrue(FormBlocks.sweep(shifted), "the sweep did not drop the form in the eclipse");
+            helper.assertFalse(formOn(shifted), "the wolf is still in a form after the eclipse started");
+            helper.assertFalse(FormBlocks.sweep(shifted), "the sweep dropped a form that was off");
+            helper.assertFalse(FormBlocks.sweep(human), "the sweep touched a wolf with no form on");
+
+            // the periodic pass does it too (the tick listener, not only the method)
+            helper.assertTrue(formOn(ticked), "the other wolf lost its form before its pass");
+            ticked.tickCount = FormBlocks.SWEEP_PERIOD * 5;
+            NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.tick.PlayerTickEvent.Post(ticked));
+            helper.assertFalse(formOn(ticked), "the player tick did not drop the form");
+        } finally {
+            MoonControl.overrideMoonBound(null);
+            reset(server, before);
+            clean(shifted, ticked, human);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void shockedDropsAnActiveForm(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper, Rank.OMEGA, 1, 1.5);
+        ServerPlayer calm = wolf(helper, Rank.OMEGA, 1, 3.5);
+        MoonControl.overrideMoonBound(false);
+        try {
+            helper.assertTrue(activateAnyForm(p), "control: the wolf could not shift: " + tried);
+            helper.assertTrue(activateAnyForm(calm), "control: the second wolf could not shift: " + tried);
+            Electricity.shock(p);
+            helper.assertTrue(FormBlocks.sweep(p), "the sweep did not drop the form of a shocked wolf");
+            helper.assertFalse(formOn(p), "the shocked wolf is still in a form");
+            helper.assertFalse(FormBlocks.sweep(calm), "the sweep dropped the form of a wolf that is not shocked");
+            helper.assertTrue(formOn(calm), "a wolf that is not shocked lost its form");
+        } finally {
+            MoonControl.overrideMoonBound(null);
+            clean(p, calm);
+        }
+        helper.succeed();
+    }
     // ---- electricity ----
 
     @GameTest(template = "empty", templateNamespace = NS)
@@ -290,11 +402,19 @@ public final class EclipseElectricityGameTests {
         try {
             helper.assertFalse(struck.hasEffect(SpeciesRegistries.SHOCKED), "control: a wolf is shocked");
 
-            // a visual bolt (no damage, no fire) at the first wolf: the join scan reaches within 3 blocks
+            // a visual-only bolt (a decoration, e.g. a skeleton trap's) shocks nobody
+            LightningBolt decoration = EntityType.LIGHTNING_BOLT.create(helper.getLevel());
+            decoration.moveTo(helper.absoluteVec(new Vec3(1.5, 1, 1.5)));
+            decoration.setVisualOnly(true);
+            helper.getLevel().addFreshEntity(decoration);
+            helper.assertFalse(struck.hasEffect(SpeciesRegistries.SHOCKED), "a visual-only bolt shocked a wolf");
+            decoration.discard();
+
+            // a real bolt at the first wolf (removed before it ticks, so no fire): the join scan reaches within 3 blocks
             LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(helper.getLevel());
             bolt.moveTo(helper.absoluteVec(new Vec3(1.5, 1, 1.5)));
-            bolt.setVisualOnly(true);
             helper.getLevel().addFreshEntity(bolt);
+            bolt.discard();
             MobEffectInstance shocked = struck.getEffect(SpeciesRegistries.SHOCKED);
             helper.assertTrue(shocked != null && shocked.getDuration() > 590 && shocked.getDuration() <= 600, "the wolf at the strike: " + shocked);
             helper.assertTrue(near.hasEffect(SpeciesRegistries.SHOCKED), "a wolf 2 blocks away was not shocked");

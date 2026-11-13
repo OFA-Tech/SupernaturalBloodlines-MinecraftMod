@@ -32,7 +32,7 @@ public final class RankEffects {
     static final double ALPHA_HEALTH = 4;
     static final double TRUE_ALPHA_SCALE = 1.1;
 
-    // the lunar eclipse takes the perks away (plan 9, task 5): a source says "not now" and calls sync when that changes
+    // the lunar eclipse takes the perks away, not the Omega penalty (plan 9, task 5): a source says "not now" and calls sync when that changes
     private static final List<Predicate<ServerPlayer>> SUPPRESSORS = new CopyOnWriteArrayList<>();
 
     private RankEffects() {
@@ -67,7 +67,11 @@ public final class RankEffects {
     }
 
     private static void apply(ServerPlayer p, boolean werewolf) {
-        Rank rank = werewolf && SUPPRESSORS.stream().noneMatch(s -> s.test(p)) ? PackAccess.wolf(p).rank() : Rank.NONE;
+        Rank rank = werewolf ? PackAccess.wolf(p).rank() : Rank.NONE;
+        // a suppressor (the lunar eclipse) takes the perks away, not the Omega's penalty
+        if (rank != Rank.OMEGA && SUPPRESSORS.stream().anyMatch(s -> s.test(p))) {
+            rank = Rank.NONE;
+        }
         double scale = rank == Rank.TRUE_ALPHA ? TRUE_ALPHA_SCALE : 1;
         boolean alpha = rank == Rank.ALPHA || rank == Rank.TRUE_ALPHA;
         set(p, Attributes.ATTACK_DAMAGE, rank == Rank.OMEGA ? OMEGA_PENALTY : alpha ? round(ALPHA_ATTACK * scale) : 0, Operation.ADD_MULTIPLIED_TOTAL);

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.VisibleForTesting;
  * The Alpha Roar (R94): the pack's Betas within 32 blocks get Strength I and Speed I for 30 s and may shift at will for
  * that time; other werewolves within 16 blocks are forced out of their form and slowed (Slowness II, 5 s). Only an Alpha
  * or True Alpha, once per 1200 ticks. The key press arrives as a {@code RoarPayload}; everything is decided here from
- * server state. The cooldown is kept in memory per player and forgotten when the server stops (tick counts start again). A dead or spectating Alpha cannot roar. Links Werewolves.
+ * server state. The cooldown is kept in memory per player and forgotten when the server stops (tick counts start again). A dead or spectating Alpha cannot roar, and nobody can during a lunar eclipse (refused with a message, no cooldown spent). Links Werewolves.
  */
 public final class AlphaRoar {
     public static final int COOLDOWN = 1200;
@@ -84,6 +84,9 @@ public final class AlphaRoar {
     public static Component roar(ServerPlayer p, long now) {
         if (!PackAccess.isAlpha(PackAccess.wolf(p).rank()) || !VampirismSupernatural.isWerewolf(p)) {
             return Component.translatable(KEY + "not_alpha");
+        }
+        if (LunarEclipse.active(p.server)) {
+            return Component.translatable(KEY + "roar_eclipse");
         }
         if (!p.isAlive() || p.isSpectator()) {
             return Component.translatable(KEY + "roar_unavailable");
