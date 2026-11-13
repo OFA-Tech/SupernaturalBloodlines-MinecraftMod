@@ -4,13 +4,13 @@ Requires: `enchanted`, `tensura`. Package: `net.ofatech.supernaturalbloodlines.p
 
 Checklist (from the design, section 1). Tick items as they ship.
 
-- [ ] Altar power from Tensura magic blocks (data): magic ore, crystal and magisteel block ids, listed from the Tensura jar.
+- [x] Altar power from Tensura magic blocks (data): magic ore, crystal and magisteel block ids, listed from the Tensura jar. See "Data (Task 2)".
 - [ ] Curse *Magicule Drain*: slowly lowers magicules while active.
 - [ ] Curse *Skill Seal*: one random learned skill can't be activated while active (`SkillEvents.ACTIVATE_SKILL` interrupt).
 - [ ] Rite of Purification (data): holy damage in an area to Tensura-undead races and `minecraft:undead`; the damage type id contains "holy".
 - [ ] Rite *Magicule Offering*: converts the caster's magicules into rite power (custom factory, or a PowerProvider shim).
 - [ ] Spirit Poppet (code): protects against damage in `tensura:is_spiritual`.
-- [ ] EP for Enchanted mobs (data): `entity_existence` entries.
+- [x] EP for Enchanted mobs (data): `entity_existence` entries. **Visual check pending** (Task 2 Step 3): `runClient`, spawn an Enchanted mandrake and familiar cat and open Tensura's analysis. Replaced by the GameTest `enchantedMobsHaveEp` (registry contents), which does not prove the analysis screen.
 
 
 ## Hook points (verified)
@@ -52,7 +52,7 @@ Altar power (read by `AltarPowerData` / `common.enchanted.altar.PowerProvider`):
 
 Rites:
 
-- `net.favouriteless.enchanted.common.enchanted.circle_magic.rites.Rite` (abstract). Constructor `protected Rite(Rite.BaseRiteParams baseParams, Rite.RiteParams params)`. `BaseRiteParams` is a record `(RiteType type, ServerLevel level, BlockPos pos, int tickPower)`. `RiteParams` has public `UUID caster`, `@Nullable UUID target`, mutable `List<ItemStack> consumedItems`, and `ticks()`; built only by Enchanted (`RiteParams.of(caster, items)`).
+- `net.favouriteless.enchanted.common.enchanted.circle_magic.rites.Rite` (abstract). Constructor `protected Rite(Rite.BaseRiteParams baseParams, Rite.RiteParams params)`. `BaseRiteParams` is a record `(RiteType type, ServerLevel level, BlockPos pos, int tickPower)`. `RiteParams` has public `UUID caster`, `@Nullable UUID target`, mutable `List<ItemStack> consumedItems`, and `ticks()`; created with `RiteParams.of(caster, items)` or `RiteParams.empty()` (private constructor), which a unit test can call directly.
 - Lifecycle: `start()` first sets `params.target` from the consumed item's `ENTITY_REF` component (override `findTargetUUID` to change), then calls `onStart(RiteParams)`; returning `false` stops the rite at once. Each server tick `tick()` charges `tickPower` from the gold chalk's altar power (if it cannot pay the rite stops), then calls `onTick(RiteParams)`; **return `true` to keep going, `false` to finish** (the default returns `false`). `stop()` calls `onStop(RiteParams)` and detaches the chalk. Failure: call `cancel()` from `onStart`/`onTick`; it plays a sound, drops the consumed items back at the chalk, detaches and returns `false`, so `return cancel();` is the "fail the rite and take nothing" idiom.
 - Caster and centre: the caster is a UUID (`params.caster`), resolved with `protected Entity findEntity(UUID)` (cached; searches all levels). The centre is `protected final BlockPos pos`, the gold chalk block the rite runs on; `level` is the `ServerLevel`. There is no radius field: each rite chooses its own.
 - The one-off `power` in the rite JSON is paid before the rite starts (by the chalk); `tick_power` is the per-tick cost passed as `tickPower`.
@@ -61,8 +61,8 @@ Rites:
 
 Curses (`net.favouriteless.enchanted.api.curses`):
 
-- `Curse` interface: `onInitialise(ServerPlayer, int strength, long age)`, `onRemove(...)`, `tick(...)`, `getMaxStrength()` (default 2), `type()`. Register a `Curse.Type<T>(ResourceLocation id, Supplier<T>, MapCodec<T>)` with `CurseManager.get().register(type)` during common setup (duplicate id throws). Curses are stored per player UUID in saved data and are re-initialised on login and clone.
-- `CurseManager.applyCurse(type, uuid, level, ServerLevel)`, `removeCurse(type, uuid, ServerLevel)` (marks removed; `onRemove` runs on the next level tick for online players), `getCurses(uuid, ServerLevel)`. `RemoveCurseFactory`/`ApplyCurseFactory` take `{"curse": "<curse id>"}`; the **remove-curse rite calls `removeCurse`, which ends in `Curse.onRemove`**, so everything a curse changes must be undone in `onRemove`.
+- `Curse` interface: `onInitialise(ServerPlayer, int strength, long age)`, `onRemove(...)`, `tick(...)`, `getMaxStrength()` (default 2), `type()`. Register a `Curse.Type<T>(ResourceLocation id, Supplier<T>, MapCodec<T>)` with `CurseManager.get().register(type)` during common setup (duplicate id throws). Curses are stored per player UUID in saved data and are re-initialised (`onInitialise`) on login (`CommonEvents.onPlayerLoggedIn`; the javadoc also promises clone/respawn, which was not checked in code).
+- `CurseManager.applyCurse(type, uuid, curseLevel, ServerLevel)`, `removeCurse(type, uuid, ServerLevel)` (marks removed; `onRemove` runs on the next level tick for online players), `getCurses(uuid, ServerLevel)`. `RemoveCurseFactory`/`ApplyCurseFactory` take `{"curse": "<curse id>"}`; the **remove-curse rite calls `removeCurse`, which ends in `Curse.onRemove`**, so everything a curse changes must be undone in `onRemove`.
 - Enchanted does **not** remove curses on death (nothing in `CommonEvents`); a death-clears-curse rule has to be ours, using `CurseManager.removeCurse`.
 
 Poppets:
@@ -75,3 +75,29 @@ Poppets:
 Entities (`EEntityTypes`, all in namespace `enchanted`): `broomstick`, `familiar_cat`, `mandrake`, `throwable_brew`, `voodoo_item`. Only `familiar_cat` (a `FamiliarCat`, tamed cat) and `mandrake` (monster) are living mobs that Tensura can analyse; the other three are vehicles or projectiles/item entities. So EP data is needed for exactly those two.
 
 Damage types: `enchanted:sacrifice`, `enchanted:sound`, `enchanted:voodoo`, `enchanted:internal_explosion`.
+
+## Data (Task 2)
+
+Files under `src/main/resources/data/tensura/`, all with `neoforge:conditions` `mod_loaded enchanted`.
+
+**Altar power** (`enchanted/altar/block/<block>.json`; path and format verified in the Enchanted jar, see above. The plan's path matches how Enchanted loads it, so nothing differs from the plan. Enchanted counts power by block first, then by tag; our files are per block):
+
+| Blocks | `power` | `limit` |
+|---|---|---|
+| `magic_ore`, `deepslate_magic_ore` | 6 | 20 |
+| `magic_ore_block`, `low_/medium_/high_quality_magic_crystal_block`, `low_/high_/pure_magisteel_block`, `mithril_block`, `orichalcum_block`, `adamantite_block`, `hihiirokane_block` | 10 | 10 |
+
+Plain stone adds nothing. Grass, dirt and similar already carry Enchanted data, which is why the test altars are built high up.
+
+**EP** (`entity_existence/supernaturalbloodlines_enchanted_<mob>.json`; only the two living Enchanted mobs, the other three entities are a vehicle, a projectile and an item-like entity):
+
+| Entity | magicule min-max | aura min-max | spiritualHealth | Reasoning |
+|---|---|---|---|---|
+| `enchanted:mandrake` (small hostile plant) | 300-500 | 50-100 | 30 | a little below Tensura's `cattledeer` (500-700) |
+| `enchanted:familiar_cat` (bound pet cat) | 600-900 | 100-200 | 60 | a bit above the cattledeer, far below `tensura:winged_cat` (8000-9000) |
+
+**GameTests** (`parts/enchantedtensura/gametest/EnchantedTensuraDataGameTests`, registered from `EnchantedTensuraPart.init`):
+
+- `magicBlocksPowerAltar`: builds two **real** formed Enchanted altars (`AltarHelper.tryFormAltar`, `AltarBlockEntity.firstTick`), one with ten stone and one with ten `tensura:magic_ore` beside it, reads the capacity through `AltarMenu.getMaxPower`, and asserts ore minus stone is exactly 60. Both altars are 40 or more blocks above the floor and 40 apart, because the altar range is 32 and the grass and dirt floor has altar power of its own (a first run showed 200 with plain stone at floor height).
+- `altarPowerDataLoaded`: every block above has the expected `power` and `limit` in Enchanted's altar block registry.
+- `enchantedMobsHaveEp`: Tensura's `ENTITY_EXISTENCE` registry holds both mobs (control entry: `tensura:orc`).

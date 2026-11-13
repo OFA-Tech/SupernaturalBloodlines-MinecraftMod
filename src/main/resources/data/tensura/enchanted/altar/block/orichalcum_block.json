@@ -1,0 +1,5 @@
+{
+  "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "enchanted"}],
+  "power": 10,
+  "limit": 10
+}
