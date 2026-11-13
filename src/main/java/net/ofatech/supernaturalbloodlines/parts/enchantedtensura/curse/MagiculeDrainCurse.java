@@ -17,7 +17,7 @@ public final class MagiculeDrainCurse implements Curse {
 
     @Override
     public void tick(ServerPlayer target, int strength, long age) {
-        if (++ticks < INTERVAL) {
+        if (target.isRemoved() || ++ticks < INTERVAL) {
             return;
         }
         ticks = 0;

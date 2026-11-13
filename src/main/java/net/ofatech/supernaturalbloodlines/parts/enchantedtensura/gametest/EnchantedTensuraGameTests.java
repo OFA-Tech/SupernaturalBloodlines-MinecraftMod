@@ -5,7 +5,6 @@ import io.github.manasmods.manascore.network.api.util.Changeable;
 import io.github.manasmods.manascore.skill.api.ManasSkill;
 import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
 import io.github.manasmods.manascore.skill.api.SkillAPI;
-import io.github.manasmods.manascore.skill.api.SkillEvents;
 import io.github.manasmods.tensura.registry.attribute.TensuraAttributes;
 import io.github.manasmods.tensura.storage.TensuraStorages;
 import io.github.manasmods.tensura.storage.ep.IExistence;
@@ -109,9 +108,11 @@ public final class EnchantedTensuraGameTests {
                 .forEach(i -> SkillAPI.getSkillsFrom(p).forgetSkill(i));
     }
 
+    // Tensura's own ACTIVATE_SKILL listener interrupts first for these test players (no magicules), so firing the
+    // event would pass whether or not our seal works; the seal's own listener bodies are called instead
     private static EventResult fireActivate(ServerPlayer p, ResourceLocation skill) {
         ManasSkillInstance inst = SkillAPI.getSkillsFrom(p).getSkill(skill).orElseThrow();
-        return SkillEvents.ACTIVATE_SKILL.invoker().activateSkill(Changeable.of(inst), p, 0, 0);
+        return Curses.onActivate(Changeable.of(inst), p);
     }
 
     // ---- Magicule Drain ----
@@ -180,14 +181,14 @@ public final class EnchantedTensuraGameTests {
         helper.assertTrue(SkillSealCurse.blocks(p, sealed), "blocks() does not report the sealed skill");
         helper.assertTrue(fireActivate(p, sealed).isFalse(), "ACTIVATE_SKILL was not interrupted for " + sealed);
         ManasSkillInstance inst = SkillAPI.getSkillsFrom(p).getSkill(sealed).orElseThrow();
-        helper.assertTrue(SkillEvents.TOGGLE_SKILL.invoker().toggleSkill(Changeable.of(inst), p).isFalse(),
-                "TOGGLE_SKILL was not interrupted for " + sealed);
+        helper.assertTrue(Curses.onToggle(Changeable.of(inst), p).isFalse(), "toggling on was not interrupted for " + sealed);
 
         int others = 0;
         for (ManasSkill s : skills) {
             if (!s.getRegistryName().equals(sealed)) {
                 others++;
                 helper.assertTrue(!SkillSealCurse.blocks(p, s.getRegistryName()), "also blocked " + s.getRegistryName());
+                helper.assertTrue(!fireActivate(p, s.getRegistryName()).isFalse(), "the seal also interrupted " + s.getRegistryName());
             }
         }
         helper.assertTrue(others == skills.size() - 1, "expected exactly one sealed skill");
@@ -253,6 +254,40 @@ public final class EnchantedTensuraGameTests {
         helper.assertTrue(curseOf(p, Curses.SKILL_SEAL) == null, "the curse instance is still on the player");
         helper.assertTrue(curse.sealedSkill() == null, "onRemove did not clear the sealed skill");
         helper.assertTrue(!SkillSealCurse.blocks(p, sealed), "the skill is blocked after the curse was removed");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void sealedSkillGivesFeedback(GameTestHelper helper) {
+        RecordingPlayer p = RecordingPlayer.create(helper);
+        forgetAll(p);
+        learn(p, 3);
+        SkillSealCurse curse = applyCurse(p, Curses.SKILL_SEAL, 0);
+        curse.tick(p, 0, 1);
+        ResourceLocation sealed = curse.sealedSkill();
+        helper.assertTrue(sealed != null, "no skill sealed");
+        helper.assertTrue(!p.received(Curses.SKILL_SEALED), "told the player before any activation was blocked");
+
+        helper.assertTrue(fireActivate(p, sealed).isFalse(), "the sealed skill was not blocked");
+        helper.assertTrue(p.received(Curses.SKILL_SEALED), "the player was not told the skill is sealed");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void cursesIgnoreRemovedPlayers(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        forgetAll(p);
+        learn(p, 2);
+        IExistence ex = TensuraStorages.getExistenceFrom(p);
+        ex.setMagicule(1000);
+        MagiculeDrainCurse drain = applyCurse(p, Curses.MAGICULE_DRAIN, 0);
+        SkillSealCurse seal = applyCurse(p, Curses.SKILL_SEAL, 0);
+
+        p.setRemoved(Entity.RemovalReason.DISCARDED);
+        tickCurse(drain, p, 0, 40);
+        seal.tick(p, 0, 1);
+        helper.assertTrue(ex.getMagicule() == 1000, "the drain ran on a removed player: " + ex.getMagicule());
+        helper.assertTrue(seal.sealedSkill() == null, "the seal chose a skill for a removed player");
         helper.succeed();
     }
 

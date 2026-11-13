@@ -80,6 +80,9 @@ public final class SkillSealCurse implements Curse {
 
     @Override
     public void tick(ServerPlayer target, int strength, long age) {
+        if (target.isRemoved()) {
+            return;
+        }
         choose(target, strength);
     }
 
