@@ -12,7 +12,12 @@ public final class SpeciesConfig {
     public static final int DEFAULT_TRANSITION_TICKS = 24000;
 
     private static final ModConfigSpec.IntValue MAX_ORIGINALS;
+    public static final boolean DEFAULT_WITCH_BONUS = true;
+    public static final double DEFAULT_SIPHONER_CHANCE = 0.25;
+
     private static final ModConfigSpec.IntValue TRANSITION_TICKS;
+    private static final ModConfigSpec.BooleanValue WITCH_BONUS;
+    private static final ModConfigSpec.DoubleValue SIPHONER_CHANCE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -21,11 +26,54 @@ public final class SpeciesConfig {
                 .defineInRange("max_originals_per_world", DEFAULT_MAX_ORIGINALS, 0, 10_000);
         TRANSITION_TICKS = b.comment("Play time a werewolf has to drink doppelgänger blood after dying with Original's Blood, in ticks.")
                 .defineInRange("transition_ticks", DEFAULT_TRANSITION_TICKS, 20, 24_000_000);
+        WITCH_BONUS = b.comment("Witches, heretics and tribrids get altar range x1.5 and rite power cost x0.75.")
+                .define("witch_bonus_enabled", DEFAULT_WITCH_BONUS);
+        SIPHONER_CHANCE = b.comment("Chance that the Rite of Ancestral Calling makes a siphoner instead of a witch.")
+                .defineInRange("siphoner_chance", DEFAULT_SIPHONER_CHANCE, 0.0, 1.0);
         b.pop();
         SPEC = b.build();
     }
 
     private SpeciesConfig() {}
+
+    private static volatile Boolean witchBonusOverride;
+    private static volatile Double siphonerChanceOverride;
+
+    /** For tests: pins {@link #witchBonusEnabled()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideWitchBonus(Boolean value) {
+        witchBonusOverride = value;
+    }
+
+    /** For tests: pins {@link #siphonerChance()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideSiphonerChance(Double value) {
+        siphonerChanceOverride = value;
+    }
+
+    public static boolean witchBonusEnabled() {
+        Boolean pinned = witchBonusOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return WITCH_BONUS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_WITCH_BONUS;
+        }
+    }
+
+    public static double siphonerChance() {
+        Double pinned = siphonerChanceOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return SIPHONER_CHANCE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_SIPHONER_CHANCE;
+        }
+    }
 
     private static volatile Integer maxOriginalsOverride;
 

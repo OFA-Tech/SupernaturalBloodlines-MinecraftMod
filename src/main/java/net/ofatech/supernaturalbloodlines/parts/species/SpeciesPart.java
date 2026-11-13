@@ -17,7 +17,11 @@ import net.ofatech.supernaturalbloodlines.parts.species.hybrid.HybridTraits;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.SireBond;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.WitchGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.rite.AncestralCallingRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.HybridBloodRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.species.witch.Siphoning;
+import net.ofatech.supernaturalbloodlines.parts.species.witch.VampireJoin;
 import net.ofatech.supernaturalbloodlines.parts.species.original.Downed;
 import net.ofatech.supernaturalbloodlines.parts.species.original.DownedGiveUpPayload;
 import net.ofatech.supernaturalbloodlines.parts.species.original.DownedPayload;
@@ -53,8 +57,11 @@ public final class SpeciesPart {
         // before the datapacks load, so the rite JSONs can name this factory
         RiteFactoryRegistry.get().register(OriginalBloodRiteFactory.ID, OriginalBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(HybridBloodRiteFactory.ID, HybridBloodRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(AncestralCallingRiteFactory.ID, AncestralCallingRiteFactory.CODEC);
         SpeciesRegistries.register(modBus);
         OriginalRules.register();
+        Siphoning.register();
+        VampireJoin.register();
         HybridTraits.register(); // always: it strips the saved modifier when Werewolves is gone
         if (ModList.get().isLoaded("werewolves")) {
             TransitionHandler.register();
@@ -76,6 +83,7 @@ public final class SpeciesPart {
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(SpeciesGameTests.class);
             e.register(OriginalGameTests.class);
+            e.register(WitchGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(HybridGameTests.class);
                 e.register(HybridTraitsGameTests.class);

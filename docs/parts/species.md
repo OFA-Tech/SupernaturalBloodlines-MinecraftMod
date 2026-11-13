@@ -8,8 +8,8 @@ Rules live in `core/bloodline` (`BloodlineRules`, `PackRules`) and `docs/superpo
 - [x] Originals and Original's blood (Rite of Immortality, white-oak rule, Original's blood item).
 - [x] Hybrid transition (doppelgänger blood during the transition; the sire bond itself and the traits are Tasks 4 and plan 8).
 - [x] Original hybrid (Rite of the Moon, needs the gene; see "Original hybrid (Task 5)").
-- [ ] Witch and siphoner (Rite of Ancestral Calling; siphoning).
-- [ ] Heretic (a siphoner who joins the vampire faction).
+- [x] Witch and siphoner (Rite of Ancestral Calling; siphoning; see "Witch and siphoner (Task 6)").
+- [x] Heretic (a siphoner who joins the vampire faction). Keeps siphoning and the witch bonuses.
 - [ ] Tribrid (a witch who completes the hybrid transition).
 - [ ] Eligibility: only human-like races; others are refused with a message.
 - [ ] Death and respawn: species, sire and Original status persist; `siphoned_power` resets.
@@ -93,6 +93,18 @@ All in `parts/species/hybrid/`, registered by `SpeciesPart.init` only behind `is
 - **Gene kill (R24)** `hybrid/GeneAwakening`: `LivingDeathEvent` at LOW, not receiving cancelled events (so a downed or DBNO victim is no kill). The killer is a `ServerPlayer` with `wolf.latentGene` (the only pre-filter; `BloodlineRules` decides who qualifies), the victim a `Villager` (not a wandering trader) or a player: `GENE_AWAKENED_AS_VAMPIRE` through `BloodlineAccess.applyEvent` and `OutcomeExecutor`. A plain vampire becomes a bound HYBRID. Refusals (heretic) and no-ops (a human) are silent and run no actions.
 - **Level carry-over:** when an outcome has `LEAVE_FACTION` and then `JOIN_WEREWOLF` from the vampire faction (R24, Rite of the Moon on an Original), `OutcomeExecutor` sets the werewolf level to `max(1, min(oldVampireLevel, werewolf highest reachable level))`; werewolf to vampire (Silver Moon on a hybrid) is `max(1, min(oldWerewolfLevel, vampire highest))`. The old level is read before leaving. `FactionRiteFactory.runFactionActions` (used alone when species is off) keeps its level 1. **Plan 9 rolls the gene**; nothing here does.
 - **GameTests**: `OriginalHybridGameTests` (Werewolves only).
+
+## Witch and siphoner (Task 6)
+
+Package `parts/species/witch`; mixins in `mixin.species` (see [mixins](../mixins.md)).
+
+- **Rite of Ancestral Calling** `ancestral_calling.json` (factory `supernaturalbloodlines:ancestral_calling`, `AncestralCallingRiteFactory`; small circle, power 4000, bone + amethyst shard + lapis lazuli, condition `part_enabled species`; no Werewolves needed). The player on the circle (else the caster) gets ANCESTRAL_CALLING_SIPHONER with the config chance `siphoner_chance` (default 0.25), else ANCESTRAL_CALLING_WITCH; the roll uses the level's random (`pick(RandomSource, chance)`; tests pin the chance with `SpeciesConfig.overrideSiphonerChance`). The rules refuse vampires, hunters and anyone with a species; the refusal goes to the caster's action bar.
+- **Witch bonus** (`WitchAltarBonus`, config `witch_bonus_enabled`, default true): witch, heretic and tribrid. Cost x0.75 (rounded up) when the chalk's caster is such a species and within the normal altar range of one of the chalk's linked altars; range x1.5 when one stands within the normal range of the altar. Cost is hooked at both places Enchanted charges the altar: the start cost in `GoldChalkBlockEntity.serverTick` and the per-tick `tryConsumePower`. Range is hooked at the three reads of `altarRange`. Both are mixins with `require = 0`: if one misses, the bonus is missing, nothing crashes. Limit: the range bonus follows who is near when Enchanted looks (altar load, block changes), see the mixin table.
+- **Siphoning** (`Siphoning`): sneak + empty main hand + right click on a block with altar power (Enchanted's own entry or one through a block tag) or on a living entity, as a siphoner, heretic or tribrid: +50 `siphonedPower`, cap 1000. A block gives power once per 30 s per player (`SiphonCooldown`, in memory, per position and dimension, cleaned on use and on logout); a creature takes 2 magic damage and gives power only if the hit landed (so its invulnerability frames limit the rate). The click is cancelled when it counts. Each gain is one `BloodlineAccess.set` (one sync); nothing syncs per tick.
+- **Paying with siphoned power** (`RiteCost`): the witch discount first, then `siphonedPower` pays as much as it can, the altar the rest. The siphoned part is taken only once the rite started (`addRite` reached) or the per-tick charge returned true, so a poor altar costs nothing. When siphoned power covers the whole cost the altar is not asked at all, so a **siphoner with enough siphoned power can start a rite with no altar** (the chalk needs no linked altar in that case). Witches do not get that: "cast without an altar" is the siphoner's.
+- **Joined the vampires** (`VampireJoin`): `FactionLevelChanged` into the vampire faction from another one applies JOINED_VAMPIRE (witch to nothing, siphoner to heretic).
+- **Not done here:** `siphonedPower` reset on death (Task 7, DIED), a witch casting without an altar, the Tensura skills.
+- **GameTests**: `WitchGameTests`; the altar tests each run in their own batch at height 200, because a witch near any altar changes it.
 
 ## Hook points (verified)
 

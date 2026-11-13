@@ -62,6 +62,9 @@
   "rite.supernaturalbloodlines.hybrid_blood": "Rite of Hybrid's Blood",
   "death.attack.venom": "%1$s succumbed to werewolf venom",
   "supernaturalbloodlines.refusal.not_hybrid": "Only a hybrid can do this.",
+  "rite.supernaturalbloodlines.ancestral_calling": "Rite of Ancestral Calling",
+  "supernaturalbloodlines.siphon.full": "You cannot hold any more siphoned power.",
+  "supernaturalbloodlines.siphon.cooling": "This block has nothing left to give yet.",
   "supernaturalbloodlines.downed.title": "You are dying",
   "supernaturalbloodlines.downed.give_up": "Give up",
   "supernaturalbloodlines.downed.wait": "Wait"
