@@ -42,7 +42,10 @@ public final class SpeciesTensuraConfig {
         APEX_ENABLED = b.comment("Offer the apex race of the player's species in Tensura's evolution screen (R100). Off: no apex option; species keep working.",
                         "Common config: the evolution screen is built on the client too, so keep it equal on the server and the clients.")
                 .define("apex_evolutions_enabled", true);
-        EVOLUTION_MULTIPLIER = b.comment("A player with a species gets this multiple of the progress Tensura counts toward any evolution (capped at 100%).")
+        EVOLUTION_MULTIPLIER = b.comment("A player with a species gets this multiple of the progress Tensura counts toward any evolution (capped at 100%).",
+                        "It scales Tensura's weighted TOTAL, not each requirement: at 1.25 up to 20% of the requirement weight can stay unmet,",
+                        "so a non-EP condition (a boss, an item, an awakening) can be skipped when the EP part is high enough. 1.0 turns the bonus off.",
+                        "Common config: the evolution screen is built on the client too, so keep it equal on the server and the clients.")
                 .defineInRange("evolution_progress_multiplier", 1.25, 1.0, 10.0);
         SPEC = b.build();
     }

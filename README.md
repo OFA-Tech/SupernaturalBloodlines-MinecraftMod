@@ -31,6 +31,8 @@ Werewolves and Curios are optional extras inside parts. Each part also has a swi
 
 The startup log has one line per part (`Part SPECIES: enabled` or `disabled (missing: …)`).
 
+**Before removing this mod from a world:** reset every player on an apex race (`supernaturalbloodlines:primordial_vampire` and the other six) with Tensura's race command. ManasCore cannot load a saved race that is no longer registered, so such a player could not join. Switching only the `speciesTensura` part off is safe: the races stay registered.
+
 ## Docs
 
 | What | Where |

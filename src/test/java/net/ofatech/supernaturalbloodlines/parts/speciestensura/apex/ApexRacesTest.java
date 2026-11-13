@@ -77,6 +77,8 @@ class ApexRacesTest {
             assertTrue(HumanLikeLine.isEvolvedMember(id), id + " is not a human-like line member");
             assertFalse(HumanLikeLine.isSaintOrHigher(id), id + " must not be offered an apex race");
         }
-        assertEquals(5, undead.size());
+        assertEquals(4, undead.size());
+        assertFalse(undead.contains("supernaturalbloodlines:void_siphon"), "a siphoner is not undead");
+        assertFalse(ApexSpec.VOID_SIPHON.undead());
     }
 }

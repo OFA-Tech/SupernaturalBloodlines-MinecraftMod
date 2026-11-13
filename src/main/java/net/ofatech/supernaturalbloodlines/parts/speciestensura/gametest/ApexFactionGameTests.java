@@ -3,6 +3,8 @@ package net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest;
 import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import io.github.manasmods.manascore.race.api.RaceAPI;
+import io.github.manasmods.tensura.race.RaceUtils;
+import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.FactionRaceRules;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -27,6 +29,26 @@ public final class ApexFactionGameTests {
 
     private static boolean hunter(ServerPlayer p) {
         return VampirismAPI.factionPlayerHandler(p).getCurrentFaction() == VReference.HUNTER_FACTION;
+    }
+
+    /** The siphoner's apex race is not undead, so none of the undead rules (R103, bite refusal) touch it. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void siphonerOnVoidSiphonIsNotUndeadNorBloodless(GameTestHelper helper) {
+        ServerPlayer siphoner = TestPlayers.create(helper);
+        species(siphoner, Species.SIPHONER);
+        RaceAPI.getRaceFrom(siphoner).setRace(ResourceLocation.parse(NS + ":void_siphon"), false);
+        helper.assertTrue(!RaceUtils.isUndead(siphoner), "a siphoner on void_siphon is undead");
+        helper.assertTrue(!RaceUtils.isBloodless(siphoner), "a siphoner on void_siphon is bloodless (Tensura)");
+        helper.assertTrue(!FactionRaceRules.isBloodless(siphoner), "a siphoner on void_siphon is bloodless (bite refusal)");
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(siphoner).canJoin(VReference.HUNTER_FACTION), "a siphoner on void_siphon is refused by the hunters");
+
+        // a heretic stays undead through the layer, not through the race
+        ServerPlayer heretic = TestPlayers.create(helper);
+        species(heretic, Species.HERETIC);
+        RaceAPI.getRaceFrom(heretic).setRace(ResourceLocation.parse(NS + ":void_siphon"), false);
+        helper.assertTrue(RaceUtils.isUndead(heretic), "a heretic is not undead through its layer");
+        helper.assertTrue(!RaceUtils.isBloodless(heretic), "a heretic on void_siphon is bloodless");
+        helper.succeed();
     }
 
     @GameTest(template = "empty", templateNamespace = NS)

@@ -59,6 +59,7 @@ public final class ApexOffer {
 
     /** The mixin is on {@code ManasRaceInstance}: false when it was not applied (a ManasCore update, or the part is off). */
     public static boolean hookApplied() {
+        // the class literal loads ManasRaceInstance, and loading it is what applies the mixin: the flag is only set after that
         return ManasRaceInstance.class != null && SpeciesTensuraMixinPlugin.apexHooked();
     }
 }

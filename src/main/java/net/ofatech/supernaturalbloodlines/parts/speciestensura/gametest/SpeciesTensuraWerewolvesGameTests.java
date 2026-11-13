@@ -130,4 +130,25 @@ public final class SpeciesTensuraWerewolvesGameTests {
         helper.assertTrue(has(p), "a skill the player had before was taken");
         helper.succeed();
     }
+
+    /** void_siphon is not undead, so R103 does not stop a siphoner on it from joining the werewolves. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void siphonerOnVoidSiphonIsNotEjectedFromTheWerewolves(GameTestHelper helper) {
+        ServerPlayer control = player(helper);
+        species(control, Species.SIPHONER);
+        boolean baseline = VampirismAPI.factionPlayerHandler(control).canJoin(WReference.WEREWOLF_FACTION);
+
+        ServerPlayer ghoul = player(helper);
+        species(ghoul, Species.SIPHONER);
+        RaceAPI.getRaceFrom(ghoul).setRace(ResourceLocation.parse("tensura:ghoul"), false);
+        helper.assertTrue(baseline && !VampirismAPI.factionPlayerHandler(ghoul).canJoin(WReference.WEREWOLF_FACTION),
+                "control: an undead race should be refused by the werewolves (baseline " + baseline + ")");
+
+        ServerPlayer siphoner = player(helper);
+        species(siphoner, Species.SIPHONER);
+        RaceAPI.getRaceFrom(siphoner).setRace(ResourceLocation.parse(NS + ":void_siphon"), false);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(siphoner).canJoin(WReference.WEREWOLF_FACTION),
+                "a siphoner on void_siphon is refused by the werewolves (R103)");
+        helper.succeed();
+    }
 }

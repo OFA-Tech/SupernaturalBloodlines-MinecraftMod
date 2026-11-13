@@ -21,7 +21,7 @@ public record ApexSpec(String id, double health, double attack, double speed, Li
     public static final ApexSpec PRIMORDIAL_HYBRID = new ApexSpec("primordial_hybrid", 1000, 25, 0.03, List.of("tensura:ultraspeed_regeneration"), true);
     public static final ApexSpec MOONBLOOD_HYBRID = new ApexSpec("moonblood_hybrid", 900, 25, 0.03, List.of("tensura:godwolf_sense"), true);
     public static final ApexSpec ANCESTRAL_WITCH = new ApexSpec("ancestral_witch", 800, 10, 0.01, List.of("tensura:magic_sense"), false);
-    public static final ApexSpec VOID_SIPHON = new ApexSpec("void_siphon", 900, 15, 0.02, List.of("tensura:gluttony"), true);
+    public static final ApexSpec VOID_SIPHON = new ApexSpec("void_siphon", 900, 15, 0.02, List.of("tensura:gluttony"), false);
     public static final ApexSpec TRIBRID_ASCENDANT = new ApexSpec("tribrid_ascendant", 1100, 25, 0.03, List.of("tensura:ultra_instinct"), true);
     public static final ApexSpec ETERNAL_HUNTER = new ApexSpec("eternal_hunter", 900, 20, 0.02, List.of("tensura:danger_sense"), false);
 
