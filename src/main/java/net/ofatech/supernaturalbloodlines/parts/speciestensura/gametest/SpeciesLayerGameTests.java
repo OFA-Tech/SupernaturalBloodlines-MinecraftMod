@@ -23,6 +23,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesLayer;
@@ -239,6 +240,23 @@ public final class SpeciesLayerGameTests {
         }
         helper.succeed();
     }
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void restoreKeepsTheCurrentLayerSkills(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:elf");
+        species(p, Species.ORIGINAL);
+        BloodlineState before = BloodlineAccess.get(p);
+        helper.assertTrue(before.layerSkills().equals(ORIGINAL_SKILLS), "control: " + before.layerSkills());
+
+        // the species goes, the layer lets go of its skills, then something rolls the state back to the snapshot
+        species(p, Species.NONE);
+        helper.assertTrue(BloodlineAccess.get(p).layerSkills().isEmpty(), "control: the layer kept " + BloodlineAccess.get(p).layerSkills());
+        BloodlineAccess.restore(p, before.toBuilder().species(Species.NONE).build());
+        helper.assertTrue(BloodlineAccess.get(p).layerSkills().isEmpty(), "the rollback brought back " + BloodlineAccess.get(p).layerSkills());
+        helper.assertTrue(!has(p, "tensura:drain"), "the skill came back");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void humanLikeCheckFollowsTheLines(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.create(helper);

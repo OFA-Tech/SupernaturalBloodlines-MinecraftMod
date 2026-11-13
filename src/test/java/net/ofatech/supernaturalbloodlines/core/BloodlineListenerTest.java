@@ -178,4 +178,19 @@ class BloodlineListenerTest {
         BloodlineAccess.notifyListeners(listeners, null, UUID.randomUUID(), NONE, WITCH);
         assertEquals(1, seen.size());
     }
-}
+
+    @Test
+    void clientViewNeverSendsTheLayerTracking() {
+        BloodlineState tracked = NONE.toBuilder().layerSkills(Set.of("tensura:drain")).build();
+        assertTrue(BloodlineAccess.clientView(tracked, true).layerSkills().isEmpty());
+        assertTrue(BloodlineAccess.clientView(tracked, false).layerSkills().isEmpty());
+    }
+
+    @Test
+    void aChangeOfLayerSkillsAloneNotifiesNobody() {
+        List<BloodlineAccess.BloodlineChange> seen = new ArrayList<>();
+        List<BiConsumer<Object, BloodlineAccess.BloodlineChange>> listeners = List.of((p, c) -> seen.add(c));
+        BloodlineAccess.notifyListeners(listeners, null, UUID.randomUUID(), WITCH,
+                WITCH.toBuilder().layerSkills(Set.of("tensura:drain")).build());
+        assertTrue(seen.isEmpty());
+    }}
