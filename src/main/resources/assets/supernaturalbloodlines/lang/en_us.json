@@ -24,5 +24,11 @@
   "rite.supernaturalbloodlines.curse_skill_seal": "Curse of Skill Seal",
   "curse.supernaturalbloodlines.magicule_drain": "Magicule Drain",
   "curse.supernaturalbloodlines.skill_seal": "Skill Seal",
-  "supernaturalbloodlines.enchanted_tensura.skill_sealed": "A curse seals that skill."
+  "supernaturalbloodlines.enchanted_tensura.skill_sealed": "A curse seals that skill.",
+  "supernaturalbloodlines.enchanted_tensura.offering_failed": "You do not have enough magicules to make this offering.",
+  "rite.supernaturalbloodlines.purification": "Rite of Purification",
+  "rite.supernaturalbloodlines.purification_holy_water": "Rite of Purification (Holy Water)",
+  "rite.supernaturalbloodlines.magicule_offering": "Rite of Magicule Offering",
+  "block.supernaturalbloodlines.condensed_magicule": "Condensed Magicule",
+  "death.attack.holy_purification": "%1$s was purified"
 }

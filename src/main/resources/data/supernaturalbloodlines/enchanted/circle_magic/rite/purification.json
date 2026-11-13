@@ -1,0 +1,15 @@
+{
+    "neoforge:conditions": [
+        { "type": "neoforge:mod_loaded", "modid": "enchanted" },
+        { "type": "neoforge:mod_loaded", "modid": "tensura" }
+    ],
+    "items": [
+        { "id": "minecraft:gold_ingot", "count": 2 },
+        { "id": "minecraft:glowstone_dust", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 3000,
+    "factory": { "type": "supernaturalbloodlines:purification" }
+}

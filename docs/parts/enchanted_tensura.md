@@ -7,8 +7,8 @@ Checklist (from the design, section 1). Tick items as they ship.
 - [x] Altar power from Tensura magic blocks (data): magic ore, crystal and magisteel block ids, listed from the Tensura jar. See "Data (Task 2)".
 - [x] Curse *Magicule Drain*: slowly lowers magicules while active. See "Curses (Task 3)". **Manual rite check pending.**
 - [x] Curse *Skill Seal*: one random learned skill can't be activated while active (`SkillEvents.ACTIVATE_SKILL` interrupt). See "Curses (Task 3)". **Manual rite check pending.**
-- [ ] Rite of Purification (data): holy damage in an area to Tensura-undead races and `minecraft:undead`; the damage type id contains "holy".
-- [ ] Rite *Magicule Offering*: converts the caster's magicules into rite power (custom factory, or a PowerProvider shim).
+- [x] Rite of Purification: holy damage in an area to Tensura-undead races and `minecraft:undead`; the damage type id contains "holy". See "Rites (Task 4)". **Manual rite check pending.**
+- [x] Rite *Magicule Offering*: the caster's magicules become a placeable `condensed_magicule` block with altar power (custom factory). See "Rites (Task 4)". **Manual rite check pending.**
 - [ ] Spirit Poppet (code): protects against damage in `tensura:is_spiritual`.
 - [x] EP for Enchanted mobs (data): `entity_existence` entries. **Visual check pending** (Task 2 Step 3): `runClient`, spawn an Enchanted mandrake and familiar cat and open Tensura's analysis. Replaced by the GameTest `enchantedMobsHaveEp` (registry contents), which does not prove the analysis screen.
 
@@ -129,3 +129,16 @@ Code: `parts/enchantedtensura/curse/` (`Curses.register()` from the part init, `
 - **Manual rite check pending.** The GameTests start the real rite JSON through `RiteType.create(...).start()` with a filled taglock on a second FakePlayer, and Enchanted's own `CurseManagerImpl.tick` for `onRemove`. They do not prove the chalk circle, the item matching on a real altar, or the client.
 
 GameTests (`EnchantedTensuraGameTests`): `drainReducesMagicules`, `neverBelowZero`, `sealChoiceIsDeterministic`, `skillSealBlocksChosenSkill`, `cursesSurviveSaving`, `skillSealWithNoSkillsIsNoop`, `removingSkillSealRestoresSkill`, `cursesAreClearedOnDeath`, `curseRitesLoad`, `ritesCurseTheTaglockTarget`.
+
+## Rites (Task 4)
+
+Code: `parts/enchantedtensura/rite/` (`PurificationRiteFactory`, `MagiculeOfferingRiteFactory`; both registered with `RiteFactoryRegistry` from the part init), `PartBlocks` and `PartItems` (DeferredRegisters for `condensed_magicule`, registered from the part init; Task 5 reuses `PartItems`). A rite that finishes in `onStart` returns `false` (Enchanted then calls `stop()`); a failure returns `cancel()`.
+
+- **Purification** (`supernaturalbloodlines:purification`, `damage` default 8): on start, `hurt` with `supernaturalbloodlines:holy_purification` for every living entity within 8 blocks (sphere, from the centre of the chalk block) that is `RaceUtils.isUndead` or in the `minecraft:undead` entity tag. The damage type is `data/supernaturalbloodlines/damage_type/holy_purification.json` (`message_id` `holy_purification`, so Tensura's `isHoly` is true; GameTest `holyPurificationDamageIsHoly`). Rites: `purification` (2 gold ingots + glowstone dust) and `purification_holy_water` (gold ingot + `vampirism:holy_water_bottle_normal`, also needs Vampirism), both `enchanted:medium_circle` of `enchanted:ritual_chalk`, power 3000.
+- **Magicule Offering** (`supernaturalbloodlines:magicule_offering`, `magicules` default 5000, `count` default 1, 1-64): on start it needs `IExistence.getMagicule() >= magicules`, subtracts them and drops `count` condensed magicule one block above the chalk. With too few it sends the caster `supernaturalbloodlines.enchanted_tensura.offering_failed` and returns `cancel()` (Enchanted gives the items back; nothing is taken). If the caster cannot be found (offline) it cancels silently. Rite `magicule_offering`: low quality magic crystal + amethyst shard, `enchanted:small_circle`, power 0. The factory lists the block as its output.
+- **`condensed_magicule`**: plain block (placeholder generated 16x16 texture, cube model, loot table drops itself, pickaxe-mineable); altar power `{"power": 30, "limit": 16}` from `data/supernaturalbloodlines/enchanted/altar/block/condensed_magicule.json`.
+- **Enchanted 4.2.7:** `findEntity` only finds players that are in the level, so the GameTests add their FakePlayers with `ServerLevel.addNewPlayer` first.
+- **Tensura listener note (Task 3 follow-up):** Tensura's own `ACTIVATE_SKILL` listener interrupts first for a test player, so firing the event proves nothing about the seal. `Curses.onActivate` / `Curses.onToggle` are the seal's listener bodies and the GameTests call them directly. A blocked activation or toggle-on sends the player the action-bar message `supernaturalbloodlines.enchanted_tensura.skill_sealed` (only when Tensura's listener lets the activation through).
+- **Manual rite check pending.** The GameTests start the rite JSON through `RiteType.create(...).start()`. They do not prove the chalk circle, item matching on a real altar, the placeholder texture, or the client.
+
+GameTests (`EnchantedTensuraRiteGameTests`): `ritesLoad`, `holyPurificationDamageIsHoly`, `condensedMagiculeIsAnAltarBlock`, `purificationHurtsUndeadRace`, `purificationHurtsUndeadMobsInRangeOnly`, `purificationSparesLiving`, `offeringFailsWithoutMagicules`, `offeringConsumesMagicules`.
