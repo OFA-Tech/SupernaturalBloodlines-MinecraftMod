@@ -4,6 +4,7 @@ import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IFactionPlayerHandler;
 import java.util.List;
+import java.util.UUID;
 import net.favouriteless.enchanted.common.enchanted.circle_magic.RiteType;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -69,7 +70,7 @@ public final class HunterGameTests {
         RecordingPlayer p = hunter(helper);
         place(helper, p);
         int before = roster(p).size();
-        SpeciesConfig.overrideMaxFive(before + 1);
+        SpeciesConfig.overrideMaxFive(roster(p).fiveCount() + 1);
         try {
             start(helper, "rite_of_the_five", p, ingredients());
             BloodlineState s = BloodlineAccess.get(p);
@@ -91,7 +92,7 @@ public final class HunterGameTests {
         RecordingPlayer first = hunter(helper);
         RecordingPlayer second = hunter(helper);
         int before = roster(first).size();
-        SpeciesConfig.overrideMaxFive(before + 1);
+        SpeciesConfig.overrideMaxFive(roster(first).fiveCount() + 1);
         try {
             place(helper, first);
             start(helper, "rite_of_the_five", first, ingredients());
@@ -112,6 +113,83 @@ public final class HunterGameTests {
             remove(helper, second);
             reset(first);
             reset(second);
+        }
+        helper.succeed();
+    }
+
+    /** Owed potentials hold a slot: a rite must not fill it, or the potential would push the Five over the limit. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void riteRefusedWhilePotentialPending(GameTestHelper helper) {
+        RecordingPlayer p = hunter(helper);
+        UUID owed = UUID.randomUUID();
+        SpeciesConfig.overrideMaxFive(roster(p).fiveCount() + 1);
+        try {
+            roster(p).addPendingPotentialChoice(owed);
+            helper.assertTrue(roster(p).fiveCount() == SpeciesConfig.maxFive(), "an owed potential does not count: " + roster(p).fiveCount());
+            place(helper, p);
+            clearDropped(helper);
+            start(helper, "rite_of_the_five", p, ingredients());
+            helper.assertTrue(p.receivedOnActionBar(Outcome.REFUSAL_PREFIX + "five_full"), "the caster was not told the Five are complete");
+            helper.assertTrue(BloodlineAccess.get(p).species() == Species.NONE && !roster(p).contains(p.getUUID()), "a refused rite filled the slot");
+            helper.assertTrue(dropped(helper, "minecraft:book") == 1, "the ingredients were not given back");
+        } finally {
+            SpeciesConfig.overrideMaxFive(null);
+            roster(p).clearPendingPotentialChoice(owed);
+            clearDropped(helper);
+            remove(helper, p);
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void riteRefusedWhilePotentialLive(GameTestHelper helper) {
+        RecordingPlayer caster = hunter(helper);
+        RecordingPlayer potential = hunter(helper);
+        try {
+            BloodlineAccess.set(potential, state(Species.POTENTIAL));
+            helper.assertTrue(roster(caster).isPotential(potential.getUUID()), "the potential is not on the roster");
+            SpeciesConfig.overrideMaxFive(roster(caster).fiveCount());
+            place(helper, caster);
+            clearDropped(helper);
+            start(helper, "rite_of_the_five", caster, ingredients());
+            helper.assertTrue(caster.receivedOnActionBar(Outcome.REFUSAL_PREFIX + "five_full"), "a live potential did not hold a slot");
+            helper.assertTrue(BloodlineAccess.get(caster).species() == Species.NONE, "species is " + BloodlineAccess.get(caster).species());
+            remove(helper, caster);
+
+            // the potential itself may still do the rite: its own slot becomes the mark
+            clearDropped(helper);
+            place(helper, potential);
+            start(helper, "rite_of_the_five", potential, ingredients());
+            helper.assertTrue(BloodlineAccess.get(potential).species() == Species.HUNTER_OF_THE_FIVE, "the potential was refused: " + BloodlineAccess.get(potential).species());
+            helper.assertTrue(!roster(caster).isPotential(potential.getUUID()) && roster(caster).fiveCount() == SpeciesConfig.maxFive(),
+                    "count is " + roster(caster).fiveCount());
+        } finally {
+            SpeciesConfig.overrideMaxFive(null);
+            clearDropped(helper);
+            remove(helper, potential);
+            reset(caster);
+            reset(potential);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void gainingTheMarkStartsTheInstinctClock(GameTestHelper helper) {
+        RecordingPlayer p = hunter(helper);
+        try {
+            BloodlineAccess.set(p, state(Species.HUNTER_OF_THE_FIVE));
+            long now = p.level().getGameTime();
+            helper.assertTrue(now > 0 && BloodlineAccess.get(p).lastVampireKill() == now, "clock is " + BloodlineAccess.get(p).lastVampireKill() + ", now " + now);
+
+            // a set clock stays, and a hunter already marked is not touched again
+            BloodlineAccess.set(p, BloodlineState.NONE);
+            BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(Species.HUNTER_OF_THE_FIVE).lastVampireKill(5).build());
+            helper.assertTrue(BloodlineAccess.get(p).lastVampireKill() == 5, "a set clock was overwritten");
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().lastVampireKill(0).markKills(2).build());
+            helper.assertTrue(BloodlineAccess.get(p).lastVampireKill() == 0, "a hunter that was already marked got a new clock");
+        } finally {
+            reset(p);
         }
         helper.succeed();
     }

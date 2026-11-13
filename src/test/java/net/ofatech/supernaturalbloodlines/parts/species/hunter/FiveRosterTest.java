@@ -47,4 +47,28 @@ class FiveRosterTest {
         back.resolvePendingPotentialChoice(pending);
         assertTrue(back.pendingPotentialChoice().isEmpty());
     }
+
+    @Test
+    void fiveCountHoldsMembersPotentialsAndOwedChoices() {
+        FiveRoster r = new FiveRoster();
+        UUID member = UUID.randomUUID();
+        UUID potential = UUID.randomUUID();
+        UUID lost = UUID.randomUUID();
+        r.add(member);
+        assertEquals(1, r.fiveCount());
+        r.setPotential(potential, true);
+        r.setPotential(potential, true);
+        assertTrue(r.isPotential(potential));
+        assertEquals(2, r.fiveCount());
+        r.addPendingPotentialChoice(lost);
+        r.addPendingPotentialChoice(lost);
+        assertEquals(4, r.fiveCount());
+        assertEquals(1, r.size()); // size is still only the Five
+        FiveRoster back = FiveRoster.load(r.save(new CompoundTag(), null), null);
+        assertEquals(4, back.fiveCount());
+        assertTrue(back.isPotential(potential));
+        back.setPotential(potential, false);
+        back.resolvePendingPotentialChoice(lost);
+        assertEquals(2, back.fiveCount());
+    }
 }

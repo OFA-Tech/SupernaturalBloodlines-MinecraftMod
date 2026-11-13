@@ -610,6 +610,43 @@ public final class HunterMarkGameTests {
         }
     }
 
+    /** A potential who leaves the hunters ends the choice that made them one: the world owes another. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void potentialLeavingTheHuntersOwesAnother(GameTestHelper helper) {
+        ServerPlayer leaver = huntNone(helper);
+        ServerPlayer next = huntNone(helper);
+        MinecraftServer server = helper.getLevel().getServer();
+        try {
+            BloodlineAccess.set(leaver, state(Species.POTENTIAL, 0));
+            online(); // nobody to take it yet
+            handler(leaver).leaveFaction(false);
+            helper.assertTrue(BloodlineAccess.get(leaver).species() == Species.NONE, "species is " + BloodlineAccess.get(leaver).species());
+            helper.assertTrue(roster(leaver).pendingPotentialChoice().getOrDefault(leaver.getUUID(), 0) == 1, "owed: " + roster(leaver).pendingPotentialChoice());
+            helper.assertTrue(!roster(leaver).isPotential(leaver.getUUID()), "the leaver is still a potential");
+
+            online(next);
+            PotentialChooser.retryPending(server);
+            helper.assertTrue(BloodlineAccess.get(next).species() == Species.POTENTIAL, "the next hunter is " + BloodlineAccess.get(next).species());
+            helper.assertTrue(roster(leaver).pendingPotentialChoice().isEmpty(), "still owed: " + roster(leaver).pendingPotentialChoice());
+
+            // and with someone online, the new potential is made at once
+            ServerPlayer third = huntNone(helper);
+            ServerPlayer second = huntNone(helper);
+            try {
+                BloodlineAccess.set(second, state(Species.POTENTIAL, 0));
+                online(third);
+                handler(second).leaveFaction(false);
+                helper.assertTrue(BloodlineAccess.get(third).species() == Species.POTENTIAL, "the online hunter is " + BloodlineAccess.get(third).species());
+            } finally {
+                reset(third, second);
+            }
+        } finally {
+            clearHooks();
+            reset(leaver, next);
+        }
+        helper.succeed();
+    }
+
     // ---- minor ----
 
     @GameTest(template = "empty", templateNamespace = NS)

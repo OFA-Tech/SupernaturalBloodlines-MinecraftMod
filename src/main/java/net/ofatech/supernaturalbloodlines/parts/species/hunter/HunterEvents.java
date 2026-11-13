@@ -12,6 +12,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BaseFaction;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext;
 
@@ -39,7 +40,10 @@ public final class HunterEvents {
         HunterCurse.register();
         HunterInstinct.register();
         // every way the species changes (rite, debug command, rules) goes through BloodlineAccess.set
-        BloodlineAccess.addListener((p, change) -> setMember(p, change.after().species()));
+        BloodlineAccess.addListener((p, change) -> {
+            setMember(p, change.after().species());
+            startClock(p, change.before().species(), change.after().species());
+        });
         NeoForge.EVENT_BUS.addListener(HunterEvents::onFactionLevelChanged);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
@@ -60,6 +64,15 @@ public final class HunterEvents {
         } else {
             roster.remove(p.getUUID());
         }
+        roster.setPotential(p.getUUID(), species == Species.POTENTIAL);
+    }
+
+    /** Whatever way the mark is gained (rite, debug command), the instinct clock (R84) starts then if nothing set it. */
+    private static void startClock(ServerPlayer p, Species before, Species after) {
+        BloodlineState s = BloodlineAccess.get(p);
+        if (after == Species.HUNTER_OF_THE_FIVE && before != after && s.species() == after && s.lastVampireKill() == 0) {
+            BloodlineAccess.set(p, s.toBuilder().lastVampireKill(p.level().getGameTime()).build());
+        }
     }
 
     /** Leaving the hunter faction ends the mark: the rules (LEFT_BASE_FACTION) turn HUNTER_OF_THE_FIVE into NONE. */
@@ -68,7 +81,11 @@ public final class HunterEvents {
                 || !(event.getPlayer().getPlayer() instanceof ServerPlayer p) || p.level().isClientSide) {
             return;
         }
+        boolean wasPotential = BloodlineAccess.get(p).species() == Species.POTENTIAL;
         BloodlineAccess.applyEvent(p, BloodlineEvent.LEFT_BASE_FACTION,
                 SpeciesContext.of(p, BaseFaction.HUNTER, p.level().getGameTime(), null));
+        if (wasPotential && BloodlineAccess.get(p).species() == Species.NONE) {
+            PotentialChooser.owe(p.server, p.getUUID()); // the world still owes the Five a potential
+        }
     }
 }

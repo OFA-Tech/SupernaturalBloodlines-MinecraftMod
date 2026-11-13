@@ -21,6 +21,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 public final class FiveRoster extends SavedData {
     private static final String NAME = "supernaturalbloodlines_five";
     private static final String MEMBERS = "members";
+    private static final String POTENTIALS = "potentials";
     private static final String PENDING = "pending_potential_choice";
     private static final String LIFTED = "lifted_curses";
     private static final String CURSED = "cursed";
@@ -28,6 +29,8 @@ public final class FiveRoster extends SavedData {
     private static final String PENDING_COUNT = "count";
 
     private final Set<UUID> members = new HashSet<>();
+    // players who are potentials now: each one holds the slot they will take when they complete the Five
+    private final Set<UUID> potentials = new HashSet<>();
     // marked hunter (by UUID) -> how many potentials their lost marks still owe the world (the same hunter can lose it twice)
     private final Map<UUID, Integer> pendingPotentialChoice = new HashMap<>();
     // cursed killers whose curse was lifted while they were offline; applied at their next login
@@ -46,6 +49,7 @@ public final class FiveRoster extends SavedData {
     static FiveRoster load(CompoundTag tag, HolderLookup.Provider registries) {
         FiveRoster r = new FiveRoster();
         read(tag, MEMBERS, r.members);
+        read(tag, POTENTIALS, r.potentials);
         for (Tag t : tag.getList(PENDING, Tag.TAG_COMPOUND)) {
             CompoundTag entry = (CompoundTag) t;
             int count = entry.getInt(PENDING_COUNT);
@@ -73,6 +77,7 @@ public final class FiveRoster extends SavedData {
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         write(tag, MEMBERS, members);
+        write(tag, POTENTIALS, potentials);
         ListTag pending = new ListTag();
         pendingPotentialChoice.forEach((id, count) -> {
             CompoundTag entry = new CompoundTag();
@@ -100,6 +105,19 @@ public final class FiveRoster extends SavedData {
 
     public boolean contains(UUID id) {
         return members.contains(id);
+    }
+
+    /** The slots taken or promised: the Five, the potentials who will complete it, and the potentials still owed. Compared with {@code max_five}. */
+    public int fiveCount() {
+        return members.size() + potentials.size() + pendingPotentialChoice.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    public boolean isPotential(UUID id) {
+        return potentials.contains(id);
+    }
+
+    public void setPotential(UUID id, boolean potential) {
+        change(potentials, id, potential);
     }
 
     /** @return false when they were already in */
