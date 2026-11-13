@@ -26,13 +26,14 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * {@code /pack invite|accept|leave|info|emissary|anchor}. An invitation works like the sireline call: a clickable
+ * {@code /pack invite|accept|leave|heal|info|emissary|anchor}. An invitation works like the sireline call: a clickable
  * [Accept] with a token bound to the invited player, single use, valid for a minute. Each action returns the error to
  * show, or null when it worked (the messages to the people involved are sent here). Registered only with Werewolves.
  */
 public final class PackCommand {
     private static final String KEY = "supernaturalbloodlines.pack.";
     private static final CallRequests REQUESTS = new CallRequests();
+    private static final double HEAL_RANGE = 4;
 
     private PackCommand() {
     }
@@ -50,6 +51,9 @@ public final class PackCommand {
                         .then(Commands.argument("token", StringArgumentType.word())
                                 .executes(c -> run(c, accept(self(c), StringArgumentType.getString(c, "token"))))))
                 .then(Commands.literal("leave").executes(c -> run(c, leave(self(c)))))
+                .then(Commands.literal("heal")
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .executes(c -> run(c, heal(self(c), EntityArgument.getPlayer(c, "player"))))))
                 .then(Commands.literal("info").executes(c -> info(c.getSource(), self(c))))
                 .then(Commands.literal("emissary")
                         .executes(c -> run(c, emissary(self(c), null)))
@@ -154,6 +158,25 @@ public final class PackCommand {
         }
         PackAccess.applyPack(p, PackEvent.LEFT_PACK, context(null, p.serverLevel().getGameTime()));
         p.sendSystemMessage(Component.translatable(KEY + "left"));
+        return null;
+    }
+
+    /** An Alpha gives up the spark to fully heal a player within 4 blocks and cure their wolfsbane and hybrid venom (R93). */
+    @Nullable
+    public static Component heal(ServerPlayer alpha, ServerPlayer target) {
+        if (!PackAccess.isAlpha(PackAccess.wolf(alpha).rank())) {
+            return error("not_alpha");
+        }
+        if (target == alpha) {
+            return error("self");
+        }
+        if (target.level() != alpha.level() || alpha.distanceToSqr(target) > HEAL_RANGE * HEAL_RANGE) {
+            return error("heal_too_far", name(target));
+        }
+        SparkHandler.cure(target);
+        SparkHandler.giveUp(alpha);
+        target.sendSystemMessage(Component.translatable(KEY + "healed", name(alpha)));
+        alpha.sendSystemMessage(Component.translatable(KEY + "gave_up", name(target)));
         return null;
     }
 

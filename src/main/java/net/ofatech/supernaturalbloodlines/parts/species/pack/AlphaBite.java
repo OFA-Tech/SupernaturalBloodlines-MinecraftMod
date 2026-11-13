@@ -40,7 +40,8 @@ import org.jetbrains.annotations.Nullable;
  * bite nobody can name: a potion, a command) leaves {@code pending_wild}. When the effect runs out Werewolves joins the
  * player to the faction and {@link #onFaction} turns the pending bite into a lineage, or into the rejected bite's death.
  * A werewolf who is already one (a Beta bitten by another Alpha) never gets a pending bite, so a pack is never switched
- * silently. Touched only behind {@code ModList.isLoaded("werewolves")}.
+ * silently. When the bite takes, an Alpha who has lost the spark since (online: no longer ALPHA, offline: marked in
+ * {@link PackIndex}) leaves the bitten an Omega with no pack. Touched only behind {@code ModList.isLoaded("werewolves")}.
  */
 public final class AlphaBite {
     public static final ResourceKey<DamageType> REJECTED_BITE = ResourceKey.create(Registries.DAMAGE_TYPE,
@@ -150,6 +151,11 @@ public final class AlphaBite {
         }
         if (alpha.equals(Util.NIL_UUID)) {
             PackAccess.applyPack(p, PackEvent.BITTEN_BY_WILD, PackContext.defaults());
+        } else if (!SparkHandler.hasSpark(p.server, alpha)) {
+            // the biter lost the spark before the bite took: no pack to join and no death roll, but the sire is still theirs
+            if (!PackAccess.applyPack(p, PackEvent.BITTEN_BY_WILD, PackContext.defaults()).refused()) {
+                SireRecorder.record(alpha, PackAccess.nameOf(p.server, alpha), p);
+            }
         } else if (roll.getAsDouble() < SpeciesConfig.alphaBiteDeathChance()) {
             // after Vampirism's setFactionAndLevel has returned. execute() would run it at once on the server thread; tell() queues it
             p.server.tell(new TickTask(p.server.getTickCount(), () -> reject(p)));

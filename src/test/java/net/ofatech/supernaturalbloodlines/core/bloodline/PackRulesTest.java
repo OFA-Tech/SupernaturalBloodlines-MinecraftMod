@@ -223,4 +223,27 @@ class PackRulesTest {
         WolfState alpha = wolf(Lineage.BORN, Rank.ALPHA);
         assertEquals(alpha, PackRules.apply(alpha, LEFT_PACK, ctx()).state());
     }
+
+    @Test
+    void sparkLostMakesAnAlphaAnOmegaWithNoPack() {
+        for (Rank r : new Rank[] {Rank.ALPHA, Rank.TRUE_ALPHA}) {
+            WolfState alpha = wolf(Lineage.BITTEN, r).toBuilder().defenderKills(7).build();
+            WolfState out = PackRules.apply(alpha, SPARK_LOST, ctx()).state();
+            assertEquals(Rank.OMEGA, out.rank());
+            assertNull(out.packAlpha());
+            assertEquals(0, out.betaSince());
+            assertEquals(Lineage.BITTEN, out.lineage());
+            assertEquals(7, out.defenderKills());
+        }
+        WolfState beta = wolf(Lineage.BITTEN, Rank.BETA);
+        assertEquals(beta, PackRules.apply(beta, SPARK_LOST, ctx()).state());
+    }
+
+    @Test
+    void aNewTrueAlphaLeavesTheirOldPack() {
+        WolfState out = PackRules.apply(eligible(), TRUE_ALPHA_EARNED, ctx()).state();
+        assertEquals(Rank.TRUE_ALPHA, out.rank());
+        assertNull(out.packAlpha());
+        assertEquals(0, out.betaSince());
+    }
 }

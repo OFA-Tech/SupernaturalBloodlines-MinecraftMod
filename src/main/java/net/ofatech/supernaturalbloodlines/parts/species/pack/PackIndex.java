@@ -2,11 +2,13 @@ package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -19,6 +21,9 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackContext;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
+import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,6 +36,8 @@ public final class PackIndex extends SavedData {
     private static final String MEMBERS = "members";
     private static final String EMISSARIES = "emissaries";
     private static final String ANCHORS = "anchors";
+    private static final String FORMER = "former_alphas";
+    private static final String DISSOLVED = "dissolved";
     private static final String KEY = "key";
     private static final String VALUE = "value";
 
@@ -38,6 +45,10 @@ public final class PackIndex extends SavedData {
     private final Map<UUID, UUID> alphaOf = new LinkedHashMap<>();
     private final Map<UUID, UUID> emissaryOf = new HashMap<>();
     private final Map<UUID, UUID> anchorOf = new HashMap<>();
+    // players who lost the spark (stolen, passed on, given up): an offline Alpha is still an Alpha unless they are here
+    private final Set<UUID> formerAlphas = new HashSet<>();
+    // Betas of a pack that dissolved while they were away: they become Omegas at their next login
+    private final Set<UUID> dissolved = new HashSet<>();
 
     PackIndex() {
     }
@@ -53,12 +64,32 @@ public final class PackIndex extends SavedData {
             if (!Objects.equals(change.before().wolf().packAlpha(), change.after().wolf().packAlpha())) {
                 follow(p);
             }
+            if (PackAccess.isAlpha(change.after().wolf().rank())) {
+                get(p.serverLevel()).clearFormerAlpha(p.getUUID());
+            }
         });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
-                follow(p);
+                login(p);
             }
         });
+    }
+
+    /**
+     * Login: a Beta whose pack dissolved while they were away is an Omega now, and one whose Alpha lost the spark to
+     * someone else (the index moved the pack, their own state still names the old Alpha) follows the index.
+     */
+    public static void login(ServerPlayer p) {
+        PackIndex index = get(p.serverLevel());
+        if (index.takeDissolved(p.getUUID())) {
+            PackAccess.applyPack(p, PackEvent.LEFT_PACK, PackContext.defaults());
+        }
+        WolfState w = PackAccess.wolf(p);
+        UUID indexed = index.alphaOf(p.getUUID()).orElse(null);
+        if (w.packAlpha() != null && indexed != null && !indexed.equals(w.packAlpha()) && index.isFormerAlpha(w.packAlpha())) {
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().wolf(w.toBuilder().packAlpha(indexed).build()).build());
+        }
+        follow(p);
     }
 
     private static void follow(ServerPlayer p) {
@@ -102,13 +133,54 @@ public final class PackIndex extends SavedData {
         }
     }
 
-    /** The new Alpha takes every Beta of the old one (and stops being a Beta); the old Alpha's emissary is dropped. */
+    /**
+     * The new Alpha takes every Beta of the old one (and stops being a Beta); the old Alpha's emissary is dropped and
+     * they are remembered as having lost the spark.
+     */
     public void transfer(UUID oldAlpha, UUID newAlpha) {
         alphaOf.remove(newAlpha);
         alphaOf.replaceAll((beta, a) -> a.equals(oldAlpha) ? newAlpha : a);
         alphaOf.remove(oldAlpha);
         emissaryOf.remove(oldAlpha);
+        formerAlphas.add(oldAlpha);
+        formerAlphas.remove(newAlpha);
         setDirty();
+    }
+
+    /** Nobody can take the pack over (no Beta is around): its Betas become Omegas when they next log in. */
+    public void dissolve(UUID alpha) {
+        for (UUID beta : betasOf(alpha)) {
+            alphaOf.remove(beta);
+            dissolved.add(beta);
+        }
+        emissaryOf.remove(alpha);
+        formerAlphas.add(alpha);
+        setDirty();
+    }
+
+    /** True once, for a Beta whose pack dissolved while they were away. */
+    public boolean takeDissolved(UUID beta) {
+        boolean was = dissolved.remove(beta);
+        if (was) {
+            setDirty();
+        }
+        return was;
+    }
+
+    public boolean isFormerAlpha(UUID id) {
+        return formerAlphas.contains(id);
+    }
+
+    public void markFormerAlpha(UUID id) {
+        if (formerAlphas.add(id)) {
+            setDirty();
+        }
+    }
+
+    public void clearFormerAlpha(UUID id) {
+        if (formerAlphas.remove(id)) {
+            setDirty();
+        }
     }
 
     public Optional<UUID> emissaryOf(UUID alpha) {
@@ -138,7 +210,21 @@ public final class PackIndex extends SavedData {
         read(tag, MEMBERS, i.alphaOf);
         read(tag, EMISSARIES, i.emissaryOf);
         read(tag, ANCHORS, i.anchorOf);
+        readIds(tag, FORMER, i.formerAlphas);
+        readIds(tag, DISSOLVED, i.dissolved);
         return i;
+    }
+
+    private static void readIds(CompoundTag tag, String name, Set<UUID> into) {
+        for (Tag t : tag.getList(name, Tag.TAG_INT_ARRAY)) {
+            into.add(NbtUtils.loadUUID(t));
+        }
+    }
+
+    private static void writeIds(CompoundTag tag, String name, Set<UUID> from) {
+        ListTag list = new ListTag();
+        from.forEach(id -> list.add(NbtUtils.createUUID(id)));
+        tag.put(name, list);
     }
 
     private static void read(CompoundTag tag, String name, Map<UUID, UUID> into) {
@@ -164,6 +250,8 @@ public final class PackIndex extends SavedData {
         write(tag, MEMBERS, alphaOf);
         write(tag, EMISSARIES, emissaryOf);
         write(tag, ANCHORS, anchorOf);
+        writeIds(tag, FORMER, formerAlphas);
+        writeIds(tag, DISSOLVED, dissolved);
         return tag;
     }
 }

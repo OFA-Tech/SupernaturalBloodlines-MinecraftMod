@@ -58,6 +58,54 @@ class PackIndexTest {
     }
 
     @Test
+    void transferLeavesATombstoneForTheOldAlphaUntilTheyAreAlphaAgain() {
+        PackIndex i = new PackIndex();
+        UUID old = id();
+        UUID heir = id();
+        i.join(old, heir);
+        i.transfer(old, heir);
+        assertTrue(i.isFormerAlpha(old));
+        assertFalse(i.isFormerAlpha(heir));
+        i.clearFormerAlpha(old);
+        assertFalse(i.isFormerAlpha(old));
+        // the new Alpha of a transfer is not a former one, even if they were once
+        i.markFormerAlpha(heir);
+        i.join(old, id());
+        i.transfer(old, heir);
+        assertFalse(i.isFormerAlpha(heir));
+    }
+
+    @Test
+    void dissolvingAPackFreesItsBetasAndMarksThemForTheirNextLogin() {
+        PackIndex i = new PackIndex();
+        UUID alpha = id();
+        UUID a = id();
+        UUID b = id();
+        i.join(alpha, a);
+        i.join(alpha, b);
+        i.dissolve(alpha);
+        assertTrue(i.betasOf(alpha).isEmpty());
+        assertTrue(i.alphaOf(a).isEmpty());
+        assertTrue(i.isFormerAlpha(alpha));
+        assertTrue(i.takeDissolved(a));
+        assertFalse(i.takeDissolved(a));
+        assertTrue(i.takeDissolved(b));
+        assertFalse(i.takeDissolved(id()));
+    }
+
+    @Test
+    void tombstonesAndDissolvedBetasSurviveSaveAndLoad() {
+        PackIndex i = new PackIndex();
+        UUID alpha = id();
+        UUID beta = id();
+        i.join(alpha, beta);
+        i.dissolve(alpha);
+        PackIndex back = PackIndex.load(i.save(new CompoundTag(), null), null);
+        assertTrue(back.isFormerAlpha(alpha));
+        assertTrue(back.takeDissolved(beta));
+    }
+
+    @Test
     void survivesSaveAndLoad() {
         PackIndex i = new PackIndex();
         UUID alpha = id();

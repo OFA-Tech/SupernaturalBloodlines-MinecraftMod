@@ -19,7 +19,12 @@ import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfPackGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfBiteGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfSparkGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaBite;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.DefenderKills;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.EyeSync;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.RankEffects;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.SparkHandler;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.GeneHandler;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackCommand;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
@@ -96,12 +101,16 @@ public final class SpeciesPart {
         SirelineDeath.register();
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> BloodlineCommand.register(e.getDispatcher()));
         HybridTraits.register(); // always: it strips the saved modifier when Werewolves is gone
+        RankEffects.register(); // always, for the same reason
         if (ModList.get().isLoaded("werewolves")) {
             TransitionHandler.register();
             GeneAwakening.register();
             GeneHandler.register();
             PackIndex.register();
             AlphaBite.register();
+            SparkHandler.register(); // after GeneHandler: an awakening comes before the innocent kill that caused it
+            DefenderKills.register();
+            EyeSync.register();
             NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> PackCommand.register(e.getDispatcher()));
             FormControl.register();
             BloodThirst.register();
@@ -136,6 +145,7 @@ public final class SpeciesPart {
                 e.register(OriginalHybridGameTests.class);
                 e.register(WerewolfPackGameTests.class);
                 e.register(WerewolfBiteGameTests.class);
+                e.register(WerewolfSparkGameTests.class);
             }
         });
         SupernaturalBloodlines.LOGGER.info("SpeciesPart enabled");

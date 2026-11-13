@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased: werewolf packs (spark and ranks)
+
+- The Alpha spark: a werewolf player who kills an Alpha takes it (and the pack: a Beta who kills their own Alpha leads it afterwards; a killer who already leads a pack adopts the Betas), the old Alpha is an Omega. Ordinary deaths keep rank and spark. When an Alpha leaves the werewolves or is cured, the spark goes to the highest-level online Beta; with none online the pack dissolves and its Betas become Omegas when they next log in.
+- `/pack heal <player>`: an Alpha within 4 blocks of the target gives up the spark to fully heal them and cure hybrid venom and wolfsbane (Werewolves' and the artifacts strains); the Alpha stays in the pack as a Beta.
+- True Alpha: checked every 1200 ticks for Betas: Werewolves' highest level, 30 days as a Beta, 300 defender kills (a hostile mob killed while it targeted a villager or a pack mate), no innocent kill, never stole a spark. No cap.
+- Ranks: Omega -10% attack and speed, Alpha +20% attack and +4 max health, True Alpha +22% and +4.4 (modifier `supernaturalbloodlines:wolf_rank`). Born wolves are spared half of the forced full-moon shifts (a coin per wolf and night).
+- Eyes: gold (Beta, Omega), red (Alpha), blue after killing an innocent (a villager, or a player who was not attacking you). Werewolves in a wolf form show two glowing dust particles at eye height every 10 ticks. The render layer on the model is not done.
+- A bitten player whose Alpha lost the spark before the bite took becomes an Omega with no pack (the sire is still recorded).
+- Pending (manual): the two-client check of the eye particles.
+
 ## Unreleased: sirelines
 
 - Compulsion: an Original, hybrid, tribrid or a vampire of level 10 or more can sneak and click with an empty hand on a villager or a lesser vampire (not advanced vampires, bosses or converted creatures) within 4 blocks and eye to eye (the target looks within 30 degrees of the caster, the caster within 15 of the target). Players, vervain users and hunters are immune.

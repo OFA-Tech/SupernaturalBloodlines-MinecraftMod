@@ -9,6 +9,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 
 /**
  * Spots and cancels the forced full-moon shift for players with {@link MoonControl} (no mixin). Werewolves forces the
@@ -65,8 +66,14 @@ public final class ForcedShift {
             }
             return;
         }
-        if (isForced(e) && MoonControl.of(p) != MoonControl.Control.NONE) {
+        if (isForced(e) && (MoonControl.of(p) != MoonControl.Control.NONE || bornSpared(p))) {
             e.setCanceled(true);
         }
+    }
+
+    /** R90: a born wolf is spared the forced shift on half of the nights. */
+    private static boolean bornSpared(ServerPlayer p) {
+        return BloodlineAccess.get(p).wolf().lineage() == WolfState.Lineage.BORN
+                && MoonControl.bornSparedOn(p.getUUID(), p.level().getDayTime() / 24000L);
     }
 }
