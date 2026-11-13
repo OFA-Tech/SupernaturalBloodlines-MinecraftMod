@@ -18,8 +18,10 @@ Version values live in `gradle.properties`.
 | GeckoLib | `software.bernie.geckolib:geckolib-neoforge-1.21.1:4.9.3` | `dl.cloudsmith.io/public/geckolib3/geckolib/maven/` | yes | yes | Tensura needs `>=4.7.5`, Enchanted `4.7`; 4.9.3 is what the pack runs |
 | SmartBrainLib | `net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1:1.16.11` | `dl.cloudsmith.io/public/tslat/sbl/maven/` | yes | yes | Tensura needs `>=1.16.7` |
 | TerraBlender | `com.github.glitchfiend:TerraBlender-neoforge:1.21.1-4.1.0.8` | `maven.minecraftforge.net` | no | yes | Tensura needs `>=4.1.0.0` |
+| Curios | `top.theillusivec4.curios:curios-neoforge:9.5.1+1.21.1` (`api` classifier for compile) | `maven.theillusivec4.top` | api jar | full jar | artifacts part: rings in a Curios `ring` slot (`curios_version`). Optional: without it rings work from the inventory |
 
-Curios is not part of this plan step; a later plan adds it.
+
+The OFA pack runs Accessories, which ships a Curios compatibility layer, so the Curios API is the one targeted. Curios classes are only loaded behind `ModList.isLoaded("curios")` (`parts/artifacts/curios/CuriosSlots`).
 
 ## Where the coordinates came from
 
@@ -45,11 +47,11 @@ Pass on the Gradle command line, e.g. `.\gradlew.bat runClient -PnoLinkedMods`.
 |---|---|
 | `-PnoLinkedMods` | no linked mod on the runtime classpath (compile classpath unchanged). Use to prove the game starts with every part "disabled (missing mods)" |
 | `-PnoWerewolves` | drops only Werewolves from runtime |
-| `-PnoCurios` | reserved, no-op until Curios is added |
+| `-PnoCurios` | drops only Curios from runtime. The artifacts GameTests that need Curios are then not registered, and the inventory path must still pass |
 
 ## `neoforge.mods.toml`
 
-All five are `type="optional"`, `ordering="AFTER"`:
+All six are `type="optional"`, `ordering="AFTER"`:
 
 | modId | range |
 |---|---|
@@ -58,5 +60,6 @@ All five are `type="optional"`, `ordering="AFTER"`:
 | `vampirism` | `[1.10.13,1.11)` |
 | `werewolves` | `[2.0.3,2.1)` |
 | `enchanted` | `[4.2.7,4.3)` |
+| `curios` | `[9.5,10)` |
 
 The real versions (Tensura 2.0.1.5, ManasCore 4.0.0.2, Vampirism 1.10.13, Werewolves 2.0.3.4, Enchanted 4.2.7) all fall inside these ranges, so no change was needed.
