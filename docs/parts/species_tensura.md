@@ -12,3 +12,82 @@ Checklist (from the design, sections 5 and 10). Tick items as they ship.
 - [ ] Sireline link: `IExistence.setPermanentOwner(sireUUID)` when a sire is recorded; removed when the sire bond breaks.
 - [ ] A sire can name their sired through Tensura's naming (R101).
 - [ ] Rank skills for werewolf packs (ALPHA → `beast_transformation`, `godwolf_sense`; TRUE_ALPHA adds the commander skill; born lineage → `godwolf_sense` at level 5); only skills this mod granted are removed.
+
+
+## Hook points (verified)
+
+Verified with `javap -p -c` on Tensura 2.0.1.5 (`curse.maven:tensura-reincarnated-643695:9476869`) and ManasCore race 4.0.0.2 (`build/manascore-modules`). Everything is from bytecode; there is no sources jar.
+
+### Races (`TensuraRace`, `ManasRace`, `ManasRaceInstance`)
+
+| Item | Result |
+|---|---|
+| `TensuraRace` | `abstract class TensuraRace extends ManasRace`. Constructor `TensuraRace(ManasRace$Difficulty)`. Abstract: `Pair<Double,Double> getBaseAuraRange()` and `getBaseMagiculeRange()`. Overridable: `getAwakeningEvolution(inst, entity)`, `getHarvestFestivalEvolution(inst, entity)`, `getEvolutionRequirements(inst, entity): Map<EvolutionRequirement, Float>`, `getEvolutionProgress(inst, entity, ManasRace target): float`, `triggerEvolutionRewards`, `getIntrinsicLearnable`, `learnIntrinsicSkills`, `getAlignment`. `template.DefaultRace` (abstract, ctor `(Difficulty)`) adds `getDefaultConfig(): RaceConfig$Default` and implements the two ranges from it; every human-like race is a `DefaultRace`. |
+| `ManasRace` (ManasCore) | Plain class. `getNextEvolutions(inst, entity): List<ManasRace>`, `getDefaultEvolution(inst, entity)`, `getPreviousEvolutions`, `getEvolutionProgress`, `onRaceEvolution(old, entity, new)`, `getIntrinsicSkills`, attribute templates via `addAttributeModifier(Holder<Attribute>, ResourceLocation, double, Operation)`. Race ids are the registry ids: all Tensura races are `tensura:<path>` (`TensuraRaces`), apex races of this mod are `supernaturalbloodlines:<path>` and must be registered in ManasCore's race registry (`RaceAPI.getRaceRegistry()`, key `RaceAPI.getRaceRegistryKey()`). |
+| Race tag loading | Race tags are ManasCore race tags: `data/<ns>/tags/manascore_race/races/<name>.json`, key `TagKey.create(RaceAPI.getRaceRegistryKey(), id)`, tested with `ManasRaceInstance.is(TagKey)`. Tensura's: `human_like`, `undead`, `daemon`, `no_blood`, `divine`, `beastfolk`, `slime`, `spiritual`, `necromancer` ... A tag of ours with `"replace": false` merges into Tensura's. |
+
+### How the evolution screen builds its options (this is where apex races hook in)
+
+1. Client: `EvolutionScreen` calls `ManasRaceInstance.getNextEvolutions(player)` (which is `getRace().getNextEvolutions(this, entity)`) for the list, and, per option, `TensuraRace.getEvolutionRequirements(inst, entity)` / `EvolutionRequirement.getProgress(inst, entity)` / `getRequirementComponent(inst, entity)` for the bars. The "tracked" evolution is `ITensuraPlayer.getTrackedEvolution()/setTrackedEvolution(ManasRace)`.
+2. Client -> server: `RequestEvolutionPacket` (`tensura:request_evolution`, record `(Action, ResourceLocation, boolean)`, actions evolve / set tracked / awakening). The server handler `handleEvolution` checks `instance.getNextEvolutions(player).contains(target)`, then `getEvolutionProgress(player, target) >= 100.0f`, then `RaceHelper.evolveRace(player, target, bool)`. Setting the tracked evolution checks `getNextEvolutions(...).contains` too. ManasCore has its own `RequestRaceEvolutionPacket` with the same two checks and `Races.evolveRace(ManasRace)`.
+3. So **one hook covers client list, tracking, and server validation: `ManasRaceInstance.getNextEvolutions(LivingEntity)`** (RETURN, add the apex race). It is common code (client and server) and both packets call it. Because it is the instance method that delegates to `ManasRace.getNextEvolutions(inst, entity)`, a mixin on the instance method needs one injection and does not depend on each Tensura race class. Both the list and `contains` see the apex race, so no second hook is needed. The mixin must return a mutable copy (`List.of(...)` in the races is immutable).
+4. `RaceHelper.evolveRace(LivingEntity, ManasRace, boolean, boolean)` is the real change (`evolveRace(entity)` / `(entity, bool)` pick the default evolution). It ends in `Races.evolveRace` -> `setRace`, so `RaceEvents.SET_RACE` fires and vampirism_tensura's sync and `FactionRaceRules` see the new race.
+5. Progress and requirements belong to the **current** race: `TensuraRace.getEvolutionProgress(inst, entity, target)` iterates `getEvolutionRequirements(inst, entity)` (a `Map<EvolutionRequirement, Float>` of requirement -> weight) and sums weight x `getProgress(inst, entity)`. Default for a `TensuraRace` is `Map.of(new EPRequirement(d), 1.0f)`. The requirement classes (`race.template.EvolutionRequirement` and nested): `EPRequirement(double ep)`, `AbilityRequirement`, `AwakenRequirement`, `BossRequirement`, `ItemCarryingRequirement`, `ItemConsumeRequirement`, `NamedRequirement`, `PhysicalBodyRequirement`. Progress is read live from the player's state (EP from `IExistence`, etc.), nothing is counted over time. `EvolutionRequirement` is a plain class with `getProgress(inst, entity): float` and `getRequirementComponent(inst, entity): Component`, so the "species bonus to the evolution requirements" (R100) can be done by wrapping a requirement or by a lower `EPRequirement`, per race, not through an event.
+6. No Architectury or NeoForge event for "evolution options" exists (`RaceEvents` has only `POST_INIT`, `SET_RACE`, ticks, cooldown, ability activate/release). `SET_RACE` is the only event and fires before the change.
+
+### Evolution lines of the human-like races (from `getNextEvolutions` / `getDefaultEvolution` / `getAwakeningEvolution` bytecode)
+
+`data/tensura/tags/manascore_race/races/human_like.json` holds **only the five base races**: `tensura:human`, `dwarf`, `elf`, `merfolk`, `beastfolk`. **The evolved races are not tagged**, so a "human-like and saint tier" check cannot be written with the tag alone (see the ruling below).
+
+| Line | Base (tagged) | Tier 2 (default evolution) | Tier 3 "saint" (awakening) | Tier 4 divine |
+|---|---|---|---|---|
+| human | `human` (also lists `vampire` as a next evolution) | `enlightened_human` | `human_saint` | `divine_human` |
+| dwarf | `dwarf` | `enlightened_dwarf` | `dwarf_saint` | `divine_dwarf` |
+| elf | `elf` | `enlightened_elf` | `elf_saint` | `divine_elf` |
+| merfolk | `merfolk` | `enlightened_merfolk` | `merfolk_saint` | `divine_fish` |
+| beastfolk | `beastfolk` | `beast_lord` | `spirit_beast` | `divine_beast` |
+
+Next evolutions: base -> tier 2 only; tier 2 -> tier 3; tier 3 -> tier 4; tier 4 has none. Tier 3 and 4 also have a `BossRequirement`/EP requirement. The vampire line (`ghoul`, `vampire`, `vampire_overcomer`, `vampire_lord`, `divine_vampire`) is not human-like, and neither are the wight, daemon, orc, ogre, goblin, lizardman, harpy, slime or giant lines.
+
+"Saint / overcomer tier or higher" of a human-like line = tier 3 and 4 ids: `human_saint`, `divine_human`, `dwarf_saint`, `divine_dwarf`, `elf_saint`, `divine_elf`, `merfolk_saint`, `divine_fish`, `spirit_beast`, `divine_beast`. (The "overcomer" wording of the brief is the vampire line's equivalent; that line is not human-like, so it never gets an apex option. A divine race has no next evolution, so the apex option is offered from tier 3 and tier 4.) **Ruling for tasks 2 and 3:** the human-like check is "race tagged `tensura:human_like`, or one of the 20 ids of the table above" (`HumanLikeLine`), because the tag misses every evolved race and an elf who evolved to an enlightened elf must stay a valid host (`layerSurvivesTensuraEvolution`). Apex races are added to the same set and tagged `tensura:human_like` by task 3.
+
+### Undead, holy exposure, bloodless (`io.github.manasmods.tensura.race.RaceUtils`, all `public static`)
+
+| Method | Logic | Override by event? |
+|---|---|---|
+| `isUndead(Entity)` | `LivingEntity` whose race instance `is(TensuraRaceTags.UNDEAD)` (= `tensura:undead`) -> true; else `entity.getType().is(EntityTypeTags.UNDEAD)`. For a player only the race tag counts (the vanilla tag never matches `minecraft:player`). | **No.** No event, no gamerule. A mixin is the only way (task 2: `RaceUtilsMixin`, `require = 0`, config switch). |
+| `isAffectedByHolyExposure(Entity)` | `TensuraEntityTags.MONSTER` entity type -> true; else for a `LivingEntity` `IExistence.getAlignment().isAffectedByHolyExposure()`; else false. **Not related to undead**: it follows the existence alignment (evil), and is read by `HolyDamageEffect.applyEffectTick`, `CharybdisEntity` and the advancement predicate `AdditionalRacialPredicate`. | **No** (same). |
+| `isBloodless(Entity)` | entity type tags `no_blood` / `spiritual`; for a `LivingEntity` the race tag `tensura:no_blood` (which includes `#tensura:undead`) or `IExistence.isSpiritualForm()`; non-living entities fall back to `isUndead`. Used by `DrainSkill`, `BloodMistCloud`, `VampireRace`. | **No.** The race-tag branch is not reached by `isUndead`, so `isBloodless` is **not** true for a layer-undead player; "bloodless rules for Originals" must come from the bite mixin in vampirism_tensura (`FactionRaceRules.isBloodless`), not from this part. |
+
+Other consumers of `isUndead`: `TensuraDamageHelper`, `DamagingHandler`, `InfectionEffect`, `CurseBindHands`, `MiasmicMistCloud`, `MixinPlayer`, `WightRace`, `ExistenceStorage`, `AdditionalRacialPredicate`.
+
+**Holy damage vs undead (what stacks).** `DamagingHandler`'s hurt handler (a ManasCore hurt event, `Changeable<Float>` amount) does `if (TensuraDamageHelper.isUndeadPurifying(source) && RaceUtils.isUndead(target)) amount *= 3.0f`. `isUndeadPurifying` = `isLightDamage(source) || isHoly(source)`. So a player the layer makes "undead" takes **x3** from Tensura holy and light damage by Tensura's own code. vampirism_tensura's `HolyDamageBridge` multiplies Tensura holy damage by `tensura_holy_vs_vampire` (default 1.5) for faction vampires on `LivingIncomingDamageEvent`. Both would stack to x4.5, so `HolyDamageBridge` skips a player whose layer treats them as undead (the plain Vampirism vampire layer does; so a faction vampire without a species also takes x3 and not x4.5). The bridge still applies when the species part is off or the undead treatment is switched off in config.
+
+### Naming (R101)
+
+| Item | Result |
+|---|---|
+| Open the menu | `RequestNamingKeyPacket` (`tensura:request_naming_key`, no payload fields; per-player tick rate limit `LAST_NAMING_KEY_TICK`). Sneaking toggles the player's own `IExistence.isNameable()`. Otherwise it ray-traces the target within 6 blocks, checks `canName(namer, target)` and opens `NamingMenu`. |
+| `public static boolean canName(Player namer, LivingEntity target)` | In order: `isNotNameable(target, namer)` -> `tensura.naming.cannot_name`; `SubordinateHelper.isSubordinate(target, namer)` -> `tensura.naming.name_owner` (**the namer cannot name their own subordinate**); `existence.getName() != null` -> `already_named`; `getPermanentOwner()` set and not the namer -> `had_owner`; `isNotSubmitting` (creative namer passes; otherwise a subordinate, or `FEAR` from the namer, or health below `PlayerConfig$Naming.lowHPToName` %) -> `not_submit`; the namer insane/rampaging -> `insane`; target max EP above the namer's `maximumEPToName` % -> `lack_EP`. |
+| `private static boolean isNotNameable(LivingEntity target, Player namer)` | Not alive -> true. For a `Player` target: `!existence.isNameable()` -> true, else **`!level.getGameRules().getBoolean(TensuraGameRules.PLAYER_NAME)`**. That `getBoolean` is the only place the gamerule (`TensuraGameRules.PLAYER_NAME`, "playerNaming") is read for players. Mobs: entity-type tag `TensuraEntityTags.NAMEABLE`, not summoned, `INameEvolution.canBeNamed`. |
+| `RequestNamingMenuPacket.name(target, ServerPlayer namer, NamingType, String name)` | Server side of the menu (`tensura:request_naming_menu`, `(int targetId, String name, NamingType)`, distance <= 16). Calls `canName` again, then `TensuraEntityEvents.NAMING_EVENT` (`Event<NamingEvent>`, `EventResult name(LivingEntity target, Player namer, Changeable<Double> magiculeCost, Changeable<Double> epGain, Changeable<NamingType> type, Changeable<String> name)`; `isFalse()` cancels). Then charges the namer's magicule, `existence.setName`, **`setPermanentOwner(namer.getUUID())`**, `setTemporaryOwner(null)`, `setSummoner(null)`, awards `NAME_ENTITY`, `namingReward` (raises the target's base `MAX_MAGICULE`/`MAX_AURA`, `evolveMobs` for non-players, harvest-festival evolution for `NamingType.HIGH`, learn points for skills), heals and strips harmful effects. `NamingType` = `LOW`, `MEDIUM`, `HIGH`, plus a pet/tame path for `ISubordinate`. |
+| Consequence for task 4 | **Two** refusals have to be lifted for a sire naming their own sired: the gamerule read in `isNotNameable` (redirect `GameRules.getBoolean(PLAYER_NAME)` -> `|| sire/sired pair`), and the `isSubordinate(target, namer)` call in `canName` (once the sire is the sired's permanent owner, Tensura treats the sired as the sire's subordinate and refuses with `name_owner`; redirect it to false for the pair while the sired is unnamed). Both are in `RequestNamingKeyPacket`, so one mixin class with two redirects. `NAMING_EVENT` can only veto or tune a name, it cannot override `canName`, so it cannot do this. Setting `setPermanentOwner(sire)` on a sire record also makes `had_owner` pass for the sire and fail for everyone else, which is the "own sired only" rule. |
+| Clearing the owner | `IExistence.setPermanentOwner(UUID)` accepts `null` (`ExistenceStorage`: ignores only a value equal to the entity's own UUID, otherwise stores it). Clear with `setPermanentOwner(null)` then `markDirty()`. `getPermanentOwner()` returns `UUID` or null. Obtain the `IExistence` with `TensuraStorages.getExistenceFrom(LivingEntity)`. |
+
+### Skills (all in the `tensura` namespace; registries `IntrinsicSkills`, `CommonSkills`, `ExtraSkills`, `UniqueSkills`)
+
+| Skill id | Registry | Verified |
+|---|---|---|
+| `tensura:blood_mist` | `IntrinsicSkills` | yes |
+| `tensura:drain` | `IntrinsicSkills` | yes |
+| `tensura:charm` | `IntrinsicSkills` | yes |
+| `tensura:beast_transformation` | `IntrinsicSkills` | yes |
+| `tensura:self_regeneration` | `CommonSkills` | yes |
+| `tensura:godwolf_sense` | `ExtraSkills` | yes |
+| `tensura:commander` | `UniqueSkills` | yes: **the commander-type skill id** (TRUE_ALPHA rank) |
+
+None of the ids in the default layer table is missing, so none is dropped. A skill is learned with `SkillAPI.getSkillsFrom(player).learnSkill(instance)`; Tensura charges max magicule for it and vetoes it when there is too little, so set the instance tag `NoMagiculeCost` first (one-shot, Tensura removes it), exactly like `WerewolfSkillGrants`.
+
+### Attributes
+
+`io.github.manasmods.tensura.registry.attribute.TensuraAttributes.MAX_MAGICULE` and `MAX_AURA` (`Holder<Attribute>`, ranged attributes with a minimum). Modifiers go on those with `AttributeModifier.Operation.ADD_MULTIPLIED_BASE`. Naming rewards change the **base value** of both, so a multiplied-base modifier follows them. Note the human-like lines raise EP through the base, so the layer bonus tracks the player's growth.
