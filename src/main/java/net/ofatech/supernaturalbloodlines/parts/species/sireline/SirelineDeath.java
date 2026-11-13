@@ -13,6 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -81,16 +82,21 @@ public final class SirelineDeath {
                 work.add(child.id());
             }
         }
+        Set<UUID> kept = new HashSet<>();
         for (SirelineIndex.Node n : doomed) {
             if (!PLAYER.equals(n.entityType())) {
                 discard(server, index, n.id());
             } else if (SireCall.player(server, n.id()) instanceof ServerPlayer online) {
-                slay(online);
+                if (!slay(online)) {
+                    // something kept them alive: they stay in the line, owing the death for their next login
+                    index.addPendingPlayer(n.id());
+                    kept.add(n.id());
+                }
             } else {
                 index.addPendingPlayer(n.id());
             }
         }
-        doomed.forEach(n -> index.remove(n.id()));
+        doomed.stream().filter(n -> !kept.contains(n.id())).forEach(n -> index.remove(n.id()));
     }
 
     private static boolean isOriginal(MinecraftServer server, SpeciesData originals, UUID id) {
@@ -98,19 +104,30 @@ public final class SirelineDeath {
         return online != null ? OriginalRules.isOriginal(BloodlineAccess.get(online).species()) : originals.isOriginal(id);
     }
 
-    /** Kills the player (if they are not dead already) and ends their sire: the line is broken. */
-    static void slay(ServerPlayer p) {
+    /**
+     * Kills the player (if they are not dead already) and, once they really are dead, ends their sire: the line is broken.
+     * A player in Vampirism's dying state ignores every hit, so they are killed through it.
+     *
+     * @return whether the player is dead now
+     */
+    static boolean slay(ServerPlayer p) {
+        if (!p.isDeadOrDying()) {
+            DamageSource blow = p.damageSources().source(DAMAGE_TYPE);
+            if (!OriginalRules.killThroughDying(p, blow)) {
+                p.hurt(blow, Float.MAX_VALUE);
+            }
+            if (!p.isDeadOrDying()) {
+                p.kill();
+            }
+        }
+        if (!p.isDeadOrDying()) {
+            return false;
+        }
         BloodlineState s = BloodlineAccess.get(p);
         if (s.sire() != null) {
             BloodlineAccess.set(p, s.toBuilder().sire(null).build());
         }
-        if (p.isDeadOrDying()) {
-            return;
-        }
-        p.hurt(p.damageSources().source(DAMAGE_TYPE), Float.MAX_VALUE);
-        if (p.isAlive()) {
-            p.kill();
-        }
+        return true;
     }
 
     /** A creature in a level that is loaded goes; one that is not is owed, and goes when it loads. */

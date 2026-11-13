@@ -4,9 +4,12 @@ import static net.ofatech.supernaturalbloodlines.parts.species.gametest.Sireline
 import static net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCommandGameTests.online;
 import static net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCommandGameTests.species;
 
+import de.teamlapen.vampirism.api.VReference;
+import de.teamlapen.vampirism.api.VampirismAPI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
@@ -17,6 +20,7 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
@@ -207,6 +211,85 @@ public final class SirelineDeathGameTests {
             cleanUp(root, a, b, other, otherChild, outsider);
             SirelineIndex.get(level).takePendingMob(gone);
             cow.discard();
+        }
+        helper.succeed();
+    }
+
+    // ---- a sired Vampirism vampire ----
+
+    private static ServerPlayer siredVampire(GameTestHelper helper, ServerPlayer sire) {
+        ServerPlayer p = TestPlayers.createMortal(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        SireRecorder.record(sire, p);
+        return p;
+    }
+
+    private static void checkDead(GameTestHelper helper, ServerPlayer p, String when) {
+        helper.assertTrue(dead(p), when + ": the sired vampire survived, health " + p.getHealth());
+        helper.assertTrue(!VampirismAPI.vampirePlayer(p).isDBNO(), when + ": the dying state was left behind");
+        helper.assertTrue(deathsOf(p.getUUID()) == 1, when + ": the sireline death was announced " + deathsOf(p.getUUID()) + " times");
+        helper.assertTrue(BloodlineAccess.get(p).sire() == null, when + ": the dead kept their sire");
+        helper.assertTrue(SirelineIndex.get(p.serverLevel()).sireOf(p.getUUID()).isEmpty(), when + ": the dead stayed in the index");
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void sirelineDeathKillsASiredVampire(GameTestHelper helper) {
+        ServerPlayer root = mortal(helper, Species.ORIGINAL);
+        ServerPlayer child = siredVampire(helper, root);
+        SpeciesConfig.overrideSirelineDeath(true);
+        try {
+            online(root, child);
+            die(root, whiteOakBlow(helper));
+            checkDead(helper, child, "healthy vampire");
+        } finally {
+            SpeciesConfig.overrideSirelineDeath(null);
+            VampirismAPI.factionPlayerHandler(child).leaveFaction(false);
+            cleanUp(root, child);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void sirelineDeathKillsASiredVampireInTheDyingState(GameTestHelper helper) {
+        ServerPlayer root = mortal(helper, Species.ORIGINAL);
+        ServerPlayer child = siredVampire(helper, root);
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(1, 1, 1));
+        zombie.setNoAi(true);
+        SpeciesConfig.overrideSirelineDeath(true);
+        try {
+            online(root, child);
+            child.hurt(child.damageSources().mobAttack(zombie), 1000f);
+            helper.assertTrue(VampirismAPI.vampirePlayer(child).isDBNO() && !dead(child), "the vampire did not enter the dying state");
+            // the dying state blocks every hit, so a plain hurt would leave them there and the line unbroken
+            die(root, whiteOakBlow(helper));
+            checkDead(helper, child, "dying vampire");
+        } finally {
+            SpeciesConfig.overrideSirelineDeath(null);
+            zombie.discard();
+            VampirismAPI.factionPlayerHandler(child).leaveFaction(false);
+            cleanUp(root, child);
+        }
+        helper.succeed();
+    }
+
+    /** A plain fake player cannot be hurt at all: the stand-in for anything that keeps a sired player alive. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSiredPlayerWhoSurvivesKeepsTheirSireAndOwesTheDeath(GameTestHelper helper) {
+        ServerPlayer root = mortal(helper, Species.ORIGINAL);
+        ServerPlayer child = TestPlayers.create(helper);
+        SpeciesConfig.overrideSirelineDeath(true);
+        try {
+            SirelineIndex index = SirelineIndex.get(helper.getLevel());
+            SireRecorder.record(root, child);
+            online(root, child);
+            die(root, whiteOakBlow(helper));
+            helper.assertTrue(!dead(child), "the test player died");
+            helper.assertTrue(root.getUUID().equals(BloodlineAccess.get(child).sire()), "the sire was cleared before the death: " + BloodlineAccess.get(child).sire());
+            helper.assertTrue(index.sireOf(child.getUUID()).isPresent(), "the survivor left the index");
+            helper.assertTrue(index.takePendingPlayer(child.getUUID()), "the survivor does not owe the death");
+        } finally {
+            SpeciesConfig.overrideSirelineDeath(null);
+            cleanUp(root, child);
         }
         helper.succeed();
     }
