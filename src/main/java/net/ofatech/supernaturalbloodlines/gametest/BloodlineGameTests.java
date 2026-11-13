@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.gametest;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import java.util.Set;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.server.MinecraftServer;
@@ -56,11 +57,21 @@ public final class BloodlineGameTests {
     @GameTest(template = "empty")
     public static void partDataFollowsSwitch(GameTestHelper helper) {
         RegistryAccess access = helper.getLevel().registryAccess();
-        checkPartData(helper, access, "enchantedTensura", "circle_magic/rite", SupernaturalBloodlines.MODID, "");
+        // explicit ids: each part owns exactly these rites (a prefix or a namespace count would mix the parts up)
+        checkPartRites(helper, access, "enchantedTensura", Set.of("purification", "purification_holy_water", "curse_magicule_drain", "curse_skill_seal", "magicule_offering"));
+        checkPartRites(helper, access, "vampirismEnchanted", Set.of("cleansing_blood", "blood_offering", "silver_moon"));
         // Tensura's registry has no namespace prefix and our files sit in its data namespace
         checkPartData(helper, access, "enchantedTensura", "entity_existence", "tensura", "supernaturalbloodlines_enchanted_");
         checkPartData(helper, access, "vampirismTensura", "entity_existence", "tensura", "supernaturalbloodlines_vampirism_");
         helper.succeed();
+    }
+
+    private static void checkPartRites(GameTestHelper helper, RegistryAccess access, String part, Set<String> ids) {
+        long count = access.registries().filter(e -> e.key().location().getPath().equals("circle_magic/rite"))
+                .mapToLong(e -> e.value().keySet().stream()
+                        .filter(id -> id.getNamespace().equals(SupernaturalBloodlines.MODID) && ids.contains(id.getPath())).count()).sum();
+        boolean on = EnabledParts.isEnabled(part);
+        helper.assertTrue(on == (count > 0), "part " + part + " enabled=" + on + " but " + count + " of its rites are in the registry");
     }
 
     private static void checkPartData(GameTestHelper helper, RegistryAccess access, String part, String registryPath, String entryNs,
