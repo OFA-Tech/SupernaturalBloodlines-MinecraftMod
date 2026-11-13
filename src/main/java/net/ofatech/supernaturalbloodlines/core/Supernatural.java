@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.core;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import net.minecraft.world.entity.Entity;
@@ -23,6 +24,10 @@ public final class Supernatural {
     }
 
     public static void register(Predicate<Entity> isSupernatural, Predicate<Entity> isVampiric, Predicate<Entity> isPrey) {
+        // all three before any is added, so a null cannot leave the lists out of step
+        Objects.requireNonNull(isSupernatural, "isSupernatural");
+        Objects.requireNonNull(isVampiric, "isVampiric");
+        Objects.requireNonNull(isPrey, "isPrey");
         SUPERNATURAL.add(isSupernatural);
         VAMPIRIC.add(isVampiric);
         PREY.add(isPrey);

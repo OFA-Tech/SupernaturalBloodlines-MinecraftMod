@@ -18,6 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -35,6 +36,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
@@ -116,10 +118,24 @@ public final class ResurrectionVervainGameTests {
         victim.addEffect(new net.minecraft.world.effect.MobEffectInstance(ArtifactItems.VERVAIN_EFFECT, 1200));
     }
 
-    /** Vampirism shaves some off magic damage (1.4% seen on a level 1 player, 40% on one mob run), so the exact figure is not asserted: more than half, never more than the burn. */
-    private static boolean tookAbout(float before, LivingEntity e, float damage) {
-        float lost = before - e.getHealth();
-        return lost > damage / 2 && lost <= damage + 0.01f;
+    /**
+     * The magic damage {@code target} is about to take while {@code action} runs, as the first listener sees it. Vampirism
+     * trims damage to vampires later on, so the health lost is not a stable figure; the amount we ask for is.
+     */
+    private static List<Float> magicHits(LivingEntity target, Runnable action) {
+        List<Float> amounts = new ArrayList<>();
+        Consumer<LivingIncomingDamageEvent> spy = e -> {
+            if (e.getEntity() == target && e.getSource().is(DamageTypes.MAGIC)) {
+                amounts.add(e.getAmount());
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, true, LivingIncomingDamageEvent.class, spy);
+        try {
+            action.run();
+        } finally {
+            NeoForge.EVENT_BUS.unregister(spy);
+        }
+        return amounts;
     }
 
     private static void fresh(ServerPlayer p) {
@@ -154,6 +170,25 @@ public final class ResurrectionVervainGameTests {
         helper.assertTrue(charges(victim.getInventory().items.get(5)) == 2, "expected 2 charges left, got " + charges(victim.getInventory().items.get(5)));
         var regen = victim.getEffect(MobEffects.REGENERATION);
         helper.assertTrue(regen != null && regen.getAmplifier() == 1 && regen.getDuration() > 0 && regen.getDuration() <= 200, "no Regeneration II for 10 s: " + regen);
+        helper.succeed();
+    }
+
+    /** The faction half of the victim rule: a hunter is a human and is revived; a vampire is not, whatever its species says. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void resurrectionRingFollowsTheVictimsFaction(GameTestHelper helper) {
+        ServerPlayer hunter = TestPlayers.createMortal(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(hunter).setFactionAndLevel(VReference.HUNTER_FACTION, 1), "could not make a hunter");
+        hunter.getInventory().items.set(5, ring(3));
+        kill(hunter, mob(helper, "vampirism:vampire"));
+        helper.assertTrue(hunter.getHealth() == hunter.getMaxHealth(), "a hunter was not revived: " + hunter.getHealth());
+        helper.assertTrue(charges(hunter.getInventory().items.get(5)) == 2, "the hunter's ring was not used");
+
+        // species NONE (the default) but in the vampire faction
+        ServerPlayer vamp = TestPlayers.createMortal(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(vamp).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        vamp.getInventory().items.set(5, ring(3));
+        kill(vamp, mob(helper, "vampirism:vampire"));
+        helper.assertTrue(charges(vamp.getInventory().items.get(5)) == 3, "a vampire used a charge of the ring");
         helper.succeed();
     }
 
@@ -248,12 +283,15 @@ public final class ResurrectionVervainGameTests {
         ServerPlayer biter = vampire(helper);
         fresh(biter);
         float full = biter.getMaxHealth();
-        helper.assertTrue(bite(biter, victim).getAmount() == 10 && biter.getHealth() == full, "control: a bite without vervain was changed");
+        List<Float> control = magicHits(biter, () -> helper.assertTrue(bite(biter, victim).getAmount() == 10, "control: a bite without vervain was changed"));
+        helper.assertTrue(control.isEmpty() && biter.getHealth() == full, "control: a bite without vervain burned: " + control);
 
         protect(victim);
         fresh(biter);
-        var event = bite(biter, victim);
-        helper.assertTrue(tookAbout(full, biter, 4f), "the biter should take about 4 damage, health " + biter.getHealth());
+        BloodDrinkEvent.PlayerDrinkBloodEvent[] bitten = new BloodDrinkEvent.PlayerDrinkBloodEvent[1];
+        List<Float> burn = magicHits(biter, () -> bitten[0] = bite(biter, victim));
+        var event = bitten[0];
+        helper.assertTrue(burn.equals(List.of(4.0f)), "the biter should take exactly one 4.0 burn: " + burn);
         var weakness = biter.getEffect(MobEffects.WEAKNESS);
         helper.assertTrue(weakness != null && weakness.getAmplifier() == 0 && weakness.getDuration() > 0 && weakness.getDuration() <= 200, "no Weakness I for 10 s: " + weakness);
         helper.assertTrue(event.getAmount() == 0, "the bite still drank " + event.getAmount());
@@ -263,8 +301,8 @@ public final class ResurrectionVervainGameTests {
         second.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, new ItemStack(ArtifactItems.VERVAIN.get()));
         ServerPlayer biter2 = vampire(helper);
         fresh(biter2);
-        bite(biter2, second);
-        helper.assertTrue(tookAbout(biter2.getMaxHealth(), biter2, 4f), "offhand vervain did not burn the biter, health " + biter2.getHealth());
+        List<Float> offhandBurn = magicHits(biter2, () -> bite(biter2, second));
+        helper.assertTrue(offhandBurn.equals(List.of(4.0f)), "offhand vervain did not burn the biter by 4.0: " + offhandBurn);
         helper.succeed();
     }
 
@@ -273,10 +311,11 @@ public final class ResurrectionVervainGameTests {
         ServerPlayer victim = TestPlayers.createVulnerable(helper);
         protect(victim);
         Mob vamp = mob(helper, "vampirism:vampire");
-        float before = vamp.getHealth();
+        // spawned mobs may get a random weapon, and this case is about bare hands
+        vamp.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         fresh(victim);
-        victim.hurt(victim.damageSources().mobAttack(vamp), 1f);
-        helper.assertTrue(tookAbout(before, vamp, 4f), "the barehanded vampire should take about 4 damage, took " + (before - vamp.getHealth()));
+        List<Float> burn = magicHits(vamp, () -> victim.hurt(victim.damageSources().mobAttack(vamp), 1f));
+        helper.assertTrue(burn.equals(List.of(4.0f)), "the barehanded vampire should take exactly one 4.0 burn: " + burn + ", main hand " + vamp.getMainHandItem());
         helper.assertTrue(vamp.hasEffect(MobEffects.WEAKNESS), "no Weakness");
 
         // armed: no burn
@@ -289,6 +328,7 @@ public final class ResurrectionVervainGameTests {
 
         // a zombie is not a vampire
         Mob zombie = mob(helper, "minecraft:zombie");
+        zombie.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         float zombieBefore = zombie.getHealth();
         fresh(victim);
         victim.hurt(victim.damageSources().mobAttack(zombie), 1f);
@@ -339,13 +379,13 @@ public final class ResurrectionVervainGameTests {
             ServerPlayer vamp = vampire(helper);
             fresh(vamp);
             ItemStack stack = new ItemStack(food);
-            NeoForge.EVENT_BUS.post(new LivingEntityUseItemEvent.Finish(vamp, stack, 0, ItemStack.EMPTY));
-            helper.assertTrue(tookAbout(vamp.getMaxHealth(), vamp, 6f), "a vampire eating " + food + " should take 6 damage, health " + vamp.getHealth());
+            List<Float> hurt = magicHits(vamp, () -> NeoForge.EVENT_BUS.post(new LivingEntityUseItemEvent.Finish(vamp, stack, 0, ItemStack.EMPTY)));
+            helper.assertTrue(hurt.equals(List.of(6.0f)), "a vampire eating " + food + " should take exactly one 6.0 hit: " + hurt);
 
             ServerPlayer human = TestPlayers.createVulnerable(helper);
             fresh(human);
-            NeoForge.EVENT_BUS.post(new LivingEntityUseItemEvent.Finish(human, stack, 0, ItemStack.EMPTY));
-            helper.assertTrue(human.getHealth() == human.getMaxHealth(), "a human was hurt by " + food);
+            List<Float> none = magicHits(human, () -> NeoForge.EVENT_BUS.post(new LivingEntityUseItemEvent.Finish(human, stack, 0, ItemStack.EMPTY)));
+            helper.assertTrue(none.isEmpty() && human.getHealth() == human.getMaxHealth(), "a human was hurt by " + food + ": " + none);
         }
         helper.succeed();
     }

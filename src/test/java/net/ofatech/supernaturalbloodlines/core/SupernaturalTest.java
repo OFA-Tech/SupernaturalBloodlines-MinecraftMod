@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SupernaturalTest {
@@ -36,6 +37,12 @@ class SupernaturalTest {
         assertTrue(Supernatural.is(null));
         assertFalse(Supernatural.isVampiric(null));
         assertFalse(Supernatural.isPrey(null));
+    }
+
+    @Test
+    void aNullPredicateIsRefusedAndRegistersNothing() {
+        assertThrows(NullPointerException.class, () -> Supernatural.register(YES, YES, null));
+        assertFalse(Supernatural.is(null));
     }
 
     @Test
