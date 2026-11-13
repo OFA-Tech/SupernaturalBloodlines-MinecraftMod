@@ -1,8 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hybrid;
 
-import de.teamlapen.vampirism.api.VampirismAPI;
-import de.teamlapen.vampirism.api.entity.factions.IFaction;
-import de.teamlapen.vampirism.api.entity.factions.IFactionEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -14,11 +11,14 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.NeoForge;
+import net.ofatech.supernaturalbloodlines.core.network.HallucinationPayload;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 
 /**
@@ -35,8 +35,6 @@ public final class Venom {
     public static final ResourceKey<DamageType> DAMAGE_TYPE = ResourceKey.create(Registries.DAMAGE_TYPE,
             ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "venom"));
 
-    private static final ResourceLocation WEREWOLF = ResourceLocation.fromNamespaceAndPath("werewolves", "werewolf");
-    private static final ResourceLocation VAMPIRE = ResourceLocation.fromNamespaceAndPath("vampirism", "vampire");
     private static final int HALLUCINATION_EVERY = 600;
     private static final int HALLUCINATION_TICKS = 100;
 
@@ -56,20 +54,14 @@ public final class Venom {
                 || target.hasEffect(SpeciesRegistries.HYBRID_VENOM)) {
             return;
         }
-        if (isFaction(attacker, WEREWOLF) && isFaction(target, VAMPIRE)) {
+        if (VampirismSupernatural.isWerewolf(attacker) && VampirismSupernatural.isVampire(target)) {
             target.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, DURATION_TICKS));
         }
     }
 
-    private static boolean isFaction(Entity e, ResourceLocation id) {
-        IFaction<?> faction = e instanceof Player p ? VampirismAPI.factionPlayerHandler(p).getCurrentFaction()
-                : e instanceof IFactionEntity fe ? fe.getFaction() : null;
-        return faction != null && faction.getID().equals(id);
-    }
-
     /**
      * One pulse of the effect, {@code remaining} ticks before it runs out. 1 damage that cannot kill (like poison);
-     * Nausea II every 600 ticks (the hallucination, plan 7 may swap in its payload); Originals are kept in Weakness II;
+     * a hallucination every 600 ticks ({@link HallucinationPayload}; Nausea II for a mob or a client that cannot receive it); Originals are kept in Weakness II;
      * on the last pulse a non-Original dies of {@code supernaturalbloodlines:venom}, which ignores Resistance and
      * Vampirism's dying state. Creative and spectator players are not touched.
      */
@@ -91,7 +83,9 @@ public final class Venom {
         if (target.getHealth() > 1f) {
             target.hurt(source(target), 1f);
         }
-        if (remaining % HALLUCINATION_EVERY == 0) {
+        if (remaining % HALLUCINATION_EVERY == 0
+                && !(target instanceof ServerPlayer sp && HallucinationPayload.send(sp, HallucinationPayload.Kind.random(sp.getRandom())))) {
+            // a mob, or a player whose client cannot take the payload
             target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, HALLUCINATION_TICKS, 1));
         }
     }

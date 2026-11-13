@@ -21,6 +21,7 @@ public final class VampirismEnchantedPart {
         RiteFactoryRegistry.get().register(FactionRiteFactory.ID, FactionRiteFactory.CODEC);
         PartBlocks.register(modBus);
         PartItems.register(modBus);
+        VampirismSupernatural.register(); // vampires and werewolves are prey and supernatural whichever other parts are on
         boolean werewolves = ModList.get().isLoaded("werewolves");
         // the part is only initialised when Vampirism and Enchanted are present, so the tests only exist then;
         // the Werewolves tests link Werewolves classes, so they are registered only when it is loaded

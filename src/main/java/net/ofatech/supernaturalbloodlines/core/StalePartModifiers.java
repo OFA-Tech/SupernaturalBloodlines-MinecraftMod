@@ -18,7 +18,7 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
  */
 public final class StalePartModifiers {
     private static final Map<Part, Set<ResourceLocation>> OWNED = Map.of(
-            Part.SPECIES, Set.of(id("original"), id("hybrid")));
+            Part.SPECIES, Set.of(id("original"), id("hybrid"), id("hunter_mark")));
 
     private StalePartModifiers() {}
 

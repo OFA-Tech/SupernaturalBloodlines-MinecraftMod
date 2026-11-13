@@ -1,4 +1,4 @@
-package net.ofatech.supernaturalbloodlines.parts.artifacts;
+package net.ofatech.supernaturalbloodlines.parts.vampirismenchanted;
 
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IFaction;
@@ -10,8 +10,9 @@ import net.minecraft.world.entity.player.Player;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
 
 /**
- * What artifacts tells {@link Supernatural}: vampires and werewolves, players and mobs. Hunters are not supernatural.
- * Factions are matched by id, so no Werewolves class is linked.
+ * What the Vampirism factions tell {@link Supernatural}: vampires and werewolves, players and mobs, are supernatural and
+ * prey. Hunters are not. Registered by this part (artifacts, species and hunters all rely on it, and any of them can be
+ * off). Factions are matched by id, so no Werewolves class is linked.
  */
 public final class VampirismSupernatural {
     private static final ResourceLocation VAMPIRE = ResourceLocation.parse("vampirism:vampire");
@@ -20,11 +21,11 @@ public final class VampirismSupernatural {
     private VampirismSupernatural() {
     }
 
-    static void register() {
+    public static void register() {
         Supernatural.register(e -> isVampire(e) || isWerewolf(e), VampirismSupernatural::isVampire, e -> isVampire(e) || isWerewolf(e));
     }
 
-    static boolean isVampire(Entity e) {
+    public static boolean isVampire(Entity e) {
         return VAMPIRE.equals(factionId(e));
     }
 

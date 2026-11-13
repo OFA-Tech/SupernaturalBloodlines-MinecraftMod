@@ -44,7 +44,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
-import net.ofatech.supernaturalbloodlines.parts.artifacts.VampirismSupernatural;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 
 /**
  * R95: the wolfsbane strains and their effects on werewolf types. Needs Werewolves: nothing here is registered without
