@@ -5,8 +5,8 @@ Requires: `enchanted`, `tensura`. Package: `net.ofatech.supernaturalbloodlines.p
 Checklist (from the design, section 1). Tick items as they ship.
 
 - [x] Altar power from Tensura magic blocks (data): magic ore, crystal and magisteel block ids, listed from the Tensura jar. See "Data (Task 2)".
-- [ ] Curse *Magicule Drain*: slowly lowers magicules while active.
-- [ ] Curse *Skill Seal*: one random learned skill can't be activated while active (`SkillEvents.ACTIVATE_SKILL` interrupt).
+- [x] Curse *Magicule Drain*: slowly lowers magicules while active. See "Curses (Task 3)". **Manual rite check pending.**
+- [x] Curse *Skill Seal*: one random learned skill can't be activated while active (`SkillEvents.ACTIVATE_SKILL` interrupt). See "Curses (Task 3)". **Manual rite check pending.**
 - [ ] Rite of Purification (data): holy damage in an area to Tensura-undead races and `minecraft:undead`; the damage type id contains "holy".
 - [ ] Rite *Magicule Offering*: converts the caster's magicules into rite power (custom factory, or a PowerProvider shim).
 - [ ] Spirit Poppet (code): protects against damage in `tensura:is_spiritual`.
@@ -117,3 +117,15 @@ Plain stone adds nothing. Grass, dirt and similar already carry Enchanted data, 
 - `magicBlocksPowerAltar`: builds two **real** formed Enchanted altars (`AltarHelper.tryFormAltar`, `AltarBlockEntity.firstTick`), one with ten stone and one with ten `tensura:magic_ore` beside it, reads the capacity through `AltarMenu.getMaxPower`, and asserts ore minus stone is exactly 60. Both altars are 40 or more blocks above the floor and 40 apart, because the altar range is 32 and the grass and dirt floor has altar power of its own (a first run showed 200 with plain stone at floor height).
 - `altarPowerDataLoaded`: every block above has the expected `power` and `limit` in Enchanted's altar block registry.
 - `enchantedMobsHaveEp`: Tensura's `ENTITY_EXISTENCE` registry holds both mobs (control entry: `tensura:orc`).
+
+## Curses (Task 3)
+
+Code: `parts/enchantedtensura/curse/` (`Curses.register()` from the part init, `MagiculeDrainCurse`, `SkillSealCurse`). Rites: `data/supernaturalbloodlines/enchanted/circle_magic/rite/curse_magicule_drain.json` and `curse_skill_seal.json` (`enchanted:apply_curse`, `enchanted:medium_circle` with `enchanted:nether_chalk`, power 2000, conditions: enchanted and tensura loaded). Items: `enchanted:taglock` (the **filled** taglock; `taglock_kit` is the empty one), a Tensura magic crystal (low quality for the drain, medium for the seal) and `minecraft:soul_sand` (Tensura has no soul item; this is a choice, easy to change). Lang: `rite.supernaturalbloodlines.<rite>` (Enchanted's key format) and `curse.supernaturalbloodlines.<curse>` (Enchanted has no curse-name key; ours is unused by it).
+
+- **Magicule Drain.** Every 20 calls of `tick` (one per server tick) it removes `max(1, MAX_MAGICULE * 0.005 * (strength + 1))`, never below 0. It counts its own calls: Enchanted 4.2.7 passes an `age` that grows by 2 a tick and is not restored on load (`CurseInstanceImpl`'s constructor ignores `level` and `age`), so `age` cannot time a period. Nothing to undo in `onRemove`: the magicules already spent are spent and Tensura regenerates them.
+- **Skill Seal.** The curse holds `seed` and the sealed skill id in its codec. The choice: learned skill ids sorted by string, index `floorMod(seed, n)`. It is made in `onInitialise` and again in `tick` while nothing is sealed, because Enchanted only calls `onInitialise` on login and clone, not when a rite curses an online player. No skills means nothing is sealed and nothing happens; a skill learned later gets sealed. `SkillEvents.ACTIVATE_SKILL` is interrupted for the sealed skill, and `TOGGLE_SKILL` too unless the skill is already toggled on (so it can always be switched off). The listeners ignore a curse already marked removed, so the skill is usable the moment the remove-curse rite marks it, before `onRemove`.
+- **Death.** A `LivingDeathEvent` listener (lowest priority, skips cancelled) calls `CurseManager.removeCurse` for both, so `onRemove` runs on Enchanted's next curse tick.
+- **Enchanted 4.2.7 quirks found** (not ours to fix): a first `applyCurse` always creates strength 0 (the level argument is dropped; only a second application raises it); strength and age are not restored on load.
+- **Manual rite check pending.** The GameTests start the real rite JSON through `RiteType.create(...).start()` with a filled taglock on a second FakePlayer, and Enchanted's own `CurseManagerImpl.tick` for `onRemove`. They do not prove the chalk circle, the item matching on a real altar, or the client.
+
+GameTests (`EnchantedTensuraGameTests`): `drainReducesMagicules`, `neverBelowZero`, `sealChoiceIsDeterministic`, `skillSealBlocksChosenSkill`, `cursesSurviveSaving`, `skillSealWithNoSkillsIsNoop`, `removingSkillSealRestoresSkill`, `cursesAreClearedOnDeath`, `curseRitesLoad`, `ritesCurseTheTaglockTarget`.

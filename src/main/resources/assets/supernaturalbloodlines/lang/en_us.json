@@ -19,5 +19,9 @@
   "supernaturalbloodlines.refusal.true_alpha_defender_kills": "You have not defended your pack enough to become a True Alpha.",
   "supernaturalbloodlines.refusal.true_alpha_stole_spark": "A stolen spark cannot make a True Alpha.",
   "supernaturalbloodlines.vampirism_tensura.hunter_left": "Your new nature cannot stand beside the hunters. You have left their ranks.",
-  "supernaturalbloodlines.vampirism_tensura.bite_bloodless": "There is no blood in them to drink."
+  "supernaturalbloodlines.vampirism_tensura.bite_bloodless": "There is no blood in them to drink.",
+  "rite.supernaturalbloodlines.curse_magicule_drain": "Curse of Magicule Drain",
+  "rite.supernaturalbloodlines.curse_skill_seal": "Curse of Skill Seal",
+  "curse.supernaturalbloodlines.magicule_drain": "Magicule Drain",
+  "curse.supernaturalbloodlines.skill_seal": "Skill Seal"
 }
