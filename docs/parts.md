@@ -35,7 +35,7 @@ Permission level 2. For quick state changes in a test world:
 
 - `/supernaturalbloodlines debug get <player>` prints the player's bloodline state.
 - `/supernaturalbloodlines debug set <player> <species>` sets the species (name, any case).
-- `/supernaturalbloodlines debug event <player> <event>` runs a `BloodlineEvent` through `BloodlineRules`. **The context is `BloodlineContext.defaults()`: faction NONE, human-like true, no Originals in the world.** Core can't see factions, so events that depend on a faction (for example the Rite of the Five, which needs a hunter) will be refused here. Faction actions in the result are listed but not performed.
+- `/supernaturalbloodlines debug event <player> <event>` runs a `BloodlineEvent` through `BloodlineRules`. **The context is `BloodlineContext.defaults()`: faction NONE, human-like true, no Originals in the world, and `werewolvesLoaded` set from the installed mods (so hybrid types are refused without Werewolves).** Core can't see factions, so events that depend on a faction (for example the Rite of the Five, which needs a hunter) will be refused here. Faction actions in the result are listed but not performed.
 
 Bad species or event names give a normal command error and change nothing.
 

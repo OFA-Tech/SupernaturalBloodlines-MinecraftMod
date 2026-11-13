@@ -3,7 +3,15 @@ package net.ofatech.supernaturalbloodlines.parts.species.gametest;
 import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IFactionPlayerHandler;
+import com.mojang.authlib.GameProfile;
 import java.util.List;
+import java.util.UUID;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesData;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesPart;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -96,11 +104,55 @@ public final class SpeciesGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void killIgnoresTotemOfUndying(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.createVulnerable(helper);
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.TOTEM_OF_UNDYING));
+        OutcomeExecutor.run(p, actions(Action.KILL_PLAYER));
+        helper.assertTrue(p.isDeadOrDying(), "the totem saved the player");
+        helper.assertTrue(p.getMainHandItem().is(Items.TOTEM_OF_UNDYING), "the totem was used up");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void killSparesCreativePlayers(GameTestHelper helper) {
+        ServerPlayer p = new FakePlayer(helper.getLevel(), new GameProfile(UUID.randomUUID(), "test-creative")) {
+            @Override
+            public boolean isCreative() {
+                return true;
+            }
+        };
+        OutcomeExecutor.run(p, actions(Action.KILL_PLAYER));
+        helper.assertTrue(p.isAlive(), "a creative player was killed");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void loginResyncsTheOriginalsRegistry(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        SpeciesData data = SpeciesData.get(p.server);
+        int before = data.count();
+        try {
+            BloodlineAccess.set(p, species(Species.ORIGINAL));
+            data.setOriginal(p.getUUID(), false); // the registry lost them
+            SpeciesPart.syncOriginal(p);
+            helper.assertTrue(data.count() == before + 1, "login did not restore the Original");
+            SpeciesPart.syncOriginal(p);
+            helper.assertTrue(data.count() == before + 1, "a second sync counted them twice");
+        } finally {
+            BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+        helper.assertTrue(data.count() == before, "the registry kept a non-Original");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void failedTransitionBypassesResistance(GameTestHelper helper) {
         helper.assertTrue(helper.getLevel().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
                 .containsKey(OutcomeExecutor.FAILED_TRANSITION), "damage type failed_transition is missing");
         helper.assertTrue(helper.getLevel().damageSources().source(OutcomeExecutor.FAILED_TRANSITION).is(DamageTypeTags.BYPASSES_RESISTANCE),
                 "failed_transition does not bypass Resistance");
+        helper.assertTrue(helper.getLevel().damageSources().source(OutcomeExecutor.FAILED_TRANSITION).is(DamageTypeTags.BYPASSES_INVULNERABILITY),
+                "failed_transition does not bypass invulnerability (a totem would save the player)");
         helper.succeed();
     }
 

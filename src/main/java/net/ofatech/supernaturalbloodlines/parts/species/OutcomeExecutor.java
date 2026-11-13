@@ -20,16 +20,24 @@ public final class OutcomeExecutor {
     }
 
     public static void run(ServerPlayer p, Outcome o) {
-        ReentrancyGuard.run(p.getUUID(), "species", () -> {
+        boolean ran = ReentrancyGuard.run(p.getUUID(), "species", () -> {
             if (o.refused()) {
                 p.sendSystemMessage(Component.translatable(o.refusalKey()));
                 return;
             }
             // leave, then join, in that order (the rite factory's own runner); the kill comes last
             FactionRiteFactory.runFactionActions(p, o);
-            if (o.actions().contains(Outcome.Action.KILL_PLAYER)) {
+            if (o.actions().contains(Outcome.Action.KILL_PLAYER) && !p.isCreative() && !p.isSpectator()) {
+                // failed_transition is in #bypasses_invulnerability, so a Totem of Undying does not save them
                 p.hurt(p.damageSources().source(FAILED_TRANSITION), Float.MAX_VALUE);
+                if (p.isAlive()) {
+                    p.kill();
+                }
             }
         });
+        if (!ran) {
+            SupernaturalBloodlines.LOGGER.warn("OutcomeExecutor: skipped a nested outcome for {} (actions {}, refusal {})",
+                    p.getGameProfile().getName(), o.actions(), o.refusalKey());
+        }
     }
 }

@@ -12,6 +12,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
@@ -80,8 +81,10 @@ public final class DebugCommand {
     private static int event(CommandContext<CommandSourceStack> c, ServerPlayer p, String name)
             throws CommandSyntaxException {
         BloodlineEvent event = parse(BloodlineEvent.class, name, UNKNOWN_EVENT);
-        // Core cannot see factions: the context has faction NONE and humanLike true (BloodlineContext.defaults()).
-        Outcome out = BloodlineAccess.applyEvent(p, event, BloodlineContext.defaults().withGameTime(p.level().getGameTime()));
+        // Core cannot see factions: the context has faction NONE and humanLike true (BloodlineContext.defaults()),
+        // but it does know whether Werewolves is installed, so hybrid types are refused without it.
+        Outcome out = BloodlineAccess.applyEvent(p, event, BloodlineContext.defaults().withGameTime(p.level().getGameTime())
+                .withWerewolvesLoaded(ModList.get().isLoaded("werewolves")));
         String note = " (debug context: faction NONE, human-like)";
         if (out.refused()) {
             c.getSource().sendFailure(Component.translatable(out.refusalKey()).append(note));
