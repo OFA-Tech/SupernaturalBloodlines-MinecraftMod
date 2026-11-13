@@ -7,6 +7,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.ofatech.supernaturalbloodlines.client.HallucinationClient;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 
@@ -32,6 +33,9 @@ public final class ModNetwork {
                         target.setData(ModAttachments.BLOODLINE, payload.state());
                     }
                 }));
+        // The handler class is client only; this lambda runs only when the packet arrives, which a dedicated server never receives.
+        registrar.playToClient(HallucinationPayload.TYPE, HallucinationPayload.STREAM_CODEC, (payload, ctx) ->
+                ctx.enqueueWork(() -> HallucinationClient.show(payload.kind())));
     }
 
     // A new client player object (login, respawn, dimension change) starts with NONE, so push the state again.

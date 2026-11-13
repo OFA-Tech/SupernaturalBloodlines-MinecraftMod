@@ -21,10 +21,15 @@ public final class FiveRoster extends SavedData {
     private static final String MEMBERS = "members";
     private static final String PENDING = "pending_potential_choice";
     private static final String LIFTED = "lifted_curses";
+    private static final String CURSED = "cursed";
 
     private final Set<UUID> members = new HashSet<>();
+    // the marked hunters (by UUID) whose death still owes the world a potential
     private final Set<UUID> pendingPotentialChoice = new HashSet<>();
+    // cursed killers whose curse was lifted while they were offline; applied at their next login
     private final Set<UUID> liftedCurses = new HashSet<>();
+    // everyone who got the curse and has not been freed: tells which offline players to free when it lifts
+    private final Set<UUID> cursed = new HashSet<>();
 
     FiveRoster() {
     }
@@ -39,6 +44,7 @@ public final class FiveRoster extends SavedData {
         read(tag, MEMBERS, r.members);
         read(tag, PENDING, r.pendingPotentialChoice);
         read(tag, LIFTED, r.liftedCurses);
+        read(tag, CURSED, r.cursed);
         return r;
     }
 
@@ -59,6 +65,7 @@ public final class FiveRoster extends SavedData {
         write(tag, MEMBERS, members);
         write(tag, PENDING, pendingPotentialChoice);
         write(tag, LIFTED, liftedCurses);
+        write(tag, CURSED, cursed);
         return tag;
     }
 
@@ -101,5 +108,13 @@ public final class FiveRoster extends SavedData {
 
     public void setLiftedCurse(UUID id, boolean lifted) {
         change(liftedCurses, id, lifted);
+    }
+
+    public Set<UUID> cursed() {
+        return Collections.unmodifiableSet(cursed);
+    }
+
+    public void setCursed(UUID id, boolean isCursed) {
+        change(cursed, id, isCursed);
     }
 }

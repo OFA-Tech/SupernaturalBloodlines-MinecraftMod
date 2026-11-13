@@ -14,7 +14,9 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.NeoForge;
+import net.ofatech.supernaturalbloodlines.core.network.HallucinationPayload;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
@@ -69,7 +71,7 @@ public final class Venom {
 
     /**
      * One pulse of the effect, {@code remaining} ticks before it runs out. 1 damage that cannot kill (like poison);
-     * Nausea II every 600 ticks (the hallucination, plan 7 may swap in its payload); Originals are kept in Weakness II;
+     * a hallucination every 600 ticks ({@link HallucinationPayload}; Nausea II for a mob or a client that cannot receive it); Originals are kept in Weakness II;
      * on the last pulse a non-Original dies of {@code supernaturalbloodlines:venom}, which ignores Resistance and
      * Vampirism's dying state. Creative and spectator players are not touched.
      */
@@ -91,7 +93,9 @@ public final class Venom {
         if (target.getHealth() > 1f) {
             target.hurt(source(target), 1f);
         }
-        if (remaining % HALLUCINATION_EVERY == 0) {
+        if (remaining % HALLUCINATION_EVERY == 0
+                && !(target instanceof ServerPlayer sp && HallucinationPayload.send(sp, HallucinationPayload.Kind.random(sp.getRandom())))) {
+            // a mob, or a player whose client cannot take the payload
             target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, HALLUCINATION_TICKS, 1));
         }
     }

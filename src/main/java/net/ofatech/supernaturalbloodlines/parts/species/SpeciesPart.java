@@ -18,6 +18,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.hybrid.SireBond;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterMarkGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterWerewolfGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WitchGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterEvents;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.AncestralCallingRiteFactory;
@@ -89,7 +91,9 @@ public final class SpeciesPart {
             e.register(OriginalGameTests.class);
             e.register(WitchGameTests.class);
             e.register(HunterGameTests.class);
+            e.register(HunterMarkGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
+                e.register(HunterWerewolfGameTests.class);
                 e.register(HybridGameTests.class);
                 e.register(HybridTraitsGameTests.class);
                 e.register(OriginalHybridGameTests.class);

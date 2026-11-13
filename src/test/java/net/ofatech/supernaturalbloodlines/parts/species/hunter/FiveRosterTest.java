@@ -33,11 +33,14 @@ class FiveRosterTest {
         r.add(member);
         r.setPendingPotentialChoice(pending, true);
         r.setLiftedCurse(lifted, true);
+        UUID cursed = UUID.randomUUID();
+        r.setCursed(cursed, true);
         FiveRoster back = FiveRoster.load(r.save(new CompoundTag(), null), null);
         assertTrue(back.contains(member));
         assertEquals(1, back.size());
         assertTrue(back.pendingPotentialChoice().contains(pending));
         assertTrue(back.liftedCurses().contains(lifted));
+        assertTrue(back.cursed().contains(cursed));
         back.setPendingPotentialChoice(pending, false);
         assertTrue(back.pendingPotentialChoice().isEmpty());
     }
