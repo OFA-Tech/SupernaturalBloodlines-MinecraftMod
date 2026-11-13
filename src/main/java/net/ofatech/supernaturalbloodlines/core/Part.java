@@ -43,6 +43,7 @@ public enum Part {
         return switch (this) {
             case SPECIES -> Set.of(VAMPIRISM_ENCHANTED); // reuses its FactionRiteFactory
             case SPECIES_TENSURA -> Set.of(SPECIES);
+            case ARTIFACTS -> Set.of(VAMPIRISM_ENCHANTED); // reuses its RiteTargets and FactionRiteHooks
             default -> Set.of();
         };
     }

@@ -1,0 +1,21 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "type": "minecraft:chest",
+    "pools": [
+        {
+            "rolls": 1.0,
+            "bonus_rolls": 0.0,
+            "conditions": [ { "condition": "minecraft:random_chance", "chance": 0.15 } ],
+            "entries": [
+                {
+                    "type": "minecraft:item",
+                    "name": "supernaturalbloodlines:yellow_wolfsbane_seeds",
+                    "functions": [ { "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 1, "max": 2 } } ]
+                }
+            ]
+        }
+    ]
+}

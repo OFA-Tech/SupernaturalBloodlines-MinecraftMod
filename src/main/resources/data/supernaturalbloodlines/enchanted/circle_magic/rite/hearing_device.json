@@ -1,0 +1,18 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" }
+    ],
+    "items": [
+        { "id": "minecraft:note_block", "count": 1 },
+        { "id": "minecraft:iron_ingot", "count": 2 },
+        { "id": "minecraft:amethyst_shard", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 3000,
+    "factory": {
+        "type": "enchanted:create_item",
+        "items": [ { "id": "supernaturalbloodlines:hearing_device", "count": 1 } ]
+    }
+}

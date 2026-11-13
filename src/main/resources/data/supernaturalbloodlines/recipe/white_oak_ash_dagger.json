@@ -1,0 +1,15 @@
+{
+  "neoforge:conditions": [
+    { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" },
+    { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [ "A", "I", "S" ],
+  "key": {
+    "A": { "item": "supernaturalbloodlines:white_oak_ash" },
+    "I": { "item": "minecraft:iron_ingot" },
+    "S": { "item": "minecraft:stick" }
+  },
+  "result": { "id": "supernaturalbloodlines:white_oak_ash_dagger", "count": 1 }
+}

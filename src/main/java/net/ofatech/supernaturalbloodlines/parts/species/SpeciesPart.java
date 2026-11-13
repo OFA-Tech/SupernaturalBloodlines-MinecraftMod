@@ -59,6 +59,7 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(HybridBloodRiteFactory.ID, HybridBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(AncestralCallingRiteFactory.ID, AncestralCallingRiteFactory.CODEC);
         SpeciesRegistries.register(modBus);
+        SpeciesSupernatural.register();
         OriginalRules.register();
         Siphoning.register();
         VampireJoin.register();

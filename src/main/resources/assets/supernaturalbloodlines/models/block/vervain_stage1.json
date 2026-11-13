@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/crop", "textures": { "crop": "supernaturalbloodlines:block/vervain_stage1" } }

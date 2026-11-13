@@ -63,6 +63,11 @@ repositories {
         content { includeGroup 'net.tslat.smartbrainlib' }
     }
     maven {
+        name = 'Illusive'
+        url = 'https://maven.theillusivec4.top/'
+        content { includeGroup 'top.theillusivec4.curios' }
+    }
+    maven {
         name = 'MinecraftForge'
         url = 'https://maven.minecraftforge.net'
         content { includeGroup 'com.github.glitchfiend' }
@@ -162,10 +167,12 @@ configurations {
 
 // Linked mods. compileOnly always; localRuntime unless switched off:
 //   -PnoLinkedMods  drop every linked mod from the run classpath
-//   -PnoWerewolves  drop only Werewolves   (-PnoCurios is reserved, no-op for now)
+//   -PnoWerewolves  drop only Werewolves
+//   -PnoCurios      drop only Curios
 // transitive=false everywhere: published POMs point at repos/versions we do not use.
 def linkedRuntime = !project.hasProperty('noLinkedMods')
 def werewolvesRuntime = linkedRuntime && !project.hasProperty('noWerewolves')
+def curiosRuntime = linkedRuntime && !project.hasProperty('noCurios')
 
 // ManasCore ships its real modules as jar-in-jar; FML unpacks them at runtime, but Gradle only sees the outer jar.
 configurations.create('manascoreOuter') { transitive = false }
@@ -186,6 +193,7 @@ dependencies {
     // Werewolves has no API classifier
     compileOnly("de.teamlapen.werewolves:Werewolves:${werewolves_version}") { transitive = false }
     compileOnly("net.favouriteless.enchanted:enchanted-neoforge-1.21.1:${enchanted_version}") { transitive = false }
+    compileOnly("top.theillusivec4.curios:curios-neoforge:${curios_version}:api") { transitive = false }
     // Tensura and ManasCore (CurseForge only)
     compileOnly("curse.maven:tensura-reincarnated-643695:${tensura_file_id}") { transitive = false }
     manascoreOuter("curse.maven:manascore-619025:${manascore_file_id}")
@@ -210,6 +218,9 @@ dependencies {
         localRuntime("software.bernie.geckolib:geckolib-neoforge-1.21.1:${geckolib_version}") { transitive = false }
         localRuntime("net.tslat.smartbrainlib:SmartBrainLib-neoforge-1.21.1:${smartbrainlib_version}") { transitive = false }
         localRuntime("com.github.glitchfiend:TerraBlender-neoforge:${terrablender_version}") { transitive = false }
+    }
+    if (curiosRuntime) {
+        localRuntime("top.theillusivec4.curios:curios-neoforge:${curios_version}") { transitive = false }
     }
     if (werewolvesRuntime) {
         localRuntime("de.teamlapen.werewolves:Werewolves:${werewolves_version}") { transitive = false }

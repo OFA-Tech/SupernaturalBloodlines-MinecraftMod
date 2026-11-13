@@ -1,0 +1,17 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:white_oak_ash", "count": 2 },
+        { "id": "supernaturalbloodlines:vervain", "count": 4 },
+        { "id": "minecraft:enchanted_golden_apple", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 20000,
+    "factory": {
+        "type": "supernaturalbloodlines:requires_desiccated"
+    }
+}

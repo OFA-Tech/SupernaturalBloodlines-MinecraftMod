@@ -91,10 +91,24 @@ public final class BloodlineGameTests {
         // explicit ids: each part owns exactly these rites (a prefix or a namespace count would mix the parts up)
         checkPartRites(helper, access, "enchantedTensura", Set.of("purification", "purification_holy_water", "curse_magicule_drain", "curse_skill_seal", "magicule_offering"));
         checkPartRites(helper, access, "vampirismEnchanted", Set.of("cleansing_blood", "blood_offering", "silver_moon"));
+        checkPartRites(helper, access, "artifacts", Set.of("ward_of_daylight", "ward_of_return", "rite_of_the_cure", "vampire_compass", "hearing_device"));
         // Tensura's registry has no namespace prefix and our files sit in its data namespace
         checkPartData(helper, access, "enchantedTensura", "entity_existence", "tensura", "supernaturalbloodlines_enchanted_");
         checkPartData(helper, access, "vampirismTensura", "entity_existence", "tensura", "supernaturalbloodlines_vampirism_");
+        // mountain ash worldgen: the trees must not be referenced (nor exist) with the part off
+        checkPartData(helper, access, "artifacts", "worldgen/configured_feature", "supernaturalbloodlines", "mountain_ash");
+        checkPartData(helper, access, "artifacts", "worldgen/placed_feature", "supernaturalbloodlines", "mountain_ash");
+        checkPartData(helper, access, "artifacts", "biome_modifier", "supernaturalbloodlines", "mountain_ash");
         checkPartData(helper, access, "species", "damage_type", "supernaturalbloodlines", "failed_transition");
+        // wolfsbane strains: the part and Werewolves both gate them (the lichen block only exists with both)
+        boolean wolfsbane = EnabledParts.isEnabled("artifacts") && net.neoforged.fml.ModList.get().isLoaded("werewolves");
+        for (String[] entry : new String[][] {{"damage_type", "wolfsbane_poison"}, {"worldgen/configured_feature", "wolf_lichen"},
+                {"worldgen/placed_feature", "wolf_lichen"}, {"biome_modifier", "wolf_lichen"}}) {
+            long count = access.registries().filter(e -> e.key().location().getPath().equals(entry[0]))
+                    .mapToLong(e -> e.value().keySet().stream()
+                            .filter(id -> id.getNamespace().equals("supernaturalbloodlines") && id.getPath().startsWith(entry[1])).count()).sum();
+            helper.assertTrue(wolfsbane == (count > 0), "wolfsbane data " + entry[1] + " in " + entry[0] + ": expected " + wolfsbane + ", entries " + count);
+        }
         helper.succeed();
     }
 

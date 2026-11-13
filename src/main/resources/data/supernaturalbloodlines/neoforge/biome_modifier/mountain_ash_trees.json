@@ -1,0 +1,7 @@
+{
+    "neoforge:conditions": [ { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" } ],
+    "type": "neoforge:add_features",
+    "biomes": "#minecraft:is_forest",
+    "features": "supernaturalbloodlines:mountain_ash",
+    "step": "vegetal_decoration"
+}

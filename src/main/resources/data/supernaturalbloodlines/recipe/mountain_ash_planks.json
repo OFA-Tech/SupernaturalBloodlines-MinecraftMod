@@ -1,0 +1,7 @@
+{
+  "neoforge:conditions": [ { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" } ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [ { "item": "supernaturalbloodlines:mountain_ash_log" } ],
+  "result": { "id": "supernaturalbloodlines:mountain_ash_planks", "count": 4 }
+}

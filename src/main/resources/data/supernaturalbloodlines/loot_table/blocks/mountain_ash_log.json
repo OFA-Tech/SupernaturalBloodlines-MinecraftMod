@@ -1,0 +1,12 @@
+{
+    "neoforge:conditions": [ { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" } ],
+    "type": "minecraft:block",
+    "pools": [
+        {
+            "rolls": 1.0,
+            "bonus_rolls": 0.0,
+            "conditions": [ { "condition": "minecraft:survives_explosion" } ],
+            "entries": [ { "type": "minecraft:item", "name": "supernaturalbloodlines:mountain_ash_log" } ]
+        }
+    ]
+}

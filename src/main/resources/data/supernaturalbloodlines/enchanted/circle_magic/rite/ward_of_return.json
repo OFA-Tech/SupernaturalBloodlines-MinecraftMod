@@ -1,0 +1,18 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" }
+    ],
+    "items": [
+        { "id": "minecraft:totem_of_undying", "count": 1 },
+        { "id": "minecraft:gold_ingot", "count": 4 },
+        { "id": "minecraft:diamond", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 8000,
+    "factory": {
+        "type": "enchanted:create_item",
+        "items": [ { "id": "supernaturalbloodlines:resurrection_ring", "count": 1 } ]
+    }
+}
