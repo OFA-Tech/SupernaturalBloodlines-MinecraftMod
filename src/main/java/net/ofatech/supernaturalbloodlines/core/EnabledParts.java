@@ -20,6 +20,10 @@ public final class EnabledParts {
         enabled = copy;
     }
 
+    public static Set<Part> snapshot() {
+        return enabled;
+    }
+
     /** True when the part with this config key is enabled. An unknown key is false and warns once. */
     public static boolean isEnabled(String configKey) {
         for (Part p : Part.values()) {

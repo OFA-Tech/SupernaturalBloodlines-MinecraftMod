@@ -27,6 +27,10 @@ Data files load even when a part's code does not, and a registry whose entries u
 - Tags merged into vanilla tags use `"required": false` entries instead (a required entry for a missing id drops the whole tag).
 - `./gradlew runGameTestServer -PpartsOff=enchantedTensura,vampirismTensura` writes those switches as `false` into `run/config/supernaturalbloodlines-common.toml` for the run and restores the file afterwards. The core GameTest `partDataFollowsSwitch` checks that part data is present exactly when its part is enabled.
 
+## Permanent attribute modifiers
+
+A modifier added with `addPermanentModifier` is saved with the player, and when its part is later switched off nothing removes it. **Any part that adds permanent attribute modifiers must list their ids in `StalePartModifiers.OWNED` (core), under its `Part`.** On login, core removes the modifiers of every part that is not enabled, by id, from all vanilla attributes (so a new modifier on any attribute is covered). Species lists `supernaturalbloodlines:original` and `supernaturalbloodlines:hybrid`. Test: `disabledPartsLoseTheirSavedModifiers`.
+
 Werewolves and Curios are optional extras inside parts; the pure rules in `core` never import them.
 
 ## Debug commands
