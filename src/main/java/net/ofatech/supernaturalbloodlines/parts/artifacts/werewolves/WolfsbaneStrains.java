@@ -12,6 +12,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.ByIdMap;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.damagesource.DamageSource;
@@ -68,7 +69,7 @@ public final class WolfsbaneStrains {
 
         public static final Codec<Strain> CODEC = StringRepresentable.fromEnum(Strain::values);
         public static final StreamCodec<RegistryFriendlyByteBuf, Strain> STREAM_CODEC =
-                ByteBufCodecs.idMapper(i -> values()[i], Strain::ordinal).cast();
+                ByteBufCodecs.idMapper(ByIdMap.continuous(Strain::ordinal, values(), ByIdMap.OutOfBoundsStrategy.ZERO), Strain::ordinal).cast();
 
         private final String id;
 
@@ -125,6 +126,7 @@ public final class WolfsbaneStrains {
             return switch (strain) {
                 case YELLOW -> duration % 40 == 0;
                 case NORTHERN_BLUE -> duration % 100 == 0 || duration == 1;
+                case LICHEN -> duration % 20 == 0; // only to notice that the victim stopped being a werewolf type
                 default -> false;
             };
         }
@@ -288,7 +290,15 @@ public final class WolfsbaneStrains {
      * last half heart (like poison); northern blue kills on its last tick. Creative and spectator players are skipped.
      */
     public static void pulse(LivingEntity target, Strain strain, int remaining) {
-        if (!target.isAlive() || target instanceof Player p && (p.isCreative() || p.isSpectator())) {
+        if (!target.isAlive()) {
+            return;
+        }
+        // cured of lycanthropy (The Cure, a rite, a command) while it ran: the strain has nothing left to act on
+        if (!isWerewolfType(target)) {
+            target.removeEffect(strain.effect());
+            return;
+        }
+        if (strain == Strain.LICHEN || target instanceof Player p && (p.isCreative() || p.isSpectator())) {
             return;
         }
         if (strain == Strain.NORTHERN_BLUE && remaining <= 1) {

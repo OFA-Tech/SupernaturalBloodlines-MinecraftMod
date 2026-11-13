@@ -5,6 +5,7 @@ import de.teamlapen.werewolves.api.entities.werewolf.WerewolfForm;
 import de.teamlapen.werewolves.entities.player.werewolf.actions.WerewolfFormAction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -99,8 +100,15 @@ public final class WolfsbaneRules {
         }
         ItemStack out = weapon.copy();
         out.set(WolfsbaneStrains.COATING.get(), new Coating(strain, WolfsbaneStrains.COATING_HITS));
+        // setting an output skips vanilla's rename handling, so keep it: a changed name field renames, for one more level
+        long cost = 1;
+        String name = e.getName();
+        if (name != null && !name.isBlank() && !name.equals(out.getHoverName().getString())) {
+            out.set(DataComponents.CUSTOM_NAME, Component.literal(name));
+            cost++;
+        }
         e.setOutput(out);
-        e.setCost(1);
+        e.setCost(cost);
         e.setMaterialCost(1);
     }
 

@@ -181,6 +181,57 @@ public final class WolfsbaneGameTests {
         helper.succeed();
     }
 
+    /** Cured of lycanthropy while it runs (The Cure, a rite, leaving the faction): the strain is dropped, nobody dies of it. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void strainEndsWhenNoLongerAWerewolf(GameTestHelper helper) {
+        var nb = WolfsbaneStrains.NORTHERN_BLUE_EFFECT.value();
+        ServerPlayer p = werewolf(helper);
+        p.addEffect(new MobEffectInstance(WolfsbaneStrains.NORTHERN_BLUE_EFFECT, 1));
+        p.addEffect(new MobEffectInstance(WolfsbaneStrains.LICHEN_EFFECT, 1000));
+        VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
+        helper.assertTrue(!WolfsbaneStrains.isWerewolfType(p), "setup: still a werewolf type");
+        float before = p.getHealth();
+        nb.applyEffectTick(p, 0);
+        helper.assertTrue(p.isAlive() && p.getHealth() == before, "northern blue still hurt someone who is no longer a werewolf");
+        helper.assertTrue(!has(p, WolfsbaneStrains.NORTHERN_BLUE_EFFECT), "northern blue stayed on a non-werewolf");
+        WolfsbaneStrains.LICHEN_EFFECT.value().applyEffectTick(p, 0);
+        helper.assertTrue(!has(p, WolfsbaneStrains.LICHEN_EFFECT), "lichen stayed on a non-werewolf");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anvilCoatingKeepsTheRename(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        ItemStack plant = new ItemStack(WolfsbaneStrains.YELLOW_PLANT.get());
+        var renamed = new AnvilUpdateEvent(new ItemStack(Items.IRON_SWORD), plant, "Fang", 0, p);
+        NeoForge.EVENT_BUS.post(renamed);
+        helper.assertTrue(renamed.getOutput().get(DataComponents.CUSTOM_NAME) != null
+                && renamed.getOutput().get(DataComponents.CUSTOM_NAME).getString().equals("Fang"), "the rename was lost: " + renamed.getOutput().get(DataComponents.CUSTOM_NAME));
+        helper.assertTrue(renamed.getOutput().get(WolfsbaneStrains.COATING.get()) != null && renamed.getCost() == 2, "renamed coating: cost " + renamed.getCost());
+
+        for (String untouched : new String[] {"", "Iron Sword"}) {
+            var plain = new AnvilUpdateEvent(new ItemStack(Items.IRON_SWORD), plant, untouched, 0, p);
+            NeoForge.EVENT_BUS.post(plain);
+            helper.assertTrue(plain.getOutput().get(DataComponents.CUSTOM_NAME) == null && plain.getCost() == 1,
+                    "'" + untouched + "' renamed the sword or cost " + plain.getCost());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void strainCodecDecodesAnyId(GameTestHelper helper) {
+        var access = helper.getLevel().registryAccess();
+        for (Strain s : Strain.values()) {
+            var buf = new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(), access);
+            Strain.STREAM_CODEC.encode(buf, s);
+            helper.assertTrue(Strain.STREAM_CODEC.decode(buf) == s, "round trip failed for " + s);
+        }
+        var bad = new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(), access);
+        bad.writeVarInt(99);
+        helper.assertTrue(Strain.STREAM_CODEC.decode(bad) == Strain.COMMON, "an unknown id did not decode to the first strain");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void sameStrainAshCures(GameTestHelper helper) {
         for (Strain s : new Strain[] {Strain.YELLOW, Strain.NORTHERN_BLUE, Strain.LICHEN}) {
