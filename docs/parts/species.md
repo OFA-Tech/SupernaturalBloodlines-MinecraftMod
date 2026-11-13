@@ -27,7 +27,7 @@ Rules live in `core/bloodline` (`BloodlineRules`, `PackRules`) and `docs/superpo
 
 **Sirelines**
 - [x] `sire` recorded for turned players, converted creatures and hybrids; `SirelineIndex` (SavedData). See "Sireline hook points" and "Sirelines: recording and index (plan 8, Task 1)".
-- [ ] `/bloodline tree [player]` and `/bloodline call`.
+- [x] `/bloodline tree [player]` and `/bloodline call` (+ `accept`, run by the [Accept] click). See "Sirelines: commands (plan 8, Task 2)".
 - [ ] Compulsion on villagers and lesser vampire mobs.
 - [ ] Sire bond; optional `sireline_death` (default off).
 
@@ -170,7 +170,16 @@ Package `parts/species/sireline`, registered by `SpeciesPart.init` (always, no W
 - **`SireRecorder.record(Entity sire, LivingEntity child)`** (also `record(UUID, String name, child)` for an offline sire): the first sire wins, so nothing is overwritten. A **player** child gets `BloodlineState.sire` (only when null); a **creature** gets the saved `supernaturalbloodlines:sire` attachment (UUID, not copied on death) and an index entry. `SireRecorder.addListener(BiConsumer<UUID sire, LivingEntity child>)` hears every new sire (plan 5 may use it, or `BloodlineAccess.addListener`).
 - **Player index entries follow the state**, not the call: a `BloodlineAccess` listener adds the child when `sire` changes to a value and removes it when `sire` becomes null (a cure), so the rules' own writes (hybrid completion, cure) are covered. A sire changed from one value to another (the hybrid completion overwrites an earlier sire with the Original's, because the rule does) moves the index entry with it. **Core change:** `BloodlineAccess.notifyListeners` now also fires when only `sire` changed (a test pins it); the other listeners are idempotent syncs. Login re-syncs the entry and the name (`SireRecorder.sync`), healing a lost file.
 - **`CompulsionImmunity`** (core): `register(Predicate<LivingEntity>)`, `isImmune(LivingEntity)`; players are always immune, others when any registered predicate says so. Artifacts registers `VervainRules.protects` (`VervainRules.register`), species registers `HunterRules.immuneToCompulsion` (`HunterEvents.register`), so each holds with the other part off. Both are for players, who are always immune anyway; they keep the registry honest for the day a non-player check exists.
-- **Not done here:** a dead sired mob stays in the index (its last known name); `/bloodline tree|call` and sireline death are Tasks 2 and 3. The mob's death does not remove it because `unloadedMobsUntouched` and the tree decide what a dead node looks like.
+- **Not done here:** sireline death is Task 3.
+
+## Sirelines: commands (plan 8, Task 2)
+
+Package `parts/species/sireline`: `BloodlineCommand` (a new `/bloodline` root, registered by `SpeciesPart`; foundation only has `/supernaturalbloodlines debug`), `SirelineTree`, `SireCall`, `CallRequests`, `CallFollowers`. Tests: `SirelineTreeTest`, `CallRequestsTest`, GameTests `SirelineCommandGameTests`.
+
+- **`/bloodline tree [player]`**: permission 0 for your own tree, 2 for anyone else's (argument is a `GameProfileArgument`, so offline names work through the profile cache). Prints "Sireline of X", "Sired by Y" (when the player has a sire; the name comes from the index), then the descendants depth-first, one indented line each (mobs show their entity type). A visited set stops a cycle, max depth 10. A dead sired mob is pruned from the index (`LivingDeathEvent`, lowest priority so a cancelled death does not count; players are never pruned).
+- **`/bloodline call`**: ORIGINAL, ORIGINAL_HYBRID, HYBRID, TRIBRID only. Cooldown 12000 ticks, `supernaturalbloodlines:last_call` attachment (game time, copied on death); it only starts when someone was actually called. Direct children only. Online sired **players** get a chat message with a clickable `[Accept]` that runs `/bloodline accept <token>` (no payload or screen). One token per (caller, sired), valid 60 s, only for that sired player, in memory, dropped on logout of either side. On accept the sired is teleported (`ServerPlayer.teleportTo(ServerLevel, ...)`, any dimension) to a free spot with floor two blocks from the caller's **current** position; an offline caller or a sire link that no longer matches refuses it. Sired **mobs** are found by `ServerLevel.getEntity(uuid)` in the caller's dimension (loaded only, no chunk is ever loaded) and told every second for 30 s to `getNavigation().moveTo(caller)`.
+- **Tensura follow is deferred to plan 05** (no `SubordinateHelper.setFollow` yet; the simple move order is used for everyone).
+- **Test notes:** game-test fake players are not in the player list, so `SireCall.overridePlayerLookup` pins how they are found. A fake player's network handler ignores teleport positions, and a dimension change needs a netty channel on its connection (the test gives it an `EmbeddedChannel`): the cross-dimension test checks the dimension, and the landing spot is checked on its own (`SireCall.spotNear`).
 
 ## Hook points (verified)
 

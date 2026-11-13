@@ -14,8 +14,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingConversionEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
@@ -49,6 +52,16 @@ public final class SireRecorder {
             }
         });
         NeoForge.EVENT_BUS.addListener(SireRecorder::onConversion);
+        // last, so a death something else cancelled is not counted
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LivingDeathEvent.class, SireRecorder::onDeath);
+    }
+
+    /** A sired creature that dies leaves the tree; a player stays (they come back, and their line goes on). */
+    private static void onDeath(LivingDeathEvent e) {
+        LivingEntity dead = e.getEntity();
+        if (!dead.level().isClientSide && !(dead instanceof Player) && dead.hasData(SpeciesRegistries.SIRE)) {
+            SirelineIndex.get((ServerLevel) dead.level()).remove(dead.getUUID());
+        }
     }
 
     /** @return false when the child already has a sire (the first wins), is the sire itself, or this is a client */

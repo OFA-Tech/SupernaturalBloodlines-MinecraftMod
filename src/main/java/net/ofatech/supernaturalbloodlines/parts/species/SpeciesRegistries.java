@@ -84,6 +84,10 @@ public final class SpeciesRegistries {
             ATTACHMENTS.register("infection_sire", () -> AttachmentType.builder(() -> new InfectionSire(Util.NIL_UUID, "", 0))
                     .serialize(InfectionSire.CODEC).build());
 
+    /** Game time of the player's last {@code /bloodline call}; use {@code hasData} to tell "never" from the default. Kept through death. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Long>> LAST_CALL =
+            ATTACHMENTS.register("last_call", () -> AttachmentType.builder(() -> 0L).serialize(Codec.LONG).copyOnDeath().build());
+
     private SpeciesRegistries() {}
 
     public static void register(IEventBus modBus) {
