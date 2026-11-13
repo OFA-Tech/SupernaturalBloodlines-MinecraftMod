@@ -16,6 +16,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.gametest.Diag;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
@@ -89,14 +90,16 @@ public final class VampirismEnchantedGameTests {
         try {
             start(helper, "cleansing_blood", human, garlic());
             helper.assertTrue(human.receivedOnActionBar(WRONG_FACTION), "the caster was not told the faction is wrong");
-            helper.assertTrue(dropped(helper, "vampirism:garlic") == 1, "the ingredients were not given back: " + dropped(helper, "vampirism:garlic"));
+            helper.assertTrue(dropped(helper, "vampirism:garlic") == 1, "the ingredients were not given back: " + dropped(helper, "vampirism:garlic")
+                    + ", items near the circle " + Diag.items(helper.getLevel(), centre(helper), 4) + ", centre " + centre(helper));
             clearDropped(helper);
 
             // a hunter is not a vampire either, and stays a hunter
             helper.assertTrue(handler(human).setFactionAndLevel(VReference.HUNTER_FACTION, 2), "could not make a hunter");
             start(helper, "cleansing_blood", human, garlic());
             helper.assertTrue(handler(human).getCurrentFaction() == VReference.HUNTER_FACTION, "the hunter lost the faction");
-            helper.assertTrue(dropped(helper, "vampirism:garlic") == 1, "the hunter's ingredients were not given back");
+            helper.assertTrue(dropped(helper, "vampirism:garlic") == 1, "the hunter's ingredients were not given back: " + dropped(helper, "vampirism:garlic")
+                    + ", items near the circle " + Diag.items(helper.getLevel(), centre(helper), 4) + ", centre " + centre(helper));
         } finally {
             clearDropped(helper);
             remove(helper, human);

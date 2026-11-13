@@ -364,9 +364,11 @@ public final class HybridTraitsGameTests {
     public static void venomEffectKillsOnItsOwn(GameTestHelper helper) {
         Mob cow = (Mob) helper.spawn(EntityType.COW, 1, 1, 1);
         cow.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, 85));
-        // the cell can sit idle for a while before its entities tick, so wait for the end rather than for a fixed time
+        // wait for the end rather than for a fixed time: the effect only counts down while the cow ticks
         helper.succeedWhen(() -> {
-            helper.assertTrue(cow.isDeadOrDying(), "the venom did not run its course: hp " + cow.getHealth() + ", effect " + cow.getEffect(SpeciesRegistries.HYBRID_VENOM));
+            helper.assertTrue(cow.isDeadOrDying(), "the venom did not run its course: " + net.ofatech.supernaturalbloodlines.gametest.Diag.describe(cow)
+                    + ", effect " + cow.getEffect(SpeciesRegistries.HYBRID_VENOM) + ", tickCount " + cow.tickCount
+                    + ", " + net.ofatech.supernaturalbloodlines.gametest.Diag.chunk(helper.getLevel(), cow.blockPosition()));
             helper.assertTrue(cow.getLastDamageSource() != null && cow.getLastDamageSource().is(Venom.DAMAGE_TYPE), "died of " + cow.getLastDamageSource());
         });
     }
