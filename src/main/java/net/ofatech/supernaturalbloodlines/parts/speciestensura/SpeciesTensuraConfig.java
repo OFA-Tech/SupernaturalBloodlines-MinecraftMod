@@ -19,10 +19,14 @@ public final class SpeciesTensuraConfig {
     private static final ModConfigSpec.BooleanValue UNDEAD_TREATMENT;
     private static final ModConfigSpec.BooleanValue APEX_ENABLED;
     private static final ModConfigSpec.DoubleValue EVOLUTION_MULTIPLIER;
+    private static final ModConfigSpec.BooleanValue SIRE_LINK;
+    private static final ModConfigSpec.BooleanValue SIRE_NAMING;
     private static final Set<String> WARNED = new HashSet<>();
 
     private static volatile Boolean undeadOverride;
     private static volatile Boolean apexOverride;
+    private static volatile Boolean sireLinkOverride;
+    private static volatile Boolean sireNamingOverride;
     private static volatile List<? extends String> parsedFrom;
     private static volatile LayerTable parsed = LayerTable.parse(LayerTable.DEFAULTS).table();
 
@@ -47,6 +51,15 @@ public final class SpeciesTensuraConfig {
                         "so a non-EP condition (a boss, an item, an awakening) can be skipped when the EP part is high enough. 1.0 turns the bonus off.",
                         "Common config: the evolution screen is built on the client too, so keep it equal on the server and the clients.")
                 .defineInRange("evolution_progress_multiplier", 1.25, 1.0, 10.0);
+        SIRE_LINK = b.comment("A sired creature or player becomes the sire's Tensura subordinate (its permanent owner is the sire). R101.",
+                        "Tensura then treats the pair as owner and subordinate: the sired cannot hurt the sire or the sire's other sired (the sire can still hurt them),",
+                        "they count as allied, and a demon lord sire's harvest festival gifts them. Off: no link is made or removed.")
+                .define("sire_subordinate_link_enabled", true);
+        SIRE_NAMING = b.comment("A sire may open Tensura's naming on their own sired, a player too, even with the playerNaming game rule off (R101).",
+                        "Only for the sired that has no Tensura name yet, and only while the sired has not switched their own nameable toggle off.",
+                        "A named sired player gets Tensura's EP and stat reward but never its race evolution (the type is lowered to LOW).",
+                        "Off: Tensura's naming rules apply unchanged.")
+                .define("sire_naming_enabled", true);
         SPEC = b.build();
     }
 
@@ -81,6 +94,34 @@ public final class SpeciesTensuraConfig {
     /** For tests: simulates the apex hook being off. Null goes back to the config. */
     public static void overrideApexEnabled(Boolean value) {
         apexOverride = value;
+    }
+
+    /** For tests: null goes back to the config. */
+    public static void overrideSireLink(Boolean value) {
+        sireLinkOverride = value;
+    }
+
+    /** For tests: null goes back to the config. */
+    public static void overrideSireNaming(Boolean value) {
+        sireNamingOverride = value;
+    }
+
+    public static boolean sireLink() {
+        Boolean forced = sireLinkOverride;
+        return forced != null ? forced : read(SIRE_LINK);
+    }
+
+    public static boolean sireNaming() {
+        Boolean forced = sireNamingOverride;
+        return forced != null ? forced : read(SIRE_NAMING);
+    }
+
+    private static boolean read(ModConfigSpec.BooleanValue value) {
+        try {
+            return value.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
     }
 
     public static boolean apexEnabled() {

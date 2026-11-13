@@ -13,6 +13,7 @@ import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexOffer;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexRaces;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexFactionGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexGameTests;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SirelineTensuraGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SpeciesLayerGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SpeciesTensuraWerewolvesGameTests;
 import net.ofatech.supernaturalbloodlines.shared.tensura.LayerQuery;
@@ -31,10 +32,17 @@ public final class SpeciesTensuraPart {
         TensuraSupernatural.register();
         LayerQuery.install(SpeciesLayer::treatedAsUndeadForBridge, SpeciesLayer::isApexVampireType);
         SpeciesLayer.register();
+        SubordinateLink.register();
+        SireNaming.register();
+        if (!SireNaming.hookApplied()) {
+            SupernaturalBloodlines.LOGGER.warn("species_tensura: the RequestNamingKeyPacket.isNotNameable hook is not in place, "
+                    + "a sire cannot name their sired player while Tensura's playerNaming game rule is off (the sireline link keeps working)");
+        }
         // the part is only initialised when its mods are present, so the tests only exist then
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(SpeciesLayerGameTests.class);
             e.register(ApexGameTests.class);
+            e.register(SirelineTensuraGameTests.class);
             if (EnabledParts.snapshot().contains(Part.VAMPIRISM_TENSURA)) {
                 e.register(ApexFactionGameTests.class);
             }
