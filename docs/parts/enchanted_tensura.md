@@ -11,3 +11,67 @@ Checklist (from the design, section 1). Tick items as they ship.
 - [ ] Rite *Magicule Offering*: converts the caster's magicules into rite power (custom factory, or a PowerProvider shim).
 - [ ] Spirit Poppet (code): protects against damage in `tensura:is_spiritual`.
 - [ ] EP for Enchanted mobs (data): `entity_existence` entries.
+
+
+## Hook points (verified)
+
+Verified against the jars in the Gradle cache (`javap -p`, zip listing): Tensura 2.0.1.5, ManasCore skill 4.0.0.2 (`build/manascore-modules`), Enchanted 4.2.7 jar plus its sources on GitHub `Favouriteless/Enchanted`, branch `1.21.1`. The `javap` and source reads agree.
+
+### Tensura
+
+| Item | Result |
+|---|---|
+| Magic ore blocks | `tensura:magic_ore`, `tensura:deepslate_magic_ore` (the two members of block tag `tensura:magic_ores`). |
+| Magic storage / crystal / magisteel blocks | `tensura:magic_ore_block`, `tensura:low_quality_magic_crystal_block`, `tensura:medium_quality_magic_crystal_block`, `tensura:high_quality_magic_crystal_block`, `tensura:low_magisteel_block`, `tensura:high_magisteel_block`, `tensura:pure_magisteel_block`. |
+| Magic metal blocks ("similar") | `tensura:mithril_block`, `tensura:orichalcum_block`, `tensura:adamantite_block`, `tensura:hihiirokane_block`. |
+| Left out on purpose | stairs, slabs, walls, bricks, chiseled and `*_magic_engine` variants (decoration or machines, many ids), `tensura:labyrinth_crystal`, `tensura:silver_*` (not magic), `tensura:kiln_*`. |
+| EP storage | `io.github.manasmods.tensura.storage.TensuraStorages.getExistenceFrom(LivingEntity): IExistence` (impl `ExistenceStorage`). |
+| `IExistence` magicule | `double getMagicule()`, `void setMagicule(double)`. Also `getAura/setAura`, `getEP/setEP`, `getSpiritualHealth/setSpiritualHealth`, `markDirty()`. |
+| Magicule max attribute | `io.github.manasmods.tensura.registry.attribute.TensuraAttributes.MAX_MAGICULE` (`Holder<Attribute>`). Also `MAX_AURA`, `MAGICULE_REGENERATION_MULTIPLIER`, `LIMITED_SPIRITUAL_MAX_MAGICULE`. Read the cap with `entity.getAttributeValue(TensuraAttributes.MAX_MAGICULE)`. |
+| EP data registry | `TensuraCustomData.ENTITY_EXISTENCE` (datapack registry of `EntityExistenceData`: `entity`, `spiritualHP`, `minMagicule`, `maxMagicule`, `minAura`, `maxAura`, optional `abilities`, `evolution`, `abilitiesRandom`). Files: `data/tensura/entity_existence/*.json`, keyed by the `entity` field, not by file name. |
+| Holy damage type | `tensura:holy_damage` (`TensuraDamageTypes.HOLY_DAMAGE`). `TensuraDamageHelper.isHoly` is also true for any damage whose `message_id` contains `holy` or `divine` (see vampirism_tensura notes). |
+| `tensura:is_spiritual` | **Damage-type** tag, `data/tensura/tags/damage_type/is_spiritual.json`: `tensura:soul_scatter`, `tensura:soul_consumed`, `tensura:synthesise`. Nothing else. A Spirit Poppet that checks this tag protects against those three only (and any damage type another mod adds to the tag). |
+
+### ManasCore skill (`SkillEvents.ACTIVATE_SKILL`)
+
+- Field: `dev.architectury.event.Event<SkillEvents.SkillActivationEvent> SkillEvents.ACTIVATE_SKILL`.
+- Listener: `EventResult activateSkill(Changeable<ManasSkillInstance> skill, LivingEntity owner, int keyNumber, int mode)`. Registered with `SkillEvents.ACTIVATE_SKILL.register(...)`; it fires for any `LivingEntity`, so check `owner instanceof ServerPlayer`.
+- The only call site is `SkillStorage.startHoldSkill(ManasSkillInstance, int keyNumber, int mode)` (the `ResourceLocation` overload delegates). It fires **before** `canActivateSkill`, cooldown and `onPressed`.
+- **Interrupt:** return `EventResult.interruptFalse()` (the caller does `if (result.isFalse()) return false`, so the skill does not run). Setting the `Changeable` to `null` also aborts (`skill == null` returns false). `EventResult.pass()` lets it through.
+- Related: `SkillEvents.TOGGLE_SKILL` (`toggleSkill(Changeable<ManasSkillInstance>, LivingEntity)`) is the same shape for toggles, and `RELEASE_SKILL` for the release of held skills. Skill Seal should block activation **and** toggle.
+- Skills API: `SkillAPI.getSkillsFrom(LivingEntity): SkillStorage` (implements `Skills`): `getLearnedSkills()`, `getSkill(ResourceLocation)`, `learnSkill(...)`, `forgetSkill(...)`, `forEachSkill(...)`. `ManasSkillInstance`: `getSkillId()`, `isTemporarySkill()`, `canActivateSkill(entity, mode)`, `isToggled()`, `onToggleOff(entity)`.
+
+### Enchanted 4.2.7
+
+Altar power (read by `AltarPowerData` / `common.enchanted.altar.PowerProvider`):
+
+- Datapack registries `EData.ALTAR_BLOCK_REGISTRY` and `EData.ALTAR_TAG_REGISTRY`. Files live at `data/<block namespace>/enchanted/altar/block/<block path>.json` (and `.../altar/tag/<tag path>.json` for block tags); the registry id is `<namespace>:<path>`. Enchanted itself ships `data/enchanted/enchanted/altar/block/belladonna.json` and `data/minecraft/enchanted/altar/block/dirt.json`, so `data/tensura/enchanted/altar/block/magic_ore.json` is the right place for `tensura:magic_ore`.
+- Format: `{"power": <int>, "limit": <int>}` (record `PowerProvider(int power, int limit)`, both required ints). An altar adds `power` per block up to `limit` blocks of that kind.
+- Lookup: **by block first, then by tag** (`tryChangeBlock`: `PowerProvider.get(level, block)`, and only if absent the first block tag with an entry). So a per-block file is enough and a Tensura block that is also in a tagged group is not double counted.
+- The altar scans an ellipsoid of `ServerConfig.altarRange` around its centre in `setupBlockData()` (first tick), and later changes through `AltarStateObserver`. `AltarBlockEntity.firstTick()` is public, `powerData` (private) holds the capacity (`getCapacity()`), and `createMenu(...)` exposes capacity as container data index 1.
+
+Rites:
+
+- `net.favouriteless.enchanted.common.enchanted.circle_magic.rites.Rite` (abstract). Constructor `protected Rite(Rite.BaseRiteParams baseParams, Rite.RiteParams params)`. `BaseRiteParams` is a record `(RiteType type, ServerLevel level, BlockPos pos, int tickPower)`. `RiteParams` has public `UUID caster`, `@Nullable UUID target`, mutable `List<ItemStack> consumedItems`, and `ticks()`; built only by Enchanted (`RiteParams.of(caster, items)`).
+- Lifecycle: `start()` first sets `params.target` from the consumed item's `ENTITY_REF` component (override `findTargetUUID` to change), then calls `onStart(RiteParams)`; returning `false` stops the rite at once. Each server tick `tick()` charges `tickPower` from the gold chalk's altar power (if it cannot pay the rite stops), then calls `onTick(RiteParams)`; **return `true` to keep going, `false` to finish** (the default returns `false`). `stop()` calls `onStop(RiteParams)` and detaches the chalk. Failure: call `cancel()` from `onStart`/`onTick`; it plays a sound, drops the consumed items back at the chalk, detaches and returns `false`, so `return cancel();` is the "fail the rite and take nothing" idiom.
+- Caster and centre: the caster is a UUID (`params.caster`), resolved with `protected Entity findEntity(UUID)` (cached; searches all levels). The centre is `protected final BlockPos pos`, the gold chalk block the rite runs on; `level` is the `ServerLevel`. There is no radius field: each rite chooses its own.
+- The one-off `power` in the rite JSON is paid before the rite starts (by the chalk); `tick_power` is the per-tick cost passed as `tickPower`.
+- Factories: `net.favouriteless.enchanted.api.circle_magic.RiteFactory` (`Rite create(BaseRiteParams, RiteParams)`, `ResourceLocation id()`, optional `getOutputs()`), registered with `RiteFactoryRegistry.get().register(id, MapCodec<? extends RiteFactory>)`. In the rite JSON the factory is `{"type": "<factory id>", ...fields}`.
+- Rite JSON (`data/<ns>/enchanted/circle_magic/rite/<name>.json`): `items` (list of `{id, count}`), `shapes` (`"enchanted:small_circle": "enchanted:ritual_chalk"`), optional `entities`, `power`, `tick_power`, `weather`, `time` (`[from, to]`), `dimensions`, and `factory`. Built-in factory ids: `apply_curse`, `remove_curse`, `sanctity`, `protection`, `sky_wrath`, `summon_entity`, `command`, `create_item`, and others (see `ERiteFactories`). `command` and `apply_curse` can be used from data alone.
+
+Curses (`net.favouriteless.enchanted.api.curses`):
+
+- `Curse` interface: `onInitialise(ServerPlayer, int strength, long age)`, `onRemove(...)`, `tick(...)`, `getMaxStrength()` (default 2), `type()`. Register a `Curse.Type<T>(ResourceLocation id, Supplier<T>, MapCodec<T>)` with `CurseManager.get().register(type)` during common setup (duplicate id throws). Curses are stored per player UUID in saved data and are re-initialised on login and clone.
+- `CurseManager.applyCurse(type, uuid, level, ServerLevel)`, `removeCurse(type, uuid, ServerLevel)` (marks removed; `onRemove` runs on the next level tick for online players), `getCurses(uuid, ServerLevel)`. `RemoveCurseFactory`/`ApplyCurseFactory` take `{"curse": "<curse id>"}`; the **remove-curse rite calls `removeCurse`, which ends in `Curse.onRemove`**, so everything a curse changes must be undone in `onRemove`.
+- Enchanted does **not** remove curses on death (nothing in `CommonEvents`); a death-clears-curse rule has to be ours, using `CurseManager.removeCurse`.
+
+Poppets:
+
+- `PoppetColour` is a record `(int primary, int secondary)` with constants `EARTH, EQUIPMENT, FIRE, HUNGER, MAGIC, VOID, VOODOO_PROTECTION, WATER`.
+- `PlayerPoppetItem(PoppetColour colour, PlayerPoppetEffect effect, Item.Properties properties)`. `PlayerPoppetEffect` (api) has `boolean protectsAgainst(DamageSource)` and `void protect(Player)`. Enchanted's helpers: `EffectsPlayerPoppetEffect.ofDefault(Predicate<DamageSource>)` / `ofDefaultPlus(predicate, effects...)` (default effect: Regeneration II for 100 ticks) and `ConsumerPlayerPoppetEffect`. Durability is set in the `Item.Properties` (Enchanted's `poppetProps(n)`).
+- `PoppetEvents.onLivingEntityHurt` only triggers a poppet when the incoming amount is **at least the player's current health** (a would-be lethal hit), the poppet is bound to the player (`PoppetHelper.isBoundTo`), and `protectsAgainst(source)` is true. Poppets are looked up in the inventory and the poppet shelves (`PoppetHelper.tryTriggerAll`). Each trigger costs one durability.
+- Enchanted's own poppet predicates (`PoppetPredicates`) use `DamageSource.is(DamageTypeTags / DamageTypes)`; a Spirit Poppet predicate would be `s -> s.is(TagKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("tensura:is_spiritual")))`.
+
+Entities (`EEntityTypes`, all in namespace `enchanted`): `broomstick`, `familiar_cat`, `mandrake`, `throwable_brew`, `voodoo_item`. Only `familiar_cat` (a `FamiliarCat`, tamed cat) and `mandrake` (monster) are living mobs that Tensura can analyse; the other three are vehicles or projectiles/item entities. So EP data is needed for exactly those two.
+
+Damage types: `enchanted:sacrifice`, `enchanted:sound`, `enchanted:voodoo`, `enchanted:internal_explosion`.
