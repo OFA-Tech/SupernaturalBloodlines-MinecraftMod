@@ -2,11 +2,13 @@ package net.ofatech.supernaturalbloodlines.shared.werewolves;
 
 import de.teamlapen.vampirism.api.event.ActionEvent;
 import de.teamlapen.werewolves.entities.player.werewolf.actions.WerewolfFormAction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 
 /**
  * Spots and cancels the forced full-moon shift for players with {@link MoonControl} (no mixin). Werewolves forces the
@@ -19,6 +21,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public final class ForcedShift {
     // PlayerTickEvent also fires on the client thread of a singleplayer game, hence the thread-local
     private static final ThreadLocal<Player> TICKING = new ThreadLocal<>();
+    public static final String BOUND_MESSAGE = "supernaturalbloodlines.hybrid_curse.bound";
     private static boolean registered;
 
     private ForcedShift() {
@@ -51,7 +54,18 @@ public final class ForcedShift {
     }
 
     private static void onActionActivated(ActionEvent.ActionActivatedEvent e) {
-        if (e.getFactionPlayer().asEntity() instanceof ServerPlayer p && isForced(e) && MoonControl.of(p) != MoonControl.Control.NONE) {
+        if (!(e.getFactionPlayer().asEntity() instanceof ServerPlayer p)) {
+            return;
+        }
+        // R24: a bound hybrid has no forms at all, forced or not, until the Rite of the Moon
+        if (e.getAction() instanceof WerewolfFormAction && BloodlineAccess.get(p).hybridCurseBound()) {
+            e.setCanceled(true);
+            if (!isForced(e)) { // the forced shift retries every second: no message spam
+                p.displayClientMessage(Component.translatable(BOUND_MESSAGE), true);
+            }
+            return;
+        }
+        if (isForced(e) && MoonControl.of(p) != MoonControl.Control.NONE) {
             e.setCanceled(true);
         }
     }

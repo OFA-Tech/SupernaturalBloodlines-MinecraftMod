@@ -1,0 +1,19 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "items": [
+        { "id": "minecraft:bone", "count": 1 },
+        { "id": "minecraft:glowstone_dust", "count": 1 },
+        { "id": "minecraft:paper", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:small_circle": "enchanted:ritual_chalk"
+    },
+    "power": 3000,
+    "factory": {
+        "type": "supernaturalbloodlines:lineage",
+        "mode": "reveal"
+    }
+}

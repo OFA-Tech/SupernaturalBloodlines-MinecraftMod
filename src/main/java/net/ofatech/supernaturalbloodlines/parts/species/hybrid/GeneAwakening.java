@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hybrid;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.EventPriority;
@@ -28,9 +29,13 @@ public final class GeneAwakening {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LivingDeathEvent.class, GeneAwakening::onDeath);
     }
 
+    /** A villager (not a wandering trader) or another player: the kills that awaken the gene (R11, R24). */
+    public static boolean isGeneVictim(ServerPlayer killer, Entity victim) {
+        return victim != killer && (victim instanceof Villager || victim instanceof Player);
+    }
+
     private static void onDeath(LivingDeathEvent e) {
-        if (!(e.getSource().getEntity() instanceof ServerPlayer killer) || e.getEntity() == killer
-                || !(e.getEntity() instanceof Villager || e.getEntity() instanceof Player)) {
+        if (!(e.getSource().getEntity() instanceof ServerPlayer killer) || !isGeneVictim(killer, e.getEntity())) {
             return;
         }
         if (!BloodlineAccess.get(killer).wolf().latentGene()) {

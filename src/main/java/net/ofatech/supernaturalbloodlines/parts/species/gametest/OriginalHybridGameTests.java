@@ -364,12 +364,8 @@ public final class OriginalHybridGameTests {
         ServerPlayer noGene = vampire(TestPlayers.createMortal(helper), Species.ORIGINAL, false);
         ServerPlayer wrongVictim = vampire(TestPlayers.createMortal(helper), Species.ORIGINAL, true);
         ServerPlayer heretic = vampire(TestPlayers.createMortal(helper), Species.HERETIC, true);
-        ServerPlayer human = TestPlayers.createMortal(helper);
         try {
-            BloodlineAccess.set(human, state(Species.NONE, true));
-            kill(human, villager(helper));
-            helper.assertTrue(BloodlineAccess.get(human).species() == Species.NONE && handler(human).getCurrentFaction() == null,
-                    "a human with the gene awakened or joined a faction");
+            // a human with the gene awakens too, but that is plan 9's GeneHandler (WerewolfPackGameTests), not this rule
             kill(wrongVictim, helper.spawn(EntityType.WANDERING_TRADER, new BlockPos(1, 1, 1)));
             helper.assertTrue(BloodlineAccess.get(wrongVictim).species() == Species.ORIGINAL && !werewolf(wrongVictim), "killing a wandering trader awakened");
             kill(noGene, villager(helper));
@@ -383,7 +379,6 @@ public final class OriginalHybridGameTests {
             reset(noGene);
             reset(wrongVictim);
             reset(heretic);
-            reset(human);
         }
         helper.succeed();
     }

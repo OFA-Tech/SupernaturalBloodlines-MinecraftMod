@@ -124,7 +124,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
      * Vampirism's {@code canJoin} only says yes to a player without a faction, but the join comes after the leave, so
      * ask the way it does (the CanJoinFaction event) as if the target had already left.
      */
-    private static boolean joinAllowed(IFactionPlayerHandler h, IPlayableFaction<?> faction, boolean leaves) {
+    public static boolean joinAllowed(IFactionPlayerHandler h, IPlayableFaction<?> faction, boolean leaves) {
         if (!leaves && h.getCurrentFaction() == faction) {
             return true; // only a level change
         }

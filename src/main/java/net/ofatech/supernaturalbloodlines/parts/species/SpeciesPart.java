@@ -17,6 +17,9 @@ import net.ofatech.supernaturalbloodlines.parts.species.hybrid.HybridTraits;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.SireBond;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfPackGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.GeneHandler;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.LineageRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterInstinctGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterMarkGameTests;
@@ -75,6 +78,7 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(OriginalBloodRiteFactory.ID, OriginalBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(HybridBloodRiteFactory.ID, HybridBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(AncestralCallingRiteFactory.ID, AncestralCallingRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(LineageRiteFactory.ID, LineageRiteFactory.CODEC);
         SpeciesRegistries.register(modBus);
         SpeciesSupernatural.register();
         OriginalRules.register();
@@ -91,6 +95,7 @@ public final class SpeciesPart {
         if (ModList.get().isLoaded("werewolves")) {
             TransitionHandler.register();
             GeneAwakening.register();
+            GeneHandler.register();
             FormControl.register();
             BloodThirst.register();
             Venom.register();
@@ -122,6 +127,7 @@ public final class SpeciesPart {
                 e.register(HybridGameTests.class);
                 e.register(HybridTraitsGameTests.class);
                 e.register(OriginalHybridGameTests.class);
+                e.register(WerewolfPackGameTests.class);
             }
         });
         SupernaturalBloodlines.LOGGER.info("SpeciesPart enabled");

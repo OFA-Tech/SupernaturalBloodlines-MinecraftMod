@@ -157,5 +157,13 @@
   "supernaturalbloodlines.bloodline.compel.immune": "%s's mind is shut to you.",
   "supernaturalbloodlines.bloodline.compel.no_contact": "Come close (within 4 blocks) and look each other in the eye.",
   "supernaturalbloodlines.bloodline.compel.expired": "The moment has passed.",
-  "death.attack.sireline": "%1$s died with the line they were born into"
+  "death.attack.sireline": "%1$s died with the line they were born into",
+  "rite.supernaturalbloodlines.rite_of_lineage_reveal": "Rite of Lineage (Reveal)",
+  "rite.supernaturalbloodlines.rite_of_lineage_awaken": "Rite of Lineage (Awaken)",
+  "supernaturalbloodlines.lineage.gene_yes": "The bones agree: you carry the werewolf gene.",
+  "supernaturalbloodlines.lineage.gene_no": "The bones are silent: you do not carry the werewolf gene.",
+  "supernaturalbloodlines.refusal.hunter_lineage": "A hunter cannot take a werewolf's lineage.",
+  "supernaturalbloodlines.refusal.wolf_wrong_faction": "Only someone with no faction, or a werewolf, can take a werewolf's lineage.",
+  "supernaturalbloodlines.refusal.wolf_wrong_species": "Your bloodline cannot take a werewolf's lineage this way.",
+  "supernaturalbloodlines.hybrid_curse.bound": "The curse binds your wolf: you cannot shift until the Rite of the Moon."
 }

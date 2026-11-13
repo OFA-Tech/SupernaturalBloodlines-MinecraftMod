@@ -23,6 +23,8 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue SIPHONER_CHANCE;
     public static final boolean DEFAULT_SIRELINE_DEATH = false;
     private static final ModConfigSpec.BooleanValue SIRELINE_DEATH;
+    public static final double DEFAULT_LATENT_GENE_CHANCE = 0.15;
+    private static final ModConfigSpec.DoubleValue LATENT_GENE_CHANCE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -39,6 +41,8 @@ public final class SpeciesConfig {
                 .defineInRange("siphoner_chance", DEFAULT_SIPHONER_CHANCE, 0.0, 1.0);
         SIRELINE_DEATH = b.comment("When an Original is killed with white oak, everyone they sired, and everyone those sired, dies with them (offline players on their next login).")
                 .define("sireline_death", DEFAULT_SIRELINE_DEATH);
+        LATENT_GENE_CHANCE = b.comment("Chance that a player carries the hidden werewolf gene, rolled once at first login.")
+                .defineInRange("latent_gene_chance", DEFAULT_LATENT_GENE_CHANCE, 0.0, 1.0);
         b.pop();
         SPEC = b.build();
     }
@@ -81,6 +85,26 @@ public final class SpeciesConfig {
             return SIPHONER_CHANCE.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_SIPHONER_CHANCE;
+        }
+    }
+
+    private static volatile Double latentGeneChanceOverride;
+
+    /** For tests: pins {@link #latentGeneChance()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideLatentGeneChance(Double value) {
+        latentGeneChanceOverride = value;
+    }
+
+    public static double latentGeneChance() {
+        Double pinned = latentGeneChanceOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return LATENT_GENE_CHANCE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_LATENT_GENE_CHANCE;
         }
     }
 
