@@ -279,6 +279,7 @@ public final class Compulsion {
             return;
         }
         vampire.setData(SpeciesRegistries.COMPELLED_BY, id);
+        vampire.setPersistenceRequired(); // a sired creature that despawns takes its place in the tree with it
         if (protects(id, vampire.getTarget())) {
             vampire.setTarget(null);
         }

@@ -241,6 +241,7 @@ public final class SirelineCompulsionGameTests {
             helper.assertTrue(index.childrenOf(caster.getUUID()).stream().anyMatch(n -> n.id().equals(vamp.getUUID()) && n.entityType().equals("vampirism:vampire")),
                     "the sire's children are " + index.childrenOf(caster.getUUID()));
             helper.assertTrue(vamp.getTarget() == null, "the vampire kept its target: " + vamp.getTarget());
+            helper.assertTrue(vamp.isPersistenceRequired(), "a compelled vampire can still despawn");
 
             vamp.setTarget(caster);
             helper.assertTrue(vamp.getTarget() == null, "the vampire went for its sire");
