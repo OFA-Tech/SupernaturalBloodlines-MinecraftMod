@@ -19,6 +19,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
@@ -103,8 +104,9 @@ public final class BloodlineAccess {
     }
 
     /**
-     * Listeners hear about changes of species, wolf lineage, wolf rank or the hunter's mark kills only (they scale the
-     * mark's perks, so a debug event or command must reach them too), not about thirst ticks, granted
+     * Listeners hear about changes of species, wolf lineage, wolf rank, the sire (the sireline index follows it) or the
+     * hunter's mark kills only (they scale the mark's perks, so a debug event or command must reach them too), not
+     * about thirst ticks, granted
      * skills and the like. A change made by a
      * listener is queued, not fanned out in place: the outer call finishes the current change for every
      * listener, then drains the queue in order, so each listener sees every change and the last one is final.
@@ -115,7 +117,8 @@ public final class BloodlineAccess {
     static <P> void notifyListeners(List<BiConsumer<P, BloodlineChange>> listeners, P player, UUID playerId,
                                     BloodlineState before, BloodlineState after) {
         if (before.species() == after.species() && before.wolf().lineage() == after.wolf().lineage()
-                && before.wolf().rank() == after.wolf().rank() && before.markKills() == after.markKills()) {
+                && before.wolf().rank() == after.wolf().rank() && before.markKills() == after.markKills()
+                && Objects.equals(before.sire(), after.sire())) {
             return;
         }
         BloodlineChange change = new BloodlineChange(before, after);

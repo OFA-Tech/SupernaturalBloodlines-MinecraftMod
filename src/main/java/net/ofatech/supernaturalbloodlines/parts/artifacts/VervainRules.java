@@ -11,6 +11,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
+import net.ofatech.supernaturalbloodlines.core.CompulsionImmunity;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
 
 /**
@@ -32,6 +33,7 @@ public final class VervainRules {
     }
 
     public static void register() {
+        CompulsionImmunity.register(e -> e instanceof Player p && protects(p));
         // the event is abstract: a listener goes on each of its subclasses (players, other creatures)
         NeoForge.EVENT_BUS.addListener((BloodDrinkEvent.PlayerDrinkBloodEvent e) -> onBlood(e));
         NeoForge.EVENT_BUS.addListener((BloodDrinkEvent.EntityDrinkBloodEvent e) -> onBlood(e));

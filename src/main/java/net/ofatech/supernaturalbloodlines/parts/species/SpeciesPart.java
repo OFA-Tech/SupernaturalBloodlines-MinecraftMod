@@ -21,8 +21,12 @@ import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterGameTests
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterInstinctGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterMarkGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterWerewolfGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineHybridGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WitchGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterEvents;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.InfectionTracker;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.AncestralCallingRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.HybridBloodRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.witch.Siphoning;
@@ -69,6 +73,8 @@ public final class SpeciesPart {
         Siphoning.register();
         VampireJoin.register();
         HunterEvents.register(); // hunters need no Werewolves
+        SireRecorder.register();
+        InfectionTracker.register();
         HybridTraits.register(); // always: it strips the saved modifier when Werewolves is gone
         if (ModList.get().isLoaded("werewolves")) {
             TransitionHandler.register();
@@ -94,7 +100,9 @@ public final class SpeciesPart {
             e.register(HunterGameTests.class);
             e.register(HunterMarkGameTests.class);
             e.register(HunterInstinctGameTests.class);
+            e.register(SirelineGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
+                e.register(SirelineHybridGameTests.class);
                 e.register(HunterWerewolfGameTests.class);
                 e.register(HybridGameTests.class);
                 e.register(HybridTraitsGameTests.class);

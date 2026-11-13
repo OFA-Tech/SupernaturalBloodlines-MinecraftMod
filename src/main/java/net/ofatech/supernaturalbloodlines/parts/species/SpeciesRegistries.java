@@ -22,6 +22,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodEffect
 import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodItem;
 import net.ofatech.supernaturalbloodlines.parts.species.item.UnstableEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.WhiteOak;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.InfectionSire;
 
 /** Everything the species part registers: Original's Blood (item, effect, component, attachment), the downed attachment and the white oak set. */
 public final class SpeciesRegistries {
@@ -70,6 +71,18 @@ public final class SpeciesRegistries {
     /** Ticks left of the downed state (0 = not downed). Saved, so a relog resumes it. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> DOWNED =
             ATTACHMENTS.register("downed", () -> AttachmentType.builder(() -> 0).serialize(Codec.INT).build());
+
+    /**
+     * Who sired this creature (a converted mob; players keep it in the bloodline state). Saved, not copied on death:
+     * read it with {@code hasData}.
+     */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<UUID>> SIRE =
+            ATTACHMENTS.register("sire", () -> AttachmentType.builder(() -> Util.NIL_UUID).serialize(UUIDUtil.CODEC).build());
+
+    /** The player or creature who infected this one with sanguinare, for a day; see {@link InfectionSire}. Not copied on death. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<InfectionSire>> INFECTION_SIRE =
+            ATTACHMENTS.register("infection_sire", () -> AttachmentType.builder(() -> new InfectionSire(Util.NIL_UUID, "", 0))
+                    .serialize(InfectionSire.CODEC).build());
 
     private SpeciesRegistries() {}
 

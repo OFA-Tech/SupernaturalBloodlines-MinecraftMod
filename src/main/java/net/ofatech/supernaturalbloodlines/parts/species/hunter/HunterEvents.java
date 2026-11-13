@@ -6,10 +6,12 @@ import java.util.List;
 import java.util.function.Function;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.VisibleForTesting;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.CompulsionImmunity;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BaseFaction;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
@@ -35,6 +37,7 @@ public final class HunterEvents {
     }
 
     public static void register() {
+        CompulsionImmunity.register(e -> e instanceof Player p && HunterRules.immuneToCompulsion(p));
         MarkTracker.register();
         PotentialChooser.register();
         HunterCurse.register();
