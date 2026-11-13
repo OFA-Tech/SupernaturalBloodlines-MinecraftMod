@@ -30,9 +30,19 @@ public final class ForcedShift {
     public static final String NO_CONTROL_MESSAGE = "supernaturalbloodlines.moon_control.none";
     // reasons to allow a form action without moon control (the Alpha Roar lets the pack shift)
     private static final List<Predicate<ServerPlayer>> PERMITS = new CopyOnWriteArrayList<>();
+    // reasons to cancel every form action, forced or not (the lunar eclipse, Shocked), each with the message it shows
+    private record FormBlock(Predicate<ServerPlayer> blocked, String message) {
+    }
+
+    private static final List<FormBlock> BLOCKS = new CopyOnWriteArrayList<>();
     private static boolean registered;
 
     private ForcedShift() {
+    }
+
+    /** A condition that cancels every Werewolves form action of the player (the roar's permit does not lift it). */
+    public static void addFormBlock(Predicate<ServerPlayer> blocked, String messageKey) {
+        BLOCKS.add(new FormBlock(blocked, messageKey));
     }
 
     /** A temporary exemption from the form gate: while it holds, the player may shift at will. */
@@ -77,6 +87,17 @@ public final class ForcedShift {
                 p.displayClientMessage(Component.translatable(BOUND_MESSAGE), true);
             }
             return;
+        }
+        if (e.getAction() instanceof WerewolfFormAction) {
+            for (FormBlock block : BLOCKS) {
+                if (block.blocked().test(p)) {
+                    e.setCanceled(true);
+                    if (!isForced(e)) {
+                        p.displayClientMessage(Component.translatable(block.message()), true);
+                    }
+                    return;
+                }
+            }
         }
         if (isForced(e)) {
             if (MoonControl.of(p) != MoonControl.Control.NONE || halvedAndSpared(p)) {

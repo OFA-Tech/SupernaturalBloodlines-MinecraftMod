@@ -27,6 +27,8 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue LATENT_GENE_CHANCE;
     public static final double DEFAULT_ALPHA_BITE_DEATH_CHANCE = 0.10;
     private static final ModConfigSpec.DoubleValue ALPHA_BITE_DEATH_CHANCE;
+    public static final double DEFAULT_LUNAR_ECLIPSE_CHANCE = 0.03;
+    private static final ModConfigSpec.DoubleValue LUNAR_ECLIPSE_CHANCE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -47,6 +49,8 @@ public final class SpeciesConfig {
                 .defineInRange("latent_gene_chance", DEFAULT_LATENT_GENE_CHANCE, 0.0, 1.0);
         ALPHA_BITE_DEATH_CHANCE = b.comment("Chance that an Alpha's bite kills the human instead of turning them.")
                 .defineInRange("alpha_bite_death_chance", DEFAULT_ALPHA_BITE_DEATH_CHANCE, 0.0, 1.0);
+        LUNAR_ECLIPSE_CHANCE = b.comment("Chance that a full-moon night is a lunar eclipse: werewolves lose their form actions, rank perks and pack bonus until dawn.")
+                .defineInRange("lunar_eclipse_chance", DEFAULT_LUNAR_ECLIPSE_CHANCE, 0.0, 1.0);
         b.pop();
         SPEC = b.build();
     }
@@ -131,6 +135,14 @@ public final class SpeciesConfig {
             return DEFAULT_ALPHA_BITE_DEATH_CHANCE;
         }
     }
+    public static double lunarEclipseChance() {
+        try {
+            return LUNAR_ECLIPSE_CHANCE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_LUNAR_ECLIPSE_CHANCE;
+        }
+    }
+
     private static volatile Boolean sirelineDeathOverride;
 
     /** For tests: pins {@link #sirelineDeath()}; null clears it. */

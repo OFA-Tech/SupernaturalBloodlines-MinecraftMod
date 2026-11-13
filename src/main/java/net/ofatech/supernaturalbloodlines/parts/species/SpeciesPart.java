@@ -30,6 +30,10 @@ import net.ofatech.supernaturalbloodlines.parts.species.gametest.PackBonusGameTe
 import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaBite;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.Anchors;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.Electricity;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.FormBlocks;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.LunarEclipse;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.EclipseElectricityGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.LineageBackfill;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.Emissary;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackBonus;
@@ -116,7 +120,10 @@ public final class SpeciesPart {
         HybridTraits.register(); // always: it strips the saved modifier when Werewolves is gone
         RankEffects.register(); // always, for the same reason
         PackBonus.register(); // always, for the same reason
+        Electricity.register(); // always: Shocked and the Taser work on every supernatural
         if (ModList.get().isLoaded("werewolves")) {
+            FormBlocks.register();
+            LunarEclipse.register();
             Anchors.register();
             AlphaRoar.register();
             Emissary.register();
@@ -179,6 +186,7 @@ public final class SpeciesPart {
                 e.register(WerewolfBiteGameTests.class);
                 e.register(WerewolfSparkGameTests.class);
                 e.register(PackBonusGameTests.class);
+                e.register(EclipseElectricityGameTests.class);
             }
         });
         SupernaturalBloodlines.LOGGER.info("SpeciesPart enabled");
