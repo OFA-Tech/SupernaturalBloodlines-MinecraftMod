@@ -198,6 +198,13 @@ public final class SpeciesGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void doppelgangerRiteOnlyExistsWithWerewolves(GameTestHelper helper) {
+        boolean present = net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport.type(helper, "doppelganger_blood") != null;
+        helper.assertTrue(present == ModList.get().isLoaded("werewolves"), "doppelganger_blood rite present: " + present);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void contextCountsOriginals(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.create(helper);
         int before = SpeciesContext.of(p, null).originalsInWorld();

@@ -6,7 +6,7 @@ Rules live in `core/bloodline` (`BloodlineRules`, `PackRules`) and `docs/superpo
 
 **Species (build order)**
 - [x] Originals and Original's blood (Rite of Immortality, white-oak rule, Original's blood item).
-- [ ] Hybrid (doppelgänger blood during the transition, sire bond).
+- [x] Hybrid transition (doppelgänger blood during the transition; the sire bond itself and the traits are Tasks 4 and plan 8).
 - [ ] Original hybrid (Rite of the Moon, needs the gene).
 - [ ] Witch and siphoner (Rite of Ancestral Calling; siphoning).
 - [ ] Heretic (a siphoner who joins the vampire faction).
@@ -61,6 +61,15 @@ Rules live in `core/bloodline` (`BloodlineRules`, `PackRules`) and `docs/superpo
 - **`Downed`** (Original hybrids; Task 5 reuses it for werewolf-faction Originals): the `downed` attachment counts down from 600, movement speed and jump strength are locked by a transient `supernaturalbloodlines:downed` modifier (-100%), forced SLEEPING pose, attack/use/interact/break events are cancelled, non-exempt damage is cancelled (`LivingIncomingDamageEvent`), revive at half health after 600 ticks, `giveUp` kills with the source that downed them (kept in memory; after a relog it is a plain /kill source). The screen (`DownedScreen`, Give up / Wait) is opened by `DownedPayload(true)` and sends `DownedGiveUpPayload`; the class is only referenced from the payload handler lambda, so a dedicated server never loads it. Optional payload channel (version "1").
 - **Attributes (R31)**: `OriginalRules.sync(player)`: +4 max health (add) and +20% attack damage (`ADD_MULTIPLIED_TOTAL`, so x1.2 of the final value, weapon included), saved (permanent) modifier id `supernaturalbloodlines:original` so health above 20 survives a relog, applied on a species change (BloodlineAccess listener), login, respawn and dimension change.
 - **GameTest note**: `FakePlayer.die` is a no-op, so no `LivingDeathEvent` ever fires for a plain FakePlayer. Use `TestPlayers.createMortal` for tests that need the death event; `FakePlayer`s also never tick, so reset `invulnerableTime` between two hits.
+
+## Hybrid transition (Task 3)
+
+- **Where:** `parts/species/hybrid/TransitionHandler`, registered by `SpeciesPart.init` only when `werewolves` is loaded (it links no Werewolves class itself; the faction comes from `SpeciesContext`). The GameTests (`HybridGameTests`) link Werewolves and are registered only with it.
+- **Death:** `LivingDeathEvent` at LOW (not receiving cancelled events) for a player with the `original_blood` effect: `DIED_WITH_ORIGINAL_BLOOD` with `bloodSource` = the `blood_source` attachment (last blood drunk wins). A `failed_transition` death is skipped, otherwise a timeout or unstable death would restart the transition. The state (`inTransition`, `pendingSire`, `transitionTicksLeft`) lives in the bloodline attachment, which is `copyOnDeath`, so the player respawns in the transition.
+- **Timer:** `PlayerTickEvent.Post`, every 20 `tickCount` ticks `secondPassed` subtracts 20 from the saved `transitionTicksLeft` (online time only; a relog resumes it, a respawn only restarts the 20-tick phase). At 0: `TRANSITION_TIMEOUT` (the rules add `KILL_PLAYER`) through `OutcomeExecutor`. The server sees one bloodline sync per second per transitioning player.
+- **Drinking:** `DoppelgangerBloodItem` (own drinkable, only usable in a stable transition; gives the bottle back) → `DRANK_DOPPELGANGER_BLOOD` (HYBRID, or TRIBRID for a witch, with `pendingSire` as sire). Other blood = an item in `#supernaturalbloodlines:blood_drinks` (Vampirism's `blood_bottle`, `required:false`) finished during a transition (`LivingEntityUseItemEvent.Finish`) → `DRANK_OTHER_BLOOD` → state `unstable` + the `unstable` effect (1200 ticks, not curable by milk). `secondPassed` kills when the state is unstable and the effect is gone (ran out or was removed): `UNSTABLE_DEATH`, then `KILL_PLAYER` through the executor (the rules' `UNSTABLE_DEATH` carries no kill action, the handler adds it).
+- **Original's Blood during a transition is a second dose (R45) and changes nothing.** A Vampirism bottle may never be drinkable by a werewolf (`BloodBottleItem.onUseTick` releases the use for non-`IVampire`), in which case the tag hook is simply never hit; there is no Werewolves bite hook in the notes, so a bite is not "other blood" yet.
+- **Rite** `doppelganger_blood.json`: `enchanted:create_item` → Doppelgänger Blood, small circle, power 6000, items filled taglock + 2 diamonds + amethyst shard (the taglock is a plain ingredient, nothing is checked about whose it is), conditions `part_enabled species` and `mod_loaded werewolves`.
 
 ## Hook points (verified)
 

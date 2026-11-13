@@ -15,8 +15,10 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.parts.species.item.DoppelgangerBloodItem;
 import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodItem;
+import net.ofatech.supernaturalbloodlines.parts.species.item.UnstableEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.WhiteOak;
 
 /** Everything the species part registers: Original's Blood (item, effect, component, attachment), the downed attachment and the white oak set. */
@@ -31,12 +33,19 @@ public final class SpeciesRegistries {
     public static final DeferredItem<OriginalBloodItem> ORIGINAL_BLOOD =
             ITEMS.register("original_blood", () -> new OriginalBloodItem(new Item.Properties().stacksTo(16)));
 
+    public static final DeferredItem<DoppelgangerBloodItem> DOPPELGANGER_BLOOD =
+            ITEMS.register("doppelganger_blood", () -> new DoppelgangerBloodItem(new Item.Properties().stacksTo(16)));
+
     /** Whose blood a bottle of Original's Blood is. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> BLOOD_SOURCE_COMPONENT =
             COMPONENTS.registerComponentType("blood_source", b -> b.persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC));
 
     public static final DeferredHolder<MobEffect, OriginalBloodEffect> ORIGINAL_BLOOD_EFFECT =
             EFFECTS.register("original_blood", OriginalBloodEffect::new);
+
+    /** A failing hybrid transition: when it ends the player dies (see TransitionHandler). */
+    public static final DeferredHolder<MobEffect, UnstableEffect> UNSTABLE_EFFECT =
+            EFFECTS.register("unstable", UnstableEffect::new);
 
     /**
      * The Original whose blood the player drank last (the last drink wins). Use {@code hasData} to tell "none" from the

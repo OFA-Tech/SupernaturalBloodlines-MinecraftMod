@@ -1,0 +1,19 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "items": [
+        { "id": "enchanted:taglock", "count": 1 },
+        { "id": "minecraft:diamond", "count": 2 },
+        { "id": "minecraft:amethyst_shard", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:small_circle": "enchanted:ritual_chalk"
+    },
+    "power": 6000,
+    "factory": {
+        "type": "enchanted:create_item",
+        "items": [ { "id": "supernaturalbloodlines:doppelganger_blood", "count": 1 } ]
+    }
+}

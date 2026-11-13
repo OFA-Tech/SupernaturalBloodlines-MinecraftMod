@@ -5,7 +5,10 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.neoforged.fml.ModList;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.HybridGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.OriginalGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler;
 import net.ofatech.supernaturalbloodlines.parts.species.original.Downed;
 import net.ofatech.supernaturalbloodlines.parts.species.original.DownedGiveUpPayload;
 import net.ofatech.supernaturalbloodlines.parts.species.original.DownedPayload;
@@ -42,6 +45,9 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(OriginalBloodRiteFactory.ID, OriginalBloodRiteFactory.CODEC);
         SpeciesRegistries.register(modBus);
         OriginalRules.register();
+        if (ModList.get().isLoaded("werewolves")) {
+            TransitionHandler.register();
+        }
         modBus.addListener((RegisterPayloadHandlersEvent e) -> {
             PayloadRegistrar registrar = e.registrar(NETWORK_VERSION).optional();
             registrar.playToClient(DownedPayload.TYPE, DownedPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> DownedScreen.show(payload.downed())));
@@ -54,6 +60,9 @@ public final class SpeciesPart {
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(SpeciesGameTests.class);
             e.register(OriginalGameTests.class);
+            if (ModList.get().isLoaded("werewolves")) {
+                e.register(HybridGameTests.class);
+            }
         });
         SupernaturalBloodlines.LOGGER.info("SpeciesPart enabled");
     }
