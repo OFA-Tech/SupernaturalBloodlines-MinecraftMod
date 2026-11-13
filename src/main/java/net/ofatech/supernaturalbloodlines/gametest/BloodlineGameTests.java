@@ -7,6 +7,8 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -35,6 +37,15 @@ public final class BloodlineGameTests {
         loaded.load(nbt);
         helper.assertTrue(BloodlineAccess.get(loaded).species() == Species.WITCH,
                 "species after reload was " + BloodlineAccess.get(loaded).species());
+        helper.succeed();
+    }
+
+    // our pickaxe tag entry names a block that only exists when a part is on; a required entry would
+    // make vanilla drop the whole merged tag
+    @GameTest(template = "empty")
+    public static void pickaxeTagSurvivesPartOnlyEntries(GameTestHelper helper) {
+        helper.assertTrue(Blocks.STONE.defaultBlockState().is(BlockTags.MINEABLE_WITH_PICKAXE),
+                "minecraft:stone is no longer in #minecraft:mineable/pickaxe");
         helper.succeed();
     }
 

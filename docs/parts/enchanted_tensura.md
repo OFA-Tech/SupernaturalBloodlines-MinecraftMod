@@ -142,3 +142,9 @@ Code: `parts/enchantedtensura/rite/` (`PurificationRiteFactory`, `MagiculeOfferi
 - **Manual rite check pending.** The GameTests start the rite JSON through `RiteType.create(...).start()`. They do not prove the chalk circle, item matching on a real altar, the placeholder texture, or the client.
 
 GameTests (`EnchantedTensuraRiteGameTests`): `ritesLoad`, `holyPurificationDamageIsHoly`, `condensedMagiculeIsAnAltarBlock`, `purificationHurtsUndeadRace`, `purificationHurtsUndeadMobsInRangeOnly`, `purificationSparesLiving`, `offeringFailsWithoutMagicules`, `offeringConsumesMagicules`.
+
+## Disabled part, worlds and servers
+
+- **The part registers content.** With Enchanted and Tensura present and the part switch on, it registers the block and item `supernaturalbloodlines:condensed_magicule`. Switch the part off, or remove Enchanted or Tensura, in a world that has them, and the placed blocks and held items vanish on load (Minecraft drops unknown block and item ids). Back up a world before turning the part off.
+- **Server and clients need the same part switches** and the same mods; a client without the part cannot join a server that registers the block (registry mismatch).
+- **Always-loaded data must not need the part.** Data files load even when the part is off. `data/minecraft/tags/block/mineable/pickaxe.json` therefore lists `condensed_magicule` as `{"id": ..., "required": false}`. A plain string entry would make vanilla drop the whole merged `#minecraft:mineable/pickaxe` tag when the block is missing, which breaks pickaxe mining for every block. The core GameTest `pickaxeTagSurvivesPartOnlyEntries` (in the `-PnoLinkedMods` run) asserts stone is still in the tag; with a required entry it fails ("missing following references" in the log). The loot table for the block also carries the `enchanted` and `tensura` mod_loaded conditions. No other tag files exist in `src/main/resources/data`.

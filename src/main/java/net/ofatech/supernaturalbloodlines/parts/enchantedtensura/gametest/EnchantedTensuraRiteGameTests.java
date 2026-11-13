@@ -13,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -118,6 +119,8 @@ public final class EnchantedTensuraRiteGameTests {
         PowerProvider p = PowerProvider.get(helper.getLevel(), PartBlocks.CONDENSED_MAGICULE.get());
         helper.assertTrue(p != null, "no altar power data for condensed_magicule");
         helper.assertTrue(p.power() == 30 && p.limit() == 16, "condensed_magicule has " + p.power() + "/" + p.limit());
+        helper.assertTrue(PartBlocks.CONDENSED_MAGICULE.get().defaultBlockState().is(BlockTags.MINEABLE_WITH_PICKAXE),
+                "condensed_magicule is not in #minecraft:mineable/pickaxe");
         helper.assertTrue(PartItems.CONDENSED_MAGICULE.get().getDescriptionId().equals("block." + NS + ".condensed_magicule"),
                 "the block item is not the condensed magicule block");
         helper.succeed();
@@ -170,6 +173,30 @@ public final class EnchantedTensuraRiteGameTests {
             helper.assertTrue(human.getHealth() == before, "a human took holy damage: " + human.getHealth() + " of " + before);
             helper.assertTrue(cow.getHealth() == cowBefore, "a cow took holy damage");
         } finally {
+            remove(level, human);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void purificationHitsUndeadCasterAndSparesLivingCaster(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ServerPlayer ghoul = TestPlayers.createVulnerable(helper);
+        ServerPlayer human = TestPlayers.createVulnerable(helper);
+        place(level, ghoul, near(helper, 1));
+        place(level, human, near(helper, -1));
+        try {
+            setRace(ghoul, "tensura:ghoul");
+            setRace(human, "tensura:human");
+            float ghoulBefore = ghoul.getHealth();
+            float humanBefore = human.getHealth();
+            start(helper, "purification", ghoul);
+            helper.assertTrue(ghoul.getHealth() < ghoulBefore, "an undead caster was not purified");
+            helper.assertTrue(human.getHealth() == humanBefore, "a living bystander was hurt");
+            start(helper, "purification", human);
+            helper.assertTrue(human.getHealth() == humanBefore, "a living caster was hurt by their own rite");
+        } finally {
+            remove(level, ghoul);
             remove(level, human);
         }
         helper.succeed();

@@ -1,1 +1,5 @@
-{ "values": [ "supernaturalbloodlines:condensed_magicule" ] }
+{
+    "values": [
+        { "id": "supernaturalbloodlines:condensed_magicule", "required": false }
+    ]
+}
