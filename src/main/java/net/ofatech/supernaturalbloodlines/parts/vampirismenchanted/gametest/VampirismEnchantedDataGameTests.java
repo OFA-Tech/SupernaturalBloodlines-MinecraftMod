@@ -38,11 +38,17 @@ public final class VampirismEnchantedDataGameTests {
 
     /** The result id of crafting these items in a row, or null when no recipe matches. */
     private static String craft(GameTestHelper helper, String... ids) {
+        ItemStack out = craftStack(helper, ids);
+        return out == null ? null : BuiltInRegistries.ITEM.getKey(out.getItem()).toString();
+    }
+
+    /** What crafting these items in a row gives, or null when no recipe matches. */
+    private static ItemStack craftStack(GameTestHelper helper, String... ids) {
         List<ItemStack> stacks = java.util.Arrays.stream(ids).map(id -> new ItemStack(item(id))).toList();
         CraftingInput input = CraftingInput.of(stacks.size(), 1, stacks);
         return helper.getLevel().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel())
                 .map(RecipeHolder::value)
-                .map((CraftingRecipe r) -> BuiltInRegistries.ITEM.getKey(r.assemble(input, helper.getLevel().registryAccess()).getItem()).toString())
+                .map((CraftingRecipe r) -> r.assemble(input, helper.getLevel().registryAccess()))
                 .orElse(null);
     }
 
@@ -78,8 +84,12 @@ public final class VampirismEnchantedDataGameTests {
         if (werewolves) {
             String toWerewolves = craft(helper, "enchanted:wolfsbane_flower");
             helper.assertTrue("werewolves:wolfsbane".equals(toWerewolves), "Enchanted wolfsbane crafts " + toWerewolves);
-            String toEnchanted = craft(helper, "werewolves:wolfsbane");
-            helper.assertTrue("enchanted:wolfsbane_flower".equals(toEnchanted), "Werewolves wolfsbane crafts " + toEnchanted);
+            // 2 -> 2: a single wolfsbane is Werewolves' own purple dye recipe, a 1 -> 1 recipe would collide with it
+            ItemStack toEnchanted = craftStack(helper, "werewolves:wolfsbane", "werewolves:wolfsbane");
+            helper.assertTrue(toEnchanted != null && toEnchanted.is(item("enchanted:wolfsbane_flower")) && toEnchanted.getCount() == 2,
+                    "two Werewolves wolfsbane craft " + toEnchanted);
+            helper.assertTrue("minecraft:purple_dye".equals(craft(helper, "werewolves:wolfsbane")),
+                    "one Werewolves wolfsbane no longer crafts purple dye: " + craft(helper, "werewolves:wolfsbane"));
         }
         helper.succeed();
     }

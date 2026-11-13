@@ -5,6 +5,6 @@
   ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
-  "ingredients": [ { "item": "werewolves:wolfsbane" } ],
-  "result": { "id": "enchanted:wolfsbane_flower", "count": 1 }
+  "ingredients": [ { "item": "werewolves:wolfsbane" }, { "item": "werewolves:wolfsbane" } ],
+  "result": { "id": "enchanted:wolfsbane_flower", "count": 2 }
 }
