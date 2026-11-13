@@ -21,6 +21,8 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.IntValue TRANSITION_TICKS;
     private static final ModConfigSpec.BooleanValue WITCH_BONUS;
     private static final ModConfigSpec.DoubleValue SIPHONER_CHANCE;
+    public static final boolean DEFAULT_SIRELINE_DEATH = false;
+    private static final ModConfigSpec.BooleanValue SIRELINE_DEATH;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -35,6 +37,8 @@ public final class SpeciesConfig {
                 .define("witch_bonus_enabled", DEFAULT_WITCH_BONUS);
         SIPHONER_CHANCE = b.comment("Chance that the Rite of Ancestral Calling makes a siphoner instead of a witch.")
                 .defineInRange("siphoner_chance", DEFAULT_SIPHONER_CHANCE, 0.0, 1.0);
+        SIRELINE_DEATH = b.comment("When an Original is killed with white oak, everyone they sired, and everyone those sired, dies with them (offline players on their next login).")
+                .define("sireline_death", DEFAULT_SIRELINE_DEATH);
         b.pop();
         SPEC = b.build();
     }
@@ -77,6 +81,26 @@ public final class SpeciesConfig {
             return SIPHONER_CHANCE.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_SIPHONER_CHANCE;
+        }
+    }
+
+    private static volatile Boolean sirelineDeathOverride;
+
+    /** For tests: pins {@link #sirelineDeath()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideSirelineDeath(Boolean value) {
+        sirelineDeathOverride = value;
+    }
+
+    public static boolean sirelineDeath() {
+        Boolean pinned = sirelineDeathOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return SIRELINE_DEATH.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_SIRELINE_DEATH;
         }
     }
 

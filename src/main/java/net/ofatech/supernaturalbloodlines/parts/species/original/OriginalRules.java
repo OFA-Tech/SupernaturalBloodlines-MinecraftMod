@@ -101,6 +101,14 @@ public final class OriginalRules {
                 && source.getDirectEntity() instanceof LivingEntity attacker && attacker.getMainHandItem().is(WhiteOak.TAG);
     }
 
+    /**
+     * A white oak blow, or the {@code generic_kill} (naming the wielder) that ends a Vampirism dying state started by one
+     * (see {@link #endVampirismDying}). A bare {@code /kill} names nobody and is neither.
+     */
+    public static boolean isWhiteOakKill(DamageSource source) {
+        return isWhiteOak(source) || (source.is(DamageTypes.GENERIC_KILL) && source.getEntity() instanceof LivingEntity a && a.getMainHandItem().is(WhiteOak.TAG));
+    }
+
     /** What the protection never applies to. */
     static boolean bypassesProtection(DamageSource source) {
         return isWhiteOak(source) || source.is(DamageTypes.FELL_OUT_OF_WORLD) || source.is(DamageTypes.GENERIC_KILL)
@@ -154,7 +162,21 @@ public final class OriginalRules {
             return; // cancelled by something else: not ours to undo
         }
         Entity attacker = blow.getEntity();
-        DamageSource kill = attacker != null ? p.damageSources().source(DamageTypes.GENERIC_KILL, attacker) : p.damageSources().genericKill();
+        killThroughDying(p, attacker != null ? p.damageSources().source(DamageTypes.GENERIC_KILL, attacker) : p.damageSources().genericKill());
+    }
+
+    /**
+     * Kills a player who is in Vampirism's dying state, which blocks every damage event ({@code hurt} does nothing to them):
+     * health to 0 and {@code die(kill)} ({@code kill} must be in {@code #bypasses_invulnerability}, or Vampirism's death hook
+     * starts the dying state again), then the state is cleaned up. {@link Downed#letDie} keeps the Original rules out of it.
+     *
+     * @return false (and nothing done) when the player is not in the dying state; the caller then uses a normal {@code hurt}
+     */
+    public static boolean killThroughDying(ServerPlayer p, DamageSource kill) {
+        IVampirePlayer vampire = VampirismAPI.vampirePlayer(p);
+        if (!vampire.isDBNO()) {
+            return false;
+        }
         Downed.letDie(p, () -> {
             p.setHealth(0.0F);
             p.die(kill);
@@ -165,5 +187,6 @@ public final class OriginalRules {
                 SupernaturalBloodlines.LOGGER.warn("Could not reset Vampirism's dying state of {}", p.getGameProfile().getName(), ex);
             }
         });
+        return true;
     }
 }

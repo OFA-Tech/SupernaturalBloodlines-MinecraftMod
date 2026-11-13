@@ -28,6 +28,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineDeath;
 
 /**
  * Hunter's Mark (R80-R83): a prey kill by a marked hunter grows the mark, a marked hunter killed by prey loses it
@@ -121,7 +122,8 @@ public final class MarkTracker {
             return;
         }
         Entity killer = killerOf(victim, e.getSource());
-        if (killer == null || killer == victim) {
+        // a sireline death is the Original's, not the credit of whoever hurt the victim last
+        if (killer == null || killer == victim || e.getSource().is(SirelineDeath.DAMAGE_TYPE)) {
             return;
         }
         if (killer instanceof ServerPlayer k && isPrey(victim)) {

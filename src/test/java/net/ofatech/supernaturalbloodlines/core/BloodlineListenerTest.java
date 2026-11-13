@@ -54,6 +54,14 @@ class BloodlineListenerTest {
         BloodlineState marked = NONE.toBuilder().species(Species.HUNTER_OF_THE_FIVE).markKills(3).build();
         BloodlineAccess.notifyListeners(listeners, null, id, marked, marked.toBuilder().markKills(4).build());
         assertEquals(5, seen.size());
+
+        // the sireline index follows the sire, so a sire gained or lost is a change too
+        BloodlineState sired = WITCH.toBuilder().sire(UUID.randomUUID()).build();
+        BloodlineAccess.notifyListeners(listeners, null, id, WITCH, sired);
+        BloodlineAccess.notifyListeners(listeners, null, id, sired, WITCH);
+        assertEquals(7, seen.size());
+        BloodlineAccess.notifyListeners(listeners, null, id, sired, sired.toBuilder().thirst(1).build());
+        assertEquals(7, seen.size());
     }
 
     @Test
