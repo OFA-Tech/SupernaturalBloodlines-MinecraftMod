@@ -1,8 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hybrid;
 
-import de.teamlapen.vampirism.api.VampirismAPI;
-import de.teamlapen.vampirism.api.entity.factions.IFaction;
-import de.teamlapen.vampirism.api.entity.factions.IFactionEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -21,6 +18,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 
 /**
@@ -37,8 +35,6 @@ public final class Venom {
     public static final ResourceKey<DamageType> DAMAGE_TYPE = ResourceKey.create(Registries.DAMAGE_TYPE,
             ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "venom"));
 
-    private static final ResourceLocation WEREWOLF = ResourceLocation.fromNamespaceAndPath("werewolves", "werewolf");
-    private static final ResourceLocation VAMPIRE = ResourceLocation.fromNamespaceAndPath("vampirism", "vampire");
     private static final int HALLUCINATION_EVERY = 600;
     private static final int HALLUCINATION_TICKS = 100;
 
@@ -58,15 +54,9 @@ public final class Venom {
                 || target.hasEffect(SpeciesRegistries.HYBRID_VENOM)) {
             return;
         }
-        if (isFaction(attacker, WEREWOLF) && isFaction(target, VAMPIRE)) {
+        if (VampirismSupernatural.isWerewolf(attacker) && VampirismSupernatural.isVampire(target)) {
             target.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, DURATION_TICKS));
         }
-    }
-
-    private static boolean isFaction(Entity e, ResourceLocation id) {
-        IFaction<?> faction = e instanceof Player p ? VampirismAPI.factionPlayerHandler(p).getCurrentFaction()
-                : e instanceof IFactionEntity fe ? fe.getFaction() : null;
-        return faction != null && faction.getID().equals(id);
     }
 
     /**

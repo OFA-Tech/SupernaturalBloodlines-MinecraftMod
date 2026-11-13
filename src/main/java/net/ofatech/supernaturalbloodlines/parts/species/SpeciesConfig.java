@@ -29,7 +29,7 @@ public final class SpeciesConfig {
                 .defineInRange("max_originals_per_world", DEFAULT_MAX_ORIGINALS, 0, 10_000);
         TRANSITION_TICKS = b.comment("Play time a werewolf has to drink doppelgänger blood after dying with Original's Blood, in ticks.")
                 .defineInRange("transition_ticks", DEFAULT_TRANSITION_TICKS, 20, 24_000_000);
-        MAX_FIVE = b.comment("How many Hunters of the Five the world allows.")
+        MAX_FIVE = b.comment("How many Hunters of the Five the world allows. Lowering it later does not remove anyone: the Five can stay above this number until marks are lost, and no new Rite of the Five works until there are fewer than this.")
                 .defineInRange("max_five", DEFAULT_MAX_FIVE, 1, 10_000);
         WITCH_BONUS = b.comment("Witches, heretics and tribrids get altar range x1.5 and rite power cost x0.75.")
                 .define("witch_bonus_enabled", DEFAULT_WITCH_BONUS);

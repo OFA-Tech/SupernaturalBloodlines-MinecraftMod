@@ -31,6 +31,8 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.Part;
 import net.ofatech.supernaturalbloodlines.core.StalePartModifiers;
+import net.ofatech.supernaturalbloodlines.core.Supernatural;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.network.HallucinationPayload;
@@ -98,7 +100,7 @@ public final class HunterMarkGameTests {
             FiveRoster r = roster(p);
             r.setCursed(p.getUUID(), false);
             r.setLiftedCurse(p.getUUID(), false);
-            r.setPendingPotentialChoice(p.getUUID(), false);
+            r.clearPendingPotentialChoice(p.getUUID());
         }
     }
 
@@ -196,7 +198,7 @@ public final class HunterMarkGameTests {
             helper.assertTrue(s.species() == Species.NONE && s.markKills() == 0, "hunter is " + s.species() + " with " + s.markKills() + " kills");
             helper.assertTrue(!roster(hunter).contains(hunter.getUUID()) && roster(hunter).size() == before - 1, "the slot was not freed");
             helper.assertTrue(mark(hunter, Attributes.ATTACK_DAMAGE) == null && mark(hunter, Attributes.MOVEMENT_SPEED) == null, "the perks stayed");
-            helper.assertTrue(roster(hunter).pendingPotentialChoice().contains(hunter.getUUID()), "no potential was owed");
+            helper.assertTrue(roster(hunter).pendingPotentialChoice().containsKey(hunter.getUUID()), "no potential was owed");
         } finally {
             clearHooks();
             reset(hunter, killer);
@@ -278,7 +280,7 @@ public final class HunterMarkGameTests {
         try {
             online(lost); // nobody else
             kill(killer, lost);
-            helper.assertTrue(roster(lost).pendingPotentialChoice().contains(lost.getUUID()), "the choice was not kept");
+            helper.assertTrue(roster(lost).pendingPotentialChoice().containsKey(lost.getUUID()), "the choice was not kept");
             helper.assertTrue(BloodlineAccess.get(lost).species() == Species.NONE, "the dead hunter was chosen");
 
             // an eligible hunter joins: the pending choice is retried
@@ -287,15 +289,21 @@ public final class HunterMarkGameTests {
             helper.assertTrue(BloodlineAccess.get(later).species() == Species.POTENTIAL, "joining the hunters chose " + BloodlineAccess.get(later).species());
             helper.assertTrue(roster(lost).pendingPotentialChoice().isEmpty(), "the choice is still pending");
 
-            // and a second loss with nobody left waits too, then a login (retry) picks
+            // the same hunter losing the mark twice while nobody is online owes two potentials, not one
             BloodlineAccess.set(later, BloodlineState.NONE);
             online();
-            helper.assertTrue(!PotentialChooser.choose(server, lost.getUUID()), "chose from an empty server");
-            helper.assertTrue(roster(lost).pendingPotentialChoice().contains(lost.getUUID()), "not pending after an empty choice");
+            PotentialChooser.owe(server, lost.getUUID());
+            PotentialChooser.owe(server, lost.getUUID());
+            helper.assertTrue(roster(lost).pendingPotentialChoice().get(lost.getUUID()) == 2,
+                    "owed " + roster(lost).pendingPotentialChoice().get(lost.getUUID()) + " instead of 2");
             online(second);
             PotentialChooser.retryPending(server);
             helper.assertTrue(BloodlineAccess.get(second).species() == Species.POTENTIAL, "the retry chose " + BloodlineAccess.get(second).species());
-            helper.assertTrue(roster(lost).pendingPotentialChoice().isEmpty(), "pending after the retry");
+            helper.assertTrue(roster(lost).pendingPotentialChoice().get(lost.getUUID()) == 1, "one should still be owed");
+            online(second, later);
+            PotentialChooser.retryPending(server);
+            helper.assertTrue(BloodlineAccess.get(later).species() == Species.POTENTIAL, "the second potential: " + BloodlineAccess.get(later).species());
+            helper.assertTrue(roster(lost).pendingPotentialChoice().isEmpty(), "pending after both were chosen");
         } finally {
             clearHooks();
             reset(lost, killer, later, second);
@@ -467,6 +475,115 @@ public final class HunterMarkGameTests {
         helper.succeed();
     }
 
+    // ---- prey comes from the Vampirism factions, not from artifacts (run with -PpartsOff=artifacts to prove it) ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void factionVampireIsPrey(GameTestHelper helper) {
+        ServerPlayer vampire = vampire(helper);
+        ServerPlayer hunter = huntNone(helper);
+        ServerPlayer human = human(helper);
+        try {
+            helper.assertTrue(Supernatural.isPrey(vampire) && Supernatural.isVampiric(vampire) && Supernatural.is(vampire), "a faction vampire is not prey");
+            helper.assertTrue(!Supernatural.isPrey(hunter) && !Supernatural.is(hunter), "a hunter is prey or supernatural");
+            helper.assertTrue(!Supernatural.isPrey(human), "a human is prey");
+        } finally {
+            reset(vampire, hunter, human);
+        }
+        helper.succeed();
+    }
+
+    // ---- kill credit through Vampirism's dying state ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void killCreditCountsWhenTheSourceHasNoAttacker(GameTestHelper helper) {
+        ServerPlayer hunter = marked(helper, 0);
+        ServerPlayer victim = vampire(helper);
+        ServerPlayer lost = marked(helper, 3);
+        ServerPlayer killer = vampire(helper);
+        try {
+            online();
+            victim.setLastHurtByPlayer(hunter);
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(victim, victim.damageSources().genericKill()));
+            helper.assertTrue(BloodlineAccess.get(hunter).markKills() == 1, "credit kill gave " + BloodlineAccess.get(hunter).markKills());
+
+            lost.setLastHurtByMob(killer);
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(lost, lost.damageSources().fall()));
+            helper.assertTrue(BloodlineAccess.get(lost).species() == Species.NONE, "a hunter pushed to death by a vampire kept the mark");
+            helper.assertTrue(BloodlineAccess.get(killer).hunterCurse(), "the credited vampire was not cursed");
+        } finally {
+            clearHooks();
+            reset(hunter, victim, lost, killer);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void dyingStateKillGivesTheHunterTheMark(GameTestHelper helper) {
+        ServerPlayer hunter = marked(helper, 0);
+        ServerPlayer victim = TestPlayers.createDuelist(helper);
+        MinecraftServer server = helper.getLevel().getServer();
+        boolean pvp = server.isPvpAllowed();
+        try {
+            handler(victim).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
+            server.setPvpAllowed(true);
+            victim.hurt(hunter.damageSources().playerAttack(hunter), 1000f);
+            helper.assertTrue(VampirismAPI.vampirePlayer(victim).isDBNO(), "the vampire is not in Vampirism's dying state");
+            helper.assertTrue(BloodlineAccess.get(hunter).markKills() == 0, "being downed counted as a kill");
+
+            // the kill credit has run out by the time the dying state ends, and the end has no attacker
+            victim.setLastHurtByPlayer(null);
+            victim.setLastHurtByMob(null);
+            helper.assertTrue(victim.getKillCredit() == null, "the kill credit is still there");
+            try {
+                VampirismAPI.vampirePlayer(victim).getClass().getMethod("giveUpDBNO").invoke(VampirismAPI.vampirePlayer(victim));
+            } catch (ReflectiveOperationException ex) {
+                throw new IllegalStateException(ex);
+            }
+            helper.assertTrue(victim.isDeadOrDying(), "giving up did not kill");
+            helper.assertTrue(BloodlineAccess.get(hunter).markKills() == 1, "the hunter's mark is " + BloodlineAccess.get(hunter).markKills());
+        } finally {
+            server.setPvpAllowed(pvp);
+            reset(hunter, victim);
+        }
+        helper.succeed();
+    }
+
+    // ---- minor ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void curseTickPrunesTheCursedList(GameTestHelper helper) {
+        ServerPlayer killer = vampire(helper);
+        ServerPlayer lost = marked(helper, 1);
+        MinecraftServer server = helper.getLevel().getServer();
+        try {
+            online(killer);
+            kill(killer, lost);
+            helper.assertTrue(roster(killer).cursed().contains(killer.getUUID()), "not listed as cursed");
+            BloodlineAccess.set(killer, BloodlineState.NONE); // cured some other way
+            HunterCurse.tick(server, HunterCurse.nextDue(killer).getAsLong());
+            helper.assertTrue(HunterCurse.nextDue(killer).isEmpty(), "the timer stayed");
+            helper.assertTrue(!roster(killer).cursed().contains(killer.getUUID()), "the cursed list kept a freed player");
+        } finally {
+            clearHooks();
+            reset(killer, lost);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anEventThatChangesMarkKillsSyncsThePerks(GameTestHelper helper) {
+        ServerPlayer p = marked(helper, 4);
+        try {
+            helper.assertTrue(mark(p, Attributes.ATTACK_DAMAGE) != null && Math.abs(mark(p, Attributes.ATTACK_DAMAGE).amount() - 0.04) < EPS,
+                    "setting the state did not set the perks: " + mark(p, Attributes.ATTACK_DAMAGE));
+            // what `/supernaturalbloodlines debug event` does
+            BloodlineAccess.applyEvent(p, net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent.KILLED_PREY, SpeciesContext.of(p, null));
+            assertPerks(helper, p, 0.05, 0.025);
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
     private static void assertPerks(GameTestHelper helper, ServerPlayer p, double attack, double speed) {
         AttributeModifier a = mark(p, Attributes.ATTACK_DAMAGE);
         AttributeModifier s = mark(p, Attributes.MOVEMENT_SPEED);

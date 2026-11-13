@@ -1,7 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hunter;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.HolderLookup;
@@ -22,10 +24,12 @@ public final class FiveRoster extends SavedData {
     private static final String PENDING = "pending_potential_choice";
     private static final String LIFTED = "lifted_curses";
     private static final String CURSED = "cursed";
+    private static final String PENDING_ID = "id";
+    private static final String PENDING_COUNT = "count";
 
     private final Set<UUID> members = new HashSet<>();
-    // the marked hunters (by UUID) whose death still owes the world a potential
-    private final Set<UUID> pendingPotentialChoice = new HashSet<>();
+    // marked hunter (by UUID) -> how many potentials their lost marks still owe the world (the same hunter can lose it twice)
+    private final Map<UUID, Integer> pendingPotentialChoice = new HashMap<>();
     // cursed killers whose curse was lifted while they were offline; applied at their next login
     private final Set<UUID> liftedCurses = new HashSet<>();
     // everyone who got the curse and has not been freed: tells which offline players to free when it lifts
@@ -42,7 +46,13 @@ public final class FiveRoster extends SavedData {
     static FiveRoster load(CompoundTag tag, HolderLookup.Provider registries) {
         FiveRoster r = new FiveRoster();
         read(tag, MEMBERS, r.members);
-        read(tag, PENDING, r.pendingPotentialChoice);
+        for (Tag t : tag.getList(PENDING, Tag.TAG_COMPOUND)) {
+            CompoundTag entry = (CompoundTag) t;
+            int count = entry.getInt(PENDING_COUNT);
+            if (count > 0) {
+                r.pendingPotentialChoice.put(NbtUtils.loadUUID(entry.get(PENDING_ID)), count);
+            }
+        }
         read(tag, LIFTED, r.liftedCurses);
         read(tag, CURSED, r.cursed);
         return r;
@@ -63,7 +73,14 @@ public final class FiveRoster extends SavedData {
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         write(tag, MEMBERS, members);
-        write(tag, PENDING, pendingPotentialChoice);
+        ListTag pending = new ListTag();
+        pendingPotentialChoice.forEach((id, count) -> {
+            CompoundTag entry = new CompoundTag();
+            entry.put(PENDING_ID, NbtUtils.createUUID(id));
+            entry.putInt(PENDING_COUNT, count);
+            pending.add(entry);
+        });
+        tag.put(PENDING, pending);
         write(tag, LIFTED, liftedCurses);
         write(tag, CURSED, cursed);
         return tag;
@@ -94,12 +111,26 @@ public final class FiveRoster extends SavedData {
         change(members, id, false);
     }
 
-    public Set<UUID> pendingPotentialChoice() {
-        return Collections.unmodifiableSet(pendingPotentialChoice);
+    /** Marked hunter who lost the mark → potentials still owed because of it. */
+    public Map<UUID, Integer> pendingPotentialChoice() {
+        return Collections.unmodifiableMap(pendingPotentialChoice);
     }
 
-    public void setPendingPotentialChoice(UUID id, boolean pending) {
-        change(pendingPotentialChoice, id, pending);
+    public void addPendingPotentialChoice(UUID lostMarkOf) {
+        pendingPotentialChoice.merge(lostMarkOf, 1, Integer::sum);
+        setDirty();
+    }
+
+    /** One owed potential was chosen. */
+    public void resolvePendingPotentialChoice(UUID lostMarkOf) {
+        pendingPotentialChoice.computeIfPresent(lostMarkOf, (id, n) -> n > 1 ? n - 1 : null);
+        setDirty();
+    }
+
+    public void clearPendingPotentialChoice(UUID lostMarkOf) {
+        if (pendingPotentialChoice.remove(lostMarkOf) != null) {
+            setDirty();
+        }
     }
 
     public Set<UUID> liftedCurses() {

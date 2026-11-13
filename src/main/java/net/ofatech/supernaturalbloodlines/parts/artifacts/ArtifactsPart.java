@@ -38,7 +38,6 @@ public final class ArtifactsPart {
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modBus.addListener(ArtifactsClient::onClientSetup);
         }
-        VampirismSupernatural.register();
         AshDagger.register();
         SunRing.register();
         ResurrectionRing.register();

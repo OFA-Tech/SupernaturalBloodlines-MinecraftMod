@@ -12,6 +12,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 
 /**
  * R13: a worn Resurrection Ring with charges cancels the death of a human killed by something supernatural: full

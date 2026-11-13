@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.Supernatural;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterCurse;
 
@@ -23,6 +24,17 @@ public final class HunterWerewolfGameTests {
         ServerPlayer p = human(helper);
         handler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1);
         return p;
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void factionWerewolfIsPrey(GameTestHelper helper) {
+        ServerPlayer wolf = werewolf(helper);
+        try {
+            helper.assertTrue(Supernatural.isPrey(wolf) && Supernatural.is(wolf) && !Supernatural.isVampiric(wolf), "a faction werewolf is not prey");
+        } finally {
+            reset(wolf);
+        }
+        helper.succeed();
     }
 
     @GameTest(template = "empty", templateNamespace = NS)

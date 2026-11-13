@@ -49,6 +49,11 @@ class BloodlineListenerTest {
         assertEquals(4, seen.size());
         BloodlineAccess.notifyListeners(listeners, null, id, wolfA, wolfSkills);
         assertEquals(4, seen.size());
+
+        // the hunter's mark scales with markKills, so that is a change too
+        BloodlineState marked = NONE.toBuilder().species(Species.HUNTER_OF_THE_FIVE).markKills(3).build();
+        BloodlineAccess.notifyListeners(listeners, null, id, marked, marked.toBuilder().markKills(4).build());
+        assertEquals(5, seen.size());
     }
 
     @Test

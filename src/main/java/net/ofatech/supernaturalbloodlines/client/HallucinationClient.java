@@ -35,6 +35,7 @@ public final class HallucinationClient {
     // far above anything the server hands out, so a phantom never shares an id with a real entity
     private static int nextId = Integer.MAX_VALUE;
     private static boolean listening;
+    private static long darknessUntil = -1;
 
     private HallucinationClient() {}
 
@@ -49,15 +50,32 @@ public final class HallucinationClient {
             case PHANTOM -> phantom(level, player);
             case WHISPER -> level.playLocalSound(player.getX(), player.getY(), player.getZ(), SoundEvents.AMBIENT_CAVE.value(),
                     SoundSource.AMBIENT, 1.0f, 0.7f + level.random.nextFloat() * 0.3f, false);
-            case DARKNESS -> player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, DARKNESS_TICKS, 0, true, false, false));
+            case DARKNESS -> darkness(level, player);
         }
     }
 
-    private static void phantom(ClientLevel level, LocalPlayer player) {
+    private static void listen() {
         if (!listening) {
             listening = true;
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick());
         }
+    }
+
+    /**
+     * The client never removes an expired effect by itself (the server does, and it does not know this one), so the tick
+     * listener takes it off. A Darkness the server really gave is left alone.
+     */
+    private static void darkness(ClientLevel level, LocalPlayer player) {
+        if (player.hasEffect(MobEffects.DARKNESS)) {
+            return;
+        }
+        listen();
+        player.addEffect(new MobEffectInstance(MobEffects.DARKNESS, DARKNESS_TICKS, 0, true, false, false));
+        darknessUntil = level.getGameTime() + DARKNESS_TICKS;
+    }
+
+    private static void phantom(ClientLevel level, LocalPlayer player) {
+        listen();
         for (int attempt = 0; attempt < 8; attempt++) {
             double angle = level.random.nextDouble() * Math.PI * 2;
             double distance = 5 + level.random.nextDouble() * 3;
@@ -98,10 +116,17 @@ public final class HallucinationClient {
     }
 
     private static void tick() {
+        Minecraft mc = Minecraft.getInstance();
+        ClientLevel level = mc.level;
+        if (darknessUntil >= 0 && (level == null || level.getGameTime() >= darknessUntil)) {
+            darknessUntil = -1;
+            if (mc.player != null) {
+                mc.player.removeEffectNoUpdate(MobEffects.DARKNESS);
+            }
+        }
         if (PHANTOMS.isEmpty()) {
             return;
         }
-        ClientLevel level = Minecraft.getInstance().level;
         PHANTOMS.removeIf(p -> {
             boolean gone = level == null || p.zombie.level() != level || level.getGameTime() >= p.until;
             if (gone && level != null) {

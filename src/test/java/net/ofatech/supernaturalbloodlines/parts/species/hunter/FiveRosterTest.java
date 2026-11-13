@@ -31,17 +31,20 @@ class FiveRosterTest {
         UUID pending = UUID.randomUUID();
         UUID lifted = UUID.randomUUID();
         r.add(member);
-        r.setPendingPotentialChoice(pending, true);
+        r.addPendingPotentialChoice(pending);
+        r.addPendingPotentialChoice(pending); // the same hunter lost the mark twice
         r.setLiftedCurse(lifted, true);
         UUID cursed = UUID.randomUUID();
         r.setCursed(cursed, true);
         FiveRoster back = FiveRoster.load(r.save(new CompoundTag(), null), null);
         assertTrue(back.contains(member));
         assertEquals(1, back.size());
-        assertTrue(back.pendingPotentialChoice().contains(pending));
+        assertEquals(2, back.pendingPotentialChoice().get(pending).intValue());
         assertTrue(back.liftedCurses().contains(lifted));
         assertTrue(back.cursed().contains(cursed));
-        back.setPendingPotentialChoice(pending, false);
+        back.resolvePendingPotentialChoice(pending);
+        assertEquals(1, back.pendingPotentialChoice().get(pending).intValue());
+        back.resolvePendingPotentialChoice(pending);
         assertTrue(back.pendingPotentialChoice().isEmpty());
     }
 }

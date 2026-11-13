@@ -1,6 +1,12 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hunter;
 
+import de.teamlapen.vampirism.api.VampirismAPI;
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import net.minecraft.core.Holder;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -39,7 +45,9 @@ public final class MarkTracker {
         // LOW with receiveCanceled=false: only a real death counts. Vampirism (HIGHEST), Original rules (HIGH) and the
         // Resurrection Ring (NORMAL) cancel a death they prevent, and this must not see those. LOWEST is the Ash Dagger's.
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, false, LivingDeathEvent.class, MarkTracker::onDeath);
-        // markKills changes do not notify listeners (only species changes do), so kills sync explicitly
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, LivingDeathEvent.class, MarkTracker::rememberAttacker);
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> DOWNING_ATTACKER.remove(e.getEntity().getUUID()));
+        // heard on a species change and on a markKills change (rules, debug event, anything that goes through BloodlineAccess)
         BloodlineAccess.addListener((p, change) -> sync(p));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> syncIfPlayer(e.getEntity()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent e) -> syncIfPlayer(e.getEntity()));
@@ -63,10 +71,46 @@ public final class MarkTracker {
         return Supernatural.isPrey(e);
     }
 
+    /**
+     * Vampirism's dying state cancels the first lethal hit, and the real death comes much later (the timer, "give up")
+     * from a source with no attacker, after the vanilla kill credit has run out. So the attacker of a death that was
+     * cancelled while the victim went into the dying state is remembered here until the real death. In memory only,
+     * dropped at the death and at logout; it expires after {@link #ATTACKER_MEMORY_TICKS} in case the victim was revived.
+     */
+    private record Attacker(WeakReference<Entity> entity, long time) {}
+
+    private static final Map<UUID, Attacker> DOWNING_ATTACKER = new HashMap<>();
+    private static final long ATTACKER_MEMORY_TICKS = 12000;
+
+    private static void rememberAttacker(LivingDeathEvent e) {
+        Entity attacker = e.getSource().getEntity();
+        if (e.isCanceled() && e.getEntity() instanceof ServerPlayer p && attacker != null && attacker != p
+                && VampirismAPI.vampirePlayer(p).isDBNO()) {
+            DOWNING_ATTACKER.put(p.getUUID(), new Attacker(new WeakReference<>(attacker), p.level().getGameTime()));
+        }
+    }
+
+    /** Who gets the credit: the damage source, else the vanilla kill credit, else the attacker that put the victim into the dying state. */
+    private static Entity killerOf(LivingEntity victim, DamageSource source) {
+        Entity killer = source.getEntity();
+        if (killer == null) {
+            killer = victim.getKillCredit();
+        }
+        Attacker remembered = victim instanceof ServerPlayer p ? DOWNING_ATTACKER.remove(p.getUUID()) : null;
+        if (killer == null && remembered != null && victim.level().getGameTime() - remembered.time <= ATTACKER_MEMORY_TICKS) {
+            Entity e = remembered.entity.get();
+            killer = e != null && !e.isRemoved() ? e : null;
+        }
+        return killer;
+    }
+
     private static void onDeath(LivingDeathEvent e) {
         LivingEntity victim = e.getEntity();
-        Entity killer = e.getSource().getEntity();
-        if (victim.level().isClientSide || killer == null || killer == victim) {
+        if (victim.level().isClientSide) {
+            return;
+        }
+        Entity killer = killerOf(victim, e.getSource());
+        if (killer == null || killer == victim) {
             return;
         }
         if (killer instanceof ServerPlayer k && isPrey(victim)) {
@@ -83,7 +127,6 @@ public final class MarkTracker {
             return;
         }
         BloodlineAccess.applyEvent(killer, BloodlineEvent.KILLED_PREY, SpeciesContext.of(killer, null));
-        sync(killer);
         if (before == Species.POTENTIAL && BloodlineAccess.get(killer).species() == Species.HUNTER_OF_THE_FIVE) {
             HunterCurse.liftAll(killer.server);
         }
@@ -94,7 +137,7 @@ public final class MarkTracker {
         if (killer instanceof ServerPlayer k) {
             HunterCurse.curse(k);
         }
-        PotentialChooser.choose(hunter.server, hunter.getUUID());
+        PotentialChooser.owe(hunter.server, hunter.getUUID());
     }
 
     /** Idempotent: makes the perks match the player's mark. */

@@ -117,8 +117,13 @@ public final class HunterCurse {
                 continue;
             }
             ServerPlayer p = online.stream().filter(o -> o.getUUID().equals(entry.getKey())).findFirst().orElse(null);
-            if (p == null || !BloodlineAccess.get(p).hunterCurse()) {
-                it.remove(); // gone, or freed some other way (the cure)
+            if (p == null) {
+                it.remove();
+                continue;
+            }
+            if (!BloodlineAccess.get(p).hunterCurse()) {
+                it.remove(); // freed some other way (the cure)
+                FiveRoster.get(server.overworld()).setCursed(p.getUUID(), false);
                 continue;
             }
             HallucinationPayload.send(p, HallucinationPayload.Kind.random(p.getRandom()));
