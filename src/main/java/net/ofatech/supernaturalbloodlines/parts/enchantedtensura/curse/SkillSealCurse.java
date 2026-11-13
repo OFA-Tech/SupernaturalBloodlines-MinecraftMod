@@ -5,6 +5,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
 import io.github.manasmods.manascore.skill.api.SkillAPI;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +19,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * One learned skill, chosen from the skills sorted by id with a per-curse seed, cannot be activated or toggled on while
- * the curse lasts. Nothing is changed on the player, so removing the curse needs no undo beyond forgetting the choice.
+ * the curse lasts (a chosen skill that is toggled on is switched off). The skill is not otherwise touched, so removing
+ * the curse needs no undo beyond forgetting the choice.
  */
 public final class SkillSealCurse implements Curse {
     static final MapCodec<SkillSealCurse> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -63,9 +65,16 @@ public final class SkillSealCurse implements Curse {
         if (sealed != null) {
             return;
         }
-        sealed = pick(seed, SkillAPI.getSkillsFrom(player).getLearnedSkills().stream()
-                .map(ManasSkillInstance::getSkillId).toList());
+        Collection<ManasSkillInstance> learned = SkillAPI.getSkillsFrom(player).getLearnedSkills();
+        sealed = pick(seed, learned.stream().map(ManasSkillInstance::getSkillId).toList());
         if (sealed != null) {
+            // a sealed skill that is already on would keep running; same two calls as ManasCore's toggle packet
+            for (ManasSkillInstance i : learned) {
+                if (sealed.equals(i.getSkillId()) && i.isToggled()) {
+                    i.setToggled(false);
+                    i.onToggleOff(player);
+                }
+            }
             // re-applying at the same strength changes nothing but marks Enchanted's curse data dirty, so it is saved
             CurseManager.get().applyCurse(Curses.SKILL_SEAL, player.getUUID(), strength, player.serverLevel());
         }

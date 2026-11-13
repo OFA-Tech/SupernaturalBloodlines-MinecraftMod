@@ -62,7 +62,7 @@ public record MagiculeOfferingRiteFactory(double magicules, int count) implement
             IExistence existence = TensuraStorages.getExistenceFrom(caster);
             if (existence.getMagicule() < magicules) {
                 if (caster instanceof ServerPlayer player) {
-                    player.sendSystemMessage(Component.translatable(OFFERING_FAILED));
+                    player.displayClientMessage(Component.translatable(OFFERING_FAILED), true);
                 }
                 return cancel();
             }

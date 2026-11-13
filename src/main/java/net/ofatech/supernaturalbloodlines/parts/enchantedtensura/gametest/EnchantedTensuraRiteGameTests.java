@@ -216,8 +216,8 @@ public final class EnchantedTensuraRiteGameTests {
             start(helper, "magicule_offering", caster);
             helper.assertTrue(ex.getMagicule() == 100, "a failed offering took magicules: " + ex.getMagicule());
             helper.assertTrue(dropped(helper) == 0, "a failed offering dropped condensed magicule");
-            helper.assertTrue(caster.received("supernaturalbloodlines.enchanted_tensura.offering_failed"),
-                    "the caster was not told the offering failed");
+            helper.assertTrue(caster.receivedOnActionBar("supernaturalbloodlines.enchanted_tensura.offering_failed"),
+                    "the caster was not told on the action bar that the offering failed");
         } finally {
             remove(level, caster);
         }

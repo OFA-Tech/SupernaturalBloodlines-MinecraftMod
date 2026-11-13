@@ -12,6 +12,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 /** A FakePlayer drops every message it is sent; this one keeps the translation keys so a test can read them. */
 final class RecordingPlayer extends FakePlayer {
     private final List<String> keys = new ArrayList<>();
+    private final List<String> actionBarKeys = new ArrayList<>();
 
     private RecordingPlayer(GameTestHelper helper, UUID id) {
         super(helper.getLevel(), new GameProfile(id, "test-" + id.toString().substring(0, 8)));
@@ -25,19 +26,26 @@ final class RecordingPlayer extends FakePlayer {
         return keys.contains(key);
     }
 
-    private void record(Component message) {
+    boolean receivedOnActionBar(String key) {
+        return actionBarKeys.contains(key);
+    }
+
+    private void record(Component message, boolean actionBar) {
         if (message.getContents() instanceof TranslatableContents t) {
             keys.add(t.getKey());
+            if (actionBar) {
+                actionBarKeys.add(t.getKey());
+            }
         }
     }
 
     @Override
     public void sendSystemMessage(Component message) {
-        record(message);
+        record(message, false);
     }
 
     @Override
     public void displayClientMessage(Component message, boolean actionBar) {
-        record(message);
+        record(message, actionBar);
     }
 }

@@ -201,6 +201,26 @@ public final class EnchantedTensuraGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void skillSealTogglesOffTheSealedSkill(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        forgetAll(p);
+        learn(p, 3);
+        List<ManasSkillInstance> learned = new ArrayList<>(SkillAPI.getSkillsFrom(p).getLearnedSkills());
+        learned.forEach(i -> i.setToggled(true));
+        SkillSealCurse curse = applyCurse(p, Curses.SKILL_SEAL, 0);
+        curse.tick(p, 0, 1);
+
+        ResourceLocation sealed = curse.sealedSkill();
+        helper.assertTrue(sealed != null, "no skill was sealed");
+        for (ManasSkillInstance i : learned) {
+            boolean isSealed = i.getSkillId().equals(sealed);
+            helper.assertTrue(i.isToggled() != isSealed,
+                    (isSealed ? "the sealed skill is still toggled on: " : "an unsealed skill was toggled off: ") + i.getSkillId());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void cursesSurviveSaving(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.create(helper);
         forgetAll(p);
