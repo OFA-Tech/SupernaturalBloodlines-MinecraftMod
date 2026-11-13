@@ -289,12 +289,89 @@ public final class OriginalHybridGameTests {
         helper.succeed();
     }
 
+    private static int werewolfCap() {
+        return WReference.WEREWOLF_FACTION.getHighestReachableLevel();
+    }
+
+    private static int vampireCap() {
+        return VReference.VAMPIRE_FACTION.getHighestReachableLevel();
+    }
+
+    private static ServerPlayer vampireAt(GameTestHelper helper, Species s, boolean gene, int level) {
+        ServerPlayer p = vampire(TestPlayers.createMortal(helper), s, gene);
+        handler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, level);
+        return p;
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void geneKillCarriesTheVampireLevelOver(GameTestHelper helper) {
+        ServerPlayer low = vampireAt(helper, Species.ORIGINAL, true, 3);
+        ServerPlayer top = vampireAt(helper, Species.NONE, true, vampireCap());
+        try {
+            kill(low, villager(helper));
+            helper.assertTrue(werewolf(low) && handler(low).getCurrentLevel() == Math.max(1, Math.min(3, werewolfCap())),
+                    "level is " + handler(low).getCurrentLevel());
+            kill(top, villager(helper));
+            helper.assertTrue(werewolf(top) && handler(top).getCurrentLevel() == Math.max(1, Math.min(vampireCap(), werewolfCap())),
+                    "capped level is " + handler(top).getCurrentLevel() + " (werewolf cap " + werewolfCap() + ")");
+        } finally {
+            reset(low);
+            reset(top);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void moonRiteCarriesTheVampireLevelOver(GameTestHelper helper) {
+        RecordingPlayer caster = RecordingPlayer.create(helper);
+        place(helper, caster);
+        try {
+            vampire(caster, Species.ORIGINAL, true);
+            handler(caster).setFactionAndLevel(VReference.VAMPIRE_FACTION, 4);
+            atFullMoon(helper, true, () -> start(helper, "rite_of_the_moon", caster, moonItems()));
+            helper.assertTrue(werewolf(caster) && handler(caster).getCurrentLevel() == Math.max(1, Math.min(4, werewolfCap())),
+                    "level is " + handler(caster).getCurrentLevel());
+        } finally {
+            remove(helper, caster);
+            reset(caster);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void silverMoonCarriesTheWerewolfLevelOver(GameTestHelper helper) {
+        ServerPlayer low = TestPlayers.createMortal(helper);
+        ServerPlayer top = TestPlayers.createMortal(helper);
+        try {
+            for (var entry : List.of(java.util.Map.entry(low, 2), java.util.Map.entry(top, werewolfCap()))) {
+                ServerPlayer p = entry.getKey();
+                handler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, entry.getValue());
+                BloodlineAccess.set(p, state(Species.HYBRID, false));
+                OutcomeExecutor.run(p, BloodlineAccess.applyEvent(p, BloodlineEvent.RITE_OF_THE_SILVER_MOON, SpeciesContext.of(p, null)));
+                int expected = Math.max(1, Math.min(entry.getValue(), vampireCap()));
+                helper.assertTrue(handler(p).getCurrentFaction() == VReference.VAMPIRE_FACTION && handler(p).getCurrentLevel() == expected,
+                        "faction " + handler(p).getCurrentFaction() + " level " + handler(p).getCurrentLevel() + ", expected " + expected);
+            }
+        } finally {
+            reset(low);
+            reset(top);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void geneKillIgnoredWithoutGeneOrWithOtherVictims(GameTestHelper helper) {
         ServerPlayer noGene = vampire(TestPlayers.createMortal(helper), Species.ORIGINAL, false);
         ServerPlayer wrongVictim = vampire(TestPlayers.createMortal(helper), Species.ORIGINAL, true);
         ServerPlayer heretic = vampire(TestPlayers.createMortal(helper), Species.HERETIC, true);
+        ServerPlayer human = TestPlayers.createMortal(helper);
         try {
+            BloodlineAccess.set(human, state(Species.NONE, true));
+            kill(human, villager(helper));
+            helper.assertTrue(BloodlineAccess.get(human).species() == Species.NONE && handler(human).getCurrentFaction() == null,
+                    "a human with the gene awakened or joined a faction");
+            kill(wrongVictim, helper.spawn(EntityType.WANDERING_TRADER, new BlockPos(1, 1, 1)));
+            helper.assertTrue(BloodlineAccess.get(wrongVictim).species() == Species.ORIGINAL && !werewolf(wrongVictim), "killing a wandering trader awakened");
             kill(noGene, villager(helper));
             helper.assertTrue(BloodlineAccess.get(noGene).species() == Species.ORIGINAL && !werewolf(noGene), "a killer without the gene awakened");
             Zombie zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(1, 1, 1));
@@ -306,6 +383,7 @@ public final class OriginalHybridGameTests {
             reset(noGene);
             reset(wrongVictim);
             reset(heretic);
+            reset(human);
         }
         helper.succeed();
     }

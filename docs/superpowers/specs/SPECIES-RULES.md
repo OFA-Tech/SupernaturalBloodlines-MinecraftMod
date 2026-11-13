@@ -21,7 +21,7 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 - **R21.** Sun damage comes only from Vampirism. A Sun Ring bound to the wearer blocks it.
 - **R22.** Cured by the *Rite of Cleansing Blood* or The Cure.
 - **R23.** From level 10, can compel villagers and lesser vampire mobs.
-- **R24.** **Hybrid-awakening rule:** a vampire with the gene who kills a villager or a player becomes a **hybrid**, with their sire kept and their werewolf side **bound** (no wolf forms) until the *Rite of the Moon*.
+- **R24.** **Hybrid-awakening rule:** a vampire with the gene who kills a villager or a player becomes a **hybrid**, with their sire kept and their werewolf side **bound** (no wolf forms) until the *Rite of the Moon*. The Vampirism level carries over (capped) when the base faction changes.
 - **R25.** A vampire who kills one of the Five gets the hunter's curse.
 
 ## Originals
