@@ -190,9 +190,12 @@ public final class WerewolfPackGameTests {
         try {
             handler(killer).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
             withGene(killer, Species.NONE);
+            java.util.UUID sire = java.util.UUID.randomUUID();
+            BloodlineAccess.set(killer, BloodlineAccess.get(killer).toBuilder().sire(sire).build());
             kill(killer, villager(helper));
             BloodlineState s = BloodlineAccess.get(killer);
             helper.assertTrue(s.species() == Species.HYBRID && s.hybridCurseBound(), "species " + s.species() + ", bound " + s.hybridCurseBound());
+            helper.assertTrue(sire.equals(s.sire()), "the vampire sire was lost (R24): " + s.sire());
             assertBornOmega(helper, killer);
         } finally {
             reset(killer);
@@ -342,6 +345,25 @@ public final class WerewolfPackGameTests {
                 reset(target);
                 handler(target).leaveFaction(false);
             }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void riteRefusesWerewolvesAndRefunds(GameTestHelper helper) {
+        RecordingPlayer target = RecordingPlayer.create(helper);
+        place(helper, target);
+        try {
+            handler(target).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1);
+            BloodlineAccess.set(target, BloodlineState.NONE);
+            start(helper, "rite_of_lineage_awaken", target, awakenItems());
+            helper.assertTrue(target.receivedOnActionBar("supernaturalbloodlines.refusal.werewolf_lineage"), "the caster was not told werewolves are refused");
+            helper.assertTrue(BloodlineAccess.get(target).equals(BloodlineState.NONE), "the refused rite changed the werewolf: " + BloodlineAccess.get(target));
+            helper.assertTrue(dropped(helper, "minecraft:bone") == 3, "the ingredients were not given back, bones: " + dropped(helper, "minecraft:bone"));
+        } finally {
+            remove(helper, target);
+            reset(target);
+            handler(target).leaveFaction(false);
         }
         helper.succeed();
     }

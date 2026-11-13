@@ -18,11 +18,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.CallRequests;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
-import net.ofatech.supernaturalbloodlines.parts.species.witch.WitchAltarBonus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -157,6 +157,11 @@ public final class PackCommand {
         return null;
     }
 
+    /** Who may be an emissary: the witch line, siphoners included (the altar bonus alone leaves them out). */
+    private static boolean isMagicUser(Species s) {
+        return s == Species.WITCH || s == Species.SIPHONER || s == Species.HERETIC || s == Species.TRIBRID;
+    }
+
     /** The Alpha names the witch whose rites cost less near the pack; a null target clears it. */
     @Nullable
     public static Component emissary(ServerPlayer alpha, @Nullable ServerPlayer target) {
@@ -172,7 +177,7 @@ public final class PackCommand {
         if (target == alpha) {
             return error("self");
         }
-        if (!WitchAltarBonus.hasBonus(BloodlineAccess.get(target).species())) {
+        if (!isMagicUser(BloodlineAccess.get(target).species())) {
             return error("emissary_witch");
         }
         index.setEmissary(alpha.getUUID(), target.getUUID());

@@ -169,19 +169,29 @@ public final class WerewolfBiteGameTests {
             bite(alpha, victim);
             helper.assertTrue(victim.addEffect(new MobEffectInstance(LUPUS, 600)), "an Alpha bite was refused");
             WerewolfFaction.join(victim);
-            helper.assertFalse(victim.isAlive(), "the victim survived a chance of 1");
-            DamageSource last = victim.getLastDamageSource();
-            helper.assertTrue(last != null && last.is(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DAMAGE_TYPE,
-                    ResourceLocation.fromNamespaceAndPath(NS, "rejected_bite"))), "died of " + last);
-            helper.assertFalse(werewolf(victim), "the dead stayed in the werewolf faction");
-            helper.assertTrue(wolfOf(victim).lineage() == Lineage.NONE && wolfOf(victim).packAlpha() == null, "wolf layer is " + wolfOf(victim));
-            helper.assertTrue(PackIndex.get(helper.getLevel()).alphaOf(victim.getUUID()).isEmpty(), "the dead is in a pack");
-            helper.assertTrue(victim.getData(SpeciesRegistries.PENDING_ALPHA).equals(Util.NIL_UUID), "the pending Alpha was not cleared");
-        } finally {
+            // the rejection waits until Vampirism's join has returned
+            helper.assertTrue(victim.isAlive() && werewolf(victim), "the rejection ran inside the faction event");
+        } catch (RuntimeException e) {
             SpeciesConfig.overrideAlphaBiteDeathChance(null);
             clean(alpha, victim);
+            throw e;
         }
-        helper.succeed();
+        helper.runAfterDelay(2, () -> {
+            try {
+                helper.assertFalse(victim.isAlive(), "the victim survived a chance of 1");
+                DamageSource last = victim.getLastDamageSource();
+                helper.assertTrue(last != null && last.is(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DAMAGE_TYPE,
+                        ResourceLocation.fromNamespaceAndPath(NS, "rejected_bite"))), "died of " + last);
+                helper.assertFalse(werewolf(victim), "the dead stayed in the werewolf faction");
+                helper.assertTrue(wolfOf(victim).lineage() == Lineage.NONE && wolfOf(victim).packAlpha() == null, "wolf layer is " + wolfOf(victim));
+                helper.assertTrue(PackIndex.get(helper.getLevel()).alphaOf(victim.getUUID()).isEmpty(), "the dead is in a pack");
+                helper.assertTrue(victim.getData(SpeciesRegistries.PENDING_ALPHA).equals(Util.NIL_UUID), "the pending Alpha was not cleared");
+            } finally {
+                SpeciesConfig.overrideAlphaBiteDeathChance(null);
+                clean(alpha, victim);
+            }
+            helper.succeed();
+        });
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
@@ -312,6 +322,11 @@ public final class WerewolfBiteGameTests {
             PackIndex index = PackIndex.get(helper.getLevel());
             helper.assertTrue(PackCommand.emissary(beta, witch) != null, "a Beta named an emissary");
             helper.assertTrue(PackCommand.emissary(alpha, human) != null, "a non-witch became the emissary");
+            for (Species s : List.of(Species.SIPHONER, Species.HERETIC, Species.TRIBRID)) {
+                BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(s).build());
+                helper.assertTrue(PackCommand.emissary(alpha, witch) == null, "a " + s + " was refused as emissary");
+            }
+            BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
             helper.assertTrue(PackCommand.emissary(alpha, witch) == null, "the witch was refused");
             helper.assertTrue(witch.getUUID().equals(index.emissaryOf(alpha.getUUID()).orElse(null)), "the emissary was not stored");
             helper.assertTrue(PackCommand.emissary(alpha, null) == null && index.emissaryOf(alpha.getUUID()).isEmpty(), "the emissary was not cleared");

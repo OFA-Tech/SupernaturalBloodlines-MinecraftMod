@@ -55,7 +55,7 @@
 - Heretics (a siphoner who joins the vampires) keep siphoning and the witch bonus. Tribrids (a witch who completes the hybrid transition) are hybrids with the witch bonus and siphoning. A siphoner cannot start the hybrid transition.
 - Hybrid-type species and their rites need Werewolves; without it they are refused and the rites are not loaded.
 - Fixed flaky GameTests: the test template was 1x1x1, so cells next to a chunk edge had entities in chunks that do not tick. It is 16x1x16 now.
-- Known pending (manual): the two-client playthrough (Original, Original's Blood, a werewolf friend turned hybrid, Original hybrid, witch, tribrid), the forced-shift check on a real full moon, the downed screen, placeholder textures. Moonstone has no loot source yet. The Werewolves bite as a source of thirst and venom is not hooked (no hook exists).
+- Known pending (manual): the two-client playthrough (Original, Original's Blood, a werewolf friend turned hybrid, Original hybrid, witch, tribrid), the forced-shift check on a real full moon, the downed screen, placeholder textures. The moonstone is crafted from Werewolves silver, which spawns as ore. The Werewolves bite as a source of thirst and venom is not hooked (no hook exists).
 
 ## Unreleased: vampirism_enchanted
 

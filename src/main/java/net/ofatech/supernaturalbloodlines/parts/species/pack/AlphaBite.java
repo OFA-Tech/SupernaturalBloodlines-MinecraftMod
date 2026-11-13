@@ -11,6 +11,7 @@ import net.minecraft.Util;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
@@ -150,7 +151,8 @@ public final class AlphaBite {
         if (alpha.equals(Util.NIL_UUID)) {
             PackAccess.applyPack(p, PackEvent.BITTEN_BY_WILD, PackContext.defaults());
         } else if (roll.getAsDouble() < SpeciesConfig.alphaBiteDeathChance()) {
-            reject(p);
+            // after Vampirism's setFactionAndLevel has returned. execute() would run it at once on the server thread; tell() queues it
+            p.server.tell(new TickTask(p.server.getTickCount(), () -> reject(p)));
         } else {
             PackContext c = new PackContext(alpha, 0, p.level().getGameTime(), 0, 30L * 24000, 300, true);
             PackOutcome out = PackAccess.applyPack(p, PackEvent.BITTEN_BY_ALPHA, c);

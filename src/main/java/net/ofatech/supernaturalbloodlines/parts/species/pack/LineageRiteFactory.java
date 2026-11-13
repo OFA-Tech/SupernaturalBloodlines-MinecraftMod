@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The Rite of Lineage (R10, R12), one factory for both rites. {@code reveal} tells the player on the circle, and only
  * them, whether they carry the gene. {@code awaken} gives the gene and awakens it: a human becomes a born werewolf
- * (pack rules), a vampire or Original a bound hybrid (bloodline rules); hunters are refused. A refusal cancels the rite,
+ * (pack rules), a vampire or Original a bound hybrid (bloodline rules); hunters and werewolves are refused (R12 lists no faction, vampire and Original only). A refusal cancels the rite,
  * so Enchanted gives the ingredients back.
  */
 public record LineageRiteFactory(Mode mode) implements RiteFactory {
@@ -39,6 +39,7 @@ public record LineageRiteFactory(Mode mode) implements RiteFactory {
     public static final String GENE_YES = "supernaturalbloodlines.lineage.gene_yes";
     public static final String GENE_NO = "supernaturalbloodlines.lineage.gene_no";
     public static final String HUNTER_REFUSED = "supernaturalbloodlines.refusal.hunter_lineage";
+    public static final String WEREWOLF_REFUSED = "supernaturalbloodlines.refusal.werewolf_lineage";
 
     public enum Mode { REVEAL, AWAKEN }
 
@@ -69,6 +70,8 @@ public record LineageRiteFactory(Mode mode) implements RiteFactory {
         switch (faction) {
             case HUNTER:
                 return HUNTER_REFUSED;
+            case WEREWOLF:
+                return WEREWOLF_REFUSED;
             case VAMPIRE: {
                 BloodlineContext ctx = FactionRiteHooks.context(target, faction, gameTime);
                 Outcome preview = BloodlineRules.apply(before, BloodlineEvent.RITE_OF_LINEAGE_AWAKEN, ctx);
@@ -84,12 +87,8 @@ public record LineageRiteFactory(Mode mode) implements RiteFactory {
                 FactionRiteHooks.run(target, BloodlineAccess.applyEvent(target, BloodlineEvent.RITE_OF_LINEAGE_AWAKEN, ctx));
                 return null;
             }
-            default: {
-                String refusal = GeneHandler.awakenHuman(target, PackEvent.RITE_OF_LINEAGE_AWAKEN);
-                // a werewolf who already carries the gene: nothing to give
-                return refusal == null && faction == BaseFaction.WEREWOLF && before.equals(BloodlineAccess.get(target))
-                        ? FactionRiteFactory.NO_EFFECT : refusal;
-            }
+            default:
+                return GeneHandler.awakenHuman(target, PackEvent.RITE_OF_LINEAGE_AWAKEN);
         }
     }
 
