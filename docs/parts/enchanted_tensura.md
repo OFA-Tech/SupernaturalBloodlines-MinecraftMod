@@ -28,7 +28,7 @@ Verified against the jars in the Gradle cache (`javap -p`, zip listing): Tensura
 | EP storage | `io.github.manasmods.tensura.storage.TensuraStorages.getExistenceFrom(LivingEntity): IExistence` (impl `ExistenceStorage`). |
 | `IExistence` magicule | `double getMagicule()`, `void setMagicule(double)`. Also `getAura/setAura`, `getEP/setEP`, `getSpiritualHealth/setSpiritualHealth`, `markDirty()`. |
 | Magicule max attribute | `io.github.manasmods.tensura.registry.attribute.TensuraAttributes.MAX_MAGICULE` (`Holder<Attribute>`). Also `MAX_AURA`, `MAGICULE_REGENERATION_MULTIPLIER`, `LIMITED_SPIRITUAL_MAX_MAGICULE`. Read the cap with `entity.getAttributeValue(TensuraAttributes.MAX_MAGICULE)`. |
-| EP data registry | `TensuraCustomData.ENTITY_EXISTENCE` (datapack registry of `EntityExistenceData`: `entity`, `spiritualHP`, `minMagicule`, `maxMagicule`, `minAura`, `maxAura`, optional `abilities`, `evolution`, `abilitiesRandom`). Files: `data/tensura/entity_existence/*.json`, keyed by the `entity` field, not by file name. |
+| EP data registry | `TensuraCustomData.ENTITY_EXISTENCE` (datapack registry of `EntityExistenceData`: `entity`, `spiritualHP`, `minMagicule`, `maxMagicule`, `minAura`, `maxAura`, optional `abilities`, `evolution`, `abilitiesRandom`). Files: `data/tensura/entity_existence/*.json`. The JSON key for the entity id is `type` (the record field is `entity`); the file name does not matter. |
 | Holy damage type | `tensura:holy_damage` (`TensuraDamageTypes.HOLY_DAMAGE`). `TensuraDamageHelper.isHoly` is also true for any damage whose `message_id` contains `holy` or `divine` (see vampirism_tensura notes). |
 | `tensura:is_spiritual` | **Damage-type** tag, `data/tensura/tags/damage_type/is_spiritual.json`: `tensura:soul_scatter`, `tensura:soul_consumed`, `tensura:synthesise`. Nothing else. A Spirit Poppet that checks this tag protects against those three only (and any damage type another mod adds to the tag). |
 
@@ -75,6 +75,22 @@ Poppets:
 Entities (`EEntityTypes`, all in namespace `enchanted`): `broomstick`, `familiar_cat`, `mandrake`, `throwable_brew`, `voodoo_item`. Only `familiar_cat` (a `FamiliarCat`, tamed cat) and `mandrake` (monster) are living mobs that Tensura can analyse; the other three are vehicles or projectiles/item entities. So EP data is needed for exactly those two.
 
 Damage types: `enchanted:sacrifice`, `enchanted:sound`, `enchanted:voodoo`, `enchanted:internal_explosion`.
+
+## ManasCore and Tensura import packages (verified)
+
+- `io.github.manasmods.manascore.network.api.util.Changeable`: the mutable wrapper passed to `ACTIVATE_SKILL` and `TOGGLE_SKILL`.
+- `io.github.manasmods.manascore.skill.api`: `SkillAPI`, `SkillEvents`, `ManasSkillInstance`, `Skills`, `ManasSkill`.
+- `io.github.manasmods.manascore.skill.impl`: `SkillStorage` (the class that calls `ACTIVATE_SKILL`; do not use it directly).
+- `io.github.manasmods.manascore.race.api`: `RaceAPI`, `RaceEvents`, `ManasRaceInstance`.
+- `io.github.manasmods.tensura.storage`: `TensuraStorages` (`getExistenceFrom`). `io.github.manasmods.tensura.storage.ep`: `IExistence`, `ExistenceStorage`.
+- `io.github.manasmods.tensura.registry.attribute`: `TensuraAttributes` (`MAX_MAGICULE`).
+- `io.github.manasmods.tensura.registry.data`: `TensuraCustomData` (`ENTITY_EXISTENCE`). `io.github.manasmods.tensura.data.existence`: `EntityExistenceData`.
+- `io.github.manasmods.tensura.damage`: `TensuraDamageHelper`, `TensuraDamageTypes`. `io.github.manasmods.tensura.registry.block`: `TensuraBlocks`.
+- `dev.architectury.event`: `Event`, `EventResult` (used by both skill and race events).
+
+## Magicule Offering: how a rite can give power or items
+
+The design uses a placed `condensed_magicule` block whose altar power comes from data, so no power API is needed. The rite (a factory or a data rite) removes the caster's magicules and places the block; the altar then counts it through its normal `enchanted/altar/block/condensed_magicule.json` entry. A custom rite needs only `Rite` and the level to place a block; no Enchanted power interface is called. Items use the same idea: `onStart`/`onTick` place or spawn the item, and `cancel()` refunds the consumed items when the caster lacks magicules.
 
 ## Data (Task 2)
 
