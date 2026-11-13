@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased: hunters
+
+- Rite of the Five (medium circle, 10000 power: 5 candles, iron ingot, book, taglock): turns a hunter-faction human into a Hunter of the Five. The Five are kept in a roster (`max_five` in the species config, default 5); leaving the hunter faction frees the slot, logging out does not.
+- Hunter's Mark: a prey kill (vampire and werewolf types; never witches or siphoners) grows the mark, up to 20 kills: +1% attack damage and +0.5% movement speed per kill. A marked hunter killed by prey loses the mark, and an online human hunter (random) becomes a potential; with nobody online the choice waits for the next hunter to join. A potential's first prey kill completes the Five. Kill credit survives Vampirism's dying state.
+- Hunter's Curse: a prey killer of a marked hunter hallucinates (phantom zombie, whisper or darkness, every 600 +- 200 ticks, only that player sees it) until a potential completes the Five. It does not stack, and humans are not cursed. Werewolf venom sends the same hallucinations.
+- Instinct: a Hunter of the Five with no prey kill for 3 days (72000 ticks; the clock starts when the mark is gained) gets Weakness I, checked every 1200 ticks, unless on a scoreboard team with an online prey player.
+- Vampire sense (5 kills or more): every 40 ticks the server tells the hunter which prey are within 24 blocks, and the hunter's client outlines them. Only that client sees it; the server sets no glow.
+- `HunterRules.immuneToCompulsion(Player)` (potentials and Hunters of the Five) for the compulsion in plan 8.
+- Access transformer `META-INF/accesstransformer.cfg` (`Entity.setSharedFlag` public) for the client-only outline, because the species part's mixin budget is used.
+- Known debts: the outline is the team colour (white without a team); a vampire that dies of the dying state's timer after more than 10 minutes, or whose killer logged out, is no kill; no Vampirism hunter skin on the phantom zombie; a hunter set with `debug set` has no kill clock and is weakened at the next check.
+- Pending (manual): the two-client check that the outline is visible only to the hunter; how the hallucinations look in a running client; kill credit through the dying state with a real vampire (kill it, let it give up or time out, and see the mark grow).
+
 ## Unreleased: artifacts
 
 - Sun Ring (craft: 4 gold ingots around glowstone; rite *Ward of Daylight*: ring, 2 sunflowers, 4 glowstone dust, medium circle, 6000 power): bound to the vampire on the circle (data component `supernaturalbloodlines:bound_to`). While they wear it (Curios `ring` slot or inventory) Vampirism's sun damage is cancelled, and a hidden sunscreen effect also stops the sun kill and nausea (Vampirism has no sun hook). Weakness in the sun is not stopped. A ring bound to someone else, or unbound, does nothing.

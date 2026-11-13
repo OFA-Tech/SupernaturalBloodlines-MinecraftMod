@@ -18,11 +18,12 @@ Rules live in `core/bloodline` (`BloodlineRules`, `PackRules`) and `docs/superpo
 
 **Hunters**
 - [x] Rite of the Five, `FiveRoster` (SavedData), `max_five` (see "Hunters: roster and rite (plan 7, Task 1)").
-- [ ] The mark: perks from `markKills`, glow of vampires within 24 blocks at 5 kills, compulsion immunity.
-- [ ] Losing the mark and choosing a potential.
+- [x] The mark: perks from `markKills`, the sense (the server sends the prey within 24 blocks at 5 kills), compulsion immunity (`HunterRules.immuneToCompulsion`).
+- [ ] **Manual:** the outline is visible only to the hunter, with two real clients; the hallucination visuals (phantom, whisper, darkness); kill credit survives the dying state (a hunter kills a vampire that goes into the dying state, and the mark grows when it gives up or times out).
+- [x] Losing the mark and choosing a potential.
 - [x] The hunter's mark, potentials and curse (see "Hunters: mark, potentials and curse (plan 7, Task 2)").
 - [x] The hunter's curse (hallucinations) and when it lifts.
-- [ ] The hunter instinct (Weakness after 3 days without a kill).
+- [x] The hunter instinct (Weakness after 3 days without a kill; see "Hunters: instinct, sense, compulsion immunity (plan 7, Task 3)").
 
 **Sirelines**
 - [ ] `sire` recorded for turned players, converted creatures and hybrids; `SirelineIndex` (SavedData).
@@ -136,6 +137,17 @@ Package `parts/species/hunter`; GameTests `HunterMarkGameTests` (and `HunterWere
 - **Werewolf venom** (`Venom.pulse`) now sends a random `HallucinationPayload` to a player every 600 ticks; Nausea II stays as the fallback for a mob or a client that cannot receive it.
 - **Test hooks**: `HunterEvents.overrideOnline` (mock players are not in the player list) and `HallucinationPayload.overrideSpy` (sees every send attempt).
 - **Limits**: only a death with a credited attacker counts; a vampire that dies of the dying state's timer after more than 10 minutes, or whose attacker logged out, is no kill. The client side of the hallucinations was only checked for loading (`runClient` log), not for how it looks.
+
+## Hunters: instinct, sense, compulsion immunity (plan 7, Task 3)
+Package `parts/species/hunter`; GameTests `HunterInstinctGameTests`. Registered by `HunterEvents.register()`.
+- **`HunterInstinct`**: one `ServerTickEvent.Post` listener (`tick(server, serverTick)`, so tests drive the cadence). Only HUNTER_OF_THE_FIVE players count (the online list, `HunterEvents.online`).
+  - **Instinct** (R84), every 1200 ticks: if `gameTime - lastVampireKill > 72000` (exactly 3 days is still fine), Weakness I for 1300 ticks (it overlaps, so it stays on while idle). No effect while the hunter is on a scoreboard team with an online player who is prey (`MarkTracker.isPrey`). `lastVampireKill` is set by the rules when the mark is gained (`RITE_OF_THE_FIVE`, and a potential's first kill) and at every prey kill, so a new hunter starts with a full 3 days (`instinctDoesNotHitNewHunter`). A hunter made with `debug set` has 0 there and is weakened at the next check.
+  - **Sense**, every 40 ticks, from `markKills >= 5`: `GlowPayload` with the ids of living prey (`MarkTracker.isPrey`, so no witches or siphoners) within 24 blocks (sphere), not the hunter. Nothing is sent when there is none.
+- **`HunterRules.immuneToCompulsion(Player)`**: true for POTENTIAL and HUNTER_OF_THE_FIVE. Public API for plan 8, to check together with `VervainRules.protects`.
+- **`GlowPayload`** (core/network, S2C, same protocol as `HallucinationPayload`: `send` skips `FakePlayer`s and connections without the channel; `overrideSpy` for tests). It carries entity ids only, and the server never sets a glow flag, so the outline exists only where the packet was received.
+- **`client/HunterSenseClient`** (client only, referenced only from the handler lambda in `ModNetwork`): keeps `id -> expiry` for 45 ticks (40 plus 5 of slack so a late packet does not flicker), and sets the entity's glow flag (shared flag 6) in this client's copy of the entity at `RenderLevelStageEvent` `AFTER_SKY` (before entities are drawn), every frame, because a server entity-data update would otherwise overwrite it. On expiry it sets the flag back to off (on if the client knows a real Glowing effect). The table is dropped when the level changes.
+- **Why an access transformer and not a mixin:** the species part has its 3 mixins (`docs/mixins.md`). The client has no API to outline one entity, and `Entity.setGlowingTag` does nothing on a client (it only rewrites the flag with itself). `Entity.setSharedFlag` is protected, so `META-INF/accesstransformer.cfg` makes it public (one line). The AT is applied whether or not the part is on; it only widens a method.
+- **Limits:** the outline colour is the entity's team colour (white without a team). The sense does not see through `/effect`-style invisibility rules; it is a plain range check. Not run with two clients (see the manual check in the checklist).
 
 ## Hook points (verified)
 

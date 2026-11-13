@@ -37,6 +37,7 @@ public final class HunterEvents {
         MarkTracker.register();
         PotentialChooser.register();
         HunterCurse.register();
+        HunterInstinct.register();
         // every way the species changes (rite, debug command, rules) goes through BloodlineAccess.set
         BloodlineAccess.addListener((p, change) -> setMember(p, change.after().species()));
         NeoForge.EVENT_BUS.addListener(HunterEvents::onFactionLevelChanged);
