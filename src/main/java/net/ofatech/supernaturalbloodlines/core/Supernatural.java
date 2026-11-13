@@ -8,7 +8,7 @@ import net.minecraft.world.entity.Entity;
 
 /**
  * "Is this entity supernatural": core cannot reference Vampirism, Werewolves or Tensura, so each part registers its own
- * predicates and the answers are OR-combined. Parts register once at init; the lists are read on the server thread.
+ * predicates and the answers are OR-combined. Parts register once at init; the lists are read on the server thread and on the client (block collision, break speed), so they are copy-on-write and the predicates must only use state the client has.
  * <ul>
  * <li>supernatural: an attacker the Resurrection Ring answers to, a target of the Hearing Device;</li>
  * <li>vampiric: has vampire traits (vervain burns it);</li>

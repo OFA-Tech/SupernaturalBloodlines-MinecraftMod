@@ -5,9 +5,9 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -16,7 +16,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -59,33 +58,40 @@ public class MountainAshLineBlock extends BaseEntityBlock {
         return OUTLINE;
     }
 
-    /** Who this line stops. A projectile counts as its owner. */
-    public static boolean blocks(@Nullable Entity entity, boolean emissary) {
+    /** Who this line stops. A projectile counts as its owner, a mount as its passengers. */
+    public static boolean blocks(@Nullable Entity entity, BlockGetter level, BlockPos pos) {
         if (entity == null) {
             return false;
         }
         if (entity instanceof Projectile p) {
             return p.getOwner() != null && Supernatural.isPrey(p.getOwner());
         }
-        return Supernatural.isPrey(entity) || (emissary && entity.getType().is(MountainAsh.SUPERNATURAL_MOBS));
+        if (Supernatural.isPrey(entity)) {
+            return true;
+        }
+        for (Entity passenger : entity.getIndirectPassengers()) {
+            if (Supernatural.isPrey(passenger)) {
+                return true;
+            }
+        }
+        // the block entity is only read for the few mobs an emissary line adds
+        return entity.getType().is(MountainAsh.SUPERNATURAL_MOBS)
+                && level.getBlockEntity(pos) instanceof MountainAshLineBlockEntity line && line.isEmissary();
     }
 
-    private static boolean isEmissary(BlockGetter level, BlockPos pos) {
-        return level.getBlockEntity(pos) instanceof MountainAshLineBlockEntity line && line.isEmissary();
-    }
-
+    /**
+     * Vanilla caches {@code hasLargeCollisionShape} from this method called with {@link EmptyBlockGetter} and an empty
+     * context, and {@code BlockCollisions} skips the cells in the one block margin of a mover's box unless that flag is
+     * set. A line that answers "nothing" there is never seen by an entity whose feet are above the line's own cell (a
+     * jump), so that one call gets the wall; it only feeds the cache (not a full block, so nothing suffocates).
+     */
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-        // an unknown walker (no entity) and non-entity contexts pass; the emissary flag is only read once someone might be stopped
-        return ctx instanceof EntityCollisionContext e && e.getEntity() != null && blocks(e.getEntity(), isEmissary(level, pos))
-                ? WALL : Shapes.empty();
-    }
-
-    /** Mobs path around the line instead of walking into it. */
-    @Nullable
-    @Override
-    public PathType getBlockPathType(BlockState state, BlockGetter level, BlockPos pos, @Nullable Mob mob) {
-        return mob != null && blocks(mob, isEmissary(level, pos)) ? PathType.BLOCKED : null;
+        if (level == EmptyBlockGetter.INSTANCE) {
+            return WALL;
+        }
+        // an unknown walker (no entity) and non-entity contexts pass
+        return ctx instanceof EntityCollisionContext e && blocks(e.getEntity(), level, pos) ? WALL : Shapes.empty();
     }
 
     @Override

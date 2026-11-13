@@ -95,6 +95,10 @@ public final class BloodlineGameTests {
         // Tensura's registry has no namespace prefix and our files sit in its data namespace
         checkPartData(helper, access, "enchantedTensura", "entity_existence", "tensura", "supernaturalbloodlines_enchanted_");
         checkPartData(helper, access, "vampirismTensura", "entity_existence", "tensura", "supernaturalbloodlines_vampirism_");
+        // mountain ash worldgen: the trees must not be referenced (nor exist) with the part off
+        checkPartData(helper, access, "artifacts", "worldgen/configured_feature", "supernaturalbloodlines", "mountain_ash");
+        checkPartData(helper, access, "artifacts", "worldgen/placed_feature", "supernaturalbloodlines", "mountain_ash");
+        checkPartData(helper, access, "artifacts", "biome_modifier", "supernaturalbloodlines", "mountain_ash");
         checkPartData(helper, access, "species", "damage_type", "supernaturalbloodlines", "failed_transition");
         helper.succeed();
     }

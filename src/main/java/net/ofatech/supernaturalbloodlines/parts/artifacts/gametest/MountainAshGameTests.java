@@ -26,7 +26,6 @@ import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.GenerationStep;
-import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
@@ -89,7 +88,13 @@ public final class MountainAshGameTests {
 
     /** Walks {@code e} 5 blocks along +x from x 4.5 and returns where it ends, relative to the test (x). */
     static double walk(GameTestHelper helper, Entity e) {
-        e.setPos(helper.absoluteVec(new Vec3(4.5, 1, 1.5)));
+        return walk(helper, e, 1);
+    }
+
+    /** Like {@link #walk(GameTestHelper, Entity)} with the feet at relative height {@code feetY}, in the air (a jump). */
+    static double walk(GameTestHelper helper, Entity e, double feetY) {
+        e.setPos(helper.absoluteVec(new Vec3(4.5, feetY, 1.5)));
+        e.setOnGround(false);
         e.move(MoverType.SELF, new Vec3(5, 0, 0));
         return helper.relativeVec(e.position()).x;
     }
@@ -129,6 +134,60 @@ public final class MountainAshGameTests {
         ServerPlayer witch = player(helper);
         BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
         assertPasses(helper, witch, "a witch");
+        helper.succeed();
+    }
+
+    /**
+     * The line is at y 1; feet at 2.2 are in the air, 1.2 above it and in the margin row that BlockCollisions skips for a
+     * block whose cached "large collision shape" flag is false.
+     */
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void jumpingPreyCannotCrossAshLine(GameTestHelper helper) {
+        BlockState line = lay(helper);
+        helper.assertTrue(line.hasLargeCollisionShape(), "the cached large-shape flag is off, so jumpers are never checked against the line");
+        helper.assertTrue(!line.isCollisionShapeFullBlock(helper.getLevel(), helper.absolutePos(LINE)), "the line counts as a full block");
+        helper.assertTrue(!line.isSuffocating(helper.getLevel(), helper.absolutePos(LINE)), "the line suffocates");
+        // the cached shape is also what a caller without a context gets (WalkNodeEvaluator's floor, say), so check that
+        // a zombie's pathfinding still finds a way across the line
+        BlockPos goal = helper.absolutePos(new BlockPos(10, 1, 1));
+        var zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(4, 1, 1));
+        zombie.setOnGround(true);
+        var zPath = zombie.getNavigation().createPath(goal, 0);
+        helper.assertTrue(zPath != null && zPath.canReach(), "a zombie finds no way across the line: " + zPath);
+
+        for (double feetY : new double[] {2.2, 2.45}) {
+            double v = walk(helper, spawn(helper, "vampirism:vampire", new BlockPos(4, 1, 1)), feetY);
+            helper.assertTrue(v < LINE.getX(), "a vampire mob jumping at " + feetY + " crossed the line: ended at x " + v);
+            double p = walk(helper, vampirePlayer(helper), feetY);
+            helper.assertTrue(p < LINE.getX(), "a vampire player jumping at " + feetY + " crossed the line: ended at x " + p);
+        }
+        // above the wall (top at 2.5) nothing stops them: the limit is the wall's height
+        double over = walk(helper, vampirePlayer(helper), 2.6);
+        helper.assertTrue(over > LINE.getX() + 1, "a vampire above the wall was stopped: ended at x " + over);
+
+        // the others still jump over and through
+        double human = walk(helper, player(helper), 2.2);
+        helper.assertTrue(human > LINE.getX() + 1, "a jumping human was stopped: ended at x " + human);
+        ServerPlayer witch = player(helper);
+        BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
+        double w = walk(helper, witch, 2.2);
+        helper.assertTrue(w > LINE.getX() + 1, "a jumping witch was stopped: ended at x " + w);
+        helper.succeed();
+    }
+
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void mountedPreyCannotCrossAshLine(GameTestHelper helper) {
+        lay(helper);
+        Mob pig = helper.spawn(EntityType.PIG, new BlockPos(4, 1, 1));
+        Mob vampire = spawn(helper, "vampirism:vampire", new BlockPos(4, 1, 1));
+        helper.assertTrue(vampire.startRiding(pig, true), "setup: the vampire did not mount");
+        assertStopped(helper, pig, "a pig carrying a vampire");
+        vampire.stopRiding();
+
+        Mob pig2 = helper.spawn(EntityType.PIG, new BlockPos(4, 1, 1));
+        Mob villager = helper.spawn(EntityType.VILLAGER, new BlockPos(4, 1, 1));
+        helper.assertTrue(villager.startRiding(pig2, true), "setup: the villager did not mount");
+        assertPasses(helper, pig2, "a pig carrying a villager");
         helper.succeed();
     }
 
@@ -257,18 +316,6 @@ public final class MountainAshGameTests {
         helper.assertTrue(!copy.isEmissary(), "setup: a new entity is an emissary");
         copy.loadWithComponents(tag, helper.getLevel().registryAccess());
         helper.assertTrue(copy.isEmissary(), "the emissary flag was not saved");
-        helper.succeed();
-    }
-
-    @GameTest(template = "tall", templateNamespace = NS)
-    public static void preyMobsPathAroundTheLine(GameTestHelper helper) {
-        BlockState line = lay(helper);
-        BlockPos abs = helper.absolutePos(LINE);
-        Mob vampire = spawn(helper, "vampirism:vampire", new BlockPos(4, 1, 1));
-        Mob zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(4, 1, 1));
-        helper.assertTrue(line.getBlockPathType(helper.getLevel(), abs, vampire) == PathType.BLOCKED, "a vampire mob would path over the line");
-        helper.assertTrue(line.getBlockPathType(helper.getLevel(), abs, zombie) != PathType.BLOCKED, "a zombie avoids the line");
-        helper.assertTrue(line.getBlockPathType(helper.getLevel(), abs, null) != PathType.BLOCKED, "an unknown mob avoids the line");
         helper.succeed();
     }
 
