@@ -31,7 +31,7 @@ public final class RiteTestSupport {
     }
 
     public static BlockPos centre(GameTestHelper helper) {
-        return helper.absolutePos(new BlockPos(1, 1, 1));
+        return helper.absolutePos(new BlockPos(8, 1, 8));
     }
 
     public static Item item(String id) {

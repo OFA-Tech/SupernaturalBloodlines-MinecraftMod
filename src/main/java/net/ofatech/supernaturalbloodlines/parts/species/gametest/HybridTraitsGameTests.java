@@ -378,9 +378,13 @@ public final class HybridTraitsGameTests {
             ServerPlayer original = vampire(helper);
             try {
                 BloodlineAccess.set(original, species(s));
+                float before = original.getHealth();
                 Venom.pulse(original, 40);
                 MobEffectInstance weak = original.getEffect(MobEffects.WEAKNESS);
                 helper.assertTrue(weak != null && weak.getAmplifier() == 1, s + ": no Weakness II: " + weak);
+                helper.assertTrue(original.getHealth() == before, s + ": the venom hurt an Original: " + before + " -> " + original.getHealth());
+                Venom.pulse(original, 600);
+                helper.assertTrue(!original.hasEffect(MobEffects.CONFUSION), s + ": hallucinations on an Original");
                 Venom.pulse(original, 1);
                 helper.assertTrue(!original.isDeadOrDying() && original.getHealth() > 0, s + " was killed by the venom");
             } finally {
@@ -525,7 +529,7 @@ public final class HybridTraitsGameTests {
     /** A tribrid is a hybrid (speed and damage), a witch (cheaper rites on an altar) and a siphoner (drains creatures). */
     @GameTest(template = "empty", templateNamespace = NS, batch = "tribrid_cost")
     public static void tribridHasHybridTraitsAndWitchBonus(GameTestHelper helper) {
-        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
+        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 4));
         AltarBlockEntity altar = WitchGameTests.altar(helper, base, 5000);
         BlockPos chalkPos = base.offset(0, 0, -2);
         Zombie zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(1, 1, 1));
@@ -549,6 +553,7 @@ public final class HybridTraitsGameTests {
             helper.assertTrue(WitchGameTests.click(tribrid, stone).isCanceled(), "a tribrid's sneak click on altar power was not taken");
             helper.assertTrue(BloodlineAccess.get(tribrid).siphonedPower() == 2 * Siphoning.GAIN, "siphoned " + BloodlineAccess.get(tribrid).siphonedPower());
         } finally {
+            zombie.discard();
             remove(helper, tribrid);
             BloodlineAccess.set(tribrid, BloodlineState.NONE);
         }

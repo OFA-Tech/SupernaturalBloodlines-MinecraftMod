@@ -171,7 +171,7 @@ public final class WitchGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS, batch = "witch_cost")
     public static void witchCheapensRite(GameTestHelper helper) {
-        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
+        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 4));
         AltarBlockEntity altar = altar(helper, base, 5000);
         BlockPos chalkPos = base.offset(0, 0, -2);
         RecordingPlayer witch = player(Species.WITCH, 0, helper);
@@ -248,7 +248,7 @@ public final class WitchGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS, batch = "witch_off")
     public static void witchBonusDisabledWhenMixinMissing(GameTestHelper helper) {
-        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
+        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 4));
         BlockPos chalkPos = base.offset(0, 0, -2);
         RecordingPlayer witch = player(Species.WITCH, 0, helper);
         put(helper, witch, chalkPos);
@@ -295,7 +295,7 @@ public final class WitchGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS, batch = "siphon_cost", timeoutTicks = 100)
     public static void siphonerPaysFromSiphonedPower(GameTestHelper helper) {
-        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
+        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 4));
         AltarBlockEntity altar = altar(helper, base, 5000);
         BlockPos chalkPos = base.offset(0, 0, -2);
         RecordingPlayer siphoner = player(Species.SIPHONER, 500, helper);
@@ -309,7 +309,7 @@ public final class WitchGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS, batch = "siphon_poor", timeoutTicks = 100)
     public static void siphonerKeepsPowerWhenTheAltarCannotPay(GameTestHelper helper) {
-        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
+        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 4));
         AltarBlockEntity altar = altar(helper, base, 10);
         BlockPos chalkPos = base.offset(0, 0, -2);
         RecordingPlayer siphoner = player(Species.SIPHONER, 500, helper);
@@ -323,7 +323,7 @@ public final class WitchGameTests {
     /** Per-tick costs get the witch discount only: siphoned power would otherwise sync to the client every tick. */
     @GameTest(template = "empty", templateNamespace = NS, batch = "siphon_tick")
     public static void perTickCostIgnoresSiphonedPower(GameTestHelper helper) {
-        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
+        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 4));
         AltarBlockEntity altar = altar(helper, base, 5000);
         RecordingPlayer siphoner = player(Species.SIPHONER, 500, helper);
         BlockPos chalkPos = base.offset(0, 0, -2);
@@ -344,7 +344,7 @@ public final class WitchGameTests {
     /** The target of a rite stands on the circle's centre, and the discount follows them, not only the caster. */
     @GameTest(template = "empty", templateNamespace = NS, batch = "witch_centre")
     public static void witchOnTheCircleCheapensTheCast(GameTestHelper helper) {
-        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
+        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 4));
         AltarBlockEntity altar = altar(helper, base, 5000);
         BlockPos chalkPos = base.offset(0, 0, -2);
         GoldChalkBlockEntity chalk = chalk(helper, chalkPos, UUID.randomUUID(), base); // the caster is not online
@@ -589,6 +589,7 @@ public final class WitchGameTests {
             helper.assertTrue(BloodlineAccess.get(p).siphonedPower() == 2 * Siphoning.GAIN, "creature: siphoned " + BloodlineAccess.get(p).siphonedPower());
             helper.assertTrue(WitchAltarBonus.hasBonus(Species.HERETIC), "a heretic lost the witch bonus");
         } finally {
+            zombie.discard();
             VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
             BloodlineAccess.set(p, BloodlineState.NONE);
         }
