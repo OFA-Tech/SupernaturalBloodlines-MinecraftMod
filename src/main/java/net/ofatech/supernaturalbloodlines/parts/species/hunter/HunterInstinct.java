@@ -27,7 +27,20 @@ public final class HunterInstinct {
     static final int SENSE_KILLS = 5;
     static final double SENSE_RANGE = 24;
 
+    private static volatile Double rangeOverride;
+
     private HunterInstinct() {}
+
+    /** For tests: shrinks the sense range so the test mobs stay inside the test structure; null clears it. */
+    @VisibleForTesting
+    public static void overrideRange(Double range) {
+        rangeOverride = range;
+    }
+
+    private static double range() {
+        Double pinned = rangeOverride;
+        return pinned != null ? pinned : SENSE_RANGE;
+    }
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> tick(e.getServer(), e.getServer().getTickCount()));
@@ -76,7 +89,7 @@ public final class HunterInstinct {
     /** Prey the hunter senses: alive, within range, not themself, no spectator, and prey by R81 (so no witches or siphoners). */
     @VisibleForTesting
     public static boolean senses(ServerPlayer hunter, LivingEntity e) {
-        return e != hunter && e.isAlive() && !e.isSpectator() && e.distanceToSqr(hunter) <= SENSE_RANGE * SENSE_RANGE && MarkTracker.isPrey(e);
+        return e != hunter && e.isAlive() && !e.isSpectator() && e.distanceToSqr(hunter) <= range() * range() && MarkTracker.isPrey(e);
     }
 
     /** Sends the prey within range, if the hunter has the kills for it. Nothing is sent when there is none. */
@@ -85,7 +98,7 @@ public final class HunterInstinct {
         if (s.species() != Species.HUNTER_OF_THE_FIVE || s.markKills() < SENSE_KILLS) {
             return;
         }
-        List<Integer> ids = p.level().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(SENSE_RANGE), e -> senses(p, e))
+        List<Integer> ids = p.level().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(range()), e -> senses(p, e))
                 .stream().map(LivingEntity::getId).toList();
         if (!ids.isEmpty()) {
             GlowPayload.send(p, ids);

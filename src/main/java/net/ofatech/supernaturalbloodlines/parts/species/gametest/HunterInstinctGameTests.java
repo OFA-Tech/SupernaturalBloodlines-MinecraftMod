@@ -186,6 +186,16 @@ public final class HunterInstinctGameTests {
         helper.succeed();
     }
 
+    private static String describe(ServerPlayer hunter, Mob... mobs) {
+        StringBuilder b = new StringBuilder("hunter at ").append(hunter.position());
+        for (Mob m : mobs) {
+            b.append("; ").append(m.getType().builtInRegistryHolder().key().location()).append('#').append(m.getId())
+                    .append(" alive=").append(m.isAlive()).append(" at ").append(m.position())
+                    .append(" distance=").append(m.distanceTo(hunter)).append(" prey=").append(HunterInstinct.senses(hunter, m));
+        }
+        return b.toString();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void senseSendsPreyInRange(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
@@ -194,22 +204,27 @@ public final class HunterInstinctGameTests {
         Vec3 home = helper.absoluteVec(new Vec3(1.5, 1, 1.5));
         hunter.setPos(home);
         young.setPos(home);
-        Mob near = vampireMob(helper, home.add(10, 0, 0));
-        Mob edge = vampireMob(helper, home.add(23, 0, 0));
-        Mob far = vampireMob(helper, home.add(26, 0, 0));
+        // The range is shrunk to 8 so every mob stands inside the test structure: at the real 24 blocks the edge and far mobs
+        // were outside it (unloaded chunks, no floor), which made this test flaky.
+        Mob near = vampireMob(helper, home.add(3, 0, 0));
+        Mob edge = vampireMob(helper, home.add(7.5, 0, 0));
+        Mob far = vampireMob(helper, home.add(10, 0, 0));
         Mob cow = (Mob) EntityType.COW.create(helper.getLevel());
         cow.moveTo(home.x + 3, home.y, home.z);
         helper.getLevel().addFreshEntity(cow);
         List<String> sent = new ArrayList<>();
         try {
             online(hunter, young);
+            HunterInstinct.overrideRange(8.0);
             GlowPayload.overrideSpy((p, ids) -> sent.add(p.getUUID() + ":" + ids.stream().sorted().toList()));
             HunterInstinct.tick(server, 41);
             helper.assertTrue(sent.isEmpty(), "sent off its 40 tick cadence");
             HunterInstinct.tick(server, 40);
             String expected = hunter.getUUID() + ":" + List.of(near.getId(), edge.getId()).stream().sorted().toList();
-            helper.assertTrue(sent.size() == 1 && sent.get(0).equals(expected), "sent " + sent + ", expected [" + expected + "] (the 4 kill hunter gets nothing)");
+            helper.assertTrue(sent.size() == 1 && sent.get(0).equals(expected),
+                    "sent " + sent + ", expected [" + expected + "] (the 4 kill hunter gets nothing); " + describe(hunter, near, edge, far, cow));
         } finally {
+            HunterInstinct.overrideRange(null);
             GlowPayload.overrideSpy(null);
             HunterMarkGameTests.clearHooks();
             near.discard();

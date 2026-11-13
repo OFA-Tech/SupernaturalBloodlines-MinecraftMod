@@ -142,5 +142,7 @@
   "supernaturalbloodlines.bloodline.call.accept_hover": "Go to %s",
   "supernaturalbloodlines.bloodline.call.answered": "%s answers your call.",
   "supernaturalbloodlines.bloodline.call.expired": "That call has run out, or it was not meant for you.",
-  "supernaturalbloodlines.bloodline.call.caller_gone": "The one who called you is no longer here."
+  "supernaturalbloodlines.bloodline.call.caller_gone": "The one who called you is no longer here.",
+  "supernaturalbloodlines.bloodline.call.dead": "You cannot answer a call while you are dead.",
+  "supernaturalbloodlines.bloodline.call.no_floor": "There is no safe ground near the one who called you."
 }

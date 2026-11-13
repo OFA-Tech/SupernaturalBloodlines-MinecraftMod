@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.UUID;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
@@ -51,7 +53,7 @@ public final class SirelineCommandGameTests {
     private SirelineCommandGameTests() {
     }
 
-    private static final class Capture implements CommandSource {
+    static final class Capture implements CommandSource {
         final List<Component> got = new ArrayList<>();
 
         @Override
@@ -101,12 +103,12 @@ public final class SirelineCommandGameTests {
         }
     }
 
-    private static CommandSourceStack stack(ServerPlayer p, int permission, Capture out) {
+    static CommandSourceStack stack(ServerPlayer p, int permission, Capture out) {
         return new CommandSourceStack(out, p.position(), p.getRotationVector(), (ServerLevel) p.level(), permission,
                 p.getGameProfile().getName(), p.getDisplayName(), p.server, p);
     }
 
-    private static int run(ServerPlayer p, int permission, Capture out, String command) {
+    static int run(ServerPlayer p, int permission, Capture out, String command) {
         try {
             return p.server.getCommands().getDispatcher().execute(command, stack(p, permission, out));
         } catch (CommandSyntaxException e) {
@@ -115,7 +117,7 @@ public final class SirelineCommandGameTests {
         }
     }
 
-    private static ServerPlayer named(GameTestHelper helper, ServerLevel level, String name) {
+    static ServerPlayer named(GameTestHelper helper, ServerLevel level, String name) {
         UUID id = UUID.randomUUID();
         return FakePlayerFactory.get(level, new GameProfile(id, name + "-" + id.toString().substring(0, 4)));
     }
@@ -131,16 +133,16 @@ public final class SirelineCommandGameTests {
         }
     }
 
-    private static void species(ServerPlayer p, Species s) {
+    static void species(ServerPlayer p, Species s) {
         BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().species(s).build());
     }
 
-    private static void place(GameTestHelper helper, Entity e, int x) {
+    static void place(GameTestHelper helper, Entity e, int x) {
         Vec3 at = helper.absoluteVec(new Vec3(x + 0.5, 2, 4.5));
         e.moveTo(at.x, at.y, at.z);
     }
 
-    private static void online(ServerPlayer... ps) {
+    static void online(ServerPlayer... ps) {
         Map<UUID, ServerPlayer> m = new HashMap<>();
         for (ServerPlayer p : ps) {
             m.put(p.getUUID(), p);
@@ -148,7 +150,7 @@ public final class SirelineCommandGameTests {
         SireCall.overridePlayerLookup(m::get);
     }
 
-    private static void cleanUp(ServerPlayer... ps) {
+    static void cleanUp(ServerPlayer... ps) {
         SireCall.overridePlayerLookup(null);
         for (ServerPlayer p : ps) {
             BloodlineAccess.set(p, BloodlineState.NONE);
@@ -390,6 +392,89 @@ public final class SirelineCommandGameTests {
             String again = SireCall.requests().tokenOf(caller.getUUID(), sired.getUUID()).orElseThrow();
             // (a fake player's network handler ignores same-dimension teleports, so only the answer is checked here)
             helper.assertTrue(run(sired, 0, new Capture(), "bloodline accept " + again) == 1, "accept in the same dimension failed");
+        } finally {
+            cleanUp(caller, sired);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void deadSiredCannotAccept(GameTestHelper helper) {
+        ServerPlayer caller = named(helper, helper.getLevel(), "caller");
+        ServerPlayer sired = named(helper, helper.getLevel(), "sired");
+        try {
+            SireRecorder.record(caller, sired);
+            online(caller, sired);
+            species(caller, Species.ORIGINAL);
+            place(helper, caller, 4);
+            helper.assertTrue(run(caller, 0, new Capture(), "bloodline call") == 1, "the call failed");
+            String token = SireCall.requests().tokenOf(caller.getUUID(), sired.getUUID()).orElseThrow();
+            sired.setHealth(0);
+            Capture out = new Capture();
+            helper.assertTrue(run(sired, 0, out, "bloodline accept " + token) == 0, "a dead player accepted: " + out.text());
+            helper.assertTrue(out.text().contains("dead"), "no refusal message: " + out.text());
+            sired.setHealth(sired.getMaxHealth());
+            helper.assertTrue(run(sired, 0, new Capture(), "bloodline accept " + token) == 1, "the request was lost with the refusal");
+        } finally {
+            cleanUp(caller, sired);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void callerInTheAirLandsTheSiredOnTheGroundBelow(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ServerPlayer caller = named(helper, level, "caller");
+        ServerPlayer sired = named(helper, level, "sired");
+        try {
+            for (int x = 1; x <= 7; x++) {
+                for (int z = 1; z <= 7; z++) {
+                    helper.setBlock(new BlockPos(x, 20, z), Blocks.STONE);
+                }
+            }
+            SireRecorder.record(caller, sired);
+            online(caller, sired);
+            species(caller, Species.ORIGINAL);
+            Vec3 up = helper.absoluteVec(new Vec3(4.5, 24, 4.5));
+            caller.moveTo(up.x, up.y, up.z);
+            Vec3 spot = SireCall.landing(level, caller);
+            helper.assertTrue(spot != null, "no landing found three blocks above the ground");
+            helper.assertTrue(spot.y == helper.absoluteVec(new Vec3(0, 21, 0)).y, "the landing is at y " + spot.y);
+            helper.assertTrue(level.noCollision(EntityType.PLAYER.getDimensions().makeBoundingBox(spot.x, spot.y, spot.z)), "the landing is inside a block");
+            helper.assertTrue(run(caller, 0, new Capture(), "bloodline call") == 1, "the call failed");
+            String token = SireCall.requests().tokenOf(caller.getUUID(), sired.getUUID()).orElseThrow();
+            Capture out = new Capture();
+            helper.assertTrue(run(sired, 0, out, "bloodline accept " + token) == 1, "accept was refused: " + out.text());
+        } finally {
+            for (int x = 1; x <= 7; x++) {
+                for (int z = 1; z <= 7; z++) {
+                    helper.setBlock(new BlockPos(x, 20, z), Blocks.AIR);
+                }
+            }
+            cleanUp(caller, sired);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void callerOverNothingRefusesTheAccept(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ServerPlayer caller = named(helper, level, "caller");
+        ServerPlayer sired = named(helper, level, "sired");
+        try {
+            SireRecorder.record(caller, sired);
+            online(caller, sired);
+            species(caller, Species.ORIGINAL);
+            Vec3 up = helper.absoluteVec(new Vec3(4.5, 40, 4.5));
+            caller.moveTo(up.x, up.y, up.z);
+            helper.assertTrue(SireCall.landing(level, caller) == null, "a landing was found in mid-air");
+            helper.assertTrue(run(caller, 0, new Capture(), "bloodline call") == 1, "the call failed");
+            String token = SireCall.requests().tokenOf(caller.getUUID(), sired.getUUID()).orElseThrow();
+            Vec3 before = sired.position();
+            Capture out = new Capture();
+            helper.assertTrue(run(sired, 0, out, "bloodline accept " + token) == 0, "accept worked over nothing: " + out.text());
+            helper.assertTrue(out.text().contains("no_floor"), "no refusal message: " + out.text());
+            helper.assertTrue(sired.position().equals(before), "the sired was moved");
         } finally {
             cleanUp(caller, sired);
         }
