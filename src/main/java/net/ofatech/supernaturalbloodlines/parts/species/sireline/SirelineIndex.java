@@ -46,6 +46,7 @@ public final class SirelineIndex extends SavedData {
     private final Map<UUID, String> names = new HashMap<>();
     // the sireline death's debts: players who were offline and creatures that were not loaded when their line died
     private final Set<UUID> pendingPlayers = new LinkedHashSet<>();
+    // shortcut: a creature that never loads again (its chunk is gone or never visited) stays here forever, so the set only grows; add an expiry per entry or prune on chunk unload events when it matters
     private final Set<UUID> pendingMobs = new LinkedHashSet<>();
 
     SirelineIndex() {
