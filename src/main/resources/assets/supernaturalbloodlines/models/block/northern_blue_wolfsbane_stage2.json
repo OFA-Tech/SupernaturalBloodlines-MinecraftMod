@@ -1,0 +1,1 @@
+{ "parent": "minecraft:block/crop", "textures": { "crop": "supernaturalbloodlines:block/northern_blue_wolfsbane_stage2" } }

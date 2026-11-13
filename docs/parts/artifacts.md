@@ -14,7 +14,9 @@ Checklist (from the design, section 6). Tick items as they ship.
 - [x] Vampire Compass: points to the nearest vampire, hybrid or Original within 64 blocks. Tests: `compassPointsToNearestVampire`, `compassSpinsWithNoVampireInRange`, `compassIgnoresItsHolderAndUpdatesOncePerSecond`.
 - [x] Hearing Device: stuns supernaturals within 5 blocks for 5 s; 60 s cooldown. Tests: `hearingDeviceStunsSupernatural`, `hearingDeviceIgnoresHumans`, `hearingDeviceHasCooldown`.
 - [x] Mountain ash: dust line, ash tree, blocks vampires and werewolves (witches pass). Tests: `vampireCannotCrossAshLine`, `werewolfCannotCrossAshLine`, `witchWalksThrough`, `humanWalksThrough`, `supernaturalCannotBreakLine`, `supernaturalProjectileStopped`, `emissaryLineAlsoBlocksSupernaturalMobs`, `jumpingPreyCannotCrossAshLine`, `mountedPreyCannotCrossAshLine`, `saplingGrowsMountainAshTree`, `mountainAshDataLoads`.
+- [x] Wolfsbane strains (R95, Werewolves only): yellow, northern blue, wolf lichen, each with seeds/plant/ash, effects and cure; the common strain is the existing purple plant. Tests: `commonWolfsbaneWeakens`, `strainsOnlyTouchWerewolfTypes`, `yellowWolfsbaneHurtsOverTime`, `northernBlueKillsWithoutAsh`, `sameStrainAshCures`, `otherAshDoesNotCure`, `lichenBlocksForms`, `coatedWeaponAppliesStrain`, `lichenGrowsOnlyOnSolidGround`, `partDataFollowsSwitch`.
 - [ ] Taser (with packs): *Shocked* effect for werewolves.
+- [ ] Manual (in the OFA pack, not covered by a GameTest): see "Pending checks" at the end.
 
 ## Slot helper and Curios (Task 1)
 
@@ -119,3 +121,27 @@ Enchanted 4.2.7:
 - `blocks(entity, level, pos)` reads the block entity only for a type in `#supernatural_mobs` after `isPrey` failed; a mount is blocked when any passenger (indirect too) is prey.
 - `partDataFollowsSwitch` now also checks the `mountain_ash` configured feature, placed feature and biome modifier (registry path `biome_modifier`) against the part switch.
 - `Supernatural` javadoc: the predicates are also read on the client.
+
+## Wolfsbane strains (Task 7)
+
+All in `parts/artifacts/werewolves/`, loaded only behind `isLoaded("werewolves")` (items, blocks, effects, potions and the component are not registered without it). Data carries `part_enabled artifacts` + `mod_loaded werewolves`; the tag `supernaturalbloodlines:wolfsbane/common` (Werewolves' `werewolves:wolfsbane` and Enchanted's `enchanted:wolfsbane_flower`) uses `required: false`. `WolfsbaneStrains` is the registry and the API (`apply`, `cure`, `pulse`, `isWerewolfType`), `WolfsbaneRules` the events.
+
+- **Who is affected (`isWerewolfType`):** the werewolf faction (players and Werewolves mobs, which hybrids, Original hybrids and tribrids are in) plus the species HYBRID/ORIGINAL_HYBRID/TRIBRID by `BloodlineAccess` whatever their faction. `Supernatural.isPrey` alone is not enough (it also matches vampires). Everyone else: the item is just food, and `MobEffectEvent.Applicable` refuses the strain effects, so a potion does nothing to them either. Test `strainsOnlyTouchWerewolfTypes`.
+- **Strains:**
+  - common: Weakness I + Nausea for 600 ticks (vanilla effects, no ash, no potion).
+  - yellow (`yellow_wolfsbane`, effect `wolfsbane_yellow`): 1200 ticks, 1 damage every 40 ticks.
+  - northern blue (`northern_blue_wolfsbane`, `wolfsbane_northern_blue`): 6000 ticks, 1 damage every 100 ticks, death on the last tick (`duration == 1`); eating a second plant does not restart the clock.
+  - wolf lichen (`wolf_lichen`, block and item): 1200 ticks, no natural regeneration, no form actions.
+  - The damage never takes the last half heart (like poison) except northern blue's final blow: `hurt(Float.MAX_VALUE)` with `supernaturalbloodlines:wolfsbane_poison` (in `bypasses_armor`; no `bypasses_invulnerability`, so a Totem of Undying can save once). Creative and spectator players are skipped.
+- **Sources:**
+  - Eating: yellow and northern blue plants, the lichen and the two common plants are edible (`LivingEntityUseItemEvent.Finish`). The common plants are not food in their own mods, so `ModifyDefaultComponentsEvent` gives them a `FOOD` component (when they have none).
+  - Potions: `wolfsbane_yellow`, `wolfsbane_northern_blue`, `wolf_lichen` (awkward potion + plant, so splash, lingering and tipped arrows follow from vanilla brewing). No common potion: Weakness and Nausea would hit everyone.
+  - Weapon coating: anvil, a sword or axe (`#minecraft:swords`/`axes`) + any strain plant gives a copy with component `wolfsbane_coating` `{strain, hits: 8}` (1 level, 1 plant). A melee hit by the holder on a werewolf type applies the strain and uses one hit; hits on others use none; at 0 the component is removed. No tooltip yet.
+- **Cure:** the ash of the **same** strain (smelt the plant; `<strain>_ash`) cures it by being eaten or by using it while sneaking (`RightClickItem`, consumed, only if you have that strain). Other ashes do nothing. The strain effects have no milk/other cures (`fillEffectCures` is empty). The common strain just wears off.
+- **Lichen effect:**
+  - No natural regeneration: `LivingHealEvent` is cancelled when the call stack contains `FoodData` (vanilla's `FoodData.tick` calls `heal`; the event carries no source). Imperfect: a mod that routes its own healing through `FoodData.tick` would be cancelled too; potions, food and Werewolves' healing are untouched. Test `lichenBlocksForms` has a control that heals.
+  - No form actions: `ActionActivatedEvent` for a `WerewolfFormAction` other than HUMAN is cancelled (forced or at will). Returning to human form stays possible, so a lichen victim in beast form is not locked in. It does not force anyone out of a form they are already in.
+- **World:**
+  - Seeds: crops `yellow_wolfsbane`, `northern_blue_wolfsbane` (wheat-like, 8 ages; loot: plant when ripe, seeds always). Seeds come from chests through global loot modifiers: yellow 15% (1-2) in taiga/snowy/plains village houses and pillager outposts, northern blue 4% in igloos, simple dungeons and abandoned mineshafts.
+  - Lichen: block `wolf_lichen` (a carpet that needs a sturdy floor, instant break, drops itself); configured/placed feature `wolf_lichen` (random patch on stone, andesite, diorite, granite or deepslate, 1 chunk in 6) through the biome modifier `wolf_lichen` in snowy slopes, grove, frozen/jagged peaks, snowy taiga, taiga, old growth taigas and windswept hills/forest. `partDataFollowsSwitch` checks the damage type, both features and the biome modifier against `part_enabled artifacts` and Werewolves.
+- **Debt:** the lichen does not spread; the wild crops do not generate (seeds only from chests); the common strain has no ash or potion; the coated weapon has no tooltip; textures are generated placeholders; Accessories/Curios are not involved.

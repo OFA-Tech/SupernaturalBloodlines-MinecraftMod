@@ -1,0 +1,19 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "type": "neoforge:add_table",
+    "conditions": [
+        {
+            "condition": "minecraft:any_of",
+            "terms": [
+                { "condition": "neoforge:loot_table_id", "loot_table_id": "minecraft:chests/village/village_taiga_house" },
+                { "condition": "neoforge:loot_table_id", "loot_table_id": "minecraft:chests/village/village_snowy_house" },
+                { "condition": "neoforge:loot_table_id", "loot_table_id": "minecraft:chests/village/village_plains_house" },
+                { "condition": "neoforge:loot_table_id", "loot_table_id": "minecraft:chests/pillager_outpost" }
+            ]
+        }
+    ],
+    "table": "supernaturalbloodlines:chests/yellow_wolfsbane_seeds"
+}

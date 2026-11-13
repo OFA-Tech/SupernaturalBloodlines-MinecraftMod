@@ -1,0 +1,7 @@
+{
+    "replace": false,
+    "values": [
+        { "id": "werewolves:wolfsbane", "required": false },
+        { "id": "enchanted:wolfsbane_flower", "required": false }
+    ]
+}

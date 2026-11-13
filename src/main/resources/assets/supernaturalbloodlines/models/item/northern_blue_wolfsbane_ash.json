@@ -1,0 +1,1 @@
+{ "parent": "minecraft:item/generated", "textures": { "layer0": "supernaturalbloodlines:item/northern_blue_wolfsbane_ash" } }

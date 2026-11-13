@@ -1,0 +1,10 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "type": "neoforge:add_features",
+    "biomes": [ "minecraft:snowy_slopes", "minecraft:grove", "minecraft:frozen_peaks", "minecraft:jagged_peaks", "minecraft:snowy_taiga", "minecraft:taiga", "minecraft:old_growth_pine_taiga", "minecraft:old_growth_spruce_taiga", "minecraft:windswept_hills", "minecraft:windswept_forest" ],
+    "features": "supernaturalbloodlines:wolf_lichen",
+    "step": "vegetal_decoration"
+}

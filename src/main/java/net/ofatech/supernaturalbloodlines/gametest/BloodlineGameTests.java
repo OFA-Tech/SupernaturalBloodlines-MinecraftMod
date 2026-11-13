@@ -100,6 +100,15 @@ public final class BloodlineGameTests {
         checkPartData(helper, access, "artifacts", "worldgen/placed_feature", "supernaturalbloodlines", "mountain_ash");
         checkPartData(helper, access, "artifacts", "biome_modifier", "supernaturalbloodlines", "mountain_ash");
         checkPartData(helper, access, "species", "damage_type", "supernaturalbloodlines", "failed_transition");
+        // wolfsbane strains: the part and Werewolves both gate them (the lichen block only exists with both)
+        boolean wolfsbane = EnabledParts.isEnabled("artifacts") && net.neoforged.fml.ModList.get().isLoaded("werewolves");
+        for (String[] entry : new String[][] {{"damage_type", "wolfsbane_poison"}, {"worldgen/configured_feature", "wolf_lichen"},
+                {"worldgen/placed_feature", "wolf_lichen"}, {"biome_modifier", "wolf_lichen"}}) {
+            long count = access.registries().filter(e -> e.key().location().getPath().equals(entry[0]))
+                    .mapToLong(e -> e.value().keySet().stream()
+                            .filter(id -> id.getNamespace().equals("supernaturalbloodlines") && id.getPath().startsWith(entry[1])).count()).sum();
+            helper.assertTrue(wolfsbane == (count > 0), "wolfsbane data " + entry[1] + " in " + entry[0] + ": expected " + wolfsbane + ", entries " + count);
+        }
         helper.succeed();
     }
 

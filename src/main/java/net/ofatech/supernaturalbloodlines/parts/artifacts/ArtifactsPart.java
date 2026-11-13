@@ -17,9 +17,12 @@ import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.MountainAshGa
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.MountainAshWerewolfGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ResurrectionVervainGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.RingGameTests;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.WolfsbaneGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.rite.BindItemRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.rite.RequiresDesiccatedRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves.MoonRing;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves.WolfsbaneRules;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves.WolfsbaneStrains;
 
 public final class ArtifactsPart {
     private ArtifactsPart() {}
@@ -42,6 +45,8 @@ public final class ArtifactsPart {
         VervainRules.register();
         if (werewolves) {
             MoonRing.register();
+            WolfsbaneStrains.register(modBus);
+            WolfsbaneRules.register(modBus);
         }
         // the Curios and Werewolves tests link those mods, so they are registered only when loaded
         modBus.addListener((RegisterGameTestsEvent e) -> {
@@ -57,6 +62,7 @@ public final class ArtifactsPart {
             if (werewolves) {
                 e.register(MountainAshWerewolfGameTests.class);
                 e.register(MoonRingGameTests.class);
+                e.register(WolfsbaneGameTests.class);
             }
         });
         SupernaturalBloodlines.LOGGER.info("ArtifactsPart enabled");

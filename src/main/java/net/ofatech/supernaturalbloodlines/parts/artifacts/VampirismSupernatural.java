@@ -13,7 +13,7 @@ import net.ofatech.supernaturalbloodlines.core.Supernatural;
  * What artifacts tells {@link Supernatural}: vampires and werewolves, players and mobs. Hunters are not supernatural.
  * Factions are matched by id, so no Werewolves class is linked.
  */
-final class VampirismSupernatural {
+public final class VampirismSupernatural {
     private static final ResourceLocation VAMPIRE = ResourceLocation.parse("vampirism:vampire");
     private static final ResourceLocation WEREWOLF = ResourceLocation.parse("werewolves:werewolf");
 
@@ -28,7 +28,7 @@ final class VampirismSupernatural {
         return VAMPIRE.equals(factionId(e));
     }
 
-    static boolean isWerewolf(Entity e) {
+    public static boolean isWerewolf(Entity e) {
         return WEREWOLF.equals(factionId(e));
     }
 

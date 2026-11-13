@@ -1,0 +1,13 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "feature": "supernaturalbloodlines:wolf_lichen",
+    "placement": [
+        { "type": "minecraft:rarity_filter", "chance": 6 },
+        { "type": "minecraft:in_square" },
+        { "type": "minecraft:heightmap", "heightmap": "MOTION_BLOCKING_NO_LEAVES" },
+        { "type": "minecraft:biome" }
+    ]
+}

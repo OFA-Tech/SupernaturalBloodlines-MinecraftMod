@@ -1,6 +1,7 @@
 {
     "replace": false,
     "values": [
-        { "id": "supernaturalbloodlines:venom", "required": false }
+        { "id": "supernaturalbloodlines:venom", "required": false },
+        { "id": "supernaturalbloodlines:wolfsbane_poison", "required": false }
     ]
 }
