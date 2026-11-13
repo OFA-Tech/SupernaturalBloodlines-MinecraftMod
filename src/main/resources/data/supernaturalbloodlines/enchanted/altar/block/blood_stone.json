@@ -1,0 +1,7 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "vampirismEnchanted" }
+    ],
+    "power": 25,
+    "limit": 16
+}

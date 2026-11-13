@@ -8,6 +8,8 @@ import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.VampirismEnchantedDataGameTests;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.VampirismEnchantedGameTests;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.VampirismEnchantedPoppetGameTests;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.VampirismEnchantedSilverPoppetGameTests;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.VampirismEnchantedWerewolfGameTests;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory;
 
@@ -17,13 +19,17 @@ public final class VampirismEnchantedPart {
     public static void init(IEventBus modBus, ModContainer container) {
         // before the datapacks load, so the rite JSONs can name this factory
         RiteFactoryRegistry.get().register(FactionRiteFactory.ID, FactionRiteFactory.CODEC);
+        PartBlocks.register(modBus);
+        PartItems.register(modBus);
         boolean werewolves = ModList.get().isLoaded("werewolves");
         // the part is only initialised when Vampirism and Enchanted are present, so the tests only exist then;
         // the Werewolves tests link Werewolves classes, so they are registered only when it is loaded
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(VampirismEnchantedDataGameTests.class);
             e.register(VampirismEnchantedGameTests.class);
+            e.register(VampirismEnchantedPoppetGameTests.class);
             if (werewolves) {
+                e.register(VampirismEnchantedSilverPoppetGameTests.class);
                 e.register(VampirismEnchantedWerewolfGameTests.class);
             }
         });
