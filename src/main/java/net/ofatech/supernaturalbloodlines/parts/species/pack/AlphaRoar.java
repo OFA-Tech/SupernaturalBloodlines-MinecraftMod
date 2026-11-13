@@ -17,6 +17,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import net.ofatech.supernaturalbloodlines.shared.werewolves.ForcedShift;
@@ -28,7 +30,7 @@ import org.jetbrains.annotations.VisibleForTesting;
  * The Alpha Roar (R94): the pack's Betas within 32 blocks get Strength I and Speed I for 30 s and may shift at will for
  * that time; other werewolves within 16 blocks are forced out of their form and slowed (Slowness II, 5 s). Only an Alpha
  * or True Alpha, once per 1200 ticks. The key press arrives as a {@code RoarPayload}; everything is decided here from
- * server state. The cooldown is kept in memory per player (a restart resets it). Links Werewolves.
+ * server state. The cooldown is kept in memory per player and forgotten when the server stops (tick counts start again). A dead or spectating Alpha cannot roar. Links Werewolves.
  */
 public final class AlphaRoar {
     public static final int COOLDOWN = 1200;
@@ -50,6 +52,13 @@ public final class AlphaRoar {
         // R96: Alphas and True Alphas have moon control (FULL from the full-form level)
         MoonControl.addSource(p -> PackAccess.isAlpha(PackAccess.wolf(p).rank()));
         ForcedShift.addFormPermit(p -> PERMIT_UNTIL.getOrDefault(p.getUUID(), 0L) > p.server.getTickCount());
+        // the maps hold server tick counts, which restart at 0 with an integrated server: a stale one would block a roar
+        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> onServerStopped());
+    }
+
+    /** Forgets every cooldown and permit (the server's tick count is about to start again). */
+    public static void onServerStopped() {
+        reset();
     }
 
     /** For tests: who counts as online for the non-pack werewolves (mock players are not in the player list); null resets. */
@@ -75,6 +84,9 @@ public final class AlphaRoar {
     public static Component roar(ServerPlayer p, long now) {
         if (!PackAccess.isAlpha(PackAccess.wolf(p).rank()) || !VampirismSupernatural.isWerewolf(p)) {
             return Component.translatable(KEY + "not_alpha");
+        }
+        if (!p.isAlive() || p.isSpectator()) {
+            return Component.translatable(KEY + "roar_unavailable");
         }
         Long last = LAST.get(p.getUUID());
         if (last != null && now - last < COOLDOWN) {

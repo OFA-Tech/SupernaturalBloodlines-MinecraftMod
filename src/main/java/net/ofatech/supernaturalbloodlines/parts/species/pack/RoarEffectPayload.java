@@ -1,7 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
 import io.netty.buffer.ByteBuf;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -20,27 +21,39 @@ public record RoarEffectPayload(int playerId, int ticks) implements CustomPacket
             ByteBufCodecs.VAR_INT, RoarEffectPayload::ticks,
             RoarEffectPayload::new);
 
-    private static volatile Consumer<RoarEffectPayload> spy;
+    private static volatile BiConsumer<ServerPlayer, RoarEffectPayload> spy;
 
     @Override
     public Type<RoarEffectPayload> type() {
         return TYPE;
     }
 
-    /** To the roarer and everyone who sees them. Mock players and clients without the mod have no channel. */
+    /**
+     * To the roarer and to every player watching them, one by one: a client without the mod has no channel (sending would
+     * throw), so each recipient is checked, not only the roarer.
+     */
     public static void send(ServerPlayer roarer, RoarEffectPayload payload) {
-        Consumer<RoarEffectPayload> s = spy;
-        if (s != null) {
-            s.accept(payload);
-        }
-        if (!(roarer instanceof FakePlayer) && roarer.connection != null && roarer.connection.hasChannel(TYPE)) {
-            PacketDistributor.sendToPlayersTrackingEntityAndSelf(roarer, payload);
+        sendOne(roarer, payload);
+        for (ServerPlayer tracker : ((ServerLevel) roarer.level()).getChunkSource().chunkMap.getPlayersWatching(roarer)) {
+            if (tracker != roarer) {
+                sendOne(tracker, payload);
+            }
         }
     }
 
-    /** For tests: sees every send attempt; null clears it. */
+    private static void sendOne(ServerPlayer to, RoarEffectPayload payload) {
+        BiConsumer<ServerPlayer, RoarEffectPayload> s = spy;
+        if (s != null) {
+            s.accept(to, payload);
+        }
+        if (!(to instanceof FakePlayer) && to.connection != null && to.connection.hasChannel(TYPE)) {
+            PacketDistributor.sendToPlayer(to, payload);
+        }
+    }
+
+    /** For tests: sees every send attempt, whether or not the player can receive it; null clears it. */
     @VisibleForTesting
-    public static void overrideSpy(Consumer<RoarEffectPayload> value) {
+    public static void overrideSpy(BiConsumer<ServerPlayer, RoarEffectPayload> value) {
         spy = value;
     }
 }

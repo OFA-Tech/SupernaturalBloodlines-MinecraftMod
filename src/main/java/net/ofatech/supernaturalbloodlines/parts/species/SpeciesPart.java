@@ -30,6 +30,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.gametest.PackBonusGameTe
 import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaBite;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.Anchors;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.LineageBackfill;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.Emissary;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackBonus;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.RoarEffectPayload;
@@ -123,6 +124,7 @@ public final class SpeciesPart {
             GeneAwakening.register();
             GeneHandler.register();
             PackIndex.register();
+            LineageBackfill.register();
             AlphaBite.register();
             SparkHandler.register(); // after GeneHandler: an awakening comes before the innocent kill that caused it
             DefenderKills.register();

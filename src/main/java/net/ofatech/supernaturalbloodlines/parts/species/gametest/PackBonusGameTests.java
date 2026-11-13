@@ -16,6 +16,12 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameType;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.Anchors;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.LineageBackfill;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -212,6 +218,12 @@ public final class PackBonusGameTests {
             PackBonus.tick(alpha);
             helper.assertTrue(bonus(alpha) > 0, "no bonus after the Alpha came back");
 
+            // logging out strips the permanent modifier (it would otherwise be saved with the player)
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(alpha));
+            helper.assertTrue(bonus(alpha) == 0, "the bonus survived the logout: " + bonus(alpha));
+            PackBonus.tick(alpha);
+            helper.assertTrue(bonus(alpha) > 0, "no bonus after logging back in");
+
             // an Alpha that lost the spark has no bonus
             BloodlineAccess.set(alpha, BloodlineAccess.get(alpha).toBuilder().wolf(stateOf(alpha).toBuilder().rank(Rank.OMEGA).build()).build());
             PackBonus.tick(alpha);
@@ -235,7 +247,10 @@ public final class PackBonusGameTests {
         human.setPos(helper.absoluteVec(new Vec3(5.5, 1, 1.5)));
         online(alpha, near, far, stranger, distantStranger, human);
         List<RoarEffectPayload> sent = new ArrayList<>();
-        RoarEffectPayload.overrideSpy(sent::add);
+        RoarEffectPayload.overrideSpy((to, payload) -> {
+            helper.assertTrue(to == alpha, "the roar glow went to " + to.getGameProfile().getName() + ", who is not watching");
+            sent.add(payload);
+        });
         try {
             helper.assertTrue(beast(near, false), "control: a pack Beta shifted at will before the roar");
             helper.assertTrue(AlphaRoar.roar(near) != null, "a Beta roared");
@@ -288,6 +303,116 @@ public final class PackBonusGameTests {
             }
         } finally {
             clean(alpha, other);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void roarStateIsForgottenWhenTheServerStops(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, Lineage.BITTEN, null, 1, 1.5);
+        ServerPlayer beta = beta(helper, alpha, Lineage.BITTEN, 4.5);
+        online(alpha, beta);
+        try {
+            // an old world's tick count was much higher than this one's
+            helper.assertTrue(AlphaRoar.roar(alpha, 500_000) == null, "the first roar was refused");
+            helper.assertTrue(AlphaRoar.roar(alpha, 10) != null, "control: the stale cooldown did not block the roar");
+            AlphaRoar.onServerStopped();
+            helper.assertTrue(AlphaRoar.roar(alpha, 10) == null, "the cooldown outlived the server");
+            AlphaRoar.reset();
+            AlphaRoar.roar(alpha, 500_000);
+            helper.assertFalse(beast(beta, false), "control: the roar's form permit did not work");
+            AlphaRoar.onServerStopped();
+            helper.assertTrue(beast(beta, false), "the form permit outlived the server");
+        } finally {
+            clean(alpha, beta);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void deadOrSpectatingAlphaCannotRoar(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, Lineage.BITTEN, null, 1, 1.5);
+        online(alpha);
+        try {
+            alpha.setGameMode(GameType.SPECTATOR);
+            helper.assertTrue(AlphaRoar.roar(alpha, 100) != null, "a spectating Alpha roared");
+            alpha.setGameMode(GameType.SURVIVAL);
+            float health = alpha.getHealth();
+            alpha.setHealth(0);
+            helper.assertTrue(AlphaRoar.roar(alpha, 100) != null, "a dead Alpha roared");
+            alpha.setHealth(health);
+            // the refusals did not start the cooldown
+            helper.assertTrue(AlphaRoar.roar(alpha, 101) == null, "a refused roar started the cooldown");
+        } finally {
+            alpha.setGameMode(GameType.SURVIVAL);
+            clean(alpha);
+        }
+        helper.succeed();
+    }
+
+    // ---- werewolves without a lineage ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void werewolfWithoutLineageIsBackfilledAtLogin(GameTestHelper helper) {
+        ServerPlayer old = wolf(helper, Rank.NONE, Lineage.NONE, null, 1, 1.5);
+        ServerPlayer born = wolf(helper, Rank.OMEGA, Lineage.BORN, null, 1, 3.5);
+        ServerPlayer human = TestPlayers.createDuelist(helper);
+        ServerPlayer hybrid = wolf(helper, Rank.NONE, Lineage.NONE, null, 1, 5.5);
+        BloodlineAccess.set(hybrid, BloodlineState.NONE.toBuilder().species(Species.HYBRID).build());
+        try {
+            helper.assertTrue(stateOf(old).lineage() == Lineage.NONE, "control: the test wolf has a lineage");
+            helper.assertTrue(LineageBackfill.backfill(old), "nothing was backfilled");
+            WolfState w = stateOf(old);
+            helper.assertTrue(w.lineage() == Lineage.BITTEN && w.rank() == Rank.OMEGA && w.packAlpha() == null, "the old wolf is " + w);
+            helper.assertFalse(LineageBackfill.backfill(old), "a second backfill changed something");
+
+            helper.assertFalse(LineageBackfill.backfill(born), "a born wolf was touched");
+            helper.assertTrue(stateOf(born).lineage() == Lineage.BORN, "the born wolf is " + stateOf(born));
+            helper.assertFalse(LineageBackfill.backfill(human), "a human got a lineage");
+            helper.assertTrue(stateOf(human).lineage() == Lineage.NONE, "the human is " + stateOf(human));
+            helper.assertFalse(LineageBackfill.backfill(hybrid), "a hybrid got a lineage");
+            helper.assertTrue(stateOf(hybrid).lineage() == Lineage.NONE, "the hybrid is " + stateOf(hybrid));
+        } finally {
+            clean(old, born, human, hybrid);
+        }
+        helper.succeed();
+    }
+
+    /** Joined by a command: the faction event queues the backfill, and it lands two ticks later. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void werewolfJoinedByCommandIsBackfilled(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.createDuelist(helper);
+        BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().wolf(WolfState.NONE.toBuilder().geneRolled(true).build()).build());
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not join the werewolves");
+        helper.assertTrue(stateOf(p).lineage() == Lineage.NONE, "control: the backfill ran inside the join event");
+        helper.runAfterDelay(5, () -> {
+            try {
+                WolfState w = stateOf(p);
+                helper.assertTrue(w.lineage() == Lineage.BITTEN && w.rank() == Rank.OMEGA, "the new wolf is " + w);
+            } finally {
+                clean(p);
+            }
+            helper.succeed();
+        });
+    }
+
+    // ---- the default anchor items ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void defaultAnchorItemsAnchor(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper, Rank.OMEGA, Lineage.BITTEN, null, 1, 1.5);
+        online(p);
+        try {
+            helper.assertFalse(AnchorItems.holdsOrWears(p), "control: an empty inventory anchored");
+            for (var item : List.of(Items.CLOCK, Items.COMPASS, Items.RECOVERY_COMPASS)) {
+                p.getInventory().items.set(5, new ItemStack(item));
+                helper.assertTrue(AnchorItems.holdsOrWears(p) && Anchors.anchored(p), item + " did not anchor");
+            }
+            p.getInventory().items.set(5, new ItemStack(Items.STICK));
+            helper.assertFalse(AnchorItems.holdsOrWears(p), "a stick anchored");
+        } finally {
+            p.getInventory().items.set(5, ItemStack.EMPTY);
+            clean(p);
         }
         helper.succeed();
     }

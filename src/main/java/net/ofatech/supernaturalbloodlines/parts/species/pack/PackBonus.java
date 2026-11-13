@@ -24,7 +24,8 @@ import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupe
  * 3 or more of them (raw count) the Alpha gets +5% attack for each, bitten Betas counting double, up to +25%, and those
  * Betas get Regeneration I. Below 3, or with the Alpha away, offline or no longer a werewolf Alpha, the bonus is gone:
  * the Betas keep the pack either way (the index does not care who is online). The modifier is permanent, so it is listed
- * in {@code StalePartModifiers}, and it is removed at logout.
+ * in {@code StalePartModifiers}, and it is removed at logout. It is {@code ADD_MULTIPLIED_TOTAL}, like the rank's +20%, so
+ * the two multiply (x1.2 * x1.25 = x1.5 at the cap).
  */
 public final class PackBonus {
     public static final ResourceLocation MODIFIER_ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "pack_bonus");

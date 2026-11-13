@@ -171,6 +171,7 @@
   "supernaturalbloodlines.moon_control.none": "You cannot shift at will: only the full moon moves your wolf.",
   "supernaturalbloodlines.pack.not_alpha": "Only an Alpha can do that.",
   "supernaturalbloodlines.pack.roar_cooldown": "You cannot roar for another %s seconds.",
+  "supernaturalbloodlines.pack.roar_unavailable": "You cannot roar right now.",
   "supernaturalbloodlines.pack.roar_submit": "%s's roar forces your wolf down.",
   "key.supernaturalbloodlines.alpha_roar": "Alpha Roar",
   "key.categories.supernaturalbloodlines": "Supernatural Bloodlines",

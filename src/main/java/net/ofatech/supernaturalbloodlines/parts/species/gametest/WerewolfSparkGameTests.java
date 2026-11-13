@@ -335,6 +335,20 @@ public final class WerewolfSparkGameTests {
             } finally {
                 clean(duel);
             }
+            // a fight that ended long ago does not count: the victim last hit the killer over 200 ticks before
+            ServerPlayer old = wolf(helper, Rank.OMEGA, null);
+            ServerPlayer rival = TestPlayers.createDuelist(helper);
+            try {
+                rival.setLastHurtMob(old);
+                rival.tickCount += 150;
+                kill(old, rival);
+                helper.assertFalse(state(old).killedInnocent(), "a fight 150 ticks ago still counts as a fight");
+                rival.tickCount += 100;
+                kill(old, rival);
+                helper.assertTrue(state(old).killedInnocent(), "a fight 250 ticks ago made the victim not innocent");
+            } finally {
+                clean(old);
+            }
 
             // a human does not get blue eyes, the rules ignore them
             ServerPlayer plain = TestPlayers.createDuelist(helper);

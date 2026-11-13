@@ -162,7 +162,7 @@ public final class PackCommand {
         return null;
     }
 
-    /** An Alpha gives up the spark to fully heal a player within 4 blocks and cure their wolfsbane and hybrid venom (R93). */
+    /** An Alpha gives up the spark to fully heal a player within 4 blocks and cure their wolfsbane and hybrid venom (R93). With no online heir the pack dissolves and the giver is left an Omega. */
     @Nullable
     public static Component heal(ServerPlayer alpha, ServerPlayer target) {
         if (!PackAccess.isAlpha(PackAccess.wolf(alpha).rank())) {
