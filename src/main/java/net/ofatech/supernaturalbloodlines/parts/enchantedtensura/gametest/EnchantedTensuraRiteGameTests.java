@@ -78,12 +78,16 @@ public final class EnchantedTensuraRiteGameTests {
 
     private static int dropped(GameTestHelper helper) {
         int n = 0;
-        for (ItemEntity i : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(centre(helper)).inflate(4))) {
+        for (ItemEntity i : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(centre(helper)).inflate(1.5))) {
             if (i.getItem().is(PartItems.CONDENSED_MAGICULE.get())) {
                 n += i.getItem().getCount();
             }
         }
         return n;
+    }
+
+    private static void clearDropped(GameTestHelper helper) {
+        helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(centre(helper)).inflate(1.5)).forEach(Entity::discard);
     }
 
     // ---- data ----
@@ -220,6 +224,7 @@ public final class EnchantedTensuraRiteGameTests {
                     "the caster was not told on the action bar that the offering failed");
         } finally {
             remove(level, caster);
+            clearDropped(helper);
         }
         helper.succeed();
     }
@@ -240,6 +245,7 @@ public final class EnchantedTensuraRiteGameTests {
                     "a good offering sent the failure message");
         } finally {
             remove(level, caster);
+            clearDropped(helper);
         }
         helper.succeed();
     }

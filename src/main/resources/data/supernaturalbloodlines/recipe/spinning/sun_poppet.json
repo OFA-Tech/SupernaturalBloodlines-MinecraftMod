@@ -1,0 +1,13 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "vampirismEnchanted" }
+    ],
+    "type": "enchanted:wheel",
+    "ingredients": [
+        { "count": 1, "id": "enchanted:poppet" },
+        { "count": 1, "id": "enchanted:anointing_paste" },
+        { "count": 1, "id": "minecraft:glowstone_dust" }
+    ],
+    "power": 500,
+    "result": { "count": 1, "id": "supernaturalbloodlines:sun_poppet" }
+}

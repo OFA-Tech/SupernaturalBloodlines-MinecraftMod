@@ -1,0 +1,19 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "vampirismEnchanted" }
+    ],
+    "items": [
+        { "id": "vampirism:garlic", "count": 1 },
+        { "id": "vampirism:holy_water_bottle_normal", "count": 1 },
+        { "id": "minecraft:golden_apple", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 4000,
+    "factory": {
+        "type": "supernaturalbloodlines:faction_rite",
+        "event": "rite_of_cleansing_blood",
+        "faction": "vampire"
+    }
+}

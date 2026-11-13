@@ -1,0 +1,14 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "vampirismEnchanted" }
+    ],
+    "type": "minecraft:block",
+    "pools": [
+        {
+            "rolls": 1.0,
+            "bonus_rolls": 0.0,
+            "conditions": [ { "condition": "minecraft:survives_explosion" } ],
+            "entries": [ { "type": "minecraft:item", "name": "supernaturalbloodlines:blood_stone" } ]
+        }
+    ]
+}

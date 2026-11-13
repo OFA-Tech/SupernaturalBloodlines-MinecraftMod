@@ -1,0 +1,10 @@
+{
+  "neoforge:conditions": [
+    { "type": "supernaturalbloodlines:part_enabled", "part": "vampirismEnchanted" },
+    { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [ { "item": "enchanted:wolfsbane_flower" } ],
+  "result": { "id": "werewolves:wolfsbane", "count": 1 }
+}

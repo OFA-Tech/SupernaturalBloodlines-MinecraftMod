@@ -31,5 +31,15 @@
   "rite.supernaturalbloodlines.magicule_offering": "Rite of Magicule Offering",
   "block.supernaturalbloodlines.condensed_magicule": "Condensed Magicule",
   "item.supernaturalbloodlines.spirit_poppet": "Spirit Poppet",
-  "death.attack.holy_purification": "%1$s was purified"
+  "death.attack.holy_purification": "%1$s was purified",
+  "rite.supernaturalbloodlines.cleansing_blood": "Rite of Cleansing Blood",
+  "rite.supernaturalbloodlines.silver_moon": "Rite of the Silver Moon",
+  "supernaturalbloodlines.rite.wrong_faction": "The one in the circle does not belong to the right faction for this rite.",
+  "supernaturalbloodlines.rite.no_effect": "The rite would change nothing.",
+  "supernaturalbloodlines.rite.join_denied": "The rite cannot take hold: the new faction would not accept them.",
+  "supernaturalbloodlines.rite.needs_full_moon": "This rite can only be performed under a full moon.",
+  "rite.supernaturalbloodlines.blood_offering": "Rite of Blood Offering",
+  "block.supernaturalbloodlines.blood_stone": "Blood Stone",
+  "item.supernaturalbloodlines.sun_poppet": "Sun Poppet",
+  "item.supernaturalbloodlines.silver_poppet": "Silver Poppet"
 }

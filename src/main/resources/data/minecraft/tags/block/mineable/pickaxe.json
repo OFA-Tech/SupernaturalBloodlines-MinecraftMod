@@ -1,5 +1,6 @@
 {
     "values": [
-        { "id": "supernaturalbloodlines:condensed_magicule", "required": false }
+        { "id": "supernaturalbloodlines:condensed_magicule", "required": false },
+        { "id": "supernaturalbloodlines:blood_stone", "required": false }
     ]
 }

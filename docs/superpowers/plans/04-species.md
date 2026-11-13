@@ -11,7 +11,7 @@
 6. tribrid
 
 **Architecture:** `BloodlineRules` (foundation) decides every state change. This part supplies:
-- **Triggers:** rites through plan 3's `FactionRiteFactory` and `RiteTargets`, plus new factories; items such as Original's blood, doppelgänger blood and white oak; death and drink events.
+- **Triggers:** rites through plan 3's `FactionRiteFactory` (its `faction` field accepts `vampire|werewolf|hunter|none|vampire_or_werewolf`) and `RiteTargets.centrePlayerOrCaster(Rite, Rite.RiteParams, ServerLevel)`, plus new factories; items such as Original's blood, doppelgänger blood and white oak; death and drink events.
 - **Effects of a state:** attributes, damage rules, the bite poison, blood thirst, and the witch altar bonus.
 
 Every effect reads `BloodlineAccess.get(player)`, so the state is the single source of truth.
@@ -49,6 +49,7 @@ Every effect reads `BloodlineAccess.get(player)`, so the state is the single sou
 **Interfaces:**
 - **`interface HumanLikeCheck { boolean isHumanLike(ServerPlayer p); }`**, with `SpeciesEligibility.setCheck(HumanLikeCheck)` (plan 5 installs the Tensura one; the default returns true).
 - **`static BloodlineContext SpeciesContext.of(ServerPlayer p, @Nullable UUID bloodSource)`:** reads the faction from `VampirismAPI.factionPlayerHandler`, `humanLike` from `SpeciesEligibility`, the Originals count from `SpeciesData` (a `SavedData` counting ORIGINAL + ORIGINAL_HYBRID players), and the config.
+- **Plan 3 follow-up:** replace `FactionRiteFactory`'s ctx line with `SpeciesContext.of(target)` and route its `run()` through `OutcomeExecutor` (KILL_PLAYER etc.).
 - **`static void OutcomeExecutor.run(ServerPlayer p, Outcome o)`:**
   - JOIN_VAMPIRE → `setFactionAndLevel(vampire, max(1, current))`
   - JOIN_WEREWOLF → the same for werewolf

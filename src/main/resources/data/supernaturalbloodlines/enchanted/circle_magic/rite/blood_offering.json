@@ -1,0 +1,17 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "vampirismEnchanted" }
+    ],
+    "items": [
+        { "id": "vampirism:blood_bottle", "count": 4, "components": { "vampirism:bottle_blood": { "blood": 9 } } },
+        { "id": "minecraft:stone", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:small_circle": "enchanted:ritual_chalk"
+    },
+    "power": 1000,
+    "factory": {
+        "type": "enchanted:create_item",
+        "items": [ { "id": "supernaturalbloodlines:blood_stone", "count": 1 } ]
+    }
+}

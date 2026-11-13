@@ -1,0 +1,14 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "vampirismEnchanted" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "type": "enchanted:wheel",
+    "ingredients": [
+        { "count": 1, "id": "enchanted:poppet" },
+        { "count": 1, "id": "enchanted:anointing_paste" },
+        { "count": 1, "id": "werewolves:silver_ingot" }
+    ],
+    "power": 500,
+    "result": { "count": 1, "id": "supernaturalbloodlines:silver_poppet" }
+}
