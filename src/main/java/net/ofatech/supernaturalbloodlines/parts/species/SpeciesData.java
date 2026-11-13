@@ -45,6 +45,10 @@ public final class SpeciesData extends SavedData {
         return originals.size();
     }
 
+    public boolean isOriginal(UUID player) {
+        return originals.contains(player);
+    }
+
     public void setOriginal(UUID player, boolean original) {
         if (original ? originals.add(player) : originals.remove(player)) {
             setDirty();

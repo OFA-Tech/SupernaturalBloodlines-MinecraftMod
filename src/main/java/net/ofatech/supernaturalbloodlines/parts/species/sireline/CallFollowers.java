@@ -9,13 +9,17 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.behavior.EntityTracker;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 /**
- * Sired creatures answering a call: for 30 seconds they are told once a second to walk to the caller. A plain navigation
- * order, so a creature that cannot path simply stays put. Only creatures that are already loaded are ever asked.
+ * Creatures answering a call (30 seconds) or a compulsion (5 minutes): they are told once a second to walk to the caller.
+ * A plain navigation order, so a creature that cannot path simply stays put. Only creatures that are already loaded are ever asked.
  */
 public final class CallFollowers {
     static final long FOLLOW_TICKS = 30 * 20;
@@ -39,7 +43,11 @@ public final class CallFollowers {
     }
 
     static void follow(Mob mob, UUID caller, long now) {
-        FOLLOWING.put(mob.getUUID(), new Follow(caller, mob.level().dimension(), now + FOLLOW_TICKS));
+        follow(mob, caller, now, FOLLOW_TICKS);
+    }
+
+    static void follow(Mob mob, UUID caller, long now, long ticks) {
+        FOLLOWING.put(mob.getUUID(), new Follow(caller, mob.level().dimension(), now + ticks));
     }
 
     public static boolean isFollowing(UUID mob) {
@@ -67,6 +75,10 @@ public final class CallFollowers {
                 it.remove();
             } else {
                 mob.getNavigation().moveTo(caller, SPEED);
+                if (mob instanceof Villager v) {
+                    // a villager's brain re-plans its own walk every few ticks; this is the memory it walks by
+                    v.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(new EntityTracker(caller, false), (float) SPEED, 2));
+                }
             }
         }
     }

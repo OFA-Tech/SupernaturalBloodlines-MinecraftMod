@@ -101,6 +101,14 @@ public final class OriginalRules {
                 && source.getDirectEntity() instanceof LivingEntity attacker && attacker.getMainHandItem().is(WhiteOak.TAG);
     }
 
+    /**
+     * A white oak blow, or the {@code generic_kill} (naming the wielder) that ends a Vampirism dying state started by one
+     * (see {@link #endVampirismDying}). A bare {@code /kill} names nobody and is neither.
+     */
+    public static boolean isWhiteOakKill(DamageSource source) {
+        return isWhiteOak(source) || (source.is(DamageTypes.GENERIC_KILL) && source.getEntity() instanceof LivingEntity a && a.getMainHandItem().is(WhiteOak.TAG));
+    }
+
     /** What the protection never applies to. */
     static boolean bypassesProtection(DamageSource source) {
         return isWhiteOak(source) || source.is(DamageTypes.FELL_OUT_OF_WORLD) || source.is(DamageTypes.GENERIC_KILL)

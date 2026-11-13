@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.species.sireline;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -33,6 +34,8 @@ public final class SirelineIndex extends SavedData {
     private static final String TYPE = "type";
     private static final String ID = "id";
     private static final String LAST_NAME = "name";
+    private static final String PENDING_PLAYERS = "pendingDeaths";
+    private static final String PENDING_MOBS = "pendingMobs";
 
     private record Link(UUID sire, String entityType) {
     }
@@ -41,6 +44,9 @@ public final class SirelineIndex extends SavedData {
     private final Map<UUID, Link> links = new LinkedHashMap<>();
     private final Map<UUID, Set<UUID>> children = new HashMap<>();
     private final Map<UUID, String> names = new HashMap<>();
+    // the sireline death's debts: players who were offline and creatures that were not loaded when their line died
+    private final Set<UUID> pendingPlayers = new LinkedHashSet<>();
+    private final Set<UUID> pendingMobs = new LinkedHashSet<>();
 
     SirelineIndex() {
     }
@@ -60,6 +66,12 @@ public final class SirelineIndex extends SavedData {
         for (Tag t : tag.getList(LINKS, Tag.TAG_COMPOUND)) {
             CompoundTag e = (CompoundTag) t;
             idx.link(NbtUtils.loadUUID(e.get(SIRE)), NbtUtils.loadUUID(e.get(CHILD)), e.getString(TYPE));
+        }
+        for (Tag t : tag.getList(PENDING_PLAYERS, Tag.TAG_INT_ARRAY)) {
+            idx.pendingPlayers.add(NbtUtils.loadUUID(t));
+        }
+        for (Tag t : tag.getList(PENDING_MOBS, Tag.TAG_INT_ARRAY)) {
+            idx.pendingMobs.add(NbtUtils.loadUUID(t));
         }
         return idx;
     }
@@ -83,7 +95,15 @@ public final class SirelineIndex extends SavedData {
             known.add(e);
         });
         tag.put(NAMES, known);
+        tag.put(PENDING_PLAYERS, uuids(pendingPlayers));
+        tag.put(PENDING_MOBS, uuids(pendingMobs));
         return tag;
+    }
+
+    private static ListTag uuids(Set<UUID> ids) {
+        ListTag list = new ListTag();
+        ids.forEach(id -> list.add(NbtUtils.createUUID(id)));
+        return list;
     }
 
     private void link(UUID sire, UUID child, String entityType) {
@@ -149,5 +169,49 @@ public final class SirelineIndex extends SavedData {
     public Optional<UUID> sireOf(UUID child) {
         Link l = links.get(child);
         return l == null ? Optional.empty() : Optional.of(l.sire());
+    }
+
+    /** Whether {@code ancestor} is somewhere above {@code id} (a sire, a sire's sire, ...). Nobody is their own descendant; a cycle ends the climb. */
+    public boolean isDescendant(UUID ancestor, UUID id) {
+        Set<UUID> seen = new HashSet<>();
+        for (Link l = links.get(id); l != null && seen.add(l.sire()); l = links.get(l.sire())) {
+            if (l.sire().equals(ancestor)) {
+                return !ancestor.equals(id);
+            }
+        }
+        return false;
+    }
+
+    public void addPendingPlayer(UUID id) {
+        if (pendingPlayers.add(id)) {
+            setDirty();
+        }
+    }
+
+    /** @return true once: the player owes a death, and now it is paid */
+    public boolean takePendingPlayer(UUID id) {
+        boolean owed = pendingPlayers.remove(id);
+        if (owed) {
+            setDirty();
+        }
+        return owed;
+    }
+
+    public void addPendingMob(UUID id) {
+        if (pendingMobs.add(id)) {
+            setDirty();
+        }
+    }
+
+    public boolean isPendingMob(UUID id) {
+        return pendingMobs.contains(id);
+    }
+
+    public boolean takePendingMob(UUID id) {
+        boolean owed = pendingMobs.remove(id);
+        if (owed) {
+            setDirty();
+        }
+        return owed;
     }
 }

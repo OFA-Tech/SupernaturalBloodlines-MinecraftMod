@@ -144,5 +144,18 @@
   "supernaturalbloodlines.bloodline.call.expired": "That call has run out, or it was not meant for you.",
   "supernaturalbloodlines.bloodline.call.caller_gone": "The one who called you is no longer here.",
   "supernaturalbloodlines.bloodline.call.dead": "You cannot answer a call while you are dead.",
-  "supernaturalbloodlines.bloodline.call.no_floor": "There is no safe ground near the one who called you."
+  "supernaturalbloodlines.bloodline.call.no_floor": "There is no safe ground near the one who called you.",
+  "supernaturalbloodlines.bloodline.compel.choose": "Their eyes are yours. What do you ask?",
+  "supernaturalbloodlines.bloodline.compel.discount": "[Discount]",
+  "supernaturalbloodlines.bloodline.compel.discount_hover": "They trade with you at a discount for a day",
+  "supernaturalbloodlines.bloodline.compel.follow": "[Follow]",
+  "supernaturalbloodlines.bloodline.compel.follow_hover": "They follow you for five minutes",
+  "supernaturalbloodlines.bloodline.compel.discounted": "The villager will trade with you at a discount for a day.",
+  "supernaturalbloodlines.bloodline.compel.following": "The villager follows you.",
+  "supernaturalbloodlines.bloodline.compel.sired": "%s bows to you and will not raise a hand against your line.",
+  "supernaturalbloodlines.bloodline.compel.bound": "That creature already answers to another.",
+  "supernaturalbloodlines.bloodline.compel.immune": "%s's mind is shut to you.",
+  "supernaturalbloodlines.bloodline.compel.no_contact": "Come close (within 4 blocks) and look each other in the eye.",
+  "supernaturalbloodlines.bloodline.compel.expired": "The moment has passed.",
+  "death.attack.sireline": "%1$s died with the line they were born into"
 }

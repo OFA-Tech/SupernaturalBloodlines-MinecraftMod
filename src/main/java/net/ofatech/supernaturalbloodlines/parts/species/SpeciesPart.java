@@ -27,7 +27,11 @@ import net.ofatech.supernaturalbloodlines.parts.species.gametest.WitchGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterEvents;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCommandGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCompulsionGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineDeathGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.BloodlineCommand;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.Compulsion;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineDeath;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.InfectionTracker;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder;
@@ -80,6 +84,8 @@ public final class SpeciesPart {
         SireRecorder.register();
         InfectionTracker.register();
         SireCall.register();
+        Compulsion.register();
+        SirelineDeath.register();
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> BloodlineCommand.register(e.getDispatcher()));
         HybridTraits.register(); // always: it strips the saved modifier when Werewolves is gone
         if (ModList.get().isLoaded("werewolves")) {
@@ -108,6 +114,8 @@ public final class SpeciesPart {
             e.register(HunterInstinctGameTests.class);
             e.register(SirelineGameTests.class);
             e.register(SirelineCommandGameTests.class);
+            e.register(SirelineCompulsionGameTests.class);
+            e.register(SirelineDeathGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(SirelineHybridGameTests.class);
                 e.register(HunterWerewolfGameTests.class);

@@ -14,7 +14,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 
-/** {@code /bloodline tree [player]}, {@code /bloodline call} and {@code /bloodline accept <token>} (what the [Accept] click runs). */
+/**
+ * {@code /bloodline tree [player]}, {@code /bloodline call}, {@code /bloodline accept <token>} (what the [Accept] click runs) and
+ * {@code /bloodline compel <token> discount|follow} (what the compulsion's buttons run).
+ */
 public final class BloodlineCommand {
     private static final String KEY = "supernaturalbloodlines.bloodline.";
 
@@ -31,7 +34,20 @@ public final class BloodlineCommand {
                         .executes(c -> call(c.getSource(), c.getSource().getPlayerOrException())))
                 .then(Commands.literal("accept")
                         .then(Commands.argument("token", StringArgumentType.word())
-                                .executes(c -> accept(c.getSource(), c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "token"))))));
+                                .executes(c -> accept(c.getSource(), c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "token")))))
+                .then(Commands.literal("compel")
+                        .then(Commands.argument("token", StringArgumentType.word())
+                                .then(Commands.literal("discount").executes(c -> compel(c, "discount")))
+                                .then(Commands.literal("follow").executes(c -> compel(c, "follow"))))));
+    }
+
+    private static int compel(CommandContext<CommandSourceStack> c, String choice) throws CommandSyntaxException {
+        Component error = Compulsion.choose(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "token"), choice);
+        if (error != null) {
+            c.getSource().sendFailure(error);
+            return 0;
+        }
+        return 1;
     }
 
     /** The one profile the argument names; a selector matching several players is refused. */

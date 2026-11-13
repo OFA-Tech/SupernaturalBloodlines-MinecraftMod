@@ -84,4 +84,35 @@ class SirelineIndexTest {
         back.remove(A);
         assertFalse(back.childrenOf(SIRE).stream().anyMatch(n -> n.id().equals(A)));
     }
+
+    @Test
+    void descendantClimbsTheLineAndStopsOnACycle() {
+        SirelineIndex idx = new SirelineIndex();
+        idx.add(SIRE, A, "minecraft:player", "Ann");
+        idx.add(A, B, "minecraft:player", "Bob");
+        assertTrue(idx.isDescendant(SIRE, B));
+        assertTrue(idx.isDescendant(A, B));
+        assertFalse(idx.isDescendant(B, SIRE));
+        assertFalse(idx.isDescendant(SIRE, SIRE));
+        assertFalse(idx.isDescendant(SIRE, UUID.randomUUID()));
+        idx.add(B, SIRE, "minecraft:player", "Sire"); // a cure and a re-turn closed the loop
+        UUID outsider = UUID.randomUUID();
+        assertFalse(idx.isDescendant(outsider, A));
+        assertTrue(idx.isDescendant(B, A));
+    }
+
+    @Test
+    void pendingDeathsAreTakenOnceAndSurviveSaveAndLoad() {
+        SirelineIndex idx = new SirelineIndex();
+        idx.addPendingPlayer(A);
+        idx.addPendingMob(B);
+        assertTrue(idx.isPendingMob(B));
+        assertFalse(idx.isPendingMob(A));
+        SirelineIndex back = SirelineIndex.load(idx.save(new CompoundTag(), null), null);
+        assertTrue(back.takePendingPlayer(A));
+        assertFalse(back.takePendingPlayer(A));
+        assertTrue(back.takePendingMob(B));
+        assertFalse(back.isPendingMob(B));
+        assertFalse(back.takePendingPlayer(B));
+    }
 }

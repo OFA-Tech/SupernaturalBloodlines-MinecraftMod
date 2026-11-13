@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased: sirelines
+
+- Compulsion: an Original, hybrid, tribrid or a vampire of level 10 or more can sneak and click with an empty hand on a villager or a lesser vampire (not advanced vampires, bosses or converted creatures) within 4 blocks and eye to eye (the target looks within 30 degrees of the caster, the caster within 15 of the target). Players, vervain users and hunters are immune.
+- Compelled villager: a 5 second choice in chat, `[Discount]` (a discount worth 20 gossip for a day; what it added is taken back exactly when it ends, and it does not stack) or `[Follow]` (walks to you for 5 minutes). The buttons run `/bloodline compel <token> discount|follow`.
+- Compelled lesser vampire: becomes your sired and never targets you or anyone below you in your sireline (everyone else is still prey). A vampire already sired by another stays theirs.
+- Optional sireline death (`sireline_death` in the species config, default off): when an Original or Original hybrid is killed with white oak, everyone they sired, and everyone those sired, dies too (damage type `supernaturalbloodlines:sireline`, which gets past armor, invulnerability, effects and totems). Offline players die once on their next login, loaded creatures are removed, unloaded ones when their chunk loads (nothing is force-loaded). A sired Original and their line survive. The dead leave the sireline tree.
+- `/bloodline call`: a dead sired player cannot accept; if the caller is in the air or in water the sired land on the ground below (up to 8 blocks) and the call is refused when there is none.
+- Fixed a flaky GameTest (`senseSendsPreyInRange`: two of its mobs stood outside the test structure).
+- Pending (manual): the two-client check of `/bloodline call` and compulsion (chat buttons, the trade screen not opening, a real walk to the caller).
+
 ## Unreleased: hunters
 
 - Rite of the Five (a slot counts for a Hunter, a live potential and an owed potential alike; medium circle, 10000 power: 5 candles, iron ingot, book, taglock): turns a hunter-faction human into a Hunter of the Five. The Five are kept in a roster (`max_five` in the species config, default 5); leaving the hunter faction frees the slot, logging out does not.

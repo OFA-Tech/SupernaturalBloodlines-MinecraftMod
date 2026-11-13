@@ -23,6 +23,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodItem;
 import net.ofatech.supernaturalbloodlines.parts.species.item.UnstableEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.WhiteOak;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.InfectionSire;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.VillagerDiscount;
 
 /** Everything the species part registers: Original's Blood (item, effect, component, attachment), the downed attachment and the white oak set. */
 public final class SpeciesRegistries {
@@ -87,6 +88,15 @@ public final class SpeciesRegistries {
     /** Game time of the player's last {@code /bloodline call}; use {@code hasData} to tell "never" from the default. Kept through death. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Long>> LAST_CALL =
             ATTACHMENTS.register("last_call", () -> AttachmentType.builder(() -> 0L).serialize(Codec.LONG).copyOnDeath().build());
+
+    /** The Original or hybrid whose compulsion made this lesser vampire theirs; it never hunts them or their line. Use {@code hasData}. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<UUID>> COMPELLED_BY =
+            ATTACHMENTS.register("compelled_by", () -> AttachmentType.builder(() -> Util.NIL_UUID).serialize(UUIDUtil.CODEC).build());
+
+    /** The discount a compelled villager gives, until it runs out; see {@link VillagerDiscount}. Use {@code hasData}. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<VillagerDiscount>> VILLAGER_DISCOUNT =
+            ATTACHMENTS.register("villager_discount", () -> AttachmentType.builder(() -> new VillagerDiscount(Util.NIL_UUID, 0, 0))
+                    .serialize(VillagerDiscount.CODEC).build());
 
     private SpeciesRegistries() {}
 
