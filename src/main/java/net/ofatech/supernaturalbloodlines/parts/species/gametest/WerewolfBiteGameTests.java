@@ -267,6 +267,25 @@ public final class WerewolfBiteGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void secondInviteReplacesTheFirst(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer omega = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, omega);
+        try {
+            helper.assertTrue(PackCommand.invite(alpha, omega) == null, "the first invitation was refused");
+            String first = PackCommand.requests().tokenOf(alpha.getUUID(), omega.getUUID()).orElseThrow();
+            helper.assertTrue(PackCommand.invite(alpha, omega) == null, "the second invitation was refused");
+            String second = PackCommand.requests().tokenOf(alpha.getUUID(), omega.getUUID()).orElseThrow();
+            helper.assertTrue(!first.equals(second), "the same token was reused");
+            helper.assertTrue(PackCommand.accept(omega, first) != null, "the first invitation still worked after a second one");
+            helper.assertTrue(PackCommand.accept(omega, second) == null, "the second invitation was refused");
+        } finally {
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, omega);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void secondBiteDoesNotSwitchPack(GameTestHelper helper) {
         ServerPlayer first = wolf(helper, Rank.ALPHA, null);
         ServerPlayer second = wolf(helper, Rank.ALPHA, null);
@@ -329,7 +348,20 @@ public final class WerewolfBiteGameTests {
             BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
             helper.assertTrue(PackCommand.emissary(alpha, witch) == null, "the witch was refused");
             helper.assertTrue(witch.getUUID().equals(index.emissaryOf(alpha.getUUID()).orElse(null)), "the emissary was not stored");
-            helper.assertTrue(PackCommand.emissary(alpha, null) == null && index.emissaryOf(alpha.getUUID()).isEmpty(), "the emissary was not cleared");
+            // a witch serves one Alpha: a second Alpha cannot take them until the first lets go
+            ServerPlayer rival = wolf(helper, Rank.ALPHA, null);
+            try {
+                helper.assertTrue(PackCommand.emissary(alpha, witch) == null, "the first Alpha lost their emissary");
+                helper.assertTrue(PackCommand.emissary(rival, witch) != null, "a second Alpha took another Alpha's emissary");
+                helper.assertTrue(alpha.getUUID().equals(index.emissaryAlpha(witch.getUUID()).orElse(null)), "the emissary changed hands");
+                helper.assertTrue(PackCommand.emissary(alpha, null) == null && index.emissaryOf(alpha.getUUID()).isEmpty(), "the emissary was not released");
+                helper.assertTrue(PackCommand.emissary(rival, witch) == null, "a free witch was refused");
+                helper.assertTrue(PackCommand.emissary(rival, null) == null, "the rival could not let go");
+                helper.assertTrue(PackCommand.emissary(alpha, witch) == null, "the first Alpha could not take them back");
+            } finally {
+                index.setEmissary(rival.getUUID(), null);
+                clean(rival);
+            }            helper.assertTrue(PackCommand.emissary(alpha, null) == null && index.emissaryOf(alpha.getUUID()).isEmpty(), "the emissary was not cleared");
 
             helper.assertTrue(PackCommand.anchor(human, alpha) != null, "a human set an anchor");
             helper.assertTrue(PackCommand.anchor(beta, beta) != null, "someone anchored themselves");

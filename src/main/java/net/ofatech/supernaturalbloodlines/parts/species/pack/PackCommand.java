@@ -204,6 +204,10 @@ public final class PackCommand {
         if (!isMagicUser(BloodlineAccess.get(target).species())) {
             return error("emissary_witch");
         }
+        // one Alpha at a time: a witch who already serves another pack must be dropped there first
+        if (index.emissaryAlpha(target.getUUID()).filter(a -> !a.equals(alpha.getUUID())).isPresent()) {
+            return error("emissary_taken", name(target));
+        }
         index.setEmissary(alpha.getUUID(), target.getUUID());
         alpha.sendSystemMessage(Component.translatable(KEY + "emissary_set", name(target)));
         return null;
