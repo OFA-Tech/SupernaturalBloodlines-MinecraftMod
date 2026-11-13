@@ -42,7 +42,15 @@ class PartLoaderTest {
         Set<Part> parts = PartLoader.enabledParts(id -> true, p -> p != Part.VAMPIRISM_ENCHANTED);
         assertFalse(parts.contains(Part.SPECIES));
         assertFalse(parts.contains(Part.SPECIES_TENSURA));
-        assertTrue(parts.contains(Part.ARTIFACTS));
+    }
+
+    @Test
+    void artifactsNeedVampirismEnchanted() {
+        Set<Part> parts = PartLoader.enabledParts(id -> true, p -> p != Part.VAMPIRISM_ENCHANTED);
+        assertFalse(parts.contains(Part.ARTIFACTS));
+        assertTrue(Part.ARTIFACTS.requiredParts().contains(Part.VAMPIRISM_ENCHANTED));
+        assertEquals("disabled (requires [VAMPIRISM_ENCHANTED])",
+                PartLoader.status(Part.ARTIFACTS, id -> true, p -> p != Part.VAMPIRISM_ENCHANTED));
     }
 
     @Test

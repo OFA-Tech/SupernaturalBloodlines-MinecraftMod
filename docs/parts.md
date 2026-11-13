@@ -9,7 +9,7 @@ A part is an optional feature set. It is enabled when every mod it requires is i
 | `VAMPIRISM_TENSURA` | `vampirismTensura` | vampirism, tensura | | [vampirism_tensura](parts/vampirism_tensura.md) |
 | `SPECIES` | `species` | vampirism, enchanted | `VAMPIRISM_ENCHANTED` | [species](parts/species.md) |
 | `SPECIES_TENSURA` | `speciesTensura` | vampirism, enchanted, tensura | `SPECIES` | [species_tensura](parts/species_tensura.md) |
-| `ARTIFACTS` | `artifacts` | vampirism, enchanted | | [artifacts](parts/artifacts.md) |
+| `ARTIFACTS` | `artifacts` | vampirism, enchanted | `VAMPIRISM_ENCHANTED` | [artifacts](parts/artifacts.md) |
 
 The server and clients need the same part switches and the same linked mods.
 

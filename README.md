@@ -13,9 +13,9 @@ Each feature set is an optional **part** that turns on only when the mods it nee
 | `ENCHANTED_TENSURA` | `enchantedTensura` | enchanted, tensura | [docs/parts/enchanted_tensura.md](docs/parts/enchanted_tensura.md) |
 | `VAMPIRISM_ENCHANTED` | `vampirismEnchanted` | vampirism, enchanted | [docs/parts/vampirism_enchanted.md](docs/parts/vampirism_enchanted.md) |
 | `VAMPIRISM_TENSURA` | `vampirismTensura` | vampirism, tensura | [docs/parts/vampirism_tensura.md](docs/parts/vampirism_tensura.md) |
-| `SPECIES` | `species` | vampirism, enchanted | [docs/parts/species.md](docs/parts/species.md) |
+| `SPECIES` | `species` | vampirism, enchanted (and the `vampirismEnchanted` part) | [docs/parts/species.md](docs/parts/species.md) |
 | `SPECIES_TENSURA` | `speciesTensura` | vampirism, enchanted, tensura (and the `species` part) | [docs/parts/species_tensura.md](docs/parts/species_tensura.md) |
-| `ARTIFACTS` | `artifacts` | vampirism, enchanted | [docs/parts/artifacts.md](docs/parts/artifacts.md) |
+| `ARTIFACTS` | `artifacts` | vampirism, enchanted (and the `vampirismEnchanted` part) | [docs/parts/artifacts.md](docs/parts/artifacts.md) |
 
 Werewolves and Curios are optional extras inside parts. Each part also has a switch in the common config. Details: [docs/parts.md](docs/parts.md).
 
