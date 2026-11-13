@@ -9,7 +9,7 @@ Checklist (from the design, section 1). Tick items as they ship.
 - [x] Curse *Skill Seal*: one random learned skill can't be activated while active (`SkillEvents.ACTIVATE_SKILL` interrupt). See "Curses (Task 3)". **Manual rite check pending.**
 - [x] Rite of Purification: holy damage in an area to Tensura-undead races and `minecraft:undead`; the damage type id contains "holy". See "Rites (Task 4)". **Manual rite check pending.**
 - [x] Rite *Magicule Offering*: the caster's magicules become a placeable `condensed_magicule` block with altar power (custom factory). See "Rites (Task 4)". **Manual rite check pending.**
-- [ ] Spirit Poppet (code): protects against damage in `tensura:is_spiritual`.
+- [x] Spirit Poppet (code): protects against damage in `tensura:is_spiritual`, on a lethal hit only (Enchanted's rule). See "Spirit Poppet (Task 5)". **Manual check pending** (visual, recipe at a real spinning wheel).
 - [x] EP for Enchanted mobs (data): `entity_existence` entries. **Visual check pending** (Task 2 Step 3): `runClient`, spawn an Enchanted mandrake and familiar cat and open Tensura's analysis. Replaced by the GameTest `enchantedMobsHaveEp` (registry contents), which does not prove the analysis screen.
 
 
@@ -143,8 +143,19 @@ Code: `parts/enchantedtensura/rite/` (`PurificationRiteFactory`, `MagiculeOfferi
 
 GameTests (`EnchantedTensuraRiteGameTests`): `ritesLoad`, `holyPurificationDamageIsHoly`, `condensedMagiculeIsAnAltarBlock`, `purificationHurtsUndeadRace`, `purificationHurtsUndeadMobsInRangeOnly`, `purificationSparesLiving`, `offeringFailsWithoutMagicules`, `offeringConsumesMagicules`.
 
+## Spirit Poppet (Task 5)
+
+Code: `parts/enchantedtensura/item/SpiritPoppetEffect` (a `PlayerPoppetEffect`), item `supernaturalbloodlines:spirit_poppet` in `PartItems` (`new PlayerPoppetItem(PoppetColour.MAGIC, new SpiritPoppetEffect(), durability 1, stacks to 1)`; creative tab Tools & Utilities). `protectsAgainst` = `source.is(tensura:is_spiritual)` (damage-type tag, 3 entries: `tensura:soul_scatter`, `tensura:soul_consumed`, `tensura:synthesise`; any type another mod adds to the tag counts too). `protect` does nothing extra.
+
+- **Behaviour (Enchanted's rule, no extra listener).** Enchanted only consults player poppets in `PoppetEvents.onLivingEntityHurt` (from `LivingDamageEvent.Pre`) when the incoming damage is **at least the player's current health**, and only for a poppet **bound** to that player (`PoppetHelper.bind`). Then it triggers the first matching poppet (inventory or poppet shelf), zeroes the damage and costs one durability. So "blocks spiritual damage" means: a **lethal** hit of a spiritual damage type is cancelled and the poppet is used. A non-lethal spiritual hit lands normally and the poppet is untouched; non-spiritual lethal damage is not covered (Enchanted's other poppets cover those).
+- **Colour and durability** copy Enchanted's `magic_poppet` (colour `MAGIC`, the closest fit for a non-physical threat; durability 1; the sturdy variants are 2). A GameTest compares the max damage with `EItems.MAGIC_POPPET`.
+- **Recipe** `data/supernaturalbloodlines/recipe/spinning/spirit_poppet.json`, Enchanted style (`enchanted:wheel`, power 500 like the plain protection poppets): `enchanted:poppet` + `tensura:medium_quality_magic_crystal` + `minecraft:soul_sand` (the same soul stand-in as the Skill Seal rite). Conditions: `enchanted` and `tensura` loaded.
+- **Placeholder** texture `textures/item/spirit_poppet.png` (generated 16x16) and `models/item/spirit_poppet.json`. Lang `item.supernaturalbloodlines.spirit_poppet`.
+- **Manual check pending.** GameTests do not prove the texture, the tooltip, binding by right-click in game, or crafting at a real spinning wheel.
+
+GameTests (`EnchantedTensuraPoppetGameTests`): `spiritPoppetBlocksSpiritualDamage` (lethal `soul_scatter`, bound poppet: no damage, poppet used), `spiritPoppetIgnoresNonLethalHits`, `spiritPoppetOnlyProtectsAgainstSpiritualTypes`, `spiritPoppetMatchesEnchantedProtectionPoppets` (colour, durability, id, recipe loaded).
 ## Disabled part, worlds and servers
 
-- **The part registers content.** With Enchanted and Tensura present and the part switch on, it registers the block and item `supernaturalbloodlines:condensed_magicule`. Switch the part off, or remove Enchanted or Tensura, in a world that has them, and the placed blocks and held items vanish on load (Minecraft drops unknown block and item ids). Back up a world before turning the part off.
+- **The part registers content.** With Enchanted and Tensura present and the part switch on, it registers the block and item `supernaturalbloodlines:condensed_magicule` and the item `supernaturalbloodlines:spirit_poppet`. Switch the part off, or remove Enchanted or Tensura, in a world that has them, and the placed blocks and held items vanish on load (Minecraft drops unknown block and item ids). Back up a world before turning the part off.
 - **Server and clients need the same part switches** and the same mods; a client without the part cannot join a server that registers the block (registry mismatch).
 - **Always-loaded data must not need the part.** Data files load even when the part is off. `data/minecraft/tags/block/mineable/pickaxe.json` therefore lists `condensed_magicule` as `{"id": ..., "required": false}`. A plain string entry would make vanilla drop the whole merged `#minecraft:mineable/pickaxe` tag when the block is missing, which breaks pickaxe mining for every block. The core GameTest `pickaxeTagSurvivesPartOnlyEntries` (in the `-PnoLinkedMods` run) asserts stone is still in the tag; with a required entry it fails ("missing following references" in the log). The loot table for the block also carries the `enchanted` and `tensura` mod_loaded conditions. No other tag files exist in `src/main/resources/data`.

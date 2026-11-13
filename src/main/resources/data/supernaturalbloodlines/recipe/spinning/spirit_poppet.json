@@ -1,0 +1,14 @@
+{
+    "neoforge:conditions": [
+        { "type": "neoforge:mod_loaded", "modid": "enchanted" },
+        { "type": "neoforge:mod_loaded", "modid": "tensura" }
+    ],
+    "type": "enchanted:wheel",
+    "ingredients": [
+        { "count": 1, "id": "enchanted:poppet" },
+        { "count": 1, "id": "tensura:medium_quality_magic_crystal" },
+        { "count": 1, "id": "minecraft:soul_sand" }
+    ],
+    "power": 500,
+    "result": { "count": 1, "id": "supernaturalbloodlines:spirit_poppet" }
+}

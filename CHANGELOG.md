@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased: enchanted_tensura
+
+- Altar power (data): Tensura magic ore, magic blocks, crystal blocks, magisteel and magic metal blocks power Enchanted altars (6 per ore up to 20, 10 per block up to 10).
+- EP data (`entity_existence`) for the Enchanted mandrake and familiar cat. Numbers are first guesses.
+- Two curses: *Magicule Drain* (slowly lowers magicules, never below 0) and *Skill Seal* (one random learned skill can't be activated or toggled on). Both are lifted by Enchanted's remove-curse rite and cleared on death.
+- Two rites: *Purification* (holy damage to Tensura-undead races and undead mobs in 8 blocks; living things are spared) and *Magicule Offering* (the caster's magicules become a `condensed_magicule` block; fails with a message and takes nothing if the caster has too few).
+- New block `condensed_magicule` (altar power 30, up to 16), new damage type `holy_purification` (counts as holy for Tensura).
+- Spirit Poppet: protects the player it is bound to from lethal damage of the `tensura:is_spiritual` types (soul scatter, soul consumed, synthesise), following Enchanted's rule (poppets are only consulted on a lethal hit). Spinning wheel recipe from the Enchanted poppet, a medium magic crystal and soul sand.
+- Known pending: manual in-game checks of the rites at a real chalk circle, the curses on a cursed player, the Tensura analysis screen for Enchanted mobs, and the placeholder textures (block and poppet).
 ## Unreleased: vampirism_tensura
 
 - Unified vampire sync: a Tensura race in the vampire line joins the Vampirism vampire faction at a level floor (`vampire` 1, `vampire_overcomer` and `vampire_lord` 7, `divine_vampire` max; `ghoul` no faction change). The floor never lowers an existing level. Joining Vampirism keeps the Tensura race, except an exact `tensura:human` becomes `tensura:vampire` automatically (R20a); a cure resets the race to `cure_race` (default `tensura:human`) only if it is in the vampire line.

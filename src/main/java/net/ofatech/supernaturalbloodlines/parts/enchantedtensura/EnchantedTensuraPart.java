@@ -8,6 +8,7 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.curse.Curses;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.EnchantedTensuraDataGameTests;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.EnchantedTensuraGameTests;
+import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.EnchantedTensuraPoppetGameTests;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.EnchantedTensuraRiteGameTests;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.rite.MagiculeOfferingRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.rite.PurificationRiteFactory;
@@ -27,6 +28,7 @@ public final class EnchantedTensuraPart {
             e.register(EnchantedTensuraDataGameTests.class);
             e.register(EnchantedTensuraGameTests.class);
             e.register(EnchantedTensuraRiteGameTests.class);
+            e.register(EnchantedTensuraPoppetGameTests.class);
         });
         SupernaturalBloodlines.LOGGER.info("EnchantedTensuraPart enabled");
     }
