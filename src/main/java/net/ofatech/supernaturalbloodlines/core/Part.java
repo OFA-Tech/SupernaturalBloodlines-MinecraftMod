@@ -40,6 +40,10 @@ public enum Part {
     }
 
     public Set<Part> requiredParts() {
-        return this == SPECIES_TENSURA ? Set.of(SPECIES) : Set.of();
+        return switch (this) {
+            case SPECIES -> Set.of(VAMPIRISM_ENCHANTED); // reuses its FactionRiteFactory
+            case SPECIES_TENSURA -> Set.of(SPECIES);
+            default -> Set.of();
+        };
     }
 }

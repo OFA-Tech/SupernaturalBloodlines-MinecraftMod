@@ -85,7 +85,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
 
     // ---- factions ----
 
-    private static BaseFaction baseFaction(IFactionPlayerHandler h) {
+    public static BaseFaction baseFaction(IFactionPlayerHandler h) {
         IPlayableFaction<?> f = h.getCurrentFaction();
         if (f == null) {
             return BaseFaction.NONE;
@@ -133,7 +133,8 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
         return event.getBehavior() != PlayerFactionEvent.CanJoinFaction.Behavior.DENY;
     }
 
-    private static void run(ServerPlayer target, Outcome out) {
+    /** The default {@link FactionRiteHooks.OutcomeRunner}: only the faction actions. */
+    public static void runFactionActions(ServerPlayer target, Outcome out) {
         IFactionPlayerHandler h = VampirismAPI.factionPlayerHandler(target);
         for (Outcome.Action a : out.actions()) {
             if (a == Outcome.Action.LEAVE_FACTION) {
@@ -192,7 +193,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             }
 
             // Preview with the pure rules, so a rite that cannot work leaves state and factions untouched
-            BloodlineContext ctx = BloodlineContext.defaults().withFaction(current).withGameTime(level.getGameTime());
+            BloodlineContext ctx = FactionRiteHooks.context(target, current, level.getGameTime());
             Outcome preview = BloodlineRules.apply(before, factory.event, ctx);
             if (preview.refused()) {
                 tell(caster, preview.refusalKey());
@@ -211,7 +212,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
                 }
             }
 
-            run(target, BloodlineAccess.applyEvent(target, factory.event, ctx));
+            FactionRiteHooks.run(target, BloodlineAccess.applyEvent(target, factory.event, ctx));
             return false;
         }
     }

@@ -17,6 +17,7 @@ import net.ofatech.supernaturalbloodlines.core.EnabledParts;
 import net.ofatech.supernaturalbloodlines.core.Part;
 import net.ofatech.supernaturalbloodlines.core.PartEnabledCondition;
 import net.ofatech.supernaturalbloodlines.core.PartLoader;
+import net.ofatech.supernaturalbloodlines.core.StalePartModifiers;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.network.ModNetwork;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ public final class SupernaturalBloodlines {
         CONDITIONS.register("part_enabled", () -> PartEnabledCondition.CODEC);
         ModAttachments.register(modBus);
         ModNetwork.register(modBus);
+        StalePartModifiers.register();
 
         ModList mods = ModList.get();
         // Config.COMMON is not loaded yet at construction, so read the file directly (see EarlySwitches)

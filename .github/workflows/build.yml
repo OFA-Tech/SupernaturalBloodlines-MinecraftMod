@@ -26,3 +26,9 @@ jobs:
 
       - name: Run GameTests
         run: ./gradlew runGameTestServer --console=plain
+
+      - name: Run GameTests without Werewolves
+        run: ./gradlew runGameTestServer -PnoWerewolves --console=plain
+
+      - name: Run GameTests with the species part off
+        run: ./gradlew runGameTestServer -PpartsOff=species --console=plain

@@ -1,0 +1,7 @@
+{
+    "replace": false,
+    "values": [
+        { "id": "supernaturalbloodlines:white_oak_log", "required": false },
+        { "id": "supernaturalbloodlines:white_oak_planks", "required": false }
+    ]
+}

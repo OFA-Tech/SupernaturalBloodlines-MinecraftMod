@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased: species
+
+- Originals: the Rite of Immortality makes one (needs a full moon, a white oak sapling, a golden apple, a human heart and a villager). +4 max health, +20% attack, and lethal damage that is not white oak, the void or `/kill` cannot kill them (vampires use Vampirism's dying state, Original hybrids a downed state of 30 seconds with a Give up / Wait screen).
+- White oak: log, planks, sapling (grows a white oak tree) and the White Oak Stake, the only weapon that kills an Original.
+- Original's Blood: Rite of Original's Blood fills a glass bottle (Originals only); drinking it gives the `original_blood` effect, and a werewolf who dies with it in them starts the hybrid transition. The last blood drunk before death is the sire.
+- Hybrid transition (24000 online ticks, config): Doppelgänger Blood completes it, any other blood makes it unstable and then kills, running out of time kills. The timer survives a relog and a respawn.
+- Hybrid traits: movement speed and attack damage that grow over 50 in-game days (1,200,000 ticks), blood thirst (Weakness at 0, Strength from 15), hybrid shifts at will (the forced full-moon shift is cancelled), and the sire bond (a hybrid cannot hurt their sire, directly or by projectile, cloud or pet).
+- Venom and Hybrid's Blood: a werewolf's melee hit on a vampire poisons them for 10 minutes (1 damage pulses, hallucinations, death at the end; Originals are weakened instead); Hybrid's Blood (a rite, one glass bottle) cures it.
+- Original hybrid: the Rite of the Moon turns an Original with the werewolf gene into one. Original hybrids cannot be cured.
+- The R24 gene kill: a vampire or Original with the hidden gene who kills a villager or a player becomes a bound hybrid; the faction level carries over (capped) when the base faction changes.
+- Witches and siphoners: the Rite of Ancestral Calling (25% siphoner by default). Witches widen an altar's range x1.5 and pay x0.75 for rites (mixins into Enchanted, each with `require = 0`, a missing one only turns the bonus off). Siphoners drain altar-power blocks and creatures for siphoned power (cap 1000, reset on death) and can pay a rite's start cost with it.
+- Heretics (a siphoner who joins the vampires) keep siphoning and the witch bonus. Tribrids (a witch who completes the hybrid transition) are hybrids with the witch bonus and siphoning. A siphoner cannot start the hybrid transition.
+- Hybrid-type species and their rites need Werewolves; without it they are refused and the rites are not loaded.
+- Fixed flaky GameTests: the test template was 1x1x1, so cells next to a chunk edge had entities in chunks that do not tick. It is 16x1x16 now.
+- Known pending (manual): the two-client playthrough (Original, Original's Blood, a werewolf friend turned hybrid, Original hybrid, witch, tribrid), the forced-shift check on a real full moon, the downed screen, placeholder textures. Moonstone has no loot source yet. The Werewolves bite as a source of thirst and venom is not hooked (no hook exists).
+
 ## Unreleased: vampirism_enchanted
 
 - Plant parity (data): Enchanted garlic is in the `c:crops/garlic` tag, so all Vampirism recipes that use garlic (and the cauldron colour) accept it. **Limitation:** the tag is only read by recipes. The garlic crop's effect on vampires and the garlic diffusers do not read it, so an `enchanted:garlic` crop does not hurt a vampire.

@@ -29,6 +29,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.gametest.Diag;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.PartBlocks;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.PartItems;
@@ -141,8 +142,9 @@ public final class EnchantedTensuraRiteGameTests {
         try {
             setRace(ghoul, "tensura:ghoul");
             float before = ghoul.getHealth();
+            Diag.watch(ghoul);
             start(helper, "purification", caster);
-            helper.assertTrue(ghoul.getHealth() < before, "an undead-race player took no damage: " + ghoul.getHealth() + " of " + before);
+            helper.assertTrue(ghoul.getHealth() < before, "an undead-race player took no damage, was " + before + ": " + Diag.describe(ghoul));
         } finally {
             remove(level, ghoul);
         }
@@ -156,9 +158,12 @@ public final class EnchantedTensuraRiteGameTests {
         var far = helper.spawnWithNoFreeWill(EntityType.HUSK, 1.5f + 12, 1f, 1.5f);
         float nearBefore = near.getHealth();
         float farBefore = far.getHealth();
+        Diag.watch(near);
+        Diag.watch(far);
         start(helper, "purification", caster);
-        helper.assertTrue(near.getHealth() < nearBefore, "a husk in range took no damage");
-        helper.assertTrue(far.getHealth() == farBefore, "a husk 12 blocks away took damage");
+        helper.assertTrue(near.getHealth() < nearBefore, "a husk in range took no damage, was " + nearBefore + ": " + Diag.describe(near)
+                + ", " + Diag.chunk(helper.getLevel(), near.blockPosition()) + ", centre " + Diag.chunk(helper.getLevel(), centre(helper)));
+        helper.assertTrue(far.getHealth() == farBefore, "a husk 12 blocks away took damage, was " + farBefore + ": " + Diag.describe(far));
         helper.succeed();
     }
 
@@ -194,11 +199,13 @@ public final class EnchantedTensuraRiteGameTests {
             setRace(human, "tensura:human");
             float ghoulBefore = ghoul.getHealth();
             float humanBefore = human.getHealth();
+            Diag.watch(ghoul);
+            Diag.watch(human);
             start(helper, "purification", ghoul);
-            helper.assertTrue(ghoul.getHealth() < ghoulBefore, "an undead caster was not purified");
-            helper.assertTrue(human.getHealth() == humanBefore, "a living bystander was hurt");
+            helper.assertTrue(ghoul.getHealth() < ghoulBefore, "an undead caster was not purified, was " + ghoulBefore + ": " + Diag.describe(ghoul));
+            helper.assertTrue(human.getHealth() == humanBefore, "a living bystander was hurt, was " + humanBefore + ": " + Diag.describe(human));
             start(helper, "purification", human);
-            helper.assertTrue(human.getHealth() == humanBefore, "a living caster was hurt by their own rite");
+            helper.assertTrue(human.getHealth() == humanBefore, "a living caster was hurt by their own rite, was " + humanBefore + ": " + Diag.describe(human));
         } finally {
             remove(level, ghoul);
             remove(level, human);
@@ -240,7 +247,8 @@ public final class EnchantedTensuraRiteGameTests {
             helper.assertTrue(ex.getMagicule() == 6000, "could not give the test player 6000 magicules: " + ex.getMagicule());
             start(helper, "magicule_offering", caster);
             helper.assertTrue(ex.getMagicule() == 1000, "expected 1000 magicules left, have " + ex.getMagicule());
-            helper.assertTrue(dropped(helper) == 1, "expected one condensed magicule, found " + dropped(helper));
+            helper.assertTrue(dropped(helper) == 1, "expected one condensed magicule, found " + dropped(helper) + ", items near " + Diag.items(level, centre(helper), 4)
+                    + ", " + Diag.chunk(level, centre(helper)));
             helper.assertTrue(!caster.received("supernaturalbloodlines.enchanted_tensura.offering_failed"),
                     "a good offering sent the failure message");
         } finally {

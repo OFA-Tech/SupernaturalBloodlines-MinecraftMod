@@ -2,7 +2,13 @@ package net.ofatech.supernaturalbloodlines.gametest;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import java.util.EnumSet;
 import java.util.Set;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.ofatech.supernaturalbloodlines.core.Part;
+import net.ofatech.supernaturalbloodlines.core.StalePartModifiers;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.server.MinecraftServer;
@@ -43,6 +49,31 @@ public final class BloodlineGameTests {
         helper.succeed();
     }
 
+    // a part that is switched off never runs, so core strips the saved modifiers it owns on login
+    @GameTest(template = "empty")
+    public static void disabledPartsLoseTheirSavedModifiers(GameTestHelper helper) {
+        ResourceLocation original = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "original");
+        ResourceLocation foreign = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "something_else");
+        ServerPlayer p = TestPlayers.create(helper);
+        double health = p.getMaxHealth();
+        double attack = p.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        p.getAttribute(Attributes.MAX_HEALTH).addPermanentModifier(new AttributeModifier(original, 4.0, AttributeModifier.Operation.ADD_VALUE));
+        p.getAttribute(Attributes.ATTACK_DAMAGE).addPermanentModifier(new AttributeModifier(original, 0.2, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        p.getAttribute(Attributes.ARMOR).addPermanentModifier(new AttributeModifier(foreign, 1.0, AttributeModifier.Operation.ADD_VALUE));
+        p.setHealth(p.getMaxHealth());
+
+        StalePartModifiers.strip(p, EnumSet.of(Part.SPECIES));
+        helper.assertTrue(p.getAttribute(Attributes.MAX_HEALTH).hasModifier(original), "an enabled part lost its modifier");
+
+        StalePartModifiers.strip(p, EnumSet.noneOf(Part.class));
+        helper.assertTrue(!p.getAttribute(Attributes.MAX_HEALTH).hasModifier(original), "the health modifier of a disabled part stayed");
+        helper.assertTrue(!p.getAttribute(Attributes.ATTACK_DAMAGE).hasModifier(original), "the attack modifier of a disabled part stayed");
+        helper.assertTrue(p.getMaxHealth() == health && p.getAttributeValue(Attributes.ATTACK_DAMAGE) == attack, "values did not return to the base");
+        helper.assertTrue(p.getHealth() <= p.getMaxHealth(), "health is above the maximum: " + p.getHealth());
+        helper.assertTrue(p.getAttribute(Attributes.ARMOR).hasModifier(foreign), "a modifier no part owns was removed");
+        helper.succeed();
+    }
+
     // our pickaxe tag entry names a block that only exists when a part is on; a required entry would
     // make vanilla drop the whole merged tag
     @GameTest(template = "empty")
@@ -63,6 +94,7 @@ public final class BloodlineGameTests {
         // Tensura's registry has no namespace prefix and our files sit in its data namespace
         checkPartData(helper, access, "enchantedTensura", "entity_existence", "tensura", "supernaturalbloodlines_enchanted_");
         checkPartData(helper, access, "vampirismTensura", "entity_existence", "tensura", "supernaturalbloodlines_vampirism_");
+        checkPartData(helper, access, "species", "damage_type", "supernaturalbloodlines", "failed_transition");
         helper.succeed();
     }
 

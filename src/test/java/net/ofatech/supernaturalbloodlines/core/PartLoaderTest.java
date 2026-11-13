@@ -38,6 +38,14 @@ class PartLoaderTest {
     }
 
     @Test
+    void speciesNeedsVampirismEnchanted() {
+        Set<Part> parts = PartLoader.enabledParts(id -> true, p -> p != Part.VAMPIRISM_ENCHANTED);
+        assertFalse(parts.contains(Part.SPECIES));
+        assertFalse(parts.contains(Part.SPECIES_TENSURA));
+        assertTrue(parts.contains(Part.ARTIFACTS));
+    }
+
+    @Test
     void missingWerewolvesKeepsSpecies() {
         Set<Part> parts = PartLoader.enabledParts(id -> !id.equals("werewolves"), p -> true);
         assertTrue(parts.contains(Part.SPECIES));

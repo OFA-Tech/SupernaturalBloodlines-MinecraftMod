@@ -1,0 +1,17 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+    ],
+    "items": [
+        { "id": "minecraft:bone", "count": 1 },
+        { "id": "minecraft:amethyst_shard", "count": 1 },
+        { "id": "minecraft:lapis_lazuli", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:small_circle": "enchanted:ritual_chalk"
+    },
+    "power": 4000,
+    "factory": {
+        "type": "supernaturalbloodlines:ancestral_calling"
+    }
+}

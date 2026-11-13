@@ -1,0 +1,8 @@
+{
+  "neoforge:conditions": [ { "type": "supernaturalbloodlines:part_enabled", "part": "species" } ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [ "P", "P", "S" ],
+  "key": { "P": { "item": "supernaturalbloodlines:white_oak_planks" }, "S": { "item": "minecraft:stick" } },
+  "result": { "id": "supernaturalbloodlines:white_oak_stake", "count": 1 }
+}

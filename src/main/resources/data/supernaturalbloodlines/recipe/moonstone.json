@@ -1,0 +1,10 @@
+{
+  "neoforge:conditions": [
+    { "type": "supernaturalbloodlines:part_enabled", "part": "species" },
+    { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [ { "item": "minecraft:amethyst_shard" }, { "item": "werewolves:silver_ingot" } ],
+  "result": { "id": "supernaturalbloodlines:moonstone", "count": 1 }
+}

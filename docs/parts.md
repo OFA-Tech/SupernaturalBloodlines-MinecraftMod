@@ -7,7 +7,7 @@ A part is an optional feature set. It is enabled when every mod it requires is i
 | `ENCHANTED_TENSURA` | `enchantedTensura` | enchanted, tensura | | [enchanted_tensura](parts/enchanted_tensura.md) |
 | `VAMPIRISM_ENCHANTED` | `vampirismEnchanted` | vampirism, enchanted | | [vampirism_enchanted](parts/vampirism_enchanted.md) |
 | `VAMPIRISM_TENSURA` | `vampirismTensura` | vampirism, tensura | | [vampirism_tensura](parts/vampirism_tensura.md) |
-| `SPECIES` | `species` | vampirism, enchanted | | [species](parts/species.md) |
+| `SPECIES` | `species` | vampirism, enchanted | `VAMPIRISM_ENCHANTED` | [species](parts/species.md) |
 | `SPECIES_TENSURA` | `speciesTensura` | vampirism, enchanted, tensura | `SPECIES` | [species_tensura](parts/species_tensura.md) |
 | `ARTIFACTS` | `artifacts` | vampirism, enchanted | | [artifacts](parts/artifacts.md) |
 
@@ -27,6 +27,10 @@ Data files load even when a part's code does not, and a registry whose entries u
 - Tags merged into vanilla tags use `"required": false` entries instead (a required entry for a missing id drops the whole tag).
 - `./gradlew runGameTestServer -PpartsOff=enchantedTensura,vampirismTensura` writes those switches as `false` into `run/config/supernaturalbloodlines-common.toml` for the run and restores the file afterwards. The core GameTest `partDataFollowsSwitch` checks that part data is present exactly when its part is enabled.
 
+## Permanent attribute modifiers
+
+A modifier added with `addPermanentModifier` is saved with the player, and when its part is later switched off nothing removes it. **Any part that adds permanent attribute modifiers must list their ids in `StalePartModifiers.OWNED` (core), under its `Part`.** On login, core removes the modifiers of every part that is not enabled, by id, from all vanilla attributes (so a new modifier on any attribute is covered). Species lists `supernaturalbloodlines:original` and `supernaturalbloodlines:hybrid`. Test: `disabledPartsLoseTheirSavedModifiers`.
+
 Werewolves and Curios are optional extras inside parts; the pure rules in `core` never import them.
 
 ## Debug commands
@@ -35,7 +39,7 @@ Permission level 2. For quick state changes in a test world:
 
 - `/supernaturalbloodlines debug get <player>` prints the player's bloodline state.
 - `/supernaturalbloodlines debug set <player> <species>` sets the species (name, any case).
-- `/supernaturalbloodlines debug event <player> <event>` runs a `BloodlineEvent` through `BloodlineRules`. **The context is `BloodlineContext.defaults()`: faction NONE, human-like true, no Originals in the world.** Core can't see factions, so events that depend on a faction (for example the Rite of the Five, which needs a hunter) will be refused here. Faction actions in the result are listed but not performed.
+- `/supernaturalbloodlines debug event <player> <event>` runs a `BloodlineEvent` through `BloodlineRules`. **The context is `BloodlineContext.defaults()`: faction NONE, human-like true, no Originals in the world, and `werewolvesLoaded` set from the installed mods (so hybrid types are refused without Werewolves).** Core can't see factions, so events that depend on a faction (for example the Rite of the Five, which needs a hunter) will be refused here. Faction actions in the result are listed but not performed.
 
 Bad species or event names give a normal command error and change nothing.
 
