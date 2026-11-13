@@ -7,11 +7,13 @@ import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ArtifactSlotsGameTests;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.AshDaggerGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.CuriosSlotsGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.MoonRingGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ResurrectionVervainGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.RingGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.rite.BindItemRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.rite.RequiresDesiccatedRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves.MoonRing;
 
 public final class ArtifactsPart {
@@ -22,8 +24,10 @@ public final class ArtifactsPart {
         boolean werewolves = ModList.get().isLoaded("werewolves");
         // before the datapacks load, so the rite JSONs can name this factory
         RiteFactoryRegistry.get().register(BindItemRiteFactory.ID, BindItemRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(RequiresDesiccatedRiteFactory.ID, RequiresDesiccatedRiteFactory.CODEC);
         ArtifactItems.register(modBus);
         VampirismSupernatural.register();
+        AshDagger.register();
         SunRing.register();
         ResurrectionRing.register();
         VervainRules.register();
@@ -33,6 +37,7 @@ public final class ArtifactsPart {
         // the Curios and Werewolves tests link those mods, so they are registered only when loaded
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(ArtifactSlotsGameTests.class);
+            e.register(AshDaggerGameTests.class);
             e.register(RingGameTests.class);
             e.register(ResurrectionVervainGameTests.class);
             if (curios) {

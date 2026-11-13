@@ -1,0 +1,12 @@
+{
+  "neoforge:conditions": [
+    { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" },
+    { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+  ],
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": { "item": "supernaturalbloodlines:white_oak_log" },
+  "result": { "id": "supernaturalbloodlines:white_oak_ash" },
+  "experience": 0.1,
+  "cookingtime": 200
+}

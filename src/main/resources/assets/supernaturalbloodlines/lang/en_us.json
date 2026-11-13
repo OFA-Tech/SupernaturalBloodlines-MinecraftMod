@@ -83,5 +83,11 @@
   "item.supernaturalbloodlines.vervain": "Vervain",
   "item.supernaturalbloodlines.vervain_seeds": "Vervain Seeds",
   "item.supernaturalbloodlines.vervain_tea": "Vervain Tea",
-  "effect.supernaturalbloodlines.vervain": "Vervain"
+  "effect.supernaturalbloodlines.vervain": "Vervain",
+  "item.supernaturalbloodlines.white_oak_ash": "White Oak Ash",
+  "item.supernaturalbloodlines.white_oak_ash_dagger": "White Oak Ash Dagger",
+  "item.supernaturalbloodlines.the_cure": "The Cure",
+  "effect.supernaturalbloodlines.desiccated": "Desiccated",
+  "rite.supernaturalbloodlines.rite_of_the_cure": "Rite of the Cure",
+  "supernaturalbloodlines.rite.needs_desiccated": "The rite needs a desiccated Original in the circle."
 }

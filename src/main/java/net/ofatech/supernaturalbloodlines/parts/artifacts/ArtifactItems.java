@@ -5,10 +5,13 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -20,14 +23,18 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.item.AshDaggerItem;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.BoundRingItem;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.ResurrectionRingItem;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.item.TheCureItem;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.VervainBlock;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.VervainTeaItem;
 
@@ -40,6 +47,8 @@ public final class ArtifactItems {
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(SupernaturalBloodlines.MODID);
     private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(SupernaturalBloodlines.MODID);
     private static final DeferredRegister<MobEffect> EFFECTS = DeferredRegister.create(Registries.MOB_EFFECT, SupernaturalBloodlines.MODID);
+    private static final DeferredRegister<AttachmentType<?>> ATTACHMENTS =
+            DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, SupernaturalBloodlines.MODID);
     private static final DeferredRegister.DataComponents COMPONENTS =
             DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, SupernaturalBloodlines.MODID);
 
@@ -81,6 +90,26 @@ public final class ArtifactItems {
                     .effect(() -> new MobEffectInstance(VERVAIN_EFFECT, VERVAIN_TICKS), 1.0f)
                     .usingConvertsTo(Items.GLASS_BOTTLE).build())));
 
+    // ---- ash dagger and the Cure ----
+
+    /** How long the dagger holds an Original: 30 minutes. */
+    public static final int DESICCATED_TICKS = 36000;
+    private static final ResourceLocation DESICCATED_ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "desiccated");
+
+    /** No movement, no jump; attacking and using items are cancelled in {@link AshDagger}. The grey screen tint is not done. */
+    public static final DeferredHolder<MobEffect, MobEffect> DESICCATED =
+            EFFECTS.register("desiccated", () -> new MobEffect(MobEffectCategory.HARMFUL, 0x8A8A8A) {
+            }.addAttributeModifier(Attributes.MOVEMENT_SPEED, DESICCATED_ID, -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+                    .addAttributeModifier(Attributes.JUMP_STRENGTH, DESICCATED_ID, -1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+
+    /** The dagger stuck in a desiccated player. Saved with the player, not copied on death (it drops instead). */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<ItemStack>> LODGED_DAGGER =
+            ATTACHMENTS.register("lodged_dagger", () -> AttachmentType.builder(() -> ItemStack.EMPTY).serialize(ItemStack.OPTIONAL_CODEC).build());
+
+    public static final DeferredItem<Item> WHITE_OAK_ASH = ITEMS.register("white_oak_ash", () -> new Item(new Item.Properties()));
+    public static final DeferredItem<AshDaggerItem> ASH_DAGGER = ITEMS.register("white_oak_ash_dagger", AshDaggerItem::new);
+    public static final DeferredItem<TheCureItem> THE_CURE = ITEMS.register("the_cure", TheCureItem::new);
+
     private ArtifactItems() {
     }
 
@@ -89,6 +118,7 @@ public final class ArtifactItems {
         BLOCKS.register(modBus);
         EFFECTS.register(modBus);
         COMPONENTS.register(modBus);
+        ATTACHMENTS.register(modBus);
         modBus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
                 e.accept(SUN_RING);
@@ -96,12 +126,15 @@ public final class ArtifactItems {
                     e.accept(MOON_RING);
                 }
                 e.accept(RESURRECTION_RING);
+                e.accept(ASH_DAGGER);
             } else if (e.getTabKey() == CreativeModeTabs.NATURAL_BLOCKS) {
                 e.accept(VERVAIN_SEEDS);
             } else if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) {
                 e.accept(VERVAIN);
+                e.accept(WHITE_OAK_ASH);
             } else if (e.getTabKey() == CreativeModeTabs.FOOD_AND_DRINKS) {
                 e.accept(VERVAIN_TEA);
+                e.accept(THE_CURE);
             }
         });
     }
