@@ -8,6 +8,7 @@ import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IFactionPlayerHandler;
 import de.teamlapen.vampirism.api.entity.factions.IPlayableFaction;
+import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import java.util.Locale;
 import java.util.Optional;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactory;
@@ -16,11 +17,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BaseFaction;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineRules;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Outcome;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.werewolves.WerewolfFaction;
@@ -34,10 +38,23 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "faction_rite");
     public static final String WRONG_FACTION = "supernaturalbloodlines.rite.wrong_faction";
     public static final String NEEDS_FULL_MOON = "supernaturalbloodlines.rite.needs_full_moon";
+    public static final String NO_EFFECT = "supernaturalbloodlines.rite.no_effect";
+    public static final String JOIN_DENIED = "supernaturalbloodlines.rite.join_denied";
     private static final ResourceLocation WEREWOLF_ID = ResourceLocation.parse("werewolves:werewolf");
 
+    /** What the target has to be. NONE = no check, the rules decide. Plan 4/7 rites add values here. */
     public enum Faction {
-        VAMPIRE, WEREWOLF
+        VAMPIRE, WEREWOLF, HUNTER, NONE, VAMPIRE_OR_WEREWOLF;
+
+        boolean accepts(BaseFaction f) {
+            return switch (this) {
+                case VAMPIRE -> f == BaseFaction.VAMPIRE;
+                case WEREWOLF -> f == BaseFaction.WEREWOLF;
+                case HUNTER -> f == BaseFaction.HUNTER;
+                case NONE -> true;
+                case VAMPIRE_OR_WEREWOLF -> f == BaseFaction.VAMPIRE || f == BaseFaction.WEREWOLF;
+            };
+        }
     }
 
     public static final MapCodec<FactionRiteFactory> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -94,21 +111,49 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
         to.displayClientMessage(Component.translatable(key), true);
     }
 
+    /** The faction a JOIN action goes to; null for other actions, and for the werewolves when they are not installed. */
+    private static IPlayableFaction<?> joinTarget(Outcome.Action a) {
+        return switch (a) {
+            case JOIN_VAMPIRE -> VReference.VAMPIRE_FACTION;
+            case JOIN_WEREWOLF -> ModList.get().isLoaded("werewolves") ? WerewolfFaction.faction() : null;
+            default -> null;
+        };
+    }
+
+    /**
+     * Vampirism's {@code canJoin} only says yes to a player without a faction, but the join comes after the leave, so
+     * ask the way it does (the CanJoinFaction event) as if the target had already left.
+     */
+    private static boolean joinAllowed(IFactionPlayerHandler h, IPlayableFaction<?> faction, boolean leaves) {
+        if (!leaves && h.getCurrentFaction() == faction) {
+            return true; // only a level change
+        }
+        PlayerFactionEvent.CanJoinFaction event = new PlayerFactionEvent.CanJoinFaction(h, null, faction);
+        NeoForge.EVENT_BUS.post(event);
+        return event.getBehavior() != PlayerFactionEvent.CanJoinFaction.Behavior.DENY;
+    }
+
     private static void run(ServerPlayer target, Outcome out) {
         IFactionPlayerHandler h = VampirismAPI.factionPlayerHandler(target);
         for (Outcome.Action a : out.actions()) {
             if (a == Outcome.Action.LEAVE_FACTION) {
                 h.leaveFaction(false);
-            } else if (a != Outcome.Action.JOIN_VAMPIRE && a != Outcome.Action.JOIN_WEREWOLF) {
+                if (h.getCurrentFaction() != null) {
+                    SupernaturalBloodlines.LOGGER.warn("faction_rite: {} could not leave faction {}", target.getGameProfile().getName(), h.getCurrentFaction().getID());
+                }
+            } else if (a == Outcome.Action.KILL_PLAYER) {
                 SupernaturalBloodlines.LOGGER.debug("faction_rite ignores outcome action {}", a);
             }
         }
         for (Outcome.Action a : out.actions()) {
             if (a == Outcome.Action.JOIN_VAMPIRE) {
                 int level = h.getCurrentFaction() == VReference.VAMPIRE_FACTION ? Math.max(1, h.getCurrentLevel()) : 1;
-                h.setFactionAndLevel(VReference.VAMPIRE_FACTION, level);
-            } else if (a == Outcome.Action.JOIN_WEREWOLF && ModList.get().isLoaded("werewolves")) {
-                WerewolfFaction.join(target);
+                if (!h.setFactionAndLevel(VReference.VAMPIRE_FACTION, level)) {
+                    SupernaturalBloodlines.LOGGER.warn("faction_rite: {} could not join the vampires", target.getGameProfile().getName());
+                }
+            } else if (a == Outcome.Action.JOIN_WEREWOLF && ModList.get().isLoaded("werewolves")
+                    && !WerewolfFaction.join(target)) {
+                SupernaturalBloodlines.LOGGER.warn("faction_rite: {} could not join the werewolves", target.getGameProfile().getName());
             }
         }
     }
@@ -130,7 +175,8 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             ServerPlayer target = found.get();
             ServerPlayer caster = findEntity(params.caster) instanceof ServerPlayer p ? p : target;
 
-            if (factory.requiresFullMoon && level.getMoonPhase() != 0) {
+            if (factory.requiresFullMoon
+                    && !MoonRule.isFullMoon(level.dimensionType().hasFixedTime(), level.getMoonPhase())) {
                 tell(caster, NEEDS_FULL_MOON);
                 return cancel();
             }
@@ -139,19 +185,33 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             }
             IFactionPlayerHandler h = VampirismAPI.factionPlayerHandler(target);
             BaseFaction current = baseFaction(h);
-            BaseFaction wanted = factory.faction == Faction.VAMPIRE ? BaseFaction.VAMPIRE : BaseFaction.WEREWOLF;
-            if (current != wanted && !rulesDecide(BloodlineAccess.get(target).species())) {
+            BloodlineState before = BloodlineAccess.get(target);
+            if (!factory.faction.accepts(current) && !rulesDecide(before.species())) {
                 tell(caster, WRONG_FACTION);
                 return cancel();
             }
 
+            // Preview with the pure rules, so a rite that cannot work leaves state and factions untouched
             BloodlineContext ctx = BloodlineContext.defaults().withFaction(current).withGameTime(level.getGameTime());
-            Outcome out = BloodlineAccess.applyEvent(target, factory.event, ctx);
-            if (out.refused()) {
-                tell(caster, out.refusalKey());
+            Outcome preview = BloodlineRules.apply(before, factory.event, ctx);
+            if (preview.refused()) {
+                tell(caster, preview.refusalKey());
                 return cancel();
             }
-            run(target, out);
+            if (preview.actions().isEmpty() && preview.state().equals(before)) {
+                tell(caster, NO_EFFECT);
+                return cancel();
+            }
+            boolean leaves = preview.actions().contains(Outcome.Action.LEAVE_FACTION);
+            for (Outcome.Action a : preview.actions()) {
+                IPlayableFaction<?> to = joinTarget(a);
+                if (to != null && !joinAllowed(h, to, leaves)) {
+                    tell(caster, JOIN_DENIED);
+                    return cancel();
+                }
+            }
+
+            run(target, BloodlineAccess.applyEvent(target, factory.event, ctx));
             return false;
         }
     }

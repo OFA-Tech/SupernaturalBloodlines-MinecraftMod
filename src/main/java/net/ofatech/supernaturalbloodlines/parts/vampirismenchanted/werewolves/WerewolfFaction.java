@@ -2,12 +2,17 @@ package net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.werewolves;
 
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IFactionPlayerHandler;
+import de.teamlapen.vampirism.api.entity.factions.IPlayableFaction;
 import de.teamlapen.werewolves.api.WReference;
 import net.minecraft.server.level.ServerPlayer;
 
 /** The only class of this part that links Werewolves; call it only behind {@code ModList.isLoaded("werewolves")}. */
 public final class WerewolfFaction {
     private WerewolfFaction() {
+    }
+
+    public static IPlayableFaction<?> faction() {
+        return WReference.WEREWOLF_FACTION;
     }
 
     /** Joins at level 1, or keeps the current level when already a werewolf. */

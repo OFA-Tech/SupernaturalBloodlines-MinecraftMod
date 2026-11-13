@@ -70,7 +70,7 @@
 - Test: GameTests `VampirismEnchantedGameTests`
 
 **Interfaces:**
-- **`RiteTargets.centrePlayerOrCaster(Rite rite, ServerLevel level)`:** returns `Optional<ServerPlayer>`, the player standing on the circle's centre block, else the caster. Plan 4 reuses this.
+- **`RiteTargets.centrePlayerOrCaster(Rite rite, Rite.RiteParams params, ServerLevel level)`:** (`params` because Enchanted keeps the caster id private to the rite) returns `Optional<ServerPlayer>`, the player standing on the circle's centre block, else the caster. Plan 4 reuses this.
 - **`FactionRiteFactory`** (type `supernaturalbloodlines:faction_rite`):
   - Codec fields: `event: BloodlineEvent`, and `faction: "vampire" | "werewolf"` (the faction the target must be in).
   - On start:

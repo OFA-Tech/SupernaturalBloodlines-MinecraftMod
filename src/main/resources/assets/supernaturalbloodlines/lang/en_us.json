@@ -35,5 +35,7 @@
   "rite.supernaturalbloodlines.cleansing_blood": "Rite of Cleansing Blood",
   "rite.supernaturalbloodlines.silver_moon": "Rite of the Silver Moon",
   "supernaturalbloodlines.rite.wrong_faction": "The one in the circle does not belong to the right faction for this rite.",
+  "supernaturalbloodlines.rite.no_effect": "The rite would change nothing.",
+  "supernaturalbloodlines.rite.join_denied": "The rite cannot take hold: the new faction would not accept them.",
   "supernaturalbloodlines.rite.needs_full_moon": "This rite can only be performed under a full moon."
 }

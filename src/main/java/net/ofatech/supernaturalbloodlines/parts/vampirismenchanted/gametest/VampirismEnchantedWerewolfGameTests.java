@@ -4,7 +4,10 @@ import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IFactionPlayerHandler;
 import de.teamlapen.werewolves.api.WReference;
+import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import java.util.List;
+import java.util.function.Consumer;
+import net.neoforged.neoforge.common.NeoForge;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
@@ -125,6 +128,55 @@ public final class VampirismEnchantedWerewolfGameTests {
         } finally {
             clearDropped(helper);
             remove(helper, vampire);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void silverMoonOnHereticHasNoEffect(GameTestHelper helper) {
+        clearDropped(helper);
+        RecordingPlayer heretic = RecordingPlayer.create(helper);
+        place(helper, heretic);
+        try {
+            BloodlineAccess.set(heretic, BloodlineState.NONE.toBuilder().species(Species.HERETIC).build());
+            atMoon(helper, true, () -> start(helper, "silver_moon", heretic, silver()));
+            helper.assertTrue(heretic.receivedOnActionBar("supernaturalbloodlines.rite.no_effect"), "no no_effect message");
+            helper.assertTrue(BloodlineAccess.get(heretic).species() == Species.HERETIC, "the heretic changed");
+            helper.assertTrue(dropped(helper, "werewolves:silver_ingot") == 2, "the silver was not given back");
+        } finally {
+            clearDropped(helper);
+            remove(helper, heretic);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void deniedJoinChangesNothing(GameTestHelper helper) {
+        clearDropped(helper);
+        RecordingPlayer hybrid = RecordingPlayer.create(helper);
+        place(helper, hybrid);
+        Consumer<PlayerFactionEvent.CanJoinFaction> deny = ev -> {
+            if (ev.getFactionToJoin() == VReference.VAMPIRE_FACTION) {
+                ev.setBehavior(PlayerFactionEvent.CanJoinFaction.Behavior.DENY);
+            }
+        };
+        try {
+            helper.assertTrue(handler(hybrid).setFactionAndLevel(WReference.WEREWOLF_FACTION, 2), "could not make a werewolf");
+            BloodlineState hybridState = BloodlineState.NONE.toBuilder().species(Species.HYBRID).build();
+            BloodlineAccess.set(hybrid, hybridState);
+            NeoForge.EVENT_BUS.addListener(deny);
+            try {
+                atMoon(helper, true, () -> start(helper, "silver_moon", hybrid, silver()));
+            } finally {
+                NeoForge.EVENT_BUS.unregister(deny);
+            }
+            helper.assertTrue(hybrid.receivedOnActionBar("supernaturalbloodlines.rite.join_denied"), "no join_denied message");
+            helper.assertTrue(BloodlineAccess.get(hybrid).equals(hybridState), "the state changed: " + BloodlineAccess.get(hybrid));
+            helper.assertTrue(isWolf(hybrid) && handler(hybrid).getCurrentLevel() == 2, "the werewolf faction or level changed");
+            helper.assertTrue(dropped(helper, "werewolves:silver_ingot") == 2, "the silver was not given back");
+        } finally {
+            clearDropped(helper);
+            remove(helper, hybrid);
         }
         helper.succeed();
     }

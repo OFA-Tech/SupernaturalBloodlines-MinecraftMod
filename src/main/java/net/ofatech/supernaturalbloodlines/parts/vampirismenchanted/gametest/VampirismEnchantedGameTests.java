@@ -1,6 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest;
 
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import de.teamlapen.vampirism.api.VReference;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IFactionPlayerHandler;
 import java.util.List;
@@ -44,6 +47,20 @@ public final class VampirismEnchantedGameTests {
         helper.assertTrue(cleansing.getItems().size() == 3, "cleansing_blood has " + cleansing.getItems().size() + " ingredients");
         helper.assertTrue((type(helper, "silver_moon") != null) == ModList.get().isLoaded("werewolves"),
                 "silver_moon is registered exactly when Werewolves is loaded");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void factionFieldAcceptsEveryRequirement(GameTestHelper helper) {
+        for (String f : List.of("vampire", "werewolf", "hunter", "none", "vampire_or_werewolf")) {
+            var json = JsonParser.parseString("{\"event\":\"rite_of_cleansing_blood\",\"faction\":\"" + f + "\"}");
+            var result = FactionRiteFactory.CODEC.codec().parse(JsonOps.INSTANCE, json);
+            helper.assertTrue(result.result().isPresent(), "faction '" + f + "' does not decode: " + result.error());
+            helper.assertTrue(result.result().get().faction().name().equalsIgnoreCase(f), "faction '" + f + "' decoded wrong");
+        }
+        helper.assertTrue(FactionRiteFactory.CODEC.codec().parse(JsonOps.INSTANCE,
+                JsonParser.parseString("{\"event\":\"rite_of_cleansing_blood\",\"faction\":\"elf\"}")).result().isEmpty(),
+                "an unknown faction decoded");
         helper.succeed();
     }
 
