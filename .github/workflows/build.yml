@@ -32,3 +32,6 @@ jobs:
 
       - name: Run GameTests with the species part off
         run: ./gradlew runGameTestServer -PpartsOff=species --console=plain
+
+      - name: Run GameTests with the artifacts part off
+        run: ./gradlew runGameTestServer -PpartsOff=artifacts --console=plain
