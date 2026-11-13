@@ -18,7 +18,11 @@ import net.ofatech.supernaturalbloodlines.parts.species.hybrid.SireBond;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfPackGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfBiteGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaBite;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.GeneHandler;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackCommand;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.LineageRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterInstinctGameTests;
@@ -96,6 +100,9 @@ public final class SpeciesPart {
             TransitionHandler.register();
             GeneAwakening.register();
             GeneHandler.register();
+            PackIndex.register();
+            AlphaBite.register();
+            NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> PackCommand.register(e.getDispatcher()));
             FormControl.register();
             BloodThirst.register();
             Venom.register();
@@ -128,6 +135,7 @@ public final class SpeciesPart {
                 e.register(HybridTraitsGameTests.class);
                 e.register(OriginalHybridGameTests.class);
                 e.register(WerewolfPackGameTests.class);
+                e.register(WerewolfBiteGameTests.class);
             }
         });
         SupernaturalBloodlines.LOGGER.info("SpeciesPart enabled");

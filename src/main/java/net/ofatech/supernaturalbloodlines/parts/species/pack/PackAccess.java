@@ -1,7 +1,11 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
+import com.mojang.authlib.GameProfile;
 import de.teamlapen.vampirism.api.VampirismAPI;
+import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.entity.player.Player;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BaseFaction;
@@ -27,6 +31,21 @@ public final class PackAccess {
 
     public static WolfState wolf(Player p) {
         return BloodlineAccess.get(p).wolf();
+    }
+
+    public static boolean isAlpha(WolfState.Rank rank) {
+        return rank == WolfState.Rank.ALPHA || rank == WolfState.Rank.TRUE_ALPHA;
+    }
+
+    /** The last name the server knows for {@code id} (online or cached), or null. */
+    @Nullable
+    public static String nameOf(MinecraftServer server, UUID id) {
+        ServerPlayer online = server.getPlayerList().getPlayer(id);
+        if (online != null) {
+            return online.getGameProfile().getName();
+        }
+        GameProfileCache cache = server.getProfileCache();
+        return cache == null ? null : cache.get(id).map(GameProfile::getName).orElse(null);
     }
 
     /** True for the events that give a player a lineage (born or bitten) instead of changing what a werewolf already has. */

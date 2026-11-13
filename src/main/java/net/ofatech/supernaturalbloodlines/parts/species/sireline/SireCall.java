@@ -67,7 +67,7 @@ public final class SireCall {
     }
 
     @Nullable
-    static ServerPlayer player(MinecraftServer server, UUID id) {
+    public static ServerPlayer player(MinecraftServer server, UUID id) {
         Function<UUID, ServerPlayer> pinned = pinnedLookup;
         ServerPlayer p = pinned == null ? null : pinned.apply(id);
         return p != null ? p : server.getPlayerList().getPlayer(id);

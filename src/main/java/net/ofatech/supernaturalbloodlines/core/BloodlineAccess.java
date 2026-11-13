@@ -118,7 +118,8 @@ public final class BloodlineAccess {
                                     BloodlineState before, BloodlineState after) {
         if (before.species() == after.species() && before.wolf().lineage() == after.wolf().lineage()
                 && before.wolf().rank() == after.wolf().rank() && before.markKills() == after.markKills()
-                && Objects.equals(before.sire(), after.sire())) {
+                && Objects.equals(before.sire(), after.sire())
+                && Objects.equals(before.wolf().packAlpha(), after.wolf().packAlpha())) {
             return;
         }
         BloodlineChange change = new BloodlineChange(before, after);

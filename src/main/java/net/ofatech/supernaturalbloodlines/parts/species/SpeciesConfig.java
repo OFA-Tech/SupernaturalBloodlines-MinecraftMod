@@ -25,6 +25,8 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.BooleanValue SIRELINE_DEATH;
     public static final double DEFAULT_LATENT_GENE_CHANCE = 0.15;
     private static final ModConfigSpec.DoubleValue LATENT_GENE_CHANCE;
+    public static final double DEFAULT_ALPHA_BITE_DEATH_CHANCE = 0.10;
+    private static final ModConfigSpec.DoubleValue ALPHA_BITE_DEATH_CHANCE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -43,6 +45,8 @@ public final class SpeciesConfig {
                 .define("sireline_death", DEFAULT_SIRELINE_DEATH);
         LATENT_GENE_CHANCE = b.comment("Chance that a player carries the hidden werewolf gene, rolled once at first login.")
                 .defineInRange("latent_gene_chance", DEFAULT_LATENT_GENE_CHANCE, 0.0, 1.0);
+        ALPHA_BITE_DEATH_CHANCE = b.comment("Chance that an Alpha's bite kills the human instead of turning them.")
+                .defineInRange("alpha_bite_death_chance", DEFAULT_ALPHA_BITE_DEATH_CHANCE, 0.0, 1.0);
         b.pop();
         SPEC = b.build();
     }
@@ -108,6 +112,25 @@ public final class SpeciesConfig {
         }
     }
 
+    private static volatile Double alphaBiteDeathChanceOverride;
+
+    /** For tests: pins {@link #alphaBiteDeathChance()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideAlphaBiteDeathChance(Double value) {
+        alphaBiteDeathChanceOverride = value;
+    }
+
+    public static double alphaBiteDeathChance() {
+        Double pinned = alphaBiteDeathChanceOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return ALPHA_BITE_DEATH_CHANCE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_ALPHA_BITE_DEATH_CHANCE;
+        }
+    }
     private static volatile Boolean sirelineDeathOverride;
 
     /** For tests: pins {@link #sirelineDeath()}; null clears it. */
