@@ -54,12 +54,14 @@ final class RiteTestSupport {
     static void remove(GameTestHelper helper, ServerPlayer p) {
         ServerLevel level = helper.getLevel();
         level.removePlayerImmediately(p, Entity.RemovalReason.DISCARDED);
+        // every rite test removes its players in a finally: leave no ItemEntity behind for the next test in this cell
+        clearDropped(helper);
     }
 
-    /** Items lying around the circle: what Enchanted gives back when a rite is cancelled. */
+    /** Items lying within 1.5 blocks of the circle centre (the test cells are further apart than that): what Enchanted gives back when a rite is cancelled. */
     static int dropped(GameTestHelper helper, String itemId) {
         int n = 0;
-        for (ItemEntity i : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(centre(helper)).inflate(4))) {
+        for (ItemEntity i : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(centre(helper)).inflate(1.5))) {
             if (i.getItem().is(item(itemId))) {
                 n += i.getItem().getCount();
             }
@@ -68,6 +70,6 @@ final class RiteTestSupport {
     }
 
     static void clearDropped(GameTestHelper helper) {
-        helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(centre(helper)).inflate(4)).forEach(Entity::discard);
+        helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(centre(helper)).inflate(1.5)).forEach(Entity::discard);
     }
 }

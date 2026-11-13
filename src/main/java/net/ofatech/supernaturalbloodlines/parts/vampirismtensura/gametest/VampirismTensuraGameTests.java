@@ -329,12 +329,16 @@ public final class VampirismTensuraGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void factionVampireTakesOnlyVampirismSunDamage(GameTestHelper helper) {
         // isDay() reads the sky brightness the level recomputes each tick, so set the time now and run the body later
+        long before = helper.getLevel().getDayTime();
         helper.getLevel().setDayTime(6000);
         helper.runAfterDelay(1, () -> {
             try {
                 factionVampireSunBody(helper);
             } catch (Exception e) {
                 throw new RuntimeException(e);
+            } finally {
+                // the clock is shared with every other test (the moon tests read it)
+                helper.getLevel().setDayTime(before);
             }
         });
     }
