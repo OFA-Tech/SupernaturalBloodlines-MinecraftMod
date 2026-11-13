@@ -61,13 +61,13 @@ public final class FactionRaceRules {
             return;
         }
         ManasRaceInstance race = RaceAPI.getRaceFrom(p).getRace().orElse(null);
+        boolean apex = race != null && LayerQuery.isApexVampireType(p, race.getRaceId()); // R103: apex races of vampire-type species
         if (event.getFactionToJoin() == VReference.HUNTER_FACTION) {
-            if (isUndeadOrDaemon(race)) {
+            if (isUndeadOrDaemon(race) && !apex) {
                 event.setBehavior(PlayerFactionEvent.CanJoinFaction.Behavior.DENY);
             }
         } else if (WEREWOLF_FACTION_ID.equals(event.getFactionToJoin().getID())
-                && (isUndeadOrDaemon(race) || race != null && race.is(NO_BLOOD))
-                && !(race != null && LayerQuery.isApexVampireType(p, race.getRaceId()))) { // R103: apex races of vampire-type species
+                && (isUndeadOrDaemon(race) || race != null && race.is(NO_BLOOD)) && !apex) {
             event.setBehavior(PlayerFactionEvent.CanJoinFaction.Behavior.DENY);
         }
     }

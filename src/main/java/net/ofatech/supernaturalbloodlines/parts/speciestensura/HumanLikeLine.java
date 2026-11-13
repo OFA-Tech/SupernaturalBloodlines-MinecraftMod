@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.speciestensura;
 
 import java.util.Set;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexSpec;
 
 /**
  * Tensura's {@code human_like} race tag holds only the five base races (human, dwarf, elf, merfolk, beastfolk), so a
@@ -23,8 +24,9 @@ public final class HumanLikeLine {
 
     private HumanLikeLine() {}
 
+    /** An evolved race of the five lines, or an apex race of ours (those are tagged human_like too). */
     public static boolean isEvolvedMember(String raceId) {
-        return EVOLVED.contains(raceId);
+        return EVOLVED.contains(raceId) || ApexSpec.ALL.stream().anyMatch(s -> raceId.equals(ApexSpec.RACE_NAMESPACE + ":" + s.id()));
     }
 
     public static boolean isSaintOrHigher(String raceId) {

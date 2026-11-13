@@ -24,11 +24,24 @@ public final class SpeciesTensuraMixinPlugin implements IMixinConfigPlugin {
 
     private static volatile boolean raceUtilsHooked;
 
+    private static volatile boolean apexHooked;
+    private static volatile boolean boostHooked;
+
     private boolean apply;
 
     /** Both RaceUtils checks really carry our call (set when the mixin has been applied to Tensura's class). */
     public static boolean raceUtilsHooked() {
         return raceUtilsHooked;
+    }
+
+    /** {@code ManasRaceInstance.getNextEvolutions} really carries our call: the apex race can be offered. */
+    public static boolean apexHooked() {
+        return apexHooked;
+    }
+
+    /** {@code ManasRaceInstance.getEvolutionProgress} really carries our call: the evolution bonus works. */
+    public static boolean boostHooked() {
+        return boostHooked;
     }
 
     @Override
@@ -68,6 +81,18 @@ public final class SpeciesTensuraMixinPlugin implements IMixinConfigPlugin {
             raceUtilsHooked = calls(targetClass, "isUndead", "layerIsUndead")
                     && calls(targetClass, "isAffectedByHolyExposure", "layerIsAffectedByHoly");
             LOGGER.info("RaceUtilsMixin hooks {}", raceUtilsHooked ? "in place" : "MISSING (a Tensura update?): undead treatment is off");
+        } else if (mixinClassName.endsWith(".RaceInstanceMixin")) {
+            apexHooked = calls(targetClass, "getNextEvolutions", "offerApex");
+            boostHooked = calls(targetClass, "getEvolutionProgress", "boostProgress");
+            if (apexHooked && boostHooked) {
+                LOGGER.info("RaceInstanceMixin hooks in place");
+            }
+            if (!apexHooked) {
+                LOGGER.warn("RaceInstanceMixin.getNextEvolutions hook MISSING (a ManasCore update?): no apex evolution is offered");
+            }
+            if (!boostHooked) {
+                LOGGER.warn("RaceInstanceMixin.getEvolutionProgress hook MISSING (a ManasCore update?): no evolution progress bonus");
+            }
         }
     }
 

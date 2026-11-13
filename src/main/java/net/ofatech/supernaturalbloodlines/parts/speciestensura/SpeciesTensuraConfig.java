@@ -17,9 +17,12 @@ public final class SpeciesTensuraConfig {
 
     private static final ModConfigSpec.ConfigValue<List<? extends String>> LAYERS;
     private static final ModConfigSpec.BooleanValue UNDEAD_TREATMENT;
+    private static final ModConfigSpec.BooleanValue APEX_ENABLED;
+    private static final ModConfigSpec.DoubleValue EVOLUTION_MULTIPLIER;
     private static final Set<String> WARNED = new HashSet<>();
 
     private static volatile Boolean undeadOverride;
+    private static volatile Boolean apexOverride;
     private static volatile List<? extends String> parsedFrom;
     private static volatile LayerTable parsed = LayerTable.parse(LayerTable.DEFAULTS).table();
 
@@ -36,6 +39,11 @@ public final class SpeciesTensuraConfig {
                         "Common config: keep it equal on the server and the clients.",
                         "Off: the layers still grant skills and bonuses, but Tensura's undead checks are left alone.")
                 .define("undead_treatment_enabled", true);
+        APEX_ENABLED = b.comment("Offer the apex race of the player's species in Tensura's evolution screen (R100). Off: no apex option; species keep working.",
+                        "Common config: the evolution screen is built on the client too, so keep it equal on the server and the clients.")
+                .define("apex_evolutions_enabled", true);
+        EVOLUTION_MULTIPLIER = b.comment("A player with a species gets this multiple of the progress Tensura counts toward any evolution (capped at 100%).")
+                .defineInRange("evolution_progress_multiplier", 1.25, 1.0, 10.0);
         SPEC = b.build();
     }
 
@@ -65,6 +73,31 @@ public final class SpeciesTensuraConfig {
     /** For tests: null goes back to the config. */
     public static void overrideUndeadTreatment(Boolean value) {
         undeadOverride = value;
+    }
+
+    /** For tests: simulates the apex hook being off. Null goes back to the config. */
+    public static void overrideApexEnabled(Boolean value) {
+        apexOverride = value;
+    }
+
+    public static boolean apexEnabled() {
+        Boolean forced = apexOverride;
+        if (forced != null) {
+            return forced;
+        }
+        try {
+            return APEX_ENABLED.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
+    public static double evolutionMultiplier() {
+        try {
+            return EVOLUTION_MULTIPLIER.get();
+        } catch (IllegalStateException notLoaded) {
+            return 1.25;
+        }
     }
 
     public static boolean undeadTreatment() {

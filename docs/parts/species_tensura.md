@@ -6,8 +6,8 @@ Checklist (from the design, sections 5 and 10). Tick items as they ship.
 
 - [x] Tensura races are never replaced: species are a layer on top of the player's race (SPECIES-RULES R3, R20, R100). The layer never calls `setRace`.
 - [x] Species layer grants Tensura skills, attributes and an EP bonus; counts as undead where it matters (Task 2).
-- [ ] One apex evolution per species, unlocked for human-like races in Tensura's evolution screen.
-- [ ] Intrinsic skills from Tensura's existing ones (e.g. `blood_mist`, `drain`, `beast_transformation`, `self_regeneration`, `godwolf_sense`, `charm`); final lists chosen by the builder.
+- [x] One apex evolution per species, unlocked for human-like races in Tensura's evolution screen (Task 3).
+- [x] Intrinsic skills from Tensura's existing ones (layer skills: `blood_mist`, `drain`, `beast_transformation`, `self_regeneration`, `godwolf_sense`, `charm`; apex signature skills below); final lists chosen by the builder.
 - [ ] Sync both ways with the unified vampire; the species layer wins over the plain vampire mapping.
 - [ ] Sireline link: `IExistence.setPermanentOwner(sireUUID)` when a sire is recorded; removed when the sire bond breaks.
 - [ ] A sire can name their sired through Tensura's naming (R101).
@@ -110,3 +110,27 @@ Code: `parts/speciestensura` (`SpeciesLayer`, `LayerSpec`, `LayerTable`, `Undead
 - **Config** is COMMON (`supernaturalbloodlines-species_tensura.toml`): Tensura's undead checks also run on the client, so the server's and the clients' `layers` and `undead_treatment_enabled` should match.- **Eligibility**: `TensuraHumanLikeCheck` is installed in plan 04's `SpeciesEligibility`: race tag `tensura:human_like` or one of the 15 evolved ids in `HumanLikeLine` (a player with no race stays eligible). `HumanLikeLine.SAINT_OR_HIGHER` (10 ids) is the host list for Task 3.
 - **Supernatural**: races tagged `tensura:undead` or `tensura:daemon` are supernatural (not vampiric, not prey).
 - A non-player `LivingEntity` is never touched by the layer.
+## Apex races and the evolution bonus (Task 3)
+
+Code: `parts/speciestensura/apex` (`ApexSpec`, `ApexRace`, `ApexRaces`, `ApexOffer`, `EvolutionBoost`), the mixin `mixin/speciestensura/RaceInstanceMixin` (second of the three; listed in `docs/mixins.md`), the tags `data/tensura/tags/manascore_race/races/{human_like,undead}.json` (entries are `required: false`) and the lang keys `supernaturalbloodlines.race.<id>` and `.description`.
+
+| Species | Apex race (`supernaturalbloodlines:`) | Signature skill (placeholder) | Undead tag |
+|---|---|---|---|
+| ORIGINAL | `primordial_vampire` | `infinite_regeneration` | yes |
+| ORIGINAL_HYBRID | `primordial_hybrid` | `ultraspeed_regeneration` | yes |
+| HYBRID | `moonblood_hybrid` | `godwolf_sense` | yes |
+| WITCH | `ancestral_witch` | `magic_sense` | no |
+| SIPHONER, HERETIC | `void_siphon` | `gluttony` | yes |
+| TRIBRID | `tribrid_ascendant` | `ultra_instinct` | yes |
+| HUNTER_OF_THE_FIVE | `eternal_hunter` | `danger_sense` | no |
+
+- **Registration.** One class, `ApexRace extends TensuraRace` (not `DefaultRace`: that one needs a Tensura `RaceConfig`), configured by an `ApexSpec` (max health, attack and movement speed as `ADD_VALUE` modifiers, all placeholders; energy range and the 1,000,000 EP requirement are constants in `ApexRace`). Added with `RaceAPI.getRaceRegistry().register(id, supplier)` from the mod constructor, the same registrar Tensura's `TensuraRaces` uses. `ManasRace.equals` compares class and registry name, so the server's `getNextEvolutions(...).contains(target)` works with the seven ids.
+- **Offer.** `ApexOffer.withApex` adds the apex race at the end of `ManasRaceInstance.getNextEvolutions` when the config allows it, the player's race is in `HumanLikeLine.SAINT_OR_HIGHER` and the species has an apex race. The result is a new `ArrayList` (Tensura's lists are immutable). Failures are caught: one warning, no apex option. The hook covers the client list, "set tracked" and the server packet; `apexEvolutionRunsThroughTensurasPacketHandler` presses Tensura's real `RequestEvolutionPacket` handler.
+- **Progress** toward an apex race is Tensura's own: `TensuraRace.getEvolutionProgress` sums the weighted requirements of the **target** race (`ApexRace.getEvolutionRequirements` = one `EPRequirement`, 1,000,000), not of the current one, and `RequestEvolutionPacket` needs `>= 100`.
+- **Evolution bonus (R100).** `EvolutionBoost` multiplies the progress `ManasRaceInstance.getEvolutionProgress` reports by `evolution_progress_multiplier` (default 1.25, range 1 to 10), capped at 100 and never below Tensura's value, for a player with a species whose layer is not empty. It applies to every evolution, not only the apex one. The requirement itself is not lowered, so the bar and the server's `>= 100` check agree.
+- **Hook missing.** The mixin plugin looks in `postApply` for our calls in both methods (`require = 0` would skip a renamed one silently), logs `RaceInstanceMixin hooks in place` or a warning, and `SpeciesTensuraPart` warns once at init when the offer hook is absent. The switch `apex_evolutions_enabled=false` is the same state for a test (`apexHookMissingIsHarmless`): no apex option, Tensura's own list unchanged, the layers keep working.
+- **Species lost after the apex race.** The race stays. The layer skills (species-only) are not part of the apex race's intrinsic list: the layer grants and tracks them, so they leave through `SkillOwners.release` when the species goes and come back when it returns (`apexKeptWhenSpeciesLost`). The signature skill is the race's own intrinsic skill and stays: only the species-only skills go dormant. **Mastery of a dormant layer skill is lost** (the skill is forgotten and learned fresh): saving it would need a new per-skill map in `BloodlineState` (its codec is at the 16-field cap), so it is documented, not built. It is the same loss as a cure.
+- **Tags.** `human_like` holds all seven. `undead` holds the five vampire-type ones. Tensura's `no_blood` includes `#tensura:undead`, so those five are also **bloodless** for Tensura (`RaceUtils.isBloodless`) and for vampirism_tensura's bite refusal (`VampirePlayerBiteMixin`): nobody bites them, and Tensura's drain and blood mist skip them as targets.
+- **R103.** `FactionRaceRules` now exempts an apex vampire-type race from the hunter **join** denial too (it only skipped the werewolf join and the hunter ejection before): `ApexFactionGameTests.apexRaceKeepsAnOriginalInTheHuntersButNotAPlainPlayer`.
+- **A saved race that is no longer registered.** ManasCore does **not** fall back: `RaceStorage.load` -> `ManasRaceInstance.fromNBT` throws `NullPointerException("No race found for location ...")` inside `Entity.load`, so that player cannot load at all (`manasCoreThrowsForAnUnregisteredSavedRace`). A login reset would run too late, so the fix is the other way round: when Tensura is installed and `species_tensura` is off, the mod constructor still registers the seven apex races (`ApexRaces.register()`, log line `Apex races registered without species_tensura`). They then exist as plain races with no offer. Removing Tensura or this mod is not covered: the same load fails for every Tensura race.
+- **Not done / open for the owner.** Names, stats, EP requirement and signature skills are placeholders. No race icon texture (`icons/races/<id>`) exists, so the evolution screen will probably show a missing-texture icon (not checked in a client). `getPreviousEvolutions` of an apex race is empty (the evolution tree may not draw the link back).

@@ -20,6 +20,7 @@ import net.ofatech.supernaturalbloodlines.core.PartLoader;
 import net.ofatech.supernaturalbloodlines.core.StalePartModifiers;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.network.ModNetwork;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexRaces;
 import org.slf4j.Logger;
 
 @Mod(SupernaturalBloodlines.MODID)
@@ -49,5 +50,10 @@ public final class SupernaturalBloodlines {
         }
         EnabledParts.set(parts);
         PartLoader.initAll(parts, modBus, container);
+        if (mods.isLoaded("tensura") && !parts.contains(Part.SPECIES_TENSURA)) {
+            // ManasCore throws when a saved race is not registered, which stops that player from loading at all
+            ApexRaces.register();
+            LOGGER.info("Apex races registered without species_tensura (a saved player may still hold one)");
+        }
     }
 }

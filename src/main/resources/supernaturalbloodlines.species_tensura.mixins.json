@@ -5,6 +5,7 @@
   "plugin": "net.ofatech.supernaturalbloodlines.mixin.SpeciesTensuraMixinPlugin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "RaceInstanceMixin",
     "RaceUtilsMixin"
   ],
   "injectors": {
