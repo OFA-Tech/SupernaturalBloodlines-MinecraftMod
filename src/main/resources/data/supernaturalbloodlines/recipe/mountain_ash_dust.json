@@ -1,0 +1,6 @@
+{
+  "neoforge:conditions": [ { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" } ],
+  "type": "minecraft:stonecutting",
+  "ingredient": { "item": "supernaturalbloodlines:mountain_ash_log" },
+  "result": { "id": "supernaturalbloodlines:mountain_ash_dust", "count": 4 }
+}

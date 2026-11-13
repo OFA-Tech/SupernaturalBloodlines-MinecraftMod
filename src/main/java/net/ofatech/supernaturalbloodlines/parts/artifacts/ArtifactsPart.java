@@ -13,6 +13,8 @@ import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.AshDaggerGame
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.CompassHearingGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.CuriosSlotsGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.MoonRingGameTests;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.MountainAshGameTests;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.MountainAshWerewolfGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ResurrectionVervainGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.RingGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.rite.BindItemRiteFactory;
@@ -29,6 +31,7 @@ public final class ArtifactsPart {
         RiteFactoryRegistry.get().register(BindItemRiteFactory.ID, BindItemRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(RequiresDesiccatedRiteFactory.ID, RequiresDesiccatedRiteFactory.CODEC);
         ArtifactItems.register(modBus);
+        MountainAsh.register(modBus);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modBus.addListener(ArtifactsClient::onClientSetup);
         }
@@ -47,10 +50,12 @@ public final class ArtifactsPart {
             e.register(RingGameTests.class);
             e.register(ResurrectionVervainGameTests.class);
             e.register(CompassHearingGameTests.class);
+            e.register(MountainAshGameTests.class);
             if (curios) {
                 e.register(CuriosSlotsGameTests.class);
             }
             if (werewolves) {
+                e.register(MountainAshWerewolfGameTests.class);
                 e.register(MoonRingGameTests.class);
             }
         });

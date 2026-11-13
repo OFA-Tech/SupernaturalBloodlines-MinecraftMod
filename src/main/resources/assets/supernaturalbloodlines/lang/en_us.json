@@ -93,5 +93,11 @@
   "item.supernaturalbloodlines.vampire_compass": "Vampire Compass",
   "item.supernaturalbloodlines.hearing_device": "Hearing Device",
   "rite.supernaturalbloodlines.vampire_compass": "Rite of the Vampire Compass",
-  "rite.supernaturalbloodlines.hearing_device": "Rite of the Hearing Device"
+  "rite.supernaturalbloodlines.hearing_device": "Rite of the Hearing Device",
+  "block.supernaturalbloodlines.mountain_ash_log": "Mountain Ash Log",
+  "block.supernaturalbloodlines.mountain_ash_planks": "Mountain Ash Planks",
+  "block.supernaturalbloodlines.mountain_ash_leaves": "Mountain Ash Leaves",
+  "block.supernaturalbloodlines.mountain_ash_sapling": "Mountain Ash Sapling",
+  "block.supernaturalbloodlines.mountain_ash_line": "Mountain Ash Line",
+  "item.supernaturalbloodlines.mountain_ash_dust": "Mountain Ash Dust"
 }

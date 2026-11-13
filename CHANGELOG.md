@@ -10,6 +10,8 @@
 - Placeholder textures for both rings.
 - Vampire Compass (rite *Rite of the Vampire Compass*: compass + vervain, medium circle, 2000 power): the needle points at the nearest vampire, hybrid or Original within 64 blocks (not yourself), refreshed once a second on the server through the vanilla lodestone tracker; with nobody in range it spins. Client: an `angle` item property with 32 placeholder needle frames.
 - Hearing Device (rite *Rite of the Hearing Device*: note block, 2 iron ingots, amethyst shard, medium circle, 3000 power): right click stuns every supernatural (vampire, werewolf, species; mob or player) within 5 blocks for 5 seconds (Slowness V + Nausea), 60 second cooldown. The user, humans and other mobs are not affected.
+- Mountain ash: sapling, log, leaves and planks (the tree grows from the sapling and generates rarely in forest biomes through a biome modifier), and *mountain ash dust* (stonecutter: 1 log -> 4 dust). Dust is placed like redstone dust and lays a line that gives no power. Vampires, werewolves, hybrids, Originals, heretics and tribrids cannot walk across it (a 1.5 block wall for them only; witches, siphoners and humans pass), mobs of that kind path around it, projectiles they fire are discarded on contact, and they cannot break it by hand. A line flagged as laid by a pack Emissary (the flag exists, plan 9 sets it) also stops the mobs in `#supernaturalbloodlines:supernatural_mobs` (only the Vampirism ghost for now).
+- Test template `tall` (16x10x16) for tests whose entities are taller than a block.
 
 ## Unreleased: species
 

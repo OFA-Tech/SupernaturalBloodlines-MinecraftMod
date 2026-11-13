@@ -1,6 +1,7 @@
 {
     "replace": false,
     "values": [
-        { "id": "supernaturalbloodlines:white_oak_sapling", "required": false }
+        { "id": "supernaturalbloodlines:white_oak_sapling", "required": false },
+        { "id": "supernaturalbloodlines:mountain_ash_sapling", "required": false }
     ]
 }
