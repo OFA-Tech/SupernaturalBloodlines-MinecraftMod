@@ -1,5 +1,5 @@
 {
-  "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "vampirism"}],
+  "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }],
   "type": "vampirism:advanced_vampire",
   "max_aura": 2500,
   "max_magicule": 8000,

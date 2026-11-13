@@ -1,4 +1,7 @@
 {
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "enchantedTensura" }
+    ],
     "exhaustion": 0.0,
     "message_id": "holy_purification",
     "scaling": "never"

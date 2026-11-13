@@ -2,139 +2,139 @@
   "values": {
     "tensura:akash": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:aqua_frog": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:arch_daemon": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:army_wasp": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:beast_gnome": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:black_spider": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:bone_golem": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:charybdis": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:clone": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:elemental_colossus": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:evil_centipede": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:evil_centipede_body": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:feathered_serpent": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:giant_ant": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:greater_daemon": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:hell_caterpillar": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:hell_moth": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:ifrit": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:ifrit_clone": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:knight_spider": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:lesser_daemon": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:megalodon": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:metal_slime": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:phantaspore": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:salamander": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:skeleton": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:slime": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:supermassive_slime": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:sylphide": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:training_dummy": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:undine": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:war_gnome": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:winged_cat": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     },
     "tensura:zombie": {
       "blood": 0,
-      "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "tensura"}]
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
     }
   }
 }
