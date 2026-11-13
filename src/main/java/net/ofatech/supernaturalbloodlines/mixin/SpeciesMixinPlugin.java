@@ -5,6 +5,7 @@ import java.util.Set;
 import net.neoforged.fml.loading.LoadingModList;
 import net.ofatech.supernaturalbloodlines.core.EarlySwitches;
 import net.ofatech.supernaturalbloodlines.core.Part;
+import net.ofatech.supernaturalbloodlines.core.PartLoader;
 import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +22,10 @@ public final class SpeciesMixinPlugin implements IMixinConfigPlugin {
     @Override
     public void onLoad(String mixinPackage) {
         LoadingModList mods = LoadingModList.get();
-        boolean modsPresent = PART.requiredMods().stream().allMatch(id -> mods.getModFileById(id) != null);
-        boolean switchOn = EarlySwitches.enabled().contains(PART);
-        apply = modsPresent && switchOn;
-        LOGGER.info("{} mixins {} (required mods present: {}, part switch on: {})",
-                PART.configKey(), apply ? "applied" : "NOT applied", modsPresent, switchOn);
+        // the same rule the part loader uses, so a part whose required parts are off gets no mixins either
+        apply = PartLoader.enabledParts(id -> mods.getModFileById(id) != null, EarlySwitches.enabled()::contains).contains(PART);
+        LOGGER.info("{} mixins {} (part loader: {})", PART.configKey(), apply ? "applied" : "NOT applied",
+                PartLoader.status(PART, id -> mods.getModFileById(id) != null, EarlySwitches.enabled()::contains));
     }
 
     @Override

@@ -84,8 +84,9 @@ public final class Venom {
             }
             return;
         }
-        if (original) {
+        if (original) { // R42v: weakened only, no tick damage and no hallucination
             target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 1, true, false, true));
+            return;
         }
         if (target.getHealth() > 1f) {
             target.hurt(source(target), 1f);
