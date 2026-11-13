@@ -35,7 +35,7 @@ public class HearingDeviceItem extends Item {
         }
         if (!level.isClientSide) {
             for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, user.getBoundingBox().inflate(RANGE),
-                    t -> t != user && t.distanceToSqr(user) <= RANGE * RANGE && Supernatural.is(t))) {
+                    t -> t != user && t.distanceToSqr(user) <= RANGE * RANGE && Supernatural.is(t) && mayStun(user, t))) {
                 e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, STUN_TICKS, 4), user);
                 e.addEffect(new MobEffectInstance(MobEffects.CONFUSION, STUN_TICKS), user);
             }
@@ -43,5 +43,10 @@ public class HearingDeviceItem extends Item {
         }
         user.getCooldowns().addCooldown(this, COOLDOWN_TICKS);
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+    }
+
+    /** A player target is stunned only if {@code user} could hit them (PvP on) and they are not creative or spectating. */
+    private static boolean mayStun(Player user, LivingEntity target) {
+        return !(target instanceof Player tp) || user.canHarmPlayer(tp) && !tp.isCreative() && !tp.isSpectator();
     }
 }

@@ -78,6 +78,27 @@ public final class TestPlayers {
         });
     }
 
+    /** Like {@link #createDuelist}, but {@code canHarmPlayer} follows the server's PvP setting, as a real player's does. */
+    public static ServerPlayer createPvpAware(GameTestHelper helper) {
+        UUID id = UUID.randomUUID();
+        return noSpawnProtection(new FakePlayer(helper.getLevel(), new GameProfile(id, "test-" + id.toString().substring(0, 8))) {
+            @Override
+            public boolean isInvulnerableTo(DamageSource source) {
+                return false;
+            }
+
+            @Override
+            public boolean canHarmPlayer(net.minecraft.world.entity.player.Player other) {
+                return level().getServer().isPvpAllowed();
+            }
+
+            @Override
+            public void die(DamageSource source) {
+                CommonHooks.onLivingDeath(this, source);
+            }
+        });
+    }
+
     private static ServerPlayer noSpawnProtection(ServerPlayer p) {
         try {
             // the 60 tick respawn protection only counts down in tick(), which a FakePlayer never runs

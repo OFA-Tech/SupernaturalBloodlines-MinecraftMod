@@ -48,8 +48,9 @@ public final class CompassHearingGameTests {
         return p;
     }
 
+    // a duelist: the hearing device only stuns players its user could hit
     private static ServerPlayer holder(GameTestHelper helper) {
-        ServerPlayer p = TestPlayers.createMortal(helper);
+        ServerPlayer p = TestPlayers.createDuelist(helper);
         p.setPos(helper.absoluteVec(new Vec3(1.5, 1, 1.5)));
         return p;
     }
@@ -211,6 +212,69 @@ public final class CompassHearingGameTests {
             }
         } finally {
             leave(helper, user, otherPlayer);
+        }
+        helper.succeed();
+    }
+
+    /** With PvP off a player target is spared (a creative or spectating one always); mobs are not. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void hearingDeviceRespectsPvp(GameTestHelper helper) {
+        var server = helper.getLevel().getServer();
+        boolean pvp = server.isPvpAllowed();
+        ServerPlayer user = TestPlayers.createPvpAware(helper);
+        user.setPos(helper.absoluteVec(new Vec3(1.5, 1, 1.5)));
+        ServerPlayer target = vampirePlayer(helper);
+        target.setPos(helper.absoluteVec(new Vec3(2.5, 1, 1.5)));
+        ServerPlayer creative = vampirePlayer(helper);
+        creative.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.5)));
+        creative.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        ServerPlayer spectator = vampirePlayer(helper);
+        spectator.setPos(helper.absoluteVec(new Vec3(3.5, 1, 1.5)));
+        spectator.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+        Mob mob = vampireMob(helper, new BlockPos(1, 1, 4));
+        ItemStack device = new ItemStack(ArtifactItems.HEARING_DEVICE.get());
+        user.setItemInHand(InteractionHand.MAIN_HAND, device);
+        for (ServerPlayer p : new ServerPlayer[] {user, target, creative, spectator}) {
+            join(helper, p);
+        }
+        try {
+            server.setPvpAllowed(false);
+            device.use(helper.getLevel(), user, InteractionHand.MAIN_HAND);
+            helper.assertTrue(target.getActiveEffects().isEmpty(), "a vampire player was stunned with PvP off: " + target.getActiveEffects());
+            helper.assertTrue(creative.getActiveEffects().isEmpty() && spectator.getActiveEffects().isEmpty(), "a creative or spectating player was stunned");
+            helper.assertTrue(mob.hasEffect(MobEffects.MOVEMENT_SLOWDOWN), "a vampire mob was spared with PvP off");
+
+            user.getCooldowns().removeCooldown(device.getItem());
+            server.setPvpAllowed(true);
+            device.use(helper.getLevel(), user, InteractionHand.MAIN_HAND);
+            helper.assertTrue(hasEffect(target, MobEffects.MOVEMENT_SLOWDOWN, 4), "control: a vampire player was spared with PvP on: " + target.getActiveEffects());
+            helper.assertTrue(creative.getActiveEffects().isEmpty() && spectator.getActiveEffects().isEmpty(), "a creative or spectating player was stunned with PvP on");
+        } finally {
+            server.setPvpAllowed(pvp);
+            leave(helper, user, target, creative, spectator);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void compassIgnoresCreativeAndSpectatorVampires(GameTestHelper helper) {
+        ServerPlayer p = holder(helper);
+        ServerPlayer creative = vampirePlayer(helper);
+        creative.setPos(helper.absoluteVec(new Vec3(2.5, 1, 1.5)));
+        creative.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        ServerPlayer spectator = vampirePlayer(helper);
+        spectator.setPos(helper.absoluteVec(new Vec3(3.5, 1, 1.5)));
+        spectator.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+        Mob far = vampireMob(helper, new BlockPos(13, 1, 13));
+        ItemStack compass = new ItemStack(ArtifactItems.VAMPIRE_COMPASS.get());
+        join(helper, creative);
+        join(helper, spectator);
+        try {
+            net.ofatech.supernaturalbloodlines.parts.artifacts.item.VampireCompassItem.update(compass, helper.getLevel(), p);
+            helper.assertTrue(target(compass).isPresent() && target(compass).get().pos().equals(far.blockPosition()),
+                    "the compass points at a creative or spectating vampire: " + target(compass));
+        } finally {
+            leave(helper, creative, spectator);
         }
         helper.succeed();
     }

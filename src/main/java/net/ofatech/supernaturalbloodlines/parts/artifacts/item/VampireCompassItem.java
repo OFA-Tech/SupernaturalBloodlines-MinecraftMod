@@ -6,6 +6,7 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.LodestoneTracker;
@@ -49,7 +50,8 @@ public class VampireCompassItem extends Item {
 
     private static Optional<LivingEntity> nearestVampire(Level level, Entity holder) {
         return level.getEntitiesOfClass(LivingEntity.class, holder.getBoundingBox().inflate(RANGE),
-                        e -> e != holder && e.isAlive() && e.distanceToSqr(holder) <= (double) RANGE * RANGE && Supernatural.isVampiric(e))
+                        e -> e != holder && e.isAlive() && e.distanceToSqr(holder) <= (double) RANGE * RANGE && Supernatural.isVampiric(e)
+                                && !(e instanceof Player p && (p.isCreative() || p.isSpectator())))
                 .stream().min(Comparator.comparingDouble(e -> e.distanceToSqr(holder)));
     }
 }
