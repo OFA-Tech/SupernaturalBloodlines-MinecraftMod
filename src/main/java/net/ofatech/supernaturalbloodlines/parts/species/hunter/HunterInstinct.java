@@ -12,6 +12,7 @@ import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.network.GlowPayload;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * What a Hunter of the Five feels (R84): instinct weakens one who has not killed prey for 3 days, and from 5 kills
@@ -72,14 +73,19 @@ public final class HunterInstinct {
         return false;
     }
 
+    /** Prey the hunter senses: alive, within range, not themself, no spectator, and prey by R81 (so no witches or siphoners). */
+    @VisibleForTesting
+    public static boolean senses(ServerPlayer hunter, LivingEntity e) {
+        return e != hunter && e.isAlive() && !e.isSpectator() && e.distanceToSqr(hunter) <= SENSE_RANGE * SENSE_RANGE && MarkTracker.isPrey(e);
+    }
+
     /** Sends the prey within range, if the hunter has the kills for it. Nothing is sent when there is none. */
     static void sense(ServerPlayer p) {
         BloodlineState s = BloodlineAccess.get(p);
         if (s.species() != Species.HUNTER_OF_THE_FIVE || s.markKills() < SENSE_KILLS) {
             return;
         }
-        List<Integer> ids = p.level().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(SENSE_RANGE),
-                e -> e != p && e.isAlive() && e.distanceToSqr(p) <= SENSE_RANGE * SENSE_RANGE && MarkTracker.isPrey(e))
+        List<Integer> ids = p.level().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(SENSE_RANGE), e -> senses(p, e))
                 .stream().map(LivingEntity::getId).toList();
         if (!ids.isEmpty()) {
             GlowPayload.send(p, ids);

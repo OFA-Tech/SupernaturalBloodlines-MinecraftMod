@@ -21,6 +21,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
@@ -216,6 +217,34 @@ public final class HunterInstinctGameTests {
             far.discard();
             cow.discard();
             reset(hunter, young);
+        }
+        helper.succeed();
+    }
+
+    /** The sense filter is R81 (no witches or siphoners, whatever their faction) plus range, living and no spectators. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void senseSkipsWitchesSiphonersAndSpectators(GameTestHelper helper) {
+        ServerPlayer hunter = marked(helper, 5);
+        ServerPlayer plain = vampire(helper);
+        ServerPlayer witch = vampire(helper);
+        ServerPlayer siphoner = vampire(helper);
+        ServerPlayer spectator = vampire(helper);
+        ServerPlayer far = vampire(helper);
+        try {
+            BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).witchLayer(true).build());
+            BloodlineAccess.set(siphoner, BloodlineState.NONE.toBuilder().species(Species.SIPHONER).build());
+            spectator.setGameMode(GameType.SPECTATOR);
+            far.setPos(hunter.getX() + 30, hunter.getY(), hunter.getZ());
+            helper.assertTrue(HunterInstinct.senses(hunter, plain), "a plain vampire is not sensed");
+            helper.assertTrue(!HunterInstinct.senses(hunter, witch), "a witch is sensed");
+            helper.assertTrue(!HunterInstinct.senses(hunter, siphoner), "a siphoner is sensed");
+            helper.assertTrue(!HunterInstinct.senses(hunter, spectator), "a spectator is sensed");
+            helper.assertTrue(!HunterInstinct.senses(hunter, far), "a vampire out of range is sensed");
+            helper.assertTrue(!HunterInstinct.senses(hunter, hunter), "the hunter senses themself");
+            helper.assertTrue(!HunterInstinct.senses(hunter, human(helper)), "a human is sensed");
+        } finally {
+            spectator.setGameMode(GameType.SURVIVAL);
+            reset(hunter, plain, witch, siphoner, spectator, far);
         }
         helper.succeed();
     }
