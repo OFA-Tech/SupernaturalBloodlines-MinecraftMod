@@ -12,6 +12,20 @@ public final class BloodlineRules {
     }
 
     public static Outcome apply(BloodlineState s, BloodlineEvent e, BloodlineContext c) {
+        Outcome out = transition(s, e, c);
+        return needsWerewolves(s, out, c) ? Outcome.refuse(s, "needs_werewolves") : out;
+    }
+
+    /** Becoming a hybrid type (or starting the transition that leads to one) is impossible without Werewolves. */
+    private static boolean needsWerewolves(BloodlineState s, Outcome out, BloodlineContext c) {
+        if (c.werewolvesLoaded() || out.refused()) {
+            return false;
+        }
+        BloodlineState next = out.state();
+        return isHybridType(next.species()) && !isHybridType(s.species()) || next.inTransition() && !s.inTransition();
+    }
+
+    private static Outcome transition(BloodlineState s, BloodlineEvent e, BloodlineContext c) {
         return switch (e) {
             case RITE_OF_IMMORTALITY -> immortality(s, c);
             case DIED_WITH_ORIGINAL_BLOOD -> diedWithOriginalBlood(s, c);

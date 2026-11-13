@@ -1,5 +1,7 @@
 {
   "supernaturalbloodlines.refusal.not_human_like": "Your race cannot take a bloodline.",
+  "supernaturalbloodlines.refusal.needs_werewolves": "This bloodline needs the Werewolves mod.",
+  "death.attack.failed_transition": "%1$s's body could not bear the change",
   "supernaturalbloodlines.refusal.has_faction": "You already belong to a faction.",
   "supernaturalbloodlines.refusal.has_species": "You already carry a bloodline.",
   "supernaturalbloodlines.refusal.original_cap": "The world already has as many Originals as it allows.",

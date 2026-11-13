@@ -133,6 +133,30 @@ class BloodlineRulesTest {
         assertNoChange(run(s, DRANK_DOPPELGANGER_BLOOD, ctx()), s);
     }
 
+    // ---- Without Werewolves ----
+
+    @Test
+    void hybridTypesAreRefusedWithoutWerewolves() {
+        BloodlineContext noWolves = ctx().withWerewolvesLoaded(false);
+        BloodlineState moonReady = gene(st(Species.ORIGINAL));
+        assertRefused(run(moonReady, RITE_OF_THE_MOON, noWolves), moonReady, "needs_werewolves");
+        assertRefused(run(st(Species.ORIGINAL), RITE_OF_LINEAGE_AWAKEN, noWolves), st(Species.ORIGINAL), "needs_werewolves");
+        BloodlineState inTransition = BloodlineState.NONE.toBuilder().inTransition(true).pendingSire(U).build();
+        assertRefused(run(inTransition, DRANK_DOPPELGANGER_BLOOD, noWolves), inTransition, "needs_werewolves");
+        assertRefused(run(BloodlineState.NONE, DIED_WITH_ORIGINAL_BLOOD, noWolves.withFaction(BaseFaction.WEREWOLF).withBloodSource(U)),
+                BloodlineState.NONE, "needs_werewolves");
+    }
+
+    @Test
+    void werewolvesAreNotNeededForTheRestOfTheSpecies() {
+        BloodlineContext noWolves = ctx().withWerewolvesLoaded(false);
+        assertEquals(Species.ORIGINAL, run(BloodlineState.NONE, RITE_OF_IMMORTALITY, noWolves).state().species());
+        assertEquals(Species.WITCH, run(BloodlineState.NONE, ANCESTRAL_CALLING_WITCH, noWolves).state().species());
+        assertEquals(Species.HERETIC, run(st(Species.SIPHONER), JOINED_VAMPIRE, noWolves).state().species());
+        // leaving a hybrid type is always allowed
+        assertEquals(Species.NONE, run(st(Species.HYBRID), RITE_OF_CLEANSING_BLOOD, noWolves).state().species());
+    }
+
     @Test
     void otherBloodMakesUnstable() {
         BloodlineState s = BloodlineState.NONE.toBuilder().inTransition(true).pendingSire(U).build();

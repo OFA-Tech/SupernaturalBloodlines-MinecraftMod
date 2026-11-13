@@ -1,0 +1,179 @@
+package net.ofatech.supernaturalbloodlines.parts.species.gametest;
+
+import de.teamlapen.vampirism.api.VReference;
+import de.teamlapen.vampirism.api.VampirismAPI;
+import de.teamlapen.vampirism.api.entity.factions.IFactionPlayerHandler;
+import java.util.List;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.DamageTypeTags;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BaseFaction;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineContext;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Outcome;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Outcome.Action;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
+import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
+import net.ofatech.supernaturalbloodlines.parts.species.OutcomeExecutor;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesEligibility;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteHooks;
+
+/** Shared species plumbing: the context, eligibility and the outcome executor. */
+@PrefixGameTestTemplate(false)
+public final class SpeciesGameTests {
+    private static final String NS = SupernaturalBloodlines.MODID;
+
+    private SpeciesGameTests() {
+    }
+
+    private static IFactionPlayerHandler handler(ServerPlayer p) {
+        return VampirismAPI.factionPlayerHandler(p);
+    }
+
+    private static Outcome actions(Action... a) {
+        return new Outcome(BloodlineState.NONE, List.of(a), null);
+    }
+
+    private static BloodlineState species(Species s) {
+        return BloodlineState.NONE.toBuilder().species(s).build();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void executorJoinsVampire(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        OutcomeExecutor.run(p, actions(Action.JOIN_VAMPIRE));
+        helper.assertTrue(handler(p).getCurrentFaction() == VReference.VAMPIRE_FACTION, "faction is " + handler(p).getCurrentFaction());
+        helper.assertTrue(handler(p).getCurrentLevel() == 1, "level is " + handler(p).getCurrentLevel());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void executorKeepsTheVampireLevel(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        helper.assertTrue(handler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 3), "could not make a vampire");
+        OutcomeExecutor.run(p, actions(Action.JOIN_VAMPIRE));
+        helper.assertTrue(handler(p).getCurrentLevel() == 3, "level is " + handler(p).getCurrentLevel());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void executorLeavesFaction(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        helper.assertTrue(handler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 2), "could not make a vampire");
+        OutcomeExecutor.run(p, actions(Action.LEAVE_FACTION));
+        helper.assertTrue(handler(p).getCurrentFaction() == null, "still in " + handler(p).getCurrentFaction());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void executorRefusalSendsMessage(GameTestHelper helper) {
+        RecordingPlayer p = RecordingPlayer.create(helper);
+        String key = Outcome.REFUSAL_PREFIX + "has_faction";
+        OutcomeExecutor.run(p, new Outcome(BloodlineState.NONE, List.of(Action.JOIN_VAMPIRE), key));
+        helper.assertTrue(p.received(key), "no chat message for " + key);
+        helper.assertTrue(!p.receivedOnActionBar(key), "the refusal went to the action bar, not the chat");
+        helper.assertTrue(handler(p).getCurrentFaction() == null, "a refused outcome still joined " + handler(p).getCurrentFaction());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void executorKillsOnKillPlayer(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.createVulnerable(helper);
+        OutcomeExecutor.run(p, actions(Action.KILL_PLAYER));
+        helper.assertTrue(p.isDeadOrDying(), "the player survived, health " + p.getHealth());
+        helper.assertTrue(p.getLastDamageSource() != null && p.getLastDamageSource().is(OutcomeExecutor.FAILED_TRANSITION),
+                "the death was not a failed transition: " + p.getLastDamageSource());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void failedTransitionBypassesResistance(GameTestHelper helper) {
+        helper.assertTrue(helper.getLevel().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
+                .containsKey(OutcomeExecutor.FAILED_TRANSITION), "damage type failed_transition is missing");
+        helper.assertTrue(helper.getLevel().damageSources().source(OutcomeExecutor.FAILED_TRANSITION).is(DamageTypeTags.BYPASSES_RESISTANCE),
+                "failed_transition does not bypass Resistance");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void nonHumanLikeRefusedWhenCheckSaysNo(GameTestHelper helper) {
+        RecordingPlayer p = RecordingPlayer.create(helper);
+        SpeciesEligibility.HumanLikeCheck before = SpeciesEligibility.check();
+        SpeciesEligibility.setCheck(x -> false);
+        try {
+            BloodlineContext ctx = SpeciesContext.of(p, null);
+            helper.assertTrue(!ctx.humanLike(), "the context is human-like although the check says no");
+            Outcome out = BloodlineAccess.applyEvent(p, BloodlineEvent.RITE_OF_IMMORTALITY, ctx);
+            helper.assertTrue(out.refused() && out.refusalKey().equals(Outcome.REFUSAL_PREFIX + "not_human_like"), "outcome was " + out);
+            helper.assertTrue(BloodlineAccess.get(p).species() == Species.NONE, "species is " + BloodlineAccess.get(p).species());
+            OutcomeExecutor.run(p, out);
+            helper.assertTrue(p.received(Outcome.REFUSAL_PREFIX + "not_human_like"), "the player was not told");
+        } finally {
+            SpeciesEligibility.setCheck(before);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void humanLikeByDefault(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        BloodlineContext ctx = SpeciesContext.of(p, null);
+        helper.assertTrue(ctx.humanLike(), "a player is not human-like by default");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void contextReadsFactionConfigAndWerewolves(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        java.util.UUID source = java.util.UUID.randomUUID();
+        helper.assertTrue(handler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        BloodlineContext ctx = SpeciesContext.of(p, source);
+        helper.assertTrue(ctx.faction() == BaseFaction.VAMPIRE, "faction is " + ctx.faction());
+        helper.assertTrue(ctx.bloodSource().equals(source), "blood source is " + ctx.bloodSource());
+        helper.assertTrue(ctx.maxOriginals() == 0, "max originals is " + ctx.maxOriginals());
+        helper.assertTrue(ctx.transitionTicks() == 24000, "transition ticks are " + ctx.transitionTicks());
+        helper.assertTrue(ctx.werewolvesLoaded() == ModList.get().isLoaded("werewolves"), "werewolves flag is " + ctx.werewolvesLoaded());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void contextCountsOriginals(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        int before = SpeciesContext.of(p, null).originalsInWorld();
+        try {
+            BloodlineAccess.set(p, species(Species.ORIGINAL));
+            helper.assertTrue(SpeciesContext.of(p, null).originalsInWorld() == before + 1, "an Original is not counted");
+            BloodlineAccess.set(p, species(Species.ORIGINAL_HYBRID));
+            helper.assertTrue(SpeciesContext.of(p, null).originalsInWorld() == before + 1, "an Original hybrid is counted twice or not at all");
+            BloodlineAccess.set(p, species(Species.WITCH));
+            helper.assertTrue(SpeciesContext.of(p, null).originalsInWorld() == before, "a witch is counted as an Original");
+        } finally {
+            BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void riteFactoryUsesTheSpeciesContext(GameTestHelper helper) {
+        RecordingPlayer p = RecordingPlayer.create(helper);
+        SpeciesEligibility.HumanLikeCheck before = SpeciesEligibility.check();
+        SpeciesEligibility.setCheck(x -> false);
+        try {
+            BloodlineContext ctx = FactionRiteHooks.context(p, BaseFaction.WEREWOLF, 77);
+            helper.assertTrue(!ctx.humanLike(), "the rite factory's context is not the species context");
+            helper.assertTrue(ctx.faction() == BaseFaction.WEREWOLF && ctx.gameTime() == 77, "faction/time were not passed on: " + ctx);
+        } finally {
+            SpeciesEligibility.setCheck(before);
+        }
+        helper.succeed();
+    }
+}

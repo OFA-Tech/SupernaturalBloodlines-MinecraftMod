@@ -63,6 +63,7 @@ public final class BloodlineGameTests {
         // Tensura's registry has no namespace prefix and our files sit in its data namespace
         checkPartData(helper, access, "enchantedTensura", "entity_existence", "tensura", "supernaturalbloodlines_enchanted_");
         checkPartData(helper, access, "vampirismTensura", "entity_existence", "tensura", "supernaturalbloodlines_vampirism_");
+        checkPartData(helper, access, "species", "damage_type", "supernaturalbloodlines", "failed_transition");
         helper.succeed();
     }
 
