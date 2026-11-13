@@ -57,6 +57,10 @@ config="${mod_id}.vampirism_tensura.mixins.json"
 [[mixins]]
 config="${mod_id}.species.mixins.json"
 
+# Applied only when the species_tensura part is possible (Vampirism, Enchanted and Tensura present, species on) and its switch is on (see SpeciesTensuraMixinPlugin).
+[[mixins]]
+config="${mod_id}.species_tensura.mixins.json"
+
 # The [[accessTransformers]] block allows you to declare where your AT file is.
 # If this block is omitted, a fallback attempt will be made to load an AT from META-INF/accesstransformer.cfg
 #[[accessTransformers]]

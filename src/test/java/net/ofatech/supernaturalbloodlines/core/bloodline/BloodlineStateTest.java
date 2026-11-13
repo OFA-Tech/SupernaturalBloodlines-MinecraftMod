@@ -21,7 +21,7 @@ class BloodlineStateTest {
                 UUID.fromString("00000000-0000-0000-0000-0000000000c3"), 777L, 12, true, Set.of("a", "b"));
         BloodlineState s = new BloodlineState(Species.TRIBRID, true, UUID.fromString("00000000-0000-0000-0000-0000000000a1"),
                 true, true, 123L, UUID.fromString("00000000-0000-0000-0000-0000000000b2"), 50, 999L, 7, "x:y",
-                4, true, 888L, true, wolf);
+                4, true, 888L, true, wolf, Set.of("tensura:drain", "tensura:charm"));
 
         JsonElement json = BloodlineState.CODEC.encodeStart(JsonOps.INSTANCE, s).getOrThrow();
         assertEquals(s, BloodlineState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());

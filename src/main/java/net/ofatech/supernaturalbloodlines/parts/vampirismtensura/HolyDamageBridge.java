@@ -13,6 +13,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.ofatech.supernaturalbloodlines.shared.tensura.LayerQuery;
 
 /**
  * Tensura holy damage hurts a Vampirism vampire like holy water does. Vampirism's own holy water already counts
@@ -37,6 +38,10 @@ public final class HolyDamageBridge {
 
     public static float factor(LivingEntity target, DamageSource source) {
         if (target.level().isClientSide || source.is(HOLY_WATER) || !isVampire(target) || !TensuraDamageHelper.isHoly(source)) {
+            return 1.0F;
+        }
+        // species_tensura makes Tensura treat this player as undead, and Tensura then triples holy damage itself: no x1.5 on top
+        if (target instanceof Player p && LayerQuery.treatedAsUndeadBySpecies(p)) {
             return 1.0F;
         }
         return (float) VampireSyncConfig.holyVsVampire();

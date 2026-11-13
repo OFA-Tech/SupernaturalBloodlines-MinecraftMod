@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "net.ofatech.supernaturalbloodlines.mixin.speciestensura",
+  "plugin": "net.ofatech.supernaturalbloodlines.mixin.SpeciesTensuraMixinPlugin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "RaceUtilsMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

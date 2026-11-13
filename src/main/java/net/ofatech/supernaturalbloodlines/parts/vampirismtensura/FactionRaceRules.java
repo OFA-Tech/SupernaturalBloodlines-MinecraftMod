@@ -18,6 +18,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.NeoForge;
+import net.ofatech.supernaturalbloodlines.shared.tensura.LayerQuery;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -65,7 +66,8 @@ public final class FactionRaceRules {
                 event.setBehavior(PlayerFactionEvent.CanJoinFaction.Behavior.DENY);
             }
         } else if (WEREWOLF_FACTION_ID.equals(event.getFactionToJoin().getID())
-                && (isUndeadOrDaemon(race) || race != null && race.is(NO_BLOOD))) {
+                && (isUndeadOrDaemon(race) || race != null && race.is(NO_BLOOD))
+                && !LayerQuery.isVampireTypeSpecies(p)) { // R103: the vampire-type species are the exception
             event.setBehavior(PlayerFactionEvent.CanJoinFaction.Behavior.DENY);
         }
     }
@@ -74,7 +76,8 @@ public final class FactionRaceRules {
     // touch the race, so it cannot bounce back into the "vampire_sync" listeners and needs no guard.
     private static EventResult onSetRace(ManasRaceInstance oldRace, LivingEntity entity, ManasRaceInstance newRace,
                                          boolean flag, Changeable<Boolean> changeable, Changeable<MutableComponent> message) {
-        if (entity instanceof ServerPlayer p && !p.level().isClientSide && isUndeadOrDaemon(newRace)) {
+        if (entity instanceof ServerPlayer p && !p.level().isClientSide && isUndeadOrDaemon(newRace)
+                && !LayerQuery.isVampireTypeSpecies(p)) {
             IFactionPlayerHandler handler = VampirismAPI.factionPlayerHandler(p);
             if (handler.getCurrentFaction() == VReference.HUNTER_FACTION) {
                 handler.leaveFaction(false);

@@ -4,8 +4,8 @@ Requires: `vampirism`, `enchanted`, `tensura`, and the `species` part active. Pa
 
 Checklist (from the design, sections 5 and 10). Tick items as they ship.
 
-- [ ] Tensura races are never replaced: species are a layer on top of the player's race (SPECIES-RULES R3, R20, R100).
-- [ ] Species layer grants Tensura skills, attributes and an EP bonus; counts as undead where it matters.
+- [x] Tensura races are never replaced: species are a layer on top of the player's race (SPECIES-RULES R3, R20, R100). The layer never calls `setRace`.
+- [x] Species layer grants Tensura skills, attributes and an EP bonus; counts as undead where it matters (Task 2).
 - [ ] One apex evolution per species, unlocked for human-like races in Tensura's evolution screen.
 - [ ] Intrinsic skills from Tensura's existing ones (e.g. `blood_mist`, `drain`, `beast_transformation`, `self_regeneration`, `godwolf_sense`, `charm`); final lists chosen by the builder.
 - [ ] Sync both ways with the unified vampire; the species layer wins over the plain vampire mapping.
@@ -91,3 +91,17 @@ None of the ids in the default layer table is missing, so none is dropped. A ski
 ### Attributes
 
 `io.github.manasmods.tensura.registry.attribute.TensuraAttributes.MAX_MAGICULE` and `MAX_AURA` (`Holder<Attribute>`, ranged attributes with a minimum). Modifiers go on those with `AttributeModifier.Operation.ADD_MULTIPLIED_BASE`. Naming rewards change the **base value** of both, so a multiplied-base modifier follows them. Note the human-like lines raise EP through the base, so the layer bonus tracks the player's growth.
+
+## Species layer (Task 2)
+
+Code: `parts/speciestensura` (`SpeciesLayer`, `LayerSpec`, `LayerTable`, `UndeadTreatment`, `TensuraHumanLikeCheck`, `HumanLikeLine`, `TensuraSupernatural`, `SpeciesTensuraConfig`), the mixin `mixin/speciestensura/RaceUtilsMixin` (listed in `docs/mixins.md`) and the shared seam `shared/tensura/LayerQuery`.
+
+- **Config** `config/supernaturalbloodlines-species_tensura.toml`: `layers` (list of `SPECIES=skill,skill|maxMagiculeBonus|maxAuraBonus|treatAsUndead`, key = a species name or `VAMPIRE` for a plain Vampirism vampire; an entry replaces the default of its key, a bad one is ignored with one warning) and `undead_treatment_enabled`. Defaults are the design table; all seven skill ids were verified in Tensura 2.0.1.5, none dropped.
+- **When it runs** (`SpeciesLayer.sync`, idempotent): on every `BloodlineAccess` listener change, on login and respawn, on Vampirism `FactionLevelChanged` (the plain vampire layer), and every 200 ticks (a Tensura evolution may rewrite modifiers or skills; the tick pass is the safety net, the evolution itself does not touch the layer, pinned by `layerSurvivesTensuraEvolution`).
+- **Skills**: the missing ones are learned with Tensura's `NoMagiculeCost` switch and tracked in `BloodlineState.layerSkills` (new field, codec `layer_skills`, default empty, merged in with a second map codec because a `RecordCodecBuilder` group holds at most 16 fields; a change of it alone does not notify the bloodline listeners). A skill the player already had is neither granted nor tracked, so it is never removed (`preexistingSkillKept`). Only tracked skills are forgotten, when they leave the layer (`curedLayerRemovesOnlyGrantedSkills`). A tracked skill the player lost is learned again; a skill id that no longer exists is skipped with one warning.
+- **Attributes**: `supernaturalbloodlines:layer_magicule` / `layer_aura`, `ADD_MULTIPLIED_BASE` by the fraction, on `TensuraAttributes.MAX_MAGICULE` / `MAX_AURA`. Both ids are in `StalePartModifiers` under `SPECIES_TENSURA`; its attribute filter now also covers the `tensura` namespace (it only looked at `minecraft` before).
+- **Undead**: `RaceUtilsMixin` makes `RaceUtils.isUndead` and `isAffectedByHolyExposure` true for a player whose layer says undead (switch `undead_treatment_enabled`). Effect measured by `vampireLayerTakesTensuraHolyDamage`: a layered Original loses exactly 3x the holy damage of a control.
+- **Plan 01 interplay** through `LayerQuery` (vampirism_tensura reads, species_tensura installs, neither imports the other; both answers are false when the part is off): `FactionRaceRules` no longer denies the werewolf join or ejects a hunter for a vampire-type species (ORIGINAL, ORIGINAL_HYBRID, HYBRID, HERETIC, TRIBRID; R103; `vampireTypeSpeciesIsNotEjectedFromHunters`), and `HolyDamageBridge` returns x1 for a player whose layer treats them as undead (a plain faction vampire now takes Tensura's x3, not 1.5 x 3). Its two old tests run the old case through `LayerQuery.runWithoutLayer`.
+- **Eligibility**: `TensuraHumanLikeCheck` is installed in plan 04's `SpeciesEligibility`: race tag `tensura:human_like` or one of the 15 evolved ids in `HumanLikeLine` (a player with no race stays eligible). `HumanLikeLine.SAINT_OR_HIGHER` (10 ids) is the host list for Task 3.
+- **Supernatural**: races tagged `tensura:undead` or `tensura:daemon` are supernatural (not vampiric, not prey).
+- A non-player `LivingEntity` is never touched by the layer.
