@@ -360,6 +360,31 @@ public final class SirelineDeathGameTests {
         helper.succeed();
     }
 
+    /** The index file rolled back after a crash: it still owes the death, but the player file already shows it (no sire, a new life). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void loginDebtWithoutASireIsDropped(GameTestHelper helper) {
+        ServerPlayer root = mortal(helper, Species.ORIGINAL);
+        ServerPlayer reborn = mortal(helper, Species.NONE);
+        ServerPlayer owing = mortal(helper, Species.NONE);
+        try {
+            SirelineIndex index = SirelineIndex.get(helper.getLevel());
+            helper.assertTrue(BloodlineAccess.get(reborn).sire() == null, "the test player has a sire");
+            index.addPendingPlayer(reborn.getUUID());
+            SirelineDeath.onLogin(reborn);
+            helper.assertTrue(!dead(reborn), "a player with no sire died of a rolled back debt");
+            helper.assertTrue(!index.takePendingPlayer(reborn.getUUID()), "the stale debt was kept");
+
+            // the same debt with a sire is paid
+            SireRecorder.record(root, owing);
+            index.addPendingPlayer(owing.getUUID());
+            SirelineDeath.onLogin(owing);
+            helper.assertTrue(dead(owing), "a player who still has a sire did not pay");
+        } finally {
+            cleanUp(root, reborn, owing);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void unloadedSiredMobsAreDiscardedWhenTheyLoad(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();

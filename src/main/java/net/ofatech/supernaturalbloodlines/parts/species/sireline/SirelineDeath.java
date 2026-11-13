@@ -143,10 +143,14 @@ public final class SirelineDeath {
         index.addPendingMob(id);
     }
 
-    /** A player who was offline for the death pays now, once. */
+    /**
+     * A player who was offline for the death pays now, once. Only a player who still has a sire pays: after a crash the player
+     * file may already show the death (no sire, a new life) while the index has rolled back to still owing it.
+     */
     public static void onLogin(ServerPlayer p) {
-        if (SirelineIndex.get(p.serverLevel()).takePendingPlayer(p.getUUID())) {
-            slay(p);
+        SirelineIndex index = SirelineIndex.get(p.serverLevel());
+        if (index.takePendingPlayer(p.getUUID()) && BloodlineAccess.get(p).sire() != null && !slay(p)) {
+            index.addPendingPlayer(p.getUUID());
         }
     }
 
