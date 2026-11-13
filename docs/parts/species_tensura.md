@@ -11,7 +11,7 @@ Checklist (from the design, sections 5 and 10). Tick items as they ship.
 - [ ] Sync both ways with the unified vampire; the species layer wins over the plain vampire mapping.
 - [x] Sireline link: `IExistence.setPermanentOwner(sireUUID)` when a sire is recorded; removed when the sire bond breaks (Task 4).
 - [x] A sire can name their sired through Tensura's naming (R101) (Task 4).
-- [ ] Rank skills for werewolf packs (ALPHA → `beast_transformation`, `godwolf_sense`; TRUE_ALPHA adds the commander skill; born lineage → `godwolf_sense` at level 5); only skills this mod granted are removed.
+- [x] Rank skills for werewolf packs (ALPHA → `beast_transformation`, `godwolf_sense`; TRUE_ALPHA adds the commander skill; born lineage → `godwolf_sense` at level 5); only skills this mod granted are removed.
 
 
 ## Hook points (verified)
@@ -172,3 +172,21 @@ Code: `parts/speciestensura` (`SubordinateLink`, `SireNaming`), the mixin `mixin
 **`/bloodline call` follow through `SubordinateHelper` (plan 08, deferred): not done.** `CallFollowers` already walks sired creatures to the caller, and a tamed `ISubordinate` creature follows its owner with Tensura's own AI. Tensura's `setFollow` would need a hook in `shared` (species must not import Tensura), for no new behaviour.
 
 **Not done / open.** An offline sire's `ISubordinate` creature is not tamed later. No message tells the sire that a sired player's naming has no evolution.
+
+## Werewolf rank skills (Task 5)
+
+Code: `parts/speciestensura` (`RankSkills`, `RankSkillTable`), tests `gametest/RankSkillsGameTests` (registered only when Werewolves is loaded) and `RankSkillTableTest`. `RankSkills` is registered only when Werewolves is loaded; it links no Werewolves class (the faction is matched by id `werewolves:werewolf`).
+
+- **Config** (`supernaturalbloodlines-species_tensura.toml`, `rank_skills`): `"RANK=skill,skill"` with RANK `ALPHA`, `TRUE_ALPHA` or `BORN_LEVEL5`. Defaults: `ALPHA=tensura:beast_transformation,tensura:godwolf_sense`, `TRUE_ALPHA=` the Alpha skills + `tensura:commander`, `BORN_LEVEL5=tensura:godwolf_sense`. An entry replaces the default of its key; a bad entry (unknown RANK, bad skill id) is ignored with one warning and the default stays.
+- **When it runs** (`RankSkills.sync`, idempotent): on every `BloodlineAccess` listener change (so on a change of `wolf.rank` or `wolf.lineage`), on Vampirism `FactionLevelChanged` (the werewolf level), on login and respawn, and every 200 ticks.
+- **What is wanted**: the skills of the player's rank (`ALPHA`, `TRUE_ALPHA`), plus `BORN_LEVEL5` while `wolf.lineage == BORN` and the player is a werewolf of level 5 or more. The rank does not need the werewolf faction (a cured Alpha keeps the rank and its skills; `RankEffects` removes only the attribute perks). Omega and Beta have no entry. The race never changes.
+- **Tracking**: skills are granted free of magicule cost and tracked in `WolfState.grantedSkills` (`granted_skills`; a change of it alone does not notify the listeners). Only tracked skills are released, through `SkillOwners.release`, so a skill the layer (`godwolf_sense` and `beast_transformation` for an ORIGINAL_HYBRID) or the werewolf level grants still wants stays; the last source to let go forgets it. A skill the player had before is never tracked (`losingAlphaRemovesOnlyGrantedSkills`, `losingTheRankKeepsASkillTheLayerStillWants`). The source is registered with `SkillOwners` as `wolf_rank`.
+- **Rollbacks**: `BloodlineAccess.restore` now also keeps the current `wolf.grantedSkills`, like `layerSkills`.
+- **Mastery** of a released skill is lost, as for the layer.
+
+## Checks (Task 6)
+
+- **Client run** (`runClient`, Vampirism + Werewolves + Enchanted + Tensura + Curios, main menu reached, then the client process was killed): no error or warning from `net.ofatech.supernaturalbloodlines`; `species_tensura` mixin config selected and applied; `RaceInstanceMixin hooks in place`; `SireNamingMixin` mixed into `RequestNamingKeyPacket`. `RaceUtilsMixin` reports when Tensura's `RaceUtils` loads (in a world), seen in the GameTest server run: `RaceUtilsMixin hooks in place`. The only errors in the log are Vampirism's own sound-pack paths.
+- **ManasCore fallback (step 2):** resolved in Task 3: there is none, so the apex races are registered whenever Tensura is present, even with the part off (see "A saved race that is no longer registered"). No login reset was needed or added.
+- **Pending in-game checks (not done, need a person in a real client):** an elf evolved to saint and offered the Original apex race in the real screen; a human to the witch apex; a sire naming a sired player through the real naming menu; an Alpha getting the rank skills in the skill list.
+- **Flake:** `HunterInstinctGameTests.senseSkipsWitchesSiphonersAndSpectators` failed once in an earlier run and passed in the 8 runs after. No shared-state cause found: the test is synchronous, its only static (`HunterInstinct.overrideRange`) is cleared in a `finally`, all fake players sit at the same spot, and no species_tensura test keeps an override across ticks. Not reproduced, so nothing was changed.
