@@ -89,5 +89,9 @@
   "item.supernaturalbloodlines.the_cure": "The Cure",
   "effect.supernaturalbloodlines.desiccated": "Desiccated",
   "rite.supernaturalbloodlines.rite_of_the_cure": "Rite of the Cure",
-  "supernaturalbloodlines.rite.needs_desiccated": "The rite needs a desiccated Original in the circle."
+  "supernaturalbloodlines.rite.needs_desiccated": "The rite needs a desiccated Original in the circle.",
+  "item.supernaturalbloodlines.vampire_compass": "Vampire Compass",
+  "item.supernaturalbloodlines.hearing_device": "Hearing Device",
+  "rite.supernaturalbloodlines.vampire_compass": "Rite of the Vampire Compass",
+  "rite.supernaturalbloodlines.hearing_device": "Rite of the Hearing Device"
 }

@@ -8,6 +8,8 @@
 - A rite factory `supernaturalbloodlines:bind_item` (input, output, optional faction): binds the person on the circle to the output item; wrong faction, a missing input or an already bound input refunds the ingredients and says why.
 - Curios is optional: the rings are in the tag `curios:ring`; without Curios they work from the inventory.
 - Placeholder textures for both rings.
+- Vampire Compass (rite *Rite of the Vampire Compass*: compass + vervain, medium circle, 2000 power): the needle points at the nearest vampire, hybrid or Original within 64 blocks (not yourself), refreshed once a second on the server through the vanilla lodestone tracker; with nobody in range it spins. Client: an `angle` item property with 32 placeholder needle frames.
+- Hearing Device (rite *Rite of the Hearing Device*: note block, 2 iron ingots, amethyst shard, medium circle, 3000 power): right click stuns every supernatural (vampire, werewolf, species; mob or player) within 5 blocks for 5 seconds (Slowness V + Nausea), 60 second cooldown. The user, humans and other mobs are not affected.
 
 ## Unreleased: species
 

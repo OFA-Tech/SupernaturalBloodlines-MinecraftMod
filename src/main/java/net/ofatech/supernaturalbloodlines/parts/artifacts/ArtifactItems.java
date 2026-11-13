@@ -34,7 +34,9 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.AshDaggerItem;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.BoundRingItem;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.ResurrectionRingItem;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.item.HearingDeviceItem;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.TheCureItem;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.item.VampireCompassItem;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.VervainBlock;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.VervainTeaItem;
 
@@ -110,6 +112,11 @@ public final class ArtifactItems {
     public static final DeferredItem<AshDaggerItem> ASH_DAGGER = ITEMS.register("white_oak_ash_dagger", AshDaggerItem::new);
     public static final DeferredItem<TheCureItem> THE_CURE = ITEMS.register("the_cure", TheCureItem::new);
 
+    // ---- compass and hearing device ----
+
+    public static final DeferredItem<VampireCompassItem> VAMPIRE_COMPASS = ITEMS.register("vampire_compass", VampireCompassItem::new);
+    public static final DeferredItem<HearingDeviceItem> HEARING_DEVICE = ITEMS.register("hearing_device", HearingDeviceItem::new);
+
     private ArtifactItems() {
     }
 
@@ -127,6 +134,8 @@ public final class ArtifactItems {
                 }
                 e.accept(RESURRECTION_RING);
                 e.accept(ASH_DAGGER);
+                e.accept(VAMPIRE_COMPASS);
+                e.accept(HEARING_DEVICE);
             } else if (e.getTabKey() == CreativeModeTabs.NATURAL_BLOCKS) {
                 e.accept(VERVAIN_SEEDS);
             } else if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) {

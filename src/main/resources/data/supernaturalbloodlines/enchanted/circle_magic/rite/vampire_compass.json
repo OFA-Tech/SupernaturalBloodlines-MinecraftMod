@@ -1,0 +1,17 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" }
+    ],
+    "items": [
+        { "id": "minecraft:compass", "count": 1 },
+        { "id": "supernaturalbloodlines:vervain", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 2000,
+    "factory": {
+        "type": "enchanted:create_item",
+        "items": [ { "id": "supernaturalbloodlines:vampire_compass", "count": 1 } ]
+    }
+}

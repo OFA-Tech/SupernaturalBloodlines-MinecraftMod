@@ -1,13 +1,16 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts;
 
 import net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ArtifactSlotsGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.AshDaggerGameTests;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.CompassHearingGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.CuriosSlotsGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.MoonRingGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ResurrectionVervainGameTests;
@@ -26,6 +29,9 @@ public final class ArtifactsPart {
         RiteFactoryRegistry.get().register(BindItemRiteFactory.ID, BindItemRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(RequiresDesiccatedRiteFactory.ID, RequiresDesiccatedRiteFactory.CODEC);
         ArtifactItems.register(modBus);
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            modBus.addListener(ArtifactsClient::onClientSetup);
+        }
         VampirismSupernatural.register();
         AshDagger.register();
         SunRing.register();
@@ -40,6 +46,7 @@ public final class ArtifactsPart {
             e.register(AshDaggerGameTests.class);
             e.register(RingGameTests.class);
             e.register(ResurrectionVervainGameTests.class);
+            e.register(CompassHearingGameTests.class);
             if (curios) {
                 e.register(CuriosSlotsGameTests.class);
             }

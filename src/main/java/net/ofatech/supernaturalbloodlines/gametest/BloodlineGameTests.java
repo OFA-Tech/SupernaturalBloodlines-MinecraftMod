@@ -91,7 +91,7 @@ public final class BloodlineGameTests {
         // explicit ids: each part owns exactly these rites (a prefix or a namespace count would mix the parts up)
         checkPartRites(helper, access, "enchantedTensura", Set.of("purification", "purification_holy_water", "curse_magicule_drain", "curse_skill_seal", "magicule_offering"));
         checkPartRites(helper, access, "vampirismEnchanted", Set.of("cleansing_blood", "blood_offering", "silver_moon"));
-        checkPartRites(helper, access, "artifacts", Set.of("ward_of_daylight", "ward_of_return", "rite_of_the_cure"));
+        checkPartRites(helper, access, "artifacts", Set.of("ward_of_daylight", "ward_of_return", "rite_of_the_cure", "vampire_compass", "hearing_device"));
         // Tensura's registry has no namespace prefix and our files sit in its data namespace
         checkPartData(helper, access, "enchantedTensura", "entity_existence", "tensura", "supernaturalbloodlines_enchanted_");
         checkPartData(helper, access, "vampirismTensura", "entity_existence", "tensura", "supernaturalbloodlines_vampirism_");
