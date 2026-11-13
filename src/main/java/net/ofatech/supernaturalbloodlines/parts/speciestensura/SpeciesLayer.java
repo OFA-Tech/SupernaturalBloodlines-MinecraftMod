@@ -4,7 +4,6 @@ import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import io.github.manasmods.manascore.skill.api.ManasSkill;
-import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
 import io.github.manasmods.manascore.skill.api.SkillAPI;
 import io.github.manasmods.tensura.registry.attribute.TensuraAttributes;
 import java.util.HashSet;
@@ -23,6 +22,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.shared.tensura.SkillOwners;
 
 /**
  * A species is a layer on the player's Tensura race (R100): skills, max magicule and aura, and (through
@@ -33,13 +33,14 @@ public final class SpeciesLayer {
     public static final ResourceLocation MAGICULE_ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "layer_magicule");
     public static final ResourceLocation AURA_ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "layer_aura");
 
-    private static final String NO_MAGICULE_COST = "NoMagiculeCost";
+    private static final String SOURCE = "species_layer";
     private static final int RECHECK_TICKS = 200;
     private static final Set<String> WARNED = new HashSet<>();
 
     private SpeciesLayer() {}
 
     public static void register() {
+        SkillOwners.register(SOURCE, (p, skill) -> spec(p).skills().contains(skill.toString()));
         BloodlineAccess.addListener((p, change) -> sync(p));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> syncIfServer(e.getEntity()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent e) -> syncIfServer(e.getEntity()));
@@ -98,7 +99,8 @@ public final class SpeciesLayer {
             if (!wanted.contains(id)) {
                 ResourceLocation rl = ResourceLocation.tryParse(id);
                 if (rl != null) {
-                    skills.getSkill(rl).ifPresent(skills::forgetSkill);
+                    // kept when another source (the werewolf grants) still wants it; the last one to let go forgets it
+                    SkillOwners.release(p, rl, SOURCE);
                 }
                 out.remove(id);
             }
@@ -113,13 +115,13 @@ public final class SpeciesLayer {
                 continue;
             }
             if (skills.getSkill(rl).isPresent()) {
-                continue; // already known: a tracked one stays tracked, one the player had before the layer stays theirs
+                // a tracked skill stays tracked; one this mod granted for another source is shared; one the player had before is theirs
+                if (SkillOwners.isGranted(p, rl)) {
+                    out.add(id);
+                }
+                continue;
             }
-            ManasSkillInstance instance = skill.createDefaultInstance();
-            // Tensura charges max magicule for a learned skill and vetoes it without enough; this is its own "free" switch
-            instance.getOrCreateTag().putBoolean(NO_MAGICULE_COST, true);
-            skills.learnSkill(instance);
-            if (skills.getSkill(rl).isPresent()) {
+            if (SkillOwners.grant(p, skill)) {
                 out.add(id);
             } else {
                 out.remove(id);
@@ -127,7 +129,6 @@ public final class SpeciesLayer {
         }
         return out;
     }
-
     private static void applyBonus(ServerPlayer p, Holder<Attribute> attribute, ResourceLocation id, double bonus) {
         AttributeInstance a = p.getAttribute(attribute);
         if (a == null) {

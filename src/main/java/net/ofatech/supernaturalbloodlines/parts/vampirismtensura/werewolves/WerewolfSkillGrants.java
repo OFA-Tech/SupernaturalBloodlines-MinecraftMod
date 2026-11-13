@@ -1,9 +1,10 @@
 package net.ofatech.supernaturalbloodlines.parts.vampirismtensura.werewolves;
 
+import de.teamlapen.vampirism.api.VampirismAPI;
+import de.teamlapen.vampirism.api.entity.factions.IFactionPlayerHandler;
 import de.teamlapen.vampirism.api.entity.factions.IPlayableFaction;
 import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import io.github.manasmods.manascore.skill.api.ManasSkill;
-import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
 import io.github.manasmods.manascore.skill.api.SkillAPI;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -12,24 +13,39 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.FactionRaceRules;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.SkillGrantSpec;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.VampireSyncConfig;
+import net.ofatech.supernaturalbloodlines.shared.tensura.SkillOwners;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Werewolf levels grant Tensura skills (config werewolf_skill_grants). Registered by the part only when Werewolves is
- * loaded; the faction is matched by id, so this class links no Werewolves class itself.
+ * loaded; the faction is matched by id, so this class links no Werewolves class itself. A skill another source also
+ * grants (the species layer's godwolf_sense) is shared through {@link SkillOwners}.
  */
 public final class WerewolfSkillGrants {
-    private static final String NO_MAGICULE_COST = "NoMagiculeCost";
-    private static final String GRANTED = "supernaturalbloodlines:granted";
+    private static final String SOURCE = "werewolf_levels";
 
     private WerewolfSkillGrants() {}
 
     public static void register() {
+        SkillOwners.register(SOURCE, WerewolfSkillGrants::wants);
         NeoForge.EVENT_BUS.addListener(WerewolfSkillGrants::onFactionLevelChanged);
     }
 
     private static boolean isWerewolf(@Nullable IPlayableFaction<?> faction) {
         return faction != null && FactionRaceRules.WEREWOLF_FACTION_ID.equals(faction.getID());
+    }
+
+    /** The player is a werewolf now, at a level that reaches a grant of this skill. */
+    private static boolean wants(ServerPlayer p, ResourceLocation skill) {
+        IFactionPlayerHandler handler = VampirismAPI.factionPlayerHandler(p);
+        IPlayableFaction<?> faction = handler.getCurrentFaction();
+        if (!isWerewolf(faction)) {
+            return false;
+        }
+        int level = handler.getCurrentLevel();
+        int max = faction.getHighestReachableLevel();
+        return VampireSyncConfig.werewolfSkillGrants().stream()
+                .anyMatch(g -> g.skill().equals(skill.toString()) && g.reachedAt(level, max));
     }
 
     private static void onFactionLevelChanged(PlayerFactionEvent.FactionLevelChanged event) {
@@ -54,17 +70,12 @@ public final class WerewolfSkillGrants {
             }
             if (grant.reachedAt(newLevel, newMax)) {
                 if (skills.getSkill(id).isEmpty()) {
-                    // Tensura charges max magicule for a learned skill and vetoes it without enough; this tag is its own "free" switch
-                    ManasSkillInstance instance = skill.createDefaultInstance();
-                    // (Tensura removes that tag itself while it unlocks, so it is one-shot; the grant mark below stays)
-                    instance.getOrCreateTag().putBoolean(NO_MAGICULE_COST, true);
-                    instance.getOrCreateTag().putBoolean(GRANTED, true);
-                    skills.learnSkill(instance);
+                    SkillOwners.grant(p, skill);
                 }
-            } else if (grant.reachedAt(oldLevel, oldMax)) {
-                // only a skill this class granted is taken back, never one the player had from somewhere else
-                skills.getSkill(id).filter(held -> held.getTag() != null && held.getTag().getBoolean(GRANTED))
-                        .ifPresent(skills::forgetSkill);
+            } else if (grant.reachedAt(oldLevel, oldMax) && SkillOwners.isGranted(p, id)) {
+                // only a skill this mod granted is taken back, never one the player had from somewhere else, and not
+                // one another source (the species layer) still wants
+                SkillOwners.release(p, id, SOURCE);
             }
         }
     }
