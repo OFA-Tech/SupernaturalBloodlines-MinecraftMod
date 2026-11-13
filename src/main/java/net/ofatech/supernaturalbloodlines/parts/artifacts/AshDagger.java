@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -10,6 +11,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemUtils;
+import net.minecraft.world.item.Items;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.item.TheCureItem;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.ICancellableEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -41,7 +45,12 @@ public final class AshDagger {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, LivingDamageEvent.Post.class, AshDagger::onHit);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, PlayerInteractEvent.EntityInteract.class, AshDagger::onPull);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, MobEffectEvent.Expired.class, e -> onEnded(e.getEntity(), e.getEffectInstance()));
-        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, MobEffectEvent.Remove.class, e -> onEnded(e.getEntity(), e.getEffectInstance()));
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, MobEffectEvent.Remove.class, e -> {
+            // /effect clear has no instance, only the effect
+            if (e.getEffect().is(ArtifactItems.DESICCATED)) {
+                release(e.getEntity());
+            }
+        });
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, LivingDeathEvent.class, e -> release(e.getEntity()));
 
         // the desiccated can do nothing; HIGHEST, so nothing else sees the action first
@@ -97,12 +106,16 @@ public final class AshDagger {
     }
 
     private static void lodge(ServerPlayer victim, LivingEntity wielder) {
+        // the effect first: another mod may refuse it (MobEffectEvent.Applicable), and then the wielder keeps the dagger
+        if (!victim.addEffect(new MobEffectInstance(ArtifactItems.DESICCATED, ArtifactItems.DESICCATED_TICKS, 0, false, true, true))) {
+            return;
+        }
+        release(victim); // never overwrite a dagger that is still lodged
         ItemStack dagger = wielder.getMainHandItem().copyWithCount(1);
         if (!(wielder instanceof Player p && p.hasInfiniteMaterials())) {
             wielder.getMainHandItem().shrink(1);
         }
         victim.setData(ArtifactItems.LODGED_DAGGER.get(), dagger);
-        victim.addEffect(new MobEffectInstance(ArtifactItems.DESICCATED, ArtifactItems.DESICCATED_TICKS, 0, false, true, true));
     }
 
     // ---- the end ----
@@ -111,6 +124,14 @@ public final class AshDagger {
         if (e.getLevel().isClientSide() || !(e.getTarget() instanceof ServerPlayer victim) || e.getEntity() == victim
                 || !isDesiccated(victim)) {
             return;
+        }
+        // the Cure wins over a pull: the feeder drinks it for the victim, the dagger drops either way
+        Player feeder = e.getEntity();
+        InteractionHand cureHand = feeder.getMainHandItem().is(ArtifactItems.THE_CURE.get()) ? InteractionHand.MAIN_HAND
+                : feeder.getOffhandItem().is(ArtifactItems.THE_CURE.get()) ? InteractionHand.OFF_HAND : null;
+        if (cureHand != null) {
+            TheCureItem.cure(victim);
+            feeder.setItemInHand(cureHand, ItemUtils.createFilledResult(feeder.getItemInHand(cureHand), feeder, new ItemStack(Items.GLASS_BOTTLE)));
         }
         release(victim);
         victim.removeEffect(ArtifactItems.DESICCATED);
@@ -131,6 +152,8 @@ public final class AshDagger {
         }
         ItemStack dagger = lodged(p);
         p.setData(ArtifactItems.LODGED_DAGGER.get(), ItemStack.EMPTY);
-        p.level().addFreshEntity(new ItemEntity(p.level(), p.getX(), p.getY() + 0.5, p.getZ(), dagger));
+        ItemEntity drop = new ItemEntity(p.level(), p.getX(), p.getY() + 0.5, p.getZ(), dagger);
+        drop.setPickUpDelay(20);
+        p.level().addFreshEntity(drop);
     }
 }

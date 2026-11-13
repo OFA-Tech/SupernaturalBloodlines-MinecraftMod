@@ -323,6 +323,98 @@ public final class AshDaggerGameTests {
         helper.succeed();
     }
 
+    /** The effect is checked first: a refused effect must not eat the dagger. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void refusedEffectKeepsTheDagger(GameTestHelper helper) {
+        BlockPos spot = new BlockPos(1, 1, 1);
+        ServerPlayer victim = original(helper, Species.ORIGINAL);
+        victim.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(1.5, 1, 1.5)));
+        Zombie z = zombie(helper, dagger());
+        Consumer<MobEffectEvent.Applicable> refuse = e -> {
+            if (e.getEntity() == victim) {
+                e.setResult(MobEffectEvent.Applicable.Result.DO_NOT_APPLY);
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, false, MobEffectEvent.Applicable.class, refuse);
+        try {
+            hit(victim, z, 1f);
+        } finally {
+            NeoForge.EVENT_BUS.unregister(refuse);
+        }
+        try {
+            helper.assertTrue(!desiccated(victim), "the refused effect was applied");
+            helper.assertTrue(z.getMainHandItem().is(ArtifactItems.ASH_DAGGER.get()), "the wielder lost the dagger to a refused effect");
+            helper.assertTrue(AshDagger.lodged(victim).isEmpty(), "a dagger was lodged without the effect");
+
+            // safety net: a dagger left lodged without the effect is dropped, not overwritten
+            victim.setData(ArtifactItems.LODGED_DAGGER.get(), dagger());
+            hit(victim, z, 1f);
+            helper.assertTrue(desiccated(victim) && AshDagger.lodged(victim).is(ArtifactItems.ASH_DAGGER.get()), "setup: the second hit did not lodge");
+            helper.assertTrue(droppedDaggers(helper, spot) == 1, "the stale dagger was not dropped: " + droppedDaggers(helper, spot));
+            helper.assertTrue(z.getMainHandItem().isEmpty(), "the wielder still holds the new dagger");
+        } finally {
+            clearDaggers(helper, spot);
+        }
+        helper.succeed();
+    }
+
+    /** /effect clear removes the effect with no instance in the event; the dagger still drops, with a pickup delay. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void effectClearReleasesTheDagger(GameTestHelper helper) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        BlockPos spot = new BlockPos(1, 1, 1);
+        ServerPlayer victim = original(helper, Species.ORIGINAL);
+        victim.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(1.5, 1, 1.5)));
+        try {
+            hit(victim, zombie(helper, dagger()), 1f);
+            helper.assertTrue(desiccated(victim), "setup: not desiccated");
+            helper.getLevel().getServer().getCommands().getDispatcher().execute("effect clear @s", victim.createCommandSourceStack().withPermission(4));
+            helper.assertTrue(!desiccated(victim), "/effect clear left the effect");
+            helper.assertTrue(AshDagger.lodged(victim).isEmpty() && droppedDaggers(helper, spot) == 1,
+                    "/effect clear did not drop the dagger: " + droppedDaggers(helper, spot));
+            boolean delayed = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(spot)).inflate(6))
+                    .stream().filter(i -> i.getItem().is(ArtifactItems.ASH_DAGGER.get())).allMatch(ItemEntity::hasPickUpDelay);
+            helper.assertTrue(delayed, "the dropped dagger can be picked up at once");
+        } finally {
+            clearDaggers(helper, spot);
+        }
+        helper.succeed();
+    }
+
+    /** Someone holding The Cure who clicks a desiccated Original feeds it to them; that wins over the plain pull. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void feedingTheCureCuresDesiccatedOriginal(GameTestHelper helper) {
+        BlockPos spot = new BlockPos(1, 1, 1);
+        ServerPlayer victim = TestPlayers.createMortal(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(victim).setFactionAndLevel(VReference.VAMPIRE_FACTION, 2), "could not make a vampire");
+        BloodlineAccess.set(victim, BloodlineState.NONE.toBuilder().species(Species.ORIGINAL).build());
+        victim.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(1.5, 1, 1.5)));
+        ServerPlayer feeder = TestPlayers.createVulnerable(helper);
+        try {
+            hit(victim, zombie(helper, dagger()), 1f);
+            helper.assertTrue(desiccated(victim), "setup: not desiccated");
+
+            // control: a cure in the pocket is not a cure in the hand
+            feeder.getInventory().items.set(5, new ItemStack(ArtifactItems.THE_CURE.get()));
+            NeoForge.EVENT_BUS.post(new PlayerInteractEvent.EntityInteract(feeder, InteractionHand.OFF_HAND, victim));
+            helper.assertTrue(BloodlineAccess.get(victim).species() == Species.ORIGINAL && !desiccated(victim), "an unheld cure was used, or the pull failed");
+            clearDaggers(helper, spot);
+            hit(victim, zombie(helper, dagger()), 1f);
+            helper.assertTrue(desiccated(victim), "setup: not desiccated again");
+
+            feeder.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ArtifactItems.THE_CURE.get()));
+            PlayerInteractEvent.EntityInteract click = NeoForge.EVENT_BUS.post(new PlayerInteractEvent.EntityInteract(feeder, InteractionHand.MAIN_HAND, victim));
+            helper.assertTrue(click.isCanceled(), "the feeding was not handled");
+            helper.assertTrue(BloodlineAccess.get(victim).species() == Species.NONE, "not cured: " + BloodlineAccess.get(victim));
+            helper.assertTrue(VampirismAPI.factionPlayerHandler(victim).getCurrentFaction() == null, "still in a faction");
+            helper.assertTrue(!desiccated(victim) && AshDagger.lodged(victim).isEmpty(), "still desiccated");
+            helper.assertTrue(droppedDaggers(helper, spot) == 1, "expected one dropped dagger: " + droppedDaggers(helper, spot));
+            helper.assertTrue(feeder.getMainHandItem().is(Items.GLASS_BOTTLE), "the feeder kept " + feeder.getMainHandItem());
+        } finally {
+            clearDaggers(helper, spot);
+        }
+        helper.succeed();
+    }
+
     // ---- the Rite of the Cure ----
 
     private static List<ItemStack> cureItems() {

@@ -33,11 +33,16 @@ public class TheCureItem extends Item {
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         ItemStack left = super.finishUsingItem(stack, level, entity);
         if (!level.isClientSide && entity instanceof ServerPlayer p) {
-            var ctx = FactionRiteHooks.context(p, FactionRiteFactory.baseFaction(VampirismAPI.factionPlayerHandler(p)), level.getGameTime());
-            Outcome out = BloodlineAccess.applyEvent(p, BloodlineEvent.DRANK_THE_CURE, ctx);
-            FactionRiteHooks.run(p, out);
+            cure(p);
         }
         return left;
+    }
+
+    /** What the drink does to {@code p}, whoever held the bottle. */
+    public static void cure(ServerPlayer p) {
+        var ctx = FactionRiteHooks.context(p, FactionRiteFactory.baseFaction(VampirismAPI.factionPlayerHandler(p)), p.level().getGameTime());
+        Outcome out = BloodlineAccess.applyEvent(p, BloodlineEvent.DRANK_THE_CURE, ctx);
+        FactionRiteHooks.run(p, out);
     }
 
     @Override
