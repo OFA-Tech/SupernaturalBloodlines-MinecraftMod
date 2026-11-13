@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased: species_tensura (species layer)
+
+Needs Vampirism, Enchanted and Tensura (and the species part). Details in `docs/parts/species_tensura.md`.
+
+- A species is a layer on the player's Tensura race (the race is never replaced): skills (granted free of magicule cost and tracked, so only those are ever taken back), +% max magicule/aura (`supernaturalbloodlines:layer_magicule` / `layer_aura`) and Tensura's undead treatment. Defaults and the config are in `supernaturalbloodlines-species_tensura.toml` (`layers`, `undead_treatment_enabled`). It is a common config: keep it equal on the server and the clients.
+- **Owner balance point (please rule on it):** a species whose layer says undead, and a plain Vampirism vampire (`VAMPIRE` entry), now count as undead for Tensura. This is wider than R100's "holy damage and sunlight":
+  - a plain faction vampire goes from x1.5 (`tensura_holy_vs_vampire`) to Tensura's x3 holy and light damage; `tensura_holy_vs_vampire` has no effect on a vampire whose layer is undead (the two multipliers would stack to x4.5, so the bridge steps aside, and only when the mixin on `RaceUtils` really applied);
+  - Tensura's other undead rules apply too: infection immunity, Enervation on food, holy exposure, and the rest of what Tensura asks `RaceUtils.isUndead` / `isAffectedByHolyExposure`;
+  - options: keep it (default), switch it off with `undead_treatment_enabled=false` (skills and bonuses stay, the bridge's x1.5 returns), or narrow the `treatAsUndead` flags of the VAMPIRE / species entries in `layers`.
+- R103: the exemption from the undead/daemon denial for hunters and werewolves only holds for an apex race (race id in the `supernaturalbloodlines` namespace) of a vampire-type species (Original, Original hybrid, Hybrid, Heretic, Tribrid). An Original with a Tensura ghoul race is ejected from the hunters like anyone else.
+- A skill two sources grant (godwolf_sense from the layer and from the werewolf max level) is kept until the last source lets go (`shared/tensura/SkillOwners`); a skill the player had before is never taken.
+- Human-like for species (plan 04's check): the `tensura:human_like` tag only has the five base races, so the evolved races of those lines count too.
+- Pending (manual): the evolution screen, skill list and analysis screen of a layered player in a real client.
 ## Unreleased: werewolf packs
 
 Needs Werewolves, except Shocked and the Taser (any supernatural). Details per task are in `docs/parts/species.md`.

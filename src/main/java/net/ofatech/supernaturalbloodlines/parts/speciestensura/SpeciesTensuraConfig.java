@@ -6,7 +6,11 @@ import java.util.Set;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 
-/** The part's own config file. Values are readable once the config has loaded; before that the defaults count. */
+/**
+ * The part's own config file. Values are readable once the config has loaded; before that the defaults count.
+ * It is a COMMON config: Tensura's undead checks also run on the client (the player's own screens and effects), so the
+ * server's and the clients' "undead_treatment_enabled" and "layers" should match.
+ */
 public final class SpeciesTensuraConfig {
     public static final String FILE = SupernaturalBloodlines.MODID + "-species_tensura.toml";
     public static final ModConfigSpec SPEC;
@@ -26,7 +30,10 @@ public final class SpeciesTensuraConfig {
                         "SPECIES is a species name or VAMPIRE (a Vampirism vampire with no species). A skill without a namespace is a Tensura one.",
                         "An entry replaces the default of the same key; a bad entry is ignored with a warning.")
                 .defineListAllowEmpty("layers", LayerTable.DEFAULTS, () -> "", o -> o instanceof String);
-        UNDEAD_TREATMENT = b.comment("Tensura treats a player whose layer says undead as undead (holy damage x3, holy exposure).",
+        UNDEAD_TREATMENT = b.comment("Tensura treats a player whose layer says undead as undead. That is wider than holy damage: Tensura's own undead rules apply,",
+                        "such as holy and light damage x3, holy exposure, infection immunity and Enervation on food. A plain Vampirism vampire (VAMPIRE) counts too,",
+                        "so it goes from x1.5 to Tensura's x3 holy damage and tensura_holy_vs_vampire (vampirism_tensura config) has no effect on it.",
+                        "Common config: keep it equal on the server and the clients.",
                         "Off: the layers still grant skills and bonuses, but Tensura's undead checks are left alone.")
                 .define("undead_treatment_enabled", true);
         SPEC = b.build();
