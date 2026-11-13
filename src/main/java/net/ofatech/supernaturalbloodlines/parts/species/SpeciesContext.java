@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BaseFaction;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineContext;
+import net.ofatech.supernaturalbloodlines.parts.species.hunter.FiveRoster;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,8 @@ public final class SpeciesContext {
                 .withHumanLike(SpeciesEligibility.isHumanLike(p))
                 .withOriginalsInWorld(SpeciesData.get(p.server).count())
                 .withMaxOriginals(SpeciesConfig.maxOriginals())
+                .withFiveCount(FiveRoster.get(p.serverLevel()).size())
+                .withMaxFive(SpeciesConfig.maxFive())
                 .withTransitionTicks(SpeciesConfig.transitionTicks())
                 .withBloodSource(bloodSource)
                 .withGameTime(gameTime)

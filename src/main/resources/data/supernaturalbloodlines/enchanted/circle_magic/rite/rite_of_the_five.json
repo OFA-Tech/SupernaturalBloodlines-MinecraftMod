@@ -1,0 +1,20 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+    ],
+    "items": [
+        { "id": "minecraft:candle", "count": 5 },
+        { "id": "minecraft:iron_ingot", "count": 1 },
+        { "id": "minecraft:book", "count": 1 },
+        { "id": "enchanted:taglock", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 10000,
+    "factory": {
+        "type": "supernaturalbloodlines:faction_rite",
+        "event": "rite_of_the_five",
+        "faction": "hunter"
+    }
+}

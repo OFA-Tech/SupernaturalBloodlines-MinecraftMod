@@ -17,7 +17,7 @@ Rules live in `core/bloodline` (`BloodlineRules`, `PackRules`) and `docs/superpo
 - [x] Vampire traits for hybrid types (attributes by age, blood thirst, venom, Hybrid's Blood, sire bond). The Werewolves bite action as a source of thirst/venom is deferred (no hook).
 
 **Hunters**
-- [ ] Rite of the Five, `FiveRoster` (SavedData), `max_five`.
+- [x] Rite of the Five, `FiveRoster` (SavedData), `max_five` (see "Hunters: roster and rite (plan 7, Task 1)").
 - [ ] The mark: perks from `markKills`, glow of vampires within 24 blocks at 5 kills, compulsion immunity.
 - [ ] Losing the mark and choosing a potential.
 - [ ] The hunter's curse (hallucinations) and when it lifts.
@@ -45,7 +45,7 @@ Rules live in `core/bloodline` (`BloodlineRules`, `PackRules`) and `docs/superpo
 ## Shared plumbing (Task 1)
 
 - **Hooks into the rite factory.** `vampirismenchanted.rite.FactionRiteHooks` holds a `ContextProvider` (`(target, faction, gameTime) -> BloodlineContext`, default `defaults()` + faction + time) and an `OutcomeRunner` (default `FactionRiteFactory.runFactionActions`, leave then join). `FactionRiteFactory` calls them for the preview and for the real call with the same context, and never imports a species class. `SpeciesPart.init` installs `SpeciesContext.of(p, faction, time, null)` and `OutcomeExecutor.run`; with `species` off the defaults stay (plan 3 behaviour).
-- `SpeciesContext.of(p, bloodSource)` / `.of(p, faction, gameTime, bloodSource)`: faction (`FactionRiteFactory.baseFaction`), `humanLike` (`SpeciesEligibility`), Originals count (`SpeciesData`), `max_originals_per_world`, `transition_ticks`, `werewolvesLoaded`. Hunter fields (`fiveCount`, `maxFive`) are left at the defaults for plan 7.
+- `SpeciesContext.of(p, bloodSource)` / `.of(p, faction, gameTime, bloodSource)`: faction (`FactionRiteFactory.baseFaction`), `humanLike` (`SpeciesEligibility`), Originals count (`SpeciesData`), `max_originals_per_world`, `transition_ticks`, `werewolvesLoaded`. `fiveCount` comes from `FiveRoster`, `maxFive` from `max_five`.
 - `SpeciesEligibility.setCheck(HumanLikeCheck)`: plan 5 installs the Tensura check (`tensura:human_like`); the default is "everyone".
 - `SpeciesData` (`SavedData` `supernaturalbloodlines_species`, overworld storage): UUIDs of ORIGINAL and ORIGINAL_HYBRID players, kept by a `BloodlineAccess` listener (species changes only), so offline Originals count. It keeps Originals who no longer log in, so their count stays against `max_originals_per_world`.
 - `SpeciesConfig` (own file `supernaturalbloodlines-species.toml`, section `species`): `max_originals_per_world` (0 = unlimited), `transition_ticks` (24000). The brief put the spec inside `SpeciesData`; it is a separate class like `VampireSyncConfig`.
@@ -113,6 +113,15 @@ Package `parts/species/witch`; mixins in `mixin.species` (see [mixins](../mixins
 - **Checked by runs, not by hand:** `runGameTestServer`, `-PnoWerewolves` (Originals, witches, heretics; no hybrid rites), `-PnoLinkedMods`, `-PpartsOff=species`, and `runClient` with and without `-PnoLinkedMods` (the log reaches "Loaded 0 entity animations" with no ERROR/Exception/NoClassDefFoundError from this mod).
 - **Manual check pending:** the two-client playthrough: Original, make Original's Blood, turn a werewolf friend into a hybrid, Original hybrid, witch, tribrid. Also pending from earlier tasks: the forced-shift heuristic on a real full moon, the downed screen, moonstone has no loot source, rite entity consumption.
 - **GameTest cells are 16x1x16 (`structure/empty.nbt`).** The runner force-loads and waits for only the chunks under a cell's box. With the old 1x1x1 template a cell next to a chunk edge had its `+1`...`+13` blocks (and a rite's 8-block radius) in a chunk whose entities do not tick and whose entity section is not visible yet: item drops were not found, FakePlayers and mobs took no damage, a cow stopped ticking. That was the flake in the rite tests (about 1 run in 10, also on the baseline). The cell spacing grows with the box (21 x 22 blocks), which also keeps a rite from reaching a neighbour's cell. **Rule: keep all test positions within 0..15 on x and z** (relative to the cell, no negative offsets); `RiteTestSupport.centre` is (8,1,8) for that reason, and the altar tests put their base at z 4 so a chalk two blocks north stays inside. A test that needs more room widens the template. Failure messages print the target's state through `gametest/Diag`.
+
+## Hunters: roster and rite (plan 7, Task 1)
+
+Package `parts/species/hunter`; GameTests `HunterGameTests`, unit test `FiveRosterTest`.
+
+- **`FiveRoster`** (`SavedData` `supernaturalbloodlines_five`, always the overworld's storage): `members` (the Five, offline ones too), `pendingPotentialChoice` and `liftedCurses` (both for Tasks 2 and 3; read-only views plus `setPendingPotentialChoice` / `setLiftedCurse`). `size()`, `add(UUID)`, `remove(UUID)`, `contains(UUID)`.
+- **`HunterEvents`** (registered by `SpeciesPart.init` always, no Werewolves needed): a `BloodlineAccess` listener adds the player when the species becomes HUNTER_OF_THE_FIVE and removes them when it is anything else, so debug and set paths are covered, not only the rite; login re-syncs (`sync`, idempotent); logout does nothing, so the slot stays. `FactionLevelChanged` out of the hunter faction applies `LEFT_BASE_FACTION` with the hunter faction as context (nothing applied that event before; the rules row `HUNTER_OF_THE_FIVE -> NONE` already existed), which frees the slot through the listener.
+- **`max_five`** (`SpeciesConfig`, default 5, 1 to 10000, `overrideMaxFive` for tests). `SpeciesContext.of` fills `fiveCount` and `maxFive`; the rules refuse a full Five with `five_full`.
+- **Rite** `rite_of_the_five.json`: `faction_rite`, event `rite_of_the_five`, faction `hunter`, medium circle of ritual chalk, power 10000, items 5 `minecraft:candle`, 1 `minecraft:iron_ingot`, 1 `minecraft:book`, 1 `enchanted:taglock` (a plain ingredient), condition `part_enabled species`. Enchanted rite items are plain ids (no tags), and Vampirism has no silver ingot, so the candle is the plain undyed one and the metal is iron.
 
 ## Hook points (verified)
 

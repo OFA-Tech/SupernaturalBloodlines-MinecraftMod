@@ -11,7 +11,10 @@ public final class SpeciesConfig {
     public static final int DEFAULT_MAX_ORIGINALS = 0;
     public static final int DEFAULT_TRANSITION_TICKS = 24000;
 
+    public static final int DEFAULT_MAX_FIVE = 5;
+
     private static final ModConfigSpec.IntValue MAX_ORIGINALS;
+    private static final ModConfigSpec.IntValue MAX_FIVE;
     public static final boolean DEFAULT_WITCH_BONUS = true;
     public static final double DEFAULT_SIPHONER_CHANCE = 0.25;
 
@@ -26,6 +29,8 @@ public final class SpeciesConfig {
                 .defineInRange("max_originals_per_world", DEFAULT_MAX_ORIGINALS, 0, 10_000);
         TRANSITION_TICKS = b.comment("Play time a werewolf has to drink doppelgänger blood after dying with Original's Blood, in ticks.")
                 .defineInRange("transition_ticks", DEFAULT_TRANSITION_TICKS, 20, 24_000_000);
+        MAX_FIVE = b.comment("How many Hunters of the Five the world allows.")
+                .defineInRange("max_five", DEFAULT_MAX_FIVE, 1, 10_000);
         WITCH_BONUS = b.comment("Witches, heretics and tribrids get altar range x1.5 and rite power cost x0.75.")
                 .define("witch_bonus_enabled", DEFAULT_WITCH_BONUS);
         SIPHONER_CHANCE = b.comment("Chance that the Rite of Ancestral Calling makes a siphoner instead of a witch.")
@@ -92,6 +97,26 @@ public final class SpeciesConfig {
             return MAX_ORIGINALS.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_MAX_ORIGINALS;
+        }
+    }
+
+    private static volatile Integer maxFiveOverride;
+
+    /** For tests: pins {@link #maxFive()} without touching the config file; null clears it. */
+    @VisibleForTesting
+    public static void overrideMaxFive(Integer value) {
+        maxFiveOverride = value;
+    }
+
+    public static int maxFive() {
+        Integer pinned = maxFiveOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return MAX_FIVE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_MAX_FIVE;
         }
     }
 
