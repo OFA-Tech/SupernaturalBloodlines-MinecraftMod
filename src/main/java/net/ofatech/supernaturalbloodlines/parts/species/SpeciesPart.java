@@ -10,7 +10,9 @@ import net.ofatech.supernaturalbloodlines.parts.species.gametest.HybridGameTests
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HybridTraitsGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.OriginalGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.BloodThirst;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.OriginalHybridGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.FormControl;
+import net.ofatech.supernaturalbloodlines.parts.species.hybrid.GeneAwakening;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.HybridTraits;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.SireBond;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler;
@@ -53,9 +55,10 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(HybridBloodRiteFactory.ID, HybridBloodRiteFactory.CODEC);
         SpeciesRegistries.register(modBus);
         OriginalRules.register();
+        HybridTraits.register(); // always: it strips the saved modifier when Werewolves is gone
         if (ModList.get().isLoaded("werewolves")) {
             TransitionHandler.register();
-            HybridTraits.register();
+            GeneAwakening.register();
             FormControl.register();
             BloodThirst.register();
             Venom.register();
@@ -76,6 +79,7 @@ public final class SpeciesPart {
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(HybridGameTests.class);
                 e.register(HybridTraitsGameTests.class);
+                e.register(OriginalHybridGameTests.class);
             }
         });
         SupernaturalBloodlines.LOGGER.info("SpeciesPart enabled");

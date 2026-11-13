@@ -7,7 +7,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.neoforged.bus.api.EventPriority;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -59,7 +59,8 @@ public final class HybridTraits {
 
     public static void sync(ServerPlayer p, long gameTime) {
         var state = BloodlineAccess.get(p);
-        boolean on = isHybrid(state.species());
+        // without Werewolves a saved modifier is stripped here (the hybrid species itself is kept)
+        boolean on = isHybrid(state.species()) && ModList.get().isLoaded("werewolves");
         double age = on ? age(state.turnedAt(), gameTime) : 0.0;
         apply(p, Attributes.MOVEMENT_SPEED, SPEED * age, on);
         apply(p, Attributes.ATTACK_DAMAGE, ATTACK * age, on);

@@ -1,6 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hybrid;
 
+import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.InteractionResult;
@@ -25,6 +27,7 @@ public final class BloodThirst {
 
     private static final int EFFECT_STEP = 20;
     private static final int EFFECT_TICKS = 100;
+    private static final int RENEW_BELOW = 40;
 
     private BloodThirst() {
     }
@@ -66,9 +69,17 @@ public final class BloodThirst {
         }
         int thirst = BloodlineAccess.get(p).thirst();
         if (thirst == 0) {
-            p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, EFFECT_TICKS, 0, true, false, true));
+            renew(p, MobEffects.WEAKNESS);
         } else if (thirst >= STRONG_FROM) {
-            p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, EFFECT_TICKS, 0, true, false, true));
+            renew(p, MobEffects.DAMAGE_BOOST);
+        }
+    }
+
+    /** Re-adding an effect sends a packet; only do it once the running one is about to end. */
+    private static void renew(ServerPlayer p, Holder<MobEffect> effect) {
+        MobEffectInstance running = p.getEffect(effect);
+        if (running == null || running.getDuration() < RENEW_BELOW) {
+            p.addEffect(new MobEffectInstance(effect, EFFECT_TICKS, 0, true, false, true));
         }
     }
 

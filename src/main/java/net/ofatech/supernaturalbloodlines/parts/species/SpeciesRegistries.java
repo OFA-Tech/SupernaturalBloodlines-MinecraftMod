@@ -42,6 +42,9 @@ public final class SpeciesRegistries {
     public static final DeferredItem<HybridBloodItem> HYBRID_BLOOD =
             ITEMS.register("hybrid_blood", () -> new HybridBloodItem(new Item.Properties().stacksTo(16)));
 
+    /** Ingredient of the Rite of the Moon (crafted: amethyst shard + Werewolves silver ingot; no loot source yet). */
+    public static final DeferredItem<Item> MOONSTONE = ITEMS.registerSimpleItem("moonstone");
+
     /** Whose blood a bottle of Original's Blood is. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> BLOOD_SOURCE_COMPONENT =
             COMPONENTS.registerComponentType("blood_source", b -> b.persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC));

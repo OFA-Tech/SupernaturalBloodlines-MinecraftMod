@@ -222,6 +222,24 @@ public final class HybridTraitsGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void thirstEffectsAreRenewedOnlyWhenRunningOut(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.createDuelist(helper);
+        try {
+            BloodlineAccess.set(p, species(Species.HYBRID).toBuilder().thirst(0).build());
+            p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 41, 0, true, false, true));
+            BloodThirst.refreshEffects(p);
+            helper.assertTrue(p.getEffect(MobEffects.WEAKNESS).getDuration() == 41, "a healthy effect was renewed: " + p.getEffect(MobEffects.WEAKNESS).getDuration());
+            p.removeEffect(MobEffects.WEAKNESS);
+            p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 39, 0, true, false, true));
+            BloodThirst.refreshEffects(p);
+            helper.assertTrue(p.getEffect(MobEffects.WEAKNESS).getDuration() == 100, "a running-out effect was not renewed: " + p.getEffect(MobEffects.WEAKNESS).getDuration());
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
     // ---- forced shift ----
 
     @GameTest(template = "empty", templateNamespace = NS)

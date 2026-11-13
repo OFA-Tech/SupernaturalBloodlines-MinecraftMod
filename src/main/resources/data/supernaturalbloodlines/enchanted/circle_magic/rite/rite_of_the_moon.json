@@ -1,0 +1,21 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:moonstone", "count": 1 },
+        { "id": "supernaturalbloodlines:original_blood", "count": 1 }
+    ],
+    "entities": [ "minecraft:wolf", "minecraft:villager" ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 15000,
+    "factory": {
+        "type": "supernaturalbloodlines:faction_rite",
+        "event": "rite_of_the_moon",
+        "faction": "vampire_or_werewolf",
+        "requires_full_moon": true
+    }
+}

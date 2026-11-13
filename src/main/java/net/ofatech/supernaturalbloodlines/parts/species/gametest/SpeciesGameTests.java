@@ -33,6 +33,10 @@ import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.Record
 import net.ofatech.supernaturalbloodlines.parts.species.OutcomeExecutor;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesEligibility;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.ofatech.supernaturalbloodlines.parts.species.hybrid.HybridTraits;
+import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteHooks;
 
 /** Shared species plumbing: the context, eligibility and the outcome executor. */
@@ -215,6 +219,29 @@ public final class SpeciesGameTests {
             helper.assertTrue(SpeciesContext.of(p, null).originalsInWorld() == before + 1, "an Original hybrid is counted twice or not at all");
             BloodlineAccess.set(p, species(Species.WITCH));
             helper.assertTrue(SpeciesContext.of(p, null).originalsInWorld() == before, "a witch is counted as an Original");
+        } finally {
+            BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    /** Runs with and without Werewolves (-PnoWerewolves): the hybrid traits follow the mod, the Original protection does not. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void hybridTraitsFollowTheWerewolvesMod(GameTestHelper helper) {
+        boolean werewolves = ModList.get().isLoaded("werewolves");
+        ServerPlayer p = TestPlayers.create(helper);
+        try {
+            BloodlineAccess.set(p, species(Species.HYBRID));
+            helper.assertTrue(p.getAttribute(Attributes.ATTACK_DAMAGE).hasModifier(HybridTraits.MODIFIER_ID) == werewolves,
+                    "werewolves=" + werewolves + " but the hybrid modifier is " + p.getAttribute(Attributes.ATTACK_DAMAGE).hasModifier(HybridTraits.MODIFIER_ID));
+            // a modifier saved while Werewolves was there is stripped on the next sync once it is gone
+            p.getAttribute(Attributes.ATTACK_DAMAGE).addOrReplacePermanentModifier(
+                    new AttributeModifier(HybridTraits.MODIFIER_ID, 2.0, AttributeModifier.Operation.ADD_VALUE));
+            HybridTraits.sync(p);
+            helper.assertTrue(p.getAttribute(Attributes.ATTACK_DAMAGE).hasModifier(HybridTraits.MODIFIER_ID) == werewolves,
+                    "the saved hybrid modifier outlived the mod: werewolves=" + werewolves);
+            BloodlineAccess.set(p, species(Species.ORIGINAL_HYBRID));
+            helper.assertTrue(p.getAttribute(Attributes.MAX_HEALTH).hasModifier(OriginalRules.MODIFIER_ID), "an Original hybrid lost the Original protection");
         } finally {
             BloodlineAccess.set(p, BloodlineState.NONE);
         }
