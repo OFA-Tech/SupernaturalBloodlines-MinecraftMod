@@ -26,4 +26,4 @@ Config `supernaturalbloodlines.species.mixins.json`, plugin `SpeciesMixinPlugin`
 
 ## Access transformers
 
-Not a mixin and not counted in the budget. `META-INF/accesstransformer.cfg` makes `Entity.setSharedFlag(int, boolean)` public, so the species part's `client/HunterSenseClient` can outline entities on one client (see docs/parts/species.md, Hunters: instinct, sense).
+Not a mixin and not counted in the budget. `META-INF/accesstransformer.cfg` makes `Entity.setSharedFlag(int, boolean)` and `getSharedFlag(int)` public, so the species part's `client/HunterSenseClient` can outline entities on one client (see docs/parts/species.md, Hunters: instinct, sense).
