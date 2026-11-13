@@ -6,6 +6,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Blocks;
@@ -14,6 +15,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.EnabledParts;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
@@ -49,6 +51,26 @@ public final class BloodlineGameTests {
         helper.succeed();
     }
 
+    // part data carries supernaturalbloodlines:part_enabled: with the switch off (or a mod missing) none of it may load,
+    // with it on it must (run with -PpartsOff=... and -PnoLinkedMods to see the off side)
+    @GameTest(template = "empty")
+    public static void partDataFollowsSwitch(GameTestHelper helper) {
+        RegistryAccess access = helper.getLevel().registryAccess();
+        checkPartData(helper, access, "enchantedTensura", "circle_magic/rite", SupernaturalBloodlines.MODID, "");
+        // Tensura's registry has no namespace prefix and our files sit in its data namespace
+        checkPartData(helper, access, "enchantedTensura", "entity_existence", "tensura", "supernaturalbloodlines_enchanted_");
+        checkPartData(helper, access, "vampirismTensura", "entity_existence", "tensura", "supernaturalbloodlines_vampirism_");
+        helper.succeed();
+    }
+
+    private static void checkPartData(GameTestHelper helper, RegistryAccess access, String part, String registryPath, String entryNs,
+                                      String entryPrefix) {
+        long count = access.registries().filter(e -> e.key().location().getPath().equals(registryPath))
+                .mapToLong(e -> e.value().keySet().stream()
+                        .filter(id -> id.getNamespace().equals(entryNs) && id.getPath().startsWith(entryPrefix)).count()).sum();
+        boolean on = EnabledParts.isEnabled(part);
+        helper.assertTrue(on == (count > 0), "part " + part + " enabled=" + on + " but " + count + " '" + entryPrefix + "' entries in " + registryPath);
+    }
     private static CommandSourceStack asOp(ServerPlayer p) {
         return p.createCommandSourceStack().withPermission(4);
     }

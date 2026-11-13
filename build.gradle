@@ -256,6 +256,46 @@ publishing {
     }
 }
 
+// -PpartsOff=enchantedTensura,vampirismTensura writes those part switches as false into the run config for
+// runGameTestServer, and restores the original file afterwards (also when the run fails).
+def partsOffConfig = file('run/config/supernaturalbloodlines-common.toml')
+def partsOffBackup = layout.buildDirectory.file('partsOff.bak').get().asFile
+if (project.hasProperty('partsOff')) {
+    def partsOffKeys = project.property('partsOff').toString().split(',').collect { it.trim() }.findAll { it }
+    def setPartsOff = tasks.register('setPartsOff') {
+        doLast {
+            // an existing backup is from an aborted run and holds the real original
+            if (!partsOffBackup.exists()) {
+                partsOffBackup.parentFile.mkdirs()
+                partsOffBackup.text = partsOffConfig.exists() ? partsOffConfig.text : '<absent>'
+            }
+            def lines = partsOffConfig.exists() ? partsOffConfig.readLines() : ['[parts]']
+            partsOffKeys.each { key ->
+                def found = false
+                lines = lines.collect { l ->
+                    if (l.trim().startsWith(key + ' ') || l.trim().startsWith(key + '=')) { found = true; return "\t${key} = false".toString() }
+                    l
+                }
+                if (!found) lines = lines + ["\t${key} = false".toString()]
+            }
+            partsOffConfig.parentFile.mkdirs()
+            partsOffConfig.text = lines.join('\n') + '\n'
+        }
+    }
+    def restoreParts = tasks.register('restoreParts') {
+        doLast {
+            if (partsOffBackup.exists()) {
+                if (partsOffBackup.text == '<absent>') partsOffConfig.delete() else partsOffConfig.text = partsOffBackup.text
+                partsOffBackup.delete()
+            }
+        }
+    }
+    tasks.named('runGameTestServer') {
+        dependsOn setPartsOff
+        finalizedBy restoreParts
+    }
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }
