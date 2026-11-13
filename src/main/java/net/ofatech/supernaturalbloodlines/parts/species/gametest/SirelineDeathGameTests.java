@@ -294,6 +294,25 @@ public final class SirelineDeathGameTests {
         helper.succeed();
     }
 
+    /** The hunter whose blow last hurt a sired vampire is not credited with the sireline's death. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void sirelineDeathGivesNoMarkKill(GameTestHelper helper) {
+        ServerPlayer hunter = HunterMarkGameTests.marked(helper, 0);
+        ServerPlayer victim = HunterMarkGameTests.vampire(helper);
+        try {
+            victim.setLastHurtByMob(hunter);
+            die(victim, helper.getLevel().damageSources().source(SirelineDeath.DAMAGE_TYPE));
+            helper.assertTrue(BloodlineAccess.get(hunter).markKills() == 0, "a sireline death grew the mark: " + BloodlineAccess.get(hunter).markKills());
+            // the same credit with an ordinary death does count, so the check above can fail
+            victim.setLastHurtByMob(hunter);
+            die(victim, helper.getLevel().damageSources().generic());
+            helper.assertTrue(BloodlineAccess.get(hunter).markKills() == 1, "the control kill gave " + BloodlineAccess.get(hunter).markKills());
+        } finally {
+            HunterMarkGameTests.reset(hunter, victim);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void sirelineDeathStopsOnACycle(GameTestHelper helper) {
         ServerPlayer root = mortal(helper, Species.ORIGINAL);
