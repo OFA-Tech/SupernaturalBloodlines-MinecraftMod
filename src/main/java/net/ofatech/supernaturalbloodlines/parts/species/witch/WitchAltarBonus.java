@@ -1,11 +1,13 @@
 package net.ofatech.supernaturalbloodlines.parts.species.witch;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import net.favouriteless.enchanted.common.ServerConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
@@ -51,16 +53,21 @@ public final class WitchAltarBonus {
         return base;
     }
 
-    /** True when {@code caster} is online in {@code level}, has the bonus and stands in range of one of the chalk's altars. */
-    public static boolean appliesToCaster(Level level, UUID caster, List<BlockPos> altars) {
-        if (level == null || caster == null || !SpeciesConfig.witchBonusEnabled()) {
-            return false;
-        }
-        Player p = level.getPlayerByUUID(caster);
-        if (p == null || !hasBonus(BloodlineAccess.get(p).species())) {
+    /**
+     * True when the caster, or the player standing on the circle's centre (the chalk's 1x2x1 column, where the rites look
+     * for their target), has the bonus and stands in range of one of the chalk's altars.
+     */
+    public static boolean appliesTo(Level level, UUID caster, BlockPos chalk, List<BlockPos> altars) {
+        if (level == null || !SpeciesConfig.witchBonusEnabled() || altars.isEmpty()) {
             return false;
         }
         int range = ServerConfig.INSTANCE.altarRange.get();
-        return altars.stream().anyMatch(a -> isNear(p, a, range));
+        List<Player> who = new ArrayList<>(level.getEntitiesOfClass(Player.class, new AABB(chalk).expandTowards(0, 1, 0)));
+        Player c = caster == null ? null : level.getPlayerByUUID(caster);
+        if (c != null) {
+            who.add(c);
+        }
+        return who.stream().anyMatch(p -> hasBonus(BloodlineAccess.get(p).species())
+                && altars.stream().anyMatch(a -> isNear(p, a, range)));
     }
 }
