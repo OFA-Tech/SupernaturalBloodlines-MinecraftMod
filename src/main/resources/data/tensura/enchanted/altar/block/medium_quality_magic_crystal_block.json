@@ -1,0 +1,5 @@
+{
+  "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "enchantedTensura" }],
+  "power": 10,
+  "limit": 10
+}

@@ -1,0 +1,18 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "enchantedTensura" }
+    ],
+    "items": [
+        { "id": "enchanted:taglock", "count": 1 },
+        { "id": "tensura:medium_quality_magic_crystal", "count": 1 },
+        { "id": "minecraft:soul_sand", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:nether_chalk"
+    },
+    "power": 2000,
+    "factory": {
+        "type": "enchanted:apply_curse",
+        "curse": "supernaturalbloodlines:skill_seal"
+    }
+}

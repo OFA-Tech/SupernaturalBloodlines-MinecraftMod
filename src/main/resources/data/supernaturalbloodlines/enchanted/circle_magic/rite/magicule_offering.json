@@ -1,0 +1,14 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "enchantedTensura" }
+    ],
+    "items": [
+        { "id": "tensura:low_quality_magic_crystal", "count": 1 },
+        { "id": "minecraft:amethyst_shard", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:small_circle": "enchanted:ritual_chalk"
+    },
+    "power": 0,
+    "factory": { "type": "supernaturalbloodlines:magicule_offering" }
+}

@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "enchantedTensura" }],
+  "type": "enchanted:mandrake",
+  "max_aura": 100,
+  "max_magicule": 500,
+  "min_aura": 50,
+  "min_magicule": 300,
+  "spiritualHealth": 30
+}

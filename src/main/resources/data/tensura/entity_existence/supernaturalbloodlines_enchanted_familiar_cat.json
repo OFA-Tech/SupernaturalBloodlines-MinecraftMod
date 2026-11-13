@@ -1,0 +1,9 @@
+{
+  "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "enchantedTensura" }],
+  "type": "enchanted:familiar_cat",
+  "max_aura": 200,
+  "max_magicule": 900,
+  "min_aura": 100,
+  "min_magicule": 600,
+  "spiritualHealth": 60
+}
