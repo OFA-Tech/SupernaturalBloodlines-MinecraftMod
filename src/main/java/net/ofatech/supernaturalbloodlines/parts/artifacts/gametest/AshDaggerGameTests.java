@@ -288,6 +288,25 @@ public final class AshDaggerGameTests {
     }
 
     /** Pinned by the plan's review focus: a desiccated Original who logs out is still desiccated on login, with the dagger. */
+    /** The packet path still lets a desiccated vampire start a bite; it drinks nothing. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void desiccatedVampireDrinksNothing(GameTestHelper helper) {
+        ServerPlayer biter = TestPlayers.createMortal(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(biter).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        ServerPlayer victim = TestPlayers.createMortal(helper);
+        var control = ResurrectionVervainGameTests.bite(biter, victim);
+        helper.assertTrue(control.getAmount() == 10, "control: a normal bite drank " + control.getAmount());
+
+        biter.addEffect(new MobEffectInstance(ArtifactItems.DESICCATED, 1000, 0, false, true, true));
+        var bite = ResurrectionVervainGameTests.bite(biter, victim);
+        helper.assertTrue(bite.getAmount() == 0 && bite.getSaturation() == 0f,
+                "a desiccated vampire drank " + bite.getAmount() + " with saturation " + bite.getSaturation());
+
+        biter.removeEffect(ArtifactItems.DESICCATED);
+        helper.assertTrue(ResurrectionVervainGameTests.bite(biter, victim).getAmount() == 10, "the bite stayed empty after the effect ended");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void desiccationSurvivesRelog(GameTestHelper helper) {
         BlockPos spot = new BlockPos(1, 1, 1);

@@ -108,7 +108,7 @@ public final class ResurrectionVervainGameTests {
     }
 
     /** Posts the event Vampirism fires when {@code biter} drinks from {@code victim}; returns it so the test can read the amount. */
-    private static BloodDrinkEvent.PlayerDrinkBloodEvent bite(ServerPlayer biter, LivingEntity victim) {
+    static BloodDrinkEvent.PlayerDrinkBloodEvent bite(ServerPlayer biter, LivingEntity victim) {
         var event = new BloodDrinkEvent.PlayerDrinkBloodEvent(VampirismAPI.vampirePlayer(biter), 10, 0.5f, false, bitten(victim));
         NeoForge.EVENT_BUS.post(event);
         return event;

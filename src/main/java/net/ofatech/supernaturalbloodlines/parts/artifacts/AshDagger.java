@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts;
 
+import de.teamlapen.vampirism.api.event.BloodDrinkEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -53,6 +54,10 @@ public final class AshDagger {
         });
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, LivingDeathEvent.class, e -> release(e.getEntity()));
 
+        // a desiccated vampire can still start a bite (a packet) but gets nothing from it; the event is abstract, so one listener each
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (BloodDrinkEvent.PlayerDrinkBloodEvent e) -> starve(e));
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (BloodDrinkEvent.EntityDrinkBloodEvent e) -> starve(e));
+
         // the desiccated can do nothing; HIGHEST, so nothing else sees the action first
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (AttackEntityEvent e) -> deny(e.getEntity(), e));
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (PlayerInteractEvent.RightClickItem e) -> deny(e.getEntity(), e));
@@ -71,6 +76,13 @@ public final class AshDagger {
 
     public static boolean isDesiccated(LivingEntity e) {
         return e.hasEffect(ArtifactItems.DESICCATED);
+    }
+
+    private static void starve(BloodDrinkEvent e) {
+        if (isDesiccated(e.getVampire().getRepresentingEntity())) {
+            e.setAmount(0);
+            e.setSaturationModifier(0f);
+        }
     }
 
     private static void deny(Entity who, ICancellableEvent event) {
