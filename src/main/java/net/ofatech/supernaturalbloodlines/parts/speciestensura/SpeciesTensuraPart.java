@@ -20,7 +20,7 @@ public final class SpeciesTensuraPart {
         container.registerConfig(ModConfig.Type.COMMON, SpeciesTensuraConfig.SPEC, SpeciesTensuraConfig.FILE);
         SpeciesEligibility.setCheck(TensuraHumanLikeCheck.INSTANCE);
         TensuraSupernatural.register();
-        LayerQuery.install(SpeciesLayer::treatAsUndead, SpeciesLayer::isApexVampireType);
+        LayerQuery.install(SpeciesLayer::treatedAsUndeadForBridge, SpeciesLayer::isApexVampireType);
         SpeciesLayer.register();
         // the part is only initialised when its mods are present, so the tests only exist then
         modBus.addListener((RegisterGameTestsEvent e) -> {

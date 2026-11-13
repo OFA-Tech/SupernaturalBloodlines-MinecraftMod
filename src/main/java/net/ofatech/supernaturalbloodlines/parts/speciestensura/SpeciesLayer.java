@@ -66,7 +66,12 @@ public final class SpeciesLayer {
         return SpeciesTensuraConfig.table().specFor(species, plainVampire);
     }
 
-    /** The layer says undead and the switch is on: Tensura's undead and holy-exposure checks answer true. */
+    /** What the hunters and werewolves rules and the holy bridge are told: the layer says undead, the switch is on and the hook is in place. */
+    public static boolean treatedAsUndeadForBridge(Player p) {
+        return UndeadTreatment.mixinApplied() && treatAsUndead(p);
+    }
+
+    /** The layer says undead and the switch is on: Tensura's undead and holy-exposure checks answer true (through the mixin). */
     public static boolean treatAsUndead(Player p) {
         return SpeciesTensuraConfig.undeadTreatment() && spec(p).treatAsUndead();
     }

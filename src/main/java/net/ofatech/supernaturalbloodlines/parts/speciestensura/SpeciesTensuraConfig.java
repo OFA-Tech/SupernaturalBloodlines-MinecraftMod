@@ -15,6 +15,7 @@ public final class SpeciesTensuraConfig {
     private static final ModConfigSpec.BooleanValue UNDEAD_TREATMENT;
     private static final Set<String> WARNED = new HashSet<>();
 
+    private static volatile Boolean undeadOverride;
     private static volatile List<? extends String> parsedFrom;
     private static volatile LayerTable parsed = LayerTable.parse(LayerTable.DEFAULTS).table();
 
@@ -54,7 +55,16 @@ public final class SpeciesTensuraConfig {
         return parsed;
     }
 
+    /** For tests: null goes back to the config. */
+    public static void overrideUndeadTreatment(Boolean value) {
+        undeadOverride = value;
+    }
+
     public static boolean undeadTreatment() {
+        Boolean forced = undeadOverride;
+        if (forced != null) {
+            return forced;
+        }
         try {
             return UNDEAD_TREATMENT.get();
         } catch (IllegalStateException notLoaded) {

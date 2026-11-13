@@ -27,8 +27,8 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesLayer;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesTensuraConfig;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.TensuraHumanLikeCheck;
-import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.HolyDamageBridge;
 import net.ofatech.supernaturalbloodlines.shared.tensura.LayerQuery;
 
 /** Registered by the part itself (RegisterGameTestsEvent), so these only exist when species_tensura is enabled. */
@@ -178,10 +178,31 @@ public final class SpeciesLayerGameTests {
         helper.assertTrue(Math.abs(originalLost - base * 3.0F) < 0.01F, "a layered Original lost " + originalLost + ", a control " + base + " (want x3)");
         // the vampire (Vampirism's own damage handling adds a little on its own) must be near x3, not the stacked x4.5
         helper.assertTrue(lost > base * 2.5F && lost < base * 3.5F, "vampire lost " + lost + ", a control " + base + " (want about x3, not x4.5)");
-        helper.assertTrue(HolyDamageBridge.factor(vampire, tensuraHoly(helper)) == 1.0F, "the bridge still multiplies");
+        helper.assertTrue(LayerQuery.treatedAsUndeadBySpecies(vampire), "the holy bridge is not told to step aside");
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void bridgeMultipliesAgainWhenTheUndeadTreatmentIsOff(GameTestHelper helper) {
+        ServerPlayer vampire = TestPlayers.createVulnerable(helper);
+        setRace(vampire, "tensura:elf");
+        VampirismAPI.factionPlayerHandler(vampire).setFactionAndLevel(VReference.VAMPIRE_FACTION, 5);
+        ServerPlayer control = TestPlayers.createVulnerable(helper);
+        setRace(control, "tensura:elf");
+        float base = healthLost(control, tensuraHoly(helper), 2.0F);
+
+        SpeciesTensuraConfig.overrideUndeadTreatment(false);
+        try {
+            helper.assertTrue(!RaceUtils.isUndead(vampire), "undead_treatment_enabled=false still makes a vampire undead");
+            helper.assertTrue(!LayerQuery.treatedAsUndeadBySpecies(vampire), "the bridge still steps aside");
+            float lost = healthLost(vampire, tensuraHoly(helper), 2.0F);
+            // the bridge's x1.5 (Vampirism's own handling shaves a little off, see vampireLayerTakesTensuraHolyDamage)
+            helper.assertTrue(lost > base * 1.3F && lost < base * 1.6F, "vampire lost " + lost + ", a control " + base + " (want about x1.5)");
+        } finally {
+            SpeciesTensuraConfig.overrideUndeadTreatment(null);
+        }
+        helper.succeed();
+    }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void witchGetsMagiculeBonus(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.create(helper);
