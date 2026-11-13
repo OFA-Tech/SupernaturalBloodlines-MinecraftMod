@@ -145,3 +145,20 @@ All in `parts/artifacts/werewolves/`, loaded only behind `isLoaded("werewolves")
   - Seeds: crops `yellow_wolfsbane`, `northern_blue_wolfsbane` (wheat-like, 8 ages; loot: plant when ripe, seeds always). Seeds come from chests through global loot modifiers: yellow 15% (1-2) in taiga/snowy/plains village houses and pillager outposts, northern blue 4% in igloos, simple dungeons and abandoned mineshafts.
   - Lichen: block `wolf_lichen` (a carpet that needs a sturdy floor, instant break, drops itself); configured/placed feature `wolf_lichen` (random patch on stone, andesite, diorite, granite or deepslate, 1 chunk in 6) through the biome modifier `wolf_lichen` in snowy slopes, grove, frozen/jagged peaks, snowy taiga, taiga, old growth taigas and windswept hills/forest. `partDataFollowsSwitch` checks the damage type, both features and the biome modifier against `part_enabled artifacts` and Werewolves.
 - **Debt:** the lichen does not spread; the wild crops do not generate (seeds only from chests); the common strain has no ash or potion; the coated weapon has no tooltip; textures are generated placeholders; Accessories/Curios are not involved.
+
+
+## Checks (Task 8)
+
+- **Run in the dev client** (`runClient -PnoCurios` and `runClient -PnoWerewolves`, log up to "Loaded 0 entity animations"): no ERROR, no exception, no `NoClassDefFoundError` from `supernaturalbloodlines` or `net.ofatech`, no missing model/texture warning for our ids; `ArtifactsPart enabled` is logged. So no Curios class and no Werewolves class is loaded when the mod is absent.
+- **GameTest runs, all green:** `build`, `runGameTestServer` (277), `-PnoCurios` (275), `-PnoWerewolves` (194), `-PnoLinkedMods` (6), `-PpartsOff=artifacts` (203), `-PpartsOff=species` (165).
+
+### Pending checks (manual, not proven by a GameTest)
+
+- [ ] In the OFA pack (Accessories): the ring slot shows on the player, the three rings can be put in it, and `findWorn` sees them through Accessories' Curios compatibility layer. Only the Curios API path and the no-Curios path are tested.
+- [ ] Rites at a real chalk circle: *Ward of Daylight*, *Ward of the Moon*, *Ward of Return*, *Rite of the Cure*, *Rite of the Vampire Compass*, *Rite of the Hearing Device* (the tests start them with a helper).
+- [ ] Sun Ring in real sunlight (Vampirism's sun handling, the hidden sunscreen); the Resurrection Ring against a real supernatural attacker.
+- [ ] Vampire Compass: the needle in a running client (the `angle` property and the 32 placeholder frames).
+- [ ] Hearing Device and Mountain ash in play (the line's look, walking into it, the sapling and tree generation in forest biomes).
+- [ ] Desiccated Original: the grey screen tint is not implemented; the dagger drop in the world; a real relog.
+- [ ] Wolfsbane: the crops grow on farmland and look right (placeholder textures); lichen patches generate on stone in cold biomes; seeds show up in village, igloo, dungeon and mineshaft chests; eating, a coated weapon and a splash potion on a real werewolf; the lichen on a real werewolf (no regeneration, no shifting) and a real full-moon shift.
+- [ ] Taser (needs the packs part).
