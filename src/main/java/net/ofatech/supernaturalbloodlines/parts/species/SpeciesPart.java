@@ -7,8 +7,15 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HybridGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.HybridTraitsGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.OriginalGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.hybrid.BloodThirst;
+import net.ofatech.supernaturalbloodlines.parts.species.hybrid.FormControl;
+import net.ofatech.supernaturalbloodlines.parts.species.hybrid.HybridTraits;
+import net.ofatech.supernaturalbloodlines.parts.species.hybrid.SireBond;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler;
+import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
+import net.ofatech.supernaturalbloodlines.parts.species.rite.HybridBloodRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.original.Downed;
 import net.ofatech.supernaturalbloodlines.parts.species.original.DownedGiveUpPayload;
 import net.ofatech.supernaturalbloodlines.parts.species.original.DownedPayload;
@@ -43,10 +50,16 @@ public final class SpeciesPart {
         });
         // before the datapacks load, so the rite JSONs can name this factory
         RiteFactoryRegistry.get().register(OriginalBloodRiteFactory.ID, OriginalBloodRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(HybridBloodRiteFactory.ID, HybridBloodRiteFactory.CODEC);
         SpeciesRegistries.register(modBus);
         OriginalRules.register();
         if (ModList.get().isLoaded("werewolves")) {
             TransitionHandler.register();
+            HybridTraits.register();
+            FormControl.register();
+            BloodThirst.register();
+            Venom.register();
+            SireBond.register();
         }
         modBus.addListener((RegisterPayloadHandlersEvent e) -> {
             PayloadRegistrar registrar = e.registrar(NETWORK_VERSION).optional();
@@ -62,6 +75,7 @@ public final class SpeciesPart {
             e.register(OriginalGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(HybridGameTests.class);
+                e.register(HybridTraitsGameTests.class);
             }
         });
         SupernaturalBloodlines.LOGGER.info("SpeciesPart enabled");

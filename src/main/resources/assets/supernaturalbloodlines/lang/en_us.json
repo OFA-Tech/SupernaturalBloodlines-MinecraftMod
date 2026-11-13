@@ -55,6 +55,11 @@
   "rite.supernaturalbloodlines.doppelganger_blood": "Rite of Doppelgänger Blood",
   "rite.supernaturalbloodlines.immortality": "Rite of Immortality",
   "rite.supernaturalbloodlines.original_blood": "Rite of Original's Blood",
+  "item.supernaturalbloodlines.hybrid_blood": "Hybrid's Blood",
+  "effect.supernaturalbloodlines.hybrid_venom": "Werewolf Venom",
+  "rite.supernaturalbloodlines.hybrid_blood": "Rite of Hybrid's Blood",
+  "death.attack.venom": "%1$s succumbed to werewolf venom",
+  "supernaturalbloodlines.refusal.not_hybrid": "Only a hybrid can do this.",
   "supernaturalbloodlines.downed.title": "You are dying",
   "supernaturalbloodlines.downed.give_up": "Give up",
   "supernaturalbloodlines.downed.wait": "Wait"

@@ -16,6 +16,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.species.item.DoppelgangerBloodItem;
+import net.ofatech.supernaturalbloodlines.parts.species.item.HybridBloodItem;
+import net.ofatech.supernaturalbloodlines.parts.species.item.HybridVenomEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodItem;
 import net.ofatech.supernaturalbloodlines.parts.species.item.UnstableEffect;
@@ -36,6 +38,10 @@ public final class SpeciesRegistries {
     public static final DeferredItem<DoppelgangerBloodItem> DOPPELGANGER_BLOOD =
             ITEMS.register("doppelganger_blood", () -> new DoppelgangerBloodItem(new Item.Properties().stacksTo(16)));
 
+    /** The only cure for werewolf venom. */
+    public static final DeferredItem<HybridBloodItem> HYBRID_BLOOD =
+            ITEMS.register("hybrid_blood", () -> new HybridBloodItem(new Item.Properties().stacksTo(16)));
+
     /** Whose blood a bottle of Original's Blood is. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> BLOOD_SOURCE_COMPONENT =
             COMPONENTS.registerComponentType("blood_source", b -> b.persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC));
@@ -46,6 +52,10 @@ public final class SpeciesRegistries {
     /** A failing hybrid transition: when it ends the player dies (see TransitionHandler). */
     public static final DeferredHolder<MobEffect, UnstableEffect> UNSTABLE_EFFECT =
             EFFECTS.register("unstable", UnstableEffect::new);
+
+    /** Werewolf venom on a vampire (see {@code hybrid/Venom}). */
+    public static final DeferredHolder<MobEffect, HybridVenomEffect> HYBRID_VENOM =
+            EFFECTS.register("hybrid_venom", HybridVenomEffect::new);
 
     /**
      * The Original whose blood the player drank last (the last drink wins). Use {@code hasData} to tell "none" from the

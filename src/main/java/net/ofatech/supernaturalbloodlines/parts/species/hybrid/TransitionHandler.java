@@ -76,14 +76,19 @@ public final class TransitionHandler {
         e.setCancellationResult(InteractionResult.CONSUME);
         e.setCanceled(true);
         if (e.getEntity() instanceof ServerPlayer p) {
-            if (!p.isCreative()) {
-                stack.shrink(1);
-                ItemStack bottle = new ItemStack(Items.GLASS_BOTTLE);
-                if (!p.getInventory().add(bottle)) {
-                    p.drop(bottle, false);
-                }
-            }
+            useUpBottle(p, stack);
             drankOtherBlood(p);
+        }
+    }
+
+    /** One bottle is drunk (not in creative): the stack shrinks and an empty glass bottle comes back. */
+    static void useUpBottle(ServerPlayer p, ItemStack stack) {
+        if (!p.isCreative()) {
+            stack.shrink(1);
+            ItemStack bottle = new ItemStack(Items.GLASS_BOTTLE);
+            if (!p.getInventory().add(bottle)) {
+                p.drop(bottle, false);
+            }
         }
     }
 
