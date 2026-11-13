@@ -257,7 +257,7 @@ public final class HybridTraitsGameTests {
             FormControl.enterTick(hybrid);
             boolean forced = post(hybrid, form);
             FormControl.leaveTick(hybrid);
-            boolean voluntary = post(hybrid, form);
+            boolean voluntary = post(hybrid, ModActions.SURVIVAL_FORM.get()); // half control at level 1 (R96)
             FormControl.enterTick(plain);
             boolean plainForced = post(plain, form);
             FormControl.leaveTick(plain);

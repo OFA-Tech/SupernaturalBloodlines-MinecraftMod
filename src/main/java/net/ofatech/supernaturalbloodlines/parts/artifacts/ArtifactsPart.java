@@ -23,6 +23,7 @@ import net.ofatech.supernaturalbloodlines.parts.artifacts.rite.RequiresDesiccate
 import net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves.MoonRing;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves.WolfsbaneRules;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves.WolfsbaneStrains;
+import net.ofatech.supernaturalbloodlines.shared.werewolves.AnchorItems;
 
 public final class ArtifactsPart {
     private ArtifactsPart() {}
@@ -44,6 +45,7 @@ public final class ArtifactsPart {
         VervainRules.register();
         if (werewolves) {
             MoonRing.register();
+            AnchorItems.setWornLookup(p -> ArtifactSlots.isWorn(p, AnchorItems.TAG)); // Curios too (R94 anchors)
             WolfsbaneStrains.register(modBus);
             WolfsbaneRules.register(modBus);
         }

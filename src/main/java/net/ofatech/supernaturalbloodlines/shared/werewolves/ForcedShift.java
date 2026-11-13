@@ -1,7 +1,11 @@
 package net.ofatech.supernaturalbloodlines.shared.werewolves;
 
 import de.teamlapen.vampirism.api.event.ActionEvent;
+import de.teamlapen.werewolves.api.entities.werewolf.WerewolfForm;
 import de.teamlapen.werewolves.entities.player.werewolf.actions.WerewolfFormAction;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Predicate;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -23,9 +27,17 @@ public final class ForcedShift {
     // PlayerTickEvent also fires on the client thread of a singleplayer game, hence the thread-local
     private static final ThreadLocal<Player> TICKING = new ThreadLocal<>();
     public static final String BOUND_MESSAGE = "supernaturalbloodlines.hybrid_curse.bound";
+    public static final String NO_CONTROL_MESSAGE = "supernaturalbloodlines.moon_control.none";
+    // reasons to allow a form action without moon control (the Alpha Roar lets the pack shift)
+    private static final List<Predicate<ServerPlayer>> PERMITS = new CopyOnWriteArrayList<>();
     private static boolean registered;
 
     private ForcedShift() {
+    }
+
+    /** A temporary exemption from the form gate: while it holds, the player may shift at will. */
+    public static void addFormPermit(Predicate<ServerPlayer> permitted) {
+        PERMITS.add(permitted);
     }
 
     public static synchronized void register() {
@@ -66,14 +78,36 @@ public final class ForcedShift {
             }
             return;
         }
-        if (isForced(e) && (MoonControl.of(p) != MoonControl.Control.NONE || bornSpared(p))) {
+        if (isForced(e)) {
+            if (MoonControl.of(p) != MoonControl.Control.NONE || halvedAndSpared(p)) {
+                e.setCanceled(true);
+            }
+        } else if (e.getAction() instanceof WerewolfFormAction form && MoonControl.moonBound() && !allowedAtWill(p, form)) {
+            // R96: without control a werewolf shifts only when the full moon forces it
             e.setCanceled(true);
+            p.displayClientMessage(Component.translatable(NO_CONTROL_MESSAGE), true);
         }
     }
 
-    /** R90: a born wolf is spared the forced shift on half of the nights. */
-    private static boolean bornSpared(ServerPlayer p) {
-        return BloodlineAccess.get(p).wolf().lineage() == WolfState.Lineage.BORN
-                && MoonControl.bornSparedOn(p.getUUID(), p.level().getDayTime() / 24000L);
+    /** Whether {@code p} may toggle this form action on by choice: HALF allows human and survivalist, FULL the beasts too. */
+    private static boolean allowedAtWill(ServerPlayer p, WerewolfFormAction action) {
+        if (PERMITS.stream().anyMatch(permit -> permit.test(p))) {
+            return true;
+        }
+        WerewolfForm form = action.getForm();
+        return switch (MoonControl.of(p)) {
+            case NONE -> false;
+            case HALF -> form == WerewolfForm.HUMAN || form == WerewolfForm.SURVIVALIST;
+            case FULL -> true;
+        };
+    }
+
+    /**
+     * R90 and R94: a born wolf, or a wolf with an anchor near, is spared the forced shift on half of the nights. The two
+     * reasons do not stack (one coin per night), and a born wolf with an anchor has control anyway.
+     */
+    private static boolean halvedAndSpared(ServerPlayer p) {
+        boolean born = BloodlineAccess.get(p).wolf().lineage() == WolfState.Lineage.BORN;
+        return (born || MoonControl.forcedShiftHalved(p)) && MoonControl.bornSparedOn(p.getUUID(), p.level().getDayTime() / 24000L);
     }
 }

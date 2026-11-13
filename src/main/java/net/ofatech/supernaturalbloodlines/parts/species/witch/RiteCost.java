@@ -26,7 +26,14 @@ public final class RiteCost {
     private RiteCost() {}
 
     public static Split split(int base, boolean witch, int siphonedAvailable) {
+        return split(base, witch, false, siphonedAvailable);
+    }
+
+    public static Split split(int base, boolean witch, boolean emissary, int siphonedAvailable) {
         int cost = witch ? WitchAltarBonus.scaledCost(base) : Math.max(0, base);
+        if (emissary) {
+            cost = WitchAltarBonus.scaledEmissaryCost(cost);
+        }
         int used = Math.min(cost, Math.max(0, siphonedAvailable));
         return new Split(cost - used, used);
     }
@@ -48,7 +55,7 @@ public final class RiteCost {
         if (p != null && Siphoning.canSiphon(BloodlineAccess.get(p).species())) {
             available = BloodlineAccess.get(p).siphonedPower();
         }
-        Split s = split(base, witch, available);
+        Split s = split(base, witch, WitchAltarBonus.emissaryApplies(level, caster), available);
         if (s.siphoned() > 0) {
             PENDING.set(new Pending(p, s.siphoned()));
         }

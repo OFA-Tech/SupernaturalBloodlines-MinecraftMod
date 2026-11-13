@@ -5,12 +5,14 @@ import java.util.List;
 import java.util.UUID;
 import net.favouriteless.enchanted.common.ServerConfig;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.Emissary;
 
 /**
  * R61: a witch (and the heretic and tribrid, who keep the magic) widens an altar's range x1.5 and pays x0.75 for rites.
@@ -30,6 +32,19 @@ public final class WitchAltarBonus {
     /** Rounded up, so a rite that costs power never becomes free. */
     public static int scaledCost(int base) {
         return base <= 0 ? 0 : (int) Math.ceil(base * COST_MULTIPLIER);
+    }
+
+    /** R94: an Emissary near their pack pays a further x0.9 for rites (after the witch discount, if they have it). */
+    public static final double EMISSARY_MULTIPLIER = 0.9;
+
+    /** Rounded up, like {@link #scaledCost}. */
+    public static int scaledEmissaryCost(int base) {
+        return base <= 0 ? 0 : (int) Math.ceil(base * EMISSARY_MULTIPLIER);
+    }
+
+    /** True when {@code caster} is a pack Emissary with a pack member within 16 blocks. */
+    public static boolean emissaryApplies(Level level, UUID caster) {
+        return level instanceof ServerLevel sl && Emissary.nearPack(sl, caster);
     }
 
     public static boolean hasBonus(Species s) {

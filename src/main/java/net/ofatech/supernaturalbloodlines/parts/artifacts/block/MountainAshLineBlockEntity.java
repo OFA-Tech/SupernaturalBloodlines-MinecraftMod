@@ -9,8 +9,8 @@ import net.ofatech.supernaturalbloodlines.parts.artifacts.MountainAsh;
 
 /**
  * The one fact a line remembers: whether a pack Emissary laid it. Such a line also stops the mobs in
- * {@code #supernaturalbloodlines:supernatural_mobs}. Plan 9 (packs) sets it when the placer is an Emissary;
- * until then nothing does and it stays false.
+ * {@code #supernaturalbloodlines:supernatural_mobs}. {@link MountainAshLineBlock#setPlacedBy} sets it when the placer is
+ * an Emissary (asked through {@code EmissaryLines}); without the species part it stays false.
  */
 public class MountainAshLineBlockEntity extends BlockEntity {
     private static final String EMISSARY = "emissary";

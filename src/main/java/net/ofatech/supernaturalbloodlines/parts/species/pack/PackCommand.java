@@ -26,7 +26,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * {@code /pack invite|accept|leave|heal|info|emissary|anchor}. An invitation works like the sireline call: a clickable
+ * {@code /pack invite|accept|leave|heal|info|emissary|anchor|roar} ({@code roar} is the keybind's server method). An invitation works like the sireline call: a clickable
  * [Accept] with a token bound to the invited player, single use, valid for a minute. Each action returns the error to
  * show, or null when it worked (the messages to the people involved are sent here). Registered only with Werewolves.
  */
@@ -59,6 +59,7 @@ public final class PackCommand {
                         .executes(c -> run(c, emissary(self(c), null)))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(c -> run(c, emissary(self(c), EntityArgument.getPlayer(c, "player"))))))
+                .then(Commands.literal("roar").executes(c -> run(c, AlphaRoar.roar(self(c)))))
                 .then(Commands.literal("anchor")
                         .executes(c -> run(c, anchor(self(c), null)))
                         .then(Commands.argument("player", EntityArgument.player())

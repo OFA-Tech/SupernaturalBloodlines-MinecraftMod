@@ -187,6 +187,11 @@ public final class PackIndex extends SavedData {
         return Optional.ofNullable(emissaryOf.get(alpha));
     }
 
+    /** The Alpha who named {@code emissary}, if anyone did. */
+    public Optional<UUID> emissaryAlpha(UUID emissary) {
+        return emissaryOf.entrySet().stream().filter(e -> e.getValue().equals(emissary)).map(Map.Entry::getKey).findFirst();
+    }
+
     public void setEmissary(UUID alpha, @Nullable UUID emissary) {
         put(emissaryOf, alpha, emissary);
     }

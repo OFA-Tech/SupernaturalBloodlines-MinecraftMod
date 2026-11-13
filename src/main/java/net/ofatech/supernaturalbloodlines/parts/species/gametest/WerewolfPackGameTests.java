@@ -250,7 +250,8 @@ public final class WerewolfPackGameTests {
 
             // the Rite of the Moon clears the curse, and then the form is theirs again
             BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().hybridCurseBound(false).build());
-            helper.assertTrue(!formCancelled(p, ModActions.BEAST_FORM.get(), false), "an unbound hybrid was stopped");
+            // (level 1: half control, so the half forms; the beast needs level 8, R96)
+            helper.assertTrue(!formCancelled(p, ModActions.SURVIVAL_FORM.get(), false), "an unbound hybrid was stopped");
         } finally {
             reset(p);
             handler(p).leaveFaction(false);
