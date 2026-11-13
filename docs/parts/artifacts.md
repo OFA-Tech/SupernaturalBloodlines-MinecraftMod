@@ -1,6 +1,6 @@
 # Part: artifacts
 
-Requires: `vampirism`, `enchanted`. Werewolves and Curios are optional (the Moon Ring needs Werewolves). Package: `net.ofatech.supernaturalbloodlines.parts.artifacts`. Plan: `docs/superpowers/plans/06-artifacts.md`.
+Requires: `vampirism`, `enchanted` and the `vampirismEnchanted` part (`Part.requiredParts`: it reuses `RiteTargets` and `FactionRiteHooks`; with that part off, artifacts reports `disabled (requires [VAMPIRISM_ENCHANTED])`). Werewolves and Curios are optional (the Moon Ring needs Werewolves). Package: `net.ofatech.supernaturalbloodlines.parts.artifacts`. Plan: `docs/superpowers/plans/06-artifacts.md`.
 
 Checklist (from the design, section 6). Tick items as they ship.
 
@@ -108,7 +108,7 @@ Enchanted 4.2.7:
 - **Tree:** configured feature `mountain_ash` (vanilla oak shape, our log and leaves, like white oak), placed feature `mountain_ash` (rarity 1 in 10 chunks, surface, `would_survive`), NeoForge biome modifier `neoforge/biome_modifier/mountain_ash_trees` (`#minecraft:is_forest`, `vegetal_decoration`). All three, the loot tables and the recipes carry `part_enabled artifacts`. Tags (`logs`, `logs_that_burn`, `planks`, `saplings`, `leaves`, `mineable/axe`, `mineable/hoe`, block and item) are `required: false`; the white oak tag files were extended, not replaced. Leaves drop saplings and sticks like oak. **Not done:** flammability (the white oak has none either), the potted sapling, leaf tint (the texture is plain green).
 - **Dust:** stonecutter recipe, 1 log -> 4 dust. Planks: shapeless 1 -> 4.
 - **The line** (`MountainAshLineBlock`): hardness 0.05, `RenderShape.MODEL`, a 1 pixel outline, gives no power (no signal methods). `getCollisionShape`: `EntityCollisionContext` with an entity that `blocks(entity, emissary)` gives a 1.5 high full-cell box, everything else is empty. `blocks`: a `Projectile` counts as its owner (`Supernatural.isPrey(owner)`), anything else is `Supernatural.isPrey` or, on an emissary line, in `#supernaturalbloodlines:supernatural_mobs`. Witches and siphoners are not prey (R81), so they pass.
-- **Rules** (`MountainAshRules`): `PlayerEvent.BreakSpeed` on the line by prey -> speed 0; `BlockEvent.BreakEvent` by prey (not creative) is cancelled, because instant mining skips the speed; `ProjectileImpactEvent` of a projectile whose owner is prey, on a line block, is cancelled and the projectile discarded. The shape alone already makes `ClipContext.Block.COLLIDER` (which projectiles use) hit the line. Explosions and pistons can still destroy it.
+- **Rules** (`MountainAshRules`): `PlayerEvent.BreakSpeed` on the line by prey -> speed 0; `BlockEvent.BreakEvent` by prey (not creative) is cancelled, because instant mining skips the speed; `ProjectileImpactEvent` of a projectile whose owner is prey, on a line block, is cancelled and the projectile discarded, unless it is an `AbstractArrow` (arrows and tridents stick into the wall shape like into any block). The shape alone already makes `ClipContext.Block.COLLIDER` (which projectiles use) hit the line. Explosions and pistons can still destroy it.
 - **Pathfinding: not done.** An earlier version overrode NeoForge's `getBlockPathType(state, level, pos, @Nullable Mob)`, but `WalkNodeEvaluator` always passes `null` for the mob (checked in the bytecode), so the hook never saw a mob and a vampire mob's planned path went straight through the line. The override and its test were removed. Prey mobs are still stopped by the collision, they just plan through the line and bump into it.
 - **Emissary flag:** `MountainAshLineBlockEntity.emissary` (saved only when true), default false. Plan 9 sets it (from `setPlacedBy` or a rite) with `setEmissary(true)`; nothing in this plan does. The tag `supernatural_mobs` is created here with only `vampirism:ghost` (`required: false`); the test uses the ghost because it is not in a faction, so the plain line lets it through. Plan 9 fills the tag.
 - **Test gotchas:**
@@ -162,3 +162,18 @@ All in `parts/artifacts/werewolves/`, loaded only behind `isLoaded("werewolves")
 - [ ] Desiccated Original: the grey screen tint is not implemented; the dagger drop in the world; a real relog.
 - [ ] Wolfsbane: the crops grow on farmland and look right (placeholder textures); lichen patches generate on stone in cold biomes; seeds show up in village, igloo, dungeon and mineshaft chests; eating, a coated weapon and a splash potion on a real werewolf; the lichen on a real werewolf (no regeneration, no shifting) and a real full-moon shift.
 - [ ] Taser (needs the packs part).
+
+
+## Final review fixes
+
+- **Mountain ash is no floor:** `getBlockSupportShape` returns empty (the cached support shape came from the wall collision shape, so `isFaceSturdy(UP)` was true). A torch, redstone dust, another line or a natural spawn can no longer sit on a line. Test `lineIsNoSturdyFloor`. `getIndirectPassengers` is only walked when `isVehicle()`.
+- **Arrows stick:** only projectiles that are not `AbstractArrow` are discarded on the line (`supernaturalProjectileStopped` covers arrow, trident and snowball).
+- **Hearing Device and PvP:** a player target is stunned only if `user.canHarmPlayer(target)` and the target is not creative or spectating (`hearingDeviceRespectsPvp`, with `TestPlayers.createPvpAware`). The compass skips creative and spectating vampires (`compassIgnoresCreativeAndSpectatorVampires`).
+- **Part dependency:** `ARTIFACTS` requires `VAMPIRISM_ENCHANTED` (`PartLoaderTest.artifactsNeedVampirismEnchanted`).
+- **Wolfsbane:** a strain pulse on someone who is no longer a werewolf type removes the effect instead of hurting them (lichen now pulses every 20 ticks only for that check); the anvil coating keeps a rename (+1 level); the strain stream codec decodes an unknown id as the first strain.
+- **Desiccated vampire bite:** `BloodDrinkEvent` (both subclasses) sets the amount and saturation to 0 when the drinker is desiccated (`desiccatedVampireDrinksNothing`). The victim still takes the bite itself (no hook).
+- **CI:** the no-Werewolves step also runs `-PnoCurios`.
+
+### Release blocker (manual, in the OFA pack)
+
+- [ ] **A Resurrection Ring charge drops after a revive.** Accessories' Curios compatibility layer may return a copy of the ring stack, in which case the charge would be taken from the copy and the ring would keep reviving forever. Test it in the pack with the ring in an Accessories slot: die to a supernatural attacker three times and check the ring is spent. Do not release before this is checked.
