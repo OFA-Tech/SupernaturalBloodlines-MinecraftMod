@@ -69,9 +69,11 @@ public class MountainAshLineBlock extends BaseEntityBlock {
         if (Supernatural.isPrey(entity)) {
             return true;
         }
-        for (Entity passenger : entity.getIndirectPassengers()) {
-            if (Supernatural.isPrey(passenger)) {
-                return true;
+        if (entity.isVehicle()) {
+            for (Entity passenger : entity.getIndirectPassengers()) {
+                if (Supernatural.isPrey(passenger)) {
+                    return true;
+                }
             }
         }
         // the block entity is only read for the few mobs an emissary line adds
@@ -92,6 +94,15 @@ public class MountainAshLineBlock extends BaseEntityBlock {
         }
         // an unknown walker (no entity) and non-entity contexts pass
         return ctx instanceof EntityCollisionContext e && blocks(e.getEntity(), level, pos) ? WALL : Shapes.empty();
+    }
+
+    /**
+     * The support shape defaults to the collision shape, and the cached one (the {@code EmptyBlockGetter} call above) is the
+     * wall, so without this the line would count as a sturdy full face: torches, more dust and spawns would sit on it.
+     */
+    @Override
+    protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
+        return Shapes.empty();
     }
 
     @Override

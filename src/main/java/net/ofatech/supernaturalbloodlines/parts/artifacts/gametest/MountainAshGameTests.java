@@ -207,6 +207,40 @@ public final class MountainAshGameTests {
         helper.succeed();
     }
 
+    /** The line's cached wall shape must not read as a floor: nothing sits on it. */
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void lineIsNoSturdyFloor(GameTestHelper helper) {
+        BlockState line = lay(helper);
+        var level = helper.getLevel();
+        BlockPos abs = helper.absolutePos(LINE);
+        helper.assertTrue(!line.isFaceSturdy(level, abs, Direction.UP), "the top of the line is a sturdy face");
+        helper.assertTrue(!line.isFaceSturdy(level, abs, Direction.UP, net.minecraft.world.level.block.SupportType.CENTER), "the line supports a centre");
+        helper.assertTrue(line.getBlockSupportShape(level, abs).isEmpty(), "the line has a support shape");
+        // control: stone is sturdy
+        helper.assertTrue(helper.getBlockState(LINE.below()).isFaceSturdy(level, abs.below(), Direction.UP), "control: stone is not sturdy");
+
+        // no line on a line, no torch on a line
+        BlockPos above = LINE.above();
+        helper.assertTrue(!MountainAsh.LINE.get().defaultBlockState().canSurvive(level, helper.absolutePos(above)), "a line can stand on a line");
+        helper.assertTrue(!Blocks.TORCH.defaultBlockState().canSurvive(level, helper.absolutePos(above)), "a torch can stand on a line");
+        helper.assertTrue(!Blocks.REDSTONE_WIRE.defaultBlockState().canSurvive(level, helper.absolutePos(above)), "redstone dust can lie on a line");
+        helper.assertTrue(Blocks.TORCH.defaultBlockState().canSurvive(level, helper.absolutePos(LINE.west())), "control: a torch cannot stand on stone");
+
+        // and dust used on top of a line places nothing
+        ServerPlayer p = player(helper);
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(MountainAsh.DUST.get(), 4));
+        BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(abs).add(0, 0.5, 0), Direction.UP, abs, false);
+        p.getMainHandItem().useOn(new UseOnContext(level, p, InteractionHand.MAIN_HAND, p.getMainHandItem(), hit));
+        helper.assertTrue(helper.getBlockState(above).isAir(), "dust was laid on top of a line: " + helper.getBlockState(above));
+
+        // nothing spawns on it
+        helper.assertTrue(net.minecraft.world.entity.SpawnPlacementTypes.ON_GROUND.isSpawnPositionOk(level, helper.absolutePos(LINE.west()), EntityType.ZOMBIE),
+                "control: nothing spawns on stone");
+        helper.assertTrue(!net.minecraft.world.entity.SpawnPlacementTypes.ON_GROUND.isSpawnPositionOk(level, helper.absolutePos(above), EntityType.ZOMBIE),
+                "a mob can spawn on a line");
+        helper.succeed();
+    }
+
     // ---- breaking ----
 
     @GameTest(template = "tall", templateNamespace = NS)
@@ -279,8 +313,18 @@ public final class MountainAshGameTests {
         Arrow fromVampire = arrow(helper, vampirePlayer(helper));
         BlockHitResult hit = fly(helper, fromVampire);
         helper.assertTrue(hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK && hit.getBlockPos().equals(abs), "a vampire's arrow flew through: " + hit);
+        // an arrow (or trident) sticks into the wall like into any block: the impact is left alone, not deleted
         var impact = NeoForge.EVENT_BUS.post(new ProjectileImpactEvent(fromVampire, hit));
-        helper.assertTrue(fromVampire.isRemoved() && impact.isCanceled(), "a vampire's arrow was not discarded on contact");
+        helper.assertTrue(!fromVampire.isRemoved() && !impact.isCanceled(), "a vampire's arrow was deleted instead of sticking");
+        var trident = EntityType.TRIDENT.create(helper.getLevel());
+        trident.setOwner(vampirePlayer(helper));
+        var tridentImpact = NeoForge.EVENT_BUS.post(new ProjectileImpactEvent(trident, hit));
+        helper.assertTrue(!trident.isRemoved() && !tridentImpact.isCanceled(), "a vampire's trident was deleted instead of sticking");
+        // anything else (a snowball, a fireball) vanishes on contact
+        var snowball = EntityType.SNOWBALL.create(helper.getLevel());
+        snowball.setOwner(vampirePlayer(helper));
+        var ballImpact = NeoForge.EVENT_BUS.post(new ProjectileImpactEvent(snowball, hit));
+        helper.assertTrue(snowball.isRemoved() && ballImpact.isCanceled(), "a vampire's snowball was not discarded on contact");
 
         Arrow fromHuman = arrow(helper, player(helper));
         BlockHitResult miss = fly(helper, fromHuman);

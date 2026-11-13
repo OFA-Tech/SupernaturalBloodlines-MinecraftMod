@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts;
 
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
@@ -29,8 +30,11 @@ final class MountainAshRules {
             Entity owner = e.getProjectile().getOwner();
             if (owner != null && e.getRayTraceResult() instanceof BlockHitResult hit
                     && e.getProjectile().level().getBlockState(hit.getBlockPos()).is(MountainAsh.LINE.get()) && Supernatural.isPrey(owner)) {
-                e.setCanceled(true);
-                e.getProjectile().discard();
+                // arrows and tridents stick into the wall shape like into any block; the rest (fireballs, potions...) just vanish
+                if (!(e.getProjectile() instanceof AbstractArrow)) {
+                    e.setCanceled(true);
+                    e.getProjectile().discard();
+                }
             }
         });
     }
