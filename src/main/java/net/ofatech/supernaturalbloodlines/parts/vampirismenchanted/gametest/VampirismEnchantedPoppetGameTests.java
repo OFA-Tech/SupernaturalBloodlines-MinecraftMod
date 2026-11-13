@@ -10,6 +10,7 @@ import net.favouriteless.enchanted.common.init.EBlocks;
 import net.favouriteless.enchanted.common.init.EItems;
 import net.favouriteless.enchanted.common.items.poppets.PlayerPoppetItem;
 import net.favouriteless.enchanted.common.menus.AltarMenu;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentType;
@@ -22,6 +23,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.item.Item;
@@ -95,8 +98,9 @@ public final class VampirismEnchantedPoppetGameTests {
     public static void bloodOfferingPowersAltar(GameTestHelper helper) {
         PowerProvider p = PowerProvider.get(helper.getLevel(), PartBlocks.BLOOD_STONE.get());
         helper.assertTrue(p != null && p.power() == 25 && p.limit() == 16, "blood_stone altar data is " + p);
-        // 40+ blocks up, outside altar_range (32) of the floor (grass and dirt have altar power) and of each other
-        BlockPos base = helper.absolutePos(new BlockPos(0, 40, 0));
+        // 120 and 160 blocks up: outside altar_range (32) of the floor (grass and dirt have altar power), of each other,
+        // and of the altars other parts' tests build at 40 and 80 in neighbouring cells (their blocks stay in the world)
+        BlockPos base = helper.absolutePos(new BlockPos(0, 120, 0));
         int withStone = altarCapacity(helper, base, Blocks.STONE);
         int withBlood = altarCapacity(helper, base.above(40), PartBlocks.BLOOD_STONE.get());
         helper.assertTrue(withBlood - withStone == 250, "ten blood stone should add 10 x 25, but the difference is " + (withBlood - withStone));
@@ -127,6 +131,54 @@ public final class VampirismEnchantedPoppetGameTests {
         helper.succeed();
     }
 
+    /** Four bottles (one per ItemEntity, they do not stack) and a stone, lying on a small ritual chalk circle. */
+    private static boolean riteMatches(GameTestHelper helper, RiteType type, ItemStack bottle) {
+        ServerLevel level = helper.getLevel();
+        BlockPos centre = centre(helper);
+        List<BlockPos> chalk = new ArrayList<>();
+        type.getShapes().forEach((shape, block) -> {
+            List<String> rows = shape.value().getStrings();
+            int mid = rows.size() / 2;
+            for (int z = 0; z < rows.size(); z++) {
+                for (int x = 0; x < rows.get(z).length(); x++) {
+                    if (rows.get(z).charAt(x) == 'X') {
+                        BlockPos p = centre.offset(x - mid, 0, z - mid);
+                        // chalk needs a floor and a plain placement (no neighbour update) or it breaks at once
+                        level.setBlock(p.below(), Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+                        level.setBlock(p, block.defaultBlockState(), Block.UPDATE_CLIENTS);
+                        chalk.add(p);
+                    }
+                }
+            }
+        });
+        try {
+            for (int i = 0; i < 4; i++) {
+                ItemStack one = bottle.copy();
+                one.setCount(1);
+                level.addFreshEntity(new ItemEntity(level, centre.getX() + 0.5, centre.getY() + 0.1, centre.getZ() + 0.5, one));
+            }
+            level.addFreshEntity(new ItemEntity(level, centre.getX() + 0.5, centre.getY() + 0.1, centre.getZ() + 0.5, new ItemStack(item("minecraft:stone"))));
+            List<Entity> found = new ArrayList<>(level.getEntitiesOfClass(ItemEntity.class, type.getBounds(centre)));
+            helper.assertTrue(found.size() == 5, "expected 5 item entities on the circle, found " + found.size());
+            return type.matches(level, centre, found);
+        } finally {
+            chalk.forEach(p -> {
+                level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                level.setBlock(p.below(), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+            });
+            clearDropped(helper);
+        }
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void bloodOfferingNeedsFullBottles(GameTestHelper helper) {
+        RiteType type = type(helper, "blood_offering");
+        ItemStack full = type.getItems().stream().filter(s -> s.is(item("vampirism:blood_bottle"))).findFirst().orElseThrow();
+        helper.assertTrue(riteMatches(helper, type, full), "control: four full bottles and a stone on the circle do not match the rite");
+        helper.assertTrue(!riteMatches(helper, type, new ItemStack(item("vampirism:blood_bottle"))),
+                "four EMPTY blood bottles and a stone match the rite");
+        helper.succeed();
+    }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void sunPoppetAbsorbsSunDamage(GameTestHelper helper) {
         ServerPlayer player = TestPlayers.createVulnerable(helper);

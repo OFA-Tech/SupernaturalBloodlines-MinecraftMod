@@ -10,6 +10,8 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -45,6 +47,29 @@ public final class VampirismEnchantedSilverPoppetGameTests {
         helper.assertTrue(player.isAlive(), "a lethal silver hit killed a player with a bound silver poppet");
         helper.assertTrue(player.getHealth() == before, "lethal silver damage got through: " + player.getHealth() + " of " + before);
         helper.assertTrue(used(player, poppet), "the silver poppet was not used");
+        helper.succeed();
+    }
+
+    private static DamageSource arrowHit(GameTestHelper helper, String ammo) {
+        Zombie shooter = EntityType.ZOMBIE.create(helper.getLevel());
+        // getWeaponItem() of an arrow is the bow, so the bow here is plain; only the ammunition can be silver
+        Arrow arrow = new Arrow(helper.getLevel(), 0, 0, 0, new ItemStack(item(ammo)), new ItemStack(Items.BOW));
+        return helper.getLevel().damageSources().arrow(arrow, shooter);
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void silverPoppetBlocksSilverArrows(GameTestHelper helper) {
+        ServerPlayer player = TestPlayers.createVulnerable(helper);
+        Item poppet = PartItems.SILVER_POPPET.get();
+        bound(player, poppet);
+        float before = player.getHealth();
+        player.hurt(arrowHit(helper, "werewolves:crossbow_arrow_silver_bolt"), before + 100);
+        helper.assertTrue(player.isAlive() && player.getHealth() == before, "a lethal silver bolt got through: " + player.getHealth());
+        helper.assertTrue(used(player, poppet), "the silver poppet was not used");
+
+        PlayerPoppetItem item = (PlayerPoppetItem) poppet;
+        helper.assertTrue(!item.protectsAgainst(arrowHit(helper, "minecraft:arrow")), "a plain arrow is protected");
+        helper.assertTrue(!item.protectsAgainst(arrowHit(helper, "vampirism:crossbow_arrow_normal")), "a normal crossbow arrow is protected");
         helper.succeed();
     }
 
