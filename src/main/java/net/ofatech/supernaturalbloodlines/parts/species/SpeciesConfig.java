@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.species;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /** The part's own config file. Values are readable once the config has loaded. */
 public final class SpeciesConfig {
@@ -29,6 +30,7 @@ public final class SpeciesConfig {
     private static volatile Integer maxOriginalsOverride;
 
     /** For tests: pins {@link #maxOriginals()} without touching the config file; null clears it. */
+    @VisibleForTesting
     public static void overrideMaxOriginals(Integer value) {
         maxOriginalsOverride = value;
     }

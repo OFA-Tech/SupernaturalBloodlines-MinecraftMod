@@ -361,6 +361,156 @@ public final class OriginalGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void attackBonusIsTwentyPercentOfTheTotal(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        try {
+            // a FakePlayer never ticks, so put the sword's modifiers on by hand
+            new ItemStack(Items.IRON_SWORD).forEachModifier(net.minecraft.world.entity.EquipmentSlot.MAINHAND,
+                    (attribute, modifier) -> p.getAttribute(attribute).addTransientModifier(modifier));
+            double before = p.getAttributeValue(Attributes.ATTACK_DAMAGE);
+            helper.assertTrue(before > 3.0, "the sword is not in effect: " + before);
+            BloodlineAccess.set(p, species(Species.ORIGINAL));
+            double after = p.getAttributeValue(Attributes.ATTACK_DAMAGE);
+            helper.assertTrue(Math.abs(after / before - 1.2) < 1e-6, "attack went from " + before + " to " + after + ", not x1.2");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void originalKeepsItsHealthThroughASaveAndLoad(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        ServerPlayer reloaded = TestPlayers.create(helper);
+        try {
+            BloodlineAccess.set(p, species(Species.ORIGINAL));
+            p.setHealth(p.getMaxHealth());
+            helper.assertTrue(p.getHealth() == 24.0F, "health is " + p.getHealth());
+            net.minecraft.nbt.CompoundTag saved = new net.minecraft.nbt.CompoundTag();
+            p.addAdditionalSaveData(saved);
+            reloaded.readAdditionalSaveData(saved); // before any login sync: the modifier has to come back with the player
+            helper.assertTrue(reloaded.getHealth() == 24.0F, "the reloaded Original has " + reloaded.getHealth() + " health");
+            helper.assertTrue(reloaded.getMaxHealth() == 24.0F, "the reloaded Original has max health " + reloaded.getMaxHealth());
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void respawnedOriginalStartsAtFullBonusHealth(GameTestHelper helper) {
+        ServerPlayer fresh = TestPlayers.create(helper); // a fresh entity: 20 health, no modifiers yet
+        try {
+            BloodlineAccess.set(fresh, species(Species.ORIGINAL));
+            fresh.getAttribute(Attributes.MAX_HEALTH).removeModifier(OriginalRules.MODIFIER_ID);
+            fresh.setHealth(20.0F);
+            OriginalRules.restore(fresh, true);
+            helper.assertTrue(fresh.getHealth() == 24.0F, "health is " + fresh.getHealth());
+            fresh.setHealth(10.0F);
+            OriginalRules.restore(fresh, false); // coming back from the End keeps the health
+            helper.assertTrue(fresh.getHealth() == 10.0F, "health is " + fresh.getHealth());
+        } finally {
+            reset(fresh);
+        }
+        helper.succeed();
+    }
+
+    // ---- review fixes ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void deathListenerRunsBeforeNormalListeners(GameTestHelper helper) {
+        ServerPlayer p = original(helper, Species.ORIGINAL_HYBRID);
+        int[] seen = {0};
+        Consumer<LivingDeathEvent> other = e -> {
+            if (e.getEntity() == p) {
+                seen[0]++;
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, LivingDeathEvent.class, other);
+        try {
+            p.hurt(hitBy(helper, zombie(helper, false)), 1000f);
+            helper.assertTrue(Downed.isDowned(p), "not downed");
+            helper.assertTrue(seen[0] == 0, "another mod's NORMAL handler saw the death before it was cancelled");
+        } finally {
+            NeoForge.EVENT_BUS.unregister(other);
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void whiteOakKillsAnOriginalAlreadyInVampirismDbno(GameTestHelper helper) {
+        ServerPlayer p = original(helper, Species.ORIGINAL);
+        List<DamageSource> deaths = new ArrayList<>();
+        Consumer<LivingDeathEvent> spy = e -> {
+            if (e.getEntity() == p) {
+                deaths.add(e.getSource());
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, LivingDeathEvent.class, spy);
+        try {
+            p.hurt(hitBy(helper, zombie(helper, false)), 1000f);
+            helper.assertTrue(dbno(p) && !p.isDeadOrDying(), "not in Vampirism's dying state");
+            p.invulnerableTime = 0;
+            Zombie oak = zombie(helper, true);
+            p.hurt(hitBy(helper, oak), 1000f);
+            helper.assertTrue(p.isDeadOrDying(), "white oak did not kill an Original who was already dying, health " + p.getHealth());
+            helper.assertTrue(!dbno(p), "the dying state was left behind");
+            helper.assertTrue(deaths.stream().anyMatch(s -> s.getEntity() == oak), "the kill did not name the white oak attacker: " + deaths);
+        } finally {
+            NeoForge.EVENT_BUS.unregister(spy);
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void thornsIsNotWhiteOak(GameTestHelper helper) {
+        ServerPlayer p = original(helper, Species.ORIGINAL_HYBRID);
+        try {
+            Zombie oak = zombie(helper, true);
+            p.hurt(helper.getLevel().damageSources().thorns(oak), 1000f);
+            helper.assertTrue(!p.isDeadOrDying() && Downed.isDowned(p), "thorns from a stake-holder killed an Original");
+            ServerPlayer other = original(helper, Species.ORIGINAL_HYBRID);
+            try {
+                other.hurt(hitBy(helper, oak), 1000f);
+                helper.assertTrue(other.isDeadOrDying(), "a plain melee hit with the stake no longer kills");
+            } finally {
+                reset(other);
+            }
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void downedPlayersStopGliding(GameTestHelper helper) {
+        ServerPlayer p = original(helper, Species.ORIGINAL_HYBRID);
+        try {
+            p.startFallFlying();
+            helper.assertTrue(p.isFallFlying(), "could not start gliding");
+            p.hurt(hitBy(helper, zombie(helper, false)), 1000f);
+            helper.assertTrue(Downed.isDowned(p) && !p.isFallFlying(), "the downed player is still gliding");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void downedScreenIsResentEveryHundredTicks(GameTestHelper helper) {
+        int resends = 0;
+        for (int left = Downed.TICKS - 1; left >= 1; left--) {
+            if (Downed.reopensScreenAt(left)) {
+                resends++;
+            }
+        }
+        helper.assertTrue(resends == 5, "the screen is re-sent " + resends + " times in a downed spell, expected 5");
+        helper.succeed();
+    }
+
     // ---- Original's Blood ----
 
     private static ItemStack blood(UUID source) {

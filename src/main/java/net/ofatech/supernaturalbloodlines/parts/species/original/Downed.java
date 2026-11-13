@@ -54,7 +54,16 @@ public final class Downed {
         p.setHealth(1.0F);
         p.stopUsingItem();
         p.setSprinting(false);
+        p.stopRiding();
+        p.stopFallFlying();
         hold(p, true);
+    }
+
+    /** The screen is re-sent this often, so a player who chose Wait (or closed it) gets the choice back. */
+    public static final int REOPEN_EVERY = 100;
+
+    public static boolean reopensScreenAt(int ticksLeft) {
+        return ticksLeft % REOPEN_EVERY == 0;
     }
 
     /** Once per server tick for every player. */
@@ -68,6 +77,9 @@ public final class Downed {
             p.setHealth(p.getMaxHealth() / 2.0F);
         } else {
             p.setData(SpeciesRegistries.DOWNED, left - 1);
+            if (reopensScreenAt(left - 1) && canReceive(p)) {
+                PacketDistributor.sendToPlayer(p, new DownedPayload(true));
+            }
         }
     }
 
