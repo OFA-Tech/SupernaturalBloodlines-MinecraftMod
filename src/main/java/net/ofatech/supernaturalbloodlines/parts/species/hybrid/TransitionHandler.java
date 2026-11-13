@@ -7,7 +7,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -55,12 +60,45 @@ public final class TransitionHandler {
                 drankOtherBlood(p);
             }
         });
+        NeoForge.EVENT_BUS.addListener(TransitionHandler::onRightClick);
+    }
+
+    /**
+     * Vampirism's blood bottle refuses to start a drink below vampire level 1 ({@code use()} passes), so a werewolf
+     * never reaches the use/finish events. During a stable transition the click is taken over: the bottle is drunk here.
+     */
+    static void onRightClick(PlayerInteractEvent.RightClickItem e) {
+        ItemStack stack = e.getItemStack();
+        BloodlineState s = BloodlineAccess.get(e.getEntity());
+        if (!stack.is(BLOOD_DRINKS) || !s.inTransition() || s.unstable()) {
+            return;
+        }
+        e.setCancellationResult(InteractionResult.CONSUME);
+        e.setCanceled(true);
+        if (e.getEntity() instanceof ServerPlayer p) {
+            if (!p.isCreative()) {
+                stack.shrink(1);
+                ItemStack bottle = new ItemStack(Items.GLASS_BOTTLE);
+                if (!p.getInventory().add(bottle)) {
+                    p.drop(bottle, false);
+                }
+            }
+            drankOtherBlood(p);
+        }
     }
 
     private static void onDeath(LivingDeathEvent e) {
         // a failed transition is not a new dose: the player stays a werewolf
-        if (!(e.getEntity() instanceof ServerPlayer p) || e.getSource().is(OutcomeExecutor.FAILED_TRANSITION)
-                || !p.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT)) {
+        if (!(e.getEntity() instanceof ServerPlayer p) || e.getSource().is(OutcomeExecutor.FAILED_TRANSITION)) {
+            return;
+        }
+        BloodlineState s = BloodlineAccess.get(p);
+        if (s.inTransition() && s.unstable()) {
+            // already dying of the instability: end it now, no kill, or they would die a second time after respawning
+            apply(p, BloodlineEvent.UNSTABLE_DEATH, null);
+            return;
+        }
+        if (!p.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT)) {
             return;
         }
         UUID source = p.hasData(SpeciesRegistries.BLOOD_SOURCE) ? p.getData(SpeciesRegistries.BLOOD_SOURCE) : null;
@@ -83,7 +121,9 @@ public final class TransitionHandler {
         }
         long left = s.transitionTicksLeft() - STEP;
         if (left > 0) {
-            BloodlineAccess.set(p, s.toBuilder().transitionTicksLeft(left).build());
+            // saved but not synced: the species does not change, and a packet a second for the whole transition is noise;
+            // the next real change (or a login) sends the current value
+            p.setData(ModAttachments.BLOODLINE, s.toBuilder().transitionTicksLeft(left).build());
         } else {
             apply(p, BloodlineEvent.TRANSITION_TIMEOUT, null); // the rules ask for the kill
         }

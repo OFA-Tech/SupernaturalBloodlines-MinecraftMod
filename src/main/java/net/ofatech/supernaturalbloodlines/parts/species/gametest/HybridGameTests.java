@@ -238,6 +238,95 @@ public final class HybridGameTests {
         helper.succeed();
     }
 
+    private static ItemStack bloodBottle(int count) {
+        return new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(ResourceLocation.parse("vampirism:blood_bottle")), count);
+    }
+
+    private static boolean click(ServerPlayer p) {
+        var click = new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickItem(p, InteractionHand.MAIN_HAND);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(click);
+        return click.isCanceled() && click.getCancellationResult().consumesAction();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void vampirismBottleCannotBeStartedByAWerewolf(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper);
+        // pins Vampirism: use() passes below vampire level 1, so the use/finish events never fire for a werewolf
+        helper.assertTrue(!bloodBottle(1).use(helper.getLevel(), p, InteractionHand.MAIN_HAND).getResult().consumesAction(),
+                "a werewolf can start drinking a Vampirism blood bottle; the RightClickItem hook is no longer needed");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void rightClickingABloodBottleMakesTheTransitionUnstable(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper);
+        try {
+            BloodlineAccess.set(p, inTransition(UUID.randomUUID(), 9000));
+            p.setItemInHand(InteractionHand.MAIN_HAND, bloodBottle(2));
+            helper.assertTrue(click(p), "the click was not taken over");
+            helper.assertTrue(BloodlineAccess.get(p).unstable(), "not unstable: " + BloodlineAccess.get(p));
+            helper.assertTrue(p.hasEffect(SpeciesRegistries.UNSTABLE_EFFECT), "no unstable effect");
+            helper.assertTrue(p.getMainHandItem().getCount() == 1, "the bottle was not used up: " + p.getMainHandItem());
+            helper.assertTrue(p.getInventory().contains(new ItemStack(Items.GLASS_BOTTLE)), "no glass bottle given back");
+            helper.assertTrue(!click(p) && p.getMainHandItem().getCount() == 1, "an unstable player drank again");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void rightClickingABloodBottleOutsideATransitionIsLeftAlone(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper);
+        p.setItemInHand(InteractionHand.MAIN_HAND, bloodBottle(1));
+        helper.assertTrue(!click(p) && p.getMainHandItem().getCount() == 1 && BloodlineAccess.get(p).equals(BloodlineState.NONE),
+                "a bottle outside a transition was taken over");
+        helper.succeed();
+    }
+
+    // ---- death and respawn ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void deathWhileUnstableEndsTheTransitionWithoutAKill(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper);
+        try {
+            BloodlineAccess.set(p, inTransition(UUID.randomUUID(), 9000).toBuilder().unstable(true).build());
+            p.addEffect(new MobEffectInstance(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT, OriginalBloodEffect.DURATION_TICKS));
+            killByAnything(helper, p);
+            BloodlineState s = BloodlineAccess.get(p);
+            helper.assertTrue(!s.inTransition() && !s.unstable() && s.pendingSire() == null && s.species() == Species.NONE,
+                    "the unstable death left a transition behind: " + s);
+            helper.assertTrue(p.getLastDamageSource() != null && !p.getLastDamageSource().is(OutcomeExecutor.FAILED_TRANSITION),
+                    "a second, failed_transition kill was issued: " + p.getLastDamageSource());
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void transitionSurvivesTheDeathClone(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper);
+        ServerPlayer fresh = TestPlayers.createMortal(helper);
+        UUID sire = UUID.randomUUID();
+        try {
+            drinkOriginalBlood(helper, p, sire);
+            killByAnything(helper, p);
+            fresh.restoreFrom(p, false); // what a respawn does
+            BloodlineState s = BloodlineAccess.get(fresh);
+            helper.assertTrue(s.inTransition() && sire.equals(s.pendingSire()) && s.transitionTicksLeft() == SpeciesConfig.transitionTicks(),
+                    "the respawned player's state is " + s);
+            helper.assertTrue(!fresh.hasData(SpeciesRegistries.BLOOD_SOURCE) && !fresh.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT),
+                    "the blood itself came back with the respawn");
+            TransitionHandler.secondPassed(fresh);
+            helper.assertTrue(BloodlineAccess.get(fresh).transitionTicksLeft() == SpeciesConfig.transitionTicks() - 20, "the timer did not run after the respawn");
+        } finally {
+            reset(p);
+            reset(fresh);
+        }
+        helper.succeed();
+    }
+
     // ---- the timer ----
 
     @GameTest(template = "empty", templateNamespace = NS)
