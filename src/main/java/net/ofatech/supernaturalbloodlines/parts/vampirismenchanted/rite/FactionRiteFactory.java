@@ -46,7 +46,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
     public enum Faction {
         VAMPIRE, WEREWOLF, HUNTER, NONE, VAMPIRE_OR_WEREWOLF;
 
-        boolean accepts(BaseFaction f) {
+        public boolean accepts(BaseFaction f) {
             return switch (this) {
                 case VAMPIRE -> f == BaseFaction.VAMPIRE;
                 case WEREWOLF -> f == BaseFaction.WEREWOLF;
@@ -63,7 +63,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             Codec.BOOL.optionalFieldOf("requires_full_moon", false).forGetter(FactionRiteFactory::requiresFullMoon)
     ).apply(i, FactionRiteFactory::new));
 
-    private static <E extends Enum<E>> Codec<E> enumCodec(Class<E> type) {
+    public static <E extends Enum<E>> Codec<E> enumCodec(Class<E> type) {
         return Codec.STRING.comapFlatMap(name -> {
             try {
                 return DataResult.success(Enum.valueOf(type, name.toUpperCase(Locale.ROOT)));

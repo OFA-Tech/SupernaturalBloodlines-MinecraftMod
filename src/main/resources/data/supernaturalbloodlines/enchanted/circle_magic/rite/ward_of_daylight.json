@@ -1,0 +1,20 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:sun_ring", "count": 1 },
+        { "id": "minecraft:sunflower", "count": 2 },
+        { "id": "minecraft:glowstone_dust", "count": 4 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 6000,
+    "factory": {
+        "type": "supernaturalbloodlines:bind_item",
+        "input": "supernaturalbloodlines:sun_ring",
+        "output": "supernaturalbloodlines:sun_ring",
+        "faction": "vampire"
+    }
+}

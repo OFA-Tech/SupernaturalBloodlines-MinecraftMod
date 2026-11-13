@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased: artifacts
+
+- Sun Ring (craft: 4 gold ingots around glowstone; rite *Ward of Daylight*: ring, 2 sunflowers, 4 glowstone dust, medium circle, 6000 power): bound to the vampire on the circle (data component `supernaturalbloodlines:bound_to`). While they wear it (Curios `ring` slot or inventory) Vampirism's sun damage is cancelled, and a hidden sunscreen effect also stops the sun kill and nausea (Vampirism has no sun hook). Weakness in the sun is not stopped. A ring bound to someone else, or unbound, does nothing.
+- Moon Ring (needs Werewolves; craft: 4 silver ingots around an amethyst shard; rite *Ward of the Moon*: ring, 2 amethyst shards, 2 silver ingots, medium circle, 6000 power; bound to a werewolf): moon control (R96). The forced full-moon shift is skipped for the owner. Half forms at will, full forms from Werewolves level 8 (`werewolves.full_form_level` in the common config).
+- Shared `MoonControl` and `ForcedShift` (package `shared.werewolves`): the hybrids' forced-shift cancelling moved there; hybrids are one control source, the Moon Ring another. No new mixin.
+- A rite factory `supernaturalbloodlines:bind_item` (input, output, optional faction): binds the person on the circle to the output item; wrong faction, a missing input or an already bound input refunds the ingredients and says why.
+- Curios is optional: the rings are in the tag `curios:ring`; without Curios they work from the inventory.
+- Placeholder textures for both rings.
+
 ## Unreleased: species
 
 - Originals: the Rite of Immortality makes one (needs a full moon, a white oak sapling, a golden apple, a human heart and a villager). +4 max health, +20% attack, and lethal damage that is not white oak, the void or `/kill` cannot kill them (vampires use Vampirism's dying state, Original hybrids a downed state of 30 seconds with a Give up / Wait screen).

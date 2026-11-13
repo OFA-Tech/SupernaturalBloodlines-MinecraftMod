@@ -67,5 +67,13 @@
   "supernaturalbloodlines.siphon.cooling": "This block has nothing left to give yet.",
   "supernaturalbloodlines.downed.title": "You are dying",
   "supernaturalbloodlines.downed.give_up": "Give up",
-  "supernaturalbloodlines.downed.wait": "Wait"
+  "supernaturalbloodlines.downed.wait": "Wait",
+  "item.supernaturalbloodlines.sun_ring": "Sun Ring",
+  "item.supernaturalbloodlines.moon_ring": "Moon Ring",
+  "tooltip.supernaturalbloodlines.bound_to": "Bound to %s",
+  "tooltip.supernaturalbloodlines.unbound": "Not bound to anyone",
+  "rite.supernaturalbloodlines.ward_of_daylight": "Ward of Daylight",
+  "rite.supernaturalbloodlines.ward_of_the_moon": "Ward of the Moon",
+  "supernaturalbloodlines.rite.bind_no_item": "The rite has nothing to bind.",
+  "supernaturalbloodlines.rite.bind_already_bound": "That is already bound to someone."
 }

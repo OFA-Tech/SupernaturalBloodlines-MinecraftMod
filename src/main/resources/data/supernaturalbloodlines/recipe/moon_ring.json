@@ -1,0 +1,11 @@
+{
+  "neoforge:conditions": [
+    { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" },
+    { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [ " G ", "GAG", " G " ],
+  "key": { "G": { "item": "werewolves:silver_ingot" }, "A": { "item": "minecraft:amethyst_shard" } },
+  "result": { "id": "supernaturalbloodlines:moon_ring", "count": 1 }
+}

@@ -5,8 +5,8 @@ Requires: `vampirism`, `enchanted`. Werewolves and Curios are optional (the Moon
 Checklist (from the design, section 6). Tick items as they ship.
 
 - [x] `ArtifactSlots.isWorn(player, item)` / `findWorn(player, item)`: the one helper for "is this ring equipped" (Curios first when Curios is loaded, then main inventory, armor and offhand). Tests: `ringWorksWithoutCurios`, `ringFoundInCuriosSlot`, `curiosCheckedBeforeInventory`.
-- [ ] Sun Ring (rite *Ward of Daylight*): no sun damage while worn; bound to one vampire by UUID in a data component.
-- [ ] Moon Ring (rite *Ward of the Moon*, Werewolves): no forced full-moon transformation.
+- [x] Sun Ring (rite *Ward of Daylight*): no sun damage while worn; bound to one vampire by UUID in a data component. Tests: `sunRingBlocksSunForBoundVampire`, `sunRingOnlyProtectsBoundVampire`, `sunRingKeepsSunscreenForBoundVampire`, `wardOfDaylight*`, `bindRiteNeedsItsInput`.
+- [x] Moon Ring (rite *Ward of the Moon*, Werewolves): moon control (R96), no forced full-moon transformation. Tests: `moonRingPreventsForcedShift`, `moonRingAllowsHalfFormsAtWill`, `moonRingAllowsFullFormsAtLevel8`, `wardOfTheMoon*`.
 - [ ] Resurrection Ring (rite *Ward of Return*): cancels death from a supernatural attacker, 3 charges.
 - [ ] Vervain: crop and tea; burns vampires and hybrids that bite or hit barehanded; compulsion immunity; harms vampires who eat it.
 - [ ] White Oak Ash Dagger: *Desiccated* on an Original until the dagger is pulled; heavy damage to a supernatural wielder.
@@ -55,3 +55,16 @@ Enchanted 4.2.7:
   }
   ```
   `power` (altar power, optional, absent = none) and `requires_bottle` (optional, default false) are optional; colours are hex without `#`. Ingredients are `{id, count}` (all seen examples name items; tags not checked). Vanilla examples: `data/enchanted/recipe/kettle/*.json` in the Enchanted jar. Wrap with `neoforge:conditions` (`part_enabled` artifacts).
+
+## Sun Ring and Moon Ring (Task 2)
+
+- **Items** (`ArtifactItems`): `sun_ring`, and `moon_ring` only when Werewolves is loaded (the field is null otherwise). Both are `BoundRingItem` (stack size 1; tooltip "Bound to <name>", the name from the client tab list, else the UUID; "Not bound to anyone" when unbound). Data component `supernaturalbloodlines:bound_to` (UUID, synced). An unbound ring does nothing. `ArtifactItems.isBoundWorn(player, item)` asks for a worn copy bound to that player; `ArtifactSlots.findWorn(p, item, filter)` takes a filter so a foreign ring cannot hide the wearer's own.
+- **Sun protection** (`SunRing`): Vampirism has no sun event, so `LivingIncomingDamageEvent` of `vampirism:sun_damage` is cancelled for a bound wearer (the damage type is looked up by id, no Vampirism class beyond the API). **Sun debuffs are separate** (read from `VampirePlayer.handleSunDamage`): the kill after 100 ticks (`vpSundamageInstantDeath`) and Nausea happen without a damage event; both read the `vampirism:sunscreen` effect, which caps the sun counter at 50 for amplifier 0 to 3 when `vpSunscreenBuff` is on (default). So the bound vampire keeps a hidden 40 tick sunscreen effect (refreshed every 20 ticks, only for vampires). **Not stopped:** Weakness (152 ticks every 150 ticks in the sun, only blocked by amplifier 5+, which would lift the cap). If `vpSunscreenBuff` is off in the Vampirism config, only the damage is stopped.
+- **Moon control** (`shared.werewolves`): `MoonControl.of(ServerPlayer)` is NONE, HALF or FULL. Sources are predicates registered with `MoonControl.addSource` (artifacts: a bound Moon Ring is worn; species: hybrid types; plan 9 adds Alphas and anchors). With a source, HALF; FULL from Werewolves level `werewolves.full_form_level` (common config, default 8). The Werewolves faction is matched by id, so `MoonControl` links no Werewolves class. `ForcedShift` (links Werewolves; register only behind `isLoaded("werewolves")`, idempotent) holds the thread-local "inside this player's tick" flag and cancels a forced `WerewolfFormAction` when `MoonControl.of(p) != NONE`. Nothing is blocked without control: plan 9 enforces that. Voluntary shifts are untouched.
+- **Bind rite** (`rite/BindItemRiteFactory`, `supernaturalbloodlines:bind_item`): fields `input`, `output`, optional `faction` (`vampire`, `werewolf`, ... as in `faction_rite`). The input is looked up among the rite's consumed items (Enchanted consumes the JSON `items`); the target is `RiteTargets.centrePlayerOrCaster`. Refused with a message and a refund (Enchanted gives the consumed items back on `cancel()`): no input among the consumed items, input already bound, target in the wrong faction. No target at all just cancels (nobody to tell). The output is a fresh stack with `bound_to`, dropped above the circle.
+- **Recipes and rites:**
+  - Sun Ring: shaped, gold ingots at the four sides, glowstone in the middle. Moon Ring (Werewolves): the same with silver ingots and an amethyst shard.
+  - *Ward of Daylight*: sun ring, 2 sunflowers, 4 glowstone dust; medium circle; 6000 power; target a vampire (faction VAMPIRE).
+  - *Ward of the Moon*: moon ring, 2 amethyst shards, 2 silver ingots; medium circle; 6000 power; target a werewolf (faction WEREWOLF, which hybrids are in).
+- **Curios:** `data/curios/tags/item/ring.json` lists both rings with `required: false` (tags cannot take conditions; an absent moon ring is just skipped).
+- No mixin was added.
