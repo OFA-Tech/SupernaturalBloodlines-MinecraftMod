@@ -8,6 +8,7 @@ import java.util.UUID;
 import net.minecraft.core.Holder;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -77,7 +78,16 @@ public final class MarkTracker {
      * cancelled while the victim went into the dying state is remembered here until the real death. In memory only,
      * dropped at the death and at logout; it expires after {@link #ATTACKER_MEMORY_TICKS} in case the victim was revived.
      */
-    private record Attacker(WeakReference<Entity> entity, long time) {}
+    private record Attacker(UUID player, WeakReference<Entity> mob, long time) {
+        /** A player is found again by UUID in the player list (a player who logged out and in is a new object); anything else by reference. */
+        Entity resolve(MinecraftServer server) {
+            if (player != null) {
+                return HunterEvents.online(server).stream().filter(o -> o.getUUID().equals(player)).findFirst().orElse(null);
+            }
+            Entity e = mob.get();
+            return e != null && !e.isRemoved() ? e : null;
+        }
+    }
 
     private static final Map<UUID, Attacker> DOWNING_ATTACKER = new HashMap<>();
     private static final long ATTACKER_MEMORY_TICKS = 12000;
@@ -86,7 +96,9 @@ public final class MarkTracker {
         Entity attacker = e.getSource().getEntity();
         if (e.isCanceled() && e.getEntity() instanceof ServerPlayer p && attacker != null && attacker != p
                 && VampirismAPI.vampirePlayer(p).isDBNO()) {
-            DOWNING_ATTACKER.put(p.getUUID(), new Attacker(new WeakReference<>(attacker), p.level().getGameTime()));
+            DOWNING_ATTACKER.put(p.getUUID(), attacker instanceof Player a
+                    ? new Attacker(a.getUUID(), null, p.level().getGameTime())
+                    : new Attacker(null, new WeakReference<>(attacker), p.level().getGameTime()));
         }
     }
 
@@ -98,8 +110,7 @@ public final class MarkTracker {
         }
         Attacker remembered = victim instanceof ServerPlayer p ? DOWNING_ATTACKER.remove(p.getUUID()) : null;
         if (killer == null && remembered != null && victim.level().getGameTime() - remembered.time <= ATTACKER_MEMORY_TICKS) {
-            Entity e = remembered.entity.get();
-            killer = e != null && !e.isRemoved() ? e : null;
+            killer = remembered.resolve(victim.level().getServer());
         }
         return killer;
     }

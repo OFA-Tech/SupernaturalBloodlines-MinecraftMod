@@ -25,6 +25,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.core.Holder;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
@@ -524,6 +525,7 @@ public final class HunterMarkGameTests {
         MinecraftServer server = helper.getLevel().getServer();
         boolean pvp = server.isPvpAllowed();
         try {
+            online(hunter); // a player attacker is found again through the player list
             handler(victim).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
             server.setPvpAllowed(true);
             victim.hurt(hunter.damageSources().playerAttack(hunter), 1000f);
@@ -543,9 +545,69 @@ public final class HunterMarkGameTests {
             helper.assertTrue(BloodlineAccess.get(hunter).markKills() == 1, "the hunter's mark is " + BloodlineAccess.get(hunter).markKills());
         } finally {
             server.setPvpAllowed(pvp);
+            clearHooks();
             reset(hunter, victim);
         }
         helper.succeed();
+    }
+
+    /** The attacker of a dying player is remembered by UUID: a player who logged out and in again is a new object, and one who is gone gets no credit. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void dyingStateAttackerIsFoundByUuid(GameTestHelper helper) {
+        ServerPlayer hunter = marked(helper, 0);
+        ServerPlayer relogged = new FakePlayer(helper.getLevel(), hunter.getGameProfile());
+        ServerPlayer victim = TestPlayers.createDuelist(helper);
+        MinecraftServer server = helper.getLevel().getServer();
+        boolean pvp = server.isPvpAllowed();
+        try {
+            BloodlineAccess.set(relogged, state(Species.HUNTER_OF_THE_FIVE, 0));
+            handler(victim).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
+            server.setPvpAllowed(true);
+            victim.hurt(hunter.damageSources().playerAttack(hunter), 1000f);
+            helper.assertTrue(VampirismAPI.vampirePlayer(victim).isDBNO(), "the vampire is not in Vampirism's dying state");
+            victim.setLastHurtByPlayer(null);
+            victim.setLastHurtByMob(null);
+            online(relogged); // the attacker logged in again: the list has the new object
+            giveUp(victim);
+            helper.assertTrue(BloodlineAccess.get(relogged).markKills() == 1, "the player in the list got " + BloodlineAccess.get(relogged).markKills());
+            helper.assertTrue(BloodlineAccess.get(hunter).markKills() == 0, "the stale player object got credit");
+        } finally {
+            server.setPvpAllowed(pvp);
+            clearHooks();
+            reset(hunter, relogged, victim);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void dyingStateAttackerWhoLeftGetsNoCredit(GameTestHelper helper) {
+        ServerPlayer hunter = marked(helper, 0);
+        ServerPlayer victim = TestPlayers.createDuelist(helper);
+        MinecraftServer server = helper.getLevel().getServer();
+        boolean pvp = server.isPvpAllowed();
+        try {
+            handler(victim).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
+            server.setPvpAllowed(true);
+            victim.hurt(hunter.damageSources().playerAttack(hunter), 1000f);
+            victim.setLastHurtByPlayer(null);
+            victim.setLastHurtByMob(null);
+            online(); // nobody online
+            giveUp(victim);
+            helper.assertTrue(BloodlineAccess.get(hunter).markKills() == 0, "an attacker who is not online got credit");
+        } finally {
+            server.setPvpAllowed(pvp);
+            clearHooks();
+            reset(hunter, victim);
+        }
+        helper.succeed();
+    }
+
+    private static void giveUp(ServerPlayer victim) {
+        try {
+            VampirismAPI.vampirePlayer(victim).getClass().getMethod("giveUpDBNO").invoke(VampirismAPI.vampirePlayer(victim));
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
     // ---- minor ----
