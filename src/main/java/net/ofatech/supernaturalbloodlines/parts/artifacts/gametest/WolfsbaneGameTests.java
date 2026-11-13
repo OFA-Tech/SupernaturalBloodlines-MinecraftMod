@@ -274,6 +274,16 @@ public final class WolfsbaneGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void lichenBlocksForms(GameTestHelper helper) {
+        // lichen is the only thing under test: without moon control a voluntary shift is cancelled anyway (R96)
+        net.ofatech.supernaturalbloodlines.shared.werewolves.MoonControl.overrideMoonBound(false);
+        try {
+            lichenBlocksFormsBody(helper);
+        } finally {
+            net.ofatech.supernaturalbloodlines.shared.werewolves.MoonControl.overrideMoonBound(null);
+        }
+    }
+
+    private static void lichenBlocksFormsBody(GameTestHelper helper) {
         ServerPlayer plain = werewolf(helper);
         helper.assertTrue(!formCancelled(plain, ModActions.BEAST_FORM.get(), false), "control: a form was cancelled without lichen");
 

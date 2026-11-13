@@ -41,12 +41,16 @@ public final class MoonRingGameTests {
 
     /** Posts the form action the way Werewolves does; true when a listener cancelled it. */
     private static boolean shiftCancelled(ServerPlayer p, boolean insideOwnTick) {
+        return shiftCancelled(p, ModActions.BEAST_FORM.get(), insideOwnTick);
+    }
+
+    private static boolean shiftCancelled(ServerPlayer p, IAction<?> action, boolean insideOwnTick) {
         if (insideOwnTick) {
             ForcedShift.enterTick(p);
         }
         try {
             var event = new ActionEvent.ActionActivatedEvent(
-                    VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow(), cast(ModActions.BEAST_FORM.get()), 0, 0);
+                    VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow(), cast(action), 0, 0);
             NeoForge.EVENT_BUS.post(event);
             return event.isCanceled();
         } finally {
@@ -80,7 +84,9 @@ public final class MoonRingGameTests {
         helper.assertTrue(MoonControl.of(p) == Control.NONE, "control: moon control without a ring");
         wear(p, p.getUUID());
         helper.assertTrue(MoonControl.of(p) == Control.HALF, "expected half control, got " + MoonControl.of(p));
-        helper.assertTrue(!shiftCancelled(p, false), "a voluntary shift was cancelled");
+        helper.assertTrue(!shiftCancelled(p, ModActions.SURVIVAL_FORM.get(), false), "a voluntary half form was cancelled");
+        helper.assertTrue(!shiftCancelled(p, ModActions.HUMAN_FORM.get(), false), "a voluntary human form was cancelled");
+        helper.assertTrue(shiftCancelled(p, ModActions.BEAST_FORM.get(), false), "a half-control wolf shifted into the beast at will");
 
         ServerPlayer foreign = werewolf(helper, 1);
         wear(foreign, p.getUUID());
@@ -98,6 +104,8 @@ public final class MoonRingGameTests {
         helper.assertTrue(MoonControl.of(high) == Control.NONE, "control: level 8 without a ring has control");
         wear(high, high.getUUID());
         helper.assertTrue(MoonControl.of(high) == Control.FULL, "level 8 should have full control, got " + MoonControl.of(high));
+        helper.assertTrue(!shiftCancelled(high, false), "a level 8 ring wearer could not shift into the beast at will");
+        helper.assertTrue(shiftCancelled(low, ModActions.BEAST_FORM.get(), false), "a level 7 ring wearer shifted into the beast at will");
         helper.succeed();
     }
 

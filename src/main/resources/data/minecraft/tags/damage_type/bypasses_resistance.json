@@ -2,6 +2,7 @@
     "replace": false,
     "values": [
         { "id": "supernaturalbloodlines:failed_transition", "required": false },
-        { "id": "supernaturalbloodlines:venom", "required": false }
+        { "id": "supernaturalbloodlines:venom", "required": false },
+        { "id": "supernaturalbloodlines:rejected_bite", "required": false }
     ]
 }

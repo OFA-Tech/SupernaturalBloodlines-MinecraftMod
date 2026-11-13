@@ -7,6 +7,8 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.ofatech.supernaturalbloodlines.client.EclipseClient;
+import net.ofatech.supernaturalbloodlines.client.EyeColorClient;
 import net.ofatech.supernaturalbloodlines.client.HallucinationClient;
 import net.ofatech.supernaturalbloodlines.client.HunterSenseClient;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
@@ -39,6 +41,10 @@ public final class ModNetwork {
                 ctx.enqueueWork(() -> HallucinationClient.show(payload.kind())));
         registrar.playToClient(GlowPayload.TYPE, GlowPayload.STREAM_CODEC, (payload, ctx) ->
                 ctx.enqueueWork(() -> HunterSenseClient.show(payload.ids())));
+        registrar.playToClient(EyeColorPayload.TYPE, EyeColorPayload.STREAM_CODEC, (payload, ctx) ->
+                ctx.enqueueWork(() -> EyeColorClient.set(payload.playerId(), payload.color())));
+        registrar.playToClient(EclipsePayload.TYPE, EclipsePayload.STREAM_CODEC, (payload, ctx) ->
+                ctx.enqueueWork(() -> EclipseClient.set(payload.active())));
     }
 
     // A new client player object (login, respawn, dimension change) starts with NONE, so push the state again.

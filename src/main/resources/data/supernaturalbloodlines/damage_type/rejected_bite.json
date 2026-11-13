@@ -1,0 +1,8 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+    ],
+    "exhaustion": 0.0,
+    "message_id": "rejected_bite",
+    "scaling": "never"
+}

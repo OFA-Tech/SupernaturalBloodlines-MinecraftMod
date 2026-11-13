@@ -1,0 +1,8 @@
+{
+    "replace": false,
+    "values": [
+        { "id": "minecraft:recovery_compass", "required": false },
+        { "id": "minecraft:clock", "required": false },
+        { "id": "minecraft:compass", "required": false }
+    ]
+}

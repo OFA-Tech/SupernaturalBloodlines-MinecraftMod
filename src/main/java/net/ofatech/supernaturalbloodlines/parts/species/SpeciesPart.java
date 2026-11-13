@@ -17,6 +17,35 @@ import net.ofatech.supernaturalbloodlines.parts.species.hybrid.HybridTraits;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.SireBond;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfPackGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfBiteGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfSparkGameTests;
+import net.minecraft.network.chat.Component;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.ofatech.supernaturalbloodlines.client.PackKeybinds;
+import net.ofatech.supernaturalbloodlines.client.RoarClient;
+import net.ofatech.supernaturalbloodlines.core.network.RoarPayload;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.PackBonusGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaBite;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.Anchors;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.Electricity;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.FormBlocks;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.LunarEclipse;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.EclipseElectricityGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.LineageBackfill;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.Emissary;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackBonus;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.RoarEffectPayload;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.DefenderKills;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.EyeSync;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.RankEffects;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.SparkHandler;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.GeneHandler;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackCommand;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.LineageRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterInstinctGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.HunterMarkGameTests;
@@ -75,6 +104,7 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(OriginalBloodRiteFactory.ID, OriginalBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(HybridBloodRiteFactory.ID, HybridBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(AncestralCallingRiteFactory.ID, AncestralCallingRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(LineageRiteFactory.ID, LineageRiteFactory.CODEC);
         SpeciesRegistries.register(modBus);
         SpeciesSupernatural.register();
         OriginalRules.register();
@@ -88,9 +118,25 @@ public final class SpeciesPart {
         SirelineDeath.register();
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> BloodlineCommand.register(e.getDispatcher()));
         HybridTraits.register(); // always: it strips the saved modifier when Werewolves is gone
+        RankEffects.register(); // always, for the same reason
+        PackBonus.register(); // always, for the same reason
+        Electricity.register(); // always: Shocked and the Taser work on every supernatural
         if (ModList.get().isLoaded("werewolves")) {
+            FormBlocks.register();
+            LunarEclipse.register();
+            Anchors.register();
+            AlphaRoar.register();
+            Emissary.register();
             TransitionHandler.register();
             GeneAwakening.register();
+            GeneHandler.register();
+            PackIndex.register();
+            LineageBackfill.register();
+            AlphaBite.register();
+            SparkHandler.register(); // after GeneHandler: an awakening comes before the innocent kill that caused it
+            DefenderKills.register();
+            EyeSync.register();
+            NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> PackCommand.register(e.getDispatcher()));
             FormControl.register();
             BloodThirst.register();
             Venom.register();
@@ -104,7 +150,21 @@ public final class SpeciesPart {
                     Downed.giveUp(p);
                 }
             }));
+            // the server decides rank and cooldown; a refusal comes back as an action bar message
+            registrar.playToServer(RoarPayload.TYPE, RoarPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> {
+                if (ctx.player() instanceof ServerPlayer p && ModList.get().isLoaded("werewolves")) {
+                    Component error = AlphaRoar.roar(p);
+                    if (error != null) {
+                        p.displayClientMessage(error, true);
+                    }
+                }
+            }));
+            registrar.playToClient(RoarEffectPayload.TYPE, RoarEffectPayload.STREAM_CODEC, (payload, ctx) ->
+                    ctx.enqueueWork(() -> RoarClient.show(payload.playerId(), payload.ticks())));
         });
+        if (FMLEnvironment.dist == Dist.CLIENT && ModList.get().isLoaded("werewolves")) {
+            PackKeybinds.register(modBus);
+        }
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(SpeciesGameTests.class);
             e.register(OriginalGameTests.class);
@@ -122,6 +182,11 @@ public final class SpeciesPart {
                 e.register(HybridGameTests.class);
                 e.register(HybridTraitsGameTests.class);
                 e.register(OriginalHybridGameTests.class);
+                e.register(WerewolfPackGameTests.class);
+                e.register(WerewolfBiteGameTests.class);
+                e.register(WerewolfSparkGameTests.class);
+                e.register(PackBonusGameTests.class);
+                e.register(EclipseElectricityGameTests.class);
             }
         });
         SupernaturalBloodlines.LOGGER.info("SpeciesPart enabled");

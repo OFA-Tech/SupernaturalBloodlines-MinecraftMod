@@ -41,7 +41,7 @@ so `io.github.manasmods.manascore.race.api.RaceAPI` is not visible from the Curs
 
 ## Run switches
 
-Pass on the Gradle command line, e.g. `.\gradlew.bat runClient -PnoLinkedMods`.
+Pass on the Gradle command line, e.g. `.\gradlew.bat runClient -PnoLinkedMods`. **CI does not run `-PnoLinkedMods`** (`.github/workflows/build.yml` runs the default, `-PnoWerewolves -PnoCurios`, `-PpartsOff=species` and `-PpartsOff=artifacts`); it is a local check before a merge.
 
 | Property | Effect |
 |---|---|

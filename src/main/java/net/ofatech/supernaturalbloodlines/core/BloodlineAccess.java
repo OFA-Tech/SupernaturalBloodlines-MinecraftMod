@@ -104,7 +104,7 @@ public final class BloodlineAccess {
     }
 
     /**
-     * Listeners hear about changes of species, wolf lineage, wolf rank, the sire (the sireline index follows it) or the
+     * Listeners hear about changes of species, wolf lineage, wolf rank, the innocent-kill flag (the eye colour), the sire (the sireline index follows it) or the
      * hunter's mark kills only (they scale the mark's perks, so a debug event or command must reach them too), not
      * about thirst ticks, granted
      * skills and the like. A change made by a
@@ -117,8 +117,10 @@ public final class BloodlineAccess {
     static <P> void notifyListeners(List<BiConsumer<P, BloodlineChange>> listeners, P player, UUID playerId,
                                     BloodlineState before, BloodlineState after) {
         if (before.species() == after.species() && before.wolf().lineage() == after.wolf().lineage()
-                && before.wolf().rank() == after.wolf().rank() && before.markKills() == after.markKills()
-                && Objects.equals(before.sire(), after.sire())) {
+                && before.wolf().rank() == after.wolf().rank() && before.wolf().killedInnocent() == after.wolf().killedInnocent()
+                && before.markKills() == after.markKills()
+                && Objects.equals(before.sire(), after.sire())
+                && Objects.equals(before.wolf().packAlpha(), after.wolf().packAlpha())) {
             return;
         }
         BloodlineChange change = new BloodlineChange(before, after);

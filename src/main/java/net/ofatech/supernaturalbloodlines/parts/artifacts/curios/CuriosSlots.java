@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.artifacts.curios;
 
 import java.util.Optional;
 import java.util.function.Predicate;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -15,6 +16,10 @@ public final class CuriosSlots {
 
     public static boolean isEquipped(Player p, Item item) {
         return CuriosApi.getCuriosInventory(p).map(h -> h.isEquipped(item)).orElse(false);
+    }
+
+    public static boolean isEquipped(Player p, TagKey<Item> tag) {
+        return CuriosApi.getCuriosInventory(p).flatMap(h -> h.findFirstCurio(s -> s.is(tag))).isPresent();
     }
 
     public static Optional<ItemStack> find(Player p, Item item) {

@@ -1,5 +1,33 @@
 # Changelog
 
+## Unreleased: werewolf packs
+
+Needs Werewolves, except Shocked and the Taser (any supernatural). Details per task are in `docs/parts/species.md`.
+
+- Lineage and the gene: every player rolls the hidden werewolf gene once (`latent_gene_chance`, default 0.15). A human with the gene who kills a villager or a player awakens as a born werewolf; a vampire with it becomes a bound hybrid (it switches to the werewolf faction and keeps the vampire layer); a hunter's gene stays latent. Rite of Lineage (reveal / awaken). A bound hybrid has no forms until the Rite of the Moon.
+- Only Alphas turn people: an Alpha's bite makes a Beta of their pack (and records the sire), with `alpha_bite_death_chance` (default 0.10) of killing the victim; a Beta or Omega bite does not infect; a wild werewolf makes an Omega. A bitten Beta bitten again by another Alpha, or invited by one, stays in their pack until `/pack leave`. `/pack invite|accept|leave|info|emissary|anchor|heal|roar`.
+- Spark, True Alpha, ranks and eyes: see the next section.
+- Pack bonus: with 3 or more Betas within 64 blocks of an online Alpha, +5% attack per Beta counted (bitten Betas twice, up to +25%) and Regeneration I for those Betas. An offline or distant Alpha keeps the pack but not the bonus.
+- Alpha Roar (unbound keybind "Alpha Roar", `/pack roar`, 60 s): pack Betas within 32 blocks get Strength I, Speed I and may shift at will for 30 s; other werewolves within 16 blocks drop their form and get Slowness II for 5 s. The roarer's eyes glow.
+- Emissary: a named witch, siphoner, heretic or tribrid pays 10% less for rites near the pack; their mountain ash lines are the Emissary's.
+- Moon control (R96, `moon_bound_werewolves` default on): a werewolf shifts at will only with control (Alpha and True Alpha, the Moon Ring, an unbound hybrid; a born wolf with an anchor has half). Anchors (`#supernaturalbloodlines:anchor` items, or a player named with `/pack anchor`) halve the forced shift.
+- Lunar eclipse: each full-moon night has `lunar_eclipse_chance` (default 0.03, rolled once per night at dusk when someone is online) of being an eclipse, until dawn. The server announces start and end, the overworld's fog and horizon turn red, and werewolves lose every form action (the full moon's shift too; a form already on is dropped within a second), the Alpha perks (the Omega penalty stays) and the pack bonus, and nobody can roar. The window is Werewolves' own full-moon window (12786 to 23216). It is stored as one night number in SavedData and is never active past dawn, so a restart cannot make it last. `/supernaturalbloodlines debug eclipse start|stop`.
+- Electricity: a lightning strike on a supernatural, or within 3 blocks of one, gives Shocked (30 s: Slowness I, no natural regeneration, no Werewolves form actions). The Taser (durability 16, repaired with redstone in an anvil; crafted from a lightning rod over redstone over an iron ingot) shocks a supernatural it hits; every hit spends a charge. A shocked wolf also drops a form it is already in. A visual-only bolt shocks nobody. A witch can be the Emissary of one Alpha only. Shocked works without Werewolves, only its form lock needs it.
+- Known debts: the eclipse tints the fog and horizon only (NeoForge 1.21.1 has no sky colour event, and no new mixins were allowed), not the zenith; the eclipse is one flag for the whole server, whatever the dimension; the Taser has placeholder art; the `lupus_sanguinem` biter is tracked by us, not by Werewolves (it records none); Werewolves has no four-legged unlock for players, so "five levels sooner" is not possible; the eye render layer on the model is not done; the Taser spends a charge on any hit, not only on supernaturals (owner to rule); Shocked's regeneration block recognises only vanilla food-bar healing (`FoodData`): a vampire's own blood regeneration is not blocked, and a mod that heals through `FoodData.tick` is blocked too; `-PnoLinkedMods` is checked locally only (CI does not run it).
+- Owner design point (farming): `DefenderKills` counts any `Enemy` mob that targeted a villager or a pack mate, so a player can farm the 300 kills for True Alpha at a spawner or a monster farm next to a villager. Possible fixes: a daily cap, or ignoring mobs that came from a spawner.
+- Owner design point: with the artifacts part off, a bitten (non-Alpha) wolf has no way to shift at will (R96 needs control and there is no Moon Ring); only the full moon moves it. Say if you want a fallback (for example an anchor or the beast shift at the highest level).
+- Pending (manual, two real clients): a pack of 1 Alpha and 3 Betas (the bonus and its Regeneration), the roar (buff, submit, eye glow seen by the other client), the eyes, and the eclipse sky (`/supernaturalbloodlines debug eclipse start`: red fog and horizon, the announcement, the form lock on a real werewolf). `runClient` loaded the mod with no error from it.
+
+## Unreleased: werewolf packs (spark and ranks)
+
+- The Alpha spark: a werewolf player who kills an Alpha takes it (and the pack: a Beta who kills their own Alpha leads it afterwards; a killer who already leads a pack adopts the Betas), the old Alpha is an Omega. Ordinary deaths keep rank and spark. When an Alpha leaves the werewolves or is cured, the spark goes to the highest-level online Beta; with none online the pack dissolves and its Betas become Omegas when they next log in.
+- `/pack heal <player>`: an Alpha within 4 blocks of the target gives up the spark to fully heal them and cure hybrid venom and wolfsbane (Werewolves' and the artifacts strains); the Alpha stays in the pack as a Beta.
+- True Alpha: checked every 1200 ticks for Betas: Werewolves' highest level, 30 days as a Beta, 300 defender kills (a hostile mob killed while it targeted a villager or a pack mate), no innocent kill, never stole a spark. No cap.
+- Ranks: Omega -10% attack and speed, Alpha +20% attack and +4 max health, True Alpha +22% and +4.4 (modifier `supernaturalbloodlines:wolf_rank`). Born wolves are spared half of the forced full-moon shifts (a coin per wolf and night).
+- Eyes: gold (Beta, Omega), red (Alpha), blue after killing an innocent (a villager, or a player who was not attacking you). Werewolves in a wolf form show two glowing dust particles at eye height every 10 ticks. The render layer on the model is not done.
+- A bitten player whose Alpha lost the spark before the bite took becomes an Omega with no pack (the sire is still recorded).
+- Pending (manual): the two-client check of the eye particles.
+
 ## Unreleased: sirelines
 
 - Compulsion: an Original, hybrid, tribrid or a vampire of level 10 or more can sneak and click with an empty hand on a villager or a lesser vampire (not advanced vampires, bosses or converted creatures) within 4 blocks and eye to eye (the target looks within 30 degrees of the caster, the caster within 15 of the target). Players, vervain users and hunters are immune.
@@ -55,7 +83,7 @@
 - Heretics (a siphoner who joins the vampires) keep siphoning and the witch bonus. Tribrids (a witch who completes the hybrid transition) are hybrids with the witch bonus and siphoning. A siphoner cannot start the hybrid transition.
 - Hybrid-type species and their rites need Werewolves; without it they are refused and the rites are not loaded.
 - Fixed flaky GameTests: the test template was 1x1x1, so cells next to a chunk edge had entities in chunks that do not tick. It is 16x1x16 now.
-- Known pending (manual): the two-client playthrough (Original, Original's Blood, a werewolf friend turned hybrid, Original hybrid, witch, tribrid), the forced-shift check on a real full moon, the downed screen, placeholder textures. Moonstone has no loot source yet. The Werewolves bite as a source of thirst and venom is not hooked (no hook exists).
+- Known pending (manual): the two-client playthrough (Original, Original's Blood, a werewolf friend turned hybrid, Original hybrid, witch, tribrid), the forced-shift check on a real full moon, the downed screen, placeholder textures. The moonstone is crafted from Werewolves silver, which spawns as ore. The Werewolves bite as a source of thirst and venom is not hooked (no hook exists).
 
 ## Unreleased: vampirism_enchanted
 

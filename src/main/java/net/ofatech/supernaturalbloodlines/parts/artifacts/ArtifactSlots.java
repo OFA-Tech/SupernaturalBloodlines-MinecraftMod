@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.artifacts;
 
 import java.util.Optional;
 import java.util.function.Predicate;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -15,6 +16,14 @@ public final class ArtifactSlots {
 
     public static boolean isWorn(Player p, Item item) {
         return findWorn(p, item).isPresent();
+    }
+
+    /** Any worn item of a tag: Curios first, then the inventory. */
+    public static boolean isWorn(Player p, TagKey<Item> tag) {
+        if (ModList.get().isLoaded("curios") && CuriosSlots.isEquipped(p, tag)) {
+            return true;
+        }
+        return InventorySlots.has(p, tag);
     }
 
     /** The stack itself, so callers can read its data components (bound UUID, charges). */

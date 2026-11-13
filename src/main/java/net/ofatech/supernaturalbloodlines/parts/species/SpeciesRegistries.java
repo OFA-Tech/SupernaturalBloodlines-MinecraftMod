@@ -7,8 +7,10 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -20,6 +22,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.item.HybridBloodItem;
 import net.ofatech.supernaturalbloodlines.parts.species.item.HybridVenomEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodItem;
+import net.ofatech.supernaturalbloodlines.parts.species.item.ShockedEffect;
+import net.ofatech.supernaturalbloodlines.parts.species.item.Taser;
 import net.ofatech.supernaturalbloodlines.parts.species.item.UnstableEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.WhiteOak;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.InfectionSire;
@@ -44,8 +48,14 @@ public final class SpeciesRegistries {
     public static final DeferredItem<HybridBloodItem> HYBRID_BLOOD =
             ITEMS.register("hybrid_blood", () -> new HybridBloodItem(new Item.Properties().stacksTo(16)));
 
-    /** Ingredient of the Rite of the Moon (crafted: amethyst shard + Werewolves silver ingot; no loot source yet). */
+    /** Ingredient of the Rite of the Moon (crafted: amethyst shard + Werewolves silver ingot; silver spawns as ore). */
     public static final DeferredItem<Item> MOONSTONE = ITEMS.registerSimpleItem("moonstone");
+
+    /** The hunter's Taser (shocks supernaturals). Recipe: lightning rod over redstone over an iron ingot. */
+    public static final DeferredItem<Taser> TASER = ITEMS.register("taser", () -> new Taser(new Item.Properties()));
+
+    /** Electricity's mark (see {@code pack/Electricity}). */
+    public static final DeferredHolder<MobEffect, ShockedEffect> SHOCKED = EFFECTS.register("shocked", ShockedEffect::new);
 
     /** Whose blood a bottle of Original's Blood is. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> BLOOD_SOURCE_COMPONENT =
@@ -93,6 +103,14 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<UUID>> COMPELLED_BY =
             ATTACHMENTS.register("compelled_by", () -> AttachmentType.builder(() -> Util.NIL_UUID).serialize(UUIDUtil.CODEC).build());
 
+    /** The Alpha whose bite is turning this player (the sanguinem effect is running); NIL when none. Saved, not copied on death. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<UUID>> PENDING_ALPHA =
+            ATTACHMENTS.register("pending_alpha", () -> AttachmentType.builder(() -> Util.NIL_UUID).serialize(UUIDUtil.CODEC).build());
+
+    /** True while a wild werewolf's bite (or one with no known biter) is turning this player. Saved, not copied on death. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> PENDING_WILD =
+            ATTACHMENTS.register("pending_wild", () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL).build());
+
     /** The discount a compelled villager gives, until it runs out; see {@link VillagerDiscount}. Use {@code hasData}. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<VillagerDiscount>> VILLAGER_DISCOUNT =
             ATTACHMENTS.register("villager_discount", () -> AttachmentType.builder(() -> new VillagerDiscount(Util.NIL_UUID, 0, 0))
@@ -106,5 +124,10 @@ public final class SpeciesRegistries {
         COMPONENTS.register(modBus);
         ATTACHMENTS.register(modBus);
         WhiteOak.register(modBus);
+        modBus.addListener((BuildCreativeModeTabContentsEvent e) -> {
+            if (e.getTabKey() == CreativeModeTabs.COMBAT) {
+                e.accept(TASER);
+            }
+        });
     }
 }

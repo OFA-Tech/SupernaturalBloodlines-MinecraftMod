@@ -21,6 +21,8 @@ public final class PackRules {
             case SPARK_GIVEN_UP -> isAlpha(w)
                     ? ok(w.toBuilder().rank(Rank.BETA).packAlpha(c.otherAlpha()).betaSince(c.gameTime()).build())
                     : ok(w);
+            // the spark is gone (stolen, or passed on with the faction): an Alpha with nothing left is an Omega
+            case SPARK_LOST -> isAlpha(w) ? ok(w.toBuilder().rank(Rank.OMEGA).packAlpha(null).betaSince(0).build()) : ok(w);
             case TRUE_ALPHA_EARNED -> trueAlpha(w, c);
             // Only a werewolf's eyes turn blue; the caller sends GENE_AWAKENED first when a kill awakens a human.
             case KILLED_INNOCENT -> isWerewolf(w) ? ok(w.toBuilder().killedInnocent(true).build()) : ok(w);
@@ -128,6 +130,7 @@ public final class PackRules {
         if (w.stoleSpark()) {
             return refuse(w, "true_alpha_stole_spark");
         }
-        return ok(w.toBuilder().rank(Rank.TRUE_ALPHA).build());
+        // an Alpha leads: they leave the pack they were a Beta in
+        return ok(w.toBuilder().rank(Rank.TRUE_ALPHA).packAlpha(null).betaSince(0).build());
     }
 }

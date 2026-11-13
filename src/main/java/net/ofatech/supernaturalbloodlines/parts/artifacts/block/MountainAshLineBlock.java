@@ -5,9 +5,13 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.EmptyBlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -22,6 +26,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.MountainAsh;
+import net.ofatech.supernaturalbloodlines.shared.werewolves.EmissaryLines;
 
 /**
  * A line of mountain ash (R95), laid like redstone dust and carrying no power. Walkers that are {@link Supernatural#isPrey}
@@ -46,6 +51,16 @@ public class MountainAshLineBlock extends BaseEntityBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new MountainAshLineBlockEntity(pos, state);
+    }
+
+    /** A line laid by a pack Emissary (the species part says who that is) is the stronger one. */
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide && placer instanceof Player p && EmissaryLines.isEmissary(p)
+                && level.getBlockEntity(pos) instanceof MountainAshLineBlockEntity line) {
+            line.setEmissary(true);
+        }
     }
 
     @Override

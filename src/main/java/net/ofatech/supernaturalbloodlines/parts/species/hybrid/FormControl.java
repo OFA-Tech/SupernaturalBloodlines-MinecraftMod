@@ -16,7 +16,8 @@ public final class FormControl {
 
     public static void register() {
         ForcedShift.register();
-        MoonControl.addSource(p -> HybridTraits.isHybrid(BloodlineAccess.get(p).species()));
+        // R96: once unbound (a bound hybrid has no forms at all: ForcedShift blocks them until the Rite of the Moon)
+        MoonControl.addSource(p -> HybridTraits.isHybrid(BloodlineAccess.get(p).species()) && !BloodlineAccess.get(p).hybridCurseBound());
     }
 
     public static void enterTick(Player p) {

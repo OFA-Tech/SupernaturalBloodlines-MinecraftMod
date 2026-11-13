@@ -23,6 +23,12 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue SIPHONER_CHANCE;
     public static final boolean DEFAULT_SIRELINE_DEATH = false;
     private static final ModConfigSpec.BooleanValue SIRELINE_DEATH;
+    public static final double DEFAULT_LATENT_GENE_CHANCE = 0.15;
+    private static final ModConfigSpec.DoubleValue LATENT_GENE_CHANCE;
+    public static final double DEFAULT_ALPHA_BITE_DEATH_CHANCE = 0.10;
+    private static final ModConfigSpec.DoubleValue ALPHA_BITE_DEATH_CHANCE;
+    public static final double DEFAULT_LUNAR_ECLIPSE_CHANCE = 0.03;
+    private static final ModConfigSpec.DoubleValue LUNAR_ECLIPSE_CHANCE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -39,6 +45,12 @@ public final class SpeciesConfig {
                 .defineInRange("siphoner_chance", DEFAULT_SIPHONER_CHANCE, 0.0, 1.0);
         SIRELINE_DEATH = b.comment("When an Original is killed with white oak, everyone they sired, and everyone those sired, dies with them (offline players on their next login).")
                 .define("sireline_death", DEFAULT_SIRELINE_DEATH);
+        LATENT_GENE_CHANCE = b.comment("Chance that a player carries the hidden werewolf gene, rolled once at first login.")
+                .defineInRange("latent_gene_chance", DEFAULT_LATENT_GENE_CHANCE, 0.0, 1.0);
+        ALPHA_BITE_DEATH_CHANCE = b.comment("Chance that an Alpha's bite kills the human instead of turning them.")
+                .defineInRange("alpha_bite_death_chance", DEFAULT_ALPHA_BITE_DEATH_CHANCE, 0.0, 1.0);
+        LUNAR_ECLIPSE_CHANCE = b.comment("Chance that a full-moon night is a lunar eclipse: werewolves lose their form actions, rank perks and pack bonus until dawn.")
+                .defineInRange("lunar_eclipse_chance", DEFAULT_LUNAR_ECLIPSE_CHANCE, 0.0, 1.0);
         b.pop();
         SPEC = b.build();
     }
@@ -81,6 +93,53 @@ public final class SpeciesConfig {
             return SIPHONER_CHANCE.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_SIPHONER_CHANCE;
+        }
+    }
+
+    private static volatile Double latentGeneChanceOverride;
+
+    /** For tests: pins {@link #latentGeneChance()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideLatentGeneChance(Double value) {
+        latentGeneChanceOverride = value;
+    }
+
+    public static double latentGeneChance() {
+        Double pinned = latentGeneChanceOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return LATENT_GENE_CHANCE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_LATENT_GENE_CHANCE;
+        }
+    }
+
+    private static volatile Double alphaBiteDeathChanceOverride;
+
+    /** For tests: pins {@link #alphaBiteDeathChance()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideAlphaBiteDeathChance(Double value) {
+        alphaBiteDeathChanceOverride = value;
+    }
+
+    public static double alphaBiteDeathChance() {
+        Double pinned = alphaBiteDeathChanceOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return ALPHA_BITE_DEATH_CHANCE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_ALPHA_BITE_DEATH_CHANCE;
+        }
+    }
+    public static double lunarEclipseChance() {
+        try {
+            return LUNAR_ECLIPSE_CHANCE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_LUNAR_ECLIPSE_CHANCE;
         }
     }
 

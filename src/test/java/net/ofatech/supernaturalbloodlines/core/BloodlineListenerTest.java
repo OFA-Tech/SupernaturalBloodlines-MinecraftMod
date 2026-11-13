@@ -65,6 +65,37 @@ class BloodlineListenerTest {
     }
 
     @Test
+    void killedInnocentAndPackAlphaChangesAreNotified() {
+        List<BloodlineAccess.BloodlineChange> seen = new ArrayList<>();
+        List<BiConsumer<Object, BloodlineAccess.BloodlineChange>> listeners = List.of((p, c) -> seen.add(c));
+        UUID id = UUID.randomUUID();
+        WolfState beta = WolfState.NONE.toBuilder().lineage(WolfState.Lineage.BITTEN).rank(WolfState.Rank.BETA).build();
+        BloodlineState base = NONE.toBuilder().wolf(beta).build();
+
+        // the eye colour turns blue for good after an innocent kill
+        BloodlineState guilty = NONE.toBuilder().wolf(beta.toBuilder().killedInnocent(true).build()).build();
+        BloodlineAccess.notifyListeners(listeners, null, id, base, guilty);
+        assertEquals(1, seen.size());
+        assertEquals(base, seen.get(0).before());
+        assertEquals(guilty, seen.get(0).after());
+        BloodlineAccess.notifyListeners(listeners, null, id, guilty, guilty.toBuilder().wolf(guilty.wolf().toBuilder().killedInnocent(false).build()).build());
+        assertEquals(2, seen.size());
+
+        // the pack index follows the pack Alpha, joined, switched or left
+        UUID alpha = UUID.randomUUID();
+        BloodlineState inPack = NONE.toBuilder().wolf(beta.toBuilder().packAlpha(alpha).build()).build();
+        BloodlineAccess.notifyListeners(listeners, null, id, base, inPack);
+        BloodlineAccess.notifyListeners(listeners, null, id, inPack, NONE.toBuilder().wolf(beta.toBuilder().packAlpha(UUID.randomUUID()).build()).build());
+        BloodlineAccess.notifyListeners(listeners, null, id, inPack, base);
+        assertEquals(5, seen.size());
+
+        // the same values again are not a change
+        BloodlineAccess.notifyListeners(listeners, null, id, inPack, NONE.toBuilder().wolf(beta.toBuilder().packAlpha(alpha).build()).build());
+        BloodlineAccess.notifyListeners(listeners, null, id, guilty, guilty);
+        assertEquals(5, seen.size());
+    }
+
+    @Test
     void clientViewHidesTheGeneAndOthersSeeNoSire() {
         UUID sire = UUID.randomUUID();
         UUID pending = UUID.randomUUID();
