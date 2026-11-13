@@ -23,7 +23,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
@@ -198,20 +200,48 @@ public final class WitchGameTests {
     @GameTest(template = "empty", templateNamespace = NS, batch = "witch_range")
     public static void witchWidensAltarRange(GameTestHelper helper) {
         BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
-        AltarBlockEntity altar = altar(helper, base, 0);
         BlockPos east = base.offset(40, 0, 0);
         BlockPos south = base.offset(0, 0, 40);
-        helper.assertTrue(!altar.posWithinRange(east) && !altar.posWithinRange(south), "40 blocks away is in range without a witch");
         RecordingPlayer witch = player(Species.WITCH, 0, helper);
         put(helper, witch, base.offset(1, 0, 0));
         try {
             helper.assertTrue(WitchAltarBonus.rangeFor(helper.getLevel(), base, 32) == 48, "range is " + WitchAltarBonus.rangeFor(helper.getLevel(), base, 32));
+            AltarBlockEntity altar = altar(helper, base, 0);
             helper.assertTrue(altar.posWithinRange(east) || altar.posWithinRange(south), "40 blocks away is out of range with a witch at the altar");
-            SpeciesConfig.overrideWitchBonus(false);
-            helper.assertTrue(!altar.posWithinRange(east) && !altar.posWithinRange(south), "the range grew with witch_bonus_enabled off");
         } finally {
-            SpeciesConfig.overrideWitchBonus(null);
             remove(helper, witch);
+        }
+        helper.succeed();
+    }
+
+    /** One altar loads with a witch beside it, one without: each keeps its range, so what it adds it can also remove. */
+    @GameTest(template = "empty", templateNamespace = NS, batch = "witch_drift")
+    public static void altarRangeIsDecidedWhenItLoads(GameTestHelper helper) {
+        BlockPos wide = helper.absolutePos(new BlockPos(0, 200, 0));
+        BlockPos narrow = helper.absolutePos(new BlockPos(0, 240, 0));
+        RecordingPlayer witch = player(Species.WITCH, 0, helper);
+        put(helper, witch, wide.offset(1, 0, 0));
+        AltarBlockEntity wideAltar;
+        try {
+            wideAltar = altar(helper, wide, 0);
+        } finally {
+            remove(helper, witch);
+        }
+        AltarBlockEntity narrowAltar = altar(helper, narrow, 0); // no witch within reach: 32
+        boolean wideEast = wideAltar.posWithinRange(wide.offset(40, 0, 0));
+        boolean wideSouth = wideAltar.posWithinRange(wide.offset(0, 0, 40));
+        helper.assertTrue(wideEast || wideSouth, "the altar loaded beside a witch is not wide");
+        // the witch is gone: the wide altar still sees the same blocks
+        helper.assertTrue(wideAltar.posWithinRange(wide.offset(40, 0, 0)) == wideEast && wideAltar.posWithinRange(wide.offset(0, 0, 40)) == wideSouth,
+                "the wide altar narrowed when the witch left");
+        // a witch arrives at the narrow one: it stays narrow
+        RecordingPlayer late = player(Species.WITCH, 0, helper);
+        put(helper, late, narrow.offset(1, 0, 0));
+        try {
+            helper.assertTrue(!narrowAltar.posWithinRange(narrow.offset(40, 0, 0)) && !narrowAltar.posWithinRange(narrow.offset(0, 0, 40)),
+                    "the narrow altar widened when a witch arrived");
+        } finally {
+            remove(helper, late);
         }
         helper.succeed();
     }
@@ -219,16 +249,17 @@ public final class WitchGameTests {
     @GameTest(template = "empty", templateNamespace = NS, batch = "witch_off")
     public static void witchBonusDisabledWhenMixinMissing(GameTestHelper helper) {
         BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
-        AltarBlockEntity altar = altar(helper, base, 5000);
         BlockPos chalkPos = base.offset(0, 0, -2);
         RecordingPlayer witch = player(Species.WITCH, 0, helper);
-        GoldChalkBlockEntity chalk = chalk(helper, chalkPos, witch.getUUID(), base);
         put(helper, witch, chalkPos);
         SpeciesConfig.overrideWitchBonus(false);
         try {
+            AltarBlockEntity altar = altar(helper, base, 5000);
+            GoldChalkBlockEntity chalk = chalk(helper, chalkPos, witch.getUUID(), base);
             helper.assertTrue(chalk.tryConsumePower(1000), "the altar did not pay");
             helper.assertTrue(power(altar) == 4000, "with the bonus off a witch pays 1000, altar left with " + power(altar));
             helper.assertTrue(WitchAltarBonus.rangeFor(helper.getLevel(), base, 32) == 32, "the range grew with the bonus off");
+            helper.assertTrue(!altar.posWithinRange(base.offset(40, 0, 0)) && !altar.posWithinRange(base.offset(0, 0, 40)), "the altar grew with the bonus off");
         } finally {
             SpeciesConfig.overrideWitchBonus(null);
             remove(helper, witch);
@@ -236,47 +267,94 @@ public final class WitchGameTests {
         helper.succeed();
     }
 
-    // ---- siphoned power pays ----
+    // ---- siphoned power pays the start cost ----
 
-    @GameTest(template = "empty", templateNamespace = NS, batch = "siphon_cost")
+    /**
+     * Waits for a game tick divisible by 20 (the only one a gold chalk acts on), then runs the chalk's real
+     * {@code serverTick} once with {@code rite} set up as if it had been matched, and checks the result.
+     */
+    private static void startThroughChalk(GameTestHelper helper, BlockPos pos, String rite, Runnable prepare, Runnable check, Runnable cleanup) {
+        boolean[] ran = {false};
+        helper.succeedWhen(() -> {
+            ServerLevel level = helper.getLevel();
+            helper.assertTrue(ran[0] || level.getGameTime() % 20 == 0, "waiting for a tick divisible by 20");
+            if (!ran[0]) {
+                ran[0] = true;
+                GoldChalkBlockEntity chalk = (GoldChalkBlockEntity) level.getBlockEntity(pos);
+                set(chalk, "type", type(helper, rite));
+                set(chalk, "itemsToConsume", new ArrayList<>());
+                set(chalk, "entitiesToConsume", new ArrayList<>());
+                set(chalk, "isInitialising", true);
+                prepare.run();
+                GoldChalkBlockEntity.serverTick(level, pos, level.getBlockState(pos), chalk);
+            }
+            check.run();
+            cleanup.run();
+        });
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, batch = "siphon_cost", timeoutTicks = 100)
     public static void siphonerPaysFromSiphonedPower(GameTestHelper helper) {
         BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
         AltarBlockEntity altar = altar(helper, base, 5000);
         BlockPos chalkPos = base.offset(0, 0, -2);
         RecordingPlayer siphoner = player(Species.SIPHONER, 500, helper);
+        chalk(helper, chalkPos, siphoner.getUUID(), base);
+        put(helper, siphoner, chalkPos);
+        startThroughChalk(helper, chalkPos, "blood_offering", () -> set(altar, "power", 5000.0), () -> {
+            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == 0, "siphoned " + BloodlineAccess.get(siphoner).siphonedPower());
+            helper.assertTrue(power(altar) == 4500, "the altar pays what siphoned power cannot (500 of 1000), altar left with " + power(altar));
+        }, () -> remove(helper, siphoner));
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS, batch = "siphon_poor", timeoutTicks = 100)
+    public static void siphonerKeepsPowerWhenTheAltarCannotPay(GameTestHelper helper) {
+        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
+        AltarBlockEntity altar = altar(helper, base, 10);
+        BlockPos chalkPos = base.offset(0, 0, -2);
+        RecordingPlayer siphoner = player(Species.SIPHONER, 500, helper);
+        chalk(helper, chalkPos, siphoner.getUUID(), base);
+        put(helper, siphoner, chalkPos);
+        startThroughChalk(helper, chalkPos, "blood_offering", () -> set(altar, "power", 10.0), () -> {
+            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == 500, "siphoned power was spent on a rite that never started: " + BloodlineAccess.get(siphoner).siphonedPower());
+        }, () -> remove(helper, siphoner));
+    }
+
+    /** Per-tick costs get the witch discount only: siphoned power would otherwise sync to the client every tick. */
+    @GameTest(template = "empty", templateNamespace = NS, batch = "siphon_tick")
+    public static void perTickCostIgnoresSiphonedPower(GameTestHelper helper) {
+        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
+        AltarBlockEntity altar = altar(helper, base, 5000);
+        RecordingPlayer siphoner = player(Species.SIPHONER, 500, helper);
+        BlockPos chalkPos = base.offset(0, 0, -2);
         GoldChalkBlockEntity chalk = chalk(helper, chalkPos, siphoner.getUUID(), base);
+        GoldChalkBlockEntity alone = chalk(helper, base.offset(5, 0, -2), siphoner.getUUID());
         put(helper, siphoner, chalkPos);
         try {
-            helper.assertTrue(chalk.tryConsumePower(300), "the charge failed");
-            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == 200 && power(altar) == 5000,
-                    "siphoned " + BloodlineAccess.get(siphoner).siphonedPower() + ", altar " + power(altar));
-            helper.assertTrue(chalk.tryConsumePower(300), "the charge failed");
-            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == 0 && power(altar) == 4900,
-                    "the altar pays what siphoned power cannot: siphoned " + BloodlineAccess.get(siphoner).siphonedPower() + ", altar " + power(altar));
-            // an altar that cannot pay the rest costs the siphoner nothing
-            BloodlineAccess.set(siphoner, state(Species.SIPHONER, 100));
-            set(altar, "power", 10.0);
-            helper.assertTrue(!chalk.tryConsumePower(300), "a poor altar paid 200");
-            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == 100, "siphoned power was spent on a charge that failed: " + BloodlineAccess.get(siphoner).siphonedPower());
+            helper.assertTrue(chalk.tryConsumePower(300), "the altar did not pay");
+            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == 500, "a per-tick charge took siphoned power: " + BloodlineAccess.get(siphoner).siphonedPower());
+            helper.assertTrue(power(altar) == 4700, "the altar pays the whole 300, left with " + power(altar));
+            helper.assertTrue(!alone.tryConsumePower(300), "siphoned power paid a per-tick cost with no altar");
         } finally {
             remove(helper, siphoner);
         }
         helper.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS, batch = "siphon_alone")
-    public static void siphonerNeedsNoAltarWhenSiphonedPowerCoversIt(GameTestHelper helper) {
-        BlockPos chalkPos = helper.absolutePos(new BlockPos(1, 200, 1));
-        RecordingPlayer siphoner = player(Species.SIPHONER, 400, helper);
-        GoldChalkBlockEntity chalk = chalk(helper, chalkPos, siphoner.getUUID());
-        put(helper, siphoner, chalkPos);
+    /** The target of a rite stands on the circle's centre, and the discount follows them, not only the caster. */
+    @GameTest(template = "empty", templateNamespace = NS, batch = "witch_centre")
+    public static void witchOnTheCircleCheapensTheCast(GameTestHelper helper) {
+        BlockPos base = helper.absolutePos(new BlockPos(0, 200, 0));
+        AltarBlockEntity altar = altar(helper, base, 5000);
+        BlockPos chalkPos = base.offset(0, 0, -2);
+        GoldChalkBlockEntity chalk = chalk(helper, chalkPos, UUID.randomUUID(), base); // the caster is not online
+        RecordingPlayer witch = player(Species.WITCH, 0, helper);
+        put(helper, witch, chalkPos);
         try {
-            helper.assertTrue(chalk.tryConsumePower(300), "siphoned power alone did not pay");
-            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == 100, "siphoned " + BloodlineAccess.get(siphoner).siphonedPower());
-            helper.assertTrue(!chalk.tryConsumePower(300), "100 siphoned power paid 300 with no altar");
-            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == 100, "a failed charge cost " + (100 - BloodlineAccess.get(siphoner).siphonedPower()));
+            helper.assertTrue(chalk.tryConsumePower(1000), "the altar did not pay");
+            helper.assertTrue(power(altar) == 4250, "the witch on the circle pays 750, altar left with " + power(altar));
         } finally {
-            remove(helper, siphoner);
+            remove(helper, witch);
         }
         helper.succeed();
     }
@@ -297,6 +375,35 @@ public final class WitchGameTests {
             helper.assertTrue(dropped(helper, "supernaturalbloodlines:blood_stone") == 1, "the rite did not run");
             remove(helper, siphoner);
         });
+    }
+
+    /** A heretic (vampire faction, can siphon) calling ancestors is refused by the rite itself, in onStart. */
+    @GameTest(template = "empty", templateNamespace = NS, batch = "siphon_cancel", timeoutTicks = 100)
+    public static void siphonedPowerKeptWhenTheRiteCancels(GameTestHelper helper) {
+        RecordingPlayer heretic = RecordingPlayer.create(helper);
+        VampirismAPI.factionPlayerHandler(heretic).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
+        BloodlineAccess.set(heretic, state(Species.HERETIC, 4000));
+        chalk(helper, centre(helper), heretic.getUUID());
+        place(helper, heretic);
+        startThroughChalk(helper, centre(helper), "ancestral_calling", () -> {}, () -> {
+            helper.assertTrue(heretic.receivedOnActionBar("supernaturalbloodlines.refusal.vampire_no_magic"), "the rite did not refuse");
+            helper.assertTrue(BloodlineAccess.get(heretic).siphonedPower() == 4000, "a refused rite cost " + (4000 - BloodlineAccess.get(heretic).siphonedPower()));
+        }, () -> {
+            remove(helper, heretic);
+            VampirismAPI.factionPlayerHandler(heretic).leaveFaction(false);
+        });
+    }
+
+    /** Same through the shared faction rite: a siphoner without the vampire faction casting a vampire rite. */
+    @GameTest(template = "empty", templateNamespace = NS, batch = "siphon_wrong", timeoutTicks = 100)
+    public static void siphonedPowerKeptOnWrongFactionRite(GameTestHelper helper) {
+        RecordingPlayer siphoner = player(Species.SIPHONER, 4000, helper);
+        chalk(helper, centre(helper), siphoner.getUUID());
+        place(helper, siphoner);
+        startThroughChalk(helper, centre(helper), "cleansing_blood", () -> {}, () -> {
+            helper.assertTrue(siphoner.receivedOnActionBar("supernaturalbloodlines.rite.wrong_faction"), "the rite did not refuse");
+            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == 4000, "a refused rite cost " + (4000 - BloodlineAccess.get(siphoner).siphonedPower()));
+        }, () -> remove(helper, siphoner));
     }
 
     // ---- siphoning ----
@@ -351,10 +458,85 @@ public final class WitchGameTests {
             helper.assertTrue(Siphoning.siphonEntity(siphoner, zombie), "the zombie gave nothing");
             helper.assertTrue(before - zombie.getHealth() == Siphoning.ENTITY_DAMAGE, "the zombie lost " + (before - zombie.getHealth()));
             helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == Siphoning.CAP, "siphoned " + BloodlineAccess.get(siphoner).siphonedPower());
+            helper.assertTrue(zombie.getLastDamageSource() != null && zombie.getLastDamageSource().getEntity() == siphoner, "the damage has no attacker");
             zombie.invulnerableTime = 0;
             helper.assertTrue(!Siphoning.siphonEntity(siphoner, zombie), "took power past the cap");
             helper.assertTrue(zombie.getHealth() == before - Siphoning.ENTITY_DAMAGE, "a full siphoner still hurt the zombie");
             helper.assertTrue(siphoner.receivedOnActionBar(Siphoning.FULL), "no 'full' message");
+        } finally {
+            BloodlineAccess.set(siphoner, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void siphonedCreatureCoolsDown(GameTestHelper helper) {
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(1, 1, 1));
+        zombie.setNoAi(true);
+        RecordingPlayer siphoner = player(Species.SIPHONER, 0, helper);
+        try {
+            helper.assertTrue(Siphoning.siphonEntity(siphoner, zombie), "the first siphon failed");
+            float health = zombie.getHealth();
+            zombie.invulnerableTime = 0;
+            helper.assertTrue(!Siphoning.siphonEntity(siphoner, zombie), "the same creature gave power twice in 30 seconds");
+            helper.assertTrue(zombie.getHealth() == health, "a cooling creature was hurt");
+            helper.assertTrue(siphoner.receivedOnActionBar(Siphoning.COOLING), "no cooldown message");
+            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == Siphoning.GAIN, "siphoned " + BloodlineAccess.get(siphoner).siphonedPower());
+        } finally {
+            BloodlineAccess.set(siphoner, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    /** The damage comes from the siphoner, so a player is only a target where PvP allows it, and a refused hit gives nothing. */
+    @GameTest(template = "empty", templateNamespace = NS, batch = "siphon_pvp")
+    public static void siphoningFollowsPvpRules(GameTestHelper helper) throws ReflectiveOperationException {
+        var server = helper.getLevel().getServer();
+        boolean pvp = server.isPvpAllowed();
+        RecordingPlayer siphoner = player(Species.SIPHONER, 0, helper);
+        // vanilla's rule: a player can be harmed by another player exactly when the server allows PvP
+        ServerPlayer victim = new net.neoforged.neoforge.common.util.FakePlayer(helper.getLevel(),
+                new com.mojang.authlib.GameProfile(UUID.randomUUID(), "pvp-victim")) {
+            @Override
+            public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
+                return false;
+            }
+
+            @Override
+            public boolean canHarmPlayer(net.minecraft.world.entity.player.Player other) {
+                return server.isPvpAllowed();
+            }
+        };
+        try {
+            Field spawnProtection = ServerPlayer.class.getDeclaredField("spawnInvulnerableTime");
+            spawnProtection.setAccessible(true);
+            spawnProtection.setInt(victim, 0); // it only counts down in tick(), which a FakePlayer never runs
+            server.setPvpAllowed(false);
+            float health = victim.getHealth();
+            helper.assertTrue(!Siphoning.siphonEntity(siphoner, victim), "siphoned a player with PvP off");
+            helper.assertTrue(victim.getHealth() == health && BloodlineAccess.get(siphoner).siphonedPower() == 0, "PvP off: health " + victim.getHealth() + ", siphoned " + BloodlineAccess.get(siphoner).siphonedPower());
+            server.setPvpAllowed(true);
+            helper.assertTrue(Siphoning.siphonEntity(siphoner, victim), "could not siphon a player with PvP on");
+            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == Siphoning.GAIN, "PvP on: siphoned " + BloodlineAccess.get(siphoner).siphonedPower());
+        } finally {
+            server.setPvpAllowed(pvp);
+            BloodlineAccess.set(siphoner, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    // ---- R65: death ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void siphonedPowerResetsOnDeath(GameTestHelper helper) {
+        RecordingPlayer siphoner = player(Species.SIPHONER, 700, helper);
+        try {
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerRespawnEvent(siphoner, true));
+            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == 700, "leaving the End emptied the siphoned power");
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerRespawnEvent(siphoner, false));
+            BloodlineState s = BloodlineAccess.get(siphoner);
+            helper.assertTrue(s.siphonedPower() == 0, "siphoned power is " + s.siphonedPower());
+            helper.assertTrue(s.species() == Species.SIPHONER, "dying changed the species to " + s.species());
         } finally {
             BloodlineAccess.set(siphoner, BloodlineState.NONE);
         }

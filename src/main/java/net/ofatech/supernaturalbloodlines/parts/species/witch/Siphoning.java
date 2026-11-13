@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.witch;
 
+import java.util.UUID;
 import net.favouriteless.enchanted.common.enchanted.altar.PowerProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
@@ -9,20 +10,25 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext;
 
 /**
  * R62/R63: a siphoner (and the heretic and tribrid) sneaks with an empty hand on a block that holds altar power, or on a
  * living thing, and takes {@link #GAIN} power into {@code siphonedPower} (cap {@link #CAP}). A block gives power once per
- * {@link #COOLDOWN_TICKS} per player, a creature takes {@link #ENTITY_DAMAGE} magic damage. Rites then spend it first
- * ({@link RiteCost}).
+ * {@link #COOLDOWN_TICKS} per player and so does a creature; a creature takes {@link #ENTITY_DAMAGE} magic damage dealt
+ * by the siphoner (so PvP rules and claims apply). Rites then spend it first ({@link RiteCost}). R65: it resets on death.
+ * The click is cancelled on the client too, from what the client knows (sneaking, empty hand, its own synced species), so
+ * nothing else reacts to it before the server answers.
  */
 public final class Siphoning {
     public static final int GAIN = 50;
@@ -33,47 +39,67 @@ public final class Siphoning {
     public static final String COOLING = "supernaturalbloodlines.siphon.cooling";
 
     private static final SiphonCooldown<GlobalPos> BLOCKS = new SiphonCooldown<>();
+    private static final SiphonCooldown<UUID> ENTITIES = new SiphonCooldown<>();
 
     private Siphoning() {}
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener(Siphoning::onBlock);
         NeoForge.EVENT_BUS.addListener(Siphoning::onEntity);
-        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> BLOCKS.forget(e.getEntity().getUUID()));
+        NeoForge.EVENT_BUS.addListener(Siphoning::onRespawn);
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
+            BLOCKS.forget(e.getEntity().getUUID());
+            ENTITIES.forget(e.getEntity().getUUID());
+        });
     }
 
     public static boolean canSiphon(Species s) {
         return s == Species.SIPHONER || s == Species.HERETIC || s == Species.TRIBRID;
     }
 
-    /** Does Enchanted give this block altar power (its own entry, or through a tag)? */
+    /** Does Enchanted give this block altar power (its own entry, or through a tag)? False if the data is not there (a client). */
     public static boolean hasAltarData(Level level, BlockState state) {
-        return PowerProvider.get(level, state.getBlock()) != null
-                || state.getTags().anyMatch(tag -> PowerProvider.get(level, tag) != null);
+        try {
+            return PowerProvider.get(level, state.getBlock()) != null
+                    || state.getTags().anyMatch(tag -> PowerProvider.get(level, tag) != null);
+        } catch (RuntimeException unknownToThisSide) {
+            return false;
+        }
     }
 
-    private static boolean ready(ServerPlayer p) {
+    private static boolean ready(Player p) {
         return p.isShiftKeyDown() && p.getMainHandItem().isEmpty() && canSiphon(BloodlineAccess.get(p).species());
     }
 
     private static void onBlock(PlayerInteractEvent.RightClickBlock e) {
-        if (e.getHand() != InteractionHand.MAIN_HAND || !(e.getEntity() instanceof ServerPlayer p)
-                || !(p.level() instanceof ServerLevel level) || !ready(p) || !hasAltarData(level, level.getBlockState(e.getPos()))) {
+        Player p = e.getEntity();
+        if (e.getHand() != InteractionHand.MAIN_HAND || !ready(p) || !hasAltarData(p.level(), p.level().getBlockState(e.getPos()))) {
             return;
         }
-        siphonBlock(p, level, e.getPos());
+        if (p instanceof ServerPlayer sp && sp.level() instanceof ServerLevel level) {
+            siphonBlock(sp, level, e.getPos());
+        }
         e.setCanceled(true);
         e.setCancellationResult(InteractionResult.SUCCESS);
     }
 
     private static void onEntity(PlayerInteractEvent.EntityInteract e) {
-        if (e.getHand() != InteractionHand.MAIN_HAND || !(e.getEntity() instanceof ServerPlayer p)
-                || !(e.getTarget() instanceof LivingEntity target) || !ready(p)) {
+        Player p = e.getEntity();
+        if (e.getHand() != InteractionHand.MAIN_HAND || !(e.getTarget() instanceof LivingEntity target) || !ready(p)) {
             return;
         }
-        siphonEntity(p, target);
+        if (p instanceof ServerPlayer sp) {
+            siphonEntity(sp, target);
+        }
         e.setCanceled(true);
         e.setCancellationResult(InteractionResult.SUCCESS);
+    }
+
+    /** R65: a death empties the siphoned power (the bloodline state is copied to the new body, then reset here). */
+    private static void onRespawn(PlayerEvent.PlayerRespawnEvent e) {
+        if (!e.isEndConquered() && e.getEntity() instanceof ServerPlayer p) {
+            BloodlineAccess.applyEvent(p, BloodlineEvent.DIED, SpeciesContext.of(p, null));
+        }
     }
 
     /** Takes power from the block unless the player is full or the block is cooling down; tells the player why not. */
@@ -89,11 +115,20 @@ public final class Siphoning {
         return true;
     }
 
-    /** Hurts the creature (magic) and takes power if it was hurt. */
+    /** Hurts the creature (magic, dealt by the siphoner) and takes power if it was hurt; a creature gives power once per cooldown. */
     public static boolean siphonEntity(ServerPlayer p, LivingEntity target) {
-        if (full(p) || target == p || !target.hurt(target.damageSources().magic(), ENTITY_DAMAGE)) {
+        if (full(p) || target == p) {
             return false;
         }
+        long now = p.level().getGameTime();
+        if (ENTITIES.isCooling(p.getUUID(), target.getUUID(), now)) {
+            p.displayClientMessage(Component.translatable(COOLING), true);
+            return false;
+        }
+        if (!target.hurt(p.damageSources().indirectMagic(p, p), ENTITY_DAMAGE)) {
+            return false; // PvP off, a claim, or immunity: no power and no cooldown
+        }
+        ENTITIES.tryUse(p.getUUID(), target.getUUID(), now, COOLDOWN_TICKS);
         gain(p);
         return true;
     }

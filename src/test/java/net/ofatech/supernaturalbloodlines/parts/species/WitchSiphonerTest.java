@@ -23,6 +23,16 @@ class WitchSiphonerTest {
     }
 
     @Test
+    void askingDoesNotStartTheCooldown() {
+        SiphonCooldown<String> c = new SiphonCooldown<>();
+        assertFalse(c.isCooling(A, "pos", 0));
+        assertFalse(c.isCooling(A, "pos", 1));
+        assertTrue(c.tryUse(A, "pos", 2, 600));
+        assertTrue(c.isCooling(A, "pos", 3));
+        assertFalse(c.isCooling(A, "pos", 602));
+    }
+
+    @Test
     void cooldownIsPerPlayerAndPerKey() {
         SiphonCooldown<String> c = new SiphonCooldown<>();
         assertTrue(c.tryUse(A, "one", 0, 600));

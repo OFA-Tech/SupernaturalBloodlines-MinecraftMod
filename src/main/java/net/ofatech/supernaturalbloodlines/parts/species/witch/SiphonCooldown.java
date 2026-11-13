@@ -10,13 +10,21 @@ public final class SiphonCooldown<K> {
 
     /** True and starts the cooldown when the key is ready at {@code now}. */
     public boolean tryUse(UUID player, K key, long now, long cooldown) {
-        Map<K, Long> mine = readyAt.computeIfAbsent(player, id -> new HashMap<>());
-        mine.values().removeIf(t -> t <= now);
-        if (mine.containsKey(key)) {
+        if (isCooling(player, key, now)) {
             return false;
         }
-        mine.put(key, now + cooldown);
+        readyAt.computeIfAbsent(player, id -> new HashMap<>()).put(key, now + cooldown);
         return true;
+    }
+
+    /** Is the key still cooling down at {@code now}? Drops what has run out. */
+    public boolean isCooling(UUID player, K key, long now) {
+        Map<K, Long> mine = readyAt.get(player);
+        if (mine == null) {
+            return false;
+        }
+        mine.values().removeIf(t -> t <= now);
+        return mine.containsKey(key);
     }
 
     public void forget(UUID player) {
