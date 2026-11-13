@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     { "id": "supernaturalbloodlines:sun_ring", "required": false },
-    { "id": "supernaturalbloodlines:moon_ring", "required": false }
+    { "id": "supernaturalbloodlines:moon_ring", "required": false },
+    { "id": "supernaturalbloodlines:resurrection_ring", "required": false }
   ]
 }

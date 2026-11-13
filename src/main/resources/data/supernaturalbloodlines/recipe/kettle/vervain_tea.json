@@ -1,0 +1,12 @@
+{
+  "neoforge:conditions": [ { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" } ],
+  "type": "enchanted:kettle",
+  "cook_colour": "3E6B2F",
+  "final_colour": "7DBA5A",
+  "ingredients": [
+    { "id": "supernaturalbloodlines:vervain", "count": 2 },
+    { "id": "minecraft:sugar", "count": 1 }
+  ],
+  "requires_bottle": true,
+  "result": { "id": "supernaturalbloodlines:vervain_tea", "count": 1 }
+}

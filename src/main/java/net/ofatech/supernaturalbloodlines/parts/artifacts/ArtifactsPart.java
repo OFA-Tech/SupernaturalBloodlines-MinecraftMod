@@ -9,6 +9,7 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ArtifactSlotsGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.CuriosSlotsGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.MoonRingGameTests;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ResurrectionVervainGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.RingGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.rite.BindItemRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves.MoonRing;
@@ -22,7 +23,10 @@ public final class ArtifactsPart {
         // before the datapacks load, so the rite JSONs can name this factory
         RiteFactoryRegistry.get().register(BindItemRiteFactory.ID, BindItemRiteFactory.CODEC);
         ArtifactItems.register(modBus);
+        VampirismSupernatural.register();
         SunRing.register();
+        ResurrectionRing.register();
+        VervainRules.register();
         if (werewolves) {
             MoonRing.register();
         }
@@ -30,6 +34,7 @@ public final class ArtifactsPart {
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(ArtifactSlotsGameTests.class);
             e.register(RingGameTests.class);
+            e.register(ResurrectionVervainGameTests.class);
             if (curios) {
                 e.register(CuriosSlotsGameTests.class);
             }

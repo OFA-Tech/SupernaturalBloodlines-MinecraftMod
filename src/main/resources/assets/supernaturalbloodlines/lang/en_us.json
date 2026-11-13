@@ -75,5 +75,13 @@
   "rite.supernaturalbloodlines.ward_of_daylight": "Ward of Daylight",
   "rite.supernaturalbloodlines.ward_of_the_moon": "Ward of the Moon",
   "supernaturalbloodlines.rite.bind_no_item": "The rite has nothing to bind.",
-  "supernaturalbloodlines.rite.bind_already_bound": "That is already bound to someone."
+  "supernaturalbloodlines.rite.bind_already_bound": "That is already bound to someone.",
+  "item.supernaturalbloodlines.resurrection_ring": "Resurrection Ring",
+  "tooltip.supernaturalbloodlines.charges": "Charges: %s",
+  "rite.supernaturalbloodlines.ward_of_return": "Ward of Return",
+  "block.supernaturalbloodlines.vervain": "Vervain",
+  "item.supernaturalbloodlines.vervain": "Vervain",
+  "item.supernaturalbloodlines.vervain_seeds": "Vervain Seeds",
+  "item.supernaturalbloodlines.vervain_tea": "Vervain Tea",
+  "effect.supernaturalbloodlines.vervain": "Vervain"
 }

@@ -125,6 +125,23 @@ public final class RingGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void sunRingLeavesARealSunscreenAlone(GameTestHelper helper) {
+        Holder<MobEffect> sunscreen = BuiltInRegistries.MOB_EFFECT.getHolder(ResourceLocation.parse("vampirism:sunscreen")).orElseThrow();
+        ServerPlayer p = vampire(helper);
+        p.getInventory().items.set(5, ring(ArtifactItems.SUN_RING.get(), p.getUUID()));
+
+        p.addEffect(new net.minecraft.world.effect.MobEffectInstance(sunscreen, 6000, 0));
+        SunRing.refreshSunscreen(p);
+        helper.assertTrue(p.getEffect(sunscreen).getDuration() > 5000 && p.getEffect(sunscreen).isVisible(), "a visible sunscreen was replaced");
+
+        p.removeEffect(sunscreen);
+        p.addEffect(new net.minecraft.world.effect.MobEffectInstance(sunscreen, 100, 3, true, false, false));
+        SunRing.refreshSunscreen(p);
+        helper.assertTrue(p.getEffect(sunscreen).getAmplifier() == 3, "a stronger sunscreen was replaced");
+        helper.succeed();
+    }
+
     // ---- the bind rite ----
 
     @GameTest(template = "empty", templateNamespace = NS)

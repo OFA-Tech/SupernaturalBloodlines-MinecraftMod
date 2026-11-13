@@ -50,12 +50,19 @@ public final class SunRing {
         }
     }
 
-    /** Keeps the sunscreen effect on a vampire who wears their own ring (twice as long as the refresh period). */
+    /**
+     * Keeps the sunscreen effect on a vampire who wears their own ring (twice as long as the refresh period). A real
+     * sunscreen (a potion or lotion: visible, or a higher level) is left alone, or the hidden one would replace it.
+     */
     public static void refreshSunscreen(ServerPlayer p) {
         if (VampirismAPI.factionPlayerHandler(p).getCurrentFaction() == VReference.VAMPIRE_FACTION
                 && ArtifactItems.isBoundWorn(p, ArtifactItems.SUN_RING.get())) {
-            BuiltInRegistries.MOB_EFFECT.getHolder(SUNSCREEN)
-                    .ifPresent(effect -> p.addEffect(new MobEffectInstance(effect, SUNSCREEN_TICKS, 0, true, false, false)));
+            BuiltInRegistries.MOB_EFFECT.getHolder(SUNSCREEN).ifPresent(effect -> {
+                MobEffectInstance current = p.getEffect(effect);
+                if (current == null || (!current.isVisible() && current.getAmplifier() == 0)) {
+                    p.addEffect(new MobEffectInstance(effect, SUNSCREEN_TICKS, 0, true, false, false));
+                }
+            });
         }
     }
 }
