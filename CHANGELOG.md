@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased: vampirism_enchanted
+
+- Plant parity (data): Enchanted garlic is in the `c:crops/garlic` tag, so Vampirism's garlic bread, garlic finder, purified garlic and diffuser-core recipes (and the cauldron colour) accept it. **Limitation:** the tag is only read by recipes. The garlic crop's effect on vampires and the garlic diffusers do not read it, so an `enchanted:garlic` crop does not hurt a vampire.
+- Enchanted wolfsbane converts 1:1 to and from Werewolves' wolfsbane (two shapeless recipes; Werewolves has no tag). Only with Werewolves.
+- Altar power: Vampirism garlic and vampire orchid, Werewolves wolfsbane and wolf berry bush (8 per block, up to 20).
+- Blood data: `entity_blood` entries for the Enchanted familiar cat (3) and mandrake (0).
+- A rite factory `supernaturalbloodlines:faction_rite` (event, faction requirement, optional full moon) that applies a bloodline event to the person on the circle through `BloodlineRules`; a failure refunds the ingredients and says why.
+- Rite of Cleansing Blood (garlic, holy water, golden apple): cures vampirism. Rite of the Silver Moon (2 silver ingots, wolfsbane, full moon; Werewolves only): cures lycanthropy. Originals and hybrids follow the bloodline rules.
+- Rite of Blood Offering: 4 full Vampirism blood bottles and a stone make a `blood_stone` block (altar power 25, up to 16). Empty bottles are not accepted.
+- Sun Poppet: protects its bound player from a lethal hit of Vampirism's sun damage. Silver Poppet (Werewolves only, not registered without it): protects from a lethal hit by a silver item (`werewolves:type/silver`) or a werewolf bite. Both follow Enchanted's rule (poppets are only consulted on a lethal hit) and are made at the spinning wheel from an Enchanted poppet, anointing paste and glowstone dust or a silver ingot.
+- Known pending: manual in-game checks of the rites at a real chalk circle, the poppets at a real spinning wheel, and the placeholder textures (block and poppets).
+
 ## Unreleased: enchanted_tensura
 
 - Altar power (data): Tensura magic ore, magic blocks, crystal blocks, magisteel and magic metal blocks power Enchanted altars (6 per ore up to 20, 10 per block up to 10).
