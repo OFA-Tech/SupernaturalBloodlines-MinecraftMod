@@ -1,0 +1,8 @@
+{
+  "neoforge:conditions": [
+    { "type": "supernaturalbloodlines:part_enabled", "part": "vampirismEnchanted" },
+    { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+  ],
+  "power": 8,
+  "limit": 20
+}

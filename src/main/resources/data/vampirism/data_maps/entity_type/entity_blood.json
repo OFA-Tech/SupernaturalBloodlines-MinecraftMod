@@ -1,5 +1,13 @@
 {
   "values": {
+    "enchanted:familiar_cat": {
+      "blood": 3,
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismEnchanted" }]
+    },
+    "enchanted:mandrake": {
+      "blood": 0,
+      "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismEnchanted" }]
+    },
     "tensura:akash": {
       "blood": 0,
       "neoforge:conditions": [{ "type": "supernaturalbloodlines:part_enabled", "part": "vampirismTensura" }]
