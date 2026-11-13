@@ -43,5 +43,16 @@
   "rite.supernaturalbloodlines.blood_offering": "Rite of Blood Offering",
   "block.supernaturalbloodlines.blood_stone": "Blood Stone",
   "item.supernaturalbloodlines.sun_poppet": "Sun Poppet",
-  "item.supernaturalbloodlines.silver_poppet": "Silver Poppet"
+  "item.supernaturalbloodlines.silver_poppet": "Silver Poppet",
+  "item.supernaturalbloodlines.original_blood": "Original's Blood",
+  "item.supernaturalbloodlines.white_oak_stake": "White Oak Stake",
+  "block.supernaturalbloodlines.white_oak_log": "White Oak Log",
+  "block.supernaturalbloodlines.white_oak_planks": "White Oak Planks",
+  "block.supernaturalbloodlines.white_oak_sapling": "White Oak Sapling",
+  "effect.supernaturalbloodlines.original_blood": "Original's Blood",
+  "rite.supernaturalbloodlines.immortality": "Rite of Immortality",
+  "rite.supernaturalbloodlines.original_blood": "Rite of Original's Blood",
+  "supernaturalbloodlines.downed.title": "You are dying",
+  "supernaturalbloodlines.downed.give_up": "Give up",
+  "supernaturalbloodlines.downed.wait": "Wait"
 }

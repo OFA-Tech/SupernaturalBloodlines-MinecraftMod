@@ -1,0 +1,1 @@
+{ "parent": "minecraft:item/generated", "textures": { "layer0": "supernaturalbloodlines:block/white_oak_sapling" } }

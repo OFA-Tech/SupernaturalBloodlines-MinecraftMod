@@ -26,7 +26,18 @@ public final class SpeciesConfig {
 
     private SpeciesConfig() {}
 
+    private static volatile Integer maxOriginalsOverride;
+
+    /** For tests: pins {@link #maxOriginals()} without touching the config file; null clears it. */
+    public static void overrideMaxOriginals(Integer value) {
+        maxOriginalsOverride = value;
+    }
+
     public static int maxOriginals() {
+        Integer pinned = maxOriginalsOverride;
+        if (pinned != null) {
+            return pinned;
+        }
         try {
             return MAX_ORIGINALS.get();
         } catch (IllegalStateException notLoaded) {

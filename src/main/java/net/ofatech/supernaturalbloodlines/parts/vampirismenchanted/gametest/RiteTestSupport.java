@@ -19,39 +19,39 @@ import net.minecraft.world.phys.Vec3;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 
 /** Shared by the rite GameTests: start the real rite JSON and look at what it left behind. */
-final class RiteTestSupport {
+public final class RiteTestSupport {
     private static final String NS = SupernaturalBloodlines.MODID;
 
     private RiteTestSupport() {
     }
 
-    static RiteType type(GameTestHelper helper, String path) {
+    public static RiteType type(GameTestHelper helper, String path) {
         return helper.getLevel().registryAccess().registryOrThrow(EData.RITE_TYPES_REGISTRY)
                 .get(ResourceLocation.fromNamespaceAndPath(NS, path));
     }
 
-    static BlockPos centre(GameTestHelper helper) {
+    public static BlockPos centre(GameTestHelper helper) {
         return helper.absolutePos(new BlockPos(1, 1, 1));
     }
 
-    static Item item(String id) {
+    public static Item item(String id) {
         return BuiltInRegistries.ITEM.get(ResourceLocation.parse(id));
     }
 
     /** Starts the rite as {@code caster} with {@code items} as the consumed ingredients. */
-    static Rite start(GameTestHelper helper, String path, ServerPlayer caster, List<ItemStack> items) {
+    public static Rite start(GameTestHelper helper, String path, ServerPlayer caster, List<ItemStack> items) {
         Rite rite = type(helper, path).create(helper.getLevel(), centre(helper), caster.getUUID(), items);
         rite.start();
         return rite;
     }
 
     /** FakePlayers are not in the level, which is where the rites look for players: put one there on the circle. */
-    static void place(GameTestHelper helper, ServerPlayer p) {
+    public static void place(GameTestHelper helper, ServerPlayer p) {
         p.setPos(Vec3.atBottomCenterOf(centre(helper)).add(0, 1, 0));
         helper.getLevel().addNewPlayer(p);
     }
 
-    static void remove(GameTestHelper helper, ServerPlayer p) {
+    public static void remove(GameTestHelper helper, ServerPlayer p) {
         ServerLevel level = helper.getLevel();
         level.removePlayerImmediately(p, Entity.RemovalReason.DISCARDED);
         // every rite test removes its players in a finally: leave no ItemEntity behind for the next test in this cell
@@ -59,7 +59,7 @@ final class RiteTestSupport {
     }
 
     /** Items lying within 1.5 blocks of the circle centre (the test cells are further apart than that): what Enchanted gives back when a rite is cancelled. */
-    static int dropped(GameTestHelper helper, String itemId) {
+    public static int dropped(GameTestHelper helper, String itemId) {
         int n = 0;
         for (ItemEntity i : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(centre(helper)).inflate(1.5))) {
             if (i.getItem().is(item(itemId))) {
@@ -69,7 +69,7 @@ final class RiteTestSupport {
         return n;
     }
 
-    static void clearDropped(GameTestHelper helper) {
+    public static void clearDropped(GameTestHelper helper) {
         helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(centre(helper)).inflate(1.5)).forEach(Entity::discard);
     }
 }

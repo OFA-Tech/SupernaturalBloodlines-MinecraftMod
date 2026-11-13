@@ -1,0 +1,7 @@
+{
+  "neoforge:conditions": [ { "type": "supernaturalbloodlines:part_enabled", "part": "species" } ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [ { "item": "supernaturalbloodlines:white_oak_log" } ],
+  "result": { "id": "supernaturalbloodlines:white_oak_planks", "count": 4 }
+}

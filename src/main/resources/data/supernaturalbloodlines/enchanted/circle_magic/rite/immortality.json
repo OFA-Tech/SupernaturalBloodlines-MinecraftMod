@@ -1,0 +1,21 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:white_oak_sapling", "count": 1 },
+        { "id": "minecraft:golden_apple", "count": 1 },
+        { "id": "vampirism:human_heart", "count": 1 }
+    ],
+    "entities": [ "minecraft:villager" ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 12000,
+    "factory": {
+        "type": "supernaturalbloodlines:faction_rite",
+        "event": "rite_of_immortality",
+        "faction": "none",
+        "requires_full_moon": true
+    }
+}

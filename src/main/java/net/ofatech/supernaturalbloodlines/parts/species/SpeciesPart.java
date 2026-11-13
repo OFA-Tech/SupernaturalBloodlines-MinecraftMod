@@ -1,7 +1,17 @@
 package net.ofatech.supernaturalbloodlines.parts.species;
 
+import net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.OriginalGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.original.Downed;
+import net.ofatech.supernaturalbloodlines.parts.species.original.DownedGiveUpPayload;
+import net.ofatech.supernaturalbloodlines.parts.species.original.DownedPayload;
+import net.ofatech.supernaturalbloodlines.parts.species.original.DownedScreen;
+import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
+import net.ofatech.supernaturalbloodlines.parts.species.rite.OriginalBloodRiteFactory;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.NeoForge;
@@ -14,6 +24,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.gametest.SpeciesGameTest
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteHooks;
 
 public final class SpeciesPart {
+    private static final String NETWORK_VERSION = "1";
+
     private SpeciesPart() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
@@ -26,7 +38,23 @@ public final class SpeciesPart {
                 syncOriginal(p);
             }
         });
-        modBus.addListener((RegisterGameTestsEvent e) -> e.register(SpeciesGameTests.class));
+        // before the datapacks load, so the rite JSONs can name this factory
+        RiteFactoryRegistry.get().register(OriginalBloodRiteFactory.ID, OriginalBloodRiteFactory.CODEC);
+        SpeciesRegistries.register(modBus);
+        OriginalRules.register();
+        modBus.addListener((RegisterPayloadHandlersEvent e) -> {
+            PayloadRegistrar registrar = e.registrar(NETWORK_VERSION).optional();
+            registrar.playToClient(DownedPayload.TYPE, DownedPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> DownedScreen.show(payload.downed())));
+            registrar.playToServer(DownedGiveUpPayload.TYPE, DownedGiveUpPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> {
+                if (ctx.player() instanceof ServerPlayer p) {
+                    Downed.giveUp(p);
+                }
+            }));
+        });
+        modBus.addListener((RegisterGameTestsEvent e) -> {
+            e.register(SpeciesGameTests.class);
+            e.register(OriginalGameTests.class);
+        });
         SupernaturalBloodlines.LOGGER.info("SpeciesPart enabled");
     }
 

@@ -5,7 +5,7 @@ Requires: `vampirism`, `enchanted`, and the `VAMPIRISM_ENCHANTED` part (it reuse
 Rules live in `core/bloodline` (`BloodlineRules`, `PackRules`) and `docs/superpowers/specs/SPECIES-RULES.md` is the source of truth. Checklist from the design (sections 4, 7, 8, 9). Tick items as they ship.
 
 **Species (build order)**
-- [ ] Originals and Original's blood (Rite of Immortality, white-oak rule, Original's blood item).
+- [x] Originals and Original's blood (Rite of Immortality, white-oak rule, Original's blood item).
 - [ ] Hybrid (doppelgänger blood during the transition, sire bond).
 - [ ] Original hybrid (Rite of the Moon, needs the gene).
 - [ ] Witch and siphoner (Rite of Ancestral Calling; siphoning).
@@ -13,7 +13,7 @@ Rules live in `core/bloodline` (`BloodlineRules`, `PackRules`) and `docs/superpo
 - [ ] Tribrid (a witch who completes the hybrid transition).
 - [ ] Eligibility: only human-like races; others are refused with a message.
 - [ ] Death and respawn: species, sire and Original status persist; `siphoned_power` resets.
-- [ ] Originals and white oak: non-oak lethal damage can't kill; white oak items and tree.
+- [x] Originals and white oak: non-oak lethal damage can't kill; white oak items and tree.
 - [ ] Vampire traits for hybrid types (attributes by age, blood thirst, bite that poisons vampires).
 
 **Hunters**
@@ -51,6 +51,16 @@ Rules live in `core/bloodline` (`BloodlineRules`, `PackRules`) and `docs/superpo
 - `SpeciesConfig` (own file `supernaturalbloodlines-species.toml`, section `species`): `max_originals_per_world` (0 = unlimited), `transition_ticks` (24000). The brief put the spec inside `SpeciesData`; it is a separate class like `VampireSyncConfig`.
 - **No Werewolves.** `BloodlineContext.werewolvesLoaded` (default true, set by `SpeciesContext`): when false, `BloodlineRules.apply` refuses any result that becomes a hybrid type or starts the hybrid transition with `supernaturalbloodlines.refusal.needs_werewolves`. The rules stay pure; the check is one wrapper in `apply`, so the rite preview refuses before anything changes.
 - `OutcomeExecutor.run(p, outcome)`, inside `ReentrancyGuard.run(uuid, "species", ...)`: a refusal is sent as a chat message; otherwise LEAVE/JOIN as the rite factory does, then KILL_PLAYER = `hurt(source(supernaturalbloodlines:failed_transition), Float.MAX_VALUE)`. The damage type is in `#minecraft:bypasses_resistance` and `#minecraft:bypasses_invulnerability` (Resistance V and a Totem of Undying cannot save the player); if the player is still alive afterwards the executor calls `p.kill()`. Creative and spectator players are skipped. **No nested executor for the same player:** the guard channel is `species` per player, so an `OutcomeExecutor.run` that starts while another one for the same player is running (for example from a faction event the first one caused) is dropped with a warning in the log; do the follow-up after the outer call returns, or from another channel. `SpeciesData` is also re-synced from the player's species on login (`SpeciesPart.syncOriginal`).
+
+## Originals (Task 2)
+
+- **Registries** (`SpeciesRegistries`, registered by `SpeciesPart.init`): item `original_blood` (own drinkable, `UseAnim.DRINK`, 32 ticks, gives back a glass bottle; blood without a source cannot be drunk), effect `original_blood` (6000 ticks, marker only), data component `blood_source` (UUID), attachments `blood_source` (UUID, last drink wins, not copied on death: read it while the player is still alive, e.g. in the death event) and `downed` (ticks left, saved). Task 3 reads `blood_source` + the effect for `DIED_WITH_ORIGINAL_BLOOD`.
+- **White oak** (`item/WhiteOak`): log, planks, sapling (grows `worldgen/configured_feature/white_oak.json`, a vanilla-shaped oak with our log, via `TreeGrower`), `white_oak_stake` (wooden sword stats). The item tag `supernaturalbloodlines:white_oak` holds the stake; any main-hand item in it is "white oak". The sapling is craftable (oak sapling + amethyst shard) because nothing drops it. Placeholder textures, generated.
+- **Rites**: `immortality.json` (`faction_rite`, event `rite_of_immortality`, `faction: none`, `requires_full_moon`, power 12000, items white oak sapling + golden apple + `vampirism:human_heart`, entity `minecraft:villager` consumed; the target is `RiteTargets.centrePlayerOrCaster`). `original_blood.json` (factory `supernaturalbloodlines:original_blood`, one glass bottle, power 1000): refuses a non-Original target with `supernaturalbloodlines.refusal.not_original` on the action bar and Enchanted gives the bottle back. Both are conditioned on `part_enabled species`.
+- **Protection (R32)** (`original/OriginalRules`, `LivingDeathEvent` at LOWEST with `receiveCanceled`; a `LivingDeathEvent` is used, not `LivingIncomingDamageEvent`, because only the death event knows the damage after armour): the exempt sources are white oak (direct attacker's main hand in the tag), `fell_out_of_world`, `generic_kill`, `#minecraft:bypasses_invulnerability` (holds `failed_transition`). Anything else lethal: a vampire Original is cancelled by Vampirism's own `onDeadlyHit` first (we see a cancelled event and leave it); otherwise (Original hybrid, or a vampire Vampirism does not down) we cancel and start `Downed`. A white oak blow on an Original already in Vampirism's dying state ends it by reflection (`VampirePlayer.giveUpDBNO()` is not in the API jar), then `die(source)`.
+- **`Downed`** (Original hybrids; Task 5 reuses it for werewolf-faction Originals): the `downed` attachment counts down from 600, movement speed and jump strength are locked by a transient `supernaturalbloodlines:downed` modifier (-100%), forced SLEEPING pose, attack/use/interact/break events are cancelled, non-exempt damage is cancelled (`LivingIncomingDamageEvent`), revive at half health after 600 ticks, `giveUp` kills with the source that downed them (kept in memory; after a relog it is a plain /kill source). The screen (`DownedScreen`, Give up / Wait) is opened by `DownedPayload(true)` and sends `DownedGiveUpPayload`; the class is only referenced from the payload handler lambda, so a dedicated server never loads it. Optional payload channel (version "1").
+- **Attributes (R31)**: `OriginalRules.sync(player)`: +4 max health (add) and +20% attack damage (multiply base), transient modifier id `supernaturalbloodlines:original`, applied on a species change (BloodlineAccess listener), login, respawn and dimension change.
+- **GameTest note**: `FakePlayer.die` is a no-op, so no `LivingDeathEvent` ever fires for a plain FakePlayer. Use `TestPlayers.createMortal` for tests that need the death event; `FakePlayer`s also never tick, so reset `invulnerableTime` between two hits.
 
 ## Hook points (verified)
 
