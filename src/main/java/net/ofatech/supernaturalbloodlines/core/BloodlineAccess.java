@@ -67,7 +67,9 @@ public final class BloodlineAccess {
      * skills the player no longer has. The current one is kept. Use this, not {@code set(p, before)}, for every rollback.
      */
     public static void restore(ServerPlayer p, BloodlineState before) {
-        set(p, before.toBuilder().layerSkills(get(p).layerSkills()).build());
+        BloodlineState now = get(p);
+        set(p, before.toBuilder().layerSkills(now.layerSkills())
+                .wolf(before.wolf().toBuilder().grantedSkills(now.wolf().grantedSkills()).build()).build());
     }
 
     /** Applies the rules and stores the result. Faction actions in the Outcome are left to the parts. */

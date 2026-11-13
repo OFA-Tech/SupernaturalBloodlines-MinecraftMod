@@ -16,6 +16,7 @@ public final class SpeciesTensuraConfig {
     public static final ModConfigSpec SPEC;
 
     private static final ModConfigSpec.ConfigValue<List<? extends String>> LAYERS;
+    private static final ModConfigSpec.ConfigValue<List<? extends String>> RANK_SKILLS;
     private static final ModConfigSpec.BooleanValue UNDEAD_TREATMENT;
     private static final ModConfigSpec.BooleanValue APEX_ENABLED;
     private static final ModConfigSpec.DoubleValue EVOLUTION_MULTIPLIER;
@@ -29,6 +30,8 @@ public final class SpeciesTensuraConfig {
     private static volatile Boolean sireNamingOverride;
     private static volatile List<? extends String> parsedFrom;
     private static volatile LayerTable parsed = LayerTable.parse(LayerTable.DEFAULTS).table();
+    private static volatile List<? extends String> rankParsedFrom;
+    private static volatile RankSkillTable rankParsed = RankSkillTable.parse(RankSkillTable.DEFAULTS).table();
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -37,6 +40,10 @@ public final class SpeciesTensuraConfig {
                         "SPECIES is a species name or VAMPIRE (a Vampirism vampire with no species). A skill without a namespace is a Tensura one.",
                         "An entry replaces the default of the same key; a bad entry is ignored with a warning.")
                 .defineListAllowEmpty("layers", LayerTable.DEFAULTS, () -> "", o -> o instanceof String);
+        RANK_SKILLS = b.comment("Tensura skills of a werewolf rank (Werewolves only): \"RANK=skill,skill\" with RANK ALPHA, TRUE_ALPHA or BORN_LEVEL5",
+                        "(a born werewolf of level 5). A skill without a namespace is a Tensura one. The race never changes; only skills this mod granted are taken back.",
+                        "An entry replaces the default of the same key; a bad entry is ignored with a warning.")
+                .defineListAllowEmpty("rank_skills", RankSkillTable.DEFAULTS, () -> "", o -> o instanceof String);
         UNDEAD_TREATMENT = b.comment("Tensura treats a player whose layer says undead as undead. That is wider than holy damage: Tensura's own undead rules apply,",
                         "such as holy and light damage x3, holy exposure, infection immunity and Enervation on food. A plain Vampirism vampire (VAMPIRE) counts too,",
                         "so it goes from x1.5 to Tensura's x3 holy damage and tensura_holy_vs_vampire (vampirism_tensura config) has no effect on it.",
@@ -84,6 +91,26 @@ public final class SpeciesTensuraConfig {
             parsedFrom = entries;
         }
         return parsed;
+    }
+
+    public static RankSkillTable rankSkills() {
+        List<? extends String> entries;
+        try {
+            entries = RANK_SKILLS.get();
+        } catch (IllegalStateException notLoaded) {
+            return rankParsed;
+        }
+        if (entries != rankParsedFrom) {
+            RankSkillTable.Parsed p = RankSkillTable.parse(entries.stream().map(String.class::cast).toList());
+            for (String bad : p.rejected()) {
+                if (WARNED.add(bad)) {
+                    SupernaturalBloodlines.LOGGER.warn("{}: ignoring invalid rank_skills entry '{}' (want ALPHA|TRUE_ALPHA|BORN_LEVEL5=skill,skill)", FILE, bad);
+                }
+            }
+            rankParsed = p.table();
+            rankParsedFrom = entries;
+        }
+        return rankParsed;
     }
 
     /** For tests: null goes back to the config. */
