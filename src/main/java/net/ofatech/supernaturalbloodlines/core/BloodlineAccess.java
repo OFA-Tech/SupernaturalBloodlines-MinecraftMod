@@ -67,9 +67,7 @@ public final class BloodlineAccess {
      * skills the player no longer has. The current one is kept. Use this, not {@code set(p, before)}, for every rollback.
      */
     public static void restore(ServerPlayer p, BloodlineState before) {
-        BloodlineState now = get(p);
-        set(p, before.toBuilder().layerSkills(now.layerSkills())
-                .wolf(before.wolf().toBuilder().grantedSkills(now.wolf().grantedSkills()).build()).build());
+        set(p, before.withTrackingOf(get(p)));
     }
 
     /** Applies the rules and stores the result. Faction actions in the Outcome are left to the parts. */
@@ -87,8 +85,9 @@ public final class BloodlineAccess {
      */
     public static BloodlineState clientView(BloodlineState s, boolean viewerIsSubject) {
         // the layer's tracking is server business (which skills this mod granted), not something to send out
-        BloodlineState.Builder b = s.toBuilder().pendingSire(null).layerSkills(java.util.Set.of())
-                .wolf(s.wolf().toBuilder().latentGene(false).geneRolled(false).build());
+        BloodlineState stripped = s.withTrackingOf(BloodlineState.NONE);
+        BloodlineState.Builder b = stripped.toBuilder().pendingSire(null)
+                .wolf(stripped.wolf().toBuilder().latentGene(false).geneRolled(false).build());
         if (!viewerIsSubject) {
             b.sire(null);
         }

@@ -181,9 +181,25 @@ class BloodlineListenerTest {
 
     @Test
     void clientViewNeverSendsTheLayerTracking() {
-        BloodlineState tracked = NONE.toBuilder().layerSkills(Set.of("tensura:drain")).build();
-        assertTrue(BloodlineAccess.clientView(tracked, true).layerSkills().isEmpty());
-        assertTrue(BloodlineAccess.clientView(tracked, false).layerSkills().isEmpty());
+        BloodlineState tracked = NONE.toBuilder().layerSkills(Set.of("tensura:drain"))
+                .wolf(NONE.wolf().toBuilder().grantedSkills(Set.of("tensura:godwolf_sense")).build()).build();
+        for (boolean subject : new boolean[] {true, false}) {
+            BloodlineState view = BloodlineAccess.clientView(tracked, subject);
+            assertTrue(view.layerSkills().isEmpty());
+            assertTrue(view.wolf().grantedSkills().isEmpty());
+        }
+    }
+
+    @Test
+    void withTrackingOfTakesBothTrackingSetsAndNothingElse() {
+        BloodlineState old = NONE.toBuilder().species(Species.WITCH)
+                .layerSkills(Set.of("old")).wolf(NONE.wolf().toBuilder().grantedSkills(Set.of("old")).build()).build();
+        BloodlineState current = NONE.toBuilder().layerSkills(Set.of("new"))
+                .wolf(NONE.wolf().toBuilder().grantedSkills(Set.of("new2")).build()).build();
+        BloodlineState merged = old.withTrackingOf(current);
+        assertEquals(Set.of("new"), merged.layerSkills());
+        assertEquals(Set.of("new2"), merged.wolf().grantedSkills());
+        assertEquals(Species.WITCH, merged.species());
     }
 
     @Test

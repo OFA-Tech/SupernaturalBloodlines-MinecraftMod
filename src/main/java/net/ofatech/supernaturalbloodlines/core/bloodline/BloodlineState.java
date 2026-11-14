@@ -77,6 +77,16 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
         return new Builder(this);
     }
 
+    /**
+     * This state with the server-only skill tracking ({@code layerSkills} and {@code wolf.grantedSkills}: which Tensura skills this
+     * mod granted) taken from {@code source}. The one place that lists those fields: a new tracking field goes here, and so into
+     * both the rollback ({@code BloodlineAccess.restore}) and the client view.
+     */
+    public BloodlineState withTrackingOf(BloodlineState source) {
+        return toBuilder().layerSkills(source.layerSkills())
+                .wolf(wolf.toBuilder().grantedSkills(source.wolf().grantedSkills()).build()).build();
+    }
+
     public static final class Builder {
         private Species species;
         private boolean witchLayer;
