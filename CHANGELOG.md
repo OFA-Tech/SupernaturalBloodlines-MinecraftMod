@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased: Rite of Severance (R101b, species part)
+
+Needs the species part (Vampirism and Enchanted). Details in `docs/parts/species.md`, rule R101b in `SPECIES-RULES.md`.
+
+- **Rite of Severance:** a witch-type (witch, siphoner, heretic, tribrid) breaks the whole sire bond of a sired player standing in the circle. Full moon night only, 6000 altar power, Sire's Blood of the sired's own sire and one `enchanted:spirit_of_otherwhere`. A clear message says why when it is refused.
+- **What a severed bond turns off:** the hybrid's "cannot hurt the sire" (R43), `/bloodline call` for that player, the sire's compelled creatures sparing them, and (species_tensura) the Tensura owner link and the sire's naming exception. **What stays:** the sire is still recorded, the family tree shows it, and the sireline death still applies (blood, not bond). A new sire replaces the old one and ends the severance (a severed player can be sired again).
+- **Sire's Blood:** hit a player or creature with a silver blade (`#supernaturalbloodlines:silver_blades`: the new Silver Dagger, Werewolves' silver sword, Tensura's silver swords) while holding a glass bottle in the off hand to get a bottle bound to the one hit (UUID and name in the tooltip).
+- **Silver Dagger:** crafted from a silver ingot (`#supernaturalbloodlines:silver_ingots`: `#c:ingots/silver`, Werewolves' and Tensura's silver ingots) and a stick. `#c:ingots/silver` is filled only by Werewolves: with neither Werewolves nor Tensura nor another silver mod the dagger cannot be crafted.
+- **Owner points:** an owner Tensura set itself through a real naming is not removed by a severance (only the link this mod made is). Placeholder art for both items. A player can be hit for blood by anyone with a silver blade and a bottle; only the rite checks it was the right sire.
+- Pending (manual, in a real client): the altar and chalk with the real ingredients (the GameTests start the rite directly and check the altar cost separately), the tooltip, the item models.
+
 ## Unreleased: species_tensura (species layer)
 
 Needs Vampirism, Enchanted and Tensura (and the species part). Details in `docs/parts/species_tensura.md`.

@@ -296,3 +296,26 @@ Package `parts/species/pack` (`LunarEclipse`, `FormBlocks`, `Electricity`, `Ecli
 - **Taser** (`supernaturalbloodlines:taser`, `Taser`): durability 16, `isValidRepairItem` is redstone only (what the anvil asks, so it repairs in an anvil with redstone). `hurtEnemy` shocks a supernatural and spends a charge on **every** hit. **Recipe (ours):** shaped, a lightning rod over redstone over an iron ingot (`recipe/taser.json`, condition `species` part on). Creative tab: combat. Placeholder art (item and effect icon, generated).
 
 - **`/pack` fixes (final review):** `/pack emissary` refuses a witch who is already another Alpha's emissary (`pack.emissary_taken`); `CallRequests.open` already voids an earlier invitation for the same (Alpha, target), now pinned by `secondInviteReplacesTheFirst`. `BloodlineListenerTest` covers `killedInnocent` and `packAlpha` notifications.
+
+## Rite of Severance and Sire's Blood (R101b)
+
+Code: `parts/species/rite/SeveranceRiteFactory` (factory `supernaturalbloodlines:severance`, data `rite_of_severance.json`), `parts/species/sireline/SiresBlood` (the hit), `parts/species/item/SiresBloodItem`, items `sires_blood` and `silver_dagger` (`SpeciesRegistries`), tags `silver_blades` and `silver_ingots`; state `BloodlineState.severedSire` (+ `bondBroken()`, `boundSire()`), event `RITE_OF_SEVERANCE` in the pure `BloodlineRules`; tests `SeveranceGameTests` (the effects), `SeveranceRiteGameTests` (the rite, the blood, altar cost at y=160, batch `severance_cost`), `SirelineDeathGameTests.severedChildStillDiesWithTheOriginal`, `SirelineTensuraGameTests.severanceFreesTheOwnerAndTheNaming`, unit rows in `BloodlineRulesTest` and `BloodlineStateTest`.
+
+- **The rite.** `part_enabled` species. Medium circle, 6000 power (a witch pays x0.75 at the altar, R61), items: Sire's Blood and `enchanted:spirit_of_otherwhere`. The target is the player on the circle's centre, else the caster. Refusals (action bar, Enchanted gives the ingredients back): not a full moon (`rite.needs_full_moon`), performer not witch-type (`refusal.severance_not_witch`; WITCH, SIPHONER, HERETIC, TRIBRID = `WitchAltarBonus.hasBonus || Siphoning.canSiphon`), no Sire's Blood (`severance_no_blood`), then the pure rule: `not_sired`, `wrong_sire_blood` (the blood's UUID is not the target's sire), `bond_already_broken`. The blood's UUID travels as the context's `bloodSource`.
+- **State.** `severedSire` is the sire the bond was broken from. The record constructor drops it unless it equals `sire`, so a new sire, no sire (cure, death) or a client view without the sire ends it, and the same sire coming back later is a fresh bond. It lives in the second codec group next to `layer_skills` (the first group is at the 16 field cap). A change of it notifies the bloodline listeners.
+- **Re-siring.** `SireRecorder.record` no longer refuses a player whose bond is broken (the first sire wins only while the bond is whole), so a freed player can be sired again; the new sire replaces the old in the state and the index.
+- **Sire's Blood.** A melee hit that does damage, by a player with an item of `#supernaturalbloodlines:silver_blades` in the main hand and a glass bottle in the off hand, spends the bottle (not in creative) and hands over `sires_blood` bound to the one hit (`blood_source` UUID, `blood_source_name`, shown in the tooltip). Any player or creature can be hit; the rite decides whether it was the right one. Blades: `supernaturalbloodlines:silver_dagger`, `werewolves:silver_sword`, and Tensura's silver swords and katanas (all optional entries). The dagger is crafted from `#supernaturalbloodlines:silver_ingots` (= `#c:ingots/silver`, plus Werewolves' and Tensura's silver ingots, optional). `#c:ingots/silver` is filled by Werewolves only; Tensura's ingot is not in it. With neither mod and no other silver mod the dagger cannot be crafted (the creative tab still has it).
+- **Reader audit: bond or blood?** Every reader of the sire:
+
+| Reader | Meaning | After a severance |
+|---|---|---|
+| `SireBond` (R43, hybrid cannot hurt the sire) | bond | reads `boundSire()`: the hybrid can hurt the sire |
+| `SireCall.call` / `accept` (`/bloodline call`) | bond | a severed player is skipped / the accept is refused |
+| `Compulsion.protects` (a compelled creature spares the caster's line) | bond | a severed player is not spared; their own descendants still are |
+| `SubordinateLink` (Tensura owner, species_tensura) | bond | unlinks (`boundSire()` changes), no link while severed |
+| `SireNaming.isOwnSired` (naming exception, species_tensura) | bond | false |
+| `SirelineIndex` / `BloodlineCommand` tree / `SirelineTree` | blood | unchanged: the tree shows the sire |
+| `SirelineDeath` (walk over `childrenOf`, `s.sire() != null` checks) | blood | unchanged: a severed child still dies with an Original |
+| `SireRecorder` (index follows `sire`, first sire wins) | blood, with one change | the first-wins rule lets a severed player be re-sired |
+| `BloodlineRules` writers (`sire(null)` on cure and transitions) | blood | clears the sire and so the severance |
+| Tensura naming owner (`had_owner`) set by a real naming | Tensura's own | not touched: an owner Tensura set itself stays |
