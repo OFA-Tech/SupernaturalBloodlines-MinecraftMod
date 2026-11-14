@@ -16,8 +16,9 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
 
 /**
- * The Rite of Revelation (R10b): the filled taglock of a player makes every gene of that player known to them, those they carry and
- * those they do not, and tells them which is which. The owner is the subject: the message goes to them only, and nothing is sent to
+ * The Rite of Revelation (R10b): the filled taglock of a player makes every gene that player was rolled for known to them, those they
+ * carry and those they do not, and tells them which is which. A gene that was never rolled (the werewolf gene without Werewolves) is
+ * neither revealed nor reported. The owner is the subject: the message goes to them only, and nothing is sent to
  * the caster beyond the rite working. A villager's taglock, or an owner who is not loaded or online, is refused and the ingredients
  * come back.
  */
@@ -45,7 +46,7 @@ public record RevelationRiteFactory() implements RiteFactory {
     /** The message each player is told: one line per gene, "yes" or "no". */
     static Component report(BloodlineState s) {
         var out = Component.translatable(HEADER);
-        for (String gene : Genes.ALL) {
+        for (String gene : Genes.rolled(s)) {
             out.append("\n").append(Component.translatable("supernaturalbloodlines.gene.revelation." + gene
                     + (Genes.has(s, gene) ? ".yes" : ".no")));
         }
@@ -70,7 +71,7 @@ public record RevelationRiteFactory() implements RiteFactory {
                 return cancel();
             }
             ServerPlayer player = (ServerPlayer) owner;
-            BloodlineAccess.reveal(player, Genes.ALL.toArray(String[]::new));
+            BloodlineAccess.reveal(player, Genes.rolled(BloodlineAccess.get(player)).toArray(String[]::new));
             player.sendSystemMessage(report(BloodlineAccess.get(player)));
             return false;
         }

@@ -182,4 +182,27 @@ public final class GeneGameTests {
         }
         helper.succeed();
     }
-}
+
+    /** Death and respawn, the end-credits return and a dimension change all go through {@code restoreFrom}: the genes must survive it. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void genesSurviveRespawnAndDimensionClone(GameTestHelper helper) {
+        BloodlineState state = BloodlineState.NONE.toBuilder().doppelgangerGene(true).doppelgangerRolled(true)
+                .revealedGenes(java.util.Set.of(Genes.DOPPELGANGER))
+                .wolf(WolfState.NONE.toBuilder().geneRolled(true).latentGene(true).build()).build();
+        for (boolean keepEverything : new boolean[]{false, true}) {
+            ServerPlayer old = TestPlayers.createMortal(helper);
+            ServerPlayer clone = TestPlayers.createMortal(helper);
+            try {
+                BloodlineAccess.set(old, state);
+                clone.restoreFrom(old, keepEverything);
+                BloodlineState after = BloodlineAccess.get(clone);
+                helper.assertTrue(after.doppelgangerGene() && after.doppelgangerRolled() && after.wolf().latentGene()
+                                && after.revealedGenes().equals(java.util.Set.of(Genes.DOPPELGANGER)),
+                        (keepEverything ? "a dimension change" : "a respawn") + " lost the genes: " + after);
+            } finally {
+                BloodlineAccess.set(old, BloodlineState.NONE);
+                BloodlineAccess.set(clone, BloodlineState.NONE);
+            }
+        }
+        helper.succeed();
+    }}

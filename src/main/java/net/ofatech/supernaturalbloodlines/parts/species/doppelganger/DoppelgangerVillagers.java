@@ -15,6 +15,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingConversionEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.ofatech.supernaturalbloodlines.core.attachment.DoppelgangerRoll;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
@@ -41,6 +42,7 @@ public final class DoppelgangerVillagers {
     public static void register() {
         NeoForge.EVENT_BUS.addListener(DoppelgangerVillagers::onJoin);
         NeoForge.EVENT_BUS.addListener(DoppelgangerVillagers::onLeave);
+        NeoForge.EVENT_BUS.addListener(DoppelgangerVillagers::onConverted);
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> INDEX.clear());
     }
 
@@ -61,7 +63,7 @@ public final class DoppelgangerVillagers {
     /** The doppelgänger villagers loaded in {@code level} right now. */
     public static Collection<Villager> loaded(ServerLevel level) {
         Map<UUID, Villager> m = INDEX.get(level.dimension());
-        return m == null ? List.of() : List.copyOf(m.values());
+        return m == null ? List.of() : m.values().stream().filter(v -> !v.isRemoved()).toList();
     }
 
     private static void onJoin(EntityJoinLevelEvent e) {
@@ -74,6 +76,20 @@ public final class DoppelgangerVillagers {
         }
         if (isDoppelganger(v)) {
             INDEX.computeIfAbsent(level.dimension(), k -> new ConcurrentHashMap<>()).put(v.getUUID(), v);
+        }
+    }
+
+    /**
+     * A conversion copies the old mob's attachments (the roll is {@code copyOnDeath}) after the new villager has joined the level,
+     * so the join already rolled it and indexed that roll. The copy overwrites the roll; this puts the index right again.
+     */
+    private static void onConverted(LivingConversionEvent.Post e) {
+        if (e.getOutcome() instanceof Villager v && v.level() instanceof ServerLevel level) {
+            Map<UUID, Villager> m = INDEX.computeIfAbsent(level.dimension(), k -> new ConcurrentHashMap<>());
+            m.remove(v.getUUID());
+            if (isDoppelganger(v)) {
+                m.put(v.getUUID(), v);
+            }
         }
     }
 

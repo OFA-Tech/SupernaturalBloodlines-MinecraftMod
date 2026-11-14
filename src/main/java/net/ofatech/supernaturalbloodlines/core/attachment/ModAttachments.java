@@ -27,10 +27,14 @@ public final class ModAttachments {
                     .copyOnDeath()
                     .build());
 
-    /** A villager's doppelgänger roll (plan 12b, R14a); saved with the entity and rolled once, so a reload never rolls again. */
+    /**
+     * A villager's doppelgänger roll (plan 12b, R14a); saved with the entity and rolled once, so a reload never rolls again.
+     * {@code copyOnDeath} is also what makes NeoForge copy it when a mob converts (villager to zombie villager and cured back).
+     */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<DoppelgangerRoll>> DOPPELGANGER_VILLAGER =
             ATTACHMENTS.register("doppelganger_villager", () -> AttachmentType.builder(() -> DoppelgangerRoll.NONE)
                     .serialize(DoppelgangerRoll.CODEC)
+                    .copyOnDeath()
                     .build());
 
     private ModAttachments() {

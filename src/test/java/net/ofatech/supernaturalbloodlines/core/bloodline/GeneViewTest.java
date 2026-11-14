@@ -106,6 +106,15 @@ class GeneViewTest {
     }
 
     @Test
+    void onlyRolledGenesCount() {
+        assertTrue(Genes.rolled(BloodlineState.NONE).isEmpty());
+        assertEquals(java.util.List.of(WEREWOLF), Genes.rolled(BloodlineState.NONE.toBuilder()
+                .wolf(WolfState.NONE.toBuilder().geneRolled(true).build()).build()));
+        assertEquals(java.util.List.of(DOPPELGANGER), Genes.rolled(BloodlineState.NONE.toBuilder().doppelgangerRolled(true).build()));
+        assertEquals(java.util.List.of(WEREWOLF, DOPPELGANGER), Genes.rolled(carrier()));
+    }
+
+    @Test
     void anUnknownGeneIdIsUnknown() {
         assertEquals(Knowledge.UNKNOWN, Genes.knowledge(carrier(), "dragon", true));
     }

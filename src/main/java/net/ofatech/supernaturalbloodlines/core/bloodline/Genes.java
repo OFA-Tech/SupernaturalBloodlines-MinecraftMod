@@ -52,6 +52,21 @@ public final class Genes {
         return awakened ? reveal(s, WEREWOLF) : s;
     }
 
+    /**
+     * The genes this player has been rolled for. The werewolf gene is never rolled without Werewolves, and a gene that was never
+     * rolled is not "no", it is not there: the Rite of Revelation neither reveals nor reports it.
+     */
+    public static List<String> rolled(BloodlineState s) {
+        List<String> out = new java.util.ArrayList<>();
+        if (s.wolf().geneRolled()) {
+            out.add(WEREWOLF);
+        }
+        if (s.doppelgangerRolled()) {
+            out.add(DOPPELGANGER);
+        }
+        return out;
+    }
+
     /** The Rite of Revelation: every gene, carried or not, becomes known. */
     public static BloodlineState revealAll(BloodlineState s) {
         return reveal(s, ALL.toArray(String[]::new));

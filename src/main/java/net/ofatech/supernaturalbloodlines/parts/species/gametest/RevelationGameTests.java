@@ -81,6 +81,33 @@ public final class RevelationGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void revelationSkipsAGeneThatWasNeverRolled(GameTestHelper helper) {
+        if (skip(helper)) {
+            return;
+        }
+        RecordingPlayer subject = RecordingPlayer.create(helper);
+        place(helper, subject);
+        try {
+            // no Werewolves: the werewolf gene was never rolled
+            BloodlineAccess.set(subject, BloodlineState.NONE.toBuilder().doppelgangerGene(true).doppelgangerRolled(true).build());
+            start(helper, "rite_of_revelation", subject, List.of(taglock(subject.getUUID())));
+            helper.assertTrue(BloodlineAccess.get(subject).revealedGenes().equals(Set.of(Genes.DOPPELGANGER)),
+                    "revealed: " + BloodlineAccess.get(subject).revealedGenes());
+            helper.assertTrue(subject.received(RevelationRiteFactory.HEADER), "the subject was not told");
+            helper.assertTrue(seen(BloodlineAccess.get(subject), Genes.WEREWOLF) == Knowledge.UNKNOWN, "an unrolled gene is shown as 'no'");
+
+            // nothing rolled at all: the rite still works and reveals nothing
+            BloodlineAccess.set(subject, BloodlineState.NONE);
+            start(helper, "rite_of_revelation", subject, List.of(taglock(subject.getUUID())));
+            helper.assertTrue(BloodlineAccess.get(subject).revealedGenes().isEmpty(), "a gene nobody rolled was revealed");
+        } finally {
+            remove(helper, subject);
+            BloodlineAccess.set(subject, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void revelationOfSomeoneElsesTaglockTellsOnlyTheirOwner(GameTestHelper helper) {
         if (skip(helper)) {
             return;

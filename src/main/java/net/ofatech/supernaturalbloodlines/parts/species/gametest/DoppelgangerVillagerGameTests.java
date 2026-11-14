@@ -6,6 +6,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.monster.ZombieVillager;
 import net.minecraft.world.entity.npc.Villager;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
@@ -171,4 +172,51 @@ public final class DoppelgangerVillagerGameTests {
         }
         helper.succeed();
     }
-}
+
+    /**
+     * A real conversion in both directions (the cure is {@code convertTo} too). The new villager joins the level before NeoForge copies
+     * the roll over, so the join rolls it and indexes that roll; the roll and the index must still end up the old mob's.
+     */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void conversionKeepsTheRollAndTheIndex(GameTestHelper helper) throws ReflectiveOperationException {
+        for (boolean doppelganger : new boolean[]{true, false}) {
+            Villager original = spawnWith(helper, doppelganger ? 1.0 : 0.0);
+            // the join roll of the converted mob is the opposite of the original's: a re-roll would show
+            SpeciesConfig.overrideDoppelgangerVillagerChance(doppelganger ? 0.0 : 1.0);
+            ZombieVillager zombie = null;
+            Villager cured = null;
+            try {
+                // what Zombie.killed does: convertTo, then the Post event that NeoForge copies the attachments on
+                zombie = original.convertTo(EntityType.ZOMBIE_VILLAGER, false);
+                helper.assertTrue(zombie != null, "the villager did not convert");
+                net.neoforged.neoforge.event.EventHooks.onLivingConvert(original, zombie);
+                helper.assertTrue(DoppelgangerVillagers.isDoppelganger(zombie) == doppelganger,
+                        "the zombie villager's roll is " + DoppelgangerVillagers.isDoppelganger(zombie) + ", expected " + doppelganger);
+                helper.assertTrue(!DoppelgangerVillagers.loaded(helper.getLevel()).contains(original), "the old villager is still indexed");
+
+                // the real cure: ZombieVillager.finishConversion converts, finalizes and posts the event itself
+                var finish = ZombieVillager.class.getDeclaredMethod("finishConversion", net.minecraft.server.level.ServerLevel.class);
+                finish.setAccessible(true);
+                var around = zombie.getBoundingBox().inflate(2);
+                finish.invoke(zombie, helper.getLevel());
+                var curedList = helper.getLevel().getEntitiesOfClass(Villager.class, around);
+                helper.assertTrue(curedList.size() == 1, "the cure made " + curedList.size() + " villagers");
+                cured = curedList.get(0);
+                helper.assertTrue(DoppelgangerVillagers.isDoppelganger(cured) == doppelganger,
+                        "the cured villager's roll is " + DoppelgangerVillagers.isDoppelganger(cured) + ", expected " + doppelganger);
+                helper.assertTrue(cured.getData(ModAttachments.DOPPELGANGER_VILLAGER).rolled(), "the cured villager is not marked as rolled");
+                helper.assertTrue(DoppelgangerVillagers.loaded(helper.getLevel()).contains(cured) == doppelganger,
+                        "the index " + (doppelganger ? "lost" : "kept a wrong") + " entry for the cured villager");
+            } finally {
+                SpeciesConfig.overrideDoppelgangerVillagerChance(null);
+                original.discard();
+                if (zombie != null) {
+                    zombie.discard();
+                }
+                if (cured != null) {
+                    cured.discard();
+                }
+            }
+        }
+        helper.succeed();
+    }}
