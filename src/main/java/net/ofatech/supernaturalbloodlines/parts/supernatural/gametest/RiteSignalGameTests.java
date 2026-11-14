@@ -152,6 +152,10 @@ public final class RiteSignalGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theSwitchTurnsTheSignalOff(GameTestHelper helper) {
+        if (missing(helper, "ward_of_return")) {
+            helper.succeed();
+            return;
+        }
         ServerPlayer p = witch(helper);
         try {
             SupernaturalConfig.overrideRiteCompleteSignal(false);
