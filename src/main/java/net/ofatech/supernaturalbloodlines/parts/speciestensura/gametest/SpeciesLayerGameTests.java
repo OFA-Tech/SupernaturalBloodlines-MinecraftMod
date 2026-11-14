@@ -22,6 +22,9 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
+import net.ofatech.supernaturalbloodlines.core.EnabledParts;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
@@ -86,6 +89,80 @@ public final class SpeciesLayerGameTests {
                 && m.operation() == AttributeModifier.Operation.ADD_MULTIPLIED_BASE, "magicule modifier " + m);
         helper.assertTrue(RaceUtils.isUndead(p), "an Original is not undead for Tensura");
         helper.assertTrue(RaceUtils.isAffectedByHolyExposure(p), "an Original is not affected by holy exposure");
+        helper.succeed();
+    }
+
+    // ---- layer slices (plan 12): the supernatural part spreads the layer over the rungs ----
+
+    private static void atRung(ServerPlayer p, SupernaturalRace race, int rung) {
+        SupernaturalAccess.set(p, SupernaturalAccess.get(p).toBuilder().schema(1).rung(race, rung).build());
+    }
+
+    private static boolean magicule(ServerPlayer p, double expected) {
+        AttributeModifier m = modifier(p, TensuraAttributes.MAX_MAGICULE, SpeciesLayer.MAGICULE_ID);
+        return expected == 0 ? m == null : m != null && Math.abs(m.amount() - expected) < 1e-9;
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void rungGrantsLayerSlice(GameTestHelper helper) {
+        if (!EnabledParts.isEnabled("supernatural")) {
+            helper.succeed(); // supernaturalOffKeepsWholeLayer covers this run
+            return;
+        }
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:elf");
+        atRung(p, SupernaturalRace.ORIGINAL, 1);
+        species(p, Species.ORIGINAL);
+        helper.assertTrue(has(p, "tensura:drain") && has(p, "tensura:self_regeneration"), "L-ORI-1 does not give drain and self_regeneration");
+        helper.assertTrue(!has(p, "tensura:charm") && !has(p, "tensura:blood_mist"), "L-ORI-1 gave charm or blood_mist");
+        helper.assertTrue(magicule(p, 0.05), "magicule at L-ORI-1: " + modifier(p, TensuraAttributes.MAX_MAGICULE, SpeciesLayer.MAGICULE_ID));
+        helper.assertTrue(RaceUtils.isUndead(p), "undead treatment is a nature: it applies from rung 0");
+
+        atRung(p, SupernaturalRace.ORIGINAL, 2);
+        helper.assertTrue(has(p, "tensura:charm") && !has(p, "tensura:blood_mist") && magicule(p, 0.10), "L-ORI-2 is not charm and 0.10");
+        atRung(p, SupernaturalRace.ORIGINAL, 3);
+        helper.assertTrue(BloodlineAccess.get(p).layerSkills().equals(ORIGINAL_SKILLS) && magicule(p, 0.20), "L-ORI-3 is not the whole layer");
+        atRung(p, SupernaturalRace.ORIGINAL, 5);
+        helper.assertTrue(BloodlineAccess.get(p).layerSkills().equals(ORIGINAL_SKILLS) && magicule(p, 0.20), "a higher rung changed the layer");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void supernaturalOffKeepsWholeLayer(GameTestHelper helper) {
+        if (EnabledParts.isEnabled("supernatural")) {
+            helper.succeed(); // rungGrantsLayerSlice covers this run
+            return;
+        }
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:elf");
+        species(p, Species.ORIGINAL);
+        helper.assertTrue(BloodlineAccess.get(p).layerSkills().equals(ORIGINAL_SKILLS) && magicule(p, 0.20),
+                "without the supernatural part the layer is not whole: " + BloodlineAccess.get(p).layerSkills());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anUnmigratedPlayerKeepsTheWholeLayer(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:elf");
+        species(p, Species.ORIGINAL); // schema 0, rung 0: nothing is taken back before the migration has run
+        helper.assertTrue(BloodlineAccess.get(p).layerSkills().equals(ORIGINAL_SKILLS) && magicule(p, 0.20), "an unmigrated player lost layer");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void sliceRemovalOnlyOurs(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:elf");
+        learn(p, "tensura:charm"); // the player's own, from before
+        atRung(p, SupernaturalRace.ORIGINAL, 3);
+        species(p, Species.ORIGINAL);
+        helper.assertTrue(has(p, "tensura:drain") && has(p, "tensura:charm"), "setup: the layer is not there");
+        species(p, Species.NONE);
+        helper.assertTrue(!has(p, "tensura:drain") && !has(p, "tensura:blood_mist") && !has(p, "tensura:self_regeneration"),
+                "a species change left layer skills behind");
+        helper.assertTrue(has(p, "tensura:charm"), "a species change took a skill the player had before");
+        helper.assertTrue(magicule(p, 0), "the magicule bonus stayed");
         helper.succeed();
     }
 

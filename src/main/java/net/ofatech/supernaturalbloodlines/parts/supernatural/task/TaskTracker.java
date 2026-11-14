@@ -13,6 +13,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderRules;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.LadderService;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.core.supernatural.StatePredicates;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
@@ -37,7 +38,7 @@ public final class TaskTracker {
     }
 
     /** Mods that drive a FakePlayer (deployers, turrets) must not climb ladders for their owners. */
-    private static boolean tracked(ServerPlayer p) {
+    public static boolean tracked(ServerPlayer p) {
         return SupernaturalAccess.tracksFakePlayers() || !(p instanceof FakePlayer);
     }
 
@@ -138,8 +139,28 @@ public final class TaskTracker {
             s = LadderRules.apply(table, s, races, e);
         }
         s = LadderRules.refreshTotals(table, s, races);
+        // a rung left with no tasks (its mod or part is missing) is reached on its own, with its reward
+        int sp = 0;
+        long ep = 0;
+        SupernaturalRace reachedRace = null;
+        int reachedRung = -1;
+        if (!races.contains(SupernaturalRace.GHOUL)) {
+            for (SupernaturalRace race : races) {
+                LadderRules.ClaimResult settled = LadderRules.settle(table, s, race);
+                s = settled.state();
+                sp += settled.sp();
+                ep += settled.ep();
+                if (settled.rungReached() >= 0) {
+                    reachedRace = race;
+                    reachedRung = settled.rungReached();
+                }
+            }
+        }
         if (!s.equals(before)) {
             SupernaturalAccess.set(p, s);
+        }
+        if (reachedRung >= 0) {
+            LadderService.pay(p, sp, ep, reachedRace, reachedRung);
         }
     }
 

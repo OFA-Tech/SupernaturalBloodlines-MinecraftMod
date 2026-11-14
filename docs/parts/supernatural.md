@@ -55,50 +55,14 @@ One file per race: `data/supernaturalbloodlines/supernatural/ladder/<race>.json`
 - **Parts and mods.** `LadderTable.parse(files, modLoaded, partEnabled)`. Each task names the part whose code fires its signal: `species` (compel, sired, dying, venom, siphon, forced shift, the rank/state predicates, the Lineage, Original/Hybrid Blood, Severance rites), `artifacts` (Sun Ring, mountain ash, vervain tea, the Wards, the Cure), `vampirismEnchanted` (the faction rites, "prey"), `enchantedTensura` (Purification). With `-PpartsOff=species` a vampire's L-VAM-3 keeps only its level step and still pays the whole rung (`LadderDataGameTests.aVampireClimbsWhateverPartsAreOff`). The Hunter ladder ends at L-HUN-2 without `species`. Apex rungs need `mods: ["tensura"]` and `parts: ["supernaturalTensura"]`: **without Tensura (or with that part off) every ladder ends before its apex rung, because there are no apex races.**
 - **Shares when a mod or part goes away between two claims.** Shares are computed from the rung as it is loaded now. If a task disappears after some of its rung was claimed, the tasks left split the whole total, so the remaining claims can pay more or less than the old shares; nothing already paid is taken back and a claimed task is never paid twice.
 - **The one door.** `LadderRules.apply` is the only public way to record an event: it freezes both ladders for a Ghoul creature race, adds the lifetime counts, and moves every matching leaf. `record` and `reach` are package-private.
-- **Client table (planned, phase 12a Task 4).** The hub and the claim screen need the ladders on the client. `LadderTable.sources()` keeps the accepted files as read; Task 4 sends them in their own payload on login and on `/reload`, and the client builds its table with `LadderTable.parse(sources, ...)` using its own mods and parts.
-- **Max-level steps** are written as the number 14; `LadderDataGameTests.maxLevelStepsMatchTheFactions` checks it against `getHighestReachableLevel()` of the three factions.
+- **Client table.** `LadderTable.sources()` keeps the accepted files as read. `LadderNet` sends them in `LadderTablePayload` (JSON text by race id) on login and after every data reload (`OnDatapackSyncEvent` fires for both), and the client parses them with its own mods and parts into `LadderTable.clientCopy()`, which the hub and the claim screen read. The packets are registered `optional()`, so a client or server without the part still connects. A file that is not JSON is skipped with one warning. Not testable here without a real client: the codec round trip is (`LadderPayloadTest`).
 
-`LadderRules` (pure, no game classes) holds the logic: `activeRung`, `activeTasks`, `record` / `reach` / `apply` (an event moves every matching leaf of the active rungs), `markDone`, `claim` (returns a `ClaimResult` with the new state, SP, EP, the rung reached and a `Refusal` whose `langKey()` is the message), `settle` (auto-reach of task-less rungs; call it when a race is first entered).
+## Claims, SP and EP (phase 12a Task 4)
 
-## Detectors and task signals (phase 12a Task 3)
-
-`parts/supernatural/task/Detectors` registers the listeners; `TaskTracker` turns what they see into `TaskEvent`s, applies them with `LadderRules.apply`, and writes the state once. No timer runs more often than every 200 ticks per online player, and nothing scans the world.
-
-| Detector | Where it comes from |
-|---|---|
-| `level` | `PlayerFactionEvent.FactionLevelChanged`, then a full re-read (below) |
-| `state` | `StatePredicates` (pure) over `BloodlineState`, re-read on every `BloodlineAccess` change, on login, on a faction change and every 200 ticks; `emissary` through `EmissaryLines`, `moon_control` through `MoonControl` |
-| `feed` | `BloodDrinkEvent.PlayerDrinkBloodEvent`, when the source is human-like: `shared/supernatural/HumanLikeBlood`, which the species part points at plan 11's `TurningHandler.isHumanLikeBlood` (without the species part only villagers and traders count) |
-| `kill` | `LivingDeathEvent`, killer a player: `prey` (`Supernatural.isPrey`), `vampire`, `hunter` (Vampirism's faction of the victim), `villager` |
-| `item_use` | `LivingEntityUseItemEvent.Finish` |
-| `sired` | `shared/supernatural/SireCount`, which the species part points at the sireline index; read every 200 ticks and on the other re-reads |
-| `days_as` | game time minus `race_since[race]`, every 200 ticks; the first time a race is seen, now is stamped (migration can set it from `turnedAt`) |
-| `thirst_days`, `pack_days` | every 200 ticks, +200 ticks while thirst is at least `min`, or while in the pack as a Beta, Alpha or True Alpha |
-| `signal`, `rite` | `shared/supernatural/TaskSignals`, fired by the other parts (below) |
-| `tensura_tier` | not in this task: the Tensura tier of the player's line comes with the apex rung gate (12d) |
-
-**Re-read.** `TaskTracker.recheck` reads the level, every state predicate, the sired count and the days as a race, and applies them as events. It runs on login, on a faction level change, on any `BloodlineAccess` listener change and whenever the rung of any race changes in the attachment, so a level reached early counts the moment its rung becomes active.
-
-**Signals and where they are fired** (each is one `TaskSignals.fire` line; with the supernatural part off there is no listener and it does nothing):
-
-| Signal | Fired from |
-|---|---|
-| `compel` | `Compulsion.choose` (a villager's discount or follow) and `Compulsion.bind` (a lesser vampire) |
-| `siphon_power` (amount) / `siphon_entity` (attr `prey`) | `Siphoning.gain` / `Siphoning.siphonEntity` |
-| `venom_hit` | `Venom.onDamaged`, when the venom is applied by a player |
-| `dying_survived` | `Downed.tick`, when an Original gets up from the dying state (R32) |
-| `forced_shift_survived` | `ForcedShift`, the last listener on a forced full-moon shift that was not cancelled |
-| `sun_ring_bound` | `BindItemRiteFactory`, when the ring made is the Sun Ring |
-| `mountain_ash_placed` | `MountainAshLineBlock.setPlacedBy` (the block is placed by the player; `BlockEvent.EntityPlaceEvent` is not used because it does not fire for every placement) |
-| `vampire_bite_refused` | `GhoulGates.biteVampire` (plan 11); no ladder task uses it yet, the Q-VAM-6 quest does (12c) |
-| `prey_hit_survived` | the supernatural part itself: `LivingDamageEvent.Post`, a player hit by a prey type and still alive |
-| `rite:<id>:performer` / `:target` (attr `other`) | every rite factory of ours: `ancestral_calling`, `hybrid_blood`, `original_blood`, `rite_of_severance`, `rite_of_lineage_reveal` and `_awaken`, the faction rites by event name (`rite_of_the_moon`, `rite_of_the_five`, `rite_of_immortality`, `rite_of_cleansing_blood`, `rite_of_the_silver_moon`), `ward_of_daylight`, `ward_of_the_moon`, `rite_of_the_cure`, `purification`, `magicule_offering`. All in the `supernaturalbloodlines` namespace. The performer is the caster, the target is the player in the circle (the caster again when nobody stands there, then both roles fire for that player). |
-
-**Settled in this task** (the open details of the Tasks 1 and 2 report):
-- `prey_hit_survived` stays: the spec has no detector for "survive a hit", and a damage event is the only honest source.
-- The `state` predicate ids are the ten in `StatePredicates.IDS`. `rank_alpha` is ALPHA or TRUE_ALPHA (L-WOL-4, L-WOL-5, L-TRI-3). `beta_days` is days since `betaSince` and only for a Beta, because `betaSince` is cleared on becoming an Alpha; L-HYB-4a ("days as a Beta or Alpha") therefore uses the `pack_days` counter instead.
-- The `mod` and `part` tags are checked against the fire points in the table above (the part of the code that fires the signal is the part named in the data).
-- **No mixin on Enchanted's `Rite` yet (decision for the owner).** Checked in the 4.2.7 jar: it has no event class for rites (its `*Events` classes are client, common, effects, poppets). The only common end point is `Rite.stop()`, which calls `onStop` and detaches the chalk; it is not a success signal (`cancel()` is the rite's own failure path and I did not trace whether a cancelled rite also reaches `stop()`), and `RiteType` keeps its `RiteFactory` in a private field with no getter, so the rite's id would need reflection. A mixin on `stop()` could therefore credit a cancelled rite. The reserved `supernatural` mixin stays unused (0 of 3) and only rites made by our own factories count, which the plan allows ("without the mixin, only our rites count"). Rites made with Enchanted's own factories (`enchanted:create_item`, `enchanted:apply_curse`: Ward of Return, Blood Offering, Hearing Device, Vampire Compass, Doppelgänger Blood, the two curses) do not count, and L-WIT-2a no longer lists Ward of Return. See the wiki's Known limits.
+- `LadderService.claim(player, taskId)` runs `LadderRules.claim` and applies its result: SP go into the state (`sp`, `spEarned`), EP go through `shared/supernatural/EpReward` (a settable hook; no-op by default; `supernaturalTensura/TensuraEpReward` adds `getEP() + ep` to `TensuraStorages.getExistenceFrom(p)` and calls `markDirty()`: flat, no +25% boost), the player gets a chat line (`claim.paid`, `claim.rung_reached`). A refusal sends its own lang key (`claim.ghoul_frozen`, `unknown_task`, `not_active`, `not_done`, `already_claimed`) and changes nothing.
+- The only client action is `ClaimTaskPayload` (a task id of at most 64 characters). The server decides everything: the id is only a name, an unknown one is refused (`anInventedTaskIdIsRefused`).
+- A rung left with no tasks (its mod or part is off) is reached on its own, with its SP and EP, by `TaskTracker` after every event (`LadderRules.settle`); a Ghoul is not paid.
+- `shared/supernatural/LadderQuery` is what other parts ask: `layerSlice(player)` (empty = the whole layer) and `rung(player, race)`. Without this part the answers are "the whole layer" and 0.
 
 ## Off
 

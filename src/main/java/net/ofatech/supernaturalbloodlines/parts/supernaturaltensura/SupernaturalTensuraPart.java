@@ -8,6 +8,7 @@ public final class SupernaturalTensuraPart {
     private SupernaturalTensuraPart() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
+        TensuraEpReward.register();
         SupernaturalBloodlines.LOGGER.info("SupernaturalTensuraPart enabled");
     }
 }

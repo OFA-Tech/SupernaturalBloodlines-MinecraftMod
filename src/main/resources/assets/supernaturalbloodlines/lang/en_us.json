@@ -260,5 +260,19 @@
   "supernaturalbloodlines.supernatural.claim.unknown_task": "There is no such task.",
   "supernaturalbloodlines.supernatural.claim.not_active": "That task is not on your current rung.",
   "supernaturalbloodlines.supernatural.claim.not_done": "That task is not done yet.",
-  "supernaturalbloodlines.supernatural.claim.already_claimed": "You already claimed that reward."
+  "supernaturalbloodlines.supernatural.claim.already_claimed": "You already claimed that reward.",
+  "supernaturalbloodlines.supernatural.claim.paid": "Claimed: %s skill points, %s EP.",
+  "supernaturalbloodlines.supernatural.claim.rung_reached": "%s: rung %s reached.",
+  "supernaturalbloodlines.supernatural.race.human": "Human",
+  "supernaturalbloodlines.supernatural.race.ghoul": "Ghoul",
+  "supernaturalbloodlines.supernatural.race.vampire": "Vampire",
+  "supernaturalbloodlines.supernatural.race.original": "Original",
+  "supernaturalbloodlines.supernatural.race.hybrid": "Hybrid",
+  "supernaturalbloodlines.supernatural.race.original_hybrid": "Original hybrid",
+  "supernaturalbloodlines.supernatural.race.tribrid": "Tribrid",
+  "supernaturalbloodlines.supernatural.race.heretic": "Heretic",
+  "supernaturalbloodlines.supernatural.race.witch": "Witch",
+  "supernaturalbloodlines.supernatural.race.siphoner": "Siphoner",
+  "supernaturalbloodlines.supernatural.race.hunter": "Hunter",
+  "supernaturalbloodlines.supernatural.race.werewolf": "Werewolf"
 }

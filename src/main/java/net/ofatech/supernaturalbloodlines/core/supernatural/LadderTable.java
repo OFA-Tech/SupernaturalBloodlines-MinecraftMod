@@ -42,6 +42,7 @@ public final class LadderTable {
 
     private static final Set<String> RESERVED = Set.of("id", "detector", "n", "mod", "part", "total", "any_of");
     private static volatile LadderTable current = EMPTY;
+    private static volatile LadderTable clientCopy = EMPTY;
 
     private final Map<SupernaturalRace, Ladder> ladders;
     private final Map<String, JsonElement> sources;
@@ -66,6 +67,15 @@ public final class LadderTable {
 
     public static void setCurrent(LadderTable t) {
         current = t;
+    }
+
+    /** The table the server sent to this client (the hub and the claim screen read it); empty until the first sync. */
+    public static LadderTable clientCopy() {
+        return clientCopy;
+    }
+
+    public static void setClientCopy(LadderTable t) {
+        clientCopy = t;
     }
 
     /** The ladder of a race; empty (no rungs) when its file was rejected or is missing. */
