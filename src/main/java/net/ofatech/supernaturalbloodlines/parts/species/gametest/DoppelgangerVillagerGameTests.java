@@ -150,6 +150,20 @@ public final class DoppelgangerVillagerGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void sharedIndexHookReadsTheSpeciesIndex(GameTestHelper helper) {
+        Villager doppel = spawnWith(helper, 1.0);
+        Villager plain = spawnWith(helper, 0.0);
+        try {
+            var seen = net.ofatech.supernaturalbloodlines.shared.species.DoppelgangerIndex.villagers(helper.getLevel());
+            helper.assertTrue(seen.contains(doppel) && !seen.contains(plain), "the compass hook does not show the species index: " + seen);
+        } finally {
+            doppel.discard();
+            plain.discard();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void indexAddsOnJoinAndRemovesOnLeave(GameTestHelper helper) {
         Villager doppel = spawnWith(helper, 1.0);
         Villager plain = spawnWith(helper, 0.0);

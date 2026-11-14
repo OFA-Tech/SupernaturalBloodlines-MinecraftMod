@@ -102,6 +102,15 @@ Enchanted 4.2.7:
 - **Rites** (both `enchanted:create_item`, medium circle, conditioned on `part_enabled artifacts`; the design says "crafted compass + vervain + witch rite" and "crafted + rite", so the crafted parts are the rite ingredients): *Rite of the Vampire Compass* = compass + vervain, 2000 power. *Rite of the Hearing Device* = note block + 2 iron ingots + amethyst shard, 3000 power. No crafting-table recipes.
 - **Test gotcha:** a `FakePlayer` is not in the level's entity storage, so area queries never find it. Tests that need a player to be found call `level.addNewPlayer(p)` and `removePlayerImmediately` after, and must read effects **before** removing (removal clears them).
 
+## Vampire Compass: Doppelgängers mode (plan 12b, Task 4)
+
+Code: `VampireCompassItem` (mode toggle, tooltip, `update`), `CompassMode` (VAMPIRES / DOPPELGANGERS, a data component), `CompassRules` (pure: the nearest target), `ArtifactsConfig` (new file `supernaturalbloodlines-artifacts.toml`, `compass_doppelganger_range` 512), the shared hook `shared/species/DoppelgangerIndex`. Tests: unit `CompassRulesTest`; game `CompassGameTests` (installs its own index source, so it does not depend on the species part), `DoppelgangerVillagerGameTests.sharedIndexHookReadsTheSpeciesIndex` (the species side).
+
+- **Mode.** Data component `supernaturalbloodlines:compass_mode`; absent = Vampires, so every existing compass keeps working. Sneak + use (`use`, both sides) flips it, empties the needle and shows the new mode on the action bar. The toggle does no search; the next periodic update (every 20 ticks of the holder) finds the new target. A plain use does nothing. The tooltip shows the mode and a hint.
+- **Vampires mode** is unchanged (64 blocks, creative and spectator ignored).
+- **Doppelgängers mode.** The nearest of: a doppelgänger villager from `DoppelgangerIndex.villagers(level)` within the range (a sphere, like the vampire mode), and every online player in the holder's level with `doppelgangerGene` who is alive, not creative or spectating and not the holder. The index is the species part's per-dimension join/leave map (`DoppelgangerVillagers.loaded`, installed by `SpeciesPart` through `DoppelgangerIndex.set`), so there is no world scan; with the species part off the source is empty and only players are found. The player scan is over `ServerLevel.players()`, never over entities. The gene is read from the core `BloodlineAccess` state, not through the species part.
+- **Only the holder learns.** Nothing is sent to, applied to or revealed on the target (`targetGetsNoMessage` checks messages, the state, glowing and effects).
+- **Not done.** The client needle is the same `angle` property as before; a different icon per mode is not drawn.
 ## Mountain ash (Task 6)
 
 - **Registry** (`MountainAsh`, own `DeferredRegister`s like `WhiteOak`): blocks `mountain_ash_log|planks|leaves|sapling|line`, items for all but the line, `mountain_ash_dust` (an `ItemNameBlockItem` of the line: placed like redstone dust, on the top of a sturdy block; the line pops off when its floor goes), block entity `mountain_ash_line`.

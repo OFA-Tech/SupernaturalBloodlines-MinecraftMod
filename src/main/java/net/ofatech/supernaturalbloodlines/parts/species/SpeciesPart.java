@@ -129,6 +129,7 @@ public final class SpeciesPart {
         BloodlineAccess.useGeneVisibility(SpeciesConfig::genesAlwaysVisible);
         DoppelgangerGene.register(); // genes and doppelgänger villagers need no Werewolves
         DoppelgangerVillagers.register();
+        net.ofatech.supernaturalbloodlines.shared.species.DoppelgangerIndex.set(DoppelgangerVillagers::loaded); // for the Vampire Compass
         SpeciesRegistries.register(modBus);
         SpeciesSupernatural.register();
         // what the supernatural part's tasks need from here, through shared hooks

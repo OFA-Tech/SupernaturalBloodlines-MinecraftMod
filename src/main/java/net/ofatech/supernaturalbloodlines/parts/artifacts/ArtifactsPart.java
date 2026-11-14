@@ -6,10 +6,12 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ArtifactSlotsGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.AshDaggerGameTests;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.CompassGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.CompassHearingGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.CuriosSlotsGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.MoonRingGameTests;
@@ -29,6 +31,7 @@ public final class ArtifactsPart {
     private ArtifactsPart() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
+        container.registerConfig(ModConfig.Type.COMMON, ArtifactsConfig.SPEC, ArtifactsConfig.FILE);
         boolean curios = ModList.get().isLoaded("curios");
         boolean werewolves = ModList.get().isLoaded("werewolves");
         // before the datapacks load, so the rite JSONs can name this factory
@@ -56,6 +59,7 @@ public final class ArtifactsPart {
             e.register(RingGameTests.class);
             e.register(ResurrectionVervainGameTests.class);
             e.register(CompassHearingGameTests.class);
+            e.register(CompassGameTests.class);
             e.register(MountainAshGameTests.class);
             if (curios) {
                 e.register(CuriosSlotsGameTests.class);

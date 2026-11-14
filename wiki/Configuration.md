@@ -72,6 +72,13 @@ All under `[species]`.
 | `alpha_bite_death_chance` | `0.10` | 0.0 to 1.0 | Chance that an Alpha's bite **kills** the human instead of turning them. |
 | `lunar_eclipse_chance` | `0.03` | 0.0 to 1.0 | Chance that a full-moon night is a **lunar eclipse**: werewolves lose their form actions, rank perks and pack bonus until dawn. |
 
+## artifacts: `supernaturalbloodlines-artifacts.toml`
+
+All under `[artifacts]`.
+
+| Key | Default | Range | Does |
+|---|---|---|---|
+| `compass_doppelganger_range` | `512` | 1 to 30,000,000 | How far the [Vampire Compass](Items-And-Blocks) in Doppelgängers mode finds a doppelgänger **villager**. Only villagers in loaded chunks are found, so a larger value does not look further than the server keeps loaded. Players with the gene are found anywhere in the dimension, whatever this says. |
 ## species_tensura: `supernaturalbloodlines-species_tensura.toml`
 
 "The Tensura layer of each species. The race is never replaced (R100)." **COMMON: keep it equal on the server and the clients**, especially `layers`, `undead_treatment_enabled` and `apex_evolutions_enabled`.
