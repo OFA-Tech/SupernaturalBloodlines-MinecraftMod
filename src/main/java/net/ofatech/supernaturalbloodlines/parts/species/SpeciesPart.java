@@ -57,6 +57,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterEvents;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCommandGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCompulsionGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.SeveranceGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineDeathGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.BloodlineCommand;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.Compulsion;
@@ -176,6 +177,7 @@ public final class SpeciesPart {
             e.register(SirelineCommandGameTests.class);
             e.register(SirelineCompulsionGameTests.class);
             e.register(SirelineDeathGameTests.class);
+            e.register(SeveranceGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(SirelineHybridGameTests.class);
                 e.register(HunterWerewolfGameTests.class);

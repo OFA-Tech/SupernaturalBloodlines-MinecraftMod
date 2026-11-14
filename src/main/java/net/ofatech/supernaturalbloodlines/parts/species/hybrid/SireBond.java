@@ -15,7 +15,8 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 /**
  * R43: a hybrid cannot hurt their sire. Whatever the damage names as its cause is followed to the people behind it:
  * the owner of an arrow or a potion cloud, the owner of a tamed pet. If one of them is a hybrid type whose
- * {@code sire} is the one being hurt, the damage is cancelled.
+ * {@code sire} is the one being hurt, the damage is cancelled. A bond broken by the Rite of Severance (R101b) no longer counts: it reads
+ * {@link BloodlineState#boundSire()}, not the recorded sire.
  */
 public final class SireBond {
     private static final int MAX_DEPTH = 4;
@@ -40,7 +41,7 @@ public final class SireBond {
         }
         if (cause instanceof Player p) {
             BloodlineState s = BloodlineAccess.get(p);
-            return HybridTraits.isHybrid(s.species()) && victim.equals(s.sire());
+            return HybridTraits.isHybrid(s.species()) && victim.equals(s.boundSire());
         }
         Entity owner = cause instanceof Projectile projectile ? projectile.getOwner()
                 : cause instanceof AreaEffectCloud cloud ? cloud.getOwner()

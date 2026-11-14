@@ -91,7 +91,8 @@ public final class SireCall {
         for (SirelineIndex.Node sired : index.childrenOf(caller.getUUID())) {
             if (PLAYER.equals(sired.entityType())) {
                 ServerPlayer target = player(caller.server, sired.id());
-                if (target != null && target != caller) {
+                // a sired player whose bond was severed (R101b) cannot be called
+                if (target != null && target != caller && !BloodlineAccess.get(target).bondBroken()) {
                     target.sendSystemMessage(requestMessage(caller.getGameProfile().getName(), REQUESTS.open(caller.getUUID(), target.getUUID(), now)));
                     players++;
                 }
@@ -114,7 +115,7 @@ public final class SireCall {
         }
         ServerLevel at = sired.serverLevel();
         CallRequests.Request r = REQUESTS.take(token, sired.getUUID(), at.getGameTime()).orElse(null);
-        if (r == null || !SirelineIndex.get(at).sireOf(sired.getUUID()).map(r.caller()::equals).orElse(false)) {
+        if (r == null || BloodlineAccess.get(sired).bondBroken() || !SirelineIndex.get(at).sireOf(sired.getUUID()).map(r.caller()::equals).orElse(false)) {
             return Result.failed("expired");
         }
         ServerPlayer caller = player(sired.server, r.caller());

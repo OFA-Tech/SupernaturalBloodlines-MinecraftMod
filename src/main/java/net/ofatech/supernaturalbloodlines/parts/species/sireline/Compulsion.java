@@ -286,9 +286,11 @@ public final class Compulsion {
         p.sendSystemMessage(Component.translatable(KEY + "sired", vampire.getDisplayName()));
     }
 
-    /** The caster and everyone below them in the sireline are safe from the creature. */
-    private static boolean protects(UUID owner, @Nullable LivingEntity target) {
-        return target instanceof Player p && (p.getUUID().equals(owner) || SirelineIndex.get((ServerLevel) p.level()).isDescendant(owner, p.getUUID()));
+    /** The caster and everyone below them in the sireline are safe from the creature, except a player whose bond was severed (R101b). */
+    @VisibleForTesting
+    public static boolean protects(UUID owner, @Nullable LivingEntity target) {
+        return target instanceof Player p && (p.getUUID().equals(owner)
+                || !BloodlineAccess.get(p).bondBroken() && SirelineIndex.get((ServerLevel) p.level()).isDescendant(owner, p.getUUID()));
     }
 
     private static void onChangeTarget(LivingChangeTargetEvent e) {

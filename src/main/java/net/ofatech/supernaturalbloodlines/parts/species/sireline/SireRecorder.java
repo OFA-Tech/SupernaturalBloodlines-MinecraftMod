@@ -81,7 +81,8 @@ public final class SireRecorder {
         SirelineIndex index = SirelineIndex.get((ServerLevel) child.level());
         if (child instanceof ServerPlayer p) {
             BloodlineState s = BloodlineAccess.get(p);
-            if (s.sire() != null) {
+            // a player whose bond was severed (R101b) is free: a new sire replaces the old one, and with it the severance
+            if (s.sire() != null && !s.bondBroken()) {
                 return false;
             }
             // the bloodline listener indexes and notifies

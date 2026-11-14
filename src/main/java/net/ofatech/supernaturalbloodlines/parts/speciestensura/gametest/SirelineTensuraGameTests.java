@@ -479,4 +479,32 @@ public final class SirelineTensuraGameTests {
         }
         helper.succeed();
     }
-}
+
+    /** R101b: a severed bond frees the sired from the Tensura owner link and the naming exception; the sire stays recorded. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void severanceFreesTheOwnerAndTheNaming(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer newSire = TestPlayers.create(helper);
+        ServerPlayer sired = hybrid(helper);
+        boolean before = playerNaming(helper, false);
+        try {
+            SireRecorder.record(sire, sired);
+            helper.assertTrue(sire.getUUID().equals(existence(sired).getPermanentOwner()), "control: no link");
+            helper.assertTrue(RequestNamingKeyPacket.canName(sire, sired), "control: the sire cannot name: " + said(sire));
+
+            BloodlineAccess.set(sired, BloodlineAccess.get(sired).toBuilder().severedSire(sire.getUUID()).build());
+            helper.assertTrue(existence(sired).getPermanentOwner() == null, "the owner stayed: " + existence(sired).getPermanentOwner());
+            helper.assertTrue(!SubordinateHelper.isSubordinate(sire, sired), "still a subordinate after the severance");
+            helper.assertTrue(!SireNaming.isOwnSired(sired, sire), "the naming exception still holds");
+            assertRuleRefusal(helper, sire, sired, "a sire naming a sired whose bond is severed");
+            helper.assertTrue(sire.getUUID().equals(BloodlineAccess.get(sired).sire()), "the sire was forgotten");
+
+            // a new sire is a new bond: linked again, to the new sire
+            helper.assertTrue(SireRecorder.record(newSire, sired), "could not be sired again");
+            helper.assertTrue(newSire.getUUID().equals(existence(sired).getPermanentOwner()), "the new sire is not the owner: " + existence(sired).getPermanentOwner());
+        } finally {
+            restore(helper, before);
+            reset(sire, newSire, sired);
+        }
+        helper.succeed();
+    }}

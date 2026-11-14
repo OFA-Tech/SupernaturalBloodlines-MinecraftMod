@@ -63,7 +63,8 @@ public final class SubordinateLink {
     }
 
     private static void onChange(ServerPlayer p, BloodlineAccess.BloodlineChange change) {
-        if (!Objects.equals(change.before().sire(), change.after().sire())) {
+        // the bond, not the blood: a Rite of Severance (R101b) ends the link while the sire stays recorded
+        if (!Objects.equals(change.before().boundSire(), change.after().boundSire())) {
             unlink(p);
         }
         sync(p);
@@ -88,7 +89,7 @@ public final class SubordinateLink {
      * switch off, the link this mod made is taken away again.
      */
     public static void sync(ServerPlayer p) {
-        UUID sire = BloodlineAccess.get(p).sire();
+        UUID sire = BloodlineAccess.get(p).boundSire();
         if (sire != null && SpeciesTensuraConfig.sireLink() && Supernatural.is(p)) {
             link(p, sire);
         } else {

@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
+import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
 import io.github.manasmods.tensura.event.TensuraEntityEvents;
 import io.github.manasmods.tensura.network.c2s.RequestNamingKeyPacket;
@@ -56,6 +57,10 @@ public final class SireNaming {
         }
         // a player who is no longer part of the sireline (a cured one) has only a stale sire in the index
         if (target instanceof Player && !Supernatural.is(target)) {
+            return false;
+        }
+        // a sired player whose bond was severed (R101b) is no longer the sire's to name
+        if (target instanceof Player p && BloodlineAccess.get(p).bondBroken()) {
             return false;
         }
         return SirelineIndex.get((ServerLevel) target.level()).sireOf(target.getUUID()).map(namer.getUUID()::equals).orElse(false);
