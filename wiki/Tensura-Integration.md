@@ -75,6 +75,9 @@ A Tensura undead or daemon race cannot be a hunter or a werewolf (see above). **
 
 Only players whose Tensura race is human-like can take a bloodline (R1). The `tensura:human_like` tag only has the five base races (human, dwarf, elf, merfolk, beastfolk), so this mod also accepts their evolved races (enlightened, saint, divine and so on, 15 more) and the apex races. A player with no Tensura race passes.
 
+## Ghouls (part `species_tensura`)
+
+A player who becomes a **Ghoul** (see [Vampires and Originals](Vampires-And-Originals#ghouls)) and whose Tensura race is exactly `tensura:human` shows the **Ghoul** race. When they finish the turning they become `tensura:vampire`; every other race (an elf, say) is kept throughout. While you are a Ghoul **no Tensura evolution goes through**: the evolution screen may seem to accept it, but your race doesn't change and chat says to complete your turning first. EP keeps adding up. Leaving the vampires sets a Ghoul back to human, like any cure.
 ## Apex evolutions
 
 From **saint tier or higher** of a human-like Tensura line, a player with a species can pick **one apex race** in Tensura's own evolution screen. Offer ids are `supernaturalbloodlines:<name>`.

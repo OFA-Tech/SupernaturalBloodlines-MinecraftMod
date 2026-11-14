@@ -39,6 +39,7 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 - **The turning is fed from a bottle for non-vampires.** Only a vampire can bite in Vampirism, so before you are a Ghoul the only way to drink human blood is a Vampirism blood bottle (right-click), and a bottle counts as human blood whatever it was filled from. The turning's clock is the player's online time; the client's copy of it is stale until the next real change or login.
 
 - **The turning, a refused join:** if Vampirism or another mod refuses the join into the vampires at the moment a player drinks, they are told and the turning is over (the bottle is used up). They have to start again. The failed-turning kill and a Ghoul's death were tested on test players only, not with a real client's Vampirism "dying" screen.
+- **Tensura's evolution screen for a Ghoul:** Tensura's own code answers "evolved" and plays its sound even when the evolution was refused, and its progress bar can show 100%. The race does not change and chat says why. Only evolutions are refused: an admin's race command still works on a Ghoul.
 - **Ghouls and Vampirism skill points:** Vampirism's skill-point providers can only add points, so a Ghoul is held at level 1 by the level cap, not by a lowered point count. A command that sets a Ghoul's level above 1 is refused too (the same event).
 
 ## Design points the owner may still change

@@ -1,7 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.turning;
 
 import de.teamlapen.vampirism.api.VReference;
-import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.event.BloodDrinkEvent;
 import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import java.util.HashSet;
@@ -24,6 +23,7 @@ import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext;
+import net.ofatech.supernaturalbloodlines.shared.vampirism.Ghouls;
 
 /**
  * Ghouls (plan 11, R20e, R20f). Any Sanguinare that finishes leaves a Ghoul: a vampire at level 1 who cannot level up until the
@@ -66,7 +66,7 @@ public final class GhoulGates {
 
     /** A vampire who is still a Ghoul (the flag only counts while they are in the vampire faction). */
     public static boolean isGhoul(Player p) {
-        return BloodlineAccess.get(p).ghoul() && VampirismAPI.factionPlayerHandler(p).getCurrentFaction() == VReference.VAMPIRE_FACTION;
+        return Ghouls.isGhoul(p);
     }
 
     /** Runs {@code join} (the turning's own join into the vampires) so it is never taken for a Sanguinare. */
