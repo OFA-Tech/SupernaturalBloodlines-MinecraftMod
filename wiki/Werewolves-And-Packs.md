@@ -41,7 +41,7 @@ Werewolves (the mod) gives players the werewolf faction, forms and levels. This 
 | **Alpha** | the spark | **+20%** attack, **+4** max health, red eyes, the Roar |
 | **True Alpha** | earned | the Alpha perks x1.1 (**+22%**, **+4.4**) |
 
-Perks only apply while in the werewolf faction (a cured Alpha keeps the rank and its Tensura skills, not the attribute perks). During a lunar eclipse the positive perks stop; the Omega penalty does not.
+Perks only apply while in the werewolf faction (a cured True Alpha keeps the rank, dormant: no attribute perks and no Tensura rank skills until they rejoin). During a lunar eclipse the positive perks stop; the Omega penalty does not.
 
 ### Eyes
 

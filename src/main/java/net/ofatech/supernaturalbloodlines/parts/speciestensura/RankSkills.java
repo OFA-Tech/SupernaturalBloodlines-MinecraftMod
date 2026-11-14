@@ -21,7 +21,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.shared.tensura.SkillOwners;
 
 /**
- * A werewolf's rank (Alpha, True Alpha) and a born werewolf's level 5 give Tensura skills (config rank_skills). The race
+ * A werewolf's rank (Alpha, True Alpha) and a born werewolf's level 5 give Tensura skills (config rank_skills), only while the player is in the werewolf faction (a cured True Alpha keeps the rank, dormant). The race
  * never changes. Only skills this class granted are taken back, tracked in {@code WolfState.grantedSkills}; a skill another
  * source (the species layer, the werewolf level grants) still wants stays, through {@link SkillOwners}. Registered only
  * when Werewolves is loaded; the faction is matched by id, so no Werewolves class is linked.
@@ -62,13 +62,17 @@ public final class RankSkills {
         WolfState wolf = BloodlineAccess.get(p).wolf();
         RankSkillTable table = SpeciesTensuraConfig.rankSkills();
         Set<String> out = new LinkedHashSet<>();
-        switch (wolf.rank()) {
-            case ALPHA -> out.addAll(table.skillsFor(RankSkillTable.ALPHA));
-            case TRUE_ALPHA -> out.addAll(table.skillsFor(RankSkillTable.TRUE_ALPHA));
-            default -> {
+        int level = werewolfLevel(p);
+        // a rank outside the werewolf faction is dormant (a cured True Alpha keeps it): its skills wait for the rejoin
+        if (level > 0) {
+            switch (wolf.rank()) {
+                case ALPHA -> out.addAll(table.skillsFor(RankSkillTable.ALPHA));
+                case TRUE_ALPHA -> out.addAll(table.skillsFor(RankSkillTable.TRUE_ALPHA));
+                default -> {
+                }
             }
         }
-        if (wolf.lineage() == WolfState.Lineage.BORN && werewolfLevel(p) >= BORN_LEVEL) {
+        if (wolf.lineage() == WolfState.Lineage.BORN && level >= BORN_LEVEL) {
             out.addAll(table.skillsFor(RankSkillTable.BORN_LEVEL5));
         }
         return out;

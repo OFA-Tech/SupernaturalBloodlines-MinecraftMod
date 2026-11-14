@@ -91,7 +91,7 @@ From **saint tier or higher** of a human-like Tensura line, a player with a spec
 
 - Tier-3 saint races: `human_saint`, `dwarf_saint`, `elf_saint`, `merfolk_saint`, `spirit_beast`. Tier 4: `divine_human`, `divine_dwarf`, `divine_elf`, `divine_fish`, `divine_beast`.
 - An apex race needs **2,000,000 EP** (the same as Tensura's divine human) and can give more max health than the divine tier (Primordial Vampire 1000, against 980). **All names, stats, EP and signature skills are placeholders.**
-- Apex races are human-like. The four vampire-type ones (Primordial Vampire, Primordial Hybrid, Moonblood Hybrid, Tribrid Ascendant) are also tagged `tensura:undead` (holy damage still applies). Tensura's `no_blood` includes undead, but every apex race is also in our tag `supernaturalbloodlines:bitable`, so **no apex race is bloodless for this mod**: they can be bitten. Tensura's own drain and blood mist still skip an undead apex race.
+- Apex races are human-like. The four vampire-type ones (Primordial Vampire, Primordial Hybrid, Moonblood Hybrid, Tribrid Ascendant) are also tagged `tensura:undead` (holy damage still applies). Tensura's `no_blood` includes undead, but every apex race is also in our tag `supernaturalbloodlines:bitable`, so **no apex race is bloodless for this mod**: they can be bitten. Tensura's own drain, blood mist and vampire feeding reach them too.
 - **Losing the species does not remove a chosen apex race.** The species-only layer skills go dormant; the race's own signature skill stays.
 - There is no icon for the apex races in the evolution screen (not checked in a client).
 - Switch off: `apex_evolutions_enabled=false`. The apex races stay registered; there is just no option to pick them.
@@ -145,7 +145,7 @@ Needs Werewolves. Config key `rank_skills`.
 | Omega, Beta | none |
 
 - The skills do not change the race (the race follows the Beastfolk line, see above).
-- The rank skills do not need the werewolf faction: a cured Alpha keeps the rank and its skills.
+- The rank skills need the werewolf faction: a True Alpha who is cured keeps the rank, dormant, and its skills come back when they rejoin the werewolves.
 - Only skills this mod granted are taken back, and a skill another source still wants stays.
 
 See [Werewolves and packs](Werewolves-And-Packs) for the ranks.

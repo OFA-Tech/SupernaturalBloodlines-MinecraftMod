@@ -76,8 +76,15 @@ public final class ApexFactionGameTests {
                 ServerPlayer victim = TestPlayers.create(helper);
                 victim.moveTo(helper.absoluteVec(new Vec3(1.5, 2, 3.5)), 0, 0);
                 victim.setYHeadRot(0);
+                // an apex race is only held by its species; the species layer is what Tensura's holy exposure reads
+                for (Species s : Species.values()) {
+                    if (ApexSpec.forSpecies(s).filter(spec::equals).isPresent()) {
+                        species(victim, s);
+                    }
+                }
                 RaceAPI.getRaceFrom(victim).setRace(ResourceLocation.parse(NS + ":" + spec.id()), false);
                 helper.assertTrue(RaceUtils.isUndead(victim), spec.id() + " is not undead");
+                helper.assertTrue(RaceUtils.isAffectedByHolyExposure(victim), spec.id() + " is not affected by holy exposure");
                 helper.assertTrue(!FactionRaceRules.isBloodless(victim), spec.id() + " is bloodless");
                 helper.assertTrue(vampire.determineBiteType(victim) == IVampirePlayer.BITE_TYPE.SUCK_BLOOD_PLAYER,
                         spec.id() + " victim gave " + vampire.determineBiteType(victim));

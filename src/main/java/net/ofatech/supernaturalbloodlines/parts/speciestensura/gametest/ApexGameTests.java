@@ -13,6 +13,7 @@ import io.github.manasmods.tensura.race.RaceUtils;
 import io.github.manasmods.tensura.race.template.EvolutionRequirement;
 import io.github.manasmods.tensura.registry.attribute.TensuraAttributes;
 import java.lang.reflect.Proxy;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.gametest.framework.GameTest;
@@ -23,11 +24,15 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.Part;
+import net.ofatech.supernaturalbloodlines.core.StalePartModifiers;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
+import net.ofatech.supernaturalbloodlines.mixin.SpeciesTensuraMixinPlugin;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesLayer;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesTensuraConfig;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexOffer;
@@ -118,7 +123,8 @@ public final class ApexGameTests {
             ManasRaceInstance inst = race.createDefaultInstance();
             helper.assertTrue(inst.is(HUMAN_LIKE), id + " is not human_like");
             helper.assertTrue(inst.is(UNDEAD) == spec.undead(), id + " undead tag");
-            helper.assertTrue(inst.is(NO_BLOOD) == spec.undead(), id + " no_blood follows undead (Tensura's tag) " + inst.is(NO_BLOOD));
+            helper.assertTrue(inst.is(NO_BLOOD) == spec.undead(), id + (spec.undead() ? " is undead, so Tensura's no_blood tag (it includes #tensura:undead) must still hold: our bitable tag overrides it, the tag itself is not touched"
+                    : " is not undead, so it must not carry Tensura's no_blood tag"));
             helper.assertTrue(RaceTags.isBitable(inst), id + " is not bitable: undead apex races must still be bitten");
             for (String skill : spec.intrinsicSkills()) {
                 helper.assertTrue(SkillAPI.getSkillRegistry().get(ResourceLocation.parse(skill)) != null, id + " lists an unknown skill " + skill);
@@ -126,6 +132,44 @@ public final class ApexGameTests {
             helper.assertTrue(race.getNextEvolutions(inst, null).isEmpty(), id + " has a next evolution");
         }
         helper.assertTrue(ApexRaces.apexFor(Species.TRIBRID).orElseThrow().equals(ResourceLocation.parse(NS + ":tribrid_ascendant")), "apexFor");
+        helper.succeed();
+    }
+
+    /** Review round: Tensura's own Drain, Blood Mist and VampireRace ask RaceUtils.isBloodless, which the mixin answers false for a bitable race. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void apexRaceNotBloodlessToTensura(GameTestHelper helper) {
+        int undead = 0;
+        for (ApexSpec spec : ApexSpec.ALL) {
+            ServerPlayer p = TestPlayers.create(helper);
+            setRace(p, NS + ":" + spec.id());
+            helper.assertTrue(!RaceUtils.isBloodless(p), spec.id() + " is bloodless to Tensura");
+            undead += spec.undead() ? 1 : 0;
+        }
+        helper.assertTrue(undead == 4, "vampire-type apex races: " + undead);
+        // controls: a Tensura undead race is still bloodless, and a plain human is not
+        ServerPlayer ghoul = TestPlayers.create(helper);
+        setRace(ghoul, "tensura:ghoul");
+        helper.assertTrue(RaceUtils.isBloodless(ghoul), "control: a ghoul is not bloodless to Tensura");
+        ServerPlayer human = TestPlayers.create(helper);
+        setRace(human, "tensura:human");
+        helper.assertTrue(!RaceUtils.isBloodless(human), "control: a human is bloodless to Tensura");
+        helper.assertTrue(SpeciesTensuraMixinPlugin.raceUtilsHooked(), "the RaceUtils hooks are not in place");
+        helper.succeed();
+    }
+
+    /** The EP boost modifier is saved on the player: with the part off it must be stripped on login (StalePartModifiers). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void epBoostIsStrippedWhenThePartIsOff(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        var aura = p.getAttribute(TensuraAttributes.AURA_GAIN);
+        var magicule = p.getAttribute(TensuraAttributes.MAGICULE_GAIN);
+        var modifier = new AttributeModifier(EvolutionBoost.ID, 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        aura.addOrReplacePermanentModifier(modifier);
+        magicule.addOrReplacePermanentModifier(modifier);
+        StalePartModifiers.strip(p, EnumSet.of(Part.SPECIES_TENSURA));
+        helper.assertTrue(aura.hasModifier(EvolutionBoost.ID) && magicule.hasModifier(EvolutionBoost.ID), "an enabled part lost its ep_boost");
+        StalePartModifiers.strip(p, EnumSet.noneOf(Part.class));
+        helper.assertTrue(!aura.hasModifier(EvolutionBoost.ID) && !magicule.hasModifier(EvolutionBoost.ID), "ep_boost stayed with species_tensura off");
         helper.succeed();
     }
 
