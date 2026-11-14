@@ -1,5 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.speciestensura;
 
+import dev.architectury.event.EventResult;
+import io.github.manasmods.manascore.network.api.util.Changeable;
+import io.github.manasmods.tensura.event.TensuraEntityEvents;
 import io.github.manasmods.tensura.network.c2s.RequestNamingMenuPacket;
 import io.github.manasmods.tensura.network.c2s.RequestNamingMenuPacket.NamingType;
 import io.github.manasmods.tensura.storage.TensuraStorages;
@@ -7,9 +10,9 @@ import io.github.manasmods.tensura.storage.ep.IExistence;
 import io.github.manasmods.tensura.world.TensuraGameRules;
 import java.util.UUID;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 
@@ -28,14 +31,23 @@ public final class SireNaming {
     private SireNaming() {}
 
     public static void register() {
-        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
-            if (e.getEntity() instanceof ServerPlayer p) {
-                retryFor(p, p.server.getPlayerList().getPlayers());
-            }
-        });
+        TensuraEntityEvents.NAMING_EVENT.register(SireNaming::onNaming);
     }
 
-    /** A player logged in: name them if they are an unnamed sired, and every unnamed sired of theirs among {@code online}. */
+    /**
+     * R100: Tensura's MEDIUM and HIGH namings evolve any target, a player included, and a sired player is never evolved by their
+     * sire. Whoever names (the automatic naming is LOW already, a hand naming through Tensura's menu is not), the sire's naming of
+     * their bound sired is LOW. Tensura's max-magicule loss roll then follows the LOW chance.
+     */
+    private static EventResult onNaming(LivingEntity target, Player namer, Changeable<Double> cost, Changeable<Double> epGain,
+                                        Changeable<NamingType> type, Changeable<String> name) {
+        if (namer != null && target instanceof ServerPlayer sired && type.get() != NamingType.LOW && namer.getUUID().equals(BloodlineAccess.get(sired).boundSire())) {
+            type.set(NamingType.LOW);
+        }
+        return EventResult.pass();
+    }
+
+    /** Called from the login handler in {@link SubordinateLink}: names the player if they are an unnamed sired, and every unnamed sired of theirs among {@code online}. */
     public static void retryFor(ServerPlayer loggedIn, Iterable<ServerPlayer> online) {
         tryName(loggedIn);
         for (ServerPlayer other : online) {

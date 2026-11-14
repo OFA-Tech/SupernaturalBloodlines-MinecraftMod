@@ -504,6 +504,90 @@ public final class SirelineTensuraGameTests {
         helper.succeed();
     }
 
+    /** R100: the sire naming their sired by hand at HIGH is lowered to LOW, so the sired keeps their race. Fails when the NAMING_EVENT handler is removed. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void sireHandNamingNeverEvolvesTheSired(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        ServerPlayer stranger = namer(helper);
+        ServerPlayer control = hybrid(helper);
+        boolean before = playerNaming(helper, true);
+        try {
+            setRace(sired, "tensura:human");
+            // the sire is not online for the lookup, so only the hand naming below can name
+            SireRecorder.record(sire, sired);
+            helper.assertTrue(existence(sired).getName() == null, "control: named already");
+            helper.assertTrue(RequestNamingKeyPacket.canName(sire, sired), "control: the sire cannot name by hand: " + said(sire));
+            RequestNamingMenuPacket.name(sired, sire, NamingType.HIGH, "Manual");
+            helper.assertTrue("Manual".equals(existence(sired).getName()), "the sired was not named by hand: " + said(sire));
+            helper.assertTrue("tensura:human".equals(race(sired)), "the sire's HIGH naming evolved the sired to " + race(sired));
+
+            // control: the same naming by someone who is not the sire evolves a player of the same kind, so the test can tell
+            setRace(control, "tensura:human");
+            control.setHealth(1);
+            RequestNamingMenuPacket.name(control, stranger, NamingType.HIGH, "Free");
+            helper.assertTrue("Free".equals(existence(control).getName()), "the control was not named " + said(stranger));
+            helper.assertTrue(!"tensura:human".equals(race(control)), "the control kept its race too, so this test cannot tell the handler's work");
+        } finally {
+            restore(helper, before);
+            reset(sire, sired, stranger, control);
+        }
+        helper.succeed();
+    }
+
+    /** A link made at login is a single naming try (SubordinateLink.sync does not try on login, retryFor does): the broke sire is told once. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void loginMakesOneNamingTryPerPair(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        try {
+            existence(sire).setMagicule(0);
+            existence(sire).setAura(0);
+            SireRecorder.record(sire, sired);
+            online(sire);
+            existence(sired).setPermanentOwner(null);
+            ((Namer) sire).keys.clear();
+            SubordinateLink.onLogin(sired, List.of(sired, sire));
+            helper.assertTrue(sire.getUUID().equals(existence(sired).getPermanentOwner()), "control: the login did not heal the link");
+            helper.assertTrue(existence(sired).getName() == null, "control: a sire with no magicule named");
+            helper.assertTrue(((Namer) sire).keys.size() == 1, "the sire was told " + said(sire) + ", not once");
+        } finally {
+            reset(sire, sired);
+        }
+        helper.succeed();
+    }
+
+    /** A failing naming leaves neither the game rule nor the sired's toggle changed. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void ruleAndToggleAreRestoredAfterAnException(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        boolean before = playerNaming(helper, false);
+        TensuraEntityEvents.NamingEvent boom = (target, namer, cost, epGain, type, name) -> {
+            throw new IllegalStateException("boom");
+        };
+        try {
+            existence(sired).setNameable(false);
+            SireRecorder.record(sire, sired);
+            online(sire);
+            TensuraEntityEvents.NAMING_EVENT.register(boom);
+            boolean thrown = false;
+            try {
+                SireNaming.tryName(sired);
+            } catch (IllegalStateException expected) {
+                thrown = true;
+            }
+            helper.assertTrue(thrown, "control: the naming did not reach the failing listener");
+            helper.assertTrue(!helper.getLevel().getGameRules().getBoolean(TensuraGameRules.PLAYER_NAME), "the game rule was left on");
+            helper.assertTrue(!existence(sired).isNameable(), "the sired's toggle was left on");
+        } finally {
+            TensuraEntityEvents.NAMING_EVENT.unregister(boom);
+            restore(helper, before);
+            reset(sire, sired);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void nonSireCannotNameWithGameRuleOff(GameTestHelper helper) {
         ServerPlayer namer = namer(helper);
