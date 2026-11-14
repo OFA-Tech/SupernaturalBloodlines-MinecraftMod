@@ -14,6 +14,7 @@ import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexRaces;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexFactionGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.RankSkillsGameTests;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.GhoulTensuraGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SirelineTensuraGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SpeciesLayerGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SpeciesTensuraWerewolvesGameTests;
@@ -37,6 +38,7 @@ public final class SpeciesTensuraPart {
         if (ModList.get().isLoaded("werewolves")) {
             RankSkills.register();
         }
+        GhoulRace.register();
         SubordinateLink.register();
         SireNaming.register();
         if (!SireNaming.hookApplied()) {
@@ -48,6 +50,7 @@ public final class SpeciesTensuraPart {
             e.register(SpeciesLayerGameTests.class);
             e.register(ApexGameTests.class);
             e.register(SirelineTensuraGameTests.class);
+            e.register(GhoulTensuraGameTests.class);
             if (EnabledParts.snapshot().contains(Part.VAMPIRISM_TENSURA)) {
                 e.register(ApexFactionGameTests.class);
             }

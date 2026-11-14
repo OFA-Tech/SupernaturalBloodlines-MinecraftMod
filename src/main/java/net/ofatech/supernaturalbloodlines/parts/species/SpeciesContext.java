@@ -32,6 +32,7 @@ public final class SpeciesContext {
                 .withFiveCount(taken)
                 .withMaxFive(SpeciesConfig.maxFive())
                 .withTransitionTicks(SpeciesConfig.transitionTicks())
+                .withVampireBloodTicks(SpeciesConfig.vampireBloodTicks())
                 .withBloodSource(bloodSource)
                 .withGameTime(gameTime)
                 .withWerewolvesLoaded(ModList.get().isLoaded("werewolves"));

@@ -22,7 +22,7 @@ class BloodlineStateTest {
         BloodlineState s = new BloodlineState(Species.TRIBRID, true, UUID.fromString("00000000-0000-0000-0000-0000000000a1"),
                 true, true, 123L, UUID.fromString("00000000-0000-0000-0000-0000000000b2"), 50, 999L, 7, "x:y",
                 4, true, 888L, true, wolf, Set.of("tensura:drain", "tensura:charm"),
-                UUID.fromString("00000000-0000-0000-0000-0000000000a1"));
+                UUID.fromString("00000000-0000-0000-0000-0000000000a1"), true, 5000L, 12000);
 
         JsonElement json = BloodlineState.CODEC.encodeStart(JsonOps.INSTANCE, s).getOrThrow();
         assertEquals(s, BloodlineState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());
@@ -78,6 +78,26 @@ class BloodlineStateTest {
         Outcome o = BloodlineRules.apply(BloodlineState.NONE, BloodlineEvent.RITE_OF_IMMORTALITY,
                 BloodlineContext.defaults().withGameTime(500));
         assertEquals(500, o.state().turnedAt());
+    }
+
+    @Test
+    void turningFieldsRoundTripAndOldSavesGetDefaults() {
+        BloodlineState s = BloodlineState.NONE.toBuilder().ghoul(true).vampireBloodUntil(9000L).turningTicksLeft(1234).build();
+        JsonElement json = BloodlineState.CODEC.encodeStart(JsonOps.INSTANCE, s).getOrThrow();
+        BloodlineState back = BloodlineState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
+        assertEquals(s, back);
+        assertTrue(back.ghoul());
+        assertTrue(back.inTurning());
+        // a save from before plan 11 has none of the keys
+        BloodlineState old = decode("{\"species\":\"HYBRID\"}");
+        assertFalse(old.ghoul());
+        assertFalse(old.inTurning());
+        assertEquals(0, old.vampireBloodUntil());
+        // junk falls back, and negatives are clamped
+        BloodlineState junk = decode("{\"ghoul\":\"yes\",\"vampire_blood_until\":\"x\",\"turning_ticks_left\":-5}");
+        assertFalse(junk.ghoul());
+        assertEquals(0, junk.vampireBloodUntil());
+        assertEquals(0, junk.turningTicksLeft());
     }
 
     private static final UUID SIRE_A = UUID.fromString("00000000-0000-0000-0000-0000000000a1");

@@ -203,6 +203,29 @@ class BloodlineListenerTest {
     }
 
     @Test
+    void ghoulAndTurningChangesNotifyButTheVampireBloodTimerDoesNot() {
+        List<BloodlineAccess.BloodlineChange> seen = new ArrayList<>();
+        List<BiConsumer<Object, BloodlineAccess.BloodlineChange>> listeners = List.of((p, c) -> seen.add(c));
+        UUID id = UUID.randomUUID();
+        BloodlineAccess.notifyListeners(listeners, null, id, NONE, NONE.toBuilder().ghoul(true).build());
+        BloodlineAccess.notifyListeners(listeners, null, id, NONE, NONE.toBuilder().turningTicksLeft(100).build());
+        assertEquals(2, seen.size());
+        BloodlineAccess.notifyListeners(listeners, null, id, NONE, NONE.toBuilder().vampireBloodUntil(500).build());
+        BloodlineAccess.notifyListeners(listeners, null, id, NONE.toBuilder().turningTicksLeft(100).build(),
+                NONE.toBuilder().turningTicksLeft(80).build());
+        assertEquals(2, seen.size());
+    }
+
+    @Test
+    void clientViewHidesTheVampireBloodTimerButKeepsGhoulAndTurning() {
+        BloodlineState s = NONE.toBuilder().ghoul(true).turningTicksLeft(50).vampireBloodUntil(777).build();
+        BloodlineState view = BloodlineAccess.clientView(s, true);
+        assertEquals(0, view.vampireBloodUntil());
+        assertTrue(view.ghoul());
+        assertEquals(50, view.turningTicksLeft());
+    }
+
+    @Test
     void aChangeOfLayerSkillsAloneNotifiesNobody() {
         List<BloodlineAccess.BloodlineChange> seen = new ArrayList<>();
         List<BiConsumer<Object, BloodlineAccess.BloodlineChange>> listeners = List.of((p, c) -> seen.add(c));

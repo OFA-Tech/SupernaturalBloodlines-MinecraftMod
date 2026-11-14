@@ -66,6 +66,12 @@ With `moon_bound_werewolves` on (the default), a werewolf can only shift **when 
 
 Only an **Alpha's** bite turns a human, with a 10% chance of killing instead. Betas and Omegas don't infect. Vampires, hunters and some species can't be turned. A target who already has a pack stays in it.
 
+## I died with vampire blood and nothing happened
+
+The blood must still be in your system (`vampire_blood_ticks`, default 24,000 ticks), and you must be in no faction or a Ghoul. A vampire, a werewolf, a hunter or a player in the hybrid transition is not affected. In the turning, only human blood completes it: a vampire's blood, an animal or a mob does nothing. See [Vampires and Originals](Vampires-And-Originals#the-turning).
+## A new vampire can't level up
+
+If they became a vampire through Sanguinare (a bite, the Vampire Fang, a MedChair or a Totem) after the turning rules arrived, they are a **Ghoul**: the level-up and both altars are refused until they finish the turning. Vampires from before the update are not affected. See [Vampires and Originals](Vampires-And-Originals#ghouls).
 ## There is no apex race in the evolution screen
 
 The player must have a **species**, a human-like race at **saint tier or higher**, `apex_evolutions_enabled` on **on the client too**, and `species_tensura` on. If the log said the evolution hook is `MISSING`, Tensura or ManasCore was updated and the hook didn't find its target.
