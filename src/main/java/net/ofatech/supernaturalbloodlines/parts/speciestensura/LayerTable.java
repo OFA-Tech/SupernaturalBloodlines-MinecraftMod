@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Pattern;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 
 /**
@@ -27,11 +26,6 @@ public final class LayerTable {
             "HUNTER_OF_THE_FIVE=|0|0.10|false",
             VAMPIRE + "=drain|0|0|true");
 
-    /** The usable table plus the config entries that could not be used. */
-    public record Parsed(LayerTable table, List<String> rejected) {}
-
-    private static final Pattern SKILL_ID = Pattern.compile("[a-z0-9_.-]+(:[a-z0-9_./-]+)?");
-
     private final Map<String, LayerSpec> specs;
 
     private LayerTable(Map<String, LayerSpec> specs) {
@@ -47,11 +41,11 @@ public final class LayerTable {
     }
 
     /** The defaults, with every valid config entry replacing the one of the same key. */
-    public static Parsed parse(List<String> entries) {
+    public static ParsedTable<LayerTable> parse(List<String> entries) {
         Map<String, LayerSpec> specs = new HashMap<>(parseAll(DEFAULTS, new ArrayList<>()));
         List<String> rejected = new ArrayList<>();
         specs.putAll(parseAll(entries, rejected));
-        return new Parsed(new LayerTable(Map.copyOf(specs)), List.copyOf(rejected));
+        return new ParsedTable<>(new LayerTable(Map.copyOf(specs)), List.copyOf(rejected));
     }
 
     private static Map<String, LayerSpec> parseAll(List<String> entries, List<String> rejected) {
@@ -86,19 +80,9 @@ public final class LayerTable {
         if (parts.length != 4) {
             return null;
         }
-        List<String> skills = new ArrayList<>();
-        for (String raw : parts[0].split(",")) {
-            String id = raw.trim().toLowerCase(Locale.ROOT);
-            if (id.isEmpty()) {
-                continue;
-            }
-            if (!SKILL_ID.matcher(id).matches()) {
-                return null;
-            }
-            String full = id.contains(":") ? id : "tensura:" + id;
-            if (!skills.contains(full)) {
-                skills.add(full);
-            }
+        List<String> skills = RankSkillTable.parseSkills(parts[0]);
+        if (skills == null) {
+            return null;
         }
         String undead = parts[3].trim().toLowerCase(Locale.ROOT);
         try {

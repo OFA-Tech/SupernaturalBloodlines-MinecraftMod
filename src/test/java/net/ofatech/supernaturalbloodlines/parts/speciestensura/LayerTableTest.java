@@ -50,7 +50,7 @@ class LayerTableTest {
 
     @Test
     void configOverridesAndKeepsTheRestOfTheDefaults() {
-        LayerTable.Parsed p = LayerTable.parse(List.of("witch=tensura:charm, godwolf_sense|0.5|0.25|true"));
+        ParsedTable<LayerTable> p = LayerTable.parse(List.of("witch=tensura:charm, godwolf_sense|0.5|0.25|true"));
         LayerSpec witch = p.table().specFor(Species.WITCH, false);
         assertEquals(List.of("tensura:charm", "tensura:godwolf_sense"), witch.skills());
         assertEquals(0.5, witch.maxMagiculeBonus());
@@ -69,7 +69,7 @@ class LayerTableTest {
 
     @Test
     void badEntriesAreRejectedAndTheDefaultStays() {
-        LayerTable.Parsed p = LayerTable.parse(List.of("DRAGON=drain|0|0|false", "ORIGINAL=drain|x|0|false",
+        ParsedTable<LayerTable> p = LayerTable.parse(List.of("DRAGON=drain|0|0|false", "ORIGINAL=drain|x|0|false",
                 "ORIGINAL=drain|0.1|0", "ORIGINAL=drain|-0.5|0|false", "nonsense", "ORIGINAL=bad id|0|0|false"));
         assertEquals(6, p.rejected().size());
         assertEquals(0.20, p.table().specFor(Species.ORIGINAL, false).maxMagiculeBonus());

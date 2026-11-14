@@ -26,6 +26,7 @@ import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.ConfigWarning;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesLayer;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesTensuraConfig;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.TensuraHumanLikeCheck;
@@ -291,6 +292,33 @@ public final class SpeciesLayerGameTests {
             setRace(p, id);
             helper.assertTrue(!TensuraHumanLikeCheck.INSTANCE.isHumanLike(p), id + " is human-like");
         }
+        helper.succeed();
+    }
+
+    /** Bad layers / rank_skills entries: only an op is told, only when there are some. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void badConfigEntriesAreToldToOpsOnly(GameTestHelper helper) {
+        java.util.List<String> said = new java.util.ArrayList<>();
+        ServerPlayer op = new net.neoforged.neoforge.common.util.FakePlayer(helper.getLevel(),
+                new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "op")) {
+            @Override
+            public boolean hasPermissions(int level) {
+                return level <= 2;
+            }
+
+            @Override
+            public void sendSystemMessage(net.minecraft.network.chat.Component message) {
+                if (message.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t) {
+                    said.add(t.getKey());
+                }
+            }
+        };
+        ServerPlayer plain = TestPlayers.create(helper);
+        java.util.List<String> bad = java.util.List.of("DRAGON=drain|0|0|false");
+        helper.assertTrue(ConfigWarning.notifyOp(op, bad) && said.equals(java.util.List.of(ConfigWarning.KEY)), "an op was not told: " + said);
+        helper.assertTrue(!ConfigWarning.notifyOp(plain, bad), "a player without permissions was told");
+        said.clear();
+        helper.assertTrue(!ConfigWarning.notifyOp(op, java.util.List.of()) && said.isEmpty(), "an op was told when nothing is wrong");
         helper.succeed();
     }
 }

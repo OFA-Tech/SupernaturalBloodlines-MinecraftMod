@@ -1,8 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.speciestensura;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 
@@ -22,27 +23,68 @@ public final class SpeciesTensuraConfig {
     private static final ModConfigSpec.DoubleValue EVOLUTION_MULTIPLIER;
     private static final ModConfigSpec.BooleanValue SIRE_LINK;
     private static final ModConfigSpec.BooleanValue SIRE_NAMING;
-    private static final Set<String> WARNED = new HashSet<>();
 
     private static volatile Boolean undeadOverride;
     private static volatile Boolean apexOverride;
     private static volatile Boolean sireLinkOverride;
     private static volatile Boolean sireNamingOverride;
-    private static volatile List<? extends String> parsedFrom;
-    private static volatile LayerTable parsed = LayerTable.parse(LayerTable.DEFAULTS).table();
-    private static volatile List<? extends String> rankParsedFrom;
-    private static volatile RankSkillTable rankParsed = RankSkillTable.parse(RankSkillTable.DEFAULTS).table();
+
+    /** A string-list option parsed into a table; parsed again only when the config hands out a new list (a reload). */
+    private static final class Cached<T> {
+        private final String key;
+        private final String want;
+        private final Supplier<List<? extends String>> raw;
+        private final Function<List<String>, ParsedTable<T>> parser;
+        private volatile List<? extends String> from;
+        private volatile T table;
+        private volatile List<String> rejected = List.of();
+
+        Cached(String key, String want, Supplier<List<? extends String>> raw, Function<List<String>, ParsedTable<T>> parser) {
+            this.key = key;
+            this.want = want;
+            this.raw = raw;
+            this.parser = parser;
+            this.table = parser.apply(List.of()).table();
+        }
+
+        T get() {
+            List<? extends String> entries;
+            try {
+                entries = raw.get();
+            } catch (IllegalStateException notLoaded) {
+                return table;
+            }
+            if (entries != from) {
+                ParsedTable<T> p = parser.apply(entries.stream().map(String.class::cast).toList());
+                for (String bad : p.rejected()) {
+                    SupernaturalBloodlines.LOGGER.error("{}: ignoring invalid {} entry '{}' (want {})", FILE, key, bad, want);
+                }
+                table = p.table();
+                rejected = p.rejected();
+                from = entries;
+            }
+            return table;
+        }
+
+        List<String> rejected() {
+            get();
+            return rejected;
+        }
+    }
+
+    private static final Cached<LayerTable> LAYER_TABLE;
+    private static final Cached<RankSkillTable> RANK_TABLE;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         b.comment("The Tensura layer of each species. The race is never replaced (R100).");
         LAYERS = b.comment("\"SPECIES=skill,skill|maxMagiculeBonus|maxAuraBonus|treatAsUndead\" (bonuses are fractions, 0.2 = +20%).",
                         "SPECIES is a species name or VAMPIRE (a Vampirism vampire with no species). A skill without a namespace is a Tensura one.",
-                        "An entry replaces the default of the same key; a bad entry is ignored with a warning.")
+                        "An entry replaces the default of the same key; a bad entry is ignored: it is logged at ERROR when the config loads and ops are told in chat on login.")
                 .defineListAllowEmpty("layers", LayerTable.DEFAULTS, () -> "", o -> o instanceof String);
         RANK_SKILLS = b.comment("Tensura skills of a werewolf rank (Werewolves only): \"RANK=skill,skill\" with RANK ALPHA, TRUE_ALPHA or BORN_LEVEL5",
                         "(a born werewolf of level 5). A skill without a namespace is a Tensura one. The race never changes; only skills this mod granted are taken back.",
-                        "An entry replaces the default of the same key; a bad entry is ignored with a warning.")
+                        "An entry replaces the default of the same key; a bad entry is ignored: it is logged at ERROR when the config loads and ops are told in chat on login.")
                 .defineListAllowEmpty("rank_skills", RankSkillTable.DEFAULTS, () -> "", o -> o instanceof String);
         UNDEAD_TREATMENT = b.comment("Tensura treats a player whose layer says undead as undead. That is wider than holy damage: Tensura's own undead rules apply,",
                         "such as holy and light damage x3, holy exposure, infection immunity and Enervation on food. A plain Vampirism vampire (VAMPIRE) counts too,",
@@ -62,55 +104,32 @@ public final class SpeciesTensuraConfig {
                         "Tensura then treats the pair as owner and subordinate: the sired cannot hurt the sire or the sire's other sired (the sire can still hurt them),",
                         "they count as allied, and a demon lord sire's harvest festival gifts them. Off: no link is made or removed.")
                 .define("sire_subordinate_link_enabled", true);
-        SIRE_NAMING = b.comment("A sire may open Tensura's naming on their own sired, a player too, even with the playerNaming game rule off (R101).",
+        SIRE_NAMING = b.comment("This BYPASSES Tensura's playerNaming game rule for a sire and their own sired only: with the rule off, nobody else can name a player,",
+                        "but a sire may open Tensura's naming on their own sired, a player too (R101). The server rule does not beat this exception.",
                         "Only for the sired that has no Tensura name yet, and only while the sired has not switched their own nameable toggle off.",
                         "A named sired player gets Tensura's EP and stat reward but never its race evolution (the type is lowered to LOW).",
                         "Off: Tensura's naming rules apply unchanged.")
                 .define("sire_naming_enabled", true);
         SPEC = b.build();
+        LAYER_TABLE = new Cached<>("layers", "SPECIES=skill,skill|magicule|aura|undead", LAYERS::get, LayerTable::parse);
+        RANK_TABLE = new Cached<>("rank_skills", "ALPHA|TRUE_ALPHA|BORN_LEVEL5=skill,skill", RANK_SKILLS::get, RankSkillTable::parse);
     }
 
     private SpeciesTensuraConfig() {}
 
     public static LayerTable table() {
-        List<? extends String> entries;
-        try {
-            entries = LAYERS.get();
-        } catch (IllegalStateException notLoaded) {
-            return parsed;
-        }
-        // get() hands back the same list until the config reloads, so the parse is redone only then
-        if (entries != parsedFrom) {
-            LayerTable.Parsed p = LayerTable.parse(entries.stream().map(String.class::cast).toList());
-            for (String bad : p.rejected()) {
-                if (WARNED.add(bad)) {
-                    SupernaturalBloodlines.LOGGER.warn("{}: ignoring invalid layers entry '{}' (want SPECIES=skill,skill|magicule|aura|undead)", FILE, bad);
-                }
-            }
-            parsed = p.table();
-            parsedFrom = entries;
-        }
-        return parsed;
+        return LAYER_TABLE.get();
     }
 
     public static RankSkillTable rankSkills() {
-        List<? extends String> entries;
-        try {
-            entries = RANK_SKILLS.get();
-        } catch (IllegalStateException notLoaded) {
-            return rankParsed;
-        }
-        if (entries != rankParsedFrom) {
-            RankSkillTable.Parsed p = RankSkillTable.parse(entries.stream().map(String.class::cast).toList());
-            for (String bad : p.rejected()) {
-                if (WARNED.add(bad)) {
-                    SupernaturalBloodlines.LOGGER.warn("{}: ignoring invalid rank_skills entry '{}' (want ALPHA|TRUE_ALPHA|BORN_LEVEL5=skill,skill)", FILE, bad);
-                }
-            }
-            rankParsed = p.table();
-            rankParsedFrom = entries;
-        }
-        return rankParsed;
+        return RANK_TABLE.get();
+    }
+
+    /** The config entries (layers, rank_skills) that could not be used. Parsing them also logs each one at ERROR, so call it when the config loads. */
+    public static List<String> rejectedEntries() {
+        List<String> all = new ArrayList<>(LAYER_TABLE.rejected());
+        all.addAll(RANK_TABLE.rejected());
+        return all;
     }
 
     /** For tests: null goes back to the config. */

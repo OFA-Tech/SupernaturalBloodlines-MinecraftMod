@@ -26,9 +26,6 @@ public final class RankSkillTable {
     private static final Set<String> KEYS = Set.of(ALPHA, TRUE_ALPHA, BORN_LEVEL5);
     private static final Pattern SKILL_ID = Pattern.compile("[a-z0-9_.-]+(:[a-z0-9_./-]+)?");
 
-    /** The usable table plus the config entries that could not be used. */
-    public record Parsed(RankSkillTable table, List<String> rejected) {}
-
     private final Map<String, List<String>> skills;
 
     private RankSkillTable(Map<String, List<String>> skills) {
@@ -40,11 +37,11 @@ public final class RankSkillTable {
     }
 
     /** The defaults, with every valid config entry replacing the one of the same key. */
-    public static Parsed parse(List<String> entries) {
+    public static ParsedTable<RankSkillTable> parse(List<String> entries) {
         Map<String, List<String>> out = new HashMap<>(parseAll(DEFAULTS, new ArrayList<>()));
         List<String> rejected = new ArrayList<>();
         out.putAll(parseAll(entries, rejected));
-        return new Parsed(new RankSkillTable(Map.copyOf(out)), List.copyOf(rejected));
+        return new ParsedTable<>(new RankSkillTable(Map.copyOf(out)), List.copyOf(rejected));
     }
 
     private static Map<String, List<String>> parseAll(List<String> entries, List<String> rejected) {
@@ -62,7 +59,8 @@ public final class RankSkillTable {
         return out;
     }
 
-    private static List<String> parseSkills(String body) {
+    /** {@code skill,skill} to full ids (no namespace means Tensura), or null when one is not an id. Also used by {@link LayerTable}. */
+    static List<String> parseSkills(String body) {
         List<String> skills = new ArrayList<>();
         for (String raw : body.split(",")) {
             String id = raw.trim().toLowerCase(Locale.ROOT);

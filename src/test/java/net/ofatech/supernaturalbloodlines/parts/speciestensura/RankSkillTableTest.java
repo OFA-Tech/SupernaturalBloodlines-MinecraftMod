@@ -17,7 +17,7 @@ class RankSkillTableTest {
 
     @Test
     void configOverridesOneKeyAndAddsTheNamespace() {
-        RankSkillTable.Parsed p = RankSkillTable.parse(List.of("alpha=charm, tensura:drain"));
+        ParsedTable<RankSkillTable> p = RankSkillTable.parse(List.of("alpha=charm, tensura:drain"));
         assertEquals(List.of("tensura:charm", "tensura:drain"), p.table().skillsFor(RankSkillTable.ALPHA));
         assertTrue(p.rejected().isEmpty());
         assertTrue(p.table().skillsFor(RankSkillTable.TRUE_ALPHA).contains("tensura:commander"));
@@ -30,7 +30,7 @@ class RankSkillTableTest {
 
     @Test
     void badEntriesAreRejectedAndTheDefaultStays() {
-        RankSkillTable.Parsed p = RankSkillTable.parse(List.of("OMEGA=drain", "ALPHA=bad id", "nonsense", "=drain"));
+        ParsedTable<RankSkillTable> p = RankSkillTable.parse(List.of("OMEGA=drain", "ALPHA=bad id", "nonsense", "=drain"));
         assertEquals(4, p.rejected().size());
         assertEquals(List.of("tensura:beast_transformation", "tensura:godwolf_sense"), p.table().skillsFor(RankSkillTable.ALPHA));
     }

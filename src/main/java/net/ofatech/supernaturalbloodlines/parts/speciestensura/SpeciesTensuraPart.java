@@ -24,6 +24,7 @@ public final class SpeciesTensuraPart {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, SpeciesTensuraConfig.SPEC, SpeciesTensuraConfig.FILE);
+        ConfigWarning.register(modBus);
         ApexRaces.register();
         if (!ApexOffer.hookApplied()) {
             SupernaturalBloodlines.LOGGER.warn("species_tensura: the ManasRaceInstance.getNextEvolutions hook is not in place, "
