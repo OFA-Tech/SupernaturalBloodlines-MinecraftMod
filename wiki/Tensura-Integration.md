@@ -18,7 +18,7 @@ Needs Vampirism and Tensura. Werewolves is optional. Config file: `supernaturalb
 | Werewolves | Races tagged `tensura:undead`, `tensura:daemon` or `tensura:no_blood` cannot become werewolves. |
 | Werewolf skill grants | Werewolf levels grant Tensura skills. Default: `tensura:godwolf_sense` at the maximum werewolf level. It is taken back if the level drops below it or the player stops being a werewolf (only if this mod granted it). |
 | Holy damage | Vampirism holy water counts as Tensura holy damage. Tensura holy damage to a Vampirism vampire is multiplied by `tensura_holy_vs_vampire` (default 1.5), unless the species layer already makes Tensura treat them as undead (then Tensura's own x3 applies, and this multiplier is skipped so the two don't stack). |
-| Bloodless races | A player whose race is tagged `tensura:no_blood` cannot be bitten (the biter sees "There is no blood in them to drink."). Tensura bloodless mobs have blood 0 for Vampirism. |
+| Bloodless races | A player whose race is tagged `tensura:no_blood` cannot be bitten, unless the race is also in our tag `supernaturalbloodlines:bitable` (the apex races) (the biter sees "There is no blood in them to drink."). Tensura bloodless mobs have blood 0 for Vampirism. |
 | Existence points (EP) | Vampirism and Werewolves mobs have EP data so that Tensura's analysis can read them. The numbers are first guesses. |
 
 Unified-vampire ids and levels can be changed with `race_level_floor`.
@@ -64,7 +64,7 @@ When a layer says undead, Tensura treats the player as undead:
 
 A plain Vampirism vampire counts as well: they go from x1.5 to Tensura's x3 holy damage. This is wider than "holy damage and sunlight", so it has its own switch: `undead_treatment_enabled`. Off: skills and bonuses stay, Tensura's undead checks are left alone, and the x1.5 multiplier of `tensura_holy_vs_vampire` returns.
 
-Being undead does **not** by itself make a player bloodless. (The apex races below do.)
+Being undead does **not** by itself make a player bloodless. (The apex races below are undead but stay bitable.)
 
 ### Hunters and werewolves cannot be undead races
 
@@ -89,8 +89,8 @@ From **saint tier or higher** of a human-like Tensura line, a player with a spec
 | Hunter of the Five | Eternal Hunter | danger_sense | no |
 
 - Tier-3 saint races: `human_saint`, `dwarf_saint`, `elf_saint`, `merfolk_saint`, `spirit_beast`. Tier 4: `divine_human`, `divine_dwarf`, `divine_elf`, `divine_fish`, `divine_beast`.
-- An apex race needs **1,000,000 EP** (Tensura's divine human needs 2,000,000) and can give more max health than the divine tier (Primordial Vampire 1000, against 980): cheaper and stronger. **All names, stats, EP and signature skills are placeholders.**
-- Apex races are human-like. The four vampire-type ones (Primordial Vampire, Primordial Hybrid, Moonblood Hybrid, Tribrid Ascendant) are also tagged `tensura:undead`, and Tensura's `no_blood` includes undead, so those players are **bloodless**: nobody can bite them, and Tensura's drain and blood mist skip them. That reaches past the Original: hybrids, Original hybrids and tribrids get it too.
+- An apex race needs **2,000,000 EP** (the same as Tensura's divine human) and can give more max health than the divine tier (Primordial Vampire 1000, against 980). **All names, stats, EP and signature skills are placeholders.**
+- Apex races are human-like. The four vampire-type ones (Primordial Vampire, Primordial Hybrid, Moonblood Hybrid, Tribrid Ascendant) are also tagged `tensura:undead` (holy damage still applies). Tensura's `no_blood` includes undead, but every apex race is also in our tag `supernaturalbloodlines:bitable`, so **no apex race is bloodless for this mod**: they can be bitten. Tensura's own drain and blood mist still skip an undead apex race.
 - **Losing the species does not remove a chosen apex race.** The species-only layer skills go dormant; the race's own signature skill stays.
 - There is no icon for the apex races in the evolution screen (not checked in a client).
 - Switch off: `apex_evolutions_enabled=false`. The apex races stay registered; there is just no option to pick them.

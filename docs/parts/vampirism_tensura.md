@@ -20,7 +20,7 @@ Checklist (from the design, section 3). Tick items as they ship.
 
 **Other**
 - [x] Holy damage both ways: `vampirism:holy_water` already counts as Tensura holy damage (no tag needed, pinned by `holyWaterCountsAsTensuraHoly`); Tensura holy damage hurts Vampirism vampires x`tensura_holy_vs_vampire` (default 1.5).
-- [x] Bloodless races can't be bitten: `tensura:no_blood` race tag (mixin, see below), and blood 0 for Tensura bloodless mobs (data map).
+- [x] Bloodless races can't be bitten: `tensura:no_blood` race tag (mixin, see below), and blood 0 for Tensura bloodless mobs (data map). Races in `supernaturalbloodlines:bitable` (the apex races, plan 10) are never bloodless: `FactionRaceRules.isBloodless` and the bloodless part of the werewolf-join check skip them. Readers of `no_blood` in this mod: only those two, both in `FactionRaceRules`.
 - [x] EP for Vampirism and Werewolves mobs (data `entity_existence`).
 - [ ] **Manual check pending** (Task 5 Step 3): `runClient`, spawn a Vampirism vampire and a werewolf, open Tensura's analysis and see their EP. Replaced by the GameTests `vampirismMobsHaveEp` / `werewolfMobsHaveEp` (registry contents), which do not prove the analysis screen.
 

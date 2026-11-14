@@ -2,6 +2,9 @@ package net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest;
 
 import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
+import de.teamlapen.vampirism.api.entity.player.vampire.IVampirePlayer;
+import net.minecraft.world.phys.Vec3;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexSpec;
 import io.github.manasmods.manascore.race.api.RaceAPI;
 import io.github.manasmods.tensura.race.RaceUtils;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.FactionRaceRules;
@@ -48,6 +51,47 @@ public final class ApexFactionGameTests {
         RaceAPI.getRaceFrom(heretic).setRace(ResourceLocation.parse(NS + ":void_siphon"), false);
         helper.assertTrue(RaceUtils.isUndead(heretic), "a heretic is not undead through its layer");
         helper.assertTrue(!RaceUtils.isBloodless(heretic), "a heretic on void_siphon is bloodless");
+        helper.succeed();
+    }
+
+    /** Decision 3: an undead apex race is bitten like anyone else, and stays undead (holy damage). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void apexRaceIsBitableButUndead(GameTestHelper helper) {
+        ServerPlayer biter = TestPlayers.create(helper);
+        VampirismAPI.factionPlayerHandler(biter).setFactionAndLevel(VReference.VAMPIRE_FACTION, 5);
+        biter.moveTo(helper.absoluteVec(new Vec3(1.5, 2, 1.5)), 0, 0);
+        IVampirePlayer vampire = VampirismAPI.vampirePlayer(biter);
+
+        // the test server has PvP off, and Vampirism refuses to bite a player then
+        var server = helper.getLevel().getServer();
+        boolean pvp = server.isPvpAllowed();
+        server.setPvpAllowed(true);
+        try {
+            int checked = 0;
+            for (ApexSpec spec : ApexSpec.ALL) {
+                if (!spec.undead()) {
+                    continue;
+                }
+                checked++;
+                ServerPlayer victim = TestPlayers.create(helper);
+                victim.moveTo(helper.absoluteVec(new Vec3(1.5, 2, 3.5)), 0, 0);
+                victim.setYHeadRot(0);
+                RaceAPI.getRaceFrom(victim).setRace(ResourceLocation.parse(NS + ":" + spec.id()), false);
+                helper.assertTrue(RaceUtils.isUndead(victim), spec.id() + " is not undead");
+                helper.assertTrue(!FactionRaceRules.isBloodless(victim), spec.id() + " is bloodless");
+                helper.assertTrue(vampire.determineBiteType(victim) == IVampirePlayer.BITE_TYPE.SUCK_BLOOD_PLAYER,
+                        spec.id() + " victim gave " + vampire.determineBiteType(victim));
+            }
+            helper.assertTrue(checked == 4, "vampire-type apex races: " + checked);
+            // control: an undead race of Tensura's own is still bloodless
+            ServerPlayer ghoul = TestPlayers.create(helper);
+            ghoul.moveTo(helper.absoluteVec(new Vec3(1.5, 2, 3.5)), 0, 0);
+            ghoul.setYHeadRot(0);
+            RaceAPI.getRaceFrom(ghoul).setRace(ResourceLocation.parse("tensura:ghoul"), false);
+            helper.assertTrue(vampire.determineBiteType(ghoul) == IVampirePlayer.BITE_TYPE.NONE, "control: a ghoul can be bitten");
+        } finally {
+            server.setPvpAllowed(pvp);
+        }
         helper.succeed();
     }
 

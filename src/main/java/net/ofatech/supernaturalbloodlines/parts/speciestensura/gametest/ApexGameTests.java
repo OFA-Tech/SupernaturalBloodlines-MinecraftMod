@@ -9,6 +9,7 @@ import io.github.manasmods.manascore.race.impl.RaceStorage;
 import io.github.manasmods.manascore.skill.api.SkillAPI;
 import io.github.manasmods.tensura.network.c2s.RequestEvolutionPacket;
 import io.github.manasmods.tensura.race.RaceUtils;
+import io.github.manasmods.tensura.race.template.EvolutionRequirement;
 import io.github.manasmods.tensura.registry.attribute.TensuraAttributes;
 import java.lang.reflect.Proxy;
 import java.util.List;
@@ -31,6 +32,7 @@ import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexOffer;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexRace;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexRaces;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexSpec;
+import net.ofatech.supernaturalbloodlines.shared.tensura.RaceTags;
 
 /** Apex races and the evolution bonus. Registered by the part itself, so these only exist when species_tensura is enabled. */
 @PrefixGameTestTemplate(false)
@@ -114,12 +116,26 @@ public final class ApexGameTests {
             helper.assertTrue(inst.is(HUMAN_LIKE), id + " is not human_like");
             helper.assertTrue(inst.is(UNDEAD) == spec.undead(), id + " undead tag");
             helper.assertTrue(inst.is(NO_BLOOD) == spec.undead(), id + " no_blood follows undead (Tensura's tag) " + inst.is(NO_BLOOD));
+            helper.assertTrue(RaceTags.isBitable(inst), id + " is not bitable: undead apex races must still be bitten");
             for (String skill : spec.intrinsicSkills()) {
                 helper.assertTrue(SkillAPI.getSkillRegistry().get(ResourceLocation.parse(skill)) != null, id + " lists an unknown skill " + skill);
             }
             helper.assertTrue(race.getNextEvolutions(inst, null).isEmpty(), id + " has a next evolution");
         }
         helper.assertTrue(ApexRaces.apexFor(Species.TRIBRID).orElseThrow().equals(ResourceLocation.parse(NS + ":tribrid_ascendant")), "apexFor");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void apexEpRequirementIsTwoMillion(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        for (ApexSpec spec : ApexSpec.ALL) {
+            ApexRace race = (ApexRace) registered(NS + ":" + spec.id());
+            var requirements = race.getEvolutionRequirements(race.createDefaultInstance(), p).keySet();
+            helper.assertTrue(requirements.size() == 1, spec.id() + " requirements " + requirements);
+            helper.assertTrue(requirements.iterator().next() instanceof EvolutionRequirement.EPRequirement ep && ep.getRequirement() == 2_000_000,
+                    spec.id() + " does not ask for 2,000,000 EP: " + requirements);
+        }
         helper.succeed();
     }
 

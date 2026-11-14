@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: balance pass (plan 10)
+
+Owner decisions of 2026-11-14, applied to existing parts. Spec `docs/superpowers/specs/2026-11-14-balance-pass-design.md`.
+
+- **Apex races cost 2,000,000 EP** (was 1,000,000), the same as a divine human. Players already on an apex race keep it.
+- **No apex race is bloodless.** All seven carry the new race tag `supernaturalbloodlines:bitable`. The vampire bite block and the bloodless part of the werewolf-join check skip it, so every apex race can be bitten. The vampire-type ones stay undead (holy damage unchanged). Tensura's own drain and blood mist still skip an undead apex race (Tensura's check, left alone).
+
 ## Unreleased: Rite of Severance (R101b, species part)
 
 Needs the species part (Vampirism and Enchanted). Details in `docs/parts/species.md`, rule R101b in `SPECIES-RULES.md`.
