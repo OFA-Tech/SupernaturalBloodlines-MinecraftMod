@@ -486,7 +486,7 @@ The largest single ladder pays about 13% of one apex evolution's 2,000,000 EP; a
 | S-WOL-7 | Moon Heart | 4 | ATTR | +10% attack on full-moon nights |
 | S-WIT-1 | Steady Circle | 2 | RULE | your rites cost ×0.95 on top of R61 |
 | S-WIT-2 | Wide Circle | 2 | RULE | altar range ×1.5 → ×1.75 (R61) |
-| S-WIT-3 | Ashwarden | 2 | RULE | mountain ash lines you placed can't be broken by vampire or werewolf types |
+| S-WIT-3 | Ashwarden | 2 | RULE | vampire or werewolf types who touch a mountain ash line you placed are pushed back and get Weakness I for 5 s *(draft, 2026-11-14: the old "can't be broken" effect was already true of every line, so it did nothing; owner to patch)* |
 | S-WIT-4 | Emissary's Bond | 3 | RULE | as an Emissary, the pack rite discount is 20% instead of 10% (R94) |
 | S-WIT-5 | Magic Sense | 3 | TENSURA | `tensura:magic_sense` |
 | S-WIT-6 | Ancestral Voice | 4 | RULE | the Rites of Lineage cost half power when you perform them |
