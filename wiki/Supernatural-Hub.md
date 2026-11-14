@@ -38,3 +38,5 @@ Skill points (SP) from the ladders buy **skills**. There are 40 to buy, in 11 tr
 ### What the skills change
 
 Skills that tune a rule: Silver Tongue (compulsion reaches 6 blocks, a bigger villager discount), Bloodmaker's Yield (2 bottles of Original's Blood), Sire's Call (call every 5 minutes), Steady Thirst and Venom Fang (hybrids), Moon Calm, Pack Heart, Roar's Echo and Wolfsbane Tolerance (werewolves), Steady Circle, Wide Circle, Emissary's Bond and Ancestral Voice (witches), the five siphoner skills, Steady Aim, Hunter's Eye, Patient Hunter and Mark Mastery (hunters), Vervain Blood and Elder's Skin. Ashwarden has no effect yet, because a mountain ash line is already unbreakable for vampires and werewolves.
+
+Keen Fangs adds 1 blood to every feed on human-like blood (villagers, traders and other humans).

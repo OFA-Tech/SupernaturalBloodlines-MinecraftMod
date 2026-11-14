@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural;
 
+import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.BloodSkillGameTests;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.BloodEffects;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -79,6 +81,7 @@ public final class SupernaturalPart {
             }
         });
         SkillEffects.register();
+        BloodEffects.register();
         modBus.addListener((RegisterGameTestsEvent e) -> {
             SupernaturalAccess.trackFakePlayers(true); // this event only fires on the GameTest server, whose players are all FakePlayers
             e.register(SupernaturalStateGameTests.class);
@@ -87,6 +90,7 @@ public final class SupernaturalPart {
             e.register(ClaimGameTests.class);
             e.register(MigrationGameTests.class);
             e.register(SkillGameTests.class);
+            e.register(BloodSkillGameTests.class);
             if (ModList.get().isLoaded("tensura") && EnabledParts.isEnabled("supernaturalTensura")) {
                 e.register(TensuraEpGameTests.class);
             }

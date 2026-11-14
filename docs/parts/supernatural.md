@@ -131,3 +131,13 @@ A RULE skill is a number one of our rules reads through `LadderQuery.value(playe
 - **No new mixin.** Only the existing `RiteCostMixin` (species, still 3 of 3) now also reads the circle's rite type through a `@Shadow` of `GoldChalkBlockEntity.type`, so Ancestral Voice can tell a Rite of Lineage from another rite; the lookup is the same registry key `RiteSignal` uses.
 - **S-WIT-3 Ashwarden has no effect**: a mountain ash line is already unbreakable for vampire and werewolf types whoever placed it, so there is no number to change. The skill stays in the catalogue and in the Witch tree (S-WIT-7 comes after it); owner to patch.
 - **Not tested end to end:** S-WIT-4 (an Emissary near the pack needs a full pack set-up); its multiplier is covered by the `RiteCost.split` rows and the wiring of `RiteCost.begin` by the S-WIT-1 and S-WIT-6 tests.
+
+## Blood skills (phase 12c, Task 3)
+
+- **Keen Fangs (S-VAM-1)** (`skill/BloodEffects`): a listener on Vampirism's `BloodDrinkEvent.PlayerDrinkBloodEvent` at `LOW` adds the skill's `extra_blood` (1) to the amount of a feed from a human-like victim (`HumanLikeBlood`, plan 11's check when the species part is on, else villagers and traders). The amount of the event is settable and is what the vampire's blood level receives, so nothing is added after the drink. It runs after the Vervain rule, which sets the amount to 0 for a protected victim; a feed that gave 0 stays 0. A dormant skill (the player's race tree does not list it) adds nothing. Test: `BloodSkillGameTests.keenFangsAddsBlood`.
+- Predator's Thirst (S-VAM-6) is the other BLOOD skill (phase 12c Task 4).
+
+## Blood skills (phase 12c, Task 3)
+
+- **Keen Fangs (S-VAM-1)** (`skill/BloodEffects`): a listener on Vampirism's `BloodDrinkEvent.PlayerDrinkBloodEvent` at `LOW` adds the skill's `extra_blood` (1) to the amount of a feed from a human-like victim (`HumanLikeBlood`, plan 11's check when the species part is on, else villagers and traders). The amount of the event is settable and is what the vampire's blood level receives, so nothing is added after the drink. It runs after the Vervain rule, which sets the amount to 0 for a protected victim; a feed that gave 0 stays 0. A dormant skill (the player's race tree does not list it) adds nothing. Test: `BloodSkillGameTests.keenFangsAddsBlood`.
+- Predator's Thirst (S-VAM-6) is the other BLOOD skill (phase 12c Task 4).
