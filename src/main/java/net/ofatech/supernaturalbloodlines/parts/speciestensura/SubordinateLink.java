@@ -45,7 +45,7 @@ public final class SubordinateLink {
         // catches a sire set while the part (or Tensura) was not there, and applies a switch that was turned off
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
-                sync(p);
+                onLogin(p, p.server.getPlayerList().getPlayers());
             }
         });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> WARNED.remove(e.getEntity().getUUID()));
@@ -102,12 +102,25 @@ public final class SubordinateLink {
     /**
      * Idempotent. A player with a sire who is still supernatural (a species, a vampire or werewolf, a Tensura undead or daemon race)
      * and no Tensura owner gets the sire as owner. With no sire, no longer supernatural (a cured player can keep a stale sire), or the
-     * switch off, the link this mod made is taken away again.
+     * switch off, the link this mod made is taken away again. A link made now also names the sired ({@link SireNaming}).
      */
     public static void sync(ServerPlayer p) {
+        sync(p, true);
+    }
+
+    /** One naming try per login and pair: the link made here is not a naming trigger, the {@link SireNaming#retryFor} that follows is. */
+    public static void onLogin(ServerPlayer p, Iterable<ServerPlayer> online) {
+        sync(p, false);
+        SireNaming.retryFor(p, online);
+    }
+
+    private static void sync(ServerPlayer p, boolean nameWhenLinked) {
         UUID sire = BloodlineAccess.get(p).boundSire();
         if (sire != null && SpeciesTensuraConfig.sireLink() && Supernatural.is(p)) {
-            link(p, sire);
+            boolean fresh = !sire.equals(TensuraStorages.getExistenceFrom(p).getPermanentOwner());
+            if (link(p, sire) && fresh && nameWhenLinked) {
+                SireNaming.tryName(p);
+            }
         } else {
             unlink(p);
         }

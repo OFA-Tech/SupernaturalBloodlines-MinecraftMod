@@ -6,8 +6,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "RaceInstanceMixin",
-    "RaceUtilsMixin",
-    "SireNamingMixin"
+    "RaceUtilsMixin"
   ],
   "injectors": {
     "defaultRequire": 0

@@ -41,10 +41,6 @@ public final class SpeciesTensuraPart {
         GhoulRace.register();
         SubordinateLink.register();
         SireNaming.register();
-        if (!SireNaming.hookApplied()) {
-            SupernaturalBloodlines.LOGGER.warn("species_tensura: the RequestNamingKeyPacket.isNotNameable hook is not in place, "
-                    + "a sire cannot name their sired player while Tensura's playerNaming game rule is off (the sireline link keeps working)");
-        }
         // the part is only initialised when its mods are present, so the tests only exist then
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(SpeciesLayerGameTests.class);

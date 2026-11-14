@@ -122,15 +122,17 @@ When someone is sired (see [Sirelines](Sirelines)), the sire becomes the **Tensu
 
 ### Sire naming (R101)
 
-A sire may **name their own sired** through Tensura's naming menu, **even with Tensura's `playerNaming` game rule off**.
+**Siring names the sired player in Tensura, automatically.** The name is the sired player's **own current name**, never a new one: it only makes the two mods compatible (Tensura's naming link). Siring itself needs no consent, and neither does this.
 
-- The sired must have **switched their own naming on** (sneak with the naming key; Tensura's players are not nameable by default) and have no Tensura name yet.
-- Only for the sire's own sired. Strangers and other sires are refused.
-- It costs the sire magicules, as Tensura says, and gives Tensura's reward (EP and stats).
-- **A sired player named this way never evolves** (the naming type is lowered to LOW). A sire who names at MEDIUM or HIGH is told once, in chat, that it grants EP and stats only. The sire still pays the cost they chose, and still risks the max-magicule loss.
-- Switch: `sire_naming_enabled` (default on). **This bypasses `playerNaming` for the sire and their sired only.** Turn it off if your server rule is meant to be absolute.
+- It uses Tensura's own naming, so the sire **pays Tensura's magicule cost** and the sired gets **Tensura's EP and stat reward**, as for a real LOW naming. LOW never gives an evolution, so a sired player is never evolved by their sire.
+- **`playerNaming=false` does not block it**, and the sired does not need to turn their own naming on. The rule and the toggle are lifted for that one call and given back; everybody else is still bound by the rule.
+- It happens when the sire link is made (siring, or the species arriving), and is tried again whenever the sired or the sire **logs in**. It needs the **sire online** and able to pay; a sire who is offline, or short of magicule, leaves the sired unnamed until the next login of either. Tensura's other checks stay (a sired with more EP than the sire cannot be named).
+- A sired who already has a Tensura name, or a Tensura owner who is not the sire, is left alone. A sired player the Rite of Severance freed keeps the name.
+- There is no menu exception for a sire any more; Tensura's naming menu follows Tensura's rules (`playerNaming`, the target's toggle) like for anyone. A sire's hand naming of their own sired is still forced to LOW, so a sire never evolves their sired.
+- Tensura's naming also fully heals the named player, removes harmful effects, makes them glow for 2 seconds and clears their tracked evolution (also when it happens at a later login). Players named by hand before this update keep their old name; a later account-name change is not followed. A sired player with more EP than the sire is never named, and the sire sees Tensura's refusal at each login.
+- Switch: `sire_naming_enabled` (default on). It needs `sire_subordinate_link_enabled` (the owner link is what Tensura's naming reads). Off: siring names nobody.
 
-- **The Rite of Severance** frees a sired player: the link is removed, and so is a Tensura owner a real naming set (only if it was the severed sire; someone else's owner and the name stay). A severed player is no longer the sire's to name. See [Rite of Severance](Rite-Of-Severance).
+- **The Rite of Severance** frees a sired player: the link is removed, and so is a Tensura owner a real naming set (only if it was the severed sire; someone else's owner and the name stay). A severed player keeps the name and gets no new one from the old sire. See [Rite of Severance](Rite-Of-Severance).
 
 To remove the links cleanly: set `sire_subordinate_link_enabled=false`, have everyone log in once, **then** disable the part. With the part off nothing runs and the links stay.
 
@@ -155,10 +157,10 @@ See [Werewolves and packs](Werewolves-And-Packs) for the ranks.
 
 ## Mixins in this integration
 
-`vampirism_tensura` uses 3 mixins (sun burn, sun debuffs, bite refusal) and `species_tensura` uses 3 (undead checks, evolution list and progress, sire naming). Each has `require = 0`: if Tensura renames a method after an update, the hook is skipped, the log says so, and the rest keeps working. See [Parts and compatibility](Parts-And-Compatibility#mixins).
+`vampirism_tensura` uses 3 mixins (sun burn, sun debuffs, bite refusal) and `species_tensura` uses 2 (undead checks, evolution list). Each has `require = 0`: if Tensura renames a method after an update, the hook is skipped, the log says so, and the rest keeps working. See [Parts and compatibility](Parts-And-Compatibility#mixins).
 
 ## Limits
 
 - Mastery of a dormant layer skill is lost (see above).
 - No race icon for the apex races.
-- Not played in a real client yet: the evolution screen offer, naming through the real menu, and Alpha rank skills in the skill list. See [Known limits](Known-Limits).
+- Not played in a real client yet: the evolution screen offer, the automatic sire naming at a real login, and Alpha rank skills in the skill list. See [Known limits](Known-Limits).
