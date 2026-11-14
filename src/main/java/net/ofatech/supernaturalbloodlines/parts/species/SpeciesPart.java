@@ -73,6 +73,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SiresBlood;
 import net.ofatech.supernaturalbloodlines.parts.species.doppelganger.DoppelgangerGene;
+import net.ofatech.supernaturalbloodlines.parts.species.doppelganger.DoppelgangerVillagers;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.DoppelgangerVillagerGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.GeneGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.GeneWerewolfGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.AncestralCallingRiteFactory;
@@ -120,6 +122,7 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(LineageRiteFactory.ID, LineageRiteFactory.CODEC);
         BloodlineAccess.useGeneVisibility(SpeciesConfig::genesAlwaysVisible);
         DoppelgangerGene.register(); // genes and doppelgänger villagers need no Werewolves
+        DoppelgangerVillagers.register();
         SpeciesRegistries.register(modBus);
         SpeciesSupernatural.register();
         // what the supernatural part's tasks need from here, through shared hooks
@@ -203,6 +206,7 @@ public final class SpeciesPart {
             e.register(TurningGameTests.class);
             e.register(GhoulGameTests.class);
             e.register(GeneGameTests.class);
+            e.register(DoppelgangerVillagerGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(GeneWerewolfGameTests.class);
                 e.register(SirelineHybridGameTests.class);

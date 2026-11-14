@@ -27,6 +27,12 @@ public final class ModAttachments {
                     .copyOnDeath()
                     .build());
 
+    /** A villager's doppelgänger roll (plan 12b, R14a); saved with the entity and rolled once, so a reload never rolls again. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<DoppelgangerRoll>> DOPPELGANGER_VILLAGER =
+            ATTACHMENTS.register("doppelganger_villager", () -> AttachmentType.builder(() -> DoppelgangerRoll.NONE)
+                    .serialize(DoppelgangerRoll.CODEC)
+                    .build());
+
     private ModAttachments() {
     }
 

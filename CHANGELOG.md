@@ -6,6 +6,7 @@ Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (owner de
 
 - **The doppelgänger gene (Task 1).** Every player rolls a second hidden gene once, at the first login after the update (`doppelganger_gene_chance`, default 5%). It can sit next to the werewolf gene and does nothing by itself. `/bloodline gene doppelganger <player> <true|false>` (level 2) sets it. `BloodlineState` gains `doppelganger_gene`, `doppelganger_rolled` and `revealed_genes` (old saves load with the defaults).
 - **Genes are discovered, not shown (Task 1).** New `gene_visibility` (`discovered`, default, or `always`). The client is only ever sent a gene the player has discovered (the Rite of Lineage (Reveal) or a werewolf awakening for the werewolf gene) and never anyone else's; otherwise it is told "unknown". A player who was already an awakened born werewolf or a bound hybrid counts as having discovered the werewolf gene.
+- **Doppelgänger villagers (Task 2).** Each villager has a 0.5% chance (`doppelganger_villager_chance`) of being a doppelgänger, rolled once the first time it is loaded (new spawns, breeding, village villagers, and old villagers after the update), never again. Unlimited per world; it looks and trades like any villager. The loaded ones are indexed per dimension for the compass (a later task).
 
 ## Unreleased: the supernatural race system, foundation (plan 12, phase 12a)
 

@@ -35,6 +35,8 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue LUNAR_ECLIPSE_CHANCE;
     public static final double DEFAULT_DOPPELGANGER_GENE_CHANCE = 0.05;
     private static final ModConfigSpec.DoubleValue DOPPELGANGER_GENE_CHANCE;
+    public static final double DEFAULT_DOPPELGANGER_VILLAGER_CHANCE = 0.005;
+    private static final ModConfigSpec.DoubleValue DOPPELGANGER_VILLAGER_CHANCE;
     public static final String GENES_DISCOVERED = "discovered";
     public static final String GENES_ALWAYS = "always";
     private static final ModConfigSpec.ConfigValue<String> GENE_VISIBILITY;
@@ -66,6 +68,8 @@ public final class SpeciesConfig {
                 .defineInRange("lunar_eclipse_chance", DEFAULT_LUNAR_ECLIPSE_CHANCE, 0.0, 1.0);
         DOPPELGANGER_GENE_CHANCE = b.comment("Chance that a player carries the hidden doppelgänger gene, rolled once at their first login after it existed. It can sit next to the werewolf gene.")
                 .defineInRange("doppelganger_gene_chance", DEFAULT_DOPPELGANGER_GENE_CHANCE, 0.0, 1.0);
+        DOPPELGANGER_VILLAGER_CHANCE = b.comment("Chance that a villager is a doppelgänger, rolled once the first time the villager is loaded (a new spawn, or an old villager after the update). Unlimited per world.")
+                .defineInRange("doppelganger_villager_chance", DEFAULT_DOPPELGANGER_VILLAGER_CHANCE, 0.0, 1.0);
         GENE_VISIBILITY = b.comment("discovered: a gene shows as Unknown to its player until the Rite of Revelation, a Doppelgänger Blood rite with their taglock, or a werewolf awakening finds it. always: a player always sees their own genes.")
                 .defineInList("gene_visibility", GENES_DISCOVERED, new java.util.ArrayList<>(java.util.List.of(GENES_DISCOVERED, GENES_ALWAYS)));
         b.pop();
@@ -150,6 +154,26 @@ public final class SpeciesConfig {
             return DOPPELGANGER_GENE_CHANCE.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_DOPPELGANGER_GENE_CHANCE;
+        }
+    }
+
+    private static volatile Double doppelgangerVillagerChanceOverride;
+
+    /** For tests: pins {@link #doppelgangerVillagerChance()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideDoppelgangerVillagerChance(Double value) {
+        doppelgangerVillagerChanceOverride = value;
+    }
+
+    public static double doppelgangerVillagerChance() {
+        Double pinned = doppelgangerVillagerChanceOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return DOPPELGANGER_VILLAGER_CHANCE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_DOPPELGANGER_VILLAGER_CHANCE;
         }
     }
 
