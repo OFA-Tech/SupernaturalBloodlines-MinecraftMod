@@ -30,12 +30,16 @@ public record SkillTablePayload(Map<String, String> skills, Map<String, String> 
     /** A skill TENSURA kind is hidden without Tensura without naming the mod in its file. */
     private static final String IMPLIED_MOD = "tensura";
 
+    /** The caps of {@link #STREAM_CODEC}: the reload listener skips files over them. */
+    public static final int NAME_BYTES = 64;
+    public static final int BODY_BYTES = 1 << 16;
+
     private static final Gson GSON = new Gson();
 
     private static final StreamCodec<ByteBuf, List<String>> NAMES = ByteBufCodecs.stringUtf8(64).apply(ByteBufCodecs.list(256));
 
     private static final StreamCodec<ByteBuf, Map<String, String>> FILES = ByteBufCodecs.<ByteBuf, String, String, Map<String, String>>map(HashMap::new,
-            ByteBufCodecs.stringUtf8(64), ByteBufCodecs.stringUtf8(1 << 16));
+            ByteBufCodecs.stringUtf8(NAME_BYTES), ByteBufCodecs.stringUtf8(BODY_BYTES));
 
     public static final StreamCodec<ByteBuf, SkillTablePayload> STREAM_CODEC = StreamCodec.composite(
             FILES, SkillTablePayload::skills,

@@ -57,4 +57,36 @@ public final class MountainAshWerewolfGameTests {
         }
         helper.succeed();
     }
-}
+
+    /** A witch-werewolf is prey (the werewolf faction) with Ashwarden (the witch tree): their own line must not push them, another's prey is. */
+    @GameTest(template = "tall", templateNamespace = NS, batch = "ashwarden")
+    public static void ashwardenNeverPushesTheLinesOwner(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer owner = MountainAshGameTests.player(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(owner).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not make a werewolf");
+        net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(owner,
+                net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState.NONE.toBuilder().species(net.ofatech.supernaturalbloodlines.core.bloodline.Species.WITCH).build());
+        net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.set(owner,
+                net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.get(owner).toBuilder().skills(java.util.Set.of("S-WIT-3")).build());
+        try {
+            MountainAshGameTests.layBy(helper, owner);
+            MountainAsh.pinOwner(owner);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.core.Supernatural.isPrey(owner), "setup: a witch-werewolf is not prey");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery.owns(owner, "S-WIT-3"), "setup: Ashwarden is not active for a witch-werewolf");
+            net.minecraft.world.entity.Mob other = MountainAshGameTests.touching(helper);
+            MountainAsh.ashwardenNow(other);
+            helper.assertTrue(other.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS), "setup: other prey was not pushed by the owner's line");
+            owner.setPos(helper.absoluteVec(new Vec3(6.65, 1, 1.5)));
+            owner.setDeltaMovement(Vec3.ZERO);
+            MountainAsh.ashwardenNow(owner);
+            helper.assertTrue(!owner.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS), "the line weakened its own placer");
+            helper.assertTrue(owner.getDeltaMovement().equals(Vec3.ZERO), "the line pushed its own placer: " + owner.getDeltaMovement());
+            other.discard();
+        } finally {
+            MountainAsh.unpinOwner(owner);
+        }
+        helper.succeed();
+    }}

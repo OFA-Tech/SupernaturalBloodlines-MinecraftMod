@@ -34,6 +34,60 @@ public final class ArtifactsSkillRuleGameTests {
         return p.getEffect(ArtifactItems.VERVAIN_EFFECT).getDuration();
     }
 
+    private static ServerPlayer predator(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        helper.assertTrue(de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p)
+                .setFactionAndLevel(de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        SupernaturalAccess.set(p, SupernaturalAccess.get(p).toBuilder().skills(Set.of("S-VAM-6")).build());
+        return p;
+    }
+
+    private static int blood(ServerPlayer p) {
+        return de.teamlapen.vampirism.api.VampirismAPI.vampirePlayer(p).getBloodStats().getBloodLevel();
+    }
+
+    /** Predator's Thirst must not turn the empty bite of R33 (a desiccated Original cannot feed) back into blood. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void predatorsThirstDoesNotFeedADesiccatedBiter(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer biter = predator(helper);
+        ServerPlayer victim = TestPlayers.create(helper);
+        helper.assertTrue(de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(victim)
+                .setFactionAndLevel(de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        de.teamlapen.vampirism.api.VampirismAPI.vampirePlayer(victim).drinkBlood(10, 0.1f, ResurrectionVervainGameTests.bitten(net.minecraft.world.entity.EntityType.VILLAGER.create(helper.getLevel())));
+        int before = blood(victim);
+        helper.assertTrue(ResurrectionVervainGameTests.bite(biter, victim).getAmount() == 10, "control: a plain biter did not get Vampirism's blood");
+        biter.addEffect(new MobEffectInstance(ArtifactItems.DESICCATED, 600));
+        int drained = blood(victim);
+        var empty = ResurrectionVervainGameTests.bite(biter, victim);
+        helper.assertTrue(empty.getAmount() == 0, "a desiccated biter was fed " + empty.getAmount());
+        helper.assertTrue(blood(victim) == drained && before > drained, "a desiccated biter drained the victim");
+        helper.succeed();
+    }
+
+    /** ...nor the empty bite on a vervain-protected victim (R94). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void predatorsThirstDoesNotFeedOnAVervainVictim(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer biter = predator(helper);
+        ServerPlayer victim = TestPlayers.create(helper);
+        helper.assertTrue(de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(victim)
+                .setFactionAndLevel(de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        de.teamlapen.vampirism.api.VampirismAPI.vampirePlayer(victim).drinkBlood(10, 0.1f, ResurrectionVervainGameTests.bitten(net.minecraft.world.entity.EntityType.VILLAGER.create(helper.getLevel())));
+        victim.addEffect(new MobEffectInstance(ArtifactItems.VERVAIN_EFFECT, 1200));
+        int before = blood(victim);
+        var empty = ResurrectionVervainGameTests.bite(biter, victim);
+        helper.assertTrue(empty.getAmount() == 0, "a vervain victim fed the biter " + empty.getAmount());
+        helper.assertTrue(blood(victim) == before, "a vervain victim was drained");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void vervainBloodDoublesTheTea(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.create(helper);

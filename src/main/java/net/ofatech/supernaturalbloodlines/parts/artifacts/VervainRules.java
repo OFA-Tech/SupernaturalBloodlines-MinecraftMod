@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.BiteProtection;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import de.teamlapen.vampirism.api.event.BloodDrinkEvent;
 import net.minecraft.world.damagesource.DamageSource;
@@ -34,6 +35,7 @@ public final class VervainRules {
     }
 
     public static void register() {
+        BiteProtection.register((biter, victim) -> AshDagger.isDesiccated(biter) || victim instanceof Player p && protects(p));
         CompulsionImmunity.register(e -> e instanceof Player p && protects(p));
         // the event is abstract: a listener goes on each of its subclasses (players, other creatures)
         NeoForge.EVENT_BUS.addListener((BloodDrinkEvent.PlayerDrinkBloodEvent e) -> onBlood(e));

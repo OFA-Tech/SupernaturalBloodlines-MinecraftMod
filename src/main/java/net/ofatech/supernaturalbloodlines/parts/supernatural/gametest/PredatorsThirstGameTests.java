@@ -137,6 +137,7 @@ public final class PredatorsThirstGameTests {
         mob.setHealth(1.5f);
         feed(biter, mob, 0);
         helper.assertTrue(mob.isAlive() && mob.getHealth() >= 1f, "the drain killed the mob");
+        mob.discard();
         helper.succeed();
     }
 

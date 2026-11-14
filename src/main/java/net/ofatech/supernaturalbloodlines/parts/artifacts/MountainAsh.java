@@ -78,6 +78,24 @@ public final class MountainAsh {
     private MountainAsh() {
     }
 
+    /** For tests: runs Ashwarden for one entity now (the listener only does it every 5 ticks, and fake players do not tick). */
+    @org.jetbrains.annotations.VisibleForTesting
+    public static void ashwardenNow(net.minecraft.world.entity.LivingEntity entity) {
+        entity.tickCount -= entity.tickCount % MountainAshRules.ASHWARDEN_CHECK_TICKS;
+        MountainAshRules.ashwarden(entity);
+    }
+
+    /** For tests: lets a player the player list does not have (a fake player) own lines; unpin with {@link #unpinOwner}. */
+    @org.jetbrains.annotations.VisibleForTesting
+    public static void pinOwner(net.minecraft.world.entity.player.Player player) {
+        MountainAshRules.pinOwner(player.getUUID(), player);
+    }
+
+    @org.jetbrains.annotations.VisibleForTesting
+    public static void unpinOwner(net.minecraft.world.entity.player.Player player) {
+        MountainAshRules.pinOwner(player.getUUID(), null);
+    }
+
     static void register(IEventBus modBus) {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);

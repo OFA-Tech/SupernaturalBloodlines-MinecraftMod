@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural;
 
+import net.ofatech.supernaturalbloodlines.parts.supernatural.net.SkillTablePayload;
+import net.ofatech.supernaturalbloodlines.core.supernatural.PayloadCaps;
 import net.ofatech.supernaturalbloodlines.core.EnabledParts;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -31,7 +33,8 @@ public final class SkillReloadListener extends SimpleJsonResourceReloadListener 
         Map<String, JsonElement> skills = new HashMap<>();
         Map<String, JsonElement> trees = new HashMap<>();
         Map<String, JsonElement> quests = new HashMap<>();
-        files.forEach((id, json) -> {
+        PayloadCaps caps = new PayloadCaps();
+        new java.util.TreeMap<>(files).forEach((id, json) -> {
             String path = id.getPath();
             boolean skill = path.startsWith("skill/");
             boolean quest = path.startsWith("quest/");
@@ -41,7 +44,14 @@ public final class SkillReloadListener extends SimpleJsonResourceReloadListener 
             if (!id.getNamespace().equals(SupernaturalBloodlines.MODID)) {
                 SupernaturalBloodlines.LOGGER.warn("Skill file {} ignored: only the {} namespace holds skills", id, SupernaturalBloodlines.MODID);
             } else {
-                (skill ? skills : quest ? quests : trees).put(path.substring(path.indexOf('/') + 1), json);
+                String name = path.substring(path.indexOf('/') + 1);
+                // the same limits as SkillTablePayload: a file over them would disconnect every player when the table is sent
+                String tooBig = caps.check(name, json, SkillTablePayload.NAME_BYTES, SkillTablePayload.BODY_BYTES);
+                if (tooBig != null) {
+                    SupernaturalBloodlines.LOGGER.error("Skill file {} skipped: {}", id, tooBig);
+                } else {
+                    (skill ? skills : quest ? quests : trees).put(name, json);
+                }
             }
         });
         SkillTable.Parsed parsed = SkillTable.parse(skills, trees, quests, ModList.get()::isLoaded, EnabledParts::isEnabled);

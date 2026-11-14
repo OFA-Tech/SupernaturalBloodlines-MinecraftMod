@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.skill;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.BiteProtection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -55,7 +56,9 @@ public final class BloodEffects {
         if (extra > 0 && e.getAmount() > 0 && HumanLikeBlood.test(source) && firstBiteOfThisFeed(p, source)) {
             e.setAmount(e.getAmount() + extra);
         }
-        if (source != p && VampirismAPI.factionRegistry().getFaction(source) == VReference.VAMPIRE_FACTION && LadderQuery.owns(p, "S-VAM-6")) {
+        // a bite that something emptied on purpose (a desiccated biter, a vervain victim) stays empty: no fallback blood, no drain
+        if (source != p && VampirismAPI.factionRegistry().getFaction(source) == VReference.VAMPIRE_FACTION && LadderQuery.owns(p, "S-VAM-6")
+                && !BiteProtection.protectedBite(p, source)) {
             predatorsThirst(e, source);
         }
     }

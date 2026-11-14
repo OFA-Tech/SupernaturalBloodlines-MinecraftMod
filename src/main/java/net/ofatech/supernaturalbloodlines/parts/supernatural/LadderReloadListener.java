@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural;
 
+import net.ofatech.supernaturalbloodlines.parts.supernatural.net.LadderTablePayload;
+import net.ofatech.supernaturalbloodlines.core.supernatural.PayloadCaps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -29,9 +31,16 @@ public final class LadderReloadListener extends SimpleJsonResourceReloadListener
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> files, ResourceManager manager, ProfilerFiller profiler) {
         Map<String, JsonElement> byRace = new HashMap<>();
-        files.forEach((id, json) -> {
+        PayloadCaps caps = new PayloadCaps();
+        new java.util.TreeMap<>(files).forEach((id, json) -> {
             if (id.getNamespace().equals(SupernaturalBloodlines.MODID)) {
-                byRace.put(id.getPath(), json);
+                // the same limits as LadderTablePayload: a file over them would disconnect every player when the table is sent
+                String tooBig = caps.check(id.getPath(), json, LadderTablePayload.NAME_BYTES, LadderTablePayload.BODY_BYTES);
+                if (tooBig != null) {
+                    SupernaturalBloodlines.LOGGER.error("Ladder {} skipped: {}", id, tooBig);
+                } else {
+                    byRace.put(id.getPath(), json);
+                }
             } else {
                 SupernaturalBloodlines.LOGGER.warn("Ladder {} ignored: only the {} namespace holds ladders", id, SupernaturalBloodlines.MODID);
             }

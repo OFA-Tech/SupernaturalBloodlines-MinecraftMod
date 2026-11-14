@@ -33,8 +33,26 @@ final class MountainAshRules {
      * Ashwarden (S-WIT-3): a vampire or werewolf type that touches a line whose placer is online and owns the skill is pushed back
      * and gets Weakness I for 5 seconds. "Touch" is the body within a tenth of a block of the line's cell, checked every
      * {@value #ASHWARDEN_CHECK_TICKS} ticks and only for prey. A line whose placer is offline, never recorded or without the
-     * skill (dormant included) only blocks, as before. (The skill reads the placer, so it follows them: no skill, no effect.)
+     * skill (dormant included) only blocks, as before. A line never pushes its own placer (a tribrid witch is prey to their own line). (The skill reads the placer, so it follows them: no skill, no effect.)
      */
+    // tests run side by side, so this is a set of players, not one lookup that the next test would replace
+    private static final java.util.Map<java.util.UUID, Player> PINNED_OWNERS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** For tests: lets a player the player list does not have (a fake player) own lines; {@code null} as the player removes the id. */
+    static void pinOwner(java.util.UUID id, Player player) {
+        if (player == null) {
+            PINNED_OWNERS.remove(id);
+        } else {
+            PINNED_OWNERS.put(id, player);
+        }
+    }
+
+    /** The line's owner when online anywhere on the server (the player list, not just this dimension). */
+    private static Player owner(Level level, java.util.UUID id) {
+        Player p = PINNED_OWNERS.get(id);
+        return p != null || level.getServer() == null ? p : level.getServer().getPlayerList().getPlayer(id);
+    }
+
     static void ashwarden(LivingEntity entity) {
         Level level = entity.level();
         if (level.isClientSide || entity.tickCount % ASHWARDEN_CHECK_TICKS != 0 || !Supernatural.isPrey(entity)) {
@@ -43,7 +61,8 @@ final class MountainAshRules {
         AABB box = entity.getBoundingBox().inflate(0.1, -0.05, 0.1);
         for (BlockPos pos : BlockPos.betweenClosed(BlockPos.containing(box.minX, box.minY, box.minZ), BlockPos.containing(box.maxX, box.minY, box.maxZ))) {
             if (level.getBlockState(pos).is(MountainAsh.LINE.get()) && level.getBlockEntity(pos) instanceof MountainAshLineBlockEntity line
-                    && line.owner() != null && level.getPlayerByUUID(line.owner()) instanceof Player owner && LadderQuery.owns(owner, "S-WIT-3")) {
+                    && line.owner() != null && !line.owner().equals(entity.getUUID())
+                    && owner(level, line.owner()) instanceof Player owner && LadderQuery.owns(owner, "S-WIT-3")) {
                 Vec3 away = entity.position().subtract(Vec3.atCenterOf(pos)).multiply(1, 0, 1);
                 away = away.lengthSqr() < 1.0E-6 ? new Vec3(1, 0, 0) : away.normalize();
                 entity.setDeltaMovement(away.x * ASHWARDEN_PUSH, 0.2, away.z * ASHWARDEN_PUSH);
