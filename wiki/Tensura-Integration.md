@@ -63,7 +63,7 @@ When a layer says undead, Tensura treats the player as undead:
 - infection immunity
 - Enervation on food, and the rest of what Tensura asks of its undead checks
 
-A plain Vampirism vampire counts as well: they go from x1.5 to Tensura's x3 holy damage. This is wider than "holy damage and sunlight", so it has its own switch: `undead_treatment_enabled`. Off: skills and bonuses stay, Tensura's undead checks are left alone, and the x1.5 multiplier of `tensura_holy_vs_vampire` returns.
+A plain Vampirism vampire counts as well: they go from x1.5 to Tensura's x3 holy damage, plus infection immunity and Enervation from food (Tensura's undead rules). This is wider than "holy damage and sunlight", so it has its own switch: `undead_treatment_enabled`. Off: skills and bonuses stay, Tensura's undead checks are left alone, and the x1.5 multiplier of `tensura_holy_vs_vampire` returns.
 
 Being undead does **not** by itself make a player bloodless. (The apex races below are undead but stay bitable.)
 
