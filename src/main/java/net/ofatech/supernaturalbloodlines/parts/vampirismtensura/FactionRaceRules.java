@@ -19,7 +19,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.shared.tensura.LayerQuery;
-import org.jetbrains.annotations.Nullable;
+import net.ofatech.supernaturalbloodlines.shared.tensura.RaceTags;
 
 /**
  * Which Tensura races may be hunters or werewolves, and which are bloodless. The race tags are ManasCore race tags
@@ -31,8 +31,6 @@ public final class FactionRaceRules {
     public static final String BITE_BLOODLESS = "supernaturalbloodlines.vampirism_tensura.bite_bloodless";
     public static final ResourceLocation WEREWOLF_FACTION_ID = ResourceLocation.parse("werewolves:werewolf");
 
-    private static final TagKey<ManasRace> UNDEAD = raceTag("undead");
-    private static final TagKey<ManasRace> DAEMON = raceTag("daemon");
     private static final TagKey<ManasRace> NO_BLOOD = raceTag("no_blood");
 
     private FactionRaceRules() {}
@@ -44,10 +42,6 @@ public final class FactionRaceRules {
     static void register() {
         NeoForge.EVENT_BUS.addListener(FactionRaceRules::onCanJoinFaction);
         RaceEvents.SET_RACE.register(FactionRaceRules::onSetRace);
-    }
-
-    private static boolean isUndeadOrDaemon(@Nullable ManasRaceInstance race) {
-        return race != null && (race.is(UNDEAD) || race.is(DAEMON));
     }
 
     /** A player whose Tensura race has no blood: the vampire bite is refused (see VampirePlayerBiteMixin). */
@@ -63,11 +57,11 @@ public final class FactionRaceRules {
         ManasRaceInstance race = RaceAPI.getRaceFrom(p).getRace().orElse(null);
         boolean apex = race != null && LayerQuery.isApexVampireType(p, race.getRaceId()); // R103: apex races of vampire-type species
         if (event.getFactionToJoin() == VReference.HUNTER_FACTION) {
-            if (isUndeadOrDaemon(race) && !apex) {
+            if (RaceTags.isUndeadOrDaemon(race) && !apex) {
                 event.setBehavior(PlayerFactionEvent.CanJoinFaction.Behavior.DENY);
             }
         } else if (WEREWOLF_FACTION_ID.equals(event.getFactionToJoin().getID())
-                && (isUndeadOrDaemon(race) || race != null && race.is(NO_BLOOD)) && !apex) {
+                && (RaceTags.isUndeadOrDaemon(race) || race != null && race.is(NO_BLOOD)) && !apex) {
             event.setBehavior(PlayerFactionEvent.CanJoinFaction.Behavior.DENY);
         }
     }
@@ -76,7 +70,7 @@ public final class FactionRaceRules {
     // touch the race, so it cannot bounce back into the "vampire_sync" listeners and needs no guard.
     private static EventResult onSetRace(ManasRaceInstance oldRace, LivingEntity entity, ManasRaceInstance newRace,
                                          boolean flag, Changeable<Boolean> changeable, Changeable<MutableComponent> message) {
-        if (entity instanceof ServerPlayer p && !p.level().isClientSide && isUndeadOrDaemon(newRace)
+        if (entity instanceof ServerPlayer p && !p.level().isClientSide && RaceTags.isUndeadOrDaemon(newRace)
                 && !LayerQuery.isApexVampireType(p, newRace.getRaceId())) { // R103
             IFactionPlayerHandler handler = VampirismAPI.factionPlayerHandler(p);
             if (handler.getCurrentFaction() == VReference.HUNTER_FACTION) {
