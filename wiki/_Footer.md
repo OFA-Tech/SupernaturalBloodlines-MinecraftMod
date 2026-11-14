@@ -1,0 +1,1 @@
+SupernaturalBloodlines · [GitHub](https://github.com/OFA-Tech/SupernaturalBloodlines-MinecraftMod) · MIT license · This wiki is generated from the repository's `wiki/` folder: edit it there, not here.
