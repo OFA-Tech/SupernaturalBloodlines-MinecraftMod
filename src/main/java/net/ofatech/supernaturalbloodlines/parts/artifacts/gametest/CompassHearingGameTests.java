@@ -147,6 +147,7 @@ public final class CompassHearingGameTests {
         ServerPlayer p = holder(helper);
         vampireMob(helper, new BlockPos(6, 1, 1));
         ItemStack held = new ItemStack(ArtifactItems.VAMPIRE_COMPASS.get());
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, held); // only a held compass is kept up to date
         p.tickCount = 7;
         held.inventoryTick(helper.getLevel(), p, 0, true);
         helper.assertTrue(held.get(DataComponents.LODESTONE_TRACKER) == null, "updated off the 20 tick beat");

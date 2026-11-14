@@ -17,6 +17,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
@@ -73,9 +74,13 @@ public final class CompassGameTests {
         }
     }
 
+    /** The doppelgänger villagers this test made: the index source lists only these, so villagers of tests running beside it never count. */
+    private static final List<Villager> OWN = new ArrayList<>();
+
     private static Villager doppelganger(GameTestHelper helper, BlockPos at) {
         Villager v = helper.spawn(EntityType.VILLAGER, at);
         v.setData(ModAttachments.DOPPELGANGER_VILLAGER, new DoppelgangerRoll(true, true));
+        OWN.add(v);
         return v;
     }
 
@@ -85,16 +90,29 @@ public final class CompassGameTests {
         return v;
     }
 
-    /** Runs {@code body} with an index that lists every villager marked as a doppelgänger in the level. */
+    /** Runs {@code body} with an index that lists the doppelgänger villagers made by this test ({@link #OWN}) that are still in the level. */
     private static void withIndex(GameTestHelper helper, Runnable body) {
         DoppelgangerIndex.Source before = DoppelgangerIndex.current();
-        DoppelgangerIndex.set(level -> level.getEntities(EntityType.VILLAGER, e -> e.hasData(ModAttachments.DOPPELGANGER_VILLAGER)
-                && e.getData(ModAttachments.DOPPELGANGER_VILLAGER).doppelganger()));
+        OWN.clear();
+        DoppelgangerIndex.set(level -> OWN.stream().filter(v -> !v.isRemoved() && v.level() == level).toList());
         try {
             body.run();
         } finally {
             DoppelgangerIndex.set(before);
+            OWN.clear();
         }
+    }
+
+    /** The gene player nearest to {@code from} in the level, whoever made them: the compass sees every player, so the test compares against this. */
+    private static ServerPlayer nearestGenePlayer(GameTestHelper helper, ServerPlayer from) {
+        ServerPlayer best = null;
+        for (ServerPlayer p : helper.getLevel().players()) {
+            if (p != from && p.isAlive() && !p.isCreative() && !p.isSpectator() && BloodlineAccess.get(p).doppelgangerGene()
+                    && (best == null || p.distanceToSqr(from) < best.distanceToSqr(from))) {
+                best = p;
+            }
+        }
+        return best;
     }
 
     private static Optional<GlobalPos> target(ItemStack compass) {
@@ -237,18 +255,25 @@ public final class CompassGameTests {
             ItemStack stack = compass(CompassMode.DOPPELGANGERS);
             withIndex(helper, () -> {
                 update(helper, stack, p);
-                helper.assertTrue(pointsAt(stack, carrier), "the gene player 600 blocks away is not the target: " + target(stack));
+                ServerPlayer expected = nearestGenePlayer(helper, p);
+                helper.assertTrue(expected != null && BloodlineAccess.get(carrier).doppelgangerGene(), "setup: the carrier is not a gene player in the level");
+                helper.assertTrue(pointsAt(stack, expected), "the nearest gene player is not the target: " + target(stack) + ", expected " + expected.blockPosition()
+                        + (expected == carrier ? "" : " (a gene player of another test was nearer than the one 600 blocks away)"));
+                helper.assertTrue(carrier.distanceToSqr(p) > 512.0 * 512.0, "setup: the carrier is inside the villager range");
                 // a nearer doppelgänger villager takes over, a farther one does not
                 Villager near = doppelganger(helper, new BlockPos(6, 1, 1));
                 update(helper, stack, p);
-                helper.assertTrue(pointsAt(stack, near), "a nearer villager did not win over the far player");
+                helper.assertTrue(pointsAt(stack, near) || nearestGenePlayer(helper, p) != null && nearestGenePlayer(helper, p).distanceToSqr(p) < near.distanceToSqr(p),
+                        "a nearer villager did not win over the far player");
             });
             // the holder's own gene is not a target
             BloodlineAccess.set(p, GENE);
             BloodlineAccess.set(carrier, BloodlineState.NONE);
             ItemStack own = compass(CompassMode.DOPPELGANGERS);
             update(helper, own, p);
-            helper.assertTrue(target(own) != null && target(own).isEmpty(), "the holder points at themself: " + target(own));
+            ServerPlayer other = nearestGenePlayer(helper, p); // gene players of tests running beside this one
+            helper.assertTrue(other == null ? target(own) != null && target(own).isEmpty() : pointsAt(own, other),
+                    "the holder points at themself or at the wrong player: " + target(own));
         } finally {
             leave(helper, p, carrier, plainPlayer);
             BloodlineAccess.set(p, BloodlineState.NONE);
@@ -328,4 +353,70 @@ public final class CompassGameTests {
         }
         helper.succeed();
     }
-}
+
+    // ---- privacy: the needle only knows a target while the compass is held ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void trackerIsClearedWhenTheCompassIsNoLongerHeld(GameTestHelper helper) {
+        ServerPlayer p = holder(helper);
+        withIndex(helper, () -> {
+            Villager near = doppelganger(helper, new BlockPos(5, 1, 1));
+            Mob vampire = vampireMob(helper, new BlockPos(7, 1, 1));
+            for (CompassMode mode : CompassMode.values()) {
+                Entity expected = mode == CompassMode.VAMPIRES ? vampire : near;
+                ItemStack stack = compass(mode);
+                p.getInventory().clearContent();
+                p.setItemInHand(InteractionHand.MAIN_HAND, stack);
+
+                // held in the main hand: updated on the beat
+                p.tickCount = 40;
+                stack.inventoryTick(helper.getLevel(), p, 0, true);
+                helper.assertTrue(pointsAt(stack, expected), mode + ": a held compass has no target: " + target(stack));
+
+                // put away in the inventory: cleared at once, not on the next beat
+                p.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                p.getInventory().setItem(5, stack);
+                p.tickCount = 41;
+                stack.inventoryTick(helper.getLevel(), p, 5, false);
+                helper.assertTrue(target(stack) != null && target(stack).isEmpty(), mode + ": a compass in the inventory still points at " + target(stack));
+                p.tickCount = 60;
+                stack.inventoryTick(helper.getLevel(), p, 5, false);
+                helper.assertTrue(target(stack).isEmpty(), mode + ": a compass in the inventory was updated");
+
+                // the off hand counts as held
+                p.getInventory().setItem(5, ItemStack.EMPTY);
+                p.setItemInHand(InteractionHand.OFF_HAND, stack);
+                p.tickCount = 80;
+                stack.inventoryTick(helper.getLevel(), p, 40, false);
+                helper.assertTrue(pointsAt(stack, expected), mode + ": an off hand compass has no target: " + target(stack));
+                p.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+
+                // dropped: cleared as the item entity joins
+                stack.set(DataComponents.LODESTONE_TRACKER, new LodestoneTracker(Optional.of(GlobalPos.of(helper.getLevel().dimension(), expected.blockPosition())), false));
+                ItemEntity drop = new ItemEntity(helper.getLevel(), p.getX(), p.getY(), p.getZ(), stack.copy());
+                helper.getLevel().addFreshEntity(drop);
+                helper.assertTrue(target(drop.getItem()) != null && target(drop.getItem()).isEmpty(), mode + ": a dropped compass still points at " + target(drop.getItem()));
+                drop.discard();
+
+                // put into a container: cleared when the player closes it
+                ItemStack stored = stack.copy();
+                var container = new net.minecraft.world.SimpleContainer(27);
+                container.setItem(3, stored);
+                var menu = net.minecraft.world.inventory.ChestMenu.threeRows(0, p.getInventory(), container);
+                net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.player.PlayerContainerEvent.Close(p, menu));
+                helper.assertTrue(target(stored) != null && target(stored).isEmpty(), mode + ": a compass in a closed container still points at " + target(stored));
+            }
+        });
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aCompassWithNoTargetGetsNoComponentWhenNotHeld(GameTestHelper helper) {
+        ServerPlayer p = holder(helper);
+        ItemStack stack = compass(null);
+        p.getInventory().setItem(5, stack);
+        p.tickCount = 40;
+        stack.inventoryTick(helper.getLevel(), p, 5, false);
+        helper.assertTrue(stack.get(DataComponents.LODESTONE_TRACKER) == null, "an idle compass in the inventory got a tracker");
+        helper.succeed();
+    }}

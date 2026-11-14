@@ -47,10 +47,34 @@ public class VampireCompassItem extends Item {
         return stack.getOrDefault(ArtifactItems.COMPASS_MODE.get(), CompassMode.VAMPIRES);
     }
 
+    /**
+     * The needle is only kept up to date while the compass is in the main hand or the off hand, and its target is cleared as soon as it
+     * is not (put away in the inventory here; dropped or put in a container in {@link CompassPrivacy}). A target in the tracker is synced
+     * to clients and saved with the stack, and in Doppelgänger mode it is a player's exact position, which only the holder looking at the
+     * needle may learn.
+     */
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity holder, int slot, boolean selected) {
-        if (!level.isClientSide && holder.tickCount % PERIOD == 0) {
+        if (level.isClientSide) {
+            return;
+        }
+        if (!heldBy(stack, holder)) {
+            clearTarget(stack);
+        } else if (holder.tickCount % PERIOD == 0) {
             update(stack, level, holder);
+        }
+    }
+
+    /** In the main hand or the off hand of {@code holder} (the very same stack, not an equal one). */
+    public static boolean heldBy(ItemStack stack, Entity holder) {
+        return holder instanceof LivingEntity living && (living.getMainHandItem() == stack || living.getOffhandItem() == stack);
+    }
+
+    /** Empties the needle if it points anywhere; a stack with no target is left untouched (no component is added). */
+    public static void clearTarget(ItemStack stack) {
+        LodestoneTracker tracker = stack.get(DataComponents.LODESTONE_TRACKER);
+        if (tracker != null && tracker.target().isPresent()) {
+            stack.set(DataComponents.LODESTONE_TRACKER, new LodestoneTracker(Optional.empty(), false));
         }
     }
 

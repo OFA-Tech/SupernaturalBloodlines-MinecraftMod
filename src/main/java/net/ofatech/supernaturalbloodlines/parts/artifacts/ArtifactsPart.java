@@ -20,6 +20,7 @@ import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.MountainAshWe
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ResurrectionVervainGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.RingGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.WolfsbaneGameTests;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.item.CompassPrivacy;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.rite.BindItemRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.rite.RequiresDesiccatedRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves.MoonRing;
@@ -42,6 +43,7 @@ public final class ArtifactsPart {
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modBus.addListener(ArtifactsClient::onClientSetup);
         }
+        CompassPrivacy.register();
         AshDagger.register();
         SunRing.register();
         ResurrectionRing.register();
