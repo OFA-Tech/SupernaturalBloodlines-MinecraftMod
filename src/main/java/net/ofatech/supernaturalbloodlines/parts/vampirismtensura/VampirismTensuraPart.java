@@ -24,6 +24,7 @@ public final class VampirismTensuraPart {
         boolean werewolves = ModList.get().isLoaded("werewolves");
         if (werewolves) {
             WerewolfSkillGrants.register();
+            // after VampireSync (registered above): a vampire who becomes a werewolf is cured to human first, and only then can this map human to beastfolk
             WerewolfRaceSync.register();
         }
         // the part is only initialised when Vampirism and Tensura are present, so the tests only exist then;

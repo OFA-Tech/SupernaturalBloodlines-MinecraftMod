@@ -198,7 +198,8 @@ class PackRulesTest {
         assertEquals(Rank.BETA, o.state().rank());
         assertEquals(ALPHA, o.state().packAlpha());
         assertEquals(1_000_000, o.state().betaSince());
-        assertEquals(Rank.BETA, PackRules.apply(wolf(Lineage.BITTEN, Rank.TRUE_ALPHA), SPARK_GIVEN_UP, ctx()).state().rank());
+        WolfState trueAlpha = wolf(Lineage.BITTEN, Rank.TRUE_ALPHA);
+        assertRefused(PackRules.apply(trueAlpha, SPARK_GIVEN_UP, ctx()), trueAlpha, "true_alpha_keeps_spark");
         WolfState beta = wolf(Lineage.BITTEN, Rank.BETA);
         assertEquals(beta, PackRules.apply(beta, SPARK_GIVEN_UP, ctx()).state());
     }

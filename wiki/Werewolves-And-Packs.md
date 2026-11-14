@@ -79,7 +79,7 @@ Checked every minute (1200 ticks), for Betas in the werewolf faction:
 
 There is **no limit** on True Alphas per world. When it happens: "Your eyes burn red: you have earned the spark. You are a True Alpha."
 
-A True Alpha **keeps the spark**: it cannot be stolen, inherited or given up. If they are cured or leave the werewolves they stay True Alpha, dormant (no attack or health perk, no `/pack invite`, `heal` or `emissary`). Their pack dissolves as for any Alpha and is **not** restored. Rejoining the werewolves brings the perks back.
+A True Alpha **keeps the spark**: it cannot be stolen, inherited or given up. If they are cured or leave the werewolves they stay True Alpha, dormant (no attack or health perk, no `/pack invite`, `heal` or `emissary`). Their pack dissolves as for any Alpha and is **not** restored. Rejoining the werewolves brings the perks back. The Cure and the Rite of the Silver Moon do not take the True Alpha rank either. A plain Alpha who is cured passes the spark on like one who leaves.
 
 ### Tensura race
 

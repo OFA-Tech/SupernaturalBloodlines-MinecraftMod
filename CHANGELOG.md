@@ -22,6 +22,12 @@ Owner decisions of 2026-11-14, applied to existing parts. Spec `docs/superpowers
 
 - **Holy damage explained (plan 10, docs only).** `undead_treatment_enabled` on (default): vampires take x3 Tensura holy damage plus Tensura's undead rules. Off: x1.5 through `tensura_holy_vs_vampire`. No code change.
 
+- **Review round 2 (plan 10, species).**
+  - The Cure and the Rite of the Silver Moon no longer wipe a True Alpha's rank: they stay True Alpha (dormant), with their lineage and tracked rank skills; every other rank is cleared as before. Their pack dissolves and nobody inherits.
+  - A cured plain Alpha now passes the spark to the best online Beta, or dissolves the pack, like leaving the werewolves does (before, the cure left the pack behind).
+  - A dormant True Alpha's pending bite makes an Omega with no pack. `SPARK_GIVEN_UP` is refused for a True Alpha.
+  - R20b rulings recorded: a True Alpha rejoining as a human goes straight to `spirit_beast`; witch and siphoner werewolves on the human race keep their race.
+
 ## Unreleased: Rite of Severance (R101b, species part)
 
 Needs the species part (Vampirism and Enchanted). Details in `docs/parts/species.md`, rule R101b in `SPECIES-RULES.md`.

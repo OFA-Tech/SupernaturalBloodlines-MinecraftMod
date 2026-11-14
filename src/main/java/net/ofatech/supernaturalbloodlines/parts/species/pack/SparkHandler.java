@@ -57,6 +57,20 @@ public final class SparkHandler {
         // innocent kill): a death something prevented is no kill
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LivingDeathEvent.class, SparkHandler::onDeath);
         NeoForge.EVENT_BUS.addListener(SparkHandler::onFaction);
+        BloodlineAccess.addListener(SparkHandler::onWolfLayerCleared);
+    }
+
+    /**
+     * A cure (the Cure, the Silver Moon, a command) clears the wolf layer, rank included, before the faction is left, so
+     * {@link #onFaction} would see a player who is no Alpha any more. The spark moves here instead: the layer is
+     * cleared (lineage gone) while the player is still a werewolf. A True Alpha keeps the rank and is not cleared.
+     */
+    private static void onWolfLayerCleared(ServerPlayer p, BloodlineAccess.BloodlineChange change) {
+        WolfState before = change.before().wolf();
+        if (before.rank() == Rank.ALPHA && change.after().wolf().lineage() == Lineage.NONE && before.lineage() != Lineage.NONE
+                && !p.level().isClientSide && VampirismSupernatural.isWerewolf(p)) {
+            passOn(p);
+        }
     }
 
     /** The damage source's attacker, else the vanilla kill credit (the last attacker of a victim who fell or burned). */
@@ -141,7 +155,7 @@ public final class SparkHandler {
         return best;
     }
 
-    /** The Alpha leaves the werewolves or is cured: the spark goes to the heir, the Alpha is an Omega with no pack. */
+    /** The Alpha leaves the werewolves or is cured: the spark goes to the heir, the Alpha is an Omega with no pack. A True Alpha only dissolves the pack. */
     static void passOn(ServerPlayer alpha) {
         if (PackAccess.wolf(alpha).rank() == Rank.TRUE_ALPHA) {
             // a True Alpha keeps the spark and the rank (dormant outside the faction): only the pack dissolves
@@ -205,7 +219,8 @@ public final class SparkHandler {
     public static boolean hasSpark(MinecraftServer server, UUID alpha) {
         ServerPlayer online = SireCall.player(server, alpha);
         if (online != null) {
-            return PackAccess.isAlpha(PackAccess.wolf(online).rank());
+            // a dormant True Alpha (cured, outside the faction) holds the rank but cannot bite anyone into a pack
+            return PackAccess.isAlpha(PackAccess.wolf(online).rank()) && VampirismSupernatural.isWerewolf(online);
         }
         return !PackIndex.get(server.overworld()).isFormerAlpha(alpha);
     }

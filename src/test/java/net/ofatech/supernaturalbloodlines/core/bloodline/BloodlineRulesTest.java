@@ -733,4 +733,48 @@ class BloodlineRulesTest {
         BloodlineState severed = sired.toBuilder().severedSire(SIRE).build();
         assertRefused(run(severed, RITE_OF_SEVERANCE, ctx().withBloodSource(SIRE)), severed, "bond_already_broken");
     }
+
+    // ---- A True Alpha keeps the rank through every cure (plan 10) ----
+
+    private static BloodlineState wolfOf(WolfState.Rank rank) {
+        WolfState w = WolfState.NONE.toBuilder().lineage(WolfState.Lineage.BITTEN).rank(rank).geneRolled(true).latentGene(true)
+                .defenderKills(300).grantedSkills(java.util.Set.of("tensura:commander")).build();
+        return BloodlineState.NONE.toBuilder().wolf(w).build();
+    }
+
+    @Test
+    void theCureAndTheSilverMoonKeepATrueAlpha() {
+        BloodlineState ta = wolfOf(WolfState.Rank.TRUE_ALPHA);
+        for (Outcome o : new Outcome[] {run(ta, DRANK_THE_CURE, ctx().withFaction(BaseFaction.WEREWOLF)),
+                run(ta, RITE_OF_THE_SILVER_MOON, ctx().withFaction(BaseFaction.WEREWOLF))}) {
+            assertFalse(o.refused());
+            assertTrue(o.actions().contains(Action.LEAVE_FACTION));
+            WolfState w = o.state().wolf();
+            assertEquals(WolfState.Rank.TRUE_ALPHA, w.rank());
+            assertEquals(WolfState.Lineage.BITTEN, w.lineage());
+            assertEquals(java.util.Set.of("tensura:commander"), w.grantedSkills());
+            assertNull(w.packAlpha());
+        }
+    }
+
+    @Test
+    void theCureAndTheSilverMoonStillWipeEveryOtherRank() {
+        for (WolfState.Rank r : new WolfState.Rank[] {WolfState.Rank.ALPHA, WolfState.Rank.BETA, WolfState.Rank.OMEGA}) {
+            BloodlineState s = wolfOf(r);
+            for (Outcome o : new Outcome[] {run(s, DRANK_THE_CURE, ctx().withFaction(BaseFaction.WEREWOLF)),
+                    run(s, RITE_OF_THE_SILVER_MOON, ctx().withFaction(BaseFaction.WEREWOLF))}) {
+                WolfState w = o.state().wolf();
+                assertEquals(WolfState.Rank.NONE, w.rank(), r.name());
+                assertEquals(WolfState.Lineage.NONE, w.lineage(), r.name());
+                assertTrue(w.latentGene(), "the gene stays");
+            }
+        }
+    }
+
+    @Test
+    void theCureKeepsATrueAlphaHybridsRankToo() {
+        BloodlineState hybrid = wolfOf(WolfState.Rank.TRUE_ALPHA).toBuilder().species(Species.HYBRID).build();
+        assertEquals(WolfState.Rank.TRUE_ALPHA, run(hybrid, RITE_OF_THE_SILVER_MOON, ctx().withFaction(BaseFaction.WEREWOLF)).state().wolf().rank());
+        assertEquals(WolfState.Rank.TRUE_ALPHA, run(hybrid, DRANK_THE_CURE, ctx().withFaction(BaseFaction.WEREWOLF)).state().wolf().rank());
+    }
 }
