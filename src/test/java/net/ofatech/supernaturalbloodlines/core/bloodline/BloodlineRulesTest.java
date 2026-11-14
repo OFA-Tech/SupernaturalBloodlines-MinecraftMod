@@ -707,4 +707,30 @@ class BloodlineRulesTest {
         BloodlineState s = st(Species.HYBRID).toBuilder().turnedAt(10).hybridCurseBound(true).build();
         assertEquals(10, run(s, RITE_OF_THE_MOON, ctx().withGameTime(999)).state().turnedAt());
     }
+
+    // ---- Rite of Severance (R101b) ----
+
+    private static final UUID SIRE = UUID.fromString("00000000-0000-0000-0000-0000000000b2");
+
+    @Test
+    void severanceBreaksTheBondAndKeepsTheSire() {
+        BloodlineState sired = st(Species.HYBRID).toBuilder().sire(SIRE).build();
+        Outcome o = run(sired, RITE_OF_SEVERANCE, ctx().withBloodSource(SIRE));
+        assertFalse(o.refused());
+        assertTrue(o.state().bondBroken());
+        assertNull(o.state().boundSire());
+        assertEquals(SIRE, o.state().sire());
+        assertEquals(sired.species(), o.state().species());
+        assertTrue(o.actions().isEmpty());
+    }
+
+    @Test
+    void severanceRefusals() {
+        BloodlineState sired = st(Species.HYBRID).toBuilder().sire(SIRE).build();
+        assertRefused(run(BloodlineState.NONE, RITE_OF_SEVERANCE, ctx().withBloodSource(SIRE)), BloodlineState.NONE, "not_sired");
+        assertRefused(run(sired, RITE_OF_SEVERANCE, ctx()), sired, "wrong_sire_blood");
+        assertRefused(run(sired, RITE_OF_SEVERANCE, ctx().withBloodSource(U)), sired, "wrong_sire_blood");
+        BloodlineState severed = sired.toBuilder().severedSire(SIRE).build();
+        assertRefused(run(severed, RITE_OF_SEVERANCE, ctx().withBloodSource(SIRE)), severed, "bond_already_broken");
+    }
 }

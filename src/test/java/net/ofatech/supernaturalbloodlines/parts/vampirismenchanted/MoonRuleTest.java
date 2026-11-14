@@ -16,6 +16,18 @@ class MoonRuleTest {
     }
 
     @Test
+    void fullMoonNightNeedsTheNightWindowToo() {
+        assertTrue(MoonRule.isFullMoonNight(false, 0, 13000));
+        assertTrue(MoonRule.isFullMoonNight(false, 0, 192000L + 18000));
+        assertFalse(MoonRule.isFullMoonNight(false, 0, 6000), "noon on the full-moon day");
+        assertFalse(MoonRule.isFullMoonNight(false, 0, 0), "the morning of the full-moon day");
+        assertFalse(MoonRule.isFullMoonNight(false, 0, MoonRule.NIGHT_START));
+        assertFalse(MoonRule.isFullMoonNight(false, 0, MoonRule.NIGHT_END));
+        assertFalse(MoonRule.isFullMoonNight(false, 3, 13000), "a night with another phase");
+        assertFalse(MoonRule.isFullMoonNight(true, 0, 13000), "a fixed-time dimension");
+    }
+
+    @Test
     void fixedTimeDimensionsNeverHaveAFullMoon() {
         assertFalse(MoonRule.isFullMoon(true, 0));
     }

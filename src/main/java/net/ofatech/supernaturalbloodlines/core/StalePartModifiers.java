@@ -18,7 +18,8 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
  */
 public final class StalePartModifiers {
     private static final Map<Part, Set<ResourceLocation>> OWNED = Map.of(
-            Part.SPECIES, Set.of(id("original"), id("hybrid"), id("hunter_mark"), id("wolf_rank"), id("pack_bonus")));
+            Part.SPECIES, Set.of(id("original"), id("hybrid"), id("hunter_mark"), id("wolf_rank"), id("pack_bonus")),
+            Part.SPECIES_TENSURA, Set.of(id("layer_magicule"), id("layer_aura")));
 
     private StalePartModifiers() {}
 
@@ -41,7 +42,9 @@ public final class StalePartModifiers {
                 continue;
             }
             BuiltInRegistries.ATTRIBUTE.holders().forEach(attribute -> {
-                if (attribute.key().location().getNamespace().equals(ResourceLocation.DEFAULT_NAMESPACE)) {
+                String namespace = attribute.key().location().getNamespace();
+                // Tensura's max magicule and aura carry the species_tensura layer modifiers
+                if (namespace.equals(ResourceLocation.DEFAULT_NAMESPACE) || namespace.equals("tensura")) {
                     AttributeInstance instance = p.getAttribute(attribute);
                     if (instance != null) {
                         owned.getValue().forEach(instance::removeModifier);

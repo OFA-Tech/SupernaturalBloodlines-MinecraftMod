@@ -5,6 +5,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.DoubleSupplier;
 import java.util.function.Function;
 import net.minecraft.core.HolderLookup;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.MoonRule;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -32,8 +33,8 @@ import org.jetbrains.annotations.VisibleForTesting;
 public final class LunarEclipse {
     public static final long NONE = -1;
     // Werewolves' own full-moon window (Helper.isFullMoon): the time of day is after 12786 and before 23216 on the phase-0 day
-    public static final long DUSK = 12786;
-    public static final long DAWN = 23216;
+    public static final long DUSK = MoonRule.NIGHT_START;
+    public static final long DAWN = MoonRule.NIGHT_END;
     public static final String START_MESSAGE = "supernaturalbloodlines.eclipse.start";
     public static final String END_MESSAGE = "supernaturalbloodlines.eclipse.end";
     private static final String NAME = "supernaturalbloodlines_eclipse";

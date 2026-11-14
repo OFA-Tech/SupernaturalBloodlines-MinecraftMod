@@ -1,0 +1,13 @@
+{
+  "neoforge:conditions": [
+    { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [ "S", "I" ],
+  "key": {
+    "S": { "tag": "supernaturalbloodlines:silver_ingots" },
+    "I": { "item": "minecraft:stick" }
+  },
+  "result": { "id": "supernaturalbloodlines:silver_dagger", "count": 1 }
+}

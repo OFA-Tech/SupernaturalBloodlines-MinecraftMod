@@ -443,4 +443,23 @@ public final class SirelineDeathGameTests {
         }
         helper.succeed();
     }
-}
+
+    /** R101b: the sireline death is blood, not bond. A child whose bond was severed still dies with the Original, and the tree still lists them. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void severedChildStillDiesWithTheOriginal(GameTestHelper helper) {
+        ServerPlayer root = mortal(helper, Species.ORIGINAL);
+        ServerPlayer child = mortal(helper, Species.NONE);
+        SpeciesConfig.overrideSirelineDeath(true);
+        try {
+            SireRecorder.record(root, child);
+            SeveranceGameTests.sever(child);
+            helper.assertTrue(BloodlineAccess.get(child).bondBroken(), "control: the bond is not severed");
+            online(root, child);
+            die(root, whiteOakBlow(helper));
+            helper.assertTrue(dead(child), "a severed child did not die with the Original");
+        } finally {
+            SpeciesConfig.overrideSirelineDeath(null);
+            cleanUp(root, child);
+        }
+        helper.succeed();
+    }}

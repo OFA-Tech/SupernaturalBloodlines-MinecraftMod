@@ -162,8 +162,9 @@ public final class VampirismEnchantedWerewolfGameTests {
         };
         try {
             helper.assertTrue(handler(hybrid).setFactionAndLevel(WReference.WEREWOLF_FACTION, 2), "could not make a werewolf");
-            BloodlineState hybridState = BloodlineState.NONE.toBuilder().species(Species.HYBRID).build();
-            BloodlineAccess.set(hybrid, hybridState);
+            BloodlineAccess.set(hybrid, BloodlineState.NONE.toBuilder().species(Species.HYBRID).build());
+            // read back: with species_tensura on, the layer has already added the skills it tracks
+            BloodlineState hybridState = BloodlineAccess.get(hybrid);
             NeoForge.EVENT_BUS.addListener(deny);
             try {
                 atMoon(helper, true, () -> start(helper, "silver_moon", hybrid, silver()));

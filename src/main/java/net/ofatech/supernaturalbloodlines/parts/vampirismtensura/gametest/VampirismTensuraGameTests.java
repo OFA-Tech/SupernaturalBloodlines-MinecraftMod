@@ -46,6 +46,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.HolyDamageBridge;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.VampireSync;
+import net.ofatech.supernaturalbloodlines.shared.tensura.LayerQuery;
 
 /**
  * Registered by the part itself (RegisterGameTestsEvent), so these only exist when the part is enabled.
@@ -507,7 +508,10 @@ public final class VampirismTensuraGameTests {
         handler(hunter).setFactionAndLevel(VReference.HUNTER_FACTION, 2);
 
         float control = hurtAmount(hunter, tensuraHoly(helper), 4.0F);
-        float seen = hurtAmount(vampire, tensuraHoly(helper), 4.0F);
+        // with species_tensura on, a plain vampire is undead for Tensura (x3 there) and the bridge steps aside
+        float[] seenBox = new float[1];
+        LayerQuery.runWithoutLayer(() -> seenBox[0] = hurtAmount(vampire, tensuraHoly(helper), 4.0F));
+        float seen = seenBox[0];
         helper.assertTrue(control > 0, "control: the hunter was not hurt by Tensura holy damage (" + control + ")");
         helper.assertTrue(Math.abs(seen - control * 1.5F) < 0.001F, "vampire saw " + seen + ", a hunter " + control + " (want x1.5)");
 
@@ -526,7 +530,8 @@ public final class VampirismTensuraGameTests {
         ServerPlayer vampire = TestPlayers.create(helper);
         handler(vampire).setFactionAndLevel(VReference.VAMPIRE_FACTION, 5);
         helper.assertTrue(HolyDamageBridge.factor(vampire, holyWater(helper)) == 1.0F, "holy water was multiplied by the bridge");
-        helper.assertTrue(HolyDamageBridge.factor(vampire, tensuraHoly(helper)) == 1.5F, "control: Tensura holy damage was not multiplied");
+        LayerQuery.runWithoutLayer(() -> helper.assertTrue(HolyDamageBridge.factor(vampire, tensuraHoly(helper)) == 1.5F,
+                "control: Tensura holy damage was not multiplied"));
         helper.succeed();
     }
 

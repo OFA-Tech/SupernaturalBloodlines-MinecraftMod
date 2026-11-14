@@ -61,6 +61,15 @@ public final class BloodlineAccess {
         notifyListeners(LISTENERS, p, p.getUUID(), before, s);
     }
 
+    /**
+     * Puts back an earlier state (a rollback). The Tensura layer's tracking is not part of what is rolled back: the listeners
+     * run while the state is being changed and may grant or forget skills, so an old {@code layerSkills} would point at
+     * skills the player no longer has. The current one is kept. Use this, not {@code set(p, before)}, for every rollback.
+     */
+    public static void restore(ServerPlayer p, BloodlineState before) {
+        set(p, before.withTrackingOf(get(p)));
+    }
+
     /** Applies the rules and stores the result. Faction actions in the Outcome are left to the parts. */
     public static Outcome applyEvent(ServerPlayer p, BloodlineEvent e, BloodlineContext c) {
         Outcome out = BloodlineRules.apply(get(p), e, c);
@@ -75,8 +84,10 @@ public final class BloodlineAccess {
      * Build every payload through this, so a new send path cannot leak.
      */
     public static BloodlineState clientView(BloodlineState s, boolean viewerIsSubject) {
-        BloodlineState.Builder b = s.toBuilder().pendingSire(null)
-                .wolf(s.wolf().toBuilder().latentGene(false).geneRolled(false).build());
+        // the layer's tracking is server business (which skills this mod granted), not something to send out
+        BloodlineState stripped = s.withTrackingOf(BloodlineState.NONE);
+        BloodlineState.Builder b = stripped.toBuilder().pendingSire(null)
+                .wolf(stripped.wolf().toBuilder().latentGene(false).geneRolled(false).build());
         if (!viewerIsSubject) {
             b.sire(null);
         }
@@ -119,7 +130,7 @@ public final class BloodlineAccess {
         if (before.species() == after.species() && before.wolf().lineage() == after.wolf().lineage()
                 && before.wolf().rank() == after.wolf().rank() && before.wolf().killedInnocent() == after.wolf().killedInnocent()
                 && before.markKills() == after.markKills()
-                && Objects.equals(before.sire(), after.sire())
+                && Objects.equals(before.sire(), after.sire()) && before.bondBroken() == after.bondBroken()
                 && Objects.equals(before.wolf().packAlpha(), after.wolf().packAlpha())) {
             return;
         }

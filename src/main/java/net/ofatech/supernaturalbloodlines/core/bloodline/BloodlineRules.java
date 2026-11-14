@@ -53,7 +53,25 @@ public final class BloodlineRules {
                     ? Outcome.of(becomeNone(s, c).build()) : unchanged(s);
             case KILLED_MARKED_HUNTER -> isPrey(s, c) ? Outcome.of(s.toBuilder().hunterCurse(true).build()) : unchanged(s);
             case HUNTER_CURSE_LIFTED -> Outcome.of(s.toBuilder().hunterCurse(false).build());
+            case RITE_OF_SEVERANCE -> severance(s, c);
         };
+    }
+
+    /**
+     * R101b: the bond with the sire is broken (the sire stays recorded). Needs a sire whose bond is still whole, and the Sire's Blood of that
+     * sire (the context's blood source).
+     */
+    private static Outcome severance(BloodlineState s, BloodlineContext c) {
+        if (s.sire() == null) {
+            return Outcome.refuse(s, "not_sired");
+        }
+        if (s.bondBroken()) {
+            return Outcome.refuse(s, "bond_already_broken");
+        }
+        if (!s.sire().equals(c.bloodSource())) {
+            return Outcome.refuse(s, "wrong_sire_blood");
+        }
+        return Outcome.of(s.toBuilder().severedSire(s.sire()).build());
     }
 
     // ---- helpers ----

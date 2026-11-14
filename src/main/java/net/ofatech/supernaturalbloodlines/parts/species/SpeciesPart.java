@@ -57,6 +57,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterEvents;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCommandGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCompulsionGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.SeveranceGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.SeveranceRiteGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineDeathGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.BloodlineCommand;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.Compulsion;
@@ -64,8 +66,10 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineDeath;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.InfectionTracker;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SiresBlood;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.AncestralCallingRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.HybridBloodRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.species.rite.SeveranceRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.witch.Siphoning;
 import net.ofatech.supernaturalbloodlines.parts.species.witch.VampireJoin;
 import net.ofatech.supernaturalbloodlines.parts.species.original.Downed;
@@ -103,6 +107,7 @@ public final class SpeciesPart {
         // before the datapacks load, so the rite JSONs can name this factory
         RiteFactoryRegistry.get().register(OriginalBloodRiteFactory.ID, OriginalBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(HybridBloodRiteFactory.ID, HybridBloodRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(SeveranceRiteFactory.ID, SeveranceRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(AncestralCallingRiteFactory.ID, AncestralCallingRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(LineageRiteFactory.ID, LineageRiteFactory.CODEC);
         SpeciesRegistries.register(modBus);
@@ -112,6 +117,7 @@ public final class SpeciesPart {
         VampireJoin.register();
         HunterEvents.register(); // hunters need no Werewolves
         SireRecorder.register();
+        SiresBlood.register();
         InfectionTracker.register();
         SireCall.register();
         Compulsion.register();
@@ -176,6 +182,8 @@ public final class SpeciesPart {
             e.register(SirelineCommandGameTests.class);
             e.register(SirelineCompulsionGameTests.class);
             e.register(SirelineDeathGameTests.class);
+            e.register(SeveranceGameTests.class);
+            e.register(SeveranceRiteGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(SirelineHybridGameTests.class);
                 e.register(HunterWerewolfGameTests.class);

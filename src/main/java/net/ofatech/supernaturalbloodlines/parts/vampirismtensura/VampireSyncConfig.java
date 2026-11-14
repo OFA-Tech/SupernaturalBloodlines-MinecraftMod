@@ -31,7 +31,9 @@ public final class VampireSyncConfig {
         WEREWOLF_SKILL_GRANTS = b.comment("\"level=skillId\": a werewolf at that Werewolves level or higher is given the Tensura skill, and loses it again",
                         "when the level drops below it or they leave the faction. -1 means the maximum werewolf level.")
                 .defineListAllowEmpty("werewolf_skill_grants", SkillGrantSpec.DEFAULTS, () -> "", o -> o instanceof String);
-        TENSURA_HOLY_VS_VAMPIRE = b.comment("Tensura holy damage (not Vampirism's holy water) to a Vampirism vampire is multiplied by this.")
+        TENSURA_HOLY_VS_VAMPIRE = b.comment("Tensura holy damage (not Vampirism's holy water) to a Vampirism vampire is multiplied by this.",
+                        "No effect while species_tensura makes Tensura treat that vampire as undead (its undead_treatment_enabled, on by default):",
+                        "Tensura then applies its own x3 and this multiplier is skipped so the two do not stack.")
                 .defineInRange("tensura_holy_vs_vampire", DEFAULT_HOLY_VS_VAMPIRE, 0.0, 100.0);
         SPEC = b.build();
     }

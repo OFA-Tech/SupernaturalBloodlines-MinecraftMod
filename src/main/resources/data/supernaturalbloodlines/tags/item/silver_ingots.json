@@ -1,0 +1,8 @@
+{
+    "replace": false,
+    "values": [
+        "#c:ingots/silver",
+        { "id": "werewolves:silver_ingot", "required": false },
+        { "id": "tensura:silver_ingot", "required": false }
+    ]
+}

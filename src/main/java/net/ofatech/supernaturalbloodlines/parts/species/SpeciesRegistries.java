@@ -9,6 +9,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tiers;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -23,6 +25,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.item.HybridVenomEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodItem;
 import net.ofatech.supernaturalbloodlines.parts.species.item.ShockedEffect;
+import net.ofatech.supernaturalbloodlines.parts.species.item.SiresBloodItem;
 import net.ofatech.supernaturalbloodlines.parts.species.item.Taser;
 import net.ofatech.supernaturalbloodlines.parts.species.item.UnstableEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.item.WhiteOak;
@@ -51,6 +54,14 @@ public final class SpeciesRegistries {
     /** Ingredient of the Rite of the Moon (crafted: amethyst shard + Werewolves silver ingot; silver spawns as ore). */
     public static final DeferredItem<Item> MOONSTONE = ITEMS.registerSimpleItem("moonstone");
 
+    /** R101b: a bottle of blood taken from someone with a silver blade; bound to their UUID and name (the blood-source components). Consumed by the Rite of Severance. */
+    public static final DeferredItem<SiresBloodItem> SIRES_BLOOD =
+            ITEMS.register("sires_blood", () -> new SiresBloodItem(new Item.Properties().stacksTo(1)));
+
+    /** A small silver blade for taking Sire's Blood where no other silver blade exists (the blades are the {@code silver_blades} item tag). */
+    public static final DeferredItem<SwordItem> SILVER_DAGGER = ITEMS.register("silver_dagger",
+            () -> new SwordItem(Tiers.IRON, new Item.Properties().attributes(SwordItem.createAttributes(Tiers.IRON, 1, -1.8F))));
+
     /** The hunter's Taser (shocks supernaturals). Recipe: lightning rod over redstone over an iron ingot. */
     public static final DeferredItem<Taser> TASER = ITEMS.register("taser", () -> new Taser(new Item.Properties()));
 
@@ -58,6 +69,9 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<MobEffect, ShockedEffect> SHOCKED = EFFECTS.register("shocked", ShockedEffect::new);
 
     /** Whose blood a bottle of Original's Blood is. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_SOURCE_NAME_COMPONENT =
+            COMPONENTS.registerComponentType("blood_source_name", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
+
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> BLOOD_SOURCE_COMPONENT =
             COMPONENTS.registerComponentType("blood_source", b -> b.persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC));
 
@@ -127,6 +141,7 @@ public final class SpeciesRegistries {
         modBus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.COMBAT) {
                 e.accept(TASER);
+                e.accept(SILVER_DAGGER);
             }
         });
     }

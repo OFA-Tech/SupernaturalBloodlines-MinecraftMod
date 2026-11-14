@@ -24,12 +24,16 @@ Werewolves and Curios are optional extras inside parts. Each part also has a swi
 1. Install NeoForge 21.1.x for Minecraft 1.21.1 (Java 21).
 2. Put the mod jar in `mods/` on the server and on every client (both sides need it). The server and the clients must have the same part switches and the same linked mods.
 3. Add the mods for the parts you want, at the tested versions:
-   - Tensura: Reincarnated `2.0.1` and ManasCore `4.0.x`
+   - Tensura: Reincarnated `2.0.1.5` (pinned: the GameTests and the bytecode hooks checked in `docs/parts/species_tensura.md` depend on this build; another Tensura version may move a hooked method, see the mixin warnings in the startup log) and ManasCore `4.0.x`
    - Vampirism `1.10.13`
    - Werewolves `2.0.3`
    - Enchanted `4.2.7`
 
 The startup log has one line per part (`Part SPECIES: enabled` or `disabled (missing: …)`).
+
+**Before removing this mod from a world:** reset every player on an apex race (`supernaturalbloodlines:primordial_vampire` and the other six) with Tensura's race command. ManasCore cannot load a saved race that is no longer registered, so such a player could not join. Switching only the `speciesTensura` part off is safe: the races stay registered.
+
+**Rolling back to a build before `species_tensura`:** first reset apex-race players with Tensura's race command; back up the world before the first deploy. (An older build does not register the apex races, so a player still on one cannot load.)
 
 ## Docs
 

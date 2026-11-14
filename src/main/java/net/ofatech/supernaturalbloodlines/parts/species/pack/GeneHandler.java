@@ -90,7 +90,7 @@ public final class GeneHandler {
         if (!WerewolfFaction.join(p)) {
             // a faction mod vetoed the join late: do not leave a lineage without the faction
             SupernaturalBloodlines.LOGGER.warn("GeneHandler: {} could not join the werewolves, undoing {}", p.getGameProfile().getName(), event);
-            BloodlineAccess.set(p, before);
+            BloodlineAccess.restore(p, before);
             return FactionRiteFactory.JOIN_DENIED;
         }
         return null;
