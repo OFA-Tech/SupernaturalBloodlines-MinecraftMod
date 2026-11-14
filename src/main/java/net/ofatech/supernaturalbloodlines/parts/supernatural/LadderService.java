@@ -34,9 +34,11 @@ public final class LadderService {
 
     /** Tells the player what a claim or an automatic rung paid and pays the EP. */
     public static void pay(ServerPlayer p, int sp, long ep, SupernaturalRace race, int rungReached) {
-        EpReward.pay(p, ep);
-        if (sp > 0 || ep > 0) {
-            p.sendSystemMessage(Component.translatable(KEY + "paid", sp, ep));
+        long paidEp = EpReward.pay(p, ep);
+        if (paidEp > 0) {
+            p.sendSystemMessage(Component.translatable(KEY + "paid", sp, paidEp));
+        } else if (sp > 0) {
+            p.sendSystemMessage(Component.translatable(KEY + "paid_sp", sp)); // no Tensura EP to pay: say only what was paid
         }
         if (rungReached >= 0 && race != null) {
             p.sendSystemMessage(Component.translatable(KEY + "rung_reached", Component.translatable("supernaturalbloodlines.supernatural.race." + race.id()),

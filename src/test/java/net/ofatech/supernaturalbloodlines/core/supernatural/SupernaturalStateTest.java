@@ -83,4 +83,12 @@ class SupernaturalStateTest {
         assertEquals(0, SupernaturalState.NONE.rung(SupernaturalRace.VAMPIRE));
         assertEquals(2, SupernaturalState.NONE.toBuilder().rung(SupernaturalRace.VAMPIRE, 2).build().rung(SupernaturalRace.VAMPIRE));
     }
+
+    @Test
+    void oneBadMapEntryDoesNotWipeTheOthers() {
+        SupernaturalState s = decode("{\"rungs\":{\"vampire\":3,\"witch\":\"high\",\"hunter\":2},\"counters\":{\"A\":5,\"B\":\"x\"},\"race_since\":{\"vampire\":100,\"werewolf\":true}}");
+        assertEquals(java.util.Map.of("vampire", 3, "hunter", 2), s.rungs());
+        assertEquals(java.util.Map.of("A", 5L), s.counters());
+        assertEquals(java.util.Map.of("vampire", 100L), s.raceSince());
+    }
 }

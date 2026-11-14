@@ -1,6 +1,11 @@
 package net.ofatech.supernaturalbloodlines.core.supernatural;
 
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Decoder;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,22 +41,48 @@ public record SupernaturalState(int schema, Map<String, Integer> rungs, Map<Stri
     public static final SupernaturalState NONE = new SupernaturalState(0, Map.of(), Map.of(), 0, 0, Set.of(), Set.of(),
             Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), List.of());
 
+    /**
+     * A map that keeps every entry that decodes and logs the ones that do not, so one bad value (a hand-edited file, an old tag) cannot
+     * silently wipe the whole map: with the plain map codec one bad entry fails the field and the lenient field falls back to empty.
+     */
+    private static <V> Codec<Map<String, V>> lenientMap(Codec<V> value, String field) {
+        Codec<Map<String, V>> strict = Codec.unboundedMap(Codec.STRING, value);
+        Codec<Map<String, Dynamic<?>>> raw = Codec.unboundedMap(Codec.STRING, Codec.PASSTHROUGH);
+        return Codec.of(strict, new Decoder<Map<String, V>>() {
+            @Override
+            public <T> DataResult<Pair<Map<String, V>, T>> decode(DynamicOps<T> ops, T input) {
+                return raw.decode(ops, input).map(decoded -> {
+                    Map<String, V> out = new HashMap<>();
+                    decoded.getFirst().forEach((key, entry) -> entry(value, entry).resultOrPartial(
+                            err -> LOG.warn("Supernatural state: dropped {}[{}]: {}", field, key, err)).ifPresent(v -> out.put(key, v)));
+                    return Pair.of(out, decoded.getSecond());
+                });
+            }
+        });
+    }
+
+    private static <V, T> DataResult<V> entry(Codec<V> value, Dynamic<T> d) {
+        return value.parse(d);
+    }
+
     private static List<String> sorted(Set<String> s) {
         List<String> l = new ArrayList<>(s);
         Collections.sort(l);
         return l;
     }
 
+    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger("supernaturalbloodlines");
+
     public static final Codec<SupernaturalState> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.lenientOptionalFieldOf("schema", 0).forGetter(SupernaturalState::schema),
-            Codec.unboundedMap(Codec.STRING, Codec.INT).lenientOptionalFieldOf("rungs", Map.of()).forGetter(SupernaturalState::rungs),
-            Codec.unboundedMap(Codec.STRING, Codec.LONG).lenientOptionalFieldOf("race_since", Map.of()).forGetter(SupernaturalState::raceSince),
+            lenientMap(Codec.INT, "rungs").lenientOptionalFieldOf("rungs", Map.of()).forGetter(SupernaturalState::rungs),
+            lenientMap(Codec.LONG, "race_since").lenientOptionalFieldOf("race_since", Map.of()).forGetter(SupernaturalState::raceSince),
             Codec.INT.lenientOptionalFieldOf("sp", 0).forGetter(SupernaturalState::sp),
             Codec.INT.lenientOptionalFieldOf("sp_earned", 0).forGetter(SupernaturalState::spEarned),
             Codec.STRING.listOf().lenientOptionalFieldOf("done", List.of()).forGetter(s -> sorted(s.done())),
             Codec.STRING.listOf().lenientOptionalFieldOf("claimed", List.of()).forGetter(s -> sorted(s.claimed())),
-            Codec.unboundedMap(Codec.STRING, Codec.LONG).lenientOptionalFieldOf("counters", Map.of()).forGetter(SupernaturalState::counters),
-            Codec.unboundedMap(Codec.STRING, Codec.LONG).lenientOptionalFieldOf("lifetime", Map.of()).forGetter(SupernaturalState::lifetime),
+            lenientMap(Codec.LONG, "counters").lenientOptionalFieldOf("counters", Map.of()).forGetter(SupernaturalState::counters),
+            lenientMap(Codec.LONG, "lifetime").lenientOptionalFieldOf("lifetime", Map.of()).forGetter(SupernaturalState::lifetime),
             Codec.STRING.listOf().lenientOptionalFieldOf("skills", List.of()).forGetter(s -> sorted(s.skills())),
             Codec.STRING.listOf().lenientOptionalFieldOf("quests", List.of()).forGetter(s -> sorted(s.quests())),
             Codec.STRING.listOf().lenientOptionalFieldOf("granted", List.of()).forGetter(s -> sorted(s.granted())),

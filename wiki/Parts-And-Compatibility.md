@@ -80,7 +80,7 @@ So switching **vampirism_enchanted** off also turns off **species**, **species_t
 
 - **Config key:** `supernatural`. **Mods:** Vampirism. Enchanted and Werewolves optional: a task that needs a missing mod is dropped from its rung.
 - **Does:** every player has a supernatural race (Human, Ghoul, Vampire, Original, Hybrid, Original hybrid, Tribrid, Heretic, Witch, Siphoner, Hunter, Werewolf), worked out from what the mod already stores. Each race has a ladder of rungs. The ladders are datapack JSON. See [Supernatural hub](Supernatural-Hub).
-- **Config file:** `supernaturalbloodlines-supernatural.toml` (empty for now).
+- **Config file:** `supernaturalbloodlines-supernatural.toml` (one switch, `rite_complete_signal`, see [Configuration](Configuration)).
 - **Mixins:** none yet (budget 3, one reserved for Enchanted rites that we do not perform ourselves).
 - **Off:** no ladders, no skill points. Saved progress stays on the player and is kept when the part is turned on again.
 

@@ -136,6 +136,10 @@ public final class MigrationRules {
         Set<String> claimed = new HashSet<>(s.claimed());
         if (claimProven) {
             for (TaskSpec t : rung.tasks()) {
+                // the claim of a task is its own id, which for an any_of group is the group's, not a member's
+                if (t.leaves().stream().map(TaskSpec::id).anyMatch(s.done()::contains)) {
+                    claimed.add(t.id());
+                }
                 t.leaves().stream().map(TaskSpec::id).filter(s.done()::contains).forEach(claimed::add);
             }
         }

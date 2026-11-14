@@ -15,9 +15,9 @@ class LadderPayloadTest {
     void theTableSurvivesTheWire() {
         LadderTable server = ShippedLadders.all();
         ByteBuf buf = Unpooled.buffer();
-        LadderTablePayload.STREAM_CODEC.encode(buf, LadderTablePayload.of(server.sources()));
+        LadderTablePayload.STREAM_CODEC.encode(buf, LadderTablePayload.of(server.sources(), mod -> true, part -> true));
         LadderTablePayload received = LadderTablePayload.STREAM_CODEC.decode(buf);
-        LadderTable.Parsed client = LadderTable.parse(received.parsed(), mod -> true);
+        LadderTable.Parsed client = received.parseWithServerSets();
         assertEquals(java.util.List.of(), client.rejected());
         for (SupernaturalRace race : SupernaturalRace.values()) {
             assertEquals(server.get(race), client.table().get(race), "ladder of " + race);
@@ -25,15 +25,28 @@ class LadderPayloadTest {
     }
 
     @Test
-    void theClientParsesWithItsOwnModsAndParts() {
-        LadderTablePayload payload = LadderTablePayload.of(ShippedLadders.all().sources());
-        LadderTable noTensura = LadderTable.parse(payload.parsed(), mod -> !mod.equals("tensura"), part -> true).table();
-        assertEquals(6, noTensura.get(SupernaturalRace.VAMPIRE).rungs().size());
+    void theClientPrunesWithTheServersSetsNotItsOwn() {
+        // the server has no Tensura and no species part: the client, whatever it has installed, gets the same pruned ladder
+        LadderTable server = LadderTable.parse(ShippedLadders.files(), mod -> !mod.equals("tensura"), part -> !part.equals("species")).table();
+        ByteBuf buf = Unpooled.buffer();
+        LadderTablePayload.STREAM_CODEC.encode(buf, LadderTablePayload.of(ShippedLadders.files(), mod -> !mod.equals("tensura"), part -> !part.equals("species")));
+        LadderTable client = LadderTablePayload.STREAM_CODEC.decode(buf).parseWithServerSets().table();
+        for (SupernaturalRace race : SupernaturalRace.values()) {
+            assertEquals(server.get(race), client.get(race), "ladder of " + race);
+        }
+        assertEquals(6, client.get(SupernaturalRace.VAMPIRE).rungs().size());
+    }
+
+    @Test
+    void theServersSetsListOnlyWhatItHas() {
+        LadderTablePayload p = LadderTablePayload.of(ShippedLadders.files(), mod -> mod.equals("tensura"), part -> part.equals("species"));
+        assertEquals(java.util.List.of("tensura"), p.mods());
+        assertEquals(java.util.List.of("species"), p.parts());
     }
 
     @Test
     void aFileThatIsNotJsonIsDroppedNotACrash() {
-        LadderTablePayload bad = new LadderTablePayload(java.util.Map.of("vampire", "{ not json", "witch", "{\"rungs\":[{\"id\":\"A-0\"}]}"));
+        LadderTablePayload bad = new LadderTablePayload(java.util.Map.of("vampire", "{ not json", "witch", "{\"rungs\":[{\"id\":\"A-0\"}]}"), java.util.List.of(), java.util.List.of());
         assertEquals(java.util.Set.of("witch"), bad.parsed().keySet());
     }
 

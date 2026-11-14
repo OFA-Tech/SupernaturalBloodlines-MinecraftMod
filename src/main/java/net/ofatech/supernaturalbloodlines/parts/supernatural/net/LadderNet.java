@@ -16,7 +16,7 @@ import net.neoforged.fml.ModList;
 /**
  * The part's packets. They are registered as optional, so a client without this part (or a server without it) still connects. The
  * claim is the only client action: the server re-checks everything. The ladder table is sent when a player joins and after every
- * data reload ({@code OnDatapackSyncEvent} fires for both).
+ * data reload ({@code OnDatapackSyncEvent} fires for both), with the server's mod and part sets so the client prunes it the same way.
  */
 public final class LadderNet {
     private static final String PROTOCOL = "1";
@@ -39,7 +39,7 @@ public final class LadderNet {
                 }));
         registrar.playToClient(LadderTablePayload.TYPE, LadderTablePayload.STREAM_CODEC, (payload, ctx) ->
                 ctx.enqueueWork(() -> {
-                    LadderTable.Parsed parsed = LadderTable.parse(payload.parsed(), ModList.get()::isLoaded, EnabledParts::isEnabled);
+                    LadderTable.Parsed parsed = payload.parseWithServerSets();
                     parsed.rejected().forEach(r -> SupernaturalBloodlines.LOGGER.warn("Ladder from the server rejected: {}", r));
                     LadderTable.setClientCopy(parsed.table());
                 }));
@@ -47,7 +47,7 @@ public final class LadderNet {
 
     public static void sendTable(ServerPlayer p) {
         if (p.connection != null && p.connection.hasChannel(LadderTablePayload.TYPE)) {
-            PacketDistributor.sendToPlayer(p, LadderTablePayload.of(LadderTable.current().sources()));
+            PacketDistributor.sendToPlayer(p, LadderTablePayload.of(LadderTable.current().sources(), ModList.get()::isLoaded, EnabledParts::isEnabled));
         }
     }
 }

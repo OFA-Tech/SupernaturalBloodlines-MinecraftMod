@@ -73,6 +73,7 @@ Enchanted 4.2.7 has no event for a rite that worked (its `*Events` classes are c
 - **A bite is one feed.** Each bite that drinks counts as one `feed`, however much blood it took.
 - **PvP counts for `prey_hit_survived`.** A hit on a player by a vampire or werewolf player counts like a hit by a mob of those types. That is accepted.
 - **Prey tasks need `vampirismEnchanted`.** "Prey" (vampire and werewolf types, never witches or siphoners) is defined by that part, so every `kill category=prey` and `siphon_entity prey=true` task carries `"part": "vampirismEnchanted"` (`LadderDataTest`). L-HER-2a asks for vampire-type victims only and uses `vampiric=true` instead, so a werewolf does not count.
+- **`dying_survived` has two fire points** (the Downed state of hybrids and Vampirism's dying state of Originals), so one event can come from either; a task must not use `n > 1` for it without a guard (the shipped L-ORI-3a uses `n = 1`).
 - **Mountain ash** is counted in a LOWEST-priority `EntityPlaceEvent` listener that skips cancelled placements, not in `setPlacedBy`.
 - **FakePlayers do not climb ladders** (deployers, turrets). The GameTest server turns this off for its own FakePlayers only (`SupernaturalAccess.trackFakePlayers`).
 ## Off

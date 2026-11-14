@@ -204,4 +204,15 @@ class MigrationRulesTest {
         Result r = MigrationRules.migrate(noSpecies, SupernaturalState.NONE, facts(HUNTER, null, bl(Species.HUNTER_OF_THE_FIVE), "vampirism:hunter", 6, null));
         assertEquals(2, r.state().rung(HUNTER), "the ladder ends at L-HUN-2 here");
     }
+
+    @Test
+    void aProvenAnyOfGroupIsClaimedUnderItsOwnId() {
+        // L-TRI-3a is a group (Emissary or Alpha); a claim is stored under the group's id, so the migration must too
+        SupernaturalState from = SupernaturalState.NONE.toBuilder().rung(TRIBRID, 2).build();
+        Facts f = new Facts(TRIBRID, Optional.empty(), rank(bl(Species.TRIBRID), WolfState.Rank.ALPHA), NOW, WOLF_FACTION, 10, false, false, 0, null);
+        Result r = MigrationRules.migrate(T, from, f);
+        assertEquals(3, r.state().rung(TRIBRID), "the rung is proven: an Alpha and level 10");
+        assertTrue(r.state().claimed().contains("L-TRI-3a"), "the group's id: " + r.state().claimed());
+        assertTrue(r.state().claimed().contains("L-TRI-3a.2"), "the member that proved it: " + r.state().claimed());
+    }
 }

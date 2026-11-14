@@ -261,6 +261,7 @@
   "supernaturalbloodlines.supernatural.claim.not_done": "That task is not done yet.",
   "supernaturalbloodlines.supernatural.claim.already_claimed": "You already claimed that reward.",
   "supernaturalbloodlines.supernatural.claim.paid": "Claimed: %s skill points, %s EP.",
+  "supernaturalbloodlines.supernatural.claim.paid_sp": "Claimed: %s skill points.",
   "supernaturalbloodlines.supernatural.claim.rung_reached": "%s: rung %s reached.",
   "supernaturalbloodlines.supernatural.race.human": "Human",
   "supernaturalbloodlines.supernatural.race.ghoul": "Ghoul",
