@@ -1,6 +1,6 @@
 # Species rules (source of truth; the owner patches these by id)
 
-Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and R101 were patched. R20a (2026-11-12) was added. Where the design or a plan disagrees, this file wins.
+Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and R101 were patched. R20a (2026-11-12) and R20b (2026-11-14) were added. Where the design or a plan disagrees, this file wins.
 
 ## General
 - **R1.** Only players whose Tensura race is tagged `human_like` can take a show species or become one of the Five. Without Tensura, everyone qualifies.
@@ -18,6 +18,7 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 ## Vampires
 - **R20.** You become one through Vampirism's normal infection. **The Tensura race is kept**: you get the vampire layer, and Tensura is told you're vampiric (see R100). Tensura's own vampire line (ghoul → vampire → overcomer/lord → divine) still joins the Vampirism vampire faction with a level floor (vampire 1, overcomer/lord 7, divine max). A cure resets the race to human **only** if the race is in Tensura's vampire line.
 - **R20a (2026-11-12).** When a player with no bloodline species joins the Vampirism vampire faction and their Tensura race is **exactly** `tensura:human`, the race is set to `tensura:vampire`, automatically. Every other race is kept, as R20 says (an elf stays an elf). Not configurable.
+- **R20b (2026-11-14).** Werewolves follow Tensura's Beastfolk line (beastfolk, beast_lord, spirit_beast, divine_beast, in the order of Tensura's own evolutions). A player with no bloodline species whose Tensura race is **exactly** `tensura:human` becomes `tensura:beastfolk` when they become a werewolf. A werewolf already on the line becomes `tensura:beast_lord` when they are an Alpha and `tensura:spirit_beast` when they are a True Alpha (also when they rejoin as one). The race is **never lowered**, `tensura:divine_beast` stays a normal Tensura evolution and every other race (an elf, a vampire-raced hybrid) is kept. Existing werewolves are not changed: only a join or a rank change after the update. **Rulings:** a True Alpha who rejoins as a `tensura:human` goes straight to `tensura:spirit_beast` (human to beastfolk to spirit beast in one step). A player with a bloodline species keeps their race, so a **witch or siphoner werewolf on the human race stays human** (the species layer owns their race). A vampire who becomes a werewolf is cured to human by the vampire sync first, and so ends on the Beastfolk line (`VampireSync` is registered before `WerewolfRaceSync`). Config `werewolf_beastfolk_enabled` (default on); off leaves every race alone.
 - **R21.** Sun damage comes only from Vampirism. A Sun Ring bound to the wearer blocks it.
 - **R22.** Cured by the *Rite of Cleansing Blood* or The Cure.
 - **R23.** From level 10, can compel villagers and lesser vampire mobs.
@@ -25,12 +26,12 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 - **R25.** A vampire who kills one of the Five gets the hunter's curse.
 
 ## Originals
-- **R30.** *Rite of Immortality*: a human-like target with no faction, full moon, 12,000 power, a villager sacrificed, and a world cap (unlimited by default).
+- **R30.** *Rite of Immortality*: a human-like target with no faction, the night of a full moon (plan 10: noon of the full-moon day is refused), 12,000 power, a villager sacrificed, and a world cap (unlimited by default).
 - **R31.** Vampire faction, +20% attack, +4 max health. Can make Original's Blood.
 - **R32.** **Non-white-oak lethal damage** puts the Original into **Vampirism's own "dying" state**, with its give-up / wait screen (or our own copy of it if Vampirism has no hook). **A white oak hit kills instantly** and skips that state. Void and `/kill` still kill.
 - **R33.** The White Oak Ash Dagger desiccates an Original until someone pulls it out, or for up to 30 minutes. It hurts any non-human who uses it.
 - **R34.** Only The Cure works on Originals.
-- **R35.** An **Original hybrid needs the gene**: either a natural gene awakened by a kill (R24 path, bound), or a gene given by the *Rite of Lineage (awaken)* on the Original, which makes them a bound Original hybrid. The *Rite of the Moon* is refused without the gene. On a bound Original hybrid, it breaks the curse.
+- **R35.** An **Original hybrid needs the gene**: either a natural gene awakened by a kill (R24 path, bound), or a gene given by the *Rite of Lineage (awaken)* on the Original, which makes them a bound Original hybrid. The *Rite of the Moon* is refused without the gene. On a bound Original hybrid, it breaks the curse. **The Rite of the Moon and the Rite of the Silver Moon, like the Rite of Immortality, need the night of a full moon (plan 10): noon of the full-moon day is refused.**
 - **R36.** Sireline death is a config switch, off by default.
 
 ## Hybrids
@@ -83,13 +84,13 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
   - **Omega:** no pack, −10% attack and speed.
   - **Beta:** in a pack.
   - **Alpha:** red eyes, +20% attack, +4 max health, the Roar.
-  - **True Alpha:** **no per-world limit, but very hard to earn**: max Werewolves level, 30 in-game days as a Beta, 300 defender kills, never killed an innocent, never stole a spark. Alpha perks +10%.
+  - **True Alpha:** **no per-world limit, but very hard to earn**: max Werewolves level, 30 in-game days as a Beta, 300 defender kills, never killed an innocent, never stole a spark. Alpha perks +10%. **A True Alpha keeps the spark (2026-11-14):** it cannot be stolen, inherited or given up. Cured or leaving the werewolves, they stay True Alpha, dormant (no perks, no pack work) until they rejoin; their pack dissolves as for any Alpha and is not restored. **Cures too (plan 10 review):** the Cure and the Silver Moon (plain werewolf and hybrid) keep a True Alpha's rank, lineage and tracked rank skills (`clearedWolf`); every other rank is wiped as before. A cured plain Alpha now passes the spark or dissolves the pack like the leave path (the pack is handled when the wolf layer is cleared, before the faction is left). `SPARK_GIVEN_UP` is refused for a True Alpha, like `SPARK_LOST`.
   - Betas and Omegas have gold eyes. An innocent kill turns them blue for good.
 - **R92.** Only Alphas turn humans, with a 10% chance the bite kills instead. Wild werewolf mobs make Omegas. A human turned by an Alpha joins that Alpha's pack and sireline.
 - **R93.** **The spark:**
-  - **Stolen** by killing the Alpha.
-  - **Inherited** by the strongest Beta when the Alpha leaves or is cured.
-  - **Given up** to heal someone.
+  - **Stolen** by killing the Alpha. Only a plain Alpha: killing a True Alpha is just a death.
+  - **Inherited** by the strongest Beta when the Alpha leaves or is cured. Only a plain Alpha: a True Alpha who leaves just dissolves the pack.
+  - **Given up** to heal someone. Not by a True Alpha.
   - **Earned:** see R91.
 - **R94.** **Pack:**
   - With 3 or more Betas near their online Alpha: the Alpha gets +5% attack per Beta (up to +25%), and the Betas get Regeneration.
@@ -119,7 +120,7 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 - **R100.** **The race is kept and species are a layer on it.** Each species:
   - grants Tensura skills, attributes and an EP or magicule bonus
   - makes Tensura treat the player correctly: vampire types count as undead for holy damage and sunlight checks, and bloodless rules apply to Originals
-  - gives a bonus to the Tensura evolution requirements of their current line
+  - speeds up the player's EP gain by 25% (config `evolution_progress_multiplier`, plan 10), through Tensura's own `AURA_GAIN` and `MAGICULE_GAIN` attributes. It never changes an evolution's requirements or progress: a boss, an item or an awakening can't be skipped
   - **unlocks one apex evolution** that human-like races can pick in Tensura's evolution screen once they reach a high stage of their own line:
 
 | Species | Apex race (working names) |
@@ -133,7 +134,9 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 | marked hunter (one of the Five) | `eternal_hunter` |
 
   Apex races keep the `human_like` tag (and `undead` for vampire types), so every other rule still applies. Losing the species doesn't remove a chosen apex race, but its species-only skills go dormant.
+  - **Apex cost (plan 10).** An apex race needs 2,000,000 EP, the same as a divine human.
+  - **Apex races are bitable (plan 10).** No apex race is bloodless. All seven carry our race tag `supernaturalbloodlines:bitable`, and every bloodless check of this mod skips it: the vampire bite block (`FactionRaceRules.isBloodless`) and the bloodless part of the R103 werewolf-join check. The vampire-type ones stay `tensura:undead`, so holy damage and the other undead rules still apply. Tensura's own `RaceUtils.isBloodless` is answered false for them by a second injection in the existing species_tensura `RaceUtilsMixin`, so Tensura's drain, blood mist and VampireRace feeding reach apex races too.
 - **R101.** A sire becomes their sired's Tensura permanent owner. **The sire can name their sired through Tensura's own naming menu** (players too, even with the server's player-naming setting off, but only for their own sired). It costs magicules and gives Tensura's naming rewards (EP, and an evolution step for mobs).
 - **R101b (owner rite).** The **Rite of Severance** breaks the whole sire bond of a sired player. The sired is freed: no Tensura owner link, no sire naming exception, they can hurt their sire (R43 ends), they cannot be called with `/bloodline call`, and the sire's compelled creatures no longer spare them. **The sire stays recorded:** the family tree still shows it and the sireline death still applies (blood, not bond). A new sire replaces the old one and ends the severance. Performer: a witch-type (witch, siphoner, heretic or tribrid) at an Enchanted altar with the sired standing in the circle. Cost: full moon night only, 6000 altar power, Sire's Blood of the sired's own sire (a bottle of blood taken with a silver blade while holding a glass bottle in the off hand, bound to the one hit) and a rare reagent (`enchanted:spirit_of_otherwhere`). Siring itself needs no consent.
 - **R102.** Werewolf ranks grant Tensura skills, and the race is kept.
-- **R103.** Hunters and werewolves can't be undead or daemon races. Apex vampire-type races are an exception for vampire-type species only.
+- **R103.** Hunters and werewolves can't be undead or daemon races. Apex vampire-type races are an exception for vampire-type species only. A race with no blood (`tensura:no_blood`) can't be a werewolf either, unless it is bitable (an apex race, see R100).

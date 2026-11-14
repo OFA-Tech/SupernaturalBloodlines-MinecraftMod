@@ -32,6 +32,17 @@ public final class RankSkillsGameTests {
         return p;
     }
 
+    /**
+     * A rank only counts while the player is a werewolf. An elf, so that the Beastfolk line (R20b) leaves the race alone: a
+     * beastfolk has beast_transformation of its own, which would not be tracked as a rank skill.
+     */
+    private static ServerPlayer werewolf(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        RaceAPI.getRaceFrom(p).setRace(ResourceLocation.parse("tensura:elf"), false);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not become a werewolf");
+        return p;
+    }
+
     private static boolean has(ServerPlayer p, String skill) {
         return SkillAPI.getSkillsFrom(p).getSkill(ResourceLocation.parse(skill)).isPresent();
     }
@@ -61,18 +72,18 @@ public final class RankSkillsGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void alphaGetsRankSkills(GameTestHelper helper) {
-        ServerPlayer p = player(helper);
+        ServerPlayer p = werewolf(helper);
         rank(p, WolfState.Rank.ALPHA);
         helper.assertTrue(has(p, BEAST) && has(p, SENSE), "an Alpha is missing a rank skill");
         helper.assertTrue(!has(p, COMMANDER), "an Alpha got the commander skill");
         helper.assertTrue(tracked(p).equals(Set.of(BEAST, SENSE)), "tracked " + tracked(p));
-        helper.assertTrue("tensura:human".equals(race(p)), "the race changed to " + race(p));
+        helper.assertTrue("tensura:elf".equals(race(p)), "the race changed to " + race(p));
         helper.succeed();
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void trueAlphaGetsTheCommanderSkill(GameTestHelper helper) {
-        ServerPlayer p = player(helper);
+        ServerPlayer p = werewolf(helper);
         rank(p, WolfState.Rank.ALPHA);
         rank(p, WolfState.Rank.TRUE_ALPHA);
         helper.assertTrue(has(p, BEAST) && has(p, SENSE) && has(p, COMMANDER), "a True Alpha is missing a rank skill");
@@ -84,7 +95,7 @@ public final class RankSkillsGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void losingAlphaRemovesOnlyGrantedSkills(GameTestHelper helper) {
-        ServerPlayer p = player(helper);
+        ServerPlayer p = werewolf(helper);
         learn(p, SENSE);
         rank(p, WolfState.Rank.ALPHA);
         helper.assertTrue(has(p, BEAST), "control: the Alpha did not get beast_transformation");
@@ -99,7 +110,7 @@ public final class RankSkillsGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void losingTheRankKeepsASkillTheLayerStillWants(GameTestHelper helper) {
-        ServerPlayer p = player(helper);
+        ServerPlayer p = werewolf(helper);
         var s = BloodlineAccess.get(p);
         BloodlineAccess.set(p, s.toBuilder().species(Species.ORIGINAL_HYBRID).build());
         helper.assertTrue(has(p, SENSE) && has(p, BEAST), "control: the layer did not grant the skills");
@@ -115,6 +126,23 @@ public final class RankSkillsGameTests {
         helper.assertTrue(has(p, SENSE) && has(p, BEAST), "losing the layer took a skill the rank still wants");
         rank(p, WolfState.Rank.NONE);
         helper.assertTrue(!has(p, SENSE) && !has(p, BEAST), "the skills stayed for good after both sources let go");
+        helper.succeed();
+    }
+
+    /** Plan 10: a True Alpha keeps the rank when cured, so its skills have to wait for the rejoin. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void dormantTrueAlphaSkillsReturnOnRejoin(GameTestHelper helper) {
+        ServerPlayer p = werewolf(helper);
+        rank(p, WolfState.Rank.TRUE_ALPHA);
+        helper.assertTrue(has(p, BEAST) && has(p, SENSE) && has(p, COMMANDER), "control: the True Alpha is missing a rank skill");
+        var handler = VampirismAPI.factionPlayerHandler(p);
+        handler.setFactionAndLevel(null, 0);
+        helper.assertTrue(BloodlineAccess.get(p).wolf().rank() == WolfState.Rank.TRUE_ALPHA, "the cured True Alpha lost the rank: " + BloodlineAccess.get(p).wolf().rank());
+        helper.assertTrue(!has(p, BEAST) && !has(p, SENSE) && !has(p, COMMANDER), "a dormant True Alpha kept rank skills");
+        helper.assertTrue(tracked(p).isEmpty(), "still tracked " + tracked(p));
+        helper.assertTrue(handler.setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not rejoin the werewolves");
+        helper.assertTrue(has(p, BEAST) && has(p, SENSE) && has(p, COMMANDER), "the rank skills did not come back on rejoining");
+        helper.assertTrue(tracked(p).equals(Set.of(BEAST, SENSE, COMMANDER)), "tracked " + tracked(p));
         helper.succeed();
     }
 

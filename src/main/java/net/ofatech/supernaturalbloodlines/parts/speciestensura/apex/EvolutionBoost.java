@@ -1,8 +1,14 @@
 package net.ofatech.supernaturalbloodlines.parts.speciestensura.apex;
 
-import io.github.manasmods.manascore.race.api.ManasRace;
-import net.minecraft.world.entity.LivingEntity;
+import io.github.manasmods.tensura.registry.attribute.TensuraAttributes;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.LayerSpec;
@@ -10,23 +16,46 @@ import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesLayer;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesTensuraConfig;
 
 /**
- * R100: a species gives a bonus to the Tensura evolution requirements of the current line. Tensura has no hook per
- * requirement (they are read live from the player's state), so the progress it reports is scaled instead: called from the
- * same mixin as {@link ApexOffer}, at the end of {@code ManasRaceInstance.getEvolutionProgress}.
+ * R100 (plan 10): a species speeds up EP gain, and nothing else. Tensura scales every EP a kill gives by the player's
+ * {@code AURA_GAIN} and {@code MAGICULE_GAIN} attributes ({@code DeathHandler.gainEPEntity}; its Gourmand skill uses them too),
+ * so the bonus is one permanent modifier on both, kept in step by {@link SpeciesLayer#sync}. No event or mixin, and the
+ * evolution progress and its requirements are Tensura's own.
  */
 public final class EvolutionBoost {
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "ep_boost");
+
     private EvolutionBoost() {}
 
-    /** The progress (0 to 100) times the multiplier, never above 100 and never below what Tensura reported. */
-    public static float boost(float progress, double multiplier) {
-        return Math.max(progress, Math.min(100.0F, (float) (progress * multiplier)));
+    /** The EP multiple: the configured one for a species with a layer, 1 for anyone else. */
+    public static double factor(boolean hasLayer, double multiplier) {
+        return hasLayer ? multiplier : 1.0;
     }
 
-    public static float boosted(LivingEntity entity, ManasRace target, float progress) {
-        if (!(entity instanceof Player p) || target == null || BloodlineAccess.get(p).species() == Species.NONE
-                || SpeciesLayer.spec(p).equals(LayerSpec.NONE)) {
-            return progress;
+    /** What the player is credited for {@code gain} EP: x1.25 (the config) with a species, as is without. The only boost entry point. */
+    public static double boostedEp(Player p, double gain) {
+        boolean hasLayer = BloodlineAccess.get(p).species() != Species.NONE && !SpeciesLayer.spec(p).equals(LayerSpec.NONE);
+        return gain * factor(hasLayer, SpeciesTensuraConfig.evolutionMultiplier());
+    }
+
+    /** Idempotent: makes the player's EP gain attributes carry the bonus {@link #boostedEp} promises. */
+    public static void sync(ServerPlayer p) {
+        double bonus = boostedEp(p, 1.0) - 1.0;
+        apply(p, TensuraAttributes.AURA_GAIN, bonus);
+        apply(p, TensuraAttributes.MAGICULE_GAIN, bonus);
+    }
+
+    private static void apply(ServerPlayer p, Holder<Attribute> attribute, double bonus) {
+        AttributeInstance a = p.getAttribute(attribute);
+        if (a == null) {
+            return;
         }
-        return boost(progress, SpeciesTensuraConfig.evolutionMultiplier());
+        if (bonus <= 0) {
+            a.removeModifier(ID);
+            return;
+        }
+        AttributeModifier current = a.getModifier(ID);
+        if (current == null || Math.abs(current.amount() - bonus) > 1e-12) {
+            a.addOrReplacePermanentModifier(new AttributeModifier(ID, bonus, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        }
     }
 }

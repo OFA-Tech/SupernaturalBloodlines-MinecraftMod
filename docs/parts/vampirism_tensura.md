@@ -17,10 +17,11 @@ Checklist (from the design, section 3). Tick items as they ship.
 **Werewolves (when installed)**
 - [x] Joining is denied for the race tags `tensura:undead`, `daemon` and `no_blood`.
 - [x] Werewolf levels grant configured Tensura skills (default `tensura:godwolf_sense` at max level).
+- [x] R20b (plan 10): `WerewolfRaceSync` puts werewolves on Tensura's Beastfolk line. Config `werewolf_beastfolk_enabled` (default true). `targetRace(current, rank, joining)` is pure (strings, no game classes; `WerewolfRaceSyncTest`): an exact `tensura:human` that joins becomes `tensura:beastfolk`; on the line, ALPHA gives `beast_lord` and TRUE_ALPHA `spirit_beast` (also when joining, so a rejoining True Alpha goes straight there); never lowered, `divine_beast` and every other race untouched. Two triggers: `FactionLevelChanged` into the werewolf faction (joining) and a `BloodlineAccess` listener on a `wolf.rank` change, which only acts for a player who is a werewolf now. A player with a bloodline species is skipped (the species layer owns their race). The line in Tensura 2.0.1.5 (`BeastfolkRace.getDefaultEvolution` and `getNextEvolutions`): beastfolk -> beast_lord -> spirit_beast -> divine_beast; `tensura:beastfolk` race tag lists the four. Registered only with Werewolves, links no Werewolves class, run under the `werewolf_race_sync` reentrancy guard. Gametests in `WerewolvesGameTests`.
 
 **Other**
 - [x] Holy damage both ways: `vampirism:holy_water` already counts as Tensura holy damage (no tag needed, pinned by `holyWaterCountsAsTensuraHoly`); Tensura holy damage hurts Vampirism vampires x`tensura_holy_vs_vampire` (default 1.5).
-- [x] Bloodless races can't be bitten: `tensura:no_blood` race tag (mixin, see below), and blood 0 for Tensura bloodless mobs (data map).
+- [x] Bloodless races can't be bitten: `tensura:no_blood` race tag (mixin, see below), and blood 0 for Tensura bloodless mobs (data map). Races in `supernaturalbloodlines:bitable` (the apex races, plan 10) are never bloodless: `FactionRaceRules.isBloodless` and the bloodless part of the werewolf-join check skip them. Readers of `no_blood` in this mod: only those two, both in `FactionRaceRules`.
 - [x] EP for Vampirism and Werewolves mobs (data `entity_existence`).
 - [ ] **Manual check pending** (Task 5 Step 3): `runClient`, spawn a Vampirism vampire and a werewolf, open Tensura's analysis and see their EP. Replaced by the GameTests `vampirismMobsHaveEp` / `werewolfMobsHaveEp` (registry contents), which do not prove the analysis screen.
 

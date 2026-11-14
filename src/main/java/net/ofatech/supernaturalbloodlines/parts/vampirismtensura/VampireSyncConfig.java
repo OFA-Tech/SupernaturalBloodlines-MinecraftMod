@@ -15,6 +15,7 @@ public final class VampireSyncConfig {
     private static final ModConfigSpec.ConfigValue<String> CURE_RACE;
     private static final ModConfigSpec.ConfigValue<List<? extends String>> RACE_LEVEL_FLOOR;
     private static final ModConfigSpec.ConfigValue<List<? extends String>> WEREWOLF_SKILL_GRANTS;
+    private static final ModConfigSpec.BooleanValue WEREWOLF_BEASTFOLK_ENABLED;
     private static final ModConfigSpec.DoubleValue TENSURA_HOLY_VS_VAMPIRE;
     public static final double DEFAULT_HOLY_VS_VAMPIRE = 1.5;
     private static final Set<String> WARNED = new HashSet<>();
@@ -31,6 +32,10 @@ public final class VampireSyncConfig {
         WEREWOLF_SKILL_GRANTS = b.comment("\"level=skillId\": a werewolf at that Werewolves level or higher is given the Tensura skill, and loses it again",
                         "when the level drops below it or they leave the faction. -1 means the maximum werewolf level.")
                 .defineListAllowEmpty("werewolf_skill_grants", SkillGrantSpec.DEFAULTS, () -> "", o -> o instanceof String);
+        WEREWOLF_BEASTFOLK_ENABLED = b.comment("Werewolves follow Tensura's Beastfolk line (Werewolves only): a player whose race is exactly tensura:human becomes tensura:beastfolk",
+                        "when they become a werewolf; an Alpha already on the line becomes a beast_lord and a True Alpha a spirit_beast. The race is never lowered",
+                        "and any other race is never touched. Existing players are not changed. Off: werewolves keep their race.")
+                .define("werewolf_beastfolk_enabled", true);
         TENSURA_HOLY_VS_VAMPIRE = b.comment("Tensura holy damage (not Vampirism's holy water) to a Vampirism vampire is multiplied by this.",
                         "No effect while species_tensura makes Tensura treat that vampire as undead (its undead_treatment_enabled, on by default):",
                         "Tensura then applies its own x3 and this multiplier is skipped so the two do not stack.")
@@ -70,6 +75,14 @@ public final class VampireSyncConfig {
             }
         }
         return p.grants();
+    }
+
+    public static boolean werewolfBeastfolkEnabled() {
+        try {
+            return WEREWOLF_BEASTFOLK_ENABLED.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
     }
 
     public static double holyVsVampire() {

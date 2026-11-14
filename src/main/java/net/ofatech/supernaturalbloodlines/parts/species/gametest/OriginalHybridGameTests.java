@@ -45,6 +45,7 @@ import static net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gamete
 public final class OriginalHybridGameTests {
     private static final String NS = SupernaturalBloodlines.MODID;
     private static final long FULL_MOON_CYCLE = 24000L * 8;
+    private static final String NEEDS_FULL_MOON = "supernaturalbloodlines.rite.needs_full_moon";
     private static final WolfState GENE = WolfState.NONE.toBuilder().geneRolled(true).latentGene(true).build();
 
     private OriginalHybridGameTests() {
@@ -80,13 +81,42 @@ public final class OriginalHybridGameTests {
         ServerLevel level = helper.getLevel();
         long before = level.getDayTime();
         long base = before - Math.floorMod(before, FULL_MOON_CYCLE);
-        level.setDayTime(full ? base : base + 24000L * 4);
+        // a full moon rite needs the night of the full moon (plan 10), not just the day: 18000 is inside Werewolves' window
+        level.setDayTime(full ? base + 18000L : base + 24000L * 4);
         try {
             helper.assertTrue((level.getMoonPhase() == 0) == full, "could not set the moon, phase is " + level.getMoonPhase());
             body.run();
         } finally {
             level.setDayTime(before);
         }
+    }
+
+    /** Plan 10: the full-moon rites need the night, so noon of a full-moon day is refused with the night message, and the night is not. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void moonRitesRefusedAtFullMoonNoon(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        long before = level.getDayTime();
+        long base = before - Math.floorMod(before, FULL_MOON_CYCLE);
+        try {
+            for (String rite : List.of("rite_of_the_moon", "immortality", "silver_moon")) {
+                for (long timeOfDay : new long[] {6000L, 18000L}) {
+                    RecordingPlayer caster = RecordingPlayer.create(helper);
+                    place(helper, caster);
+                    try {
+                        level.setDayTime(base + timeOfDay);
+                        helper.assertTrue(level.getMoonPhase() == 0, "could not set the moon, phase is " + level.getMoonPhase());
+                        start(helper, rite, caster, List.of());
+                        boolean told = caster.receivedOnActionBar(NEEDS_FULL_MOON);
+                        helper.assertTrue(told == (timeOfDay == 6000L), rite + " at " + timeOfDay + ": the night message was " + (told ? "sent" : "not sent"));
+                    } finally {
+                        remove(helper, caster);
+                    }
+                }
+            }
+        } finally {
+            level.setDayTime(before);
+        }
+        helper.succeed();
     }
 
     private static List<ItemStack> moonItems() {

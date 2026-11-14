@@ -44,10 +44,13 @@ public final class FactionRaceRules {
         RaceEvents.SET_RACE.register(FactionRaceRules::onSetRace);
     }
 
-    /** A player whose Tensura race has no blood: the vampire bite is refused (see VampirePlayerBiteMixin). */
+    /** A player whose Tensura race has no blood: the vampire bite is refused (see VampirePlayerBiteMixin). Bitable races (the apex races) always have blood. */
     public static boolean isBloodless(Player player) {
-        ManasRaceInstance race = RaceAPI.getRaceFrom(player).getRace().orElse(null);
-        return race != null && race.is(NO_BLOOD);
+        return noBlood(RaceAPI.getRaceFrom(player).getRace().orElse(null));
+    }
+
+    private static boolean noBlood(ManasRaceInstance race) {
+        return race != null && race.is(NO_BLOOD) && !RaceTags.isBitable(race);
     }
 
     private static void onCanJoinFaction(PlayerFactionEvent.CanJoinFaction event) {
@@ -61,7 +64,7 @@ public final class FactionRaceRules {
                 event.setBehavior(PlayerFactionEvent.CanJoinFaction.Behavior.DENY);
             }
         } else if (WEREWOLF_FACTION_ID.equals(event.getFactionToJoin().getID())
-                && (RaceTags.isUndeadOrDaemon(race) || race != null && race.is(NO_BLOOD)) && !apex) {
+                && (RaceTags.isUndeadOrDaemon(race) || noBlood(race)) && !apex) {
             event.setBehavior(PlayerFactionEvent.CanJoinFaction.Behavior.DENY);
         }
     }

@@ -101,9 +101,16 @@ public final class BloodlineRules {
         return b.inTransition(false).unstable(false).transitionTicksLeft(0).pendingSire(null);
     }
 
-    /** The Teen Wolf layer reset; the hidden gene is a human trait and stays (it must not be re-rolled). */
+    /**
+     * The Teen Wolf layer reset; the hidden gene is a human trait and stays (it must not be re-rolled). A True Alpha keeps the
+     * spark (plan 10): the rank, the lineage that makes it count and the tracked rank skills stay, dormant until they rejoin.
+     */
     private static WolfState clearedWolf(WolfState w) {
-        return WolfState.NONE.toBuilder().geneRolled(w.geneRolled()).latentGene(w.latentGene()).build();
+        WolfState.Builder b = WolfState.NONE.toBuilder().geneRolled(w.geneRolled()).latentGene(w.latentGene());
+        if (w.rank() == WolfState.Rank.TRUE_ALPHA) {
+            b.rank(WolfState.Rank.TRUE_ALPHA).lineage(w.lineage()).grantedSkills(w.grantedSkills());
+        }
+        return b.build();
     }
 
     /** Leaving the werewolf side: no wolf rank and no half-done hybrid transition. */

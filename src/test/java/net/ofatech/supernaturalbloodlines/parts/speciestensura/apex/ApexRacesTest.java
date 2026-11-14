@@ -67,6 +67,20 @@ class ApexRacesTest {
     }
 
     @Test
+    void bitableTagHoldsEveryApexRace() throws IOException {
+        JsonObject tag = resource("/data/supernaturalbloodlines/tags/manascore_race/races/bitable.json");
+        assertFalse(tag.get("replace").getAsBoolean());
+        Set<String> ids = new HashSet<>();
+        tag.getAsJsonArray("values").forEach(v -> ids.add(v.getAsJsonObject().get("id").getAsString()));
+        assertEquals(new HashSet<>(ApexSpec.ALL.stream().map(s -> "supernaturalbloodlines:" + s.id()).toList()), ids);
+    }
+
+    @Test
+    void epRequirementIsTwoMillion() {
+        assertEquals(2_000_000, ApexRace.EP_REQUIREMENT);
+    }
+
+    @Test
     void humanLikeTagHoldsEveryApexRaceAndUndeadTagTheVampireTypes() throws IOException {
         Set<String> humanLike = tagValues("human_like");
         Set<String> undead = tagValues("undead");

@@ -36,7 +36,7 @@ The player was on an **apex race**. ManasCore can't load a saved race that is no
 
 | Message | What to do |
 |---|---|
-| "This rite can only be performed under a full moon." | wait for the full-moon day (not in the Nether or the End) |
+| "This rite can only be performed on a full-moon night." | wait for the night of the full moon, after dusk (not in the Nether or the End) |
 | "The one in the circle does not belong to the right faction for this rite." | the target must stand on the centre block and be in the faction the rite names |
 | "The rite would change nothing." | the target already has what the rite gives |
 | "The rite cannot take hold: the new faction would not accept them." | Vampirism or Werewolves refused the join (for example an undead Tensura race) |
@@ -84,7 +84,7 @@ Is it **bound** to you (tooltip "Bound to ...")? A ring bound to someone else, o
 ## A vampire still burns, or can't bite
 
 - A faction vampire's sun damage is Vampirism's. A [Sun Ring](Items-And-Blocks#rings-and-wards) bound to them blocks it.
-- "There is no blood in them to drink." means the victim's Tensura race is bloodless (or an apex race of a vampire-type species).
+- "There is no blood in them to drink." means the victim's Tensura race is bloodless (a slime, a ghoul or a spirit, for example). Apex races are never bloodless.
 
 ## A sired player can't hurt their sire
 

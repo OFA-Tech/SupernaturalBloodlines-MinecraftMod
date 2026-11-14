@@ -23,7 +23,7 @@ Tokens last 60 seconds (calls) or 5 seconds (compulsion choices), are tied to on
 | `/pack accept <token>` | the invited player | what the button runs |
 | `/pack leave` | a werewolf in a pack | leave the pack and become an Omega. Alphas can't. |
 | `/pack info` | a werewolf | the pack: its Alpha, Betas, Emissary and anchor |
-| `/pack heal <player>` | an **Alpha** | give the spark away to fully heal someone within 4 blocks, curing hybrid venom and wolfsbane. The Alpha becomes a Beta. |
+| `/pack heal <player>` | an **Alpha** | give the spark away to fully heal someone within 4 blocks, curing hybrid venom and wolfsbane. The Alpha becomes a Beta. Not for a True Alpha. |
 | `/pack roar` | an **Alpha** or True Alpha | the Alpha Roar (60 s cooldown). Same as the **Alpha Roar** [key bind](Key-Binds). |
 | `/pack emissary [player]` | an **Alpha** | name a witch, siphoner, heretic or tribrid as your Emissary. Without a name it clears it. |
 | `/pack anchor [player]` | a werewolf | name a player as your **anchor**. Without a name it clears it. |

@@ -24,8 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * ({@link ApexSpec} for the stats, the constants here for energy). An apex race is the end of the line: no next evolution.
  */
 public class ApexRace extends TensuraRace {
-    /** Placeholder: base max aura + magicule needed to evolve (a divine human needs 2,000,000). */
-    static final double EP_REQUIREMENT = 1_000_000;
+    /** Base max EP needed to evolve (owner decision 2026-11-14: the same as a divine human). */
+    static final double EP_REQUIREMENT = 2_000_000;
     private static final double MIN_BASE_ENERGY = 250_000;
     private static final double MAX_BASE_ENERGY = 350_000;
     private static final ResourceLocation STATS_ID = ResourceLocation.fromNamespaceAndPath(ApexSpec.RACE_NAMESPACE, "apex_race_stats");

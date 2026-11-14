@@ -96,7 +96,8 @@ public final class OriginalGameTests {
         ServerLevel level = helper.getLevel();
         long before = level.getDayTime();
         long base = before - Math.floorMod(before, FULL_MOON_CYCLE);
-        level.setDayTime(full ? base : base + 24000L * 4);
+        // a full moon rite needs the night of the full moon (plan 10), not just the day: 18000 is inside Werewolves' window
+        level.setDayTime(full ? base + 18000L : base + 24000L * 4);
         try {
             helper.assertTrue((level.getMoonPhase() == 0) == full, "could not set the moon, phase is " + level.getMoonPhase());
             body.run();

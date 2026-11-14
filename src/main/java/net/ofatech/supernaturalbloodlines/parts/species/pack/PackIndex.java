@@ -24,6 +24,7 @@ import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -64,7 +65,8 @@ public final class PackIndex extends SavedData {
             if (!Objects.equals(change.before().wolf().packAlpha(), change.after().wolf().packAlpha())) {
                 follow(p);
             }
-            if (PackAccess.isAlpha(change.after().wolf().rank())) {
+            // a dormant True Alpha (outside the faction) keeps its tombstone until it rejoins
+            if (PackAccess.isAlpha(change.after().wolf().rank()) && VampirismSupernatural.isWerewolf(p)) {
                 get(p.serverLevel()).clearFormerAlpha(p.getUUID());
             }
         });

@@ -23,6 +23,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.CallRequests;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -86,13 +87,18 @@ public final class PackCommand {
         return p.getGameProfile().getName();
     }
 
+    /** A rank outside the werewolf faction is dormant (a cured True Alpha): it cannot lead a pack until they rejoin. */
+    private static boolean isActiveAlpha(ServerPlayer p) {
+        return PackAccess.isAlpha(PackAccess.wolf(p).rank()) && VampirismSupernatural.isWerewolf(p);
+    }
+
     private static PackContext context(@Nullable UUID alpha, long now) {
         return new PackContext(alpha, 0, now, 0, 30L * 24000, 300, alpha != null);
     }
 
     @Nullable
     public static Component invite(ServerPlayer alpha, ServerPlayer target) {
-        if (!PackAccess.isAlpha(PackAccess.wolf(alpha).rank())) {
+        if (!isActiveAlpha(alpha)) {
             return error("not_alpha");
         }
         if (target == alpha) {
@@ -129,7 +135,7 @@ public final class PackCommand {
             return error("expired");
         }
         ServerPlayer alpha = SireCall.player(p.server, r.caller());
-        if (alpha == null || !PackAccess.isAlpha(PackAccess.wolf(alpha).rank())) {
+        if (alpha == null || !isActiveAlpha(alpha)) {
             return error("alpha_gone");
         }
         WolfState w = PackAccess.wolf(p);
@@ -165,8 +171,11 @@ public final class PackCommand {
     /** An Alpha gives up the spark to fully heal a player within 4 blocks and cure their wolfsbane and hybrid venom (R93). With no online heir the pack dissolves and the giver is left an Omega. */
     @Nullable
     public static Component heal(ServerPlayer alpha, ServerPlayer target) {
-        if (!PackAccess.isAlpha(PackAccess.wolf(alpha).rank())) {
+        if (!isActiveAlpha(alpha)) {
             return error("not_alpha");
+        }
+        if (PackAccess.wolf(alpha).rank() == WolfState.Rank.TRUE_ALPHA) {
+            return error("true_alpha_keeps_spark");
         }
         if (target == alpha) {
             return error("self");
@@ -189,7 +198,7 @@ public final class PackCommand {
     /** The Alpha names the witch whose rites cost less near the pack; a null target clears it. */
     @Nullable
     public static Component emissary(ServerPlayer alpha, @Nullable ServerPlayer target) {
-        if (!PackAccess.isAlpha(PackAccess.wolf(alpha).rank())) {
+        if (!isActiveAlpha(alpha)) {
             return error("not_alpha");
         }
         PackIndex index = PackIndex.get(alpha.serverLevel());

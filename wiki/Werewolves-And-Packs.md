@@ -41,7 +41,7 @@ Werewolves (the mod) gives players the werewolf faction, forms and levels. This 
 | **Alpha** | the spark | **+20%** attack, **+4** max health, red eyes, the Roar |
 | **True Alpha** | earned | the Alpha perks x1.1 (**+22%**, **+4.4**) |
 
-Perks only apply while in the werewolf faction (a cured Alpha keeps the rank and its Tensura skills, not the attribute perks). During a lunar eclipse the positive perks stop; the Omega penalty does not.
+Perks only apply while in the werewolf faction (a cured True Alpha keeps the rank, dormant: no attribute perks and no Tensura rank skills until they rejoin). During a lunar eclipse the positive perks stop; the Omega penalty does not.
 
 ### Eyes
 
@@ -62,10 +62,10 @@ Eyes show as two glowing dust particles at eye height every half second while a 
 
 | How | What happens |
 |---|---|
-| **Stolen** | a werewolf player kills an Alpha: they take the spark and the pack (a Beta who kills their own Alpha leads it afterwards; a killer who already leads a pack adopts the Betas). The old Alpha becomes an **Omega**. Ordinary deaths keep rank and spark. |
-| **Inherited** | an Alpha leaves the werewolves or is cured: the spark goes to the **highest-level online Beta**. With nobody online the pack **dissolves** and its Betas become Omegas at next login. |
-| **Given up** | `/pack heal <player>`: an Alpha within 4 blocks of a player gives the spark away to fully heal them and cure hybrid venom and wolfsbane (all strains). The Alpha stays in the pack as a Beta of the heir. |
-| **Earned** | a Beta becomes a **True Alpha** |
+| **Stolen** | a werewolf player kills an **Alpha** (never a True Alpha: killing one is just a death): they take the spark and the pack (a Beta who kills their own Alpha leads it afterwards; a killer who already leads a pack adopts the Betas). The old Alpha becomes an **Omega**. Ordinary deaths keep rank and spark. |
+| **Inherited** | an **Alpha** leaves the werewolves or is cured: the spark goes to the **highest-level online Beta**. With nobody online the pack **dissolves** and its Betas become Omegas at next login. |
+| **Given up** | `/pack heal <player>`: an **Alpha** (not a True Alpha) within 4 blocks of a player gives the spark away to fully heal them and cure hybrid venom and wolfsbane (all strains). The Alpha stays in the pack as a Beta of the heir. |
+| **Earned** | a Beta becomes a **True Alpha**, who keeps the spark for good |
 
 ### Becoming a True Alpha
 
@@ -78,6 +78,12 @@ Checked every minute (1200 ticks), for Betas in the werewolf faction:
 - **never stole a spark**
 
 There is **no limit** on True Alphas per world. When it happens: "Your eyes burn red: you have earned the spark. You are a True Alpha."
+
+A True Alpha **keeps the spark**: it cannot be stolen, inherited or given up. If they are cured or leave the werewolves they stay True Alpha, dormant (no attack or health perk, no `/pack invite`, `heal` or `emissary`). Their pack dissolves as for any Alpha and is **not** restored. Rejoining the werewolves brings the perks back. The Cure and the Rite of the Silver Moon do not take the True Alpha rank either. A plain Alpha who is cured passes the spark on like one who leaves.
+
+### Tensura race
+
+With Tensura, a human who becomes a werewolf becomes a Tensura **beastfolk**. As an Alpha they become a **beast lord**, as a True Alpha a **spirit beast**, and the race is never lowered. Other races are kept. See [Tensura integration](Tensura-Integration). Switch: `werewolf_beastfolk_enabled`.
 
 ## Packs and `/pack`
 
@@ -170,7 +176,7 @@ Lines of dust stop vampires, werewolves, hybrids, Originals, heretics and tribri
 Each full-moon night (the Werewolves full-moon window, 12786 to 23216 of the day) has a **3%** chance (`lunar_eclipse_chance`, rolled once per night when someone is online) of being an **eclipse**, until dawn.
 
 - The server announces the start and the end: "A lunar eclipse darkens the moon. The wolves lose their strength until dawn."
-- The overworld's **fog and horizon turn red**. (The zenith colour is not changed: NeoForge 1.21.1 has no event for it.)
+- The overworld's **fog, horizon and sky turn red**, and the **moon turns dark orange** (client side: a tinted disc over the sky and a dark orange disc over the moon, drawn after the vanilla sky; no mixin).
 - Werewolves lose **every form action** (the full moon's forced shift too, and a form already on is dropped within a second): "The eclipse holds your wolf down until dawn."
 - The Alpha perks (the Omega penalty stays) and the **pack bonus** are suppressed. Nobody can roar.
 - It is one flag for the **whole server**, whatever the dimension. It is stored as one night number and is never active past dawn, so a restart cannot make it last.

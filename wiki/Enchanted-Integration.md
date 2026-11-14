@@ -47,12 +47,12 @@ See [Rites](Rites) for ingredients and power. In short:
 - **Rite of Magicule Offering** (enchanted_tensura): the caster pays 5000 magicules and a Condensed Magicule block is dropped above the chalk. With too few magicules nothing is taken and the caster is told "You do not have enough magicules to make this offering."
 - **Rite of Blood Offering** (vampirism_enchanted): 4 **full** Vampirism blood bottles and a stone make a Blood Stone. Empty or partly filled bottles do not count.
 - **Rite of Cleansing Blood** (vampirism_enchanted): cures vampirism. Follows the bloodline rules for Originals and hybrids (see [Hybrids](Hybrids-And-Original-Hybrids)).
-- **Rite of the Silver Moon** (vampirism_enchanted, needs Werewolves): cures lycanthropy, on a full-moon day.
+- **Rite of the Silver Moon** (vampirism_enchanted, needs Werewolves): cures lycanthropy, on a full-moon night.
 - Everything for the species, hunters and artifacts: see [Rites](Rites).
 
 The faction rites act on the **player standing on the centre block of the circle** (the closest player in the column on the chalk), or on the caster if nobody stands there. A rite that would change nothing, or whose new faction would refuse the player, is cancelled and the ingredients come back ("The rite would change nothing", "The rite cannot take hold: the new faction would not accept them.").
 
-"Full moon" for rites means the overworld full-moon phase (the whole full-moon day, not only the night). In the Nether and the End (no day/night) it is never a full moon.
+"Full moon" for rites means the night of the overworld full moon (phase 0 and the time of day between 12786 and 23216; noon of the full-moon day is refused). In the Nether and the End (no day/night) it is never a full moon.
 
 ## Poppets
 

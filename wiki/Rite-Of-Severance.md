@@ -17,7 +17,7 @@ The Sire's Blood must be the blood **of the target's own sire**. Anything wrong 
 
 | Message | Why |
 |---|---|
-| "This rite can only be performed under a full moon." | not the night of a full moon |
+| "This rite can only be performed on a full-moon night." | not the night of a full moon |
 | "Only a witch, siphoner, heretic or tribrid can break a bond." | the caster is not a witch type |
 | "The rite needs Sire's Blood." | no Sire's Blood in the circle |
 | "Nobody sired them: there is no bond to break." | the target has no sire |
@@ -64,4 +64,4 @@ A **new sire replaces the old one and ends the severance**: a severed player can
 
 - **Rolling back to an older build forgets severances**: the bonds come back there. See [For server owners](For-Server-Owners#removing-the-mod-or-tensura).
 - The altar and chalk with the real ingredients, the tooltips and the item models have **not been checked in a real client** (the tests start the rite directly). See [Known limits](Known-Limits).
-- Other rites with `requires_full_moon` (the Rite of the Moon, the Silver Moon, Immortality) still work on the whole full-moon **day**. Only this rite is night-only.
+- The other rites with `requires_full_moon` (the Rite of the Moon, the Silver Moon, Immortality) are night-only too since plan 10.

@@ -18,11 +18,13 @@ public final class PackRules {
             case LEFT_PACK -> leftPack(w);
             case KILLED_ALPHA -> killedAlpha(w);
             case SPARK_INHERITED -> isWerewolf(w) && !isAlpha(w) ? ok(w.toBuilder().rank(Rank.ALPHA).packAlpha(null).build()) : ok(w);
-            case SPARK_GIVEN_UP -> isAlpha(w)
+            case SPARK_GIVEN_UP -> w.rank() == Rank.TRUE_ALPHA ? refuse(w, "true_alpha_keeps_spark")
+                    : isAlpha(w)
                     ? ok(w.toBuilder().rank(Rank.BETA).packAlpha(c.otherAlpha()).betaSince(c.gameTime()).build())
                     : ok(w);
-            // the spark is gone (stolen, or passed on with the faction): an Alpha with nothing left is an Omega
-            case SPARK_LOST -> isAlpha(w) ? ok(w.toBuilder().rank(Rank.OMEGA).packAlpha(null).betaSince(0).build()) : ok(w);
+            // the spark is gone (stolen, or passed on with the faction): an Alpha with nothing left is an Omega. A True Alpha never loses it.
+            case SPARK_LOST -> w.rank() == Rank.TRUE_ALPHA ? refuse(w, "true_alpha_keeps_spark")
+                    : isAlpha(w) ? ok(w.toBuilder().rank(Rank.OMEGA).packAlpha(null).betaSince(0).build()) : ok(w);
             case TRUE_ALPHA_EARNED -> trueAlpha(w, c);
             // Only a werewolf's eyes turn blue; the caller sends GENE_AWAKENED first when a kill awakens a human.
             case KILLED_INNOCENT -> isWerewolf(w) ? ok(w.toBuilder().killedInnocent(true).build()) : ok(w);

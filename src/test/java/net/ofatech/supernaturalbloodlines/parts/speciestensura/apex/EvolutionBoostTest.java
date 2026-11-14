@@ -6,21 +6,20 @@ import org.junit.jupiter.api.Test;
 
 class EvolutionBoostTest {
     @Test
-    void multipliesTheProgress() {
-        assertEquals(50.0F, EvolutionBoost.boost(40.0F, 1.25), 1e-4F);
-        assertEquals(0.0F, EvolutionBoost.boost(0.0F, 1.25), 1e-4F);
+    void aSpeciesPlayerGainsAQuarterMoreEp() {
+        assertEquals(1250.0, 1000.0 * EvolutionBoost.factor(true, 1.25), 1e-9);
     }
 
     @Test
-    void neverPassesOneHundred() {
-        assertEquals(100.0F, EvolutionBoost.boost(80.0F, 1.25), 1e-4F);
-        assertEquals(100.0F, EvolutionBoost.boost(99.0F, 10.0), 1e-4F);
-        assertEquals(100.0F, EvolutionBoost.boost(100.0F, 1.25), 1e-4F);
+    void noSpeciesGainsExactlyWhatTensuraGives() {
+        assertEquals(1000.0, 1000.0 * EvolutionBoost.factor(false, 1.25), 1e-9);
+        assertEquals(1.0, EvolutionBoost.factor(false, 10.0), 0.0);
     }
 
     @Test
-    void neverLowersTheProgress() {
-        assertEquals(40.0F, EvolutionBoost.boost(40.0F, 0.5), 1e-4F);
-        assertEquals(100.0F, EvolutionBoost.boost(100.0F, 0.5), 1e-4F);
+    void theConfigMultiplierIsTheFactor() {
+        assertEquals(1.0, EvolutionBoost.factor(true, 1.0), 0.0);
+        assertEquals(10.0, EvolutionBoost.factor(true, 10.0), 0.0);
+        assertEquals(1.5, EvolutionBoost.factor(true, 1.5), 0.0);
     }
 }
