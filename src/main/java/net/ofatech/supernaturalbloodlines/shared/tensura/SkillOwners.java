@@ -9,8 +9,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Several sources can grant the same Tensura skill (the species layer and the werewolf level grants both give
- * {@code godwolf_sense}, and the rank skills will too). One rule keeps them from taking it from each other:
+ * Several sources can grant the same Tensura skill (the species layer, the werewolf level grants and the werewolf rank
+ * skills can all give {@code godwolf_sense}). One rule keeps them from taking it from each other. The sources are
+ * {@code species_layer} (species_tensura, {@code SpeciesLayer}), {@code werewolf_levels} (vampirism_tensura,
+ * {@code WerewolfSkillGrants}) and {@code wolf_rank} (species_tensura, {@code RankSkills}):
  * <ul>
  * <li>a skill this mod granted carries the instance mark {@link #GRANTED_TAG}; a skill the player had from elsewhere
  * has none and is never forgotten;</li>
@@ -18,7 +20,7 @@ import net.minecraft.server.level.ServerPlayer;
  * <li>a source that stops wanting a skill forgets it only if no other registered source still wants it
  * ({@link #release}); otherwise the skill stays, with its mark, and whoever wants it last forgets it.</li>
  * </ul>
- * A new source (Task 5's werewolf rank skills) registers its predicate once at init and releases through
+ * A new source registers its predicate once at init and releases through
  * {@link #release}. No Tensura classes: only ManasCore's skill API.
  */
 public final class SkillOwners {
