@@ -38,6 +38,16 @@ public final class RiteSignalGameTests {
                 .get(ResourceLocation.fromNamespaceAndPath(NS, path));
     }
 
+    /** The rite types of other parts exist only when that part (and its mods) is on; the test then has nothing to start. */
+    private static boolean missing(GameTestHelper helper, String... paths) {
+        for (String path : paths) {
+            if (type(helper, path) == null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static BlockPos centre(GameTestHelper helper) {
         return helper.absolutePos(new BlockPos(1, 1, 1));
     }
@@ -66,6 +76,10 @@ public final class RiteSignalGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void anEnchantedTypeCountsOnce(GameTestHelper helper) {
+        if (missing(helper, "ward_of_return")) {
+            helper.succeed();
+            return;
+        }
         ServerPlayer p = witch(helper);
         try {
             SupernaturalAccess.set(p, SupernaturalAccess.get(p).toBuilder().rung(SupernaturalRace.WITCH, 1).build());
@@ -80,6 +94,10 @@ public final class RiteSignalGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void anyRiteIsCountedExactlyOnce(GameTestHelper helper) {
+        if (missing(helper, "ward_of_return")) {
+            helper.succeed();
+            return;
+        }
         ServerPlayer p = witch(helper);
         try {
             run(helper, "ward_of_return", p);
@@ -94,6 +112,10 @@ public final class RiteSignalGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aRiteOfOursCountsOnceToo(GameTestHelper helper) {
+        if (missing(helper, "ancestral_calling")) {
+            helper.succeed();
+            return;
+        }
         ServerPlayer p = TestPlayers.create(helper);
         p.setPos(Vec3.atBottomCenterOf(centre(helper)));
         helper.getLevel().addNewPlayer(p);
@@ -112,6 +134,10 @@ public final class RiteSignalGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aCancelledRiteCountsForNothing(GameTestHelper helper) {
+        if (missing(helper, "hybrid_blood", "original_blood")) {
+            helper.succeed();
+            return;
+        }
         ServerPlayer p = witch(helper);
         try {
             run(helper, "hybrid_blood", p); // the player is not a hybrid: the rite cancels itself

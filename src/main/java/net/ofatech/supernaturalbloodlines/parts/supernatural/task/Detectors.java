@@ -24,6 +24,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.Migration;
 import net.ofatech.supernaturalbloodlines.core.supernatural.TaskEvent;
 import net.ofatech.supernaturalbloodlines.core.supernatural.TaskSpec.Detector;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HumanLikeBlood;
@@ -68,9 +69,10 @@ public final class Detectors {
                 TaskTracker.recheck(p);
             }
         });
+        // the migration first: it stamps the race from turnedAt before anything can stamp it as "now"
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
-                TaskTracker.recheck(p);
+                onLogin(p);
             }
         });
         NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> {
@@ -90,6 +92,14 @@ public final class Detectors {
         });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> DYING.remove(e.getEntity().getUUID()));
         TaskSignals.addListener(Detectors::onSignal);
+    }
+
+    /** What a login does, in this order: the migration (it knows when the player became their race), then the first read of the state. */
+    public static void onLogin(ServerPlayer p) {
+        if (TaskTracker.tracked(p)) {
+            Migration.runIfNeeded(p);
+            TaskTracker.recheck(p);
+        }
     }
 
     /** The dying state of a player in Vampirism's DBNO is over: if they are alive they came back (R32). */

@@ -171,7 +171,7 @@ public final class TaskTracker {
         }
         Map<String, Long> since = null;
         for (SupernaturalRace race : races) {
-            if (!s.raceSince().containsKey(race.id())) {
+            if (race != SupernaturalRace.GHOUL && !s.raceSince().containsKey(race.id())) { // a Ghoul is frozen: no days run for them
                 since = since == null ? new HashMap<>(s.raceSince()) : since;
                 since.put(race.id(), now);
             }

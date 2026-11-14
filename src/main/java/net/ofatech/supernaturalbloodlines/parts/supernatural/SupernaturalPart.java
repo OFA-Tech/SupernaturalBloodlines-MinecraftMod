@@ -13,6 +13,7 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.EnabledParts;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.ClaimGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.DetectorGameTests;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.MigrationGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.LadderDataGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.RiteSignalGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.TensuraEpGameTests;
@@ -55,6 +56,7 @@ public final class SupernaturalPart {
             e.register(LadderDataGameTests.class);
             e.register(DetectorGameTests.class);
             e.register(ClaimGameTests.class);
+            e.register(MigrationGameTests.class);
             if (ModList.get().isLoaded("tensura") && EnabledParts.isEnabled("supernaturalTensura")) {
                 e.register(TensuraEpGameTests.class);
             }

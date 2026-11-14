@@ -9,6 +9,7 @@ public final class SupernaturalTensuraPart {
 
     public static void init(IEventBus modBus, ModContainer container) {
         TensuraEpReward.register();
+        ApexRaceReader.register();
         SupernaturalBloodlines.LOGGER.info("SupernaturalTensuraPart enabled");
     }
 }

@@ -2,7 +2,7 @@
 
 Requires: `vampirism`. Optional: `enchanted` (rite tasks), `werewolves` (level steps and pack tasks); a task whose mod is missing is dropped from its rung. Package: `net.ofatech.supernaturalbloodlines.parts.supernatural`. Config key `supernatural`, config file `supernaturalbloodlines-supernatural.toml` (empty for now). Plan: `docs/superpowers/plans/2026-11-14-supernatural-system.md` (phase 12a). Spec: `docs/superpowers/specs/2026-11-14-supernatural-system-design.md`.
 
-**Mixin budget: 0 of 3 used.** One is reserved for an `@Inject` on Enchanted's `Rite` completion (phase 12a Task 3, `require = 0`, config switch), added only if Enchanted fires no event.
+**Mixin budget: 1 of 3 used** (`RiteCompleteMixin`, see "The rite signal" below).
 
 ## What it holds
 
@@ -64,6 +64,29 @@ One file per race: `data/supernaturalbloodlines/supernatural/ladder/<race>.json`
 - A rung left with no tasks (its mod or part is off) is reached on its own, with its SP and EP, by `TaskTracker` after every event (`LadderRules.settle`); a Ghoul is not paid.
 - `shared/supernatural/LadderQuery` is what other parts ask: `layerSlice(player)` (empty = the whole layer) and `rung(player, race)`. Without this part the answers are "the whole layer" and 0.
 
+## The rite signal (one mixin on Enchanted's `Rite`)
+
+Enchanted 4.2.7 has no event for a rite that worked (its `*Events` classes are client, common, effects, poppets). The reliable point is `Rite.start()`: it calls `stop()` only when `onStart` returned false (the rite is finished), and a rite that refuses calls `cancel()` first, so a `@Unique` flag set at the head of `cancel()` tells the two apart. Both hooks are `require = 0`; the plugin checks in `postApply` that both landed and logs `RiteCompleteMixin hook in place` or a warning. It is applied only when Enchanted is installed and the part is on; the switch is `rite_complete_signal` in `supernaturalbloodlines-supernatural.toml` (the plan's `supernatural.mixin.rite_complete` name was not used: that file is already the part's). `RiteSignal` fires the datapack rite id for the caster and the target through `TaskSignals.rite`, so it is the single signal for every rite, Enchanted's own types and ours (our factories fire nothing any more). A rite that keeps running and ends in `tick()` is not signalled; none of the rites the ladders ask for does that. Checked with real rites in `RiteSignalGameTests`: an Enchanted type counts once, one of ours counts once, a cancelled rite counts for nothing, and the switch turns it off.
+## What the tasks count, exactly (notes from the Task 3 review)
+
+- **L-HYB-2a ("thirst 15+ for 3 days in total")** is summed only while the rung is active, because `thirst_days` cannot be a lifetime count (a `total` on it is rejected when the file is read).
+- **A bite is one feed.** Each bite that drinks counts as one `feed`, however much blood it took.
+- **PvP counts for `prey_hit_survived`.** A hit on a player by a vampire or werewolf player counts like a hit by a mob of those types. That is accepted.
+- **Prey tasks need `vampirismEnchanted`.** "Prey" (vampire and werewolf types, never witches or siphoners) is defined by that part, so every `kill category=prey` and `siphon_entity prey=true` task carries `"part": "vampirismEnchanted"` (`LadderDataTest`). L-HER-2a asks for vampire-type victims only and uses `vampiric=true` instead, so a werewolf does not count.
+- **Mountain ash** is counted in a LOWEST-priority `EntityPlaceEvent` listener that skips cancelled placements, not in `setPlacedBy`.
+- **FakePlayers do not climb ladders** (deployers, turrets). The GameTest server turns this off for its own FakePlayers only (`SupernaturalAccess.trackFakePlayers`).
 ## Off
 
 With the part off nothing reads or writes the attachment. Saved progress stays on the player and is back when the part is turned on again.
+
+## Migration (phase 12a Task 5)
+
+`Detectors.onLogin` runs `Migration.runIfNeeded` first, then the first read of the state, so the race is stamped from `turnedAt` and not from "now" (a long-time vampire keeps their days: `aLongTimeVampireKeepsTheirDaysAfterTheUpdate`). The rules are pure (`core/supernatural/MigrationRules`, `MigrationRulesTest`), run once (`schema` 0 to 1) and only add:
+
+1. `race_since` = `turnedAt` of the current species, else now (the creature race and the magic race both).
+2. Tasks the state proves are marked done: `level`, `state`, `sired`, `days_as`. A count (feeds, rites, kills, venom) has no history and is never proven.
+3. The rung goes up while every task of the active rung is proven (their tasks are marked claimed), then up to the highest floor: the **layer rung** of the species (every layer skill and bonus a player holds today stays), **Alpha or True Alpha rank to L-WOL-5**, the **apex floor** (the top rung of the ladder of the apex race the player is, such as `primordial_vampire`; clipped to the ladder, so without Tensura it is the last rung there). A True Alpha who is not a werewolf now keeps L-WOL-5 dormant; an Alpha who is cured does not (only the True Alpha rank is the R91 proof kept past the cure).
+4. The SP of every rung given are paid into the pool (`sp` and `spEarned`), no EP (they earned it playing). A rung left with no tasks is reached on its own with its reward.
+5. `backfill` lists the rungs it gave. A Ghoul gets the schema and nothing else.
+
+Debug commands (permission 2): `debug supernatural <player> show | backfill | reset | sp <n> | rung <race> <n>`. `reset` puts the state back to "never migrated" so the next login migrates again; `rung` sets the high-water mark with no reward.

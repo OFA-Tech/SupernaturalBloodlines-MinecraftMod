@@ -12,7 +12,7 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 
 ## Supernatural ladders
 
-- **Only our own rites count for tasks.** Enchanted fires no event when a rite is done and gives no reliable way to tell a finished rite from a cancelled one, so a rite counts only if one of this mod's rite types made it. Rites made with Enchanted's own types do not count: Ward of Return, Blood Offering, Hearing Device, Vampire Compass, Doppelgänger Blood and the two curse rites. The Ward of Return is therefore not one of the Ward rites the Witch's L-WIT-2 asks for.
+- **A rite counts when it finishes at once.** Enchanted fires no event when a rite is done, so the mod watches the moment a rite's start finishes the rite without cancelling it. Every rite the ladders ask for (Ward of Return, the Rite of Ancestral Calling, the blood rites, the cure, the curses of ours) works that way. A rite that keeps running over time and ends later is not counted; no ladder task asks for one. If an Enchanted update changes the hook, the log says "RiteCompleteMixin hook MISSING" and rites stop counting until the mod is updated.
 - **A task whose part is switched off is not shown or asked for.** If you turn a part off (for example `species`), the tasks it fires (compelling, siphoning, the rites of that part) are dropped from the ladders, and a rung with nothing left is reached on its own.
 
 ## Rites, rollbacks and configs
