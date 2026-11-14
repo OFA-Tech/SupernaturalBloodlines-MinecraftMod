@@ -1,0 +1,7 @@
+{
+    "id": "S-VAM-1",
+    "name": "Keen Fangs",
+    "cost": 1,
+    "kinds": ["blood"],
+    "params": { "extra_blood": 1 }
+}

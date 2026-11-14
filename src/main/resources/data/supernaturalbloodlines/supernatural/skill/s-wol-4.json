@@ -1,0 +1,7 @@
+{
+    "id": "S-WOL-4",
+    "name": "Wolfsbane Tolerance",
+    "cost": 2,
+    "kinds": ["rule"],
+    "params": { "duration_factor": 0.5 }
+}

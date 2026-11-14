@@ -1,0 +1,7 @@
+{
+    "id": "S-WIT-6",
+    "name": "Ancestral Voice",
+    "cost": 4,
+    "kinds": ["rule"],
+    "params": { "cost_factor": 0.5 }
+}

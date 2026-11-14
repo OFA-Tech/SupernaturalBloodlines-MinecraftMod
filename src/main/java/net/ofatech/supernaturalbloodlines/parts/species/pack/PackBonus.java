@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -63,7 +64,17 @@ public final class PackBonus {
 
     /** The attack bonus: nothing below {@link #MIN_BETAS} raw Betas, else 5% per counted Beta (bitten twice) up to 25%. */
     public static double bonusFor(int rawBetas, int doubledBetas) {
-        return rawBetas < MIN_BETAS ? 0 : round(STEP * Math.min(doubledBetas, CAP));
+        return bonusFor(rawBetas, doubledBetas, MIN_BETAS);
+    }
+
+    /** {@link #bonusFor(int, int)} with the number of Betas the Alpha needs (Pack Heart, S-WOL-5, lowers it). */
+    public static double bonusFor(int rawBetas, int doubledBetas, int minBetas) {
+        return rawBetas < minBetas ? 0 : round(STEP * Math.min(doubledBetas, CAP));
+    }
+
+    /** Betas an Alpha needs near them for the bonus: 3, or 2 with Pack Heart (S-WOL-5). */
+    public static int betasNeeded(ServerPlayer alpha) {
+        return (int) LadderQuery.value(alpha, "S-WOL-5", "betas_needed", MIN_BETAS);
     }
 
     /** One pass for one player: a non-Alpha is only cleaned of a bonus they should not have. */
@@ -82,7 +93,7 @@ public final class PackBonus {
                 doubled += PackAccess.wolf(beta).lineage() == Lineage.BITTEN ? 2 : 1;
             }
         }
-        double bonus = bonusFor(near.size(), doubled);
+        double bonus = bonusFor(near.size(), doubled, betasNeeded(alpha));
         set(alpha, bonus);
         if (bonus > 0) {
             for (ServerPlayer beta : near) {

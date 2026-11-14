@@ -1,0 +1,7 @@
+{
+    "id": "S-HUM-2",
+    "name": "Vervain Blood",
+    "cost": 2,
+    "kinds": ["rule"],
+    "params": { "duration_ticks": 24000 }
+}

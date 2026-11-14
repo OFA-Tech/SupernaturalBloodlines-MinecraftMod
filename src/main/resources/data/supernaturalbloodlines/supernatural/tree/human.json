@@ -1,0 +1,7 @@
+{
+    "skills": [
+        { "skill": "S-HUM-1", "rung": 1 },
+        { "skill": "S-HUM-2", "rung": 2 },
+        { "skill": "S-HUM-3", "rung": 2 }
+    ]
+}

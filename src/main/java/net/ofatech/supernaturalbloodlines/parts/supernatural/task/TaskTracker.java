@@ -1,5 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.task;
 
+import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SkillTable;
+import net.ofatech.supernaturalbloodlines.core.supernatural.QuestRules;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IPlayableFaction;
 import java.util.ArrayList;
@@ -8,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
@@ -43,7 +47,7 @@ public final class TaskTracker {
     }
 
     /** Creature race, then the magic race if there is one. */
-    public static List<SupernaturalRace> races(ServerPlayer p) {
+    public static List<SupernaturalRace> races(Player p) {
         BloodlineState b = BloodlineAccess.get(p);
         List<SupernaturalRace> out = new ArrayList<>();
         out.add(SupernaturalRace.creature(b, factionId(p)));
@@ -52,7 +56,7 @@ public final class TaskTracker {
     }
 
     @Nullable
-    private static String factionId(ServerPlayer p) {
+    private static String factionId(Player p) {
         IPlayableFaction<?> f = VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
         return f == null ? null : f.getID().toString();
     }
@@ -132,13 +136,14 @@ public final class TaskTracker {
             return;
         }
         LadderTable table = LadderTable.current();
+        SkillTable skills = SkillTable.current();
         SupernaturalState before = SupernaturalAccess.get(p);
         List<SupernaturalRace> races = races(p);
         SupernaturalState s = stamped(before, races, p.level().getGameTime());
         for (TaskEvent e : eventsFor.apply(s)) {
-            s = LadderRules.apply(table, s, races, e);
+            s = QuestRules.apply(skills, LadderRules.apply(table, s, races, e), races, e);
         }
-        s = LadderRules.refreshTotals(table, s, races);
+        s = QuestRules.settle(skills, LadderRules.refreshTotals(table, s, races), races);
         // a rung left with no tasks (its mod or part is missing) is reached on its own, with its reward
         int sp = 0;
         long ep = 0;
@@ -158,6 +163,12 @@ public final class TaskTracker {
         }
         if (!s.equals(before)) {
             SupernaturalAccess.set(p, s);
+        }
+        for (String quest : s.quests()) {
+            if (!before.quests().contains(quest)) {
+                p.sendSystemMessage(Component.translatable("supernaturalbloodlines.supernatural.quest.done",
+                        skills.quest(quest).map(q -> q.name()).orElse(quest)));
+            }
         }
         if (reachedRung >= 0) {
             LadderService.pay(p, sp, ep, reachedRace, reachedRung);

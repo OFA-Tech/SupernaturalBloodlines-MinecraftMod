@@ -1,0 +1,9 @@
+{
+    "id": "Q-VAM-6",
+    "name": "Hunter of Hunters",
+    "tasks": [
+        { "id": "Q-VAM-6a", "detector": "kill", "category": "vampire", "n": 10 },
+        { "id": "Q-VAM-6b", "detector": "signal", "signal": "vampire_bite_refused", "n": 3, "part": "species" },
+        { "id": "Q-VAM-6c", "detector": "feed", "n": 25 }
+    ]
+}

@@ -1,0 +1,7 @@
+{
+    "id": "S-WIT-2",
+    "name": "Wide Circle",
+    "cost": 2,
+    "kinds": ["rule"],
+    "params": { "altar_range_factor": 1.75 }
+}

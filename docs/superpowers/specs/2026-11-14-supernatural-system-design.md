@@ -466,7 +466,7 @@ The largest single ladder pays about 13% of one apex evolution's 2,000,000 EP; a
 | S-HUM-3 | Swift Feet | 2 | ATTR | +5% movement speed while Human or Hunter |
 | S-VAM-1 | Keen Fangs | 1 | BLOOD | +1 Vampirism blood per human-like feed |
 | S-VAM-2 | Night Stride | 2 | ATTR | +5% movement speed at night |
-| S-VAM-3 | Silver Tongue | 2 | RULE | compulsion range 4 → 6 blocks; villager discount 20% → 30% |
+| S-VAM-3 | Silver Tongue | 2 | RULE | compulsion lasts 1.5× as long; villager discount 20% → 30% (capped by vanilla gossip) *(2026-11-14: the old "range 4 → 6" can't be reached, the vanilla interaction reach is ~4 blocks and raising it would also lengthen melee reach; draft, owner to patch)* |
 | S-VAM-4 | Hardened | 3 | ATTR | +2 max health |
 | S-VAM-5 | Blood Mist | 3 | TENSURA | `tensura:blood_mist` (for a tree whose layer doesn't already grant it) |
 | S-VAM-6 | **Predator's Thirst** (the vampire-feeding skill) | 4 + Q-VAM-6 | BLOOD | see below |
@@ -486,7 +486,7 @@ The largest single ladder pays about 13% of one apex evolution's 2,000,000 EP; a
 | S-WOL-7 | Moon Heart | 4 | ATTR | +10% attack on full-moon nights |
 | S-WIT-1 | Steady Circle | 2 | RULE | your rites cost ×0.95 on top of R61 |
 | S-WIT-2 | Wide Circle | 2 | RULE | altar range ×1.5 → ×1.75 (R61) |
-| S-WIT-3 | Ashwarden | 2 | RULE | mountain ash lines you placed can't be broken by vampire or werewolf types |
+| S-WIT-3 | Ashwarden | 2 | RULE | vampire or werewolf types who touch a mountain ash line you placed are pushed back and get Weakness I for 5 s *(draft, 2026-11-14: the old "can't be broken" effect was already true of every line, so it did nothing; owner to patch)* |
 | S-WIT-4 | Emissary's Bond | 3 | RULE | as an Emissary, the pack rite discount is 20% instead of 10% (R94) |
 | S-WIT-5 | Magic Sense | 3 | TENSURA | `tensura:magic_sense` |
 | S-WIT-6 | Ancestral Voice | 4 | RULE | the Rites of Lineage cost half power when you perform them |

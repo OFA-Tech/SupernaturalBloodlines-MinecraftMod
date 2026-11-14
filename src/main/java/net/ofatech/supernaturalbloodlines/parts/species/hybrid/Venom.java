@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hybrid;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
 import net.minecraft.core.registries.Registries;
@@ -59,6 +60,10 @@ public final class Venom {
         if (VampirismSupernatural.isWerewolf(attacker) && VampirismSupernatural.isVampire(target)) {
             target.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, DURATION_TICKS));
             if (attacker instanceof Player p) {
+                int slow = (int) LadderQuery.value(p, "S-HYB-2", "slowness_ticks", 0);
+                if (slow > 0) {
+                    target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, slow, 0));
+                }
                 TaskSignals.fire(p, "venom_hit", 1);
             }
         }

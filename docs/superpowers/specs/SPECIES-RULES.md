@@ -26,8 +26,8 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 - **R20c (2026-11-14, plan 11).** **The turning, the show's way.** Vampire blood in the system, then death, then human blood. Drinking vampire blood (a Ghoul biting a vampire, or an item in `#supernaturalbloodlines:vampire_blood`, by default `vampirism:vampire_blood_bottle`) marks the player for `vampire_blood_ticks` (default 24,000, `supernaturalbloodlines-species.toml`). Dying while marked puts them in the **turning** for `transition_ticks` (24,000 by default, the same setting as the hybrid transition) of online time: they respawn as they were and can drink. Drinking **human-like blood** in that time completes it: they join the Vampirism vampire faction at level 1 (the species rules do the rest, R61/R62), and a Ghoul (R20e) simply stops being one. Nothing is taken from them. Only someone in no faction, or a Ghoul, can be marked or turned: an existing vampire, werewolf or hunter is untouched. The only settings are the two timers.
 - **R20d (2026-11-14, plan 11).** **Failing the turning, and where blood comes from.** If the clock runs out first, the player dies of `failed_transition` ("body could not bear the change", it bypasses a Totem of Undying) and comes back as they were: a human stays human, a Ghoul stays a Ghoul. Expired vampire blood, or a death with none, is a normal death. The hybrid transition (R40) wins: vampire blood does nothing to a player already in it, and a second turning never starts over a running one. **Human-like blood** is a villager or wandering trader, a Vampirism hunter, a player whose race is human-like (R1; witches and hunters count), or a Vampirism blood bottle. **Never** human blood: anything in the vampire faction (so a converted villager, and every vampire), a player of the vampire side by species (Original, Original hybrid, hybrid, tribrid, heretic), and a player in the werewolf faction. These exclusions hold with or without Tensura; Tensura only adds its human-like race list. Vampirism only lets a vampire bite, so a player who is not yet a Ghoul drinks the bottle (the click is taken over, like the hybrid transition's). Vampire blood, animals and other mobs do not feed the turning. If the player can no longer turn when it ends (they joined the hunters or the werewolves, or the vampires some other way during the turning), it **ends quietly**: no join, no kill, and the bottle is not taken over. If Vampirism or another mod refuses the join, the player is told (`turning.join_refused`), the turning is over and the bottle stays used up. A failed turning also says so in chat (`turning.failed`).
 - **R20e (2026-11-14, plan 11).** **Ghouls.** Any Sanguinare that finishes (a bite, the Vampire Fang, a MedChair or a Totem) joins the Vampirism vampire faction at level 1 as before, but the player is also a **Ghoul** (`BloodlineState.ghoul`): they have the level 1 vampire (sun, thirst, weak to vampire weapons) and nothing more. They **cannot level up** (Vampirism's `FactionLevelChangePre` is cancelled for a new level above 1, which also stops the altars, `setFactionLevel` and the commands), the **Altar of Infusion and the Altar of Inspiration refuse the click** (no item is used), and each refusal says so in chat (`turning.ghoul_no_level`, `turning.ghoul_no_altar`). Vampirism's skill points cannot be lowered by a provider, so a Ghoul has the points of level 1 (the cap does the work). Only a Sanguinare that finishes **after** this update counts, only for a player in no faction at the moment of the join, and never for a vampire species: **existing vampires are not Ghouls**. A Ghoul stops being one only through the turning (R20c), or by leaving the vampire faction (a cure, a rite, a command): leaving also ends the turning that went with it (the clock and any vampire blood), because a cured Ghoul is fully human again. Nothing earned is taken. **With Tensura (species_tensura):** a Ghoul whose race is exactly `tensura:human` shows `tensura:ghoul`, and `tensura:vampire` once the turning is done (a Ghoul who leaves the vampires goes back to human, as a cure does, with or without vampirism_tensura); every other race is kept. **No Tensura evolution** goes through while a Ghoul (ManasCore's `SET_RACE` is refused for an evolution, with `turning.ghoul_no_evolve`); EP keeps accruing. Plain race changes (an admin command, a cure) are not evolutions and are not refused.
-- **R20f (2026-11-14, plan 11).** **Biting a vampire** (a player or a mob) never fills the biter and costs them `bite_vampire_cost` of their own blood (default 1, 0 = free; `supernaturalbloodlines-species.toml`). This holds for every vampire, not only Ghouls. A later skill (plan 12) will lift it.
-- **R21.** Sun damage comes only from Vampirism. A Sun Ring bound to the wearer blocks it.
+- **R20f (2026-11-14, plan 11).** **Biting a vampire** (a player or a mob) never fills the biter and costs them `bite_vampire_cost` of their own blood (default 1, 0 = free; `supernaturalbloodlines-species.toml`). This holds for every vampire, not only Ghouls. Predator's Thirst (S-VAM-6, plan 12c) lifts it for its owner: the biter then gets the blood Vampirism gives for that victim (else `vampire_feed_blood`, default 3, in `supernaturalbloodlines-supernatural.toml`) and the victim is drained of that much; a vampire mob also takes 2 damage (never killed by it) and Weakness I for 10 s. A vampire player victim loses blood only, so an Original is never killed by the drain.
+- **R21.** Sun damage comes only from Vampirism. A Sun Ring bound to the wearer blocks it. *A skill can change this number: Elder's Skin (S-VAM-7) takes 25% off the sun damage of a vampire who has it.*
 - **R22.** Cured by the *Rite of Cleansing Blood* or The Cure.
 - **R23.** From level 10, can compel villagers and lesser vampire mobs.
 - **R24.** **Hybrid-awakening rule:** a vampire with the gene who kills a villager or a player becomes a **hybrid**, with their sire kept and their werewolf side **bound** (no wolf forms) until the *Rite of the Moon*. The Vampirism level carries over (capped) when the base faction changes.
@@ -35,7 +35,7 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 
 ## Originals
 - **R30.** *Rite of Immortality*: a human-like target with no faction, the night of a full moon (plan 10: noon of the full-moon day is refused), 12,000 power, a villager sacrificed, and a world cap (unlimited by default).
-- **R31.** Vampire faction, +20% attack, +4 max health. Can make Original's Blood.
+- **R31.** Vampire faction, +20% attack, +4 max health. Can make Original's Blood. *A skill can change this number: Bloodmaker's Yield (S-ORI-2) makes the rite fill 2 bottles; Old Blood (S-ORI-1) adds +10% attack of its own.*
 - **R32.** **Non-white-oak lethal damage** puts the Original into **Vampirism's own "dying" state**, with its give-up / wait screen (or our own copy of it if Vampirism has no hook). **A white oak hit kills instantly** and skips that state. Void and `/kill` still kill.
 - **R33.** The White Oak Ash Dagger desiccates an Original until someone pulls it out, or for up to 30 minutes. It hurts any non-human who uses it.
 - **R34.** Only The Cure works on Originals.
@@ -51,14 +51,14 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 - **R41.** R24 also makes a hybrid.
 - **R42.** **Traits:**
   - speed and attack grow with age
-  - blood thirst from 0 to 20: Weakness at 0, Strength at 15 or more
+  - blood thirst from 0 to 20: Weakness at 0, Strength at 15 or more *A skill can change this number: Steady Thirst (S-HYB-1) makes the thirst fall half as fast.*
   - they shift form at will once unbound (R96)
-- **R42v.** **Venom:**
+- **R42v.** **Venom:** *A skill can change this: Venom Fang (S-HYB-2) adds Slowness I for 5 seconds to the hit that poisons.*
   - **Werewolf, hybrid, Original hybrid and tribrid bites and attacks poison vampires.**
   - It's lethal unless cured: 1 damage every 40 ticks, plus hallucinations, and it kills a **non-Original** vampire after 12,000 ticks.
   - Originals only get Weakness II for that time.
   - **Only Hybrid's Blood cures it.** A rite makes it from a hybrid, Original hybrid or tribrid. Original's Blood does not cure it.
-- **R43.** A hybrid can't hurt their sire. The sire can use `/bloodline call`.
+- **R43.** A hybrid can't hurt their sire. The sire can use `/bloodline call`. *A skill can change this number: Sire's Call (S-ORI-3) makes the call cooldown 5 minutes instead of 10.*
 - **R44.** Cleansing Blood turns them into a plain werewolf. The Cure turns them human.
 - **R45.** A second dose of Original's Blood does nothing.
 
@@ -67,7 +67,7 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 
 ## Witches, siphoners, heretics
 - **R60.** *Rite of Ancestral Calling*: 75% witch, 25% siphoner. Only for players with no faction or the werewolf faction.
-- **R61.** Witch: altar range ×1.5 and rite cost ×0.75. Joining the vampires removes their magic.
+- **R61.** Witch: altar range ×1.5 and rite cost ×0.75. Joining the vampires removes their magic. *Skills can change these numbers: Steady Circle (S-WIT-1) x0.95 on the cost, Wide Circle (S-WIT-2) x1.75 on the range, Ancestral Voice (S-WIT-6) half cost for the two Rites of Lineage.*
 - **R62.** Siphoner: drains up to 1,000 power from blocks, mobs and players. Joining the vampires makes them a heretic. A siphoner can't start the hybrid transition.
 - **R63.** Heretic: vampire faction, keeps siphoning.
 - **R64.** A witch-werewolf who completes the hybrid transition becomes a tribrid.
@@ -79,16 +79,16 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 
 ## Hunters of the Five (supernatural hunters)
 - **R80.** *Rite of the Five*: 10,000 power, only for human-like Vampirism hunters, while fewer than 5 marked hunters exist (config).
-- **R81.** **Prey** means vampires, werewolves, hybrids, Originals, heretics and tribrids. **Witches and siphoners are not prey**: they're nature's side.
+- **R81.** **Prey** means vampires, werewolves, hybrids, Originals, heretics and tribrids. **Witches and siphoners are not prey**: they're nature's side. *A skill can change this: Steady Aim (S-HUN-1) adds 5% damage against prey.*
   - The mark grows with each prey kill: +1% attack and +0.5% speed per kill, capped at +20% / +10%.
   - From 5 kills, nearby prey glows, visible only to that hunter.
   - Marked hunters are immune to compulsion.
 - **R82.** A marked hunter killed by **prey** loses the mark. A random online eligible hunter becomes a potential, whose first prey kill makes them one of the Five.
 - **R83.** **Hunter's curse:** any **prey** killer of a marked hunter (vampire *or* werewolf types) hallucinates until a potential activates. Humans and witches are exempt, and it doesn't stack.
-- **R84.** Instinct: after 3 in-game days without a prey kill, Weakness until the next one.
+- **R84.** Instinct: after 3 in-game days without a prey kill, Weakness until the next one. *A skill can change this number: Patient Hunter (S-HUN-3) makes it 5 days. Hunter's Eye (S-HUN-2) widens the prey sense from 24 to 32 blocks and Mark Mastery (S-HUN-5) raises the mark caps to +25% attack and +12.5% speed.*
 
 ## Werewolves (Teen Wolf layer)
-- **R90.** **Born** (R11, R12, R24): half the full-moon forced-shift chance, and the four-legged form unlocks 5 levels sooner. **Bitten:** counts double for the pack bonus.
+- **R90.** **Born** (R11, R12, R24): half the full-moon forced-shift chance, and the four-legged form unlocks 5 levels sooner. **Bitten:** counts double for the pack bonus. *A skill can change this chance: Moon Calm (S-WOL-2) spares a wolf on another quarter of the nights.*
 - **R91.** **Ranks:**
   - **Omega:** no pack, −10% attack and speed.
   - **Beta:** in a pack.
@@ -103,11 +103,11 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
   - **Earned:** see R91.
 - **R94.** **Pack:**
   - With 3 or more Betas near their online Alpha: the Alpha gets +5% attack per Beta (up to +25%), and the Betas get Regeneration.
-  - **Roar:** buffs the pack and forces other werewolves out of wolf form.
-  - **Emissary:** a witch whose rites cost 10% less near the pack.
+  - **Roar:** buffs the pack and forces other werewolves out of wolf form. *A skill can change this number: Roar's Echo (S-WOL-6) makes the cooldown 40 seconds instead of 60.*
+  - **Emissary:** a witch whose rites cost 10% less near the pack. *A skill can change this number: Emissary's Bond (S-WIT-4) makes it 20%.*
   - **Anchor:** an item or a nearby player halves the forced full-moon shift.
 - **R95.** **Weaknesses:**
-  - **Wolfsbane strains:**
+  - **Wolfsbane strains:** *A skill can change this: Wolfsbane Tolerance (S-WOL-4) halves how long the common strain lasts. Pack Heart (S-WOL-5) lowers the Betas the pack bonus needs from 3 to 2.*
     - **common** (purple: the existing Werewolves and Enchanted plant): Weakness and Nausea
     - **yellow** (uncommon): damage over time
     - **northern blue** (rare): lethal in 6,000 ticks unless cured with **ash of the same strain**
@@ -149,3 +149,11 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 - **R101b (owner rite).** The **Rite of Severance** breaks the whole sire bond of a sired player. The sired is freed: no Tensura owner link, no sire naming exception, they can hurt their sire (R43 ends), they cannot be called with `/bloodline call`, and the sire's compelled creatures no longer spare them. **The sire stays recorded:** the family tree still shows it and the sireline death still applies (blood, not bond). A new sire replaces the old one and ends the severance. Performer: a witch-type (witch, siphoner, heretic or tribrid) at an Enchanted altar with the sired standing in the circle. Cost: full moon night only, 6000 altar power, Sire's Blood of the sired's own sire (a bottle of blood taken with a silver blade while holding a glass bottle in the off hand, bound to the one hit) and a rare reagent (`enchanted:spirit_of_otherwhere`). Siring itself needs no consent.
 - **R102.** Werewolf ranks grant Tensura skills, and the race is kept.
 - **R103.** Hunters and werewolves can't be undead or daemon races. Apex vampire-type races are an exception for vampire-type species only. A race with no blood (`tensura:no_blood`) can't be a werewolf either, unless it is bitable (an apex race, see R100).
+
+## Skills (plan 12, phase 12c)
+
+Skills bought with skill points tune the numbers above through `LadderQuery.value`; every other number is unchanged. A skill counts only while the tree of the player's race lists it. The numbers a skill gives are in `data/supernaturalbloodlines/supernatural/skill/<id>.json` (`params`).
+
+- **Silver Tongue (S-VAM-3):** compulsion lasts 1.5 times as long: the villager discount (a day, so a day and a half) and Follow (5 minutes, so 7 and a half). The reach stays the vanilla ~4 blocks (the old "range 4 to 6" could not be reached and was dropped). The discount gossip goes from 20 to 30, but a villager keeps at most 20 of the `MAJOR_POSITIVE` kind (weight 5, 100 reputation) and 25 of the `MINOR_POSITIVE` kind (weight 1); the extra 10 is put into the minor kind and capped, so the skill is worth **+25 reputation** on the 100 (125 in all), not the +50 that 30% would give. That is accepted: it is the villager's own limit.
+- **Ashwarden (S-WIT-3):** a vampire or werewolf type (R81 prey) that touches a mountain ash line **its placer laid** is pushed back and gets Weakness I for 5 s, if that placer owns the skill. A line remembers who placed it (the player who used the dust), saved with the line; lines from before the update have no placer. The placer must be **online** (the skill is read from them, so it is gone when it is dormant) and "touch" is the body within 0.1 blocks of the line, checked every 5 ticks. Otherwise the line only blocks, as before.
+- **Keen Fangs (S-VAM-1)** and the other BLOOD skills are in `docs/parts/supernatural.md`.

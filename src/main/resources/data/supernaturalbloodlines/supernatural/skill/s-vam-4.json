@@ -1,0 +1,7 @@
+{
+    "id": "S-VAM-4",
+    "name": "Hardened",
+    "cost": 3,
+    "kinds": ["attr"],
+    "attribute": { "id": "minecraft:generic.max_health", "operation": "add_value", "amount": 2 }
+}

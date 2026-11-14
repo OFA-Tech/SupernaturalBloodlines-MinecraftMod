@@ -1,0 +1,11 @@
+{
+    "skills": [
+        { "skill": "S-WOL-1", "rung": 1 },
+        { "skill": "S-WOL-2", "rung": 1 },
+        { "skill": "S-WOL-3", "rung": 2 },
+        { "skill": "S-WOL-4", "rung": 3 },
+        { "skill": "S-WOL-5", "rung": 4 },
+        { "skill": "S-WOL-6", "rung": 4, "after": "S-WOL-5" },
+        { "skill": "S-WOL-7", "rung": 5, "after": "S-WOL-1" }
+    ]
+}

@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hybrid;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
@@ -36,12 +37,17 @@ public final class BloodThirst {
         NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> {
             if (e.getEntity() instanceof ServerPlayer p && p.tickCount % EFFECT_STEP == 0) {
                 refreshEffects(p);
-                if (p.tickCount % FALL_TICKS == 0) {
+                if (p.tickCount % fallTicks(p) == 0) {
                     decay(p);
                 }
             }
         });
         NeoForge.EVENT_BUS.addListener(BloodThirst::onRightClick);
+    }
+
+    /** Game ticks between two falls of the thirst: 1200, or double that with Steady Thirst (S-HYB-1). */
+    public static int fallTicks(ServerPlayer p) {
+        return (int) Math.max(1, Math.round(FALL_TICKS / LadderQuery.value(p, "S-HYB-1", "thirst_rate_factor", 1.0)));
     }
 
     private static boolean applies(ServerPlayer p) {

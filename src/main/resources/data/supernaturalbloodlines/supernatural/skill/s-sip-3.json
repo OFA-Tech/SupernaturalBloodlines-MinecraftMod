@@ -1,0 +1,7 @@
+{
+    "id": "S-SIP-3",
+    "name": "Life Siphon",
+    "cost": 3,
+    "kinds": ["rule"],
+    "params": { "power_per_health": 100 }
+}

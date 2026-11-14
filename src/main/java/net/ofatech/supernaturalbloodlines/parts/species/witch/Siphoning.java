@@ -1,5 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.species.witch;
 
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import java.util.Map;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
@@ -133,23 +136,44 @@ public final class Siphoning {
             return false; // PvP off, a claim, or immunity: no power and no cooldown
         }
         ENTITIES.tryUse(p.getUUID(), target.getUUID(), now, COOLDOWN_TICKS);
-        gain(p);
+        int gained = gain(p);
+        // Life Siphon (S-SIP-3): 1 health per 100 power, and Void Hunger (S-SIP-5): a vampire or werewolf type is weakened
+        double perHealth = LadderQuery.value(p, "S-SIP-3", "power_per_health", 0);
+        if (perHealth > 0 && gained > 0) {
+            p.heal((float) (gained / perHealth));
+        }
+        int weakness = (int) LadderQuery.value(p, "S-SIP-5", "weakness_ticks", 0);
+        if (weakness > 0 && Supernatural.isPrey(target)) {
+            target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, weakness, 0));
+        }
         TaskSignals.fire(p, "siphon_entity", 1, Map.of("prey", String.valueOf(Supernatural.isPrey(target)), "vampiric", String.valueOf(Supernatural.isVampiric(target))));
         return true;
     }
 
     private static boolean full(ServerPlayer p) {
-        if (BloodlineAccess.get(p).siphonedPower() >= CAP) {
+        if (BloodlineAccess.get(p).siphonedPower() >= cap(p)) {
             p.displayClientMessage(Component.translatable(FULL), true);
             return true;
         }
         return false;
     }
 
-    private static void gain(ServerPlayer p) {
+    /** The most power the siphoner can hold: 1000, or 1500 with Deep Draw (S-SIP-1). */
+    public static int cap(Player p) {
+        return (int) LadderQuery.value(p, "S-SIP-1", "cap", CAP);
+    }
+
+    /** The power one siphon gives: 50, or x1.5 with Quick Draw (S-SIP-2). */
+    public static int gainPerSiphon(Player p) {
+        return (int) Math.round(GAIN * LadderQuery.value(p, "S-SIP-2", "rate_factor", 1.0));
+    }
+
+    /** @return the power taken */
+    private static int gain(ServerPlayer p) {
         BloodlineState s = BloodlineAccess.get(p);
-        int gained = Math.min(CAP, s.siphonedPower() + GAIN) - s.siphonedPower();
+        int gained = Math.max(0, Math.min(cap(p), s.siphonedPower() + gainPerSiphon(p)) - s.siphonedPower());
         BloodlineAccess.set(p, s.toBuilder().siphonedPower(s.siphonedPower() + gained).build());
         TaskSignals.fire(p, "siphon_power", gained);
+        return gained;
     }
 }

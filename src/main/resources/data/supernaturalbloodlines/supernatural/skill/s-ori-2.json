@@ -1,0 +1,7 @@
+{
+    "id": "S-ORI-2",
+    "name": "Bloodmaker's Yield",
+    "cost": 1,
+    "kinds": ["rule"],
+    "params": { "bottles": 2 }
+}

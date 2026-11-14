@@ -187,3 +187,7 @@ All in `parts/artifacts/werewolves/`, loaded only behind `isLoaded("werewolves")
 ### Release blocker (manual, in the OFA pack)
 
 - [ ] **A Resurrection Ring charge drops after a revive.** Accessories' Curios compatibility layer may return a copy of the ring stack, in which case the charge would be taken from the copy and the ring would keep reviving forever. Test it in the pack with the ring in an Accessories slot: die to a supernatural attacker three times and check the ring is spent. Do not release before this is checked.
+
+## Skills (plan 12, phase 12c)
+
+Vervain Blood (S-HUM-2) makes the tea last 20 minutes (`VervainRules.teaTicks`) and Wolfsbane Tolerance (S-WOL-4) halves the common wolfsbane strain (`WolfsbaneStrains.commonTicks`). Without the skill, or with the supernatural part off, nothing changes. Ashwarden (S-WIT-3): a mountain ash line now records who placed it (`MountainAshLineBlockEntity.owner`), and prey that touches a line of an online placer who owns the skill is pushed back and weakened for 5 seconds (`MountainAshRules.ashwarden`, checked every 5 ticks for prey only). Lines placed before the update have no placer and only block.

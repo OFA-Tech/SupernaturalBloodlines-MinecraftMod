@@ -1,5 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hunter;
 
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
+import org.jetbrains.annotations.VisibleForTesting;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -51,6 +54,12 @@ public final class MarkTracker {
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> DOWNING_ATTACKER.remove(e.getEntity().getUUID()));
         // heard on a species change and on a markKills change (rules, debug event, anything that goes through BloodlineAccess)
         BloodlineAccess.addListener((p, change) -> sync(p));
+        // Mark Mastery (S-HUN-5) changes the rate per kill
+        SupernaturalAccess.addListener((p, change) -> {
+            if (!change.before().skills().equals(change.after().skills())) {
+                sync(p);
+            }
+        });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> syncIfPlayer(e.getEntity()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent e) -> syncIfPlayer(e.getEntity()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerChangedDimensionEvent e) -> syncIfPlayer(e.getEntity()));
@@ -153,12 +162,19 @@ public final class MarkTracker {
         PotentialChooser.owe(hunter.server, hunter.getUUID());
     }
 
+    /** Mark Mastery (S-HUN-5) gives the bonus at {@link #CAP} kills (+25% attack, +12.5% speed); the rate per kill is that over the cap. */
+    @VisibleForTesting
+    public static double perKill(ServerPlayer p, String key, double base) {
+        double atCap = LadderQuery.value(p, "S-HUN-5", key, Double.NaN);
+        return Double.isNaN(atCap) ? base : atCap / CAP;
+    }
+
     /** Idempotent: makes the perks match the player's mark. */
     public static void sync(ServerPlayer p) {
         BloodlineState s = BloodlineAccess.get(p);
         int kills = s.species() == Species.HUNTER_OF_THE_FIVE ? Math.min(s.markKills(), CAP) : 0;
-        apply(p, Attributes.ATTACK_DAMAGE, kills * ATTACK_PER_KILL, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-        apply(p, Attributes.MOVEMENT_SPEED, kills * SPEED_PER_KILL, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+        apply(p, Attributes.ATTACK_DAMAGE, kills * perKill(p, "mark_attack", ATTACK_PER_KILL), AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        apply(p, Attributes.MOVEMENT_SPEED, kills * perKill(p, "mark_other", SPEED_PER_KILL), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
     }
 
     private static void apply(ServerPlayer p, Holder<Attribute> attribute, double amount, AttributeModifier.Operation operation) {

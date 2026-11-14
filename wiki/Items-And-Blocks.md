@@ -70,6 +70,7 @@ How it works:
 - They **cannot break it by hand**. Nothing can be placed or spawn on the line (it's not a floor).
 - A line laid by a pack's [Emissary](Werewolves-And-Packs#emissary) also stops the mobs in `#supernaturalbloodlines:supernatural_mobs` (only the Vampirism ghost for now).
 - **Explosions and pistons destroy it.** It has no flammability, leaf colour or potted sapling.
+- **Ashwarden** (witch skill): the line remembers who laid it. While that player is online and has the skill, a vampire or werewolf type that touches the line is **pushed back** (away from it, and a little up) and gets Weakness I for 5 seconds. The one who laid it is never pushed. **Careful where you lay it:** a line at the edge of a cliff or next to lava can push creatures into danger. That is by design.
 
 ## Wolfsbane and wolf lichen
 

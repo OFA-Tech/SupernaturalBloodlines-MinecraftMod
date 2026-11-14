@@ -1,0 +1,7 @@
+{
+    "id": "S-SIP-4",
+    "name": "Spent Wisely",
+    "cost": 3,
+    "kinds": ["rule"],
+    "params": { "payment_factor": 0.9 }
+}

@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.werewolves.api.entities.player.IWerewolfPlayer;
 import de.teamlapen.werewolves.util.FormHelper;
@@ -73,6 +74,11 @@ public final class AlphaRoar {
         PERMIT_UNTIL.clear();
     }
 
+    /** Ticks between two roars: 1200, or 800 with Roar's Echo (S-WOL-6). */
+    public static int cooldown(ServerPlayer p) {
+        return (int) LadderQuery.value(p, "S-WOL-6", "cooldown_ticks", COOLDOWN);
+    }
+
     /** The error to show, or null when the roar happened. */
     @Nullable
     public static Component roar(ServerPlayer p) {
@@ -92,8 +98,9 @@ public final class AlphaRoar {
             return Component.translatable(KEY + "roar_unavailable");
         }
         Long last = LAST.get(p.getUUID());
-        if (last != null && now - last < COOLDOWN) {
-            return Component.translatable(KEY + "roar_cooldown", (COOLDOWN - (now - last) + 19) / 20);
+        long cooldown = cooldown(p);
+        if (last != null && now - last < cooldown) {
+            return Component.translatable(KEY + "roar_cooldown", (cooldown - (now - last) + 19) / 20);
         }
         LAST.put(p.getUUID(), now);
 

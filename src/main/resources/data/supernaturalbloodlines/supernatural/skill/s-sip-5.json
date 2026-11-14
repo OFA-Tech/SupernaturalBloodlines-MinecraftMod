@@ -1,0 +1,7 @@
+{
+    "id": "S-SIP-5",
+    "name": "Void Hunger",
+    "cost": 4,
+    "kinds": ["rule"],
+    "params": { "weakness_ticks": 100 }
+}

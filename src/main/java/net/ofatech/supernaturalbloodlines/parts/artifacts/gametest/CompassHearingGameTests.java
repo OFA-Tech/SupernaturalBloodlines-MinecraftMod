@@ -112,7 +112,8 @@ public final class CompassHearingGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
+    // its own batch: it needs no vampire mob within 64 blocks, and the tests of its batch spawn some in the next structures
+    @GameTest(template = "empty", templateNamespace = NS, batch = "compass_empty")
     public static void compassSpinsWithNoVampireInRange(GameTestHelper helper) {
         ServerPlayer p = holder(helper);
         ItemStack compass = new ItemStack(ArtifactItems.VAMPIRE_COMPASS.get());

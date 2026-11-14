@@ -54,13 +54,15 @@ public class MountainAshLineBlock extends BaseEntityBlock {
         return new MountainAshLineBlockEntity(pos, state);
     }
 
-    /** A line laid by a pack Emissary (the species part says who that is) is the stronger one. */
+    /** A line laid by a pack Emissary (the species part says who that is) is the stronger one. The placer is written down for Ashwarden. */
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (!level.isClientSide && placer instanceof Player p && EmissaryLines.isEmissary(p)
-                && level.getBlockEntity(pos) instanceof MountainAshLineBlockEntity line) {
-            line.setEmissary(true);
+        if (!level.isClientSide && placer instanceof Player p && level.getBlockEntity(pos) instanceof MountainAshLineBlockEntity line) {
+            line.setOwner(p.getUUID());
+            if (EmissaryLines.isEmissary(p)) {
+                line.setEmissary(true);
+            }
         }
     }
 

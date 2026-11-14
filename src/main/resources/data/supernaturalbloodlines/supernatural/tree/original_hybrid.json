@@ -1,0 +1,12 @@
+{
+    "skills": [
+        { "skill": "S-VAM-1", "rung": 1 },
+        { "skill": "S-ORI-1", "rung": 1 },
+        { "skill": "S-HYB-1", "rung": 2 },
+        { "skill": "S-HYB-2", "rung": 2 },
+        { "skill": "S-VAM-3", "rung": 3 },
+        { "skill": "S-ORI-3", "rung": 4, "after": "S-VAM-3" },
+        { "skill": "S-VAM-6", "rung": 3, "after": "S-VAM-1", "quest": "Q-VAM-6" },
+        { "skill": "S-WOL-7", "rung": 5, "after": "S-HYB-2" }
+    ]
+}

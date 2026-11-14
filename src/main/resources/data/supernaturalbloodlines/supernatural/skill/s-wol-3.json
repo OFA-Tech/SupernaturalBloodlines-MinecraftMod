@@ -1,0 +1,7 @@
+{
+    "id": "S-WOL-3",
+    "name": "Godwolf Sense",
+    "cost": 2,
+    "kinds": ["tensura"],
+    "tensura_skill": "tensura:godwolf_sense"
+}

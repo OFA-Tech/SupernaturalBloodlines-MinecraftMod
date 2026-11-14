@@ -1,0 +1,7 @@
+{
+    "id": "S-WOL-2",
+    "name": "Moon Calm",
+    "cost": 2,
+    "kinds": ["rule"],
+    "params": { "shift_chance_factor": 0.75 }
+}

@@ -1,0 +1,7 @@
+{
+    "id": "S-WOL-6",
+    "name": "Roar's Echo",
+    "cost": 3,
+    "kinds": ["rule"],
+    "params": { "cooldown_ticks": 800 }
+}

@@ -1,6 +1,12 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural;
 
+import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.ModSkillGameTests;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.PredatorsThirstGameTests;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.BloodSkillGameTests;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.BloodEffects;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -16,9 +22,14 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.DetectorGa
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.MigrationGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.LadderDataGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.RiteSignalGameTests;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.SkillGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.TensuraEpGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.SupernaturalStateGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.task.Detectors;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.task.TaskTracker;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.SkillEffects;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SkillRules;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SkillTable;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LayerSlice;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LayerSlices;
@@ -33,7 +44,10 @@ public final class SupernaturalPart {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, SupernaturalConfig.SPEC, SupernaturalConfig.FILE);
-        NeoForge.EVENT_BUS.addListener((AddReloadListenerEvent e) -> e.addListener(new LadderReloadListener()));
+        NeoForge.EVENT_BUS.addListener((AddReloadListenerEvent e) -> {
+            e.addListener(new LadderReloadListener());
+            e.addListener(new SkillReloadListener());
+        });
         Detectors.register();
         LadderNet.register(modBus);
         LadderQuery.set(new LadderQuery.Provider() {
@@ -49,7 +63,27 @@ public final class SupernaturalPart {
             public int rung(Player player, SupernaturalRace race) {
                 return SupernaturalAccess.get(player).rung(race);
             }
+
+            @Override
+            public boolean owns(Player player, String skillId) {
+                SupernaturalState s = SupernaturalAccess.get(player);
+                if (!s.skills().contains(skillId)) {
+                    return false; // the common answer, without looking up the race
+                }
+                List<SupernaturalRace> races = TaskTracker.races(player);
+                return SkillRules.owns(SkillTable.current(), s, races.get(0), races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty(), skillId);
+            }
+
+            @Override
+            public Set<String> tensuraSkills(Player player) {
+                SupernaturalState s = SupernaturalAccess.get(player);
+                List<SupernaturalRace> races = TaskTracker.races(player);
+                return SkillEffects.tensuraSkillsOf(SkillTable.current(), SkillRules.active(SkillTable.current(), s, races.get(0),
+                        races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty()));
+            }
         });
+        SkillEffects.register();
+        BloodEffects.register();
         modBus.addListener((RegisterGameTestsEvent e) -> {
             SupernaturalAccess.trackFakePlayers(true); // this event only fires on the GameTest server, whose players are all FakePlayers
             e.register(SupernaturalStateGameTests.class);
@@ -57,6 +91,10 @@ public final class SupernaturalPart {
             e.register(DetectorGameTests.class);
             e.register(ClaimGameTests.class);
             e.register(MigrationGameTests.class);
+            e.register(SkillGameTests.class);
+            e.register(BloodSkillGameTests.class);
+            e.register(PredatorsThirstGameTests.class);
+            e.register(ModSkillGameTests.class);
             if (ModList.get().isLoaded("tensura") && EnabledParts.isEnabled("supernaturalTensura")) {
                 e.register(TensuraEpGameTests.class);
             }

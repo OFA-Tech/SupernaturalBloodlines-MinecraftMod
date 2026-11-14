@@ -83,7 +83,7 @@ public final class ResurrectionVervainGameTests {
         victim.hurt(victim.damageSources().mobAttack(attacker), 1000f);
     }
 
-    private static IDrinkBloodContext bitten(LivingEntity victim) {
+    static IDrinkBloodContext bitten(LivingEntity victim) {
         return new IDrinkBloodContext() {
             @Override
             public Optional<LivingEntity> getEntity() {

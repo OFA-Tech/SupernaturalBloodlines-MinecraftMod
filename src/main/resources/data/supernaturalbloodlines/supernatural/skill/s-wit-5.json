@@ -1,0 +1,7 @@
+{
+    "id": "S-WIT-5",
+    "name": "Magic Sense",
+    "cost": 3,
+    "kinds": ["tensura"],
+    "tensura_skill": "tensura:magic_sense"
+}

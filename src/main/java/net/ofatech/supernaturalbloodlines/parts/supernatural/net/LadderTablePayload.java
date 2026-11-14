@@ -26,13 +26,17 @@ public record LadderTablePayload(Map<String, String> files, List<String> mods, L
     public static final Type<LadderTablePayload> TYPE = new Type<>(
             ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "ladder_table"));
 
+    /** The caps of {@link #STREAM_CODEC}: the reload listener skips files over them. */
+    public static final int NAME_BYTES = 32;
+    public static final int BODY_BYTES = 1 << 17;
+
     private static final Gson GSON = new Gson();
 
     private static final StreamCodec<ByteBuf, List<String>> NAMES = ByteBufCodecs.stringUtf8(64).apply(ByteBufCodecs.list(256));
 
     public static final StreamCodec<ByteBuf, LadderTablePayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.<ByteBuf, String, String, Map<String, String>>map(HashMap::new,
-                    ByteBufCodecs.stringUtf8(32), ByteBufCodecs.stringUtf8(1 << 17)), LadderTablePayload::files,
+                    ByteBufCodecs.stringUtf8(NAME_BYTES), ByteBufCodecs.stringUtf8(BODY_BYTES)), LadderTablePayload::files,
             NAMES, LadderTablePayload::mods,
             NAMES, LadderTablePayload::parts,
             LadderTablePayload::new);

@@ -74,7 +74,7 @@ public final class MountainAshGameTests {
         return helper.spawnWithNoFreeWill((EntityType<Mob>) BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse(id)), at);
     }
 
-    private static ServerPlayer player(GameTestHelper helper) {
+    static ServerPlayer player(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.createMortal(helper);
         p.setPos(helper.absoluteVec(new Vec3(4.5, 1, 1.5)));
         return p;
@@ -263,6 +263,81 @@ public final class MountainAshGameTests {
         helper.assertTrue(!NeoForge.EVENT_BUS.post(new BlockEvent.BreakEvent(helper.getLevel(), abs, line, human)).isCanceled(), "a human's break was cancelled");
         helper.assertTrue(NeoForge.EVENT_BUS.post(new BlockEvent.BreakEvent(helper.getLevel(), abs, line, vampire)).isCanceled(), "a vampire's break went through");
         helper.succeed();
+    }
+
+    /** Lays a line at {@link #LINE} with real dust, as {@code placer} (who is put into the level so the line's owner is online). */
+    static void layBy(GameTestHelper helper, ServerPlayer placer) {
+        lay(helper);
+        helper.setBlock(LINE, Blocks.AIR);
+        helper.getLevel().addNewPlayer(placer);
+        placer.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(MountainAsh.DUST.get(), 4));
+        BlockPos floor = helper.absolutePos(LINE.below());
+        BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(floor).add(0, 0.5, 0), Direction.UP, floor, false);
+        helper.assertTrue(placer.getMainHandItem().useOn(new UseOnContext(helper.getLevel(), placer, InteractionHand.MAIN_HAND, placer.getMainHandItem(), hit)).consumesAction(),
+                "the dust was not placed");
+        helper.assertTrue(helper.getLevel().getBlockEntity(helper.absolutePos(LINE)) instanceof MountainAshLineBlockEntity line
+                && placer.getUUID().equals(line.owner()), "the line did not record who placed it");
+    }
+
+    static Mob touching(GameTestHelper helper) {
+        Mob v = spawn(helper, "vampirism:vampire", new BlockPos(6, 1, 1));
+        v.setNoAi(true);
+        Vec3 at = helper.absoluteVec(new Vec3(6.65, 1, 1.5));
+        v.setPos(at);
+        v.setNoGravity(true);
+        return v;
+    }
+
+    /** Ashwarden (S-WIT-3): prey touching a line of a witch who has the skill is pushed back and weakened; any other line only blocks. */
+    // its own batch: a vampire mob in the world would be found by a compass test running in the next structure
+    @GameTest(template = "tall", templateNamespace = NS, timeoutTicks = 100, batch = "ashwarden")
+    public static void ashwardenPushesAndWeakensPrey(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed(); // skills only exist with the supernatural part
+            return;
+        }
+        ServerPlayer witch = player(helper);
+        BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
+        net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.set(witch,
+                net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.get(witch).toBuilder().skills(java.util.Set.of("S-WIT-3")).build());
+        ServerPlayer plainWitch = player(helper);
+        BloodlineAccess.set(plainWitch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
+        layBy(helper, witch);
+        MountainAsh.pinOwner(witch);
+        Mob prey = touching(helper);
+        Mob human = helper.spawn(EntityType.ZOMBIE, new BlockPos(6, 1, 1));
+        human.setNoAi(true);
+        human.setPos(helper.absoluteVec(new Vec3(6.65, 1, 1.5)));
+        double startX = prey.getX();
+        helper.succeedWhen(() -> {
+            helper.assertTrue(prey.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS), "the vampire touching the line was not weakened");
+            var weakness = prey.getEffect(net.minecraft.world.effect.MobEffects.WEAKNESS);
+            helper.assertTrue(weakness.getAmplifier() == 0 && weakness.getDuration() > 80 && weakness.getDuration() <= 100, "weakness " + weakness);
+            // the push is a velocity that friction eats within a few ticks (or has moved the mob): either shows it happened, and away from the line
+            helper.assertTrue(prey.getDeltaMovement().x < -0.05 || prey.getX() < startX - 0.05, "the vampire was not pushed back (away from the line): " + prey.getDeltaMovement() + " at x " + prey.getX());
+            helper.assertFalse(human.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS), "a zombie was weakened");
+            MountainAsh.unpinOwner(witch);
+            // a vampire mob left in the world would be found by a compass test running in the next structure
+            prey.discard();
+            human.discard();
+        });
+    }
+
+    @GameTest(template = "tall", templateNamespace = NS, timeoutTicks = 60)
+    public static void withoutAshwardenALineOnlyBlocks(GameTestHelper helper) {
+        ServerPlayer witch = player(helper);
+        BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
+        layBy(helper, witch);
+        MountainAsh.pinOwner(witch);
+        Mob prey = touching(helper);
+        int[] ticks = {0};
+        helper.succeedWhen(() -> {
+            helper.assertTrue(++ticks[0] > 30, "waiting");
+            helper.assertFalse(prey.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS), "a line without Ashwarden weakened prey");
+            helper.assertTrue(prey.getDeltaMovement().x > -0.3, "a line without Ashwarden pushed prey back");
+            MountainAsh.unpinOwner(witch);
+            prey.discard();
+        });
     }
 
     @GameTest(template = "tall", templateNamespace = NS)

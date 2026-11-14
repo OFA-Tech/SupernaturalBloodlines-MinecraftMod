@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.turning;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
 import de.teamlapen.vampirism.api.VReference;
@@ -44,7 +45,7 @@ import net.ofatech.supernaturalbloodlines.shared.vampirism.Ghouls;
  * may use up items before it tries the level.</li>
  * <li><b>Skill points.</b> {@code SkillPointProviders} cannot take points away (each provider's answer is floored at 0 and summed),
  * so the level 1 cap is what keeps a Ghoul at the level 1 points.</li>
- * <li><b>Biting a vampire</b> never feeds the biter and costs {@code bite_vampire_cost} of their own blood. Plan 12's skill will lift it.</li>
+ * <li><b>Biting a vampire</b> never feeds the biter and costs {@code bite_vampire_cost} of their own blood. Predator's Thirst (S-VAM-6) lifts it: the biter then feeds and the victim is drained.</li>
  * </ul>
  */
 public final class GhoulGates {
@@ -133,6 +134,9 @@ public final class GhoulGates {
         if (!(e.getVampire().getRepresentingEntity() instanceof ServerPlayer p) || source == null
                 || !TurningHandler.isFaction(source, VReference.VAMPIRE_FACTION)) {
             return;
+        }
+        if (LadderQuery.owns(p, "S-VAM-6")) {
+            return; // Predator's Thirst (the supernatural part's BloodEffects) feeds the biter and drains the victim
         }
         e.setAmount(0);
         e.setSaturationModifier(0);

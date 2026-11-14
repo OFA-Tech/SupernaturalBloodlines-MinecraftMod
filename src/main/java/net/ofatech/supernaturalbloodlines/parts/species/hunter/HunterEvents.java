@@ -39,6 +39,7 @@ public final class HunterEvents {
     public static void register() {
         CompulsionImmunity.register(e -> e instanceof Player p && HunterRules.immuneToCompulsion(p));
         MarkTracker.register();
+        SteadyAim.register();
         PotentialChooser.register();
         HunterCurse.register();
         HunterInstinct.register();
