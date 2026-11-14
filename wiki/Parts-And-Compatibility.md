@@ -16,6 +16,8 @@ Switch a part off in [`supernaturalbloodlines-common.toml`](Configuration#core-s
 | **species** | ● | ● | | ○ | |
 | **species_tensura** | ● | ● | ● | ○ | |
 | **artifacts** | ● | ● | | ○ | ○ |
+| **supernatural** | ● | ○ | | ○ | |
+| **supernatural_tensura** | ● | ○ | ● | ○ | |
 
 Parts that build on another part:
 
@@ -24,6 +26,7 @@ Parts that build on another part:
 | species | vampirism_enchanted |
 | species_tensura | species |
 | artifacts | vampirism_enchanted |
+| supernatural_tensura | supernatural |
 
 So switching **vampirism_enchanted** off also turns off **species**, **species_tensura** and **artifacts**. The log says `disabled (requires [VAMPIRISM_ENCHANTED])`.
 
@@ -72,6 +75,21 @@ So switching **vampirism_enchanted** off also turns off **species**, **species_t
 - **Does:** the three rings, the Vampire Compass, the Hearing Device, the White Oak Ash Dagger and The Cure, vervain, mountain ash, wolfsbane strains and wolf lichen. See [Items and blocks](Items-And-Blocks).
 - **Mixins:** none. **Config file:** none.
 - **Off:** the items and blocks vanish from existing worlds. The Curios `ring` slot still shows on the player (Curios ignores load conditions for that file); it is harmless. A bitten non-Alpha werewolf can no longer shift at will (no Moon Ring). Mountain ash lines that were placed disappear.
+
+## supernatural
+
+- **Config key:** `supernatural`. **Mods:** Vampirism. Enchanted and Werewolves optional: a task that needs a missing mod is dropped from its rung.
+- **Does:** every player has a supernatural race (Human, Ghoul, Vampire, Original, Hybrid, Original hybrid, Tribrid, Heretic, Witch, Siphoner, Hunter, Werewolf), worked out from what the mod already stores. Each race has a ladder of rungs. The ladders are datapack JSON. See [Supernatural hub](Supernatural-Hub).
+- **Config file:** `supernaturalbloodlines-supernatural.toml` (empty for now).
+- **Mixins:** none yet (budget 3, one reserved for Enchanted rites that we do not perform ourselves).
+- **Off:** no ladders, no skill points. Saved progress stays on the player and is kept when the part is turned on again.
+
+## supernatural_tensura
+
+- **Config key:** `supernaturalTensura`. **Mods:** Vampirism, Tensura (and the supernatural part).
+- **Does:** the Tensura side of the ladders: EP rewards and the apex rungs. Nothing yet in this version.
+- **Mixins:** none (budget 3, one reserved for Tensura's menu tab). **Config file:** none.
+- **Off:** no EP rewards; ladders without the apex rungs.
 
 ## Always on (core)
 

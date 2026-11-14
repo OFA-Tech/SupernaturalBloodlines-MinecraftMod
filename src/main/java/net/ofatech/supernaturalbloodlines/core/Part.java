@@ -15,7 +15,11 @@ public enum Part {
     SPECIES_TENSURA("speciesTensura", "net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesTensuraPart",
             List.of("vampirism", "enchanted", "tensura")),
     ARTIFACTS("artifacts", "net.ofatech.supernaturalbloodlines.parts.artifacts.ArtifactsPart",
-            List.of("vampirism", "enchanted"));
+            List.of("vampirism", "enchanted")),
+    SUPERNATURAL("supernatural", "net.ofatech.supernaturalbloodlines.parts.supernatural.SupernaturalPart",
+            List.of("vampirism")),
+    SUPERNATURAL_TENSURA("supernaturalTensura", "net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.SupernaturalTensuraPart",
+            List.of("vampirism", "tensura"));
 
     private final String configKey;
     private final String initClass;
@@ -44,6 +48,7 @@ public enum Part {
             case SPECIES -> Set.of(VAMPIRISM_ENCHANTED); // reuses its FactionRiteFactory
             case SPECIES_TENSURA -> Set.of(SPECIES);
             case ARTIFACTS -> Set.of(VAMPIRISM_ENCHANTED); // reuses its RiteTargets and FactionRiteHooks
+            case SUPERNATURAL_TENSURA -> Set.of(SUPERNATURAL);
             default -> Set.of();
         };
     }

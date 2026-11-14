@@ -7,6 +7,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
 
 public final class ModAttachments {
     private static final DeferredRegister<AttachmentType<?>> ATTACHMENTS =
@@ -16,6 +17,13 @@ public final class ModAttachments {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<BloodlineState>> BLOODLINE =
             ATTACHMENTS.register("bloodline", () -> AttachmentType.builder(() -> BloodlineState.NONE)
                     .serialize(BloodlineState.CODEC)
+                    .copyOnDeath()
+                    .build());
+
+    /** Ladder progress, skill points and skills (plan 12); kept on death, a rung is never lost. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<SupernaturalState>> SUPERNATURAL =
+            ATTACHMENTS.register("supernatural", () -> AttachmentType.builder(() -> SupernaturalState.NONE)
+                    .serialize(SupernaturalState.CODEC)
                     .copyOnDeath()
                     .build());
 

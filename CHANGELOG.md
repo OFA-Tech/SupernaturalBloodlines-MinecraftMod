@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: the supernatural race system, foundation (plan 12, phase 12a)
+
+Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md`. Two new parts, `supernatural` (needs Vampirism) and `supernatural_tensura` (needs Vampirism and Tensura), each with a mixin budget of 0 of 3. Nothing a player has is removed.
+
+- **The supernatural race.** Every player has a creature race (Human, Ghoul, Vampire, Original, Hybrid, Original hybrid, Tribrid, Heretic, Hunter, Werewolf) and a witch or a siphoner also a magic race. It is worked out from the bloodline state and the Vampirism faction, never stored.
+- **A new player attachment** `supernaturalbloodlines:supernatural`: ladder progress (a rung once reached is never lost), skill points, skills, kept on death and sent to the owning player once per tick.
+
 ## Unreleased: turning the show's way (plan 11)
 
 Spec `docs/superpowers/specs/2026-11-14-show-turning-design.md`. Rules R20c and R20d in `SPECIES-RULES.md`. Parts: species and species_tensura.
