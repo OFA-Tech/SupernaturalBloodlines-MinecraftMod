@@ -276,6 +276,7 @@
   "supernaturalbloodlines.supernatural.race.hunter": "Hunter",
   "supernaturalbloodlines.supernatural.race.werewolf": "Werewolf",
   "rite.supernaturalbloodlines.rite_of_revelation": "Rite of Revelation",
+  "supernaturalbloodlines.hybrid.blood_refused": "This blood is too weak for the transition: only blood taken from an Original hybrid will do.",
   "supernaturalbloodlines.compass.mode": "Mode: %s",
   "supernaturalbloodlines.compass.mode.vampires": "Vampires",
   "supernaturalbloodlines.compass.mode.doppelgangers": "Doppelgängers",

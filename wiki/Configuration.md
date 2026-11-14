@@ -70,6 +70,7 @@ All under `[species]`.
 | `doppelganger_villager_chance` | `0.005` | 0.0 to 1.0 | Chance that a villager is a **doppelgänger**, rolled **once**, the first time the villager is loaded (new spawns, breeding, village villagers, and old villagers after the update). Unlimited per world. It looks and trades like any villager. |
 | `doppelganger_rite_taglock` | `doppelganger` | `doppelganger` or `human` | Whose taglock the Rite of Doppelgänger Blood accepts. `doppelganger`: a doppelgänger villager or a player with the gene. `human`: any human-like villager or player (the old behaviour). The owner must be nearby or online either way. |
 | `alpha_bite_death_chance` | `0.10` | 0.0 to 1.0 | Chance that an Alpha's bite **kills** the human instead of turning them. |
+| `hybrid_transition_blood` | `original_hybrid` | `original_hybrid` or `original` | Whose **Original's Blood** starts the hybrid transition. `original_hybrid`: only blood taken from an **Original hybrid** (as in the show). `original`: blood from any Original or Original hybrid. The bottle records its source's species when the rite fills it. A bottle made before this setting existed is accepted either way. A refused drink keeps the bottle and tells the player. |
 | `lunar_eclipse_chance` | `0.03` | 0.0 to 1.0 | Chance that a full-moon night is a **lunar eclipse**: werewolves lose their form actions, rank perks and pack bonus until dawn. |
 
 ## artifacts: `supernaturalbloodlines-artifacts.toml`

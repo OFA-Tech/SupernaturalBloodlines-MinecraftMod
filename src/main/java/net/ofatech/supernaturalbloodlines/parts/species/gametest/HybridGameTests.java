@@ -437,4 +437,124 @@ public final class HybridGameTests {
         }
         helper.succeed();
     }
-}
+
+    // ---- hybrid_transition_blood (R40a) ----
+
+    private static ItemStack bottleOf(UUID source, Species species) {
+        ItemStack bottle = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
+        bottle.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), source);
+        if (species != null) {
+            bottle.set(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get(), species.name());
+        }
+        return bottle;
+    }
+
+    /** Drinks the way a player does (use, then the drink finishing); returns whether the drink started. */
+    private static boolean drink(GameTestHelper helper, ServerPlayer p, ItemStack bottle) {
+        p.setItemInHand(InteractionHand.MAIN_HAND, bottle);
+        boolean started = bottle.use(helper.getLevel(), p, InteractionHand.MAIN_HAND).getResult().consumesAction();
+        if (started) {
+            p.setItemInHand(InteractionHand.MAIN_HAND, bottle.finishUsingItem(helper.getLevel(), p));
+        }
+        return started;
+    }
+
+    private static void assertTransitionFrom(GameTestHelper helper, ServerPlayer p, UUID source, String what) {
+        killByAnything(helper, p);
+        BloodlineState s = BloodlineAccess.get(p);
+        helper.assertTrue(s.inTransition() && source.equals(s.pendingSire()), what + ": no transition started, state " + s);
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void originalHybridBloodStartsTransition(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper);
+        UUID source = UUID.randomUUID();
+        try {
+            helper.assertTrue(drink(helper, p, bottleOf(source, Species.ORIGINAL_HYBRID)), "the drink did not start");
+            helper.assertTrue(p.getMainHandItem().is(net.minecraft.world.item.Items.GLASS_BOTTLE), "the bottle was not used up");
+            assertTransitionFrom(helper, p, source, "an Original hybrid's blood");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void plainOriginalBloodRefusedByDefault(GameTestHelper helper) {
+        net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer p =
+                net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer.create(helper);
+        helper.assertTrue(handler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not make a werewolf");
+        UUID source = UUID.randomUUID();
+        try {
+            ItemStack bottle = bottleOf(source, Species.ORIGINAL);
+            helper.assertTrue(!drink(helper, p, bottle), "a plain Original's blood started a drink in the default mode");
+            helper.assertTrue(p.receivedOnActionBar("supernaturalbloodlines.hybrid.blood_refused"), "the player was not told why");
+            helper.assertTrue(!p.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT) && !p.hasData(SpeciesRegistries.BLOOD_SOURCE),
+                    "a refused drink still marked the player");
+            // and no other route drinks it either
+            helper.assertTrue(bottle.finishUsingItem(helper.getLevel(), p) == bottle && !p.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT),
+                    "finishing the drink worked on a refused bottle");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void refusedBottleKept(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper);
+        try {
+            ItemStack bottle = bottleOf(UUID.randomUUID(), Species.ORIGINAL);
+            drink(helper, p, bottle);
+            ItemStack held = p.getMainHandItem();
+            helper.assertTrue(held == bottle && held.is(SpeciesRegistries.ORIGINAL_BLOOD.get()) && held.getCount() == 1
+                            && held.has(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get()),
+                    "the refused bottle was used up or changed: " + held);
+            killByAnything(helper, p);
+            helper.assertTrue(!BloodlineAccess.get(p).inTransition(), "a refused bottle started a transition");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void plainOriginalBloodAcceptedInOriginalMode(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper);
+        ServerPlayer q = wolf(helper);
+        ServerPlayer r = wolf(helper);
+        UUID source = UUID.randomUUID();
+        UUID hybridSource = UUID.randomUUID();
+        SpeciesConfig.overrideTransitionBloodAnyOriginal(true);
+        try {
+            helper.assertTrue(drink(helper, p, bottleOf(source, Species.ORIGINAL)), "the original mode refused a plain Original's blood");
+            assertTransitionFrom(helper, p, source, "a plain Original's blood");
+            helper.assertTrue(drink(helper, q, bottleOf(hybridSource, Species.ORIGINAL_HYBRID)), "the original mode refused an Original hybrid's blood");
+            assertTransitionFrom(helper, q, hybridSource, "an Original hybrid's blood");
+            helper.assertTrue(!drink(helper, r, bottleOf(UUID.randomUUID(), Species.WITCH)), "the original mode took the blood of a witch");
+        } finally {
+            SpeciesConfig.overrideTransitionBloodAnyOriginal(null);
+            reset(p);
+            reset(q);
+            reset(r);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void legacyBottleAccepted(GameTestHelper helper) {
+        // a bottle made before the update records no species: it counts under either setting
+        for (boolean anyOriginal : new boolean[]{false, true}) {
+            ServerPlayer p = wolf(helper);
+            UUID source = UUID.randomUUID();
+            SpeciesConfig.overrideTransitionBloodAnyOriginal(anyOriginal);
+            try {
+                helper.assertTrue(drink(helper, p, bottleOf(source, null)), "a bottle without a recorded species was refused (any original: " + anyOriginal + ")");
+                assertTransitionFrom(helper, p, source, "a legacy bottle");
+            } finally {
+                SpeciesConfig.overrideTransitionBloodAnyOriginal(null);
+                reset(p);
+            }
+        }
+        helper.succeed();
+    }}

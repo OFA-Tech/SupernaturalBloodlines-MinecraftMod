@@ -624,4 +624,30 @@ public final class OriginalGameTests {
         }
         helper.succeed();
     }
-}
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void originalBloodRiteRecordsTheSourceSpecies(GameTestHelper helper) {
+        for (Species s : List.of(Species.ORIGINAL, Species.ORIGINAL_HYBRID)) {
+            clearDropped(helper);
+            RecordingPlayer source = RecordingPlayer.create(helper);
+            place(helper, source);
+            try {
+                BloodlineAccess.set(source, species(s));
+                start(helper, "original_blood", source, List.of(new ItemStack(Items.GLASS_BOTTLE)));
+                ItemStack found = ItemStack.EMPTY;
+                for (ItemEntity i : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(centre(helper)).inflate(1.5))) {
+                    if (i.getItem().is(SpeciesRegistries.ORIGINAL_BLOOD.get())) {
+                        found = i.getItem();
+                    }
+                }
+                helper.assertTrue(!found.isEmpty(), "no Original's Blood was made from " + s);
+                helper.assertTrue(s.name().equals(found.get(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get())),
+                        "the bottle records " + found.get(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get()) + ", expected " + s);
+            } finally {
+                clearDropped(helper);
+                remove(helper, source);
+                reset(source);
+            }
+        }
+        helper.succeed();
+    }}

@@ -47,6 +47,7 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
   - Doppelgänger blood makes them a hybrid, with that Original as their sire.
   - Any other blood makes them unstable, then they die and stay a werewolf.
   - If the timer runs out, they die and stay a werewolf.
+- **R40a (plan 12b, owner 2026-11-14).** **Whose Original's Blood starts R40.** Config `hybrid_transition_blood` (server): `original_hybrid` (default, as in the show) takes only Original's Blood that was taken from an **Original hybrid**; `original` takes the blood of any Original or Original hybrid (the old behaviour). The Rite of Original's Blood records the source's species on the bottle, so the check needs no lookup and works with the source offline. It is checked when the bottle is drunk: a refused drink tells the player why and keeps the bottle. A bottle made before the update records nothing and is accepted under either setting.
 - **R41.** R24 also makes a hybrid.
 - **R42.** **Traits:**
   - speed and attack grow with age

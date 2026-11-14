@@ -43,6 +43,9 @@ public final class SpeciesConfig {
     public static final String TAGLOCK_DOPPELGANGER = "doppelganger";
     public static final String TAGLOCK_HUMAN = "human";
     private static final ModConfigSpec.ConfigValue<String> DOPPELGANGER_RITE_TAGLOCK;
+    public static final String TRANSITION_BLOOD_ORIGINAL_HYBRID = "original_hybrid";
+    public static final String TRANSITION_BLOOD_ORIGINAL = "original";
+    private static final ModConfigSpec.ConfigValue<String> HYBRID_TRANSITION_BLOOD;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -77,6 +80,8 @@ public final class SpeciesConfig {
                 .defineInList("gene_visibility", GENES_DISCOVERED, new java.util.ArrayList<>(java.util.List.of(GENES_DISCOVERED, GENES_ALWAYS)));
         DOPPELGANGER_RITE_TAGLOCK = b.comment("Whose taglock the Rite of Doppelgänger Blood accepts. doppelganger: a doppelgänger villager or a player with the gene. human: any human-like villager or player (the old behaviour).")
                 .defineInList("doppelganger_rite_taglock", TAGLOCK_DOPPELGANGER, new java.util.ArrayList<>(java.util.List.of(TAGLOCK_DOPPELGANGER, TAGLOCK_HUMAN)));
+        HYBRID_TRANSITION_BLOOD = b.comment("Whose Original's Blood starts the hybrid transition (R40). original_hybrid: only blood taken from an Original hybrid. original: blood from any Original or Original hybrid. A bottle made before the bottles recorded their source counts under either setting.")
+                .defineInList("hybrid_transition_blood", TRANSITION_BLOOD_ORIGINAL_HYBRID, new java.util.ArrayList<>(java.util.List.of(TRANSITION_BLOOD_ORIGINAL_HYBRID, TRANSITION_BLOOD_ORIGINAL)));
         b.pop();
         SPEC = b.build();
     }
@@ -219,6 +224,27 @@ public final class SpeciesConfig {
         }
         try {
             return TAGLOCK_HUMAN.equals(DOPPELGANGER_RITE_TAGLOCK.get());
+        } catch (IllegalStateException notLoaded) {
+            return false;
+        }
+    }
+
+    private static volatile Boolean transitionBloodAnyOriginalOverride;
+
+    /** For tests: pins {@link #transitionBloodAnyOriginal()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideTransitionBloodAnyOriginal(Boolean value) {
+        transitionBloodAnyOriginalOverride = value;
+    }
+
+    /** {@code hybrid_transition_blood = original}; false is the default {@code original_hybrid}. */
+    public static boolean transitionBloodAnyOriginal() {
+        Boolean pinned = transitionBloodAnyOriginalOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return TRANSITION_BLOOD_ORIGINAL.equals(HYBRID_TRANSITION_BLOOD.get());
         } catch (IllegalStateException notLoaded) {
             return false;
         }

@@ -61,6 +61,7 @@ public record OriginalBloodRiteFactory() implements RiteFactory {
             }
             ItemStack blood = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
             blood.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), target.getUUID());
+            blood.set(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get(), BloodlineAccess.get(target).species().name());
             level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, blood));
             return false;
         }
