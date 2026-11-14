@@ -275,7 +275,20 @@
   "supernaturalbloodlines.supernatural.race.siphoner": "Siphoner",
   "supernaturalbloodlines.supernatural.race.hunter": "Hunter",
   "supernaturalbloodlines.supernatural.race.werewolf": "Werewolf",
+  "rite.supernaturalbloodlines.rite_of_revelation": "Rite of Revelation",
   "supernaturalbloodlines.gene.command.doppelganger": "%s: doppelgänger gene set to %s.",
   "supernaturalbloodlines.gene.command.true": "true",
-  "supernaturalbloodlines.gene.command.false": "false"
+  "supernaturalbloodlines.gene.command.false": "false",
+  "supernaturalbloodlines.gene.refusal.no_owner": "This taglock has no owner.",
+  "supernaturalbloodlines.gene.refusal.owner_away": "The taglock's owner must be nearby or online.",
+  "supernaturalbloodlines.gene.refusal.not_doppelganger": "This taglock does not belong to a doppelgänger.",
+  "supernaturalbloodlines.gene.refusal.not_human_like": "This taglock does not belong to anyone human-like.",
+  "supernaturalbloodlines.gene.refusal.revelation_players_only": "The Rite of Revelation needs a player's own taglock.",
+  "supernaturalbloodlines.gene.revealed.doppelganger.yes": "The blood answers: you carry the doppelgänger gene.",
+  "supernaturalbloodlines.gene.revealed.doppelganger.no": "The blood is quiet: you do not carry the doppelgänger gene.",
+  "supernaturalbloodlines.gene.revelation": "The rite lays your blood bare:",
+  "supernaturalbloodlines.gene.revelation.werewolf.yes": "You carry the werewolf gene.",
+  "supernaturalbloodlines.gene.revelation.werewolf.no": "You do not carry the werewolf gene.",
+  "supernaturalbloodlines.gene.revelation.doppelganger.yes": "You carry the doppelgänger gene.",
+  "supernaturalbloodlines.gene.revelation.doppelganger.no": "You do not carry the doppelgänger gene."
 }

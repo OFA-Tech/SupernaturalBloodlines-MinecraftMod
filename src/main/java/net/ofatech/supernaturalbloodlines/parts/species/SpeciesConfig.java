@@ -40,6 +40,9 @@ public final class SpeciesConfig {
     public static final String GENES_DISCOVERED = "discovered";
     public static final String GENES_ALWAYS = "always";
     private static final ModConfigSpec.ConfigValue<String> GENE_VISIBILITY;
+    public static final String TAGLOCK_DOPPELGANGER = "doppelganger";
+    public static final String TAGLOCK_HUMAN = "human";
+    private static final ModConfigSpec.ConfigValue<String> DOPPELGANGER_RITE_TAGLOCK;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -72,6 +75,8 @@ public final class SpeciesConfig {
                 .defineInRange("doppelganger_villager_chance", DEFAULT_DOPPELGANGER_VILLAGER_CHANCE, 0.0, 1.0);
         GENE_VISIBILITY = b.comment("discovered: a gene shows as Unknown to its player until the Rite of Revelation, a Doppelgänger Blood rite with their taglock, or a werewolf awakening finds it. always: a player always sees their own genes.")
                 .defineInList("gene_visibility", GENES_DISCOVERED, new java.util.ArrayList<>(java.util.List.of(GENES_DISCOVERED, GENES_ALWAYS)));
+        DOPPELGANGER_RITE_TAGLOCK = b.comment("Whose taglock the Rite of Doppelgänger Blood accepts. doppelganger: a doppelgänger villager or a player with the gene. human: any human-like villager or player (the old behaviour).")
+                .defineInList("doppelganger_rite_taglock", TAGLOCK_DOPPELGANGER, new java.util.ArrayList<>(java.util.List.of(TAGLOCK_DOPPELGANGER, TAGLOCK_HUMAN)));
         b.pop();
         SPEC = b.build();
     }
@@ -193,6 +198,27 @@ public final class SpeciesConfig {
         }
         try {
             return GENES_ALWAYS.equals(GENE_VISIBILITY.get());
+        } catch (IllegalStateException notLoaded) {
+            return false;
+        }
+    }
+
+    private static volatile Boolean humanTaglockOverride;
+
+    /** For tests: pins {@link #doppelgangerRiteAcceptsHumans()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideDoppelgangerRiteHuman(Boolean value) {
+        humanTaglockOverride = value;
+    }
+
+    /** {@code doppelganger_rite_taglock = human}; false is the default {@code doppelganger}. */
+    public static boolean doppelgangerRiteAcceptsHumans() {
+        Boolean pinned = humanTaglockOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return TAGLOCK_HUMAN.equals(DOPPELGANGER_RITE_TAGLOCK.get());
         } catch (IllegalStateException notLoaded) {
             return false;
         }

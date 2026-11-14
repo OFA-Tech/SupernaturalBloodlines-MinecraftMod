@@ -20,6 +20,8 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 - **Rolling back forgets severances.** An older build doesn't know them, so severed bonds come back. Reset apex-race players first (see [For server owners](For-Server-Owners#removing-the-mod-or-tensura)).
 - **The apex pick is refused silently on a config mismatch.** If `apex_evolutions_enabled` is on for the client and off for the server, the client shows the apex race and the server refuses the pick with nothing logged. Keep the config equal.
 - **Severance has no consent check**, and a new sire replaces the old one (tree and sireline death follow the new sire).
+- **Taglock rites need the owner online or loaded.** The Rite of Doppelgänger Blood and the Rite of Revelation read the owner's genes from the live player or villager, so a taglock of an offline player or of an unloaded villager is refused ("The taglock's owner must be nearby or online.") and its ingredients come back. A player's genes are stored in their save, which is not read while they are away.
+- **The doppelgänger gene can only be set by command for an online player.**
 - **Sire's Blood:** anyone can be hit for blood; only the rite checks it was the right sire. The Silver Dagger can't be crafted with no silver mod (neither Werewolves nor Tensura). Art for both items is a placeholder.
 
 ## Not done yet
