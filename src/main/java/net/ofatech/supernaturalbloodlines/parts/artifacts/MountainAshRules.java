@@ -1,5 +1,16 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts;
 
+import net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlockEntity;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.phys.BlockHitResult;
@@ -14,7 +25,41 @@ final class MountainAshRules {
     private MountainAshRules() {
     }
 
+    static final int ASHWARDEN_CHECK_TICKS = 5;
+    static final int ASHWARDEN_WEAKNESS_TICKS = 5 * 20;
+    private static final double ASHWARDEN_PUSH = 0.6;
+
+    /**
+     * Ashwarden (S-WIT-3): a vampire or werewolf type that touches a line whose placer is online and owns the skill is pushed back
+     * and gets Weakness I for 5 seconds. "Touch" is the body within a tenth of a block of the line's cell, checked every
+     * {@value #ASHWARDEN_CHECK_TICKS} ticks and only for prey. A line whose placer is offline, never recorded or without the
+     * skill (dormant included) only blocks, as before. (The skill reads the placer, so it follows them: no skill, no effect.)
+     */
+    static void ashwarden(LivingEntity entity) {
+        Level level = entity.level();
+        if (level.isClientSide || entity.tickCount % ASHWARDEN_CHECK_TICKS != 0 || !Supernatural.isPrey(entity)) {
+            return;
+        }
+        AABB box = entity.getBoundingBox().inflate(0.1, -0.05, 0.1);
+        for (BlockPos pos : BlockPos.betweenClosed(BlockPos.containing(box.minX, box.minY, box.minZ), BlockPos.containing(box.maxX, box.minY, box.maxZ))) {
+            if (level.getBlockState(pos).is(MountainAsh.LINE.get()) && level.getBlockEntity(pos) instanceof MountainAshLineBlockEntity line
+                    && line.owner() != null && level.getPlayerByUUID(line.owner()) instanceof Player owner && LadderQuery.owns(owner, "S-WIT-3")) {
+                Vec3 away = entity.position().subtract(Vec3.atCenterOf(pos)).multiply(1, 0, 1);
+                away = away.lengthSqr() < 1.0E-6 ? new Vec3(1, 0, 0) : away.normalize();
+                entity.setDeltaMovement(away.x * ASHWARDEN_PUSH, 0.2, away.z * ASHWARDEN_PUSH);
+                entity.hurtMarked = true;
+                entity.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, ASHWARDEN_WEAKNESS_TICKS, 0));
+                return;
+            }
+        }
+    }
+
     static void register() {
+        NeoForge.EVENT_BUS.addListener(EntityTickEvent.Post.class, e -> {
+            if (e.getEntity() instanceof LivingEntity living) {
+                ashwarden(living);
+            }
+        });
         NeoForge.EVENT_BUS.addListener(PlayerEvent.BreakSpeed.class, e -> {
             // speed 0: never finishes. Instant mining skips the speed, so the break itself is refused below
             if (e.getState().is(MountainAsh.LINE.get()) && Supernatural.isPrey(e.getEntity())) {

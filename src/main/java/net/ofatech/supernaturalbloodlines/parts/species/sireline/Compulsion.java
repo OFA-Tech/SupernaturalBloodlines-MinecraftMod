@@ -51,9 +51,9 @@ import org.jetbrains.annotations.VisibleForTesting;
  * the target). Players, vervain users and hunters are immune ({@link CompulsionImmunity}).
  * <ul>
  * <li>A villager: the click opens a five second choice in chat, [Discount] or [Follow] (a click on the buttons runs
- * {@code /bloodline compel <token> <choice>}). The discount is 20 of the villager's MAJOR_POSITIVE gossip about the caster for a day,
+ * {@code /bloodline compel <token> <choice>}). The discount is 20 of the villager's MAJOR_POSITIVE gossip about the caster for a day (a day and a half with Silver Tongue),
  * and what it added is written down on the villager ({@link VillagerDiscount}) and taken back exactly, lazily: when anyone
- * clicks the villager and every 200 ticks of its own. Follow is five minutes of {@link CallFollowers}.</li>
+ * clicks the villager and every 200 ticks of its own. Follow is five minutes of {@link CallFollowers}. Silver Tongue (S-VAM-3) makes both last 1.5 times as long and the discount 30 gossip.</li>
  * <li>A lesser Vampirism vampire (the {@code vampirism:vampire} tag without advanced vampires, bosses and converted creatures): it is
  * sired by the caster through {@link SireRecorder} and never targets the caster or the caster's line.</li>
  * </ul>
@@ -142,8 +142,7 @@ public final class Compulsion {
     }
 
     private static boolean eyeToEye(ServerPlayer p, LivingEntity t) {
-        double reach = LadderQuery.value(p, "S-VAM-3", "range", REACH);
-        return p.distanceToSqr(t) <= reach * reach
+        return p.distanceToSqr(t) <= REACH * REACH
                 && looksAt(gaze(t), t.getEyePosition(), p.getEyePosition(), TARGET_CONE)
                 && looksAt(gaze(p), p.getEyePosition(), t.getEyePosition(), CASTER_CONE);
     }
@@ -239,7 +238,7 @@ public final class Compulsion {
             discount(caster, v, now);
             caster.sendSystemMessage(Component.translatable(KEY + "discounted"));
         } else {
-            CallFollowers.follow(v, caster.getUUID(), now, FOLLOW_TICKS);
+            CallFollowers.follow(v, caster.getUUID(), now, lasting(caster, FOLLOW_TICKS));
             caster.sendSystemMessage(Component.translatable(KEY + "following"));
         }
         TaskSignals.fire(caster, "compel", 1);
@@ -259,7 +258,12 @@ public final class Compulsion {
             v.getGossips().add(id, GossipType.MINOR_POSITIVE, (wanted - DISCOUNT_GOSSIP) * GossipType.MAJOR_POSITIVE.weight); // the gossip container caps it
         }
         v.setData(SpeciesRegistries.VILLAGER_DISCOUNT, new VillagerDiscount(id, gossip(v, id, GossipType.MAJOR_POSITIVE) - before,
-                gossip(v, id, GossipType.MINOR_POSITIVE) - beforeMinor, now + DISCOUNT_TICKS));
+                gossip(v, id, GossipType.MINOR_POSITIVE) - beforeMinor, now + lasting(caster, DISCOUNT_TICKS)));
+    }
+
+    /** How long a compelled villager stays discounted or following: Silver Tongue (S-VAM-3) makes it 1.5 times as long. */
+    static long lasting(ServerPlayer caster, long ticks) {
+        return (long) (ticks * LadderQuery.value(caster, "S-VAM-3", "duration_factor", 1.0));
     }
 
     private static int gossip(Villager v, UUID player, GossipType type) {

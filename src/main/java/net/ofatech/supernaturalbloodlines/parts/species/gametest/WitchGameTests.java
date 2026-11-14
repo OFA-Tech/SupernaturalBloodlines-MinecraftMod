@@ -307,6 +307,64 @@ public final class WitchGameTests {
         }, () -> remove(helper, siphoner));
     }
 
+    /**
+     * Ancestral Voice (S-WIT-6) through the mixin: the start cost of a Rite of Lineage, taken by the chalk's real {@code serverTick}
+     * (start = true, the rite type read from the chalk), is halved; the same player paid the plain cost a moment before.
+     */
+    @GameTest(template = "empty", templateNamespace = NS, batch = "ancestral_voice", timeoutTicks = 120)
+    public static void ancestralVoiceHalvesTheStartCostThroughTheMixin(GameTestHelper helper) {
+        if (type(helper, "rite_of_lineage_reveal") == null || !net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed(); // the Rites of Lineage need Werewolves
+            return;
+        }
+        BlockPos baseA = helper.absolutePos(new BlockPos(0, 200, 4));
+        BlockPos baseB = helper.absolutePos(new BlockPos(8, 200, 4));
+        AltarBlockEntity altarA = altar(helper, baseA, 5000);
+        AltarBlockEntity altarB = altar(helper, baseB, 5000);
+        BlockPos chalkA = baseA.offset(0, 0, -2);
+        BlockPos chalkB = baseB.offset(0, 0, -2);
+        RecordingPlayer witch = player(Species.WITCH, 0, helper);
+        GoldChalkBlockEntity a = chalk(helper, chalkA, witch.getUUID(), baseA);
+        GoldChalkBlockEntity b = chalk(helper, chalkB, witch.getUUID(), baseB);
+        put(helper, witch, chalkA);
+        int[] stage = {0};
+        double[] paid = {0, 0};
+        helper.succeedWhen(() -> {
+            ServerLevel level = helper.getLevel();
+            helper.assertTrue(level.getGameTime() % 20 == 0 || stage[0] == 2, "waiting for a tick divisible by 20");
+            if (stage[0] == 0) {
+                set(altarA, "power", 5000.0);
+                runChalk(helper, chalkA, a);
+                paid[0] = 5000 - power(altarA);
+                stage[0] = 1;
+                net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.set(witch,
+                        net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.get(witch).toBuilder().skills(java.util.Set.of("S-WIT-6")).build());
+                helper.assertTrue(false, "the first start ran; waiting for the next tick divisible by 20");
+            }
+            if (stage[0] == 1) {
+                helper.assertTrue(level.getGameTime() % 20 == 0, "waiting for a tick divisible by 20");
+                set(altarB, "power", 5000.0);
+                runChalk(helper, chalkB, b);
+                paid[1] = 5000 - power(altarB);
+                stage[0] = 2;
+            }
+            double plain = paid[0];
+            double skilled = paid[1];
+            remove(helper, witch);
+            helper.assertTrue(plain == 2250, "a witch pays 750 of 1000, so 2250 of the 3000 start cost; paid " + plain);
+            helper.assertTrue(skilled >= 1124 && skilled <= 1126, "Ancestral Voice halves it: paid " + skilled + " of " + plain);
+        });
+    }
+
+    private static void runChalk(GameTestHelper helper, BlockPos pos, GoldChalkBlockEntity chalk) {
+        ServerLevel level = helper.getLevel();
+        set(chalk, "type", type(helper, "rite_of_lineage_reveal"));
+        set(chalk, "itemsToConsume", new ArrayList<>());
+        set(chalk, "entitiesToConsume", new ArrayList<>());
+        set(chalk, "isInitialising", true);
+        GoldChalkBlockEntity.serverTick(level, pos, level.getBlockState(pos), chalk);
+    }
+
     @GameTest(template = "empty", templateNamespace = NS, batch = "siphon_poor", timeoutTicks = 100)
     public static void siphonerKeepsPowerWhenTheAltarCannotPay(GameTestHelper helper) {
         BlockPos base = helper.absolutePos(new BlockPos(0, 200, 4));

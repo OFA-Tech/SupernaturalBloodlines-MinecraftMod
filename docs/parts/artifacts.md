@@ -190,4 +190,4 @@ All in `parts/artifacts/werewolves/`, loaded only behind `isLoaded("werewolves")
 
 ## Skills (plan 12, phase 12c)
 
-Vervain Blood (S-HUM-2) makes the tea last 20 minutes (`VervainRules.teaTicks`) and Wolfsbane Tolerance (S-WOL-4) halves the common wolfsbane strain (`WolfsbaneStrains.commonTicks`). Without the skill, or with the supernatural part off, nothing changes. Mountain ash needs no skill: a vampire or werewolf type cannot break a line whoever placed it, so Ashwarden (S-WIT-3) has nothing to add.
+Vervain Blood (S-HUM-2) makes the tea last 20 minutes (`VervainRules.teaTicks`) and Wolfsbane Tolerance (S-WOL-4) halves the common wolfsbane strain (`WolfsbaneStrains.commonTicks`). Without the skill, or with the supernatural part off, nothing changes. Ashwarden (S-WIT-3): a mountain ash line now records who placed it (`MountainAshLineBlockEntity.owner`), and prey that touches a line of an online placer who owns the skill is pushed back and weakened for 5 seconds (`MountainAshRules.ashwarden`, checked every 5 ticks for prey only). Lines placed before the update have no placer and only block.

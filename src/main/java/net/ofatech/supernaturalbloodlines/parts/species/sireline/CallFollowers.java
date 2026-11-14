@@ -50,6 +50,13 @@ public final class CallFollowers {
         FOLLOWING.put(mob.getUUID(), new Follow(caller, mob.level().dimension(), now + ticks));
     }
 
+    /** The game time a following mob stops at, or -1. */
+    @org.jetbrains.annotations.VisibleForTesting
+    public static long followUntil(UUID mob) {
+        Follow f = FOLLOWING.get(mob);
+        return f == null ? -1 : f.until();
+    }
+
     public static boolean isFollowing(UUID mob) {
         return FOLLOWING.containsKey(mob);
     }

@@ -279,6 +279,30 @@ public final class PackBonusGameTests {
         helper.succeed();
     }
 
+    /** Roar's Echo (S-WOL-6) through the roar itself: 800 ticks instead of 1200 between two roars. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void roarsEchoShortensTheRealCooldown(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed(); // skills only exist with the supernatural part
+            return;
+        }
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, Lineage.BITTEN, null, 1, 1.5);
+        ServerPlayer plain = wolf(helper, Rank.ALPHA, Lineage.BITTEN, null, 1, 3.5);
+        online(alpha, plain);
+        try {
+            net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.set(alpha,
+                    net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.get(alpha).toBuilder().skills(java.util.Set.of("S-WOL-6")).build());
+            helper.assertTrue(AlphaRoar.roar(alpha, 5000) == null && AlphaRoar.roar(plain, 5000) == null, "the first roars were refused");
+            helper.assertTrue(AlphaRoar.roar(alpha, 5000 + 799) != null, "Roar's Echo ended a tick early");
+            helper.assertTrue(AlphaRoar.roar(alpha, 5000 + 800) == null, "Roar's Echo did not end at 800 ticks");
+            helper.assertTrue(AlphaRoar.roar(plain, 5000 + 800) != null, "the Alpha without the skill roared after 800 ticks");
+            helper.assertTrue(AlphaRoar.roar(plain, 5000 + AlphaRoar.COOLDOWN) == null, "the Alpha without the skill did not roar after 1200");
+        } finally {
+            clean(alpha, plain);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void roarCooldown(GameTestHelper helper) {
         ServerPlayer alpha = wolf(helper, Rank.ALPHA, Lineage.BITTEN, null, 1, 1.5);

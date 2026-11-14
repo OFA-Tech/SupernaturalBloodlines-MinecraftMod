@@ -170,12 +170,12 @@ public final class SkillGameTests {
     public static void ruleNumbersComeFromTheJson(GameTestHelper helper) {
         ServerPlayer p = vampire(helper, 1);
         give(p, 0, SupernaturalRace.VAMPIRE, 3);
-        helper.assertTrue(LadderQuery.value(p, "S-VAM-3", "range", 4) == 4, "a skill nobody owns changed the number");
+        helper.assertTrue(LadderQuery.value(p, "S-VAM-3", "duration_factor", 1) == 1, "a skill nobody owns changed the number");
         give(p, 0, SupernaturalRace.VAMPIRE, 3, "S-VAM-3");
-        helper.assertTrue(LadderQuery.value(p, "S-VAM-3", "range", 4) == 6, "the owned skill did not give its number");
+        helper.assertTrue(LadderQuery.value(p, "S-VAM-3", "duration_factor", 1) == 1.5, "the owned skill did not give its number");
         helper.assertTrue(LadderQuery.value(p, "S-VAM-3", "no_such_number", 4) == 4, "an unknown key changed the number");
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(null, 0), "could not leave the vampires");
-        helper.assertTrue(LadderQuery.value(p, "S-VAM-3", "range", 4) == 4, "a dormant skill changed the number");
+        helper.assertTrue(LadderQuery.value(p, "S-VAM-3", "duration_factor", 1) == 1, "a dormant skill changed the number");
         helper.succeed();
     }
 

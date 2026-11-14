@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.gametest;
 
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder;
 import static net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCommandGameTests.cleanUp;
 import static net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCommandGameTests.named;
 import static net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCommandGameTests.place;
@@ -51,6 +52,8 @@ import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.Record
 import net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterInstinct;
 import net.ofatech.supernaturalbloodlines.parts.species.hunter.MarkTracker;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.BloodThirst;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.CallFollowers;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.Compulsion;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.witch.RiteCost;
@@ -107,32 +110,55 @@ public final class SkillRuleGameTests {
         b.setYHeadRot(b.getYRot());
     }
 
+    /** The real path: the sneak click opens the choice, the choice runs the command's code. The villager is 3 blocks away. */
+    private static long[] compel(GameTestHelper helper, ServerPlayer caster, Villager v, String choice) {
+        Compulsion.clearGuard(caster.getUUID());
+        gaze(caster, v);
+        Compulsion.onInteract(new PlayerInteractEvent.EntityInteract(caster, InteractionHand.MAIN_HAND, v));
+        String token = Compulsion.pendingChoice(caster.getUUID(), v.getUUID()).orElseThrow(() -> new AssertionError("not compelled"));
+        long now = helper.getLevel().getGameTime();
+        helper.assertTrue(Compulsion.choose(caster, token, choice) == null, choice + " failed");
+        return new long[] {now, v.hasData(SpeciesRegistries.VILLAGER_DISCOUNT) ? v.getData(SpeciesRegistries.VILLAGER_DISCOUNT).expires() : -1,
+                CallFollowers.followUntil(v.getUUID())};
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void silverTongueWidensEyeContactAndTheDiscount(GameTestHelper helper) {
+    public static void silverTongueLengthensCompulsionAndTheDiscount(GameTestHelper helper) {
         ServerPlayer caster = named(helper, helper.getLevel(), "caster");
         species(caster, Species.ORIGINAL);
         caster.setShiftKeyDown(true);
         place(helper, caster, 4);
-        Villager v = villager(helper, 9); // 5 blocks away: more than the 4 of the rule, less than the 6 of the skill
+        Villager v = villager(helper, 7);
+        Villager w = villager(helper, 2);
         try {
-            gaze(caster, v);
-            Compulsion.onInteract(new PlayerInteractEvent.EntityInteract(caster, InteractionHand.MAIN_HAND, v));
-            helper.assertTrue(Compulsion.pendingChoice(caster.getUUID(), v.getUUID()).isEmpty(), "compelled from 5 blocks without the skill");
+            long[] plain = compel(helper, caster, v, "discount");
+            helper.assertTrue(plain[1] - plain[0] == 24000, "a day without the skill: " + (plain[1] - plain[0]));
+            int rep = v.getGossips().getReputation(caster.getUUID(), t -> t == GossipType.MAJOR_POSITIVE);
+            helper.assertTrue(rep == 100, "reputation " + rep + " without the skill");
+            long[] plainFollow = compel(helper, caster, w, "follow");
+            helper.assertTrue(plainFollow[2] - plainFollow[0] == 6000, "follow " + (plainFollow[2] - plainFollow[0]));
             own(caster, "S-VAM-3");
+            Villager x = villager(helper, 6);
+            Villager y = villager(helper, 1);
+            long[] skilled = compel(helper, caster, x, "discount");
+            helper.assertTrue(skilled[1] - skilled[0] == 36000, "a day and a half with the skill: " + (skilled[1] - skilled[0]));
+            // a villager keeps 20 of the major kind and up to 25 of the minor kind: worth 125 reputation, not the planned 150
+            int skilledRep = x.getGossips().getReputation(caster.getUUID(), t -> t == GossipType.MAJOR_POSITIVE || t == GossipType.MINOR_POSITIVE);
+            helper.assertTrue(skilledRep == 125, "reputation " + skilledRep + " with the skill (the gossip caps make it 125)");
+            long[] skilledFollow = compel(helper, caster, y, "follow");
+            helper.assertTrue(skilledFollow[2] - skilledFollow[0] == 9000, "follow with the skill " + (skilledFollow[2] - skilledFollow[0]));
+            // the reach is still the vanilla 4 blocks: no skill makes the click reach further
+            Villager far = villager(helper, 9);
             Compulsion.clearGuard(caster.getUUID());
-            gaze(caster, v);
-            Compulsion.onInteract(new PlayerInteractEvent.EntityInteract(caster, InteractionHand.MAIN_HAND, v));
-            String token = Compulsion.pendingChoice(caster.getUUID(), v.getUUID()).orElseThrow(() -> new AssertionError("not compelled from 5 blocks with the skill"));
-            helper.assertTrue(Compulsion.choose(caster, token, "discount") == null, "the discount failed");
-            int rep = v.getGossips().getReputation(caster.getUUID(), t -> t == GossipType.MAJOR_POSITIVE || t == GossipType.MINOR_POSITIVE);
-            helper.assertTrue(rep == 125, "reputation is " + rep + ": 100 without the skill (20 x 5), 125 with it (the villager keeps at most 25 of MINOR_POSITIVE)");
+            gaze(caster, far);
+            Compulsion.onInteract(new PlayerInteractEvent.EntityInteract(caster, InteractionHand.MAIN_HAND, far));
+            helper.assertTrue(Compulsion.pendingChoice(caster.getUUID(), far.getUUID()).isEmpty(), "compelled from 5 blocks with the skill");
         } finally {
             cleanUp(caster);
             Compulsion.clearGuard(caster.getUUID());
         }
         helper.succeed();
     }
-
     // ---- S-ORI-2 Bloodmaker's Yield ----
 
     @GameTest(template = "empty", templateNamespace = NS)
@@ -165,6 +191,31 @@ public final class SkillRuleGameTests {
         helper.assertTrue(SireCall.cooldownTicks(p) == 12000, "base cooldown " + SireCall.cooldownTicks(p));
         own(p, "S-ORI-3");
         helper.assertTrue(SireCall.cooldownTicks(p) == 6000, "cooldown with the skill " + SireCall.cooldownTicks(p));
+        helper.succeed();
+    }
+
+    /** Sire's Call (S-ORI-3) through the call itself: a call 7,000 ticks after the last one is refused, and goes through with the skill. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void siresCallShortensTheRealCooldown(GameTestHelper helper) {
+        ServerPlayer caller = named(helper, helper.getLevel(), "caller");
+        ServerPlayer sired = named(helper, helper.getLevel(), "sired");
+        try {
+            SireRecorder.record(caller, sired);
+            net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCommandGameTests.online(caller, sired);
+            species(caller, Species.ORIGINAL);
+            long now = helper.getLevel().getGameTime();
+            caller.setData(SpeciesRegistries.LAST_CALL, now - 7000);
+            var refused = SireCall.call(caller);
+            helper.assertTrue(refused.error() != null && refused.error().getString().length() > 0 && refused.players() == 0, "a call 7,000 ticks after the last one went through without the skill");
+            own(caller, "S-ORI-3");
+            helper.assertTrue(SireCall.call(caller).error() == null, "the call was still refused with Sire's Call");
+            helper.assertTrue(caller.getData(SpeciesRegistries.LAST_CALL) == now, "the cooldown did not start again");
+            caller.setData(SpeciesRegistries.LAST_CALL, now - 5999);
+            helper.assertTrue(SireCall.call(caller).error() != null, "the cooldown ended a tick early");
+        } finally {
+            SireCall.requests().forget(caller.getUUID());
+            cleanUp(caller, sired);
+        }
         helper.succeed();
     }
 

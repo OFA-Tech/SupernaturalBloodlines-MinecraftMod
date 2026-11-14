@@ -3,5 +3,5 @@
     "name": "Silver Tongue",
     "cost": 2,
     "kinds": ["rule"],
-    "params": { "discount_gossip": 30, "range": 6 }
+    "params": { "discount_gossip": 30, "duration_factor": 1.5 }
 }
