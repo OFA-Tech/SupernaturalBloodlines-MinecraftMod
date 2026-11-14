@@ -227,7 +227,19 @@ public final class SpeciesConfig {
         }
     }
 
+    private static volatile Integer biteVampireCostOverride;
+
+    /** For tests: pins {@link #biteVampireCost()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideBiteVampireCost(Integer value) {
+        biteVampireCostOverride = value;
+    }
+
     public static int biteVampireCost() {
+        Integer pinned = biteVampireCostOverride;
+        if (pinned != null) {
+            return pinned;
+        }
         try {
             return BITE_VAMPIRE_COST.get();
         } catch (IllegalStateException notLoaded) {

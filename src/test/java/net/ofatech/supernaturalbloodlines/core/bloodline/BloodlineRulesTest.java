@@ -182,6 +182,19 @@ class BloodlineRulesTest {
     }
 
     @Test
+    void leavingTheVampiresEndsTheGhoulAndTheTurning() {
+        BloodlineState mid = ghoul().toBuilder().turningTicksLeft(5000).vampireBloodUntil(900).build();
+        for (BloodlineEvent e : new BloodlineEvent[] {LEFT_BASE_FACTION, RITE_OF_CLEANSING_BLOOD, DRANK_THE_CURE}) {
+            BloodlineState after = run(mid, e, ctx().withFaction(BaseFaction.VAMPIRE)).state();
+            assertFalse(after.ghoul(), e + " left the Ghoul flag");
+            assertEquals(0, after.turningTicksLeft(), e + " left the turning running");
+            assertEquals(0, after.vampireBloodUntil(), e + " left vampire blood");
+        }
+        // a plain vampire is unchanged by leaving
+        assertNoChange(run(BloodlineState.NONE, LEFT_BASE_FACTION, ctx().withFaction(BaseFaction.VAMPIRE)), BloodlineState.NONE);
+    }
+
+    @Test
     void turningFedOutsideTheTurningDoesNothing() {
         assertNoChange(run(BloodlineState.NONE, TURNING_FED, ctx()), BloodlineState.NONE);
         assertNoChange(run(ghoul(), TURNING_FED, ctx().withFaction(BaseFaction.VAMPIRE)), ghoul());

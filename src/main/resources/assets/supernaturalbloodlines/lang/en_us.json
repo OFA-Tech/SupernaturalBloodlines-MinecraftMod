@@ -253,6 +253,7 @@
   "supernaturalbloodlines.turning.ghoul_no_altar": "You are a Ghoul. The altar will not answer until you finish your turning.",
   "supernaturalbloodlines.turning.ghoul_no_evolve": "You are a Ghoul. Complete your turning before you can evolve.",
   "supernaturalbloodlines.turning.vampire_blood_no_fill": "Vampire blood does not feed you, and it cost you some of your own.",
+  "supernaturalbloodlines.turning.vampire_blood_no_fill_free": "Vampire blood does not feed you.",
   "supernaturalbloodlines.sire_naming.no_evolution": "Naming your sired grants EP and stats only, never an evolution.",
   "supernaturalbloodlines.species_tensura.bad_config": "species_tensura: %s invalid entries in the config were ignored (see the server log)."
 }

@@ -161,6 +161,11 @@ public final class BloodlineRules {
         return clearTransition(to(s, Species.NONE, c).sire(null).witchLayer(false).markKills(0).lastVampireKill(0));
     }
 
+    /** Leaving the vampires for good (a cure, the faction left): no longer a Ghoul, and nothing of the turning is left to finish. */
+    private static BloodlineState.Builder humanAgain(BloodlineState.Builder b) {
+        return b.ghoul(false).turningTicksLeft(0).vampireBloodUntil(0);
+    }
+
     private static BloodlineState.Builder clearTransition(BloodlineState.Builder b) {
         return b.inTransition(false).unstable(false).transitionTicksLeft(0).pendingSire(null);
     }
@@ -305,7 +310,7 @@ public final class BloodlineRules {
             case TRIBRID -> Outcome.of(to(s, Species.WITCH, c).witchLayer(true).sire(null).build());
             case HERETIC -> Outcome.of(to(s, Species.SIPHONER, c).build(), Action.LEAVE_FACTION);
             case NONE, WITCH, SIPHONER -> c.faction() == BaseFaction.VAMPIRE
-                    ? Outcome.of(s, Action.LEAVE_FACTION) : unchanged(s);
+                    ? Outcome.of(humanAgain(s.toBuilder()).build(), Action.LEAVE_FACTION) : unchanged(s);
             default -> unchanged(s);
         };
     }
@@ -323,7 +328,7 @@ public final class BloodlineRules {
     }
 
     private static Outcome drankTheCure(BloodlineState s, BloodlineContext c) {
-        BloodlineState cured = becomeNone(s, c).hunterCurse(false).siphonedPower(0).thirst(20)
+        BloodlineState cured = humanAgain(becomeNone(s, c)).hunterCurse(false).siphonedPower(0).thirst(20)
                 .wolf(clearedWolf(s.wolf())).build();
         boolean leaves = c.faction() == BaseFaction.VAMPIRE || c.faction() == BaseFaction.WEREWOLF
                 || switch (s.species()) {
@@ -344,8 +349,11 @@ public final class BloodlineRules {
             case TRIBRID -> Outcome.of(leaveWerewolf(s, to(s, Species.WITCH, c).witchLayer(true).sire(null)).build());
             case ORIGINAL, POTENTIAL, HUNTER_OF_THE_FIVE -> Outcome.of(becomeNone(s, c).build());
             case ORIGINAL_HYBRID, HYBRID -> Outcome.of(leaveWerewolf(s, becomeNone(s, c)).build());
-            case NONE, WITCH, SIPHONER -> c.faction() == BaseFaction.WEREWOLF
-                    ? Outcome.of(leaveWerewolf(s, s.toBuilder()).build()) : unchanged(s);
+            case NONE, WITCH, SIPHONER -> switch (c.faction()) {
+                case WEREWOLF -> Outcome.of(leaveWerewolf(s, s.toBuilder()).build());
+                case VAMPIRE -> Outcome.of(humanAgain(s.toBuilder()).build());
+                default -> unchanged(s);
+            };
         };
     }
 

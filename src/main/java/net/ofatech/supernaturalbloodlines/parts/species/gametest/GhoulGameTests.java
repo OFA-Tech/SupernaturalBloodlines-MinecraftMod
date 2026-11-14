@@ -35,6 +35,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.turning.GhoulGates;
 
 /** Ghouls (R20e, R20f): what a finished Sanguinare leaves, and what a Ghoul cannot do. Needs no Werewolves. */
@@ -172,8 +173,11 @@ public final class GhoulGameTests {
         try {
             finishSanguinare(p);
             helper.assertTrue(BloodlineAccess.get(p).ghoul(), "setup: not a Ghoul");
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().turningTicksLeft(5000).vampireBloodUntil(helper.getLevel().getGameTime() + 900).build());
             handler(p).leaveFaction(true);
-            helper.assertTrue(!BloodlineAccess.get(p).ghoul(), "a cured Ghoul is still flagged");
+            BloodlineState left = BloodlineAccess.get(p);
+            helper.assertTrue(!left.ghoul(), "a cured Ghoul is still flagged");
+            helper.assertTrue(!left.inTurning() && left.vampireBloodUntil() == 0, "the turning outlived the Ghoul: " + left);
             vampireAt(helper, p, 2);
             helper.assertTrue(!GhoulGates.isGhoul(p) && handler(p).getCurrentLevel() == 2, "the old flag gates a new vampire");
         } finally {
@@ -246,6 +250,33 @@ public final class GhoulGameTests {
     }
 
     // ---- biting a vampire ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void biteMessageHasAVariantForNoCost(GameTestHelper helper) {
+        RecordingPlayer free = RecordingPlayer.create(helper);
+        RecordingPlayer paid = RecordingPlayer.create(helper);
+        ServerPlayer source = TestPlayers.createMortal(helper);
+        try {
+            vampireAt(helper, free, 1);
+            vampireAt(helper, paid, 1);
+            vampireAt(helper, source, 1);
+            SpeciesConfig.overrideBiteVampireCost(0);
+            VampirismAPI.vampirePlayer(free).useBlood(10, true);
+            int before = VampirismAPI.vampirePlayer(free).getBloodStats().getBloodLevel();
+            drinkFrom(free, source, 4);
+            helper.assertTrue(VampirismAPI.vampirePlayer(free).getBloodStats().getBloodLevel() == before, "a free bite changed the blood level");
+            helper.assertTrue(free.receivedOnActionBar(KEY + "vampire_blood_no_fill_free") && !free.received(KEY + "vampire_blood_no_fill"),
+                    "the free bite did not get the message without a cost");
+            SpeciesConfig.overrideBiteVampireCost(null);
+            drinkFrom(paid, source, 4);
+            helper.assertTrue(paid.receivedOnActionBar(KEY + "vampire_blood_no_fill") && !paid.received(KEY + "vampire_blood_no_fill_free"),
+                    "a costly bite did not get the message with the cost");
+        } finally {
+            SpeciesConfig.overrideBiteVampireCost(null);
+            reset(free, paid, source);
+        }
+        helper.succeed();
+    }
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void bitingVampireGivesNoBloodAndCosts(GameTestHelper helper) {

@@ -54,9 +54,10 @@ final class GhoulRace {
         String race = RaceAPI.getRaceFrom(p).getRace().map(r -> r.getRaceId().toString()).orElse(null);
         if (is && HUMAN.equals(race)) {
             setRace(p, GHOUL);
-        } else if (!is && GHOUL.equals(race) && Ghouls.inVampireFaction(p)) {
-            // the turning is done (a Ghoul who left the vampires is not here: the cure sets the race back to human)
-            setRace(p, VAMPIRE);
+        } else if (!is && GHOUL.equals(race)) {
+            // in the vampire faction the turning is done; out of it the Ghoul left the vampires (a cure), and the race goes back to
+            // human as VampireSync.raceOnCure does, so it also does when vampirism_tensura (which owns that mapping) is off
+            setRace(p, Ghouls.inVampireFaction(p) ? VAMPIRE : HUMAN);
         }
     }
 

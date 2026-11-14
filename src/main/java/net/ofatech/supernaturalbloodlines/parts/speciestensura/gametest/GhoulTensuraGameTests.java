@@ -155,6 +155,23 @@ public final class GhoulTensuraGameTests {
         helper.succeed();
     }
 
+    /** vampirism_tensura (VampireSync.raceOnCure) may be off, so species_tensura sets the race back to human itself. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void clearedGhoulOutsideTheVampiresIsHuman(GameTestHelper helper) {
+        RecordingPlayer p = RecordingPlayer.create(helper);
+        try {
+            setRace(p, "tensura:ghoul");
+            // a Ghoul flag with no vampire faction behind it (what is left when the cure mapping is not there to act first)
+            BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().ghoul(true).build());
+            helper.assertTrue("tensura:ghoul".equals(race(p)), "setup: race is " + race(p));
+            BloodlineAccess.set(p, BloodlineState.NONE);
+            helper.assertTrue("tensura:human".equals(race(p)), "race is " + race(p));
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void leavingTheVampiresAsAGhoulGoesBackToHuman(GameTestHelper helper) {
         RecordingPlayer p = RecordingPlayer.create(helper);

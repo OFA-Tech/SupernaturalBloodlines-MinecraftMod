@@ -20,6 +20,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BaseFaction;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext;
@@ -100,11 +101,16 @@ public final class GhoulGates {
         }
     }
 
-    /** Any way out of the vampire faction (cure, rite, command) ends the Ghoul: a later vampire is not gated by an old flag. */
+    /**
+     * Any way out of the vampire faction (cure, rite, command) ends the Ghoul and the turning that went with it (the rules do it, as
+     * LEFT_BASE_FACTION from the vampire faction): a later vampire is not gated by an old flag, and a leftover clock does not kill
+     * someone who is human again. Only for a Ghoul: other vampires' species rules are not touched here.
+     */
     private static void endOnLeaving(PlayerFactionEvent.FactionLevelChanged e) {
         if (e.getOldFaction() == VReference.VAMPIRE_FACTION && e.getCurrentFaction() != VReference.VAMPIRE_FACTION
                 && e.getPlayer().getPlayer() instanceof ServerPlayer p && BloodlineAccess.get(p).ghoul()) {
-            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().ghoul(false).build());
+            BloodlineAccess.applyEvent(p, BloodlineEvent.LEFT_BASE_FACTION,
+                    SpeciesContext.of(p, BaseFaction.VAMPIRE, p.level().getGameTime(), null));
         }
     }
 
@@ -132,6 +138,6 @@ public final class GhoulGates {
         if (cost > 0) {
             e.getVampire().useBlood(cost, true);
         }
-        p.displayClientMessage(Component.translatable("supernaturalbloodlines.turning.vampire_blood_no_fill"), true);
+        p.displayClientMessage(Component.translatable("supernaturalbloodlines.turning.vampire_blood_no_fill" + (cost > 0 ? "" : "_free")), true);
     }
 }
