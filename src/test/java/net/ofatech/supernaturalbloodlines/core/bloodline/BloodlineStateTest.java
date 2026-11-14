@@ -21,7 +21,8 @@ class BloodlineStateTest {
                 UUID.fromString("00000000-0000-0000-0000-0000000000c3"), 777L, 12, true, Set.of("a", "b"));
         BloodlineState s = new BloodlineState(Species.TRIBRID, true, UUID.fromString("00000000-0000-0000-0000-0000000000a1"),
                 true, true, 123L, UUID.fromString("00000000-0000-0000-0000-0000000000b2"), 50, 999L, 7, "x:y",
-                4, true, 888L, true, wolf, Set.of("tensura:drain", "tensura:charm"));
+                4, true, 888L, true, wolf, Set.of("tensura:drain", "tensura:charm"),
+                UUID.fromString("00000000-0000-0000-0000-0000000000a1"));
 
         JsonElement json = BloodlineState.CODEC.encodeStart(JsonOps.INSTANCE, s).getOrThrow();
         assertEquals(s, BloodlineState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());
@@ -77,5 +78,36 @@ class BloodlineStateTest {
         Outcome o = BloodlineRules.apply(BloodlineState.NONE, BloodlineEvent.RITE_OF_IMMORTALITY,
                 BloodlineContext.defaults().withGameTime(500));
         assertEquals(500, o.state().turnedAt());
+    }
+
+    private static final UUID SIRE_A = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
+    private static final UUID SIRE_B = UUID.fromString("00000000-0000-0000-0000-0000000000b2");
+
+    @Test
+    void severedSireOnlyCountsWhileItIsTheSire() {
+        BloodlineState severed = BloodlineState.NONE.toBuilder().sire(SIRE_A).severedSire(SIRE_A).build();
+        assertTrue(severed.bondBroken());
+        assertNull(severed.boundSire());
+        assertEquals(SIRE_A, severed.sire());
+
+        BloodlineState bound = BloodlineState.NONE.toBuilder().sire(SIRE_A).build();
+        assertFalse(bound.bondBroken());
+        assertEquals(SIRE_A, bound.boundSire());
+
+        // a new sire, or none, ends it; the same sire coming back after none is a fresh bond
+        assertFalse(severed.toBuilder().sire(SIRE_B).build().bondBroken());
+        BloodlineState cleared = severed.toBuilder().sire(null).build();
+        assertFalse(cleared.bondBroken());
+        assertFalse(cleared.toBuilder().sire(SIRE_A).build().bondBroken());
+        // a flag with no sire is dropped
+        assertFalse(BloodlineState.NONE.toBuilder().severedSire(SIRE_A).build().bondBroken());
+    }
+
+    @Test
+    void severedSireRoundTrips() {
+        BloodlineState severed = BloodlineState.NONE.toBuilder().sire(SIRE_A).severedSire(SIRE_A).build();
+        JsonElement json = BloodlineState.CODEC.encodeStart(JsonOps.INSTANCE, severed).getOrThrow();
+        assertEquals(severed, BloodlineState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());
+        assertTrue(BloodlineState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow().bondBroken());
     }
 }

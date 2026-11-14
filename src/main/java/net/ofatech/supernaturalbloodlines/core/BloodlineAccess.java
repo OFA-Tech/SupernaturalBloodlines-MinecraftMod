@@ -130,7 +130,7 @@ public final class BloodlineAccess {
         if (before.species() == after.species() && before.wolf().lineage() == after.wolf().lineage()
                 && before.wolf().rank() == after.wolf().rank() && before.wolf().killedInnocent() == after.wolf().killedInnocent()
                 && before.markKills() == after.markKills()
-                && Objects.equals(before.sire(), after.sire())
+                && Objects.equals(before.sire(), after.sire()) && before.bondBroken() == after.bondBroken()
                 && Objects.equals(before.wolf().packAlpha(), after.wolf().packAlpha())) {
             return;
         }
