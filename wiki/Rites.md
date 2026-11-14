@@ -65,7 +65,7 @@ Makes an **Original**. See [Vampires and Originals](Vampires-And-Originals#origi
 
 For the cure results see [Hybrids](Hybrids-And-Original-Hybrids#ending-it-cures) and [Heretics and Tribrids](Heretics-And-Tribrids).
 
-**Refusals you may see:** "The one in the circle does not belong to the right faction for this rite." / "The rite would change nothing." / "The rite cannot take hold: the new faction would not accept them." / "This rite can only be performed under a full moon." / "An Original cannot be cured this way."
+**Refusals you may see:** "The one in the circle does not belong to the right faction for this rite." / "The rite would change nothing." / "The rite cannot take hold: the new faction would not accept them." / "This rite can only be performed on a full-moon night." / "An Original cannot be cured this way."
 
 ## Rite of the Moon
 

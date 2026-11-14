@@ -128,6 +128,12 @@ public final class SparkHandler {
     }
 
     private static void onFaction(PlayerFactionEvent.FactionLevelChanged e) {
+        // a dormant True Alpha is marked as not holding the spark while they are away (hasSpark, offline); rejoining wakes it
+        if (e.getPlayer().getPlayer() instanceof ServerPlayer back && !back.level().isClientSide && e.getCurrentFaction() == WerewolfFaction.faction()
+                && e.getOldFaction() != WerewolfFaction.faction() && PackAccess.wolf(back).rank() == Rank.TRUE_ALPHA) {
+            PackIndex.get(back.serverLevel()).clearFormerAlpha(back.getUUID());
+            return;
+        }
         if (!(e.getPlayer().getPlayer() instanceof ServerPlayer p) || p.level().isClientSide || e.getOldFaction() != WerewolfFaction.faction()
                 || e.getCurrentFaction() == WerewolfFaction.faction() || !PackAccess.isAlpha(PackAccess.wolf(p).rank())) {
             return;
@@ -158,9 +164,9 @@ public final class SparkHandler {
     /** The Alpha leaves the werewolves or is cured: the spark goes to the heir, the Alpha is an Omega with no pack. A True Alpha only dissolves the pack. */
     static void passOn(ServerPlayer alpha) {
         if (PackAccess.wolf(alpha).rank() == Rank.TRUE_ALPHA) {
-            // a True Alpha keeps the spark and the rank (dormant outside the faction): only the pack dissolves
+            // a True Alpha keeps the spark and the rank (dormant outside the faction): only the pack dissolves. The tombstone
+            // dissolve leaves says "not holding it now" for an offline check; onFaction clears it on rejoining
             dissolve(alpha);
-            PackIndex.get(alpha.serverLevel()).clearFormerAlpha(alpha.getUUID());
             return;
         }
         ServerPlayer heir = heirOf(alpha);

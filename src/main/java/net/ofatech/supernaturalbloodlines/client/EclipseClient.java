@@ -7,9 +7,12 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.FogType;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
@@ -30,7 +33,7 @@ public final class EclipseClient {
     private static final float SKY_ALPHA = 0.55f;
     private static final float STRENGTH = 0.65f;
     private static final float[] RED = {0.55f, 0.03f, 0.03f};
-    // vanilla draws the moon as a 40 x 40 quad at 100 blocks; its disc fills about 0.9 of the cell
+    // radius 7 at 100 blocks covers the vanilla moon sprite in the dev client (checked by eye: 4.5 left its rim showing, 18 was far larger than the moon)
     private static final float MOON_DISTANCE = 100f;
     private static final float MOON_RADIUS = 7f;
     private static final int DISC_STEPS = 48;
@@ -52,7 +55,7 @@ public final class EclipseClient {
             });
             NeoForge.EVENT_BUS.addListener((RenderLevelStageEvent e) -> {
                 if (e.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY && inEclipse()) {
-                    drawSkyAndMoon(e.getModelViewMatrix(), e.getPartialTick().getGameTimeDeltaPartialTick(false));
+                    drawSkyAndMoon(e.getCamera(), e.getModelViewMatrix(), e.getPartialTick().getGameTimeDeltaPartialTick(false));
                 }
             });
             NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> active = false);
@@ -68,7 +71,15 @@ public final class EclipseClient {
         return from + (to - from) * STRENGTH;
     }
 
-    private static void drawSkyAndMoon(Matrix4f modelView, float partialTick) {
+    private static void drawSkyAndMoon(Camera camera, Matrix4f modelView, float partialTick) {
+        // under water, lava or powder snow, or blinded, the sky is not seen (vanilla skips its own sky in those cases too)
+        Minecraft mc = Minecraft.getInstance();
+        if (camera.getFluidInCamera() != FogType.NONE || mc.player != null
+                && (mc.player.hasEffect(MobEffects.BLINDNESS) || mc.player.hasEffect(MobEffects.DARKNESS))) {
+            return;
+        }
+        // rain hides the moon: its alpha goes down with the rain level
+        float moonAlpha = 1f - mc.level.getRainLevel(partialTick);
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -84,7 +95,7 @@ public final class EclipseClient {
         pose.mulPose(modelView);
         pose.mulPose(Axis.YP.rotationDegrees(-90f));
         pose.mulPose(Axis.XP.rotationDegrees(Minecraft.getInstance().level.getTimeOfDay(partialTick) * 360f));
-        disc(pose.last().pose(), -MOON_DISTANCE, MOON_RADIUS, MOON_TINT, 1f);
+        disc(pose.last().pose(), -MOON_DISTANCE, MOON_RADIUS, MOON_TINT, moonAlpha);
 
         RenderSystem.enableCull();
         RenderSystem.enableDepthTest();

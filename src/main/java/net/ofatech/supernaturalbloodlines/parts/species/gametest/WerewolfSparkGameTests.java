@@ -345,7 +345,8 @@ public final class WerewolfSparkGameTests {
             VampirismAPI.factionPlayerHandler(truth).leaveFaction(false);
             helper.assertTrue(state(strong).rank() == Rank.OMEGA && state(weak).rank() == Rank.OMEGA, "a Beta inherited or kept the pack: " + state(strong) + " " + state(weak));
             helper.assertTrue(index.betasOf(truth.getUUID()).isEmpty() && index.alphaOf(strong.getUUID()).isEmpty(), "the pack was not dissolved");
-            helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA && !index.isFormerAlpha(truth.getUUID()), "the True Alpha lost the spark: " + state(truth));
+            helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA, "the True Alpha lost the spark: " + state(truth));
+            helper.assertTrue(index.isFormerAlpha(truth.getUUID()), "no tombstone: an offline check would take the dormant True Alpha for an active one");
         } finally {
             clean(truth, strong, weak);
         }
@@ -420,12 +421,12 @@ public final class WerewolfSparkGameTests {
                 helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA && state(truth).lineage() == Lineage.BITTEN, event + ": the cure wiped the rank: " + state(truth));
                 assertRank(helper, truth, 0, 0, 0);
                 helper.assertTrue(state(strong).rank() == Rank.OMEGA && state(weak).rank() == Rank.OMEGA, event + ": a Beta inherited or kept the pack: " + state(strong) + " " + state(weak));
-                helper.assertTrue(index.betasOf(truth.getUUID()).isEmpty() && !index.isFormerAlpha(truth.getUUID()), event + ": the pack stayed or the spark was marked lost");
+                helper.assertTrue(index.betasOf(truth.getUUID()).isEmpty() && index.isFormerAlpha(truth.getUUID()), event + ": the pack stayed or the dormant True Alpha has no tombstone");
                 // and they are True Alpha again on rejoining, with no pack
                 VampirismAPI.factionPlayerHandler(truth).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1);
                 helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA, event + ": the rejoined wolf is " + state(truth));
                 assertRank(helper, truth, 0.22, 0, 4.4);
-                helper.assertTrue(index.betasOf(truth.getUUID()).isEmpty(), event + ": the pack came back");
+                helper.assertTrue(index.betasOf(truth.getUUID()).isEmpty() && !index.isFormerAlpha(truth.getUUID()), event + ": the pack came back or the tombstone stayed");
             } finally {
                 clean(truth, strong, weak);
             }
@@ -492,6 +493,40 @@ public final class WerewolfSparkGameTests {
             AlphaBite.resetRoll();
             SpeciesConfig.overrideAlphaBiteDeathChance(null);
             clean(truth, live, victim, control);
+        }
+        helper.succeed();
+    }
+
+    /** The bite lands, the True Alpha is cured and logs off, then the bite takes: nobody leads a pack any more. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void biteThenCureThenLogOffMakesNoBeta(GameTestHelper helper) {
+        ServerPlayer truth = wolf(helper, Rank.TRUE_ALPHA, null);
+        ServerPlayer victim = TestPlayers.createDuelist(helper);
+        ServerPlayer later = TestPlayers.createDuelist(helper);
+        online(truth, victim, later);
+        SpeciesConfig.overrideAlphaBiteDeathChance(0.0);
+        AlphaBite.useRoll(() -> 0.5);
+        try {
+            PackIndex index = PackIndex.get(helper.getLevel());
+            victim.setData(SpeciesRegistries.PENDING_ALPHA, truth.getUUID());
+            later.setData(SpeciesRegistries.PENDING_ALPHA, truth.getUUID());
+            cure(truth, BloodlineEvent.DRANK_THE_CURE);
+            online(victim, later);
+            helper.assertTrue(index.isFormerAlpha(truth.getUUID()), "the cured True Alpha has no tombstone");
+            helper.assertTrue(WerewolfFaction.join(victim), "the victim could not join the werewolves");
+            WolfState w = state(victim);
+            helper.assertTrue(w.lineage() == Lineage.BITTEN && w.rank() == Rank.OMEGA && w.packAlpha() == null, "the victim of an offline dormant True Alpha is " + w);
+            helper.assertTrue(index.betasOf(truth.getUUID()).isEmpty() && index.alphaOf(victim.getUUID()).isEmpty(), "the dissolved pack took a Beta");
+
+            // control: once they rejoin the tombstone is gone and an offline True Alpha again holds the spark
+            VampirismAPI.factionPlayerHandler(truth).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1);
+            helper.assertTrue(!index.isFormerAlpha(truth.getUUID()), "the tombstone stayed after rejoining");
+            helper.assertTrue(WerewolfFaction.join(later), "the second victim could not join the werewolves");
+            helper.assertTrue(state(later).rank() == Rank.BETA && truth.getUUID().equals(state(later).packAlpha()), "control: the bite of a rejoined True Alpha gave " + state(later));
+        } finally {
+            AlphaBite.resetRoll();
+            SpeciesConfig.overrideAlphaBiteDeathChance(null);
+            clean(truth, victim, later);
         }
         helper.succeed();
     }

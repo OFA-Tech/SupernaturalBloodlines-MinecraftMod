@@ -31,7 +31,7 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 - **R32.** **Non-white-oak lethal damage** puts the Original into **Vampirism's own "dying" state**, with its give-up / wait screen (or our own copy of it if Vampirism has no hook). **A white oak hit kills instantly** and skips that state. Void and `/kill` still kill.
 - **R33.** The White Oak Ash Dagger desiccates an Original until someone pulls it out, or for up to 30 minutes. It hurts any non-human who uses it.
 - **R34.** Only The Cure works on Originals.
-- **R35.** An **Original hybrid needs the gene**: either a natural gene awakened by a kill (R24 path, bound), or a gene given by the *Rite of Lineage (awaken)* on the Original, which makes them a bound Original hybrid. The *Rite of the Moon* is refused without the gene. On a bound Original hybrid, it breaks the curse.
+- **R35.** An **Original hybrid needs the gene**: either a natural gene awakened by a kill (R24 path, bound), or a gene given by the *Rite of Lineage (awaken)* on the Original, which makes them a bound Original hybrid. The *Rite of the Moon* is refused without the gene. On a bound Original hybrid, it breaks the curse. **The Rite of the Moon and the Rite of the Silver Moon, like the Rite of Immortality, need the night of a full moon (plan 10): noon of the full-moon day is refused.**
 - **R36.** Sireline death is a config switch, off by default.
 
 ## Hybrids
