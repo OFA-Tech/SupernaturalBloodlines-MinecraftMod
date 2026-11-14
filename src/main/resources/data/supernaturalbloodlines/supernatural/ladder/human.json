@@ -1,0 +1,16 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "supernatural" }
+    ],
+    "rungs": [
+        { "id": "L-HUM-0", "name": "Human", "sp": 0, "ep": 0 },
+        { "id": "L-HUM-1", "name": "Aware", "sp": 2, "ep": 1000, "tasks": [
+            { "id": "L-HUM-1a", "detector": "item_use", "item": "supernaturalbloodlines:vervain_tea", "mod": "enchanted" },
+            { "id": "L-HUM-1b", "detector": "signal", "signal": "prey_hit_survived" }
+        ] },
+        { "id": "L-HUM-2", "name": "Prepared", "sp": 3, "ep": 3000, "tasks": [
+            { "id": "L-HUM-2a", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_lineage_reveal", "role": "target", "mod": "enchanted" },
+            { "id": "L-HUM-2b", "detector": "kill", "category": "prey", "n": 5 }
+        ] }
+    ]
+}

@@ -50,7 +50,8 @@ public final class SupernaturalStateGameTests {
         ServerPlayer p = TestPlayers.create(helper);
         SupernaturalAccess.addListener((who, change) -> {
             if (who == p) {
-                throw new IllegalStateException("test listener");
+                // this test expects the access to log this and carry on
+                throw new IllegalStateException("EXPECTED: deliberate failure of a test listener");
             }
         });
         SupernaturalState s = SupernaturalState.NONE.toBuilder().sp(1).build();

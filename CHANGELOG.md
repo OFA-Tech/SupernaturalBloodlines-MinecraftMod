@@ -6,6 +6,7 @@ Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md`. Two new 
 
 - **The supernatural race.** Every player has a creature race (Human, Ghoul, Vampire, Original, Hybrid, Original hybrid, Tribrid, Heretic, Hunter, Werewolf) and a witch or a siphoner also a magic race. It is worked out from the bloodline state and the Vampirism faction, never stored.
 - **A new player attachment** `supernaturalbloodlines:supernatural`: ladder progress (a rung once reached is never lost), skill points, skills, kept on death and sent to the owning player once per tick.
+- **Ladders as datapack JSON.** One ladder per race in `data/supernaturalbloodlines/supernatural/ladder/<race>.json`, with every rung and task of the design (ids `L-VAM-3`, `L-VAM-3a`, ...). A bad file is rejected with one log line and the others load. Tasks of a missing mod are dropped and a rung left empty is reached on its own. L-WOL-5 is "Alpha": rank ALPHA or TRUE_ALPHA (a True Alpha is still only made the R91 way). Nothing counts yet: the detectors come next.
 
 ## Unreleased: turning the show's way (plan 11)
 

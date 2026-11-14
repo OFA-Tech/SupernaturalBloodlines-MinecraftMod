@@ -3,8 +3,11 @@ package net.ofatech.supernaturalbloodlines.parts.supernatural;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.LadderDataGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.SupernaturalStateGameTests;
 
 public final class SupernaturalPart {
@@ -12,7 +15,11 @@ public final class SupernaturalPart {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, SupernaturalConfig.SPEC, SupernaturalConfig.FILE);
-        modBus.addListener((RegisterGameTestsEvent e) -> e.register(SupernaturalStateGameTests.class));
+        NeoForge.EVENT_BUS.addListener((AddReloadListenerEvent e) -> e.addListener(new LadderReloadListener()));
+        modBus.addListener((RegisterGameTestsEvent e) -> {
+            e.register(SupernaturalStateGameTests.class);
+            e.register(LadderDataGameTests.class);
+        });
         SupernaturalBloodlines.LOGGER.info("SupernaturalPart enabled");
     }
 }

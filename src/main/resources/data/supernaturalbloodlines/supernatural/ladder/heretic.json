@@ -1,0 +1,29 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "supernatural" }
+    ],
+    "rungs": [
+        { "id": "L-HER-0", "name": "Heretic", "sp": 0, "ep": 0 },
+        { "id": "L-HER-1", "name": "Blood Witch", "sp": 3, "ep": 5000, "tasks": [
+            { "id": "L-HER-1a", "detector": "level", "faction": "vampirism:vampire", "n": 4 },
+            { "id": "L-HER-1b", "detector": "signal", "signal": "siphon_power", "n": 2000, "mod": "enchanted" }
+        ] },
+        { "id": "L-HER-2", "name": "Thief of Craft", "sp": 3, "ep": 15000, "tasks": [
+            { "id": "L-HER-2a", "detector": "signal", "signal": "siphon_entity", "prey": "true", "n": 3, "mod": "enchanted" },
+            { "id": "L-HER-2b", "detector": "feed", "n": 15 }
+        ] },
+        { "id": "L-HER-3", "name": "Coven of Heretics", "sp": 4, "ep": 30000, "tasks": [
+            { "id": "L-HER-3a", "detector": "level", "faction": "vampirism:vampire", "n": 10 },
+            { "id": "L-HER-3b", "detector": "signal", "signal": "compel", "n": 3, "mod": "enchanted" },
+            { "id": "L-HER-3c", "detector": "signal", "signal": "siphon_power", "n": 20000, "mod": "enchanted" }
+        ] },
+        { "id": "L-HER-4", "name": "Dark Apostle", "sp": 5, "ep": 60000, "tasks": [
+            { "id": "L-HER-4a", "detector": "level", "faction": "vampirism:vampire", "n": 14 },
+            { "id": "L-HER-4b", "detector": "rite", "rite": "any", "role": "performer", "n": 10, "mod": "enchanted" }
+        ] },
+        { "id": "L-HER-5", "name": "Void Siphon", "sp": 5, "ep": 100000, "mods": ["tensura"], "tasks": [
+            { "id": "L-HER-5a", "detector": "tensura_tier", "mod": "tensura" },
+            { "id": "L-HER-5b", "detector": "days_as", "race": "heretic", "n": 60 }
+        ] }
+    ]
+}
