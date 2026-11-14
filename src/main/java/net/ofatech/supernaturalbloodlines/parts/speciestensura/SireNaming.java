@@ -1,7 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.speciestensura;
 
 import dev.architectury.event.EventResult;
-import java.util.Arrays;
+import net.ofatech.supernaturalbloodlines.mixin.SpeciesTensuraMixinPlugin;
 import io.github.manasmods.manascore.network.api.util.Changeable;
 import io.github.manasmods.tensura.config.entity.PlayerConfig;
 import io.github.manasmods.tensura.menu.NamingMenu;
@@ -37,15 +37,12 @@ public final class SireNaming {
 
     /**
      * The game rule read in {@code RequestNamingKeyPacket.isNotNameable} is really wrapped: false when it was not (a Tensura update, or
-     * the part is off), since {@code require = 0} skips a changed method silently. The merged handler copy
-     * ({@code wrapOperation$...sireNamesSired}) is there even when the call site was not found, so that is not proof; the synthetic
-     * {@code mixinextras$bridge$getBoolean$N} method that lets the wrap call the original is only added when the call was wrapped
-     * (checked by pointing the {@code @At} at a missing method: the bridge is gone). The class literal loads the class, which is what
-     * applies the mixin.
+     * the part is off), since {@code require = 0} skips a changed method silently. The mixin plugin finds our handler's call in
+     * {@code isNotNameable} when the mixin is applied; loading the class here is what applies it.
      */
     public static boolean hookApplied() {
-        return Arrays.stream(RequestNamingKeyPacket.class.getDeclaredMethods())
-                .anyMatch(m -> m.isSynthetic() && m.getName().startsWith("mixinextras$bridge$getBoolean$"));
+        Class<?> packet = RequestNamingKeyPacket.class;
+        return packet != null && SpeciesTensuraMixinPlugin.sireNamingHooked();
     }
 
     /** Called from the mixin; true when {@code namer} is the recorded sire of {@code target} and the target has no name yet. */
