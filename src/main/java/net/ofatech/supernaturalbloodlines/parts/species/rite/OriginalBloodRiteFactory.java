@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import java.util.Optional;

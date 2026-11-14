@@ -1,0 +1,28 @@
+{
+    "rungs": [
+        { "id": "L-SIP-0", "name": "Called", "sp": 0, "ep": 0 },
+        { "id": "L-SIP-1", "name": "Drawing", "sp": 2, "ep": 5000, "tasks": [
+            { "id": "L-SIP-1a", "detector": "signal", "signal": "siphon_power", "n": 2000, "total": true },
+            { "id": "L-SIP-1b", "detector": "rite", "rite": "any", "role": "performer", "n": 2 }
+        ] },
+        { "id": "L-SIP-2", "name": "Leech", "sp": 3, "ep": 10000, "tasks": [
+            { "id": "L-SIP-2a", "detector": "signal", "signal": "siphon_entity", "n": 5 },
+            { "id": "L-SIP-2b", "detector": "signal", "signal": "siphon_power", "n": 10000, "total": true }
+        ] },
+        { "id": "L-SIP-3", "name": "Full Vessel", "sp": 4, "ep": 20000, "tasks": [
+            { "id": "L-SIP-3a", "detector": "state", "predicate": "siphoned_power", "n": 1000 },
+            { "id": "L-SIP-3b", "detector": "rite", "rite": "any", "role": "performer", "n": 10 }
+        ] },
+        { "id": "L-SIP-4", "name": "Hollow", "sp": 5, "ep": 40000, "tasks": [
+            { "id": "L-SIP-4a", "detector": "signal", "signal": "siphon_power", "n": 50000, "total": true },
+            { "id": "L-SIP-4b", "any_of": [
+                { "id": "L-SIP-4b.1", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_severance", "role": "performer" },
+                { "id": "L-SIP-4b.2", "detector": "rite", "rite": "supernaturalbloodlines:purification", "role": "performer", "part": "enchantedTensura" }
+            ] }
+        ] },
+        { "id": "L-SIP-5", "name": "Void Siphon", "sp": 5, "ep": 100000, "mods": ["tensura"], "parts": ["supernaturalTensura"], "tasks": [
+            { "id": "L-SIP-5a", "detector": "tensura_tier" },
+            { "id": "L-SIP-5b", "detector": "days_as", "race": "siphoner", "n": 60 }
+        ] }
+    ]
+}

@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
+
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import de.teamlapen.vampirism.api.VampirismAPI;

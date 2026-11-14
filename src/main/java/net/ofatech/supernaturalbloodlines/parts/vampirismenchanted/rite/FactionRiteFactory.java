@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite;
 
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;

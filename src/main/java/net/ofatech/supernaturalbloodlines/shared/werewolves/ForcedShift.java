@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.shared.werewolves;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
+
 import de.teamlapen.vampirism.api.event.ActionEvent;
 import de.teamlapen.werewolves.api.entities.werewolf.WerewolfForm;
 import de.teamlapen.werewolves.entities.player.werewolf.actions.WerewolfFormAction;
@@ -58,6 +60,12 @@ public final class ForcedShift {
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (PlayerTickEvent.Pre e) -> enterTick(e.getEntity()));
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (PlayerTickEvent.Post e) -> leaveTick(e.getEntity()));
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ForcedShift::onActionActivated);
+        // last, and not for a cancelled shift: the full moon forced the wolf into a form and it happened
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ActionEvent.ActionActivatedEvent e) -> {
+            if (isForced(e) && e.getFactionPlayer().asEntity() instanceof Player p) {
+                TaskSignals.fire(p, "forced_shift_survived", 1);
+            }
+        });
     }
 
     public static void enterTick(Player p) {

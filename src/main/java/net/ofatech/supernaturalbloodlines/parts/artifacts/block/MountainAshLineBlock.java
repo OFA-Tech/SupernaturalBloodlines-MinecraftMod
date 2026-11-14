@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts.block;
 
+
 import com.mojang.serialization.MapCodec;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;

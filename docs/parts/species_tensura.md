@@ -110,6 +110,25 @@ Code: `parts/speciestensura` (`SpeciesLayer`, `LayerSpec`, `LayerTable`, `Undead
 - **Config** is COMMON (`supernaturalbloodlines-species_tensura.toml`): Tensura's undead checks also run on the client, so the server's and the clients' `layers` and `undead_treatment_enabled` should match.- **Eligibility**: `TensuraHumanLikeCheck` is installed in plan 04's `SpeciesEligibility`: race tag `tensura:human_like` or one of the 15 evolved ids in `HumanLikeLine` (a player with no race stays eligible). `HumanLikeLine.SAINT_OR_HIGHER` (10 ids) is the host list for Task 3.
 - **Supernatural**: races tagged `tensura:undead` or `tensura:daemon` are supernatural (not vampiric, not prey).
 - A non-player `LivingEntity` is never touched by the layer.
+## Layer by rung (plan 12, phase 12a Task 4)
+
+With the `supernatural` part on, `SpeciesLayer.sync` asks `shared/supernatural/LadderQuery.layerSlice(player)` for the part of the layer that has been granted, instead of the whole `LayerSpec`. The answer comes from `core/supernatural/LayerSlices` (pure, no game classes), which spreads each species' default layer over the rungs of its race's ladder: the skills one by one, and the magicule and aura bonus as a cumulative fraction of the layer's own value. **Undead treatment and the +25% EP gain stay from rung 0** (they use the whole spec). Without the part, or once the **layer rung** is reached, the answer is empty and the whole layer applies, as before (config extras included).
+
+| Species | Layer rung | Rung 0 | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|---|---|
+| Original | 3 | drain | + self_regeneration, magicule 0.05 | + charm, 0.10 | + blood_mist, 0.20 | |
+| Original hybrid | 3 | drain, self_regeneration | + beast_transformation, 0.08 | + charm, 0.15 | + blood_mist, godwolf_sense, 0.25 | |
+| Hybrid | 3 | drain | + beast_transformation | + self_regeneration, 0.05 | 0.10 | |
+| Tribrid | 3 | drain | + beast_transformation, 0.10 | + self_regeneration, 0.20 | + charm, 0.30 | |
+| Witch | 3 | magicule 0.05 | 0.10 | 0.20, aura 0.05 | 0.30, aura 0.10 | |
+| Siphoner | 2 | drain | magicule 0.05 | 0.10 | | |
+| Heretic | 3 | drain | + self_regeneration, 0.05 | + charm, 0.10 | 0.20 | |
+| Hunter (marked) | 4 | | | | aura 0.05 | aura 0.10 |
+
+A plain Vampirism vampire (`VAMPIRE=drain`), and any species with no row, keep the whole layer. The slices of each race add up to its `LayerTable` entry (`LayerSlicesTest`); if the config adds a skill the table does not know, it arrives at the layer rung.
+
+- **Nothing is taken back.** `rungs` is a high-water mark, so a slice only grows. A player who has not been migrated yet (`schema == 0`) keeps the whole layer they hold until the migration sets their rung to at least the layer rung (Task 5). A species change still takes back only the skills `SpeciesLayer` itself granted (`layerSkills`).
+- `SpeciesLayer` also syncs when the rungs or the migration schema of a player change (a listener on `SupernaturalAccess`), not only on the 200-tick check.
 ## Apex races and the evolution bonus (Task 3)
 
 Code: `parts/speciestensura/apex` (`ApexSpec`, `ApexRace`, `ApexRaces`, `ApexOffer`, `EvolutionBoost`), the mixin `mixin/speciestensura/RaceInstanceMixin` (second of the three; one injection, the apex offer; listed in `docs/mixins.md`), the tags `data/tensura/tags/manascore_race/races/{human_like,undead}.json` (entries are `required: false`) and the lang keys `supernaturalbloodlines.race.<id>` and `.description`.

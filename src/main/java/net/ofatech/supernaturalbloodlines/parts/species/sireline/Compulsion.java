@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.sireline;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
+
 import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IFactionPlayerHandler;
@@ -238,6 +240,7 @@ public final class Compulsion {
             CallFollowers.follow(v, caster.getUUID(), now, FOLLOW_TICKS);
             caster.sendSystemMessage(Component.translatable(KEY + "following"));
         }
+        TaskSignals.fire(caster, "compel", 1);
         return null;
     }
 
@@ -284,6 +287,7 @@ public final class Compulsion {
             vampire.setTarget(null);
         }
         p.sendSystemMessage(Component.translatable(KEY + "sired", vampire.getDisplayName()));
+        TaskSignals.fire(p, "compel", 1);
     }
 
     /** The caster and everyone below them in the sireline are safe from the creature, except a player whose bond was severed (R101b). */

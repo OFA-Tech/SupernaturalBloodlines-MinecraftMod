@@ -8,6 +8,7 @@ Four config files, all NeoForge **COMMON** configs. They are in the `config/` fo
 | [`supernaturalbloodlines-vampirism_tensura.toml`](#vampirism_tensura-supernaturalbloodlines-vampirism_tensuratoml) | vampirism_tensura | Tensura races, levels, skills, holy damage |
 | [`supernaturalbloodlines-species.toml`](#species-supernaturalbloodlines-speciestoml) | species | Originals, hunters, hybrids, packs, eclipse |
 | [`supernaturalbloodlines-species_tensura.toml`](#species_tensura-supernaturalbloodlines-species_tensuratoml) | species_tensura | species layers, apex races, sire links |
+| [`supernaturalbloodlines-supernatural.toml`](#supernatural-supernaturalbloodlines-supernaturaltoml) | supernatural | whether a finished rite counts for ladder tasks |
 
 **COMMON configs are not synced** by NeoForge: the server and each client read their own file. Keep them **equal**, especially the part switches and the species_tensura options. See [For server owners](For-Server-Owners#common-configs-must-match).
 
@@ -108,6 +109,14 @@ rank_skills = [
   "BORN_LEVEL5=tensura:godwolf_sense"
 ]
 ```
+
+## supernatural: `supernaturalbloodlines-supernatural.toml`
+
+| Key | Default | What it does |
+|---|---|---|
+| `rite_complete_signal` | `true` | A rite that finished counts for ladder tasks (the hook on Enchanted's rites). `false`: no rite counts for any task. |
+
+The ladders themselves are datapack JSON (`data/supernaturalbloodlines/supernatural/ladder/`), not config.
 
 ## Part data and the load condition
 

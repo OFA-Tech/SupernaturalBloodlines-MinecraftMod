@@ -39,6 +39,11 @@ For testing and for operators fixing a player. All of them affect only the playe
 | `/supernaturalbloodlines debug get <player>` | prints the player's bloodline state |
 | `/supernaturalbloodlines debug set <player> <species>` | sets the species. Names (any case): `NONE`, `ORIGINAL`, `ORIGINAL_HYBRID`, `HYBRID`, `WITCH`, `SIPHONER`, `HERETIC`, `TRIBRID`, `POTENTIAL`, `HUNTER_OF_THE_FIVE`. It sets the state only: it does **not** change the player's faction. |
 | `/supernaturalbloodlines debug event <player> <event>` | runs a bloodline event through the rules. The **context is the defaults**: no faction, human-like, no Originals in the world, Werewolves loaded as installed. Events that need a faction (such as the Rite of the Five, which needs a hunter) will be refused. Faction actions in the result are listed, **not performed**. |
+| `/supernaturalbloodlines debug supernatural <player> show` | prints the player's ladder state: rungs, skill points, done and claimed tasks |
+| `/supernaturalbloodlines debug supernatural <player> backfill` | lists the rungs the one-time migration gave this player |
+| `/supernaturalbloodlines debug supernatural <player> reset` | forgets all ladder progress; the next login migrates again |
+| `/supernaturalbloodlines debug supernatural <player> sp <n>` | adds (or takes) skill points |
+| `/supernaturalbloodlines debug supernatural <player> rung <race> <n>` | sets a ladder's rung with no reward |
 | `/supernaturalbloodlines debug eclipse start\|stop` | starts or stops a [lunar eclipse](Werewolves-And-Packs#lunar-eclipse). `start` outside the night makes tonight's eclipse and works in daytime until 23216; "An eclipse is already running." / "No eclipse is running." |
 
 Events (any case): `RITE_OF_IMMORTALITY`, `DIED_WITH_ORIGINAL_BLOOD`, `DRANK_DOPPELGANGER_BLOOD`, `DRANK_OTHER_BLOOD`, `TRANSITION_TIMEOUT`, `UNSTABLE_DEATH`, `JOINED_VAMPIRE`, `RITE_OF_THE_MOON`, `RITE_OF_CLEANSING_BLOOD`, `RITE_OF_THE_SILVER_MOON`, `LEFT_BASE_FACTION`, `ANCESTRAL_CALLING_WITCH`, `ANCESTRAL_CALLING_SIPHONER`, `DIED`, `DRANK_THE_CURE`, `GENE_AWAKENED_AS_VAMPIRE`, `RITE_OF_THE_FIVE`, `KILLED_PREY`, `KILLED_BY_PREY`, `RITE_OF_LINEAGE_AWAKEN`, `CHOSEN_AS_POTENTIAL`, `KILLED_MARKED_HUNTER`, `HUNTER_CURSE_LIFTED`.

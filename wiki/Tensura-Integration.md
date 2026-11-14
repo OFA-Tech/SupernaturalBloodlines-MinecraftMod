@@ -54,6 +54,11 @@ The layer is re-checked when your bloodline changes, on login and respawn, when 
 
 **Losing a species:** its layer skills go dormant (they are forgotten) and come back if the species returns. **The mastery of those skills is lost**; they start fresh.
 
+### The layer, rung by rung
+
+With the supernatural system on, your species layer arrives step by step as you climb your race's ladder, instead of all at once. An Original, for example, starts with Drain, gets Self-Regeneration and a first share of the extra magicule at the first rung, Charm at the second, and the whole layer (Blood Mist and the full 20% magicule) at the third. Being counted as undead and the +25% EP gain apply from the start. Nothing already granted is ever taken back, and a player who was already a species when the system arrived keeps the whole layer. The rows are in the part docs (`docs/parts/species_tensura.md`, "Layer by rung").
+
+Rungs also pay Tensura EP when they are claimed: a flat sum straight into your EP, with no boost and no evolution requirement touched.
 ### Undead treatment and holy damage
 
 When a layer says undead, Tensura treats the player as undead:

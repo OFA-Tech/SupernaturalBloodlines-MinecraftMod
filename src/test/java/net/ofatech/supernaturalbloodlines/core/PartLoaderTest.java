@@ -63,8 +63,32 @@ class PartLoaderTest {
     @Test
     void vampirismAndEnchantedOnly() {
         Set<String> loaded = Set.of("vampirism", "enchanted");
-        assertEquals(EnumSet.of(Part.VAMPIRISM_ENCHANTED, Part.SPECIES, Part.ARTIFACTS),
+        assertEquals(EnumSet.of(Part.VAMPIRISM_ENCHANTED, Part.SPECIES, Part.ARTIFACTS, Part.SUPERNATURAL),
                 PartLoader.enabledParts(loaded::contains, p -> true));
+    }
+
+    @Test
+    void supernaturalNeedsOnlyVampirism() {
+        assertEquals(EnumSet.of(Part.SUPERNATURAL), PartLoader.enabledParts(Set.of("vampirism")::contains, p -> true));
+        assertFalse(PartLoader.enabledParts(id -> !id.equals("vampirism"), p -> true).contains(Part.SUPERNATURAL));
+    }
+
+    @Test
+    void supernaturalTensuraNeedsVampirismTensuraAndSupernatural() {
+        Set<String> loaded = Set.of("vampirism", "tensura");
+        assertTrue(PartLoader.enabledParts(loaded::contains, p -> true).contains(Part.SUPERNATURAL_TENSURA));
+        assertFalse(PartLoader.enabledParts(Set.of("vampirism")::contains, p -> true).contains(Part.SUPERNATURAL_TENSURA));
+        assertFalse(PartLoader.enabledParts(Set.of("tensura")::contains, p -> true).contains(Part.SUPERNATURAL_TENSURA));
+        Set<Part> off = PartLoader.enabledParts(id -> true, p -> p != Part.SUPERNATURAL);
+        assertFalse(off.contains(Part.SUPERNATURAL_TENSURA));
+        assertEquals("disabled (requires [SUPERNATURAL])",
+                PartLoader.status(Part.SUPERNATURAL_TENSURA, id -> true, p -> p != Part.SUPERNATURAL));
+    }
+
+    @Test
+    void supernaturalOffKeepsTheOtherParts() {
+        Set<Part> parts = PartLoader.enabledParts(id -> true, p -> p != Part.SUPERNATURAL);
+        assertTrue(parts.containsAll(EnumSet.complementOf(EnumSet.of(Part.SUPERNATURAL, Part.SUPERNATURAL_TENSURA))));
     }
 
     @Test

@@ -117,6 +117,10 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(LineageRiteFactory.ID, LineageRiteFactory.CODEC);
         SpeciesRegistries.register(modBus);
         SpeciesSupernatural.register();
+        // what the supernatural part's tasks need from here, through shared hooks
+        net.ofatech.supernaturalbloodlines.shared.supernatural.HumanLikeBlood.set(TurningHandler::isHumanLikeBlood);
+        net.ofatech.supernaturalbloodlines.shared.supernatural.SireCount.set(
+                p -> net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(p.serverLevel()).childrenOf(p.getUUID()).size());
         OriginalRules.register();
         Siphoning.register();
         VampireJoin.register();

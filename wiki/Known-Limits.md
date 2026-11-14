@@ -10,6 +10,11 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 - **Tensura skills on a sired player:** Starved and Usurper don't check for subordinates, so a sire can drain or rob a sired player.
 - **Mastery of a layer skill is lost** when the species goes and comes back (the skill is forgotten and learned fresh). Same for rank skills.
 
+## Supernatural ladders
+
+- **A rite counts when it finishes at once.** Enchanted fires no event when a rite is done, so the mod watches the moment a rite's start finishes the rite without cancelling it. Every rite the ladders ask for (Ward of Return, the Rite of Ancestral Calling, the blood rites, the cure, the curses of ours) works that way. A rite that keeps running over time and ends later is not counted; no ladder task asks for one. If an Enchanted update changes the hook, the log says "RiteCompleteMixin hook MISSING" and rites stop counting until the mod is updated.
+- **A task whose part is switched off is not shown or asked for.** If you turn a part off (for example `species`), the tasks it fires (compelling, siphoning, the rites of that part) are dropped from the ladders, and a rung with nothing left is reached on its own.
+
 ## Rites, rollbacks and configs
 
 - **Rolling back forgets severances.** An older build doesn't know them, so severed bonds come back. Reset apex-race players first (see [For server owners](For-Server-Owners#removing-the-mod-or-tensura)).

@@ -14,6 +14,7 @@
 - [Items and blocks](Items-And-Blocks)
 - [Rites](Rites)
 - [Key binds](Key-Binds)
+- [Supernatural hub](Supernatural-Hub)
 
 **Species**
 - [Vampires and Originals](Vampires-And-Originals)

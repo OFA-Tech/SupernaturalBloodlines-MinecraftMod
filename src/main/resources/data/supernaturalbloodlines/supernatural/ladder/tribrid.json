@@ -1,0 +1,31 @@
+{
+    "rungs": [
+        { "id": "L-TRI-0", "name": "Threefold", "sp": 0, "ep": 0 },
+        { "id": "L-TRI-1", "name": "Witch's Return", "sp": 3, "ep": 10000, "tasks": [
+            { "id": "L-TRI-1a", "detector": "rite", "rite": "any", "role": "performer", "n": 3 },
+            { "id": "L-TRI-1b", "detector": "level", "faction": "werewolves:werewolf", "n": 4, "mod": "werewolves" }
+        ] },
+        { "id": "L-TRI-2", "name": "Venom and Craft", "sp": 3, "ep": 20000, "tasks": [
+            { "id": "L-TRI-2a", "detector": "signal", "signal": "venom_hit", "n": 3, "mod": "werewolves" },
+            { "id": "L-TRI-2b", "detector": "rite", "rite": "supernaturalbloodlines:hybrid_blood", "role": "target" }
+        ] },
+        { "id": "L-TRI-3", "name": "Emissary of Three", "sp": 4, "ep": 40000, "tasks": [
+            { "id": "L-TRI-3a", "any_of": [
+                { "id": "L-TRI-3a.1", "detector": "state", "predicate": "emissary", "mod": "werewolves" },
+                { "id": "L-TRI-3a.2", "detector": "state", "predicate": "rank_alpha", "mod": "werewolves" }
+            ] },
+            { "id": "L-TRI-3b", "detector": "level", "faction": "werewolves:werewolf", "n": 10, "mod": "werewolves" }
+        ] },
+        { "id": "L-TRI-4", "name": "Ascending", "sp": 5, "ep": 60000, "tasks": [
+            { "id": "L-TRI-4a", "detector": "level", "faction": "werewolves:werewolf", "n": 14, "mod": "werewolves" },
+            { "id": "L-TRI-4b", "any_of": [
+                { "id": "L-TRI-4b.1", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_lineage_awaken", "role": "performer", "mod": "werewolves" },
+                { "id": "L-TRI-4b.2", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_severance", "role": "performer" }
+            ] }
+        ] },
+        { "id": "L-TRI-5", "name": "Tribrid Ascendant", "sp": 5, "ep": 100000, "mods": ["tensura"], "parts": ["supernaturalTensura"], "tasks": [
+            { "id": "L-TRI-5a", "detector": "tensura_tier" },
+            { "id": "L-TRI-5b", "detector": "days_as", "race": "tribrid", "n": 60 }
+        ] }
+    ]
+}

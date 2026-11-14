@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.turning;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
+
 import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.event.BloodDrinkEvent;
 import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
@@ -139,5 +141,6 @@ public final class GhoulGates {
             e.getVampire().useBlood(cost, true);
         }
         p.displayClientMessage(Component.translatable("supernaturalbloodlines.turning.vampire_blood_no_fill" + (cost > 0 ? "" : "_free")), true);
+        TaskSignals.fire(p, "vampire_bite_refused", 1);
     }
 }

@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased: the supernatural race system, foundation (plan 12, phase 12a)
+
+Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md`. Two new parts, `supernatural` (needs Vampirism) and `supernatural_tensura` (needs Vampirism and Tensura), each with a mixin budget of 0 of 3. Nothing a player has is removed.
+
+- **The supernatural race.** Every player has a creature race (Human, Ghoul, Vampire, Original, Hybrid, Original hybrid, Tribrid, Heretic, Hunter, Werewolf) and a witch or a siphoner also a magic race. It is worked out from the bloodline state and the Vampirism faction, never stored.
+- **A new player attachment** `supernaturalbloodlines:supernatural`: ladder progress (a rung once reached is never lost), skill points, skills, kept on death and sent to the owning player once per tick.
+- **Ladders as datapack JSON.** One ladder per race in `data/supernaturalbloodlines/supernatural/ladder/<race>.json`, with every rung and task of the design (ids `L-VAM-3`, `L-VAM-3a`, ...). A bad file is rejected with one log line and the others load. Tasks of a missing mod are dropped and a rung left empty is reached on its own. L-WOL-5 is "Alpha": rank ALPHA or TRUE_ALPHA (a True Alpha is still only made the R91 way). Tasks are dropped when the part that fires their signal is off (`part` per task), not only when a mod is missing; a datapack file needs no `part_enabled` condition (the loader only exists while the part is on).
+- **Task detectors (phase 12a Task 3).** Level steps, state, feeding human-like blood, kills, rites, vervain tea, sired, days as a race, thirst and pack time now move the ladders, through one door that freezes Ghouls. The parts tell the supernatural part with `TaskSignals` (compel, siphon power and entity, venom hit, dying survived, forced shift, Sun Ring bound, mountain ash placed, the plan 11 bite refusal, and every rite of ours as performer or target). "In total" tasks (the siphon totals, L-WIT-3b and 4b) count from the moment the player has the race, in a new `lifetime` field. New detector `pack_days` (days in the pack as a Beta, Alpha or True Alpha, for L-HYB-4a). Only rites made by our own rite types count; Enchanted's own types fire nothing.
+- **Claims, EP and layer slices (phase 12a Task 4).** A done task can be claimed (one client packet, the server decides): it pays its share of the rung's skill points, and Tensura EP when the supernatural_tensura part is on, and the last claim reaches the rung. A rung with no tasks left is reached on its own. Each species layer now arrives rung by rung (Original: Drain, then Self-Regeneration, Charm, Blood Mist; the magicule and aura bonus grow with it); the whole layer applies once the layer rung is reached, and a player who was a species before the update keeps all of it. The ladder files are sent to the client on login and after a reload.
+- **Migration and debug commands (phase 12a Task 5).** A player who had a race before the ladders gets what it proves on their first login: days as their race from when they turned, the rungs their level and state prove, the species layer rung (so no layer is lost), Alpha rank, and the apex rung of an apex race, with the skill points of those rungs and no EP. New `debug supernatural` commands show, reset and adjust ladder state.
+- **Rites count at last (phase 12a).** One mixin on Enchanted's `Rite` tells a rite that worked from a cancelled one, so ladder tasks that need Enchanted's own rites (the Ward of Return and the others) count.
+
 ## Unreleased: automatic sire naming
 
 Owner decisions of 2026-11-14 (SPECIES-RULES R101). Part: species_tensura.
@@ -9,6 +21,7 @@ Owner decisions of 2026-11-14 (SPECIES-RULES R101). Part: species_tensura.
 - **The manual route is gone.** The sire's exception to `playerNaming`, the hand-made max-magicule loss roll and the "grants EP and stats only" chat line were removed; a small `NAMING_EVENT` handler (no mixin) still forces a sire's hand naming of their bound sired to LOW, so a sire never evolves their sired (R100). **`SireNamingMixin` is removed**: species_tensura has 2 mixins now (a free slot). Otherwise a hand naming follows Tensura's normal rules.
 - **Side effects of the naming on the sired** are Tensura's own and are listed in `docs/parts/species_tensura.md`: full heal, harmful effects removed, Glowing, particles, a custom name, the tracked evolution cleared (also at a later login try). Sired players named by hand before this change keep their old custom name (no migration), and a later account-name change is not followed.
 - Tests: `SirelineTensuraGameTests` reworked (automatic name, own name, cost and reward, no evolution with a control, `playerNaming=false`, switch off, offline or broke sire).
+
 ## Unreleased: turning the show's way (plan 11)
 
 Spec `docs/superpowers/specs/2026-11-14-show-turning-design.md`. Rules R20c and R20d in `SPECIES-RULES.md`. Parts: species and species_tensura.

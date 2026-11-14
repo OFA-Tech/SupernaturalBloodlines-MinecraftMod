@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts.rite;
 
+
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactory;

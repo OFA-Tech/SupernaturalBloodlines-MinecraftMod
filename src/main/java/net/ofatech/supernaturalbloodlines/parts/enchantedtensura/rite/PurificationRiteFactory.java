@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.enchantedtensura.rite;
 
+
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
