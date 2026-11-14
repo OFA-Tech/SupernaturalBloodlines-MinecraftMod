@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.speciestensura;
 
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexSpec;
 
 /**
  * R103: hunters and werewolves can't be undead or daemon races; the apex vampire-type races are the exception, for
@@ -11,8 +12,6 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
  * not undead). Only the apex races of this part live in that namespace.
  */
 public final class ApexRule {
-    public static final String APEX_NAMESPACE = "supernaturalbloodlines";
-
     private ApexRule() {}
 
     /** The species whose members count as vampires for R103 (what the species is, not what the config gives it). */
@@ -24,6 +23,6 @@ public final class ApexRule {
     }
 
     public static boolean isApexVampire(Species species, String raceNamespace) {
-        return isVampireType(species) && APEX_NAMESPACE.equals(raceNamespace);
+        return isVampireType(species) && ApexSpec.RACE_NAMESPACE.equals(raceNamespace);
     }
 }

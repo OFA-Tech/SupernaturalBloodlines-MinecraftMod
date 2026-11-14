@@ -43,7 +43,7 @@ class ApexRacesTest {
             assertEquals(apexSpecies, ApexSpec.forSpecies(s).isPresent(), s.name());
             ApexSpec.forSpecies(s).ifPresent(spec -> ids.add(spec.id()));
         }
-        assertEquals(7, ids.size());
+        assertEquals(ApexSpec.ALL.size(), ids.size());
         assertEquals(ids, new HashSet<>(ApexSpec.ALL.stream().map(ApexSpec::id).toList()));
         assertEquals("primordial_vampire", ApexSpec.forSpecies(Species.ORIGINAL).orElseThrow().id());
         assertSame(ApexSpec.forSpecies(Species.SIPHONER).orElseThrow(), ApexSpec.forSpecies(Species.HERETIC).orElseThrow());
@@ -77,7 +77,7 @@ class ApexRacesTest {
             assertTrue(HumanLikeLine.isEvolvedMember(id), id + " is not a human-like line member");
             assertFalse(HumanLikeLine.isSaintOrHigher(id), id + " must not be offered an apex race");
         }
-        assertEquals(4, undead.size());
+        assertEquals(ApexSpec.ALL.stream().filter(ApexSpec::undead).count(), undead.size());
         assertFalse(undead.contains("supernaturalbloodlines:void_siphon"), "a siphoner is not undead");
         assertFalse(ApexSpec.VOID_SIPHON.undead());
     }
