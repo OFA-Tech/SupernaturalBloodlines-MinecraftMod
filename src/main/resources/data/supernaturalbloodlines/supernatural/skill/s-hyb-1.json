@@ -1,0 +1,7 @@
+{
+    "id": "S-HYB-1",
+    "name": "Steady Thirst",
+    "cost": 2,
+    "kinds": ["rule"],
+    "params": { "thirst_rate_factor": 0.5 }
+}

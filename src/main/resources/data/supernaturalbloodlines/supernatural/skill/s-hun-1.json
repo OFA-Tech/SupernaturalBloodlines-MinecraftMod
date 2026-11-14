@@ -1,0 +1,7 @@
+{
+    "id": "S-HUN-1",
+    "name": "Steady Aim",
+    "cost": 2,
+    "kinds": ["rule"],
+    "params": { "prey_damage_factor": 1.05 }
+}

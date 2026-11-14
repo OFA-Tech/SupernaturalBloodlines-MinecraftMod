@@ -1,0 +1,8 @@
+{
+    "id": "S-WOL-8",
+    "name": "Primeval Roar",
+    "cost": 0,
+    "granted_only": true,
+    "kinds": ["rule"],
+    "params": { "pack_attack": 0.1, "pack_ticks": 600, "range_factor": 2 }
+}

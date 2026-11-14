@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased: skills (plan 12, phase 12c)
+
+Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (Skills). Parts: supernatural, supernatural_tensura. No new mixin (supernatural stays at 1 of 3).
+
+- **Skill trees (Task 1).** Skill points now buy skills: 40 skills in 11 trees (one per race, none for a Ghoul), as datapack files (`supernatural/skill`, `supernatural/tree`). A skill has a cost, a rung, sometimes a skill to learn first or a quest. It works only while your race's tree lists it; otherwise it is dormant and comes back with the race, and nothing bought is ever lost. Attribute skills (health, speed, attack, armor, some only at night or on a full-moon night) add a modifier with our id; Tensura skills are granted through `SkillOwners` and only the ones the mod granted are taken back. The server checks every purchase (`BuySkillPayload`). Primeval Roar (S-WOL-8) is in the catalogue as granted-only; its grant comes in phase 12d.
+
 ## Unreleased: doppelgängers, genes and blood (plan 12, phase 12b)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (owner decisions D5 to D8). Rules R10a, R10b, R14, R14a and R40a in `SPECIES-RULES.md`. Part: species. No new mixin.

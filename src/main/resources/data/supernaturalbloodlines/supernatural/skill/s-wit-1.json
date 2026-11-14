@@ -1,0 +1,7 @@
+{
+    "id": "S-WIT-1",
+    "name": "Steady Circle",
+    "cost": 2,
+    "kinds": ["rule"],
+    "params": { "cost_factor": 0.95 }
+}

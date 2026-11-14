@@ -1,19 +1,27 @@
 package net.ofatech.supernaturalbloodlines.shared.supernatural;
 
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.world.entity.player.Player;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LayerSlice;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SkillTable;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 
 /**
- * What the other parts may ask the ladders. The supernatural part installs the answers; without it the layer is the whole layer
- * (today's behaviour) and every rung is 0.
+ * What the other parts may ask the ladders and the skill trees. The supernatural part installs the answers; without it the layer is
+ * the whole layer (today's behaviour), every rung is 0 and no skill is owned.
  */
 public final class LadderQuery {
     public interface Provider {
         Optional<LayerSlice> layerSlice(Player player);
 
         int rung(Player player, SupernaturalRace race);
+
+        /** The skill is bought and the tree of the player's creature or magic race lists it. */
+        boolean owns(Player player, String skillId);
+
+        /** The Tensura skills (resource locations) of the owned, active TENSURA skills. */
+        Set<String> tensuraSkills(Player player);
     }
 
     private static final Provider NONE = new Provider() {
@@ -25,6 +33,16 @@ public final class LadderQuery {
         @Override
         public int rung(Player player, SupernaturalRace race) {
             return 0;
+        }
+
+        @Override
+        public boolean owns(Player player, String skillId) {
+            return false;
+        }
+
+        @Override
+        public Set<String> tensuraSkills(Player player) {
+            return Set.of();
         }
     };
 
@@ -45,5 +63,25 @@ public final class LadderQuery {
     /** The highest rung reached on that race's ladder (0 for none). */
     public static int rung(Player player, SupernaturalRace race) {
         return provider.rung(player, race);
+    }
+
+    /** True only when the skill is owned <b>and</b> active: a dormant skill (the player's race tree does not list it) is not owned. */
+    public static boolean owns(Player player, String skillId) {
+        return provider.owns(player, skillId);
+    }
+
+    /**
+     * The number a RULE or BLOOD skill gives for {@code key} (its {@code params} in the skill JSON), or {@code base} when the player does
+     * not own the skill or the skill names no such number. A rule asks for its number here and keeps its own behaviour as the base.
+     */
+    public static double value(Player player, String skillId, String key, double base) {
+        if (!provider.owns(player, skillId)) {
+            return base;
+        }
+        return SkillTable.current().skill(skillId).map(s -> s.param(key, base)).orElse(base);
+    }
+
+    public static Set<String> tensuraSkills(Player player) {
+        return provider.tensuraSkills(player);
     }
 }

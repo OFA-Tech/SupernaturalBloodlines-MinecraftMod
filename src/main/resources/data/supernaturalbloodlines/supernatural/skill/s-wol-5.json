@@ -1,0 +1,7 @@
+{
+    "id": "S-WOL-5",
+    "name": "Pack Heart",
+    "cost": 3,
+    "kinds": ["rule"],
+    "params": { "betas_needed": 2 }
+}

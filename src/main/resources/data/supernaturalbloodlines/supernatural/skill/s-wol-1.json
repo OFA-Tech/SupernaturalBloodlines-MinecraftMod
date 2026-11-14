@@ -1,0 +1,7 @@
+{
+    "id": "S-WOL-1",
+    "name": "Thick Hide",
+    "cost": 1,
+    "kinds": ["attr"],
+    "attribute": { "id": "minecraft:generic.armor", "operation": "add_value", "amount": 1 }
+}

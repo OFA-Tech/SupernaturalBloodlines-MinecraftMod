@@ -11,6 +11,7 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.EnabledParts;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.LadderService;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.SkillService;
 import net.neoforged.fml.ModList;
 
 /**
@@ -35,6 +36,12 @@ public final class LadderNet {
                 ctx.enqueueWork(() -> {
                     if (ctx.player() instanceof ServerPlayer p) {
                         LadderService.claim(p, payload.taskId());
+                    }
+                }));
+        registrar.playToServer(BuySkillPayload.TYPE, BuySkillPayload.STREAM_CODEC, (payload, ctx) ->
+                ctx.enqueueWork(() -> {
+                    if (ctx.player() instanceof ServerPlayer p) {
+                        SkillService.buy(p, payload.skillId());
                     }
                 }));
         registrar.playToClient(LadderTablePayload.TYPE, LadderTablePayload.STREAM_CODEC, (payload, ctx) ->

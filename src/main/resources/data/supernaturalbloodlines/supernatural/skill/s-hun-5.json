@@ -1,0 +1,7 @@
+{
+    "id": "S-HUN-5",
+    "name": "Mark Mastery",
+    "cost": 4,
+    "kinds": ["rule"],
+    "params": { "mark_attack": 0.25, "mark_other": 0.125 }
+}

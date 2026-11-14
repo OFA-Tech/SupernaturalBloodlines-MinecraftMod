@@ -1,0 +1,8 @@
+{
+    "id": "S-WIT-7",
+    "name": "Coven's Ward",
+    "cost": 4,
+    "kinds": ["attr", "rule"],
+    "attribute": { "id": "minecraft:generic.max_health", "operation": "add_value", "amount": 2 },
+    "params": { "aura_bonus": 0.05 }
+}

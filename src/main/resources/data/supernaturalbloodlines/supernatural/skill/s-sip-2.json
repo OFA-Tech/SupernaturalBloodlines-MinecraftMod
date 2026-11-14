@@ -1,0 +1,7 @@
+{
+    "id": "S-SIP-2",
+    "name": "Quick Draw",
+    "cost": 2,
+    "kinds": ["rule"],
+    "params": { "rate_factor": 1.5 }
+}

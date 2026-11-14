@@ -1,0 +1,7 @@
+{
+    "id": "S-HUN-3",
+    "name": "Patient Hunter",
+    "cost": 3,
+    "kinds": ["rule"],
+    "params": { "instinct_days": 5 }
+}

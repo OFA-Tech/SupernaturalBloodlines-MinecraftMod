@@ -1,0 +1,7 @@
+{
+    "id": "S-WIT-4",
+    "name": "Emissary's Bond",
+    "cost": 3,
+    "kinds": ["rule"],
+    "params": { "discount": 0.2 }
+}

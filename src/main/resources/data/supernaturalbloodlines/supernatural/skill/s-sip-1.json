@@ -1,0 +1,7 @@
+{
+    "id": "S-SIP-1",
+    "name": "Deep Draw",
+    "cost": 2,
+    "kinds": ["rule"],
+    "params": { "cap": 1500 }
+}

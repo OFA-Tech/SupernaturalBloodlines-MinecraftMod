@@ -1,0 +1,7 @@
+{
+    "id": "S-HUN-2",
+    "name": "Hunter's Eye",
+    "cost": 2,
+    "kinds": ["rule"],
+    "params": { "sense_radius": 32 }
+}

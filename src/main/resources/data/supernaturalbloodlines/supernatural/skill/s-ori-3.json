@@ -1,0 +1,7 @@
+{
+    "id": "S-ORI-3",
+    "name": "Sire's Call",
+    "cost": 3,
+    "kinds": ["rule"],
+    "params": { "cooldown_ticks": 6000 }
+}

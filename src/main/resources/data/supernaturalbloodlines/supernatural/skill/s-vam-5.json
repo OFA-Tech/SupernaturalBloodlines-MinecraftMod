@@ -1,0 +1,7 @@
+{
+    "id": "S-VAM-5",
+    "name": "Blood Mist",
+    "cost": 3,
+    "kinds": ["tensura"],
+    "tensura_skill": "tensura:blood_mist"
+}

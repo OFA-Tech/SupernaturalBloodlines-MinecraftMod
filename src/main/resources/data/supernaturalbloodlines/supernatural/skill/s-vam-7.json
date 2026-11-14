@@ -1,0 +1,7 @@
+{
+    "id": "S-VAM-7",
+    "name": "Elder's Skin",
+    "cost": 4,
+    "kinds": ["rule"],
+    "params": { "sun_damage_factor": 0.75 }
+}

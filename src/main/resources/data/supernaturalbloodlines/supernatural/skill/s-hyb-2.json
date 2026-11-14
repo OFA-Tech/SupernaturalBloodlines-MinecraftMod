@@ -1,0 +1,7 @@
+{
+    "id": "S-HYB-2",
+    "name": "Venom Fang",
+    "cost": 3,
+    "kinds": ["rule"],
+    "params": { "slowness_ticks": 100 }
+}

@@ -1,0 +1,7 @@
+{
+    "id": "S-HUN-4",
+    "name": "Danger Sense",
+    "cost": 3,
+    "kinds": ["tensura"],
+    "tensura_skill": "tensura:danger_sense"
+}

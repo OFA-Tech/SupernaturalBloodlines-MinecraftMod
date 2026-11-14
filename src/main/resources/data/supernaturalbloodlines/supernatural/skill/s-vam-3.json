@@ -1,0 +1,7 @@
+{
+    "id": "S-VAM-3",
+    "name": "Silver Tongue",
+    "cost": 2,
+    "kinds": ["rule"],
+    "params": { "discount_gossip": 30, "range": 6 }
+}

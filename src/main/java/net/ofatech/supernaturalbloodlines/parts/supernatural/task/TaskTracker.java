@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
@@ -43,7 +44,7 @@ public final class TaskTracker {
     }
 
     /** Creature race, then the magic race if there is one. */
-    public static List<SupernaturalRace> races(ServerPlayer p) {
+    public static List<SupernaturalRace> races(Player p) {
         BloodlineState b = BloodlineAccess.get(p);
         List<SupernaturalRace> out = new ArrayList<>();
         out.add(SupernaturalRace.creature(b, factionId(p)));
@@ -52,7 +53,7 @@ public final class TaskTracker {
     }
 
     @Nullable
-    private static String factionId(ServerPlayer p) {
+    private static String factionId(Player p) {
         IPlayableFaction<?> f = VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
         return f == null ? null : f.getID().toString();
     }
