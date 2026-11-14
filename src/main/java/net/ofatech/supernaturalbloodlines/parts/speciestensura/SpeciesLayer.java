@@ -49,7 +49,8 @@ public final class SpeciesLayer {
         BloodlineAccess.addListener((p, change) -> sync(p));
         // a rung reached (or a first migration) changes how much of the layer is granted
         SupernaturalAccess.addListener((p, change) -> {
-            if (!change.before().rungs().equals(change.after().rungs()) || change.before().schema() != change.after().schema()) {
+            if (!change.before().rungs().equals(change.after().rungs()) || change.before().schema() != change.after().schema()
+                    || !change.before().skills().equals(change.after().skills())) {
                 sync(p);
             }
         });
@@ -101,8 +102,11 @@ public final class SpeciesLayer {
         // the supernatural part spreads the layer over the rungs; without it (or with the whole layer reached) this is the whole spec
         Optional<LayerSlice> slice = LadderQuery.layerSlice(p);
         List<String> skills = slice.map(s -> spec.skills().stream().filter(id -> s.skills().contains(bareName(id))).toList()).orElse(spec.skills());
-        double magicule = slice.map(s -> spec.maxMagiculeBonus() * s.magiculeFraction()).orElse(spec.maxMagiculeBonus());
-        double aura = slice.map(s -> spec.maxAuraBonus() * s.auraFraction()).orElse(spec.maxAuraBonus());
+        // Primordial Mind (S-ORI-4) and Coven's Ward (S-WIT-7) add to the layer's bonus
+        double magicule = slice.map(s -> spec.maxMagiculeBonus() * s.magiculeFraction()).orElse(spec.maxMagiculeBonus())
+                + LadderQuery.value(p, "S-ORI-4", "magicule_bonus", 0);
+        double aura = slice.map(s -> spec.maxAuraBonus() * s.auraFraction()).orElse(spec.maxAuraBonus())
+                + LadderQuery.value(p, "S-WIT-7", "aura_bonus", 0);
         Set<String> before = BloodlineAccess.get(p).layerSkills();
         Set<String> tracked = syncSkills(p, before, skills);
         if (!tracked.equals(before)) {

@@ -102,3 +102,32 @@ Debug commands (permission 2): `debug supernatural <player> show | backfill | re
 - **ATTR effects** (`SkillEffects`): one permanent modifier per skill with our id `supernaturalbloodlines:skill/<id>`, set when the skill is active and its `when` holds, removed when not. It runs on login, respawn, a faction or species change, a change of skills, and every 200 ticks (night and full moon). The night is 13000 to 23000 ticks of the day; the full moon is Werewolves' own window (after 12786 and before 23216 on the phase-0 day). A fixed-time dimension has neither.
 - **TENSURA effects** (`supernaturalTensura/TensuraSkillEffects`): granted through `SkillOwners` source `supernatural_skill`, tracked in `granted`. A skill the player had before is theirs and never forgotten; one shared with the species layer or the werewolf grants stays while any source wants it. A data reload that loses the whole catalogue changes nothing.
 - **Known limit:** the client does not get the skill table yet (the hub, phase 12e, needs it); the purchase is server-checked.
+
+## Skill rules (phase 12c, Task 2)
+
+A RULE skill is a number one of our rules reads through `LadderQuery.value(player, skillId, key, base)`: the `params` number of the skill JSON when the player owns it (owned and active), else the rule's own base. The rule keeps its behaviour and its tests; a skill adds nothing else. GameTests compare the same player with and without the skill (`SkillRuleGameTests`, `WerewolfSkillRuleGameTests` in species, `ArtifactsSkillRuleGameTests`, `ArtifactsWerewolfSkillRuleGameTests` in artifacts, `SpeciesTensuraSkillRuleGameTests` in species_tensura; each is registered only when the part is on and `supernatural` is on); the pure rows are in `SkillRuleMathTest`.
+
+| Skill | Where | What |
+|---|---|---|
+| S-HUM-2 | `artifacts/VervainRules.teaTicks` | after the tea is drunk, the `vervain` effect is replaced by a 24,000 tick one |
+| S-VAM-3 | `species/sireline/Compulsion` | eye-contact reach 4 to 6; villager discount: see SPECIES-RULES.md, "Skills" (capped by the villager at +25 reputation) |
+| S-VAM-7 | `species/ElderSkin` | `vampirism:sun_damage` x0.75 in `LivingIncomingDamageEvent`; a bound Sun Ring cancels it first |
+| S-ORI-2 | `species/rite/OriginalBloodRiteFactory` | 2 bottles (the target Original's skill) |
+| S-ORI-3 | `species/sireline/SireCall.cooldownTicks` | 12,000 to 6,000 ticks |
+| S-ORI-4, S-WIT-7 | `speciestensura/SpeciesLayer.sync` | +0.05 on `layer_magicule` / `layer_aura`; the layer re-syncs when skills change |
+| S-HYB-1 | `species/hybrid/BloodThirst.fallTicks` | thirst falls every 2,400 ticks |
+| S-HYB-2 | `species/hybrid/Venom` | Slowness I for 100 ticks on the hit that applies the venom |
+| S-WOL-2 | `shared/werewolves/ForcedShift.moonCalmSpares` | a second per-night coin (`MoonControl.sparedOn`, independent of the born wolf's) spares 25% of the nights |
+| S-WOL-4 | `artifacts/werewolves/WolfsbaneStrains.commonTicks` | common strain 600 to 300 ticks |
+| S-WOL-5 | `species/pack/PackBonus.betasNeeded` | 3 to 2 Betas |
+| S-WOL-6 | `species/pack/AlphaRoar.cooldown` | 1,200 to 800 ticks |
+| S-WIT-1, S-WIT-4, S-WIT-6, S-SIP-4 | `species/witch/RiteCost.begin` | the caster's multipliers: x0.95, Emissary discount 10% to 20%, x0.5 on the Rites of Lineage, siphoned power covers the cost at x0.9. Order: witch (round up), Emissary (round up), then the skills (round up) |
+| S-WIT-2 | `species/witch/WitchAltarBonus.rangeFor` | altar range x1.75 instead of x1.5 (the widest witch at the altar) |
+| S-SIP-1, -2, -3, -5 | `species/witch/Siphoning` | cap 1,000 to 1,500; 50 to 75 power per siphon; heal 1 per 100 power taken from a creature; Weakness I for 5 s on a vampire or werewolf type |
+| S-HUN-1 | `species/hunter/SteadyAim` | x1.05 on damage to prey, `LivingIncomingDamageEvent` |
+| S-HUN-2, S-HUN-3 | `species/hunter/HunterInstinct.range / idleTicks` | sense radius 24 to 32; instinct after 5 days |
+| S-HUN-5 | `species/hunter/MarkTracker.perKill` | the mark at the cap of 20 kills gives +25% attack and +12.5% speed (per kill 1.25% and 0.625%) |
+
+- **No new mixin.** Only the existing `RiteCostMixin` (species, still 3 of 3) now also reads the circle's rite type through a `@Shadow` of `GoldChalkBlockEntity.type`, so Ancestral Voice can tell a Rite of Lineage from another rite; the lookup is the same registry key `RiteSignal` uses.
+- **S-WIT-3 Ashwarden has no effect**: a mountain ash line is already unbreakable for vampire and werewolf types whoever placed it, so there is no number to change. The skill stays in the catalogue and in the Witch tree (S-WIT-7 comes after it); owner to patch.
+- **Not tested end to end:** S-WIT-4 (an Emissary near the pack needs a full pack set-up); its multiplier is covered by the `RiteCost.split` rows and the wiring of `RiteCost.begin` by the S-WIT-1 and S-WIT-6 tests.

@@ -34,3 +34,7 @@ Skill points (SP) from the ladders buy **skills**. There are 40 to buy, in 11 tr
 - A skill can add health, speed, attack or armor, change a number in one of the mod's rules (compulsion range, rite cost, siphon cap and so on), give you a Tensura skill, or change how much blood you get from feeding.
 - The skills are datapack files (`supernatural/skill` and `supernatural/tree`), so a pack can change costs and trees.
 - Primeval Roar (S-WOL-8) is never bought: a True Alpha who is a Primeval Alpha gets it (phase 12d).
+
+### What the skills change
+
+Skills that tune a rule: Silver Tongue (compulsion reaches 6 blocks, a bigger villager discount), Bloodmaker's Yield (2 bottles of Original's Blood), Sire's Call (call every 5 minutes), Steady Thirst and Venom Fang (hybrids), Moon Calm, Pack Heart, Roar's Echo and Wolfsbane Tolerance (werewolves), Steady Circle, Wide Circle, Emissary's Bond and Ancestral Voice (witches), the five siphoner skills, Steady Aim, Hunter's Eye, Patient Hunter and Mark Mastery (hunters), Vervain Blood and Elder's Skin. Ashwarden has no effect yet, because a mountain ash line is already unbreakable for vampires and werewolves.

@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species;
 
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfSkillRuleGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.SkillRuleGameTests;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -128,6 +130,7 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(RevelationRiteFactory.ID, RevelationRiteFactory.CODEC);
         BloodlineAccess.useGeneVisibility(SpeciesConfig::genesAlwaysVisible);
         DoppelgangerGene.register(); // genes and doppelgänger villagers need no Werewolves
+        ElderSkin.register();
         DoppelgangerVillagers.register();
         net.ofatech.supernaturalbloodlines.shared.species.DoppelgangerIndex.set(DoppelgangerVillagers::loaded); // for the Vampire Compass
         SpeciesRegistries.register(modBus);
@@ -215,6 +218,12 @@ public final class SpeciesPart {
             e.register(GeneGameTests.class);
             e.register(DoppelgangerVillagerGameTests.class);
             e.register(RevelationGameTests.class);
+            if (net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+                e.register(SkillRuleGameTests.class);
+                if (ModList.get().isLoaded("werewolves")) {
+                    e.register(WerewolfSkillRuleGameTests.class);
+                }
+            }
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(GeneWerewolfGameTests.class);
                 e.register(DoppelgangerRiteGameTests.class);

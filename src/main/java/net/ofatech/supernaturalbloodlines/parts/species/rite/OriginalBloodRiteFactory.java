@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import java.util.Optional;
@@ -59,10 +60,13 @@ public record OriginalBloodRiteFactory() implements RiteFactory {
                 caster.displayClientMessage(Component.translatable(NOT_ORIGINAL), true);
                 return cancel();
             }
-            ItemStack blood = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
-            blood.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), target.getUUID());
-            blood.set(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get(), BloodlineAccess.get(target).species().name());
-            level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, blood));
+            int bottles = (int) LadderQuery.value(target, "S-ORI-2", "bottles", 1);
+            for (int i = 0; i < bottles; i++) {
+                ItemStack blood = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
+                blood.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), target.getUUID());
+                blood.set(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get(), BloodlineAccess.get(target).species().name());
+                level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, blood));
+            }
             return false;
         }
     }

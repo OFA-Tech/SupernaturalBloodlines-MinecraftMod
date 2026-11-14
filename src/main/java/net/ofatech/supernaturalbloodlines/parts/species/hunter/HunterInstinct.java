@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hunter;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import java.util.List;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -37,9 +38,17 @@ public final class HunterInstinct {
         rangeOverride = range;
     }
 
-    private static double range() {
+    /** The blocks a Hunter of the Five senses prey within: 24, or 32 with Hunter's Eye (S-HUN-2). */
+    @VisibleForTesting
+    public static double range(ServerPlayer hunter) {
         Double pinned = rangeOverride;
-        return pinned != null ? pinned : SENSE_RANGE;
+        return pinned != null ? pinned : LadderQuery.value(hunter, "S-HUN-2", "sense_radius", SENSE_RANGE);
+    }
+
+    /** Ticks without a prey kill before the instinct weakens the hunter: 3 days, or 5 with Patient Hunter (S-HUN-3). */
+    @VisibleForTesting
+    public static long idleTicks(ServerPlayer hunter) {
+        return (long) (LadderQuery.value(hunter, "S-HUN-3", "instinct_days", IDLE_TICKS / 24000.0) * 24000);
     }
 
     public static void register() {
@@ -68,7 +77,7 @@ public final class HunterInstinct {
     /** Weakness I when more than 3 days have passed since the last prey kill, unless a prey teammate is online. @param now the game time */
     public static void instinct(ServerPlayer p, long now) {
         BloodlineState s = BloodlineAccess.get(p);
-        if (s.species() != Species.HUNTER_OF_THE_FIVE || now - s.lastVampireKill() <= IDLE_TICKS || hasPreyTeammate(p)) {
+        if (s.species() != Species.HUNTER_OF_THE_FIVE || now - s.lastVampireKill() <= idleTicks(p) || hasPreyTeammate(p)) {
             return;
         }
         p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, WEAKNESS_TICKS, 0, false, true, true));
@@ -89,7 +98,7 @@ public final class HunterInstinct {
     /** Prey the hunter senses: alive, within range, not themself, no spectator, and prey by R81 (so no witches or siphoners). */
     @VisibleForTesting
     public static boolean senses(ServerPlayer hunter, LivingEntity e) {
-        return e != hunter && e.isAlive() && !e.isSpectator() && e.distanceToSqr(hunter) <= range() * range() && MarkTracker.isPrey(e);
+        return e != hunter && e.isAlive() && !e.isSpectator() && e.distanceToSqr(hunter) <= range(hunter) * range(hunter) && MarkTracker.isPrey(e);
     }
 
     /** Sends the prey within range, if the hunter has the kills for it. Nothing is sent when there is none. */
@@ -98,7 +107,7 @@ public final class HunterInstinct {
         if (s.species() != Species.HUNTER_OF_THE_FIVE || s.markKills() < SENSE_KILLS) {
             return;
         }
-        List<Integer> ids = p.level().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(range()), e -> senses(p, e))
+        List<Integer> ids = p.level().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(range(p)), e -> senses(p, e))
                 .stream().map(LivingEntity::getId).toList();
         if (!ids.isEmpty()) {
             GlowPayload.send(p, ids);

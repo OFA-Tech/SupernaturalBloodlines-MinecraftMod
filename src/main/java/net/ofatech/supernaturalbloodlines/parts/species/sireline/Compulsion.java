@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.sireline;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
 import de.teamlapen.vampirism.api.VReference;
@@ -141,7 +142,8 @@ public final class Compulsion {
     }
 
     private static boolean eyeToEye(ServerPlayer p, LivingEntity t) {
-        return p.distanceToSqr(t) <= REACH * REACH
+        double reach = LadderQuery.value(p, "S-VAM-3", "range", REACH);
+        return p.distanceToSqr(t) <= reach * reach
                 && looksAt(gaze(t), t.getEyePosition(), p.getEyePosition(), TARGET_CONE)
                 && looksAt(gaze(p), p.getEyePosition(), t.getEyePosition(), CASTER_CONE);
     }
@@ -247,14 +249,22 @@ public final class Compulsion {
     private static void discount(ServerPlayer caster, Villager v, long now) {
         expireDiscount(v, Long.MAX_VALUE); // an earlier one is given back first, so the amounts below are against the villager's own gossip
         UUID id = caster.getUUID();
-        int before = gossip(v, id);
-        v.getGossips().add(id, GossipType.MAJOR_POSITIVE, DISCOUNT_GOSSIP);
-        v.setData(SpeciesRegistries.VILLAGER_DISCOUNT, new VillagerDiscount(id, gossip(v, id) - before, now + DISCOUNT_TICKS));
+        int before = gossip(v, id, GossipType.MAJOR_POSITIVE);
+        int beforeMinor = gossip(v, id, GossipType.MINOR_POSITIVE);
+        // a villager keeps at most 20 of MAJOR_POSITIVE (weight 5); Silver Tongue's extra goes to MINOR_POSITIVE (weight 1, at most 25):
+        // the villager's own limits make the skill worth +25 reputation on the 100, not +50
+        int wanted = (int) LadderQuery.value(caster, "S-VAM-3", "discount_gossip", DISCOUNT_GOSSIP);
+        v.getGossips().add(id, GossipType.MAJOR_POSITIVE, Math.min(wanted, DISCOUNT_GOSSIP));
+        if (wanted > DISCOUNT_GOSSIP) {
+            v.getGossips().add(id, GossipType.MINOR_POSITIVE, (wanted - DISCOUNT_GOSSIP) * GossipType.MAJOR_POSITIVE.weight); // the gossip container caps it
+        }
+        v.setData(SpeciesRegistries.VILLAGER_DISCOUNT, new VillagerDiscount(id, gossip(v, id, GossipType.MAJOR_POSITIVE) - before,
+                gossip(v, id, GossipType.MINOR_POSITIVE) - beforeMinor, now + DISCOUNT_TICKS));
     }
 
-    private static int gossip(Villager v, UUID player) {
+    private static int gossip(Villager v, UUID player, GossipType type) {
         var entries = v.getGossips().getGossipEntries().get(player);
-        return entries == null ? 0 : entries.getInt(GossipType.MAJOR_POSITIVE);
+        return entries == null ? 0 : entries.getInt(type);
     }
 
     /** Takes back the villager's discount once it has run out ({@code now} is the game time). */
@@ -268,6 +278,9 @@ public final class Compulsion {
         }
         if (d.amount() > 0) {
             v.getGossips().remove(d.player(), GossipType.MAJOR_POSITIVE, d.amount());
+        }
+        if (d.minor() > 0) {
+            v.getGossips().remove(d.player(), GossipType.MINOR_POSITIVE, d.minor());
         }
         v.removeData(SpeciesRegistries.VILLAGER_DISCOUNT);
     }

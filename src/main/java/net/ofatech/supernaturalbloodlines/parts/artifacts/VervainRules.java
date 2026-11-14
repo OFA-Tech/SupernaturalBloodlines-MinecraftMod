@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import de.teamlapen.vampirism.api.event.BloodDrinkEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -60,8 +61,17 @@ public final class VervainRules {
         }
     }
 
+    /** How long the tea protects: 10 minutes, or 20 with Vervain Blood (S-HUM-2). */
+    public static int teaTicks(Player p) {
+        return (int) LadderQuery.value(p, "S-HUM-2", "duration_ticks", ArtifactItems.VERVAIN_TICKS);
+    }
+
     private static void onEaten(LivingEntityUseItemEvent.Finish e) {
         ItemStack eaten = e.getItem();
+        if (e.getEntity() instanceof Player p && !p.level().isClientSide && eaten.is(ArtifactItems.VERVAIN_TEA.get())
+                && teaTicks(p) > ArtifactItems.VERVAIN_TICKS) {
+            p.addEffect(new MobEffectInstance(ArtifactItems.VERVAIN_EFFECT, teaTicks(p))); // the tea gave the short one; this replaces it
+        }
         if (e.getEntity() instanceof Player p && (eaten.is(ArtifactItems.VERVAIN.get()) || eaten.is(ArtifactItems.VERVAIN_TEA.get()))
                 && Supernatural.isVampiric(p)) {
             p.hurt(p.damageSources().magic(), EATING_DAMAGE);

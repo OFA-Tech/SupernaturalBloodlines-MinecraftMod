@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.witch;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -26,7 +27,11 @@ public final class WitchAltarBonus {
     private WitchAltarBonus() {}
 
     public static int scaledRange(int base) {
-        return (int) Math.round(base * RANGE_MULTIPLIER);
+        return scaledRange(base, RANGE_MULTIPLIER);
+    }
+
+    public static int scaledRange(int base, double multiplier) {
+        return (int) Math.round(base * multiplier);
     }
 
     /** Rounded up, so a rite that costs power never becomes free. */
@@ -39,8 +44,15 @@ public final class WitchAltarBonus {
 
     /** Rounded up, like {@link #scaledCost}. */
     public static int scaledEmissaryCost(int base) {
-        return base <= 0 ? 0 : (int) Math.ceil(base * EMISSARY_MULTIPLIER);
+        return scaledEmissaryCost(base, EMISSARY_MULTIPLIER);
     }
+
+    public static int scaledEmissaryCost(int base, double multiplier) {
+        return base <= 0 ? 0 : (int) Math.ceil(base * multiplier - EPSILON);
+    }
+
+    /** A product like 100 x 0.9 must not round up to 91 because of how doubles store 0.9. */
+    static final double EPSILON = 1e-9;
 
     /** True when {@code caster} is a pack Emissary with a pack member within 16 blocks. */
     public static boolean emissaryApplies(Level level, UUID caster) {
@@ -60,12 +72,14 @@ public final class WitchAltarBonus {
         if (level == null || level.isClientSide || !SpeciesConfig.witchBonusEnabled()) {
             return base;
         }
+        double best = 0;
         for (Player p : level.players()) {
             if (hasBonus(BloodlineAccess.get(p).species()) && isNear(p, altar, base)) {
-                return scaledRange(base);
+                // Wide Circle (S-WIT-2) widens it further for its owner; the widest witch near the altar decides
+                best = Math.max(best, LadderQuery.value(p, "S-WIT-2", "altar_range_factor", RANGE_MULTIPLIER));
             }
         }
-        return base;
+        return best > 0 ? scaledRange(base, best) : base;
     }
 
     /**

@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.mixin.species;
 
+import net.favouriteless.enchanted.common.enchanted.circle_magic.RiteType;
 import java.util.UUID;
 import net.favouriteless.enchanted.api.altar.PowerConsumer;
 import net.favouriteless.enchanted.common.blocks.entity.GoldChalkBlockEntity;
@@ -29,14 +30,22 @@ public abstract class RiteCostMixin implements ChalkCaster {
     @Shadow
     public abstract PowerConsumer.PowerPosHolder getPosHolder();
 
+    @Shadow
+    private RiteType type;
+
     @Override
     public UUID supernaturalbloodlines$caster() {
         return caster;
     }
 
+    @Override
+    public RiteType supernaturalbloodlines$type() {
+        return type;
+    }
+
     @ModifyVariable(method = "serverTick", at = @At("STORE"), ordinal = 0, require = 0)
     private static int supernaturalbloodlines$startCost(int power, Level level, BlockPos pos, BlockState state, GoldChalkBlockEntity chalk) {
-        return RiteCost.begin(level, ((ChalkCaster) chalk).supernaturalbloodlines$caster(), pos, chalk.getPosHolder(), power, true);
+        return RiteCost.begin(level, ((ChalkCaster) chalk).supernaturalbloodlines$caster(), pos, chalk.getPosHolder(), power, true, ((ChalkCaster) chalk).supernaturalbloodlines$type());
     }
 
     @Inject(method = "serverTick", at = @At(value = "INVOKE", shift = At.Shift.AFTER,
@@ -53,6 +62,6 @@ public abstract class RiteCostMixin implements ChalkCaster {
     @ModifyVariable(method = "tryConsumePower", at = @At("HEAD"), argsOnly = true, require = 0)
     private int supernaturalbloodlines$tickCost(int power) {
         GoldChalkBlockEntity self = (GoldChalkBlockEntity) (Object) this;
-        return RiteCost.begin(self.getLevel(), caster, self.getBlockPos(), getPosHolder(), power, false);
+        return RiteCost.begin(self.getLevel(), caster, self.getBlockPos(), getPosHolder(), power, false, type);
     }
 }

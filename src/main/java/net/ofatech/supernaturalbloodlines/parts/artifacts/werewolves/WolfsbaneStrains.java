@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts.werewolves;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.List;
@@ -264,8 +265,9 @@ public final class WolfsbaneStrains {
         }
         switch (strain) {
             case COMMON -> {
-                target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 600, 0));
-                target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 600));
+                int ticks = commonTicks(target);
+                target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, ticks, 0));
+                target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, ticks));
             }
             case YELLOW -> target.addEffect(new MobEffectInstance(YELLOW_EFFECT, 1200));
             case NORTHERN_BLUE -> {
@@ -277,6 +279,13 @@ public final class WolfsbaneStrains {
         }
         return true;
     }
+
+    /** The common strain lasts 30 seconds, half of that for a wolf with Wolfsbane Tolerance (S-WOL-4). The other strains are unchanged. */
+    public static int commonTicks(LivingEntity target) {
+        return target instanceof Player p ? (int) (COMMON_TICKS * LadderQuery.value(p, "S-WOL-4", "duration_factor", 1.0)) : COMMON_TICKS;
+    }
+
+    static final int COMMON_TICKS = 600;
 
     /** Removes the strain's effect (the common strain just wears off). */
     public static void cure(LivingEntity target, Strain strain) {

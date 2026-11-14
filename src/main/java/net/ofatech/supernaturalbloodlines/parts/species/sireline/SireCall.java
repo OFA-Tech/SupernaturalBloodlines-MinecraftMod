@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.sireline;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
@@ -73,6 +74,11 @@ public final class SireCall {
         return p != null ? p : server.getPlayerList().getPlayer(id);
     }
 
+    /** Ticks between two calls: 10 minutes, or 5 with Sire's Call (S-ORI-3). */
+    public static long cooldownTicks(ServerPlayer caller) {
+        return (long) LadderQuery.value(caller, "S-ORI-3", "cooldown_ticks", COOLDOWN_TICKS);
+    }
+
     public static Result call(ServerPlayer caller) {
         if (!MAY_CALL.contains(BloodlineAccess.get(caller).species())) {
             return Result.failed("needs_species");
@@ -80,7 +86,7 @@ public final class SireCall {
         ServerLevel level = caller.serverLevel();
         long now = level.getGameTime();
         if (caller.hasData(SpeciesRegistries.LAST_CALL)) {
-            long left = COOLDOWN_TICKS - (now - caller.getData(SpeciesRegistries.LAST_CALL));
+            long left = cooldownTicks(caller) - (now - caller.getData(SpeciesRegistries.LAST_CALL));
             if (left > 0) {
                 return Result.failed("cooling", (left + 19) / 20);
             }

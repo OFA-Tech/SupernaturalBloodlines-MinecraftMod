@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.speciestensura;
 
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SpeciesTensuraSkillRuleGameTests;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
@@ -47,6 +48,9 @@ public final class SpeciesTensuraPart {
             e.register(ApexGameTests.class);
             e.register(SirelineTensuraGameTests.class);
             e.register(GhoulTensuraGameTests.class);
+            if (EnabledParts.isEnabled("supernatural")) {
+                e.register(SpeciesTensuraSkillRuleGameTests.class);
+            }
             if (EnabledParts.snapshot().contains(Part.VAMPIRISM_TENSURA)) {
                 e.register(ApexFactionGameTests.class);
             }

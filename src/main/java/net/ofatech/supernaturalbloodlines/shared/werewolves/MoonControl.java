@@ -76,13 +76,25 @@ public final class MoonControl {
      * time / 24000), so the same wolves are spared all night.
      */
     public static boolean bornSparedOn(UUID id, long day) {
-        long h = id.getMostSignificantBits() * 31 + id.getLeastSignificantBits() + day * 0x9E3779B97F4A7C15L;
+        return (nightHash(id, day, 0) & 1) == 0;
+    }
+
+    /**
+     * Moon Calm (S-WOL-2): another coin per wolf and night, independent of {@link #bornSparedOn}, that spares the wolf with the given
+     * chance (0 never, 1 always). Thrown once per night for the same reason.
+     */
+    public static boolean sparedOn(UUID id, long day, double chance) {
+        return (nightHash(id, day, 0x5851F42D4C957F2DL) >>> 11) * 0x1.0p-53 < chance;
+    }
+
+    private static long nightHash(UUID id, long day, long salt) {
+        long h = id.getMostSignificantBits() * 31 + id.getLeastSignificantBits() + day * 0x9E3779B97F4A7C15L + salt;
         h ^= h >>> 33;
         h *= 0xff51afd7ed558ccdL;
         h ^= h >>> 33;
         h *= 0xc4ceb9fe1a85ec53L;
         h ^= h >>> 33;
-        return (h & 1) == 0;
+        return h;
     }
 
     public static int fullFormLevel() {

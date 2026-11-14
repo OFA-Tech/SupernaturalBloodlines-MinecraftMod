@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts;
 
+import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ArtifactsWerewolfSkillRuleGameTests;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ArtifactsSkillRuleGameTests;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -65,6 +67,12 @@ public final class ArtifactsPart {
             e.register(MountainAshGameTests.class);
             if (curios) {
                 e.register(CuriosSlotsGameTests.class);
+            }
+            if (net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+                e.register(ArtifactsSkillRuleGameTests.class);
+                if (werewolves) {
+                    e.register(ArtifactsWerewolfSkillRuleGameTests.class);
+                }
             }
             if (werewolves) {
                 e.register(MountainAshWerewolfGameTests.class);
