@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased: automatic sire naming
+
+Owner decisions of 2026-11-14 (SPECIES-RULES R101). Part: species_tensura.
+
+- **Siring names the sired player in Tensura, automatically.** The name is the sired's own current name (never a new one); it is only the compatibility link between the two mods. No consent. It uses Tensura's own `RequestNamingMenuPacket.name`, so the sire pays Tensura's magicule cost and the sired gets Tensura's EP and stats. The type is LOW, so a sired player is never evolved by their sire (R100). `playerNaming=false` does not block it (the rule and the sired's naming toggle are lifted for that one call and given back). `sire_naming_enabled` stays default on, and now needs `sire_subordinate_link_enabled`.
+- **A sire who is offline or short of magicules** leaves the sired unnamed (still linked); the attempt is repeated whenever the sired or the sire logs in. No timer, so no chat spam.
+- **The manual route is gone.** The sire's exception to `playerNaming`, the type lowering, the hand-made max-magicule loss roll and the "grants EP and stats only" chat line were removed. **`SireNamingMixin` is removed**: species_tensura has 2 mixins now (a free slot). A sire who names a sired player by hand follows Tensura's normal rules.
+- Tests: `SirelineTensuraGameTests` reworked (automatic name, own name, cost and reward, no evolution with a control, `playerNaming=false`, switch off, offline or broke sire).
 ## Unreleased: turning the show's way (plan 11)
 
 Spec `docs/superpowers/specs/2026-11-14-show-turning-design.md`. Rules R20c and R20d in `SPECIES-RULES.md`. Parts: species and species_tensura.

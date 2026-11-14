@@ -102,12 +102,15 @@ public final class SubordinateLink {
     /**
      * Idempotent. A player with a sire who is still supernatural (a species, a vampire or werewolf, a Tensura undead or daemon race)
      * and no Tensura owner gets the sire as owner. With no sire, no longer supernatural (a cured player can keep a stale sire), or the
-     * switch off, the link this mod made is taken away again.
+     * switch off, the link this mod made is taken away again. A link made now also names the sired ({@link SireNaming}).
      */
     public static void sync(ServerPlayer p) {
         UUID sire = BloodlineAccess.get(p).boundSire();
         if (sire != null && SpeciesTensuraConfig.sireLink() && Supernatural.is(p)) {
-            link(p, sire);
+            boolean fresh = !sire.equals(TensuraStorages.getExistenceFrom(p).getPermanentOwner());
+            if (link(p, sire) && fresh) {
+                SireNaming.tryName(p);
+            }
         } else {
             unlink(p);
         }

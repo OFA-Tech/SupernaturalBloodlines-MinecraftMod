@@ -55,7 +55,20 @@ public final class SirelineTensuraGameTests {
         return TensuraStorages.getExistenceFrom(e);
     }
 
+    /** These fake players are not in the player list, so the sire is found through the lookup; reset gives it back. */
+    private static void online(ServerPlayer... ps) {
+        SireCall.overridePlayerLookup(id -> {
+            for (ServerPlayer p : ps) {
+                if (p.getUUID().equals(id)) {
+                    return p;
+                }
+            }
+            return null;
+        });
+    }
+
     private static void reset(ServerPlayer... ps) {
+        SireCall.overridePlayerLookup(null);
         for (ServerPlayer p : ps) {
             BloodlineAccess.set(p, BloodlineState.NONE);
             existence(p).setPermanentOwner(null);
@@ -312,54 +325,181 @@ public final class SirelineTensuraGameTests {
 
     // ---- naming ----
 
+    /** The key test: siring names the sired in Tensura with their own current name. Fails when the hook in SubordinateLink.sync is removed. */
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void sireCanNameOwnSiredOnly(GameTestHelper helper) {
+    public static void siringNamesTheSiredWithTheirOwnName(GameTestHelper helper) {
         ServerPlayer sire = namer(helper);
-        ServerPlayer stranger = namer(helper);
-        ServerPlayer rival = namer(helper);
         ServerPlayer sired = hybrid(helper);
-        ServerPlayer rivalSired = hybrid(helper);
-        boolean before = playerNaming(helper, false);
-        existence(stranger).setNameable(true);
-        ServerPlayer lowStranger = TestPlayers.create(helper);
-        existence(lowStranger).setNameable(true);
-        lowStranger.setHealth(1);
-        ServerPlayer stale = TestPlayers.create(helper);
-        existence(stale).setNameable(true);
-        stale.setHealth(1);
+        online(sire);
         try {
-            helper.assertTrue(SireNaming.hookApplied(), "the naming hook is not in place");
-            SireRecorder.record(sire, sired);
-            SireRecorder.record(rival, rivalSired);
+            helper.assertTrue(existence(sired).getName() == null, "control: the sired is named before the siring");
+            helper.assertTrue(SireRecorder.record(sire, sired), "the sire was not recorded");
+            String own = sired.getGameProfile().getName();
+            helper.assertTrue(own.equals(existence(sired).getName()), "the sired's Tensura name is " + existence(sired).getName() + ", not their own " + own + " " + said(sire));
+            helper.assertTrue(sire.getUUID().equals(existence(sired).getPermanentOwner()), "the owner is " + existence(sired).getPermanentOwner());
+        } finally {
+            reset(sire, sired);
+        }
+        helper.succeed();
+    }
 
-            helper.assertTrue(RequestNamingKeyPacket.canName(sire, sired), "the sire cannot name their own sired with the game rule off: " + said(sire));
-            assertRuleRefusal(helper, stranger, sired, "a stranger naming someone's sired");
-            assertRuleRefusal(helper, rival, sired, "another sire naming a sired that is not theirs");
-            assertRuleRefusal(helper, sire, rivalSired, "a sire naming another sire's sired");
-            assertRuleRefusal(helper, sire, stranger, "a sire naming a player who is not their sired");
-            // ownerless, nameable, low on health, nobody's sired: only the game rule stands in the way, and the wrap must not lift it
-            assertRuleRefusal(helper, sire, lowStranger, "a sire naming a hurt, ownerless player who is not their sired");
-            // a sire in the index only: the player is no longer supernatural (cured, stale sire)
-            SireRecorder.record(sire, stale);
-            assertRuleRefusal(helper, sire, stale, "a sire naming a player who is no longer part of the sireline");
-
-            // the sired keeps the say over their own nameable toggle
+    /** No consent and no server rule: playerNaming=false and a sired who never turned naming on do not block it, and both are given back. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void autoNamingIgnoresPlayerNamingAndConsent(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        ServerPlayer stranger = namer(helper);
+        ServerPlayer hurt = TestPlayers.create(helper);
+        existence(hurt).setNameable(true);
+        hurt.setHealth(1);
+        boolean before = playerNaming(helper, false);
+        online(sire);
+        try {
             existence(sired).setNameable(false);
-            helper.assertTrue(!RequestNamingKeyPacket.canName(sire, sired), "a sire named a sired who switched naming off");
-            existence(sired).setNameable(true);
+            helper.assertTrue(!RequestNamingKeyPacket.canName(sire, sired), "control: the sired is nameable by hand with the rule off and no consent");
+            SireRecorder.record(sire, sired);
+            helper.assertTrue(sired.getGameProfile().getName().equals(existence(sired).getName()), "not named: " + existence(sired).getName() + " " + said(sire));
+            helper.assertTrue(!helper.getLevel().getGameRules().getBoolean(TensuraGameRules.PLAYER_NAME), "the game rule was left on");
+            helper.assertTrue(!existence(sired).isNameable(), "the sired's nameable toggle was left on");
+            // the rule still stops everyone else
+            assertRuleRefusal(helper, stranger, hurt, "a stranger naming a player with the game rule off");
+        } finally {
+            restore(helper, before);
+            reset(sire, sired, stranger, hurt);
+        }
+        helper.succeed();
+    }
 
-            // with the switch off Tensura's own rule applies
+    /** The sire pays Tensura's cost and the sired gets Tensura's EP and stat reward, and no evolution (LOW); a real HIGH naming does evolve (control). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void autoNamingCostsTheSireAndRewardsTheSiredWithoutEvolving(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        ServerPlayer stranger = namer(helper);
+        ServerPlayer control = TestPlayers.create(helper);
+        boolean before = playerNaming(helper, true);
+        online(sire);
+        try {
+            existence(control).setNameable(true);
+            setRace(sired, "tensura:human");
+            setRace(control, "tensura:human");
+            double base = sired.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue();
+            double baseAura = sired.getAttribute(TensuraAttributes.MAX_AURA).getBaseValue();
+            double magicule = existence(sire).getMagicule();
+            double aura = existence(sire).getAura();
+            lastCost = 0;
+
+            SireRecorder.record(sire, sired);
+            helper.assertTrue(existence(sired).getName() != null, "the sired was not named " + said(sire));
+            helper.assertTrue(lastCost > 0, "Tensura saw no cost");
+            double paid = (magicule - existence(sire).getMagicule()) + (aura - existence(sire).getAura());
+            helper.assertTrue(Math.abs(paid - lastCost) < 1e-6 * lastCost, "the sire paid " + paid + ", Tensura's cost was " + lastCost);
+            helper.assertTrue(sired.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue() > base
+                    || sired.getAttribute(TensuraAttributes.MAX_AURA).getBaseValue() > baseAura, "no EP and stat reward for the sired");
+            helper.assertTrue("tensura:human".equals(race(sired)), "the naming changed the sired's race to " + race(sired));
+
+            // control: Tensura's own HIGH naming of a player nobody sired evolves them, so the test can tell a LOW naming from one that cannot evolve
+            control.setHealth(1);
+            RequestNamingMenuPacket.name(control, stranger, NamingType.HIGH, "Free");
+            helper.assertTrue("Free".equals(existence(control).getName()), "the control was not named " + said(stranger));
+            helper.assertTrue(!"tensura:human".equals(race(control)), "the control kept its race too, so this test cannot tell LOW from HIGH");
+        } finally {
+            restore(helper, before);
+            reset(sire, sired, stranger, control);
+        }
+        helper.succeed();
+    }
+
+    /** Tensura's own LOW roll decides the sire's loss of max magicule: at 100 percent the base falls by the cost, at 0 it does not. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void autoNamingFollowsTensurasLowMaxLossRoll(GameTestHelper helper) {
+        PlayerConfig.Naming config = NamingMenu.CONFIG;
+        double subdue = config.subdueLostChance;
+        ServerPlayer sire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        ServerPlayer lucky = namer(helper);
+        ServerPlayer luckySired = hybrid(helper);
+        online(sire, lucky);
+        try {
+            config.subdueLostChance = 100;
+            double base = sire.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue();
+            SireRecorder.record(sire, sired);
+            helper.assertTrue(existence(sired).getName() != null, "the sired was not named: " + said(sire));
+            double lost = base - sire.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue();
+            helper.assertTrue(lastCost > 0 && Math.abs(lost - lastCost) < 1e-6 * lastCost, "the sire lost " + lost + " max magicule, the cost was " + lastCost);
+
+            config.subdueLostChance = 0;
+            double base2 = lucky.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue();
+            SireRecorder.record(lucky, luckySired);
+            helper.assertTrue(existence(luckySired).getName() != null, "the second sired was not named: " + said(lucky));
+            helper.assertTrue(lucky.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue() == base2, "the sire lost max magicule on a roll that cannot hit");
+        } finally {
+            config.subdueLostChance = subdue;
+            reset(sire, sired, lucky, luckySired);
+        }
+        helper.succeed();
+    }
+
+    /** An offline sire or one short of magicule leaves the sired unnamed; the next login of either names them. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void absentOrBrokeSireNamesAtTheNextLogin(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        ServerPlayer broke = namer(helper);
+        ServerPlayer brokeSired = hybrid(helper);
+        try {
+            // the sire is not online
+            SireRecorder.record(sire, sired);
+            helper.assertTrue(sire.getUUID().equals(existence(sired).getPermanentOwner()), "control: no link");
+            helper.assertTrue(existence(sired).getName() == null, "named with the sire offline");
+            online(sire);
+            SireNaming.retryFor(sire, List.of(sire, sired));
+            helper.assertTrue(existence(sired).getName() != null, "the sire's login did not name the sired " + said(sire));
+
+            // the sire is online but has nothing to pay with
+            existence(broke).setMagicule(0);
+            existence(broke).setAura(0);
+            online(sire, broke);
+            SireRecorder.record(broke, brokeSired);
+            helper.assertTrue(existence(brokeSired).getName() == null, "named by a sire with no magicule");
+            existence(broke).setMagicule(10_000_000);
+            existence(broke).setAura(10_000_000);
+            SireNaming.retryFor(brokeSired, List.of(brokeSired));
+            helper.assertTrue(existence(brokeSired).getName() != null, "the sired's login did not name them once the sire could pay " + said(broke));
+        } finally {
+            reset(sire, sired, broke, brokeSired);
+        }
+        helper.succeed();
+    }
+
+    /** The switch off: siring links and names nobody; an already named sired and one with a foreign Tensura owner are left alone and cost the sire nothing. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void autoNamingSwitchAndSkips(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer off = hybrid(helper);
+        ServerPlayer named = hybrid(helper);
+        ServerPlayer owned = hybrid(helper);
+        ServerPlayer other = TestPlayers.create(helper);
+        online(sire);
+        try {
             SpeciesTensuraConfig.overrideSireNaming(false);
-            helper.assertTrue(!RequestNamingKeyPacket.canName(sire, sired), "the sire named their sired with sire_naming_enabled off");
+            SireRecorder.record(sire, off);
+            helper.assertTrue(sire.getUUID().equals(existence(off).getPermanentOwner()), "the link depends on the naming switch");
+            helper.assertTrue(existence(off).getName() == null, "named with sire_naming_enabled off");
+            helper.assertTrue(!SireNaming.tryName(off), "tryName named with the switch off");
             SpeciesTensuraConfig.overrideSireNaming(null);
 
-            // once the sired has a name the lift is over
-            existence(sired).setName("Taken");
-            helper.assertTrue(!RequestNamingKeyPacket.canName(sire, sired), "a named sired can be named again");
+            double magicule = existence(sire).getMagicule();
+            existence(named).setName("Taken");
+            SireRecorder.record(sire, named);
+            helper.assertTrue("Taken".equals(existence(named).getName()), "a named sired was renamed to " + existence(named).getName());
+            existence(owned).setPermanentOwner(other.getUUID());
+            SireRecorder.record(sire, owned);
+            helper.assertTrue(existence(owned).getName() == null, "a sired with a foreign Tensura owner was named");
+            helper.assertTrue(existence(sire).getMagicule() == magicule, "the sire paid for a naming that did not happen");
         } finally {
             SpeciesTensuraConfig.overrideSireNaming(null);
-            restore(helper, before);
-            reset(sire, stranger, rival, sired, rivalSired, lowStranger, stale);
+            reset(sire, off, named, owned, other);
         }
         helper.succeed();
     }
@@ -385,84 +525,6 @@ public final class SirelineTensuraGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void namingSiredPlayerDoesNotChangeRace(GameTestHelper helper) {
-        ServerPlayer sire = namer(helper);
-        ServerPlayer sired = hybrid(helper);
-        ServerPlayer stranger = namer(helper);
-        ServerPlayer control = TestPlayers.create(helper);
-        boolean before = playerNaming(helper, true);
-        try {
-            existence(control).setNameable(true);
-            setRace(sired, "tensura:human");
-            setRace(control, "tensura:human");
-            SireRecorder.record(sire, sired);
-            double base = sired.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue();
-
-            helper.assertTrue(RequestNamingKeyPacket.canName(sire, sired), "the sire cannot name: " + said(sire));
-            ((Namer) sire).keys.clear();
-            ((Namer) stranger).keys.clear();
-            RequestNamingMenuPacket.name(sired, sire, NamingType.HIGH, "Ward");
-            helper.assertTrue(said(sire).contains(SireNaming.NO_EVOLUTION_KEY), "the sire was not told about the lowered naming: " + said(sire));
-            helper.assertTrue("Ward".equals(existence(sired).getName()), "the sired was not named: " + existence(sired).getName() + " " + said(sire));
-            helper.assertTrue(sire.getUUID().equals(existence(sired).getPermanentOwner()), "the owner changed");
-            helper.assertTrue("tensura:human".equals(race(sired)), "naming changed the sired's race to " + race(sired));
-            helper.assertTrue(sired.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue() > base, "no stat reward for the sired");
-
-            // control: the same naming of a player nobody sired is Tensura's own, harvest festival evolution included
-            control.setHealth(1);
-            RequestNamingMenuPacket.name(control, stranger, NamingType.HIGH, "Free");
-            helper.assertTrue("Free".equals(existence(control).getName()), "the control was not named " + said(stranger));
-            SupernaturalBloodlines.LOGGER.info("species_tensura test: control race after a HIGH naming: {}", race(control));
-            helper.assertTrue(!"tensura:human".equals(race(control)),
-                    "the control kept its race too, so this test cannot tell the downgrade from a race that does not evolve");
-            helper.assertTrue(!said(stranger).contains(SireNaming.NO_EVOLUTION_KEY), "a stranger naming a player got the sire's notice");
-        } finally {
-            restore(helper, before);
-            reset(sire, sired, stranger, control);
-        }
-        helper.succeed();
-    }
-
-    @GameTest(template = "empty", templateNamespace = NS)
-    public static void namingSiredPlayerKeepsTheNamersMaxLoss(GameTestHelper helper) {
-        PlayerConfig.Naming config = NamingMenu.CONFIG;
-        double endow = config.endowLostChance;
-        double subdue = config.subdueLostChance;
-        ServerPlayer sire = namer(helper);
-        ServerPlayer sired = hybrid(helper);
-        ServerPlayer lucky = namer(helper);
-        ServerPlayer luckySired = hybrid(helper);
-        boolean before = playerNaming(helper, false);
-        try {
-            SireRecorder.record(sire, sired);
-            SireRecorder.record(lucky, luckySired);
-            config.subdueLostChance = 0;
-
-            // the loss roll of the type the namer chose (HIGH) always hits: the base max magicule falls by the cost, as it would unlowered
-            config.endowLostChance = 100;
-            double base = sire.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue();
-            RequestNamingMenuPacket.name(sired, sire, NamingType.HIGH, "Cost");
-            helper.assertTrue("Cost".equals(existence(sired).getName()), "the sired was not named: " + said(sire));
-            helper.assertTrue(lastCost > 0, "no cost seen");
-            double lost = base - sire.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue();
-            helper.assertTrue(Math.abs(lost - lastCost) < 1e-6 * lastCost, "the namer lost " + lost + " max magicule, the cost was " + lastCost);
-
-            // and a roll that never hits costs nothing
-            config.endowLostChance = 0;
-            double base2 = lucky.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue();
-            RequestNamingMenuPacket.name(luckySired, lucky, NamingType.HIGH, "Free");
-            helper.assertTrue("Free".equals(existence(luckySired).getName()), "the second sired was not named: " + said(lucky));
-            helper.assertTrue(lucky.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue() == base2, "the namer lost max magicule on a roll that cannot hit");
-        } finally {
-            config.endowLostChance = endow;
-            config.subdueLostChance = subdue;
-            restore(helper, before);
-            reset(sire, sired, lucky, luckySired);
-        }
-        helper.succeed();
-    }
-
-    @GameTest(template = "empty", templateNamespace = NS)
     public static void siredMobCanBeNamedByItsSire(GameTestHelper helper) {
         ServerPlayer sire = namer(helper);
         DirewolfEntity wolf = helper.spawn(MonsterEntityTypes.DIREWOLF.get(), new Vec3(8.5, 2, 4.5));
@@ -480,34 +542,34 @@ public final class SirelineTensuraGameTests {
         helper.succeed();
     }
 
-    /** R101b: a severed bond frees the sired from the Tensura owner link and the naming exception; the sire stays recorded. */
+    /** R101b: a severed bond frees the sired from the Tensura owner link; the sire stays recorded and the name, which is only a name, stays. */
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void severanceFreesTheOwnerAndTheNaming(GameTestHelper helper) {
+    public static void severanceFreesTheOwnerAndTheNameStays(GameTestHelper helper) {
         ServerPlayer sire = namer(helper);
         ServerPlayer newSire = TestPlayers.create(helper);
         ServerPlayer sired = hybrid(helper);
-        boolean before = playerNaming(helper, false);
+        online(sire);
         try {
             SireRecorder.record(sire, sired);
             helper.assertTrue(sire.getUUID().equals(existence(sired).getPermanentOwner()), "control: no link");
-            helper.assertTrue(RequestNamingKeyPacket.canName(sire, sired), "control: the sire cannot name: " + said(sire));
+            String own = sired.getGameProfile().getName();
+            helper.assertTrue(own.equals(existence(sired).getName()), "control: not named " + said(sire));
 
             BloodlineAccess.set(sired, BloodlineAccess.get(sired).toBuilder().severedSire(sire.getUUID()).build());
             helper.assertTrue(existence(sired).getPermanentOwner() == null, "the owner stayed: " + existence(sired).getPermanentOwner());
             helper.assertTrue(!SubordinateHelper.isSubordinate(sire, sired), "still a subordinate after the severance");
-            helper.assertTrue(!SireNaming.isOwnSired(sired, sire), "the naming exception still holds");
-            assertRuleRefusal(helper, sire, sired, "a sire naming a sired whose bond is severed");
+            helper.assertTrue(own.equals(existence(sired).getName()), "the name was lost: " + existence(sired).getName());
             helper.assertTrue(sire.getUUID().equals(BloodlineAccess.get(sired).sire()), "the sire was forgotten");
 
             // a new sire is a new bond: linked again, to the new sire
             helper.assertTrue(SireRecorder.record(newSire, sired), "could not be sired again");
             helper.assertTrue(newSire.getUUID().equals(existence(sired).getPermanentOwner()), "the new sire is not the owner: " + existence(sired).getPermanentOwner());
         } finally {
-            restore(helper, before);
             reset(sire, newSire, sired);
         }
         helper.succeed();
     }
+
     /** An owner Tensura's own naming set (no link of ours stored) is freed by a severance too, and the name stays; someone else's owner stays. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void severanceClearsTheOwnerANamingSet(GameTestHelper helper) {

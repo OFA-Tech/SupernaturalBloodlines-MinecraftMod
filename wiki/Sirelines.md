@@ -82,7 +82,7 @@ When an **Original or Original hybrid** is **killed with white oak**:
 
 ## Naming and breaking the bond
 
-- A sire can **name** their own sired through Tensura's naming menu, even with the server's player naming off, if the sired turned their own naming on. A named sired player gets Tensura's stats but **never** its race evolution. See [Tensura integration](Tensura-Integration#sire-naming-r101).
+- Siring **names the sired player in Tensura automatically**, with their own name (even with the server's player naming off, and without their consent). The sire pays Tensura's magicule cost; the sired gets Tensura's EP and stats but **never** a race evolution. See [Tensura integration](Tensura-Integration#sire-naming-r101).
 - **Siring needs no consent** (it comes from blood or a bite). The **[Rite of Severance](Rite-Of-Severance)** is how a sired player frees themselves of the bond: a witch type performs it on the night of a full moon, with the sire's blood. It frees the Tensura link, the naming exception, the hybrid's "can't hurt the sire" (R43), `/bloodline call` and the sparing by the sire's compelled creatures. **The tree still shows the sire and sireline death still applies** (blood, not bond).
 - **Re-siring:** a **new sire replaces the old one** and ends the severance, so a freed player can be sired again. The first-sire-wins rule only holds while the bond is whole. From then on the **new** sire's tree and sireline death apply.
 

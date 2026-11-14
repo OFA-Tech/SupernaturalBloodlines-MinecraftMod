@@ -49,7 +49,7 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 - With the **artifacts part off**, a bitten non-Alpha wolf has no way to shift at will.
 - **Undead treatment** is wider than holy damage: it affects a plain Vampirism vampire too.
 - **Apex races** give more max health than the divine tier, and all their values are placeholders.
-- **Sire link** makes sired players unable to hurt their sire, and siblings allies. Sire naming bypasses `playerNaming`.
+- **Sire link** makes sired players unable to hurt their sire, and siblings allies. Siring names the sired automatically and ignores `playerNaming`; with the sire offline or short of magicule the naming waits for the next login of either.
 
 ## Not checked in a real game yet
 
@@ -65,6 +65,6 @@ Automated tests cover the rules, but these still need a person with a real clien
 - **Hunter outline** visible only to the hunter; the hallucinations; kill credit through the dying state with a real vampire.
 - `/bloodline call` and compulsion with two clients (the chat buttons, the trade screen not opening, a walk to the caller).
 - A real Sun Ring in sunlight; a real full-moon shift with the Moon Ring; the compass needle; the mountain ash and wolfsbane visuals.
-- **Tensura:** an elf (or human) taken to the apex offer in the real evolution screen; a sire naming a sired player through the real menu; an Alpha's rank skills in the skill list; the analysis screen for Vampirism, Werewolves and Enchanted mobs (EP numbers are first guesses); the evolution and skill screens of a layered player.
+- **Tensura:** an elf (or human) taken to the apex offer in the real evolution screen; a sire's automatic naming of a sired player at a real login; an Alpha's rank skills in the skill list; the analysis screen for Vampirism, Werewolves and Enchanted mobs (EP numbers are first guesses); the evolution and skill screens of a layered player.
 
 If you find something that behaves differently from this wiki, please [open an issue](https://github.com/OFA-Tech/SupernaturalBloodlines-MinecraftMod/issues). See [Troubleshooting](Troubleshooting).

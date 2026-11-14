@@ -103,11 +103,11 @@ public final class SpeciesTensuraConfig {
                         "Tensura then treats the pair as owner and subordinate: the sired cannot hurt the sire or the sire's other sired (the sire can still hurt them),",
                         "they count as allied, and a demon lord sire's harvest festival gifts them. Off: no link is made or removed.")
                 .define("sire_subordinate_link_enabled", true);
-        SIRE_NAMING = b.comment("This BYPASSES Tensura's playerNaming game rule for a sire and their own sired only: with the rule off, nobody else can name a player,",
-                        "but a sire may open Tensura's naming on their own sired, a player too (R101). The server rule does not beat this exception.",
-                        "Only for the sired that has no Tensura name yet, and only while the sired has not switched their own nameable toggle off.",
-                        "A named sired player gets Tensura's EP and stat reward but never its race evolution (the type is lowered to LOW).",
-                        "Off: Tensura's naming rules apply unchanged.")
+        SIRE_NAMING = b.comment("Siring names the sired player in Tensura, automatically (R101). The name is the sired's own current name, so it only",
+                        "makes the two mods compatible. It needs no consent and Tensura's playerNaming game rule and the sired's nameable toggle do not block it.",
+                        "The sire pays Tensura's naming cost and the sired gets Tensura's EP and stat reward, as for a real LOW naming: never a race evolution.",
+                        "It is tried when the link is made and when the sired or the sire logs in, and needs the sire online with enough magicule.",
+                        "It needs sire_subordinate_link_enabled. Off: siring names nobody.")
                 .define("sire_naming_enabled", true);
         SPEC = b.build();
         LAYER_TABLE = new Cached<>("layers", "SPECIES=skill,skill|magicule|aura|undead", LAYERS::get, LayerTable::parse);
