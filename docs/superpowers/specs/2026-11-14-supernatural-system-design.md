@@ -73,7 +73,7 @@ The owner wants:
 
 ## Constraints
 
-- **Mixin budget.** Each part has 3 mixins and every current part is full (`species`: AltarRange, RiteCancel, RiteCost; `species_tensura`: RaceInstance, RaceUtils, SireNaming; `vampirism_tensura`: RaceUtilsSun, VampirePlayerBite, VampireRaceSun). Plan 13 has its own new part. This plan adds **two new parts** with their own budgets:
+- **Mixin budget.** Each part has 3 mixins and every current part is full (`species`: AltarRange, RiteCancel, RiteCost; `species_tensura`: RaceInstance, RaceUtils (SireNaming was removed when sire naming became automatic, so this part has a free slot); `vampirism_tensura`: RaceUtilsSun, VampirePlayerBite, VampireRaceSun). Plan 13 has its own new part. This plan adds **two new parts** with their own budgets:
 
 | Part | Package | Required mods | Optional | Mixins planned |
 |---|---|---|---|---|

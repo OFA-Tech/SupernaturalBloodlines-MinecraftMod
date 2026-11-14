@@ -336,7 +336,7 @@ Code: `parts/species/rite/SeveranceRiteFactory` (factory `supernaturalbloodlines
 | `SireCall.call` / `accept` (`/bloodline call`) | bond | a severed player is skipped / the accept is refused |
 | `Compulsion.protects` (a compelled creature spares the caster's line) | bond | a severed player is not spared; their own descendants still are |
 | `SubordinateLink` (Tensura owner, species_tensura) | bond | unlinks (`boundSire()` changes), no link while severed |
-| `SireNaming.isOwnSired` (naming exception, species_tensura) | bond | false |
+| `SireNaming.tryName` (automatic naming, species_tensura) | bond | no naming: `boundSire()` is null (no new name from the old sire; the name already given stays) |
 | `SirelineIndex` / `BloodlineCommand` tree / `SirelineTree` | blood | unchanged: the tree shows the sire |
 | `SirelineDeath` (walk over `childrenOf`, `s.sire() != null` checks) | blood | unchanged: a severed child still dies with an Original |
 | `SireRecorder` (index follows `sire`, first sire wins) | blood, with one change | the first-wins rule lets a severed player be re-sired |

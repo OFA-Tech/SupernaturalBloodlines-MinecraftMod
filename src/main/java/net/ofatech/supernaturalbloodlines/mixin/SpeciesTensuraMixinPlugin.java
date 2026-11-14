@@ -11,7 +11,6 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 public final class SpeciesTensuraMixinPlugin extends PartMixinPlugin {
     private static volatile boolean raceUtilsHooked;
     private static volatile boolean apexHooked;
-    private static volatile boolean sireNamingHooked;
 
     public SpeciesTensuraMixinPlugin() {
         super(Part.SPECIES_TENSURA);
@@ -27,11 +26,6 @@ public final class SpeciesTensuraMixinPlugin extends PartMixinPlugin {
         return apexHooked;
     }
 
-    /** {@code RequestNamingKeyPacket.isNotNameable} really carries our wrap of the playerNaming game rule read. */
-    public static boolean sireNamingHooked() {
-        return sireNamingHooked;
-    }
-
     @Override
     public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
         if (mixinClassName.endsWith(".RaceUtilsMixin")) {
@@ -45,14 +39,6 @@ public final class SpeciesTensuraMixinPlugin extends PartMixinPlugin {
                 log.info("RaceInstanceMixin hook in place");
             } else {
                 log.warn("RaceInstanceMixin.getNextEvolutions hook MISSING (a ManasCore update?): no apex evolution is offered");
-            }
-        } else if (mixinClassName.endsWith(".SireNamingMixin")) {
-            // a WrapOperation is rewritten after postApply, so the proof is the call the handler's @At names being in isNotNameable
-            sireNamingHooked = wrapTargetPresent(targetClass, "isNotNameable", mixinInfo, "sireNamesSired");
-            if (sireNamingHooked) {
-                log.info("SireNamingMixin hook in place");
-            } else {
-                log.warn("SireNamingMixin hook MISSING (a Tensura update?): a sire cannot name their sired player while playerNaming is off");
             }
         }
     }

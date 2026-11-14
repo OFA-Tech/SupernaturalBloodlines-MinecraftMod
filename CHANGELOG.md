@@ -12,6 +12,16 @@ Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md`. Two new 
 - **Migration and debug commands (phase 12a Task 5).** A player who had a race before the ladders gets what it proves on their first login: days as their race from when they turned, the rungs their level and state prove, the species layer rung (so no layer is lost), Alpha rank, and the apex rung of an apex race, with the skill points of those rungs and no EP. New `debug supernatural` commands show, reset and adjust ladder state.
 - **Rites count at last (phase 12a).** One mixin on Enchanted's `Rite` tells a rite that worked from a cancelled one, so ladder tasks that need Enchanted's own rites (the Ward of Return and the others) count.
 
+## Unreleased: automatic sire naming
+
+Owner decisions of 2026-11-14 (SPECIES-RULES R101). Part: species_tensura.
+
+- **Siring names the sired player in Tensura, automatically.** The name is the sired's own current name (never a new one); it is only the compatibility link between the two mods. No consent. It uses Tensura's own `RequestNamingMenuPacket.name`, so the sire pays Tensura's magicule cost and the sired gets Tensura's EP and stats. The type is LOW, so a sired player is never evolved by their sire (R100). `playerNaming=false` does not block it (the rule and the sired's naming toggle are lifted for that one call and given back). `sire_naming_enabled` stays default on, and now needs `sire_subordinate_link_enabled`.
+- **A sire who is offline or short of magicules** leaves the sired unnamed (still linked); the attempt is repeated whenever the sired or the sire logs in. No timer: one try per login and pair, so the sire sees Tensura's refusal (`lack_magicule`) once per login. A sired player with more EP than the sire is never named (`lack_EP`), and the sire sees that at each login too.
+- **The manual route is gone.** The sire's exception to `playerNaming`, the hand-made max-magicule loss roll and the "grants EP and stats only" chat line were removed; a small `NAMING_EVENT` handler (no mixin) still forces a sire's hand naming of their bound sired to LOW, so a sire never evolves their sired (R100). **`SireNamingMixin` is removed**: species_tensura has 2 mixins now (a free slot). Otherwise a hand naming follows Tensura's normal rules.
+- **Side effects of the naming on the sired** are Tensura's own and are listed in `docs/parts/species_tensura.md`: full heal, harmful effects removed, Glowing, particles, a custom name, the tracked evolution cleared (also at a later login try). Sired players named by hand before this change keep their old custom name (no migration), and a later account-name change is not followed.
+- Tests: `SirelineTensuraGameTests` reworked (automatic name, own name, cost and reward, no evolution with a control, `playerNaming=false`, switch off, offline or broke sire).
+
 ## Unreleased: turning the show's way (plan 11)
 
 Spec `docs/superpowers/specs/2026-11-14-show-turning-design.md`. Rules R20c and R20d in `SPECIES-RULES.md`. Parts: species and species_tensura.
