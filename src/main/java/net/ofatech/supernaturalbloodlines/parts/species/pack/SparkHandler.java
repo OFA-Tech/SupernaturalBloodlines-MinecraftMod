@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The Alpha spark (R93): stolen by killing the Alpha, inherited by the strongest online Beta when the Alpha leaves the
- * werewolves or is cured, given up to heal someone. Also what a kill means for the killer's eyes (an innocent: a villager,
+ * werewolves or is cured, given up to heal someone. A True Alpha keeps it: it cannot be stolen, inherited or given up. Also what a kill means for the killer's eyes (an innocent: a villager,
  * or a player who was not attacking them). Ordinary deaths keep rank and spark. Touched only behind
  * {@code ModList.isLoaded("werewolves")}.
  * <p>
@@ -99,6 +99,9 @@ public final class SparkHandler {
      * victim's Betas join it), the victim becomes an Omega. Anyone else killing an Alpha changes nothing.
      */
     static boolean steal(ServerPlayer killer, ServerPlayer victim) {
+        if (PackAccess.wolf(victim).rank() == Rank.TRUE_ALPHA) {
+            return false;
+        }
         if (!VampirismSupernatural.isWerewolf(killer) || PackAccess.applyPack(killer, PackEvent.KILLED_ALPHA, PackContext.defaults()).refused()) {
             return false;
         }
@@ -140,6 +143,12 @@ public final class SparkHandler {
 
     /** The Alpha leaves the werewolves or is cured: the spark goes to the heir, the Alpha is an Omega with no pack. */
     static void passOn(ServerPlayer alpha) {
+        if (PackAccess.wolf(alpha).rank() == Rank.TRUE_ALPHA) {
+            // a True Alpha keeps the spark and the rank (dormant outside the faction): only the pack dissolves
+            dissolve(alpha);
+            PackIndex.get(alpha.serverLevel()).clearFormerAlpha(alpha.getUUID());
+            return;
+        }
         ServerPlayer heir = heirOf(alpha);
         if (heir != null) {
             handOver(alpha, heir);

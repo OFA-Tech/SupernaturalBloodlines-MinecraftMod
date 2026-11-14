@@ -83,13 +83,13 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
   - **Omega:** no pack, −10% attack and speed.
   - **Beta:** in a pack.
   - **Alpha:** red eyes, +20% attack, +4 max health, the Roar.
-  - **True Alpha:** **no per-world limit, but very hard to earn**: max Werewolves level, 30 in-game days as a Beta, 300 defender kills, never killed an innocent, never stole a spark. Alpha perks +10%.
+  - **True Alpha:** **no per-world limit, but very hard to earn**: max Werewolves level, 30 in-game days as a Beta, 300 defender kills, never killed an innocent, never stole a spark. Alpha perks +10%. **A True Alpha keeps the spark (2026-11-14):** it cannot be stolen, inherited or given up. Cured or leaving the werewolves, they stay True Alpha, dormant (no perks, no pack work) until they rejoin; their pack dissolves as for any Alpha and is not restored.
   - Betas and Omegas have gold eyes. An innocent kill turns them blue for good.
 - **R92.** Only Alphas turn humans, with a 10% chance the bite kills instead. Wild werewolf mobs make Omegas. A human turned by an Alpha joins that Alpha's pack and sireline.
 - **R93.** **The spark:**
-  - **Stolen** by killing the Alpha.
-  - **Inherited** by the strongest Beta when the Alpha leaves or is cured.
-  - **Given up** to heal someone.
+  - **Stolen** by killing the Alpha. Only a plain Alpha: killing a True Alpha is just a death.
+  - **Inherited** by the strongest Beta when the Alpha leaves or is cured. Only a plain Alpha: a True Alpha who leaves just dissolves the pack.
+  - **Given up** to heal someone. Not by a True Alpha.
   - **Earned:** see R91.
 - **R94.** **Pack:**
   - With 3 or more Betas near their online Alpha: the Alpha gets +5% attack per Beta (up to +25%), and the Betas get Regeneration.

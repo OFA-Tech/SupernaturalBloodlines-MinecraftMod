@@ -226,17 +226,26 @@ class PackRulesTest {
 
     @Test
     void sparkLostMakesAnAlphaAnOmegaWithNoPack() {
-        for (Rank r : new Rank[] {Rank.ALPHA, Rank.TRUE_ALPHA}) {
-            WolfState alpha = wolf(Lineage.BITTEN, r).toBuilder().defenderKills(7).build();
-            WolfState out = PackRules.apply(alpha, SPARK_LOST, ctx()).state();
-            assertEquals(Rank.OMEGA, out.rank());
-            assertNull(out.packAlpha());
-            assertEquals(0, out.betaSince());
-            assertEquals(Lineage.BITTEN, out.lineage());
-            assertEquals(7, out.defenderKills());
-        }
+        WolfState alpha = wolf(Lineage.BITTEN, Rank.ALPHA).toBuilder().defenderKills(7).build();
+        WolfState out = PackRules.apply(alpha, SPARK_LOST, ctx()).state();
+        assertEquals(Rank.OMEGA, out.rank());
+        assertNull(out.packAlpha());
+        assertEquals(0, out.betaSince());
+        assertEquals(Lineage.BITTEN, out.lineage());
+        assertEquals(7, out.defenderKills());
         WolfState beta = wolf(Lineage.BITTEN, Rank.BETA);
         assertEquals(beta, PackRules.apply(beta, SPARK_LOST, ctx()).state());
+    }
+
+    @Test
+    void sparkLostStillDemotesPlainAlpha() {
+        assertEquals(Rank.OMEGA, PackRules.apply(wolf(Lineage.BORN, Rank.ALPHA), SPARK_LOST, ctx()).state().rank());
+    }
+
+    @Test
+    void sparkLostRefusedForTrueAlpha() {
+        WolfState trueAlpha = wolf(Lineage.BITTEN, Rank.TRUE_ALPHA).toBuilder().defenderKills(7).build();
+        assertRefused(PackRules.apply(trueAlpha, SPARK_LOST, ctx()), trueAlpha, "true_alpha_keeps_spark");
     }
 
     @Test

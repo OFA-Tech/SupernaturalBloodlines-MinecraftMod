@@ -62,10 +62,10 @@ Eyes show as two glowing dust particles at eye height every half second while a 
 
 | How | What happens |
 |---|---|
-| **Stolen** | a werewolf player kills an Alpha: they take the spark and the pack (a Beta who kills their own Alpha leads it afterwards; a killer who already leads a pack adopts the Betas). The old Alpha becomes an **Omega**. Ordinary deaths keep rank and spark. |
-| **Inherited** | an Alpha leaves the werewolves or is cured: the spark goes to the **highest-level online Beta**. With nobody online the pack **dissolves** and its Betas become Omegas at next login. |
-| **Given up** | `/pack heal <player>`: an Alpha within 4 blocks of a player gives the spark away to fully heal them and cure hybrid venom and wolfsbane (all strains). The Alpha stays in the pack as a Beta of the heir. |
-| **Earned** | a Beta becomes a **True Alpha** |
+| **Stolen** | a werewolf player kills an **Alpha** (never a True Alpha: killing one is just a death): they take the spark and the pack (a Beta who kills their own Alpha leads it afterwards; a killer who already leads a pack adopts the Betas). The old Alpha becomes an **Omega**. Ordinary deaths keep rank and spark. |
+| **Inherited** | an **Alpha** leaves the werewolves or is cured: the spark goes to the **highest-level online Beta**. With nobody online the pack **dissolves** and its Betas become Omegas at next login. |
+| **Given up** | `/pack heal <player>`: an **Alpha** (not a True Alpha) within 4 blocks of a player gives the spark away to fully heal them and cure hybrid venom and wolfsbane (all strains). The Alpha stays in the pack as a Beta of the heir. |
+| **Earned** | a Beta becomes a **True Alpha**, who keeps the spark for good |
 
 ### Becoming a True Alpha
 
@@ -78,6 +78,8 @@ Checked every minute (1200 ticks), for Betas in the werewolf faction:
 - **never stole a spark**
 
 There is **no limit** on True Alphas per world. When it happens: "Your eyes burn red: you have earned the spark. You are a True Alpha."
+
+A True Alpha **keeps the spark**: it cannot be stolen, inherited or given up. If they are cured or leave the werewolves they stay True Alpha, dormant (no attack or health perk, no `/pack invite`, `heal` or `emissary`). Their pack dissolves as for any Alpha and is **not** restored. Rejoining the werewolves brings the perks back.
 
 ## Packs and `/pack`
 
