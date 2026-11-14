@@ -42,6 +42,142 @@ class BloodlineRulesTest {
         assertTrue(o.actions().isEmpty());
     }
 
+    // ---- Ghouls and the turning (plan 11) ----
+
+    private static BloodlineState ghoul() {
+        return BloodlineState.NONE.toBuilder().ghoul(true).build();
+    }
+
+    private static BloodlineState turning() {
+        return BloodlineState.NONE.toBuilder().turningTicksLeft(24000).build();
+    }
+
+    @Test
+    void sanguinareFinishedMakesGhoul() {
+        Outcome o = run(BloodlineState.NONE, SANGUINARE_FINISHED, ctx());
+        assertFalse(o.refused());
+        assertTrue(o.state().ghoul());
+        assertEquals(Species.NONE, o.state().species());
+        assertTrue(o.actions().isEmpty());
+    }
+
+    @Test
+    void sanguinareFinishedChangesNothingForAVampireSpeciesOrAnExistingFaction() {
+        for (Species sp : new Species[] {Species.ORIGINAL, Species.ORIGINAL_HYBRID, Species.HYBRID, Species.TRIBRID, Species.HERETIC}) {
+            assertNoChange(run(st(sp), SANGUINARE_FINISHED, ctx()), st(sp));
+        }
+        // an existing vampire (faction already joined) is never made a ghoul
+        assertNoChange(run(BloodlineState.NONE, SANGUINARE_FINISHED, ctx().withFaction(BaseFaction.VAMPIRE)), BloodlineState.NONE);
+        assertNoChange(run(BloodlineState.NONE, SANGUINARE_FINISHED, ctx().withFaction(BaseFaction.WEREWOLF)), BloodlineState.NONE);
+        assertNoChange(run(ghoul(), SANGUINARE_FINISHED, ctx().withFaction(BaseFaction.VAMPIRE)), ghoul());
+    }
+
+    @Test
+    void witchAndSiphonerBecomeGhoulsToo() {
+        assertTrue(run(st(Species.WITCH), SANGUINARE_FINISHED, ctx()).state().ghoul());
+        assertTrue(run(st(Species.SIPHONER), SANGUINARE_FINISHED, ctx()).state().ghoul());
+    }
+
+    @Test
+    void drankVampireBloodSetsExpiry() {
+        Outcome o = run(BloodlineState.NONE, DRANK_VAMPIRE_BLOOD, ctx().withGameTime(100).withVampireBloodTicks(500));
+        assertEquals(600, o.state().vampireBloodUntil());
+        // drinking again renews it
+        assertEquals(900, run(o.state(), DRANK_VAMPIRE_BLOOD, ctx().withGameTime(400).withVampireBloodTicks(500)).state().vampireBloodUntil());
+    }
+
+    @Test
+    void drankVampireBloodDoesNothingForThoseWhoCannotTurn() {
+        assertNoChange(run(BloodlineState.NONE, DRANK_VAMPIRE_BLOOD, ctx().withFaction(BaseFaction.VAMPIRE)), BloodlineState.NONE);
+        assertNoChange(run(BloodlineState.NONE, DRANK_VAMPIRE_BLOOD, ctx().withFaction(BaseFaction.WEREWOLF)), BloodlineState.NONE);
+        assertNoChange(run(BloodlineState.NONE, DRANK_VAMPIRE_BLOOD, ctx().withFaction(BaseFaction.HUNTER)), BloodlineState.NONE);
+        // a ghoul is in the faction and can still turn
+        assertEquals(24000, run(ghoul(), DRANK_VAMPIRE_BLOOD, ctx().withFaction(BaseFaction.VAMPIRE)).state().vampireBloodUntil());
+    }
+
+    @Test
+    void diedWithVampireBloodStartsTurning() {
+        BloodlineState marked = BloodlineState.NONE.toBuilder().vampireBloodUntil(1000).build();
+        Outcome o = run(marked, DIED_WITH_VAMPIRE_BLOOD, ctx().withGameTime(999).withTransitionTicks(7777));
+        assertFalse(o.refused());
+        assertEquals(7777, o.state().turningTicksLeft());
+        assertTrue(o.state().inTurning());
+        assertEquals(0, o.state().vampireBloodUntil());
+        assertFalse(o.state().inTransition());
+        assertTrue(o.actions().isEmpty());
+        // a ghoul turns the same way
+        assertTrue(run(marked.toBuilder().ghoul(true).build(), DIED_WITH_VAMPIRE_BLOOD,
+                ctx().withFaction(BaseFaction.VAMPIRE).withGameTime(5)).state().inTurning());
+    }
+
+    @Test
+    void expiredVampireBloodNoTransition() {
+        BloodlineState marked = BloodlineState.NONE.toBuilder().vampireBloodUntil(1000).build();
+        assertNoChange(run(marked, DIED_WITH_VAMPIRE_BLOOD, ctx().withGameTime(1000)), marked);
+        assertNoChange(run(marked, DIED_WITH_VAMPIRE_BLOOD, ctx().withGameTime(5000)), marked);
+        assertNoChange(run(BloodlineState.NONE, DIED_WITH_VAMPIRE_BLOOD, ctx()), BloodlineState.NONE);
+    }
+
+    @Test
+    void vampireBloodDuringHybridTransitionIgnored() {
+        BloodlineState s = BloodlineState.NONE.toBuilder().vampireBloodUntil(1000).inTransition(true).transitionTicksLeft(500).build();
+        assertNoChange(run(s, DIED_WITH_VAMPIRE_BLOOD, ctx().withFaction(BaseFaction.WEREWOLF).withGameTime(1)), s);
+        assertNoChange(run(s, DIED_WITH_VAMPIRE_BLOOD, ctx().withGameTime(1)), s);
+    }
+
+    @Test
+    void diedWithVampireBloodOnlyStartsOneTurning() {
+        BloodlineState s = turning().toBuilder().turningTicksLeft(300).vampireBloodUntil(1000).build();
+        assertNoChange(run(s, DIED_WITH_VAMPIRE_BLOOD, ctx().withGameTime(1)), s);
+    }
+
+    @Test
+    void diedWithVampireBloodDoesNothingForVampiresWerewolvesAndHunters() {
+        BloodlineState marked = BloodlineState.NONE.toBuilder().vampireBloodUntil(1000).build();
+        for (BaseFaction f : new BaseFaction[] {BaseFaction.VAMPIRE, BaseFaction.WEREWOLF, BaseFaction.HUNTER}) {
+            assertNoChange(run(marked, DIED_WITH_VAMPIRE_BLOOD, ctx().withFaction(f).withGameTime(1)), marked);
+        }
+    }
+
+    @Test
+    void turningFedCompletes() {
+        BloodlineState s = turning();
+        Outcome o = run(s, TURNING_FED, ctx());
+        assertFalse(o.refused());
+        assertEquals(0, o.state().turningTicksLeft());
+        assertFalse(o.state().ghoul());
+        assertEquals(List.of(Action.JOIN_VAMPIRE), o.actions());
+    }
+
+    @Test
+    void turningFedClearsAGhoulWithoutAJoin() {
+        BloodlineState s = turning().toBuilder().ghoul(true).build();
+        Outcome o = run(s, TURNING_FED, ctx().withFaction(BaseFaction.VAMPIRE));
+        assertFalse(o.state().ghoul());
+        assertFalse(o.state().inTurning());
+        assertTrue(o.actions().isEmpty());
+    }
+
+    @Test
+    void turningFedOutsideTheTurningDoesNothing() {
+        assertNoChange(run(BloodlineState.NONE, TURNING_FED, ctx()), BloodlineState.NONE);
+        assertNoChange(run(ghoul(), TURNING_FED, ctx().withFaction(BaseFaction.VAMPIRE)), ghoul());
+    }
+
+    @Test
+    void turningFailedEnds() {
+        Outcome o = run(turning().toBuilder().ghoul(true).build(), TURNING_FAILED, ctx().withFaction(BaseFaction.VAMPIRE));
+        assertEquals(0, o.state().turningTicksLeft());
+        assertTrue(o.state().ghoul()); // a ghoul stays a ghoul
+        assertEquals(List.of(Action.KILL_PLAYER), o.actions());
+        assertFalse(run(turning(), TURNING_FAILED, ctx()).state().ghoul());
+    }
+
+    @Test
+    void turningFailedOutsideTheTurningDoesNothing() {
+        assertNoChange(run(BloodlineState.NONE, TURNING_FAILED, ctx()), BloodlineState.NONE);
+    }
+
     // ---- Immortality ----
 
     @Test

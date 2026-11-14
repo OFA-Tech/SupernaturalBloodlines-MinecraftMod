@@ -86,7 +86,7 @@ public final class BloodlineAccess {
     public static BloodlineState clientView(BloodlineState s, boolean viewerIsSubject) {
         // the layer's tracking is server business (which skills this mod granted), not something to send out
         BloodlineState stripped = s.withTrackingOf(BloodlineState.NONE);
-        BloodlineState.Builder b = stripped.toBuilder().pendingSire(null)
+        BloodlineState.Builder b = stripped.toBuilder().pendingSire(null).vampireBloodUntil(0)
                 .wolf(stripped.wolf().toBuilder().latentGene(false).geneRolled(false).build());
         if (!viewerIsSubject) {
             b.sire(null);
@@ -130,6 +130,7 @@ public final class BloodlineAccess {
         if (before.species() == after.species() && before.wolf().lineage() == after.wolf().lineage()
                 && before.wolf().rank() == after.wolf().rank() && before.wolf().killedInnocent() == after.wolf().killedInnocent()
                 && before.markKills() == after.markKills()
+                && before.ghoul() == after.ghoul() && before.inTurning() == after.inTurning()
                 && Objects.equals(before.sire(), after.sire()) && before.bondBroken() == after.bondBroken()
                 && Objects.equals(before.wolf().packAlpha(), after.wolf().packAlpha())) {
             return;

@@ -25,15 +25,19 @@ import java.util.UUID;
  * @param severedSire     the sire the bond was broken from by the Rite of Severance (R101b); kept only while it is still the {@code sire}.
  *                        The sire stays for the family tree and the sireline death (blood); only the bond (what the sire can do to or through
  *                        the sired) is gone. See {@link #bondBroken()}.
+ * @param ghoul           a Sanguinare that finished made this player a Ghoul: stuck at Vampirism level 1 until the turning is done (plan 11)
+ * @param vampireBloodUntil game time until which vampire blood is in the player's system; 0 = none (server only: not sent to clients)
+ * @param turningTicksLeft online ticks left to drink human-like blood after dying with vampire blood; 0 = not in the turning
  */
 public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID sire, boolean inTransition,
                              boolean unstable, long transitionTicksLeft, @Nullable UUID pendingSire,
                              int siphonedPower, long turnedAt, int thirst, @Nullable String previousRace,
                              int markKills, boolean hunterCurse, long lastVampireKill, boolean hybridCurseBound,
-                             WolfState wolf, Set<String> layerSkills, @Nullable UUID severedSire) {
+                             WolfState wolf, Set<String> layerSkills, @Nullable UUID severedSire,
+                             boolean ghoul, long vampireBloodUntil, int turningTicksLeft) {
 
     public static final BloodlineState NONE = new BloodlineState(Species.NONE, false, null, false, false, 0, null,
-            0, 0, 20, null, 0, false, 0, false, WolfState.NONE, Set.of(), null);
+            0, 0, 20, null, 0, false, 0, false, WolfState.NONE, Set.of(), null, false, 0, 0);
 
     // RecordCodecBuilder groups at most 16 fields, so layer_skills is a second map codec merged in by the pair below
     private static final MapCodec<BloodlineState> BASE_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -56,29 +60,36 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
     ).apply(i, (species, witch, sire, inTransition, unstable, ticks, pending, power, turnedAt, thirst, prev,
                 markKills, curse, lastKill, bound, wolf) -> new BloodlineState(species, witch, sire.orElse(null),
             inTransition, unstable, ticks, pending.orElse(null), power, turnedAt, thirst, prev.orElse(null),
-            markKills, curse, lastKill, bound, wolf, Set.of(), null)));
+            markKills, curse, lastKill, bound, wolf, Set.of(), null, false, 0L, 0)));
 
-    /** The fields past the 16-field cap of a record codec group: the layer tracking and the severed sire. */
-    private record Extra(java.util.List<String> layerSkills, @Nullable UUID severedSire) {}
+    /** The fields past the 16-field cap of a record codec group: the layer tracking, the severed sire and the turning (plan 11). */
+    private record Extra(java.util.List<String> layerSkills, @Nullable UUID severedSire, boolean ghoul, long vampireBloodUntil,
+                         int turningTicksLeft) {}
 
     private static final MapCodec<Extra> EXTRA_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             Codec.STRING.listOf().lenientOptionalFieldOf("layer_skills", java.util.List.of()).forGetter(Extra::layerSkills),
-            BloodlineCodecs.UUID_CODEC.lenientOptionalFieldOf("severed_sire").forGetter(e -> Optional.ofNullable(e.severedSire()))
-    ).apply(i, (skills, severed) -> new Extra(skills, severed.orElse(null))));
+            BloodlineCodecs.UUID_CODEC.lenientOptionalFieldOf("severed_sire").forGetter(e -> Optional.ofNullable(e.severedSire())),
+            Codec.BOOL.lenientOptionalFieldOf("ghoul", false).forGetter(Extra::ghoul),
+            Codec.LONG.lenientOptionalFieldOf("vampire_blood_until", 0L).forGetter(Extra::vampireBloodUntil),
+            Codec.INT.lenientOptionalFieldOf("turning_ticks_left", 0).forGetter(Extra::turningTicksLeft)
+    ).apply(i, (skills, severed, ghoul, until, turning) -> new Extra(skills, severed.orElse(null), ghoul, until, turning)));
 
     public static final Codec<BloodlineState> CODEC = Codec.mapPair(BASE_CODEC, EXTRA_CODEC).codec().xmap(
             p -> p.getFirst().toBuilder().layerSkills(new HashSet<>(p.getSecond().layerSkills()))
-                    .severedSire(p.getSecond().severedSire()).build(),
+                    .severedSire(p.getSecond().severedSire()).ghoul(p.getSecond().ghoul())
+                    .vampireBloodUntil(p.getSecond().vampireBloodUntil()).turningTicksLeft(p.getSecond().turningTicksLeft()).build(),
             s -> {
                 var sorted = new ArrayList<>(s.layerSkills());
                 Collections.sort(sorted);
-                return Pair.of(s, new Extra(sorted, s.severedSire()));
+                return Pair.of(s, new Extra(sorted, s.severedSire(), s.ghoul(), s.vampireBloodUntil(), s.turningTicksLeft()));
             });
 
     public BloodlineState {
         species = species == null ? Species.NONE : species;
         thirst = Math.max(0, Math.min(20, thirst));
         wolf = wolf == null ? WolfState.NONE : wolf;
+        vampireBloodUntil = Math.max(0, vampireBloodUntil);
+        turningTicksLeft = Math.max(0, turningTicksLeft);
         layerSkills = layerSkills == null ? Set.of() : Set.copyOf(layerSkills);
         // a severance only means something against the sire it was done to: a new sire, or none, ends it
         severedSire = sire != null && sire.equals(severedSire) ? severedSire : null;
@@ -93,6 +104,11 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
     @Nullable
     public UUID boundSire() {
         return bondBroken() ? null : sire;
+    }
+
+    /** In the turning (plan 11): died with vampire blood and now has until {@code turningTicksLeft} runs out to drink human-like blood. */
+    public boolean inTurning() {
+        return turningTicksLeft > 0;
     }
 
     public Builder toBuilder() {
@@ -128,6 +144,9 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
         private WolfState wolf;
         private Set<String> layerSkills;
         private UUID severedSire;
+        private boolean ghoul;
+        private long vampireBloodUntil;
+        private int turningTicksLeft;
 
         private Builder(BloodlineState s) {
             species = s.species;
@@ -148,6 +167,9 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
             wolf = s.wolf;
             layerSkills = s.layerSkills;
             severedSire = s.severedSire;
+            ghoul = s.ghoul;
+            vampireBloodUntil = s.vampireBloodUntil;
+            turningTicksLeft = s.turningTicksLeft;
         }
 
         public Builder species(Species v) { species = v; return this; }
@@ -168,11 +190,14 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
         public Builder wolf(WolfState v) { wolf = v; return this; }
         public Builder layerSkills(Set<String> v) { layerSkills = v; return this; }
         public Builder severedSire(@Nullable UUID v) { severedSire = v; return this; }
+        public Builder ghoul(boolean v) { ghoul = v; return this; }
+        public Builder vampireBloodUntil(long v) { vampireBloodUntil = v; return this; }
+        public Builder turningTicksLeft(int v) { turningTicksLeft = v; return this; }
 
         public BloodlineState build() {
             return new BloodlineState(species, witchLayer, sire, inTransition, unstable, transitionTicksLeft,
                     pendingSire, siphonedPower, turnedAt, thirst, previousRace, markKills, hunterCurse,
-                    lastVampireKill, hybridCurseBound, wolf, layerSkills, severedSire);
+                    lastVampireKill, hybridCurseBound, wolf, layerSkills, severedSire, ghoul, vampireBloodUntil, turningTicksLeft);
         }
     }
 }

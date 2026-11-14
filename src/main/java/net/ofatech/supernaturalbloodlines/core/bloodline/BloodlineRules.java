@@ -54,7 +54,53 @@ public final class BloodlineRules {
             case KILLED_MARKED_HUNTER -> isPrey(s, c) ? Outcome.of(s.toBuilder().hunterCurse(true).build()) : unchanged(s);
             case HUNTER_CURSE_LIFTED -> Outcome.of(s.toBuilder().hunterCurse(false).build());
             case RITE_OF_SEVERANCE -> severance(s, c);
+            case SANGUINARE_FINISHED -> sanguinareFinished(s, c);
+            case DRANK_VAMPIRE_BLOOD -> canTurn(s, c)
+                    ? Outcome.of(s.toBuilder().vampireBloodUntil(c.gameTime() + c.vampireBloodTicks()).build()) : unchanged(s);
+            case DIED_WITH_VAMPIRE_BLOOD -> diedWithVampireBlood(s, c);
+            case TURNING_FED -> turningFed(s, c);
+            case TURNING_FAILED -> s.inTurning()
+                    ? Outcome.of(s.toBuilder().turningTicksLeft(0).build(), Action.KILL_PLAYER) : unchanged(s);
         };
+    }
+
+    // ---- Ghouls and the turning (plan 11) ----
+
+    /**
+     * Vampirism's own route (bite, fang, MedChair, Totem) leaves a Ghoul. Only for someone who is not in a faction yet: the caller
+     * applies it before Vampirism joins the faction, and an existing vampire is never made a Ghoul.
+     */
+    private static Outcome sanguinareFinished(BloodlineState s, BloodlineContext c) {
+        if (s.ghoul() || c.faction() != BaseFaction.NONE || isVampireSpecies(s.species())) {
+            return unchanged(s);
+        }
+        return Outcome.of(s.toBuilder().ghoul(true).build());
+    }
+
+    private static boolean isVampireSpecies(Species sp) {
+        return isOriginal(sp) || sp == Species.HYBRID || sp == Species.TRIBRID || sp == Species.HERETIC;
+    }
+
+    /** Someone the turning can still make a vampire: in no faction, or a Ghoul (who is already in the vampire faction). */
+    private static boolean canTurn(BloodlineState s, BloodlineContext c) {
+        return c.faction() == BaseFaction.NONE || s.ghoul() && c.faction() == BaseFaction.VAMPIRE;
+    }
+
+    /** Needs unexpired vampire blood. The hybrid transition (R40) wins over it, and a turning already running is not restarted. */
+    private static Outcome diedWithVampireBlood(BloodlineState s, BloodlineContext c) {
+        if (!canTurn(s, c) || s.inTransition() || s.inTurning() || c.gameTime() >= s.vampireBloodUntil()) {
+            return unchanged(s);
+        }
+        return Outcome.of(s.toBuilder().vampireBloodUntil(0).turningTicksLeft((int) Math.min(Integer.MAX_VALUE, c.transitionTicks())).build());
+    }
+
+    /** Human-like blood drunk in the turning: a Ghoul only loses the flag, anyone else joins the vampires. */
+    private static Outcome turningFed(BloodlineState s, BloodlineContext c) {
+        if (!s.inTurning()) {
+            return unchanged(s);
+        }
+        BloodlineState done = s.toBuilder().turningTicksLeft(0).ghoul(false).build();
+        return c.faction() == BaseFaction.VAMPIRE ? Outcome.of(done) : Outcome.of(done, Action.JOIN_VAMPIRE);
     }
 
     /**
