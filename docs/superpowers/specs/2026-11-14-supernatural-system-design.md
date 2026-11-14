@@ -466,7 +466,7 @@ The largest single ladder pays about 13% of one apex evolution's 2,000,000 EP; a
 | S-HUM-3 | Swift Feet | 2 | ATTR | +5% movement speed while Human or Hunter |
 | S-VAM-1 | Keen Fangs | 1 | BLOOD | +1 Vampirism blood per human-like feed |
 | S-VAM-2 | Night Stride | 2 | ATTR | +5% movement speed at night |
-| S-VAM-3 | Silver Tongue | 2 | RULE | compulsion range 4 → 6 blocks; villager discount 20% → 30% |
+| S-VAM-3 | Silver Tongue | 2 | RULE | compulsion lasts 1.5× as long; villager discount 20% → 30% (capped by vanilla gossip) *(2026-11-14: the old "range 4 → 6" can't be reached, the vanilla interaction reach is ~4 blocks and raising it would also lengthen melee reach; draft, owner to patch)* |
 | S-VAM-4 | Hardened | 3 | ATTR | +2 max health |
 | S-VAM-5 | Blood Mist | 3 | TENSURA | `tensura:blood_mist` (for a tree whose layer doesn't already grant it) |
 | S-VAM-6 | **Predator's Thirst** (the vampire-feeding skill) | 4 + Q-VAM-6 | BLOOD | see below |
