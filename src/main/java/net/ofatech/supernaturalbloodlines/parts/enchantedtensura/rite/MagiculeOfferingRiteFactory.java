@@ -1,6 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.enchantedtensura.rite;
 
-import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -72,7 +71,6 @@ public record MagiculeOfferingRiteFactory(double magicules, int count) implement
             existence.markDirty();
             level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5,
                     new ItemStack(PartItems.CONDENSED_MAGICULE.get(), count)));
-            TaskSignals.rite(caster instanceof ServerPlayer offerer ? offerer : null, null, "supernaturalbloodlines:magicule_offering");
             return false;
         }
     }

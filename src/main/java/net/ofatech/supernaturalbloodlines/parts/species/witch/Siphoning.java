@@ -134,7 +134,7 @@ public final class Siphoning {
         }
         ENTITIES.tryUse(p.getUUID(), target.getUUID(), now, COOLDOWN_TICKS);
         gain(p);
-        TaskSignals.fire(p, "siphon_entity", 1, Map.of("prey", String.valueOf(Supernatural.isPrey(target))));
+        TaskSignals.fire(p, "siphon_entity", 1, Map.of("prey", String.valueOf(Supernatural.isPrey(target)), "vampiric", String.valueOf(Supernatural.isVampiric(target))));
         return true;
     }
 

@@ -1,6 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
-import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
 import com.mojang.serialization.MapCodec;
 import java.util.List;
@@ -73,7 +72,6 @@ public record AncestralCallingRiteFactory() implements RiteFactory {
                 return cancel();
             }
             BloodlineAccess.applyEvent(target, event, ctx);
-            TaskSignals.rite(findEntity(params.caster) instanceof ServerPlayer c ? c : target, target, ID.toString());
             return false;
         }
     }

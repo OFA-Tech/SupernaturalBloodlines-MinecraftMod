@@ -28,7 +28,7 @@ public record TaskSpec(String id, @Nullable Detector detector, Map<String, Strin
         FEED(true, 1, List.of(), List.of()),
         KILL(true, 1, List.of("category"), List.of()),
         RITE(true, 1, List.of("rite", "role"), List.of("other")),
-        SIGNAL(true, 1, List.of("signal"), List.of("prey")),
+        SIGNAL(true, 1, List.of("signal"), List.of("prey", "vampiric")),
         ITEM_USE(true, 1, List.of("item"), List.of()),
         SIRED(false, 1, List.of(), List.of()),
         DAYS_AS(false, 1, List.of("race"), List.of()),

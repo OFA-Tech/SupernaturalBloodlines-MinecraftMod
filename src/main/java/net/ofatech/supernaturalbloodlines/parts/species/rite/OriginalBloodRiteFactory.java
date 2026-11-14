@@ -1,6 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
-import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
 import com.mojang.serialization.MapCodec;
 import java.util.List;
@@ -63,7 +62,6 @@ public record OriginalBloodRiteFactory() implements RiteFactory {
             ItemStack blood = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
             blood.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), target.getUUID());
             level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, blood));
-            TaskSignals.rite(findEntity(params.caster) instanceof ServerPlayer c ? c : target, target, ID.toString());
             return false;
         }
     }

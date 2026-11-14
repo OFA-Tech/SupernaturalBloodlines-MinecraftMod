@@ -95,5 +95,11 @@ public final class MountainAsh {
             }
         });
         MountainAshRules.register();
+        // last, and not for a cancelled placement: a line that was really laid by a player counts for the Witch ladder
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, (net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent e) -> {
+            if (!e.isCanceled() && e.getEntity() instanceof net.minecraft.world.entity.player.Player p && e.getPlacedBlock().is(LINE.get())) {
+                net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals.fire(p, "mountain_ash_placed", 1);
+            }
+        });
     }
 }

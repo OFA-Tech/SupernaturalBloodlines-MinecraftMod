@@ -180,6 +180,16 @@ class LadderTableTest {
     }
 
     @Test
+    void totalIsRejectedOnThirstDays() {
+        String thirst = GOOD.replace("{ \"id\": \"A-1a\", \"detector\": \"feed\", \"n\": 4 }",
+                "{ \"id\": \"A-1a\", \"detector\": \"thirst_days\", \"min\": \"15\", \"n\": 3, \"total\": true }");
+        LadderTable.Parsed p = parse("vampire", thirst);
+        assertEquals(1, p.rejected().size());
+        assertTrue(p.rejected().get(0).contains("thirst_days"), p.rejected().get(0));
+        assertEquals(0, parse("vampire", thirst.replace(", \"total\": true", "")).rejected().size());
+    }
+
+    @Test
     void aValueOfTheWrongKindRejectsTheFileInsteadOfCrashing() {
         LadderTable.Parsed p = parse("vampire", GOOD.replace("\"n\": 4", "\"n\": 4, \"total\": \"yes please\""));
         assertEquals(1, p.rejected().size());

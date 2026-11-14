@@ -6,7 +6,7 @@
             { "id": "L-HER-1b", "detector": "signal", "signal": "siphon_power", "n": 2000, "total": true }
         ] },
         { "id": "L-HER-2", "name": "Thief of Craft", "sp": 3, "ep": 15000, "tasks": [
-            { "id": "L-HER-2a", "detector": "signal", "signal": "siphon_entity", "prey": "true", "n": 3 },
+            { "id": "L-HER-2a", "detector": "signal", "signal": "siphon_entity", "vampiric": "true", "n": 3, "part": "vampirismEnchanted" },
             { "id": "L-HER-2b", "detector": "feed", "n": 15 }
         ] },
         { "id": "L-HER-3", "name": "Coven of Heretics", "sp": 4, "ep": 30000, "tasks": [

@@ -1,6 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
-import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
 import com.mojang.serialization.MapCodec;
 import java.util.List;
@@ -62,7 +61,6 @@ public record HybridBloodRiteFactory() implements RiteFactory {
             }
             level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5,
                     new ItemStack(SpeciesRegistries.HYBRID_BLOOD.get())));
-            TaskSignals.rite(findEntity(params.caster) instanceof ServerPlayer c ? c : target, target, ID.toString());
             return false;
         }
     }

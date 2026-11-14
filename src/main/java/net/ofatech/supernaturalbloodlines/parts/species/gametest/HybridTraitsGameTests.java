@@ -37,6 +37,8 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
@@ -283,6 +285,27 @@ public final class HybridTraitsGameTests {
     }
 
     // ---- venom ----
+
+    /** The fire point of {@code venom_hit} is the venom itself: a real bite on a real vampire, no direct signal. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVenomBiteCountsForTheLadder(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer wolf = werewolf(helper);
+        ServerPlayer victim = vampire(helper);
+        BloodlineAccess.set(wolf, BloodlineState.NONE.toBuilder().species(Species.HYBRID).build());
+        SupernaturalAccess.set(wolf, SupernaturalAccess.get(wolf).toBuilder().rung(SupernaturalRace.HYBRID, 2).build());
+        bite(wolf, victim);
+        helper.assertTrue(victim.hasEffect(SpeciesRegistries.HYBRID_VENOM), "setup: no venom");
+        helper.assertTrue(SupernaturalAccess.get(wolf).counters().getOrDefault("L-HYB-3a", 0L) == 1,
+                "the venom did not count for L-HYB-3a: " + SupernaturalAccess.get(wolf).counters());
+        ServerPlayer human = TestPlayers.createDuelist(helper);
+        bite(wolf, human);
+        helper.assertTrue(SupernaturalAccess.get(wolf).counters().getOrDefault("L-HYB-3a", 0L) == 1, "a bite on a human counted");
+        helper.succeed();
+    }
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void venomPoisonsVampire(GameTestHelper helper) {

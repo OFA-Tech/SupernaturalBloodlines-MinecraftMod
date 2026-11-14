@@ -238,8 +238,8 @@ public final class LadderTable {
             throw new BadData("task " + id + ": total must be true or false");
         }
         boolean total = o.has("total") && o.get("total").getAsBoolean();
-        if (total && !detector.counting()) {
-            throw new BadData("task " + id + ": total only makes sense for a counting detector");
+        if (total && (!detector.counting() || detector == TaskSpec.Detector.THIRST_DAYS)) {
+            throw new BadData("task " + id + ": total only makes sense for a counting detector that is not thirst_days");
         }
         String mod = o.has("mod") ? string(o, "mod") : null;
         String part = o.has("part") ? string(o, "part") : null;

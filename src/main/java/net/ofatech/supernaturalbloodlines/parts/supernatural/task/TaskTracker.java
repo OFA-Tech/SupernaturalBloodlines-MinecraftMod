@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.function.Function;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderRules;
@@ -33,6 +34,11 @@ public final class TaskTracker {
     public static final int PERIOD = 200;
 
     private TaskTracker() {
+    }
+
+    /** Mods that drive a FakePlayer (deployers, turrets) must not climb ladders for their owners. */
+    private static boolean tracked(ServerPlayer p) {
+        return SupernaturalAccess.tracksFakePlayers() || !(p instanceof FakePlayer);
     }
 
     /** Creature race, then the magic race if there is one. */
@@ -121,6 +127,9 @@ public final class TaskTracker {
     }
 
     private static void run(ServerPlayer p, Function<SupernaturalState, List<TaskEvent>> eventsFor) {
+        if (!tracked(p)) {
+            return;
+        }
         LadderTable table = LadderTable.current();
         SupernaturalState before = SupernaturalAccess.get(p);
         List<SupernaturalRace> races = races(p);
@@ -136,6 +145,9 @@ public final class TaskTracker {
 
     /** The first time a race is seen, now is when the player became it (migration may know better). */
     private static SupernaturalState stamped(SupernaturalState s, List<SupernaturalRace> races, long now) {
+        if (s.schema() == 0) {
+            return s; // not migrated yet: the migration knows when the player really became this race (turnedAt), "now" would be wrong
+        }
         Map<String, Long> since = null;
         for (SupernaturalRace race : races) {
             if (!s.raceSince().containsKey(race.id())) {

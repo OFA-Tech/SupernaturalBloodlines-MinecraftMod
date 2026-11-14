@@ -6,6 +6,9 @@ import de.teamlapen.vampirism.api.event.BloodDrinkEvent;
 import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -33,6 +36,7 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
  */
 public final class Detectors {
     private static boolean registered;
+    private static final Set<UUID> DYING = ConcurrentHashMap.newKeySet();
 
     private Detectors() {
     }
@@ -70,11 +74,32 @@ public final class Detectors {
             }
         });
         NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> {
-            if (e.getEntity() instanceof ServerPlayer p && p.tickCount % TaskTracker.PERIOD == 0) {
-                TaskTracker.periodic(p);
+            if (e.getEntity() instanceof ServerPlayer p) {
+                if (p.tickCount % TaskTracker.PERIOD == 0) {
+                    TaskTracker.periodic(p);
+                }
+                checkDyingEnded(p);
             }
         });
+        // Vampirism has no event for the dying state, so a player is watched from the moment it starts (a cancelled death while
+        // isDBNO) to the moment it ends: only those players are checked each tick, nobody else
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, (LivingDeathEvent e) -> {
+            if (e.isCanceled() && e.getEntity() instanceof ServerPlayer p && VampirismAPI.vampirePlayer(p).isDBNO()) {
+                DYING.add(p.getUUID());
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> DYING.remove(e.getEntity().getUUID()));
         TaskSignals.addListener(Detectors::onSignal);
+    }
+
+    /** The dying state of a player in Vampirism's DBNO is over: if they are alive they came back (R32). */
+    private static void checkDyingEnded(ServerPlayer p) {
+        if (!DYING.isEmpty() && DYING.contains(p.getUUID()) && !VampirismAPI.vampirePlayer(p).isDBNO()) {
+            DYING.remove(p.getUUID());
+            if (p.isAlive() && p.getHealth() > 0) {
+                TaskSignals.fire(p, "dying_survived", 1);
+            }
+        }
     }
 
     /** A vampire drank from someone whose blood is human-like. */

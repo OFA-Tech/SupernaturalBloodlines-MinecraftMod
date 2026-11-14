@@ -26,7 +26,18 @@ public final class SupernaturalAccess {
     // server thread only
     private static final Map<UUID, ServerPlayer> DIRTY = new LinkedHashMap<>();
 
+    private static volatile boolean trackFakePlayers;
+
     private SupernaturalAccess() {
+    }
+
+    /** For the GameTest server only, whose players are all FakePlayers: lets them climb ladders. A real server never sets it. */
+    public static void trackFakePlayers(boolean track) {
+        trackFakePlayers = track;
+    }
+
+    public static boolean tracksFakePlayers() {
+        return trackFakePlayers;
     }
 
     public static SupernaturalState get(Player p) {

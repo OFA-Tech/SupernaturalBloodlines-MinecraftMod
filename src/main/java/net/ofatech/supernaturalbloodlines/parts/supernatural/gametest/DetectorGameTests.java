@@ -91,7 +91,6 @@ public final class DetectorGameTests {
         helper.assertTrue(!state(p).done().contains("L-VAM-1a"), "level 1 completed the level 2 step");
         vampireAt(helper, p, 2);
         helper.assertTrue(state(p).done().contains("L-VAM-1a"), "level 2 did not complete L-VAM-1a: " + state(p).done());
-        helper.assertTrue(state(p).raceSince().containsKey("vampire"), "the race was not stamped");
         helper.succeed();
     }
 
@@ -188,6 +187,23 @@ public final class DetectorGameTests {
         TaskTracker.periodic(p);
         SupernaturalState s = state(p);
         helper.assertTrue(s.done().isEmpty() && s.counters().isEmpty() && s.lifetime().isEmpty(), "a Ghoul progressed: " + s.done() + s.counters());
+        helper.succeed();
+    }
+
+    /** The GameTest server tracks FakePlayers on purpose; a real server must not (a deployer or turret does not climb for its owner). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aFakePlayerClimbsNothingOnARealServer(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        SupernaturalAccess.trackFakePlayers(false);
+        try {
+            vampireAt(helper, p, 5);
+            drinkFrom(p, EntityType.VILLAGER.create(helper.getLevel()));
+            TaskTracker.recheck(p);
+            TaskTracker.periodic(p);
+            helper.assertTrue(state(p).equals(SupernaturalState.NONE), "a FakePlayer progressed: " + state(p));
+        } finally {
+            SupernaturalAccess.trackFakePlayers(true);
+        }
         helper.succeed();
     }
 

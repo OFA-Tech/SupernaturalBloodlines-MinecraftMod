@@ -114,6 +114,7 @@ class LadderSpecRowsTest {
             R L-WIT-2 3 10000
             T L-WIT-2a.1 rite %S%ward_of_daylight/performer 1
             T L-WIT-2a.2 rite %S%ward_of_the_moon/performer 1
+            T L-WIT-2a.3 rite %S%ward_of_return/performer 1
             T L-WIT-2b signal mountain_ash_placed 16
             R L-WIT-3 4 20000
             T L-WIT-3a state emissary 1

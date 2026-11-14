@@ -29,6 +29,8 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
@@ -281,6 +283,36 @@ public final class OriginalGameTests {
             helper.assertTrue(!Downed.isDowned(p), "still downed after " + Downed.TICKS + " ticks");
             helper.assertTrue(p.getHealth() == p.getMaxHealth() / 2, "health is " + p.getHealth() + " of " + p.getMaxHealth());
             helper.assertTrue(p.getAttributeValue(Attributes.MOVEMENT_SPEED) > 0.0, "the revived hybrid cannot walk");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * {@code dying_survived} for an Original is Vampirism's dying state ending with the player alive. The real lethal blow starts it; its
+     * timer is ended by hand (the private {@code setDBNOTimer}) and the next player tick is the one the detector watches. No direct signal.
+     */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void gettingUpFromTheDyingStateCountsForTheLadder(GameTestHelper helper) throws ReflectiveOperationException {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer p = original(helper, Species.ORIGINAL);
+        try {
+            SupernaturalAccess.set(p, SupernaturalAccess.get(p).toBuilder().rung(SupernaturalRace.ORIGINAL, 2).build());
+            p.hurt(hitBy(helper, zombie(helper, false)), 1000f);
+            helper.assertTrue(dbno(p), "the Original is not in Vampirism's dying state");
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.tick.PlayerTickEvent.Post(p));
+            helper.assertTrue(!SupernaturalAccess.get(p).done().contains("L-ORI-3a"), "counted while still dying");
+            var vampire = VampirismAPI.vampirePlayer(p);
+            var end = vampire.getClass().getDeclaredMethod("setDBNOTimer", int.class);
+            end.setAccessible(true);
+            end.invoke(vampire, -1); // isDBNO is "timer >= 0"
+            helper.assertTrue(!dbno(p) && p.isAlive(), "setup: the dying state did not end");
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.tick.PlayerTickEvent.Post(p));
+            helper.assertTrue(SupernaturalAccess.get(p).done().contains("L-ORI-3a"), "coming back did not complete L-ORI-3a: " + SupernaturalAccess.get(p).done());
         } finally {
             reset(p);
         }

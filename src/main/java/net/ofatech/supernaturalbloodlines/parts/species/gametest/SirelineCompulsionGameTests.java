@@ -30,6 +30,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.CompulsionImmunity;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
@@ -128,6 +130,32 @@ public final class SirelineCompulsionGameTests {
             Compulsion.expireDiscount(v, now + Compulsion.DISCOUNT_TICKS);
             helper.assertTrue(reputation(v, caster.getUUID()) == 0, "the discount did not end: " + reputation(v, caster.getUUID()));
             helper.assertTrue(!v.hasData(SpeciesRegistries.VILLAGER_DISCOUNT), "the record outlived the discount");
+        } finally {
+            cleanUp(caster);
+            Compulsion.clearGuard(caster.getUUID());
+            v.discard();
+        }
+        helper.succeed();
+    }
+
+    /** The fire point of {@code compel} is the choice itself: the real click and the real command, no direct signal. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void compellingAVillagerCountsForTheLadder(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer caster = caster(helper);
+        Villager v = villager(helper, 6);
+        try {
+            SupernaturalAccess.set(caster, SupernaturalAccess.get(caster).toBuilder().rung(SupernaturalRace.ORIGINAL, 2).build());
+            gaze(caster, v);
+            click(caster, v);
+            helper.assertTrue(SupernaturalAccess.get(caster).counters().getOrDefault("L-ORI-3b", 0L) == 0, "counted before the choice");
+            String token = token(helper, caster, v);
+            helper.assertTrue(run(caster, 0, new Capture(), "bloodline compel " + token + " discount") == 1, "the discount failed");
+            helper.assertTrue(SupernaturalAccess.get(caster).counters().getOrDefault("L-ORI-3b", 0L) == 1,
+                    "compelling did not count for L-ORI-3b: " + SupernaturalAccess.get(caster).counters());
         } finally {
             cleanUp(caster);
             Compulsion.clearGuard(caster.getUUID());

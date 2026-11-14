@@ -1,6 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts.rite;
 
-import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
 import com.mojang.serialization.MapCodec;
 import java.util.List;
@@ -59,8 +58,6 @@ public record RequiresDesiccatedRiteFactory() implements RiteFactory {
                 return cancel();
             }
             level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, new ItemStack(ArtifactItems.THE_CURE.get())));
-            TaskSignals.rite(findEntity(params.caster) instanceof ServerPlayer caster ? caster : null, null,
-                    SupernaturalBloodlines.MODID + ":rite_of_the_cure");
             return false;
         }
 

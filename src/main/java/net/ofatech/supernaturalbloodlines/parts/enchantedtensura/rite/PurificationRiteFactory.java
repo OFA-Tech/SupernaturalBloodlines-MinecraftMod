@@ -1,8 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.enchantedtensura.rite;
 
-import net.minecraft.server.level.ServerPlayer;
 
-import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -62,7 +60,6 @@ public record PurificationRiteFactory(float damage) implements RiteFactory {
                     e.hurt(source, damage);
                 }
             }
-            TaskSignals.rite(findEntity(params.caster) instanceof ServerPlayer caster ? caster : null, null, "supernaturalbloodlines:purification");
             return false;
         }
     }

@@ -167,6 +167,35 @@ class LadderDataTest {
     }
 
     @Test
+    void everyPreyTaskCarriesTheVampirismEnchantedPart() {
+        // "prey" is defined by vampirismEnchanted; with that part off these signals never come
+        int seen = 0;
+        LadderTable t = ShippedLadders.all();
+        for (SupernaturalRace race : SupernaturalRace.values()) {
+            for (Rung r : t.get(race).rungs()) {
+                for (TaskSpec top : r.tasks()) {
+                    for (TaskSpec leaf : top.leaves()) {
+                        boolean prey = "prey".equals(leaf.args().get("category")) || "true".equals(leaf.args().get("prey"))
+                                || "true".equals(leaf.args().get("vampiric")) || "prey_hit_survived".equals(leaf.args().get("signal"));
+                        if (prey) {
+                            seen++;
+                            assertEquals("vampirismEnchanted", leaf.part(), leaf.id());
+                        }
+                    }
+                }
+            }
+        }
+        assertTrue(seen >= 5, "the test found only " + seen + " prey tasks");
+    }
+
+    @Test
+    void theHereticsSiphonTaskIsVampireTypeOnly() {
+        TaskSpec her2a = ShippedLadders.all().find("L-HER-2a").orElseThrow().task();
+        assertEquals("true", her2a.args().get("vampiric"));
+        assertTrue(!her2a.args().containsKey("prey"), "a werewolf would count");
+    }
+
+    @Test
     void theShippedFilesGiveNoWarnings() {
         assertEquals(List.of(), LadderTable.parse(ShippedLadders.files(), mod -> true).warnings());
     }

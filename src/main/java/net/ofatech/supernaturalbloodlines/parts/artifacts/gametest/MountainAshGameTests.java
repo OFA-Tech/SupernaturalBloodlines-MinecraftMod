@@ -290,6 +290,29 @@ public final class MountainAshGameTests {
         helper.succeed();
     }
 
+    /** The fire point of {@code mountain_ash_placed} is the placement event: real dust used on a real floor, no direct signal. */
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void layingALineCountsForTheLadder(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer p = player(helper);
+        net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(p, net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState.NONE.toBuilder()
+                .species(net.ofatech.supernaturalbloodlines.core.bloodline.Species.WITCH).build());
+        net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.set(p, net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.get(p).toBuilder()
+                .rung(net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace.WITCH, 1).build());
+        BlockPos floor = new BlockPos(2, 0, 1);
+        helper.setBlock(new BlockPos(2, 1, 1), Blocks.AIR);
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(MountainAsh.DUST.get(), 4));
+        BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(helper.absolutePos(floor)).add(0, 0.5, 0), Direction.UP, helper.absolutePos(floor), false);
+        InteractionResult result = p.getMainHandItem().useOn(new UseOnContext(helper.getLevel(), p, InteractionHand.MAIN_HAND, p.getMainHandItem(), hit));
+        helper.assertTrue(result.consumesAction(), "setup: the dust was not placed: " + result);
+        long counted = net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.get(p).counters().getOrDefault("L-WIT-2b", 0L);
+        helper.assertTrue(counted == 1, "a laid line counted " + counted + " times for L-WIT-2b");
+        helper.succeed();
+    }
+
     // ---- projectiles ----
 
     private static Arrow arrow(GameTestHelper helper, Entity owner) {
