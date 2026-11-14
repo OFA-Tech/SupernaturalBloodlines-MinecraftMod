@@ -232,6 +232,17 @@
   "supernaturalbloodlines.race.tribrid_ascendant.description": "A tribrid's apex form: vampire, wolf and witch, no longer at war.",
   "supernaturalbloodlines.race.eternal_hunter": "Eternal Hunter",
   "supernaturalbloodlines.race.eternal_hunter.description": "A Hunter of the Five's apex form: the mark made permanent.",
+  "item.supernaturalbloodlines.sires_blood": "Sire's Blood",
+  "item.supernaturalbloodlines.silver_dagger": "Silver Dagger",
+  "tooltip.supernaturalbloodlines.sires_blood": "Blood of %s",
+  "tooltip.supernaturalbloodlines.sires_blood.nobody": "Blood of nobody",
+  "rite.supernaturalbloodlines.rite_of_severance": "Rite of Severance",
+  "supernaturalbloodlines.rite.severance_done": "The bond is broken. Your sire no longer holds you.",
+  "supernaturalbloodlines.refusal.severance_not_witch": "Only a witch, siphoner, heretic or tribrid can break a bond.",
+  "supernaturalbloodlines.refusal.severance_no_blood": "The rite needs Sire's Blood.",
+  "supernaturalbloodlines.refusal.not_sired": "Nobody sired them: there is no bond to break.",
+  "supernaturalbloodlines.refusal.wrong_sire_blood": "That is not the blood of their sire.",
+  "supernaturalbloodlines.refusal.bond_already_broken": "Their bond is already broken.",
   "supernaturalbloodlines.sire_naming.no_evolution": "Naming your sired grants EP and stats only, never an evolution.",
   "supernaturalbloodlines.species_tensura.bad_config": "species_tensura: %s invalid entries in the config were ignored (see the server log)."
 }

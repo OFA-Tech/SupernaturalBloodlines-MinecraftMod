@@ -1,0 +1,15 @@
+{
+    "replace": false,
+    "values": [
+        "supernaturalbloodlines:silver_dagger",
+        { "id": "werewolves:silver_sword", "required": false },
+        { "id": "tensura:silver_short_sword", "required": false },
+        { "id": "tensura:silver_long_sword", "required": false },
+        { "id": "tensura:silver_great_sword", "required": false },
+        { "id": "tensura:silver_sword", "required": false },
+        { "id": "tensura:silver_katana", "required": false },
+        { "id": "tensura:silver_kodachi", "required": false },
+        { "id": "tensura:silver_odachi", "required": false },
+        { "id": "tensura:silver_tachi", "required": false }
+    ]
+}
