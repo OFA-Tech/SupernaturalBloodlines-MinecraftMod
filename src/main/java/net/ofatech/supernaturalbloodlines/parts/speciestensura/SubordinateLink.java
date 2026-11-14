@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -67,7 +68,22 @@ public final class SubordinateLink {
         if (!Objects.equals(change.before().boundSire(), change.after().boundSire())) {
             unlink(p);
         }
+        if (change.after().bondBroken()) {
+            freeFrom(p, change.before().boundSire());
+        }
         sync(p);
+    }
+
+    /**
+     * The owner a naming made (Tensura sets the permanent owner itself, with no stored link of ours) is part of the bond too: a
+     * severance clears it, but only when it is the severed sire. Someone else's owner stays, and so does the name.
+     */
+    private static void freeFrom(ServerPlayer p, @Nullable UUID severedSire) {
+        IExistence existence = TensuraStorages.getExistenceFrom(p);
+        if (severedSire != null && severedSire.equals(existence.getPermanentOwner())) {
+            existence.setPermanentOwner(null);
+            existence.markDirty();
+        }
     }
 
     private static void onSired(UUID sire, LivingEntity child) {

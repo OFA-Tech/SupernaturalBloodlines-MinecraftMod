@@ -41,6 +41,7 @@ public final class SeveranceRiteGameTests {
     private static final String RITE = "rite_of_severance";
     private static final String OTHERWHERE = "enchanted:spirit_of_otherwhere";
     private static final long FULL_MOON_CYCLE = 24000L * 8;
+    private static final long NIGHT = 14000;
 
     private SeveranceRiteGameTests() {}
 
@@ -48,7 +49,7 @@ public final class SeveranceRiteGameTests {
         ServerLevel level = helper.getLevel();
         long before = level.getDayTime();
         long base = before - Math.floorMod(before, FULL_MOON_CYCLE);
-        level.setDayTime(full ? base : base + 24000L * 4);
+        level.setDayTime(full ? base + NIGHT : base + 24000L * 4 + NIGHT);
         try {
             helper.assertTrue((level.getMoonPhase() == 0) == full, "could not set the moon, phase is " + level.getMoonPhase());
             body.run();
@@ -101,11 +102,11 @@ public final class SeveranceRiteGameTests {
         helper.succeed();
     }
 
-    /** Altar cost: 6000 power, a witch pays x0.75 (R61). Own height and batch, like the other altar tests. */
+    /** Altar cost: 6000 power, a witch pays x0.75 (R61). Own height (280: the others use 40, 80, 120, 160, 200 and 240) and batch, like the other altar tests. */
     @GameTest(template = "empty", templateNamespace = NS, batch = "severance_cost")
     public static void severanceCostsSixThousandAltarPower(GameTestHelper helper) {
         int power = type(helper, RITE).getPower();
-        BlockPos base = helper.absolutePos(new BlockPos(0, 160, 4));
+        BlockPos base = helper.absolutePos(new BlockPos(0, 280, 4));
         AltarBlockEntity altar = WitchGameTests.altar(helper, base, 7000);
         BlockPos chalkPos = base.offset(0, 0, -2);
         RecordingPlayer witch = RecordingPlayer.create(helper);
@@ -179,6 +180,30 @@ public final class SeveranceRiteGameTests {
     public static void severanceNeedsAFullMoon(GameTestHelper helper) {
         UUID sire = UUID.randomUUID();
         refused(helper, Species.WITCH, false, sire, sire, false, "supernaturalbloodlines.rite.needs_full_moon");
+        helper.succeed();
+    }
+
+    /** Noon on the full-moon day has the phase but no moon up: refused. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void severanceNeedsTheNightNotJustTheDay(GameTestHelper helper) {
+        UUID sire = UUID.randomUUID();
+        ServerLevel level = helper.getLevel();
+        long before = level.getDayTime();
+        long day = before - Math.floorMod(before, FULL_MOON_CYCLE);
+        RecordingPlayer witch = caster(helper, Species.WITCH);
+        RecordingPlayer sired = sired(helper, sire, false);
+        try {
+            for (long noon : new long[] {day + 6000, day + 1000, day + 23500}) {
+                level.setDayTime(noon);
+                helper.assertTrue(level.getMoonPhase() == 0, "control: phase is " + level.getMoonPhase() + " at " + noon);
+                start(helper, RITE, witch, items(sire));
+                helper.assertTrue(witch.receivedOnActionBar("supernaturalbloodlines.rite.needs_full_moon"), "not told at day time " + noon);
+                helper.assertTrue(!BloodlineAccess.get(sired).bondBroken(), "the bond broke at day time " + noon);
+            }
+        } finally {
+            level.setDayTime(before);
+            done(helper, witch, sired);
+        }
         helper.succeed();
     }
 

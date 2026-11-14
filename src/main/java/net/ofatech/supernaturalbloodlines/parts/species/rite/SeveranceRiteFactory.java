@@ -26,7 +26,7 @@ import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.RiteTarg
 
 /**
  * Rite of Severance (R101b): a witch-type performer (witch, siphoner, heretic or tribrid) breaks the whole sire bond of the sired player
- * on the circle. Full moon only. The ingredients (the JSON) are Sire's Blood and a rare reagent; the blood has to be the blood of
+ * on the circle. Full moon night only (the phase-0 day, inside Werewolves' night window; not at noon). The ingredients (the JSON) are Sire's Blood and a rare reagent; the blood has to be the blood of
  * the target's own sire, which the pure rules check ({@link BloodlineEvent#RITE_OF_SEVERANCE}). When anything is wrong the caster is told
  * and Enchanted gives the ingredients back.
  */
@@ -71,7 +71,7 @@ public record SeveranceRiteFactory() implements RiteFactory {
             ServerPlayer target = found.get();
             ServerPlayer caster = findEntity(params.caster) instanceof ServerPlayer p ? p : target;
 
-            if (!MoonRule.isFullMoon(level.dimensionType().hasFixedTime(), level.getMoonPhase())) {
+            if (!MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime())) {
                 return refuse(caster, FactionRiteFactory.NEEDS_FULL_MOON);
             }
             if (!isWitchType(BloodlineAccess.get(caster).species())) {

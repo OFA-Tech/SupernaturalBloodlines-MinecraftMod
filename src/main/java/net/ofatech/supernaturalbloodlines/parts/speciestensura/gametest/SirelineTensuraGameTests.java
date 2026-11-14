@@ -507,4 +507,39 @@ public final class SirelineTensuraGameTests {
             reset(sire, newSire, sired);
         }
         helper.succeed();
-    }}
+    }
+    /** An owner Tensura's own naming set (no link of ours stored) is freed by a severance too, and the name stays; someone else's owner stays. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void severanceClearsTheOwnerANamingSet(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        ServerPlayer other = TestPlayers.create(helper);
+        ServerPlayer ownedSired = hybrid(helper);
+        boolean before = playerNaming(helper, true);
+        // no link of ours: the only owner is the one the naming sets
+        SpeciesTensuraConfig.overrideSireLink(false);
+        try {
+            SireRecorder.record(sire, sired);
+            RequestNamingMenuPacket.name(sired, sire, NamingType.LOW, "Ward");
+            helper.assertTrue("Ward".equals(existence(sired).getName()), "the sired was not named: " + existence(sired).getName() + " " + said(sire));
+            helper.assertTrue(sire.getUUID().equals(existence(sired).getPermanentOwner()), "the naming did not make the sire the owner");
+            helper.assertTrue(!sired.getPersistentData().hasUUID("supernaturalbloodlines:linked_sire"), "control: a link of ours is stored");
+
+            BloodlineAccess.set(sired, BloodlineAccess.get(sired).toBuilder().severedSire(sire.getUUID()).build());
+            helper.assertTrue(existence(sired).getPermanentOwner() == null, "the naming owner survived the severance: " + existence(sired).getPermanentOwner());
+            helper.assertTrue("Ward".equals(existence(sired).getName()), "the name was lost: " + existence(sired).getName());
+            helper.assertTrue(sire.getUUID().equals(BloodlineAccess.get(sired).sire()), "the sire was forgotten");
+
+            // an owner that is not the severed sire is nobody's to clear
+            existence(ownedSired).setPermanentOwner(other.getUUID());
+            SireRecorder.record(sire, ownedSired);
+            BloodlineAccess.set(ownedSired, BloodlineAccess.get(ownedSired).toBuilder().severedSire(sire.getUUID()).build());
+            helper.assertTrue(other.getUUID().equals(existence(ownedSired).getPermanentOwner()), "an unrelated owner was cleared: " + existence(ownedSired).getPermanentOwner());
+        } finally {
+            SpeciesTensuraConfig.overrideSireLink(null);
+            restore(helper, before);
+            reset(sire, sired, other, ownedSired);
+        }
+        helper.succeed();
+    }
+}
