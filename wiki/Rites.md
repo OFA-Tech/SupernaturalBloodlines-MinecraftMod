@@ -5,7 +5,7 @@ Every rite in this mod is an **Enchanted circle-magic rite**: you draw a chalk c
 - **Small circle** and **medium circle** are Enchanted's circle shapes. The chalk is Enchanted's **ritual chalk**, except the two curses, which need **nether chalk**.
 - **Target:** the person who stands on the **centre block** of the circle (the closest player in the 1x2x1 column), or the **caster** if nobody does.
 - A rite that **refuses** its target gives the ingredients back, takes no power, and shows the reason to the caster on the action bar.
-- **Full moon** means the overworld's full-moon day (moon phase 0), noon included. The Nether and the End never have one. Only the Rite of Severance also needs **night**.
+- **Full moon** means the **night** of the overworld's full moon: moon phase 0 and the time of day between 12786 and 23216 (Werewolves' own full-moon window). Noon of the full-moon day is refused with "This rite can only be performed on a full-moon night." The Nether and the End never have one. This holds for the Rite of the Moon, the Silver Moon, Immortality and Severance.
 - Ingredients **in bold** come from another mod. "Silver" is Werewolves' Silver Ingot.
 - Costs are before the witch bonus (x0.75), Emissary bonus (x0.9) and siphoned power. See [Witches and siphoners](Witches-And-Siphoners).
 
@@ -61,7 +61,7 @@ Makes an **Original**. See [Vampires and Originals](Vampires-And-Originals#origi
 | **Rite of Doppelgänger Blood** | small, 6,000 | **filled Taglock** (Enchanted), 2 Diamonds, Amethyst Shard | Werewolves | **Doppelgänger Blood** |
 | **Rite of Hybrid's Blood** | small, 1,000 | Glass Bottle | the target is a **hybrid, Original hybrid or tribrid** ("Only a hybrid can do this.") | **Hybrid's Blood** (cures werewolf venom) |
 | **Rite of Cleansing Blood** | medium, 4,000 | **Garlic** (Vampirism), **Holy Water Bottle** (Vampirism, normal), Golden Apple | the target should be a vampire; works on heretics, hybrids and tribrids too. **Refused on Originals.** | cures vampirism; hybrid becomes a plain werewolf, tribrid a witch, heretic a siphoner |
-| **Rite of the Silver Moon** | medium, 4,000 | 2 **Silver Ingots**, 1 **Wolfsbane** (Werewolves) | **full moon** (the whole day); a werewolf; Werewolves. **Refused on Originals.** | cures lycanthropy; hybrid and tribrid become plain vampires |
+| **Rite of the Silver Moon** | medium, 4,000 | 2 **Silver Ingots**, 1 **Wolfsbane** (Werewolves) | **full-moon night**; a werewolf; Werewolves. **Refused on Originals.** | cures lycanthropy; hybrid and tribrid become plain vampires |
 
 For the cure results see [Hybrids](Hybrids-And-Original-Hybrids#ending-it-cures) and [Heretics and Tribrids](Heretics-And-Tribrids).
 
@@ -170,4 +170,4 @@ Breaks a sired player's whole sire bond. Full details on [Rite of Severance](Rit
 | Target | the sired player on the centre (else the caster). No consent check. |
 | Result | the bond is broken; the sire stays recorded and sireline death still applies |
 
-Note: the other rites that say "full moon" only check the moon phase, so they also work at noon of the full-moon day. Severance is the only night-only rite.
+Note: every rite that says "full moon" needs the night of the full moon, like this one.

@@ -47,12 +47,12 @@ public final class VampirismEnchantedWerewolfGameTests {
         return handler(p).getCurrentFaction() == WReference.WEREWOLF_FACTION;
     }
 
-    /** Runs {@code body} with the world clock on a full moon night (phase 0) or a new moon (phase 4), then restores it. */
+    /** Runs {@code body} with the world clock on a full moon night (phase 0, 18000) or a new moon (phase 4), then restores it. */
     private static void atMoon(GameTestHelper helper, boolean full, Runnable body) {
         ServerLevel level = helper.getLevel();
         long before = level.getDayTime();
         long base = before - Math.floorMod(before, FULL_MOON_CYCLE);
-        level.setDayTime(full ? base : base + 24000L * 4);
+        level.setDayTime(full ? base + 18000L : base + 24000L * 4);
         try {
             helper.assertTrue((level.getMoonPhase() == 0) == full, "could not set the moon, phase is " + level.getMoonPhase());
             body.run();

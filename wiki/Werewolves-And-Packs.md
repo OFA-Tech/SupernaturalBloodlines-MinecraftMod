@@ -176,7 +176,7 @@ Lines of dust stop vampires, werewolves, hybrids, Originals, heretics and tribri
 Each full-moon night (the Werewolves full-moon window, 12786 to 23216 of the day) has a **3%** chance (`lunar_eclipse_chance`, rolled once per night when someone is online) of being an **eclipse**, until dawn.
 
 - The server announces the start and the end: "A lunar eclipse darkens the moon. The wolves lose their strength until dawn."
-- The overworld's **fog and horizon turn red**. (The zenith colour is not changed: NeoForge 1.21.1 has no event for it.)
+- The overworld's **fog, horizon and sky turn red**, and the **moon turns dark orange** (client side: a tinted disc over the sky and a dark orange disc over the moon, drawn after the vanilla sky; no mixin).
 - Werewolves lose **every form action** (the full moon's forced shift too, and a form already on is dropped within a second): "The eclipse holds your wolf down until dawn."
 - The Alpha perks (the Omega penalty stays) and the **pack bonus** are suppressed. Nobody can roar.
 - It is one flag for the **whole server**, whatever the dimension. It is stored as one night number and is never active past dawn, so a restart cannot make it last.

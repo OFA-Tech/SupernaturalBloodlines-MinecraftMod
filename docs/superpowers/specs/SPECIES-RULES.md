@@ -26,7 +26,7 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 - **R25.** A vampire who kills one of the Five gets the hunter's curse.
 
 ## Originals
-- **R30.** *Rite of Immortality*: a human-like target with no faction, full moon, 12,000 power, a villager sacrificed, and a world cap (unlimited by default).
+- **R30.** *Rite of Immortality*: a human-like target with no faction, the night of a full moon (plan 10: noon of the full-moon day is refused), 12,000 power, a villager sacrificed, and a world cap (unlimited by default).
 - **R31.** Vampire faction, +20% attack, +4 max health. Can make Original's Blood.
 - **R32.** **Non-white-oak lethal damage** puts the Original into **Vampirism's own "dying" state**, with its give-up / wait screen (or our own copy of it if Vampirism has no hook). **A white oak hit kills instantly** and skips that state. Void and `/kill` still kill.
 - **R33.** The White Oak Ash Dagger desiccates an Original until someone pulls it out, or for up to 30 minutes. It hurts any non-human who uses it.

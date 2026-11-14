@@ -17,6 +17,11 @@ Owner decisions of 2026-11-14, applied to existing parts. Spec `docs/superpowers
   - A dormant True Alpha's Tensura rank skills go dormant too: they are released on leaving the werewolves and granted again on rejoining.
   - Tests: `ep_boost` is stripped when `species_tensura` is off, a vampire-type apex race is affected by holy exposure.
 
+- **Full-moon rites need the night (plan 10).** The Rite of the Moon, the Rite of Immortality and the Rite of the Silver Moon are refused at noon of the full-moon day, like the Rite of Severance (`MoonRule.isFullMoonNight`); the refusal says "This rite can only be performed on a full-moon night." Nothing changes for a rite already running.
+- **The lunar eclipse tints the sky and the moon (plan 10).** Besides the red fog and horizon, a translucent red disc is drawn over the sky and the moon is drawn dark orange (`0xB4501E`), both on the client after the vanilla sky (`RenderLevelStageEvent`, no mixin; `EclipseClient.SKY_TINT` and `MOON_TINT`). Checked in a real client (`.superpowers/sdd/10-balance-pass/eclipse-final.png`).
+
+- **Holy damage explained (plan 10, docs only).** `undead_treatment_enabled` on (default): vampires take x3 Tensura holy damage plus Tensura's undead rules. Off: x1.5 through `tensura_holy_vs_vampire`. No code change.
+
 ## Unreleased: Rite of Severance (R101b, species part)
 
 Needs the species part (Vampirism and Enchanted). Details in `docs/parts/species.md`, rule R101b in `SPECIES-RULES.md`.

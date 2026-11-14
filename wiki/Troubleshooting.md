@@ -36,7 +36,7 @@ The player was on an **apex race**. ManasCore can't load a saved race that is no
 
 | Message | What to do |
 |---|---|
-| "This rite can only be performed under a full moon." | wait for the full-moon day (not in the Nether or the End) |
+| "This rite can only be performed on a full-moon night." | wait for the night of the full moon, after dusk (not in the Nether or the End) |
 | "The one in the circle does not belong to the right faction for this rite." | the target must stand on the centre block and be in the faction the rite names |
 | "The rite would change nothing." | the target already has what the rite gives |
 | "The rite cannot take hold: the new faction would not accept them." | Vampirism or Werewolves refused the join (for example an undead Tensura race) |

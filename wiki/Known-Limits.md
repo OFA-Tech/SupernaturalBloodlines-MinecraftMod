@@ -12,7 +12,6 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 
 ## Rites, rollbacks and configs
 
-- **`requires_full_moon` rites work on the whole full-moon day.** The Rite of the Moon, the Silver Moon and Immortality only check the moon phase, so they also work at noon of the full-moon day. **Only the [Rite of Severance](Rite-Of-Severance) is night-only** (12786 to 23216).
 - **Rolling back forgets severances.** An older build doesn't know them, so severed bonds come back. Reset apex-race players first (see [For server owners](For-Server-Owners#removing-the-mod-or-tensura)).
 - **The apex pick is refused silently on a config mismatch.** If `apex_evolutions_enabled` is on for the client and off for the server, the client shows the apex race and the server refuses the pick with nothing logged. Keep the config equal.
 - **Severance has no consent check**, and a new sire replaces the old one (tree and sireline death follow the new sire).
@@ -20,7 +19,6 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 
 ## Not done yet
 
-- **Eclipse is fog and horizon only.** NeoForge 1.21.1 has no event for the sky dome's own colour, so the zenith isn't tinted. It is one flag for the whole server, whatever the dimension.
 - **Eyes are particles only.** Werewolves in a wolf form show two glowing dust particles at eye height. The render layer on the model is not done.
 - **The Taser** has placeholder art and spends a charge on **every** hit, not only on supernaturals.
 - **No race icon** for the seven apex races in Tensura's evolution screen, and the evolution tree may not draw the link back (`getPreviousEvolutions` is empty). Names, stats, EP and signature skills are **placeholders**.

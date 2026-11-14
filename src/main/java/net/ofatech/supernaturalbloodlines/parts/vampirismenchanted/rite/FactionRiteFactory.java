@@ -177,7 +177,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             ServerPlayer caster = findEntity(params.caster) instanceof ServerPlayer p ? p : target;
 
             if (factory.requiresFullMoon
-                    && !MoonRule.isFullMoon(level.dimensionType().hasFixedTime(), level.getMoonPhase())) {
+                    && !MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime())) {
                 tell(caster, NEEDS_FULL_MOON);
                 return cancel();
             }
