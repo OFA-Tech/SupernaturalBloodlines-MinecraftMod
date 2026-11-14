@@ -245,6 +245,8 @@
   "supernaturalbloodlines.refusal.not_sired": "Nobody sired them: there is no bond to break.",
   "supernaturalbloodlines.refusal.wrong_sire_blood": "That is not the blood of their sire.",
   "supernaturalbloodlines.refusal.bond_already_broken": "Their bond is already broken.",
+  "supernaturalbloodlines.turning.started": "You died with vampire blood in you. Drink human blood before the turning runs out, or you will die for good.",
+  "supernaturalbloodlines.turning.completed": "The turning is complete. You are a vampire.",
   "supernaturalbloodlines.sire_naming.no_evolution": "Naming your sired grants EP and stats only, never an evolution.",
   "supernaturalbloodlines.species_tensura.bad_config": "species_tensura: %s invalid entries in the config were ignored (see the server log)."
 }

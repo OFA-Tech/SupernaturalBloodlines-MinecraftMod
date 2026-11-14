@@ -12,7 +12,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -42,8 +41,6 @@ public final class TransitionHandler {
     public static final TagKey<Item> BLOOD_DRINKS = TagKey.create(Registries.ITEM,
             ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "blood_drinks"));
 
-    private static final int STEP = 20;
-
     private TransitionHandler() {
     }
 
@@ -51,7 +48,7 @@ public final class TransitionHandler {
         // LOW and not receiving cancelled events: a death that something else prevented is not a death
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LivingDeathEvent.class, TransitionHandler::onDeath);
         NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> {
-            if (e.getEntity() instanceof ServerPlayer p && p.tickCount % STEP == 0) {
+            if (e.getEntity() instanceof ServerPlayer p && TransitionTimer.secondIsUp(p)) {
                 secondPassed(p);
             }
         });
@@ -82,7 +79,7 @@ public final class TransitionHandler {
     }
 
     /** One bottle is drunk (not in creative): the stack shrinks and an empty glass bottle comes back. */
-    static void useUpBottle(ServerPlayer p, ItemStack stack) {
+    public static void useUpBottle(ServerPlayer p, ItemStack stack) {
         if (!p.isCreative()) {
             stack.shrink(1);
             ItemStack bottle = new ItemStack(Items.GLASS_BOTTLE);
@@ -124,12 +121,7 @@ public final class TransitionHandler {
             }
             return;
         }
-        long left = s.transitionTicksLeft() - STEP;
-        if (left > 0) {
-            // saved but not synced: the species does not change, and a packet a second for the whole transition is noise;
-            // the next real change (or a login) sends the current value
-            p.setData(ModAttachments.BLOODLINE, s.toBuilder().transitionTicksLeft(left).build());
-        } else {
+        if (TransitionTimer.tick(p, s.transitionTicksLeft(), left -> s.toBuilder().transitionTicksLeft(left).build())) {
             apply(p, BloodlineEvent.TRANSITION_TIMEOUT, null); // the rules ask for the kill
         }
     }

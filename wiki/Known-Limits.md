@@ -36,6 +36,8 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 - **Enchanted 4.2.7 curse quirks** (not ours): a first application of a curse always has strength 0, and a curse applied in the same tick as its removal is lost.
 - **Hybrids and the eclipse:** while an eclipse runs, hybrids can't shift either.
 
+- **The turning is fed from a bottle for non-vampires.** Only a vampire can bite in Vampirism, so before you are a Ghoul the only way to drink human blood is a Vampirism blood bottle (right-click), and a bottle counts as human blood whatever it was filled from. The turning's clock is the player's online time; the client's copy of it is stale until the next real change or login.
+
 ## Design points the owner may still change
 
 - Farming True Alpha **defender kills** at a spawner beside a villager.

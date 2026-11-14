@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: turning the show's way (plan 11)
+
+Spec `docs/superpowers/specs/2026-11-14-show-turning-design.md`. Rules R20c and R20d in `SPECIES-RULES.md`. The Ghoul gates come in the next task.
+
+- **The turning (species).** Vampire blood, then death, then human blood. Drinking vampire blood (a Ghoul biting a vampire, or an item in `#supernaturalbloodlines:vampire_blood`, which holds `vampirism:vampire_blood_bottle`) marks you for `vampire_blood_ticks` (new, default 24,000). Dying while marked starts the **turning**: `transition_ticks` (24,000) of online time to drink human-like blood (villagers and traders, Vampirism hunters, human-like players, a Vampirism blood bottle). Doing so makes you a level 1 vampire; running out of time kills you for good and you come back as you were. A player already in the hybrid transition, a vampire, a werewolf or a hunter is not affected. Works without Werewolves.
+- **State.** `BloodlineState` gains `ghoul`, `vampire_blood_until` and `turning_ticks_left` (old saves load with the defaults); new rules `SANGUINARE_FINISHED`, `DRANK_VAMPIRE_BLOOD`, `DIED_WITH_VAMPIRE_BLOOD`, `TURNING_FED` and `TURNING_FAILED`. The vampire-blood timer is not sent to clients.
+- **No new mixin.** The hybrid transition and the turning share one clock (`TransitionTimer`).
 ## Unreleased: balance pass (plan 10)
 
 Owner decisions of 2026-11-14, applied to existing parts. Spec `docs/superpowers/specs/2026-11-14-balance-pass-design.md`.

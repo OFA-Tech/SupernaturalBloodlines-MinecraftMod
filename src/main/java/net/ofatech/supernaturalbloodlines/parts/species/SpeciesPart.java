@@ -17,6 +17,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.hybrid.HybridTraits;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.SireBond;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
+import net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.TurningGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfPackGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfBiteGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfSparkGameTests;
@@ -127,6 +129,7 @@ public final class SpeciesPart {
         RankEffects.register(); // always, for the same reason
         PackBonus.register(); // always, for the same reason
         Electricity.register(); // always: Shocked and the Taser work on every supernatural
+        TurningHandler.register(); // always: the turning is vampires only, no Werewolves needed
         if (ModList.get().isLoaded("werewolves")) {
             FormBlocks.register();
             LunarEclipse.register();
@@ -184,6 +187,7 @@ public final class SpeciesPart {
             e.register(SirelineDeathGameTests.class);
             e.register(SeveranceGameTests.class);
             e.register(SeveranceRiteGameTests.class);
+            e.register(TurningGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(SirelineHybridGameTests.class);
                 e.register(HunterWerewolfGameTests.class);
