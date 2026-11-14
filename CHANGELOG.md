@@ -8,6 +8,7 @@ Spec `docs/superpowers/specs/2026-11-14-show-turning-design.md`. Rules R20c and 
 - **State.** `BloodlineState` gains `ghoul`, `vampire_blood_until` and `turning_ticks_left` (old saves load with the defaults); new rules `SANGUINARE_FINISHED`, `DRANK_VAMPIRE_BLOOD`, `DIED_WITH_VAMPIRE_BLOOD`, `TURNING_FED` and `TURNING_FAILED`. The vampire-blood timer is not sent to clients.
 - **Ghouls (R20e).** A Sanguinare that finishes (bite, fang, MedChair, Totem) leaves a **Ghoul**: a level 1 vampire who cannot level up (the level change is refused, the Altars of Infusion and Inspiration do nothing, and the player is told why) until the turning is done. Existing vampires are not Ghouls; leaving the vampire faction ends the state. Hooked on Vampirism's `FactionLevelChangePre`, no mixin.
 - **Biting a vampire (R20f)** never fills the biter and costs `bite_vampire_cost` (new, default 1) of their own blood.
+- **Turning review fixes.** A hunter or werewolf in the turning is no longer switched into the vampires or killed when it ends (it just ends, and their bottle is not used). Human blood no longer includes converted villagers, vampires, vampire-side species or werewolves, with or without Tensura. A refused join and a failed turning now tell the player (`turning.join_refused`, `turning.failed`); a refused join leaves the bottle used up.
 - **No new mixin.** The hybrid transition and the turning share one clock (`TransitionTimer`).
 ## Unreleased: balance pass (plan 10)
 

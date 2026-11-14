@@ -59,8 +59,7 @@ public final class BloodlineRules {
                     ? Outcome.of(s.toBuilder().vampireBloodUntil(c.gameTime() + c.vampireBloodTicks()).build()) : unchanged(s);
             case DIED_WITH_VAMPIRE_BLOOD -> diedWithVampireBlood(s, c);
             case TURNING_FED -> turningFed(s, c);
-            case TURNING_FAILED -> s.inTurning()
-                    ? Outcome.of(s.toBuilder().turningTicksLeft(0).build(), Action.KILL_PLAYER) : unchanged(s);
+            case TURNING_FAILED -> turningFailed(s, c);
         };
     }
 
@@ -77,7 +76,8 @@ public final class BloodlineRules {
         return Outcome.of(s.toBuilder().ghoul(true).build());
     }
 
-    private static boolean isVampireSpecies(Species sp) {
+    /** The species of the vampire side: Originals, the hybrid types and heretics. */
+    public static boolean isVampireSpecies(Species sp) {
         return isOriginal(sp) || sp == Species.HYBRID || sp == Species.TRIBRID || sp == Species.HERETIC;
     }
 
@@ -94,10 +94,28 @@ public final class BloodlineRules {
         return Outcome.of(s.toBuilder().vampireBloodUntil(0).turningTicksLeft((int) Math.min(Integer.MAX_VALUE, c.transitionTicks())).build());
     }
 
+    /**
+     * A turning that is running for someone who can no longer turn (they joined the hunters or the werewolves, or the vampires some
+     * other way, while it ran) just ends: no join and no kill.
+     */
+    private static Outcome endedQuietly(BloodlineState s) {
+        return Outcome.of(s.toBuilder().turningTicksLeft(0).build());
+    }
+
+    private static Outcome turningFailed(BloodlineState s, BloodlineContext c) {
+        if (!s.inTurning()) {
+            return unchanged(s);
+        }
+        return canTurn(s, c) ? Outcome.of(s.toBuilder().turningTicksLeft(0).build(), Action.KILL_PLAYER) : endedQuietly(s);
+    }
+
     /** Human-like blood drunk in the turning: a Ghoul only loses the flag, anyone else joins the vampires. */
     private static Outcome turningFed(BloodlineState s, BloodlineContext c) {
         if (!s.inTurning()) {
             return unchanged(s);
+        }
+        if (!canTurn(s, c)) {
+            return endedQuietly(s);
         }
         BloodlineState done = s.toBuilder().turningTicksLeft(0).ghoul(false).build();
         return c.faction() == BaseFaction.VAMPIRE ? Outcome.of(done) : Outcome.of(done, Action.JOIN_VAMPIRE);

@@ -159,6 +159,29 @@ class BloodlineRulesTest {
     }
 
     @Test
+    void turningFedEndsQuietlyForSomeoneWhoCanNoLongerTurn() {
+        for (BaseFaction f : new BaseFaction[] {BaseFaction.HUNTER, BaseFaction.WEREWOLF}) {
+            Outcome o = run(turning(), TURNING_FED, ctx().withFaction(f));
+            assertFalse(o.refused());
+            assertEquals(BloodlineState.NONE, o.state());
+            assertTrue(o.actions().isEmpty(), "a " + f + " was switched into the vampires");
+        }
+        // a vampire who is not a Ghoul too
+        Outcome vamp = run(turning(), TURNING_FED, ctx().withFaction(BaseFaction.VAMPIRE));
+        assertEquals(BloodlineState.NONE, vamp.state());
+        assertTrue(vamp.actions().isEmpty());
+    }
+
+    @Test
+    void turningFailedKillsNobodyWhoCanNoLongerTurn() {
+        for (BaseFaction f : new BaseFaction[] {BaseFaction.HUNTER, BaseFaction.WEREWOLF, BaseFaction.VAMPIRE}) {
+            Outcome o = run(turning(), TURNING_FAILED, ctx().withFaction(f));
+            assertEquals(BloodlineState.NONE, o.state());
+            assertTrue(o.actions().isEmpty(), "a " + f + " was killed by a turning that no longer applied");
+        }
+    }
+
+    @Test
     void turningFedOutsideTheTurningDoesNothing() {
         assertNoChange(run(BloodlineState.NONE, TURNING_FED, ctx()), BloodlineState.NONE);
         assertNoChange(run(ghoul(), TURNING_FED, ctx().withFaction(BaseFaction.VAMPIRE)), ghoul());

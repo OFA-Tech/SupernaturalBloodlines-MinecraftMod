@@ -4,6 +4,10 @@ import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IFactionPlayerHandler;
 import de.teamlapen.vampirism.api.entity.player.vampire.IDrinkBloodContext;
+import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
+import java.util.function.Consumer;
+import net.neoforged.bus.api.EventPriority;
+import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -142,10 +146,14 @@ public final class TurningGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void vampireBloodDoesNothingForAVampire(GameTestHelper helper) {
         ServerPlayer p = vampire(helper);
-        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(item("vampirism:vampire_blood_bottle")));
-        helper.assertTrue(!click(p), "a vampire's click was taken over");
-        helper.assertTrue(p.getMainHandItem().is(item("vampirism:vampire_blood_bottle")), "the bottle was used up for nothing");
-        helper.assertTrue(BloodlineAccess.get(p).vampireBloodUntil() == 0, "a vampire was marked");
+        try {
+            p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(item("vampirism:vampire_blood_bottle")));
+            helper.assertTrue(!click(p), "a vampire's click was taken over");
+            helper.assertTrue(p.getMainHandItem().is(item("vampirism:vampire_blood_bottle")), "the bottle was used up for nothing");
+            helper.assertTrue(BloodlineAccess.get(p).vampireBloodUntil() == 0, "a vampire was marked");
+        } finally {
+            reset(p);
+        }
         helper.succeed();
     }
 
@@ -247,9 +255,13 @@ public final class TurningGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void bloodBottleOutsideTheTurningIsLeftAlone(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.createMortal(helper);
-        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(item("vampirism:blood_bottle")));
-        helper.assertTrue(!click(p), "a blood bottle was taken over outside the turning");
-        helper.assertTrue(handler(p).getCurrentFaction() == null, "joined a faction");
+        try {
+            p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(item("vampirism:blood_bottle")));
+            helper.assertTrue(!click(p), "a blood bottle was taken over outside the turning");
+            helper.assertTrue(handler(p).getCurrentFaction() == null, "joined a faction");
+        } finally {
+            reset(p);
+        }
         helper.succeed();
     }
 
@@ -277,12 +289,107 @@ public final class TurningGameTests {
     public static void humanLikeBloodIsPlayersAndVillagers(GameTestHelper helper) {
         ServerPlayer human = TestPlayers.createMortal(helper);
         ServerPlayer vampire = vampire(helper);
-        helper.assertTrue(TurningHandler.isHumanLikeBlood(human), "a human player is not human-like blood");
-        helper.assertTrue(!TurningHandler.isHumanLikeBlood(vampire), "a vampire is human-like blood");
-        helper.assertTrue(TurningHandler.isHumanLikeBlood(villager(helper)), "a villager is not human-like blood");
-        helper.assertTrue(TurningHandler.isHumanLikeBlood(EntityType.WANDERING_TRADER.create(helper.getLevel())), "a trader is not");
-        helper.assertTrue(!TurningHandler.isHumanLikeBlood(EntityType.COW.create(helper.getLevel())), "a cow is human-like blood");
-        helper.assertTrue(!TurningHandler.isHumanLikeBlood(EntityType.ZOMBIE.create(helper.getLevel())), "a zombie is human-like blood");
+        ServerPlayer hunter = TestPlayers.createMortal(helper);
+        ServerPlayer witch = TestPlayers.createMortal(helper);
+        ServerPlayer hybrid = TestPlayers.createMortal(helper);
+        try {
+            helper.assertTrue(handler(hunter).setFactionAndLevel(VReference.HUNTER_FACTION, 1), "could not make a hunter");
+            BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).witchLayer(true).build());
+            BloodlineAccess.set(hybrid, BloodlineState.NONE.toBuilder().species(Species.HYBRID).build());
+            helper.assertTrue(TurningHandler.isHumanLikeBlood(human), "a human player is not human-like blood");
+            helper.assertTrue(TurningHandler.isHumanLikeBlood(hunter), "a hunter is not human-like blood");
+            helper.assertTrue(TurningHandler.isHumanLikeBlood(witch), "a witch is not human-like blood");
+            helper.assertTrue(!TurningHandler.isHumanLikeBlood(vampire), "a vampire is human-like blood");
+            helper.assertTrue(!TurningHandler.isHumanLikeBlood(hybrid), "a hybrid is human-like blood");
+            for (Species sp : new Species[] {Species.ORIGINAL, Species.ORIGINAL_HYBRID, Species.TRIBRID, Species.HERETIC}) {
+                BloodlineAccess.set(hybrid, BloodlineState.NONE.toBuilder().species(sp).build());
+                helper.assertTrue(!TurningHandler.isHumanLikeBlood(hybrid), sp + " is human-like blood");
+            }
+            helper.assertTrue(TurningHandler.isHumanLikeBlood(villager(helper)), "a villager is not human-like blood");
+            helper.assertTrue(TurningHandler.isHumanLikeBlood(EntityType.WANDERING_TRADER.create(helper.getLevel())), "a trader is not");
+            helper.assertTrue(!TurningHandler.isHumanLikeBlood(EntityType.COW.create(helper.getLevel())), "a cow is human-like blood");
+            helper.assertTrue(!TurningHandler.isHumanLikeBlood(EntityType.ZOMBIE.create(helper.getLevel())), "a zombie is human-like blood");
+            LivingEntity converted = (LivingEntity) BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse("vampirism:villager_converted"))
+                    .create(helper.getLevel());
+            helper.assertTrue(converted != null && !TurningHandler.isHumanLikeBlood(converted), "a converted villager is human-like blood");
+        } finally {
+            reset(human, vampire, hunter, witch, hybrid);
+        }
+        helper.succeed();
+    }
+
+    // ---- someone who can no longer turn (review I1) ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void hunterInTurningDrinksBottleAndStaysHunter(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.createMortal(helper);
+        try {
+            helper.assertTrue(handler(p).setFactionAndLevel(VReference.HUNTER_FACTION, 1), "could not make a hunter");
+            BloodlineAccess.set(p, turning(9000));
+            p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(item("vampirism:blood_bottle"), 2));
+            helper.assertTrue(!click(p), "the bottle was taken over for a hunter");
+            helper.assertTrue(p.getMainHandItem().getCount() == 2, "the bottle was used up for nothing");
+            TurningHandler.drankHumanBlood(p);
+            helper.assertTrue(handler(p).getCurrentFaction() == VReference.HUNTER_FACTION, "the hunter is now " + handler(p).getCurrentFaction());
+            helper.assertTrue(!BloodlineAccess.get(p).inTurning(), "the turning is still running");
+            // a clock that runs out for a hunter kills nobody
+            BloodlineAccess.set(p, turning(20));
+            TurningHandler.secondPassed(p);
+            helper.assertTrue(!p.isDeadOrDying() && !BloodlineAccess.get(p).inTurning(), "the hunter was killed by the turning");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void refusedJoinTellsThePlayerAndKeepsTheBottleUsed(GameTestHelper helper) {
+        RecordingPlayer p = RecordingPlayer.create(helper);
+        Consumer<PlayerFactionEvent.FactionLevelChangePre> refuse = e -> e.setCanceled(true);
+        try {
+            BloodlineAccess.set(p, turning(9000));
+            p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(item("vampirism:blood_bottle")));
+            NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerFactionEvent.FactionLevelChangePre.class, refuse);
+            try {
+                helper.assertTrue(click(p), "the bottle was not taken over");
+            } finally {
+                NeoForge.EVENT_BUS.unregister(refuse);
+            }
+            helper.assertTrue(handler(p).getCurrentFaction() == null, "joined although the join was refused");
+            helper.assertTrue(p.received("supernaturalbloodlines.turning.join_refused"), "the player was not told");
+            helper.assertTrue(!p.received("supernaturalbloodlines.turning.completed"), "told the turning was complete");
+            helper.assertTrue(p.getMainHandItem().is(Items.GLASS_BOTTLE), "the bottle was not used up");
+            helper.assertTrue(!BloodlineAccess.get(p).inTurning(), "the turning is still running");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void failedTurningTellsThePlayer(GameTestHelper helper) {
+        RecordingPlayer p = RecordingPlayer.create(helper);
+        try {
+            BloodlineAccess.set(p, turning(20));
+            TurningHandler.secondPassed(p);
+            helper.assertTrue(p.received("supernaturalbloodlines.turning.failed"), "no chat line for the failed turning");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void ghoulDeathWithVampireBloodStartsTurning(GameTestHelper helper) {
+        ServerPlayer p = ghoul(helper);
+        try {
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().vampireBloodUntil(helper.getLevel().getGameTime() + 1000).build());
+            killByAnything(helper, p);
+            BloodlineState s = BloodlineAccess.get(p);
+            helper.assertTrue(s.ghoul() && s.inTurning(), "a Ghoul's death with vampire blood did not start the turning: " + s);
+        } finally {
+            reset(p);
+        }
         helper.succeed();
     }
 

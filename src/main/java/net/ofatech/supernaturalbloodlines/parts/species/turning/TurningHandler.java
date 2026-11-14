@@ -51,6 +51,8 @@ public final class TurningHandler {
     public static final TagKey<Item> VAMPIRE_BLOOD = TagKey.create(Registries.ITEM,
             ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "vampire_blood"));
 
+    private static final ResourceLocation WEREWOLF_ID = ResourceLocation.parse("werewolves:werewolf");
+
     private TurningHandler() {
     }
 
@@ -72,12 +74,19 @@ public final class TurningHandler {
     }
 
     /**
-     * Human blood as the turning means it: a Vampirism human creature (villagers and traders, hunters) or a player who is not a
-     * vampire and whose race is human-like (Tensura's check, installed by species_tensura; everyone without it).
+     * Human blood as the turning means it. Nothing in the vampire faction counts (so a converted villager does not), nor does a
+     * player of the vampire side (Original, hybrids, tribrid, heretic) or in the werewolf faction. Then: a villager or trader, a
+     * hunter, or a player (witches and hunters included) whose race is human-like: Tensura's check when species_tensura installs it,
+     * everyone without it.
      */
     public static boolean isHumanLikeBlood(LivingEntity victim) {
+        if (isFaction(victim, VReference.VAMPIRE_FACTION)) {
+            return false;
+        }
         if (victim instanceof ServerPlayer p) {
-            return !isFaction(p, VReference.VAMPIRE_FACTION) && SpeciesEligibility.isHumanLike(p);
+            var faction = VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
+            return !(faction != null && WEREWOLF_ID.equals(faction.getID()))
+                    && !BloodlineRules.isVampireSpecies(BloodlineAccess.get(p).species()) && SpeciesEligibility.isHumanLike(p);
         }
         return victim instanceof AbstractVillager || isFaction(victim, VReference.HUNTER_FACTION);
     }
@@ -102,7 +111,10 @@ public final class TurningHandler {
     public static void secondPassed(ServerPlayer p) {
         BloodlineState s = BloodlineAccess.get(p);
         if (s.inTurning() && TransitionTimer.tick(p, s.turningTicksLeft(), left -> s.toBuilder().turningTicksLeft((int) left).build())) {
-            apply(p, BloodlineEvent.TURNING_FAILED, null); // the rules ask for the kill
+            Outcome out = apply(p, BloodlineEvent.TURNING_FAILED, null); // the rules ask for the kill
+            if (out.actions().contains(Outcome.Action.KILL_PLAYER)) {
+                p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.failed"));
+            }
         }
     }
 
@@ -115,11 +127,18 @@ public final class TurningHandler {
 
     /** Human-like blood reached a player in the turning. */
     public static void drankHumanBlood(ServerPlayer p) {
-        if (!BloodlineAccess.get(p).inTurning()) {
+        BloodlineState before = BloodlineAccess.get(p);
+        if (!before.inTurning()) {
             return;
         }
-        GhoulGates.completing(p, () -> apply(p, BloodlineEvent.TURNING_FED, null));
-        if (!BloodlineAccess.get(p).inTurning()) {
+        Outcome[] out = new Outcome[1];
+        GhoulGates.completing(p, () -> out[0] = apply(p, BloodlineEvent.TURNING_FED, null));
+        boolean joins = out[0].actions().contains(Outcome.Action.JOIN_VAMPIRE);
+        if (joins && VampirismAPI.factionPlayerHandler(p).getCurrentFaction() != VReference.VAMPIRE_FACTION) {
+            // the turning is over and what drank it is gone: Vampirism or another mod refused the join
+            SupernaturalBloodlines.LOGGER.warn("TurningHandler: {} drank human blood but could not join the vampires", p.getGameProfile().getName());
+            p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.join_refused"));
+        } else if (joins || before.ghoul() && !BloodlineAccess.get(p).ghoul()) {
             p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.completed"));
         }
     }
@@ -137,7 +156,7 @@ public final class TurningHandler {
         if (s.inTransition()) {
             return;
         }
-        boolean human = stack.is(TransitionHandler.BLOOD_DRINKS) && s.inTurning();
+        boolean human = stack.is(TransitionHandler.BLOOD_DRINKS) && s.inTurning() && wouldComplete(p);
         boolean vampire = !human && stack.is(VAMPIRE_BLOOD) && stack.getUseDuration(p) <= 0;
         if (!human && !vampire) {
             return;
@@ -153,6 +172,13 @@ public final class TurningHandler {
         } else {
             drankVampireBlood(p);
         }
+    }
+
+    /** The turning would do something for this player (a hunter or a werewolf in it would only end it quietly). */
+    private static boolean wouldComplete(ServerPlayer p) {
+        BloodlineState s = BloodlineAccess.get(p);
+        Outcome out = BloodlineRules.apply(s, BloodlineEvent.TURNING_FED, SpeciesContext.of(p, null));
+        return !out.actions().isEmpty() || out.state().ghoul() != s.ghoul();
     }
 
     private static boolean wouldMark(ServerPlayer p) {

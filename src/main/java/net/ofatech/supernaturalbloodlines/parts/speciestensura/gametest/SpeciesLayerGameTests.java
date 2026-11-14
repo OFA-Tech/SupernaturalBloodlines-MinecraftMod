@@ -295,6 +295,21 @@ public final class SpeciesLayerGameTests {
         helper.succeed();
     }
 
+    /** The turning's human blood follows the same list for players (review M1). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void turningBloodFollowsTheTensuraHumanLikeList(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        for (String id : new String[] {"tensura:human", "tensura:elf"}) {
+            setRace(p, id);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.isHumanLikeBlood(p), id + " is not human blood");
+        }
+        for (String id : new String[] {"tensura:slime", "tensura:orc", "tensura:ghoul"}) {
+            setRace(p, id);
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.isHumanLikeBlood(p), id + " is human blood");
+        }
+        helper.succeed();
+    }
+
     /** Bad layers / rank_skills entries: only an op is told, only when there are some. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void badConfigEntriesAreToldToOpsOnly(GameTestHelper helper) {

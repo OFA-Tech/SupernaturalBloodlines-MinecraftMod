@@ -247,6 +247,8 @@
   "supernaturalbloodlines.refusal.bond_already_broken": "Their bond is already broken.",
   "supernaturalbloodlines.turning.started": "You died with vampire blood in you. Drink human blood before the turning runs out, or you will die for good.",
   "supernaturalbloodlines.turning.completed": "The turning is complete. You are a vampire.",
+  "supernaturalbloodlines.turning.failed": "You did not drink human blood in time. The turning failed.",
+  "supernaturalbloodlines.turning.join_refused": "You drank, but you could not join the vampires. The turning is over.",
   "supernaturalbloodlines.turning.ghoul_no_level": "You are a Ghoul. Finish your turning before you can level up: die with vampire blood in you, then drink human blood.",
   "supernaturalbloodlines.turning.ghoul_no_altar": "You are a Ghoul. The altar will not answer until you finish your turning.",
   "supernaturalbloodlines.turning.ghoul_no_evolve": "You are a Ghoul. Complete your turning before you can evolve.",

@@ -20,6 +20,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
 import net.ofatech.supernaturalbloodlines.parts.species.turning.GhoulGates;
 import net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.GhoulGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.TurningWerewolfGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.TurningGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfPackGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfBiteGameTests;
@@ -196,6 +197,7 @@ public final class SpeciesPart {
                 e.register(SirelineHybridGameTests.class);
                 e.register(HunterWerewolfGameTests.class);
                 e.register(HybridGameTests.class);
+                e.register(TurningWerewolfGameTests.class);
                 e.register(HybridTraitsGameTests.class);
                 e.register(OriginalHybridGameTests.class);
                 e.register(WerewolfPackGameTests.class);
