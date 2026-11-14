@@ -27,6 +27,7 @@ The species rules, with their ids (the "R" numbers used in the code, the changel
 |---|---|
 | **R20** | You become one through Vampirism's infection. The Tensura race is **kept**, and you get the vampire layer. Tensura's vampire line joins the faction at a level floor. A cure resets the race to human **only** if it is in that line. |
 | **R20a** | A player with no species who joins the vampires with the race exactly `tensura:human` becomes `tensura:vampire`. Every other race is kept. Not configurable. |
+| **R20b** | Werewolves follow Tensura's Beastfolk line: an exact `tensura:human` becomes `tensura:beastfolk` when they become a werewolf; on the line an Alpha is a `beast_lord` and a True Alpha a `spirit_beast`. Never lowered; other races kept. Config `werewolf_beastfolk_enabled`. |
 | **R21** | Sun damage comes only from Vampirism. A bound Sun Ring blocks it. |
 | **R22** | Cured by the Rite of Cleansing Blood or The Cure. |
 | **R23** | From level 10, can compel villagers and lesser vampire mobs. |

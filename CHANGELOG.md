@@ -10,6 +10,8 @@ Owner decisions of 2026-11-14, applied to existing parts. Spec `docs/superpowers
 
 - **True Alphas keep the spark.** Killing a True Alpha is just a death: nobody steals the spark and the victim stays True Alpha. A True Alpha who is cured or leaves the werewolves stays True Alpha, dormant while they are not a werewolf (no attack or health perk, no `/pack invite|heal|emissary`; the Tensura rank skills still follow the rank, as before). Their pack dissolves as for any Alpha, no Beta inherits, and the pack is not restored when they rejoin; the perks come back at once. A True Alpha cannot give up the spark with `/pack heal` (`true_alpha_keeps_spark`). A plain Alpha is unchanged. Saves: only events after the update follow this; a True Alpha already made an Omega by an earlier cure stays an Omega.
 
+- **Werewolves follow Tensura's Beastfolk line (R20b, vampirism_tensura, needs Werewolves).** A player whose Tensura race is exactly `tensura:human` becomes `tensura:beastfolk` when they become a werewolf (as R20a does for vampires). An Alpha already on the line is a `beast_lord`, a True Alpha a `spirit_beast`. The race is never lowered, `divine_beast` stays a Tensura evolution, and every other race (an elf, a vampire-raced hybrid, any player with a bloodline species) is kept. Config `werewolf_beastfolk_enabled` (default on, in `supernaturalbloodlines-vampirism_tensura.toml`). Existing werewolves keep their race: only a join or a rank change after the update counts.
+
 ## Unreleased: Rite of Severance (R101b, species part)
 
 Needs the species part (Vampirism and Enchanted). Details in `docs/parts/species.md`, rule R101b in `SPECIES-RULES.md`.

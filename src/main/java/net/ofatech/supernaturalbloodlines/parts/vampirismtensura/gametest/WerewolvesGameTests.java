@@ -16,7 +16,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
+import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.VampireSyncConfig;
 
 /**
  * The tests that need Werewolves classes. Registered by the part only when Werewolves is loaded
@@ -104,6 +108,125 @@ public final class WerewolvesGameTests {
         handler(p).setFactionAndLevel(wolf, wolf.getHighestReachableLevel());
         handler(p).setFactionAndLevel(null, 0);
         helper.assertTrue(hasGodwolfSense(p), "a skill the player had before was removed on leaving");
+        helper.succeed();
+    }
+
+    // ---- R20b: the Beastfolk line ----
+
+    private static String race(ServerPlayer p) {
+        return RaceAPI.getRaceFrom(p).getRace().map(r -> r.getRaceId().toString()).orElse("none");
+    }
+
+    private static void rank(ServerPlayer p, WolfState.Rank rank) {
+        WolfState w = WolfState.NONE.toBuilder().lineage(WolfState.Lineage.BITTEN).rank(rank).geneRolled(true).build();
+        BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().wolf(w).build());
+    }
+
+    private static void join(GameTestHelper helper, ServerPlayer p) {
+        helper.assertTrue(handler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not become a werewolf: " + race(p));
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void humanWerewolfBecomesBeastfolk(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:human");
+        join(helper, p);
+        helper.assertTrue("tensura:beastfolk".equals(race(p)), "the new werewolf is a " + race(p));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void alphaOnBeastfolkBecomesBeastLord(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:human");
+        join(helper, p);
+        rank(p, WolfState.Rank.BETA);
+        helper.assertTrue("tensura:beastfolk".equals(race(p)), "a Beta is a " + race(p));
+        rank(p, WolfState.Rank.ALPHA);
+        helper.assertTrue("tensura:beast_lord".equals(race(p)), "the Alpha is a " + race(p));
+        rank(p, WolfState.Rank.OMEGA);
+        helper.assertTrue("tensura:beast_lord".equals(race(p)), "the race was lowered to " + race(p));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void trueAlphaBecomesSpiritBeast(GameTestHelper helper) {
+        ServerPlayer lord = TestPlayers.create(helper);
+        setRace(lord, "tensura:human");
+        join(helper, lord);
+        rank(lord, WolfState.Rank.ALPHA);
+        rank(lord, WolfState.Rank.TRUE_ALPHA);
+        helper.assertTrue("tensura:spirit_beast".equals(race(lord)), "the True Alpha is a " + race(lord));
+        rank(lord, WolfState.Rank.ALPHA);
+        helper.assertTrue("tensura:spirit_beast".equals(race(lord)), "the race was lowered to " + race(lord));
+
+        // straight from a beastfolk, and on rejoining with the rank already there
+        ServerPlayer direct = TestPlayers.create(helper);
+        setRace(direct, "tensura:human");
+        join(helper, direct);
+        rank(direct, WolfState.Rank.TRUE_ALPHA);
+        helper.assertTrue("tensura:spirit_beast".equals(race(direct)), "the beastfolk True Alpha is a " + race(direct));
+        ServerPlayer rejoin = TestPlayers.create(helper);
+        setRace(rejoin, "tensura:human");
+        rank(rejoin, WolfState.Rank.TRUE_ALPHA);
+        join(helper, rejoin);
+        helper.assertTrue("tensura:spirit_beast".equals(race(rejoin)), "the rejoining True Alpha is a " + race(rejoin));
+
+        // a divine beast stays what Tensura made it
+        ServerPlayer divine = TestPlayers.create(helper);
+        setRace(divine, "tensura:divine_beast");
+        join(helper, divine);
+        rank(divine, WolfState.Rank.TRUE_ALPHA);
+        helper.assertTrue("tensura:divine_beast".equals(race(divine)), "the divine beast became " + race(divine));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void nonHumanWerewolfKeepsRace(GameTestHelper helper) {
+        // an elf, and a vampire-raced hybrid (a plain vampire-race player is cured to human by the vampire sync when they
+        // leave the vampires, so the hybrid is the real case); the hybrid is made first so the vampire sync ignores it
+        for (String raceId : List.of("tensura:elf", "tensura:vampire")) {
+            ServerPlayer p = TestPlayers.create(helper);
+            if (raceId.equals("tensura:vampire")) {
+                BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().species(Species.HYBRID).build());
+            }
+            setRace(p, raceId);
+            join(helper, p);
+            rank(p, WolfState.Rank.ALPHA);
+            rank(p, WolfState.Rank.TRUE_ALPHA);
+            helper.assertTrue(raceId.equals(race(p)), raceId + " became " + race(p));
+        }
+        // a hybrid's race belongs to the species layer, even when it is a plain human
+        ServerPlayer hybrid = TestPlayers.create(helper);
+        setRace(hybrid, "tensura:human");
+        BloodlineAccess.set(hybrid, BloodlineAccess.get(hybrid).toBuilder().species(Species.HYBRID).build());
+        join(helper, hybrid);
+        helper.assertTrue("tensura:human".equals(race(hybrid)), "the hybrid became " + race(hybrid));
+        // not a werewolf: a rank alone changes nothing
+        ServerPlayer human = TestPlayers.create(helper);
+        setRace(human, "tensura:beastfolk");
+        rank(human, WolfState.Rank.TRUE_ALPHA);
+        helper.assertTrue("tensura:beastfolk".equals(race(human)), "a non-werewolf became " + race(human));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void switchOffLeavesRace(GameTestHelper helper) throws ReflectiveOperationException {
+        var field = VampireSyncConfig.class.getDeclaredField("WEREWOLF_BEASTFOLK_ENABLED");
+        field.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        var enabled = (net.neoforged.neoforge.common.ModConfigSpec.BooleanValue) field.get(null);
+        helper.assertTrue(enabled.get(), "the switch is not on by default");
+        enabled.set(false);
+        try {
+            ServerPlayer p = TestPlayers.create(helper);
+            setRace(p, "tensura:human");
+            join(helper, p);
+            rank(p, WolfState.Rank.ALPHA);
+            helper.assertTrue("tensura:human".equals(race(p)), "the switch was off and the race became " + race(p));
+        } finally {
+            enabled.set(true);
+        }
         helper.succeed();
     }
 

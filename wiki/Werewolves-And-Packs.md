@@ -81,6 +81,10 @@ There is **no limit** on True Alphas per world. When it happens: "Your eyes burn
 
 A True Alpha **keeps the spark**: it cannot be stolen, inherited or given up. If they are cured or leave the werewolves they stay True Alpha, dormant (no attack or health perk, no `/pack invite`, `heal` or `emissary`). Their pack dissolves as for any Alpha and is **not** restored. Rejoining the werewolves brings the perks back.
 
+### Tensura race
+
+With Tensura, a human who becomes a werewolf becomes a Tensura **beastfolk**. As an Alpha they become a **beast lord**, as a True Alpha a **spirit beast**, and the race is never lowered. Other races are kept. See [Tensura integration](Tensura-Integration). Switch: `werewolf_beastfolk_enabled`.
+
 ## Packs and `/pack`
 
 | Command | Does |

@@ -16,6 +16,7 @@ Needs Vampirism and Tensura. Werewolves is optional. Config file: `supernaturalb
 | Sun | Only Vampirism's sun damage hurts a Vampirism vampire. Tensura's own vampire burn, and its Weakness, Slowness and Mining Fatigue in the sun, are switched off for them (two mixins). A bound [Sun Ring](Items-And-Blocks#rings-and-wards) also blocks Vampirism's sun damage. |
 | Hunters | A hunter whose race is tagged `tensura:undead` or `tensura:daemon` cannot join the hunters. A hunter who becomes one leaves the hunters and is told so. |
 | Werewolves | Races tagged `tensura:undead`, `tensura:daemon` or `tensura:no_blood` cannot become werewolves. |
+| Werewolf race (R20b) | A player whose race is exactly `tensura:human` who becomes a werewolf becomes **`tensura:beastfolk`**. A werewolf on the Beastfolk line becomes a **`beast_lord`** as an Alpha and a **`spirit_beast`** as a True Alpha (Tensura's line is beastfolk, beast lord, spirit beast, divine beast). The race is never lowered, `divine_beast` stays a normal Tensura evolution and every other race is kept (an elf stays an elf). Players with a bloodline species are skipped. Only a join or a rank change after the update counts. Switch: `werewolf_beastfolk_enabled`. |
 | Werewolf skill grants | Werewolf levels grant Tensura skills. Default: `tensura:godwolf_sense` at the maximum werewolf level. It is taken back if the level drops below it or the player stops being a werewolf (only if this mod granted it). |
 | Holy damage | Vampirism holy water counts as Tensura holy damage. Tensura holy damage to a Vampirism vampire is multiplied by `tensura_holy_vs_vampire` (default 1.5), unless the species layer already makes Tensura treat them as undead (then Tensura's own x3 applies, and this multiplier is skipped so the two don't stack). |
 | Bloodless races | A player whose race is tagged `tensura:no_blood` cannot be bitten, unless the race is also in our tag `supernaturalbloodlines:bitable` (the apex races) (the biter sees "There is no blood in them to drink."). Tensura bloodless mobs have blood 0 for Vampirism. |
@@ -143,7 +144,7 @@ Needs Werewolves. Config key `rank_skills`.
 | Born werewolf of Werewolves level 5 or more | `tensura:godwolf_sense` |
 | Omega, Beta | none |
 
-- The race never changes.
+- The skills do not change the race (the race follows the Beastfolk line, see above).
 - The rank skills do not need the werewolf faction: a cured Alpha keeps the rank and its skills.
 - Only skills this mod granted are taken back, and a skill another source still wants stays.
 

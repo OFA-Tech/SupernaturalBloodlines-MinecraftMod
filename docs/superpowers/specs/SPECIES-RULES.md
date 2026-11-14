@@ -1,6 +1,6 @@
 # Species rules (source of truth; the owner patches these by id)
 
-Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and R101 were patched. R20a (2026-11-12) was added. Where the design or a plan disagrees, this file wins.
+Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and R101 were patched. R20a (2026-11-12) and R20b (2026-11-14) were added. Where the design or a plan disagrees, this file wins.
 
 ## General
 - **R1.** Only players whose Tensura race is tagged `human_like` can take a show species or become one of the Five. Without Tensura, everyone qualifies.
@@ -18,6 +18,7 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 ## Vampires
 - **R20.** You become one through Vampirism's normal infection. **The Tensura race is kept**: you get the vampire layer, and Tensura is told you're vampiric (see R100). Tensura's own vampire line (ghoul → vampire → overcomer/lord → divine) still joins the Vampirism vampire faction with a level floor (vampire 1, overcomer/lord 7, divine max). A cure resets the race to human **only** if the race is in Tensura's vampire line.
 - **R20a (2026-11-12).** When a player with no bloodline species joins the Vampirism vampire faction and their Tensura race is **exactly** `tensura:human`, the race is set to `tensura:vampire`, automatically. Every other race is kept, as R20 says (an elf stays an elf). Not configurable.
+- **R20b (2026-11-14).** Werewolves follow Tensura's Beastfolk line (beastfolk, beast_lord, spirit_beast, divine_beast, in the order of Tensura's own evolutions). A player with no bloodline species whose Tensura race is **exactly** `tensura:human` becomes `tensura:beastfolk` when they become a werewolf. A werewolf already on the line becomes `tensura:beast_lord` when they are an Alpha and `tensura:spirit_beast` when they are a True Alpha (also when they rejoin as one). The race is **never lowered**, `tensura:divine_beast` stays a normal Tensura evolution and every other race (an elf, a vampire-raced hybrid) is kept. Existing werewolves are not changed: only a join or a rank change after the update. Config `werewolf_beastfolk_enabled` (default on); off leaves every race alone.
 - **R21.** Sun damage comes only from Vampirism. A Sun Ring bound to the wearer blocks it.
 - **R22.** Cured by the *Rite of Cleansing Blood* or The Cure.
 - **R23.** From level 10, can compel villagers and lesser vampire mobs.

@@ -8,6 +8,7 @@ import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.gametest.VampirismTensuraGameTests;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.gametest.WerewolvesGameTests;
+import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.werewolves.WerewolfRaceSync;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.werewolves.WerewolfSkillGrants;
 
 public final class VampirismTensuraPart {
@@ -23,6 +24,7 @@ public final class VampirismTensuraPart {
         boolean werewolves = ModList.get().isLoaded("werewolves");
         if (werewolves) {
             WerewolfSkillGrants.register();
+            WerewolfRaceSync.register();
         }
         // the part is only initialised when Vampirism and Tensura are present, so the tests only exist then;
         // the Werewolves tests link Werewolves classes, so they are registered only when it is loaded
