@@ -57,6 +57,7 @@ All under `[species]`.
 |---|---|---|---|
 | `max_originals_per_world` | `0` | 0 to 10000 | How many Originals (Original and Original hybrid) the world allows. **0 = unlimited.** Counts Originals who no longer log in. |
 | `transition_ticks` | `24000` | 20 to 24,000,000 | Play time a werewolf has to drink Doppelgänger Blood after dying with Original's Blood, in ticks. The same time a player has in the turning to drink human blood. |
+| `bite_vampire_cost` | `1` | 0 to 20 | How much of their own blood a vampire loses when biting a vampire (a bite on a vampire never feeds). |
 | `vampire_blood_ticks` | `24000` | 20 to 24,000,000 | How long vampire blood stays in a player's system, in game ticks. Dying while it is there starts the turning. |
 | `max_five` | `5` | 1 to 10000 | How many Hunters of the Five the world allows. Lowering it later removes nobody: the Five can stay above it until marks are lost, and no new Rite of the Five works until there are fewer than this. |
 | `witch_bonus_enabled` | `true` | | Witches, heretics and tribrids get **altar range x1.5** and **rite power cost x0.75**. Siphoned power is always usable. |

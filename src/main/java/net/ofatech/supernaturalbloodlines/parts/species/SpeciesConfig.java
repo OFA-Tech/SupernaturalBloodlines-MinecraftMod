@@ -11,6 +11,7 @@ public final class SpeciesConfig {
     public static final int DEFAULT_MAX_ORIGINALS = 0;
     public static final int DEFAULT_TRANSITION_TICKS = 24000;
     public static final int DEFAULT_VAMPIRE_BLOOD_TICKS = 24000;
+    public static final int DEFAULT_BITE_VAMPIRE_COST = 1;
 
     public static final int DEFAULT_MAX_FIVE = 5;
 
@@ -21,6 +22,7 @@ public final class SpeciesConfig {
 
     private static final ModConfigSpec.IntValue TRANSITION_TICKS;
     private static final ModConfigSpec.IntValue VAMPIRE_BLOOD_TICKS;
+    private static final ModConfigSpec.IntValue BITE_VAMPIRE_COST;
     private static final ModConfigSpec.BooleanValue WITCH_BONUS;
     private static final ModConfigSpec.DoubleValue SIPHONER_CHANCE;
     public static final boolean DEFAULT_SIRELINE_DEATH = false;
@@ -41,6 +43,8 @@ public final class SpeciesConfig {
                 .defineInRange("transition_ticks", DEFAULT_TRANSITION_TICKS, 20, 24_000_000);
         VAMPIRE_BLOOD_TICKS = b.comment("How long vampire blood stays in a player's system, in game ticks. Dying while it is there starts the turning (the same transition_ticks to drink human blood).")
                 .defineInRange("vampire_blood_ticks", DEFAULT_VAMPIRE_BLOOD_TICKS, 20, 24_000_000);
+        BITE_VAMPIRE_COST = b.comment("Biting a vampire never feeds the biter and costs them this much of their own blood (0 = nothing).")
+                .defineInRange("bite_vampire_cost", DEFAULT_BITE_VAMPIRE_COST, 0, 20);
         MAX_FIVE = b.comment("How many Hunters of the Five the world allows. Lowering it later does not remove anyone: the Five can stay above this number until marks are lost, and no new Rite of the Five works until there are fewer than this.")
                 .defineInRange("max_five", DEFAULT_MAX_FIVE, 1, 10_000);
         WITCH_BONUS = b.comment("Witches, heretics and tribrids get altar range x1.5 and rite power cost x0.75.")
@@ -220,6 +224,14 @@ public final class SpeciesConfig {
             return VAMPIRE_BLOOD_TICKS.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_VAMPIRE_BLOOD_TICKS;
+        }
+    }
+
+    public static int biteVampireCost() {
+        try {
+            return BITE_VAMPIRE_COST.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_BITE_VAMPIRE_COST;
         }
     }
 }

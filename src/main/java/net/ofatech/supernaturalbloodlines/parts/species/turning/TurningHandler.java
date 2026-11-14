@@ -82,7 +82,7 @@ public final class TurningHandler {
         return victim instanceof AbstractVillager || isFaction(victim, VReference.HUNTER_FACTION);
     }
 
-    private static boolean isFaction(Entity e, IFaction<?> faction) {
+    static boolean isFaction(Entity e, IFaction<?> faction) {
         return VampirismAPI.factionRegistry().getFaction(e) == faction;
     }
 
@@ -118,7 +118,7 @@ public final class TurningHandler {
         if (!BloodlineAccess.get(p).inTurning()) {
             return;
         }
-        apply(p, BloodlineEvent.TURNING_FED, null);
+        GhoulGates.completing(p, () -> apply(p, BloodlineEvent.TURNING_FED, null));
         if (!BloodlineAccess.get(p).inTurning()) {
             p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.completed"));
         }

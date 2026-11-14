@@ -38,6 +38,8 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 
 - **The turning is fed from a bottle for non-vampires.** Only a vampire can bite in Vampirism, so before you are a Ghoul the only way to drink human blood is a Vampirism blood bottle (right-click), and a bottle counts as human blood whatever it was filled from. The turning's clock is the player's online time; the client's copy of it is stale until the next real change or login.
 
+- **Ghouls and Vampirism skill points:** Vampirism's skill-point providers can only add points, so a Ghoul is held at level 1 by the level cap, not by a lowered point count. A command that sets a Ghoul's level above 1 is refused too (the same event).
+
 ## Design points the owner may still change
 
 - Farming True Alpha **defender kills** at a spawner beside a villager.
