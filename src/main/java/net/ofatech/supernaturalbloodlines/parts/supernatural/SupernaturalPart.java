@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural;
 
+import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.ModSkillGameTests;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.PredatorsThirstGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.BloodSkillGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.BloodEffects;
 import java.util.List;
@@ -91,6 +93,8 @@ public final class SupernaturalPart {
             e.register(MigrationGameTests.class);
             e.register(SkillGameTests.class);
             e.register(BloodSkillGameTests.class);
+            e.register(PredatorsThirstGameTests.class);
+            e.register(ModSkillGameTests.class);
             if (ModList.get().isLoaded("tensura") && EnabledParts.isEnabled("supernaturalTensura")) {
                 e.register(TensuraEpGameTests.class);
             }

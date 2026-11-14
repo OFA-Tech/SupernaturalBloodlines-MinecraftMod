@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.net;
 
+import net.ofatech.supernaturalbloodlines.core.supernatural.SkillTable;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.ModSkillService;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
@@ -44,6 +46,18 @@ public final class LadderNet {
                         SkillService.buy(p, payload.skillId());
                     }
                 }));
+        registrar.playToServer(UnlockModSkillPayload.TYPE, UnlockModSkillPayload.STREAM_CODEC, (payload, ctx) ->
+                ctx.enqueueWork(() -> {
+                    if (ctx.player() instanceof ServerPlayer p) {
+                        ModSkillService.unlock(p, payload.skillId());
+                    }
+                }));
+        registrar.playToClient(SkillTablePayload.TYPE, SkillTablePayload.STREAM_CODEC, (payload, ctx) ->
+                ctx.enqueueWork(() -> {
+                    SkillTable.Parsed parsed = payload.parseWithServerSets();
+                    parsed.rejected().forEach(r -> SupernaturalBloodlines.LOGGER.warn("Skill data from the server rejected: {}", r));
+                    SkillTable.setClientCopy(parsed.table());
+                }));
         registrar.playToClient(LadderTablePayload.TYPE, LadderTablePayload.STREAM_CODEC, (payload, ctx) ->
                 ctx.enqueueWork(() -> {
                     LadderTable.Parsed parsed = payload.parseWithServerSets();
@@ -55,6 +69,9 @@ public final class LadderNet {
     public static void sendTable(ServerPlayer p) {
         if (p.connection != null && p.connection.hasChannel(LadderTablePayload.TYPE)) {
             PacketDistributor.sendToPlayer(p, LadderTablePayload.of(LadderTable.current().sources(), ModList.get()::isLoaded, EnabledParts::isEnabled));
+        }
+        if (p.connection != null && p.connection.hasChannel(SkillTablePayload.TYPE)) {
+            PacketDistributor.sendToPlayer(p, SkillTablePayload.of(SkillTable.current().sources(), ModList.get()::isLoaded, EnabledParts::isEnabled));
         }
     }
 }

@@ -91,7 +91,11 @@ class SkillDataTest {
     }
 
     static SkillTable load(java.util.function.Predicate<String> modLoaded) {
-        SkillTable.Parsed parsed = SkillTable.parse(read("skill"), read("tree"), modLoaded);
+        return load(modLoaded, part -> true);
+    }
+
+    static SkillTable load(java.util.function.Predicate<String> modLoaded, java.util.function.Predicate<String> partEnabled) {
+        SkillTable.Parsed parsed = SkillTable.parse(read("skill"), read("tree"), read("quest"), modLoaded, partEnabled);
         assertEquals(List.of(), parsed.rejected());
         return parsed.table();
     }
@@ -146,6 +150,28 @@ class SkillDataTest {
             }
         }
         assertEquals(COSTS.keySet(), listed, "a catalogue skill no tree lists, or a tree skill outside the catalogue");
+    }
+
+    @Test
+    void theQuestIsTheSpecsAndEveryTreeQuestExists() {
+        SkillTable t = load(mod -> true);
+        QuestSpec q = t.quest("Q-VAM-6").orElseThrow();
+        assertEquals("Hunter of Hunters", q.name());
+        assertEquals(List.of("Q-VAM-6a:kill:10", "Q-VAM-6b:signal:3", "Q-VAM-6c:feed:25"),
+                q.tasks().stream().map(x -> x.id() + ":" + x.detector().id() + ":" + x.target()).toList());
+        assertEquals("vampire", q.tasks().get(0).args().get("category"));
+        assertEquals("vampire_bite_refused", q.tasks().get(1).args().get("signal"));
+        assertEquals(1, t.quests().size());
+        for (SupernaturalRace race : SupernaturalRace.values()) {
+            for (SkillTree.Entry e : t.tree(race).entries()) {
+                assertTrue(e.quest() == null || t.quest(e.quest()).isPresent(), race.id() + " lists a quest that does not exist: " + e.quest());
+            }
+        }
+        // the quest opens at the rung the tree names for S-VAM-6
+        assertEquals(4, t.tree(SupernaturalRace.VAMPIRE).entry("S-VAM-6").orElseThrow().rung());
+        assertEquals(3, t.tree(SupernaturalRace.ORIGINAL).entry("S-VAM-6").orElseThrow().rung());
+        // without the species part the bite task goes (its signal is fired there)
+        assertEquals(2, load(mod -> true, part -> !part.equals("species")).quest("Q-VAM-6").orElseThrow().tasks().size());
     }
 
     @Test

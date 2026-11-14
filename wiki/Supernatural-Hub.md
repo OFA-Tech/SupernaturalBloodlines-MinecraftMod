@@ -37,6 +37,12 @@ Skill points (SP) from the ladders buy **skills**. There are 40 to buy, in 11 tr
 
 ### What the skills change
 
-Skills that tune a rule: Silver Tongue (compulsion reaches 6 blocks, a bigger villager discount), Bloodmaker's Yield (2 bottles of Original's Blood), Sire's Call (call every 5 minutes), Steady Thirst and Venom Fang (hybrids), Moon Calm, Pack Heart, Roar's Echo and Wolfsbane Tolerance (werewolves), Steady Circle, Wide Circle, Emissary's Bond and Ancestral Voice (witches), the five siphoner skills, Steady Aim, Hunter's Eye, Patient Hunter and Mark Mastery (hunters), Vervain Blood and Elder's Skin. Ashwarden has no effect yet, because a mountain ash line is already unbreakable for vampires and werewolves.
+Skills that tune a rule: Silver Tongue (compulsion lasts 1.5 times as long and the villager discount is a bit bigger: +25 reputation, the villager's own limit), Bloodmaker's Yield (2 bottles of Original's Blood), Sire's Call (call every 5 minutes), Steady Thirst and Venom Fang (hybrids), Moon Calm, Pack Heart, Roar's Echo and Wolfsbane Tolerance (werewolves), Steady Circle, Wide Circle, Emissary's Bond and Ancestral Voice (witches), the five siphoner skills, Steady Aim, Hunter's Eye, Patient Hunter and Mark Mastery (hunters), Vervain Blood and Elder's Skin. Ashwarden: vampires and werewolves that touch a mountain ash line you laid (while you are online) are pushed back and weakened for 5 seconds.
 
 Keen Fangs adds 1 blood to every feed on human-like blood (villagers, traders and other humans).
+
+### Quests and your Vampirism and Werewolves skills
+
+Some skills need a quest first. Predator's Thirst (S-VAM-6) needs Hunter of Hunters: kill 10 vampires, have 3 bites on a vampire refused and feed 25 times. It opens when you reach the rung of your tree that lists the skill. With Predator's Thirst, biting a vampire feeds you (3 blood, or what Vampirism gives for that victim) and drains them; a vampire mob is also hurt (never killed) and weakened for 10 seconds, and an Original cannot be killed by the drain.
+
+The skill points of Vampirism and Werewolves are spent through the hub on those mods' own skill trees: the server asks the mod whether the skill can be unlocked and the mod takes its own points. A Ghoul cannot unlock skills.

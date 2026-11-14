@@ -24,7 +24,7 @@ import java.util.function.Predicate;
  * <pre>{@code
  * skill: { "id": "S-VAM-4", "name": "Hardened", "cost": 3, "kinds": ["attr"],
  *          "attribute": { "id": "minecraft:generic.max_health", "operation": "add_value", "amount": 2, "when": "always" } }
- *        { "id": "S-VAM-3", "name": "Silver Tongue", "cost": 2, "kinds": ["rule"], "params": { "range": 6 } }
+ *        { "id": "S-VAM-3", "name": "Silver Tongue", "cost": 2, "kinds": ["rule"], "params": { "duration_factor": 1.5 } }
  *        { "id": "S-VAM-5", "name": "Blood Mist", "cost": 3, "kinds": ["tensura"], "tensura_skill": "tensura:blood_mist" }
  * tree:  { "skills": [ { "skill": "S-VAM-1", "rung": 1 }, { "skill": "S-VAM-6", "rung": 4, "after": "S-VAM-1", "quest": "Q-VAM-6" } ] }
  * }</pre>
@@ -34,16 +34,26 @@ public final class SkillTable {
     public record Parsed(SkillTable table, List<String> rejected) {
     }
 
-    public static final SkillTable EMPTY = new SkillTable(Map.of(), Map.of());
+    /** The accepted files as read, by name: skills, trees (by race id) and quests. A client that gets them can parse its own table. */
+    public record Sources(Map<String, JsonElement> skills, Map<String, JsonElement> trees, Map<String, JsonElement> quests) {
+        static final Sources NONE = new Sources(Map.of(), Map.of(), Map.of());
+    }
+
+    public static final SkillTable EMPTY = new SkillTable(Map.of(), Map.of(), Map.of(), Sources.NONE);
 
     private static volatile SkillTable current = EMPTY;
+    private static volatile SkillTable clientCopy = EMPTY;
 
     private final Map<String, SkillSpec> skills;
     private final Map<SupernaturalRace, SkillTree> trees;
+    private final Map<String, QuestSpec> quests;
+    private final Sources sources;
 
-    private SkillTable(Map<String, SkillSpec> skills, Map<SupernaturalRace, SkillTree> trees) {
+    private SkillTable(Map<String, SkillSpec> skills, Map<SupernaturalRace, SkillTree> trees, Map<String, QuestSpec> quests, Sources sources) {
         this.skills = Map.copyOf(skills);
         this.trees = Map.copyOf(trees);
+        this.quests = Map.copyOf(quests);
+        this.sources = sources;
     }
 
     /** The table the server is using; replaced on every data reload. */
@@ -53,6 +63,27 @@ public final class SkillTable {
 
     public static void setCurrent(SkillTable t) {
         current = t;
+    }
+
+    /** The table the server sent to this client (the hub reads it); empty until the first sync. */
+    public static SkillTable clientCopy() {
+        return clientCopy;
+    }
+
+    public static void setClientCopy(SkillTable t) {
+        clientCopy = t;
+    }
+
+    public Sources sources() {
+        return sources;
+    }
+
+    public Optional<QuestSpec> quest(String id) {
+        return Optional.ofNullable(quests.get(id));
+    }
+
+    public Collection<QuestSpec> quests() {
+        return quests.values();
     }
 
     public Optional<SkillSpec> skill(String id) {
@@ -74,7 +105,19 @@ public final class SkillTable {
      * @param modLoaded  a skill of a missing mod is hidden
      */
     public static Parsed parse(Map<String, JsonElement> skillFiles, Map<String, JsonElement> treeFiles, Predicate<String> modLoaded) {
+        return parse(skillFiles, treeFiles, Map.of(), modLoaded, part -> true);
+    }
+
+    /**
+     * @param questFiles file name to its JSON
+     * @param partEnabled a quest task whose part is off is dropped (its signal never comes), as in a ladder
+     */
+    public static Parsed parse(Map<String, JsonElement> skillFiles, Map<String, JsonElement> treeFiles, Map<String, JsonElement> questFiles,
+                               Predicate<String> modLoaded, Predicate<String> partEnabled) {
         List<String> rejected = new ArrayList<>();
+        Map<String, JsonElement> acceptedSkills = new HashMap<>();
+        Map<String, JsonElement> acceptedTrees = new HashMap<>();
+        Map<String, JsonElement> acceptedQuests = new HashMap<>();
         Map<String, SkillSpec> all = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> file : new TreeMap<>(skillFiles).entrySet()) {
             try {
@@ -82,6 +125,7 @@ public final class SkillTable {
                 if (all.putIfAbsent(s.id(), s) != null) {
                     throw new BadData("duplicate id " + s.id());
                 }
+                acceptedSkills.put(file.getKey(), file.getValue());
             } catch (RuntimeException e) {
                 rejected.add("skill " + file.getKey() + ": " + describe(e));
             }
@@ -97,15 +141,56 @@ public final class SkillTable {
             try {
                 SupernaturalRace race = SupernaturalRace.byId(file.getKey()).orElseThrow(() -> new BadData("unknown race"));
                 trees.put(race, new SkillTree(race, prune(readTree(file.getValue(), all), visible.keySet())));
+                acceptedTrees.put(file.getKey(), file.getValue());
             } catch (RuntimeException e) {
                 rejected.add("tree " + file.getKey() + ": " + describe(e));
             }
         }
-        return new Parsed(new SkillTable(visible, trees), List.copyOf(rejected));
+        Map<String, QuestSpec> quests = new LinkedHashMap<>();
+        Set<String> taskIds = new HashSet<>();
+        for (Map.Entry<String, JsonElement> file : new TreeMap<>(questFiles).entrySet()) {
+            try {
+                QuestSpec q = readQuest(file.getValue(), taskIds, modLoaded, partEnabled);
+                if (quests.putIfAbsent(q.id(), q) != null) {
+                    throw new BadData("duplicate id " + q.id());
+                }
+                acceptedQuests.put(file.getKey(), file.getValue());
+            } catch (RuntimeException e) {
+                rejected.add("quest " + file.getKey() + ": " + describe(e));
+            }
+        }
+        return new Parsed(new SkillTable(visible, trees, quests, new Sources(acceptedSkills, acceptedTrees, acceptedQuests)), List.copyOf(rejected));
+    }
+
+    private static QuestSpec readQuest(JsonElement json, Set<String> taskIds, Predicate<String> modLoaded, Predicate<String> partEnabled) {
+        JsonObject o = object(json, "quest");
+        String id = string(o, "id");
+        List<TaskSpec> tasks = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+        Set<String> mine = new HashSet<>();
+        for (JsonElement el : array(o, "tasks")) {
+            JsonObject t = object(el, "task of " + id);
+            if (t.has("any_of") || t.has("total")) {
+                throw new BadData(id + ": a quest task is a plain task (no any_of, no total)");
+            }
+            String taskId = string(t, "id");
+            if (!mine.add(taskId) || taskIds.contains(taskId)) {
+                throw new BadData("duplicate id " + taskId);
+            }
+            TaskSpec task = LadderTable.readLeaf(t, taskId, warnings);
+            if ((task.mod() == null || modLoaded.test(task.mod())) && (task.part() == null || partEnabled.test(task.part()))) {
+                tasks.add(task);
+            }
+        }
+        if (array(o, "tasks").isEmpty()) {
+            throw new BadData(id + ": no tasks");
+        }
+        taskIds.addAll(mine);
+        return new QuestSpec(id, o.has("name") ? string(o, "name") : id, tasks);
     }
 
     private static String describe(RuntimeException e) {
-        return e instanceof BadData ? e.getMessage() : "unreadable value (" + e + ")";
+        return e instanceof BadData || e instanceof LadderTable.BadData ? e.getMessage() : "unreadable value (" + e + ")";
     }
 
     /** Drops what is hidden, and what comes after it (it could never be bought). */

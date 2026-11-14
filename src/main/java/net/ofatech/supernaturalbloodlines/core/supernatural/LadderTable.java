@@ -215,7 +215,7 @@ public final class LadderTable {
         return new TaskSpec(id, null, Map.of(), 0, null, null, false, list);
     }
 
-    private static TaskSpec readLeaf(JsonObject o, String id, List<String> warnings) {
+    static TaskSpec readLeaf(JsonObject o, String id, List<String> warnings) {
         String detectorId = string(o, "detector");
         TaskSpec.Detector detector = TaskSpec.Detector.byId(detectorId)
                 .orElseThrow(() -> new BadData("task " + id + ": unknown detector " + detectorId));
@@ -315,7 +315,7 @@ public final class LadderTable {
         return out;
     }
 
-    private static final class BadData extends RuntimeException {
+    static final class BadData extends RuntimeException {
         BadData(String message) {
             super(message);
         }

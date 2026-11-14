@@ -99,6 +99,17 @@ public final class WerewolfSkillRuleGameTests {
         helper.succeed();
     }
 
+    /** A hybrid with Predator's Thirst still poisons the vampire it bites: the venom is a rule of the hit, not of the drink. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void hybridBiterStillPoisons(GameTestHelper helper) {
+        ServerPlayer wolf = werewolf(helper, Species.HYBRID);
+        own(wolf, "S-VAM-6");
+        ServerPlayer victim = vampire(helper);
+        bite(wolf, victim);
+        helper.assertTrue(victim.hasEffect(SpeciesRegistries.HYBRID_VENOM), "the hybrid's bite no longer poisons");
+        helper.succeed();
+    }
+
     private static ServerPlayer vampire(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.createDuelist(helper);
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
