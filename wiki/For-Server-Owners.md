@@ -64,7 +64,7 @@ To **remove sire links cleanly:** set `sire_subordinate_link_enabled = false` in
 NeoForge **COMMON** configs are **not synced from the server**: each side reads its own file. Keep these equal on the server and on every client:
 
 - **All of `[parts]`** (and the same mods installed).
-- **`supernaturalbloodlines-species_tensura.toml`:** `layers`, `undead_treatment_enabled`, `apex_evolutions_enabled`, `evolution_progress_multiplier`. Tensura's undead checks and the evolution screen run **on the client too**, so a mismatch gives wrong screens (the evolution bar showing a different number than the server checks, a missing apex option).
+- **`supernaturalbloodlines-species_tensura.toml`:** `layers`, `undead_treatment_enabled`, `apex_evolutions_enabled`, `evolution_progress_multiplier`. Tensura's undead checks and the evolution screen run **on the client too**, so a mismatch gives wrong screens (a missing apex option). `evolution_progress_multiplier` only matters on the server.
 - **`moon_bound_werewolves`, `full_form_level`** in the common file.
 - The other values (`max_originals_per_world`, `max_five`, chances, `sireline_death`) are used by the **server** only, but equal values avoid confusion.
 
@@ -77,7 +77,7 @@ A simple way: keep one `config/` folder in your modpack and ship it to everyone.
 | Knob | Where | Default | Why you might change it |
 |---|---|---|---|
 | Undead treatment | `undead_treatment_enabled` | on | **Wider than holy damage**: a plain faction vampire goes from x1.5 to **x3** holy and light damage, and Tensura's other undead rules apply (infection immunity, Enervation on food...). Off keeps skills and bonuses but not this. |
-| Evolution boost | `evolution_progress_multiplier` | 1.25 | up to 20% of an evolution's requirement weight can stay unmet, so a boss or an item can be skipped once EP is high. 1.0 turns it off. Applies to **every** evolution of a player with a species. |
+| Evolution boost | `evolution_progress_multiplier` | 1.25 | a player with a species gains 25% more EP. It speeds up EP gain only: no evolution requirement is skipped. 1.0 turns it off. |
 | Apex races | `apex_evolutions_enabled` | on | An apex race costs **2,000,000 EP** (the same as a divine human) and gives more max health than the divine tier. All values are placeholders. No apex race is bloodless: all of them can be bitten. |
 | Sire naming | `sire_naming_enabled` | on | **Bypasses `playerNaming`** for a sire and their own sired: `playerNaming=false` does not beat it. Turn it off if your naming rule is meant to be absolute. Siring needs no consent; the Rite of Severance is the way out. |
 | Severance | (rite) | n/a | A witch type can sever an **unwilling** player in the circle (no consent check), and a sired witch type can sever herself. A new sire replaces the old one, tree and sireline death included. |

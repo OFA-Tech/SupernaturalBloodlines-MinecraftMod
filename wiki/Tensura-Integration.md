@@ -97,11 +97,11 @@ From **saint tier or higher** of a human-like Tensura line, a player with a spec
 
 ### The evolution boost
 
-A player with a species gets `evolution_progress_multiplier` (default **1.25**, range 1 to 10) times the progress Tensura counts toward **any** evolution, capped at 100%. Set it to 1.0 to turn it off.
+A player with a species gains `evolution_progress_multiplier` (default **1.25**, range 1 to 10) times the EP Tensura credits them, so they reach an evolution's EP requirement sooner. Set it to 1.0 to turn it off.
 
-It scales Tensura's weighted *total*, not each requirement. At 1.25, up to 20% of the requirement weight can stay unmet, so a non-EP condition (a boss, an item, an awakening) can be skipped once the EP part is high enough.
+It speeds up **EP gain only**. The evolution requirements and their progress are Tensura's own, so no boss, item or awakening can be skipped. (The setting's name is from an older version, where it scaled the progress; the value is kept.) It works through Tensura's own aura and magicule gain, so it needs no extra mod hook.
 
-> **Important:** keep `apex_evolutions_enabled`, `evolution_progress_multiplier` and `undead_treatment_enabled` equal on the server and on every client. The evolution screen is built on the client too. See [For server owners](For-Server-Owners#common-configs-must-match).
+> **Important:** keep `apex_evolutions_enabled` and `undead_treatment_enabled` equal on the server and on every client. The evolution screen is built on the client too. See [For server owners](For-Server-Owners#common-configs-must-match).
 
 ## Sires as Tensura owners, and naming
 

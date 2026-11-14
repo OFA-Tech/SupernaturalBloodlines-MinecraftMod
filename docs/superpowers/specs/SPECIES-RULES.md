@@ -119,7 +119,7 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 - **R100.** **The race is kept and species are a layer on it.** Each species:
   - grants Tensura skills, attributes and an EP or magicule bonus
   - makes Tensura treat the player correctly: vampire types count as undead for holy damage and sunlight checks, and bloodless rules apply to Originals
-  - gives a bonus to the Tensura evolution requirements of their current line
+  - speeds up the player's EP gain by 25% (config `evolution_progress_multiplier`, plan 10), through Tensura's own `AURA_GAIN` and `MAGICULE_GAIN` attributes. It never changes an evolution's requirements or progress: a boss, an item or an awakening can't be skipped
   - **unlocks one apex evolution** that human-like races can pick in Tensura's evolution screen once they reach a high stage of their own line:
 
 | Species | Apex race (working names) |

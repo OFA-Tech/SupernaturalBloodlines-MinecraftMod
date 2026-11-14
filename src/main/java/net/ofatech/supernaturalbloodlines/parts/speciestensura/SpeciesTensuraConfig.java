@@ -95,10 +95,9 @@ public final class SpeciesTensuraConfig {
         APEX_ENABLED = b.comment("Offer the apex race of the player's species in Tensura's evolution screen (R100). Off: no apex option; species keep working.",
                         "Common config: the evolution screen is built on the client too, so keep it equal on the server and the clients.")
                 .define("apex_evolutions_enabled", true);
-        EVOLUTION_MULTIPLIER = b.comment("A player with a species gets this multiple of the progress Tensura counts toward any evolution (capped at 100%).",
-                        "It scales Tensura's weighted TOTAL, not each requirement: at 1.25 up to 20% of the requirement weight can stay unmet,",
-                        "so a non-EP condition (a boss, an item, an awakening) can be skipped when the EP part is high enough. 1.0 turns the bonus off.",
-                        "Common config: the evolution screen is built on the client too, so keep it equal on the server and the clients.")
+        EVOLUTION_MULTIPLIER = b.comment("A player with a species gets this multiple of the EP Tensura credits them (kills, and everything else that raises max aura and magicule). 1.0 turns the bonus off.",
+                        "It speeds up EP gain only: the evolution requirements and their progress are Tensura's own. The old name says 'progress' because it used to scale the progress; the key is kept so existing configs keep their value.",
+                        "Applied as a modifier on Tensura's aura and magicule gain attributes, refreshed within 10 seconds of a change.")
                 .defineInRange("evolution_progress_multiplier", 1.25, 1.0, 10.0);
         SIRE_LINK = b.comment("A sired creature or player becomes the sire's Tensura subordinate (its permanent owner is the sire). R101.",
                         "Tensura then treats the pair as owner and subordinate: the sired cannot hurt the sire or the sire's other sired (the sire can still hurt them),",

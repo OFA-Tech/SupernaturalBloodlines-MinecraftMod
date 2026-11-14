@@ -43,7 +43,6 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 - Farming True Alpha **defender kills** at a spawner beside a villager.
 - With the **artifacts part off**, a bitten non-Alpha wolf has no way to shift at will.
 - **Undead treatment** is wider than holy damage: it affects a plain Vampirism vampire too.
-- **Evolution boost** can skip non-EP conditions (a boss, an item) once EP is high.
 - **Apex races** give more max health than the divine tier, and all their values are placeholders.
 - **Sire link** makes sired players unable to hurt their sire, and siblings allies. Sire naming bypasses `playerNaming`.
 

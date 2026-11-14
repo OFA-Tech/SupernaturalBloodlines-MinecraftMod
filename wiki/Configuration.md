@@ -66,7 +66,7 @@ All under `[species]`.
 
 ## species_tensura: `supernaturalbloodlines-species_tensura.toml`
 
-"The Tensura layer of each species. The race is never replaced (R100)." **COMMON: keep it equal on the server and the clients**, especially `layers`, `undead_treatment_enabled`, `apex_evolutions_enabled` and `evolution_progress_multiplier`.
+"The Tensura layer of each species. The race is never replaced (R100)." **COMMON: keep it equal on the server and the clients**, especially `layers`, `undead_treatment_enabled` and `apex_evolutions_enabled`.
 
 | Key | Default | Does |
 |---|---|---|
@@ -74,7 +74,7 @@ All under `[species]`.
 | `rank_skills` | see below | `"RANK=skill,skill"` with RANK `ALPHA`, `TRUE_ALPHA` or `BORN_LEVEL5` (a born werewolf of level 5). Werewolves only. The race never changes; only skills this mod granted are taken back. An entry replaces the default of its key. |
 | `undead_treatment_enabled` | `true` | Tensura treats a player whose layer says undead as undead (holy and light damage x3, holy exposure, infection immunity, Enervation on food...). A plain Vampirism vampire counts too, so `tensura_holy_vs_vampire` has no effect on it. **Off:** layers still grant skills and bonuses, and Tensura's undead checks are left alone. |
 | `apex_evolutions_enabled` | `true` | Offer the species' apex race in Tensura's evolution screen. Off: no apex option; species keep working. **If it differs between client and server, the client shows the option and the server silently refuses the pick** (nothing is logged). |
-| `evolution_progress_multiplier` | `1.25` (1.0 to 10.0) | A player with a species gets this multiple of the progress Tensura counts toward **any** evolution (capped at 100%). It scales the weighted *total*, not each requirement: at 1.25 up to 20% of the requirement weight can stay unmet, so a non-EP condition (a boss, an item, an awakening) can be skipped once the EP part is high enough. **1.0 turns it off.** |
+| `evolution_progress_multiplier` | `1.25` (1.0 to 10.0) | A player with a species gets this multiple of the EP Tensura credits them (**EP gain only**: evolution requirements are never touched). The name is old; the value is kept from earlier versions. Server side only. **1.0 turns it off.** |
 | `sire_subordinate_link_enabled` | `true` | A sired creature or player becomes the sire's Tensura subordinate. A sired player then cannot hurt the sire or the sire's other sired (one way); owner and sired count as allied; a demon lord sire's harvest festival gifts them. **Off:** no link is made or removed. |
 | `sire_naming_enabled` | `true` | **Bypasses Tensura's `playerNaming` game rule** for a sire and their own sired only. Only for a sired player with no Tensura name who has turned their own naming on. A named sired player gets Tensura's EP and stats, **never** its race evolution. Off: Tensura's naming rules apply unchanged. |
 

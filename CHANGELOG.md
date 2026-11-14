@@ -5,6 +5,7 @@
 Owner decisions of 2026-11-14, applied to existing parts. Spec `docs/superpowers/specs/2026-11-14-balance-pass-design.md`.
 
 - **Apex races cost 2,000,000 EP** (was 1,000,000), the same as a divine human. Players already on an apex race keep it.
+- **The evolution boost speeds up EP gain only.** A player with a species is credited 25% more EP (`evolution_progress_multiplier`, default 1.25, 1.0 = off; the key keeps its old name). It no longer scales the evolution progress, so a boss, an item or an awakening can't be skipped. Done through Tensura's own `AURA_GAIN`/`MAGICULE_GAIN` attributes (Tensura has no EP-gain event): a permanent modifier `supernaturalbloodlines:ep_boost`, refreshed with the species layer. The `getEvolutionProgress` injection of `RaceInstanceMixin` is gone; the class stays for the apex offer (still 3 mixins in the part). The setting is server-side only now. A player who had the old progress bonus loses it; EP already gained is kept.
 - **No apex race is bloodless.** All seven carry the new race tag `supernaturalbloodlines:bitable`. The vampire bite block and the bloodless part of the werewolf-join check skip it, so every apex race can be bitten. The vampire-type ones stay undead (holy damage unchanged). Tensura's own drain and blood mist still skip an undead apex race (Tensura's check, left alone).
 
 ## Unreleased: Rite of Severance (R101b, species part)

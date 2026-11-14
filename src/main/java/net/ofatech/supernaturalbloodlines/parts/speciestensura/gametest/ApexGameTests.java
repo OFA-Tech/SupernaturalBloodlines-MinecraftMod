@@ -7,6 +7,7 @@ import io.github.manasmods.manascore.race.api.ManasRaceInstance;
 import io.github.manasmods.manascore.race.api.RaceAPI;
 import io.github.manasmods.manascore.race.impl.RaceStorage;
 import io.github.manasmods.manascore.skill.api.SkillAPI;
+import io.github.manasmods.tensura.handler.DeathHandler;
 import io.github.manasmods.tensura.network.c2s.RequestEvolutionPacket;
 import io.github.manasmods.tensura.race.RaceUtils;
 import io.github.manasmods.tensura.race.template.EvolutionRequirement;
@@ -20,6 +21,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
@@ -32,6 +34,7 @@ import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexOffer;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexRace;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexRaces;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexSpec;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.EvolutionBoost;
 import net.ofatech.supernaturalbloodlines.shared.tensura.RaceTags;
 
 /** Apex races and the evolution bonus. Registered by the part itself, so these only exist when species_tensura is enabled. */
@@ -277,8 +280,45 @@ public final class ApexGameTests {
         helper.succeed();
     }
 
+    /** What Tensura adds to the base max aura and magicule when {@code gainer} gets {@code ep} EP from killing {@code victim}. */
+    private static double[] epGained(GameTestHelper helper, ServerPlayer gainer, double ep) {
+        double aura = gainer.getAttribute(TensuraAttributes.MAX_AURA).getBaseValue();
+        double magicule = gainer.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue();
+        DeathHandler.gainEPEntity(gainer, helper.spawnWithNoFreeWill(EntityType.PIG, 1, 2, 1), ep);
+        return new double[] {gainer.getAttribute(TensuraAttributes.MAX_AURA).getBaseValue() - aura,
+                gainer.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue() - magicule};
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void evolutionBoostScalesTheProgressAndCapsAtOneHundred(GameTestHelper helper) {
+    public static void boostAddsQuarterEpForSpeciesPlayers(GameTestHelper helper) {
+        ServerPlayer original = TestPlayers.create(helper);
+        setRace(original, "tensura:human");
+        species(original, Species.ORIGINAL);
+        ServerPlayer control = TestPlayers.create(helper);
+        setRace(control, "tensura:human");
+
+        double[] plain = epGained(helper, control, 1000);
+        helper.assertTrue(plain[0] > 0 && plain[1] > 0, "control: no EP was credited " + plain[0] + "/" + plain[1]);
+        double[] boosted = epGained(helper, original, 1000);
+        helper.assertTrue(Math.abs(boosted[0] - EvolutionBoost.boostedEp(original, plain[0])) < 1e-6
+                && Math.abs(boosted[1] - EvolutionBoost.boostedEp(original, plain[1])) < 1e-6,
+                "credited " + boosted[0] + "/" + boosted[1] + " from " + plain[0] + "/" + plain[1] + " (want x1.25)");
+        helper.assertTrue(Math.abs(boosted[0] / plain[0] - 1.25) < 1e-6, "aura ratio " + boosted[0] / plain[0]);
+        helper.assertTrue(Math.abs(boosted[1] / plain[1] - 1.25) < 1e-6, "magicule ratio " + boosted[1] / plain[1]);
+
+        // the bonus follows the species, and a player with a species but an empty layer gets none
+        species(original, Species.NONE);
+        double[] lost = epGained(helper, original, 1000);
+        helper.assertTrue(Math.abs(lost[0] - plain[0]) < 1e-6 && Math.abs(lost[1] - plain[1]) < 1e-6,
+                "the bonus stayed after the species went: " + lost[0] + "/" + lost[1]);
+        species(original, Species.TRIBRID);
+        double[] back = epGained(helper, original, 1000);
+        helper.assertTrue(Math.abs(back[0] / plain[0] - 1.25) < 1e-6, "the bonus did not come back: " + back[0]);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void boostNoLongerRaisesEvolutionProgress(GameTestHelper helper) {
         ServerPlayer original = TestPlayers.create(helper);
         setRace(original, "tensura:elf");
         species(original, Species.ORIGINAL);
@@ -286,30 +326,16 @@ public final class ApexGameTests {
         setRace(control, "tensura:elf");
         ManasRace target = registered("tensura:enlightened_elf");
 
-        for (ServerPlayer p : new ServerPlayer[] {original, control}) {
-            setEnergy(p, 1000);
-            double each = 1000;
-            for (int i = 0; i < 4; i++) {
-                float raw = instance(p).getRace().getEvolutionProgress(instance(p), p, target);
-                helper.assertTrue(raw > 0, "no raw progress");
-                each = each * 40.0 / raw;
-                setEnergy(p, each);
-            }
+        for (double each : new double[] {1000, 40_000, 100_000_000}) {
+            setEnergy(original, each);
+            setEnergy(control, each);
+            float raw = instance(control).getEvolutionProgress(control, target);
+            helper.assertTrue(raw > 0, "no progress at " + each);
+            helper.assertTrue(instance(original).getEvolutionProgress(original, target) == raw,
+                    "progress " + instance(original).getEvolutionProgress(original, target) + " against " + raw + " at " + each);
+            helper.assertTrue(raw == instance(original).getRace().getEvolutionProgress(instance(original), original, target),
+                    "the species player's progress is not Tensura's own at " + each);
         }
-        float rawO = instance(original).getRace().getEvolutionProgress(instance(original), original, target);
-        float rawC = instance(control).getRace().getEvolutionProgress(instance(control), control, target);
-        float boosted = instance(original).getEvolutionProgress(original, target);
-        helper.assertTrue(Math.abs(rawO - 40.0F) < 1.0F, "raw progress " + rawO + " (wanted about 40)");
-        helper.assertTrue(Math.abs(boosted - rawO * 1.25F) < 0.05F, "boosted " + boosted + " from " + rawO + " (want x1.25)");
-        helper.assertTrue(Math.abs(instance(control).getEvolutionProgress(control, target) - rawC) < 0.001F, "a player without a species got a bonus");
-
-        setEnergy(original, original.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue() * 90.0 / 40.0);
-        float high = instance(original).getRace().getEvolutionProgress(instance(original), original, target);
-        helper.assertTrue(high > 78.0F && high < 100.0F, "raw " + high + " (wanted about 90)");
-        helper.assertTrue(instance(original).getEvolutionProgress(original, target) == 100.0F, "not capped: "
-                + instance(original).getEvolutionProgress(original, target));
-        setEnergy(original, 100_000_000);
-        helper.assertTrue(instance(original).getEvolutionProgress(original, target) == 100.0F, "above the cap");
         helper.succeed();
     }
 

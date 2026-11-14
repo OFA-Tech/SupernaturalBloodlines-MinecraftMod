@@ -63,7 +63,7 @@ So switching **vampirism_enchanted** off also turns off **species**, **species_t
 - **Config key:** `speciesTensura`. **Mods:** Vampirism, Enchanted, Tensura (and the species part). Werewolves optional.
 - **Does:** the Tensura layer of each species (skills, magicule and aura bonus, undead treatment), the **seven apex races** and the evolution boost, **sires as Tensura owners**, sire naming, werewolf rank skills. See [Tensura integration](Tensura-Integration#the-species-layer-part-species_tensura).
 - **Config file:** `supernaturalbloodlines-species_tensura.toml`.
-- **Mixins (3, into Tensura and ManasCore):** `RaceUtilsMixin` (undead checks), `RaceInstanceMixin` (apex offer and the evolution boost), `SireNamingMixin` (naming). Applied only when all the mods and both parts are on. The log says whether each hook is in place; if Tensura renames a method after an update, the hook is skipped and the rest keeps working.
+- **Mixins (3, into Tensura and ManasCore):** `RaceUtilsMixin` (undead checks), `RaceInstanceMixin` (apex offer), `SireNamingMixin` (naming). Applied only when all the mods and both parts are on. The log says whether each hook is in place; if Tensura renames a method after an update, the hook is skipped and the rest keeps working.
 - **Off:** nothing runs, **but the apex races stay registered** whenever Tensura is installed, because ManasCore throws for a saved race that is not registered. Players on an apex race stay on it, with no layer. Sire links already made stay too. See [For server owners](For-Server-Owners#granted-skills-and-links-stay-when-a-part-is-off).
 
 ## artifacts
@@ -92,7 +92,7 @@ The mod has **9 mixins** in 3 configs (a budget of 3 per part, each `require = 0
 | species | `RiteCostMixin` | Enchanted `GoldChalkBlockEntity` | witch cost x0.75, siphoned power |
 | species | `RiteCancelMixin` | Enchanted `Rite.cancel` | a refused rite costs nothing |
 | species_tensura | `RaceUtilsMixin` | Tensura `RaceUtils.isUndead`, `isAffectedByHolyExposure` | undead treatment |
-| species_tensura | `RaceInstanceMixin` | ManasCore `ManasRaceInstance` | apex offer, evolution boost |
+| species_tensura | `RaceInstanceMixin` | ManasCore `ManasRaceInstance` | apex offer |
 | species_tensura | `SireNamingMixin` | Tensura `RequestNamingKeyPacket` | sire naming |
 
 If another mod you use also patches these methods, tell us (see [Troubleshooting](Troubleshooting)).

@@ -11,7 +11,6 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 public final class SpeciesTensuraMixinPlugin extends PartMixinPlugin {
     private static volatile boolean raceUtilsHooked;
     private static volatile boolean apexHooked;
-    private static volatile boolean boostHooked;
     private static volatile boolean sireNamingHooked;
 
     public SpeciesTensuraMixinPlugin() {
@@ -28,11 +27,6 @@ public final class SpeciesTensuraMixinPlugin extends PartMixinPlugin {
         return apexHooked;
     }
 
-    /** {@code ManasRaceInstance.getEvolutionProgress} really carries our call: the evolution bonus works. */
-    public static boolean boostHooked() {
-        return boostHooked;
-    }
-
     /** {@code RequestNamingKeyPacket.isNotNameable} really carries our wrap of the playerNaming game rule read. */
     public static boolean sireNamingHooked() {
         return sireNamingHooked;
@@ -46,15 +40,10 @@ public final class SpeciesTensuraMixinPlugin extends PartMixinPlugin {
             log.info("RaceUtilsMixin hooks {}", raceUtilsHooked ? "in place" : "MISSING (a Tensura update?): undead treatment is off");
         } else if (mixinClassName.endsWith(".RaceInstanceMixin")) {
             apexHooked = calls(targetClass, "getNextEvolutions", "offerApex");
-            boostHooked = calls(targetClass, "getEvolutionProgress", "boostProgress");
-            if (apexHooked && boostHooked) {
-                log.info("RaceInstanceMixin hooks in place");
-            }
-            if (!apexHooked) {
+            if (apexHooked) {
+                log.info("RaceInstanceMixin hook in place");
+            } else {
                 log.warn("RaceInstanceMixin.getNextEvolutions hook MISSING (a ManasCore update?): no apex evolution is offered");
-            }
-            if (!boostHooked) {
-                log.warn("RaceInstanceMixin.getEvolutionProgress hook MISSING (a ManasCore update?): no evolution progress bonus");
             }
         } else if (mixinClassName.endsWith(".SireNamingMixin")) {
             // a WrapOperation is rewritten after postApply, so the proof is the call the handler's @At names being in isNotNameable

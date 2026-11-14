@@ -22,6 +22,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.EvolutionBoost;
 import net.ofatech.supernaturalbloodlines.shared.tensura.SkillOwners;
 
 /**
@@ -95,6 +96,7 @@ public final class SpeciesLayer {
         }
         applyBonus(p, TensuraAttributes.MAX_MAGICULE, MAGICULE_ID, spec.maxMagiculeBonus());
         applyBonus(p, TensuraAttributes.MAX_AURA, AURA_ID, spec.maxAuraBonus());
+        EvolutionBoost.sync(p);
     }
 
     private static Set<String> syncSkills(ServerPlayer p, Set<String> tracked, List<String> wanted) {
