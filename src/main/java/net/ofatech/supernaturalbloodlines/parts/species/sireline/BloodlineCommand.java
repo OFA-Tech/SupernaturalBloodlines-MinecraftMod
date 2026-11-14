@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.species.sireline;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -9,14 +10,17 @@ import java.util.Collection;
 import java.util.UUID;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.ofatech.supernaturalbloodlines.parts.species.doppelganger.DoppelgangerGene;
 
 /**
  * {@code /bloodline tree [player]}, {@code /bloodline call}, {@code /bloodline accept <token>} (what the [Accept] click runs) and
- * {@code /bloodline compel <token> discount|follow} (what the compulsion's buttons run).
+ * {@code /bloodline compel <token> discount|follow} (what the compulsion's buttons run) and the admin command
+ * {@code /bloodline gene doppelganger <player> <true|false>}.
  */
 public final class BloodlineCommand {
     private static final String KEY = "supernaturalbloodlines.bloodline.";
@@ -38,7 +42,21 @@ public final class BloodlineCommand {
                 .then(Commands.literal("compel")
                         .then(Commands.argument("token", StringArgumentType.word())
                                 .then(Commands.literal("discount").executes(c -> compel(c, "discount")))
-                                .then(Commands.literal("follow").executes(c -> compel(c, "follow"))))));
+                                .then(Commands.literal("follow").executes(c -> compel(c, "follow")))))
+                .then(Commands.literal("gene").requires(s -> s.hasPermission(2))
+                        .then(Commands.literal("doppelganger")
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .then(Commands.argument("value", BoolArgumentType.bool())
+                                                .executes(c -> setDoppelgangerGene(c.getSource(), EntityArgument.getPlayer(c, "player"),
+                                                        BoolArgumentType.getBool(c, "value"))))))));
+    }
+
+    /** {@code /bloodline gene doppelganger <player> <true|false>} (op 2): the player must be online. Counts as rolled; does not reveal the gene. */
+    public static int setDoppelgangerGene(CommandSourceStack source, ServerPlayer target, boolean value) {
+        DoppelgangerGene.set(target, value);
+        source.sendSuccess(() -> Component.translatable("supernaturalbloodlines.gene.command.doppelganger",
+                target.getDisplayName(), Component.translatable("supernaturalbloodlines.gene.command." + value)), true);
+        return 1;
     }
 
     private static int compel(CommandContext<CommandSourceStack> c, String choice) throws CommandSyntaxException {

@@ -72,6 +72,10 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_SOURCE_NAME_COMPONENT =
             COMPONENTS.registerComponentType("blood_source_name", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
 
+    /** The species ({@code Species} name) of the one a bottle of Original's Blood was taken from, written when the rite fills it (R40a). A bottle without it was made before. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_SOURCE_SPECIES_COMPONENT =
+            COMPONENTS.registerComponentType("blood_source_species", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
+
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> BLOOD_SOURCE_COMPONENT =
             COMPONENTS.registerComponentType("blood_source", b -> b.persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC));
 

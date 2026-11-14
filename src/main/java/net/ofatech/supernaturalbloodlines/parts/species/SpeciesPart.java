@@ -72,6 +72,15 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.InfectionTracke
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SiresBlood;
+import net.ofatech.supernaturalbloodlines.parts.species.doppelganger.DoppelgangerGene;
+import net.ofatech.supernaturalbloodlines.parts.species.doppelganger.DoppelgangerVillagers;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.DoppelgangerRiteGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.DoppelgangerVillagerGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.GeneGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.GeneWerewolfGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.RevelationGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.rite.DoppelgangerBloodRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.species.rite.RevelationRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.AncestralCallingRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.HybridBloodRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.SeveranceRiteFactory;
@@ -115,6 +124,12 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(SeveranceRiteFactory.ID, SeveranceRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(AncestralCallingRiteFactory.ID, AncestralCallingRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(LineageRiteFactory.ID, LineageRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(DoppelgangerBloodRiteFactory.ID, DoppelgangerBloodRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(RevelationRiteFactory.ID, RevelationRiteFactory.CODEC);
+        BloodlineAccess.useGeneVisibility(SpeciesConfig::genesAlwaysVisible);
+        DoppelgangerGene.register(); // genes and doppelgänger villagers need no Werewolves
+        DoppelgangerVillagers.register();
+        net.ofatech.supernaturalbloodlines.shared.species.DoppelgangerIndex.set(DoppelgangerVillagers::loaded); // for the Vampire Compass
         SpeciesRegistries.register(modBus);
         SpeciesSupernatural.register();
         // what the supernatural part's tasks need from here, through shared hooks
@@ -197,7 +212,12 @@ public final class SpeciesPart {
             e.register(SeveranceRiteGameTests.class);
             e.register(TurningGameTests.class);
             e.register(GhoulGameTests.class);
+            e.register(GeneGameTests.class);
+            e.register(DoppelgangerVillagerGameTests.class);
+            e.register(RevelationGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
+                e.register(GeneWerewolfGameTests.class);
+                e.register(DoppelgangerRiteGameTests.class);
                 e.register(SirelineHybridGameTests.class);
                 e.register(HunterWerewolfGameTests.class);
                 e.register(HybridGameTests.class);

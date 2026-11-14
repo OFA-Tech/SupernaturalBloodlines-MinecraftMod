@@ -36,6 +36,7 @@ import net.ofatech.supernaturalbloodlines.parts.artifacts.item.BoundRingItem;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.ResurrectionRingItem;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.HearingDeviceItem;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.TheCureItem;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.item.CompassMode;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.VampireCompassItem;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.VervainBlock;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.VervainTeaItem;
@@ -63,6 +64,10 @@ public final class ArtifactItems {
             .persistent(ExtraCodecs.NON_NEGATIVE_INT).networkSynchronized(ByteBufCodecs.VAR_INT).build();
     /** Uses a Resurrection Ring has left. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> CHARGES = COMPONENTS.register("charges", () -> CHARGES_TYPE);
+
+    /** What a Vampire Compass looks for; absent means vampires. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<CompassMode>> COMPASS_MODE =
+            COMPONENTS.registerComponentType("compass_mode", b -> b.persistent(CompassMode.CODEC).networkSynchronized(CompassMode.STREAM_CODEC));
 
     public static final DeferredItem<BoundRingItem> SUN_RING = ITEMS.register("sun_ring", BoundRingItem::new);
 

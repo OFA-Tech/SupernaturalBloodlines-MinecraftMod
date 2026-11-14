@@ -13,13 +13,17 @@ import net.minecraft.world.item.ItemUtils;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
+import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
+import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionBlood;
 
 /**
  * A bottle of an Original's blood. Our own drinkable item: werewolves cannot drink Vampirism's blood bottles. Drinking
  * records whose blood it was and gives the {@code original_blood} effect; the last drink wins.
  */
 public final class OriginalBloodItem extends Item {
+    public static final String REFUSED = "supernaturalbloodlines.hybrid.blood_refused";
     private static final int DRINK_TICKS = 32;
 
     public OriginalBloodItem(Properties properties) {
@@ -42,12 +46,27 @@ public final class OriginalBloodItem extends Item {
         if (!stack.has(SpeciesRegistries.BLOOD_SOURCE_COMPONENT)) {
             return InteractionResultHolder.pass(stack); // blood from nobody
         }
+        if (!startsTransition(stack)) {
+            // the bottle is kept; the player is told why (R40a)
+            if (!level.isClientSide) {
+                player.displayClientMessage(Component.translatable(REFUSED), true);
+            }
+            return InteractionResultHolder.fail(stack);
+        }
         return ItemUtils.startUsingInstantly(level, player, hand);
+    }
+
+    /** Whether this bottle's source may start the hybrid transition under {@code hybrid_transition_blood}; a bottle that did not record its source may. */
+    public static boolean startsTransition(ItemStack stack) {
+        return TransitionBlood.accepts(SpeciesConfig.transitionBloodAnyOriginal(), stack.get(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT));
     }
 
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         UUID source = stack.get(SpeciesRegistries.BLOOD_SOURCE_COMPONENT);
+        if (!startsTransition(stack)) {
+            return stack; // not drunk by any other route either; nothing is used up
+        }
         if (source != null && entity instanceof ServerPlayer player) {
             player.setData(SpeciesRegistries.BLOOD_SOURCE, source);
             player.addEffect(new MobEffectInstance(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT, OriginalBloodEffect.DURATION_TICKS));

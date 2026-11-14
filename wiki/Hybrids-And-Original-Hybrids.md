@@ -16,7 +16,7 @@ There are three hybrid types:
 
 A werewolf can become a hybrid by dying the right way.
 
-1. An **Original** makes **Original's Blood** ([Rites](Rites#species-and-cures)) and the werewolf **drinks** it. This gives the `Original's Blood` effect (5 minutes).
+1. An **Original** makes **Original's Blood** ([Rites](Rites#species-and-cures)) and the werewolf **drinks** it. This gives the `Original's Blood` effect (5 minutes). By default (`hybrid_transition_blood = original_hybrid`) only blood taken from an **Original hybrid** works, as in the show; a plain Original's bottle is refused when you try to drink it ("This blood is too weak for the transition: only blood taken from an Original hybrid will do.") and you keep the bottle. With `hybrid_transition_blood = original`, the blood of any Original or Original hybrid works. The bottle records its source's species when the rite fills it, so it works even when the source is offline. A bottle made before the setting existed is accepted either way.
 2. The werewolf **dies** with the effect active. The transition starts: they respawn (the timer survives a respawn and a relog) with **24,000 ticks of online play time** (20 minutes; config `transition_ticks`). The Original whose blood they last drank is their **sire**.
 3. During the transition they must drink **Doppelgänger Blood**. That completes it: they become a hybrid.
 

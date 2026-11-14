@@ -12,6 +12,7 @@ The mod has three command roots: `/bloodline`, `/pack` and `/supernaturalbloodli
 | `/bloodline call` | an **Original, Original hybrid, hybrid or tribrid** | calls your sired to you. 10 minute cooldown, only starts when someone was called. See [Sirelines](Sirelines#bloodline-call). |
 | `/bloodline accept <token>` | the sired player | what the **[Accept]** chat button runs. Don't type it. |
 | `/bloodline compel <token> discount\|follow` | the caster of a compulsion | what the **[Discount]** and **[Follow]** buttons run. Don't type it. |
+| `/bloodline gene doppelganger <player> <true\|false>` | **level 2** | gives or takes the hidden doppelgänger gene. The player must be **online**. It counts as rolled (a later login does not roll over it) and does not reveal the gene to them. See [Werewolves and packs](Werewolves-And-Packs#genes). |
 
 Tokens last 60 seconds (calls) or 5 seconds (compulsion choices), are tied to one player, and are used once.
 

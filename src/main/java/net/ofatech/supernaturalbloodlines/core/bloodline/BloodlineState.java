@@ -28,16 +28,21 @@ import java.util.UUID;
  * @param ghoul           a Sanguinare that finished made this player a Ghoul: stuck at Vampirism level 1 until the turning is done (plan 11)
  * @param vampireBloodUntil game time until which vampire blood is in the player's system; 0 = none (server only: not sent to clients)
  * @param turningTicksLeft online ticks left to drink human-like blood after dying with vampire blood; 0 = not in the turning
+ * @param doppelgangerGene the player carries the doppelgänger gene (plan 12b, R14). The werewolf gene is {@code wolf.latentGene}.
+ * @param doppelgangerRolled the gene was rolled (once, at the first login after it existed; also set by the admin command)
+ * @param revealedGenes   the genes ({@link Genes#WEREWOLF}, {@link Genes#DOPPELGANGER}) the player has discovered. On the client this is the set of
+ *                        genes the client may know, and the gene fields are only filled for those (see {@link Genes#forClient}).
  */
 public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID sire, boolean inTransition,
                              boolean unstable, long transitionTicksLeft, @Nullable UUID pendingSire,
                              int siphonedPower, long turnedAt, int thirst, @Nullable String previousRace,
                              int markKills, boolean hunterCurse, long lastVampireKill, boolean hybridCurseBound,
                              WolfState wolf, Set<String> layerSkills, @Nullable UUID severedSire,
-                             boolean ghoul, long vampireBloodUntil, int turningTicksLeft) {
+                             boolean ghoul, long vampireBloodUntil, int turningTicksLeft,
+                             boolean doppelgangerGene, boolean doppelgangerRolled, Set<String> revealedGenes) {
 
     public static final BloodlineState NONE = new BloodlineState(Species.NONE, false, null, false, false, 0, null,
-            0, 0, 20, null, 0, false, 0, false, WolfState.NONE, Set.of(), null, false, 0, 0);
+            0, 0, 20, null, 0, false, 0, false, WolfState.NONE, Set.of(), null, false, 0, 0, false, false, Set.of());
 
     // RecordCodecBuilder groups at most 16 fields, so layer_skills is a second map codec merged in by the pair below
     private static final MapCodec<BloodlineState> BASE_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -60,28 +65,38 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
     ).apply(i, (species, witch, sire, inTransition, unstable, ticks, pending, power, turnedAt, thirst, prev,
                 markKills, curse, lastKill, bound, wolf) -> new BloodlineState(species, witch, sire.orElse(null),
             inTransition, unstable, ticks, pending.orElse(null), power, turnedAt, thirst, prev.orElse(null),
-            markKills, curse, lastKill, bound, wolf, Set.of(), null, false, 0L, 0)));
+            markKills, curse, lastKill, bound, wolf, Set.of(), null, false, 0L, 0, false, false, Set.of())));
 
-    /** The fields past the 16-field cap of a record codec group: the layer tracking, the severed sire and the turning (plan 11). */
+    /** The fields past the 16-field cap of a record codec group: the layer tracking, the severed sire, the turning (plan 11) and the genes (plan 12b). */
     private record Extra(java.util.List<String> layerSkills, @Nullable UUID severedSire, boolean ghoul, long vampireBloodUntil,
-                         int turningTicksLeft) {}
+                         int turningTicksLeft, boolean doppelgangerGene, boolean doppelgangerRolled,
+                         java.util.List<String> revealedGenes) {}
 
     private static final MapCodec<Extra> EXTRA_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             Codec.STRING.listOf().lenientOptionalFieldOf("layer_skills", java.util.List.of()).forGetter(Extra::layerSkills),
             BloodlineCodecs.UUID_CODEC.lenientOptionalFieldOf("severed_sire").forGetter(e -> Optional.ofNullable(e.severedSire())),
             Codec.BOOL.lenientOptionalFieldOf("ghoul", false).forGetter(Extra::ghoul),
             Codec.LONG.lenientOptionalFieldOf("vampire_blood_until", 0L).forGetter(Extra::vampireBloodUntil),
-            Codec.INT.lenientOptionalFieldOf("turning_ticks_left", 0).forGetter(Extra::turningTicksLeft)
-    ).apply(i, (skills, severed, ghoul, until, turning) -> new Extra(skills, severed.orElse(null), ghoul, until, turning)));
+            Codec.INT.lenientOptionalFieldOf("turning_ticks_left", 0).forGetter(Extra::turningTicksLeft),
+            Codec.BOOL.lenientOptionalFieldOf("doppelganger_gene", false).forGetter(Extra::doppelgangerGene),
+            Codec.BOOL.lenientOptionalFieldOf("doppelganger_rolled", false).forGetter(Extra::doppelgangerRolled),
+            Codec.STRING.listOf().lenientOptionalFieldOf("revealed_genes", java.util.List.of()).forGetter(Extra::revealedGenes)
+    ).apply(i, (skills, severed, ghoul, until, turning, gene, rolled, revealed) ->
+            new Extra(skills, severed.orElse(null), ghoul, until, turning, gene, rolled, revealed)));
 
     public static final Codec<BloodlineState> CODEC = Codec.mapPair(BASE_CODEC, EXTRA_CODEC).codec().xmap(
             p -> p.getFirst().toBuilder().layerSkills(new HashSet<>(p.getSecond().layerSkills()))
                     .severedSire(p.getSecond().severedSire()).ghoul(p.getSecond().ghoul())
-                    .vampireBloodUntil(p.getSecond().vampireBloodUntil()).turningTicksLeft(p.getSecond().turningTicksLeft()).build(),
+                    .vampireBloodUntil(p.getSecond().vampireBloodUntil()).turningTicksLeft(p.getSecond().turningTicksLeft())
+                    .doppelgangerGene(p.getSecond().doppelgangerGene()).doppelgangerRolled(p.getSecond().doppelgangerRolled())
+                    .revealedGenes(new HashSet<>(p.getSecond().revealedGenes())).build(),
             s -> {
                 var sorted = new ArrayList<>(s.layerSkills());
                 Collections.sort(sorted);
-                return Pair.of(s, new Extra(sorted, s.severedSire(), s.ghoul(), s.vampireBloodUntil(), s.turningTicksLeft()));
+                var revealed = new ArrayList<>(s.revealedGenes());
+                Collections.sort(revealed);
+                return Pair.of(s, new Extra(sorted, s.severedSire(), s.ghoul(), s.vampireBloodUntil(), s.turningTicksLeft(),
+                        s.doppelgangerGene(), s.doppelgangerRolled(), revealed));
             });
 
     public BloodlineState {
@@ -90,6 +105,7 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
         wolf = wolf == null ? WolfState.NONE : wolf;
         vampireBloodUntil = Math.max(0, vampireBloodUntil);
         turningTicksLeft = Math.max(0, turningTicksLeft);
+        revealedGenes = revealedGenes == null ? Set.of() : Set.copyOf(revealedGenes);
         layerSkills = layerSkills == null ? Set.of() : Set.copyOf(layerSkills);
         // a severance only means something against the sire it was done to: a new sire, or none, ends it
         severedSire = sire != null && sire.equals(severedSire) ? severedSire : null;
@@ -147,6 +163,9 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
         private boolean ghoul;
         private long vampireBloodUntil;
         private int turningTicksLeft;
+        private boolean doppelgangerGene;
+        private boolean doppelgangerRolled;
+        private Set<String> revealedGenes;
 
         private Builder(BloodlineState s) {
             species = s.species;
@@ -170,6 +189,9 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
             ghoul = s.ghoul;
             vampireBloodUntil = s.vampireBloodUntil;
             turningTicksLeft = s.turningTicksLeft;
+            doppelgangerGene = s.doppelgangerGene;
+            doppelgangerRolled = s.doppelgangerRolled;
+            revealedGenes = s.revealedGenes;
         }
 
         public Builder species(Species v) { species = v; return this; }
@@ -193,11 +215,15 @@ public record BloodlineState(Species species, boolean witchLayer, @Nullable UUID
         public Builder ghoul(boolean v) { ghoul = v; return this; }
         public Builder vampireBloodUntil(long v) { vampireBloodUntil = v; return this; }
         public Builder turningTicksLeft(int v) { turningTicksLeft = v; return this; }
+        public Builder doppelgangerGene(boolean v) { doppelgangerGene = v; return this; }
+        public Builder doppelgangerRolled(boolean v) { doppelgangerRolled = v; return this; }
+        public Builder revealedGenes(Set<String> v) { revealedGenes = v; return this; }
 
         public BloodlineState build() {
             return new BloodlineState(species, witchLayer, sire, inTransition, unstable, transitionTicksLeft,
                     pendingSire, siphonedPower, turnedAt, thirst, previousRace, markKills, hunterCurse,
-                    lastVampireKill, hybridCurseBound, wolf, layerSkills, severedSire, ghoul, vampireBloodUntil, turningTicksLeft);
+                    lastVampireKill, hybridCurseBound, wolf, layerSkills, severedSire, ghoul, vampireBloodUntil, turningTicksLeft,
+                    doppelgangerGene, doppelgangerRolled, revealedGenes);
         }
     }
 }

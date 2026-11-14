@@ -65,9 +65,21 @@ All under `[species]`.
 | `siphoner_chance` | `0.25` | 0.0 to 1.0 | Chance that the Rite of Ancestral Calling makes a **siphoner** instead of a witch. |
 | `sireline_death` | `false` | | When an Original is killed with white oak, everyone they sired, and everyone those sired, dies with them (offline players on their next login). |
 | `latent_gene_chance` | `0.15` | 0.0 to 1.0 | Chance that a player carries the hidden werewolf gene, rolled **once at first login**. Changing it does not re-roll players who already logged in. |
+| `doppelganger_gene_chance` | `0.05` | 0.0 to 1.0 | Chance that a player carries the hidden doppelgänger gene, rolled **once** at the first login after it exists. Changing it does not re-roll players who were already rolled. It can sit next to the werewolf gene. |
+| `gene_visibility` | `discovered` | `discovered` or `always` | `discovered`: a player sees each gene as Unknown until the Rite of Lineage (Reveal), the Rite of Revelation, a Doppelgänger Blood rite with their taglock, or a werewolf awakening finds it. `always`: a player always sees their own genes. Never shown to other players. |
+| `doppelganger_villager_chance` | `0.005` | 0.0 to 1.0 | Chance that a villager is a **doppelgänger**, rolled **once**, the first time the villager is loaded (new spawns, breeding, village villagers, and old villagers after the update). Unlimited per world. It looks and trades like any villager. |
+| `doppelganger_rite_taglock` | `doppelganger` | `doppelganger` or `human` | Whose taglock the Rite of Doppelgänger Blood accepts. `doppelganger`: a doppelgänger villager or a player with the gene. `human`: any human-like villager or player (the old behaviour). The owner must be nearby or online either way. |
 | `alpha_bite_death_chance` | `0.10` | 0.0 to 1.0 | Chance that an Alpha's bite **kills** the human instead of turning them. |
+| `hybrid_transition_blood` | `original_hybrid` | `original_hybrid` or `original` | Whose **Original's Blood** starts the hybrid transition. `original_hybrid`: only blood taken from an **Original hybrid** (as in the show). `original`: blood from any Original or Original hybrid. The bottle records its source's species when the rite fills it. A bottle made before this setting existed is accepted either way. A refused drink keeps the bottle and tells the player. |
 | `lunar_eclipse_chance` | `0.03` | 0.0 to 1.0 | Chance that a full-moon night is a **lunar eclipse**: werewolves lose their form actions, rank perks and pack bonus until dawn. |
 
+## artifacts: `supernaturalbloodlines-artifacts.toml`
+
+All under `[artifacts]`.
+
+| Key | Default | Range | Does |
+|---|---|---|---|
+| `compass_doppelganger_range` | `512` | 1 to 30,000,000 | How far the [Vampire Compass](Items-And-Blocks) in Doppelgängers mode finds a doppelgänger **villager**. Only villagers in loaded chunks are found, so a larger value does not look further than the server keeps loaded. Players with the gene are found anywhere in the dimension, whatever this says. |
 ## species_tensura: `supernaturalbloodlines-species_tensura.toml`
 
 "The Tensura layer of each species. The race is never replaced (R100)." **COMMON: keep it equal on the server and the clients**, especially `layers`, `undead_treatment_enabled` and `apex_evolutions_enabled`.

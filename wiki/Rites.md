@@ -22,6 +22,7 @@ Every rite in this mod is an **Enchanted circle-magic rite**: you draw a chalk c
 | [Rite of the Five](#rite-of-the-five) | medium | 10,000 | | species |
 | [Rite of Lineage (Reveal)](#rite-of-lineage) | small | 3,000 | Werewolves | species |
 | [Rite of Lineage (Awaken)](#rite-of-lineage) | medium | 9,000 | Werewolves | species |
+| [Rite of Revelation](#rite-of-revelation) | small | 1,000 | | species |
 | [Rite of Cleansing Blood](#species-and-cures) | medium | 4,000 | | vampirism_enchanted |
 | [Rite of the Silver Moon](#species-and-cures) | medium | 4,000 | Werewolves | vampirism_enchanted |
 | [Rite of Blood Offering](#altar-blocks) | small | 1,000 | | vampirism_enchanted |
@@ -58,7 +59,7 @@ Makes an **Original**. See [Vampires and Originals](Vampires-And-Originals#origi
 | Rite | Circle, power | Items | Target and conditions | Result |
 |---|---|---|---|---|
 | **Rite of Original's Blood** | small, 1,000 | Glass Bottle | the target is an **Original** (Original hybrid too) | **Original's Blood** (drinkable) |
-| **Rite of Doppelgänger Blood** | small, 6,000 | **filled Taglock** (Enchanted), 2 Diamonds, Amethyst Shard | Werewolves | **Doppelgänger Blood** |
+| **Rite of Doppelgänger Blood** | small, 6,000 | **filled Taglock** (Enchanted), 2 Diamonds, Amethyst Shard | Werewolves. The taglock must be of a **doppelgänger** villager or a player with the doppelgänger gene (`doppelganger_rite_taglock`, or any human-like villager or player with `human`). The owner must be nearby (a villager) or online (a player). A player owner learns whether they carry the gene. **A refused rite tells the caster that the owner is not a doppelgänger** (or not human-like), so it can be used to test a player's taglock: the owner is not told. | **Doppelgänger Blood** |
 | **Rite of Hybrid's Blood** | small, 1,000 | Glass Bottle | the target is a **hybrid, Original hybrid or tribrid** ("Only a hybrid can do this.") | **Hybrid's Blood** (cures werewolf venom) |
 | **Rite of Cleansing Blood** | medium, 4,000 | **Garlic** (Vampirism), **Holy Water Bottle** (Vampirism, normal), Golden Apple | the target should be a vampire; works on heretics, hybrids and tribrids too. **Refused on Originals.** | cures vampirism; hybrid becomes a plain werewolf, tribrid a witch, heretic a siphoner |
 | **Rite of the Silver Moon** | medium, 4,000 | 2 **Silver Ingots**, 1 **Wolfsbane** (Werewolves) | **full-moon night**; a werewolf; Werewolves. **Refused on Originals.** | cures lycanthropy; hybrid and tribrid become plain vampires |
@@ -109,6 +110,13 @@ Needs Werewolves. See [Werewolves and packs](Werewolves-And-Packs#the-hidden-gen
 | **Reveal** | small, 3,000 | Bone, Glowstone Dust, Paper | tells the target whether they carry the gene. Changes nothing. |
 | **Awaken** | medium, 9,000 | Moonstone, 3 Bones | gives the gene and awakens it (see the table on the werewolf page) |
 
+## Rite of Revelation
+
+Small circle, 1,000 power, one **filled Taglock** (Enchanted) of the subject. It makes **every gene the owner was rolled for** known to them (carried or not; the werewolf gene is skipped when it was never rolled, for example without Werewolves) and tells them, and only them, which they carry. See [genes](Werewolves-And-Packs#genes).
+
+- Only a **player's** taglock works ("The Rite of Revelation needs a player's own taglock."), and the player must be **online**. An offline owner, an unfilled taglock or a villager's taglock is refused with the reason and the taglock comes back.
+- The caster learns nothing except that the rite worked; with someone else's taglock only the owner gets the message.
+- Needs only the species part (not Werewolves).
 ## Rite of Purification
 
 | | |
