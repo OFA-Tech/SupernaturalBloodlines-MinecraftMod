@@ -4,9 +4,9 @@ The mod has **one key bind**. It is on the client only, and it only exists when 
 
 | Key bind | Category in Controls | Default | Does |
 |---|---|---|---|
-| **Alpha Roar** | Supernatural Bloodlines | **unbound** | The [Alpha Roar](Werewolves-And-Packs#alpha-roar). Only an Alpha or True Alpha can use it; the server checks. Same as `/pack roar`. |
+| **Alpha Roar** | Supernatural Bloodlines | **unbound** (registered with no default key) | The [Alpha Roar](Werewolves-And-Packs#alpha-roar). Only an Alpha or True Alpha can use it; the server checks. Same as `/pack roar`. |
 
-Bind it in **Options > Controls > Key Binds**, under **Supernatural Bloodlines**. (The OFA pack's key-map script binds it for you.)
+Bind it in **Options > Controls > Key Binds**, under **Supernatural Bloodlines**.
 
 The server checks the roar itself: a press from someone who isn't an Alpha, or during a **lunar eclipse**, or during the **60 second** cooldown, does nothing but show a message in the action bar ("Only an Alpha can do that.", "You cannot roar for another N seconds.", "The eclipse swallows your roar.").
 

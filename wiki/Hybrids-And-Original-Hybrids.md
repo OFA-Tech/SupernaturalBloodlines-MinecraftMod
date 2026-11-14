@@ -49,7 +49,7 @@ A hybrid made by the gene kill or the lineage rite is **bound**: no wolf forms a
   - **15 or more:** Strength I
 - **Shift at will.** Once unbound, a hybrid shifts form whenever they want, and the forced full-moon shift is cancelled. See [moon control](Werewolves-And-Packs#moon-control).
 - **Venom as a weapon.** A melee hit or bite of a werewolf, hybrid, Original hybrid or tribrid on a **vampire** poisons them (see below).
-- **Sire bond.** A hybrid **cannot hurt their sire**, directly, by projectile, area cloud or pet. The sire can use `/bloodline call` on them. See [Sirelines](Sirelines).
+- **Sire bond.** A hybrid **cannot hurt their sire**, directly, by projectile, area cloud or pet. The sire can use `/bloodline call` on them. A [Rite of Severance](Rite-Of-Severance) ends both. See [Sirelines](Sirelines).
 - With the Tensura part: skills `drain`, `beast_transformation`, `self_regeneration`, +10% max magicule, undead treatment. Tensura apex race: **Moonblood Hybrid**.
 
 ## Werewolf venom

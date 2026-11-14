@@ -11,6 +11,8 @@ Every item and block this mod adds, with its in-game name, what it does and how 
 | **Original's Blood** | Drink it (32 ticks, stacks to 16): gives the `Original's Blood` effect for 5 minutes. A werewolf who dies with it in them starts the [hybrid transition](Hybrids-And-Original-Hybrids#the-transition). Remembers whose blood it is. You get a glass bottle back. | Rite of Original's Blood (an Original on the circle) |
 | **Doppelgänger Blood** | Drink it during a stable hybrid transition to complete it. Only usable then. | Rite of Doppelgänger Blood (needs Werewolves) |
 | **Hybrid's Blood** | Drink it only while poisoned with werewolf venom: cures the venom. | Rite of Hybrid's Blood (a hybrid type on the circle; needs Werewolves) |
+| **Sire's Blood** | Bound to the one you hit (tooltip "Blood of <name>"). Ingredient of the [Rite of Severance](Rite-Of-Severance); only the blood of the target's own sire works. Can't be drunk. Stack size 1. | Hit a player or creature in melee with a **silver blade** while holding a **Glass Bottle in your off hand** (the bottle is used up) |
+| **Silver Dagger** | A small silver blade (iron-tier sword, +1 attack, speed -1.8) for taking Sire's Blood. Any item in `#supernaturalbloodlines:silver_blades` works: also Werewolves' silver sword and Tensura's silver swords and katanas. | Craft: a silver ingot (`#supernaturalbloodlines:silver_ingots`: Werewolves', Tensura's or any `#c:ingots/silver`) over a Stick. Not craftable with no silver mod at all. |
 | **Moonstone** | Ingredient of the Rite of the Moon and of Rite of Lineage (Awaken). | Craft: Amethyst Shard + Silver Ingot (Werewolves), shapeless |
 | **Taser** | Hit a supernatural to give them **Shocked** for 30 s. 16 charges; every hit spends one; repair with redstone in an anvil. | Craft: Lightning Rod / Redstone / Iron Ingot, top to bottom |
 | **White Oak Stake** | The weapon that kills an Original at once. Wooden-sword stats. | Craft: 2 White Oak Planks over a Stick |
@@ -107,7 +109,7 @@ Other recipes with wolfsbane: Enchanted and Werewolves wolfsbane convert into ea
 |---|---|
 | `enchanted_tensura` | Condensed Magicule, Spirit Poppet |
 | `vampirism_enchanted` | Blood Stone, Sun Poppet, Silver Poppet |
-| `species` | Original's Blood, Doppelgänger Blood, Hybrid's Blood, Moonstone, Taser, White Oak items |
+| `species` | Original's Blood, Doppelgänger Blood, Hybrid's Blood, Sire's Blood, Silver Dagger, Moonstone, Taser, White Oak items |
 | `artifacts` | rings, Vampire Compass, Hearing Device, White Oak Ash and Ash Dagger, The Cure, vervain, mountain ash, wolfsbane strains and wolf lichen |
 | `vampirism_tensura`, `species_tensura` | none (data and Tensura races only) |
 

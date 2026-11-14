@@ -49,6 +49,8 @@ The player was on an **apex race**. ManasCore can't load a saved race that is no
 | "This bloodline needs the Werewolves mod." | install Werewolves |
 | "The rite needs a desiccated Original in the circle." | hit an Original with the Ash Dagger first, within 6 blocks |
 | "You do not have enough magicules to make this offering." | the Rite of Magicule Offering needs 5000 magicules |
+| "Only a witch, siphoner, heretic or tribrid can break a bond." / "The rite needs Sire's Blood." / "That is not the blood of their sire." / "Nobody sired them: there is no bond to break." / "Their bond is already broken." | the Rite of Severance: see [its page](Rite-Of-Severance). It also needs the **night** of a full moon. |
+| The apex race is shown but the pick does nothing | `apex_evolutions_enabled` differs between client and server (the server refuses silently) |
 
 See [Rites](Rites). A rite that needs Werewolves doesn't exist without it.
 
@@ -86,7 +88,7 @@ Is it **bound** to you (tooltip "Bound to ...")? A ring bound to someone else, o
 
 ## A sired player can't hurt their sire
 
-That is the Tensura subordinate link, and for hybrids rule R43. `sire_subordinate_link_enabled = false` removes the first. See [Tensura integration](Tensura-Integration#sires-as-tensura-owners-and-naming).
+That is the Tensura subordinate link, and for hybrids rule R43. `sire_subordinate_link_enabled = false` removes the first. The **[Rite of Severance](Rite-Of-Severance)** frees one player from both. See [Tensura integration](Tensura-Integration#sires-as-tensura-owners-and-naming).
 
 ## Blocks or items disappeared
 

@@ -23,7 +23,8 @@ The apex races (Primordial Vampire, Primordial Hybrid, Moonblood Hybrid, Ancestr
 | **Remove the mod** | **First** reset every player who picked an apex race, with **Tensura's race command**. Then stop the server and remove the jar. Players who are not reset cannot join. |
 | **Remove Tensura** | The same load error happens for **every Tensura race**, not only ours. Tensura's own warnings apply. |
 | **Turn off only `species_tensura`** | Safe. **The apex races stay registered** (this mod registers them whenever Tensura is installed), so players load. The apex race stays on the player; the layer does nothing. An Original **hunter** on `primordial_vampire` is **ejected from the hunters** (the vampire-type exemption needs the part). |
-| **Take an apex race away (rollback)** | Tensura's race command. There is no undo in this mod. Losing the *species* does **not** remove an apex race: its species-only skills go dormant, the race's own signature skill stays. |
+| **Roll back to an older build** (before `species_tensura`) | **First reset players on an apex race** with Tensura's race command, and **back up the world** before the first deploy. An older build also **forgets severances** ([Rite of Severance](Rite-Of-Severance)), so severed bonds come back. |
+| **Take an apex race away** | Tensura's race command. There is no undo in this mod. Losing the *species* does **not** remove an apex race: its species-only skills go dormant, the race's own signature skill stays. |
 
 Other things that cannot be rolled back in the game: mastery of a skill that was taken away and given back is lost.
 
@@ -54,6 +55,8 @@ Switching a part off means *nothing runs*. It does **not** undo what already hap
 | Players' **saved bloodline data** | stays in their player file. |
 | **Apex races** | stay (see above). |
 
+To **clean up skills first:** remove the species from the players (or set `layers` and `rank_skills` to empty and let everyone log in), then switch the part off.
+
 To **remove sire links cleanly:** set `sire_subordinate_link_enabled = false` in `supernaturalbloodlines-species_tensura.toml`, have **everyone log in once**, **then** disable the part. The switch is read at login, on a bloodline change and on a faction change. With the part already off, nothing runs and the links stay until cleared by hand.
 
 ## COMMON configs must match
@@ -65,6 +68,8 @@ NeoForge **COMMON** configs are **not synced from the server**: each side reads 
 - **`moon_bound_werewolves`, `full_form_level`** in the common file.
 - The other values (`max_originals_per_world`, `max_five`, chances, `sireline_death`) are used by the **server** only, but equal values avoid confusion.
 
+If `apex_evolutions_enabled` differs, the client shows the apex race and the server **silently refuses the pick**, with nothing in the log.
+
 A simple way: keep one `config/` folder in your modpack and ship it to everyone.
 
 ## Balance knobs
@@ -74,7 +79,8 @@ A simple way: keep one `config/` folder in your modpack and ship it to everyone.
 | Undead treatment | `undead_treatment_enabled` | on | **Wider than holy damage**: a plain faction vampire goes from x1.5 to **x3** holy and light damage, and Tensura's other undead rules apply (infection immunity, Enervation on food...). Off keeps skills and bonuses but not this. |
 | Evolution boost | `evolution_progress_multiplier` | 1.25 | up to 20% of an evolution's requirement weight can stay unmet, so a boss or an item can be skipped once EP is high. 1.0 turns it off. Applies to **every** evolution of a player with a species. |
 | Apex races | `apex_evolutions_enabled` | on | An apex race costs **1,000,000 EP** (a divine human 2,000,000) and gives more max health than the divine tier. All values are placeholders. Four of them are also **bloodless** (nobody can bite them), including hybrids, Original hybrids and tribrids. |
-| Sire naming | `sire_naming_enabled` | on | **Bypasses `playerNaming`** for a sire and their own sired. Turn it off if your naming rule is meant to be absolute. |
+| Sire naming | `sire_naming_enabled` | on | **Bypasses `playerNaming`** for a sire and their own sired: `playerNaming=false` does not beat it. Turn it off if your naming rule is meant to be absolute. Siring needs no consent; the Rite of Severance is the way out. |
+| Severance | (rite) | n/a | A witch type can sever an **unwilling** player in the circle (no consent check), and a sired witch type can sever herself. A new sire replaces the old one, tree and sireline death included. |
 | Sire link | `sire_subordinate_link_enabled` | on | A sired player can't hurt their sire or the sire's other sired. Also true for a bitten Beta and their Alpha. |
 | Starved and Usurper | (Tensura skills) | n/a | They don't check for subordinates, so a sire with them can drain or rob a sired player. Nothing in this mod changes it. |
 | Original cap | `max_originals_per_world` | 0 (no cap) | Originals are very hard to kill. Consider a cap. |
@@ -86,8 +92,6 @@ A simple way: keep one `config/` folder in your modpack and ship it to everyone.
 | True Alpha farming | (design) | | The 300 defender kills can be farmed at a mob spawner beside a villager. |
 
 ## Operators
-
-<!-- verify: the bad-config message and the species_tensura notes may change with the panel fixes -->
 - A bad entry in `layers` or `rank_skills` is **ignored**, logged at **ERROR** when the config loads, and every **operator (permission level 2)** is told in chat on login: "species_tensura: N invalid entries in the config were ignored (see the server log)."
 - The debug commands are at **permission level 2**: see [Commands](Commands#supernaturalbloodlines-debug-permission-level-2).
 - The log says whether each mixin hook is in place. Search it for `hooks in place`, `MISSING` or `hook is not in place`.

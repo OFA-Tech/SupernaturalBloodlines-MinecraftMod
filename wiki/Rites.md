@@ -5,7 +5,7 @@ Every rite in this mod is an **Enchanted circle-magic rite**: you draw a chalk c
 - **Small circle** and **medium circle** are Enchanted's circle shapes. The chalk is Enchanted's **ritual chalk**, except the two curses, which need **nether chalk**.
 - **Target:** the person who stands on the **centre block** of the circle (the closest player in the 1x2x1 column), or the **caster** if nobody does.
 - A rite that **refuses** its target gives the ingredients back, takes no power, and shows the reason to the caster on the action bar.
-- **Full moon** means the overworld's full-moon day (moon phase 0). The Nether and the End never have one.
+- **Full moon** means the overworld's full-moon day (moon phase 0), noon included. The Nether and the End never have one. Only the Rite of Severance also needs **night**.
 - Ingredients **in bold** come from another mod. "Silver" is Werewolves' Silver Ingot.
 - Costs are before the witch bonus (x0.75), Emissary bonus (x0.9) and siphoned power. See [Witches and siphoners](Witches-And-Siphoners).
 
@@ -36,7 +36,7 @@ Every rite in this mod is an **Enchanted circle-magic rite**: you draw a chalk c
 | [Rite of the Cure](#rite-of-the-cure) | medium | 20,000 | | artifacts |
 | [Rite of the Vampire Compass](#artifact-rites) | medium | 2,000 | | artifacts |
 | [Rite of the Hearing Device](#artifact-rites) | medium | 3,000 | | artifacts |
-| [Rite of Severance](Rite-Of-Severance) | | 6,000 | not in the mod yet | |
+| [Rite of Severance](#rite-of-severance) | medium | 6,000 | | species |
 
 A rite listed with "Werewolves" is not loaded without it (its data file has a Werewolves condition).
 
@@ -159,4 +159,15 @@ A ward refuses (and returns the ingredients) if the wrong faction stands on the 
 
 ## Rite of Severance
 
-Not in the mod yet. See [Rite of Severance](Rite-Of-Severance).
+Breaks a sired player's whole sire bond. Full details on [Rite of Severance](Rite-Of-Severance).
+
+| | |
+|---|---|
+| Circle, power | medium, **6,000** |
+| Items | **Sire's Blood** (of the target's own sire), **Spirit of Otherwhere** (Enchanted) |
+| Performer | a **witch, siphoner, heretic or tribrid** |
+| Condition | the **night of a full moon** (full-moon day and time of day 12786 to 23216; noon is refused) |
+| Target | the sired player on the centre (else the caster). No consent check. |
+| Result | the bond is broken; the sire stays recorded and sireline death still applies |
+
+Note: the other rites that say "full moon" only check the moon phase, so they also work at noon of the full-moon day. Severance is the only night-only rite.

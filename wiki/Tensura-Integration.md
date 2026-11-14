@@ -49,8 +49,6 @@ The default layers (change them with `layers`; see [Configuration](Configuration
 
 A skill with no namespace is a Tensura skill (`drain` is `tensura:drain`).
 
-<!-- verify: layer table, undead treatment and apex numbers may change with the panel fixes -->
-
 The layer is re-checked when your bloodline changes, on login and respawn, when your Vampirism level changes, and every 200 ticks. A Tensura evolution does not remove it.
 
 **Losing a species:** its layer skills go dormant (they are forgotten) and come back if the species returns. **The mastery of those skills is lost**; they start fresh.
@@ -120,17 +118,19 @@ When someone is sired (see [Sirelines](Sirelines)), the sire becomes the **Tensu
 
 ### Sire naming (R101)
 
-<!-- verify: sire naming wording and messages may change with the panel fixes -->
-
 A sire may **name their own sired** through Tensura's naming menu, **even with Tensura's `playerNaming` game rule off**.
 
 - The sired must have **switched their own naming on** (sneak with the naming key; Tensura's players are not nameable by default) and have no Tensura name yet.
 - Only for the sire's own sired. Strangers and other sires are refused.
 - It costs the sire magicules, as Tensura says, and gives Tensura's reward (EP and stats).
-- **A sired player named this way never evolves** (the naming type is lowered to LOW). The sire is told so in chat. The sire still pays the cost they chose, and still risks the max-magicule loss.
+- **A sired player named this way never evolves** (the naming type is lowered to LOW). A sire who names at MEDIUM or HIGH is told once, in chat, that it grants EP and stats only. The sire still pays the cost they chose, and still risks the max-magicule loss.
 - Switch: `sire_naming_enabled` (default on). **This bypasses `playerNaming` for the sire and their sired only.** Turn it off if your server rule is meant to be absolute.
 
+- **The Rite of Severance** frees a sired player: the link is removed, and so is a Tensura owner a real naming set (only if it was the severed sire; someone else's owner and the name stay). A severed player is no longer the sire's to name. See [Rite of Severance](Rite-Of-Severance).
+
 To remove the links cleanly: set `sire_subordinate_link_enabled=false`, have everyone log in once, **then** disable the part. With the part off nothing runs and the links stay.
+
+**Config mismatch (known gap):** if `apex_evolutions_enabled` is on for a client and off for the server, the client shows the apex race and the **server silently refuses the pick**. Nothing is logged (telling the refusal apart needs a fourth mixin, over the budget). Keep the config equal.
 
 ## Werewolf rank skills
 
@@ -158,5 +158,3 @@ See [Werewolves and packs](Werewolves-And-Packs) for the ranks.
 - Mastery of a dormant layer skill is lost (see above).
 - No race icon for the apex races.
 - Not played in a real client yet: the evolution screen offer, naming through the real menu, and Alpha rank skills in the skill list. See [Known limits](Known-Limits).
-
-<!-- verify: species_tensura panel fixes (14 items) -->

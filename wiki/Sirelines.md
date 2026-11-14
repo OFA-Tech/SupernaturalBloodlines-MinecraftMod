@@ -14,7 +14,7 @@ A **sireline** is a family tree of who made whom. A **sire** is the one who turn
 | an **Alpha's bite** turns you | that Alpha |
 | you are **compelled** (a lesser vampire mob) | the compeller |
 
-- A child has **one sire**. The **first sire wins**: nothing overwrites it, except that finishing the hybrid transition replaces it with the Original's.
+- A child has **one sire**. The **first sire wins**: nothing overwrites it, except that finishing the hybrid transition replaces it with the Original's, and that a player whose bond was **severed** can be sired again (see below).
 - A pending infection is kept for **24,000 ticks** (20 minutes), and is dropped if the infection is cured.
 - A **cure** removes you from the tree as a child. Your own children stay in it.
 - A dead sired creature is removed from the tree. Players never are.
@@ -32,14 +32,14 @@ A **sireline** is a family tree of who made whom. A **sire** is the one who turn
 An **Original, Original hybrid, hybrid or tribrid** can **call their sired**. Everyone else: "Only an Original or a hybrid can call their sired."
 
 - **12,000 ticks (10 minutes)** cooldown. It only starts if someone was actually called ("None of your sired can hear you now.").
-- Only **direct** children are called.
+- Only **direct** children are called. A sired player whose bond was severed is skipped.
 - A sired **player** (online) gets a chat message with a clickable **[Accept]** (valid for **60 seconds**, only for them). On accepting they are **teleported** to a free spot with a floor, two blocks from where the caller **is now**, in any dimension. A dead sired player cannot accept. If the caller is in the air or in water, the sired land on the ground below (up to 8 blocks); if there is none, the call is refused ("There is no safe ground near the one who called you.").
 - Sired **creatures** loaded in the caller's dimension are told every second, for **30 seconds**, to walk to the caller. No chunk is loaded to reach them.
 - `/bloodline accept <token>` is what the button runs. It's not meant to be typed.
 
 ## Sire bond
 
-- **R43:** a **hybrid** type cannot hurt their sire: directly, by projectile, by area cloud or by pet. The sire can still hurt them. A cured player with a stale sire is not bound.
+- **R43:** a **hybrid** type cannot hurt their sire: directly, by projectile, by area cloud or by pet. The sire can still hurt them. A cured player with a stale sire is not bound, and neither is one whose bond was severed.
 - Gaps: an area cloud with no owner (a dispenser), and an arrow whose owner is offline, can still hurt.
 - With **Tensura**, **every** sired player becomes the sire's Tensura subordinate, and cannot hurt the sire either. See [Tensura integration](Tensura-Integration#sires-as-tensura-owners-and-naming).
 
@@ -64,7 +64,7 @@ A 5-second choice appears in chat, with clickable buttons:
 A vampire mob (not an advanced vampire, boss, baron, task master or a converted creature) becomes **your sired**:
 
 - it does **not despawn**
-- it **never targets you, or anyone below you** in your sireline (everyone else is still prey)
+- it **never targets you, or anyone below you** in your sireline (everyone else is still prey). A descendant whose bond was severed is not spared.
 - a vampire already sired by another stays theirs ("That creature already answers to another.")
 
 ## Sireline death
@@ -83,7 +83,8 @@ When an **Original or Original hybrid** is **killed with white oak**:
 ## Naming and breaking the bond
 
 - A sire can **name** their own sired through Tensura's naming menu, even with the server's player naming off, if the sired turned their own naming on. A named sired player gets Tensura's stats but **never** its race evolution. See [Tensura integration](Tensura-Integration#sire-naming-r101).
-- **Siring needs no consent** (it comes from blood or a bite). The **[Rite of Severance](Rite-Of-Severance)** is how a sired player frees themselves of the bond. It is **not final yet**.
+- **Siring needs no consent** (it comes from blood or a bite). The **[Rite of Severance](Rite-Of-Severance)** is how a sired player frees themselves of the bond: a witch type performs it on the night of a full moon, with the sire's blood. It frees the Tensura link, the naming exception, the hybrid's "can't hurt the sire" (R43), `/bloodline call` and the sparing by the sire's compelled creatures. **The tree still shows the sire and sireline death still applies** (blood, not bond).
+- **Re-siring:** a **new sire replaces the old one** and ends the severance, so a freed player can be sired again. The first-sire-wins rule only holds while the bond is whole. From then on the **new** sire's tree and sireline death apply.
 
 ## Hybrids and the tree
 

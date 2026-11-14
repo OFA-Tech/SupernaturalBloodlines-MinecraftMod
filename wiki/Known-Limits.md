@@ -10,9 +10,16 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 - **Tensura skills on a sired player:** Starved and Usurper don't check for subordinates, so a sire can drain or rob a sired player.
 - **Mastery of a layer skill is lost** when the species goes and comes back (the skill is forgotten and learned fresh). Same for rank skills.
 
+## Rites, rollbacks and configs
+
+- **`requires_full_moon` rites work on the whole full-moon day.** The Rite of the Moon, the Silver Moon and Immortality only check the moon phase, so they also work at noon of the full-moon day. **Only the [Rite of Severance](Rite-Of-Severance) is night-only** (12786 to 23216).
+- **Rolling back forgets severances.** An older build doesn't know them, so severed bonds come back. Reset apex-race players first (see [For server owners](For-Server-Owners#removing-the-mod-or-tensura)).
+- **The apex pick is refused silently on a config mismatch.** If `apex_evolutions_enabled` is on for the client and off for the server, the client shows the apex race and the server refuses the pick with nothing logged. Keep the config equal.
+- **Severance has no consent check**, and a new sire replaces the old one (tree and sireline death follow the new sire).
+- **Sire's Blood:** anyone can be hit for blood; only the rite checks it was the right sire. The Silver Dagger can't be crafted with no silver mod (neither Werewolves nor Tensura). Art for both items is a placeholder.
+
 ## Not done yet
 
-- **The Rite of Severance** is not in the mod. See [Rite of Severance](Rite-Of-Severance).
 - **Eclipse is fog and horizon only.** NeoForge 1.21.1 has no event for the sky dome's own colour, so the zenith isn't tinted. It is one flag for the whole server, whatever the dimension.
 - **Eyes are particles only.** Werewolves in a wolf form show two glowing dust particles at eye height. The render layer on the model is not done.
 - **The Taser** has placeholder art and spends a charge on **every** hit, not only on supernaturals.
@@ -44,7 +51,7 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 
 Automated tests cover the rules, but these still need a person with a real client (two clients where it says so):
 
-- Every rite at a real chalk circle and altar (item matching, entity sacrifice). Poppets at a real spinning wheel.
+- Every rite at a real chalk circle and altar (item matching, entity sacrifice), the Rite of Severance with its real ingredients, and the Sire's Blood tooltip and models. Poppets at a real spinning wheel.
 - **A real Tensura soul attack against a bound Spirit Poppet** (a release blocker; the tests only use hand-dealt soul damage).
 - **The Resurrection Ring in an Accessories slot** (the OFA pack): the charge may be taken from a copy, in which case the ring would keep reviving. Die to a supernatural three times and see the ring empty. **Do not rely on it before this is checked.** The three rings through Accessories' Curios layer, in general, are unverified.
 - The two-client playthrough: Original, Original's Blood, a werewolf friend turned hybrid, Original hybrid, witch, tribrid.

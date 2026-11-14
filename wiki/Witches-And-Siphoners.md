@@ -52,6 +52,10 @@ Witch bonuses (range and cost) apply to witch, heretic and tribrid. Siphoning ap
 
 An Alpha may name a **witch, siphoner, heretic or tribrid** as their **Emissary** (`/pack emissary <player>`). The Emissary pays **10% less** for rites while the Alpha or a Beta of the pack is within 16 blocks. Their mountain ash lines also block more creatures. A witch can be the Emissary of **only one** Alpha. See [Werewolves and packs](Werewolves-And-Packs#emissary).
 
+## Rite of Severance
+
+A witch, siphoner, heretic or tribrid can perform the [Rite of Severance](Rite-Of-Severance), which breaks the sire bond of a sired player on the circle (or their own, if the circle is empty).
+
 ## Weaknesses
 
 Witches and siphoners have no special weakness of their own. They are not prey, and pass mountain ash. They lose their magic if they join the vampires (witch) or become heretics (siphoner).

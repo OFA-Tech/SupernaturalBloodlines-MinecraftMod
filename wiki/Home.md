@@ -42,7 +42,7 @@
 ## Reference
 
 - [Items and blocks](Items-And-Blocks)
-- [Rites](Rites) · [Rite of Severance](Rite-Of-Severance) (not built yet)
+- [Rites](Rites) · [Rite of Severance](Rite-Of-Severance)
 - [Commands](Commands) · [Key binds](Key-Binds)
 - [Configuration](Configuration)
 - [Rules reference](Rules-Reference)
