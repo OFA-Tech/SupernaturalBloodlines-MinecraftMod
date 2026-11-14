@@ -419,8 +419,8 @@ Werewolves faction, no species. No `LayerTable` entry; rank skills stay `RankSki
 | L-WOL-2 | Beta | a) join a pack (rank BETA, R91) [SB `state`]; b) Werewolves level 5 [WW] | 3 / 8,000 | — |
 | L-WOL-3 | Controlled | a) have moon control (bound Moon Ring, bound anchor, or Alpha rank; `MoonControl`) [SB `state`]; b) Werewolves level 8 [WW] | 3 / 15,000 | — |
 | L-WOL-4 | Leader | a) **or** group: rank ALPHA or TRUE_ALPHA [SB `state`] **or** 15 days as a Beta [SB `state` `betaSince`]; b) 100 defender kills [SB `state` `defenderKills`] | 4 / 40,000 | — |
-| L-WOL-5 | True Alpha | a) rank TRUE_ALPHA, earned only the R91 way (max level, 30 days as a Beta, 300 defender kills, no innocent kill, no stolen spark; the hub shows each condition) [SB `state`]. *(owner, 2026-11-14: no alternative path; True Alpha is never bought, so `alpha_primeval` is True-Alpha-only)* | 6 / 100,000 | title "True Alpha" when the rank is held; True Alpha keeps the spark (R91): the rank stays and goes dormant when cured or leaving |
-| L-WOL-6 | Primeval (apex) *(owner, 2026-11-14, D1)* | a) Tensura race at its line's apex tier [TEN]; b) 100 days as a werewolf [SB `days_as`] | 5 / 100,000 | apex offer `alpha_primeval` |
+| L-WOL-5 | Alpha | a) rank ALPHA or TRUE_ALPHA [SB `state`] (Alpha the R90 way; True Alpha **only** the R91 way: max level, 30 days as a Beta, 300 defender kills, no innocent kill, no stolen spark; the hub shows each condition; never bought, no alternative path) *(owner, 2026-11-14)* | 6 / 100,000 | title "Alpha", or "True Alpha" when that rank is held; True Alpha keeps the spark (R91): the rank stays and goes dormant when cured or leaving |
+| L-WOL-6 | Primeval (apex) *(owner, 2026-11-14, D1)* | a) Tensura race at its line's apex tier [TEN]; b) 100 days as a werewolf [SB `days_as`] | 5 / 100,000 | apex offer `alpha_primeval` to Alphas and True Alphas. **A True Alpha gets more from it** *(owner, 2026-11-14)*: while holding TRUE_ALPHA (not dormant), `alpha_primeval`'s stat bonuses are ×1.5 and they also get the skill S-WOL-8 "Primeval Roar" *(draft numbers/skill, owner to patch)*; an Alpha who later becomes True Alpha gains it then, a dormant True Alpha loses it until rejoin |
 
 L-WOL-4's "or 15 days as a Beta" keeps the earned True Alpha path open: R91 forbids a stolen spark, so a Beta must be able to climb without becoming an Alpha first.
 
@@ -651,6 +651,7 @@ The owner's vampire-feeding skill (no show names in game, R5).
 | S-WOL-5 Pack Heart | 3 | L-WOL-4 | — |
 | S-WOL-6 Roar's Echo | 3 | L-WOL-4 | S-WOL-5 |
 | S-WOL-7 Moon Heart | 4 | L-WOL-5 | S-WOL-1 |
+| S-WOL-8 Primeval Roar | granted, not bought | on `alpha_primeval` while TRUE_ALPHA (not dormant) | — | *(owner, 2026-11-14; draft effect: S-WOL-6's roar with double range, and pack members get +10% attack for 30 s; owner to patch)* |
 
 ### Vampirism and Werewolves skills in the hub
 
