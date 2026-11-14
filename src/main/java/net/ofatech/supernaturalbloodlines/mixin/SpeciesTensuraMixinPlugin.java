@@ -57,8 +57,8 @@ public final class SpeciesTensuraMixinPlugin extends PartMixinPlugin {
                 log.warn("RaceInstanceMixin.getEvolutionProgress hook MISSING (a ManasCore update?): no evolution progress bonus");
             }
         } else if (mixinClassName.endsWith(".SireNamingMixin")) {
-            // the merged handler copy is there even when the call site was not found; the wrapped call in isNotNameable is the proof
-            sireNamingHooked = calls(targetClass, "isNotNameable", "sireNamesSired");
+            // a WrapOperation is rewritten after postApply, so the proof is the call the handler's @At names being in isNotNameable
+            sireNamingHooked = wrapTargetPresent(targetClass, "isNotNameable", mixinInfo, "sireNamesSired");
             if (sireNamingHooked) {
                 log.info("SireNamingMixin hook in place");
             } else {
