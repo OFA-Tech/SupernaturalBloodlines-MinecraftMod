@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.core;
 
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import org.junit.jupiter.api.Test;
@@ -119,6 +120,33 @@ class BloodlineListenerTest {
         // the stored state is untouched
         assertTrue(full.wolf().latentGene());
         assertEquals(pending, full.pendingSire());
+    }
+
+    @Test
+    void clientViewSendsAGeneOnlyWhenDiscoveredOrAlways() {
+        BloodlineState carrier = WITCH.toBuilder().doppelgangerGene(true).doppelgangerRolled(true)
+                .wolf(WolfState.NONE.toBuilder().latentGene(true).geneRolled(true).build()).build();
+
+        BloodlineState hidden = BloodlineAccess.clientView(carrier, true, false);
+        assertFalse(hidden.doppelgangerGene());
+        assertFalse(hidden.wolf().latentGene());
+        assertTrue(hidden.revealedGenes().isEmpty());
+
+        BloodlineState found = BloodlineAccess.clientView(Genes.reveal(carrier, Genes.DOPPELGANGER), true, false);
+        assertTrue(found.doppelgangerGene());
+        assertFalse(found.wolf().latentGene());
+        assertEquals(Set.of(Genes.DOPPELGANGER), found.revealedGenes());
+
+        BloodlineState always = BloodlineAccess.clientView(carrier, true, true);
+        assertTrue(always.doppelgangerGene() && always.wolf().latentGene());
+
+        // never to the people around: not even a discovered gene
+        BloodlineState seenByOthers = BloodlineAccess.clientView(Genes.revealAll(carrier), false, true);
+        assertFalse(seenByOthers.doppelgangerGene() || seenByOthers.wolf().latentGene());
+        assertTrue(seenByOthers.revealedGenes().isEmpty());
+
+        // the default setting is `discovered`
+        assertFalse(BloodlineAccess.clientView(carrier, true).doppelgangerGene());
     }
 
     @Test

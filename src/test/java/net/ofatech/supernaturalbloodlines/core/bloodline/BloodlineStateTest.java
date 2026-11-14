@@ -22,7 +22,8 @@ class BloodlineStateTest {
         BloodlineState s = new BloodlineState(Species.TRIBRID, true, UUID.fromString("00000000-0000-0000-0000-0000000000a1"),
                 true, true, 123L, UUID.fromString("00000000-0000-0000-0000-0000000000b2"), 50, 999L, 7, "x:y",
                 4, true, 888L, true, wolf, Set.of("tensura:drain", "tensura:charm"),
-                UUID.fromString("00000000-0000-0000-0000-0000000000a1"), true, 5000L, 12000);
+                UUID.fromString("00000000-0000-0000-0000-0000000000a1"), true, 5000L, 12000, true, true,
+                Set.of(Genes.WEREWOLF, Genes.DOPPELGANGER));
 
         JsonElement json = BloodlineState.CODEC.encodeStart(JsonOps.INSTANCE, s).getOrThrow();
         assertEquals(s, BloodlineState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());
@@ -78,6 +79,23 @@ class BloodlineStateTest {
         Outcome o = BloodlineRules.apply(BloodlineState.NONE, BloodlineEvent.RITE_OF_IMMORTALITY,
                 BloodlineContext.defaults().withGameTime(500));
         assertEquals(500, o.state().turnedAt());
+    }
+
+    @Test
+    void geneFieldsRoundTripAndOldSavesGetNoGenes() {
+        BloodlineState s = BloodlineState.NONE.toBuilder().doppelgangerGene(true).doppelgangerRolled(true)
+                .revealedGenes(Set.of(Genes.DOPPELGANGER)).build();
+        JsonElement json = BloodlineState.CODEC.encodeStart(JsonOps.INSTANCE, s).getOrThrow();
+        BloodlineState back = BloodlineState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
+        assertEquals(s, back);
+        assertTrue(back.doppelgangerGene() && back.doppelgangerRolled());
+        assertEquals(Set.of(Genes.DOPPELGANGER), back.revealedGenes());
+
+        BloodlineState old = decode("{\"species\":\"WITCH\",\"wolf\":{\"gene_rolled\":true,\"latent_gene\":true},\"ghoul\":true}");
+        assertFalse(old.doppelgangerGene());
+        assertFalse(old.doppelgangerRolled(), "an old save must roll the gene on its next login");
+        assertTrue(old.revealedGenes().isEmpty());
+        assertTrue(old.wolf().latentGene());
     }
 
     @Test

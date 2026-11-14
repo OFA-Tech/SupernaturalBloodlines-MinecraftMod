@@ -65,6 +65,8 @@ All under `[species]`.
 | `siphoner_chance` | `0.25` | 0.0 to 1.0 | Chance that the Rite of Ancestral Calling makes a **siphoner** instead of a witch. |
 | `sireline_death` | `false` | | When an Original is killed with white oak, everyone they sired, and everyone those sired, dies with them (offline players on their next login). |
 | `latent_gene_chance` | `0.15` | 0.0 to 1.0 | Chance that a player carries the hidden werewolf gene, rolled **once at first login**. Changing it does not re-roll players who already logged in. |
+| `doppelganger_gene_chance` | `0.05` | 0.0 to 1.0 | Chance that a player carries the hidden doppelgänger gene, rolled **once** at the first login after it exists. Changing it does not re-roll players who were already rolled. It can sit next to the werewolf gene. |
+| `gene_visibility` | `discovered` | `discovered` or `always` | `discovered`: a player sees each gene as Unknown until the Rite of Lineage (Reveal), the Rite of Revelation, a Doppelgänger Blood rite with their taglock, or a werewolf awakening finds it. `always`: a player always sees their own genes. Never shown to other players. |
 | `alpha_bite_death_chance` | `0.10` | 0.0 to 1.0 | Chance that an Alpha's bite **kills** the human instead of turning them. |
 | `lunar_eclipse_chance` | `0.03` | 0.0 to 1.0 | Chance that a full-moon night is a **lunar eclipse**: werewolves lose their form actions, rank perks and pack bonus until dawn. |
 

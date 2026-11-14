@@ -11,6 +11,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Outcome;
 import net.ofatech.supernaturalbloodlines.core.network.BloodlineSyncPayload;
 
@@ -23,6 +24,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
 
 /** The one door to a player's bloodline state: read it, change it (synced), and listen for species, lineage and rank changes. */
 public final class BloodlineAccess {
@@ -80,18 +82,38 @@ public final class BloodlineAccess {
     }
 
     /**
-     * What a client may know: the hidden gene stays on the server, and only the subject sees their own sire.
+     * What a client may know: an undiscovered gene stays on the server (see {@link Genes}), and only the subject sees their own sire.
      * Build every payload through this, so a new send path cannot leak.
      */
     public static BloodlineState clientView(BloodlineState s, boolean viewerIsSubject) {
+        return clientView(s, viewerIsSubject, genesAlwaysVisible.getAsBoolean());
+    }
+
+    /** {@link #clientView(BloodlineState, boolean)} with the {@code gene_visibility} setting given: {@code alwaysVisible} = {@code always}, else {@code discovered}. */
+    public static BloodlineState clientView(BloodlineState s, boolean viewerIsSubject, boolean alwaysVisible) {
         // the layer's tracking is server business (which skills this mod granted), not something to send out
-        BloodlineState stripped = s.withTrackingOf(BloodlineState.NONE);
-        BloodlineState.Builder b = stripped.toBuilder().pendingSire(null).vampireBloodUntil(0)
-                .wolf(stripped.wolf().toBuilder().latentGene(false).geneRolled(false).build());
+        BloodlineState stripped = Genes.forClient(s.withTrackingOf(BloodlineState.NONE), viewerIsSubject, alwaysVisible);
+        BloodlineState.Builder b = stripped.toBuilder().pendingSire(null).vampireBloodUntil(0);
         if (!viewerIsSubject) {
             b.sire(null);
         }
         return b.build();
+    }
+
+    private static volatile BooleanSupplier genesAlwaysVisible = () -> false;
+
+    /** The species part tells the core whether {@code gene_visibility} is {@code always}; without it (or with the part off) genes stay secret until discovered. */
+    public static void useGeneVisibility(BooleanSupplier always) {
+        genesAlwaysVisible = always;
+    }
+
+    /** Marks these genes as discovered by {@code p} (synced); nothing changes, and nothing is sent, when they already were. */
+    public static void reveal(ServerPlayer p, String... genes) {
+        BloodlineState s = get(p);
+        BloodlineState revealed = Genes.reveal(s, genes);
+        if (revealed != s) {
+            set(p, revealed);
+        }
     }
 
     public static void addListener(BiConsumer<ServerPlayer, BloodlineChange> l) {

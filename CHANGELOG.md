@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: doppelgängers, genes and blood (plan 12, phase 12b)
+
+Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (owner decisions D5 to D8). Rules R10a, R14 in `SPECIES-RULES.md`. Part: species. No new mixin.
+
+- **The doppelgänger gene (Task 1).** Every player rolls a second hidden gene once, at the first login after the update (`doppelganger_gene_chance`, default 5%). It can sit next to the werewolf gene and does nothing by itself. `/bloodline gene doppelganger <player> <true|false>` (level 2) sets it. `BloodlineState` gains `doppelganger_gene`, `doppelganger_rolled` and `revealed_genes` (old saves load with the defaults).
+- **Genes are discovered, not shown (Task 1).** New `gene_visibility` (`discovered`, default, or `always`). The client is only ever sent a gene the player has discovered (the Rite of Lineage (Reveal) or a werewolf awakening for the werewolf gene) and never anyone else's; otherwise it is told "unknown". A player who was already an awakened born werewolf or a bound hybrid counts as having discovered the werewolf gene.
+
 ## Unreleased: the supernatural race system, foundation (plan 12, phase 12a)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md`. Two new parts, `supernatural` (needs Vampirism) and `supernatural_tensura` (needs Vampirism and Tensura), each with a mixin budget of 0 of 3. Nothing a player has is removed.

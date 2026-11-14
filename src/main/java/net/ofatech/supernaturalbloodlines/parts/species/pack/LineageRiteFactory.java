@@ -20,6 +20,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Outcome;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext;
@@ -86,6 +87,7 @@ public record LineageRiteFactory(Mode mode) implements RiteFactory {
                     return FactionRiteFactory.JOIN_DENIED;
                 }
                 FactionRiteHooks.run(target, BloodlineAccess.applyEvent(target, BloodlineEvent.RITE_OF_LINEAGE_AWAKEN, ctx));
+                BloodlineAccess.reveal(target, Genes.WEREWOLF);
                 return null;
             }
             default:
@@ -113,6 +115,7 @@ public record LineageRiteFactory(Mode mode) implements RiteFactory {
             ServerPlayer target = found.get();
             if (mode == Mode.REVEAL) {
                 target.sendSystemMessage(Component.translatable(BloodlineAccess.get(target).wolf().latentGene() ? GENE_YES : GENE_NO));
+                BloodlineAccess.reveal(target, Genes.WEREWOLF);
                 return false;
             }
             String refusal = awaken(target, level.getGameTime());

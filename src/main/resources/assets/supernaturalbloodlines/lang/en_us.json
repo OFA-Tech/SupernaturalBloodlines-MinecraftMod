@@ -274,5 +274,8 @@
   "supernaturalbloodlines.supernatural.race.witch": "Witch",
   "supernaturalbloodlines.supernatural.race.siphoner": "Siphoner",
   "supernaturalbloodlines.supernatural.race.hunter": "Hunter",
-  "supernaturalbloodlines.supernatural.race.werewolf": "Werewolf"
+  "supernaturalbloodlines.supernatural.race.werewolf": "Werewolf",
+  "supernaturalbloodlines.gene.command.doppelganger": "%s: doppelgänger gene set to %s.",
+  "supernaturalbloodlines.gene.command.true": "true",
+  "supernaturalbloodlines.gene.command.false": "false"
 }

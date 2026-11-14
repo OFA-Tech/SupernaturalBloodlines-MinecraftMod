@@ -33,6 +33,11 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue ALPHA_BITE_DEATH_CHANCE;
     public static final double DEFAULT_LUNAR_ECLIPSE_CHANCE = 0.03;
     private static final ModConfigSpec.DoubleValue LUNAR_ECLIPSE_CHANCE;
+    public static final double DEFAULT_DOPPELGANGER_GENE_CHANCE = 0.05;
+    private static final ModConfigSpec.DoubleValue DOPPELGANGER_GENE_CHANCE;
+    public static final String GENES_DISCOVERED = "discovered";
+    public static final String GENES_ALWAYS = "always";
+    private static final ModConfigSpec.ConfigValue<String> GENE_VISIBILITY;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -59,6 +64,10 @@ public final class SpeciesConfig {
                 .defineInRange("alpha_bite_death_chance", DEFAULT_ALPHA_BITE_DEATH_CHANCE, 0.0, 1.0);
         LUNAR_ECLIPSE_CHANCE = b.comment("Chance that a full-moon night is a lunar eclipse: werewolves lose their form actions, rank perks and pack bonus until dawn.")
                 .defineInRange("lunar_eclipse_chance", DEFAULT_LUNAR_ECLIPSE_CHANCE, 0.0, 1.0);
+        DOPPELGANGER_GENE_CHANCE = b.comment("Chance that a player carries the hidden doppelgänger gene, rolled once at their first login after it existed. It can sit next to the werewolf gene.")
+                .defineInRange("doppelganger_gene_chance", DEFAULT_DOPPELGANGER_GENE_CHANCE, 0.0, 1.0);
+        GENE_VISIBILITY = b.comment("discovered: a gene shows as Unknown to its player until the Rite of Revelation, a Doppelgänger Blood rite with their taglock, or a werewolf awakening finds it. always: a player always sees their own genes.")
+                .defineInList("gene_visibility", GENES_DISCOVERED, new java.util.ArrayList<>(java.util.List.of(GENES_DISCOVERED, GENES_ALWAYS)));
         b.pop();
         SPEC = b.build();
     }
@@ -121,6 +130,47 @@ public final class SpeciesConfig {
             return LATENT_GENE_CHANCE.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_LATENT_GENE_CHANCE;
+        }
+    }
+
+    private static volatile Double doppelgangerGeneChanceOverride;
+
+    /** For tests: pins {@link #doppelgangerGeneChance()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideDoppelgangerGeneChance(Double value) {
+        doppelgangerGeneChanceOverride = value;
+    }
+
+    public static double doppelgangerGeneChance() {
+        Double pinned = doppelgangerGeneChanceOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return DOPPELGANGER_GENE_CHANCE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_DOPPELGANGER_GENE_CHANCE;
+        }
+    }
+
+    private static volatile Boolean genesAlwaysVisibleOverride;
+
+    /** For tests: pins {@link #genesAlwaysVisible()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideGenesAlwaysVisible(Boolean value) {
+        genesAlwaysVisibleOverride = value;
+    }
+
+    /** {@code gene_visibility = always}. */
+    public static boolean genesAlwaysVisible() {
+        Boolean pinned = genesAlwaysVisibleOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return GENES_ALWAYS.equals(GENE_VISIBILITY.get());
+        } catch (IllegalStateException notLoaded) {
+            return false;
         }
     }
 

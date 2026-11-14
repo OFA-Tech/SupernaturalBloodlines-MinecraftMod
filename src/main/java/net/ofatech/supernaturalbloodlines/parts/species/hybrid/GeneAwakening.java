@@ -9,6 +9,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Outcome;
 import net.ofatech.supernaturalbloodlines.parts.species.OutcomeExecutor;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext;
@@ -45,6 +46,7 @@ public final class GeneAwakening {
         Outcome out = BloodlineAccess.applyEvent(killer, BloodlineEvent.GENE_AWAKENED_AS_VAMPIRE, SpeciesContext.of(killer, null));
         if (!out.refused() && !out.actions().isEmpty()) {
             OutcomeExecutor.run(killer, out);
+            BloodlineAccess.reveal(killer, Genes.WEREWOLF); // the awakening shows the gene (R10a)
         }
     }
 }

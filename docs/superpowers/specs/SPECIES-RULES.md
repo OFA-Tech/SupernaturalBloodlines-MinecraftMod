@@ -11,9 +11,11 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
 
 ## Humans
 - **R10.** The hidden werewolf gene: rolled once at first login (15%) and kept secret. The *Rite of Lineage (reveal)* shows it.
+- **R10a (plan 12b, owner 2026-11-14).** **Genes are discovered, not shown.** `gene_visibility` (server, default `discovered`): under `discovered` a player's Bloodline page shows each gene as *Unknown* until it is discovered; under `always` a player sees their own genes. The werewolf gene is discovered by the Rite of Lineage (Reveal) or by its awakening (R11 or R24, or the Rite of Lineage (Awaken)); the doppelgänger gene by the Rite of Revelation (R10b) or a successful Rite of Doppelgänger Blood with their taglock (R14). **The server never sends an undiscovered gene** (the client is told *unknown*), and never sends anyone's genes to other players. A player from before the update who is already an awakened born werewolf, or a bound hybrid made by the gene, counts as discovered for the werewolf gene.
 - **R11.** A human with the gene who kills a villager or a player becomes a **born werewolf** (Omega).
 - **R12.** The *Rite of Lineage (awaken)* gives the gene (and awakens it for humans). Anyone with no faction, or a vampire or Original (see R24, R35), can be the target.
 - **R13.** Resurrection Ring: 3 charges, and only against supernatural killers.
+- **R14 (plan 12b, owner 2026-11-14).** The hidden **doppelgänger gene**: rolled once for every player who has not been rolled yet, at their first login (or the next login, for a player from before the gene existed), `doppelganger_gene_chance` default 5%. Secret like R10 (see R10a). It can sit next to the werewolf gene, does nothing by itself and has no ladder. `/bloodline gene doppelganger <player> <true|false>` (permission level 2, the player must be online) sets it and counts as rolled; it does not reveal the gene.
 
 ## Vampires
 - **R20.** You become one through Vampirism's normal infection. **The Tensura race is kept**: you get the vampire layer, and Tensura is told you're vampiric (see R100). Tensura's own vampire line (ghoul → vampire → overcomer/lord → divine) still joins the Vampirism vampire faction with a level floor (vampire 1, overcomer/lord 7, divine max). A cure resets the race to human **only** if the race is in Tensura's vampire line.

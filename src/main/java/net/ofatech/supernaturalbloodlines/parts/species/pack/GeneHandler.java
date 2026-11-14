@@ -13,6 +13,7 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BaseFaction;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackOutcome;
@@ -93,6 +94,7 @@ public final class GeneHandler {
             BloodlineAccess.restore(p, before);
             return FactionRiteFactory.JOIN_DENIED;
         }
+        BloodlineAccess.reveal(p, Genes.WEREWOLF); // an awakening shows the gene (R10a)
         return null;
     }
 }

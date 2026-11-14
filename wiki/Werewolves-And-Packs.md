@@ -32,6 +32,20 @@ Werewolves (the mod) gives players the werewolf faction, forms and levels. This 
 
 - **A human with the gene who kills a villager or a player** becomes a born werewolf (an Omega). A vampire with the gene becomes a bound hybrid; a hunter's gene stays latent.
 
+### Genes
+
+There are two hidden genes, and a player can carry both.
+
+| Gene | Chance | Rolled | Does |
+|---|---|---|---|
+| werewolf | `latent_gene_chance`, 15% | once, at first login | can awaken (above) |
+| doppelgänger | `doppelganger_gene_chance`, 5% | once, at the first login after it exists (so players from before the update are rolled on their next login) | nothing by itself. A [Vampire Compass](Items-And-Blocks) in its second mode and the [Rite of Doppelgänger Blood](Rites#species-and-cures) look for it. |
+
+- **Unknown until discovered.** With `gene_visibility = discovered` (the default) a player sees each of their genes as *Unknown*. The werewolf gene is discovered by the Rite of Lineage (Reveal) or by awakening; the doppelgänger gene by the Rite of Revelation or a successful Rite of Doppelgänger Blood with their taglock. `always` shows a player their own genes. Nobody ever sees another player's genes, and the server does not send an undiscovered gene to the client at all.
+- **Changing `gene_visibility`** takes effect the next time the player's bloodline is synced (at login, or when it changes).
+- A player who was already an awakened born werewolf (or a bound hybrid made by the gene) before this update counts as having discovered the werewolf gene.
+- Operators can set the doppelgänger gene with `/bloodline gene doppelganger <player> <true|false>` ([Commands](Commands)).
+
 ## Ranks
 
 | Rank | How | Perks |
