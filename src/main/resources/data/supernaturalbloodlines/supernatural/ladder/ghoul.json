@@ -1,7 +1,4 @@
 {
-    "neoforge:conditions": [
-        { "type": "supernaturalbloodlines:part_enabled", "part": "supernatural" }
-    ],
     "rungs": [
         { "id": "L-GHO-0", "name": "Ghoul", "sp": 0, "ep": 0 }
     ]

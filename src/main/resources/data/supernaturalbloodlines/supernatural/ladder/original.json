@@ -1,7 +1,4 @@
 {
-    "neoforge:conditions": [
-        { "type": "supernaturalbloodlines:part_enabled", "part": "supernatural" }
-    ],
     "rungs": [
         { "id": "L-ORI-0", "name": "Immortal", "sp": 0, "ep": 0 },
         { "id": "L-ORI-1", "name": "Eternal Hunger", "sp": 3, "ep": 5000, "tasks": [
@@ -9,19 +6,19 @@
             { "id": "L-ORI-1b", "detector": "feed", "n": 20 }
         ] },
         { "id": "L-ORI-2", "name": "Bloodmaker", "sp": 3, "ep": 15000, "tasks": [
-            { "id": "L-ORI-2a", "detector": "rite", "rite": "supernaturalbloodlines:original_blood", "role": "target", "mod": "enchanted" },
+            { "id": "L-ORI-2a", "detector": "rite", "rite": "supernaturalbloodlines:original_blood", "role": "target" },
             { "id": "L-ORI-2b", "detector": "level", "faction": "vampirism:vampire", "n": 8 }
         ] },
         { "id": "L-ORI-3", "name": "Unbroken", "sp": 4, "ep": 30000, "tasks": [
-            { "id": "L-ORI-3a", "detector": "signal", "signal": "dying_survived", "mod": "enchanted" },
-            { "id": "L-ORI-3b", "detector": "signal", "signal": "compel", "n": 5, "mod": "enchanted" }
+            { "id": "L-ORI-3a", "detector": "signal", "signal": "dying_survived" },
+            { "id": "L-ORI-3b", "detector": "signal", "signal": "compel", "n": 5 }
         ] },
         { "id": "L-ORI-4", "name": "Progenitor", "sp": 5, "ep": 60000, "tasks": [
-            { "id": "L-ORI-4a", "detector": "sired", "n": 3, "mod": "enchanted" },
+            { "id": "L-ORI-4a", "detector": "sired", "n": 3 },
             { "id": "L-ORI-4b", "detector": "level", "faction": "vampirism:vampire", "n": 14 }
         ] },
-        { "id": "L-ORI-5", "name": "Primordial", "sp": 5, "ep": 100000, "mods": ["tensura"], "tasks": [
-            { "id": "L-ORI-5a", "detector": "tensura_tier", "mod": "tensura" },
+        { "id": "L-ORI-5", "name": "Primordial", "sp": 5, "ep": 100000, "mods": ["tensura"], "parts": ["supernaturalTensura"], "tasks": [
+            { "id": "L-ORI-5a", "detector": "tensura_tier" },
             { "id": "L-ORI-5b", "detector": "days_as", "race": "original", "n": 60 }
         ] }
     ]

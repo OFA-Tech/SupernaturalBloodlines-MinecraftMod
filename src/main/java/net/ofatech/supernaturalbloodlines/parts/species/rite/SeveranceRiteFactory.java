@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
+
 import com.mojang.serialization.MapCodec;
 import java.util.List;
 import java.util.Optional;
@@ -90,6 +92,7 @@ public record SeveranceRiteFactory() implements RiteFactory {
             }
             BloodlineAccess.applyEvent(target, BloodlineEvent.RITE_OF_SEVERANCE, ctx);
             target.displayClientMessage(Component.translatable(DONE), true);
+            TaskSignals.rite(caster, target, SupernaturalBloodlines.MODID + ":rite_of_severance");
             return false;
         }
 

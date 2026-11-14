@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
@@ -213,6 +215,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             }
 
             FactionRiteHooks.run(target, BloodlineAccess.applyEvent(target, factory.event, ctx));
+            TaskSignals.rite(caster, target, SupernaturalBloodlines.MODID + ":" + factory.event.name().toLowerCase(java.util.Locale.ROOT));
             return false;
         }
     }

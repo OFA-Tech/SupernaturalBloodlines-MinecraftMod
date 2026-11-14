@@ -1,26 +1,23 @@
 {
-    "neoforge:conditions": [
-        { "type": "supernaturalbloodlines:part_enabled", "part": "supernatural" }
-    ],
     "rungs": [
         { "id": "L-HUN-0", "name": "Hunter", "sp": 0, "ep": 0 },
         { "id": "L-HUN-1", "name": "Tracker", "sp": 2, "ep": 3000, "tasks": [
             { "id": "L-HUN-1a", "detector": "level", "faction": "vampirism:hunter", "n": 3 },
-            { "id": "L-HUN-1b", "detector": "kill", "category": "prey", "n": 10 }
+            { "id": "L-HUN-1b", "detector": "kill", "category": "prey", "n": 10, "part": "vampirismEnchanted" }
         ] },
         { "id": "L-HUN-2", "name": "Slayer", "sp": 3, "ep": 8000, "tasks": [
             { "id": "L-HUN-2a", "detector": "level", "faction": "vampirism:hunter", "n": 6 },
-            { "id": "L-HUN-2b", "detector": "kill", "category": "prey", "n": 25 }
+            { "id": "L-HUN-2b", "detector": "kill", "category": "prey", "n": 25, "part": "vampirismEnchanted" }
         ] },
-        { "id": "L-HUN-3", "name": "Marked", "sp": 4, "ep": 20000, "mods": ["enchanted"], "tasks": [
-            { "id": "L-HUN-3a", "detector": "state", "predicate": "hunter_of_the_five", "mod": "enchanted" }
+        { "id": "L-HUN-3", "name": "Marked", "sp": 4, "ep": 20000, "parts": ["species"], "tasks": [
+            { "id": "L-HUN-3a", "detector": "state", "predicate": "hunter_of_the_five" }
         ] },
-        { "id": "L-HUN-4", "name": "Five-tested", "sp": 4, "ep": 40000, "mods": ["enchanted"], "tasks": [
-            { "id": "L-HUN-4a", "detector": "state", "predicate": "mark_kills", "n": 20, "mod": "enchanted" },
+        { "id": "L-HUN-4", "name": "Five-tested", "sp": 4, "ep": 40000, "parts": ["species"], "tasks": [
+            { "id": "L-HUN-4a", "detector": "state", "predicate": "mark_kills", "n": 20 },
             { "id": "L-HUN-4b", "detector": "level", "faction": "vampirism:hunter", "n": 10 }
         ] },
-        { "id": "L-HUN-5", "name": "Eternal Hunter", "sp": 5, "ep": 100000, "mods": ["enchanted", "tensura"], "tasks": [
-            { "id": "L-HUN-5a", "detector": "tensura_tier", "mod": "tensura" },
+        { "id": "L-HUN-5", "name": "Eternal Hunter", "sp": 5, "ep": 100000, "mods": ["tensura"], "parts": ["species", "supernaturalTensura"], "tasks": [
+            { "id": "L-HUN-5a", "detector": "tensura_tier" },
             { "id": "L-HUN-5b", "detector": "level", "faction": "vampirism:hunter", "n": 14 }
         ] }
     ]

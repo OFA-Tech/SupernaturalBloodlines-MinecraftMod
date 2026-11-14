@@ -279,6 +279,52 @@ class LadderRulesTest {
     }
 
     @Test
+    void inTotalTasksCountFromTheStartWhateverTheRung() {
+        // L-SIP-4a (50,000) sits three rungs ahead; siphoning from the first day already counts
+        TaskEvent siphon = TaskEvent.of(Detector.SIGNAL, 1000, "signal", "siphon_power");
+        SupernaturalState s = FRESH;
+        for (int i = 0; i < 12; i++) {
+            s = LadderRules.apply(T, s, List.of(HUMAN, SIPHONER), siphon);
+        }
+        assertEquals(12_000L, s.lifetime().get("siphoner/signal?signal=siphon_power"));
+        // the active tasks (rung 1: 2,000; rung 2 would be 10,000) are done from the count, not from a counter of their own
+        assertTrue(s.done().contains("L-SIP-1a"));
+        assertTrue(s.counters().isEmpty());
+        // the rung after: 2b (10,000) is already enough the moment it becomes active
+        SupernaturalState rung2 = s.toBuilder().rung(SIPHONER, 1).build();
+        assertFalse(rung2.done().contains("L-SIP-2b"));
+        SupernaturalState refreshed = LadderRules.refreshTotals(T, rung2, List.of(HUMAN, SIPHONER));
+        assertTrue(refreshed.done().contains("L-SIP-2b"));
+        assertFalse(refreshed.done().contains("L-SIP-2a"));
+    }
+
+    @Test
+    void theHereticKeepsItsOwnTotal() {
+        TaskEvent siphon = TaskEvent.of(Detector.SIGNAL, 2000, "signal", "siphon_power");
+        SupernaturalState s = LadderRules.apply(T, FRESH, List.of(HERETIC), siphon);
+        assertTrue(s.done().contains("L-HER-1b"));
+        assertEquals(2000L, s.lifetime().get("heretic/signal?signal=siphon_power"));
+        assertFalse(s.lifetime().containsKey("siphoner/signal?signal=siphon_power"));
+    }
+
+    @Test
+    void aRiteTotalDoesNotCountOtherRoles() {
+        TaskEvent target = TaskEvent.of(Detector.RITE, 1, "rite", "x:y", "role", "target");
+        assertTrue(LadderRules.apply(T, FRESH, List.of(HUMAN, WITCH), target).lifetime().isEmpty());
+        TaskEvent performer = TaskEvent.of(Detector.RITE, 1, "rite", "x:y", "role", "performer");
+        assertEquals(1L, LadderRules.apply(T, FRESH, List.of(HUMAN, WITCH), performer).lifetime().get("witch/rite?rite=any&role=performer"));
+    }
+
+    @Test
+    void aGhoulFreezesTheMagicLadderAndTheTotalsToo() {
+        TaskEvent siphon = TaskEvent.of(Detector.SIGNAL, 5000, "signal", "siphon_power");
+        assertEquals(FRESH, LadderRules.apply(T, FRESH, List.of(GHOUL, SIPHONER), siphon));
+        SupernaturalState rich = FRESH.toBuilder().lifetime(Map.of("siphoner/signal?signal=siphon_power", 99_999L)).build();
+        assertEquals(rich, LadderRules.refreshTotals(T, rich, List.of(GHOUL, SIPHONER)));
+        assertTrue(LadderRules.refreshTotals(T, rich, List.of(SIPHONER)).done().contains("L-SIP-1a"));
+    }
+
+    @Test
     void thirstDaysCountInTicks() {
         // L-HYB-2a: 3 days at thirst 15+, fed 200 ticks at a time
         SupernaturalState s = FRESH.toBuilder().rung(HYBRID, 1).build();

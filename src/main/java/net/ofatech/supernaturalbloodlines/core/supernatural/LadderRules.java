@@ -69,7 +69,7 @@ public final class LadderRules {
      * Adds {@code amount} to the counter of a leaf of the active rung of {@code race}; done at its target.
      * Anything else (a Ghoul, a task that is not active, one already done) changes nothing.
      */
-    public static SupernaturalState record(LadderTable table, SupernaturalState s, SupernaturalRace race, String leafId, long amount) {
+    static SupernaturalState record(LadderTable table, SupernaturalState s, SupernaturalRace race, String leafId, long amount) {
         TaskSpec leaf = trackable(table, s, race, leafId);
         if (leaf == null || amount <= 0) {
             return s;
@@ -84,24 +84,34 @@ public final class LadderRules {
     }
 
     /** Marks a leaf of the active rung of {@code race} done when {@code value} reaches its target. */
-    public static SupernaturalState reach(LadderTable table, SupernaturalState s, SupernaturalRace race, String leafId, long value) {
+    static SupernaturalState reach(LadderTable table, SupernaturalState s, SupernaturalRace race, String leafId, long value) {
         TaskSpec leaf = trackable(table, s, race, leafId);
         return leaf != null && value >= leaf.target() ? markDone(s, leafId) : s;
     }
 
     /**
-     * Applies an event to the active rungs of the player's races (creature first, then magic): every leaf the event
-     * matches records it. One event can move both ladders.
+     * The one door for events: applies one to the active rungs of the player's races (creature first, then magic), and
+     * every leaf it matches records it. One event can move both ladders. A Ghoul as the creature race freezes both
+     * ladders. "In total" tasks also add the event to their lifetime counter, whatever the rung, for each race the
+     * player has. {@code record} and {@code reach} are not public, so nothing can skip the freeze.
      */
     public static SupernaturalState apply(LadderTable table, SupernaturalState s, List<SupernaturalRace> races, TaskEvent e) {
         if (races.contains(SupernaturalRace.GHOUL)) {
             return s;
         }
-        SupernaturalState out = s;
+        SupernaturalState out = e.detector().counting() ? addLifetime(table, s, races, e) : s;
         for (SupernaturalRace race : races) {
             for (TaskSpec task : activeTasks(table, out, List.of(race))) {
+                if (isDone(task, out)) {
+                    continue;
+                }
                 for (TaskSpec leaf : task.leaves()) {
-                    if (leaf.matches(e)) {
+                    if (!leaf.matches(e)) {
+                        continue;
+                    }
+                    if (leaf.total()) {
+                        out = totalReached(out, race, leaf);
+                    } else {
                         out = e.detector().counting()
                                 ? record(table, out, race, leaf.id(), e.value())
                                 : reach(table, out, race, leaf.id(), e.value());
@@ -112,9 +122,55 @@ public final class LadderRules {
         return out;
     }
 
+    /** Marks the "in total" tasks of the active rungs whose lifetime count is already enough (call it when a rung becomes active). */
+    public static SupernaturalState refreshTotals(LadderTable table, SupernaturalState s, List<SupernaturalRace> races) {
+        if (races.contains(SupernaturalRace.GHOUL)) {
+            return s;
+        }
+        SupernaturalState out = s;
+        for (SupernaturalRace race : races) {
+            for (TaskSpec task : activeTasks(table, out, List.of(race))) {
+                if (!isDone(task, out)) {
+                    for (TaskSpec leaf : task.leaves()) {
+                        out = leaf.total() ? totalReached(out, race, leaf) : out;
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    private static SupernaturalState totalReached(SupernaturalState s, SupernaturalRace race, TaskSpec leaf) {
+        return s.lifetime().getOrDefault(leaf.totalKey(race), 0L) >= leaf.target() ? markDone(s, leaf.id()) : s;
+    }
+
+    private static SupernaturalState addLifetime(LadderTable table, SupernaturalState s, List<SupernaturalRace> races, TaskEvent e) {
+        Set<String> keys = new HashSet<>();
+        for (SupernaturalRace race : races) {
+            for (Rung rung : table.get(race).rungs()) {
+                for (TaskSpec task : rung.tasks()) {
+                    for (TaskSpec leaf : task.leaves()) {
+                        if (leaf.total() && leaf.matches(e)) {
+                            keys.add(leaf.totalKey(race));
+                        }
+                    }
+                }
+            }
+        }
+        if (keys.isEmpty() || e.value() <= 0) {
+            return s;
+        }
+        Map<String, Long> lifetime = new HashMap<>(s.lifetime());
+        keys.forEach(k -> lifetime.merge(k, e.value(), Long::sum));
+        return s.toBuilder().lifetime(lifetime).build();
+    }
+
     /**
      * Pays the task's share of its rung and, when that was the last unclaimed task, reaches the rung (and any
      * following rung left with no tasks). The share is the rung total divided evenly, the remainder on the last task.
+     * The shares are worked out from the rung as it is now: if a mod or part is removed between two claims of one rung, the tasks left
+     * split the whole total, so what was already paid can be more or less than the new share; the rung still pays its full total at most once
+     * per task claimed, and nothing already paid is taken back.
      */
     public static ClaimResult claim(LadderTable table, SupernaturalState s, SupernaturalRace creature,
                                     Optional<SupernaturalRace> magic, String taskId) {

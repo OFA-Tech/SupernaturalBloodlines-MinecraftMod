@@ -1,12 +1,9 @@
 {
-    "neoforge:conditions": [
-        { "type": "supernaturalbloodlines:part_enabled", "part": "supernatural" }
-    ],
     "rungs": [
         { "id": "L-OHY-0", "name": "Bound", "sp": 0, "ep": 0 },
         { "id": "L-OHY-1", "name": "Unbound", "sp": 3, "ep": 10000, "tasks": [
             { "id": "L-OHY-1a", "any_of": [
-                { "id": "L-OHY-1a.1", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_the_moon", "role": "target", "mod": "enchanted" },
+                { "id": "L-OHY-1a.1", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_the_moon", "role": "target", "part": "vampirismEnchanted" },
                 { "id": "L-OHY-1a.2", "detector": "state", "predicate": "moon_unbound" }
             ] },
             { "id": "L-OHY-1b", "detector": "level", "faction": "werewolves:werewolf", "n": 4, "mod": "werewolves" }
@@ -16,15 +13,15 @@
             { "id": "L-OHY-2b", "detector": "signal", "signal": "venom_hit", "n": 3, "mod": "werewolves" }
         ] },
         { "id": "L-OHY-3", "name": "Blood and Moon", "sp": 4, "ep": 30000, "tasks": [
-            { "id": "L-OHY-3a", "detector": "rite", "rite": "supernaturalbloodlines:hybrid_blood", "role": "target", "mod": "enchanted" },
-            { "id": "L-OHY-3b", "detector": "rite", "rite": "supernaturalbloodlines:original_blood", "role": "target", "mod": "enchanted" }
+            { "id": "L-OHY-3a", "detector": "rite", "rite": "supernaturalbloodlines:hybrid_blood", "role": "target" },
+            { "id": "L-OHY-3b", "detector": "rite", "rite": "supernaturalbloodlines:original_blood", "role": "target" }
         ] },
         { "id": "L-OHY-4", "name": "Two Lines", "sp": 5, "ep": 60000, "tasks": [
             { "id": "L-OHY-4a", "detector": "level", "faction": "werewolves:werewolf", "n": 14, "mod": "werewolves" },
-            { "id": "L-OHY-4b", "detector": "sired", "n": 3, "mod": "enchanted" }
+            { "id": "L-OHY-4b", "detector": "sired", "n": 3 }
         ] },
-        { "id": "L-OHY-5", "name": "Primordial Hybrid", "sp": 5, "ep": 100000, "mods": ["tensura"], "tasks": [
-            { "id": "L-OHY-5a", "detector": "tensura_tier", "mod": "tensura" },
+        { "id": "L-OHY-5", "name": "Primordial Hybrid", "sp": 5, "ep": 100000, "mods": ["tensura"], "parts": ["supernaturalTensura"], "tasks": [
+            { "id": "L-OHY-5a", "detector": "tensura_tier" },
             { "id": "L-OHY-5b", "detector": "days_as", "race": "original_hybrid", "n": 60 }
         ] }
     ]

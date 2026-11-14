@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
+
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import de.teamlapen.vampirism.api.VampirismAPI;
@@ -110,8 +112,10 @@ public record LineageRiteFactory(Mode mode) implements RiteFactory {
                 return cancel();
             }
             ServerPlayer target = found.get();
+            ServerPlayer performer = findEntity(params.caster) instanceof ServerPlayer c ? c : target;
             if (mode == Mode.REVEAL) {
                 target.sendSystemMessage(Component.translatable(BloodlineAccess.get(target).wolf().latentGene() ? GENE_YES : GENE_NO));
+                TaskSignals.rite(performer, target, SupernaturalBloodlines.MODID + ":rite_of_lineage_reveal");
                 return false;
             }
             String refusal = awaken(target, level.getGameTime());
@@ -120,6 +124,7 @@ public record LineageRiteFactory(Mode mode) implements RiteFactory {
                 caster.displayClientMessage(Component.translatable(refusal), true);
                 return cancel();
             }
+            TaskSignals.rite(performer, target, SupernaturalBloodlines.MODID + ":rite_of_lineage_awaken");
             return false;
         }
     }

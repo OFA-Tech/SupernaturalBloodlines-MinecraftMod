@@ -1,5 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.species.witch;
 
+import java.util.Map;
+import net.ofatech.supernaturalbloodlines.core.Supernatural;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
+
 import java.util.UUID;
 import net.favouriteless.enchanted.common.enchanted.altar.PowerProvider;
 import net.minecraft.core.BlockPos;
@@ -130,6 +134,7 @@ public final class Siphoning {
         }
         ENTITIES.tryUse(p.getUUID(), target.getUUID(), now, COOLDOWN_TICKS);
         gain(p);
+        TaskSignals.fire(p, "siphon_entity", 1, Map.of("prey", String.valueOf(Supernatural.isPrey(target))));
         return true;
     }
 
@@ -143,6 +148,8 @@ public final class Siphoning {
 
     private static void gain(ServerPlayer p) {
         BloodlineState s = BloodlineAccess.get(p);
-        BloodlineAccess.set(p, s.toBuilder().siphonedPower(Math.min(CAP, s.siphonedPower() + GAIN)).build());
+        int gained = Math.min(CAP, s.siphonedPower() + GAIN) - s.siphonedPower();
+        BloodlineAccess.set(p, s.toBuilder().siphonedPower(s.siphonedPower() + gained).build());
+        TaskSignals.fire(p, "siphon_power", gained);
     }
 }

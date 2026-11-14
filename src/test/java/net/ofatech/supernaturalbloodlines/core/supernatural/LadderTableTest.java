@@ -146,6 +146,54 @@ class LadderTableTest {
     }
 
     @Test
+    void aPartThatIsOffDropsItsTasksAndEndsLadderBeforeARungThatNeedsIt() {
+        String json = """
+                { "rungs": [ { "id": "A-0" },
+                  { "id": "A-1", "sp": 1, "tasks": [
+                    { "id": "A-1a", "detector": "feed" },
+                    { "id": "A-1b", "detector": "signal", "signal": "compel", "part": "species" } ] },
+                  { "id": "A-2", "parts": ["supernaturalTensura"] } ] }
+                """;
+        LadderTable t = LadderTable.parse(files("vampire", json), mod -> true, part -> !part.equals("species")).table();
+        assertEquals(List.of("A-1a"), t.get(SupernaturalRace.VAMPIRE).rung(1).orElseThrow().tasks().stream().map(TaskSpec::id).toList());
+        assertEquals(3, t.get(SupernaturalRace.VAMPIRE).rungs().size());
+        LadderTable noTensura = LadderTable.parse(files("vampire", json), mod -> true, part -> !part.equals("supernaturalTensura")).table();
+        assertEquals(2, noTensura.get(SupernaturalRace.VAMPIRE).rungs().size());
+    }
+
+    @Test
+    void anUnknownArgIsWarnedAboutAndKept() {
+        LadderTable.Parsed p = parse("vampire", GOOD.replace("\"n\": 4", "\"n\": 4, \"colour\": \"red\""));
+        assertEquals(List.of(), p.rejected());
+        assertEquals(1, p.warnings().size());
+        assertTrue(p.warnings().get(0).contains("colour"), p.warnings().get(0));
+        assertEquals("red", p.table().find("A-1a").orElseThrow().task().args().get("colour"));
+        assertEquals(List.of(), parse("vampire", GOOD).warnings());
+    }
+
+    @Test
+    void totalIsOnlyForCountingDetectors() {
+        assertEquals(1, parse("vampire", GOOD.replace("\"n\": 4", "\"n\": 4, \"total\": true").replace("\"feed\"", "\"sired\"")).rejected().size());
+        TaskSpec t = parse("vampire", GOOD.replace("\"n\": 4", "\"n\": 4, \"total\": true")).table().find("A-1a").orElseThrow().task();
+        assertTrue(t.total());
+        assertEquals("vampire/feed?", t.totalKey(SupernaturalRace.VAMPIRE));
+    }
+
+    @Test
+    void aValueOfTheWrongKindRejectsTheFileInsteadOfCrashing() {
+        LadderTable.Parsed p = parse("vampire", GOOD.replace("\"n\": 4", "\"n\": 4, \"total\": \"yes please\""));
+        assertEquals(1, p.rejected().size());
+    }
+
+    @Test
+    void theAcceptedFilesAreKeptForTheClient() {
+        LadderTable.Parsed p = parse("vampire", GOOD, "dragon", GOOD);
+        assertEquals(java.util.Set.of("vampire"), p.table().sources().keySet());
+        LadderTable again = LadderTable.parse(p.table().sources(), mod -> true).table();
+        assertEquals(p.table().get(SupernaturalRace.VAMPIRE), again.get(SupernaturalRace.VAMPIRE));
+    }
+
+    @Test
     void currentIsReplaceable() {
         LadderTable t = parse("vampire", GOOD).table();
         LadderTable.setCurrent(t);

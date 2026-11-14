@@ -1,35 +1,31 @@
 {
-    "neoforge:conditions": [
-        { "type": "supernaturalbloodlines:part_enabled", "part": "supernatural" }
-    ],
     "rungs": [
         { "id": "L-WIT-0", "name": "Called", "sp": 0, "ep": 0 },
         { "id": "L-WIT-1", "name": "Apprentice", "sp": 2, "ep": 5000, "tasks": [
-            { "id": "L-WIT-1a", "detector": "rite", "rite": "any", "role": "performer", "n": 3, "mod": "enchanted" },
-            { "id": "L-WIT-1b", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_lineage_reveal", "role": "performer", "mod": "enchanted" }
+            { "id": "L-WIT-1a", "detector": "rite", "rite": "any", "role": "performer", "n": 3 },
+            { "id": "L-WIT-1b", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_lineage_reveal", "role": "performer", "mod": "werewolves" }
         ] },
         { "id": "L-WIT-2", "name": "Ward-maker", "sp": 3, "ep": 10000, "tasks": [
             { "id": "L-WIT-2a", "any_of": [
-                { "id": "L-WIT-2a.1", "detector": "rite", "rite": "supernaturalbloodlines:ward_of_daylight", "role": "performer", "mod": "enchanted" },
-                { "id": "L-WIT-2a.2", "detector": "rite", "rite": "supernaturalbloodlines:ward_of_the_moon", "role": "performer", "mod": "enchanted" },
-                { "id": "L-WIT-2a.3", "detector": "rite", "rite": "supernaturalbloodlines:ward_of_return", "role": "performer", "mod": "enchanted" }
+                { "id": "L-WIT-2a.1", "detector": "rite", "rite": "supernaturalbloodlines:ward_of_daylight", "role": "performer", "part": "artifacts" },
+                { "id": "L-WIT-2a.2", "detector": "rite", "rite": "supernaturalbloodlines:ward_of_the_moon", "role": "performer", "mod": "werewolves", "part": "artifacts" }
             ] },
-            { "id": "L-WIT-2b", "detector": "signal", "signal": "mountain_ash_placed", "n": 16, "mod": "enchanted" }
+            { "id": "L-WIT-2b", "detector": "signal", "signal": "mountain_ash_placed", "n": 16, "part": "artifacts" }
         ] },
         { "id": "L-WIT-3", "name": "Emissary", "sp": 4, "ep": 20000, "tasks": [
             { "id": "L-WIT-3a", "detector": "state", "predicate": "emissary", "mod": "werewolves" },
-            { "id": "L-WIT-3b", "detector": "rite", "rite": "any", "role": "performer", "n": 10, "mod": "enchanted" }
+            { "id": "L-WIT-3b", "detector": "rite", "rite": "any", "role": "performer", "n": 10, "total": true }
         ] },
         { "id": "L-WIT-4", "name": "Coven-mother", "sp": 5, "ep": 40000, "tasks": [
             { "id": "L-WIT-4a", "any_of": [
-                { "id": "L-WIT-4a.1", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_severance", "role": "performer", "mod": "enchanted" },
-                { "id": "L-WIT-4a.2", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_the_cure", "role": "performer", "mod": "enchanted" }
+                { "id": "L-WIT-4a.1", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_severance", "role": "performer" },
+                { "id": "L-WIT-4a.2", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_the_cure", "role": "performer", "part": "artifacts" }
             ] },
-            { "id": "L-WIT-4b", "detector": "rite", "rite": "any", "role": "performer", "n": 25, "mod": "enchanted" }
+            { "id": "L-WIT-4b", "detector": "rite", "rite": "any", "role": "performer", "n": 25, "total": true }
         ] },
-        { "id": "L-WIT-5", "name": "Ancestral", "sp": 5, "ep": 100000, "mods": ["tensura"], "tasks": [
-            { "id": "L-WIT-5a", "detector": "tensura_tier", "mod": "tensura" },
-            { "id": "L-WIT-5b", "detector": "rite", "rite": "supernaturalbloodlines:ancestral_calling", "role": "performer", "other": "true", "mod": "enchanted" }
+        { "id": "L-WIT-5", "name": "Ancestral", "sp": 5, "ep": 100000, "mods": ["tensura"], "parts": ["supernaturalTensura"], "tasks": [
+            { "id": "L-WIT-5a", "detector": "tensura_tier" },
+            { "id": "L-WIT-5b", "detector": "rite", "rite": "supernaturalbloodlines:ancestral_calling", "role": "performer", "other": "true" }
         ] }
     ]
 }

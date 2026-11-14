@@ -1,15 +1,12 @@
 {
-    "neoforge:conditions": [
-        { "type": "supernaturalbloodlines:part_enabled", "part": "supernatural" }
-    ],
     "rungs": [
         { "id": "L-WOL-0", "name": "Omega", "sp": 0, "ep": 0 },
         { "id": "L-WOL-1", "name": "First Moon", "sp": 2, "ep": 3000, "tasks": [
             { "id": "L-WOL-1a", "detector": "level", "faction": "werewolves:werewolf", "n": 3, "mod": "werewolves" },
-            { "id": "L-WOL-1b", "detector": "signal", "signal": "forced_shift_survived", "mod": "werewolves" }
+            { "id": "L-WOL-1b", "detector": "signal", "signal": "forced_shift_survived", "mod": "werewolves", "part": "species" }
         ] },
         { "id": "L-WOL-2", "name": "Beta", "sp": 3, "ep": 8000, "tasks": [
-            { "id": "L-WOL-2a", "detector": "state", "predicate": "rank_beta", "mod": "werewolves" },
+            { "id": "L-WOL-2a", "detector": "state", "predicate": "rank_beta", "mod": "werewolves", "part": "species" },
             { "id": "L-WOL-2b", "detector": "level", "faction": "werewolves:werewolf", "n": 5, "mod": "werewolves" }
         ] },
         { "id": "L-WOL-3", "name": "Controlled", "sp": 3, "ep": 15000, "tasks": [
@@ -18,16 +15,16 @@
         ] },
         { "id": "L-WOL-4", "name": "Leader", "sp": 4, "ep": 40000, "tasks": [
             { "id": "L-WOL-4a", "any_of": [
-                { "id": "L-WOL-4a.1", "detector": "state", "predicate": "rank_alpha", "mod": "werewolves" },
-                { "id": "L-WOL-4a.2", "detector": "state", "predicate": "beta_days", "n": 15, "mod": "werewolves" }
+                { "id": "L-WOL-4a.1", "detector": "state", "predicate": "rank_alpha", "mod": "werewolves", "part": "species" },
+                { "id": "L-WOL-4a.2", "detector": "state", "predicate": "beta_days", "n": 15, "mod": "werewolves", "part": "species" }
             ] },
-            { "id": "L-WOL-4b", "detector": "state", "predicate": "defender_kills", "n": 100, "mod": "werewolves" }
+            { "id": "L-WOL-4b", "detector": "state", "predicate": "defender_kills", "n": 100, "mod": "werewolves", "part": "species" }
         ] },
         { "id": "L-WOL-5", "name": "Alpha", "sp": 6, "ep": 100000, "tasks": [
-            { "id": "L-WOL-5a", "detector": "state", "predicate": "rank_alpha", "mod": "werewolves" }
+            { "id": "L-WOL-5a", "detector": "state", "predicate": "rank_alpha", "mod": "werewolves", "part": "species" }
         ] },
-        { "id": "L-WOL-6", "name": "Primeval", "sp": 5, "ep": 100000, "mods": ["tensura"], "tasks": [
-            { "id": "L-WOL-6a", "detector": "tensura_tier", "mod": "tensura" },
+        { "id": "L-WOL-6", "name": "Primeval", "sp": 5, "ep": 100000, "mods": ["tensura"], "parts": ["supernaturalTensura"], "tasks": [
+            { "id": "L-WOL-6a", "detector": "tensura_tier" },
             { "id": "L-WOL-6b", "detector": "days_as", "race": "werewolf", "n": 100 }
         ] }
     ]

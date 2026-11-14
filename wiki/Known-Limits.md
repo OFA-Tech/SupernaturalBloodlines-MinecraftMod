@@ -10,6 +10,11 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 - **Tensura skills on a sired player:** Starved and Usurper don't check for subordinates, so a sire can drain or rob a sired player.
 - **Mastery of a layer skill is lost** when the species goes and comes back (the skill is forgotten and learned fresh). Same for rank skills.
 
+## Supernatural ladders
+
+- **Only our own rites count for tasks.** Enchanted fires no event when a rite is done and gives no reliable way to tell a finished rite from a cancelled one, so a rite counts only if one of this mod's rite types made it. Rites made with Enchanted's own types do not count: Ward of Return, Blood Offering, Hearing Device, Vampire Compass, Doppelgänger Blood and the two curse rites. The Ward of Return is therefore not one of the Ward rites the Witch's L-WIT-2 asks for.
+- **A task whose part is switched off is not shown or asked for.** If you turn a part off (for example `species`), the tasks it fires (compelling, siphoning, the rites of that part) are dropped from the ladders, and a rung with nothing left is reached on its own.
+
 ## Rites, rollbacks and configs
 
 - **Rolling back forgets severances.** An older build doesn't know them, so severed bonds come back. Reset apex-race players first (see [For server owners](For-Server-Owners#removing-the-mod-or-tensura)).

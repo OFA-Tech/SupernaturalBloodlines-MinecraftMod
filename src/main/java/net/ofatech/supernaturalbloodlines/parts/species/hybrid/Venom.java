@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hybrid;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
+
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -56,6 +58,9 @@ public final class Venom {
         }
         if (VampirismSupernatural.isWerewolf(attacker) && VampirismSupernatural.isVampire(target)) {
             target.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, DURATION_TICKS));
+            if (attacker instanceof Player p) {
+                TaskSignals.fire(p, "venom_hit", 1);
+            }
         }
     }
 

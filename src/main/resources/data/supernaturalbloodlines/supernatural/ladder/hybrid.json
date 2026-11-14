@@ -1,12 +1,9 @@
 {
-    "neoforge:conditions": [
-        { "type": "supernaturalbloodlines:part_enabled", "part": "supernatural" }
-    ],
     "rungs": [
         { "id": "L-HYB-0", "name": "Awakened", "sp": 0, "ep": 0 },
         { "id": "L-HYB-1", "name": "Unbound", "sp": 2, "ep": 5000, "tasks": [
             { "id": "L-HYB-1a", "any_of": [
-                { "id": "L-HYB-1a.1", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_the_moon", "role": "target", "mod": "enchanted" },
+                { "id": "L-HYB-1a.1", "detector": "rite", "rite": "supernaturalbloodlines:rite_of_the_moon", "role": "target", "part": "vampirismEnchanted" },
                 { "id": "L-HYB-1a.2", "detector": "state", "predicate": "moon_unbound" }
             ] },
             { "id": "L-HYB-1b", "detector": "level", "faction": "werewolves:werewolf", "n": 3, "mod": "werewolves" }
@@ -17,15 +14,15 @@
         ] },
         { "id": "L-HYB-3", "name": "Venom", "sp": 4, "ep": 20000, "tasks": [
             { "id": "L-HYB-3a", "detector": "signal", "signal": "venom_hit", "n": 3, "mod": "werewolves" },
-            { "id": "L-HYB-3b", "detector": "rite", "rite": "supernaturalbloodlines:hybrid_blood", "role": "target", "mod": "enchanted" },
+            { "id": "L-HYB-3b", "detector": "rite", "rite": "supernaturalbloodlines:hybrid_blood", "role": "target" },
             { "id": "L-HYB-3c", "detector": "level", "faction": "werewolves:werewolf", "n": 8, "mod": "werewolves" }
         ] },
         { "id": "L-HYB-4", "name": "Packbound", "sp": 4, "ep": 40000, "tasks": [
-            { "id": "L-HYB-4a", "detector": "state", "predicate": "beta_days", "n": 7, "mod": "werewolves" },
+            { "id": "L-HYB-4a", "detector": "pack_days", "n": 7, "mod": "werewolves" },
             { "id": "L-HYB-4b", "detector": "level", "faction": "werewolves:werewolf", "n": 12, "mod": "werewolves" }
         ] },
-        { "id": "L-HYB-5", "name": "Moonblood", "sp": 5, "ep": 100000, "mods": ["tensura"], "tasks": [
-            { "id": "L-HYB-5a", "detector": "tensura_tier", "mod": "tensura" },
+        { "id": "L-HYB-5", "name": "Moonblood", "sp": 5, "ep": 100000, "mods": ["tensura"], "parts": ["supernaturalTensura"], "tasks": [
+            { "id": "L-HYB-5a", "detector": "tensura_tier" },
             { "id": "L-HYB-5b", "detector": "level", "faction": "werewolves:werewolf", "n": 14, "mod": "werewolves" }
         ] }
     ]

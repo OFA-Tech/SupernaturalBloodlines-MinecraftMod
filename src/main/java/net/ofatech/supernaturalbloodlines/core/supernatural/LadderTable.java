@@ -21,31 +21,35 @@ import java.util.function.Predicate;
  * <pre>{@code
  * { "rungs": [
  *   { "id": "L-VAM-0", "name": "Fledgling", "sp": 0, "ep": 0 },
- *   { "id": "L-VAM-1", "name": "Thirst", "sp": 2, "ep": 2000, "mods": [], "tasks": [
+ *   { "id": "L-VAM-1", "name": "Thirst", "sp": 2, "ep": 2000, "mods": [], "parts": [], "tasks": [
  *     { "id": "L-VAM-1a", "detector": "level", "faction": "vampirism:vampire", "n": 2 },
- *     { "id": "L-VAM-1b", "detector": "feed", "n": 10, "mod": "vampirism" } ] } ] }
+ *     { "id": "L-VAM-1b", "detector": "feed", "n": 10, "mod": "vampirism", "part": "species", "total": false } ] } ] }
  * }</pre>
- * A task is a detector, its args (every other key), a count {@code n} (default 1) and an optional {@code mod}. An
- * {@code any_of} task has a list of such tasks instead of a detector. Rung 0 has no tasks and pays nothing.
+ * A task is a detector, its args (every other key), a count {@code n} (default 1), an optional {@code mod} and
+ * {@code part} (it is dropped when that mod is missing or that part is off) and {@code total} (a lifetime count). An
+ * {@code any_of} task has a list of such tasks instead of a detector. Rung 0 has no tasks and pays nothing; a rung's
+ * {@code mods} and {@code parts} end the ladder before it when one is missing.
  */
 public final class LadderTable {
-    public record Parsed(LadderTable table, List<String> rejected) {
+    public record Parsed(LadderTable table, List<String> rejected, List<String> warnings) {
     }
 
     /** Where a top-level task sits. */
     public record TaskRef(SupernaturalRace race, int rung, TaskSpec task) {
     }
 
-    public static final LadderTable EMPTY = new LadderTable(Map.of());
+    public static final LadderTable EMPTY = new LadderTable(Map.of(), Map.of());
 
-    private static final Set<String> RESERVED = Set.of("id", "detector", "n", "mod", "any_of");
+    private static final Set<String> RESERVED = Set.of("id", "detector", "n", "mod", "part", "total", "any_of");
     private static volatile LadderTable current = EMPTY;
 
     private final Map<SupernaturalRace, Ladder> ladders;
+    private final Map<String, JsonElement> sources;
     private final Map<String, TaskRef> tasks = new HashMap<>();
 
-    private LadderTable(Map<SupernaturalRace, Ladder> ladders) {
+    private LadderTable(Map<SupernaturalRace, Ladder> ladders, Map<String, JsonElement> sources) {
         this.ladders = Map.copyOf(ladders);
+        this.sources = Map.copyOf(sources);
         for (Ladder l : ladders.values()) {
             for (int i = 0; i < l.rungs().size(); i++) {
                 for (TaskSpec t : l.rungs().get(i).tasks()) {
@@ -75,60 +79,83 @@ public final class LadderTable {
     }
 
     /**
-     * @param files      file name (the race id) to its JSON
-     * @param modLoaded  tasks of a missing mod are dropped, and a ladder ends before the first rung that needs one
+     * The files this table was built from (the accepted ones, as read), by race id. A client that gets them can
+     * {@link #parse} its own table with its own mods and parts.
      */
+    public Map<String, JsonElement> sources() {
+        return sources;
+    }
+
+    /** {@link #parse(Map, Predicate, Predicate)} with every part on. */
     public static Parsed parse(Map<String, JsonElement> files, Predicate<String> modLoaded) {
+        return parse(files, modLoaded, part -> true);
+    }
+
+    /**
+     * @param files        file name (the race id) to its JSON
+     * @param modLoaded    tasks of a missing mod are dropped, and a ladder ends before the first rung that needs one
+     * @param partEnabled  the same for the parts (config keys): a signal whose part is off never fires, so its task is dropped
+     */
+    public static Parsed parse(Map<String, JsonElement> files, Predicate<String> modLoaded, Predicate<String> partEnabled) {
         Map<SupernaturalRace, Ladder> out = new EnumMap<>(SupernaturalRace.class);
+        Map<String, JsonElement> accepted = new HashMap<>();
         List<String> rejected = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         for (Map.Entry<String, JsonElement> file : new TreeMap<>(files).entrySet()) {
             try {
                 SupernaturalRace race = SupernaturalRace.byId(file.getKey())
                         .orElseThrow(() -> new BadData("unknown race"));
                 Set<String> ids = new HashSet<>();
-                List<Rung> rungs = readRungs(file.getValue(), ids);
+                List<String> fileWarnings = new ArrayList<>();
+                List<Rung> rungs = readRungs(file.getValue(), ids, fileWarnings);
                 for (String id : ids) {
                     if (seen.contains(id)) {
                         throw new BadData("duplicate id " + id + " (already used by another ladder)");
                     }
                 }
                 seen.addAll(ids);
-                out.put(race, new Ladder(race, available(rungs, modLoaded)));
-            } catch (BadData e) {
-                rejected.add(file.getKey() + ": " + e.getMessage());
+                fileWarnings.forEach(w -> warnings.add(file.getKey() + ": " + w));
+                out.put(race, new Ladder(race, available(rungs, modLoaded, partEnabled)));
+                accepted.put(file.getKey(), file.getValue());
+            } catch (RuntimeException e) { // BadData, or a value of the wrong kind that Gson refuses: never a crash
+                rejected.add(file.getKey() + ": " + (e instanceof BadData ? e.getMessage() : "unreadable value (" + e + ")"));
             }
         }
-        return new Parsed(new LadderTable(out), List.copyOf(rejected));
+        return new Parsed(new LadderTable(out, accepted), List.copyOf(rejected), List.copyOf(warnings));
     }
 
-    private static List<Rung> available(List<Rung> rungs, Predicate<String> modLoaded) {
+    private static List<Rung> available(List<Rung> rungs, Predicate<String> modLoaded, Predicate<String> partEnabled) {
         List<Rung> out = new ArrayList<>();
         for (Rung r : rungs) {
-            if (!r.mods().stream().allMatch(modLoaded)) {
+            if (!r.mods().stream().allMatch(modLoaded) || !r.parts().stream().allMatch(partEnabled)) {
                 break;
             }
-            out.add(new Rung(r.id(), r.name(), r.sp(), r.ep(), r.mods(), prune(r.tasks(), modLoaded)));
+            out.add(new Rung(r.id(), r.name(), r.sp(), r.ep(), r.mods(), r.parts(), prune(r.tasks(), modLoaded, partEnabled)));
         }
         return out;
     }
 
-    private static List<TaskSpec> prune(List<TaskSpec> tasks, Predicate<String> modLoaded) {
+    private static boolean present(TaskSpec t, Predicate<String> modLoaded, Predicate<String> partEnabled) {
+        return (t.mod() == null || modLoaded.test(t.mod())) && (t.part() == null || partEnabled.test(t.part()));
+    }
+
+    private static List<TaskSpec> prune(List<TaskSpec> tasks, Predicate<String> modLoaded, Predicate<String> partEnabled) {
         List<TaskSpec> out = new ArrayList<>();
         for (TaskSpec t : tasks) {
             if (t.isGroup()) {
-                List<TaskSpec> members = t.anyOf().stream().filter(m -> m.mod() == null || modLoaded.test(m.mod())).toList();
+                List<TaskSpec> members = t.anyOf().stream().filter(m -> present(m, modLoaded, partEnabled)).toList();
                 if (!members.isEmpty()) {
-                    out.add(new TaskSpec(t.id(), null, Map.of(), 0, null, members));
+                    out.add(new TaskSpec(t.id(), null, Map.of(), 0, null, null, false, members));
                 }
-            } else if (t.mod() == null || modLoaded.test(t.mod())) {
+            } else if (present(t, modLoaded, partEnabled)) {
                 out.add(t);
             }
         }
         return out;
     }
 
-    private static List<Rung> readRungs(JsonElement json, Set<String> ids) {
+    private static List<Rung> readRungs(JsonElement json, Set<String> ids, List<String> warnings) {
         JsonArray array = array(object(json, "ladder"), "rungs");
         if (array.isEmpty()) {
             throw new BadData("no rungs");
@@ -140,24 +167,25 @@ public final class LadderTable {
             int sp = (int) number(o, "sp", 0, 0, 1_000_000);
             long ep = number(o, "ep", 0, 0, 1_000_000_000L);
             List<String> mods = strings(o, "mods");
+            List<String> parts = strings(o, "parts");
             List<TaskSpec> tasks = new ArrayList<>();
             if (o.has("tasks")) {
                 for (JsonElement t : array(o, "tasks")) {
-                    tasks.add(readTask(object(t, "task of " + id), ids));
+                    tasks.add(readTask(object(t, "task of " + id), ids, warnings));
                 }
             }
             if (i == 0 && (sp != 0 || ep != 0 || !tasks.isEmpty())) {
                 throw new BadData("rung 0 (" + id + ") must pay nothing and have no tasks");
             }
-            rungs.add(new Rung(id, o.has("name") ? string(o, "name") : id, sp, ep, mods, tasks));
+            rungs.add(new Rung(id, o.has("name") ? string(o, "name") : id, sp, ep, mods, parts, tasks));
         }
         return rungs;
     }
 
-    private static TaskSpec readTask(JsonObject o, Set<String> ids) {
+    private static TaskSpec readTask(JsonObject o, Set<String> ids, List<String> warnings) {
         String id = unique(string(o, "id"), ids);
         if (!o.has("any_of")) {
-            return readLeaf(o, id);
+            return readLeaf(o, id, warnings);
         }
         if (o.has("detector")) {
             throw new BadData("task " + id + " has both any_of and a detector");
@@ -172,12 +200,12 @@ public final class LadderTable {
             if (mo.has("any_of")) {
                 throw new BadData("task " + id + " nests an any_of");
             }
-            list.add(readLeaf(mo, unique(string(mo, "id"), ids)));
+            list.add(readLeaf(mo, unique(string(mo, "id"), ids), warnings));
         }
-        return new TaskSpec(id, null, Map.of(), 0, null, list);
+        return new TaskSpec(id, null, Map.of(), 0, null, null, false, list);
     }
 
-    private static TaskSpec readLeaf(JsonObject o, String id) {
+    private static TaskSpec readLeaf(JsonObject o, String id, List<String> warnings) {
         String detectorId = string(o, "detector");
         TaskSpec.Detector detector = TaskSpec.Detector.byId(detectorId)
                 .orElseThrow(() -> new BadData("task " + id + ": unknown detector " + detectorId));
@@ -187,6 +215,10 @@ public final class LadderTable {
             if (!RESERVED.contains(e.getKey())) {
                 if (!e.getValue().isJsonPrimitive()) {
                     throw new BadData("task " + id + ": arg " + e.getKey() + " is not a plain value");
+                }
+                if (!detector.allows(e.getKey())) {
+                    // kept, so a datapack that adds an arg for a newer event still loads; it just may never match
+                    warnings.add("task " + id + ": " + detectorId + " has no arg " + e.getKey());
                 }
                 args.put(e.getKey(), e.getValue().getAsString());
             }
@@ -202,8 +234,16 @@ public final class LadderTable {
         if (detector == TaskSpec.Detector.RITE && !List.of("performer", "target").contains(args.get("role"))) {
             throw new BadData("task " + id + ": role must be performer or target");
         }
+        if (o.has("total") && !(o.get("total").isJsonPrimitive() && o.get("total").getAsJsonPrimitive().isBoolean())) {
+            throw new BadData("task " + id + ": total must be true or false");
+        }
+        boolean total = o.has("total") && o.get("total").getAsBoolean();
+        if (total && !detector.counting()) {
+            throw new BadData("task " + id + ": total only makes sense for a counting detector");
+        }
         String mod = o.has("mod") ? string(o, "mod") : null;
-        return new TaskSpec(id, detector, args, n * detector.unit(), mod, List.of());
+        String part = o.has("part") ? string(o, "part") : null;
+        return new TaskSpec(id, detector, args, n * detector.unit(), mod, part, total, List.of());
     }
 
     private static String unique(String id, Set<String> ids) {

@@ -128,9 +128,54 @@ class LadderDataTest {
     }
 
     @Test
-    void hunterLadderStopsAtSlayerWithoutEnchanted() {
-        LadderTable t = ShippedLadders.load(mod -> !mod.equals("enchanted"));
+    void hunterLadderStopsAtSlayerWithoutTheSpeciesPart() {
+        LadderTable t = LadderTable.parse(ShippedLadders.files(), mod -> true, part -> !part.equals("species")).table();
         assertEquals(3, t.get(SupernaturalRace.HUNTER).rungs().size());
+    }
+
+    @Test
+    void theApexRungsAlsoNeedTheTensuraPart() {
+        LadderTable t = LadderTable.parse(ShippedLadders.files(), mod -> true, part -> !part.equals("supernaturalTensura")).table();
+        assertEquals(6, t.get(SupernaturalRace.VAMPIRE).rungs().size());
+        assertEquals(6, t.get(SupernaturalRace.WEREWOLF).rungs().size());
+    }
+
+    @Test
+    void aTaskWhoseSignalComesFromAPartThatIsOffIsDropped() {
+        LadderTable t = LadderTable.parse(ShippedLadders.files(), mod -> true, part -> !part.equals("species")).table();
+        // compelling is the species part's; the vampire's rung 3 is left with its level step and still pays in full
+        Rung compeller = t.get(SupernaturalRace.VAMPIRE).rungs().get(3);
+        assertEquals(List.of("L-VAM-3a"), compeller.tasks().stream().map(TaskSpec::id).toList());
+        assertEquals(4, compeller.sp());
+        // the sun ring is the artifacts part's
+        LadderTable noArtifacts = LadderTable.parse(ShippedLadders.files(), mod -> true, part -> !part.equals("artifacts")).table();
+        assertEquals(List.of("L-VAM-2a"), noArtifacts.get(SupernaturalRace.VAMPIRE).rungs().get(2).tasks().stream().map(TaskSpec::id).toList());
+    }
+
+    @Test
+    void theInTotalTasksAreTheSiphonAndRiteTotals() {
+        LadderTable t = ShippedLadders.all();
+        java.util.Set<String> totals = new java.util.TreeSet<>();
+        for (SupernaturalRace race : SupernaturalRace.values()) {
+            for (Rung r : t.get(race).rungs()) {
+                for (TaskSpec top : r.tasks()) {
+                    top.leaves().stream().filter(TaskSpec::total).forEach(l -> totals.add(l.id()));
+                }
+            }
+        }
+        assertEquals(java.util.Set.of("L-SIP-1a", "L-SIP-2b", "L-SIP-4a", "L-HER-1b", "L-HER-3c", "L-WIT-3b", "L-WIT-4b"), totals);
+    }
+
+    @Test
+    void theShippedFilesGiveNoWarnings() {
+        assertEquals(List.of(), LadderTable.parse(ShippedLadders.files(), mod -> true).warnings());
+    }
+
+    @Test
+    void theShippedFilesNeedNoPartEnabledCondition() {
+        for (JsonElement f : ShippedLadders.files().values()) {
+            assertTrue(!f.getAsJsonObject().has("neoforge:conditions"), "the listener only exists while the part is on");
+        }
     }
 
     @Test

@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts.block;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
+
 import com.mojang.serialization.MapCodec;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
@@ -57,6 +59,9 @@ public class MountainAshLineBlock extends BaseEntityBlock {
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide && placer instanceof Player laid) {
+            TaskSignals.fire(laid, "mountain_ash_placed", 1);
+        }
         if (!level.isClientSide && placer instanceof Player p && EmissaryLines.isEmissary(p)
                 && level.getBlockEntity(pos) instanceof MountainAshLineBlockEntity line) {
             line.setEmissary(true);

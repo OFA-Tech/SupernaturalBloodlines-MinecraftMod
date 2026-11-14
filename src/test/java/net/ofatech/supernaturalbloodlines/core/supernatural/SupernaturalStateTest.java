@@ -18,7 +18,8 @@ class SupernaturalStateTest {
 
     private static SupernaturalState full() {
         return new SupernaturalState(1, Map.of("vampire", 3, "witch", 1), Map.of("vampire", 100L), 4, 9,
-                Set.of("L-VAM-1a", "L-VAM-1b"), Set.of("L-VAM-1a"), Map.of("L-VAM-2b", 5L), Set.of("S-VAM-1"),
+                Set.of("L-VAM-1a", "L-VAM-1b"), Set.of("L-VAM-1a"), Map.of("L-VAM-2b", 5L), Map.of("witch/rite?rite=any&role=performer", 7L),
+                Set.of("S-VAM-1"),
                 Set.of("Q-VAM-6"), Set.of("tensura:drain"), List.of("layer", "rank"));
     }
 
@@ -58,6 +59,14 @@ class SupernaturalStateTest {
         assertEquals(full().skills(), view.skills());
         assertEquals(4, view.sp());
         assertEquals(full().counters(), view.counters());
+        assertEquals(full().lifetime(), view.lifetime());
+    }
+
+    @Test
+    void anOldTagWithoutLifetimeStillLoads() {
+        SupernaturalState s = decode("{\"sp\":2,\"counters\":{\"L-VAM-1b\":3}}");
+        assertEquals(Map.of(), s.lifetime());
+        assertEquals(Map.of("L-VAM-1b", 3L), s.counters());
     }
 
     @Test

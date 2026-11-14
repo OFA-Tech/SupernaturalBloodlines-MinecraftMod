@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.original;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -75,6 +77,7 @@ public final class Downed {
         if (left == 1) {
             clear(p);
             p.setHealth(p.getMaxHealth() / 2.0F);
+            TaskSignals.fire(p, "dying_survived", 1);
         } else {
             p.setData(SpeciesRegistries.DOWNED, left - 1);
             if (reopensScreenAt(left - 1) && canReceive(p)) {

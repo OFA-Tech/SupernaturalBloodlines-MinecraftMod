@@ -35,13 +35,16 @@ public final class SupernaturalStateGameTests {
                 seen.add(change);
             }
         });
-        SupernaturalState one = SupernaturalState.NONE.toBuilder().sp(3).rung(SupernaturalRace.VAMPIRE, 1).build();
+        SupernaturalState one = SupernaturalState.NONE.toBuilder().sp(3).build();
         SupernaturalAccess.set(p, one);
-        SupernaturalAccess.set(p, one);
-        helper.assertTrue(SupernaturalAccess.get(p).equals(one), "the state was not stored");
-        helper.assertTrue(seen.size() == 1, "expected one notification, got " + seen.size());
-        helper.assertTrue(seen.get(0).before().equals(SupernaturalState.NONE) && seen.get(0).after().equals(one),
-                "the change did not carry before and after");
+        // the detectors may stamp the race right after; what counts is that the stored state is what was set, plus that
+        SupernaturalState stored = SupernaturalAccess.get(p);
+        helper.assertTrue(stored.sp() == 3, "the state was not stored");
+        helper.assertTrue(!seen.isEmpty() && seen.get(0).before().equals(SupernaturalState.NONE) && seen.get(0).after().equals(one),
+                "the first change did not carry before and after");
+        int before = seen.size();
+        SupernaturalAccess.set(p, stored);
+        helper.assertTrue(seen.size() == before, "setting the same state again notified");
         helper.succeed();
     }
 
@@ -68,7 +71,10 @@ public final class SupernaturalStateGameTests {
         SupernaturalAccess.set(p, s);
         ServerPlayer clone = TestPlayers.create(helper);
         clone.restoreFrom(p, false); // what a respawn does
-        helper.assertTrue(SupernaturalAccess.get(clone).equals(s), "a death lost the supernatural state");
+        // the detectors may have stamped the race on either player; what a death must keep is what was earned
+        SupernaturalState got = SupernaturalAccess.get(clone);
+        helper.assertTrue(got.sp() == 2 && got.rung(SupernaturalRace.WEREWOLF) == 4 && got.skills().contains("S-WOL-1"),
+                "a death lost the supernatural state: " + got);
         helper.succeed();
     }
 }

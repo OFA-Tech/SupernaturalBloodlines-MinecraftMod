@@ -23,17 +23,18 @@ import java.util.Set;
  * @param done       ids of the leaf tasks whose condition is met
  * @param claimed    ids of the tasks whose reward was paid
  * @param counters   progress of counting tasks of an active rung; dropped when the task is done
+ * @param lifetime   counts that run from the moment the player has a race, whatever the rung (the "in total" tasks), by {@code TaskSpec#totalKey}
  * @param skills     our skills bought
  * @param quests     skill quests finished
  * @param granted    Tensura skill and attribute ids our skills granted; only these are ever taken back (server only)
  * @param backfill   what the migration gave (server only)
  */
 public record SupernaturalState(int schema, Map<String, Integer> rungs, Map<String, Long> raceSince, int sp, int spEarned,
-                                Set<String> done, Set<String> claimed, Map<String, Long> counters, Set<String> skills,
+                                Set<String> done, Set<String> claimed, Map<String, Long> counters, Map<String, Long> lifetime, Set<String> skills,
                                 Set<String> quests, Set<String> granted, List<String> backfill) {
 
     public static final SupernaturalState NONE = new SupernaturalState(0, Map.of(), Map.of(), 0, 0, Set.of(), Set.of(),
-            Map.of(), Set.of(), Set.of(), Set.of(), List.of());
+            Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), List.of());
 
     private static List<String> sorted(Set<String> s) {
         List<String> l = new ArrayList<>(s);
@@ -50,18 +51,20 @@ public record SupernaturalState(int schema, Map<String, Integer> rungs, Map<Stri
             Codec.STRING.listOf().lenientOptionalFieldOf("done", List.of()).forGetter(s -> sorted(s.done())),
             Codec.STRING.listOf().lenientOptionalFieldOf("claimed", List.of()).forGetter(s -> sorted(s.claimed())),
             Codec.unboundedMap(Codec.STRING, Codec.LONG).lenientOptionalFieldOf("counters", Map.of()).forGetter(SupernaturalState::counters),
+            Codec.unboundedMap(Codec.STRING, Codec.LONG).lenientOptionalFieldOf("lifetime", Map.of()).forGetter(SupernaturalState::lifetime),
             Codec.STRING.listOf().lenientOptionalFieldOf("skills", List.of()).forGetter(s -> sorted(s.skills())),
             Codec.STRING.listOf().lenientOptionalFieldOf("quests", List.of()).forGetter(s -> sorted(s.quests())),
             Codec.STRING.listOf().lenientOptionalFieldOf("granted", List.of()).forGetter(s -> sorted(s.granted())),
             Codec.STRING.listOf().lenientOptionalFieldOf("backfill", List.of()).forGetter(SupernaturalState::backfill)
-    ).apply(i, (schema, rungs, since, sp, earned, done, claimed, counters, skills, quests, granted, backfill) ->
-            new SupernaturalState(schema, rungs, since, sp, earned, new HashSet<>(done), new HashSet<>(claimed), counters,
+    ).apply(i, (schema, rungs, since, sp, earned, done, claimed, counters, lifetime, skills, quests, granted, backfill) ->
+            new SupernaturalState(schema, rungs, since, sp, earned, new HashSet<>(done), new HashSet<>(claimed), counters, lifetime,
                     new HashSet<>(skills), new HashSet<>(quests), new HashSet<>(granted), backfill)));
 
     public SupernaturalState {
         rungs = Map.copyOf(rungs);
         raceSince = Map.copyOf(raceSince);
         counters = Map.copyOf(counters);
+        lifetime = Map.copyOf(lifetime);
         done = Set.copyOf(done);
         claimed = Set.copyOf(claimed);
         skills = Set.copyOf(skills);
@@ -98,6 +101,7 @@ public record SupernaturalState(int schema, Map<String, Integer> rungs, Map<Stri
         private Set<String> done;
         private Set<String> claimed;
         private Map<String, Long> counters;
+        private Map<String, Long> lifetime;
         private Set<String> skills;
         private Set<String> quests;
         private Set<String> granted;
@@ -112,6 +116,7 @@ public record SupernaturalState(int schema, Map<String, Integer> rungs, Map<Stri
             done = s.done;
             claimed = s.claimed;
             counters = s.counters;
+            lifetime = s.lifetime;
             skills = s.skills;
             quests = s.quests;
             granted = s.granted;
@@ -126,6 +131,7 @@ public record SupernaturalState(int schema, Map<String, Integer> rungs, Map<Stri
         public Builder done(Set<String> v) { done = v; return this; }
         public Builder claimed(Set<String> v) { claimed = v; return this; }
         public Builder counters(Map<String, Long> v) { counters = v; return this; }
+        public Builder lifetime(Map<String, Long> v) { lifetime = v; return this; }
         public Builder skills(Set<String> v) { skills = v; return this; }
         public Builder quests(Set<String> v) { quests = v; return this; }
         public Builder granted(Set<String> v) { granted = v; return this; }
@@ -139,7 +145,7 @@ public record SupernaturalState(int schema, Map<String, Integer> rungs, Map<Stri
         }
 
         public SupernaturalState build() {
-            return new SupernaturalState(schema, rungs, raceSince, sp, spEarned, done, claimed, counters, skills, quests,
+            return new SupernaturalState(schema, rungs, raceSince, sp, spEarned, done, claimed, counters, lifetime, skills, quests,
                     granted, backfill);
         }
     }

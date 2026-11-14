@@ -1,5 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts.rite;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
+import net.minecraft.core.registries.BuiltInRegistries;
+
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import de.teamlapen.vampirism.api.VampirismAPI;
@@ -84,6 +87,12 @@ public record BindItemRiteFactory(Item input, Item output, Faction faction) impl
             ItemStack bound = new ItemStack(factory.output);
             bound.set(ArtifactItems.BOUND_TO.get(), target.getUUID());
             level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, bound));
+            String ring = BuiltInRegistries.ITEM.getKey(factory.output).getPath();
+            String rite = ring.equals("sun_ring") ? "ward_of_daylight" : ring.equals("moon_ring") ? "ward_of_the_moon" : "bind_" + ring;
+            TaskSignals.rite(caster, target, SupernaturalBloodlines.MODID + ":" + rite);
+            if (ring.equals("sun_ring")) {
+                TaskSignals.fire(target, "sun_ring_bound", 1);
+            }
             return false;
         }
     }

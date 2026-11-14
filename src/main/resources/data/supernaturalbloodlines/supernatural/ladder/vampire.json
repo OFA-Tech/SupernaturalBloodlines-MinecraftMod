@@ -1,7 +1,4 @@
 {
-    "neoforge:conditions": [
-        { "type": "supernaturalbloodlines:part_enabled", "part": "supernatural" }
-    ],
     "rungs": [
         { "id": "L-VAM-0", "name": "Fledgling", "sp": 0, "ep": 0 },
         { "id": "L-VAM-1", "name": "Thirst", "sp": 2, "ep": 2000, "tasks": [
@@ -10,11 +7,11 @@
         ] },
         { "id": "L-VAM-2", "name": "Night Walker", "sp": 3, "ep": 5000, "tasks": [
             { "id": "L-VAM-2a", "detector": "level", "faction": "vampirism:vampire", "n": 4 },
-            { "id": "L-VAM-2b", "detector": "signal", "signal": "sun_ring_bound", "mod": "enchanted" }
+            { "id": "L-VAM-2b", "detector": "signal", "signal": "sun_ring_bound", "part": "artifacts" }
         ] },
         { "id": "L-VAM-3", "name": "Compeller", "sp": 4, "ep": 15000, "tasks": [
             { "id": "L-VAM-3a", "detector": "level", "faction": "vampirism:vampire", "n": 10 },
-            { "id": "L-VAM-3b", "detector": "signal", "signal": "compel", "n": 3, "mod": "enchanted" }
+            { "id": "L-VAM-3b", "detector": "signal", "signal": "compel", "n": 3, "part": "species" }
         ] },
         { "id": "L-VAM-4", "name": "Predator", "sp": 4, "ep": 30000, "tasks": [
             { "id": "L-VAM-4a", "detector": "level", "faction": "vampirism:vampire", "n": 12 },
@@ -24,8 +21,8 @@
             { "id": "L-VAM-5a", "detector": "level", "faction": "vampirism:vampire", "n": 14 },
             { "id": "L-VAM-5b", "detector": "days_as", "race": "vampire", "n": 30 }
         ] },
-        { "id": "L-VAM-6", "name": "Elder Vampire", "sp": 5, "ep": 100000, "mods": ["tensura"], "tasks": [
-            { "id": "L-VAM-6a", "detector": "tensura_tier", "mod": "tensura" },
+        { "id": "L-VAM-6", "name": "Elder Vampire", "sp": 5, "ep": 100000, "mods": ["tensura"], "parts": ["supernaturalTensura"], "tasks": [
+            { "id": "L-VAM-6a", "detector": "tensura_tier" },
             { "id": "L-VAM-6b", "detector": "days_as", "race": "vampire", "n": 60 }
         ] }
     ]
