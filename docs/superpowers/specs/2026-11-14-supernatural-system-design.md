@@ -4,6 +4,20 @@ Direction approved by the owner in conversation on 2026-11-14. `SPECIES-RULES.md
 
 **How to patch this file.** Every rung, task and skill has a stable id (`L-VAM-3`, `L-VAM-3b`, `S-HYB-2`, `Q-VAM-6`). Patch by id, as with `SPECIES-RULES.md`. Every value the designer invented is marked *(draft, owner to patch)*; in the content tables a whole table carries the mark once in its heading, and it covers every number and name in it.
 
+**Owner review (2026-11-14): "build as drafted"**, with these decisions folded in below, each marked *(owner, 2026-11-14)*:
+
+| # | Decision | Where |
+|---|---|---|
+| D1 | Plain Vampire and plain Werewolf get new apex races as their top rung (2,000,000 EP) | "Apex races", L-VAM-6, L-WOL-6 |
+| D2 | Apex races are offered from every Tensura line a species can be on, at the Saint-equivalent tier | "Apex races" |
+| D3 | Witch and Siphoner are a **magic ladder** that stacks with a creature ladder; heretic and tribrid stay single races | "The supernatural race" |
+| D4 | Back-filled rungs pay SP, no EP | "Migration" |
+| D5 | Config `hybrid_transition_blood` | "Doppelgängers, genes and blood" |
+| D6 | Doppelgänger villagers, the doppelgänger gene, config `doppelganger_rite_taglock` | "Doppelgängers, genes and blood" |
+| D7 | Genes on the Bloodline page, config `gene_visibility`, the Rite of Revelation | "Doppelgängers, genes and blood", "Pages" |
+| D8 | Vampire Compass doppelgänger mode | "Doppelgängers, genes and blood" |
+| D9 | Sire naming is changed separately (automatic, the player's own name): not planned here, and no task depends on it | L-ORI-4 |
+
 Source tags used in the tables:
 
 | Tag | Source | Detected through |
@@ -67,7 +81,7 @@ The owner wants:
 | `supernatural_tensura` | `...parts.supernaturaltensura` | vampirism, tensura | werewolves | 0, with 1 reserved: the Tensura menu tab, only if `ScreenEvent.Init.Post` can't place it |
 
   Everything else is events (`FactionLevelChanged`, `BloodDrinkEvent`, `LivingDeathEvent`, `LivingEntityUseItemEvent.Finish`, `BlockEvent.EntityPlaceEvent`, `ScreenEvent.*`, `RaceEvents`) and our own listeners.
-- **The 16-field codec cap.** `BloodlineState` is at 16 base fields plus the `Extra` group, and plan 11 adds three more to `Extra`. This plan adds **nothing** to `BloodlineState`. All new data goes in a **new attachment** `supernaturalbloodlines:supernatural` with its own codec (12 fields, under the cap).
+- **The 16-field codec cap.** `BloodlineState` is at 16 base fields plus the `Extra` group, and plan 11 adds three more to `Extra`. Ladder data goes in a **new attachment** `supernaturalbloodlines:supernatural` with its own codec (12 fields, under the cap). Only the species-domain gene data of D6/D7 goes into `Extra` (3 fields: `doppelganger_gene`, `doppelganger_rolled`, `revealed_genes`), because the `species` and `artifacts` parts read it without the `supernatural` part. `Extra` stays far below 16.
 - **Parts never import each other.** Shared hooks live in `shared/`:
   - `shared/supernatural/SupernaturalRace` (enum + `of(...)`, pure, in `core` if it needs no mod class);
   - `shared/supernatural/TaskSignals`: a tiny bus. Other parts fire `(player, signalId, amount)` (a compulsion, a siphon, a venom hit, a rite done, a naming); the `supernatural` part listens. Firing with no listener is a no-op.
@@ -115,9 +129,11 @@ The owner wants:
 
 ### The supernatural race (computed, never stored)
 
-`SupernaturalRace.of(state, factionId)`, first match wins:
+A player has **one creature race** and **at most one magic race** *(owner, 2026-11-14, D3)*. Both are climbed at once: each has its own ladder, its own active rung and its own tree, and they share the one SP pool.
 
-| # | Condition | Race |
+`SupernaturalRace.creature(state, factionId)`, first match wins:
+
+| # | Condition | Creature race |
 |---|---|---|
 | 1 | `state.ghoul()` (plan 11) | GHOUL |
 | 2 | species ORIGINAL_HYBRID | ORIGINAL_HYBRID |
@@ -125,12 +141,20 @@ The owner wants:
 | 4 | species TRIBRID | TRIBRID |
 | 5 | species HYBRID | HYBRID |
 | 6 | species HERETIC | HERETIC |
-| 7 | species SIPHONER | SIPHONER |
-| 8 | species WITCH (also a witch-werewolf) | WITCH *(draft, owner to patch: a witch-werewolf could instead be a Werewolf with the witch layer)* |
-| 9 | species POTENTIAL or HUNTER_OF_THE_FIVE, or faction `vampirism:hunter` | HUNTER |
-| 10 | faction `vampirism:vampire` (Tensura vampire-line races in the faction included, R20) | VAMPIRE |
-| 11 | faction `werewolves:werewolf` | WEREWOLF |
-| 12 | anything else | HUMAN |
+| 7 | species POTENTIAL or HUNTER_OF_THE_FIVE, or faction `vampirism:hunter` | HUNTER |
+| 8 | faction `vampirism:vampire` (Tensura vampire-line races in the faction included, R20) | VAMPIRE |
+| 9 | faction `werewolves:werewolf` (a witch- or siphoner-werewolf too) | WEREWOLF |
+| 10 | anything else (a witch or siphoner with no faction too) | HUMAN |
+
+`SupernaturalRace.magic(state)`:
+
+| Condition | Magic race |
+|---|---|
+| species WITCH (a witch-werewolf is species WITCH in the werewolf faction) | WITCH |
+| species SIPHONER | SIPHONER |
+| anything else, **tribrids and heretics included** (single races of their own) | none |
+
+So a witch-werewolf climbs both L-WIT and L-WOL and owns both trees; a witch with no faction climbs L-HUM and L-WIT.
 
 Hybrid-types are Werewolves-faction players with a vampire layer (R2): their ladders use **[WW]** steps and their vampire side comes from our skill tree, never from Vampirism vampire levels.
 
@@ -164,8 +188,8 @@ Hybrid-types are Werewolves-faction players with a vampire layer (R2): their lad
 
 | Packet | Server checks |
 |---|---|
-| `ClaimTask(taskId)` | task belongs to the active rung of the current race; `done` and not `claimed`; not a Ghoul |
-| `BuySkill(skillId)` | listed in the current race's tree; rung and prerequisite skill met; quest done if any; `sp >= cost`; not owned; not a Ghoul |
+| `ClaimTask(taskId)` | task belongs to the active rung of the current creature or magic race; `done` and not `claimed`; not a Ghoul |
+| `BuySkill(skillId)` | listed in the creature or magic race's tree (the rung named there); rung and prerequisite skill met; quest done if any; `sp >= cost`; not owned; not a Ghoul |
 | `UnlockModSkill(factionSkillId)` | calls Vampirism's own skill-handler path (its points, parents and exclusions); refused for Ghouls (plan 11 gives them none anyway) |
 | `SetLoadout(slot, actionId)` | forwarded to `LoadoutAccess` with plan 13's own checks |
 | `OpenLauncher(target)` | client-only, no packet |
@@ -192,22 +216,22 @@ Hybrid-types are Werewolves-faction players with a vampire layer (R2): their lad
 | `feed(human_like, n)` | `BloodDrinkEvent.PlayerDrinkBloodEvent`, and a signal from our Bite key / Tensura race feed (plan 13) | human-like = plan 05's list plus villagers and Vampirism human creatures (owner, 2026-11-14) |
 | `kill(category, n)` | `LivingDeathEvent`, killer is the player | categories: `prey` (R81, existing check), `vampire`, `hunter`, `villager` |
 | `rite(id, role, n)` | `TaskSignals` from rite factories | `any` matches every counted rite |
-| `signal(id, n)` | `TaskSignals` from other parts | `compel`, `siphon_power`, `siphon_entity`, `venom_hit`, `dying_survived` (R32), `forced_shift_survived`, `vampire_bite_refused` (plan 11), `sire_named` (R101), `sun_ring_bound`, `mountain_ash_placed` |
+| `signal(id, n)` | `TaskSignals` from other parts | `compel`, `siphon_power`, `siphon_entity`, `venom_hit`, `dying_survived` (R32), `forced_shift_survived`, `vampire_bite_refused` (plan 11), `sun_ring_bound`, `mountain_ash_placed` |
 | `item_use(item, n)` | `LivingEntityUseItemEvent.Finish` | vervain tea |
 | `sired(n)` | `SirelineIndex` size, checked on activation and on its change | players or mobs |
 | `days_as(race, n)` | game time − `race_since[race]`, checked every 200 ticks | in-game days of 24,000 ticks |
 | `thirst_days(min, n)` | every 200 ticks, adds 200 to the counter while `thirst >= min` | hybrids |
-| `tensura_tier(saint)` | `HumanLikeLine.isSaintOrHigher` on the current race | the same gate `ApexOffer` already uses |
+| `tensura_tier(apex)` | the apex tier of the player's current Tensura line (see "Apex races") | human-like Saint+, vampire Lord+, Beastfolk Spirit Beast+ |
 
 ### Rules
 
-1. **Only the active rung's tasks track** (the rung after the highest reached). State and level detectors are re-checked the moment a rung becomes active, so a level reached early counts at once. Counting detectors (kills, feeds, rites, signals) only count while their task is active. *(draft, owner to patch)*
+1. **Only the active rung's tasks track** (the rung after the highest reached), one active rung per ladder the player climbs (creature, and magic if any). One event can complete a task on both ladders. State and level detectors are re-checked the moment a rung becomes active, so a level reached early counts at once. Counting detectors (kills, feeds, rites, signals) only count while their task is active. *(draft, owner to patch)*
 2. **Claim.** A done task shows a claim button. Claiming pays its share of the rung's rewards: the rung's SP and EP split evenly across its tasks, the remainder on the last. EP is added through `IExistence` (`markDirty()`) as a flat sum: no +25% boost, no evolution requirement touched.
 3. **Rung up.** Claiming the last task of a rung reaches it: `rungs[race]++`, its grants apply, a toast shows, and the next rung's tasks activate.
 4. **Any-of groups.** A rung may list tasks as "one of" (marked **or** in the tables). One done member completes the group; the group pays as one task.
 5. **Missing mods.** A task whose source mod is absent is dropped from its rung. A rung left with no tasks is reached automatically with its rewards (without the EP when Tensura is absent).
 6. **Ghouls are frozen.** While `ghoul`, no detector records, nothing can be claimed or bought, and the ladder shows the turning instead (L-GHO-0). EP itself keeps accumulating in Tensura (plan 11).
-7. **Race changes.** The new race starts at its stored rung (0 the first time) and `race_since` is stamped on first entry. The old race's rung and grants stay recorded; its layer grants follow the species layer as today (they leave with the species), and its skills go dormant unless the new tree lists them. SP is never refunded or lost.
+7. **Race changes** (creature or magic, each on its own). The new race starts at its stored rung (0 the first time) and `race_since` is stamped on first entry. The old race's rung and grants stay recorded; its layer grants follow the species layer as today (they leave with the species), and its skills go dormant unless the new tree lists them. SP is never refunded or lost.
 8. **Grants that need a state** (a layer on a species, the apex offer, a rank perk) are dormant while the state is missing and return with it. This is how R82 (a hunter losing the mark) and R91 (a cured True Alpha) stay true.
 9. **Persistence.** Everything is in the attachment, saved with the player. Rite and kill signals are applied on the server thread at once; nothing is queued across restarts.
 
@@ -215,7 +239,28 @@ Hybrid-types are Werewolves-faction players with a vampire layer (R2): their lad
 
 - **Layer slices.** Each species' plan 05 `LayerTable` entry is spread over the rungs: the skills one by one, and the magicule/aura bonus as a cumulative fraction. `SpeciesLayer.sync` asks `LadderQuery` for the granted slice instead of the whole `LayerSpec`. When the `supernatural` part is off, `LadderQuery` answers "the whole layer", which is today's behaviour. The **layer rung** of each race is the rung by which the whole plan 05 layer is granted.
 - **Undead treatment** (`treatAsUndead`) and the R100 EP gain (+25%) are natures, not rewards: they apply from rung 0.
-- **The apex offer.** The top rung of a race with a plan 05 apex makes `ApexOffer.apexIdFor` answer for that player (it now also requires the apex rung reached). The player still evolves in Tensura's evolution screen and still pays 2,000,000 EP.
+- **The apex offer.** The top rung of every race but Human and Ghoul makes `ApexOffer.apexIdFor` answer for that player (it now also requires the apex rung reached). The player still evolves in Tensura's evolution screen and still pays 2,000,000 EP. A witch- or siphoner-werewolf can reach two apex rungs; Tensura's screen then lists both and the player picks one.
+
+### Apex races *(owner, 2026-11-14, D1 and D2)*
+
+**Two new apex races** (D1), in the plan 05 style (`ApexSpec`, `supernaturalbloodlines:` namespace, `human_like`, `supernaturalbloodlines:bitable`, 2,000,000 EP). Ids and stats *(draft, owner to patch)*:
+
+| Race | Apex id | Health | Attack | Speed | Intrinsic skill | Undead |
+|---|---|---|---|---|---|---|
+| plain Vampire | `elder_vampire` | 900 | 20 | 0.02 | `tensura:self_regeneration` | yes |
+| plain Werewolf | `alpha_primeval` | 1000 | 25 | 0.03 | `tensura:godwolf_sense` | no (R103: werewolves can't be undead) |
+
+`ApexSpec.forSpecies` becomes `forRace(SupernaturalRace)`, so plain Vampire and Werewolf (species NONE) have an apex.
+
+**Lines that offer an apex** (D2). The offer appears at the Saint-equivalent tier of the line the player's Tensura race is on, if the species is allowed on that line:
+
+| Tensura line | Tier and up | Species allowed |
+|---|---|---|
+| human-like lines (`HumanLikeLine`) | Saint (as today) | every species with an apex |
+| Tensura vampire line | Vampire Lord (`tensura:vampire_lord`, and `vampire_overcomer` if it is the same tier), then `divine_vampire` | vampire, Original, hybrid, Original hybrid, heretic |
+| Beastfolk line | `tensura:spirit_beast`, then `divine_beast` | werewolf, hybrid, tribrid |
+
+A hybrid can be on either line: one made by R24 (a vampire who awakens the gene) normally stays on the vampire line (R20a), one made by R40 (a werewolf turned by Original's Blood) on Beastfolk (R20b). The offer only reads the current race; it never moves the player between lines. The builder checks the tiers and their ids in Tensura's files before coding.
 - **SP and EP** through claims.
 - **Unlocks** in the skill tree (a skill's "needs rung").
 
@@ -247,7 +292,7 @@ Frozen (owner rule). One rung that shows plan 11's turning as steps. Nothing to 
 
 ### Vampire: L-VAM *(draft, owner to patch)*
 
-Plain Vampirism vampires with no species, Tensura vampire-line races in the faction included. Plan 05 layer key `VAMPIRE`: `drain`, undead. **No plan 05 apex** (see "Could not ground"). Layer rung: 1.
+Plain Vampirism vampires with no species, Tensura vampire-line races in the faction included. Plan 05 layer key `VAMPIRE`: `drain`, undead. Apex `elder_vampire` *(owner, 2026-11-14, D1)*. Layer rung: 1.
 
 | Id | Rung | Tasks | SP / EP | Grants |
 |---|---|---|---|---|
@@ -256,7 +301,8 @@ Plain Vampirism vampires with no species, Tensura vampire-line races in the fact
 | L-VAM-2 | Night Walker | a) Vampirism level 4 (Altar of Inspiration) [VMP]; b) have a Sun Ring bound to you (Ward of Daylight, target) [ENC / SB `sun_ring_bound`] | 3 / 5,000 | — |
 | L-VAM-3 | Compeller | a) Vampirism level 10 (R23) [VMP]; b) compel 3 villagers or lesser vampires [SB `compel`] | 4 / 15,000 | — |
 | L-VAM-4 | Predator | a) Vampirism level 12 [VMP]; b) kill 10 hunters (mobs or players) [SB `kill`] | 4 / 30,000 | Q-VAM-6 opens |
-| L-VAM-5 | Elder (top) | a) Vampirism max level [VMP]; b) 30 days as a vampire [SB `days_as`] | 5 / 60,000 | title "Elder" |
+| L-VAM-5 | Elder | a) Vampirism max level [VMP]; b) 30 days as a vampire [SB `days_as`] | 5 / 60,000 | title "Elder" |
+| L-VAM-6 | Elder Vampire (apex) *(owner, 2026-11-14, D1)* | a) Tensura race at its line's apex tier [TEN]; b) 60 days as a vampire [SB `days_as`] | 5 / 100,000 | apex offer `elder_vampire` |
 
 ### Original: L-ORI *(draft, owner to patch)*
 
@@ -268,8 +314,8 @@ Layer `ORIGINAL`: `blood_mist, drain, charm, self_regeneration`, magicule 0.20, 
 | L-ORI-1 | Eternal Hunger | a) Vampirism level 4 [VMP]; b) drink human-like blood 20 times [SB `feed`] | 3 / 5,000 | `self_regeneration`; magicule 0.05 |
 | L-ORI-2 | Bloodmaker | a) make Original's Blood (Rite of Original's Blood, target) [ENC]; b) Vampirism level 8 [VMP] | 3 / 15,000 | `charm`; magicule 0.10 |
 | L-ORI-3 | Unbroken | a) come back from Vampirism's dying state once (R32) [SB `dying_survived`]; b) compel 5 creatures [SB `compel`] | 4 / 30,000 | `blood_mist`; magicule 0.20 (whole layer) |
-| L-ORI-4 | Progenitor | a) sire 3 (players or mobs) [SB `sired`]; b) Vampirism max level [VMP]; c) name a sired through Tensura's naming (R101) [TEN `sire_named`] | 5 / 60,000 | — |
-| L-ORI-5 | Primordial (apex) | a) Tensura race saint or higher [TEN]; b) 60 days as an Original [SB `days_as`] | 5 / 100,000 | apex offer `primordial_vampire` |
+| L-ORI-4 | Progenitor | a) sire 3 (players or mobs) [SB `sired`]; b) Vampirism max level [VMP]. (The drafted naming task is dropped: sire naming becomes automatic, *(owner, 2026-11-14, D9)*.) | 5 / 60,000 | — |
+| L-ORI-5 | Primordial (apex) | a) Tensura race at its line's apex tier [TEN]; b) 60 days as an Original [SB `days_as`] | 5 / 100,000 | apex offer `primordial_vampire` |
 
 ### Original hybrid: L-OHY *(draft, owner to patch)*
 
@@ -282,7 +328,7 @@ Werewolves faction (R50), so [WW] steps. Layer `ORIGINAL_HYBRID`: `blood_mist, d
 | L-OHY-2 | Twin Nature | a) Werewolves level 8 (full forms, R96) [WW]; b) poison 3 vampires with venom (R42v) [SB `venom_hit`] | 4 / 20,000 | `charm`; magicule 0.15 |
 | L-OHY-3 | Blood and Moon | a) make Hybrid's Blood (target) [ENC]; b) make Original's Blood (target) [ENC] | 4 / 30,000 | `blood_mist`, `godwolf_sense`; magicule 0.25 (whole layer) |
 | L-OHY-4 | Two Lines | a) Werewolves max level [WW]; b) sire 3 [SB `sired`] | 5 / 60,000 | — |
-| L-OHY-5 | Primordial hybrid (apex) | a) Tensura race saint or higher [TEN]; b) 60 days as an Original hybrid [SB] | 5 / 100,000 | apex offer `primordial_hybrid` |
+| L-OHY-5 | Primordial hybrid (apex) | a) Tensura race at its line's apex tier [TEN]; b) 60 days as an Original hybrid [SB] | 5 / 100,000 | apex offer `primordial_hybrid` |
 
 ### Hybrid: L-HYB *(draft, owner to patch)*
 
@@ -295,7 +341,7 @@ Werewolves faction plus a vampire layer (R2, owner rule). Layer `HYBRID`: `drain
 | L-HYB-2 | Thirst Mastered | a) keep thirst at 15+ for 3 in-game days in total (R42) [SB `thirst_days`]; b) Werewolves level 6 [WW] | 3 / 10,000 | `self_regeneration`; magicule 0.05 |
 | L-HYB-3 | Venom | a) poison 3 vampires [SB `venom_hit`]; b) make Hybrid's Blood (target) [ENC]; c) Werewolves level 8 [WW] | 4 / 20,000 | magicule 0.10 (whole layer) |
 | L-HYB-4 | Packbound | a) 7 days as a Beta or Alpha [SB `state` on `betaSince`/rank]; b) Werewolves level 12 [WW] | 4 / 40,000 | — |
-| L-HYB-5 | Moonblood (apex) | a) Tensura race saint or higher [TEN]; b) Werewolves max level [WW] | 5 / 100,000 | apex offer `moonblood_hybrid` |
+| L-HYB-5 | Moonblood (apex) | a) Tensura race at its line's apex tier [TEN]; b) Werewolves max level [WW] | 5 / 100,000 | apex offer `moonblood_hybrid` |
 
 ### Tribrid: L-TRI *(draft, owner to patch)*
 
@@ -308,11 +354,11 @@ Werewolves faction, hybrid traits plus witch bonuses (R70). Layer `TRIBRID`: `dr
 | L-TRI-2 | Venom and Craft | a) poison 3 vampires [SB `venom_hit`]; b) make Hybrid's Blood (target) [ENC] | 3 / 20,000 | `self_regeneration`; magicule 0.20 |
 | L-TRI-3 | Emissary of Three | a) **or** group: be a pack's Emissary [SB `state`] **or** lead a pack (Alpha / True Alpha) [SB `state`]; b) Werewolves level 10 [WW] | 4 / 40,000 | `charm`; magicule 0.30 (whole layer) |
 | L-TRI-4 | Ascending | a) Werewolves max level [WW]; b) **or** group: perform the Rite of Lineage (Awaken) **or** the Rite of Severance (performer) [ENC] | 5 / 60,000 | — |
-| L-TRI-5 | Tribrid Ascendant (apex) | a) Tensura race saint or higher [TEN]; b) 60 days as a tribrid [SB] | 5 / 100,000 | apex offer `tribrid_ascendant` |
+| L-TRI-5 | Tribrid Ascendant (apex) | a) Tensura race at its line's apex tier [TEN]; b) 60 days as a tribrid [SB] | 5 / 100,000 | apex offer `tribrid_ascendant` |
 
 ### Witch: L-WIT *(draft, owner to patch)*
 
-No faction, or a witch-werewolf. Layer `WITCH`: no skills, magicule 0.30, aura 0.10. Apex `ancestral_witch`. Layer rung: 3. R61 bonuses are rule-level from rung 0.
+A **magic ladder** *(owner, 2026-11-14, D3)*: climbed next to the creature ladder (Human with no faction, Werewolf for a witch-werewolf). Layer `WITCH`: no skills, magicule 0.30, aura 0.10. Apex `ancestral_witch`. Layer rung: 3. R61 bonuses are rule-level from rung 0.
 
 | Id | Rung | Tasks | SP / EP | Grants |
 |---|---|---|---|---|
@@ -321,11 +367,11 @@ No faction, or a witch-werewolf. Layer `WITCH`: no skills, magicule 0.30, aura 0
 | L-WIT-2 | Ward-maker | a) perform any Ward rite (Daylight, the Moon, Return) [ENC]; b) place 16 mountain ash line blocks [SB `mountain_ash_placed`] | 3 / 10,000 | magicule 0.20; aura 0.05 |
 | L-WIT-3 | Emissary | a) be named a pack's Emissary (R94) [SB `state`, Werewolves]; b) perform 10 rites in total [ENC] | 4 / 20,000 | magicule 0.30; aura 0.10 (whole layer) |
 | L-WIT-4 | Coven-mother | a) **or** group: perform the Rite of Severance **or** the Rite of the Cure [ENC]; b) perform 25 rites in total [ENC] | 5 / 40,000 | — |
-| L-WIT-5 | Ancestral (apex) | a) Tensura race saint or higher [TEN]; b) perform the Rite of Ancestral Calling on someone else [ENC] | 5 / 100,000 | apex offer `ancestral_witch` |
+| L-WIT-5 | Ancestral (apex) | a) Tensura race at its line's apex tier [TEN]; b) perform the Rite of Ancestral Calling on someone else [ENC] | 5 / 100,000 | apex offer `ancestral_witch` |
 
 ### Siphoner: L-SIP *(draft, owner to patch)*
 
-Layer `SIPHONER`: `drain`, magicule 0.10. Apex `void_siphon`. Layer rung: 2. Siphon totals are lifetime counters of ours (R65 still resets `siphonedPower` on death).
+A **magic ladder** like L-WIT *(owner, 2026-11-14, D3)*. Layer `SIPHONER`: `drain`, magicule 0.10. Apex `void_siphon`. Layer rung: 2. Siphon totals are lifetime counters of ours (R65 still resets `siphonedPower` on death).
 
 | Id | Rung | Tasks | SP / EP | Grants |
 |---|---|---|---|---|
@@ -334,7 +380,7 @@ Layer `SIPHONER`: `drain`, magicule 0.10. Apex `void_siphon`. Layer rung: 2. Sip
 | L-SIP-2 | Leech | a) siphon from 5 mobs or players [SB `siphon_entity`]; b) siphon 10,000 in total [SB] | 3 / 10,000 | magicule 0.10 (whole layer) |
 | L-SIP-3 | Full Vessel | a) hold the full 1,000 siphoned power at once (R62) [SB `state`]; b) perform 10 rites [ENC] | 4 / 20,000 | — |
 | L-SIP-4 | Hollow | a) siphon 50,000 in total [SB]; b) **or** group: perform the Rite of Severance **or** the Rite of Purification [ENC] | 5 / 40,000 | — |
-| L-SIP-5 | Void Siphon (apex) | a) Tensura race saint or higher [TEN]; b) 60 days as a siphoner [SB] | 5 / 100,000 | apex offer `void_siphon` |
+| L-SIP-5 | Void Siphon (apex) | a) Tensura race at its line's apex tier [TEN]; b) 60 days as a siphoner [SB] | 5 / 100,000 | apex offer `void_siphon` |
 
 ### Heretic: L-HER *(draft, owner to patch)*
 
@@ -347,7 +393,7 @@ Vampire faction (R63), so [VMP] steps. Layer `HERETIC`: `drain, charm, self_rege
 | L-HER-2 | Thief of Craft | a) siphon from 3 vampire-type mobs or players [SB `siphon_entity`]; b) drink human-like blood 15 times [SB `feed`] | 3 / 15,000 | `charm`; magicule 0.10 |
 | L-HER-3 | Coven of Heretics | a) Vampirism level 10 [VMP]; b) compel 3 villagers [SB `compel`]; c) siphon 20,000 in total [SB] | 4 / 30,000 | magicule 0.20 (whole layer) |
 | L-HER-4 | Dark Apostle | a) Vampirism max level [VMP]; b) perform 10 rites [ENC] | 5 / 60,000 | — |
-| L-HER-5 | Void Siphon (apex) | a) Tensura race saint or higher [TEN]; b) 60 days as a heretic [SB] | 5 / 100,000 | apex offer `void_siphon` |
+| L-HER-5 | Void Siphon (apex) | a) Tensura race at its line's apex tier [TEN]; b) 60 days as a heretic [SB] | 5 / 100,000 | apex offer `void_siphon` |
 
 ### Hunter: L-HUN *(draft, owner to patch)*
 
@@ -360,11 +406,11 @@ Vampirism hunters, the Five (POTENTIAL, HUNTER_OF_THE_FIVE) included. Layer `HUN
 | L-HUN-2 | Slayer | a) hunter level 6 [VMP]; b) kill 25 prey [SB] | 3 / 8,000 | — |
 | L-HUN-3 | Marked | a) become one of the Five (Rite of the Five as target, or a potential's first prey kill, R82) [ENC / SB `state`] | 4 / 20,000 | aura 0.05 (while marked) |
 | L-HUN-4 | Five-tested | a) 20 mark kills (the R81 cap) [SB `state` `markKills`]; b) hunter level 10 [VMP] | 4 / 40,000 | aura 0.10 (whole layer, while marked) |
-| L-HUN-5 | Eternal Hunter (apex) | a) Tensura race saint or higher [TEN]; b) hunter max level [VMP] | 5 / 100,000 | apex offer `eternal_hunter` (while marked) |
+| L-HUN-5 | Eternal Hunter (apex) | a) Tensura race at its line's apex tier [TEN]; b) hunter max level [VMP] | 5 / 100,000 | apex offer `eternal_hunter` (while marked) |
 
 ### Werewolf: L-WOL *(draft, owner to patch)*
 
-Werewolves faction, no species. No `LayerTable` entry; rank skills stay `RankSkills` (Alpha, True Alpha, born level 5) and keep following the rank. The Beastfolk mapping (R20b) is shown on the Path page as it happens; the ladder never sets a Tensura race. **No plan 05 apex**: the top rung is True Alpha.
+Werewolves faction, no species. No `LayerTable` entry; rank skills stay `RankSkills` (Alpha, True Alpha, born level 5) and keep following the rank. The Beastfolk mapping (R20b) is shown on the Path page as it happens; the ladder never sets a Tensura race. Apex `alpha_primeval` *(owner, 2026-11-14, D1)*.
 
 | Id | Rung | Tasks | SP / EP | Grants |
 |---|---|---|---|---|
@@ -373,7 +419,8 @@ Werewolves faction, no species. No `LayerTable` entry; rank skills stay `RankSki
 | L-WOL-2 | Beta | a) join a pack (rank BETA, R91) [SB `state`]; b) Werewolves level 5 [WW] | 3 / 8,000 | — |
 | L-WOL-3 | Controlled | a) have moon control (bound Moon Ring, bound anchor, or Alpha rank; `MoonControl`) [SB `state`]; b) Werewolves level 8 [WW] | 3 / 15,000 | — |
 | L-WOL-4 | Leader | a) **or** group: rank ALPHA or TRUE_ALPHA [SB `state`] **or** 15 days as a Beta [SB `state` `betaSince`]; b) 100 defender kills [SB `state` `defenderKills`] | 4 / 40,000 | — |
-| L-WOL-5 | True Alpha (top) | a) rank TRUE_ALPHA (R91: max level, 30 days as a Beta, 300 defender kills, no innocent kill, no stolen spark; the hub shows each condition) [SB `state`] | 6 / 100,000 | title; True Alpha keeps the spark (R91): the rung stays and goes dormant with the rank when cured or leaving |
+| L-WOL-5 | True Alpha | a) **or** group: rank TRUE_ALPHA (R91: max level, 30 days as a Beta, 300 defender kills, no innocent kill, no stolen spark; the hub shows each condition) [SB `state`] **or** Werewolves max level and 60 days as a werewolf [WW + SB `days_as`] *(draft, owner to patch: added so the new apex below isn't gated behind R91's "very hard" True Alpha)* | 6 / 100,000 | title "True Alpha" when the rank is held; True Alpha keeps the spark (R91): the rank stays and goes dormant when cured or leaving |
+| L-WOL-6 | Primeval (apex) *(owner, 2026-11-14, D1)* | a) Tensura race at its line's apex tier [TEN]; b) 100 days as a werewolf [SB `days_as`] | 5 / 100,000 | apex offer `alpha_primeval` |
 
 L-WOL-4's "or 15 days as a Beta" keeps the earned True Alpha path open: R91 forbids a stolen spark, so a Beta must be able to climb without becoming an Alpha first.
 
@@ -383,7 +430,7 @@ L-WOL-4's "or 15 days as a Beta" keeps the earned True Alpha path open: R91 forb
 |---|---|---|---|
 | Human | 3 | 5 | 4,000 |
 | Ghoul | 1 | 0 | 0 |
-| Vampire | 6 | 18 | 112,000 |
+| Vampire | 7 | 23 | 212,000 |
 | Original | 6 | 20 | 210,000 |
 | Original hybrid | 6 | 21 | 220,000 |
 | Hybrid | 6 | 18 | 175,000 |
@@ -392,9 +439,9 @@ L-WOL-4's "or 15 days as a Beta" keeps the earned True Alpha path open: R91 forb
 | Siphoner | 6 | 19 | 175,000 |
 | Heretic | 6 | 20 | 210,000 |
 | Hunter | 6 | 18 | 171,000 |
-| Werewolf | 6 | 18 | 166,000 |
+| Werewolf | 7 | 23 | 266,000 |
 
-The largest ladder pays about 11% of one apex evolution's 2,000,000 EP, so rewards help but never replace Tensura's own progression *(draft, owner to patch)*.
+The largest single ladder pays about 13% of one apex evolution's 2,000,000 EP; a witch-werewolf climbing both ladders gets about 22%. Rewards help but never replace Tensura's own progression *(draft, owner to patch)*.
 
 ---
 
@@ -402,7 +449,7 @@ The largest ladder pays about 11% of one apex evolution's 2,000,000 EP, so rewar
 
 ### The model
 
-- **One catalogue, many trees.** A skill has one id and one cost. A race's tree lists catalogue ids with a "needs rung" for that tree and an optional prerequisite skill. A skill bought once is owned in every tree that lists it; it is **active** only while the current race's tree lists it, dormant otherwise.
+- **One catalogue, many trees.** A skill has one id and one cost. A race's tree lists catalogue ids with a "needs rung" for that tree and an optional prerequisite skill. A skill bought once is owned in every tree that lists it; it is **active** only while the creature or magic race's tree lists it, dormant otherwise. A player with a magic race has both trees (D3); a skill listed in both is bought once.
 - **Effect kinds** (fixed in code, tuned in JSON):
   - **ATTR**: an attribute modifier with our id, removed when dormant.
   - **RULE**: a number one of our own rules reads through `LadderQuery.owns(player, id)` (compulsion range, siphon cap, rite cost, ...).
@@ -627,7 +674,7 @@ The owner's vampire-feeding skill (no show names in game, R5).
 | **Skills** | our tree (owned, buyable, locked with reason, dormant); Vampirism/Werewolves trees; **Loadout** tab (plan 13's 6 slots) | buy our skills; unlock their skills; assign HUD slots | Loadout without plan 13; faction trees without a faction |
 | **Quests** | the active rung's tasks with progress, source tag and the mod's hint; skill quests (Q-VAM-6) | claim | — |
 | **Rites** | rite tasks; the rites you can perform or be the target of, with power and items (from our rite JSON); witch bonuses in effect | launcher: Enchanted's book | without Enchanted |
-| **Bloodline** | sire, sired, the family tree (`/bloodline tree` data), bond / severance, the gene once revealed (R10), Tensura EP and evolution progress (live) | launcher: Tensura's screen; `/bloodline call` button where allowed (R43) | — |
+| **Bloodline** | sire, sired, the family tree (`/bloodline tree` data), bond / severance, **genes** (werewolf, doppelgänger: "Unknown" until discovered, or always shown, per `gene_visibility`, *(owner, 2026-11-14, D7)*), Tensura EP and evolution progress (live) | launcher: Tensura's screen; `/bloodline call` button where allowed (R43) | — |
 | **Pack** | rank and eyes, pack members and who is near, anchor, emissary, spark state, True Alpha conditions, eclipse warning | `/pack` actions the commands already allow (invite, accept, leave) | without Werewolves, or for non-wolf races with no pack |
 
 A Ghoul sees Path (with L-GHO-0's steps) and Bloodline; every other page shows "Complete your turning".
@@ -654,6 +701,47 @@ Opening a launcher remembers the hub page. When the launched screen closes (Esc)
 1. **Tensura menu tab.** A 5th right-side tab under Tensura's three "coming soon" tabs, added with `ScreenEvent.Init.Post` on Tensura's menu screen (class matched by name, so no hard link). If the screen class or the tab positions aren't found, no tab is added and a warning is logged once. The reserved mixin in `supernatural_tensura` is only for the case where the event can't place it.
 2. **Our key** `key.supernaturalbloodlines.hub`, in our key category. The default comes from plan 13's keymap (suggested `J`) *(draft, owner to patch)*.
 
+## Doppelgängers, genes and blood *(owner, 2026-11-14, D5–D8)*
+
+These live in the `species` and `artifacts` parts (and core state), not in the `supernatural` part, so they work without the hub. New rule ids for `SPECIES-RULES.md` are suggested in brackets.
+
+### Hybrid transition blood (D5) [R40a]
+
+- Config `hybrid_transition_blood` (server): `original_hybrid` (default, show-accurate) or `original`.
+  - `original_hybrid`: only Original's Blood taken from an **Original hybrid** starts the R40 transition.
+  - `original`: Original's Blood from any Original or Original hybrid does (today's behaviour).
+- The **Original's Blood bottle records its source's species** in a data component when the Rite of Original's Blood fills it, so the check needs no lookup and works with the source offline.
+- A bottle with no record (made before the update) counts as accepted under either setting, so nothing a player holds stops working *(draft, owner to patch)*.
+- A refused drink tells the player why and keeps the bottle.
+
+### Doppelgängers (D6) [R14, R14a]
+
+- **Doppelgänger villager.** Each newly spawned villager has `doppelganger_villager_chance` (config, default 0.005) of being a doppelgänger: an entity attachment flag rolled once at spawn (never re-rolled on chunk load). Unlimited per world. It looks and trades like any villager.
+- **Player gene.** Rolled once on first join, `doppelganger_gene_chance` (config, default 0.05), kept secret like the werewolf gene (R10). It can coexist with the werewolf gene. It does nothing else and has no ladder.
+- **Admin command:** `/bloodline gene doppelganger <player> <true|false>` (op level 2) *(draft, owner to patch: name)*.
+- **Rite of Doppelgänger Blood taglock**, config `doppelganger_rite_taglock`:
+  - `doppelganger` (default): the filled taglock must belong to a doppelgänger villager or a player with the gene; otherwise the rite refuses with the reason.
+  - `human`: any human-like villager or player (the old behaviour).
+  - A successful rite with a player's taglock **reveals** that player's doppelgänger gene and tells them.
+
+### Genes on the Bloodline page (D7) [R10a, R10b]
+
+- Config `gene_visibility` (server): `discovered` (default) or `always`.
+- Under `discovered`, each gene shows "Unknown" until discovered. Discovery comes from any of:
+  - the new **Rite of Revelation**: small circle, about 1,000 power *(draft, owner to patch)*, the subject's own filled taglock; reveals **all** genes of the taglock's owner to that owner;
+  - a successful Rite of Doppelgänger Blood with that player's taglock (the doppelgänger gene);
+  - the werewolf gene's first awakening kill, as today (and the Rite of Lineage (Reveal), which already shows it, R10).
+- **Secrecy:** the server never sends an undiscovered gene to the client; the client gets "unknown" (or the value when discovered or `always`).
+
+### Vampire Compass second mode (D8) [artifacts]
+
+- **Sneak + use** toggles the compass between **Vampires** (today's mode) and **Doppelgängers**; the mode is a data component and shows in the tooltip.
+- **Doppelgängers** mode points at the nearest doppelgänger villager or gene player:
+  - range `compass_doppelganger_range` (config, default 512);
+  - villagers only in loaded chunks, found through an index of loaded doppelgänger villagers (kept on entity join/leave), never a world scan;
+  - players anywhere in the holder's dimension (not limited by the range) *(draft, owner to patch: the owner's wording reads this way)*.
+- **Only the holder learns:** the target gets no message, glow or sound, and nothing is revealed on the target's Bloodline page.
+
 ## Migration
 
 Runs once per player on login when `schema == 0`, server side, inside the usual re-entrancy guard. It only adds.
@@ -669,7 +757,9 @@ Runs once per player on login when `schema == 0`, server side, inside the usual 
    - the **layer rung** for any player with a species, so every layer skill and bonus they hold today stays (no `SpeciesLayer` take-back);
    - the **rank floor**: Alpha → L-WOL-4, True Alpha → L-WOL-5 (dormant if not a werewolf now), and the same rungs' pack tasks for hybrid-types;
    - the **apex floor**: a player whose Tensura race is already one of our apex races gets that ladder's apex rung.
-4. **Rewards.** SP for every back-filled rung is added to `sp` (so they can buy skills at once). EP is **not** paid for back-filled rungs, since they already earned it playing *(draft, owner to patch)*.
+4. **Rewards.** SP for every back-filled rung is added to `sp` (so they can buy skills at once). EP is **not** paid for back-filled rungs, since they already earned it playing *(owner, 2026-11-14, D4: confirmed)*.
+   - Magic ladders (D3) are back-filled the same way, next to the creature ladder.
+   - Genes (D6): every player without `doppelganger_rolled` is rolled once on their next login, like a first join. A werewolf gene already revealed by the Rite of Lineage (Reveal) or an awakening counts as discovered.
 5. **Skills** start empty; nothing they own today is a skill of ours.
 6. Ghoul flags are untouched (plan 11: existing vampires are not Ghouls).
 7. `backfill` records what was given; `schema = 1`.
@@ -697,7 +787,8 @@ A datapack change that moves a task to a different rung never lowers anyone's ru
 
 ## Could not ground
 
-- **No plan 05 apex for Vampire, Werewolf, Human or Ghoul.** Their top rungs (Elder, True Alpha) are titles; Tensura's own vampire and Beastfolk lines stay Tensura's.
-- **Witch-werewolves** are placed in the Witch race (row 8); no rule says which ladder they climb.
+- **Human and Ghoul have no apex.** Vampire and Werewolf now do (D1); their ids and stats are the designer's.
+- **The Tensura tiers** of D2 (Vampire Lord vs Overcomer, Spirit Beast) are taken from the rule text, not yet checked in Tensura's jar.
+- **Players on the Original hybrid line** are offered their apex only from the human-like and vampire lines, as the owner listed; an Original hybrid on Beastfolk (possible through R20b before R35) gets no Beastfolk offer.
 - **Detectors not yet in code:** `forced_shift_survived`, `sun_ring_bound`, `mountain_ash_placed`, `vampire_bite_refused` (plan 11), `dying_survived`, lifetime siphon totals. Each is one `TaskSignals` call in code that already exists or is planned.
 - **Every number** (SP, EP, counts, days, skill effects) is the designer's.
