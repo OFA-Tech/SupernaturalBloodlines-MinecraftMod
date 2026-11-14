@@ -399,7 +399,10 @@ public final class SirelineTensuraGameTests {
             double base = sired.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue();
 
             helper.assertTrue(RequestNamingKeyPacket.canName(sire, sired), "the sire cannot name: " + said(sire));
+            ((Namer) sire).keys.clear();
+            ((Namer) stranger).keys.clear();
             RequestNamingMenuPacket.name(sired, sire, NamingType.HIGH, "Ward");
+            helper.assertTrue(said(sire).contains(SireNaming.NO_EVOLUTION_KEY), "the sire was not told about the lowered naming: " + said(sire));
             helper.assertTrue("Ward".equals(existence(sired).getName()), "the sired was not named: " + existence(sired).getName() + " " + said(sire));
             helper.assertTrue(sire.getUUID().equals(existence(sired).getPermanentOwner()), "the owner changed");
             helper.assertTrue("tensura:human".equals(race(sired)), "naming changed the sired's race to " + race(sired));
@@ -412,6 +415,7 @@ public final class SirelineTensuraGameTests {
             SupernaturalBloodlines.LOGGER.info("species_tensura test: control race after a HIGH naming: {}", race(control));
             helper.assertTrue(!"tensura:human".equals(race(control)),
                     "the control kept its race too, so this test cannot tell the downgrade from a race that does not evolve");
+            helper.assertTrue(!said(stranger).contains(SireNaming.NO_EVOLUTION_KEY), "a stranger naming a player got the sire's notice");
         } finally {
             restore(helper, before);
             reset(sire, sired, stranger, control);

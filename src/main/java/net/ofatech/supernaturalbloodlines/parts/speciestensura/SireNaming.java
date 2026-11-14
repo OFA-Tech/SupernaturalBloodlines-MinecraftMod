@@ -9,6 +9,7 @@ import io.github.manasmods.tensura.registry.attribute.TensuraAttributes;
 import io.github.manasmods.tensura.storage.Alignment;
 import io.github.manasmods.tensura.storage.ep.IExistence;
 import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
@@ -29,6 +30,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex;
  * one's own owner is a different pair and needs no change: once the sire is the sired's owner, the sire passes it.
  */
 public final class SireNaming {
+    public static final String NO_EVOLUTION_KEY = "supernaturalbloodlines.sire_naming.no_evolution";
+
     private SireNaming() {}
 
     public static void register() {
@@ -73,6 +76,7 @@ public final class SireNaming {
         NamingType chosen = type.get();
         if (target instanceof Player && chosen != NamingType.LOW && isOwnSired(target, namer)) {
             type.set(NamingType.LOW);
+            namer.sendSystemMessage(Component.translatable(NO_EVOLUTION_KEY));
             if (!namer.hasInfiniteMaterials() && shouldConsumeMax(chosen, namer)) {
                 loseMax(namer, cost.get());
             }

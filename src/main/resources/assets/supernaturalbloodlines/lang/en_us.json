@@ -231,5 +231,7 @@
   "supernaturalbloodlines.race.tribrid_ascendant": "Tribrid Ascendant",
   "supernaturalbloodlines.race.tribrid_ascendant.description": "A tribrid's apex form: vampire, wolf and witch, no longer at war.",
   "supernaturalbloodlines.race.eternal_hunter": "Eternal Hunter",
-  "supernaturalbloodlines.race.eternal_hunter.description": "A Hunter of the Five's apex form: the mark made permanent."
+  "supernaturalbloodlines.race.eternal_hunter.description": "A Hunter of the Five's apex form: the mark made permanent.",
+  "supernaturalbloodlines.sire_naming.no_evolution": "Naming your sired grants EP and stats only, never an evolution.",
+  "supernaturalbloodlines.species_tensura.bad_config": "species_tensura: %s invalid entries in the config were ignored (see the server log)."
 }
