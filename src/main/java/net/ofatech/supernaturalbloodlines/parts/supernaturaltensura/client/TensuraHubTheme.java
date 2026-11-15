@@ -115,7 +115,7 @@ public final class TensuraHubTheme implements HubTheme {
         int edge = switch (status) {
             case REACHED -> CYAN;
             case CURRENT -> GOLD;
-            case LOCKED -> TEAL;
+            case LOCKED -> 0xFF3f8090; // 4.3:1 on the panel: a sealed rung must still be seen (WCAG 1.4.11)
         };
         // an octagon: the square with its corners cut
         g.fill(x + 2, y, x + MARK - 2, y + MARK, edge);

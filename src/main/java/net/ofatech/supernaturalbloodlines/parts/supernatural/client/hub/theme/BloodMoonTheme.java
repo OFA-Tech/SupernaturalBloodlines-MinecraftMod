@@ -204,7 +204,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         int edge = switch (status) {
             case REACHED -> 0xFFffb3a3;
             case CURRENT -> GOLD;
-            case LOCKED -> EDGE;
+            case LOCKED -> 0xFF8a5a64; // 3.3:1 on the cards: a sealed rung must still be seen (WCAG 1.4.11)
         };
         for (int i = 0; i < MARK; i++) {
             int half = 4 - Math.abs(4 - i);
