@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.mojang.serialization.JsonOps;
 import com.google.gson.JsonObject;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
@@ -80,6 +81,38 @@ class LoadoutTest {
         assertEquals(Optional.empty(), a.get(1), "the original is unchanged");
         assertTrue(b.contains(Loadout.BITE));
         assertFalse(Loadout.DEFAULT.with(0, null).contains(Loadout.BITE));
+    }
+
+    @Test
+    void theFallbackFillsEmptySlotsTwoToSixInOrderAndSkipsWhatIsThere() {
+        ResourceLocation a = ResourceLocation.parse("vampirism:a");
+        ResourceLocation b = ResourceLocation.parse("vampirism:b");
+        ResourceLocation c = ResourceLocation.parse("vampirism:c");
+        Loadout l = Loadout.DEFAULT.with(2, b).withFallback(List.of(a, b, c));
+        assertEquals(Optional.of(Loadout.BITE), l.get(0), "slot 1 is left alone");
+        assertEquals(Optional.of(a), l.get(1));
+        assertEquals(Optional.of(b), l.get(2), "a slot the player filled is kept");
+        assertEquals(Optional.of(c), l.get(3), "an action already in the list is not repeated");
+        assertEquals(Optional.empty(), l.get(4));
+    }
+
+    @Test
+    void theFallbackNeverTouchesAClearedSlotOne() {
+        Loadout l = Loadout.DEFAULT.with(0, null).withFallback(List.of(ResourceLocation.parse("vampirism:a")));
+        assertEquals(Optional.empty(), l.get(0));
+        assertEquals(Optional.of(ResourceLocation.parse("vampirism:a")), l.get(1));
+    }
+
+    @Test
+    void theFallbackWithNothingUnlockedChangesNothing() {
+        assertEquals(Loadout.DEFAULT, Loadout.DEFAULT.withFallback(List.of()));
+    }
+
+    @Test
+    void theFallbackFillsAtMostFiveSlots() {
+        List<ResourceLocation> many = java.util.stream.IntStream.range(0, 9).mapToObj(i -> ResourceLocation.parse("vampirism:a" + i)).toList();
+        Loadout l = Loadout.DEFAULT.withFallback(many);
+        assertEquals(Optional.of(many.get(4)), l.get(5));
     }
 
     @Test

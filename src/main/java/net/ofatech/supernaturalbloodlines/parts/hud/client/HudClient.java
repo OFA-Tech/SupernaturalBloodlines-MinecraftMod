@@ -12,12 +12,12 @@ public final class HudClient {
 
     public static void register(IEventBus modBus) {
         modBus.addListener((RegisterKeyMappingsEvent e) -> HudKeys.register(e));
+        modBus.addListener(AbilityHudLayer::register);
         LoadoutAccess.install(new ClientLoadout());
         HudSlots.register();
         HudInput.register();
         if (ModList.get().isLoaded("tensura")) {
-            // nothing is hidden until the HUD layer of 13b Task 4 says that ours is on screen
-            TensuraHudFlags.register(() -> false);
+            TensuraHudFlags.register(AbilityHudLayer::shown);
         }
         KeyCover.register();
         KeyHiding.register();

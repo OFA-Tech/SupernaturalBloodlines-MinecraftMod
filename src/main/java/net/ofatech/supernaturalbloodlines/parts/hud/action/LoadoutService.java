@@ -23,6 +23,19 @@ public final class LoadoutService {
         return p.getData(ModAttachments.HUD_LOADOUT);
     }
 
+    /**
+     * What the slots do now: the stored loadout, and, when the supernatural part is off (no hub to assign in), the empty slots 2 to 6 show the first
+     * unlocked actions ({@link Loadout#withFallback}). Never stored.
+     */
+    public static Loadout effective(net.minecraft.world.entity.player.Player p) {
+        Loadout stored = p.getData(ModAttachments.HUD_LOADOUT);
+        return needsFallback() ? stored.withFallback(FactionActions.unlockedIds(p)) : stored;
+    }
+
+    public static boolean needsFallback() {
+        return ModList.get().isLoaded("vampirism") && !net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural");
+    }
+
     /** @param id the action, null to clear the slot @return the lang key of the refusal, null when the slot was set */
     @Nullable
     public static String set(ServerPlayer p, int slot, @Nullable ResourceLocation id) {

@@ -11,6 +11,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
+import net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.vampirism.ClientActions;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.SetLoadoutPayload;
 import net.ofatech.supernaturalbloodlines.shared.hud.LoadoutAccess;
@@ -24,7 +25,11 @@ public final class ClientLoadout implements LoadoutAccess.Provider {
 
     public static Loadout loadout() {
         var player = Minecraft.getInstance().player;
-        return player == null ? Loadout.DEFAULT : player.getData(ModAttachments.HUD_LOADOUT);
+        if (player == null) {
+            return Loadout.DEFAULT;
+        }
+        // with the supernatural part off there is no hub to assign in: the empty slots show the first unlocked actions, the same rule the server uses
+        return LoadoutService.needsFallback() ? LoadoutService.effective(player) : player.getData(ModAttachments.HUD_LOADOUT);
     }
 
     @Override

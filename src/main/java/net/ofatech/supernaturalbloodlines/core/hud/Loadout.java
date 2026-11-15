@@ -66,6 +66,28 @@ public record Loadout(List<Optional<ResourceLocation>> slots) {
         return new Loadout(list);
     }
 
+    /**
+     * The fallback for a server that runs the hud part without the supernatural part (so there is no hub to assign slots in): the empty slots 2 to 6 show,
+     * in order, the unlocked actions that are not already in the list. Slot 1 stays Bite or empty. Never stored: server and client both compute it.
+     */
+    public Loadout withFallback(List<ResourceLocation> unlocked) {
+        List<Optional<ResourceLocation>> list = new ArrayList<>(slots);
+        int next = 0;
+        for (int i = 1; i < SLOTS; i++) {
+            if (list.get(i).isPresent()) {
+                continue;
+            }
+            while (next < unlocked.size() && list.contains(Optional.of(unlocked.get(next)))) {
+                next++;
+            }
+            if (next >= unlocked.size()) {
+                break;
+            }
+            list.set(i, Optional.of(unlocked.get(next++)));
+        }
+        return new Loadout(list);
+    }
+
     public boolean contains(ResourceLocation id) {
         return slots.contains(Optional.of(id));
     }

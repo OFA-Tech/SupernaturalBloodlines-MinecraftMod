@@ -1,7 +1,10 @@
 package net.ofatech.supernaturalbloodlines.parts.hud.client;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
 
@@ -28,7 +31,13 @@ public final class HudModeState {
         return Optional.ofNullable(mode);
     }
 
+    /** The mode key: switches, says which mode it is now in the action bar, and remembers it. Nothing changes with only one mode installed. */
     public static void toggle() {
+        SlotMode before = mode;
         mode = SlotMode.next(current().orElse(SlotMode.TENSURA), AVAILABLE).orElse(null);
+        if (mode != null && AVAILABLE.size() > 1 && mode != before) {
+            Minecraft.getInstance().gui.setOverlayMessage(Component.translatable("supernaturalbloodlines.hud.mode." + mode.name().toLowerCase(Locale.ROOT)), false);
+            HudClientConfig.rememberMode(HudClientConfig.Mode.valueOf(mode.name()));
+        }
     }
 }

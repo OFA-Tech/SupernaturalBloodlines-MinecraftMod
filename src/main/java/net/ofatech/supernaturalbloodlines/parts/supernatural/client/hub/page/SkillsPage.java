@@ -34,13 +34,13 @@ import org.jetbrains.annotations.Nullable;
 public final class SkillsPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "skills.";
 
-    // shortcut: no Loadout tab until plan 13's ability HUD exists (the spec hides it without that part); add Tab.LOADOUT then
-    private enum Tab { OURS, FACTION }
+    private enum Tab { OURS, FACTION, LOADOUT }
 
     /** One skill of the faction's own tree, as the mod's client-side handler sees it. */
     private record ModSkill(String id, Component name, Component description, int cost, ISkillHandler.Result result) {
     }
 
+    private final LoadoutTab loadout = new LoadoutTab();
     private Tab tab = Tab.OURS;
     private List<ModSkill> cached = List.of();
     private long cachedAt = Long.MIN_VALUE;
@@ -52,7 +52,7 @@ public final class SkillsPage implements HubPageView {
     @Override
     public void render(HubScreen.Frame f) {
         Optional<IPlayableFaction<?>> faction = faction(f.view.player());
-        if (tab == Tab.FACTION && faction.isEmpty()) {
+        if (tab == Tab.FACTION && faction.isEmpty() || tab == Tab.LOADOUT && !LoadoutTab.available()) {
             tab = Tab.OURS;
         }
         Rect r = f.region(HubLayout.MAIN);
@@ -61,6 +61,7 @@ public final class SkillsPage implements HubPageView {
         switch (tab) {
             case OURS -> ours(f, r, y);
             case FACTION -> modSkills(f, r, y, faction.orElseThrow());
+            case LOADOUT -> loadout.render(f, r, y);
         }
     }
 
@@ -68,6 +69,9 @@ public final class SkillsPage implements HubPageView {
         int x = r.x();
         List<Tab> shown = new ArrayList<>(List.of(Tab.OURS));
         faction.ifPresent(fa -> shown.add(Tab.FACTION));
+        if (LoadoutTab.available()) {
+            shown.add(Tab.LOADOUT);
+        }
         for (Tab t : shown) {
             Component full = t == Tab.FACTION ? faction.orElseThrow().getName() : Component.translatable(KEY + "tab." + t.name().toLowerCase(Locale.ROOT));
             // a long faction name is cut to the room left on the row, never drawn past the page
@@ -87,6 +91,7 @@ public final class SkillsPage implements HubPageView {
             f.target(id, hit, List.of(full), () -> {
                 tab = t;
                 selected = null;
+                loadout.reset();
             });
             if (f.focused(id)) {
                 f.theme().drawFocus(f.g, hit);

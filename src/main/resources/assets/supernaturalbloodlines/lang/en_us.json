@@ -549,5 +549,17 @@
   "supernaturalbloodlines.hud.slot.skill_missing": "You no longer have this skill.",
   "supernaturalbloodlines.hud.slot.cannot_use": "You cannot use this skill now.",
   "supernaturalbloodlines.hud.slot.locked": "This action is not unlocked for your faction.",
-  "supernaturalbloodlines.hud.slot.action_missing": "This action does not exist any more."
+  "supernaturalbloodlines.hud.slot.action_missing": "This action does not exist any more.",
+  "supernaturalbloodlines.hud.mode.tensura": "Slots: Tensura skills",
+  "supernaturalbloodlines.hud.mode.supernatural": "Slots: supernatural actions",
+  "supernaturalbloodlines.hud.slot.cooldown": "Ready in %s s",
+  "supernaturalbloodlines.hub.skills.tab.loadout": "Slots",
+  "supernaturalbloodlines.hub.skills.loadout.hint": "Pick an action, then a slot (or a slot, then an action).",
+  "supernaturalbloodlines.hub.skills.loadout.slots": "Slots, in HUD order",
+  "supernaturalbloodlines.hub.skills.loadout.empty": "empty",
+  "supernaturalbloodlines.hub.skills.loadout.clear": "Clear",
+  "supernaturalbloodlines.hub.skills.loadout.none": "You have no action to put in a slot yet.",
+  "supernaturalbloodlines.hub.skills.loadout.picked": "Now pick a slot.",
+  "supernaturalbloodlines.hub.skills.loadout.picked_slot": "Now pick an action.",
+  "supernaturalbloodlines.hub.skills.loadout.bite": "Bite: %s"
 }
