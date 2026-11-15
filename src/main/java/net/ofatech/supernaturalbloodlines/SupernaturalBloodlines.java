@@ -3,7 +3,9 @@ package net.ofatech.supernaturalbloodlines;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.MapCodec;
 import java.util.Set;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
@@ -20,6 +22,7 @@ import net.ofatech.supernaturalbloodlines.core.PartLoader;
 import net.ofatech.supernaturalbloodlines.core.StalePartModifiers;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.network.ModNetwork;
+import net.ofatech.supernaturalbloodlines.parts.hud.client.KeyCover;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexRaces;
 import org.slf4j.Logger;
 
@@ -50,6 +53,10 @@ public final class SupernaturalBloodlines {
         }
         EnabledParts.set(parts);
         PartLoader.initAll(parts, modBus, container);
+        if (FMLEnvironment.dist == Dist.CLIENT && !parts.contains(Part.HUD)) {
+            // with the HUD off nothing would give back the keys it covered
+            KeyCover.registerRestoreOnly();
+        }
         if (mods.isLoaded("tensura") && !parts.contains(Part.SPECIES_TENSURA)) {
             // ManasCore throws when a saved race is not registered, which stops that player from loading at all
             ApexRaces.register();

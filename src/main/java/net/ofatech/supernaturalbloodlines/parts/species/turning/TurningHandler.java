@@ -175,7 +175,7 @@ public final class TurningHandler {
     }
 
     /** The turning would do something for this player (a hunter or a werewolf in it would only end it quietly). */
-    private static boolean wouldComplete(ServerPlayer p) {
+    public static boolean wouldComplete(ServerPlayer p) {
         BloodlineState s = BloodlineAccess.get(p);
         Outcome out = BloodlineRules.apply(s, BloodlineEvent.TURNING_FED, SpeciesContext.of(p, null));
         return !out.actions().isEmpty() || out.state().ghoul() != s.ghoul();

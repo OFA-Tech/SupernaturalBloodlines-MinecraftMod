@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.hybrid;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HybridFeed;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,8 +19,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
  * Blood thirst of a hybrid type (R42): {@link BloodlineState#thirst()}, 0 to 20. Drinking a blood bottle raises it by
  * {@link #GAIN}, it falls by 1 every 1200 ticks, Weakness I at 0 and Strength I from 15. Only the thirst field
  * changes, so no species listener runs; the value is synced when it changes, about once a minute.
- * <p>
- * Deferred: a bite as a source of blood (Werewolves has no bite hook, see docs/parts/species.md).
+ * A bite of the HUD's Bite action is a source too ({@link #addThirst}, R110 row 3).
  */
 public final class BloodThirst {
     public static final int GAIN = 5;
@@ -59,6 +59,11 @@ public final class BloodThirst {
         if (s.thirst() != thirst) {
             BloodlineAccess.set(p, s.toBuilder().thirst(thirst).build());
         }
+    }
+
+    /** A bite fed this hybrid: thirst up by {@code amount}, capped at 20. */
+    public static void addThirst(ServerPlayer p, int amount) {
+        setThirst(p, Math.min(HybridFeed.MAX_THIRST, BloodlineAccess.get(p).thirst() + amount));
     }
 
     /** One step of 1200 ticks. */

@@ -15,6 +15,7 @@
 - [Rites](Rites)
 - [Key binds](Key-Binds)
 - [Supernatural hub](Supernatural-Hub)
+- [Ability HUD](Ability-HUD)
 
 **Species**
 - [Vampires and Originals](Vampires-And-Originals)

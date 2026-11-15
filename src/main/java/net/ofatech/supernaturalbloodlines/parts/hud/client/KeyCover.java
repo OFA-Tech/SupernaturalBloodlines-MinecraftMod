@@ -1,0 +1,154 @@
+package net.ofatech.supernaturalbloodlines.parts.hud.client;
+
+import com.mojang.blaze3d.platform.InputConstants;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BooleanSupplier;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
+import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.client.settings.KeyModifier;
+import net.neoforged.neoforge.common.NeoForge;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.hud.CoverRun;
+import net.ofatech.supernaturalbloodlines.core.hud.RecordFile;
+
+/**
+ * Unbinds the keys of Tensura, Tensura Slots, Vampirism and Werewolves that the HUD covers, and gives them back. The rules are
+ * {@code CoveredKeys} and {@code CoverRun} (core); this class reads the game's binds, applies the plan, saves the options and keeps the record in
+ * {@code config/supernaturalbloodlines-hud-keys.json}. Keys are found by name, so a mod that is not installed has no key to cover and nothing
+ * is touched. It runs on the first client tick (every mod has registered its keys and the options are loaded by then) and again whenever
+ * {@code hide_covered_keys} changes or the Controls screen closes (its "Reset All" puts covered keys back on their defaults).
+ * <p>
+ * With the part off nothing of it would run, so the main class calls {@link #registerRestoreOnly()} then: the recorded binds come back.
+ * Never touched: Tensura's {@code next_mode}, {@code race_ability} and {@code main_gui}, and Vampirism's action wheel, vision and skill screen.
+ */
+public final class KeyCover {
+    public static final String FILE = SupernaturalBloodlines.MODID + "-hud-keys.json";
+
+    /** Tensura's three skill keys, Tensura Slots' three, Vampirism's suck and nine action toggles, and Werewolves' bite. */
+    public static final List<String> COVERED = covered();
+
+    private static final RecordFile RECORD = new RecordFile(FMLPaths.CONFIGDIR.get().resolve(FILE), System::currentTimeMillis,
+            m -> SupernaturalBloodlines.LOGGER.warn("Covered keys: {}", m));
+    private static Boolean applied;
+    private static boolean covering;
+
+    private KeyCover() {
+    }
+
+    private static List<String> covered() {
+        List<String> ids = new ArrayList<>();
+        for (int i = 1; i <= 3; i++) {
+            ids.add("tensura.keybinding.ability.slot_" + i);
+        }
+        for (int i = 1; i <= 3; i++) {
+            ids.add("tensuraslots.keybinding.secondary_ability.slot_" + i);
+        }
+        ids.add("keys.vampirism.suck");
+        for (int i = 1; i <= 9; i++) {
+            ids.add("keys.vampirism.action" + i);
+        }
+        ids.add("keys.werewolves.bite");
+        return List.copyOf(ids);
+    }
+
+    public static void register() {
+        NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick(HudClientConfig::hideCoveredKeys));
+        NeoForge.EVENT_BUS.addListener((ScreenEvent.Closing e) -> {
+            if (e.getScreen() instanceof KeyBindsScreen) {
+                applied = null;
+            }
+        });
+    }
+
+    /** The part is off: put back what a run with it on took away, once. */
+    public static void registerRestoreOnly() {
+        NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick(() -> false));
+    }
+
+    /** True while covering is in effect (the option is on and the record could be kept): only then are the keys hidden from Controls. */
+    public static boolean covering() {
+        return covering;
+    }
+
+    private static void tick(BooleanSupplier hide) {
+        Minecraft mc = Minecraft.getInstance();
+        boolean want = hide.getAsBoolean();
+        if (mc.options == null || applied != null && applied == want) {
+            return;
+        }
+        applied = want;
+        try {
+            apply(mc, want);
+        } catch (RuntimeException e) {
+            covering = false;
+            SupernaturalBloodlines.LOGGER.warn("Covered keys: could not apply the plan, leaving the keys as they are", e);
+        }
+    }
+
+    private static void apply(Minecraft mc, boolean hide) {
+        Map<String, KeyMapping> byName = new HashMap<>();
+        Map<String, String> current = new HashMap<>();
+        Map<String, String> defaults = new HashMap<>();
+        for (KeyMapping km : mc.options.keyMappings) {
+            byName.put(km.getName(), km);
+            current.put(km.getName(), bind(km.getKey(), km.getKeyModifier()));
+            defaults.put(km.getName(), bind(km.getDefaultKey(), km.getDefaultKeyModifier()));
+        }
+        CoverRun.Keys keys = new CoverRun.Keys() {
+            @Override
+            public Map<String, String> current() {
+                return current;
+            }
+
+            @Override
+            public Map<String, String> defaults() {
+                return defaults;
+            }
+
+            @Override
+            public boolean set(String id, String bind) {
+                return KeyCover.set(byName.get(id), bind);
+            }
+
+            @Override
+            public void save() {
+                KeyMapping.resetMapping();
+                mc.options.save();
+            }
+        };
+        CoverRun.Result result = CoverRun.run(keys, RECORD, COVERED, hide);
+        covering = hide && result.outcome() == CoverRun.Outcome.DONE;
+        switch (result.outcome()) {
+            case BLOCKED -> SupernaturalBloodlines.LOGGER.warn("Covered keys: not covering, an unreadable record is waiting ({}.bad-*); see the wiki, Key binds", FILE);
+            case RECORD_NOT_SAVED -> SupernaturalBloodlines.LOGGER.warn("Covered keys: the record of the original binds could not be saved; {}",
+                    hide ? "no key was touched" : "the keys were restored but a stale record stays");
+            default -> {
+            }
+        }
+        if (!result.changed().isEmpty()) {
+            SupernaturalBloodlines.LOGGER.info("Covered keys: {} {}", hide ? "unbound" : "restored", result.changed());
+        }
+    }
+
+    private static String bind(InputConstants.Key key, KeyModifier modifier) {
+        return modifier == KeyModifier.NONE ? key.getName() : key.getName() + ":" + modifier.name();
+    }
+
+    private static boolean set(KeyMapping km, String bind) {
+        String[] parts = bind.split(":");
+        try {
+            km.setKeyModifierAndCode(parts.length > 1 ? KeyModifier.valueFromString(parts[1]) : KeyModifier.NONE, InputConstants.getKey(parts[0]));
+            return true;
+        } catch (IllegalArgumentException e) {
+            SupernaturalBloodlines.LOGGER.warn("Covered keys: {} is not a bind I understand for {}, leaving it (its record stays)", bind, km.getName());
+            return false;
+        }
+    }
+}
