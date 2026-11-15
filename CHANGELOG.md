@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased: the six HUD slots (plan 13, phase 13b)
+## 0.2.0-alpha (2026-11-15)
+
+### The six HUD slots (plan 13, phase 13b)
 
 - **13c review fixes.** The race feed no longer drains a victim for blood a full vampire cannot take, nor a Vampirism vampire victim (the species and supernatural parts decide that bite), a failed blood draw keeps the originals for the whole session, and the docs now say that Vampirism draws its own blood bar only in survival and adventure.
 - **Player-ready defaults (13c Task 3).** Every setting of the hud part starts on, the HUD needs no setup, and switching the part off puts every hidden key back (checked in a real client). `HudPartOffGameTests` and `DefaultsTest` keep it that way.
@@ -12,7 +14,7 @@
 
 - **The loadout (13b Task 1).** The six Supernatural-mode slots are saved per player (kept on death). A new player has **Bite** in slot 1; you can move it or clear it and it is never put back. The server decides what can go in a slot: Bite, or an action your current faction has unlocked. Every request counts against `rate_limit_per_second`, refused ones too. Nothing shows it yet; the hub's Loadout tab and the HUD itself come in the next tasks.
 
-## Unreleased: the supernatural HUD, the Bite action (plan 13, phase 13a Tasks 1 to 3)
+### The supernatural HUD, the Bite action (plan 13, phase 13a Tasks 1 to 3)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-hud-design.md`. New part: **hud** (needs no mod; Tensura, Vampirism and Werewolves are optional extras). No mixin yet (0 of 3, three reserved).
 
@@ -24,18 +26,18 @@ Spec `docs/superpowers/specs/2026-11-14-supernatural-hud-design.md`. New part: *
 - **Final review fixes.** The record of your original keys is written before any key is unbound (and nothing is unbound if it cannot be saved), replaced in one step, and never overwritten when unreadable: it is kept as `.bad-<time>` and covering waits until you remove it (recovery steps in the wiki). Ids that left the covered list are given back. A bite on a player who is not a vampire takes their food level, like Vampirism's own. Vampirism's drinking refuses a dying or bat-form biter.
 - **Hooks for it.** `HybridFeed`, `TurningFeed` and `BloodlessPlayers` (shared); `BloodThirst.addThirst`; `TurningHandler.wouldComplete` is public.
 
-## Unreleased: hub themes (plan 12, phase 12f)
+### Hub themes (plan 12, phase 12f)
 
 - **Two more looks for the hub**, picked with `hub_theme` in `supernaturalbloodlines-hub-client.toml` (it can be changed while the hub is open). **Blood Moon**: a dark screen with a red moon that fills as you climb, rungs as gems around it, pages and other mods on rails at either side. **Tensura**: Tensura's menu style, wider, with pages and mods as two lists; only with Tensura, otherwise the Grimoire. Same pages, actions and keys in every theme. Some of the Grimoire's tag colours are darker so all text is readable.
 
-## Unreleased: the hub (plan 12, phase 12e)
+### The hub (plan 12, phase 12e)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (The hub). Part: supernatural (and species for the names). No new mixin.
 
 - **The hub screen (Tasks 1 and 2).** Press Home to open it (and to close it). One screen model with themes as skins; the theme is a client setting (`hub_theme`), and the **Grimoire** (an open book with ribbon bookmarks) is the default and the only one so far. **Path** shows your story and each ladder you climb, rung by rung, and the next rung's tasks with their source tags and a wax stamp to claim a done one. **Quests** lists every active task and open skill quest, with the chosen one in full (progress, the mod's own hint). A Ghoul sees the turning. Keyboard: Tab, arrows, Enter. Skills, Rites, Bloodline and Pack come in the next tasks.
 - **The rest of the hub (Tasks 3 to 5).** Skills: learn our skills with SP and unlock your Vampirism or Werewolves skills with that mod's points (the Loadout tab comes with the ability HUD). Rites (your rite tasks, and every rite of ours the server has with power, circle and items, yours first), Bloodline (the family tree up and down, a call button, genes as Unknown ? until discovered, Tensura EP) and Pack (only for werewolves and hybrid types; accept and leave). Path shows the Tensura race and EP. Wax seals open Tensura's status menu, Enchanted's book and your Vampirism or Werewolves skill tree unchanged, and Esc brings you back to the same page. Tensura's menu has a fifth tab for the hub (no mixin). The hub key is now **Home** (J is JourneyMap's), and it also closes the hub. Level steps show your current level.
 - **Hub snapshot.** Opening the hub asks the server for the names it shows (sire, sired, pack members and ranks, the Five's count, severance) and your own genes as your client may know them. Nothing of other players' state is sent.
-## Unreleased: apex additions (plan 12, phase 12d)
+### Apex additions (plan 12, phase 12d)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (Apex races, D1 and D2). Parts: species_tensura, supernatural_tensura. No new mixin (species_tensura stays at 2 of 3).
 
@@ -45,7 +47,7 @@ Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (Apex rac
 - **`tensura_tier`** works: the apex task of each ladder is done while your Tensura race is at the apex tier of a line your race may be on, read for each of your races (so a werewolf witch on Beastfolk finishes the werewolf's task and not the witch's).
 - **True Alpha on `alpha_primeval`.** A True Alpha who is a werewolf now has the apex race's stat bonuses x1.5, and is granted S-WOL-8 Primeval Roar the moment they become a True Alpha on that race: the Alpha Roar with Roar's Echo's cooldown, twice the range (64 and 32 blocks), and +10% attack for 30 s for the Betas it reaches. A dormant True Alpha (cured or out of the werewolves) has neither until they rejoin; a normal Alpha never has them. Draft numbers, owner to patch.
 
-## Unreleased: skills (plan 12, phase 12c)
+### Skills (plan 12, phase 12c)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (Skills). Parts: supernatural, supernatural_tensura. No new mixin (supernatural stays at 1 of 3).
 
@@ -58,7 +60,7 @@ Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (Skills).
 - **Predator's Thirst and the quest Hunter of Hunters (Task 4).** New skill quests (supernatural/quest): Q-VAM-6 asks for 10 vampire kills, 3 refused bites on a vampire and 25 feeds, once the tree's rung is reached, and lets you buy Predator's Thirst (S-VAM-6). With it, biting a vampire feeds you (config vampire_feed_blood, default 3) and drains the victim; a vampire mob takes 2 damage (never killed) and Weakness I for 10 s, and an Original cannot be killed by the drain. The skill table, trees and quests are now sent to the client like the ladders (for the hub).
 - **Unlocking Vampirism and Werewolves skills (Task 5).** A new server-validated packet unlocks a skill of your faction's own tree through that mod's skill handler (it takes that mod's points; refused for Ghouls and with the mod's own reason).
 
-## Unreleased: doppelgängers, genes and blood (plan 12, phase 12b)
+### Doppelgängers, genes and blood (plan 12, phase 12b)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (owner decisions D5 to D8). Rules R10a, R10b, R14, R14a and R40a in `SPECIES-RULES.md`. Part: species. No new mixin.
 
@@ -69,7 +71,7 @@ Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (owner de
 - **The Vampire Compass finds doppelgängers (Task 4).** Sneak + use switches the compass between Vampires (today's mode) and Doppelgängers; the tooltip shows the mode. In Doppelgängers mode the needle points at the nearest doppelgänger villager within `compass_doppelganger_range` (new file `supernaturalbloodlines-artifacts.toml`, default 512, loaded chunks only) or at a player with the gene anywhere in your dimension. Only the holder learns anything: the needle is kept up to date only while the compass is in the main hand or the off hand, and its target is cleared as soon as it is put in the inventory, dropped or put in a container (both modes), so a player's position is never left in a stored compass. No world scan: the villagers come from the species part's index through a shared hook.
 - **Original's Blood remembers whose it is (Task 5).** New `hybrid_transition_blood` (`original_hybrid`, the default, or `original`). By default only Original's Blood taken from an **Original hybrid** starts the hybrid transition; `original` keeps the old behaviour (any Original or Original hybrid). The Rite of Original's Blood now records the source's species on the bottle (data component `blood_source_species`). A bottle with no record, made before the update, is accepted under either setting. A refused drink tells the player why and keeps the bottle.
 
-## Unreleased: the supernatural race system, foundation (plan 12, phase 12a)
+### The supernatural race system, foundation (plan 12, phase 12a)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md`. Two new parts, `supernatural` (needs Vampirism) and `supernatural_tensura` (needs Vampirism and Tensura), each with a mixin budget of 0 of 3. Nothing a player has is removed.
 
@@ -81,7 +83,7 @@ Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md`. Two new 
 - **Migration and debug commands (phase 12a Task 5).** A player who had a race before the ladders gets what it proves on their first login: days as their race from when they turned, the rungs their level and state prove, the species layer rung (so no layer is lost), Alpha rank, and the apex rung of an apex race, with the skill points of those rungs and no EP. New `debug supernatural` commands show, reset and adjust ladder state.
 - **Rites count at last (phase 12a).** One mixin on Enchanted's `Rite` tells a rite that worked from a cancelled one, so ladder tasks that need Enchanted's own rites (the Ward of Return and the others) count.
 
-## Unreleased: automatic sire naming
+### Automatic sire naming
 
 Owner decisions of 2026-11-14 (SPECIES-RULES R101). Part: species_tensura.
 
@@ -91,7 +93,7 @@ Owner decisions of 2026-11-14 (SPECIES-RULES R101). Part: species_tensura.
 - **Side effects of the naming on the sired** are Tensura's own and are listed in `docs/parts/species_tensura.md`: full heal, harmful effects removed, Glowing, particles, a custom name, the tracked evolution cleared (also at a later login try). Sired players named by hand before this change keep their old custom name (no migration), and a later account-name change is not followed.
 - Tests: `SirelineTensuraGameTests` reworked (automatic name, own name, cost and reward, no evolution with a control, `playerNaming=false`, switch off, offline or broke sire).
 
-## Unreleased: turning the show's way (plan 11)
+### Turning the show's way (plan 11)
 
 Spec `docs/superpowers/specs/2026-11-14-show-turning-design.md`. Rules R20c and R20d in `SPECIES-RULES.md`. Parts: species and species_tensura.
 
@@ -102,7 +104,7 @@ Spec `docs/superpowers/specs/2026-11-14-show-turning-design.md`. Rules R20c and 
 - **Turning review fixes.** A hunter or werewolf in the turning is no longer switched into the vampires or killed when it ends (it just ends, and their bottle is not used). Human blood no longer includes converted villagers, vampires, vampire-side species or werewolves, with or without Tensura. A refused join and a failed turning now tell the player (`turning.join_refused`, `turning.failed`); a refused join leaves the bottle used up.
 - **The Tensura side of the Ghoul (species_tensura, R20e).** A Ghoul whose race is `tensura:human` shows `tensura:ghoul`, then `tensura:vampire` when the turning is done; every other race is kept. **No Tensura evolution goes through while a Ghoul** (`turning.ghoul_no_evolve`): done on ManasCore's `SET_RACE` event, which `RaceHelper.evolveRace` reaches, so no mixin. EP keeps accruing.
 - **No new mixin.** The hybrid transition and the turning share one clock (`TransitionTimer`).
-## Unreleased: balance pass (plan 10)
+### Balance pass (plan 10)
 
 Owner decisions of 2026-11-14, applied to existing parts. Spec `docs/superpowers/specs/2026-11-14-balance-pass-design.md`.
 
@@ -132,7 +134,7 @@ Owner decisions of 2026-11-14, applied to existing parts. Spec `docs/superpowers
 
 - **Review round 3 (plan 10).** A dormant True Alpha who is offline no longer counts as an active Alpha: a bite that lands after the cure makes an Omega with no pack (the tombstone stays until they rejoin). The eclipse sky and moon are not drawn under water, in lava or powder snow, or while blinded, and the moon fades with the rain. Docs corrected (rank skills need the faction, the silver moon needs night, R100 is +25% EP gain, the `isBloodless` mixin row).
 
-## Unreleased: Rite of Severance (R101b, species part)
+### Rite of Severance (R101b, species part)
 
 Needs the species part (Vampirism and Enchanted). Details in `docs/parts/species.md`, rule R101b in `SPECIES-RULES.md`.
 
@@ -149,7 +151,7 @@ Needs the species part (Vampirism and Enchanted). Details in `docs/parts/species
   - Placeholder art for both items. A player can be hit for blood by anyone with a silver blade and a bottle; only the rite checks it was the right sire.
 - Pending (manual, in a real client): the altar and chalk with the real ingredients (the GameTests start the rite directly and check the altar cost separately), the tooltip, the item models.
 
-## Unreleased: species_tensura (species layer)
+### Species_tensura (species layer)
 
 Needs Vampirism, Enchanted and Tensura (and the species part). Details in `docs/parts/species_tensura.md`.
 
@@ -179,7 +181,7 @@ Needs Vampirism, Enchanted and Tensura (and the species part). Details in `docs/
 - **Owner point (checks):** apex races stay registered whenever Tensura is present, even with `species_tensura` off, because ManasCore has no fallback for an unregistered saved race (NPE in `Entity.load`; see the removal warning above). So the "turn the part off with an apex player" check is: the player loads, the apex race stays, the layer does nothing.
 - Checks run: client launched with Vampirism, Werewolves, Enchanted, Tensura, Curios; no error or warning from this mod, `species_tensura` mixin config applied, `RaceInstanceMixin` and `RaceUtilsMixin` report "hooks in place" and `SireNamingMixin` applies (no "hook is not in place" warning). All GameTests pass with all mods, `-PnoWerewolves -PnoCurios`, `-PnoLinkedMods`, `-PpartsOff=species` and `-PpartsOff=speciesTensura`.
 - Pending (manual, in a real client): an elf taken to the Original apex offer in the evolution screen; a human to the witch apex; a sire naming a sired player through the real naming menu; an Alpha getting the skills in the skill list; the evolution screen, skill list and analysis screen of a layered player; the race icon of the apex races (no texture exists).
-## Unreleased: werewolf packs
+### Werewolf packs
 
 Needs Werewolves, except Shocked and the Taser (any supernatural). Details per task are in `docs/parts/species.md`.
 
@@ -197,7 +199,7 @@ Needs Werewolves, except Shocked and the Taser (any supernatural). Details per t
 - Owner design point: with the artifacts part off, a bitten (non-Alpha) wolf has no way to shift at will (R96 needs control and there is no Moon Ring); only the full moon moves it. Say if you want a fallback (for example an anchor or the beast shift at the highest level).
 - Pending (manual, two real clients): a pack of 1 Alpha and 3 Betas (the bonus and its Regeneration), the roar (buff, submit, eye glow seen by the other client), the eyes, and the eclipse sky (`/supernaturalbloodlines debug eclipse start`: red fog and horizon, the announcement, the form lock on a real werewolf). `runClient` loaded the mod with no error from it.
 
-## Unreleased: werewolf packs (spark and ranks)
+### Werewolf packs (spark and ranks)
 
 - The Alpha spark: a werewolf player who kills an Alpha takes it (and the pack: a Beta who kills their own Alpha leads it afterwards; a killer who already leads a pack adopts the Betas), the old Alpha is an Omega. Ordinary deaths keep rank and spark. When an Alpha leaves the werewolves or is cured, the spark goes to the highest-level online Beta; with none online the pack dissolves and its Betas become Omegas when they next log in.
 - `/pack heal <player>`: an Alpha within 4 blocks of the target gives up the spark to fully heal them and cure hybrid venom and wolfsbane (Werewolves' and the artifacts strains); the Alpha stays in the pack as a Beta.
@@ -207,7 +209,7 @@ Needs Werewolves, except Shocked and the Taser (any supernatural). Details per t
 - A bitten player whose Alpha lost the spark before the bite took becomes an Omega with no pack (the sire is still recorded).
 - Pending (manual): the two-client check of the eye particles.
 
-## Unreleased: sirelines
+### Sirelines
 
 - Compulsion: an Original, hybrid, tribrid or a vampire of level 10 or more can sneak and click with an empty hand on a villager or a lesser vampire (not advanced vampires, bosses or converted creatures) within 4 blocks and eye to eye (the target looks within 30 degrees of the caster, the caster within 15 of the target). Players, vervain users and hunters are immune.
 - Compelled villager: a 5 second choice in chat, `[Discount]` (a cure-sized discount, major positive gossip 20, for a day; what it added is taken back exactly when it ends, it does not stack, and a villager holds one discount at a time) or `[Follow]` (walks to you for 5 minutes). The buttons run `/bloodline compel <token> discount|follow`.
@@ -217,7 +219,7 @@ Needs Werewolves, except Shocked and the Taser (any supernatural). Details per t
 - Fixed a flaky GameTest (`senseSendsPreyInRange`: two of its mobs stood outside the test structure).
 - Pending (manual): the two-client check of `/bloodline call` and compulsion (chat buttons, the trade screen not opening, a real walk to the caller).
 
-## Unreleased: hunters
+### Hunters
 
 - Rite of the Five (a slot counts for a Hunter, a live potential and an owed potential alike; medium circle, 10000 power: 5 candles, iron ingot, book, taglock): turns a hunter-faction human into a Hunter of the Five. The Five are kept in a roster (`max_five` in the species config, default 5); leaving the hunter faction frees the slot, logging out does not.
 - Hunter's Mark: a prey kill (vampire and werewolf types; never witches or siphoners) grows the mark, up to 20 kills: +1% attack damage and +0.5% movement speed per kill. A potential who leaves the hunters owes a new one like a lost mark. A marked hunter killed by prey loses the mark, and an online human hunter (random) becomes a potential; with nobody online the choice waits for the next hunter to join. A potential's first prey kill completes the Five. Kill credit survives Vampirism's dying state (a player attacker is found again by UUID).
@@ -229,7 +231,7 @@ Needs Werewolves, except Shocked and the Taser (any supernatural). Details per t
 - Known debts: the outline is the team colour (white without a team); a vampire that dies of the dying state's timer after more than 10 minutes, or whose killer logged out, is no kill; no Vampirism hunter skin on the phantom zombie.
 - Pending (manual): the two-client check that the outline is visible only to the hunter; how the hallucinations look in a running client; kill credit through the dying state with a real vampire (kill it, let it give up or time out, and see the mark grow).
 
-## Unreleased: artifacts
+### Artifacts
 
 - Sun Ring (craft: 4 gold ingots around glowstone; rite *Ward of Daylight*: ring, 2 sunflowers, 4 glowstone dust, medium circle, 6000 power): bound to the vampire on the circle (data component `supernaturalbloodlines:bound_to`). While they wear it (Curios `ring` slot or inventory) Vampirism's sun damage is cancelled, and a hidden sunscreen effect also stops the sun kill and nausea (Vampirism has no sun hook). Weakness in the sun is not stopped. A ring bound to someone else, or unbound, does nothing.
 - Moon Ring (needs Werewolves; craft: 4 silver ingots around an amethyst shard; rite *Ward of the Moon*: ring, 2 amethyst shards, 2 silver ingots, medium circle, 6000 power; bound to a werewolf): moon control (R96). The forced full-moon shift is skipped for the owner. Half forms at will, full forms from Werewolves level 8 (`werewolves.full_form_level` in the common config).
@@ -248,7 +250,7 @@ Needs Werewolves, except Shocked and the Taser (any supernatural). Details per t
 - Pending (manual, see `docs/parts/artifacts.md`): the Accessories ring slots in the OFA pack, every rite at a real circle, the compass needle and the mountain ash and wolfsbane visuals in a running client, real sunlight for the Sun Ring, a real full-moon shift. The Taser needs the packs part.
 - Test template `tall` (16x10x16) for tests whose entities are taller than a block.
 
-## Unreleased: species
+### Species
 
 - Originals: the Rite of Immortality makes one (needs a full moon, a white oak sapling, a golden apple, a human heart and a villager). +4 max health, +20% attack, and lethal damage that is not white oak, the void or `/kill` cannot kill them (vampires use Vampirism's dying state, Original hybrids a downed state of 30 seconds with a Give up / Wait screen).
 - White oak: log, planks, sapling (grows a white oak tree) and the White Oak Stake, the only weapon that kills an Original.
@@ -264,7 +266,7 @@ Needs Werewolves, except Shocked and the Taser (any supernatural). Details per t
 - Fixed flaky GameTests: the test template was 1x1x1, so cells next to a chunk edge had entities in chunks that do not tick. It is 16x1x16 now.
 - Known pending (manual): the two-client playthrough (Original, Original's Blood, a werewolf friend turned hybrid, Original hybrid, witch, tribrid), the forced-shift check on a real full moon, the downed screen, placeholder textures. The moonstone is crafted from Werewolves silver, which spawns as ore. The Werewolves bite as a source of thirst and venom is not hooked (no hook exists).
 
-## Unreleased: vampirism_enchanted
+### Vampirism_enchanted
 
 - Plant parity (data): Enchanted garlic is in the `c:crops/garlic` tag, so all Vampirism recipes that use garlic (and the cauldron colour) accept it. **Limitation:** the tag is only read by recipes. The garlic crop's effect on vampires and the garlic diffusers do not read it, so an `enchanted:garlic` crop does not hurt a vampire.
 - Enchanted wolfsbane converts to and from Werewolves' wolfsbane (two shapeless recipes; Werewolves has no tag): 1 Enchanted flower gives 1 Werewolves wolfsbane, 2 Werewolves wolfsbane give 2 Enchanted flowers (a single wolfsbane is Werewolves' own purple dye recipe, so a 1:1 recipe would collide with it). Only with Werewolves.
@@ -276,7 +278,7 @@ Needs Werewolves, except Shocked and the Taser (any supernatural). Details per t
 - Sun Poppet: protects its bound player from a lethal hit of Vampirism's sun damage. Silver Poppet (Werewolves only, not registered without it): protects from a lethal hit by a silver item (`werewolves:type/silver`), a silver bolt or other silver ammunition shot at the player, or a werewolf bite. Both follow Enchanted's rule (poppets are only consulted on a lethal hit) and are made at the spinning wheel from an Enchanted poppet, anointing paste and glowstone dust or a silver ingot.
 - Known pending: manual in-game checks of the rites at a real chalk circle, the poppets at a real spinning wheel, and the placeholder textures (block and poppets).
 
-## Unreleased: enchanted_tensura
+### Enchanted_tensura
 
 - Altar power (data): Tensura magic ore, magic blocks, crystal blocks, magisteel and magic metal blocks power Enchanted altars (6 per ore up to 20, 10 per block up to 10).
 - EP data (`entity_existence`) for the Enchanted mandrake and familiar cat. Numbers are first guesses.
@@ -285,7 +287,7 @@ Needs Werewolves, except Shocked and the Taser (any supernatural). Details per t
 - New block `condensed_magicule` (altar power 30, up to 16), new damage type `holy_purification` (counts as holy for Tensura).
 - Spirit Poppet: protects the player it is bound to from lethal damage of the `tensura:is_spiritual` types (soul scatter, soul consumed, synthesise), following Enchanted's rule (poppets are only consulted on a lethal hit). Spinning wheel recipe from the Enchanted poppet, a medium magic crystal and soul sand.
 - Known pending: manual in-game checks of the rites at a real chalk circle, the curses on a cursed player, the Tensura analysis screen for Enchanted mobs, and the placeholder textures (block and poppet).
-## Unreleased: vampirism_tensura
+### Vampirism_tensura
 
 - Unified vampire sync: a Tensura race in the vampire line joins the Vampirism vampire faction at a level floor (`vampire` 1, `vampire_overcomer` and `vampire_lord` 7, `divine_vampire` max; `ghoul` no faction change). The floor never lowers an existing level. Joining Vampirism keeps the Tensura race, except an exact `tensura:human` becomes `tensura:vampire` automatically (R20a); a cure resets the race to `cure_race` (default `tensura:human`) only if it is in the vampire line.
 - Single sun burn: Tensura's own vampire burn and sun debuffs are disabled for faction vampires (2 mixins, see `docs/mixins.md`); Vampirism's sun handling wins.
@@ -297,7 +299,7 @@ Needs Werewolves, except Shocked and the Taser (any supernatural). Details per t
 - New config file `supernaturalbloodlines-vampirism_tensura.toml`.
 - Known pending: manual check in game that the Tensura analysis screen shows the EP of Vampirism and Werewolves mobs (covered only by registry GameTests).
 
-## Unreleased
+## 0.1.0-alpha (2026-11-12)
 
 - Project created from the NeoForge 1.21.1 ModDevGradle template.
 
