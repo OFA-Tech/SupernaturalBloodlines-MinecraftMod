@@ -10,6 +10,7 @@ A part is an optional feature set. It is enabled when every mod it requires is i
 | `SPECIES` | `species` | vampirism, enchanted | `VAMPIRISM_ENCHANTED` | [species](parts/species.md) |
 | `SPECIES_TENSURA` | `speciesTensura` | vampirism, enchanted, tensura | `SPECIES` | [species_tensura](parts/species_tensura.md) |
 | `ARTIFACTS` | `artifacts` | vampirism, enchanted | `VAMPIRISM_ENCHANTED` | [artifacts](parts/artifacts.md) |
+| `HUD` | `hud` | none (Tensura, Vampirism and Werewolves are optional extras inside it) | | [hud](parts/hud.md) |
 
 The server and clients need the same part switches and the same linked mods.
 

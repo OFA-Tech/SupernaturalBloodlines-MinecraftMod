@@ -19,7 +19,8 @@ public enum Part {
     SUPERNATURAL("supernatural", "net.ofatech.supernaturalbloodlines.parts.supernatural.SupernaturalPart",
             List.of("vampirism")),
     SUPERNATURAL_TENSURA("supernaturalTensura", "net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.SupernaturalTensuraPart",
-            List.of("vampirism", "tensura"));
+            List.of("vampirism", "tensura")),
+    HUD("hud", "net.ofatech.supernaturalbloodlines.parts.hud.HudPart", List.of());
 
     private final String configKey;
     private final String initClass;

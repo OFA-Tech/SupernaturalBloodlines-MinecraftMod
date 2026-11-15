@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "net.ofatech.supernaturalbloodlines.mixin.hud",
+  "plugin": "net.ofatech.supernaturalbloodlines.mixin.HudMixinPlugin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

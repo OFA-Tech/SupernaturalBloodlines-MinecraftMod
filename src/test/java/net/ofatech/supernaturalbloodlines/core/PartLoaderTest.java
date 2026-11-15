@@ -14,8 +14,8 @@ import org.junit.jupiter.api.Test;
 
 class PartLoaderTest {
     @Test
-    void noModsMeansNoParts() {
-        assertTrue(PartLoader.enabledParts(id -> false, p -> true).isEmpty());
+    void noModsMeansOnlyTheHudPart() {
+        assertEquals(EnumSet.of(Part.HUD), PartLoader.enabledParts(id -> false, p -> true));
     }
 
     @Test
@@ -63,13 +63,13 @@ class PartLoaderTest {
     @Test
     void vampirismAndEnchantedOnly() {
         Set<String> loaded = Set.of("vampirism", "enchanted");
-        assertEquals(EnumSet.of(Part.VAMPIRISM_ENCHANTED, Part.SPECIES, Part.ARTIFACTS, Part.SUPERNATURAL),
+        assertEquals(EnumSet.of(Part.VAMPIRISM_ENCHANTED, Part.SPECIES, Part.ARTIFACTS, Part.SUPERNATURAL, Part.HUD),
                 PartLoader.enabledParts(loaded::contains, p -> true));
     }
 
     @Test
     void supernaturalNeedsOnlyVampirism() {
-        assertEquals(EnumSet.of(Part.SUPERNATURAL), PartLoader.enabledParts(Set.of("vampirism")::contains, p -> true));
+        assertEquals(EnumSet.of(Part.SUPERNATURAL, Part.HUD), PartLoader.enabledParts(Set.of("vampirism")::contains, p -> true));
         assertFalse(PartLoader.enabledParts(id -> !id.equals("vampirism"), p -> true).contains(Part.SUPERNATURAL));
     }
 
@@ -89,6 +89,23 @@ class PartLoaderTest {
     void supernaturalOffKeepsTheOtherParts() {
         Set<Part> parts = PartLoader.enabledParts(id -> true, p -> p != Part.SUPERNATURAL);
         assertTrue(parts.containsAll(EnumSet.complementOf(EnumSet.of(Part.SUPERNATURAL, Part.SUPERNATURAL_TENSURA))));
+    }
+
+    @Test
+    void hudNeedsNoMod() {
+        assertTrue(Part.HUD.requiredMods().isEmpty());
+        assertTrue(Part.HUD.requiredParts().isEmpty());
+        assertEquals("hud", Part.HUD.configKey());
+        assertTrue(PartLoader.enabledParts(id -> false, p -> true).contains(Part.HUD));
+        assertEquals("enabled", PartLoader.status(Part.HUD, id -> false, p -> true));
+    }
+
+    @Test
+    void hudOffBySwitch() {
+        Set<Part> parts = PartLoader.enabledParts(id -> true, p -> p != Part.HUD);
+        assertFalse(parts.contains(Part.HUD));
+        assertEquals("disabled (config)", PartLoader.status(Part.HUD, id -> true, p -> p != Part.HUD));
+        assertEquals(EnumSet.complementOf(EnumSet.of(Part.HUD)), parts);
     }
 
     @Test

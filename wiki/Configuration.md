@@ -28,6 +28,7 @@ Switch a part off to keep it disabled even when its mods are installed. All defa
 | `species` | `true` | species (all the species pages) | Vampirism, Enchanted, and the vampirismEnchanted part |
 | `speciesTensura` | `true` | [species_tensura](Tensura-Integration#the-species-layer-part-species_tensura) | Vampirism, Enchanted, Tensura, and the species part |
 | `artifacts` | `true` | artifacts ([items](Items-And-Blocks)) | Vampirism, Enchanted, and the vampirismEnchanted part |
+| `hud` | `true` | [hud](Ability-HUD) | none (Tensura, Vampirism and Werewolves are optional extras) |
 
 The switches are read straight from the file early at startup (the config system loads too late for mixins), so a missing file, a missing key, or a bad value means **on**.
 
@@ -129,6 +130,18 @@ rank_skills = [
 | `rite_complete_signal` | `true` | A rite that finished counts for ladder tasks (the hook on Enchanted's rites). `false`: no rite counts for any task. |
 
 The ladders themselves are datapack JSON (`data/supernaturalbloodlines/supernatural/ladder/`), not config.
+
+## hud: `supernaturalbloodlines-hud.toml` and `supernaturalbloodlines-hud-client.toml`
+
+Common (server):
+
+| Key | Default | What it does |
+|---|---|---|
+| `rate_limit_per_second` | `10` | Most HUD payloads one player may send per second. |
+| `bite_reach` | `4.0` | How far (blocks) the [Bite action](Ability-HUD#the-bite-action) reaches. |
+| `[mixins]` `next_preset_active`, `tensura_feed_fills_blood`, `hide_in_controls_mixin` | `true` | Reserved: each guards a mixin that does not exist yet. |
+
+Client (each player's own): `hud_enabled` (`true`), `hide_covered_keys` (`true`), `hide_tensura_skill_hud` (`true`), `blood_in_food_spot` (`true`), `mode` (`AUTO`, `TENSURA` or `SUPERNATURAL`). They do nothing yet; the HUD itself comes in the next phase.
 
 ## Part data and the load condition
 
