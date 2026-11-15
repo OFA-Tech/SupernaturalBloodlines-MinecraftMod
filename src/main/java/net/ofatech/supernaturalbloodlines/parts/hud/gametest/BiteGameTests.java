@@ -122,6 +122,28 @@ public final class BiteGameTests {
         helper.succeed();
     }
 
+    /** Without the species part nobody is in the turning here: row T never matches, whatever the player's state says. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void turningBiteWithoutSpeciesDoesNothing(GameTestHelper helper) {
+        if (EnabledParts.isEnabled("species")) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer p = TestPlayers.createMortal(helper);
+        BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().turningTicksLeft(9000).build());
+        place(helper, p, 1.5);
+        PathfinderMob v = villager(helper, 2.5);
+        try {
+            helper.assertTrue(BiteService.actionFor(p) == BiteAction.NONE, "a bite without species is " + BiteService.actionFor(p));
+            BiteService.Result r = BiteService.press(p, v.getId());
+            helper.assertTrue(!r.ok() && v.getHealth() == v.getMaxHealth(), "a bite without species happened: " + r);
+        } finally {
+            v.discard();
+            BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void plainHumanBiteDoesNothing(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.createMortal(helper);

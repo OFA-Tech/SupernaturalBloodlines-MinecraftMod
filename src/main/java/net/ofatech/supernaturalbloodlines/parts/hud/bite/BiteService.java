@@ -1,6 +1,15 @@
 package net.ofatech.supernaturalbloodlines.parts.hud.bite;
 
 import java.util.Map;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HumanLikeBlood;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.TurningFeed;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.network.chat.Component;
@@ -27,6 +36,9 @@ public final class BiteService {
     public static final String KEY = "supernaturalbloodlines.hud.bite.";
     public static final int COOLDOWN_TICKS = 20;
     public static final float HYBRID_BITE_DAMAGE = 2f;
+    public static final float TURNING_BITE_DAMAGE = 1f;
+    public static final ResourceKey<DamageType> DAMAGE_TYPE = ResourceKey.create(Registries.DAMAGE_TYPE,
+            ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "turning_bite"));
 
     /** @param refusal the lang key that explains why nothing happened, null when the bite happened */
     public record Result(BiteAction action, String refusal) {
@@ -53,7 +65,7 @@ public final class BiteService {
         boolean werewolf = VampirismBite.WEREWOLF.equals(faction);
         boolean wolfForm = werewolf && ModList.get().isLoaded("werewolves") && WerewolfBite.wolfForm(p);
         boolean vampire = VampirismBite.VAMPIRE.equals(faction);
-        return new BiteContext(werewolf, wolfForm, vampire, HybridFeed.isHybrid(p), false, false);
+        return new BiteContext(werewolf, wolfForm, vampire, HybridFeed.isHybrid(p), BloodlineAccess.get(p).inTurning(), TurningFeed.canFeed(p));
     }
 
     /** What a press would do now. NONE without Vampirism: every row needs it. */
@@ -106,9 +118,23 @@ public final class BiteService {
             case WEREWOLF_BITE -> ModList.get().isLoaded("werewolves") ? WerewolfBite.bite(p, target) : KEY + "none";
             case VAMPIRISM_DRINK -> VampirismBite.start(p, target);
             case HYBRID_FEED -> hybridFeed(p, target);
+            case TURNING_BITE -> turningBite(p, target);
             default -> KEY + "none";
         };
         return new Result(action, refusal);
+    }
+
+    /** A human in the turning bites a human-like creature: it bleeds 1 (of a bite damage source, so the player is the attacker), and the turning is fed. */
+    private static String turningBite(ServerPlayer p, LivingEntity target) {
+        if (!HumanLikeBlood.test(target)) {
+            return KEY + "not_human";
+        }
+        if (!target.hurt(new DamageSource(p.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DAMAGE_TYPE), p), TURNING_BITE_DAMAGE)) {
+            return KEY + "cannot_bite_target";
+        }
+        p.level().playSound(null, target.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 0.8f, 0.6f);
+        TurningFeed.feed(p);
+        return null;
     }
 
     /** Our own feeding for a hybrid type in human form: the victim bleeds 2, so Venom (R42) poisons a vampire by itself, then +5 thirst. */

@@ -137,6 +137,8 @@ public final class SpeciesPart {
         SpeciesSupernatural.register();
         // what the supernatural part's tasks need from here, through shared hooks
         net.ofatech.supernaturalbloodlines.shared.supernatural.HumanLikeBlood.set(TurningHandler::isHumanLikeBlood);
+        net.ofatech.supernaturalbloodlines.shared.supernatural.TurningFeed.set(
+                p -> BloodlineAccess.get(p).inTurning() && TurningHandler.wouldComplete(p), TurningHandler::drankHumanBlood);
         net.ofatech.supernaturalbloodlines.shared.supernatural.HybridFeed.set(
                 p -> HybridTraits.isHybrid(BloodlineAccess.get(p).species()) && ModList.get().isLoaded("werewolves"), p -> BloodThirst.addThirst(p, BloodThirst.GAIN));
         net.ofatech.supernaturalbloodlines.shared.supernatural.SireCount.set(

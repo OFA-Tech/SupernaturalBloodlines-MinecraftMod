@@ -24,6 +24,8 @@ Vampire blood, then death, then human blood (rules R20c and R20d, in the species
 2. **Die while it is there.** You come back in the **turning** for `transition_ticks` of online time (default 24,000). Dying after the blood has worn off is an ordinary death.
 3. **Drink human blood in time.** A villager or trader, a hunter, a player with a human-like race (a Ghoul bites them), or a Vampirism blood bottle (right-click). Vampires, vampire-side species, werewolves and converted villagers don't count. You become a level 1 vampire. If the time runs out you die for good and come back as you were.
 
+You can drink the human blood from a blood bottle, or **bite a villager, a trader, a hunter or a human-like player with the Bite action** of the [ability HUD](Ability-HUD) (slot 1 by default). A cow, a vampire or any other non-human is refused and the turning goes on.
+
 A vampire, a werewolf or a hunter is not turned (if they join one of those during the turning, it just ends), and a player already in the hybrid transition keeps that transition. Nothing you earned is taken away.
 ## Ghouls
 

@@ -1,0 +1,8 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "hud" }
+    ],
+    "exhaustion": 0.1,
+    "message_id": "turning_bite",
+    "scaling": "when_caused_by_living_non_player"
+}
