@@ -80,3 +80,9 @@ If you find something that behaves differently from this wiki, please [open an i
 
 - **Tensura Slots is no longer needed.** The ability HUD's right column (the next preset) works without it, through one small mixin (
 ext_preset_active). With Tensura Slots still installed both work, but its own second column keeps drawing next to ours and its keys are unbound by the HUD, so remove it. The hold, press and Alt checks against Tensura's own keys were done from the code and the tests, not yet in a running client.
+
+- **Ability HUD keys:**
+  - **Alt + scroll is Tensura's own**: it is bound to Tensura's `next_mode` key (Left Alt) and moves through the nine presets; the HUD adds nothing to it. In Supernatural mode Alt + scroll still moves Tensura's presets.
+  - **Shift + R and Shift + F belong to Book of Dragons in the OFA pack**, so sneaking blocks slots 1 and 2 there.
+  - A slot key also fires with Ctrl or Shift held (Alt must work for Tensura's mode change).
+  - Vampirism's blood bar does not come back when `blood_in_food_spot` is switched off in a Tensura + Vampirism setup (Tensura's HUD overhaul or Vampirism's own condition hides it); Tensura's food number does.

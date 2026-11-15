@@ -28,6 +28,10 @@ The apex races (Primordial Vampire, Primordial Hybrid, Moonblood Hybrid, Ancestr
 
 Other things that cannot be rolled back in the game: mastery of a skill that was taken away and given back is lost.
 
+## The ability HUD part
+
+The `hud` part is mostly client side (the slots, the keys, the blood in Tensura's food spot), but **the server needs it too**: bites and the slot triggers are checked and done on the server, and the loadout is stored on the player. A client without the mod cannot send or receive its packets and is simply skipped. It adds two small mixins with Tensura (a skill in the next preset can be fired, and Tensura's vampire race ability can feed a thirsty vampire); both can be switched off in `supernaturalbloodlines-hud.toml` (`next_preset_active`, `tensura_feed_fills_blood`). Switching the part off puts every hidden key back the next time a client starts. See [Ability HUD](Ability-HUD) and [Configuration](Configuration).
+
 ## Switching parts off
 
 Edit `[parts]` in `config/supernaturalbloodlines-common.toml` (see [Configuration](Configuration#core-supernaturalbloodlines-commontoml)) and **restart**. Do it on the server **and** the clients.
