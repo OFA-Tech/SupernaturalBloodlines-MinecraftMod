@@ -18,7 +18,24 @@ import org.jetbrains.annotations.Nullable;
 public final class ActionService {
     public static final String KEY = "supernaturalbloodlines.hud.action.";
 
+    /** Slots (as a bit mask) whose press was accepted and whose key is still down, per player: a release with nothing held is ignored. */
+    private static final java.util.Map<java.util.UUID, Integer> HELD = new java.util.concurrent.ConcurrentHashMap<>();
+
     private ActionService() {
+    }
+
+    /** True while a press of this slot was accepted and not yet released. */
+    public static boolean held(ServerPlayer p, int slot) {
+        return (HELD.getOrDefault(p.getUUID(), 0) & (1 << slot)) != 0;
+    }
+
+    /** Also for a player who logged out or died with a key down: nothing is held any more. */
+    public static void forget(ServerPlayer p) {
+        HELD.remove(p.getUUID());
+    }
+
+    private static void mark(ServerPlayer p, int slot, boolean down) {
+        HELD.merge(p.getUUID(), down ? 1 << slot : 0, (old, bit) -> down ? old | (1 << slot) : old & ~(1 << slot));
     }
 
     /** @return the refusal's lang key, null when the slot did something */
@@ -27,7 +44,14 @@ public final class ActionService {
         if (!Loadout.validSlot(slot)) {
             return KEY + "bad_slot";
         }
-        Optional<ResourceLocation> id = LoadoutService.get(p).get(slot);
+        if (release) {
+            // a release counts only for a press that was accepted: nothing held, nothing to end (the rate limit does not apply to releases)
+            if (!held(p, slot)) {
+                return null;
+            }
+            mark(p, slot, false);
+        }
+        Optional<ResourceLocation> id = LoadoutService.effective(p).get(slot);
         if (id.isEmpty()) {
             return release ? null : refuse(p, KEY + "empty_slot");
         }
@@ -36,7 +60,11 @@ public final class ActionService {
                 BiteService.release(p);
                 return null;
             }
-            return BiteService.press(p, targetEntityId).refusal();
+            String refusal = BiteService.press(p, targetEntityId).refusal();
+            if (refusal == null) {
+                mark(p, slot, true);
+            }
+            return refusal;
         }
         if (release) {
             return null;
@@ -44,7 +72,8 @@ public final class ActionService {
         if (!ModList.get().isLoaded("vampirism")) {
             return refuse(p, BiteService.KEY + "needs_vampirism");
         }
-        if (p.isSpectator() || !p.isAlive()) {
+        // asleep too, like Bite: an action key does nothing from a bed
+        if (p.isSpectator() || !p.isAlive() || p.isSleeping()) {
             return refuse(p, KEY + "cannot_act");
         }
         if (!FactionActions.unlocked(p, id.get())) {

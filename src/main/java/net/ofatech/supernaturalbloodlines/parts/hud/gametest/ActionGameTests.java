@@ -130,6 +130,55 @@ public final class ActionGameTests {
         helper.succeed();
     }
 
+    /** A release counts only for a press the server accepted: a stray release must not end a feeding that something else started. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aReleaseWithNothingHeldDoesNothing(GameTestHelper helper) {
+        ServerPlayer p = vampire(helper);
+        PathfinderMob v = BiteGameTests.villager(helper, 2.5);
+        helper.assertTrue(VampirismAPI.vampirePlayer(p).useBlood(15, true), "could not empty the vampire's blood");
+        int mine = VampirismAPI.vampirePlayer(p).getBloodStats().getBloodLevel();
+        helper.assertTrue(BiteService.press(p, v.getId()).ok(), "setup: the bite was refused"); // started without ActionService: no press of slot 1 is held
+        helper.assertTrue(!ActionService.held(p, 0), "setup: a press that ActionService never saw is held");
+        helper.assertTrue(ActionService.trigger(p, 0, -1, true) == null, "a release with nothing held was refused");
+        for (int i = 0; i < 40 && VampirismAPI.vampirePlayer(p).getBloodStats().getBloodLevel() <= mine; i++) {
+            Feeding.tick(p);
+        }
+        helper.assertTrue(VampirismAPI.vampirePlayer(p).getBloodStats().getBloodLevel() > mine, "the stray release ended the feeding");
+        BiteService.release(p);
+        v.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aReleaseAfterAnAcceptedPressEndsTheFeeding(GameTestHelper helper) {
+        ServerPlayer p = vampire(helper);
+        PathfinderMob v = BiteGameTests.villager(helper, 2.5);
+        helper.assertTrue(VampirismAPI.vampirePlayer(p).useBlood(15, true), "could not empty the vampire's blood");
+        int mine = VampirismAPI.vampirePlayer(p).getBloodStats().getBloodLevel();
+        helper.assertTrue(ActionService.trigger(p, 0, v.getId(), false) == null, "the press was refused");
+        helper.assertTrue(ActionService.held(p, 0), "an accepted press is not noted as held");
+        helper.assertTrue(ActionService.trigger(p, 0, -1, true) == null, "the release was refused");
+        helper.assertTrue(!ActionService.held(p, 0), "the release left the press held");
+        for (int i = 0; i < 10; i++) {
+            Feeding.tick(p);
+        }
+        helper.assertTrue(VampirismAPI.vampirePlayer(p).getBloodStats().getBloodLevel() <= mine, "the feeding went on after the release");
+        v.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSleepingPlayerCannotTriggerAnAction(GameTestHelper helper) {
+        ServerPlayer p = vampire(helper);
+        ResourceLocation action = usableLasting(p, VReference.VAMPIRE_FACTION);
+        LoadoutService.set(p, 2, action);
+        p.setPose(net.minecraft.world.entity.Pose.SLEEPING);
+        p.setSleepingPos(helper.absolutePos(new net.minecraft.core.BlockPos(1, 2, 1)));
+        helper.assertTrue(p.isSleeping(), "setup: the player is not asleep");
+        String refusal = ActionService.trigger(p, 2, -1, false);
+        helper.assertTrue(refusal != null && refusal.endsWith("cannot_act") && !active(p, action), "a sleeping player triggered it: " + refusal);
+        helper.succeed();
+    }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void biteFiresFromItsSlot(GameTestHelper helper) {
         ServerPlayer p = vampire(helper);

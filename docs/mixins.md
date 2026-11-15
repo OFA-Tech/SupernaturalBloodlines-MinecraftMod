@@ -56,3 +56,6 @@ No mixin. Tensura's menu tab for the hub (plan 12 phase 12e Task 5) is added wit
 ## Access transformers
 
 Not a mixin and not counted in the budget. `META-INF/accesstransformer.cfg` makes `Entity.setSharedFlag(int, boolean)` and `getSharedFlag(int)` public, so the species part's `client/HunterSenseClient` can outline entities on one client (see docs/parts/species.md, Hunters: instinct, sense).
+
+**hud: renames.** The two @Shadow fields of AbilityStorageNextPresetMixin (ctivePreset, presets) are not covered by equire = 0: a Tensura update that renames them makes this mixin config fail to apply (the game logs it and runs on, without the right column working), it does not crash. supernaturalbloodlines-hud.mixins.json has no other mixin, and the four hooks are equire = 0. **The mixin applies to every player on the server** (next-preset skills count as equipped, 6 instead of 3); 
+ext_preset_active = false turns it off.

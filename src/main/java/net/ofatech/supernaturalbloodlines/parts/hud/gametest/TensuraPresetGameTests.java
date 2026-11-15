@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.hud.PresetPair;
+import net.ofatech.supernaturalbloodlines.parts.hud.HudConfig;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 
 /**
@@ -70,6 +71,24 @@ public final class TensuraPresetGameTests {
         ServerPlayer p = player(helper, 0);
         TensuraStorages.getAbilityFrom(p).setAbilitySlot(1, 1, skill(SKILL), 0);
         helper.assertTrue(SkillAPI.getSkillsFrom(p).startHoldSkill(SKILL, 1, 0), "Tensura refused a skill in preset N+1 (the HUD's right column)");
+        helper.succeed();
+    }
+
+    /** The switch: with `next_preset_active` false the mixin steps aside and Tensura's own refusal comes back. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void withTheSwitchOffTensuraRefusesTheNextPresetAgain(GameTestHelper helper) {
+        ServerPlayer p = player(helper, 0);
+        IAbility ab = TensuraStorages.getAbilityFrom(p);
+        ab.setAbilitySlot(PresetPair.right(0, PresetPair.TENSURA_PRESETS), 2, skill(SKILL), 0);
+        HudConfig.NEXT_PRESET_ACTIVE.set(false);
+        try {
+            helper.assertTrue(!ab.isAbilityInActivePreset(2, skill(SKILL), 0), "the check still says yes with the switch off");
+            helper.assertTrue(!ab.isAbilityInActivePreset(skill(SKILL)), "the passive check still says yes with the switch off");
+            helper.assertTrue(!SkillAPI.getSkillsFrom(p).startHoldSkill(SKILL, 2, 0), "the activation was accepted with the switch off");
+        } finally {
+            HudConfig.NEXT_PRESET_ACTIVE.set(true);
+        }
+        helper.assertTrue(ab.isAbilityInActivePreset(2, skill(SKILL), 0), "the switch back on did not bring the answer back");
         helper.succeed();
     }
 
