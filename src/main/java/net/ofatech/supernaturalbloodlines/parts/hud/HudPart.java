@@ -33,6 +33,9 @@ public final class HudPart {
             HudClient.register(modBus);
         }
         BiteService.register();
+        if (ModList.get().isLoaded("tensura") && ModList.get().isLoaded("vampirism")) {
+            net.ofatech.supernaturalbloodlines.parts.hud.bite.TensuraFeed.register();
+        }
         HudNet.register(modBus);
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(LoadoutGameTests.class);
@@ -46,6 +49,9 @@ public final class HudPart {
                     e.register(ActionWerewolfGameTests.class);
                 }
                 e.register(BiteGameTests.class);
+                if (ModList.get().isLoaded("tensura")) {
+                    e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.TensuraFeedGameTests.class);
+                }
                 if (EnabledParts.isEnabled("species")) {
                     e.register(TurningBiteGameTests.class);
                 }

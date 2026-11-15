@@ -12,7 +12,8 @@ import net.ofatech.supernaturalbloodlines.core.Part;
  */
 public final class HudMixinPlugin extends PartMixinPlugin {
     private static final Map<String, List<String>> REQUIRED_MODS = Map.of(
-            "AbilityStorageNextPresetMixin", List.of("tensura"));
+            "AbilityStorageNextPresetMixin", List.of("tensura"),
+            "VampireRaceFeedMixin", List.of("tensura", "vampirism"));
 
     public HudMixinPlugin() {
         super(Part.HUD);
@@ -21,6 +22,16 @@ public final class HudMixinPlugin extends PartMixinPlugin {
     @Override
     public void postApply(String targetClassName, org.objectweb.asm.tree.ClassNode targetClass, String mixinClassName,
                           org.spongepowered.asm.mixin.extensibility.IMixinInfo mixinInfo) {
+        if (mixinClassName.endsWith(".VampireRaceFeedMixin")) {
+            boolean hooked = targetClass.methods.stream().anyMatch(m -> m.name.equals("onActivateAbility")
+                    && java.util.stream.StreamSupport.stream(m.instructions.spliterator(), false)
+                    .anyMatch(i -> i instanceof org.objectweb.asm.tree.MethodInsnNode call && call.name.contains("supernaturalbloodlines$needsFood")));
+            if (hooked) {
+                log.info("VampireRaceFeedMixin: the needsFood hook in VampireRace.onActivateAbility is in place");
+            } else {
+                log.warn("VampireRaceFeedMixin: the needsFood call was not found in VampireRace.onActivateAbility (a Tensura update?): a thirsty healthy vampire gets no race feed");
+            }
+        }
         if (mixinClassName.endsWith(".AbilityStorageNextPresetMixin")) {
             long hooks = targetClass.methods.stream().filter(m -> m.name.equals("isAbilityInActivePreset")
                     && java.util.stream.StreamSupport.stream(m.instructions.spliterator(), false)

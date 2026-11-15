@@ -22,7 +22,7 @@ public final class HudConfig {
                 .defineInRange("rate_limit_per_second", DEFAULT_RATE_LIMIT, 1, 100);
         BITE_REACH = b.comment("How far (blocks) a Bite action may reach its target, 1 to 16. Vampirism's own drinking is also limited to the player's interaction range (3), so a higher value only helps the other bites.")
                 .defineInRange("bite_reach", DEFAULT_BITE_REACH, 1.0, 16.0);
-        b.comment("Reserved mixin switches. Each mixin is only added when its task shows no event or API works; until then the switch does nothing.").push("mixins");
+        b.comment("Switches of the hud part's mixins (each is applied only with the mods it targets). next_preset_active and tensura_feed_fills_blood guard a mixin each; hide_in_controls_mixin is reserved and does nothing.").push("mixins");
         NEXT_PRESET_ACTIVE = b.define("next_preset_active", true);
         TENSURA_FEED_FILLS_BLOOD = b.define("tensura_feed_fills_blood", true);
         HIDE_IN_CONTROLS_MIXIN = b.define("hide_in_controls_mixin", true);
@@ -44,6 +44,14 @@ public final class HudConfig {
     public static boolean nextPresetActive() {
         try {
             return NEXT_PRESET_ACTIVE.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
+    public static boolean tensuraFeedFillsBlood() {
+        try {
+            return TENSURA_FEED_FILLS_BLOOD.get();
         } catch (IllegalStateException notLoaded) {
             return true;
         }

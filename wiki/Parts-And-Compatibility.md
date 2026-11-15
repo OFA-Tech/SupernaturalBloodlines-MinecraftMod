@@ -96,7 +96,7 @@ So switching **vampirism_enchanted** off also turns off **species**, **species_t
 
 - **Config key:** `hud`. **Mods:** none. Tensura, Vampirism and Werewolves are optional extras inside it; each is only used when it is installed.
 - **Does:** the [Ability HUD](Ability-HUD). So far the **Bite action** (needs Vampirism): what a bite does for your form. The HUD itself, the keymap and the one blood value come in the next phases.
-- **Mixins:** 1 of 3 (with Tensura, a skill in the next preset can be fired: Tensura refuses it otherwise; switch `next_preset_active`). Reserved: Tensura race feeding, the Controls list. **Config files:** `supernaturalbloodlines-hud.toml` (common) and `supernaturalbloodlines-hud-client.toml` (client).
+- **Mixins:** 2 of 3 (with Tensura, a skill in the next preset can be fired: Tensura refuses it otherwise, switch `next_preset_active`; with Tensura and Vampirism, Tensura's vampire race ability can feed a thirsty healthy vampire, switch `tensura_feed_fills_blood`). Reserved: the Controls list. **Config files:** `supernaturalbloodlines-hud.toml` (common) and `supernaturalbloodlines-hud-client.toml` (client).
 - **Off:** no Bite action.
 
 ## Always on (core)
@@ -107,7 +107,7 @@ So switching **vampirism_enchanted** off also turns off **species**, **species_t
 
 ## Mixins
 
-The mod has **8 mixins** in 3 configs (a budget of 3 per part, each `require = 0`, each gated by its part's switch). The plugin for each config only applies it when all the part's mods are installed and its switch is on (read from the toml file at the start, since COMMON configs load after mixins).
+The mod has **11 mixins** in 5 configs (a budget of 3 per part, each `require = 0`, each gated by its part's switch). The plugin for each config only applies it when all the part's mods are installed and its switch is on (read from the toml file at the start, since COMMON configs load after mixins).
 
 | Part | Mixin | Where | Why |
 |---|---|---|---|
@@ -119,5 +119,8 @@ The mod has **8 mixins** in 3 configs (a budget of 3 per part, each `require = 0
 | species | `RiteCancelMixin` | Enchanted `Rite.cancel` | a refused rite costs nothing |
 | species_tensura | `RaceUtilsMixin` | Tensura `RaceUtils.isUndead`, `isAffectedByHolyExposure` | undead treatment |
 | species_tensura | `RaceInstanceMixin` | ManasCore `ManasRaceInstance` | apex offer |
+| supernatural | `RiteCompleteMixin` | Enchanted `Rite` | tells the mod when a rite is completed |
+| hud | `AbilityStorageNextPresetMixin` | Tensura `AbilityStorage.isAbilityInActivePreset` (four overloads) | a skill in the next preset can be fired (`next_preset_active`) |
+| hud | `VampireRaceFeedMixin` | Tensura `VampireRace.onActivateAbility` (one `needsFood()` call) | a thirsty healthy vampire can use the race feed (`tensura_feed_fills_blood`) |
 
 If another mod you use also patches these methods, tell us (see [Troubleshooting](Troubleshooting)).

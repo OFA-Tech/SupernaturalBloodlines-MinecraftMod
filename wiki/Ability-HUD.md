@@ -16,6 +16,10 @@ Two columns of three boxes stand on the bottom edge, one left of the offhand slo
 
 A slot key also fires when Ctrl or Shift is held with it (Alt is how you change a skill's mode), and a press in the very moment a screen closes is ignored, so a slot key that is also your inventory key never fires as the inventory closes. On a narrow window at a big GUI scale a column that does not fit moves up above the hotbar.
 
+## Blood
+
+A Vampirism vampire has one blood value, Vampirism's. With **Tensura installed** it is shown in Tensura's **food spot**: our blood drop and the number, in the place, size and side that Tensura gives its own food number, and Vampirism's blood bar is hidden. Tensura's food number comes back by itself when you are not a vampire, and both come back if you set `blood_in_food_spot = false` in `supernaturalbloodlines-hud-client.toml`. Nothing is deleted: the two displays are only hidden while ours is on, and Tensura's own setting is put back exactly as you had it (also when you open Tensura's HUD settings or leave the world). **Without Tensura**, Vampirism's blood bar stays where it is. If an update of Tensura changes the parts we reach (or drawing ever fails), the blood simply stays in Vampirism's bar and the log says so once. Vampirism itself draws that bar only in survival and adventure, so in creative or spectator mode a vampire sees no blood value unless the setting is on and the lookup works.
+
 ## Putting actions in the slots
 
 In the [Supernatural hub](Supernatural-Hub), the **Skills** page has a **Slots** tab (only when this part is installed). The left page lists Bite and every action you have unlocked; the right page shows the six slots with their keys. **Click an action and then a slot** (or a slot and then an action) to put it there; the small **x** empties a slot. You can put one action in several slots. Without the supernatural part there is no hub, so slots 2 to 6 show your unlocked actions in order, and Bite stays in slot 1.

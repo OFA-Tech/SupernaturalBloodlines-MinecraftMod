@@ -61,6 +61,10 @@ The Cure needs a *desiccated* Original: see [Rites](Rites#rite-of-the-cure).
 
 The only key bind is **Alpha Roar** (unbound by default). See [Key binds](Key-Binds). All commands are on [Commands](Commands).
 
+## The ability HUD
+
+Nothing to set up: with the mod installed you get six slots at the bottom of the screen (**R F V** and **Z X C**), a **Bite** action in the first one, and, with Tensura, your vampire blood in Tensura's food spot. Other mods' keys that the slots replace are hidden from the Controls screen and given back if you switch it off. Alt + Caps Lock switches between Tensura and Supernatural mode. See [Ability HUD](Ability-HUD) and [Key binds](Key-Binds).
+
 ## If something doesn't work
 
 [Troubleshooting](Troubleshooting) and [Known limits](Known-Limits).

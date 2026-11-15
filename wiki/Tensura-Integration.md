@@ -172,6 +172,10 @@ See [Werewolves and packs](Werewolves-And-Packs) for the ranks.
 
 `vampirism_tensura` uses 3 mixins (sun burn, sun debuffs, bite refusal) and `species_tensura` uses 2 (undead checks, evolution list). Each has `require = 0`: if Tensura renames a method after an update, the hook is skipped, the log says so, and the rest keeps working. See [Parts and compatibility](Parts-And-Compatibility#mixins).
 
+## Feeding
+
+If you are a Vampirism vampire, Tensura's **vampire race ability** used on a creature (the race ability key, looking at it within 5 blocks) now also fills your **Vampirism blood**: 2 blood, taken from the creature's own blood (a drained creature gives nothing, and a creature without blood gives nothing). It works when you are thirsty even at full health, which Tensura alone would refuse because a vampire's food is never short. Everything else Tensura's ability does (the damage, the healing, bat mode) is unchanged. `tensura_feed_fills_blood = false` in `supernaturalbloodlines-hud.toml` turns it all off.
+
 ## Limits
 
 - Mastery of a dormant layer skill is lost (see above).

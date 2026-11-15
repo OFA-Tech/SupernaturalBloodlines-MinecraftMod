@@ -27,29 +27,54 @@ import net.ofatech.supernaturalbloodlines.parts.hud.client.HudClientConfig;
  * {@code HudClient} after {@code ModList.isLoaded("tensura")}.
  */
 public final class TensuraHudFlags {
-    private static final HudFlagGuard SKILL_HUD = new HudFlagGuard();
+    /** One in-memory flag of Tensura's HudConfig that we lower while something of ours replaces it. */
+    private record Flag(HudFlagGuard guard, java.util.function.Function<HudConfig, Boolean> read, java.util.function.BiConsumer<HudConfig, Boolean> write,
+                        BooleanSupplier want) {
+        void whileManasScreen(HudConfig cfg) {
+            guard.screenOpening().ifPresent(v -> write.accept(cfg, v));
+        }
+
+        void tick(HudConfig cfg) {
+            guard.screenClosed(read.apply(cfg));
+            guard.tick(want.getAsBoolean(), read.apply(cfg)).ifPresent(v -> write.accept(cfg, v));
+        }
+
+        void restore(HudConfig cfg) {
+            guard.restoreNow(read.apply(cfg)).ifPresent(v -> write.accept(cfg, v));
+        }
+    }
+
+    private static final java.util.List<Flag> FLAGS = new java.util.ArrayList<>();
 
     private TensuraHudFlags() {
     }
 
-    /** @param ourHudShown true while our HUD is drawn in any mode */
-    public static void register(BooleanSupplier ourHudShown) {
+    /**
+     * @param ourHudShown true while our HUD is drawn in any mode (hides Tensura's skill HUD, {@code abilities.render})
+     * @param hideFood    true while our blood replaces Tensura's food number ({@code decorations.food.render}); {@code () -> false} without Vampirism
+     */
+    public static void register(BooleanSupplier ourHudShown, BooleanSupplier hideFood) {
+        FLAGS.add(new Flag(new HudFlagGuard(), c -> c.abilities.render, (c, v) -> c.abilities.render = v,
+                () -> ourHudShown.getAsBoolean() && HudClientConfig.hideTensuraSkillHud()));
+        FLAGS.add(new Flag(new HudFlagGuard(), c -> c.decorations.food.render, (c, v) -> c.decorations.food.render = v, hideFood));
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> {
             HudConfig cfg = config();
             if (cfg == null) {
                 return;
             }
-            if (manasScreenOpen(Minecraft.getInstance().screen)) {
-                SKILL_HUD.screenOpening().ifPresent(v -> cfg.abilities.render = v);
-                return;
+            boolean manas = manasScreenOpen(Minecraft.getInstance().screen);
+            for (Flag f : FLAGS) {
+                if (manas) {
+                    f.whileManasScreen(cfg);
+                } else {
+                    f.tick(cfg);
+                }
             }
-            SKILL_HUD.screenClosed(cfg.abilities.render);
-            SKILL_HUD.tick(ourHudShown.getAsBoolean() && HudClientConfig.hideTensuraSkillHud(), cfg.abilities.render).ifPresent(v -> cfg.abilities.render = v);
         });
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Opening e) -> {
             HudConfig cfg = config();
             if (cfg != null && manasScreenOpen(e.getNewScreen())) {
-                SKILL_HUD.screenOpening().ifPresent(v -> cfg.abilities.render = v);
+                FLAGS.forEach(f -> f.whileManasScreen(cfg));
             }
         });
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> restore());
@@ -63,9 +88,10 @@ public final class TensuraHudFlags {
     private static void restore() {
         HudConfig cfg = config();
         if (cfg != null) {
-            SKILL_HUD.restoreNow(cfg.abilities.render).ifPresent(v -> cfg.abilities.render = v);
+            FLAGS.forEach(f -> f.restore(cfg));
         }
     }
+
     private static HudConfig config() {
         return ConfigRegistry.getConfig(HudConfig.class);
     }
