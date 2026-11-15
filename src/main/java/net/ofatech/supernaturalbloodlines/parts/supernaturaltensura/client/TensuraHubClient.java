@@ -21,6 +21,7 @@ public final class TensuraHubClient {
 
     public static void register() {
         HubHooks.setTensura(TensuraHubClient::info);
+        HubHooks.addTheme(new HubHooks.Theme("tensura", () -> true, TensuraHubTheme::new));
         HubHooks.addLauncher(new HubHooks.Launcher("tensura", "T", 0xFF9fd8e6, Component.translatable("supernaturalbloodlines.hub.launcher.tensura"),
                 "io.github.manasmods.", () -> true, () -> ScreenHelper.openScreen(ScreenHelper.STATUS_MENU)));
         NeoForge.EVENT_BUS.addListener(TensuraMenuTab::onInit);

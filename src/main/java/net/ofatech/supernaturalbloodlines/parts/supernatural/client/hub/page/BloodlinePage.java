@@ -1,5 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import java.util.List;
 import java.util.Set;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
@@ -8,11 +11,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubTheme;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotPayload;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 

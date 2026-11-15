@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 

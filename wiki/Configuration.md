@@ -9,6 +9,7 @@ Four config files, all NeoForge **COMMON** configs. They are in the `config/` fo
 | [`supernaturalbloodlines-species.toml`](#species-supernaturalbloodlines-speciestoml) | species | Originals, hunters, hybrids, packs, eclipse |
 | [`supernaturalbloodlines-species_tensura.toml`](#species_tensura-supernaturalbloodlines-species_tensuratoml) | species_tensura | species layers, apex races, sire links |
 | [`supernaturalbloodlines-supernatural.toml`](#supernatural-supernaturalbloodlines-supernaturaltoml) | supernatural | whether a finished rite counts for ladder tasks |
+| [`supernaturalbloodlines-hub-client.toml`](#supernatural-client-supernaturalbloodlines-hub-clienttoml) | supernatural (client only) | the hub's look |
 
 **COMMON configs are not synced** by NeoForge: the server and each client read their own file. Keep them **equal**, especially the part switches and the species_tensura options. See [For server owners](For-Server-Owners#common-configs-must-match).
 
@@ -129,6 +130,14 @@ rank_skills = [
 | `rite_complete_signal` | `true` | A rite that finished counts for ladder tasks (the hook on Enchanted's rites). `false`: no rite counts for any task. |
 
 The ladders themselves are datapack JSON (`data/supernaturalbloodlines/supernatural/ladder/`), not config.
+
+## supernatural (client): `supernaturalbloodlines-hub-client.toml`
+
+A **CLIENT** config: each player picks their own, the server never reads it. It is the one file you may edit while the game runs; an open hub picks the change up at once and stays on its page.
+
+| Key | Default | What it does |
+|---|---|---|
+| `hub_theme` | `GRIMOIRE` | The [hub](Supernatural-Hub)'s look. `GRIMOIRE`: an open book. `BLOOD_MOON`: a dark screen with a red moon that fills with your ladder. `TENSURA`: Tensura's menu style, made wider; needs Tensura and the `supernaturalTensura` part, otherwise the Grimoire is shown. |
 
 ## Part data and the load condition
 

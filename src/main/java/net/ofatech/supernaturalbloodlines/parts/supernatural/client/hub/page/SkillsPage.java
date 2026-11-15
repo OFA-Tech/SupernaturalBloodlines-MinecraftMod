@@ -1,5 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.VampirismRegistries;
 import de.teamlapen.vampirism.api.entity.factions.IPlayableFaction;
@@ -15,13 +19,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubSkills;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubTheme;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.BuySkillPayload;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.UnlockModSkillPayload;
 import org.jetbrains.annotations.Nullable;
@@ -125,11 +126,11 @@ public final class SkillsPage implements HubPageView {
         ourDetail(f, chosen);
     }
 
-    private static HubModel.RungStatus mark(HubSkills.State s) {
+    private static RungStatus mark(HubSkills.State s) {
         return switch (s) {
-            case OWNED -> HubModel.RungStatus.REACHED;
-            case BUYABLE -> HubModel.RungStatus.CURRENT;
-            case LOCKED, DORMANT -> HubModel.RungStatus.LOCKED;
+            case OWNED -> RungStatus.REACHED;
+            case BUYABLE -> RungStatus.CURRENT;
+            case LOCKED, DORMANT -> RungStatus.LOCKED;
         };
     }
 
@@ -147,7 +148,7 @@ public final class SkillsPage implements HubPageView {
     }
 
     /** One list line: a mark, the name, a note on the right. Returns the y under it. */
-    private static int line(HubScreen.Frame f, Rect r, int y, String id, HubModel.RungStatus mark, Component name, Component note, boolean chosen,
+    private static int line(HubScreen.Frame f, Rect r, int y, String id, RungStatus mark, Component name, Component note, boolean chosen,
                             List<Component> tooltip, Runnable select) {
         HubTheme t = f.theme();
         Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, PageKit.LINE + 1);
@@ -157,7 +158,7 @@ public final class SkillsPage implements HubPageView {
         t.drawRungMark(f.g, r.x(), y, mark);
         int nw = f.font().width(note);
         String text = f.font().plainSubstrByWidth(name.getString(), r.w() - HubTheme.MARK - 4 - nw - 4);
-        f.g.drawString(f.font(), text, r.x() + HubTheme.MARK + 4, y + 1, mark == HubModel.RungStatus.LOCKED ? t.muted() : t.ink(), false);
+        f.g.drawString(f.font(), text, r.x() + HubTheme.MARK + 4, y + 1, mark == RungStatus.LOCKED ? t.muted() : t.ink(), false);
         f.g.drawString(f.font(), note, r.right() - nw, y + 1, t.muted(), false);
         f.target(id, hit, tooltip, select);
         if (f.focused(id)) {
@@ -262,8 +263,8 @@ public final class SkillsPage implements HubPageView {
         List<ModSkill> skills = cached;
         ModSkill chosen = skills.stream().filter(s -> s.id().equals(selected)).findFirst().orElse(skills.isEmpty() ? null : skills.get(0));
         for (ModSkill s : skills) {
-            HubModel.RungStatus mark = s.result() == ISkillHandler.Result.ALREADY_ENABLED ? HubModel.RungStatus.REACHED
-                    : s.result() == ISkillHandler.Result.OK ? HubModel.RungStatus.CURRENT : HubModel.RungStatus.LOCKED;
+            RungStatus mark = s.result() == ISkillHandler.Result.ALREADY_ENABLED ? RungStatus.REACHED
+                    : s.result() == ISkillHandler.Result.OK ? RungStatus.CURRENT : RungStatus.LOCKED;
             Component note = s.result() == ISkillHandler.Result.ALREADY_ENABLED ? Component.translatable(KEY + "owned") : Component.translatable(KEY + "cost_mod", s.cost());
             y = line(f, r, y, "modskill:" + s.id(), mark, s.name(), note, s == chosen, List.of(s.name(), reason(s)), () -> selected = s.id());
         }

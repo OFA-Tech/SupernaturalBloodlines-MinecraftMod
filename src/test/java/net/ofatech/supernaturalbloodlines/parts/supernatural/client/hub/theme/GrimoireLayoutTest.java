@@ -1,11 +1,11 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
 import org.junit.jupiter.api.Test;
 
 class GrimoireLayoutTest {

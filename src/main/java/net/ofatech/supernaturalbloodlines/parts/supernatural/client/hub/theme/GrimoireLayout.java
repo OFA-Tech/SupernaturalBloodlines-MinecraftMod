@@ -1,10 +1,10 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
 
 /**
  * The open book's geometry for a screen of {@code width x height} GUI pixels: a cover, two pages either side of the spine (the left one
