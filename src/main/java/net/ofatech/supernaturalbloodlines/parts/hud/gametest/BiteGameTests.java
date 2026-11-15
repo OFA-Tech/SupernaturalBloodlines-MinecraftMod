@@ -3,6 +3,10 @@ package net.ofatech.supernaturalbloodlines.parts.hud.gametest;
 import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.IExtendedCreatureVampirism;
+import java.util.function.Consumer;
+import net.minecraft.world.level.GameType;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
@@ -49,6 +53,13 @@ public final class BiteGameTests {
         return v;
     }
 
+    /** What a claim or PvP mod does: cancel the attack event. Close it to stop. */
+    static AutoCloseable cancelAttacks() {
+        Consumer<AttackEntityEvent> listener = e -> e.setCanceled(true);
+        NeoForge.EVENT_BUS.addListener(listener);
+        return () -> NeoForge.EVENT_BUS.unregister(listener);
+    }
+
     static int blood(PathfinderMob mob) {
         return VampirismAPI.getExtendedCreatureVampirism(mob).map(IExtendedCreatureVampirism::getBlood).orElse(0);
     }
@@ -81,6 +92,44 @@ public final class BiteGameTests {
         BiteService.Result r = BiteService.press(p, v.getId());
         helper.assertTrue(!r.ok() && r.refusal().endsWith("out_of_reach"), "a far target: " + r);
         helper.assertTrue(BiteService.cooldownLeft(p) == 0, "a refused bite started the cooldown");
+        v.discard();
+        helper.succeed();
+    }
+
+    /** Vampirism's own bite ignores a target beyond the player's interaction range (3), which must not look like a bite that worked. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void vampireBiteBeyondInteractionRangeRefused(GameTestHelper helper) {
+        ServerPlayer p = vampire(helper);
+        helper.assertTrue(VampirismAPI.vampirePlayer(p).useBlood(15, true), "could not empty the vampire's blood");
+        PathfinderMob v = villager(helper, 5.0);
+        int villagerBlood = blood(v);
+        BiteService.Result r = BiteService.press(p, v.getId());
+        helper.assertTrue(!r.ok() && r.refusal().endsWith("out_of_reach"), "a target 3.5 blocks away: " + r);
+        helper.assertTrue(BiteService.cooldownLeft(p) == 0, "a refused bite started the cooldown");
+        for (int i = 0; i < 20; i++) {
+            Feeding.tick(p);
+        }
+        helper.assertTrue(blood(v) == villagerBlood, "the villager lost blood");
+        v.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void biterThatCannotActIsRefused(GameTestHelper helper) {
+        PathfinderMob v = villager(helper, 2.5);
+        ServerPlayer spectator = vampire(helper);
+        spectator.setGameMode(GameType.SPECTATOR);
+        BiteService.Result r = BiteService.press(spectator, v.getId());
+        helper.assertTrue(!r.ok() && r.refusal().endsWith("cannot_bite") && BiteService.cooldownLeft(spectator) == 0, "a spectator bit: " + r);
+        ServerPlayer dead = vampire(helper);
+        dead.setHealth(0f);
+        BiteService.Result r2 = BiteService.press(dead, v.getId());
+        helper.assertTrue(!r2.ok() && r2.refusal().endsWith("cannot_bite"), "a dead player bit: " + r2);
+        ServerPlayer asleep = vampire(helper);
+        asleep.startSleeping(asleep.blockPosition());
+        BiteService.Result r3 = BiteService.press(asleep, v.getId());
+        helper.assertTrue(!r3.ok() && r3.refusal().endsWith("cannot_bite"), "a sleeping player bit: " + r3);
+        helper.assertTrue(v.getMaxHealth() == v.getHealth(), "a refused bite hurt the villager");
         v.discard();
         helper.succeed();
     }

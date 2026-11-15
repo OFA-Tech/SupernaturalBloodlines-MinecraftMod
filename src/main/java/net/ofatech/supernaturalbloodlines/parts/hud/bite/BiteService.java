@@ -13,6 +13,8 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.TurningFeed;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.neoforged.neoforge.common.CommonHooks;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -36,6 +38,7 @@ public final class BiteService {
     public static final String KEY = "supernaturalbloodlines.hud.bite.";
     public static final int COOLDOWN_TICKS = 20;
     public static final float HYBRID_BITE_DAMAGE = 2f;
+    public static final int HYBRID_BITE_BLOOD = 2;
     public static final float TURNING_BITE_DAMAGE = 1f;
     public static final ResourceKey<DamageType> DAMAGE_TYPE = ResourceKey.create(Registries.DAMAGE_TYPE,
             ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "turning_bite"));
@@ -60,7 +63,8 @@ public final class BiteService {
         return ModList.get().isLoaded("vampirism");
     }
 
-    public static BiteContext context(ServerPlayer p) {
+    /** Private: it links Vampirism, so only {@link #actionFor}, which checks that Vampirism is installed, may call it. */
+    private static BiteContext context(ServerPlayer p) {
         ResourceLocation faction = VampirismBite.factionId(p);
         boolean werewolf = VampirismBite.WEREWOLF.equals(faction);
         boolean wolfForm = werewolf && ModList.get().isLoaded("werewolves") && WerewolfBite.wolfForm(p);
@@ -97,6 +101,9 @@ public final class BiteService {
     }
 
     private static Result doPress(ServerPlayer p, int targetId) {
+        if (p.isSpectator() || !p.isAlive() || p.isSleeping()) {
+            return new Result(BiteAction.NONE, KEY + "cannot_bite");
+        }
         BiteAction action = actionFor(p);
         if (action == BiteAction.NONE) {
             return new Result(action, KEY + (usable() ? "none" : "needs_vampirism"));
@@ -108,7 +115,12 @@ public final class BiteService {
         if (!(found instanceof LivingEntity target) || !target.isAlive() || target == p) {
             return new Result(action, KEY + "no_target");
         }
-        if (p.distanceTo(target) > HudConfig.biteReach()) {
+        // Vampirism's own biteEntity silently ignores a target beyond the player's interaction range, which would look like a bite that worked
+        double reach = HudConfig.biteReach();
+        if (action == BiteAction.VAMPIRISM_DRINK) {
+            reach = Math.min(reach, p.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE));
+        }
+        if (p.distanceTo(target) > reach) {
             return new Result(action, KEY + "out_of_reach");
         }
         if (!p.hasLineOfSight(target)) {
@@ -129,6 +141,9 @@ public final class BiteService {
         if (!HumanLikeBlood.test(target)) {
             return KEY + "not_human";
         }
+        if (!CommonHooks.onPlayerAttackTarget(p, target)) {
+            return KEY + "cannot_bite_target";
+        }
         if (!target.hurt(new DamageSource(p.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DAMAGE_TYPE), p), TURNING_BITE_DAMAGE)) {
             return KEY + "cannot_bite_target";
         }
@@ -137,17 +152,22 @@ public final class BiteService {
         return null;
     }
 
-    /** Our own feeding for a hybrid type in human form: the victim bleeds 2, so Venom (R42) poisons a vampire by itself, then +5 thirst. */
+    /**
+     * Our own feeding for a hybrid type in human form: the victim bleeds 2 and loses {@link #HYBRID_BITE_BLOOD} of its Vampirism blood (a drained
+     * victim gives nothing, so a hybrid cannot farm one creature), so Venom (R42) poisons a vampire by itself, then +5 thirst.
+     */
     private static String hybridFeed(ServerPlayer p, LivingEntity target) {
         if (BloodlineAccess.get(p).thirst() >= HybridFeed.MAX_THIRST) {
             return KEY + "thirst_full";
         }
-        if (!VampirismBite.hasBlood(target)) {
+        if (VampirismBite.blood(target) <= 0) {
             return KEY + "no_blood";
         }
-        if (!target.hurt(p.damageSources().playerAttack(p), HYBRID_BITE_DAMAGE)) {
+        // claim and PvP mods answer to the attack event; a victim they protect is not bitten
+        if (!CommonHooks.onPlayerAttackTarget(p, target) || !target.hurt(p.damageSources().playerAttack(p), HYBRID_BITE_DAMAGE)) {
             return KEY + "cannot_bite_target";
         }
+        VampirismBite.drain(target, HYBRID_BITE_BLOOD);
         HybridFeed.feed(p);
         return null;
     }

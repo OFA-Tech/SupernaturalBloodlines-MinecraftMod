@@ -169,7 +169,7 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
   | 4 | Werewolf faction in human form, no vampire side | Werewolves' bite, which refuses while the form cannot bite |
   | 5 | Anyone else (a Tensura vampire race with no Vampirism faction feeds with Tensura's own race-ability key) | Nothing; the slot shows greyed with the reason |
 
-  "Transformed" is Werewolves' own `WerewolfForm.isTransformed()`, the forms in which `canBite()` lets a werewolf bite (the half form and the beast forms). A victim has blood when it is a mob with `entity_blood` above 0, a vampire (player or mob), or a player that is not bloodless. The target must be in the same level, within `bite_reach` (4), in sight and alive; one bite per 20 ticks.
+  "Transformed" is Werewolves' own `WerewolfForm.isTransformed()`, the forms in which `canBite()` lets a werewolf bite (the half form and the beast forms). A victim has blood by Vampirism's own values: a mob with `entity_blood` above 0, or a player that is not bloodless (a vampire mob has none). **Row 3 takes 2 of that blood** from the victim, and a drained victim gives nothing, so one creature cannot be farmed; it also fires the attack event first, so a claim or PvP mod that protects the victim refuses the bite. The biter must be alive, awake and not a spectator. The target must be in the same level, within `bite_reach` (4), in sight and alive; one bite per 20 ticks.
 
 ## Skills (plan 12, phase 12c)
 

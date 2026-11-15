@@ -57,6 +57,22 @@ public final class TurningBiteGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void turningBiteRefusedByAClaim(GameTestHelper helper) throws Exception {
+        ServerPlayer p = inTurning(helper);
+        PathfinderMob v = BiteGameTests.villager(helper, 2.5);
+        try (AutoCloseable claim = BiteGameTests.cancelAttacks()) {
+            BiteService.Result r = BiteService.press(p, v.getId());
+            helper.assertTrue(!r.ok() && r.refusal().endsWith("cannot_bite_target"), "a protected villager: " + r);
+        } finally {
+            v.discard();
+        }
+        helper.assertTrue(BloodlineAccess.get(p).inTurning() && BiteService.cooldownLeft(p) == 0 && v.getHealth() == v.getMaxHealth(),
+                "a refused turning bite changed something");
+        clean(p);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void turningBiteRefusesNonHumanLike(GameTestHelper helper) {
         ServerPlayer p = inTurning(helper);
         Mob cow = (Mob) EntityType.COW.create(helper.getLevel());

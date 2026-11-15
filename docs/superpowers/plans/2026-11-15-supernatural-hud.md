@@ -341,7 +341,7 @@ Vampirism, Werewolves and SupernaturalBloodlines are **deliberately out of the p
   - For `supernaturalbloodlines:bite` it calls `BiteService.press(p, targetEntityId)` on press and `release(p)` on release (13a Task 2).
   - For any other id it checks that the action is unlocked, then calls `toggleAction(action, ctx)` on press only, with `ctx` from a server ray-trace (`ActivationContext` implemented by a small record). A refusal `PERM` gets the action-bar reason.
 
-  It is rate-limited.
+  It is rate-limited. **`rate_limit_per_second` applies to every press payload, refusals included** (a refused press costs as much as a bite, so spamming refusals cannot flood the server; `BiteService`'s own 20-tick cooldown counts only bites that happened). The Bite slot also gets `BiteService`'s refusal reason keys (`supernaturalbloodlines.hud.bite.*`) for its greyed state.
 - Modify: `parts/hud/client/HudInput.java` (from Task 2's key handling): in Supernatural mode the six keys send `TriggerActionPayload` on press and on release.
 - Test: `parts/hud/gametest/ActionGameTests.java`.
 

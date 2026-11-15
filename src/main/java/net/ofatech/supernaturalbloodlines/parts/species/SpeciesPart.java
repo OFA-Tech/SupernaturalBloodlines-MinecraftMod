@@ -140,7 +140,9 @@ public final class SpeciesPart {
         net.ofatech.supernaturalbloodlines.shared.supernatural.TurningFeed.set(
                 p -> BloodlineAccess.get(p).inTurning() && TurningHandler.wouldComplete(p), TurningHandler::drankHumanBlood);
         net.ofatech.supernaturalbloodlines.shared.supernatural.HybridFeed.set(
-                p -> HybridTraits.isHybrid(BloodlineAccess.get(p).species()) && ModList.get().isLoaded("werewolves"), p -> BloodThirst.addThirst(p, BloodThirst.GAIN));
+                p -> HybridTraits.isHybrid(BloodlineAccess.get(p).species()) && ModList.get().isLoaded("werewolves")
+                        && net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural.isWerewolf(p),
+                p -> BloodThirst.addThirst(p, BloodThirst.GAIN));
         net.ofatech.supernaturalbloodlines.shared.supernatural.SireCount.set(
                 p -> net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(p.serverLevel()).childrenOf(p.getUUID()).size());
         SpeciesHub.register();

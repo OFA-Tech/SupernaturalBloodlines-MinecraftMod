@@ -3,7 +3,6 @@ package net.ofatech.supernaturalbloodlines.parts.hud.bite;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IPlayableFaction;
 import de.teamlapen.vampirism.api.entity.player.vampire.IVampirePlayer;
-import de.teamlapen.vampirism.api.entity.vampire.IVampire;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -36,15 +35,28 @@ final class VampirismBite {
         return f == null ? null : f.getID();
     }
 
-    /** Blood by Vampirism's rule: a mob with {@code entity_blood} above 0, a vampire (a vampire mob is as full of blood as a vampire player), or a player that is not bloodless. */
-    static boolean hasBlood(LivingEntity target) {
+    /**
+     * The blood a bite can take, by Vampirism's own values: a mob's {@code ExtendedCreature} blood (from the {@code entity_blood} data map), a
+     * player's blood stats (a bloodless race has none). A vampire mob has no blood value, so nothing to drink.
+     */
+    static int blood(LivingEntity target) {
         if (target instanceof Player player) {
-            return !BloodlessPlayers.test(player);
+            return BloodlessPlayers.test(player) ? 0 : VampirismAPI.vampirePlayer(player).getBloodStats().getBloodLevel();
         }
-        if (target instanceof IVampire) {
-            return true;
+        return target instanceof PathfinderMob mob ? VampirismAPI.getExtendedCreatureVampirism(mob).map(c -> c.getBlood()).orElse(0) : 0;
+    }
+
+    /** Takes up to {@code amount} blood from the victim, the way Vampirism's own feeding does. */
+    static void drain(LivingEntity target, int amount) {
+        int take = Math.min(amount, blood(target));
+        if (take <= 0) {
+            return;
         }
-        return target instanceof PathfinderMob mob && VampirismAPI.getExtendedCreatureVampirism(mob).map(c -> c.getBlood() > 0).orElse(false);
+        if (target instanceof Player player) {
+            VampirismAPI.vampirePlayer(player).useBlood(take, true);
+        } else if (target instanceof PathfinderMob mob) {
+            VampirismAPI.getExtendedCreatureVampirism(mob).ifPresent(c -> c.setBlood(c.getBlood() - take));
+        }
     }
 
     /** Starts Vampirism's own feeding. Null when it started, else the refusal's lang key. */

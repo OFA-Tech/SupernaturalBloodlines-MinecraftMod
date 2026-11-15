@@ -33,7 +33,7 @@ public final class BiteWerewolfGameTests {
     }
 
     /** {@code WerewolfPlayer.switchForm} is public, but its class needs the Vampirism full jar to compile against. */
-    private static void switchForm(ServerPlayer p, WerewolfForm form) {
+    static void switchForm(ServerPlayer p, WerewolfForm form) {
         Object wolf = VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow();
         try {
             MethodHandles.publicLookup().findVirtual(wolf.getClass(), "switchForm", MethodType.methodType(void.class, WerewolfForm.class)).invoke(wolf, form);
@@ -67,6 +67,21 @@ public final class BiteWerewolfGameTests {
         } finally {
             BloodlineAccess.set(p, BloodlineState.NONE);
         }
+        helper.succeed();
+    }
+
+    /** The half form is transformed (Werewolves' own canBite() says so), so it is a wolf form: row 1, not row 4. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void halfFormTakesRowOne(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper);
+        switchForm(p, WerewolfForm.HUMAN);
+        PathfinderMob v = BiteGameTests.villager(helper, 2.5);
+        helper.assertTrue(BiteService.actionFor(p) == BiteAction.WEREWOLF_BITE, "a werewolf in the half form bites with " + BiteService.actionFor(p));
+        float health = v.getHealth();
+        BiteService.Result r = BiteService.press(p, v.getId());
+        helper.assertTrue(r.ok() && v.getHealth() < health, "the half form's bite: " + r);
+        switchForm(p, WerewolfForm.NONE);
+        v.discard();
         helper.succeed();
     }
 
