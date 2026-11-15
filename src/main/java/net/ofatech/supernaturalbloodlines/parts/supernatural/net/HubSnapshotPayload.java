@@ -1,0 +1,126 @@
+package net.ofatech.supernaturalbloodlines.parts.supernatural.net;
+
+import io.netty.buffer.ByteBuf;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
+
+/**
+ * Server to client, answering {@link HubSnapshotRequestPayload}: what the hub shows about other players and the world. Only names,
+ * ranks and online flags of others; the genes are the subject's own, as their client may know them (unknown until discovered).
+ */
+public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes,
+                                 List<HubSocial.Rite> rites) implements CustomPacketPayload {
+    /**
+     * The player's line: the sire (and whether the bond is severed), the sire's sire and up, those the player sired, and everyone below.
+     * Names only.
+     */
+    public record Family(Optional<String> sire, boolean severed, List<String> sired, List<String> ancestors, List<HubSocial.Kin> line) {
+        public static final Family NONE = new Family(Optional.empty(), false, List.of(), List.of(), List.of());
+
+        public Family {
+            sired = cap(sired);
+            ancestors = cap(ancestors);
+            line = cap(line);
+        }
+    }
+
+    public static final Type<HubSnapshotPayload> TYPE = new Type<>(
+            ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "hub_snapshot"));
+
+    public static final HubSnapshotPayload EMPTY = new HubSnapshotPayload(Family.NONE, List.of(), 0, Map.of(), List.of());
+
+    private static final int MAX_NAMES = 256;
+    private static final StreamCodec<ByteBuf, String> NAME = ByteBufCodecs.stringUtf8(64);
+    private static final StreamCodec<ByteBuf, String> ID = ByteBufCodecs.stringUtf8(128);
+
+    private static final StreamCodec<ByteBuf, HubSocial.Member> MEMBER = StreamCodec.composite(
+            NAME, HubSocial.Member::name,
+            ByteBufCodecs.stringUtf8(16), HubSocial.Member::rank,
+            ByteBufCodecs.BOOL, HubSocial.Member::online,
+            HubSocial.Member::new);
+
+    private static final StreamCodec<ByteBuf, HubSocial.Kin> KIN = StreamCodec.composite(
+            NAME, HubSocial.Kin::name,
+            ByteBufCodecs.VAR_INT, HubSocial.Kin::depth,
+            HubSocial.Kin::new);
+
+    private static final StreamCodec<ByteBuf, HubSocial.Rite> RITE = StreamCodec.composite(
+            ID, HubSocial.Rite::id,
+            ByteBufCodecs.VAR_INT, HubSocial.Rite::power,
+            ID.apply(ByteBufCodecs.list(32)), HubSocial.Rite::items,
+            ID.apply(ByteBufCodecs.list(8)), HubSocial.Rite::shapes,
+            ID, HubSocial.Rite::factory,
+            ByteBufCodecs.stringUtf8(64), HubSocial.Rite::faction,
+            HubSocial.Rite::new);
+
+    private static final StreamCodec<ByteBuf, Family> FAMILY = StreamCodec.composite(
+            ByteBufCodecs.optional(NAME), Family::sire,
+            ByteBufCodecs.BOOL, Family::severed,
+            NAME.apply(ByteBufCodecs.list(MAX_NAMES)), Family::sired,
+            NAME.apply(ByteBufCodecs.list(MAX_NAMES)), Family::ancestors,
+            KIN.apply(ByteBufCodecs.list(MAX_NAMES)), Family::line,
+            Family::new);
+
+    private static final StreamCodec<ByteBuf, Genes.Knowledge> KNOWLEDGE = ByteBufCodecs.stringUtf8(16).map(
+            s -> Genes.Knowledge.valueOf(s.toUpperCase(Locale.ROOT)), k -> k.name().toLowerCase(Locale.ROOT));
+
+    public static final StreamCodec<ByteBuf, HubSnapshotPayload> STREAM_CODEC = StreamCodec.composite(
+            FAMILY, HubSnapshotPayload::family,
+            MEMBER.apply(ByteBufCodecs.list(MAX_NAMES)), HubSnapshotPayload::pack,
+            ByteBufCodecs.VAR_INT, HubSnapshotPayload::fiveCount,
+            ByteBufCodecs.map(LinkedHashMap::new, ByteBufCodecs.stringUtf8(32), KNOWLEDGE, 8), HubSnapshotPayload::genes,
+            RITE.apply(ByteBufCodecs.list(MAX_NAMES)), HubSnapshotPayload::rites,
+            HubSnapshotPayload::new);
+
+    public HubSnapshotPayload {
+        // the codec caps a list: a sire of hundreds is cut, not a crash on the client
+        pack = cap(pack);
+        genes = Map.copyOf(genes);
+        rites = cap(rites);
+    }
+
+    private static <T> List<T> cap(List<T> l) {
+        return List.copyOf(l.subList(0, Math.min(l.size(), MAX_NAMES)));
+    }
+
+    public Optional<String> sire() {
+        return family.sire();
+    }
+
+    public boolean severed() {
+        return family.severed();
+    }
+
+    public List<String> sired() {
+        return family.sired();
+    }
+
+    /** The snapshot for {@code p}, built only from {@code p}'s own state and the indexes' names. */
+    public static HubSnapshotPayload of(ServerPlayer p) {
+        BloodlineState own = BloodlineAccess.get(p);
+        BloodlineState view = BloodlineAccess.clientView(own, true);
+        Map<String, Genes.Knowledge> genes = new LinkedHashMap<>();
+        Genes.ALL.forEach(g -> genes.put(g, Genes.ofClient(view, g)));
+        HubSocial.Social social = HubSocial.of(p);
+        return new HubSnapshotPayload(new Family(social.sire(), own.bondBroken(), social.sired(), social.ancestors(), social.line()),
+                social.pack(), social.fiveCount(), genes, social.rites());
+    }
+
+    @Override
+    public Type<HubSnapshotPayload> type() {
+        return TYPE;
+    }
+}

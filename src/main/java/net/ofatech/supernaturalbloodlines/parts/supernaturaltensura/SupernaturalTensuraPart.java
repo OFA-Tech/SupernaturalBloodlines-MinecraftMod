@@ -14,6 +14,9 @@ public final class SupernaturalTensuraPart {
         ApexRaceReader.register();
         PrimevalRoarGrant.register();
         TensuraSkillEffects.register();
+        if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+            net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.client.TensuraHubClient.register();
+        }
         modBus.addListener((net.neoforged.neoforge.event.RegisterGameTestsEvent e) -> {
             e.register(TensuraSkillGameTests.class);
             if (net.neoforged.fml.ModList.get().isLoaded("werewolves")) {

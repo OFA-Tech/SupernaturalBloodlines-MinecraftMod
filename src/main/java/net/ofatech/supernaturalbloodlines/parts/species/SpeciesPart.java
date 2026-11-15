@@ -139,6 +139,7 @@ public final class SpeciesPart {
         net.ofatech.supernaturalbloodlines.shared.supernatural.HumanLikeBlood.set(TurningHandler::isHumanLikeBlood);
         net.ofatech.supernaturalbloodlines.shared.supernatural.SireCount.set(
                 p -> net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(p.serverLevel()).childrenOf(p.getUUID()).size());
+        SpeciesHub.register();
         OriginalRules.register();
         Siphoning.register();
         VampireJoin.register();
@@ -208,6 +209,7 @@ public final class SpeciesPart {
             e.register(HunterMarkGameTests.class);
             e.register(HunterInstinctGameTests.class);
             e.register(SirelineGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.SpeciesHubGameTests.class);
             e.register(SirelineCommandGameTests.class);
             e.register(SirelineCompulsionGameTests.class);
             e.register(SirelineDeathGameTests.class);

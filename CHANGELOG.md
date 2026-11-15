@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased: the hub (plan 12, phase 12e)
+
+Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (The hub). Part: supernatural (and species for the names). No new mixin.
+
+- **The hub screen (Tasks 1 and 2).** Press Home to open it (and to close it). One screen model with themes as skins; the theme is a client setting (`hub_theme`), and the **Grimoire** (an open book with ribbon bookmarks) is the default and the only one so far. **Path** shows your story and each ladder you climb, rung by rung, and the next rung's tasks with their source tags and a wax stamp to claim a done one. **Quests** lists every active task and open skill quest, with the chosen one in full (progress, the mod's own hint). A Ghoul sees the turning. Keyboard: Tab, arrows, Enter. Skills, Rites, Bloodline and Pack come in the next tasks.
+- **The rest of the hub (Tasks 3 to 5).** Skills: learn our skills with SP and unlock your Vampirism or Werewolves skills with that mod's points (the Loadout tab comes with the ability HUD). Rites (your rite tasks, and every rite of ours the server has with power, circle and items, yours first), Bloodline (the family tree up and down, a call button, genes as Unknown ? until discovered, Tensura EP) and Pack (only for werewolves and hybrid types; accept and leave). Path shows the Tensura race and EP. Wax seals open Tensura's status menu, Enchanted's book and your Vampirism or Werewolves skill tree unchanged, and Esc brings you back to the same page. Tensura's menu has a fifth tab for the hub (no mixin). The hub key is now **Home** (J is JourneyMap's), and it also closes the hub. Level steps show your current level.
+- **Hub snapshot.** Opening the hub asks the server for the names it shows (sire, sired, pack members and ranks, the Five's count, severance) and your own genes as your client may know them. Nothing of other players' state is sent.
 ## Unreleased: apex additions (plan 12, phase 12d)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (Apex races, D1 and D2). Parts: species_tensura, supernatural_tensura. No new mixin (species_tensura stays at 2 of 3).

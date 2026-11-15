@@ -15,6 +15,9 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.LadderService;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.SkillService;
 import net.neoforged.fml.ModList;
+import java.util.Map;
+import net.neoforged.fml.loading.FMLEnvironment;
+import java.util.WeakHashMap;
 
 /**
  * The part's packets. They are registered as optional, so a client without this part (or a server without it) still connects. The
@@ -52,6 +55,16 @@ public final class LadderNet {
                         ModSkillService.unlock(p, payload.skillId());
                     }
                 }));
+        registrar.playToServer(HubSnapshotRequestPayload.TYPE, HubSnapshotRequestPayload.STREAM_CODEC, (payload, ctx) ->
+                ctx.enqueueWork(() -> {
+                    if (ctx.player() instanceof ServerPlayer p && snapshotDue(p)) {
+                        PacketDistributor.sendToPlayer(p, HubSnapshotPayload.of(p));
+                    }
+                }));
+        // the client handler is only named on a client, so a dedicated server never links the client class
+        registrar.playToClient(HubSnapshotPayload.TYPE, HubSnapshotPayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
+                ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.HubClientHandlers::snapshot
+                : (payload, ctx) -> { });
         registrar.playToClient(SkillTablePayload.TYPE, SkillTablePayload.STREAM_CODEC, (payload, ctx) ->
                 ctx.enqueueWork(() -> {
                     SkillTable.Parsed parsed = payload.parseWithServerSets();
@@ -64,6 +77,20 @@ public final class LadderNet {
                     parsed.rejected().forEach(r -> SupernaturalBloodlines.LOGGER.warn("Ladder from the server rejected: {}", r));
                     LadderTable.setClientCopy(parsed.table());
                 }));
+    }
+
+    // server thread only; a snapshot walks the indexes, so a request within a second of the last one is dropped (the client keeps the last answer)
+    private static final Map<ServerPlayer, Long> LAST_SNAPSHOT = new WeakHashMap<>();
+    private static final long SNAPSHOT_COOLDOWN = 20;
+
+    static boolean snapshotDue(ServerPlayer p) {
+        long now = p.serverLevel().getGameTime();
+        Long last = LAST_SNAPSHOT.get(p);
+        if (last != null && now - last < SNAPSHOT_COOLDOWN && now >= last) {
+            return false;
+        }
+        LAST_SNAPSHOT.put(p, now);
+        return true;
     }
 
     public static void sendTable(ServerPlayer p) {

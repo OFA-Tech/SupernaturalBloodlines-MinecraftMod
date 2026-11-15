@@ -6,6 +6,10 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.BloodSkill
 import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.BloodEffects;
 import java.util.List;
 import java.util.Optional;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.HubKeybinds;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClientConfig;
 import java.util.Set;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.IEventBus;
@@ -53,6 +57,10 @@ public final class SupernaturalPart {
         });
         Detectors.register();
         LadderNet.register(modBus);
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            container.registerConfig(ModConfig.Type.CLIENT, HubClientConfig.SPEC, HubClientConfig.FILE);
+            HubKeybinds.register(modBus);
+        }
         LadderQuery.set(new LadderQuery.Provider() {
             @Override
             public Optional<LayerSlice> layerSlice(Player player) {
@@ -106,6 +114,7 @@ public final class SupernaturalPart {
             e.register(BloodSkillGameTests.class);
             e.register(PredatorsThirstGameTests.class);
             e.register(ModSkillGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.HubGameTests.class);
             if (ModList.get().isLoaded("tensura") && EnabledParts.isEnabled("supernaturalTensura")) {
                 e.register(TensuraEpGameTests.class);
             }

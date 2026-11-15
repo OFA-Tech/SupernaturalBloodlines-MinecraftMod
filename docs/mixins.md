@@ -39,6 +39,10 @@ Config `supernaturalbloodlines.supernatural.mixins.json`, plugin `SupernaturalMi
 |---|---|---|---|---|
 | supernatural | `RiteCompleteMixin` | `Rite.start()` (`@Inject` at the `INVOKE` of `stop()`, `require = 0`) and `Rite.cancel()` (HEAD, marks the instance in a `@Unique` field) | Enchanted 4.2.7 fires no event when a rite works (checked with javap: its `*Events` classes are client, common, effects and poppets). `start()` calls `stop()` only when `onStart` returned false, which means the rite is finished; a rite that refuses (`return cancel()`) ends the same way, so `cancel()` marks the instance and the signal is sent only for an instance that was not cancelled. `RiteSignal` then fires `rite:<datapack rite id>:performer / :target` through `TaskSignals` for the caster and for the rite's target (its own target player, else the player on the circle's centre). It is the single "a rite worked" signal for every rite, Enchanted's own types and ours (our rite factories no longer fire anything). A rite that keeps running (`onStart` true) and ends in `tick()` is not signalled: none of the rites the ladders ask for runs over time. Verified with real rites in `RiteSignalGameTests`: an Enchanted `create_item` type counts once, a rite of ours counts once, a cancelled rite counts for nothing. | `rite_complete_signal` in `supernaturalbloodlines-supernatural.toml` (the mixin stays applied, the signal is not sent) |
 
+## supernatural_tensura (0 of 3)
+
+No mixin. Tensura's menu tab for the hub (plan 12 phase 12e Task 5) is added with `ScreenEvent.Init.Post` (`TensuraMenuTab`), so the reserved slot stays unused. If an update to Tensura ever stops the event from placing it, the reserved mixin goes here, `require = 0`, with a switch in `supernaturalbloodlines-supernatural_tensura.toml`.
+
 ## Access transformers
 
 Not a mixin and not counted in the budget. `META-INF/accesstransformer.cfg` makes `Entity.setSharedFlag(int, boolean)` and `getSharedFlag(int)` public, so the species part's `client/HunterSenseClient` can outline entities on one client (see docs/parts/species.md, Hunters: instinct, sense).

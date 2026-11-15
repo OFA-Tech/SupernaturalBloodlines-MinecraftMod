@@ -1,10 +1,11 @@
 # Key binds
 
-The mod has **one key bind**. It is on the client only, and it only exists when **Werewolves** is installed.
+The mod has **two key binds**, both on the client only.
 
 | Key bind | Category in Controls | Default | Does |
 |---|---|---|---|
-| **Alpha Roar** | Supernatural Bloodlines | **unbound** (registered with no default key) | The [Alpha Roar](Werewolves-And-Packs#alpha-roar). Only an Alpha or True Alpha can use it; the server checks. Same as `/pack roar`. |
+| **Supernatural hub** | Supernatural Bloodlines | **Home** | Opens the [Supernatural hub](Supernatural-Hub); in the hub it closes it. Only exists with the supernatural part on. J was not used: it is JourneyMap's map, and = and - are map zoom keys. |
+| **Alpha Roar** | Supernatural Bloodlines | **unbound** (registered with no default key; only exists when **Werewolves** is installed) | The [Alpha Roar](Werewolves-And-Packs#alpha-roar). Only an Alpha or True Alpha can use it; the server checks. Same as `/pack roar`. |
 
 Bind it in **Options > Controls > Key Binds**, under **Supernatural Bloodlines**.
 
