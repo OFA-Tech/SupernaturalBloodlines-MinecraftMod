@@ -1,4 +1,4 @@
-package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
+package net.ofatech.supernaturalbloodlines.shared.hub;
 
 /** A screen rectangle in GUI pixels. Pure. */
 public record Rect(int x, int y, int w, int h) {

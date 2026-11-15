@@ -1,5 +1,11 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
+import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -7,14 +13,12 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubTheme;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubThemeViews;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BloodMoonPathPage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PathPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 
 /**
@@ -23,12 +27,17 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
  * page's content sits in two cards under the moon. Every page but Path uses the shared views; Path has its own
  * ({@link BloodMoonPathPage}) because the moon already shows the ladder. All drawn with fills: no textures but our page icons.
  */
-public final class BloodMoonTheme implements HubTheme {
+public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     private static final ResourceLocation ICONS = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hub/grimoire/widgets.png");
     private static final int CARD = 0xFF1a0a10;
     private static final int EDGE = 0xFF4a1c26;
     private static final int RED = 0xFFe2493f;
     private static final int GOLD = 0xFFffd36b;
+    private static final int PILL = 0xFF2a0b12;
+    private static final int COUNT = 0xFFfff1ea;
+    /** The screen's gradient, top to bottom: the moon band's text is on it. */
+    private static final int SKY_TOP = 0xFF2a0b14;
+    private static final int SKY_BOTTOM = 0xFF07040a;
     private static final HubPageView PATH = new BloodMoonPathPage();
 
     @Override
@@ -38,13 +47,13 @@ public final class BloodMoonTheme implements HubTheme {
 
     @Override
     public HubPageView view(HubPage page) {
-        return page == HubPage.PATH ? PATH : HubTheme.super.view(page);
+        return page == HubPage.PATH ? PATH : HubThemeViews.super.view(page);
     }
 
     @Override
     public void drawFrame(GuiGraphics g, HubLayout l) {
         Rect s = l.frame();
-        g.fillGradient(s.x(), s.y(), s.right(), s.bottom(), 0xFF2a0b14, 0xFF07040a);
+        g.fillGradient(s.x(), s.y(), s.right(), s.bottom(), SKY_TOP, SKY_BOTTOM);
         for (String region : List.of(HubLayout.MAIN, HubLayout.SIDE)) {
             Rect c = BloodMoonLayout.card(l.region(region));
             g.fill(c.x(), c.y(), c.right(), c.bottom(), 0xE61a0a10);
@@ -77,7 +86,10 @@ public final class BloodMoonTheme implements HubTheme {
             // the count in the moon, so the fill reads without the tooltip
             Component count = ladders.get(0).active().map(a -> (Component) Component.literal(a.claimed() + " / " + a.tasks()))
                     .orElse(Component.translatable("supernaturalbloodlines.hub.moon.full"));
-            g.drawString(font, count, cx - font.width(count) / 2, cy - 4, 0xFFfff1ea, true);
+            // on a dark pill: the lit moon runs from pale pink to deep red, and no one text colour reads on all of it
+            int cw = font.width(count);
+            g.fill(cx - cw / 2 - 3, cy - 6, cx + cw / 2 + 3, cy + 6, PILL);
+            g.drawString(font, count, cx - cw / 2, cy - 4, COUNT, false);
         }
         if (ladders.size() > 1) {
             ring(g, cx, cy, r + 2, progress(ladders.get(1)));
@@ -101,12 +113,14 @@ public final class BloodMoonTheme implements HubTheme {
             }
             y += 3;
         }
-        int rx = band.right() - 2;
+        // the counters sit at the bottom right of the band: the top right is where vanilla's toasts are drawn
+        Rect counters = BloodMoonLayout.counters(band);
+        int rx = counters.right();
         Component sp = Component.translatable("supernaturalbloodlines.hub.moon.sp", f.view.state().sp());
-        g.drawString(font, sp, rx - font.width(sp), band.y() + 4, GOLD, true);
+        g.drawString(font, sp, rx - font.width(sp), counters.y(), GOLD, true);
         HubHooks.tensura().ifPresent(info -> {
             Component ep = Component.translatable("supernaturalbloodlines.hub.moon.ep", String.format("%,d", (long) info.ep()));
-            g.drawString(font, ep, rx - font.width(ep), band.y() + 14, ink(), false);
+            g.drawString(font, ep, rx - font.width(ep), counters.y() + 10, ink(), false);
         });
     }
 
@@ -128,8 +142,7 @@ public final class BloodMoonTheme implements HubTheme {
             drawRungMark(f.g, gx, gy, row.status());
             String id = "phase:" + ladder.race().id() + ":" + row.id();
             Rect hit = new Rect(gx - 1, gy - 1, MARK + 2, MARK + 2);
-            f.target(id, hit, List.of(Component.translatableWithFallback("supernaturalbloodlines.hub.rung." + row.id(), row.name()),
-                    Component.translatable("supernaturalbloodlines.hub.path.rung_state." + row.status().name().toLowerCase(java.util.Locale.ROOT))), null);
+            f.target(id, hit, PathPage.rungTooltip(ladder, row), null);
             if (f.focused(id)) {
                 drawFocus(f.g, hit);
             }
@@ -181,7 +194,7 @@ public final class BloodMoonTheme implements HubTheme {
     }
 
     @Override
-    public void drawRungMark(GuiGraphics g, int x, int y, HubModel.RungStatus status) {
+    public void drawRungMark(GuiGraphics g, int x, int y, RungStatus status) {
         // a gem: a diamond of rows
         int fill = switch (status) {
             case REACHED -> RED;
@@ -203,11 +216,11 @@ public final class BloodMoonTheme implements HubTheme {
     }
 
     @Override
-    public void drawTaskBox(GuiGraphics g, int x, int y, HubModel.TaskState state) {
-        g.renderOutline(x, y, BOX, BOX, state == HubModel.TaskState.CLAIMABLE ? good() : muted());
-        if (state == HubModel.TaskState.CLAIMABLE) {
+    public void drawTaskBox(GuiGraphics g, int x, int y, TaskState state) {
+        g.renderOutline(x, y, BOX, BOX, state == TaskState.CLAIMABLE ? good() : muted());
+        if (state == TaskState.CLAIMABLE) {
             g.fill(x + 1, y + 1, x + BOX - 1, y + BOX - 1, 0xFF3f8f5a);
-        } else if (state == HubModel.TaskState.CLAIMED) {
+        } else if (state == TaskState.CLAIMED) {
             g.fill(x + 2, y + 2, x + BOX - 2, y + BOX - 2, muted());
         }
     }
@@ -248,6 +261,14 @@ public final class BloodMoonTheme implements HubTheme {
     @Override
     public int paper() {
         return CARD;
+    }
+
+    @Override
+    public List<TextPair> textPairs() {
+        return List.of(new TextPair("moon count", COUNT, PILL),
+                new TextPair("race, gold, on the sky top", GOLD, SKY_TOP), new TextPair("race, gold, on the sky bottom", GOLD, SKY_BOTTOM),
+                new TextPair("next rung, muted, on the sky top", muted(), SKY_TOP), new TextPair("next rung, muted, on the sky bottom", muted(), SKY_BOTTOM),
+                new TextPair("EP, ink, on the sky top", ink(), SKY_TOP), new TextPair("EP, ink, on the sky bottom", ink(), SKY_BOTTOM));
     }
 
     @Override

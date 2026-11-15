@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
+import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -22,10 +24,6 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.TaskSpec;
  * themes only draw it. It decides nothing: a claim is still the server's, this only says which stamp to offer.
  */
 public final class HubModel {
-    public enum RungStatus { REACHED, CURRENT, LOCKED }
-
-    public enum TaskState { CLAIMABLE, OPEN, CLAIMED, FROZEN }
-
     /** @param claimed tasks of this rung claimed so far (all of them once reached) */
     public record RungRow(String id, String name, int index, RungStatus status, int claimed, int tasks, int sp, long ep) {
     }

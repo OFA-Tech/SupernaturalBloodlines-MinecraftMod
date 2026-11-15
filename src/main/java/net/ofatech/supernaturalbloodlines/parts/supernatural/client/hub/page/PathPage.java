@@ -1,19 +1,21 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubView;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 
 /** Path: the left page is your story and your ladders (rungs as chapters), the right page the next rung's tasks with their claim stamps. */
@@ -34,9 +36,9 @@ public final class PathPage implements HubPageView {
         f.g.drawString(f.font(), Component.translatable(KEY + "book_of"), r.x(), y, t.muted(), false);
         y = PageKit.title(f, v.player().getName(), r.x(), y + PageKit.LINE, r.w(), t.accent());
         y = PageKit.wrapped(f, subtitle(v), r.x(), y + 1, r.w(), t.muted());
-        HubHooks.TensuraInfo tensura = HubHooks.tensura().orElse(null);
-        if (tensura != null) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "tensura", tensura.race(), String.format("%,d", (long) tensura.ep())), r.x(), y, r.w(), t.muted());
+        Optional<Component> tensura = tensuraLine();
+        if (tensura.isPresent()) {
+            y = PageKit.wrapped(f, tensura.get(), r.x(), y, r.w(), t.muted());
         }
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 6;
@@ -62,17 +64,26 @@ public final class PathPage implements HubPageView {
         for (int i = 0; i < v.races().size(); i++) {
             races.append(i == 0 ? Component.empty() : Component.literal(" \u00b7 ")).append(PageKit.race(v.races().get(i)));
         }
-        v.snapshot().sire().ifPresent(sire -> races.append(Component.literal(" \u00b7 "))
-                .append(Component.translatable(v.snapshot().severed() ? KEY + "sire_severed" : KEY + "sire", sire)));
+        sireLine(v).ifPresent(sire -> races.append(Component.literal(" \u00b7 ")).append(sire));
         return races;
+    }
+
+    /** "sired by X" (or "(bond severed)"), when the snapshot names a sire. Shared with the themes' own Path views. */
+    static Optional<Component> sireLine(HubView v) {
+        return v.snapshot().sire().map(sire -> Component.translatable(v.snapshot().severed() ? KEY + "sire_severed" : KEY + "sire", sire));
+    }
+
+    /** "Tensura: race, EP" with Tensura and its part on. */
+    static Optional<Component> tensuraLine() {
+        return HubHooks.tensura().map(info -> Component.translatable(KEY + "tensura", info.race(), String.format("%,d", (long) info.ep())));
     }
 
     private static int rung(HubScreen.Frame f, HubModel.LadderView ladder, HubModel.RungRow row, Rect r, int y) {
         HubTheme t = f.theme();
-        boolean current = row.status() == HubModel.RungStatus.CURRENT;
+        boolean current = row.status() == RungStatus.CURRENT;
         int h = current ? PageKit.LINE + 5 : PageKit.LINE + 1;
         t.drawRungMark(f.g, r.x(), y, row.status());
-        int color = row.status() == HubModel.RungStatus.LOCKED ? t.muted() : current ? t.accent() : t.ink();
+        int color = row.status() == RungStatus.LOCKED ? t.muted() : current ? t.accent() : t.ink();
         Component status = status(ladder, row);
         int sw = f.font().width(status);
         String name = f.font().plainSubstrByWidth(PageKit.rung(row).getString(), r.w() - HubTheme.MARK - 4 - sw - 4);
@@ -83,7 +94,7 @@ public final class PathPage implements HubPageView {
         }
         Rect hit = new Rect(r.x(), y, r.w(), h - 1);
         String id = "rung:" + ladder.race().id() + ":" + row.id();
-        f.target(id, hit, tooltip(row), null);
+        f.target(id, hit, rungTooltip(ladder, row), null);
         if (f.focused(id)) {
             t.drawFocus(f.g, hit);
         }
@@ -94,28 +105,52 @@ public final class PathPage implements HubPageView {
         return switch (row.status()) {
             case REACHED -> Component.translatable(KEY + "reached");
             case CURRENT -> Component.translatable(KEY + "of", row.claimed(), row.tasks());
-            case LOCKED -> Component.translatable(row.index() == ladder.rungs().size() - 1 && apexLadder(ladder.race()) ? KEY + "apex" : KEY + "sealed");
+            case LOCKED -> Component.translatable(apex(ladder, row) ? KEY + "apex" : KEY + "sealed");
         };
+    }
+
+    /** The last rung of a creature ladder is its apex. */
+    static boolean apex(HubModel.LadderView ladder, HubModel.RungRow row) {
+        return row.index() == ladder.rungs().size() - 1 && apexLadder(ladder.race());
     }
 
     private static boolean apexLadder(SupernaturalRace race) {
         return race != SupernaturalRace.HUMAN && race != SupernaturalRace.GHOUL;
     }
 
-    private static List<Component> tooltip(HubModel.RungRow row) {
+    /** A rung's tooltip: its name, where it stands (the apex says so), and its reward. Shared with the themes' own Path views and Blood Moon's gems. */
+    public static List<Component> rungTooltip(HubModel.LadderView ladder, HubModel.RungRow row) {
         List<Component> out = new ArrayList<>();
         out.add(PageKit.rung(row));
         out.add(Component.translatable(KEY + "rung_state." + row.status().name().toLowerCase(java.util.Locale.ROOT)).withStyle(ChatFormatting.GRAY));
+        if (apex(ladder, row)) {
+            out.add(Component.translatable(KEY + "rung_apex").withStyle(ChatFormatting.LIGHT_PURPLE));
+        }
         if (row.index() > 0) {
             out.add(reward(row).copy().withStyle(ChatFormatting.GOLD));
         }
         return out;
     }
 
-    private static Component reward(HubModel.RungRow row) {
+    /** "Reward: +N skill points" (and EP with Tensura). Shared with the themes' own Path views. */
+    static Component reward(HubModel.RungRow row) {
         return row.ep() > 0 && ModList.get().isLoaded("tensura")
                 ? Component.translatable(KEY + "reward_ep", row.sp(), String.format("%,d", row.ep()))
                 : Component.translatable(KEY + "reward", row.sp());
+    }
+
+    /** A Ghoul's turning: what it is and the time left. Returns the y under it. Shared with the themes' own Path views. */
+    static int turning(HubScreen.Frame f, Rect r, int y) {
+        HubTheme t = f.theme();
+        y = PageKit.title(f, Component.translatable(KEY + "turning"), r.x(), y, r.w(), t.accent());
+        t.drawRule(f.g, r.x(), y + 2, r.w());
+        y = PageKit.wrapped(f, Component.translatable(KEY + "turning_text"), r.x(), y + 6, r.w(), t.ink());
+        int ticks = f.view.bloodline().turningTicksLeft();
+        if (ticks > 0) {
+            int s = ticks / 20;
+            y = PageKit.wrapped(f, Component.translatable(KEY + "turning_left", s / 60, String.format("%02d", s % 60)), r.x(), y + 4, r.w(), t.accent());
+        }
+        return y;
     }
 
     private static void next(HubScreen.Frame f) {
@@ -124,15 +159,7 @@ public final class PathPage implements HubPageView {
         Rect r = f.region(HubLayout.SIDE);
         int y = f.begin(HubLayout.SIDE);
         if (v.ghoul()) {
-            y = PageKit.title(f, Component.translatable(KEY + "turning"), r.x(), y, r.w(), t.accent());
-            t.drawRule(f.g, r.x(), y + 2, r.w());
-            y = PageKit.wrapped(f, Component.translatable(KEY + "turning_text"), r.x(), y + 6, r.w(), t.ink());
-            int ticks = v.bloodline().turningTicksLeft();
-            if (ticks > 0) {
-                int s = ticks / 20;
-                y = PageKit.wrapped(f, Component.translatable(KEY + "turning_left", s / 60, String.format("%02d", s % 60)), r.x(), y + 4, r.w(), t.accent());
-            }
-            f.end(y);
+            f.end(turning(f, r, y));
             return;
         }
         boolean any = false;

@@ -321,6 +321,7 @@
   "supernaturalbloodlines.hub.path.sealed": "sealed",
   "supernaturalbloodlines.hub.path.rung_state.reached": "Reached",
   "supernaturalbloodlines.hub.path.rung_state.current": "Your next rung: claim its tasks to reach it",
+  "supernaturalbloodlines.hub.path.rung_apex": "The apex of this ladder",
   "supernaturalbloodlines.hub.path.rung_state.locked": "Sealed until the rungs before it are reached",
   "supernaturalbloodlines.hub.path.reward": "Reward: +%s skill points",
   "supernaturalbloodlines.hub.path.reward_ep": "Reward: +%s skill points, +%s EP",

@@ -1,5 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import java.util.EnumMap;
 import java.util.Map;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BloodlinePage;

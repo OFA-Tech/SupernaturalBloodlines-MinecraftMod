@@ -1,16 +1,14 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.neoforged.fml.ModList;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubView;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
-import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 
 /**
  * Path in the Blood Moon theme: the moon above already shows the ladder (its phases), so the cards hold the next rung's tasks with their
@@ -26,8 +24,7 @@ public final class BloodMoonPathPage implements HubPageView {
         Rect r = f.region(HubLayout.MAIN);
         int y = f.begin(HubLayout.MAIN);
         if (v.ghoul()) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "turning").withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
-            y = PageKit.wrapped(f, Component.translatable(KEY + "turning_text"), r.x(), y + 2, r.w(), t.ink());
+            y = PathPage.turning(f, r, y);
         }
         boolean any = false;
         for (HubModel.LadderView ladder : v.ladders()) {
@@ -41,10 +38,7 @@ public final class BloodMoonPathPage implements HubPageView {
             for (HubModel.TaskRow task : ladder.tasks()) {
                 y = PageKit.taskRow(f, task, r.x(), y, r.w(), true, null, false);
             }
-            Component reward = active.ep() > 0 && ModList.get().isLoaded("tensura")
-                    ? Component.translatable(KEY + "reward_ep", active.sp(), String.format("%,d", active.ep()))
-                    : Component.translatable(KEY + "reward", active.sp());
-            y = PageKit.wrapped(f, reward, r.x(), y + 1, r.w(), t.muted()) + 5;
+            y = PageKit.wrapped(f, PathPage.reward(active), r.x(), y + 1, r.w(), t.muted()) + 5;
         }
         if (!any && !v.ghoul()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "complete"), r.x(), y, r.w(), t.ink());
@@ -58,13 +52,8 @@ public final class BloodMoonPathPage implements HubPageView {
         sy = PageKit.wrapped(f, Component.translatable(PageKit.HUB + "moon.earned", v.state().spEarned()), s.x(), sy, s.w(), t.muted()) + 4;
         t.drawRule(f.g, s.x(), sy, s.w());
         sy = PageKit.wrapped(f, v.player().getName(), s.x(), sy + 4, s.w(), t.ink());
-        if (v.snapshot().sire().isPresent()) {
-            sy = PageKit.wrapped(f, Component.translatable(v.snapshot().severed() ? KEY + "sire_severed" : KEY + "sire", v.snapshot().sire().get()),
-                    s.x(), sy, s.w(), t.muted());
-        }
-        HubHooks.TensuraInfo tensura = HubHooks.tensura().orElse(null);
-        if (tensura != null) {
-            sy = PageKit.wrapped(f, Component.translatable(KEY + "tensura", tensura.race(), String.format("%,d", (long) tensura.ep())), s.x(), sy, s.w(), t.muted());
+        for (Component line : java.util.stream.Stream.of(PathPage.sireLine(v), PathPage.tensuraLine()).flatMap(java.util.Optional::stream).toList()) {
+            sy = PageKit.wrapped(f, line, s.x(), sy, s.w(), t.muted());
         }
         f.end(sy);
     }

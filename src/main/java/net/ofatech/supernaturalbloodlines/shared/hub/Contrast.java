@@ -1,4 +1,4 @@
-package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
+package net.ofatech.supernaturalbloodlines.shared.hub;
 
 /** WCAG contrast of two ARGB colours (alpha ignored): 1 to 21, text needs 4.5. Pure. */
 public final class Contrast {

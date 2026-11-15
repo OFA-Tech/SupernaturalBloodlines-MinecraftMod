@@ -1,20 +1,15 @@
-package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
+package net.ofatech.supernaturalbloodlines.shared.hub;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 
 /**
- * A skin and layout over the one hub screen model: where things go, how they look, and which view draws each page. The shared views
- * ({@link HubPages}) draw into {@link HubLayout#MAIN} and {@link HubLayout#SIDE} through these calls and never pick colours or textures
- * of their own; a theme whose shape does not fit them overrides {@link #view} for the pages it lays out its own way.
+ * A skin and layout over the one hub screen model: where things go and how they look. The supernatural part's shared page views draw
+ * into {@link HubLayout#MAIN} and {@link HubLayout#SIDE} through these calls and never pick colours or textures of their own. It lives in
+ * {@code shared} so another part (Tensura's theme) can bring one without importing the supernatural part; a theme whose shape does not
+ * fit the shared views also implements that part's {@code HubThemeViews}.
  */
 public interface HubTheme {
     HubLayout layout(int width, int height, int tabs, int seals);
-
-    /** The view of a page in this theme; the shared one unless the theme brings its own. */
-    default HubPageView view(HubPage page) {
-        return HubPages.shared(page);
-    }
 
     void drawFrame(GuiGraphics g, HubLayout layout);
 
@@ -28,15 +23,11 @@ public interface HubTheme {
         drawSeal(g, r, launcher.letter(), launcher.color(), lit);
     }
 
-    /** What a theme draws itself from the frame's data before the page (Blood Moon's moon). Nothing by default. */
-    default void drawOverlay(HubScreen.Frame f, HubPage page) {
-    }
-
     /** A rung's mark, {@link #MARK} square. */
-    void drawRungMark(GuiGraphics g, int x, int y, HubModel.RungStatus status);
+    void drawRungMark(GuiGraphics g, int x, int y, RungStatus status);
 
     /** A task's box, {@link #BOX} square. */
-    void drawTaskBox(GuiGraphics g, int x, int y, HubModel.TaskState state);
+    void drawTaskBox(GuiGraphics g, int x, int y, TaskState state);
 
     /** The claim or buy button, {@link #STAMP} square. */
     void drawStamp(GuiGraphics g, int x, int y, boolean lit);
@@ -64,6 +55,15 @@ public interface HubTheme {
 
     /** The tag colour of a source mod ({@code species}, {@code vampirism}, {@code werewolves}, {@code enchanted}, {@code tensura}). */
     int sourceColor(String source);
+
+    /** Text the theme draws on something other than {@link #paper()}: {@code fg} on {@code bg}, named for the test that checks it. */
+    record TextPair(String what, int fg, int bg) {
+    }
+
+    /** Every such pair, so a test can check each is readable (4.5:1 or more); a gradient lists its lightest and darkest end. */
+    default java.util.List<TextPair> textPairs() {
+        return java.util.List.of();
+    }
 
     int MARK = 9;
     int BOX = 7;

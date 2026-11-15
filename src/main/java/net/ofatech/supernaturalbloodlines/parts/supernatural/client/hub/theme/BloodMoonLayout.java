@@ -1,10 +1,10 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
 
 /**
  * Blood Moon's geometry: the whole screen, a rail of page icons on the left and of launchers on the right, the moon band at the top
@@ -44,6 +44,11 @@ public final class BloodMoonLayout {
         Rect main = new Rect(left, cardsTop, mainW, cardsH).inset(5);
         Rect side = new Rect(left + mainW + GAP, cardsTop, right - left - mainW - GAP, cardsH).inset(5);
         return new HubLayout(screen, Map.of(MOON, moon, HubLayout.MAIN, main, HubLayout.SIDE, side), rail, portals);
+    }
+
+    /** Where the SP and EP counters go: the bottom right of the moon band, two lines (the top right is the toasts'). */
+    public static Rect counters(Rect band) {
+        return new Rect(band.right() - 90, band.bottom() - 20, 88, 20);
     }
 
     /** The card behind a content region. */

@@ -1,5 +1,11 @@
 package net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.client;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
+import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -7,11 +13,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPage;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubTheme;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 
 /**
@@ -28,7 +29,11 @@ public final class TensuraHubTheme implements HubTheme {
     private static final int NAVY = 0xFF192032;
     private static final int PANEL = 0xFF041d2c;
     private static final int TEAL = 0xFF093c4c;
-    private static final int BUTTON = 0xFF5a5a5a;
+    private static final int BUTTON = 0xFF505050;
+    private static final int BUTTON_LIT = 0xFF5e5e5e;
+    private static final int SELECTED = 0xFF24324f;
+    private static final int LABEL = 0xFFeef5ff;
+    private static final int SELECTED_LABEL = 0xFFffe680;
     private static final int GOLD = 0xFFffd36b;
     private static final int CYAN = 0xFF5fd3e6;
 
@@ -73,15 +78,15 @@ public final class TensuraHubTheme implements HubTheme {
     private static void row(GuiGraphics g, Rect r, boolean selected, boolean lit, String label, int labelColor, Runnable icon) {
         Font font = Minecraft.getInstance().font;
         g.fill(r.x() - 1, r.y() - 1, r.right() + 1, r.bottom() + 1, 0xFF000000);
-        bevel(g, r, selected ? 0xFF24324f : lit ? 0xFF6a6a6a : BUTTON, selected ? 0xFF4a6090 : 0xFF8a8a8a, selected ? 0xFF101828 : 0xFF3a3a3a);
+        bevel(g, r, selected ? SELECTED : lit ? BUTTON_LIT : BUTTON, selected ? 0xFF4a6090 : 0xFF8a8a8a, selected ? 0xFF101828 : 0xFF3a3a3a);
         icon.run();
-        String text = font.plainSubstrByWidth(label, r.w() - 18);
+        String text = TensuraHubLayout.fit(label, r.w() - 18, font::width);
         g.drawString(font, text, r.x() + 15, r.y() + (r.h() - 8) / 2, labelColor, true);
     }
 
     @Override
     public void drawTab(GuiGraphics g, Rect r, HubPage page, boolean selected, boolean focused) {
-        row(g, r, selected, false, Component.translatable(page.langKey()).getString(), selected ? 0xFFffe680 : 0xFFeef5ff, () -> {
+        row(g, r, selected, false, Component.translatable(page.langKey()).getString(), selected ? SELECTED_LABEL : LABEL, () -> {
             g.setColor(selected ? 1f : 0.93f, selected ? 0.9f : 0.96f, selected ? 0.5f : 1f, 1f);
             g.blit(ICONS, r.x() + 4, r.y() + (r.h() - 8) / 2, page.ordinal() * 9, 24, 8, 8, 64, 32);
             g.setColor(1f, 1f, 1f, 1f);
@@ -93,7 +98,7 @@ public final class TensuraHubTheme implements HubTheme {
 
     @Override
     public void drawSeal(GuiGraphics g, Rect r, String letter, int color, boolean lit) {
-        row(g, r, false, lit, letter, 0xFFeef5ff, () -> { });
+        row(g, r, false, lit, letter, LABEL, () -> { });
     }
 
     @Override
@@ -101,12 +106,12 @@ public final class TensuraHubTheme implements HubTheme {
         Font font = Minecraft.getInstance().font;
         // the short name (the mod's), as the full one ("Tensura: the status menu") does not fit the list; the tooltip has it
         Component label = Component.translatableWithFallback("supernaturalbloodlines.hub.launcher.short." + launcher.id(), launcher.id());
-        row(g, r, false, lit, label.getString(), 0xFFeef5ff,
+        row(g, r, false, lit, label.getString(), LABEL,
                 () -> g.drawString(font, launcher.letter(), r.x() + 5, r.y() + (r.h() - 8) / 2, launcher.color(), true));
     }
 
     @Override
-    public void drawRungMark(GuiGraphics g, int x, int y, HubModel.RungStatus status) {
+    public void drawRungMark(GuiGraphics g, int x, int y, RungStatus status) {
         int edge = switch (status) {
             case REACHED -> CYAN;
             case CURRENT -> GOLD;
@@ -121,11 +126,11 @@ public final class TensuraHubTheme implements HubTheme {
     }
 
     @Override
-    public void drawTaskBox(GuiGraphics g, int x, int y, HubModel.TaskState state) {
-        g.renderOutline(x, y, BOX, BOX, state == HubModel.TaskState.CLAIMABLE ? good() : muted());
-        if (state == HubModel.TaskState.CLAIMABLE) {
+    public void drawTaskBox(GuiGraphics g, int x, int y, TaskState state) {
+        g.renderOutline(x, y, BOX, BOX, state == TaskState.CLAIMABLE ? good() : muted());
+        if (state == TaskState.CLAIMABLE) {
             g.fill(x + 1, y + 1, x + BOX - 1, y + BOX - 1, 0xFF2f8f5a);
-        } else if (state == HubModel.TaskState.CLAIMED) {
+        } else if (state == TaskState.CLAIMED) {
             g.fill(x + 2, y + 2, x + BOX - 2, y + BOX - 2, muted());
         }
     }
@@ -168,6 +173,12 @@ public final class TensuraHubTheme implements HubTheme {
     @Override
     public int paper() {
         return PANEL;
+    }
+
+    @Override
+    public List<TextPair> textPairs() {
+        return List.of(new TextPair("page and mod labels on grey", LABEL, BUTTON), new TextPair("labels on lit grey", LABEL, BUTTON_LIT),
+                new TextPair("the chosen page's label", SELECTED_LABEL, SELECTED), new TextPair("the claim tick on orange", 0xFF1a0a00, 0xFFe08a00));
     }
 
     @Override

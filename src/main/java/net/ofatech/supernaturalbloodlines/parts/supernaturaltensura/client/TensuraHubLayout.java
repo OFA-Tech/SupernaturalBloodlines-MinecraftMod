@@ -1,10 +1,10 @@
 package net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.client;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
 
 /**
  * The Tensura expansion's geometry: Tensura's framed window made wider, a navy list on the left with the pages from the top and the
@@ -46,6 +46,20 @@ public final class TensuraHubLayout {
     static Rect nav(Rect frame) {
         int navW = Math.max(72, Math.min(110, frame.w() / 4));
         return new Rect(frame.x() + INSET, frame.y() + INSET, navW, frame.h() - 2 * INSET);
+    }
+
+    /** {@code label} as it fits in {@code width}: whole, or cut with an ellipsis (the row's tooltip has it whole). */
+    static String fit(String label, int width, java.util.function.ToIntFunction<String> measure) {
+        if (measure.applyAsInt(label) <= width) {
+            return label;
+        }
+        String ellipsis = "\u2026";
+        int room = width - measure.applyAsInt(ellipsis);
+        int end = label.length();
+        while (end > 0 && measure.applyAsInt(label.substring(0, end)) > room) {
+            end--;
+        }
+        return end == 0 ? "" : label.substring(0, end).stripTrailing() + ellipsis;
     }
 
     /** The panel behind a content region. */

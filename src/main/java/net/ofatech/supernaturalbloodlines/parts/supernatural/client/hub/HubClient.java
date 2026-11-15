@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.DeathScreen;

@@ -1,5 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -11,11 +14,8 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubTheme;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
 import org.jetbrains.annotations.Nullable;
 
 /** The drawing the pages share: wrapped text, task rows with their tags and stamps, and the words for the model's ids. */
@@ -120,12 +120,12 @@ final class PageKit {
         Font font = f.font();
         Component tag = sourceTag(row.source());
         int tagW = font.width(tag) + 4;
-        boolean stamp = stamps && row.state() == HubModel.TaskState.CLAIMABLE;
+        boolean stamp = stamps && row.state() == TaskState.CLAIMABLE;
         int stampW = stamp ? HubTheme.STAMP + 2 : 0;
         int textX = x + HubTheme.BOX + 3;
         int textW = Math.max(20, x + w - stampW - tagW - 2 - textX);
         MutableComponent words = text(row.text()).copy();
-        if (row.counted() && row.target() > 1 && row.state() != HubModel.TaskState.CLAIMED) {
+        if (row.counted() && row.target() > 1 && row.state() != TaskState.CLAIMED) {
             words.append(Component.literal(" " + row.progress() + "/" + row.target()).withColor(t.muted() & 0xFFFFFF));
         }
         List<FormattedCharSequence> lines = font.split(words, textW);
@@ -135,7 +135,7 @@ final class PageKit {
             f.g.fill(rowRect.x(), rowRect.y(), rowRect.right(), rowRect.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
         }
         t.drawTaskBox(f.g, x, y + 1, row.state());
-        int color = row.state() == HubModel.TaskState.CLAIMED ? t.muted() : t.ink();
+        int color = row.state() == TaskState.CLAIMED ? t.muted() : t.ink();
         int ly = y + (h - lines.size() * LINE) / 2;
         for (FormattedCharSequence line : lines) {
             f.g.drawString(font, line, textX, ly, color, false);

@@ -68,7 +68,7 @@ The owner wants:
 - **Skipping Tensura evolution.** EP rewards add EP; they never touch an evolution's requirements (R100). An apex rung only *offers* the apex race in Tensura's own evolution screen, which still needs its 2,000,000 EP.
 - **A second source of truth.** The supernatural race is computed from state we already keep; it is never stored as its own field that could drift.
 - **Ghouls progressing.** A Ghoul records no task progress, earns no SP and spends none until the turning is finished (plan 11).
-- **Copying Tensura's art.** The Tensura theme draws Tensura's own textures by resource location at runtime; nothing of Tensura's is copied into the repo (Tensura is ARR).
+- **Copying Tensura's art.** Nothing of Tensura's is copied into the repo (Tensura is ARR). Owner decision (12e/12f): the hub's themes use **our own art**; the Tensura theme redraws Tensura's style (grey frame, navy and teal panels) itself and draws none of Tensura's textures. The only Tensura texture we draw is inside Tensura's own menu, for the hub tab added there (by resource location, never copied).
 - **Breaking when a mod is missing.** Whatever isn't installed simply isn't shown.
 
 ## Constraints
@@ -686,7 +686,7 @@ A Ghoul sees Path (with L-GHO-0's steps) and Bloodline; every other page shows "
 
 | | Grimoire (default) | Blood Moon | Tensura expansion |
 |---|---|---|---|
-| Frame | an open book | dark full screen | Tensura's own frame style, wider; Tensura's textures by resource location, never copied |
+| Frame | an open book | dark full screen | Tensura's frame style, wider, redrawn as our own art (none of Tensura's textures) |
 | Navigation | ribbon bookmarks, one per page | left rail of pages | Tensura-style side tabs |
 | Path | left page: story and ladder (rungs as chapters, reached ones stamped); right page: next rung's tasks | the moon fills with progress to the next rung; rungs as phases around it | ladder as Tensura's evolution-style list |
 | Quests | right page, claim buttons as wax stamps | below the moon | list panel |
