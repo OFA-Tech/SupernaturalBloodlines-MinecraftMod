@@ -5,7 +5,8 @@
   "plugin": "net.ofatech.supernaturalbloodlines.mixin.HudMixinPlugin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "AbilityStorageNextPresetMixin"
+    "AbilityStorageNextPresetMixin",
+    "VampireRaceFeedMixin"
   ],
   "injectors": {
     "defaultRequire": 0

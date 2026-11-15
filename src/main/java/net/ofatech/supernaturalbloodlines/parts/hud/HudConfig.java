@@ -49,6 +49,14 @@ public final class HudConfig {
         }
     }
 
+    public static boolean tensuraFeedFillsBlood() {
+        try {
+            return TENSURA_FEED_FILLS_BLOOD.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
     public static double biteReach() {
         try {
             return BITE_REACH.get();
