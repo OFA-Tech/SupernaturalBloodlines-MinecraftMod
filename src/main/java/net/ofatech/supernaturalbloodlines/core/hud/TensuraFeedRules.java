@@ -12,9 +12,20 @@ public final class TensuraFeedRules {
     private TensuraFeedRules() {
     }
 
-    /** Blood credited to the vampire for one feed from a victim that has {@code victimBlood}. */
-    public static int credit(int victimBlood, boolean victimBloodless) {
-        return victimBloodless ? 0 : Math.max(0, Math.min(FEED, victimBlood));
+    /**
+     * Blood credited to the vampire for one feed from a victim that has {@code victimBlood}, when the vampire has {@code room} to its maximum.
+     * A full vampire (room 0) takes nothing, so the victim is not drained for nothing.
+     */
+    public static int credit(int victimBlood, boolean victimBloodless, int room) {
+        return victimBloodless ? 0 : Math.max(0, Math.min(FEED, Math.min(victimBlood, room)));
+    }
+
+    /**
+     * What a feed on a Vampirism vampire is worth: the same, from the room only (a vampire's blood is not drained by us at all, see
+     * {@code TensuraFeed}).
+     */
+    public static int creditFromVampire(int room) {
+        return Math.max(0, Math.min(FEED, room));
     }
 
     /**

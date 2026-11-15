@@ -2,6 +2,7 @@
 
 ## Unreleased: the six HUD slots (plan 13, phase 13b)
 
+- **13c review fixes.** The race feed no longer drains a victim for blood a full vampire cannot take, nor a Vampirism vampire victim (the species and supernatural parts decide that bite), a failed blood draw keeps the originals for the whole session, and the docs now say that Vampirism draws its own blood bar only in survival and adventure.
 - **Player-ready defaults (13c Task 3).** Every setting of the hud part starts on, the HUD needs no setup, and switching the part off puts every hidden key back (checked in a real client). `HudPartOffGameTests` and `DefaultsTest` keep it that way.
 - **Tensura's race feed fills Vampirism blood (13c Task 2).** A Vampirism vampire who uses Tensura's vampire race ability on a creature gets 2 Vampirism blood, taken from the creature, and can use it when thirsty even at full health (one mixin, `tensura_feed_fills_blood`; the hud part is now at 2 of 3 mixins).
 - **One blood value (13c Task 1).** With Tensura installed a Vampirism vampire's blood is shown in Tensura's food spot, with Vampirism's blood bar and Tensura's food number hidden while it is (`blood_in_food_spot`, on by default; both come back when it is off or when you are not a vampire). Without Tensura, Vampirism's bar stays.

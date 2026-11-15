@@ -4,6 +4,7 @@ import de.teamlapen.vampirism.api.VampirismAPI;
 import io.github.manasmods.manascore.race.api.ManasRaceInstance;
 import io.github.manasmods.manascore.race.api.RaceAPI;
 import io.github.manasmods.manascore.race.api.RaceEvents;
+import io.github.manasmods.tensura.damage.TensuraDamageTypes;
 import io.github.manasmods.tensura.race.vampire.VampireRace;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -93,6 +94,45 @@ public final class TensuraFeedGameTests {
         helper.assertTrue(v.getHealth() < v.getMaxHealth(), "Tensura's own feed (hurt vampire) should still run");
         helper.assertTrue(blood(p) == mine, "blood was credited with the switch off: " + blood(p) + ", was " + mine);
         v.discard();
+        helper.succeed();
+    }
+
+    /** Hurt, so Tensura's own feed runs, but the blood is full: the victim must not be drained for blood that cannot be taken. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aFullVampireDoesNotDrainTheVictim(GameTestHelper helper) {
+        ServerPlayer p = vampire(helper);
+        PathfinderMob v = BiteGameTests.villager(helper, 2.5);
+        p.setHealth(10f);
+        int mine = blood(p);
+        int theirs = BiteGameTests.blood(v);
+        useRaceAbility(p);
+        helper.assertTrue(v.getHealth() < v.getMaxHealth(), "Tensura's feed did not run (the villager was not hurt)");
+        helper.assertTrue(blood(p) == mine, "blood changed from " + mine + " to " + blood(p));
+        helper.assertTrue(BiteGameTests.blood(v) == theirs, "the villager was drained to " + BiteGameTests.blood(v) + " from " + theirs + " for nothing");
+        v.discard();
+        helper.succeed();
+    }
+
+    /** A vampire victim is Vampirism's and the supernatural part's business (a refused bite, or Predator's Thirst, which drains by itself): we drain nothing. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVampirePlayerVictimIsNotDrainedByTheRaceFeed(GameTestHelper helper) {
+        ServerPlayer p = vampire(helper);
+        ServerPlayer victim = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.createDuelist(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(victim).setFactionAndLevel(de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION, 1), "could not make the victim a vampire");
+        BiteGameTests.place(helper, victim, 2.5);
+        helper.getLevel().addNewPlayer(victim);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+        helper.getLevel().getServer().setPvpAllowed(true);
+        helper.assertTrue(VampirismAPI.vampirePlayer(p).useBlood(15, true), "could not empty the biter's blood");
+        p.setHealth(10f);
+        int theirs = blood(victim);
+        float health = victim.getHealth();
+        // the race ability's own target search is not what is under test (it may skip players); what it does to the victim is: the activation, then its blood_drain hit
+        RaceEvents.ACTIVATE_ABILITY.invoker().activateAbility(RaceAPI.getRaceFrom(p).getRace().orElseThrow(), p);
+        helper.assertTrue(victim.hurt(TensuraDamageTypes.getEntityDamageSource(helper.getLevel(), TensuraDamageTypes.BLOOD_DRAIN, p), 2f), "the drain hit did not land");
+        helper.assertTrue(victim.getHealth() < health, "the vampire victim was not hurt");
+        helper.getLevel().getServer().setPvpAllowed(pvp);
+        helper.assertTrue(blood(victim) == theirs, "the vampire victim lost blood without Predator's Thirst: " + blood(victim) + ", was " + theirs);
         helper.succeed();
     }
 

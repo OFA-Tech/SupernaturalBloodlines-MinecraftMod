@@ -107,7 +107,7 @@ So switching **vampirism_enchanted** off also turns off **species**, **species_t
 
 ## Mixins
 
-The mod has **8 mixins** in 3 configs (a budget of 3 per part, each `require = 0`, each gated by its part's switch). The plugin for each config only applies it when all the part's mods are installed and its switch is on (read from the toml file at the start, since COMMON configs load after mixins).
+The mod has **11 mixins** in 5 configs (a budget of 3 per part, each `require = 0`, each gated by its part's switch). The plugin for each config only applies it when all the part's mods are installed and its switch is on (read from the toml file at the start, since COMMON configs load after mixins).
 
 | Part | Mixin | Where | Why |
 |---|---|---|---|
@@ -119,5 +119,8 @@ The mod has **8 mixins** in 3 configs (a budget of 3 per part, each `require = 0
 | species | `RiteCancelMixin` | Enchanted `Rite.cancel` | a refused rite costs nothing |
 | species_tensura | `RaceUtilsMixin` | Tensura `RaceUtils.isUndead`, `isAffectedByHolyExposure` | undead treatment |
 | species_tensura | `RaceInstanceMixin` | ManasCore `ManasRaceInstance` | apex offer |
+| supernatural | `RiteCompleteMixin` | Enchanted `Rite` | tells the mod when a rite is completed |
+| hud | `AbilityStorageNextPresetMixin` | Tensura `AbilityStorage.isAbilityInActivePreset` (four overloads) | a skill in the next preset can be fired (`next_preset_active`) |
+| hud | `VampireRaceFeedMixin` | Tensura `VampireRace.onActivateAbility` (one `needsFood()` call) | a thirsty healthy vampire can use the race feed (`tensura_feed_fills_blood`) |
 
 If another mod you use also patches these methods, tell us (see [Troubleshooting](Troubleshooting)).

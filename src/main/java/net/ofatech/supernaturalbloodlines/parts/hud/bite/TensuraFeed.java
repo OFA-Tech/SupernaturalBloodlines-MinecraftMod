@@ -19,6 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.ofatech.supernaturalbloodlines.core.hud.TensuraFeedRules;
 import net.ofatech.supernaturalbloodlines.parts.hud.HudConfig;
 
@@ -44,6 +45,7 @@ public final class TensuraFeed {
             return EventResult.pass();
         });
         NeoForge.EVENT_BUS.addListener(TensuraFeed::onDamage);
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> ACTIVATED.remove(e.getEntity().getUUID()));
     }
 
     private static void onDamage(LivingDamageEvent.Post e) {
@@ -54,8 +56,20 @@ public final class TensuraFeed {
         if (when == null || when != p.serverLevel().getGameTime() || VampirismAPI.factionPlayerHandler(p).getCurrentFaction() != VReference.VAMPIRE_FACTION) {
             return;
         }
+        ACTIVATED.remove(p.getUUID()); // one feed per activation
         LivingEntity victim = e.getEntity();
-        int credit = TensuraFeedRules.credit(VampirismBite.blood(victim), RaceUtils.isBloodless(victim));
+        IBloodStats stats = VampirismAPI.vampirePlayer(p).getBloodStats();
+        int room = stats.getMaxBlood() - stats.getBloodLevel();
+        if (VampirismAPI.factionRegistry().getFaction(victim) == VReference.VAMPIRE_FACTION) {
+            // A bite on a vampire is Vampirism's and our other parts' business: the species part empties it (and the biter pays) unless the biter has
+            // Predator's Thirst, which then also drains the victim itself. We drain nothing here, so a refused feed costs the victim nothing.
+            int credit = TensuraFeedRules.creditFromVampire(room);
+            if (credit > 0) {
+                VampirismAPI.vampirePlayer(p).drinkBlood(credit, IBloodStats.LOW_SATURATION, new Source(victim));
+            }
+            return;
+        }
+        int credit = TensuraFeedRules.credit(VampirismBite.blood(victim), RaceUtils.isBloodless(victim), room);
         if (credit > 0) {
             VampirismBite.drain(victim, credit);
             VampirismAPI.vampirePlayer(p).drinkBlood(credit, IBloodStats.LOW_SATURATION, new Source(victim));

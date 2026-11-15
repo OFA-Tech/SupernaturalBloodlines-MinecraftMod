@@ -35,6 +35,8 @@ public final class BloodInFoodSpot {
     private static final VarHandle POSE;
     private static final MethodHandle TRANSFORM;
     private static BloodSpotRule.Show show = BloodSpotRule.Show.TENSURA_FOOD;
+    /** Set once a draw has thrown: the originals stay for the rest of the session (the rule is re-evaluated every tick and would turn it back on). */
+    private static volatile boolean broken;
 
     static {
         VarHandle pose = null;
@@ -43,7 +45,7 @@ public final class BloodInFoodSpot {
             MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(OverlayHandler.class, MethodHandles.lookup());
             pose = lookup.findStaticVarHandle(OverlayHandler.class, "poseStack", PoseStack.class);
             transform = lookup.findStatic(OverlayHandler.class, "transform", MethodType.methodType(void.class, int.class, float.class, boolean.class));
-        } catch (ReflectiveOperationException | RuntimeException e) {
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
             SupernaturalBloodlines.LOGGER.warn("HUD: Tensura's food decoration cannot be reached ({}); the blood stays in Vampirism's bar", e.toString());
         }
         POSE = pose;
@@ -54,7 +56,7 @@ public final class BloodInFoodSpot {
     }
 
     public static boolean ready() {
-        return POSE != null && TRANSFORM != null;
+        return POSE != null && TRANSFORM != null && !broken;
     }
 
     public static boolean hidesVampirismBar() {
@@ -94,7 +96,10 @@ public final class BloodInFoodSpot {
             g.drawString(mc.font, text, left ? -2 - mc.font.width(text) : 11, 1, 0xFFFFFF);
         } catch (Throwable t) {
             show = BloodSpotRule.Show.VAMPIRISM_BAR; // never half draw twice: fall back to the originals
-            SupernaturalBloodlines.LOGGER.warn("HUD: drawing the blood in Tensura's food spot failed; the originals are back", t);
+            if (!broken) {
+                broken = true;
+                SupernaturalBloodlines.LOGGER.warn("HUD: drawing the blood in Tensura's food spot failed; the originals are back for this session", t);
+            }
         } finally {
             stack.popPose();
             POSE.set(before);

@@ -36,7 +36,7 @@ class BloodSpotRuleTest {
 
     @Test
     void nothingIsHiddenUntilTheRendererIsReady() {
-        // the private hooks of Tensura could not be reached: the player must still see a blood value and a food value
+        // the private hooks of Tensura could not be reached: the player must still see a blood value and a food value (Vampirism's bar draws in survival and adventure only, not in creative or spectator: checked in a real client)
         Show s = BloodSpotRule.decide(true, true, true, true, false);
         assertEquals(Show.VAMPIRISM_BAR, s);
         assertFalse(s.hidesVampirismBar());

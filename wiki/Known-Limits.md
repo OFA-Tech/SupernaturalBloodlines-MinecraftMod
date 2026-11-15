@@ -85,4 +85,4 @@ ext_preset_active). With Tensura Slots still installed both work, but its own se
   - **Alt + scroll is Tensura's own**: it is bound to Tensura's `next_mode` key (Left Alt) and moves through the nine presets; the HUD adds nothing to it. In Supernatural mode Alt + scroll still moves Tensura's presets.
   - **Shift + R and Shift + F belong to Book of Dragons in the OFA pack**, so sneaking blocks slots 1 and 2 there.
   - A slot key also fires with Ctrl or Shift held (Alt must work for Tensura's mode change).
-  - Vampirism's blood bar does not come back when `blood_in_food_spot` is switched off in a Tensura + Vampirism setup (Tensura's HUD overhaul or Vampirism's own condition hides it); Tensura's food number does.
+  - **Creative and spectator mode show no Vampirism blood bar.** Vampirism itself does not draw its blood bar when the game mode has no hunger (`hasExperience()` is false), so with `blood_in_food_spot = false` a vampire in creative sees no blood value at all (in survival and adventure Vampirism's bar is back above the hotbar). With the setting on, the blood in Tensura's food spot shows in every game mode.

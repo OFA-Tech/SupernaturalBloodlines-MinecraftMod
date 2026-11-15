@@ -9,20 +9,28 @@ import org.junit.jupiter.api.Test;
 class TensuraFeedRulesTest {
     @Test
     void aFeedGivesTensurasFoodValueInBlood() {
-        assertEquals(TensuraFeedRules.FEED, TensuraFeedRules.credit(8, false));
+        assertEquals(TensuraFeedRules.FEED, TensuraFeedRules.credit(8, false, 20));
         assertEquals(2, TensuraFeedRules.FEED);
     }
 
     @Test
     void aVictimWithLessBloodGivesOnlyWhatItHas() {
-        assertEquals(1, TensuraFeedRules.credit(1, false));
-        assertEquals(0, TensuraFeedRules.credit(0, false));
-        assertEquals(0, TensuraFeedRules.credit(-3, false), "a negative blood value is never credited");
+        assertEquals(1, TensuraFeedRules.credit(1, false, 20));
+        assertEquals(0, TensuraFeedRules.credit(0, false, 20));
+        assertEquals(0, TensuraFeedRules.credit(-3, false, 20), "a negative blood value is never credited");
     }
 
     @Test
     void aBloodlessVictimGivesNothing() {
-        assertEquals(0, TensuraFeedRules.credit(20, true));
+        assertEquals(0, TensuraFeedRules.credit(20, true, 20));
+    }
+
+    @Test
+    void aFullVampireTakesNothingAndAlmostFullTakesWhatFits() {
+        assertEquals(0, TensuraFeedRules.credit(8, false, 0), "full blood: the victim must not be drained");
+        assertEquals(1, TensuraFeedRules.credit(8, false, 1));
+        assertEquals(0, TensuraFeedRules.creditFromVampire(0));
+        assertEquals(TensuraFeedRules.FEED, TensuraFeedRules.creditFromVampire(15));
     }
 
     @Test
