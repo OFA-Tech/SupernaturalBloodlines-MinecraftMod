@@ -24,6 +24,8 @@ public final class GrimoireLayout {
     static final int RIBBON_GAP = 3;
     static final int SEAL = 18;
     static final int SEAL_STEP = 20;
+    /** Ribbons start below the top 34 GUI pixels, where vanilla's toasts (tutorial, advancement, recipe) are drawn over the screen. */
+    static final int TOAST_CLEAR = 34;
 
     private GrimoireLayout() {
     }
@@ -37,7 +39,7 @@ public final class GrimoireLayout {
         Rect rightPage = new Rect(leftPage.right() + SPINE, leftPage.y(), pageW, leftPage.h());
         List<Rect> ribbons = new ArrayList<>();
         for (int i = 0; i < tabs; i++) {
-            ribbons.add(new Rect(book.right() - 4, book.y() + 14 + i * (RIBBON_H + RIBBON_GAP), RIBBON_OUT + 4, RIBBON_H));
+            ribbons.add(new Rect(book.right() - 4, Math.max(book.y() + 14, TOAST_CLEAR) + i * (RIBBON_H + RIBBON_GAP), RIBBON_OUT + 4, RIBBON_H));
         }
         List<Rect> wax = new ArrayList<>();
         for (int i = 0; i < seals; i++) {

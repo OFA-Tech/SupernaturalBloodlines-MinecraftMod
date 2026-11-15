@@ -100,9 +100,10 @@ class HubPageVisibilityTest {
     }
 
     @Test
-    void everyThemeFallsBackToTheGrimoireForNow() {
-        assertEquals(ThemeId.GRIMOIRE, HubClientConfig.resolve(ThemeId.GRIMOIRE, true));
-        assertEquals(ThemeId.GRIMOIRE, HubClientConfig.resolve(ThemeId.TENSURA, false));
-        assertEquals(ThemeId.GRIMOIRE, HubClientConfig.resolve(ThemeId.BLOOD_MOON, false));
+    void aThemeNoPartRegisteredIsTheGrimoire() {
+        assertEquals(ThemeId.GRIMOIRE, HubClientConfig.resolve(ThemeId.GRIMOIRE, id -> id.equals("grimoire")));
+        assertEquals(ThemeId.GRIMOIRE, HubClientConfig.resolve(ThemeId.TENSURA, id -> id.equals("grimoire"))); // no Tensura, or 12f not in
+        assertEquals(ThemeId.TENSURA, HubClientConfig.resolve(ThemeId.TENSURA, id -> true));
+        assertEquals("blood_moon", ThemeId.BLOOD_MOON.id());
     }
 }

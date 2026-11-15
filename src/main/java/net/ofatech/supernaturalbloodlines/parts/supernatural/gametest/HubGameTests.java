@@ -63,7 +63,7 @@ public final class HubGameTests {
                 .revealedGenes(Set.of(Genes.DOPPELGANGER)).build());
         try {
             for (RecordComponent c : HubSnapshotPayload.class.getRecordComponents()) {
-                helper.assertTrue(Set.of(Optional.class, boolean.class, List.class, int.class, Map.class).contains(c.getType()),
+                helper.assertTrue(Set.of(HubSnapshotPayload.Family.class, boolean.class, List.class, int.class, Map.class).contains(c.getType()),
                         "the snapshot carries a " + c.getType().getSimpleName() + " (" + c.getName() + ")");
             }
             HubSnapshotPayload ofSire = HubSnapshotPayload.of(sire);
@@ -79,7 +79,7 @@ public final class HubGameTests {
                 // the sire's name is only known from a cache a GameTest server lacks: SpeciesHubGameTests names a sire through SireRecorder
                 helper.assertTrue(ofChild.sire().map(n -> n.equals(sire.getGameProfile().getName())).orElse(true), "sire " + ofChild.sire());
             } else {
-                helper.assertTrue(ofSire.equals(new HubSnapshotPayload(Optional.empty(), false, List.of(), List.of(), 0, ofSire.genes())),
+                helper.assertTrue(ofSire.equals(new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, ofSire.genes(), List.of())),
                         "without the species part there is nobody to show: " + ofSire);
             }
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());

@@ -211,7 +211,7 @@ public final class HubModel {
     }
 
     /** {@code rite_of_the_moon} -> {@code Rite of the moon}: the English fallback for an id the lang file does not name. */
-    static String pretty(String id) {
+    public static String pretty(String id) {
         if (id == null || id.isEmpty()) {
             return "?";
         }

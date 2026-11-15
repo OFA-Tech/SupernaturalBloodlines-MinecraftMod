@@ -8,7 +8,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.neoforged.fml.ModList;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.HubKeybinds;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.GrimoireTheme;
@@ -50,9 +50,13 @@ public final class HubScreen extends Screen {
 
     private void applyTheme() {
         themeId = HubClientConfig.theme();
-        theme = switch (HubClientConfig.resolve(themeId, ModList.get().isLoaded("tensura"))) {
-            case GRIMOIRE, BLOOD_MOON, TENSURA -> new GrimoireTheme();
-        };
+        // the themes are registered by the parts that bring them (HubHooks.addTheme); a missing one, or one of the wrong type, is the Grimoire
+        HubClientConfig.ThemeId shown = HubClientConfig.resolve(themeId, id -> HubHooks.theme(id).isPresent());
+        Object made = HubHooks.theme(shown.id()).map(t -> t.factory().get()).orElse(null);
+        if (made != null && !(made instanceof HubTheme)) {
+            SupernaturalBloodlines.LOGGER.warn("Hub theme {} is not a HubTheme ({}); showing the Grimoire", shown.id(), made.getClass().getName());
+        }
+        theme = made instanceof HubTheme h ? h : new GrimoireTheme();
     }
 
     @Override

@@ -19,6 +19,9 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
  */
 public final class PackPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "pack.";
+    private static final long CONFIRM_TICKS = 100;
+
+    private long confirmUntil;
 
     @Override
     public void render(HubScreen.Frame f) {
@@ -58,7 +61,17 @@ public final class PackPage implements HubPageView {
         t.drawRule(f.g, s.x(), sy + 2, s.w());
         sy = SkillsPage.stamp(f, s, sy + 2, "pack:accept", Component.translatable(KEY + "accept"), () -> command("pack accept"));
         if (!pack.isEmpty()) {
-            sy = SkillsPage.stamp(f, s, sy + 2, "pack:leave", Component.translatable(KEY + "leave"), () -> command("pack leave"));
+            // leaving takes two presses within 5 seconds: the first only asks
+            long now = f.view.player().level().getGameTime();
+            boolean asking = now < confirmUntil;
+            sy = SkillsPage.stamp(f, s, sy + 2, "pack:leave", Component.translatable(KEY + (asking ? "leave_confirm" : "leave")), () -> {
+                if (asking) {
+                    confirmUntil = 0;
+                    command("pack leave");
+                } else {
+                    confirmUntil = now + CONFIRM_TICKS;
+                }
+            });
         }
         sy = PageKit.wrapped(f, Component.translatable(KEY + "invite_hint"), s.x(), sy + 6, s.w(), t.muted());
         f.end(sy);

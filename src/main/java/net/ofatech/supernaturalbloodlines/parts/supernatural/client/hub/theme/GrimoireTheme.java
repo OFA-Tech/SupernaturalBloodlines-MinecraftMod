@@ -79,7 +79,7 @@ public final class GrimoireTheme implements HubTheme {
 
     @Override
     public void drawSeal(GuiGraphics g, Rect r, String letter, int color, boolean lit) {
-        g.blit(WIDGETS, r.x(), r.y(), r.w(), r.h(), lit ? 15 : 0, 10, STAMP, STAMP, WIDGETS_W, WIDGETS_H);
+        g.blit(WIDGETS, r.x(), r.y(), r.w(), r.h(), lit ? 45 : 30, 10, STAMP, STAMP, WIDGETS_W, WIDGETS_H);
         var font = net.minecraft.client.Minecraft.getInstance().font;
         g.drawString(font, letter, r.x() + (r.w() - font.width(letter)) / 2 + 1, r.y() + (r.h() - 8) / 2 + 1, color, false);
     }
@@ -144,7 +144,7 @@ public final class GrimoireTheme implements HubTheme {
 
     @Override
     public int muted() {
-        return 0xFF7a5a3a;
+        return 0xFF5e4228; // 6.9:1 on the parchment (#e9dcbc), readable small and at GUI scale 1
     }
 
     @Override

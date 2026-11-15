@@ -28,19 +28,23 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Skills: our trees (bought with our SP through {@code BuySkillPayload}), the player's Vampirism or Werewolves tree (unlocked through
- * {@code UnlockModSkillPayload}, spending that mod's own points, read from its synced client data), and the Loadout tab, which waits for
- * plan 13's ability HUD. The left page lists, the right page shows the chosen skill and its stamp.
+ * {@code UnlockModSkillPayload}, spending that mod's own points, read from its synced client data). The left page lists, the right page shows the chosen skill and its stamp.
  */
 public final class SkillsPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "skills.";
 
-    private enum Tab { OURS, FACTION, LOADOUT }
+    // shortcut: no Loadout tab until plan 13's ability HUD exists (the spec hides it without that part); add Tab.LOADOUT then
+    private enum Tab { OURS, FACTION }
 
     /** One skill of the faction's own tree, as the mod's client-side handler sees it. */
     private record ModSkill(String id, Component name, Component description, int cost, ISkillHandler.Result result) {
     }
 
     private Tab tab = Tab.OURS;
+    private List<ModSkill> cached = List.of();
+    private long cachedAt = Long.MIN_VALUE;
+    @Nullable
+    private IPlayableFaction<?> cachedFaction;
     @Nullable
     private String selected;
 
@@ -56,7 +60,6 @@ public final class SkillsPage implements HubPageView {
         switch (tab) {
             case OURS -> ours(f, r, y);
             case FACTION -> modSkills(f, r, y, faction.orElseThrow());
-            case LOADOUT -> loadout(f, r, y);
         }
     }
 
@@ -64,9 +67,14 @@ public final class SkillsPage implements HubPageView {
         int x = r.x();
         List<Tab> shown = new ArrayList<>(List.of(Tab.OURS));
         faction.ifPresent(fa -> shown.add(Tab.FACTION));
-        shown.add(Tab.LOADOUT);
         for (Tab t : shown) {
-            Component label = t == Tab.FACTION ? faction.orElseThrow().getName() : Component.translatable(KEY + "tab." + t.name().toLowerCase(Locale.ROOT));
+            Component full = t == Tab.FACTION ? faction.orElseThrow().getName() : Component.translatable(KEY + "tab." + t.name().toLowerCase(Locale.ROOT));
+            // a long faction name is cut to the room left on the row, never drawn past the page
+            int room = r.right() - x;
+            if (room < 12) {
+                break;
+            }
+            Component label = Component.literal(f.font().plainSubstrByWidth(full.getString(), room));
             int w = f.font().width(label);
             Rect hit = new Rect(x - 1, y - 1, w + 2, 11);
             int color = t == tab ? f.theme().accent() : f.theme().muted();
@@ -75,7 +83,7 @@ public final class SkillsPage implements HubPageView {
                 f.g.fill(x, y + 9, x + w, y + 10, color);
             }
             String id = "skilltab:" + t.name();
-            f.target(id, hit, List.of(label), () -> {
+            f.target(id, hit, List.of(full), () -> {
                 tab = t;
                 selected = null;
             });
@@ -244,7 +252,14 @@ public final class SkillsPage implements HubPageView {
         HubTheme t = f.theme();
         Player p = f.view.player();
         y = PageKit.wrapped(f, Component.translatable(KEY + "mod_points", faction.getName(), points(p)), r.x(), y, r.w(), t.ink()) + 2;
-        List<ModSkill> skills = modSkills(p, faction);
+        long now = p.level().getGameTime();
+        if (cachedAt != now || cachedFaction != faction) {
+            // the registry walk and the mod's checks run once per game tick, not once per frame
+            cached = modSkills(p, faction);
+            cachedAt = now;
+            cachedFaction = faction;
+        }
+        List<ModSkill> skills = cached;
         ModSkill chosen = skills.stream().filter(s -> s.id().equals(selected)).findFirst().orElse(skills.isEmpty() ? null : skills.get(0));
         for (ModSkill s : skills) {
             HubModel.RungStatus mark = s.result() == ISkillHandler.Result.ALREADY_ENABLED ? HubModel.RungStatus.REACHED
@@ -277,13 +292,5 @@ public final class SkillsPage implements HubPageView {
     private static Component reason(ModSkill s) {
         return s.result() == ISkillHandler.Result.OK ? Component.translatable(KEY + "state.unlockable")
                 : Component.translatable("supernaturalbloodlines.supernatural.modskill.refuse." + s.result().name().toLowerCase(Locale.ROOT));
-    }
-
-    private static void loadout(HubScreen.Frame f, Rect r, int y) {
-        y = PageKit.wrapped(f, Component.translatable(KEY + "loadout"), r.x(), y + 4, r.w(), f.theme().muted());
-        f.end(y);
-        Rect side = f.region(HubLayout.SIDE);
-        int sy = f.begin(HubLayout.SIDE);
-        f.end(PageKit.wrapped(f, Component.translatable(KEY + "loadout_more"), side.x(), sy, side.w(), f.theme().muted()));
     }
 }

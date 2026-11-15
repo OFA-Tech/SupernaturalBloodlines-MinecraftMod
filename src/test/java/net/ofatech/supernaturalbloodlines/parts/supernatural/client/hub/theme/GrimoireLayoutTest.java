@@ -16,7 +16,7 @@ class GrimoireLayoutTest {
     void theBookAndItsRibbonsFitEveryScreen() {
         for (int[] s : SCREENS) {
             Rect screen = new Rect(0, 0, s[0], s[1]);
-            HubLayout l = GrimoireLayout.of(s[0], s[1], 6, 4);
+            HubLayout l = GrimoireLayout.of(s[0], s[1], 6, 3);
             String at = s[0] + "x" + s[1];
             assertTrue(l.frame().inside(screen), at);
             assertEquals(6, l.tabs().size(), at);
@@ -30,7 +30,7 @@ class GrimoireLayoutTest {
     @Test
     void thePagesAreTwinsEitherSideOfTheSpine() {
         for (int[] s : SCREENS) {
-            HubLayout l = GrimoireLayout.of(s[0], s[1], 6, 4);
+            HubLayout l = GrimoireLayout.of(s[0], s[1], 6, 3);
             assertEquals(l.region(HubLayout.MAIN).w(), l.region(HubLayout.SIDE).w());
             assertEquals(l.region(HubLayout.MAIN).h(), l.region(HubLayout.SIDE).h());
             assertEquals(l.region(HubLayout.MAIN).y(), l.region(HubLayout.SIDE).y());
@@ -43,15 +43,22 @@ class GrimoireLayoutTest {
 
     @Test
     void ribbonsDoNotTouchEachOther() {
-        HubLayout l = GrimoireLayout.of(320, 240, 6, 4);
+        HubLayout l = GrimoireLayout.of(320, 240, 6, 3);
         for (int i = 1; i < l.tabs().size(); i++) {
             assertFalse(l.tabs().get(i).overlaps(l.tabs().get(i - 1)));
         }
     }
 
     @Test
+    void ribbonsStayBelowTheToasts() {
+        for (int[] s : SCREENS) {
+            assertTrue(GrimoireLayout.of(s[0], s[1], 6, 3).tabs().get(0).y() >= GrimoireLayout.TOAST_CLEAR);
+        }
+    }
+
+    @Test
     void sealsSitUnderTheRibbonsOnTheSmallestScreen() {
-        HubLayout l = GrimoireLayout.of(320, 240, 6, 4);
+        HubLayout l = GrimoireLayout.of(320, 240, 6, 3);
         Rect screen = new Rect(0, 0, 320, 240);
         for (Rect s : l.seals()) {
             assertTrue(s.inside(screen), "seal off screen " + s);

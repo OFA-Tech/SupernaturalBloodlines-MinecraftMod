@@ -59,10 +59,10 @@ Press **Home** (Supernatural Bloodlines key category, rebindable; it also closes
 
 ### Pages and launchers (phase 12e, Tasks 3 to 5)
 
-- **Skills.** Three tabs. *Bloodline skills*: your race trees (both for a witch or siphoner werewolf, a shared skill once), each skill known, ready to learn, locked with the reason, or dormant; press the stamp to learn it with your skill points. *Your Vampirism or Werewolves tree*: that mod's own skills, unlocked with that mod's own points (the mod checks parents and exclusions). *Loadout*: coming with the ability HUD.
-- **Rites.** The rite tasks of your next rungs, with their claim stamps, and how rites are done.
-- **Bloodline.** Your sire (and whether the bond is severed), who you sired, the Five for a hunter, your genes (Unknown ? until you discover them, unless the server shows them always), and Tensura's race, EP and magicules.
-- **Pack.** Only for a werewolf or a hybrid type. Your rank, the members and who is online, and the `/pack accept` and `/pack leave` actions (the server checks them as if typed).
+- **Skills.** Three tabs. *Bloodline skills*: your race trees (both for a witch or siphoner werewolf, a shared skill once), each skill known, ready to learn, locked with the reason, or dormant; press the stamp to learn it with your skill points. *Your Vampirism or Werewolves tree*: that mod's own skills, unlocked with that mod's own points (the mod checks parents and exclusions). A Loadout tab comes with the ability HUD.
+- **Rites.** The rite tasks of your next rungs, with their claim stamps, then every rite of this mod the server has, yours first: its power, circle and items.
+- **Bloodline.** Your family tree: the sire's line above you (and whether your bond is severed), and everyone you sired below; a **Call your sired** stamp for Originals and hybrid types (the same as `/bloodline call`), the Five for a hunter, your genes (Unknown ? until you discover them, unless the server shows them always), and Tensura's race, EP and magicules.
+- **Pack.** Only for a werewolf or a hybrid type. Your rank, the members and who is online, and the `/pack accept` and `/pack leave` actions (leaving asks you to press twice) (the server checks them as if typed).
 - **Path** also shows your Tensura race and EP.
-- **Seals.** Wax seals under the ribbons open other mods' screens as they are: **T** Tensura's status menu, **E** Enchanted's book. Press Esc there and the hub comes back on the page you left.
+- **Seals.** Wax seals under the ribbons open other mods' screens as they are: **T** Tensura's status menu, **E** Enchanted's book, **V** or **W** your Vampirism or Werewolves skill tree. Press Esc there and the hub comes back on the page you left.
 - **Tensura's menu** has a fifth tab on the right, under its three "coming soon" tabs, that opens the hub.

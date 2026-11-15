@@ -5,7 +5,14 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 
 /** The hub's client settings (each player picks their own look). The theme is never sent to or read by the server. */
 public final class HubClientConfig {
-    public enum ThemeId { GRIMOIRE, BLOOD_MOON, TENSURA }
+    public enum ThemeId {
+        GRIMOIRE, BLOOD_MOON, TENSURA;
+
+        /** The id a part registers the theme under ({@code HubHooks.addTheme}). */
+        public String id() {
+            return name().toLowerCase(java.util.Locale.ROOT);
+        }
+    }
 
     public static final String FILE = SupernaturalBloodlines.MODID + "-hub-client.toml";
     public static final ModConfigSpec SPEC;
@@ -13,8 +20,8 @@ public final class HubClientConfig {
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
-        HUB_THEME = b.comment("The hub's look. GRIMOIRE (default): an open book. BLOOD_MOON and TENSURA are not built yet and show the Grimoire;",
-                        "TENSURA also falls back to the Grimoire without Tensura.")
+        HUB_THEME = b.comment("The hub's look. GRIMOIRE (default): an open book. A theme that is not there (not built yet, or TENSURA without Tensura)",
+                        "shows the Grimoire.")
                 .defineEnum("hub_theme", ThemeId.GRIMOIRE);
         SPEC = b.build();
     }
@@ -30,12 +37,8 @@ public final class HubClientConfig {
         }
     }
 
-    /** The theme that is drawn for the one chosen: the Grimoire until the others are built (12f), and for Tensura's without Tensura. */
-    public static ThemeId resolve(ThemeId chosen, boolean tensuraLoaded) {
-        if (chosen == ThemeId.TENSURA && !tensuraLoaded) {
-            return ThemeId.GRIMOIRE;
-        }
-        // shortcut: Blood Moon and Tensura are phase 12f; return `chosen` here once they exist
-        return ThemeId.GRIMOIRE;
+    /** The theme that is drawn for the one chosen: itself when a part registered it and it can be drawn now (Tensura's needs Tensura), else the Grimoire. */
+    public static ThemeId resolve(ThemeId chosen, java.util.function.Predicate<String> registered) {
+        return registered.test(chosen.id()) ? chosen : ThemeId.GRIMOIRE;
     }
 }

@@ -1,6 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import java.util.List;
+import java.util.Set;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -29,20 +31,10 @@ public final class BloodlinePage implements HubPageView {
         int y = f.begin(HubLayout.MAIN);
         y = PageKit.title(f, Component.translatable(KEY + "title"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
-        y = heading(f, r, y + 6, KEY + "sire");
-        boolean hasSire = f.view.bloodline().sire() != null;
-        Component sire = !hasSire ? Component.translatable(KEY + "no_sire")
-                : snap.sire().map(n -> (Component) Component.literal(n)).orElse(Component.translatable(KEY + "sire_unknown"));
-        y = PageKit.wrapped(f, sire, r.x() + 4, y, r.w() - 4, t.ink());
-        if (hasSire && snap.severed()) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "severed"), r.x() + 4, y, r.w() - 4, t.muted());
-        }
-        y = heading(f, r, y + 4, KEY + "sired");
-        if (snap.sired().isEmpty()) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "none"), r.x() + 4, y, r.w() - 4, t.muted());
-        }
-        for (String name : snap.sired()) {
-            y = PageKit.wrapped(f, Component.literal("\u2022 " + name), r.x() + 4, y, r.w() - 4, t.ink());
+        y = tree(f, r, y + 6, snap);
+        if (MAY_CALL.contains(f.view.races().get(0)) && !snap.sired().isEmpty()) {
+            // sent as the command itself: the server checks it as it checks a typed one (who may call, the cooldown, who answers)
+            y = SkillsPage.stamp(f, r, y + 2, "bloodline:call", Component.translatable(KEY + "call"), () -> command("bloodline call"));
         }
         if (f.view.races().get(0) == SupernaturalRace.HUNTER) {
             y = heading(f, r, y + 4, KEY + "five");
@@ -79,6 +71,57 @@ public final class BloodlinePage implements HubPageView {
                     s.x(), sy, s.w(), t.ink());
         }
         f.end(sy);
+    }
+
+    /** The species that may call their sired (R43); the server decides, this only hides a button that would always be refused. */
+    private static final Set<SupernaturalRace> MAY_CALL = Set.of(SupernaturalRace.ORIGINAL, SupernaturalRace.ORIGINAL_HYBRID,
+            SupernaturalRace.HYBRID, SupernaturalRace.TRIBRID);
+
+    /** The family tree: the sire's line above (farthest first), you, and everyone you sired below, indented by depth. */
+    private static int tree(HubScreen.Frame f, Rect r, int y, HubSnapshotPayload snap) {
+        HubTheme t = f.theme();
+        y = heading(f, r, y, KEY + "tree");
+        boolean hasSire = f.view.bloodline().sire() != null;
+        List<String> above = snap.family().ancestors();
+        for (int i = above.size() - 1; i >= 0; i--) {
+            y = PageKit.wrapped(f, name(above.get(i)), r.x() + 4, y, r.w() - 4, t.muted());
+            y = arrow(f, r, y);
+        }
+        if (hasSire) {
+            Component sire = Component.translatable(KEY + "sire_line", snap.sire().map(n -> name(n)).orElse(Component.translatable(KEY + "sire_unknown")));
+            y = PageKit.wrapped(f, sire, r.x() + 4, y, r.w() - 4, t.ink());
+            if (snap.severed()) {
+                y = PageKit.wrapped(f, Component.translatable(KEY + "severed"), r.x() + 8, y, r.w() - 8, t.muted());
+            }
+            y = arrow(f, r, y);
+        } else {
+            y = PageKit.wrapped(f, Component.translatable(KEY + "no_sire"), r.x() + 4, y, r.w() - 4, t.muted());
+        }
+        y = PageKit.wrapped(f, f.view.player().getName().copy().withStyle(ChatFormatting.BOLD), r.x() + 4, y, r.w() - 4, t.accent());
+        for (HubSocial.Kin k : snap.family().line()) {
+            int indent = 4 + Math.min(k.depth(), 6) * 6;
+            y = PageKit.wrapped(f, Component.literal("\u2514 ").append(name(k.name())), r.x() + indent, y, r.w() - indent, t.ink());
+        }
+        if (snap.family().line().isEmpty()) {
+            y = PageKit.wrapped(f, Component.translatable(KEY + "none_sired"), r.x() + 10, y, r.w() - 10, t.muted());
+        }
+        return y;
+    }
+
+    private static int arrow(HubScreen.Frame f, Rect r, int y) {
+        f.g.drawString(f.font(), "\u2193", r.x() + 6, y - 1, f.theme().muted(), false);
+        return y + 8;
+    }
+
+    private static Component name(String n) {
+        return n.isEmpty() ? Component.translatable(KEY + "name_lost") : Component.literal(n);
+    }
+
+    private static void command(String command) {
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        if (player != null) {
+            player.connection.sendCommand(command);
+        }
     }
 
     private static int heading(HubScreen.Frame f, Rect r, int y, String key) {

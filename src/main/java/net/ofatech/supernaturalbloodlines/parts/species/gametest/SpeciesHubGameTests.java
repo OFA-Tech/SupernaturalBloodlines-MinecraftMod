@@ -36,6 +36,37 @@ public final class SpeciesHubGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void theFamilyTreeGoesUpAndDown(GameTestHelper helper) {
+        ServerPlayer grand = TestPlayers.create(helper);
+        ServerPlayer sire = TestPlayers.create(helper);
+        ServerPlayer child = TestPlayers.create(helper);
+        helper.assertTrue(SireRecorder.record(grand, sire) && SireRecorder.record(sire, child), "the line was not recorded");
+        try {
+            helper.assertTrue(HubSocial.of(child).ancestors().equals(List.of(grand.getGameProfile().getName())), "ancestors " + HubSocial.of(child).ancestors());
+            List<HubSocial.Kin> line = HubSocial.of(grand).line();
+            helper.assertTrue(line.equals(List.of(new HubSocial.Kin(sire.getGameProfile().getName(), 1), new HubSocial.Kin(child.getGameProfile().getName(), 2))),
+                    "line " + line);
+        } finally {
+            BloodlineAccess.set(child, BloodlineState.NONE);
+            BloodlineAccess.set(sire, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theSnapshotListsTheLoadedRitesWithPowerAndItems(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        List<HubSocial.Rite> rites = HubSocial.of(p).rites();
+        HubSocial.Rite revelation = rites.stream().filter(r -> r.id().equals(SupernaturalBloodlines.MODID + ":rite_of_revelation")).findFirst().orElse(null);
+        helper.assertTrue(revelation != null, "no Rite of Revelation in " + rites.stream().map(HubSocial.Rite::id).toList());
+        helper.assertTrue(revelation.power() == 1000 && !revelation.shapes().isEmpty(), "revelation " + revelation);
+        helper.assertTrue(rites.stream().allMatch(r -> r.id().startsWith(SupernaturalBloodlines.MODID + ":")), "another mod's rite listed");
+        HubSocial.Rite five = rites.stream().filter(r -> r.id().endsWith(":rite_of_the_five")).findFirst().orElse(null);
+        helper.assertTrue(five != null && five.faction().equals("hunter") && five.factory().endsWith("faction_rite"), "the factory is not read: " + five);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void anEmissarySeesThePackTheyServe(GameTestHelper helper) {
         if (!net.neoforged.fml.ModList.get().isLoaded("werewolves")) {
             helper.succeed(); // no pack without Werewolves
