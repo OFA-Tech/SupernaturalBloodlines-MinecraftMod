@@ -109,5 +109,9 @@ class SkillRulesTest {
         assertTrue(SkillRules.owns(TABLE, s, WOLF, Optional.empty(), "S-1"));
         assertFalse(SkillRules.owns(TABLE, s, WOLF, Optional.empty(), "S-W"));
         assertFalse(SkillRules.owns(TABLE, s, WOLF, WITCH, "S-2"));
+        // a granted-only skill counts only while the rule that grants it holds
+        assertEquals(Set.of("S-1"), SkillRules.active(TABLE, s, WOLF, Optional.empty(), id -> !id.equals("S-G")));
+        assertFalse(SkillRules.owns(TABLE, s, WOLF, Optional.empty(), "S-G", id -> false));
+        assertTrue(SkillRules.owns(TABLE, s, WOLF, Optional.empty(), "S-G", id -> true));
     }
 }

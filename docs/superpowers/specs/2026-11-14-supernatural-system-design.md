@@ -221,7 +221,7 @@ Hybrid-types are Werewolves-faction players with a vampire layer (R2): their lad
 | `sired(n)` | `SirelineIndex` size, checked on activation and on its change | players or mobs |
 | `days_as(race, n)` | game time − `race_since[race]`, checked every 200 ticks | in-game days of 24,000 ticks |
 | `thirst_days(min, n)` | every 200 ticks, adds 200 to the counter while `thirst >= min` | hybrids |
-| `tensura_tier(apex)` | the apex tier of the player's current Tensura line (see "Apex races") | human-like Saint+, vampire Lord+, Beastfolk Spirit Beast+ |
+| `tensura_tier(apex)` | the apex tier of the player's current Tensura line (see "Apex races") | human-like Saint+, vampire Lord+, Beastfolk Spirit Beast+ (werewolf-types, and a witch or siphoner who is also a werewolf) |
 
 ### Rules
 
@@ -258,7 +258,9 @@ Hybrid-types are Werewolves-faction players with a vampire layer (R2): their lad
 |---|---|---|
 | human-like lines (`HumanLikeLine`) | Saint (as today) | every species with an apex |
 | Tensura vampire line | Vampire Lord (`tensura:vampire_lord`, and `vampire_overcomer` if it is the same tier), then `divine_vampire` | vampire, Original, hybrid, Original hybrid, heretic |
-| Beastfolk line | `tensura:spirit_beast`, then `divine_beast` | werewolf, hybrid, tribrid |
+| Beastfolk line | `tensura:spirit_beast`, then `divine_beast` | werewolf, hybrid, tribrid, **and witch and siphoner when they are also werewolves** (a werewolf is on Beastfolk and the magic ladder stacks on it; owner ruling 2026-11-15). Original, Original hybrid and hunter are never on it. |
+
+Rule: each species is offered its apex from every Tensura line it can actually be on. A witch or siphoner who becomes a vampire is a Heretic, which has its own apex, so the vampire line is unchanged.
 
 A hybrid can be on either line: one made by R24 (a vampire who awakens the gene) normally stays on the vampire line (R20a), one made by R40 (a werewolf turned by Original's Blood) on Beastfolk (R20b). The offer only reads the current race; it never moves the player between lines. The builder checks the tiers and their ids in Tensura's files before coding.
 - **SP and EP** through claims.
@@ -789,7 +791,7 @@ A datapack change that moves a task to a different rung never lowers anyone's ru
 ## Could not ground
 
 - **Human and Ghoul have no apex.** Vampire and Werewolf now do (D1); their ids and stats are the designer's.
-- **The Tensura tiers** of D2 (Vampire Lord vs Overcomer, Spirit Beast) are taken from the rule text, not yet checked in Tensura's jar.
+- **The Tensura tiers** of D2 are checked in Tensura 2.0.1.5 (phase 12d): the vampire line is vampire, overcomer, lord, divine, so Vampire Lord (tier 3) is the Saint equivalent and the Overcomer is not offered; Beastfolk is beastfolk, beast lord, spirit beast, divine beast. See `docs/parts/species_tensura.md`.
 - **Players on the Original hybrid line** are offered their apex only from the human-like and vampire lines, as the owner listed; an Original hybrid on Beastfolk (possible through R20b before R35) gets no Beastfolk offer.
 - **Detectors not yet in code:** `forced_shift_survived`, `sun_ring_bound`, `mountain_ash_placed`, `vampire_bite_refused` (plan 11), `dying_survived`, lifetime siphon totals. Each is one `TaskSignals` call in code that already exists or is planned.
 - **Every number** (SP, EP, counts, days, skill effects) is the designer's.

@@ -2,7 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.speciestensura.apex;
 
 import java.util.List;
 import java.util.Optional;
-import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 
 /**
  * One apex race: the stat bonuses (placeholders, the owner tunes them) and its intrinsic skills. The species layer
@@ -25,23 +25,31 @@ public record ApexSpec(String id, double health, double attack, double speed, Li
     public static final ApexSpec TRIBRID_ASCENDANT = new ApexSpec("tribrid_ascendant", 1100, 25, 0.03, List.of("tensura:ultra_instinct"), true);
     public static final ApexSpec ETERNAL_HUNTER = new ApexSpec("eternal_hunter", 900, 20, 0.02, List.of("tensura:danger_sense"), false);
 
+    /** Plain Vampire (D1). */
+    public static final ApexSpec ELDER_VAMPIRE = new ApexSpec("elder_vampire", 900, 20, 0.02, List.of("tensura:self_regeneration"), true);
+    /** Plain Werewolf (D1); R103: not undead. */
+    public static final ApexSpec ALPHA_PRIMEVAL = new ApexSpec("alpha_primeval", 1000, 25, 0.03, List.of("tensura:godwolf_sense"), false);
+
     public static final List<ApexSpec> ALL = List.of(PRIMORDIAL_VAMPIRE, PRIMORDIAL_HYBRID, MOONBLOOD_HYBRID, ANCESTRAL_WITCH,
-            VOID_SIPHON, TRIBRID_ASCENDANT, ETERNAL_HUNTER);
+            VOID_SIPHON, TRIBRID_ASCENDANT, ETERNAL_HUNTER, ELDER_VAMPIRE, ALPHA_PRIMEVAL);
 
     public ApexSpec {
         intrinsicSkills = List.copyOf(intrinsicSkills);
     }
 
-    public static Optional<ApexSpec> forSpecies(Species species) {
-        return Optional.ofNullable(switch (species) {
+    /** The apex race of a supernatural race. Whether a given player may be offered it (a Potential is not a hunter of the Five) is {@code ApexOffer}'s. */
+    public static Optional<ApexSpec> forRace(SupernaturalRace race) {
+        return Optional.ofNullable(switch (race) {
+            case VAMPIRE -> ELDER_VAMPIRE;
             case ORIGINAL -> PRIMORDIAL_VAMPIRE;
             case ORIGINAL_HYBRID -> PRIMORDIAL_HYBRID;
             case HYBRID -> MOONBLOOD_HYBRID;
             case WITCH -> ANCESTRAL_WITCH;
             case SIPHONER, HERETIC -> VOID_SIPHON;
             case TRIBRID -> TRIBRID_ASCENDANT;
-            case HUNTER_OF_THE_FIVE -> ETERNAL_HUNTER;
-            case NONE, POTENTIAL -> null;
+            case HUNTER -> ETERNAL_HUNTER;
+            case WEREWOLF -> ALPHA_PRIMEVAL;
+            case HUMAN, GHOUL -> null;
         });
     }
 }

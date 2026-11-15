@@ -336,4 +336,51 @@ class LadderRulesTest {
         s = LadderRules.apply(T, s, List.of(HYBRID), tick);
         assertTrue(s.done().contains("L-HYB-2a"));
     }
+
+    @Test
+    void theApexOfferNeedsTheTopRungOfThatRacesLadder() {
+        // every shipped ladder ends with its apex rung (L-VAM-6, L-ORI-5, ..., L-WOL-6)
+        for (SupernaturalRace r : SupernaturalRace.values()) {
+            if (r == HUMAN || r == GHOUL) {
+                assertTrue(LadderRules.apexRungReached(T, FRESH, r), r + " has no apex rung to ask for");
+                continue;
+            }
+            int top = T.get(r).rungs().size() - 1;
+            assertFalse(LadderRules.apexRungReached(T, FRESH.toBuilder().rung(r, top - 1).build(), r), r + " one below the top");
+            assertTrue(LadderRules.apexRungReached(T, FRESH.toBuilder().rung(r, top).build(), r), r + " at the top");
+        }
+        // a witch werewolf has two ladders, each its own rung
+        SupernaturalState s = FRESH.toBuilder().rung(WEREWOLF, 6).rung(WITCH, 4).build();
+        assertTrue(LadderRules.apexRungReached(T, s, WEREWOLF));
+        assertFalse(LadderRules.apexRungReached(T, s, WITCH));
+    }
+
+    @Test
+    void aLadderWithoutAnApexRungAsksForNothing() {
+        String ladder = """
+                { "rungs": [ { "id": "X-0" },
+                    { "id": "X-1", "sp": 1, "tasks": [ { "id": "X-1a", "detector": "signal", "signal": "s" } ] },
+                    { "id": "X-2", "mods": ["tensura"], "tasks": [ { "id": "X-2a", "detector": "tensura_tier" } ] } ] }
+                """;
+        LadderTable without = custom(mod -> !mod.equals("tensura"), "vampire", ladder);
+        assertEquals(2, without.get(VAMPIRE).rungs().size());
+        assertTrue(LadderRules.apexRungReached(without, FRESH, VAMPIRE));
+        LadderTable with = custom(mod -> true, "vampire", ladder);
+        assertFalse(LadderRules.apexRungReached(with, FRESH.toBuilder().rung(VAMPIRE, 1).build(), VAMPIRE));
+        assertTrue(LadderRules.apexRungReached(with, FRESH.toBuilder().rung(VAMPIRE, 2).build(), VAMPIRE));
+    }
+
+    /** A werewolf witch may be at the apex tier of the human-like line for both, or of Beastfolk for the werewolf only. */
+    @Test
+    void tensuraTierMovesOnlyTheLadderOfTheRaceItNames() {
+        SupernaturalState s = FRESH.toBuilder().rung(WEREWOLF, 5).rung(WITCH, 4).build();
+        List<SupernaturalRace> races = List.of(WEREWOLF, WITCH);
+        SupernaturalState wolf = LadderRules.apply(T, s, races, TaskEvent.of(Detector.TENSURA_TIER, 1, "race", "werewolf"));
+        assertTrue(wolf.done().contains("L-WOL-6a"));
+        assertFalse(wolf.done().contains("L-WIT-5a"));
+        SupernaturalState both = LadderRules.apply(T, wolf, races, TaskEvent.of(Detector.TENSURA_TIER, 1, "race", "witch"));
+        assertTrue(both.done().contains("L-WIT-5a"));
+        // an event that names no race (an older sender) still moves every ladder, as every other detector does
+        assertTrue(LadderRules.apply(T, s, races, TaskEvent.of(Detector.TENSURA_TIER, 1)).done().containsAll(List.of("L-WOL-6a", "L-WIT-5a")));
+    }
 }

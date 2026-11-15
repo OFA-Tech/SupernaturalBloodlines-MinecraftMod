@@ -51,6 +51,20 @@ public final class LadderRules {
         return out;
     }
 
+    /**
+     * The apex offer's gate: the rung that holds the {@code tensura_tier} task (the top one) is reached. True when the ladder has no such rung
+     * (no Tensura, or the part that reads the tier is off: it cannot be climbed, so it cannot be asked for).
+     */
+    public static boolean apexRungReached(LadderTable table, SupernaturalState s, SupernaturalRace race) {
+        List<Rung> rungs = table.get(race).rungs();
+        for (int i = 0; i < rungs.size(); i++) {
+            if (rungs.get(i).tasks().stream().anyMatch(t -> t.leaves().stream().anyMatch(l -> l.detector() == TaskSpec.Detector.TENSURA_TIER))) {
+                return s.rung(race) >= i;
+            }
+        }
+        return true;
+    }
+
     /** A leaf is done when recorded; a group when any member is. */
     public static boolean isDone(TaskSpec task, SupernaturalState s) {
         return task.leaves().stream().anyMatch(l -> s.done().contains(l.id()));
@@ -106,7 +120,7 @@ public final class LadderRules {
                     continue;
                 }
                 for (TaskSpec leaf : task.leaves()) {
-                    if (!leaf.matches(e)) {
+                    if (!leaf.matches(e) || !forRace(e, race)) {
                         continue;
                     }
                     if (leaf.total()) {
@@ -120,6 +134,12 @@ public final class LadderRules {
             }
         }
         return out;
+    }
+
+    /** Which line a Tensura race is on counts for one race at a time: a {@code tensura_tier} event that names a race moves only that ladder. */
+    private static boolean forRace(TaskEvent e, SupernaturalRace race) {
+        String named = e.attrs().get("race");
+        return e.detector() != TaskSpec.Detector.TENSURA_TIER || named == null || named.equals(race.id());
     }
 
     /** Marks the "in total" tasks of the active rungs whose lifetime count is already enough (call it when a rung becomes active). */

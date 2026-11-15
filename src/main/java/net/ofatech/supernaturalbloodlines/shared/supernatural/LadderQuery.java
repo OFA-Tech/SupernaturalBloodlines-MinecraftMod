@@ -17,6 +17,9 @@ public final class LadderQuery {
 
         int rung(Player player, SupernaturalRace race);
 
+        /** The player has reached the apex rung of that race's ladder (see {@link LadderQuery#apexRungReached}). */
+        boolean apexRungReached(Player player, SupernaturalRace race);
+
         /** The skill is bought and the tree of the player's creature or magic race lists it. */
         boolean owns(Player player, String skillId);
 
@@ -33,6 +36,11 @@ public final class LadderQuery {
         @Override
         public int rung(Player player, SupernaturalRace race) {
             return 0;
+        }
+
+        @Override
+        public boolean apexRungReached(Player player, SupernaturalRace race) {
+            return true;
         }
 
         @Override
@@ -63,6 +71,15 @@ public final class LadderQuery {
     /** The highest rung reached on that race's ladder (0 for none). */
     public static int rung(Player player, SupernaturalRace race) {
         return provider.rung(player, race);
+    }
+
+    /**
+     * The apex offer needs the apex rung of the race's ladder (the top rung, L-VAM-6 and its kin). True without the supernatural part (today's
+     * behaviour), for a player who has not been migrated yet (nothing is taken back), and when the ladder has no apex rung (no Tensura, or
+     * the supernatural_tensura part is off: a rung that cannot be climbed cannot be asked for).
+     */
+    public static boolean apexRungReached(Player player, SupernaturalRace race) {
+        return provider.apexRungReached(player, race);
     }
 
     /** True only when the skill is owned <b>and</b> active: a dormant skill (the player's race tree does not list it) is not owned. */

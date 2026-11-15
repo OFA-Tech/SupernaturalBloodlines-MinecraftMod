@@ -31,7 +31,7 @@ A **tribrid** is a **witch who is also a werewolf and completes the hybrid trans
 - the **witch bonus**: altar range x1.5, rite cost x0.75
 - **siphoning**
 - **prey** for hunters; a vampire and a werewolf for every rule (R2)
-- Tensura (Tensura part): skills `drain`, `beast_transformation`, `self_regeneration`, `charm`, +30% max magicule, **undead**. Apex race: **Tribrid Ascendant** (the most max health of the seven, by the placeholder stats).
+- Tensura (Tensura part): skills `drain`, `beast_transformation`, `self_regeneration`, `charm`, +30% max magicule, **undead**. Apex race: **Tribrid Ascendant** (the most max health of the nine, by the placeholder stats).
 - Needs Werewolves.
 
 **How to become one:** a witch is bitten and becomes a werewolf (see [Werewolves and packs](Werewolves-And-Packs)), an Original makes Original's Blood, the witch-werewolf drinks it and dies, then drinks Doppelgänger Blood in time. See [The transition](Hybrids-And-Original-Hybrids#the-transition).

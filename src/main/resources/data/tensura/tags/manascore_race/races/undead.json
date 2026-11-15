@@ -4,6 +4,7 @@
     { "id": "supernaturalbloodlines:primordial_vampire", "required": false },
     { "id": "supernaturalbloodlines:primordial_hybrid", "required": false },
     { "id": "supernaturalbloodlines:moonblood_hybrid", "required": false },
-    { "id": "supernaturalbloodlines:tribrid_ascendant", "required": false }
+    { "id": "supernaturalbloodlines:tribrid_ascendant", "required": false },
+    { "id": "supernaturalbloodlines:elder_vampire", "required": false }
   ]
 }

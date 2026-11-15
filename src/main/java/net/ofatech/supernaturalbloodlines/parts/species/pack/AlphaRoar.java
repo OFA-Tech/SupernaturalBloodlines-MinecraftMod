@@ -12,8 +12,13 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -43,6 +48,10 @@ public final class AlphaRoar {
 
     private static final Map<UUID, Long> LAST = new ConcurrentHashMap<>();
     private static final Map<UUID, Long> PERMIT_UNTIL = new ConcurrentHashMap<>();
+    /** Betas carrying the Primeval Roar's attack bonus (a transient modifier, never saved) and the tick it ends. */
+    private static final Map<UUID, Long> PACK_ATTACK_UNTIL = new ConcurrentHashMap<>();
+    private static final Map<UUID, ServerPlayer> PACK_ATTACK_HOLDERS = new ConcurrentHashMap<>();
+    public static final ResourceLocation PACK_ATTACK_ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "primeval_pack_attack");
     private static volatile Function<MinecraftServer, Collection<ServerPlayer>> players = s -> s.getPlayerList().getPlayers();
 
     private AlphaRoar() {
@@ -55,6 +64,23 @@ public final class AlphaRoar {
         ForcedShift.addFormPermit(p -> PERMIT_UNTIL.getOrDefault(p.getUUID(), 0L) > p.server.getTickCount());
         // the maps hold server tick counts, which restart at 0 with an integrated server: a stale one would block a roar
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> onServerStopped());
+        // a map lookup per player per second, and nothing at all while nobody carries the bonus
+        NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> {
+            if (!PACK_ATTACK_UNTIL.isEmpty() && e.getEntity() instanceof ServerPlayer p && p.tickCount % 20 == 0) {
+                endPackAttack(p, false);
+            }
+        });
+    }
+
+    /** Takes the Primeval Roar's attack bonus off {@code p} when its time is up (or at once with {@code force}). */
+    @VisibleForTesting
+    public static void endPackAttack(ServerPlayer p, boolean force) {
+        Long until = PACK_ATTACK_UNTIL.get(p.getUUID());
+        if (until != null && (force || p.server.getTickCount() >= until)) {
+            PACK_ATTACK_UNTIL.remove(p.getUUID());
+            PACK_ATTACK_HOLDERS.remove(p.getUUID());
+            p.getAttribute(Attributes.ATTACK_DAMAGE).removeModifier(PACK_ATTACK_ID);
+        }
     }
 
     /** Forgets every cooldown and permit (the server's tick count is about to start again). */
@@ -72,11 +98,22 @@ public final class AlphaRoar {
     public static void reset() {
         LAST.clear();
         PERMIT_UNTIL.clear();
+        // the bonus is a transient modifier on a player who may still be online: take it off, do not just forget when it ends
+        for (ServerPlayer holder : PACK_ATTACK_HOLDERS.values()) {
+            holder.getAttribute(Attributes.ATTACK_DAMAGE).removeModifier(PACK_ATTACK_ID);
+        }
+        PACK_ATTACK_HOLDERS.clear();
+        PACK_ATTACK_UNTIL.clear();
     }
 
-    /** Ticks between two roars: 1200, or 800 with Roar's Echo (S-WOL-6). */
+    /** Ticks between two roars: 1200, or 800 with Roar's Echo (S-WOL-6) or the Primeval Roar (S-WOL-8, which is Roar's Echo and more). */
     public static int cooldown(ServerPlayer p) {
-        return (int) LadderQuery.value(p, "S-WOL-6", "cooldown_ticks", COOLDOWN);
+        return (int) Math.min(LadderQuery.value(p, "S-WOL-6", "cooldown_ticks", COOLDOWN), LadderQuery.value(p, "S-WOL-8", "cooldown_ticks", COOLDOWN));
+    }
+
+    /** The Primeval Roar (S-WOL-8) doubles both ranges. */
+    private static double rangeFactor(ServerPlayer p) {
+        return LadderQuery.value(p, "S-WOL-8", "range_factor", 1);
     }
 
     /** The error to show, or null when the roar happened. */
@@ -104,18 +141,27 @@ public final class AlphaRoar {
         }
         LAST.put(p.getUUID(), now);
 
+        double range = rangeFactor(p);
+        double packAttack = LadderQuery.value(p, "S-WOL-8", "pack_attack", 0);
+        int packTicks = (int) LadderQuery.value(p, "S-WOL-8", "pack_ticks", BUFF_TICKS);
         PackIndex index = PackIndex.get(p.serverLevel());
         Set<UUID> pack = new HashSet<>(index.betasOf(p.getUUID()));
         for (UUID id : pack) {
             ServerPlayer beta = SireCall.player(p.server, id);
-            if (inRange(p, beta, PACK_RANGE)) {
+            if (inRange(p, beta, PACK_RANGE * range)) {
                 beta.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, BUFF_TICKS, 0));
                 beta.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, BUFF_TICKS, 0));
                 PERMIT_UNTIL.put(id, now + BUFF_TICKS);
+                if (packAttack > 0) {
+                    beta.getAttribute(Attributes.ATTACK_DAMAGE).addOrUpdateTransientModifier(new AttributeModifier(PACK_ATTACK_ID, packAttack,
+                            AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+                    PACK_ATTACK_UNTIL.put(id, now + packTicks);
+                    PACK_ATTACK_HOLDERS.put(id, beta);
+                }
             }
         }
         for (ServerPlayer other : players.apply(p.server)) {
-            if (other != p && !pack.contains(other.getUUID()) && VampirismSupernatural.isWerewolf(other) && inRange(p, other, SUBMIT_RANGE)) {
+            if (other != p && !pack.contains(other.getUUID()) && VampirismSupernatural.isWerewolf(other) && inRange(p, other, SUBMIT_RANGE * range)) {
                 VampirismAPI.factionPlayerHandler(other).getCurrentFactionPlayer()
                         .filter(f -> f instanceof IWerewolfPlayer).ifPresent(f -> FormHelper.deactivateWerewolfActions((IWerewolfPlayer) f));
                 other.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, SUBMIT_TICKS, 1));

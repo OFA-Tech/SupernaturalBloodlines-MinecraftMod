@@ -30,7 +30,7 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 
 - **Eyes are particles only.** Werewolves in a wolf form show two glowing dust particles at eye height. The render layer on the model is not done.
 - **The Taser** has placeholder art and spends a charge on **every** hit, not only on supernaturals.
-- **No race icon** for the seven apex races in Tensura's evolution screen, and the evolution tree may not draw the link back (`getPreviousEvolutions` is empty). Names, stats, EP and signature skills are **placeholders**.
+- **No race icon** for the nine apex races in Tensura's evolution screen, and the evolution tree may not draw the link back (`getPreviousEvolutions` is empty). Names, stats, EP and signature skills are **placeholders**.
 - **Placeholder textures** for almost everything this mod adds (Blood Stone, Condensed Magicule, poppets, rings, wood, vervain, wolfsbane, lichen, Taser, effect icons).
 - **No grey screen tint** for a desiccated player. A desiccated vampire can still *start* a Vampirism bite: it drinks nothing, but the victim still takes the bite.
 - **Hunter outline:** the colour is the entity's team colour (white without a team). A glow that starts while an entity is outlined is lost when the outline ends. No Vampirism hunter skin on the phantom zombie. The outline and the hallucinations were loaded, not seen, in a client.

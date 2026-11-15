@@ -3,7 +3,7 @@ package net.ofatech.supernaturalbloodlines.parts.speciestensura.apex;
 import io.github.manasmods.manascore.race.api.RaceAPI;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
-import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 
 /** Puts the apex races into ManasCore's race registry, next to Tensura's own (they share the registry; ids are ours). */
 public final class ApexRaces {
@@ -20,7 +20,7 @@ public final class ApexRaces {
         return ResourceLocation.fromNamespaceAndPath(ApexSpec.RACE_NAMESPACE, spec.id());
     }
 
-    public static Optional<ResourceLocation> apexFor(Species species) {
-        return ApexSpec.forSpecies(species).map(ApexRaces::id);
+    public static Optional<ResourceLocation> apexFor(SupernaturalRace race) {
+        return ApexSpec.forRace(race).map(ApexRaces::id);
     }
 }

@@ -28,6 +28,8 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.Supernatur
 import net.ofatech.supernaturalbloodlines.parts.supernatural.task.Detectors;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.task.TaskTracker;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.SkillEffects;
+import net.ofatech.supernaturalbloodlines.core.supernatural.LadderRules;
+import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SkillRules;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SkillTable;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
@@ -37,6 +39,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.LadderNet;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.GrantedSkills;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 
 public final class SupernaturalPart {
@@ -65,13 +68,21 @@ public final class SupernaturalPart {
             }
 
             @Override
+            public boolean apexRungReached(Player player, SupernaturalRace race) {
+                SupernaturalState s = SupernaturalAccess.get(player);
+                // not migrated yet: the migration gives the floor on login, and until then nothing is taken back
+                return s.schema() == 0 || LadderRules.apexRungReached(LadderTable.current(), s, race);
+            }
+
+            @Override
             public boolean owns(Player player, String skillId) {
                 SupernaturalState s = SupernaturalAccess.get(player);
                 if (!s.skills().contains(skillId)) {
                     return false; // the common answer, without looking up the race
                 }
                 List<SupernaturalRace> races = TaskTracker.races(player);
-                return SkillRules.owns(SkillTable.current(), s, races.get(0), races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty(), skillId);
+                return SkillRules.owns(SkillTable.current(), s, races.get(0), races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty(), skillId,
+                        id -> GrantedSkills.holds(player, id));
             }
 
             @Override
@@ -79,7 +90,7 @@ public final class SupernaturalPart {
                 SupernaturalState s = SupernaturalAccess.get(player);
                 List<SupernaturalRace> races = TaskTracker.races(player);
                 return SkillEffects.tensuraSkillsOf(SkillTable.current(), SkillRules.active(SkillTable.current(), s, races.get(0),
-                        races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty()));
+                        races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty(), id -> GrantedSkills.holds(player, id)));
             }
         });
         SkillEffects.register();

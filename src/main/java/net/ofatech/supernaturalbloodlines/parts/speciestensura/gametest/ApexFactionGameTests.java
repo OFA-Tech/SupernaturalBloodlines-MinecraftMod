@@ -77,10 +77,10 @@ public final class ApexFactionGameTests {
                 victim.moveTo(helper.absoluteVec(new Vec3(1.5, 2, 3.5)), 0, 0);
                 victim.setYHeadRot(0);
                 // an apex race is only held by its species; the species layer is what Tensura's holy exposure reads
-                for (Species s : Species.values()) {
-                    if (ApexSpec.forSpecies(s).filter(spec::equals).isPresent()) {
-                        species(victim, s);
-                    }
+                ApexGameTests.speciesOf(spec).ifPresent(s -> species(victim, s));
+                if (spec == ApexSpec.ELDER_VAMPIRE) {
+                    // a plain vampire's layer (what Tensura's holy exposure reads) comes with the Vampirism faction, not a species
+                    VampirismAPI.factionPlayerHandler(victim).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
                 }
                 RaceAPI.getRaceFrom(victim).setRace(ResourceLocation.parse(NS + ":" + spec.id()), false);
                 helper.assertTrue(RaceUtils.isUndead(victim), spec.id() + " is not undead");
@@ -89,7 +89,7 @@ public final class ApexFactionGameTests {
                 helper.assertTrue(vampire.determineBiteType(victim) == IVampirePlayer.BITE_TYPE.SUCK_BLOOD_PLAYER,
                         spec.id() + " victim gave " + vampire.determineBiteType(victim));
             }
-            helper.assertTrue(checked == 4, "vampire-type apex races: " + checked);
+            helper.assertTrue(checked == 5, "vampire-type apex races: " + checked);
             // control: an undead race of Tensura's own is still bloodless
             ServerPlayer ghoul = TestPlayers.create(helper);
             ghoul.moveTo(helper.absoluteVec(new Vec3(1.5, 2, 3.5)), 0, 0);
