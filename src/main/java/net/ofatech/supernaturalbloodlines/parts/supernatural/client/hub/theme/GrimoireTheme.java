@@ -138,6 +138,11 @@ public final class GrimoireTheme implements HubTheme {
     }
 
     @Override
+    public int paper() {
+        return 0xFFe9dcbc;
+    }
+
+    @Override
     public int ink() {
         return 0xFF3b2414;
     }
@@ -154,16 +159,16 @@ public final class GrimoireTheme implements HubTheme {
 
     @Override
     public int good() {
-        return 0xFF2f6e4a;
+        return 0xFF245a3a;
     }
 
     @Override
     public int sourceColor(String source) {
         return switch (source) {
             case "vampirism" -> 0xFF9a1820;
-            case "werewolves" -> 0xFFa2620e;
-            case "enchanted" -> 0xFF2f6e4a;
-            case "tensura" -> 0xFF1f6f86;
+            case "werewolves" -> 0xFF7a4508;
+            case "enchanted" -> 0xFF245a3a;
+            case "tensura" -> 0xFF16566a;
             default -> 0xFF5a2f9a;
         };
     }

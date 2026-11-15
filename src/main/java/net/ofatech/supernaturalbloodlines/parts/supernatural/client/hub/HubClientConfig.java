@@ -20,8 +20,8 @@ public final class HubClientConfig {
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
-        HUB_THEME = b.comment("The hub's look. GRIMOIRE (default): an open book. A theme that is not there (not built yet, or TENSURA without Tensura)",
-                        "shows the Grimoire.")
+        HUB_THEME = b.comment("The hub's look: GRIMOIRE (default, an open book), BLOOD_MOON (a red moon that fills with your ladder) or TENSURA",
+                        "(Tensura's menu style, wider; needs Tensura, else the Grimoire). It can be changed while the hub is open.")
                 .defineEnum("hub_theme", ThemeId.GRIMOIRE);
         SPEC = b.build();
     }

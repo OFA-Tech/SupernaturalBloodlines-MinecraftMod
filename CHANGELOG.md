@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased: hub themes (plan 12, phase 12f)
+
+- **Two more looks for the hub**, picked with `hub_theme` in `supernaturalbloodlines-hub-client.toml` (it can be changed while the hub is open). **Blood Moon**: a dark screen with a red moon that fills as you climb, rungs as gems around it, pages and other mods on rails at either side. **Tensura**: Tensura's menu style, wider, with pages and mods as two lists; only with Tensura, otherwise the Grimoire. Same pages, actions and keys in every theme. Some of the Grimoire's tag colours are darker so all text is readable.
+
 ## Unreleased: the hub (plan 12, phase 12e)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (The hub). Part: supernatural (and species for the names). No new mixin.

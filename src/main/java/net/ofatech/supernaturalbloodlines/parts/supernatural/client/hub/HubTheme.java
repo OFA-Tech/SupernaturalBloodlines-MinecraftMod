@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 
 /**
  * A skin and layout over the one hub screen model: where things go, how they look, and which view draws each page. The shared views
@@ -22,6 +23,15 @@ public interface HubTheme {
     /** A launcher (another mod's screen), marked with {@code letter}. */
     void drawSeal(GuiGraphics g, Rect r, String letter, int color, boolean lit);
 
+    /** A launcher in its place; a theme with room for the name draws it too. */
+    default void drawLauncher(GuiGraphics g, Rect r, HubHooks.Launcher launcher, boolean lit) {
+        drawSeal(g, r, launcher.letter(), launcher.color(), lit);
+    }
+
+    /** What a theme draws itself from the frame's data before the page (Blood Moon's moon). Nothing by default. */
+    default void drawOverlay(HubScreen.Frame f, HubPage page) {
+    }
+
     /** A rung's mark, {@link #MARK} square. */
     void drawRungMark(GuiGraphics g, int x, int y, HubModel.RungStatus status);
 
@@ -40,6 +50,9 @@ public interface HubTheme {
 
     /** The keyboard focus around a target. */
     void drawFocus(GuiGraphics g, Rect r);
+
+    /** The colour behind the content regions: every text colour below is readable on it (4.5:1 or more). */
+    int paper();
 
     int ink();
 

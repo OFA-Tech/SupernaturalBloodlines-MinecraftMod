@@ -34,6 +34,7 @@ public final class HubScreen extends Screen {
     private String selectedTask;
     private String focus;
     private boolean scrollToFocus;
+    private boolean keyboard;
     private final Map<String, Integer> scroll = new HashMap<>();
     private final Map<String, Integer> maxScroll = new HashMap<>();
     private HubClientConfig.ThemeId themeId;
@@ -105,11 +106,12 @@ public final class HubScreen extends Screen {
             String id = "seal:" + l.id();
             f.targets.add(new Target(id, r, null, true, List.of(l.name(), Component.translatable("supernaturalbloodlines.hub.launcher.hint", l.name())),
                     () -> HubClient.launch(l, page)));
-            theme.drawSeal(g, r, l.letter(), l.color(), r.contains(mouseX, mouseY) || f.focused(id));
+            theme.drawLauncher(g, r, l, r.contains(mouseX, mouseY) || f.focused(id));
             if (f.focused(id)) {
                 theme.drawFocus(g, r);
             }
         }
+        theme.drawOverlay(f, page);
         (page.locked(view.context()) ? HubPages.locked() : theme.view(page)).render(f);
         targets = f.targets;
         for (Map.Entry<String, Integer> e : maxScroll.entrySet()) {
@@ -146,7 +148,7 @@ public final class HubScreen extends Screen {
             g.renderComponentTooltip(font, hovered.tooltip(), mouseX, mouseY);
             return;
         }
-        Target focused = target(focus);
+        Target focused = keyboard ? target(focus) : null;
         if (focused != null && focused.shown()) {
             g.renderComponentTooltip(font, focused.tooltip(), focused.rect().x(), focused.rect().bottom() + 12);
         }
@@ -176,6 +178,7 @@ public final class HubScreen extends Screen {
             for (Target t : targets) {
                 if (t.shown() && t.action() != null && t.rect().contains(mouseX, mouseY)) {
                     focus = t.id();
+                    keyboard = false; // the mouse moved the focus: no tooltip pinned to it
                     t.action().run();
                     return true;
                 }
@@ -236,6 +239,7 @@ public final class HubScreen extends Screen {
     }
 
     private void moveFocus(int delta) {
+        keyboard = true;
         focus = HubFocus.move(targets.stream().map(Target::id).toList(), focus, delta);
         scrollToFocus = true;
     }
