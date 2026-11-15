@@ -88,3 +88,5 @@ Drinking Original's Blood gives the `Original's Blood` effect (5 minutes). A **w
 `parts.species` off: Originals stay as vampires in Vampirism, but lose the protection, the bonuses and the rites. See [For server owners](For-Server-Owners#switching-parts-off).
 
 Predator's Thirst (skill S-VAM-6, after the quest Hunter of Hunters) lifts that: biting a vampire then feeds you (3 blood by default, config `vampire_feed_blood`) and drains the victim of the same amount. A vampire mob also takes 2 damage (it is never killed by it) and Weakness I for 10 seconds.
+
+**Your blood on screen.** With Tensura installed your blood is shown in Tensura's food spot (see [Ability HUD](Ability-HUD#blood)); without Tensura it stays in Vampirism's own bar.

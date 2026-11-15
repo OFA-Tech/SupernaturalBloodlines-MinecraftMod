@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.parts.hud.client;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.fml.ModList;
+import net.ofatech.supernaturalbloodlines.parts.hud.client.tensura.BloodInFoodSpot;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.tensura.TensuraHudFlags;
 import net.ofatech.supernaturalbloodlines.shared.hud.LoadoutAccess;
 
@@ -17,7 +18,11 @@ public final class HudClient {
         HudSlots.register();
         HudInput.register();
         if (ModList.get().isLoaded("tensura")) {
-            TensuraHudFlags.register(AbilityHudLayer::shown);
+            boolean blood = ModList.get().isLoaded("vampirism");
+            if (blood) {
+                BloodInFoodSpot.register();
+            }
+            TensuraHudFlags.register(AbilityHudLayer::shown, blood ? BloodInFoodSpot::hidesTensuraFood : () -> false);
         }
         KeyCover.register();
         KeyHiding.register();
