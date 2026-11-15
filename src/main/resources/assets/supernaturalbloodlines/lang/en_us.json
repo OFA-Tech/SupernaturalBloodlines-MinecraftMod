@@ -534,5 +534,20 @@
   "supernaturalbloodlines.hud.bite.no_blood": "There is no blood in that.",
   "death.attack.turning_bite": "%1$s was bitten dry",
   "death.attack.turning_bite.player": "%1$s was bitten dry by %2$s",
-  "supernaturalbloodlines.hud.bite.not_human": "That blood is not human enough to finish the turning."
+  "supernaturalbloodlines.hud.bite.not_human": "That blood is not human enough to finish the turning.",
+  "supernaturalbloodlines.hud.loadout.bad_slot": "There is no such slot.",
+  "supernaturalbloodlines.hud.loadout.unknown_action": "That is not an action you can put in a slot.",
+  "supernaturalbloodlines.hud.loadout.not_unlocked": "You have not unlocked that action.",
+  "supernaturalbloodlines.hud.action.bad_slot": "There is no such slot.",
+  "supernaturalbloodlines.hud.action.empty_slot": "That slot is empty.",
+  "supernaturalbloodlines.hud.action.cannot_act": "You cannot do that now.",
+  "supernaturalbloodlines.hud.action.not_unlocked": "You have not unlocked that action.",
+  "supernaturalbloodlines.hud.action.disabled": "That action is turned off.",
+  "supernaturalbloodlines.hud.action.disallowed": "You cannot use that action now.",
+  "supernaturalbloodlines.hud.action.cooldown": "That action is still on cooldown.",
+  "supernaturalbloodlines.hud.action.permission_disallowed": "You are not allowed to use that action here.",
+  "supernaturalbloodlines.hud.slot.skill_missing": "You no longer have this skill.",
+  "supernaturalbloodlines.hud.slot.cannot_use": "You cannot use this skill now.",
+  "supernaturalbloodlines.hud.slot.locked": "This action is not unlocked for your faction.",
+  "supernaturalbloodlines.hud.slot.action_missing": "This action does not exist any more."
 }

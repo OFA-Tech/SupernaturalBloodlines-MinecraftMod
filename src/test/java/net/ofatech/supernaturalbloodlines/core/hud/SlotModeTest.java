@@ -26,6 +26,12 @@ class SlotModeTest {
     }
 
     @Test
+    void biteInTensuraModeNotOffered() {
+        org.junit.jupiter.api.Assertions.assertFalse(SlotMode.TENSURA.offersBite());
+        assertTrue(SlotMode.SUPERNATURAL.offersBite());
+    }
+
+    @Test
     void aModeThatIsNotInstalledFallsBackToTheFirstAvailable() {
         assertEquals(SlotMode.SUPERNATURAL, SlotMode.next(SlotMode.TENSURA, SlotMode.available(false, true)).orElseThrow());
     }

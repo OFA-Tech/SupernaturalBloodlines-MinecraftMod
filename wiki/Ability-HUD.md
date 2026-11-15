@@ -7,7 +7,7 @@ The ability HUD (plan 13) is being built in phases. So far only the **Bite actio
 Six slots (keys **R F V** and **Z X C** by default, see [Key binds](Key-Binds)): slots 1 to 3 are the left column and 4 to 6 the right one.
 
 - **Tensura mode** (needs Tensura): slots 1 to 3 are your active Tensura preset and 4 to 6 the **next** preset, like Tensura Slots (preset 9 pairs with preset 1). A slot key does what Tensura's own key does: press, hold and release, toggle skills, and **hold Alt with a slot key to change that skill's mode**. Alt + scroll still moves through the presets, as in Tensura. You no longer need Tensura Slots.
-- **Supernatural mode** (needs Vampirism): the six slots are the actions you put in the hub's Loadout tab, and **Bite** (slot 1 by default).
+- **Supernatural mode** (needs Vampirism): the six slots are the actions you put in the hub's Loadout tab, and **Bite** (slot 1 by default). A slot key does what Vampirism's own key for that action does (a lasting action switches on and off, a short one fires) and the server checks that you have the action unlocked; a refusal says why in the action bar. Holding the key of a Bite slot keeps a vampire drinking. A werewolf or hybrid's slots hold Werewolves' actions. You can put an action in several slots. Slots the hub does not fill stay empty: with a faction change the list is kept, and the slots you can no longer use are shown greyed.
 - **Alt + Caps Lock** switches between the two when both are installed.
 
 The slot HUD itself (the boxes on screen, cooldowns, Alt tooltips) is still being built: today the keys work and nothing is drawn by us.

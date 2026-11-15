@@ -31,7 +31,7 @@ final class VampirismBite {
     private VampirismBite() {
     }
 
-    static ResourceLocation factionId(ServerPlayer p) {
+    static ResourceLocation factionId(net.minecraft.world.entity.player.Player p) {
         IPlayableFaction<?> f = VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
         return f == null ? null : f.getID();
     }

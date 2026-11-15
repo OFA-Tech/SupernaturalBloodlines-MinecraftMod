@@ -30,7 +30,7 @@ public final class BiteHybridGameTests {
     private BiteHybridGameTests() {
     }
 
-    private static ServerPlayer hybrid(GameTestHelper helper, Species species, int thirst) {
+    static ServerPlayer hybrid(GameTestHelper helper, Species species, int thirst) {
         ServerPlayer p = TestPlayers.createDuelist(helper);
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(species).thirst(thirst).build());
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not make a werewolf");

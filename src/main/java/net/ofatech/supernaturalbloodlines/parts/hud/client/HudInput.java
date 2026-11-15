@@ -4,7 +4,10 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.ofatech.supernaturalbloodlines.parts.hud.net.TriggerActionPayload;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
@@ -54,12 +57,23 @@ public final class HudInput {
     private static void press(LocalPlayer p, int slot, SlotMode mode) {
         if (mode == SlotMode.TENSURA) {
             TensuraInput.press(p, slot);
+        } else if (mode != null && mode.offersBite()) {
+            var id = ClientLoadout.loadout().get(slot);
+            if (id.isPresent()) {
+                if (Loadout.BITE.equals(id.get())) {
+                    BiteView.pressed();
+                }
+                Entity looked = Minecraft.getInstance().crosshairPickEntity;
+                PacketDistributor.sendToServer(new TriggerActionPayload(slot, looked == null ? -1 : looked.getId(), false));
+            }
         }
     }
 
     private static void release(int slot, SlotMode mode) {
         if (mode == SlotMode.TENSURA) {
             TensuraInput.release(slot);
+        } else if (mode == SlotMode.SUPERNATURAL && ClientLoadout.loadout().get(slot).isPresent()) {
+            PacketDistributor.sendToServer(new TriggerActionPayload(slot, -1, true));
         }
     }
 

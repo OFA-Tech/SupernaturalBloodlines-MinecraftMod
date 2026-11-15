@@ -25,12 +25,12 @@ final class WerewolfBite {
     private WerewolfBite() {
     }
 
-    private static Optional<IWerewolfPlayer> wolf(ServerPlayer p) {
+    private static Optional<IWerewolfPlayer> wolf(net.minecraft.world.entity.player.Player p) {
         return VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().filter(f -> f instanceof IWerewolfPlayer).map(f -> (IWerewolfPlayer) f);
     }
 
     /** In a transformed form, the only forms in which Werewolves lets the player bite ({@code canBite()}). */
-    static boolean wolfForm(ServerPlayer p) {
+    static boolean wolfForm(net.minecraft.world.entity.player.Player p) {
         return wolf(p).map(w -> w.getForm().isTransformed()).orElse(false);
     }
 

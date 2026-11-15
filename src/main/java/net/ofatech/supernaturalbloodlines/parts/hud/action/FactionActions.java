@@ -7,10 +7,17 @@ import de.teamlapen.vampirism.api.entity.player.actions.IAction;
 import de.teamlapen.vampirism.api.entity.player.actions.IActionHandler;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.ofatech.supernaturalbloodlines.parts.hud.HudConfig;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -62,7 +69,32 @@ public final class FactionActions {
         return ids;
     }
 
-    /** Toggles the action like Vampirism's own key does. Returns the refusal (a {@code PERM} name) or null when it was allowed. */
+    /**
+     * Toggles the action like Vampirism's own key does, with a context built here: the block the player looks at, and the creature the client's crosshair
+     * named if it is in the same level, within {@code bite_reach} and in sight.
+     *
+     * @return the refusal (a lower case {@code PERM} name), null when it was allowed
+     */
+    @Nullable
+    public static String toggleFor(ServerPlayer p, ResourceLocation id, int targetEntityId) {
+        Optional<BlockPos> block = Optional.empty();
+        HitResult hit = p.pick(Math.min(HudConfig.biteReach(), 5.0), 1f, false);
+        if (hit instanceof BlockHitResult b && hit.getType() == HitResult.Type.BLOCK) {
+            block = Optional.of(b.getBlockPos());
+        }
+        Optional<Entity> entity = Optional.empty();
+        Entity found = targetEntityId < 0 ? null : p.level().getEntity(targetEntityId);
+        if (found instanceof LivingEntity living && living.isAlive() && living != p && p.distanceTo(living) <= HudConfig.biteReach() && p.hasLineOfSight(living)) {
+            entity = Optional.of(living);
+        }
+        IAction.PERM perm = toggle(p, id, new Context(block, entity));
+        return perm == null ? null : perm.name().toLowerCase(Locale.ROOT);
+    }
+
+    private record Context(Optional<BlockPos> targetBlock, Optional<Entity> targetEntity) implements IAction.ActivationContext {
+    }
+
+    /** Toggles the action like Vampirism's own key does. Returns the refusal (a {@code PERM}) or null when it was allowed. */
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Nullable
     public static IAction.PERM toggle(ServerPlayer p, ResourceLocation id, IAction.ActivationContext ctx) {

@@ -19,6 +19,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -64,16 +65,16 @@ public final class BiteService {
     }
 
     /** Private: it links Vampirism, so only {@link #actionFor}, which checks that Vampirism is installed, may call it. */
-    private static BiteContext context(ServerPlayer p) {
+    private static BiteContext context(Player p) {
         ResourceLocation faction = VampirismBite.factionId(p);
         boolean werewolf = VampirismBite.WEREWOLF.equals(faction);
         boolean wolfForm = werewolf && ModList.get().isLoaded("werewolves") && WerewolfBite.wolfForm(p);
         boolean vampire = VampirismBite.VAMPIRE.equals(faction);
-        return new BiteContext(werewolf, wolfForm, vampire, HybridFeed.isHybrid(p), BloodlineAccess.get(p).inTurning(), TurningFeed.canFeed(p));
+        return new BiteContext(werewolf, wolfForm, vampire, HybridFeed.isHybrid(p), BloodlineAccess.get(p).inTurning(), p instanceof ServerPlayer sp ? TurningFeed.canFeed(sp) : BloodlineAccess.get(p).inTurning() && !werewolf);
     }
 
     /** What a press would do now. NONE without Vampirism: every row needs it. */
-    public static BiteAction actionFor(ServerPlayer p) {
+    public static BiteAction actionFor(Player p) {
         return usable() ? BiteRules.decide(context(p)) : BiteAction.NONE;
     }
 

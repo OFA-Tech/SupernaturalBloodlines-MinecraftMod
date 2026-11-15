@@ -9,6 +9,11 @@ public enum SlotMode {
     TENSURA,
     SUPERNATURAL;
 
+    /** Bite is a Supernatural-mode action: the slots of Tensura mode never trigger it. */
+    public boolean offersBite() {
+        return this == SUPERNATURAL;
+    }
+
     public static List<SlotMode> available(boolean tensuraLoaded, boolean vampirismLoaded) {
         List<SlotMode> modes = new ArrayList<>(2);
         if (tensuraLoaded) {

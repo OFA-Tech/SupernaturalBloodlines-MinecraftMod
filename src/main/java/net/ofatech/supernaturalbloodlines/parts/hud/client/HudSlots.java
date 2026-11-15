@@ -9,6 +9,7 @@ import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.tensura.TensuraSlots;
+import net.ofatech.supernaturalbloodlines.parts.hud.client.vampirism.ActionSlots;
 
 /**
  * The six {@link SlotView}s of the current mode, rebuilt once per client tick (what the renderer of 13b Task 4 reads each frame). Each source is reached
@@ -42,6 +43,8 @@ public final class HudSlots {
         }
         if (mode == SlotMode.TENSURA) {
             TensuraSlots.refresh(p, VIEWS);
+        } else {
+            ActionSlots.refresh(p, VIEWS);
         }
     }
 }

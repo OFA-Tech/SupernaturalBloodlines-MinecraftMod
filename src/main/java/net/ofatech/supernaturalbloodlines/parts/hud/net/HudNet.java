@@ -11,6 +11,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.hud.RateLimiter;
 import net.ofatech.supernaturalbloodlines.parts.hud.HudConfig;
+import net.ofatech.supernaturalbloodlines.parts.hud.action.ActionService;
 import net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +51,11 @@ public final class HudNet {
                 handleSetLoadout(p, payload);
             }
         }));
+        registrar.playToServer(TriggerActionPayload.TYPE, TriggerActionPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> {
+            if (ctx.player() instanceof ServerPlayer p) {
+                handleTrigger(p, payload);
+            }
+        }));
         registrar.playToClient(LoadoutSyncPayload.TYPE, LoadoutSyncPayload.STREAM_CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> ctx.player().setData(ModAttachments.HUD_LOADOUT, payload.loadout())));
     }
@@ -62,6 +68,20 @@ public final class HudNet {
     /** Test hook: forgets the rate limit window of a player. */
     public static void forgetRateLimit(ServerPlayer p) {
         LIMITER.forget(p.getUUID());
+    }
+
+    /**
+     * A slot key went down (counts against the rate limit, refusals too) or up (not limited: a dropped release would leave a feeding running, and it does
+     * nothing unless something is held). The action is the one in the player's own loadout.
+     *
+     * @return the refusal's lang key (already shown in the action bar, except for {@link #RATE_LIMITED}), null when the slot did something
+     */
+    @Nullable
+    public static String handleTrigger(ServerPlayer p, TriggerActionPayload payload) {
+        if (!payload.release() && !allowed(p)) {
+            return RATE_LIMITED;
+        }
+        return ActionService.trigger(p, payload.slot(), payload.targetEntityId(), payload.release());
     }
 
     /** @return the refusal's lang key (shown in the action bar, except for {@link #RATE_LIMITED}), null when the slot was set */
