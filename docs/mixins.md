@@ -41,7 +41,7 @@ Config `supernaturalbloodlines.hud.mixins.json` (empty), plugin `HudMixinPlugin`
 |---|---|---|---|---|
 | hud | (1) `AbilityStorageNextPresetMixin` (13b Task 2) | RETURN of the four `AbilityStorage.isAbilityInActivePreset(...)` overloads (Tensura) | Only if a right-column skill (preset N+1) is refused or loses its passive without Tensura Slots' mixin. Needs Tensura | `next_preset_active` |
 | hud | (2) `VampireRaceFeedMixin` (13c Task 2) | `FoodData.needsFood()` / `eat(int, float)` inside `VampireRace.onActivateAbility` (Tensura) | Only if Tensura's race feeding has no event or `needsFood` refuses a Vampirism vampire. Needs Tensura and Vampirism | `tensura_feed_fills_blood` |
-| hud | (3) `KeyBindsListHideMixin` (13a Task 4) | Controls list entry build | Only if hiding covered keys on `ScreenEvent.Init.Post` fails (Controlling's search rebuilds the list) | `hide_in_controls_mixin` |
+| hud | (3) `KeyBindsListHideMixin` (13a Task 4) | Controls list entry build | Only if hiding covered keys on `ScreenEvent.Init.Post` fails. **Not needed so far:** `KeyHiding` also clears Controlling's `allEntries`, which its search rebuilds from (read with javap, not yet seen in a running client) | `hide_in_controls_mixin` |
 
 ## supernatural (1 of 3)
 Config `supernaturalbloodlines.supernatural.mixins.json`, plugin `SupernaturalMixinPlugin`, package `mixin.supernatural`. Applies only when Vampirism and Enchanted are installed and `parts.supernatural` is not `false` (the mixin targets Enchanted's `Rite`, the part itself only needs Vampirism). The plugin logs one line saying whether the mixin was applied and, in `postApply`, whether both hooks landed (`RiteCompleteMixin hook in place` or a warning).
