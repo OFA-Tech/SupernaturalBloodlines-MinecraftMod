@@ -20,7 +20,7 @@ public final class HudConfig {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         RATE_LIMIT_PER_SECOND = b.comment("Most HUD payloads (bites, action triggers, loadout changes) one player may send per second; the rest are dropped.")
                 .defineInRange("rate_limit_per_second", DEFAULT_RATE_LIMIT, 1, 100);
-        BITE_REACH = b.comment("How far (blocks) a Bite action may reach its target.")
+        BITE_REACH = b.comment("How far (blocks) a Bite action may reach its target, 1 to 16. Vampirism's own drinking is also limited to the player's interaction range (3), so a higher value only helps the other bites.")
                 .defineInRange("bite_reach", DEFAULT_BITE_REACH, 1.0, 16.0);
         b.comment("Reserved mixin switches. Each mixin is only added when its task shows no event or API works; until then the switch does nothing.").push("mixins");
         NEXT_PRESET_ACTIVE = b.define("next_preset_active", true);

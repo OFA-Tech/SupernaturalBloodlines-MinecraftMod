@@ -22,6 +22,7 @@ import net.ofatech.supernaturalbloodlines.shared.vampirism.BloodlessPlayers;
 final class VampirismBite {
     static final ResourceLocation VAMPIRE = ResourceLocation.parse("vampirism:vampire");
     static final ResourceLocation WEREWOLF = ResourceLocation.parse("werewolves:werewolf");
+    private static final ResourceLocation BAT = ResourceLocation.parse("vampirism:bat");
 
     private static boolean lookedUp;
     private static MethodHandle bite;
@@ -36,24 +37,35 @@ final class VampirismBite {
     }
 
     /**
-     * The blood a bite can take, by Vampirism's own values: a mob's {@code ExtendedCreature} blood (from the {@code entity_blood} data map), a
-     * player's blood stats (a bloodless race has none). A vampire mob has no blood value, so nothing to drink.
+     * The blood a bite can take, by Vampirism's own values: a mob's {@code ExtendedCreature} blood (from the {@code entity_blood} data map); a
+     * Vampirism vampire player's blood stats; for a player who is not a vampire (vampire level 0), their <b>food level</b>, which is what Vampirism's
+     * own {@code VampirePlayer.onBite} takes from such a victim (its blood stats are not used below level 1). A bloodless race has none. A vampire
+     * mob and a converted creature have none.
      */
     static int blood(LivingEntity target) {
         if (target instanceof Player player) {
-            return BloodlessPlayers.test(player) ? 0 : VampirismAPI.vampirePlayer(player).getBloodStats().getBloodLevel();
+            if (BloodlessPlayers.test(player)) {
+                return 0;
+            }
+            IVampirePlayer vampire = VampirismAPI.vampirePlayer(player);
+            return vampire.getLevel() > 0 ? vampire.getBloodStats().getBloodLevel() : player.getFoodData().getFoodLevel();
         }
         return target instanceof PathfinderMob mob ? VampirismAPI.getExtendedCreatureVampirism(mob).map(c -> c.getBlood()).orElse(0) : 0;
     }
 
-    /** Takes up to {@code amount} blood from the victim, the way Vampirism's own feeding does. */
+    /** Takes up to {@code amount} blood from the victim, from the same place {@link #blood} reads. */
     static void drain(LivingEntity target, int amount) {
         int take = Math.min(amount, blood(target));
         if (take <= 0) {
             return;
         }
         if (target instanceof Player player) {
-            VampirismAPI.vampirePlayer(player).useBlood(take, true);
+            IVampirePlayer vampire = VampirismAPI.vampirePlayer(player);
+            if (vampire.getLevel() > 0) {
+                vampire.useBlood(take, true);
+            } else {
+                player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - take);
+            }
         } else if (target instanceof PathfinderMob mob) {
             VampirismAPI.getExtendedCreatureVampirism(mob).ifPresent(c -> c.setBlood(c.getBlood() - take));
         }
@@ -64,6 +76,10 @@ final class VampirismBite {
         IVampirePlayer vampire = VampirismAPI.vampirePlayer(p);
         if (vampire.getLevel() == 0 || vampire.determineBiteType(target) == IVampirePlayer.BITE_TYPE.NONE) {
             return BiteService.KEY + "cannot_bite_target";
+        }
+        // biteEntity ignores these without a word, and Vampirism has no public feeding state to read afterwards, so refuse them here
+        if (vampire.isDBNO() || vampire.getActionHandler().isActionActive(BAT)) {
+            return BiteService.KEY + "cannot_bite";
         }
         lookup(vampire);
         if (bite == null) {

@@ -31,7 +31,7 @@ public final class KeyHiding {
     }
 
     private static void onInit(ScreenEvent.Init.Post e) {
-        if (!(e.getScreen() instanceof KeyBindsScreen screen) || !HudClientConfig.hideCoveredKeys() || screen.keyBindsList == null) {
+        if (!(e.getScreen() instanceof KeyBindsScreen screen) || !HudClientConfig.hideCoveredKeys() || !KeyCover.covering() || screen.keyBindsList == null) {
             return;
         }
         KeyBindsList list = screen.keyBindsList;

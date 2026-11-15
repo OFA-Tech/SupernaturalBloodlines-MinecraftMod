@@ -101,6 +101,15 @@ class CoveredKeysTest {
     }
 
     @Test
+    void aCoveredIdThatLeftTheListIsRestoredEvenWhileHiding() {
+        // the record has "old.key", which the covered list no longer names
+        Plan p = hide(Map.of("tensura.slot_1", "key.keyboard.g", "old.key", U), Map.of("old.key", "key.keyboard.k"));
+        assertEquals("key.keyboard.k", p.set().get("old.key"));
+        assertTrue(!p.record().containsKey("old.key"));
+        assertEquals(U, p.set().get("tensura.slot_1"), "the ids still covered are covered as before");
+    }
+
+    @Test
     void hideRestoreRoundTrip() {
         Map<String, String> before = Map.of("tensura.slot_1", "key.keyboard.g", "keys.vampirism.suck", "key.keyboard.v:SHIFT");
         Plan off = hide(before, Map.of());

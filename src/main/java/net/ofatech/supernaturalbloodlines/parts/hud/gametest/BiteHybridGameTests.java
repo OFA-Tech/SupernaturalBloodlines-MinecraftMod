@@ -140,6 +140,31 @@ public final class BiteHybridGameTests {
         helper.succeed();
     }
 
+    /** A player who is not a vampire has no Vampirism blood to bite: like Vampirism's own bite, the feed takes their food level. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void hybridFeedOnAHumanPlayerTakesFood(GameTestHelper helper) {
+        ServerPlayer p = hybrid(helper, Species.HYBRID, 0);
+        ServerPlayer human = TestPlayers.createDuelist(helper);
+        BiteGameTests.place(helper, human, 2.5);
+        helper.getLevel().addNewPlayer(human);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+        helper.getLevel().getServer().setPvpAllowed(true);
+        try {
+            int bloodStats = VampirismAPI.vampirePlayer(human).getBloodStats().getBloodLevel();
+            int food = human.getFoodData().getFoodLevel();
+            BiteService.Result r = BiteService.press(p, human.getId());
+            helper.assertTrue(r.ok(), "the feed on a human player was refused: " + r.refusal());
+            helper.assertTrue(food - human.getFoodData().getFoodLevel() == 2, "the human's food: " + food + " -> " + human.getFoodData().getFoodLevel());
+            helper.assertTrue(VampirismAPI.vampirePlayer(human).getBloodStats().getBloodLevel() == bloodStats, "Vampirism blood stats were drained from a human");
+            helper.assertTrue(BloodlineAccess.get(p).thirst() == 5, "thirst " + BloodlineAccess.get(p).thirst());
+        } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
+            helper.getLevel().removePlayerImmediately(human, Entity.RemovalReason.DISCARDED);
+            clean(p);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void hybridFeedRefusedWhenFull(GameTestHelper helper) {
         ServerPlayer p = hybrid(helper, Species.HYBRID, 20);
