@@ -19,6 +19,7 @@ public final class VampirismTensuraPart {
         // Architectury calls SET_RACE listeners in registration order: a hunter whose new race is undead has to leave
         // the hunters before VampireSync tries to make them a vampire (it refuses while they are still a hunter)
         FactionRaceRules.register();
+        net.ofatech.supernaturalbloodlines.shared.vampirism.BloodlessPlayers.set(FactionRaceRules::isBloodless);
         VampireSync.register();
         HolyDamageBridge.register();
         boolean werewolves = ModList.get().isLoaded("werewolves");

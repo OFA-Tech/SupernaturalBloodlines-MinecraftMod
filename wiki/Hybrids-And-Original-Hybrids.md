@@ -44,7 +44,7 @@ A hybrid made by the gene kill or the lineage rite is **bound**: no wolf forms a
 ## What a hybrid gets
 
 - **Speed and attack that grow with age.** +0.02 movement speed and +2 attack damage, reached over **50 in-game days** (1,200,000 ticks) after turning. A hybrid with no recorded turning time counts as fully grown.
-- **Blood thirst** (0 to 20): a hybrid cannot drink Vampirism's bottles the normal way, so a right-click on a blood bottle gives **+5 thirst** (only below 20) and gives a glass bottle back. Thirst falls by 1 every 1200 ticks (1 minute).
+- **Blood thirst** (0 to 20): a hybrid cannot drink Vampirism's bottles the normal way, so a right-click on a blood bottle gives **+5 thirst** (only below 20) and gives a glass bottle back. Thirst falls by 1 every 1200 ticks (1 minute). **Biting feeds you too:** in human form, the Bite action of the [ability HUD](Ability-HUD) (slot 1 by default) bites a creature that has blood for **+5 thirst**. The victim takes 2 damage, so your venom still poisons a vampire. In a wolf form the same action is the Werewolves bite instead. A full thirst (20) refuses the bite.
   - **0:** Weakness I
   - **15 or more:** Strength I
 - **Shift at will.** Once unbound, a hybrid shifts form whenever they want, and the forced full-moon shift is cancelled. See [moon control](Werewolves-And-Packs#moon-control).

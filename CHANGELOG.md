@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased: the supernatural HUD, the Bite action (plan 13, phase 13a Tasks 1 to 3)
+
+Spec `docs/superpowers/specs/2026-11-14-supernatural-hud-design.md`. New part: **hud** (needs no mod; Tensura, Vampirism and Werewolves are optional extras). No mixin yet (0 of 3, three reserved).
+
+- **The `hud` part.** Config key `hud`, files `supernaturalbloodlines-hud.toml` (rate limit, bite reach, three reserved mixin switches) and `supernaturalbloodlines-hud-client.toml` (HUD on, hide covered keys, hide Tensura's skill HUD, blood in the food spot, mode). `-PpartsOff=hud` switches it off.
+- **The Bite action (R110).** What a bite does by form: the Werewolves bite in a transformed wolf form, Vampirism's blood drinking for a vampire, **our own feeding for a hybrid, Original hybrid or tribrid in human form** (+5 blood thirst, the victim takes 2 damage so venom still poisons a vampire), the turning bite, and nothing for anyone else. The server checks the target (same world, in reach, in sight, alive) and a 20-tick cooldown, and every refusal says why. Nothing fires it yet: it gets its slot with the ability HUD in the next phase (no new key).
+- **The turning bite (R20e).** A human in the turning can finish it by biting a human-like creature (new damage type `turning_bite`).
+- **Hooks for it.** `HybridFeed`, `TurningFeed` and `BloodlessPlayers` (shared); `BloodThirst.addThirst`; `TurningHandler.wouldComplete` is public.
+
 ## Unreleased: the hub (plan 12, phase 12e)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (The hub). Part: supernatural (and species for the names). No new mixin.
