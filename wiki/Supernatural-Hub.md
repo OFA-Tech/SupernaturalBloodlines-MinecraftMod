@@ -1,6 +1,6 @@
 # Supernatural hub
 
-> **Status: in progress.** The foundation is in: every player has a supernatural race and a ladder for it, held as data. There is no screen yet; the hub, the tasks, skill points and skills arrive in the next phases of the same system.
+> **Status: in progress.** Races, ladders, tasks, skill points and skills are in. The hub screen has its Path and Quests pages; the other pages and the launchers come next.
 
 ## The supernatural race
 
@@ -46,3 +46,13 @@ Keen Fangs adds 1 blood to every feed on human-like blood (villagers, traders an
 Some skills need a quest first. Predator's Thirst (S-VAM-6) needs Hunter of Hunters: kill 10 vampires, have 3 bites on a vampire refused and feed 25 times. It opens when you reach the rung of your tree that lists the skill. With Predator's Thirst, biting a vampire feeds you (3 blood, or what Vampirism gives for that victim) and drains them; a vampire mob is also hurt (never killed) and weakened for 10 seconds, and an Original cannot be killed by the drain.
 
 The skill points of Vampirism and Werewolves are spent through the hub on those mods' own skill trees: the server asks the mod whether the skill can be unlocked and the mod takes its own points. A Ghoul cannot unlock skills.
+
+## The screen (phase 12e)
+
+Press **J** (Supernatural Bloodlines key category, rebindable) to open the hub. It is one screen with pages; how it looks is a **theme**, a client setting (`hub_theme` in `supernaturalbloodlines-hub-client.toml`). **Grimoire**, an open book, is the default and the only one built so far; Blood Moon and Tensura fall back to it for now.
+
+- **Ribbons** on the right edge of the book are the pages: Path, Skills, Quests, Rites (with Enchanted), Bloodline and Pack (with Werewolves, for werewolf-type races or anyone in a pack). Skills, Rites, Bloodline and Pack are still being written.
+- **Path.** The left page is your story: your name, your races, who sired you (and whether the bond is severed), then each ladder you climb, rung by rung. A green seal is a rung reached, the red one is your next rung (with how many of its tasks you have claimed), tan ones are sealed. The right page lists the next rung's tasks, each with a tag for the mod it comes from (SB ours, VMP Vampirism, WW Werewolves, ENC Enchanted, TEN Tensura) and its count. A done task shows a **wax stamp**: press it to claim. The server checks every claim.
+- **Quests.** Every task of your next rungs on the left (both ladders for a witch or siphoner werewolf), and any open skill quest such as Hunter of Hunters. Pick one to see it in full on the right: its source, its progress, how that mod does it (for a level step, the altar to use), and the stamp when it can be claimed.
+- **A Ghoul** sees Path, with the turning and the time left, and Bloodline; the other pages say to complete the turning first.
+- **Keyboard:** Tab or the up and down arrows move through everything on the page, Enter or Space presses it, the left and right arrows turn the page, Esc closes. Every tooltip says in words what the picture shows.

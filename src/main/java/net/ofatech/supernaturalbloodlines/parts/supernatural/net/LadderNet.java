@@ -15,6 +15,8 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.LadderService;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.SkillService;
 import net.neoforged.fml.ModList;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * The part's packets. They are registered as optional, so a client without this part (or a server without it) still connects. The
@@ -52,6 +54,14 @@ public final class LadderNet {
                         ModSkillService.unlock(p, payload.skillId());
                     }
                 }));
+        registrar.playToServer(HubSnapshotRequestPayload.TYPE, HubSnapshotRequestPayload.STREAM_CODEC, (payload, ctx) ->
+                ctx.enqueueWork(() -> {
+                    if (ctx.player() instanceof ServerPlayer p) {
+                        PacketDistributor.sendToPlayer(p, snapshot(p));
+                    }
+                }));
+        registrar.playToClient(HubSnapshotPayload.TYPE, HubSnapshotPayload.STREAM_CODEC, (payload, ctx) ->
+                ctx.enqueueWork(() -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient.receive(payload)));
         registrar.playToClient(SkillTablePayload.TYPE, SkillTablePayload.STREAM_CODEC, (payload, ctx) ->
                 ctx.enqueueWork(() -> {
                     SkillTable.Parsed parsed = payload.parseWithServerSets();
@@ -64,6 +74,24 @@ public final class LadderNet {
                     parsed.rejected().forEach(r -> SupernaturalBloodlines.LOGGER.warn("Ladder from the server rejected: {}", r));
                     LadderTable.setClientCopy(parsed.table());
                 }));
+    }
+
+    private record Sent(long time, HubSnapshotPayload payload) {
+    }
+
+    // server thread only; a snapshot walks the indexes, so a client that floods requests gets the same answer again for a second
+    private static final Map<ServerPlayer, Sent> LAST_SNAPSHOT = new WeakHashMap<>();
+    private static final long SNAPSHOT_COOLDOWN = 20;
+
+    private static HubSnapshotPayload snapshot(ServerPlayer p) {
+        long now = p.serverLevel().getGameTime();
+        Sent last = LAST_SNAPSHOT.get(p);
+        if (last != null && now - last.time() < SNAPSHOT_COOLDOWN && now >= last.time()) {
+            return last.payload();
+        }
+        HubSnapshotPayload fresh = HubSnapshotPayload.of(p);
+        LAST_SNAPSHOT.put(p, new Sent(now, fresh));
+        return fresh;
     }
 
     public static void sendTable(ServerPlayer p) {

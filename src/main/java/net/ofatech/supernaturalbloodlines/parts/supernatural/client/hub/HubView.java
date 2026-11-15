@@ -1,0 +1,36 @@
+package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
+
+import java.util.List;
+import java.util.Optional;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.fml.ModList;
+import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
+import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SkillTable;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotPayload;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.PlayerRaces;
+
+/** Everything a frame of the hub reads, from the client's synced copies only. Rebuilt every frame, so a sync shows at once. */
+public record HubView(Player player, BloodlineState bloodline, SupernaturalState state, List<SupernaturalRace> races,
+                      List<HubModel.LadderView> ladders, SkillTable skills, HubSnapshotPayload snapshot, HubPage.Context context) {
+
+    public static HubView of(Player p) {
+        BloodlineState b = BloodlineAccess.get(p);
+        SupernaturalState s = SupernaturalAccess.get(p);
+        List<SupernaturalRace> races = PlayerRaces.of(p);
+        HubSnapshotPayload snap = HubClient.snapshot();
+        boolean hasPack = !snap.pack().isEmpty() || b.wolf().rank() != WolfState.Rank.NONE;
+        HubPage.Context c = new HubPage.Context(races.get(0), races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty(),
+                ModList.get().isLoaded("werewolves"), ModList.get().isLoaded("enchanted"), hasPack);
+        return new HubView(p, b, s, races, HubModel.ladders(LadderTable.clientCopy(), s, races), SkillTable.clientCopy(), snap, c);
+    }
+
+    public boolean ghoul() {
+        return races.get(0) == SupernaturalRace.GHOUL;
+    }
+}
