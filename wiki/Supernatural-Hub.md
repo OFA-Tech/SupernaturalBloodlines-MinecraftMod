@@ -49,7 +49,13 @@ The skill points of Vampirism and Werewolves are spent through the hub on those 
 
 ## The screen (phase 12e)
 
-Press **Home** (Supernatural Bloodlines key category, rebindable; it also closes the hub) to open the hub. It is one screen with pages; how it looks is a **theme**, a client setting (`hub_theme` in `supernaturalbloodlines-hub-client.toml`). **Grimoire**, an open book, is the default and the only one built so far; Blood Moon and Tensura fall back to it for now.
+Press **Home** (Supernatural Bloodlines key category, rebindable; it also closes the hub) to open the hub. It is one screen with pages; how it looks is a **theme**, a client setting (`hub_theme` in `supernaturalbloodlines-hub-client.toml`). There are three, with the same pages, actions and keys:
+
+- **Grimoire** (default): an open book. Ribbons on the right edge are the pages, wax seals under them the other mods' screens.
+- **Blood Moon**: a dark screen with a big red moon that fills as you claim the tasks of your next rung; the rungs are gems around it (a witch's or siphoner's second ladder is the gold ring and the gems above). Pages on the left rail, other mods on the right rail, your tasks and points in the cards under the moon.
+- **Tensura**: Tensura's own menu style (grey frame, navy panels), made wider, with the pages and the other mods as two lists on the left. Only with Tensura; otherwise the Grimoire.
+
+Change it in [Configuration](Configuration#supernatural-client-supernaturalbloodlines-hub-clienttoml), even while the hub is open: it keeps the page.
 
 - **Ribbons** on the right edge of the book are the pages: Path, Skills, Quests, Rites (with Enchanted), Bloodline and Pack (with Werewolves, for werewolf-type races or anyone in a pack). 
 - **Path.** The left page is your story: your name, your races, who sired you (and whether the bond is severed), then each ladder you climb, rung by rung. A green seal is a rung reached, the red one is your next rung (with how many of its tasks you have claimed), tan ones are sealed. The right page lists the next rung's tasks, each with a tag for the mod it comes from (SB ours, VMP Vampirism, WW Werewolves, ENC Enchanted, TEN Tensura) and its count. A done task shows a **wax stamp**: press it to claim. The server checks every claim.

@@ -11,6 +11,10 @@ Spec `docs/superpowers/specs/2026-11-14-supernatural-hud-design.md`. New part: *
 - **One keymap and covered keys (13a Task 4).** New keys, all in game: **Slot 1 to 6** (R F V Z X C) and **HUD mode** (Alt + Caps Lock); they do nothing until the HUD arrives. The keys of other mods that the HUD replaces (Tensura's Ability 1 to 3, Tensura Slots' 4 to 6, Vampirism's Suck blood and Toggle action 1 to 9, Werewolves' Bite) are unbound and hidden from Controls, also from Controlling and its search. Your own binds are first saved in `config/supernaturalbloodlines-hud-keys.json` and come back when you turn `hide_covered_keys` off or the `hud` part off. A key you rebound yourself in the meantime is not overwritten. No mixin.
 - **Hooks for it.** `HybridFeed`, `TurningFeed` and `BloodlessPlayers` (shared); `BloodThirst.addThirst`; `TurningHandler.wouldComplete` is public.
 
+## Unreleased: hub themes (plan 12, phase 12f)
+
+- **Two more looks for the hub**, picked with `hub_theme` in `supernaturalbloodlines-hub-client.toml` (it can be changed while the hub is open). **Blood Moon**: a dark screen with a red moon that fills as you climb, rungs as gems around it, pages and other mods on rails at either side. **Tensura**: Tensura's menu style, wider, with pages and mods as two lists; only with Tensura, otherwise the Grimoire. Same pages, actions and keys in every theme. Some of the Grimoire's tag colours are darker so all text is readable.
+
 ## Unreleased: the hub (plan 12, phase 12e)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (The hub). Part: supernatural (and species for the names). No new mixin.

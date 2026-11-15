@@ -1,4 +1,4 @@
-package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
+package net.ofatech.supernaturalbloodlines.shared.hub;
 
 import java.util.Arrays;
 import java.util.List;

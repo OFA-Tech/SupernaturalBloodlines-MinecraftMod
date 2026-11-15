@@ -1,13 +1,15 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
+import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPage;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubTheme;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
 
 /** The default theme: an open grimoire, dark ink on parchment, ribbon bookmarks for pages and wax for what can be pressed. */
 public final class GrimoireTheme implements HubTheme {
@@ -94,12 +96,12 @@ public final class GrimoireTheme implements HubTheme {
     }
 
     @Override
-    public void drawRungMark(GuiGraphics g, int x, int y, HubModel.RungStatus status) {
+    public void drawRungMark(GuiGraphics g, int x, int y, RungStatus status) {
         g.blit(WIDGETS, x, y, status.ordinal() * 10, 0, MARK, MARK, WIDGETS_W, WIDGETS_H);
     }
 
     @Override
-    public void drawTaskBox(GuiGraphics g, int x, int y, HubModel.TaskState state) {
+    public void drawTaskBox(GuiGraphics g, int x, int y, TaskState state) {
         int u = switch (state) {
             case OPEN, FROZEN -> 30;
             case CLAIMABLE -> 38;
@@ -138,6 +140,11 @@ public final class GrimoireTheme implements HubTheme {
     }
 
     @Override
+    public int paper() {
+        return 0xFFe9dcbc;
+    }
+
+    @Override
     public int ink() {
         return 0xFF3b2414;
     }
@@ -154,16 +161,16 @@ public final class GrimoireTheme implements HubTheme {
 
     @Override
     public int good() {
-        return 0xFF2f6e4a;
+        return 0xFF245a3a;
     }
 
     @Override
     public int sourceColor(String source) {
         return switch (source) {
             case "vampirism" -> 0xFF9a1820;
-            case "werewolves" -> 0xFFa2620e;
-            case "enchanted" -> 0xFF2f6e4a;
-            case "tensura" -> 0xFF1f6f86;
+            case "werewolves" -> 0xFF7a4508;
+            case "enchanted" -> 0xFF245a3a;
+            case "tensura" -> 0xFF16566a;
             default -> 0xFF5a2f9a;
         };
     }

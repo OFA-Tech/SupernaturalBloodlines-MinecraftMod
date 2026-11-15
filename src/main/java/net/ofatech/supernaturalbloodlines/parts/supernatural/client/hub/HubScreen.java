@@ -1,5 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +38,7 @@ public final class HubScreen extends Screen {
     private String selectedTask;
     private String focus;
     private boolean scrollToFocus;
+    private boolean keyboard;
     private final Map<String, Integer> scroll = new HashMap<>();
     private final Map<String, Integer> maxScroll = new HashMap<>();
     private HubClientConfig.ThemeId themeId;
@@ -52,11 +57,7 @@ public final class HubScreen extends Screen {
         themeId = HubClientConfig.theme();
         // the themes are registered by the parts that bring them (HubHooks.addTheme); a missing one, or one of the wrong type, is the Grimoire
         HubClientConfig.ThemeId shown = HubClientConfig.resolve(themeId, id -> HubHooks.theme(id).isPresent());
-        Object made = HubHooks.theme(shown.id()).map(t -> t.factory().get()).orElse(null);
-        if (made != null && !(made instanceof HubTheme)) {
-            SupernaturalBloodlines.LOGGER.warn("Hub theme {} is not a HubTheme ({}); showing the Grimoire", shown.id(), made.getClass().getName());
-        }
-        theme = made instanceof HubTheme h ? h : new GrimoireTheme();
+        theme = HubHooks.theme(shown.id()).map(t -> t.factory().get()).orElseGet(GrimoireTheme::new);
     }
 
     @Override
@@ -105,12 +106,16 @@ public final class HubScreen extends Screen {
             String id = "seal:" + l.id();
             f.targets.add(new Target(id, r, null, true, List.of(l.name(), Component.translatable("supernaturalbloodlines.hub.launcher.hint", l.name())),
                     () -> HubClient.launch(l, page)));
-            theme.drawSeal(g, r, l.letter(), l.color(), r.contains(mouseX, mouseY) || f.focused(id));
+            theme.drawLauncher(g, r, l, r.contains(mouseX, mouseY) || f.focused(id));
             if (f.focused(id)) {
                 theme.drawFocus(g, r);
             }
         }
-        (page.locked(view.context()) ? HubPages.locked() : theme.view(page)).render(f);
+        HubThemeViews views = theme instanceof HubThemeViews v ? v : null;
+        if (views != null) {
+            views.drawOverlay(f, page);
+        }
+        (page.locked(view.context()) ? HubPages.locked() : views != null ? views.view(page) : HubPages.shared(page)).render(f);
         targets = f.targets;
         for (Map.Entry<String, Integer> e : maxScroll.entrySet()) {
             if (e.getValue() > 0 && layout.regions().containsKey(e.getKey())) {
@@ -146,7 +151,7 @@ public final class HubScreen extends Screen {
             g.renderComponentTooltip(font, hovered.tooltip(), mouseX, mouseY);
             return;
         }
-        Target focused = target(focus);
+        Target focused = keyboard ? target(focus) : null;
         if (focused != null && focused.shown()) {
             g.renderComponentTooltip(font, focused.tooltip(), focused.rect().x(), focused.rect().bottom() + 12);
         }
@@ -176,6 +181,7 @@ public final class HubScreen extends Screen {
             for (Target t : targets) {
                 if (t.shown() && t.action() != null && t.rect().contains(mouseX, mouseY)) {
                     focus = t.id();
+                    keyboard = false; // the mouse moved the focus: no tooltip pinned to it
                     t.action().run();
                     return true;
                 }
@@ -236,6 +242,7 @@ public final class HubScreen extends Screen {
     }
 
     private void moveFocus(int delta) {
+        keyboard = true;
         focus = HubFocus.move(targets.stream().map(Target::id).toList(), focus, delta);
         scrollToFocus = true;
     }

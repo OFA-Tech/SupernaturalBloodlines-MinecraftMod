@@ -1,18 +1,19 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubView;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
 
 /** Quests: every active task (both ladders) and the open skill quests on the left; the chosen task in full, with its claim stamp, on the right. */
 public final class QuestsPage implements HubPageView {
@@ -89,8 +90,8 @@ public final class QuestsPage implements HubPageView {
             y = PageKit.wrapped(f, Component.translatable(hint), r.x(), y + 2, r.w(), t.muted());
         }
         y = PageKit.wrapped(f, Component.translatable(PageKit.HUB + "task.state." + row.state().name().toLowerCase(java.util.Locale.ROOT)),
-                r.x(), y + 4, r.w(), row.state() == HubModel.TaskState.CLAIMABLE ? t.good() : t.muted());
-        if (row.state() == HubModel.TaskState.CLAIMABLE) {
+                r.x(), y + 4, r.w(), row.state() == TaskState.CLAIMABLE ? t.good() : t.muted());
+        if (row.state() == TaskState.CLAIMABLE) {
             Rect s = new Rect(r.x() + (r.w() - HubTheme.STAMP) / 2, y + 6, HubTheme.STAMP, HubTheme.STAMP);
             String id = row.task().id();
             t.drawStamp(f.g, s.x(), s.y(), f.hovered(s) || f.focused("claim:" + id));

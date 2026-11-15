@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
+import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
 import static net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,9 +15,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.LadderRules;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel.LadderView;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel.RungStatus;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel.TaskRow;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel.TaskState;
 import org.junit.jupiter.api.Test;
 
 class HubModelTest {

@@ -1,10 +1,10 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.minecraft.network.chat.Component;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
 
 /** A page a Ghoul cannot use yet ("Complete your turning"), or one whose chapter is not written yet (Skills, Rites, Bloodline, Pack: 12e Tasks 3 and 4). */
 public final class PlaceholderPage implements HubPageView {

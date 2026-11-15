@@ -1,7 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import static net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace.*;
-import static net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPage.*;
+import static net.ofatech.supernaturalbloodlines.shared.hub.HubPage.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

@@ -1,9 +1,11 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.DeathScreen;
 import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.BloodMoonTheme;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.GrimoireTheme;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -48,6 +50,7 @@ public final class HubClient {
         });
         HubHooks.setHubOpener(HubClient::open);
         HubHooks.addTheme(new HubHooks.Theme(HubClientConfig.ThemeId.GRIMOIRE.id(), () -> true, GrimoireTheme::new));
+        HubHooks.addTheme(new HubHooks.Theme(HubClientConfig.ThemeId.BLOOD_MOON.id(), () -> true, BloodMoonTheme::new));
         HubHooks.addLauncher(new HubHooks.Launcher("vampirism", "V", 0xFFf4c9c9, Component.translatable("supernaturalbloodlines.hub.launcher.vampirism"),
                 VAMPIRISM_SCREENS, () -> factionNamespace().equals("vampirism"), HubClient::openSkillScreen));
         if (ModList.get().isLoaded("werewolves")) {

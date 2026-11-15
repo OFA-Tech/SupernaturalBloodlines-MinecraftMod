@@ -46,7 +46,7 @@ Each phase is one mergeable PR.
 - **Server decides, client shows.** Every C2S packet is validated on the server. Undiscovered genes are never sent to the client.
 - **No per-tick scans.** Periodic checks run every 200 ticks per online player (the `RankSkills` pattern). The compass uses an index, never a world scan.
 - **Data-first.** Ladders: `data/supernaturalbloodlines/supernatural/ladder/<race>.json`. Skills: `data/supernaturalbloodlines/supernatural/skill/<id>.json` and `.../tree/<race>.json`. Gate each file with `supernaturalbloodlines:part_enabled` and `neoforge:mod_loaded` as needed. A bad entry is rejected with one log line, never a crash.
-- **Tensura is ARR.** The Tensura theme draws Tensura's textures by resource location at runtime; nothing is copied into the repo.
+- **Tensura is ARR.** Nothing of Tensura's is copied into the repo. Owner decision: the hub themes are our own art; the Tensura theme redraws its style and draws none of Tensura's textures (only the tab added inside Tensura's own menu draws Tensura's tab texture, by resource location).
 - **Test runs** (all must pass at the end of every task):
   - `build`
   - `runGameTestServer`
@@ -429,12 +429,12 @@ Client code in `parts/supernatural/client/` (and `parts/supernaturaltensura/clie
 
 ### Task 1: Blood Moon
 
-**Files:** `client/hub/theme/BloodMoonTheme.java`, textures under `.../gui/hub/blood_moon/`.
+**Files:** `client/hub/theme/BloodMoonTheme.java`, `BloodMoonLayout.java`, `client/hub/page/BloodMoonPathPage.java`; drawn with fills (no textures of its own; it reuses the Grimoire's page icons).
 - [ ] The moon fills with progress to the next rung (both ladders as two arcs for a magic race); left rail pages; right rail launchers and SP/EP counters.
 - [ ] Manual check of every page at GUI scale 2 and 4; switching theme keeps the page. Run all test runs. **Commit** `feat(supernatural): blood moon theme`.
 
 ### Task 2: Tensura expansion
 
-**Files:** `parts/supernaturaltensura/client/TensuraHubTheme.java`, drawing Tensura's own textures by resource location (find them in the jar; nothing copied). Without Tensura, `hub_theme=TENSURA` falls back to Grimoire.
+**Files:** `parts/supernaturaltensura/client/TensuraHubTheme.java`, `TensuraHubLayout.java`: Tensura's style redrawn as our own art (owner decision; none of Tensura's textures is drawn or copied), registered through `shared/hub/HubHooks`, built on `shared/hub` types only. Without Tensura, `hub_theme=TENSURA` falls back to Grimoire.
 - [ ] Unit test the fallback rule. Manual check of every page. Run all test runs.
 - [ ] **Docs and commit.** `wiki/Supernatural-Hub.md` (themes, screenshots later), `wiki/Configuration.md` (`hub_theme`). Commit `feat(supernatural): tensura hub theme`.

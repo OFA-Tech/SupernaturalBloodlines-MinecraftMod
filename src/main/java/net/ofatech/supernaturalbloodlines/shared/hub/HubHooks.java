@@ -24,11 +24,8 @@ public final class HubHooks {
     public record Launcher(String id, String letter, int color, Component name, String screenPackage, BooleanSupplier available, Runnable open) {
     }
 
-    /**
-     * A hub theme another part brings (the Tensura theme in 12f). {@code factory} makes the theme object, which must implement the
-     * supernatural part's client {@code HubTheme} (checked when the hub picks it: anything else is ignored with a log line).
-     */
-    public record Theme(String id, BooleanSupplier available, Supplier<Object> factory) {
+    /** A hub theme a part brings, by the id {@code hub_theme} names (lower case). */
+    public record Theme(String id, BooleanSupplier available, Supplier<HubTheme> factory) {
     }
 
     private static final List<Theme> THEMES = new CopyOnWriteArrayList<>();
