@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased: the six HUD slots (plan 13, phase 13b)
+
+- **The loadout (13b Task 1).** The six Supernatural-mode slots are saved per player (kept on death). A new player has **Bite** in slot 1; you can move it or clear it and it is never put back. The server decides what can go in a slot: Bite, or an action your current faction has unlocked. Every request counts against `rate_limit_per_second`, refused ones too. Nothing shows it yet; the hub's Loadout tab and the HUD itself come in the next tasks.
+
 ## Unreleased: the supernatural HUD, the Bite action (plan 13, phase 13a Tasks 1 to 3)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-hud-design.md`. New part: **hud** (needs no mod; Tensura, Vampirism and Werewolves are optional extras). No mixin yet (0 of 3, three reserved).
