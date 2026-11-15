@@ -12,6 +12,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.GrantedSkills;
 import net.ofatech.supernaturalbloodlines.shared.tensura.PrimevalAlpha;
 
 /**
@@ -28,6 +29,8 @@ public final class PrimevalRoarGrant {
     }
 
     public static void register() {
+        // the skill only counts while this holds; with the part off nothing registers it and the skill stays inactive
+        GrantedSkills.register(SKILL, PrimevalAlpha::active);
         BloodlineAccess.addListener((p, change) -> sync(p));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> syncIfServer(e.getEntity()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent e) -> syncIfServer(e.getEntity()));

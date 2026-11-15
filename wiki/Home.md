@@ -20,7 +20,7 @@
 - **Parts, not requirements.** Each feature is a *part* that switches on only when its mods are installed. You can install only Vampirism and Tensura, or all five. See [Parts and compatibility](Parts-And-Compatibility).
 - **Species** (with Vampirism and Enchanted): Originals, hybrids, witches, siphoners, heretics, tribrids, Hunters of the Five, and **werewolf packs** with ranks, spark, roar and moon control.
 - **Sirelines:** a family tree of who made whom, `/bloodline call`, compulsion, optional sireline death.
-- **Tensura layer:** a species is a layer on your Tensura race (skills, magicule bonus, undead treatment) and unlocks **seven apex races**. Sires become Tensura owners and can name their sired.
+- **Tensura layer:** a species is a layer on your Tensura race (skills, magicule bonus, undead treatment) and unlocks **nine apex races**. Sires become Tensura owners and can name their sired.
 - **Enchanted magic:** more altar power sources, two curses, and about two dozen **rites**.
 - **Items:** rings, poppets, vervain, mountain ash, wolfsbane strains, white oak, the Taser, the Ash Dagger and The Cure.
 

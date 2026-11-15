@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import org.jetbrains.annotations.Nullable;
 
 /** Pure rules of the skill trees: who can buy what, and which of the skills a player owns are active. No game classes. */
@@ -97,13 +98,23 @@ public final class SkillRules {
      * ones. A Ghoul has none.
      */
     public static Set<String> active(SkillTable table, SupernaturalState s, SupernaturalRace creature, Optional<SupernaturalRace> magic) {
+        return active(table, s, creature, magic, id -> true);
+    }
+
+    /** As above; a granted-only skill counts only while {@code grantedHolds} says the rule that grants it still holds (S-WOL-8). */
+    public static Set<String> active(SkillTable table, SupernaturalState s, SupernaturalRace creature, Optional<SupernaturalRace> magic,
+                                     Predicate<String> grantedHolds) {
         Set<String> out = new HashSet<>();
         if (creature == SupernaturalRace.GHOUL) {
             return out;
         }
         for (String id : s.skills()) {
             Optional<SkillSpec> spec = table.skill(id);
-            if (spec.isPresent() && (spec.get().grantedOnly() || races(creature, magic).stream().anyMatch(r -> table.tree(r).lists(id)))) {
+            if (spec.isEmpty()) {
+                continue;
+            }
+            boolean counts = spec.get().grantedOnly() ? grantedHolds.test(id) : races(creature, magic).stream().anyMatch(r -> table.tree(r).lists(id));
+            if (counts) {
                 out.add(id);
             }
         }
@@ -111,6 +122,11 @@ public final class SkillRules {
     }
 
     public static boolean owns(SkillTable table, SupernaturalState s, SupernaturalRace creature, Optional<SupernaturalRace> magic, String skillId) {
-        return s.skills().contains(skillId) && active(table, s, creature, magic).contains(skillId);
+        return owns(table, s, creature, magic, skillId, id -> true);
+    }
+
+    public static boolean owns(SkillTable table, SupernaturalState s, SupernaturalRace creature, Optional<SupernaturalRace> magic, String skillId,
+                               Predicate<String> grantedHolds) {
+        return s.skills().contains(skillId) && active(table, s, creature, magic, grantedHolds).contains(skillId);
     }
 }

@@ -39,6 +39,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.LadderNet;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.GrantedSkills;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 
 public final class SupernaturalPart {
@@ -80,7 +81,8 @@ public final class SupernaturalPart {
                     return false; // the common answer, without looking up the race
                 }
                 List<SupernaturalRace> races = TaskTracker.races(player);
-                return SkillRules.owns(SkillTable.current(), s, races.get(0), races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty(), skillId);
+                return SkillRules.owns(SkillTable.current(), s, races.get(0), races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty(), skillId,
+                        id -> GrantedSkills.holds(player, id));
             }
 
             @Override
@@ -88,7 +90,7 @@ public final class SupernaturalPart {
                 SupernaturalState s = SupernaturalAccess.get(player);
                 List<SupernaturalRace> races = TaskTracker.races(player);
                 return SkillEffects.tensuraSkillsOf(SkillTable.current(), SkillRules.active(SkillTable.current(), s, races.get(0),
-                        races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty()));
+                        races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty(), id -> GrantedSkills.holds(player, id)));
             }
         });
         SkillEffects.register();

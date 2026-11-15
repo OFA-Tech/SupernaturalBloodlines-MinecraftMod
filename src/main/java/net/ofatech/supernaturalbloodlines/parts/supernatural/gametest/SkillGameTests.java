@@ -21,6 +21,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.SkillEffects;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.SkillService;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.GrantedSkills;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 
 /** Buying skills on real players: the server's checks, the shared pool, and the modifiers that follow the active trees. */
@@ -56,6 +57,28 @@ public final class SkillGameTests {
         helper.assertTrue(SkillService.buy(p, "S-VAM-1").ok(), "the purchase was refused");
         helper.assertTrue(state(p).sp() == 4 && state(p).spEarned() == 5 && state(p).skills().equals(Set.of("S-VAM-1")), "state: " + state(p));
         helper.assertTrue(LadderQuery.owns(p, "S-VAM-1"), "not owned after buying");
+        helper.succeed();
+    }
+
+    /**
+     * A granted-only skill counts only while the rule that grants it holds. S-WOL-8 is in the saved skills, but with supernatural_tensura off
+     * (nothing registers its rule) or the player not a True Alpha on alpha_primeval, it is inactive: it cannot outlive its rule.
+     */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void grantedOnlySkillIsInactiveWithoutItsRule(GameTestHelper helper) {
+        ServerPlayer p = vampire(helper, 1);
+        give(p, 0, SupernaturalRace.VAMPIRE, 0, "S-WOL-8");
+        helper.assertTrue(state(p).skills().contains("S-WOL-8"), "control: the skill is in the saved state");
+        helper.assertTrue(!LadderQuery.owns(p, "S-WOL-8"), "a stuck S-WOL-8 is active for a player who is not a True Alpha on alpha_primeval");
+        helper.assertTrue(LadderQuery.value(p, "S-WOL-8", "range_factor", 1) == 1, "a stuck S-WOL-8 still gives its number");
+        // a granted-only skill of the catalogue with no rule would count; here the rule is the one that makes it count
+        var previous = GrantedSkills.register("S-WOL-8", pl -> true);
+        try {
+            helper.assertTrue(LadderQuery.owns(p, "S-WOL-8") && LadderQuery.value(p, "S-WOL-8", "range_factor", 1) == 2, "does not count while its rule holds");
+        } finally {
+            GrantedSkills.register("S-WOL-8", previous);
+        }
+        helper.assertTrue(!LadderQuery.owns(p, "S-WOL-8"), "still counts after the rule is gone");
         helper.succeed();
     }
 

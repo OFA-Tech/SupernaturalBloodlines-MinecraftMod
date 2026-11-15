@@ -27,6 +27,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.task.TaskTracker;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.GrantedSkills;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.SkillGrants;
 
 /**
@@ -79,7 +80,7 @@ public final class SkillEffects {
         SupernaturalState s = SupernaturalAccess.get(p);
         List<SupernaturalRace> races = TaskTracker.races(p);
         Optional<SupernaturalRace> magic = races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty();
-        Set<String> active = SkillRules.active(table, s, races.get(0), magic);
+        Set<String> active = SkillRules.active(table, s, races.get(0), magic, id -> GrantedSkills.holds(p, id));
         Level level = p.level();
         boolean fixed = level.dimensionType().hasFixedTime();
         for (SkillSpec spec : table.skills()) {

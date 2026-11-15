@@ -50,6 +50,7 @@ public final class AlphaRoar {
     private static final Map<UUID, Long> PERMIT_UNTIL = new ConcurrentHashMap<>();
     /** Betas carrying the Primeval Roar's attack bonus (a transient modifier, never saved) and the tick it ends. */
     private static final Map<UUID, Long> PACK_ATTACK_UNTIL = new ConcurrentHashMap<>();
+    private static final Map<UUID, ServerPlayer> PACK_ATTACK_HOLDERS = new ConcurrentHashMap<>();
     public static final ResourceLocation PACK_ATTACK_ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "primeval_pack_attack");
     private static volatile Function<MinecraftServer, Collection<ServerPlayer>> players = s -> s.getPlayerList().getPlayers();
 
@@ -77,6 +78,7 @@ public final class AlphaRoar {
         Long until = PACK_ATTACK_UNTIL.get(p.getUUID());
         if (until != null && (force || p.server.getTickCount() >= until)) {
             PACK_ATTACK_UNTIL.remove(p.getUUID());
+            PACK_ATTACK_HOLDERS.remove(p.getUUID());
             p.getAttribute(Attributes.ATTACK_DAMAGE).removeModifier(PACK_ATTACK_ID);
         }
     }
@@ -96,6 +98,11 @@ public final class AlphaRoar {
     public static void reset() {
         LAST.clear();
         PERMIT_UNTIL.clear();
+        // the bonus is a transient modifier on a player who may still be online: take it off, do not just forget when it ends
+        for (ServerPlayer holder : PACK_ATTACK_HOLDERS.values()) {
+            holder.getAttribute(Attributes.ATTACK_DAMAGE).removeModifier(PACK_ATTACK_ID);
+        }
+        PACK_ATTACK_HOLDERS.clear();
         PACK_ATTACK_UNTIL.clear();
     }
 
@@ -149,6 +156,7 @@ public final class AlphaRoar {
                     beta.getAttribute(Attributes.ATTACK_DAMAGE).addOrUpdateTransientModifier(new AttributeModifier(PACK_ATTACK_ID, packAttack,
                             AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
                     PACK_ATTACK_UNTIL.put(id, now + packTicks);
+                    PACK_ATTACK_HOLDERS.put(id, beta);
                 }
             }
         }

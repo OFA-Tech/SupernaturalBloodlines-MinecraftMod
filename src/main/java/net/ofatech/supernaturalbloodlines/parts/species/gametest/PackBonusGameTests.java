@@ -316,6 +316,8 @@ public final class PackBonusGameTests {
         ServerPlayer plainFarBeta = beta(helper, plain, Lineage.BITTEN, 52.5);
         ServerPlayer stranger = wolf(helper, Rank.OMEGA, Lineage.BITTEN, null, 1, 28.5);
         online(primeval, plain, farBeta, plainFarBeta, stranger);
+        // the skill counts only while a True Alpha is on alpha_primeval (supernatural_tensura); this test is about what it does to the roar
+        var previousRule = net.ofatech.supernaturalbloodlines.shared.supernatural.GrantedSkills.register("S-WOL-8", pl -> pl == primeval);
         try {
             net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.set(primeval,
                     net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.get(primeval).toBuilder().skills(java.util.Set.of("S-WOL-8")).build());
@@ -343,7 +345,13 @@ public final class PackBonusGameTests {
             helper.assertTrue(attack.hasModifier(AlphaRoar.PACK_ATTACK_ID), "the bonus ended at once");
             AlphaRoar.endPackAttack(farBeta, true);
             helper.assertFalse(attack.hasModifier(AlphaRoar.PACK_ATTACK_ID), "the bonus did not end");
+            // a reset (server stop, test clean-up) takes the bonus off a player who is still online
+            helper.assertTrue(AlphaRoar.roar(primeval, 99_999) == null, "the second Primeval Roar was refused");
+            helper.assertTrue(attack.hasModifier(AlphaRoar.PACK_ATTACK_ID), "control: no bonus from the second roar");
+            AlphaRoar.reset();
+            helper.assertFalse(attack.hasModifier(AlphaRoar.PACK_ATTACK_ID), "reset left the bonus on an online player");
         } finally {
+            net.ofatech.supernaturalbloodlines.shared.supernatural.GrantedSkills.register("S-WOL-8", previousRule);
             clean(primeval, plain, farBeta, plainFarBeta, stranger);
         }
         helper.succeed();
