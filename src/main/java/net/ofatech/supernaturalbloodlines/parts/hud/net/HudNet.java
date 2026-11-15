@@ -35,7 +35,12 @@ public final class HudNet {
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> sync(e.getEntity()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent e) -> sync(e.getEntity()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerChangedDimensionEvent e) -> sync(e.getEntity()));
-        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> LIMITER.forget(e.getEntity().getUUID()));
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
+            LIMITER.forget(e.getEntity().getUUID());
+            if (e.getEntity() instanceof ServerPlayer sp) {
+                ActionService.forget(sp);
+            }
+        });
     }
 
     private static void sync(net.minecraft.world.entity.player.Player p) {

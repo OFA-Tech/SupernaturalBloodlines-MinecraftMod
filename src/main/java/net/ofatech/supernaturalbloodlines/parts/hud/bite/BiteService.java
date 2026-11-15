@@ -96,7 +96,8 @@ public final class BiteService {
 
     /** The key was released: Vampirism's feeding ends. */
     public static void release(ServerPlayer p) {
-        if (actionFor(p) == BiteAction.VAMPIRISM_DRINK) {
+        // ends whatever feeding this press started, even if the form (and so actionFor) has changed since: the feeding is Vampirism's own and must always end
+        if (usable()) {
             VampirismBite.end(p);
         }
     }

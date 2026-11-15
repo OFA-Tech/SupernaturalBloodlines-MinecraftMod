@@ -58,6 +58,13 @@ public final class LoadoutService {
 
     /** Sends the player their own loadout (login, respawn, dimension change and every change). */
     public static void sync(ServerPlayer p) {
-        PacketDistributor.sendToPlayer(p, new LoadoutSyncPayload(get(p)));
+        if (canReceive(p)) {
+            PacketDistributor.sendToPlayer(p, new LoadoutSyncPayload(get(p)));
+        }
+    }
+
+    /** Fake and mock players, and clients without this mod's channel, cannot take the payload: sending would throw. */
+    public static boolean canReceive(ServerPlayer p) {
+        return !(p instanceof net.neoforged.neoforge.common.util.FakePlayer) && p.connection != null && p.connection.hasChannel(LoadoutSyncPayload.TYPE);
     }
 }

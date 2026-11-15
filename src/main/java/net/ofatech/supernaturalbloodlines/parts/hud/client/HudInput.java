@@ -8,7 +8,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.TriggerActionPayload;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
@@ -20,8 +20,9 @@ import org.lwjgl.glfw.GLFW;
  * The six slot keys and the mode key. A slot key is not read through {@code KeyMapping.isDown()}: NeoForge only fires a mapping whose modifier matches
  * the modifiers held, so a plain R mapping would be silent while Alt is held, and Alt + slot key is how Tensura changes a skill's mode. Instead the raw
  * key events are noted (so a tap shorter than a tick is not lost) and acted on in the next client tick, in order. A mapping bound with its own modifier
- * still needs it held; NONE means any modifiers. Only while a world is open with no screen. A key that is held when a screen opens is released at once,
- * and one still held when the screen closes needs a fresh press. Press and release go to the source of the mode the key was pressed in ({@link HudModeState}).
+ * still needs it held; NONE means any modifiers (so a slot key also fires with Ctrl or Shift held: nothing else in the pack needs those on the same key). Only while a world is open with no screen. A key that is held when a screen opens is released at once,
+ * and one still held when the screen closes needs a fresh press; a press in the tick a screen closed is ignored too (a slot key that is also the inventory key,
+ * or another screen's close key, must not fire as the screen goes). With no connection (the world is closing) nothing is sent and the held state is dropped. Press and release go to the source of the mode the key was pressed in ({@link HudModeState}).
  */
 public final class HudInput {
     private static final boolean[] DOWN = new boolean[Loadout.SLOTS];
@@ -29,12 +30,15 @@ public final class HudInput {
     private static final boolean[] PENDING_RELEASE = new boolean[Loadout.SLOTS];
     /** The mode each held key was pressed in, so its release goes to the same source even if the mode was toggled meanwhile. */
     private static final SlotMode[] PRESSED_IN = new SlotMode[Loadout.SLOTS];
+    /** A screen was open at the end of the last tick. */
+    private static boolean screenWasOpen;
 
     private HudInput() {
     }
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick());
+        NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> reset());
         NeoForge.EVENT_BUS.addListener((InputEvent.Key e) -> note(InputConstants.Type.KEYSYM, e.getKey(), e.getAction()));
         NeoForge.EVENT_BUS.addListener((InputEvent.MouseButton.Pre e) -> note(InputConstants.Type.MOUSE, e.getButton(), e.getAction()));
     }
@@ -50,7 +54,7 @@ public final class HudInput {
             }
             if (action == GLFW.GLFW_PRESS) {
                 // a key held over a screen needs a fresh press: events only come for presses, and a screen swallows its own
-                PENDING_PRESS[i] = Minecraft.getInstance().screen == null && modifierHeld(HudKeys.SLOTS[i].getKeyModifier());
+                PENDING_PRESS[i] = Minecraft.getInstance().screen == null && !screenWasOpen && modifierHeld(HudKeys.SLOTS[i].getKeyModifier());
             } else {
                 PENDING_RELEASE[i] = true;
             }
@@ -60,6 +64,10 @@ public final class HudInput {
     private static void tick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
+        if (mc.getConnection() == null) {
+            reset();
+            return;
+        }
         boolean live = HudClientConfig.hudEnabled() && p != null && mc.screen == null && mc.getOverlay() == null;
         if (live) {
             while (HudKeys.HUD_MODE.consumeClick()) {
@@ -84,6 +92,22 @@ public final class HudInput {
                 end(i);
             }
         }
+        screenWasOpen = mc.screen != null;
+    }
+
+
+    /** Drops everything held and pending without sending a thing (the connection is gone or going). */
+    public static void reset() {
+        for (int i = 0; i < DOWN.length; i++) {
+            DOWN[i] = false;
+            PENDING_PRESS[i] = false;
+            PENDING_RELEASE[i] = false;
+            PRESSED_IN[i] = null;
+        }
+        screenWasOpen = false;
+        if (net.neoforged.fml.ModList.get().isLoaded("tensura")) {
+            TensuraInput.reset();
+        }
     }
 
     private static void end(int slot) {
@@ -101,7 +125,7 @@ public final class HudInput {
                     BiteView.pressed();
                 }
                 Entity looked = Minecraft.getInstance().crosshairPickEntity;
-                PacketDistributor.sendToServer(new TriggerActionPayload(slot, looked == null ? -1 : looked.getId(), false));
+                HudSend.send(new TriggerActionPayload(slot, looked == null ? -1 : looked.getId(), false));
             }
         }
     }
@@ -110,7 +134,7 @@ public final class HudInput {
         if (mode == SlotMode.TENSURA) {
             TensuraInput.release(slot);
         } else if (mode == SlotMode.SUPERNATURAL && ClientLoadout.loadout().get(slot).isPresent()) {
-            PacketDistributor.sendToServer(new TriggerActionPayload(slot, -1, true));
+            HudSend.send(new TriggerActionPayload(slot, -1, true));
         }
     }
 

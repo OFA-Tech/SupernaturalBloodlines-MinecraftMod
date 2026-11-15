@@ -14,6 +14,8 @@ Six slots (keys **R F V** and **Z X C** by default, see [Key binds](Key-Binds)):
 
 Two columns of three boxes stand on the bottom edge, one left of the offhand slot and one right of the attack indicator. Each box shows the skill or action icon, its key in the corner, a dark fill with the seconds left while it recharges, a gold outline while it is on, and a faded icon when you cannot use it. **Hold Alt** to read a name (and the mode, for a Tensura skill that has modes) and why a box is greyed or how long it has left. **Alt + Caps Lock** switches between Tensura and Supernatural mode when you have both; the action bar says which one you are in, and the choice is kept for next time. While the HUD is on, Tensura's own skill HUD is hidden (turn that off with `hide_tensura_skill_hud`); open Tensura's HUD settings and you see your own setting, and it comes back when you leave.
 
+A slot key also fires when Ctrl or Shift is held with it (Alt is how you change a skill's mode), and a press in the very moment a screen closes is ignored, so a slot key that is also your inventory key never fires as the inventory closes. On a narrow window at a big GUI scale a column that does not fit moves up above the hotbar.
+
 ## Putting actions in the slots
 
 In the [Supernatural hub](Supernatural-Hub), the **Skills** page has a **Slots** tab (only when this part is installed). The left page lists Bite and every action you have unlocked; the right page shows the six slots with their keys. **Click an action and then a slot** (or a slot and then an action) to put it there; the small **x** empties a slot. You can put one action in several slots. Without the supernatural part there is no hub, so slots 2 to 6 show your unlocked actions in order, and Bite stays in slot 1.

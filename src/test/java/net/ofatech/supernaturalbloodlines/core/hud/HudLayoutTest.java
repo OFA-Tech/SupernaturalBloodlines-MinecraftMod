@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class HudLayoutTest {
     /** Widths and heights of a 1280x720 to 1920x1080 window at GUI scale 4 and 2 (and 427 wide: 1280 at scale 3). */
-    private static final int[][] SCREENS = {{320, 180}, {427, 240}, {480, 270}, {640, 360}, {960, 540}, {320, 240}};
+    private static final int[][] SCREENS = {{320, 180}, {427, 240}, {480, 270}, {640, 360}, {960, 540}, {320, 240}, {213, 120}, {240, 135}, {256, 144}, {171, 96}};
 
     @Test
     void sixSlotsInOrderLeftColumnThenRight() {
@@ -52,6 +52,15 @@ class HudLayoutTest {
                 assertFalse(b[i].overlaps(b[j]), i + " overlaps " + j);
             }
         }
+    }
+
+    @Test
+    void aNarrowWindowLiftsAColumnThatDoesNotFitAboveTheHotbarStrip() {
+        // 854 x 480 at GUI scale 4 is 213 x 120: the offhand slot itself is off screen, so both columns are lifted
+        Box[] b = HudLayout.slots(213, 120);
+        assertTrue(b[0].x() >= 0 && b[5].right() <= 213);
+        assertTrue(b[2].bottom() <= 120 - HudLayout.HOTBAR_STRIP);
+        assertTrue(b[5].bottom() <= 120 - HudLayout.HOTBAR_STRIP);
     }
 
     @Test

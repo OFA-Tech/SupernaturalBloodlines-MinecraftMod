@@ -167,6 +167,34 @@ public final class ActionGameTests {
         helper.succeed();
     }
 
+    /** A fake or mock player, or a client without our channel, cannot take a payload: the sync is skipped instead of throwing. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theLoadoutIsNotSentToAPlayerWithoutTheChannel(GameTestHelper helper) {
+        ServerPlayer p = vampire(helper);
+        helper.assertTrue(!LoadoutService.canReceive(p), "a test player claims to have the channel");
+        try {
+            LoadoutService.sync(p);
+            LoadoutService.set(p, 3, Loadout.BITE); // sets and syncs
+        } catch (RuntimeException e) {
+            helper.fail("sending to a player without the channel threw: " + e);
+            return;
+        }
+        helper.assertTrue(LoadoutService.get(p).get(3).equals(java.util.Optional.of(Loadout.BITE)), "the change was lost with the sync");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void forgettingAPlayerClearsTheirHeldPresses(GameTestHelper helper) {
+        ServerPlayer p = vampire(helper);
+        PathfinderMob v = BiteGameTests.villager(helper, 2.5);
+        helper.assertTrue(ActionService.trigger(p, 0, v.getId(), false) == null, "the press was refused");
+        helper.assertTrue(ActionService.held(p, 0), "setup: not held");
+        ActionService.forget(p);
+        helper.assertTrue(!ActionService.held(p, 0), "a logged out player is still holding a key");
+        BiteService.release(p);
+        v.discard();
+        helper.succeed();
+    }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aSleepingPlayerCannotTriggerAnAction(GameTestHelper helper) {
         ServerPlayer p = vampire(helper);

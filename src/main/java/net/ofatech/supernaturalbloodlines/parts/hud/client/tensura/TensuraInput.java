@@ -10,6 +10,7 @@ import io.github.manasmods.tensura.storage.ability.IAbility;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.core.hud.InputPlan;
+import net.ofatech.supernaturalbloodlines.parts.hud.client.HudSend;
 
 /**
  * Tensura mode: a slot key sends what Tensura's own key sends, in the same order ({@link InputPlan} is the tested table): a mode change when Next or
@@ -25,7 +26,16 @@ public final class TensuraInput {
     private TensuraInput() {
     }
 
+    /** The connection is gone: forget what is held without sending the release packets. */
+    public static void reset() {
+        java.util.Arrays.fill(HELD_SKILL, null);
+        java.util.Arrays.fill(HELD_MODE, 0);
+    }
+
     public static void press(LocalPlayer p, int hudSlot) {
+        if (!HudSend.connected()) {
+            return;
+        }
         AbilitySlot slot = TensuraSlots.slot(p, hudSlot);
         ResourceLocation skill = slot == null || slot.isEmpty() || slot.getSkill() == null ? null : slot.getSkill().getRegistryName();
         IAbility ab = TensuraStorages.getAbilityFrom(p);
@@ -46,7 +56,7 @@ public final class TensuraInput {
     public static void release(int hudSlot) {
         InputPlan.Step step = InputPlan.forRelease(hudSlot, HELD_SKILL[hudSlot], HELD_MODE[hudSlot]);
         HELD_SKILL[hudSlot] = null;
-        if (step.kind() == InputPlan.Kind.RELEASE) {
+        if (step.kind() == InputPlan.Kind.RELEASE && HudSend.connected()) {
             SkillAPI.skillReleasePacket(step.skill(), step.keyNumber(), step.mode());
         }
     }

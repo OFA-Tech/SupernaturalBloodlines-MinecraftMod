@@ -14,6 +14,8 @@ public final class HudLayout {
     /** The hotbar-mode attack indicator: 6 right of the hotbar, 18 wide. */
     public static final int ATTACK_GAP = 6;
     public static final int ATTACK = 18;
+    /** Height of the strip along the bottom edge that the hotbar, the offhand slot and the attack indicator use. */
+    public static final int HOTBAR_STRIP = 24;
 
     public record Box(int x, int y, int w, int h) {
         public int right() {
@@ -44,16 +46,24 @@ public final class HudLayout {
         return new Box(screenW / 2 + HOTBAR_HALF + ATTACK_GAP, screenH - 20, ATTACK, 18);
     }
 
-    /** The six slot boxes in slot order: 0 to 2 the left column, 3 to 5 the right column. */
+    /**
+     * The six slot boxes in slot order: 0 to 2 the left column, 3 to 5 the right column. A column that does not fit beside the hotbar (a narrow window at
+     * a big GUI scale) is pushed against the screen edge and lifted above the hotbar strip, so it stays on screen and never covers the hotbar.
+     */
     public static Box[] slots(int screenW, int screenH) {
         int left = screenW / 2 - HOTBAR_HALF - OFFHAND - MARGIN - SLOT;
         int right = screenW / 2 + HOTBAR_HALF + ATTACK_GAP + ATTACK + MARGIN;
-        int top = screenH - 3 * SLOT - 2 * GAP;
+        int columnH = 3 * SLOT + 2 * GAP;
+        int low = screenH - columnH;
+        int lifted = screenH - HOTBAR_STRIP - columnH;
+        boolean liftLeft = left < 0;
+        boolean liftRight = right + SLOT > screenW;
+        left = Math.max(0, left);
+        right = Math.min(right, screenW - SLOT);
         Box[] boxes = new Box[Loadout.SLOTS];
         for (int row = 0; row < 3; row++) {
-            int y = top + row * (SLOT + GAP);
-            boxes[row] = new Box(left, y, SLOT, SLOT);
-            boxes[3 + row] = new Box(right, y, SLOT, SLOT);
+            boxes[row] = new Box(left, (liftLeft ? lifted : low) + row * (SLOT + GAP), SLOT, SLOT);
+            boxes[3 + row] = new Box(right, (liftRight ? lifted : low) + row * (SLOT + GAP), SLOT, SLOT);
         }
         return boxes;
     }

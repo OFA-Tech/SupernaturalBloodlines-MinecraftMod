@@ -7,7 +7,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
@@ -49,9 +48,7 @@ public final class ClientLoadout implements LoadoutAccess.Provider {
 
     @Override
     public void set(int slot, @Nullable ResourceLocation id) {
-        if (Minecraft.getInstance().getConnection() != null) {
-            PacketDistributor.sendToServer(new SetLoadoutPayload(slot, id == null ? "" : id.toString()));
-        }
+        HudSend.send(new SetLoadoutPayload(slot, id == null ? "" : id.toString()));
     }
 
     @Override
