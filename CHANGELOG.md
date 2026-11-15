@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased: apex additions (plan 12, phase 12d)
+
+Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (Apex races, D1 and D2). Parts: species_tensura, supernatural_tensura. No new mixin (species_tensura stays at 2 of 3).
+
+- **Two new apex races (D1).** `elder_vampire` for a plain Vampire (undead, bitable) and `alpha_primeval` for a plain Werewolf (not undead, R103; bitable). 2,000,000 EP each. Stats and signature skills are the spec's drafts. They are registered whenever Tensura is installed, even with `species_tensura` off, like the other seven. **Before removing the mod, reset players on any of the nine apex races** with Tensura's race command.
+- **Offered from every Tensura line (D2).** The apex race appears at the third tier of the line your Tensura race is on: a saint of the human, dwarf, elf or merfolk lines (as before), **Vampire Lord** on Tensura's vampire line (vampire, overcomer, lord, divine: the overcomer is the tier below, checked in Tensura 2.0.1.5) for vampire, Original, hybrid, Original hybrid and heretic, and **Spirit Beast** on Beastfolk for werewolf, hybrid and tribrid. A witch- or siphoner-werewolf can be offered two apex races. **Beastfolk is now a line of its own:** a witch, siphoner, heretic, Original, Original hybrid or hunter on Spirit Beast or Divine Beast is no longer offered an apex race from there (they still are from a saint).
+- **The apex rung gate.** With the ladders on, the offer also needs the top rung of that race's ladder (L-VAM-6, L-ORI-5, L-WOL-6 and the rest). Without the supernatural part, for a player who has not been migrated yet, or when the ladder has no apex rung (no Tensura, or `supernatural_tensura` off), nothing changes.
+- **`tensura_tier`** works: the apex task of each ladder is done while your Tensura race is at the apex tier of a line your race may be on, read for each of your races (so a werewolf witch on Beastfolk finishes the werewolf's task and not the witch's).
+- **True Alpha on `alpha_primeval`.** A True Alpha who is a werewolf now has the apex race's stat bonuses x1.5, and is granted S-WOL-8 Primeval Roar the moment they become a True Alpha on that race: the Alpha Roar with Roar's Echo's cooldown, twice the range (64 and 32 blocks), and +10% attack for 30 s for the Betas it reaches. A dormant True Alpha (cured or out of the werewolves) has neither until they rejoin; a normal Alpha never has them. Draft numbers, owner to patch.
+
 ## Unreleased: skills (plan 12, phase 12c)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (Skills). Parts: supernatural, supernatural_tensura. No new mixin (supernatural stays at 1 of 3).

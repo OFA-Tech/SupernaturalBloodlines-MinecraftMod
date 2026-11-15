@@ -14,6 +14,7 @@ import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexOffer;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexRaces;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexFactionGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexGameTests;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexWerewolfGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.RankSkillsGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.GhoulTensuraGameTests;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SirelineTensuraGameTests;
@@ -56,6 +57,7 @@ public final class SpeciesTensuraPart {
             }
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(RankSkillsGameTests.class);
+                e.register(ApexWerewolfGameTests.class);
             }
             // these link Werewolves classes, and the werewolf level grants live in vampirism_tensura
             if (ModList.get().isLoaded("werewolves") && EnabledParts.snapshot().contains(Part.VAMPIRISM_TENSURA)) {

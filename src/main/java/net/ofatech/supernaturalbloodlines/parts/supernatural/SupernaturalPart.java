@@ -28,6 +28,8 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.Supernatur
 import net.ofatech.supernaturalbloodlines.parts.supernatural.task.Detectors;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.task.TaskTracker;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.SkillEffects;
+import net.ofatech.supernaturalbloodlines.core.supernatural.LadderRules;
+import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SkillRules;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SkillTable;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
@@ -62,6 +64,13 @@ public final class SupernaturalPart {
             @Override
             public int rung(Player player, SupernaturalRace race) {
                 return SupernaturalAccess.get(player).rung(race);
+            }
+
+            @Override
+            public boolean apexRungReached(Player player, SupernaturalRace race) {
+                SupernaturalState s = SupernaturalAccess.get(player);
+                // not migrated yet: the migration gives the floor on login, and until then nothing is taken back
+                return s.schema() == 0 || LadderRules.apexRungReached(LadderTable.current(), s, race);
             }
 
             @Override

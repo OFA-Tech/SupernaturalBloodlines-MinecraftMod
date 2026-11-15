@@ -9,8 +9,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.HumanLikeLine;
 import org.junit.jupiter.api.Test;
 
@@ -36,17 +37,31 @@ class ApexRacesTest {
     }
 
     @Test
-    void everyApexSpeciesHasRace() {
+    void everyApexRaceHasRace() {
         Set<String> ids = new HashSet<>();
-        for (Species s : Species.values()) {
-            boolean apexSpecies = s != Species.NONE && s != Species.POTENTIAL;
-            assertEquals(apexSpecies, ApexSpec.forSpecies(s).isPresent(), s.name());
-            ApexSpec.forSpecies(s).ifPresent(spec -> ids.add(spec.id()));
+        for (SupernaturalRace r : SupernaturalRace.values()) {
+            boolean apex = r != SupernaturalRace.HUMAN && r != SupernaturalRace.GHOUL;
+            assertEquals(apex, ApexSpec.forRace(r).isPresent(), r.name());
+            ApexSpec.forRace(r).ifPresent(spec -> ids.add(spec.id()));
         }
         assertEquals(ApexSpec.ALL.size(), ids.size());
         assertEquals(ids, new HashSet<>(ApexSpec.ALL.stream().map(ApexSpec::id).toList()));
-        assertEquals("primordial_vampire", ApexSpec.forSpecies(Species.ORIGINAL).orElseThrow().id());
-        assertSame(ApexSpec.forSpecies(Species.SIPHONER).orElseThrow(), ApexSpec.forSpecies(Species.HERETIC).orElseThrow());
+        assertEquals("primordial_vampire", ApexSpec.forRace(SupernaturalRace.ORIGINAL).orElseThrow().id());
+        assertSame(ApexSpec.forRace(SupernaturalRace.SIPHONER).orElseThrow(), ApexSpec.forRace(SupernaturalRace.HERETIC).orElseThrow());
+    }
+
+    @Test
+    void thePlainRacesHaveTheirOwnApex() {
+        assertEquals(9, ApexSpec.ALL.size());
+        assertSame(ApexSpec.ELDER_VAMPIRE, ApexSpec.forRace(SupernaturalRace.VAMPIRE).orElseThrow());
+        assertSame(ApexSpec.ALPHA_PRIMEVAL, ApexSpec.forRace(SupernaturalRace.WEREWOLF).orElseThrow());
+        assertEquals(900, ApexSpec.ELDER_VAMPIRE.health());
+        assertEquals(List.of("tensura:self_regeneration"), ApexSpec.ELDER_VAMPIRE.intrinsicSkills());
+        assertEquals(List.of("tensura:godwolf_sense"), ApexSpec.ALPHA_PRIMEVAL.intrinsicSkills());
+        assertEquals(1000, ApexSpec.ALPHA_PRIMEVAL.health());
+        assertEquals(25, ApexSpec.ALPHA_PRIMEVAL.attack());
+        assertTrue(ApexSpec.ELDER_VAMPIRE.undead());
+        assertFalse(ApexSpec.ALPHA_PRIMEVAL.undead(), "R103: werewolves can't be undead");
     }
 
     @Test

@@ -25,6 +25,8 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
 import net.ofatech.supernaturalbloodlines.core.supernatural.TaskEvent;
 import net.ofatech.supernaturalbloodlines.core.supernatural.TaskSpec.Detector;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.ApexRaceQuery;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.PlayerRaces;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.SireCount;
 import net.ofatech.supernaturalbloodlines.shared.werewolves.EmissaryLines;
 import net.ofatech.supernaturalbloodlines.shared.werewolves.MoonControl;
@@ -48,17 +50,7 @@ public final class TaskTracker {
 
     /** Creature race, then the magic race if there is one. */
     public static List<SupernaturalRace> races(Player p) {
-        BloodlineState b = BloodlineAccess.get(p);
-        List<SupernaturalRace> out = new ArrayList<>();
-        out.add(SupernaturalRace.creature(b, factionId(p)));
-        SupernaturalRace.magic(b).ifPresent(out::add);
-        return out;
-    }
-
-    @Nullable
-    private static String factionId(Player p) {
-        IPlayableFaction<?> f = VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
-        return f == null ? null : f.getID().toString();
+        return PlayerRaces.of(p);
     }
 
     /** One event now. */
@@ -126,6 +118,9 @@ public final class TaskTracker {
             Long since = s.raceSince().get(race.id());
             if (since != null) {
                 events.add(TaskEvent.of(Detector.DAYS_AS, Math.max(0, now - since) / StatePredicates.DAY_TICKS, "race", race.id()));
+            }
+            if (ApexRaceQuery.atApexTier(p, race)) {
+                events.add(TaskEvent.of(Detector.TENSURA_TIER, 1, "race", race.id()));
             }
         }
         return events;

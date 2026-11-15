@@ -303,6 +303,52 @@ public final class PackBonusGameTests {
         helper.succeed();
     }
 
+    /** The Primeval Roar (S-WOL-8): Roar's Echo's cooldown, double range, and +10% attack for the pack for 30 s. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void primevalRoarDoublesTheRangeAndBuffsThePackAttack(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed(); // skills only exist with the supernatural part
+            return;
+        }
+        ServerPlayer primeval = wolf(helper, Rank.TRUE_ALPHA, Lineage.BITTEN, null, 1, 1.5);
+        ServerPlayer plain = wolf(helper, Rank.TRUE_ALPHA, Lineage.BITTEN, null, 1, 3.5);
+        ServerPlayer farBeta = beta(helper, primeval, Lineage.BITTEN, 50.5);
+        ServerPlayer plainFarBeta = beta(helper, plain, Lineage.BITTEN, 52.5);
+        ServerPlayer stranger = wolf(helper, Rank.OMEGA, Lineage.BITTEN, null, 1, 28.5);
+        online(primeval, plain, farBeta, plainFarBeta, stranger);
+        try {
+            net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.set(primeval,
+                    net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.get(primeval).toBuilder().skills(java.util.Set.of("S-WOL-8")).build());
+            helper.assertTrue(AlphaRoar.cooldown(primeval) == 800 && AlphaRoar.cooldown(plain) == AlphaRoar.COOLDOWN,
+                    "cooldowns " + AlphaRoar.cooldown(primeval) + "/" + AlphaRoar.cooldown(plain));
+
+            helper.assertTrue(AlphaRoar.roar(plain) == null, "the plain True Alpha's roar was refused");
+            helper.assertFalse(plainFarBeta.hasEffect(MobEffects.DAMAGE_BOOST), "a Beta 49 blocks away was buffed without the skill");
+            helper.assertFalse(stranger.hasEffect(MobEffects.MOVEMENT_SLOWDOWN), "a werewolf 25 blocks away was slowed without the skill");
+
+            helper.assertTrue(AlphaRoar.roar(primeval) == null, "the Primeval Roar was refused");
+            helper.assertTrue(farBeta.hasEffect(MobEffects.DAMAGE_BOOST), "a Beta 49 blocks away was not buffed (64 blocks with the skill)");
+            helper.assertTrue(stranger.hasEffect(MobEffects.MOVEMENT_SLOWDOWN), "a werewolf 27 blocks away was not slowed (32 blocks with the skill)");
+            var attack = farBeta.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+            var bonus = attack.getModifier(AlphaRoar.PACK_ATTACK_ID);
+            helper.assertTrue(bonus != null && Math.abs(bonus.amount() - 0.1) < 1e-9, "no +10% attack for the Beta: " + bonus);
+            helper.assertTrue(bonus.operation() == net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, "wrong operation");
+            helper.assertFalse(plainFarBeta.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).hasModifier(AlphaRoar.PACK_ATTACK_ID),
+                    "the other pack got the attack bonus");
+            helper.assertFalse(primeval.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).hasModifier(AlphaRoar.PACK_ATTACK_ID),
+                    "the Alpha buffed themself");
+
+            // not yet over, then over
+            AlphaRoar.endPackAttack(farBeta, false);
+            helper.assertTrue(attack.hasModifier(AlphaRoar.PACK_ATTACK_ID), "the bonus ended at once");
+            AlphaRoar.endPackAttack(farBeta, true);
+            helper.assertFalse(attack.hasModifier(AlphaRoar.PACK_ATTACK_ID), "the bonus did not end");
+        } finally {
+            clean(primeval, plain, farBeta, plainFarBeta, stranger);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void roarCooldown(GameTestHelper helper) {
         ServerPlayer alpha = wolf(helper, Rank.ALPHA, Lineage.BITTEN, null, 1, 1.5);

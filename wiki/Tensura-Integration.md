@@ -85,7 +85,7 @@ Only players whose Tensura race is human-like can take a bloodline (R1). The `te
 A player who becomes a **Ghoul** (see [Vampires and Originals](Vampires-And-Originals#ghouls)) and whose Tensura race is exactly `tensura:human` shows the **Ghoul** race. When they finish the turning they become `tensura:vampire`; every other race (an elf, say) is kept throughout. While you are a Ghoul **no Tensura evolution goes through**: the evolution screen may seem to accept it, but your race doesn't change and chat says to complete your turning first. EP keeps adding up. Leaving the vampires sets a Ghoul back to human, like any cure.
 ## Apex evolutions
 
-From **saint tier or higher** of a human-like Tensura line, a player with a species can pick **one apex race** in Tensura's own evolution screen. Offer ids are `supernaturalbloodlines:<name>`.
+From the **third tier** of a Tensura line (saint tier for the human-like lines), a player with a species (or a plain vampire or werewolf) can pick **one apex race** in Tensura's own evolution screen. Offer ids are `supernaturalbloodlines:<name>`. With the supernatural ladders on, you also need the top rung of your race's ladder.
 
 | Species | Apex race | Signature skill (placeholder) | Undead |
 |---|---|---|---|
@@ -96,10 +96,18 @@ From **saint tier or higher** of a human-like Tensura line, a player with a spec
 | Siphoner, Heretic | Void Siphon | gluttony | no |
 | Tribrid | Tribrid Ascendant | ultra_instinct | yes |
 | Hunter of the Five | Eternal Hunter | danger_sense | no |
+| Plain Vampire | Elder Vampire | self_regeneration | yes |
+| Plain Werewolf | Primeval Alpha (`alpha_primeval`) | godwolf_sense | no |
 
-- Tier-3 saint races: `human_saint`, `dwarf_saint`, `elf_saint`, `merfolk_saint`, `spirit_beast`. Tier 4: `divine_human`, `divine_dwarf`, `divine_elf`, `divine_fish`, `divine_beast`.
+| Tensura line | Offered from (tier 3, then tier 4) | For |
+|---|---|---|
+| Human, dwarf, elf, merfolk | `human_saint`, `dwarf_saint`, `elf_saint`, `merfolk_saint`; `divine_human`, `divine_dwarf`, `divine_elf`, `divine_fish` | every race with an apex race |
+| Vampire (vampire, overcomer, lord, divine) | `vampire_lord`; `divine_vampire` (the overcomer is the tier below) | vampire, Original, hybrid, Original hybrid, heretic |
+| Beastfolk | `spirit_beast`; `divine_beast` | werewolf, hybrid, tribrid |
+
+A witch- or siphoner-werewolf may be offered two apex races. A **True Alpha** (not dormant) on Primeval Alpha has the apex bonuses x1.5 and is granted the skill Primeval Roar: the Alpha Roar with Roar's Echo's cooldown, twice the range, and +10% attack for 30 s for the Betas it reaches (draft numbers).
 - An apex race needs **2,000,000 EP** (the same as Tensura's divine human) and can give more max health than the divine tier (Primordial Vampire 1000, against 980). **All names, stats, EP and signature skills are placeholders.**
-- Apex races are human-like. The four vampire-type ones (Primordial Vampire, Primordial Hybrid, Moonblood Hybrid, Tribrid Ascendant) are also tagged `tensura:undead` (holy damage still applies). Tensura's `no_blood` includes undead, but every apex race is also in our tag `supernaturalbloodlines:bitable`, so **no apex race is bloodless for this mod**: they can be bitten. Tensura's own drain, blood mist and vampire feeding reach them too.
+- Apex races are human-like. The five vampire-type ones (Primordial Vampire, Primordial Hybrid, Moonblood Hybrid, Tribrid Ascendant, Elder Vampire) are also tagged `tensura:undead` (holy damage still applies). Tensura's `no_blood` includes undead, but every apex race is also in our tag `supernaturalbloodlines:bitable`, so **no apex race is bloodless for this mod**: they can be bitten. Tensura's own drain, blood mist and vampire feeding reach them too.
 - **Losing the species does not remove a chosen apex race.** The species-only layer skills go dormant; the race's own signature skill stays.
 - There is no icon for the apex races in the evolution screen (not checked in a client).
 - Switch off: `apex_evolutions_enabled=false`. The apex races stay registered; there is just no option to pick them.

@@ -789,7 +789,7 @@ A datapack change that moves a task to a different rung never lowers anyone's ru
 ## Could not ground
 
 - **Human and Ghoul have no apex.** Vampire and Werewolf now do (D1); their ids and stats are the designer's.
-- **The Tensura tiers** of D2 (Vampire Lord vs Overcomer, Spirit Beast) are taken from the rule text, not yet checked in Tensura's jar.
+- **The Tensura tiers** of D2 are checked in Tensura 2.0.1.5 (phase 12d): the vampire line is vampire, overcomer, lord, divine, so Vampire Lord (tier 3) is the Saint equivalent and the Overcomer is not offered; Beastfolk is beastfolk, beast lord, spirit beast, divine beast. See `docs/parts/species_tensura.md`.
 - **Players on the Original hybrid line** are offered their apex only from the human-like and vampire lines, as the owner listed; an Original hybrid on Beastfolk (possible through R20b before R35) gets no Beastfolk offer.
 - **Detectors not yet in code:** `forced_shift_survived`, `sun_ring_bound`, `mountain_ash_placed`, `vampire_bite_refused` (plan 11), `dying_survived`, lifetime siphon totals. Each is one `TaskSignals` call in code that already exists or is planned.
 - **Every number** (SP, EP, counts, days, skill effects) is the designer's.

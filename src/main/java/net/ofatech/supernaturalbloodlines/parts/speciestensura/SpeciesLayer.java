@@ -26,6 +26,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LayerSlice;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.EvolutionBoost;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.PrimevalBoost;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import net.ofatech.supernaturalbloodlines.shared.tensura.SkillOwners;
 
@@ -116,6 +117,7 @@ public final class SpeciesLayer {
         applyBonus(p, TensuraAttributes.MAX_MAGICULE, MAGICULE_ID, magicule);
         applyBonus(p, TensuraAttributes.MAX_AURA, AURA_ID, aura);
         EvolutionBoost.sync(p);
+        PrimevalBoost.sync(p);
     }
 
     /** {@code tensura:drain} and {@code drain} are the same skill for the slice table. */

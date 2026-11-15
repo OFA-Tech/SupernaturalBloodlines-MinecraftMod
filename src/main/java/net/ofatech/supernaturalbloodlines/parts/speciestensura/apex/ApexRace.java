@@ -20,7 +20,7 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * One class for the seven apex races, configured by an {@link ApexSpec}. Placeholder numbers: the owner tunes them
+ * One class for the nine apex races, configured by an {@link ApexSpec}. Placeholder numbers: the owner tunes them
  * ({@link ApexSpec} for the stats, the constants here for energy). An apex race is the end of the line: no next evolution.
  */
 public class ApexRace extends TensuraRace {

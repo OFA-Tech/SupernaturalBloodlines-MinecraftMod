@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest;
 
+import de.teamlapen.vampirism.api.VReference;
+import de.teamlapen.vampirism.api.VampirismAPI;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.Env;
 import io.github.manasmods.manascore.race.api.ManasRace;
@@ -15,6 +17,7 @@ import io.github.manasmods.tensura.registry.attribute.TensuraAttributes;
 import java.lang.reflect.Proxy;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -28,9 +31,15 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.EnabledParts;
 import net.ofatech.supernaturalbloodlines.core.Part;
 import net.ofatech.supernaturalbloodlines.core.StalePartModifiers;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
+import net.ofatech.supernaturalbloodlines.core.supernatural.MigrationRules;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.mixin.SpeciesTensuraMixinPlugin;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesLayer;
@@ -76,6 +85,41 @@ public final class ApexGameTests {
 
     private static void species(ServerPlayer p, Species s) {
         BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().species(s).build());
+    }
+
+    /** The species that holds this apex race, if one does: a plain Vampire or Werewolf has none (the faction does). */
+    static Optional<Species> speciesOf(ApexSpec spec) {
+        for (Species s : Species.values()) {
+            if (s != Species.POTENTIAL && ApexSpec.forRace(SupernaturalRace.creature(BloodlineState.NONE.toBuilder().species(s).build(), null)).filter(spec::equals).isPresent()) {
+                return Optional.of(s);
+            }
+            if (SupernaturalRace.magic(BloodlineState.NONE.toBuilder().species(s).build()).flatMap(ApexSpec::forRace).filter(spec::equals).isPresent()) {
+                return Optional.of(s);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** What the offer was before the lines: one apex per species, from the saint tier of a human-like line. */
+    private static Optional<String> apexOfSpecies(Species s) {
+        return Optional.ofNullable(switch (s) {
+            case ORIGINAL -> "primordial_vampire";
+            case ORIGINAL_HYBRID -> "primordial_hybrid";
+            case HYBRID -> "moonblood_hybrid";
+            case WITCH -> "ancestral_witch";
+            case SIPHONER, HERETIC -> "void_siphon";
+            case TRIBRID -> "tribrid_ascendant";
+            case HUNTER_OF_THE_FIVE -> "eternal_hunter";
+            case NONE, POTENTIAL -> null;
+        });
+    }
+
+    private static boolean offers(ServerPlayer p, String id) {
+        return offered(p).contains(NS + ":" + id);
+    }
+
+    private static String[] concat(String[]... parts) {
+        return java.util.Arrays.stream(parts).flatMap(java.util.Arrays::stream).toArray(String[]::new);
     }
 
     private static boolean has(ServerPlayer p, String skill) {
@@ -131,7 +175,7 @@ public final class ApexGameTests {
             }
             helper.assertTrue(race.getNextEvolutions(inst, null).isEmpty(), id + " has a next evolution");
         }
-        helper.assertTrue(ApexRaces.apexFor(Species.TRIBRID).orElseThrow().equals(ResourceLocation.parse(NS + ":tribrid_ascendant")), "apexFor");
+        helper.assertTrue(ApexRaces.apexFor(SupernaturalRace.TRIBRID).orElseThrow().equals(ResourceLocation.parse(NS + ":tribrid_ascendant")), "apexFor");
         helper.succeed();
     }
 
@@ -145,7 +189,7 @@ public final class ApexGameTests {
             helper.assertTrue(!RaceUtils.isBloodless(p), spec.id() + " is bloodless to Tensura");
             undead += spec.undead() ? 1 : 0;
         }
-        helper.assertTrue(undead == 4, "vampire-type apex races: " + undead);
+        helper.assertTrue(undead == 5, "vampire-type apex races: " + undead);
         // controls: a Tensura undead race is still bloodless, and a plain human is not
         ServerPlayer ghoul = TestPlayers.create(helper);
         setRace(ghoul, "tensura:ghoul");
@@ -192,19 +236,154 @@ public final class ApexGameTests {
         setRace(p, "tensura:human_saint");
         for (Species s : Species.values()) {
             species(p, s);
-            var apex = ApexSpec.forSpecies(s);
+            var apex = apexOfSpecies(s);
             helper.assertTrue(offersApex(p) == apex.isPresent(), s + " offered " + offered(p));
-            apex.ifPresent(a -> helper.assertTrue(offered(p).contains(NS + ":" + a.id()), s + " is not offered " + a.id() + ": " + offered(p)));
+            apex.ifPresent(a -> helper.assertTrue(offered(p).contains(NS + ":" + a), s + " is not offered " + a + ": " + offered(p)));
         }
-        // tier 3 and 4 of the other lines, and the list is the race's own plus ours (divine races have none of their own)
+        // tier 3 and 4 of the other human-like lines, and the list is the race's own plus ours (divine races have none of their own)
         species(p, Species.WITCH);
-        for (String id : new String[] {"tensura:divine_human", "tensura:elf_saint", "tensura:divine_fish", "tensura:spirit_beast", "tensura:divine_beast"}) {
+        for (String id : new String[] {"tensura:divine_human", "tensura:elf_saint", "tensura:divine_fish", "tensura:dwarf_saint", "tensura:divine_elf"}) {
             setRace(p, id);
             helper.assertTrue(offered(p).contains(NS + ":ancestral_witch"), id + " is not offered the apex race: " + offered(p));
+        }
+        // Beastfolk is its own line (D2): only the werewolf types are offered from it
+        for (String id : new String[] {"tensura:spirit_beast", "tensura:divine_beast"}) {
+            setRace(p, id);
+            helper.assertTrue(!offersApex(p), "a witch is offered an apex race from Beastfolk " + id + ": " + offered(p));
         }
         setRace(p, "tensura:human_saint");
         helper.assertTrue(offered(p).contains("tensura:divine_human"), "Tensura's own evolution is gone: " + offered(p));
         helper.assertTrue(ApexOffer.hookApplied(), "the getNextEvolutions hook is not in place");
+        helper.succeed();
+    }
+
+    /** D2: the offer follows the Tensura line the race is on, at the Saint-equivalent tier of that line, for the species the line allows. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void apexOfferedFromEveryTensuraLine(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        String[] vampireLine = {"tensura:vampire_lord", "tensura:divine_vampire"};
+        String[] beastLine = {"tensura:spirit_beast", "tensura:divine_beast"};
+        // a hybrid is on either line
+        species(p, Species.HYBRID);
+        for (String id : concat(vampireLine, beastLine, new String[] {"tensura:human_saint"})) {
+            setRace(p, id);
+            helper.assertTrue(offers(p, "moonblood_hybrid"), "a hybrid on " + id + " is not offered the apex race: " + offered(p));
+        }
+        for (String id : new String[] {"tensura:vampire", "tensura:vampire_overcomer", "tensura:beastfolk", "tensura:beast_lord"}) {
+            setRace(p, id);
+            helper.assertTrue(!offersApex(p), "a hybrid on the tier below, " + id + ", is offered: " + offered(p));
+        }
+        // a tribrid only on Beastfolk, an Original hybrid only on the vampire line
+        species(p, Species.TRIBRID);
+        setRace(p, "tensura:vampire_lord");
+        helper.assertTrue(!offersApex(p), "a tribrid on the vampire line is offered: " + offered(p));
+        setRace(p, "tensura:spirit_beast");
+        helper.assertTrue(offers(p, "tribrid_ascendant"), "a tribrid on Beastfolk is not offered: " + offered(p));
+        species(p, Species.ORIGINAL_HYBRID);
+        setRace(p, "tensura:spirit_beast");
+        helper.assertTrue(!offersApex(p), "an Original hybrid on Beastfolk is offered: " + offered(p));
+        setRace(p, "tensura:vampire_lord");
+        helper.assertTrue(offers(p, "primordial_hybrid"), "an Original hybrid on the vampire line is not offered: " + offered(p));
+        // the vampire-type species
+        for (Species s : new Species[] {Species.ORIGINAL, Species.HERETIC}) {
+            species(p, s);
+            for (String id : vampireLine) {
+                setRace(p, id);
+                helper.assertTrue(offers(p, apexOfSpecies(s).orElseThrow()), s + " on " + id + " is not offered: " + offered(p));
+            }
+            for (String id : beastLine) {
+                setRace(p, id);
+                helper.assertTrue(!offersApex(p), s + " on " + id + " is offered: " + offered(p));
+            }
+        }
+        // the others never from the vampire line
+        for (Species s : new Species[] {Species.WITCH, Species.SIPHONER, Species.HUNTER_OF_THE_FIVE}) {
+            species(p, s);
+            setRace(p, "tensura:vampire_lord");
+            helper.assertTrue(!offersApex(p), s + " on the vampire line is offered: " + offered(p));
+        }
+        helper.succeed();
+    }
+
+    /** D1: a plain Vampire (no species, the Vampirism faction) has an apex race of its own. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void plainVampireIsOfferedElderVampire(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not become a vampire");
+        for (String id : new String[] {"tensura:vampire_lord", "tensura:divine_vampire", "tensura:human_saint", "tensura:elf_saint"}) {
+            setRace(p, id);
+            helper.assertTrue(offers(p, "elder_vampire"), "a vampire on " + id + " is not offered the apex race: " + offered(p));
+        }
+        for (String id : new String[] {"tensura:vampire", "tensura:vampire_overcomer", "tensura:spirit_beast"}) {
+            setRace(p, id);
+            helper.assertTrue(!offersApex(p), "a vampire on " + id + " is offered: " + offered(p));
+        }
+        setRace(p, NS + ":elder_vampire");
+        helper.assertTrue(offered(p).isEmpty(), "the apex race has a next evolution: " + offered(p));
+        helper.succeed();
+    }
+
+    private static boolean laddersGateApex() {
+        return EnabledParts.isEnabled("supernatural") && EnabledParts.isEnabled("supernaturalTensura");
+    }
+
+    private static void setLadder(ServerPlayer p, SupernaturalRace race, int rung) {
+        SupernaturalAccess.set(p, SupernaturalAccess.get(p).toBuilder().schema(MigrationRules.SCHEMA).rung(race, rung).build());
+    }
+
+    private static int top(SupernaturalRace race) {
+        return LadderTable.current().get(race).rungs().size() - 1;
+    }
+
+    /** 12d Task 3: with the ladders (supernatural and supernatural_tensura on) the offer also needs the top rung of the race's ladder. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void apexNeedsTopRung(GameTestHelper helper) {
+        if (!laddersGateApex()) {
+            helper.succeed(); // nothing to gate on, apexWithoutSupernaturalPartAsToday covers this run
+            return;
+        }
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:human_saint");
+        species(p, Species.ORIGINAL);
+        helper.assertTrue(offers(p, "primordial_vampire"), "control: a player who has not been migrated lost the offer");
+        setLadder(p, SupernaturalRace.ORIGINAL, top(SupernaturalRace.ORIGINAL) - 1);
+        helper.assertTrue(!offersApex(p), "offered one rung below the top: " + offered(p));
+        setLadder(p, SupernaturalRace.ORIGINAL, top(SupernaturalRace.ORIGINAL));
+        helper.assertTrue(offers(p, "primordial_vampire"), "not offered at the top rung: " + offered(p));
+        // Review Focus 6: a hybrid on the vampire line only after L-HYB-5
+        ServerPlayer hybrid = TestPlayers.create(helper);
+        setRace(hybrid, "tensura:vampire_lord");
+        species(hybrid, Species.HYBRID);
+        setLadder(hybrid, SupernaturalRace.HYBRID, 4);
+        helper.assertTrue(!offersApex(hybrid), "a hybrid on the vampire line before L-HYB-5: " + offered(hybrid));
+        setLadder(hybrid, SupernaturalRace.HYBRID, 5);
+        helper.assertTrue(offers(hybrid, "moonblood_hybrid"), "a hybrid on the vampire line at L-HYB-5: " + offered(hybrid));
+        // a werewolf-type on Beastfolk, and the server's own check refuses a forged evolution below the rung
+        ServerPlayer wolf = TestPlayers.create(helper);
+        setRace(wolf, "tensura:spirit_beast");
+        species(wolf, Species.TRIBRID);
+        setLadder(wolf, SupernaturalRace.TRIBRID, 4);
+        setEnergy(wolf, 2_000_000);
+        pressEvolve(wolf, NS + ":tribrid_ascendant");
+        helper.assertTrue("tensura:spirit_beast".equals(race(wolf)), "evolved below the top rung: " + race(wolf));
+        setLadder(wolf, SupernaturalRace.TRIBRID, 5);
+        pressEvolve(wolf, NS + ":tribrid_ascendant");
+        helper.assertTrue((NS + ":tribrid_ascendant").equals(race(wolf)), "did not evolve at the top rung: " + race(wolf));
+        helper.succeed();
+    }
+
+    /** Without the supernatural part, or with no apex rung to climb, the offer is what it was before the ladders. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void apexWithoutSupernaturalPartAsToday(GameTestHelper helper) {
+        if (laddersGateApex()) {
+            helper.succeed(); // apexNeedsTopRung covers this run
+            return;
+        }
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:human_saint");
+        species(p, Species.ORIGINAL);
+        setLadder(p, SupernaturalRace.ORIGINAL, 0);
+        helper.assertTrue(offers(p, "primordial_vampire"), "the ladders gate the offer without the part: " + offered(p));
         helper.succeed();
     }
 
@@ -228,7 +407,8 @@ public final class ApexGameTests {
         species(p, Species.ORIGINAL);
         // below saint tier of a human-like line, and lines that are not human-like
         for (String id : new String[] {"tensura:human", "tensura:elf", "tensura:enlightened_elf", "tensura:beast_lord",
-                "tensura:ghoul", "tensura:orc", "tensura:slime", "tensura:vampire", "tensura:wight"}) {
+                "tensura:ghoul", "tensura:orc", "tensura:slime", "tensura:vampire", "tensura:vampire_overcomer", "tensura:wight",
+                "tensura:spirit_beast", "tensura:divine_beast"}) {
             setRace(p, id);
             helper.assertTrue(!offersApex(p), id + " is offered the apex race: " + offered(p));
         }
