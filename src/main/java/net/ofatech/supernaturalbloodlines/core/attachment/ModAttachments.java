@@ -7,6 +7,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
 
 public final class ModAttachments {
@@ -34,6 +35,13 @@ public final class ModAttachments {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<DoppelgangerRoll>> DOPPELGANGER_VILLAGER =
             ATTACHMENTS.register("doppelganger_villager", () -> AttachmentType.builder(() -> DoppelgangerRoll.NONE)
                     .serialize(DoppelgangerRoll.CODEC)
+                    .copyOnDeath()
+                    .build());
+
+    /** The six Supernatural-mode slots of the ability HUD (plan 13); kept on death, and never put back to the default once the player changed it. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Loadout>> HUD_LOADOUT =
+            ATTACHMENTS.register("hud_loadout", () -> AttachmentType.builder(() -> Loadout.DEFAULT)
+                    .serialize(Loadout.CODEC)
                     .copyOnDeath()
                     .build());
 

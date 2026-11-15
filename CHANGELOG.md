@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased: the six HUD slots (plan 13, phase 13b)
+
+- **HUD review fixes.** Nothing is sent to a server without the mod's channel or after a disconnect; a slot key pressed as a screen closes is ignored; Tensura's own HUD setting is handed back whenever a Tensura or ManasCore screen is open, on logout and on shutdown, so it can never be saved as off; a window that is too narrow lifts a slot column above the hotbar; a logged out player's held key is forgotten and a release always ends a feeding.
+- **Vampirism and Werewolves slots, and the Bite key press (13b Task 3).** In Supernatural mode (Alt + Caps Lock) a slot key now uses the action in that slot: a lasting action toggles like Vampirism's own key (and for a hybrid, Werewolves' actions too), and **Bite does what your form does**: hold the key to keep drinking as a vampire. The server checks everything: the action comes from your own loadout, it must be unlocked in your faction, and every key press (a refused one too) counts against `rate_limit_per_second`. The six slots now know their cooldown and state; the boxes that show them are still to come.
+- **Tensura slots (13b Task 2).** (Mixin budget of the hud part: 1 of 3.) With Tensura installed the six slot keys (R F V Z X C) work again: slots 1 to 3 are your active preset and 4 to 6 the next one, like Tensura Slots, and they send what Tensura's own keys send (hold Alt to change a skill's mode). A skill in the next preset now fires without Tensura Slots (one mixin, off with `next_preset_active = false`). Tensura's own HUD is not hidden yet and nothing is drawn by us yet: the layer comes in Task 4.
+
+- **The loadout (13b Task 1).** The six Supernatural-mode slots are saved per player (kept on death). A new player has **Bite** in slot 1; you can move it or clear it and it is never put back. The server decides what can go in a slot: Bite, or an action your current faction has unlocked. Every request counts against `rate_limit_per_second`, refused ones too. Nothing shows it yet; the hub's Loadout tab and the HUD itself come in the next tasks.
+
 ## Unreleased: the supernatural HUD, the Bite action (plan 13, phase 13a Tasks 1 to 3)
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-hud-design.md`. New part: **hud** (needs no mod; Tensura, Vampirism and Werewolves are optional extras). No mixin yet (0 of 3, three reserved).
@@ -288,3 +296,4 @@ Needs Werewolves, except Shocked and the Taser (any supernatural). Details per t
 ## Unreleased
 
 - Project created from the NeoForge 1.21.1 ModDevGradle template.
+

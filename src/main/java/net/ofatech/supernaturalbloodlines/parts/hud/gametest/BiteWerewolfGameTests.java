@@ -25,7 +25,7 @@ public final class BiteWerewolfGameTests {
     private BiteWerewolfGameTests() {
     }
 
-    private static ServerPlayer wolf(GameTestHelper helper) {
+    static ServerPlayer wolf(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.createDuelist(helper);
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not make a werewolf");
         BiteGameTests.place(helper, p, 1.5);

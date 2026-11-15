@@ -1,0 +1,105 @@
+package net.ofatech.supernaturalbloodlines.parts.hud.net;
+
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
+import net.ofatech.supernaturalbloodlines.core.hud.RateLimiter;
+import net.ofatech.supernaturalbloodlines.parts.hud.HudConfig;
+import net.ofatech.supernaturalbloodlines.parts.hud.action.ActionService;
+import net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * The HUD's payloads and their rate limit. The registrar is optional, so a player without the part (or a server without it) can still connect.
+ * Every payload that asks for something counts against {@code rate_limit_per_second}, a refused one as much as one that worked, and one over the
+ * limit is dropped without an answer (a flood must not make the server talk back).
+ */
+public final class HudNet {
+    private static final String VERSION = "1";
+    /** The refusal of a payload over the rate limit; never shown, since nothing is sent back. */
+    public static final String RATE_LIMITED = "supernaturalbloodlines.hud.rate_limited";
+
+    private static final RateLimiter LIMITER = new RateLimiter();
+
+    private HudNet() {
+    }
+
+    public static void register(IEventBus modBus) {
+        modBus.addListener(HudNet::onRegisterPayloads);
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> sync(e.getEntity()));
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent e) -> sync(e.getEntity()));
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerChangedDimensionEvent e) -> sync(e.getEntity()));
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
+            LIMITER.forget(e.getEntity().getUUID());
+            if (e.getEntity() instanceof ServerPlayer sp) {
+                ActionService.forget(sp);
+            }
+        });
+    }
+
+    private static void sync(net.minecraft.world.entity.player.Player p) {
+        if (p instanceof ServerPlayer sp) {
+            LoadoutService.sync(sp);
+        }
+    }
+
+    private static void onRegisterPayloads(RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar(VERSION).optional();
+        registrar.playToServer(SetLoadoutPayload.TYPE, SetLoadoutPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> {
+            if (ctx.player() instanceof ServerPlayer p) {
+                handleSetLoadout(p, payload);
+            }
+        }));
+        registrar.playToServer(TriggerActionPayload.TYPE, TriggerActionPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> {
+            if (ctx.player() instanceof ServerPlayer p) {
+                handleTrigger(p, payload);
+            }
+        }));
+        registrar.playToClient(LoadoutSyncPayload.TYPE, LoadoutSyncPayload.STREAM_CODEC,
+                (payload, ctx) -> ctx.enqueueWork(() -> ctx.player().setData(ModAttachments.HUD_LOADOUT, payload.loadout())));
+    }
+
+    /** True when this payload is within the player's rate limit; every call counts. */
+    public static boolean allowed(ServerPlayer p) {
+        return LIMITER.tryAcquire(p.getUUID(), p.server.getTickCount(), HudConfig.rateLimitPerSecond());
+    }
+
+    /** Test hook: forgets the rate limit window of a player. */
+    public static void forgetRateLimit(ServerPlayer p) {
+        LIMITER.forget(p.getUUID());
+    }
+
+    /**
+     * A slot key went down (counts against the rate limit, refusals too) or up (not limited: a dropped release would leave a feeding running, and it does
+     * nothing unless something is held). The action is the one in the player's own loadout.
+     *
+     * @return the refusal's lang key (already shown in the action bar, except for {@link #RATE_LIMITED}), null when the slot did something
+     */
+    @Nullable
+    public static String handleTrigger(ServerPlayer p, TriggerActionPayload payload) {
+        if (!payload.release() && !allowed(p)) {
+            return RATE_LIMITED;
+        }
+        return ActionService.trigger(p, payload.slot(), payload.targetEntityId(), payload.release());
+    }
+
+    /** @return the refusal's lang key (shown in the action bar, except for {@link #RATE_LIMITED}), null when the slot was set */
+    @Nullable
+    public static String handleSetLoadout(ServerPlayer p, SetLoadoutPayload payload) {
+        if (!allowed(p)) {
+            return RATE_LIMITED;
+        }
+        ResourceLocation id = payload.actionId().isEmpty() ? null : ResourceLocation.tryParse(payload.actionId());
+        String refusal = !payload.actionId().isEmpty() && id == null ? LoadoutService.KEY + "unknown_action" : LoadoutService.set(p, payload.slot(), id);
+        if (refusal != null) {
+            p.displayClientMessage(Component.translatable(refusal), true);
+        }
+        return refusal;
+    }
+}

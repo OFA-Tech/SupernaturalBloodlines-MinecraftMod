@@ -7,6 +7,11 @@ import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.ofatech.supernaturalbloodlines.core.EnabledParts;
 import net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService;
+import net.ofatech.supernaturalbloodlines.parts.hud.gametest.ActionGameTests;
+import net.ofatech.supernaturalbloodlines.parts.hud.gametest.ActionWerewolfGameTests;
+import net.ofatech.supernaturalbloodlines.parts.hud.gametest.LoadoutGameTests;
+import net.ofatech.supernaturalbloodlines.parts.hud.gametest.LoadoutVampirismGameTests;
+import net.ofatech.supernaturalbloodlines.parts.hud.net.HudNet;
 import net.ofatech.supernaturalbloodlines.parts.hud.gametest.BiteGameTests;
 import net.ofatech.supernaturalbloodlines.parts.hud.gametest.BiteHybridGameTests;
 import net.ofatech.supernaturalbloodlines.parts.hud.gametest.BiteWerewolfGameTests;
@@ -28,8 +33,18 @@ public final class HudPart {
             HudClient.register(modBus);
         }
         BiteService.register();
+        HudNet.register(modBus);
         modBus.addListener((RegisterGameTestsEvent e) -> {
+            e.register(LoadoutGameTests.class);
+            if (ModList.get().isLoaded("tensura")) {
+                e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.TensuraPresetGameTests.class);
+            }
             if (ModList.get().isLoaded("vampirism")) {
+                e.register(LoadoutVampirismGameTests.class);
+                e.register(ActionGameTests.class);
+                if (ModList.get().isLoaded("werewolves")) {
+                    e.register(ActionWerewolfGameTests.class);
+                }
                 e.register(BiteGameTests.class);
                 if (EnabledParts.isEnabled("species")) {
                     e.register(TurningBiteGameTests.class);

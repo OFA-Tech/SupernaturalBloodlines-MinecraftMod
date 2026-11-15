@@ -77,3 +77,6 @@ Automated tests cover the rules, but these still need a person with a real clien
 - **Tensura:** an elf (or human) taken to the apex offer in the real evolution screen; a sire's automatic naming of a sired player at a real login; an Alpha's rank skills in the skill list; the analysis screen for Vampirism, Werewolves and Enchanted mobs (EP numbers are first guesses); the evolution and skill screens of a layered player.
 
 If you find something that behaves differently from this wiki, please [open an issue](https://github.com/OFA-Tech/SupernaturalBloodlines-MinecraftMod/issues). See [Troubleshooting](Troubleshooting).
+
+- **Tensura Slots is no longer needed.** The ability HUD's right column (the next preset) works without it, through one small mixin (
+ext_preset_active). With Tensura Slots still installed both work, but its own second column keeps drawing next to ours and its keys are unbound by the HUD, so remove it. The hold, press and Alt checks against Tensura's own keys were done from the code and the tests, not yet in a running client.

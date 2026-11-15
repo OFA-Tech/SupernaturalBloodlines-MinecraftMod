@@ -54,6 +54,16 @@ public final class HudClientConfig {
         }
     }
 
+    /** Remembers the mode the player chose with the mode key, for the next session. */
+    public static void rememberMode(Mode mode) {
+        try {
+            MODE.set(mode);
+            MODE.save();
+        } catch (RuntimeException notLoaded) {
+            // the config is not loaded yet (a test run): the choice only lasts this session
+        }
+    }
+
     private static boolean read(ModConfigSpec.BooleanValue v, boolean fallback) {
         try {
             return v.get();

@@ -4,7 +4,9 @@
   "package": "net.ofatech.supernaturalbloodlines.mixin.hud",
   "plugin": "net.ofatech.supernaturalbloodlines.mixin.HudMixinPlugin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
+  "mixins": [
+    "AbilityStorageNextPresetMixin"
+  ],
   "injectors": {
     "defaultRequire": 0
   }
