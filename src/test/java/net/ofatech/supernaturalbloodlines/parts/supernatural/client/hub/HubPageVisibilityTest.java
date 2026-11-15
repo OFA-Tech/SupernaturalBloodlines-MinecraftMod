@@ -13,8 +13,8 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClien
 import org.junit.jupiter.api.Test;
 
 class HubPageVisibilityTest {
-    private static HubPage.Context ctx(SupernaturalRace creature, boolean werewolves, boolean enchanted, boolean pack) {
-        return new HubPage.Context(creature, Optional.empty(), werewolves, enchanted, pack);
+    private static HubPage.Context ctx(SupernaturalRace creature, boolean werewolves, boolean enchanted, boolean unused) {
+        return new HubPage.Context(creature, Optional.empty(), werewolves, enchanted);
     }
 
     @Test
@@ -28,8 +28,14 @@ class HubPageVisibilityTest {
     }
 
     @Test
-    void anyRaceInAPackSeesThePack() {
-        assertTrue(PACK.visible(ctx(HUMAN, true, true, true)));
+    void onlyCurrentWolvesAndHybridTypesSeeThePack() {
+        for (SupernaturalRace r : List.of(WEREWOLF, HYBRID, ORIGINAL_HYBRID, TRIBRID)) {
+            assertTrue(PACK.visible(ctx(r, true, true, false)), r.id());
+        }
+        // a former werewolf: cured (human) or turned (vampire), whatever pack state they kept
+        for (SupernaturalRace r : List.of(HUMAN, VAMPIRE, ORIGINAL, HERETIC, HUNTER, GHOUL)) {
+            assertFalse(PACK.visible(ctx(r, true, true, true)), r.id());
+        }
     }
 
     @Test

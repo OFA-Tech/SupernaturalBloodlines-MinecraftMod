@@ -13,6 +13,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.HubKeybinds;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.GrimoireTheme;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.ClaimTaskPayload;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -83,7 +84,8 @@ public final class HubScreen extends Screen {
         HubView view = HubView.of(minecraft.player);
         visible = HubPage.visiblePages(view.context());
         setPage(HubPage.orFirst(page, view.context()));
-        layout = theme.layout(width, height, visible.size(), 0);
+        List<HubHooks.Launcher> launchers = HubHooks.launchers();
+        layout = theme.layout(width, height, visible.size(), launchers.size());
         theme.drawFrame(g, layout);
         maxScroll.clear();
         Frame f = new Frame(g, mouseX, mouseY, view);
@@ -92,6 +94,17 @@ public final class HubScreen extends Screen {
             Rect r = layout.tabs().get(i);
             f.targets.add(new Target("tab:" + p.name(), r, null, true, List.of(Component.translatable(p.langKey())), () -> setPage(p)));
             theme.drawTab(g, r, p, p == page, f.focused("tab:" + p.name()));
+        }
+        for (int i = 0; i < launchers.size(); i++) {
+            HubHooks.Launcher l = launchers.get(i);
+            Rect r = layout.seals().get(i);
+            String id = "seal:" + l.id();
+            f.targets.add(new Target(id, r, null, true, List.of(l.name(), Component.translatable("supernaturalbloodlines.hub.launcher.hint", l.name())),
+                    () -> HubClient.launch(l, page)));
+            theme.drawSeal(g, r, l.letter(), l.color(), r.contains(mouseX, mouseY) || f.focused(id));
+            if (f.focused(id)) {
+                theme.drawFocus(g, r);
+            }
         }
         (page.locked(view.context()) ? HubPages.locked() : theme.view(page)).render(f);
         targets = f.targets;

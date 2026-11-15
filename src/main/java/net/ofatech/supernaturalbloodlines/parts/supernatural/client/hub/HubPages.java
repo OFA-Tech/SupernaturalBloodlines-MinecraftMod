@@ -2,7 +2,11 @@ package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
 import java.util.EnumMap;
 import java.util.Map;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BloodlinePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PathPage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.SkillsPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PlaceholderPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.QuestsPage;
 
@@ -11,7 +15,11 @@ public final class HubPages {
     private static final HubPageView PLACEHOLDER = new PlaceholderPage();
     private static final Map<HubPage, HubPageView> SHARED = new EnumMap<>(Map.of(
             HubPage.PATH, new PathPage(),
-            HubPage.QUESTS, new QuestsPage()));
+            HubPage.QUESTS, new QuestsPage(),
+            HubPage.SKILLS, new SkillsPage(),
+            HubPage.RITES, new RitesPage(),
+            HubPage.BLOODLINE, new BloodlinePage(),
+            HubPage.PACK, new PackPage()));
 
     private HubPages() {
     }

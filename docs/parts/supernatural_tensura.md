@@ -9,3 +9,7 @@ Requires: `vampirism`, `tensura`, and the `supernatural` part. Optional: `werewo
 Everything in the supernatural system that touches Tensura: EP rewards (`TensuraEpReward`, phase 12a Task 4), the apex rungs and the layer slices of `SpeciesLayer`, the Tensura skills our skills grant, the Tensura menu tab. `init` is empty in this version.
 
 Without Tensura, or with this part off, the ladders have no EP rewards, no Tensura-state tasks and no apex rungs: **each ladder ends one rung lower, before the apex rung, because there are no apex races to evolve into.** The apex rungs of the data carry `mods: ["tensura"]` and `parts: ["supernaturalTensura"]`, and `tensura_tier` (the apex tier of the player's current Tensura line: `ApexRaceReader` installs `ApexRaceQuery.atApexTier`, which reads `shared/tensura/ApexLines`) is read by this part. The same part grants S-WOL-8 Primeval Roar to a True Alpha on `alpha_primeval` (`PrimevalRoarGrant`); see `species_tensura.md`, "Apex from every line".
+
+## The hub (phase 12e)
+
+Client only, `client/TensuraHubClient`: the hub's Tensura launcher (Tensura's status menu, unchanged), Tensura's live race, EP and magicules for the Path and Bloodline pages, and `TensuraMenuTab`, the hub's tab under Tensura's three "coming soon" tabs, added with `ScreenEvent.Init.Post` (no mixin; see `docs/parts/supernatural.md`). With this part off there is no tab and no Tensura seal; the hub key still works.

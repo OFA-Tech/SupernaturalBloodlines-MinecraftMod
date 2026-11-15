@@ -9,7 +9,6 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
-import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SkillTable;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
@@ -27,9 +26,8 @@ public record HubView(Player player, BloodlineState bloodline, SupernaturalState
         SupernaturalState s = SupernaturalAccess.get(p);
         List<SupernaturalRace> races = PlayerRaces.of(p);
         HubSnapshotPayload snap = HubClient.snapshot();
-        boolean hasPack = !snap.pack().isEmpty() || b.wolf().rank() != WolfState.Rank.NONE;
         HubPage.Context c = new HubPage.Context(races.get(0), races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty(),
-                ModList.get().isLoaded("werewolves"), ModList.get().isLoaded("enchanted"), hasPack);
+                ModList.get().isLoaded("werewolves"), ModList.get().isLoaded("enchanted"));
         return new HubView(p, b, s, races, HubModel.ladders(LadderTable.clientCopy(), s, races, levels(p)), SkillTable.clientCopy(), snap, c);
     }
 

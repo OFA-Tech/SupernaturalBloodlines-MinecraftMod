@@ -14,6 +14,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScree
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 
 /** Path: the left page is your story and your ladders (rungs as chapters), the right page the next rung's tasks with their claim stamps. */
 public final class PathPage implements HubPageView {
@@ -33,6 +34,10 @@ public final class PathPage implements HubPageView {
         f.g.drawString(f.font(), Component.translatable(KEY + "book_of"), r.x(), y, t.muted(), false);
         y = PageKit.title(f, v.player().getName(), r.x(), y + PageKit.LINE, r.w(), t.accent());
         y = PageKit.wrapped(f, subtitle(v), r.x(), y + 1, r.w(), t.muted());
+        HubHooks.TensuraInfo tensura = HubHooks.tensura().orElse(null);
+        if (tensura != null) {
+            y = PageKit.wrapped(f, Component.translatable(KEY + "tensura", tensura.race(), String.format("%,d", (long) tensura.ep())), r.x(), y, r.w(), t.muted());
+        }
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 6;
         boolean many = v.ladders().size() > 1;

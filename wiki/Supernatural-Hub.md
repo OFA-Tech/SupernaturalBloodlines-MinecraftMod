@@ -1,6 +1,6 @@
 # Supernatural hub
 
-> **Status: in progress.** Races, ladders, tasks, skill points and skills are in. The hub screen has its Path and Quests pages; the other pages and the launchers come next.
+> **Status: in progress.** Races, ladders, tasks, skill points and skills are in. The hub screen has all its pages, launchers and a tab in Tensura's menu; the Loadout waits for the ability HUD.
 
 ## The supernatural race
 
@@ -51,8 +51,18 @@ The skill points of Vampirism and Werewolves are spent through the hub on those 
 
 Press **Home** (Supernatural Bloodlines key category, rebindable; it also closes the hub) to open the hub. It is one screen with pages; how it looks is a **theme**, a client setting (`hub_theme` in `supernaturalbloodlines-hub-client.toml`). **Grimoire**, an open book, is the default and the only one built so far; Blood Moon and Tensura fall back to it for now.
 
-- **Ribbons** on the right edge of the book are the pages: Path, Skills, Quests, Rites (with Enchanted), Bloodline and Pack (with Werewolves, for werewolf-type races or anyone in a pack). Skills, Rites, Bloodline and Pack are still being written.
+- **Ribbons** on the right edge of the book are the pages: Path, Skills, Quests, Rites (with Enchanted), Bloodline and Pack (with Werewolves, for werewolf-type races or anyone in a pack). 
 - **Path.** The left page is your story: your name, your races, who sired you (and whether the bond is severed), then each ladder you climb, rung by rung. A green seal is a rung reached, the red one is your next rung (with how many of its tasks you have claimed), tan ones are sealed. The right page lists the next rung's tasks, each with a tag for the mod it comes from (SB ours, VMP Vampirism, WW Werewolves, ENC Enchanted, TEN Tensura) and its count. A done task shows a **wax stamp**: press it to claim. The server checks every claim.
 - **Quests.** Every task of your next rungs on the left (both ladders for a witch or siphoner werewolf), and any open skill quest such as Hunter of Hunters. Pick one to see it in full on the right: its source, its progress, how that mod does it (for a level step, the altar to use), and the stamp when it can be claimed.
 - **A Ghoul** sees Path, with the turning and the time left, and Bloodline; the other pages say to complete the turning first.
 - **Keyboard:** Tab or the up and down arrows move through everything on the page (scrolling to it), Page Up and Page Down scroll, Enter or Space presses it, the left and right arrows turn the page, Esc or the hub key closes. Every tooltip says in words what the picture shows.
+
+### Pages and launchers (phase 12e, Tasks 3 to 5)
+
+- **Skills.** Three tabs. *Bloodline skills*: your race trees (both for a witch or siphoner werewolf, a shared skill once), each skill known, ready to learn, locked with the reason, or dormant; press the stamp to learn it with your skill points. *Your Vampirism or Werewolves tree*: that mod's own skills, unlocked with that mod's own points (the mod checks parents and exclusions). *Loadout*: coming with the ability HUD.
+- **Rites.** The rite tasks of your next rungs, with their claim stamps, and how rites are done.
+- **Bloodline.** Your sire (and whether the bond is severed), who you sired, the Five for a hunter, your genes (Unknown ? until you discover them, unless the server shows them always), and Tensura's race, EP and magicules.
+- **Pack.** Only for a werewolf or a hybrid type. Your rank, the members and who is online, and the `/pack accept` and `/pack leave` actions (the server checks them as if typed).
+- **Path** also shows your Tensura race and EP.
+- **Seals.** Wax seals under the ribbons open other mods' screens as they are: **T** Tensura's status menu, **E** Enchanted's book. Press Esc there and the hub comes back on the page you left.
+- **Tensura's menu** has a fifth tab on the right, under its three "coming soon" tabs, that opens the hub.

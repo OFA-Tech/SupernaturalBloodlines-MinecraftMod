@@ -10,10 +10,8 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 public enum HubPage {
     PATH, SKILLS, QUESTS, RITES, BLOODLINE, PACK;
 
-    /**
-     * @param hasPack the player is in a pack (or leads one), whatever the race
-     */
-    public record Context(SupernaturalRace creature, Optional<SupernaturalRace> magic, boolean werewolves, boolean enchanted, boolean hasPack) {
+    /** The races and installed mods a page's visibility depends on. */
+    public record Context(SupernaturalRace creature, Optional<SupernaturalRace> magic, boolean werewolves, boolean enchanted) {
     }
 
     public String langKey() {
@@ -24,7 +22,8 @@ public enum HubPage {
         return switch (this) {
             case PATH, SKILLS, QUESTS, BLOODLINE -> true;
             case RITES -> c.enchanted();
-            case PACK -> c.werewolves() && (wolfRace(c.creature()) || c.hasPack());
+            // a current member of the werewolf faction or a hybrid type; a former werewolf (cured, or turned a vampire) keeps no pack page
+            case PACK -> c.werewolves() && wolfRace(c.creature());
         };
     }
 
