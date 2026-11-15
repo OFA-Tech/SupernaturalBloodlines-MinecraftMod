@@ -96,7 +96,7 @@ So switching **vampirism_enchanted** off also turns off **species**, **species_t
 
 - **Config key:** `hud`. **Mods:** none. Tensura, Vampirism and Werewolves are optional extras inside it; each is only used when it is installed.
 - **Does:** the [Ability HUD](Ability-HUD). So far the **Bite action** (needs Vampirism): what a bite does for your form. The HUD itself, the keymap and the one blood value come in the next phases.
-- **Mixins:** none yet (budget 3, reserved: Tensura presets, Tensura race feeding, the Controls list). **Config files:** `supernaturalbloodlines-hud.toml` (common) and `supernaturalbloodlines-hud-client.toml` (client).
+- **Mixins:** 1 of 3 (with Tensura, a skill in the next preset can be fired: Tensura refuses it otherwise; switch `next_preset_active`). Reserved: Tensura race feeding, the Controls list. **Config files:** `supernaturalbloodlines-hud.toml` (common) and `supernaturalbloodlines-hud-client.toml` (client).
 - **Off:** no Bite action.
 
 ## Always on (core)

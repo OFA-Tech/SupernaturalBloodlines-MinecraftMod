@@ -40,6 +40,15 @@ public final class HudConfig {
         }
     }
 
+    /** The switch of reserved mixin (1); read when a check runs, since the mixin is applied before the config loads. */
+    public static boolean nextPresetActive() {
+        try {
+            return NEXT_PRESET_ACTIVE.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
     public static double biteReach() {
         try {
             return BITE_REACH.get();

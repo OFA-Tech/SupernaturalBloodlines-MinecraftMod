@@ -2,6 +2,16 @@
 
 The ability HUD (plan 13) is being built in phases. So far only the **Bite action** exists; the six slots, the Tensura and Supernatural modes and the Loadout tab come with the next phases.
 
+## The six slots
+
+Six slots (keys **R F V** and **Z X C** by default, see [Key binds](Key-Binds)): slots 1 to 3 are the left column and 4 to 6 the right one.
+
+- **Tensura mode** (needs Tensura): slots 1 to 3 are your active Tensura preset and 4 to 6 the **next** preset, like Tensura Slots (preset 9 pairs with preset 1). A slot key does what Tensura's own key does: press, hold and release, toggle skills, and **hold Alt with a slot key to change that skill's mode**. Alt + scroll still moves through the presets, as in Tensura. You no longer need Tensura Slots.
+- **Supernatural mode** (needs Vampirism): the six slots are the actions you put in the hub's Loadout tab, and **Bite** (slot 1 by default).
+- **Alt + Caps Lock** switches between the two when both are installed.
+
+The slot HUD itself (the boxes on screen, cooldowns, Alt tooltips) is still being built: today the keys work and nothing is drawn by us.
+
 ## The Bite action
 
 Bite is **not a key**. It is an action that sits in a HUD slot (Supernatural-mode slot 1, so **R**, by default) and does the right thing for what you are. It needs **Vampirism**. The server decides everything: the target must be in the same world, within 4 blocks (`bite_reach`), in sight and alive. One bite per second. A refusal always says why in the action bar.

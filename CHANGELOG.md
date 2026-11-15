@@ -2,6 +2,8 @@
 
 ## Unreleased: the six HUD slots (plan 13, phase 13b)
 
+- **Tensura slots (13b Task 2).** (Mixin budget of the hud part: 1 of 3.) With Tensura installed the six slot keys (R F V Z X C) work again: slots 1 to 3 are your active preset and 4 to 6 the next one, like Tensura Slots, and they send what Tensura's own keys send (hold Alt to change a skill's mode). A skill in the next preset now fires without Tensura Slots (one mixin, off with `next_preset_active = false`). Tensura's own HUD is not hidden yet and nothing is drawn by us yet: the layer comes in Task 4.
+
 - **The loadout (13b Task 1).** The six Supernatural-mode slots are saved per player (kept on death). A new player has **Bite** in slot 1; you can move it or clear it and it is never put back. The server decides what can go in a slot: Bite, or an action your current faction has unlocked. Every request counts against `rate_limit_per_second`, refused ones too. Nothing shows it yet; the hub's Loadout tab and the HUD itself come in the next tasks.
 
 ## Unreleased: the supernatural HUD, the Bite action (plan 13, phase 13a Tasks 1 to 3)

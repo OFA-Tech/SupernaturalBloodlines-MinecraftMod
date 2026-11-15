@@ -140,7 +140,8 @@ Common (server):
 |---|---|---|
 | `rate_limit_per_second` | `10` | Most HUD payloads one player may send per second. |
 | `bite_reach` | `4.0` | How far (blocks) the [Bite action](Ability-HUD#the-bite-action) reaches, from 1 up to 16. Vampirism's own drinking is also limited to the player's interaction range (3), so more only helps the other bites. |
-| `[mixins]` `next_preset_active`, `tensura_feed_fills_blood`, `hide_in_controls_mixin` | `true` | Reserved: each guards a mixin that does not exist yet. |
+| `[mixins]` `next_preset_active` | `true` | With Tensura, a skill in the next preset (the right column) can be fired. Off: Tensura refuses it unless Tensura Slots is installed. |
+| `[mixins]` `tensura_feed_fills_blood`, `hide_in_controls_mixin` | `true` | Reserved: each guards a mixin that does not exist yet. |
 
 Client (each player's own): `hud_enabled` (`true`), `hide_covered_keys` (`true`), `hide_tensura_skill_hud` (`true`), `blood_in_food_spot` (`true`), `mode` (`AUTO`, `TENSURA` or `SUPERNATURAL`). `hide_covered_keys` is live: it unbinds and hides the [covered keys](Key-Binds#covered-keys-and-how-to-get-them-back) and, when turned off, gives your recorded binds back (the record is `config/supernaturalbloodlines-hud-keys.json`). The others do nothing yet; the HUD itself comes in the next phase.
 

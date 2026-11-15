@@ -34,6 +34,9 @@ public final class HudPart {
         HudNet.register(modBus);
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(LoadoutGameTests.class);
+            if (ModList.get().isLoaded("tensura")) {
+                e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.TensuraPresetGameTests.class);
+            }
             if (ModList.get().isLoaded("vampirism")) {
                 e.register(LoadoutVampirismGameTests.class);
                 e.register(BiteGameTests.class);
