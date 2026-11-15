@@ -1,6 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
+import de.teamlapen.vampirism.api.VampirismAPI;
+import de.teamlapen.vampirism.api.entity.factions.IPlayableFaction;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.fml.ModList;
@@ -27,7 +30,14 @@ public record HubView(Player player, BloodlineState bloodline, SupernaturalState
         boolean hasPack = !snap.pack().isEmpty() || b.wolf().rank() != WolfState.Rank.NONE;
         HubPage.Context c = new HubPage.Context(races.get(0), races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty(),
                 ModList.get().isLoaded("werewolves"), ModList.get().isLoaded("enchanted"), hasPack);
-        return new HubView(p, b, s, races, HubModel.ladders(LadderTable.clientCopy(), s, races), SkillTable.clientCopy(), snap, c);
+        return new HubView(p, b, s, races, HubModel.ladders(LadderTable.clientCopy(), s, races, levels(p)), SkillTable.clientCopy(), snap, c);
+    }
+
+    /** The level of the current faction, from Vampirism's synced client data (Werewolves too: it uses Vampirism's faction API). */
+    static Map<String, Integer> levels(Player p) {
+        var h = VampirismAPI.factionPlayerHandler(p);
+        IPlayableFaction<?> f = h.getCurrentFaction();
+        return f == null ? Map.of() : Map.of(f.getID().toString(), h.getCurrentLevel());
     }
 
     public boolean ghoul() {

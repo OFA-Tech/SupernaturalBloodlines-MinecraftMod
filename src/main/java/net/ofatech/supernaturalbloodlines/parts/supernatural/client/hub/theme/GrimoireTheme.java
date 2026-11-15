@@ -21,8 +21,8 @@ public final class GrimoireTheme implements HubTheme {
     }
 
     @Override
-    public HubLayout layout(int width, int height, int tabs) {
-        return GrimoireLayout.of(width, height, tabs);
+    public HubLayout layout(int width, int height, int tabs, int seals) {
+        return GrimoireLayout.of(width, height, tabs, seals);
     }
 
     @Override
@@ -31,8 +31,8 @@ public final class GrimoireTheme implements HubTheme {
         g.fill(b.x() - 2, b.y() - 2, b.right() + 2, b.bottom() + 2, 0xFF120506);
         g.fill(b.x(), b.y(), b.right(), b.bottom(), 0xFF3a1418);
         outline(g, b.inset(2), 0xFF5e1f25);
-        Rect lp = GrimoireLayout.page(l.left());
-        Rect rp = GrimoireLayout.page(l.right());
+        Rect lp = GrimoireLayout.page(l.region(HubLayout.MAIN));
+        Rect rp = GrimoireLayout.page(l.region(HubLayout.SIDE));
         paper(g, lp);
         paper(g, rp);
         // the gutter: the paper darkens towards the spine
@@ -75,6 +75,22 @@ public final class GrimoireTheme implements HubTheme {
         if (focused) {
             drawFocus(g, new Rect(r.x(), r.y(), w, r.h()));
         }
+    }
+
+    @Override
+    public void drawSeal(GuiGraphics g, Rect r, String letter, int color, boolean lit) {
+        g.blit(WIDGETS, r.x(), r.y(), r.w(), r.h(), lit ? 15 : 0, 10, STAMP, STAMP, WIDGETS_W, WIDGETS_H);
+        var font = net.minecraft.client.Minecraft.getInstance().font;
+        g.drawString(font, letter, r.x() + (r.w() - font.width(letter)) / 2 + 1, r.y() + (r.h() - 8) / 2 + 1, color, false);
+    }
+
+    @Override
+    public void drawScrollbar(GuiGraphics g, Rect region, int offset, int max) {
+        int x = region.right() + 2;
+        g.fill(x, region.y(), x + 2, region.bottom(), 0x40472a10);
+        int thumb = Math.max(8, region.h() * region.h() / (region.h() + max));
+        int y = region.y() + (region.h() - thumb) * offset / Math.max(1, max);
+        g.fill(x, y, x + 2, y + thumb, 0xFF9a1820);
     }
 
     @Override

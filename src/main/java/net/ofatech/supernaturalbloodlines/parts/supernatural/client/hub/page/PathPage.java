@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
@@ -27,8 +28,8 @@ public final class PathPage implements HubPageView {
     private static void story(HubScreen.Frame f) {
         HubView v = f.view;
         HubTheme t = f.theme();
-        Rect r = f.region(0);
-        int y = f.begin(0);
+        Rect r = f.region(HubLayout.MAIN);
+        int y = f.begin(HubLayout.MAIN);
         f.g.drawString(f.font(), Component.translatable(KEY + "book_of"), r.x(), y, t.muted(), false);
         y = PageKit.title(f, v.player().getName(), r.x(), y + PageKit.LINE, r.w(), t.accent());
         y = PageKit.wrapped(f, subtitle(v), r.x(), y + 1, r.w(), t.muted());
@@ -48,7 +49,7 @@ public final class PathPage implements HubPageView {
         t.drawRule(f.g, r.x(), y, r.w());
         y += 4;
         y = PageKit.wrapped(f, Component.translatable(KEY + "sp", v.state().sp(), v.state().spEarned()), r.x(), y, r.w(), t.ink());
-        f.end(0, y);
+        f.end(y);
     }
 
     private static Component subtitle(HubView v) {
@@ -76,8 +77,9 @@ public final class PathPage implements HubPageView {
             t.drawBar(f.g, new Rect(r.x() + HubTheme.MARK + 4, y + PageKit.LINE + 1, Math.min(70, r.w() / 2), 4), row.claimed() / (float) row.tasks());
         }
         Rect hit = new Rect(r.x(), y, r.w(), h - 1);
-        f.target(hit, tooltip(row), null);
-        if (f.focused(hit)) {
+        String id = "rung:" + ladder.race().id() + ":" + row.id();
+        f.target(id, hit, tooltip(row), null);
+        if (f.focused(id)) {
             t.drawFocus(f.g, hit);
         }
         return y + h;
@@ -114,8 +116,8 @@ public final class PathPage implements HubPageView {
     private static void next(HubScreen.Frame f) {
         HubView v = f.view;
         HubTheme t = f.theme();
-        Rect r = f.region(1);
-        int y = f.begin(1);
+        Rect r = f.region(HubLayout.SIDE);
+        int y = f.begin(HubLayout.SIDE);
         if (v.ghoul()) {
             y = PageKit.title(f, Component.translatable(KEY + "turning"), r.x(), y, r.w(), t.accent());
             t.drawRule(f.g, r.x(), y + 2, r.w());
@@ -125,7 +127,7 @@ public final class PathPage implements HubPageView {
                 int s = ticks / 20;
                 y = PageKit.wrapped(f, Component.translatable(KEY + "turning_left", s / 60, String.format("%02d", s % 60)), r.x(), y + 4, r.w(), t.accent());
             }
-            f.end(1, y);
+            f.end(y);
             return;
         }
         boolean any = false;
@@ -147,6 +149,6 @@ public final class PathPage implements HubPageView {
         if (!any) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "complete"), r.x(), y, r.w(), t.ink());
         }
-        f.end(1, y);
+        f.end(y);
     }
 }

@@ -1,7 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.client.gui.Font;
@@ -10,31 +10,31 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PathPage;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PlaceholderPage;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.QuestsPage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.HubKeybinds;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.GrimoireTheme;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.ClaimTaskPayload;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * The hub: one screen model (the page, the selected task, the keyboard focus, the scroll of each region) drawn by a {@link HubTheme}.
- * A theme change in the client config swaps the theme on the next tick and keeps the page. Every action is a server-validated packet.
+ * The hub: one screen model (the page, the selected task, the keyboard focus by target id, the scroll of each named region) drawn by a
+ * {@link HubTheme}, which also picks the view of each page. A theme change in the client config swaps the theme on the next tick and
+ * keeps the page. Every action is a server-validated packet.
  */
 public final class HubScreen extends Screen {
-    /** Something on screen that has a tooltip and may be pressed. */
-    public record Target(Rect rect, List<Component> tooltip, @Nullable Runnable action) {
+    /**
+     * Something on screen that has a tooltip and may be pressed. {@code region} is where it scrolls (null for fixed ones like tabs);
+     * {@code shown} is false while it is scrolled out of view: it can still take the keyboard focus, which scrolls it back.
+     */
+    public record Target(String id, Rect rect, @Nullable String region, boolean shown, List<Component> tooltip, @Nullable Runnable action) {
     }
-
-    private static final Map<HubPage, HubPageView> PAGES = new EnumMap<>(Map.of(HubPage.PATH, new PathPage(), HubPage.QUESTS, new QuestsPage()));
-    private static final HubPageView PLACEHOLDER = new PlaceholderPage();
 
     private HubPage page;
     private String selectedTask;
-    private int focus = -1;
-    private final int[] scroll = new int[2];
-    private final int[] maxScroll = new int[2];
+    private String focus;
+    private boolean scrollToFocus;
+    private final Map<String, Integer> scroll = new HashMap<>();
+    private final Map<String, Integer> maxScroll = new HashMap<>();
     private HubClientConfig.ThemeId themeId;
     private HubTheme theme;
     private List<Target> targets = List.of();
@@ -58,6 +58,7 @@ public final class HubScreen extends Screen {
     public void tick() {
         if (HubClientConfig.theme() != themeId) {
             applyTheme();
+            scroll.clear();
         }
     }
 
@@ -68,8 +69,7 @@ public final class HubScreen extends Screen {
     void setPage(HubPage p) {
         if (p != page) {
             page = p;
-            scroll[0] = scroll[1] = 0;
-            focus = -1;
+            scroll.clear();
             HubClient.remember(p);
         }
     }
@@ -83,29 +83,69 @@ public final class HubScreen extends Screen {
         HubView view = HubView.of(minecraft.player);
         visible = HubPage.visiblePages(view.context());
         setPage(HubPage.orFirst(page, view.context()));
-        layout = theme.layout(width, height, visible.size());
+        layout = theme.layout(width, height, visible.size(), 0);
         theme.drawFrame(g, layout);
+        maxScroll.clear();
         Frame f = new Frame(g, mouseX, mouseY, view);
         for (int i = 0; i < visible.size(); i++) {
             HubPage p = visible.get(i);
             Rect r = layout.tabs().get(i);
-            f.targets.add(new Target(r, List.of(Component.translatable(p.langKey())), () -> setPage(p)));
-            theme.drawTab(g, r, p, p == page, f.focused(r));
+            f.targets.add(new Target("tab:" + p.name(), r, null, true, List.of(Component.translatable(p.langKey())), () -> setPage(p)));
+            theme.drawTab(g, r, p, p == page, f.focused("tab:" + p.name()));
         }
-        (page.locked(view.context()) ? PLACEHOLDER : PAGES.getOrDefault(page, PLACEHOLDER)).render(f);
+        (page.locked(view.context()) ? HubPages.locked() : theme.view(page)).render(f);
         targets = f.targets;
-        Target tip = null;
-        for (Target t : targets) {
-            if (t.rect().contains(mouseX, mouseY)) {
-                tip = t;
+        for (Map.Entry<String, Integer> e : maxScroll.entrySet()) {
+            if (e.getValue() > 0 && layout.regions().containsKey(e.getKey())) {
+                theme.drawScrollbar(g, layout.region(e.getKey()), scroll.getOrDefault(e.getKey(), 0), e.getValue());
             }
         }
-        if (tip == null && focus >= 0 && focus < targets.size()) {
-            tip = targets.get(focus);
-            g.renderComponentTooltip(font, tip.tooltip(), tip.rect().x(), tip.rect().bottom() + 12);
-        } else if (tip != null) {
-            g.renderComponentTooltip(font, tip.tooltip(), mouseX, mouseY);
+        followFocus();
+        tooltip(g, mouseX, mouseY);
+    }
+
+    /** After a keyboard move, scrolls the focused target's region so it shows (it is drawn there from the next frame). */
+    private void followFocus() {
+        if (!scrollToFocus) {
+            return;
         }
+        scrollToFocus = false;
+        Target t = target(focus);
+        if (t != null && t.region() != null && layout.regions().containsKey(t.region())) {
+            int now = scroll.getOrDefault(t.region(), 0);
+            int next = Math.min(maxScroll.getOrDefault(t.region(), 0), HubFocus.scrollToShow(now, layout.region(t.region()), t.rect()));
+            scroll.put(t.region(), next);
+        }
+    }
+
+    private void tooltip(GuiGraphics g, int mouseX, int mouseY) {
+        Target hovered = null;
+        for (Target t : targets) {
+            if (t.shown() && t.rect().contains(mouseX, mouseY)) {
+                hovered = t;
+            }
+        }
+        if (hovered != null) {
+            g.renderComponentTooltip(font, hovered.tooltip(), mouseX, mouseY);
+            return;
+        }
+        Target focused = target(focus);
+        if (focused != null && focused.shown()) {
+            g.renderComponentTooltip(font, focused.tooltip(), focused.rect().x(), focused.rect().bottom() + 12);
+        }
+    }
+
+    @Nullable
+    private Target target(@Nullable String id) {
+        if (id == null) {
+            return null;
+        }
+        for (Target t : targets) {
+            if (t.id().equals(id)) {
+                return t;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -117,7 +157,8 @@ public final class HubScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
             for (Target t : targets) {
-                if (t.action() != null && t.rect().contains(mouseX, mouseY)) {
+                if (t.shown() && t.action() != null && t.rect().contains(mouseX, mouseY)) {
+                    focus = t.id();
                     t.action().run();
                     return true;
                 }
@@ -128,29 +169,46 @@ public final class HubScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (layout == null) {
+        String region = regionAt(mouseX, mouseY);
+        if (region == null) {
             return false;
         }
-        int region = layout.left().contains(mouseX, mouseY) ? 0 : layout.right().contains(mouseX, mouseY) ? 1 : -1;
-        if (region < 0) {
-            return false;
-        }
-        scroll[region] = Math.max(0, Math.min(maxScroll[region], scroll[region] - (int) Math.signum(scrollY) * 10));
+        scroll.put(region, Math.max(0, Math.min(maxScroll.getOrDefault(region, 0), scroll.getOrDefault(region, 0) - (int) Math.signum(scrollY) * 10)));
         return true;
+    }
+
+    @Nullable
+    private String regionAt(double x, double y) {
+        if (layout == null) {
+            return null;
+        }
+        for (Map.Entry<String, Rect> e : layout.regions().entrySet()) {
+            if (e.getValue().contains(x, y)) {
+                return e.getKey();
+            }
+        }
+        return null;
     }
 
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
+        if (HubKeybinds.HUB.matches(key, scanCode)) {
+            onClose();
+            return true;
+        }
         boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
         switch (key) {
-            case GLFW.GLFW_KEY_TAB -> focus = HubFocus.move(focus, targets.size(), shift ? -1 : 1);
-            case GLFW.GLFW_KEY_DOWN -> focus = HubFocus.move(focus, targets.size(), 1);
-            case GLFW.GLFW_KEY_UP -> focus = HubFocus.move(focus, targets.size(), -1);
+            case GLFW.GLFW_KEY_TAB -> moveFocus(shift ? -1 : 1);
+            case GLFW.GLFW_KEY_DOWN -> moveFocus(1);
+            case GLFW.GLFW_KEY_UP -> moveFocus(-1);
             case GLFW.GLFW_KEY_LEFT -> setPage(HubFocus.page(visible, page, -1));
             case GLFW.GLFW_KEY_RIGHT -> setPage(HubFocus.page(visible, page, 1));
+            case GLFW.GLFW_KEY_PAGE_DOWN -> pageScroll(1);
+            case GLFW.GLFW_KEY_PAGE_UP -> pageScroll(-1);
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> {
-                if (focus >= 0 && focus < targets.size() && targets.get(focus).action() != null) {
-                    targets.get(focus).action().run();
+                Target t = target(focus);
+                if (t != null && t.action() != null) {
+                    t.action().run();
                 }
             }
             default -> {
@@ -160,27 +218,42 @@ public final class HubScreen extends Screen {
         return true;
     }
 
+    private void moveFocus(int delta) {
+        focus = HubFocus.move(targets.stream().map(Target::id).toList(), focus, delta);
+        scrollToFocus = true;
+    }
+
+    /** PgUp / PgDn: the focused target's region, else the main one. */
+    private void pageScroll(int direction) {
+        Target t = target(focus);
+        String region = t != null && t.region() != null ? t.region() : HubLayout.MAIN;
+        if (layout != null && layout.regions().containsKey(region)) {
+            scroll.put(region, HubFocus.pageScroll(scroll.getOrDefault(region, 0), maxScroll.getOrDefault(region, 0), layout.region(region), direction));
+        }
+    }
+
     @Override
     public boolean isPauseScreen() {
         return false;
     }
 
-    /** What a page draws with during one frame: the theme, the regions, and the targets it registers. */
+    /** What a page draws with during one frame: the theme, the named regions, and the targets it registers. */
     public final class Frame {
         public final GuiGraphics g;
         public final int mouseX;
         public final int mouseY;
         public final HubView view;
         final List<Target> targets = new ArrayList<>();
+        @Nullable
+        private String region;
+        @Nullable
         private Rect clip;
-        private final Rect focusedRect;
 
         Frame(GuiGraphics g, int mouseX, int mouseY, HubView view) {
             this.g = g;
             this.mouseX = mouseX;
             this.mouseY = mouseY;
             this.view = view;
-            this.focusedRect = focus >= 0 && focus < HubScreen.this.targets.size() ? HubScreen.this.targets.get(focus).rect() : null;
         }
 
         public HubTheme theme() {
@@ -199,38 +272,40 @@ public final class HubScreen extends Screen {
             return layout;
         }
 
-        public Rect region(int i) {
-            return i == 0 ? layout.left() : layout.right();
+        public Rect region(String name) {
+            return layout.region(name);
         }
 
-        /** Starts drawing into region {@code i} (0 left, 1 right): clips to it and returns the top y, moved by its scroll. */
-        public int begin(int i) {
-            clip = region(i);
+        /** Starts drawing into a region: clips to it and returns the top y, moved by its scroll. */
+        public int begin(String name) {
+            region = name;
+            clip = layout.region(name);
             g.enableScissor(clip.x(), clip.y(), clip.right(), clip.bottom());
-            return clip.y() - scroll[i];
+            return clip.y() - scroll.getOrDefault(name, 0);
         }
 
-        /** Ends region {@code i}; {@code bottom} is where its content ended, which bounds its scroll. */
-        public void end(int i, int bottom) {
+        /** Ends the region; {@code bottom} is where its content ended, which bounds its scroll. */
+        public void end(int bottom) {
             g.disableScissor();
-            maxScroll[i] = Math.max(0, bottom + scroll[i] - region(i).bottom());
-            scroll[i] = Math.min(scroll[i], maxScroll[i]);
+            int now = scroll.getOrDefault(region, 0);
+            int max = Math.max(0, bottom + now - clip.bottom());
+            maxScroll.put(region, max);
+            scroll.put(region, Math.min(now, max));
+            region = null;
             clip = null;
         }
 
-        /** Registers a target; one outside the visible part of the region is not hoverable or pressable. */
-        public void target(Rect r, List<Component> tooltip, @Nullable Runnable action) {
-            if (clip == null || r.overlaps(clip)) {
-                targets.add(new Target(r, tooltip, action));
-            }
+        /** Registers a target; one scrolled out of its region can take the focus but not the mouse. Ids are unique within a frame. */
+        public void target(String id, Rect r, List<Component> tooltip, @Nullable Runnable action) {
+            targets.add(new Target(id, r, region, clip == null || r.overlaps(clip), tooltip, action));
         }
 
         public boolean hovered(Rect r) {
             return r.contains(mouseX, mouseY) && (clip == null || clip.contains(mouseX, mouseY));
         }
 
-        public boolean focused(Rect r) {
-            return r.equals(focusedRect);
+        public boolean focused(String id) {
+            return id.equals(focus);
         }
 
         public String selectedTask() {

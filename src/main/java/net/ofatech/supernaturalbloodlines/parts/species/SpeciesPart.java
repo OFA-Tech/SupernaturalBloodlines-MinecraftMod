@@ -209,6 +209,7 @@ public final class SpeciesPart {
             e.register(HunterMarkGameTests.class);
             e.register(HunterInstinctGameTests.class);
             e.register(SirelineGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.SpeciesHubGameTests.class);
             e.register(SirelineCommandGameTests.class);
             e.register(SirelineCompulsionGameTests.class);
             e.register(SirelineDeathGameTests.class);

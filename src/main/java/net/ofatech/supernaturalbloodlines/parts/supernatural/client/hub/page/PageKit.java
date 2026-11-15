@@ -11,6 +11,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubTheme;
@@ -124,7 +125,7 @@ final class PageKit {
         int textX = x + HubTheme.BOX + 3;
         int textW = Math.max(20, x + w - stampW - tagW - 2 - textX);
         MutableComponent words = text(row.text()).copy();
-        if (row.counted() && row.target() > 1 && (row.state() == HubModel.TaskState.OPEN || row.state() == HubModel.TaskState.FROZEN)) {
+        if (row.counted() && row.target() > 1 && row.state() != HubModel.TaskState.CLAIMED) {
             words.append(Component.literal(" " + row.progress() + "/" + row.target()).withColor(t.muted() & 0xFFFFFF));
         }
         List<FormattedCharSequence> lines = font.split(words, textW);
@@ -144,16 +145,17 @@ final class PageKit {
         int sc = t.sourceColor(row.source());
         f.g.renderOutline(tagX, y, tagW, 9, sc);
         f.g.drawString(font, tag, tagX + 2, y + 1, sc, false);
-        f.target(rowRect, tooltip(row), onSelect);
-        if (f.focused(rowRect)) {
+        String rowId = "task:" + row.task().id();
+        f.target(rowId, rowRect, tooltip(row), onSelect);
+        if (f.focused(rowId)) {
             t.drawFocus(f.g, rowRect);
         }
         if (stamp) {
             Rect s = new Rect(x + w - HubTheme.STAMP, y + (h - HubTheme.STAMP) / 2, HubTheme.STAMP, HubTheme.STAMP);
-            t.drawStamp(f.g, s.x(), s.y(), f.hovered(s) || f.focused(s));
             String id = row.task().id();
-            f.target(s, List.of(Component.translatable(HUB + "task.claim"), text(row.text())), () -> f.claim(id));
-            if (f.focused(s)) {
+            t.drawStamp(f.g, s.x(), s.y(), f.hovered(s) || f.focused("stamp:" + id));
+            f.target("stamp:" + id, s, List.of(Component.translatable(HUB + "task.claim"), text(row.text())), () -> f.claim(id));
+            if (f.focused("stamp:" + id)) {
                 t.drawFocus(f.g, s);
             }
         }

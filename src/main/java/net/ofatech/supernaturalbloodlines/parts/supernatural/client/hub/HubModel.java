@@ -70,8 +70,8 @@ public final class HubModel {
     private HubModel() {
     }
 
-    /** The ladders of the player's races, creature first. */
-    public static List<LadderView> ladders(LadderTable table, SupernaturalState s, List<SupernaturalRace> races) {
+    /** The ladders of the player's races, creature first. {@code levels} is the player's level per faction id (only the current faction has one). */
+    public static List<LadderView> ladders(LadderTable table, SupernaturalState s, List<SupernaturalRace> races, Map<String, Integer> levels) {
         boolean frozen = races.contains(SupernaturalRace.GHOUL);
         List<LadderView> out = new ArrayList<>();
         for (SupernaturalRace race : races) {
@@ -87,7 +87,7 @@ public final class HubModel {
             }
             Optional<RungRow> active = rows.stream().filter(r -> r.status() == RungStatus.CURRENT).findFirst();
             List<TaskRow> tasks = new ArrayList<>();
-            ladder.rung(reached + 1).ifPresent(r -> r.tasks().forEach(t -> tasks.add(row(race, t, s, frozen))));
+            ladder.rung(reached + 1).ifPresent(r -> r.tasks().forEach(t -> tasks.add(row(race, t, s, frozen, levels))));
             tasks.sort(Comparator.comparingInt(t -> order(t.state())));
             out.add(new LadderView(race, rows, active, tasks));
         }
@@ -102,7 +102,7 @@ public final class HubModel {
         boolean frozen = races.contains(SupernaturalRace.GHOUL);
         List<QuestView> out = new ArrayList<>();
         for (QuestSpec q : QuestRules.open(skills, s, races)) {
-            List<TaskRow> rows = q.tasks().stream().map(t -> row(races.get(0), t, s, frozen))
+            List<TaskRow> rows = q.tasks().stream().map(t -> row(races.get(0), t, s, frozen, Map.of()))
                     .map(r -> r.state() == TaskState.CLAIMABLE ? withState(r, TaskState.CLAIMED) : r).toList();
             out.add(new QuestView(q.id(), q.name(), rows));
         }
@@ -129,16 +129,21 @@ public final class HubModel {
         };
     }
 
-    static TaskRow row(SupernaturalRace race, TaskSpec t, SupernaturalState s, boolean frozen) {
+    static TaskRow row(SupernaturalRace race, TaskSpec t, SupernaturalState s, boolean frozen, Map<String, Integer> levels) {
         boolean done = LadderRules.isDone(t, s);
         TaskState state = frozen ? TaskState.FROZEN : s.claimed().contains(t.id()) ? TaskState.CLAIMED : done ? TaskState.CLAIMABLE : TaskState.OPEN;
         if (t.isGroup()) {
-            List<TaskRow> members = t.anyOf().stream().map(m -> row(race, m, s, frozen)).toList();
+            List<TaskRow> members = t.anyOf().stream().map(m -> row(race, m, s, frozen, levels)).toList();
             return new TaskRow(race, t, state, done ? 1 : 0, 1, true, source(t), new TaskText(HUB + "task.any_of", "One of:", List.of(),
                     HUB + "task.id." + t.id(), null), members);
         }
         long unit = t.detector().unit();
         long target = Math.max(1, t.target() / unit);
+        if (t.detector() == TaskSpec.Detector.LEVEL) {
+            // a level step shows the level reached so far in that faction: the mod's own number, read from its synced client data
+            long level = levels.getOrDefault(t.args().getOrDefault("faction", ""), 0);
+            return new TaskRow(race, t, state, done ? target : Math.min(target, level), target, true, source(t), text(t), List.of());
+        }
         long raw = t.total() ? s.lifetime().getOrDefault(t.totalKey(race), 0L) : s.counters().getOrDefault(t.id(), 0L);
         long progress = done ? target : Math.min(target, raw / unit);
         return new TaskRow(race, t, state, progress, target, done || t.detector().counting(), source(t), text(t), List.of());
@@ -169,8 +174,8 @@ public final class HubModel {
             case LEVEL -> {
                 String faction = a.getOrDefault("faction", "");
                 String id = faction.replace(':', '.');
-                yield new TaskText(HUB + "task.level", "Reach %s level %s",
-                        List.of(new Key(HUB + "faction." + id, pretty(path(faction))), new Num(t.target())), override, HUB + "hint.level." + id);
+                yield new TaskText(HUB + "task.level", "%s level",
+                        List.of(new Key(HUB + "faction." + id, pretty(path(faction)))), override, HUB + "hint.level." + id);
             }
             case STATE -> new TaskText(HUB + "task.when." + a.get("predicate"), pretty(a.get("predicate")), List.of(new Num(t.target())), override, null);
             case FEED -> plain(HUB + "task.feed", "Feed on human-like blood", override);

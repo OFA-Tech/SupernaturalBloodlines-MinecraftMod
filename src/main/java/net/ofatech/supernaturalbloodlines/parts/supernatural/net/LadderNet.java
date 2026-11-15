@@ -16,6 +16,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.LadderService;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.skill.SkillService;
 import net.neoforged.fml.ModList;
 import java.util.Map;
+import net.neoforged.fml.loading.FMLEnvironment;
 import java.util.WeakHashMap;
 
 /**
@@ -56,12 +57,14 @@ public final class LadderNet {
                 }));
         registrar.playToServer(HubSnapshotRequestPayload.TYPE, HubSnapshotRequestPayload.STREAM_CODEC, (payload, ctx) ->
                 ctx.enqueueWork(() -> {
-                    if (ctx.player() instanceof ServerPlayer p) {
-                        PacketDistributor.sendToPlayer(p, snapshot(p));
+                    if (ctx.player() instanceof ServerPlayer p && snapshotDue(p)) {
+                        PacketDistributor.sendToPlayer(p, HubSnapshotPayload.of(p));
                     }
                 }));
-        registrar.playToClient(HubSnapshotPayload.TYPE, HubSnapshotPayload.STREAM_CODEC, (payload, ctx) ->
-                ctx.enqueueWork(() -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient.receive(payload)));
+        // the client handler is only named on a client, so a dedicated server never links the client class
+        registrar.playToClient(HubSnapshotPayload.TYPE, HubSnapshotPayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
+                ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.HubClientHandlers::snapshot
+                : (payload, ctx) -> { });
         registrar.playToClient(SkillTablePayload.TYPE, SkillTablePayload.STREAM_CODEC, (payload, ctx) ->
                 ctx.enqueueWork(() -> {
                     SkillTable.Parsed parsed = payload.parseWithServerSets();
@@ -76,22 +79,18 @@ public final class LadderNet {
                 }));
     }
 
-    private record Sent(long time, HubSnapshotPayload payload) {
-    }
-
-    // server thread only; a snapshot walks the indexes, so a client that floods requests gets the same answer again for a second
-    private static final Map<ServerPlayer, Sent> LAST_SNAPSHOT = new WeakHashMap<>();
+    // server thread only; a snapshot walks the indexes, so a request within a second of the last one is dropped (the client keeps the last answer)
+    private static final Map<ServerPlayer, Long> LAST_SNAPSHOT = new WeakHashMap<>();
     private static final long SNAPSHOT_COOLDOWN = 20;
 
-    private static HubSnapshotPayload snapshot(ServerPlayer p) {
+    static boolean snapshotDue(ServerPlayer p) {
         long now = p.serverLevel().getGameTime();
-        Sent last = LAST_SNAPSHOT.get(p);
-        if (last != null && now - last.time() < SNAPSHOT_COOLDOWN && now >= last.time()) {
-            return last.payload();
+        Long last = LAST_SNAPSHOT.get(p);
+        if (last != null && now - last < SNAPSHOT_COOLDOWN && now >= last) {
+            return false;
         }
-        HubSnapshotPayload fresh = HubSnapshotPayload.of(p);
-        LAST_SNAPSHOT.put(p, new Sent(now, fresh));
-        return fresh;
+        LAST_SNAPSHOT.put(p, now);
+        return true;
     }
 
     public static void sendTable(ServerPlayer p) {

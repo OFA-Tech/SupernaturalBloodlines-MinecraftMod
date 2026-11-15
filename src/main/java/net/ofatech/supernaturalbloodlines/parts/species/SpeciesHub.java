@@ -36,7 +36,8 @@ final class SpeciesHub {
 
     private static List<HubSocial.Member> pack(ServerPlayer p, MinecraftServer server) {
         PackIndex index = PackIndex.get(p.serverLevel());
-        UUID alpha = index.alphaOf(p.getUUID()).orElse(p.getUUID());
+        // a Beta has an Alpha, an emissary serves one, and anyone else is the Alpha of their own pack (if it has anyone)
+        UUID alpha = index.alphaOf(p.getUUID()).or(() -> index.emissaryAlpha(p.getUUID())).orElse(p.getUUID());
         List<UUID> betas = index.betasOf(alpha);
         Optional<UUID> emissary = index.emissaryOf(alpha);
         if (betas.isEmpty() && emissary.isEmpty()) {

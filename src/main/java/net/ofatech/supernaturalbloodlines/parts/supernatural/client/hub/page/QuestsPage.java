@@ -6,6 +6,7 @@ import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
@@ -25,8 +26,8 @@ public final class QuestsPage implements HubPageView {
         v.ladders().forEach(l -> all.addAll(l.tasks()));
         Optional<HubModel.TaskRow> chosen = HubModel.pick(all, f.selectedTask());
 
-        Rect r = f.region(0);
-        int y = f.begin(0);
+        Rect r = f.region(HubLayout.MAIN);
+        int y = f.begin(HubLayout.MAIN);
         y = PageKit.title(f, Component.translatable(KEY + "title"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 6;
@@ -57,18 +58,18 @@ public final class QuestsPage implements HubPageView {
                 }
             }
         }
-        f.end(0, y);
+        f.end(y);
 
         detail(f, chosen);
     }
 
     private static void detail(HubScreen.Frame f, Optional<HubModel.TaskRow> chosen) {
         HubTheme t = f.theme();
-        Rect r = f.region(1);
-        int y = f.begin(1);
+        Rect r = f.region(HubLayout.SIDE);
+        int y = f.begin(HubLayout.SIDE);
         if (chosen.isEmpty()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "choose"), r.x(), y, r.w(), t.muted());
-            f.end(1, y);
+            f.end(y);
             return;
         }
         HubModel.TaskRow row = chosen.get();
@@ -91,14 +92,14 @@ public final class QuestsPage implements HubPageView {
                 r.x(), y + 4, r.w(), row.state() == HubModel.TaskState.CLAIMABLE ? t.good() : t.muted());
         if (row.state() == HubModel.TaskState.CLAIMABLE) {
             Rect s = new Rect(r.x() + (r.w() - HubTheme.STAMP) / 2, y + 6, HubTheme.STAMP, HubTheme.STAMP);
-            t.drawStamp(f.g, s.x(), s.y(), f.hovered(s) || f.focused(s));
             String id = row.task().id();
-            f.target(s, List.of(Component.translatable(PageKit.HUB + "task.claim"), PageKit.text(row.text())), () -> f.claim(id));
-            if (f.focused(s)) {
+            t.drawStamp(f.g, s.x(), s.y(), f.hovered(s) || f.focused("claim:" + id));
+            f.target("claim:" + id, s, List.of(Component.translatable(PageKit.HUB + "task.claim"), PageKit.text(row.text())), () -> f.claim(id));
+            if (f.focused("claim:" + id)) {
                 t.drawFocus(f.g, s);
             }
             y = PageKit.centered(f, Component.translatable(PageKit.HUB + "task.claim"), r, s.bottom() + 3, t.accent());
         }
-        f.end(1, y);
+        f.end(y);
     }
 }

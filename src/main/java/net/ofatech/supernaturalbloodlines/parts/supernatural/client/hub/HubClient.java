@@ -1,6 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
 import net.minecraft.client.Minecraft;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotPayload;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotRequestPayload;
@@ -11,6 +13,11 @@ public final class HubClient {
     private static HubPage lastPage = HubPage.PATH;
 
     private HubClient() {
+    }
+
+    /** Forgets the last snapshot when leaving a world, so another world never shows its names. */
+    public static void register() {
+        NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> snapshot = HubSnapshotPayload.EMPTY);
     }
 
     public static void receive(HubSnapshotPayload payload) {
@@ -30,7 +37,6 @@ public final class HubClient {
         if (mc.player == null || mc.getConnection() == null) {
             return;
         }
-        snapshot = HubSnapshotPayload.EMPTY; // never show another world's names while the answer is on its way
         if (mc.getConnection().hasChannel(HubSnapshotRequestPayload.TYPE)) {
             PacketDistributor.sendToServer(HubSnapshotRequestPayload.INSTANCE);
         }

@@ -6,21 +6,27 @@ import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.client.PackKeybinds;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;
 import org.lwjgl.glfw.GLFW;
 
-/** The hub key ({@code J} by default), in our key category. Client only; registered only while the supernatural part is on. */
+/**
+ * The hub key, in our key category. Default Home: J is JourneyMap's map and the OFA pack's Mekanism legs key, every letter is taken in the
+ * pack's keymap, and = and - are map zoom keys. Plan 13's keymap may move it. In game it opens the hub; inside the hub the screen closes on it. Client only; registered only
+ * while the supernatural part is on.
+ */
 public final class HubKeybinds {
-    public static final KeyMapping HUB = new KeyMapping("key.supernaturalbloodlines.hub", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J,
-            PackKeybinds.CATEGORY);
+    public static final KeyMapping HUB = new KeyMapping("key.supernaturalbloodlines.hub", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_HOME, PackKeybinds.CATEGORY);
 
     private HubKeybinds() {
     }
 
     public static void register(IEventBus modBus) {
         modBus.addListener((RegisterKeyMappingsEvent e) -> e.register(HUB));
+        HubClient.register();
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> {
             while (HUB.consumeClick()) {
                 if (Minecraft.getInstance().screen == null) {

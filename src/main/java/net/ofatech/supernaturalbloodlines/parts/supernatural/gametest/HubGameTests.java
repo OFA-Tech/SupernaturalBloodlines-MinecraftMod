@@ -10,7 +10,9 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.EnabledParts;
@@ -25,6 +27,29 @@ public final class HubGameTests {
     private static final String NS = SupernaturalBloodlines.MODID;
 
     private HubGameTests() {}
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void snapshotNamesThePackForAlphaAndBeta(GameTestHelper helper) {
+        if (!EnabledParts.isEnabled("species") || !ModList.get().isLoaded("werewolves")) {
+            helper.succeed(); // no pack without the species part and Werewolves: the other test covers the empty snapshot
+            return;
+        }
+        ServerPlayer alpha = TestPlayers.create(helper);
+        ServerPlayer beta = TestPlayers.create(helper);
+        BloodlineState b = BloodlineAccess.get(beta);
+        BloodlineAccess.set(beta, b.toBuilder().wolf(b.wolf().toBuilder().packAlpha(alpha.getUUID()).build()).build());
+        try {
+            // fake players are on no player list and in no profile cache, so names may be ids here; SpeciesHubGameTests checks the names
+            for (ServerPlayer viewer : List.of(alpha, beta)) {
+                List<HubSocial.Member> pack = HubSnapshotPayload.of(viewer).pack();
+                helper.assertTrue(pack.stream().map(HubSocial.Member::rank).toList().equals(List.of("alpha", "beta")), "the pack seen: " + pack);
+                helper.assertTrue(pack.stream().noneMatch(HubSocial.Member::online), "a fake player shows as online: " + pack);
+            }
+        } finally {
+            BloodlineAccess.set(beta, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void snapshotHasNoOtherPlayersAttachments(GameTestHelper helper) {
@@ -51,6 +76,7 @@ public final class HubGameTests {
             if (EnabledParts.isEnabled("species")) {
                 String childName = child.getGameProfile().getName();
                 helper.assertTrue(ofSire.sired().equals(List.of(childName)), "sired " + ofSire.sired());
+                // the sire's name is only known from a cache a GameTest server lacks: SpeciesHubGameTests names a sire through SireRecorder
                 helper.assertTrue(ofChild.sire().map(n -> n.equals(sire.getGameProfile().getName())).orElse(true), "sire " + ofChild.sire());
             } else {
                 helper.assertTrue(ofSire.equals(new HubSnapshotPayload(Optional.empty(), false, List.of(), List.of(), 0, ofSire.genes())),

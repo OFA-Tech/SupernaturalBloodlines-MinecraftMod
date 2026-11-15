@@ -4,7 +4,7 @@
 
 Spec `docs/superpowers/specs/2026-11-14-supernatural-system-design.md` (The hub). Part: supernatural (and species for the names). No new mixin.
 
-- **The hub screen (Tasks 1 and 2).** Press J to open it. One screen model with themes as skins; the theme is a client setting (`hub_theme`), and the **Grimoire** (an open book with ribbon bookmarks) is the default and the only one so far. **Path** shows your story and each ladder you climb, rung by rung, and the next rung's tasks with their source tags and a wax stamp to claim a done one. **Quests** lists every active task and open skill quest, with the chosen one in full (progress, the mod's own hint). A Ghoul sees the turning. Keyboard: Tab, arrows, Enter. Skills, Rites, Bloodline and Pack come in the next tasks.
+- **The hub screen (Tasks 1 and 2).** Press Home to open it (and to close it). One screen model with themes as skins; the theme is a client setting (`hub_theme`), and the **Grimoire** (an open book with ribbon bookmarks) is the default and the only one so far. **Path** shows your story and each ladder you climb, rung by rung, and the next rung's tasks with their source tags and a wax stamp to claim a done one. **Quests** lists every active task and open skill quest, with the chosen one in full (progress, the mod's own hint). A Ghoul sees the turning. Keyboard: Tab, arrows, Enter. Skills, Rites, Bloodline and Pack come in the next tasks.
 - **Hub snapshot.** Opening the hub asks the server for the names it shows (sire, sired, pack members and ranks, the Five's count, severance) and your own genes as your client may know them. Nothing of other players' state is sent.
 ## Unreleased: apex additions (plan 12, phase 12d)
 

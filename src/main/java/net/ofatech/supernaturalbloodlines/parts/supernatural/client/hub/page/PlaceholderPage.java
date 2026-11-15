@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.Rect;
@@ -10,7 +11,7 @@ public final class PlaceholderPage implements HubPageView {
     @Override
     public void render(HubScreen.Frame f) {
         boolean locked = f.screen().page().locked(f.view.context());
-        Rect r = f.region(0);
+        Rect r = f.region(HubLayout.MAIN);
         int y = r.y() + r.h() / 3;
         y = PageKit.centered(f, Component.translatable(f.screen().page().langKey()), r, y, f.theme().accent());
         f.theme().drawRule(f.g, r.x(), y + 2, r.w());

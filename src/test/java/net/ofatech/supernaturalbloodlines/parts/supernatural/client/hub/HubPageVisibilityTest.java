@@ -61,13 +61,28 @@ class HubPageVisibilityTest {
     }
 
     @Test
-    void focusWrapsAndStartsAtEitherEnd() {
-        assertEquals(0, HubFocus.move(-1, 4, 1));
-        assertEquals(3, HubFocus.move(-1, 4, -1));
-        assertEquals(0, HubFocus.move(3, 4, 1));
-        assertEquals(3, HubFocus.move(0, 4, -1));
-        assertEquals(-1, HubFocus.move(2, 0, 1));
-        assertEquals(0, HubFocus.move(9, 4, 1)); // a stale focus after the targets shrank
+    void focusWrapsByIdAndStartsAtEitherEnd() {
+        List<String> ids = List.of("tab:PATH", "task:a", "stamp:a", "task:b");
+        assertEquals("tab:PATH", HubFocus.move(ids, null, 1));
+        assertEquals("task:b", HubFocus.move(ids, null, -1));
+        assertEquals("tab:PATH", HubFocus.move(ids, "task:b", 1));
+        assertEquals("task:b", HubFocus.move(ids, "tab:PATH", -1));
+        assertEquals(null, HubFocus.move(List.of(), "task:a", 1));
+        // the focus follows its target when the list re-sorts, and starts over when the target went away
+        assertEquals("task:a", HubFocus.move(List.of("task:b", "stamp:b", "task:a"), "stamp:b", 1));
+        assertEquals("tab:PATH", HubFocus.move(ids, "gone", 1));
+    }
+
+    @Test
+    void focusScrollsItsTargetIntoView() {
+        Rect clip = new Rect(0, 100, 50, 100);
+        assertEquals(0, HubFocus.scrollToShow(0, clip, new Rect(0, 120, 10, 10)));          // already shown
+        assertEquals(30, HubFocus.scrollToShow(0, clip, new Rect(0, 220, 10, 10)));         // below: just enough
+        assertEquals(10, HubFocus.scrollToShow(40, clip, new Rect(0, 70, 10, 10)));         // above: back up to it
+        assertEquals(0, HubFocus.scrollToShow(5, clip, new Rect(0, 50, 10, 10)));           // never negative
+        assertEquals(90, HubFocus.pageScroll(0, 200, clip, 1));
+        assertEquals(0, HubFocus.pageScroll(50, 200, clip, -1));
+        assertEquals(60, HubFocus.pageScroll(0, 60, clip, 1));
     }
 
     @Test
