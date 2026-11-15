@@ -41,7 +41,7 @@ public final class ApexOffer {
             if (race == SupernaturalRace.HUNTER && species != Species.HUNTER_OF_THE_FIVE) {
                 continue;
             }
-            ApexSpec.forRace(race).filter(spec -> ApexLines.qualifies(race, currentRaceId) && rungReached.test(race))
+            ApexSpec.forRace(race).filter(spec -> ApexLines.qualifies(race, currentRaceId, races) && rungReached.test(race))
                     .map(ApexSpec::id).filter(id -> !out.contains(id)).ifPresent(out::add);
         }
         return out;

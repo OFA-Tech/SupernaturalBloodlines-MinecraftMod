@@ -98,6 +98,10 @@ public final class TensuraEpGameTests {
         helper.assertTrue(!tierDone(witch, "L-WIT-5a"), "a witch on the vampire line is at the apex tier");
         RaceAPI.getRaceFrom(witch).setRace(ResourceLocation.parse("tensura:human_saint"), false);
         helper.assertTrue(tierDone(witch, "L-WIT-5a"), "a witch on a human saint is not at the apex tier");
+        // on Beastfolk a witch is at the tier only as a werewolf (its magic ladder stacks on the werewolf's line)
+        RaceAPI.getRaceFrom(witch).setRace(ResourceLocation.parse("tensura:spirit_beast"), false);
+        helper.assertTrue(!tierDone(atRung(helper, Species.WITCH, SupernaturalRace.WITCH, 4, "tensura:spirit_beast"), "L-WIT-5a"),
+                "a witch who is not a werewolf is at the apex tier on Beastfolk");
         helper.succeed();
     }
 }

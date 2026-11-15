@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.shared.tensura;
 
+import java.util.List;
 import java.util.Set;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 
@@ -24,8 +25,16 @@ public final class ApexLines {
     private ApexLines() {
     }
 
-    /** The race is offered its apex race from this Tensura race (an apex race of ours has no further one). */
+    /** {@link #qualifies(SupernaturalRace, String, List)} for a player whose only race is {@code race}. */
     public static boolean qualifies(SupernaturalRace race, String tensuraRaceId) {
+        return qualifies(race, tensuraRaceId, List.of(race));
+    }
+
+    /**
+     * The race is offered its apex race from this Tensura race (an apex race of ours has no further one). {@code races} is all the player's
+     * races: a witch or siphoner is on the Beastfolk line only as a werewolf (human werewolf, Beastfolk), and the magic ladder stacks on it.
+     */
+    public static boolean qualifies(SupernaturalRace race, String tensuraRaceId, List<SupernaturalRace> races) {
         if (race == SupernaturalRace.HUMAN || race == SupernaturalRace.GHOUL) {
             return false;
         }
@@ -41,17 +50,22 @@ public final class ApexLines {
         if (BEASTFOLK.contains(tensuraRaceId)) {
             return switch (race) {
                 case WEREWOLF, HYBRID, TRIBRID -> true;
+                case WITCH, SIPHONER -> races.contains(SupernaturalRace.WEREWOLF);
                 default -> false;
             };
         }
         return false;
     }
 
-    /** The {@code tensura_tier} reading of a ladder: at the apex tier of a line the race may be on, or already on an apex race of ours. */
     public static boolean atApexTier(SupernaturalRace race, String tensuraRaceId) {
+        return atApexTier(race, tensuraRaceId, List.of(race));
+    }
+
+    /** The {@code tensura_tier} reading of a ladder: at the apex tier of a line the race may be on, or already on an apex race of ours. */
+    public static boolean atApexTier(SupernaturalRace race, String tensuraRaceId, List<SupernaturalRace> races) {
         if (race == SupernaturalRace.HUMAN || race == SupernaturalRace.GHOUL) {
             return false;
         }
-        return tensuraRaceId.startsWith(OUR_NAMESPACE) || qualifies(race, tensuraRaceId);
+        return tensuraRaceId.startsWith(OUR_NAMESPACE) || qualifies(race, tensuraRaceId, races);
     }
 }

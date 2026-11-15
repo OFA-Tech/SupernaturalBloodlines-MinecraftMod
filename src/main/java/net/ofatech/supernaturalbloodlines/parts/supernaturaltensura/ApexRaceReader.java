@@ -6,6 +6,7 @@ import net.minecraft.world.entity.player.Player;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.ApexRaceQuery;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.PlayerRaces;
 import net.ofatech.supernaturalbloodlines.shared.tensura.ApexLines;
 
 /** Reads the Tensura race of a player for the migration and the {@code tensura_tier} detector: only races of this mod's namespace are apex races of ours. */
@@ -28,7 +29,7 @@ public final class ApexRaceReader {
 
     static boolean atApexTier(Player p, SupernaturalRace race) {
         return RaceAPI.getRaceFrom((LivingEntity) p).getRace()
-                .map(r -> ApexLines.atApexTier(race, r.getRaceId().toString()))
+                .map(r -> ApexLines.atApexTier(race, r.getRaceId().toString(), PlayerRaces.of(p)))
                 .orElse(false);
     }
 }

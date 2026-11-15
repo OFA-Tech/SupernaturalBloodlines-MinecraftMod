@@ -72,6 +72,27 @@ class ApexLinesTest {
     }
 
     @Test
+    void aWitchOrSiphonerIsOnBeastfolkOnlyAsAWerewolf() {
+        var wolfWitch = java.util.List.of(WEREWOLF, WITCH);
+        var wolfSiphoner = java.util.List.of(WEREWOLF, SIPHONER);
+        for (String id : new String[] {"tensura:spirit_beast", "tensura:divine_beast"}) {
+            assertTrue(ApexLines.qualifies(WEREWOLF, id, wolfWitch), id);
+            assertTrue(ApexLines.qualifies(WITCH, id, wolfWitch), id);
+            assertTrue(ApexLines.qualifies(SIPHONER, id, wolfSiphoner), id);
+            assertTrue(ApexLines.atApexTier(WITCH, id, wolfWitch), id);
+            // a witch who is not a werewolf is not on that line
+            assertFalse(ApexLines.qualifies(WITCH, id, java.util.List.of(HUMAN, WITCH)), id);
+            assertFalse(ApexLines.qualifies(SIPHONER, id, java.util.List.of(VAMPIRE, SIPHONER)), id);
+        }
+        assertFalse(ApexLines.qualifies(WITCH, "tensura:beast_lord", wolfWitch));
+        // a witch or siphoner vampire is a heretic, which has its own apex; Original, Original hybrid and hunter never
+        assertFalse(ApexLines.qualifies(WITCH, "tensura:vampire_lord", wolfWitch));
+        for (SupernaturalRace r : new SupernaturalRace[] {ORIGINAL, ORIGINAL_HYBRID, HUNTER}) {
+            assertFalse(ApexLines.qualifies(r, "tensura:spirit_beast", java.util.List.of(WEREWOLF, r)), r.name());
+        }
+    }
+
+    @Test
     void anApexRaceOfOursIsPastTheTier() {
         assertTrue(ApexLines.atApexTier(ORIGINAL, "supernaturalbloodlines:primordial_vampire"));
         assertTrue(ApexLines.atApexTier(WEREWOLF, "supernaturalbloodlines:alpha_primeval"));

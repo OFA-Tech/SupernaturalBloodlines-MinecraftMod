@@ -70,7 +70,11 @@ class ApexOfferTest {
     @Test
     void aWitchWerewolfIsOfferedBothApexesWhereBothLinesAllowThem() {
         assertEquals(List.of("alpha_primeval", "ancestral_witch"), offer(Species.WITCH, List.of(WEREWOLF, WITCH), "tensura:human_saint"));
-        assertEquals(List.of("alpha_primeval"), offer(Species.WITCH, List.of(WEREWOLF, WITCH), "tensura:spirit_beast"));
+        // the magic ladder stacks on the Beastfolk line of a werewolf
+        assertEquals(List.of("alpha_primeval", "ancestral_witch"), offer(Species.WITCH, List.of(WEREWOLF, WITCH), "tensura:spirit_beast"));
+        assertEquals(List.of("alpha_primeval", "void_siphon"), offer(Species.SIPHONER, List.of(WEREWOLF, SIPHONER), "tensura:divine_beast"));
+        assertTrue(offer(Species.WITCH, List.of(HUMAN, WITCH), "tensura:spirit_beast").isEmpty());
+        assertTrue(offer(Species.WITCH, List.of(WEREWOLF, WITCH), "tensura:vampire_lord").isEmpty());
         assertEquals(List.of("alpha_primeval", "void_siphon"), offer(Species.SIPHONER, List.of(WEREWOLF, SIPHONER), "tensura:human_saint"));
     }
 

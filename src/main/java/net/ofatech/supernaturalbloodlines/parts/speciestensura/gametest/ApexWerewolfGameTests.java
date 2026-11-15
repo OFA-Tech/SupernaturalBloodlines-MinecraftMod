@@ -112,7 +112,7 @@ public final class ApexWerewolfGameTests {
         helper.succeed();
     }
 
-    /** A witch-werewolf can reach two apex rungs; Tensura's screen then lists both. On Beastfolk only the werewolf's. */
+    /** A witch-werewolf can reach two apex rungs; Tensura's screen then lists both, on a saint and on Beastfolk. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void witchWerewolfOfferedBothApexes(GameTestHelper helper) {
         ServerPlayer p = werewolf(helper, Species.WITCH);
@@ -124,8 +124,21 @@ public final class ApexWerewolfGameTests {
             setLadder(p, SupernaturalRace.WITCH, top(SupernaturalRace.WITCH));
         }
         helper.assertTrue(offers(p, "alpha_primeval") && offers(p, "ancestral_witch"), "not offered both apex races on a saint: " + offered(p));
+        // a werewolf is on the Beastfolk line and the magic ladder stacks on it
+        for (String id : new String[] {"tensura:spirit_beast", "tensura:divine_beast"}) {
+            setRace(p, id);
+            helper.assertTrue(offers(p, "alpha_primeval") && offers(p, "ancestral_witch"), "a witch werewolf on " + id + " is not offered both: " + offered(p));
+        }
+        setRace(p, "tensura:beast_lord");
+        helper.assertTrue(!offersApex(p), "offered from the tier below: " + offered(p));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void siphonerWerewolfOnSpiritBeastIsOfferedVoidSiphon(GameTestHelper helper) {
+        ServerPlayer p = werewolf(helper, Species.SIPHONER);
         setRace(p, "tensura:spirit_beast");
-        helper.assertTrue(offers(p, "alpha_primeval") && !offers(p, "ancestral_witch"), "Beastfolk offers the witch's apex race: " + offered(p));
+        helper.assertTrue(offers(p, "alpha_primeval") && offers(p, "void_siphon"), "a siphoner werewolf on Spirit Beast is not offered both: " + offered(p));
         helper.succeed();
     }
 

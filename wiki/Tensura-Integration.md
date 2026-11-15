@@ -103,7 +103,7 @@ From the **third tier** of a Tensura line (saint tier for the human-like lines),
 |---|---|---|
 | Human, dwarf, elf, merfolk | `human_saint`, `dwarf_saint`, `elf_saint`, `merfolk_saint`; `divine_human`, `divine_dwarf`, `divine_elf`, `divine_fish` | every race with an apex race |
 | Vampire (vampire, overcomer, lord, divine) | `vampire_lord`; `divine_vampire` (the overcomer is the tier below) | vampire, Original, hybrid, Original hybrid, heretic |
-| Beastfolk | `spirit_beast`; `divine_beast` | werewolf, hybrid, tribrid |
+| Beastfolk | `spirit_beast`; `divine_beast` | werewolf, hybrid, tribrid, and a witch or siphoner who is also a werewolf |
 
 A witch- or siphoner-werewolf may be offered two apex races. A **True Alpha** (not dormant) on Primeval Alpha has the apex bonuses x1.5 and is granted the skill Primeval Roar: the Alpha Roar with Roar's Echo's cooldown, twice the range, and +10% attack for 30 s for the Betas it reaches (draft numbers).
 - An apex race needs **2,000,000 EP** (the same as Tensura's divine human) and can give more max health than the divine tier (Primordial Vampire 1000, against 980). **All names, stats, EP and signature skills are placeholders.**
