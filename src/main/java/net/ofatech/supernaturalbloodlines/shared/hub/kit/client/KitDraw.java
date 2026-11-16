@@ -19,6 +19,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.DetailLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.ModelDrag;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.SourceTag;
@@ -45,8 +46,33 @@ public final class KitDraw {
         g.setColor(1f, 1f, 1f, 1f);
     }
 
+    private static int batchDepth;
+
+    /**
+     * Runs fill-only drawing as one batch: {@code GuiGraphics.fill} flushes after each call unless the drawing is "managed", so a line of 80 pixels was 80 draw
+     * calls. Safe to nest (only the outermost call opens the batch). Do not draw text, items or an entity inside it.
+     */
+    public static void batch(GuiGraphics g, Runnable fills) {
+        if (batchDepth > 0) {
+            fills.run();
+            return;
+        }
+        g.drawManaged(() -> {
+            batchDepth++;
+            try {
+                fills.run();
+            } finally {
+                batchDepth--;
+            }
+        });
+    }
+
     /** A one pixel line (Bresenham): ink strokes of a sigil, cords. */
     public static void line(GuiGraphics g, int x0, int y0, int x1, int y1, int color) {
+        batch(g, () -> bresenham(g, x0, y0, x1, y1, color));
+    }
+
+    private static void bresenham(GuiGraphics g, int x0, int y0, int x1, int y1, int color) {
         int dx = Math.abs(x1 - x0);
         int dy = -Math.abs(y1 - y0);
         int sx = x0 < x1 ? 1 : -1;
@@ -74,14 +100,14 @@ public final class KitDraw {
         if (size <= 0) {
             return;
         }
-        // one blit of a baked white mask, tinted; a fill per row only if a texture cannot be made (no GL context)
-        try {
-            var mask = BakedTexture.get("shape/" + shape + "/" + size, size, size, (px, py) -> Shapes.contains(shape, size, px, py) ? 0xFFFFFFFF : 0);
+        // one blit of a baked white mask, tinted; the merged runs (a fill each) only if a texture cannot be made
+        var mask = BakedTexture.get(BakedTexture.Key.of("shape", size, shape.ordinal()), size, size, (px, py) -> Shapes.contains(shape, size, px, py) ? 0xFFFFFFFF : 0);
+        if (mask != null) {
             BakedTexture.blitTinted(g, mask, x, y, size, size, color);
-        } catch (RuntimeException noTexture) {
-            for (Shapes.Run run : Shapes.runs(shape, size)) {
-                g.fill(x + run.x(), y + run.y(), x + run.x() + run.w(), y + run.y() + run.h(), color);
-            }
+            return;
+        }
+        for (Shapes.Run run : Shapes.runs(shape, size)) {
+            g.fill(x + run.x(), y + run.y(), x + run.x() + run.w(), y + run.y() + run.h(), color);
         }
     }
 
@@ -99,9 +125,11 @@ public final class KitDraw {
     }
 
     public static void tickRing(GuiGraphics g, int cx, int cy, int radius, int count, float fraction, int on, int off) {
-        for (TickRing.Tick t : TickRing.ticks(cx, cy, radius, count, fraction)) {
-            g.fill(t.x() - 1, t.y() - 1, t.x() + 1, t.y() + 1, t.on() ? on : off);
-        }
+        batch(g, () -> {
+            for (TickRing.Tick t : TickRing.ticks(cx, cy, radius, count, fraction)) {
+                g.fill(t.x() - 1, t.y() - 1, t.x() + 1, t.y() + 1, t.on() ? on : off);
+            }
+        });
     }
 
     /** Rank pips; the width they take. */
@@ -226,7 +254,8 @@ public final class KitDraw {
             int label = a.primary() ? Contrast.bestText(fill) : a.enabled() ? theme.ink() : theme.muted();
             g.fill(b.x(), b.y(), b.right(), b.bottom(), a.enabled() ? theme.accent() : theme.muted());
             g.fill(b.x() + 1, b.y() + 1, b.right() - 1, b.bottom() - 1, hot && !a.primary() ? theme.good() : fill);
-            g.drawString(font, a.label(), b.x() + (b.w() - font.width(a.label())) / 2, b.y() + 3,
+            String shown = LabelFit.cut(a.label().getString(), b.w() - 8, font::width);
+            g.drawString(font, shown, b.x() + (b.w() - font.width(shown)) / 2, b.y() + 3,
                     hot && !a.primary() ? Contrast.bestText(theme.good()) : label, false);
         }
         detailActions(ctx, theme, rects, d);
@@ -344,14 +373,11 @@ public final class KitDraw {
         g.fill(0, 0, screenW, screenH, 0xB0000000);
         g.fill(panel.x() - 1, panel.y() - 1, panel.right() + 1, panel.bottom() + 1, theme.accent());
         g.fill(panel.x(), panel.y(), panel.right(), panel.bottom(), theme.paper());
-        g.drawString(font, title, panel.x() + ConfirmLayout.PAD, panel.y() + ConfirmLayout.PAD, theme.accent(), false);
+        g.drawString(font, LabelFit.cut(title.getString(), panel.w() - 2 * ConfirmLayout.PAD, font::width), panel.x() + ConfirmLayout.PAD, panel.y() + ConfirmLayout.PAD, theme.accent(), false);
         Rect text = l.text();
         int y = text.y();
-        int lines = 0;
-        for (FormattedCharSequence part : font.split(body, text.w())) {
-            if (++lines > l.maxLines()) {
-                break;
-            }
+        // a body longer than the panel has lines for ends in an ellipsis; it is never cut off in silence
+        for (String part : LabelFit.wrap(body.getString(), text.w(), l.maxLines(), font::width)) {
             g.drawString(font, part, text.x(), y, theme.ink(), false);
             y += ConfirmLayout.LINE;
         }
@@ -363,7 +389,8 @@ public final class KitDraw {
         int fill = primary ? theme.accent() : theme.paper();
         g.fill(r.x(), r.y(), r.right(), r.bottom(), theme.accent());
         g.fill(r.x() + 1, r.y() + 1, r.right() - 1, r.bottom() - 1, fill);
-        g.drawString(font, label, r.x() + (r.w() - font.width(label)) / 2, r.y() + 4, primary ? Contrast.bestText(fill) : theme.ink(), false);
+        String shown = LabelFit.cut(label.getString(), r.w() - 8, font::width);
+        g.drawString(font, shown, r.x() + (r.w() - font.width(shown)) / 2, r.y() + 4, primary ? Contrast.bestText(fill) : theme.ink(), false);
         if (focused) {
             focusRing(g, r, theme.focusColor());
         }

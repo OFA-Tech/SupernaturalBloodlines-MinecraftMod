@@ -36,6 +36,10 @@ A modifier added with `addPermanentModifier` is saved with the player, and when 
 
 Werewolves and Curios are optional extras inside parts; the pure rules in `core` never import them.
 
+## The one allowed cross-part import: Tensura's hub look
+
+`supernaturalTensura` **Needs `SUPERNATURAL`** (the table above), so `TensuraHubTheme`, `TensuraHubLayout` and the Tensura hub pages may import classes of `parts.supernatural.client.hub` and `.hub.page` (the hub screen, the page views `Stage*Page` and `Book*Page`, the almanac, the page helpers). It is the one exception to "a part imports only `core` and `shared`", and it is safe because the part is never loaded without `supernatural`: `PartLoader` disables it first. Moving those 13 classes into `shared/hub` would drag the whole hub screen with them for no gain; if a third part ever needs them, that is the time to move them.
+
 ## Debug commands
 
 Permission level 2. For quick state changes in a test world:

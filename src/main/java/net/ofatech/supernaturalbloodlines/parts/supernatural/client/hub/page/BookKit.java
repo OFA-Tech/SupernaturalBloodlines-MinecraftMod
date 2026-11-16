@@ -126,13 +126,13 @@ public final class BookKit {
         return r;
     }
 
-    /** A secondary action: red text with an underline. Returns its width. */
     /** The "Track on HUD" (or "Stop tracking") link of a task: working with the HUD part, a grey link that says why without it. Returns its width. */
     static int trackLink(HubScreen.Frame f, String id, String taskId, boolean claimed, int x, int y) {
         var a = TrackHud.action(taskId, claimed);
         return link(f, id, a.label(), x, y, List.of(a.enabled() || a.disabledReason() == null ? a.label() : a.disabledReason()), a.enabled() ? a.run() : null);
     }
 
+    /** A secondary action: red text with an underline. Returns its width. */
     static int link(HubScreen.Frame f, String id, Component label, int x, int y, List<Component> tooltip, @Nullable Runnable action) {
         HubTheme t = f.theme();
         int w = f.font().width(label);

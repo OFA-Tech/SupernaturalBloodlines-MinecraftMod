@@ -62,7 +62,8 @@ public final class BookQuestsPage implements HubPageView {
                 y = PageKit.wrapped(f, Component.translatableWithFallback(PageKit.HUB + "quest." + q.id(), q.name()), r.x(), y, r.w(), t.ink());
                 for (HubModel.TaskRow row : q.tasks()) {
                     if (quests.shown(row)) {
-                        y = PageKit.taskRow(f, row, r.x() + 4, y, r.w() - 4, false, null, false);
+                        String id = row.task().id();
+                        y = PageKit.taskRow(f, row, r.x() + 4, y, r.w() - 4, false, () -> f.select(id), QuestFilter.isChosen(chosen, id));
                     }
                 }
             }

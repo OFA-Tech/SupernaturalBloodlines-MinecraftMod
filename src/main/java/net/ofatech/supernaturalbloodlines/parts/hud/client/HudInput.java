@@ -21,7 +21,7 @@ import org.lwjgl.glfw.GLFW;
  * The six slot keys and the mode key. A slot key is not read through {@code KeyMapping.isDown()}: NeoForge only fires a mapping whose modifier matches
  * the modifiers held, so a plain R mapping would be silent while Alt is held, and Alt + slot key is how Tensura changes a skill's mode. Instead the raw
  * key events are noted (so a tap shorter than a tick is not lost) and acted on in the next client tick, in order. A mapping bound with its own modifier
- * still needs it held; NONE means any modifiers (so a slot key also fires with Ctrl or Shift held: nothing else in the pack needs those on the same key). Only while a world is open with no screen. A key that is held when a screen opens is released at once,
+ * still needs it held; NONE means no Ctrl or Shift (Alt is allowed: it is Tensura's mode change; Ctrl + Z must never fire a slot, see {@link #slotAllowed}). Only while a world is open with no screen. A key that is held when a screen opens is released at once,
  * and one still held when the screen closes needs a fresh press; a press in the tick a screen closed is ignored too (a slot key that is also the inventory key,
  * or another screen's close key, must not fire as the screen goes). With no connection (the world is closing) nothing is sent and the held state is dropped. Press and release go to the source of the mode the key was pressed in ({@link HudModeState}).
  */
@@ -73,13 +73,13 @@ public final class HudInput {
         boolean live = HudClientConfig.hudEnabled() && p != null && mc.screen == null && mc.getOverlay() == null;
         // the mode key's physical state is followed every tick, screen or not, so closing a screen while it is held is not a press
         KeyMapping mode = HudKeys.HUD_MODE;
-        boolean capsDown = mode.getKeyModifier() == KeyModifier.NONE && physicallyDown(mc, mode);
+        boolean capsDown = physicallyDown(mc, mode);
         if (live) {
             while (HudKeys.HUD_MODE.consumeClick()) {
                 HudModeState.toggle();
             }
             // a plain mapping does not fire while Alt, Ctrl or Shift is held (NeoForge looks up the held modifier's mappings): a Caps press with one held still switches
-            if (capsDown && !capsWasDown && (Screen.hasAltDown() || Screen.hasControlDown() || Screen.hasShiftDown())) {
+            if (modePressedWithModifier(mode.getKeyModifier() != KeyModifier.NONE, capsDown, capsWasDown, Screen.hasAltDown() || Screen.hasControlDown() || Screen.hasShiftDown())) {
                 HudModeState.toggle();
             }
         }
@@ -148,7 +148,6 @@ public final class HudInput {
         }
     }
 
-    /** A mapping bound with a modifier needs it held; NONE means "any modifiers", because Alt + slot key is Tensura's mode change. */
     /** A slot key fires with no modifier or with Alt (Alt + a slot key is Tensura's mode change); Ctrl and Shift are other shortcuts' (Ctrl + Z), so the slot ignores them. */
     static boolean slotAllowed(boolean ctrl, boolean shift) {
         return !ctrl && !shift;
@@ -164,6 +163,20 @@ public final class HudInput {
     }
 
     private static boolean capsWasDown;
+
+    /**
+     * Whether the mode key was pressed this tick although the game's own key mapping stayed silent. NeoForge fires a plain mapping only while no Alt, Ctrl or Shift
+     * is held, so a press with one of them down is read from the key's physical state: it counts on the tick the key goes down (not while it stays down, and not
+     * for a key that was already down when a screen closed), and only if the mapping has no modifier of its own.
+     *
+     * @param mappingHasModifier the {@code hud_mode} mapping is bound with its own modifier (it then fires by itself)
+     * @param down               the key is down now
+     * @param wasDown            it was down on the previous tick
+     * @param modifierHeld       Alt, Ctrl or Shift is held
+     */
+    static boolean modePressedWithModifier(boolean mappingHasModifier, boolean down, boolean wasDown, boolean modifierHeld) {
+        return !mappingHasModifier && down && !wasDown && modifierHeld;
+    }
 
     private static boolean physicallyDown(Minecraft mc, KeyMapping km) {
         InputConstants.Key key = km.getKey();

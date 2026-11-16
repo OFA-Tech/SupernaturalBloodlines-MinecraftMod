@@ -69,6 +69,22 @@ final class HudChrome {
     private static int columnsWidth = -1;
     private static HudStyle.Style columnsStyle;
 
+    private record WrapKey(String text, int width, int lines) {
+    }
+
+    private static final java.util.Map<WrapKey, java.util.List<String>> WRAPS = new java.util.HashMap<>();
+    private static long wrapsTick = Long.MIN_VALUE;
+
+    /** {@link LabelFit#wrap} kept for the rest of the tick, keyed by (text, width, lines): the same pill is drawn every frame of a tick. */
+    private static java.util.List<String> wrap(Font font, String text, int width, int maxLines) {
+        long now = tick();
+        if (now != wrapsTick) {
+            WRAPS.clear();
+            wrapsTick = now;
+        }
+        return WRAPS.computeIfAbsent(new WrapKey(text, width, maxLines), k -> LabelFit.wrap(text, width, maxLines, font::width));
+    }
+
     private static long tick() {
         var level = net.minecraft.client.Minecraft.getInstance().level;
         return level == null ? 0 : level.getGameTime();
@@ -108,7 +124,7 @@ final class HudChrome {
     static int preview(GuiGraphics g, Font font, HudStyle.Style style, SlotMode other, SlotView[] views, HudLayout.Box[] boxes, float alpha) {
         String key = HudKeys.HUD_MODE.getTranslatedKeyMessage().getString();
         String name = Component.translatable("supernaturalbloodlines.hud.pill." + other.name().toLowerCase(Locale.ROOT)).getString();
-        java.util.List<String> head = LabelFit.wrap(Component.translatable("supernaturalbloodlines.hud.pill.next", key, name).getString(), PREVIEW_W - 12, 2, font::width);
+        java.util.List<String> head = wrap(font, Component.translatable("supernaturalbloodlines.hud.pill.next", key, name).getString(), PREVIEW_W - 12, 2);
         int h = 30 + 9 * head.size();
         int x = Math.max(4, Math.min(boxes[3].right() - PREVIEW_W, g.guiWidth() - PREVIEW_W - 4));
         int y = boxes[3].y() - h - 4;
@@ -214,7 +230,7 @@ final class HudChrome {
     /** The tracked task: its name and a bar of its progress, at the configured anchor (the top centre, under the boss bars, by default). */
     static void tracker(GuiGraphics g, Font font, HudStyle.Style style, TrackerAccess.Line line, float alpha, TrackerAnchor anchor, int bossBottom) {
         String count = line.total() > 1 ? "  " + line.done() + "/" + line.total() : "";
-        java.util.List<String> lines = LabelFit.wrap(line.text() + count, 150, 2, font::width);
+        java.util.List<String> lines = wrap(font, line.text() + count, 150, 2);
         int widest = 0;
         for (String l : lines) {
             widest = Math.max(widest, font.width(l));

@@ -196,20 +196,23 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
         int cx = r.x() + r.w() / 2;
         int cy = r.y() + r.h() / 2;
         int radius = Math.min(r.w(), r.h()) / 2 - 2;
-        KitDraw.tickRing(g, cx, cy, radius, 36, data.progress(), INK_RED, 0xFFA89870);
-        ring(g, cx, cy, radius - 5, ink());
-        ring(g, cx, cy, radius - 9, 0xFF8A7A5A);
         int sr = radius - 9;
-        int[] px = new int[5];
-        int[] py = new int[5];
-        for (int i = 0; i < 5; i++) {
-            double a = -Math.PI / 2 + 2 * Math.PI * i / 5;
-            px[i] = cx + (int) Math.round(sr * Math.cos(a));
-            py[i] = cy + (int) Math.round(sr * Math.sin(a));
-        }
-        for (int i = 0; i < 5; i++) {
-            KitDraw.line(g, px[i], py[i], px[(i + 2) % 5], py[(i + 2) % 5], 0xFF8A7A5A);
-        }
+        // the whole sigil is plain fills: one batch, not one draw call per pixel
+        KitDraw.batch(g, () -> {
+            KitDraw.tickRing(g, cx, cy, radius, 36, data.progress(), INK_RED, 0xFFA89870);
+            ring(g, cx, cy, radius - 5, ink());
+            ring(g, cx, cy, radius - 9, 0xFF8A7A5A);
+            int[] px = new int[5];
+            int[] py = new int[5];
+            for (int i = 0; i < 5; i++) {
+                double a = -Math.PI / 2 + 2 * Math.PI * i / 5;
+                px[i] = cx + (int) Math.round(sr * Math.cos(a));
+                py[i] = cy + (int) Math.round(sr * Math.sin(a));
+            }
+            for (int i = 0; i < 5; i++) {
+                KitDraw.line(g, px[i], py[i], px[(i + 2) % 5], py[(i + 2) % 5], 0xFF8A7A5A);
+            }
+        });
         int inner = (int) (sr * 1.25);
         KitDraw.model(g, new Rect(cx - inner / 2, cy - inner / 2 - 2, inner, inner), data.entity(), data.drag());
     }

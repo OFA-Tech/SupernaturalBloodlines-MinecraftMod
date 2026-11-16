@@ -271,11 +271,14 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         int cx = area.x() + area.w() / 2;
         int cy = area.y() + area.h() / 2;
         int r = Math.max(14, Math.min(area.w(), area.h()) / 2 - 2);
-        KitDraw.tickRing(g, cx, cy, r, 56, data.progress(), TEAL, 0xFF1d5a68);
-        ring(g, cx, cy, r * 82 / 100, TEAL);
-        ring(g, cx, cy, r * 74 / 100, TEAL_DIM);
-        hexagon(g, cx, cy, r * 66 / 100, TEAL_DIM);
-        hexagon(g, cx, cy, r * 50 / 100, 0xFF7a6a2c);
+        // the rings and hexagons are plain fills: one batch
+        KitDraw.batch(g, () -> {
+            KitDraw.tickRing(g, cx, cy, r, 56, data.progress(), TEAL, 0xFF1d5a68);
+            ring(g, cx, cy, r * 82 / 100, TEAL);
+            ring(g, cx, cy, r * 74 / 100, TEAL_DIM);
+            hexagon(g, cx, cy, r * 66 / 100, TEAL_DIM);
+            hexagon(g, cx, cy, r * 50 / 100, 0xFF7a6a2c);
+        });
         int m = (int) (r * 0.95);
         KitDraw.model(g, new Rect(cx - m / 2, cy - m / 2 - 2, m, m), data.entity(), data.drag());
     }
@@ -325,7 +328,8 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         caption(g, font, d.kicker() != null ? d.kicker() : Component.translatable("supernaturalbloodlines.hub.tensura.info"), x, y);
         y += 11;
         var pose = g.pose();
-        for (var line : font.split(d.title(), (int) (w / 1.4f))) {
+        // as many title lines as fit above the buttons; a title that does not all fit ends its last line with an ellipsis
+        for (String line : LabelFit.wrap(d.title().getString(), (int) (w / 1.4f), Math.max(0, (limit - y) / 13), font::width)) {
             pose.pushPose();
             pose.translate(x, y, 0);
             pose.scale(1.4f, 1.4f, 1f);
@@ -381,11 +385,10 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         KitDraw.detailActions(ctx, this, buttons, d);
     }
 
+    /** The text wrapped to {@code w}, as many lines as fit above {@code limit}; when it does not all fit the last line ends with an ellipsis instead of stopping silently. */
     private static int text(GuiGraphics g, Font font, Component c, int x, int y, int w, int color, int limit) {
-        for (var line : font.split(c, w)) {
-            if (y + 9 > limit) {
-                break;
-            }
+        int fit = Math.max(0, (limit - y + 1) / 10);
+        for (String line : LabelFit.wrap(c.getString(), w, fit, font::width)) {
             g.drawString(font, line, x, y, color, false);
             y += 10;
         }

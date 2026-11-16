@@ -15,7 +15,11 @@ import org.junit.jupiter.api.Test;
  * reached, none twice, in the order the page lists them (the tabs, the stage, the panel, the buttons), it wraps, and Shift+Tab undoes Tab.
  */
 class FocusWalkTest {
-    /** The ids of a frame of the Path page with a ladder bookmark row, a task list, the info pane's buttons and the chrome. */
+    /**
+     * The ids of a frame of the Path page with a ladder bookmark row, a task list, the info pane's buttons and the chrome. Written by hand, not read from a real
+     * frame (a frame needs a {@code HubScreen} and so a running Minecraft): the ids copy the prefixes the pages register ({@code tab:}, {@code seal:}, {@code theme},
+     * {@code close}, {@code ladder:}, {@code phase:}, {@code task:}, {@code detail:}), and if a page registers a new prefix, add it here and to {@code FocusOrder.zoneOf}.
+     */
     private static final List<String> FRAME = List.of("tab:PATH", "tab:SKILLS", "tab:QUESTS", "tab:RITES", "tab:BLOODLINE", "tab:PACK", "tab:GUIDE", "seal:tensura", "seal:enchanted",
             "theme", "close", "ladder:0", "ladder:1", "phase:hybrid:awakened", "task:a", "task:b", "task:c", "detail:track", "detail:claim");
 

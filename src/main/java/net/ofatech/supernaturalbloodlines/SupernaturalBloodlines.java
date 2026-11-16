@@ -54,6 +54,9 @@ public final class SupernaturalBloodlines {
         }
         EnabledParts.set(parts);
         PartLoader.initAll(parts, modBus, container);
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitClient.register(modBus);
+        }
         if (FMLEnvironment.dist == Dist.CLIENT && !parts.contains(Part.HUD)) {
             // with the HUD off nothing would give back the keys it covered
             KeyCover.registerRestoreOnly();

@@ -68,9 +68,30 @@ final class QuestFilter {
         return all;
     }
 
-    /** The chosen task among {@code all}: the one the player picked if it is still shown, else the first. */
+    /** The tasks of the "Other" skill quests that pass the filter: only the All filter lists them. */
+    List<HubModel.TaskRow> skillQuestRows(HubScreen.Frame f) {
+        List<HubModel.TaskRow> rows = new ArrayList<>();
+        if (filter == 0) {
+            for (HubModel.QuestView q : HubModel.quests(f.view.skills(), f.view.state(), f.view.races())) {
+                q.tasks().stream().filter(this::shown).forEach(rows::add);
+            }
+        }
+        return rows;
+    }
+
+    /**
+     * The chosen task: the one the player picked if it is still shown, else the first. The skill quests listed under "Other" can be picked too, so they are among
+     * the candidates (after the ladder tasks).
+     */
     Optional<HubModel.TaskRow> chosen(HubScreen.Frame f, List<HubModel.TaskRow> all) {
-        return HubModel.pick(all, f.selectedTask());
+        return choose(all, skillQuestRows(f), f.selectedTask());
+    }
+
+    /** Pure: the picked task among the ladder tasks and the skill-quest tasks, else the first of the ladder tasks, else the first skill-quest task. */
+    static Optional<HubModel.TaskRow> choose(List<HubModel.TaskRow> ladder, List<HubModel.TaskRow> skill, String picked) {
+        List<HubModel.TaskRow> candidates = new ArrayList<>(ladder);
+        candidates.addAll(skill);
+        return HubModel.pick(candidates, picked);
     }
 
     static boolean isChosen(Optional<HubModel.TaskRow> chosen, String id) {

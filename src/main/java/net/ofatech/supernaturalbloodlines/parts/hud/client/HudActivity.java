@@ -9,7 +9,8 @@ import net.minecraft.client.Minecraft;
 public final class HudActivity {
     public static final int IDLE_TICKS = 200;
     public static final float FADED = 0.4f;
-    private static long last;
+    private static final long UNSET = Long.MIN_VALUE;
+    private static long last = UNSET;
 
     private HudActivity() {
     }
@@ -17,6 +18,11 @@ public final class HudActivity {
     private static long now() {
         var level = Minecraft.getInstance().level;
         return level == null ? 0 : level.getGameTime();
+    }
+
+    /** Forgets the last use: a new world starts with a full-strength HUD whatever its game time. */
+    static void reset() {
+        last = UNSET; // armed again by the first frame in the new world (the old level may still be set while this runs)
     }
 
     /** A key or the mode switch just happened. */
@@ -32,7 +38,15 @@ public final class HudActivity {
         if (busy) {
             touch();
         }
-        return alphaFor(now() - last);
+        if (last == UNSET) {
+            touch();
+        }
+        return alphaFor(idleTicks(last, now()));
+    }
+
+    /** Ticks since the last use; a use that is "in the future" (game time restarts in every world) or never happened counts as just now. Pure. */
+    static long idleTicks(long last, long now) {
+        return last == UNSET || now < last ? 0 : now - last;
     }
 
     /** The alpha {@code idleTicks} after the last use; pure. */

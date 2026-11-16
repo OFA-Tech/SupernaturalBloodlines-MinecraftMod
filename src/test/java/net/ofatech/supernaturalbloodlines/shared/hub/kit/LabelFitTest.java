@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ToIntFunction;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.BloodMoonLayout;
 import net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.client.TensuraHubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
@@ -42,12 +41,11 @@ class LabelFitTest {
         assertTrue(lines.get(lines.size() - 1).endsWith("\u2026"), lines.toString());
     }
 
-    /** The stage the hexagon ladder is drawn on, at each GUI width: the Blood Moon's and Tensura's moon stages (the Grimoire has no ladder row; its Path lists the rungs). */
+    /** The stage the hexagon ladder is drawn on, at each GUI width: Tensura's moon stage (the only look that draws {@link LadderLabels}; the Blood Moon's ladder is a column of names and the Grimoire lists the rungs). */
     private static List<Rect> stages() {
         List<Rect> stages = new ArrayList<>();
         for (int w : WIDTHS) {
             int h = w * 9 / 16;
-            stages.add(BloodMoonLayout.of(w, h, 8, 3).region(BloodMoonLayout.MOON));
             stages.add(TensuraHubLayout.of(w, h, 8, 4).region(TensuraHubLayout.MOON));
         }
         return stages;
@@ -75,17 +73,23 @@ class LabelFitTest {
         }
     }
     @Test
-    void radialLabelsFitTheChordBetweenNeighbours() {
+    void radialLabelsFitTheGapBetweenNeighboursOnTheRealRing() {
         for (int count = 4; count <= 14; count++) {
             for (int radius = 50; radius <= 220; radius += 10) {
                 int w = LabelFit.radialWidth(radius, count, 36, 110);
-                int chord = (int) (2 * radius * Math.sin(Math.PI / count));
-                assertTrue(w <= Math.max(36, chord - 4), count + " nodes on " + radius + ": " + w + " vs the chord " + chord);
+                // the nodes as the Skills page really places them, not a formula copied from the code under test
+                List<Radial.Node> ring = Radial.ring(0, 0, radius, count);
+                double gap = Double.MAX_VALUE;
+                for (int i = 0; i < count; i++) {
+                    Radial.Node a = ring.get(i);
+                    Radial.Node b = ring.get((i + 1) % count);
+                    gap = Math.min(gap, Math.hypot(a.x() - b.x(), a.y() - b.y()));
+                }
+                assertTrue(w <= Math.max(36, gap - 2), count + " nodes on " + radius + ": a label " + w + " wide against nodes " + gap + " apart");
                 assertTrue(w >= 36 && w <= 110);
             }
         }
     }
-
     @Test
     void cardTitlesWrapToTheirCardAtBothWidths() {
         for (int width : WIDTHS) {
@@ -107,7 +111,8 @@ class LabelFitTest {
 
     @Test
     void theTitleStripShortensTheTitleBeforeTheStatsLoseParts() {
-        List<String> titles = List.of("Status \u00b7 Path of the Hybrid", "Status \u00b7 Path", "Path");
+        // the strings TensuraHubTheme.drawFooter builds, with the title bar's brackets
+        List<String> titles = List.of("\u300a Status \u00b7 Path of the Hybrid \u300b", "\u300a Status \u00b7 Path \u300b", "\u300a Path \u300b");
         List<String> stats = List.of("Beastfolk \u00b7 6 SP \u00b7 1,028 EP \u00b7 3 days", "Beastfolk \u00b7 6 SP \u00b7 1,028 EP", "6 SP \u00b7 1,028 EP", "6 SP");
         for (int available = 80; available <= 700; available += 20) {
             LabelFit.Header h = LabelFit.header(titles, stats, available, 14, NORMAL, NORMAL);
@@ -123,9 +128,9 @@ class LabelFitTest {
     @Test
     void theRealTitleStripsAtBothWidthsHoldTheirTitleAndStats() {
         for (int width : WIDTHS) {
-            HubLayout l = layoutOf("tensura", width);
+            HubLayout l = layoutOf(width);
             int available = l.chrome().themeButton().x() - 8 - (l.frame().x() + 10);
-            LabelFit.Header h = LabelFit.header(List.of("Status \u00b7 Path of the Hybrid", "Status \u00b7 Path", "Path"),
+            LabelFit.Header h = LabelFit.header(List.of("\u300a Status \u00b7 Path of the Hybrid \u300b", "\u300a Status \u00b7 Path \u300b", "\u300a Path \u300b"),
                     List.of("Beastfolk \u00b7 6 SP \u00b7 1,028 EP \u00b7 3 days", "6 SP \u00b7 1,028 EP", "6 SP"), available, 14, s -> (int) (s.length() * 6 * 1.25f), NORMAL);
             int used = (int) (h.title().length() * 6 * 1.25f) + (h.stats().isEmpty() ? 0 : 14 + NORMAL.applyAsInt(h.stats()));
             assertTrue(used <= available, width + ": " + h + " needs " + used + " of " + available);
@@ -133,7 +138,7 @@ class LabelFitTest {
         }
     }
 
-    private static HubLayout layoutOf(String theme, int guiWidth) {
+    private static HubLayout layoutOf(int guiWidth) {
         int height = guiWidth * 9 / 16;
         return net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.client.TensuraHubLayout.of(guiWidth, height, 8, 4);
     }

@@ -108,7 +108,7 @@ final class SlotArt {
     /** The dark sweep over the icon: it covers {@code left} of the circle from twelve o'clock clockwise. One baked mask per 1/32, tinted. */
     private static void pie(GuiGraphics g, HudLayout.Box b, float left, float alpha) {
         int step = Math.max(1, Math.min(PIE_STEPS, Math.round(left * PIE_STEPS)));
-        var mask = BakedTexture.get("pie/" + step, 16, 16, (x, y) -> PieSweep.covered(x + 0.5 - 8, y + 0.5 - 8, step / (float) PIE_STEPS) ? 0xFFFFFFFF : 0);
+        var mask = BakedTexture.get(BakedTexture.Key.of("pie", step), 16, 16, (x, y) -> PieSweep.covered(x + 0.5 - 8, y + 0.5 - 8, step / (float) PIE_STEPS) ? 0xFFFFFFFF : 0);
         BakedTexture.blitTinted(g, mask, b.x() + 3, b.y() + 3, 16, 16, fade(0xB0000000, alpha));
     }
 
@@ -138,11 +138,11 @@ final class SlotArt {
         int x = b.x() + HudLayout.SLOT / 2 - RING_SIZE / 2;
         int y = b.y() + HudLayout.SLOT / 2 - RING_SIZE / 2;
         int step = Math.max(0, Math.min(RING_STEPS, Math.round(share * RING_STEPS)));
-        var all = BakedTexture.get("ring/all", RING_SIZE, RING_SIZE, (px, py) -> ringPixel(px, py, RING_DOTS));
+        var all = BakedTexture.get(BakedTexture.Key.of("ring", -1), RING_SIZE, RING_SIZE, (px, py) -> ringPixel(px, py, RING_DOTS));
         BakedTexture.blitTinted(g, all, x, y, RING_SIZE, RING_SIZE, fade(0x40601020, alpha));
         if (step > 0) {
             int lit = step * RING_DOTS / RING_STEPS;
-            var part = BakedTexture.get("ring/" + step, RING_SIZE, RING_SIZE, (px, py) -> ringPixel(px, py, lit));
+            var part = BakedTexture.get(BakedTexture.Key.of("ring", step), RING_SIZE, RING_SIZE, (px, py) -> ringPixel(px, py, lit));
             BakedTexture.blitTinted(g, part, x, y, RING_SIZE, RING_SIZE, fade(BLOOD, alpha));
         }
     }
