@@ -133,6 +133,9 @@ public final class SparkHandler {
         }
         PackIndex index = PackIndex.get(victim.serverLevel());
         if (PackIndex.samePack(killer, victim)) {
+            if (index.onlyByGrace(killer.getUUID(), victim.getUUID(), SpeciesConfig.leftPackGraceMinutes())) {
+                killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.grace_no_spark"));
+            }
             return false;
         }
         boolean victimTrue = PackAccess.wolf(victim).rank() == Rank.TRUE_ALPHA;
@@ -153,7 +156,12 @@ public final class SparkHandler {
         if ((killerIsAlpha ? Math.max(1, killerSparks) : 0) + taken > cap) {
             killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_capped", cap));
         }
-        PackMembers.tell(killer.server, victim.getUUID(), "supernaturalbloodlines.pack.spark_lost", killer.getGameProfile().getName());
+        if (!victimTrue) {
+            PackMembers.tell(killer.server, victim.getUUID(), "supernaturalbloodlines.pack.spark_lost", killer.getGameProfile().getName());
+        } else if (PackAccess.wolf(victim).sparks() > 1) {
+            // their own True spark stays: only the sparks stacked on it were taken
+            PackMembers.tell(killer.server, victim.getUUID(), "supernaturalbloodlines.pack.spark_lost_stacked", killer.getGameProfile().getName());
+        }
         if (victimTrue) {
             // the True spark stays: only the stacked ones went, and they are an Alpha as before
             PackAccess.setSparks(victim, 1);

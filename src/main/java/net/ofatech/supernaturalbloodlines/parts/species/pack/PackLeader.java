@@ -25,8 +25,11 @@ public final class PackLeader {
         });
     }
 
-    /** The strength this player has right now: an Alpha of the werewolves by rank and level, 0 for a Beta or Omega, -1 for anyone who is no werewolf (a Packmate). */
-    /** The strength of {@code p} for a wolf layer the caller already has (a listener is told the new state before it can be read back). */
+
+    /**
+     * The strength of {@code p} for a wolf layer the caller already has (a listener is told the new state before it can be read back):
+     * an Alpha of the werewolves by rank and level, 0 for a Beta or Omega, -1 for anyone who is no werewolf (a Packmate).
+     */
     public static int strengthOf(ServerPlayer p, net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf) {
         if (wolf.lineage() == net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.NONE) {
             return -1;

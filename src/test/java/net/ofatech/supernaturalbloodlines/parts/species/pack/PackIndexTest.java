@@ -103,12 +103,12 @@ class PackIndexTest {
     @Test
     void samePackNeedsTwoPlayersInOnePack() {
         PackIndex i = new PackIndex();
-        assertFalse(i.samePack(A, A));
-        assertFalse(i.samePack(A, B), "two strangers");
+        assertFalse(i.samePackNow(A, A));
+        assertFalse(i.samePackNow(A, B), "two strangers");
         i.join(A, M);
-        assertTrue(i.samePack(A, M) && i.samePack(M, A));
-        assertFalse(i.samePack(M, M));
-        assertFalse(i.samePack(M, B));
+        assertTrue(i.samePackNow(A, M) && i.samePackNow(M, A));
+        assertFalse(i.samePackNow(M, M));
+        assertFalse(i.samePackNow(M, B));
         assertTrue(i.isLeader(A) && !i.isLeader(M) && i.isLeader(B));
     }
 
@@ -133,16 +133,31 @@ class PackIndexTest {
     }
 
     @Test
-    void aServerStartBeginsEveryRecordedTimeAgain() {
+    void aStartMovesEveryRecordedTimeForwardByExactlyTheDowntime() {
         PackIndex i = new PackIndex();
         i.setLastSeen(A, 100);
         i.setLastSeen(B, 200);
-        i.resetLastSeen(9_000);
-        assertEquals(9_000L, i.lastSeen(A).orElseThrow());
-        assertEquals(9_000L, i.lastSeen(B).orElseThrow());
+        i.shiftLastSeen(9_000);
+        assertEquals(9_100L, i.lastSeen(A).orElseThrow());
+        assertEquals(9_200L, i.lastSeen(B).orElseThrow());
         assertTrue(i.lastSeen(C).isEmpty(), "somebody the index never saw got a time");
+        i.shiftLastSeen(0);
+        i.shiftLastSeen(-5);
+        assertEquals(9_100L, i.lastSeen(A).orElseThrow(), "a gap that is not positive moved the times");
     }
 
+    @Test
+    void theAliveTimeSurvivesASaveAndAnOldWorldHasNone() {
+        PackIndex i = new PackIndex();
+        assertEquals(0L, i.aliveAt());
+        i.setAliveAt(123_456L);
+        net.minecraft.nbt.CompoundTag tag = i.save(new net.minecraft.nbt.CompoundTag(), null);
+        assertEquals(123_456L, PackIndex.load(tag, null).aliveAt());
+        tag.remove("alive_at");
+        assertEquals(0L, PackIndex.load(tag, null).aliveAt(), "a world from before it was recorded must read as never recorded");
+        tag.putString("alive_at", "not a number");
+        assertEquals(0L, PackIndex.load(tag, null).aliveAt(), "a damaged value is no time");
+    }
     @Test
     void theNoticeThatSaysYouLostTheLeadIsNeverDroppedForRoom() {
         PackIndex i = new PackIndex();
@@ -157,32 +172,72 @@ class PackIndexTest {
     }
 
     @Test
-    void someoneWhoLeftAMomentAgoStillCountsForAKillUntilTheGraceEnds() {
+    void someoneWhoLeftByChoiceAMomentAgoStillCountsForAKillUntilTheGraceEnds() {
         long[] clock = {5_000_000L};
         PackIndex.overrideClock(() -> clock[0]);
         try {
             PackIndex i = new PackIndex();
             i.join(A, M);
-            i.leave(M);
-            assertFalse(i.samePack(A, M), "they are not in it any more");
+            i.leaveVoluntarily(M);
+            assertFalse(i.samePackNow(A, M), "they are not in it any more");
             assertTrue(i.killsInPack(M, A, 10) && i.killsInPack(A, M, 10), "leaving a moment ago must not free a kill: a lone leader matches who left them");
             assertFalse(i.killsInPack(M, A, 0), "the switch at 0 is off");
             assertFalse(i.killsInPack(M, B, 10), "a stranger is no member");
             assertFalse(i.killsInPack(M, M, 10), "nobody is their own pack mate");
+            assertTrue(i.onlyByGrace(M, A, 10) && !i.onlyByGrace(M, A, 0));
             clock[0] += 10 * 60_000L - 1;
             assertTrue(i.killsInPack(M, A, 10), "ten minutes minus a millisecond");
             clock[0] += 1;
             assertFalse(i.killsInPack(M, A, 10), "ten minutes");
-            // kicked counts like leaving, and joining again clears it
-            clock[0] = 5_000_000L;
-            i.join(A, M);
-            i.kick(M);
-            assertTrue(i.killsInPack(A, M, 10), "a kick frees a kill too");
-            i.join(B, M);
-            assertFalse(i.killsInPack(M, A, 10), "somebody who joined another pack is no member of the old one");
-            assertTrue(i.killsInPack(M, B, 10));
         } finally {
             PackIndex.overrideClock(null);
         }
     }
-}
+
+    @Test
+    void aKickAnUnchosenLeaveAndADissolvedPackGetNoGrace() {
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            PackIndex i = new PackIndex();
+            i.join(A, M);
+            i.kick(M);
+            assertFalse(i.killsInPack(A, M, 10), "a kicked member is an outsider at once");
+            i.join(A, M);
+            i.leave(M); // the other leaves (a steal, a state change): not a choice
+            assertFalse(i.killsInPack(A, M, 10));
+            i.join(A, M);
+            i.join(A, B);
+            i.dissolve(A);
+            assertFalse(i.killsInPack(M, B, 10), "a dissolved pack is no pack to be held to");
+            assertFalse(i.killsInPack(M, A, 10));
+        } finally {
+            PackIndex.overrideClock(null);
+        }
+    }
+
+    @Test
+    void theGraceSurvivesJoiningAnotherPackAndAChangeOfLeaderOfTheOldOne() {
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            PackIndex i = new PackIndex();
+            i.join(A, M);
+            i.join(A, B);
+            i.leaveVoluntarily(M);
+            // leaves A, joins a friend's pack C: a kill on A's pack is still a kill inside it
+            i.join(C, M);
+            assertTrue(i.killsInPack(M, A, 10) && i.killsInPack(M, B, 10), "joining a friend's pack freed the kill on the old one");
+            // the old pack changes leader meanwhile: A steps down for B
+            i.promote(A, B);
+            assertTrue(i.killsInPack(M, B, 10), "the new leader of the old pack is no longer found");
+            assertTrue(i.killsInPack(M, A, 10), "the old leader, now a member, is no longer found");
+            // and the friend's pack counts as well, for as long as they are in it
+            assertTrue(i.killsInPack(M, C, 10));
+            clock[0] += 11 * 60_000L;
+            assertFalse(i.killsInPack(M, B, 10), "the grace never ended");
+            assertTrue(i.killsInPack(M, C, 10), "the pack they are in now is theirs for good");
+        } finally {
+            PackIndex.overrideClock(null);
+        }
+    }}

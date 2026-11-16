@@ -812,7 +812,7 @@ public final class PackReviewGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void anOnlineLeadersTimeIsRefreshedAndAServerStartBeginsEveryTimeAgain(GameTestHelper helper) {
+    public static void everyOnlinePackMemberIsRenewedEveryHourAndTheAliveTimeIsWrittenOncePerMinute(GameTestHelper helper) {
         ServerPlayer leader = alpha(helper, 6, 1.5);
         ServerPlayer mate = wolf(helper, Rank.BETA, leader.getUUID(), 1, 2.5);
         online(leader, mate);
@@ -822,20 +822,74 @@ public final class PackReviewGameTests {
         try {
             helper.assertTrue(index.inPack(leader.getUUID()), "the pack was not indexed");
             index.setLastSeen(leader.getUUID(), now - 2 * PackAbsence.REFRESH_MILLIS);
+            index.setLastSeen(mate.getUUID(), now - 2 * PackAbsence.REFRESH_MILLIS);
             PackAbsence.check(server, now);
             helper.assertTrue(index.lastSeen(leader.getUUID()).orElse(0L) == now, "a crash left an online leader looking away: " + index.lastSeen(leader.getUUID()));
+            helper.assertTrue(index.lastSeen(mate.getUUID()).orElse(0L) == now, "a crash left an online member looking away: " + index.lastSeen(mate.getUUID()));
 
-            // a server that was off for ten days is no absence
-            UUID gone = UUID.randomUUID();
-            index.setLastSeen(gone, now - 10 * PackAbsence.DAY_MILLIS);
-            index.resetLastSeen(now);
-            helper.assertTrue(index.lastSeen(gone).orElse(0L) == now, "the start of the server did not begin the time again");
+            // "the server is running" is written at most once a minute
+            index.setAliveAt(0);
+            PackAbsence.check(server, now);
+            helper.assertTrue(index.aliveAt() == now, "the alive time was not written");
+            PackAbsence.check(server, now + 30_000L);
+            helper.assertTrue(index.aliveAt() == now, "it was written twice within a minute");
+            PackAbsence.check(server, now + PackAbsence.ALIVE_EVERY_MILLIS);
+            helper.assertTrue(index.aliveAt() == now + PackAbsence.ALIVE_EVERY_MILLIS, "it was not written after a minute");
         } finally {
             clean(helper, leader, mate);
         }
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aRestartForgivesOnlyTheTimeTheServerWasOffAndNeverEraseAnAbsence(GameTestHelper helper) {
+        ServerPlayer gone = alpha(helper, 6, 1.5);
+        ServerPlayer next = alpha(helper, 3, 2.5);
+        online(next);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        long now = System.currentTimeMillis();
+        try {
+            index.join(gone.getUUID(), next.getUUID());
+            index.setStrength(next.getUUID(), 1003);
+            // 8 days away, and the server was off for the last 3 of them: 5 days of absence are left, not 8 and not 0
+            index.setLastSeen(gone.getUUID(), now - 8 * PackAbsence.DAY_MILLIS);
+            index.setAliveAt(now - 3 * PackAbsence.DAY_MILLIS);
+            PackAbsence.onStarted(server, now);
+            helper.assertTrue(index.lastSeen(gone.getUUID()).orElse(0L) == now - 5 * PackAbsence.DAY_MILLIS, "downtime was not forgiven exactly: " + (now - index.lastSeen(gone.getUUID()).orElse(0L)));
+            helper.assertTrue(index.aliveAt() == now, "the start did not record that the server is running");
+            helper.assertTrue(PackAbsence.check(server, now) == 0 && index.isLeader(gone.getUUID()), "downtime counted as an absence");
+
+            // a restart a minute after the last sign of life must not save somebody who was away for 8 days
+            index.setLastSeen(gone.getUUID(), now - 8 * PackAbsence.DAY_MILLIS);
+            index.setAliveAt(now - 60_000L);
+            PackAbsence.onStarted(server, now);
+            helper.assertTrue(PackAbsence.check(server, now) == 1 && index.isLeader(next.getUUID()), "a quick restart wiped an 8 day absence");
+        } finally {
+            index.leave(gone.getUUID());
+            index.takeNotices(gone.getUUID());
+            clean(helper, gone, next);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aWorldThatNeverRecordedItIsNotShifted(GameTestHelper helper) {
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        long now = System.currentTimeMillis();
+        UUID some = UUID.randomUUID();
+        try {
+            index.setLastSeen(some, now - 8 * PackAbsence.DAY_MILLIS);
+            index.setAliveAt(0);
+            PackAbsence.onStarted(server, now);
+            helper.assertTrue(index.lastSeen(some).orElse(0L) == now - 8 * PackAbsence.DAY_MILLIS, "an old world was shifted by a gap nobody knows");
+            helper.assertTrue(index.aliveAt() == now, "the start did not begin recording");
+        } finally {
+            index.setLastSeen(some, 0);
+        }
+        helper.succeed();
+    }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void lastSeenIsOnlyKeptForPackMembers(GameTestHelper helper) {
         ServerPlayer leader = alpha(helper, 6, 1.5);
@@ -988,6 +1042,117 @@ public final class PackReviewGameTests {
             helper.assertTrue(PackCommand.heal(healer, patient) == null && healer.received("supernaturalbloodlines.pack.spark_reset"), "the heal said nothing about the stacked sparks");
         } finally {
             clean(helper, stacked, healer, patient);
+        }
+        helper.succeed();
+    }
+
+    // ---- the grace, and what is said when it makes a kill nothing ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aKillerWhoseKillIsIgnoredByTheGraceIsToldAndAPlainInPackKillIsNotCommented(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        TalkingDuelist second = talkingAlpha(helper, 3, 2.5);
+        TalkingDuelist other = talkingAlpha(helper, 3, 3.5);
+        online(leader, second, other);
+        try {
+            helper.assertTrue(join(leader, second) && join(leader, other), "the pack could not be built");
+            kill(other, leader); // inside the pack, no grace needed: nothing is said
+            helper.assertTrue(!other.received("supernaturalbloodlines.pack.grace_no_spark"), "an ordinary in-pack kill was commented");
+            helper.assertTrue(PackCommand.leave(second) == null, "the second Alpha could not leave");
+            kill(second, leader);
+            helper.assertTrue(second.received("supernaturalbloodlines.pack.grace_no_spark"), "the one who left a moment ago was not told why there is no spark: " + second.keys());
+            helper.assertTrue(state(leader).rank() == Rank.ALPHA, "leaving first gained the spark");
+        } finally {
+            clean(helper, leader, second, other);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aKickedMemberGetsNoGraceAndTheLeaderCanBeRobbedAtOnce(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        online(leader, second);
+        try {
+            helper.assertTrue(join(leader, second), "the second Alpha could not join");
+            helper.assertTrue(PackMembers.remove(helper.getLevel().getServer(), second.getUUID(), "supernaturalbloodlines.pack.kicked", "Leader"), "the kick failed");
+            kill(second, leader);
+            helper.assertTrue(state(leader).rank() == Rank.OMEGA && state(second).sparks() == 2, "a kicked member got a grace: " + state(leader).rank() + " " + state(second).sparks());
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void leavingAndJoiningAFriendsPackDoesNotFreeAKillOnTheOldOne(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        ServerPlayer friend = alpha(helper, 4, 3.5);
+        online(leader, second, friend);
+        try {
+            helper.assertTrue(join(leader, second), "the second Alpha could not join");
+            helper.assertTrue(PackCommand.leave(second) == null && join(friend, second), "the second Alpha could not move to the friend's pack");
+            kill(second, leader);
+            helper.assertTrue(state(leader).rank() == Rank.ALPHA && state(second).sparks() == 1, "joining another pack freed the kill on the old one");
+        } finally {
+            clean(helper, leader, second, friend);
+        }
+        helper.succeed();
+    }
+
+    // ---- True Alpha victims, and the cure line ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTrueAlphaVictimIsToldOnlyAboutTheSparksStackedOnTheirs(GameTestHelper helper) {
+        TalkingDuelist killer = talkingAlpha(helper, 5, 1.5);
+        TalkingDuelist stacked = talkingAlpha(helper, 5, 2.5);
+        TalkingDuelist plain = talkingAlpha(helper, 5, 3.5);
+        online(killer, stacked, plain);
+        try {
+            for (TalkingDuelist t : new TalkingDuelist[] {stacked, plain}) {
+                BloodlineAccess.set(t, BloodlineAccess.get(t).toBuilder().wolf(state(t).toBuilder().rank(Rank.TRUE_ALPHA).build()).build());
+            }
+            PackAccess.setSparks(stacked, 2);
+            kill(killer, stacked);
+            helper.assertTrue(stacked.received("supernaturalbloodlines.pack.spark_lost_stacked") && !stacked.received("supernaturalbloodlines.pack.spark_lost"),
+                    "the True Alpha with a stacked spark was told the wrong thing: " + stacked.keys());
+            kill(killer, plain);
+            helper.assertTrue(!plain.received("supernaturalbloodlines.pack.spark_lost") && !plain.received("supernaturalbloodlines.pack.spark_lost_stacked"),
+                    "a True Alpha with nothing stacked was told a spark was taken: " + plain.keys());
+        } finally {
+            clean(helper, killer, stacked, plain);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aCureTellsTheAlphaTheirStackedSparksAreGoneExactlyOnce(GameTestHelper helper) {
+        TalkingDuelist stacked = talkingAlpha(helper, 5, 1.5);
+        online(stacked);
+        try {
+            PackAccess.setSparks(stacked, 3);
+            // leaving the faction with the sparks still on the wolf layer: the listener and passOn both know them
+            VampirismAPI.factionPlayerHandler(stacked).leaveFaction(false);
+            helper.assertTrue(stacked.count("supernaturalbloodlines.pack.spark_reset") == 1, "the cure said it " + stacked.count("supernaturalbloodlines.pack.spark_reset") + " times: " + stacked.keys());
+        } finally {
+            clean(helper, stacked);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theCuresOwnPathClearsTheLayerFirstAndStillTellsExactlyOnce(GameTestHelper helper) {
+        TalkingDuelist stacked = talkingAlpha(helper, 5, 1.5);
+        online(stacked);
+        try {
+            PackAccess.setSparks(stacked, 3);
+            // what the Cure does: the wolf layer is cleared first, the faction is left after
+            BloodlineAccess.set(stacked, BloodlineAccess.get(stacked).toBuilder().wolf(WolfState.NONE).build());
+            VampirismAPI.factionPlayerHandler(stacked).leaveFaction(false);
+            helper.assertTrue(stacked.count("supernaturalbloodlines.pack.spark_reset") == 1, "the cure said it " + stacked.count("supernaturalbloodlines.pack.spark_reset") + " times: " + stacked.keys());
+        } finally {
+            clean(helper, stacked);
         }
         helper.succeed();
     }

@@ -50,6 +50,7 @@ public final class PackIndex extends SavedData {
     private static final String NOTICES = "notices";
     private static final String SPARKS = "sparks";
     private static final String LAST_SEEN = "last_seen";
+    private static final String ALIVE_AT = "alive_at";
     private static final String KEY = "key";
     private static final String VALUE = "value";
 
@@ -75,8 +76,10 @@ public final class PackIndex extends SavedData {
     private final Map<UUID, List<String[]>> notices = new HashMap<>();
     // the spark count each Alpha last had while online: a pack's offline Alphas are shown with it, and the strongest is picked by it
     private final Map<UUID, Integer> sparks = new HashMap<>();
-    // when (wall clock, milliseconds) a member of a pack last logged out (only members are recorded), for the leader who stays away too long
+    // when (wall clock, milliseconds) a member of a pack was last seen: logged out, or renewed every hour while online (only members are recorded)
     private final Map<UUID, Long> lastSeen = new HashMap<>();
+    // the last wall-clock time the server was known to be running (0: never recorded): the gap to the next start is downtime, not an absence
+    private long aliveAt;
 
     /** The wall clock the grace windows and last-seen times use; a test pins it. */
     private static volatile java.util.function.LongSupplier clock = System::currentTimeMillis;
@@ -223,7 +226,7 @@ public final class PackIndex extends SavedData {
     }
 
     /** Both are in the same pack (not the same player). */
-    public boolean samePack(UUID a, UUID b) {
+    public boolean samePackNow(UUID a, UUID b) {
         return !a.equals(b) && inPack(a) && leaderOf(a).equals(leaderOf(b));
     }
 
@@ -356,32 +359,64 @@ public final class PackIndex extends SavedData {
         return Optional.ofNullable(lastSeen.get(id));
     }
 
-    /** After a start of the server: nobody was away while it was off, so every recorded time begins again from {@code millis}. */
-    public void resetLastSeen(long millis) {
-        if (!lastSeen.isEmpty()) {
-            lastSeen.replaceAll((id, t) -> millis);
+    /** The last time the server was known to be running, or 0 for a world that never recorded it. */
+    public long aliveAt() {
+        return aliveAt;
+    }
+
+    public void setAliveAt(long millis) {
+        if (millis != aliveAt) {
+            aliveAt = millis;
             setDirty();
         }
     }
 
-    /** Whether {@code a} and {@code b} count as one pack for what a kill does: in it now, or left it within the grace window. */
+    /** Every recorded time moves forward by {@code millis}: the server was off for that long, and nobody was away in it. */
+    public void shiftLastSeen(long millis) {
+        if (millis > 0 && !lastSeen.isEmpty()) {
+            lastSeen.replaceAll((id, t) -> t + millis);
+            setDirty();
+        }
+    }
+
+    /**
+     * Whether {@code a} and {@code b} count as one pack for what a kill does: their packs are the same now, or one of them left a
+     * pack of the other's (by {@code /pack leave}, within the grace window) whatever pack either of them is in since. A kicked
+     * member and a dissolved pack get no grace.
+     */
     public boolean killsInPack(UUID a, UUID b, int graceMinutes) {
         if (a.equals(b)) {
             return false;
         }
-        return packKey(a, graceMinutes).equals(packKey(b, graceMinutes));
+        Set<UUID> kb = packKeys(b, graceMinutes);
+        return packKeys(a, graceMinutes).stream().anyMatch(kb::contains);
     }
 
-    /** The leader of the pack {@code p} is in, or was in a moment ago; a player of no pack is their own key (so a leader left alone still matches who left them). */
-    private UUID packKey(UUID p, int graceMinutes) {
-        if (inPack(p)) {
-            return leaderOf(p);
-        }
+    /**
+     * The packs {@code p} counts as being in: the one they are in now (a player of no pack is their own key, so a leader left alone
+     * still matches who left them), and the one they left a moment ago, found again through its old leader so that a change of
+     * leader or of pack since does not lose it.
+     */
+    private Set<UUID> packKeys(UUID p, int graceMinutes) {
+        Set<UUID> keys = new HashSet<>();
+        keys.add(inPack(p) ? leaderOf(p) : p);
         Left l = leftAt.get(p);
-        return graceMinutes > 0 && l != null && now() - l.at < graceMinutes * 60_000L ? l.leader : p;
+        if (l != null) {
+            if (graceMinutes > 0 && now() - l.at < graceMinutes * 60_000L) {
+                keys.add(leaderOf(l.leader));
+            } else if (now() - l.at >= 24 * 60 * 60_000L) {
+                leftAt.remove(p);
+            }
+        }
+        return keys;
     }
 
-    /** {@link #killsInPack} for two players in a world, with the configured grace. */
+    /** True when the grace (not the pack they are in now) is what makes {@code a} and {@code b} count as one pack. */
+    public boolean onlyByGrace(UUID a, UUID b, int graceMinutes) {
+        return killsInPack(a, b, graceMinutes) && !killsInPack(a, b, 0);
+    }
+
+    /** {@link #killsInPack} for two players in a world, with the configured grace: what a kill between them does. */
     public static boolean samePack(net.minecraft.world.entity.Entity a, net.minecraft.world.entity.Entity b) {
         return a instanceof ServerPlayer x && b instanceof ServerPlayer y
                 && get(x.serverLevel()).killsInPack(x.getUUID(), y.getUUID(), net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.leftPackGraceMinutes());
@@ -432,7 +467,6 @@ public final class PackIndex extends SavedData {
             alphaOf.put(own, alpha);
         }
         alphaOf.put(beta, alpha);
-        leftAt.remove(beta);
         emissaryOf.remove(beta); // a leader who joins another pack no longer has an Emissary of their own
         allies.remove(beta);
         allies.values().forEach(s -> s.remove(beta));
@@ -473,7 +507,6 @@ public final class PackIndex extends SavedData {
         if (was == null) {
             return false;
         }
-        leftAt.put(member, new Left(was, now()));
         emissaryOf.values().removeIf(member::equals);
         dissolved.add(member);
         setDirty();
@@ -512,12 +545,22 @@ public final class PackIndex extends SavedData {
     }
 
     public void leave(UUID beta) {
-        UUID was = alphaOf.remove(beta);
-        if (was != null) {
-            leftAt.put(beta, new Left(was, now()));
+        if (alphaOf.remove(beta) != null) {
             emissaryOf.values().removeIf(beta::equals);
             setDirty();
         }
+    }
+
+    /**
+     * A member leaves by their own choice ({@code /pack leave}): like {@link #leave}, and the pack they left is remembered for the
+     * grace window of what a kill does. Being kicked, or the pack dissolving, gets no grace: those are outsiders at once.
+     */
+    public void leaveVoluntarily(UUID member) {
+        UUID was = alphaOf.get(member);
+        if (was != null) {
+            leftAt.put(member, new Left(was, now()));
+        }
+        leave(member);
     }
 
     /**
@@ -634,6 +677,7 @@ public final class PackIndex extends SavedData {
                 skipped(LAST_SEEN, bad);
             }
         }
+        i.aliveAt = tag.contains(ALIVE_AT, Tag.TAG_LONG) ? Math.max(0, tag.getLong(ALIVE_AT)) : 0;
         for (Tag t : tag.getList(STRENGTHS, Tag.TAG_COMPOUND)) {
             try {
                 CompoundTag e = (CompoundTag) t;
@@ -734,6 +778,7 @@ public final class PackIndex extends SavedData {
             seen.add(e);
         });
         tag.put(LAST_SEEN, seen);
+        tag.putLong(ALIVE_AT, aliveAt);
         ListTag strong = new ListTag();
         strengths.forEach((id, s) -> {
             CompoundTag e = new CompoundTag();

@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
@@ -45,7 +46,7 @@ class PackUiTest {
             assertEquals("Remove %s from the pack", lang.get("supernaturalbloodlines.hub.pack.kick_for").getAsString());
             assertTrue(lang.get("supernaturalbloodlines.hub.pack.ally_end_for").getAsString().contains("%s"));
             assertEquals("They leave the pack. A werewolf Beta becomes an Omega.", lang.get("supernaturalbloodlines.hub.pack.kick_body").getAsString());
-            for (String key : new String[] {"pack.absent_leader", "pack.absent_you", "pack.absent_lead_now", "pack.spark_gained", "pack.spark_capped", "pack.spark_lost", "pack.spark_reset", "pack.duel.off.died", "hub.pack.duel_accept_for", "hub.pack.duel_decline_for", "hub.pack.duel_asked", "pack.party_refused", "pack.emissary_not_member", "pack.duel_cooldown", "pack.duel.off.timeout", "pack.duel.off.declined", "hub.pack.challenge_btn", "hub.pack.duel_accept", "hub.pack.duel_decline", "hub.bloodline.sparks", "pack.dissolved", "pack.now_follows", "pack.invite_merge", "pack.left_party", "pack.kicked"}) {
+            for (String key : new String[] {"pack.grace_no_spark", "pack.spark_lost_stacked", "pack.duel.forfeit", "pack.absent_leader", "pack.absent_you", "pack.absent_lead_now", "pack.spark_gained", "pack.spark_capped", "pack.spark_lost", "pack.spark_reset", "pack.duel.off.died", "hub.pack.duel_accept_for", "hub.pack.duel_decline_for", "hub.pack.duel_asked", "pack.party_refused", "pack.emissary_not_member", "pack.duel_cooldown", "pack.duel.off.timeout", "pack.duel.off.declined", "hub.pack.challenge_btn", "hub.pack.duel_accept", "hub.pack.duel_decline", "hub.bloodline.sparks", "pack.dissolved", "pack.now_follows", "pack.invite_merge", "pack.left_party", "pack.kicked"}) {
                 assertTrue(lang.has("supernaturalbloodlines." + key), key);
             }
         }
@@ -66,5 +67,21 @@ class PackUiTest {
         assertEquals(110, BookPackPage.nameRoom(200, 80));
         assertEquals(16, BookPackPage.nameRoom(60, 80), "a narrow row still shows a few letters of the name");
         assertEquals(16, BookPackPage.nameRoom(0, 200));
+    }
+
+    @Test
+    void declineSitsBesideAcceptWhenItFitsAndOnTheNextLineWhenItDoesNot() {
+        assertEquals(68, BookPackPage.declineX(0, 60, 40, 200), "8 pixels after Accept");
+        assertEquals(-1, BookPackPage.declineX(0, 100, 60, 150), "108 + 60 does not fit in 150");
+        assertEquals(108, BookPackPage.declineX(0, 100, 42, 150), "108 + 42 fits exactly");
+        assertEquals(-1, BookPackPage.declineX(20, 100, 43, 150), "the x of the page counts");
+    }
+
+    @Test
+    void aRowTooNarrowForTheNameAndTheWholeRankPutsTheRankOnItsOwnLine() {
+        assertFalse(BookPackPage.rankOnOwnLine(200, 50), "plenty of room");
+        assertFalse(BookPackPage.rankOnOwnLine(100, 66), "24 pixels left for the name is the least");
+        assertTrue(BookPackPage.rankOnOwnLine(100, 67), "23 left is too few");
+        assertTrue(BookPackPage.rankOnOwnLine(60, 60), "a rank as wide as the row");
     }
 }

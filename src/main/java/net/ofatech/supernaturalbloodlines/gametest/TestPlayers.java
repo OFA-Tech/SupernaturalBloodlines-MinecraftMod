@@ -122,6 +122,11 @@ public final class TestPlayers {
             setLevel(level);
         }
 
+        /** How many times a message with this key came. */
+        public int count(String key) {
+            return (int) keys.stream().filter(key::equals).count();
+        }
+
         public boolean received(String key) {
             return keys.contains(key);
         }

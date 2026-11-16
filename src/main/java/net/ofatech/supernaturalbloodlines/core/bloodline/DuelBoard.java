@@ -79,6 +79,12 @@ public final class DuelBoard {
     // challenges that ran out while somebody was asking for a new one: PackDuel.check still tells their two players
     private final List<Duel> expiredBacklog = new ArrayList<>();
 
+    private record Hit(UUID attacker, long at) {
+    }
+
+    // the last blow each duelist took from their opponent while the duel was on (the vanilla "last attacker" is forgotten after 5 seconds)
+    private final Map<UUID, Hit> hits = new HashMap<>();
+
     private static String pair(UUID a, UUID b) {
         return a.compareTo(b) <= 0 ? a + "|" + b : b + "|" + a;
     }
@@ -145,10 +151,27 @@ public final class DuelBoard {
         Optional<Duel> d = on(loser);
         d.ifPresent(x -> {
             duels.remove(x);
+            forget(x);
             pairCooldown.put(pair(x.challenger, x.leader), now + PAIR_COOLDOWN_TICKS);
             guards.put(loser, new Guard(x.other(loser), now + GUARD_TICKS));
         });
         return d.map(x -> new Result(x.other(loser), loser, x.challenger.equals(x.other(loser))));
+    }
+
+    /** A blow from {@code attacker} on {@code victim}: kept (for the combat credit of what follows) only if they are each other's opponent in a duel that is on. */
+    public void recordHit(UUID victim, UUID attacker, long now) {
+        on(victim).filter(d -> d.other(victim).equals(attacker)).ifPresent(d -> hits.put(victim, new Hit(attacker, now)));
+    }
+
+    /** Whether {@code attacker} hit {@code victim} within the last {@link #COMBAT_CREDIT_TICKS}, while this duel was on. */
+    public boolean hasCredit(UUID victim, UUID attacker, long now) {
+        Hit h = hits.get(victim);
+        return h != null && h.attacker.equals(attacker) && now - h.at <= COMBAT_CREDIT_TICKS;
+    }
+
+    /** The two cannot duel again for {@link #PAIR_COOLDOWN_TICKS}: used when one of them walked out of a duel that was on. */
+    public void bar(UUID a, UUID b, long now) {
+        pairCooldown.put(pair(a, b), now + PAIR_COOLDOWN_TICKS);
     }
 
     /** Whether a hit from {@code attacker} on {@code victim} is stopped: the victim just lost to them. */
@@ -168,6 +191,7 @@ public final class DuelBoard {
     public List<Duel> cancelInvolving(UUID player) {
         List<Duel> gone = duels.stream().filter(d -> d.involves(player)).toList();
         duels.removeAll(gone);
+        gone.forEach(this::forget);
         return gone;
     }
 
@@ -182,9 +206,15 @@ public final class DuelBoard {
         return gone;
     }
 
+    private void forget(Duel d) {
+        hits.remove(d.challenger);
+        hits.remove(d.leader);
+    }
+
     private List<Duel> sweep(long now) {
         List<Duel> gone = duels.stream().filter(d -> d.expires < now).toList();
         duels.removeAll(gone);
+        gone.forEach(this::forget);
         for (Duel d : gone) {
             if (d.phase == Phase.ASKED) {
                 retryCooldown.put(ordered(d.challenger, d.leader), now + RETRY_COOLDOWN_TICKS);
@@ -210,6 +240,7 @@ public final class DuelBoard {
         pairCooldown.clear();
         retryCooldown.clear();
         guards.clear();
+        hits.clear();
         expiredBacklog.clear();
     }
 }

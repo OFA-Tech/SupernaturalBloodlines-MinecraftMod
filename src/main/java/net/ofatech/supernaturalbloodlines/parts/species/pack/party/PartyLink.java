@@ -28,6 +28,8 @@ public final class PartyLink {
     public static final String MOD_ID = "openpartiesandclaims";
     private static final int PERIOD = 200;
     private static volatile PartyBackend backend;
+    // owners whose party refused a removal: logged once, until it works again
+    private static final java.util.Set<UUID> FAILED_OWNERS = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     private PartyLink() {
     }
@@ -87,9 +89,23 @@ public final class PartyLink {
                 }
             }
             if (allOut) {
+                FAILED_OWNERS.remove(owner);
                 index.forgetParty(owner); // a failed removal keeps the record, so the next pass tries again
+            } else {
+                logFailed(owner);
             }
         }
+    }
+
+    private static void logFailed(UUID owner) {
+        if (FAILED_OWNERS.add(owner)) {
+            net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("Open Parties and Claims did not let a pack member out of the party of {}; the link keeps its record and tries again at every pass", owner);
+        }
+    }
+
+    /** For tests: how many owners have a failed removal on record (each is logged once). */
+    public static int failedOwners() {
+        return FAILED_OWNERS.size();
     }
 
     public static void syncAll(MinecraftServer server) {
@@ -132,8 +148,10 @@ public final class PartyLink {
                 allOut &= b.remove(server, owner, id);
             }
             if (!allOut) {
+                logFailed(owner);
                 return; // the old party still holds our members: nothing is forgotten, and the next pass tries again
             }
+            FAILED_OWNERS.remove(owner);
             index.forgetParty(owner);
         }
         if (plan.create()) {

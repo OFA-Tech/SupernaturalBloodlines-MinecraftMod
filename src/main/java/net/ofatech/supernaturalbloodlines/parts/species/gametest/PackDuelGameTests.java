@@ -108,6 +108,15 @@ public final class PackDuelGameTests {
         return e;
     }
 
+    private static WolfState state(ServerPlayer p) {
+        return BloodlineAccess.get(p).wolf();
+    }
+
+    /** A blow from {@code attacker} on {@code victim}: what the board keeps as the combat credit of whatever comes next. */
+    private static void hit(ServerPlayer attacker, ServerPlayer victim) {
+        NeoForge.EVENT_BUS.post(new LivingIncomingDamageEvent(victim, new net.neoforged.neoforge.common.damagesource.DamageContainer(attacker.damageSources().playerAttack(attacker), 1f)));
+    }
+
     private static String id(ServerPlayer p) {
         return p.getUUID().toString();
     }
@@ -176,7 +185,7 @@ public final class PackDuelGameTests {
             helper.assertTrue(join(leader, second), "the second Alpha could not join");
             // the loser walks into lava: no totem of a duel, it is the defeat all the same
             helper.assertTrue(start(second, leader), "the duel did not start");
-            second.setLastHurtByMob(leader); // the leader hit them a moment ago: lava finishes what they started
+            hit(leader, second); // the leader hit them a moment ago: lava finishes what they started
             LivingDeathEvent lava = new LivingDeathEvent(second, second.damageSources().lava());
             NeoForge.EVENT_BUS.post(lava);
             helper.assertTrue(lava.isCanceled() && second.getHealth() == 1f, "the challenger escaped the defeat by dying to lava: " + second.getHealth());
@@ -195,7 +204,7 @@ public final class PackDuelGameTests {
         PackIndex index = PackIndex.get(helper.getLevel());
         try {
             helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
-            leader.setLastHurtByMob(second);
+            hit(second, leader);
             LivingDeathEvent fall = new LivingDeathEvent(leader, leader.damageSources().fall());
             NeoForge.EVENT_BUS.post(fall);
             helper.assertTrue(fall.isCanceled() && leader.getHealth() == 1f, "the leader escaped the defeat by falling");
@@ -273,11 +282,10 @@ public final class PackDuelGameTests {
             helper.assertTrue(leader.received(OFF + "timeout") && second.received(OFF + "timeout"), "the timeout was not told: " + leader.keys() + " " + second.keys() + " board " + PackDuel.board().all().size());
             PackDuel.reset();
 
-            // the real logout event
-            helper.assertTrue(start(second, leader), "the duel did not start");
+            // the real logout event: a challenge nobody accepted yet is just called off
+            helper.assertTrue(PackDuel.challenge(second, id(leader)) == null, "the challenge was refused");
             NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(second));
-            helper.assertTrue(PackDuel.board().all().isEmpty() && !finish(human, second).isCanceled(), "the duel survived a logout");
-            helper.assertTrue(leader.received(OFF + "logout"), "the one who stayed was not told");
+            helper.assertTrue(PackDuel.board().all().isEmpty() && leader.received(OFF + "logout"), "the challenge survived a logout, or the one who stayed was not told");
             PackDuel.reset();
 
             // leaving the pack
@@ -489,18 +497,16 @@ public final class PackDuelGameTests {
             helper.assertTrue(join(leader, second), "the second Alpha could not join");
             helper.assertTrue(start(second, leader), "the duel did not start");
             // nobody has hit anybody: lava is a death, not a way to have the duel turned into a defeat and a life saved
-            second.setLastHurtByMob(null);
             LivingDeathEvent lava = new LivingDeathEvent(second, second.damageSources().lava());
             NeoForge.EVENT_BUS.post(lava);
             helper.assertTrue(!lava.isCanceled(), "a death nobody had caused was turned into a defeat");
             helper.assertTrue(PackDuel.board().all().isEmpty() && index.isLeader(leader.getUUID()), "the duel went on or the lead moved");
             helper.assertTrue(leader.received(OFF + "died") && second.received(OFF + "died"), "they were not told why it is off: " + leader.keys());
 
-            // somebody else hit them long ago: the credit has run out
+            // a blow from long ago: the credit has run out
             PackDuel.reset();
             helper.assertTrue(start(second, leader), "the second duel did not start (a settled pair is barred)");
-            second.setLastHurtByMob(leader);
-            second.tickCount += (int) DuelBoard.COMBAT_CREDIT_TICKS + 5;
+            PackDuel.board().recordHit(second.getUUID(), leader.getUUID(), helper.getLevel().getGameTime() - DuelBoard.COMBAT_CREDIT_TICKS - 5);
             LivingDeathEvent late = new LivingDeathEvent(second, second.damageSources().fall());
             NeoForge.EVENT_BUS.post(late);
             helper.assertTrue(!late.isCanceled(), "a hit from a minute ago still counted");
@@ -510,7 +516,7 @@ public final class PackDuelGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
+    @GameTest(template = "tall", templateNamespace = NS)
     public static void aDefeatByTheWorldWithCreditGivesFireResistanceAndAWayOutOfTheLava(GameTestHelper helper) {
         ServerPlayer leader = alpha(helper, 6, 1.5);
         ServerPlayer second = alpha(helper, 3, 2.5);
@@ -519,15 +525,21 @@ public final class PackDuelGameTests {
         BlockPos lava = new BlockPos(6, 1, 4);
         try {
             helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
+            // a floor to stand on around the lava (the test box has none we can count on)
+            for (int fx = 4; fx <= 8; fx++) {
+                for (int fz = 2; fz <= 6; fz++) {
+                    helper.setBlock(new BlockPos(fx, 0, fz), Blocks.STONE);
+                }
+            }
             helper.setBlock(lava, Blocks.LAVA);
-            second.setLastHurtByMob(leader);
+            hit(leader, second);
             LivingDeathEvent e = new LivingDeathEvent(second, second.damageSources().lava());
             NeoForge.EVENT_BUS.post(e);
             helper.assertTrue(e.isCanceled() && second.getHealth() == 1f, "the defeat was not turned into 1 HP");
             helper.assertTrue(second.hasEffect(MobEffects.FIRE_RESISTANCE), "no Fire Resistance after a defeat by the world");
             helper.assertTrue(index.isLeader(leader.getUUID()), "the leader did not win");
             // the way out: the nearest block to stand on is no lava and has a solid block under it
-            BlockPos safe = PackDuel.safeSpot(helper.getLevel(), helper.absolutePos(lava));
+            BlockPos safe = PackDuel.safeSpot(helper.getLevel(), helper.absolutePos(lava), second);
             helper.assertTrue(safe != null && !safe.equals(helper.absolutePos(lava)) && helper.getLevel().getFluidState(safe).isEmpty()
                     && helper.getLevel().getFluidState(safe.below()).isEmpty() && !helper.getLevel().getBlockState(safe.below()).isAir(), "no safe spot near the lava: " + safe);
         } finally {
@@ -582,6 +594,140 @@ public final class PackDuelGameTests {
             helper.assertTrue(join(leader, second) && start(second, leader) && !PackDuel.board().all().isEmpty(), "the duel did not start");
             PackDuel.onStopped();
             helper.assertTrue(PackDuel.board().all().isEmpty(), "a duel survived the stop of the world");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theVoidIsADeathWhoeverPushed(GameTestHelper helper) {
+        TalkingDuelist leader = talker(helper, 6, 1.5);
+        TalkingDuelist second = talker(helper, 3, 2.5);
+        online(leader, second);
+        try {
+            helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
+            hit(leader, second); // credit from the leader, all the same: the void is nobody's win
+            LivingDeathEvent e = new LivingDeathEvent(second, second.damageSources().fellOutOfWorld());
+            NeoForge.EVENT_BUS.post(e);
+            helper.assertTrue(!e.isCanceled(), "the void was turned into a defeat");
+            helper.assertTrue(PackDuel.board().all().isEmpty() && leader.received(OFF + "died"), "the duel was not called off with a reason: " + leader.keys());
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBlowFromSomeoneElseGivesTheOpponentNoCredit(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        ServerPlayer bystander = human(helper, 3.5);
+        online(leader, second);
+        try {
+            helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
+            hit(bystander, second);
+            LivingDeathEvent e = new LivingDeathEvent(second, second.damageSources().lava());
+            NeoForge.EVENT_BUS.post(e);
+            helper.assertTrue(!e.isCanceled(), "a blow from a third player was taken for the leader's");
+        } finally {
+            clean(helper, leader, second, bystander);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void noRescueThroughAWall(GameTestHelper helper) {
+        ServerPlayer loser = alpha(helper, 3, 2.5);
+        BlockPos lava = new BlockPos(6, 1, 4);
+        online(loser);
+        try {
+            // a closed stone box around one cell of lava, the loser inside it: every spot outside is behind a wall
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    for (int dy = 0; dy <= 3; dy++) {
+                        BlockPos p = lava.offset(dx, dy, dz);
+                        boolean inside = dx == 0 && dz == 0 && dy >= 1 && dy <= 2;
+                        helper.setBlock(p, inside ? (dy == 1 ? Blocks.LAVA : Blocks.AIR) : Blocks.STONE);
+                    }
+                }
+            }
+            loser.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(6.5, 1.0, 4.5)));
+            helper.assertTrue(PackDuel.safeSpot(helper.getLevel(), helper.absolutePos(lava), loser) == null, "a spot was found on the other side of a wall");
+            // the same lava in the open has one
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    for (int dy = 1; dy <= 3; dy++) {
+                        helper.setBlock(lava.offset(dx, dy, dz), dx == 0 && dz == 0 && dy == 1 ? Blocks.LAVA : Blocks.AIR);
+                    }
+                }
+            }
+            helper.assertTrue(PackDuel.safeSpot(helper.getLevel(), helper.absolutePos(lava), loser) != null, "no spot in the open");
+        } finally {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    for (int dy = 0; dy <= 3; dy++) {
+                        helper.setBlock(lava.offset(dx, dy, dz), dy == 0 ? Blocks.STONE : Blocks.AIR);
+                    }
+                }
+            }
+            clean(helper, loser);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void leavingAnOnDuelByLoggingOutIsADefeatAndTheWinnerLeadsIfTheyWereTheChallenger(GameTestHelper helper) {
+        TalkingDuelist leader = talker(helper, 6, 1.5);
+        TalkingDuelist second = talker(helper, 3, 2.5);
+        online(leader, second);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
+            // the leader walks out of the game in the middle of it: the challenger wins at once
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(leader));
+            helper.assertTrue(PackDuel.board().all().isEmpty(), "the duel was left on");
+            helper.assertTrue(index.isLeader(second.getUUID()) && index.alphaOf(leader.getUUID()).map(second.getUUID()::equals).orElse(false), "the challenger did not take the lead");
+            helper.assertTrue(second.received("supernaturalbloodlines.pack.duel.forfeit"), "the winner was not told: " + second.keys());
+            helper.assertTrue(state(leader).rank() == Rank.ALPHA && state(leader).sparks() == 1, "the forfeit cost a spark or a rank");
+            helper.assertTrue(PackDuel.board().cooldownLeft(second.getUUID(), leader.getUUID(), helper.getLevel().getGameTime()) > 0, "the pair is not barred after a settled duel");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aChallengerWhoLogsOutOfAnOnDuelLosesItAndTheLeaderStaysLeader(GameTestHelper helper) {
+        TalkingDuelist leader = talker(helper, 6, 1.5);
+        TalkingDuelist second = talker(helper, 3, 2.5);
+        online(leader, second);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(second));
+            helper.assertTrue(PackDuel.board().all().isEmpty() && index.isLeader(leader.getUUID()), "the leader lost the lead to somebody who left");
+            helper.assertTrue(leader.received("supernaturalbloodlines.pack.duel.forfeit"), "the leader was not told");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void walkingOutOfRangeEndsAnOnDuelAndBarsThePair(GameTestHelper helper) {
+        TalkingDuelist leader = talker(helper, 6, 1.5);
+        TalkingDuelist second = talker(helper, 3, 2.5);
+        online(leader, second);
+        try {
+            helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
+            second.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(200, 1, 1.5)));
+            PackDuel.check(helper.getLevel().getServer());
+            helper.assertTrue(PackDuel.board().all().isEmpty() && leader.received(OFF + "far"), "the duel went on out of range, or nobody was told");
+            second.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(2.5, 1, 1.5)));
+            net.minecraft.network.chat.Component refused = PackDuel.challenge(second, id(leader));
+            helper.assertTrue(refused != null && refused.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().endsWith("duel_cooldown"),
+                    "walking out of the duel did not bar the pair: " + refused);
         } finally {
             clean(helper, leader, second);
         }

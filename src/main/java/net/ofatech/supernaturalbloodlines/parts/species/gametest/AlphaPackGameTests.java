@@ -830,6 +830,11 @@ public final class AlphaPackGameTests {
             helper.assertTrue(index.recordedParty(List.of(leader.getUUID())).isPresent() && index.mirrorOwner(beta.getUUID()).isPresent(),
                     "a record or a mirror was forgotten after a removal that failed");
 
+            int logged = PartyLink.failedOwners();
+            PartyLink.syncAll(server);
+            PartyLink.syncAll(server);
+            helper.assertTrue(PartyLink.failedOwners() == logged, "a failing owner was counted again at every pass (it is logged once)");
+            helper.assertTrue(logged >= 1, "the failure was never logged");
             fake.failRemove = false;
             PartyLink.syncAll(server);
             PartyLink.syncAll(server);

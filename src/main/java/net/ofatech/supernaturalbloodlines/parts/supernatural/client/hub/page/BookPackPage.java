@@ -123,6 +123,19 @@ public final class BookPackPage implements HubPageView {
         return chosen != null && leads(f, pack) && chosen.base().equals("ally");
     }
 
+    /** Where Decline goes beside Accept (8 pixels after it), or -1 when it does not fit in the width and goes on the next line. */
+    public static int declineX(int x, int acceptWidth, int declineWidth, int width) {
+        int at = x + acceptWidth + 8;
+        return at + declineWidth <= x + width ? at : -1;
+    }
+
+    /** A row whose rank (with its spark count) would leave the name fewer than this many pixels puts the rank on its own line. */
+    public static final int MIN_NAME = 24;
+
+    public static boolean rankOnOwnLine(int width, int rankWidth) {
+        return width - rankWidth - 10 < MIN_NAME;
+    }
+
     /** The name cut so that the whole rank (with its spark count) always fits beside it: the name goes first, never the rank. */
     static String nameFor(HubScreen.Frame f, String name, Component rank, int width) {
         return net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(name, nameRoom(width, f.font().width(rank)), f.font()::width);
@@ -179,10 +192,15 @@ public final class BookPackPage implements HubPageView {
             // the first of the list leads the pack: a small gold crown before the name
             boolean leads = m == pack.get(0) && !m.base().equals("ally");
             int crown = leads ? 9 : 0;
-            if (leads) {
+            // the rank (Alpha x3) is never what is cut: on a row too narrow for both it goes on its own line, and the crown makes way
+            boolean tight = rankOnOwnLine(r.w() - 8 - crown, f.font().width(rank));
+            if (tight) {
+                crown = 0;
+            }
+            if (leads && crown > 0) {
                 crown(f, r.x() + 8, y + 1);
             }
-            boolean stacked = style == Style.TENSURA && f.font().width(m.name()) + f.font().width(rank) + 14 > r.w() - 8 - crown;
+            boolean stacked = tight || (style == Style.TENSURA && f.font().width(m.name()) + f.font().width(rank) + 14 > r.w() - 8 - crown);
             if (stacked) {
                 f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(m.name(), r.w() - 8 - crown, f.font()::width), r.x() + 8 + crown, y, t.ink(), false);
                 f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(rank.getString(), r.w() - 8 - crown, f.font()::width), r.x() + 8 + crown, y + 10, t.muted(), false);
@@ -228,9 +246,13 @@ public final class BookPackPage implements HubPageView {
             String asking = challengerName(pack);
             int acceptW = BookKit.link(f, "pack:duel_accept", Component.translatable(KEY + "duel_accept"), r.x(), y, List.of(Component.translatable(KEY + "duel_accept_for", asking)),
                     () -> BloodlinePage.command("pack challenge accept"));
-            BookKit.link(f, "pack:duel_decline", Component.translatable(KEY + "duel_decline"), r.x() + acceptW + 8, y, List.of(Component.translatable(KEY + "duel_decline_for", asking)),
+            Component decline = Component.translatable(KEY + "duel_decline");
+            // beside the accept link when it fits, under it when it does not
+            int dx = declineX(r.x(), acceptW, f.font().width(decline), r.w());
+            int dy = dx < 0 ? y + 13 : y;
+            BookKit.link(f, "pack:duel_decline", decline, dx < 0 ? r.x() : dx, dy, List.of(Component.translatable(KEY + "duel_decline_for", asking)),
                     () -> BloodlinePage.command("pack challenge decline"));
-            y += 13;
+            y = dy + 13;
         }
         y = BookKit.small(f, Component.translatable(BOOK + "invite"), r.x(), y + 2, r.w(), t.muted());
         f.end(y);

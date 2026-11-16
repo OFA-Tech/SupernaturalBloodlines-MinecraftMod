@@ -268,7 +268,7 @@ public final class PackCommand {
         }
         // a co-Alpha or a Packmate lives in the index only
         UUID wasIn = index.leaderOf(p.getUUID());
-        index.leave(p.getUUID());
+        index.leaveVoluntarily(p.getUUID());
         PartyLink.sync(p.server, wasIn, true);
         p.sendSystemMessage(Component.translatable(KEY + "left"));
         return null;

@@ -8,7 +8,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -57,7 +57,7 @@ public final class PackDuel {
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, false, LivingIncomingDamageEvent.class, PackDuel::onDamage);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
-                callOff(p.server, p.getUUID(), Reason.LOGOUT);
+                forfeit(p.server, p);
             }
         });
         // a world that was stopped leaves no half-fought duel behind (the board lives in memory)
@@ -163,6 +163,9 @@ public final class PackDuel {
 
     private static void onDamage(LivingIncomingDamageEvent e) {
         Entity by = e.getSource().getEntity();
+        if (by != null && e.getEntity() instanceof ServerPlayer hurt) {
+            BOARD.recordHit(hurt.getUUID(), by.getUUID(), hurt.level().getGameTime());
+        }
         if (by != null && e.getEntity() instanceof ServerPlayer loser && BOARD.guarded(loser.getUUID(), by.getUUID(), loser.level().getGameTime())) {
             e.setCanceled(true);
         }
@@ -179,6 +182,11 @@ public final class PackDuel {
         }
         Entity by = e.getSource().getEntity();
         UUID opponent = duel.other(loser.getUUID());
+        // the void takes everybody: it is no defeat to be saved from, whoever pushed
+        if (e.getSource().is(net.minecraft.world.damagesource.DamageTypes.FELL_OUT_OF_WORLD) || loser.getY() < loser.level().getMinBuildHeight()) {
+            callOff(loser.server, loser.getUUID(), Reason.DIED);
+            return;
+        }
         boolean byOpponent = by instanceof Player other && other.getUUID().equals(opponent);
         if (by instanceof Player && !byOpponent) {
             callOff(loser.server, loser.getUUID(), Reason.KILLED); // a third player killed them: the duel is off and the death stands
@@ -199,8 +207,9 @@ public final class PackDuel {
             // the world was about to finish them: 5 seconds of Fire Resistance, and out of the lava if they stand in it, or the next
             // tick would be the death the duel just turned into a defeat
             loser.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 100));
-            if (loser.isInLava() || loser.isInWall()) {
-                BlockPos safe = safeSpot(loser.serverLevel(), loser.blockPosition());
+            // only out of lava, and only to a spot in line of sight (no teleport through a wall, none for somebody stuck in one)
+            if (loser.isInLava()) {
+                BlockPos safe = safeSpot(loser.serverLevel(), loser.blockPosition(), loser);
                 if (safe != null) {
                     loser.teleportTo(safe.getX() + 0.5, safe.getY(), safe.getZ() + 0.5);
                 }
@@ -212,18 +221,18 @@ public final class PackDuel {
         }
     }
 
-    /** The opponent hit {@code loser} in the last 10 seconds (the vanilla last attacker, whose time is the loser's own tick count). */
+    /** The opponent hit {@code loser} in the last 10 seconds of this duel (the board keeps the tick of the blow: vanilla forgets its last attacker after 5). */
     static boolean fought(ServerPlayer loser, UUID opponent) {
-        LivingEntity last = loser.getLastHurtByMob();
-        return last != null && last.getUUID().equals(opponent) && loser.tickCount - loser.getLastHurtByMobTimestamp() <= DuelBoard.COMBAT_CREDIT_TICKS;
+        return BOARD.hasCredit(loser.getUUID(), opponent, loser.level().getGameTime());
     }
 
     /**
-     * The nearest block to stand on within 4 blocks of {@code from}: two free blocks (no fluid) over a solid one. Null when there
-     * is none, and then the Fire Resistance is all the loser gets.
+     * The nearest block to stand on within 4 blocks of {@code from}: two free blocks (no fluid) over a solid one, and in line of
+     * sight from the eyes of {@code viewer} (a ray that hits no block on the way). Null when there is none, and then the Fire
+     * Resistance is all the loser gets.
      */
     @Nullable
-    public static BlockPos safeSpot(ServerLevel level, BlockPos from) {
+    public static BlockPos safeSpot(ServerLevel level, BlockPos from, Entity viewer) {
         for (int radius = 0; radius <= 4; radius++) {
             for (int dy = 0; dy <= 4; dy++) {
                 for (int dx = -radius; dx <= radius; dx++) {
@@ -233,7 +242,9 @@ public final class PackDuel {
                         }
                         BlockPos feet = from.offset(dx, dy, dz);
                         BlockPos below = feet.below();
-                        if (free(level, feet) && free(level, feet.above()) && level.getBlockState(below).isFaceSturdy(level, below, Direction.UP) && level.getFluidState(below).isEmpty()) {
+                        if (free(level, feet) && free(level, feet.above()) && level.getBlockState(below).isFaceSturdy(level, below, Direction.UP) && level.getFluidState(below).isEmpty()
+                                && level.clip(new ClipContext(viewer.getEyePosition(), net.minecraft.world.phys.Vec3.atCenterOf(feet), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, viewer)).getType()
+                                == net.minecraft.world.phys.HitResult.Type.MISS) {
                             return feet;
                         }
                     }
@@ -245,6 +256,25 @@ public final class PackDuel {
 
     private static boolean free(ServerLevel level, BlockPos pos) {
         return level.getBlockState(pos).getCollisionShape(level, pos).isEmpty() && level.getFluidState(pos).isEmpty();
+    }
+
+    /**
+     * {@code leaver} logs out. A duel that is on is lost by them, at once (the winner is told, and leads if they were the challenger);
+     * a challenge nobody accepted yet is just called off.
+     */
+    public static void forfeit(MinecraftServer server, ServerPlayer leaver) {
+        if (BOARD.on(leaver.getUUID()).isEmpty()) {
+            callOff(server, leaver.getUUID(), Reason.LOGOUT);
+            return;
+        }
+        DuelBoard.Result r = BOARD.defeat(leaver.getUUID(), leaver.level().getGameTime()).orElse(null);
+        if (r != null) {
+            ServerPlayer winner = SireCall.player(server, r.winner());
+            if (winner != null) {
+                winner.sendSystemMessage(Component.translatable(KEY + "forfeit", name(server, r.loser())));
+            }
+            settle(server, r);
+        }
     }
 
     private static void settle(MinecraftServer server, DuelBoard.Result r) {
@@ -313,10 +343,13 @@ public final class PackDuel {
                 why = Reason.LOGOUT;
             } else if (!d.leader().equals(index.alphaOf(d.challenger()).orElse(null)) || !index.isLeader(d.leader())) {
                 why = Reason.PACK;
-            } else if (c.level().dimension() != l.level().dimension()) {
+            } else if (c.level().dimension() != l.level().dimension() || (d.phase() == DuelBoard.Phase.ON && c.distanceTo(l) > RANGE)) {
                 why = Reason.FAR;
             }
             if (why != null) {
+                if (d.phase() == DuelBoard.Phase.ON && why == Reason.FAR) {
+                    BOARD.bar(d.challenger(), d.leader(), now); // walking out of a duel is no way to end it for free
+                }
                 BOARD.cancelInvolving(d.challenger());
                 tellOff(server, new UUID[] {d.challenger(), d.leader()}, why, null);
             }

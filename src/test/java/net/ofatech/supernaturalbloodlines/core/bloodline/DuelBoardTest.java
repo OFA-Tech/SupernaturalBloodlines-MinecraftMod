@@ -165,4 +165,44 @@ class DuelBoardTest {
         assertEquals(DuelBoard.PAIR_COOLDOWN_TICKS - 50, b.cooldownLeft(LEADER, CHALLENGER, 150), "the pair is the same either way round");
         assertEquals(0, b.cooldownLeft(CHALLENGER, LEADER, 100 + DuelBoard.PAIR_COOLDOWN_TICKS + 1));
     }
+
+    @Test
+    void aBlowCountsOnlyFromTheOpponentOfADuelThatIsOnAndOnlyForTenSeconds() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        b.recordHit(LEADER, CHALLENGER, 5);
+        assertFalse(b.hasCredit(LEADER, CHALLENGER, 6), "a blow in a challenge nobody accepted is no credit");
+        b.accept(LEADER, 10);
+        b.recordHit(LEADER, THIRD, 20);
+        assertFalse(b.hasCredit(LEADER, CHALLENGER, 21), "a blow from a third player is nobody's credit");
+        assertFalse(b.hasCredit(LEADER, THIRD, 21));
+        b.recordHit(LEADER, CHALLENGER, 100);
+        assertTrue(b.hasCredit(LEADER, CHALLENGER, 100 + DuelBoard.COMBAT_CREDIT_TICKS), "the last tick of the window");
+        assertFalse(b.hasCredit(LEADER, CHALLENGER, 100 + DuelBoard.COMBAT_CREDIT_TICKS + 1), "one tick too late");
+        assertFalse(b.hasCredit(CHALLENGER, LEADER, 101), "the credit is the victim's, not the attacker's");
+    }
+
+    @Test
+    void theHitsAreForgottenWhenTheDuelEnds() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        b.accept(LEADER, 1);
+        b.recordHit(LEADER, CHALLENGER, 5);
+        b.cancelInvolving(LEADER);
+        assertFalse(b.hasCredit(LEADER, CHALLENGER, 6), "a blow of a duel that was called off counted in the next one");
+        challenge(b, CHALLENGER, LEADER, 10_000_000);
+        b.accept(LEADER, 10_000_001);
+        b.recordHit(LEADER, CHALLENGER, 10_000_002);
+        b.defeat(LEADER, 10_000_003);
+        assertFalse(b.hasCredit(LEADER, CHALLENGER, 10_000_004), "a settled duel left its blows behind");
+    }
+
+    @Test
+    void barringThePairStopsEitherOfThemChallenging() {
+        DuelBoard b = new DuelBoard();
+        b.bar(CHALLENGER, LEADER, 100);
+        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), b.challenge(CHALLENGER, LEADER, 101));
+        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), b.challenge(LEADER, CHALLENGER, 101));
+        assertTrue(challenge(b, THIRD, LEADER, 101));
+    }
 }

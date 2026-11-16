@@ -19,13 +19,17 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
  * <p>The successor must be here: online, or seen within the same window. If every other Alpha is away too nothing changes, so
  * two absent Alphas never pass the lead back and forth. A pack with an absent leader and no second Alpha keeps its leader.
  *
- * <p>Time is the wall clock the index kept at each logout. A server that was off is not an absence: at every start every
- * recorded time begins again, and an online leader's time is refreshed (a crash leaves no logout behind).
+ * <p>Time is the wall clock the index kept: at each logout, and renewed every hour for every pack member who is online (a crash
+ * leaves no logout behind). A server that was off is not an absence, and a restart does not erase one: the index also keeps the
+ * last time it knew the server was running (at most a minute old, and at a clean stop), and at the start every recorded time moves
+ * forward by exactly the downtime. A world that never recorded it is not shifted.
  */
 public final class PackAbsence {
     public static final long DAY_MILLIS = 24L * 60 * 60 * 1000;
-    /** An online leader's stored time is renewed when it is older than this. */
+    /** An online pack member's stored time is renewed when it is older than this. */
     public static final long REFRESH_MILLIS = 60L * 60 * 1000;
+    /** The "server is running" time is written at most this often. */
+    public static final long ALIVE_EVERY_MILLIS = 60_000L;
     private static final int PERIOD = 200;
     private static final String KEY = "supernaturalbloodlines.pack.";
 
@@ -33,7 +37,8 @@ public final class PackAbsence {
     }
 
     public static void register() {
-        NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> PackIndex.get(e.getServer().overworld()).resetLastSeen(PackIndex.now()));
+        NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> onStarted(e.getServer(), PackIndex.now()));
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> PackIndex.get(e.getServer().overworld()).setAliveAt(PackIndex.now()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity().getServer() != null) {
                 check(e.getEntity().getServer(), PackIndex.now());
@@ -46,6 +51,16 @@ public final class PackAbsence {
         });
     }
 
+    /** The server started: the time it was off is not an absence, so every recorded time moves forward by it (none when it was never recorded). */
+    public static void onStarted(MinecraftServer server, long nowMillis) {
+        PackIndex index = PackIndex.get(server.overworld());
+        long was = index.aliveAt();
+        if (was > 0 && nowMillis > was) {
+            index.shiftLastSeen(nowMillis - was);
+        }
+        index.setAliveAt(nowMillis);
+    }
+
     /** @return how many packs changed hands */
     public static int check(MinecraftServer server, long nowMillis) {
         int days = SpeciesConfig.absentLeaderDays();
@@ -54,13 +69,22 @@ public final class PackAbsence {
         }
         long limit = days * DAY_MILLIS;
         PackIndex index = PackIndex.get(server.overworld());
+        // the server is running: say so (at most once a minute), so a crash costs the leader no more than that
+        if (nowMillis - index.aliveAt() >= ALIVE_EVERY_MILLIS) {
+            index.setAliveAt(nowMillis);
+        }
+        // a crash leaves no logout: whoever of a pack is online is seen now, renewed every hour
+        for (UUID leader : List.copyOf(index.leaders())) {
+            for (UUID id : index.pack(leader)) {
+                if (SireCall.player(server, id) != null && index.lastSeen(id).map(t -> nowMillis - t > REFRESH_MILLIS).orElse(true)) {
+                    index.setLastSeen(id, nowMillis);
+                }
+            }
+        }
         int changed = 0;
         for (UUID leader : List.copyOf(index.leaders())) {
             Long seen = index.lastSeen(leader).orElse(null);
             if (SireCall.player(server, leader) != null) {
-                if (seen == null || nowMillis - seen > REFRESH_MILLIS) {
-                    index.setLastSeen(leader, nowMillis); // a crash leaves no logout: an online leader is seen now
-                }
                 continue;
             }
             if (seen == null) {
