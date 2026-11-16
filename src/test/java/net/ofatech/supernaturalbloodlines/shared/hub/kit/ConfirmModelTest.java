@@ -45,13 +45,29 @@ class ConfirmModelTest {
     @Test
     void theDialogFitsEveryScreenWithTwoSeparateButtons() {
         for (int[] s : new int[][] {{320, 240}, {480, 270}, {640, 360}, {960, 540}}) {
-            ConfirmLayout l = ConfirmLayout.of(s[0], s[1]);
-            Rect screen = new Rect(0, 0, s[0], s[1]);
-            assertTrue(l.panel().inside(screen));
-            assertTrue(l.cancel().inside(l.panel()) && l.confirm().inside(l.panel()));
-            assertFalse(l.cancel().overlaps(l.confirm()));
-            assertTrue(l.text().inside(l.panel()) && l.text().h() >= 18, "room for two lines of text at " + s[0]);
-            assertFalse(l.text().overlaps(l.cancel()));
+            for (int lines : new int[] {1, 3, 12, 80}) {
+                ConfirmLayout l = ConfirmLayout.of(s[0], s[1], lines);
+                String at = s[0] + "x" + s[1] + " " + lines + " lines";
+                Rect screen = new Rect(0, 0, s[0], s[1]);
+                assertTrue(l.panel().inside(screen), at);
+                assertTrue(l.safe().inside(l.panel()) && l.confirm().inside(l.panel()), at);
+                assertFalse(l.safe().overlaps(l.confirm()), at);
+                assertTrue(l.safe().x() < l.confirm().x(), at + ": the safe button is on the left");
+                assertTrue(l.text().inside(l.panel()) && l.maxLines() >= 1, at);
+                assertFalse(l.text().overlaps(l.safe()), at);
+                assertTrue(l.panel().h() <= Math.max(ConfirmLayout.MIN_H, s[1] * 7 / 10), at + ": more than 70% of the screen");
+            }
         }
+    }
+
+    @Test
+    void theDialogGrowsWithTheBodyUpToTheLimit() {
+        int one = ConfirmLayout.of(480, 270, 1).panel().h();
+        int six = ConfirmLayout.of(480, 270, 6).panel().h();
+        int huge = ConfirmLayout.of(480, 270, 200).panel().h();
+        assertTrue(six > one, "taller for six lines");
+        assertEquals(270 * 7 / 10, huge, "stops at 70% of the screen");
+        assertTrue(ConfirmLayout.of(480, 270, 6).maxLines() >= 6, "room for the six lines");
+        assertTrue(ConfirmLayout.textWidth(320) > 100);
     }
 }

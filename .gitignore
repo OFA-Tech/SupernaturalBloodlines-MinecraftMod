@@ -42,3 +42,7 @@ repo/
 ### Superpowers scratch ###
 .superpowers/
 
+
+# Python bytecode
+__pycache__/
+*.pyc

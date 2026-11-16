@@ -430,6 +430,7 @@
   "supernaturalbloodlines.hub.theme.tensura": "Tensura",
   "supernaturalbloodlines.hub.close": "Close",
   "supernaturalbloodlines.hub.confirm.cancel": "Cancel",
+  "supernaturalbloodlines.hub.confirm.stay": "Stay",
   "supernaturalbloodlines.hub.skills.state.covered": "Covered: you already have this through Vampirism's own skill, so there is nothing to buy.",
   "supernaturalbloodlines.hub.skills.cost": "%s SP",
   "supernaturalbloodlines.hub.skills.none": "Nothing here yet.",

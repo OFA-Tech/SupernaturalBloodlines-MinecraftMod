@@ -1,11 +1,13 @@
 package net.ofatech.supernaturalbloodlines.shared.hub;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Counters;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.FocusRing;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitDraw;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.UiContext;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiContext;
 
 /**
  * A skin and layout over the one hub screen model: where things go and how they look. The supernatural part's shared page views draw
@@ -55,6 +57,16 @@ public interface HubTheme {
     /** The close button, for a theme whose layout has one. */
     default void drawClose(GuiGraphics g, Rect r, boolean hot, boolean focused) {
         KitDraw.button(g, this, r, Icons.CLOSE, hot, focused);
+    }
+
+    /** The emblem in {@code r}: the live model in the theme's own frame (the book's sigil, the moon, the status hex). */
+    default void drawEmblem(UiContext ctx, Rect r, EmblemData data) {
+        KitDraw.emblem(ctx.g(), this, r, data);
+    }
+
+    /** SP and EP in {@code r}: a margin note, a top-right pair or a stats line, as the theme's layout names it ({@code Chrome.counters}). */
+    default void drawCounters(UiContext ctx, Rect r, Counters counters) {
+        KitDraw.counters(ctx.g(), ctx.font(), this, r, counters);
     }
 
     /** The detail of a selection in {@code r}: the shared contract of every page, which a theme may style as the page opposite, a bar or a pane. */

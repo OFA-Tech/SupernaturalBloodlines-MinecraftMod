@@ -17,13 +17,17 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.HubKeybinds;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.GrimoireTheme;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.ClaimTaskPayload;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.ConfirmLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.ConfirmModel;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.FocusOrder;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitDraw;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.UiContext;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Counters;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.ModelDrag;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiContext;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -57,6 +61,12 @@ public final class HubScreen extends Screen {
     private Component dialogTitle = Component.empty();
     private Component dialogBody = Component.empty();
     private Component dialogYes = Component.empty();
+    private Component dialogSafe = Component.empty();
+    /** The emblem's turn, owned here so it survives a theme or page change and every theme's model answers the same drag. */
+    private final ModelDrag modelDrag = new ModelDrag();
+    @Nullable
+    private Rect emblemRect;
+    private boolean dragEmblem;
     private Runnable dialogAction = () -> { };
 
     HubScreen(HubPage page) {
@@ -105,6 +115,7 @@ public final class HubScreen extends Screen {
         layout = theme.layout(width, height, visible.size(), launchers.size());
         theme.drawFrame(g, layout);
         maxScroll.clear();
+        emblemRect = null;
         Frame f = new Frame(g, mouseX, mouseY, view);
         for (int i = 0; i < visible.size(); i++) {
             HubPage p = visible.get(i);
@@ -128,7 +139,7 @@ public final class HubScreen extends Screen {
         if (views != null) {
             views.drawOverlay(f, page);
         }
-        (page.locked(view.context()) ? HubPages.locked() : views != null ? views.view(page) : HubPages.shared(page)).render(f);
+        viewOf(page, view).render(f);
         targets = f.targets;
         for (Map.Entry<String, Integer> e : maxScroll.entrySet()) {
             if (e.getValue() > 0 && layout.regions().containsKey(e.getKey())) {
@@ -137,16 +148,34 @@ public final class HubScreen extends Screen {
         }
         followFocus();
         if (dialog != null) {
-            ConfirmLayout cl = ConfirmLayout.of(width, height);
-            KitDraw.confirm(f, theme, width, height, dialogTitle, dialogBody, Component.translatable("supernaturalbloodlines.hub.confirm.cancel"), dialogYes,
-                    dialog.confirmFocused(), cl.cancel(), cl.confirm(), cl.panel(), cl.text());
+            KitDraw.confirm(f, theme, width, height, dialogTitle, dialogBody, dialogSafe, dialogYes, dialog.confirmFocused(), dialogLayout());
             return;
         }
         tooltip(g, mouseX, mouseY);
     }
 
-    /** The theme's own chrome: the theme switch and the close button, when its layout has them. */
+    /** The view of a page in the current theme; the page answers keys and drags first, see {@link #keyPressed}. */
+    private HubPageView viewOf(HubPage p, HubView view) {
+        HubThemeViews views = theme instanceof HubThemeViews v ? v : null;
+        return p.locked(view.context()) ? HubPages.locked() : views != null ? views.view(p) : HubPages.shared(p);
+    }
+
+    @Nullable
+    private HubPageView currentView() {
+        return minecraft == null || minecraft.player == null ? null : viewOf(page, HubView.of(minecraft.player));
+    }
+
+    private ConfirmLayout dialogLayout() {
+        return ConfirmLayout.of(width, height, font.split(dialogBody, ConfirmLayout.textWidth(width)).size());
+    }
+
+    /** The theme's own chrome: the theme switch, the close button and the counters, when its layout has them. */
     private void chrome(Frame f, int mouseX, int mouseY) {
+        Rect cr = layout.chrome().counters();
+        if (cr != null) {
+            SupernaturalState st = f.view.state();
+            theme.drawCounters(f, cr, new Counters(st.sp(), HubHooks.tensura().map(t -> (long) t.ep()).orElse(null)));
+        }
         Rect tb = layout.chrome().themeButton();
         if (tb != null) {
             HubClientConfig.ThemeId next = HubClientConfig.next(themeId, id -> HubHooks.theme(id).isPresent());
@@ -165,8 +194,9 @@ public final class HubScreen extends Screen {
      * Asks before something that cannot be undone. Esc and a click outside cancel, Enter on the safe button cancels, so only a deliberate move
      * to {@code yes} confirms.
      */
-    public void confirm(Component title, Component body, Component yes, Runnable action) {
+    public void confirm(Component title, Component body, Component safe, Component yes, Runnable action) {
         dialog = new ConfirmModel();
+        dialogSafe = safe;
         dialogTitle = title;
         dialogBody = body;
         dialogYes = yes;
@@ -237,13 +267,17 @@ public final class HubScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (dialog != null) {
-            ConfirmLayout cl = ConfirmLayout.of(width, height);
-            if (cl.panel().contains(mouseX, mouseY) && !cl.cancel().contains(mouseX, mouseY) && !cl.confirm().contains(mouseX, mouseY)) {
+            if (button != 0) {
+                return true; // only the left mouse button answers a dialog: a right click on Leave pack does not leave
+            }
+            ConfirmLayout cl = dialogLayout();
+            if (cl.panel().contains(mouseX, mouseY) && !cl.safe().contains(mouseX, mouseY) && !cl.confirm().contains(mouseX, mouseY)) {
                 return true;
             }
             dialogResult(ConfirmModel.click(cl.confirm().contains(mouseX, mouseY)));
             return true;
         }
+        dragEmblem = button == 0 && emblemRect != null && emblemRect.contains(mouseX, mouseY);
         if (button == 0) {
             for (Target t : targets) {
                 if (t.shown() && t.action() != null && t.rect().contains(mouseX, mouseY)) {
@@ -258,7 +292,32 @@ public final class HubScreen extends Screen {
     }
 
     @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+        if (dialog != null) {
+            return true;
+        }
+        HubPageView v = currentView();
+        if (v != null && v.mouseDragged(mouseX, mouseY, dx, dy, button)) {
+            return true;
+        }
+        if (dragEmblem && button == 0) {
+            modelDrag.drag(dx);
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        dragEmblem = false;
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (dialog != null) {
+            return true; // nothing scrolls behind a dialog
+        }
         String region = regionAt(mouseX, mouseY);
         if (region == null) {
             return false;
@@ -296,13 +355,19 @@ public final class HubScreen extends Screen {
             }
             return true; // a dialog takes every key: nothing behind it moves
         }
-        var jump = FocusOrder.pageForKey(key, visible.size());
-        if (jump.isPresent()) {
-            setPage(visible.get(jump.getAsInt()));
+        if (HubKeybinds.HUB.matches(key, scanCode)) {
+            onClose(); // the hub key always wins, even bound to a digit
             return true;
         }
-        if (HubKeybinds.HUB.matches(key, scanCode)) {
-            onClose();
+        // the page asks first: a radial tree or a ring uses the arrows, a list may use Enter; what it leaves goes to the hub
+        HubPageView v = currentView();
+        if (v != null && v.keyPressed(key, modifiers)) {
+            return true;
+        }
+        boolean plain = (modifiers & (GLFW.GLFW_MOD_SHIFT | GLFW.GLFW_MOD_CONTROL | GLFW.GLFW_MOD_ALT | GLFW.GLFW_MOD_SUPER)) == 0;
+        var jump = plain ? FocusOrder.pageForKey(key, visible.size()) : java.util.OptionalInt.empty();
+        if (jump.isPresent()) {
+            setPage(visible.get(jump.getAsInt()));
             return true;
         }
         boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
@@ -375,14 +440,52 @@ public final class HubScreen extends Screen {
             return theme;
         }
 
-        /** Hands the selection's detail to the theme: it draws it in its own place (the opposite page, a bottom bar, an info pane). */
+        /**
+         * Hands the selection's detail to the theme: it draws it in its own place (the opposite page, a bottom bar, an info pane). The current
+         * region and its clip are set aside while it draws and put back after, so a place outside MAIN is seen and clickable.
+         */
         public void detail(Detail d) {
             Rect r = layout.chrome().detail() != null ? layout.chrome().detail() : layout.region(HubLayout.SIDE);
+            String savedRegion = region;
+            Rect savedClip = clip;
+            if (savedClip != null) {
+                g.disableScissor();
+            }
+            region = null;
+            clip = null;
             theme.drawDetail(this, r, d);
+            region = savedRegion;
+            clip = savedClip;
+            if (savedClip != null) {
+                g.enableScissor(savedClip.x(), savedClip.y(), savedClip.right(), savedClip.bottom());
+            }
         }
 
+        /** The emblem in {@code r} (a page picks the place; {@code Chrome.emblem} is the theme's default): the live model, turned by dragging. */
+        public void emblem(Rect r) {
+            List<HubModel.LadderView> ladders = view.ladders();
+            float progress = ladders.isEmpty() ? 0f : HubModel.progress(ladders.get(0));
+            List<EmblemData.Rung> rungs = ladders.isEmpty() ? List.of()
+                    : ladders.get(0).rungs().stream().map(rr -> new EmblemData.Rung(rr.name(), rr.status())).toList();
+            emblemRect = r;
+            theme.drawEmblem(this, r, new EmblemData(progress, rungs, view.player(), modelDrag));
+        }
+
+        public void emblem() {
+            Rect r = layout.chrome().emblem();
+            if (r != null) {
+                emblem(r);
+            }
+        }
+
+        @Override
+        public void confirm(Component title, Component body, Component safe, Component yes, Runnable action) {
+            HubScreen.this.confirm(title, body, safe, yes, action);
+        }
+
+        /** Asks first with the standard "Stay" as the safe button. */
         public void confirm(Component title, Component body, Component yes, Runnable action) {
-            HubScreen.this.confirm(title, body, yes, action);
+            HubScreen.this.confirm(title, body, Component.translatable("supernaturalbloodlines.hub.confirm.stay"), yes, action);
         }
 
         public HubScreen screen() {

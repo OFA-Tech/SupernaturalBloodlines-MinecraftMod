@@ -5,8 +5,8 @@
 ### Added
 
 - **A button in the hub switches the look** (Grimoire, Blood Moon, Tensura) and saves it to the same setting as the config. Tensura's window gets a title strip for it.
-- **Number keys 1 to 8 jump to a page** in the hub, and Tab now goes navigation, then the page, then its buttons.
-- **The UI kit for plan 16** (docs/hub-ui-kit.md): a model-in-ring emblem, tick progress ring, radial layout with arrow navigation, rank pips, source tags (SB, VMP, WW, ENC, TEN), round and hex medallions, the pack portrait ring (ready for plans 14 and 15), a shared detail contract each theme draws in its own place, a confirm dialog (Esc cancels, Enter alone never confirms) and a 36-sprite icon atlas drawn by `tools/gen_icons.py`. No page uses them yet; the three themes are rebuilt on them in 16b to 16d.
+- **Number keys 1 to 8 jump to a page** in the hub (not with Ctrl, Alt, Shift or Super held, and the hub key wins if it is bound to a digit). Tab goes through the navigation (page tabs, launchers, the look button) before the page; the buttons of a page's detail come last once a page uses the new detail contract.
+- **The UI kit for plan 16** (docs/hub-ui-kit.md; pages ask first for keys and drags, themes own the emblem and the counters): a model-in-ring emblem, tick progress ring, radial layout with arrow navigation, rank pips, source tags (SB, VMP, WW, ENC, TEN), round and hex medallions, the pack portrait ring (ready for plans 14 and 15), a shared detail contract each theme draws in its own place, a confirm dialog (Esc cancels, Enter alone never confirms) and a 36-sprite icon atlas drawn by `tools/gen_icons.py`. No page uses them yet; the three themes are rebuilt on them in 16b to 16d.
 
 ## Unreleased (plan 13d, compatibility hardening)
 

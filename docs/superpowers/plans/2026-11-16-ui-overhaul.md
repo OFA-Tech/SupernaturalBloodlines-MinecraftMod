@@ -59,7 +59,11 @@ Branch per phase from main, one PR each. The approved design is the 34 PNG expor
 | Tick progress ring | pure `TickRing` | none (16a kit) |
 | Guide page, species chapters | none | new page, lang-driven chapters (16e) |
 | Ghoul state with countdown | `BloodlineState.ghoul`, turning data | the remaining time to finish the turning must be synced (16e) |
-| Two-ladders and no-Tensura fallback states | `HubModel.ladders`, `HubHooks.tensura()` | none |
+| Tensura status line "Hybrid . Beastfolk . 6 SP . 1,088 EP . 3 days" | `HubView.races`, `SupernaturalState.sp`, `HubHooks.tensura()` (race, EP), `Counters`; the days are the lunar calendar | the "3 days" chip needs the calendar (16e); the line is `Chrome.counters` in the Tensura theme (16d) |
+| Tensura "Other mods" rows (Vampirism, Werewolves, Enchanted, Tensura) | `HubHooks.launchers()` (a launcher per installed mod with its own screen) | the group heading and a launch arrow icon (`Icons.LAUNCH`); the order is the order the parts add them (16d) |
+| Grimoire footnotes and margin notes ("Reward: ..." as a footnote, SP and EP in red ink in the margin) | `Detail.reward`, `Counters` | the footnote mark and the margin placement are Grimoire drawing (16b); no new data |
+| Home opens the hub everywhere | `HubKeybinds.HUB`, default `GLFW_KEY_HOME` (checked in code), rebindable; it also closes the hub | none |
+| Pages 1 to 8 on the keys | `FocusOrder.pageForKey` over the visible pages (Guide and Loadout join in 16b and 16e) | with fewer pages the unused keys do nothing || Two-ladders and no-Tensura fallback states | `HubModel.ladders`, `HubHooks.tensura()` | none |
 | Confirm dialogs | `ConfirmModel` (16a), used for Remove, Release and Reset | none |
 | Theme switch | `HubClientConfig.theme` | button in the hub (16a) |
 | HUD icons, cooldown, bite ring, mode pill | `AbilityHudLayer`, `HudSlots`, `ClientActions`, `BiteView` | ability icon per action and cooldown seconds per slot (16f) |

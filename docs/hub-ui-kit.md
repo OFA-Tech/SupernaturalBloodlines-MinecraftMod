@@ -35,3 +35,14 @@ The shared pieces every hub theme is built from. Package `net.ofatech.supernatur
 `HubTheme` has default methods for the new chrome (`drawThemeButton`, `drawClose`, `drawDetail`, `focusColor`), so an old theme needs no change; a theme restyles them when it is rebuilt (16b to 16d).
 
 `HubScreen`: draws and registers the chrome; the theme button cycles Grimoire, Blood Moon, Tensura (skipping a look that cannot be drawn) and saves it to `supernaturalbloodlines-hub-client.toml`, the same setting as the config; number keys 1 to 8 jump to a page; Tab follows the zone order; `Frame.detail(Detail)` hands a selection to the theme; `Frame.confirm(title, body, yes, action)` asks first (a dialog takes every key while it is open).
+
+## API after the 16a review
+
+- **Page first.** `HubPageView.keyPressed(key, modifiers)` and `mouseDragged(...)` (default: not used). `HubScreen` order: dialog, the hub key (always wins, even bound to a digit), the page, the number keys 1 to 8 (only with no Ctrl, Alt, Shift or Super), then the global arrows, Tab and Enter. A page that uses Left and Right (a radial tree, a ring) answers them and the hub no longer turns the page.
+- **Emblem.** `HubTheme.drawEmblem(UiContext, Rect, EmblemData)`; `EmblemData` has the ladder progress (`HubModel.progress`), the rungs, the entity and the `ModelDrag` the screen owns. A page calls `Frame.emblem(Rect)` (or `Frame.emblem()` for `Chrome.emblem`); a drag that starts on it turns the model whichever theme drew it.
+- **Counters.** `HubTheme.drawCounters(UiContext, Rect, Counters)` into `Chrome.counters` (SP always, EP with Tensura): a margin note, a top-right pair or a stats line, as the theme places it.
+- **Detail.** `Detail` has a `kicker`, an `icon`, task `rows(label, SourceTag, done, total)`, and per action a `confirm(title, body)` and a `disabledReason`. `KitDraw.detailHeight(font, w, d)` measures the text; `DetailLayout.stack/textArea` place the actions and keep text out from under them; `KitDraw.detailActions(ctx, theme, rects, d)` registers the `detail:` targets, tooltips (with the reason), the confirm routing and the focus rings, so a theme draws its own buttons and calls it. The default `KitDraw.detail` no longer lets the text run under the actions or the title run into the tag.
+- **`Frame.detail`** sets the current region and clip aside and puts them back, so a bar outside MAIN shows and takes clicks.
+- **Confirm.** `confirm(title, body, safe, yes, action)`: the safe button (usually "Stay") is on the left and is focused first; the height follows the wrapped body up to 70% of the screen; only a left mouse click answers; nothing scrolls while it is open. An action with a `Detail.Confirm` goes through it by itself.
+- `HubLayout.Chrome` is now (theme button, close, emblem, counters, detail); the unused nav style and detail kind were removed.
+- `KitDraw` and `UiContext` are in `shared.hub.kit.client`.

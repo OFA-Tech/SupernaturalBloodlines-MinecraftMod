@@ -48,7 +48,7 @@ public final class GrimoireLayout {
         // the theme switch sits over the first ribbon, in the same column
         Rect themeButton = new Rect(book.right() - 4, TOAST_CLEAR - 17, RIBBON_OUT + 4, 14);
         return new HubLayout(book, Map.of(HubLayout.MAIN, leftPage.inset(PAD), HubLayout.SIDE, rightPage.inset(PAD)), ribbons, wax,
-                new HubLayout.Chrome(themeButton, null, null, null, HubLayout.DetailKind.SIDE_REGION, HubLayout.NavStyle.INDEX_TABS));
+                new HubLayout.Chrome(themeButton, null, null, null, null));
     }
 
     /** The paper of a page, from its content region (what the theme draws behind it). */
