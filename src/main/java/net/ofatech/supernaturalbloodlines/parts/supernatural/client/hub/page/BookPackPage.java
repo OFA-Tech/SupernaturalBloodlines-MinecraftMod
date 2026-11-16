@@ -64,13 +64,36 @@ public final class BookPackPage implements HubPageView {
         if (r.contains("beta")) {
             return PackRing.Role.BETA;
         }
-        if (r.contains("mate") || r.contains("emissary")) {
+        if (r.contains("mate") || r.contains("emissary") || r.contains("ally")) {
             return PackRing.Role.PACKMATE;
         }
         if (r.contains("brother")) {
             return PackRing.Role.BROTHER;
         }
         return PackRing.Role.SUBORDINATE;
+    }
+
+    /** A 7 by 6 crown in gold: three points on a band. */
+    static void crown(HubScreen.Frame f, int x, int y) {
+        int gold = 0xFFD9A93C;
+        f.g.fill(x, y + 4, x + 7, y + 6, gold);
+        f.g.fill(x, y + 1, x + 1, y + 4, gold);
+        f.g.fill(x + 3, y, x + 4, y + 4, gold);
+        f.g.fill(x + 6, y + 1, x + 7, y + 4, gold);
+    }
+
+    private static boolean leads(HubScreen.Frame f, List<HubSocial.Member> pack) {
+        return !pack.isEmpty() && pack.get(0).name().equals(f.view.player().getName().getString());
+    }
+
+    /** The leader may remove a member of the pack (not themselves, an emissary or the leader of an allied pack). */
+    private static boolean canKick(HubScreen.Frame f, List<HubSocial.Member> pack, @Nullable HubSocial.Member chosen) {
+        return chosen != null && leads(f, pack) && !chosen.name().equals(f.view.player().getName().getString())
+                && !chosen.rank().equals("ally") && !chosen.rank().equals("emissary");
+    }
+
+    private static boolean canEndAlliance(HubScreen.Frame f, List<HubSocial.Member> pack, @Nullable HubSocial.Member chosen) {
+        return chosen != null && leads(f, pack) && chosen.rank().equals("ally");
     }
 
     private static Component rankName(HubSocial.Member m) {
@@ -111,7 +134,13 @@ public final class BookPackPage implements HubPageView {
             }
             f.g.fill(r.x(), y + 2, r.x() + 4, y + 6, m.online() ? 0xFF2F6E4A : 0xFF9A8566);
             Component rank = rankName(m);
-            BookKit.leader(f, Component.literal(m.name()), rank, r.x() + 8, y, r.w() - 8, t.muted());
+            // the first of the list leads the pack: a small gold crown before the name
+            boolean leads = m == pack.get(0) && !m.rank().equals("ally");
+            int crown = leads ? 9 : 0;
+            if (leads) {
+                crown(f, r.x() + 8, y + 1);
+            }
+            BookKit.leader(f, Component.literal(m.name()), rank, r.x() + 8 + crown, y, r.w() - 8 - crown, t.muted());
             String id = "member:" + m.name();
             f.target(id, hit, List.of(Component.literal(m.name()), rank, Component.translatable(KEY + (m.online() ? "online" : "offline"))), () -> selected = m.name());
             if (f.focused(id)) {
@@ -125,6 +154,17 @@ public final class BookPackPage implements HubPageView {
             y = BookKit.caps(f, Component.translatable(BOOK + "selected"), r.x(), y, t.muted());
             y = PageKit.title(f, Component.literal(chosen.name()), r.x(), y, r.w(), t.ink());
             y = PageKit.wrapped(f, Component.translatable(KEY + (chosen.online() ? "online" : "offline")), r.x(), y, r.w(), t.muted()) + 4;
+            if (canKick(f, pack, chosen)) {
+                BookKit.link(f, "pack:kick", Component.translatable(KEY + "kick"), r.x(), y, List.of(Component.translatable(KEY + "kick")),
+                        () -> f.confirm(Component.translatable(KEY + "kick_title", chosen.name()), Component.translatable(KEY + "kick_body"), Component.translatable(KEY + "kick"),
+                                () -> BloodlinePage.command("pack kick " + chosen.name())));
+                y += 13;
+            } else if (canEndAlliance(f, pack, chosen)) {
+                BookKit.link(f, "pack:ally_end", Component.translatable(KEY + "ally_end"), r.x(), y, List.of(Component.translatable(KEY + "ally_end")),
+                        () -> f.confirm(Component.translatable(KEY + "ally_end_title", chosen.name()), Component.translatable(KEY + "ally_end_body"),
+                                Component.translatable(KEY + "ally_end"), () -> BloodlinePage.command("pack ally remove " + chosen.name())));
+                y += 13;
+            }
         }
         y = BookKit.small(f, Component.translatable(BOOK + "invite"), r.x(), y + 2, r.w(), t.muted());
         f.end(y);
@@ -152,6 +192,15 @@ public final class BookPackPage implements HubPageView {
             }
         }
         d.action("accept", Component.translatable(KEY + "accept"), true, true, () -> BloodlinePage.command("pack accept"));
+        if (canKick(f, pack, chosen)) {
+            d.action(new Detail.Action("kick", Component.translatable(KEY + "kick"), false, true, null,
+                    new Detail.Confirm(Component.translatable(KEY + "kick_title", chosen.name()), Component.translatable(KEY + "kick_body")),
+                    () -> BloodlinePage.command("pack kick " + chosen.name())));
+        } else if (canEndAlliance(f, pack, chosen)) {
+            d.action(new Detail.Action("ally_end", Component.translatable(KEY + "ally_end"), false, true, null,
+                    new Detail.Confirm(Component.translatable(KEY + "ally_end_title", chosen.name()), Component.translatable(KEY + "ally_end_body")),
+                    () -> BloodlinePage.command("pack ally remove " + chosen.name())));
+        }
         if (!pack.isEmpty()) {
             d.action(new Detail.Action("leave", Component.translatable(KEY + "leave"), false, true, null,
                     new Detail.Confirm(Component.translatable(BOOK + "leave_title"), Component.translatable(BOOK + "leave_body")), () -> BloodlinePage.command("pack leave")));
@@ -175,7 +224,7 @@ public final class BookPackPage implements HubPageView {
         int cy = top + (s.bottom() - legend - top) / 2;
         int cx = s.x() + areaW / 2;
         List<PackRing.Member> members = new ArrayList<>();
-        pack.stream().filter(m -> !m.name().equals(f.view.player().getName().getString())).forEach(m -> members.add(new PackRing.Member(m.name(), role(m.rank()))));
+        pack.stream().filter(m -> !m.name().equals(f.view.player().getName().getString()) && !m.rank().equals("ally")).forEach(m -> members.add(new PackRing.Member(m.name(), role(m.rank()))));
         int face = members.size() > 8 ? 12 : 16;
         // the faces sit on a ring; their names go outward (beside the side ones, over the top ones, under the bottom ones), small, inside the page
         int radius = Math.max(26, Math.min(areaW / 2 - 52, (s.bottom() - legend - top) / 2 - face / 2 - 12));

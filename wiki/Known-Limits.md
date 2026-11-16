@@ -86,3 +86,11 @@ If you find something that behaves differently from this wiki, please [open an i
   - **Shift + R and Shift + F belong to Book of Dragons in the OFA pack**, so sneaking blocks slots 1 and 2 there.
   - A slot key also fires with Ctrl or Shift held (Alt must work for Tensura's mode change).
   - **Creative and spectator mode show no Vampirism blood bar.** Vampirism itself does not draw its blood bar when the game mode has no hunger (`hasExperience()` is false), so with `blood_in_food_spot = false` a vampire in creative sees no blood value at all (in survival and adventure Vampirism's bar is back above the hotbar). With the setting on, the blood in Tensura's food spot shows in every game mode.
+
+## Packs (plan 14)
+
+- **The party link has not been seen with the real Open Parties and Claims running.** It is written against the 0.33.0 jar (and the Team Claims 1.5.0 fork, which has the same classes) with javap, reached by reflection, and tested with a stand-in. If a call fails it logs one warning and the link stops.
+- **Open Parties and Claims cannot hand a party to someone else.** The party's owner stays the player who founded it, whoever leads the pack now. If that owner leaves the pack their party is ended and the pack gets a new one owned by its leader.
+- **The party is checked every 10 seconds** (and at once when somebody joins, leaves or is kicked): leaving the party leaves the pack within that time.
+- **The leader is the strongest Alpha** by the last level the game saw them with. Raising an offline Alpha's level cannot move the lead until they log in.
+- **Packmates have no rank of their own.** They keep their race and ranks; a Packmate who is later turned into a werewolf by another Alpha's bite changes pack with the bite.

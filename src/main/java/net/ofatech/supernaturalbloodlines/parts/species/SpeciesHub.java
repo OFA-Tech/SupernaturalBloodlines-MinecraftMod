@@ -18,6 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.hunter.FiveRoster;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackLeadership;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex;
@@ -89,7 +90,7 @@ final class SpeciesHub {
 
     private static List<HubSocial.Member> pack(ServerPlayer p, MinecraftServer server) {
         PackIndex index = PackIndex.get(p.serverLevel());
-        // a Beta has an Alpha, an emissary serves one, and anyone else is the Alpha of their own pack (if it has anyone)
+        // a member has a leader, an emissary serves one, and anyone else is the leader of their own pack (if it has anyone)
         UUID alpha = index.alphaOf(p.getUUID()).or(() -> index.emissaryAlpha(p.getUUID())).orElse(p.getUUID());
         List<UUID> betas = index.betasOf(alpha);
         Optional<UUID> emissary = index.emissaryOf(alpha);
@@ -98,8 +99,11 @@ final class SpeciesHub {
         }
         List<HubSocial.Member> out = new ArrayList<>();
         out.add(member(server, alpha, "alpha"));
-        betas.forEach(b -> out.add(member(server, b, "beta")));
+        // the other Alphas are Alphas, a member who was no werewolf when last seen is a Packmate, the rest are Betas
+        betas.forEach(b -> out.add(member(server, b, PackLeadership.isAlpha(index.strengthOf(b)) ? "coalpha" : index.strengthOf(b) < 0 ? "packmate" : "beta")));
         emissary.ifPresent(e -> out.add(member(server, e, "emissary")));
+        // the leaders of the packs this one is allied with (not their members)
+        index.alliesOf(alpha).forEach(a -> out.add(member(server, a, "ally")));
         return out;
     }
 

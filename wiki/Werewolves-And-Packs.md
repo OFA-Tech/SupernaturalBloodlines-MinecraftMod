@@ -103,9 +103,11 @@ With Tensura, a human who becomes a werewolf becomes a Tensura **beastfolk**. As
 
 | Command | Does |
 |---|---|
-| `/pack invite <player>` | an Alpha invites an online werewolf with no pack who isn't an Alpha. They get a clickable **[Accept]** that lasts 60 s. |
+| `/pack invite <player>` | the leader invites an online player who is in no pack. They get a clickable **[Accept]** that lasts 60 s. |
+| `/pack kick <player>` | the leader removes a member (online or not) |
+| `/pack ally invite <player>` / `accept <token>` / `remove <player>` | packs ally through their leaders |
 | `/pack accept <token>` | what the **[Accept]** button runs |
-| `/pack leave` | leave your pack (becomes an Omega). An Alpha cannot leave. |
+| `/pack leave` | leave your pack (a Beta becomes an Omega). The leader cannot leave. |
 | `/pack info` | show your pack |
 | `/pack heal <player>` | give up the spark to heal |
 | `/pack roar` | the Alpha Roar |
@@ -113,6 +115,17 @@ With Tensura, a human who becomes a werewolf becomes a Tensura **beastfolk**. As
 | `/pack anchor [player]` | name your anchor (no name clears it) |
 
 A werewolf with a pack already must leave it before another Alpha's bite or invitation can move them.
+
+### Mixed packs and Alpha Packs
+
+- **Anyone can join a pack.** A player who is not a werewolf joins as a **Packmate**: nothing about them changes, and they have every perk of the pack (the pack bonus counts them, the Roar buffs them, the Emissary's discount reaches them).
+- **There is no limit** on the size of a pack.
+- **A pack can have several Alphas.** An Alpha who accepts another Alpha's invitation keeps the spark and becomes a second Alpha of that pack. **The strongest leads**: a True Alpha before an Alpha, then the higher Werewolves level, and on a tie the sitting leader stays. It is worked out again when someone joins, leaves or is kicked, when a level changes and at login (an offline Alpha counts with the level they last had).
+- **Only the leader invites and kicks.** The other Alphas are admins of the party (see below).
+- When the leader loses the spark (stolen, given up, cured, or leaves the werewolves) the **strongest other Alpha takes the pack** before any Beta is made an Alpha. A werewolf who kills **an Alpha of their own pack** still steals their spark.
+- **Allied packs** (`/pack ally`): their members cannot hurt each other and the Roar does not make them submit. They share no pack bonus and no Roar buff.
+- **The Alpha Trial** (plan 15) will let a Beta who wins it become a second Alpha of their own pack; the hook for it is in place.
+- **Open Parties and Claims.** With Open Parties and Claims (or its Team Claims fork, same mod id) installed, the pack is a party: the first leader owns it, the other Alphas are its admins, everyone else a member. Someone who **leaves the party leaves the pack**, and someone who leaves the pack leaves the party. A party its owner disbanded is not made again until someone joins or leaves. Without the mod nothing of this exists.
 
 ### Pack bonus
 
