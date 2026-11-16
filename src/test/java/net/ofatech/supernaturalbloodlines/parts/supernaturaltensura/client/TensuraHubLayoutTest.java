@@ -43,4 +43,25 @@ class TensuraHubLayoutTest {
     void itStopsGrowingOnABigScreen() {
         assertEquals(TensuraHubLayout.MAX_W, TensuraHubLayout.of(1920, 1080, 6, 3).frame().w());
     }
+
+    @Test
+    void theThemeButtonFitsEveryScreenAndTouchesNothing() {
+        for (int[] s : SCREENS) {
+            String at = s[0] + "x" + s[1];
+            HubLayout l = TensuraHubLayout.of(s[0], s[1], 6, 3);
+            Rect b = l.chrome().themeButton();
+            org.junit.jupiter.api.Assertions.assertNotNull(b, at + " has no theme button");
+            assertTrue(b.inside(new Rect(0, 0, s[0], s[1])), at + " button off screen " + b);
+            assertTrue(b.w() >= 14 && b.h() >= 12, at + " button too small to hit");
+            for (Rect r : l.tabs()) {
+                assertFalse(b.overlaps(r), at + " button on a tab");
+            }
+            for (Rect r : l.seals()) {
+                assertFalse(b.overlaps(r), at + " button on a seal");
+            }
+            for (Rect r : l.regions().values()) {
+                assertFalse(b.overlaps(r), at + " button on a region " + r);
+            }
+        }
+    }
 }

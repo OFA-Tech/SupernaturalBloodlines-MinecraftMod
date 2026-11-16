@@ -17,6 +17,8 @@ public final class TensuraHubLayout {
     static final int INSET = 6;
     static final int ROW_H = 16;
     static final int ROW_STEP = 18;
+    /** The title strip over the lists and panels: the window's title and the theme button. */
+    static final int TITLE = 12;
     static final int PANEL_PAD = 6;
 
     private TensuraHubLayout() {
@@ -40,12 +42,14 @@ public final class TensuraHubLayout {
         int mainW = (inner - INSET) * 20 / 43; // the mockup's 1 : 1.15
         Rect main = new Rect(left, nav.y(), mainW, nav.h());
         Rect side = new Rect(left + mainW + INSET, nav.y(), inner - mainW - INSET, nav.h());
-        return new HubLayout(frame, Map.of(HubLayout.MAIN, main.inset(PANEL_PAD), HubLayout.SIDE, side.inset(PANEL_PAD)), pages, mods);
+        Rect themeButton = new Rect(frame.right() - INSET - 44, frame.y() + 3, 44, 12);
+        return new HubLayout(frame, Map.of(HubLayout.MAIN, main.inset(PANEL_PAD), HubLayout.SIDE, side.inset(PANEL_PAD)), pages, mods,
+                new HubLayout.Chrome(themeButton, null, null, null, HubLayout.DetailKind.SIDE_REGION, HubLayout.NavStyle.LIST));
     }
 
     static Rect nav(Rect frame) {
         int navW = Math.max(72, Math.min(110, frame.w() / 4));
-        return new Rect(frame.x() + INSET, frame.y() + INSET, navW, frame.h() - 2 * INSET);
+        return new Rect(frame.x() + INSET, frame.y() + INSET + TITLE, navW, frame.h() - 2 * INSET - TITLE);
     }
 
     /** {@code label} as it fits in {@code width}: whole, or cut with an ellipsis (the row's tooltip has it whole). */

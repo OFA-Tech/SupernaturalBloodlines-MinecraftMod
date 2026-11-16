@@ -37,6 +37,28 @@ public final class HubClientConfig {
         }
     }
 
+    /** The theme a press of the hub's theme button shows after {@code current}: the next one that can be drawn now (the Grimoire always can). */
+    public static ThemeId next(ThemeId current, java.util.function.Predicate<String> available) {
+        ThemeId[] all = ThemeId.values();
+        for (int i = 1; i <= all.length; i++) {
+            ThemeId c = all[(current.ordinal() + i) % all.length];
+            if (c == ThemeId.GRIMOIRE || available.test(c.id())) {
+                return c;
+            }
+        }
+        return current;
+    }
+
+    /** Saves the look (the hub button and the config file are the same setting). */
+    public static void setTheme(ThemeId theme) {
+        try {
+            HUB_THEME.set(theme);
+            HUB_THEME.save();
+        } catch (IllegalStateException notLoaded) {
+            // the config is not loaded (a test, or too early): the screen keeps the look for this session only
+        }
+    }
+
     /** The theme that is drawn for the one chosen: itself when a part registered it and it can be drawn now (Tensura's needs Tensura), else the Grimoire. */
     public static ThemeId resolve(ThemeId chosen, java.util.function.Predicate<String> registered) {
         return registered.test(chosen.id()) ? chosen : ThemeId.GRIMOIRE;

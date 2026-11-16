@@ -18,6 +18,12 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.HubKeybinds;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.GrimoireTheme;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.ClaimTaskPayload;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.ConfirmLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.ConfirmModel;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.FocusOrder;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.UiContext;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -46,6 +52,12 @@ public final class HubScreen extends Screen {
     private List<Target> targets = List.of();
     private List<HubPage> visible = List.of(HubPage.PATH);
     private HubLayout layout;
+    @Nullable
+    private ConfirmModel dialog;
+    private Component dialogTitle = Component.empty();
+    private Component dialogBody = Component.empty();
+    private Component dialogYes = Component.empty();
+    private Runnable dialogAction = () -> { };
 
     HubScreen(HubPage page) {
         super(Component.translatable("supernaturalbloodlines.hub.title"));
@@ -111,6 +123,7 @@ public final class HubScreen extends Screen {
                 theme.drawFocus(g, r);
             }
         }
+        chrome(f, mouseX, mouseY);
         HubThemeViews views = theme instanceof HubThemeViews v ? v : null;
         if (views != null) {
             views.drawOverlay(f, page);
@@ -123,7 +136,53 @@ public final class HubScreen extends Screen {
             }
         }
         followFocus();
+        if (dialog != null) {
+            ConfirmLayout cl = ConfirmLayout.of(width, height);
+            KitDraw.confirm(f, theme, width, height, dialogTitle, dialogBody, Component.translatable("supernaturalbloodlines.hub.confirm.cancel"), dialogYes,
+                    dialog.confirmFocused(), cl.cancel(), cl.confirm(), cl.panel(), cl.text());
+            return;
+        }
         tooltip(g, mouseX, mouseY);
+    }
+
+    /** The theme's own chrome: the theme switch and the close button, when its layout has them. */
+    private void chrome(Frame f, int mouseX, int mouseY) {
+        Rect tb = layout.chrome().themeButton();
+        if (tb != null) {
+            HubClientConfig.ThemeId next = HubClientConfig.next(themeId, id -> HubHooks.theme(id).isPresent());
+            f.targets.add(new Target("theme", tb, null, true, List.of(Component.translatable("supernaturalbloodlines.hub.theme.switch",
+                    Component.translatable("supernaturalbloodlines.hub.theme." + next.id()))), () -> HubClientConfig.setTheme(next)));
+            theme.drawThemeButton(f.g, tb, tb.contains(mouseX, mouseY), f.focused("theme"));
+        }
+        Rect cb = layout.chrome().close();
+        if (cb != null) {
+            f.targets.add(new Target("close", cb, null, true, List.of(Component.translatable("supernaturalbloodlines.hub.close")), this::onClose));
+            theme.drawClose(f.g, cb, cb.contains(mouseX, mouseY), f.focused("close"));
+        }
+    }
+
+    /**
+     * Asks before something that cannot be undone. Esc and a click outside cancel, Enter on the safe button cancels, so only a deliberate move
+     * to {@code yes} confirms.
+     */
+    public void confirm(Component title, Component body, Component yes, Runnable action) {
+        dialog = new ConfirmModel();
+        dialogTitle = title;
+        dialogBody = body;
+        dialogYes = yes;
+        dialogAction = action;
+    }
+
+    private void dialogResult(ConfirmModel.Result r) {
+        if (r == ConfirmModel.Result.NONE) {
+            return;
+        }
+        Runnable action = dialogAction;
+        dialog = null;
+        dialogAction = () -> { };
+        if (r == ConfirmModel.Result.CONFIRM) {
+            action.run();
+        }
     }
 
     /** After a keyboard move, scrolls the focused target's region so it shows (it is drawn there from the next frame). */
@@ -177,6 +236,14 @@ public final class HubScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (dialog != null) {
+            ConfirmLayout cl = ConfirmLayout.of(width, height);
+            if (cl.panel().contains(mouseX, mouseY) && !cl.cancel().contains(mouseX, mouseY) && !cl.confirm().contains(mouseX, mouseY)) {
+                return true;
+            }
+            dialogResult(ConfirmModel.click(cl.confirm().contains(mouseX, mouseY)));
+            return true;
+        }
         if (button == 0) {
             for (Target t : targets) {
                 if (t.shown() && t.action() != null && t.rect().contains(mouseX, mouseY)) {
@@ -215,6 +282,25 @@ public final class HubScreen extends Screen {
 
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
+        if (dialog != null) {
+            ConfirmModel.Key k = switch (key) {
+                case GLFW.GLFW_KEY_ESCAPE -> ConfirmModel.Key.ESCAPE;
+                case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> ConfirmModel.Key.ENTER;
+                case GLFW.GLFW_KEY_TAB -> ConfirmModel.Key.TAB;
+                case GLFW.GLFW_KEY_LEFT -> ConfirmModel.Key.LEFT;
+                case GLFW.GLFW_KEY_RIGHT -> ConfirmModel.Key.RIGHT;
+                default -> null;
+            };
+            if (k != null) {
+                dialogResult(dialog.press(k));
+            }
+            return true; // a dialog takes every key: nothing behind it moves
+        }
+        var jump = FocusOrder.pageForKey(key, visible.size());
+        if (jump.isPresent()) {
+            setPage(visible.get(jump.getAsInt()));
+            return true;
+        }
         if (HubKeybinds.HUB.matches(key, scanCode)) {
             onClose();
             return true;
@@ -243,7 +329,7 @@ public final class HubScreen extends Screen {
 
     private void moveFocus(int delta) {
         keyboard = true;
-        focus = HubFocus.move(targets.stream().map(Target::id).toList(), focus, delta);
+        focus = HubFocus.move(FocusOrder.order(targets.stream().map(Target::id).toList()), focus, delta);
         scrollToFocus = true;
     }
 
@@ -262,7 +348,7 @@ public final class HubScreen extends Screen {
     }
 
     /** What a page draws with during one frame: the theme, the named regions, and the targets it registers. */
-    public final class Frame {
+    public final class Frame implements UiContext {
         public final GuiGraphics g;
         public final int mouseX;
         public final int mouseY;
@@ -280,14 +366,30 @@ public final class HubScreen extends Screen {
             this.view = view;
         }
 
+        @Override
+        public GuiGraphics g() {
+            return g;
+        }
+
         public HubTheme theme() {
             return theme;
+        }
+
+        /** Hands the selection's detail to the theme: it draws it in its own place (the opposite page, a bottom bar, an info pane). */
+        public void detail(Detail d) {
+            Rect r = layout.chrome().detail() != null ? layout.chrome().detail() : layout.region(HubLayout.SIDE);
+            theme.drawDetail(this, r, d);
+        }
+
+        public void confirm(Component title, Component body, Component yes, Runnable action) {
+            HubScreen.this.confirm(title, body, yes, action);
         }
 
         public HubScreen screen() {
             return HubScreen.this;
         }
 
+        @Override
         public Font font() {
             return font;
         }
@@ -320,14 +422,17 @@ public final class HubScreen extends Screen {
         }
 
         /** Registers a target; one scrolled out of its region can take the focus but not the mouse. Ids are unique within a frame. */
+        @Override
         public void target(String id, Rect r, List<Component> tooltip, @Nullable Runnable action) {
             targets.add(new Target(id, r, region, clip == null || r.overlaps(clip), tooltip, action));
         }
 
+        @Override
         public boolean hovered(Rect r) {
             return r.contains(mouseX, mouseY) && (clip == null || clip.contains(mouseX, mouseY));
         }
 
+        @Override
         public boolean focused(String id) {
             return id.equals(focus);
         }

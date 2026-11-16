@@ -28,5 +28,6 @@ public final class ThemeContrast {
             }
         }
         assertTrue(failed.isEmpty(), name + " has text below 4.5:1: " + failed);
+        assertTrue(Contrast.ratio(theme.focusColor(), paper) >= 3.0, name + " focus ring is below 3:1 on its paper");
     }
 }

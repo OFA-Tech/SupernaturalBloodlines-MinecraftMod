@@ -11,6 +11,11 @@ public final class Contrast {
         return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
     }
 
+    /** White or black, whichever reads better on {@code bg} (the label on a coloured chip). */
+    public static int bestText(int bg) {
+        return ratio(0xFFFFFFFF, bg) >= ratio(0xFF000000, bg) ? 0xFFFFFFFF : 0xFF000000;
+    }
+
     static double luminance(int argb) {
         return 0.2126 * channel(argb >> 16) + 0.7152 * channel(argb >> 8) + 0.0722 * channel(argb);
     }

@@ -1,6 +1,11 @@
 package net.ofatech.supernaturalbloodlines.shared.hub;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.FocusRing;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.UiContext;
 
 /**
  * A skin and layout over the one hub screen model: where things go and how they look. The supernatural part's shared page views draw
@@ -41,6 +46,26 @@ public interface HubTheme {
 
     /** The keyboard focus around a target. */
     void drawFocus(GuiGraphics g, Rect r);
+
+    /** The theme switch button. A theme draws its own (the clasp, the moon, the title bar button). */
+    default void drawThemeButton(GuiGraphics g, Rect r, boolean hot, boolean focused) {
+        KitDraw.button(g, this, r, Icons.THEME, hot, focused);
+    }
+
+    /** The close button, for a theme whose layout has one. */
+    default void drawClose(GuiGraphics g, Rect r, boolean hot, boolean focused) {
+        KitDraw.button(g, this, r, Icons.CLOSE, hot, focused);
+    }
+
+    /** The detail of a selection in {@code r}: the shared contract of every page, which a theme may style as the page opposite, a bar or a pane. */
+    default void drawDetail(UiContext ctx, Rect r, Detail detail) {
+        KitDraw.detail(ctx, this, r, detail);
+    }
+
+    /** The colour of the keyboard focus ring (a target outline, not text): 3:1 or more on {@link #paper()}. */
+    default int focusColor() {
+        return FocusRing.forPaper(paper());
+    }
 
     /** The colour behind the content regions: every text colour below is readable on it (4.5:1 or more). */
     int paper();

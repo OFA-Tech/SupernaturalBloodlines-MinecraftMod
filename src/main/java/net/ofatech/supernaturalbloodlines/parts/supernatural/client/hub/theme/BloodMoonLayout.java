@@ -43,7 +43,9 @@ public final class BloodMoonLayout {
         // the cards' text sits inside a 5 px border, so the regions are inset by it
         Rect main = new Rect(left, cardsTop, mainW, cardsH).inset(5);
         Rect side = new Rect(left + mainW + GAP, cardsTop, right - left - mainW - GAP, cardsH).inset(5);
-        return new HubLayout(screen, Map.of(MOON, moon, HubLayout.MAIN, main, HubLayout.SIDE, side), rail, portals);
+        Rect themeButton = new Rect(width - EDGE - RAIL, EDGE, RAIL, RAIL); // top right, above the launcher rail
+        return new HubLayout(screen, Map.of(MOON, moon, HubLayout.MAIN, main, HubLayout.SIDE, side), rail, portals,
+                new HubLayout.Chrome(themeButton, null, moon, null, HubLayout.DetailKind.SIDE_REGION, HubLayout.NavStyle.ICON_RAIL));
     }
 
     /** Where the SP and EP counters go: the bottom right of the moon band, two lines (the top right is the toasts'). */
