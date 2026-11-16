@@ -146,6 +146,7 @@ public final class HubScreen extends Screen {
                 theme.drawScrollbar(g, layout.region(e.getKey()), scroll.getOrDefault(e.getKey(), 0), e.getValue());
             }
         }
+        theme.drawFooter(f, layout, page);
         followFocus();
         if (dialog != null) {
             KitDraw.confirm(f, theme, width, height, dialogTitle, dialogBody, dialogSafe, dialogYes, dialog.confirmFocused(), dialogLayout());

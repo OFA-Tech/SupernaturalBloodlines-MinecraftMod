@@ -6,6 +6,8 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import java.util.EnumMap;
 import java.util.Map;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BloodlinePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.GuidePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.LoadoutPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PathPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage;
@@ -22,7 +24,9 @@ public final class HubPages {
             HubPage.SKILLS, new SkillsPage(),
             HubPage.RITES, new RitesPage(),
             HubPage.BLOODLINE, new BloodlinePage(),
-            HubPage.PACK, new PackPage()));
+            HubPage.PACK, new PackPage(),
+            HubPage.GUIDE, new GuidePage(),
+            HubPage.LOADOUT, new LoadoutPage()));
 
     private HubPages() {
     }

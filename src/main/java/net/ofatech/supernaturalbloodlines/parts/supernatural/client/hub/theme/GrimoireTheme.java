@@ -1,25 +1,54 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme;
 
-import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
-import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
-import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
-import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
-import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
-import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubThemeViews;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PathPage;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
+import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Counters;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.TickRing;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiContext;
 
-/** The default theme: an open grimoire, dark ink on parchment, ribbon bookmarks for pages and wax for what can be pressed. */
-public final class GrimoireTheme implements HubTheme {
+/**
+ * The default theme, a real open book: a leather cover with a gold line, two parchment pages with spine shading and stacked page edges,
+ * page numbers, index tabs out of the right edge, wax seals on cords below, a brass clasp that switches the look, SP and EP as a margin note
+ * in red ink, and an ink sigil round the live player model. Everything on the pages is the shared kit and the shared page views.
+ */
+public final class GrimoireTheme implements HubTheme, HubThemeViews {
     private static final ResourceLocation PARCHMENT = tex("parchment");
     private static final ResourceLocation WIDGETS = tex("widgets");
     private static final int WIDGETS_W = 64;
     private static final int WIDGETS_H = 32;
+    private static final int LEATHER = 0xFF4A1717;
+    private static final int LEATHER_DARK = 0xFF260A0A;
+    private static final int GOLD = 0xFFB8903A;
+    private static final int GOLD_DARK = 0xFF5A4010;
+    private static final int INK_RED = 0xFF7A1218;
+    private static final int[] EDGES = {0xFFD9C9A2, 0xFFC4B088, 0xFFAE9868};
+
+    private final HubPageView path = new PathPage(true);
 
     private static ResourceLocation tex(String name) {
         return ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hub/grimoire/" + name + ".png");
+    }
+
+    /** The Path page of the book carries the almanac and the sigil emblem; every other page is the shared one. */
+    @Override
+    public HubPageView view(HubPage page) {
+        return page == HubPage.PATH ? path : HubThemeViews.super.view(page);
     }
 
     @Override
@@ -29,12 +58,16 @@ public final class GrimoireTheme implements HubTheme {
 
     @Override
     public void drawFrame(GuiGraphics g, HubLayout l) {
+        g.fill(0, 0, g.guiWidth(), g.guiHeight(), 0xA0100707);
         Rect b = l.frame();
-        g.fill(b.x() - 2, b.y() - 2, b.right() + 2, b.bottom() + 2, 0xFF120506);
-        g.fill(b.x(), b.y(), b.right(), b.bottom(), 0xFF3a1418);
-        outline(g, b.inset(2), 0xFF5e1f25);
+        g.fill(b.x() - 3, b.y() - 3, b.right() + 3, b.bottom() + 4, 0x80000000);
+        g.fill(b.x() - 1, b.y() - 1, b.right() + 1, b.bottom() + 1, LEATHER_DARK);
+        g.fill(b.x(), b.y(), b.right(), b.bottom(), LEATHER);
+        g.renderOutline(b.x() + 2, b.y() + 2, b.w() - 4, b.h() - 4, GOLD);
         Rect lp = GrimoireLayout.page(l.region(HubLayout.MAIN));
         Rect rp = GrimoireLayout.page(l.region(HubLayout.SIDE));
+        stackedEdges(g, lp, true);
+        stackedEdges(g, rp, false);
         paper(g, lp);
         paper(g, rp);
         // the gutter: the paper darkens towards the spine
@@ -46,8 +79,16 @@ public final class GrimoireTheme implements HubTheme {
         g.fill(lp.right(), b.y() + 2, rp.x(), b.bottom() - 2, 0xFF2a1708);
         g.fill(lp.right() + 1, b.y() + 2, lp.right() + 2, b.bottom() - 2, 0xFF5a3a1c);
         g.fill(rp.x() - 2, b.y() + 2, rp.x() - 1, b.bottom() - 2, 0xFF5a3a1c);
-        outline(g, lp, 0xFF7a5a32);
-        outline(g, rp, 0xFF7a5a32);
+        g.renderOutline(lp.x(), lp.y(), lp.w(), lp.h(), 0xFF7a5a32);
+        g.renderOutline(rp.x(), rp.y(), rp.w(), rp.h(), 0xFF7a5a32);
+    }
+
+    /** The stack of leaves under a page: three paper edges peeking out below it and on its outer side. */
+    private static void stackedEdges(GuiGraphics g, Rect page, boolean left) {
+        for (int k = EDGES.length; k >= 1; k--) {
+            int c = EDGES[k - 1];
+            g.fill(page.x() + (left ? -k : 0), page.y() + k, page.right() + (left ? 0 : k), page.bottom() + k, c);
+        }
     }
 
     private static void paper(GuiGraphics g, Rect r) {
@@ -58,32 +99,104 @@ public final class GrimoireTheme implements HubTheme {
         }
     }
 
-    private static void outline(GuiGraphics g, Rect r, int color) {
-        g.renderOutline(r.x(), r.y(), r.w(), r.h(), color);
+    @Override
+    public void drawFooter(UiContext ctx, HubLayout layout, HubPage page) {
+        GuiGraphics g = ctx.g();
+        Font font = ctx.font();
+        int left = 2 * page.ordinal() + 1;
+        for (int i = 0; i < 2; i++) {
+            Rect pg = GrimoireLayout.page(layout.region(i == 0 ? HubLayout.MAIN : HubLayout.SIDE));
+            String n = "~ " + (left + i) + " ~";
+            Rect r = GrimoireLayout.number(pg);
+            g.drawString(font, n, r.x() + (r.w() - font.width(n)) / 2, r.y(), muted(), false);
+        }
     }
 
     @Override
     public void drawTab(GuiGraphics g, Rect r, HubPage page, boolean selected, boolean focused) {
         int w = selected ? r.w() + 4 : r.w();
-        g.fill(r.x(), r.y() - 1, r.x() + w + 1, r.bottom() + 1, 0xFF2a0a0d);
-        g.fill(r.x(), r.y(), r.x() + w, r.bottom(), selected ? 0xFF9a1820 : 0xFF6a1a20);
+        g.fill(r.x(), r.y() - 1, r.x() + w + 1, r.bottom() + 1, LEATHER_DARK);
+        g.fill(r.x(), r.y(), r.x() + w, r.bottom(), selected ? 0xFF9A1820 : 0xFF6A1A20);
         if (selected) {
-            g.renderOutline(r.x() + 1, r.y() + 1, w - 2, r.h() - 2, 0xFFe8b84a);
+            g.renderOutline(r.x() + 1, r.y() + 1, w - 2, r.h() - 2, GOLD);
         }
-        int icon = page.ordinal();
-        g.setColor(selected ? 1f : 0.91f, selected ? 0.886f : 0.69f, selected ? 0.627f : 0.69f, 1f);
-        g.blit(WIDGETS, r.x() + 4 + (w - 4 - 8) / 2, r.y() + (r.h() - 8) / 2, icon * 9, 24, 8, 8, WIDGETS_W, WIDGETS_H);
-        g.setColor(1f, 1f, 1f, 1f);
+        KitDraw.icon(g, Icons.of(page), r.x() + 4 + (w - 4 - 12) / 2, r.y() + (r.h() - 12) / 2, 12, selected ? 0xFFFFE3A0 : 0xFFE8B0B0);
         if (focused) {
-            drawFocus(g, new Rect(r.x(), r.y(), w, r.h()));
+            KitDraw.focusRing(g, new Rect(r.x(), r.y(), w, r.h()), focusColor());
+        }
+    }
+
+    /** A wax seal hanging on a cord from the book's bottom edge. */
+    @Override
+    public void drawSeal(GuiGraphics g, Rect r, String letter, int color, boolean lit) {
+        int cx = r.x() + r.w() / 2;
+        g.fill(cx, r.y() - GrimoireLayout.CORD, cx + 1, r.y(), GOLD);
+        KitDraw.shape(g, Shapes.Shape.ROUND, r.x(), r.y(), Math.min(r.w(), r.h()), lit ? 0xFFC03038 : 0xFF9A1820);
+        KitDraw.shape(g, Shapes.Shape.ROUND, r.x() + 2, r.y() + 2, Math.min(r.w(), r.h()) - 4, lit ? 0xFFA82028 : 0xFF7A1218);
+        Font font = Minecraft.getInstance().font;
+        g.drawString(font, letter, r.x() + (r.w() - font.width(letter)) / 2 + 1, r.y() + (r.h() - 8) / 2 + 1, 0xFFF0DCB0, false);
+    }
+
+    /** The brass clasp that switches the look. */
+    @Override
+    public void drawThemeButton(GuiGraphics g, Rect r, boolean hot, boolean focused) {
+        g.fill(r.x(), r.y(), r.right(), r.bottom(), GOLD_DARK);
+        g.fill(r.x() + 1, r.y() + 1, r.right() - 1, r.bottom() - 1, hot ? 0xFFD4AC4E : GOLD);
+        g.fill(r.x() + 1, r.y() + r.h() / 2, r.right() - 1, r.y() + r.h() / 2 + 1, GOLD_DARK);
+        KitDraw.icon(g, Icons.THEME, r.x() + (r.w() - 12) / 2, r.y() + (r.h() - 12) / 2, 12, 0xFF2A1808);
+        if (focused) {
+            KitDraw.focusRing(g, r, focusColor());
         }
     }
 
     @Override
-    public void drawSeal(GuiGraphics g, Rect r, String letter, int color, boolean lit) {
-        g.blit(WIDGETS, r.x(), r.y(), r.w(), r.h(), lit ? 45 : 30, 10, STAMP, STAMP, WIDGETS_W, WIDGETS_H);
-        var font = net.minecraft.client.Minecraft.getInstance().font;
-        g.drawString(font, letter, r.x() + (r.w() - font.width(letter)) / 2 + 1, r.y() + (r.h() - 8) / 2 + 1, color, false);
+    public void drawClose(GuiGraphics g, Rect r, boolean hot, boolean focused) {
+        KitDraw.icon(g, Icons.CLOSE, r.x() + (r.w() - 12) / 2, r.y() + (r.h() - 12) / 2, 12, hot ? 0xFFE8B84A : GOLD);
+        if (focused) {
+            KitDraw.focusRing(g, r, 0xFFE8B84A);
+        }
+    }
+
+    /** SP and EP as a red ink margin note in the header of the left page. */
+    @Override
+    public void drawCounters(UiContext ctx, Rect r, Counters c) {
+        String ep = c.epText();
+        String text = c.sp() + " SP" + (ep == null ? "" : "  \u00b7  " + ep);
+        Font font = ctx.font();
+        int x = r.right() - font.width(text);
+        ctx.g().drawString(font, text, x, r.y(), INK_RED, false);
+        ctx.g().fill(x, r.y() + 9, r.right(), r.y() + 10, INK_RED);
+    }
+
+    /** The ink sigil: two circles and a five-pointed star round the live model, with the ladder's progress as a ring of ticks outside. */
+    @Override
+    public void drawEmblem(UiContext ctx, Rect r, EmblemData data) {
+        GuiGraphics g = ctx.g();
+        int cx = r.x() + r.w() / 2;
+        int cy = r.y() + r.h() / 2;
+        int radius = Math.min(r.w(), r.h()) / 2 - 2;
+        KitDraw.tickRing(g, cx, cy, radius, 36, data.progress(), INK_RED, 0xFFA89870);
+        ring(g, cx, cy, radius - 5, ink());
+        ring(g, cx, cy, radius - 9, 0xFF8A7A5A);
+        int sr = radius - 9;
+        int[] px = new int[5];
+        int[] py = new int[5];
+        for (int i = 0; i < 5; i++) {
+            double a = -Math.PI / 2 + 2 * Math.PI * i / 5;
+            px[i] = cx + (int) Math.round(sr * Math.cos(a));
+            py[i] = cy + (int) Math.round(sr * Math.sin(a));
+        }
+        for (int i = 0; i < 5; i++) {
+            KitDraw.line(g, px[i], py[i], px[(i + 2) % 5], py[(i + 2) % 5], 0xFF8A7A5A);
+        }
+        int inner = (int) (sr * 1.25);
+        KitDraw.model(g, new Rect(cx - inner / 2, cy - inner / 2 - 2, inner, inner), data.entity(), data.drag());
+    }
+
+    private static void ring(GuiGraphics g, int cx, int cy, int radius, int color) {
+        for (TickRing.Tick t : TickRing.ticks(cx, cy, radius, Math.max(24, radius * 6), 0f)) {
+            g.fill(t.x(), t.y(), t.x() + 1, t.y() + 1, color);
+        }
     }
 
     @Override
@@ -136,7 +249,7 @@ public final class GrimoireTheme implements HubTheme {
 
     @Override
     public void drawFocus(GuiGraphics g, Rect r) {
-        g.renderOutline(r.x() - 1, r.y() - 1, r.w() + 2, r.h() + 2, 0xFFe8b84a);
+        g.renderOutline(r.x() - 1, r.y() - 1, r.w() + 2, r.h() + 2, focusColor());
     }
 
     @Override

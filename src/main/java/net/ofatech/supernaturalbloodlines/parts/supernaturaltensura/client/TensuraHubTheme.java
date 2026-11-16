@@ -10,6 +10,8 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
@@ -87,9 +89,7 @@ public final class TensuraHubTheme implements HubTheme {
     @Override
     public void drawTab(GuiGraphics g, Rect r, HubPage page, boolean selected, boolean focused) {
         row(g, r, selected, false, Component.translatable(page.langKey()).getString(), selected ? SELECTED_LABEL : LABEL, () -> {
-            g.setColor(selected ? 1f : 0.93f, selected ? 0.9f : 0.96f, selected ? 0.5f : 1f, 1f);
-            g.blit(ICONS, r.x() + 4, r.y() + (r.h() - 8) / 2, page.ordinal() * 9, 24, 8, 8, 64, 32);
-            g.setColor(1f, 1f, 1f, 1f);
+            KitDraw.icon(g, Icons.of(page), r.x() + 3, r.y() + (r.h() - 12) / 2, 12, selected ? 0xFFFFE680 : 0xFFEDF5FF);
         });
         if (focused) {
             drawFocus(g, r);

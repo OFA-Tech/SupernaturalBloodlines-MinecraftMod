@@ -12,7 +12,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubAlmanac;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubView;
@@ -21,14 +24,28 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 /** Path: the left page is your story and your ladders (rungs as chapters), the right page the next rung's tasks with their claim stamps. */
 public final class PathPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "path.";
+    private final boolean book;
+
+    /** The shared Path page. */
+    public PathPage() {
+        this(false);
+    }
+
+    /**
+     * @param book the Grimoire's Path page: the moon almanac under the ladders, the sigil emblem (the live model) over the tasks, a footnote reward and
+     *             the Track on HUD link; everything else is the same page
+     */
+    public PathPage(boolean book) {
+        this.book = book;
+    }
 
     @Override
     public void render(HubScreen.Frame f) {
-        story(f);
-        next(f);
+        story(f, book);
+        next(f, book);
     }
 
-    private static void story(HubScreen.Frame f) {
+    private static void story(HubScreen.Frame f, boolean book) {
         HubView v = f.view;
         HubTheme t = f.theme();
         Rect r = f.region(HubLayout.MAIN);
@@ -56,7 +73,28 @@ public final class PathPage implements HubPageView {
         t.drawRule(f.g, r.x(), y, r.w());
         y += 4;
         y = PageKit.wrapped(f, Component.translatable(KEY + "sp", v.state().sp(), v.state().spEarned()), r.x(), y, r.w(), t.ink());
+        if (book) {
+            y = almanac(f, r, y + 4);
+        }
         f.end(y);
+    }
+
+    /** The almanac: the next six moons from the level's day, and when the full moon rises. */
+    private static int almanac(HubScreen.Frame f, Rect r, int y) {
+        HubTheme t = f.theme();
+        var level = f.view.player().level();
+        int phase = level.getMoonPhase();
+        f.g.drawString(f.font(), Component.translatable(KEY + "almanac"), r.x(), y, t.muted(), false);
+        int x = r.x();
+        List<Component> tip = new ArrayList<>();
+        for (int p : HubAlmanac.phases(phase, 6)) {
+            KitDraw.icon(f.g, Icons.moon(p), x, y + PageKit.LINE, 12, p == 0 ? 0xFFB8860B : t.ink());
+            x += 14;
+        }
+        int days = HubAlmanac.daysToFull(phase);
+        Component line = days == 0 ? Component.translatable(KEY + "full_moon_today") : Component.translatable(KEY + "full_moon_in", days);
+        y = PageKit.wrapped(f, line, r.x(), y + PageKit.LINE + 14, r.w(), t.accent());
+        return y;
     }
 
     private static Component subtitle(HubView v) {
@@ -153,7 +191,7 @@ public final class PathPage implements HubPageView {
         return y;
     }
 
-    private static void next(HubScreen.Frame f) {
+    private static void next(HubScreen.Frame f, boolean book) {
         HubView v = f.view;
         HubTheme t = f.theme();
         Rect r = f.region(HubLayout.SIDE);
@@ -173,10 +211,22 @@ public final class PathPage implements HubPageView {
             y = PageKit.title(f, PageKit.rung(active), r.x(), y + PageKit.LINE, r.w(), t.accent());
             t.drawRule(f.g, r.x(), y + 2, r.w());
             y += 6;
+            if (book && ladder == v.ladders().get(0)) {
+                int size = Math.min(r.w(), 78);
+                f.emblem(new Rect(r.x() + (r.w() - size) / 2, y, size, size));
+                y += size + 4;
+            }
             for (HubModel.TaskRow task : ladder.tasks()) {
                 y = PageKit.taskRow(f, task, r.x(), y, r.w(), true, null, false);
             }
-            y = PageKit.wrapped(f, reward(active), r.x(), y + 2, r.w(), t.muted()) + 6;
+            y = PageKit.wrapped(f, book ? Component.literal("* ").append(reward(active)) : reward(active), r.x(), y + 2, r.w(), t.muted()) + 6;
+            if (book) {
+                Component track = Component.translatable(KEY + "track");
+                f.g.drawString(f.font(), track, r.x(), y, t.muted(), false);
+                f.g.fill(r.x(), y + 9, r.x() + f.font().width(track), y + 10, t.muted());
+                f.target("panel:track", new Rect(r.x(), y - 1, f.font().width(track), 11), List.of(track, Component.translatable(KEY + "track_soon")), null);
+                y += 14;
+            }
         }
         if (!any) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "complete"), r.x(), y, r.w(), t.ink());

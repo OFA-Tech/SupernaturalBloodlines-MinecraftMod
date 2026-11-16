@@ -10,6 +10,8 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
@@ -177,9 +179,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     public void drawTab(GuiGraphics g, Rect r, HubPage page, boolean selected, boolean focused) {
         g.fill(r.x(), r.y(), r.right(), r.bottom(), selected ? 0xFF2a0d15 : CARD);
         g.renderOutline(r.x(), r.y(), r.w(), r.h(), selected ? RED : EDGE);
-        g.setColor(selected ? 1f : 0.54f, selected ? 0.7f : 0.35f, selected ? 0.64f : 0.4f, 1f);
-        g.blit(ICONS, r.x() + (r.w() - 8) / 2, r.y() + (r.h() - 8) / 2, page.ordinal() * 9, 24, 8, 8, 64, 32);
-        g.setColor(1f, 1f, 1f, 1f);
+        KitDraw.icon(g, Icons.of(page), r.x() + (r.w() - 12) / 2, r.y() + (r.h() - 12) / 2, 12, selected ? 0xFFFFB3A3 : 0xFF8A5966);
         if (focused) {
             drawFocus(g, r);
         }

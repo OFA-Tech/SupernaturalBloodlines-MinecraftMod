@@ -7,52 +7,75 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The open book's geometry for a screen of {@code width x height} GUI pixels: a cover, two pages either side of the spine (the left one
- * is {@link HubLayout#MAIN}, the right one {@link HubLayout#SIDE}), the ribbon bookmarks out of the right edge from the top, and the wax
- * launcher seals out of the same edge from the bottom. It shrinks to fit the smallest GUI (320 x 240, any scale) and stops growing at
- * {@link #MAX_W} x {@link #MAX_H}. Pure.
+ * The open book's geometry for a screen of {@code width x height} GUI pixels: a leather cover with a gold line, two pages either side of the
+ * spine (the left is {@link HubLayout#MAIN}, the right {@link HubLayout#SIDE}), each with a header band (the margin notes) and a foot (the
+ * page number); the index tabs out of the right edge from the top, the brass clasp (the theme switch) over the first tab and the close under
+ * the last; and the wax seals hanging on cords in a row below the book. It shrinks to fit the smallest GUI (320 x 240, any scale) and stops
+ * growing at {@link #MAX_W} x {@link #MAX_H}. Pure.
  */
 public final class GrimoireLayout {
-    static final int MAX_W = 360;
-    static final int MAX_H = 230;
+    static final int MAX_W = 372;
+    static final int MAX_H = 236;
     static final int MARGIN = 6;
     static final int COVER = 6;
     static final int SPINE = 8;
     static final int PAD = 7;
-    static final int RIBBON_OUT = 18;
-    static final int RIBBON_H = 18;
-    static final int RIBBON_GAP = 3;
-    static final int SEAL = 18;
+    /** The band at the top of a page for margin notes (SP and EP). */
+    static final int HEADER = 12;
+    /** The band at the foot of a page for its number. */
+    static final int FOOT = 5;
+    /** How far a tab sticks out of the book's right edge, and its height. */
+    static final int TAB_OUT = 22;
+    static final int TAB_H = 18;
+    static final int TAB_GAP = 2;
+    static final int SEAL = 16;
     static final int SEAL_STEP = 20;
-    /** Ribbons start below the top 34 GUI pixels, where vanilla's toasts (tutorial, advancement, recipe) are drawn over the screen. */
+    /** The cord a seal hangs on, from the book's bottom edge. */
+    static final int CORD = 6;
+    /** What the seals take below the book. */
+    static final int SEAL_ROW = CORD + SEAL + 4;
+    /** Tabs start below the top 34 GUI pixels, where vanilla's toasts (tutorial, advancement, recipe) are drawn over the screen. */
     static final int TOAST_CLEAR = 34;
 
     private GrimoireLayout() {
     }
 
     public static HubLayout of(int width, int height, int tabs, int seals) {
-        int bookW = Math.min(MAX_W, width - 2 * MARGIN - RIBBON_OUT);
-        int bookH = Math.min(MAX_H, height - 2 * MARGIN);
-        Rect book = new Rect((width - bookW - RIBBON_OUT) / 2, (height - bookH) / 2, bookW, bookH);
+        int bookW = Math.min(MAX_W, width - 2 * MARGIN - TAB_OUT);
+        int bookH = Math.min(MAX_H, height - MARGIN - SEAL_ROW);
+        Rect book = new Rect((width - bookW - TAB_OUT) / 2, MARGIN + Math.max(0, (height - MARGIN - SEAL_ROW - bookH) / 2), bookW, bookH);
         int pageW = (bookW - 2 * COVER - SPINE) / 2;
         Rect leftPage = new Rect(book.x() + COVER, book.y() + COVER, pageW, bookH - 2 * COVER);
         Rect rightPage = new Rect(leftPage.right() + SPINE, leftPage.y(), pageW, leftPage.h());
-        List<Rect> ribbons = new ArrayList<>();
+        List<Rect> tabRects = new ArrayList<>();
+        int top = Math.max(book.y() + 12, TOAST_CLEAR);
         for (int i = 0; i < tabs; i++) {
-            ribbons.add(new Rect(book.right() - 4, Math.max(book.y() + 14, TOAST_CLEAR) + i * (RIBBON_H + RIBBON_GAP), RIBBON_OUT + 4, RIBBON_H));
+            tabRects.add(new Rect(book.right() - 4, top + i * (TAB_H + TAB_GAP), TAB_OUT + 4, TAB_H));
         }
         List<Rect> wax = new ArrayList<>();
         for (int i = 0; i < seals; i++) {
-            wax.add(new Rect(book.right() - 2, book.bottom() - 8 - (i + 1) * SEAL_STEP, SEAL, SEAL));
+            wax.add(new Rect(book.x() + 24 + i * SEAL_STEP, book.bottom() + CORD, SEAL, SEAL));
         }
-        // the theme switch sits over the first ribbon, in the same column
-        Rect themeButton = new Rect(book.right() - 4, TOAST_CLEAR - 17, RIBBON_OUT + 4, 14);
-        return new HubLayout(book, Map.of(HubLayout.MAIN, leftPage.inset(PAD), HubLayout.SIDE, rightPage.inset(PAD)), ribbons, wax,
-                new HubLayout.Chrome(themeButton, null, null, null, null));
+        Rect main = content(leftPage);
+        Rect clasp = new Rect(book.right() - 4, TOAST_CLEAR - 17, TAB_OUT + 4, 14);
+        Rect close = new Rect(book.right() - 4, book.bottom() - 16, TAB_OUT + 4, 14);
+        Rect counters = new Rect(main.x(), leftPage.y() + 3, main.w(), 9);
+        return new HubLayout(book, Map.of(HubLayout.MAIN, main, HubLayout.SIDE, content(rightPage)), tabRects, wax,
+                new HubLayout.Chrome(clasp, close, null, counters, null));
+    }
+
+    /** The text area of a page: inside the margins, under the header band and over the foot. */
+    static Rect content(Rect page) {
+        return new Rect(page.x() + PAD, page.y() + PAD + HEADER, page.w() - 2 * PAD, page.h() - 2 * PAD - HEADER - FOOT);
     }
 
     /** The paper of a page, from its content region (what the theme draws behind it). */
     static Rect page(Rect content) {
-        return content.inset(-PAD);
+        return new Rect(content.x() - PAD, content.y() - PAD - HEADER, content.w() + 2 * PAD, content.h() + 2 * PAD + HEADER + FOOT);
+    }
+
+    /** Where a page's number sits: centred in its foot. */
+    static Rect number(Rect page) {
+        return new Rect(page.x(), page.bottom() - 11, page.w(), 9);
     }
 }

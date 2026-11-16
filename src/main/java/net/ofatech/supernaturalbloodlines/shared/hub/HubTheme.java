@@ -59,6 +59,10 @@ public interface HubTheme {
         KitDraw.button(g, this, r, Icons.CLOSE, hot, focused);
     }
 
+    /** After the page: what a theme draws over it that is not content (the book's page numbers, a footnote line). */
+    default void drawFooter(UiContext ctx, HubLayout layout, HubPage page) {
+    }
+
     /** The emblem in {@code r}: the live model in the theme's own frame (the book's sigil, the moon, the status hex). */
     default void drawEmblem(UiContext ctx, Rect r, EmblemData data) {
         KitDraw.emblem(ctx.g(), this, r, data);

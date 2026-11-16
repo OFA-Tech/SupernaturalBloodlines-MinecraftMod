@@ -32,6 +32,20 @@ public enum Icons {
         return name().toLowerCase(Locale.ROOT);
     }
 
+    /** The sprite of a hub page (its tab, its rail button, its list row). */
+    public static Icons of(net.ofatech.supernaturalbloodlines.shared.hub.HubPage page) {
+        return switch (page) {
+            case PATH -> PATH;
+            case SKILLS -> SKILLS;
+            case QUESTS -> QUESTS;
+            case RITES -> RITES;
+            case BLOODLINE -> BLOODLINE;
+            case PACK -> Icons.PACK;
+            case GUIDE -> GUIDE;
+            case LOADOUT -> LOADOUT;
+        };
+    }
+
     /** The moon of a vanilla moon phase (0 is the full moon, 4 the new moon). */
     public static Icons moon(int vanillaPhase) {
         return switch (Math.floorMod(vanillaPhase, 8)) {

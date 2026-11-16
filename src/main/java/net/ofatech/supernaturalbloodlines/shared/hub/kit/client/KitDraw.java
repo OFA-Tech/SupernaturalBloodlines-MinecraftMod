@@ -45,6 +45,30 @@ public final class KitDraw {
         g.setColor(1f, 1f, 1f, 1f);
     }
 
+    /** A one pixel line (Bresenham): ink strokes of a sigil, cords. */
+    public static void line(GuiGraphics g, int x0, int y0, int x1, int y1, int color) {
+        int dx = Math.abs(x1 - x0);
+        int dy = -Math.abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx + dy;
+        while (true) {
+            g.fill(x0, y0, x0 + 1, y0 + 1, color);
+            if (x0 == x1 && y0 == y1) {
+                return;
+            }
+            int e2 = 2 * err;
+            if (e2 >= dy) {
+                err += dy;
+                x0 += sx;
+            }
+            if (e2 <= dx) {
+                err += dx;
+                y0 += sy;
+            }
+        }
+    }
+
     /** A filled shape of {@code size} pixels at ({@code x}, {@code y}). */
     public static void shape(GuiGraphics g, Shapes.Shape shape, int x, int y, int size, int color) {
         Shapes.Span[] rows = Shapes.spans(shape, size);

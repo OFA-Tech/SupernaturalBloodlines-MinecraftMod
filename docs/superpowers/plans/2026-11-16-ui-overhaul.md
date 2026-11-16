@@ -27,6 +27,10 @@ Branch per phase from main, one PR each. The approved design is the 34 PNG expor
 | **16f** | HUD polish | Theme-shaped slots, real icons, cooldown pie, active glow, Bite blood ring, mode pill, Alt tooltips, full-moon warning, compact fade; the Caps default (defaults test, docs, wiki, `OFA-notes` KEYMAP and `apply_keymap.py`). |
 | **16g** | proof | Screenshots at GUI scale 2, 3 and 4 of every theme and page; the contrast test over every pair; the fit test. |
 
+## 16b scope (as built)
+
+Grimoire layout and theme (`GrimoireLayout`, `GrimoireTheme`: cover, gold line, stacked edges, spine, page numbers through the new `drawFooter`, index tabs with kit icons, wax seals on cords, brass clasp, close, margin-note counters, ink sigil emblem), the Path page in book mode (`PathPage(true)`: almanac of moons, the emblem, a footnote reward, a Track on HUD link that waits for 16f), the Guide page (`GuideChapters`, lang-driven, species chapters first) and the Loadout page (`LoadoutPage` over `LoadoutTab`), both shared by all three looks. Not in 16b, moved to the phases that own their data: drop caps, leaders and footnote marks as a text style, the radial Skills page, the Bloodline family tree and gene vials, the pack ring (16e, or when plans 14 and 15 land the data).
+
 ## 16a tasks
 
 1. Pure kit with tests: `TickRing`, `Radial`, `Shapes`, `PackRing` / `PackRole`, `SourceTag`, `FocusOrder` (zones NAV, STAGE, PANEL, ACTIONS and number keys), `ConfirmModel`, `ModelDrag`, `Detail`, `Icons` (names equal the atlas list), `Contrast.bestText`.

@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased (plan 16b, Grimoire v2)
+
+### Added
+
+- **The Grimoire is a real open book now.** A leather cover with a gold line, two parchment pages with spine shading and stacked page edges and page numbers, index tabs out of the right edge (with their icons), wax seals on cords below the book, a brass clasp (the look button) and a close mark, SP and EP as a red ink margin note on the left page, and on the Path page an almanac of the next six moons ("the full moon rises in 3 days") and an ink sigil with the live player model (drag it to turn) and your ladder's progress as a ring of ticks.
+- **Two new pages in every look: Guide and Loadout.** The Guide has chapters for what you are (your creature, then your magic race) and for how the hub, the path, skills, quests, rites, the bloodline, the pack, the loadout and the moon work. The Loadout page is the Loadout tab of the Skills page on a page of its own (the tab stays), and it shows only with the ability HUD. A Ghoul can read the Guide while the other pages wait. Keys 1 to 8 now reach them.
+- The three looks draw their page icons from the new icon atlas.
+
+### Not yet in the Grimoire
+
+Drop caps, dotted leaders and footnote marks, the radial skill tree, the bloodline family tree with heads and gene vials, and the pack ring are still the shared pages; they come with 16e and the gaps listed in the plan. "Track on HUD" is shown but waits for the HUD update.
+
 ## Unreleased (plan 16a, hub UI kit)
 
 ### Added
