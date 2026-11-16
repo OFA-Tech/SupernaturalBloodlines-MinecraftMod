@@ -10,16 +10,17 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 
-/** Taking someone out of a pack: the kick of the leader, and a member who left the linked party. */
+/** Taking someone out of a pack, and telling them: now when they are online, at their next login when they are not. */
 public final class PackMembers {
     private PackMembers() {
     }
 
     /**
      * Removes {@code member} from their pack. A werewolf Beta becomes an Omega now, or at their next login when away.
+     * @param reasonKey a lang key taking one argument ({@code arg}); it is shown now, or kept for the next login
      * @return false if they were in no pack
      */
-    public static boolean remove(MinecraftServer server, UUID member, Component reasonForThem) {
+    public static boolean remove(MinecraftServer server, UUID member, String reasonKey, String arg) {
         PackIndex index = PackIndex.get(server.overworld());
         if (!index.kick(member)) {
             return false;
@@ -32,8 +33,28 @@ public final class PackMembers {
             }
             // done now: left alone it would take them out of the next pack they join
             index.takeDissolved(member);
-            online.sendSystemMessage(reasonForThem);
+            online.sendSystemMessage(Component.translatable(reasonKey, arg));
+        } else {
+            index.addNotice(member, reasonKey, arg);
         }
         return true;
+    }
+
+    /** Tells each of {@code ids} that their pack now follows {@code leaderName}: at once when online, at their next login when not. */
+    public static void moved(MinecraftServer server, java.util.Collection<UUID> ids, UUID newLeader) {
+        PackIndex index = PackIndex.get(server.overworld());
+        String name = PackAccess.nameOf(server, newLeader);
+        String shown = name != null ? name : newLeader.toString().substring(0, 8);
+        for (UUID id : ids) {
+            if (id.equals(newLeader)) {
+                continue;
+            }
+            ServerPlayer online = SireCall.player(server, id);
+            if (online != null) {
+                online.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.now_follows", shown));
+            } else {
+                index.addNotice(id, "supernaturalbloodlines.pack.now_follows", shown);
+            }
+        }
     }
 }

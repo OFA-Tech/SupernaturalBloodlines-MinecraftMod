@@ -6,120 +6,62 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.UUID;
-import net.minecraft.nbt.CompoundTag;
 import org.junit.jupiter.api.Test;
 
+/** The index's own rules, without a world. */
 class PackIndexTest {
-    private static UUID id() {
-        return UUID.randomUUID();
+    private static final UUID A = new UUID(0, 1);
+    private static final UUID B = new UUID(0, 2);
+    private static final UUID C = new UUID(0, 3);
+    private static final UUID M = new UUID(0, 4);
+
+    @Test
+    void anAllianceIsMadeBothWaysOnceAndNeverWithYourself() {
+        PackIndex i = new PackIndex();
+        assertFalse(i.ally(A, A), "allied with themselves");
+        assertTrue(i.ally(A, B));
+        assertFalse(i.ally(A, B), "the same alliance twice");
+        assertFalse(i.ally(B, A), "the same alliance from the other side");
+        assertTrue(i.alliesOf(A).contains(B) && i.alliesOf(B).contains(A), "not both ways");
+        assertTrue(i.unally(B, A));
+        assertTrue(i.alliesOf(A).isEmpty() && i.alliesOf(B).isEmpty());
     }
 
     @Test
-    void joinAndLeave() {
+    void onlyALeaderAllies() {
         PackIndex i = new PackIndex();
-        UUID alpha = id();
-        UUID a = id();
-        UUID b = id();
-        assertTrue(i.join(alpha, a));
-        assertTrue(i.join(alpha, b));
-        assertEquals(List.of(a, b), i.betasOf(alpha));
-        assertEquals(alpha, i.alphaOf(a).orElseThrow());
-        i.leave(a);
-        assertTrue(i.alphaOf(a).isEmpty());
-        assertEquals(List.of(b), i.betasOf(alpha));
+        i.join(A, M);
+        assertFalse(i.ally(M, B), "a member allied");
+        assertFalse(i.ally(B, M), "allied with a member");
+        assertTrue(i.ally(A, B));
+        assertTrue(i.alliedPlayers(M, B) && i.alliedPlayers(B, M), "a member is covered by their pack's alliance");
+        assertFalse(i.alliedPlayers(A, M), "the same pack is not allied with itself");
     }
 
     @Test
-    void aBetaNeverSwitchesPackThroughJoin() {
+    void samePackNeedsTwoPlayersInOnePack() {
         PackIndex i = new PackIndex();
-        UUID one = id();
-        UUID two = id();
-        UUID beta = id();
-        assertTrue(i.join(one, beta));
-        assertFalse(i.join(two, beta));
-        assertEquals(one, i.alphaOf(beta).orElseThrow());
-        assertFalse(i.join(one, one));
+        assertFalse(i.samePack(A, A));
+        assertFalse(i.samePack(A, B), "two strangers");
+        i.join(A, M);
+        assertTrue(i.samePack(A, M) && i.samePack(M, A));
+        assertFalse(i.samePack(M, M));
+        assertFalse(i.samePack(M, B));
+        assertTrue(i.isLeader(A) && !i.isLeader(M) && i.isLeader(B));
     }
 
     @Test
-    void transferMovesTheWholePackAndDropsTheOldAlpha() {
+    void aLeaderWhoJoinsBringsTheirMembersAndTheirAlliesGoWithTheLeadership() {
         PackIndex i = new PackIndex();
-        UUID old = id();
-        UUID heir = id();
-        UUID other = id();
-        i.join(old, heir);
-        i.join(old, other);
-        i.setEmissary(old, id());
-        i.transfer(old, heir);
-        assertTrue(i.alphaOf(heir).isEmpty());
-        assertEquals(List.of(other), i.betasOf(heir));
-        assertTrue(i.betasOf(old).isEmpty());
-        assertTrue(i.emissaryOf(old).isEmpty());
-    }
-
-    @Test
-    void transferLeavesATombstoneForTheOldAlphaUntilTheyAreAlphaAgain() {
-        PackIndex i = new PackIndex();
-        UUID old = id();
-        UUID heir = id();
-        i.join(old, heir);
-        i.transfer(old, heir);
-        assertTrue(i.isFormerAlpha(old));
-        assertFalse(i.isFormerAlpha(heir));
-        i.clearFormerAlpha(old);
-        assertFalse(i.isFormerAlpha(old));
-        // the new Alpha of a transfer is not a former one, even if they were once
-        i.markFormerAlpha(heir);
-        i.join(old, id());
-        i.transfer(old, heir);
-        assertFalse(i.isFormerAlpha(heir));
-    }
-
-    @Test
-    void dissolvingAPackFreesItsBetasAndMarksThemForTheirNextLogin() {
-        PackIndex i = new PackIndex();
-        UUID alpha = id();
-        UUID a = id();
-        UUID b = id();
-        i.join(alpha, a);
-        i.join(alpha, b);
-        i.dissolve(alpha);
-        assertTrue(i.betasOf(alpha).isEmpty());
-        assertTrue(i.alphaOf(a).isEmpty());
-        assertTrue(i.isFormerAlpha(alpha));
-        assertTrue(i.takeDissolved(a));
-        assertFalse(i.takeDissolved(a));
-        assertTrue(i.takeDissolved(b));
-        assertFalse(i.takeDissolved(id()));
-    }
-
-    @Test
-    void tombstonesAndDissolvedBetasSurviveSaveAndLoad() {
-        PackIndex i = new PackIndex();
-        UUID alpha = id();
-        UUID beta = id();
-        i.join(alpha, beta);
-        i.dissolve(alpha);
-        PackIndex back = PackIndex.load(i.save(new CompoundTag(), null), null);
-        assertTrue(back.isFormerAlpha(alpha));
-        assertTrue(back.takeDissolved(beta));
-    }
-
-    @Test
-    void survivesSaveAndLoad() {
-        PackIndex i = new PackIndex();
-        UUID alpha = id();
-        UUID beta = id();
-        UUID witch = id();
-        UUID anchor = id();
-        i.join(alpha, beta);
-        i.setEmissary(alpha, witch);
-        i.setAnchor(beta, anchor);
-        PackIndex back = PackIndex.load(i.save(new CompoundTag(), null), null);
-        assertEquals(alpha, back.alphaOf(beta).orElseThrow());
-        assertEquals(witch, back.emissaryOf(alpha).orElseThrow());
-        assertEquals(anchor, back.anchorOf(beta).orElseThrow());
-        back.setAnchor(beta, null);
-        assertTrue(back.anchorOf(beta).isEmpty());
+        i.join(B, M);
+        i.ally(B, C);
+        assertTrue(i.join(A, B));
+        assertEquals(List.of(M, B), i.betasOf(A), "the members come along, the leader after them");
+        assertTrue(i.alliesOf(B).isEmpty(), "a member has no alliance of their own");
+        // the leadership moves to B: the alliance of the pack goes with it
+        i.ally(A, C);
+        i.promote(A, B);
+        assertTrue(i.alliesOf(B).contains(C) && i.alliesOf(A).isEmpty());
+        assertTrue(i.alliedPlayers(A, C), "the old leader is still in the allied pack");
     }
 }

@@ -89,8 +89,13 @@ If you find something that behaves differently from this wiki, please [open an i
 
 ## Packs (plan 14)
 
-- **The party link has not been seen with the real Open Parties and Claims running.** It is written against the 0.33.0 jar (and the Team Claims 1.5.0 fork, which has the same classes) with javap, reached by reflection, and tested with a stand-in. If a call fails it logs one warning and the link stops.
-- **Open Parties and Claims cannot hand a party to someone else.** The party's owner stays the player who founded it, whoever leads the pack now. If that owner leaves the pack their party is ended and the pack gets a new one owned by its leader.
+- **The party link has not been seen with the real Open Parties and Claims running.** It is written against the 0.33.0 jar (and the Team Claims 1.5.0 fork, which has the same classes) with javap, reached by reflection, and tested with a stand-in. Five failed calls in a row log one warning and turn it off for the rest of the session; a single failure changes nothing.
+- **The Alpha Trial cannot happen yet.** `AlphaTrial.win` is the hook plan 15 will call: until then nothing in the game makes a Beta a second Alpha except an invitation to an Alpha.
+- **Do not downgrade this mod on a world that has packs, and back the world up before you update.** The pack file (`supernaturalbloodlines_packs`) gets new lists (strengths, alliances, recorded parties, notices); an older version drops them, and the packs' parties are then forgotten.
+- **A player already in another party** (any Open Parties and Claims party) is not added to the pack's party; they stay in the pack and are tried again every 10 seconds.
+- **A cured second Alpha, and a cured Beta, stay in the pack as Packmates.** Leave with `/pack leave`.
+- **Open Parties and Claims cannot hand a party to someone else.** The party's owner stays the player who founded it, whoever leads the pack now: when leadership moves, the pack makes a new party for the new leader, takes its own members out of the old one and leaves the old owner's party (and the old owner in it) as it is.
 - **The party is checked every 10 seconds** (and at once when somebody joins, leaves or is kicked): leaving the party leaves the pack within that time.
-- **The leader is the strongest Alpha** by the last level the game saw them with. Raising an offline Alpha's level cannot move the lead until they log in.
+- **The strongest Alpha is only the successor.** It is worked out when the leader leaves, loses the spark or gives it up, from the last level the game saw each Alpha with (an offline Alpha counts with the level they last had). An ordinary death of the leader changes nothing. A joining or levelling Alpha never takes the lead; only a duel does.
+- **A leadership duel needs both of them online** and ends when either logs out; it is not kept across a restart.
 - **Packmates have no rank of their own.** They keep their race and ranks; a Packmate who is later turned into a werewolf by another Alpha's bite changes pack with the bite.

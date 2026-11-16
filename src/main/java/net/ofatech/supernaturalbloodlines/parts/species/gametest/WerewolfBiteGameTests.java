@@ -373,8 +373,12 @@ public final class WerewolfBiteGameTests {
                 helper.assertTrue(PackCommand.emissary(rival, witch) != null, "a second Alpha took another Alpha's emissary");
                 helper.assertTrue(alpha.getUUID().equals(index.emissaryAlpha(witch.getUUID()).orElse(null)), "the emissary changed hands");
                 helper.assertTrue(PackCommand.emissary(alpha, null) == null && index.emissaryOf(alpha.getUUID()).isEmpty(), "the emissary was not released");
+                // the Emissary is a Packmate of the pack that named them (plan 14): another pack cannot take them until they leave
+                helper.assertTrue(PackCommand.emissary(rival, witch) != null, "an Emissary who still runs with the first pack was taken");
+                helper.assertTrue(PackCommand.leave(witch) == null, "the witch could not leave the pack");
                 helper.assertTrue(PackCommand.emissary(rival, witch) == null, "a free witch was refused");
                 helper.assertTrue(PackCommand.emissary(rival, null) == null, "the rival could not let go");
+                helper.assertTrue(PackCommand.leave(witch) == null, "the witch could not leave the rival's pack");
                 helper.assertTrue(PackCommand.emissary(alpha, witch) == null, "the first Alpha could not take them back");
             } finally {
                 index.setEmissary(rival.getUUID(), null);

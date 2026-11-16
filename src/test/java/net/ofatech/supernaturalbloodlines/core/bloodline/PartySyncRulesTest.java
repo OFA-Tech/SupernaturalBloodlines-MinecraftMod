@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PartySyncRules.Party;
@@ -17,78 +16,63 @@ class PartySyncRulesTest {
     private static final UUID BETA = new UUID(0, 3);
     private static final UUID MATE = new UUID(0, 4);
     private static final Set<UUID> PACK = Set.of(LEADER, ALPHA2, BETA, MATE);
-    private static final Set<UUID> ALPHAS = Set.of(LEADER, ALPHA2);
 
     @Test
-    void aPackWithNoPartyGetsOneAndEveryoneIsAddedTheOtherAlphasAsAdmins() {
-        Plan p = PartySyncRules.plan(LEADER, PACK, ALPHAS, null, Set.of(), true);
+    void aPackWithNoRecordedPartyGetsOneForItsLeaderAndEveryoneElseIsAdded() {
+        Plan p = PartySyncRules.plan(LEADER, PACK, null, false, Set.of(), false, false);
         assertTrue(p.create());
-        assertEquals(Boolean.TRUE, p.add().get(ALPHA2));
-        assertEquals(Boolean.FALSE, p.add().get(BETA));
-        assertEquals(Boolean.FALSE, p.add().get(MATE));
+        assertEquals(Set.of(ALPHA2, BETA, MATE), p.add());
+        assertFalse(p.abandon() || p.forget());
     }
 
     @Test
     void aLonePackLeaderMakesNoParty() {
-        assertFalse(PartySyncRules.plan(LEADER, Set.of(LEADER), ALPHAS, null, Set.of(), true).create());
+        assertFalse(PartySyncRules.plan(LEADER, Set.of(LEADER), null, false, Set.of(), false, true).create());
     }
 
     @Test
-    void aPartyTheOwnerDisbandedIsNotMadeAgainUntilTheRosterChanges() {
-        Plan quiet = PartySyncRules.plan(LEADER, PACK, ALPHAS, null, Set.of(BETA, MATE), false);
-        assertFalse(quiet.create());
-        assertEquals(Set.of(LEADER), quiet.ours(), "the mirror says: ended");
-        assertFalse(PartySyncRules.plan(LEADER, PACK, ALPHAS, null, quiet.ours(), false).create(), "and stays quiet on the next pass");
-        assertTrue(PartySyncRules.plan(LEADER, PACK, ALPHAS, null, quiet.ours(), true).create(), "until the roster changes");
-        assertTrue(PartySyncRules.plan(LEADER, PACK, ALPHAS, null, Set.of(), false).create(), "a pack that never had one gets it");
+    void aPartyThatWasEndedIsForgottenAndNotMadeAgainUntilTheRosterChanges() {
+        Plan gone = PartySyncRules.plan(LEADER, PACK, null, true, Set.of(BETA), false, false);
+        assertTrue(gone.forget());
+        assertFalse(gone.create(), "the owner ended it: it does not come back by itself");
+        assertFalse(PartySyncRules.plan(LEADER, PACK, null, false, Set.of(), true, false).create(), "and stays quiet while the roster is the same");
+        assertTrue(PartySyncRules.plan(LEADER, PACK, null, false, Set.of(), true, true).create(), "until the roster changes");
     }
 
     @Test
-    void aMemberWhoLeftThePartyLeavesThePack() {
-        Party party = new Party(LEADER, Set.of(LEADER, ALPHA2, MATE));
-        Plan p = PartySyncRules.plan(LEADER, PACK, ALPHAS, party, Set.of(ALPHA2, BETA, MATE), false);
-        assertEquals(Set.of(BETA), p.leavePack());
-        assertFalse(p.ours().contains(BETA));
-        assertTrue(p.add().isEmpty(), "and the Beta is not added again");
+    void aPlayerWhoLeftThePartyLeavesThePackButOnlyOneWeAdded() {
+        Party party = new Party(LEADER, Set.of(LEADER, MATE));
+        Plan p = PartySyncRules.plan(LEADER, PACK, party, true, Set.of(ALPHA2, BETA, MATE), false, false);
+        assertEquals(Set.of(ALPHA2, BETA), p.leavePack());
+        assertTrue(p.add().isEmpty(), "and nobody is added again");
+        // a pack member we never added is not touched, whether they are in the party or not
+        Plan q = PartySyncRules.plan(LEADER, PACK, new Party(LEADER, Set.of(LEADER)), true, Set.of(), false, false);
+        assertTrue(q.leavePack().isEmpty());
+        assertEquals(Set.of(ALPHA2, BETA, MATE), q.add(), "they are asked to join instead");
     }
 
     @Test
-    void aMemberWhoLeftThePackLeavesTheParty() {
+    void aPlayerWhoLeftThePackLeavesTheParty() {
         Party party = new Party(LEADER, Set.of(LEADER, ALPHA2, BETA, MATE));
-        Plan p = PartySyncRules.plan(LEADER, Set.of(LEADER, ALPHA2, MATE), ALPHAS, party, Set.of(ALPHA2, BETA, MATE), false);
+        Plan p = PartySyncRules.plan(LEADER, Set.of(LEADER, ALPHA2, MATE), party, true, Set.of(ALPHA2, BETA, MATE), false, false);
         assertEquals(Set.of(BETA), p.removeFrom());
-        assertFalse(p.ours().contains(BETA));
     }
 
     @Test
-    void aNewPackMemberIsAddedAndMirrored() {
-        Party party = new Party(LEADER, Set.of(LEADER));
-        Plan p = PartySyncRules.plan(LEADER, PACK, ALPHAS, party, Set.of(), true);
-        assertEquals(Map.of(ALPHA2, true, BETA, false, MATE, false), p.add());
-        assertEquals(Set.of(ALPHA2, BETA, MATE), p.ours());
-    }
-
-    @Test
-    void anOwnerWhoLeftThePackDisbandsTheirPartyAndThePackGetsItsOwn() {
-        Party party = new Party(new UUID(9, 9), Set.of(new UUID(9, 9), BETA));
-        Plan p = PartySyncRules.plan(LEADER, PACK, ALPHAS, party, Set.of(BETA), false);
-        assertTrue(p.disband());
-        assertTrue(p.create());
-    }
-
-    @Test
-    void aPartyMemberWeNeverAddedIsLeftAlone() {
+    void aPartyMemberNobodyAddedStaysEvenWhenTheyAreNotInThePack() {
         Party party = new Party(LEADER, Set.of(LEADER, new UUID(7, 7)));
-        Plan p = PartySyncRules.plan(LEADER, PACK, ALPHAS, party, Set.of(), false);
+        Plan p = PartySyncRules.plan(LEADER, PACK, party, true, Set.of(), false, false);
         assertTrue(p.removeFrom().isEmpty());
         assertTrue(p.leavePack().isEmpty());
     }
 
     @Test
-    void theFoundingOwnerStaysEvenWhenAnotherAlphaLeadsNow() {
-        Party party = new Party(LEADER, Set.of(LEADER, ALPHA2));
-        Plan p = PartySyncRules.plan(ALPHA2, PACK, ALPHAS, party, Set.of(ALPHA2), false);
-        assertFalse(p.create() || p.disband());
-        assertTrue(p.leavePack().isEmpty());
+    void whenTheOwnerIsNotTheLeaderTheOwnPeopleLeaveAndTheLeaderGetsANewParty() {
+        Party party = new Party(LEADER, Set.of(LEADER, ALPHA2, BETA));
+        Plan p = PartySyncRules.plan(ALPHA2, PACK, party, true, Set.of(ALPHA2, BETA), false, false);
+        assertTrue(p.abandon() && p.create());
+        assertEquals(Set.of(ALPHA2, BETA), p.removeFrom());
+        assertFalse(p.removeFrom().contains(LEADER), "the old owner stays in their own party: it is left alone");
+        assertEquals(Set.of(LEADER, BETA, MATE), p.add(), "the new party takes the whole pack but its own owner");
     }
 }

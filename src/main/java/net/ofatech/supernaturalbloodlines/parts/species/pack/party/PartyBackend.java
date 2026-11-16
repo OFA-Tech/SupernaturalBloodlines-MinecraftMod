@@ -1,6 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack.party;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PartySyncRules.Party;
@@ -8,16 +8,18 @@ import org.jetbrains.annotations.Nullable;
 
 /** The one party system the packs mirror: Open Parties and Claims (and its Team Claims fork, same API), or nothing. */
 public interface PartyBackend {
-    /** The party owned by one of {@code candidates} (the leader first), or null. */
-    @Nullable
-    Party find(MinecraftServer server, List<UUID> candidates);
+    /** @param reachable false when the party system did not answer (not the same as "there is no such party") */
+    record Found(boolean reachable, @Nullable Party party) {
+    }
 
-    /** @return false when the owner is offline or the party could not be made */
-    boolean create(MinecraftServer server, UUID owner);
+    /** The party {@code owner} owns, if it is the one with this id (a manual party of the same owner is not ours). */
+    Found find(MinecraftServer server, UUID owner, UUID partyId);
 
-    void disband(MinecraftServer server, UUID owner);
+    /** Makes a party for {@code owner}; empty when it was refused (they own one already, they are offline, an error). Never adopts one. */
+    Optional<UUID> create(MinecraftServer server, UUID owner);
 
-    void add(MinecraftServer server, UUID owner, UUID member, boolean admin);
+    /** Adds {@code member} with the plain member rank. False when refused: they are in another party, a limit, an error. */
+    boolean add(MinecraftServer server, UUID owner, UUID member);
 
     void remove(MinecraftServer server, UUID owner, UUID member);
 }

@@ -7,9 +7,10 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Who leads a pack with more than one Alpha (plan 14). The strongest Alpha leads: a True Alpha before a plain Alpha, then
- * the higher Werewolves level; on a tie the sitting leader stays, then the first in the list (the order they joined).
- * Pure: no game classes, so a strength is one number the index can store for an offline player.
+ * Who succeeds the leader of a pack with more than one Alpha (plan 14). The strongest Alpha: a True Alpha before a plain Alpha,
+ * then the higher Werewolves level; on a tie the first in the list (the order they joined). **Only a successor:** the order is
+ * used when the leader leaves, loses the spark or gives it up, never when someone joins or levels up (a leader keeps the pack
+ * until then, or until they lose a duel). Pure: no game classes, so a strength is one number the index can store for an offline player.
  */
 public final class PackLeadership {
     /** Levels never reach this; the rank is kept above them in the packed number. */

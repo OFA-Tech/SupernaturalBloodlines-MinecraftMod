@@ -1,17 +1,16 @@
 package net.ofatech.supernaturalbloodlines.core.bloodline;
 
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * What a pack asks of the Open Parties and Claims party it mirrors (plan 14), as a pure plan: the pack is the party, the
- * founding leader its owner, the other Alphas its admins, everyone else a member; a player who left the party leaves the
- * pack. The party is only ever changed for the people we put in it ({@code ours}).
+ * What a pack asks of the Open Parties and Claims party it mirrors (plan 14), as a pure plan. Only a party the pack made
+ * itself is ever touched (the glue records it when it creates one), and only the people the pack put in it: a manual
+ * party, and a player already in another party, are left alone. Everyone is a plain member, so only the owner, who is the
+ * leader, can remove people from it; whoever is no longer in it left it themselves (or the leader removed them), and
+ * leaves the pack.
  */
 public final class PartySyncRules {
     private PartySyncRules() {
@@ -22,68 +21,58 @@ public final class PartySyncRules {
     }
 
     /**
-     * @param create     the pack has no party and its leader gets one
-     * @param disband    the party's owner is no longer in the pack: it ends and a new one is made for the leader
-     * @param add        who joins the party, true for an admin (an Alpha)
+     * @param forget     the recorded party is gone (its owner ended it): forget it and wait for the roster to change
+     * @param abandon    the party's owner is not the leader any more: our people leave it, it is forgotten and left alone otherwise
+     * @param create     the leader gets a new party
+     * @param add        who joins the party (each may still be refused: another party, a limit)
      * @param removeFrom who leaves the party because they left the pack
      * @param leavePack  who leaves the pack because they left the party
-     * @param ours       the mirror after this pass (only the leader means: the party was ended, wait for the roster to change)
      */
-    public record Plan(boolean create, boolean disband, Map<UUID, Boolean> add, Set<UUID> removeFrom, Set<UUID> leavePack, Set<UUID> ours) {
+    public record Plan(boolean forget, boolean abandon, boolean create, Set<UUID> add, Set<UUID> removeFrom, Set<UUID> leavePack) {
+        static final Plan NOTHING = new Plan(false, false, false, Set.of(), Set.of(), Set.of());
     }
 
     /**
-     * @param leader         the pack's leader
-     * @param pack           everyone in the pack, the leader too
-     * @param alphas         the Alphas among them
-     * @param party          the party the pack mirrors, or null when there is none
-     * @param ours           whom this pack put in that party before
-     * @param rosterChanged  somebody joined, left or was kicked now, so a missing party is made again (a party that simply
-     *                       vanished is not: its owner disbanded it)
+     * @param leader        the pack's leader
+     * @param pack          everyone in the pack, the leader too
+     * @param party         the party the pack recorded, as it is now, or null when it is not there
+     * @param recorded      the pack has a recorded party (so a null {@code party} means it was ended)
+     * @param ours         whom the pack put in the recorded party
+     * @param ended         the recorded party was ended and the roster has not changed since
+     * @param rosterChanged somebody joined, left or was kicked just now
      */
-    public static Plan plan(UUID leader, Set<UUID> pack, Set<UUID> alphas, @Nullable Party party, Set<UUID> ours, boolean rosterChanged) {
-        Map<UUID, Boolean> add = new LinkedHashMap<>();
-        Set<UUID> removeFrom = new LinkedHashSet<>();
-        Set<UUID> leavePack = new LinkedHashSet<>();
-        Set<UUID> keep = new HashSet<>(ours);
+    public static Plan plan(UUID leader, Set<UUID> pack, @Nullable Party party, boolean recorded, Set<UUID> ours, boolean ended, boolean rosterChanged) {
+        if (recorded && party == null) {
+            return new Plan(true, false, false, Set.of(), Set.of(), Set.of());
+        }
         if (party == null) {
-            // a party that was there and is gone was ended by its owner: do not make another until the roster changes. The
-            // mirror then holds only the leader, which says "ended" and is no one we added.
-            if (!ours.isEmpty() && !rosterChanged) {
-                return new Plan(false, false, add, removeFrom, leavePack, new HashSet<>(Set.of(leader)));
+            if (ended && !rosterChanged || pack.size() < 2) {
+                return Plan.NOTHING;
             }
-            boolean create = pack.size() > 1;
-            if (create) {
-                for (UUID m : pack) {
-                    add.put(m, alphas.contains(m) && !m.equals(leader));
-                }
-            }
-            return new Plan(create, false, add, removeFrom, leavePack, new HashSet<>(add.keySet()));
+            Set<UUID> add = new HashSet<>(pack);
+            add.remove(leader);
+            return new Plan(false, false, true, add, Set.of(), Set.of());
         }
-        if (!pack.contains(party.owner())) {
-            // the owner left the pack: the party goes with them and the pack gets its own
-            for (UUID m : pack) {
-                add.put(m, alphas.contains(m) && !m.equals(leader));
-            }
-            return new Plan(true, true, add, removeFrom, leavePack, new HashSet<>(add.keySet()));
+        if (!party.owner().equals(leader)) {
+            Set<UUID> out = new HashSet<>(ours);
+            out.retainAll(party.members());
+            out.remove(party.owner());
+            Set<UUID> add = new HashSet<>(pack);
+            add.remove(leader);
+            return new Plan(false, true, pack.size() > 1, pack.size() > 1 ? add : Set.of(), out, Set.of());
         }
-        for (UUID m : ours) {
-            if (!party.members().contains(m) && pack.contains(m) && !m.equals(party.owner())) {
-                leavePack.add(m);
-                keep.remove(m);
-            } else if (!pack.contains(m)) {
-                if (party.members().contains(m)) {
-                    removeFrom.add(m);
-                }
-                keep.remove(m);
-            }
-        }
-        for (UUID m : pack) {
-            if (!party.members().contains(m) && !leavePack.contains(m) && !ours.contains(m)) {
-                add.put(m, alphas.contains(m));
-                keep.add(m);
-            }
-        }
-        return new Plan(false, false, add, removeFrom, leavePack, keep);
+        Set<UUID> leavePack = new HashSet<>(ours);
+        leavePack.retainAll(pack);
+        leavePack.removeAll(party.members());
+        leavePack.remove(party.owner());
+        Set<UUID> removeFrom = new HashSet<>(ours);
+        removeFrom.removeAll(pack);
+        removeFrom.retainAll(party.members());
+        removeFrom.remove(party.owner());
+        Set<UUID> add = new HashSet<>(pack);
+        add.removeAll(party.members());
+        add.removeAll(ours);
+        add.remove(party.owner());
+        return new Plan(false, false, false, add, removeFrom, leavePack);
     }
 }

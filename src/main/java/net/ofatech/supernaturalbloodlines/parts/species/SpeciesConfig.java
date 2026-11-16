@@ -19,6 +19,9 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.IntValue MAX_FIVE;
     private static final ModConfigSpec.BooleanValue ONLY_ALPHAS_TURN;
     private static volatile Boolean onlyAlphasTurnOverride;
+    public static final boolean DEFAULT_OPAC_LINK = true;
+    private static final ModConfigSpec.BooleanValue OPAC_LINK_ENABLED;
+    private static volatile Boolean opacLinkOverride;
     public static final boolean DEFAULT_WITCH_BONUS = true;
     public static final boolean DEFAULT_ONLY_ALPHAS_TURN = true;
     public static final double DEFAULT_SIPHONER_CHANCE = 0.25;
@@ -65,6 +68,8 @@ public final class SpeciesConfig {
                 .defineInRange("max_five", DEFAULT_MAX_FIVE, 1, 10_000);
         ONLY_ALPHAS_TURN = b.comment("R92: only an Alpha's bite turns a human (the Werewolves effect lupus_sanguinem is refused from a werewolf player below Alpha). Off: Werewolves' own rule, any werewolf's bite can infect (it then records no pack or sire).")
                 .define("only_alphas_turn", DEFAULT_ONLY_ALPHAS_TURN);
+        OPAC_LINK_ENABLED = b.comment("With Open Parties and Claims (or Team Claims) installed, a pack gets a party of its own: the leader owns it, everyone else is a member, and leaving the party leaves the pack. Only a party the pack made itself is ever touched, never a party anyone made by hand. Off: packs and parties are separate.")
+                .define("opac_link_enabled", DEFAULT_OPAC_LINK);
         WITCH_BONUS = b.comment("Witches, heretics and tribrids get altar range x1.5 and rite power cost x0.75.")
                 .define("witch_bonus_enabled", DEFAULT_WITCH_BONUS);
         SIPHONER_CHANCE = b.comment("Chance that the Rite of Ancestral Calling makes a siphoner instead of a witch.")
@@ -111,6 +116,23 @@ public final class SpeciesConfig {
     /** For tests: pins {@link #onlyAlphasTurn()}; null clears it. */
     public static void overrideOnlyAlphasTurn(Boolean value) {
         onlyAlphasTurnOverride = value;
+    }
+
+    /** For tests: pins {@link #opacLinkEnabled()}; null clears it. */
+    public static void overrideOpacLink(Boolean value) {
+        opacLinkOverride = value;
+    }
+
+    public static boolean opacLinkEnabled() {
+        Boolean pinned = opacLinkOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return OPAC_LINK_ENABLED.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_OPAC_LINK;
+        }
     }
 
     public static boolean onlyAlphasTurn() {

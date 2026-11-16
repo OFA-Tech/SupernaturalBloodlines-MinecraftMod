@@ -173,6 +173,7 @@ public final class SpeciesPart {
             GeneHandler.register();
             PackIndex.register();
             net.ofatech.supernaturalbloodlines.parts.species.pack.PackLeader.register();
+        net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.register();
             net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink.register();
             net.ofatech.supernaturalbloodlines.parts.species.pack.AllyProtection.register();
             LineageBackfill.register();
@@ -249,6 +250,8 @@ public final class SpeciesPart {
                 e.register(WerewolfSparkGameTests.class);
                 e.register(PackBonusGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AlphaPackGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.PackReviewGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.PackDuelGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.FreeWillGameTests.class);
                 e.register(EclipseElectricityGameTests.class);
             }

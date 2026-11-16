@@ -45,6 +45,9 @@ public final class PackIndex extends SavedData {
     private static final String STRENGTHS = "strengths";
     private static final String ALLIES = "allies";
     private static final String MIRRORS = "party_mirrors";
+    private static final String PARTIES = "party_ids";
+    private static final String ENDED = "party_ended";
+    private static final String NOTICES = "notices";
     private static final String KEY = "key";
     private static final String VALUE = "value";
 
@@ -62,7 +65,16 @@ public final class PackIndex extends SavedData {
     private final Map<UUID, Set<UUID>> allies = new HashMap<>();
     // member -> the owner of the Open Parties and Claims party we put them in (see PartyLink)
     private final Map<UUID, UUID> mirrors = new HashMap<>();
+    // owner -> id of the party the pack made for them: the only party a pack ever touches
+    private final Map<UUID, UUID> parties = new HashMap<>();
+    // owners whose recorded party vanished: nothing is made again until the roster changes
+    private final Set<UUID> ended = new HashSet<>();
+    // what to tell a player who was away when their pack changed: reason key and one argument
+    private final Map<UUID, String[]> notices = new HashMap<>();
 
+    /** A party the pack made: its owner and its id. */
+    public record Recorded(UUID owner, UUID id) {
+    }
     public PackIndex() {
     }
 
@@ -83,10 +95,15 @@ public final class PackIndex extends SavedData {
         BloodlineAccess.addListener((p, change) -> {
             WolfState before = change.before().wolf();
             WolfState after = change.after().wolf();
-            boolean cured = before.lineage() != Lineage.NONE && after.lineage() == Lineage.NONE;
             boolean ownSpark = before.rank() == Rank.BETA && PackAccess.isAlpha(after.rank()) && !KEEP_PACK.get();
-            if (cured || ownSpark) {
-                get(p.serverLevel()).leave(p.getUUID());
+            PackIndex index = get(p.serverLevel());
+            if (ownSpark) {
+                index.leave(p.getUUID());
+            } else if (before.lineage() == Lineage.NONE && after.lineage() != Lineage.NONE && after.packAlpha() == null && !PackAccess.isAlpha(after.rank())
+                    && index.alphaOf(p.getUUID()).isPresent()) {
+                // a Packmate who becomes a werewolf is a Beta of the pack they are in (a cured Beta, the other way, stays as a Packmate)
+                UUID leader = index.alphaOf(p.getUUID()).get();
+                BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().wolf(after.toBuilder().rank(Rank.BETA).packAlpha(leader).betaSince(p.level().getGameTime()).build()).build());
             } else if (!Objects.equals(before.packAlpha(), after.packAlpha())) {
                 follow(p);
             }
@@ -111,6 +128,7 @@ public final class PackIndex extends SavedData {
      */
     public static void login(ServerPlayer p) {
         PackIndex index = get(p.serverLevel());
+        index.takeNotice(p.getUUID()).ifPresent(n -> p.sendSystemMessage(net.minecraft.network.chat.Component.translatable(n[0], n[1])));
         if (index.takeDissolved(p.getUUID())) {
             PackAccess.applyPack(p, PackEvent.LEFT_PACK, PackContext.defaults());
         }
@@ -157,6 +175,63 @@ public final class PackIndex extends SavedData {
         out.add(leader);
         out.addAll(betasOf(leader));
         return out;
+    }
+
+    /** Whether {@code p} leads the pack they are in (a lone player leads their own). */
+    public boolean isLeader(UUID p) {
+        return !alphaOf.containsKey(p);
+    }
+
+    /** Both are in the same pack (not the same player). */
+    public boolean samePack(UUID a, UUID b) {
+        return !a.equals(b) && inPack(a) && leaderOf(a).equals(leaderOf(b));
+    }
+
+    public Optional<Recorded> recordedParty(List<UUID> pack) {
+        for (UUID owner : pack) {
+            UUID id = parties.get(owner);
+            if (id != null) {
+                return Optional.of(new Recorded(owner, id));
+            }
+        }
+        return Optional.empty();
+    }
+
+    public void recordParty(UUID owner, UUID id) {
+        parties.put(owner, id);
+        setDirty();
+    }
+
+    /** Forgets the party and everyone mirrored into it (the party itself is not touched). */
+    public void forgetParty(UUID owner) {
+        boolean was = parties.remove(owner) != null;
+        was |= mirrors.values().removeIf(owner::equals);
+        if (was) {
+            setDirty();
+        }
+    }
+
+    public boolean partyEnded(List<UUID> pack) {
+        return pack.stream().anyMatch(ended::contains);
+    }
+
+    public void setPartyEnded(UUID owner, boolean value) {
+        if (value ? ended.add(owner) : ended.remove(owner)) {
+            setDirty();
+        }
+    }
+
+    public void addNotice(UUID player, String key, String arg) {
+        notices.put(player, new String[] {key, arg});
+        setDirty();
+    }
+
+    public Optional<String[]> takeNotice(UUID player) {
+        String[] n = notices.remove(player);
+        if (n != null) {
+            setDirty();
+        }
+        return Optional.ofNullable(n);
     }
 
     /** Every leader that has members. */
@@ -225,24 +300,6 @@ public final class PackIndex extends SavedData {
         allies.values().forEach(s -> s.remove(beta));
         setDirty();
         return true;
-    }
-
-    /**
-     * The strongest Alpha of the pack of {@code p} leads it: they become the leader, the old leader a member, and everyone follows.
-     * @return the new leader when it changed, else empty
-     */
-    public Optional<UUID> recalc(UUID p) {
-        UUID leader = leaderOf(p);
-        List<PackLeadership.Candidate> candidates = new ArrayList<>();
-        for (UUID id : pack(leader)) {
-            candidates.add(new PackLeadership.Candidate(id, strengthOf(id)));
-        }
-        Optional<UUID> best = PackLeadership.pick(candidates, leader);
-        if (best.isEmpty() || best.get().equals(leader)) {
-            return Optional.empty();
-        }
-        promote(leader, best.get());
-        return best;
     }
 
     /** {@code next} (a member) leads, {@code old} stays in the pack as a member; allies and the emissary go with the leadership. */
@@ -408,6 +465,12 @@ public final class PackIndex extends SavedData {
         readIds(tag, FORMER, i.formerAlphas);
         readIds(tag, DISSOLVED, i.dissolved);
         read(tag, MIRRORS, i.mirrors);
+        read(tag, PARTIES, i.parties);
+        readIds(tag, ENDED, i.ended);
+        for (Tag t : tag.getList(NOTICES, Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            i.notices.put(NbtUtils.loadUUID(e.get(KEY)), new String[] {e.getString("reason"), e.getString("arg")});
+        }
         for (Tag t : tag.getList(STRENGTHS, Tag.TAG_COMPOUND)) {
             CompoundTag e = (CompoundTag) t;
             i.strengths.put(NbtUtils.loadUUID(e.get(KEY)), e.getInt(VALUE));
@@ -460,6 +523,17 @@ public final class PackIndex extends SavedData {
         writeIds(tag, FORMER, formerAlphas);
         writeIds(tag, DISSOLVED, dissolved);
         write(tag, MIRRORS, mirrors);
+        write(tag, PARTIES, parties);
+        writeIds(tag, ENDED, ended);
+        ListTag notes = new ListTag();
+        notices.forEach((id, n) -> {
+            CompoundTag e = new CompoundTag();
+            e.put(KEY, NbtUtils.createUUID(id));
+            e.putString("reason", n[0]);
+            e.putString("arg", n[1]);
+            notes.add(e);
+        });
+        tag.put(NOTICES, notes);
         ListTag strong = new ListTag();
         strengths.forEach((id, s) -> {
             CompoundTag e = new CompoundTag();

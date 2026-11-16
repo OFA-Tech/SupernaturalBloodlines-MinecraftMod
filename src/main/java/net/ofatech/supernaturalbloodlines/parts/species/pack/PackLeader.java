@@ -1,17 +1,17 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
 import de.teamlapen.vampirism.api.VampirismAPI;
-import java.util.List;
-import java.util.UUID;
+import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.NeoForge;
-import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackLeadership;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 
 /**
- * Who leads an Alpha Pack (plan 14). The index keeps each member's last seen strength; this reads it fresh for a player who
- * is online, asks the index to recalculate and, when the leadership moved, points every online Beta at the new leader.
+ * What an Alpha is worth when a pack has to pick a new leader (plan 14, owner). The index keeps each member's last seen strength;
+ * this reads it fresh for a player who is online. **It never moves the leadership:** a joining Alpha, or one who levels up, does
+ * not take over. The strongest is only the successor when the leader leaves, loses the spark or gives it up; otherwise the lead
+ * changes hands in a {@link PackDuel}.
  */
 public final class PackLeader {
     private PackLeader() {
@@ -36,29 +36,10 @@ public final class PackLeader {
         return PackLeadership.strength(PackAccess.wolf(p).rank(), VampirismAPI.factionPlayerHandler(p).getCurrentLevel());
     }
 
-    /** Records the player's strength and recalculates their pack's leader. */
+    /** Records the player's strength. The leader stays the leader. */
     public static void refresh(ServerPlayer p) {
-        if (p.level().isClientSide) {
-            return;
+        if (!p.level().isClientSide) {
+            PackIndex.get(p.serverLevel()).setStrength(p.getUUID(), strengthNow(p));
         }
-        PackIndex index = PackIndex.get(p.serverLevel());
-        index.setStrength(p.getUUID(), strengthNow(p));
-        recalc(p, p.getUUID());
-    }
-
-    /** Recalculates the pack {@code member} is in; true when the leader changed. */
-    public static boolean recalc(ServerPlayer any, UUID member) {
-        PackIndex index = PackIndex.get(any.serverLevel());
-        UUID old = index.leaderOf(member);
-        List<UUID> before = index.betasOf(old);
-        var next = index.recalc(member);
-        if (next.isEmpty()) {
-            return false;
-        }
-        // the old leader and every Beta now follow the new one
-        for (UUID id : before) {
-            SparkHandler.repoint(any.server, id, next.get());
-        }
-        return true;
     }
 }

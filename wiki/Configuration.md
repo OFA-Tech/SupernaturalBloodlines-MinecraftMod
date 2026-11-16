@@ -63,6 +63,7 @@ All under `[species]`.
 | `bite_vampire_cost` | `1` | 0 to 20 | How much of their own blood a vampire loses when biting a vampire (a bite on a vampire never feeds). |
 | `vampire_blood_ticks` | `24000` | 20 to 24,000,000 | How long vampire blood stays in a player's system, in game ticks. Dying while it is there starts the turning. |
 | `max_five` | `5` | 1 to 10000 | How many Hunters of the Five the world allows. Lowering it later removes nobody: the Five can stay above it until marks are lost, and no new Rite of the Five works until there are fewer than this. |
+| `opac_link_enabled` | `true` | | With Open Parties and Claims (or Team Claims) installed: a pack gets a party of its own and leaving the party leaves the pack. Only a party the pack made itself is ever touched. **Off:** packs and parties are separate (existing pack parties are left as they are). |
 | `only_alphas_turn` | `true` | | A werewolf player below Alpha cannot infect a human (R92, the Teen Wolf rule). **Off:** Werewolves' own rule: any werewolf's bite can infect (it then records no pack and no sire). |
 | `witch_bonus_enabled` | `true` | | Witches, heretics and tribrids get **altar range x1.5** and **rite power cost x0.75**. Siphoned power is always usable. |
 | `siphoner_chance` | `0.25` | 0.0 to 1.0 | Chance that the Rite of Ancestral Calling makes a **siphoner** instead of a witch. |

@@ -58,10 +58,8 @@ public final class DefenderKills {
         }
     }
 
-    /** Both are in the same pack: the same leader, whoever they are (a Packmate counts), and not alone. */
     private static boolean samePack(ServerPlayer a, ServerPlayer b) {
-        PackIndex index = PackIndex.get(a.serverLevel());
-        return index.inPack(a.getUUID()) && index.leaderOf(a.getUUID()).equals(index.leaderOf(b.getUUID()));
+        return PackIndex.get(a.serverLevel()).samePack(a.getUUID(), b.getUUID());
     }
 
     /**

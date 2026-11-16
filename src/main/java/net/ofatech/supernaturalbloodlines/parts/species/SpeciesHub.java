@@ -100,8 +100,9 @@ final class SpeciesHub {
         List<HubSocial.Member> out = new ArrayList<>();
         out.add(member(server, alpha, "alpha"));
         // the other Alphas are Alphas, a member who was no werewolf when last seen is a Packmate, the rest are Betas
-        betas.forEach(b -> out.add(member(server, b, PackLeadership.isAlpha(index.strengthOf(b)) ? "coalpha" : index.strengthOf(b) < 0 ? "packmate" : "beta")));
-        emissary.ifPresent(e -> out.add(member(server, e, "emissary")));
+        betas.forEach(b -> out.add(member(server, b, emissary.filter(b::equals).isPresent() ? "emissary"
+                : PackLeadership.isAlpha(index.strengthOf(b)) ? "coalpha" : index.strengthOf(b) < 0 ? "packmate" : "beta")));
+        emissary.filter(e -> !betas.contains(e)).ifPresent(e -> out.add(member(server, e, "emissary")));
         // the leaders of the packs this one is allied with (not their members)
         index.alliesOf(alpha).forEach(a -> out.add(member(server, a, "ally")));
         return out;

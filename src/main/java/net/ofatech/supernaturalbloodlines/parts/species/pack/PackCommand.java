@@ -4,14 +4,17 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import com.mojang.authlib.GameProfile;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -47,6 +50,10 @@ public final class PackCommand {
         return REQUESTS;
     }
 
+    public static CallRequests allyRequests() {
+        return ALLY_REQUESTS;
+    }
+
     public static void register(CommandDispatcher<CommandSourceStack> d) {
         // /pack is also a short word other mods use; /sb pack is the same tree under our own prefix (13d)
         com.mojang.brigadier.tree.LiteralCommandNode<CommandSourceStack> pack = d.register(Commands.literal("pack")
@@ -58,11 +65,9 @@ public final class PackCommand {
                                 .executes(c -> run(c, accept(self(c), StringArgumentType.getString(c, "token"))))))
                 .then(Commands.literal("leave").executes(c -> run(c, leave(self(c)))))
                 .then(Commands.literal("kick")
-                        .then(Commands.argument("player", GameProfileArgument.gameProfile())
-                                .executes(c -> {
-                                    GameProfile g = GameProfileArgument.getGameProfiles(c, "player").iterator().next();
-                                    return run(c, kick(self(c), g.getId(), g.getName()));
-                                })))
+                        .then(Commands.argument("player", StringArgumentType.word())
+                                .suggests((c, b) -> suggest(c, b, false))
+                                .executes(c -> run(c, kickNamed(self(c), StringArgumentType.getString(c, "player"))))))
                 .then(Commands.literal("ally")
                         .then(Commands.literal("invite")
                                 .then(Commands.argument("player", EntityArgument.player())
@@ -71,11 +76,19 @@ public final class PackCommand {
                                 .then(Commands.argument("token", StringArgumentType.word())
                                         .executes(c -> run(c, allyAccept(self(c), StringArgumentType.getString(c, "token"))))))
                         .then(Commands.literal("remove")
-                                .then(Commands.argument("player", GameProfileArgument.gameProfile())
-                                        .executes(c -> {
-                                            GameProfile g = GameProfileArgument.getGameProfiles(c, "player").iterator().next();
-                                            return run(c, allyRemove(self(c), g.getId(), g.getName()));
-                                        }))))
+                                .then(Commands.argument("player", StringArgumentType.word())
+                                        .suggests((c, b) -> suggest(c, b, true))
+                                        .executes(c -> run(c, allyRemoveNamed(self(c), StringArgumentType.getString(c, "player")))))))
+                .then(Commands.literal("challenge")
+                        .then(Commands.literal("accept").executes(c -> run(c, PackDuel.accept(self(c)))))
+                        .then(Commands.argument("alpha", StringArgumentType.word())
+                                .suggests((c, b) -> {
+                                    if (c.getSource().getEntity() instanceof ServerPlayer me) {
+                                        PackIndex.get(me.serverLevel()).alphaOf(me.getUUID()).map(id -> PackAccess.nameOf(me.server, id)).ifPresent(b::suggest);
+                                    }
+                                    return b.buildFuture();
+                                })
+                                .executes(c -> run(c, PackDuel.challenge(self(c), StringArgumentType.getString(c, "alpha"))))))
                 .then(Commands.literal("heal")
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(c -> run(c, heal(self(c), EntityArgument.getPlayer(c, "player"))))))
@@ -92,6 +105,44 @@ public final class PackCommand {
         d.register(Commands.literal("sb").then(Commands.literal("pack").redirect(pack)));
     }
 
+    /** Who /pack kick may name (the members of the pack) or /pack ally remove (the leaders of the allied packs): ids and names the pack already has, so no profile lookup. */
+    private static Map<UUID, String> named(ServerPlayer leader, boolean allies) {
+        PackIndex index = PackIndex.get(leader.serverLevel());
+        Map<UUID, String> out = new LinkedHashMap<>();
+        for (UUID id : allies ? List.copyOf(index.alliesOf(leader.getUUID())) : index.betasOf(leader.getUUID())) {
+            String n = PackAccess.nameOf(leader.server, id);
+            out.put(id, n != null ? n : id.toString());
+        }
+        return out;
+    }
+
+    private static CompletableFuture<Suggestions> suggest(CommandContext<CommandSourceStack> c, SuggestionsBuilder b, boolean allies) {
+        if (c.getSource().getEntity() instanceof ServerPlayer me) {
+            named(me, allies).values().forEach(b::suggest);
+        }
+        return b.buildFuture();
+    }
+
+    @Nullable
+    private static UUID match(Map<UUID, String> candidates, String word) {
+        return candidates.entrySet().stream().filter(e -> e.getKey().toString().equalsIgnoreCase(word) || e.getValue().equalsIgnoreCase(word))
+                .map(Map.Entry::getKey).findFirst().orElse(null);
+    }
+
+    @Nullable
+    public static Component kickNamed(ServerPlayer leader, String word) {
+        Map<UUID, String> members = named(leader, false);
+        UUID id = match(members, word);
+        return id == null ? error("not_member", word) : kick(leader, id, members.get(id));
+    }
+
+    @Nullable
+    public static Component allyRemoveNamed(ServerPlayer leader, String word) {
+        Map<UUID, String> allies = named(leader, true);
+        UUID id = match(allies, word);
+        return id == null ? error("ally_none", word) : allyRemove(leader, id, allies.get(id));
+    }
+
     private static ServerPlayer self(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         return c.getSource().getPlayerOrException();
     }
@@ -104,11 +155,11 @@ public final class PackCommand {
         return 0;
     }
 
-    private static Component error(String key, Object... args) {
+    static Component error(String key, Object... args) {
         return Component.translatable(KEY + key, args);
     }
 
-    private static String name(ServerPlayer p) {
+    static String name(ServerPlayer p) {
         return p.getGameProfile().getName();
     }
 
@@ -127,7 +178,7 @@ public final class PackCommand {
             return error("not_alpha");
         }
         PackIndex index = PackIndex.get(alpha.serverLevel());
-        if (!index.leaderOf(alpha.getUUID()).equals(alpha.getUUID())) {
+        if (!index.isLeader(alpha.getUUID())) {
             return error("not_leader");
         }
         if (target == alpha) {
@@ -138,16 +189,22 @@ public final class PackCommand {
             return error("target_has_pack", name(target));
         }
         long now = alpha.serverLevel().getGameTime();
-        target.sendSystemMessage(requestMessage(name(alpha), REQUESTS.open(alpha.getUUID(), target.getUUID(), now)));
+        target.sendSystemMessage(inviteMessage(name(alpha), REQUESTS.open(alpha.getUUID(), target.getUUID(), now), index.betasOf(target.getUUID()).size()));
         alpha.sendSystemMessage(Component.translatable(KEY + "invited", name(target)));
         return null;
     }
 
-    private static Component requestMessage(String alphaName, String token) {
+    /** The invitation text: who asks, and (when the invited one leads a pack of their own) that it comes along. */
+    public static Component inviteMessage(String alphaName, String token, int bringing) {
         Component accept = Component.translatable(KEY + "accept").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pack accept " + token))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(KEY + "accept_hover", alphaName))));
-        return Component.translatable(KEY + "invite", alphaName).append(" ").append(accept);
+        MutableComponent text = Component.translatable(KEY + "invite", alphaName);
+        // a leader who joins brings their own pack along: they are told before they click
+        if (bringing > 0) {
+            text.append(" ").append(Component.translatable(KEY + "invite_merge", bringing));
+        }
+        return text.append(" ").append(accept);
     }
 
     @Nullable
@@ -163,7 +220,11 @@ public final class PackCommand {
         }
         WolfState w = PackAccess.wolf(p);
         PackIndex index = PackIndex.get(p.serverLevel());
-        UUID leader = index.leaderOf(alpha.getUUID());
+        // the inviter must still lead: a pack that changed hands since the invitation is no longer the one they were asked to join
+        if (!index.isLeader(alpha.getUUID())) {
+            return error("not_leader");
+        }
+        UUID leader = alpha.getUUID();
         // a Beta keeps their pack until /pack leave: a second invitation or bite never switches it
         if (w.packAlpha() != null || index.alphaOf(p.getUUID()).isPresent()) {
             return error("has_pack");
@@ -182,6 +243,7 @@ public final class PackCommand {
                 return error("refused");
             }
             own.forEach(id -> SparkHandler.repoint(p.server, id, leader));
+            PackMembers.moved(p.server, own, leader);
         }
         PackLeader.refresh(p);
         PartyLink.sync(p.server, p.getUUID(), true);
@@ -218,7 +280,7 @@ public final class PackCommand {
             return error("not_alpha");
         }
         PackIndex index = PackIndex.get(leader.serverLevel());
-        if (!index.leaderOf(leader.getUUID()).equals(leader.getUUID())) {
+        if (!index.isLeader(leader.getUUID())) {
             return error("not_leader");
         }
         if (target.equals(leader.getUUID())) {
@@ -227,7 +289,7 @@ public final class PackCommand {
         if (!index.betasOf(leader.getUUID()).contains(target)) {
             return error("not_member", targetName);
         }
-        PackMembers.remove(leader.server, target, Component.translatable(KEY + "kicked", name(leader)));
+        PackMembers.remove(leader.server, target, KEY + "kicked", name(leader));
         leader.sendSystemMessage(Component.translatable(KEY + "kicked_ok", targetName));
         PartyLink.sync(leader.server, leader.getUUID(), true);
         return null;
@@ -237,13 +299,13 @@ public final class PackCommand {
     @Nullable
     public static Component allyInvite(ServerPlayer leader, ServerPlayer target) {
         PackIndex index = PackIndex.get(leader.serverLevel());
-        if (!isActiveAlpha(leader) || !index.leaderOf(leader.getUUID()).equals(leader.getUUID())) {
+        if (!isActiveAlpha(leader) || !index.isLeader(leader.getUUID())) {
             return error("not_leader");
         }
         if (target == leader) {
             return error("self");
         }
-        if (!index.leaderOf(target.getUUID()).equals(target.getUUID()) || !isActiveAlpha(target)) {
+        if (!index.isLeader(target.getUUID()) || !isActiveAlpha(target)) {
             return error("ally_not_leader", name(target));
         }
         if (index.alliesOf(leader.getUUID()).contains(target.getUUID())) {
@@ -269,7 +331,11 @@ public final class PackCommand {
         if (other == null || !isActiveAlpha(other) || !isActiveAlpha(p)) {
             return error("alpha_gone");
         }
-        if (!index.ally(index.leaderOf(p.getUUID()), index.leaderOf(other.getUUID()))) {
+        // both must still lead the packs the alliance was asked between
+        if (!index.isLeader(other.getUUID()) || !index.isLeader(p.getUUID())) {
+            return error("not_leader");
+        }
+        if (!index.ally(p.getUUID(), other.getUUID())) {
             return error("refused");
         }
         p.sendSystemMessage(Component.translatable(KEY + "ally_made", name(other)));
@@ -281,7 +347,7 @@ public final class PackCommand {
     @Nullable
     public static Component allyRemove(ServerPlayer leader, UUID target, String targetName) {
         PackIndex index = PackIndex.get(leader.serverLevel());
-        if (!isActiveAlpha(leader) || !index.leaderOf(leader.getUUID()).equals(leader.getUUID())) {
+        if (!isActiveAlpha(leader) || !index.isLeader(leader.getUUID())) {
             return error("not_leader");
         }
         if (!index.unally(leader.getUUID(), index.leaderOf(target))) {
@@ -325,6 +391,9 @@ public final class PackCommand {
             return error("not_alpha");
         }
         PackIndex index = PackIndex.get(alpha.serverLevel());
+        if (!index.isLeader(alpha.getUUID())) {
+            return error("not_leader");
+        }
         if (target == null) {
             index.setEmissary(alpha.getUUID(), null);
             alpha.sendSystemMessage(Component.translatable(KEY + "emissary_cleared"));
@@ -339,6 +408,15 @@ public final class PackCommand {
         // one Alpha at a time: a witch who already serves another pack must be dropped there first
         if (index.emissaryAlpha(target.getUUID()).filter(a -> !a.equals(alpha.getUUID())).isPresent()) {
             return error("emissary_taken", name(target));
+        }
+        // the Emissary is a member of the pack too (a Packmate), unless they run with another pack or lead one
+        if (!index.pack(alpha.getUUID()).contains(target.getUUID())) {
+            if (index.inPack(target.getUUID())) {
+                return error("target_has_pack", name(target));
+            }
+            index.join(alpha.getUUID(), target.getUUID());
+            PackLeader.refresh(target);
+            PartyLink.sync(alpha.server, alpha.getUUID(), true);
         }
         index.setEmissary(alpha.getUUID(), target.getUUID());
         alpha.sendSystemMessage(Component.translatable(KEY + "emissary_set", name(target)));

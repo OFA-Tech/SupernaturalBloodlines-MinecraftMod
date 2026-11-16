@@ -24,6 +24,7 @@ Tokens last 60 seconds (calls) or 5 seconds (compulsion choices), are tied to on
 | `/pack kick <player>` | the **leader** | remove a member, online or not. A werewolf Beta becomes an Omega. There is no limit on the size of a pack. |
 | `/pack ally invite <player>` · `accept <token>` · `remove <player>` | the leader of a pack | make or end an alliance with another pack (its leader answers the **[Accept]**). Allies cannot hurt each other and the [Alpha Roar](Werewolves-And-Packs#alpha-roar) spares them. They share no pack bonus. |
 | `/pack accept <token>` | the invited player | what the button runs |
+| `/pack challenge <leader>` · `challenge accept` | a **second Alpha** of the pack; the leader | challenge the leader for the lead, and accept. A duel to the first defeat, where nobody dies and nobody loses the spark; the winner leads. It runs out after 2 minutes. See [Werewolves and packs](Werewolves-And-Packs#mixed-packs-and-alpha-packs). |
 | `/pack leave` | anyone in a pack | leave the pack (a werewolf Beta becomes an Omega). The leader can't; a second Alpha or a Packmate can. |
 | `/pack info` | a pack member | the pack: its leader, members, Emissary, allies and your anchor |
 | `/pack heal <player>` | an **Alpha** | give the spark away to fully heal someone within 4 blocks, curing hybrid venom and wolfsbane. The Alpha becomes a Beta. Not for a True Alpha. |
