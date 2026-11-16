@@ -1,7 +1,7 @@
 {
     "id": "S-ORI-4",
     "name": "Primordial Mind",
-    "cost": 5,
+    "cost": 4,
     "kinds": ["rule"],
     "params": { "magicule_bonus": 0.05 }
 }

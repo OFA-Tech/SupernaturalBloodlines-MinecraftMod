@@ -166,11 +166,11 @@ public final class ApexWerewolfGameTests {
         rank(truth, WolfState.Rank.TRUE_ALPHA);
         SpeciesLayer.sync(truth);
         helper.assertTrue(truth.getAttribute(Attributes.MAX_HEALTH).hasModifier(PrimevalBoost.ID), "no bonus for a True Alpha");
-        // the extra half of the apex race's own bonuses (1000 health, 25 attack, 0.03 speed), on top of what the True Alpha rank gives anyway
-        helper.assertTrue(Math.abs(extra(truth, Attributes.MAX_HEALTH) - 500) < 1e-6, "health " + extra(truth, Attributes.MAX_HEALTH));
+        // the extra half of the apex race's own bonuses (900 health, 25 attack, 0.03 speed), on top of what the True Alpha rank gives anyway
+        helper.assertTrue(Math.abs(extra(truth, Attributes.MAX_HEALTH) - 450) < 1e-6, "health " + extra(truth, Attributes.MAX_HEALTH));
         helper.assertTrue(Math.abs(extra(truth, Attributes.ATTACK_DAMAGE) - 12.5) < 1e-6, "attack " + extra(truth, Attributes.ATTACK_DAMAGE));
         helper.assertTrue(Math.abs(extra(truth, Attributes.MOVEMENT_SPEED) - 0.015) < 1e-6, "speed " + extra(truth, Attributes.MOVEMENT_SPEED));
-        helper.assertTrue(value(alpha, Attributes.MAX_HEALTH) - value(truth, Attributes.MAX_HEALTH) < -499, "the True Alpha is not stronger than the Alpha");
+        helper.assertTrue(value(alpha, Attributes.MAX_HEALTH) - value(truth, Attributes.MAX_HEALTH) < -449, "the True Alpha is not stronger than the Alpha");
 
         // a dormant True Alpha (cured, or left the werewolves) loses it until the rejoin
         VampirismAPI.factionPlayerHandler(truth).leaveFaction(false);

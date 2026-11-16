@@ -58,7 +58,7 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 - Farming True Alpha **defender kills** at a spawner beside a villager.
 - With the **artifacts part off**, a bitten non-Alpha wolf has no way to shift at will.
 - **Undead treatment** is wider than holy damage: it affects a plain Vampirism vampire too.
-- **Apex races** give more max health than the divine tier, and all their values are placeholders.
+- **Apex races** give more max health than the divine tier, and their values are final (see `docs/balance.md`); only the textures and icons are still placeholders.
 - **Sire link** makes sired players unable to hurt their sire, and siblings allies. Siring names the sired automatically and ignores `playerNaming`; with the sire offline or short of magicule the naming waits for the next login of either.
 
 ## Not checked in a real game yet

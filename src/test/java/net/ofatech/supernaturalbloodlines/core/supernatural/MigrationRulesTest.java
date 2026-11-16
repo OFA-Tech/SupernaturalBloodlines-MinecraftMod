@@ -80,7 +80,7 @@ class MigrationRulesTest {
         Result r = MigrationRules.migrate(T, from, f);
         assertEquals(5, r.state().rung(WEREWOLF));
         assertTrue(r.state().claimed().contains("L-WOL-5a"));
-        assertEquals(6, r.state().sp());
+        assertEquals(5, r.state().sp());
     }
 
     @Test

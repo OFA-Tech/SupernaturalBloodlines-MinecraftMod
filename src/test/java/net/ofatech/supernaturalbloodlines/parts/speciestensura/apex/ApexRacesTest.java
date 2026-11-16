@@ -58,7 +58,7 @@ class ApexRacesTest {
         assertEquals(900, ApexSpec.ELDER_VAMPIRE.health());
         assertEquals(List.of("tensura:self_regeneration"), ApexSpec.ELDER_VAMPIRE.intrinsicSkills());
         assertEquals(List.of("tensura:godwolf_sense"), ApexSpec.ALPHA_PRIMEVAL.intrinsicSkills());
-        assertEquals(1000, ApexSpec.ALPHA_PRIMEVAL.health());
+        assertEquals(900, ApexSpec.ALPHA_PRIMEVAL.health());
         assertEquals(25, ApexSpec.ALPHA_PRIMEVAL.attack());
         assertTrue(ApexSpec.ELDER_VAMPIRE.undead());
         assertFalse(ApexSpec.ALPHA_PRIMEVAL.undead(), "R103: werewolves can't be undead");

@@ -185,11 +185,11 @@ class LadderSpecRowsTest {
             T L-WOL-4a.1 state rank_alpha 1
             T L-WOL-4a.2 state beta_days 15
             T L-WOL-4b state defender_kills 100
-            R L-WOL-5 6 100000
+            R L-WOL-5 5 100000
             T L-WOL-5a state rank_alpha 1
             R L-WOL-6 5 100000
             T L-WOL-6a tensura_tier - 1
-            T L-WOL-6b days_as werewolf 100
+            T L-WOL-6b days_as werewolf 60
             """.replace("%V%", V).replace("%W%", W).replace("%H%", H).replace("%S%", S);
 
     private static String key(TaskSpec t) {

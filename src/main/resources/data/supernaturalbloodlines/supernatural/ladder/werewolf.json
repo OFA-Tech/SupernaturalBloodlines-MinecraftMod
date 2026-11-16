@@ -20,12 +20,12 @@
             ] },
             { "id": "L-WOL-4b", "detector": "state", "predicate": "defender_kills", "n": 100, "mod": "werewolves", "part": "species" }
         ] },
-        { "id": "L-WOL-5", "name": "Alpha", "sp": 6, "ep": 100000, "tasks": [
+        { "id": "L-WOL-5", "name": "Alpha", "sp": 5, "ep": 100000, "tasks": [
             { "id": "L-WOL-5a", "detector": "state", "predicate": "rank_alpha", "mod": "werewolves", "part": "species" }
         ] },
         { "id": "L-WOL-6", "name": "Primeval", "sp": 5, "ep": 100000, "mods": ["tensura"], "parts": ["supernaturalTensura"], "tasks": [
             { "id": "L-WOL-6a", "detector": "tensura_tier" },
-            { "id": "L-WOL-6b", "detector": "days_as", "race": "werewolf", "n": 100 }
+            { "id": "L-WOL-6b", "detector": "days_as", "race": "werewolf", "n": 60 }
         ] }
     ]
 }

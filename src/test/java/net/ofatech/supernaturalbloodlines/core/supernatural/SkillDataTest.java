@@ -26,9 +26,9 @@ class SkillDataTest {
             Map.entry("S-HUM-1", 1), Map.entry("S-HUM-2", 2), Map.entry("S-HUM-3", 2),
             Map.entry("S-VAM-1", 1), Map.entry("S-VAM-2", 2), Map.entry("S-VAM-3", 2), Map.entry("S-VAM-4", 3), Map.entry("S-VAM-5", 3),
             Map.entry("S-VAM-6", 4), Map.entry("S-VAM-7", 4),
-            Map.entry("S-ORI-1", 2), Map.entry("S-ORI-2", 1), Map.entry("S-ORI-3", 3), Map.entry("S-ORI-4", 5),
+            Map.entry("S-ORI-1", 3), Map.entry("S-ORI-2", 1), Map.entry("S-ORI-3", 3), Map.entry("S-ORI-4", 4),
             Map.entry("S-HYB-1", 2), Map.entry("S-HYB-2", 3),
-            Map.entry("S-WOL-1", 1), Map.entry("S-WOL-2", 2), Map.entry("S-WOL-3", 2), Map.entry("S-WOL-4", 2), Map.entry("S-WOL-5", 3),
+            Map.entry("S-WOL-1", 1), Map.entry("S-WOL-2", 2), Map.entry("S-WOL-3", 2), Map.entry("S-WOL-4", 2), Map.entry("S-WOL-5", 4),
             Map.entry("S-WOL-6", 3), Map.entry("S-WOL-7", 4),
             Map.entry("S-WIT-1", 2), Map.entry("S-WIT-2", 2), Map.entry("S-WIT-3", 2), Map.entry("S-WIT-4", 3), Map.entry("S-WIT-5", 3),
             Map.entry("S-WIT-6", 4), Map.entry("S-WIT-7", 4),
@@ -42,9 +42,9 @@ class SkillDataTest {
             Map.entry(SupernaturalRace.HUMAN, List.of("S-HUM-1@1", "S-HUM-2@2", "S-HUM-3@2")),
             Map.entry(SupernaturalRace.VAMPIRE, List.of("S-VAM-1@1", "S-VAM-2@2", "S-VAM-3@3", "S-VAM-4@3>S-VAM-2", "S-VAM-5@4",
                     "S-VAM-6@4>S-VAM-1+Q", "S-VAM-7@5>S-VAM-4")),
-            Map.entry(SupernaturalRace.ORIGINAL, List.of("S-VAM-1@1", "S-ORI-1@1", "S-ORI-2@2", "S-VAM-3@2", "S-VAM-4@3>S-ORI-1",
+            Map.entry(SupernaturalRace.ORIGINAL, List.of("S-VAM-1@1", "S-ORI-1@2", "S-ORI-2@2", "S-VAM-3@2", "S-VAM-4@3>S-ORI-1",
                     "S-ORI-3@4>S-VAM-3", "S-VAM-6@3>S-VAM-1+Q", "S-ORI-4@5>S-VAM-4")),
-            Map.entry(SupernaturalRace.ORIGINAL_HYBRID, List.of("S-VAM-1@1", "S-ORI-1@1", "S-HYB-1@2", "S-HYB-2@2", "S-VAM-3@3",
+            Map.entry(SupernaturalRace.ORIGINAL_HYBRID, List.of("S-VAM-1@1", "S-ORI-1@2", "S-HYB-1@2", "S-HYB-2@2", "S-VAM-3@3",
                     "S-ORI-3@4>S-VAM-3", "S-VAM-6@3>S-VAM-1+Q", "S-WOL-7@5>S-HYB-2")),
             Map.entry(SupernaturalRace.HYBRID, List.of("S-VAM-1@1", "S-WOL-1@1", "S-HYB-1@2", "S-VAM-2@2", "S-HYB-2@3", "S-VAM-3@3",
                     "S-VAM-6@4>S-VAM-1+Q", "S-WOL-7@5>S-HYB-2")),
@@ -64,9 +64,9 @@ class SkillDataTest {
     // race -> SP total of its tree, as the spec states it
     private static final Map<SupernaturalRace, Integer> SP = Map.ofEntries(
             Map.entry(SupernaturalRace.HUMAN, 5), Map.entry(SupernaturalRace.VAMPIRE, 19), Map.entry(SupernaturalRace.ORIGINAL, 21),
-            Map.entry(SupernaturalRace.ORIGINAL_HYBRID, 21), Map.entry(SupernaturalRace.HYBRID, 19), Map.entry(SupernaturalRace.TRIBRID, 20),
+            Map.entry(SupernaturalRace.ORIGINAL_HYBRID, 22), Map.entry(SupernaturalRace.HYBRID, 19), Map.entry(SupernaturalRace.TRIBRID, 20),
             Map.entry(SupernaturalRace.WITCH, 20), Map.entry(SupernaturalRace.SIPHONER, 17), Map.entry(SupernaturalRace.HERETIC, 19),
-            Map.entry(SupernaturalRace.HUNTER, 18), Map.entry(SupernaturalRace.WEREWOLF, 17));
+            Map.entry(SupernaturalRace.HUNTER, 18), Map.entry(SupernaturalRace.WEREWOLF, 18));
 
     private static Path dir() throws IOException {
         try {
