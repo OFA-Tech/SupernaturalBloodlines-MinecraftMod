@@ -5,14 +5,12 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
-import net.ofatech.supernaturalbloodlines.core.bloodline.FailureBreaker;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PartySyncRules.Party;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +18,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Open Parties and Claims through reflection: the mod is not a build dependency, so without it nothing here is loaded. Every
  * name below was read from the 0.33.0 jar (and the Team Claims 1.5.0 fork, which has the same classes) with javap. A call that
- * throws is counted; {@link #FAIL_LIMIT} in a row turn the link off (once, with a warning), one success starts the count again.
+ * throws is counted by the {@link CallGuard}; {@link #FAIL_LIMIT} in a row turn the link off (once, with a warning), one success
+ * starts the count again.
  */
 final class OpacBackend implements PartyBackend {
     static final int FAIL_LIMIT = 5;
@@ -36,7 +35,8 @@ final class OpacBackend implements PartyBackend {
     private final Method addMember;
     private final Method removeMember;
     private final Class<?> rankClass;
-    private final FailureBreaker breaker = new FailureBreaker(FAIL_LIMIT);
+    private final CallGuard guard = new CallGuard(FAIL_LIMIT,
+            e -> SupernaturalBloodlines.LOGGER.warn("The pack-party link is off: Open Parties and Claims failed {} calls in a row (last: {})", FAIL_LIMIT, e.toString()));
 
     private OpacBackend() throws ReflectiveOperationException {
         Class<?> api = Class.forName("xaero.pac.common.server.api.OpenPACServerAPI");
@@ -68,30 +68,7 @@ final class OpacBackend implements PartyBackend {
     }
 
     boolean isOff() {
-        return breaker.tripped();
-    }
-
-    /** One call: a throw is a failure (counted), a normal answer, null or not, is a success. */
-    private <T> T call(Callable<T> c) throws CallFailed {
-        if (breaker.tripped()) {
-            throw new CallFailed(null);
-        }
-        try {
-            T result = c.call();
-            breaker.record(true);
-            return result;
-        } catch (Exception | LinkageError e) {
-            if (breaker.record(false)) {
-                SupernaturalBloodlines.LOGGER.warn("The pack-party link is off: Open Parties and Claims failed {} calls in a row (last: {})", FAIL_LIMIT, e.toString());
-            }
-            throw new CallFailed(e);
-        }
-    }
-
-    private static final class CallFailed extends Exception {
-        CallFailed(@Nullable Throwable cause) {
-            super(cause);
-        }
+        return guard.off();
     }
 
     private Object manager(MinecraftServer server) throws ReflectiveOperationException {
@@ -100,85 +77,71 @@ final class OpacBackend implements PartyBackend {
 
     @Override
     public Found find(MinecraftServer server, UUID owner, UUID id) {
-        try {
-            return call(() -> {
-                Object party = byOwner.invoke(manager(server), owner);
-                if (party == null || !id.equals(partyId.invoke(party))) {
-                    return new Found(true, null);
-                }
-                Set<UUID> members = new HashSet<>();
-                members.add(owner);
-                try (Stream<?> s = (Stream<?>) memberStream.invoke(party)) {
-                    members.addAll(s.map(m -> {
-                        try {
-                            return (UUID) memberUuid.invoke(m);
-                        } catch (ReflectiveOperationException e) {
-                            throw new IllegalStateException(e);
-                        }
-                    }).collect(Collectors.toSet()));
-                }
-                return new Found(true, new Party(owner, members));
-            });
-        } catch (CallFailed e) {
-            return new Found(false, null);
-        }
+        CallGuard.Answer<Found> a = guard.call(() -> {
+            Object party = byOwner.invoke(manager(server), owner);
+            if (party == null || !id.equals(partyId.invoke(party))) {
+                return new Found(true, null);
+            }
+            Set<UUID> members = new HashSet<>();
+            members.add(owner);
+            try (Stream<?> s = (Stream<?>) memberStream.invoke(party)) {
+                members.addAll(s.map(m -> {
+                    try {
+                        return (UUID) memberUuid.invoke(m);
+                    } catch (ReflectiveOperationException e) {
+                        throw new IllegalStateException(e);
+                    }
+                }).collect(Collectors.toSet()));
+            }
+            return new Found(true, new Party(owner, members));
+        });
+        return a.ok() ? a.value() : new Found(false, null);
     }
 
     @Override
     public Optional<UUID> create(MinecraftServer server, UUID owner) {
         ServerPlayer p = server.getPlayerList().getPlayer(owner);
-        if (p == null || breaker.tripped()) {
+        if (p == null || guard.off()) {
             return Optional.empty();
         }
-        try {
-            return call(() -> {
-                Object manager = manager(server);
-                // a party the owner has already is theirs: it is never adopted, and never replaced
-                if (byOwner.invoke(manager, owner) != null || byMember.invoke(manager, owner) != null) {
-                    return Optional.<UUID>empty();
-                }
-                Object party = createForOwner.invoke(manager, p);
-                return party == null ? Optional.<UUID>empty() : Optional.of((UUID) partyId.invoke(party));
-            });
-        } catch (CallFailed e) {
-            return Optional.empty();
-        }
+        return guard.call(() -> {
+            Object manager = manager(server);
+            // a party the owner has already is theirs: it is never adopted, and never replaced
+            if (byOwner.invoke(manager, owner) != null || byMember.invoke(manager, owner) != null) {
+                return Optional.<UUID>empty();
+            }
+            Object party = createForOwner.invoke(manager, p);
+            return party == null ? Optional.<UUID>empty() : Optional.of((UUID) partyId.invoke(party));
+        }).toOptional().flatMap(o -> o);
     }
 
     @Override
     public boolean add(MinecraftServer server, UUID owner, UUID member) {
-        try {
-            return call(() -> {
-                Object manager = manager(server);
-                Object party = byOwner.invoke(manager, owner);
-                if (party == null) {
-                    return false;
-                }
-                Object theirs = byMember.invoke(manager, member);
-                if (theirs != null) {
-                    // already in a party (ours counts as done, another one is not ours to move them out of)
-                    return partyId.invoke(theirs).equals(partyId.invoke(party));
-                }
-                String name = PackAccess.nameOf(server, member);
-                return addMember.invoke(party, member, Enum.valueOf(rankClass.asSubclass(Enum.class), "MEMBER"), name != null ? name : member.toString().substring(0, 8)) != null;
-            });
-        } catch (CallFailed e) {
-            return false;
-        }
+        CallGuard.Answer<Boolean> a = guard.call(() -> {
+            Object manager = manager(server);
+            Object party = byOwner.invoke(manager, owner);
+            if (party == null) {
+                return false;
+            }
+            Object theirs = byMember.invoke(manager, member);
+            if (theirs != null) {
+                // already in a party (ours counts as done, another one is not ours to move them out of)
+                return partyId.invoke(theirs).equals(partyId.invoke(party));
+            }
+            String name = PackAccess.nameOf(server, member);
+            return addMember.invoke(party, member, Enum.valueOf(rankClass.asSubclass(Enum.class), "MEMBER"), name != null ? name : member.toString().substring(0, 8)) != null;
+        });
+        return a.ok() && Boolean.TRUE.equals(a.value());
     }
 
     @Override
     public void remove(MinecraftServer server, UUID owner, UUID member) {
-        try {
-            call(() -> {
-                Object party = byOwner.invoke(manager(server), owner);
-                if (party != null) {
-                    removeMember.invoke(party, member);
-                }
-                return null;
-            });
-        } catch (CallFailed e) {
-            // counted already; the next pass tries again
-        }
+        guard.call(() -> {
+            Object party = byOwner.invoke(manager(server), owner);
+            if (party != null) {
+                removeMember.invoke(party, member);
+            }
+            return null;
+        });
     }
 }

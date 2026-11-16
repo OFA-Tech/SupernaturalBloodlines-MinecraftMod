@@ -109,6 +109,66 @@ public final class TestPlayers {
         });
     }
 
+    /** A duelist that keeps the translation keys of the messages it is sent, so a test can read what a player was told. */
+    public static final class TalkingDuelist extends FakePlayer {
+        private final java.util.List<String> keys = new java.util.ArrayList<>();
+
+        private TalkingDuelist(GameTestHelper helper, UUID id) {
+            super(helper.getLevel(), new GameProfile(id, "test-" + id.toString().substring(0, 8)));
+        }
+
+        /** Puts the player in another level (a test of a duel that crosses dimensions). */
+        public void putIn(net.minecraft.world.level.Level level) {
+            setLevel(level);
+        }
+
+        public boolean received(String key) {
+            return keys.contains(key);
+        }
+
+        public String keys() {
+            return keys.stream().filter(k -> k.contains("duel")).map(k -> k.substring(k.indexOf("duel"))).toList().toString();
+        }
+
+        public int received() {
+            return keys.size();
+        }
+
+        @Override
+        public void sendSystemMessage(net.minecraft.network.chat.Component message) {
+            if (message.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t) {
+                keys.add(t.getKey());
+            }
+            for (net.minecraft.network.chat.Component sibling : message.getSiblings()) {
+                if (sibling.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t) {
+                    keys.add(t.getKey());
+                }
+            }
+        }
+
+        @Override
+        public boolean isInvulnerableTo(DamageSource source) {
+            return false;
+        }
+
+        @Override
+        public boolean canHarmPlayer(net.minecraft.world.entity.player.Player other) {
+            return true;
+        }
+
+        @Override
+        public void die(DamageSource source) {
+            CommonHooks.onLivingDeath(this, source);
+        }
+    }
+
+    /** Like {@link #createDuelist}, but it keeps what it was told. */
+    public static TalkingDuelist createTalkingDuelist(GameTestHelper helper) {
+        TalkingDuelist p = new TalkingDuelist(helper, UUID.randomUUID());
+        noSpawnProtection(helper, p);
+        return p;
+    }
+
     private static ServerPlayer noSpawnProtection(GameTestHelper helper, ServerPlayer p) {
         place(helper, p);
         try {

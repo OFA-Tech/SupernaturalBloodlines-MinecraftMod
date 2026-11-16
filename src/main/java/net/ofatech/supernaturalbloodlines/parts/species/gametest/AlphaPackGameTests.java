@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.gametest;
 
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAbsence;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.werewolves.api.WReference;
 import java.util.HashMap;
@@ -279,7 +280,7 @@ public final class AlphaPackGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void killingAnAlphaOfYourOwnPackStillStealsTheSpark(GameTestHelper helper) {
+    public static void aKillInsideThePackOutsideADuelChangesNothingInEitherDirection(GameTestHelper helper) {
         ServerPlayer leader = alpha(helper, 6, 1.5);
         ServerPlayer second = alpha(helper, 3, 2.5);
         ServerPlayer beta = wolf(helper, Rank.BETA, leader.getUUID(), 1, 3.5);
@@ -287,27 +288,19 @@ public final class AlphaPackGameTests {
         PackIndex index = PackIndex.get(helper.getLevel());
         try {
             helper.assertTrue(join(helper, leader, second), "the co-Alpha could not join");
-            // the leader kills a co-Alpha of their own pack
-            kill(leader, second);
-            helper.assertTrue(state(second).rank() == Rank.OMEGA && index.alphaOf(second.getUUID()).isEmpty() && index.isFormerAlpha(second.getUUID()),
-                    "the victim is " + state(second) + " in " + index.alphaOf(second.getUUID()));
-            helper.assertTrue(state(leader).stoleSpark() && index.leaderOf(beta.getUUID()).equals(leader.getUUID()), "the killer is " + state(leader));
+            kill(leader, second); // the leader kills a co-Alpha
+            kill(second, leader); // a co-Alpha kills the leader
+            kill(beta, second);   // a Beta kills a co-Alpha
+            kill(beta, leader);   // and the leader
+            helper.assertTrue(state(leader).rank() == Rank.ALPHA && state(second).rank() == Rank.ALPHA && state(beta).rank() == Rank.BETA, "a rank changed: "
+                    + state(leader).rank() + " " + state(second).rank() + " " + state(beta).rank());
+            helper.assertTrue(!state(leader).stoleSpark() && !state(second).stoleSpark() && !state(beta).stoleSpark(), "somebody stole a spark");
+            helper.assertTrue(state(leader).sparks() == 1 && state(second).sparks() == 1, "a spark moved");
+            helper.assertTrue(index.isLeader(leader.getUUID()) && index.alphaOf(second.getUUID()).map(leader.getUUID()::equals).orElse(false)
+                    && index.alphaOf(beta.getUUID()).map(leader.getUUID()::equals).orElse(false), "the pack or its lead moved");
+            helper.assertTrue(!index.isFormerAlpha(leader.getUUID()) && !index.isFormerAlpha(second.getUUID()), "somebody was marked as having lost the spark");
         } finally {
             clean(helper, leader, second, beta);
-        }
-        // and a co-Alpha who kills the leader takes the pack
-        ServerPlayer leader2 = alpha(helper, 6, 1.5);
-        ServerPlayer second2 = alpha(helper, 3, 2.5);
-        ServerPlayer beta2 = wolf(helper, Rank.BETA, leader2.getUUID(), 1, 3.5);
-        online(leader2, second2, beta2);
-        try {
-            helper.assertTrue(join(helper, leader2, second2), "the second pack could not be built");
-            kill(second2, leader2);
-            helper.assertTrue(index.leaderOf(beta2.getUUID()).equals(second2.getUUID()) && index.alphaOf(second2.getUUID()).isEmpty(), "the killer does not lead");
-            helper.assertTrue(second2.getUUID().equals(state(beta2).packAlpha()), "the Beta did not follow the killer");
-            helper.assertTrue(state(leader2).rank() == Rank.OMEGA, "the old leader is " + state(leader2));
-        } finally {
-            clean(helper, leader2, second2, beta2);
         }
         helper.succeed();
     }
@@ -394,6 +387,7 @@ public final class AlphaPackGameTests {
         index.recordParty(l, partyId);
         index.setPartyEnded(other, true);
         index.addNotice(m, "supernaturalbloodlines.pack.dissolved", "x");
+        index.addNotice(m, "supernaturalbloodlines.pack.kicked", "y");
         CompoundTag tag = index.save(new CompoundTag(), helper.getLevel().registryAccess());
         PackIndex back = PackIndex.load(tag, helper.getLevel().registryAccess());
         helper.assertTrue(back.betasOf(l).equals(List.of(m, co)), "the members were lost: " + back.betasOf(l));
@@ -401,7 +395,8 @@ public final class AlphaPackGameTests {
         helper.assertTrue(back.alliedPlayers(l, other) && back.alliedPlayers(other, l), "the alliance was lost or is one way");
         helper.assertTrue(l.equals(back.mirrorOwner(m).orElse(null)), "the party mirror was lost");
         helper.assertTrue(back.recordedParty(List.of(l)).map(r -> r.id().equals(partyId)).orElse(false) && back.partyEnded(List.of(other)), "the recorded party or its end was lost");
-        helper.assertTrue(back.takeNotice(m).map(n -> n[0].equals("supernaturalbloodlines.pack.dissolved")).orElse(false), "the notice was lost");
+        List<String[]> waiting = back.takeNotices(m);
+        helper.assertTrue(waiting.size() == 2 && waiting.get(0)[0].equals("supernaturalbloodlines.pack.dissolved") && waiting.get(1)[0].equals("supernaturalbloodlines.pack.kicked"), "the notices were lost or came in the wrong order");
 
         // a file from before plan 14 has none of the new lists
         tag.remove("strengths");
@@ -623,6 +618,181 @@ public final class AlphaPackGameTests {
             helper.assertTrue(index.recordedParty(index.pack(stronger.getUUID())).map(r -> r.owner().equals(stronger.getUUID())).orElse(false), "the new party is not the recorded one");
         } finally {
             clean(helper, leader, beta, stronger);
+        }
+        helper.succeed();
+    }
+
+    // ---- the party follows the leadership (plan 14 review) ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDissolvedOrStolenPackLeavesNoMirroredMembersInItsOldParty(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer beta = wolf(helper, Rank.BETA, leader.getUUID(), 1, 2.5);
+        ServerPlayer thief = wolf(helper, Rank.OMEGA, null, 1, 3.5);
+        online(leader, beta, thief);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        FakeParties fake = new FakeParties();
+        PartyLink.setBackend(fake);
+        MinecraftServer server = helper.getLevel().getServer();
+        try {
+            PartyLink.sync(server, leader.getUUID(), true);
+            helper.assertTrue(fake.parties.get(leader.getUUID()).contains(beta.getUUID()) && index.mirrorOwner(beta.getUUID()).isPresent(), "the pack was not mirrored to start with");
+
+            kill(thief, leader); // an outside werewolf takes the spark and not the pack, which has no other Alpha: it dissolves
+            helper.assertTrue(index.alphaOf(beta.getUUID()).isEmpty() && index.betasOf(thief.getUUID()).isEmpty(), "the pack did not dissolve");
+            helper.assertTrue(!fake.parties.get(leader.getUUID()).contains(beta.getUUID()), "a member of the dissolved pack is still in its party");
+            helper.assertTrue(index.recordedParty(List.of(leader.getUUID())).isEmpty() && index.mirrorOwner(beta.getUUID()).isEmpty(), "the record of the dead party stayed");
+            helper.assertTrue(fake.parties.containsKey(leader.getUUID()), "the old owner's own party was ended");
+        } finally {
+            clean(helper, leader, beta, thief);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPackHandedToACoAlphaGetsHisPartyAndTheOldOneLosesOurMembers(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        ServerPlayer beta = wolf(helper, Rank.BETA, leader.getUUID(), 1, 3.5);
+        ServerPlayer thief = wolf(helper, Rank.OMEGA, null, 1, 4.5);
+        ServerPlayer patient = human(helper, 5.5);
+        online(leader, second, beta, thief, patient);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        FakeParties fake = new FakeParties();
+        PartyLink.setBackend(fake);
+        MinecraftServer server = helper.getLevel().getServer();
+        try {
+            helper.assertTrue(join(helper, leader, second), "the co-Alpha could not join");
+            PartyLink.sync(server, leader.getUUID(), true);
+            helper.assertTrue(fake.parties.get(leader.getUUID()).containsAll(Set.of(second.getUUID(), beta.getUUID())), "the pack was not mirrored to start with");
+
+            kill(thief, leader); // stolen from outside: the co-Alpha leads the pack
+            helper.assertTrue(index.isLeader(second.getUUID()) && index.alphaOf(beta.getUUID()).map(second.getUUID()::equals).orElse(false), "the co-Alpha does not lead");
+            helper.assertTrue(fake.parties.containsKey(second.getUUID()) && fake.parties.get(second.getUUID()).contains(beta.getUUID()), "the new leader got no party with the pack");
+            helper.assertTrue(!fake.parties.get(leader.getUUID()).contains(beta.getUUID()) && !fake.parties.get(leader.getUUID()).contains(second.getUUID()), "the old party still holds our members");
+            helper.assertTrue(index.recordedParty(index.pack(second.getUUID())).map(rec -> rec.owner().equals(second.getUUID())).orElse(false), "the recorded party is not the new one");
+            helper.assertTrue(index.recordedParty(List.of(leader.getUUID())).isEmpty(), "the dead record stayed");
+        } finally {
+            clean(helper, leader, second, beta, thief, patient);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aCuredLeaderAndAGivenUpSparkMoveThePartyToo(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer heir = wolf(helper, Rank.BETA, leader.getUUID(), 9, 2.5);
+        ServerPlayer beta = wolf(helper, Rank.BETA, leader.getUUID(), 1, 3.5);
+        online(leader, heir, beta);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        FakeParties fake = new FakeParties();
+        PartyLink.setBackend(fake);
+        MinecraftServer server = helper.getLevel().getServer();
+        try {
+            PartyLink.sync(server, leader.getUUID(), true);
+            helper.assertTrue(fake.parties.get(leader.getUUID()).containsAll(Set.of(heir.getUUID(), beta.getUUID())), "the pack was not mirrored to start with");
+
+            VampirismAPI.factionPlayerHandler(leader).leaveFaction(false); // cured: the strongest Beta inherits
+            helper.assertTrue(index.isLeader(heir.getUUID()) && index.alphaOf(beta.getUUID()).map(heir.getUUID()::equals).orElse(false), "the Beta did not inherit");
+            helper.assertTrue(fake.parties.containsKey(heir.getUUID()) && fake.parties.get(heir.getUUID()).contains(beta.getUUID()), "the new leader got no party");
+            helper.assertTrue(!fake.parties.get(leader.getUUID()).contains(heir.getUUID()) && !fake.parties.get(leader.getUUID()).contains(beta.getUUID()), "the old party still holds our members");
+            helper.assertTrue(index.recordedParty(List.of(leader.getUUID())).isEmpty(), "the dead record stayed");
+        } finally {
+            clean(helper, leader, heir, beta);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLeaderGivingUpTheSparkToACoAlphaMovesTheParty(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        ServerPlayer beta = wolf(helper, Rank.BETA, leader.getUUID(), 1, 3.5);
+        ServerPlayer patient = human(helper, 4.5);
+        online(leader, second, beta, patient);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        FakeParties fake = new FakeParties();
+        PartyLink.setBackend(fake);
+        MinecraftServer server = helper.getLevel().getServer();
+        try {
+            helper.assertTrue(join(helper, leader, second), "the co-Alpha could not join");
+            PartyLink.sync(server, leader.getUUID(), true);
+            helper.assertTrue(PackCommand.heal(leader, patient) == null, "the heal was refused");
+            helper.assertTrue(index.isLeader(second.getUUID()), "the co-Alpha does not lead");
+            helper.assertTrue(fake.parties.containsKey(second.getUUID()) && fake.parties.get(second.getUUID()).contains(beta.getUUID()), "the new leader got no party");
+            helper.assertTrue(!fake.parties.get(leader.getUUID()).contains(beta.getUUID()), "the old party still holds our members");
+            // the old leader stayed in the pack as a Beta: the next pass brings them into the new party
+            PartyLink.syncAll(server);
+            helper.assertTrue(index.alphaOf(leader.getUUID()).map(second.getUUID()::equals).orElse(false) && fake.parties.get(second.getUUID()).contains(leader.getUUID()), "the old leader was not brought into the new party");
+        } finally {
+            clean(helper, leader, second, beta, patient);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMemberTheirPartyRefusesIsToldOnceAndStaysInThePack(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        UUID away = UUID.randomUUID();
+        online(leader);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        FakeParties fake = new FakeParties();
+        fake.refuse.add(away);
+        PartyLink.setBackend(fake);
+        MinecraftServer server = helper.getLevel().getServer();
+        try {
+            index.join(leader.getUUID(), away);
+            for (int i = 0; i < 4; i++) {
+                PartyLink.sync(server, leader.getUUID(), false);
+            }
+            helper.assertTrue(index.noticeCount(away) == 1, "told " + index.noticeCount(away) + " times, not once");
+            helper.assertTrue(index.alphaOf(away).isPresent() && index.mirrorOwner(away).isEmpty(), "they left the pack or were mirrored anyway");
+
+            fake.refuse.clear();
+            PartyLink.sync(server, leader.getUUID(), false);
+            helper.assertTrue(index.mirrorOwner(away).isPresent(), "they were not added once free");
+            // refused again later: told again once, because the last attempt worked
+            fake.parties.get(leader.getUUID()).remove(away);
+            index.setMirror(away, null);
+            fake.refuse.add(away);
+            PartyLink.sync(server, leader.getUUID(), false);
+            PartyLink.sync(server, leader.getUUID(), false);
+            helper.assertTrue(index.noticeCount(away) == 2, "a second refusal was not told, or was told twice: " + index.noticeCount(away));
+        } finally {
+            index.leave(away);
+            index.takeNotices(away);
+            clean(helper, leader);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anAbsentLeadersPartyMovesToTheNewLeaderToo(GameTestHelper helper) {
+        UUID goneId = UUID.randomUUID();
+        ServerPlayer strong = alpha(helper, 9, 1.5);
+        ServerPlayer beta = wolf(helper, Rank.BETA, goneId, 1, 2.5);
+        online(strong, beta);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        MinecraftServer server = helper.getLevel().getServer();
+        FakeParties fake = new FakeParties();
+        PartyLink.setBackend(fake);
+        long now = System.currentTimeMillis();
+        try {
+            index.join(goneId, strong.getUUID());
+            index.join(goneId, beta.getUUID());
+            index.setStrength(strong.getUUID(), 1009);
+            PartyLink.sync(server, goneId, true);
+            helper.assertTrue(fake.parties.containsKey(goneId) && fake.parties.get(goneId).contains(beta.getUUID()), "the pack was not mirrored to start with");
+
+            index.setLastSeen(goneId, now - 8 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackAbsence.check(server, now) == 1 && index.isLeader(strong.getUUID()), "the absent leader was not deposed");
+            helper.assertTrue(fake.parties.containsKey(strong.getUUID()) && fake.parties.get(strong.getUUID()).contains(beta.getUUID()), "the new leader got no party with the pack");
+            helper.assertTrue(!fake.parties.get(goneId).contains(beta.getUUID()) && !fake.parties.get(goneId).contains(strong.getUUID()), "the old party still holds our members");
+            helper.assertTrue(index.recordedParty(index.pack(strong.getUUID())).map(r -> r.owner().equals(strong.getUUID())).orElse(false), "the recorded party is not the new one");
+        } finally {
+            index.leave(goneId);
+            index.takeNotices(goneId);
+            clean(helper, strong, beta);
         }
         helper.succeed();
     }

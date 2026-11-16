@@ -40,6 +40,16 @@ public final class PackMembers {
         return true;
     }
 
+    /** Tells {@code id} now when they are online, at their next login when not. */
+    public static void tell(MinecraftServer server, UUID id, String key, String arg) {
+        ServerPlayer online = SireCall.player(server, id);
+        if (online != null) {
+            online.sendSystemMessage(Component.translatable(key, arg));
+        } else {
+            PackIndex.get(server.overworld()).addNotice(id, key, arg);
+        }
+    }
+
     /** Tells each of {@code ids} that their pack now follows {@code leaderName}: at once when online, at their next login when not. */
     public static void moved(MinecraftServer server, java.util.Collection<UUID> ids, UUID newLeader) {
         PackIndex index = PackIndex.get(server.overworld());

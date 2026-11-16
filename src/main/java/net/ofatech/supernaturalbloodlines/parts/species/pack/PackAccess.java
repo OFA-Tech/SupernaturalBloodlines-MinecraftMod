@@ -37,6 +37,13 @@ public final class PackAccess {
         return rank == WolfState.Rank.ALPHA || rank == WolfState.Rank.TRUE_ALPHA;
     }
 
+    /** Sets how many Alpha sparks {@code p} holds (stored with the wolf layer; the rank and the Roar read it). */
+    public static void setSparks(ServerPlayer p, int count) {
+        WolfState w = wolf(p);
+        if (w.sparks() != Math.max(1, count)) {
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().wolf(w.toBuilder().sparks(count).build()).build());
+        }
+    }
     /** The last name the server knows for {@code id} (online or cached), or null. */
     @Nullable
     public static String nameOf(MinecraftServer server, UUID id) {

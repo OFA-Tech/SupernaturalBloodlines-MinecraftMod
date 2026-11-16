@@ -76,7 +76,7 @@ Eyes show as two glowing dust particles at eye height every half second while a 
 
 | How | What happens |
 |---|---|
-| **Stolen** | a werewolf player kills an **Alpha** (never a True Alpha: killing one is just a death) and takes the spark; the old Alpha becomes an **Omega**. A member of **the same pack** (a Beta or a second Alpha) who kills the leader takes the pack with the spark, unless a second Alpha is stronger (the strongest Alpha of the pack leads it afterwards). Someone **outside the pack** takes the spark but **not the pack**: the strongest other Alpha leads it, and with none it dissolves. An Alpha who runs with a pack cannot take the spark of an Alpha outside it (they are told so). A second Alpha killed by their own leader (or the other way round) loses the spark the same way. Ordinary deaths keep rank and spark. |
+| **Stolen** | a werewolf kills an **Alpha from outside their pack** (never a True Alpha's own spark, see below): they take **every spark the victim had** and the victim becomes an **Omega** (the [stacked sparks](#stacked-sparks) of the Deucalion factor). An Alpha who steals **keeps their own spark and gains the victim's on top**; a werewolf who was no Alpha becomes one. They take the spark and **not the pack**: the strongest other Alpha leads it, and with none it dissolves. **A kill inside the pack, outside a duel, changes nothing at all**: no spark, no lead, no rank, whoever kills whom (Beta, second Alpha or leader). Ordinary deaths (a mob, a fall, lava, a player who is no werewolf) keep rank and spark; **an ordinary death of the leader keeps them leading**. |
 | **Inherited** | the leader leaves the werewolves or is cured: the pack goes to the **strongest second Alpha** first (online or not); with none, the spark goes to the **highest-level online Beta**; with nobody online the pack **dissolves** and its members are told (now, or at their next login). A second Alpha who is cured stays in the pack as a Packmate. |
 | **Given up** | `/pack heal <player>`: an **Alpha** (not a True Alpha) within 4 blocks of a player gives the spark away to fully heal them and cure hybrid venom and wolfsbane (all strains). The Alpha stays in the pack as a Beta of the heir. |
 | **Earned** | a Beta becomes a **True Alpha**, who keeps the spark for good |
@@ -111,7 +111,7 @@ With Tensura, a human who becomes a werewolf becomes a Tensura **beastfolk**. As
 | `/pack info` | show your pack |
 | `/pack heal <player>` | give up the spark to heal |
 | `/pack roar` | the Alpha Roar |
-| `/pack emissary [player]` | name your Emissary (no name clears it) |
+| `/pack emissary [player]` | name a member of your pack (a witch, siphoner, heretic or tribrid) as your Emissary (no name clears it) |
 | `/pack anchor [player]` | name your anchor (no name clears it) |
 
 A werewolf with a pack already must leave it before another Alpha's bite or invitation can move them.
@@ -122,15 +122,16 @@ A werewolf with a pack already must leave it before another Alpha's bite or invi
 - **There is no limit** on the size of a pack.
 - **A pack can have several Alphas, and one leader.** An Alpha who accepts another Alpha's invitation keeps the spark and becomes a **second Alpha** of that pack. **A joining Alpha never takes over**, however strong: the sitting leader stays leader, and a level-up or a rank does not move the lead. Only the leader invites and kicks.
 - **Who leads next.** The **strongest Alpha** (a True Alpha before a plain Alpha, then the higher Werewolves level, and on a tie whoever was in the pack first) is only **the successor**: it leads when the leader leaves the werewolves, is cured, loses the spark or gives it up.
-- **Leadership duel.** Otherwise the lead changes hands in a duel: a second Alpha uses `/pack challenge <leader>` (or the **Challenge for leadership** action on the leader's row in the hub, after a confirmation), and the leader answers with `/pack challenge accept` (the **[Accept]** in chat). They fight to the first defeat: whoever would die is left at **1 HP** instead (and shielded for 5 seconds), and loses. **The winner leads the pack. Nobody loses the spark** and it is no steal. It is called off after **2 minutes**, when either of them logs out or leaves the pack, or when anyone else kills either one (that death stands).
-- **Only the leader invites and kicks.** The other Alphas are admins of the party (see below).
-- When the leader loses the spark (stolen, given up, cured, or leaves the werewolves) the **strongest other Alpha takes the pack** before any Beta is made an Alpha. A werewolf who kills **an Alpha of their own pack** still steals their spark (and then the strongest Alpha of the pack, the killer among them, leads it).
+- **Leadership duel.** Otherwise the lead changes hands in a duel: a second Alpha uses `/pack challenge <leader>` (or the **Challenge <leader>** action on the leader's row in the hub, after a confirmation), and the leader answers with `/pack challenge accept` or `/pack challenge decline` (the chat message has an **[Accept]** button, and the hub shows **Accept the challenge** and **Decline** to the leader). Both must be in the same dimension and within **64 blocks** when it is asked and when it is accepted. They fight to the first defeat: **any death** of one of them while the duel is on (by the other, by lava, a fall, a mob) is turned into **1 HP** and counts as their defeat, and for 5 seconds the winner cannot hurt the loser. **The winner leads the pack. Nobody loses the spark** and it is no steal. The same two cannot duel again for **10 minutes**, and a challenger whose challenge ran out or was declined cannot ask the same leader again for **5**. It is called off, with a message saying why, after **2 minutes**, when either of them logs out, leaves the pack or goes to another dimension, when the pack is not the one it was asked in any more, or when **another player** kills either one (that death stands).
+- **Only the leader invites and kicks.** (The party of Open Parties and Claims, below, has no admins: everyone but its owner is a plain member.)
+- When the leader loses the spark (stolen from outside, given up, cured, or leaves the werewolves) the **strongest other Alpha takes the pack** before any Beta is made an Alpha. **An ordinary death of the leader (a mob, a fall, lava, a player who is not a werewolf) changes nothing: they keep leading.** And a werewolf who kills a member of their own pack, the leader included, changes nothing either: the lead moves only in a duel.
+- **A leader who stays away.** Offline for `absent_leader_days` real days (default **7**, 0 = off), the leader loses the lead to the strongest second Alpha (online or not) the next time the server checks (when anyone logs in, and every 10 seconds). **They keep their spark and stay a second Alpha**, can challenge for the lead when they are back, and are told at their next login. The pack is told and the Open Parties and Claims party moves too.
 - **Allied packs** (`/pack ally`): their members cannot hurt each other and the Roar does not make them submit. **That includes Packmates**: a Packmate of one pack cannot hurt, and cannot be hurt by, anyone in an allied pack (a Packmate has every perk of the pack, and this is one). They share no pack bonus and no Roar buff.
-- **The Alpha Trial** (plan 15) will let a Beta who wins it become a second Alpha of their own pack; the hook for it is in place.
-- **Open Parties and Claims.** With Open Parties and Claims (or its Team Claims fork, same mod id) installed and `opac_link_enabled` on, a pack gets **a party of its own**: the leader owns it and everyone else is a plain member. It is **never a party anyone made by hand**: a leader who already has one keeps it and the pack makes no party; a player who is already in another party is left out of ours and **stays in the pack**. Someone who **leaves the party themselves leaves the pack** (only the owner, who is the leader, can remove people from it), and someone who leaves the pack leaves the party. A party its owner ended is not made again until someone joins or leaves. When leadership moves, the new leader gets a new party, our members leave the old one, and the old owner's party is left as it is. Without the mod nothing of this exists.
+- **The Alpha Trial** (plan 15) is not in the game yet: `AlphaTrial.win` is the hook it will use, so until then the only way to a second Alpha is an invitation to an Alpha.
+- **Open Parties and Claims.** With Open Parties and Claims (or its Team Claims fork, same mod id) installed and `opac_link_enabled` on, a pack gets **a party of its own**: the leader owns it and everyone else is a plain member. It is **never a party anyone made by hand**: a leader who already has one keeps it and the pack makes no party; a player who is already in another party is left out of ours and **stays in the pack**. Someone who **leaves the party (or is removed from it) leaves the pack, and is told so: "You left the party, so you left the pack. A werewolf Beta becomes an Omega."** Only the owner, who is the leader, can remove people from it. Someone who leaves the pack leaves the party. A party its owner ended is not made again until someone joins or leaves. When leadership moves, the new leader gets a new party, our members leave the old one, and the old owner's party is left as it is. Without the mod nothing of this exists.
 - **Cures and bites.** A cured Beta stays in the pack as a **Packmate**. A bite from a second Alpha puts the bitten in the **leader's** pack (the biter is still the sire); a Packmate of that pack becomes a Beta of it; someone who already runs with another pack is bitten but **not moved**. A Packmate who becomes a werewolf any other way becomes a Beta of the pack they are in.
 - **Hunters of the Five.** A kill between two members of one pack gives no mark and no Hunter's Curse, in either direction.
-- **Told.** Everyone a change takes out of a pack, or moves to a new leader, is told: in chat now, or at their next login. An invitation to a leader who already has a pack says that their pack comes along. Naming an Emissary adds them to the pack as a Packmate (only the leader can).
+- **Told.** Everyone a change takes out of a pack, or moves to a new leader, is told: in chat now, or at their next login (a short list is kept for someone who stays away). A leader the party link could not add because they are in another party is told once. An invitation to a leader who already has a pack says that their pack comes along. **Only a member of the pack can be named an Emissary** (invite them first, as a Packmate), and only the leader can name one; an Emissary who leaves or is removed is nobody's Emissary any more.
 
 ### Pack bonus
 
@@ -141,11 +142,23 @@ Every 5 seconds the game counts an **online Alpha's** Betas within **64 blocks**
 
 The bonus stacks multiplicatively with the Alpha's +20% (1.20 x 1.25). An offline or distant Alpha keeps the pack but not the bonus. The eclipse suppresses it.
 
+### Stacked sparks
+
+The **Deucalion factor**: an Alpha who kills an Alpha from outside their pack keeps their own spark and **gains the victim's on top**, so one wolf can hold several.
+
+| | |
+|---|---|
+| **Count** | every Alpha has 1 spark; a steal adds **all** the victim's to the killer's, up to `max_stacked_sparks` (default **5**, 1 turns it off). A werewolf who was no Alpha becomes one with the victim's count (the first spark is the rank, the rest are stacked). |
+| **Each spark past the first** | **+10%** to the Alpha rank's attack and health bonuses (the True Alpha's ×1.1 on top) and **one tier of Strength** for the pack from the Alpha Roar (Strength I with one spark, II with two, up to V). |
+| **A True Alpha** | can stack too, but their own spark is never taken: if they are killed, the killer gets only the stacked extras, and with none stacked it is just a death. |
+| **Lost** | the cure, `/pack heal`, losing the faction and being robbed of the spark drop every stacked spark together with the rank. |
+| **Shown** | "Alpha ×3" on the Alpha's row in every theme, in the Pack page's rank line and in the Bloodline page. |
+
 ### Alpha Roar
 
 Key bind **Alpha Roar** (unbound by default, category *Supernatural Bloodlines*) or `/pack roar`. **60 second** cooldown. Alpha and True Alpha only, not during an eclipse ("The eclipse swallows your roar.").
 
-- **Pack Betas within 32 blocks:** Strength I and Speed I for 30 s, and may shift at will for those 30 s.
+- **Pack Betas within 32 blocks:** Strength I (a tier higher for each [stacked spark](#stacked-sparks)) and Speed I for 30 s, and may shift at will for those 30 s.
 - **Other werewolves within 16 blocks:** drop their form and get Slowness II for 5 s ("X's roar forces your wolf down.").
 - The roarer's eyes glow for 30 s.
 

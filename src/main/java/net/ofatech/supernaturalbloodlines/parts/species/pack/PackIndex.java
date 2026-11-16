@@ -48,6 +48,8 @@ public final class PackIndex extends SavedData {
     private static final String PARTIES = "party_ids";
     private static final String ENDED = "party_ended";
     private static final String NOTICES = "notices";
+    private static final String SPARKS = "sparks";
+    private static final String LAST_SEEN = "last_seen";
     private static final String KEY = "key";
     private static final String VALUE = "value";
 
@@ -70,7 +72,15 @@ public final class PackIndex extends SavedData {
     // owners whose recorded party vanished: nothing is made again until the roster changes
     private final Set<UUID> ended = new HashSet<>();
     // what to tell a player who was away when their pack changed: reason key and one argument
-    private final Map<UUID, String[]> notices = new HashMap<>();
+    private final Map<UUID, List<String[]>> notices = new HashMap<>();
+    // the spark count each Alpha last had while online: a pack's offline Alphas are shown with it, and the strongest is picked by it
+    private final Map<UUID, Integer> sparks = new HashMap<>();
+    // when (wall clock, milliseconds) each member of a pack last logged out, for the leader who stays away too long
+    private final Map<UUID, Long> lastSeen = new HashMap<>();
+    /** A short list: the newest few are kept for a player who stays away. */
+    public static final int MAX_NOTICES = 8;
+    // members the party link already told that they could not be added (in memory: told again once after a restart, not once per retry)
+    private final Set<UUID> partyRefused = new HashSet<>();
 
     /** A party the pack made: its owner and its id. */
     public record Recorded(UUID owner, UUID id) {
@@ -107,8 +117,8 @@ public final class PackIndex extends SavedData {
             } else if (!Objects.equals(before.packAlpha(), after.packAlpha())) {
                 follow(p);
             }
-            if (before.rank() != after.rank() || before.lineage() != after.lineage()) {
-                PackLeader.refresh(p);
+            if (before.rank() != after.rank() || before.lineage() != after.lineage() || before.sparks() != after.sparks()) {
+                PackLeader.refresh(p, after);
             }
             // a dormant True Alpha (outside the faction) keeps its tombstone until it rejoins
             if (PackAccess.isAlpha(change.after().wolf().rank()) && VampirismSupernatural.isWerewolf(p)) {
@@ -120,6 +130,11 @@ public final class PackIndex extends SavedData {
                 login(p);
             }
         });
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p && !p.level().isClientSide) {
+                get(p.serverLevel()).setLastSeen(p.getUUID(), System.currentTimeMillis());
+            }
+        });
     }
 
     /**
@@ -128,7 +143,8 @@ public final class PackIndex extends SavedData {
      */
     public static void login(ServerPlayer p) {
         PackIndex index = get(p.serverLevel());
-        index.takeNotice(p.getUUID()).ifPresent(n -> p.sendSystemMessage(net.minecraft.network.chat.Component.translatable(n[0], n[1])));
+        index.setLastSeen(p.getUUID(), System.currentTimeMillis());
+        index.takeNotices(p.getUUID()).forEach(n -> p.sendSystemMessage(net.minecraft.network.chat.Component.translatable(n[0], n[1])));
         if (index.takeDissolved(p.getUUID())) {
             PackAccess.applyPack(p, PackEvent.LEFT_PACK, PackContext.defaults());
         }
@@ -222,16 +238,53 @@ public final class PackIndex extends SavedData {
     }
 
     public void addNotice(UUID player, String key, String arg) {
-        notices.put(player, new String[] {key, arg});
+        List<String[]> list = notices.computeIfAbsent(player, k -> new ArrayList<>());
+        if (list.size() >= MAX_NOTICES) {
+            list.remove(0);
+        }
+        list.add(new String[] {key, arg});
         setDirty();
     }
 
-    public Optional<String[]> takeNotice(UUID player) {
-        String[] n = notices.remove(player);
+    /** Everything that waits for {@code player}, oldest first. */
+    public List<String[]> takeNotices(UUID player) {
+        List<String[]> n = notices.remove(player);
         if (n != null) {
             setDirty();
         }
-        return Optional.ofNullable(n);
+        return n == null ? List.of() : n;
+    }
+
+    /** The oldest notice that waits for {@code player}. */
+    public Optional<String[]> takeNotice(UUID player) {
+        List<String[]> n = notices.get(player);
+        if (n == null || n.isEmpty()) {
+            return Optional.empty();
+        }
+        String[] first = n.remove(0);
+        if (n.isEmpty()) {
+            notices.remove(player);
+        }
+        setDirty();
+        return Optional.of(first);
+    }
+
+    public int noticeCount(UUID player) {
+        return notices.getOrDefault(player, List.of()).size();
+    }
+
+    /** @return true the first time (until {@link #clearPartyRefused}): the player should be told once, not at every retry */
+    public boolean markPartyRefused(UUID member) {
+        return partyRefused.add(member);
+    }
+
+    public void clearPartyRefused(UUID member) {
+        partyRefused.remove(member);
+    }
+
+    /** The owners of the parties the packs made (see {@code PartyLink}). */
+    public Set<UUID> partyOwners() {
+        return new HashSet<>(parties.keySet());
     }
 
     /** Every leader that has members. */
@@ -256,6 +309,29 @@ public final class PackIndex extends SavedData {
 
     public void setMirror(UUID member, @Nullable UUID owner) {
         put(mirrors, member, owner);
+    }
+
+    public int sparksOf(UUID id) {
+        return sparks.getOrDefault(id, 1);
+    }
+
+    public void setSparks(UUID id, int count) {
+        Integer old = count <= 1 ? sparks.remove(id) : sparks.put(id, count);
+        if ((count <= 1 && old != null) || (count > 1 && (old == null || old != count))) {
+            setDirty();
+        }
+    }
+
+    /** When {@code id} last left (wall clock milliseconds), if the index ever saw it. */
+    public Optional<Long> lastSeen(UUID id) {
+        return Optional.ofNullable(lastSeen.get(id));
+    }
+
+    public void setLastSeen(UUID id, long millis) {
+        Long old = lastSeen.put(id, millis);
+        if (old == null || old != millis) {
+            setDirty();
+        }
     }
 
     public int strengthOf(UUID id) {
@@ -296,6 +372,7 @@ public final class PackIndex extends SavedData {
             alphaOf.put(own, alpha);
         }
         alphaOf.put(beta, alpha);
+        emissaryOf.remove(beta); // a leader who joins another pack no longer has an Emissary of their own
         allies.remove(beta);
         allies.values().forEach(s -> s.remove(beta));
         setDirty();
@@ -334,6 +411,7 @@ public final class PackIndex extends SavedData {
         if (alphaOf.remove(member) == null) {
             return false;
         }
+        emissaryOf.values().removeIf(member::equals);
         dissolved.add(member);
         setDirty();
         return true;
@@ -372,13 +450,14 @@ public final class PackIndex extends SavedData {
 
     public void leave(UUID beta) {
         if (alphaOf.remove(beta) != null) {
+            emissaryOf.values().removeIf(beta::equals);
             setDirty();
         }
     }
 
     /**
-     * The new Alpha takes every Beta of the old one (and stops being a Beta); the old Alpha's emissary is dropped and
-     * they are remembered as having lost the spark.
+     * The new Alpha takes every member of the old one (and stops being a member); the old Alpha's Emissary and allies go with the
+     * leadership (the Emissary only if the new Alpha has none), and the old Alpha is remembered as having lost the spark.
      */
     public void transfer(UUID oldAlpha, UUID newAlpha) {
         alphaOf.remove(newAlpha);
@@ -468,26 +547,63 @@ public final class PackIndex extends SavedData {
         read(tag, PARTIES, i.parties);
         readIds(tag, ENDED, i.ended);
         for (Tag t : tag.getList(NOTICES, Tag.TAG_COMPOUND)) {
-            CompoundTag e = (CompoundTag) t;
-            i.notices.put(NbtUtils.loadUUID(e.get(KEY)), new String[] {e.getString("reason"), e.getString("arg")});
+            try {
+                CompoundTag e = (CompoundTag) t;
+                i.notices.computeIfAbsent(NbtUtils.loadUUID(e.get(KEY)), k -> new ArrayList<>()).add(new String[] {e.getString("reason"), e.getString("arg")});
+            } catch (RuntimeException bad) {
+                skipped(NOTICES, bad);
+            }
+        }
+        for (Tag t : tag.getList(SPARKS, Tag.TAG_COMPOUND)) {
+            try {
+                CompoundTag e = (CompoundTag) t;
+                i.sparks.put(NbtUtils.loadUUID(e.get(KEY)), Math.max(1, e.getInt(VALUE)));
+            } catch (RuntimeException bad) {
+                skipped(SPARKS, bad);
+            }
+        }
+        for (Tag t : tag.getList(LAST_SEEN, Tag.TAG_COMPOUND)) {
+            try {
+                CompoundTag e = (CompoundTag) t;
+                i.lastSeen.put(NbtUtils.loadUUID(e.get(KEY)), e.getLong(VALUE));
+            } catch (RuntimeException bad) {
+                skipped(LAST_SEEN, bad);
+            }
         }
         for (Tag t : tag.getList(STRENGTHS, Tag.TAG_COMPOUND)) {
-            CompoundTag e = (CompoundTag) t;
-            i.strengths.put(NbtUtils.loadUUID(e.get(KEY)), e.getInt(VALUE));
+            try {
+                CompoundTag e = (CompoundTag) t;
+                i.strengths.put(NbtUtils.loadUUID(e.get(KEY)), e.getInt(VALUE));
+            } catch (RuntimeException bad) {
+                skipped(STRENGTHS, bad);
+            }
         }
         for (Tag t : tag.getList(ALLIES, Tag.TAG_COMPOUND)) {
-            CompoundTag e = (CompoundTag) t;
-            UUID a = NbtUtils.loadUUID(e.get(KEY));
-            UUID b = NbtUtils.loadUUID(e.get(VALUE));
-            i.allies.computeIfAbsent(a, k -> new HashSet<>()).add(b);
-            i.allies.computeIfAbsent(b, k -> new HashSet<>()).add(a);
+            try {
+                CompoundTag e = (CompoundTag) t;
+                UUID a = NbtUtils.loadUUID(e.get(KEY));
+                UUID b = NbtUtils.loadUUID(e.get(VALUE));
+                i.allies.computeIfAbsent(a, k -> new HashSet<>()).add(b);
+                i.allies.computeIfAbsent(b, k -> new HashSet<>()).add(a);
+            } catch (RuntimeException bad) {
+                skipped(ALLIES, bad);
+            }
         }
         return i;
     }
 
+    /** One bad entry (a damaged tag) costs that entry, not the whole index. */
+    private static void skipped(String list, RuntimeException bad) {
+        net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("The pack index skipped a damaged entry of '{}': {}", list, bad.toString());
+    }
+
     private static void readIds(CompoundTag tag, String name, Set<UUID> into) {
         for (Tag t : tag.getList(name, Tag.TAG_INT_ARRAY)) {
-            into.add(NbtUtils.loadUUID(t));
+            try {
+                into.add(NbtUtils.loadUUID(t));
+            } catch (RuntimeException bad) {
+                skipped(name, bad);
+            }
         }
     }
 
@@ -499,8 +615,12 @@ public final class PackIndex extends SavedData {
 
     private static void read(CompoundTag tag, String name, Map<UUID, UUID> into) {
         for (Tag t : tag.getList(name, Tag.TAG_COMPOUND)) {
-            CompoundTag e = (CompoundTag) t;
-            into.put(NbtUtils.loadUUID(e.get(KEY)), NbtUtils.loadUUID(e.get(VALUE)));
+            try {
+                CompoundTag e = (CompoundTag) t;
+                into.put(NbtUtils.loadUUID(e.get(KEY)), NbtUtils.loadUUID(e.get(VALUE)));
+            } catch (RuntimeException bad) {
+                skipped(name, bad);
+            }
         }
     }
 
@@ -526,14 +646,30 @@ public final class PackIndex extends SavedData {
         write(tag, PARTIES, parties);
         writeIds(tag, ENDED, ended);
         ListTag notes = new ListTag();
-        notices.forEach((id, n) -> {
+        notices.forEach((id, list) -> list.forEach(n -> {
             CompoundTag e = new CompoundTag();
             e.put(KEY, NbtUtils.createUUID(id));
             e.putString("reason", n[0]);
             e.putString("arg", n[1]);
             notes.add(e);
-        });
+        }));
         tag.put(NOTICES, notes);
+        ListTag sp = new ListTag();
+        sparks.forEach((id, n) -> {
+            CompoundTag e = new CompoundTag();
+            e.put(KEY, NbtUtils.createUUID(id));
+            e.putInt(VALUE, n);
+            sp.add(e);
+        });
+        tag.put(SPARKS, sp);
+        ListTag seen = new ListTag();
+        lastSeen.forEach((id, t) -> {
+            CompoundTag e = new CompoundTag();
+            e.put(KEY, NbtUtils.createUUID(id));
+            e.putLong(VALUE, t);
+            seen.add(e);
+        });
+        tag.put(LAST_SEEN, seen);
         ListTag strong = new ListTag();
         strengths.forEach((id, s) -> {
             CompoundTag e = new CompoundTag();

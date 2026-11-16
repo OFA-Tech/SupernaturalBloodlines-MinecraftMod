@@ -19,6 +19,12 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.IntValue MAX_FIVE;
     private static final ModConfigSpec.BooleanValue ONLY_ALPHAS_TURN;
     private static volatile Boolean onlyAlphasTurnOverride;
+    public static final int DEFAULT_MAX_STACKED_SPARKS = 5;
+    private static final ModConfigSpec.IntValue MAX_STACKED_SPARKS;
+    private static volatile Integer maxStackedSparksOverride;
+    public static final int DEFAULT_ABSENT_LEADER_DAYS = 7;
+    private static final ModConfigSpec.IntValue ABSENT_LEADER_DAYS;
+    private static volatile Integer absentLeaderDaysOverride;
     public static final boolean DEFAULT_OPAC_LINK = true;
     private static final ModConfigSpec.BooleanValue OPAC_LINK_ENABLED;
     private static volatile Boolean opacLinkOverride;
@@ -68,6 +74,10 @@ public final class SpeciesConfig {
                 .defineInRange("max_five", DEFAULT_MAX_FIVE, 1, 10_000);
         ONLY_ALPHAS_TURN = b.comment("R92: only an Alpha's bite turns a human (the Werewolves effect lupus_sanguinem is refused from a werewolf player below Alpha). Off: Werewolves' own rule, any werewolf's bite can infect (it then records no pack or sire).")
                 .define("only_alphas_turn", DEFAULT_ONLY_ALPHAS_TURN);
+        MAX_STACKED_SPARKS = b.comment("Most Alpha sparks one werewolf can hold at once (the Deucalion factor): an Alpha who kills an Alpha from outside their pack takes the victim's spark on top of their own. Each spark beyond the first adds 10% to the Alpha rank's attack and health bonuses and one tier to the Alpha Roar's Strength. 1 turns stacking off.")
+                .defineInRange("max_stacked_sparks", DEFAULT_MAX_STACKED_SPARKS, 1, 20);
+        ABSENT_LEADER_DAYS = b.comment("A pack leader who has been offline this many real days loses the lead to the strongest second Alpha (they keep their spark and stay a second Alpha). 0 turns it off.")
+                .defineInRange("absent_leader_days", DEFAULT_ABSENT_LEADER_DAYS, 0, 3650);
         OPAC_LINK_ENABLED = b.comment("With Open Parties and Claims (or Team Claims) installed, a pack gets a party of its own: the leader owns it, everyone else is a member, and leaving the party leaves the pack. Only a party the pack made itself is ever touched, never a party anyone made by hand. Off: packs and parties are separate.")
                 .define("opac_link_enabled", DEFAULT_OPAC_LINK);
         WITCH_BONUS = b.comment("Witches, heretics and tribrids get altar range x1.5 and rite power cost x0.75.")
@@ -132,6 +142,40 @@ public final class SpeciesConfig {
             return OPAC_LINK_ENABLED.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_OPAC_LINK;
+        }
+    }
+
+    /** For tests: pins {@link #maxStackedSparks()}; null clears it. */
+    public static void overrideMaxStackedSparks(Integer value) {
+        maxStackedSparksOverride = value;
+    }
+
+    public static int maxStackedSparks() {
+        Integer pinned = maxStackedSparksOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return MAX_STACKED_SPARKS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_MAX_STACKED_SPARKS;
+        }
+    }
+
+    /** For tests: pins {@link #absentLeaderDays()}; null clears it. */
+    public static void overrideAbsentLeaderDays(Integer value) {
+        absentLeaderDaysOverride = value;
+    }
+
+    public static int absentLeaderDays() {
+        Integer pinned = absentLeaderDaysOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return ABSENT_LEADER_DAYS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_ABSENT_LEADER_DAYS;
         }
     }
 

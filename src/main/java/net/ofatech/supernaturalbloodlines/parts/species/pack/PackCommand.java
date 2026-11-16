@@ -81,6 +81,7 @@ public final class PackCommand {
                                         .executes(c -> run(c, allyRemoveNamed(self(c), StringArgumentType.getString(c, "player")))))))
                 .then(Commands.literal("challenge")
                         .then(Commands.literal("accept").executes(c -> run(c, PackDuel.accept(self(c)))))
+                        .then(Commands.literal("decline").executes(c -> run(c, PackDuel.decline(self(c)))))
                         .then(Commands.argument("alpha", StringArgumentType.word())
                                 .suggests((c, b) -> {
                                     if (c.getSource().getEntity() instanceof ServerPlayer me) {
@@ -409,14 +410,9 @@ public final class PackCommand {
         if (index.emissaryAlpha(target.getUUID()).filter(a -> !a.equals(alpha.getUUID())).isPresent()) {
             return error("emissary_taken", name(target));
         }
-        // the Emissary is a member of the pack too (a Packmate), unless they run with another pack or lead one
+        // only someone who is in the pack already (invite them first, as a Packmate): the Emissary is a member, never pulled in by a command
         if (!index.pack(alpha.getUUID()).contains(target.getUUID())) {
-            if (index.inPack(target.getUUID())) {
-                return error("target_has_pack", name(target));
-            }
-            index.join(alpha.getUUID(), target.getUUID());
-            PackLeader.refresh(target);
-            PartyLink.sync(alpha.server, alpha.getUUID(), true);
+            return error("emissary_not_member", name(target));
         }
         index.setEmissary(alpha.getUUID(), target.getUUID());
         alpha.sendSystemMessage(Component.translatable(KEY + "emissary_set", name(target)));

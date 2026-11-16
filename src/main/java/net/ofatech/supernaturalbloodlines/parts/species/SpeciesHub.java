@@ -97,15 +97,24 @@ final class SpeciesHub {
         if (betas.isEmpty() && emissary.isEmpty()) {
             return List.of(); // no pack: a lone wolf is not an Alpha of anyone
         }
+        // the leader is told who is asking for the lead, so the hub can offer to accept or decline
+        UUID asking = alpha.equals(p.getUUID())
+                ? net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.board().asked(p.getUUID(), p.serverLevel().getGameTime()).map(d -> d.challenger()).orElse(null) : null;
         List<HubSocial.Member> out = new ArrayList<>();
-        out.add(member(server, alpha, "alpha"));
+        out.add(member(server, alpha, "alpha" + sparks(index, alpha)));
         // the other Alphas are Alphas, a member who was no werewolf when last seen is a Packmate, the rest are Betas
         betas.forEach(b -> out.add(member(server, b, emissary.filter(b::equals).isPresent() ? "emissary"
-                : PackLeadership.isAlpha(index.strengthOf(b)) ? "coalpha" : index.strengthOf(b) < 0 ? "packmate" : "beta")));
+                : b.equals(asking) ? "coalpha_challenger" + sparks(index, b) : PackLeadership.isAlpha(index.strengthOf(b)) ? "coalpha" + sparks(index, b) : index.strengthOf(b) < 0 ? "packmate" : "beta")));
         emissary.filter(e -> !betas.contains(e)).ifPresent(e -> out.add(member(server, e, "emissary")));
         // the leaders of the packs this one is allied with (not their members)
         index.alliesOf(alpha).forEach(a -> out.add(member(server, a, "ally")));
         return out;
+    }
+
+    /** ":3" for an Alpha with three sparks, nothing for one. */
+    private static String sparks(PackIndex index, UUID id) {
+        int n = index.sparksOf(id);
+        return n > 1 ? ":" + n : "";
     }
 
     private static HubSocial.Member member(MinecraftServer server, UUID id, String rank) {

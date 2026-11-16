@@ -45,7 +45,7 @@ class PackUiTest {
             assertEquals("Remove %s from the pack", lang.get("supernaturalbloodlines.hub.pack.kick_for").getAsString());
             assertTrue(lang.get("supernaturalbloodlines.hub.pack.ally_end_for").getAsString().contains("%s"));
             assertEquals("They leave the pack. A werewolf Beta becomes an Omega.", lang.get("supernaturalbloodlines.hub.pack.kick_body").getAsString());
-            for (String key : new String[] {"pack.steal_refused", "pack.dissolved", "pack.now_follows", "pack.invite_merge", "pack.left_party", "pack.kicked"}) {
+            for (String key : new String[] {"pack.absent_leader", "pack.absent_you", "pack.party_refused", "pack.emissary_not_member", "pack.duel_cooldown", "pack.duel.off.timeout", "pack.duel.off.declined", "hub.pack.challenge_btn", "hub.pack.duel_accept", "hub.pack.duel_decline", "hub.bloodline.sparks", "pack.dissolved", "pack.now_follows", "pack.invite_merge", "pack.left_party", "pack.kicked"}) {
                 assertTrue(lang.has("supernaturalbloodlines." + key), key);
             }
         }

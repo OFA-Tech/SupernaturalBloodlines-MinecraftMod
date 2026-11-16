@@ -39,6 +39,68 @@ class PackIndexTest {
     }
 
     @Test
+    void anEmissaryWhoLeavesOrIsKickedIsNobodysEmissaryAndAJoiningLeaderLosesTheirOwn() {
+        PackIndex i = new PackIndex();
+        UUID witch = new UUID(0, 9);
+        i.join(A, witch);
+        i.setEmissary(A, witch);
+        assertTrue(i.kick(witch));
+        assertTrue(i.emissaryOf(A).isEmpty() && i.emissaryAlpha(witch).isEmpty(), "a kicked Emissary is still named");
+
+        i.join(A, witch);
+        i.setEmissary(A, witch);
+        i.leave(witch);
+        assertTrue(i.emissaryOf(A).isEmpty(), "an Emissary who left is still named");
+
+        // a leader who joins another pack no longer has an Emissary of their own
+        i.join(B, witch);
+        i.setEmissary(B, witch);
+        assertTrue(i.join(A, B));
+        assertTrue(i.emissaryOf(B).isEmpty(), "a joined leader kept their Emissary");
+    }
+
+    @Test
+    void noticesAreAShortListPerPlayerKeptInOrderAndSurviveASave() {
+        PackIndex i = new PackIndex();
+        for (int n = 0; n < PackIndex.MAX_NOTICES + 3; n++) {
+            i.addNotice(A, "k", Integer.toString(n));
+        }
+        i.addNotice(B, "other", "x");
+        assertEquals(PackIndex.MAX_NOTICES, i.noticeCount(A), "the list is not capped");
+        PackIndex back = PackIndex.load(i.save(new net.minecraft.nbt.CompoundTag(), null), null);
+        List<String[]> got = back.takeNotices(A);
+        assertEquals(PackIndex.MAX_NOTICES, got.size());
+        assertEquals("3", got.get(0)[1], "the oldest were not the ones dropped");
+        assertEquals("10", got.get(got.size() - 1)[1]);
+        assertEquals(1, back.takeNotices(B).size());
+        assertTrue(back.takeNotices(A).isEmpty(), "a notice came twice");
+    }
+
+    @Test
+    void aDamagedEntryIsSkippedAndTheRestOfTheIndexLoads() {
+        PackIndex i = new PackIndex();
+        i.join(A, M);
+        i.setStrength(A, 1005);
+        i.addNotice(M, "k", "v");
+        net.minecraft.nbt.CompoundTag tag = i.save(new net.minecraft.nbt.CompoundTag(), null);
+        // two damaged entries in the middle of good ones: a list entry that is no compound with ids, and an id that is no uuid
+        net.minecraft.nbt.ListTag members = tag.getList("members", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        members.add(0, new net.minecraft.nbt.CompoundTag());
+        tag.put("members", members);
+        net.minecraft.nbt.ListTag former = new net.minecraft.nbt.ListTag();
+        former.add(new net.minecraft.nbt.IntArrayTag(new int[] {1, 2}));
+        tag.put("former_alphas", former);
+        net.minecraft.nbt.ListTag notices = tag.getList("notices", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        notices.add(0, new net.minecraft.nbt.CompoundTag());
+        tag.put("notices", notices);
+
+        PackIndex back = PackIndex.load(tag, null);
+        assertEquals(A, back.leaderOf(M), "the good member was lost with the bad entry");
+        assertEquals(1005, back.strengthOf(A));
+        assertEquals(1, back.takeNotices(M).size(), "the good notice was lost with the bad one");
+    }
+
+    @Test
     void samePackNeedsTwoPlayersInOnePack() {
         PackIndex i = new PackIndex();
         assertFalse(i.samePack(A, A));
@@ -63,5 +125,10 @@ class PackIndexTest {
         i.promote(A, B);
         assertTrue(i.alliesOf(B).contains(C) && i.alliesOf(A).isEmpty());
         assertTrue(i.alliedPlayers(A, C), "the old leader is still in the allied pack");
+        assertEquals(B, i.leaderOf(A), "the old leader does not follow the new one");
+        assertEquals(B, i.leaderOf(M), "a member does not follow the new leader");
+        assertEquals(B, i.leaderOf(B));
+        assertTrue(i.isLeader(B) && !i.isLeader(A) && !i.isLeader(M));
+        assertEquals(java.util.Set.of(M, A), new java.util.HashSet<>(i.betasOf(B)));
     }
 }

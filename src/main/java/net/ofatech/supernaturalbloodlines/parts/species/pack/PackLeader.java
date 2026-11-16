@@ -27,19 +27,30 @@ public final class PackLeader {
 
     /** The strength this player has right now: an Alpha of the werewolves by rank and level, 0 for a Beta or Omega, -1 for anyone who is no werewolf (a Packmate). */
     public static int strengthNow(ServerPlayer p) {
-        if (PackAccess.wolf(p).lineage() == net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.NONE) {
+        return strengthOf(p, PackAccess.wolf(p));
+    }
+
+    /** {@link #strengthNow} for a wolf layer the caller already has (a listener is told the new state before it can be read back). */
+    public static int strengthOf(ServerPlayer p, net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf) {
+        if (wolf.lineage() == net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.NONE) {
             return -1;
         }
-        if (!PackAccess.isAlpha(PackAccess.wolf(p).rank()) || !VampirismSupernatural.isWerewolf(p)) {
+        if (!PackAccess.isAlpha(wolf.rank()) || !VampirismSupernatural.isWerewolf(p)) {
             return 0;
         }
-        return PackLeadership.strength(PackAccess.wolf(p).rank(), VampirismAPI.factionPlayerHandler(p).getCurrentLevel());
+        return PackLeadership.strength(wolf.rank(), VampirismAPI.factionPlayerHandler(p).getCurrentLevel());
     }
 
     /** Records the player's strength. The leader stays the leader. */
     public static void refresh(ServerPlayer p) {
+        refresh(p, PackAccess.wolf(p));
+    }
+
+    public static void refresh(ServerPlayer p, net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf) {
         if (!p.level().isClientSide) {
-            PackIndex.get(p.serverLevel()).setStrength(p.getUUID(), strengthNow(p));
+            PackIndex index = PackIndex.get(p.serverLevel());
+            index.setStrength(p.getUUID(), strengthOf(p, wolf));
+            index.setSparks(p.getUUID(), wolf.sparks());
         }
     }
 }

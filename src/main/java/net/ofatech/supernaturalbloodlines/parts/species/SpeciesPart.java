@@ -173,7 +173,8 @@ public final class SpeciesPart {
             GeneHandler.register();
             PackIndex.register();
             net.ofatech.supernaturalbloodlines.parts.species.pack.PackLeader.register();
-        net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.register();
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.register();
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackAbsence.register();
             net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink.register();
             net.ofatech.supernaturalbloodlines.parts.species.pack.AllyProtection.register();
             LineageBackfill.register();

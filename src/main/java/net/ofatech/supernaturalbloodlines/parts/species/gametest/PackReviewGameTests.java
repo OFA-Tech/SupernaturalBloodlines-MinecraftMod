@@ -1,5 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.species.gametest;
 
+import net.ofatech.supernaturalbloodlines.parts.species.pack.RankEffects;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAbsence;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackRules;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.werewolves.api.WReference;
 import java.util.HashMap;
@@ -295,7 +298,7 @@ public final class PackReviewGameTests {
         try {
             BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
             BloodlineAccess.set(taken, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
-            helper.assertTrue(join(leader, second) && join(rival, taken), "the packs could not be built");
+            helper.assertTrue(join(leader, second) && join(leader, witch) && join(rival, taken), "the packs could not be built");
             helper.assertTrue(PackCommand.emissary(second, witch) != null, "a second Alpha named an Emissary");
             helper.assertTrue(PackCommand.emissary(leader, taken) != null, "named an Emissary who runs with another pack");
             helper.assertTrue(PackCommand.emissary(leader, witch) == null, "the leader could not name an Emissary");
@@ -399,7 +402,7 @@ public final class PackReviewGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void anAlphaWhoRunsWithAPackDoesNotStealFromOutsideIt(GameTestHelper helper) {
+    public static void anAlphaWhoRunsWithAPackStealsFromOutsideItAndStacksTheSpark(GameTestHelper helper) {
         ServerPlayer leader = alpha(helper, 6, 1.5);
         ServerPlayer second = alpha(helper, 3, 2.5);
         ServerPlayer outsider = alpha(helper, 5, 3.5);
@@ -408,8 +411,9 @@ public final class PackReviewGameTests {
         try {
             helper.assertTrue(join(leader, second), "the co-Alpha could not join");
             kill(second, outsider);
-            helper.assertTrue(state(outsider).rank() == Rank.ALPHA && !state(second).stoleSpark(), "the spark moved: " + state(outsider) + " / " + state(second));
-            helper.assertTrue(index.alphaOf(second.getUUID()).isPresent(), "the co-Alpha left the pack");
+            helper.assertTrue(state(outsider).rank() == Rank.OMEGA && state(outsider).sparks() == 1, "the victim is " + state(outsider));
+            helper.assertTrue(state(second).rank() == Rank.ALPHA && state(second).sparks() == 2 && state(second).stoleSpark(), "the thief is " + state(second));
+            helper.assertTrue(index.alphaOf(second.getUUID()).map(leader.getUUID()::equals).orElse(false), "the thief left the pack");
         } finally {
             clean(helper, leader, second, outsider);
         }
@@ -494,6 +498,217 @@ public final class PackReviewGameTests {
             index.leave(awayToo);
             index.takeNotice(awayToo);
             index.takeNotice(away);
+        }
+        helper.succeed();
+    }
+
+    // ---- stacked Alpha sparks (the Deucalion factor) ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOutsideStealStacksTheSparkAndTakesEveryOneTheVictimHad(GameTestHelper helper) {
+        ServerPlayer a = alpha(helper, 5, 1.5);
+        ServerPlayer b = alpha(helper, 5, 2.5);
+        ServerPlayer c = alpha(helper, 5, 3.5);
+        ServerPlayer thief = wolf(helper, Rank.OMEGA, null, 1, 4.5);
+        online(a, b, c, thief);
+        try {
+            kill(a, b);
+            helper.assertTrue(state(a).sparks() == 2 && state(b).rank() == Rank.OMEGA && state(b).sparks() == 1, "after one steal: " + state(a).sparks() + " / " + state(b));
+            kill(a, c);
+            helper.assertTrue(state(a).sparks() == 3, "after two: " + state(a).sparks());
+            // a non-Alpha who kills the one with three takes all three at once
+            kill(thief, a);
+            helper.assertTrue(state(thief).rank() == Rank.ALPHA && state(thief).sparks() == 3, "the thief is " + state(thief));
+            helper.assertTrue(state(a).rank() == Rank.OMEGA && state(a).sparks() == 1, "the victim kept sparks: " + state(a));
+        } finally {
+            clean(helper, a, b, c, thief);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void stackedSparksAreCappedByTheConfig(GameTestHelper helper) {
+        ServerPlayer a = alpha(helper, 5, 1.5);
+        ServerPlayer b = alpha(helper, 5, 2.5);
+        ServerPlayer c = alpha(helper, 5, 3.5);
+        ServerPlayer d = alpha(helper, 5, 4.5);
+        online(a, b, c, d);
+        SpeciesConfig.overrideMaxStackedSparks(3);
+        try {
+            kill(a, b);
+            kill(a, c);
+            kill(a, d);
+            helper.assertTrue(state(a).sparks() == 3, "the cap of 3 was not kept: " + state(a).sparks());
+            helper.assertTrue(state(d).rank() == Rank.OMEGA, "the capped steal did not take the victim's spark: " + state(d));
+        } finally {
+            SpeciesConfig.overrideMaxStackedSparks(null);
+            clean(helper, a, b, c, d);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTrueAlphaLosesOnlyTheStackedSparksAndKeepsTheirOwn(GameTestHelper helper) {
+        ServerPlayer truth = wolf(helper, Rank.TRUE_ALPHA, null, 5, 1.5);
+        ServerPlayer victim = alpha(helper, 5, 2.5);
+        ServerPlayer thief = wolf(helper, Rank.OMEGA, null, 1, 3.5);
+        ServerPlayer rival = alpha(helper, 5, 4.5);
+        online(truth, victim, thief, rival);
+        try {
+            kill(truth, victim);
+            helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA && state(truth).sparks() == 2, "the True Alpha did not stack: " + state(truth));
+            kill(rival, truth);
+            helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA && state(truth).sparks() == 1, "the True spark was taken or the extras stayed: " + state(truth));
+            helper.assertTrue(state(rival).rank() == Rank.ALPHA && state(rival).sparks() == 2, "the killer took " + (state(rival).sparks() - 1) + " instead of the one stacked");
+            // with none stacked, killing one is just a death
+            kill(thief, truth);
+            helper.assertTrue(state(thief).rank() == Rank.OMEGA && state(truth).rank() == Rank.TRUE_ALPHA, "a True Alpha's own spark was taken");
+        } finally {
+            clean(helper, truth, victim, thief, rival);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void everyExtraSparkRaisesTheAlphaBonusesAndTheRoarTier(GameTestHelper helper) {
+        ServerPlayer a = alpha(helper, 5, 1.5);
+        ServerPlayer b = alpha(helper, 5, 2.5);
+        ServerPlayer mate = wolf(helper, Rank.BETA, a.getUUID(), 1, 3.5);
+        online(a, b, mate);
+        try {
+            double one = a.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+            net.minecraft.world.entity.ai.attributes.AttributeModifier before = a.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).getModifier(RankEffects.MODIFIER_ID);
+            helper.assertTrue(before != null && Math.abs(before.amount() - 0.20) < 1e-9, "one spark: attack " + (before == null ? null : before.amount()));
+            kill(a, b);
+            net.minecraft.world.entity.ai.attributes.AttributeModifier after = a.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).getModifier(RankEffects.MODIFIER_ID);
+            helper.assertTrue(after != null && Math.abs(after.amount() - 0.22) < 1e-9, "two sparks: attack " + (after == null ? null : after.amount()));
+            helper.assertTrue(a.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) > one, "the health bonus did not grow");
+            helper.assertTrue(PackRules.roarTier(state(a).sparks(), SpeciesConfig.maxStackedSparks()) == 1, "the Roar tier is not 1");
+            AlphaRoar.roar(a);
+            var strength = mate.getEffect(net.minecraft.world.effect.MobEffects.DAMAGE_BOOST);
+            helper.assertTrue(strength != null && strength.getAmplifier() == 1, "the Roar gave Strength " + (strength == null ? "none" : strength.getAmplifier() + 1) + " instead of II");
+        } finally {
+            clean(helper, a, b, mate);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theCureTheHealAndLosingTheFactionDropEveryStackedSpark(GameTestHelper helper) {
+        ServerPlayer a = alpha(helper, 5, 1.5);
+        ServerPlayer b = alpha(helper, 5, 2.5);
+        ServerPlayer c = alpha(helper, 5, 3.5);
+        ServerPlayer d = alpha(helper, 5, 4.5);
+        ServerPlayer patient = human(helper, 5.5);
+        online(a, b, c, d, patient);
+        try {
+            kill(a, b);
+            kill(c, d);
+            helper.assertTrue(state(a).sparks() == 2 && state(c).sparks() == 2, "the setup did not stack");
+
+            // leaving the faction (the cure): the rank goes and the extra spark with it
+            VampirismAPI.factionPlayerHandler(a).leaveFaction(false);
+            helper.assertTrue(state(a).sparks() == 1 && state(a).rank() != Rank.ALPHA, "the cure left sparks: " + state(a));
+
+            // /pack heal gives the spark up
+            helper.assertTrue(PackCommand.heal(c, patient) == null, "the heal was refused");
+            helper.assertTrue(state(c).sparks() == 1 && state(c).rank() != Rank.ALPHA, "the heal left sparks: " + state(c));
+        } finally {
+            clean(helper, a, b, c, d, patient);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theHubShowsTheSparkCountOnAnAlphasRow(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        ServerPlayer outsider = alpha(helper, 5, 3.5);
+        online(leader, second, outsider);
+        try {
+            helper.assertTrue(join(leader, second), "the co-Alpha could not join");
+            kill(leader, outsider);
+            var pack = net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial.of(second).pack();
+            helper.assertTrue(pack.get(0).rank().equals("alpha:2") && pack.get(0).base().equals("alpha") && pack.get(0).sparks() == 2, "the leader's row is " + pack.get(0) + " state " + state(leader).sparks() + " index " + PackIndex.get(helper.getLevel()).sparksOf(leader.getUUID()) + " leader=" + leader.getUUID());
+            helper.assertTrue(pack.get(1).rank().equals("coalpha") && pack.get(1).sparks() == 1, "the co-Alpha's row is " + pack.get(1));
+        } finally {
+            clean(helper, leader, second, outsider);
+        }
+        helper.succeed();
+    }
+
+    // ---- the absent leader ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLeaderAwayForSevenDaysLosesTheLeadToTheStrongestSecondAlpha(GameTestHelper helper) {
+        UUID goneId = UUID.randomUUID();
+        ServerPlayer weak = alpha(helper, 2, 1.5);
+        ServerPlayer strong = alpha(helper, 9, 2.5);
+        ServerPlayer beta = wolf(helper, Rank.BETA, goneId, 1, 3.5);
+        online(weak, strong, beta);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        long now = System.currentTimeMillis();
+        try {
+            // the leader is somebody who is not online, with a pack
+            index.join(goneId, weak.getUUID());
+            index.join(goneId, strong.getUUID());
+            index.join(goneId, beta.getUUID());
+            index.setStrength(weak.getUUID(), 1002);
+            index.setStrength(strong.getUUID(), 1009);
+            index.setLastSeen(goneId, now - 6 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackAbsence.check(server, now) == 0 && index.isLeader(goneId), "a leader away for 6 days was deposed");
+
+            index.setLastSeen(goneId, now - 8 * PackAbsence.DAY_MILLIS);
+            SpeciesConfig.overrideAbsentLeaderDays(0);
+            helper.assertTrue(PackAbsence.check(server, now) == 0 && index.isLeader(goneId), "the switch at 0 did not turn it off");
+            SpeciesConfig.overrideAbsentLeaderDays(null);
+
+            helper.assertTrue(PackAbsence.check(server, now) == 1, "the absent leader was not deposed");
+            helper.assertTrue(index.isLeader(strong.getUUID()), "the strongest second Alpha does not lead: " + index.leaderOf(strong.getUUID()));
+            helper.assertTrue(index.alphaOf(goneId).map(strong.getUUID()::equals).orElse(false), "the old leader is not a member of the new pack");
+            helper.assertTrue(strong.getUUID().equals(state(beta).packAlpha()), "the Beta did not follow");
+            helper.assertTrue(index.noticeCount(goneId) == 1 && !index.isFormerAlpha(goneId), "the old leader was not told, or lost the spark");
+            helper.assertTrue(PackAbsence.check(server, now) == 0, "it deposed again");
+        } finally {
+            index.leave(goneId);
+            index.takeNotices(goneId);
+            clean(helper, weak, strong, beta);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLeaderWithNoRecordedTimeOrNoSecondAlphaOrWhoIsOnlineIsLeftAlone(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        UUID away = UUID.randomUUID();
+        UUID mate = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        online(leader);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        long now = System.currentTimeMillis();
+        try {
+            // an online leader, however old their last time is
+            index.join(leader.getUUID(), mate);
+            index.join(leader.getUUID(), second);
+            index.setStrength(second, 1003);
+            index.setLastSeen(leader.getUUID(), now - 30 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackAbsence.check(server, now) == 0 && index.isLeader(leader.getUUID()), "an online leader was deposed");
+
+            // a leader nobody recorded a time for: the time starts now, nobody is deposed
+            index.join(away, UUID.randomUUID());
+            helper.assertTrue(PackAbsence.check(server, now) == 0 && index.lastSeen(away).isPresent() && index.isLeader(away), "an unrecorded leader was deposed or no time was started");
+            // away a long time, but no second Alpha: nothing to hand the pack to
+            index.setLastSeen(away, now - 20 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackAbsence.check(server, now) == 0 && index.isLeader(away), "a pack with no second Alpha changed hands");
+        } finally {
+            index.leave(mate);
+            index.leave(second);
+            for (UUID id : index.betasOf(away)) {
+                index.leave(id);
+            }
+            clean(helper, leader);
         }
         helper.succeed();
     }

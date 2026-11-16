@@ -14,14 +14,20 @@ import java.util.UUID;
 /** The Teen Wolf layer of a player: lineage, rank, pack and spark. */
 public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean latentGene, boolean killedInnocent,
                         @Nullable UUID packAlpha, long betaSince, int defenderKills, boolean stoleSpark,
-                        Set<String> grantedSkills) {
+                        Set<String> grantedSkills, int sparks) {
 
     public enum Lineage { NONE, BORN, BITTEN }
 
     public enum Rank { NONE, OMEGA, BETA, ALPHA, TRUE_ALPHA }
 
     public static final WolfState NONE =
-            new WolfState(Lineage.NONE, Rank.NONE, false, false, false, null, 0, 0, false, Set.of());
+            new WolfState(Lineage.NONE, Rank.NONE, false, false, false, null, 0, 0, false, Set.of(), 1);
+
+    /** Without a spark count: one spark, the Alpha's own. */
+    public WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean latentGene, boolean killedInnocent,
+                     @Nullable UUID packAlpha, long betaSince, int defenderKills, boolean stoleSpark, Set<String> grantedSkills) {
+        this(lineage, rank, geneRolled, latentGene, killedInnocent, packAlpha, betaSince, defenderKills, stoleSpark, grantedSkills, 1);
+    }
 
     public static final Codec<WolfState> CODEC = RecordCodecBuilder.create(i -> i.group(
             BloodlineCodecs.enumByName(Lineage.class, Lineage.NONE).lenientOptionalFieldOf("lineage", Lineage.NONE).forGetter(WolfState::lineage),
@@ -38,14 +44,17 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
                         var sorted = new ArrayList<>(w.grantedSkills());
                         Collections.sort(sorted);
                         return sorted;
-                    })
-    ).apply(i, (lineage, rank, rolled, latent, innocent, alpha, since, kills, stole, skills) ->
-            new WolfState(lineage, rank, rolled, latent, innocent, alpha.orElse(null), since, kills, stole, new HashSet<>(skills))));
+                    }),
+            // stacked Alpha sparks (plan 14): an old save has none, which is one
+            Codec.INT.lenientOptionalFieldOf("sparks", 1).forGetter(WolfState::sparks)
+    ).apply(i, (lineage, rank, rolled, latent, innocent, alpha, since, kills, stole, skills, sparks) ->
+            new WolfState(lineage, rank, rolled, latent, innocent, alpha.orElse(null), since, kills, stole, new HashSet<>(skills), sparks)));
 
     public WolfState {
         lineage = lineage == null ? Lineage.NONE : lineage;
         rank = rank == null ? Rank.NONE : rank;
         grantedSkills = grantedSkills == null ? Set.of() : Set.copyOf(grantedSkills);
+        sparks = Math.max(1, sparks);
     }
 
     public Builder toBuilder() {
@@ -63,6 +72,7 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
         private int defenderKills;
         private boolean stoleSpark;
         private Set<String> grantedSkills;
+        private int sparks;
 
         private Builder(WolfState w) {
             lineage = w.lineage;
@@ -75,6 +85,7 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
             defenderKills = w.defenderKills;
             stoleSpark = w.stoleSpark;
             grantedSkills = w.grantedSkills;
+            sparks = w.sparks;
         }
 
         public Builder lineage(Lineage v) { lineage = v; return this; }
@@ -87,10 +98,11 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
         public Builder defenderKills(int v) { defenderKills = v; return this; }
         public Builder stoleSpark(boolean v) { stoleSpark = v; return this; }
         public Builder grantedSkills(Set<String> v) { grantedSkills = v; return this; }
+        public Builder sparks(int v) { sparks = v; return this; }
 
         public WolfState build() {
             return new WolfState(lineage, rank, geneRolled, latentGene, killedInnocent, packAlpha, betaSince,
-                    defenderKills, stoleSpark, grantedSkills);
+                    defenderKills, stoleSpark, grantedSkills, sparks);
         }
     }
 }

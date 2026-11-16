@@ -48,7 +48,7 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
 
     private static final StreamCodec<ByteBuf, HubSocial.Member> MEMBER = StreamCodec.composite(
             NAME, HubSocial.Member::name,
-            ByteBufCodecs.stringUtf8(16), HubSocial.Member::rank,
+            ByteBufCodecs.stringUtf8(32), HubSocial.Member::rank,
             ByteBufCodecs.BOOL, HubSocial.Member::online,
             HubSocial.Member::new);
 

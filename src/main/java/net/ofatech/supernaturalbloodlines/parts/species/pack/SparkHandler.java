@@ -22,6 +22,9 @@ import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackLeadership;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackRules;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
@@ -111,36 +114,46 @@ public final class SparkHandler {
     }
 
     /**
-     * A werewolf player kills an Alpha: they take the spark (and the pack: the killer's own pack stays theirs and the
-     * victim's Betas join it), the victim becomes an Omega. Anyone else killing an Alpha changes nothing.
+     * A werewolf player kills an Alpha from <b>outside</b> their pack (the Deucalion factor): they take every spark the victim
+     * had, on top of their own when they are an Alpha already (up to {@code max_stacked_sparks}); a werewolf who was no Alpha
+     * becomes one. The victim, who had them all, is an Omega with no pack to lead. A True Alpha's own spark is never taken, only
+     * the ones stacked on it, so killing one with none is just a death.
+     *
+     * <p>A kill inside the pack, outside a duel, changes nothing at all (owner ruling): no spark, no lead, no rank. Anyone who
+     * is no werewolf killing an Alpha changes nothing either.
      */
     static boolean steal(ServerPlayer killer, ServerPlayer victim) {
-        if (PackAccess.wolf(victim).rank() == Rank.TRUE_ALPHA || !VampirismSupernatural.isWerewolf(killer)) {
+        if (!VampirismSupernatural.isWerewolf(killer)) {
             return false;
         }
         PackIndex index = PackIndex.get(victim.serverLevel());
-        boolean samePack = index.samePack(killer.getUUID(), victim.getUUID());
-        // an Alpha who runs with a pack does not take the spark of someone outside it (that would pull the pack apart)
-        if (!samePack && PackAccess.isAlpha(PackAccess.wolf(killer).rank()) && index.inPack(killer.getUUID())) {
-            killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.steal_refused"));
+        if (index.samePack(killer.getUUID(), victim.getUUID())) {
             return false;
         }
+        boolean victimTrue = PackAccess.wolf(victim).rank() == Rank.TRUE_ALPHA;
+        int taken = PackRules.transferableSparks(PackAccess.wolf(victim).sparks(), victimTrue);
+        if (taken <= 0) {
+            return false;
+        }
+        boolean killerIsAlpha = PackAccess.isAlpha(PackAccess.wolf(killer).rank());
+        int killerSparks = PackAccess.wolf(killer).sparks();
         if (PackAccess.applyPack(killer, PackEvent.KILLED_ALPHA, PackContext.defaults()).refused()) {
             return false;
         }
+        PackAccess.setSparks(killer, PackRules.sparksAfterSteal(killerSparks, killerIsAlpha, taken, SpeciesConfig.maxStackedSparks()));
+        if (victimTrue) {
+            // the True spark stays: only the stacked ones went, and they are an Alpha as before
+            PackAccess.setSparks(victim, 1);
+            return true;
+        }
         boolean victimLeads = index.isLeader(victim.getUUID());
-        List<UUID> members = index.betasOf(victim.getUUID());
-        PackAccess.applyPack(victim, PackEvent.SPARK_LOST, PackContext.defaults());
+        PackAccess.applyPack(victim, PackEvent.SPARK_LOST, PackContext.defaults()); // the rules also clear every stacked spark with the rank
         if (!victimLeads) {
             // a second Alpha loses the spark and the pack, which goes on under its leader
             index.leave(victim.getUUID());
             index.markFormerAlpha(victim.getUUID());
-        } else if (samePack) {
-            // the leader lost the spark: the strongest Alpha takes the pack, the killer (an Alpha now) among them, and on a tie the one who was there first
-            UUID co = coAlphaHeir(victim);
-            handOverToCoAlpha(victim, co != null && index.strengthOf(co) >= PackLeader.strengthNow(killer) ? co : killer.getUUID());
         } else {
-            // an outside werewolf takes the spark and not the pack: the strongest other Alpha leads it, and with none it dissolves
+            // the strongest other Alpha leads the pack, and with none it dissolves
             UUID co = coAlphaHeir(victim);
             if (co != null) {
                 handOverToCoAlpha(victim, co);
@@ -150,7 +163,6 @@ public final class SparkHandler {
         }
         return true;
     }
-
     private static void onFaction(PlayerFactionEvent.FactionLevelChanged e) {
         // a dormant True Alpha is marked as not holding the spark while they are away (hasSpark, offline); rejoining wakes it
         if (e.getPlayer().getPlayer() instanceof ServerPlayer back && !back.level().isClientSide && e.getCurrentFaction() == WerewolfFaction.faction()
@@ -191,9 +203,14 @@ public final class SparkHandler {
      */
     @Nullable
     static UUID coAlphaHeir(ServerPlayer alpha) {
-        PackIndex index = PackIndex.get(alpha.serverLevel());
+        return coAlphaHeir(PackIndex.get(alpha.serverLevel()), alpha.getUUID());
+    }
+
+    /** The strongest other Alpha of the pack {@code leader} leads, online or not (the order of {@link PackLeadership}). */
+    @Nullable
+    static UUID coAlphaHeir(PackIndex index, UUID leader) {
         List<PackLeadership.Candidate> candidates = new java.util.ArrayList<>();
-        for (UUID id : index.betasOf(alpha.getUUID())) {
+        for (UUID id : index.betasOf(leader)) {
             candidates.add(new PackLeadership.Candidate(id, index.isFormerAlpha(id) ? 0 : index.strengthOf(id)));
         }
         return PackLeadership.pick(candidates, null).orElse(null);
@@ -206,6 +223,7 @@ public final class SparkHandler {
         index.transfer(from.getUUID(), heir);
         members.forEach(b -> repoint(from.server, b, heir));
         PackMembers.moved(from.server, members, heir);
+        PartyLink.leadershipChanged(from.server, heir);
     }
 
     /** The Alpha leaves the werewolves or is cured: the spark goes to the heir, the Alpha is an Omega with no pack. A True Alpha only dissolves the pack. */
@@ -223,6 +241,7 @@ public final class SparkHandler {
             return;
         }
         if (PackAccess.wolf(alpha).rank() == Rank.TRUE_ALPHA) {
+            PackAccess.setSparks(alpha, 1); // the stacked sparks go with the faction, the True spark stays
             // a True Alpha keeps the spark and the rank (dormant outside the faction): only the pack dissolves. The tombstone
             // dissolve leaves says "not holding it now" for an offline check; onFaction clears it on rejoining
             dissolve(alpha);
@@ -275,6 +294,7 @@ public final class SparkHandler {
         index.transfer(from.getUUID(), heir.getUUID());
         betas.forEach(b -> repoint(from.server, b, heir.getUUID()));
         PackMembers.moved(from.server, betas, heir.getUUID());
+        PartyLink.leadershipChanged(from.server, heir.getUUID());
     }
 
     private static void dissolve(ServerPlayer alpha) {
@@ -297,6 +317,7 @@ public final class SparkHandler {
                 index.addNotice(id, "supernaturalbloodlines.pack.dissolved", "");
             }
         }
+        PartyLink.leadershipChanged(alpha.server, null);
     }
 
     /** An online Beta now belongs to {@code newAlpha}; the index was moved already, so only their own state changes. */

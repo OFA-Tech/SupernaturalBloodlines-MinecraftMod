@@ -16,7 +16,9 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 
 /**
@@ -39,7 +41,7 @@ public final class RankEffects {
     }
 
     public static void register() {
-        BloodlineAccess.addListener((p, change) -> sync(p));
+        BloodlineAccess.addListener((p, change) -> apply(p, VampirismSupernatural.isWerewolf(p), change.after().wolf()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> syncIfPlayer(e.getEntity()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent e) -> syncIfPlayer(e.getEntity()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerChangedDimensionEvent e) -> syncIfPlayer(e.getEntity()));
@@ -67,12 +69,20 @@ public final class RankEffects {
     }
 
     private static void apply(ServerPlayer p, boolean werewolf) {
-        Rank rank = werewolf ? PackAccess.wolf(p).rank() : Rank.NONE;
+        apply(p, werewolf, PackAccess.wolf(p));
+    }
+
+    private static void apply(ServerPlayer p, boolean werewolf, net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf) {
+        Rank rank = werewolf ? wolf.rank() : Rank.NONE;
         // a suppressor (the lunar eclipse) takes the perks away, not the Omega's penalty
         if (rank != Rank.OMEGA && SUPPRESSORS.stream().anyMatch(s -> s.test(p))) {
             rank = Rank.NONE;
         }
         double scale = rank == Rank.TRUE_ALPHA ? TRUE_ALPHA_SCALE : 1;
+        // every spark stacked on the first adds 10% to the Alpha bonuses (the Deucalion factor)
+        if (werewolf) {
+            scale *= PackRules.sparkScale(wolf.sparks(), SpeciesConfig.maxStackedSparks());
+        }
         boolean alpha = rank == Rank.ALPHA || rank == Rank.TRUE_ALPHA;
         set(p, Attributes.ATTACK_DAMAGE, rank == Rank.OMEGA ? OMEGA_PENALTY : alpha ? round(ALPHA_ATTACK * scale) : 0, Operation.ADD_MULTIPLIED_TOTAL);
         set(p, Attributes.MOVEMENT_SPEED, rank == Rank.OMEGA ? OMEGA_PENALTY : 0, Operation.ADD_MULTIPLIED_TOTAL);

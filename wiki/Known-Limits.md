@@ -99,3 +99,8 @@ If you find something that behaves differently from this wiki, please [open an i
 - **The strongest Alpha is only the successor.** It is worked out when the leader leaves, loses the spark or gives it up, from the last level the game saw each Alpha with (an offline Alpha counts with the level they last had). An ordinary death of the leader changes nothing. A joining or levelling Alpha never takes the lead; only a duel does.
 - **A leadership duel needs both of them online** and ends when either logs out; it is not kept across a restart.
 - **Packmates have no rank of their own.** They keep their race and ranks; a Packmate who is later turned into a werewolf by another Alpha's bite changes pack with the bite.
+- **Upgrading with Open Parties and Claims:** packs that exist already get a party on the first run. Set opac_link_enabled=false before upgrading to opt out; turning it off later does not remove the parties.
+- **A leadership duel needs the two within 64 blocks and in one dimension**, and ends when one of them leaves it.
+- **The absent leader is measured by the wall clock** (the time the leader last logged out, kept with the packs), not by game days; a server that is off counts as time passing. A leader with no time on record (a world from before this) is not deposed: the time starts the first time the check sees them away.
+- **Stacked sparks are not shown for a wolf that was offline since before they were stacked** until they log in once (the index learns the count when it changes online).
+- **An ordinary death of the pack leader changes nothing**, and so does a kill inside the pack outside a duel: only a duel, a leader who stays away, or a lost spark moves the lead.

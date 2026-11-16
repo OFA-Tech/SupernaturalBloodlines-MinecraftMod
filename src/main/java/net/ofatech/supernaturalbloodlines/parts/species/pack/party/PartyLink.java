@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.NeoForge;
@@ -53,7 +53,44 @@ public final class PartyLink {
         return backend != null && SpeciesConfig.opacLinkEnabled();
     }
 
+    /** The leadership of a pack moved or a pack ended: parties of owners who lead nothing any more are cleaned up, and the new leader gets theirs. */
+    public static void leadershipChanged(MinecraftServer server, @Nullable UUID newLeader) {
+        cleanup(server);
+        if (newLeader != null) {
+            sync(server, newLeader, true);
+        }
+    }
+
+    /**
+     * A party the pack made for an owner who is in no pack any more (the pack dissolved, the owner was kicked or lost the lead
+     * and left): our mirrored members leave it, the record is cleared, and the owner's party itself is left as it is.
+     */
+    public static void cleanup(MinecraftServer server) {
+        PartyBackend b = backend;
+        if (b == null || !SpeciesConfig.opacLinkEnabled()) {
+            return;
+        }
+        PackIndex index = PackIndex.get(server.overworld());
+        for (UUID owner : index.partyOwners()) {
+            if (index.inPack(owner)) {
+                continue; // the pack's own pass sees to a party whose owner is still in a pack
+            }
+            Optional<PackIndex.Recorded> recorded = index.recordedParty(List.of(owner));
+            PartyBackend.Found found = recorded.map(r -> b.find(server, r.owner(), r.id())).orElse(new PartyBackend.Found(true, null));
+            if (!found.reachable()) {
+                continue;
+            }
+            if (found.party() != null) {
+                for (UUID m : index.mirrorsOf(List.of(owner))) {
+                    b.remove(server, owner, m);
+                }
+            }
+            index.forgetParty(owner);
+        }
+    }
+
     public static void syncAll(MinecraftServer server) {
+        cleanup(server);
         for (UUID leader : new ArrayList<>(PackIndex.get(server.overworld()).leaders())) {
             sync(server, leader, false);
         }
@@ -104,6 +141,10 @@ public final class PartyLink {
         for (UUID m : plan.add()) {
             if (b.add(server, owner, m)) {
                 index.setMirror(m, owner);
+                index.clearPartyRefused(m);
+            } else if (index.markPartyRefused(m)) {
+                // told once, not at every retry: they stay in the pack, and are tried again later
+                PackMembers.tell(server, m, "supernaturalbloodlines.pack.party_refused", "");
             }
         }
         for (UUID m : plan.removeFrom()) {

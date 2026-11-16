@@ -8,14 +8,16 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.DuelBoard;
+import net.ofatech.supernaturalbloodlines.core.bloodline.DuelBoard.Reason;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
@@ -23,14 +25,18 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The leadership duel (plan 14, owner): a second Alpha challenges the leader, the leader accepts, and they fight to the first
- * defeat. The one who would die is left at 1 HP instead and loses; the winner leads. Nobody loses the spark and it is no steal.
- * It is called off by a timeout of 2 minutes, by either of them logging out or leaving the pack, or by anyone else killing one of them.
+ * defeat. A defeat is any death of one of them while the duel is on (by the other one, or by lava, a fall, a mob): it is turned
+ * into 1 HP, and the other one wins and leads. Nobody loses the spark and it is no steal. For 5 seconds the winner cannot hurt
+ * the loser (a guard against that one hit, not a totem). The same two cannot duel again for 10 minutes, and a challenger whose
+ * challenge ran out or was declined cannot ask the same leader for 5. It is called off by a timeout of 2 minutes, by either of
+ * them logging out, leaving the pack, or being in another dimension, or by a third player killing one of them (that death stands).
  */
 public final class PackDuel {
     private static final String KEY = "supernaturalbloodlines.pack.duel.";
+    /** A challenge or an acceptance needs both in one dimension and this close. */
+    public static final double RANGE = 64;
     private static final DuelBoard BOARD = new DuelBoard();
     private static final int CHECK_EVERY = 20;
-    private static final int SHIELD_TICKS = 100;
 
     private PackDuel() {
     }
@@ -42,9 +48,10 @@ public final class PackDuel {
     public static void register() {
         // before the death is handled by anything that would act on it (a totem is asked first, and a duel is not a death)
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, false, LivingDeathEvent.class, PackDuel::onDeath);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, false, LivingIncomingDamageEvent.class, PackDuel::onDamage);
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
-                callOff(p.server, p.getUUID());
+                callOff(p.server, p.getUUID(), Reason.LOGOUT);
             }
         });
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> {
@@ -54,8 +61,13 @@ public final class PackDuel {
         });
     }
 
-    private static UUID leaderOf(ServerPlayer p) {
-        return PackIndex.get(p.serverLevel()).leaderOf(p.getUUID());
+    /** @return the error to show when {@code a} and {@code b} are too far apart or in other dimensions, or null when they are close */
+    @Nullable
+    private static Component apart(ServerPlayer a, ServerPlayer b) {
+        if (a.level().dimension() != b.level().dimension()) {
+            return PackCommand.error("duel_dimension");
+        }
+        return a.distanceTo(b) > RANGE ? PackCommand.error("duel_far") : null;
     }
 
     /** @return the error to show, or null when the leader was asked */
@@ -74,9 +86,18 @@ public final class PackDuel {
         if (leader == null || !SparkHandler.hasSpark(challenger.server, leaderId)) {
             return PackCommand.error("duel_leader_away");
         }
+        Component far = apart(challenger, leader);
+        if (far != null) {
+            return far;
+        }
         long now = challenger.serverLevel().getGameTime();
-        if (!BOARD.challenge(challenger.getUUID(), leaderId, now)) {
-            return PackCommand.error("duel_busy");
+        var refused = BOARD.challenge(challenger.getUUID(), leaderId, now);
+        if (refused.isPresent()) {
+            return PackCommand.error(switch (refused.get()) {
+                case BUSY -> "duel_busy";
+                case PAIR_COOLDOWN -> "duel_cooldown";
+                case RETRY_COOLDOWN -> "duel_retry";
+            });
         }
         Component accept = Component.translatable(KEY + "accept").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pack challenge accept"))
@@ -98,9 +119,16 @@ public final class PackDuel {
         ServerPlayer challenger = SireCall.player(leader.server, asked.challenger());
         // still the same pack: the leader leads it and the challenger is still a second Alpha in it
         if (challenger == null || !index.isLeader(leader.getUUID()) || !leader.getUUID().equals(index.alphaOf(asked.challenger()).orElse(null))
-                || !PackAccess.isAlpha(PackAccess.wolf(challenger).rank())) {
+                || !PackAccess.isAlpha(PackAccess.wolf(challenger).rank()) || !VampirismSupernatural.isWerewolf(challenger)) {
             BOARD.cancelInvolving(leader.getUUID());
+            if (challenger != null) {
+                challenger.sendSystemMessage(Component.translatable(KEY + "off." + Reason.PACK.name().toLowerCase(java.util.Locale.ROOT)));
+            }
             return PackCommand.error("duel_gone");
+        }
+        Component far = apart(leader, challenger);
+        if (far != null) {
+            return far;
         }
         BOARD.accept(leader.getUUID(), now);
         Component on = Component.translatable(KEY + "on", PackCommand.name(challenger), PackCommand.name(leader));
@@ -109,25 +137,48 @@ public final class PackDuel {
         return null;
     }
 
+    /** @return the error to show, or null when the challenge was turned down */
+    @Nullable
+    public static Component decline(ServerPlayer leader) {
+        DuelBoard.Duel d = BOARD.decline(leader.getUUID(), leader.serverLevel().getGameTime()).orElse(null);
+        if (d == null) {
+            return PackCommand.error("duel_none");
+        }
+        ServerPlayer challenger = SireCall.player(leader.server, d.challenger());
+        if (challenger != null) {
+            challenger.sendSystemMessage(Component.translatable(KEY + "off.declined", PackCommand.name(leader)));
+        }
+        leader.sendSystemMessage(Component.translatable(KEY + "declined_you"));
+        return null;
+    }
+
+    private static void onDamage(LivingIncomingDamageEvent e) {
+        Entity by = e.getSource().getEntity();
+        if (by != null && e.getEntity() instanceof ServerPlayer loser && BOARD.guarded(loser.getUUID(), by.getUUID(), loser.level().getGameTime())) {
+            e.setCanceled(true);
+        }
+    }
+
     private static void onDeath(LivingDeathEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer loser) || loser.level().isClientSide) {
             return;
         }
         DuelBoard.Duel duel = BOARD.on(loser.getUUID()).orElse(null);
         if (duel == null) {
-            callOff(loser.server, loser.getUUID()); // a challenge nobody accepted yet, or no duel at all
+            callOff(loser.server, loser.getUUID(), Reason.KILLED); // a challenge nobody accepted yet, or no duel at all
             return;
         }
-        UUID by = e.getSource().getEntity() == null ? null : e.getSource().getEntity().getUUID();
-        if (!duel.other(loser.getUUID()).equals(by)) {
-            callOff(loser.server, loser.getUUID()); // somebody else killed them (or the world did): the duel is off and the death stands
+        Entity by = e.getSource().getEntity();
+        if (by instanceof Player other && !other.getUUID().equals(duel.other(loser.getUUID()))) {
+            callOff(loser.server, loser.getUUID(), Reason.KILLED); // a third player killed them: the duel is off and the death stands
             return;
         }
-        // the first defeat: no death, one heart left, and a moment in which the winner cannot finish them
+        // the first defeat (by the other one, or by anything else that would have killed them): no death, one heart left
         e.setCanceled(true);
         loser.setHealth(1f);
-        loser.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, SHIELD_TICKS, 4, false, false));
-        DuelBoard.Result r = BOARD.defeat(loser.getUUID()).orElse(null);
+        loser.clearFire();
+        loser.fallDistance = 0;
+        DuelBoard.Result r = BOARD.defeat(loser.getUUID(), loser.level().getGameTime()).orElse(null);
         if (r != null) {
             settle(loser.server, r);
         }
@@ -137,7 +188,14 @@ public final class PackDuel {
         ServerPlayer winner = SireCall.player(server, r.winner());
         ServerPlayer loser = SireCall.player(server, r.loser());
         PackIndex index = PackIndex.get(server.overworld());
-        if (r.challengerWon() && winner != null) {
+        if (r.challengerWon()) {
+            // the pack may have changed since the duel began: the loser must still lead the winner's pack and the winner still be an Alpha
+            boolean valid = winner != null && index.isLeader(r.loser()) && r.loser().equals(index.alphaOf(r.winner()).orElse(null))
+                    && PackAccess.isAlpha(PackAccess.wolf(winner).rank()) && VampirismSupernatural.isWerewolf(winner);
+            if (!valid) {
+                tellOff(server, new UUID[] {r.winner(), r.loser()}, Reason.PACK, null);
+                return;
+            }
             List<UUID> members = index.betasOf(r.loser());
             index.promote(r.loser(), r.winner());
             for (UUID id : members) {
@@ -161,34 +219,43 @@ public final class PackDuel {
         return n != null ? n : id.toString().substring(0, 8);
     }
 
-    /** Whatever {@code player} was in (a challenge, a duel) is over: both are told. */
-    public static void callOff(MinecraftServer server, UUID player) {
+    /** Whatever {@code player} was in (a challenge, a duel) is over; the other one (and a player who did not leave) is told why. */
+    public static void callOff(MinecraftServer server, UUID player, Reason reason) {
         for (DuelBoard.Duel d : BOARD.cancelInvolving(player)) {
-            tellOff(server, d);
+            tellOff(server, new UUID[] {d.challenger(), d.leader()}, reason, reason == Reason.LOGOUT ? player : null);
         }
     }
 
-    private static void tellOff(MinecraftServer server, DuelBoard.Duel d) {
-        for (UUID id : new UUID[] {d.challenger(), d.leader()}) {
-            ServerPlayer p = SireCall.player(server, id);
+    private static void tellOff(MinecraftServer server, UUID[] both, Reason reason, @Nullable UUID except) {
+        for (UUID id : both) {
+            ServerPlayer p = id.equals(except) ? null : SireCall.player(server, id);
             if (p != null) {
-                p.sendSystemMessage(Component.translatable(KEY + "off"));
+                p.sendSystemMessage(Component.translatable(KEY + "off." + reason.name().toLowerCase(java.util.Locale.ROOT)));
             }
         }
     }
 
-    /** Timeouts, and a pack that is not the one the duel was asked in any more. */
+    /** Timeouts, and a pack, a dimension or a login that is not what the duel was asked in any more. */
     public static void check(MinecraftServer server) {
         long now = server.overworld().getGameTime();
         for (DuelBoard.Duel d : BOARD.expire(now)) {
-            tellOff(server, d);
+            tellOff(server, new UUID[] {d.challenger(), d.leader()}, Reason.TIMEOUT, null);
         }
         PackIndex index = PackIndex.get(server.overworld());
         for (DuelBoard.Duel d : BOARD.all()) {
-            boolean here = SireCall.player(server, d.challenger()) != null && SireCall.player(server, d.leader()) != null;
-            boolean samePack = d.leader().equals(index.alphaOf(d.challenger()).orElse(null)) && index.isLeader(d.leader());
-            if (!here || !samePack) {
-                callOff(server, d.challenger());
+            ServerPlayer c = SireCall.player(server, d.challenger());
+            ServerPlayer l = SireCall.player(server, d.leader());
+            Reason why = null;
+            if (c == null || l == null) {
+                why = Reason.LOGOUT;
+            } else if (!d.leader().equals(index.alphaOf(d.challenger()).orElse(null)) || !index.isLeader(d.leader())) {
+                why = Reason.PACK;
+            } else if (c.level().dimension() != l.level().dimension()) {
+                why = Reason.FAR;
+            }
+            if (why != null) {
+                BOARD.cancelInvolving(d.challenger());
+                tellOff(server, new UUID[] {d.challenger(), d.leader()}, why, null);
             }
         }
     }

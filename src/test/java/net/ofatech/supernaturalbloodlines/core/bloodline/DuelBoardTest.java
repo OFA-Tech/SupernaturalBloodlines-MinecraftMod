@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Optional;
 import java.util.UUID;
+import net.ofatech.supernaturalbloodlines.core.bloodline.DuelBoard.Refusal;
 import org.junit.jupiter.api.Test;
 
 class DuelBoardTest {
@@ -12,10 +14,14 @@ class DuelBoardTest {
     private static final UUID CHALLENGER = new UUID(0, 2);
     private static final UUID THIRD = new UUID(0, 3);
 
+    private static boolean challenge(DuelBoard b, UUID c, UUID l, long now) {
+        return b.challenge(c, l, now).isEmpty();
+    }
+
     @Test
     void aChallengeIsAcceptedOnlyByTheLeaderItWasAimedAtAndOnlyOnTime() {
         DuelBoard b = new DuelBoard();
-        assertTrue(b.challenge(CHALLENGER, LEADER, 100));
+        assertTrue(challenge(b, CHALLENGER, LEADER, 100));
         assertTrue(b.accept(THIRD, 110).isEmpty(), "somebody else accepted");
         assertTrue(b.accept(LEADER, 100 + DuelBoard.TIMEOUT_TICKS + 1).isEmpty(), "accepted after it timed out");
         assertTrue(b.accept(LEADER, 100 + DuelBoard.TIMEOUT_TICKS).isPresent(), "accepted on the last tick");
@@ -24,43 +30,103 @@ class DuelBoardTest {
     @Test
     void aDuelIsNotOnUntilAcceptedAndSettlesOnceOnTheFirstDefeat() {
         DuelBoard b = new DuelBoard();
-        b.challenge(CHALLENGER, LEADER, 0);
-        assertTrue(b.defeat(LEADER).isEmpty(), "a challenge nobody accepted ended in a defeat");
+        challenge(b, CHALLENGER, LEADER, 0);
+        assertTrue(b.defeat(LEADER, 5).isEmpty(), "a challenge nobody accepted ended in a defeat");
         b.accept(LEADER, 10);
-        DuelBoard.Result r = b.defeat(LEADER).orElseThrow();
+        DuelBoard.Result r = b.defeat(LEADER, 20).orElseThrow();
         assertEquals(CHALLENGER, r.winner());
         assertEquals(LEADER, r.loser());
         assertTrue(r.challengerWon());
-        assertTrue(b.defeat(CHALLENGER).isEmpty() && b.all().isEmpty(), "a settled duel settled again");
+        assertTrue(b.defeat(CHALLENGER, 21).isEmpty() && b.all().isEmpty(), "a settled duel settled again");
+    }
 
-        b.challenge(CHALLENGER, LEADER, 20);
-        b.accept(LEADER, 21);
-        assertFalse(b.defeat(CHALLENGER).orElseThrow().challengerWon(), "the leader who wins is the leader still");
+    @Test
+    void theLeaderWhoWinsIsTheWinner() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        b.accept(LEADER, 1);
+        assertFalse(b.defeat(CHALLENGER, 2).orElseThrow().challengerWon());
     }
 
     @Test
     void nobodyIsInTwoThingsAtOnce() {
         DuelBoard b = new DuelBoard();
-        assertFalse(b.challenge(LEADER, LEADER, 0), "challenged themselves");
-        assertTrue(b.challenge(CHALLENGER, LEADER, 0));
-        assertFalse(b.challenge(THIRD, LEADER, 0), "a second challenge for the same leader");
-        assertFalse(b.challenge(CHALLENGER, THIRD, 0), "the challenger challenged twice");
+        assertEquals(Optional.of(Refusal.BUSY), b.challenge(LEADER, LEADER, 0), "challenged themselves");
+        assertTrue(challenge(b, CHALLENGER, LEADER, 0));
+        assertEquals(Optional.of(Refusal.BUSY), b.challenge(THIRD, LEADER, 0), "a second challenge for the same leader");
+        assertEquals(Optional.of(Refusal.BUSY), b.challenge(CHALLENGER, THIRD, 0), "the challenger challenged twice");
     }
 
     @Test
     void aDuelRunsOutAndAnyoneLeavingCallsItOff() {
         DuelBoard b = new DuelBoard();
-        b.challenge(CHALLENGER, LEADER, 0);
+        challenge(b, CHALLENGER, LEADER, 0);
         b.accept(LEADER, 50);
         assertTrue(b.expire(50 + DuelBoard.TIMEOUT_TICKS).isEmpty());
         assertEquals(1, b.expire(50 + DuelBoard.TIMEOUT_TICKS + 1).size());
         assertTrue(b.all().isEmpty());
 
-        b.challenge(CHALLENGER, LEADER, 0);
+        // a duel that was on and ran out does not make the challenger wait, only a challenge nobody answered does
+        assertTrue(challenge(b, CHALLENGER, LEADER, 10_000));
+
+        b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
         b.accept(LEADER, 1);
         assertEquals(1, b.cancelInvolving(CHALLENGER).size());
         assertTrue(b.on(LEADER).isEmpty(), "the leader is still in a duel their challenger left");
-        b.challenge(CHALLENGER, LEADER, 0);
+        challenge(b, CHALLENGER, LEADER, 0);
         assertEquals(1, b.cancelInvolving(LEADER).size(), "a challenge nobody accepted yet is called off too");
+    }
+
+    @Test
+    void aSettledDuelBarsTheSamePairForTenMinutesWhoeverAsks() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        b.accept(LEADER, 1);
+        b.defeat(LEADER, 100);
+        long until = 100 + DuelBoard.PAIR_COOLDOWN_TICKS;
+        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), b.challenge(CHALLENGER, LEADER, until - 1), "challenged again at once");
+        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), b.challenge(LEADER, CHALLENGER, until - 1), "the other way round is the same pair");
+        assertTrue(challenge(b, THIRD, LEADER, until - 1), "somebody else is not barred");
+        b.cancelInvolving(THIRD);
+        assertTrue(challenge(b, CHALLENGER, LEADER, until), "still barred after ten minutes");
+    }
+
+    @Test
+    void aChallengeNobodyAnsweredBarsThatChallengerFromTheSameLeaderForFiveMinutes() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        long ran = DuelBoard.TIMEOUT_TICKS + 1;
+        assertEquals(1, b.expire(ran).size());
+        long until = ran + DuelBoard.RETRY_COOLDOWN_TICKS;
+        assertEquals(Optional.of(Refusal.RETRY_COOLDOWN), b.challenge(CHALLENGER, LEADER, until - 1), "asked again at once");
+        assertTrue(challenge(b, THIRD, LEADER, until - 1), "somebody else asked");
+        b.cancelInvolving(THIRD);
+        assertTrue(challenge(b, CHALLENGER, THIRD, until - 1), "the same challenger asked someone else");
+        b.cancelInvolving(THIRD);
+        assertTrue(challenge(b, CHALLENGER, LEADER, until), "still barred after five minutes");
+    }
+
+    @Test
+    void decliningRemovesTheChallengeAndBarsRetriesTheSameWay() {
+        DuelBoard b = new DuelBoard();
+        assertTrue(b.decline(LEADER, 0).isEmpty(), "declined a challenge nobody made");
+        challenge(b, CHALLENGER, LEADER, 0);
+        assertTrue(b.decline(CHALLENGER, 5).isEmpty(), "the challenger declined their own challenge");
+        assertTrue(b.decline(LEADER, 5).isPresent());
+        assertTrue(b.all().isEmpty());
+        assertEquals(Optional.of(Refusal.RETRY_COOLDOWN), b.challenge(CHALLENGER, LEADER, 6));
+    }
+
+    @Test
+    void aGuardStopsOnlyTheWinnerAndOnlyForAMoment() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        b.accept(LEADER, 1);
+        b.defeat(LEADER, 100);
+        assertTrue(b.guarded(LEADER, CHALLENGER, 100 + DuelBoard.GUARD_TICKS - 1), "the winner could finish the loser");
+        assertFalse(b.guarded(LEADER, THIRD, 101), "a guard stopped somebody who is not the winner");
+        assertFalse(b.guarded(CHALLENGER, LEADER, 101), "the winner is guarded too");
+        assertFalse(b.guarded(LEADER, CHALLENGER, 100 + DuelBoard.GUARD_TICKS), "the guard never ends");
     }
 }

@@ -10,8 +10,26 @@ import net.minecraft.server.level.ServerPlayer;
  * sireline index, the pack index and the Five roster) installs it; without it the hub shows nobody.
  */
 public final class HubSocial {
-    /** @param rank {@code alpha}, {@code beta} or {@code emissary} */
+    /** @param rank {@code alpha}, {@code beta}, {@code emissary} and so on; an Alpha with stacked sparks carries the count after a colon ({@code alpha:3}) */
     public record Member(String name, String rank, boolean online) {
+        /** The rank without the spark count: {@code alpha:3} is {@code alpha}. */
+        public String base() {
+            int i = rank.indexOf(':');
+            return i < 0 ? rank : rank.substring(0, i);
+        }
+
+        /** How many Alpha sparks this member holds (1 when the rank does not say). */
+        public int sparks() {
+            int i = rank.indexOf(':');
+            if (i < 0) {
+                return 1;
+            }
+            try {
+                return Math.max(1, Integer.parseInt(rank.substring(i + 1)));
+            } catch (NumberFormatException bad) {
+                return 1;
+            }
+        }
     }
 
     /** One of the family below the player: {@code depth} 1 is sired by them, 2 by those, and so on. */

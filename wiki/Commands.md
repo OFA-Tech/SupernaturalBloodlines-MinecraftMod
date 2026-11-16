@@ -24,12 +24,12 @@ Tokens last 60 seconds (calls) or 5 seconds (compulsion choices), are tied to on
 | `/pack kick <player>` | the **leader** | remove a member, online or not. A werewolf Beta becomes an Omega. There is no limit on the size of a pack. |
 | `/pack ally invite <player>` · `accept <token>` · `remove <player>` | the leader of a pack | make or end an alliance with another pack (its leader answers the **[Accept]**). Allies cannot hurt each other and the [Alpha Roar](Werewolves-And-Packs#alpha-roar) spares them. They share no pack bonus. |
 | `/pack accept <token>` | the invited player | what the button runs |
-| `/pack challenge <leader>` · `challenge accept` | a **second Alpha** of the pack; the leader | challenge the leader for the lead, and accept. A duel to the first defeat, where nobody dies and nobody loses the spark; the winner leads. It runs out after 2 minutes. See [Werewolves and packs](Werewolves-And-Packs#mixed-packs-and-alpha-packs). |
+| `/pack challenge <leader>` · `challenge accept` · `challenge decline` | a **second Alpha** of the pack; the leader | challenge the leader for the lead; the leader accepts or declines. A duel to the first defeat (any death is the defeat), where nobody dies and nobody loses the spark; the winner leads. Within 64 blocks and one dimension; 2 minutes to answer; the same two wait 10 minutes after a duel and a refused challenger 5. See [Werewolves and packs](Werewolves-And-Packs#mixed-packs-and-alpha-packs). |
 | `/pack leave` | anyone in a pack | leave the pack (a werewolf Beta becomes an Omega). The leader can't; a second Alpha or a Packmate can. |
 | `/pack info` | a pack member | the pack: its leader, members, Emissary, allies and your anchor |
 | `/pack heal <player>` | an **Alpha** | give the spark away to fully heal someone within 4 blocks, curing hybrid venom and wolfsbane. The Alpha becomes a Beta. Not for a True Alpha. |
 | `/pack roar` | an **Alpha** or True Alpha | the Alpha Roar (60 s cooldown). Same as the **Alpha Roar** [key bind](Key-Binds). |
-| `/pack emissary [player]` | an **Alpha** | name a witch, siphoner, heretic or tribrid as your Emissary. Without a name it clears it. |
+| `/pack emissary [player]` | the **leader** | name a witch, siphoner, heretic or tribrid who is **already a member** of the pack (invite them first) as your Emissary. Without a name it clears it. |
 | `/pack anchor [player]` | a werewolf | name a player as your **anchor**. Without a name it clears it. |
 
 See [Werewolves and packs](Werewolves-And-Packs#packs-and-pack) for what each one means. A refused command says why in chat (for example "Only an Alpha can do that.", "You are not in a pack.").
