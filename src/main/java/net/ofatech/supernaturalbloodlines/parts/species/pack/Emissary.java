@@ -36,8 +36,7 @@ public final class Emissary {
         if (me == null || me.level() != level) {
             return false;
         }
-        List<UUID> pack = new ArrayList<>(index.betasOf(alpha));
-        pack.add(alpha);
+        List<UUID> pack = new ArrayList<>(index.pack(alpha));
         for (UUID id : pack) {
             ServerPlayer member = id.equals(caster) ? null : SireCall.player(level.getServer(), id);
             if (member != null && member.isAlive() && member.level() == level && me.distanceToSqr(member) <= RANGE * RANGE) {

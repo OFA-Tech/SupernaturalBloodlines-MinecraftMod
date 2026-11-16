@@ -254,7 +254,7 @@ public final class WerewolfBiteGameTests {
         lookup(alpha, omega, human);
         try {
             helper.assertTrue(PackCommand.invite(omega, alpha) != null, "an Omega invited");
-            helper.assertTrue(PackCommand.invite(alpha, human) != null, "an Alpha invited a human");
+            helper.assertTrue(PackCommand.invite(alpha, human) == null, "an Alpha could not invite a human as a Packmate (plan 14)");
             helper.assertTrue(PackCommand.invite(alpha, alpha) != null, "an Alpha invited themselves");
             helper.assertTrue(PackCommand.invite(alpha, omega) == null, "the invitation was refused");
             String token = PackCommand.requests().tokenOf(alpha.getUUID(), omega.getUUID()).orElse(null);

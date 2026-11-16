@@ -145,7 +145,9 @@ public final class AlphaRoar {
         double packAttack = LadderQuery.value(p, "S-WOL-8", "pack_attack", 0);
         int packTicks = (int) LadderQuery.value(p, "S-WOL-8", "pack_ticks", BUFF_TICKS);
         PackIndex index = PackIndex.get(p.serverLevel());
-        Set<UUID> pack = new HashSet<>(index.betasOf(p.getUUID()));
+        // the whole pack: Betas, Packmates and the other Alphas (the leader when a co-Alpha roars)
+        Set<UUID> pack = new HashSet<>(index.pack(p.getUUID()));
+        pack.remove(p.getUUID());
         for (UUID id : pack) {
             ServerPlayer beta = SireCall.player(p.server, id);
             if (inRange(p, beta, PACK_RANGE * range)) {
@@ -161,7 +163,7 @@ public final class AlphaRoar {
             }
         }
         for (ServerPlayer other : players.apply(p.server)) {
-            if (other != p && !pack.contains(other.getUUID()) && VampirismSupernatural.isWerewolf(other) && inRange(p, other, SUBMIT_RANGE * range)) {
+            if (other != p && !pack.contains(other.getUUID()) && !index.alliedPlayers(p.getUUID(), other.getUUID()) && VampirismSupernatural.isWerewolf(other) && inRange(p, other, SUBMIT_RANGE * range)) {
                 VampirismAPI.factionPlayerHandler(other).getCurrentFactionPlayer()
                         .filter(f -> f instanceof IWerewolfPlayer).ifPresent(f -> FormHelper.deactivateWerewolfActions((IWerewolfPlayer) f));
                 other.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, SUBMIT_TICKS, 1));

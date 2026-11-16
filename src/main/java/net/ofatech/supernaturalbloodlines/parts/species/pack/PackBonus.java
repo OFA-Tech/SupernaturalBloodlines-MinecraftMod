@@ -86,7 +86,11 @@ public final class PackBonus {
         }
         List<ServerPlayer> near = new ArrayList<>();
         int doubled = 0;
-        for (UUID id : PackIndex.get(alpha.serverLevel()).betasOf(alpha.getUUID())) {
+        // the whole pack counts: Betas, Packmates and the other Alphas (a mixed pack has every perk)
+        for (UUID id : PackIndex.get(alpha.serverLevel()).pack(alpha.getUUID())) {
+            if (id.equals(alpha.getUUID())) {
+                continue;
+            }
             ServerPlayer beta = SireCall.player(alpha.server, id);
             if (beta != null && beta.isAlive() && beta.level() == alpha.level() && alpha.distanceToSqr(beta) <= RANGE * RANGE) {
                 near.add(beta);

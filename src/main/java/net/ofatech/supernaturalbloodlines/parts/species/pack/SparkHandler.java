@@ -20,6 +20,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackLeadership;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
@@ -161,16 +162,54 @@ public final class SparkHandler {
         return best;
     }
 
+    /**
+     * The co-Alpha who takes the pack when {@code alpha} stops leading it: the strongest other Alpha of the pack, online or not
+     * (an Alpha Pack hands over to an Alpha before any Beta is made one).
+     */
+    @Nullable
+    static UUID coAlphaHeir(ServerPlayer alpha) {
+        PackIndex index = PackIndex.get(alpha.serverLevel());
+        UUID best = null;
+        int bestStrength = 0;
+        for (UUID id : index.betasOf(alpha.getUUID())) {
+            int s = index.strengthOf(id);
+            if (PackLeadership.isAlpha(s) && !index.isFormerAlpha(id) && s > bestStrength) {
+                best = id;
+                bestStrength = s;
+            }
+        }
+        return best;
+    }
+
+    /** The pack of {@code from} goes to the co-Alpha {@code heir}, who is an Alpha already: the index moves, the online Betas follow. */
+    private static void handOverToCoAlpha(ServerPlayer from, UUID heir) {
+        PackIndex index = PackIndex.get(from.serverLevel());
+        List<UUID> members = index.betasOf(from.getUUID());
+        index.transfer(from.getUUID(), heir);
+        members.forEach(b -> repoint(from.server, b, heir));
+    }
+
     /** The Alpha leaves the werewolves or is cured: the spark goes to the heir, the Alpha is an Omega with no pack. A True Alpha only dissolves the pack. */
     static void passOn(ServerPlayer alpha) {
+        PackIndex own = PackIndex.get(alpha.serverLevel());
+        if (own.alphaOf(alpha.getUUID()).isPresent()) {
+            // a co-Alpha has no pack of their own to hand over: they just leave the one they were in
+            own.leave(alpha.getUUID());
+            own.markFormerAlpha(alpha.getUUID());
+            PackAccess.applyPack(alpha, PackEvent.SPARK_LOST, PackContext.defaults());
+            return;
+        }
         if (PackAccess.wolf(alpha).rank() == Rank.TRUE_ALPHA) {
             // a True Alpha keeps the spark and the rank (dormant outside the faction): only the pack dissolves. The tombstone
             // dissolve leaves says "not holding it now" for an offline check; onFaction clears it on rejoining
             dissolve(alpha);
             return;
         }
-        ServerPlayer heir = heirOf(alpha);
-        if (heir != null) {
+        UUID coHeir = coAlphaHeir(alpha);
+        ServerPlayer heir = coHeir == null ? heirOf(alpha) : null;
+        if (coHeir != null) {
+            handOverToCoAlpha(alpha, coHeir);
+        } else if (heir != null) {
             handOver(alpha, heir);
         } else {
             dissolve(alpha);
@@ -183,6 +222,12 @@ public final class SparkHandler {
      * the pack dissolves and the Alpha is an Omega.
      */
     static void giveUp(ServerPlayer alpha) {
+        UUID coHeir = coAlphaHeir(alpha);
+        if (coHeir != null) {
+            handOverToCoAlpha(alpha, coHeir);
+            PackAccess.applyPack(alpha, PackEvent.SPARK_GIVEN_UP, context(coHeir, alpha.level().getGameTime()));
+            return;
+        }
         ServerPlayer heir = heirOf(alpha);
         if (heir == null) {
             dissolve(alpha);
@@ -213,7 +258,7 @@ public final class SparkHandler {
     }
 
     /** An online Beta now belongs to {@code newAlpha}; the index was moved already, so only their own state changes. */
-    private static void repoint(MinecraftServer server, UUID beta, UUID newAlpha) {
+    static void repoint(MinecraftServer server, UUID beta, UUID newAlpha) {
         ServerPlayer b = SireCall.player(server, beta);
         WolfState w = b == null ? null : PackAccess.wolf(b);
         if (w != null && w.lineage() != Lineage.NONE && w.packAlpha() != null && !beta.equals(newAlpha)) {

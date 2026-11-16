@@ -58,19 +58,10 @@ public final class DefenderKills {
         }
     }
 
-    @Nullable
-    private static UUID leaderOf(ServerPlayer p) {
-        WolfState w = PackAccess.wolf(p);
-        if (w.lineage() == Lineage.NONE) {
-            return null;
-        }
-        return PackAccess.isAlpha(w.rank()) ? p.getUUID() : w.packAlpha();
-    }
-
-    /** Both are werewolves under the same Alpha (or one is the Alpha). */
+    /** Both are in the same pack: the same leader, whoever they are (a Packmate counts), and not alone. */
     private static boolean samePack(ServerPlayer a, ServerPlayer b) {
-        UUID leader = leaderOf(a);
-        return leader != null && leader.equals(leaderOf(b));
+        PackIndex index = PackIndex.get(a.serverLevel());
+        return index.inPack(a.getUUID()) && index.leaderOf(a.getUUID()).equals(index.leaderOf(b.getUUID()));
     }
 
     /**

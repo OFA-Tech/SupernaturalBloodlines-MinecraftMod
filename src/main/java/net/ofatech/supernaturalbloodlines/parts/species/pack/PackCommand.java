@@ -9,7 +9,9 @@ import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -21,6 +23,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.CallRequests;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
@@ -34,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 public final class PackCommand {
     private static final String KEY = "supernaturalbloodlines.pack.";
     private static final CallRequests REQUESTS = new CallRequests();
+    private static final CallRequests ALLY_REQUESTS = new CallRequests();
     private static final double HEAL_RANGE = 4;
 
     private PackCommand() {
@@ -53,6 +57,25 @@ public final class PackCommand {
                         .then(Commands.argument("token", StringArgumentType.word())
                                 .executes(c -> run(c, accept(self(c), StringArgumentType.getString(c, "token"))))))
                 .then(Commands.literal("leave").executes(c -> run(c, leave(self(c)))))
+                .then(Commands.literal("kick")
+                        .then(Commands.argument("player", GameProfileArgument.gameProfile())
+                                .executes(c -> {
+                                    GameProfile g = GameProfileArgument.getGameProfiles(c, "player").iterator().next();
+                                    return run(c, kick(self(c), g.getId(), g.getName()));
+                                })))
+                .then(Commands.literal("ally")
+                        .then(Commands.literal("invite")
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .executes(c -> run(c, allyInvite(self(c), EntityArgument.getPlayer(c, "player"))))))
+                        .then(Commands.literal("accept")
+                                .then(Commands.argument("token", StringArgumentType.word())
+                                        .executes(c -> run(c, allyAccept(self(c), StringArgumentType.getString(c, "token"))))))
+                        .then(Commands.literal("remove")
+                                .then(Commands.argument("player", GameProfileArgument.gameProfile())
+                                        .executes(c -> {
+                                            GameProfile g = GameProfileArgument.getGameProfiles(c, "player").iterator().next();
+                                            return run(c, allyRemove(self(c), g.getId(), g.getName()));
+                                        }))))
                 .then(Commands.literal("heal")
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(c -> run(c, heal(self(c), EntityArgument.getPlayer(c, "player"))))))
@@ -103,17 +126,15 @@ public final class PackCommand {
         if (!isActiveAlpha(alpha)) {
             return error("not_alpha");
         }
+        PackIndex index = PackIndex.get(alpha.serverLevel());
+        if (!index.leaderOf(alpha.getUUID()).equals(alpha.getUUID())) {
+            return error("not_leader");
+        }
         if (target == alpha) {
             return error("self");
         }
-        WolfState t = PackAccess.wolf(target);
-        if (t.lineage() == Lineage.NONE) {
-            return error("target_not_werewolf", name(target));
-        }
-        if (PackAccess.isAlpha(t.rank())) {
-            return error("target_alpha", name(target));
-        }
-        if (t.packAlpha() != null) {
+        // anyone can join: a werewolf as a Beta, an Alpha as a second Alpha, everyone else as a Packmate; only a player already in someone else's pack cannot
+        if (index.alphaOf(target.getUUID()).isPresent() || PackAccess.wolf(target).packAlpha() != null) {
             return error("target_has_pack", name(target));
         }
         long now = alpha.serverLevel().getGameTime();
@@ -141,16 +162,29 @@ public final class PackCommand {
             return error("alpha_gone");
         }
         WolfState w = PackAccess.wolf(p);
-        if (w.lineage() == Lineage.NONE) {
-            return error("not_werewolf");
-        }
+        PackIndex index = PackIndex.get(p.serverLevel());
+        UUID leader = index.leaderOf(alpha.getUUID());
         // a Beta keeps their pack until /pack leave: a second invitation or bite never switches it
-        if (w.packAlpha() != null) {
+        if (w.packAlpha() != null || index.alphaOf(p.getUUID()).isPresent()) {
             return error("has_pack");
         }
-        if (PackAccess.applyPack(p, PackEvent.JOINED_PACK, context(alpha.getUUID(), now)).refused()) {
-            return error("refused");
+        if (leader.equals(p.getUUID())) {
+            return error("self");
         }
+        if (w.lineage() != Lineage.NONE && !PackAccess.isAlpha(w.rank())) {
+            if (PackAccess.applyPack(p, PackEvent.JOINED_PACK, context(leader, now)).refused()) {
+                return error("refused");
+            }
+        } else {
+            // an Alpha keeps the spark and a non-werewolf is a Packmate: the index alone holds them (a leader brings their members)
+            List<UUID> own = index.betasOf(p.getUUID());
+            if (!index.join(leader, p.getUUID())) {
+                return error("refused");
+            }
+            own.forEach(id -> SparkHandler.repoint(p.server, id, leader));
+        }
+        PackLeader.refresh(p);
+        PartyLink.sync(p.server, p.getUUID(), true);
         p.sendSystemMessage(Component.translatable(KEY + "joined", name(alpha)));
         alpha.sendSystemMessage(Component.translatable(KEY + "joined_alpha", name(p)));
         return null;
@@ -159,14 +193,101 @@ public final class PackCommand {
     @Nullable
     public static Component leave(ServerPlayer p) {
         WolfState w = PackAccess.wolf(p);
-        if (PackAccess.isAlpha(w.rank())) {
+        PackIndex index = PackIndex.get(p.serverLevel());
+        if (index.alphaOf(p.getUUID()).isEmpty() && PackAccess.isAlpha(w.rank())) {
             return error("alpha_cannot_leave");
         }
-        if (w.packAlpha() == null) {
+        if (index.alphaOf(p.getUUID()).isEmpty() && w.packAlpha() == null) {
             return error("no_pack");
         }
-        PackAccess.applyPack(p, PackEvent.LEFT_PACK, context(null, p.serverLevel().getGameTime()));
+        if (w.lineage() != Lineage.NONE && !PackAccess.isAlpha(w.rank())) {
+            PackAccess.applyPack(p, PackEvent.LEFT_PACK, context(null, p.serverLevel().getGameTime()));
+        }
+        // a co-Alpha or a Packmate lives in the index only
+        UUID wasIn = index.leaderOf(p.getUUID());
+        index.leave(p.getUUID());
+        PartyLink.sync(p.server, wasIn, true);
         p.sendSystemMessage(Component.translatable(KEY + "left"));
+        return null;
+    }
+
+    /** The leader removes a member, online or not. A werewolf Beta becomes an Omega (now, or at their next login). */
+    @Nullable
+    public static Component kick(ServerPlayer leader, UUID target, String targetName) {
+        if (!isActiveAlpha(leader)) {
+            return error("not_alpha");
+        }
+        PackIndex index = PackIndex.get(leader.serverLevel());
+        if (!index.leaderOf(leader.getUUID()).equals(leader.getUUID())) {
+            return error("not_leader");
+        }
+        if (target.equals(leader.getUUID())) {
+            return error("self");
+        }
+        if (!index.betasOf(leader.getUUID()).contains(target)) {
+            return error("not_member", targetName);
+        }
+        PackMembers.remove(leader.server, target, Component.translatable(KEY + "kicked", name(leader)));
+        leader.sendSystemMessage(Component.translatable(KEY + "kicked_ok", targetName));
+        PartyLink.sync(leader.server, leader.getUUID(), true);
+        return null;
+    }
+
+    /** One leader asks another to ally their packs. */
+    @Nullable
+    public static Component allyInvite(ServerPlayer leader, ServerPlayer target) {
+        PackIndex index = PackIndex.get(leader.serverLevel());
+        if (!isActiveAlpha(leader) || !index.leaderOf(leader.getUUID()).equals(leader.getUUID())) {
+            return error("not_leader");
+        }
+        if (target == leader) {
+            return error("self");
+        }
+        if (!index.leaderOf(target.getUUID()).equals(target.getUUID()) || !isActiveAlpha(target)) {
+            return error("ally_not_leader", name(target));
+        }
+        if (index.alliesOf(leader.getUUID()).contains(target.getUUID())) {
+            return error("ally_already", name(target));
+        }
+        String token = ALLY_REQUESTS.open(leader.getUUID(), target.getUUID(), leader.serverLevel().getGameTime());
+        Component accept = Component.translatable(KEY + "accept").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
+                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pack ally accept " + token)));
+        target.sendSystemMessage(Component.translatable(KEY + "ally_invite", name(leader)).append(" ").append(accept));
+        leader.sendSystemMessage(Component.translatable(KEY + "ally_invited", name(target)));
+        return null;
+    }
+
+    @Nullable
+    public static Component allyAccept(ServerPlayer p, String token) {
+        long now = p.serverLevel().getGameTime();
+        CallRequests.Request r = ALLY_REQUESTS.take(token, p.getUUID(), now).orElse(null);
+        if (r == null) {
+            return error("expired");
+        }
+        ServerPlayer other = SireCall.player(p.server, r.caller());
+        PackIndex index = PackIndex.get(p.serverLevel());
+        if (other == null || !isActiveAlpha(other) || !isActiveAlpha(p)) {
+            return error("alpha_gone");
+        }
+        if (!index.ally(index.leaderOf(p.getUUID()), index.leaderOf(other.getUUID()))) {
+            return error("refused");
+        }
+        p.sendSystemMessage(Component.translatable(KEY + "ally_made", name(other)));
+        other.sendSystemMessage(Component.translatable(KEY + "ally_made", name(p)));
+        return null;
+    }
+
+    /** Either leader ends an alliance with the pack {@code target} is in. */
+    @Nullable
+    public static Component allyRemove(ServerPlayer leader, UUID target, String targetName) {
+        PackIndex index = PackIndex.get(leader.serverLevel());
+        if (!isActiveAlpha(leader) || !index.leaderOf(leader.getUUID()).equals(leader.getUUID())) {
+            return error("not_leader");
+        }
+        if (!index.unally(leader.getUUID(), index.leaderOf(target))) {
+            return error("ally_none", targetName);
+        }
+        leader.sendSystemMessage(Component.translatable(KEY + "ally_ended", targetName));
         return null;
     }
 
@@ -246,19 +367,21 @@ public final class PackCommand {
 
     private static int info(CommandSourceStack source, ServerPlayer p) {
         WolfState w = PackAccess.wolf(p);
-        if (w.lineage() == Lineage.NONE) {
+        PackIndex index = PackIndex.get(p.serverLevel());
+        if (w.lineage() == Lineage.NONE && !index.inPack(p.getUUID())) {
             source.sendFailure(error("not_werewolf"));
             return 0;
         }
-        PackIndex index = PackIndex.get(p.serverLevel());
         MutableComponent out = Component.translatable(KEY + "info.header", name(p))
                 .append("\n").append(Component.translatable(KEY + "info.rank", w.rank().name()));
-        if (PackAccess.isAlpha(w.rank())) {
+        UUID leader = index.leaderOf(p.getUUID());
+        if (leader.equals(p.getUUID())) {
             out.append("\n").append(Component.translatable(KEY + "info.betas", names(p, index.betasOf(p.getUUID()))));
             out.append("\n").append(Component.translatable(KEY + "info.emissary", names(p, index.emissaryOf(p.getUUID()).stream().toList())));
         } else {
-            out.append("\n").append(Component.translatable(KEY + "info.alpha", names(p, index.alphaOf(p.getUUID()).stream().toList())));
+            out.append("\n").append(Component.translatable(KEY + "info.alpha", names(p, List.of(leader))));
         }
+        out.append("\n").append(Component.translatable(KEY + "info.allies", names(p, List.copyOf(index.alliesOf(leader)))));
         out.append("\n").append(Component.translatable(KEY + "info.anchor", names(p, index.anchorOf(p.getUUID()).stream().toList())));
         source.sendSuccess(() -> out, false);
         return 1;

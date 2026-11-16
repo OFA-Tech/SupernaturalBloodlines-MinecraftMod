@@ -172,6 +172,9 @@ public final class SpeciesPart {
             GeneAwakening.register();
             GeneHandler.register();
             PackIndex.register();
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackLeader.register();
+            net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink.register();
+            net.ofatech.supernaturalbloodlines.parts.species.pack.AllyProtection.register();
             LineageBackfill.register();
             AlphaBite.register();
             SparkHandler.register(); // after GeneHandler: an awakening comes before the innocent kill that caused it
@@ -245,6 +248,7 @@ public final class SpeciesPart {
                 e.register(WerewolfBiteGameTests.class);
                 e.register(WerewolfSparkGameTests.class);
                 e.register(PackBonusGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AlphaPackGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.FreeWillGameTests.class);
                 e.register(EclipseElectricityGameTests.class);
             }

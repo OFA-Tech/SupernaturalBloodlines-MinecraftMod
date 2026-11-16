@@ -23,7 +23,10 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackLeadership;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
+import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +42,9 @@ public final class PackIndex extends SavedData {
     private static final String ANCHORS = "anchors";
     private static final String FORMER = "former_alphas";
     private static final String DISSOLVED = "dissolved";
+    private static final String STRENGTHS = "strengths";
+    private static final String ALLIES = "allies";
+    private static final String MIRRORS = "party_mirrors";
     private static final String KEY = "key";
     private static final String VALUE = "value";
 
@@ -50,8 +56,14 @@ public final class PackIndex extends SavedData {
     private final Set<UUID> formerAlphas = new HashSet<>();
     // Betas of a pack that dissolved while they were away: they become Omegas at their next login
     private final Set<UUID> dissolved = new HashSet<>();
+    // the packed strength (PackLeadership.strength) each member last had while online: an offline Alpha still counts
+    private final Map<UUID, Integer> strengths = new HashMap<>();
+    // leader -> the leaders of the packs allied with it (kept both ways)
+    private final Map<UUID, Set<UUID>> allies = new HashMap<>();
+    // member -> the owner of the Open Parties and Claims party we put them in (see PartyLink)
+    private final Map<UUID, UUID> mirrors = new HashMap<>();
 
-    PackIndex() {
+    public PackIndex() {
     }
 
     /** One index per world: always the overworld's storage, whichever level is passed. */
@@ -59,11 +71,27 @@ public final class PackIndex extends SavedData {
         return level.getServer().overworld().getDataStorage().computeIfAbsent(new Factory<>(PackIndex::new, PackIndex::load, null), NAME);
     }
 
-    /** Keeps the index in step with {@code WolfState.packAlpha}: on every change, and at login (heals a lost file). */
+    /** Set while a Beta is made a second Alpha of the pack they are in (the Alpha Trial): they stay in it. */
+    static final ThreadLocal<Boolean> KEEP_PACK = ThreadLocal.withInitial(() -> false);
+
+    /**
+     * Keeps the index in step with {@code WolfState.packAlpha}: on every change, and at login (heals a lost file). A cured
+     * werewolf and a Beta who becomes an Alpha of their own (not through the trial) leave the pack they were in; a Packmate
+     * (not a werewolf) and a co-Alpha live in the index only.
+     */
     public static void register() {
         BloodlineAccess.addListener((p, change) -> {
-            if (!Objects.equals(change.before().wolf().packAlpha(), change.after().wolf().packAlpha())) {
+            WolfState before = change.before().wolf();
+            WolfState after = change.after().wolf();
+            boolean cured = before.lineage() != Lineage.NONE && after.lineage() == Lineage.NONE;
+            boolean ownSpark = before.rank() == Rank.BETA && PackAccess.isAlpha(after.rank()) && !KEEP_PACK.get();
+            if (cured || ownSpark) {
+                get(p.serverLevel()).leave(p.getUUID());
+            } else if (!Objects.equals(before.packAlpha(), after.packAlpha())) {
                 follow(p);
+            }
+            if (before.rank() != after.rank() || before.lineage() != after.lineage()) {
+                PackLeader.refresh(p);
             }
             // a dormant True Alpha (outside the faction) keeps its tombstone until it rejoins
             if (PackAccess.isAlpha(change.after().wolf().rank()) && VampirismSupernatural.isWerewolf(p)) {
@@ -88,15 +116,22 @@ public final class PackIndex extends SavedData {
         }
         WolfState w = PackAccess.wolf(p);
         UUID indexed = index.alphaOf(p.getUUID()).orElse(null);
-        if (w.packAlpha() != null && indexed != null && !indexed.equals(w.packAlpha()) && index.isFormerAlpha(w.packAlpha())) {
+        if (w.packAlpha() != null && indexed != null && !indexed.equals(w.packAlpha())
+                && (index.isFormerAlpha(w.packAlpha()) || indexed.equals(index.leaderOf(w.packAlpha())))) {
             BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().wolf(w.toBuilder().packAlpha(indexed).build()).build());
         }
         follow(p);
+        PackLeader.refresh(p);
     }
 
     private static void follow(ServerPlayer p) {
         PackIndex index = get(p.serverLevel());
-        UUID alpha = PackAccess.wolf(p).packAlpha();
+        WolfState w = PackAccess.wolf(p);
+        UUID alpha = w.packAlpha();
+        // a co-Alpha and a Packmate (no werewolf state, no Alpha of their own named) live in the index only
+        if (PackAccess.isAlpha(w.rank()) || (alpha == null && w.lineage() == Lineage.NONE)) {
+            return;
+        }
         if (!Objects.equals(index.alphaOf(p.getUUID()).orElse(null), alpha)) {
             index.leave(p.getUUID());
             if (alpha != null) {
@@ -105,10 +140,65 @@ public final class PackIndex extends SavedData {
         }
     }
 
+    /** The leader of the pack {@code p} is in, or {@code p} itself when they lead (or are alone). */
+    public UUID leaderOf(UUID p) {
+        return alphaOf.getOrDefault(p, p);
+    }
+
+    /** Whether {@code p} is in a pack of anyone else: a member, or a leader with members. */
+    public boolean inPack(UUID p) {
+        return alphaOf.containsKey(p) || alphaOf.containsValue(p);
+    }
+
+    /** The whole pack of {@code p}: the leader first, then every member in the order they joined. */
+    public List<UUID> pack(UUID p) {
+        UUID leader = leaderOf(p);
+        List<UUID> out = new ArrayList<>();
+        out.add(leader);
+        out.addAll(betasOf(leader));
+        return out;
+    }
+
+    /** Every leader that has members. */
+    public Set<UUID> leaders() {
+        return new HashSet<>(alphaOf.values());
+    }
+
+    /** The members of {@code pack} (and anyone else still marked as put in a party by an owner in it) we mirrored. */
+    public Set<UUID> mirrorsOf(List<UUID> pack) {
+        Set<UUID> out = new HashSet<>();
+        mirrors.forEach((member, owner) -> {
+            if (pack.contains(owner)) {
+                out.add(member);
+            }
+        });
+        return out;
+    }
+
+    public Optional<UUID> mirrorOwner(UUID member) {
+        return Optional.ofNullable(mirrors.get(member));
+    }
+
+    public void setMirror(UUID member, @Nullable UUID owner) {
+        put(mirrors, member, owner);
+    }
+
+    public int strengthOf(UUID id) {
+        return strengths.getOrDefault(id, 0);
+    }
+
+    public void setStrength(UUID id, int strength) {
+        Integer old = strengths.put(id, strength);
+        if (old == null || old != strength) {
+            setDirty();
+        }
+    }
+
     public Optional<UUID> alphaOf(UUID beta) {
         return Optional.ofNullable(alphaOf.get(beta));
     }
 
+    /** Every member of the pack led by {@code alpha}: Betas, Packmates and co-Alphas, in the order they joined (not the leader). */
     public List<UUID> betasOf(UUID alpha) {
         List<UUID> out = new ArrayList<>();
         alphaOf.forEach((beta, a) -> {
@@ -119,14 +209,108 @@ public final class PackIndex extends SavedData {
         return out;
     }
 
-    /** @return false when the beta already has an Alpha (a pack is never switched silently) or is the Alpha itself */
+    /**
+     * @return false when the beta already has an Alpha (a pack is never switched silently), is the Alpha itself, or {@code alpha}
+     *         is not a leader. A leader who joins another pack brings their own members along.
+     */
     public boolean join(UUID alpha, UUID beta) {
-        if (alpha.equals(beta) || alphaOf.containsKey(beta)) {
+        if (alpha.equals(beta) || alphaOf.containsKey(beta) || alphaOf.containsKey(alpha)) {
             return false;
         }
+        for (UUID own : betasOf(beta)) {
+            alphaOf.put(own, alpha);
+        }
         alphaOf.put(beta, alpha);
+        allies.remove(beta);
+        allies.values().forEach(s -> s.remove(beta));
         setDirty();
         return true;
+    }
+
+    /**
+     * The strongest Alpha of the pack of {@code p} leads it: they become the leader, the old leader a member, and everyone follows.
+     * @return the new leader when it changed, else empty
+     */
+    public Optional<UUID> recalc(UUID p) {
+        UUID leader = leaderOf(p);
+        List<PackLeadership.Candidate> candidates = new ArrayList<>();
+        for (UUID id : pack(leader)) {
+            candidates.add(new PackLeadership.Candidate(id, strengthOf(id)));
+        }
+        Optional<UUID> best = PackLeadership.pick(candidates, leader);
+        if (best.isEmpty() || best.get().equals(leader)) {
+            return Optional.empty();
+        }
+        promote(leader, best.get());
+        return best;
+    }
+
+    /** {@code next} (a member) leads, {@code old} stays in the pack as a member; allies and the emissary go with the leadership. */
+    public void promote(UUID old, UUID next) {
+        alphaOf.remove(next);
+        alphaOf.replaceAll((member, a) -> a.equals(old) ? next : a);
+        alphaOf.put(old, next);
+        moveLeadership(old, next);
+        setDirty();
+    }
+
+    private void moveLeadership(UUID old, UUID next) {
+        UUID emissary = emissaryOf.remove(old);
+        if (emissary != null && !emissaryOf.containsKey(next)) {
+            emissaryOf.put(next, emissary);
+        }
+        Set<UUID> mine = allies.remove(old);
+        if (mine != null) {
+            mine.remove(next);
+            allies.computeIfAbsent(next, k -> new HashSet<>()).addAll(mine);
+        }
+        allies.values().forEach(s -> {
+            if (s.remove(old)) {
+                s.add(next);
+            }
+        });
+        allies.values().removeIf(Set::isEmpty);
+    }
+
+    /** The leader removes a member (online or not): a werewolf Beta becomes an Omega at their next login. @return false if they were no member */
+    public boolean kick(UUID member) {
+        if (alphaOf.remove(member) == null) {
+            return false;
+        }
+        dissolved.add(member);
+        setDirty();
+        return true;
+    }
+
+    public Set<UUID> alliesOf(UUID leader) {
+        return Set.copyOf(allies.getOrDefault(leader, Set.of()));
+    }
+
+    /** Two leaders ally (both ways). @return false for the same leader, someone who is not a leader or an alliance that exists */
+    public boolean ally(UUID a, UUID b) {
+        if (a.equals(b) || alphaOf.containsKey(a) || alphaOf.containsKey(b) || !allies.computeIfAbsent(a, k -> new HashSet<>()).add(b)) {
+            allies.values().removeIf(Set::isEmpty);
+            return false;
+        }
+        allies.computeIfAbsent(b, k -> new HashSet<>()).add(a);
+        setDirty();
+        return true;
+    }
+
+    public boolean unally(UUID a, UUID b) {
+        boolean was = allies.getOrDefault(a, new HashSet<>()).remove(b) | allies.getOrDefault(b, new HashSet<>()).remove(a);
+        allies.values().removeIf(Set::isEmpty);
+        if (was) {
+            setDirty();
+        }
+        return was;
+    }
+
+    /** Whether {@code a} and {@code b} are in packs that are allied (not the same pack). */
+    public boolean alliedPlayers(UUID a, UUID b) {
+        UUID la = leaderOf(a);
+        UUID lb = leaderOf(b);
+        return !la.equals(lb) && allies.getOrDefault(la, Set.of()).contains(lb);
     }
 
     public void leave(UUID beta) {
@@ -143,6 +327,7 @@ public final class PackIndex extends SavedData {
         alphaOf.remove(newAlpha);
         alphaOf.replaceAll((beta, a) -> a.equals(oldAlpha) ? newAlpha : a);
         alphaOf.remove(oldAlpha);
+        moveLeadership(oldAlpha, newAlpha);
         emissaryOf.remove(oldAlpha);
         formerAlphas.add(oldAlpha);
         formerAlphas.remove(newAlpha);
@@ -156,6 +341,9 @@ public final class PackIndex extends SavedData {
             dissolved.add(beta);
         }
         emissaryOf.remove(alpha);
+        allies.remove(alpha);
+        allies.values().forEach(s -> s.remove(alpha));
+        allies.values().removeIf(Set::isEmpty);
         formerAlphas.add(alpha);
         setDirty();
     }
@@ -212,13 +400,25 @@ public final class PackIndex extends SavedData {
         }
     }
 
-    static PackIndex load(CompoundTag tag, HolderLookup.Provider registries) {
+    public static PackIndex load(CompoundTag tag, HolderLookup.Provider registries) {
         PackIndex i = new PackIndex();
         read(tag, MEMBERS, i.alphaOf);
         read(tag, EMISSARIES, i.emissaryOf);
         read(tag, ANCHORS, i.anchorOf);
         readIds(tag, FORMER, i.formerAlphas);
         readIds(tag, DISSOLVED, i.dissolved);
+        read(tag, MIRRORS, i.mirrors);
+        for (Tag t : tag.getList(STRENGTHS, Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            i.strengths.put(NbtUtils.loadUUID(e.get(KEY)), e.getInt(VALUE));
+        }
+        for (Tag t : tag.getList(ALLIES, Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            UUID a = NbtUtils.loadUUID(e.get(KEY));
+            UUID b = NbtUtils.loadUUID(e.get(VALUE));
+            i.allies.computeIfAbsent(a, k -> new HashSet<>()).add(b);
+            i.allies.computeIfAbsent(b, k -> new HashSet<>()).add(a);
+        }
         return i;
     }
 
@@ -259,6 +459,25 @@ public final class PackIndex extends SavedData {
         write(tag, ANCHORS, anchorOf);
         writeIds(tag, FORMER, formerAlphas);
         writeIds(tag, DISSOLVED, dissolved);
+        write(tag, MIRRORS, mirrors);
+        ListTag strong = new ListTag();
+        strengths.forEach((id, s) -> {
+            CompoundTag e = new CompoundTag();
+            e.put(KEY, NbtUtils.createUUID(id));
+            e.putInt(VALUE, s);
+            strong.add(e);
+        });
+        tag.put(STRENGTHS, strong);
+        ListTag pairs = new ListTag();
+        allies.forEach((a, set) -> set.forEach(b -> {
+            if (a.compareTo(b) < 0) {
+                CompoundTag e = new CompoundTag();
+                e.put(KEY, NbtUtils.createUUID(a));
+                e.put(VALUE, NbtUtils.createUUID(b));
+                pairs.add(e);
+            }
+        }));
+        tag.put(ALLIES, pairs);
         return tag;
     }
 }
