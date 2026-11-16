@@ -19,6 +19,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.DetailLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.ModelDrag;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.SourceTag;
@@ -253,7 +254,8 @@ public final class KitDraw {
             int label = a.primary() ? Contrast.bestText(fill) : a.enabled() ? theme.ink() : theme.muted();
             g.fill(b.x(), b.y(), b.right(), b.bottom(), a.enabled() ? theme.accent() : theme.muted());
             g.fill(b.x() + 1, b.y() + 1, b.right() - 1, b.bottom() - 1, hot && !a.primary() ? theme.good() : fill);
-            g.drawString(font, a.label(), b.x() + (b.w() - font.width(a.label())) / 2, b.y() + 3,
+            String shown = LabelFit.cut(a.label().getString(), b.w() - 8, font::width);
+            g.drawString(font, shown, b.x() + (b.w() - font.width(shown)) / 2, b.y() + 3,
                     hot && !a.primary() ? Contrast.bestText(theme.good()) : label, false);
         }
         detailActions(ctx, theme, rects, d);
@@ -371,14 +373,11 @@ public final class KitDraw {
         g.fill(0, 0, screenW, screenH, 0xB0000000);
         g.fill(panel.x() - 1, panel.y() - 1, panel.right() + 1, panel.bottom() + 1, theme.accent());
         g.fill(panel.x(), panel.y(), panel.right(), panel.bottom(), theme.paper());
-        g.drawString(font, title, panel.x() + ConfirmLayout.PAD, panel.y() + ConfirmLayout.PAD, theme.accent(), false);
+        g.drawString(font, LabelFit.cut(title.getString(), panel.w() - 2 * ConfirmLayout.PAD, font::width), panel.x() + ConfirmLayout.PAD, panel.y() + ConfirmLayout.PAD, theme.accent(), false);
         Rect text = l.text();
         int y = text.y();
-        int lines = 0;
-        for (FormattedCharSequence part : font.split(body, text.w())) {
-            if (++lines > l.maxLines()) {
-                break;
-            }
+        // a body longer than the panel has lines for ends in an ellipsis; it is never cut off in silence
+        for (String part : LabelFit.wrap(body.getString(), text.w(), l.maxLines(), font::width)) {
             g.drawString(font, part, text.x(), y, theme.ink(), false);
             y += ConfirmLayout.LINE;
         }
@@ -390,7 +389,8 @@ public final class KitDraw {
         int fill = primary ? theme.accent() : theme.paper();
         g.fill(r.x(), r.y(), r.right(), r.bottom(), theme.accent());
         g.fill(r.x() + 1, r.y() + 1, r.right() - 1, r.bottom() - 1, fill);
-        g.drawString(font, label, r.x() + (r.w() - font.width(label)) / 2, r.y() + 4, primary ? Contrast.bestText(fill) : theme.ink(), false);
+        String shown = LabelFit.cut(label.getString(), r.w() - 8, font::width);
+        g.drawString(font, shown, r.x() + (r.w() - font.width(shown)) / 2, r.y() + 4, primary ? Contrast.bestText(fill) : theme.ink(), false);
         if (focused) {
             focusRing(g, r, theme.focusColor());
         }

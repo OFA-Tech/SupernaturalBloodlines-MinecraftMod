@@ -236,6 +236,9 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     }
 
     private static final int PILL_ROW = 16;
+    /** A disabled primary pill: a muted fill and the label on it (checked in the contrast test). */
+    private static final int DISABLED_FILL = 0xFF5a3a42;
+    private static final int DISABLED_TEXT = 0xFFd8b8c0;
     /** The glow behind the stage is baked at this radius in pixels and stretched to the real one. */
     private static final int GLOW_PX = 64;
     /** The primary pill's fill: a red dark enough for the pale label (4.5:1), and its hovered step. */
@@ -247,11 +250,11 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         GuiGraphics g = ctx.g();
         Font font = ctx.font();
         boolean hot = a.enabled() && (ctx.hovered(pill) || ctx.focused("detail:" + a.id()));
-        int fill = a.primary() ? (a.enabled() ? (hot ? PRIMARY_HOT : PRIMARY) : 0xFF5a3a42) : (hot ? 0xFF3a1822 : PILL);
+        int fill = a.primary() ? (a.enabled() ? (hot ? PRIMARY_HOT : PRIMARY) : DISABLED_FILL) : (hot ? 0xFF3a1822 : PILL);
         g.fill(pill.x(), pill.y(), pill.right(), pill.bottom(), a.primary() ? fill : EDGE);
         g.fill(pill.x() + 1, pill.y() + 1, pill.right() - 1, pill.bottom() - 1, fill);
         String label = LabelFit.cut(a.label().getString(), pill.w() - 6, font::width);
-        g.drawString(font, label, pill.x() + (pill.w() - font.width(label)) / 2, pill.y() + 4, a.enabled() ? (a.primary() ? 0xFFfff1ea : ink()) : 0xFF9a7a82, false);
+        g.drawString(font, label, pill.x() + (pill.w() - font.width(label)) / 2, pill.y() + 4, a.enabled() ? (a.primary() ? 0xFFfff1ea : ink()) : DISABLED_TEXT, false);
     }
 
     /** Claimed tasks of the next rung out of its tasks; a full moon at the top of the ladder. */
@@ -378,6 +381,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
                 // the floating bar and its pills
                 new TextPair("bar title", 0xFFfff1ea, 0xFF140810), new TextPair("bar body, muted", muted(), 0xFF140810),
                 new TextPair("primary pill", 0xFFfff1ea, PRIMARY), new TextPair("primary pill, hovered", 0xFFfff1ea, PRIMARY_HOT), new TextPair("secondary pill", ink(), PILL),
+                new TextPair("disabled primary pill", DISABLED_TEXT, DISABLED_FILL), new TextPair("disabled secondary pill", DISABLED_TEXT, PILL),
                 new TextPair("gold on a card", GOLD, CARD), new TextPair("ink on a card", ink(), CARD));
     }
 

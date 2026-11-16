@@ -1,6 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
+import net.minecraft.client.gui.narration.NarratedElementType;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Narration;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
@@ -99,6 +102,7 @@ public final class HubScreen extends Screen {
             page = p;
             scroll.clear();
             HubClient.remember(p);
+            triggerImmediateNarration(true);
         }
     }
 
@@ -310,6 +314,7 @@ public final class HubScreen extends Screen {
         dialogBody = body;
         dialogYes = yes;
         dialogAction = action;
+        triggerImmediateNarration(true);
     }
 
     private void dialogResult(ConfirmModel.Result r) {
@@ -477,7 +482,8 @@ public final class HubScreen extends Screen {
             return true; // the menu takes every key while it is open
         }
         if (dialog != null) {
-            ConfirmModel.Key k = switch (key) {
+            // the hub key cancels, like Escape: the dialog never traps a player who pressed the key that opened the hub
+            ConfirmModel.Key k = HubKeybinds.HUB.matches(key, scanCode) ? ConfirmModel.Key.ESCAPE : switch (key) {
                 case GLFW.GLFW_KEY_ESCAPE -> ConfirmModel.Key.ESCAPE;
                 case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> ConfirmModel.Key.ENTER;
                 case GLFW.GLFW_KEY_TAB -> ConfirmModel.Key.TAB;
@@ -487,6 +493,9 @@ public final class HubScreen extends Screen {
             };
             if (k != null) {
                 dialogResult(dialog.press(k));
+                if (dialog != null) {
+                    triggerImmediateNarration(false); // the focus moved to the other button
+                }
             }
             return true; // a dialog takes every key: nothing behind it moves
         }
@@ -531,6 +540,19 @@ public final class HubScreen extends Screen {
         keyboard = true;
         focus = HubFocus.move(FocusOrder.order(targets.stream().map(Target::id).toList()), focus, delta);
         scrollToFocus = true;
+        triggerImmediateNarration(false);
+    }
+
+    /** What a screen reader says: the page and the focused target, or, over a confirm dialog, the dialog and its focused button (see {@link Narration}). */
+    @Override
+    protected void updateNarrationState(NarrationElementOutput output) {
+        Target t = target(focus);
+        List<String> tip = t == null ? null : t.tooltip().stream().map(Component::getString).toList();
+        String focused = dialog == null ? null : (dialog.confirmFocused() ? dialogYes : dialogSafe).getString();
+        for (String line : Narration.lines(Component.translatable(page.langKey()).getString(), tip,
+                dialog == null ? null : dialogTitle.getString(), dialog == null ? null : dialogBody.getString(), focused)) {
+            output.add(NarratedElementType.TITLE, line);
+        }
     }
 
     /** PgUp / PgDn: the focused target's region, else the main one. */
