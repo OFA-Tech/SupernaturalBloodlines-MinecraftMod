@@ -86,6 +86,18 @@ public final class PackReviewGameTests {
         return p;
     }
 
+    /** A werewolf Beta of {@code leader} that keeps the translation keys of what it is told, and is in the pack's index. */
+    private static TalkingDuelist talkingBeta(GameTestHelper helper, UUID leader, double x) {
+        TalkingDuelist p = TestPlayers.createTalkingDuelist(helper);
+        p.setPos(helper.absoluteVec(new Vec3(x, 1, 1.5)));
+        WolfState w = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(Rank.BETA).packAlpha(leader).geneRolled(true).build();
+        BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().wolf(w).build());
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "the test wolf could not join the werewolves");
+        PackIndex.get(helper.getLevel()).join(leader, p.getUUID());
+        PackLeader.refresh(p);
+        return p;
+    }
+
     private static ServerPlayer human(GameTestHelper helper, double x) {
         ServerPlayer p = TestPlayers.createDuelist(helper);
         p.setPos(helper.absoluteVec(new Vec3(x, 1, 1.5)));
@@ -1060,7 +1072,7 @@ public final class PackReviewGameTests {
             helper.assertTrue(!other.received("supernaturalbloodlines.pack.grace_no_spark"), "an ordinary in-pack kill was commented");
             helper.assertTrue(PackCommand.leave(second) == null, "the second Alpha could not leave");
             kill(second, leader);
-            helper.assertTrue(second.received("supernaturalbloodlines.pack.grace_no_spark"), "the one who left a moment ago was not told why there is no spark: " + second.keys());
+            helper.assertTrue(second.received("supernaturalbloodlines.pack.grace_no_spark_you") && !second.received("supernaturalbloodlines.pack.grace_no_spark"), "the one who left a moment ago was not told, in the first person, why there is no spark: " + second.keys());
             helper.assertTrue(state(leader).rank() == Rank.ALPHA, "leaving first gained the spark");
         } finally {
             clean(helper, leader, second, other);
@@ -1153,6 +1165,158 @@ public final class PackReviewGameTests {
             helper.assertTrue(stacked.count("supernaturalbloodlines.pack.spark_reset") == 1, "the cure said it " + stacked.count("supernaturalbloodlines.pack.spark_reset") + " times: " + stacked.keys());
         } finally {
             clean(helper, stacked);
+        }
+        helper.succeed();
+    }
+
+    // ---- /pack leave, driven for real, for a werewolf Beta (round 5) ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aWerewolfBetaWhoRunsPackLeaveStillGetsTheGraceAndTheOldPartyIsSynced(GameTestHelper helper) {
+        TalkingDuelist leader = talkingAlpha(helper, 6, 1.5);
+        TalkingDuelist beta = talkingBeta(helper, leader.getUUID(), 2.5);
+        ServerPlayer mate = wolf(helper, Rank.BETA, leader.getUUID(), 1, 3.5);
+        online(leader, beta, mate);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyBackend fake = new net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyBackend() {
+            final java.util.Map<UUID, UUID> ids = new java.util.HashMap<>();
+            final java.util.Map<UUID, java.util.Set<UUID>> parties = new java.util.HashMap<>();
+
+            @Override
+            public Found find(net.minecraft.server.MinecraftServer server, UUID owner, UUID id) {
+                return id.equals(ids.get(owner)) ? new Found(true, new net.ofatech.supernaturalbloodlines.core.bloodline.PartySyncRules.Party(owner, new java.util.HashSet<>(parties.get(owner)))) : new Found(true, null);
+            }
+
+            @Override
+            public java.util.Optional<UUID> create(net.minecraft.server.MinecraftServer server, UUID owner) {
+                ids.put(owner, UUID.randomUUID());
+                parties.put(owner, new java.util.HashSet<>(java.util.Set.of(owner)));
+                return java.util.Optional.of(ids.get(owner));
+            }
+
+            @Override
+            public boolean add(net.minecraft.server.MinecraftServer server, UUID owner, UUID member) {
+                return parties.get(owner).add(member) || true;
+            }
+
+            @Override
+            public boolean remove(net.minecraft.server.MinecraftServer server, UUID owner, UUID member) {
+                parties.get(owner).remove(member);
+                return true;
+            }
+        };
+        net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink.setBackend(fake);
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        try {
+            helper.assertTrue(index.alphaOf(beta.getUUID()).map(leader.getUUID()::equals).orElse(false), "the Beta was not in the pack");
+            net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink.sync(server, leader.getUUID(), true);
+            helper.assertTrue(index.mirrorOwner(beta.getUUID()).isPresent(), "the pack was not mirrored to start with");
+
+            helper.assertTrue(PackCommand.leave(beta) == null, "the Beta could not leave");
+            helper.assertTrue(!index.inPack(beta.getUUID()), "the Beta is still in the pack");
+            // the party of the pack they LEFT was synced: the Beta is out of it
+            helper.assertTrue(index.mirrorOwner(beta.getUUID()).isEmpty(), "the old pack's party was not synced: the leaver is still mirrored");
+            helper.assertTrue(index.leftRecently(beta.getUUID(), 10), "no grace was recorded for the werewolf Beta who left");
+
+            kill(beta, leader);
+            helper.assertTrue(state(leader).rank() == Rank.ALPHA && state(leader).sparks() == 1 && !state(beta).stoleSpark(), "leaving as a werewolf Beta just before the kill gained the spark: " + state(leader).rank());
+            helper.assertTrue(!state(beta).killedInnocent(), "the kill turned the killer's eyes blue: leaving first made it an innocent kill");
+            helper.assertTrue(PackIndex.samePack(beta, leader), "the leaver does not count as one pack with the one they left");
+            helper.assertTrue(beta.received("supernaturalbloodlines.pack.grace_no_spark_you"), "the leaver was not told why there is no spark: " + beta.keys());
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink.setBackend(null);
+            clean(helper, leader, beta, mate);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theGraceFollowsAPackThatChangesHandsByTransfer(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        ServerPlayer leaver = wolf(helper, Rank.BETA, leader.getUUID(), 1, 3.5);
+        ServerPlayer thief = wolf(helper, Rank.OMEGA, null, 1, 4.5);
+        online(leader, second, leaver, thief);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, second), "the second Alpha could not join");
+            helper.assertTrue(PackCommand.leave(leaver) == null, "the Beta could not leave");
+            kill(thief, leader); // stolen from outside: the pack goes to the second Alpha with transfer
+            helper.assertTrue(index.isLeader(second.getUUID()), "the second Alpha does not lead");
+            helper.assertTrue(index.killsInPack(leaver.getUUID(), second.getUUID(), 10), "the grace was lost when the pack changed hands");
+            kill(leaver, second);
+            helper.assertTrue(state(second).rank() == Rank.ALPHA, "a kill on the pack they just left, now under its new leader, stole the spark");
+        } finally {
+            clean(helper, leader, second, leaver, thief);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void leavingThePartyIsLeavingByChoiceAndKeepsTheGrace(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        UUID member = UUID.randomUUID();
+        online(leader);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        try {
+            index.join(leader.getUUID(), member);
+            helper.assertTrue(PackMembers.remove(server, member, "supernaturalbloodlines.pack.left_party", "", true), "the removal failed");
+            helper.assertTrue(index.leftRecently(member, 10) && index.killsInPack(member, leader.getUUID(), 10), "leaving the party is not leaving by choice");
+
+            index.join(leader.getUUID(), member);
+            index.takeNotices(member);
+            helper.assertTrue(PackMembers.remove(server, member, "supernaturalbloodlines.pack.kicked", "Leader"), "the kick failed");
+            helper.assertTrue(index.killsInPack(member, leader.getUUID(), 10) == index.killsInPack(member, leader.getUUID(), 10) && !index.samePackNow(member, leader.getUUID()), "a kick");
+        } finally {
+            index.leave(member);
+            index.takeNotices(member);
+            clean(helper, leader);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theCrashTimeIsWrittenEvenWithTheAbsenceCheckSwitchedOffAndAClockThatRanBackwards(GameTestHelper helper) {
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        long now = System.currentTimeMillis();
+        SpeciesConfig.overrideAbsentLeaderDays(0);
+        try {
+            index.setAliveAt(0);
+            PackAbsence.check(server, now);
+            helper.assertTrue(index.aliveAt() == now, "the alive time was not written with the check switched off");
+            // the clock went back (a time in the future was stored)
+            index.setAliveAt(now + 10 * PackAbsence.DAY_MILLIS);
+            PackAbsence.check(server, now);
+            helper.assertTrue(index.aliveAt() == now, "a time in the future stayed: the next start would be shifted by a negative gap and then not at all");
+        } finally {
+            SpeciesConfig.overrideAbsentLeaderDays(null);
+            index.setAliveAt(now);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void queryingTheGraceChangesNothingAndOldLeavesArePrunedByTheTick(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        UUID member = UUID.randomUUID();
+        online(leader);
+        long[] clock = {1_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        try {
+            index.join(leader.getUUID(), member);
+            index.leaveVoluntarily(member);
+            clock[0] += 2 * PackAbsence.DAY_MILLIS;
+            helper.assertTrue(!index.killsInPack(member, leader.getUUID(), 10), "a leave from two days ago still counts");
+            helper.assertTrue(index.hasLeft(member), "asking removed the entry: a query must not change anything");
+            PackAbsence.check(server, clock[0]);
+            helper.assertTrue(!index.hasLeft(member), "the tick did not prune an old leave");
+        } finally {
+            PackIndex.overrideClock(null);
+            clean(helper, leader);
         }
         helper.succeed();
     }

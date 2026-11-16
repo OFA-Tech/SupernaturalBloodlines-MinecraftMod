@@ -263,11 +263,14 @@ public final class PackCommand {
         if (index.alphaOf(p.getUUID()).isEmpty() && w.packAlpha() == null) {
             return error("no_pack");
         }
+        // a werewolf Beta's state change takes them out of the index by itself: the pack they leave, and the grace for it, are
+        // noted first, or there would be neither
+        UUID wasIn = index.leaderOf(p.getUUID());
+        index.rememberLeft(p.getUUID());
         if (w.lineage() != Lineage.NONE && !PackAccess.isAlpha(w.rank())) {
             PackAccess.applyPack(p, PackEvent.LEFT_PACK, context(null, p.serverLevel().getGameTime()));
         }
         // a co-Alpha or a Packmate lives in the index only
-        UUID wasIn = index.leaderOf(p.getUUID());
         index.leaveVoluntarily(p.getUUID());
         PartyLink.sync(p.server, wasIn, true);
         p.sendSystemMessage(Component.translatable(KEY + "left"));

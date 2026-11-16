@@ -134,7 +134,9 @@ public final class SparkHandler {
         PackIndex index = PackIndex.get(victim.serverLevel());
         if (PackIndex.samePack(killer, victim)) {
             if (index.onlyByGrace(killer.getUUID(), victim.getUUID(), SpeciesConfig.leftPackGraceMinutes())) {
-                killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.grace_no_spark"));
+                // the one who left is told so, and so is a killer whose victim left
+                boolean you = index.leftRecently(killer.getUUID(), SpeciesConfig.leftPackGraceMinutes());
+                killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.grace_no_spark" + (you ? "_you" : "")));
             }
             return false;
         }

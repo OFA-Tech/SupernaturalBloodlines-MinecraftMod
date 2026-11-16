@@ -846,4 +846,27 @@ public final class AlphaPackGameTests {
         }
         helper.succeed();
     }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMemberWhoLeavesThePartyThemselvesLeavesThePackWithTheKillGrace(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer beta = wolf(helper, Rank.BETA, leader.getUUID(), 1, 2.5);
+        online(leader, beta);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        FakeParties fake = new FakeParties();
+        PartyLink.setBackend(fake);
+        MinecraftServer server = helper.getLevel().getServer();
+        try {
+            PartyLink.sync(server, leader.getUUID(), true);
+            helper.assertTrue(fake.parties.get(leader.getUUID()).contains(beta.getUUID()) && index.mirrorOwner(beta.getUUID()).isPresent(), "the pack was not mirrored to start with");
+            // the member leaves the party in the party mod's own screen: the next pass takes them out of the pack, by their own choice
+            fake.parties.get(leader.getUUID()).remove(beta.getUUID());
+            PartyLink.sync(server, leader.getUUID(), false);
+            helper.assertTrue(!index.inPack(beta.getUUID()), "leaving the party did not leave the pack");
+            helper.assertTrue(index.leftRecently(beta.getUUID(), 10) && index.killsInPack(beta.getUUID(), leader.getUUID(), 10), "leaving the party is leaving by choice: no kill grace was recorded");
+        } finally {
+            clean(helper, leader, beta);
+        }
+        helper.succeed();
+    }
 }

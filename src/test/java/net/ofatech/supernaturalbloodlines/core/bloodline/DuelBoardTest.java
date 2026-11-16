@@ -67,7 +67,7 @@ class DuelBoardTest {
         assertTrue(b.all().isEmpty());
 
         // a duel that was on and ran out bars the same two like a settled one (waiting it out must not save anybody)
-        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), b.challenge(CHALLENGER, LEADER, 10_000));
+        assertEquals(Optional.of(Refusal.PAIR_CALLED_OFF), b.challenge(CHALLENGER, LEADER, 10_000));
 
         b = new DuelBoard();
         challenge(b, CHALLENGER, LEADER, 0);
@@ -137,8 +137,8 @@ class DuelBoardTest {
         b.accept(LEADER, 10);
         long out = 10 + DuelBoard.TIMEOUT_TICKS + 1;
         assertEquals(1, b.expire(out).size());
-        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), b.challenge(CHALLENGER, LEADER, out + 5), "waiting a duel out is a way to save a life");
-        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), b.challenge(LEADER, CHALLENGER, out + 5));
+        assertEquals(Optional.of(Refusal.PAIR_CALLED_OFF), b.challenge(CHALLENGER, LEADER, out + 5), "waiting a duel out is a way to save a life");
+        assertEquals(Optional.of(Refusal.PAIR_CALLED_OFF), b.challenge(LEADER, CHALLENGER, out + 5));
         assertTrue(challenge(b, CHALLENGER, LEADER, out + DuelBoard.PAIR_COOLDOWN_TICKS));
     }
 
@@ -201,8 +201,74 @@ class DuelBoardTest {
     void barringThePairStopsEitherOfThemChallenging() {
         DuelBoard b = new DuelBoard();
         b.bar(CHALLENGER, LEADER, 100);
-        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), b.challenge(CHALLENGER, LEADER, 101));
-        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), b.challenge(LEADER, CHALLENGER, 101));
+        assertEquals(Optional.of(Refusal.PAIR_CALLED_OFF), b.challenge(CHALLENGER, LEADER, 101));
+        assertEquals(Optional.of(Refusal.PAIR_CALLED_OFF), b.challenge(LEADER, CHALLENGER, 101));
         assertTrue(challenge(b, THIRD, LEADER, 101));
+    }
+
+    @Test
+    void aBarredPairThatNeverFoughtIsToldItCalledTheDuelOff() {
+        DuelBoard b = new DuelBoard();
+        b.bar(CHALLENGER, LEADER, 100);
+        assertEquals(Optional.of(Refusal.PAIR_CALLED_OFF), b.challenge(CHALLENGER, LEADER, 101));
+        // a settled duel after it is called what it is
+        DuelBoard c = new DuelBoard();
+        challenge(c, CHALLENGER, LEADER, 0);
+        c.accept(LEADER, 1);
+        c.defeat(LEADER, 5);
+        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), c.challenge(CHALLENGER, LEADER, 6));
+        // an on duel that ran out was not fought to a defeat either
+        DuelBoard d = new DuelBoard();
+        challenge(d, CHALLENGER, LEADER, 0);
+        d.accept(LEADER, 1);
+        d.expire(1 + DuelBoard.TIMEOUT_TICKS + 1);
+        assertEquals(Optional.of(Refusal.PAIR_CALLED_OFF), d.challenge(CHALLENGER, LEADER, 1 + DuelBoard.TIMEOUT_TICKS + 2));
+    }
+
+    @Test
+    void noCooldownMeansZeroMinutesLeftNotAnOverflow() {
+        DuelBoard b = new DuelBoard();
+        assertEquals(0, b.cooldownLeft(CHALLENGER, LEADER, 0));
+        assertEquals(0, b.cooldownLeft(CHALLENGER, LEADER, 1_000_000_000L), "a pair that was never barred has time left");
+    }
+
+    @Test
+    void aPausedDuelHasNoClockAndResumesWithTheTimeItHadWhenTheDuelistLeft() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        b.accept(LEADER, 10); // runs until 10 + TIMEOUT
+        assertTrue(b.pause(CHALLENGER, 100, 1200), "the duel on was not paused");
+        assertTrue(b.expire(10 + DuelBoard.TIMEOUT_TICKS + 5_000).isEmpty(), "a paused duel ran out of time");
+        assertTrue(b.on(LEADER).isPresent(), "a paused duel is gone");
+        // back after 600 ticks: the wait is not counted against the 2 minutes
+        assertTrue(b.resume(CHALLENGER, 700).isPresent());
+        assertTrue(b.expire(10 + DuelBoard.TIMEOUT_TICKS + 599).isEmpty(), "the wait was counted against the duel");
+        assertEquals(1, b.expire(10 + DuelBoard.TIMEOUT_TICKS + 601).size(), "it never runs out after the resume");
+    }
+
+    @Test
+    void aWindowThatRanOutIsReportedOnceAndCannotBeResumedAfterwards() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        b.accept(LEADER, 1);
+        b.pause(LEADER, 100, 200); // until 300
+        assertTrue(b.expiredPauses(299).isEmpty(), "reported before the window ended");
+        assertTrue(b.resume(LEADER, 300).isEmpty(), "resumed on the tick the window ended");
+        assertEquals(1, b.expiredPauses(300).size());
+        assertEquals(LEADER, b.expiredPauses(300).get(0).pausedBy());
+        assertTrue(b.defeat(LEADER, 301).isPresent(), "a paused duel cannot be lost");
+        assertTrue(b.expiredPauses(302).isEmpty(), "reported again after it was settled");
+    }
+
+    @Test
+    void onlyOneDuelistCanBeAwayAndOnlyForADuelThatIsOn() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        assertFalse(b.pause(CHALLENGER, 5, 100), "a challenge nobody accepted was paused");
+        b.accept(LEADER, 6);
+        assertTrue(b.pause(CHALLENGER, 7, 100));
+        assertFalse(b.pause(LEADER, 8, 100), "the second to leave was waited for too");
+        assertTrue(b.resume(LEADER, 9).isEmpty(), "somebody who never left resumed it");
+        assertFalse(b.pause(THIRD, 8, 100), "a third player paused a duel");
     }
 }

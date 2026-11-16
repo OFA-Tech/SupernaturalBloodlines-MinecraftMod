@@ -38,7 +38,12 @@ public final class PackAbsence {
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> onStarted(e.getServer(), PackIndex.now()));
-        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> PackIndex.get(e.getServer().overworld()).setAliveAt(PackIndex.now()));
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> {
+            net.minecraft.server.level.ServerLevel overworld = e.getServer().overworld();
+            if (overworld != null) {
+                PackIndex.get(overworld).setAliveAt(PackIndex.now());
+            }
+        });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity().getServer() != null) {
                 check(e.getEntity().getServer(), PackIndex.now());
@@ -56,23 +61,25 @@ public final class PackAbsence {
         PackIndex index = PackIndex.get(server.overworld());
         long was = index.aliveAt();
         if (was > 0 && nowMillis > was) {
-            index.shiftLastSeen(nowMillis - was);
+            index.shiftLastSeen(nowMillis - was, nowMillis);
         }
         index.setAliveAt(nowMillis);
     }
 
     /** @return how many packs changed hands */
     public static int check(MinecraftServer server, long nowMillis) {
+        PackIndex index = PackIndex.get(server.overworld());
+        // the server is running: say so (at most once a minute, or at once when the clock went back), so a crash costs the leader no
+        // more than that. Whether the check is switched off or not
+        if (nowMillis - index.aliveAt() >= ALIVE_EVERY_MILLIS || nowMillis < index.aliveAt()) {
+            index.setAliveAt(nowMillis);
+        }
+        index.pruneLeft();
         int days = SpeciesConfig.absentLeaderDays();
         if (days <= 0) {
             return 0;
         }
         long limit = days * DAY_MILLIS;
-        PackIndex index = PackIndex.get(server.overworld());
-        // the server is running: say so (at most once a minute), so a crash costs the leader no more than that
-        if (nowMillis - index.aliveAt() >= ALIVE_EVERY_MILLIS) {
-            index.setAliveAt(nowMillis);
-        }
         // a crash leaves no logout: whoever of a pack is online is seen now, renewed every hour
         for (UUID leader : List.copyOf(index.leaders())) {
             for (UUID id : index.pack(leader)) {

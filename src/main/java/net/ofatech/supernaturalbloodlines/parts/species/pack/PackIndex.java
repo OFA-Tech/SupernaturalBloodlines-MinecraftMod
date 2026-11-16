@@ -371,10 +371,13 @@ public final class PackIndex extends SavedData {
         }
     }
 
-    /** Every recorded time moves forward by {@code millis}: the server was off for that long, and nobody was away in it. */
-    public void shiftLastSeen(long millis) {
+    /**
+     * Every recorded time moves forward by {@code millis}: the server was off for that long, and nobody was away in it. A time never
+     * moves past {@code cap} (the present): a clock that ran backwards must not leave a time in the future.
+     */
+    public void shiftLastSeen(long millis, long cap) {
         if (millis > 0 && !lastSeen.isEmpty()) {
-            lastSeen.replaceAll((id, t) -> t + millis);
+            lastSeen.replaceAll((id, t) -> Math.max(t, Math.min(t + millis, cap)));
             setDirty();
         }
     }
@@ -404,8 +407,6 @@ public final class PackIndex extends SavedData {
         if (l != null) {
             if (graceMinutes > 0 && now() - l.at < graceMinutes * 60_000L) {
                 keys.add(leaderOf(l.leader));
-            } else if (now() - l.at >= 24 * 60 * 60_000L) {
-                leftAt.remove(p);
             }
         }
         return keys;
@@ -503,6 +504,14 @@ public final class PackIndex extends SavedData {
 
     /** The leader removes a member (online or not): a werewolf Beta becomes an Omega at their next login. @return false if they were no member */
     public boolean kick(UUID member) {
+        return kick(member, false);
+    }
+
+    /** {@link #kick(UUID)}; {@code voluntary} is a member who left the party of the pack: they chose it, so the kill grace holds. */
+    public boolean kick(UUID member, boolean voluntary) {
+        if (voluntary) {
+            rememberLeft(member);
+        }
         UUID was = alphaOf.remove(member);
         if (was == null) {
             return false;
@@ -556,11 +565,35 @@ public final class PackIndex extends SavedData {
      * grace window of what a kill does. Being kicked, or the pack dissolving, gets no grace: those are outsiders at once.
      */
     public void leaveVoluntarily(UUID member) {
+        rememberLeft(member);
+        leave(member);
+    }
+
+    /**
+     * Notes that {@code member} is leaving their pack by their own choice, so the grace holds. It has to run BEFORE anything that
+     * can take them out of the index (a Beta's state change does, through {@code follow}): afterwards there is no pack to remember.
+     */
+    public void rememberLeft(UUID member) {
         UUID was = alphaOf.get(member);
         if (was != null) {
             leftAt.put(member, new Left(was, now()));
         }
-        leave(member);
+    }
+
+    /** Whether {@code p} left a pack by choice within the grace window (nothing is changed by asking). */
+    public boolean leftRecently(UUID p, int graceMinutes) {
+        Left l = leftAt.get(p);
+        return graceMinutes > 0 && l != null && now() - l.at < graceMinutes * 60_000L;
+    }
+
+    /** Whether a leave is on record for {@code p} (any age): for the tests of the pruning. */
+    public boolean hasLeft(UUID p) {
+        return leftAt.containsKey(p);
+    }
+
+    /** Forgets the leaves older than a day: they could never count for anything again. Called from the tick, never from a query. */
+    public void pruneLeft() {
+        leftAt.values().removeIf(l -> now() - l.at >= PackAbsence.DAY_MILLIS);
     }
 
     /**
@@ -572,6 +605,8 @@ public final class PackIndex extends SavedData {
         alphaOf.replaceAll((beta, a) -> a.equals(oldAlpha) ? newAlpha : a);
         alphaOf.remove(oldAlpha);
         moveLeadership(oldAlpha, newAlpha);
+        // somebody who left the old pack a moment ago left the pack that is now the new Alpha's
+        leftAt.replaceAll((id, l) -> l.leader.equals(oldAlpha) ? new Left(newAlpha, l.at) : l);
         formerAlphas.add(oldAlpha);
         formerAlphas.remove(newAlpha);
         setDirty();

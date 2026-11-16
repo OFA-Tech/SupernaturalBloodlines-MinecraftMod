@@ -22,6 +22,9 @@ public final class SpeciesConfig {
     public static final int DEFAULT_MAX_STACKED_SPARKS = 5;
     private static final ModConfigSpec.IntValue MAX_STACKED_SPARKS;
     private static volatile Integer maxStackedSparksOverride;
+    public static final int DEFAULT_DUEL_RECONNECT_SECONDS = 60;
+    private static final ModConfigSpec.IntValue DUEL_RECONNECT_SECONDS;
+    private static volatile Integer duelReconnectOverride;
     public static final int DEFAULT_LEFT_PACK_GRACE_MINUTES = 10;
     private static final ModConfigSpec.IntValue LEFT_PACK_GRACE_MINUTES;
     private static volatile Integer leftPackGraceOverride;
@@ -79,7 +82,9 @@ public final class SpeciesConfig {
                 .define("only_alphas_turn", DEFAULT_ONLY_ALPHAS_TURN);
         MAX_STACKED_SPARKS = b.comment("Most Alpha sparks one werewolf can hold at once (the Deucalion factor): an Alpha who kills an Alpha from outside their pack takes the victim's spark on top of their own. Each spark beyond the first adds 10% to the Alpha rank's attack and health bonuses and one tier to the Alpha Roar's Strength. 1 turns stacking off.")
                 .defineInRange("max_stacked_sparks", DEFAULT_MAX_STACKED_SPARKS, 1, 20);
-        LEFT_PACK_GRACE_MINUTES = b.comment("Someone who left a pack with /pack leave in the last this many minutes still counts as a member of it for what a kill does (no spark steal, no blue eyes, no gene awakening, no Hunter mark), so leaving just before a kill gains nothing, and joining another pack does not free it either. Someone who was kicked, and the members of a pack that dissolved, get no grace: they are outsiders at once. Kept in memory only: a restart forgets it. 0 turns it off.")
+        DUEL_RECONNECT_SECONDS = b.comment("A duelist who loses their connection during a leadership duel has this many seconds to come back: the duel waits for them (its 2 minute clock stops) and the other one is told. After that they forfeit it, as if they had logged out. 0 makes a disconnect an instant forfeit. A server that is stopping settles nothing.")
+                .defineInRange("duel_reconnect_seconds", DEFAULT_DUEL_RECONNECT_SECONDS, 0, 600);
+        LEFT_PACK_GRACE_MINUTES = b.comment("Someone who left a pack by choice (with /pack leave, or by leaving its party) in the last this many minutes still counts as a member of it for what a kill does (no spark steal, no blue eyes, no gene awakening, no Hunter mark), so leaving just before a kill gains nothing, and joining another pack does not free it either. Someone who was kicked, and the members of a pack that dissolved, get no grace: they are outsiders at once. Kept in memory only: a restart forgets it. 0 turns it off.")
                 .defineInRange("left_pack_grace_minutes", DEFAULT_LEFT_PACK_GRACE_MINUTES, 0, 1440);
         ABSENT_LEADER_DAYS = b.comment("A pack leader who has been offline this many real days loses the lead to the strongest second Alpha who is here (online, or seen within the same days); they keep their spark and stay a second Alpha. The time the server was off does not count, and a restart does not erase an absence. 0 turns it off.")
                 .defineInRange("absent_leader_days", DEFAULT_ABSENT_LEADER_DAYS, 0, 3650);
@@ -164,6 +169,23 @@ public final class SpeciesConfig {
             return MAX_STACKED_SPARKS.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_MAX_STACKED_SPARKS;
+        }
+    }
+
+    /** For tests: pins {@link #duelReconnectSeconds()}; null clears it. */
+    public static void overrideDuelReconnectSeconds(Integer value) {
+        duelReconnectOverride = value;
+    }
+
+    public static int duelReconnectSeconds() {
+        Integer pinned = duelReconnectOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return DUEL_RECONNECT_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_DUEL_RECONNECT_SECONDS;
         }
     }
 

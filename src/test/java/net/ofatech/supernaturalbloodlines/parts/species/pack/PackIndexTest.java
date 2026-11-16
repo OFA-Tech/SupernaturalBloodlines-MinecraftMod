@@ -137,12 +137,12 @@ class PackIndexTest {
         PackIndex i = new PackIndex();
         i.setLastSeen(A, 100);
         i.setLastSeen(B, 200);
-        i.shiftLastSeen(9_000);
+        i.shiftLastSeen(9_000, 1_000_000);
         assertEquals(9_100L, i.lastSeen(A).orElseThrow());
         assertEquals(9_200L, i.lastSeen(B).orElseThrow());
         assertTrue(i.lastSeen(C).isEmpty(), "somebody the index never saw got a time");
-        i.shiftLastSeen(0);
-        i.shiftLastSeen(-5);
+        i.shiftLastSeen(0, 1_000_000);
+        i.shiftLastSeen(-5, 1_000_000);
         assertEquals(9_100L, i.lastSeen(A).orElseThrow(), "a gap that is not positive moved the times");
     }
 
@@ -240,4 +240,68 @@ class PackIndexTest {
         } finally {
             PackIndex.overrideClock(null);
         }
-    }}
+    }
+
+    @Test
+    void aShiftNeverMovesATimeIntoTheFuture() {
+        PackIndex i = new PackIndex();
+        i.setLastSeen(A, 900);
+        i.setLastSeen(B, 5_000);
+        i.shiftLastSeen(10_000, 1_000);
+        assertEquals(1_000L, i.lastSeen(A).orElseThrow(), "capped at the present");
+        assertEquals(5_000L, i.lastSeen(B).orElseThrow(), "a time that was in the future already is left, not pulled back");
+    }
+
+    @Test
+    void theGraceFollowsTheLeadershipWhenAPackIsTransferred() {
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            PackIndex i = new PackIndex();
+            i.join(A, M);
+            i.join(A, B);
+            i.leaveVoluntarily(M);
+            i.transfer(A, B); // A loses the lead and leaves; B takes the pack
+            assertTrue(i.killsInPack(M, B, 10), "the grace was lost when the pack changed hands");
+            assertFalse(i.killsInPack(M, C, 10));
+        } finally {
+            PackIndex.overrideClock(null);
+        }
+    }
+
+    @Test
+    void aVoluntaryKickRemembersTheGraceAndAPlainOneDoesNot() {
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            PackIndex i = new PackIndex();
+            i.join(A, M);
+            i.kick(M, true);
+            assertTrue(i.killsInPack(M, A, 10) && i.leftRecently(M, 10), "somebody who left the party themselves has the grace");
+            i.join(A, B);
+            i.kick(B, false);
+            assertFalse(i.killsInPack(B, A, 10) || i.leftRecently(B, 10), "a plain kick has none");
+        } finally {
+            PackIndex.overrideClock(null);
+        }
+    }
+
+    @Test
+    void rememberLeftNeedsTheMemberStillInThePack() {
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            PackIndex i = new PackIndex();
+            i.join(A, M);
+            i.leave(M);          // what a werewolf Beta''s state change does before anything else can
+            i.rememberLeft(M);   // too late: nothing to remember (this is the bug /pack leave works around by calling it first)
+            assertFalse(i.leftRecently(M, 10));
+            i.join(A, M);
+            i.rememberLeft(M);
+            i.leave(M);
+            assertTrue(i.leftRecently(M, 10), "noted first, the grace survives the removal");
+        } finally {
+            PackIndex.overrideClock(null);
+        }
+    }
+}

@@ -132,6 +132,11 @@ public final class BookPackPage implements HubPageView {
     /** A row whose rank (with its spark count) would leave the name fewer than this many pixels puts the rank on its own line. */
     public static final int MIN_NAME = 24;
 
+    /** On a row that has to stack, the crown goes only when the rank would not fit on its own line beside it. */
+    public static boolean dropCrown(int rowWidth, int rankWidth) {
+        return rankWidth > rowWidth - 8 - 9;
+    }
+
     public static boolean rankOnOwnLine(int width, int rankWidth) {
         return width - rankWidth - 10 < MIN_NAME;
     }
@@ -183,28 +188,30 @@ public final class BookPackPage implements HubPageView {
             y = PageKit.wrapped(f, Component.translatable(KEY + "alone"), r.x(), y + 2, r.w(), t.muted());
         }
         for (HubSocial.Member m : pack) {
-            Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, 11);
-            if (m == chosen) {
-                f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
-            }
-            f.g.fill(r.x(), y + 2, r.x() + 4, y + 6, m.online() ? 0xFF2F6E4A : 0xFF9A8566);
             Component rank = rankName(m);
             // the first of the list leads the pack: a small gold crown before the name
             boolean leads = m == pack.get(0) && !m.base().equals("ally");
             int crown = leads ? 9 : 0;
-            // the rank (Alpha x3) is never what is cut: on a row too narrow for both it goes on its own line, and the crown makes way
+            // the rank (Alpha x3) is never what is cut: on a row too narrow for both it goes on its own line. The crown stays unless
+            // the rank would not fit beside it even there
             boolean tight = rankOnOwnLine(r.w() - 8 - crown, f.font().width(rank));
-            if (tight) {
+            if (tight && dropCrown(r.w(), f.font().width(rank))) {
                 crown = 0;
             }
+            boolean stacked = tight || (style == Style.TENSURA && f.font().width(m.name()) + f.font().width(rank) + 14 > r.w() - 8 - crown);
+            // the row, and its tint, are as tall as what is drawn in it (20 pixels when the rank has a line of its own)
+            Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, stacked ? 20 : 11);
+            if (m == chosen) {
+                f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
+            }
+            f.g.fill(r.x(), y + 2, r.x() + 4, y + 6, m.online() ? 0xFF2F6E4A : 0xFF9A8566);
             if (leads && crown > 0) {
                 crown(f, r.x() + 8, y + 1);
             }
-            boolean stacked = tight || (style == Style.TENSURA && f.font().width(m.name()) + f.font().width(rank) + 14 > r.w() - 8 - crown);
             if (stacked) {
                 f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(m.name(), r.w() - 8 - crown, f.font()::width), r.x() + 8 + crown, y, t.ink(), false);
                 f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(rank.getString(), r.w() - 8 - crown, f.font()::width), r.x() + 8 + crown, y + 10, t.muted(), false);
-                hit = new Rect(hit.x(), hit.y(), hit.w(), 20);
+
             } else {
                 BookKit.leader(f, Component.literal(nameFor(f, m.name(), rank, r.w() - 8 - crown)), rank, r.x() + 8 + crown, y, r.w() - 8 - crown, t.muted());
             }

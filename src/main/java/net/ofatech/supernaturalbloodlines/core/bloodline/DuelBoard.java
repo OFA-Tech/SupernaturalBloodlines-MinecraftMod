@@ -25,7 +25,7 @@ public final class DuelBoard {
     public enum Phase { ASKED, ON }
 
     /** Why a challenge or a duel was called off, for the message the two of them get. */
-    public enum Reason { TIMEOUT, LOGOUT, KILLED, PACK, FAR, DECLINED, DIED }
+    public enum Reason { TIMEOUT, LOGOUT, KILLED, PACK, FAR, RANGE, DECLINED, DIED }
 
     /** Combat credit from a hit lasts this long: a death by the world counts as the opponent's win only within it. */
     public static final long COMBAT_CREDIT_TICKS = 10 * 20;
@@ -35,6 +35,10 @@ public final class DuelBoard {
         private final UUID leader;
         private Phase phase = Phase.ASKED;
         private long expires;
+        // a duelist who lost their connection: the duel waits for them until pauseEnd, and its own clock stands still meanwhile
+        private UUID pausedBy;
+        private long pausedAt;
+        private long pauseEnd;
 
         Duel(UUID challenger, UUID leader, long expires) {
             this.challenger = challenger;
@@ -54,6 +58,15 @@ public final class DuelBoard {
             return phase;
         }
 
+        /** The duelist whose connection dropped, or null when the duel is not paused. */
+        public UUID pausedBy() {
+            return pausedBy;
+        }
+
+        public long pauseEnd() {
+            return pauseEnd;
+        }
+
         public boolean involves(UUID p) {
             return challenger.equals(p) || leader.equals(p);
         }
@@ -67,13 +80,15 @@ public final class DuelBoard {
     }
 
     /** Why a challenge was not made. */
-    public enum Refusal { BUSY, PAIR_COOLDOWN, RETRY_COOLDOWN }
+    public enum Refusal { BUSY, PAIR_COOLDOWN, PAIR_CALLED_OFF, RETRY_COOLDOWN }
 
     private record Guard(UUID winner, long until) {
     }
 
     private final List<Duel> duels = new ArrayList<>();
     private final Map<String, Long> pairCooldown = new HashMap<>();
+    // pairs barred because a duel was called off or ran out (not settled by a defeat): their refusal says so
+    private final java.util.Set<String> calledOffPairs = new java.util.HashSet<>();
     private final Map<String, Long> retryCooldown = new HashMap<>();
     private final Map<UUID, Guard> guards = new HashMap<>();
     // challenges that ran out while somebody was asking for a new one: PackDuel.check still tells their two players
@@ -105,7 +120,7 @@ public final class DuelBoard {
             return Optional.of(Refusal.BUSY);
         }
         if (pairCooldown.getOrDefault(pair(challenger, leader), Long.MIN_VALUE) > now) {
-            return Optional.of(Refusal.PAIR_COOLDOWN);
+            return Optional.of(calledOffPairs.contains(pair(challenger, leader)) ? Refusal.PAIR_CALLED_OFF : Refusal.PAIR_COOLDOWN);
         }
         if (retryCooldown.getOrDefault(ordered(challenger, leader), Long.MIN_VALUE) > now) {
             return Optional.of(Refusal.RETRY_COOLDOWN);
@@ -153,9 +168,40 @@ public final class DuelBoard {
             duels.remove(x);
             forget(x);
             pairCooldown.put(pair(x.challenger, x.leader), now + PAIR_COOLDOWN_TICKS);
+            calledOffPairs.remove(pair(x.challenger, x.leader));
             guards.put(loser, new Guard(x.other(loser), now + GUARD_TICKS));
         });
         return d.map(x -> new Result(x.other(loser), loser, x.challenger.equals(x.other(loser))));
+    }
+
+    /**
+     * {@code player} lost their connection in a duel that is on: it waits {@code windowTicks} for them, and its own clock stops.
+     * @return false when there is no duel on for them, or it is waiting for the other one already (then it should be called off)
+     */
+    public boolean pause(UUID player, long now, long windowTicks) {
+        Optional<Duel> d = on(player);
+        if (d.isEmpty() || d.get().pausedBy != null) {
+            return false;
+        }
+        d.get().pausedBy = player;
+        d.get().pausedAt = now;
+        d.get().pauseEnd = now + Math.max(0, windowTicks);
+        return true;
+    }
+
+    /** {@code player} is back in time: the duel goes on, with the time it still had when they left (the wait is not counted). */
+    public Optional<Duel> resume(UUID player, long now) {
+        Optional<Duel> d = duels.stream().filter(x -> player.equals(x.pausedBy) && now < x.pauseEnd).findFirst();
+        d.ifPresent(x -> {
+            x.expires += now - x.pausedAt;
+            x.pausedBy = null;
+        });
+        return d;
+    }
+
+    /** The duels whose wait ran out: the one who did not come back has lost them (the caller settles that). */
+    public List<Duel> expiredPauses(long now) {
+        return duels.stream().filter(d -> d.pausedBy != null && d.pauseEnd <= now).toList();
     }
 
     /** A blow from {@code attacker} on {@code victim}: kept (for the combat credit of what follows) only if they are each other's opponent in a duel that is on. */
@@ -172,6 +218,7 @@ public final class DuelBoard {
     /** The two cannot duel again for {@link #PAIR_COOLDOWN_TICKS}: used when one of them walked out of a duel that was on. */
     public void bar(UUID a, UUID b, long now) {
         pairCooldown.put(pair(a, b), now + PAIR_COOLDOWN_TICKS);
+        calledOffPairs.add(pair(a, b));
     }
 
     /** Whether a hit from {@code attacker} on {@code victim} is stopped: the victim just lost to them. */
@@ -212,14 +259,15 @@ public final class DuelBoard {
     }
 
     private List<Duel> sweep(long now) {
-        List<Duel> gone = duels.stream().filter(d -> d.expires < now).toList();
+        // a paused duel has no clock: its 2 minutes do not run while somebody is away
+        List<Duel> gone = duels.stream().filter(d -> d.pausedBy == null && d.expires < now).toList();
         duels.removeAll(gone);
         gone.forEach(this::forget);
         for (Duel d : gone) {
             if (d.phase == Phase.ASKED) {
                 retryCooldown.put(ordered(d.challenger, d.leader), now + RETRY_COOLDOWN_TICKS);
             } else {
-                pairCooldown.put(pair(d.challenger, d.leader), now + PAIR_COOLDOWN_TICKS);
+                bar(d.challenger, d.leader, now);
             }
         }
         return gone;
@@ -227,8 +275,8 @@ public final class DuelBoard {
 
     /** Ticks until {@code challenger} may ask {@code leader} again (the longer of the pair and the retry wait); 0 when they may. */
     public long cooldownLeft(UUID challenger, UUID leader, long now) {
-        long pairEnd = pairCooldown.getOrDefault(pair(challenger, leader), Long.MIN_VALUE);
-        long retryEnd = retryCooldown.getOrDefault(ordered(challenger, leader), Long.MIN_VALUE);
+        long pairEnd = pairCooldown.getOrDefault(pair(challenger, leader), 0L);
+        long retryEnd = retryCooldown.getOrDefault(ordered(challenger, leader), 0L);
         return Math.max(0, Math.max(pairEnd, retryEnd) - now);
     }
     public List<Duel> all() {
@@ -238,6 +286,7 @@ public final class DuelBoard {
     public void clear() {
         duels.clear();
         pairCooldown.clear();
+        calledOffPairs.clear();
         retryCooldown.clear();
         guards.clear();
         hits.clear();

@@ -179,7 +179,8 @@ public final class PartyLink {
         }
         for (UUID m : plan.leavePack()) {
             index.setMirror(m, null);
-            PackMembers.remove(server, m, "supernaturalbloodlines.pack.left_party", "");
+            // they left the party themselves: that is leaving the pack by choice, with the kill grace of /pack leave
+            PackMembers.remove(server, m, "supernaturalbloodlines.pack.left_party", "", true);
         }
     }
 }

@@ -21,8 +21,13 @@ public final class PackMembers {
      * @return false if they were in no pack
      */
     public static boolean remove(MinecraftServer server, UUID member, String reasonKey, String arg) {
+        return remove(server, member, reasonKey, arg, false);
+    }
+
+    /** {@link #remove(MinecraftServer, UUID, String, String)}; {@code voluntary} is somebody who left the pack's party themselves, which is leaving by choice. */
+    public static boolean remove(MinecraftServer server, UUID member, String reasonKey, String arg, boolean voluntary) {
         PackIndex index = PackIndex.get(server.overworld());
-        if (!index.kick(member)) {
+        if (!index.kick(member, voluntary)) {
             return false;
         }
         ServerPlayer online = SireCall.player(server, member);

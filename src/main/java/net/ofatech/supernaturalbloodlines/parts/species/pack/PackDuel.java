@@ -18,12 +18,14 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.DuelBoard;
 import net.ofatech.supernaturalbloodlines.core.bloodline.DuelBoard.Reason;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
@@ -42,6 +44,8 @@ public final class PackDuel {
     /** A challenge or an acceptance needs both in one dimension and this close. */
     public static final double RANGE = 64;
     private static final DuelBoard BOARD = new DuelBoard();
+    /** True from the moment the server starts to stop: the players who are sent away then have not left any duel. */
+    private static volatile boolean stopping;
     private static final int CHECK_EVERY = 20;
 
     private PackDuel() {
@@ -55,13 +59,22 @@ public final class PackDuel {
         // before the death is handled by anything that would act on it (a totem is asked first, and a duel is not a death)
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, false, LivingDeathEvent.class, PackDuel::onDeath);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, false, LivingIncomingDamageEvent.class, PackDuel::onDamage);
+        // the credit for a blow is given when it landed: a cancelled one (a shield, a protected player) never gets here
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, (LivingDamageEvent.Post e) -> onHurt(e));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
                 forfeit(p.server, p);
             }
         });
-        // a world that was stopped leaves no half-fought duel behind (the board lives in memory)
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p && p.getServer() != null) {
+                onLogin(p.getServer(), p);
+            }
+        });
+        // a world that is stopping leaves no half-fought duel behind (the board lives in memory): the logouts that follow must not settle one
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> onStopping());
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> onStopped());
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStartingEvent e) -> stopping = false);
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> {
             if (e.getServer().getTickCount() % CHECK_EVERY == 0) {
                 check(e.getServer());
@@ -105,6 +118,7 @@ public final class PackDuel {
             return switch (refused.get()) {
                 case BUSY -> PackCommand.error("duel_busy");
                 case PAIR_COOLDOWN -> PackCommand.error("duel_cooldown", minutes);
+                case PAIR_CALLED_OFF -> PackCommand.error("duel_called_off", minutes);
                 case RETRY_COOLDOWN -> PackCommand.error("duel_retry", minutes);
             };
         }
@@ -161,11 +175,16 @@ public final class PackDuel {
         return null;
     }
 
-    private static void onDamage(LivingIncomingDamageEvent e) {
+    /** A blow that landed on a player: the attacker has hit them, for the credit of a death by the world that comes soon after. */
+    static void onHurt(LivingDamageEvent.Post e) {
         Entity by = e.getSource().getEntity();
-        if (by != null && e.getEntity() instanceof ServerPlayer hurt) {
+        if (by != null && e.getNewDamage() > 0 && e.getEntity() instanceof ServerPlayer hurt) {
             BOARD.recordHit(hurt.getUUID(), by.getUUID(), hurt.level().getGameTime());
         }
+    }
+
+    private static void onDamage(LivingIncomingDamageEvent e) {
+        Entity by = e.getSource().getEntity();
         if (by != null && e.getEntity() instanceof ServerPlayer loser && BOARD.guarded(loser.getUUID(), by.getUUID(), loser.level().getGameTime())) {
             e.setCanceled(true);
         }
@@ -259,21 +278,66 @@ public final class PackDuel {
     }
 
     /**
-     * {@code leaver} logs out. A duel that is on is lost by them, at once (the winner is told, and leads if they were the challenger);
-     * a challenge nobody accepted yet is just called off.
+     * {@code leaver} lost their connection (or logged out). A challenge nobody accepted yet is just called off. A duel that is on
+     * waits for them for {@code duel_reconnect_seconds}: it is paused and the other one is told how long they have; with 0 it is
+     * lost at once. If the other one is away already, there is nobody left to wait for and it is called off.
      */
     public static void forfeit(MinecraftServer server, ServerPlayer leaver) {
-        if (BOARD.on(leaver.getUUID()).isEmpty()) {
+        if (stopping || !server.isRunning()) {
+            return; // the shutdown sends everybody away: nobody has walked out of anything
+        }
+        DuelBoard.Duel duel = BOARD.on(leaver.getUUID()).orElse(null);
+        if (duel == null) {
             callOff(server, leaver.getUUID(), Reason.LOGOUT);
             return;
         }
-        DuelBoard.Result r = BOARD.defeat(leaver.getUUID(), leaver.level().getGameTime()).orElse(null);
+        int seconds = SpeciesConfig.duelReconnectSeconds();
+        if (seconds <= 0) {
+            settleForfeit(server, leaver.getUUID());
+            return;
+        }
+        long now = server.overworld().getGameTime();
+        if (!BOARD.pause(leaver.getUUID(), now, seconds * 20L)) {
+            callOff(server, leaver.getUUID(), Reason.LOGOUT); // both of them are away: nothing to wait for
+            return;
+        }
+        ServerPlayer other = SireCall.player(server, duel.other(leaver.getUUID()));
+        if (other != null) {
+            other.sendSystemMessage(Component.translatable(KEY + "disconnected", name(server, leaver.getUUID()), seconds));
+        }
+    }
+
+    /** A duelist who was away is back (a login): if the wait is not over the duel goes on, and both are told. */
+    public static void onLogin(MinecraftServer server, ServerPlayer back) {
+        long now = server.overworld().getGameTime();
+        DuelBoard.Duel d = BOARD.resume(back.getUUID(), now).orElse(null);
+        if (d == null) {
+            check(server); // the wait may have run out a moment ago: settle it before anything else
+            return;
+        }
+        Component on = Component.translatable(KEY + "resumed", name(server, back.getUUID()));
+        for (UUID id : new UUID[] {d.challenger(), d.leader()}) {
+            ServerPlayer p = SireCall.player(server, id);
+            if (p != null) {
+                p.sendSystemMessage(on);
+            }
+        }
+    }
+
+    /** {@code loser} did not come back in time (or left with no wait): the duel is theirs to lose, now. */
+    static void settleForfeit(MinecraftServer server, UUID loser) {
+        DuelBoard.Result r = BOARD.defeat(loser, server.overworld().getGameTime()).orElse(null);
         if (r != null) {
             ServerPlayer winner = SireCall.player(server, r.winner());
             if (winner != null) {
                 winner.sendSystemMessage(Component.translatable(KEY + "forfeit", name(server, r.loser())));
             }
             settle(server, r);
+            // the one who left is told at their next login (they are not here to read it now), and how it ended
+            PackIndex index = PackIndex.get(server.overworld());
+            UUID leads = index.leaderOf(r.loser());
+            String key = KEY + (r.challengerWon() && leads.equals(r.winner()) ? "forfeit_lost_now" : "forfeit_lost_same");
+            index.addNotice(r.loser(), key, name(server, leads));
         }
     }
 
@@ -314,7 +378,11 @@ public final class PackDuel {
 
     /** Whatever {@code player} was in (a challenge, a duel) is over; the other one (and a player who did not leave) is told why. */
     public static void callOff(MinecraftServer server, UUID player, Reason reason) {
+        long now = server.overworld().getGameTime();
         for (DuelBoard.Duel d : BOARD.cancelInvolving(player)) {
+            if (d.phase() == DuelBoard.Phase.ON && (reason == Reason.DIED || reason == Reason.KILLED || reason == Reason.RANGE)) {
+                BOARD.bar(d.challenger(), d.leader(), now); // dying of something else, or being killed by a third player, is no way out for free either
+            }
             tellOff(server, new UUID[] {d.challenger(), d.leader()}, reason, reason == Reason.LOGOUT ? player : null);
         }
     }
@@ -334,8 +402,15 @@ public final class PackDuel {
         for (DuelBoard.Duel d : BOARD.expire(now)) {
             tellOff(server, new UUID[] {d.challenger(), d.leader()}, Reason.TIMEOUT, null);
         }
+        // somebody who did not come back in time forfeits
+        for (DuelBoard.Duel d : BOARD.expiredPauses(now)) {
+            settleForfeit(server, d.pausedBy());
+        }
         PackIndex index = PackIndex.get(server.overworld());
         for (DuelBoard.Duel d : BOARD.all()) {
+            if (d.pausedBy() != null) {
+                continue; // waiting for somebody: nothing about it is judged until they are back or the wait is over
+            }
             ServerPlayer c = SireCall.player(server, d.challenger());
             ServerPlayer l = SireCall.player(server, d.leader());
             Reason why = null;
@@ -343,26 +418,31 @@ public final class PackDuel {
                 why = Reason.LOGOUT;
             } else if (!d.leader().equals(index.alphaOf(d.challenger()).orElse(null)) || !index.isLeader(d.leader())) {
                 why = Reason.PACK;
-            } else if (c.level().dimension() != l.level().dimension() || (d.phase() == DuelBoard.Phase.ON && c.distanceTo(l) > RANGE)) {
+            } else if (c.level().dimension() != l.level().dimension()) {
                 why = Reason.FAR;
+            } else if (d.phase() == DuelBoard.Phase.ON && c.distanceTo(l) > RANGE) {
+                why = Reason.RANGE;
             }
             if (why != null) {
-                if (d.phase() == DuelBoard.Phase.ON && why == Reason.FAR) {
-                    BOARD.bar(d.challenger(), d.leader(), now); // walking out of a duel is no way to end it for free
-                }
-                BOARD.cancelInvolving(d.challenger());
-                tellOff(server, new UUID[] {d.challenger(), d.leader()}, why, null);
+                callOff(server, d.challenger(), why); // an on duel that is called off for the range (or by a death) also bars the pair
             }
         }
     }
 
-    /** The world stopped: no half-fought duel is left behind (the board lives in memory). */
+    /** The server is about to stop: the board is cleared first, so the logouts of the shutdown settle nothing. */
+    public static void onStopping() {
+        stopping = true;
+        BOARD.clear();
+    }
+
+    /** The world stopped: a backstop for {@link #onStopping}. */
     public static void onStopped() {
         BOARD.clear();
     }
 
     /** For tests: nothing is left on the board. */
     public static void reset() {
+        stopping = false;
         BOARD.clear();
     }
 }
