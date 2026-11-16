@@ -322,7 +322,7 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
             int fill = a.primary() ? (a.enabled() ? (hot ? 0xFF6be4ea : TEAL) : 0xFF244a55) : (hot ? PANEL_LIT : BG);
             g.fill(b.x(), b.y(), b.right(), b.bottom(), a.primary() ? fill : EDGE);
             g.fill(b.x() + 1, b.y() + 1, b.right() - 1, b.bottom() - 1, fill);
-            String label = font.plainSubstrByWidth(a.label().getString(), b.w() - 8);
+            String label = LabelFit.cut(a.label().getString(), b.w() - 8, font::width);
             g.drawString(font, label, b.x() + (b.w() - font.width(label)) / 2, b.y() + 4, a.primary() ? (a.enabled() ? 0xFF05202a : 0xFF6a8d97) : a.enabled() ? TEXT : 0xFF6a8d97, false);
         }
         int limit = by - 2;

@@ -139,7 +139,7 @@ public final class StageQuestsPage implements HubPageView {
             d.pips((int) row.progress(), (int) row.target());
         }
         d.action("hide", Component.translatable(BOOK + (hideDone ? "show" : "hide")), false, true, () -> hideDone = !hideDone);
-        d.action(new Detail.Action("track", Component.translatable(PageKit.HUB + "path.track"), false, false, Component.translatable(PageKit.HUB + "path.track_soon"), null, () -> { }));
+        d.action(TrackHud.action(row.task().id(), row.state() == TaskState.CLAIMED));
         String id = row.task().id();
         d.action("claim", Component.translatable(BOOK + "claim"), true, row.state() == TaskState.CLAIMABLE, () -> f.claim(id));
         f.detail(d.build());

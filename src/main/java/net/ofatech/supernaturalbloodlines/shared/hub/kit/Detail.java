@@ -49,6 +49,11 @@ public record Detail(@Nullable Component kicker, Component title, @Nullable Comp
         actions = List.copyOf(actions);
     }
 
+    /** The same detail with only {@code kept} of its actions (the ones a narrow bar shows). */
+    public Detail withActions(List<Action> kept) {
+        return new Detail(kicker, title, subtitle, icon, source, pips, pipsFilled, body, rows, fields, reward, kept);
+    }
+
     public static Builder of(Component title) {
         return new Builder(title);
     }

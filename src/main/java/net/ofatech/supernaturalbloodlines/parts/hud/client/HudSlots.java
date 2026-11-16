@@ -34,6 +34,26 @@ public final class HudSlots {
         return VIEWS;
     }
 
+    private static final SlotView[] OTHER = new SlotView[Loadout.SLOTS];
+    private static long otherAt = Long.MIN_VALUE;
+
+    /** The slots {@code other} mode would show, for the panel that appears with Alt; built at most once a tick. */
+    public static SlotView[] preview(SlotMode other) {
+        LocalPlayer p = Minecraft.getInstance().player;
+        long now = Minecraft.getInstance().level == null ? 0 : Minecraft.getInstance().level.getGameTime();
+        if (p == null) {
+            Arrays.fill(OTHER, SlotView.EMPTY);
+        } else if (now != otherAt) {
+            otherAt = now;
+            if (other == SlotMode.TENSURA) {
+                TensuraSlots.refresh(p, OTHER);
+            } else {
+                ActionSlots.refresh(p, OTHER);
+            }
+        }
+        return OTHER;
+    }
+
     private static void tick() {
         LocalPlayer p = Minecraft.getInstance().player;
         SlotMode mode = HudModeState.current().orElse(null);

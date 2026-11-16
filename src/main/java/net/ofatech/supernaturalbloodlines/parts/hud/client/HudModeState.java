@@ -32,8 +32,21 @@ public final class HudModeState {
     }
 
     /** The mode key: switches, says which mode it is now in the action bar, and remembers it. Nothing changes with only one mode installed. */
+    private static long switchedAt = Long.MIN_VALUE;
+
+    /** True for three seconds after the mode key was pressed: the panel with the other mode's slots stays up for that long. */
+    public static boolean justSwitched() {
+        var level = Minecraft.getInstance().level;
+        return level != null && switchedAt != Long.MIN_VALUE && level.getGameTime() - switchedAt < 60;
+    }
+
     public static void toggle() {
         SlotMode before = mode;
+        var level = Minecraft.getInstance().level;
+        if (level != null) {
+            switchedAt = level.getGameTime();
+        }
+        HudActivity.touch();
         mode = SlotMode.next(current().orElse(SlotMode.TENSURA), AVAILABLE).orElse(null);
         if (mode != null && AVAILABLE.size() > 1 && mode != before) {
             Minecraft.getInstance().gui.setOverlayMessage(Component.translatable("supernaturalbloodlines.hud.mode." + mode.name().toLowerCase(Locale.ROOT)), false);

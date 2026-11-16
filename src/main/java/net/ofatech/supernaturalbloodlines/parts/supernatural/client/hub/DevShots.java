@@ -30,7 +30,11 @@ public final class DevShots {
     private static final int SETTLE_TICKS = 12;
     private static final int WORLD_TICKS = 100;
 
-    private record Shot(String theme, HubPage page, int scale, boolean menu) {
+    /** @param hud null for a hub page; otherwise "normal", "alt" or "idle": the ability HUD in game with demo slots, in the look of {@code theme} */
+    private record Shot(String theme, HubPage page, int scale, boolean menu, String hud) {
+        Shot(String theme, HubPage page, int scale, boolean menu) {
+            this(theme, page, scale, menu, null);
+        }
     }
 
     private final List<Shot> shots;
@@ -75,6 +79,13 @@ public final class DevShots {
         for (String item : spec.split(",")) {
             menuShots = false;
             String[] parts = item.trim().split(":");
+            if (parts[0].equalsIgnoreCase("hud")) {
+                // hud:<look>[:alt|idle], for example hud:blood_moon:alt
+                for (int scale : scales) {
+                    shots.add(new Shot(parts[1].toLowerCase(Locale.ROOT), HubPage.PATH, scale, false, parts.length > 2 ? parts[2].toLowerCase(Locale.ROOT) : "normal"));
+                }
+                continue;
+            }
             String theme = parts[0].toLowerCase(Locale.ROOT);
             List<HubPage> pages = new ArrayList<>();
             if (parts.length < 2 || parts[1].equalsIgnoreCase("all")) {
@@ -100,6 +111,7 @@ public final class DevShots {
             HubView.devOverride(DevDemo::apply);
         }
         HubScreen.devNoTensura(Boolean.getBoolean(PROPERTY + ".noTensura"));
+        HubScreen.devQuiet(true);
         NeoForge.EVENT_BUS.addListener(d::tick);
         SupernaturalBloodlines.LOGGER.warn("DEVSHOTS on: {} shots queued (development only)", shots.size());
     }
@@ -131,6 +143,7 @@ public final class DevShots {
         }
         if (index >= shots.size()) {
             done = true;
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on = false;
             SupernaturalBloodlines.LOGGER.warn("DEVSHOTS done");
             if (quit) {
                 mc.stop();
@@ -146,6 +159,14 @@ public final class DevShots {
             HubClientConfig.ThemeId theme = HubClientConfig.ThemeId.valueOf(s.theme().toUpperCase(Locale.ROOT));
             HubClientConfig.setTheme(theme);
             mc.setScreen(null);
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on = s.hud() != null;
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.alt = "alt".equals(s.hud());
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.idle = "idle".equals(s.hud());
+            if (s.hud() != null) {
+                GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 1, 1);
+                wait = 1;
+                return;
+            }
             GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 1, 1); // a hover tooltip would cover the page
             HubClient.remember(s.page());
             HubClient.open(s.page());
@@ -163,7 +184,7 @@ public final class DevShots {
         File dir = new File(mc.gameDirectory, "screenshots/devshots");
         dir.mkdirs();
         String tag = demo() == null || demo().equals("true") ? "" : "-" + demo();
-        String name = "devshots/" + s.theme() + "-" + (s.menu() ? "menu" : s.page().name().toLowerCase(Locale.ROOT)) + tag + "-s" + mc.options.guiScale().get() + ".png";
+        String name = "devshots/" + (s.hud() != null ? "hud-" : "") + s.theme() + "-" + (s.hud() != null ? s.hud() : s.menu() ? "menu" : s.page().name().toLowerCase(Locale.ROOT)) + tag + "-s" + mc.options.guiScale().get() + ".png";
         Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), c -> { });
         SupernaturalBloodlines.LOGGER.warn("DEVSHOTS {}", name);
         index++;

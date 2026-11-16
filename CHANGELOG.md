@@ -8,6 +8,13 @@
 - **Two new pages in every look: Guide and Loadout.** The Guide has chapters for what you are (your creature, then your magic race) and for how the hub, the path, skills, quests, rites, the bloodline, the pack, the loadout and the moon work. The Loadout page is the Loadout tab of the Skills page on a page of its own (the tab stays), and it shows only with the ability HUD. A Ghoul can read the Guide while the other pages wait. Keys 1 to 8 now reach them.
 - The three looks draw their page icons from the new icon atlas.
 
+### The ability HUD in the hub's look (16f)
+
+- **The slots follow the hub's theme:** inked tiles with wax key badges (Grimoire), round slots with gold key letters (Blood Moon), hexagons with key tabs (Tensura). Real icons, a clockwise cooldown pie with the seconds, a gold glow while a skill is active, a lock on actions you have not unlocked, and a ring of blood round Bite.
+- **Caps Lock now switches the mode** (it was Alt + Caps Lock). It works with Alt held too, and it can be rebound in Controls.
+- **Hold Alt** for the other mode's six slots and one panel per column with what each slot is. A werewolf sees the full moon's forced-shift countdown for the last five minutes. After ten idle seconds the slots fade to 40 percent.
+- **Track on HUD works:** pick a task on the hub's Path or Quests page and its line and progress bar show top left.
+
 ### States of the hub (16e)
 
 - **Ghoul:** Path and Guide only; a grey moon with the time left, the other tabs locked. **Two ladders:** a bookmark per ladder with a ready dot. **Empty pages:** one line and a button to what explains it. **The look button** is a menu; Tensura is greyed without Tensura. Clearing a slot asks first. The Tensura look's title strip and ladder labels no longer overlap at any size, and its page list is icons only on a narrow window.

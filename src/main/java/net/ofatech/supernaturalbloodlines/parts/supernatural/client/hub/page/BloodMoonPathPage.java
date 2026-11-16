@@ -161,7 +161,7 @@ public final class BloodMoonPathPage implements HubPageView {
         Optional<HubModel.TaskRow> claimable = ladder.tasks().stream().filter(r -> r.state() == TaskState.CLAIMABLE).findFirst();
         Detail.Builder d = Detail.of(PageKit.rung(active)).pips(active.claimed(), Math.max(active.tasks(), 1))
                 .body(Component.translatable(MOON + "bar", active.claimed(), active.tasks(), PathPage.reward(active)));
-        d.action(new Detail.Action("track", Component.translatable(KEY + "track"), false, false, Component.translatable(KEY + "track_soon"), null, () -> { }));
+        d.action(TrackHud.action(PathPage.trackable(ladder).map(r -> r.task().id()).orElse(""), PathPage.trackable(ladder).isEmpty()));
         d.action("claim", Component.translatable(MOON + "claim"), true, claimable.isPresent(), () -> claimable.ifPresent(r -> f.claim(r.task().id())));
         f.detail(d.build());
     }

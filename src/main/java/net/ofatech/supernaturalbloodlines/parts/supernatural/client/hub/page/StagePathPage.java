@@ -133,7 +133,7 @@ public final class StagePathPage implements HubPageView {
         for (HubModel.TaskRow row : ladder.tasks()) {
             d.row(PageKit.text(row.text()), SourceTag.of(row.source()), row.counted() ? row.progress() : row.state() == TaskState.OPEN ? 0 : 1, row.counted() ? row.target() : 1);
         }
-        d.action(new Detail.Action("track", Component.translatable(KEY + "track"), false, false, Component.translatable(KEY + "track_soon"), null, () -> { }));
+        d.action(TrackHud.action(PathPage.trackable(ladder).map(r -> r.task().id()).orElse(""), PathPage.trackable(ladder).isEmpty()));
         d.action("claim", Component.translatable(KEY + "claim_reward"), true, claimable.isPresent(), () -> claimable.ifPresent(r -> f.claim(r.task().id())));
         f.detail(d.build());
     }

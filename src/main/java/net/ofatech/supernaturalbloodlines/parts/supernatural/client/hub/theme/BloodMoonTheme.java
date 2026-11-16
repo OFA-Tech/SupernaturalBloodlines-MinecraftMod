@@ -12,7 +12,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Counters;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.BarPlan;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
@@ -184,37 +186,64 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         }
     }
 
-    /** The floating bar along the bottom: the selection's name and pips, a line about it, and its actions as pills on the right. */
+    /** The floating bar along the bottom: the selection's name and pips, a line about it, and its actions as pills on the right; what does not fit moves behind "...". */
     @Override
     public void drawDetail(UiContext ctx, Rect r, Detail d) {
         GuiGraphics g = ctx.g();
         Font font = ctx.font();
         g.fill(r.x(), r.y(), r.right(), r.bottom(), 0xEE140810);
         g.renderOutline(r.x(), r.y(), r.w(), r.h(), EDGE);
-        List<Rect> pills = new ArrayList<>();
-        int right = r.right() - 6;
-        for (int i = d.actions().size() - 1; i >= 0; i--) {
-            Detail.Action a = d.actions().get(i);
-            int w = Math.min(font.width(a.label()) + 14, Math.max(40, r.w() / 3));
-            Rect pill = new Rect(right - w, r.y() + (r.h() - 16) / 2, w, 16);
-            right = pill.x() - 4;
-            pills.add(0, pill);
-            boolean hot = a.enabled() && (ctx.hovered(pill) || ctx.focused("detail:" + a.id()));
-            int fill = a.primary() ? (a.enabled() ? (hot ? 0xFFf06a5f : RED) : 0xFF5a3a42) : (hot ? 0xFF3a1822 : PILL);
-            g.fill(pill.x(), pill.y(), pill.right(), pill.bottom(), a.primary() ? fill : EDGE);
-            g.fill(pill.x() + 1, pill.y() + 1, pill.right() - 1, pill.bottom() - 1, fill);
-            String label = font.plainSubstrByWidth(a.label().getString(), pill.w() - 6);
-            g.drawString(font, label, pill.x() + (pill.w() - font.width(label)) / 2, pill.y() + 4,
-                    a.enabled() ? (a.primary() ? 0xFFfff1ea : ink()) : 0xFF9a7a82, false);
+        List<Integer> widths = new ArrayList<>();
+        int primary = -1;
+        for (int i = 0; i < d.actions().size(); i++) {
+            widths.add(font.width(d.actions().get(i).label()));
+            if (d.actions().get(i).primary()) {
+                primary = i;
+            }
         }
-        int textW = Math.max(40, right - r.x() - 14);
-        int x = r.x() + 8;
-        g.drawString(font, font.plainSubstrByWidth(d.title().getString(), textW - (d.pips() > 0 ? d.pips() * 6 + 6 : 0)), x, r.y() + 6, 0xFFfff1ea, false);
+        BarPlan plan = BarPlan.of(r, widths, primary, font.width(d.title()) + (d.pips() > 0 ? d.pips() * 6 + 6 : 0));
+        List<Detail.Action> shown = new ArrayList<>();
+        List<Rect> rects = new ArrayList<>();
+        for (int i = 0; i < d.actions().size(); i++) {
+            if (plan.pills().get(i) != null) {
+                shown.add(d.actions().get(i));
+                rects.add(plan.pills().get(i));
+                pill(ctx, plan.pills().get(i), d.actions().get(i));
+            }
+        }
+        if (plan.overflow() != null) {
+            Rect more = plan.overflow();
+            boolean hot = ctx.hovered(more) || ctx.focused("detail:more");
+            g.fill(more.x(), more.y(), more.right(), more.bottom(), EDGE);
+            g.fill(more.x() + 1, more.y() + 1, more.right() - 1, more.bottom() - 1, hot || overflowOpen ? 0xFF3a1822 : PILL);
+            g.drawString(font, "\u2026", more.x() + (more.w() - font.width("\u2026")) / 2, more.y() + 4, ink(), false);
+            ctx.target("detail:more", more, List.of(Component.translatable("supernaturalbloodlines.hub.more")), () -> overflowOpen = !overflowOpen);
+            if (overflowOpen) {
+                // the actions that did not fit, stacked above the bar
+                int y = r.y() - 2;
+                for (int i = plan.hidden().size() - 1; i >= 0; i--) {
+                    Detail.Action a = d.actions().get(plan.hidden().get(i));
+                    int w = Math.max(90, font.width(a.label()) + 14);
+                    Rect item = new Rect(more.right() - w, y - PILL_ROW, w, PILL_ROW);
+                    y -= PILL_ROW + 2;
+                    pill(ctx, item, a);
+                    shown.add(a);
+                    rects.add(item);
+                }
+            }
+        } else {
+            overflowOpen = false;
+        }
+        int textW = Math.max(40, plan.title());
+        int x = r.x() + BarPlan.PAD + 2;
+        String title = LabelFit.cut(d.title().getString(), textW - (d.pips() > 0 ? d.pips() * 6 + 6 : 0), font::width);
+        g.drawString(font, title, x, r.y() + 6, 0xFFfff1ea, false);
         if (d.pips() > 0) {
-            KitDraw.pips(g, x + Math.min(font.width(d.title()), textW - d.pips() * 6 - 6) + 6, r.y() + 8, d.pips(), d.pipsFilled(), RED, 0xFF4a2430);
+            KitDraw.pips(g, x + font.width(title) + 6, r.y() + 8, d.pips(), d.pipsFilled(), RED, 0xFF4a2430);
         }
         int by = r.y() + 17;
-        for (var line : font.split(d.body().isEmpty() ? Component.empty() : d.body().get(0), (int) (textW / 0.75f))) {
+        List<String> lines = LabelFit.wrap(d.body().isEmpty() ? "" : d.body().get(0).getString(), (int) (textW / 0.75f), 2, font::width);
+        for (String line : lines) {
             if (by + 7 > r.bottom() - 3) {
                 break;
             }
@@ -226,7 +255,21 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
             pose.popPose();
             by += 7;
         }
-        KitDraw.detailActions(ctx, this, pills, d);
+        KitDraw.detailActions(ctx, this, rects, d.withActions(shown));
+    }
+
+    private static final int PILL_ROW = 16;
+    private boolean overflowOpen;
+
+    private void pill(UiContext ctx, Rect pill, Detail.Action a) {
+        GuiGraphics g = ctx.g();
+        Font font = ctx.font();
+        boolean hot = a.enabled() && (ctx.hovered(pill) || ctx.focused("detail:" + a.id()));
+        int fill = a.primary() ? (a.enabled() ? (hot ? 0xFFf06a5f : RED) : 0xFF5a3a42) : (hot ? 0xFF3a1822 : PILL);
+        g.fill(pill.x(), pill.y(), pill.right(), pill.bottom(), a.primary() ? fill : EDGE);
+        g.fill(pill.x() + 1, pill.y() + 1, pill.right() - 1, pill.bottom() - 1, fill);
+        String label = LabelFit.cut(a.label().getString(), pill.w() - 6, font::width);
+        g.drawString(font, label, pill.x() + (pill.w() - font.width(label)) / 2, pill.y() + 4, a.enabled() ? (a.primary() ? 0xFFfff1ea : ink()) : 0xFF9a7a82, false);
     }
 
     /** Claimed tasks of the next rung out of its tasks; a full moon at the top of the ladder. */

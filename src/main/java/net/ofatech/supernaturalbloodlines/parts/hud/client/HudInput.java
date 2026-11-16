@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.neoforged.neoforge.client.settings.KeyModifier;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -73,6 +74,13 @@ public final class HudInput {
             while (HudKeys.HUD_MODE.consumeClick()) {
                 HudModeState.toggle();
             }
+            // a plain mapping does not fire while Alt, Ctrl or Shift is held (NeoForge looks up the held modifier's mappings): a Caps press with one held still switches
+            KeyMapping mode = HudKeys.HUD_MODE;
+            boolean capsDown = mode.getKeyModifier() == KeyModifier.NONE && physicallyDown(mc, mode);
+            if (capsDown && !capsWasDown && (Screen.hasAltDown() || Screen.hasControlDown() || Screen.hasShiftDown())) {
+                HudModeState.toggle();
+            }
+            capsWasDown = capsDown;
         }
         for (int i = 0; i < DOWN.length; i++) {
             boolean press = PENDING_PRESS[i];
@@ -147,6 +155,8 @@ public final class HudInput {
             default -> true;
         };
     }
+
+    private static boolean capsWasDown;
 
     private static boolean physicallyDown(Minecraft mc, KeyMapping km) {
         InputConstants.Key key = km.getKey();

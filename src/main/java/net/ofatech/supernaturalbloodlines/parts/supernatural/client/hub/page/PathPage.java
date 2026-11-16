@@ -7,6 +7,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -45,11 +46,18 @@ public final class PathPage implements HubPageView {
         next(f, book);
     }
 
+    /** The task "Track on HUD" follows on this ladder: the first one still open, or claimable when none is open. */
+    public static Optional<HubModel.TaskRow> trackable(HubModel.LadderView ladder) {
+        if (ladder == null || ladder.atTop()) {
+            return Optional.empty();
+        }
+        return ladder.tasks().stream().filter(r -> r.state() == TaskState.OPEN).findFirst().or(() -> ladder.tasks().stream().filter(r -> r.state() == TaskState.CLAIMABLE).findFirst());
+    }
+
     private static void story(HubScreen.Frame f, boolean book) {
         HubView v = f.view;
         HubTheme t = f.theme();
         Rect r = f.region(HubLayout.MAIN);
-        LadderTabs.render(f, r.x(), r.y() - 13, r.w());
         int y = f.begin(HubLayout.MAIN);
         f.g.drawString(f.font(), Component.translatable(KEY + "book_of"), r.x(), y, t.muted(), false);
         y = PageKit.title(f, v.player().getName(), r.x(), y + PageKit.LINE, r.w(), t.accent());
@@ -204,6 +212,8 @@ public final class PathPage implements HubPageView {
         HubView v = f.view;
         HubTheme t = f.theme();
         Rect r = f.region(HubLayout.SIDE);
+        // the bookmarks hang in the right page's header band (the margin note is on the left page), so they never touch it
+        LadderTabs.render(f, r.x(), r.y() - 17, r.w());
         int y = f.begin(HubLayout.SIDE);
         if (v.ghoul()) {
             f.end(turning(f, r, y));

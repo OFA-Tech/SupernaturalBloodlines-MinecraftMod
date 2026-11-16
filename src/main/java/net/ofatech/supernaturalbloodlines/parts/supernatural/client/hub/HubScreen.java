@@ -104,6 +104,10 @@ public final class HubScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        if (devQuiet) {
+            mouseX = -1000;
+            mouseY = -1000;
+        }
         super.render(g, mouseX, mouseY, partialTick);
         if (minecraft == null || minecraft.player == null) {
             return;
@@ -237,6 +241,12 @@ public final class HubScreen extends Screen {
     }
 
     private static boolean devNoTensura;
+    private static boolean devQuiet;
+
+    /** Development only (the dev screenshots): the pointer counts as far away, so no hover and no tooltip is in a picture. */
+    static void devQuiet(boolean on) {
+        devQuiet = on;
+    }
 
     /** Development only (the dev screenshots): pretend Tensura is missing, so the look menu shows it greyed. */
     static void devNoTensura(boolean on) {

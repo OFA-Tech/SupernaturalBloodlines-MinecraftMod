@@ -17,7 +17,7 @@ All in the **Supernatural Bloodlines** category, in game only.
 |---|---|---|
 | **Slot 1, 2, 3** | **R, F, V** | The left column of the [ability HUD](Ability-HUD). Slot 1 is where the Bite action sits by default |
 | **Slot 4, 5, 6** | **Z, X, C** | The right column |
-| **HUD mode** | **Alt + Caps Lock** | Switches between Tensura mode and Supernatural mode. Caps Lock alone is not ours |
+| **HUD mode** | **Caps Lock** | Switches between Tensura mode and Supernatural mode (a Caps press with Alt, Ctrl or Shift held also works). If another mod uses Caps Lock, rebind one of them in Controls; in the OFA pack the held radio moved to Backslash |
 | Supernatural hub | **Home** | (above, supernatural part) |
 
 There is **no Bite key**: Bite is an action in a slot. The slots do nothing until the HUD arrives in the next phase.

@@ -40,23 +40,28 @@ public final class StageGhoulPage implements HubPageView {
         pose.pushPose();
         pose.translate(cx - f.font().width(clock) * scale / 2f, cy - 4 * scale - 4, 0);
         pose.scale(scale, scale, 1f);
-        f.g.drawString(f.font(), clock, 0, 0, 0xFF161616, false);
+        f.g.drawString(f.font(), clock, 0, 0, 0xFF0A0A0A, false);
         pose.popPose();
         Component left = Component.translatable(KEY + "left");
-        f.g.drawString(f.font(), left, cx - f.font().width(left) / 2, cy + 4 * scale + 2, 0xFF2e2e2e, false);
+        f.g.drawString(f.font(), left, cx - f.font().width(left) / 2, cy + 4 * scale + 2, 0xFF0A0A0A, false);
         f.end(stage.bottom());
         f.detail(Detail.of(Component.translatable(KEY + "bar")).body(Component.translatable(KEY + "bar_text"))
                 .action("guide", Component.translatable(KEY + "guide"), true, true, () -> f.screen().setPage(HubPage.GUIDE)).build());
     }
 
-    /** A grey moon, pale in the middle and dark at the rim. */
+    /** The grey of the moon at {@code d} (0 in the middle, 1 at the rim): about 55 percent luminance in the middle to 38 at the rim, a drained moon. */
+    static int value(float d) {
+        return 0x8C - (int) (0x2A * Math.min(1f, d * d));
+    }
+
+    /** A dim grey moon, a little paler in the middle. */
     static void disc(GuiGraphics g, int cx, int cy, int r) {
         for (int dy = -r; dy <= r; dy++) {
             int half = (int) Math.sqrt((double) r * r - (double) dy * dy);
             int step = Math.max(1, half / 14);
             for (int dx = -half; dx < half; dx += step) {
                 float d = (float) Math.sqrt((double) dx * dx + (double) dy * dy) / r;
-                int v = 0xE6 - (int) (0x8A * Math.min(1f, d * d));
+                int v = value(d);
                 g.fill(cx + dx, cy + dy, Math.min(cx + half, cx + dx + step), cy + dy + 1, 0xFF000000 | v << 16 | v << 8 | v);
             }
         }
