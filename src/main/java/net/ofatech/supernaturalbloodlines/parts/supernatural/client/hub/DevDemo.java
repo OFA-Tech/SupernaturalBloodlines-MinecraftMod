@@ -7,7 +7,9 @@ import java.util.Optional;
 import java.util.Set;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotPayload;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 
@@ -21,6 +23,39 @@ final class DevDemo {
     }
 
     static HubView apply(HubView v) {
+        String mode = DevShots.demo();
+        if ("ghoul".equals(mode)) {
+            return ghoul(v);
+        }
+        HubView base = "empty".equals(mode) ? empty(v) : populated(v);
+        if ("two".equals(mode)) {
+            List<HubModel.LadderView> both = new ArrayList<>(base.ladders());
+            HubModel.LadderView first = both.get(0);
+            both.add(new HubModel.LadderView(SupernaturalRace.WITCH, first.rungs(), first.active(), first.tasks()));
+            return new HubView(base.player(), base.bloodline(), base.state(), base.races(), both, base.skills(), base.snapshot(), base.context());
+        }
+        return base;
+    }
+
+    /** A Ghoul with 14:20 left to finish turning: Path and Guide open, the rest locked. */
+    private static HubView ghoul(HubView v) {
+        List<SupernaturalRace> races = List.of(SupernaturalRace.GHOUL);
+        HubPage.Context c = v.context();
+        HubPage.Context ghoul = new HubPage.Context(SupernaturalRace.GHOUL, Optional.empty(), c.werewolves(), c.enchanted(), c.loadout());
+        return new HubView(v.player(), v.bloodline().toBuilder().ghoul(true).turningTicksLeft(17_200).build(), v.state(), races,
+                HubModel.ladders(LadderTable.clientCopy(), v.state(), races, Map.of()), v.skills(), v.snapshot(), ghoul);
+    }
+
+    /** Nothing yet: no pack, no sire or children, no open task (the three empty states). */
+    private static HubView empty(HubView v) {
+        HubSnapshotPayload.Family none = new HubSnapshotPayload.Family(Optional.empty(), false, List.of(), List.of(), List.of());
+        HubSnapshotPayload snap = new HubSnapshotPayload(none, List.of(), 0, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),
+                v.snapshot().rites());
+        List<HubModel.LadderView> done = v.ladders().stream().map(l -> new HubModel.LadderView(l.race(), l.rungs(), Optional.empty(), List.of())).toList();
+        return new HubView(v.player(), v.bloodline(), v.state().toBuilder().skills(Set.of()).build(), v.races(), done, v.skills(), snap, v.context());
+    }
+
+    private static HubView populated(HubView v) {
         SupernaturalState s = v.state().toBuilder().skills(Set.of("S-HYB-1", "S-HYB-2", "S-VAM-1", "S-VAM-2", "S-WOL-1", "S-WOL-5", "S-WOL-7"))
                 .sp(6).spEarned(11).build();
         List<HubSocial.Member> pack = List.of(new HubSocial.Member("Derek", "alpha", true), new HubSocial.Member("Liam", "beta", true),
@@ -32,9 +67,7 @@ final class DevDemo {
                 List.of("Mikael"), List.of(new HubSocial.Kin("Tyler", 0), new HubSocial.Kin("Ana", 0), new HubSocial.Kin("Bo", 0), new HubSocial.Kin("Cy", 0),
                         new HubSocial.Kin("Di", 0)));
         List<HubSocial.Rite> rites = new ArrayList<>();
-        rites.add(new HubSocial.Rite("enchanted:rite_of_revelation", 1000, List.of("1 minecraft:glass_bottle", "1 minecraft:white_wool", "2 minecraft:glowstone_dust"),
-                List.of("enchanted:small_circle"), "demo", "enchanted"));
-        v.snapshot().rites().stream().filter(r -> !r.id().equals("enchanted:rite_of_revelation")).forEach(rites::add);
+        rites.addAll(v.snapshot().rites());
         HubSnapshotPayload snap = new HubSnapshotPayload(family, pack, 2, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),
                 rites);
         return new HubView(v.player(), v.bloodline(), s, v.races(), HubModel.ladders(LadderTable.clientCopy(), s, v.races(), HubView.levels(v.player())), v.skills(), snap,

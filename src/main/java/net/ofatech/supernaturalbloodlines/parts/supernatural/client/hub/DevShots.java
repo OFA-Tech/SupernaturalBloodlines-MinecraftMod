@@ -30,7 +30,7 @@ public final class DevShots {
     private static final int SETTLE_TICKS = 12;
     private static final int WORLD_TICKS = 100;
 
-    private record Shot(String theme, HubPage page, int scale) {
+    private record Shot(String theme, HubPage page, int scale, boolean menu) {
     }
 
     private final List<Shot> shots;
@@ -45,6 +45,12 @@ public final class DevShots {
     private boolean opened;
     private boolean done;
     private boolean gave;
+
+    /** The demo mode: "true" (a populated hub), or "ghoul", "two" (two ladders) or "empty"; null when off. */
+    static String demo() {
+        String v = System.getProperty(PROPERTY + ".demo");
+        return v == null || v.equalsIgnoreCase("false") ? null : v.toLowerCase(Locale.ROOT);
+    }
 
     private DevShots(List<Shot> shots, String world, boolean quit, int width, int height) {
         this.shots = shots;
@@ -65,27 +71,35 @@ public final class DevShots {
             scales.add(Integer.parseInt(s.trim()));
         }
         List<Shot> shots = new ArrayList<>();
+        boolean menuShots = false;
         for (String item : spec.split(",")) {
+            menuShots = false;
             String[] parts = item.trim().split(":");
             String theme = parts[0].toLowerCase(Locale.ROOT);
             List<HubPage> pages = new ArrayList<>();
             if (parts.length < 2 || parts[1].equalsIgnoreCase("all")) {
                 pages.addAll(List.of(HubPage.values()));
             } else {
-                pages.add(HubPage.valueOf(parts[1].toUpperCase(Locale.ROOT)));
+                if (parts[1].equalsIgnoreCase("menu")) {
+                    pages.add(HubPage.PATH); // the look menu open over the Path
+                    menuShots = true;
+                } else {
+                    pages.add(HubPage.valueOf(parts[1].toUpperCase(Locale.ROOT)));
+                }
             }
             for (int scale : scales) {
                 for (HubPage p : pages) {
-                    shots.add(new Shot(theme, p, scale));
+                    shots.add(new Shot(theme, p, scale, menuShots));
                 }
             }
         }
         String[] size = System.getProperty(PROPERTY + ".size", "1920x1080").split("x");
         DevShots d = new DevShots(shots, System.getProperty(PROPERTY + ".world", "New World"), Boolean.getBoolean(PROPERTY + ".quit"),
                 Integer.parseInt(size[0]), Integer.parseInt(size[1]));
-        if (Boolean.getBoolean(PROPERTY + ".demo")) {
+        if (demo() != null) {
             HubView.devOverride(DevDemo::apply);
         }
+        HubScreen.devNoTensura(Boolean.getBoolean(PROPERTY + ".noTensura"));
         NeoForge.EVENT_BUS.addListener(d::tick);
         SupernaturalBloodlines.LOGGER.warn("DEVSHOTS on: {} shots queued (development only)", shots.size());
     }
@@ -106,7 +120,7 @@ public final class DevShots {
             }
             return;
         }
-        if (Boolean.getBoolean(PROPERTY + ".demo") && !gave) {
+        if (demo() != null && !gave) {
             gave = true;
             mc.player.connection.sendCommand("give @s minecraft:glass_bottle");
         }
@@ -135,15 +149,21 @@ public final class DevShots {
             GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 1, 1); // a hover tooltip would cover the page
             HubClient.remember(s.page());
             HubClient.open(s.page());
+            if (s.menu() && mc.screen instanceof HubScreen hs) {
+                hs.devOpenMenu();
+            }
             wait = 1;
             return;
         }
+        // the pointer in the screen's corner, so no stray tooltip is in the picture
+        org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 0, 0);
         if (++wait < SETTLE_TICKS) {
             return;
         }
         File dir = new File(mc.gameDirectory, "screenshots/devshots");
         dir.mkdirs();
-        String name = "devshots/" + s.theme() + "-" + s.page().name().toLowerCase(Locale.ROOT) + "-s" + mc.options.guiScale().get() + ".png";
+        String tag = demo() == null || demo().equals("true") ? "" : "-" + demo();
+        String name = "devshots/" + s.theme() + "-" + (s.menu() ? "menu" : s.page().name().toLowerCase(Locale.ROOT)) + tag + "-s" + mc.options.guiScale().get() + ".png";
         Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), c -> { });
         SupernaturalBloodlines.LOGGER.warn("DEVSHOTS {}", name);
         index++;

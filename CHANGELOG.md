@@ -8,6 +8,10 @@
 - **Two new pages in every look: Guide and Loadout.** The Guide has chapters for what you are (your creature, then your magic race) and for how the hub, the path, skills, quests, rites, the bloodline, the pack, the loadout and the moon work. The Loadout page is the Loadout tab of the Skills page on a page of its own (the tab stays), and it shows only with the ability HUD. A Ghoul can read the Guide while the other pages wait. Keys 1 to 8 now reach them.
 - The three looks draw their page icons from the new icon atlas.
 
+### States of the hub (16e)
+
+- **Ghoul:** Path and Guide only; a grey moon with the time left, the other tabs locked. **Two ladders:** a bookmark per ladder with a ready dot. **Empty pages:** one line and a button to what explains it. **The look button** is a menu; Tensura is greyed without Tensura. Clearing a slot asks first. The Tensura look's title strip and ladder labels no longer overlap at any size, and its page list is icons only on a narrow window.
+
 ### Tensura v2 (16d)
 
 - **Tensura''s window is a status window:** a title bar ("Status · Path"), the stats line and a Theme button, a page list with Other mods under it, a teal magic circle with hexagon rings and a hexagon ladder, and an info pane on the right that holds the selection, its tasks and its buttons. Skills are hexagon nodes. No bottom bar.

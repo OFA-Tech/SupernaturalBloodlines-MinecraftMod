@@ -24,16 +24,23 @@ public final class BloodMoonPathPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "path.";
     private static final String MOON = PageKit.HUB + "moon.";
 
+    private final HubPageView ghoul = new StageGhoulPage();
+
     @Override
     public void render(HubScreen.Frame f) {
+        if (f.view.ghoul()) {
+            ghoul.render(f);
+            return;
+        }
         HubTheme t = f.theme();
         List<HubModel.LadderView> ladders = f.view.ladders();
-        HubModel.LadderView ladder = ladders.isEmpty() ? null : ladders.get(0);
+        HubModel.LadderView ladder = ladders.isEmpty() ? null : ladders.get(f.screen().ladderIndex(ladders.size()));
         BookKit.moonHead(f, Component.translatable(MOON + "path_of", PageKit.race(f.view.races().get(0))), subtitle(f, ladder));
 
         Rect stage = f.region(BookKit.MOON);
         Rect col = f.region("right");
         int y0 = f.begin(BookKit.MOON);
+        y0 += LadderTabs.render(f, stage.x(), y0, Math.max(60, col.x() - 14 - stage.x()));
         int labels = 78;
         Rect area = new Rect(stage.x(), y0, Math.max(60, col.x() - 14 - stage.x()), stage.bottom() - y0);
         int size = Math.max(60, Math.min(area.w() - labels, area.h() - 34));
@@ -98,7 +105,9 @@ public final class BloodMoonPathPage implements HubPageView {
             x += 10;
         }
         int days = HubAlmanac.daysToFull(phase);
-        BookKit.small(f, days == 0 ? Component.translatable(KEY + "full_moon_today") : Component.translatable(KEY + "full_moon_in", days), x + 4, y + 1, 120, t.muted());
+        Component line = days == 0 ? Component.translatable(KEY + "full_moon_today") : Component.translatable(KEY + "full_moon_in", days);
+        int room = Math.max(30, area.right() - x - 8);
+        BookKit.small(f, Component.literal(net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(line.getString(), room, s -> BookKit.smallWidth(f, s))), x + 4, y + 1, room, t.muted());
     }
 
     /** The right card: the next rung's name and its tasks as cards with a progress bar, then the reward. */

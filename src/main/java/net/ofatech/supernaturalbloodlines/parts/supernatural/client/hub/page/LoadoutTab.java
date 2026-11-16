@@ -124,7 +124,8 @@ public final class LoadoutTab {
             Rect clear = new Rect(r.right() - 12, y + 2, 12, 12);
             String clearId = "loadout:clear:" + i;
             f.g.drawString(f.font(), "x", clear.x() + 3, clear.y() + 2, f.hovered(clear) ? t.accent() : t.muted(), false);
-            f.target(clearId, clear, List.of(Component.translatable(KEY + "clear")), () -> apply(model.clearSlot(i)));
+            f.target(clearId, clear, List.of(Component.translatable(KEY + "clear")), () -> f.confirm(Component.translatable(KEY + "clear_title", LoadoutAccess.keyLabel(i)),
+                    Component.translatable(KEY + "clear_body"), Component.translatable(KEY + "clear_stay"), Component.translatable(KEY + "clear"), () -> apply(model.clearSlot(i))));
             if (f.focused(clearId)) {
                 t.drawFocus(f.g, clear);
             }

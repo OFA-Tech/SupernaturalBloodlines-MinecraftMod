@@ -76,3 +76,12 @@ Change it in [Configuration](Configuration#supernatural-client-supernaturalblood
 - **Path** also shows your Tensura race and EP.
 - **Seals.** Wax seals under the ribbons open other mods' screens as they are: **T** Tensura's status menu, **E** Enchanted's book, **V** or **W** your Vampirism or Werewolves skill tree. Press Esc there and the hub comes back on the page you left.
 - **Tensura's menu** has a fifth tab on the right, under its three "coming soon" tabs, that opens the hub.
+
+### States of the hub (plan 16e)
+
+- **Ghoul.** While you are turning, only **Path** and **Guide** open. Path shows a grey moon with the time left ("14 : 20") and says what to do: drink human blood (villagers, traders, humans, witches or hunters, not vampires or werewolves). The other tabs are dimmed with a lock, and their tooltip says why.
+- **Two ladders.** With two ladders (a hybrid with a witch's, a tribrid) Path has a bookmark per ladder; the chosen one is filled and a dot on a bookmark means a task there is ready to claim. Skill points from both go into one pool.
+- **Empty pages** say so in one line and point to the page that explains it: "You run alone." (Pack, to the Guide), "No one turned you yet." (Bloodline) and "All caught up." (Quests, to Path).
+- **The look button** opens a menu of the three looks with the one in use ticked. Without Tensura the Tensura look is greyed with "needs Tensura", and there is no EP, no Tensura race line and no **T** seal.
+- **Keys.** Tab and Shift+Tab walk every button and row, Enter presses, 1 to 8 jump to a page, the arrows turn pages or move in a ring, Esc closes (or cancels a question), and the hub key (default Home) closes it. Every irreversible action (leaving a pack, clearing a slot) asks first, and Esc or Stay is always the safe answer.
+- **Small windows.** The Tensura look shrinks its page list to icons under 340 GUI pixels wide, so the stage keeps its room.

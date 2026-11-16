@@ -13,6 +13,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,13 @@ public final class StageRitesPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "rites.";
     private static final String BOOK = PageKit.HUB + "book.rites.";
     private static final int GOLD = 0xFFE0A83A;
+
+    static final int CARD_H = 56;
+
+    /** Columns of rite cards: up to three, but never so many that a name has less than about 120 pixels. */
+    static int columns(int width) {
+        return Math.max(1, Math.min(3, width / 190));
+    }
 
     @Nullable
     private String selected;
@@ -51,18 +59,18 @@ public final class StageRitesPage implements HubPageView {
             }
             f.end(y);
         } else {
-            int cols = Math.max(1, Math.min(3, s.w() / 130));
+            int cols = columns(s.w());
             int gap = 6;
             int cw = (s.w() - gap * (cols - 1)) / cols;
             int y = top + 1;
             for (int i = 0; i < rites.size(); i++) {
                 int col = i % cols;
                 if (col == 0 && i > 0) {
-                    y += 58;
+                    y += CARD_H + 6;
                 }
-                card(f, rites.get(i), new Rect(s.x() + col * (cw + gap), y, cw, 52), rites.get(i) == chosen);
+                card(f, rites.get(i), new Rect(s.x() + col * (cw + gap), y, cw, CARD_H), rites.get(i) == chosen);
             }
-            f.end(y + 58);
+            f.end(y + CARD_H + 6);
         }
         if (chosen != null) {
             detail(f, chosen);
@@ -84,13 +92,18 @@ public final class StageRitesPage implements HubPageView {
             f.g.fill(px - 2, py - 2, px + 2, py + 2, GOLD);
         }
         int tx = box.x() + 40;
-        int tw = box.w() - 44;
-        f.g.drawString(f.font(), f.font().plainSubstrByWidth(RitesPage.name(l.rite()).getString(), tw), tx, box.y() + 6, sel ? t.accent() : t.ink(), false);
-        BookKit.small(f, Component.translatable(BOOK + "power", String.format("%,d", l.rite().power())), tx, box.y() + 18, tw, GOLD);
+        int tw = box.w() - 46;
+        // the name in up to two lines, cut with an ellipsis only when even that does not fit
+        List<String> name = LabelFit.wrap(RitesPage.name(l.rite()).getString(), tw, 2, f.font()::width);
+        for (int k = 0; k < name.size(); k++) {
+            f.g.drawString(f.font(), name.get(k), tx, box.y() + 5 + 10 * k, sel ? t.accent() : t.ink(), false);
+        }
+        int py = box.y() + 5 + 10 * name.size() + 2;
+        BookKit.small(f, Component.translatable(BOOK + "power", String.format("%,d", l.rite().power())), tx, py, tw, GOLD);
         Component status = Component.translatable(BOOK + (l.forYou() ? "yours" : "anyone"));
         int sw = Math.min(tw, BookKit.smallWidth(f, status.getString()) + 8);
-        f.g.fill(tx, box.y() + 31, tx + sw, box.y() + 42, l.forYou() ? (t.good() & 0xFFFFFF) | 0x55000000 : (t.muted() & 0xFFFFFF) | 0x33000000);
-        BookKit.small(f, status, tx + 4, box.y() + 33, sw, l.forYou() ? t.good() : t.muted());
+        f.g.fill(tx, py + 11, tx + sw, py + 22, l.forYou() ? (t.good() & 0xFFFFFF) | 0x55000000 : (t.muted() & 0xFFFFFF) | 0x33000000);
+        BookKit.small(f, Component.literal(LabelFit.cut(status.getString(), sw - 6, s -> BookKit.smallWidth(f, s))), tx + 4, py + 13, sw, l.forYou() ? t.good() : t.muted());
         String id = "rite:" + l.rite().id();
         f.target(id, box, List.of(RitesPage.name(l.rite())), () -> selected = l.rite().id());
         if (f.focused(id)) {
@@ -106,7 +119,7 @@ public final class StageRitesPage implements HubPageView {
         Detail.Builder d = Detail.of(RitesPage.name(rite)).subtitle(Component.translatable(BOOK + "sub", shape, String.format("%,d", rite.power())))
                 .body(items.isEmpty() ? Component.translatable(BOOK + "no_items") : Component.translatable(BOOK + "needs", items.stream().map(Component::getString).reduce((a, b) -> a + ", " + b).orElse("")));
         HubHooks.Launcher book = HubHooks.launchers().stream().filter(x -> x.id().equals("enchanted")).findFirst().orElse(null);
-        d.action(new Detail.Action("book", Component.translatable(BOOK + "open_book"), false, book != null, null, null, () -> f.screen().launch(book)));
+        d.action(new Detail.Action("book", Component.translatable(BOOK + "enchanted_short"), false, book != null, null, null, () -> f.screen().launch(book)));
         d.action("circle", Component.translatable(BOOK + (circle ? "back" : "show_circle")), true, true, () -> circle = !circle);
         f.detail(d.build());
     }

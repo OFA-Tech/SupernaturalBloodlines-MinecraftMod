@@ -121,7 +121,8 @@ public final class StageLoadoutPage implements HubPageView {
         Component body = slot != null ? Component.translatable(KEY + "picked_slot") : action != null ? Component.translatable(KEY + "picked") : Component.translatable(KEY + "hint");
         Detail.Builder d = Detail.of(title).body(body);
         boolean full = slot != null && slot < slots.size() && slots.get(slot).isPresent();
-        d.action("clear", Component.translatable(KEY + "clear"), false, full, () -> apply(model.clearSlot(slot)));
+        d.action(new Detail.Action("clear", Component.translatable(KEY + "clear"), false, full, null,
+                new Detail.Confirm(Component.translatable(KEY + "clear_title", slot == null ? "" : LoadoutAccess.keyLabel(slot)), Component.translatable(KEY + "clear_body")), () -> apply(model.clearSlot(slot))));
         f.detail(d.build());
     }
 

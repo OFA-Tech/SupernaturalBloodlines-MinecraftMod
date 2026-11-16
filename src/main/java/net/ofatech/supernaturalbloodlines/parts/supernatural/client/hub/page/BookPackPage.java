@@ -8,6 +8,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
@@ -160,6 +161,12 @@ public final class BookPackPage implements HubPageView {
         HubTheme t = f.theme();
         Rect s = f.region(ringRegion);
         int top = f.begin(ringRegion);
+        if (pack.isEmpty()) {
+            // nobody beside you: the empty state instead of an empty ring
+            EmptyState.render(f, s, top + Math.max(0, (s.bottom() - top - 150) / 2), "pack", HubPage.GUIDE);
+            f.end(s.bottom());
+            return;
+        }
         int legend = 17;
         // on the Blood Moon stage the ledger card takes the right of it, so the ring is centred in what is left
         int areaW = style == Style.MOON ? Math.max(60, f.region("right").x() - 14 - s.x()) : s.w();

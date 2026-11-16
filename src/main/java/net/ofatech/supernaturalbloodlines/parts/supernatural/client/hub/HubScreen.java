@@ -121,8 +121,16 @@ public final class HubScreen extends Screen {
         for (int i = 0; i < visible.size(); i++) {
             HubPage p = visible.get(i);
             Rect r = layout.tabs().get(i);
-            f.targets.add(new Target("tab:" + p.name(), r, null, true, List.of(Component.translatable(p.langKey())), () -> setPage(p)));
+            boolean locked = p.locked(view.context());
+            f.targets.add(new Target("tab:" + p.name(), r, null, true, locked ? List.of(Component.translatable(p.langKey()), Component.translatable("supernaturalbloodlines.hub.locked.tab"))
+                    : List.of(Component.translatable(p.langKey())), () -> setPage(p)));
             theme.drawTab(g, r, p, p == page, f.focused("tab:" + p.name()));
+            if (locked) {
+                // dimmed, with a lock over it: the page opens (to say what it needs) but the tab reads as shut
+                g.fill(r.x(), r.y(), r.right(), r.bottom(), (theme.paper() & 0xFFFFFF) | 0x99000000);
+                boolean row = r.w() > 2 * r.h(); // a wide list row gets its lock at the end, a round or square button in the middle
+                KitDraw.icon(g, net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons.LOCK, row ? r.right() - 13 : r.x() + (r.w() - 10) / 2, r.y() + (r.h() - 10) / 2, 10, theme.muted());
+            }
         }
         for (int i = 0; i < launchers.size(); i++) {
             HubHooks.Launcher l = launchers.get(i);
@@ -149,6 +157,10 @@ public final class HubScreen extends Screen {
         }
         theme.drawFooter(f, layout, page);
         followFocus();
+        if (menu) {
+            drawThemeMenu(g, mouseX, mouseY);
+            return; // no tooltip behind an open menu
+        }
         if (dialog != null) {
             KitDraw.confirm(f, theme, width, height, dialogTitle, dialogBody, dialogSafe, dialogYes, dialog.confirmFocused(), dialogLayout());
             return;
@@ -192,7 +204,7 @@ public final class HubScreen extends Screen {
         if (tb != null) {
             HubClientConfig.ThemeId next = HubClientConfig.next(themeId, id -> HubHooks.theme(id).isPresent());
             f.targets.add(new Target("theme", tb, null, true, List.of(Component.translatable("supernaturalbloodlines.hub.theme.switch",
-                    Component.translatable("supernaturalbloodlines.hub.theme." + next.id()))), () -> HubClientConfig.setTheme(next)));
+                    Component.translatable("supernaturalbloodlines.hub.theme." + next.id()))), () -> openThemeMenu()));
             theme.drawThemeButton(f.g, tb, tb.contains(mouseX, mouseY), f.focused("theme"));
         }
         Rect cb = layout.chrome().close();
@@ -211,6 +223,90 @@ public final class HubScreen extends Screen {
         HubClient.launch(launcher, page);
     }
 
+    private boolean menu;
+    private int menuIndex;
+    private int ladderChoice;
+
+    /** Which ladder of several the Path shows (0 with one). */
+    public int ladderIndex(int count) {
+        return Math.max(0, Math.min(count - 1, ladderChoice));
+    }
+
+    public void setLadder(int index) {
+        ladderChoice = index;
+    }
+
+    private static boolean devNoTensura;
+
+    /** Development only (the dev screenshots): pretend Tensura is missing, so the look menu shows it greyed. */
+    static void devNoTensura(boolean on) {
+        devNoTensura = on;
+    }
+
+    void devOpenMenu() {
+        openThemeMenu();
+    }
+
+    private void openThemeMenu() {
+        menu = true;
+        menuIndex = themeId.ordinal();
+    }
+
+    private boolean themeAvailable(HubClientConfig.ThemeId id) {
+        return id == HubClientConfig.ThemeId.GRIMOIRE || (HubHooks.theme(id.id()).isPresent() && !(devNoTensura && id == HubClientConfig.ThemeId.TENSURA));
+    }
+
+    /** The menu's rows, under the theme button and right-aligned to it, kept on the screen. */
+    private List<Rect> menuRows() {
+        Rect tb = layout.chrome().themeButton();
+        int n = HubClientConfig.ThemeId.values().length;
+        int w = 176;
+        int x = tb == null ? width - w - 6 : Math.max(4, Math.min(width - w - 4, tb.right() - w));
+        int y = tb == null ? 24 : tb.bottom() + 3;
+        List<Rect> rows = new java.util.ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            rows.add(new Rect(x + 3, Math.min(y + 3 + i * 18, height - 21 * (n - i)), w - 6, 16));
+        }
+        return rows;
+    }
+
+    private void chooseTheme(int index) {
+        HubClientConfig.ThemeId id = HubClientConfig.ThemeId.values()[index];
+        if (themeAvailable(id)) {
+            HubClientConfig.setTheme(id);
+        }
+        menu = false;
+    }
+
+    /** The look menu: every theme, the one in use ticked, one that cannot be drawn greyed with what it needs. */
+    private void drawThemeMenu(GuiGraphics g, int mouseX, int mouseY) {
+        List<Rect> rows = menuRows();
+        Rect first = rows.get(0);
+        Rect last = rows.get(rows.size() - 1);
+        Rect box = new Rect(first.x() - 3, first.y() - 3, first.w() + 6, last.bottom() - first.y() + 6);
+        g.fill(box.x(), box.y(), box.right(), box.bottom(), 0xFF000000 | theme.paper());
+        g.renderOutline(box.x(), box.y(), box.w(), box.h(), theme.accent());
+        HubClientConfig.ThemeId[] all = HubClientConfig.ThemeId.values();
+        for (int i = 0; i < all.length; i++) {
+            Rect r = rows.get(i);
+            boolean ok = themeAvailable(all[i]);
+            boolean hot = i == menuIndex || r.contains(mouseX, mouseY);
+            if (hot) {
+                g.fill(r.x(), r.y(), r.right(), r.bottom(), (theme.accent() & 0xFFFFFF) | 0x33000000);
+                if (i == menuIndex) {
+                    g.renderOutline(r.x(), r.y(), r.w(), r.h(), theme.focusColor());
+                }
+            }
+            Component name = Component.translatable("supernaturalbloodlines.hub.theme." + all[i].id());
+            g.drawString(font, name, r.x() + 6, r.y() + 4, ok ? theme.ink() : theme.muted(), false);
+            if (!ok) {
+                Component need = Component.translatable("supernaturalbloodlines.hub.theme.needs." + all[i].id());
+                g.drawString(font, need, r.right() - font.width(need) - 5, r.y() + 4, theme.muted(), false);
+            } else if (all[i] == themeId) {
+                g.drawString(font, "\u2713", r.right() - 12, r.y() + 4, theme.accent(), false);
+            }
+        }
+    }
     public void confirm(Component title, Component body, Component safe, Component yes, Runnable action) {
         dialog = new ConfirmModel();
         dialogSafe = safe;
@@ -283,6 +379,17 @@ public final class HubScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (menu && dialog == null) {
+            List<Rect> rows = menuRows();
+            for (int i = 0; i < rows.size(); i++) {
+                if (button == 0 && rows.get(i).contains(mouseX, mouseY)) {
+                    chooseTheme(i);
+                    return true;
+                }
+            }
+            menu = false; // a click anywhere else closes it
+            return true;
+        }
         if (dialog != null) {
             if (button != 0) {
                 return true; // only the left mouse button answers a dialog: a right click on Leave pack does not leave
@@ -358,6 +465,17 @@ public final class HubScreen extends Screen {
 
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
+        if (menu && dialog == null) {
+            int n = HubClientConfig.ThemeId.values().length;
+            switch (key) {
+                case GLFW.GLFW_KEY_ESCAPE -> menu = false;
+                case GLFW.GLFW_KEY_DOWN, GLFW.GLFW_KEY_TAB -> menuIndex = (menuIndex + 1) % n;
+                case GLFW.GLFW_KEY_UP -> menuIndex = (menuIndex + n - 1) % n;
+                case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> chooseTheme(menuIndex);
+                default -> { }
+            }
+            return true; // the menu takes every key while it is open
+        }
         if (dialog != null) {
             ConfirmModel.Key k = switch (key) {
                 case GLFW.GLFW_KEY_ESCAPE -> ConfirmModel.Key.ESCAPE;
@@ -481,9 +599,9 @@ public final class HubScreen extends Screen {
         /** The emblem in {@code r} (a page picks the place; {@code Chrome.emblem} is the theme's default): the live model, turned by dragging. */
         public void emblem(Rect r) {
             List<HubModel.LadderView> ladders = view.ladders();
-            float progress = ladders.isEmpty() ? 0f : HubModel.progress(ladders.get(0));
+            float progress = ladders.isEmpty() ? 0f : HubModel.progress(ladders.get(ladderIndex(ladders.size())));
             List<EmblemData.Rung> rungs = ladders.isEmpty() ? List.of()
-                    : ladders.get(0).rungs().stream().map(rr -> new EmblemData.Rung(rr.name(), rr.status())).toList();
+                    : ladders.get(ladderIndex(ladders.size())).rungs().stream().map(rr -> new EmblemData.Rung(rr.name(), rr.status())).toList();
             emblemRect = r;
             theme.drawEmblem(this, r, new EmblemData(progress, rungs, view.player(), modelDrag));
         }

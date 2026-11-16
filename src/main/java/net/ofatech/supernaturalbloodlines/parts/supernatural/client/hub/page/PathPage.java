@@ -49,6 +49,7 @@ public final class PathPage implements HubPageView {
         HubView v = f.view;
         HubTheme t = f.theme();
         Rect r = f.region(HubLayout.MAIN);
+        LadderTabs.render(f, r.x(), r.y() - 13, r.w());
         int y = f.begin(HubLayout.MAIN);
         f.g.drawString(f.font(), Component.translatable(KEY + "book_of"), r.x(), y, t.muted(), false);
         y = PageKit.title(f, v.player().getName(), r.x(), y + PageKit.LINE, r.w(), t.accent());
@@ -60,7 +61,7 @@ public final class PathPage implements HubPageView {
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 6;
         boolean many = v.ladders().size() > 1;
-        for (HubModel.LadderView ladder : v.ladders()) {
+        for (HubModel.LadderView ladder : LadderTabs.shown(f)) {
             if (many) {
                 f.g.drawString(f.font(), PageKit.race(ladder.race()).copy().withStyle(ChatFormatting.BOLD), r.x(), y, t.accent(), false);
                 y += PageKit.LINE + 1;
@@ -185,8 +186,16 @@ public final class PathPage implements HubPageView {
         y = PageKit.wrapped(f, Component.translatable(KEY + "turning_text"), r.x(), y + 6, r.w(), t.ink());
         int ticks = f.view.bloodline().turningTicksLeft();
         if (ticks > 0) {
-            int s = ticks / 20;
-            y = PageKit.wrapped(f, Component.translatable(KEY + "turning_left", s / 60, String.format("%02d", s % 60)), r.x(), y + 4, r.w(), t.accent());
+            // the clock large, as the Blood Moon's grey moon has it
+            String clock = StageGhoulPage.clock(ticks);
+            var pose = f.g.pose();
+            pose.pushPose();
+            pose.translate(r.x() + (r.w() - f.font().width(clock) * 2.5f) / 2f, y + 10, 0);
+            pose.scale(2.5f, 2.5f, 1f);
+            f.g.drawString(f.font(), clock, 0, 0, t.accent(), false);
+            pose.popPose();
+            y += 38;
+            y = PageKit.wrapped(f, Component.translatable(PageKit.HUB + "ghoul.left"), r.x(), y, r.w(), t.muted());
         }
         return y;
     }
@@ -201,7 +210,7 @@ public final class PathPage implements HubPageView {
             return;
         }
         boolean any = false;
-        for (HubModel.LadderView ladder : v.ladders()) {
+        for (HubModel.LadderView ladder : LadderTabs.shown(f)) {
             if (ladder.atTop()) {
                 continue;
             }
@@ -211,7 +220,7 @@ public final class PathPage implements HubPageView {
             y = PageKit.title(f, PageKit.rung(active), r.x(), y + PageKit.LINE, r.w(), t.accent());
             t.drawRule(f.g, r.x(), y + 2, r.w());
             y += 6;
-            if (book && ladder == v.ladders().get(0)) {
+            if (book && ladder == LadderTabs.shown(f).get(0)) {
                 int size = Math.min(r.w(), 78);
                 f.emblem(new Rect(r.x() + (r.w() - size) / 2, y, size, size));
                 y += size + 4;

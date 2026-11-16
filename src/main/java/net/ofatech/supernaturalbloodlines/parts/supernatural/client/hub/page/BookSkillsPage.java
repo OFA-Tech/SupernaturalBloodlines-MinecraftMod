@@ -170,7 +170,7 @@ public final class BookSkillsPage implements HubPageView {
             KitDraw.line(f.g, sx, sy, n.x() - (int) Math.round(9 * Math.cos(a)), n.y() - (int) Math.round(9 * Math.sin(a)), locked ? (t.muted() & 0xFFFFFF) | 0x70000000 : t.muted());
         }
         f.emblem(centre);
-        int labelWidth = Math.max(40, Math.min(110, (int) (2.2 * radius * Math.sin(Math.PI / count))));
+        int labelWidth = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.radialWidth(radius, count, 36, 110);
         for (int i = 0; i < rows.size(); i++) {
             node(f, s, rows.get(i), ring.get(i), cy, rows.get(i) == chosen, labelWidth);
         }

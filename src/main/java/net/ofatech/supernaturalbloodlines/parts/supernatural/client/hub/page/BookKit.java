@@ -197,11 +197,14 @@ public final class BookKit {
             return;
         }
         Rect h = f.region("head");
+        // the title is large while it fits beside the points and the look button; a narrow window gets it at normal size, then cut with an ellipsis
+        float scale = f.font().width(title) * 1.5f <= h.w() ? 1.5f : 1f;
+        Component shown = scale == 1f && f.font().width(title) > h.w() ? Component.literal(net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(title.getString(), h.w(), f.font()::width)) : title;
         var pose = f.g.pose();
         pose.pushPose();
         pose.translate(h.x(), h.y() + 1, 0);
-        pose.scale(1.5f, 1.5f, 1f);
-        f.g.drawString(f.font(), title, 0, 0, f.theme().ink(), true);
+        pose.scale(scale, scale, 1f);
+        f.g.drawString(f.font(), shown, 0, 0, f.theme().ink(), true);
         pose.popPose();
         if (subtitle != null) {
             small(f, subtitle, h.x(), h.y() + 17, h.w(), f.theme().muted());

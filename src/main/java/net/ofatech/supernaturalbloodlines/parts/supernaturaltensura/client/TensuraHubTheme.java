@@ -30,6 +30,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.Counters;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiContext;
@@ -63,6 +64,10 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     private final HubPageView loadout = new StageLoadoutPage();
     @Nullable
     private Component title;
+    @Nullable
+    private Counters counters;
+    private boolean detailDrawn;
+    private boolean lockedNow;
 
     @Override
     public HubLayout layout(int width, int height, int tabs, int seals) {
@@ -93,6 +98,8 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     @Override
     public void drawOverlay(HubScreen.Frame f, HubPage page) {
         title = null;
+        detailDrawn = false;
+        lockedNow = page.locked(f.view.context());
         boolean panels = page == HubPage.BLOODLINE || page == HubPage.GUIDE || page.locked(f.view.context());
         if (panels) {
             for (String region : List.of(HubLayout.MAIN, HubLayout.SIDE)) {
@@ -127,22 +134,67 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         Font font = ctx.font();
         GuiGraphics g = ctx.g();
         Rect f = layout.frame();
-        Component name = title != null ? title : Component.translatable(page.langKey());
-        String text = "\u300a Status \u00b7 " + font.plainSubstrByWidth(name.getString(), Math.max(40, f.w() / 4)) + " \u300b";
+        Rect theme = layout.chrome().themeButton();
+        int right = (theme == null ? f.right() - 30 : theme.x()) - 8;
+        String name = title != null ? title.getString() : Component.translatable(page.langKey()).getString();
+        String shortName = Component.translatable(page.langKey()).getString();
+        LabelFit.Header header = LabelFit.header(List.of("\u300a Status \u00b7 " + name + " \u300b", "\u300a Status \u00b7 " + shortName + " \u300b", "\u300a " + shortName + " \u300b"),
+                stats(), right - (f.x() + 10), 14, s -> (int) (font.width(s) * 1.25f), s -> font.width(s.replace("\u0001", "")) + (s.contains("\u0001") ? 10 : 0));
         var pose = g.pose();
         pose.pushPose();
         pose.translate(f.x() + 10, f.y() + 6, 0);
         pose.scale(1.25f, 1.25f, 1f);
-        g.drawString(font, text, 0, 0, TEAL, true);
+        g.drawString(font, header.title(), 0, 0, TEAL, true);
         pose.popPose();
-        if (!layout.tabs().isEmpty()) {
+        if (!header.stats().isEmpty()) {
+            String[] parts = header.stats().split("\u0001", -1);
+            int x = right - (font.width(header.stats().replace("\u0001", "")) + (parts.length > 1 ? 10 : 0));
+            g.drawString(font, parts[0], x, f.y() + 7, TEXT, false);
+            if (parts.length > 1) {
+                int dx = x + font.width(parts[0]);
+                g.fill(dx, f.y() + 8, dx + 6, f.y() + 14, GOLD);
+                g.drawString(font, parts[1], dx + 10, f.y() + 7, TEXT, false);
+            }
+        }
+        Rect pane = layout.chrome().detail();
+        if (pane != null && !detailDrawn) {
+            caption(g, font, Component.translatable("supernaturalbloodlines.hub.tensura.info"), pane.x() + 8, pane.y() + 7);
+            text(g, font, Component.translatable("supernaturalbloodlines.hub.tensura.empty." + (lockedNow ? "locked" : page.name().toLowerCase(java.util.Locale.ROOT))), pane.x() + 8, pane.y() + 20, pane.w() - 16,
+                    MUTED, pane.bottom() - 8);
+        }
+        boolean wide = !layout.tabs().isEmpty() && layout.tabs().get(0).w() > 40;
+        if (wide) {
             Rect first = layout.tabs().get(0);
             caption(g, font, Component.translatable("supernaturalbloodlines.hub.tensura.pages"), first.x(), first.y() - 9);
         }
-        if (!layout.seals().isEmpty()) {
+        if (wide && !layout.seals().isEmpty()) {
             Rect first = layout.seals().get(0);
             caption(g, font, Component.translatable("supernaturalbloodlines.hub.tensura.mods"), first.x(), first.y() - 9);
         }
+    }
+
+    /** The stats line from the fullest to the barest: race, SP, EP and the days to the full moon (after the \u0001 mark, drawn with a gold square), dropped in turn. */
+    private List<String> stats() {
+        if (counters == null) {
+            return List.of("");
+        }
+        String race = HubHooks.tensura().map(info -> info.race().getString()).orElse(null);
+        String ep = counters.epText();
+        var level = Minecraft.getInstance().level;
+        int days = level == null ? -1 : HubAlmanac.daysToFull(level.getMoonPhase());
+        String moon = days < 0 ? null : "\u0001" + (days == 0 ? "tonight" : days + (days == 1 ? " day" : " days"));
+        String base = counters.spText() + (ep == null ? "" : " \u00b7 " + ep);
+        String front = race == null ? "" : race + " \u00b7 ";
+        List<String> out = new ArrayList<>();
+        out.add(front + base + (moon == null ? "" : " \u00b7 " + moon));
+        if (moon != null) {
+            out.add(front + base);
+        }
+        if (race != null) {
+            out.add(base);
+        }
+        out.add(counters.spText());
+        return out;
     }
 
     private static void caption(GuiGraphics g, Font font, Component text, int x, int y) {
@@ -159,8 +211,10 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         g.fill(r.x(), r.y(), r.right(), r.bottom(), selected ? PANEL_LIT : lit ? PANEL_LIT : PANEL);
         g.renderOutline(r.x(), r.y(), r.w(), r.h(), selected ? TEAL : EDGE);
         icon.run();
-        String text = TensuraHubLayout.fit(label, r.w() - 22, font::width);
-        g.drawString(font, text, r.x() + 18, r.y() + (r.h() - 8) / 2, labelColor, false);
+        if (r.w() > 40) { // an icon-only row on a narrow window (the tooltip has the name)
+            String text = TensuraHubLayout.fit(label, r.w() - 22, font::width);
+            g.drawString(font, text, r.x() + 18, r.y() + (r.h() - 8) / 2, labelColor, false);
+        }
     }
 
     @Override
@@ -181,7 +235,13 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     public void drawLauncher(GuiGraphics g, Rect r, HubHooks.Launcher launcher, boolean lit) {
         // the mod's short name (the full one does not fit the list; the tooltip has it)
         Component label = Component.translatableWithFallback("supernaturalbloodlines.hub.launcher.short." + launcher.id(), launcher.id());
-        row(g, r, false, lit, label.getString(), GOLD, () -> KitDraw.icon(g, Icons.LAUNCH, r.x() + 4, r.y() + (r.h() - 10) / 2, 10, TEXT));
+        row(g, r, false, lit, label.getString(), GOLD, () -> {
+            if (r.w() > 40) {
+                KitDraw.icon(g, Icons.LAUNCH, r.x() + 4, r.y() + (r.h() - 10) / 2, 10, TEXT);
+            } else {
+                g.drawString(Minecraft.getInstance().font, launcher.letter(), r.x() + (r.w() - 6) / 2, r.y() + (r.h() - 8) / 2, GOLD, false);
+            }
+        });
     }
 
     @Override
@@ -203,27 +263,10 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         }
     }
 
-    /** The stats line in the middle of the title bar: race, SP, EP and the days to the full moon. */
+    /** The stats are drawn with the title, in {@link #drawFooter}, so the two are fitted together; this only keeps the numbers. */
     @Override
     public void drawCounters(UiContext ctx, Rect r, Counters c) {
-        Font font = ctx.font();
-        StringBuilder sb = new StringBuilder();
-        HubHooks.tensura().ifPresent(info -> sb.append(info.race().getString()).append(" \u00b7 "));
-        sb.append(c.spText());
-        if (c.epText() != null) {
-            sb.append(" \u00b7 ").append(c.epText());
-        }
-        var level = Minecraft.getInstance().level;
-        int days = level == null ? -1 : HubAlmanac.daysToFull(level.getMoonPhase());
-        String line = font.plainSubstrByWidth(sb.toString(), r.w() - (days >= 0 ? 52 : 0));
-        int w = font.width(line) + (days >= 0 ? 52 : 0);
-        int x = r.x() + (r.w() - w) / 2;
-        ctx.g().drawString(font, line, x, r.y(), TEXT, false);
-        if (days >= 0) {
-            int dx = x + font.width(line) + 8;
-            ctx.g().fill(dx, r.y() + 1, dx + 6, r.y() + 7, GOLD);
-            ctx.g().drawString(font, days == 0 ? "tonight" : days + (days == 1 ? " day" : " days"), dx + 10, r.y(), TEXT, false);
-        }
+        counters = c;
     }
 
     /** The magic circle: a ring of ticks that fill to your progress, two circles, two nested hexagons and the live model. */
@@ -263,6 +306,7 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     /** The info pane: the selection's caption, its name in teal, its pips, its text, fields and reward, its task rows, and its buttons stacked at the bottom. */
     @Override
     public void drawDetail(UiContext ctx, Rect r, Detail d) {
+        detailDrawn = true;
         GuiGraphics g = ctx.g();
         Font font = ctx.font();
         int x = r.x() + 8;

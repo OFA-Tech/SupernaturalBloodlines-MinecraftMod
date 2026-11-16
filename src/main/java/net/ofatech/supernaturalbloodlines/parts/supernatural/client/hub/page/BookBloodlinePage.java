@@ -9,6 +9,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageV
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotPayload;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
@@ -43,6 +44,12 @@ public final class BookBloodlinePage implements HubPageView {
             f.reserve(BookKit.MAIN, BookKit.SEAL + 8); // the CALL seal is pinned at the foot of the page
         }
         int y = BookKit.head(f, BookKit.MAIN, Component.translatable(KEY + "title"), Component.translatable(BOOK + "subtitle"));
+        boolean alone = f.view.bloodline().sire() == null && snap.family().ancestors().isEmpty() && snap.family().line().isEmpty();
+        if (alone) {
+            EmptyState.render(f, r, y, "bloodline", HubPage.GUIDE);
+            f.end(r.bottom());
+        }
+        if (!alone) {
         face = r.h() > 190 ? 14 : 11; // a short page (a small GUI) gets smaller faces so the tree and the CALL seal fit without scrolling
         int cx = r.x() + r.w() / 2;
         List<String> above = snap.family().ancestors();
@@ -65,6 +72,7 @@ public final class BookBloodlinePage implements HubPageView {
             y = children(f, r, y + 2, line, snap.family().line().size() - Math.min(3, line.size()));
         }
         f.end(y);
+        }
         if (mayCall) {
             if (pill) {
                 f.detail(Detail.of(Component.translatable(KEY + "title")).body(Component.translatable(BOOK + "call_note"))

@@ -65,7 +65,7 @@ class HubPageVisibilityTest {
         HubPage.Context ghoul = new HubPage.Context(GHOUL, Optional.empty(), true, true, true);
         assertFalse(GUIDE.locked(ghoul));
         assertFalse(PATH.locked(ghoul));
-        assertFalse(BLOODLINE.locked(ghoul));
+        assertTrue(BLOODLINE.locked(ghoul), "the design opens Path and Guide only");
         assertTrue(SKILLS.locked(ghoul));
         assertTrue(LOADOUT.locked(ghoul));
     }
@@ -74,7 +74,7 @@ class HubPageVisibilityTest {
     void ghoulSeesPathAndBloodlineAndTheRestIsLocked() {
         HubPage.Context c = ctx(GHOUL, true, true, false);
         for (HubPage p : visiblePages(c)) {
-            assertEquals(p != PATH && p != BLOODLINE && p != GUIDE, p.locked(c), p.name());
+            assertEquals(p != PATH && p != GUIDE, p.locked(c), p.name());
         }
         assertFalse(PATH.locked(ctx(VAMPIRE, true, true, false)));
         assertFalse(QUESTS.locked(ctx(VAMPIRE, true, true, false)));

@@ -32,9 +32,9 @@ public enum HubPage {
         };
     }
 
-    /** A Ghoul sees Path, Bloodline and the Guide; every other page asks them to complete the turning first. */
+    /** A Ghoul sees Path (the turning and its clock) and the Guide; every other page asks them to complete the turning first. */
     public boolean locked(Context c) {
-        return c.creature() == SupernaturalRace.GHOUL && this != PATH && this != BLOODLINE && this != GUIDE;
+        return c.creature() == SupernaturalRace.GHOUL && this != PATH && this != GUIDE;
     }
 
     public static List<HubPage> visiblePages(Context c) {

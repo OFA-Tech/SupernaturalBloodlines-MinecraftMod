@@ -23,6 +23,8 @@ public final class TensuraHubLayout {
     /** Room over the page list for its "Pages" caption, and over the mod list for "Other mods". */
     static final int CAPTION = 11;
     static final int GAP = 8;
+    /** Below this window width the page and mod lists show icons only. */
+    static final int NARROW = 340;
 
     private TensuraHubLayout() {
     }
@@ -62,7 +64,8 @@ public final class TensuraHubLayout {
     }
 
     static Rect nav(Rect frame) {
-        int navW = Math.max(70, Math.min(104, frame.w() * 17 / 100));
+        // a narrow window shrinks the list to icons first, so the stage keeps its room
+        int navW = frame.w() < NARROW ? 26 : Math.max(70, Math.min(104, frame.w() * 17 / 100));
         return new Rect(frame.x() + INSET, frame.y() + TITLE + INSET, navW, frame.h() - TITLE - 2 * INSET);
     }
 

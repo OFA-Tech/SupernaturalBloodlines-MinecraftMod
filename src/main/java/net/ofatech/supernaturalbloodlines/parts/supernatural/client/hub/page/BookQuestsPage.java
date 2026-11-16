@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
@@ -65,7 +66,7 @@ public final class BookQuestsPage implements HubPageView {
             y += 3;
         }
         if (all.isEmpty()) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "none"), r.x(), y, r.w(), t.muted()) + 4;
+            y = EmptyState.render(f, r, y + 10, "quests", HubPage.PATH);
         }
         List<HubModel.QuestView> quests = HubModel.quests(f.view.skills(), f.view.state(), f.view.races());
         if (!quests.isEmpty() && filter == 0) {

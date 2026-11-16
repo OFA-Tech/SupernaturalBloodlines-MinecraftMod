@@ -13,6 +13,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
 import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.SourceTag;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
@@ -27,16 +28,23 @@ public final class StagePathPage implements HubPageView {
     private static final String MOON = PageKit.HUB + "moon.";
     private static final int HEX = 18;
 
+    private final HubPageView ghoul = new StageGhoulPage();
+
     @Override
     public void render(HubScreen.Frame f) {
+        if (f.view.ghoul()) {
+            ghoul.render(f);
+            return;
+        }
         HubTheme t = f.theme();
         List<HubModel.LadderView> ladders = f.view.ladders();
-        HubModel.LadderView ladder = ladders.isEmpty() ? null : ladders.get(0);
+        HubModel.LadderView ladder = ladders.isEmpty() ? null : ladders.get(f.screen().ladderIndex(ladders.size()));
         BookKit.moonHead(f, Component.translatable(MOON + "path_of", PageKit.race(f.view.races().get(0))), null);
         Rect stage = f.region(BookKit.MOON);
         int top = f.begin(BookKit.MOON);
+        top += LadderTabs.render(f, stage.x(), top, stage.w());
         int almanacH = 22;
-        int ladderH = ladder == null ? 0 : HEX + 16;
+        int ladderH = ladder == null ? 0 : HEX + 22 + (staggered(f, ladder, stage) ? 18 : 0);
         int size = Math.max(50, Math.min(stage.w() - 20, stage.bottom() - top - almanacH - ladderH - 8));
         Rect circle = new Rect(stage.x() + (stage.w() - size) / 2, top + 2, size, size);
         f.emblem(circle);
@@ -57,6 +65,7 @@ public final class StagePathPage implements HubPageView {
         int n = rungs.size();
         int span = Math.min(stage.w() - 16, n * 70);
         int step = n <= 1 ? 0 : (span - HEX) / (n - 1);
+        boolean stagger = staggered(f, ladder, stage);
         int x0 = stage.x() + (stage.w() - (step * (n - 1) + HEX)) / 2;
         f.g.fill(x0 + HEX / 2, y + HEX / 2, x0 + HEX / 2 + step * (n - 1), y + HEX / 2 + 1, (t.muted() & 0xFFFFFF) | 0x99000000);
         for (int i = 0; i < n; i++) {
@@ -69,17 +78,31 @@ public final class StagePathPage implements HubPageView {
             KitDraw.shape(f.g, Shapes.Shape.HEX, x + 2, y + 2, HEX - 4, t.paper());
             KitDraw.icon(f.g, reached ? Icons.CHECK : current ? Icons.DOT : Icons.LOCK, x + (HEX - 10) / 2, y + (HEX - 10) / 2, 10, edge);
             Component name = PageKit.rung(row);
-            String text = f.font().plainSubstrByWidth(name.getString(), Math.max(40, step + 16));
-            int tw = BookKit.smallWidth(f, text);
-            int lx = Math.max(stage.x(), Math.min(stage.right() - tw - 4, x + HEX / 2 - tw / 2));
-            BookKit.small(f, Component.literal(text), lx, y + HEX + 3, tw + 4, current ? t.accent() : reached ? t.ink() : t.muted());
-            Rect hit = new Rect(x - 2, y, Math.max(HEX + 4, tw + 4), HEX + 12);
+            int maxW = LabelFit.ladderWidth(step == 0 ? 80 : stagger ? 2 * step : step, 90);
+            int lower = stagger && i % 2 == 1 ? 18 : 0;
+            List<String> lines = LabelFit.wrap(name.getString(), maxW, 2, s -> BookKit.smallWidth(f, s));
+            int tw = 0;
+            for (int k = 0; k < lines.size(); k++) {
+                int lw = BookKit.smallWidth(f, lines.get(k));
+                tw = Math.max(tw, lw);
+                int lx = Math.max(stage.x(), Math.min(stage.right() - lw - 4, x + HEX / 2 - lw / 2));
+                BookKit.small(f, Component.literal(lines.get(k)), lx, y + HEX + 3 + lower + 8 * k, lw + 4, current ? t.accent() : reached ? t.ink() : t.muted());
+            }
+            Rect hit = new Rect(x - 2, y, Math.max(HEX + 4, tw + 4), HEX + 4 + 8 * lines.size());
             String id = "phase:" + ladder.race().id() + ":" + row.id();
             f.target(id, hit, PathPage.rungTooltip(ladder, row), null);
             if (f.focused(id)) {
                 KitDraw.focusRing(f.g, hit, t.focusColor());
             }
         }
+    }
+
+    /** Whether the rung names need two alternating rows to stay apart (a name's longest word does not fit the gap between rungs). */
+    private static boolean staggered(HubScreen.Frame f, HubModel.LadderView ladder, Rect stage) {
+        int n = ladder.rungs().size();
+        int span = Math.min(stage.w() - 16, n * 70);
+        int step = n <= 1 ? 0 : (span - HEX) / (n - 1);
+        return n > 1 && LabelFit.needsStagger(ladder.rungs().stream().map(r -> PageKit.rung(r).getString()).toList(), step, s -> BookKit.smallWidth(f, s));
     }
 
     /** The next moons in a box with the days to the full moon. */
@@ -95,7 +118,7 @@ public final class StagePathPage implements HubPageView {
         }
         int days = HubAlmanac.daysToFull(phase);
         Component line = days == 0 ? Component.translatable(KEY + "full_moon_today") : Component.translatable(KEY + "full_moon_in", days);
-        f.g.drawString(f.font(), f.font().plainSubstrByWidth(line.getString(), box.right() - x - 10), x + 6, y, t.accent(), false);
+        f.g.drawString(f.font(), LabelFit.cut(line.getString(), box.right() - x - 10, f.font()::width), x + 6, y, t.accent(), false);
     }
 
     private void detail(HubScreen.Frame f, HubModel.LadderView ladder) {

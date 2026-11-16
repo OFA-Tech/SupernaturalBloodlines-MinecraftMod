@@ -9,6 +9,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.shared.hub.Contrast;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
@@ -62,10 +63,12 @@ public final class StageQuestsPage implements HubPageView {
                 y = card(f, row, x, y, w, chosen);
             }
         }
-        if (all.isEmpty()) {
+        List<HubModel.QuestView> quests = HubModel.quests(f.view.skills(), f.view.state(), f.view.races());
+        if (all.isEmpty() && quests.isEmpty() && filter == 0) {
+            y = EmptyState.render(f, new Rect(x, y, w, 0), y + 14, "quests", HubPage.PATH);
+        } else if (all.isEmpty()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "none"), x, y, w, t.muted()) + 4;
         }
-        List<HubModel.QuestView> quests = HubModel.quests(f.view.skills(), f.view.state(), f.view.races());
         if (!quests.isEmpty() && filter == 0) {
             y = BookKit.caps(f, Component.translatable(BOOK + "other"), x, y + 2, t.muted());
             for (HubModel.QuestView q : quests) {

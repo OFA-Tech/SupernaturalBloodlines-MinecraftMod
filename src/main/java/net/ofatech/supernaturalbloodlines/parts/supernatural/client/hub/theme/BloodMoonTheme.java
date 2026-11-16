@@ -114,7 +114,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
                 f.g.renderOutline(c.x(), c.y(), c.w(), c.h(), EDGE);
             }
         }
-        if (page == HubPage.PATH || page == HubPage.PACK) {
+        if ((page == HubPage.PATH && !f.view.ghoul()) || page == HubPage.PACK) {
             Rect c = BloodMoonLayout.card(f.region(BloodMoonLayout.RIGHT));
             f.g.fill(c.x(), c.y(), c.right(), c.bottom(), 0xE61a0a10);
             f.g.renderOutline(c.x(), c.y(), c.w(), c.h(), EDGE);
