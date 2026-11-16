@@ -255,6 +255,7 @@
   "supernaturalbloodlines.turning.join_refused": "You drank, but you could not join the vampires. The turning is over.",
   "supernaturalbloodlines.turning.ghoul_no_level": "You are a Ghoul. Finish your turning before you can level up: die with vampire blood in you, then drink human blood.",
   "supernaturalbloodlines.turning.ghoul_no_altar": "You are a Ghoul. The altar will not answer until you finish your turning.",
+  "supernaturalbloodlines.vampire_line.no_evolve": "Only a vampire can evolve along the vampire line. Become a vampire first.",
   "supernaturalbloodlines.turning.ghoul_no_evolve": "You are a Ghoul. Complete your turning before you can evolve.",
   "supernaturalbloodlines.turning.vampire_blood_no_fill": "Vampire blood does not feed you, and it cost you some of your own.",
   "supernaturalbloodlines.turning.vampire_blood_no_fill_free": "Vampire blood does not feed you.",

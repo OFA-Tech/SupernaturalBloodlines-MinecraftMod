@@ -631,4 +631,20 @@ public final class VampirismTensuraGameTests {
         helper.assertTrue(BloodlineAccess.get(p).species() == Species.WITCH, "species changed");
         helper.succeed();
     }
+
+    // ---- 13d M4: the vampire line is for vampires ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void evolvingIntoTheVampireLineNeedsTheVampireFaction(GameTestHelper helper) {
+        ServerPlayer outsider = TestPlayers.create(helper);
+        setRace(outsider, "tensura:human");
+        helper.assertTrue(!RaceAPI.getRaceFrom(outsider).evolveRace(ResourceLocation.parse("tensura:vampire_lord")), "a non-vampire evolved into the vampire line");
+        helper.assertTrue(handler(outsider).getCurrentFaction() == null, "the evolution pulled a human into a faction");
+        helper.assertTrue(RaceAPI.getRaceFrom(outsider).getRace().map(r -> r.getRaceId().toString()).orElse("none").equals("tensura:human"), "the race changed");
+
+        ServerPlayer vampire = TestPlayers.create(helper);
+        helper.assertTrue(handler(vampire).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not become a vampire");
+        helper.assertTrue(RaceAPI.getRaceFrom(vampire).evolveRace(ResourceLocation.parse("tensura:vampire_lord")), "a vampire could not evolve along its own line");
+        helper.succeed();
+    }
 }

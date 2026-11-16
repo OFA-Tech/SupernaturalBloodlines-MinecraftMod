@@ -10,6 +10,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.ReentrancyGuard;
+import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
+import net.ofatech.supernaturalbloodlines.core.attachment.RaceMemory;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
 import net.ofatech.supernaturalbloodlines.parts.vampirismtensura.FactionRaceRules;
@@ -56,9 +58,13 @@ public final class WerewolfRaceSync {
     }
 
     private static void onFactionLevelChanged(PlayerFactionEvent.FactionLevelChanged event) {
-        if (event.getPlayer().getPlayer() instanceof ServerPlayer p && !p.level().isClientSide && isWerewolf(event.getCurrentFaction())
-                && !isWerewolf(event.getOldFaction())) {
+        if (!(event.getPlayer().getPlayer() instanceof ServerPlayer p) || p.level().isClientSide) {
+            return;
+        }
+        if (isWerewolf(event.getCurrentFaction()) && !isWerewolf(event.getOldFaction())) {
             sync(p, true);
+        } else if (isWerewolf(event.getOldFaction()) && !isWerewolf(event.getCurrentFaction())) {
+            restore(p);
         }
     }
 
@@ -74,8 +80,26 @@ public final class WerewolfRaceSync {
         }
         ReentrancyGuard.run(p.getUUID(), CHANNEL, () -> {
             String current = RaceAPI.getRaceFrom(p).getRace().map(r -> r.getRaceId().toString()).orElse(null);
-            targetRace(current, BloodlineAccess.get(p).wolf().rank(), joining)
-                    .ifPresent(race -> RaceAPI.getRaceFrom(p).setRace(ResourceLocation.parse(race), false));
+            targetRace(current, BloodlineAccess.get(p).wolf().rank(), joining).ifPresent(race -> {
+                p.setData(ModAttachments.RACE_MEMORY, p.getData(ModAttachments.RACE_MEMORY).afterChange(current, race));
+                RaceAPI.getRaceFrom(p).setRace(ResourceLocation.parse(race), false);
+            });
+        });
+    }
+
+    /**
+     * A cure or any other way out of the werewolves: the race this mod set goes back to what it replaced, the way {@code VampireSync} sends a cured
+     * vampire back to human. A race the player evolved to themselves stays. The memory is spent either way.
+     */
+    private static void restore(ServerPlayer p) {
+        if (BloodlineAccess.get(p).species() != Species.NONE) {
+            return;
+        }
+        RaceMemory memory = p.getData(ModAttachments.RACE_MEMORY);
+        p.setData(ModAttachments.RACE_MEMORY, RaceMemory.NONE);
+        ReentrancyGuard.run(p.getUUID(), CHANNEL, () -> {
+            String current = RaceAPI.getRaceFrom(p).getRace().map(r -> r.getRaceId().toString()).orElse(null);
+            memory.restore(current).ifPresent(race -> RaceAPI.getRaceFrom(p).setRace(ResourceLocation.parse(race), false));
         });
     }
 }

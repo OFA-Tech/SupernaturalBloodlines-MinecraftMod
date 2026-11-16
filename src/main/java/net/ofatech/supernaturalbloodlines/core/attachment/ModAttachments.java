@@ -45,6 +45,13 @@ public final class ModAttachments {
                     .copyOnDeath()
                     .build());
 
+    /** The Tensura race this mod replaced (a werewolf's Beastfolk line), put back on a cure (plan 13d); kept on death. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<RaceMemory>> RACE_MEMORY =
+            ATTACHMENTS.register("race_memory", () -> AttachmentType.builder(() -> RaceMemory.NONE)
+                    .serialize(RaceMemory.CODEC)
+                    .copyOnDeath()
+                    .build());
+
     private ModAttachments() {
     }
 

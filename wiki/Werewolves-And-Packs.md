@@ -97,7 +97,7 @@ A True Alpha **keeps the spark**: it cannot be stolen, inherited or given up. If
 
 ### Tensura race
 
-With Tensura, a human who becomes a werewolf becomes a Tensura **beastfolk**. As an Alpha they become a **beast lord**, as a True Alpha a **spirit beast**, and the race is never lowered. Other races are kept. See [Tensura integration](Tensura-Integration). Switch: `werewolf_beastfolk_enabled`.
+With Tensura, a human who becomes a werewolf becomes a Tensura **beastfolk**. As an Alpha they become a **beast lord**, as a True Alpha a **spirit beast**, and the race is never lowered. Other races are kept. **A cure (or any other way out of the werewolves) puts back the race this mod replaced** (a human is human again), but only while the race is still the one this mod set: a race you evolved to yourself stays. See [Tensura integration](Tensura-Integration). Switch: `werewolf_beastfolk_enabled`.
 
 ## Packs and `/pack`
 
