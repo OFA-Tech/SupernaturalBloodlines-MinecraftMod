@@ -57,6 +57,9 @@ public final class HubClient {
             HubHooks.addLauncher(new HubHooks.Launcher("werewolves", "W", 0xFFf0c890, Component.translatable("supernaturalbloodlines.hub.launcher.werewolves"),
                     VAMPIRISM_SCREENS, () -> factionNamespace().equals("werewolves"), HubClient::openSkillScreen));
         }
+        if (ModList.get().isLoaded("enchanted")) {
+            HubModel.ritesCountWhen(() -> net.ofatech.supernaturalbloodlines.parts.supernatural.task.RiteSignal.countable());
+        }
         if (ModList.get().isLoaded("enchanted") && ModList.get().isLoaded("modopedia")) {
             HubHooks.addLauncher(new HubHooks.Launcher("enchanted", "E", 0xFFb7f0c4, Component.translatable("supernaturalbloodlines.hub.launcher.enchanted"),
                     "net.favouriteless.", () -> true, HubClient::openEnchantedBook));

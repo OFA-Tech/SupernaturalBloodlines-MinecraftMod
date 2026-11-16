@@ -241,4 +241,35 @@ public final class WerewolvesGameTests {
         }
         helper.succeed();
     }
+
+    // ---- 13d M5: a cured werewolf gets back the race this mod replaced ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void curedWerewolfGetsTheirRaceBack(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:human");
+        join(helper, p);
+        rank(p, WolfState.Rank.ALPHA);
+        helper.assertTrue("tensura:beast_lord".equals(race(p)), "setup: the Alpha is a " + race(p));
+        handler(p).leaveFaction(false);
+        helper.assertTrue("tensura:human".equals(race(p)), "the cured werewolf is a " + race(p));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void curedWerewolfKeepsARaceTheyEvolvedTo(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        setRace(p, "tensura:human");
+        join(helper, p);
+        setRace(p, "tensura:divine_beast");
+        handler(p).leaveFaction(false);
+        helper.assertTrue("tensura:divine_beast".equals(race(p)), "the cured werewolf's own evolution became " + race(p));
+        // and a race that was never ours: an elf werewolf stays an elf
+        ServerPlayer elf = TestPlayers.create(helper);
+        setRace(elf, "tensura:elf");
+        join(helper, elf);
+        handler(elf).leaveFaction(false);
+        helper.assertTrue("tensura:elf".equals(race(elf)), "the elf became " + race(elf));
+        helper.succeed();
+    }
 }

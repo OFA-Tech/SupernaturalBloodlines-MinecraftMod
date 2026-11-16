@@ -92,8 +92,10 @@ public final class GhoulTensuraGameTests {
         RecordingPlayer control = RecordingPlayer.create(helper);
         try {
             // control: the same call goes through for a player who is not a Ghoul, so it does reach SET_RACE
+            // a vampire evolving along its own line (the vampire line is for vampires since 13d, see VampirismTensuraGameTests)
             setRace(control, "tensura:human");
-            helper.assertTrue(evolveTo(helper, control, "tensura:vampire") && "tensura:vampire".equals(race(control)),
+            helper.assertTrue(de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(control).setFactionAndLevel(de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION, 1), "could not make the control a vampire");
+            helper.assertTrue(RaceAPI.getRaceFrom(control).evolveRace(ResourceLocation.parse("tensura:vampire_lord")) && "tensura:vampire_lord".equals(race(control)),
                     "the control evolution failed: " + race(control));
             helper.assertTrue(!control.received(NO_EVOLVE), "a non-Ghoul was told to finish the turning");
 

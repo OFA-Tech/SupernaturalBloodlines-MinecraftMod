@@ -17,6 +17,8 @@ public abstract class RaceUtilsMixin {
     private static void supernaturalbloodlines$layerIsUndead(Entity entity, CallbackInfoReturnable<Boolean> cir) {
         if (UndeadTreatment.applies(entity)) {
             cir.setReturnValue(true);
+        } else if (UndeadTreatment.apexSuppressed(entity)) {
+            cir.setReturnValue(false);
         }
     }
 
@@ -24,6 +26,8 @@ public abstract class RaceUtilsMixin {
     private static void supernaturalbloodlines$layerIsAffectedByHoly(Entity entity, CallbackInfoReturnable<Boolean> cir) {
         if (UndeadTreatment.applies(entity)) {
             cir.setReturnValue(true);
+        } else if (UndeadTreatment.apexSuppressed(entity)) {
+            cir.setReturnValue(false);
         }
     }
 

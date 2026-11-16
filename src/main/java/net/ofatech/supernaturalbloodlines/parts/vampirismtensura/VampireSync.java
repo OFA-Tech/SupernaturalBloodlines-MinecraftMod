@@ -45,6 +45,15 @@ public final class VampireSync {
     // SET_RACE fires before the change (old, entity, new); the new race id is what counts here.
     private static EventResult onSetRace(ManasRaceInstance oldRace, LivingEntity entity, ManasRaceInstance newRace,
                                          boolean flag, Changeable<Boolean> changeable, Changeable<MutableComponent> message) {
+        if (flag && newRace != null && entity instanceof ServerPlayer p && !p.level().isClientSide && isSyncable(p) && !BloodlineAccess.get(p).ghoul() // a Ghoul's evolutions are refused by species_tensura
+                && VampirismAPI.factionPlayerHandler(p).getCurrentFaction() != VReference.VAMPIRE_FACTION
+                && (VampirismAPI.factionPlayerHandler(p).getCurrentFaction() != null || !VampirismAPI.factionPlayerHandler(p).canJoin(VReference.VAMPIRE_FACTION))
+                && VampireSyncConfig.mapping(VReference.VAMPIRE_FACTION.getHighestReachableLevel()).levelForRace(newRace.getRaceId().toString(), 0).isPresent()) {
+            // an evolution into the vampire line is not for a hunter or a werewolf (another faction) or anyone who cannot join the vampire faction: it would otherwise
+            // leave a vampire race outside the faction. A player with no faction passes and raiseToRaceFloor below joins them (Tensura evolution drives the race).
+            p.sendSystemMessage(net.minecraft.network.chat.Component.translatable("supernaturalbloodlines.vampire_line.no_evolve"));
+            return EventResult.interruptFalse();
+        }
         if (newRace != null && entity instanceof ServerPlayer p && !p.level().isClientSide && isSyncable(p)) {
             GATE_PASSES.incrementAndGet();
             ReentrancyGuard.run(p.getUUID(), CHANNEL, () -> raiseToRaceFloor(p, newRace.getRaceId().toString()));

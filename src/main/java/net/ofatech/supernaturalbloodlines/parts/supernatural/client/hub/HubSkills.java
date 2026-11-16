@@ -19,7 +19,8 @@ import org.jetbrains.annotations.Nullable;
  * the server's own pure rules ({@link SkillRules}), so the page offers a purchase exactly when the server would accept it. Pure.
  */
 public final class HubSkills {
-    public enum State { OWNED, BUYABLE, LOCKED, DORMANT }
+    /** COVERED: the player already has what the skill stands for (Vampirism's own skill), so buying it would pay for nothing. */
+    public enum State { OWNED, BUYABLE, LOCKED, DORMANT, COVERED }
 
     /**
      * @param race  the tree that lists it, null for a dormant skill no current tree lists
@@ -34,6 +35,10 @@ public final class HubSkills {
     }
 
     public static List<Row> rows(SkillTable table, SupernaturalState s, List<SupernaturalRace> races) {
+        return rows(table, s, races, spec -> false);
+    }
+
+    public static List<Row> rows(SkillTable table, SupernaturalState s, List<SupernaturalRace> races, java.util.function.Predicate<SkillSpec> covered) {
         SupernaturalRace creature = races.get(0);
         Optional<SupernaturalRace> magic = races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty();
         Set<String> active = SkillRules.active(table, s, creature, magic);
@@ -53,8 +58,8 @@ public final class HubSkills {
                 if (s.skills().contains(e.skill())) {
                     state = active.contains(e.skill()) ? State.OWNED : State.DORMANT;
                 } else {
-                    why = SkillRules.buy(table, s, creature, magic, e.skill()).refusal();
-                    state = why == null ? State.BUYABLE : State.LOCKED;
+                    why = SkillRules.buy(table, s, creature, magic, e.skill(), covered).refusal();
+                    state = why == null ? State.BUYABLE : why == SkillRules.Refusal.COVERED ? State.COVERED : State.LOCKED;
                 }
                 out.add(new Row(e.skill(), spec.get().name(), spec.get().cost(), race, e, state, why));
             }

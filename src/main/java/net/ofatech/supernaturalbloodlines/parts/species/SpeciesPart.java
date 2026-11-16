@@ -130,7 +130,6 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(RevelationRiteFactory.ID, RevelationRiteFactory.CODEC);
         BloodlineAccess.useGeneVisibility(SpeciesConfig::genesAlwaysVisible);
         DoppelgangerGene.register(); // genes and doppelgänger villagers need no Werewolves
-        ElderSkin.register();
         DoppelgangerVillagers.register();
         net.ofatech.supernaturalbloodlines.shared.species.DoppelgangerIndex.set(DoppelgangerVillagers::loaded); // for the Vampire Compass
         SpeciesRegistries.register(modBus);
@@ -211,6 +210,7 @@ public final class SpeciesPart {
             e.register(SpeciesGameTests.class);
             e.register(OriginalGameTests.class);
             e.register(WitchGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CommandAliasGameTests.class);
             e.register(HunterGameTests.class);
             e.register(HunterMarkGameTests.class);
             e.register(HunterInstinctGameTests.class);
@@ -245,6 +245,7 @@ public final class SpeciesPart {
                 e.register(WerewolfBiteGameTests.class);
                 e.register(WerewolfSparkGameTests.class);
                 e.register(PackBonusGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.FreeWillGameTests.class);
                 e.register(EclipseElectricityGameTests.class);
             }
         });

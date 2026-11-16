@@ -60,6 +60,23 @@ class HubModelTest {
     }
 
     @Test
+    void aRiteTaskIsUnavailableWhileTheMixinHookCannotSeeRites() {
+        try {
+            HubModel.ritesCountWhen(() -> false);
+            // W-1c holds the rite as one of two options (a group: unchanged); a leaf rite task is the witch ladder's C-1a
+            List<TaskRow> witch = HubModel.ladders(T, SupernaturalState.NONE.toBuilder().rung(WITCH, 0).build(), List.of(WITCH), Map.of()).get(0).tasks();
+            assertEquals(List.of(TaskState.UNAVAILABLE), witch.stream().map(TaskRow::state).toList());
+            List<TaskRow> wolf = HubModel.ladders(T, state(0, Set.of(), Set.of(), Map.of()), List.of(WEREWOLF), Map.of()).get(0).tasks();
+            assertTrue(wolf.stream().noneMatch(r -> r.task().id().equals("W-1a") && r.state() == TaskState.UNAVAILABLE), "a kill task is not a rite task");
+            HubModel.ritesCountWhen(() -> true);
+            assertEquals(List.of(TaskState.OPEN), HubModel.ladders(T, SupernaturalState.NONE.toBuilder().rung(WITCH, 0).build(), List.of(WITCH), Map.of()).get(0).tasks()
+                    .stream().map(TaskRow::state).toList());
+        } finally {
+            HubModel.ritesCountWhen(() -> true);
+        }
+    }
+
+    @Test
     void tasksSortClaimableFirstThenOpenThenClaimed() {
         SupernaturalState s = state(0, Set.of("W-1b", "W-1c.2"), Set.of("W-1b"), Map.of("W-1a", 2L));
         List<TaskRow> rows = HubModel.ladders(T, s, List.of(WEREWOLF), Map.of()).get(0).tasks();

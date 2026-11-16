@@ -29,7 +29,8 @@ public final class BloodlineCommand {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> d) {
-        d.register(Commands.literal("bloodline")
+        // /sb bloodline is the same tree under our own prefix, for servers where another mod owns /bloodline (13d)
+        com.mojang.brigadier.tree.LiteralCommandNode<CommandSourceStack> bloodline = d.register(Commands.literal("bloodline")
                 .then(Commands.literal("tree")
                         .executes(c -> tree(c, c.getSource().getPlayerOrException().getGameProfile()))
                         .then(Commands.argument("player", GameProfileArgument.gameProfile())
@@ -49,6 +50,7 @@ public final class BloodlineCommand {
                                         .then(Commands.argument("value", BoolArgumentType.bool())
                                                 .executes(c -> setDoppelgangerGene(c.getSource(), EntityArgument.getPlayer(c, "player"),
                                                         BoolArgumentType.getBool(c, "value"))))))));
+        d.register(Commands.literal("sb").then(Commands.literal("bloodline").redirect(bloodline)));
     }
 
     /** {@code /bloodline gene doppelganger <player> <true|false>} (op 2): the player must be online. Counts as rolled; does not reveal the gene. */

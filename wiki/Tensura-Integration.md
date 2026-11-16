@@ -170,11 +170,15 @@ See [Werewolves and packs](Werewolves-And-Packs) for the ranks.
 
 ## Mixins in this integration
 
-`vampirism_tensura` uses 3 mixins (sun burn, sun debuffs, bite refusal) and `species_tensura` uses 2 (undead checks, evolution list). Each has `require = 0`: if Tensura renames a method after an update, the hook is skipped, the log says so, and the rest keeps working. See [Parts and compatibility](Parts-And-Compatibility#mixins).
+`vampirism_tensura` uses 3 mixins (sun burn, sun debuffs, bite refusal), `species_tensura` uses 2 (undead checks, evolution list) and `hud` uses 2 with Tensura (a skill in the next preset can be fired, a thirsty vampire can use Tensura's vampire race feed). Each has `require = 0`: if Tensura renames a method after an update, the hook is skipped, the log says so, and the rest keeps working. See [Parts and compatibility](Parts-And-Compatibility#mixins).
 
 ## Feeding
 
 If you are a Vampirism vampire, Tensura's **vampire race ability** used on a creature (the race ability key, looking at it within 5 blocks) now also fills your **Vampirism blood**: 2 blood, taken from the creature's own blood (a drained creature gives nothing, and a creature without blood gives nothing). It works when you are thirsty even at full health, which Tensura alone would refuse because a vampire's food is never short. Everything else Tensura's ability does (the damage, the healing, bat mode) is unchanged. `tensura_feed_fills_blood = false` in `supernaturalbloodlines-hud.toml` turns it all off.
+
+## The vampire line and other factions
+
+Tensura's vampire line (`vampire`, `vampire_overcomer`, `vampire_lord`, `divine_vampire`, the ids of `race_level_floor`) is evolved into by a Vampirism vampire, or by a player **with no faction** (a Tensura-only player: their evolution drives the race, and the mod then joins them to the vampire faction). A player who is **in another faction**, a hunter or a werewolf, or anyone who cannot join the vampire faction, gets "Only a vampire can evolve along the vampire line" and nothing changes. Becoming a vampire first (Vampirism infection) still moves a human to `vampire` as before, and an admin's race command is not an evolution, so it still works (and still joins the faction). Species players (Originals, hybrids and so on) and Ghouls follow their own rules.
 
 ## Limits
 

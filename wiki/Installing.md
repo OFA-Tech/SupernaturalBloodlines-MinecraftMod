@@ -10,14 +10,14 @@
 | **NeoForge** | **21.1.265** or newer | built and tested on 21.1.265 |
 | **Java** | 21 | what NeoForge 1.21.1 needs |
 
-The mod declares every linked mod as **optional**, with a version range. **A linked mod outside its range stops the game from starting** with a version error, so stick to these:
+The mod declares every linked mod as **optional**, with a version range. **A linked mod outside its range stops the game from starting** with a version error, so stick to these. A version **inside** the range but beyond the tested one (a later patch) loads, and the log says `... is not a version this build was tested with`: a hook may be missing, and the log lines about mixins (`... hooks MISSING`) say which.
 
 | Mod | Mod id | Supported range | Built and tested with |
 |---|---|---|---|
 | **Vampirism** | `vampirism` | `[1.10.13, 1.11)` | 1.21-1.10.13 |
 | **Werewolves** | `werewolves` | `[2.0.3, 2.1)` | 1.21-2.0.3.4 (needs Vampirism) |
 | **Enchanted** | `enchanted` | `[4.2.7, 4.3)` | 4.2.7 |
-| **Tensura: Reincarnated** | `tensura` | `[2.0.1, 2.0.2)` | 2.0.1.5 |
+| **Tensura: Reincarnated** | `tensura` | `[2.0.1, 2.1)` | 2.0.1.5 |
 | **ManasCore** (race) | `manascore_race` | `[4.0.0, 4.1)` | 4.0.0.2 |
 | **Curios** | `curios` | `[9.5, 10)` | 9.5.1+1.21.1 |
 

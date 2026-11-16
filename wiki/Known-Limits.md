@@ -1,6 +1,6 @@
 # Known limits
 
-Things that **don't work the way you may expect**, or are **not finished or not checked in a real game yet**. The mod is at version **0.1.0**. Everything is covered by automated game tests on a test server; the "not checked" items need a person in a real client.
+Things that **don't work the way you may expect**, or are **not finished or not checked in a real game yet**. The mod is at version **0.2.0-alpha**. Everything is covered by automated game tests on a test server; the "not checked" items need a person in a real client.
 
 ## Not possible
 
@@ -49,6 +49,7 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 
 - **The turning, a refused join:** if Vampirism or another mod refuses the join into the vampires at the moment a player drinks, they are told and the turning is over (the bottle is used up). They have to start again. The failed-turning kill and a Ghoul's death were tested on test players only, not with a real client's Vampirism "dying" screen.
 - **Switching Tensura parts off with Ghouls around:** with `species_tensura` off a Ghoul keeps a plain human (or other) race and Tensura evolutions are **not** blocked (the level and altar gates are Vampirism-side and still hold); a player who already has the `tensura:ghoul` race keeps it until `vampirism_tensura`'s cure mapping runs. With `vampirism_tensura` off, `species_tensura` still sets a cured Ghoul back to `tensura:human` itself.
+- **A hunter or a werewolf cannot evolve along Tensura's vampire line** (the evolution would pull them out of their faction): chat says why and nothing changes. A player with **no faction** (a Tensura-only player) can, and is joined to the vampire faction by it.
 - **Tensura's evolution screen for a Ghoul:** Tensura's own code answers "evolved" and plays its sound even when the evolution was refused, and its progress bar can show 100%. The race does not change and chat says why. Only evolutions are refused: an admin's race command still works on a Ghoul.
 - **Ghouls and Vampirism skill points:** Vampirism's skill-point providers can only add points, so a Ghoul is held at level 1 by the level cap, not by a lowered point count. A command that sets a Ghoul's level above 1 is refused too (the same event).
 
@@ -78,8 +79,7 @@ Automated tests cover the rules, but these still need a person with a real clien
 
 If you find something that behaves differently from this wiki, please [open an issue](https://github.com/OFA-Tech/SupernaturalBloodlines-MinecraftMod/issues). See [Troubleshooting](Troubleshooting).
 
-- **Tensura Slots is no longer needed.** The ability HUD's right column (the next preset) works without it, through one small mixin (
-ext_preset_active). With Tensura Slots still installed both work, but its own second column keeps drawing next to ours and its keys are unbound by the HUD, so remove it. The hold, press and Alt checks against Tensura's own keys were done from the code and the tests, not yet in a running client.
+- **Tensura Slots is no longer needed.** The ability HUD's right column (the next preset) works without it, through one small mixin (switch `next_preset_active`). With Tensura Slots still installed both work, but its own second column keeps drawing next to ours and its keys are unbound by the HUD, so remove it. The hold, press and Alt checks against Tensura's own keys were done from the code and the tests, not yet in a running client.
 
 - **Ability HUD keys:**
   - **Alt + scroll is Tensura's own**: it is bound to Tensura's `next_mode` key (Left Alt) and moves through the nine presets; the HUD adds nothing to it. In Supernatural mode Alt + scroll still moves Tensura's presets.

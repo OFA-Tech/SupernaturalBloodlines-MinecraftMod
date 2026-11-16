@@ -15,12 +15,13 @@ import org.jetbrains.annotations.Nullable;
  * @param kinds        what the skill does: an attribute modifier, a number a rule reads, a Tensura skill, or Vampirism blood
  * @param attr         the modifier of an ATTR skill
  * @param tensuraSkill the Tensura skill a TENSURA skill grants, as a resource location
+ * @param vampirismSkill the Vampirism skill a VAMPIRISM skill enables for its owner (Vampirism's own skill, with its own effect), as a resource location
  * @param params       the numbers RULE and BLOOD skills read through {@code LadderQuery.value}
  */
 public record SkillSpec(String id, String name, int cost, boolean grantedOnly, Set<Kind> kinds, @Nullable Attr attr,
-                        @Nullable String tensuraSkill, Map<String, Double> params) {
+                        @Nullable String tensuraSkill, @Nullable String vampirismSkill, Map<String, Double> params) {
     public enum Kind {
-        ATTR, RULE, TENSURA, BLOOD;
+        ATTR, RULE, TENSURA, BLOOD, VAMPIRISM;
 
         public static Kind byId(String id) {
             for (Kind k : values()) {
@@ -74,7 +75,7 @@ public record SkillSpec(String id, String name, int cost, boolean grantedOnly, S
     /** The mod a skill needs to exist at all: a TENSURA skill is hidden without Tensura. */
     @Nullable
     public String mod() {
-        return kinds.contains(Kind.TENSURA) ? "tensura" : null;
+        return kinds.contains(Kind.TENSURA) ? "tensura" : null; // a VAMPIRISM skill needs no check: the supernatural part itself needs Vampirism
     }
 
     /** The number the JSON gives for {@code key}, or {@code fallback} when it names none. */

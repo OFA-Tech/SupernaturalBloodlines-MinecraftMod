@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /** Pure rules of the skill trees: who can buy what, and which of the skills a player owns are active. No game classes. */
 public final class SkillRules {
     public enum Refusal {
-        GHOUL_FROZEN, UNKNOWN_SKILL, GRANTED_ONLY, ALREADY_OWNED, NOT_IN_TREE, RUNG, PREREQUISITE, QUEST, SP;
+        GHOUL_FROZEN, UNKNOWN_SKILL, GRANTED_ONLY, ALREADY_OWNED, COVERED, NOT_IN_TREE, RUNG, PREREQUISITE, QUEST, SP;
 
         public String langKey() {
             return "supernaturalbloodlines.supernatural.skill.refuse." + name().toLowerCase(Locale.ROOT);
@@ -41,6 +41,12 @@ public final class SkillRules {
      * rung, prerequisite and quest are met is enough, so a skill listed in both trees is bought once and owned in both. One pool of SP.
      */
     public static BuyResult buy(SkillTable table, SupernaturalState s, SupernaturalRace creature, Optional<SupernaturalRace> magic, String skillId) {
+        return buy(table, s, creature, magic, skillId, spec -> false);
+    }
+
+    /** As {@link #buy(SkillTable, SupernaturalState, SupernaturalRace, Optional, String)}; {@code covered} says the player already has what the skill stands for (S-VAM-7 with Vampirism's own skill), so nobody pays for nothing. */
+    public static BuyResult buy(SkillTable table, SupernaturalState s, SupernaturalRace creature, Optional<SupernaturalRace> magic, String skillId,
+                                java.util.function.Predicate<SkillSpec> covered) {
         if (creature == SupernaturalRace.GHOUL) {
             return refuse(s, Refusal.GHOUL_FROZEN);
         }
@@ -53,6 +59,9 @@ public final class SkillRules {
         }
         if (s.skills().contains(skillId)) {
             return refuse(s, Refusal.ALREADY_OWNED);
+        }
+        if (covered.test(spec.get())) {
+            return refuse(s, Refusal.COVERED);
         }
         Refusal first = Refusal.NOT_IN_TREE;
         boolean listed = false;

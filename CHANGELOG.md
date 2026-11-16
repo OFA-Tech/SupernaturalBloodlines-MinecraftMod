@@ -1,5 +1,33 @@
 # Changelog
 
+## Unreleased (plan 13d, compatibility hardening)
+
+Checked against Vampirism 1.10.13, Werewolves 2.0.3.4, Tensura 2.0.1.5 and Enchanted 4.2.7.
+
+### Fixed
+
+- **Werewolves' Free Will skill is moon control.** Its owners could not shift at will under the moon gate (`moon_bound_werewolves`, still on by default). It now counts as full control.
+- **Ladder-skill modifiers are stripped with their part.** The `skill/<id>` attribute modifiers belong to the supernatural part, so switching it off removes them at the next login. `For-Server-Owners` has a "Before removing the mod" section with the exact `/attribute ... modifier remove` commands for every modifier id this mod adds.
+- **Covered keys are taken only where the HUD works.** The HUD takes other mods' keys only while `hud_enabled` is on and you are in a world whose server has the HUD. Leaving the world, joining a server without the mod and `hud_enabled = false` give every key back.
+- **The vampire line and other factions.** A hunter or a werewolf (or anyone who cannot join the vampire faction) can no longer evolve into Tensura's vampire line, which pulled them into the vampire faction. A player with no faction still can: the evolution drives the race and the mod joins them to the vampire faction.
+- **A cured werewolf gets back the race this mod replaced** (a human is human again), unless they evolved to another race themselves.
+- **`undead_treatment_enabled = false` also stops Tensura's undead and holy-exposure answers for our apex races** (the tag entries cannot be made conditional in this NeoForge; a datapack override is documented).
+- **`only_alphas_turn`** (default on) can be switched off to give back Werewolves' own rule that any werewolf's bite infects.
+- **Enchanted mixins that did not apply are in the log as warnings**, and the hub shows rite tasks as unavailable instead of leaving them at 0 when the hook that sees a rite finish is missing.
+- **Optional dependency ranges** are wider (Tensura `[2.0.1,2.1)`): FML stops the whole game when an optional mod is present but out of range. A version outside the tested series loads with a warning.
+- **A sneaking siphoner can still trade** with a villager or a trader.
+- **The Tensura race feed** takes blood from a victim only as far as the vampire really got it (no drain for a full vampire, a vervain victim, or a Vampirism vampire victim).
+- `venom`, `sireline` and `rejected_bite` damage no longer bypasses creative invulnerability.
+
+### Changed
+
+- **Elder's Skin (S-VAM-7) enables Vampirism's own `less_sundamage` skill** instead of our own x0.75 on the sun damage. The skill is taken back when S-VAM-7 stops being active (a respec, a lost race) or the supernatural part is off, but only if this mod enabled it: one you had or bought yourself stays. The hub shows S-VAM-7 as covered (and the server refuses to sell it) when you already have the Vampirism skill.
+- `/sb pack` and `/sb bloodline` work like `/pack` and `/bloodline`.
+
+### Docs
+
+- Documentation drift fixed (parts count, mixin counts, versions, the mixin notes, the HUD settings).
+
 ## 0.2.0-alpha (2026-11-15)
 
 ### The six HUD slots (plan 13, phase 13b)

@@ -65,7 +65,7 @@ Eyes show as two glowing dust particles at eye height every half second while a 
 
 ## Turning people (bites)
 
-- **Only Alphas turn humans.** An Alpha's bite makes the victim a **Beta of their pack** (and records the Alpha as their sire) with `alpha_bite_death_chance` (default **10%**) of killing them instead ("... body rejected the Alpha's bite").
+- **Only Alphas turn humans** (config `only_alphas_turn`, default on; off gives Werewolves' own rule where any werewolf's bite infects). An Alpha's bite makes the victim a **Beta of their pack** (and records the Alpha as their sire) with `alpha_bite_death_chance` (default **10%**) of killing them instead ("... body rejected the Alpha's bite").
 - A **Beta's or Omega's** bite does **not** infect.
 - A **wild werewolf mob** makes an **Omega** (no pack, no death roll, no sire).
 - A Beta bitten again by another Alpha, or invited by one, **stays in their pack** until `/pack leave`.
@@ -97,7 +97,7 @@ A True Alpha **keeps the spark**: it cannot be stolen, inherited or given up. If
 
 ### Tensura race
 
-With Tensura, a human who becomes a werewolf becomes a Tensura **beastfolk**. As an Alpha they become a **beast lord**, as a True Alpha a **spirit beast**, and the race is never lowered. Other races are kept. See [Tensura integration](Tensura-Integration). Switch: `werewolf_beastfolk_enabled`.
+With Tensura, a human who becomes a werewolf becomes a Tensura **beastfolk**. As an Alpha they become a **beast lord**, as a True Alpha a **spirit beast**, and the race is never lowered. Other races are kept. **A cure (or any other way out of the werewolves) puts back the race this mod replaced** (a human is human again), but only while the race is still the one this mod set: a race you evolved to yourself stays. See [Tensura integration](Tensura-Integration). Switch: `werewolf_beastfolk_enabled`.
 
 ## Packs and `/pack`
 
@@ -156,9 +156,11 @@ On, a werewolf transforms **only when the full moon forces it** and cannot shift
 | **Alpha** or **True Alpha** | **full** |
 | **Hybrid**, **Original hybrid**, **tribrid** (unbound) | **full** |
 | **Born** werewolf with an **anchor** | **half** |
+| Werewolves' own **Free Will** skill (`werewolves:free_will`) | **full** |
 
 - **Half control:** human and survivalist forms at will.
 - **Full control:** also the beast forms, but only from Werewolves level `full_form_level` (default **8**); below it, half.
+- **Free Will** is the skill Werewolves itself sells for controlling the full moon; before this mod's gate it let its owner leave a form, so it counts as full control here too (an earlier build cancelled their shifts).
 - Control also **skips the forced full-moon shift**. Without control you see "You cannot shift at will: only the full moon moves your wolf."
 - The roar gives a short permit to shift.
 - Switching a form **off** is never blocked.

@@ -3,7 +3,11 @@ package net.ofatech.supernaturalbloodlines.shared.werewolves;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
+import de.teamlapen.vampirism.api.VampirismAPI;
+import de.teamlapen.vampirism.api.VampirismRegistries;
+import de.teamlapen.vampirism.api.entity.player.skills.ISkill;
 import de.teamlapen.vampirism.api.event.ActionEvent;
+import net.minecraft.resources.ResourceLocation;
 import de.teamlapen.werewolves.api.entities.werewolf.WerewolfForm;
 import de.teamlapen.werewolves.entities.player.werewolf.actions.WerewolfFormAction;
 import java.util.List;
@@ -29,6 +33,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 public final class ForcedShift {
     // PlayerTickEvent also fires on the client thread of a singleplayer game, hence the thread-local
     private static final ThreadLocal<Player> TICKING = new ThreadLocal<>();
+    private static final ResourceLocation FREE_WILL = ResourceLocation.parse("werewolves:free_will");
     public static final String BOUND_MESSAGE = "supernaturalbloodlines.hybrid_curse.bound";
     public static final String NO_CONTROL_MESSAGE = "supernaturalbloodlines.moon_control.none";
     // reasons to allow a form action without moon control (the Alpha Roar lets the pack shift)
@@ -58,6 +63,8 @@ public final class ForcedShift {
             return;
         }
         registered = true;
+        // Werewolves' own Free Will skill is the full-moon control it sells: without this the moon gate (R96) cancelled the shift of its owners
+        MoonControl.addSource(ForcedShift::hasFreeWill);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (PlayerTickEvent.Pre e) -> enterTick(e.getEntity()));
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, (PlayerTickEvent.Post e) -> leaveTick(e.getEntity()));
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ForcedShift::onActionActivated);
@@ -67,6 +74,13 @@ public final class ForcedShift {
                 TaskSignals.fire(p, "forced_shift_survived", 1);
             }
         });
+    }
+
+    /** Whether the player has Werewolves' {@code free_will} skill (a werewolf only; checked by id, so a missing skill is simply false). */
+    public static boolean hasFreeWill(ServerPlayer p) {
+        var skill = VampirismRegistries.SKILL.get().get(FREE_WILL);
+        return skill != null && VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer()
+                .map(fp -> fp.getSkillHandler().isSkillEnabled((ISkill<?>) skill)).orElse(false);
     }
 
     public static void enterTick(Player p) {

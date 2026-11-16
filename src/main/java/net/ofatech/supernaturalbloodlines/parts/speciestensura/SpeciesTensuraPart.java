@@ -47,6 +47,7 @@ public final class SpeciesTensuraPart {
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(SpeciesLayerGameTests.class);
             e.register(ApexGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexUndeadSwitchGameTests.class);
             e.register(SirelineTensuraGameTests.class);
             e.register(GhoulTensuraGameTests.class);
             if (EnabledParts.isEnabled("supernatural")) {

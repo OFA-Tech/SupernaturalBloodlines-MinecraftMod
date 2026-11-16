@@ -71,8 +71,10 @@ public final class TensuraFeed {
         }
         int credit = TensuraFeedRules.credit(VampirismBite.blood(victim), RaceUtils.isBloodless(victim), room);
         if (credit > 0) {
-            VampirismBite.drain(victim, credit);
+            // the victim loses only what the vampire really got: a drink that something emptied on purpose (vervain, a desiccated biter) takes nothing
+            int before = stats.getBloodLevel();
             VampirismAPI.vampirePlayer(p).drinkBlood(credit, IBloodStats.LOW_SATURATION, new Source(victim));
+            VampirismBite.drain(victim, Math.min(credit, Math.max(0, stats.getBloodLevel() - before)));
         }
     }
 

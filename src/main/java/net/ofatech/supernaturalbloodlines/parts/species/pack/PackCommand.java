@@ -44,7 +44,8 @@ public final class PackCommand {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> d) {
-        d.register(Commands.literal("pack")
+        // /pack is also a short word other mods use; /sb pack is the same tree under our own prefix (13d)
+        com.mojang.brigadier.tree.LiteralCommandNode<CommandSourceStack> pack = d.register(Commands.literal("pack")
                 .then(Commands.literal("invite")
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(c -> run(c, invite(self(c), EntityArgument.getPlayer(c, "player"))))))
@@ -65,6 +66,7 @@ public final class PackCommand {
                         .executes(c -> run(c, anchor(self(c), null)))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(c -> run(c, anchor(self(c), EntityArgument.getPlayer(c, "player")))))));
+        d.register(Commands.literal("sb").then(Commands.literal("pack").redirect(pack)));
     }
 
     private static ServerPlayer self(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {

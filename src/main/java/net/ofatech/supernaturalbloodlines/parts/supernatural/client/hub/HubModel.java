@@ -122,14 +122,24 @@ public final class HubModel {
     private static int order(TaskState s) {
         return switch (s) {
             case CLAIMABLE -> 0;
-            case OPEN, FROZEN -> 1;
+            case OPEN, FROZEN, UNAVAILABLE -> 1;
             case CLAIMED -> 2;
         };
+    }
+
+    /** False when this client cannot see rites finish (Enchanted's hook is missing); set by the hub client when Enchanted is installed. */
+    static volatile java.util.function.BooleanSupplier ritesCount = () -> true;
+
+    public static void ritesCountWhen(java.util.function.BooleanSupplier supplier) {
+        ritesCount = supplier;
     }
 
     static TaskRow row(SupernaturalRace race, TaskSpec t, SupernaturalState s, boolean frozen, Map<String, Integer> levels) {
         boolean done = LadderRules.isDone(t, s);
         TaskState state = frozen ? TaskState.FROZEN : s.claimed().contains(t.id()) ? TaskState.CLAIMED : done ? TaskState.CLAIMABLE : TaskState.OPEN;
+        if (state == TaskState.OPEN && !t.isGroup() && t.detector() == TaskSpec.Detector.RITE && !ritesCount.getAsBoolean()) {
+            state = TaskState.UNAVAILABLE; // 13d M9: the hook that sees a rite finish is not in place, so the task would stay at 0 for no visible reason
+        }
         if (t.isGroup()) {
             List<TaskRow> members = t.anyOf().stream().map(m -> row(race, m, s, frozen, levels)).toList();
             return new TaskRow(race, t, state, done ? 1 : 0, 1, true, source(t), new TaskText(HUB + "task.any_of", "One of:", List.of(),

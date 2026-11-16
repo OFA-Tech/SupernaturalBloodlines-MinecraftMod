@@ -74,6 +74,25 @@ public final class BloodlineGameTests {
         helper.succeed();
     }
 
+    // 13d H2: the ladder skills' modifiers are named skill/<id> and belong to the supernatural part, on whichever attribute they sit
+    @GameTest(template = "empty")
+    public static void disabledSupernaturalLosesItsSkillModifiers(GameTestHelper helper) {
+        ResourceLocation skill = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "skill/s-vam-3");
+        ResourceLocation other = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "skills_notes");
+        ServerPlayer p = TestPlayers.create(helper);
+        double attack = p.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        p.getAttribute(Attributes.MAX_HEALTH).addPermanentModifier(new AttributeModifier(skill, 2.0, AttributeModifier.Operation.ADD_VALUE));
+        p.getAttribute(Attributes.ATTACK_DAMAGE).addPermanentModifier(new AttributeModifier(skill, 0.2, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        p.getAttribute(Attributes.ARMOR).addPermanentModifier(new AttributeModifier(other, 1.0, AttributeModifier.Operation.ADD_VALUE));
+        StalePartModifiers.strip(p, EnumSet.of(Part.SUPERNATURAL));
+        helper.assertTrue(p.getAttribute(Attributes.MAX_HEALTH).hasModifier(skill), "an enabled supernatural part lost its skill modifier");
+        StalePartModifiers.strip(p, EnumSet.of(Part.SPECIES));
+        helper.assertTrue(!p.getAttribute(Attributes.MAX_HEALTH).hasModifier(skill), "the health skill modifier of the disabled supernatural part stayed");
+        helper.assertTrue(!p.getAttribute(Attributes.ATTACK_DAMAGE).hasModifier(skill) && p.getAttributeValue(Attributes.ATTACK_DAMAGE) == attack, "the attack skill modifier stayed");
+        helper.assertTrue(p.getAttribute(Attributes.ARMOR).hasModifier(other), "a modifier outside the skill/ prefix was removed");
+        helper.succeed();
+    }
+
     // our pickaxe tag entry names a block that only exists when a part is on; a required entry would
     // make vanilla drop the whole merged tag
     @GameTest(template = "empty")

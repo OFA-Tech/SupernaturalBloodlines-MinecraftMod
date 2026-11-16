@@ -19,6 +19,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.VampirismSkillAccess;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SkillRules;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SkillSpec;
@@ -88,12 +89,33 @@ public final class SkillEffects {
                 apply(p, spec, active.contains(spec.id()) && spec.attr().when().holds(fixed, level.getMoonPhase(), level.getDayTime()));
             }
         }
+        enableVampirismSkills(p, table, active);
         Set<String> granted = SkillGrants.sync(p, tensuraSkillsOf(table, active), s.granted());
         if (!granted.equals(s.granted())) {
             SupernaturalAccess.set(p, SupernaturalAccess.get(p).toBuilder().granted(granted).build());
         }
     }
 
+    /**
+     * The Vampirism skills the active VAMPIRISM skills stand for (S-VAM-7: {@code vampirism:less_sundamage}) are enabled on the player's Vampirism skill
+     * handler, so Vampirism's own effect and its own skill screen carry them, and taken back when the ladder skill is no longer active (a respec, a lost
+     * race, the part off: see {@code StalePartModifiers}). Only a skill this mod enabled is recorded, so one the player had or bought is never taken
+     * away. A Vampirism skill reset is answered by the next sync (every 200 ticks) while the ladder skill is active. It costs no Vampirism skill points
+     * (SkillRuleGameTests.eldersSkinEnablesVampirismsLessSundamageSkill): the ladder skill's own cost is what the player paid.
+     */
+    private static void enableVampirismSkills(ServerPlayer p, SkillTable table, Set<String> active) {
+        Set<String> wanted = new HashSet<>();
+        for (String id : active) {
+            table.skill(id).filter(s -> s.vampirismSkill() != null).ifPresent(spec -> {
+                if (VampirismSkillAccess.exists(spec.vampirismSkill())) {
+                    wanted.add(spec.vampirismSkill());
+                } else if (WARNED.add(spec.id())) {
+                    SupernaturalBloodlines.LOGGER.warn("Skill {}: unknown Vampirism skill '{}', skipped", spec.id(), spec.vampirismSkill());
+                }
+            });
+        }
+        VampirismSkillAccess.apply(p, wanted);
+    }
     /** The Tensura skills the active TENSURA skills grant. */
     public static Set<String> tensuraSkillsOf(SkillTable table, Set<String> active) {
         Set<String> out = new HashSet<>();

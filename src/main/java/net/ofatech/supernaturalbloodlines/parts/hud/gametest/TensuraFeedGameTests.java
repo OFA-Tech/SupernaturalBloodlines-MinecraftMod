@@ -136,6 +136,29 @@ public final class TensuraFeedGameTests {
         helper.succeed();
     }
 
+    /** Vervain, a desiccated biter: something empties the drink on purpose. The victim must not lose blood the vampire never got. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDrinkSomethingEmptiedDoesNotDrainTheVictim(GameTestHelper helper) {
+        ServerPlayer p = vampire(helper);
+        PathfinderMob v = BiteGameTests.villager(helper, 2.5);
+        helper.assertTrue(VampirismAPI.vampirePlayer(p).useBlood(15, true), "could not empty the vampire's blood");
+        p.setHealth(10f);
+        int mine = blood(p);
+        int theirs = BiteGameTests.blood(v);
+        java.util.function.Consumer<de.teamlapen.vampirism.api.event.BloodDrinkEvent.PlayerDrinkBloodEvent> empty = e -> e.setAmount(0);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGH, empty);
+        try {
+            useRaceAbility(p);
+        } finally {
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(empty);
+        }
+        helper.assertTrue(v.getHealth() < v.getMaxHealth(), "Tensura's feed did not run (the villager was not hurt)");
+        helper.assertTrue(blood(p) == mine, "the emptied drink gave blood: " + blood(p) + ", was " + mine);
+        helper.assertTrue(BiteGameTests.blood(v) == theirs, "the villager lost blood for an emptied drink: " + BiteGameTests.blood(v) + ", was " + theirs);
+        v.discard();
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aVampireWithFullBloodAndHealthDoesNotFeed(GameTestHelper helper) {
         ServerPlayer p = vampire(helper);

@@ -631,4 +631,28 @@ public final class VampirismTensuraGameTests {
         helper.assertTrue(BloodlineAccess.get(p).species() == Species.WITCH, "species changed");
         helper.succeed();
     }
+
+    // ---- 13d M4: the vampire line is for vampires ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void evolvingIntoTheVampireLineNeedsTheVampireFaction(GameTestHelper helper) {
+        ServerPlayer outsider = TestPlayers.create(helper);
+        setRace(outsider, "tensura:human");
+        helper.assertTrue(handler(outsider).setFactionAndLevel(VReference.HUNTER_FACTION, 1), "could not become a hunter");
+        helper.assertTrue(!RaceAPI.getRaceFrom(outsider).evolveRace(ResourceLocation.parse("tensura:vampire_lord")), "a hunter evolved into the vampire line");
+        helper.assertTrue(handler(outsider).getCurrentFaction() == VReference.HUNTER_FACTION, "the evolution pulled a hunter out of their faction");
+        helper.assertTrue(RaceAPI.getRaceFrom(outsider).getRace().map(r -> r.getRaceId().toString()).orElse("none").equals("tensura:human"), "the race changed");
+
+        // a player with no faction (a Tensura-only player) may evolve into the line, and the sync then joins them to the vampire faction
+        ServerPlayer plain = TestPlayers.create(helper);
+        setRace(plain, "tensura:human");
+        helper.assertTrue(handler(plain).getCurrentFaction() == null, "setup: the player has a faction");
+        helper.assertTrue(RaceAPI.getRaceFrom(plain).evolveRace(ResourceLocation.parse("tensura:vampire_lord")), "a faction-less player could not evolve into the vampire line");
+        helper.assertTrue(handler(plain).getCurrentFaction() == VReference.VAMPIRE_FACTION, "the evolution did not join the player to the vampire faction");
+
+        ServerPlayer vampire = TestPlayers.create(helper);
+        helper.assertTrue(handler(vampire).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not become a vampire");
+        helper.assertTrue(RaceAPI.getRaceFrom(vampire).evolveRace(ResourceLocation.parse("tensura:vampire_lord")), "a vampire could not evolve along its own line");
+        helper.succeed();
+    }
 }

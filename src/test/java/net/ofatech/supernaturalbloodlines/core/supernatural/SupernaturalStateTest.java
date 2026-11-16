@@ -20,7 +20,7 @@ class SupernaturalStateTest {
         return new SupernaturalState(1, Map.of("vampire", 3, "witch", 1), Map.of("vampire", 100L), 4, 9,
                 Set.of("L-VAM-1a", "L-VAM-1b"), Set.of("L-VAM-1a"), Map.of("L-VAM-2b", 5L), Map.of("witch/rite?rite=any&role=performer", 7L),
                 Set.of("S-VAM-1"),
-                Set.of("Q-VAM-6"), Set.of("tensura:drain"), List.of("layer", "rank"));
+                Set.of("Q-VAM-6"), Set.of("tensura:drain"), Set.of("vampirism:less_sundamage"), List.of("layer", "rank"));
     }
 
     @Test
@@ -52,6 +52,7 @@ class SupernaturalStateTest {
     void clientViewDropsTheServerOnlyFields() {
         SupernaturalState view = full().clientView();
         assertTrue(view.granted().isEmpty());
+        assertTrue(view.vampirismGranted().isEmpty());
         assertTrue(view.backfill().isEmpty());
         assertEquals(0, view.schema());
         // everything the hub shows stays
@@ -73,6 +74,7 @@ class SupernaturalStateTest {
     void withTrackingOfTakesOnlyTheTracking() {
         SupernaturalState s = SupernaturalState.NONE.toBuilder().sp(7).build().withTrackingOf(full());
         assertEquals(Set.of("tensura:drain"), s.granted());
+        assertEquals(Set.of("vampirism:less_sundamage"), s.vampirismGranted());
         assertEquals(List.of("layer", "rank"), s.backfill());
         assertEquals(7, s.sp());
         assertEquals(0, s.schema());
