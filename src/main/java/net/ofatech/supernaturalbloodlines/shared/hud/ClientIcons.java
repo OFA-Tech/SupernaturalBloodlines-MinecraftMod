@@ -20,7 +20,30 @@ public final class ClientIcons {
     private ClientIcons() {
     }
 
+    /** Drawn for an icon that no resource pack has (a mod that does not ship the texture of one of its actions): a small rune, never the magenta square. */
+    public static final ResourceLocation UNKNOWN = ResourceLocation.fromNamespaceAndPath("supernaturalbloodlines", "textures/gui/hud/unknown.png");
+    private static final Map<ResourceLocation, Boolean> EXISTS = new HashMap<>();
+
+    /** The icon itself when a resource has it, else {@link #UNKNOWN} (and one warning in the log per icon). */
+    public static ResourceLocation resolve(ResourceLocation icon) {
+        boolean ok = EXISTS.computeIfAbsent(icon, i -> {
+            boolean has = Minecraft.getInstance().getResourceManager().getResource(i).isPresent();
+            if (!has) {
+                net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("HUD icon {} does not exist, drawing the unknown rune instead", i);
+            }
+            return has;
+        });
+        return ok ? icon : UNKNOWN;
+    }
+
+    /** Forget which icons exist (a resource reload can add or remove them). */
+    public static void reload() {
+        EXISTS.clear();
+        SIZES.clear();
+    }
+
     public static void draw(GuiGraphics g, ResourceLocation icon, int x, int y, int size, float alpha) {
+        icon = resolve(icon);
         int[] d = SIZES.computeIfAbsent(icon, ClientIcons::measure);
         RenderSystem.enableBlend();
         g.setColor(1f, 1f, 1f, alpha);

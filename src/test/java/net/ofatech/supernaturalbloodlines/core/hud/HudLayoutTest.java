@@ -64,9 +64,19 @@ class HudLayoutTest {
     }
 
     @Test
-    void theColumnsStandOnTheBottomEdgeLikeTheHotbar() {
+    void theColumnsStandJustAboveTheBottomEdge() {
         Box[] b = HudLayout.slots(427, 240);
-        assertEquals(240, b[2].bottom());
-        assertEquals(240, b[5].bottom());
+        assertEquals(240 - HudLayout.BOTTOM, b[2].bottom());
+        assertEquals(240 - HudLayout.BOTTOM, b[5].bottom());
+    }
+
+    @Test
+    void allThreeSlotsOfBothColumnsFitAboveTheBottomEdgeAtEveryGuiScale() {
+        // 1920 x 1080 at GUI scale 2, 3 and 4, 1280 x 720 at 2 and 3, and the smallest the design allows
+        for (int[] s : new int[][] {{960, 540}, {640, 360}, {480, 270}, {640, 360}, {427, 240}, {320, 240}}) {
+            for (Box b : HudLayout.slots(s[0], s[1])) {
+                assertTrue(b.y() >= 0 && b.bottom() <= s[1] - HudLayout.BOTTOM, b + " is cut by the bottom of a " + s[0] + "x" + s[1] + " screen");
+            }
+        }
     }
 }

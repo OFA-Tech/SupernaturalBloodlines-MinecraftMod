@@ -259,13 +259,16 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     }
 
     private static final int PILL_ROW = 16;
+    /** The primary pill's fill: a red dark enough for the pale label (4.5:1), and its hovered step. */
+    private static final int PRIMARY = 0xFFb8281f;
+    private static final int PRIMARY_HOT = 0xFFcf3328;
     private boolean overflowOpen;
 
     private void pill(UiContext ctx, Rect pill, Detail.Action a) {
         GuiGraphics g = ctx.g();
         Font font = ctx.font();
         boolean hot = a.enabled() && (ctx.hovered(pill) || ctx.focused("detail:" + a.id()));
-        int fill = a.primary() ? (a.enabled() ? (hot ? 0xFFf06a5f : RED) : 0xFF5a3a42) : (hot ? 0xFF3a1822 : PILL);
+        int fill = a.primary() ? (a.enabled() ? (hot ? PRIMARY_HOT : PRIMARY) : 0xFF5a3a42) : (hot ? 0xFF3a1822 : PILL);
         g.fill(pill.x(), pill.y(), pill.right(), pill.bottom(), a.primary() ? fill : EDGE);
         g.fill(pill.x() + 1, pill.y() + 1, pill.right() - 1, pill.bottom() - 1, fill);
         String label = LabelFit.cut(a.label().getString(), pill.w() - 6, font::width);
@@ -397,7 +400,11 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         return List.of(new TextPair("moon count", COUNT, PILL),
                 new TextPair("race, gold, on the sky top", GOLD, SKY_TOP), new TextPair("race, gold, on the sky bottom", GOLD, SKY_BOTTOM),
                 new TextPair("next rung, muted, on the sky top", muted(), SKY_TOP), new TextPair("next rung, muted, on the sky bottom", muted(), SKY_BOTTOM),
-                new TextPair("EP, ink, on the sky top", ink(), SKY_TOP), new TextPair("EP, ink, on the sky bottom", ink(), SKY_BOTTOM));
+                new TextPair("EP, ink, on the sky top", ink(), SKY_TOP), new TextPair("EP, ink, on the sky bottom", ink(), SKY_BOTTOM),
+                // the floating bar and its pills
+                new TextPair("bar title", 0xFFfff1ea, 0xFF140810), new TextPair("bar body, muted", muted(), 0xFF140810),
+                new TextPair("primary pill", 0xFFfff1ea, PRIMARY), new TextPair("primary pill, hovered", 0xFFfff1ea, PRIMARY_HOT), new TextPair("secondary pill", ink(), PILL),
+                new TextPair("gold on a card", GOLD, CARD), new TextPair("ink on a card", ink(), CARD));
     }
 
     @Override

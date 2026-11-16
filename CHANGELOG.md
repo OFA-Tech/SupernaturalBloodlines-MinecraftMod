@@ -8,6 +8,13 @@
 - **Two new pages in every look: Guide and Loadout.** The Guide has chapters for what you are (your creature, then your magic race) and for how the hub, the path, skills, quests, rites, the bloodline, the pack, the loadout and the moon work. The Loadout page is the Loadout tab of the Skills page on a page of its own (the tab stays), and it shows only with the ability HUD. A Ghoul can read the Guide while the other pages wait. Keys 1 to 8 now reach them.
 - The three looks draw their page icons from the new icon atlas.
 
+### The finished hub and HUD (16g)
+
+- **The tracked task** shows at the top centre, under the boss bars, instead of on top of Tensura's status (client setting `tracker_anchor`).
+- **The slot columns** stand 3 pixels above the bottom edge, so no slot is cut at any GUI scale. **Bite** has its own fang icon, a rune stands in for an icon a mod does not have, the cooldown is a small "4s" label over the dimmed icon, and the Alt panels wrap their text.
+- **Contrast:** the Blood Moon's red buttons were 3.6:1 and are darker now; the check covers the floating bar, the Tensura title bar and info pane and the HUD.
+- **Skill names** on the radial tree no longer split in the middle of a word.
+
 ### The ability HUD in the hub's look (16f)
 
 - **The slots follow the hub's theme:** inked tiles with wax key badges (Grimoire), round slots with gold key letters (Blood Moon), hexagons with key tabs (Tensura). Real icons, a clockwise cooldown pie with the seconds, a gold glow while a skill is active, a lock on actions you have not unlocked, and a ring of blood round Bite.

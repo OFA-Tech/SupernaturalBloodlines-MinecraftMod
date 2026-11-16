@@ -78,7 +78,8 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         }
         if (HudDemo.on() || TrackerAccess.available()) {
             Optional<TrackerAccess.Line> line = HudDemo.on() ? Optional.of(HudDemo.tracked()) : TrackerAccess.line();
-            line.ifPresent(l -> HudChrome.tracker(g, mc.font, style, l, alpha));
+            int boss = HudDemo.on() ? 0 : BossBars.bottom();
+            line.ifPresent(l -> HudChrome.tracker(g, mc.font, style, l, alpha, HudClientConfig.trackerAnchor(), boss));
         }
         if (alt) {
             HudChrome.tooltips(g, mc.font, style, boxes, views, mode != null && (HudDemo.on() || HudModeState.available().size() > 1), alpha);

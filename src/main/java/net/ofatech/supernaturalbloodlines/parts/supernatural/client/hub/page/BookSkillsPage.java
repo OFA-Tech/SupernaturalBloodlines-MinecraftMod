@@ -201,10 +201,8 @@ public final class BookSkillsPage implements HubPageView {
             KitDraw.shape(f.g, shape, x + 2, y + 2, size - 4, t.paper());
             KitDraw.icon(f.g, icon, n.x() - 6, n.y() - 6, 12, t.ink());
         }
-        List<net.minecraft.util.FormattedCharSequence> lines = f.font().split(SkillsPage.name(row), (int) (labelWidth / 0.75f));
-        if (lines.size() > 2) {
-            lines = lines.subList(0, 2);
-        }
+        // by words, and a word that is too long ends in an ellipsis instead of being broken in the middle
+        List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(SkillsPage.name(row).getString(), (int) (labelWidth / 0.75f), 2, f.font()::width);
         int height = (int) Math.ceil(lines.size() * 9 * 0.75f);
         int ly = n.y() >= cy ? n.y() + size / 2 + 2 : n.y() - size / 2 - 2 - height;
         int color = selected ? t.accent() : locked ? t.muted() : t.ink();

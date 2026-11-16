@@ -16,6 +16,7 @@ public final class HudClient {
         modBus.addListener(AbilityHudLayer::register);
         LoadoutAccess.install(new ClientLoadout());
         HudSlots.register();
+        BossBars.register();
         net.ofatech.supernaturalbloodlines.shared.hud.TrackerAccess.installHud();
         HudInput.register();
         if (ModList.get().isLoaded("tensura")) {

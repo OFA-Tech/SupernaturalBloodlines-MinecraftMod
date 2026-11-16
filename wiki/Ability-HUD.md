@@ -12,7 +12,7 @@ Six slots (keys **R F V** and **Z X C** by default, see [Key binds](Key-Binds)):
 
 ## What is on screen
 
-Two columns of three boxes stand on the bottom edge, one left of the offhand slot and one right of the attack indicator. Each box shows the skill or action icon, its key in the corner, a dark fill with the seconds left while it recharges, a gold outline while it is on, and a faded icon when you cannot use it. **Hold Alt** to read a name (and the mode, for a Tensura skill that has modes) and why a box is greyed or how long it has left. **Alt + Caps Lock** switches between Tensura and Supernatural mode when you have both; the action bar says which one you are in, and the choice is kept for next time. While the HUD is on, Tensura's own skill HUD is hidden (turn that off with `hide_tensura_skill_hud`); open Tensura's HUD settings and you see your own setting, and it comes back when you leave.
+Two columns of three slots stand just above the bottom edge (never cut by it, at every GUI scale), one left of the offhand slot and one right of the attack indicator. The slots take the look of your hub's theme: inked tiles with a wax key badge (Grimoire), round slots with a gold key letter (Blood Moon) or hexagons with a key tab (Tensura). Each shows the skill or action icon (the mod's own; a rune if a mod has none), a dark pie that sweeps clockwise with the seconds left ("4s") while it recharges, a gold glow while it is on, a lock when you have not unlocked it, and Bite has a ring of your blood. **Hold Alt** to read, per column, the name, what it does (and the mode of a Tensura skill) and why a slot is greyed or how long it has left; the other mode's six slots show beside it. A pill above the hotbar says which mode you are in. After ten idle seconds the slots fade to 40 percent. A werewolf sees "Forced shift in 1:40" for the last five minutes before the full moon. **Caps Lock** switches between Tensura and Supernatural mode when you have both; the action bar says which one you are in, and the choice is kept for next time. While the HUD is on, Tensura's own skill HUD is hidden (turn that off with `hide_tensura_skill_hud`); open Tensura's HUD settings and you see your own setting, and it comes back when you leave.
 
 A slot key also fires when Ctrl or Shift is held with it (Alt is how you change a skill's mode), and a press in the very moment a screen closes is ignored, so a slot key that is also your inventory key never fires as the inventory closes. On a narrow window at a big GUI scale a column that does not fit moves up above the hotbar.
 
@@ -38,3 +38,7 @@ Bite is **not a key**. It is an action that sits in a HUD slot (Supernatural-mod
 | Anyone else | Nothing. A Tensura vampire race that is not a Vampirism vampire feeds with Tensura's own race ability key |
 
 Vampirism's own bite key and Werewolves' bite key are covered by the HUD in a later phase.
+
+## Tracking a task
+
+Pick a task on the hub's Path or Quests page and press **Track on HUD**: its line and a progress bar show on the screen until you stop tracking it or claim it. By default it sits at the top centre, under any boss bars, which keeps it off Tensura's and Vampirism's status in the top left. Change the place with the client setting `tracker_anchor` (`TOP_CENTER`, `TOP_RIGHT`, `TOP_LEFT` or `ABOVE_MODE_PILL`).

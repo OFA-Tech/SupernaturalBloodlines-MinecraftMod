@@ -2,7 +2,7 @@ package net.ofatech.supernaturalbloodlines.core.hud;
 
 /**
  * Where the six slots go on screen, in GUI pixels. The left column (slots 1 to 3, top to bottom) sits left of the offhand slot and the right column
- * (4 to 6) right of the attack indicator, both standing on the bottom edge like the hotbar. Pure, so it is tested for the screen sizes of GUI scale 2 and 4.
+ * (4 to 6) right of the attack indicator, both standing {@link #BOTTOM} pixels above the bottom edge. Pure, so it is tested for the screen sizes of GUI scale 2 and 4.
  */
 public final class HudLayout {
     public static final int SLOT = 22;
@@ -16,6 +16,8 @@ public final class HudLayout {
     public static final int ATTACK = 18;
     /** Height of the strip along the bottom edge that the hotbar, the offhand slot and the attack indicator use. */
     public static final int HOTBAR_STRIP = 24;
+    /** Air under the columns, so the last slot (and the tab or glow round it) is never cut by the screen edge. */
+    public static final int BOTTOM = 3;
 
     public record Box(int x, int y, int w, int h) {
         public int right() {
@@ -54,7 +56,7 @@ public final class HudLayout {
         int left = screenW / 2 - HOTBAR_HALF - OFFHAND - MARGIN - SLOT;
         int right = screenW / 2 + HOTBAR_HALF + ATTACK_GAP + ATTACK + MARGIN;
         int columnH = 3 * SLOT + 2 * GAP;
-        int low = screenH - columnH;
+        int low = screenH - BOTTOM - columnH;
         int lifted = screenH - HOTBAR_STRIP - columnH;
         boolean liftLeft = left < 0;
         boolean liftRight = right + SLOT > screenW;

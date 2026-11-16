@@ -461,7 +461,10 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     @Override
     public List<TextPair> textPairs() {
         return List.of(new TextPair("page labels", TEXT, PANEL), new TextPair("the chosen page", TEAL, PANEL_LIT), new TextPair("mod names", GOLD, PANEL),
-                new TextPair("the primary button", 0xFF05202a, TEAL), new TextPair("muted text", MUTED, PANEL));
+                new TextPair("the primary button", 0xFF05202a, TEAL), new TextPair("muted text", MUTED, PANEL),
+                // the title bar, the stage and the info pane
+                new TextPair("title, teal, on the bar", TEAL, BG), new TextPair("stats, text, on the bar", TEXT, BG), new TextPair("muted on the stage", MUTED, BG),
+                new TextPair("gold reward in the pane", GOLD, PANEL), new TextPair("good, green, in the pane", GREEN, PANEL), new TextPair("text on a lit row", TEXT, PANEL_LIT));
     }
 
     @Override

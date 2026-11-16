@@ -59,3 +59,9 @@ The shared pieces every hub theme is built from. Package `net.ofatech.supernatur
 
 -Dsupernaturalbloodlines.devshots.demo=true makes DevShots set HubView.devOverride to DevDemo::apply: a 12 member pack, a family, two genes, rite items (and a glass bottle given to the dev player) and learned skills, so every populated state can be photographed. Client only, inert without the property, the server never sees it.
 
+
+## The shipped set (plan 16g)
+
+- **Screens:** the Grimoire, the Blood Moon and Tensura's status window, each with Path, Skills, Quests, Rites, Bloodline, Pack, Guide and Loadout, and the ability HUD in the three looks. `-Dsupernaturalbloodlines.devshots=grimoire:all,blood_moon:all,tensura:all,hud:grimoire,hud:blood_moon:alt,... -Dsupernaturalbloodlines.devshots.scales=2,3,4 -Dsupernaturalbloodlines.devshots.demo=true` takes the whole set (90 pictures) in about a minute. A curated 12 are committed in `docs/superpowers/design/plan16/shots/` (1280 x 720).
+- **Contrast:** `ThemeContrastTest` and `TensuraHubThemeTest` run `ThemeContrast.assertReadable` on each theme object; the text pairs now include the Blood Moon's floating bar and pills and the Tensura title bar, stage and info pane. `HudContrastTest` does the same for the HUD's panels and key letters. The first run found the Blood Moon's primary pill at 3.62:1, so its fill is `0xFFb8281f` (and `0xFFcf3328` hovered) now.
+- **Rules every theme follows (tested, see `LabelFitTest`, `BarPlanTest`, `LadderTabsTest`, `HudLayoutTest`, `TrackerAnchorTest`, `HudPanelsTest`):** text is wrapped by words, a word that does not fit ends in an ellipsis, a panel never leaves the screen or covers a neighbour, the HUD's slots always fit above the bottom edge (480 x 270 and up), and nothing the HUD draws sits on another mod's HUD (the tracker moves right of the status corner on a narrow window and under the boss bars).

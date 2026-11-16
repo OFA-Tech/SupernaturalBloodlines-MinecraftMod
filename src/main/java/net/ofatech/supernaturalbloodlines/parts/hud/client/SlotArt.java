@@ -54,11 +54,11 @@ final class SlotArt {
                     // lifted over the pie: text is drawn in its own pass, which would otherwise put the pie over the number
                     g.pose().pushPose();
                     g.pose().translate(0, 0, 200);
-                    String secs = Integer.toString(v.cooldownSeconds());
-                    int sw = font.width(secs);
-                    // a dark plate under the digits, so they read on a bright icon too
-                    g.fill(b.x() + (s - sw) / 2 - 2, b.y() + s / 2 - 5, b.x() + (s + sw) / 2 + 2, b.y() + s / 2 + 5, fade(0xC0000000, alpha));
-                    g.drawCenteredString(font, secs, b.x() + s / 2, b.y() + s / 2 - 4, fade(0xFFFFFFFF, alpha));
+                    // a small label over the dimmed icon: "4s", at three quarters of the text size, with the font's own shadow
+                    String secs = v.cooldownSeconds() + "s";
+                    g.pose().translate(b.x() + s / 2f, b.y() + s / 2f - 3, 0);
+                    g.pose().scale(0.75f, 0.75f, 1f);
+                    g.drawString(font, secs, -font.width(secs) / 2, 0, fade(0xFFFFFFFF, alpha), true);
                     g.pose().popPose();
                 }
             }

@@ -14,6 +14,7 @@ public final class HudClientConfig {
     private static final ModConfigSpec.BooleanValue HIDE_TENSURA_SKILL_HUD;
     private static final ModConfigSpec.BooleanValue BLOOD_IN_FOOD_SPOT;
     private static final ModConfigSpec.EnumValue<Mode> MODE;
+    private static final ModConfigSpec.EnumValue<net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor> TRACKER_ANCHOR;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -25,6 +26,8 @@ public final class HudClientConfig {
                 .define("blood_in_food_spot", true);
         MODE = b.comment("Which source the six slots show. AUTO: Tensura when it is installed, else Supernatural.")
                 .defineEnum("mode", Mode.AUTO);
+        TRACKER_ANCHOR = b.comment("Where the tracked task shows: TOP_CENTER (under the boss bars), TOP_RIGHT (under the full moon warning), TOP_LEFT (under the corner",
+                "where Tensura and Vampirism draw your status) or ABOVE_MODE_PILL.").defineEnum("tracker_anchor", net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_CENTER);
         SPEC = b.build();
     }
 
@@ -44,6 +47,14 @@ public final class HudClientConfig {
 
     public static boolean bloodInFoodSpot() {
         return read(BLOOD_IN_FOOD_SPOT, true);
+    }
+
+    public static net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor trackerAnchor() {
+        try {
+            return TRACKER_ANCHOR.get();
+        } catch (IllegalStateException notLoaded) {
+            return net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_CENTER;
+        }
     }
 
     public static Mode mode() {

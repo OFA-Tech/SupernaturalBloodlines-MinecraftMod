@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.hud.HudLayout;
 import net.ofatech.supernaturalbloodlines.core.hud.MoonClock;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
+import net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hud.ClientIcons;
@@ -39,7 +40,7 @@ final class HudChrome {
         };
     }
 
-    private static int ink(HudStyle.Style style) {
+    static int ink(HudStyle.Style style) {
         return style == HudStyle.Style.GRIMOIRE ? 0xFFF4E2C0 : 0xFFF2F6FA;
     }
 
@@ -110,8 +111,10 @@ final class HudChrome {
                 if (v.isEmpty()) {
                     continue;
                 }
-                lines.add(LabelFit.cut((v.keyLabel().isEmpty() ? "" : v.keyLabel() + "  ") + v.name(), textW, font::width));
-                colors.add(ink(style));
+                for (String l : LabelFit.wrap((v.keyLabel().isEmpty() ? "" : v.keyLabel() + "  ") + v.name(), textW, 2, font::width)) {
+                    lines.add(l);
+                    colors.add(ink(style));
+                }
                 if (v.detail() != null) {
                     for (String l : LabelFit.wrap(v.detail(), textW, 2, font::width)) {
                         lines.add(l);
@@ -119,8 +122,10 @@ final class HudChrome {
                     }
                 }
                 if (v.greyed()) {
-                    lines.add(LabelFit.cut(Component.translatable(v.greyedReason()).getString(), textW, font::width));
-                    colors.add(0xFFFF7A70);
+                    for (String l : LabelFit.wrap(Component.translatable(v.greyedReason()).getString(), textW, 3, font::width)) {
+                        lines.add(l);
+                        colors.add(0xFFFF7A70);
+                    }
                 } else if (v.cooldownSeconds() > 0) {
                     lines.add(Component.translatable("supernaturalbloodlines.hud.slot.cooldown", v.cooldownSeconds()).getString());
                     colors.add(0xFFB8B0B4);
@@ -137,9 +142,10 @@ final class HudChrome {
             w += widest;
             int h = 8 + 10 * lines.size();
             int x = col == 0 ? Math.max(4, top.x()) : Math.max(half + 2, Math.min(top.right() - w, g.guiWidth() - w - 4));
-            int y = (col == 1 && previewUp ? previewTop(boxes) : top.y()) - h - 6;
-            pillBox(g, style, x, Math.max(2, y), w, h, Math.max(alpha, 0.95f));
-            int ty = Math.max(2, y) + 5;
+            // above the column (or the mode panel), but never off the top of the screen
+            int y = Math.max(2, (col == 1 && previewUp ? previewTop(boxes) : top.y()) - h - 6);
+            pillBox(g, style, x, y, w, h, Math.max(alpha, 0.95f));
+            int ty = y + 5;
             for (int i = 0; i < lines.size(); i++) {
                 g.drawString(font, lines.get(i), x + 6, ty, SlotArt.fade(colors.get(i), 1f), false);
                 ty += 10;
@@ -160,15 +166,17 @@ final class HudChrome {
         g.drawString(font, line, x + 22 - font.width(line), y + 26, SlotArt.fade(0xFFFFFFFF, a), true);
     }
 
-    /** The tracked task: its name and a bar of its progress, top left. */
-    static void tracker(GuiGraphics g, Font font, HudStyle.Style style, TrackerAccess.Line line, float alpha) {
+    /** The tracked task: its name and a bar of its progress, at the configured anchor (the top centre, under the boss bars, by default). */
+    static void tracker(GuiGraphics g, Font font, HudStyle.Style style, TrackerAccess.Line line, float alpha, TrackerAnchor anchor, int bossBottom) {
         String text = LabelFit.cut(line.text(), 150, font::width);
         String count = line.total() > 1 ? "  " + line.done() + "/" + line.total() : "";
         int w = font.width(text + count) + 14;
-        pillBox(g, style, 6, 6, w, 22, alpha);
-        g.drawString(font, text + count, 13, 10, SlotArt.fade(ink(style), alpha), false);
+        int[] at = anchor.place(g.guiWidth(), g.guiHeight(), w, bossBottom);
+        int x = at[0];
+        int y = at[1];
+        pillBox(g, style, x, y, w, TrackerAnchor.HEIGHT, alpha);
+        g.drawString(font, text + count, x + 7, y + 4, SlotArt.fade(ink(style), alpha), false);
         int bar = w - 14;
-        g.fill(13, 21, 13 + bar, 23, SlotArt.fade(0x80000000, alpha));
-        g.fill(13, 21, 13 + Math.round(bar * line.fraction()), 23, SlotArt.fade(0xFF000000 | edge(style), alpha));
-    }
-}
+        g.fill(x + 7, y + 15, x + 7 + bar, y + 17, SlotArt.fade(0x80000000, alpha));
+        g.fill(x + 7, y + 15, x + 7 + Math.round(bar * line.fraction()), y + 17, SlotArt.fade(0xFF000000 | edge(style), alpha));
+    }}
