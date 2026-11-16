@@ -45,8 +45,33 @@ public final class KitDraw {
         g.setColor(1f, 1f, 1f, 1f);
     }
 
+    private static int batchDepth;
+
+    /**
+     * Runs fill-only drawing as one batch: {@code GuiGraphics.fill} flushes after each call unless the drawing is "managed", so a line of 80 pixels was 80 draw
+     * calls. Safe to nest (only the outermost call opens the batch). Do not draw text, items or an entity inside it.
+     */
+    public static void batch(GuiGraphics g, Runnable fills) {
+        if (batchDepth > 0) {
+            fills.run();
+            return;
+        }
+        g.drawManaged(() -> {
+            batchDepth++;
+            try {
+                fills.run();
+            } finally {
+                batchDepth--;
+            }
+        });
+    }
+
     /** A one pixel line (Bresenham): ink strokes of a sigil, cords. */
     public static void line(GuiGraphics g, int x0, int y0, int x1, int y1, int color) {
+        batch(g, () -> bresenham(g, x0, y0, x1, y1, color));
+    }
+
+    private static void bresenham(GuiGraphics g, int x0, int y0, int x1, int y1, int color) {
         int dx = Math.abs(x1 - x0);
         int dy = -Math.abs(y1 - y0);
         int sx = x0 < x1 ? 1 : -1;
@@ -74,14 +99,14 @@ public final class KitDraw {
         if (size <= 0) {
             return;
         }
-        // one blit of a baked white mask, tinted; a fill per row only if a texture cannot be made (no GL context)
-        try {
-            var mask = BakedTexture.get("shape/" + shape + "/" + size, size, size, (px, py) -> Shapes.contains(shape, size, px, py) ? 0xFFFFFFFF : 0);
+        // one blit of a baked white mask, tinted; the merged runs (a fill each) only if a texture cannot be made
+        var mask = BakedTexture.get(BakedTexture.Key.of("shape/" + shape.ordinal(), size), size, size, (px, py) -> Shapes.contains(shape, size, px, py) ? 0xFFFFFFFF : 0);
+        if (mask != null) {
             BakedTexture.blitTinted(g, mask, x, y, size, size, color);
-        } catch (RuntimeException noTexture) {
-            for (Shapes.Run run : Shapes.runs(shape, size)) {
-                g.fill(x + run.x(), y + run.y(), x + run.x() + run.w(), y + run.y() + run.h(), color);
-            }
+            return;
+        }
+        for (Shapes.Run run : Shapes.runs(shape, size)) {
+            g.fill(x + run.x(), y + run.y(), x + run.x() + run.w(), y + run.y() + run.h(), color);
         }
     }
 
@@ -99,9 +124,11 @@ public final class KitDraw {
     }
 
     public static void tickRing(GuiGraphics g, int cx, int cy, int radius, int count, float fraction, int on, int off) {
-        for (TickRing.Tick t : TickRing.ticks(cx, cy, radius, count, fraction)) {
-            g.fill(t.x() - 1, t.y() - 1, t.x() + 1, t.y() + 1, t.on() ? on : off);
-        }
+        batch(g, () -> {
+            for (TickRing.Tick t : TickRing.ticks(cx, cy, radius, count, fraction)) {
+                g.fill(t.x() - 1, t.y() - 1, t.x() + 1, t.y() + 1, t.on() ? on : off);
+            }
+        });
     }
 
     /** Rank pips; the width they take. */

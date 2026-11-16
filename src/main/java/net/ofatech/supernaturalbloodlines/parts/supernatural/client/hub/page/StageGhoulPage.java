@@ -58,7 +58,7 @@ public final class StageGhoulPage implements HubPageView {
     static void disc(GuiGraphics g, int cx, int cy, int r) {
         int side = 2 * r;
         if (side > 0) {
-            net.ofatech.supernaturalbloodlines.shared.hub.kit.client.BakedTexture.blit(g, net.ofatech.supernaturalbloodlines.shared.hub.kit.client.BakedTexture.get("ghoul/" + r, side, side,
+            net.ofatech.supernaturalbloodlines.shared.hub.kit.client.BakedTexture.blit(g, net.ofatech.supernaturalbloodlines.shared.hub.kit.client.BakedTexture.get(net.ofatech.supernaturalbloodlines.shared.hub.kit.client.BakedTexture.Key.of("ghoul", r), side, side,
                     net.ofatech.supernaturalbloodlines.shared.hub.kit.Bake.greyMoon(r)), cx - r, cy - r, side, side);
         }
     }

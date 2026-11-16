@@ -82,7 +82,7 @@ public final class BloodMoonPathPage implements HubPageView {
             int gy = cy + (int) Math.round(radius * Math.sin(angle)) - 4;
             t.drawRungMark(f.g, gx, gy, row.status());
             Component name = PageKit.rung(row);
-            String text = f.font().plainSubstrByWidth(name.getString(), 120);
+            String text = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(name.getString(), 120, f.font()::width);
             int tw = BookKit.smallWidth(f, text);
             int color = row.status() == net.ofatech.supernaturalbloodlines.shared.hub.RungStatus.LOCKED ? t.muted() : row.status() == net.ofatech.supernaturalbloodlines.shared.hub.RungStatus.CURRENT ? t.accent() : t.ink();
             BookKit.small(f, Component.literal(text), Math.max(area.x(), gx - 4 - tw), gy + 1, tw + 4, color);
@@ -120,10 +120,11 @@ public final class BloodMoonPathPage implements HubPageView {
         for (HubModel.TaskRow row : ladder.tasks()) {
             String id = row.task().id();
             boolean claimable = row.state() == TaskState.CLAIMABLE;
-            List<net.minecraft.util.FormattedCharSequence> lines = f.font().split(PageKit.text(row.text()), Math.max(40, col.w() - KitDraw.tagWidth(f.font(), SourceTag.of(row.source())) - 14));
+            List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(PageKit.text(row.text()).getString(),
+                    Math.max(40, col.w() - KitDraw.tagWidth(f.font(), SourceTag.of(row.source())) - 14), 2, f.font()::width);
             boolean two = lines.size() > 1;
             Rect box = new Rect(col.x(), y, col.w(), two ? 40 : 30);
-            f.g.fill(box.x(), box.y(), box.right(), box.bottom(), claimable ? t.good() : QuestFilter.isChosen(chosen, id) ? t.accent() : t.muted());
+            f.g.fill(box.x(), box.y(), box.right(), box.bottom(), TaskCard.border(t, row, QuestFilter.isChosen(chosen, id)));
             f.g.fill(box.x() + 1, box.y() + 1, box.right() - 1, box.bottom() - 1, 0xFF160a10);
             int tw = KitDraw.sourceTag(f.g, f.font(), t, SourceTag.of(row.source()), box.x() + 4, box.y() + 4);
             f.g.drawString(f.font(), lines.get(0), box.x() + tw + 8, box.y() + 5, t.ink(), false);

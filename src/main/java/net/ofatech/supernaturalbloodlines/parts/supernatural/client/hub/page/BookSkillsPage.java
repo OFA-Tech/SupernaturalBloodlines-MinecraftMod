@@ -161,14 +161,16 @@ public final class BookSkillsPage implements HubPageView {
         List<Radial.Node> ring = Radial.ring(cx, cy, radius, count);
         nodes = rows.isEmpty() ? List.of() : ring;
         ids = rows.stream().map(HubSkills.Row::id).toList();
-        for (int i = 0; i < rows.size(); i++) {
-            Radial.Node n = ring.get(i);
-            double a = Math.atan2(n.y() - cy, n.x() - cx);
-            int sx = cx + (int) Math.round((inner + 4) * Math.cos(a));
-            int sy = cy + (int) Math.round((inner + 4) * Math.sin(a));
-            boolean locked = rows.get(i).state() == HubSkills.State.LOCKED || rows.get(i).state() == HubSkills.State.DORMANT;
-            KitDraw.line(f.g, sx, sy, n.x() - (int) Math.round(9 * Math.cos(a)), n.y() - (int) Math.round(9 * Math.sin(a)), locked ? (t.muted() & 0xFFFFFF) | 0x70000000 : t.muted());
-        }
+        KitDraw.batch(f.g, () -> {
+            for (int i = 0; i < rows.size(); i++) {
+                Radial.Node n = ring.get(i);
+                double a = Math.atan2(n.y() - cy, n.x() - cx);
+                int sx = cx + (int) Math.round((inner + 4) * Math.cos(a));
+                int sy = cy + (int) Math.round((inner + 4) * Math.sin(a));
+                boolean locked = rows.get(i).state() == HubSkills.State.LOCKED || rows.get(i).state() == HubSkills.State.DORMANT;
+                KitDraw.line(f.g, sx, sy, n.x() - (int) Math.round(9 * Math.cos(a)), n.y() - (int) Math.round(9 * Math.sin(a)), locked ? (t.muted() & 0xFFFFFF) | 0x70000000 : t.muted());
+            }
+        });
         f.emblem(centre);
         int labelWidth = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.radialWidth(radius, count, 36, 110);
         for (int i = 0; i < rows.size(); i++) {

@@ -31,15 +31,30 @@ public final class HudModeState {
         return Optional.ofNullable(mode);
     }
 
-    /** The mode key: switches, says which mode it is now in the action bar, and remembers it. Nothing changes with only one mode installed. */
     private static long switchedAt = Long.MIN_VALUE;
 
     /** True for three seconds after the mode key was pressed: the panel with the other mode's slots stays up for that long. */
     public static boolean justSwitched() {
         var level = Minecraft.getInstance().level;
-        return level != null && switchedAt != Long.MIN_VALUE && level.getGameTime() - switchedAt < 60;
+        return level != null && within(switchedAt, level.getGameTime());
     }
 
+    /**
+     * Whether {@code now} is within three seconds after {@code switchedAt}. Game time restarts in every world, so a world that is younger than the last switch
+     * gives a negative difference, which is not "just switched".
+     */
+    static boolean within(long switchedAt, long now) {
+        long d = now - switchedAt;
+        return switchedAt != Long.MIN_VALUE && d >= 0 && d < 60;
+    }
+
+    /** Forgets the last switch and the last use (logout): the next world starts with no panel and a full-strength HUD. */
+    public static void reset() {
+        switchedAt = Long.MIN_VALUE;
+        HudActivity.reset();
+    }
+
+    /** The mode key: switches, says which mode it is now in the action bar, and remembers it. Nothing changes with only one mode installed. */
     public static void toggle() {
         SlotMode before = mode;
         var level = Minecraft.getInstance().level;

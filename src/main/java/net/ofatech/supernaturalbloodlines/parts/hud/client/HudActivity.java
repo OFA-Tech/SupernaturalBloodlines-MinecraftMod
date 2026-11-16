@@ -19,6 +19,11 @@ public final class HudActivity {
         return level == null ? 0 : level.getGameTime();
     }
 
+    /** Forgets the last use: a new world starts with a full-strength HUD whatever its game time. */
+    static void reset() {
+        last = now();
+    }
+
     /** A key or the mode switch just happened. */
     public static void touch() {
         last = now();
@@ -32,7 +37,8 @@ public final class HudActivity {
         if (busy) {
             touch();
         }
-        return alphaFor(now() - last);
+        long idle = now() - last;
+        return alphaFor(idle < 0 ? 0 : idle); // a world younger than the last use (game time restarts) counts as just used
     }
 
     /** The alpha {@code idleTicks} after the last use; pure. */

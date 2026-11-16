@@ -95,8 +95,10 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         int cx = stage.x() + stage.w() * 2 / 5;
         int cy = stage.y() + stage.h() / 2;
         int radius = Math.min(stage.w() / 2, stage.h() * 3 / 4);
-        for (int i = 16; i >= 1; i--) {
-            disc(g, cx, cy, radius * i / 16, 0x07000000 | 0xA0202A);
+        // the glow is baked once at a capped size and stretched: it is a soft blur, so 128 pixels are plenty, and the texture does not change with the window
+        if (radius > 0) {
+            BakedTexture.blitScaled(g, BakedTexture.get(BakedTexture.Key.of("glow", GLOW_PX), 2 * GLOW_PX, 2 * GLOW_PX, Bake.glow(GLOW_PX)), cx - radius, cy - radius,
+                    2 * radius, 2 * radius, 2 * GLOW_PX, 2 * GLOW_PX);
         }
     }
 
@@ -135,7 +137,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         // the halo, the disc lit up to the progress and the craters are one baked picture (a new one only when the radius or the progress step changes)
         int step = Bake.step(data.progress());
         int size = Bake.moonSize(r);
-        BakedTexture.blit(g, BakedTexture.get("moon/" + r + "/" + step, size, size, Bake.moon(r, step)), cx - size / 2, cy - size / 2, size, size);
+        BakedTexture.blit(g, BakedTexture.get(BakedTexture.Key.of("moon", r, step), size, size, Bake.moon(r, step)), cx - size / 2, cy - size / 2, size, size);
         KitDraw.tickRing(g, cx, cy, r + 10, 48, data.progress(), RED, 0xFF4a2430);
         int m = (int) (r * 0.95);
         KitDraw.model(g, new Rect(cx - m / 2, cy - m / 2 - 2, m, m), data.entity(), data.drag());
@@ -234,6 +236,8 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     }
 
     private static final int PILL_ROW = 16;
+    /** The glow behind the stage is baked at this radius in pixels and stretched to the real one. */
+    private static final int GLOW_PX = 64;
     /** The primary pill's fill: a red dark enough for the pale label (4.5:1), and its hovered step. */
     private static final int PRIMARY = 0xFFb8281f;
     private static final int PRIMARY_HOT = 0xFFcf3328;
