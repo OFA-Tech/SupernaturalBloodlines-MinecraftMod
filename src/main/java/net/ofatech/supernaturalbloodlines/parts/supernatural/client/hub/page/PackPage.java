@@ -78,7 +78,7 @@ public final class PackPage implements HubPageView {
     }
 
     /** Sends the command as the player typed it: the server checks it exactly as it checks a typed one. */
-    private static void command(String command) {
+    static void command(String command) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             mc.player.connection.sendCommand(command);

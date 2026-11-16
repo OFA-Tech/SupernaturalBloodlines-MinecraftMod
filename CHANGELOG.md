@@ -8,9 +8,21 @@
 - **Two new pages in every look: Guide and Loadout.** The Guide has chapters for what you are (your creature, then your magic race) and for how the hub, the path, skills, quests, rites, the bloodline, the pack, the loadout and the moon work. The Loadout page is the Loadout tab of the Skills page on a page of its own (the tab stays), and it shows only with the ability HUD. A Ghoul can read the Guide while the other pages wait. Keys 1 to 8 now reach them.
 - The three looks draw their page icons from the new icon atlas.
 
-### Not yet in the Grimoire
+### The Grimoire pages (16b, second part)
 
-Drop caps, dotted leaders and footnote marks, the radial skill tree, the bloodline family tree with heads and gene vials, and the pack ring are still the shared pages; they come with 16e and the gaps listed in the plan. "Track on HUD" is shown but waits for the HUD update.
+- **Skills:** the chosen skill is written on the left page (name, one learned-or-not pip, a drop-cap description, leaders for cost, requirement and source, the LEARN wax seal and a red "Put in a HUD slot" link that opens the Loadout), and a radial tree is on the right page, the sigil with your model in the middle and a medallion per skill round it (arrow keys move through it). A mod's own tree and the loadout slots are still reached from the tab row above the tree. Skills have no ranks in this mod, so each shows one pip.
+- **Quests:** a filter row (All and one per mod), tasks grouped under the rung they belong to, the chosen task on the facing page with its mod tag, progress circles, the reward by a leader, a "Hide finished" link and the CLAIM seal.
+- **Rites:** an index with the altar power and whether you can perform each rite; the facing page has the ink circle, the ingredients by leaders (in hand when you carry them, missing when not) and a link into Enchanted's book.
+- **Bloodline:** a family tree with player faces (their own skin when the client knows them) and genes in stoppered vials.
+- **Pack:** a ledger with leaders, the pack's portrait ring round the sigil (Alphas red, Betas gold, Packmates blue, Brothers brown, the rest small and pale), the ACCEPT seal, and a leave link that asks first.
+- **Guide:** contents in roman numerals with leaders to the page, the chapter with a drop cap, and a "Turn the page" link.
+- **Loadout:** "Your Hand" (the slots) and "Abilities you know", in every look.
+- The book is bigger on a big screen (up to 496 x 300 GUI pixels).
+- A development screenshot driver (see docs/hub-ui-kit.md) can photograph every page without a click.
+
+### Not yet in the Grimoire (after this)
+
+Skill ranks (there is one pip per skill), the Counts and Resets lines of a quest, the pack's name, its attack bonus and Anchor, "Bite into a Beta" and "Remove from pack" (no server command for them yet), the family tree's roles and "you cannot harm him" note, and the eclipse in the almanac need data that does not exist yet. The tab labels under the icons are tooltips. "Track on HUD" is shown but waits for the HUD update.
 
 ## Unreleased (plan 16a, hub UI kit)
 

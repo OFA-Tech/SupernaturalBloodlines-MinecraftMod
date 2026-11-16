@@ -32,6 +32,7 @@ public final class HubClient {
     }
 
     public static void register() {
+        DevShots.registerIfRequested(); // development only: a no-op unless the JVM property is set
         // forget the last snapshot when leaving a world, so another world never shows its names
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> {
             snapshot = HubSnapshotPayload.EMPTY;

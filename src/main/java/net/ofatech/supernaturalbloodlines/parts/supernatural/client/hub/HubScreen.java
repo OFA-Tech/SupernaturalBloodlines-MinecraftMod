@@ -94,7 +94,7 @@ public final class HubScreen extends Screen {
         return page;
     }
 
-    void setPage(HubPage p) {
+    public void setPage(HubPage p) {
         if (p != page) {
             page = p;
             scroll.clear();
@@ -195,6 +195,11 @@ public final class HubScreen extends Screen {
      * Asks before something that cannot be undone. Esc and a click outside cancel, Enter on the safe button cancels, so only a deliberate move
      * to {@code yes} confirms.
      */
+    /** Opens another mod's screen from the hub; Esc out of it brings the hub back on this page. */
+    public void launch(HubHooks.Launcher launcher) {
+        HubClient.launch(launcher, page);
+    }
+
     public void confirm(Component title, Component body, Component safe, Component yes, Runnable action) {
         dialog = new ConfirmModel();
         dialogSafe = safe;

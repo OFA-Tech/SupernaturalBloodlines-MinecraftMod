@@ -171,7 +171,7 @@ public final class PathPage implements HubPageView {
     }
 
     /** "Reward: +N skill points" (and EP with Tensura). Shared with the themes' own Path views. */
-    static Component reward(HubModel.RungRow row) {
+    public static Component reward(HubModel.RungRow row) {
         return row.ep() > 0 && ModList.get().isLoaded("tensura")
                 ? Component.translatable(KEY + "reward_ep", row.sp(), String.format("%,d", row.ep()))
                 : Component.translatable(KEY + "reward", row.sp());

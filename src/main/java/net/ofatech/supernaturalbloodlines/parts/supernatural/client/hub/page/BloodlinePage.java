@@ -74,7 +74,7 @@ public final class BloodlinePage implements HubPageView {
     }
 
     /** The species that may call their sired (R43); the server decides, this only hides a button that would always be refused. */
-    private static final Set<SupernaturalRace> MAY_CALL = Set.of(SupernaturalRace.ORIGINAL, SupernaturalRace.ORIGINAL_HYBRID,
+    static final Set<SupernaturalRace> MAY_CALL = Set.of(SupernaturalRace.ORIGINAL, SupernaturalRace.ORIGINAL_HYBRID,
             SupernaturalRace.HYBRID, SupernaturalRace.TRIBRID);
 
     /** The family tree: the sire's line above (farthest first), you, and everyone you sired below, indented by depth. */
@@ -113,11 +113,11 @@ public final class BloodlinePage implements HubPageView {
         return y + 8;
     }
 
-    private static Component name(String n) {
+    static Component name(String n) {
         return n.isEmpty() ? Component.translatable(KEY + "name_lost") : Component.literal(n);
     }
 
-    private static void command(String command) {
+    static void command(String command) {
         var player = net.minecraft.client.Minecraft.getInstance().player;
         if (player != null) {
             player.connection.sendCommand(command);

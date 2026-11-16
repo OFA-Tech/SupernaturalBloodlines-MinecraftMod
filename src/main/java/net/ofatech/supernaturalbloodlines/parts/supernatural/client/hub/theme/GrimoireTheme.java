@@ -7,6 +7,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubThemeViews;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookBloodlinePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookGuidePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookPackPage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookQuestsPage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookRitesPage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookSkillsPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PathPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
@@ -40,6 +46,12 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
     private static final int[] EDGES = {0xFFD9C9A2, 0xFFC4B088, 0xFFAE9868};
 
     private final HubPageView path = new PathPage(true);
+    private final HubPageView skills = new BookSkillsPage();
+    private final HubPageView quests = new BookQuestsPage();
+    private final HubPageView rites = new BookRitesPage();
+    private final HubPageView bloodline = new BookBloodlinePage();
+    private final HubPageView pack = new BookPackPage();
+    private final HubPageView guide = new BookGuidePage();
 
     private static ResourceLocation tex(String name) {
         return ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hub/grimoire/" + name + ".png");
@@ -48,7 +60,16 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
     /** The Path page of the book carries the almanac and the sigil emblem; every other page is the shared one. */
     @Override
     public HubPageView view(HubPage page) {
-        return page == HubPage.PATH ? path : HubThemeViews.super.view(page);
+        return switch (page) {
+            case PATH -> path;
+            case SKILLS -> skills;
+            case QUESTS -> quests;
+            case RITES -> rites;
+            case BLOODLINE -> bloodline;
+            case PACK -> pack;
+            case GUIDE -> guide;
+            default -> HubThemeViews.super.view(page);
+        };
     }
 
     @Override

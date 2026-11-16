@@ -46,3 +46,11 @@ The shared pieces every hub theme is built from. Package `net.ofatech.supernatur
 - **Confirm.** `confirm(title, body, safe, yes, action)`: the safe button (usually "Stay") is on the left and is focused first; the height follows the wrapped body up to 70% of the screen; only a left mouse click answers; nothing scrolls while it is open. An action with a `Detail.Confirm` goes through it by itself.
 - `HubLayout.Chrome` is now (theme button, close, emblem, counters, detail); the unused nav style and detail kind were removed.
 - `KitDraw` and `UiContext` are in `shared.hub.kit.client`.
+
+## Dev screenshots (no clicking)
+
+`-Dsupernaturalbloodlines.devshots=<theme>:<page|all>,...` (themes `grimoire`, `blood_moon`, `tensura`; pages by name) makes the client open the hub on each theme and page after the world loads, wait twelve ticks and grab the frame with vanilla's `Screenshot.grab` into `run/screenshots/devshots/<theme>-<page>-s<scale>.png`. Extra properties: `.scales=2,4` (GUI scales), `.size=1920x1080` (the window; 1080p at scale 4 is the 480 x 270 GUI the design is checked at), `.world=New World`, `.quit=true`. It sets the tutorial off. It is registered only when the property is set and lives in `DevShots` (client only); without the property nothing of it runs, and the server never loads it. Run it with `JAVA_TOOL_OPTIONS` and `gradlew runClient`.
+
+## The Grimoire's book pages
+
+`BookKit` (drop cap, leaders, wax seal, red link, footnote, small text, face) and `BookSkillsPage`, `BookQuestsPage`, `BookRitesPage`, `BookBloodlinePage`, `BookPackPage`, `BookGuidePage` are the Grimoire's own views; `GrimoireTheme.view(page)` returns them and the other two looks keep the shared pages. Path is `PathPage(true)`.

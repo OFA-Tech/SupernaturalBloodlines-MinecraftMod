@@ -14,8 +14,8 @@ import java.util.Map;
  * growing at {@link #MAX_W} x {@link #MAX_H}. Pure.
  */
 public final class GrimoireLayout {
-    static final int MAX_W = 372;
-    static final int MAX_H = 236;
+    static final int MAX_W = 496;
+    static final int MAX_H = 300;
     static final int MARGIN = 6;
     static final int COVER = 6;
     static final int SPINE = 8;

@@ -44,7 +44,7 @@ final class LoadoutTab {
         } else if (model.pickedSlot() != null) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "picked_slot"), r.x(), y, r.w(), t.accent());
         }
-        y += 2;
+        y = BookKit.caps(f, Component.translatable(PageKit.HUB + "loadout.known"), r.x(), y + 2, t.muted());
         for (LoadoutAccess.Entry e : entries) {
             y = action(f, r, y, e);
         }
@@ -85,7 +85,7 @@ final class LoadoutTab {
         HubTheme t = f.theme();
         Rect r = f.region(HubLayout.SIDE);
         int y = f.begin(HubLayout.SIDE);
-        y = PageKit.title(f, Component.translatable(KEY + "slots"), r.x(), y, r.w(), t.accent());
+        y = PageKit.title(f, Component.translatable(PageKit.HUB + "loadout.hand"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 6;
         Map<ResourceLocation, LoadoutAccess.Entry> byId = new HashMap<>();
