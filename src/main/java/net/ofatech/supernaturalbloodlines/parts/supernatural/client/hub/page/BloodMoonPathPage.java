@@ -127,9 +127,9 @@ public final class BloodMoonPathPage implements HubPageView {
             f.g.fill(box.x(), box.y(), box.right(), box.bottom(), TaskCard.border(t, row, QuestFilter.isChosen(chosen, id)));
             f.g.fill(box.x() + 1, box.y() + 1, box.right() - 1, box.bottom() - 1, 0xFF160a10);
             int tw = KitDraw.sourceTag(f.g, f.font(), t, SourceTag.of(row.source()), box.x() + 4, box.y() + 4);
-            f.g.drawString(f.font(), lines.get(0), box.x() + tw + 8, box.y() + 5, t.ink(), false);
-            if (two) {
-                f.g.drawString(f.font(), lines.get(1), box.x() + tw + 8, box.y() + 15, t.ink(), false);
+            // a task with no text has no lines: draw what there is
+            for (int k = 0; k < lines.size(); k++) {
+                f.g.drawString(f.font(), lines.get(k), box.x() + tw + 8, box.y() + 5 + 10 * k, t.ink(), false);
             }
             int by = box.y() + (two ? 29 : 19);
             float frac = TaskCard.fraction(row);

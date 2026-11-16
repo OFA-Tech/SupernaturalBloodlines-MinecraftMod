@@ -95,7 +95,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         int cx = stage.x() + stage.w() * 2 / 5;
         int cy = stage.y() + stage.h() / 2;
         int radius = Math.min(stage.w() / 2, stage.h() * 3 / 4);
-        // the glow is baked once at a capped size and stretched: it is a soft blur, so 128 pixels are plenty, and the texture does not change with the window
+        // the glow is baked once at a capped size and stretched: it is a soft blur, so a 128 pixel diameter (radius {@link #GLOW_PX}, 64) is plenty, and the texture does not change with the window
         if (radius > 0) {
             BakedTexture.blitScaled(g, BakedTexture.get(BakedTexture.Key.of("glow", GLOW_PX), 2 * GLOW_PX, 2 * GLOW_PX, Bake.glow(GLOW_PX)), cx - radius, cy - radius,
                     2 * radius, 2 * radius, 2 * GLOW_PX, 2 * GLOW_PX);
@@ -239,7 +239,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     /** A disabled primary pill: a muted fill and the label on it (checked in the contrast test). */
     private static final int DISABLED_FILL = 0xFF5a3a42;
     private static final int DISABLED_TEXT = 0xFFd8b8c0;
-    /** The glow behind the stage is baked at this radius in pixels and stretched to the real one. */
+    /** The glow behind the stage is baked at this radius in pixels (a 128 pixel diameter) and stretched to the real one. */
     private static final int GLOW_PX = 64;
     /** The primary pill's fill: a red dark enough for the pale label (4.5:1), and its hovered step. */
     private static final int PRIMARY = 0xFFb8281f;

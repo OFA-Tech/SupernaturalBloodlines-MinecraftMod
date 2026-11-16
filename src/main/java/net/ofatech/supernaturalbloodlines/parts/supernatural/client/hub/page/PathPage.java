@@ -212,7 +212,7 @@ public final class PathPage implements HubPageView {
         HubTheme t = f.theme();
         Rect r = f.region(HubLayout.SIDE);
         // the bookmarks hang in the right page's header band (the margin note is on the left page), so they never touch it
-        LadderTabs.render(f, r.x(), r.y() - 17, r.w());
+        LadderTabs.render(f, r.x(), r.y() - LadderTabs.BAND, r.w());
         int y = f.begin(HubLayout.SIDE);
         if (v.ghoul()) {
             f.end(turning(f, r, y));

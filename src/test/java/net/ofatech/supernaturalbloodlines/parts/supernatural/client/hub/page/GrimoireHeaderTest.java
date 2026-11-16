@@ -23,7 +23,7 @@ class GrimoireHeaderTest {
             Rect side = l.region(HubLayout.SIDE);
             Rect counters = l.chrome().counters();
             for (int ladders = 2; ladders <= 3; ladders++) {
-                List<Rect> tabs = LadderTabs.layout(side.x(), side.y() - 17, side.w(), ladders);
+                List<Rect> tabs = LadderTabs.layout(side.x(), side.y() - LadderTabs.BAND, side.w(), ladders);
                 for (Rect tab : tabs) {
                     String at = size[0] + "x" + size[1] + " with " + ladders + " ladders";
                     assertFalse(tab.overlaps(counters), "the bookmarks cover the points line at " + at);

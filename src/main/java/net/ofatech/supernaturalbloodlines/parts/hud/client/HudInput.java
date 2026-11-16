@@ -73,13 +73,13 @@ public final class HudInput {
         boolean live = HudClientConfig.hudEnabled() && p != null && mc.screen == null && mc.getOverlay() == null;
         // the mode key's physical state is followed every tick, screen or not, so closing a screen while it is held is not a press
         KeyMapping mode = HudKeys.HUD_MODE;
-        boolean capsDown = mode.getKeyModifier() == KeyModifier.NONE && physicallyDown(mc, mode);
+        boolean capsDown = physicallyDown(mc, mode);
         if (live) {
             while (HudKeys.HUD_MODE.consumeClick()) {
                 HudModeState.toggle();
             }
             // a plain mapping does not fire while Alt, Ctrl or Shift is held (NeoForge looks up the held modifier's mappings): a Caps press with one held still switches
-            if (modePressedWithModifier(false, capsDown, capsWasDown, Screen.hasAltDown() || Screen.hasControlDown() || Screen.hasShiftDown())) {
+            if (modePressedWithModifier(mode.getKeyModifier() != KeyModifier.NONE, capsDown, capsWasDown, Screen.hasAltDown() || Screen.hasControlDown() || Screen.hasShiftDown())) {
                 HudModeState.toggle();
             }
         }

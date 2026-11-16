@@ -101,7 +101,7 @@ public final class KitDraw {
             return;
         }
         // one blit of a baked white mask, tinted; the merged runs (a fill each) only if a texture cannot be made
-        var mask = BakedTexture.get(BakedTexture.Key.of("shape/" + shape.ordinal(), size), size, size, (px, py) -> Shapes.contains(shape, size, px, py) ? 0xFFFFFFFF : 0);
+        var mask = BakedTexture.get(BakedTexture.Key.of("shape", size, shape.ordinal()), size, size, (px, py) -> Shapes.contains(shape, size, px, py) ? 0xFFFFFFFF : 0);
         if (mask != null) {
             BakedTexture.blitTinted(g, mask, x, y, size, size, color);
             return;

@@ -52,6 +52,9 @@ final class LadderTabs {
         return out;
     }
 
+    /** How far above the page's text region the bookmarks start: they hang in the page's header band. */
+    static final int BAND = 17;
+
     /** Draws the bookmarks from {@code (x, y)}, within {@code width}; returns the height used (0 with one ladder). */
     static int render(HubScreen.Frame f, int x, int y, int width) {
         List<HubModel.LadderView> all = f.view.ladders();
@@ -83,6 +86,6 @@ final class LadderTabs {
                 KitDraw.focusRing(f.g, r, t.focusColor());
             }
         }
-        return 17;
+        return BAND;
     }
 }

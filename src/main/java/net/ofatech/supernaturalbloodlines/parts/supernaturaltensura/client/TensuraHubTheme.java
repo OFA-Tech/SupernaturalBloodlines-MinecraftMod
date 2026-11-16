@@ -328,10 +328,8 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         caption(g, font, d.kicker() != null ? d.kicker() : Component.translatable("supernaturalbloodlines.hub.tensura.info"), x, y);
         y += 11;
         var pose = g.pose();
-        for (var line : font.split(d.title(), (int) (w / 1.4f))) {
-            if (y + 13 > limit) {
-                break;
-            }
+        // as many title lines as fit above the buttons; a title that does not all fit ends its last line with an ellipsis
+        for (String line : LabelFit.wrap(d.title().getString(), (int) (w / 1.4f), Math.max(0, (limit - y) / 13), font::width)) {
             pose.pushPose();
             pose.translate(x, y, 0);
             pose.scale(1.4f, 1.4f, 1f);
