@@ -55,7 +55,8 @@ public final class HudInput {
             }
             if (action == GLFW.GLFW_PRESS) {
                 // a key held over a screen needs a fresh press: events only come for presses, and a screen swallows its own
-                PENDING_PRESS[i] = Minecraft.getInstance().screen == null && !screenWasOpen && modifierHeld(HudKeys.SLOTS[i].getKeyModifier());
+                PENDING_PRESS[i] = Minecraft.getInstance().screen == null && !screenWasOpen && modifierHeld(HudKeys.SLOTS[i].getKeyModifier())
+                    && slotAllowed(Screen.hasControlDown(), Screen.hasShiftDown());
             } else {
                 PENDING_RELEASE[i] = true;
             }
@@ -70,18 +71,19 @@ public final class HudInput {
             return;
         }
         boolean live = HudClientConfig.hudEnabled() && p != null && mc.screen == null && mc.getOverlay() == null;
+        // the mode key's physical state is followed every tick, screen or not, so closing a screen while it is held is not a press
+        KeyMapping mode = HudKeys.HUD_MODE;
+        boolean capsDown = mode.getKeyModifier() == KeyModifier.NONE && physicallyDown(mc, mode);
         if (live) {
             while (HudKeys.HUD_MODE.consumeClick()) {
                 HudModeState.toggle();
             }
             // a plain mapping does not fire while Alt, Ctrl or Shift is held (NeoForge looks up the held modifier's mappings): a Caps press with one held still switches
-            KeyMapping mode = HudKeys.HUD_MODE;
-            boolean capsDown = mode.getKeyModifier() == KeyModifier.NONE && physicallyDown(mc, mode);
             if (capsDown && !capsWasDown && (Screen.hasAltDown() || Screen.hasControlDown() || Screen.hasShiftDown())) {
                 HudModeState.toggle();
             }
-            capsWasDown = capsDown;
         }
+        capsWasDown = capsDown;
         for (int i = 0; i < DOWN.length; i++) {
             boolean press = PENDING_PRESS[i];
             boolean release = PENDING_RELEASE[i];
@@ -147,6 +149,11 @@ public final class HudInput {
     }
 
     /** A mapping bound with a modifier needs it held; NONE means "any modifiers", because Alt + slot key is Tensura's mode change. */
+    /** A slot key fires with no modifier or with Alt (Alt + a slot key is Tensura's mode change); Ctrl and Shift are other shortcuts' (Ctrl + Z), so the slot ignores them. */
+    static boolean slotAllowed(boolean ctrl, boolean shift) {
+        return !ctrl && !shift;
+    }
+
     private static boolean modifierHeld(net.neoforged.neoforge.client.settings.KeyModifier m) {
         return switch (m) {
             case CONTROL -> Screen.hasControlDown();

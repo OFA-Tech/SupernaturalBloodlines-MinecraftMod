@@ -14,8 +14,8 @@ class TrackerAnchorTest {
     @Test
     void theDefaultIsTheTopCentreAndClearOfTheOtherModsCorner() {
         for (int[] s : SCREENS) {
-            int[] p = TrackerAnchor.TOP_CENTER.place(s[0], s[1], 150, 0);
-            HudLayout.Box pill = new HudLayout.Box(p[0], p[1], 150, TrackerAnchor.HEIGHT);
+            int[] p = TrackerAnchor.TOP_CENTER.place(s[0], s[1], 150, TrackerAnchor.height(2), 0);
+            HudLayout.Box pill = new HudLayout.Box(p[0], p[1], 150, TrackerAnchor.height(2));
             assertFalse(pill.overlaps(OTHER_MODS_CORNER), s[0] + "x" + s[1] + ": the pill is on the other mods' status");
             // centred when the screen is wide enough, else just right of the other mods' corner
             assertEquals(Math.max(s[0] / 2 - 75, TrackerAnchor.CORNER_W + 4), p[0], 1);
@@ -24,7 +24,7 @@ class TrackerAnchorTest {
 
     @Test
     void itMovesDownUnderTheBossBars() {
-        int[] p = TrackerAnchor.TOP_CENTER.place(480, 270, 150, 57);
+        int[] p = TrackerAnchor.TOP_CENTER.place(480, 270, 150, TrackerAnchor.height(1), 57);
         assertTrue(p[1] >= 57 + 4, "the pill is on the boss bars: y=" + p[1]);
     }
 
@@ -33,8 +33,8 @@ class TrackerAnchorTest {
         for (int[] s : SCREENS) {
             HudLayout.Box[] slots = HudLayout.slots(s[0], s[1]);
             for (TrackerAnchor a : TrackerAnchor.values()) {
-                int[] p = a.place(s[0], s[1], 150, 0);
-                HudLayout.Box pill = new HudLayout.Box(p[0], p[1], 150, TrackerAnchor.HEIGHT);
+                int[] p = a.place(s[0], s[1], 150, TrackerAnchor.height(2), 0);
+                HudLayout.Box pill = new HudLayout.Box(p[0], p[1], 150, TrackerAnchor.height(2));
                 assertTrue(p[0] >= 0 && p[1] >= 0 && pill.right() <= s[0] && pill.bottom() <= s[1], a + " leaves a " + s[0] + "x" + s[1] + " screen");
                 for (HudLayout.Box slot : slots) {
                     assertFalse(pill.overlaps(slot), a + " covers a slot on " + s[0] + "x" + s[1]);

@@ -100,8 +100,7 @@ public final class PathPage implements HubPageView {
             KitDraw.icon(f.g, Icons.moon(p), x, y + PageKit.LINE, 12, p == 0 ? 0xFFB8860B : t.ink());
             x += 14;
         }
-        int days = HubAlmanac.daysToFull(phase);
-        Component line = days == 0 ? Component.translatable(KEY + "full_moon_today") : Component.translatable(KEY + "full_moon_in", days);
+        Component line = PathActions.almanacLine(phase);
         y = PageKit.wrapped(f, line, r.x(), y + PageKit.LINE + 14, r.w(), t.accent());
         return y;
     }
@@ -240,10 +239,8 @@ public final class PathPage implements HubPageView {
             }
             y = PageKit.wrapped(f, book ? Component.literal("* ").append(reward(active)) : reward(active), r.x(), y + 2, r.w(), t.muted()) + 6;
             if (book) {
-                Component track = Component.translatable(KEY + "track");
-                f.g.drawString(f.font(), track, r.x(), y, t.muted(), false);
-                f.g.fill(r.x(), y + 9, r.x() + f.font().width(track), y + 10, t.muted());
-                f.target("panel:track", new Rect(r.x(), y - 1, f.font().width(track), 11), List.of(track, Component.translatable(KEY + "track_soon")), null);
+                Optional<HubModel.TaskRow> trackable = trackable(ladder);
+                BookKit.trackLink(f, "panel:track:" + ladder.race(), trackable.map(row -> row.task().id()).orElse(""), trackable.isEmpty(), r.x(), y);
                 y += 14;
             }
         }

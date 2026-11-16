@@ -15,7 +15,11 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.Ski
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PlaceholderPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.QuestsPage;
 
-/** The shared page views, drawn into {@link HubLayout#MAIN} and {@link HubLayout#SIDE}; any theme may replace one (see {@link HubTheme#view}). */
+/**
+ * The shared page views, drawn into {@link HubLayout#MAIN} and {@link HubLayout#SIDE}. They are the documented fallback of {@link HubThemeViews#view}: the
+ * Grimoire, the Blood Moon and Tensura now bring a view for every page, so these are reached only by a theme that brings none (a future one, or one added
+ * by another mod), and by {@code SkillsPage}, which the book's Skills page still borrows. {@code HubPagesTest} checks that every page has one.
+ */
 public final class HubPages {
     private static final HubPageView PLACEHOLDER = new PlaceholderPage();
     private static final Map<HubPage, HubPageView> SHARED = new EnumMap<>(Map.of(

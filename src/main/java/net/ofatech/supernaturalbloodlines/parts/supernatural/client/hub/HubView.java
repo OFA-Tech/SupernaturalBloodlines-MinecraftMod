@@ -31,15 +31,8 @@ public record HubView(Player player, BloodlineState bloodline, SupernaturalState
                 ModList.get().isLoaded("werewolves"), ModList.get().isLoaded("enchanted"),
                 net.ofatech.supernaturalbloodlines.shared.hud.LoadoutAccess.available());
         HubView view = new HubView(p, b, s, races, HubModel.ladders(LadderTable.clientCopy(), s, races, levels(p)), SkillTable.clientCopy(), snap, c);
-        java.util.function.UnaryOperator<HubView> dev = devOverride;
+        java.util.function.UnaryOperator<HubView> dev = HubDev.view();
         return dev == null ? view : dev.apply(view);
-    }
-
-    /** Set only by the development screenshot driver ({@link DevShots}) when it is asked for demo data; null in every normal run. */
-    private static volatile java.util.function.UnaryOperator<HubView> devOverride;
-
-    static void devOverride(java.util.function.UnaryOperator<HubView> override) {
-        devOverride = override;
     }
 
     /** The level of the current faction, from Vampirism's synced client data (Werewolves too: it uses Vampirism's faction API). */

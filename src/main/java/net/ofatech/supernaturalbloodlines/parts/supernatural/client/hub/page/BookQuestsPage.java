@@ -23,44 +23,31 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 public final class BookQuestsPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "quests.";
     private static final String BOOK = PageKit.HUB + "book.quests.";
-    private static final List<SourceTag> FILTERS = List.of(SourceTag.SB, SourceTag.VMP, SourceTag.WW, SourceTag.ENC, SourceTag.TEN);
-
-    private int filter;
-    private boolean hideDone;
-
-    private boolean shown(HubModel.TaskRow row) {
-        if (hideDone && row.state() == TaskState.CLAIMED) {
-            return false;
-        }
-        return filter == 0 || SourceTag.of(row.source()) == FILTERS.get(filter - 1);
-    }
+    private final QuestFilter quests = new QuestFilter();
 
     @Override
     public void render(HubScreen.Frame f) {
         HubTheme t = f.theme();
-        List<HubModel.TaskRow> all = new ArrayList<>();
-        f.view.ladders().forEach(l -> all.addAll(l.tasks().stream().filter(this::shown).toList()));
-        Optional<HubModel.TaskRow> chosen = HubModel.pick(all, f.selectedTask());
+        List<HubModel.TaskRow> all = quests.all(f);
+        Optional<HubModel.TaskRow> chosen = quests.chosen(f, all);
 
         Rect r = f.region(BookKit.MAIN);
         int y = BookKit.headNoRule(f, BookKit.MAIN, Component.translatable(KEY + "title"), null);
-        List<String> labels = new ArrayList<>(List.of(Component.translatable(BOOK + "all").getString()));
-        FILTERS.forEach(s -> labels.add(s.label()));
-        y = BookKit.filterRow(f, labels, filter, r.x(), y + 1, r.w(), i -> filter = i);
+        y = BookKit.filterRow(f, quests.labels(), quests.filter(), r.x(), y + 1, r.w(), quests::filter);
         t.drawRule(f.g, r.x(), y, r.w());
         y += 6;
         for (HubModel.LadderView ladder : f.view.ladders()) {
             if (ladder.atTop()) {
                 continue;
             }
-            List<HubModel.TaskRow> rows = ladder.tasks().stream().filter(this::shown).toList();
+            List<HubModel.TaskRow> rows = quests.rows(ladder);
             if (rows.isEmpty()) {
                 continue;
             }
             y = BookKit.caps(f, Component.translatable(BOOK + "next_step", PageKit.rung(ladder.active().orElseThrow())), r.x(), y, t.muted());
             for (HubModel.TaskRow row : rows) {
                 String id = row.task().id();
-                boolean sel = chosen.map(c -> c.task().id().equals(id)).orElse(false);
+                boolean sel = QuestFilter.isChosen(chosen, id);
                 y = PageKit.taskRow(f, row, r.x(), y, r.w(), false, () -> f.select(id), sel);
             }
             y += 3;
@@ -68,13 +55,13 @@ public final class BookQuestsPage implements HubPageView {
         if (all.isEmpty()) {
             y = EmptyState.render(f, r, y + 10, "quests", HubPage.PATH);
         }
-        List<HubModel.QuestView> quests = HubModel.quests(f.view.skills(), f.view.state(), f.view.races());
-        if (!quests.isEmpty() && filter == 0) {
+        List<HubModel.QuestView> skillQuests = HubModel.quests(f.view.skills(), f.view.state(), f.view.races());
+        if (!skillQuests.isEmpty() && quests.filter() == 0) {
             y = BookKit.caps(f, Component.translatable(BOOK + "other"), r.x(), y + 2, t.muted());
-            for (HubModel.QuestView q : quests) {
+            for (HubModel.QuestView q : skillQuests) {
                 y = PageKit.wrapped(f, Component.translatableWithFallback(PageKit.HUB + "quest." + q.id(), q.name()), r.x(), y, r.w(), t.ink());
                 for (HubModel.TaskRow row : q.tasks()) {
-                    if (shown(row)) {
+                    if (quests.shown(row)) {
                         y = PageKit.taskRow(f, row, r.x() + 4, y, r.w() - 4, false, null, false);
                     }
                 }
@@ -107,7 +94,7 @@ public final class BookQuestsPage implements HubPageView {
         y += 19;
         String hint = row.text().hint();
         y = hint != null && I18n.exists(hint) ? BookKit.dropCap(f, Component.translatable(hint), s.x(), y, s.w(), t.ink())
-                : PageKit.wrapped(f, Component.translatable(PageKit.HUB + "task.state." + row.state().name().toLowerCase(java.util.Locale.ROOT)), s.x(), y, s.w(), t.ink()) + 3;
+                : PageKit.wrapped(f, QuestFilter.hintBody(row), s.x(), y, s.w(), t.ink()) + 3;
         y = BookKit.caps(f, Component.translatable(BOOK + "progress"), s.x(), y + 4, t.muted());
         if (row.counted() && row.target() > 1) {
             if (row.target() <= 8) {
@@ -136,9 +123,8 @@ public final class BookQuestsPage implements HubPageView {
         }
         y += 6;
         int x = s.x();
-        x += BookKit.link(f, "link:track", Component.translatable(PageKit.HUB + "path.track"), x, y, List.of(Component.translatable(PageKit.HUB + "path.track_soon")), null) + 12;
-        BookKit.link(f, "link:hide", Component.translatable(BOOK + (hideDone ? "show" : "hide")), x, y, List.of(Component.translatable(BOOK + (hideDone ? "show" : "hide"))),
-                () -> hideDone = !hideDone);
+        x += BookKit.trackLink(f, "link:track", row.task().id(), row.state() == TaskState.CLAIMED, x, y) + 12;
+        BookKit.link(f, "link:hide", quests.hideLabel(), x, y, List.of(quests.hideLabel()), quests::toggleHideDone);
         f.end(y + 16);
         String id = row.task().id();
         boolean claimable = row.state() == TaskState.CLAIMABLE;

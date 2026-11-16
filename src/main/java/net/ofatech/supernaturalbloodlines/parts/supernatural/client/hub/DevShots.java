@@ -48,7 +48,6 @@ public final class DevShots {
     private boolean sized;
     private boolean opened;
     private boolean done;
-    private boolean gave;
 
     /** The demo mode: "true" (a populated hub), or "ghoul", "two" (two ladders) or "empty"; null when off. */
     static String demo() {
@@ -64,20 +63,27 @@ public final class DevShots {
         this.height = height;
     }
 
-    /** Registers the driver when the property is set; a no-op otherwise. */
+    /** Registers the driver when the property is set; a no-op otherwise. A bad flag is logged and the driver stays off: it must never stop the game from starting. */
     public static void registerIfRequested() {
         String spec = System.getProperty(PROPERTY);
         if (spec == null || spec.isBlank()) {
             return;
         }
+        try {
+            register(spec);
+        } catch (RuntimeException bad) {
+            SupernaturalBloodlines.LOGGER.error("DEVSHOTS: cannot read -D{}={} ({}); the screenshot driver is off", PROPERTY, spec, bad.toString());
+        }
+    }
+
+    private static void register(String spec) {
         List<Integer> scales = new ArrayList<>();
         for (String s : System.getProperty(PROPERTY + ".scales", "0").split(",")) {
             scales.add(Integer.parseInt(s.trim()));
         }
         List<Shot> shots = new ArrayList<>();
-        boolean menuShots = false;
         for (String item : spec.split(",")) {
-            menuShots = false;
+            boolean menuShots = false;
             String[] parts = item.trim().split(":");
             if (parts[0].equalsIgnoreCase("hud")) {
                 // hud:<look>[:alt|idle], for example hud:blood_moon:alt
@@ -87,16 +93,15 @@ public final class DevShots {
                 continue;
             }
             String theme = parts[0].toLowerCase(Locale.ROOT);
+            HubClientConfig.ThemeId.valueOf(theme.toUpperCase(Locale.ROOT)); // a look that does not exist is a bad flag now, not a crash in the middle of the run
             List<HubPage> pages = new ArrayList<>();
             if (parts.length < 2 || parts[1].equalsIgnoreCase("all")) {
                 pages.addAll(List.of(HubPage.values()));
+            } else if (parts[1].equalsIgnoreCase("menu")) {
+                pages.add(HubPage.PATH); // the look menu open over the Path
+                menuShots = true;
             } else {
-                if (parts[1].equalsIgnoreCase("menu")) {
-                    pages.add(HubPage.PATH); // the look menu open over the Path
-                    menuShots = true;
-                } else {
-                    pages.add(HubPage.valueOf(parts[1].toUpperCase(Locale.ROOT)));
-                }
+                pages.add(HubPage.valueOf(parts[1].toUpperCase(Locale.ROOT)));
             }
             for (int scale : scales) {
                 for (HubPage p : pages) {
@@ -106,16 +111,16 @@ public final class DevShots {
         }
         String[] size = System.getProperty(PROPERTY + ".size", "1920x1080").split("x");
         DevShots d = new DevShots(shots, System.getProperty(PROPERTY + ".world", "New World"), Boolean.getBoolean(PROPERTY + ".quit"),
-                Integer.parseInt(size[0]), Integer.parseInt(size[1]));
+                Integer.parseInt(size[0].trim()), Integer.parseInt(size[1].trim()));
         if (demo() != null) {
-            HubView.devOverride(DevDemo::apply);
+            HubDev.view(DevDemo::apply);
+            HubDev.handsFull(true);
         }
-        HubScreen.devNoTensura(Boolean.getBoolean(PROPERTY + ".noTensura"));
-        HubScreen.devQuiet(true);
+        HubDev.noTensura(Boolean.getBoolean(PROPERTY + ".noTensura"));
+        HubDev.quiet(true);
         NeoForge.EVENT_BUS.addListener(d::tick);
         SupernaturalBloodlines.LOGGER.warn("DEVSHOTS on: {} shots queued (development only)", shots.size());
     }
-
     private void tick(ClientTickEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
         if (done) {
@@ -131,10 +136,6 @@ public final class DevShots {
                 mc.createWorldOpenFlows().openWorld(world, () -> mc.setScreen(new TitleScreen()));
             }
             return;
-        }
-        if (demo() != null && !gave) {
-            gave = true;
-            mc.player.connection.sendCommand("give @s minecraft:glass_bottle");
         }
         mc.options.tutorialStep = TutorialSteps.NONE;
         mc.getTutorial().setStep(TutorialSteps.NONE);

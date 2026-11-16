@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * theme, so a page asking the kit never picks one.
  */
 public final class BookKit {
-    static final int SEAL = 38;
+    static final int SEAL = 44;
     private static final int CAP = 16;
 
     private BookKit() {
@@ -50,25 +50,19 @@ public final class BookKit {
         return y;
     }
 
-    /** Text at three quarters of the size, wrapped to {@code w}: subtitles, captions and legends. Returns the y under it. */
+    /** Muted text at the normal size (nothing in the hub is under 8 GUI pixels), wrapped to {@code w}: subtitles, captions and legends. Returns the y under it. */
     static int small(HubScreen.Frame f, Component text, int x, int y, int w, int color) {
-        float s = 0.75f;
-        var pose = f.g.pose();
-        pose.pushPose();
-        pose.translate(x, y, 0);
-        pose.scale(s, s, 1f);
-        int ly = 0;
-        for (FormattedCharSequence line : f.font().split(text, (int) (w / s))) {
-            f.g.drawString(f.font(), line, 0, ly, color, false);
+        int ly = y;
+        for (FormattedCharSequence line : f.font().split(text, Math.max(8, w))) {
+            f.g.drawString(f.font(), line, x, ly, color, false);
             ly += 9;
         }
-        pose.popPose();
-        return y + (int) Math.ceil(ly * s) + 1;
+        return ly + 1;
     }
 
     /** The width of {@code text} drawn by {@link #small}. */
     static int smallWidth(HubScreen.Frame f, String text) {
-        return (int) Math.ceil(f.font().width(text) * 0.75f);
+        return f.font().width(text);
     }
 
     /** A paragraph with a drop cap: the first letter in a dark tile, the rest beside it. Returns the y under it. */
@@ -122,13 +116,9 @@ public final class BookKit {
         KitDraw.shape(f.g, Shapes.Shape.ROUND, r.x(), r.y(), SEAL, enabled ? dark : t.muted());
         KitDraw.shape(f.g, Shapes.Shape.ROUND, r.x() + 2, r.y() + 2, SEAL - 4, fill);
         String text = label.getString().toUpperCase(java.util.Locale.ROOT);
-        float s = f.font().width(text) > SEAL - 8 ? 0.75f : 1f;
-        var pose = f.g.pose();
-        pose.pushPose();
-        pose.translate(r.x() + SEAL / 2f, r.y() + SEAL / 2f, 0);
-        pose.scale(s, s, 1f);
-        f.g.drawString(f.font(), text, -f.font().width(text) / 2, -4, Contrast.bestText(fill), false);
-        pose.popPose();
+        // the label is at the normal size; the disc is wide enough for the longest of them, and one that is not is cut with an ellipsis
+        text = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(text, SEAL - 6, f.font()::width);
+        f.g.drawString(f.font(), text, r.x() + (SEAL - f.font().width(text)) / 2, r.y() + (SEAL - 8) / 2, Contrast.bestText(fill), false);
         f.target(id, r, tooltip, enabled ? action : null);
         if (f.focused(id)) {
             KitDraw.focusRing(f.g, r, t.focusColor());
@@ -137,6 +127,12 @@ public final class BookKit {
     }
 
     /** A secondary action: red text with an underline. Returns its width. */
+    /** The "Track on HUD" (or "Stop tracking") link of a task: working with the HUD part, a grey link that says why without it. Returns its width. */
+    static int trackLink(HubScreen.Frame f, String id, String taskId, boolean claimed, int x, int y) {
+        var a = TrackHud.action(taskId, claimed);
+        return link(f, id, a.label(), x, y, List.of(a.enabled() || a.disabledReason() == null ? a.label() : a.disabledReason()), a.enabled() ? a.run() : null);
+    }
+
     static int link(HubScreen.Frame f, String id, Component label, int x, int y, List<Component> tooltip, @Nullable Runnable action) {
         HubTheme t = f.theme();
         int w = f.font().width(label);

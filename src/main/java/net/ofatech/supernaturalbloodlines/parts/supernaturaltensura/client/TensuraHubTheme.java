@@ -198,12 +198,7 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     }
 
     private static void caption(GuiGraphics g, Font font, Component text, int x, int y) {
-        var pose = g.pose();
-        pose.pushPose();
-        pose.translate(x, y, 0);
-        pose.scale(0.75f, 0.75f, 1f);
-        g.drawString(font, text.getString().toUpperCase(java.util.Locale.ROOT), 0, 0, MUTED, false);
-        pose.popPose();
+        g.drawString(font, text.getString().toUpperCase(java.util.Locale.ROOT), x, y, MUTED, false);
     }
 
     private static void row(GuiGraphics g, Rect r, boolean selected, boolean lit, String label, int labelColor, Runnable icon) {

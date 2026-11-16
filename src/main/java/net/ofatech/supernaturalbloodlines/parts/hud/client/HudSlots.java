@@ -55,6 +55,7 @@ public final class HudSlots {
     }
 
     private static void tick() {
+        LiveHud.tick(Minecraft.getInstance());
         LocalPlayer p = Minecraft.getInstance().player;
         SlotMode mode = HudModeState.current().orElse(null);
         if (p == null || mode == null) {

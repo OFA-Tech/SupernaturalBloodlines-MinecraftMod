@@ -71,9 +71,17 @@ public final class KitDraw {
 
     /** A filled shape of {@code size} pixels at ({@code x}, {@code y}). */
     public static void shape(GuiGraphics g, Shapes.Shape shape, int x, int y, int size, int color) {
-        Shapes.Span[] rows = Shapes.spans(shape, size);
-        for (int row = 0; row < rows.length; row++) {
-            g.fill(x + rows[row].x(), y + row, x + rows[row].x() + rows[row].w(), y + row + 1, color);
+        if (size <= 0) {
+            return;
+        }
+        // one blit of a baked white mask, tinted; a fill per row only if a texture cannot be made (no GL context)
+        try {
+            var mask = BakedTexture.get("shape/" + shape + "/" + size, size, size, (px, py) -> Shapes.contains(shape, size, px, py) ? 0xFFFFFFFF : 0);
+            BakedTexture.blitTinted(g, mask, x, y, size, size, color);
+        } catch (RuntimeException noTexture) {
+            for (Shapes.Run run : Shapes.runs(shape, size)) {
+                g.fill(x + run.x(), y + run.y(), x + run.x() + run.w(), y + run.y() + run.h(), color);
+            }
         }
     }
 

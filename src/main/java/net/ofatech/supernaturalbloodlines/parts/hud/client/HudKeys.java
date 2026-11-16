@@ -9,10 +9,10 @@ import net.ofatech.supernaturalbloodlines.client.PackKeybinds;
 import net.ofatech.supernaturalbloodlines.core.hud.HudKeyDefaults;
 
 /**
- * The HUD's own keys, in our key category, in game only. The six slot keys and the mode key do nothing yet (13b adds the HUD that reads them).
+ * The HUD's own keys, in our key category, in game only. The six slot keys fire the slots, the mode key switches the mode.
  * There is no Bite key: Bite is an action in a slot. The hub key is registered by the supernatural part.
  * <p>
- * The mode key is plain Caps Lock (plan 16f). NeoForge fires a plain mapping only while no modifier is held, so {@code HudInput} also reads the key`s
+ * The mode key is plain Caps Lock (plan 16f). NeoForge fires a plain mapping only while no modifier is held, so {@code HudInput} also reads the key's
  * physical state and switches when it goes down with Alt, Ctrl or Shift held.
  */
 public final class HudKeys {

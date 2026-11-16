@@ -7,6 +7,7 @@ import net.ofatech.supernaturalbloodlines.core.hud.PieSweep;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.BakedTexture;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.shared.hud.ClientIcons;
 import net.ofatech.supernaturalbloodlines.shared.hud.HudStyle;
@@ -56,9 +57,8 @@ final class SlotArt {
                     g.pose().translate(0, 0, 200);
                     // a small label over the dimmed icon: "4s", at three quarters of the text size, with the font's own shadow
                     String secs = v.cooldownSeconds() + "s";
-                    g.pose().translate(b.x() + s / 2f, b.y() + s / 2f - 3, 0);
-                    g.pose().scale(0.75f, 0.75f, 1f);
-                    g.drawString(font, secs, -font.width(secs) / 2, 0, fade(0xFFFFFFFF, alpha), true);
+                    // at the top of the slot, so the key badge in the bottom corner never covers it
+                    g.drawString(font, secs, b.x() + (s - font.width(secs)) / 2, b.y() + 2, fade(0xFFFFFFFF, alpha), true);
                     g.pose().popPose();
                 }
             }
@@ -100,74 +100,78 @@ final class SlotArt {
         }
     }
 
-    /** The dark sweep over the icon: it covers {@code left} of the circle from twelve o'clock clockwise. */
+    private static final int PIE_STEPS = 32;
+    private static final int RING_SIZE = 32;
+    private static final int RING_DOTS = 72;
+    private static final int RING_STEPS = 24;
+
+    /** The dark sweep over the icon: it covers {@code left} of the circle from twelve o'clock clockwise. One baked mask per 1/32, tinted. */
     private static void pie(GuiGraphics g, HudLayout.Box b, float left, float alpha) {
-        int color = fade(0xB0000000, alpha);
-        for (int y = 0; y < 16; y++) {
-            int run = -1;
-            for (int x = 0; x <= 16; x++) {
-                boolean on = x < 16 && PieSweep.covered(x + 0.5 - 8, y + 0.5 - 8, left);
-                if (on && run < 0) {
-                    run = x;
-                } else if (!on && run >= 0) {
-                    g.fill(b.x() + 3 + run, b.y() + 3 + y, b.x() + 3 + x, b.y() + 4 + y, color);
-                    run = -1;
-                }
+        int step = Math.max(1, Math.min(PIE_STEPS, Math.round(left * PIE_STEPS)));
+        var mask = BakedTexture.get("pie/" + step, 16, 16, (x, y) -> PieSweep.covered(x + 0.5 - 8, y + 0.5 - 8, step / (float) PIE_STEPS) ? 0xFFFFFFFF : 0);
+        BakedTexture.blitTinted(g, mask, b.x() + 3, b.y() + 3, 16, 16, fade(0xB0000000, alpha));
+    }
+
+    /** Whether the dot {@code i} of the ring is lit when {@code lit} dots are. */
+    static boolean dotLit(int i, int lit) {
+        return i < lit;
+    }
+
+    /** The ring's dots as a mask: the first {@code lit} of {@link #RING_DOTS}, clockwise from the top, each 2 x 2. */
+    private static int ringPixel(int x, int y, int lit) {
+        for (int i = 0; i < RING_DOTS; i++) {
+            if (!dotLit(i, lit)) {
+                continue;
+            }
+            double a = 2 * Math.PI * i / RING_DOTS;
+            int px = RING_SIZE / 2 + (int) Math.round(Math.sin(a) * 12.5) - 1;
+            int py = RING_SIZE / 2 - (int) Math.round(Math.cos(a) * 12.5) - 1;
+            if (x >= px && x < px + 2 && y >= py && y < py + 2) {
+                return 0xFFFFFFFF;
             }
         }
+        return 0;
     }
 
-    /** A ring of blood round the slot, filled clockwise from the top to {@code share}. */
+    /** A ring of blood round the slot, filled clockwise from the top to {@code share}: the whole ring dim and the lit part over it, two blits. */
     private static void ring(GuiGraphics g, HudLayout.Box b, float share, float alpha) {
-        int cx = b.x() + HudLayout.SLOT / 2;
-        int cy = b.y() + HudLayout.SLOT / 2;
-        int steps = 72;
-        for (int i = 0; i < steps; i++) {
-            double a = 2 * Math.PI * i / steps;
-            boolean full = i / (double) steps < share;
-            int px = cx + (int) Math.round(Math.sin(a) * 12.5) - 1;
-            int py = cy - (int) Math.round(Math.cos(a) * 12.5) - 1;
-            g.fill(px, py, px + 2, py + 2, fade(full ? BLOOD : 0x40601020, alpha));
+        int x = b.x() + HudLayout.SLOT / 2 - RING_SIZE / 2;
+        int y = b.y() + HudLayout.SLOT / 2 - RING_SIZE / 2;
+        int step = Math.max(0, Math.min(RING_STEPS, Math.round(share * RING_STEPS)));
+        var all = BakedTexture.get("ring/all", RING_SIZE, RING_SIZE, (px, py) -> ringPixel(px, py, RING_DOTS));
+        BakedTexture.blitTinted(g, all, x, y, RING_SIZE, RING_SIZE, fade(0x40601020, alpha));
+        if (step > 0) {
+            int lit = step * RING_DOTS / RING_STEPS;
+            var part = BakedTexture.get("ring/" + step, RING_SIZE, RING_SIZE, (px, py) -> ringPixel(px, py, lit));
+            BakedTexture.blitTinted(g, part, x, y, RING_SIZE, RING_SIZE, fade(BLOOD, alpha));
         }
     }
-
     private static void key(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box b, String label, float alpha) {
         if (label.isEmpty()) {
             return;
         }
-        String text = label.length() > 3 ? label.substring(0, 3) : label;
+        // at the normal size (nothing is under 8 GUI pixels): a letter, or the first two characters of a longer key name
+        String text = label.length() > 2 ? label.substring(0, 2) : label;
         int w = font.width(text);
-        var pose = g.pose();
         switch (style) {
             case GRIMOIRE -> {
-                // a red wax badge at the foot of the tile
-                int cx = b.right() - 7;
-                KitDraw.shape(g, Shapes.Shape.ROUND, cx - 4, b.bottom() - 10, 9, fade(0xFF8E1A1A, alpha));
-                pose.pushPose();
-                pose.translate(cx - w * 0.6f / 2f + 0.5f, b.bottom() - 8, 0);
-                pose.scale(0.6f, 0.6f, 1f);
-                g.drawString(font, text, 0, 0, fade(0xFFF4E2C0, alpha), false);
-                pose.popPose();
+                // a red wax badge in the corner of the tile
+                int bw = Math.max(11, w + 5);
+                KitDraw.shape(g, Shapes.Shape.ROUND, b.right() - bw - 1, b.bottom() - 12, bw, fade(0xFF8E1A1A, alpha));
+                g.drawString(font, text, b.right() - bw - 1 + (bw - w) / 2, b.bottom() - 12 + (bw - 8) / 2, fade(0xFFF4E2C0, alpha), false);
             }
             case BLOOD_MOON -> {
-                // gold letter on the ring's lower edge
-                int cx = b.x() + HudLayout.SLOT / 2;
-                pose.pushPose();
-                pose.translate(cx - w * 0.65f / 2f, b.bottom() - 6, 0);
-                pose.scale(0.65f, 0.65f, 1f);
-                g.drawString(font, text, 0, 0, fade(GOLD, alpha), true);
-                pose.popPose();
+                // a gold letter on the ring's lower edge, on a dark plate so it reads over the icon
+                int x = b.x() + (HudLayout.SLOT - w) / 2;
+                g.fill(x - 1, b.bottom() - 9, x + w + 1, b.bottom() - 1, fade(0xB0140810, alpha));
+                g.drawString(font, text, x, b.bottom() - 9, fade(GOLD, alpha), false);
             }
             case TENSURA -> {
-                // a small dark tab with a teal edge at the top left
-                int tw = Math.max(7, (int) (w * 0.6f) + 4);
-                g.fill(b.x() - 1, b.y() - 2, b.x() - 1 + tw, b.y() + 6, fade(0xFF3FD0D6, alpha));
-                g.fill(b.x(), b.y() - 1, b.x() - 2 + tw, b.y() + 5, fade(0xFF0A1A28, alpha));
-                pose.pushPose();
-                pose.translate(b.x() + 1, b.y(), 0);
-                pose.scale(0.6f, 0.6f, 1f);
-                g.drawString(font, text, 0, 0, fade(0xFF3FD0D6, alpha), false);
-                pose.popPose();
+                // a dark tab with a teal edge at the top left
+                int tw = w + 4;
+                g.fill(b.x() - 2, b.y() - 3, b.x() - 2 + tw, b.y() + 8, fade(0xFF3FD0D6, alpha));
+                g.fill(b.x() - 1, b.y() - 2, b.x() - 3 + tw, b.y() + 7, fade(0xFF0A1A28, alpha));
+                g.drawString(font, text, b.x(), b.y() - 1, fade(0xFF3FD0D6, alpha), false);
             }
             default -> { }
         }

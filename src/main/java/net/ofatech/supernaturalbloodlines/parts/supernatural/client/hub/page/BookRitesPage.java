@@ -135,6 +135,9 @@ public final class BookRitesPage implements HubPageView {
         } catch (NumberFormatException ignored) {
             // a bad count in a rite file counts as one
         }
+        if (net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubDev.handsFull()) {
+            return true; // the dev screenshots' demo data: every ingredient is in hand, without giving the player anything
+        }
         ResourceLocation id = ResourceLocation.tryParse(space < 0 ? entry : entry.substring(space + 1));
         if (id == null || !BuiltInRegistries.ITEM.containsKey(id) || !(p instanceof LocalPlayer)) {
             return false;

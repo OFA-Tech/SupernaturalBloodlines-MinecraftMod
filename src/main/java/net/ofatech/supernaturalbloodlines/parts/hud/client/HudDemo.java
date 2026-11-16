@@ -1,32 +1,20 @@
 package net.ofatech.supernaturalbloodlines.parts.hud.client;
 
+import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
+import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.shared.hud.DevHud;
 import net.ofatech.supernaturalbloodlines.shared.hud.TrackerAccess;
 
-/** Development only: six demo slots for the HUD screenshots, so every state (cooldown, active, locked, Bite's blood ring) can be photographed. Inert unless {@link DevHud#on}. */
-final class HudDemo {
-    private HudDemo() {
-    }
-
+/** Development only: six demo slots for the HUD screenshots, so every state (cooldown, active, locked, Bite's blood ring) can be photographed. Used only while {@link DevHud#on}. */
+final class HudDemo implements HudSource {
     private static ResourceLocation icon(String item) {
         return ResourceLocation.withDefaultNamespace("textures/item/" + item + ".png");
     }
 
-    static net.ofatech.supernaturalbloodlines.core.hud.SlotMode mode() {
-        return net.ofatech.supernaturalbloodlines.core.hud.SlotMode.SUPERNATURAL;
-    }
-
-    static boolean on() {
-        return DevHud.on;
-    }
-
-    static boolean alt() {
-        return DevHud.on && DevHud.alt;
-    }
-
-    static SlotView[] views() {
+    @Override
+    public SlotView[] views() {
         return new SlotView[] {
                 new SlotView(ClientLoadout.BITE_ICON, "R", 0.35f, 7, false, null, "Bite", "Vampire feed (human form), blood 62%"),
                 new SlotView(icon("diamond_sword"), "F", 0f, 0, true, null, "Predator's Thirst", "toggled on"),
@@ -36,7 +24,18 @@ final class HudDemo {
                 new SlotView(icon("blaze_powder"), "C", 0f, 0, false, null, "Bat Form", null)};
     }
 
-    static SlotView[] otherViews() {
+    @Override
+    public SlotMode mode() {
+        return SlotMode.SUPERNATURAL;
+    }
+
+    @Override
+    public SlotMode other() {
+        return SlotMode.TENSURA;
+    }
+
+    @Override
+    public SlotView[] otherViews(SlotMode other) {
         return new SlotView[] {
                 new SlotView(icon("iron_sword"), "R", 0f, 0, false, null, "", null),
                 new SlotView(icon("bow"), "F", 0f, 0, false, null, "", null),
@@ -46,15 +45,33 @@ final class HudDemo {
                 new SlotView(icon("heart_of_the_sea"), "C", 0f, 0, false, null, "", null)};
     }
 
-    static float blood() {
+    @Override
+    public boolean alt() {
+        return DevHud.alt;
+    }
+
+    @Override
+    public float blood() {
         return 0.62f;
     }
 
-    static long moonTicks() {
+    @Override
+    public long moonTicks() {
         return 2000;
     }
 
-    static TrackerAccess.Line tracked() {
-        return new TrackerAccess.Line("Endure thirst of 15 or more", 1, 3);
+    @Override
+    public Optional<TrackerAccess.Line> tracked() {
+        return Optional.of(new TrackerAccess.Line("Endure thirst of 15 or more", 1, 3));
+    }
+
+    @Override
+    public int bossBottom() {
+        return 0;
+    }
+
+    @Override
+    public boolean cacheable() {
+        return false;
     }
 }

@@ -13,13 +13,18 @@ public enum TrackerAnchor {
     public static final int TOP = 6;
     /** The pill's height. */
     public static final int HEIGHT = 22;
+
+    /** The pill's height for {@code lines} lines of text: one line is {@link #HEIGHT}, every further line is 9 more. */
+    public static int height(int lines) {
+        return HEIGHT + 9 * (Math.max(1, lines) - 1);
+    }
     /** The right edge of the full moon warning's corner (it takes 6 + 22 + 30 from the right) and its text row under it. */
     /** The width of the status Tensura and Vampirism draw in the top left corner (about 130 pixels in the screenshots). */
     public static final int CORNER_W = 140;
     private static final int MOON_ROW = 6 + 26 + 10;
 
     /** @param bossBottom the lowest pixel of the boss bars drawn last frame (0 for none) */
-    public int[] place(int screenW, int screenH, int w, int bossBottom) {
+    public int[] place(int screenW, int screenH, int w, int h, int bossBottom) {
         int x;
         int y;
         switch (this) {
@@ -34,7 +39,7 @@ public enum TrackerAnchor {
             }
             case ABOVE_MODE_PILL -> {
                 x = screenW / 2 - w / 2;
-                y = screenH - 22 - 52 - HEIGHT - 4;
+                y = screenH - 22 - 52 - h - 4;
             }
             default -> {
                 x = screenW / 2 - w / 2;
@@ -46,7 +51,7 @@ public enum TrackerAnchor {
             }
         }
         x = Math.max(2, Math.min(x, screenW - w - 2));
-        y = Math.max(2, Math.min(y, screenH - HEIGHT - 2));
+        y = Math.max(2, Math.min(y, screenH - h - 2));
         return new int[] {x, y};
     }
 }

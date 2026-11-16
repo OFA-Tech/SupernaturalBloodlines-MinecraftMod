@@ -202,20 +202,15 @@ public final class BookSkillsPage implements HubPageView {
             KitDraw.icon(f.g, icon, n.x() - 6, n.y() - 6, 12, t.ink());
         }
         // by words, and a word that is too long ends in an ellipsis instead of being broken in the middle
-        List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(SkillsPage.name(row).getString(), (int) (labelWidth / 0.75f), 2, f.font()::width);
-        int height = (int) Math.ceil(lines.size() * 9 * 0.75f);
+        List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(SkillsPage.name(row).getString(), labelWidth, 2, f.font()::width);
+        int height = lines.size() * 9;
         int ly = n.y() >= cy ? n.y() + size / 2 + 2 : n.y() - size / 2 - 2 - height;
         int color = selected ? t.accent() : locked ? t.muted() : t.ink();
         for (var line : lines) {
-            int lw = (int) Math.ceil(f.font().width(line) * 0.75f);
+            int lw = f.font().width(line);
             int lx = Math.max(page.x(), Math.min(page.right() - lw, n.x() - lw / 2));
-            var pose = f.g.pose();
-            pose.pushPose();
-            pose.translate(lx, ly, 0);
-            pose.scale(0.75f, 0.75f, 1f);
-            f.g.drawString(f.font(), line, 0, 0, color, false);
-            pose.popPose();
-            ly += 7;
+            f.g.drawString(f.font(), line, lx, ly, color, false);
+            ly += 9;
         }
         Rect hit = new Rect(n.x() - size / 2 - 2, n.y() - size / 2 - 2, size + 4, size + 4);
         String id = "skill:" + row.id();

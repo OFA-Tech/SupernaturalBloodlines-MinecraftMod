@@ -87,11 +87,7 @@ public final class BloodMoonPathPage implements HubPageView {
             int color = row.status() == net.ofatech.supernaturalbloodlines.shared.hub.RungStatus.LOCKED ? t.muted() : row.status() == net.ofatech.supernaturalbloodlines.shared.hub.RungStatus.CURRENT ? t.accent() : t.ink();
             BookKit.small(f, Component.literal(text), Math.max(area.x(), gx - 4 - tw), gy + 1, tw + 4, color);
             Rect hit = new Rect(Math.max(area.x(), gx - 6 - tw), gy - 1, tw + 20, 11);
-            String id = "phase:" + ladder.race().id() + ":" + row.id();
-            f.target(id, hit, PathPage.rungTooltip(ladder, row), null);
-            if (f.focused(id)) {
-                KitDraw.focusRing(f.g, hit, t.focusColor());
-            }
+            PathActions.rungTarget(f, ladder, row, hit);
         }
     }
 
@@ -104,8 +100,7 @@ public final class BloodMoonPathPage implements HubPageView {
             KitDraw.icon(f.g, Icons.moon(p), x, y, 8, p == 0 ? 0xFFffd36b : t.muted());
             x += 10;
         }
-        int days = HubAlmanac.daysToFull(phase);
-        Component line = days == 0 ? Component.translatable(KEY + "full_moon_today") : Component.translatable(KEY + "full_moon_in", days);
+        Component line = PathActions.almanacLine(phase);
         int room = Math.max(30, area.right() - x - 8);
         BookKit.small(f, Component.literal(net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(line.getString(), room, s -> BookKit.smallWidth(f, s))), x + 4, y + 1, room, t.muted());
     }
@@ -124,12 +119,11 @@ public final class BloodMoonPathPage implements HubPageView {
         Optional<HubModel.TaskRow> chosen = HubModel.pick(ladder.tasks(), f.selectedTask());
         for (HubModel.TaskRow row : ladder.tasks()) {
             String id = row.task().id();
-            boolean sel = chosen.map(c -> c.task().id().equals(id)).orElse(false);
             boolean claimable = row.state() == TaskState.CLAIMABLE;
             List<net.minecraft.util.FormattedCharSequence> lines = f.font().split(PageKit.text(row.text()), Math.max(40, col.w() - KitDraw.tagWidth(f.font(), SourceTag.of(row.source())) - 14));
             boolean two = lines.size() > 1;
             Rect box = new Rect(col.x(), y, col.w(), two ? 40 : 30);
-            f.g.fill(box.x(), box.y(), box.right(), box.bottom(), claimable ? t.good() : sel ? t.accent() : t.muted());
+            f.g.fill(box.x(), box.y(), box.right(), box.bottom(), claimable ? t.good() : QuestFilter.isChosen(chosen, id) ? t.accent() : t.muted());
             f.g.fill(box.x() + 1, box.y() + 1, box.right() - 1, box.bottom() - 1, 0xFF160a10);
             int tw = KitDraw.sourceTag(f.g, f.font(), t, SourceTag.of(row.source()), box.x() + 4, box.y() + 4);
             f.g.drawString(f.font(), lines.get(0), box.x() + tw + 8, box.y() + 5, t.ink(), false);
@@ -137,32 +131,26 @@ public final class BloodMoonPathPage implements HubPageView {
                 f.g.drawString(f.font(), lines.get(1), box.x() + tw + 8, box.y() + 15, t.ink(), false);
             }
             int by = box.y() + (two ? 29 : 19);
-            float frac = row.counted() && row.target() > 0 ? Math.min(1f, row.progress() / (float) row.target()) : row.state() == TaskState.CLAIMED || claimable ? 1f : 0f;
-            String count = row.counted() && row.target() > 1 ? row.progress() + "/" + row.target() : claimable ? "\u2713" : "";
+            float frac = TaskCard.fraction(row);
+            String count = TaskCard.count(row);
             int cw = BookKit.smallWidth(f, count);
             t.drawBar(f.g, new Rect(box.x() + 4, by, box.w() - 12 - cw, 5), frac);
             BookKit.small(f, Component.literal(count), box.right() - cw - 4, by - 1, cw + 4, claimable ? t.good() : t.muted());
-            f.target("task:" + id, box, PageKit.tooltip(row), () -> f.select(id));
-            if (f.focused("task:" + id)) {
-                KitDraw.focusRing(f.g, box, t.focusColor());
-            }
+            TaskCard.target(f, row, box);
             y += box.h() + 4;
         }
         y = BookKit.small(f, PathPage.reward(active), col.x(), y + 2, col.w(), t.accent());
         f.end(y);
     }
 
-    /** The floating bar: the rung, its pips, a line, Track on HUD (waits for the HUD update) and Claim reward. */
+    /** The floating bar: the rung, its pips, a line, Track on HUD (needs the HUD part) and Claim reward. */
     private void bar(HubScreen.Frame f, HubModel.LadderView ladder) {
         if (ladder == null || ladder.atTop()) {
             return;
         }
         HubModel.RungRow active = ladder.active().orElseThrow();
-        Optional<HubModel.TaskRow> claimable = ladder.tasks().stream().filter(r -> r.state() == TaskState.CLAIMABLE).findFirst();
-        Detail.Builder d = Detail.of(PageKit.rung(active)).pips(active.claimed(), Math.max(active.tasks(), 1))
-                .body(Component.translatable(MOON + "bar", active.claimed(), active.tasks(), PathPage.reward(active)));
-        d.action(TrackHud.action(PathPage.trackable(ladder).map(r -> r.task().id()).orElse(""), PathPage.trackable(ladder).isEmpty()));
-        d.action("claim", Component.translatable(MOON + "claim"), true, claimable.isPresent(), () -> claimable.ifPresent(r -> f.claim(r.task().id())));
+        Detail.Builder d = PathActions.rung(ladder, null).body(Component.translatable(MOON + "bar", active.claimed(), active.tasks(), PathPage.reward(active)));
+        PathActions.addActions(d, f, ladder, Component.translatable(MOON + "claim"));
         f.detail(d.build());
     }
 }

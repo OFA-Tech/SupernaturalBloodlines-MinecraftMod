@@ -13,7 +13,9 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Counters;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.BarPlan;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Bake;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.BakedTexture;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
@@ -130,31 +132,10 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         int cx = area.x() + area.w() / 2;
         int cy = area.y() + area.h() / 2;
         int r = Math.max(12, Math.min(area.w(), area.h()) / 2 - 8);
-        for (int h = 22; h >= 2; h -= 2) {
-            disc(g, cx, cy, r + h, 0x0Ae2493f); // a soft red halo, built from faint rings
-        }
-        float fill = Math.max(0.1f, data.progress());
-        int line = cy + r - Math.round(2 * r * fill);
-        for (int dy = -r; dy <= r; dy++) {
-            int half = (int) Math.sqrt((double) r * r - dy * dy);
-            int y = cy + dy;
-            float k = (dy + r) / (2f * r);
-            if (y < line) {
-                g.fill(cx - half, y, cx + half, y + 1, mix(0xFF4a1520, 0xFF2a0b12, k));
-                continue;
-            }
-            // lit part: pale in the middle, red toward the rim, so the moon glows instead of being a flat disc
-            int step = Math.max(1, half / 12);
-            for (int dx = -half; dx < half; dx += step) {
-                float d = (float) Math.sqrt((double) dx * dx + (double) dy * dy) / r;
-                g.fill(cx + dx, y, Math.min(cx + half, cx + dx + step), y + 1, mix(0xFFffd2c4, 0xFF8a1220, Math.min(1f, d * d)));
-            }
-        }
-        int[][] craters = {{-r * 45 / 100, -r * 40 / 100, r / 6}, {r * 30 / 100, -r * 15 / 100, r / 9}, {-r * 60 / 100, r * 25 / 100, r / 10},
-                {r * 20 / 100, r * 50 / 100, r / 7}, {r * 55 / 100, r * 30 / 100, r / 12}};
-        for (int[] c : craters) {
-            disc(g, cx + c[0], cy + c[1], Math.max(1, c[2]), 0x22000000);
-        }
+        // the halo, the disc lit up to the progress and the craters are one baked picture (a new one only when the radius or the progress step changes)
+        int step = Bake.step(data.progress());
+        int size = Bake.moonSize(r);
+        BakedTexture.blit(g, BakedTexture.get("moon/" + r + "/" + step, size, size, Bake.moon(r, step)), cx - size / 2, cy - size / 2, size, size);
         KitDraw.tickRing(g, cx, cy, r + 10, 48, data.progress(), RED, 0xFF4a2430);
         int m = (int) (r * 0.95);
         KitDraw.model(g, new Rect(cx - m / 2, cy - m / 2 - 2, m, m), data.entity(), data.drag());
@@ -242,18 +223,12 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
             KitDraw.pips(g, x + font.width(title) + 6, r.y() + 8, d.pips(), d.pipsFilled(), RED, 0xFF4a2430);
         }
         int by = r.y() + 17;
-        List<String> lines = LabelFit.wrap(d.body().isEmpty() ? "" : d.body().get(0).getString(), (int) (textW / 0.75f), 2, font::width);
-        for (String line : lines) {
-            if (by + 7 > r.bottom() - 3) {
+        for (String line : LabelFit.wrap(d.body().isEmpty() ? "" : d.body().get(0).getString(), textW, 2, font::width)) {
+            if (by + 8 > r.bottom() - 3) {
                 break;
             }
-            var pose = g.pose();
-            pose.pushPose();
-            pose.translate(x, by, 0);
-            pose.scale(0.75f, 0.75f, 1f);
-            g.drawString(font, line, 0, 0, muted(), false);
-            pose.popPose();
-            by += 7;
+            g.drawString(font, line, x, by, muted(), false);
+            by += 9;
         }
         KitDraw.detailActions(ctx, this, rects, d.withActions(shown));
     }
@@ -303,14 +278,9 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         if (selected && g.guiWidth() >= BloodMoonLayout.FLAG_MIN_WIDTH) {
             Font font = Minecraft.getInstance().font;
             String label = Component.translatable(page.langKey()).getString();
-            int w = (int) Math.ceil(font.width(label) * 0.75f) + 8;
+            int w = font.width(label) + 8;
             g.fill(r.right() + 3, r.y() + 4, r.right() + 3 + w, r.y() + r.h() - 4, PILL);
-            var pose = g.pose();
-            pose.pushPose();
-            pose.translate(r.right() + 7, r.y() + 8, 0);
-            pose.scale(0.75f, 0.75f, 1f);
-            g.drawString(font, label, 0, 0, RED, false);
-            pose.popPose();
+            g.drawString(font, label, r.right() + 7, r.y() + (r.h() - 8) / 2, RED, false);
         }
         if (focused) {
             KitDraw.focusRing(g, r, GOLD);

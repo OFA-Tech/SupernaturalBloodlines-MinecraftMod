@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ToIntFunction;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.BloodMoonLayout;
+import net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.client.TensuraHubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import org.junit.jupiter.api.Test;
@@ -41,32 +42,38 @@ class LabelFitTest {
         assertTrue(lines.get(lines.size() - 1).endsWith("\u2026"), lines.toString());
     }
 
+    /** The stage the hexagon ladder is drawn on, at each GUI width: the Blood Moon's and Tensura's moon stages (the Grimoire has no ladder row; its Path lists the rungs). */
+    private static List<Rect> stages() {
+        List<Rect> stages = new ArrayList<>();
+        for (int w : WIDTHS) {
+            int h = w * 9 / 16;
+            stages.add(BloodMoonLayout.of(w, h, 8, 3).region(BloodMoonLayout.MOON));
+            stages.add(TensuraHubLayout.of(w, h, 8, 4).region(TensuraHubLayout.MOON));
+        }
+        return stages;
+    }
+
     @Test
-    void ladderLabelsNeverOverlapOrLeaveTheStageAtGuiWidths480And960() {
-        for (HubLayout layout : List.of(layoutOf("tensura", 480), layoutOf("tensura", 960), BloodMoonLayout.of(480, 270, 8, 3), BloodMoonLayout.of(960, 540, 8, 3))) {
-            Rect stage = layout.region(layout.regions().containsKey("moon") ? "moon" : "full");
+    void ladderLabelsNeverOverlapOrLeaveTheStageOnTheStagesAtGuiWidths480And960() {
+        for (Rect stage : stages()) {
             for (int n : new int[] {5, 6, 8}) {
-                int hex = 18;
-                int span = Math.min(stage.w() - 16, n * 70);
-                int step = (span - hex) / (n - 1);
-                int x0 = stage.x() + (stage.w() - (step * (n - 1) + hex)) / 2;
-                List<Rect> boxes = new ArrayList<>();
-                boolean stagger = LabelFit.needsStagger(RUNGS.subList(0, n), step, SMALL);
+                List<LadderLabels.Placed> placed = LadderLabels.place(RUNGS.subList(0, n), stage, 18, 100, SMALL);
+                List<Rect> all = new ArrayList<>();
                 for (int i = 0; i < n; i++) {
-                    List<String> lines = LabelFit.wrap(RUNGS.get(i), LabelFit.ladderWidth(stagger ? 2 * step : step, 90), 2, SMALL);
-                    int w = lines.stream().mapToInt(SMALL::applyAsInt).max().orElse(0);
-                    int x = x0 + i * step + hex / 2;
-                    Rect box = new Rect(Math.max(stage.x(), Math.min(stage.right() - w, x - w / 2)), stagger && i % 2 == 1 ? 18 : 0, w, 16);
-                    assertTrue(box.x() >= stage.x() && box.right() <= stage.right(), RUNGS.get(i) + " leaves the stage at " + stage.w());
-                    boxes.add(box);
-                }
-                for (int i = 1; i < boxes.size(); i++) {
-                    assertFalse(boxes.get(i - 1).overlaps(boxes.get(i)), "ladder labels " + (i - 1) + " and " + i + " overlap with " + n + " rungs on a stage " + stage.w() + " wide");
+                    for (Rect box : placed.get(i).boxes()) {
+                        // a box carries 4 pixels of padding after its text; the text itself must stay inside the stage and 2 pixels clear of its neighbour
+                        Rect text = new Rect(box.x(), box.y(), box.w() - 4, box.h());
+                        assertTrue(text.x() >= stage.x() && text.right() <= stage.right(), RUNGS.get(i) + " leaves the stage (" + stage + ")");
+                        for (Rect other : all) {
+                            Rect near = new Rect(other.x() - 2, other.y(), other.w() - 4 + 4, other.h());
+                            assertFalse(text.overlaps(near), "ladder labels overlap with " + n + " rungs on " + stage + " (" + text + " vs " + other + ")");
+                        }
+                        all.add(box);
+                    }
                 }
             }
         }
     }
-
     @Test
     void radialLabelsFitTheChordBetweenNeighbours() {
         for (int count = 4; count <= 14; count++) {

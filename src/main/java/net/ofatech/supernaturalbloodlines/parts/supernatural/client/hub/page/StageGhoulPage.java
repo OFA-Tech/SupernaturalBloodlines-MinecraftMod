@@ -51,19 +51,15 @@ public final class StageGhoulPage implements HubPageView {
 
     /** The grey of the moon at {@code d} (0 in the middle, 1 at the rim): about 55 percent luminance in the middle to 38 at the rim, a drained moon. */
     static int value(float d) {
-        return 0x8C - (int) (0x2A * Math.min(1f, d * d));
+        return net.ofatech.supernaturalbloodlines.shared.hub.kit.Bake.greyValue(d);
     }
 
-    /** A dim grey moon, a little paler in the middle. */
+    /** A dim grey moon, a little paler in the middle: one baked picture per radius. */
     static void disc(GuiGraphics g, int cx, int cy, int r) {
-        for (int dy = -r; dy <= r; dy++) {
-            int half = (int) Math.sqrt((double) r * r - (double) dy * dy);
-            int step = Math.max(1, half / 14);
-            for (int dx = -half; dx < half; dx += step) {
-                float d = (float) Math.sqrt((double) dx * dx + (double) dy * dy) / r;
-                int v = value(d);
-                g.fill(cx + dx, cy + dy, Math.min(cx + half, cx + dx + step), cy + dy + 1, 0xFF000000 | v << 16 | v << 8 | v);
-            }
+        int side = 2 * r;
+        if (side > 0) {
+            net.ofatech.supernaturalbloodlines.shared.hub.kit.client.BakedTexture.blit(g, net.ofatech.supernaturalbloodlines.shared.hub.kit.client.BakedTexture.get("ghoul/" + r, side, side,
+                    net.ofatech.supernaturalbloodlines.shared.hub.kit.Bake.greyMoon(r)), cx - r, cy - r, side, side);
         }
     }
 }

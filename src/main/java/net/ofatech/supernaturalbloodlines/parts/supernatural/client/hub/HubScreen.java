@@ -104,7 +104,7 @@ public final class HubScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        if (devQuiet) {
+        if (HubDev.quiet()) {
             mouseX = -1000;
             mouseY = -1000;
         }
@@ -172,7 +172,6 @@ public final class HubScreen extends Screen {
         tooltip(g, mouseX, mouseY);
     }
 
-    /** The view of a page in the current theme; the page answers keys and drags first, see {@link #keyPressed}. */
     /** Pixels at the bottom of a region that a page keeps for something pinned (a wax seal), set by {@link Frame#reserve} before {@link Frame#begin}. */
     private final Map<String, Integer> reserved = new java.util.HashMap<>();
 
@@ -183,6 +182,7 @@ public final class HubScreen extends Screen {
         return keep <= 0 ? r : new Rect(r.x(), r.y(), r.w(), Math.max(0, r.h() - keep));
     }
 
+    /** The view of a page in the current theme; the page answers keys and drags first, see {@link #keyPressed}. */
     private HubPageView viewOf(HubPage p, HubView view) {
         HubThemeViews views = theme instanceof HubThemeViews v ? v : null;
         return p.locked(view.context()) ? HubPages.locked() : views != null ? views.view(p) : HubPages.shared(p);
@@ -206,9 +206,7 @@ public final class HubScreen extends Screen {
         }
         Rect tb = layout.chrome().themeButton();
         if (tb != null) {
-            HubClientConfig.ThemeId next = HubClientConfig.next(themeId, id -> HubHooks.theme(id).isPresent());
-            f.targets.add(new Target("theme", tb, null, true, List.of(Component.translatable("supernaturalbloodlines.hub.theme.switch",
-                    Component.translatable("supernaturalbloodlines.hub.theme." + next.id()))), () -> openThemeMenu()));
+            f.targets.add(new Target("theme", tb, null, true, List.of(Component.translatable("supernaturalbloodlines.hub.theme.switch")), () -> openThemeMenu()));
             theme.drawThemeButton(f.g, tb, tb.contains(mouseX, mouseY), f.focused("theme"));
         }
         Rect cb = layout.chrome().close();
@@ -240,19 +238,7 @@ public final class HubScreen extends Screen {
         ladderChoice = index;
     }
 
-    private static boolean devNoTensura;
-    private static boolean devQuiet;
-
-    /** Development only (the dev screenshots): the pointer counts as far away, so no hover and no tooltip is in a picture. */
-    static void devQuiet(boolean on) {
-        devQuiet = on;
-    }
-
-    /** Development only (the dev screenshots): pretend Tensura is missing, so the look menu shows it greyed. */
-    static void devNoTensura(boolean on) {
-        devNoTensura = on;
-    }
-
+    /** Development only (the dev screenshots): opens the look menu. */
     void devOpenMenu() {
         openThemeMenu();
     }
@@ -263,7 +249,7 @@ public final class HubScreen extends Screen {
     }
 
     private boolean themeAvailable(HubClientConfig.ThemeId id) {
-        return id == HubClientConfig.ThemeId.GRIMOIRE || (HubHooks.theme(id.id()).isPresent() && !(devNoTensura && id == HubClientConfig.ThemeId.TENSURA));
+        return id == HubClientConfig.ThemeId.GRIMOIRE || (HubHooks.theme(id.id()).isPresent() && !(HubDev.noTensura() && id == HubClientConfig.ThemeId.TENSURA));
     }
 
     /** The menu's rows, under the theme button and right-aligned to it, kept on the screen. */
@@ -476,6 +462,10 @@ public final class HubScreen extends Screen {
     @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
         if (menu && dialog == null) {
+            if (HubKeybinds.HUB.matches(key, scanCode)) {
+                onClose(); // the hub key closes the hub even with the look menu open
+                return true;
+            }
             int n = HubClientConfig.ThemeId.values().length;
             switch (key) {
                 case GLFW.GLFW_KEY_ESCAPE -> menu = false;

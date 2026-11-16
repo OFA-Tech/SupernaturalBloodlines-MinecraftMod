@@ -1,31 +1,30 @@
 package net.ofatech.supernaturalbloodlines.core.hud;
 
+import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
+
 /**
- * When the full moon forces a werewolf's shift, from the world clock alone: the moon is full on the days whose number is a multiple of eight, and the forced
- * shift comes when that day's night begins (tick 13000 of the day). Pure, so the HUD's warning is tested without a world.
+ * When the full moon forces a werewolf's shift, from the world clock alone, by the same window the rites and the lunar eclipse use ({@link MoonRule}: the
+ * phase-0 day, after 12786 and before 23216, and never in a dimension with a fixed time). The client cannot know whether the player has moon control (a Moon
+ * Ring, Moon Calm, free_will, an exempt rank, or {@code moon_bound_werewolves} turned off on the server), so the warning is shown to every werewolf. Pure.
  */
 public final class MoonClock {
-    public static final int DAY = 24_000;
-    public static final int NIGHT_BEGINS = 13_000;
-    /** The night ends (the sun is up again) at tick 23000 of the day. */
-    public static final int NIGHT_ENDS = 23_000;
-
     private MoonClock() {
     }
 
     /**
-     * @return the ticks until the night of a full moon begins, 0 while it is that night, or -1 when today is not a full moon day or its night has passed
+     * @param phase the world's moon phase today (0 is full)
+     * @return the ticks until the night of a full moon begins, 0 while it is that night, or -1 when today is not a full moon, the dimension has a fixed
+     *         time, or the night has passed
      */
-    public static long ticksUntilForcedShift(long dayTime) {
-        long day = Math.floorDiv(dayTime, DAY);
-        long tod = Math.floorMod(dayTime, DAY);
-        if (Math.floorMod(day, 8) != 0) {
+    public static long ticksUntilForcedShift(boolean hasFixedTime, int phase, long dayTime) {
+        if (!MoonRule.isFullMoon(hasFixedTime, phase)) {
             return -1;
         }
-        if (tod < NIGHT_BEGINS) {
-            return NIGHT_BEGINS - tod;
+        long timeOfDay = Math.floorMod(dayTime, 24_000L);
+        if (timeOfDay <= MoonRule.NIGHT_START) {
+            return MoonRule.NIGHT_START + 1 - timeOfDay;
         }
-        return tod < NIGHT_ENDS ? 0 : -1;
+        return timeOfDay < MoonRule.NIGHT_END ? 0 : -1;
     }
 
     /** {@code "1:40"} for 2000 ticks. */

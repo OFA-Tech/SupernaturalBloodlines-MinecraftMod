@@ -14,6 +14,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LadderLabels;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.SourceTag;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
@@ -21,7 +22,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 /**
  * Path for Tensura's status window: the magic circle with the live model in the middle of the stage, the ladder as a row of hexagons under it (the
  * ones you have reached ticked, the current one open, the rest sealed), the moon almanac in a box along the bottom, and the next rung's name, its
- * tasks and the reward in the info pane with Track on HUD (waits for the HUD update) and Claim reward as its buttons.
+ * tasks and the reward in the info pane with Track on HUD (needs the HUD part) and Claim reward as its buttons.
  */
 public final class StagePathPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "path.";
@@ -63,10 +64,9 @@ public final class StagePathPage implements HubPageView {
         HubTheme t = f.theme();
         List<HubModel.RungRow> rungs = ladder.rungs();
         int n = rungs.size();
-        int span = Math.min(stage.w() - 16, n * 70);
-        int step = n <= 1 ? 0 : (span - HEX) / (n - 1);
-        boolean stagger = staggered(f, ladder, stage);
-        int x0 = stage.x() + (stage.w() - (step * (n - 1) + HEX)) / 2;
+        int step = LadderLabels.step(stage.w(), n, HEX);
+        int x0 = LadderLabels.x0(stage, n, HEX);
+        List<LadderLabels.Placed> labels = LadderLabels.place(rungs.stream().map(r -> PageKit.rung(r).getString()).toList(), stage, HEX, y, s -> BookKit.smallWidth(f, s));
         f.g.fill(x0 + HEX / 2, y + HEX / 2, x0 + HEX / 2 + step * (n - 1), y + HEX / 2 + 1, (t.muted() & 0xFFFFFF) | 0x99000000);
         for (int i = 0; i < n; i++) {
             HubModel.RungRow row = rungs.get(i);
@@ -77,32 +77,21 @@ public final class StagePathPage implements HubPageView {
             KitDraw.shape(f.g, Shapes.Shape.HEX, x, y, HEX, edge);
             KitDraw.shape(f.g, Shapes.Shape.HEX, x + 2, y + 2, HEX - 4, t.paper());
             KitDraw.icon(f.g, reached ? Icons.CHECK : current ? Icons.DOT : Icons.LOCK, x + (HEX - 10) / 2, y + (HEX - 10) / 2, 10, edge);
-            Component name = PageKit.rung(row);
-            int maxW = LabelFit.ladderWidth(step == 0 ? 80 : stagger ? 2 * step : step, 90);
-            int lower = stagger && i % 2 == 1 ? 18 : 0;
-            List<String> lines = LabelFit.wrap(name.getString(), maxW, 2, s -> BookKit.smallWidth(f, s));
+            LadderLabels.Placed label = labels.get(i);
             int tw = 0;
-            for (int k = 0; k < lines.size(); k++) {
-                int lw = BookKit.smallWidth(f, lines.get(k));
-                tw = Math.max(tw, lw);
-                int lx = Math.max(stage.x(), Math.min(stage.right() - lw - 4, x + HEX / 2 - lw / 2));
-                BookKit.small(f, Component.literal(lines.get(k)), lx, y + HEX + 3 + lower + 8 * k, lw + 4, current ? t.accent() : reached ? t.ink() : t.muted());
+            for (int k = 0; k < label.lines().size(); k++) {
+                Rect b = label.boxes().get(k);
+                tw = Math.max(tw, b.w() - 4);
+                BookKit.small(f, Component.literal(label.lines().get(k)), b.x(), b.y(), b.w(), current ? t.accent() : reached ? t.ink() : t.muted());
             }
-            Rect hit = new Rect(x - 2, y, Math.max(HEX + 4, tw + 4), HEX + 4 + 8 * lines.size());
-            String id = "phase:" + ladder.race().id() + ":" + row.id();
-            f.target(id, hit, PathPage.rungTooltip(ladder, row), null);
-            if (f.focused(id)) {
-                KitDraw.focusRing(f.g, hit, t.focusColor());
-            }
+            Rect hit = new Rect(x - 2, y, Math.max(HEX + 4, tw + 4), HEX + 4 + 8 * label.lines().size());
+            PathActions.rungTarget(f, ladder, row, hit);
         }
     }
 
     /** Whether the rung names need two alternating rows to stay apart (a name's longest word does not fit the gap between rungs). */
     private static boolean staggered(HubScreen.Frame f, HubModel.LadderView ladder, Rect stage) {
-        int n = ladder.rungs().size();
-        int span = Math.min(stage.w() - 16, n * 70);
-        int step = n <= 1 ? 0 : (span - HEX) / (n - 1);
-        return n > 1 && LabelFit.needsStagger(ladder.rungs().stream().map(r -> PageKit.rung(r).getString()).toList(), step, s -> BookKit.smallWidth(f, s));
+        return LadderLabels.staggered(ladder.rungs().stream().map(r -> PageKit.rung(r).getString()).toList(), stage.w(), HEX, s -> BookKit.smallWidth(f, s));
     }
 
     /** The next moons in a box with the days to the full moon. */
@@ -116,8 +105,7 @@ public final class StagePathPage implements HubPageView {
             KitDraw.icon(f.g, Icons.moon(p), x, y, 8, p == 0 ? 0xFFffd36b : t.muted());
             x += 11;
         }
-        int days = HubAlmanac.daysToFull(phase);
-        Component line = days == 0 ? Component.translatable(KEY + "full_moon_today") : Component.translatable(KEY + "full_moon_in", days);
+        Component line = PathActions.almanacLine(phase);
         f.g.drawString(f.font(), LabelFit.cut(line.getString(), box.right() - x - 10, f.font()::width), x + 6, y, t.accent(), false);
     }
 
@@ -127,14 +115,11 @@ public final class StagePathPage implements HubPageView {
             return;
         }
         HubModel.RungRow active = ladder.active().orElseThrow();
-        Optional<HubModel.TaskRow> claimable = ladder.tasks().stream().filter(r -> r.state() == TaskState.CLAIMABLE).findFirst();
-        Detail.Builder d = Detail.of(PageKit.rung(active)).kicker(Component.translatable(KEY + "to_become")).pips(active.claimed(), Math.max(active.tasks(), 1))
-                .body(Component.translatable(KEY + "info_body", active.tasks())).reward(PathPage.reward(active));
+        Detail.Builder d = PathActions.rung(ladder, Component.translatable(KEY + "to_become")).body(Component.translatable(KEY + "info_body", active.tasks()));
         for (HubModel.TaskRow row : ladder.tasks()) {
             d.row(PageKit.text(row.text()), SourceTag.of(row.source()), row.counted() ? row.progress() : row.state() == TaskState.OPEN ? 0 : 1, row.counted() ? row.target() : 1);
         }
-        d.action(TrackHud.action(PathPage.trackable(ladder).map(r -> r.task().id()).orElse(""), PathPage.trackable(ladder).isEmpty()));
-        d.action("claim", Component.translatable(KEY + "claim_reward"), true, claimable.isPresent(), () -> claimable.ifPresent(r -> f.claim(r.task().id())));
+        PathActions.addActions(d, f, ladder, Component.translatable(KEY + "claim_reward"));
         f.detail(d.build());
     }
 }

@@ -30,11 +30,11 @@ The shared pieces every hub theme is built from. Package `net.ofatech.supernatur
 
 ## The theme API
 
-`HubLayout` has a `Chrome` as well as the regions, tabs and seals: the theme switch button, a close button, the emblem rectangle, the detail rectangle and kind (`SIDE_REGION`, `PAGE`, `BOTTOM_BAR`, `INFO_PANE`) and the nav style (`INDEX_TABS`, `ICON_RAIL`, `LIST`). A rectangle that is null means the theme has none of it. The four-argument constructor stays, with an empty chrome.
+`HubLayout` has a `Chrome` as well as the regions, tabs and seals: the theme switch button, a close button, the emblem rectangle, and the detail rectangle (the nav style and the detail kind were removed in the 16a review: a theme draws its own tabs and its own detail). A rectangle that is null means the theme has none of it. The four-argument constructor stays, with an empty chrome.
 
 `HubTheme` has default methods for the new chrome (`drawThemeButton`, `drawClose`, `drawDetail`, `focusColor`), so an old theme needs no change; a theme restyles them when it is rebuilt (16b to 16d).
 
-`HubScreen`: draws and registers the chrome; the theme button cycles Grimoire, Blood Moon, Tensura (skipping a look that cannot be drawn) and saves it to `supernaturalbloodlines-hub-client.toml`, the same setting as the config; number keys 1 to 8 jump to a page; Tab follows the zone order; `Frame.detail(Detail)` hands a selection to the theme; `Frame.confirm(title, body, yes, action)` asks first (a dialog takes every key while it is open).
+`HubScreen`: draws and registers the chrome; the theme button opens a menu of the looks (Grimoire, Blood Moon, Tensura; one that cannot be drawn is greyed) and saves the one you pick to `supernaturalbloodlines-hub-client.toml`, the same setting as the config; number keys 1 to 8 jump to a page; Tab follows the zone order; `Frame.detail(Detail)` hands a selection to the theme; `Frame.confirm(title, body, yes, action)` asks first (a dialog takes every key while it is open).
 
 ## API after the 16a review
 
@@ -44,7 +44,8 @@ The shared pieces every hub theme is built from. Package `net.ofatech.supernatur
 - **Detail.** `Detail` has a `kicker`, an `icon`, task `rows(label, SourceTag, done, total)`, and per action a `confirm(title, body)` and a `disabledReason`. `KitDraw.detailHeight(font, w, d)` measures the text; `DetailLayout.stack/textArea` place the actions and keep text out from under them; `KitDraw.detailActions(ctx, theme, rects, d)` registers the `detail:` targets, tooltips (with the reason), the confirm routing and the focus rings, so a theme draws its own buttons and calls it. The default `KitDraw.detail` no longer lets the text run under the actions or the title run into the tag.
 - **`Frame.detail`** sets the current region and clip aside and puts them back, so a bar outside MAIN shows and takes clicks.
 - **Confirm.** `confirm(title, body, safe, yes, action)`: the safe button (usually "Stay") is on the left and is focused first; the height follows the wrapped body up to 70% of the screen; only a left mouse click answers; nothing scrolls while it is open. An action with a `Detail.Confirm` goes through it by itself.
-- `HubLayout.Chrome` is now (theme button, close, emblem, counters, detail); the unused nav style and detail kind were removed.
+- `HubLayout.Chrome` is (theme button, close, emblem, counters, detail); the nav style and detail kind are gone.
+- 16 review: shapes are baked into textures once (`Bake`, `BakedTexture`; a square is one fill, `ShapesCacheTest`); text is never under the normal 8-pixel size (`BookKit.small` is full size now); `QuestFilter`, `TaskCard`, `PathActions` and `LadderLabels` hold what the three themes shared; `HubDev` holds the dev switches; the shared pages (`HubPages`) are the documented fallback for a theme with no views of its own.
 - `KitDraw` and `UiContext` are in `shared.hub.kit.client`.
 
 ## Dev screenshots (no clicking)
@@ -65,3 +66,7 @@ The shared pieces every hub theme is built from. Package `net.ofatech.supernatur
 - **Screens:** the Grimoire, the Blood Moon and Tensura's status window, each with Path, Skills, Quests, Rites, Bloodline, Pack, Guide and Loadout, and the ability HUD in the three looks. `-Dsupernaturalbloodlines.devshots=grimoire:all,blood_moon:all,tensura:all,hud:grimoire,hud:blood_moon:alt,... -Dsupernaturalbloodlines.devshots.scales=2,3,4 -Dsupernaturalbloodlines.devshots.demo=true` takes the whole set (90 pictures) in about a minute. A curated 12 are committed in `docs/superpowers/design/plan16/shots/` (1280 x 720).
 - **Contrast:** `ThemeContrastTest` and `TensuraHubThemeTest` run `ThemeContrast.assertReadable` on each theme object; the text pairs now include the Blood Moon's floating bar and pills and the Tensura title bar, stage and info pane. `HudContrastTest` does the same for the HUD's panels and key letters. The first run found the Blood Moon's primary pill at 3.62:1, so its fill is `0xFFb8281f` (and `0xFFcf3328` hovered) now.
 - **Rules every theme follows (tested, see `LabelFitTest`, `BarPlanTest`, `LadderTabsTest`, `HudLayoutTest`, `TrackerAnchorTest`, `HudPanelsTest`):** text is wrapped by words, a word that does not fit ends in an ellipsis, a panel never leaves the screen or covers a neighbour, the HUD's slots always fit above the bottom edge (480 x 270 and up), and nothing the HUD draws sits on another mod's HUD (the tracker moves right of the status corner on a narrow window and under the boss bars).
+
+## Performance (the 16 review)
+
+Every shape (a slot, a medallion, the Blood Moon's disc and halo, the Ghoul's grey moon, the glow behind the stage, the HUD's cooldown pie and blood ring) is painted once by a pure function (`Shapes`, `Bake`, `PieSweep`) into a `DynamicTexture` (`BakedTexture`, at most 96 kept, cleared on a resource reload) and drawn with one blit, tinted. A square is one fill; a round or hexagonal shape falls back to its few merged runs (`Shapes.runs`) if a texture cannot be made. The HUD's texts (the mode pill, the Alt tooltips) are translated, measured and wrapped once a tick, not every frame, and Bite's blood and the moon warning are read in `LiveHud.tick`. `HudSource` is the one seam between the layer and its data (`LiveHud` for the game, `HudDemo` for the dev screenshots).

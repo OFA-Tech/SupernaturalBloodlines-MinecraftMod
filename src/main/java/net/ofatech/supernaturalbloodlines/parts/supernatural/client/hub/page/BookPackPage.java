@@ -28,6 +28,8 @@ public final class BookPackPage implements HubPageView {
 
     private static final String KEY = PageKit.HUB + "pack.";
     private static final String BOOK = PageKit.HUB + "book.pack.";
+    /** Past this many portraits on the ring the names are left out (the tooltip has them). */
+    private static final int NAMED_MAX = 12;
 
     @Nullable
     private String selected;
@@ -167,7 +169,7 @@ public final class BookPackPage implements HubPageView {
             f.end(s.bottom());
             return;
         }
-        int legend = 17;
+        int legend = 10 * Math.max(1, Math.min(3, f.font().split(Component.translatable(BOOK + "legend"), s.w()).size())) + 2;
         // on the Blood Moon stage the ledger card takes the right of it, so the ring is centred in what is left
         int areaW = style == Style.MOON ? Math.max(60, f.region("right").x() - 14 - s.x()) : s.w();
         int cy = top + (s.bottom() - legend - top) / 2;
@@ -176,24 +178,32 @@ public final class BookPackPage implements HubPageView {
         pack.stream().filter(m -> !m.name().equals(f.view.player().getName().getString())).forEach(m -> members.add(new PackRing.Member(m.name(), role(m.rank()))));
         int face = members.size() > 8 ? 12 : 16;
         // the faces sit on a ring; their names go outward (beside the side ones, over the top ones, under the bottom ones), small, inside the page
-        int radius = Math.max(26, Math.min(areaW / 2 - 34, (s.bottom() - legend - top) / 2 - face / 2 - 12));
+        int radius = Math.max(26, Math.min(areaW / 2 - 52, (s.bottom() - legend - top) / 2 - face / 2 - 12));
         int inner = Math.max(14, radius * 2 / 5);
         f.emblem(new Rect(cx - inner - 2, cy - inner - 2, 2 * inner + 4, 2 * inner + 4));
         Component you = Component.translatable(BOOK + "you", f.view.player().getName(), Component.translatable(KEY + "rank." + wolf.rank().name().toLowerCase(Locale.ROOT)));
         int yw = BookKit.smallWidth(f, you.getString());
         BookKit.small(f, you, cx - yw / 2, cy + inner + 4, yw + 4, t.accent());
-        for (PackRing.Slot slot : PackRing.ring(members, cx, cy, radius, face)) {
+        PackRing.Layout ring = PackRing.layout(members, cx, cy, radius, face);
+        boolean named = ring.slots().size() <= NAMED_MAX; // a crowded ring keeps the faces and the tooltips, and drops the names
+        for (PackRing.Slot slot : ring.slots()) {
             int size = slot.size();
             int color = (slot.member().role().color() & 0xFFFFFF) | ((int) (slot.alpha() * 255) << 24);
             BookKit.portrait(f.g, slot.member().id(), slot.x(), slot.y(), size, color, t.paper());
-            String n = f.font().plainSubstrByWidth(slot.member().id(), 56);
-            int nw = BookKit.smallWidth(f, n);
-            int side = Math.abs(slot.x() - cx) > radius / 2 ? (slot.x() > cx ? 1 : -1) : 0;
-            int nx = side == 0 ? slot.x() - nw / 2 : side > 0 ? slot.x() + size / 2 + 3 : slot.x() - size / 2 - 3 - nw;
-            int ny = side != 0 ? slot.y() - 3 : slot.y() < cy ? slot.y() - size / 2 - 9 : slot.y() + size / 2 + 3;
-            BookKit.small(f, Component.literal(n), Math.max(s.x(), Math.min(s.x() + areaW - nw - 2, nx)), ny, nw + 4, slot.member().role().small() ? t.muted() : t.ink());
+            if (named) {
+                String n = f.font().plainSubstrByWidth(slot.member().id(), 56);
+                int nw = BookKit.smallWidth(f, n);
+                int side = Math.abs(slot.x() - cx) > radius / 2 ? (slot.x() > cx ? 1 : -1) : 0;
+                int nx = side == 0 ? slot.x() - nw / 2 : side > 0 ? slot.x() + size / 2 + 3 : slot.x() - size / 2 - 3 - nw;
+                int ny = side != 0 ? slot.y() - 3 : slot.y() < cy ? slot.y() - size / 2 - 9 : slot.y() + size / 2 + 3;
+                BookKit.small(f, Component.literal(n), Math.max(s.x(), Math.min(s.x() + areaW - nw - 2, nx)), ny, nw + 4, slot.member().role().small() ? t.muted() : t.ink());
+            }
             f.target("ring:" + slot.member().id(), new Rect(slot.x() - size / 2 - 2, slot.y() - size / 2 - 2, size + 4, size + 4),
                     List.of(Component.literal(slot.member().id())), () -> selected = slot.member().id());
+        }
+        if (ring.hidden() > 0) {
+            Component more = Component.translatable(BOOK + "ring_more", ring.hidden());
+            f.g.drawString(f.font(), more, cx - f.font().width(more) / 2, cy + inner + 14, t.muted(), false);
         }
         BookKit.small(f, Component.translatable(BOOK + "legend"), s.x(), s.bottom() - legend + 1, areaW, t.muted());
         f.end(s.bottom());
