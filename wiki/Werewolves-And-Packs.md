@@ -65,7 +65,7 @@ Eyes show as two glowing dust particles at eye height every half second while a 
 
 ## Turning people (bites)
 
-- **Only Alphas turn humans.** An Alpha's bite makes the victim a **Beta of their pack** (and records the Alpha as their sire) with `alpha_bite_death_chance` (default **10%**) of killing them instead ("... body rejected the Alpha's bite").
+- **Only Alphas turn humans** (config `only_alphas_turn`, default on; off gives Werewolves' own rule where any werewolf's bite infects). An Alpha's bite makes the victim a **Beta of their pack** (and records the Alpha as their sire) with `alpha_bite_death_chance` (default **10%**) of killing them instead ("... body rejected the Alpha's bite").
 - A **Beta's or Omega's** bite does **not** infect.
 - A **wild werewolf mob** makes an **Omega** (no pack, no death roll, no sire).
 - A Beta bitten again by another Alpha, or invited by one, **stays in their pack** until `/pack leave`.

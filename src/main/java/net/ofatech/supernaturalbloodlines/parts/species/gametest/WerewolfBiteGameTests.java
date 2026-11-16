@@ -123,6 +123,24 @@ public final class WerewolfBiteGameTests {
         helper.succeed();
     }
 
+    /** 13d M8: only_alphas_turn=false gives back Werewolves' own rule: a Beta's bite infects (and records no pack). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void betaBiteInfectsWhenOnlyAlphasTurnIsOff(GameTestHelper helper) {
+        ServerPlayer beta = wolf(helper, Rank.BETA, UUID.randomUUID());
+        ServerPlayer victim = TestPlayers.createDuelist(helper);
+        net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.overrideOnlyAlphasTurn(false);
+        try {
+            bite(beta, victim);
+            helper.assertTrue(victim.addEffect(new MobEffectInstance(LUPUS, 600)), "a Beta bite was refused with only_alphas_turn off");
+            helper.assertTrue(victim.hasEffect(LUPUS), "the sanguinem effect is not on the victim");
+            helper.assertTrue(victim.getData(SpeciesRegistries.PENDING_ALPHA).equals(Util.NIL_UUID), "a pending Alpha was recorded for a Beta");
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.overrideOnlyAlphasTurn(null);
+            clean(beta, victim);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void alphaBiteInfectsAndJoinsPack(GameTestHelper helper) {
         ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);

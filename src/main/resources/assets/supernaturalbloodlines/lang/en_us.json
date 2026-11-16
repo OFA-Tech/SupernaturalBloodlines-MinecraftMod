@@ -355,6 +355,7 @@
   "supernaturalbloodlines.hub.task.state.open": "Not done yet",
   "supernaturalbloodlines.hub.task.state.claimed": "Claimed",
   "supernaturalbloodlines.hub.task.state.frozen": "Frozen while you are a Ghoul",
+  "supernaturalbloodlines.hub.task.state.unavailable": "Not counted: this Enchanted version is not supported",
   "supernaturalbloodlines.hub.task.any_of": "One of:",
   "supernaturalbloodlines.hub.task.level": "%s level",
   "supernaturalbloodlines.hub.task.feed": "Feed on human blood",

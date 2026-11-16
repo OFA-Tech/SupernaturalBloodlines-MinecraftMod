@@ -1,7 +1,10 @@
 package net.ofatech.supernaturalbloodlines.parts.speciestensura;
 
 import io.github.manasmods.tensura.race.RaceUtils;
+import io.github.manasmods.manascore.race.api.RaceAPI;
 import net.minecraft.world.entity.Entity;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.shared.tensura.RaceTags;
 import net.minecraft.world.entity.player.Player;
 import net.ofatech.supernaturalbloodlines.mixin.SpeciesTensuraMixinPlugin;
 
@@ -18,6 +21,15 @@ public final class UndeadTreatment {
      */
     public static boolean mixinApplied() {
         return RaceUtils.class != null && SpeciesTensuraMixinPlugin.raceUtilsHooked();
+    }
+
+    /**
+     * The switch is off and the entity is one of our apex races, which sit in {@code tensura:undead} through a data file that cannot be made conditional:
+     * Tensura's undead and holy-exposure answers are then "no".
+     */
+    public static boolean apexSuppressed(Entity entity) {
+        return !SpeciesTensuraConfig.undeadTreatment() && entity instanceof net.minecraft.world.entity.LivingEntity living
+                && RaceAPI.getRaceFrom(living).getRace().filter(r -> SupernaturalBloodlines.MODID.equals(r.getRaceId().getNamespace()) && r.is(RaceTags.UNDEAD)).isPresent();
     }
 
     public static boolean applies(Entity entity) {

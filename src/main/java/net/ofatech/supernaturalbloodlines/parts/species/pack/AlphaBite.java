@@ -106,7 +106,7 @@ public final class AlphaBite {
             return;
         }
         Attack a = recent(victim);
-        if (a != null && !a.mob() && !a.alpha()) {
+        if (a != null && !a.mob() && !a.alpha() && SpeciesConfig.onlyAlphasTurn()) {
             e.setResult(MobEffectEvent.Applicable.Result.DO_NOT_APPLY);
         }
     }

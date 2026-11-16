@@ -46,6 +46,7 @@ public final class SupernaturalBloodlines {
 
         ModList mods = ModList.get();
         // Config.COMMON is not loaded yet at construction, so read the file directly (see EarlySwitches)
+        net.ofatech.supernaturalbloodlines.core.LinkedMods.warnUntested(id -> mods.getModContainerById(id).map(c -> c.getModInfo().getVersion().toString()).orElse(null), LOGGER);
         Set<Part> switches = EarlySwitches.enabled();
         Set<Part> parts = PartLoader.enabledParts(mods::isLoaded, switches::contains);
         for (Part p : Part.values()) {

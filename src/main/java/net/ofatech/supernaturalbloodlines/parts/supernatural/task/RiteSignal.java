@@ -25,6 +25,14 @@ public final class RiteSignal {
 
     private RiteSignal() {}
 
+    /**
+     * Whether a rite that worked can reach the ladder tasks: the mixin hook is in place (loading {@code Rite} is what applies it) and the signal is not
+     * switched off. When not, the hub shows the rite tasks as unavailable instead of leaving them at 0.
+     */
+    public static boolean countable() {
+        return Rite.class != null && net.ofatech.supernaturalbloodlines.mixin.SupernaturalMixinPlugin.riteHooked() && SupernaturalConfig.riteCompleteSignal();
+    }
+
     public static void completed(Rite rite, Rite.RiteParams params) {
         if (!SupernaturalConfig.riteCompleteSignal()) {
             return;

@@ -103,7 +103,7 @@ public final class GrimoireTheme implements HubTheme {
     @Override
     public void drawTaskBox(GuiGraphics g, int x, int y, TaskState state) {
         int u = switch (state) {
-            case OPEN, FROZEN -> 30;
+            case OPEN, FROZEN, UNAVAILABLE -> 30;
             case CLAIMABLE -> 38;
             case CLAIMED -> 46;
         };

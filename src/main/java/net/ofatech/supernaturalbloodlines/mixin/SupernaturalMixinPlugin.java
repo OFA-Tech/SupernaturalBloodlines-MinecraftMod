@@ -37,7 +37,11 @@ public final class SupernaturalMixinPlugin extends PartMixinPlugin {
     public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
         if (mixinClassName.endsWith(".RiteCompleteMixin")) {
             riteHooked = calls(targetClass, "start", "riteCompleted") && calls(targetClass, "cancel", "riteCancelled");
-            log.info("RiteCompleteMixin hook {}", riteHooked ? "in place" : "MISSING (an Enchanted update?): rites will not count for ladder tasks");
+            if (riteHooked) {
+                log.info("RiteCompleteMixin hooks in place");
+            } else {
+                log.warn("RiteCompleteMixin hooks MISSING (an Enchanted update?): rites will not count for ladder tasks, which the hub then shows as unavailable");
+            }
         }
     }
 }

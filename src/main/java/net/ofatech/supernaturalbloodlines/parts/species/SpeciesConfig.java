@@ -17,7 +17,10 @@ public final class SpeciesConfig {
 
     private static final ModConfigSpec.IntValue MAX_ORIGINALS;
     private static final ModConfigSpec.IntValue MAX_FIVE;
+    private static final ModConfigSpec.BooleanValue ONLY_ALPHAS_TURN;
+    private static volatile Boolean onlyAlphasTurnOverride;
     public static final boolean DEFAULT_WITCH_BONUS = true;
+    public static final boolean DEFAULT_ONLY_ALPHAS_TURN = true;
     public static final double DEFAULT_SIPHONER_CHANCE = 0.25;
 
     private static final ModConfigSpec.IntValue TRANSITION_TICKS;
@@ -60,6 +63,8 @@ public final class SpeciesConfig {
                 .defineInRange("bite_vampire_cost", DEFAULT_BITE_VAMPIRE_COST, 0, 20);
         MAX_FIVE = b.comment("How many Hunters of the Five the world allows. Lowering it later does not remove anyone: the Five can stay above this number until marks are lost, and no new Rite of the Five works until there are fewer than this.")
                 .defineInRange("max_five", DEFAULT_MAX_FIVE, 1, 10_000);
+        ONLY_ALPHAS_TURN = b.comment("R92: only an Alpha's bite turns a human (the Werewolves effect lupus_sanguinem is refused from a werewolf player below Alpha). Off: Werewolves' own rule, any werewolf's bite can infect (it then records no pack or sire).")
+                .define("only_alphas_turn", DEFAULT_ONLY_ALPHAS_TURN);
         WITCH_BONUS = b.comment("Witches, heretics and tribrids get altar range x1.5 and rite power cost x0.75.")
                 .define("witch_bonus_enabled", DEFAULT_WITCH_BONUS);
         SIPHONER_CHANCE = b.comment("Chance that the Rite of Ancestral Calling makes a siphoner instead of a witch.")
@@ -101,6 +106,23 @@ public final class SpeciesConfig {
     @VisibleForTesting
     public static void overrideSiphonerChance(Double value) {
         siphonerChanceOverride = value;
+    }
+
+    /** For tests: pins {@link #onlyAlphasTurn()}; null clears it. */
+    public static void overrideOnlyAlphasTurn(Boolean value) {
+        onlyAlphasTurnOverride = value;
+    }
+
+    public static boolean onlyAlphasTurn() {
+        Boolean pinned = onlyAlphasTurnOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return ONLY_ALPHAS_TURN.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_ONLY_ALPHAS_TURN;
+        }
     }
 
     public static boolean witchBonusEnabled() {
