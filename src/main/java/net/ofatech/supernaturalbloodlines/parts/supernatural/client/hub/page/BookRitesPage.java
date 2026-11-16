@@ -104,7 +104,7 @@ public final class BookRitesPage implements HubPageView {
     }
 
     /** The ink circle: an outer and an inner ring, a square at each point of the compass lit for an ingredient, and your focus in the middle. */
-    private static int circle(HubScreen.Frame f, Rect s, int y, HubSocial.Rite rite) {
+    static int circle(HubScreen.Frame f, Rect s, int y, HubSocial.Rite rite) {
         HubTheme t = f.theme();
         int radius = Math.max(24, Math.min(s.w() / 2 - 10, 44));
         int cx = s.x() + s.w() / 2;
@@ -127,7 +127,7 @@ public final class BookRitesPage implements HubPageView {
         return cy + radius + 10;
     }
 
-    private static boolean have(Player p, String entry) {
+    static boolean have(Player p, String entry) {
         int space = entry.indexOf(' ');
         int count = 1;
         try {

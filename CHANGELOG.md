@@ -8,6 +8,12 @@
 - **Two new pages in every look: Guide and Loadout.** The Guide has chapters for what you are (your creature, then your magic race) and for how the hub, the path, skills, quests, rites, the bloodline, the pack, the loadout and the moon work. The Loadout page is the Loadout tab of the Skills page on a page of its own (the tab stays), and it shows only with the ability HUD. A Ghoul can read the Guide while the other pages wait. Keys 1 to 8 now reach them.
 - The three looks draw their page icons from the new icon atlas.
 
+### Tensura v2 (16d)
+
+- **Tensura''s window is a status window:** a title bar ("Status · Path"), the stats line and a Theme button, a page list with Other mods under it, a teal magic circle with hexagon rings and a hexagon ladder, and an info pane on the right that holds the selection, its tasks and its buttons. Skills are hexagon nodes. No bottom bar.
+- **Blood Moon''s Quests, Rites, Guide and Loadout** are now pill pages (source filters, task cards, a grid of rite cards, a chapter list, round slots), its actions are pills in the floating bar, and the moon glows.
+- Wax seals are never cut by the page number any more, at any GUI scale.
+
 ### Blood Moon v2 (16c) and the Grimoire follow-ups
 
 - **Blood Moon is redrawn:** the moon is the emblem and fills as you climb (rung gems down its left, an almanac under them), a round icon rail on the left and a round launcher rail on the right, SP and EP and a round look button top right, task cards on the right of Path, and a floating bar along the bottom for the chosen rung, skill or pack member. Skills is a radial tree round the moon with tab pills; Pack is the portrait ring round the moon with the ledger in a card. Quests, Rites, Bloodline and Guide use the book pages in two dark cards.

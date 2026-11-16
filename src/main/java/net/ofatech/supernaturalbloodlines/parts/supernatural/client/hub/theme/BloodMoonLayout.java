@@ -16,6 +16,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 public final class BloodMoonLayout {
     public static final String MOON = "moon";
     public static final String RIGHT = "right";
+    public static final String FULL = "full";
     public static final String HEAD = "head";
     static final int RAIL = 22;
     static final int EDGE = 6;
@@ -57,7 +58,7 @@ public final class BloodMoonLayout {
         int fullH = height - EDGE - fullTop;
         Rect main = new Rect(left, fullTop, half, fullH).inset(5);
         Rect side = new Rect(left + half + GAP, fullTop, right - left - half - GAP, fullH).inset(5);
-        return new HubLayout(screen, Map.of(MOON, stage, RIGHT, col.inset(5), HEAD, head, HubLayout.MAIN, main, HubLayout.SIDE, side), rail, portals,
+        return new HubLayout(screen, Map.of(MOON, stage, FULL, new Rect(left, fullTop, right - left, bar.y() - GAP - fullTop), RIGHT, col.inset(5), HEAD, head, HubLayout.MAIN, main, HubLayout.SIDE, side), rail, portals,
                 new HubLayout.Chrome(themeButton, close, stage, counters, bar));
     }
 

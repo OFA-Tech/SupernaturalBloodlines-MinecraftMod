@@ -1,25 +1,28 @@
 package net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.client;
 
-import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
-import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 
 /**
- * The Tensura expansion's geometry: Tensura's framed window made wider, a navy list on the left with the pages from the top and the
- * mods from the bottom, and two panels ({@link HubLayout#MAIN}, {@link HubLayout#SIDE}). Pure.
+ * The Tensura expansion's geometry, a status window: a title bar along the top (the page's name on the left, the stats line in the middle, the Theme
+ * button and the close mark on the right), a list on the left (the pages from the top, "Other mods" under them), a stage in the middle and an info
+ * pane down the right that holds the selection and its buttons ({@link HubLayout.Chrome#detail}). The stage is {@code moon}, {@code full} and, split in two,
+ * {@link HubLayout#MAIN} and {@link HubLayout#SIDE} for the pages that read as two columns. Pure.
  */
 public final class TensuraHubLayout {
-    static final int MAX_W = 470;
-    static final int MAX_H = 270;
+    public static final String MOON = "moon";
+    public static final String FULL = "full";
+    static final int MAX_W = 760;
+    static final int MAX_H = 430;
     static final int MARGIN = 6;
-    static final int INSET = 6;
-    static final int ROW_H = 16;
-    static final int ROW_STEP = 18;
-    /** The title strip over the lists and panels: the window's title and the theme button. */
-    static final int TITLE = 14;
-    static final int PANEL_PAD = 6;
+    static final int INSET = 8;
+    static final int TITLE = 22;
+    /** Room over the page list for its "Pages" caption, and over the mod list for "Other mods". */
+    static final int CAPTION = 11;
+    static final int GAP = 8;
 
     private TensuraHubLayout() {
     }
@@ -29,27 +32,44 @@ public final class TensuraHubLayout {
         int h = Math.min(MAX_H, height - 2 * MARGIN);
         Rect frame = new Rect((width - w) / 2, (height - h) / 2, w, h);
         Rect nav = nav(frame);
+        // every row fits: the step shrinks on a small screen
+        int rows = tabs + seals;
+        int avail = nav.h() - 2 * CAPTION - (seals > 0 ? 6 : 0);
+        int step = Math.max(13, Math.min(18, rows == 0 ? 18 : avail / rows));
+        int rowH = step - 2;
         List<Rect> pages = new ArrayList<>();
+        int y = nav.y() + CAPTION;
         for (int i = 0; i < tabs; i++) {
-            pages.add(new Rect(nav.x() + 4, nav.y() + 5 + i * ROW_STEP, nav.w() - 8, ROW_H));
+            pages.add(new Rect(nav.x(), y + i * step, nav.w(), rowH));
         }
         List<Rect> mods = new ArrayList<>();
+        int modsTop = y + tabs * step + 6 + CAPTION;
         for (int i = 0; i < seals; i++) {
-            mods.add(new Rect(nav.x() + 4, nav.bottom() - 5 - (seals - i) * ROW_STEP + 2, nav.w() - 8, ROW_H));
+            mods.add(new Rect(nav.x(), modsTop + i * step, nav.w(), rowH));
         }
-        int left = nav.right() + INSET;
-        int inner = frame.right() - INSET - left;
-        int mainW = (inner - INSET) * 20 / 43; // the mockup's 1 : 1.15
-        Rect main = new Rect(left, nav.y(), mainW, nav.h());
-        Rect side = new Rect(left + mainW + INSET, nav.y(), inner - mainW - INSET, nav.h());
-        Rect themeButton = new Rect(frame.right() - INSET - 44, frame.y() + 3, 44, 14);
-        return new HubLayout(frame, Map.of(HubLayout.MAIN, main.inset(PANEL_PAD), HubLayout.SIDE, side.inset(PANEL_PAD)), pages, mods,
-                new HubLayout.Chrome(themeButton, null, null, null, null));
+        Rect pane = pane(frame);
+        int left = nav.right() + GAP;
+        Rect stage = new Rect(left, frame.y() + TITLE + INSET, pane.x() - GAP - left, frame.bottom() - INSET - (frame.y() + TITLE + INSET));
+        int mainW = (stage.w() - GAP) * 42 / 100;
+        Rect main = new Rect(stage.x(), stage.y(), mainW, stage.h());
+        Rect side = new Rect(stage.x() + mainW + GAP, stage.y(), stage.w() - mainW - GAP, stage.h());
+        Rect close = new Rect(frame.right() - INSET - 14, frame.y() + 4, 14, 14);
+        Rect themeButton = new Rect(close.x() - 6 - 52, frame.y() + 4, 52, 14);
+        int counterW = Math.max(60, Math.min(250, themeButton.x() - (frame.x() + 150) - 8));
+        Rect counters = new Rect(themeButton.x() - 8 - counterW, frame.y() + 7, counterW, 10);
+        return new HubLayout(frame, Map.of(MOON, stage, FULL, stage, HubLayout.MAIN, main, HubLayout.SIDE, side), pages, mods,
+                new HubLayout.Chrome(themeButton, close, stage, counters, pane));
     }
 
     static Rect nav(Rect frame) {
-        int navW = Math.max(72, Math.min(110, frame.w() / 4));
-        return new Rect(frame.x() + INSET, frame.y() + INSET + TITLE, navW, frame.h() - 2 * INSET - TITLE);
+        int navW = Math.max(70, Math.min(104, frame.w() * 17 / 100));
+        return new Rect(frame.x() + INSET, frame.y() + TITLE + INSET, navW, frame.h() - TITLE - 2 * INSET);
+    }
+
+    /** The info pane down the right of the window. */
+    static Rect pane(Rect frame) {
+        int w = Math.max(110, Math.min(190, frame.w() * 27 / 100));
+        return new Rect(frame.right() - INSET - w, frame.y() + TITLE + INSET, w, frame.h() - TITLE - 2 * INSET);
     }
 
     /** {@code label} as it fits in {@code width}: whole, or cut with an ellipsis (the row's tooltip has it whole). */
@@ -66,8 +86,8 @@ public final class TensuraHubLayout {
         return end == 0 ? "" : label.substring(0, end).stripTrailing() + ellipsis;
     }
 
-    /** The panel behind a content region. */
+    /** The panel behind a content region of the two column pages. */
     static Rect panel(Rect region) {
-        return region.inset(-PANEL_PAD);
+        return region.inset(-4);
     }
 }

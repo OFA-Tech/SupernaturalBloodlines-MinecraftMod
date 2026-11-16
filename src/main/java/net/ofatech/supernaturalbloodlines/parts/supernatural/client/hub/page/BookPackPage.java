@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Locale;
 import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
@@ -16,25 +17,38 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The Grimoire's Pack: a ledger of the pack (leaders between each name and its rank), the chosen member with the actions the command allows
- * (the ACCEPT seal, a red link to leave that asks first), and on the facing page the portrait ring round the sigil: Alphas red, Betas gold,
- * Packmates blue, Brothers brown, the rest small and pale.
+ * Pack: the portrait ring round the sigil (Alphas red, Betas gold, Packmates blue, Brothers brown, the rest small and pale) and the actions the
+ * {@code /pack} command allows, in three styles. BOOK is the Grimoire's: a ledger with leaders, an ACCEPT seal pinned at the foot and a leave link
+ * that asks first. MOON is the Blood Moon's: the ledger in its card, the ring on the stage, accept and leave in the floating bar. TENSURA has the ring
+ * on the stage and the ledger and the buttons in the info pane.
  */
 public final class BookPackPage implements HubPageView {
+    public enum Style { BOOK, MOON, TENSURA }
+
     private static final String KEY = PageKit.HUB + "pack.";
     private static final String BOOK = PageKit.HUB + "book.pack.";
 
     @Nullable
     private String selected;
+    private final Style style;
     private final String ledgerRegion;
     private final String ringRegion;
 
     public BookPackPage() {
-        this(BookKit.MAIN, BookKit.SIDE);
+        this(Style.BOOK, BookKit.MAIN, BookKit.SIDE);
     }
 
-    /** @param ledgerRegion where the ledger and the actions go; @param ringRegion where the portrait ring goes (the Blood Moon puts them in its card and on the stage) */
+    /** The Blood Moon: the ledger in {@code ledgerRegion}, the ring in {@code ringRegion}. */
     public BookPackPage(String ledgerRegion, String ringRegion) {
+        this(Style.MOON, ledgerRegion, ringRegion);
+    }
+
+    public BookPackPage(Style style) {
+        this(style, BookKit.MAIN, BookKit.MOON);
+    }
+
+    private BookPackPage(Style style, String ledgerRegion, String ringRegion) {
+        this.style = style;
         this.ledgerRegion = ledgerRegion;
         this.ringRegion = ringRegion;
     }
@@ -56,25 +70,44 @@ public final class BookPackPage implements HubPageView {
         return PackRing.Role.SUBORDINATE;
     }
 
+    private static Component rankName(HubSocial.Member m) {
+        return Component.translatableWithFallback(KEY + "member." + m.rank(), HubModel.pretty(m.rank()));
+    }
+
     @Override
     public void render(HubScreen.Frame f) {
-        HubTheme t = f.theme();
         WolfState wolf = f.view.bloodline().wolf();
         List<HubSocial.Member> pack = f.view.snapshot().pack();
+        HubSocial.Member chosen = pack.stream().filter(m -> m.name().equals(selected)).findFirst().orElse(null);
+        if (style != Style.TENSURA) {
+            ledger(f, wolf, pack, chosen);
+        } else {
+            BookKit.moonHead(f, Component.translatable(KEY + "title"), Component.translatable(BOOK + "subtitle"));
+        }
+        ring(f, pack, wolf);
+        if (style != Style.BOOK) {
+            detail(f, wolf, pack, chosen);
+        }
+    }
+
+    private void ledger(HubScreen.Frame f, WolfState wolf, List<HubSocial.Member> pack, @Nullable HubSocial.Member chosen) {
+        HubTheme t = f.theme();
         Rect r = f.region(ledgerRegion);
+        if (style == Style.BOOK) {
+            f.reserve(ledgerRegion, BookKit.SEAL + 8); // the ACCEPT seal is pinned at the foot of the page
+        }
         int y = BookKit.head(f, ledgerRegion, Component.translatable(KEY + "title"), Component.translatable(BOOK + "subtitle"));
         y = PageKit.title(f, Component.translatable(KEY + "rank", Component.translatable(KEY + "rank." + wolf.rank().name().toLowerCase(Locale.ROOT))), r.x(), y, r.w(), t.accent());
         if (pack.isEmpty()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "alone"), r.x(), y + 2, r.w(), t.muted());
         }
-        HubSocial.Member chosen = pack.stream().filter(m -> m.name().equals(selected)).findFirst().orElse(null);
         for (HubSocial.Member m : pack) {
             Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, 11);
             if (m == chosen) {
                 f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
             }
             f.g.fill(r.x(), y + 2, r.x() + 4, y + 6, m.online() ? 0xFF2F6E4A : 0xFF9A8566);
-            Component rank = Component.translatableWithFallback(KEY + "member." + m.rank(), net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel.pretty(m.rank()));
+            Component rank = rankName(m);
             BookKit.leader(f, Component.literal(m.name()), rank, r.x() + 8, y, r.w() - 8, t.muted());
             String id = "member:" + m.name();
             f.target(id, hit, List.of(Component.literal(m.name()), rank, Component.translatable(KEY + (m.online() ? "online" : "offline"))), () -> selected = m.name());
@@ -85,36 +118,36 @@ public final class BookPackPage implements HubPageView {
         }
         t.drawRule(f.g, r.x(), y + 3, r.w());
         y += 9;
-        if (chosen != null) {
+        if (style == Style.BOOK && chosen != null) {
             y = BookKit.caps(f, Component.translatable(BOOK + "selected"), r.x(), y, t.muted());
             y = PageKit.title(f, Component.literal(chosen.name()), r.x(), y, r.w(), t.ink());
             y = PageKit.wrapped(f, Component.translatable(KEY + (chosen.online() ? "online" : "offline")), r.x(), y, r.w(), t.muted()) + 4;
         }
-        boolean moon = !ledgerRegion.equals(BookKit.MAIN);
-        if (!moon) {
-            BookKit.seal(f, "pack:accept", Component.translatable(BOOK + "accept"), true, r.x(), y, () -> BloodlinePage.command("pack accept"),
-                    List.of(Component.translatable(KEY + "accept")));
-        }
-        int lx = r.x() + BookKit.SEAL + 8;
-        if (!pack.isEmpty() && !moon) {
-            BookKit.link(f, "pack:leave", Component.translatable(KEY + "leave"), lx, y + 6, List.of(Component.translatable(KEY + "leave")),
-                    () -> f.confirm(Component.translatable(BOOK + "leave_title"), Component.translatable(BOOK + "leave_body"), Component.translatable(BOOK + "leave_yes"),
-                            () -> BloodlinePage.command("pack leave")));
-        }
-        y += moon ? 2 : BookKit.SEAL + 4;
-        y = BookKit.small(f, Component.translatable(BOOK + "invite"), r.x(), y, r.w(), t.muted());
+        y = BookKit.small(f, Component.translatable(BOOK + "invite"), r.x(), y + 2, r.w(), t.muted());
         f.end(y);
-        ring(f, pack, wolf);
-        if (moon) {
-            bar(f, pack, chosen);
+        if (style == Style.BOOK) {
+            int sy = r.bottom() - BookKit.SEAL;
+            BookKit.seal(f, "pack:accept", Component.translatable(BOOK + "accept"), true, r.x(), sy, () -> BloodlinePage.command("pack accept"),
+                    List.of(Component.translatable(KEY + "accept")));
+            if (!pack.isEmpty()) {
+                BookKit.link(f, "pack:leave", Component.translatable(KEY + "leave"), r.x() + BookKit.SEAL + 8, sy + 14, List.of(Component.translatable(KEY + "leave")),
+                        () -> f.confirm(Component.translatable(BOOK + "leave_title"), Component.translatable(BOOK + "leave_body"), Component.translatable(BOOK + "leave_yes"),
+                                () -> BloodlinePage.command("pack leave")));
+            }
         }
     }
 
-    /** The Blood Moon's floating bar: the chosen member (or the pack), and what the command allows: accept an invitation, leave (asks first). */
-    private void bar(HubScreen.Frame f, List<HubSocial.Member> pack, @Nullable HubSocial.Member chosen) {
+    /** The Blood Moon's floating bar and Tensura's info pane: the chosen member (or the pack) and what the command allows. */
+    private void detail(HubScreen.Frame f, WolfState wolf, List<HubSocial.Member> pack, @Nullable HubSocial.Member chosen) {
         Component title = chosen != null ? Component.literal(chosen.name()) : Component.translatable(KEY + "title");
         Component body = chosen != null ? Component.translatable(KEY + (chosen.online() ? "online" : "offline")) : Component.translatable(BOOK + "subtitle");
         Detail.Builder d = Detail.of(title).body(body);
+        if (style == Style.TENSURA) {
+            d.field(Component.translatable(KEY + "rank", Component.translatable(KEY + "rank." + wolf.rank().name().toLowerCase(Locale.ROOT))), Component.empty());
+            for (int i = 0; i < pack.size() && i < 10; i++) {
+                d.field(Component.literal(pack.get(i).name()), rankName(pack.get(i)));
+            }
+        }
         d.action("accept", Component.translatable(KEY + "accept"), true, true, () -> BloodlinePage.command("pack accept"));
         if (!pack.isEmpty()) {
             d.action(new Detail.Action("leave", Component.translatable(KEY + "leave"), false, true, null,
@@ -129,7 +162,7 @@ public final class BookPackPage implements HubPageView {
         int top = f.begin(ringRegion);
         int legend = 17;
         // on the Blood Moon stage the ledger card takes the right of it, so the ring is centred in what is left
-        int areaW = ringRegion.equals(BookKit.MOON) ? Math.max(60, f.region("right").x() - 14 - s.x()) : s.w();
+        int areaW = style == Style.MOON ? Math.max(60, f.region("right").x() - 14 - s.x()) : s.w();
         int cy = top + (s.bottom() - legend - top) / 2;
         int cx = s.x() + areaW / 2;
         List<PackRing.Member> members = new ArrayList<>();

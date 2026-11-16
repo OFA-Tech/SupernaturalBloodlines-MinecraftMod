@@ -21,13 +21,13 @@ import net.ofatech.supernaturalbloodlines.shared.hud.LoadoutAccess;
  * first, with what it does for their form); the right page shows the six slots in HUD order with their keys. Pick an action and then a slot, or a slot
  * and then an action ({@link LoadoutTabModel}); each slot has a clear mark. The server checks what is sent.
  */
-final class LoadoutTab {
+public final class LoadoutTab {
     private static final String KEY = PageKit.HUB + "skills.loadout.";
     private static final int ROW = 18;
 
     private final LoadoutTabModel model = new LoadoutTabModel();
 
-    static boolean available() {
+    public static boolean available() {
         return LoadoutAccess.available();
     }
 

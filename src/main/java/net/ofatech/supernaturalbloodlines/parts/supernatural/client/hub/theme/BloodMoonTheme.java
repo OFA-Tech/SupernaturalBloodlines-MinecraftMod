@@ -18,10 +18,11 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiContext;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookBloodlinePage;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookGuidePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageGuidePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageLoadoutPage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageQuestsPage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageRitesPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookPackPage;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookQuestsPage;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookRitesPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookSkillsPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.minecraft.network.chat.Component;
@@ -55,10 +56,11 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     private final HubPageView path = new BloodMoonPathPage();
     private final BookSkillsPage skills = new BookSkillsPage(true);
     private final HubPageView pack = new BookPackPage(BloodMoonLayout.RIGHT, BloodMoonLayout.MOON);
-    private final HubPageView quests = new BookQuestsPage();
-    private final HubPageView rites = new BookRitesPage();
-    private final HubPageView bloodline = new BookBloodlinePage();
-    private final HubPageView guide = new BookGuidePage();
+    private final HubPageView quests = new StageQuestsPage();
+    private final HubPageView rites = new StageRitesPage();
+    private final HubPageView bloodline = new BookBloodlinePage(true);
+    private final HubPageView guide = new StageGuidePage();
+    private final HubPageView loadout = new StageLoadoutPage();
 
     @Override
     public HubLayout layout(int width, int height, int tabs, int seals) {
@@ -75,6 +77,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
             case RITES -> rites;
             case BLOODLINE -> bloodline;
             case GUIDE -> guide;
+            case LOADOUT -> loadout;
             default -> HubThemeViews.super.view(page);
         };
     }
@@ -97,7 +100,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     @Override
     public void drawOverlay(HubScreen.Frame f, HubPage page) {
         boolean cards = switch (page) {
-            case QUESTS, RITES, BLOODLINE, GUIDE, LOADOUT -> true;
+            case BLOODLINE, GUIDE -> true;
             case SKILLS -> skills.legacyActive();
             default -> false;
         };
@@ -125,16 +128,25 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         int cx = area.x() + area.w() / 2;
         int cy = area.y() + area.h() / 2;
         int r = Math.max(12, Math.min(area.w(), area.h()) / 2 - 8);
-        disc(g, cx, cy, r + 6, 0x28e2493f);
-        disc(g, cx, cy, r + 3, 0x30e2493f);
+        for (int h = 22; h >= 2; h -= 2) {
+            disc(g, cx, cy, r + h, 0x0Ae2493f); // a soft red halo, built from faint rings
+        }
         float fill = Math.max(0.1f, data.progress());
         int line = cy + r - Math.round(2 * r * fill);
         for (int dy = -r; dy <= r; dy++) {
             int half = (int) Math.sqrt((double) r * r - dy * dy);
             int y = cy + dy;
             float k = (dy + r) / (2f * r);
-            int color = y >= line ? mix(0xFFffb3a3, 0xFF9a1820, k) : mix(0xFF4a1520, 0xFF2a0b12, k);
-            g.fill(cx - half, y, cx + half, y + 1, color);
+            if (y < line) {
+                g.fill(cx - half, y, cx + half, y + 1, mix(0xFF4a1520, 0xFF2a0b12, k));
+                continue;
+            }
+            // lit part: pale in the middle, red toward the rim, so the moon glows instead of being a flat disc
+            int step = Math.max(1, half / 12);
+            for (int dx = -half; dx < half; dx += step) {
+                float d = (float) Math.sqrt((double) dx * dx + (double) dy * dy) / r;
+                g.fill(cx + dx, y, Math.min(cx + half, cx + dx + step), y + 1, mix(0xFFffd2c4, 0xFF8a1220, Math.min(1f, d * d)));
+            }
         }
         int[][] craters = {{-r * 45 / 100, -r * 40 / 100, r / 6}, {r * 30 / 100, -r * 15 / 100, r / 9}, {-r * 60 / 100, r * 25 / 100, r / 10},
                 {r * 20 / 100, r * 50 / 100, r / 7}, {r * 55 / 100, r * 30 / 100, r / 12}};

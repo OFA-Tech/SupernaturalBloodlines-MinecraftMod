@@ -86,6 +86,9 @@ public final class BookQuestsPage implements HubPageView {
     private void detail(HubScreen.Frame f, Optional<HubModel.TaskRow> chosen) {
         HubTheme t = f.theme();
         Rect s = f.region(BookKit.SIDE);
+        if (chosen.isPresent()) {
+            f.reserve(BookKit.SIDE, BookKit.SEAL + 8); // the CLAIM seal is pinned at the foot of the page
+        }
         int y = f.begin(BookKit.SIDE);
         if (chosen.isEmpty()) {
             f.end(PageKit.wrapped(f, Component.translatable(KEY + "choose"), s.x(), y, s.w(), t.muted()));
@@ -135,12 +138,12 @@ public final class BookQuestsPage implements HubPageView {
         x += BookKit.link(f, "link:track", Component.translatable(PageKit.HUB + "path.track"), x, y, List.of(Component.translatable(PageKit.HUB + "path.track_soon")), null) + 12;
         BookKit.link(f, "link:hide", Component.translatable(BOOK + (hideDone ? "show" : "hide")), x, y, List.of(Component.translatable(BOOK + (hideDone ? "show" : "hide"))),
                 () -> hideDone = !hideDone);
-        y += 16;
+        f.end(y + 16);
         String id = row.task().id();
         boolean claimable = row.state() == TaskState.CLAIMABLE;
-        Rect seal = BookKit.seal(f, "claim:" + id, Component.translatable(BOOK + "claim"), claimable, s.right() - BookKit.SEAL, y, () -> f.claim(id),
+        int sy = s.bottom() - BookKit.SEAL;
+        BookKit.seal(f, "claim:" + id, Component.translatable(BOOK + "claim"), claimable, s.right() - BookKit.SEAL, sy, () -> f.claim(id),
                 List.of(Component.translatable(PageKit.HUB + "task.claim"), PageKit.text(row.text())));
-        int note = BookKit.small(f, Component.translatable(BOOK + "stamp_note"), s.x(), y + 4, s.w() - BookKit.SEAL - 8, t.muted());
-        f.end(Math.max(seal.bottom(), note) + 4);
+        BookKit.small(f, Component.translatable(BOOK + "stamp_note"), s.x(), sy + 6, s.w() - BookKit.SEAL - 8, t.muted());
     }
 }

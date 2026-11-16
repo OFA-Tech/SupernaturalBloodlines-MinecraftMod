@@ -115,6 +115,7 @@ public final class HubScreen extends Screen {
         layout = theme.layout(width, height, visible.size(), launchers.size());
         theme.drawFrame(g, layout);
         maxScroll.clear();
+        reserved.clear();
         emblemRect = null;
         Frame f = new Frame(g, mouseX, mouseY, view);
         for (int i = 0; i < visible.size(); i++) {
@@ -143,7 +144,7 @@ public final class HubScreen extends Screen {
         targets = f.targets;
         for (Map.Entry<String, Integer> e : maxScroll.entrySet()) {
             if (e.getValue() > 0 && layout.regions().containsKey(e.getKey())) {
-                theme.drawScrollbar(g, layout.region(e.getKey()), scroll.getOrDefault(e.getKey(), 0), e.getValue());
+                theme.drawScrollbar(g, viewport(e.getKey()), scroll.getOrDefault(e.getKey(), 0), e.getValue());
             }
         }
         theme.drawFooter(f, layout, page);
@@ -156,6 +157,16 @@ public final class HubScreen extends Screen {
     }
 
     /** The view of a page in the current theme; the page answers keys and drags first, see {@link #keyPressed}. */
+    /** Pixels at the bottom of a region that a page keeps for something pinned (a wax seal), set by {@link Frame#reserve} before {@link Frame#begin}. */
+    private final Map<String, Integer> reserved = new java.util.HashMap<>();
+
+    /** The part of a region that scrolls: the region less what the page reserved at its bottom. */
+    private Rect viewport(String name) {
+        Rect r = layout.region(name);
+        int keep = reserved.getOrDefault(name, 0);
+        return keep <= 0 ? r : new Rect(r.x(), r.y(), r.w(), Math.max(0, r.h() - keep));
+    }
+
     private HubPageView viewOf(HubPage p, HubView view) {
         HubThemeViews views = theme instanceof HubThemeViews v ? v : null;
         return p.locked(view.context()) ? HubPages.locked() : views != null ? views.view(p) : HubPages.shared(p);
@@ -230,7 +241,7 @@ public final class HubScreen extends Screen {
         Target t = target(focus);
         if (t != null && t.region() != null && layout.regions().containsKey(t.region())) {
             int now = scroll.getOrDefault(t.region(), 0);
-            int next = Math.min(maxScroll.getOrDefault(t.region(), 0), HubFocus.scrollToShow(now, layout.region(t.region()), t.rect()));
+            int next = Math.min(maxScroll.getOrDefault(t.region(), 0), HubFocus.scrollToShow(now, viewport(t.region()), t.rect()));
             scroll.put(t.region(), next);
         }
     }
@@ -409,7 +420,7 @@ public final class HubScreen extends Screen {
         Target t = target(focus);
         String region = t != null && t.region() != null ? t.region() : HubLayout.MAIN;
         if (layout != null && layout.regions().containsKey(region)) {
-            scroll.put(region, HubFocus.pageScroll(scroll.getOrDefault(region, 0), maxScroll.getOrDefault(region, 0), layout.region(region), direction));
+            scroll.put(region, HubFocus.pageScroll(scroll.getOrDefault(region, 0), maxScroll.getOrDefault(region, 0), viewport(region), direction));
         }
     }
 
@@ -511,10 +522,15 @@ public final class HubScreen extends Screen {
             return layout.region(name);
         }
 
+        /** Keeps {@code pixels} at the bottom of a region out of its scrolling content, so something pinned there (a seal) is never cut; call before {@link #begin}. */
+        public void reserve(String name, int pixels) {
+            reserved.put(name, pixels);
+        }
+
         /** Starts drawing into a region: clips to it and returns the top y, moved by its scroll. */
         public int begin(String name) {
             region = name;
-            clip = layout.region(name);
+            clip = viewport(name);
             g.enableScissor(clip.x(), clip.y(), clip.right(), clip.bottom());
             return clip.y() - scroll.getOrDefault(name, 0);
         }

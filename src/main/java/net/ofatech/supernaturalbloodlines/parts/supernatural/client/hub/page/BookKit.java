@@ -159,6 +159,12 @@ public final class BookKit {
     }
 
     /** A small muted heading in capitals. */
+    /** A filled box with a one pixel border: the cards and tiles of the pill styles. */
+    static void outline(net.minecraft.client.gui.GuiGraphics g, Rect r, int fill, int border) {
+        g.fill(r.x(), r.y(), r.right(), r.bottom(), border);
+        g.fill(r.x() + 1, r.y() + 1, r.right() - 1, r.bottom() - 1, fill);
+    }
+
     static int caps(HubScreen.Frame f, Component text, int x, int y, int color) {
         return small(f, Component.literal(text.getString().toUpperCase(java.util.Locale.ROOT)), x, y, 1000, color) + 2;
     }
@@ -187,6 +193,9 @@ public final class BookKit {
 
     /** The Blood Moon's page head, top left: the title large and a muted line under it. */
     static void moonHead(HubScreen.Frame f, Component title, @Nullable Component subtitle) {
+        if (f.theme() instanceof net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubThemeViews v && v.takesHead(title, subtitle)) {
+            return;
+        }
         Rect h = f.region("head");
         var pose = f.g.pose();
         pose.pushPose();
@@ -256,6 +265,8 @@ public final class BookKit {
     }
 
     static final String MOON = "moon";
+    /** The whole area between the rails and above the bar: the pill styles' Quests, Rites and Loadout draw their cards and grids here. */
+    static final String FULL = "full";
     static final String MAIN = HubLayout.MAIN;
     static final String SIDE = HubLayout.SIDE;
 }

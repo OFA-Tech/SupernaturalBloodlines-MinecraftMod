@@ -117,22 +117,27 @@ public final class BloodMoonPathPage implements HubPageView {
             String id = row.task().id();
             boolean sel = chosen.map(c -> c.task().id().equals(id)).orElse(false);
             boolean claimable = row.state() == TaskState.CLAIMABLE;
-            Rect box = new Rect(col.x(), y, col.w(), 30);
+            List<net.minecraft.util.FormattedCharSequence> lines = f.font().split(PageKit.text(row.text()), Math.max(40, col.w() - KitDraw.tagWidth(f.font(), SourceTag.of(row.source())) - 14));
+            boolean two = lines.size() > 1;
+            Rect box = new Rect(col.x(), y, col.w(), two ? 40 : 30);
             f.g.fill(box.x(), box.y(), box.right(), box.bottom(), claimable ? t.good() : sel ? t.accent() : t.muted());
             f.g.fill(box.x() + 1, box.y() + 1, box.right() - 1, box.bottom() - 1, 0xFF160a10);
             int tw = KitDraw.sourceTag(f.g, f.font(), t, SourceTag.of(row.source()), box.x() + 4, box.y() + 4);
-            String text = f.font().plainSubstrByWidth(PageKit.text(row.text()).getString(), box.w() - tw - 14);
-            f.g.drawString(f.font(), text, box.x() + tw + 8, box.y() + 5, t.ink(), false);
+            f.g.drawString(f.font(), lines.get(0), box.x() + tw + 8, box.y() + 5, t.ink(), false);
+            if (two) {
+                f.g.drawString(f.font(), lines.get(1), box.x() + tw + 8, box.y() + 15, t.ink(), false);
+            }
+            int by = box.y() + (two ? 29 : 19);
             float frac = row.counted() && row.target() > 0 ? Math.min(1f, row.progress() / (float) row.target()) : row.state() == TaskState.CLAIMED || claimable ? 1f : 0f;
             String count = row.counted() && row.target() > 1 ? row.progress() + "/" + row.target() : claimable ? "\u2713" : "";
             int cw = BookKit.smallWidth(f, count);
-            t.drawBar(f.g, new Rect(box.x() + 4, box.y() + 19, box.w() - 12 - cw, 5), frac);
-            BookKit.small(f, Component.literal(count), box.right() - cw - 4, box.y() + 18, cw + 4, claimable ? t.good() : t.muted());
+            t.drawBar(f.g, new Rect(box.x() + 4, by, box.w() - 12 - cw, 5), frac);
+            BookKit.small(f, Component.literal(count), box.right() - cw - 4, by - 1, cw + 4, claimable ? t.good() : t.muted());
             f.target("task:" + id, box, PageKit.tooltip(row), () -> f.select(id));
             if (f.focused("task:" + id)) {
                 KitDraw.focusRing(f.g, box, t.focusColor());
             }
-            y += 34;
+            y += box.h() + 4;
         }
         y = BookKit.small(f, PathPage.reward(active), col.x(), y + 2, col.w(), t.accent());
         f.end(y);
