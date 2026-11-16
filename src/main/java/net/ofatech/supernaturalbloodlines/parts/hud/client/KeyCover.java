@@ -15,6 +15,8 @@ import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.settings.KeyModifier;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.parts.hud.net.SetLoadoutPayload;
+import net.ofatech.supernaturalbloodlines.core.hud.CoverPolicy;
 import net.ofatech.supernaturalbloodlines.core.hud.CoverRun;
 import net.ofatech.supernaturalbloodlines.core.hud.RecordFile;
 
@@ -23,7 +25,7 @@ import net.ofatech.supernaturalbloodlines.core.hud.RecordFile;
  * {@code CoveredKeys} and {@code CoverRun} (core); this class reads the game's binds, applies the plan, saves the options and keeps the record in
  * {@code config/supernaturalbloodlines-hud-keys.json}. Keys are found by name, so a mod that is not installed has no key to cover and nothing
  * is touched. It runs on the first client tick (every mod has registered its keys and the options are loaded by then) and again whenever
- * {@code hide_covered_keys} changes or the Controls screen closes (its "Reset All" puts covered keys back on their defaults).
+ * the cover policy changes ({@code hud_enabled}, {@code hide_covered_keys}, joining or leaving a world whose server has the HUD channel) or the Controls screen closes (its "Reset All" puts covered keys back on their defaults).
  * <p>
  * With the part off nothing of it would run, so the main class calls {@link #registerRestoreOnly()} then: the recorded binds come back.
  * Never touched: Tensura's {@code next_mode}, {@code race_ability} and {@code main_gui}, and Vampirism's action wheel, vision and skill screen.
@@ -59,7 +61,7 @@ public final class KeyCover {
     }
 
     public static void register() {
-        NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick(HudClientConfig::hideCoveredKeys));
+        NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick(KeyCover::wantCover));
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Closing e) -> {
             if (e.getScreen() instanceof KeyBindsScreen) {
                 applied = null;
@@ -70,6 +72,13 @@ public final class KeyCover {
     /** The part is off: put back what a run with it on took away, once. */
     public static void registerRestoreOnly() {
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick(() -> false));
+    }
+
+    /** The keys are taken only while the HUD can take over (see {@link CoverPolicy}): in a world whose server has the HUD channel. */
+    private static boolean wantCover() {
+        Minecraft mc = Minecraft.getInstance();
+        return CoverPolicy.cover(HudClientConfig.hudEnabled(), HudClientConfig.hideCoveredKeys(), mc.player != null && mc.level != null,
+                HudSend.canSend(SetLoadoutPayload.TYPE));
     }
 
     /** True while covering is in effect (the option is on and the record could be kept): only then are the keys hidden from Controls. */

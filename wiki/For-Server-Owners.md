@@ -28,6 +28,32 @@ The apex races (Primordial Vampire, Primordial Hybrid, Moonblood Hybrid, Ancestr
 
 Other things that cannot be rolled back in the game: mastery of a skill that was taken away and given back is lost.
 
+## Before removing the mod: saved attribute modifiers
+
+Some parts add **permanent attribute modifiers**. They are saved with the player, so **they stay after the jar is gone** (nothing is left to take them away): a player keeps the extra health, attack or speed for good. While the mod runs, switching a part off removes its modifiers at the next login. Before you remove the jar, do either of these:
+
+1. **Switch every part off first** (`[parts]` in `supernaturalbloodlines-common.toml`, all `false`), restart, and let every player log in once. Core strips the modifiers of every switched-off part on login. Players who never come back keep theirs, so for them:
+2. **Remove them by command**, per player (`<player>` or `@a` for everyone online). Each line is harmless if the modifier is not there ("no such modifier").
+
+| Modifier id (`supernaturalbloodlines:...`) | Part | Attribute(s) | Command |
+|---|---|---|---|
+| `original` | species | max health, attack damage | `/attribute <player> minecraft:generic.max_health modifier remove supernaturalbloodlines:original` and the same with `minecraft:generic.attack_damage` |
+| `hybrid` | species | movement speed, attack damage | `/attribute <player> minecraft:generic.movement_speed modifier remove supernaturalbloodlines:hybrid` and `minecraft:generic.attack_damage` |
+| `hunter_mark` | species | attack damage, movement speed | `/attribute <player> minecraft:generic.attack_damage modifier remove supernaturalbloodlines:hunter_mark` and `minecraft:generic.movement_speed` |
+| `wolf_rank` | species | attack damage, movement speed, max health | `/attribute <player> minecraft:generic.attack_damage modifier remove supernaturalbloodlines:wolf_rank`, then `minecraft:generic.movement_speed`, `minecraft:generic.max_health` |
+| `pack_bonus` | species | attack damage | `/attribute <player> minecraft:generic.attack_damage modifier remove supernaturalbloodlines:pack_bonus` |
+| `layer_magicule` | species_tensura | `tensura:max_magicule` | `/attribute <player> tensura:max_magicule modifier remove supernaturalbloodlines:layer_magicule` |
+| `layer_aura` | species_tensura | `tensura:max_aura` | `/attribute <player> tensura:max_aura modifier remove supernaturalbloodlines:layer_aura` |
+| `ep_boost` | species_tensura | `tensura:aura_gain`, `tensura:magicule_gain` | `/attribute <player> tensura:aura_gain modifier remove supernaturalbloodlines:ep_boost` and `tensura:magicule_gain` |
+| `primeval_true_alpha` | species_tensura | max health, attack damage, movement speed | `/attribute <player> minecraft:generic.max_health modifier remove supernaturalbloodlines:primeval_true_alpha`, then `minecraft:generic.attack_damage`, `minecraft:generic.movement_speed` |
+| `skill/s-hum-1`, `skill/s-vam-4`, `skill/s-wit-7` | supernatural | max health | `/attribute <player> minecraft:generic.max_health modifier remove supernaturalbloodlines:skill/s-hum-1` (and `s-vam-4`, `s-wit-7`) |
+| `skill/s-hum-3`, `skill/s-vam-2` | supernatural | movement speed | `/attribute <player> minecraft:generic.movement_speed modifier remove supernaturalbloodlines:skill/s-hum-3` (and `s-vam-2`) |
+| `skill/s-ori-1`, `skill/s-wol-7` | supernatural | attack damage | `/attribute <player> minecraft:generic.attack_damage modifier remove supernaturalbloodlines:skill/s-ori-1` (and `s-wol-7`) |
+| `skill/s-wol-1` | supernatural | armor | `/attribute <player> minecraft:generic.armor modifier remove supernaturalbloodlines:skill/s-wol-1` |
+
+The `skill/...` rows are the ladder skills that change an attribute in the shipped data. A datapack that adds more attribute skills adds more `skill/<id>` modifiers (the id is the skill id in lower case). `/attribute <player> <attribute> modifier remove <id>` is vanilla and works on offline players only through a tool that edits the player file; a player who is offline keeps the modifier until they log in with the mod still installed.
+
+**Also before removing the mod:** apex races (see above), and on every client the hidden keys ([Key binds](Key-Binds)): every player who covered keys should start their client once with `hide_covered_keys = false` (or `hud_enabled = false`, or sit at the title screen) **before** the jar is deleted, because the restore code is in the jar. After that the keys stay unbound until the player binds them again (the old binds are in `config/supernaturalbloodlines-hud-keys.json`). The keys are only unbound while the player is in a world whose server has the HUD, so a server that turns the `hud` part off gives them back by itself.
 ## The ability HUD part
 
 The `hud` part is mostly client side (the slots, the keys, the blood in Tensura's food spot), but **the server needs it too**: bites and the slot triggers are checked and done on the server, and the loadout is stored on the player. A client without the mod cannot send or receive its packets and is simply skipped. It adds two small mixins with Tensura (a skill in the next preset can be fired, and Tensura's vampire race ability can feed a thirsty vampire); both can be switched off in `supernaturalbloodlines-hud.toml` (`next_preset_active`, `tensura_feed_fills_blood`). Switching the part off puts every hidden key back the next time a client starts. See [Ability HUD](Ability-HUD) and [Configuration](Configuration).
