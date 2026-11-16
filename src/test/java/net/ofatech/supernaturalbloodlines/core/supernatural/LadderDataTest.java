@@ -40,7 +40,7 @@ class LadderDataTest {
             Map.entry(SupernaturalRace.SIPHONER, new long[] {6, 19, 175_000}),
             Map.entry(SupernaturalRace.HERETIC, new long[] {6, 20, 210_000}),
             Map.entry(SupernaturalRace.HUNTER, new long[] {6, 18, 171_000}),
-            Map.entry(SupernaturalRace.WEREWOLF, new long[] {7, 23, 266_000}));
+            Map.entry(SupernaturalRace.WEREWOLF, new long[] {7, 22, 266_000}));
 
     private static String prefix(SupernaturalRace race) {
         return switch (race) {
@@ -237,7 +237,7 @@ class LadderDataTest {
         TaskSpec a = alpha.tasks().get(0);
         assertEquals(TaskSpec.Detector.STATE, a.detector());
         assertEquals("rank_alpha", a.args().get("predicate"));
-        assertEquals(6, alpha.sp());
+        assertEquals(5, alpha.sp());
         assertEquals(100_000, alpha.ep());
     }
 }

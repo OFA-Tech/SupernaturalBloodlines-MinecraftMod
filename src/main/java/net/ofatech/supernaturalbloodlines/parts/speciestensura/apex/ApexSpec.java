@@ -5,7 +5,7 @@ import java.util.Optional;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 
 /**
- * One apex race: the stat bonuses (placeholders, the owner tunes them) and its intrinsic skills. The species layer
+ * One apex race: the stat bonuses (final, see docs/balance.md) and its intrinsic skills. The species layer
  * skills are not repeated here: the layer owns and tracks them, so they go dormant when the species is lost, while the
  * race keeps its signature skill. No game classes.
  *
@@ -28,7 +28,7 @@ public record ApexSpec(String id, double health, double attack, double speed, Li
     /** Plain Vampire (D1). */
     public static final ApexSpec ELDER_VAMPIRE = new ApexSpec("elder_vampire", 900, 20, 0.02, List.of("tensura:self_regeneration"), true);
     /** Plain Werewolf (D1); R103: not undead. */
-    public static final ApexSpec ALPHA_PRIMEVAL = new ApexSpec("alpha_primeval", 1000, 25, 0.03, List.of("tensura:godwolf_sense"), false);
+    public static final ApexSpec ALPHA_PRIMEVAL = new ApexSpec("alpha_primeval", 900, 25, 0.03, List.of("tensura:godwolf_sense"), false);
 
     public static final List<ApexSpec> ALL = List.of(PRIMORDIAL_VAMPIRE, PRIMORDIAL_HYBRID, MOONBLOOD_HYBRID, ANCESTRAL_WITCH,
             VOID_SIPHON, TRIBRID_ASCENDANT, ETERNAL_HUNTER, ELDER_VAMPIRE, ALPHA_PRIMEVAL);

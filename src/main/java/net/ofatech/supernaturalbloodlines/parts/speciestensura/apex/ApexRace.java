@@ -20,8 +20,7 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * One class for the nine apex races, configured by an {@link ApexSpec}. Placeholder numbers: the owner tunes them
- * ({@link ApexSpec} for the stats, the constants here for energy). An apex race is the end of the line: no next evolution.
+ * One class for the nine apex races, configured by an {@link ApexSpec}. Final numbers (docs/balance.md): {@link ApexSpec} has the stats, the constants here the energy. An apex race is the end of the line: no next evolution.
  */
 public class ApexRace extends TensuraRace {
     /** Base max EP needed to evolve (owner decision 2026-11-14: the same as a divine human). */

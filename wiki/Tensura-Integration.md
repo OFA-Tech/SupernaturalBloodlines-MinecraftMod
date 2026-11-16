@@ -87,7 +87,7 @@ A player who becomes a **Ghoul** (see [Vampires and Originals](Vampires-And-Orig
 
 From the **third tier** of a Tensura line (saint tier for the human-like lines), a player with a species (or a plain vampire or werewolf) can pick **one apex race** in Tensura's own evolution screen. Offer ids are `supernaturalbloodlines:<name>`. With the supernatural ladders on, you also need the top rung of your race's ladder.
 
-| Species | Apex race | Signature skill (placeholder) | Undead |
+| Species | Apex race | Signature skill | Undead |
 |---|---|---|---|
 | Original | Primordial Vampire | infinite_regeneration | yes |
 | Original hybrid | Primordial Hybrid | ultraspeed_regeneration | yes |
@@ -105,8 +105,8 @@ From the **third tier** of a Tensura line (saint tier for the human-like lines),
 | Vampire (vampire, overcomer, lord, divine) | `vampire_lord`; `divine_vampire` (the overcomer is the tier below) | vampire, Original, hybrid, Original hybrid, heretic |
 | Beastfolk | `spirit_beast`; `divine_beast` | werewolf, hybrid, tribrid, and a witch or siphoner who is also a werewolf |
 
-A witch- or siphoner-werewolf may be offered two apex races. A **True Alpha** (not dormant) on Primeval Alpha has the apex bonuses x1.5 and is granted the skill Primeval Roar: the Alpha Roar with Roar's Echo's cooldown, twice the range, and +10% attack for 30 s for the Betas it reaches (draft numbers).
-- An apex race needs **2,000,000 EP** (the same as Tensura's divine human) and can give more max health than the divine tier (Primordial Vampire 1000, against 980). **All names, stats, EP and signature skills are placeholders.**
+A witch- or siphoner-werewolf may be offered two apex races. A **True Alpha** (not dormant) on Primeval Alpha has the apex bonuses x1.5 and is granted the skill Primeval Roar: the Alpha Roar with Roar's Echo's cooldown, twice the range, and +10% attack for 30 s for the Betas it reaches.
+- An apex race needs **2,000,000 EP** (the same as Tensura's divine human) and can give more max health than the divine tier (Primordial Vampire 1000, against 980). All names, stats, EP and signature skills are final (`docs/balance.md`); only the race icons are missing.
 - Apex races are human-like. The five vampire-type ones (Primordial Vampire, Primordial Hybrid, Moonblood Hybrid, Tribrid Ascendant, Elder Vampire) are also tagged `tensura:undead` (holy damage still applies). Tensura's `no_blood` includes undead, but every apex race is also in our tag `supernaturalbloodlines:bitable`, so **no apex race is bloodless for this mod**: they can be bitten. Tensura's own drain, blood mist and vampire feeding reach them too.
 - **Losing the species does not remove a chosen apex race.** The species-only layer skills go dormant; the race's own signature skill stays.
 - There is no icon for the apex races in the evolution screen (not checked in a client).
