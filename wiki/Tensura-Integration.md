@@ -170,7 +170,7 @@ See [Werewolves and packs](Werewolves-And-Packs) for the ranks.
 
 ## Mixins in this integration
 
-`vampirism_tensura` uses 3 mixins (sun burn, sun debuffs, bite refusal) and `species_tensura` uses 2 (undead checks, evolution list). Each has `require = 0`: if Tensura renames a method after an update, the hook is skipped, the log says so, and the rest keeps working. See [Parts and compatibility](Parts-And-Compatibility#mixins).
+`vampirism_tensura` uses 3 mixins (sun burn, sun debuffs, bite refusal), `species_tensura` uses 2 (undead checks, evolution list) and `hud` uses 2 with Tensura (a skill in the next preset can be fired, a thirsty vampire can use Tensura's vampire race feed). Each has `require = 0`: if Tensura renames a method after an update, the hook is skipped, the log says so, and the rest keeps working. See [Parts and compatibility](Parts-And-Compatibility#mixins).
 
 ## Feeding
 

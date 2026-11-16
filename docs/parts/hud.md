@@ -4,7 +4,7 @@ Requires: **no mod**. Tensura, Vampirism and Werewolves are optional extras insi
 
 **Mixin budget: 2 of 3 used** (see `docs/mixins.md`): (1) `AbilityStorageNextPresetMixin` (13b Task 2) **used**, because Tensura's server refuses a skill in preset N+1 otherwise; (2) `VampireRaceFeedMixin` (13c Task 2) **used**, because Tensura's race feed refuses a healthy thirsty vampire otherwise. Still reserved: (3) `KeyBindsListHideMixin` (not needed: 13a Task 4 hides the keys without it). `HudMixinPlugin` follows `PartMixinPlugin` and applies each future mixin only when its target mods are installed (a map from the mixin's simple class name to mod ids).
 
-**Done so far (phase 13a, Tasks 1 to 3):** the part and its configs, the Bite rules and the server bite, the turning bite. Not yet: the keymap, the slots and the HUD (13a Task 4 and 13b).
+**Status (plan 13 done, plan 13d hardening on top):** the part and its configs, the Bite rules and the server bite, the turning bite, the keymap and the covered keys (13a), the six slots, the loadout, the layer and the hub Loadout tab (13b), the blood in Tensura's food spot, the race feed and the player-ready defaults (13c). Later changes are in the sections below and in `CHANGELOG.md`.
 
 ## Layout
 

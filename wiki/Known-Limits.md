@@ -1,6 +1,6 @@
 # Known limits
 
-Things that **don't work the way you may expect**, or are **not finished or not checked in a real game yet**. The mod is at version **0.1.0**. Everything is covered by automated game tests on a test server; the "not checked" items need a person in a real client.
+Things that **don't work the way you may expect**, or are **not finished or not checked in a real game yet**. The mod is at version **0.2.0-alpha**. Everything is covered by automated game tests on a test server; the "not checked" items need a person in a real client.
 
 ## Not possible
 
