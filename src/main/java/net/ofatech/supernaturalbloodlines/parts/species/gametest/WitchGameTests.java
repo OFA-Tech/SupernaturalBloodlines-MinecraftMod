@@ -473,6 +473,31 @@ public final class WitchGameTests {
         return e;
     }
 
+    /** 13d: a sneaking siphoner with an empty hand can still trade: the click on a villager is not taken, a click on an ordinary creature is. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void siphonerClickLeavesAVillagersMenuAlone(GameTestHelper helper) {
+        net.minecraft.world.entity.npc.Villager villager = helper.spawn(net.minecraft.world.entity.EntityType.VILLAGER, new BlockPos(1, 1, 1));
+        net.minecraft.world.entity.monster.Zombie zombie = helper.spawn(net.minecraft.world.entity.EntityType.ZOMBIE, new BlockPos(2, 1, 1));
+        villager.setNoAi(true);
+        zombie.setNoAi(true);
+        RecordingPlayer siphoner = player(Species.SIPHONER, 0, helper);
+        siphoner.setShiftKeyDown(true);
+        try {
+            var onZombie = new PlayerInteractEvent.EntityInteract(siphoner, InteractionHand.MAIN_HAND, zombie);
+            NeoForge.EVENT_BUS.post(onZombie);
+            helper.assertTrue(onZombie.isCanceled(), "control: a siphoner's click on a zombie was not taken");
+            long power = BloodlineAccess.get(siphoner).siphonedPower();
+            var onVillager = new PlayerInteractEvent.EntityInteract(siphoner, InteractionHand.MAIN_HAND, villager);
+            NeoForge.EVENT_BUS.post(onVillager);
+            helper.assertTrue(!onVillager.isCanceled(), "a siphoner's click on a villager was taken: no trade menu");
+            helper.assertTrue(BloodlineAccess.get(siphoner).siphonedPower() == power && villager.getHealth() == villager.getMaxHealth(), "the villager was siphoned");
+        } finally {
+            villager.discard();
+            zombie.discard();
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void siphonerDrainsBlock(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();

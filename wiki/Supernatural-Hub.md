@@ -37,7 +37,9 @@ Skill points (SP) from the ladders buy **skills**. There are 40 to buy, in 11 tr
 
 ### What the skills change
 
-Skills that tune a rule: Silver Tongue (compulsion lasts 1.5 times as long and the villager discount is a bit bigger: +25 reputation, the villager's own limit), Bloodmaker's Yield (2 bottles of Original's Blood), Sire's Call (call every 5 minutes), Steady Thirst and Venom Fang (hybrids), Moon Calm, Pack Heart, Roar's Echo and Wolfsbane Tolerance (werewolves), Steady Circle, Wide Circle, Emissary's Bond and Ancestral Voice (witches), the five siphoner skills, Steady Aim, Hunter's Eye, Patient Hunter and Mark Mastery (hunters), Vervain Blood and Elder's Skin. Ashwarden: vampires and werewolves that touch a mountain ash line you laid (while you are online) are pushed back and weakened for 5 seconds.
+Skills that tune a rule: Silver Tongue (compulsion lasts 1.5 times as long and the villager discount is a bit bigger: +25 reputation, the villager's own limit), Bloodmaker's Yield (2 bottles of Original's Blood), Sire's Call (call every 5 minutes), Steady Thirst and Venom Fang (hybrids), Moon Calm, Pack Heart, Roar's Echo and Wolfsbane Tolerance (werewolves), Steady Circle, Wide Circle, Emissary's Bond and Ancestral Voice (witches), the five siphoner skills, Steady Aim, Hunter's Eye, Patient Hunter and Mark Mastery (hunters), and Vervain Blood. Ashwarden: vampires and werewolves that touch a mountain ash line you laid (while you are online) are pushed back and weakened for 5 seconds.
+
+**Elder's Skin (S-VAM-7)** gives you **Vampirism's own less_sundamage skill** (it then also shows in Vampirism's skill screen and costs no Vampirism skill points; the sun hurts less by Vampirism's own rule). **Night Stride (S-VAM-2, +5% speed at night) and Thick Hide (S-WOL-1, +1 armor)** overlap with what Vampirism and Werewolves already give; they stack with those on purpose.
 
 Keen Fangs adds 1 blood to every feed on human-like blood (villagers, traders and other humans).
 

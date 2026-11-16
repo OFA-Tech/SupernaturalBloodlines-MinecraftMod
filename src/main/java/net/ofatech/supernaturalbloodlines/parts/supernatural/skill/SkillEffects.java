@@ -1,5 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.skill;
 
+import de.teamlapen.vampirism.api.VampirismAPI;
+import de.teamlapen.vampirism.api.VampirismRegistries;
+import de.teamlapen.vampirism.api.entity.player.skills.ISkill;
+import de.teamlapen.vampirism.api.entity.player.skills.ISkillHandler;
 import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import java.util.HashSet;
 import java.util.List;
@@ -88,9 +92,39 @@ public final class SkillEffects {
                 apply(p, spec, active.contains(spec.id()) && spec.attr().when().holds(fixed, level.getMoonPhase(), level.getDayTime()));
             }
         }
+        enableVampirismSkills(p, table, active);
         Set<String> granted = SkillGrants.sync(p, tensuraSkillsOf(table, active), s.granted());
         if (!granted.equals(s.granted())) {
             SupernaturalAccess.set(p, SupernaturalAccess.get(p).toBuilder().granted(granted).build());
+        }
+    }
+
+    /**
+     * The Vampirism skills the active VAMPIRISM skills stand for (S-VAM-7: {@code vampirism:less_sundamage}) are enabled on the player's Vampirism skill
+     * handler, so Vampirism's own effect and its own skill screen carry them. Nothing is taken back: a skill the player already has is left alone, and
+     * a Vampirism skill reset is answered by the next sync (every 200 ticks) while the ladder skill is owned. It is not paid for with Vampirism skill
+     * points here (checked in a GameTest, SkillRuleGameTests.eldersSkinEnablesVampirismsLessSundamageSkill): the ladder skill's own cost is what the player paid.
+     */
+    private static void enableVampirismSkills(ServerPlayer p, SkillTable table, Set<String> active) {
+        for (String id : active) {
+            table.skill(id).filter(s -> s.vampirismSkill() != null).ifPresent(spec -> {
+                ResourceLocation rl = ResourceLocation.tryParse(spec.vampirismSkill());
+                var skill = rl == null ? null : VampirismRegistries.SKILL.get().get(rl);
+                var handler = VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().map(fp -> fp.getSkillHandler());
+                if (skill == null || handler.isEmpty()) {
+                    if (skill == null && WARNED.add(spec.id())) {
+                        SupernaturalBloodlines.LOGGER.warn("Skill {}: unknown Vampirism skill '{}', skipped", spec.id(), spec.vampirismSkill());
+                    }
+                    return;
+                }
+                @SuppressWarnings({"unchecked", "rawtypes"})
+                ISkillHandler<?> h = (ISkillHandler) handler.get();
+                if (!h.isSkillEnabled((ISkill<?>) skill) && skill.getFaction().map(f -> f == VampirismAPI.factionPlayerHandler(p).getCurrentFaction()).orElse(false)) {
+                    @SuppressWarnings({"unchecked", "rawtypes"})
+                    ISkillHandler raw = h;
+                    raw.enableSkill((ISkill) skill, true);
+                }
+            });
         }
     }
 

@@ -23,6 +23,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceKey;
+import de.teamlapen.vampirism.api.VampirismRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -448,21 +449,29 @@ public final class SkillRuleGameTests {
         helper.succeed();
     }
 
-    // ---- S-VAM-7 Elder's Skin ----
+    // ---- S-VAM-7 Elder's Skin: Vampirism's own less_sundamage skill (owner ruling, 13d) ----
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void eldersSkinSoftensTheSun(GameTestHelper helper) {
+    public static void eldersSkinEnablesVampirismsLessSundamageSkill(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.createVulnerable(helper);
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        var skill = (de.teamlapen.vampirism.api.entity.player.skills.ISkill<?>) VampirismRegistries.SKILL.get().get(ResourceLocation.parse("vampirism:less_sundamage"));
+        helper.assertTrue(skill != null, "vampirism:less_sundamage is not registered (a Vampirism update?)");
+        var handler = VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow().getSkillHandler();
+        helper.assertTrue(!handler.isSkillEnabled(skill), "setup: the player already has the Vampirism skill");
         DamageSource sun = new DamageSource(helper.getLevel().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SUN_DAMAGE));
         p.setHealth(p.getMaxHealth());
         hit(p, sun, 4f);
         double plain = p.getMaxHealth() - p.getHealth();
+        int pointsBefore = handler.getLeftSkillPoints();
         own(p, "S-VAM-7");
+        helper.assertTrue(handler.getLeftSkillPoints() == pointsBefore, "the grant cost Vampirism skill points: " + pointsBefore + " -> " + handler.getLeftSkillPoints());
+        helper.assertTrue(handler.isSkillEnabled(skill), "owning S-VAM-7 did not enable Vampirism's less_sundamage");
+        // our own x0.75 on the damage event is gone: what softens the sun now is Vampirism's skill (its attribute, read by its own sun code)
         p.setHealth(p.getMaxHealth());
         hit(p, sun, 4f);
         double skilled = p.getMaxHealth() - p.getHealth();
-        helper.assertTrue(plain > 0 && Math.abs(skilled - plain * 0.75) < 0.05, "sun damage " + plain + " without the skill, " + skilled + " with it");
+        helper.assertTrue(plain > 0 && skilled <= plain + 1e-6 && skilled > plain * 0.9, "sun damage " + plain + " without the skill, " + skilled + " with it (our x0.75 rule must be gone)");
         helper.succeed();
     }
 }

@@ -95,6 +95,9 @@ public final class Siphoning {
         if (e.getHand() != InteractionHand.MAIN_HAND || !(e.getTarget() instanceof LivingEntity target) || !ready(p)) {
             return;
         }
+        if (target instanceof net.minecraft.world.item.trading.Merchant || target instanceof net.minecraft.world.MenuProvider) {
+            return; // a villager, a trader, a horse: its own menu opens, a siphoner can still trade (13d)
+        }
         if (p instanceof ServerPlayer sp) {
             siphonEntity(sp, target);
         }

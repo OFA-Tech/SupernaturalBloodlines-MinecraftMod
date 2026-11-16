@@ -52,7 +52,7 @@ Part `artifacts`. Rings sit in a **Curios `ring` slot** if Curios is installed, 
 | **Vervain Seeds** | Plants the crop. | **25%** in village house chests (plains, taiga, savanna, snowy, desert) |
 | **Vervain Tea** | **10 minutes** of the `Vervain` effect. | Kettle: 2 Vervain + 1 Sugar with a bottle |
 
-**While you have the Vervain effect, or hold vervain in your offhand:** a vampire who **bites** you or hits you **barehanded** takes **4 magic damage** and Weakness (a vervain bite gives no blood). A vampire who **eats** it takes **6**. Vervain also makes you **immune to compulsion**. A werewolf's bite doesn't burn (Werewolves gives no hook).
+**While you have the Vervain effect, or hold vervain in your offhand:** a vampire who **bites** you or hits you **barehanded** takes **4 magic damage** and Weakness (a vervain bite gives no blood). A vampire who **eats** it takes **6**. Vervain also makes you **immune to compulsion**. A werewolf's bite doesn't burn (Werewolves gives no hook). **Limits:** vervain stops what Vampirism's bite and this mod's feeds do to your blood (a vampire using Tensura's vampire race ability on you still hurts you for 2 but gets no blood and takes none), and it does not stop a werewolf's bite (see above).
 
 ## Mountain ash
 

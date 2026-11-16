@@ -244,6 +244,10 @@ public final class SkillTable {
         if (kinds.contains(SkillSpec.Kind.TENSURA)) {
             tensura = string(o, "tensura_skill");
         }
+        String vampirism = null;
+        if (kinds.contains(SkillSpec.Kind.VAMPIRISM)) {
+            vampirism = string(o, "vampirism_skill");
+        }
         Map<String, Double> params = new HashMap<>();
         if (o.has("params")) {
             JsonObject given = object(o.get("params"), id + ": params");
@@ -251,7 +255,7 @@ public final class SkillTable {
                 params.put(key, finite(given, key, id + " param"));
             }
         }
-        return new SkillSpec(id, o.has("name") ? string(o, "name") : id, cost, granted, kinds, attr, tensura, params);
+        return new SkillSpec(id, o.has("name") ? string(o, "name") : id, cost, granted, kinds, attr, tensura, vampirism, params);
     }
 
     private static List<SkillTree.Entry> readTree(JsonElement json, Map<String, SkillSpec> catalogue) {
