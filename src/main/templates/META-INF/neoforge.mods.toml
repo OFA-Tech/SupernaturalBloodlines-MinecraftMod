@@ -140,6 +140,14 @@ config="${mod_id}.hud.mixins.json"
     ordering="AFTER"
     side="BOTH"
 
+# Open Parties and Claims (and its Team Claims fork, same id): the pack mirrors to a party. Reached by reflection, so it is not a build dependency;
+# any version loads (an out-of-range optional mod stops FML), and an API this mod does not know only turns the link off with a warning.
+[[dependencies.${mod_id}]]
+    modId="openpartiesandclaims"
+    type="optional"
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="BOTH"
 [[dependencies.${mod_id}]]
     modId="curios"
     type="optional"
