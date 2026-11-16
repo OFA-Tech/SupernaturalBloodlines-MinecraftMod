@@ -420,6 +420,8 @@ public final class AlphaPackGameTests {
         /** Players who are "already in another party": adding them is refused. */
         final Set<UUID> refuse = new HashSet<>();
         boolean unreachable;
+        /** Removing from a party fails (the party mod did not answer). */
+        boolean failRemove;
         int creates;
 
         /** A party somebody made by hand. */
@@ -453,7 +455,9 @@ public final class AlphaPackGameTests {
 
         @Override
         public boolean add(MinecraftServer server, UUID owner, UUID member) {
-            if (refuse.contains(member) || !parties.containsKey(owner)) {
+            // like the real thing, somebody who is in another party cannot be added to this one
+            boolean inAnother = parties.entrySet().stream().anyMatch(e -> !e.getKey().equals(owner) && e.getValue().contains(member));
+            if (refuse.contains(member) || inAnother || !parties.containsKey(owner)) {
                 return false;
             }
             parties.get(owner).add(member);
@@ -461,8 +465,12 @@ public final class AlphaPackGameTests {
         }
 
         @Override
-        public void remove(MinecraftServer server, UUID owner, UUID member) {
+        public boolean remove(MinecraftServer server, UUID owner, UUID member) {
+            if (failRemove) {
+                return false;
+            }
             parties.get(owner).remove(member);
+            return true;
         }
     }
 
@@ -721,9 +729,11 @@ public final class AlphaPackGameTests {
             helper.assertTrue(index.isLeader(second.getUUID()), "the co-Alpha does not lead");
             helper.assertTrue(fake.parties.containsKey(second.getUUID()) && fake.parties.get(second.getUUID()).contains(beta.getUUID()), "the new leader got no party");
             helper.assertTrue(!fake.parties.get(leader.getUUID()).contains(beta.getUUID()), "the old party still holds our members");
-            // the old leader stayed in the pack as a Beta: the next pass brings them into the new party
+            // the old leader stays in the pack as a Beta of the new one, but owns the old party still, so the party mod cannot put them in
+            // the new one: they stay in the pack (it is no reason to take anyone out of it) and in their own old party
             PartyLink.syncAll(server);
-            helper.assertTrue(index.alphaOf(leader.getUUID()).map(second.getUUID()::equals).orElse(false) && fake.parties.get(second.getUUID()).contains(leader.getUUID()), "the old leader was not brought into the new party");
+            helper.assertTrue(index.alphaOf(leader.getUUID()).map(second.getUUID()::equals).orElse(false), "the old leader left the pack because the party mod refused them");
+            helper.assertTrue(!fake.parties.get(second.getUUID()).contains(leader.getUUID()) && fake.parties.get(leader.getUUID()).contains(leader.getUUID()), "the old leader is in two parties or lost their own");
         } finally {
             clean(helper, leader, second, beta, patient);
         }
@@ -793,6 +803,41 @@ public final class AlphaPackGameTests {
             index.leave(goneId);
             index.takeNotices(goneId);
             clean(helper, strong, beta);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aFailedRemovalKeepsTheRecordAndTheNextPassTriesAgain(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        ServerPlayer beta = wolf(helper, Rank.BETA, leader.getUUID(), 1, 3.5);
+        ServerPlayer thief = wolf(helper, Rank.OMEGA, null, 1, 4.5);
+        online(leader, second, beta, thief);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        FakeParties fake = new FakeParties();
+        PartyLink.setBackend(fake);
+        MinecraftServer server = helper.getLevel().getServer();
+        try {
+            helper.assertTrue(join(helper, leader, second), "the co-Alpha could not join");
+            PartyLink.sync(server, leader.getUUID(), true);
+            helper.assertTrue(fake.parties.get(leader.getUUID()).contains(beta.getUUID()), "the pack was not mirrored to start with");
+
+            fake.failRemove = true;
+            kill(thief, leader); // stolen from outside: the co-Alpha leads, and the old party must let our members go
+            helper.assertTrue(index.isLeader(second.getUUID()), "the co-Alpha does not lead");
+            helper.assertTrue(fake.parties.get(leader.getUUID()).contains(beta.getUUID()), "the failed removal took the member out anyway");
+            helper.assertTrue(index.recordedParty(List.of(leader.getUUID())).isPresent() && index.mirrorOwner(beta.getUUID()).isPresent(),
+                    "a record or a mirror was forgotten after a removal that failed");
+
+            fake.failRemove = false;
+            PartyLink.syncAll(server);
+            PartyLink.syncAll(server);
+            helper.assertTrue(!fake.parties.get(leader.getUUID()).contains(beta.getUUID()), "the retry did not take the member out");
+            helper.assertTrue(index.recordedParty(List.of(leader.getUUID())).isEmpty(), "the dead record stayed after the retry");
+            helper.assertTrue(fake.parties.containsKey(second.getUUID()) && fake.parties.get(second.getUUID()).contains(beta.getUUID()), "the new leader got no party after the retry");
+        } finally {
+            clean(helper, leader, second, beta, thief);
         }
         helper.succeed();
     }

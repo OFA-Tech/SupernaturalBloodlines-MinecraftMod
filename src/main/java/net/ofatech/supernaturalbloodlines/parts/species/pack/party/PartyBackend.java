@@ -21,5 +21,6 @@ public interface PartyBackend {
     /** Adds {@code member} with the plain member rank. False when refused: they are in another party, a limit, an error. */
     boolean add(MinecraftServer server, UUID owner, UUID member);
 
-    void remove(MinecraftServer server, UUID owner, UUID member);
+    /** @return true when {@code member} is out of the party (or was never in it); false when the call failed and must be tried again */
+    boolean remove(MinecraftServer server, UUID owner, UUID member);
 }

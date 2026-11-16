@@ -45,9 +45,26 @@ class PackUiTest {
             assertEquals("Remove %s from the pack", lang.get("supernaturalbloodlines.hub.pack.kick_for").getAsString());
             assertTrue(lang.get("supernaturalbloodlines.hub.pack.ally_end_for").getAsString().contains("%s"));
             assertEquals("They leave the pack. A werewolf Beta becomes an Omega.", lang.get("supernaturalbloodlines.hub.pack.kick_body").getAsString());
-            for (String key : new String[] {"pack.absent_leader", "pack.absent_you", "pack.party_refused", "pack.emissary_not_member", "pack.duel_cooldown", "pack.duel.off.timeout", "pack.duel.off.declined", "hub.pack.challenge_btn", "hub.pack.duel_accept", "hub.pack.duel_decline", "hub.bloodline.sparks", "pack.dissolved", "pack.now_follows", "pack.invite_merge", "pack.left_party", "pack.kicked"}) {
+            for (String key : new String[] {"pack.absent_leader", "pack.absent_you", "pack.absent_lead_now", "pack.spark_gained", "pack.spark_capped", "pack.spark_lost", "pack.spark_reset", "pack.duel.off.died", "hub.pack.duel_accept_for", "hub.pack.duel_decline_for", "hub.pack.duel_asked", "pack.party_refused", "pack.emissary_not_member", "pack.duel_cooldown", "pack.duel.off.timeout", "pack.duel.off.declined", "hub.pack.challenge_btn", "hub.pack.duel_accept", "hub.pack.duel_decline", "hub.bloodline.sparks", "pack.dissolved", "pack.now_follows", "pack.invite_merge", "pack.left_party", "pack.kicked"}) {
                 assertTrue(lang.has("supernaturalbloodlines." + key), key);
             }
         }
+    }
+
+    @Test
+    void theCooldownMessagesTakeTheMinutesLeft() throws Exception {
+        try (var in = PackUiTest.class.getResourceAsStream("/assets/supernaturalbloodlines/lang/en_us.json")) {
+            JsonObject lang = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
+            assertTrue(lang.get("supernaturalbloodlines.pack.duel_cooldown").getAsString().contains("%s minute(s)"));
+            assertTrue(lang.get("supernaturalbloodlines.pack.duel_retry").getAsString().contains("%s minute(s)"));
+            assertTrue(lang.get("supernaturalbloodlines.pack.spark_gained").getAsString().split("%s", -1).length == 3, "spark_gained takes the count and the cap");
+        }
+    }
+
+    @Test
+    void theNameGivesWayBeforeTheRankAndNeverBelowAFewLetters() {
+        assertEquals(110, BookPackPage.nameRoom(200, 80));
+        assertEquals(16, BookPackPage.nameRoom(60, 80), "a narrow row still shows a few letters of the name");
+        assertEquals(16, BookPackPage.nameRoom(0, 200));
     }
 }

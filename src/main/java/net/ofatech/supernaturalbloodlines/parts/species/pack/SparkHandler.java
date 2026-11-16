@@ -34,8 +34,9 @@ import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.werewolves.We
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The Alpha spark (R93): stolen by killing the Alpha, inherited by the strongest online Beta when the Alpha leaves the
- * werewolves or is cured, given up to heal someone. A True Alpha keeps it: it cannot be stolen, inherited or given up. Also what a kill means for the killer's eyes (an innocent: a villager,
+ * The Alpha spark (R93): stolen by killing an Alpha from outside their pack (the Deucalion factor stacks the victim's on the
+ * killer's), inherited by the strongest second Alpha, else the strongest online Beta, when the Alpha leaves the werewolves
+ * or is cured, given up to heal someone. A True Alpha keeps it: it cannot be stolen, inherited or given up. Also what a kill means for the killer's eyes (an innocent: a villager,
  * or a player who was not attacking them). Ordinary deaths keep rank and spark. Touched only behind
  * {@code ModList.isLoaded("werewolves")}.
  * <p>
@@ -74,6 +75,9 @@ public final class SparkHandler {
         WolfState before = change.before().wolf();
         if (before.rank() == Rank.ALPHA && change.after().wolf().lineage() == Lineage.NONE && before.lineage() != Lineage.NONE
                 && !p.level().isClientSide && VampirismSupernatural.isWerewolf(p)) {
+            if (before.sparks() > 1) {
+                p.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_reset", before.sparks() - 1));
+            }
             passOn(p);
         }
     }
@@ -93,7 +97,8 @@ public final class SparkHandler {
         if (victim instanceof ServerPlayer v && PackAccess.isAlpha(PackAccess.wolf(v).rank())) {
             steal(killer, v);
         }
-        if (isInnocent(killer, victim)) {
+        // a kill inside the pack (or a moment after leaving it) is no innocent kill: no blue eyes, no True Alpha block
+        if (isInnocent(killer, victim) && !(victim instanceof ServerPlayer v && PackIndex.samePack(killer, v))) {
             PackAccess.applyPack(killer, PackEvent.KILLED_INNOCENT, PackContext.defaults());
         }
     }
@@ -127,7 +132,7 @@ public final class SparkHandler {
             return false;
         }
         PackIndex index = PackIndex.get(victim.serverLevel());
-        if (index.samePack(killer.getUUID(), victim.getUUID())) {
+        if (PackIndex.samePack(killer, victim)) {
             return false;
         }
         boolean victimTrue = PackAccess.wolf(victim).rank() == Rank.TRUE_ALPHA;
@@ -140,7 +145,15 @@ public final class SparkHandler {
         if (PackAccess.applyPack(killer, PackEvent.KILLED_ALPHA, PackContext.defaults()).refused()) {
             return false;
         }
-        PackAccess.setSparks(killer, PackRules.sparksAfterSteal(killerSparks, killerIsAlpha, taken, SpeciesConfig.maxStackedSparks()));
+        int cap = SpeciesConfig.maxStackedSparks();
+        int now = PackRules.sparksAfterSteal(killerSparks, killerIsAlpha, taken, cap);
+        PackAccess.setSparks(killer, now);
+        // told: how many they hold now, and that the cap stopped some of them; the victim learns it too (at their next login if away)
+        killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_gained", now, cap));
+        if ((killerIsAlpha ? Math.max(1, killerSparks) : 0) + taken > cap) {
+            killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_capped", cap));
+        }
+        PackMembers.tell(killer.server, victim.getUUID(), "supernaturalbloodlines.pack.spark_lost", killer.getGameProfile().getName());
         if (victimTrue) {
             // the True spark stays: only the stacked ones went, and they are an Alpha as before
             PackAccess.setSparks(victim, 1);
@@ -209,8 +222,17 @@ public final class SparkHandler {
     /** The strongest other Alpha of the pack {@code leader} leads, online or not (the order of {@link PackLeadership}). */
     @Nullable
     static UUID coAlphaHeir(PackIndex index, UUID leader) {
+        return coAlphaHeir(index, leader, id -> true);
+    }
+
+    /** {@link #coAlphaHeir(PackIndex, UUID)} among the Alphas {@code eligible} accepts (the absent leader's successor must be here). */
+    @Nullable
+    static UUID coAlphaHeir(PackIndex index, UUID leader, java.util.function.Predicate<UUID> eligible) {
         List<PackLeadership.Candidate> candidates = new java.util.ArrayList<>();
         for (UUID id : index.betasOf(leader)) {
+            if (!eligible.test(id)) {
+                continue;
+            }
             candidates.add(new PackLeadership.Candidate(id, index.isFormerAlpha(id) ? 0 : index.strengthOf(id)));
         }
         return PackLeadership.pick(candidates, null).orElse(null);
@@ -224,6 +246,14 @@ public final class SparkHandler {
         members.forEach(b -> repoint(from.server, b, heir));
         PackMembers.moved(from.server, members, heir);
         PartyLink.leadershipChanged(from.server, heir);
+    }
+
+    /** One line for an Alpha whose stacked sparks go with the rank (a cure, a heal, leaving the werewolves). */
+    private static void tellReset(ServerPlayer alpha) {
+        int extra = PackAccess.wolf(alpha).sparks() - 1;
+        if (extra > 0) {
+            alpha.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_reset", extra));
+        }
     }
 
     /** The Alpha leaves the werewolves or is cured: the spark goes to the heir, the Alpha is an Omega with no pack. A True Alpha only dissolves the pack. */
@@ -241,12 +271,19 @@ public final class SparkHandler {
             return;
         }
         if (PackAccess.wolf(alpha).rank() == Rank.TRUE_ALPHA) {
+            tellReset(alpha);
             PackAccess.setSparks(alpha, 1); // the stacked sparks go with the faction, the True spark stays
-            // a True Alpha keeps the spark and the rank (dormant outside the faction): only the pack dissolves. The tombstone
-            // dissolve leaves says "not holding it now" for an offline check; onFaction clears it on rejoining
-            dissolve(alpha);
+            // a True Alpha keeps the spark and the rank (dormant outside the faction), and the pack goes to its strongest second
+            // Alpha, or dissolves when it has none. The tombstone says "not holding it now" for an offline check; onFaction clears it on rejoining
+            UUID second = coAlphaHeir(alpha);
+            if (second != null) {
+                handOverToCoAlpha(alpha, second);
+            } else {
+                dissolve(alpha);
+            }
             return;
         }
+        tellReset(alpha);
         UUID coHeir = coAlphaHeir(alpha);
         ServerPlayer heir = coHeir == null ? heirOf(alpha) : null;
         if (coHeir != null) {
@@ -264,6 +301,7 @@ public final class SparkHandler {
      * the pack dissolves and the Alpha is an Omega.
      */
     static void giveUp(ServerPlayer alpha) {
+        tellReset(alpha);
         PackIndex own = PackIndex.get(alpha.serverLevel());
         UUID theirLeader = own.alphaOf(alpha.getUUID()).orElse(null);
         if (theirLeader != null) {

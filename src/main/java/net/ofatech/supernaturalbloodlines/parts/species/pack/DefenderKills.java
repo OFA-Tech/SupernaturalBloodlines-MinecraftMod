@@ -53,13 +53,9 @@ public final class DefenderKills {
             return;
         }
         LivingEntity target = mob.getTarget();
-        if (target instanceof Villager || (target instanceof ServerPlayer t && t != killer && samePack(killer, t))) {
+        if (target instanceof Villager || (target instanceof ServerPlayer t && t != killer && PackIndex.get(killer.serverLevel()).samePack(killer.getUUID(), t.getUUID()))) {
             PackAccess.applyPack(killer, PackEvent.DEFENDER_KILL, PackContext.defaults());
         }
-    }
-
-    private static boolean samePack(ServerPlayer a, ServerPlayer b) {
-        return PackIndex.get(a.serverLevel()).samePack(a.getUUID(), b.getUUID());
     }
 
     /**

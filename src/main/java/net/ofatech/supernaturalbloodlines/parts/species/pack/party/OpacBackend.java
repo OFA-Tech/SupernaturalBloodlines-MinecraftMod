@@ -135,13 +135,13 @@ final class OpacBackend implements PartyBackend {
     }
 
     @Override
-    public void remove(MinecraftServer server, UUID owner, UUID member) {
-        guard.call(() -> {
+    public boolean remove(MinecraftServer server, UUID owner, UUID member) {
+        return guard.call(() -> {
             Object party = byOwner.invoke(manager(server), owner);
             if (party != null) {
                 removeMember.invoke(party, member);
             }
-            return null;
-        });
+            return Boolean.TRUE;
+        }).ok();
     }
 }

@@ -80,12 +80,15 @@ public final class PartyLink {
             if (!found.reachable()) {
                 continue;
             }
+            boolean allOut = true;
             if (found.party() != null) {
                 for (UUID m : index.mirrorsOf(List.of(owner))) {
-                    b.remove(server, owner, m);
+                    allOut &= b.remove(server, owner, m);
                 }
             }
-            index.forgetParty(owner);
+            if (allOut) {
+                index.forgetParty(owner); // a failed removal keeps the record, so the next pass tries again
+            }
         }
     }
 
@@ -124,8 +127,12 @@ public final class PartyLink {
             return;
         }
         if (plan.abandon()) {
+            boolean allOut = true;
             for (UUID id : plan.removeFrom()) {
-                b.remove(server, owner, id);
+                allOut &= b.remove(server, owner, id);
+            }
+            if (!allOut) {
+                return; // the old party still holds our members: nothing is forgotten, and the next pass tries again
             }
             index.forgetParty(owner);
         }
@@ -148,10 +155,9 @@ public final class PartyLink {
             }
         }
         for (UUID m : plan.removeFrom()) {
-            if (!plan.abandon()) {
-                b.remove(server, owner, m);
+            if (plan.abandon() || b.remove(server, owner, m)) {
+                index.setMirror(m, null);
             }
-            index.setMirror(m, null);
         }
         for (UUID m : plan.leavePack()) {
             index.setMirror(m, null);

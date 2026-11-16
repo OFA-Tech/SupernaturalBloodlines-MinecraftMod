@@ -114,8 +114,23 @@ public final class BookPackPage implements HubPageView {
         return leads(f, pack) && pack.stream().anyMatch(m -> m.base().equals("coalpha_challenger"));
     }
 
+    /** Who is asking for the lead, for the hovers of accept and decline. */
+    private static String challengerName(List<HubSocial.Member> pack) {
+        return pack.stream().filter(m -> m.base().equals("coalpha_challenger")).map(HubSocial.Member::name).findFirst().orElse("");
+    }
+
     private static boolean canEndAlliance(HubScreen.Frame f, List<HubSocial.Member> pack, @Nullable HubSocial.Member chosen) {
         return chosen != null && leads(f, pack) && chosen.base().equals("ally");
+    }
+
+    /** The name cut so that the whole rank (with its spark count) always fits beside it: the name goes first, never the rank. */
+    static String nameFor(HubScreen.Frame f, String name, Component rank, int width) {
+        return net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(name, nameRoom(width, f.font().width(rank)), f.font()::width);
+    }
+
+    /** What is left of a row for the name once the whole rank and a gap are there: never less than a few letters. */
+    public static int nameRoom(int width, int rankWidth) {
+        return Math.max(16, width - rankWidth - 10);
     }
 
     /** "Alpha", or "Alpha ×3" with stacked sparks. */
@@ -173,10 +188,14 @@ public final class BookPackPage implements HubPageView {
                 f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(rank.getString(), r.w() - 8 - crown, f.font()::width), r.x() + 8 + crown, y + 10, t.muted(), false);
                 hit = new Rect(hit.x(), hit.y(), hit.w(), 20);
             } else {
-                BookKit.leader(f, Component.literal(m.name()), rank, r.x() + 8 + crown, y, r.w() - 8 - crown, t.muted());
+                BookKit.leader(f, Component.literal(nameFor(f, m.name(), rank, r.w() - 8 - crown)), rank, r.x() + 8 + crown, y, r.w() - 8 - crown, t.muted());
             }
             String id = "member:" + m.name();
-            f.target(id, hit, List.of(Component.literal(m.name()), rank, Component.translatable(KEY + (m.online() ? "online" : "offline"))), () -> selected = m.name());
+            List<Component> tip = new java.util.ArrayList<>(List.of(Component.literal(m.name()), rank, Component.translatable(KEY + (m.online() ? "online" : "offline"))));
+            if (leads) {
+                tip.add(1, Component.translatable(KEY + "leader"));
+            }
+            f.target(id, hit, tip, () -> selected = m.name());
             if (f.focused(id)) {
                 KitDraw.focusRing(f.g, hit, t.focusColor());
             }
@@ -206,9 +225,10 @@ public final class BookPackPage implements HubPageView {
             }
         }
         if (style == Style.BOOK && askedForTheLead(f, pack)) {
-            BookKit.link(f, "pack:duel_accept", Component.translatable(KEY + "duel_accept"), r.x(), y, List.of(Component.translatable(KEY + "duel_accept_hover")),
+            String asking = challengerName(pack);
+            int acceptW = BookKit.link(f, "pack:duel_accept", Component.translatable(KEY + "duel_accept"), r.x(), y, List.of(Component.translatable(KEY + "duel_accept_for", asking)),
                     () -> BloodlinePage.command("pack challenge accept"));
-            BookKit.link(f, "pack:duel_decline", Component.translatable(KEY + "duel_decline"), r.x() + 90, y, List.of(Component.translatable(KEY + "duel_decline_hover")),
+            BookKit.link(f, "pack:duel_decline", Component.translatable(KEY + "duel_decline"), r.x() + acceptW + 8, y, List.of(Component.translatable(KEY + "duel_decline_for", asking)),
                     () -> BloodlinePage.command("pack challenge decline"));
             y += 13;
         }
@@ -254,6 +274,7 @@ public final class BookPackPage implements HubPageView {
         if (askedForTheLead(f, pack)) {
             d.action("duel_accept", Component.translatable(KEY + "duel_accept"), true, true, () -> BloodlinePage.command("pack challenge accept"));
             d.action("duel_decline", Component.translatable(KEY + "duel_decline"), false, true, () -> BloodlinePage.command("pack challenge decline"));
+            d.field(Component.translatable(KEY + "duel_asked"), Component.literal(challengerName(pack)));
         }
         if (!pack.isEmpty()) {
             d.action(new Detail.Action("leave", Component.translatable(KEY + "leave"), false, true, null,

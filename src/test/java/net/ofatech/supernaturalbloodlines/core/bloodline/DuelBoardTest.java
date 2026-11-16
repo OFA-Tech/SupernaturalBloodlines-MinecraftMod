@@ -66,8 +66,8 @@ class DuelBoardTest {
         assertEquals(1, b.expire(50 + DuelBoard.TIMEOUT_TICKS + 1).size());
         assertTrue(b.all().isEmpty());
 
-        // a duel that was on and ran out does not make the challenger wait, only a challenge nobody answered does
-        assertTrue(challenge(b, CHALLENGER, LEADER, 10_000));
+        // a duel that was on and ran out bars the same two like a settled one (waiting it out must not save anybody)
+        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), b.challenge(CHALLENGER, LEADER, 10_000));
 
         b = new DuelBoard();
         challenge(b, CHALLENGER, LEADER, 0);
@@ -128,5 +128,41 @@ class DuelBoardTest {
         assertFalse(b.guarded(LEADER, THIRD, 101), "a guard stopped somebody who is not the winner");
         assertFalse(b.guarded(CHALLENGER, LEADER, 101), "the winner is guarded too");
         assertFalse(b.guarded(LEADER, CHALLENGER, 100 + DuelBoard.GUARD_TICKS), "the guard never ends");
+    }
+
+    @Test
+    void aDuelThatWasOnAndRanOutBarsTheSamePairLikeASettledOne() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        b.accept(LEADER, 10);
+        long out = 10 + DuelBoard.TIMEOUT_TICKS + 1;
+        assertEquals(1, b.expire(out).size());
+        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), b.challenge(CHALLENGER, LEADER, out + 5), "waiting a duel out is a way to save a life");
+        assertEquals(Optional.of(Refusal.PAIR_COOLDOWN), b.challenge(LEADER, CHALLENGER, out + 5));
+        assertTrue(challenge(b, CHALLENGER, LEADER, out + DuelBoard.PAIR_COOLDOWN_TICKS));
+    }
+
+    @Test
+    void aChallengeThatRanOutIsSweptWhenSomebodyAsksAndStillReportedOnce() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        long after = DuelBoard.TIMEOUT_TICKS + 1;
+        assertTrue(challenge(b, THIRD, LEADER, after), "the old challenge kept the leader busy");
+        assertEquals(1, b.expire(after).size(), "the one whose challenge ran out must still be told");
+        assertTrue(b.expire(after).isEmpty(), "it came twice");
+        b.cancelInvolving(THIRD);
+        assertEquals(Optional.of(Refusal.RETRY_COOLDOWN), b.challenge(CHALLENGER, LEADER, after + 1), "and waits before asking again");
+    }
+
+    @Test
+    void theCooldownLeftIsTheLongerOfThePairAndTheRetryWait() {
+        DuelBoard b = new DuelBoard();
+        assertEquals(0, b.cooldownLeft(CHALLENGER, LEADER, 0));
+        challenge(b, CHALLENGER, LEADER, 0);
+        b.accept(LEADER, 1);
+        b.defeat(LEADER, 100);
+        assertEquals(DuelBoard.PAIR_COOLDOWN_TICKS - 50, b.cooldownLeft(CHALLENGER, LEADER, 150));
+        assertEquals(DuelBoard.PAIR_COOLDOWN_TICKS - 50, b.cooldownLeft(LEADER, CHALLENGER, 150), "the pair is the same either way round");
+        assertEquals(0, b.cooldownLeft(CHALLENGER, LEADER, 100 + DuelBoard.PAIR_COOLDOWN_TICKS + 1));
     }
 }

@@ -75,8 +75,27 @@ public final class PackIndex extends SavedData {
     private final Map<UUID, List<String[]>> notices = new HashMap<>();
     // the spark count each Alpha last had while online: a pack's offline Alphas are shown with it, and the strongest is picked by it
     private final Map<UUID, Integer> sparks = new HashMap<>();
-    // when (wall clock, milliseconds) each member of a pack last logged out, for the leader who stays away too long
+    // when (wall clock, milliseconds) a member of a pack last logged out (only members are recorded), for the leader who stays away too long
     private final Map<UUID, Long> lastSeen = new HashMap<>();
+
+    /** The wall clock the grace windows and last-seen times use; a test pins it. */
+    private static volatile java.util.function.LongSupplier clock = System::currentTimeMillis;
+
+    public static void overrideClock(java.util.function.LongSupplier c) {
+        clock = c == null ? System::currentTimeMillis : c;
+    }
+
+    public static long now() {
+        return clock.getAsLong();
+    }
+
+    /** Who a player left and when (wall clock). In memory only: a restart forgets it, which only shortens the grace. */
+    private record Left(UUID leader, long at) {
+    }
+
+    private final Map<UUID, Left> leftAt = new HashMap<>();
+    /** The notice an absent leader gets is never dropped to make room for another one. */
+    public static final String KEPT_NOTICE = "supernaturalbloodlines.pack.absent_you";
     /** A short list: the newest few are kept for a player who stays away. */
     public static final int MAX_NOTICES = 8;
     // members the party link already told that they could not be added (in memory: told again once after a restart, not once per retry)
@@ -132,7 +151,10 @@ public final class PackIndex extends SavedData {
         });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p && !p.level().isClientSide) {
-                get(p.serverLevel()).setLastSeen(p.getUUID(), System.currentTimeMillis());
+                PackIndex index = get(p.serverLevel());
+                if (index.inPack(p.getUUID())) {
+                    index.setLastSeen(p.getUUID(), now());
+                }
             }
         });
     }
@@ -143,7 +165,9 @@ public final class PackIndex extends SavedData {
      */
     public static void login(ServerPlayer p) {
         PackIndex index = get(p.serverLevel());
-        index.setLastSeen(p.getUUID(), System.currentTimeMillis());
+        if (index.inPack(p.getUUID())) {
+            index.setLastSeen(p.getUUID(), now());
+        }
         index.takeNotices(p.getUUID()).forEach(n -> p.sendSystemMessage(net.minecraft.network.chat.Component.translatable(n[0], n[1])));
         if (index.takeDissolved(p.getUUID())) {
             PackAccess.applyPack(p, PackEvent.LEFT_PACK, PackContext.defaults());
@@ -239,10 +263,15 @@ public final class PackIndex extends SavedData {
 
     public void addNotice(UUID player, String key, String arg) {
         List<String[]> list = notices.computeIfAbsent(player, k -> new ArrayList<>());
-        if (list.size() >= MAX_NOTICES) {
-            list.remove(0);
-        }
         list.add(new String[] {key, arg});
+        while (list.size() > MAX_NOTICES) {
+            // the oldest goes, but never the one that says you lost the lead
+            int drop = 0;
+            while (drop < list.size() - 1 && list.get(drop)[0].equals(KEPT_NOTICE)) {
+                drop++;
+            }
+            list.remove(drop);
+        }
         setDirty();
     }
 
@@ -327,6 +356,37 @@ public final class PackIndex extends SavedData {
         return Optional.ofNullable(lastSeen.get(id));
     }
 
+    /** After a start of the server: nobody was away while it was off, so every recorded time begins again from {@code millis}. */
+    public void resetLastSeen(long millis) {
+        if (!lastSeen.isEmpty()) {
+            lastSeen.replaceAll((id, t) -> millis);
+            setDirty();
+        }
+    }
+
+    /** Whether {@code a} and {@code b} count as one pack for what a kill does: in it now, or left it within the grace window. */
+    public boolean killsInPack(UUID a, UUID b, int graceMinutes) {
+        if (a.equals(b)) {
+            return false;
+        }
+        return packKey(a, graceMinutes).equals(packKey(b, graceMinutes));
+    }
+
+    /** The leader of the pack {@code p} is in, or was in a moment ago; a player of no pack is their own key (so a leader left alone still matches who left them). */
+    private UUID packKey(UUID p, int graceMinutes) {
+        if (inPack(p)) {
+            return leaderOf(p);
+        }
+        Left l = leftAt.get(p);
+        return graceMinutes > 0 && l != null && now() - l.at < graceMinutes * 60_000L ? l.leader : p;
+    }
+
+    /** {@link #killsInPack} for two players in a world, with the configured grace. */
+    public static boolean samePack(net.minecraft.world.entity.Entity a, net.minecraft.world.entity.Entity b) {
+        return a instanceof ServerPlayer x && b instanceof ServerPlayer y
+                && get(x.serverLevel()).killsInPack(x.getUUID(), y.getUUID(), net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.leftPackGraceMinutes());
+    }
+
     public void setLastSeen(UUID id, long millis) {
         Long old = lastSeen.put(id, millis);
         if (old == null || old != millis) {
@@ -372,6 +432,7 @@ public final class PackIndex extends SavedData {
             alphaOf.put(own, alpha);
         }
         alphaOf.put(beta, alpha);
+        leftAt.remove(beta);
         emissaryOf.remove(beta); // a leader who joins another pack no longer has an Emissary of their own
         allies.remove(beta);
         allies.values().forEach(s -> s.remove(beta));
@@ -408,9 +469,11 @@ public final class PackIndex extends SavedData {
 
     /** The leader removes a member (online or not): a werewolf Beta becomes an Omega at their next login. @return false if they were no member */
     public boolean kick(UUID member) {
-        if (alphaOf.remove(member) == null) {
+        UUID was = alphaOf.remove(member);
+        if (was == null) {
             return false;
         }
+        leftAt.put(member, new Left(was, now()));
         emissaryOf.values().removeIf(member::equals);
         dissolved.add(member);
         setDirty();
@@ -449,7 +512,9 @@ public final class PackIndex extends SavedData {
     }
 
     public void leave(UUID beta) {
-        if (alphaOf.remove(beta) != null) {
+        UUID was = alphaOf.remove(beta);
+        if (was != null) {
+            leftAt.put(beta, new Left(was, now()));
             emissaryOf.values().removeIf(beta::equals);
             setDirty();
         }
@@ -464,7 +529,6 @@ public final class PackIndex extends SavedData {
         alphaOf.replaceAll((beta, a) -> a.equals(oldAlpha) ? newAlpha : a);
         alphaOf.remove(oldAlpha);
         moveLeadership(oldAlpha, newAlpha);
-        emissaryOf.remove(oldAlpha);
         formerAlphas.add(oldAlpha);
         formerAlphas.remove(newAlpha);
         setDirty();

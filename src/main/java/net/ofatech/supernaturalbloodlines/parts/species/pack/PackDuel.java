@@ -3,6 +3,12 @@ package net.ofatech.supernaturalbloodlines.parts.species.pack;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -54,6 +60,8 @@ public final class PackDuel {
                 callOff(p.server, p.getUUID(), Reason.LOGOUT);
             }
         });
+        // a world that was stopped leaves no half-fought duel behind (the board lives in memory)
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> onStopped());
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> {
             if (e.getServer().getTickCount() % CHECK_EVERY == 0) {
                 check(e.getServer());
@@ -93,11 +101,12 @@ public final class PackDuel {
         long now = challenger.serverLevel().getGameTime();
         var refused = BOARD.challenge(challenger.getUUID(), leaderId, now);
         if (refused.isPresent()) {
-            return PackCommand.error(switch (refused.get()) {
-                case BUSY -> "duel_busy";
-                case PAIR_COOLDOWN -> "duel_cooldown";
-                case RETRY_COOLDOWN -> "duel_retry";
-            });
+            long minutes = Math.max(1, (BOARD.cooldownLeft(challenger.getUUID(), leaderId, now) + 1199) / 1200);
+            return switch (refused.get()) {
+                case BUSY -> PackCommand.error("duel_busy");
+                case PAIR_COOLDOWN -> PackCommand.error("duel_cooldown", minutes);
+                case RETRY_COOLDOWN -> PackCommand.error("duel_retry", minutes);
+            };
         }
         Component accept = Component.translatable(KEY + "accept").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pack challenge accept"))
@@ -169,19 +178,73 @@ public final class PackDuel {
             return;
         }
         Entity by = e.getSource().getEntity();
-        if (by instanceof Player other && !other.getUUID().equals(duel.other(loser.getUUID()))) {
+        UUID opponent = duel.other(loser.getUUID());
+        boolean byOpponent = by instanceof Player other && other.getUUID().equals(opponent);
+        if (by instanceof Player && !byOpponent) {
             callOff(loser.server, loser.getUUID(), Reason.KILLED); // a third player killed them: the duel is off and the death stands
             return;
         }
-        // the first defeat (by the other one, or by anything else that would have killed them): no death, one heart left
+        // lava, a fall, a mob, a pet: it is the opponent's win only if they hit this one in the last 10 seconds. Otherwise it is no
+        // defeat but a death (or a way out of a duel that was going badly), so the duel is off and the death stands
+        if (!byOpponent && !fought(loser, opponent)) {
+            callOff(loser.server, loser.getUUID(), Reason.DIED);
+            return;
+        }
+        // the first defeat: no death, one heart left
         e.setCanceled(true);
         loser.setHealth(1f);
         loser.clearFire();
         loser.fallDistance = 0;
+        if (!byOpponent) {
+            // the world was about to finish them: 5 seconds of Fire Resistance, and out of the lava if they stand in it, or the next
+            // tick would be the death the duel just turned into a defeat
+            loser.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 100));
+            if (loser.isInLava() || loser.isInWall()) {
+                BlockPos safe = safeSpot(loser.serverLevel(), loser.blockPosition());
+                if (safe != null) {
+                    loser.teleportTo(safe.getX() + 0.5, safe.getY(), safe.getZ() + 0.5);
+                }
+            }
+        }
         DuelBoard.Result r = BOARD.defeat(loser.getUUID(), loser.level().getGameTime()).orElse(null);
         if (r != null) {
             settle(loser.server, r);
         }
+    }
+
+    /** The opponent hit {@code loser} in the last 10 seconds (the vanilla last attacker, whose time is the loser's own tick count). */
+    static boolean fought(ServerPlayer loser, UUID opponent) {
+        LivingEntity last = loser.getLastHurtByMob();
+        return last != null && last.getUUID().equals(opponent) && loser.tickCount - loser.getLastHurtByMobTimestamp() <= DuelBoard.COMBAT_CREDIT_TICKS;
+    }
+
+    /**
+     * The nearest block to stand on within 4 blocks of {@code from}: two free blocks (no fluid) over a solid one. Null when there
+     * is none, and then the Fire Resistance is all the loser gets.
+     */
+    @Nullable
+    public static BlockPos safeSpot(ServerLevel level, BlockPos from) {
+        for (int radius = 0; radius <= 4; radius++) {
+            for (int dy = 0; dy <= 4; dy++) {
+                for (int dx = -radius; dx <= radius; dx++) {
+                    for (int dz = -radius; dz <= radius; dz++) {
+                        if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                            continue;
+                        }
+                        BlockPos feet = from.offset(dx, dy, dz);
+                        BlockPos below = feet.below();
+                        if (free(level, feet) && free(level, feet.above()) && level.getBlockState(below).isFaceSturdy(level, below, Direction.UP) && level.getFluidState(below).isEmpty()) {
+                            return feet;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean free(ServerLevel level, BlockPos pos) {
+        return level.getBlockState(pos).getCollisionShape(level, pos).isEmpty() && level.getFluidState(pos).isEmpty();
     }
 
     private static void settle(MinecraftServer server, DuelBoard.Result r) {
@@ -258,6 +321,11 @@ public final class PackDuel {
                 tellOff(server, new UUID[] {d.challenger(), d.leader()}, why, null);
             }
         }
+    }
+
+    /** The world stopped: no half-fought duel is left behind (the board lives in memory). */
+    public static void onStopped() {
+        BOARD.clear();
     }
 
     /** For tests: nothing is left on the board. */

@@ -32,7 +32,8 @@ public final class GeneAwakening {
 
     /** A villager (not a wandering trader) or another player: the kills that awaken the gene (R11, R24). */
     public static boolean isGeneVictim(ServerPlayer killer, Entity victim) {
-        return victim != killer && (victim instanceof Villager || victim instanceof Player);
+        // a player of the killer's own pack (or one they left a moment ago) is no victim for a gene: a kill inside the pack changes nothing
+        return victim != killer && (victim instanceof Villager || (victim instanceof Player && !net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.samePack(killer, victim)));
     }
 
     private static void onDeath(LivingDeathEvent e) {

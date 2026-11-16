@@ -131,4 +131,58 @@ class PackIndexTest {
         assertTrue(i.isLeader(B) && !i.isLeader(A) && !i.isLeader(M));
         assertEquals(java.util.Set.of(M, A), new java.util.HashSet<>(i.betasOf(B)));
     }
+
+    @Test
+    void aServerStartBeginsEveryRecordedTimeAgain() {
+        PackIndex i = new PackIndex();
+        i.setLastSeen(A, 100);
+        i.setLastSeen(B, 200);
+        i.resetLastSeen(9_000);
+        assertEquals(9_000L, i.lastSeen(A).orElseThrow());
+        assertEquals(9_000L, i.lastSeen(B).orElseThrow());
+        assertTrue(i.lastSeen(C).isEmpty(), "somebody the index never saw got a time");
+    }
+
+    @Test
+    void theNoticeThatSaysYouLostTheLeadIsNeverDroppedForRoom() {
+        PackIndex i = new PackIndex();
+        i.addNotice(A, PackIndex.KEPT_NOTICE, "x");
+        for (int n = 0; n < PackIndex.MAX_NOTICES + 5; n++) {
+            i.addNotice(A, "k", Integer.toString(n));
+        }
+        List<String[]> got = i.takeNotices(A);
+        assertEquals(PackIndex.MAX_NOTICES, got.size());
+        assertEquals(PackIndex.KEPT_NOTICE, got.get(0)[0], "the absence notice was dropped to make room");
+        assertEquals("12", got.get(got.size() - 1)[1], "the newest one is gone");
+    }
+
+    @Test
+    void someoneWhoLeftAMomentAgoStillCountsForAKillUntilTheGraceEnds() {
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            PackIndex i = new PackIndex();
+            i.join(A, M);
+            i.leave(M);
+            assertFalse(i.samePack(A, M), "they are not in it any more");
+            assertTrue(i.killsInPack(M, A, 10) && i.killsInPack(A, M, 10), "leaving a moment ago must not free a kill: a lone leader matches who left them");
+            assertFalse(i.killsInPack(M, A, 0), "the switch at 0 is off");
+            assertFalse(i.killsInPack(M, B, 10), "a stranger is no member");
+            assertFalse(i.killsInPack(M, M, 10), "nobody is their own pack mate");
+            clock[0] += 10 * 60_000L - 1;
+            assertTrue(i.killsInPack(M, A, 10), "ten minutes minus a millisecond");
+            clock[0] += 1;
+            assertFalse(i.killsInPack(M, A, 10), "ten minutes");
+            // kicked counts like leaving, and joining again clears it
+            clock[0] = 5_000_000L;
+            i.join(A, M);
+            i.kick(M);
+            assertTrue(i.killsInPack(A, M, 10), "a kick frees a kill too");
+            i.join(B, M);
+            assertFalse(i.killsInPack(M, A, 10), "somebody who joined another pack is no member of the old one");
+            assertTrue(i.killsInPack(M, B, 10));
+        } finally {
+            PackIndex.overrideClock(null);
+        }
+    }
 }

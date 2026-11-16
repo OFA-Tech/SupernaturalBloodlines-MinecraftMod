@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.gametest;
 
+import net.ofatech.supernaturalbloodlines.gametest.TestPlayers.TalkingDuelist;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.RankEffects;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAbsence;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackRules;
@@ -72,6 +73,17 @@ public final class PackReviewGameTests {
 
     private static ServerPlayer alpha(GameTestHelper helper, int level, double x) {
         return wolf(helper, Rank.ALPHA, null, level, x);
+    }
+
+    /** An Alpha that keeps the translation keys of what it is told. */
+    private static TalkingDuelist talkingAlpha(GameTestHelper helper, int level, double x) {
+        TalkingDuelist p = TestPlayers.createTalkingDuelist(helper);
+        p.setPos(helper.absoluteVec(new Vec3(x, 1, 1.5)));
+        WolfState w = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(Rank.ALPHA).geneRolled(true).build();
+        BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().wolf(w).build());
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, level), "the test wolf could not join the werewolves");
+        PackLeader.refresh(p);
+        return p;
     }
 
     private static ServerPlayer human(GameTestHelper helper, double x) {
@@ -709,6 +721,273 @@ public final class PackReviewGameTests {
                 index.leave(id);
             }
             clean(helper, leader);
+        }
+        helper.succeed();
+    }
+
+    // ---- the absent leader, round 3 ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anAbsentLeaderIsOnlyReplacedBySomeoneWhoIsHere(GameTestHelper helper) {
+        ServerPlayer gone = alpha(helper, 6, 1.5);
+        ServerPlayer away = alpha(helper, 9, 2.5);
+        ServerPlayer here = alpha(helper, 2, 3.5);
+        online(here); // the leader and the stronger Alpha are both away
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        long now = System.currentTimeMillis();
+        try {
+            index.join(gone.getUUID(), away.getUUID());
+            index.join(gone.getUUID(), here.getUUID());
+            index.setStrength(away.getUUID(), 1009);
+            index.setStrength(here.getUUID(), 1002);
+            index.setLastSeen(gone.getUUID(), now - 8 * PackAbsence.DAY_MILLIS);
+            // the stronger Alpha was seen 8 days ago too: not here, and no record at all counts as not here
+            index.setLastSeen(away.getUUID(), now - 8 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackAbsence.check(server, now) == 1 && index.isLeader(here.getUUID()), "the successor is not the one who is here: " + index.leaderOf(here.getUUID()));
+            PackIndex.get(helper.getLevel()).leave(away.getUUID());
+        } finally {
+            index.leave(gone.getUUID());
+            clean(helper, gone, away, here);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void twoAbsentAlphasNeverPassTheLeadBackAndForth(GameTestHelper helper) {
+        ServerPlayer a = alpha(helper, 6, 1.5);
+        ServerPlayer b = alpha(helper, 9, 2.5);
+        online(); // nobody is here
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        long now = System.currentTimeMillis();
+        try {
+            index.join(a.getUUID(), b.getUUID());
+            index.setStrength(b.getUUID(), 1009);
+            index.setLastSeen(a.getUUID(), now - 8 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackAbsence.check(server, now) == 0 && index.isLeader(a.getUUID()), "the lead moved to somebody with no record");
+            index.setLastSeen(b.getUUID(), now - 8 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackAbsence.check(server, now) == 0 && index.isLeader(a.getUUID()), "the lead moved to somebody who is away as well");
+            // b was seen yesterday: the lead goes to b, and b away for a week does not send it back to a (a was away longer)
+            index.setLastSeen(b.getUUID(), now - PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackAbsence.check(server, now) == 1 && index.isLeader(b.getUUID()), "the lead did not go to the one seen yesterday");
+            long later = now + 8 * PackAbsence.DAY_MILLIS;
+            helper.assertTrue(PackAbsence.check(server, later) == 0 && index.isLeader(b.getUUID()), "the lead was passed back to an Alpha who is away too");
+        } finally {
+            index.leave(a.getUUID());
+            index.leave(b.getUUID());
+            clean(helper, a, b);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theLeadMovesAtExactlySevenDaysAndKeepsTheOldLeadersRankAndSparks(GameTestHelper helper) {
+        ServerPlayer gone = alpha(helper, 6, 1.5);
+        TalkingDuelist next = talkingAlpha(helper, 3, 2.5);
+        ServerPlayer mate = wolf(helper, Rank.BETA, gone.getUUID(), 1, 3.5);
+        online(next, mate);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        long now = System.currentTimeMillis();
+        try {
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess.setSparks(gone, 2);
+            index.join(gone.getUUID(), next.getUUID());
+            index.join(gone.getUUID(), mate.getUUID());
+            index.setStrength(next.getUUID(), 1003);
+            index.setLastSeen(gone.getUUID(), now - 7 * PackAbsence.DAY_MILLIS + 1);
+            helper.assertTrue(PackAbsence.check(server, now) == 0 && index.isLeader(gone.getUUID()), "7 days minus a millisecond was enough");
+            index.setLastSeen(gone.getUUID(), now - 7 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackAbsence.check(server, now) == 1 && index.isLeader(next.getUUID()), "exactly 7 days was not enough");
+            helper.assertTrue(state(gone).rank() == Rank.ALPHA && state(gone).sparks() == 2, "the old leader lost their rank or sparks: " + state(gone));
+            helper.assertTrue(next.received("supernaturalbloodlines.pack.absent_lead_now") && !next.received("supernaturalbloodlines.pack.absent_leader"),
+                    "the new leader was not told they lead, or was told about themselves in the third person: " + next.keys());
+            helper.assertTrue(index.noticeCount(gone.getUUID()) == 1, "the old leader has no notice for their next login");
+        } finally {
+            index.leave(gone.getUUID());
+            index.takeNotices(gone.getUUID());
+            clean(helper, gone, next, mate);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOnlineLeadersTimeIsRefreshedAndAServerStartBeginsEveryTimeAgain(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer mate = wolf(helper, Rank.BETA, leader.getUUID(), 1, 2.5);
+        online(leader, mate);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        long now = System.currentTimeMillis();
+        try {
+            helper.assertTrue(index.inPack(leader.getUUID()), "the pack was not indexed");
+            index.setLastSeen(leader.getUUID(), now - 2 * PackAbsence.REFRESH_MILLIS);
+            PackAbsence.check(server, now);
+            helper.assertTrue(index.lastSeen(leader.getUUID()).orElse(0L) == now, "a crash left an online leader looking away: " + index.lastSeen(leader.getUUID()));
+
+            // a server that was off for ten days is no absence
+            UUID gone = UUID.randomUUID();
+            index.setLastSeen(gone, now - 10 * PackAbsence.DAY_MILLIS);
+            index.resetLastSeen(now);
+            helper.assertTrue(index.lastSeen(gone).orElse(0L) == now, "the start of the server did not begin the time again");
+        } finally {
+            clean(helper, leader, mate);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void lastSeenIsOnlyKeptForPackMembers(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer stranger = human(helper, 2.5);
+        online(leader, stranger);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            index.join(leader.getUUID(), UUID.randomUUID());
+            PackIndex.login(leader);
+            PackIndex.login(stranger);
+            helper.assertTrue(index.lastSeen(leader.getUUID()).isPresent(), "a pack member's time was not kept");
+            helper.assertTrue(index.lastSeen(stranger.getUUID()).isEmpty(), "the time of somebody in no pack was kept");
+        } finally {
+            for (UUID id : index.betasOf(leader.getUUID())) {
+                index.leave(id);
+            }
+            clean(helper, leader, stranger);
+        }
+        helper.succeed();
+    }
+
+    // ---- a True Alpha who leaves ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTrueAlphaWhoLeavesHandsThePackToTheirSecondAlphaAndDissolvesItOnlyWithNone(GameTestHelper helper) {
+        ServerPlayer truth = wolf(helper, Rank.TRUE_ALPHA, null, 5, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        ServerPlayer beta = wolf(helper, Rank.BETA, truth.getUUID(), 1, 3.5);
+        online(truth, second, beta);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            index.join(truth.getUUID(), second.getUUID());
+            VampirismAPI.factionPlayerHandler(truth).leaveFaction(false);
+            helper.assertTrue(index.isLeader(second.getUUID()) && index.alphaOf(beta.getUUID()).map(second.getUUID()::equals).orElse(false), "the second Alpha did not take the pack");
+            helper.assertTrue(second.getUUID().equals(state(beta).packAlpha()) && state(beta).rank() == Rank.BETA, "the Beta did not follow: " + state(beta));
+            helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA && index.isFormerAlpha(truth.getUUID()), "the True Alpha lost the spark, or no tombstone");
+        } finally {
+            clean(helper, truth, second, beta);
+        }
+        helper.succeed();
+    }
+
+    // ---- a kill inside the pack ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aKillInsideThePackMakesNoBlueEyesAndNoGeneAwakening(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer killer = wolf(helper, Rank.BETA, leader.getUUID(), 1, 2.5);
+        ServerPlayer mate = human(helper, 3.5);
+        ServerPlayer stranger = human(helper, 4.5);
+        ServerPlayer carrier = human(helper, 5.5);
+        ServerPlayer carrierMate = human(helper, 6.5);
+        ServerPlayer carrier2 = human(helper, 7.5);
+        online(leader, killer, mate, stranger, carrier, carrierMate, carrier2);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, mate) && join(leader, carrier) && join(leader, carrierMate), "the Packmates could not join");
+            kill(killer, mate);
+            helper.assertTrue(!state(killer).killedInnocent(), "a kill inside the pack turned the killer's eyes blue");
+            kill(killer, stranger);
+            helper.assertTrue(state(killer).killedInnocent(), "the control kill of a stranger no longer turns the eyes blue");
+
+            // a human with the latent gene: a kill inside the pack awakens nothing, a kill outside it does
+            BloodlineAccess.set(carrier, BloodlineState.NONE.toBuilder().wolf(WolfState.NONE.toBuilder().latentGene(true).geneRolled(true).build()).build());
+            BloodlineAccess.set(carrier2, BloodlineState.NONE.toBuilder().wolf(WolfState.NONE.toBuilder().latentGene(true).geneRolled(true).build()).build());
+            kill(carrier, carrierMate);
+            helper.assertTrue(state(carrier).lineage() == Lineage.NONE, "a kill inside the pack awakened the gene");
+            kill(carrier2, stranger);
+            helper.assertTrue(state(carrier2).lineage() != Lineage.NONE, "the control kill no longer awakens the gene");
+        } finally {
+            clean(helper, leader, killer, mate, stranger, carrier, carrierMate, carrier2);
+        }
+        helper.succeed();
+    }
+
+    // ---- leaving a pack just before a kill ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void someoneWhoLeftThePackAMomentAgoStillCountsAsItsMemberForAKill(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        online(leader, second);
+        long[] clock = {1_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, second), "the second Alpha could not join");
+            helper.assertTrue(PackCommand.leave(second) == null && !index.inPack(second.getUUID()), "the second Alpha could not leave");
+            kill(second, leader);
+            helper.assertTrue(state(leader).rank() == Rank.ALPHA && state(second).sparks() == 1 && !state(second).stoleSpark(), "leaving just before the kill gained the spark");
+
+            clock[0] += 11 * 60_000L;
+            kill(second, leader);
+            helper.assertTrue(state(leader).rank() == Rank.OMEGA && state(second).sparks() == 2, "after the grace the kill no longer stole: " + state(leader).rank() + " " + state(second).sparks());
+        } finally {
+            PackIndex.overrideClock(null);
+            clean(helper, leader, second);
+        }
+        // and with the grace at 0 the kill steals at once
+        ServerPlayer leader2 = alpha(helper, 6, 1.5);
+        ServerPlayer second2 = alpha(helper, 3, 2.5);
+        online(leader2, second2);
+        SpeciesConfig.overrideLeftPackGrace(0);
+        try {
+            helper.assertTrue(join(leader2, second2) && PackCommand.leave(second2) == null, "the second pack could not be built");
+            kill(second2, leader2);
+            helper.assertTrue(state(leader2).rank() == Rank.OMEGA, "the switch at 0 did not turn the grace off");
+        } finally {
+            SpeciesConfig.overrideLeftPackGrace(null);
+            clean(helper, leader2, second2);
+        }
+        helper.succeed();
+    }
+
+    // ---- what a stolen spark says ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aStealTellsTheKillerTheCountAndTheCapAndTheVictimWhoTookIt(GameTestHelper helper) {
+        TalkingDuelist killer = talkingAlpha(helper, 5, 1.5);
+        TalkingDuelist victim = talkingAlpha(helper, 5, 2.5);
+        ServerPlayer away = alpha(helper, 5, 3.5); // not online: told at the next login
+        online(killer, victim);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        SpeciesConfig.overrideMaxStackedSparks(2);
+        try {
+            kill(killer, victim);
+            helper.assertTrue(killer.received("supernaturalbloodlines.pack.spark_gained") && !killer.received("supernaturalbloodlines.pack.spark_capped"), "the killer was not told the count: " + killer.keys());
+            helper.assertTrue(victim.received("supernaturalbloodlines.pack.spark_lost"), "the victim was not told who took it");
+            kill(killer, away);
+            helper.assertTrue(killer.received("supernaturalbloodlines.pack.spark_capped"), "the cap was not mentioned");
+            helper.assertTrue(index.takeNotices(away.getUUID()).stream().anyMatch(n -> n[0].equals("supernaturalbloodlines.pack.spark_lost")), "an absent victim was not left a notice");
+        } finally {
+            SpeciesConfig.overrideMaxStackedSparks(null);
+            clean(helper, killer, victim, away);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aCureOrAHealTellsTheAlphaTheirStackedSparksAreGone(GameTestHelper helper) {
+        TalkingDuelist stacked = talkingAlpha(helper, 5, 1.5);
+        TalkingDuelist healer = talkingAlpha(helper, 5, 2.5);
+        ServerPlayer patient = human(helper, 3.5);
+        online(stacked, healer, patient);
+        try {
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess.setSparks(stacked, 3);
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess.setSparks(healer, 2);
+            VampirismAPI.factionPlayerHandler(stacked).leaveFaction(false);
+            helper.assertTrue(stacked.received("supernaturalbloodlines.pack.spark_reset"), "the cure said nothing about the stacked sparks: " + stacked.keys());
+            helper.assertTrue(PackCommand.heal(healer, patient) == null && healer.received("supernaturalbloodlines.pack.spark_reset"), "the heal said nothing about the stacked sparks");
+        } finally {
+            clean(helper, stacked, healer, patient);
         }
         helper.succeed();
     }

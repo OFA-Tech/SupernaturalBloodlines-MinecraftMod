@@ -143,10 +143,9 @@ public final class MarkTracker {
         }
     }
 
-    /** Two players of one pack (plan 14): a kill between them gives no mark and no curse, in either direction. */
+    /** Two players of one pack (plan 14), or who left it a moment ago: a kill between them gives no mark and no curse, in either direction. */
     static boolean samePack(Entity a, Entity b) {
-        return a instanceof ServerPlayer x && b instanceof ServerPlayer y && net.neoforged.fml.ModList.get().isLoaded("werewolves")
-                && net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.get(x.serverLevel()).samePack(x.getUUID(), y.getUUID());
+        return net.neoforged.fml.ModList.get().isLoaded("werewolves") && net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.samePack(a, b);
     }
 
     private static void killedPrey(ServerPlayer killer) {

@@ -25,7 +25,10 @@ public final class DuelBoard {
     public enum Phase { ASKED, ON }
 
     /** Why a challenge or a duel was called off, for the message the two of them get. */
-    public enum Reason { TIMEOUT, LOGOUT, KILLED, PACK, FAR, DECLINED }
+    public enum Reason { TIMEOUT, LOGOUT, KILLED, PACK, FAR, DECLINED, DIED }
+
+    /** Combat credit from a hit lasts this long: a death by the world counts as the opponent's win only within it. */
+    public static final long COMBAT_CREDIT_TICKS = 10 * 20;
 
     public static final class Duel {
         private final UUID challenger;
@@ -73,6 +76,8 @@ public final class DuelBoard {
     private final Map<String, Long> pairCooldown = new HashMap<>();
     private final Map<String, Long> retryCooldown = new HashMap<>();
     private final Map<UUID, Guard> guards = new HashMap<>();
+    // challenges that ran out while somebody was asking for a new one: PackDuel.check still tells their two players
+    private final List<Duel> expiredBacklog = new ArrayList<>();
 
     private static String pair(UUID a, UUID b) {
         return a.compareTo(b) <= 0 ? a + "|" + b : b + "|" + a;
@@ -88,6 +93,8 @@ public final class DuelBoard {
 
     /** @return empty when the challenge was made, otherwise why not */
     public Optional<Refusal> challenge(UUID challenger, UUID leader, long now) {
+        // one that ran out and nobody has swept yet is gone: it must not keep the leader busy
+        expiredBacklog.addAll(sweep(now));
         if (challenger.equals(leader) || of(challenger).isPresent() || of(leader).isPresent()) {
             return Optional.of(Refusal.BUSY);
         }
@@ -164,18 +171,36 @@ public final class DuelBoard {
         return gone;
     }
 
-    /** What ran out of time; a challenge nobody answered also makes its challenger wait before asking the same leader again. */
+    /**
+     * What ran out of time. A challenge nobody answered makes its challenger wait before asking the same leader again, and a duel
+     * that was on and ran out bars the same two for as long as a settled one (waiting it out is no way to save a life).
+     */
     public List<Duel> expire(long now) {
+        List<Duel> gone = new ArrayList<>(expiredBacklog);
+        expiredBacklog.clear();
+        gone.addAll(sweep(now));
+        return gone;
+    }
+
+    private List<Duel> sweep(long now) {
         List<Duel> gone = duels.stream().filter(d -> d.expires < now).toList();
         duels.removeAll(gone);
         for (Duel d : gone) {
             if (d.phase == Phase.ASKED) {
                 retryCooldown.put(ordered(d.challenger, d.leader), now + RETRY_COOLDOWN_TICKS);
+            } else {
+                pairCooldown.put(pair(d.challenger, d.leader), now + PAIR_COOLDOWN_TICKS);
             }
         }
         return gone;
     }
 
+    /** Ticks until {@code challenger} may ask {@code leader} again (the longer of the pair and the retry wait); 0 when they may. */
+    public long cooldownLeft(UUID challenger, UUID leader, long now) {
+        long pairEnd = pairCooldown.getOrDefault(pair(challenger, leader), Long.MIN_VALUE);
+        long retryEnd = retryCooldown.getOrDefault(ordered(challenger, leader), Long.MIN_VALUE);
+        return Math.max(0, Math.max(pairEnd, retryEnd) - now);
+    }
     public List<Duel> all() {
         return List.copyOf(duels);
     }
@@ -185,5 +210,6 @@ public final class DuelBoard {
         pairCooldown.clear();
         retryCooldown.clear();
         guards.clear();
+        expiredBacklog.clear();
     }
 }
