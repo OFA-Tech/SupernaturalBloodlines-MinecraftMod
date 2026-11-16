@@ -7,12 +7,16 @@ import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubAlmanac;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubView;
@@ -21,14 +25,36 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 /** Path: the left page is your story and your ladders (rungs as chapters), the right page the next rung's tasks with their claim stamps. */
 public final class PathPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "path.";
+    private final boolean book;
+
+    /** The shared Path page. */
+    public PathPage() {
+        this(false);
+    }
+
+    /**
+     * @param book the Grimoire's Path page: the moon almanac under the ladders, the sigil emblem (the live model) over the tasks, a footnote reward and
+     *             the Track on HUD link; everything else is the same page
+     */
+    public PathPage(boolean book) {
+        this.book = book;
+    }
 
     @Override
     public void render(HubScreen.Frame f) {
-        story(f);
-        next(f);
+        story(f, book);
+        next(f, book);
     }
 
-    private static void story(HubScreen.Frame f) {
+    /** The task "Track on HUD" follows on this ladder: the first one still open, or claimable when none is open. */
+    public static Optional<HubModel.TaskRow> trackable(HubModel.LadderView ladder) {
+        if (ladder == null || ladder.atTop()) {
+            return Optional.empty();
+        }
+        return ladder.tasks().stream().filter(r -> r.state() == TaskState.OPEN).findFirst().or(() -> ladder.tasks().stream().filter(r -> r.state() == TaskState.CLAIMABLE).findFirst());
+    }
+
+    private static void story(HubScreen.Frame f, boolean book) {
         HubView v = f.view;
         HubTheme t = f.theme();
         Rect r = f.region(HubLayout.MAIN);
@@ -43,7 +69,7 @@ public final class PathPage implements HubPageView {
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 6;
         boolean many = v.ladders().size() > 1;
-        for (HubModel.LadderView ladder : v.ladders()) {
+        for (HubModel.LadderView ladder : LadderTabs.shown(f)) {
             if (many) {
                 f.g.drawString(f.font(), PageKit.race(ladder.race()).copy().withStyle(ChatFormatting.BOLD), r.x(), y, t.accent(), false);
                 y += PageKit.LINE + 1;
@@ -56,7 +82,27 @@ public final class PathPage implements HubPageView {
         t.drawRule(f.g, r.x(), y, r.w());
         y += 4;
         y = PageKit.wrapped(f, Component.translatable(KEY + "sp", v.state().sp(), v.state().spEarned()), r.x(), y, r.w(), t.ink());
+        if (book) {
+            y = almanac(f, r, y + 4);
+        }
         f.end(y);
+    }
+
+    /** The almanac: the next six moons from the level's day, and when the full moon rises. */
+    private static int almanac(HubScreen.Frame f, Rect r, int y) {
+        HubTheme t = f.theme();
+        var level = f.view.player().level();
+        int phase = level.getMoonPhase();
+        f.g.drawString(f.font(), Component.translatable(KEY + "almanac"), r.x(), y, t.muted(), false);
+        int x = r.x();
+        List<Component> tip = new ArrayList<>();
+        for (int p : HubAlmanac.phases(phase, 6)) {
+            KitDraw.icon(f.g, Icons.moon(p), x, y + PageKit.LINE, 12, p == 0 ? 0xFFB8860B : t.ink());
+            x += 14;
+        }
+        Component line = PathActions.almanacLine(phase);
+        y = PageKit.wrapped(f, line, r.x(), y + PageKit.LINE + 14, r.w(), t.accent());
+        return y;
     }
 
     private static Component subtitle(HubView v) {
@@ -133,7 +179,7 @@ public final class PathPage implements HubPageView {
     }
 
     /** "Reward: +N skill points" (and EP with Tensura). Shared with the themes' own Path views. */
-    static Component reward(HubModel.RungRow row) {
+    public static Component reward(HubModel.RungRow row) {
         return row.ep() > 0 && ModList.get().isLoaded("tensura")
                 ? Component.translatable(KEY + "reward_ep", row.sp(), String.format("%,d", row.ep()))
                 : Component.translatable(KEY + "reward", row.sp());
@@ -147,23 +193,33 @@ public final class PathPage implements HubPageView {
         y = PageKit.wrapped(f, Component.translatable(KEY + "turning_text"), r.x(), y + 6, r.w(), t.ink());
         int ticks = f.view.bloodline().turningTicksLeft();
         if (ticks > 0) {
-            int s = ticks / 20;
-            y = PageKit.wrapped(f, Component.translatable(KEY + "turning_left", s / 60, String.format("%02d", s % 60)), r.x(), y + 4, r.w(), t.accent());
+            // the clock large, as the Blood Moon's grey moon has it
+            String clock = StageGhoulPage.clock(ticks);
+            var pose = f.g.pose();
+            pose.pushPose();
+            pose.translate(r.x() + (r.w() - f.font().width(clock) * 2.5f) / 2f, y + 10, 0);
+            pose.scale(2.5f, 2.5f, 1f);
+            f.g.drawString(f.font(), clock, 0, 0, t.accent(), false);
+            pose.popPose();
+            y += 38;
+            y = PageKit.wrapped(f, Component.translatable(PageKit.HUB + "ghoul.left"), r.x(), y, r.w(), t.muted());
         }
         return y;
     }
 
-    private static void next(HubScreen.Frame f) {
+    private static void next(HubScreen.Frame f, boolean book) {
         HubView v = f.view;
         HubTheme t = f.theme();
         Rect r = f.region(HubLayout.SIDE);
+        // the bookmarks hang in the right page's header band (the margin note is on the left page), so they never touch it
+        LadderTabs.render(f, r.x(), r.y() - 17, r.w());
         int y = f.begin(HubLayout.SIDE);
         if (v.ghoul()) {
             f.end(turning(f, r, y));
             return;
         }
         boolean any = false;
-        for (HubModel.LadderView ladder : v.ladders()) {
+        for (HubModel.LadderView ladder : LadderTabs.shown(f)) {
             if (ladder.atTop()) {
                 continue;
             }
@@ -173,10 +229,20 @@ public final class PathPage implements HubPageView {
             y = PageKit.title(f, PageKit.rung(active), r.x(), y + PageKit.LINE, r.w(), t.accent());
             t.drawRule(f.g, r.x(), y + 2, r.w());
             y += 6;
+            if (book && ladder == LadderTabs.shown(f).get(0)) {
+                int size = Math.min(r.w(), 78);
+                f.emblem(new Rect(r.x() + (r.w() - size) / 2, y, size, size));
+                y += size + 4;
+            }
             for (HubModel.TaskRow task : ladder.tasks()) {
                 y = PageKit.taskRow(f, task, r.x(), y, r.w(), true, null, false);
             }
-            y = PageKit.wrapped(f, reward(active), r.x(), y + 2, r.w(), t.muted()) + 6;
+            y = PageKit.wrapped(f, book ? Component.literal("* ").append(reward(active)) : reward(active), r.x(), y + 2, r.w(), t.muted()) + 6;
+            if (book) {
+                Optional<HubModel.TaskRow> trackable = trackable(ladder);
+                BookKit.trackLink(f, "panel:track:" + ladder.race(), trackable.map(row -> row.task().id()).orElse(""), trackable.isEmpty(), r.x(), y);
+                y += 14;
+            }
         }
         if (!any) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "complete"), r.x(), y, r.w(), t.ink());

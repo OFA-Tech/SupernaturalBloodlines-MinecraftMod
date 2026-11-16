@@ -21,12 +21,12 @@ class HubPageVisibilityTest {
 
     @Test
     void allModsWerewolfSeesEveryPage() {
-        assertEquals(List.of(PATH, SKILLS, QUESTS, RITES, BLOODLINE, PACK), visiblePages(ctx(WEREWOLF, true, true, false)));
+        assertEquals(List.of(PATH, SKILLS, QUESTS, RITES, BLOODLINE, PACK, GUIDE), visiblePages(ctx(WEREWOLF, true, true, false)));
     }
 
     @Test
     void vampireWithNoPackHasNoPackPage() {
-        assertEquals(List.of(PATH, SKILLS, QUESTS, RITES, BLOODLINE), visiblePages(ctx(VAMPIRE, true, true, false)));
+        assertEquals(List.of(PATH, SKILLS, QUESTS, RITES, BLOODLINE, GUIDE), visiblePages(ctx(VAMPIRE, true, true, false)));
     }
 
     @Test
@@ -49,14 +49,32 @@ class HubPageVisibilityTest {
 
     @Test
     void withoutEnchantedTheRitesAreGone() {
-        assertEquals(List.of(PATH, SKILLS, QUESTS, BLOODLINE), visiblePages(ctx(VAMPIRE, false, false, false)));
+        assertEquals(List.of(PATH, SKILLS, QUESTS, BLOODLINE, GUIDE), visiblePages(ctx(VAMPIRE, false, false, false)));
+    }
+
+    @Test
+    void theLoadoutIsAPageOnlyWithTheAbilityHud() {
+        assertFalse(LOADOUT.visible(ctx(VAMPIRE, true, true, false)), "no HUD part, no Loadout page");
+        HubPage.Context withHud = new HubPage.Context(VAMPIRE, Optional.empty(), true, true, true);
+        assertTrue(LOADOUT.visible(withHud));
+        assertEquals(List.of(PATH, SKILLS, QUESTS, RITES, BLOODLINE, GUIDE, LOADOUT), visiblePages(withHud));
+    }
+
+    @Test
+    void aGhoulCanReadTheGuideWhileTheOtherPagesWait() {
+        HubPage.Context ghoul = new HubPage.Context(GHOUL, Optional.empty(), true, true, true);
+        assertFalse(GUIDE.locked(ghoul));
+        assertFalse(PATH.locked(ghoul));
+        assertTrue(BLOODLINE.locked(ghoul), "the design opens Path and Guide only");
+        assertTrue(SKILLS.locked(ghoul));
+        assertTrue(LOADOUT.locked(ghoul));
     }
 
     @Test
     void ghoulSeesPathAndBloodlineAndTheRestIsLocked() {
         HubPage.Context c = ctx(GHOUL, true, true, false);
         for (HubPage p : visiblePages(c)) {
-            assertEquals(p != PATH && p != BLOODLINE, p.locked(c), p.name());
+            assertEquals(p != PATH && p != GUIDE, p.locked(c), p.name());
         }
         assertFalse(PATH.locked(ctx(VAMPIRE, true, true, false)));
         assertFalse(QUESTS.locked(ctx(VAMPIRE, true, true, false)));
@@ -97,8 +115,9 @@ class HubPageVisibilityTest {
     void arrowsWalkTheVisiblePagesOnly() {
         List<HubPage> pages = visiblePages(ctx(VAMPIRE, false, false, false));
         assertEquals(BLOODLINE, HubFocus.page(pages, QUESTS, 1));
-        assertEquals(PATH, HubFocus.page(pages, BLOODLINE, 1));
-        assertEquals(BLOODLINE, HubFocus.page(pages, PATH, -1));
+        assertEquals(GUIDE, HubFocus.page(pages, BLOODLINE, 1));
+        assertEquals(PATH, HubFocus.page(pages, GUIDE, 1));
+        assertEquals(GUIDE, HubFocus.page(pages, PATH, -1));
     }
 
     @Test

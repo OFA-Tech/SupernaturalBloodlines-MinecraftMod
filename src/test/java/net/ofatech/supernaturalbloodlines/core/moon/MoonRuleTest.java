@@ -1,9 +1,9 @@
-package net.ofatech.supernaturalbloodlines.parts.vampirismenchanted;
+package net.ofatech.supernaturalbloodlines.core.moon;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.MoonRule;
+import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
 import org.junit.jupiter.api.Test;
 
 class MoonRuleTest {

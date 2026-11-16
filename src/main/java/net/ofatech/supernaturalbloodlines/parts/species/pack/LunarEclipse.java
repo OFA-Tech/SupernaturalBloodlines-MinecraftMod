@@ -5,7 +5,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.DoubleSupplier;
 import java.util.function.Function;
 import net.minecraft.core.HolderLookup;
-import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.MoonRule;
+import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;

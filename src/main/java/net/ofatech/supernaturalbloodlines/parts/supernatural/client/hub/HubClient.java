@@ -32,6 +32,13 @@ public final class HubClient {
     }
 
     public static void register() {
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.TrackHud.register();
+        net.ofatech.supernaturalbloodlines.shared.hud.HudStyle.install(() -> switch (HubClientConfig.theme()) {
+            case BLOOD_MOON -> net.ofatech.supernaturalbloodlines.shared.hud.HudStyle.Style.BLOOD_MOON;
+            case TENSURA -> net.ofatech.supernaturalbloodlines.shared.hud.HudStyle.Style.TENSURA;
+            default -> net.ofatech.supernaturalbloodlines.shared.hud.HudStyle.Style.GRIMOIRE;
+        });
+        DevShots.registerIfRequested(); // development only: a no-op unless the JVM property is set
         // forget the last snapshot when leaving a world, so another world never shows its names
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> {
             snapshot = HubSnapshotPayload.EMPTY;

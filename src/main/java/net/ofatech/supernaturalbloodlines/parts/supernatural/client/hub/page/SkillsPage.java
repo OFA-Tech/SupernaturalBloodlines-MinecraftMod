@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 public final class SkillsPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "skills.";
 
-    private enum Tab { OURS, FACTION, LOADOUT }
+    enum Tab { OURS, FACTION, LOADOUT }
 
     /** One skill of the faction's own tree, as the mod's client-side handler sees it. */
     private record ModSkill(String id, Component name, Component description, int cost, ISkillHandler.Result result) {
@@ -49,6 +49,25 @@ public final class SkillsPage implements HubPageView {
     private IPlayableFaction<?> cachedFaction;
     @Nullable
     private String selected;
+
+    Tab tab() {
+        return tab;
+    }
+
+    void tab(Tab next) {
+        tab = next;
+        selected = null;
+        loadout.reset();
+    }
+
+    @Nullable
+    String selected() {
+        return selected;
+    }
+
+    void select(String id) {
+        selected = id;
+    }
 
     @Override
     public void render(HubScreen.Frame f) {
@@ -143,11 +162,11 @@ public final class SkillsPage implements HubPageView {
         };
     }
 
-    private static Component name(HubSkills.Row row) {
+    static Component name(HubSkills.Row row) {
         return Component.translatableWithFallback(PageKit.HUB + "skill." + row.id(), row.name());
     }
 
-    private static Component state(HubSkills.Row row) {
+    static Component state(HubSkills.Row row) {
         return switch (row.state()) {
             case OWNED -> Component.translatable(KEY + "state.owned");
             case BUYABLE -> Component.translatable(KEY + "state.buyable", row.cost());
@@ -216,6 +235,10 @@ public final class SkillsPage implements HubPageView {
         f.end(y);
     }
 
+    static void buy(String id) {
+        PacketDistributor.sendToServer(new BuySkillPayload(id));
+    }
+
     /** A wax stamp with its word under it, centred on the page; the server checks what it sends. Returns the y under it. */
     static int stamp(HubScreen.Frame f, Rect r, int y, String id, Component word, Runnable action) {
         Rect s = new Rect(r.x() + (r.w() - HubTheme.STAMP) / 2, y + 6, HubTheme.STAMP, HubTheme.STAMP);
@@ -227,7 +250,7 @@ public final class SkillsPage implements HubPageView {
         return PageKit.centered(f, word, r, s.bottom() + 3, f.theme().accent());
     }
 
-    private static Optional<IPlayableFaction<?>> faction(Player p) {
+    static Optional<IPlayableFaction<?>> faction(Player p) {
         IPlayableFaction<?> fa = VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
         return Optional.ofNullable(fa);
     }

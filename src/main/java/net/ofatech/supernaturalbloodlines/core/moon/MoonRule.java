@@ -1,4 +1,4 @@
-package net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite;
+package net.ofatech.supernaturalbloodlines.core.moon;
 
 /** Pure, so a unit test can reach it without Minecraft. */
 public final class MoonRule {

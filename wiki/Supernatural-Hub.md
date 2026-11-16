@@ -63,6 +63,8 @@ Change it in [Configuration](Configuration#supernatural-client-supernaturalblood
 - **Path.** The left page is your story: your name, your races, who sired you (and whether the bond is severed), then each ladder you climb, rung by rung. A green seal is a rung reached, the red one is your next rung (with how many of its tasks you have claimed), tan ones are sealed. The right page lists the next rung's tasks, each with a tag for the mod it comes from (SB ours, VMP Vampirism, WW Werewolves, ENC Enchanted, TEN Tensura) and its count. A done task shows a **wax stamp**: press it to claim. The server checks every claim.
 - **Quests.** Every task of your next rungs on the left (both ladders for a witch or siphoner werewolf), and any open skill quest such as Hunter of Hunters. Pick one to see it in full on the right: its source, its progress, how that mod does it (for a level step, the altar to use), and the stamp when it can be claimed.
 - **A Ghoul** sees Path, with the turning and the time left, and Bloodline; the other pages say to complete the turning first.
+- **Guide and Loadout.** The Guide page has chapters for what you are and how the game works; the Loadout page (only with the ability HUD) is the Skills page's Loadout tab on a page of its own. In the **Grimoire** the pages are index tabs out of the right edge, the other mods' screens are wax seals hanging below the book, SP and EP are a red margin note, and the Path page has an almanac of the next moons and a sigil round your model.
+- **The look button** (top right of the hub, a moon in the Grimoire and Blood Moon, "Theme" in the Tensura window) switches Grimoire, Blood Moon and Tensura, and saves your choice (the same setting as `hub_theme`). **Keys 1 to 8** jump to the first to eighth page. In the hub Tab goes through the navigation first, then the page, then its buttons.
 - **Keyboard:** Tab or the up and down arrows move through everything on the page (scrolling to it), Page Up and Page Down scroll, Enter or Space presses it, the left and right arrows turn the page, Esc or the hub key closes. Every tooltip says in words what the picture shows.
 
 ### Pages and launchers (phase 12e, Tasks 3 to 5)
@@ -74,3 +76,12 @@ Change it in [Configuration](Configuration#supernatural-client-supernaturalblood
 - **Path** also shows your Tensura race and EP.
 - **Seals.** Wax seals under the ribbons open other mods' screens as they are: **T** Tensura's status menu, **E** Enchanted's book, **V** or **W** your Vampirism or Werewolves skill tree. Press Esc there and the hub comes back on the page you left.
 - **Tensura's menu** has a fifth tab on the right, under its three "coming soon" tabs, that opens the hub.
+
+### States of the hub (plan 16e)
+
+- **Ghoul.** While you are turning, only **Path** and **Guide** open. Path shows a grey moon with the time left ("14 : 20") and says what to do: drink human blood (villagers, traders, humans, witches or hunters, not vampires or werewolves). The other tabs are dimmed with a lock, and their tooltip says why.
+- **Two ladders.** With two ladders (a hybrid with a witch's, a tribrid) Path has a bookmark per ladder; the chosen one is filled and a dot on a bookmark means a task there is ready to claim. Skill points from both go into one pool.
+- **Empty pages** say so in one line and point to the page that explains it: "You run alone." (Pack, to the Guide), "No one turned you yet." (Bloodline) and "All caught up." (Quests, to Path).
+- **The look button** opens a menu of the three looks with the one in use ticked. Without Tensura the Tensura look is greyed with "needs Tensura", and there is no EP, no Tensura race line and no **T** seal.
+- **Keys.** Tab and Shift+Tab walk every button and row, Enter presses, 1 to 8 jump to a page, the arrows turn pages or move in a ring, Esc closes (or cancels a question), and the hub key (default Home) closes it. Every irreversible action (leaving a pack, clearing a slot) asks first, and Esc or Stay is always the safe answer.
+- **Small windows.** The Tensura look shrinks its page list to icons under 340 GUI pixels wide, so the stage keeps its room.

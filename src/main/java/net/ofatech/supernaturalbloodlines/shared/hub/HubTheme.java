@@ -1,6 +1,13 @@
 package net.ofatech.supernaturalbloodlines.shared.hub;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Counters;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.FocusRing;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiContext;
 
 /**
  * A skin and layout over the one hub screen model: where things go and how they look. The supernatural part's shared page views draw
@@ -41,6 +48,40 @@ public interface HubTheme {
 
     /** The keyboard focus around a target. */
     void drawFocus(GuiGraphics g, Rect r);
+
+    /** The theme switch button. A theme draws its own (the clasp, the moon, the title bar button). */
+    default void drawThemeButton(GuiGraphics g, Rect r, boolean hot, boolean focused) {
+        KitDraw.button(g, this, r, Icons.THEME, hot, focused);
+    }
+
+    /** The close button, for a theme whose layout has one. */
+    default void drawClose(GuiGraphics g, Rect r, boolean hot, boolean focused) {
+        KitDraw.button(g, this, r, Icons.CLOSE, hot, focused);
+    }
+
+    /** After the page: what a theme draws over it that is not content (the book's page numbers, a footnote line). */
+    default void drawFooter(UiContext ctx, HubLayout layout, HubPage page) {
+    }
+
+    /** The emblem in {@code r}: the live model in the theme's own frame (the book's sigil, the moon, the status hex). */
+    default void drawEmblem(UiContext ctx, Rect r, EmblemData data) {
+        KitDraw.emblem(ctx.g(), this, r, data);
+    }
+
+    /** SP and EP in {@code r}: a margin note, a top-right pair or a stats line, as the theme's layout names it ({@code Chrome.counters}). */
+    default void drawCounters(UiContext ctx, Rect r, Counters counters) {
+        KitDraw.counters(ctx.g(), ctx.font(), this, r, counters);
+    }
+
+    /** The detail of a selection in {@code r}: the shared contract of every page, which a theme may style as the page opposite, a bar or a pane. */
+    default void drawDetail(UiContext ctx, Rect r, Detail detail) {
+        KitDraw.detail(ctx, this, r, detail);
+    }
+
+    /** The colour of the keyboard focus ring (a target outline, not text): 3:1 or more on {@link #paper()}. */
+    default int focusColor() {
+        return FocusRing.forPaper(paper());
+    }
 
     /** The colour behind the content regions: every text colour below is readable on it (4.5:1 or more). */
     int paper();

@@ -27,7 +27,7 @@ public final class HudKeyDefaults {
 
     /** Slots 1 to 3 are the left column and 4 to 6 the right one. */
     public static final List<Key> SLOTS = slots();
-    public static final Key HUD_MODE = new Key("key.supernaturalbloodlines.hud_mode", GLFW_CAPS_LOCK, "ALT");
+    public static final Key HUD_MODE = new Key("key.supernaturalbloodlines.hud_mode", GLFW_CAPS_LOCK, "NONE");
     /** Registered by the supernatural part ({@code HubKeybinds}); listed so the clash test sees it. */
     public static final Key HUB = new Key("key.supernaturalbloodlines.hub", GLFW_HOME, "NONE");
     public static final List<Key> ALL = all();

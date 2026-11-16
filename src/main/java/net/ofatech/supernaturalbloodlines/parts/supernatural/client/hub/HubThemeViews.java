@@ -15,4 +15,9 @@ public interface HubThemeViews {
 
     default void drawOverlay(HubScreen.Frame f, HubPage page) {
     }
+
+    /** A theme with its own title bar takes the page's title and line (Tensura's "Status · Path"); the others draw them on the page. */
+    default boolean takesHead(net.minecraft.network.chat.Component title, @org.jetbrains.annotations.Nullable net.minecraft.network.chat.Component subtitle) {
+        return false;
+    }
 }

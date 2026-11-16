@@ -22,8 +22,8 @@ class HudKeysDefaultsTest {
         // the owner's live options.txt (plan 13, "OFA pack facts"): next_mode is Left Alt, race_ability [, great sage menu G, and Caps alone is the radio
         List<HudKeyDefaults.Key> live = List.of(new HudKeyDefaults.Key("next_mode", HudKeyDefaults.GLFW_LEFT_ALT, "NONE"),
                 new HudKeyDefaults.Key("race_ability", HudKeyDefaults.GLFW_LEFT_BRACKET, "NONE"),
-                new HudKeyDefaults.Key("greatsage.menu", HudKeyDefaults.GLFW_G, "NONE"),
-                new HudKeyDefaults.Key("radio", HudKeyDefaults.GLFW_CAPS_LOCK, "NONE"));
+                new HudKeyDefaults.Key("greatsage.menu", HudKeyDefaults.GLFW_G, "NONE"));
+        // the radio left Caps for plan 16f (the mode key is plain Caps Lock now): the pack's staged keymap moves it, see OFA-notes/KEYMAP.md
         for (HudKeyDefaults.Key ours : HudKeyDefaults.ALL) {
             for (HudKeyDefaults.Key other : live) {
                 assertFalse(ours.glfwKey() == other.glfwKey() && ours.modifier().equals(other.modifier()), ours.id() + " collides with " + other.id());
@@ -32,10 +32,10 @@ class HudKeysDefaultsTest {
     }
 
     @Test
-    void theSlotsAreRFVZXCAndTheModeKeyIsAltCaps() {
+    void theSlotsAreRFVZXCAndTheModeKeyIsPlainCapsLock() {
         assertEquals(List.of(HudKeyDefaults.GLFW_R, HudKeyDefaults.GLFW_F, HudKeyDefaults.GLFW_V, HudKeyDefaults.GLFW_Z, HudKeyDefaults.GLFW_X,
                 HudKeyDefaults.GLFW_C), HudKeyDefaults.SLOTS.stream().map(HudKeyDefaults.Key::glfwKey).toList());
-        assertEquals("ALT", HudKeyDefaults.HUD_MODE.modifier());
+        assertEquals("NONE", HudKeyDefaults.HUD_MODE.modifier());
         assertEquals(HudKeyDefaults.GLFW_CAPS_LOCK, HudKeyDefaults.HUD_MODE.glfwKey());
     }
 

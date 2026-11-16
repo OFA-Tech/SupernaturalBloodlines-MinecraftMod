@@ -16,6 +16,13 @@ public final class HudClient {
         modBus.addListener(AbilityHudLayer::register);
         LoadoutAccess.install(new ClientLoadout());
         HudSlots.register();
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent e) -> e.registerReloadListener(
+                (net.minecraft.server.packs.resources.ResourceManagerReloadListener) rm -> {
+                    net.ofatech.supernaturalbloodlines.shared.hud.ClientIcons.reload();
+                    net.ofatech.supernaturalbloodlines.shared.hub.kit.client.BakedTexture.clear();
+                }));
+        BossBars.register();
+        net.ofatech.supernaturalbloodlines.shared.hud.TrackerAccess.installHud();
         HudInput.register();
         if (ModList.get().isLoaded("tensura")) {
             boolean blood = ModList.get().isLoaded("vampirism");

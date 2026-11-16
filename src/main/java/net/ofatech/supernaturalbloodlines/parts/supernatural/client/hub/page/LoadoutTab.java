@@ -21,13 +21,13 @@ import net.ofatech.supernaturalbloodlines.shared.hud.LoadoutAccess;
  * first, with what it does for their form); the right page shows the six slots in HUD order with their keys. Pick an action and then a slot, or a slot
  * and then an action ({@link LoadoutTabModel}); each slot has a clear mark. The server checks what is sent.
  */
-final class LoadoutTab {
+public final class LoadoutTab {
     private static final String KEY = PageKit.HUB + "skills.loadout.";
     private static final int ROW = 18;
 
     private final LoadoutTabModel model = new LoadoutTabModel();
 
-    static boolean available() {
+    public static boolean available() {
         return LoadoutAccess.available();
     }
 
@@ -44,7 +44,7 @@ final class LoadoutTab {
         } else if (model.pickedSlot() != null) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "picked_slot"), r.x(), y, r.w(), t.accent());
         }
-        y += 2;
+        y = BookKit.caps(f, Component.translatable(PageKit.HUB + "loadout.known"), r.x(), y + 2, t.muted());
         for (LoadoutAccess.Entry e : entries) {
             y = action(f, r, y, e);
         }
@@ -85,7 +85,7 @@ final class LoadoutTab {
         HubTheme t = f.theme();
         Rect r = f.region(HubLayout.SIDE);
         int y = f.begin(HubLayout.SIDE);
-        y = PageKit.title(f, Component.translatable(KEY + "slots"), r.x(), y, r.w(), t.accent());
+        y = PageKit.title(f, Component.translatable(PageKit.HUB + "loadout.hand"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 6;
         Map<ResourceLocation, LoadoutAccess.Entry> byId = new HashMap<>();
@@ -124,7 +124,8 @@ final class LoadoutTab {
             Rect clear = new Rect(r.right() - 12, y + 2, 12, 12);
             String clearId = "loadout:clear:" + i;
             f.g.drawString(f.font(), "x", clear.x() + 3, clear.y() + 2, f.hovered(clear) ? t.accent() : t.muted(), false);
-            f.target(clearId, clear, List.of(Component.translatable(KEY + "clear")), () -> apply(model.clearSlot(i)));
+            f.target(clearId, clear, List.of(Component.translatable(KEY + "clear")), () -> f.confirm(Component.translatable(KEY + "clear_title", LoadoutAccess.keyLabel(i)),
+                    Component.translatable(KEY + "clear_body"), Component.translatable(KEY + "clear_stay"), Component.translatable(KEY + "clear"), () -> apply(model.clearSlot(i))));
             if (f.focused(clearId)) {
                 t.drawFocus(f.g, clear);
             }

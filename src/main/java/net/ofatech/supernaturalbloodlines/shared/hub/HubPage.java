@@ -8,10 +8,13 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 
 /** The hub's pages, in ribbon order. Which ones show depends on the installed mods and the player's races. Pure, no client classes. */
 public enum HubPage {
-    PATH, SKILLS, QUESTS, RITES, BLOODLINE, PACK;
+    PATH, SKILLS, QUESTS, RITES, BLOODLINE, PACK, GUIDE, LOADOUT;
 
     /** The races and installed mods a page's visibility depends on. */
-    public record Context(SupernaturalRace creature, Optional<SupernaturalRace> magic, boolean werewolves, boolean enchanted) {
+    public record Context(SupernaturalRace creature, Optional<SupernaturalRace> magic, boolean werewolves, boolean enchanted, boolean loadout) {
+        public Context(SupernaturalRace creature, Optional<SupernaturalRace> magic, boolean werewolves, boolean enchanted) {
+            this(creature, magic, werewolves, enchanted, false);
+        }
     }
 
     public String langKey() {
@@ -20,16 +23,18 @@ public enum HubPage {
 
     public boolean visible(Context c) {
         return switch (this) {
-            case PATH, SKILLS, QUESTS, BLOODLINE -> true;
+            case PATH, SKILLS, QUESTS, BLOODLINE, GUIDE -> true;
+            // the ability HUD part brings the slots to arrange; without it there is nothing to assign (the Skills page keeps its own tab)
+            case LOADOUT -> c.loadout();
             case RITES -> c.enchanted();
             // a current member of the werewolf faction or a hybrid type; a former werewolf (cured, or turned a vampire) keeps no pack page
             case PACK -> c.werewolves() && wolfRace(c.creature());
         };
     }
 
-    /** A Ghoul sees Path and Bloodline; every other page asks them to complete the turning first. */
+    /** A Ghoul sees Path (the turning and its clock) and the Guide; every other page asks them to complete the turning first. */
     public boolean locked(Context c) {
-        return c.creature() == SupernaturalRace.GHOUL && this != PATH && this != BLOODLINE;
+        return c.creature() == SupernaturalRace.GHOUL && this != PATH && this != GUIDE;
     }
 
     public static List<HubPage> visiblePages(Context c) {

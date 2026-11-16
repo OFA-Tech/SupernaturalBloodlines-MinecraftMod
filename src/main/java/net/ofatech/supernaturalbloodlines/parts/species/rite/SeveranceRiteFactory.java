@@ -22,7 +22,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.item.SiresBloodItem;
 import net.ofatech.supernaturalbloodlines.parts.species.witch.Siphoning;
 import net.ofatech.supernaturalbloodlines.parts.species.witch.WitchAltarBonus;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory;
-import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.MoonRule;
+import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.RiteTargets;
 
 /**

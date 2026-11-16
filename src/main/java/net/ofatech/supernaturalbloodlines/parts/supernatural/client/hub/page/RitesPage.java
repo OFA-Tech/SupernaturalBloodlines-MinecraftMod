@@ -101,19 +101,19 @@ public final class RitesPage implements HubPageView {
         f.end(sy);
     }
 
-    private static Component name(HubSocial.Rite rite) {
+    static Component name(HubSocial.Rite rite) {
         ResourceLocation id = ResourceLocation.parse(rite.id());
         return Component.translatableWithFallback("rite." + id.getNamespace() + "." + id.getPath(), HubModel.pretty(id.getPath()));
     }
 
-    private static Component shapeName(String shape) {
+    static Component shapeName(String shape) {
         ResourceLocation id = ResourceLocation.tryParse(shape);
         String path = id == null ? shape : id.getPath();
         return Component.translatableWithFallback(KEY + "shape." + path, HubModel.pretty(path));
     }
 
     /** "count id" as "2 x Item Name". */
-    private static Component item(String entry) {
+    static Component item(String entry) {
         int space = entry.indexOf(' ');
         String count = space < 0 ? "1" : entry.substring(0, space);
         ResourceLocation id = ResourceLocation.tryParse(space < 0 ? entry : entry.substring(space + 1));
@@ -121,7 +121,7 @@ public final class RitesPage implements HubPageView {
         return Component.literal(count + " x ").append(name);
     }
 
-    private static boolean isRite(HubModel.TaskRow row) {
+    static boolean isRite(HubModel.TaskRow row) {
         return row.task().leaves().stream().anyMatch(l -> l.detector() == TaskSpec.Detector.RITE);
     }
 }

@@ -112,6 +112,20 @@ public final class HubModel {
     }
 
     /** The task the Quests page shows in detail: the selected one while it is still listed, else the first claimable, else the first. */
+    /** How far along a ladder is, 0 to 1: the rungs reached plus the share of the active rung's tasks claimed, over all rungs but the first (the race itself). Pure. */
+    public static float progress(LadderView ladder) {
+        int steps = Math.max(1, ladder.rungs().size() - 1);
+        float done = 0f;
+        for (RungRow r : ladder.rungs()) {
+            if (r.index() > 0 && r.status() == RungStatus.REACHED) {
+                done += 1f;
+            } else if (r.status() == RungStatus.CURRENT && r.tasks() > 0) {
+                done += (float) r.claimed() / r.tasks();
+            }
+        }
+        return Math.max(0f, Math.min(1f, done / steps));
+    }
+
     public static Optional<TaskRow> pick(List<TaskRow> rows, String selectedId) {
         return rows.stream().filter(r -> r.task().id().equals(selectedId)).findFirst()
                 .or(() -> rows.stream().filter(r -> r.state() == TaskState.CLAIMABLE).findFirst())

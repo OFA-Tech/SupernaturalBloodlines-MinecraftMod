@@ -28,5 +28,8 @@ public final class ThemeContrast {
             }
         }
         assertTrue(failed.isEmpty(), name + " has text below 4.5:1: " + failed);
+        assertTrue(Contrast.ratio(theme.focusColor(), paper) >= 3.0, name + " focus ring is below 3:1 on its paper");
+        // a button's icon is accent on paper at rest and paper on accent when hovered (the same ratio): 3:1 or more for a graphic
+        assertTrue(Contrast.ratio(theme.accent(), paper) >= 3.0, name + " button icon (rest and hovered) is below 3:1");
     }
 }

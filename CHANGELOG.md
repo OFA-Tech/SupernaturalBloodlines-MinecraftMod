@@ -1,5 +1,67 @@
 # Changelog
 
+## Unreleased (plan 16b, Grimoire v2)
+
+### Added
+
+- **The Grimoire is a real open book now.** A leather cover with a gold line, two parchment pages with spine shading and stacked page edges and page numbers, index tabs out of the right edge (with their icons), wax seals on cords below the book, a brass clasp (the look button) and a close mark, SP and EP as a red ink margin note on the left page, and on the Path page an almanac of the next six moons ("the full moon rises in 3 days") and an ink sigil with the live player model (drag it to turn) and your ladder's progress as a ring of ticks.
+- **Two new pages in every look: Guide and Loadout.** The Guide has chapters for what you are (your creature, then your magic race) and for how the hub, the path, skills, quests, rites, the bloodline, the pack, the loadout and the moon work. The Loadout page is the Loadout tab of the Skills page on a page of its own (the tab stays), and it shows only with the ability HUD. A Ghoul can read the Guide while the other pages wait. Keys 1 to 8 now reach them.
+- The three looks draw their page icons from the new icon atlas.
+
+### The finished hub and HUD (16g)
+
+- **The tracked task** shows at the top centre, under the boss bars, instead of on top of Tensura's status (client setting `tracker_anchor`).
+- **The slot columns** stand 3 pixels above the bottom edge, so no slot is cut at any GUI scale. **Bite** has its own fang icon, a rune stands in for an icon a mod does not have, the cooldown is a small "4s" label over the dimmed icon, and the Alt panels wrap their text.
+- **Contrast:** the Blood Moon's red buttons were 3.6:1 and are darker now; the check covers the floating bar, the Tensura title bar and info pane and the HUD.
+- **Skill names** on the radial tree no longer split in the middle of a word.
+
+### The ability HUD in the hub's look (16f)
+
+- **The slots follow the hub's theme:** inked tiles with wax key badges (Grimoire), round slots with gold key letters (Blood Moon), hexagons with key tabs (Tensura). Real icons, a clockwise cooldown pie with the seconds, a gold glow while a skill is active, a lock on actions you have not unlocked, and a ring of blood round Bite.
+- **Caps Lock now switches the mode** (it was Alt + Caps Lock) on a new install. It works with Alt held too, and it can be rebound in Controls. **Upgrading:** a game that has run an earlier version (v0.2.0) keeps the HUD mode key it saved, Alt + Caps Lock; a new install gets plain Caps Lock. To switch, set "HUD mode" in Controls (or delete the `key_key.supernaturalbloodlines.hud_mode` line from `options.txt` while the game is closed).
+- **Hold Alt** for the other mode's six slots and one panel per column with what each slot is. A werewolf sees the full moon's forced-shift countdown for the last five minutes. After ten idle seconds the slots fade to 40 percent.
+- **Track on HUD works:** pick a task on the hub's Path or Quests page and its line and progress bar show at the top centre, under the boss bars.
+
+### States of the hub (16e)
+
+- **Ghoul:** Path and Guide only; a grey moon with the time left, the other tabs locked. **Two ladders:** a bookmark per ladder with a ready dot. **Empty pages:** one line and a button to what explains it. **The look button** is a menu; Tensura is greyed without Tensura. Clearing a slot asks first. The Tensura look's title strip and ladder labels no longer overlap at any size, and its page list is icons only on a narrow window.
+
+### Tensura v2 (16d)
+
+- **Tensura's window is a status window:** a title bar ("Status · Path"), the stats line and a Theme button, a page list with Other mods under it, a teal magic circle with hexagon rings and a hexagon ladder, and an info pane on the right that holds the selection, its tasks and its buttons. Skills are hexagon nodes. No bottom bar.
+- **Blood Moon's Quests, Rites, Guide and Loadout** are now pill pages (source filters, task cards, a grid of rite cards, a chapter list, round slots), its actions are pills in the floating bar, and the moon glows.
+- Wax seals are never cut by the page number any more, at any GUI scale.
+
+### Blood Moon v2 (16c) and the Grimoire follow-ups
+
+- **Blood Moon is redrawn:** the moon is the emblem and fills as you climb (rung gems down its left, an almanac under them), a round icon rail on the left and a round launcher rail on the right, SP and EP and a round look button top right, task cards on the right of Path, and a floating bar along the bottom for the chosen rung, skill or pack member. Skills is a radial tree round the moon with tab pills; Pack is the portrait ring round the moon with the ledger in a card. Quests, Rites, Bloodline and Guide use the book pages in two dark cards.
+- **Skill nodes have icons** (a boot, an eye, a fang, a shield...) and three states: owned is filled, available has a gold ring, locked is a faint dotted ring. Radial names wrap to two lines and stay inside the page.
+- The Grimoire's clasp stays on the book's corner at every scale, lists clip above the page number, and a dev screenshot flag (`.demo=true`) fills the hub with a pack, a family, rite items and learned skills.
+
+### The Grimoire pages (16b, second part)
+
+- **Skills:** the chosen skill is written on the left page (name, one learned-or-not pip, a drop-cap description, leaders for cost, requirement and source, the LEARN wax seal and a red "Put in a HUD slot" link that opens the Loadout), and a radial tree is on the right page, the sigil with your model in the middle and a medallion per skill round it (arrow keys move through it). A mod's own tree and the loadout slots are still reached from the tab row above the tree. Skills have no ranks in this mod, so each shows one pip.
+- **Quests:** a filter row (All and one per mod), tasks grouped under the rung they belong to, the chosen task on the facing page with its mod tag, progress circles, the reward by a leader, a "Hide finished" link and the CLAIM seal.
+- **Rites:** an index with the altar power and whether you can perform each rite; the facing page has the ink circle, the ingredients by leaders (in hand when you carry them, missing when not) and a link into Enchanted's book.
+- **Bloodline:** a family tree with player faces (their own skin when the client knows them) and genes in stoppered vials.
+- **Pack:** a ledger with leaders, the pack's portrait ring round the sigil (Alphas red, Betas gold, Packmates blue, Brothers brown, the rest small and pale), the ACCEPT seal, and a leave link that asks first.
+- **Guide:** contents in roman numerals with leaders to the page, the chapter with a drop cap, and a "Turn the page" link.
+- **Loadout:** "Your Hand" (the slots) and "Abilities you know", in every look.
+- The book is bigger on a big screen (up to 496 x 300 GUI pixels).
+- A development screenshot driver (see docs/hub-ui-kit.md) can photograph every page without a click.
+
+### Not yet in the Grimoire (after this)
+
+Skill ranks (there is one pip per skill), the Counts and Resets lines of a quest, the pack's name, its attack bonus and Anchor, "Bite into a Beta" and "Remove from pack" (no server command for them yet), the family tree's roles and "you cannot harm him" note, and the eclipse in the almanac need data that does not exist yet. The tab labels under the icons are tooltips. "Track on HUD" works with the ability HUD (see 16f).
+
+## Unreleased (plan 16a, hub UI kit)
+
+### Added
+
+- **A button in the hub switches the look** (Grimoire, Blood Moon, Tensura) and saves it to the same setting as the config. Tensura's window gets a title strip for it.
+- **Number keys 1 to 8 jump to a page** in the hub (not with Ctrl, Alt, Shift or Super held, and the hub key wins if it is bound to a digit). Tab goes through the navigation (page tabs, launchers, the look button) before the page; the buttons of a page's detail come last once a page uses the new detail contract.
+- **The UI kit for plan 16** (docs/hub-ui-kit.md; pages ask first for keys and drags, themes own the emblem and the counters): a model-in-ring emblem, tick progress ring, radial layout with arrow navigation, rank pips, source tags (SB, VMP, WW, ENC, TEN), round and hex medallions, the pack portrait ring (ready for plans 14 and 15), a shared detail contract each theme draws in its own place, a confirm dialog (Esc cancels, Enter alone never confirms) and a 36-sprite icon atlas drawn by `tools/gen_icons.py`. The Grimoire, the Blood Moon and Tensura's status window are built on them (16b to 16d).
+
 ## Unreleased (plan 13d, compatibility hardening)
 
 Checked against Vampirism 1.10.13, Werewolves 2.0.3.4, Tensura 2.0.1.5 and Enchanted 4.2.7.
@@ -37,7 +99,7 @@ Checked against Vampirism 1.10.13, Werewolves 2.0.3.4, Tensura 2.0.1.5 and Encha
 - **Tensura's race feed fills Vampirism blood (13c Task 2).** A Vampirism vampire who uses Tensura's vampire race ability on a creature gets 2 Vampirism blood, taken from the creature, and can use it when thirsty even at full health (one mixin, `tensura_feed_fills_blood`; the hud part is now at 2 of 3 mixins).
 - **One blood value (13c Task 1).** With Tensura installed a Vampirism vampire's blood is shown in Tensura's food spot, with Vampirism's blood bar and Tensura's food number hidden while it is (`blood_in_food_spot`, on by default; both come back when it is off or when you are not a vampire). Without Tensura, Vampirism's bar stays.
 - **HUD review fixes.** Nothing is sent to a server without the mod's channel or after a disconnect; a slot key pressed as a screen closes is ignored; Tensura's own HUD setting is handed back whenever a Tensura or ManasCore screen is open, on logout and on shutdown, so it can never be saved as off; a window that is too narrow lifts a slot column above the hotbar; a logged out player's held key is forgotten and a release always ends a feeding.
-- **Vampirism and Werewolves slots, and the Bite key press (13b Task 3).** In Supernatural mode (Alt + Caps Lock) a slot key now uses the action in that slot: a lasting action toggles like Vampirism's own key (and for a hybrid, Werewolves' actions too), and **Bite does what your form does**: hold the key to keep drinking as a vampire. The server checks everything: the action comes from your own loadout, it must be unlocked in your faction, and every key press (a refused one too) counts against `rate_limit_per_second`. The six slots now know their cooldown and state; the boxes that show them are still to come.
+- **Vampirism and Werewolves slots, and the Bite key press (13b Task 3).** In Supernatural mode (the mode key, Caps Lock since 16f) a slot key now uses the action in that slot: a lasting action toggles like Vampirism's own key (and for a hybrid, Werewolves' actions too), and **Bite does what your form does**: hold the key to keep drinking as a vampire. The server checks everything: the action comes from your own loadout, it must be unlocked in your faction, and every key press (a refused one too) counts against `rate_limit_per_second`. The six slots now know their cooldown and state; the boxes that show them are still to come.
 - **Tensura slots (13b Task 2).** (Mixin budget of the hud part: 1 of 3.) With Tensura installed the six slot keys (R F V Z X C) work again: slots 1 to 3 are your active preset and 4 to 6 the next one, like Tensura Slots, and they send what Tensura's own keys send (hold Alt to change a skill's mode). A skill in the next preset now fires without Tensura Slots (one mixin, off with `next_preset_active = false`). Tensura's own HUD is not hidden yet and nothing is drawn by us yet: the layer comes in Task 4.
 
 - **The loadout (13b Task 1).** The six Supernatural-mode slots are saved per player (kept on death). A new player has **Bite** in slot 1; you can move it or clear it and it is never put back. The server decides what can go in a slot: Bite, or an action your current faction has unlocked. Every request counts against `rate_limit_per_second`, refused ones too. Nothing shows it yet; the hub's Loadout tab and the HUD itself come in the next tasks.
@@ -50,7 +112,7 @@ Spec `docs/superpowers/specs/2026-11-14-supernatural-hud-design.md`. New part: *
 - **The Bite action (R110).** What a bite does by form: the Werewolves bite in a transformed wolf form, Vampirism's blood drinking for a vampire, **our own feeding for a hybrid, Original hybrid or tribrid in human form** (+5 blood thirst, the victim takes 2 damage so venom still poisons a vampire), the turning bite, and nothing for anyone else. The server checks the target (same world, in reach, in sight, alive) and a 20-tick cooldown, and every refusal says why. Nothing fires it yet: it gets its slot with the ability HUD in the next phase (no new key).
 - **The turning bite (R20e).** A human in the turning can finish it by biting a human-like creature (new damage type `turning_bite`).
 - **Review fixes.** The hybrid feed and the turning bite respect claim and PvP mods (they fire the attack event first). A spectator, a dead or a sleeping player cannot bite. Vampirism's drinking is limited to the player's interaction range (3), so a bite it ignores is refused instead of counted. The hybrid feed drains the victim's Vampirism blood (2), so a drained creature gives nothing, and it needs the werewolf faction.
-- **One keymap and covered keys (13a Task 4).** New keys, all in game: **Slot 1 to 6** (R F V Z X C) and **HUD mode** (Alt + Caps Lock); they do nothing until the HUD arrives. The keys of other mods that the HUD replaces (Tensura's Ability 1 to 3, Tensura Slots' 4 to 6, Vampirism's Suck blood and Toggle action 1 to 9, Werewolves' Bite) are unbound and hidden from Controls, also from Controlling and its search. Your own binds are first saved in `config/supernaturalbloodlines-hud-keys.json` and come back when you turn `hide_covered_keys` off or the `hud` part off. A key you rebound yourself in the meantime is not overwritten. No mixin.
+- **One keymap and covered keys (13a Task 4).** New keys, all in game: **Slot 1 to 6** (R F V Z X C) and **HUD mode** (Alt + Caps Lock then, Caps Lock since 16f); they do nothing until the HUD arrives. The keys of other mods that the HUD replaces (Tensura's Ability 1 to 3, Tensura Slots' 4 to 6, Vampirism's Suck blood and Toggle action 1 to 9, Werewolves' Bite) are unbound and hidden from Controls, also from Controlling and its search. Your own binds are first saved in `config/supernaturalbloodlines-hud-keys.json` and come back when you turn `hide_covered_keys` off or the `hud` part off. A key you rebound yourself in the meantime is not overwritten. No mixin.
 - **Final review fixes.** The record of your original keys is written before any key is unbound (and nothing is unbound if it cannot be saved), replaced in one step, and never overwritten when unreadable: it is kept as `.bad-<time>` and covering waits until you remove it (recovery steps in the wiki). Ids that left the covered list are given back. A bite on a player who is not a vampire takes their food level, like Vampirism's own. Vampirism's drinking refuses a dying or bat-form biter.
 - **Hooks for it.** `HybridFeed`, `TurningFeed` and `BloodlessPlayers` (shared); `BloodThirst.addThirst`; `TurningHandler.wouldComplete` is public.
 
