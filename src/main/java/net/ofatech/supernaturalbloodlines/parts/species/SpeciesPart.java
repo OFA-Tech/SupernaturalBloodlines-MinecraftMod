@@ -245,6 +245,7 @@ public final class SpeciesPart {
                 e.register(WerewolfBiteGameTests.class);
                 e.register(WerewolfSparkGameTests.class);
                 e.register(PackBonusGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.FreeWillGameTests.class);
                 e.register(EclipseElectricityGameTests.class);
             }
         });

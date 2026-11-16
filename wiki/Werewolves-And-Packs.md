@@ -156,9 +156,11 @@ On, a werewolf transforms **only when the full moon forces it** and cannot shift
 | **Alpha** or **True Alpha** | **full** |
 | **Hybrid**, **Original hybrid**, **tribrid** (unbound) | **full** |
 | **Born** werewolf with an **anchor** | **half** |
+| Werewolves' own **Free Will** skill (`werewolves:free_will`) | **full** |
 
 - **Half control:** human and survivalist forms at will.
 - **Full control:** also the beast forms, but only from Werewolves level `full_form_level` (default **8**); below it, half.
+- **Free Will** is the skill Werewolves itself sells for controlling the full moon; before this mod's gate it let its owner leave a form, so it counts as full control here too (an earlier build cancelled their shifts).
 - Control also **skips the forced full-moon shift**. Without control you see "You cannot shift at will: only the full moon moves your wolf."
 - The roar gives a short permit to shift.
 - Switching a form **off** is never blocked.
