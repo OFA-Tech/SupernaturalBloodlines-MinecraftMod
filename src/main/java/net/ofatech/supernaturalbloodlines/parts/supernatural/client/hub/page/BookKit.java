@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * underlined link for the secondary ones, a footnote, a page head (title, subtitle, rule) and a player face. Everything takes its colours from the
  * theme, so a page asking the kit never picks one.
  */
-final class BookKit {
+public final class BookKit {
     static final int SEAL = 38;
     private static final int CAP = 16;
 
@@ -185,6 +185,49 @@ final class BookKit {
         return 0xFF000000 | r << 16 | gr << 8 | b;
     }
 
+    /** The Blood Moon's page head, top left: the title large and a muted line under it. */
+    static void moonHead(HubScreen.Frame f, Component title, @Nullable Component subtitle) {
+        Rect h = f.region("head");
+        var pose = f.g.pose();
+        pose.pushPose();
+        pose.translate(h.x(), h.y() + 1, 0);
+        pose.scale(1.5f, 1.5f, 1f);
+        f.g.drawString(f.font(), title, 0, 0, f.theme().ink(), true);
+        pose.popPose();
+        if (subtitle != null) {
+            small(f, subtitle, h.x(), h.y() + 17, h.w(), f.theme().muted());
+        }
+    }
+
+    /** A row of pills, the chosen one filled: the Blood Moon's tabs. Returns the y under the row. */
+    static int pillRow(HubScreen.Frame f, List<String> labels, int chosen, int x, int y, int w, java.util.function.IntConsumer pick) {
+        HubTheme t = f.theme();
+        int total = 0;
+        for (String s : labels) {
+            total += f.font().width(s) + 18;
+        }
+        int cx = x + Math.max(0, (w - total) / 2);
+        for (int i = 0; i < labels.size(); i++) {
+            String s = labels.get(i);
+            int pw = f.font().width(s) + 14;
+            Rect pill = new Rect(cx, y, pw, 14);
+            boolean on = i == chosen;
+            boolean hot = f.hovered(pill);
+            int fill = on ? t.accent() : hot ? t.muted() & 0xFFFFFF | 0x40000000 : 0;
+            f.g.fill(pill.x(), pill.y(), pill.right(), pill.bottom(), on ? t.accent() : t.muted());
+            f.g.fill(pill.x() + 1, pill.y() + 1, pill.right() - 1, pill.bottom() - 1, on ? fill : t.paper());
+            f.g.drawString(f.font(), s, pill.x() + 7, pill.y() + 3, on ? Contrast.bestText(t.accent()) : t.ink(), false);
+            int idx = i;
+            String id = "pill:" + i;
+            f.target(id, pill, List.of(Component.literal(s)), () -> pick.accept(idx));
+            if (f.focused(id)) {
+                KitDraw.focusRing(f.g, pill, t.focusColor());
+            }
+            cx += pw + 4;
+        }
+        return y + 20;
+    }
+
     /** A row of filters (All, SB, VMP...): the chosen one underlined. Returns the chosen index, and the y under the row. */
     static int filterRow(HubScreen.Frame f, List<String> labels, int chosen, int x, int y, int w, java.util.function.IntConsumer pick) {
         HubTheme t = f.theme();
@@ -212,6 +255,7 @@ final class BookKit {
         return y + 14;
     }
 
+    static final String MOON = "moon";
     static final String MAIN = HubLayout.MAIN;
     static final String SIDE = HubLayout.SIDE;
 }

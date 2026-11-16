@@ -8,6 +8,12 @@
 - **Two new pages in every look: Guide and Loadout.** The Guide has chapters for what you are (your creature, then your magic race) and for how the hub, the path, skills, quests, rites, the bloodline, the pack, the loadout and the moon work. The Loadout page is the Loadout tab of the Skills page on a page of its own (the tab stays), and it shows only with the ability HUD. A Ghoul can read the Guide while the other pages wait. Keys 1 to 8 now reach them.
 - The three looks draw their page icons from the new icon atlas.
 
+### Blood Moon v2 (16c) and the Grimoire follow-ups
+
+- **Blood Moon is redrawn:** the moon is the emblem and fills as you climb (rung gems down its left, an almanac under them), a round icon rail on the left and a round launcher rail on the right, SP and EP and a round look button top right, task cards on the right of Path, and a floating bar along the bottom for the chosen rung, skill or pack member. Skills is a radial tree round the moon with tab pills; Pack is the portrait ring round the moon with the ledger in a card. Quests, Rites, Bloodline and Guide use the book pages in two dark cards.
+- **Skill nodes have icons** (a boot, an eye, a fang, a shield...) and three states: owned is filled, available has a gold ring, locked is a faint dotted ring. Radial names wrap to two lines and stay inside the page.
+- The Grimoire's clasp stays on the book's corner at every scale, lists clip above the page number, and a dev screenshot flag (`.demo=true`) fills the hub with a pack, a family, rite items and learned skills.
+
 ### The Grimoire pages (16b, second part)
 
 - **Skills:** the chosen skill is written on the left page (name, one learned-or-not pip, a drop-cap description, leaders for cost, requirement and source, the LEARN wax seal and a red "Put in a HUD slot" link that opens the Loadout), and a radial tree is on the right page, the sigil with your model in the middle and a medallion per skill round it (arrow keys move through it). A mod's own tree and the loadout slots are still reached from the tab row above the tree. Skills have no ranks in this mod, so each shows one pip.

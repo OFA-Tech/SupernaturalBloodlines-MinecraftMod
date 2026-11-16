@@ -20,7 +20,7 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 public final class BookBloodlinePage implements HubPageView {
     private static final String KEY = PageKit.HUB + "bloodline.";
     private static final String BOOK = PageKit.HUB + "book.bloodline.";
-    private static final int FACE = 14;
+    private int face = 14;
 
     @Override
     public void render(HubScreen.Frame f) {
@@ -28,6 +28,7 @@ public final class BookBloodlinePage implements HubPageView {
         HubSnapshotPayload snap = f.view.snapshot();
         Rect r = f.region(BookKit.MAIN);
         int y = BookKit.head(f, BookKit.MAIN, Component.translatable(KEY + "title"), Component.translatable(BOOK + "subtitle"));
+        face = r.h() > 190 ? 14 : 11; // a short page (a small GUI) gets smaller faces so the tree and the CALL seal fit without scrolling
         int cx = r.x() + r.w() / 2;
         List<String> above = snap.family().ancestors();
         int from = Math.max(0, above.size() - 2);
@@ -49,19 +50,19 @@ public final class BookBloodlinePage implements HubPageView {
             y = children(f, r, y + 2, line, snap.family().line().size() - Math.min(3, line.size()));
         }
         if (BloodlinePage.MAY_CALL.contains(f.view.races().get(0)) && !snap.sired().isEmpty()) {
-            y += 4;
+            y += 2;
             BookKit.seal(f, "bloodline:call", Component.translatable(BOOK + "call"), true, r.right() - BookKit.SEAL, y, () -> BloodlinePage.command("bloodline call"),
                     List.of(Component.translatable(KEY + "call")));
-            y = PageKit.wrapped(f, Component.translatable(BOOK + "call_note"), r.x(), y + 4, r.w() - BookKit.SEAL - 8, t.muted()) + BookKit.SEAL;
+            y = Math.max(y + BookKit.SEAL, BookKit.small(f, Component.translatable(BOOK + "call_note"), r.x(), y + 6, r.w() - BookKit.SEAL - 8, t.muted()));
         }
         f.end(y);
         genes(f, snap);
     }
 
-    private static int node(HubScreen.Frame f, int cx, int y, String name, Component caption, boolean you, int color) {
+    private int node(HubScreen.Frame f, int cx, int y, String name, Component caption, boolean you, int color) {
         HubTheme t = f.theme();
-        BookKit.portrait(f.g, name, cx, y + FACE / 2 + 2, FACE, you ? t.accent() : t.muted(), t.paper());
-        y += FACE + 6;
+        BookKit.portrait(f.g, name, cx, y + face / 2 + 2, face, you ? t.accent() : t.muted(), t.paper());
+        y += face + 5;
         String n = f.font().plainSubstrByWidth(name, 120);
         f.g.drawString(f.font(), n, cx - f.font().width(n) / 2, y, color, false);
         y += 9;

@@ -34,3 +34,8 @@ arrow_right
 claw
 heart
 key
+boot
+eye
+voice
+spark
+bolt

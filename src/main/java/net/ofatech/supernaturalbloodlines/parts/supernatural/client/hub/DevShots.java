@@ -21,6 +21,7 @@ import org.lwjgl.glfw.GLFW;
  * <p>
  * Other properties: {@code .scales=2,4} (GUI scales, default the current one), {@code .size=1920x1080} (the window, default 1920x1080: GUI
  * scale 4 is then the 480 x 270 GUI the design is checked at), {@code .world=New World} (a world to open from the title screen) and
+ * {@code .demo=true} (fill the hub with demo data: a pack, a family, learned skills, rite items; see {@link DevDemo}) and
  * {@code .quit=true} (leave the game when done). It sets the tutorial off, opens each hub page, waits some frames and grabs the frame with vanilla's
  * {@code Screenshot.grab} into {@code run/screenshots/devshots/<theme>-<page>-s<scale>.png}.
  */
@@ -43,6 +44,7 @@ public final class DevShots {
     private boolean sized;
     private boolean opened;
     private boolean done;
+    private boolean gave;
 
     private DevShots(List<Shot> shots, String world, boolean quit, int width, int height) {
         this.shots = shots;
@@ -81,6 +83,9 @@ public final class DevShots {
         String[] size = System.getProperty(PROPERTY + ".size", "1920x1080").split("x");
         DevShots d = new DevShots(shots, System.getProperty(PROPERTY + ".world", "New World"), Boolean.getBoolean(PROPERTY + ".quit"),
                 Integer.parseInt(size[0]), Integer.parseInt(size[1]));
+        if (Boolean.getBoolean(PROPERTY + ".demo")) {
+            HubView.devOverride(DevDemo::apply);
+        }
         NeoForge.EVENT_BUS.addListener(d::tick);
         SupernaturalBloodlines.LOGGER.warn("DEVSHOTS on: {} shots queued (development only)", shots.size());
     }
@@ -100,6 +105,10 @@ public final class DevShots {
                 mc.createWorldOpenFlows().openWorld(world, () -> mc.setScreen(new TitleScreen()));
             }
             return;
+        }
+        if (Boolean.getBoolean(PROPERTY + ".demo") && !gave) {
+            gave = true;
+            mc.player.connection.sendCommand("give @s minecraft:glass_bottle");
         }
         mc.options.tutorialStep = TutorialSteps.NONE;
         mc.getTutorial().setStep(TutorialSteps.NONE);
@@ -123,6 +132,7 @@ public final class DevShots {
             HubClientConfig.ThemeId theme = HubClientConfig.ThemeId.valueOf(s.theme().toUpperCase(Locale.ROOT));
             HubClientConfig.setTheme(theme);
             mc.setScreen(null);
+            GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 1, 1); // a hover tooltip would cover the page
             HubClient.remember(s.page());
             HubClient.open(s.page());
             wait = 1;

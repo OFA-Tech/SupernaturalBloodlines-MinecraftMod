@@ -23,7 +23,7 @@ public final class GrimoireLayout {
     /** The band at the top of a page for margin notes (SP and EP). */
     static final int HEADER = 12;
     /** The band at the foot of a page for its number. */
-    static final int FOOT = 5;
+    static final int FOOT = 14;
     /** How far a tab sticks out of the book's right edge, and its height. */
     static final int TAB_OUT = 22;
     static final int TAB_H = 18;
@@ -57,7 +57,7 @@ public final class GrimoireLayout {
             wax.add(new Rect(book.x() + 24 + i * SEAL_STEP, book.bottom() + CORD, SEAL, SEAL));
         }
         Rect main = content(leftPage);
-        Rect clasp = new Rect(book.right() - 4, TOAST_CLEAR - 17, TAB_OUT + 4, 14);
+        Rect clasp = new Rect(book.right() - 4, top - 17, TAB_OUT + 4, 14);
         Rect close = new Rect(book.right() - 4, book.bottom() - 16, TAB_OUT + 4, 14);
         Rect counters = new Rect(main.x(), leftPage.y() + 3, main.w(), 9);
         return new HubLayout(book, Map.of(HubLayout.MAIN, main, HubLayout.SIDE, content(rightPage)), tabRects, wax,
@@ -76,6 +76,6 @@ public final class GrimoireLayout {
 
     /** Where a page's number sits: centred in its foot. */
     static Rect number(Rect page) {
-        return new Rect(page.x(), page.bottom() - 11, page.w(), 9);
+        return new Rect(page.x(), page.bottom() - 13, page.w(), 9);
     }
 }

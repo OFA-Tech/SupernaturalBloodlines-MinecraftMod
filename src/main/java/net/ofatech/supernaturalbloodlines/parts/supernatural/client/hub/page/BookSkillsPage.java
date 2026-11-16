@@ -10,7 +10,10 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageV
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Radial;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.SkillIcons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.VampirismSkillAccess;
@@ -25,7 +28,23 @@ import org.lwjgl.glfw.GLFW;
 public final class BookSkillsPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "skills.";
     private static final String BOOK = PageKit.HUB + "book.skills.";
+    private static final int GOLD = 0xFFB8903A;
     private final SkillsPage legacy = new SkillsPage();
+    private final boolean moon;
+
+    public BookSkillsPage() {
+        this(false);
+    }
+
+    /** @param moon the Blood Moon's version: the tree round the moon on the stage and the chosen skill in the floating bar, no left page */
+    public BookSkillsPage(boolean moon) {
+        this.moon = moon;
+    }
+
+    /** True while another tab (a mod's own tree, the loadout slots) is showing, which draws into the two list cards. */
+    public boolean legacyActive() {
+        return legacy.tab() != SkillsPage.Tab.OURS;
+    }
     private List<Radial.Node> nodes = List.of();
     private List<String> ids = List.of();
 
@@ -41,6 +60,10 @@ public final class BookSkillsPage implements HubPageView {
         HubSkills.Row chosen = rows.stream().filter(row -> row.id().equals(legacy.selected())).findFirst()
                 .orElse(rows.stream().filter(row -> row.state() == HubSkills.State.BUYABLE).findFirst().orElse(rows.isEmpty() ? null : rows.get(0)));
 
+        if (moon) {
+            moon(f, rows, chosen);
+            return;
+        }
         Rect r = f.region(BookKit.MAIN);
         Component chapter = Component.empty();
         for (int i = 0; i < f.view.races().size(); i++) {
@@ -52,7 +75,27 @@ public final class BookSkillsPage implements HubPageView {
         } else {
             f.end(chosenSkill(f, r, y, chosen));
         }
-        tree(f, rows, chosen);
+        tree(f, rows, chosen, BookKit.SIDE);
+    }
+
+    /** The Blood Moon page: title, the tree round the moon, and the chosen skill in the bar. */
+    private void moon(HubScreen.Frame f, List<HubSkills.Row> rows, HubSkills.Row chosen) {
+        Component chapter = Component.empty();
+        for (int i = 0; i < f.view.races().size(); i++) {
+            chapter = ((net.minecraft.network.chat.MutableComponent) chapter).append(i == 0 ? Component.empty() : Component.literal(" \u00b7 ")).append(PageKit.race(f.view.races().get(i)));
+        }
+        BookKit.moonHead(f, Component.translatable(PageKit.HUB + "page.skills"), chapter);
+        tree(f, rows, chosen, BookKit.MOON);
+        if (chosen != null) {
+            boolean known = chosen.state() == HubSkills.State.OWNED || chosen.state() == HubSkills.State.COVERED;
+            String id = chosen.id();
+            Detail.Builder d = Detail.of(SkillsPage.name(chosen)).pips(known ? 1 : 0, 1).body(SkillsPage.state(chosen));
+            d.action("buy", Component.translatable(BOOK + "learn_cost", chosen.cost()), true, chosen.state() == HubSkills.State.BUYABLE, () -> SkillsPage.buy(id));
+            if (f.view.context().loadout()) {
+                d.action("hud", Component.translatable(BOOK + "hud_link"), false, true, () -> f.screen().setPage(HubPage.LOADOUT));
+            }
+            f.detail(d.build());
+        }
     }
 
     private int chosenSkill(HubScreen.Frame f, Rect r, int y, HubSkills.Row row) {
@@ -88,18 +131,20 @@ public final class BookSkillsPage implements HubPageView {
         return y + BookKit.SEAL + 4;
     }
 
-    private void tree(HubScreen.Frame f, List<HubSkills.Row> rows, HubSkills.Row chosen) {
+    private void tree(HubScreen.Frame f, List<HubSkills.Row> rows, HubSkills.Row chosen, String region) {
         HubTheme t = f.theme();
-        Rect s = f.region(BookKit.SIDE);
-        int y = f.begin(BookKit.SIDE);
+        Rect s = f.region(region);
+        int y = f.begin(region);
         y = tabs(f, s, y);
         int top = y + 4;
+        int count = Math.max(1, rows.size());
         int cx = s.x() + s.w() / 2;
         int cy = top + (s.bottom() - top) / 2;
-        int radius = Math.max(28, Math.min(s.w() / 2 - 26, (s.bottom() - top) / 2 - 14));
+        // a node is 16 to 20 px and its name takes two small lines under (or over) it; keep all of that inside the page, above the page number
+        int radius = Math.max(26, Math.min(s.w() / 2 - 30, (s.bottom() - top) / 2 - 10 - 18));
         int inner = Math.max(14, radius * 9 / 20);
         Rect centre = new Rect(cx - inner - 2, cy - inner - 2, 2 * inner + 4, 2 * inner + 4);
-        List<Radial.Node> ring = Radial.ring(cx, cy, radius, Math.max(1, rows.size()));
+        List<Radial.Node> ring = Radial.ring(cx, cy, radius, count);
         nodes = rows.isEmpty() ? List.of() : ring;
         ids = rows.stream().map(HubSkills.Row::id).toList();
         for (int i = 0; i < rows.size(); i++) {
@@ -107,29 +152,59 @@ public final class BookSkillsPage implements HubPageView {
             double a = Math.atan2(n.y() - cy, n.x() - cx);
             int sx = cx + (int) Math.round((inner + 4) * Math.cos(a));
             int sy = cy + (int) Math.round((inner + 4) * Math.sin(a));
-            int line = rows.get(i).state() == HubSkills.State.LOCKED || rows.get(i).state() == HubSkills.State.DORMANT ? t.muted() & 0x70FFFFFF | 0x70000000 : t.muted();
-            KitDraw.line(f.g, sx, sy, n.x() - (int) Math.round(8 * Math.cos(a)), n.y() - (int) Math.round(8 * Math.sin(a)), line);
+            boolean locked = rows.get(i).state() == HubSkills.State.LOCKED || rows.get(i).state() == HubSkills.State.DORMANT;
+            KitDraw.line(f.g, sx, sy, n.x() - (int) Math.round(9 * Math.cos(a)), n.y() - (int) Math.round(9 * Math.sin(a)), locked ? (t.muted() & 0xFFFFFF) | 0x70000000 : t.muted());
         }
         f.emblem(centre);
+        int labelWidth = Math.max(40, Math.min(110, (int) (2.2 * radius * Math.sin(Math.PI / count))));
         for (int i = 0; i < rows.size(); i++) {
-            node(f, s, rows.get(i), ring.get(i), cy, rows.get(i) == chosen);
+            node(f, s, rows.get(i), ring.get(i), cy, rows.get(i) == chosen, labelWidth);
         }
         f.end(s.bottom());
     }
 
-    private void node(HubScreen.Frame f, Rect page, HubSkills.Row row, Radial.Node n, int cy, boolean selected) {
+    /** One skill: owned is filled, available is ringed in gold, locked is a faint dotted ring; its icon inside and its name in two small lines. */
+    private void node(HubScreen.Frame f, Rect page, HubSkills.Row row, Radial.Node n, int cy, boolean selected, int labelWidth) {
         HubTheme t = f.theme();
         boolean known = row.state() == HubSkills.State.OWNED || row.state() == HubSkills.State.COVERED;
         boolean locked = row.state() == HubSkills.State.LOCKED || row.state() == HubSkills.State.DORMANT;
-        int size = selected ? 18 : 14;
-        int border = selected ? t.accent() : known ? t.good() : locked ? t.muted() : t.accent();
-        int fill = known ? t.good() : locked ? t.paper() : t.accent();
-        KitDraw.shape(f.g, Shapes.Shape.ROUND, n.x() - size / 2, n.y() - size / 2, size, border);
-        KitDraw.shape(f.g, Shapes.Shape.ROUND, n.x() - size / 2 + 2, n.y() - size / 2 + 2, size - 4, fill);
-        String name = f.font().plainSubstrByWidth(SkillsPage.name(row).getString(), 84);
-        int nw = BookKit.smallWidth(f, name);
-        int ly = n.y() >= cy ? n.y() + size / 2 + 2 : n.y() - size / 2 - 8;
-        BookKit.small(f, Component.literal(name), Math.max(page.x(), Math.min(page.right() - nw - 4, n.x() - nw / 2)), ly, nw + 4, selected ? t.accent() : locked ? t.muted() : t.ink());
+        int size = 18;
+        int x = n.x() - size / 2;
+        int y = n.y() - size / 2;
+        if (selected) {
+            KitDraw.shape(f.g, Shapes.Shape.ROUND, x - 3, y - 3, size + 6, t.accent());
+            KitDraw.shape(f.g, Shapes.Shape.ROUND, x - 2, y - 2, size + 4, t.paper());
+        }
+        Icons icon = SkillIcons.of(row.id());
+        if (known) {
+            KitDraw.shape(f.g, Shapes.Shape.ROUND, x, y, size, t.good());
+            KitDraw.icon(f.g, icon, n.x() - 6, n.y() - 6, 12, t.paper());
+        } else if (locked) {
+            KitDraw.tickRing(f.g, n.x(), n.y(), size / 2, 16, 0f, (t.muted() & 0xFFFFFF) | 0xA0000000, (t.muted() & 0xFFFFFF) | 0xA0000000);
+            KitDraw.icon(f.g, icon, n.x() - 6, n.y() - 6, 12, (t.muted() & 0xFFFFFF) | 0x80000000);
+        } else {
+            KitDraw.shape(f.g, Shapes.Shape.ROUND, x, y, size, GOLD);
+            KitDraw.shape(f.g, Shapes.Shape.ROUND, x + 2, y + 2, size - 4, t.paper());
+            KitDraw.icon(f.g, icon, n.x() - 6, n.y() - 6, 12, t.ink());
+        }
+        List<net.minecraft.util.FormattedCharSequence> lines = f.font().split(SkillsPage.name(row), (int) (labelWidth / 0.75f));
+        if (lines.size() > 2) {
+            lines = lines.subList(0, 2);
+        }
+        int height = (int) Math.ceil(lines.size() * 9 * 0.75f);
+        int ly = n.y() >= cy ? n.y() + size / 2 + 2 : n.y() - size / 2 - 2 - height;
+        int color = selected ? t.accent() : locked ? t.muted() : t.ink();
+        for (var line : lines) {
+            int lw = (int) Math.ceil(f.font().width(line) * 0.75f);
+            int lx = Math.max(page.x(), Math.min(page.right() - lw, n.x() - lw / 2));
+            var pose = f.g.pose();
+            pose.pushPose();
+            pose.translate(lx, ly, 0);
+            pose.scale(0.75f, 0.75f, 1f);
+            f.g.drawString(f.font(), line, 0, 0, color, false);
+            pose.popPose();
+            ly += 7;
+        }
         Rect hit = new Rect(n.x() - size / 2 - 2, n.y() - size / 2 - 2, size + 4, size + 4);
         String id = "skill:" + row.id();
         f.target(id, hit, List.of(SkillsPage.name(row), SkillsPage.state(row)), () -> legacy.select(row.id()));
@@ -137,7 +212,6 @@ public final class BookSkillsPage implements HubPageView {
             KitDraw.focusRing(f.g, hit, t.focusColor());
         }
     }
-
     private int tabs(HubScreen.Frame f, Rect s, int y) {
         List<SkillsPage.Tab> shown = new ArrayList<>(List.of(SkillsPage.Tab.OURS));
         var faction = SkillsPage.faction(f.view.player());
@@ -150,7 +224,8 @@ public final class BookSkillsPage implements HubPageView {
             labels.add(tab == SkillsPage.Tab.FACTION ? faction.orElseThrow().getName().getString()
                     : Component.translatable(KEY + "tab." + tab.name().toLowerCase(java.util.Locale.ROOT)).getString());
         }
-        return BookKit.filterRow(f, labels, 0, s.x(), y, s.w(), i -> legacy.tab(shown.get(i)));
+        return moon ? BookKit.pillRow(f, labels, 0, s.x(), y, s.w(), i -> legacy.tab(shown.get(i)))
+                : BookKit.filterRow(f, labels, 0, s.x(), y, s.w(), i -> legacy.tab(shown.get(i)));
     }
 
     @Override

@@ -19,6 +19,7 @@ NAMES = [
     "moon_new", "moon_waxing_crescent", "moon_first_quarter", "moon_waxing_gibbous", "moon_full", "moon_waning_gibbous",
     "moon_last_quarter", "moon_waning_crescent",
     "sun", "shield", "fang", "vial", "question", "info", "plus", "arrow_left", "arrow_right", "claw", "heart", "key",
+    "boot", "eye", "voice", "spark", "bolt",
 ]
 
 
@@ -211,6 +212,22 @@ def draw(name):
         c.ring(5, 5, 3.4, 1.6)
         c.line(7, 7, 14, 14, 2)
         c.rect(11, 12, 12, 13)
+    elif name == "boot":
+        c.rect(5, 2, 9, 10)
+        c.rect(4, 10, 14, 13)
+        c.rect(4, 13, 13, 14)
+    elif name == "eye":
+        c.ring(8, 8, 5.6, 1.6)
+        c.disc(8, 8, 2.4)
+    elif name == "voice":
+        c.rect(2, 3, 13, 10)
+        c.poly([(4, 10), (4, 14), (8, 10)])
+        c.rect(5, 5, 10, 5, True, 0)
+        c.rect(5, 7, 8, 7, True, 0)
+    elif name == "spark":
+        c.poly([(8, 1), (10, 6), (15, 8), (10, 10), (8, 15), (6, 10), (1, 8), (6, 6)])
+    elif name == "bolt":
+        c.poly([(9, 1), (3, 9), (7, 9), (6, 15), (13, 6), (8, 6)])
     else:
         raise SystemExit("no drawing for " + name)
     return c
