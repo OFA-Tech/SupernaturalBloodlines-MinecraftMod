@@ -176,9 +176,9 @@ See [Werewolves and packs](Werewolves-And-Packs) for the ranks.
 
 If you are a Vampirism vampire, Tensura's **vampire race ability** used on a creature (the race ability key, looking at it within 5 blocks) now also fills your **Vampirism blood**: 2 blood, taken from the creature's own blood (a drained creature gives nothing, and a creature without blood gives nothing). It works when you are thirsty even at full health, which Tensura alone would refuse because a vampire's food is never short. Everything else Tensura's ability does (the damage, the healing, bat mode) is unchanged. `tensura_feed_fills_blood = false` in `supernaturalbloodlines-hud.toml` turns it all off.
 
-## The vampire line is for vampires
+## The vampire line and other factions
 
-Tensura's vampire line (`vampire`, `vampire_overcomer`, `vampire_lord`, `divine_vampire`, the ids of `race_level_floor`) can be **evolved into only by a Vampirism vampire**. A hunter, a werewolf or a plain human who tries gets "Only a vampire can evolve along the vampire line", and nothing changes. Becoming a vampire first (Vampirism infection) still moves a human to `vampire` as before, and an admin's race command is not an evolution, so it still works (and still joins the faction). Species players (Originals, hybrids and so on) and Ghouls follow their own rules.
+Tensura's vampire line (`vampire`, `vampire_overcomer`, `vampire_lord`, `divine_vampire`, the ids of `race_level_floor`) is evolved into by a Vampirism vampire, or by a player **with no faction** (a Tensura-only player: their evolution drives the race, and the mod then joins them to the vampire faction). A player who is **in another faction**, a hunter or a werewolf, or anyone who cannot join the vampire faction, gets "Only a vampire can evolve along the vampire line" and nothing changes. Becoming a vampire first (Vampirism infection) still moves a human to `vampire` as before, and an admin's race command is not an evolution, so it still works (and still joins the faction). Species players (Originals, hybrids and so on) and Ghouls follow their own rules.
 
 ## Limits
 

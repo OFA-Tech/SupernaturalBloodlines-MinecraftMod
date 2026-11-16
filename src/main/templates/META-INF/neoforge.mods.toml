@@ -104,7 +104,7 @@ config="${mod_id}.hud.mixins.json"
 
 # Linked mods: all optional, features switch on per part when the mods are present. An optional dependency that is present but OUT of its range stops
 # the whole game from loading (checked, 13d), so each range spans the whole minor line of the tested version; LinkedMods warns in the log for any
-# version outside the tested series (tensura 2.0.1.x, manascore_race 4.0.x, vampirism 1.10.13+, werewolves 2.0.3.x, enchanted 4.2.7+, curios 9.5.x).
+# version outside the tested series (LinkedMods.TESTED: tensura 2.0.1, manascore_race 4.0, vampirism 1.10.13, werewolves 2.0.3, enchanted 4.2.7, curios 9.5, each exactly that version or one that continues it with ".", "-" or "+", for example 2.0.1.5).
 [[dependencies.${mod_id}]]
     modId="tensura"
     type="optional"

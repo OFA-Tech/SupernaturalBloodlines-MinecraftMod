@@ -474,4 +474,65 @@ public final class SkillRuleGameTests {
         helper.assertTrue(plain > 0 && skilled <= plain + 1e-6 && skilled > plain * 0.9, "sun damage " + plain + " without the skill, " + skilled + " with it (our x0.75 rule must be gone)");
         helper.succeed();
     }
-}
+
+    private static de.teamlapen.vampirism.api.entity.player.skills.ISkill<?> lessSundamage() {
+        return (de.teamlapen.vampirism.api.entity.player.skills.ISkill<?>) VampirismRegistries.SKILL.get().get(ResourceLocation.parse("vampirism:less_sundamage"));
+    }
+
+    private static ServerPlayer vampirePlayer(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.createVulnerable(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        return p;
+    }
+
+    private static boolean has(ServerPlayer p) {
+        return VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow().getSkillHandler().isSkillEnabled(lessSundamage());
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void eldersSkinIsTakenBackWhenTheLadderSkillGoes(GameTestHelper helper) {
+        ServerPlayer p = vampirePlayer(helper);
+        own(p, "S-VAM-7");
+        helper.assertTrue(has(p), "the skill was not enabled");
+        helper.assertTrue(SupernaturalAccess.get(p).vampirismGranted().contains("vampirism:less_sundamage"), "the enabled skill was not recorded");
+        own(p); // a respec, or a lost race: the ladder skill is gone
+        helper.assertTrue(!has(p), "Vampirism's less_sundamage stayed after the ladder skill went");
+        helper.assertTrue(SupernaturalAccess.get(p).vampirismGranted().isEmpty(), "the record was not cleared");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void eldersSkinNeverTakesASkillThePlayerBoughtThemselves(GameTestHelper helper) {
+        ServerPlayer p = vampirePlayer(helper);
+        VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow().getSkillHandler().enableSkill(
+                (de.teamlapen.vampirism.api.entity.player.skills.ISkill) lessSundamage(), true);
+        helper.assertTrue(has(p), "setup: the player could not get the skill");
+        own(p, "S-VAM-7");
+        helper.assertTrue(SupernaturalAccess.get(p).vampirismGranted().isEmpty(), "the player's own skill was recorded as ours");
+        own(p);
+        helper.assertTrue(has(p), "the player's own less_sundamage was taken away");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void eldersSkinIsTakenBackWhenTheSupernaturalPartIsOff(GameTestHelper helper) {
+        ServerPlayer p = vampirePlayer(helper);
+        own(p, "S-VAM-7");
+        helper.assertTrue(has(p), "the skill was not enabled");
+        net.ofatech.supernaturalbloodlines.core.StalePartModifiers.strip(p, Set.of()); // what a login does with the part off
+        helper.assertTrue(!has(p), "Vampirism's less_sundamage stayed with the supernatural part off");
+        helper.assertTrue(SupernaturalAccess.get(p).vampirismGranted().isEmpty(), "the record was not cleared");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void eldersSkinIsNotSoldToAPlayerWhoAlreadyHasTheVampirismSkill(GameTestHelper helper) {
+        ServerPlayer p = vampirePlayer(helper);
+        VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow().getSkillHandler().enableSkill(
+                (de.teamlapen.vampirism.api.entity.player.skills.ISkill) lessSundamage(), true);
+        SupernaturalAccess.set(p, SupernaturalAccess.get(p).toBuilder().sp(50).build());
+        var r = net.ofatech.supernaturalbloodlines.parts.supernatural.skill.SkillService.buy(p, "S-VAM-7");
+        helper.assertTrue(r.refusal() == net.ofatech.supernaturalbloodlines.core.supernatural.SkillRules.Refusal.COVERED, "refusal was " + r.refusal());
+        helper.assertTrue(SupernaturalAccess.get(p).sp() == 50, "skill points were spent for nothing");
+        helper.succeed();
+    }}

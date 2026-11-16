@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.VampirismSkillAccess;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
@@ -105,7 +106,8 @@ public final class SkillsPage implements HubPageView {
     private void ours(HubScreen.Frame f, Rect r, int y) {
         HubTheme t = f.theme();
         y = PageKit.wrapped(f, Component.translatable(KEY + "sp", f.view.state().sp()), r.x(), y, r.w(), t.ink()) + 2;
-        List<HubSkills.Row> rows = HubSkills.rows(f.view.skills(), f.view.state(), f.view.races());
+        List<HubSkills.Row> rows = HubSkills.rows(f.view.skills(), f.view.state(), f.view.races(),
+                spec -> VampirismSkillAccess.covers(net.minecraft.client.Minecraft.getInstance().player, spec));
         HubSkills.Row chosen = rows.stream().filter(row -> row.id().equals(selected)).findFirst()
                 .orElse(rows.stream().filter(row -> row.state() == HubSkills.State.BUYABLE).findFirst().orElse(rows.isEmpty() ? null : rows.get(0)));
         SupernaturalRace header = null;
@@ -120,7 +122,8 @@ public final class SkillsPage implements HubPageView {
                 y = PageKit.wrapped(f, Component.translatable(KEY + "dormant_header"), r.x(), y + 1, r.w(), t.accent());
             }
             Component cost = row.state() == HubSkills.State.DORMANT ? Component.translatable(KEY + "dormant")
-                    : row.state() == HubSkills.State.OWNED ? Component.translatable(KEY + "owned") : Component.translatable(KEY + "cost", row.cost());
+                    : row.state() == HubSkills.State.OWNED ? Component.translatable(KEY + "owned")
+                    : row.state() == HubSkills.State.COVERED ? Component.translatable(KEY + "covered") : Component.translatable(KEY + "cost", row.cost());
             y = line(f, r, y, "skill:" + row.id(), mark(row.state()), name(row), cost, row == chosen,
                     List.of(name(row), state(row)), () -> selected = row.id());
         }
@@ -135,6 +138,7 @@ public final class SkillsPage implements HubPageView {
         return switch (s) {
             case OWNED -> RungStatus.REACHED;
             case BUYABLE -> RungStatus.CURRENT;
+            case COVERED -> RungStatus.REACHED;
             case LOCKED, DORMANT -> RungStatus.LOCKED;
         };
     }
@@ -148,6 +152,7 @@ public final class SkillsPage implements HubPageView {
             case OWNED -> Component.translatable(KEY + "state.owned");
             case BUYABLE -> Component.translatable(KEY + "state.buyable", row.cost());
             case DORMANT -> Component.translatable(KEY + "state.dormant");
+            case COVERED -> Component.translatable(KEY + "state.covered");
             case LOCKED -> Component.translatable(row.why().langKey());
         };
     }

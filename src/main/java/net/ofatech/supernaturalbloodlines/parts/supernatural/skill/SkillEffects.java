@@ -1,9 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.skill;
 
-import de.teamlapen.vampirism.api.VampirismAPI;
-import de.teamlapen.vampirism.api.VampirismRegistries;
-import de.teamlapen.vampirism.api.entity.player.skills.ISkill;
-import de.teamlapen.vampirism.api.entity.player.skills.ISkillHandler;
 import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +19,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.VampirismSkillAccess;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SkillRules;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SkillSpec;
@@ -101,33 +98,24 @@ public final class SkillEffects {
 
     /**
      * The Vampirism skills the active VAMPIRISM skills stand for (S-VAM-7: {@code vampirism:less_sundamage}) are enabled on the player's Vampirism skill
-     * handler, so Vampirism's own effect and its own skill screen carry them. Nothing is taken back: a skill the player already has is left alone, and
-     * a Vampirism skill reset is answered by the next sync (every 200 ticks) while the ladder skill is owned. It is not paid for with Vampirism skill
-     * points here (checked in a GameTest, SkillRuleGameTests.eldersSkinEnablesVampirismsLessSundamageSkill): the ladder skill's own cost is what the player paid.
+     * handler, so Vampirism's own effect and its own skill screen carry them, and taken back when the ladder skill is no longer active (a respec, a lost
+     * race, the part off: see {@code StalePartModifiers}). Only a skill this mod enabled is recorded, so one the player had or bought is never taken
+     * away. A Vampirism skill reset is answered by the next sync (every 200 ticks) while the ladder skill is active. It costs no Vampirism skill points
+     * (SkillRuleGameTests.eldersSkinEnablesVampirismsLessSundamageSkill): the ladder skill's own cost is what the player paid.
      */
     private static void enableVampirismSkills(ServerPlayer p, SkillTable table, Set<String> active) {
+        Set<String> wanted = new HashSet<>();
         for (String id : active) {
             table.skill(id).filter(s -> s.vampirismSkill() != null).ifPresent(spec -> {
-                ResourceLocation rl = ResourceLocation.tryParse(spec.vampirismSkill());
-                var skill = rl == null ? null : VampirismRegistries.SKILL.get().get(rl);
-                var handler = VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().map(fp -> fp.getSkillHandler());
-                if (skill == null || handler.isEmpty()) {
-                    if (skill == null && WARNED.add(spec.id())) {
-                        SupernaturalBloodlines.LOGGER.warn("Skill {}: unknown Vampirism skill '{}', skipped", spec.id(), spec.vampirismSkill());
-                    }
-                    return;
-                }
-                @SuppressWarnings({"unchecked", "rawtypes"})
-                ISkillHandler<?> h = (ISkillHandler) handler.get();
-                if (!h.isSkillEnabled((ISkill<?>) skill) && skill.getFaction().map(f -> f == VampirismAPI.factionPlayerHandler(p).getCurrentFaction()).orElse(false)) {
-                    @SuppressWarnings({"unchecked", "rawtypes"})
-                    ISkillHandler raw = h;
-                    raw.enableSkill((ISkill) skill, true);
+                if (VampirismSkillAccess.exists(spec.vampirismSkill())) {
+                    wanted.add(spec.vampirismSkill());
+                } else if (WARNED.add(spec.id())) {
+                    SupernaturalBloodlines.LOGGER.warn("Skill {}: unknown Vampirism skill '{}', skipped", spec.id(), spec.vampirismSkill());
                 }
             });
         }
+        VampirismSkillAccess.apply(p, wanted);
     }
-
     /** The Tensura skills the active TENSURA skills grant. */
     public static Set<String> tensuraSkillsOf(SkillTable table, Set<String> active) {
         Set<String> out = new HashSet<>();

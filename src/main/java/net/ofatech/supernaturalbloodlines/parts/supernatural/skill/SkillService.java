@@ -9,6 +9,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SkillTable;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.task.TaskTracker;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.VampirismSkillAccess;
 
 /** Applies a purchase: the rules decide, this stores the state and tells the player. The effects follow from the state change. */
 public final class SkillService {
@@ -19,7 +20,8 @@ public final class SkillService {
     public static SkillRules.BuyResult buy(ServerPlayer p, String skillId) {
         List<SupernaturalRace> races = TaskTracker.races(p);
         Optional<SupernaturalRace> magic = races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty();
-        SkillRules.BuyResult r = SkillRules.buy(SkillTable.current(), SupernaturalAccess.get(p), races.get(0), magic, skillId);
+        SkillRules.BuyResult r = SkillRules.buy(SkillTable.current(), SupernaturalAccess.get(p), races.get(0), magic, skillId,
+                spec -> VampirismSkillAccess.covers(p, spec));
         if (!r.ok()) {
             p.sendSystemMessage(Component.translatable(r.refusal().langKey()));
             return r;

@@ -7,9 +7,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.VampirismSkillAccess;
 
 /**
  * Permanent attribute modifiers are saved with the player. If a part is switched off afterwards its code never runs,
@@ -68,6 +71,11 @@ public final class StalePartModifiers {
                             .toList().forEach(instance::removeModifier);
                 }
             });
+        }
+        // the Vampirism skills S-VAM-7 enabled belong to the supernatural part too; only the ones this mod enabled are taken back
+        if (!enabled.contains(Part.SUPERNATURAL) && ModList.get().isLoaded("vampirism")
+                && !SupernaturalAccess.get(p).vampirismGranted().isEmpty()) {
+            VampirismSkillAccess.apply(p, Set.of());
         }
         if (p.getHealth() > p.getMaxHealth()) {
             p.setHealth(p.getMaxHealth());

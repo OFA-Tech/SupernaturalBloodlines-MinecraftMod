@@ -95,9 +95,10 @@ public final class WerewolfRaceSync {
         if (BloodlineAccess.get(p).species() != Species.NONE) {
             return;
         }
-        RaceMemory memory = p.getData(ModAttachments.RACE_MEMORY);
-        p.setData(ModAttachments.RACE_MEMORY, RaceMemory.NONE);
         ReentrancyGuard.run(p.getUUID(), CHANNEL, () -> {
+            // spent inside the guard: a skipped (re-entered) restore must keep the memory for the one that runs
+            RaceMemory memory = p.getData(ModAttachments.RACE_MEMORY);
+            p.setData(ModAttachments.RACE_MEMORY, RaceMemory.NONE);
             String current = RaceAPI.getRaceFrom(p).getRace().map(r -> r.getRaceId().toString()).orElse(null);
             memory.restore(current).ifPresent(race -> RaceAPI.getRaceFrom(p).setRace(ResourceLocation.parse(race), false));
         });
