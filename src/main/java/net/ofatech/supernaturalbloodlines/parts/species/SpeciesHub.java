@@ -21,6 +21,12 @@ import net.ofatech.supernaturalbloodlines.parts.species.hunter.FiveRoster;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackLeadership;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackCommand;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.CallRequests;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.Compulsion;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
@@ -37,6 +43,7 @@ final class SpeciesHub {
 
     static void register() {
         HubSocial.set(SpeciesHub::social);
+        HubRequests.set(SpeciesHub::requests);
     }
 
     static HubSocial.Social social(ServerPlayer p) {
@@ -58,6 +65,37 @@ final class SpeciesHub {
     }
 
     static final int MAX_LINE = 64;
+
+    /** The requests still open to the player, for the hub's Requests card: who asked, the answer's token and the ticks left. */
+    static List<HubRequests.Request> requests(ServerPlayer p) {
+        MinecraftServer server = p.server;
+        long now = p.serverLevel().getGameTime();
+        List<HubRequests.Request> out = new ArrayList<>();
+        tokens(out, HubRequests.Kind.SIRE_CALL, SireCall.requests(), p, server, now);
+        if (ModList.get().isLoaded("werewolves")) {
+            tokens(out, HubRequests.Kind.PACK_INVITE, PackCommand.requests(), p, server, now);
+            tokens(out, HubRequests.Kind.ALLY_INVITE, PackCommand.allyRequests(), p, server, now);
+            PackDuel.board().asked(p.getUUID(), now).ifPresent(d -> {
+                String name = PackAccess.nameOf(server, d.challenger());
+                out.add(new HubRequests.Request(HubRequests.Kind.CHALLENGE, d.challenger(), name == null ? "" : name, "", left(d.expires(), now)));
+            });
+        }
+        for (var choice : Compulsion.openChoices(p.getUUID(), now)) {
+            out.add(new HubRequests.Request(HubRequests.Kind.COMPULSION, HubRequests.NOBODY, "", choice.getKey(), left(choice.getValue(), now)));
+        }
+        return out;
+    }
+
+    private static void tokens(List<HubRequests.Request> out, HubRequests.Kind kind, CallRequests requests, ServerPlayer p, MinecraftServer server, long now) {
+        for (var open : requests.openFor(p.getUUID(), now)) {
+            String name = PackAccess.nameOf(server, open.getValue().caller());
+            out.add(new HubRequests.Request(kind, open.getValue().caller(), name == null ? "" : name, open.getKey(), left(open.getValue().expires(), now)));
+        }
+    }
+
+    private static int left(long expires, long now) {
+        return (int) Math.max(0, Math.min(expires - now, Integer.MAX_VALUE));
+    }
 
     /**
      * The sire's sire and up, nearest first; a cycle (a sire turned by their own descendant) ends the climb. An ancestor recorded as a

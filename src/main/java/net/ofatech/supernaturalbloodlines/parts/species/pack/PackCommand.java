@@ -30,6 +30,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.party.PartyLink;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.CallRequests;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -61,6 +62,8 @@ public final class PackCommand {
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(c -> run(c, invite(self(c), EntityArgument.getPlayer(c, "player"))))))
                 .then(Commands.literal("accept")
+                        // no token: the hub's button answers the newest invitation made to the player
+                        .executes(c -> run(c, acceptLatest(self(c))))
                         .then(Commands.argument("token", StringArgumentType.word())
                                 .executes(c -> run(c, accept(self(c), StringArgumentType.getString(c, "token"))))))
                 .then(Commands.literal("leave").executes(c -> run(c, leave(self(c)))))
@@ -192,6 +195,7 @@ public final class PackCommand {
         long now = alpha.serverLevel().getGameTime();
         target.sendSystemMessage(inviteMessage(name(alpha), REQUESTS.open(alpha.getUUID(), target.getUUID(), now), index.betasOf(target.getUUID()).size()));
         alpha.sendSystemMessage(Component.translatable(KEY + "invited", name(target)));
+        HubRequests.changed(target);
         return null;
     }
 
@@ -208,10 +212,18 @@ public final class PackCommand {
         return text.append(" ").append(accept);
     }
 
+    /** {@code /pack accept} with no token: the newest open invitation to {@code p}. */
+    @Nullable
+    public static Component acceptLatest(ServerPlayer p) {
+        String token = REQUESTS.latestFor(p.getUUID(), p.serverLevel().getGameTime()).orElse(null);
+        return token == null ? error("expired") : accept(p, token);
+    }
+
     @Nullable
     public static Component accept(ServerPlayer p, String token) {
         long now = p.serverLevel().getGameTime();
         CallRequests.Request r = REQUESTS.take(token, p.getUUID(), now).orElse(null);
+        HubRequests.changed(p);
         if (r == null) {
             return error("expired");
         }
@@ -324,6 +336,7 @@ public final class PackCommand {
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pack ally accept " + token)));
         target.sendSystemMessage(Component.translatable(KEY + "ally_invite", name(leader)).append(" ").append(accept));
         leader.sendSystemMessage(Component.translatable(KEY + "ally_invited", name(target)));
+        HubRequests.changed(target);
         return null;
     }
 
@@ -331,6 +344,7 @@ public final class PackCommand {
     public static Component allyAccept(ServerPlayer p, String token) {
         long now = p.serverLevel().getGameTime();
         CallRequests.Request r = ALLY_REQUESTS.take(token, p.getUUID(), now).orElse(null);
+        HubRequests.changed(p);
         if (r == null) {
             return error("expired");
         }

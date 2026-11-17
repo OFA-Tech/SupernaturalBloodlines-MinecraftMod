@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.ChatFormatting;
@@ -127,6 +128,7 @@ public final class PackDuel {
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(KEY + "accept_hover", PackCommand.name(challenger)))));
         leader.sendSystemMessage(Component.translatable(KEY + "asked", PackCommand.name(challenger)).append(" ").append(accept));
         challenger.sendSystemMessage(Component.translatable(KEY + "sent", PackCommand.name(leader)));
+        HubRequests.changed(leader);
         return null;
     }
 
@@ -154,6 +156,7 @@ public final class PackDuel {
             return far;
         }
         BOARD.accept(leader.getUUID(), now);
+        HubRequests.changed(leader);
         Component on = Component.translatable(KEY + "on", PackCommand.name(challenger), PackCommand.name(leader));
         challenger.sendSystemMessage(on);
         leader.sendSystemMessage(on);
@@ -167,6 +170,7 @@ public final class PackDuel {
         if (d == null) {
             return PackCommand.error("duel_none");
         }
+        HubRequests.changed(leader);
         ServerPlayer challenger = SireCall.player(leader.server, d.challenger());
         if (challenger != null) {
             challenger.sendSystemMessage(Component.translatable(KEY + "off.declined", PackCommand.name(leader)));

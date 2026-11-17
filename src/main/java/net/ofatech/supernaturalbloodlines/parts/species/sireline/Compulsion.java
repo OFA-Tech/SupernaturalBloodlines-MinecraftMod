@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.sireline;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubPresence;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
@@ -60,6 +62,8 @@ import org.jetbrains.annotations.VisibleForTesting;
  */
 public final class Compulsion {
     public static final long CHOICE_TICKS = 5 * 20;
+    /** How long a choice waits while the target has the hub open (the owner's ruling: a click in a menu needs longer than a chat button). */
+    public static final long HUB_OPEN_CHOICE_TICKS = 30 * 20;
     public static final long DISCOUNT_TICKS = 24000;
     public static final long FOLLOW_TICKS = 5 * 60 * 20;
     static final int DISCOUNT_GOSSIP = 20;
@@ -193,7 +197,8 @@ public final class Compulsion {
         forgetChoices(p.getUUID());
         CHOICES.values().removeIf(c -> now > c.expires());
         String token = UUID.randomUUID().toString().substring(0, 8);
-        CHOICES.put(token, new Choice(p.getUUID(), v.getUUID(), now + CHOICE_TICKS));
+        CHOICES.put(token, new Choice(p.getUUID(), v.getUUID(), now + (HubPresence.isOpen(p.getUUID()) ? HUB_OPEN_CHOICE_TICKS : CHOICE_TICKS)));
+        HubRequests.changed(p);
         p.sendSystemMessage(Component.translatable(KEY + "choose").append(" ").append(button("discount", token)).append(" ").append(button("follow", token)));
     }
 
@@ -208,6 +213,12 @@ public final class Compulsion {
         return CHOICES.entrySet().stream()
                 .filter(e -> e.getValue().caster().equals(caster) && e.getValue().villager().equals(villager))
                 .map(Map.Entry::getKey).findFirst();
+    }
+
+    /** The open choices of {@code caster} as token and expiry tick, for the hub's Requests card. */
+    public static java.util.List<Map.Entry<String, Long>> openChoices(UUID caster, long now) {
+        return CHOICES.entrySet().stream().filter(e -> e.getValue().caster().equals(caster) && now <= e.getValue().expires())
+                .map(e -> Map.entry(e.getKey(), e.getValue().expires())).toList();
     }
 
     public static void forgetChoices(UUID caster) {
@@ -227,6 +238,7 @@ public final class Compulsion {
             return Component.translatable(KEY + "expired");
         }
         CHOICES.remove(token);
+        HubRequests.changed(caster);
         if (now > c.expires() || !(caster.serverLevel().getEntity(c.villager()) instanceof Villager v) || !v.isAlive()
                 || caster.distanceToSqr(v) > CHOICE_REACH * CHOICE_REACH) {
             return Component.translatable(KEY + "expired");

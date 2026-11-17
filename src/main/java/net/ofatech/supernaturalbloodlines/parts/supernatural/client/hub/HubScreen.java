@@ -579,6 +579,12 @@ public final class HubScreen extends Screen {
     }
 
     @Override
+    public void removed() {
+        super.removed();
+        HubClient.sendOpen(false);
+    }
+
+    @Override
     public boolean isPauseScreen() {
         return false;
     }

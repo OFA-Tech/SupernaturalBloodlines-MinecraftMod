@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.sireline;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import java.util.EnumSet;
 import java.util.Set;
@@ -100,6 +101,7 @@ public final class SireCall {
                 // a sired player whose bond was severed (R101b) cannot be called
                 if (target != null && target != caller && !BloodlineAccess.get(target).bondBroken()) {
                     target.sendSystemMessage(requestMessage(caller.getGameProfile().getName(), REQUESTS.open(caller.getUUID(), target.getUUID(), now)));
+                    HubRequests.changed(target);
                     players++;
                 }
             } else if (level.getEntity(sired.id()) instanceof Mob mob && mob.isAlive()) {
@@ -121,6 +123,7 @@ public final class SireCall {
         }
         ServerLevel at = sired.serverLevel();
         CallRequests.Request r = REQUESTS.take(token, sired.getUUID(), at.getGameTime()).orElse(null);
+        HubRequests.changed(sired);
         if (r == null || BloodlineAccess.get(sired).bondBroken() || !SirelineIndex.get(at).sireOf(sired.getUUID()).map(r.caller()::equals).orElse(false)) {
             return Result.failed("expired");
         }

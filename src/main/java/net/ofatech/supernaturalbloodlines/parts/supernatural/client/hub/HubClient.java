@@ -16,6 +16,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotPayload;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubOpenPayload;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotRequestPayload;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 
@@ -153,5 +154,14 @@ public final class HubClient {
         }
         lastPage = page;
         mc.setScreen(new HubScreen(page));
+        sendOpen(true);
+    }
+
+    /** Tells the server whether the hub is open, so a request made to this player waits longer while they can answer it. */
+    static void sendOpen(boolean open) {
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null && connection.hasChannel(HubOpenPayload.TYPE)) {
+            PacketDistributor.sendToServer(new HubOpenPayload(open));
+        }
     }
 }

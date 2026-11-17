@@ -132,6 +132,28 @@ public final class PackDuelGameTests {
         return start(challenger, leader) && finish(challenger, leader).isCanceled();
     }
 
+    /** The challenge is one of the hub's requests: the leader is asked, with the time left, and it is gone once answered. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aChallengeIsARequestUntilItIsAnswered(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        online(leader, second);
+        try {
+            helper.assertTrue(join(leader, second), "the pack could not be built");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(leader).isEmpty(), "a request before any challenge");
+            helper.assertTrue(PackDuel.challenge(second, id(leader)) == null, "the challenge was refused");
+            var open = net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(leader);
+            helper.assertTrue(open.size() == 1 && open.get(0).kind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.CHALLENGE
+                    && open.get(0).from().equals(second.getUUID()) && open.get(0).token().isEmpty() && open.get(0).ticksLeft() == DuelBoard.TIMEOUT_TICKS, "the leader's requests are " + open);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(second).isEmpty(), "the challenger was shown a request");
+            helper.assertTrue(PackDuel.decline(leader) == null, "the decline failed");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(leader).isEmpty(), "an answered challenge is still a request");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theChallengerWhoWinsLeadsAndNobodyLosesTheSpark(GameTestHelper helper) {
         ServerPlayer leader = alpha(helper, 6, 1.5);
