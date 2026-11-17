@@ -69,6 +69,10 @@ config="${mod_id}.supernatural.mixins.json"
 [[mixins]]
 config="${mod_id}.hud.mixins.json"
 
+# Development only: applied by DevShotsMixinPlugin only when the JVM has -Dsupernaturalbloodlines.devshots.hidden=true (screenshots with a hidden window). Not a part.
+[[mixins]]
+config="${mod_id}.devshots.mixins.json"
+
 # The [[accessTransformers]] block allows you to declare where your AT file is.
 # If this block is omitted, a fallback attempt will be made to load an AT from META-INF/accesstransformer.cfg
 #[[accessTransformers]]
