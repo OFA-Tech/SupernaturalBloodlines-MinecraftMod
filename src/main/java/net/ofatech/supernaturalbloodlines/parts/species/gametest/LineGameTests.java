@@ -318,25 +318,35 @@ public final class LineGameTests {
         helper.succeed();
     }
 
+    /** A made Original takes their branch with them, creatures in it as well (an unlined creature is filled when it joins, not here). */
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void madeOriginalDoesNotReRootCreatures(GameTestHelper helper) {
+    public static void madeOriginalReRootsTheCreaturesOfTheBranch(GameTestHelper helper) {
         ServerPlayer o = mortal(helper, Species.ORIGINAL);
         ServerPlayer a = mortal(helper, Species.NONE);
         ServerPlayer under = mortal(helper, Species.NONE);
         Mob creature = spawnVampire(helper);
+        Mob unlined = spawnVampire(helper);
         try {
             SireRecorder.record(o, a);
             SireRecorder.record(a, creature);
+            SireRecorder.record(a, unlined);
+            lines(helper).remove(unlined.getUUID()); // a creature with no line yet
+            unlined.removeData(SpeciesRegistries.LINE);
             SireRecorder.record(creature, under);
             helper.assertTrue(lines(helper).rootOf(creature.getUUID()).filter(o.getUUID()::equals).isPresent(), "control: the creature is not in the line");
             species(a, Species.ORIGINAL);
-            helper.assertTrue(lines(helper).rootOf(creature.getUUID()).filter(o.getUUID()::equals).isPresent(), "a creature was re-rooted from here (it is filled when it joins)");
-            helper.assertTrue(lines(helper).rootOf(under.getUUID()).filter(a.getUUID()::equals).isPresent(), "a player below a creature did not move with the made Original");
+            helper.assertTrue(lines(helper).rootOf(creature.getUUID()).filter(a.getUUID()::equals).isPresent(), "a creature of the branch stayed in the old line");
+            helper.assertTrue(a.getUUID().equals(creature.getData(SpeciesRegistries.LINE)), "the loaded creature's mirror was not moved");
+            helper.assertTrue(lines(helper).rootOf(under.getUUID()).filter(a.getUUID()::equals).isPresent(), "a player below the creature did not move with the made Original");
+            helper.assertTrue(lines(helper).rootOf(unlined.getUUID()).isEmpty(), "a creature with no line was given one here");
+            helper.assertTrue(lines(helper).rootOf(o.getUUID()).filter(o.getUUID()::equals).isPresent(), "the first Original lost their line");
         } finally {
             forget(helper, o, a, under);
-            lines(helper).remove(creature.getUUID());
-            SirelineIndex.get(helper.getLevel()).remove(creature.getUUID());
-            creature.discard();
+            for (Mob m : List.of(creature, unlined)) {
+                lines(helper).remove(m.getUUID());
+                SirelineIndex.get(helper.getLevel()).remove(m.getUUID());
+                m.discard();
+            }
         }
         helper.succeed();
     }
@@ -349,7 +359,7 @@ public final class LineGameTests {
         try {
             Mob mob = (Mob) BuiltInRegistries.ENTITY_TYPE.get(VAMPIRE).create(helper.getLevel());
             mob.setUUID(id);
-            SirelineIndex.get(helper.getLevel()).addPendingMob(id);
+            SirelineIndex.get(helper.getLevel()).addPendingMob(id, helper.getLevel().getServer().overworld().getGameTime());
             NeoForge.EVENT_BUS.post(new EntityJoinLevelEvent(mob, helper.getLevel()));
             helper.assertTrue(!mob.hasData(SpeciesRegistries.LINE) && lines(helper).rootOf(id).isEmpty(), "a creature owed a death was given a line");
         } finally {

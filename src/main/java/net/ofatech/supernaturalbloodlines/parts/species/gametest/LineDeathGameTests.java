@@ -521,6 +521,8 @@ public final class LineDeathGameTests {
             SireRecorder.record(o, c);
             // a world saved by the old sireline death: owed in the sireline index, and no entry in the line index
             lines(helper).remove(c.getUUID());
+            // the old rule removed the doomed player from the sire index, so only their own recorded sire is left to climb from
+            SirelineIndex.get(helper.getLevel()).remove(c.getUUID());
             SirelineIndex.get(helper.getLevel()).addLegacyPendingPlayer(c.getUUID());
             SirelineIndex.get(helper.getLevel()).addLegacyPendingPlayer(lost.getUUID());
             online(o, c, lost);
@@ -575,7 +577,7 @@ public final class LineDeathGameTests {
 
             // a creature that loads later and is waiting is turned away; another is not
             EntityJoinLevelEvent late = new EntityJoinLevelEvent(later, level);
-            index.addPendingMob(later.getUUID());
+            index.addPendingMob(later.getUUID(), level.getServer().overworld().getGameTime());
             LineDeath.onJoin(late);
             helper.assertTrue(late.isCanceled(), "a waiting creature joined the world");
             helper.assertTrue(!index.isPendingMob(later.getUUID()), "the waiting creature stayed on the list");
@@ -652,7 +654,7 @@ public final class LineDeathGameTests {
             // an old entry (or a creature that stopped being one) still does not die
             lines(helper).setRoot(cow.getUUID(), o.getUUID(), false);
             SireRecorder.record(o, vampire);
-            SirelineIndex.get(level).addPendingMob(lateCow.getUUID());
+            SirelineIndex.get(level).addPendingMob(lateCow.getUUID(), level.getServer().overworld().getGameTime());
             online(o);
             LineDeath.run(level.getServer(), o.getUUID());
             helper.assertTrue(vampire.isRemoved(), "control: the vampire stayed");
@@ -668,6 +670,41 @@ public final class LineDeathGameTests {
             cow.discard();
             lateCow.discard();
             vampire.discard();
+        }
+        helper.succeed();
+    }
+
+    /** With line death off, a death the old rule still owes is dropped (and logged), not paid. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void legacyOwedDeathIsDroppedWhenLineDeathIsOff(GameTestHelper helper) {
+        ServerPlayer o = mortal(helper, Species.ORIGINAL);
+        LineTestPlayer paid = talker(helper, Species.HYBRID);
+        LineTestPlayer dropped = talker(helper, Species.HYBRID);
+        try {
+            for (LineTestPlayer c : List.of(paid, dropped)) {
+                SireRecorder.record(o, c);
+                lines(helper).remove(c.getUUID());
+                SirelineIndex.get(helper.getLevel()).remove(c.getUUID());
+                SirelineIndex.get(helper.getLevel()).addLegacyPendingPlayer(c.getUUID());
+            }
+            online(o, paid, dropped);
+            // the control: the same debt with line death on is paid
+            LineDeath.onLogin(paid);
+            helper.assertTrue(dead(paid), "control: an old debt was not paid with line death on");
+            SpeciesConfig.overrideOriginalLineDeath(false);
+            LineDeath.onLogin(dropped);
+            helper.assertTrue(!dead(dropped), "an old debt was paid with line death off");
+            helper.assertTrue(!dropped.received("supernaturalbloodlines.line.death_login") && lines(helper).rootOf(dropped.getUUID()).isEmpty(),
+                    "the old debt was turned into a new one: " + dropped.heard() + " / " + lines(helper).rootOf(dropped.getUUID()));
+            helper.assertTrue(!SirelineIndex.get(helper.getLevel()).takeLegacyPendingPlayer(dropped.getUUID()), "the old debt was kept");
+            helper.assertTrue(lines(helper).takeOwed(dropped.getUUID()).isEmpty(), "the old debt became a new one");
+            // and switched on again, a login owes nothing: the debt is gone, not postponed
+            SpeciesConfig.overrideOriginalLineDeath(null);
+            LineDeath.onLogin(dropped);
+            helper.assertTrue(!dead(dropped), "the dropped debt came back");
+        } finally {
+            SpeciesConfig.overrideOriginalLineDeath(null);
+            forget(helper, o, paid, dropped);
         }
         helper.succeed();
     }

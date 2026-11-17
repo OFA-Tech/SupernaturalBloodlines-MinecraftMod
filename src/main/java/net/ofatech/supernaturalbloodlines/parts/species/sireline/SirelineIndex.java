@@ -39,8 +39,11 @@ public final class SirelineIndex extends SavedData {
     private static final String AT = "at";
     /** The key of the old sireline death's offline players: read so their debt is not lost (see {@code LineDeath.onLogin}). */
     private static final String LEGACY_PLAYERS = "pendingDeaths";
-    /** A creature owed a death that never loads again is forgotten after this long (wall clock). */
-    public static final long PENDING_MAX_AGE_MS = 30L * 24 * 60 * 60 * 1000;
+    private static final String PENDING_TICKS = "pendingMobTicks";
+    /** A creature owed a death that never loads again is forgotten after this much game time (30 days of 20 ticks a second). */
+    public static final long PENDING_MAX_AGE_TICKS = 51_840_000L;
+    /** The stamp of a debt saved before debts had game time: it gets the time of the first prune. */
+    private static final long UNSTAMPED = -1L;
 
     private record Link(UUID sire, String entityType) {
     }
@@ -73,11 +76,17 @@ public final class SirelineIndex extends SavedData {
             CompoundTag e = (CompoundTag) t;
             idx.link(NbtUtils.loadUUID(e.get(SIRE)), NbtUtils.loadUUID(e.get(CHILD)), e.getString(TYPE));
         }
-        long now = System.currentTimeMillis();
+        // nothing is pruned here: there is no game time yet. The plain list and the first stamped format (wall clock) have none.
         for (Tag t : tag.getList(PENDING_MOBS, Tag.TAG_INT_ARRAY)) {
-            idx.pendingMobs.put(NbtUtils.loadUUID(t), now);
+            idx.pendingMobs.putIfAbsent(NbtUtils.loadUUID(t), UNSTAMPED);
         }
         for (Tag t : tag.getList(PENDING_STAMPS, Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            if (e.contains(ID)) {
+                idx.pendingMobs.putIfAbsent(NbtUtils.loadUUID(e.get(ID)), UNSTAMPED);
+            }
+        }
+        for (Tag t : tag.getList(PENDING_TICKS, Tag.TAG_COMPOUND)) {
             CompoundTag e = (CompoundTag) t;
             if (e.contains(ID) && e.contains(AT)) {
                 idx.pendingMobs.put(NbtUtils.loadUUID(e.get(ID)), e.getLong(AT));
@@ -86,7 +95,6 @@ public final class SirelineIndex extends SavedData {
         for (Tag t : tag.getList(LEGACY_PLAYERS, Tag.TAG_INT_ARRAY)) {
             idx.legacyPlayers.add(NbtUtils.loadUUID(t));
         }
-        idx.prunePending(now);
         return idx;
     }
 
@@ -116,7 +124,9 @@ public final class SirelineIndex extends SavedData {
             e.putLong(AT, at);
             stamps.add(e);
         });
-        tag.put(PENDING_STAMPS, stamps);
+        tag.put(PENDING_TICKS, stamps);
+        // shortcut: the plain list is kept for one release so that going back to the previous version keeps its debts; drop it after that
+        tag.put(PENDING_MOBS, uuids(pendingMobs.keySet()));
         tag.put(LEGACY_PLAYERS, uuids(legacyPlayers));
         return tag;
     }
@@ -209,20 +219,28 @@ public final class SirelineIndex extends SavedData {
         return false;
     }
 
-    public void addPendingMob(UUID id) {
-        addPendingMob(id, System.currentTimeMillis());
-    }
-
-    public void addPendingMob(UUID id, long at) {
-        prunePending(at);
-        if (pendingMobs.putIfAbsent(id, at) == null) {
+    /** @param gameTime the overworld's game time now */
+    public void addPendingMob(UUID id, long gameTime) {
+        prunePending(gameTime);
+        if (pendingMobs.putIfAbsent(id, gameTime) == null) {
             setDirty();
         }
     }
 
-    /** Forgets the creatures owed a death for more than {@link #PENDING_MAX_AGE_MS} as of {@code now}. */
+    /** Stamps the debts that have no game time yet with {@code now}, and forgets those owed for more than {@link #PENDING_MAX_AGE_TICKS}. */
     public void prunePending(long now) {
-        if (pendingMobs.values().removeIf(at -> now - at > PENDING_MAX_AGE_MS)) {
+        boolean changed = false;
+        for (var it = pendingMobs.entrySet().iterator(); it.hasNext();) {
+            var entry = it.next();
+            if (entry.getValue() == UNSTAMPED) {
+                entry.setValue(now);
+                changed = true;
+            } else if (now - entry.getValue() > PENDING_MAX_AGE_TICKS) {
+                it.remove();
+                changed = true;
+            }
+        }
+        if (changed) {
             setDirty();
         }
     }

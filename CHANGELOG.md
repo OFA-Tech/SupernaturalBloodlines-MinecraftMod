@@ -4,6 +4,7 @@
 
 ### Upgrading
 - Line death is now ON by default, offline players included. Set `original_line_death = false` to keep the old behaviour. `sireline_death` is ignored. The server logs one warning at start if its species config still has the old key.
+- Deaths the old rule still owed offline players are paid at their next login as deaths of their new line. With `original_line_death = false` they are dropped (and logged), not paid.
 
 ### Added
 - Every vampire belongs to the line of an Original (players and NPC vampires; a creature turned by a player takes theirs). Config: `original_visibility`, `npc_line_weights`, `line_rites_enabled`, `imprisonment_ring_max_radius`, `imprisonment_rite_seconds`.

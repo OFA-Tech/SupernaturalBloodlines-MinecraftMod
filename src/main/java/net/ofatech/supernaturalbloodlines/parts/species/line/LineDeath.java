@@ -57,6 +57,9 @@ public final class LineDeath {
             }
         });
         NeoForge.EVENT_BUS.addListener(LineDeath::onJoin);
+        // stamps debts that have none yet (older saves) and forgets the ones owed for 30 days of game time
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStartedEvent e) ->
+                SirelineIndex.get(e.getServer().overworld()).prunePending(e.getServer().overworld().getGameTime()));
     }
 
     private static void onDeath(LivingDeathEvent e) {
@@ -157,7 +160,7 @@ public final class LineDeath {
                 return;
             }
         }
-        sirelines.addPendingMob(id);
+        sirelines.addPendingMob(id, server.overworld().getGameTime());
     }
 
     /**
@@ -167,12 +170,23 @@ public final class LineDeath {
      */
     public static void onLogin(ServerPlayer p) {
         LineIndex index = LineIndex.get(p.server);
-        if (SirelineIndex.get(p.serverLevel()).takeLegacyPendingPlayer(p.getUUID())) {
-            Optional<UUID> root = Lines.heal(p).filter(r -> !r.equals(p.getUUID()));
-            if (root.isPresent()) {
-                index.addOwed(p.getUUID(), root.get());
+        SirelineIndex sirelines = SirelineIndex.get(p.serverLevel());
+        if (sirelines.takeLegacyPendingPlayer(p.getUUID())) {
+            if (!SpeciesConfig.originalLineDeath()) {
+                SupernaturalBloodlines.LOGGER.warn("Dropping a sireline death owed to {}: original_line_death is off", p.getGameProfile().getName());
             } else {
-                SupernaturalBloodlines.LOGGER.warn("Dropping a sireline death owed to {}: no Original is recorded above them", p.getGameProfile().getName());
+                // the old rule removed the doomed player's sire link from the index, so heal may find nothing: climb from the sire the player still has
+                Optional<UUID> root = Lines.heal(p).filter(r -> !r.equals(p.getUUID()));
+                if (root.isEmpty()) {
+                    root = Lines.climbFrom(p.server, sirelines, p.getUUID(), Optional.ofNullable(BloodlineAccess.get(p).sire())).filter(r -> !r.equals(p.getUUID()));
+                    // heal would have put them in the line; the debt only applies to someone who is in it
+                    root.ifPresent(r -> index.setRoot(p.getUUID(), r, true));
+                }
+                if (root.isPresent()) {
+                    index.addOwed(p.getUUID(), root.get());
+                } else {
+                    SupernaturalBloodlines.LOGGER.warn("Dropping a sireline death owed to {}: no Original is recorded above them", p.getGameProfile().getName());
+                }
             }
         }
         index.takeOwed(p.getUUID()).ifPresent(root -> {

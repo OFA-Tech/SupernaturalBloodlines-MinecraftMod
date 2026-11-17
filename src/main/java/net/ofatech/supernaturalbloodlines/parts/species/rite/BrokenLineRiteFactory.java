@@ -65,10 +65,10 @@ public record BrokenLineRiteFactory() implements RiteFactory {
             List<UUID> bloods = LineRites.bloodSources(params.consumedItems);
             Optional<LineRules.BloodPair> pair = LineRules.pairBloods(bloods, id -> Lines.rootOf(server, id), id -> Lines.isOriginalId(server, id));
             ServerPlayer target = pair.map(p -> hereOnline(server, p.target())).orElse(null);
-            boolean someoneHere = pair.isPresent() ? target != null : bloods.stream().anyMatch(id -> hereOnline(server, id) != null);
+            boolean anyBloodHere = bloods.stream().anyMatch(id -> hereOnline(server, id) != null);
             Optional<String> refusal = LineRules.brokenLineRefusal(new LineRules.BrokenLineFacts(
                     SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), LunarEclipse.active(server), bloods.size(), pair,
-                    someoneHere, pair.isPresent() && Lines.isOriginalId(server, pair.get().target())));
+                    anyBloodHere, target != null, pair.isPresent() && Lines.isOriginalId(server, pair.get().target())));
             if (refusal.isPresent()) {
                 return refuse(caster, refusal.get());
             }

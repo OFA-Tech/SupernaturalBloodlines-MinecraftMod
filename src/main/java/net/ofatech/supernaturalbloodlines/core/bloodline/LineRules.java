@@ -110,9 +110,13 @@ public final class LineRules {
         return Optional.empty();
     }
 
-    /** @param targetOnline some bound blood belongs to a player who is online here (checked before the pair, so a wrong blood tells nothing) */
+    /**
+     * @param anyBloodHere some bound blood belongs to a player who is online here, paired or not (checked before the pair, so a wrong blood
+     *                     tells nothing)
+     * @param targetHere   the pair's target is online here (false when there is no pair)
+     */
     public record BrokenLineFacts(boolean witchType, boolean eclipse, int bloodCount, Optional<BloodPair> pair,
-                                  boolean targetOnline, boolean targetIsOriginal) {
+                                  boolean anyBloodHere, boolean targetHere, boolean targetIsOriginal) {
     }
 
     /** R125: the first failing check, as a full lang key. The performer's own checks come first, then the target's, and a blood that does not pair is the plain {@link #FAILS}. */
@@ -126,13 +130,15 @@ public final class LineRules {
         if (f.bloodCount() < 2) {
             return refusal("no_blood");
         }
-        if (!f.targetOnline()) {
+        // "away" means only that nobody whose blood is bound is here: it says nothing about who pairs with whom
+        if (!f.anyBloodHere()) {
             return refusal("target_away");
         }
         if (f.targetIsOriginal()) {
             return refusal("target_original");
         }
-        if (f.pair().isEmpty()) {
+        // no pair and a pair whose target is not here are one answer
+        if (f.pair().isEmpty() || !f.targetHere()) {
             return Optional.of(FAILS);
         }
         return Optional.empty();
@@ -175,8 +181,8 @@ public final class LineRules {
     }
 
     /**
-     * Whether a white oak death starts line death: someone else must have dealt it. A projectile or an item counts as its owner (that is who
-     * {@code DamageSource.getEntity()} is); no killer at all (the environment, a bare {@code /kill}) and the Original's own hand do not.
+     * Whether a white oak death starts line death: only a melee white oak blow by someone other than the Original counts. No killer at all
+     * (the environment, a bare {@code /kill}) and the Original's own hand do not.
      */
     public static boolean killerCounts(UUID victim, @Nullable UUID killer) {
         return killer != null && !killer.equals(victim);

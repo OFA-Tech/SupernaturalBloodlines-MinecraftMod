@@ -108,7 +108,8 @@ public final class Lines {
 
     /**
      * A player made Original is the root of their own line, even if an Original sired them. Everyone recorded below them who still
-     * follows their previous root, or none, moves with them; an Original below keeps their own branch.
+     * follows their previous root moves with them (a player with no line too; a creature only when it already has an entry, since an
+     * unlined one is filled when it joins); an Original below keeps their own branch.
      */
     public static void makeRoot(ServerPlayer p) {
         MinecraftServer server = p.server;
@@ -125,13 +126,14 @@ public final class Lines {
                 if (!seen.add(child.id()) || isOriginalId(server, child.id())) {
                     continue;
                 }
-                if (!"minecraft:player".equals(child.entityType())) {
-                    // a creature fills its line when it next joins the world; its own descendants are still looked at
-                    work.add(child.id());
-                    continue;
-                }
-                if (LineRules.followsRoot(index.rootOf(child.id()), previous, index.freedOf(child.id()).isPresent(), true)) {
-                    index.setRoot(child.id(), p.getUUID(), true);
+                boolean player = "minecraft:player".equals(child.entityType());
+                Optional<UUID> memberRoot = index.rootOf(child.id());
+                if ((player || memberRoot.isPresent())
+                        && LineRules.followsRoot(memberRoot, previous, index.freedOf(child.id()).isPresent(), true)) {
+                    index.setRoot(child.id(), p.getUUID(), player);
+                    if (!player) {
+                        mirror(server, child.id(), p.getUUID());
+                    }
                     work.add(child.id());
                 }
             }

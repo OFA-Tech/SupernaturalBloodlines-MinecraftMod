@@ -308,8 +308,9 @@ public final class LineRiteGameTests {
         refused(helper, Species.WITCH, true, r -> List.of(r.bloodOf(r.target), new ItemStack(item(ASH)), new ItemStack(item(OTHERWHERE))), "no_blood");
         refused(helper, Species.WITCH, true, r -> List.of(r.bloodOf(r.target), SiresBloodItem.of(UUID.randomUUID(), "Stranger"),
                 new ItemStack(item(ASH)), new ItemStack(item(OTHERWHERE))), "fails");
+        // nobody whose blood is bound is here
         refused(helper, Species.WITCH, true, r -> {
-            online(r.original); // the target is away
+            online();
             return r.brokenLineItems();
         }, "target_away");
         refused(helper, Species.WITCH, true, r -> {
@@ -404,6 +405,27 @@ public final class LineRiteGameTests {
         } finally {
             rig.close();
         }
+        helper.succeed();
+    }
+
+    /** The Original is here and the other blood is not: whether that other blood is in the Original's line must not show in the answer. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void brokenLineAnswersTheSameForAnAbsentTargetInTheLineOrNot(GameTestHelper helper) {
+        if (skipWithoutArtifacts(helper)) {
+            return;
+        }
+        // B is in A's line and away
+        refused(helper, Species.WITCH, true, r -> {
+            online(r.original);
+            return r.brokenLineItems();
+        }, "fails");
+        // B is not in A's line, and away
+        refused(helper, Species.WITCH, true, r -> {
+            LineTestPlayer stranger = LineTestPlayer.create(helper);
+            species(stranger, Species.HYBRID);
+            online(r.original);
+            return List.of(r.bloodOf(r.original), r.bloodOf(stranger), new ItemStack(item(ASH)), new ItemStack(item(OTHERWHERE)));
+        }, "fails");
         helper.succeed();
     }
 }

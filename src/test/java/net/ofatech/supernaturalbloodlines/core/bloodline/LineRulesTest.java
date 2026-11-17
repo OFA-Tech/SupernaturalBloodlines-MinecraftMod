@@ -101,18 +101,28 @@ class LineRulesTest {
 
     @Test
     void brokenLineRefusalOrder() {
-        assertEquals(Optional.empty(), brokenLineRefusal(new BrokenLineFacts(true, true, 2, PAIR, true, false)));
-        assertEquals(Optional.of(REFUSAL_PREFIX + "not_witch"), brokenLineRefusal(new BrokenLineFacts(false, true, 2, PAIR, true, false)));
-        assertEquals(Optional.of(REFUSAL_PREFIX + "no_eclipse"), brokenLineRefusal(new BrokenLineFacts(true, false, 2, PAIR, true, false)));
-        assertEquals(Optional.of(REFUSAL_PREFIX + "no_blood"), brokenLineRefusal(new BrokenLineFacts(true, true, 1, PAIR, true, false)));
-        assertEquals(Optional.of(FAILS), brokenLineRefusal(new BrokenLineFacts(true, true, 2, Optional.empty(), true, false)));
-        assertEquals(Optional.of(REFUSAL_PREFIX + "target_away"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, PAIR, false, false)));
-        assertEquals(Optional.of(REFUSAL_PREFIX + "target_original"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, PAIR, true, true)));
+        // (witch, eclipse, bloods, pair, anyBloodHere, targetHere, targetIsOriginal)
+        assertEquals(Optional.empty(), brokenLineRefusal(new BrokenLineFacts(true, true, 2, PAIR, true, true, false)));
+        assertEquals(Optional.of(REFUSAL_PREFIX + "not_witch"), brokenLineRefusal(new BrokenLineFacts(false, true, 2, PAIR, true, true, false)));
+        assertEquals(Optional.of(REFUSAL_PREFIX + "no_eclipse"), brokenLineRefusal(new BrokenLineFacts(true, false, 2, PAIR, true, true, false)));
+        assertEquals(Optional.of(REFUSAL_PREFIX + "no_blood"), brokenLineRefusal(new BrokenLineFacts(true, true, 1, PAIR, true, true, false)));
+        assertEquals(Optional.of(REFUSAL_PREFIX + "target_away"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, PAIR, false, false, false)));
+        assertEquals(Optional.of(REFUSAL_PREFIX + "target_original"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, PAIR, true, true, true)));
         // two failures: the earlier one in the order wins
-        assertEquals(Optional.of(REFUSAL_PREFIX + "not_witch"), brokenLineRefusal(new BrokenLineFacts(false, false, 0, Optional.empty(), false, true)));
-        // the target's own checks come before the pair: a wrong blood says nothing while nobody is here
-        assertEquals(Optional.of(REFUSAL_PREFIX + "target_away"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, Optional.empty(), false, true)));
-        assertEquals(Optional.of(REFUSAL_PREFIX + "target_away"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, PAIR, false, true)));
+        assertEquals(Optional.of(REFUSAL_PREFIX + "not_witch"), brokenLineRefusal(new BrokenLineFacts(false, false, 0, Optional.empty(), false, false, true)));
+        assertEquals(Optional.of(REFUSAL_PREFIX + "target_away"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, Optional.empty(), false, false, true)));
+    }
+
+    /** The bloods are checked for who is here before they are paired, and "no pair" and "the target is not here" are one answer. */
+    @Test
+    void brokenLineIsNotAnOracleForWhoIsInWhoseLine() {
+        Optional<String> noPair = brokenLineRefusal(new BrokenLineFacts(true, true, 2, Optional.empty(), true, false, false));
+        Optional<String> pairButTargetAway = brokenLineRefusal(new BrokenLineFacts(true, true, 2, PAIR, true, false, false));
+        assertEquals(Optional.of(FAILS), noPair);
+        assertEquals(noPair, pairButTargetAway, "a target who is away must not say that the bloods pair");
+        // "away" is only for nobody here at all, paired or not
+        assertEquals(Optional.of(REFUSAL_PREFIX + "target_away"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, PAIR, false, false, false)));
+        assertEquals(Optional.of(REFUSAL_PREFIX + "target_away"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, Optional.empty(), false, false, false)));
     }
 
     private static ImprisonedFacts imp(boolean witch, boolean eclipse, boolean blood, boolean online, boolean original,
