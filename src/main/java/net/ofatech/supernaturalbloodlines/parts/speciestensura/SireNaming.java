@@ -14,6 +14,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 
 /**
@@ -45,12 +46,16 @@ public final class SireNaming {
      */
     private static EventResult onNaming(LivingEntity target, Player namer, Changeable<Double> epGain, Changeable<Double> cost,
                                         Changeable<NamingType> type, Changeable<String> name) {
-        if (namer != null && target instanceof ServerPlayer sired && namer.getUUID().equals(BloodlineAccess.get(sired).boundSire())) {
-            if (type.get() != NamingType.LOW) {
+        if (namer != null && target instanceof ServerPlayer sired) {
+            BloodlineState state = BloodlineAccess.get(sired);
+            boolean severed = sired.getPersistentData().getBoolean(SubordinateLink.SEVERED_KEY);
+            // the recorded sire of a severed player is no sire any more, but their hand naming must not evolve the player either
+            boolean sire = namer.getUUID().equals(state.boundSire()) || namer.getUUID().equals(state.severedSire());
+            if (sire && type.get() != NamingType.LOW) {
                 type.set(NamingType.LOW);
             }
             // a severance cleared the name: this is a re-naming, and the switch can take the reward away (the cost stays)
-            if (sired.getPersistentData().getBoolean(SubordinateLink.SEVERED_KEY) && !SpeciesTensuraConfig.resireNamingReward()) {
+            if (sire && severed && !SpeciesTensuraConfig.resireNamingReward()) {
                 epGain.set(0.0);
             }
         }

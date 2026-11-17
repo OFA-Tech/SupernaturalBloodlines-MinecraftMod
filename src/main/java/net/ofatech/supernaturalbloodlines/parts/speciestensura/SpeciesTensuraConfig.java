@@ -119,7 +119,7 @@ public final class SpeciesTensuraConfig {
                 .define("severance_clears_name", true);
         RESIRE_NAMING_REWARD = b.comment("A sire naming a player whose name a severance cleared pays Tensura's EP and stat reward again, as a first naming does.",
                         "Off: that re-naming still names the player and the sire still pays Tensura's cost, but the sired gets no EP and stat reward a second time.",
-                        "Only a sire's naming of their bound sired is affected; a naming by anyone else is Tensura's own.")
+                        "Only a sire's naming of their bound or severed sired is affected; a naming by anyone else is Tensura's own.")
                 .define("resire_naming_reward", true);
         SPEC = b.build();
         LAYER_TABLE = new Cached<>("layers", "SPECIES=skill,skill|magicule|aura|undead", LAYERS::get, LayerTable::parse);

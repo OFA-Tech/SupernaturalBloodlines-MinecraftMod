@@ -723,6 +723,7 @@ public final class SirelineTensuraGameTests {
             sever(sired, sire);
             helper.assertTrue(existence(sired).getPermanentOwner() == null, "the owner stayed: " + existence(sired).getPermanentOwner());
             helper.assertTrue(own.equals(existence(sired).getName()), "the name was cleared with the switch off: " + existence(sired).getName());
+            helper.assertTrue(sired.getCustomName() != null, "the visible name was cleared with the switch off");
         } finally {
             SpeciesTensuraConfig.overrideSeveranceClearsName(null);
             reset(sire, sired);
@@ -826,6 +827,58 @@ public final class SirelineTensuraGameTests {
         } finally {
             SpeciesTensuraConfig.overrideResireNamingReward(null);
             reset(sire, newSire, sired);
+        }
+        helper.succeed();
+    }
+
+    /** Tensura's naming also sets the visible custom name; the severance takes it away with the name. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void severanceClearsTheVisibleName(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        online(sire);
+        try {
+            SireRecorder.record(sire, sired);
+            helper.assertTrue(sired.getCustomName() != null, "control: the naming set no visible name " + said(sire));
+            sever(sired, sire);
+            helper.assertTrue(sired.getCustomName() == null, "the visible name survived the severance: " + sired.getCustomName());
+        } finally {
+            reset(sire, sired);
+            sired.setCustomName(null);
+        }
+        helper.succeed();
+    }
+
+    /** The recorded ex-sire of a severed player is no sire, but their hand naming at HIGH is still lowered to LOW: the severed player keeps their race. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void exSireHandNamingNeverEvolvesTheSevered(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        ServerPlayer stranger = namer(helper);
+        ServerPlayer control = hybrid(helper);
+        boolean before = playerNaming(helper, true);
+        try {
+            setRace(sired, "tensura:human");
+            // the sire is not online, so nothing names the sired before the severance
+            SireRecorder.record(sire, sired);
+            sever(sired, sire);
+            helper.assertTrue(existence(sired).getName() == null, "control: named already");
+            helper.assertTrue(RequestNamingKeyPacket.canName(sire, sired), "control: the ex-sire cannot name by hand: " + said(sire));
+            RequestNamingMenuPacket.name(sired, sire, NamingType.HIGH, "Manual");
+            helper.assertTrue("Manual".equals(existence(sired).getName()), "the severed player was not named by hand: " + said(sire));
+            helper.assertTrue("tensura:human".equals(race(sired)), "the ex-sire's HIGH naming evolved the severed player to " + race(sired));
+
+            // control: the same naming by a stranger evolves a player of the same kind
+            setRace(control, "tensura:human");
+            control.setHealth(1);
+            RequestNamingMenuPacket.name(control, stranger, NamingType.HIGH, "Free");
+            helper.assertTrue("Free".equals(existence(control).getName()), "the control was not named " + said(stranger));
+            helper.assertTrue(!"tensura:human".equals(race(control)), "the control kept its race too, so this test cannot tell the handler's work");
+        } finally {
+            restore(helper, before);
+            reset(sire, sired, stranger, control);
+            sired.setCustomName(null);
+            control.setCustomName(null);
         }
         helper.succeed();
     }

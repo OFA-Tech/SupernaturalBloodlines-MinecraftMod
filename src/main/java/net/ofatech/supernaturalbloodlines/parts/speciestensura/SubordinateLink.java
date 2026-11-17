@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -96,8 +97,11 @@ public final class SubordinateLink {
         if (SpeciesTensuraConfig.severanceClearsName()) {
             if (existence.getName() != null) {
                 p.getPersistentData().putBoolean(SEVERED_KEY, true);
+                p.sendSystemMessage(Component.translatable("supernaturalbloodlines.rite.name_cleared"));
             }
             existence.setName(null);
+            // Tensura's naming also sets the entity's visible custom name
+            p.setCustomName(null);
         }
         existence.markDirty();
     }
