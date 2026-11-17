@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.speciestensura;
 
+import java.util.List;
+import net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SpeciesTensuraSkillRuleGameTests;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -27,6 +29,9 @@ public final class SpeciesTensuraPart {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, SpeciesTensuraConfig.SPEC, SpeciesTensuraConfig.FILE);
+        AdminSpecs.register(SpeciesTensuraConfig.FILE, SpeciesTensuraConfig.SPEC);
+        AdminSpecs.lineCheck(SpeciesTensuraConfig.FILE + ":layers", line -> LayerTable.parse(List.of(line)).rejected().isEmpty());
+        AdminSpecs.lineCheck(SpeciesTensuraConfig.FILE + ":rank_skills", line -> RankSkillTable.parse(List.of(line)).rejected().isEmpty());
         ConfigWarning.register(modBus);
         ApexRaces.register();
         if (!ApexOffer.hookApplied()) {
