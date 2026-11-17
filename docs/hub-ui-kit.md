@@ -54,7 +54,7 @@ The shared pieces every hub theme is built from. Package `net.ofatech.supernatur
 
 ## The Grimoire's book pages
 
-`BookKit` (drop cap, leaders, wax seal, red link, footnote, small text, face) and `BookSkillsPage`, `BookQuestsPage`, `BookRitesPage`, `BookBloodlinePage`, `BookPackPage`, `BookGuidePage` are the Grimoire's own views; `GrimoireTheme.view(page)` returns them and the other two looks keep the shared pages. Path is `PathPage(true)`.
+`BookKit` (drop cap, leaders, wax seal, red link, footnote, small text, face) and `BookSkillsPage`, `BookQuestsPage`, `BookRitesPage`, `GrimoireBloodlinePage`, `BookPackPage`, `BookGuidePage` are the Grimoire's own views; `GrimoireTheme.view(page)` returns them and the other two looks keep the shared pages. Path is `PathPage(true)`.
 
 ### Demo data for the dev shots
 

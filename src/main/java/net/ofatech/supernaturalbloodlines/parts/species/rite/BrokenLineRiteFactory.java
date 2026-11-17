@@ -63,19 +63,25 @@ public record BrokenLineRiteFactory() implements RiteFactory {
                 return refuse(caster, RITES_OFF);
             }
             List<UUID> bloods = LineRites.bloodSources(params.consumedItems);
-            Optional<LineRules.BloodPair> pair = LineRules.pairBloods(bloods, id -> Lines.rootOf(server, id));
-            ServerPlayer target = pair.map(p -> SireCall.player(server, p.target())).orElse(null);
+            Optional<LineRules.BloodPair> pair = LineRules.pairBloods(bloods, id -> Lines.rootOf(server, id), id -> Lines.isOriginalId(server, id));
+            ServerPlayer target = pair.map(p -> hereOnline(server, p.target())).orElse(null);
+            boolean someoneHere = pair.isPresent() ? target != null : bloods.stream().anyMatch(id -> hereOnline(server, id) != null);
             Optional<String> refusal = LineRules.brokenLineRefusal(new LineRules.BrokenLineFacts(
                     SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), LunarEclipse.active(server), bloods.size(), pair,
-                    target != null, pair.isPresent() && Lines.isOriginalId(server, pair.get().target())));
+                    someoneHere, pair.isPresent() && Lines.isOriginalId(server, pair.get().target())));
             if (refusal.isPresent()) {
                 return refuse(caster, refusal.get());
             }
             UUID original = pair.get().original();
             Lines.freeTarget(server, target.getUUID(), original, LineIndex.Kind.BROKEN_LINE);
             Lines.learn(target, original);
-            target.displayClientMessage(Component.translatable(DONE, Lines.rootName(server, original)), true);
+            target.sendSystemMessage(Component.translatable(DONE, Lines.rootName(server, original)));
             return false;
+        }
+
+        /** The player, when they are online and in the rite's world. */
+        private ServerPlayer hereOnline(MinecraftServer server, UUID id) {
+            return SireCall.player(server, id) instanceof ServerPlayer p && p.level() == level ? p : null;
         }
 
         private boolean refuse(ServerPlayer caster, String key) {

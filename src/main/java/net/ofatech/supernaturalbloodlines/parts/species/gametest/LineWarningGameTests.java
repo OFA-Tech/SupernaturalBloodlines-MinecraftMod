@@ -26,8 +26,10 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder;
 public final class LineWarningGameTests {
     private static final String NS = SupernaturalBloodlines.MODID;
     private static final UUID KLAUS = NpcOriginal.KLAUS.uuid();
-    private static final String NAMED = "supernaturalbloodlines.line.warning_named";
-    private static final String HIDDEN = "supernaturalbloodlines.line.warning_hidden";
+    private static final String NAMED = "supernaturalbloodlines.line.warning_desiccated_named";
+    private static final String HIDDEN = "supernaturalbloodlines.line.warning_desiccated_hidden";
+    private static final String OPEN_NAMED = "supernaturalbloodlines.line.warning_open_named";
+    private static final String OPEN_HIDDEN = "supernaturalbloodlines.line.warning_open_hidden";
 
     private LineWarningGameTests() {
     }
@@ -63,7 +65,7 @@ public final class LineWarningGameTests {
         LineTestPlayer b = memberOfKlaus(helper, false);
         try {
             online(a, b);
-            LineWarning.opened(server(helper), KLAUS);
+            LineWarning.opened(server(helper), KLAUS, true);
             helper.assertTrue(a.received(NAMED) && a.heard().contains("[supernaturalbloodlines.original.klaus]"), "the one who knows was not told by name: " + a.heard());
             helper.assertTrue(b.received(HIDDEN), "the one who does not know got no warning: " + b.heard());
         } finally {
@@ -77,7 +79,7 @@ public final class LineWarningGameTests {
         LineTestPlayer b = memberOfKlaus(helper, false);
         try {
             online(b);
-            LineWarning.opened(server(helper), KLAUS);
+            LineWarning.opened(server(helper), KLAUS, true);
             helper.assertTrue(!b.received(NAMED) && !b.heard().toLowerCase().contains("klaus"), "the warning named an undiscovered Original: " + b.heard());
             helper.assertTrue(b.heard().equals("[" + HIDDEN + "]"), "unexpected warning: " + b.heard());
         } finally {
@@ -91,11 +93,11 @@ public final class LineWarningGameTests {
         LineTestPlayer a = memberOfKlaus(helper, true);
         try {
             online(a);
-            LineWarning.opened(server(helper), KLAUS);
-            LineWarning.opened(server(helper), KLAUS);
+            LineWarning.opened(server(helper), KLAUS, true);
+            LineWarning.opened(server(helper), KLAUS, true);
             helper.assertTrue(a.count(NAMED) == 1, "warned " + a.count(NAMED) + " times for one opening");
             LineWarning.closed(KLAUS);
-            LineWarning.opened(server(helper), KLAUS);
+            LineWarning.opened(server(helper), KLAUS, true);
             helper.assertTrue(a.count(NAMED) == 2, "a new opening did not warn: " + a.count(NAMED));
         } finally {
             done(helper, a);
@@ -118,7 +120,8 @@ public final class LineWarningGameTests {
 
             o.setData(SpeciesRegistries.DOWNED, 200);
             LineWarning.tick(server(helper));
-            helper.assertTrue(a.count(HIDDEN) + a.count(NAMED) == 1, "the member was not warned once: " + a.heard());
+            helper.assertTrue(a.count(OPEN_HIDDEN) + a.count(OPEN_NAMED) == 1, "the member was not warned once, in the words of an Original who lies open: " + a.heard());
+            helper.assertTrue(a.count(HIDDEN) + a.count(NAMED) == 0, "a downed Original was called desiccated: " + a.heard());
             LineWarning.tick(server(helper));
             helper.assertTrue(a.received() == 1, "the second tick warned again");
 
@@ -135,10 +138,25 @@ public final class LineWarningGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void downedOriginalIsNotCalledDesiccatedAndAHiddenOneIsNotNamed(GameTestHelper helper) {
+        LineTestPlayer b = memberOfKlaus(helper, false);
+        LineTestPlayer a = memberOfKlaus(helper, true);
+        try {
+            online(a, b);
+            LineWarning.opened(server(helper), KLAUS, false);
+            helper.assertTrue(a.heard().equals("[" + OPEN_NAMED + "][supernaturalbloodlines.original.klaus]"), "the one who knows heard: " + a.heard());
+            helper.assertTrue(b.heard().equals("[" + OPEN_HIDDEN + "]"), "the one who does not know heard: " + b.heard());
+        } finally {
+            done(helper, a, b);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void loginWhileOpenWarns(GameTestHelper helper) {
         LineTestPlayer c = memberOfKlaus(helper, true);
         try {
-            LineWarning.opened(server(helper), KLAUS); // nobody online yet
+            LineWarning.opened(server(helper), KLAUS, true); // nobody online yet
             helper.assertTrue(c.received() == 0, "control: someone was online");
             online(c);
             LineWarning.onLogin(c);
@@ -158,7 +176,7 @@ public final class LineWarningGameTests {
         SpeciesConfig.overrideOriginalLineDeath(false);
         try {
             online(a);
-            LineWarning.opened(server(helper), KLAUS);
+            LineWarning.opened(server(helper), KLAUS, true);
             LineWarning.onLogin(a);
             helper.assertTrue(a.received() == 0, "a warning came with line death off: " + a.heard());
         } finally {

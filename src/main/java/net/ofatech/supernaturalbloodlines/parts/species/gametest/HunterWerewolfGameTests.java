@@ -26,6 +26,20 @@ public final class HunterWerewolfGameTests {
         return p;
     }
 
+    /** A werewolf is supernatural but not a vampire: they have no sire to be unknown, so the Bloodline page shows its "No bloodline yet" card. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void factionWerewolfIsNotAVampireForTheBloodlinePage(GameTestHelper helper) {
+        ServerPlayer wolf = werewolf(helper);
+        try {
+            helper.assertTrue(Supernatural.is(wolf) && !Supernatural.isVampiric(wolf), "control: a werewolf is supernatural and not vampiric");
+            net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial.Origin origin = net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial.of(wolf).origin();
+            helper.assertTrue(origin.state() == net.ofatech.supernaturalbloodlines.core.bloodline.LineRules.State.NOT_VAMPIRE, "a werewolf was given the state " + origin.state());
+        } finally {
+            reset(wolf);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void factionWerewolfIsPrey(GameTestHelper helper) {
         ServerPlayer wolf = werewolf(helper);

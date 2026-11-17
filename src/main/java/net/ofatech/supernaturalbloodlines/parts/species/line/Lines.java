@@ -121,10 +121,13 @@ public final class Lines {
                 if (!seen.add(child.id()) || isOriginalId(server, child.id())) {
                     continue;
                 }
-                Optional<UUID> root = index.rootOf(child.id());
-                if (root.isEmpty() || root.equals(previous) && index.freedOf(child.id()).isEmpty()) {
-                    index.setRoot(child.id(), p.getUUID(), "minecraft:player".equals(child.entityType()));
-                    mirror(server, child.id(), p.getUUID());
+                if (!"minecraft:player".equals(child.entityType())) {
+                    // a creature fills its line when it next joins the world; its own descendants are still looked at
+                    work.add(child.id());
+                    continue;
+                }
+                if (LineRules.followsRoot(index.rootOf(child.id()), previous, index.freedOf(child.id()).isPresent(), true)) {
+                    index.setRoot(child.id(), p.getUUID(), true);
                     work.add(child.id());
                 }
             }
@@ -205,6 +208,18 @@ public final class Lines {
         }
     }
 
+    /** The name of {@code root} for this player: the Original's name once they have discovered it (or the config shows it), else "the Original of your bloodline". */
+    public static Component shownName(MinecraftServer server, ServerPlayer p, UUID root) {
+        return LineRules.showsRoot(BloodlineAccess.get(p).knownLine(), root, SpeciesConfig.originalVisibilityAlways())
+                ? rootName(server, root)
+                : Component.translatable("supernaturalbloodlines.line.unknown_original");
+    }
+
+    /** A creature's line on the creature alone: an un-sired NPC vampire is not stored in the index (see {@code NpcLines}). */
+    public static void assign(LivingEntity creature, UUID root) {
+        creature.setData(SpeciesRegistries.LINE, root);
+    }
+
     /** What to call an Original in a message: an NPC's lang name, or a player's profile name. */
     public static Component rootName(MinecraftServer server, UUID root) {
         Optional<NpcOriginal> npc = NpcOriginal.byUuid(root);
@@ -240,10 +255,14 @@ public final class Lines {
                 if (!seen.add(child.id()) || isOriginalId(server, child.id())) {
                     continue;
                 }
-                if (index.rootOf(child.id()).filter(from::equals).isPresent()) {
-                    index.setRoot(child.id(), target, "minecraft:player".equals(child.entityType()));
+                if (LineRules.followsRoot(index.rootOf(child.id()), Optional.of(from), index.freedOf(child.id()).isPresent(), false)) {
+                    boolean player = "minecraft:player".equals(child.entityType());
+                    index.setRoot(child.id(), target, player);
                     mirror(server, child.id(), target);
                     work.add(child.id());
+                    if (player && SireCall.player(server, child.id()) instanceof ServerPlayer online) {
+                        online.sendSystemMessage(Component.translatable("supernaturalbloodlines.line.freed", shownName(server, online, from)));
+                    }
                 }
             }
         }

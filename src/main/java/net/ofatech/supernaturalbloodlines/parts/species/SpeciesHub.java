@@ -43,7 +43,9 @@ final class SpeciesHub {
         MinecraftServer server = p.getServer();
         SirelineIndex sirelines = SirelineIndex.get(p.serverLevel());
         UUID sireId = BloodlineAccess.get(p).sire();
+        // a creature sire is "?" like a creature ancestor: an empty name
         Optional<String> sire = sireId == null ? Optional.empty()
+                : isCreature(sirelines, sireId) ? Optional.of("")
                 : sirelines.nameOf(sireId).or(() -> Optional.ofNullable(PackAccess.nameOf(server, sireId)));
         List<String> sired = sirelines.childrenOf(p.getUUID()).stream().map(SirelineIndex.Node::name).toList();
         List<HubSocial.Kin> line = SirelineTree.below(sirelines, p.getUUID()).stream().limit(MAX_LINE)
@@ -55,7 +57,6 @@ final class SpeciesHub {
                 FiveRoster.get(p.serverLevel()).size(), names, line, rites(server), origin(p, hidden));
     }
 
-    static final int MAX_ANCESTORS = 8;
     static final int MAX_LINE = 64;
 
     /**
@@ -65,14 +66,18 @@ final class SpeciesHub {
     private static void ancestors(MinecraftServer server, SirelineIndex sirelines, UUID sire, List<String> names, List<Boolean> hidden) {
         java.util.Set<UUID> seen = new java.util.HashSet<>();
         UUID at = sire == null ? null : sirelines.sireOf(sire).orElse(null);
-        while (at != null && names.size() < MAX_ANCESTORS && seen.add(at)) {
+        while (at != null && names.size() < HubSocial.MAX_ANCESTORS && seen.add(at)) {
             UUID id = at;
-            // the top of a chain has no link of its own, so no recorded type: it keeps its name, as before
-            boolean creature = sirelines.entityTypeOf(id).map(t -> !"minecraft:player".equals(t)).orElse(false);
+            boolean creature = isCreature(sirelines, id);
             names.add(creature ? "" : sirelines.nameOf(id).or(() -> Optional.ofNullable(PackAccess.nameOf(server, id))).orElse(""));
             hidden.add(creature);
             at = sirelines.sireOf(id).orElse(null);
         }
+    }
+
+    /** Recorded as a creature, or one of the six NPC Originals. The top of a chain has no link of its own and no recorded type: it is taken for a player, as before. */
+    private static boolean isCreature(SirelineIndex sirelines, UUID id) {
+        return NpcOriginal.byUuid(id).isPresent() || sirelines.entityTypeOf(id).map(t -> !"minecraft:player".equals(t)).orElse(false);
     }
 
     /** Where the player stands in a line (R120 to R127): the root only when they have discovered it, and never an undiscovered name. */
@@ -81,7 +86,7 @@ final class SpeciesHub {
         LineIndex index = LineIndex.get(server);
         Optional<LineIndex.Freed> freed = index.freedOf(p.getUUID());
         boolean original = OriginalRules.isOriginal(BloodlineAccess.get(p).species());
-        LineRules.State state = LineRules.state(original, Supernatural.is(p), freed.isPresent(), index.rootOf(p.getUUID()).isPresent());
+        LineRules.State state = LineRules.state(original, Supernatural.isVampiric(p), freed.isPresent(), index.rootOf(p.getUUID()).isPresent());
         UUID known = BloodlineAccess.get(p).knownLine();
         boolean always = SpeciesConfig.originalVisibilityAlways();
         Optional<String> root = state == LineRules.State.IN_LINE ? Lines.visibleRoot(p).map(r -> rootName(server, r)) : Optional.empty();

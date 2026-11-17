@@ -10,6 +10,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineColors;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineTree;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineTreeLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
@@ -103,7 +104,7 @@ public final class GrimoireBloodlinePage extends LinePageBase {
             f.g.fill(cx - 6, mid - 1, cx - 5, mid + 2, c);
         }
         Rect hit = new Rect(cx - 8, mid - 6, 16, 12);
-        f.target("line:break", hit, List.of(LinePageSupport.breakTooltip(LinePageSupport.origin(f))), null);
+        f.target("line:break", hit, List.of(LinePageSupport.breakTooltip(LinePageSupport.origin(f))), () -> selected = LineTree.YOU);
         if (f.focused("line:break")) {
             KitDraw.focusRing(f.g, hit, t.focusColor());
         }
@@ -116,10 +117,11 @@ public final class GrimoireBloodlinePage extends LinePageBase {
         if (selected) {
             KitDraw.shape(f.g, Shapes.Shape.ROUND, r.x() - 2, r.y() - 2, r.w() + 4, t.accent() & 0xFFFFFF | 0x66000000);
         }
-        int border = you ? t.accent() : crowned ? LinePageSupport.GOLD : n.hidden() ? t.muted() : t.ink();
+        int gold = LineColors.gold(t);
+        int border = you ? t.accent() : crowned ? gold : n.hidden() ? t.muted() : t.ink();
         LinePageSupport.portrait(f, n, r, Shapes.Shape.ROUND, border, t.paper());
         if (crowned) {
-            LinePageSupport.crown(f, r);
+            LinePageSupport.crown(f, r, gold);
         }
         if (you && m.padlock()) {
             LinePageSupport.padlock(f, r, t.accent(), t.paper());

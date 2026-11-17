@@ -55,11 +55,11 @@ For the sired who goes through it, the bond is gone:
 ## What it keeps (blood, not bond)
 
 - The **sire is still recorded**: the family tree shows it.
-- **Sireline death still applies**: a severed child still dies with an Original (see [Sirelines](Sirelines#sireline-death)).
+- **Line death still applies**: a severed child is still in the Original's line and dies with them (see [Sirelines](Sirelines#line-death)).
 
 ## Re-siring
 
-A **new sire replaces the old one and ends the severance**: a severed player can be sired again (the "first sire wins" rule only holds while the bond is whole). From then on the **new** sire's tree and sireline death apply, not the old one's. The same sire coming back later is a fresh bond. A cure, death with no sire, or any other change of sire also ends the severance.
+A **new sire replaces the old one and ends the severance**: a severed player can be sired again (the "first sire wins" rule only holds while the bond is whole). From then on the **new** sire's tree and line apply, not the old one's. The same sire coming back later is a fresh bond. A cure, death with no sire, or any other change of sire also ends the severance.
 
 ## Limits
 

@@ -307,7 +307,7 @@ public final class LineRiteGameTests {
         refused(helper, Species.WITCH, false, Rig::brokenLineItems, "no_eclipse");
         refused(helper, Species.WITCH, true, r -> List.of(r.bloodOf(r.target), new ItemStack(item(ASH)), new ItemStack(item(OTHERWHERE))), "no_blood");
         refused(helper, Species.WITCH, true, r -> List.of(r.bloodOf(r.target), SiresBloodItem.of(UUID.randomUUID(), "Stranger"),
-                new ItemStack(item(ASH)), new ItemStack(item(OTHERWHERE))), "wrong_blood");
+                new ItemStack(item(ASH)), new ItemStack(item(OTHERWHERE))), "fails");
         refused(helper, Species.WITCH, true, r -> {
             online(r.original); // the target is away
             return r.brokenLineItems();
@@ -338,7 +338,7 @@ public final class LineRiteGameTests {
                 helper.assertTrue(rig.lines().freedOf(rig.target.getUUID()).isPresent(), "control: the first rite did not run");
                 perform(helper, rig);
             });
-            helper.assertTrue(rig.caster().received(LineRules.REFUSAL_PREFIX + "wrong_blood"), "the second rite was not refused as wrong blood: " + rig.caster().heard());
+            helper.assertTrue(rig.caster().received(LineRules.FAILS), "the second rite was not refused: " + rig.caster().heard());
         } finally {
             rig.close();
         }
@@ -362,6 +362,47 @@ public final class LineRiteGameTests {
             helper.assertTrue(u.isDeadOrDying(), "the target's sired, still in the line, survived");
         } finally {
             rig.close(u);
+        }
+        helper.succeed();
+    }
+
+    /** A wrong blood and an unrelated pair say the same thing, and the performer's and target's own checks come first (no oracle for who is in a line). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void brokenLineGivesOnePlainRefusalForEveryWrongBlood(GameTestHelper helper) {
+        if (skipWithoutArtifacts(helper)) {
+            return;
+        }
+        // two unrelated players, one of them with a different Original: not a pair
+        refused(helper, Species.WITCH, true, r -> {
+            LineTestPlayer other = LineTestPlayer.create(helper);
+            species(other, Species.HYBRID);
+            r.lines().setRoot(other.getUUID(), NpcOriginal.ELIJAH.uuid(), true);
+            online(r.original, r.target, other);
+            return List.of(r.bloodOf(other), r.bloodOf(r.target), new ItemStack(item(ASH)), new ItemStack(item(OTHERWHERE)));
+        }, "fails");
+        // a freed head is a root but not an Original: their blood with a member's is not a pair
+        refused(helper, Species.WITCH, true, r -> {
+            LineTestPlayer member = LineTestPlayer.create(helper);
+            species(member, Species.HYBRID);
+            r.lines().setRoot(member.getUUID(), r.target.getUUID(), true); // the "head"'s own line
+            online(r.original, r.target, member);
+            return List.of(r.bloodOf(r.target), r.bloodOf(member), new ItemStack(item(ASH)), new ItemStack(item(OTHERWHERE)));
+        }, "fails");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void doneMessageGoesToChat(GameTestHelper helper) {
+        if (skipWithoutArtifacts(helper)) {
+            return;
+        }
+        Rig rig = new Rig(helper, Species.WITCH);
+        try {
+            eclipse(helper, () -> perform(helper, rig));
+            helper.assertTrue(rig.target.received(net.ofatech.supernaturalbloodlines.parts.species.rite.BrokenLineRiteFactory.DONE), "the target was not told: " + rig.target.heard());
+            helper.assertTrue(rig.target.chat() >= 1, "the message did not go to chat");
+        } finally {
+            rig.close();
         }
         helper.succeed();
     }

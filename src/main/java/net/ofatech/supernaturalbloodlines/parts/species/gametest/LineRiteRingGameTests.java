@@ -119,6 +119,7 @@ public final class LineRiteRingGameTests {
         try {
             SireRecorder.record(rig.target, c);
             SireRecorder.record(rig.target, d);
+            online(rig.original, rig.target, c, d);
             place(helper, rig.original);
             eclipse(helper, () -> {
                 Rite rite = begin(helper, rig);
@@ -133,6 +134,10 @@ public final class LineRiteRingGameTests {
                     "the freed record is " + idx.freedOf(t));
             helper.assertTrue(idx.freedOf(c.getUUID()).isEmpty(), "a member of the branch was marked freed");
             helper.assertTrue(rig.original.getUUID().equals(BloodlineAccess.get(rig.target).knownLine()), "the target did not learn the Original");
+            helper.assertTrue(rig.target.received(ImprisonedOriginalRiteFactory.DONE) && rig.target.chat() >= 1, "the target was not told in chat: " + rig.target.heard());
+            helper.assertTrue(c.received("supernaturalbloodlines.line.freed") && d.received("supernaturalbloodlines.line.freed"), "the freed descendants were not told: " + c.heard() + " / " + d.heard());
+            helper.assertTrue(c.heard().contains("[supernaturalbloodlines.line.unknown_original]") && !c.heard().contains(rig.original.getGameProfile().getName()),
+                    "a descendant who has not discovered the Original was told their name: " + c.heard());
         } finally {
             finish(helper, rig, true);
             rig.close(c, d);
@@ -215,7 +220,7 @@ public final class LineRiteRingGameTests {
 
     // ---- it must hold for the whole rite ----
 
-    private static void failsMidRite(GameTestHelper helper, String why, Runnable breakIt) {
+    private static void failsMidRite(GameTestHelper helper, String why, String told, Runnable breakIt) {
         common(helper);
         buildRing(helper);
         LineRiteGameTests.Rig rig = new LineRiteGameTests.Rig(helper, Species.WITCH);
@@ -231,7 +236,7 @@ public final class LineRiteRingGameTests {
             });
             helper.assertTrue(rig.lines().freedOf(rig.target.getUUID()).isEmpty(), why + ": the target was freed");
             helper.assertTrue(rig.lines().rootOf(rig.target.getUUID()).filter(rig.original.getUUID()::equals).isPresent(), why + ": the line changed");
-            helper.assertTrue(rig.caster().received(ImprisonedOriginalRiteFactory.RING_BROKEN), why + ": the caster was not told the rite failed");
+            helper.assertTrue(rig.caster().received(told) && rig.caster().chat() >= 1, why + ": the caster was not told in chat (" + told + "): " + rig.caster().heard());
             helper.assertTrue(dropped(helper, OTHERWHERE) == 0, why + ": the ingredients came back");
         } finally {
             finish(helper, rig, true);
@@ -241,7 +246,7 @@ public final class LineRiteRingGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void imprisonedFailsWhenTheRingBreaksMidRite(GameTestHelper helper) {
-        failsMidRite(helper, "ring", () -> helper.getLevel().setBlock(centre(helper).offset(RADIUS, 0, 0), Blocks.AIR.defaultBlockState(), 2));
+        failsMidRite(helper, "ring", ImprisonedOriginalRiteFactory.RING_BROKEN, () -> helper.getLevel().setBlock(centre(helper).offset(RADIUS, 0, 0), Blocks.AIR.defaultBlockState(), 2));
         helper.succeed();
     }
 
@@ -260,6 +265,7 @@ public final class LineRiteRingGameTests {
                 helper.assertTrue(ended > 0 && ended <= 12, "the rite went on with the Original out of the centre: " + ended);
             });
             helper.assertTrue(rig.lines().freedOf(rig.target.getUUID()).isEmpty(), "the target was freed");
+            helper.assertTrue(rig.caster().received(ImprisonedOriginalRiteFactory.ESCAPED) && rig.caster().chat() >= 1, "the caster was not told the Original escaped: " + rig.caster().heard());
         } finally {
             finish(helper, rig, true);
             rig.close();
@@ -269,7 +275,7 @@ public final class LineRiteRingGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void imprisonedFailsWhenTheEclipseEnds(GameTestHelper helper) {
-        failsMidRite(helper, "eclipse", () -> LunarEclipse.stop(helper.getLevel().getServer()));
+        failsMidRite(helper, "eclipse", LineRules.REFUSAL_PREFIX + "no_eclipse", () -> LunarEclipse.stop(helper.getLevel().getServer()));
         helper.succeed();
     }
 
@@ -305,9 +311,9 @@ public final class LineRiteRingGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void imprisonedRefusals(GameTestHelper helper) {
-        refusedAtStart(helper, "ring_open", Species.WITCH, false, true, true, r -> { });
+        refusedAtStart(helper, "fails", Species.WITCH, false, true, true, r -> { }); // the ring is open
         refusedAtStart(helper, "nobody_trapped", Species.WITCH, true, true, false, r -> { });
-        refusedAtStart(helper, "wrong_original", Species.WITCH, true, true, true, r -> {
+        refusedAtStart(helper, "fails", Species.WITCH, true, true, true, r -> { // the wrong Original is trapped
             // the target belongs to another Original than the one on the circle
             r.lines().setRoot(r.target.getUUID(), NpcOriginal.ELIJAH.uuid(), true);
         });
@@ -330,7 +336,7 @@ public final class LineRiteRingGameTests {
         try {
             place(helper, rig.original);
             eclipse(helper, () -> begin(helper, rig));
-            helper.assertTrue(rig.caster().received(LineRules.REFUSAL_PREFIX + "ring_open"), "a ring beyond the configured radius closed: " + rig.caster().heard());
+            helper.assertTrue(rig.caster().received(LineRules.FAILS), "a ring beyond the configured radius closed: " + rig.caster().heard());
         } finally {
             finish(helper, rig, true);
             rig.close();

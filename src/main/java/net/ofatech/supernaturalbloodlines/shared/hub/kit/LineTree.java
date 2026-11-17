@@ -174,11 +174,13 @@ public final class LineTree {
         String name = n.hidden() ? "?" : n.name();
         String root = m.node(ROOT).filter(r -> !r.hidden()).map(Node::name).orElse("?");
         boolean free = m.state() == LineRules.State.FREE;
+        // freed from an Original the player has not discovered: the words never name them
+        String hiddenRoot = m.node(ROOT).filter(r -> !r.hidden()).isPresent() ? "" : "_unknown";
         String key = switch (n.kind()) {
             case ROOT -> n.hidden() ? "root_hidden" : "root";
             case ANCESTOR -> n.hidden() ? "ancestor_hidden" : "ancestor";
-            case SIRE -> free ? "sire_free" : "sire";
-            case YOU -> m.state() == LineRules.State.ORIGINAL ? "you_original" : free ? "you_free" : "you";
+            case SIRE -> free ? "sire_free" + hiddenRoot : "sire";
+            case YOU -> m.state() == LineRules.State.ORIGINAL ? "you_original" : free ? "you_free" + hiddenRoot : "you";
             case DESCENDANT -> "descendant";
         };
         return new Narr(NARR + key, List.of(name, root));

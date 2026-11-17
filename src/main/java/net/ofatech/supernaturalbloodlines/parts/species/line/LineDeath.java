@@ -1,5 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.species.line;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -24,6 +27,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex;
@@ -64,13 +68,12 @@ public final class LineDeath {
     public static void run(MinecraftServer server, UUID root) {
         LineIndex index = LineIndex.get(server);
         SirelineIndex sirelines = SirelineIndex.get(server.overworld());
-        Component name = Lines.rootName(server, root);
         for (LineIndex.Member m : index.membersOf(root)) {
             if (!m.player()) {
                 discard(server, sirelines, m.id());
                 index.remove(m.id());
             } else if (SireCall.player(server, m.id()) instanceof ServerPlayer online) {
-                online.sendSystemMessage(Component.translatable("supernaturalbloodlines.line.death", name));
+                online.sendSystemMessage(Component.translatable("supernaturalbloodlines.line.death", Lines.shownName(server, online, root)));
                 if (slay(online)) {
                     index.remove(m.id());
                 } else {
@@ -84,6 +87,23 @@ public final class LineDeath {
         }
         if (NpcOriginal.byUuid(root).isPresent()) {
             index.markDead(root);
+        }
+        discardLoaded(server, root);
+    }
+
+    /**
+     * Un-sired NPC vampires hold their line on the creature alone, so the index cannot list them: the ones that are loaded go now, the ones that
+     * are not are turned away when they load ({@link #onJoin}, through {@code LineIndex.isDead}).
+     */
+    private static void discardLoaded(MinecraftServer server, UUID root) {
+        for (ServerLevel level : server.getAllLevels()) {
+            List<Entity> doomed = new ArrayList<>();
+            for (Entity e : level.getAllEntities()) {
+                if (!(e instanceof Player) && e.hasData(SpeciesRegistries.LINE) && root.equals(e.getData(SpeciesRegistries.LINE))) {
+                    doomed.add(e);
+                }
+            }
+            doomed.forEach(Entity::discard);
         }
     }
 
@@ -129,18 +149,24 @@ public final class LineDeath {
 
     /**
      * A player who was offline for the death pays now, once, if they are still in that line and still supernatural: someone cured or
-     * freed in the meantime owes nothing. The Original is named only if the player has discovered them.
+     * freed in the meantime owes nothing. The Original is named only if the player has discovered them. A death the old sireline death
+     * owed is turned into one of this line first (the Original found from the recorded sires), or dropped when there is none.
      */
     public static void onLogin(ServerPlayer p) {
         LineIndex index = LineIndex.get(p.server);
+        if (SirelineIndex.get(p.serverLevel()).takeLegacyPendingPlayer(p.getUUID())) {
+            Optional<UUID> root = Lines.heal(p).filter(r -> !r.equals(p.getUUID()));
+            if (root.isPresent()) {
+                index.addOwed(p.getUUID(), root.get());
+            } else {
+                SupernaturalBloodlines.LOGGER.warn("Dropping a sireline death owed to {}: no Original is recorded above them", p.getGameProfile().getName());
+            }
+        }
         index.takeOwed(p.getUUID()).ifPresent(root -> {
-            if (!index.rootOf(p.getUUID()).filter(root::equals).isPresent() || !Supernatural.is(p)) {
+            if (!LineRules.owedStillApplies(root, index.rootOf(p.getUUID()), Supernatural.is(p))) {
                 return;
             }
-            Component who = LineRules.showsRoot(BloodlineAccess.get(p).knownLine(), root, SpeciesConfig.originalVisibilityAlways())
-                    ? Lines.rootName(p.server, root)
-                    : Component.translatable("supernaturalbloodlines.line.unknown_original");
-            p.sendSystemMessage(Component.translatable("supernaturalbloodlines.line.death_login", who));
+            p.sendSystemMessage(Component.translatable("supernaturalbloodlines.line.death_login", Lines.shownName(p.server, p, root)));
             if (slay(p)) {
                 index.remove(p.getUUID());
             } else {
@@ -149,12 +175,15 @@ public final class LineDeath {
         });
     }
 
-    /** A creature that was owed a death does not join the world. */
+    /** A creature that was owed a death does not join the world, and neither does one of a line that is already dead. */
     public static void onJoin(EntityJoinLevelEvent e) {
         if (e.getLevel().isClientSide || e.getEntity() instanceof Player) {
             return;
         }
-        if (SirelineIndex.get((ServerLevel) e.getLevel()).takePendingMob(e.getEntity().getUUID())) {
+        ServerLevel level = (ServerLevel) e.getLevel();
+        Entity entity = e.getEntity();
+        if (SirelineIndex.get(level).takePendingMob(entity.getUUID())
+                || (entity.hasData(SpeciesRegistries.LINE) && LineIndex.get(level.getServer()).isDead(entity.getData(SpeciesRegistries.LINE)))) {
             e.setCanceled(true);
         }
     }

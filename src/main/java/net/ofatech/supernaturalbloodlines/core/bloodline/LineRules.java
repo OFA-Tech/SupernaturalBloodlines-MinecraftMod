@@ -7,11 +7,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import org.jetbrains.annotations.Nullable;
 
 /** The pure rules of Original bloodlines (R120 to R127). Roots are UUIDs: a player Original's own, or an {@link NpcOriginal}'s fixed one. */
 public final class LineRules {
     public static final String REFUSAL_PREFIX = "supernaturalbloodlines.refusal.line_";
+    /** One plain refusal for every case that would tell a performer something about a line they have not discovered (wrong blood, wrong Original, an open ring). */
+    public static final String FAILS = REFUSAL_PREFIX + "fails";
 
     private LineRules() {
     }
@@ -95,11 +98,11 @@ public final class LineRules {
     public record BloodPair(UUID original, UUID target) {
     }
 
-    /** The first ordered pair of distinct sources where the second belongs to the first's line (the first is its root). */
-    public static Optional<BloodPair> pairBloods(List<UUID> sources, Function<UUID, Optional<UUID>> rootOf) {
+    /** The first ordered pair of distinct sources where the second belongs to the first's line and the first is an Original (a freed head is a root, not an Original). */
+    public static Optional<BloodPair> pairBloods(List<UUID> sources, Function<UUID, Optional<UUID>> rootOf, Predicate<UUID> isOriginal) {
         for (UUID a : sources) {
             for (UUID b : sources) {
-                if (!a.equals(b) && rootOf.apply(b).filter(a::equals).isPresent()) {
+                if (!a.equals(b) && isOriginal.test(a) && rootOf.apply(b).filter(a::equals).isPresent()) {
                     return Optional.of(new BloodPair(a, b));
                 }
             }
@@ -107,11 +110,12 @@ public final class LineRules {
         return Optional.empty();
     }
 
+    /** @param targetOnline some bound blood belongs to a player who is online here (checked before the pair, so a wrong blood tells nothing) */
     public record BrokenLineFacts(boolean witchType, boolean eclipse, int bloodCount, Optional<BloodPair> pair,
                                   boolean targetOnline, boolean targetIsOriginal) {
     }
 
-    /** R125: the first failing check, as a full lang key. */
+    /** R125: the first failing check, as a full lang key. The performer's own checks come first, then the target's, and a blood that does not pair is the plain {@link #FAILS}. */
     public static Optional<String> brokenLineRefusal(BrokenLineFacts f) {
         if (!f.witchType()) {
             return refusal("not_witch");
@@ -122,14 +126,14 @@ public final class LineRules {
         if (f.bloodCount() < 2) {
             return refusal("no_blood");
         }
-        if (f.pair().isEmpty()) {
-            return refusal("wrong_blood");
-        }
         if (!f.targetOnline()) {
             return refusal("target_away");
         }
         if (f.targetIsOriginal()) {
             return refusal("target_original");
+        }
+        if (f.pair().isEmpty()) {
+            return Optional.of(FAILS);
         }
         return Optional.empty();
     }
@@ -159,13 +163,27 @@ public final class LineRules {
         if (f.trappedRoot().isEmpty()) {
             return refusal("nobody_trapped");
         }
-        if (!f.trappedRoot().equals(f.targetRoot())) {
-            return refusal("wrong_original");
-        }
-        if (!f.ringClosed()) {
-            return refusal("ring_open");
+        // the wrong Original and an open ring are one answer: which of the two it is would tell the performer who stands in the ring
+        if (!f.trappedRoot().equals(f.targetRoot()) || !f.ringClosed()) {
+            return Optional.of(FAILS);
         }
         return Optional.empty();
+    }
+
+    /** Whether a line death owed to {@code owedRoot} is still owed: the player is still in that line and still supernatural (a freed, cured or re-lined player owes nothing). */
+    public static boolean owedStillApplies(UUID owedRoot, Optional<UUID> currentRoot, boolean supernatural) {
+        return supernatural && currentRoot.filter(owedRoot::equals).isPresent();
+    }
+
+    /**
+     * Whether a member recorded below someone moves with them when the line changes. {@code takesLineless} is true for a new Original (a
+     * member with no line yet follows them), false for a freed branch, where only those in the old line move. A freed member never follows.
+     */
+    public static boolean followsRoot(Optional<UUID> memberRoot, Optional<UUID> oldRoot, boolean memberFreed, boolean takesLineless) {
+        if (memberFreed) {
+            return false;
+        }
+        return memberRoot.isEmpty() ? takesLineless : memberRoot.equals(oldRoot);
     }
 
     private static Optional<String> refusal(String key) {

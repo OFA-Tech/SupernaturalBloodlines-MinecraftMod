@@ -20,7 +20,6 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 /** What the three Bloodline pages share: the model, the words, the selection's detail and the few shapes every look draws the same way. */
 public final class LinePageSupport {
     public static final String KEY = PageKit.HUB + "bloodline.";
-    public static final int GOLD = 0xFFC9962B;
 
     private LinePageSupport() {
     }
@@ -132,6 +131,10 @@ public final class LinePageSupport {
         b.action(new Detail.Action("severance", Component.translatable(KEY + "act.severance"), false, canSever,
                 canSever ? Component.translatable(KEY + "act.severance_hint") : Component.translatable(KEY + (snap.severed() ? "act.why_severed" : "act.why_no_sire")),
                 null, () -> f.screen().setPage(HubPage.RITES)));
+        boolean rootUnknown = (m.state() == LineRules.State.IN_LINE && o.root().isEmpty()) || (m.state() == LineRules.State.FREE && o.freedFrom().isEmpty());
+        if (rootUnknown) {
+            b.action(new Detail.Action("revelation", Component.translatable(KEY + "act.revelation"), false, true, null, null, () -> f.screen().setPage(HubPage.RITES)));
+        }
         boolean free = m.state() == LineRules.State.FREE;
         boolean canBreak = m.state() == LineRules.State.IN_LINE;
         b.action(new Detail.Action("broken_line", Component.translatable(KEY + (free ? "act.broken_done" : "act.broken_line")), false, canBreak,
@@ -157,9 +160,9 @@ public final class LinePageSupport {
         BookKit.face(g, n.name(), r.x() + (r.w() - size) / 2, r.y() + (r.h() - size) / 2, size);
     }
 
-    public static void crown(HubScreen.Frame f, Rect r) {
+    public static void crown(HubScreen.Frame f, Rect r, int color) {
         int size = net.ofatech.supernaturalbloodlines.shared.hub.kit.LineTreeLayout.CROWN - 1;
-        KitDraw.icon(f.g, Icons.CROWN, r.x() + (r.w() - size) / 2, r.y() - size - 1, size, GOLD);
+        KitDraw.icon(f.g, Icons.CROWN, r.x() + (r.w() - size) / 2, r.y() - size - 1, size, color);
     }
 
     /** A small open padlock: the body, and a shackle that does not close. */

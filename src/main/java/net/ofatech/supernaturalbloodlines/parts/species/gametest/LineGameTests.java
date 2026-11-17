@@ -17,6 +17,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
@@ -197,7 +198,7 @@ public final class LineGameTests {
             mob = spawnVampire(helper);
             helper.assertTrue(mob.hasData(SpeciesRegistries.LINE) && NpcOriginal.MIKAEL.uuid().equals(mob.getData(SpeciesRegistries.LINE)),
                     "the creature's mirror is wrong");
-            helper.assertTrue(lines(helper).rootOf(mob.getUUID()).filter(NpcOriginal.MIKAEL.uuid()::equals).isPresent(), "the index disagrees");
+            helper.assertTrue(lines(helper).rootOf(mob.getUUID()).isEmpty(), "an un-sired NPC vampire was stored in the index");
         } finally {
             NpcLines.useRoll(null);
             SpeciesConfig.overrideNpcLineWeights(null);
@@ -217,8 +218,7 @@ public final class LineGameTests {
         Mob mob = null;
         try {
             mob = spawnVampire(helper);
-            helper.assertTrue(lines(helper).rootOf(mob.getUUID()).filter(NpcOriginal.FINN.uuid()::equals).isPresent(),
-                    "the creature joined a dead Original's line: " + lines(helper).rootOf(mob.getUUID()));
+            helper.assertTrue(NpcOriginal.FINN.uuid().equals(mob.getData(SpeciesRegistries.LINE)), "the creature joined a dead Original's line: " + mob.getData(SpeciesRegistries.LINE));
         } finally {
             lines(helper).unmarkDead(NpcOriginal.MIKAEL.uuid());
             NpcLines.useRoll(null);
@@ -240,7 +240,7 @@ public final class LineGameTests {
             mob = spawnVampire(helper);
             lines(helper).markDead(NpcOriginal.MIKAEL.uuid());
             NeoForge.EVENT_BUS.post(new EntityJoinLevelEvent(mob, helper.getLevel()));
-            helper.assertTrue(lines(helper).rootOf(mob.getUUID()).filter(NpcOriginal.MIKAEL.uuid()::equals).isPresent(), "an existing member lost its line");
+            helper.assertTrue(NpcOriginal.MIKAEL.uuid().equals(mob.getData(SpeciesRegistries.LINE)), "an existing member lost its line");
         } finally {
             lines(helper).unmarkDead(NpcOriginal.MIKAEL.uuid());
             NpcLines.useRoll(null);
@@ -263,7 +263,7 @@ public final class LineGameTests {
         helper.assertTrue(baron.is(NpcLines.EXEMPT), "the baron is not in #line_exempt");
         Entity e = helper.spawn(baron, new Vec3(6.5, 2, 4.5));
         try {
-            helper.assertTrue(lines(helper).rootOf(e.getUUID()).isEmpty(), "a boss got a line");
+            helper.assertTrue(lines(helper).rootOf(e.getUUID()).isEmpty() && !e.hasData(SpeciesRegistries.LINE), "a boss got a line");
         } finally {
             e.discard();
         }
@@ -291,16 +291,71 @@ public final class LineGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void deadMobLeavesTheIndex(GameTestHelper helper) {
-        Mob mob = spawnVampire(helper);
-        UUID id = mob.getUUID();
+    public static void siredCreatureLeavesTheIndexWhenDestroyedButNotWhenUnloaded(GameTestHelper helper) {
+        ServerPlayer o = mortal(helper, Species.ORIGINAL);
+        Mob unloaded = spawnVampire(helper);
+        Mob killed = spawnVampire(helper);
+        Mob discarded = spawnVampire(helper);
         try {
-            helper.assertTrue(lines(helper).rootOf(id).isPresent(), "control: the creature has no line");
-            ((LivingEntity) mob).kill();
-            helper.assertTrue(lines(helper).rootOf(id).isEmpty(), "a dead creature stayed in the index");
+            for (Mob m : List.of(unloaded, killed, discarded)) {
+                helper.assertTrue(SireRecorder.record(o, m), "the sire was not recorded");
+                helper.assertTrue(lines(helper).rootOf(m.getUUID()).isPresent(), "control: the sired creature is not in the index");
+            }
+            unloaded.setRemoved(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+            NeoForge.EVENT_BUS.post(new EntityLeaveLevelEvent(unloaded, helper.getLevel()));
+            helper.assertTrue(lines(helper).rootOf(unloaded.getUUID()).isPresent(), "an unloaded creature left the index");
+            killed.remove(Entity.RemovalReason.KILLED);
+            helper.assertTrue(lines(helper).rootOf(killed.getUUID()).isEmpty(), "a killed creature stayed in the index");
+            discarded.discard();
+            helper.assertTrue(lines(helper).rootOf(discarded.getUUID()).isEmpty(), "a discarded creature stayed in the index");
         } finally {
-            lines(helper).remove(id);
-            mob.discard();
+            forget(helper, o);
+            for (Mob m : List.of(unloaded, killed, discarded)) {
+                lines(helper).remove(m.getUUID());
+                SirelineIndex.get(helper.getLevel()).remove(m.getUUID());
+            }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void madeOriginalDoesNotReRootCreatures(GameTestHelper helper) {
+        ServerPlayer o = mortal(helper, Species.ORIGINAL);
+        ServerPlayer a = mortal(helper, Species.NONE);
+        ServerPlayer under = mortal(helper, Species.NONE);
+        Mob creature = spawnVampire(helper);
+        try {
+            SireRecorder.record(o, a);
+            SireRecorder.record(a, creature);
+            SireRecorder.record(creature, under);
+            helper.assertTrue(lines(helper).rootOf(creature.getUUID()).filter(o.getUUID()::equals).isPresent(), "control: the creature is not in the line");
+            species(a, Species.ORIGINAL);
+            helper.assertTrue(lines(helper).rootOf(creature.getUUID()).filter(o.getUUID()::equals).isPresent(), "a creature was re-rooted from here (it is filled when it joins)");
+            helper.assertTrue(lines(helper).rootOf(under.getUUID()).filter(a.getUUID()::equals).isPresent(), "a player below a creature did not move with the made Original");
+        } finally {
+            forget(helper, o, a, under);
+            lines(helper).remove(creature.getUUID());
+            SirelineIndex.get(helper.getLevel()).remove(creature.getUUID());
+            creature.discard();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void creatureOwedADeathIsNotGivenALine(GameTestHelper helper) {
+        NpcLines.useRoll(() -> 0.0);
+        SpeciesConfig.overrideNpcLineWeights(List.of("mikael=1"));
+        UUID id = UUID.randomUUID();
+        try {
+            Mob mob = (Mob) BuiltInRegistries.ENTITY_TYPE.get(VAMPIRE).create(helper.getLevel());
+            mob.setUUID(id);
+            SirelineIndex.get(helper.getLevel()).addPendingMob(id);
+            NeoForge.EVENT_BUS.post(new EntityJoinLevelEvent(mob, helper.getLevel()));
+            helper.assertTrue(!mob.hasData(SpeciesRegistries.LINE) && lines(helper).rootOf(id).isEmpty(), "a creature owed a death was given a line");
+        } finally {
+            NpcLines.useRoll(null);
+            SpeciesConfig.overrideNpcLineWeights(null);
+            SirelineIndex.get(helper.getLevel()).takePendingMob(id);
         }
         helper.succeed();
     }

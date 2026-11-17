@@ -45,7 +45,6 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
     public static final HubSnapshotPayload EMPTY = new HubSnapshotPayload(Family.NONE, List.of(), 0, Map.of(), List.of());
 
     private static final int MAX_NAMES = 256;
-    private static final int MAX_ANCESTORS = 8;
     private static final StreamCodec<ByteBuf, String> NAME = ByteBufCodecs.stringUtf8(64);
     private static final StreamCodec<ByteBuf, String> ID = ByteBufCodecs.stringUtf8(128);
 
@@ -92,7 +91,7 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
             ByteBufCodecs.optional(NAME), HubSocial.Origin::root,
             ByteBufCodecs.optional(NAME), HubSocial.Origin::freedFrom,
             FREED_KIND, HubSocial.Origin::freedKind,
-            ByteBufCodecs.BOOL.apply(ByteBufCodecs.list(MAX_ANCESTORS)), HubSocial.Origin::ancestorHidden,
+            ByteBufCodecs.BOOL.apply(ByteBufCodecs.list(HubSocial.MAX_ANCESTORS)), HubSocial.Origin::ancestorHidden,
             HubSocial.Origin::new);
 
     private static final StreamCodec<ByteBuf, Family> FAMILY = StreamCodec.composite(

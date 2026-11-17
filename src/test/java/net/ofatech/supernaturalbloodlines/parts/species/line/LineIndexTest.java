@@ -95,4 +95,31 @@ class LineIndexTest {
         assertTrue(LineIndex.load(saved, null).freedOf(A).isEmpty());
         assertTrue(LineIndex.load(tag, null).rootOf(A).isEmpty());
     }
+
+    @Test
+    void aBadEntryIsSkippedAndTheGoodOnesLoad() {
+        LineIndex idx = new LineIndex();
+        idx.setRoot(A, O, true);
+        idx.setRoot(B, O, true);
+        idx.addOwed(B, O);
+        idx.markDead(NpcOriginal.KLAUS.uuid());
+        CompoundTag saved = idx.save(new CompoundTag(), null);
+        net.minecraft.nbt.ListTag entries = saved.getList("entries", 10);
+        CompoundTag bad = new CompoundTag();
+        bad.putString("id", "not a uuid");
+        bad.putString("root", "nor this");
+        entries.add(0, bad);
+        CompoundTag half = new CompoundTag();
+        half.put("id", net.minecraft.nbt.NbtUtils.createUUID(UUID.randomUUID()));
+        entries.add(1, half);
+        net.minecraft.nbt.ListTag dead = saved.getList("dead", 11);
+        dead.add(0, new net.minecraft.nbt.IntArrayTag(new int[] {1, 2, 3}));
+        net.minecraft.nbt.ListTag owed = saved.getList("owed", 10);
+        owed.add(0, new CompoundTag());
+        LineIndex back = LineIndex.load(saved, null);
+        assertEquals(O, back.rootOf(A).orElseThrow());
+        assertEquals(O, back.rootOf(B).orElseThrow());
+        assertEquals(O, back.takeOwed(B).orElseThrow());
+        assertTrue(back.isDead(NpcOriginal.KLAUS.uuid()));
+    }
 }

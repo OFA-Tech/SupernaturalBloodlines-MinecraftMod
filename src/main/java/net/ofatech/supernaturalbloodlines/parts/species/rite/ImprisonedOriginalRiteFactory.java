@@ -35,6 +35,7 @@ public record ImprisonedOriginalRiteFactory() implements RiteFactory {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "imprisoned_original");
     public static final String DONE = "supernaturalbloodlines.rite.imprisoned_done";
     public static final String RING_BROKEN = LineRules.REFUSAL_PREFIX + "ring_broken";
+    public static final String ESCAPED = LineRules.REFUSAL_PREFIX + "escaped";
     public static final MapCodec<ImprisonedOriginalRiteFactory> CODEC = MapCodec.unit(ImprisonedOriginalRiteFactory::new);
     private static final int CHECK_EVERY = 10;
 
@@ -74,7 +75,7 @@ public record ImprisonedOriginalRiteFactory() implements RiteFactory {
                         false, false, Optional.empty(), trapped, ring));
             }
             return LineRules.imprisonedRefusal(new LineRules.ImprisonedFacts(witch, LunarEclipse.active(server), Optional.of(targetBlood),
-                    SireCall.player(server, targetBlood) != null, Lines.isOriginalId(server, targetBlood), Lines.rootOf(server, targetBlood),
+                    SireCall.player(server, targetBlood) instanceof ServerPlayer here && here.level() == level, Lines.isOriginalId(server, targetBlood), Lines.rootOf(server, targetBlood),
                     trapped, ring));
         }
 
@@ -106,10 +107,14 @@ public record ImprisonedOriginalRiteFactory() implements RiteFactory {
                 return true;
             }
             ServerPlayer performer = findEntity(caster) instanceof ServerPlayer p ? p : null;
-            Optional<String> failure = performer == null ? Optional.of(RING_BROKEN) : refusal(performer, target);
-            if (failure.isPresent()) {
+            Optional<String> failure = performer == null ? Optional.empty() : refusal(performer, target);
+            if (performer == null || failure.isPresent()) {
                 if (performer != null) {
-                    performer.displayClientMessage(Component.translatable(RING_BROKEN), true);
+                    // an open ring and a wrong Original are one answer at the start; mid-rite the performer watched it happen, so say which
+                    boolean aboutTheCircle = failure.get().equals(LineRules.FAILS) || failure.get().equals(LineRules.REFUSAL_PREFIX + "nobody_trapped");
+                    String why = !aboutTheCircle ? failure.get()
+                            : Imprisonment.trappedRoot(level, getPos()).equals(Optional.of(root)) ? RING_BROKEN : ESCAPED;
+                    performer.sendSystemMessage(Component.translatable(why));
                 }
                 return false;
             }
@@ -120,7 +125,7 @@ public record ImprisonedOriginalRiteFactory() implements RiteFactory {
             Lines.freeBranch(server, target, root);
             if (SireCall.player(server, target) instanceof ServerPlayer freed) {
                 Lines.learn(freed, root);
-                freed.displayClientMessage(Component.translatable(DONE, Lines.rootName(server, root)), true);
+                freed.sendSystemMessage(Component.translatable(DONE, Lines.rootName(server, root)));
             }
             return false;
         }

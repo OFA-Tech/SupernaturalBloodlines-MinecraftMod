@@ -35,6 +35,12 @@ public final class SirelineIndex extends SavedData {
     private static final String ID = "id";
     private static final String LAST_NAME = "name";
     private static final String PENDING_MOBS = "pendingMobs";
+    private static final String PENDING_STAMPS = "pendingMobStamps";
+    private static final String AT = "at";
+    /** The key of the old sireline death's offline players: read so their debt is not lost (see {@code LineDeath.onLogin}). */
+    private static final String LEGACY_PLAYERS = "pendingDeaths";
+    /** A creature owed a death that never loads again is forgotten after this long (wall clock). */
+    public static final long PENDING_MAX_AGE_MS = 30L * 24 * 60 * 60 * 1000;
 
     private record Link(UUID sire, String entityType) {
     }
@@ -43,9 +49,10 @@ public final class SirelineIndex extends SavedData {
     private final Map<UUID, Link> links = new LinkedHashMap<>();
     private final Map<UUID, Set<UUID>> children = new HashMap<>();
     private final Map<UUID, String> names = new HashMap<>();
-    // line death's debts of creatures that were not loaded when their line died (players owe it through LineIndex)
-    // shortcut: a creature that never loads again (its chunk is gone or never visited) stays here forever, so the set only grows; add an expiry per entry or prune on chunk unload events when it matters
-    private final Set<UUID> pendingMobs = new LinkedHashSet<>();
+    // line death's debts of creatures that were not loaded when their line died (players owe it through LineIndex), with when they were added
+    private final Map<UUID, Long> pendingMobs = new LinkedHashMap<>();
+    // players the old sireline death owed a death while offline: paid or dropped at their next login
+    private final Set<UUID> legacyPlayers = new LinkedHashSet<>();
 
     SirelineIndex() {
     }
@@ -66,9 +73,20 @@ public final class SirelineIndex extends SavedData {
             CompoundTag e = (CompoundTag) t;
             idx.link(NbtUtils.loadUUID(e.get(SIRE)), NbtUtils.loadUUID(e.get(CHILD)), e.getString(TYPE));
         }
+        long now = System.currentTimeMillis();
         for (Tag t : tag.getList(PENDING_MOBS, Tag.TAG_INT_ARRAY)) {
-            idx.pendingMobs.add(NbtUtils.loadUUID(t));
+            idx.pendingMobs.put(NbtUtils.loadUUID(t), now);
         }
+        for (Tag t : tag.getList(PENDING_STAMPS, Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            if (e.contains(ID) && e.contains(AT)) {
+                idx.pendingMobs.put(NbtUtils.loadUUID(e.get(ID)), e.getLong(AT));
+            }
+        }
+        for (Tag t : tag.getList(LEGACY_PLAYERS, Tag.TAG_INT_ARRAY)) {
+            idx.legacyPlayers.add(NbtUtils.loadUUID(t));
+        }
+        idx.prunePending(now);
         return idx;
     }
 
@@ -91,7 +109,15 @@ public final class SirelineIndex extends SavedData {
             known.add(e);
         });
         tag.put(NAMES, known);
-        tag.put(PENDING_MOBS, uuids(pendingMobs));
+        ListTag stamps = new ListTag();
+        pendingMobs.forEach((id, at) -> {
+            CompoundTag e = new CompoundTag();
+            e.put(ID, NbtUtils.createUUID(id));
+            e.putLong(AT, at);
+            stamps.add(e);
+        });
+        tag.put(PENDING_STAMPS, stamps);
+        tag.put(LEGACY_PLAYERS, uuids(legacyPlayers));
         return tag;
     }
 
@@ -184,17 +210,45 @@ public final class SirelineIndex extends SavedData {
     }
 
     public void addPendingMob(UUID id) {
-        if (pendingMobs.add(id)) {
+        addPendingMob(id, System.currentTimeMillis());
+    }
+
+    public void addPendingMob(UUID id, long at) {
+        prunePending(at);
+        if (pendingMobs.putIfAbsent(id, at) == null) {
+            setDirty();
+        }
+    }
+
+    /** Forgets the creatures owed a death for more than {@link #PENDING_MAX_AGE_MS} as of {@code now}. */
+    public void prunePending(long now) {
+        if (pendingMobs.values().removeIf(at -> now - at > PENDING_MAX_AGE_MS)) {
             setDirty();
         }
     }
 
     public boolean isPendingMob(UUID id) {
-        return pendingMobs.contains(id);
+        return pendingMobs.containsKey(id);
     }
 
     public boolean takePendingMob(UUID id) {
-        boolean owed = pendingMobs.remove(id);
+        boolean owed = pendingMobs.remove(id) != null;
+        if (owed) {
+            setDirty();
+        }
+        return owed;
+    }
+
+    /** For tests: a player the old sireline death owed. */
+    public void addLegacyPendingPlayer(UUID id) {
+        if (legacyPlayers.add(id)) {
+            setDirty();
+        }
+    }
+
+    /** @return true once: the old sireline death owed this player a death; the caller resolves their line */
+    public boolean takeLegacyPendingPlayer(UUID id) {
+        boolean owed = legacyPlayers.remove(id);
         if (owed) {
             setDirty();
         }

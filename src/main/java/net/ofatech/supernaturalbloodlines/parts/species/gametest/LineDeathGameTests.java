@@ -38,6 +38,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.item.WhiteOak;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineDeath;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex;
@@ -462,19 +463,93 @@ public final class LineDeathGameTests {
         UUID klaus = NpcOriginal.KLAUS.uuid();
         ServerPlayer a = mortal(helper, Species.HYBRID);
         Mob mob = spawnVampire(helper);
+        Mob other = spawnVampire(helper);
         try {
             lines(helper).setRoot(a.getUUID(), klaus, true);
-            lines(helper).setRoot(mob.getUUID(), klaus, false);
+            // un-sired NPC vampires hold their line on the creature alone: the index does not list them, line death still reaches them
+            mob.setData(SpeciesRegistries.LINE, klaus);
+            other.setData(SpeciesRegistries.LINE, NpcOriginal.ELIJAH.uuid());
+            helper.assertTrue(lines(helper).rootOf(mob.getUUID()).isEmpty(), "control: the creature is in the index");
             online(a);
             LineDeath.run(helper.getLevel().getServer(), klaus);
             helper.assertTrue(dead(a), "a member of Klaus's line survived");
-            helper.assertTrue(mob.isRemoved(), "a creature of Klaus's line stayed");
+            helper.assertTrue(mob.isRemoved(), "a loaded creature of Klaus's line stayed");
+            helper.assertTrue(!other.isRemoved(), "a creature of another line was removed");
             helper.assertTrue(lines(helper).isDead(klaus), "Klaus's line is not marked dead");
         } finally {
             lines(helper).unmarkDead(klaus);
             forget(helper, a);
-            lines(helper).remove(mob.getUUID());
+            other.discard();
             mob.discard();
+        }
+        helper.succeed();
+    }
+
+    /** The mob was not loaded when its Original died: nothing was recorded for it, and it is turned away when it loads (no pending list for these). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void creatureOfADeadLineIsTurnedAwayWhenItLoads(GameTestHelper helper) {
+        UUID klaus = NpcOriginal.KLAUS.uuid();
+        Mob late = spawnVampire(helper);
+        Mob living = spawnVampire(helper);
+        try {
+            late.setData(SpeciesRegistries.LINE, klaus);
+            living.setData(SpeciesRegistries.LINE, NpcOriginal.ELIJAH.uuid());
+            lines(helper).markDead(klaus);
+            EntityJoinLevelEvent lateJoin = new EntityJoinLevelEvent(late, helper.getLevel());
+            LineDeath.onJoin(lateJoin);
+            helper.assertTrue(lateJoin.isCanceled(), "a creature of a dead line joined the world");
+            EntityJoinLevelEvent livingJoin = new EntityJoinLevelEvent(living, helper.getLevel());
+            LineDeath.onJoin(livingJoin);
+            helper.assertTrue(!livingJoin.isCanceled(), "a creature of a living line was turned away");
+            helper.assertTrue(!SirelineIndex.get(helper.getLevel()).isPendingMob(late.getUUID()), "a pending entry was kept for it");
+        } finally {
+            lines(helper).unmarkDead(klaus);
+            late.discard();
+            living.discard();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void legacyOwedPlayerIsMigratedAtLogin(GameTestHelper helper) {
+        ServerPlayer o = mortal(helper, Species.ORIGINAL);
+        LineTestPlayer c = talker(helper, Species.HYBRID);
+        LineTestPlayer lost = talker(helper, Species.HYBRID);
+        try {
+            SireRecorder.record(o, c);
+            // a world saved by the old sireline death: owed in the sireline index, and no entry in the line index
+            lines(helper).remove(c.getUUID());
+            SirelineIndex.get(helper.getLevel()).addLegacyPendingPlayer(c.getUUID());
+            SirelineIndex.get(helper.getLevel()).addLegacyPendingPlayer(lost.getUUID());
+            online(o, c, lost);
+            LineDeath.onLogin(c);
+            LineDeath.onLogin(lost);
+            helper.assertTrue(dead(c), "an old debt of a member of a line was not paid");
+            helper.assertTrue(!dead(lost), "an old debt with no Original above was paid");
+            helper.assertTrue(!SirelineIndex.get(helper.getLevel()).takeLegacyPendingPlayer(c.getUUID())
+                    && !SirelineIndex.get(helper.getLevel()).takeLegacyPendingPlayer(lost.getUUID()), "the old debts were kept");
+        } finally {
+            forget(helper, o, c, lost);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void onlineMessageNeverNamesAnUndiscoveredOriginal(GameTestHelper helper) {
+        ServerPlayer o = mortal(helper, Species.ORIGINAL);
+        LineTestPlayer hidden = talker(helper, Species.HYBRID);
+        LineTestPlayer known = talker(helper, Species.HYBRID);
+        try {
+            SireRecorder.record(o, hidden);
+            SireRecorder.record(o, known);
+            BloodlineAccess.set(known, BloodlineAccess.get(known).toBuilder().knownLine(o.getUUID()).build());
+            online(o, hidden, known);
+            die(o, whiteOakBlow(helper));
+            helper.assertTrue(hidden.heard().contains("[supernaturalbloodlines.line.unknown_original]") && !hidden.heard().contains(o.getGameProfile().getName()),
+                    "the message named an Original the player has not discovered: " + hidden.heard());
+            helper.assertTrue(known.heard().contains(o.getGameProfile().getName()), "a discovered Original was not named: " + known.heard());
+        } finally {
+            forget(helper, o, hidden, known);
         }
         helper.succeed();
     }

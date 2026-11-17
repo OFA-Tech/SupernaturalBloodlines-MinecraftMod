@@ -11,12 +11,13 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
@@ -41,8 +42,7 @@ public final class NpcLines {
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener(NpcLines::onJoin);
-        // last, so a death something else cancelled is not counted
-        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LivingDeathEvent.class, NpcLines::onDeath);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, EntityLeaveLevelEvent.class, NpcLines::onLeave);
     }
 
     public static Optional<NpcOriginal> pick(MinecraftServer server) {
@@ -51,31 +51,45 @@ public final class NpcLines {
         return LineRules.pickRoot(LineRules.parseWeights(SpeciesConfig.npcLineWeights()), LineIndex.get(server).deadNpcRoots(), r);
     }
 
+    /**
+     * An un-sired NPC vampire keeps its line on the creature alone (the {@code LINE} attachment): thousands of them would otherwise fill the
+     * index. A creature a player or NPC sired is a member of the line and is in the index (so line death and the rites can reach it).
+     */
     private static void onJoin(EntityJoinLevelEvent e) {
         if (!(e.getLevel() instanceof ServerLevel level) || !(e.getEntity() instanceof LivingEntity mob) || mob instanceof Player
                 || !(mob instanceof IVampire || mob instanceof IConvertedCreature<?>) || mob.getType().is(EXEMPT)) {
             return;
         }
+        SirelineIndex sirelines = SirelineIndex.get(level);
+        UUID id = mob.getUUID();
+        if (sirelines.isPendingMob(id)) {
+            return; // owed a death: LineDeath.onJoin turns it away
+        }
         MinecraftServer server = level.getServer();
         LineIndex index = LineIndex.get(server);
-        UUID id = mob.getUUID();
+        boolean sired = mob.hasData(SpeciesRegistries.SIRE);
         Optional<UUID> known = index.rootOf(id);
         if (known.isPresent()) {
-            mob.setData(SpeciesRegistries.LINE, known.get());
+            Lines.assign(mob, known.get());
         } else if (mob.hasData(SpeciesRegistries.LINE)) {
-            index.setRoot(id, mob.getData(SpeciesRegistries.LINE), false);
-        } else if (mob.hasData(SpeciesRegistries.SIRE)) {
+            if (sired) {
+                index.setRoot(id, mob.getData(SpeciesRegistries.LINE), false);
+            }
+        } else if (sired) {
             // a creature sired before lines existed: its line is whatever its sire's is
-            Lines.climbFrom(server, SirelineIndex.get(level), id, Optional.of(mob.getData(SpeciesRegistries.SIRE)))
-                    .ifPresent(root -> Lines.join(server, root, mob));
+            Lines.climbFrom(server, sirelines, id, Optional.of(mob.getData(SpeciesRegistries.SIRE))).ifPresent(root -> Lines.join(server, root, mob));
         } else {
-            pick(server).ifPresent(root -> Lines.join(server, root.uuid(), mob));
+            pick(server).ifPresent(root -> Lines.assign(mob, root.uuid()));
         }
     }
 
-    private static void onDeath(LivingDeathEvent e) {
-        if (!e.getEntity().level().isClientSide && !(e.getEntity() instanceof Player) && e.getEntity().hasData(SpeciesRegistries.LINE)) {
-            LineIndex.get(e.getEntity().getServer()).remove(e.getEntity().getUUID());
+    /** A sired creature that is destroyed (killed or discarded) leaves the index; one that only unloads or changes dimension stays. */
+    private static void onLeave(EntityLeaveLevelEvent e) {
+        Entity.RemovalReason why = e.getEntity().getRemovalReason();
+        if (e.getLevel().isClientSide || e.getEntity() instanceof Player
+                || (why != Entity.RemovalReason.DISCARDED && why != Entity.RemovalReason.KILLED)) {
+            return;
         }
+        LineIndex.get(e.getLevel().getServer()).remove(e.getEntity().getUUID());
     }
 }

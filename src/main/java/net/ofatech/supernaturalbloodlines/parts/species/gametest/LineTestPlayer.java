@@ -15,6 +15,7 @@ import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 /** A mortal fake player that keeps every message it is sent whole (key and arguments), for the line tests. */
 public final class LineTestPlayer extends FakePlayer {
     private final List<Component> messages = new ArrayList<>();
+    private int chat;
 
     private LineTestPlayer(GameTestHelper helper, UUID id) {
         super(helper.getLevel(), new GameProfile(id, "test-" + id.toString().substring(0, 8)));
@@ -69,9 +70,16 @@ public final class LineTestPlayer extends FakePlayer {
         }
     }
 
+    /** How many of the messages kept went to chat (an action bar message does not count). */
+    public int chat() {
+        return chat;
+    }
+
     @Override
     public void sendSystemMessage(Component message) {
+        int before = messages.size();
         keep(message);
+        chat += messages.size() - before;
     }
 
     @Override

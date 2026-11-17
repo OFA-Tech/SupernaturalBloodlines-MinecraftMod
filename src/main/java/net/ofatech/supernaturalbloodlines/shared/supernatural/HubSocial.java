@@ -51,6 +51,9 @@ public final class HubSocial {
         }
     }
 
+    /** How many of the sire's ancestors the snapshot carries (the server cuts the list, the codec bounds it). */
+    public static final int MAX_ANCESTORS = 8;
+
     /** How a player left the line of their Original: by the Rite of the Broken Line (alone) or the Rite of the Imprisoned Original (with their branch). */
     public enum FreedKind { NONE, BROKEN_LINE, IMPRISONED }
 

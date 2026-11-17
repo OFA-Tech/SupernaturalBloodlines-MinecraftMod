@@ -111,4 +111,43 @@ class SirelineIndexTest {
         assertTrue(back.takePendingMob(B));
         assertFalse(back.isPendingMob(B));
     }
+
+    @Test
+    void pendingMobsOlderThanThirtyDaysAreForgotten() {
+        SirelineIndex idx = new SirelineIndex();
+        long day = 24L * 60 * 60 * 1000;
+        long now = 100 * day;
+        idx.addPendingMob(A, now - 31 * day);
+        idx.addPendingMob(B, now - 29 * day);
+        idx.prunePending(now);
+        assertFalse(idx.isPendingMob(A), "a 31 day old debt was kept");
+        assertTrue(idx.isPendingMob(B), "a 29 day old debt was forgotten");
+        // adding prunes too, so the set cannot grow without bound
+        UUID c = UUID.randomUUID();
+        idx.addPendingMob(c, now + 40 * day);
+        assertFalse(idx.isPendingMob(B));
+        assertTrue(idx.isPendingMob(c));
+    }
+
+    @Test
+    void pendingStampsAndTheOldKeysSurviveSaveAndLoad() {
+        SirelineIndex idx = new SirelineIndex();
+        idx.addPendingMob(A, System.currentTimeMillis());
+        idx.addLegacyPendingPlayer(B);
+        SirelineIndex back = SirelineIndex.load(idx.save(new CompoundTag(), null), null);
+        assertTrue(back.isPendingMob(A));
+        assertTrue(back.takeLegacyPendingPlayer(B));
+        assertFalse(back.takeLegacyPendingPlayer(B));
+        // an old save: the list of ids without a time is kept, stamped as of loading
+        CompoundTag old = new CompoundTag();
+        net.minecraft.nbt.ListTag ids = new net.minecraft.nbt.ListTag();
+        ids.add(net.minecraft.nbt.NbtUtils.createUUID(A));
+        old.put("pendingMobs", ids);
+        net.minecraft.nbt.ListTag players = new net.minecraft.nbt.ListTag();
+        players.add(net.minecraft.nbt.NbtUtils.createUUID(B));
+        old.put("pendingDeaths", players);
+        SirelineIndex loaded = SirelineIndex.load(old, null);
+        assertTrue(loaded.isPendingMob(A));
+        assertTrue(loaded.takeLegacyPendingPlayer(B));
+    }
 }

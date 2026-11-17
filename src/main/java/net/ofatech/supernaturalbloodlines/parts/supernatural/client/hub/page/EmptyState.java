@@ -27,7 +27,13 @@ public final class EmptyState {
         int hex = 34;
         KitDraw.shape(f.g, Shapes.Shape.HEX, x + (w - hex) / 2, y, hex, t.muted());
         KitDraw.shape(f.g, Shapes.Shape.HEX, x + (w - hex) / 2 + 2, y + 2, hex - 4, t.paper());
-        y += hex + 10;
+        y += hex + 4;
+        if (net.minecraft.client.resources.language.I18n.exists(key + "caption")) {
+            Component caption = Component.translatable(key + "caption");
+            f.g.drawString(f.font(), caption, x + (w - f.font().width(caption)) / 2, y, t.muted(), false);
+            y += 10;
+        }
+        y += 6;
         Component title = Component.translatable(key + "title");
         var pose = f.g.pose();
         pose.pushPose();

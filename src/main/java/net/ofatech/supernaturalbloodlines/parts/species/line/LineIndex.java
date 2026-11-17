@@ -17,6 +17,7 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,27 +64,34 @@ public final class LineIndex extends SavedData {
     public static LineIndex load(CompoundTag tag, @Nullable HolderLookup.Provider registries) {
         LineIndex idx = new LineIndex();
         for (Tag t : tag.getList(ENTRIES, Tag.TAG_COMPOUND)) {
-            CompoundTag e = (CompoundTag) t;
-            if (!e.contains(ID) || !e.contains(ROOT)) {
-                continue;
-            }
-            Freed freed = null;
-            if (e.contains(FREED_FROM) && e.contains(FREED_KIND)) {
-                try {
-                    freed = new Freed(NbtUtils.loadUUID(e.get(FREED_FROM)), Kind.valueOf(e.getString(FREED_KIND)));
-                } catch (IllegalArgumentException ignored) {
-                    // an unknown kind loads as not freed
+            try {
+                CompoundTag e = (CompoundTag) t;
+                Freed freed = null;
+                if (e.contains(FREED_FROM) && e.contains(FREED_KIND)) {
+                    try {
+                        freed = new Freed(NbtUtils.loadUUID(e.get(FREED_FROM)), Kind.valueOf(e.getString(FREED_KIND)));
+                    } catch (IllegalArgumentException ignored) {
+                        // an unknown kind loads as not freed
+                    }
                 }
+                idx.put(NbtUtils.loadUUID(e.get(ID)), new Entry(NbtUtils.loadUUID(e.get(ROOT)), e.getBoolean(PLAYER), freed));
+            } catch (RuntimeException bad) {
+                SupernaturalBloodlines.LOGGER.warn("Skipping a bad line entry: {}", bad.toString());
             }
-            idx.put(NbtUtils.loadUUID(e.get(ID)), new Entry(NbtUtils.loadUUID(e.get(ROOT)), e.getBoolean(PLAYER), freed));
         }
         for (Tag t : tag.getList(DEAD, Tag.TAG_INT_ARRAY)) {
-            idx.dead.add(NbtUtils.loadUUID(t));
+            try {
+                idx.dead.add(NbtUtils.loadUUID(t));
+            } catch (RuntimeException bad) {
+                SupernaturalBloodlines.LOGGER.warn("Skipping a bad dead line: {}", bad.toString());
+            }
         }
         for (Tag t : tag.getList(OWED, Tag.TAG_COMPOUND)) {
-            CompoundTag e = (CompoundTag) t;
-            if (e.contains(ID) && e.contains(ROOT)) {
+            try {
+                CompoundTag e = (CompoundTag) t;
                 idx.owed.put(NbtUtils.loadUUID(e.get(ID)), NbtUtils.loadUUID(e.get(ROOT)));
+            } catch (RuntimeException bad) {
+                SupernaturalBloodlines.LOGGER.warn("Skipping a bad owed death: {}", bad.toString());
             }
         }
         return idx;
@@ -144,11 +152,6 @@ public final class LineIndex extends SavedData {
     public Optional<Freed> freedOf(UUID member) {
         Entry e = entries.get(member);
         return e == null ? Optional.empty() : Optional.ofNullable(e.freed());
-    }
-
-    /** Whether the index holds this id at all (a member, a root or a freed head). */
-    public boolean has(UUID id) {
-        return entries.containsKey(id);
     }
 
     /** Puts {@code member} in {@code root}'s line (clearing any freed record). */

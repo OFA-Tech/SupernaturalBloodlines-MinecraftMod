@@ -176,7 +176,7 @@ Breaks a sired player's whole sire bond. Full details on [Rite of Severance](Rit
 | Performer | a **witch, siphoner, heretic or tribrid** |
 | Condition | the **night of a full moon** (full-moon day and time of day 12786 to 23216; noon is refused) |
 | Target | the sired player on the centre (else the caster). No consent check. |
-| Result | the bond is broken; the sire stays recorded and sireline death still applies |
+| Result | the bond is broken; the sire stays recorded and line death still applies |
 
 Note: every rite that says "full moon" needs the night of the full moon, like this one.
 

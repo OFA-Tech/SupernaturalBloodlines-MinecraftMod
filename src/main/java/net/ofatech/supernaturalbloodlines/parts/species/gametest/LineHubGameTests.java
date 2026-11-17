@@ -173,4 +173,37 @@ public final class LineHubGameTests {
         }
         helper.succeed();
     }
+
+    /** A witch is supernatural but not a vampire (no line, no sire to be unknown). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aWitchIsNotAVampireForTheBloodlinePage(GameTestHelper helper) {
+        LineTestPlayer witch = player(helper, Species.WITCH);
+        try {
+            helper.assertTrue(origin(witch).state() == LineRules.State.NOT_VAMPIRE, "a witch was given the state " + origin(witch).state());
+        } finally {
+            done(helper, witch);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aCreatureSireIsHiddenLikeACreatureAncestor(GameTestHelper helper) {
+        LineTestPlayer c = player(helper, Species.HYBRID);
+        UUID zombieSire = UUID.randomUUID();
+        UUID npcSire = NpcOriginal.KLAUS.uuid();
+        try {
+            SirelineIndex index = SirelineIndex.get(helper.getLevel());
+            index.add(UUID.randomUUID(), zombieSire, "minecraft:zombie", "Zed");
+            BloodlineAccess.set(c, BloodlineAccess.get(c).toBuilder().sire(zombieSire).build());
+            helper.assertTrue(HubSocial.of(c).sire().equals(Optional.of("")), "a creature sire was named: " + HubSocial.of(c).sire());
+            helper.assertTrue(!HubSocial.of(c).toString().contains("Zed"), "the creature's name is in the snapshot");
+            BloodlineAccess.set(c, BloodlineAccess.get(c).toBuilder().sire(npcSire).build());
+            helper.assertTrue(HubSocial.of(c).sire().equals(Optional.of("")), "an NPC Original sire was named: " + HubSocial.of(c).sire());
+        } finally {
+            BloodlineAccess.set(c, BloodlineAccess.get(c).toBuilder().sire(null).build());
+            SirelineIndex.get(helper.getLevel()).remove(zombieSire);
+            done(helper, c);
+        }
+        helper.succeed();
+    }
 }

@@ -8,6 +8,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScree
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineColors;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineTree;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineTreeLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
@@ -20,8 +21,9 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 public final class StageBloodlinePage extends LinePageBase {
     public enum Look { MOON, TENSURA }
 
-    private static final int RED = 0xFFE05A5A;
-    private static final int RED_DIM = 0xFF8A2F3A;
+    private static final int RED = LineColors.MOON_RED;
+    private static final int RED_DIM = LineColors.atLeast(LineColors.MOON_THREAD, LineColors.MOON_SKY_TOP, LineColors.MIN_RATIO);
+    private static final int MOON_RING = LineColors.atLeast(LineColors.MOON_RING, LineColors.MOON_SKY_TOP, LineColors.MIN_RATIO);
     private final Look look;
 
     public StageBloodlinePage(Look look) {
@@ -98,11 +100,17 @@ public final class StageBloodlinePage extends LinePageBase {
                 f.g.renderOutline(hit.x(), hit.y(), hit.w(), hit.h(), RED);
                 f.g.drawString(f.font(), tag, hit.x() + 4, hit.y() + 2, RED, false);
             } else {
-                String shown = tag;
-                f.g.drawString(f.font(), shown, cx - 10 - f.font().width(shown), mid - 4, RED, false);
-                hit = new Rect(cx - 12 - f.font().width(shown), mid - 6, f.font().width(shown) + 16, 12);
+                // the label sits left of the link: when the stage has no room there it is left out (the tooltip has it)
+                int room = cx - 10 - stage.x();
+                if (room >= 24) {
+                    String shown = fit(f, Component.literal(tag), room);
+                    f.g.drawString(f.font(), shown, cx - 10 - f.font().width(shown), mid - 4, RED, false);
+                    hit = new Rect(cx - 12 - f.font().width(shown), mid - 6, f.font().width(shown) + 16, 12);
+                } else {
+                    hit = new Rect(cx - 8, mid - 6, 16, 12);
+                }
             }
-            f.target("line:break", hit, List.of(LinePageSupport.breakTooltip(LinePageSupport.origin(f))), null);
+            f.target("line:break", hit, List.of(LinePageSupport.breakTooltip(LinePageSupport.origin(f))), () -> selected = LineTree.YOU);
             if (f.focused("line:break")) {
                 KitDraw.focusRing(f.g, hit, t.focusColor());
             }
@@ -120,13 +128,13 @@ public final class StageBloodlinePage extends LinePageBase {
         boolean you = n.kind() == LineTree.Kind.YOU;
         boolean crowned = n.kind() == LineTree.Kind.ROOT || (you && m.state() == LineRules.State.ORIGINAL);
         Shapes.Shape shape = moon ? Shapes.Shape.ROUND : Shapes.Shape.HEX;
-        int border = you ? (moon ? RED : t.accent()) : crowned ? LinePageSupport.GOLD : n.hidden() ? t.muted() : (moon ? 0xFF6a3a44 : t.muted());
+        int border = you ? (moon ? RED : t.accent()) : crowned ? LineColors.gold(t) : n.hidden() ? t.muted() : (moon ? MOON_RING : t.muted());
         if (n.id().equals(selected)) {
             KitDraw.shape(f.g, shape, r.x() - 2, r.y() - 2, r.w() + 4, t.focusColor());
         }
         LinePageSupport.portrait(f, n, r, shape, border, t.paper());
         if (crowned) {
-            LinePageSupport.crown(f, r);
+            LinePageSupport.crown(f, r, LineColors.gold(t));
         }
         if (you && m.padlock()) {
             LinePageSupport.padlock(f, r, moon ? RED : t.accent(), t.paper());

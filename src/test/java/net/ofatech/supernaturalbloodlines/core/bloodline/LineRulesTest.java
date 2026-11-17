@@ -88,10 +88,13 @@ class LineRulesTest {
     @Test
     void pairBloodsFindsTheOriginalAndTheTarget() {
         Function<UUID, Optional<UUID>> rootOf = id -> id.equals(T) || id.equals(O) ? Optional.of(O) : id.equals(X) ? Optional.of(P) : Optional.empty();
-        assertEquals(Optional.of(new BloodPair(O, T)), pairBloods(List.of(T, O), rootOf));
-        assertTrue(pairBloods(List.of(O, O), rootOf).isEmpty());
-        assertTrue(pairBloods(List.of(T, X), rootOf).isEmpty());
-        assertTrue(pairBloods(List.of(T), rootOf).isEmpty());
+        java.util.function.Predicate<UUID> originals = id -> id.equals(O) || id.equals(P);
+        assertEquals(Optional.of(new BloodPair(O, T)), pairBloods(List.of(T, O), rootOf, originals));
+        assertTrue(pairBloods(List.of(O, O), rootOf, originals).isEmpty());
+        assertTrue(pairBloods(List.of(T, X), rootOf, originals).isEmpty());
+        assertTrue(pairBloods(List.of(T), rootOf, originals).isEmpty());
+        // a freed head is the root of their own members but is not an Original: no pair
+        assertTrue(pairBloods(List.of(T, O), rootOf, id -> false).isEmpty());
     }
 
     private static final Optional<BloodPair> PAIR = Optional.of(new BloodPair(O, T));
@@ -102,12 +105,13 @@ class LineRulesTest {
         assertEquals(Optional.of(REFUSAL_PREFIX + "not_witch"), brokenLineRefusal(new BrokenLineFacts(false, true, 2, PAIR, true, false)));
         assertEquals(Optional.of(REFUSAL_PREFIX + "no_eclipse"), brokenLineRefusal(new BrokenLineFacts(true, false, 2, PAIR, true, false)));
         assertEquals(Optional.of(REFUSAL_PREFIX + "no_blood"), brokenLineRefusal(new BrokenLineFacts(true, true, 1, PAIR, true, false)));
-        assertEquals(Optional.of(REFUSAL_PREFIX + "wrong_blood"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, Optional.empty(), true, false)));
+        assertEquals(Optional.of(FAILS), brokenLineRefusal(new BrokenLineFacts(true, true, 2, Optional.empty(), true, false)));
         assertEquals(Optional.of(REFUSAL_PREFIX + "target_away"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, PAIR, false, false)));
         assertEquals(Optional.of(REFUSAL_PREFIX + "target_original"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, PAIR, true, true)));
         // two failures: the earlier one in the order wins
         assertEquals(Optional.of(REFUSAL_PREFIX + "not_witch"), brokenLineRefusal(new BrokenLineFacts(false, false, 0, Optional.empty(), false, true)));
-        assertEquals(Optional.of(REFUSAL_PREFIX + "wrong_blood"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, Optional.empty(), false, true)));
+        // the target's own checks come before the pair: a wrong blood says nothing while nobody is here
+        assertEquals(Optional.of(REFUSAL_PREFIX + "target_away"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, Optional.empty(), false, true)));
         assertEquals(Optional.of(REFUSAL_PREFIX + "target_away"), brokenLineRefusal(new BrokenLineFacts(true, true, 2, PAIR, false, true)));
     }
 
@@ -126,10 +130,36 @@ class LineRulesTest {
         assertEquals(Optional.of(REFUSAL_PREFIX + "target_away"), imprisonedRefusal(imp(true, true, true, false, false, o, o, true)));
         assertEquals(Optional.of(REFUSAL_PREFIX + "target_original"), imprisonedRefusal(imp(true, true, true, true, true, o, o, true)));
         assertEquals(Optional.of(REFUSAL_PREFIX + "nobody_trapped"), imprisonedRefusal(imp(true, true, true, true, false, o, Optional.empty(), true)));
-        assertEquals(Optional.of(REFUSAL_PREFIX + "wrong_original"), imprisonedRefusal(imp(true, true, true, true, false, o, Optional.of(P), true)));
-        assertEquals(Optional.of(REFUSAL_PREFIX + "ring_open"), imprisonedRefusal(imp(true, true, true, true, false, o, o, false)));
+        // the wrong Original and an open ring are one and the same answer
+        assertEquals(Optional.of(FAILS), imprisonedRefusal(imp(true, true, true, true, false, o, Optional.of(P), true)));
+        assertEquals(Optional.of(FAILS), imprisonedRefusal(imp(true, true, true, true, false, o, o, false)));
+        assertEquals(imprisonedRefusal(imp(true, true, true, true, false, o, Optional.of(P), true)), imprisonedRefusal(imp(true, true, true, true, false, o, o, false)));
         // earlier wins
         assertEquals(Optional.of(REFUSAL_PREFIX + "nobody_trapped"), imprisonedRefusal(imp(true, true, true, true, false, o, Optional.empty(), false)));
-        assertEquals(Optional.of(REFUSAL_PREFIX + "wrong_original"), imprisonedRefusal(imp(true, true, true, true, false, o, Optional.of(P), false)));
+        assertEquals(Optional.of(FAILS), imprisonedRefusal(imp(true, true, true, true, false, o, Optional.of(P), false)));
+    }
+
+    @Test
+    void owedStillAppliesOnlyToSomeoneStillInThatLineAndSupernatural() {
+        assertTrue(owedStillApplies(O, Optional.of(O), true));
+        assertFalse(owedStillApplies(O, Optional.of(O), false), "a cured player");
+        assertFalse(owedStillApplies(O, Optional.of(T), true), "a player of another line");
+        assertFalse(owedStillApplies(O, Optional.of(P), true), "a freed head is their own root");
+        assertFalse(owedStillApplies(O, Optional.empty(), true), "a player with no line");
+    }
+
+    @Test
+    void followsRootRules() {
+        // a new Original takes members of the old line and those with no line, never a freed one or another line's
+        assertTrue(followsRoot(Optional.of(O), Optional.of(O), false, true));
+        assertTrue(followsRoot(Optional.empty(), Optional.of(O), false, true));
+        assertFalse(followsRoot(Optional.of(O), Optional.of(O), true, true), "a freed member");
+        assertFalse(followsRoot(Optional.of(T), Optional.of(O), false, true), "another line");
+        // a freed branch takes only the old line's members
+        assertTrue(followsRoot(Optional.of(O), Optional.of(O), false, false));
+        assertFalse(followsRoot(Optional.empty(), Optional.of(O), false, false), "a member with no line");
+        // a new Original with no previous line takes the lineless
+        assertTrue(followsRoot(Optional.empty(), Optional.empty(), false, true));
+        assertFalse(followsRoot(Optional.of(O), Optional.empty(), false, true));
     }
 }

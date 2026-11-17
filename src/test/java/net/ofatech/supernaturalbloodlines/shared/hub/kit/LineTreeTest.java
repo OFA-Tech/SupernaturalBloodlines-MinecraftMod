@@ -207,4 +207,14 @@ class LineTreeTest {
             }
         }
     }
+
+    @Test
+    void narrationOfAFreePlayerWhoDoesNotKnowTheOriginalNeverNamesOne() {
+        Model m = LineTree.build(freed(null, FreedKind.BROKEN_LINE), "Me", Optional.of("Tyler"), false, List.of(), List.of());
+        assertEquals("supernaturalbloodlines.hub.bloodline.narr.sire_free_unknown", LineTree.narrate(m, m.node("line:sire").orElseThrow()).key());
+        assertEquals("supernaturalbloodlines.hub.bloodline.narr.you_free_unknown", LineTree.narrate(m, m.node("line:you").orElseThrow()).key());
+        // and the one who knows hears the named words
+        Model known = LineTree.build(freed("Klaus", FreedKind.BROKEN_LINE), "Me", Optional.of("Tyler"), false, List.of(), List.of());
+        assertEquals("supernaturalbloodlines.hub.bloodline.narr.you_free", LineTree.narrate(known, known.node("line:you").orElseThrow()).key());
+    }
 }
