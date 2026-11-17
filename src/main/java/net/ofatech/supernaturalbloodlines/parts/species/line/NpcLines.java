@@ -1,7 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.species.line;
 
-import de.teamlapen.vampirism.api.entity.convertible.IConvertedCreature;
-import de.teamlapen.vampirism.api.entity.vampire.IVampire;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.DoubleSupplier;
@@ -57,7 +55,7 @@ public final class NpcLines {
      */
     private static void onJoin(EntityJoinLevelEvent e) {
         if (!(e.getLevel() instanceof ServerLevel level) || !(e.getEntity() instanceof LivingEntity mob) || mob instanceof Player
-                || !(mob instanceof IVampire || mob instanceof IConvertedCreature<?>) || mob.getType().is(EXEMPT)) {
+                || !LineDeath.dies(mob) || mob.getType().is(EXEMPT)) {
             return;
         }
         SirelineIndex sirelines = SirelineIndex.get(level);

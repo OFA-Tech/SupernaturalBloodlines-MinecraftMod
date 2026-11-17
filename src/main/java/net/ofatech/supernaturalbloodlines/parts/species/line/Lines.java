@@ -83,6 +83,10 @@ public final class Lines {
         if (server == null || (child instanceof ServerPlayer p && OriginalRules.isOriginal(BloodlineAccess.get(p).species()))) {
             return;
         }
+        // a converted animal or villager is sired but not a vampire: it has no line, and line death never takes it
+        if (!(child instanceof ServerPlayer) && !LineDeath.dies(child)) {
+            return;
+        }
         LineRules.inheritedRoot(sire, isOriginalId(server, sire), rootOf(server, sire)).ifPresent(root -> join(server, root, child));
     }
 

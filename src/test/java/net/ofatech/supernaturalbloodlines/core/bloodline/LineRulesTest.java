@@ -117,7 +117,7 @@ class LineRulesTest {
 
     private static ImprisonedFacts imp(boolean witch, boolean eclipse, boolean blood, boolean online, boolean original,
                                        Optional<UUID> targetRoot, Optional<UUID> trapped, boolean ring) {
-        return new ImprisonedFacts(witch, eclipse, blood ? Optional.of(T) : Optional.empty(), online, original, targetRoot, trapped, ring);
+        return new ImprisonedFacts(witch, eclipse, blood ? Optional.of(T) : Optional.empty(), online, original, targetRoot, trapped, true, ring);
     }
 
     @Test
@@ -137,6 +137,28 @@ class LineRulesTest {
         // earlier wins
         assertEquals(Optional.of(REFUSAL_PREFIX + "nobody_trapped"), imprisonedRefusal(imp(true, true, true, true, false, o, Optional.empty(), false)));
         assertEquals(Optional.of(FAILS), imprisonedRefusal(imp(true, true, true, true, false, o, Optional.of(P), false)));
+    }
+
+    @Test
+    void anOriginalWhoIsOnlyStandingThereIsRefused() {
+        Optional<UUID> o = Optional.of(O);
+        ImprisonedFacts standing = new ImprisonedFacts(true, true, Optional.of(T), true, false, o, o, false, true);
+        assertEquals(Optional.of(REFUSAL_PREFIX + "not_down"), imprisonedRefusal(standing));
+        ImprisonedFacts down = new ImprisonedFacts(true, true, Optional.of(T), true, false, o, o, true, true);
+        assertEquals(Optional.empty(), imprisonedRefusal(down));
+        // nobody there is still "nobody trapped"; the wrong Original standing up is "not down", not an answer about who they are
+        assertEquals(Optional.of(REFUSAL_PREFIX + "nobody_trapped"), imprisonedRefusal(new ImprisonedFacts(true, true, Optional.of(T), true, false, o, Optional.empty(), false, true)));
+        assertEquals(Optional.of(REFUSAL_PREFIX + "not_down"), imprisonedRefusal(new ImprisonedFacts(true, true, Optional.of(T), true, false, o, Optional.of(P), false, true)));
+        // earlier checks still come first, and an open ring or a wrong Original is the plain refusal once they are down
+        assertEquals(Optional.of(REFUSAL_PREFIX + "no_eclipse"), imprisonedRefusal(new ImprisonedFacts(true, false, Optional.of(T), true, false, o, o, false, true)));
+        assertEquals(Optional.of(FAILS), imprisonedRefusal(new ImprisonedFacts(true, true, Optional.of(T), true, false, o, o, true, false)));
+    }
+
+    @Test
+    void aSelfKillDoesNotCount() {
+        assertTrue(killerCounts(O, T));
+        assertFalse(killerCounts(O, O), "the Original's own white oak");
+        assertFalse(killerCounts(O, null), "the environment or a bare /kill");
     }
 
     @Test

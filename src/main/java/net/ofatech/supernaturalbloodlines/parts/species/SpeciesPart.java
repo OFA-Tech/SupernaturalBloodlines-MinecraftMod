@@ -117,6 +117,7 @@ public final class SpeciesPart {
     private SpeciesPart() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
+        LegacyConfig.register(); // reads the file before NeoForge loads it
         container.registerConfig(ModConfig.Type.COMMON, SpeciesConfig.SPEC, SpeciesConfig.FILE);
         // the faction rites (vampirism_enchanted part) now run with the real context and through the executor
         FactionRiteHooks.install((p, faction, time) -> SpeciesContext.of(p, faction, time, null), OutcomeExecutor::run);

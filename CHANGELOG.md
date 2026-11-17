@@ -2,6 +2,9 @@
 
 ## Unreleased (plan 17a, Original bloodlines)
 
+### Upgrading
+- Line death is now ON by default, offline players included. Set `original_line_death = false` to keep the old behaviour. `sireline_death` is ignored. The server logs one warning at start if its species config still has the old key.
+
 ### Added
 - Every vampire belongs to the line of an Original (players and NPC vampires; a creature turned by a player takes theirs). Config: `original_visibility`, `npc_line_weights`, `line_rites_enabled`, `imprisonment_ring_max_radius`, `imprisonment_rite_seconds`.
 - The Rite of Revelation also reveals the Original of your line; the Bloodline page shows it as "?" until then.

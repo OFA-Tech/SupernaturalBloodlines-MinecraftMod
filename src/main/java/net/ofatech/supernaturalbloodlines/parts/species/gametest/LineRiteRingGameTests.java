@@ -34,6 +34,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
+import net.ofatech.supernaturalbloodlines.parts.species.line.Imprisonment;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineDeath;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.LunarEclipse;
@@ -95,6 +96,7 @@ public final class LineRiteRingGameTests {
     }
 
     private static void finish(GameTestHelper helper, LineRiteGameTests.Rig rig, boolean ring) {
+        rig.original.removeData(SpeciesRegistries.DOWNED);
         SpeciesConfig.overrideImprisonmentSeconds(null);
         SpeciesConfig.overrideRingRadius(null);
         if (ring) {
@@ -103,7 +105,13 @@ public final class LineRiteRingGameTests {
         remove(helper, rig.original);
     }
 
+    /** The Original is brought down (a long Downed state: nothing ticks these fake players). */
+    private static void down(LineRiteGameTests.Rig rig) {
+        rig.original.setData(SpeciesRegistries.DOWNED, 100000);
+    }
+
     private static Rite begin(GameTestHelper helper, LineRiteGameTests.Rig rig) {
+        down(rig);
         return start(helper, IMPRISONED, rig.caster(), rig.imprisonedItems());
     }
 
@@ -186,6 +194,9 @@ public final class LineRiteRingGameTests {
         Zombie stand = helper.spawn(EntityType.ZOMBIE, new Vec3(8.5, 1, 8.5));
         stand.setNoAi(true);
         stand.setData(SpeciesRegistries.ORIGINAL_ROOT, "klaus");
+        // an NPC Original is brought down by desiccation
+        stand.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.getHolder(Imprisonment.DESICCATED).orElseThrow(), 100000));
         try {
             rig.lines().setRoot(rig.target.getUUID(), klaus, true);
             eclipse(helper, () -> {
@@ -337,6 +348,48 @@ public final class LineRiteRingGameTests {
             place(helper, rig.original);
             eclipse(helper, () -> begin(helper, rig));
             helper.assertTrue(rig.caster().received(LineRules.FAILS), "a ring beyond the configured radius closed: " + rig.caster().heard());
+        } finally {
+            finish(helper, rig, true);
+            rig.close();
+        }
+        helper.succeed();
+    }
+
+    /** R126: standing in the ring is not enough. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void imprisonedNeedsTheOriginalBroughtDown(GameTestHelper helper) {
+        common(helper);
+        buildRing(helper);
+        LineRiteGameTests.Rig rig = new LineRiteGameTests.Rig(helper, Species.WITCH);
+        try {
+            place(helper, rig.original);
+            eclipse(helper, () -> start(helper, IMPRISONED, rig.caster(), rig.imprisonedItems())); // not down
+            helper.assertTrue(rig.caster().received(LineRules.REFUSAL_PREFIX + "not_down"), "a standing Original was held: " + rig.caster().heard());
+            helper.assertTrue(rig.lines().freedOf(rig.target.getUUID()).isEmpty(), "the target was freed");
+            helper.assertTrue(dropped(helper, OTHERWHERE) == 2, "the ingredients were not given back");
+        } finally {
+            finish(helper, rig, true);
+            rig.close();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void imprisonedEndsWhenTheOriginalGetsUp(GameTestHelper helper) {
+        common(helper);
+        buildRing(helper);
+        LineRiteGameTests.Rig rig = new LineRiteGameTests.Rig(helper, Species.WITCH);
+        try {
+            place(helper, rig.original);
+            eclipse(helper, () -> {
+                Rite rite = begin(helper, rig);
+                helper.assertTrue(run(rite, HOLD_TICKS / 2, () -> true) == -1, "control: the rite ended early");
+                rig.original.removeData(SpeciesRegistries.DOWNED); // up again
+                int ended = run(rite, HOLD_TICKS, () -> true);
+                helper.assertTrue(ended > 0 && ended <= 12, "the rite went on with the Original up: " + ended);
+            });
+            helper.assertTrue(rig.lines().freedOf(rig.target.getUUID()).isEmpty(), "the target was freed");
+            helper.assertTrue(rig.caster().received(LineRules.REFUSAL_PREFIX + "not_down"), "the caster was not told: " + rig.caster().heard());
         } finally {
             finish(helper, rig, true);
             rig.close();

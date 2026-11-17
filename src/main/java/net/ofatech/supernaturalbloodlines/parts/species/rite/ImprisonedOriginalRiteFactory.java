@@ -13,6 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
@@ -68,15 +69,17 @@ public record ImprisonedOriginalRiteFactory() implements RiteFactory {
         private Optional<String> refusal(ServerPlayer performer, @Nullable UUID targetBlood) {
             MinecraftServer server = level.getServer();
             boolean witch = SeveranceRiteFactory.isWitchType(BloodlineAccess.get(performer).species());
+            Optional<LivingEntity> there = Imprisonment.trapped(level, getPos());
             Optional<UUID> trapped = Imprisonment.trappedRoot(level, getPos());
+            boolean down = there.map(Imprisonment::isDown).orElse(false);
             boolean ring = Imprisonment.ringClosed(level, getPos(), SpeciesConfig.ringRadius());
             if (targetBlood == null) {
                 return LineRules.imprisonedRefusal(new LineRules.ImprisonedFacts(witch, LunarEclipse.active(server), Optional.empty(),
-                        false, false, Optional.empty(), trapped, ring));
+                        false, false, Optional.empty(), trapped, down, ring));
             }
             return LineRules.imprisonedRefusal(new LineRules.ImprisonedFacts(witch, LunarEclipse.active(server), Optional.of(targetBlood),
                     SireCall.player(server, targetBlood) instanceof ServerPlayer here && here.level() == level, Lines.isOriginalId(server, targetBlood), Lines.rootOf(server, targetBlood),
-                    trapped, ring));
+                    trapped, down, ring));
         }
 
         @Override

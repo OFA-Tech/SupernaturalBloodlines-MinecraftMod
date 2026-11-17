@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species.line;
 
+import de.teamlapen.vampirism.api.entity.convertible.IConvertedCreature;
+import de.teamlapen.vampirism.api.entity.vampire.IVampire;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -59,7 +61,8 @@ public final class LineDeath {
 
     private static void onDeath(LivingDeathEvent e) {
         if (e.getEntity() instanceof ServerPlayer p && SpeciesConfig.originalLineDeath() && OriginalRules.isOriginal(BloodlineAccess.get(p).species())
-                && OriginalRules.isWhiteOakKill(e.getSource())) {
+                && OriginalRules.isWhiteOakKill(e.getSource())
+                && LineRules.killerCounts(p.getUUID(), e.getSource().getEntity() == null ? null : e.getSource().getEntity().getUUID())) {
             run(p.server, p.getUUID());
         }
     }
@@ -99,7 +102,7 @@ public final class LineDeath {
         for (ServerLevel level : server.getAllLevels()) {
             List<Entity> doomed = new ArrayList<>();
             for (Entity e : level.getAllEntities()) {
-                if (!(e instanceof Player) && e.hasData(SpeciesRegistries.LINE) && root.equals(e.getData(SpeciesRegistries.LINE))) {
+                if (dies(e) && e.hasData(SpeciesRegistries.LINE) && root.equals(e.getData(SpeciesRegistries.LINE))) {
                     doomed.add(e);
                 }
             }
@@ -133,14 +136,24 @@ public final class LineDeath {
         return true;
     }
 
-    /** A creature in a level that is loaded goes; one that is not is owed, and goes when it loads. */
+    /**
+     * Line death takes vampires and players only. Vampirism's converted animals and villagers are {@code IVampire} too (through
+     * {@code IConvertedCreature}), but they are animals bitten by a vampire, not vampires: they are never killed, discarded or given a line.
+     */
+    public static boolean dies(Entity e) {
+        return e instanceof IVampire && !(e instanceof IConvertedCreature<?>);
+    }
+
+    /** A creature in a level that is loaded goes (if it is a vampire); one that is not loaded is owed, and goes when it loads (if it is one). */
     private static void discard(MinecraftServer server, SirelineIndex sirelines, UUID id) {
         sirelines.remove(id);
         for (ServerLevel level : server.getAllLevels()) {
             // getEntity only finds what is loaded: it never loads a chunk
             Entity e = level.getEntity(id);
             if (e != null) {
-                e.discard();
+                if (dies(e)) {
+                    e.discard();
+                }
                 return;
             }
         }
@@ -182,8 +195,9 @@ public final class LineDeath {
         }
         ServerLevel level = (ServerLevel) e.getLevel();
         Entity entity = e.getEntity();
-        if (SirelineIndex.get(level).takePendingMob(entity.getUUID())
-                || (entity.hasData(SpeciesRegistries.LINE) && LineIndex.get(level.getServer()).isDead(entity.getData(SpeciesRegistries.LINE)))) {
+        boolean owed = SirelineIndex.get(level).takePendingMob(entity.getUUID());
+        // a creature that is not a vampire (a converted animal) is let in: the debt of its line is not one it pays
+        if (dies(entity) && (owed || (entity.hasData(SpeciesRegistries.LINE) && LineIndex.get(level.getServer()).isDead(entity.getData(SpeciesRegistries.LINE))))) {
             e.setCanceled(true);
         }
     }

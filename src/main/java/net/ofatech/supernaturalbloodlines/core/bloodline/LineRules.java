@@ -140,7 +140,7 @@ public final class LineRules {
 
     public record ImprisonedFacts(boolean witchType, boolean eclipse, Optional<UUID> targetBlood, boolean targetOnline,
                                   boolean targetIsOriginal, Optional<UUID> targetRoot, Optional<UUID> trappedRoot,
-                                  boolean ringClosed) {
+                                  boolean originalDown, boolean ringClosed) {
     }
 
     /** R126: the first failing check, as a full lang key. */
@@ -163,11 +163,23 @@ public final class LineRules {
         if (f.trappedRoot().isEmpty()) {
             return refusal("nobody_trapped");
         }
+        // standing in the ring is not enough: the Original has to be downed or desiccated (whoever they are)
+        if (!f.originalDown()) {
+            return refusal("not_down");
+        }
         // the wrong Original and an open ring are one answer: which of the two it is would tell the performer who stands in the ring
         if (!f.trappedRoot().equals(f.targetRoot()) || !f.ringClosed()) {
             return Optional.of(FAILS);
         }
         return Optional.empty();
+    }
+
+    /**
+     * Whether a white oak death starts line death: someone else must have dealt it. A projectile or an item counts as its owner (that is who
+     * {@code DamageSource.getEntity()} is); no killer at all (the environment, a bare {@code /kill}) and the Original's own hand do not.
+     */
+    public static boolean killerCounts(UUID victim, @Nullable UUID killer) {
+        return killer != null && !killer.equals(victim);
     }
 
     /** Whether a line death owed to {@code owedRoot} is still owed: the player is still in that line and still supernatural (a freed, cured or re-lined player owes nothing). */

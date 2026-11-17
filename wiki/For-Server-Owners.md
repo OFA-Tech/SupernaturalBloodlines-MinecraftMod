@@ -123,6 +123,12 @@ A simple way: keep one `config/` folder in your modpack and ship it to everyone.
 | Hidden gene | `latent_gene_chance` | 15% | rolled once per player at first login |
 | True Alpha farming | (design) | | The 300 defender kills can be farmed at a mob spawner beside a villager. |
 
+## Upgrading to line death
+
+Line death is now ON by default, offline players included. Set `original_line_death = false` to keep the old behaviour. `sireline_death` is ignored. A server that had `sireline_death` in `supernaturalbloodlines-species.toml` is told once in the log when it starts. Offline players who owed a death to the old rule still pay it at their next login (as a death of their new line, or dropped if no Original is recorded above them).
+
+Line death only takes vampires and players: a converted animal or villager is never killed or removed by it. The Original's own white oak does not start it (see [Original Bloodlines](Original-Bloodlines)).
+
 ## Operators
 - A bad entry in `layers` or `rank_skills` is **ignored**, logged at **ERROR** when the config loads, and every **operator (permission level 2)** is told in chat on login: "species_tensura: N invalid entries in the config were ignored (see the server log)."
 - The debug commands are at **permission level 2**: see [Commands](Commands#supernaturalbloodlines-debug-permission-level-2).

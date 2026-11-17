@@ -5,6 +5,7 @@ import static net.ofatech.supernaturalbloodlines.parts.species.gametest.Sireline
 import static net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCommandGameTests.species;
 
 import de.teamlapen.vampirism.api.VReference;
+import de.teamlapen.vampirism.api.entity.convertible.IConvertedCreature;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.monster.Zombie;
@@ -558,7 +560,7 @@ public final class LineDeathGameTests {
     public static void unloadedSiredMobsAreDiscardedWhenTheyLoad(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         ServerPlayer o = mortal(helper, Species.ORIGINAL);
-        Cow later = helper.spawn(EntityType.COW, new Vec3(6.5, 2, 4.5));
+        Mob later = spawnVampire(helper);
         Cow bystander = helper.spawn(EntityType.COW, new Vec3(8.5, 2, 4.5));
         UUID far = UUID.randomUUID();
         try {
@@ -607,6 +609,65 @@ public final class LineDeathGameTests {
             helper.assertTrue(dead(child), "a severed child did not die with the Original");
         } finally {
             forget(helper, o, child);
+        }
+        helper.succeed();
+    }
+
+    /** The Original's own white oak is not a line death; someone else's is. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOriginalsOwnWhiteOakDoesNotStartLineDeath(GameTestHelper helper) {
+        ServerPlayer o = mortal(helper, Species.ORIGINAL);
+        ServerPlayer child = mortal(helper, Species.HYBRID);
+        try {
+            SireRecorder.record(o, child);
+            online(o, child);
+            o.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(WhiteOak.STAKE.get()));
+            die(o, o.damageSources().playerAttack(o));
+            helper.assertTrue(!dead(child), "a self-inflicted white oak blow took the line");
+            die(o, o.damageSources().source(DamageTypes.GENERIC_KILL, o));
+            helper.assertTrue(!dead(child), "a generic_kill naming the Original themselves took the line");
+            die(o, o.damageSources().source(DamageTypes.GENERIC_KILL));
+            helper.assertTrue(!dead(child), "a kill with no killer took the line");
+            // the same weapon in someone else's hand does
+            die(o, whiteOakBlow(helper));
+            helper.assertTrue(dead(child), "control: another entity's white oak did not take the line");
+        } finally {
+            forget(helper, o, child);
+        }
+        helper.succeed();
+    }
+
+    /** Line death takes vampires and players: a converted animal is in no line and is never discarded, loaded or not. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void convertedAnimalsAreNeverTakenByLineDeath(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ServerPlayer o = mortal(helper, Species.ORIGINAL);
+        Entity cow = helper.spawn(BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse("vampirism:converted_cow")), new Vec3(8.5, 2, 4.5));
+        Entity lateCow = helper.spawn(BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse("vampirism:converted_cow")), new Vec3(10.5, 2, 4.5));
+        Mob vampire = spawnVampire(helper);
+        try {
+            helper.assertTrue(cow instanceof IConvertedCreature<?> && LineDeath.dies(vampire) && !LineDeath.dies(cow), "control: the converted cow is not a converted creature (or the vampire is not killable)");
+            SireRecorder.record(o, (LivingEntity) cow);
+            helper.assertTrue(lines(helper).rootOf(cow.getUUID()).isEmpty(), "a converted animal was given a line when it was sired");
+            // an old entry (or a creature that stopped being one) still does not die
+            lines(helper).setRoot(cow.getUUID(), o.getUUID(), false);
+            SireRecorder.record(o, vampire);
+            SirelineIndex.get(level).addPendingMob(lateCow.getUUID());
+            online(o);
+            LineDeath.run(level.getServer(), o.getUUID());
+            helper.assertTrue(vampire.isRemoved(), "control: the vampire stayed");
+            helper.assertTrue(!cow.isRemoved(), "a converted cow was discarded");
+            EntityJoinLevelEvent join = new EntityJoinLevelEvent(lateCow, level);
+            LineDeath.onJoin(join);
+            helper.assertTrue(!join.isCanceled(), "a converted cow owed a death was turned away");
+            helper.assertTrue(!SirelineIndex.get(level).isPendingMob(lateCow.getUUID()), "its debt was kept");
+        } finally {
+            forget(helper, o);
+            lines(helper).remove(cow.getUUID());
+            SirelineIndex.get(level).takePendingMob(lateCow.getUUID());
+            cow.discard();
+            lateCow.discard();
+            vampire.discard();
         }
         helper.succeed();
     }

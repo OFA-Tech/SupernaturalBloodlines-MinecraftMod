@@ -182,5 +182,5 @@ Note: every rite that says "full moon" needs the night of the full moon, like th
 
 ## Rite of the Broken Line and Rite of the Imprisoned Original
 
-Witch-type performer, lunar eclipse. The Broken Line frees one player from an Original's line; the Imprisoned Original frees a player and their whole branch, with the Original held inside a closed mountain ash circle for 30 seconds. See [Original Bloodlines](Original-Bloodlines).
+Witch-type performer, lunar eclipse. The Broken Line frees one player from an Original's line; the Imprisoned Original frees a player and their whole branch, with the Original, brought down (downed, dying or desiccated), held inside a closed mountain ash circle for 30 seconds. Neither rite asks the target: a witch can free an unwilling player. See [Original Bloodlines](Original-Bloodlines).
 
