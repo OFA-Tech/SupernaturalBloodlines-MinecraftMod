@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import org.jetbrains.annotations.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -30,10 +29,15 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder;
  * overwritten either. The link is dropped when the sire is gone, the child is no longer supernatural, or the switch is off; the switch
  * is read when a player logs in or their bloodline changes, so turn it off and have everyone log in once before disabling the part.
  * Nothing runs while the whole part is off, so its links stay.
+ * <p>
+ * A Rite of Severance (R101b) frees the sired from the severed sire: the owner goes, and when the severed sire was the owner the
+ * Tensura name goes too ({@code severance_clears_name}), so someone else can name them. The EP and stats the naming gave stay.
  */
 public final class SubordinateLink {
     /** The sire this mod made the child's owner; absent when the owner (if any) is not ours. */
     public static final String KEY = SupernaturalBloodlines.MODID + ":linked_sire";
+    /** Set when a severance cleared the player's Tensura name; read by {@link SireNaming} to tell a re-naming from a first one. */
+    public static final String SEVERED_KEY = SupernaturalBloodlines.MODID + ":severed_name";
     private static final int MAX_WARNED = 1024;
     private static final Set<UUID> WARNED = new HashSet<>();
 
@@ -54,6 +58,9 @@ public final class SubordinateLink {
             if (e.getOriginal().getPersistentData().hasUUID(KEY)) {
                 e.getEntity().getPersistentData().putUUID(KEY, e.getOriginal().getPersistentData().getUUID(KEY));
             }
+            if (e.getOriginal().getPersistentData().getBoolean(SEVERED_KEY)) {
+                e.getEntity().getPersistentData().putBoolean(SEVERED_KEY, true);
+            }
         });
         // a plain vampire is supernatural through its faction: joining or leaving it moves the bond
         NeoForge.EVENT_BUS.addListener((PlayerFactionEvent.FactionLevelChanged e) -> {
@@ -64,26 +71,35 @@ public final class SubordinateLink {
     }
 
     private static void onChange(ServerPlayer p, BloodlineAccess.BloodlineChange change) {
+        // read before unlink: for a link of ours unlink clears the owner, and the owner is how we know the severed sire owned the player
+        UUID severed = change.after().bondBroken() ? change.before().boundSire() : null;
+        boolean ownedBySevered = severed != null && severed.equals(TensuraStorages.getExistenceFrom(p).getPermanentOwner());
         // the bond, not the blood: a Rite of Severance (R101b) ends the link while the sire stays recorded
         if (!Objects.equals(change.before().boundSire(), change.after().boundSire())) {
             unlink(p);
         }
-        if (change.after().bondBroken()) {
-            freeFrom(p, change.before().boundSire());
+        if (ownedBySevered) {
+            freeFrom(p);
         }
         sync(p);
     }
 
     /**
      * The owner a naming made (Tensura sets the permanent owner itself, with no stored link of ours) is part of the bond too: a
-     * severance clears it, but only when it is the severed sire. Someone else's owner stays, and so does the name.
+     * severance clears it, and with it the Tensura name (the EP and stats the naming gave stay), but only when the severed sire was
+     * the owner. Someone else's owner stays, and so does the name. A cleared name is remembered ({@link #SEVERED_KEY}) for the
+     * re-siring reward switch.
      */
-    private static void freeFrom(ServerPlayer p, @Nullable UUID severedSire) {
+    private static void freeFrom(ServerPlayer p) {
         IExistence existence = TensuraStorages.getExistenceFrom(p);
-        if (severedSire != null && severedSire.equals(existence.getPermanentOwner())) {
-            existence.setPermanentOwner(null);
-            existence.markDirty();
+        existence.setPermanentOwner(null);
+        if (SpeciesTensuraConfig.severanceClearsName()) {
+            if (existence.getName() != null) {
+                p.getPersistentData().putBoolean(SEVERED_KEY, true);
+            }
+            existence.setName(null);
         }
+        existence.markDirty();
     }
 
     private static void onSired(UUID sire, LivingEntity child) {

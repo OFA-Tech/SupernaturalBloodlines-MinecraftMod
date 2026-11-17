@@ -127,7 +127,7 @@ public final class SirelineTensuraGameTests {
 
     static {
         // sees the magicule cost Tensura worked out for the last naming (SireNaming does not change it)
-        TensuraEntityEvents.NAMING_EVENT.register((target, namer, cost, epGain, type, name) -> {
+        TensuraEntityEvents.NAMING_EVENT.register((target, namer, epGain, cost, type, name) -> {
             lastCost = cost.get();
             return EventResult.pass();
         });
@@ -626,9 +626,9 @@ public final class SirelineTensuraGameTests {
         helper.succeed();
     }
 
-    /** R101b: a severed bond frees the sired from the Tensura owner link; the sire stays recorded and the name, which is only a name, stays. */
+    /** R101b: a severed bond frees the sired from the Tensura owner link and the Tensura name goes with it; the sire stays recorded. */
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void severanceFreesTheOwnerAndTheNameStays(GameTestHelper helper) {
+    public static void severanceFreesTheOwnerAndClearsTheName(GameTestHelper helper) {
         ServerPlayer sire = namer(helper);
         ServerPlayer newSire = TestPlayers.create(helper);
         ServerPlayer sired = hybrid(helper);
@@ -642,7 +642,7 @@ public final class SirelineTensuraGameTests {
             BloodlineAccess.set(sired, BloodlineAccess.get(sired).toBuilder().severedSire(sire.getUUID()).build());
             helper.assertTrue(existence(sired).getPermanentOwner() == null, "the owner stayed: " + existence(sired).getPermanentOwner());
             helper.assertTrue(!SubordinateHelper.isSubordinate(sire, sired), "still a subordinate after the severance");
-            helper.assertTrue(own.equals(existence(sired).getName()), "the name was lost: " + existence(sired).getName());
+            helper.assertTrue(existence(sired).getName() == null, "the name survived the severance: " + existence(sired).getName());
             helper.assertTrue(sire.getUUID().equals(BloodlineAccess.get(sired).sire()), "the sire was forgotten");
 
             // a new sire is a new bond: linked again, to the new sire
@@ -654,13 +654,20 @@ public final class SirelineTensuraGameTests {
         helper.succeed();
     }
 
-    /** An owner Tensura's own naming set (no link of ours stored) is freed by a severance too, and the name stays; someone else's owner stays. */
+    /** The sired's base max aura plus max magicule: what Tensura's naming reward raises. */
+    private static double maxEp(LivingEntity e) {
+        return e.getAttribute(TensuraAttributes.MAX_AURA).getBaseValue() + e.getAttribute(TensuraAttributes.MAX_MAGICULE).getBaseValue();
+    }
+
+    private static void sever(ServerPlayer sired, ServerPlayer sire) {
+        BloodlineAccess.set(sired, BloodlineAccess.get(sired).toBuilder().severedSire(sire.getUUID()).build());
+    }
+
+    /** An owner Tensura's own naming set (no link of ours stored) is freed by a severance too, and the name goes with it. */
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void severanceClearsTheOwnerANamingSet(GameTestHelper helper) {
+    public static void severanceClearsTheOwnerANamingSetAndTheName(GameTestHelper helper) {
         ServerPlayer sire = namer(helper);
         ServerPlayer sired = hybrid(helper);
-        ServerPlayer other = TestPlayers.create(helper);
-        ServerPlayer ownedSired = hybrid(helper);
         boolean before = playerNaming(helper, true);
         // no link of ours: the only owner is the one the naming sets
         SpeciesTensuraConfig.overrideSireLink(false);
@@ -671,20 +678,154 @@ public final class SirelineTensuraGameTests {
             helper.assertTrue(sire.getUUID().equals(existence(sired).getPermanentOwner()), "the naming did not make the sire the owner");
             helper.assertTrue(!sired.getPersistentData().hasUUID("supernaturalbloodlines:linked_sire"), "control: a link of ours is stored");
 
-            BloodlineAccess.set(sired, BloodlineAccess.get(sired).toBuilder().severedSire(sire.getUUID()).build());
+            sever(sired, sire);
             helper.assertTrue(existence(sired).getPermanentOwner() == null, "the naming owner survived the severance: " + existence(sired).getPermanentOwner());
-            helper.assertTrue("Ward".equals(existence(sired).getName()), "the name was lost: " + existence(sired).getName());
+            helper.assertTrue(existence(sired).getName() == null, "the name survived the severance: " + existence(sired).getName());
             helper.assertTrue(sire.getUUID().equals(BloodlineAccess.get(sired).sire()), "the sire was forgotten");
-
-            // an owner that is not the severed sire is nobody's to clear
-            existence(ownedSired).setPermanentOwner(other.getUUID());
-            SireRecorder.record(sire, ownedSired);
-            BloodlineAccess.set(ownedSired, BloodlineAccess.get(ownedSired).toBuilder().severedSire(sire.getUUID()).build());
-            helper.assertTrue(other.getUUID().equals(existence(ownedSired).getPermanentOwner()), "an unrelated owner was cleared: " + existence(ownedSired).getPermanentOwner());
         } finally {
             SpeciesTensuraConfig.overrideSireLink(null);
             restore(helper, before);
-            reset(sire, sired, other, ownedSired);
+            reset(sire, sired);
+        }
+        helper.succeed();
+    }
+
+    /** An owner that is not the severed sire is nobody's to clear, and the name it gave stays. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void severanceKeepsAnUnrelatedOwnerAndItsName(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer other = TestPlayers.create(helper);
+        ServerPlayer ownedSired = hybrid(helper);
+        try {
+            existence(ownedSired).setPermanentOwner(other.getUUID());
+            existence(ownedSired).setName("Taken");
+            SireRecorder.record(sire, ownedSired);
+            sever(ownedSired, sire);
+            helper.assertTrue(other.getUUID().equals(existence(ownedSired).getPermanentOwner()), "an unrelated owner was cleared: " + existence(ownedSired).getPermanentOwner());
+            helper.assertTrue("Taken".equals(existence(ownedSired).getName()), "an unrelated name was cleared: " + existence(ownedSired).getName());
+        } finally {
+            reset(sire, other, ownedSired);
+        }
+        helper.succeed();
+    }
+
+    /** severance_clears_name off: today's behaviour, the owner goes and the name stays. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void severanceNameClearSwitchOffKeepsTheName(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        online(sire);
+        SpeciesTensuraConfig.overrideSeveranceClearsName(false);
+        try {
+            SireRecorder.record(sire, sired);
+            String own = sired.getGameProfile().getName();
+            helper.assertTrue(own.equals(existence(sired).getName()), "control: not named " + said(sire));
+            sever(sired, sire);
+            helper.assertTrue(existence(sired).getPermanentOwner() == null, "the owner stayed: " + existence(sired).getPermanentOwner());
+            helper.assertTrue(own.equals(existence(sired).getName()), "the name was cleared with the switch off: " + existence(sired).getName());
+        } finally {
+            SpeciesTensuraConfig.overrideSeveranceClearsName(null);
+            reset(sire, sired);
+        }
+        helper.succeed();
+    }
+
+    /** The old sire does not re-name a severed player at login, a later namer's name survives an unrelated bloodline change (no second severance). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void severedPlayerKeepsALaterNameFromAnotherNamer(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer other = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        boolean before = playerNaming(helper, true);
+        online(sire);
+        try {
+            SireRecorder.record(sire, sired);
+            sever(sired, sire);
+            helper.assertTrue(existence(sired).getName() == null, "the name survived the severance: " + existence(sired).getName());
+
+            SubordinateLink.onLogin(sired, List.of(sire, sired));
+            helper.assertTrue(existence(sired).getName() == null, "the old sire named the severed player again: " + existence(sired).getName());
+
+            RequestNamingMenuPacket.name(sired, other, NamingType.LOW, "Second");
+            helper.assertTrue("Second".equals(existence(sired).getName()), "another namer could not name them: " + said(other));
+            helper.assertTrue(other.getUUID().equals(existence(sired).getPermanentOwner()), "the new namer is not the owner");
+
+            BloodlineAccess.set(sired, BloodlineAccess.get(sired).toBuilder().thirst(10).build());
+            helper.assertTrue("Second".equals(existence(sired).getName()), "an unrelated change wiped the name: " + existence(sired).getName());
+            helper.assertTrue(other.getUUID().equals(existence(sired).getPermanentOwner()), "an unrelated change cleared the owner: " + existence(sired).getPermanentOwner());
+        } finally {
+            restore(helper, before);
+            reset(sire, other, sired);
+        }
+        helper.succeed();
+    }
+
+    /** The naming's EP and stats stay when the name goes. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void severanceKeepsEpAndStats(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        online(sire);
+        try {
+            double base = maxEp(sired);
+            SireRecorder.record(sire, sired);
+            helper.assertTrue(existence(sired).getName() != null, "control: not named " + said(sire));
+            double named = maxEp(sired);
+            helper.assertTrue(named > base, "control: the naming gave no EP and stats");
+
+            sever(sired, sire);
+            helper.assertTrue(existence(sired).getName() == null, "the name survived the severance");
+            helper.assertTrue(maxEp(sired) == named, "the severance changed the stats: " + named + " to " + maxEp(sired));
+        } finally {
+            reset(sire, sired);
+        }
+        helper.succeed();
+    }
+
+    /** Default: a sire naming the player again after a severance pays Tensura's reward again. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void resiringAfterSeverancePaysTheNamingRewardAgain(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer newSire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        online(sire, newSire);
+        try {
+            SireRecorder.record(sire, sired);
+            sever(sired, sire);
+            double afterFirst = maxEp(sired);
+            helper.assertTrue(SireRecorder.record(newSire, sired), "could not be sired again");
+            helper.assertTrue(existence(sired).getName() != null, "the re-siring did not name them " + said(newSire));
+            helper.assertTrue(maxEp(sired) > afterFirst, "no reward for the re-naming");
+        } finally {
+            reset(sire, newSire, sired);
+        }
+        helper.succeed();
+    }
+
+    /** resire_naming_reward off: the re-naming happens and costs the new sire as usual, but gives the sired nothing; a first naming is unaffected. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void resireNamingRewardOffNamesWithoutReward(GameTestHelper helper) {
+        ServerPlayer sire = namer(helper);
+        ServerPlayer newSire = namer(helper);
+        ServerPlayer sired = hybrid(helper);
+        online(sire, newSire);
+        SpeciesTensuraConfig.overrideResireNamingReward(false);
+        try {
+            double base = maxEp(sired);
+            SireRecorder.record(sire, sired);
+            helper.assertTrue(maxEp(sired) > base, "the switch took away a first naming's reward");
+            sever(sired, sire);
+            double afterFirst = maxEp(sired);
+            double magicule = existence(newSire).getMagicule() + existence(newSire).getAura();
+
+            helper.assertTrue(SireRecorder.record(newSire, sired), "could not be sired again");
+            helper.assertTrue(existence(sired).getName() != null, "the re-siring did not name them " + said(newSire));
+            helper.assertTrue(maxEp(sired) == afterFirst, "the re-naming still paid a reward: " + afterFirst + " to " + maxEp(sired));
+            helper.assertTrue(existence(newSire).getMagicule() + existence(newSire).getAura() < magicule, "the new sire paid nothing");
+            helper.assertTrue(!sired.getPersistentData().getBoolean(SubordinateLink.SEVERED_KEY), "the re-naming left the severed marker behind");
+        } finally {
+            SpeciesTensuraConfig.overrideResireNamingReward(null);
+            reset(sire, newSire, sired);
         }
         helper.succeed();
     }
