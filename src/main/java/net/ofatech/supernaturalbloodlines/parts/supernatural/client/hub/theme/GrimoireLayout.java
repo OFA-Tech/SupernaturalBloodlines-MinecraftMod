@@ -49,8 +49,10 @@ public final class GrimoireLayout {
         Rect rightPage = new Rect(leftPage.right() + SPINE, leftPage.y(), pageW, leftPage.h());
         List<Rect> tabRects = new ArrayList<>();
         int top = Math.max(book.y() + 12, TOAST_CLEAR);
+        // the tabs share the edge above the close button: the pitch shrinks (never below a pressable 12) when ten of them would not fit
+        int pitch = tabs <= 0 ? TAB_H + TAB_GAP : Math.max(12 + TAB_GAP, Math.min(TAB_H + TAB_GAP, (book.bottom() - 18 - top) / tabs));
         for (int i = 0; i < tabs; i++) {
-            tabRects.add(new Rect(book.right() - 4, top + i * (TAB_H + TAB_GAP), TAB_OUT + 4, TAB_H));
+            tabRects.add(new Rect(book.right() - 4, top + i * pitch, TAB_OUT + 4, pitch - TAB_GAP));
         }
         List<Rect> wax = new ArrayList<>();
         for (int i = 0; i < seals; i++) {

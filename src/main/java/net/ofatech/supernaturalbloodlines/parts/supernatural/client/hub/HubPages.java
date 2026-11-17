@@ -5,7 +5,11 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import java.util.EnumMap;
 import java.util.Map;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.AdminPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BloodlinePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.HomePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.ProfilePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.SettingsPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.GuidePage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.LoadoutPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackPage;
@@ -22,17 +26,29 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.Que
  */
 public final class HubPages {
     private static final HubPageView PLACEHOLDER = new PlaceholderPage();
-    private static final Map<HubPage, HubPageView> SHARED = new EnumMap<>(Map.of(
-            HubPage.PATH, new PathPage(),
-            HubPage.QUESTS, new QuestsPage(),
-            HubPage.SKILLS, new SkillsPage(),
-            HubPage.RITES, new RitesPage(),
-            HubPage.BLOODLINE, new BloodlinePage(),
-            HubPage.PACK, new PackPage(),
-            HubPage.GUIDE, new GuidePage(),
-            HubPage.LOADOUT, new LoadoutPage()));
+    private static final HubPageView PROFILE = new ProfilePage();
+    private static final Map<HubPage, HubPageView> SHARED = new EnumMap<>(HubPage.class);
+
+    static {
+        SHARED.put(HubPage.HOME, new HomePage());
+        SHARED.put(HubPage.PATH, new PathPage());
+        SHARED.put(HubPage.QUESTS, new QuestsPage());
+        SHARED.put(HubPage.SKILLS, new SkillsPage());
+        SHARED.put(HubPage.RITES, new RitesPage());
+        SHARED.put(HubPage.BLOODLINE, new BloodlinePage());
+        SHARED.put(HubPage.PACK, new PackPage());
+        SHARED.put(HubPage.GUIDE, new GuidePage());
+        SHARED.put(HubPage.SETTINGS, new SettingsPage());
+        SHARED.put(HubPage.ADMIN, new AdminPage());
+        SHARED.put(HubPage.LOADOUT, new LoadoutPage());
+    }
 
     private HubPages() {
+    }
+
+    /** The Profile route: one view for every theme, drawn into the same regions. */
+    public static HubPageView profile() {
+        return PROFILE;
     }
 
     public static HubPageView shared(HubPage page) {

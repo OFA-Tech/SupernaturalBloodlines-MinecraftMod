@@ -219,7 +219,8 @@ public final class BookPackPage implements HubPageView {
             if (leads) {
                 tip.add(1, Component.translatable(KEY + "leader"));
             }
-            f.target(id, hit, tip, () -> selected = m.name());
+            tip.add(Component.translatable(KEY + "open_profile"));
+            f.target(id, hit, tip, openProfile(f, m.name()));
             if (f.focused(id)) {
                 KitDraw.focusRing(f.g, hit, t.focusColor());
             }
@@ -272,6 +273,17 @@ public final class BookPackPage implements HubPageView {
                                 () -> BloodlinePage.command("pack leave")));
             }
         }
+    }
+
+    /** A click on a member (portrait or ledger row) selects them and opens their Profile when the snapshot named an id for them. */
+    private Runnable openProfile(HubScreen.Frame f, String name) {
+        java.util.UUID id = f.view.snapshot().pack().stream().filter(m -> m.name().equals(name)).flatMap(m -> m.id().stream()).findFirst().orElse(null);
+        return () -> {
+            selected = name;
+            if (id != null) {
+                f.screen().openProfile(id, name);
+            }
+        };
     }
 
     /** The Blood Moon's floating bar and Tensura's info pane: the chosen member (or the pack) and what the command allows. */
@@ -353,7 +365,7 @@ public final class BookPackPage implements HubPageView {
                 BookKit.small(f, Component.literal(n), Math.max(s.x(), Math.min(s.x() + areaW - nw - 2, nx)), ny, nw + 4, slot.member().role().small() ? t.muted() : t.ink());
             }
             f.target("ring:" + slot.member().id(), new Rect(slot.x() - size / 2 - 2, slot.y() - size / 2 - 2, size + 4, size + 4),
-                    List.of(Component.literal(slot.member().id())), () -> selected = slot.member().id());
+                    List.of(Component.literal(slot.member().id()), Component.translatable(KEY + "open_profile")), openProfile(f, slot.member().id()));
         }
         if (ring.hidden() > 0) {
             Component more = Component.translatable(BOOK + "ring_more", ring.hidden());

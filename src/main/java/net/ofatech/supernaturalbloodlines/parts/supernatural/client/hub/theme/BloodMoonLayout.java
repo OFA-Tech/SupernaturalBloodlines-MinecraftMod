@@ -33,8 +33,9 @@ public final class BloodMoonLayout {
         Rect screen = new Rect(0, 0, width, height);
         int step = Math.min(28, tabs <= 1 ? 28 : (height - TOP - EDGE - RAIL) / (tabs - 1));
         List<Rect> rail = new ArrayList<>();
+        int size = Math.max(14, Math.min(RAIL, step - 1)); // ten buttons on the smallest GUI shrink a little instead of overlapping
         for (int i = 0; i < tabs; i++) {
-            rail.add(new Rect(EDGE, TOP + i * step, RAIL, RAIL));
+            rail.add(new Rect(EDGE, TOP + i * step, size, size));
         }
         Rect close = new Rect(width - EDGE - 14, EDGE + 4, 14, 14);
         Rect themeButton = new Rect(close.x() - 6 - RAIL, EDGE, RAIL, RAIL);

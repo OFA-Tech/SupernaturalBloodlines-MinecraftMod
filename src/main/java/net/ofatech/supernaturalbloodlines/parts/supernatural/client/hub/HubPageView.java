@@ -13,6 +13,11 @@ public interface HubPageView {
         return false;
     }
 
+    /** A typed character, for a page with a text field; true when it was taken. */
+    default boolean charTyped(char c, int modifiers) {
+        return false;
+    }
+
     default boolean mouseDragged(double mouseX, double mouseY, double dx, double dy, int button) {
         return false;
     }

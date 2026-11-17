@@ -87,6 +87,11 @@ public enum HubPage {
         return w.visible(c) ? w : HOME;
     }
 
+    /** A werewolf or a hybrid type: the races that have a pack by nature. */
+    public static boolean isWolfType(SupernaturalRace r) {
+        return wolfRace(r);
+    }
+
     private static boolean wolfRace(SupernaturalRace r) {
         return r == SupernaturalRace.WEREWOLF || r == SupernaturalRace.HYBRID || r == SupernaturalRace.ORIGINAL_HYBRID || r == SupernaturalRace.TRIBRID;
     }

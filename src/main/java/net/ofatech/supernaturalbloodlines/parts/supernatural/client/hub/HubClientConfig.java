@@ -14,19 +14,51 @@ public final class HubClientConfig {
         }
     }
 
+    /** Which page the hub opens on: Home the first time in a session (and whenever a request waits), or always the page the player left. */
+    public enum OpenOn { HOME, LAST_PAGE }
+
     public static final String FILE = SupernaturalBloodlines.MODID + "-hub-client.toml";
     public static final ModConfigSpec SPEC;
     private static final ModConfigSpec.EnumValue<ThemeId> HUB_THEME;
+    private static final ModConfigSpec.EnumValue<OpenOn> OPEN_ON;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         HUB_THEME = b.comment("The hub's look: GRIMOIRE (default, an open book), BLOOD_MOON (a red moon that fills with your ladder) or TENSURA",
                         "(Tensura's menu style, wider; needs Tensura, else the Grimoire). It can be changed while the hub is open.")
                 .defineEnum("hub_theme", ThemeId.GRIMOIRE);
+        OPEN_ON = b.comment("Which page the hub opens on: HOME (the first time in a session, and whenever a request waits) or LAST_PAGE (the page you left;",
+                        "only a waiting request opens Home).").defineEnum("open_on", OpenOn.HOME);
         SPEC = b.build();
     }
 
     private HubClientConfig() {
+    }
+
+    /** True for "Home first"; false means the page the player left (a waiting request still opens Home). */
+    public static boolean openOnHome() {
+        try {
+            return OPEN_ON.get() == OpenOn.HOME;
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
+    public static OpenOn openOn() {
+        try {
+            return OPEN_ON.get();
+        } catch (IllegalStateException notLoaded) {
+            return OpenOn.HOME;
+        }
+    }
+
+    public static void setOpenOn(OpenOn value) {
+        try {
+            OPEN_ON.set(value);
+            OPEN_ON.save();
+        } catch (IllegalStateException notLoaded) {
+            // not loaded: no change
+        }
     }
 
     public static ThemeId theme() {

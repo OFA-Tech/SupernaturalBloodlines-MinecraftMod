@@ -16,6 +16,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotPayload;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubOpenPayload;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotRequestPayload;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
@@ -26,7 +27,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
  */
 public final class HubClient {
     private static volatile HubSnapshotPayload snapshot = HubSnapshotPayload.EMPTY;
-    private static HubPage lastPage = HubPage.PATH;
+    private static HubPage lastPage = HubPage.HOME;
     private static final HubReturn RETURN = new HubReturn();
 
     private HubClient() {
@@ -140,8 +141,26 @@ public final class HubClient {
         }
     }
 
+    private static boolean openedThisSession;
+
+    /** Home the first time in a session and whenever a request waits, else the page the player left (the Settings option "open on" can force either). */
     public static void open() {
-        open(lastPage);
+        boolean waiting = !RequestsClient.requests().isEmpty();
+        boolean home = HubClientConfig.openOnHome() ? !openedThisSession || waiting : waiting;
+        openedThisSession = true;
+        open(home ? HubPage.HOME : lastPage);
+    }
+
+    /** The "answer request" key: Home, with the first request focused. */
+    public static void openRequests() {
+        openedThisSession = true;
+        open(HubPage.HOME);
+    }
+
+    /** Back in the main menu: the next world starts a new session. */
+    public static void newSession() {
+        openedThisSession = false;
+        lastPage = HubPage.HOME;
     }
 
     static void open(HubPage page) {
@@ -155,6 +174,27 @@ public final class HubClient {
         lastPage = page;
         mc.setScreen(new HubScreen(page));
         sendOpen(true);
+    }
+
+    /** Runs one of our commands by its row id (see {@code AdminCommands}); the server rebuilds the typed command, Brigadier checks it, and the reply comes back. */
+    public static void runCommand(String rowId, java.util.List<String> args) {
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null && connection.hasChannel(net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubCommandPayload.TYPE)) {
+            PacketDistributor.sendToServer(new net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubCommandPayload(rowId, args));
+        }
+    }
+
+    /** Asks for a person's profile; the OP view only goes out from Admin and the server answers it only to permission level 2. */
+    static void requestProfile(java.util.UUID id, boolean op) {
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection == null) {
+            return;
+        }
+        if (op && connection.hasChannel(net.ofatech.supernaturalbloodlines.parts.supernatural.net.AdminProfileRequestPayload.TYPE)) {
+            PacketDistributor.sendToServer(new net.ofatech.supernaturalbloodlines.parts.supernatural.net.AdminProfileRequestPayload(id));
+        } else if (!op && connection.hasChannel(net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfileRequestPayload.TYPE)) {
+            PacketDistributor.sendToServer(new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfileRequestPayload(id));
+        }
     }
 
     /** Tells the server whether the hub is open, so a request made to this player waits longer while they can answer it. */
