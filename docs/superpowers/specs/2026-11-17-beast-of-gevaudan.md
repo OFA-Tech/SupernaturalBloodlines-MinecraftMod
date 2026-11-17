@@ -128,6 +128,11 @@ Show mapping: phase 3 is "Lydia pulls the spirit out of Mason", with the Host su
 - **Mod boundaries:** it needs the Werewolves mod (model). With Werewolves off the boss is not registered. The Host and Spirit can exist, but the encounter is gated on it. Part switch: `bosses`, config `beast_of_gevaudan_enabled`.
 - **Pike rite** goes in the Enchanted rites part (`circle_magic/rite` data, with the `part_enabled` condition, see `docs/parts/enchanted_tensura.md` on why every rite file needs it).
 
+## Owner answers (2026-11-17)
+- **Q1:** season 5, no mask. There is no Anuk-Ite boss for now.
+- **Q5:** the Valet Pike is made by a witch's spell or rite, using blood from a hunter or an advanced vampire/werewolf. A plain player's own blood is not enough.
+- **All other questions:** the recommended options are accepted for now.
+
 ## 4. Open questions for the owner
 
 1. **Skull mask / season 6.** The Beast has no skull mask and is a season 5 villain. Did you mean the Anuk-Ite (season 6, a different boss), or just the Dread Doctor masks? *Recommend:* treat the Beast as season 5, skip the mask, and give the Anuk-Ite its own research task.
