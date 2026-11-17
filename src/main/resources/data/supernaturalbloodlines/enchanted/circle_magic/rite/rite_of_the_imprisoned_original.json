@@ -1,0 +1,18 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" },
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:sires_blood", "count": 1 },
+        { "id": "supernaturalbloodlines:white_oak_ash", "count": 3 },
+        { "id": "enchanted:spirit_of_otherwhere", "count": 2 }
+    ],
+    "shapes": {
+        "enchanted:large_circle": "enchanted:ritual_chalk"
+    },
+    "power": 36000,
+    "factory": {
+        "type": "supernaturalbloodlines:imprisoned_original"
+    }
+}

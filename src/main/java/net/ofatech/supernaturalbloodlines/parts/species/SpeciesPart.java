@@ -90,6 +90,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.rite.RevelationRiteFacto
 import net.ofatech.supernaturalbloodlines.parts.species.rite.AncestralCallingRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.HybridBloodRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.SeveranceRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.species.rite.BrokenLineRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.species.rite.ImprisonedOriginalRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.witch.Siphoning;
 import net.ofatech.supernaturalbloodlines.parts.species.witch.VampireJoin;
 import net.ofatech.supernaturalbloodlines.parts.species.original.Downed;
@@ -128,6 +130,8 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(OriginalBloodRiteFactory.ID, OriginalBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(HybridBloodRiteFactory.ID, HybridBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(SeveranceRiteFactory.ID, SeveranceRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(BrokenLineRiteFactory.ID, BrokenLineRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(ImprisonedOriginalRiteFactory.ID, ImprisonedOriginalRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(AncestralCallingRiteFactory.ID, AncestralCallingRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(LineageRiteFactory.ID, LineageRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(DoppelgangerBloodRiteFactory.ID, DoppelgangerBloodRiteFactory.CODEC);
@@ -231,6 +235,11 @@ public final class SpeciesPart {
             e.register(SirelineCommandGameTests.class);
             e.register(SirelineCompulsionGameTests.class);
             e.register(LineGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineRiteGameTests.class);
+            // the ring tests need the artifacts part's mountain ash block, found by id: the species part does not import it
+            if (net.minecraft.core.registries.BuiltInRegistries.BLOCK.containsKey(net.ofatech.supernaturalbloodlines.parts.species.line.Imprisonment.RING_BLOCK)) {
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineRiteRingGameTests.class);
+            }
             e.register(LineDeathGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineDiscoveryGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineWarningGameTests.class);
