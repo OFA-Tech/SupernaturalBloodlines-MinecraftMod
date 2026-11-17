@@ -1,0 +1,10 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "net.ofatech.supernaturalbloodlines.mixin.dev",
+  "plugin": "net.ofatech.supernaturalbloodlines.mixin.DevShotsMixinPlugin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "DevShotsWindowMixin"
+  ]
+}

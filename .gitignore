@@ -46,3 +46,5 @@ repo/
 # Python bytecode
 __pycache__/
 *.pyc
+
+run-safeshots/
