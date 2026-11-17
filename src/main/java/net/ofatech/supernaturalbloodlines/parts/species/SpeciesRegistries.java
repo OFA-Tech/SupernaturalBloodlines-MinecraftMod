@@ -108,6 +108,14 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<UUID>> SIRE =
             ATTACHMENTS.register("sire", () -> AttachmentType.builder(() -> Util.NIL_UUID).serialize(UUIDUtil.CODEC).build());
 
+    /** The root Original of this creature's line: the mob's mirror of its {@code LineIndex} entry. Use {@code hasData}. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<UUID>> LINE =
+            ATTACHMENTS.register("line", () -> AttachmentType.builder(() -> Util.NIL_UUID).serialize(UUIDUtil.CODEC).build());
+
+    /** An {@code NpcOriginal} id on an entity that is that NPC Original (set by the boss entities); rites and line death tell Originals apart by it. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<String>> ORIGINAL_ROOT =
+            ATTACHMENTS.register("original_root", () -> AttachmentType.builder(() -> "").serialize(Codec.STRING).build());
+
     /** The player or creature who infected this one with sanguinare, for a day; see {@link InfectionSire}. Not copied on death. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<InfectionSire>> INFECTION_SIRE =
             ATTACHMENTS.register("infection_sire", () -> AttachmentType.builder(() -> new InfectionSire(Util.NIL_UUID, "", 0))
