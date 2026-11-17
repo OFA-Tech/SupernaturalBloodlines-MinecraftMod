@@ -37,6 +37,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrial;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackBonus;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackCommand;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackLeader;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.RoarEffectPayload;
@@ -866,6 +867,33 @@ public final class AlphaPackGameTests {
             helper.assertTrue(index.leftRecently(beta.getUUID(), 10) && index.killsInPack(beta.getUUID(), leader.getUUID(), 10), "leaving the party is leaving by choice: no kill grace was recorded");
         } finally {
             clean(helper, leader, beta);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDuelistWhoLeavesThePartyMidDuelStaysInThePackUntilItEnds(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        online(leader, second);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        FakeParties fake = new FakeParties();
+        PartyLink.setBackend(fake);
+        MinecraftServer server = helper.getLevel().getServer();
+        try {
+            helper.assertTrue(join(helper, leader, second), "the second Alpha could not join");
+            PartyLink.sync(server, leader.getUUID(), true);
+            helper.assertTrue(fake.parties.get(leader.getUUID()).contains(second.getUUID()), "the pack was not mirrored to start with");
+            helper.assertTrue(PackDuel.challenge(second, leader.getUUID().toString()) == null && PackDuel.accept(leader) == null, "the duel did not start");
+            fake.parties.get(leader.getUUID()).remove(second.getUUID());
+            PartyLink.sync(server, leader.getUUID(), false);
+            helper.assertTrue(index.alphaOf(second.getUUID()).isPresent(), "a duelist was taken out of the pack in the middle of the duel");
+            PackDuel.reset();
+            PartyLink.sync(server, leader.getUUID(), false);
+            helper.assertTrue(index.alphaOf(second.getUUID()).isEmpty(), "the removal never took effect after the duel");
+        } finally {
+            PackDuel.reset();
+            clean(helper, leader, second);
         }
         helper.succeed();
     }

@@ -14,6 +14,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PartySyncRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PartySyncRules.Plan;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackMembers;
 
@@ -178,6 +179,9 @@ public final class PartyLink {
             }
         }
         for (UUID m : plan.leavePack()) {
+            if (PackDuel.board().on(m).isPresent()) {
+                continue; // in the middle of a leadership duel nobody can leave the pack: the next pass after it takes them out
+            }
             index.setMirror(m, null);
             // they left the party themselves: that is leaving the pack by choice, with the kill grace of /pack leave
             PackMembers.remove(server, m, "supernaturalbloodlines.pack.left_party", "", true);

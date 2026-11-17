@@ -283,6 +283,10 @@ public final class PackCommand {
         if (!isActiveAlpha(leader)) {
             return error("not_alpha");
         }
+        // somebody the leader is fighting for the lead cannot be sent away in the middle of it
+        if (PackDuel.board().on(leader.getUUID()).map(d -> d.other(leader.getUUID()).equals(target)).orElse(false)) {
+            return error("duel_no_kick", targetName);
+        }
         PackIndex index = PackIndex.get(leader.serverLevel());
         if (!index.isLeader(leader.getUUID())) {
             return error("not_leader");

@@ -271,4 +271,21 @@ class DuelBoardTest {
         assertTrue(b.resume(LEADER, 9).isEmpty(), "somebody who never left resumed it");
         assertFalse(b.pause(THIRD, 8, 100), "a third player paused a duel");
     }
+
+    @Test
+    void eachDuelistHasOneWaitPerDuelAndANewDuelStartsFresh() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        b.accept(LEADER, 1);
+        assertFalse(b.on(CHALLENGER).orElseThrow().pauseSpent(CHALLENGER));
+        assertTrue(b.pause(CHALLENGER, 5, 100));
+        assertTrue(b.on(CHALLENGER).orElseThrow().pauseSpent(CHALLENGER), "the wait was not counted");
+        assertTrue(b.resume(CHALLENGER, 10).isPresent());
+        assertFalse(b.pause(CHALLENGER, 20, 100), "a second wait was given to the same duelist");
+        assertTrue(b.pause(LEADER, 21, 100), "the other duelist's own wait was taken from them");
+        b.clear();
+        challenge(b, CHALLENGER, LEADER, 1000);
+        b.accept(LEADER, 1001);
+        assertTrue(b.pause(CHALLENGER, 1002, 100), "a new duel did not give a new wait");
+    }
 }

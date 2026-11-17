@@ -39,6 +39,8 @@ public final class DuelBoard {
         private UUID pausedBy;
         private long pausedAt;
         private long pauseEnd;
+        // who has used their one wait already: a second disconnect of the same duelist is a forfeit, whatever the window
+        private final java.util.Set<UUID> spentPauses = new java.util.HashSet<>();
 
         Duel(UUID challenger, UUID leader, long expires) {
             this.challenger = challenger;
@@ -65,6 +67,11 @@ public final class DuelBoard {
 
         public long pauseEnd() {
             return pauseEnd;
+        }
+
+        /** Whether {@code p} has had their one wait in this duel already. */
+        public boolean pauseSpent(UUID p) {
+            return spentPauses.contains(p);
         }
 
         public boolean involves(UUID p) {
@@ -176,13 +183,15 @@ public final class DuelBoard {
 
     /**
      * {@code player} lost their connection in a duel that is on: it waits {@code windowTicks} for them, and its own clock stops.
-     * @return false when there is no duel on for them, or it is waiting for the other one already (then it should be called off)
+     * Each duelist gets one wait per duel.
+     * @return false when there is no duel on for them, it is waiting for the other one already, or they have had their wait
      */
     public boolean pause(UUID player, long now, long windowTicks) {
         Optional<Duel> d = on(player);
-        if (d.isEmpty() || d.get().pausedBy != null) {
+        if (d.isEmpty() || d.get().pausedBy != null || d.get().spentPauses.contains(player)) {
             return false;
         }
+        d.get().spentPauses.add(player);
         d.get().pausedBy = player;
         d.get().pausedAt = now;
         d.get().pauseEnd = now + Math.max(0, windowTicks);

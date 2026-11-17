@@ -430,6 +430,7 @@ public final class PackDuelGameTests {
             second.putIn(nether);
             PackDuel.check(helper.getLevel().getServer());
             helper.assertTrue(PackDuel.board().all().isEmpty() && leader.received(OFF + "far"), "the duel went on across dimensions or nobody was told");
+            helper.assertTrue(PackDuel.board().cooldownLeft(second.getUUID(), leader.getUUID(), helper.getLevel().getGameTime()) > 0, "changing dimension in a duel that was on left the pair free to start again");
         } finally {
             clean(helper, leader, second);
         }
@@ -733,9 +734,7 @@ public final class PackDuelGameTests {
             second.setPos(helper.absoluteVec(new net.minecraft.world.phys.Vec3(2.5, 1, 1.5)));
             net.minecraft.network.chat.Component refused = PackDuel.challenge(second, id(leader));
             helper.assertTrue(refused != null && refused.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().endsWith("duel_called_off"),
-                    "walking out of the duel did not bar the pair: " + refused);
-            helper.assertTrue(refused.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tt && tt.getKey().endsWith("duel_called_off"),
-                    "a pair barred for a call-off was told they fought: " + refused);
+                    "walking out of the duel did not bar the pair, or they were told they fought: " + refused);
         } finally {
             clean(helper, leader, second);
         }
@@ -867,7 +866,7 @@ public final class PackDuelGameTests {
 
             NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedInEvent(second));
             helper.assertTrue(PackDuel.board().on(leader.getUUID()).map(x -> x.pausedBy() == null).orElse(false), "the duel is not running again");
-            helper.assertTrue(leader.received("supernaturalbloodlines.pack.duel.resumed") && second.received("supernaturalbloodlines.pack.duel.resumed"), "both were not told it goes on");
+            helper.assertTrue(leader.received("supernaturalbloodlines.pack.duel.resumed") && second.received("supernaturalbloodlines.pack.duel.resumed_you"), "both were not told it goes on");
             // and it is a duel again: the first defeat settles it
             helper.assertTrue(finish(second, leader).isCanceled() && index.isLeader(second.getUUID()), "the resumed duel did not settle on the first defeat");
         } finally {
@@ -885,12 +884,11 @@ public final class PackDuelGameTests {
         net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
         try {
             helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
-            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(leader));
-            // the minute went by: the wait began long ago
+            // the leader lost their connection long ago: their wait of 100 ticks began 5000 ticks back, and they are not here
             long now = helper.getLevel().getGameTime();
             DuelBoard.Duel d = PackDuel.board().on(second.getUUID()).orElseThrow();
-            PackDuel.board().resume(leader.getUUID(), now); // back to running, so the pause can be set again in the past
             PackDuel.board().pause(leader.getUUID(), now - 5000, 100);
+            online(second);
             helper.assertTrue(d.pausedBy() != null, "the duel is not paused");
 
             PackDuel.check(server);
@@ -946,7 +944,7 @@ public final class PackDuelGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void ifTheOtherOneLeavesWhileSomebodyIsAwayTheDuelIsCalledOffWithoutAWinner(GameTestHelper helper) {
+    public static void ifTheOtherOneLeavesToTheFirstToLeaveForfeitsAndBothFindOutTheOutcome(GameTestHelper helper) {
         TalkingDuelist leader = talker(helper, 6, 1.5);
         TalkingDuelist second = talker(helper, 3, 2.5);
         online(leader, second);
@@ -954,9 +952,138 @@ public final class PackDuelGameTests {
         try {
             helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
             NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(second));
+            online(leader);
             NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(leader));
+            // the challenger left first and was waited for; the leader leaves too: the first to leave lost it, and the one who stays
+            // longest (here, the leader) won it
             helper.assertTrue(PackDuel.board().all().isEmpty(), "a duel with nobody in it was kept");
-            helper.assertTrue(index.isLeader(leader.getUUID()) && index.noticeCount(second.getUUID()) == 0, "somebody forfeited a duel nobody could see");
+            helper.assertTrue(index.isLeader(leader.getUUID()), "the first to leave won");
+            java.util.List<String[]> forSecond = index.takeNotices(second.getUUID());
+            java.util.List<String[]> forLeader = index.takeNotices(leader.getUUID());
+            helper.assertTrue(forSecond.size() == 1 && forSecond.get(0)[0].endsWith("duel.forfeit_lost_same"), "the first to leave has no notice of the outcome: " + forSecond.size());
+            helper.assertTrue(forLeader.size() == 1 && forLeader.get(0)[0].endsWith("duel.forfeit_won_same"), "the other has no notice of the outcome: " + forLeader.size());
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void eachDuelistGetsOneWaitAndASecondDisconnectIsAForfeit(GameTestHelper helper) {
+        TalkingDuelist leader = talker(helper, 6, 1.5);
+        TalkingDuelist second = talker(helper, 3, 2.5);
+        online(leader, second);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(second));
+            helper.assertTrue(PackDuel.board().on(leader.getUUID()).map(d -> d.pausedBy() != null).orElse(false), "the first disconnect was not waited for");
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedInEvent(second));
+            helper.assertTrue(PackDuel.board().on(leader.getUUID()).map(d -> d.pausedBy() == null).orElse(false), "the duel did not resume");
+            // the same duelist again: no second wait, they lose it
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(second));
+            helper.assertTrue(PackDuel.board().all().isEmpty(), "a second disconnect was waited for again");
+            helper.assertTrue(index.isLeader(leader.getUUID()) && leader.received("supernaturalbloodlines.pack.duel.forfeit"), "the one who stayed did not win it");
+            helper.assertTrue(index.takeNotices(second.getUUID()).stream().anyMatch(n -> n[0].endsWith("duel.forfeit_lost_same")), "the one who left twice has no notice");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theFirstToLeaveLosesWhenTheSecondLeavesWhileTheyAreAway(GameTestHelper helper) {
+        TalkingDuelist leader = talker(helper, 6, 1.5);
+        TalkingDuelist second = talker(helper, 3, 2.5);
+        online(leader, second);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(leader)); // the leader leaves first: waited for
+            online(second);
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(second)); // the challenger leaves too
+            helper.assertTrue(PackDuel.board().all().isEmpty(), "the duel was kept");
+            helper.assertTrue(index.isLeader(second.getUUID()), "the one who left first did not lose it: the lead is with " + index.leaderOf(second.getUUID()));
+            helper.assertTrue(index.takeNotices(leader.getUUID()).stream().anyMatch(n -> n[0].endsWith("duel.forfeit_lost_now")), "the first to leave has no notice");
+            helper.assertTrue(index.takeNotices(second.getUUID()).stream().anyMatch(n -> n[0].endsWith("duel.forfeit_won_now")), "the second to leave, the winner, has no notice");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void youCannotRemoveSomebodyYouAreDuelingAndTheCommandSaysSo(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        ServerPlayer third = alpha(helper, 2, 3.5);
+        online(leader, second, third);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, second) && join(leader, third), "the pack could not be built");
+            helper.assertTrue(start(second, leader), "the duel did not start");
+            net.minecraft.network.chat.Component refused = PackCommand.kick(leader, second.getUUID(), "Second");
+            helper.assertTrue(refused != null && refused.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().endsWith("duel_no_kick"), "the leader removed their opponent: " + refused);
+            helper.assertTrue(index.alphaOf(second.getUUID()).isPresent(), "the opponent is out of the pack");
+            helper.assertTrue(PackCommand.kick(leader, third.getUUID(), "Third") == null, "somebody else could not be removed during the duel");
+        } finally {
+            clean(helper, leader, second, third);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDeathWhileTheDuelWaitsForSomebodyEndsItAndSettlesNothing(GameTestHelper helper) {
+        TalkingDuelist leader = talker(helper, 6, 1.5);
+        TalkingDuelist second = talker(helper, 3, 2.5);
+        online(leader, second);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(second));
+            hit(second, leader);
+            LivingDeathEvent e = new LivingDeathEvent(leader, leader.damageSources().lava());
+            NeoForge.EVENT_BUS.post(e);
+            helper.assertTrue(!e.isCanceled(), "a death was turned into a defeat while the other one was away");
+            helper.assertTrue(PackDuel.board().all().isEmpty() && index.isLeader(leader.getUUID()) && !index.isLeader(second.getUUID()), "the duel was settled for somebody who could not be there");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theReturningDuelistAndTheOtherAreToldDifferently(GameTestHelper helper) {
+        TalkingDuelist leader = talker(helper, 6, 1.5);
+        TalkingDuelist second = talker(helper, 3, 2.5);
+        online(leader, second);
+        try {
+            helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(second));
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedInEvent(second));
+            helper.assertTrue(second.received("supernaturalbloodlines.pack.duel.resumed_you") && !second.received("supernaturalbloodlines.pack.duel.resumed"), "the one who came back was not welcomed back: " + second.keys());
+            helper.assertTrue(leader.received("supernaturalbloodlines.pack.duel.resumed") && !leader.received("supernaturalbloodlines.pack.duel.resumed_you"), "the other was not told who is back: " + leader.keys());
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLateReturnIsToldDirectlyHowItEnded(GameTestHelper helper) {
+        TalkingDuelist leader = talker(helper, 6, 1.5);
+        TalkingDuelist second = talker(helper, 3, 2.5);
+        online(leader, second);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            helper.assertTrue(join(leader, second) && start(second, leader), "the duel did not start");
+            long now = helper.getLevel().getGameTime();
+            PackDuel.board().pause(second.getUUID(), now - 5000, 100);
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedInEvent(second));
+            helper.assertTrue(second.received("supernaturalbloodlines.pack.duel.forfeit_lost_same") && index.noticeCount(second.getUUID()) == 0,
+                    "the one who came back too late was not told straight away how it ended (or a notice was left behind): " + second.keys());
+            helper.assertTrue(!second.received("supernaturalbloodlines.pack.duel.resumed_you"), "a late return was welcomed back into a duel that was over");
+
         } finally {
             clean(helper, leader, second);
         }

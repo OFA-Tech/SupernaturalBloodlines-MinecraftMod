@@ -211,7 +211,6 @@ public final class BookPackPage implements HubPageView {
             if (stacked) {
                 f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(m.name(), r.w() - 8 - crown, f.font()::width), r.x() + 8 + crown, y, t.ink(), false);
                 f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(rank.getString(), r.w() - 8 - crown, f.font()::width), r.x() + 8 + crown, y + 10, t.muted(), false);
-
             } else {
                 BookKit.leader(f, Component.literal(nameFor(f, m.name(), rank, r.w() - 8 - crown)), rank, r.x() + 8 + crown, y, r.w() - 8 - crown, t.muted());
             }

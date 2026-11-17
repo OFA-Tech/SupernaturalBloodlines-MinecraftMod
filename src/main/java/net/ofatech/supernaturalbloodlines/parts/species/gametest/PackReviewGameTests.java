@@ -1264,10 +1264,11 @@ public final class PackReviewGameTests {
             helper.assertTrue(PackMembers.remove(server, member, "supernaturalbloodlines.pack.left_party", "", true), "the removal failed");
             helper.assertTrue(index.leftRecently(member, 10) && index.killsInPack(member, leader.getUUID(), 10), "leaving the party is not leaving by choice");
 
-            index.join(leader.getUUID(), member);
-            index.takeNotices(member);
-            helper.assertTrue(PackMembers.remove(server, member, "supernaturalbloodlines.pack.kicked", "Leader"), "the kick failed");
-            helper.assertTrue(index.killsInPack(member, leader.getUUID(), 10) == index.killsInPack(member, leader.getUUID(), 10) && !index.samePackNow(member, leader.getUUID()), "a kick");
+            UUID kicked = UUID.randomUUID();
+            index.join(leader.getUUID(), kicked);
+            helper.assertTrue(PackMembers.remove(server, kicked, "supernaturalbloodlines.pack.kicked", "Leader"), "the kick failed");
+            helper.assertTrue(!index.killsInPack(kicked, leader.getUUID(), 10) && !index.leftRecently(kicked, 10), "a kick got the grace of leaving by choice");
+            index.takeNotices(kicked);
         } finally {
             index.leave(member);
             index.takeNotices(member);
