@@ -3,6 +3,8 @@ package net.ofatech.supernaturalbloodlines.shared.admin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,14 +59,27 @@ public final class AdminCommands {
 
     /** An argument by its name in the form; the name decides what the server accepts. */
     public record Arg(String name, boolean optional) {
-        private static final Pattern NAME = Pattern.compile("[A-Za-z0-9_-]{1,36}");
+        private static final Pattern UUID_TEXT = Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+        private static final Pattern NAME = Pattern.compile("[A-Za-z0-9_.-]{1,32}");
         private static final Pattern TOKEN = Pattern.compile("[0-9a-f]{8}");
         private static final Pattern WORD = Pattern.compile("[A-Za-z0-9_:.-]{1,64}");
 
-        /** Whether {@code value} is safe to put in the command: no space, no selector, no quote. */
+        public boolean isPerson() {
+            return name.equals("player") || name.equals("leader");
+        }
+
+        /** Whether a person argument is a UUID or a plain name once the server has looked the UUID up (a selector or a space is neither). */
+        boolean safeAfterLookup(String value) {
+            return isPerson() ? UUID_TEXT.matcher(value).matches() || NAME.matcher(value).matches() : accepts(value);
+        }
+
+        /**
+         * Whether {@code value} is safe to put in the command: no space, no selector, no quote. A person is always named by UUID (the
+         * commands take one in place of a name), so the hub never depends on a name and the route never carries one.
+         */
         public boolean accepts(String value) {
             return switch (name) {
-                case "player", "leader" -> NAME.matcher(value).matches();
+                case "player", "leader" -> UUID_TEXT.matcher(value).matches();
                 case "token" -> TOKEN.matcher(value).matches();
                 case "value" -> value.equals("true") || value.equals("false");
                 case "n" -> {
@@ -128,6 +143,14 @@ public final class AdminCommands {
 
     /** The typed command for a row and its arguments (optional ones may be left out), or empty when an argument is missing, extra or unsafe. */
     public static Optional<String> command(Row row, List<String> args) {
+        return command(row, args, Function.identity());
+    }
+
+    /**
+     * Like {@link #command(Row, List)}, but each person (a UUID on the wire) goes through {@code lookup} first: some commands take only the name
+     * of an online player ({@code EntityArgument.player} refuses a UUID), so the server swaps in the name it knows. The result must still be safe.
+     */
+    public static Optional<String> command(Row row, List<String> args, Function<String, String> lookup) {
         List<Arg> wanted = row.args();
         long required = wanted.stream().filter(a -> !a.optional()).count();
         if (args.size() < required || args.size() > wanted.size()) {
@@ -145,7 +168,11 @@ public final class AdminCommands {
                 if (!a.accepts(value)) {
                     return Optional.empty();
                 }
-                word = value;
+                String used = a.isPerson() ? lookup.apply(value) : value;
+                if (used == null || !a.safeAfterLookup(used)) {
+                    return Optional.empty();
+                }
+                word = used;
             }
             out.append(out.isEmpty() ? "" : " ").append(word);
         }

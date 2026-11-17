@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.shared.admin;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,6 +16,8 @@ public final class AdminSpecs {
     private static final Map<String, ModConfigSpec> SPECS = new ConcurrentHashMap<>();
     private static final Map<String, Predicate<String>> LINE_CHECKS = new ConcurrentHashMap<>();
 
+    private static final Map<String, List<String>> CHOICES = new ConcurrentHashMap<>();
+
     private AdminSpecs() {}
 
     public static void register(String file, ModConfigSpec spec) {
@@ -29,6 +32,15 @@ public final class AdminSpecs {
     /** The line check of the list {@code id}, or null when it has none. */
     public static Predicate<String> lineCheck(String id) {
         return LINE_CHECKS.get(id);
+    }
+
+    /** The values a CHOICE key accepts (a spec cannot list them): registered next to its spec by the part that owns the key. */
+    public static void choices(String id, List<String> values) {
+        CHOICES.put(id, List.copyOf(values));
+    }
+
+    public static List<String> choices(String id) {
+        return CHOICES.getOrDefault(id, List.of());
     }
 
     public static Optional<ModConfigSpec> spec(String file) {

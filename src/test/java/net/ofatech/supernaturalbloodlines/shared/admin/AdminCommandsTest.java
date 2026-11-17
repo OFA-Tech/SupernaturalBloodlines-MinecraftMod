@@ -12,6 +12,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class AdminCommandsTest {
+    private static final String STEVE = "123e4567-e89b-42d3-a456-426614174000";
+    private static final String ALEX = "0f8fad5b-d9cb-469f-a165-70867728950e";
+
     private static AdminCommands.Row row(String id) {
         return AdminCommands.byId(id).orElseThrow();
     }
@@ -65,29 +68,44 @@ class AdminCommandsTest {
 
     @Test
     void theCommandIsRebuiltFromTheRowAndItsArguments() {
-        assertEquals(Optional.of("pack kick Steve"), AdminCommands.command(row("P4"), List.of("Steve")));
+        assertEquals(Optional.of("pack kick " + STEVE), AdminCommands.command(row("P4"), List.of(STEVE)));
         assertEquals(Optional.of("pack emissary"), AdminCommands.command(row("P13"), List.of()));
-        assertEquals(Optional.of("pack emissary Alex"), AdminCommands.command(row("P13"), List.of("Alex")));
+        assertEquals(Optional.of("pack emissary " + ALEX), AdminCommands.command(row("P13"), List.of(ALEX)));
         assertEquals(Optional.of("bloodline compel ab12cd34 follow"), AdminCommands.command(row("B6"), List.of("ab12cd34")));
-        assertEquals(Optional.of("supernaturalbloodlines debug supernatural Steve rung vampire 3"),
-                AdminCommands.command(row("D8"), List.of("Steve", "vampire", "3")));
+        assertEquals(Optional.of("supernaturalbloodlines debug supernatural " + STEVE + " rung vampire 3"),
+                AdminCommands.command(row("D8"), List.of(STEVE, "vampire", "3")));
         assertEquals(Optional.of("pack accept"), AdminCommands.command(row("P2"), List.of()));
     }
 
     @Test
     void anArgumentThatCouldSmuggleAnotherCommandIsRefused() {
-        assertTrue(AdminCommands.command(row("P4"), List.of("Steve ; op Steve")).isEmpty(), "a space");
+        assertTrue(AdminCommands.command(row("P4"), List.of(STEVE + " ; op Steve")).isEmpty(), "a space");
         assertTrue(AdminCommands.command(row("P4"), List.of("@a")).isEmpty(), "a selector");
+        assertTrue(AdminCommands.command(row("P4"), List.of("Steve")).isEmpty(), "a name: people are named by UUID");
         assertTrue(AdminCommands.command(row("P4"), List.of("")).isEmpty(), "empty");
         assertTrue(AdminCommands.command(row("B4"), List.of("not-a-token")).isEmpty(), "a token is 8 hex digits");
-        assertTrue(AdminCommands.command(row("D7"), List.of("Steve", "ten")).isEmpty(), "n is a number");
-        assertTrue(AdminCommands.command(row("B7"), List.of("Steve", "maybe")).isEmpty(), "value is true or false");
+        assertTrue(AdminCommands.command(row("D7"), List.of(STEVE, "ten")).isEmpty(), "n is a number");
+        assertTrue(AdminCommands.command(row("B7"), List.of(STEVE, "maybe")).isEmpty(), "value is true or false");
     }
 
     @Test
     void theNumberOfArgumentsMustFit() {
         assertTrue(AdminCommands.command(row("P4"), List.of()).isEmpty(), "missing");
-        assertTrue(AdminCommands.command(row("P4"), List.of("a", "b")).isEmpty(), "extra");
+        assertTrue(AdminCommands.command(row("P4"), List.of(STEVE, ALEX)).isEmpty(), "extra");
         assertTrue(AdminCommands.command(row("P3"), List.of("a")).isEmpty(), "a form without arguments takes none");
+    }
+
+    @Test
+    void anOnlinePersonIsSwappedForTheNameTheCommandNeeds() {
+        // EntityArgument.player refuses a UUID, so the server looks the online player up
+        assertEquals(Optional.of("pack invite Steve"), AdminCommands.command(row("P1"), List.of(STEVE), uuid -> "Steve"));
+        assertEquals(Optional.of("pack invite " + STEVE), AdminCommands.command(row("P1"), List.of(STEVE), uuid -> uuid), "offline: the UUID stays");
+        assertEquals(Optional.of("supernaturalbloodlines debug supernatural Steve sp 5"), AdminCommands.command(row("D7"), List.of(STEVE, "5"), uuid -> "Steve"));
+        // only people are looked up, and what the lookup returns is checked again
+        assertEquals(Optional.of("bloodline compel ab12cd34 follow"), AdminCommands.command(row("B6"), List.of("ab12cd34"), uuid -> "never called"));
+        assertTrue(AdminCommands.command(row("P1"), List.of(STEVE), uuid -> "Steve extra").isEmpty());
+        assertTrue(AdminCommands.command(row("P1"), List.of(STEVE), uuid -> "@a").isEmpty());
+        assertTrue(AdminCommands.command(row("P1"), List.of(STEVE), uuid -> null).isEmpty());
+        assertTrue(AdminCommands.command(row("P1"), List.of("Steve"), uuid -> "Steve").isEmpty(), "the wire still carries a UUID, never a name");
     }
 }
