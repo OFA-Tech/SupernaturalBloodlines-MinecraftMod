@@ -34,7 +34,6 @@ public final class SirelineIndex extends SavedData {
     private static final String TYPE = "type";
     private static final String ID = "id";
     private static final String LAST_NAME = "name";
-    private static final String PENDING_PLAYERS = "pendingDeaths";
     private static final String PENDING_MOBS = "pendingMobs";
 
     private record Link(UUID sire, String entityType) {
@@ -44,8 +43,7 @@ public final class SirelineIndex extends SavedData {
     private final Map<UUID, Link> links = new LinkedHashMap<>();
     private final Map<UUID, Set<UUID>> children = new HashMap<>();
     private final Map<UUID, String> names = new HashMap<>();
-    // the sireline death's debts: players who were offline and creatures that were not loaded when their line died
-    private final Set<UUID> pendingPlayers = new LinkedHashSet<>();
+    // line death's debts of creatures that were not loaded when their line died (players owe it through LineIndex)
     // shortcut: a creature that never loads again (its chunk is gone or never visited) stays here forever, so the set only grows; add an expiry per entry or prune on chunk unload events when it matters
     private final Set<UUID> pendingMobs = new LinkedHashSet<>();
 
@@ -67,9 +65,6 @@ public final class SirelineIndex extends SavedData {
         for (Tag t : tag.getList(LINKS, Tag.TAG_COMPOUND)) {
             CompoundTag e = (CompoundTag) t;
             idx.link(NbtUtils.loadUUID(e.get(SIRE)), NbtUtils.loadUUID(e.get(CHILD)), e.getString(TYPE));
-        }
-        for (Tag t : tag.getList(PENDING_PLAYERS, Tag.TAG_INT_ARRAY)) {
-            idx.pendingPlayers.add(NbtUtils.loadUUID(t));
         }
         for (Tag t : tag.getList(PENDING_MOBS, Tag.TAG_INT_ARRAY)) {
             idx.pendingMobs.add(NbtUtils.loadUUID(t));
@@ -96,7 +91,6 @@ public final class SirelineIndex extends SavedData {
             known.add(e);
         });
         tag.put(NAMES, known);
-        tag.put(PENDING_PLAYERS, uuids(pendingPlayers));
         tag.put(PENDING_MOBS, uuids(pendingMobs));
         return tag;
     }
@@ -181,21 +175,6 @@ public final class SirelineIndex extends SavedData {
             }
         }
         return false;
-    }
-
-    public void addPendingPlayer(UUID id) {
-        if (pendingPlayers.add(id)) {
-            setDirty();
-        }
-    }
-
-    /** @return true once: the player owes a death, and now it is paid */
-    public boolean takePendingPlayer(UUID id) {
-        boolean owed = pendingPlayers.remove(id);
-        if (owed) {
-            setDirty();
-        }
-        return owed;
     }
 
     public void addPendingMob(UUID id) {

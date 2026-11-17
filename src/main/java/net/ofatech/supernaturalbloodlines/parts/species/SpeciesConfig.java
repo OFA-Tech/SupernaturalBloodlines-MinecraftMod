@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species;
 
+import java.util.List;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -43,8 +44,19 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.IntValue BITE_VAMPIRE_COST;
     private static final ModConfigSpec.BooleanValue WITCH_BONUS;
     private static final ModConfigSpec.DoubleValue SIPHONER_CHANCE;
-    public static final boolean DEFAULT_SIRELINE_DEATH = false;
-    private static final ModConfigSpec.BooleanValue SIRELINE_DEATH;
+    public static final boolean DEFAULT_ORIGINAL_LINE_DEATH = true;
+    private static final ModConfigSpec.BooleanValue ORIGINAL_LINE_DEATH;
+    public static final String LINE_DISCOVERED = "discovered";
+    public static final String LINE_ALWAYS = "always";
+    private static final ModConfigSpec.ConfigValue<String> ORIGINAL_VISIBILITY;
+    public static final boolean DEFAULT_LINE_RITES = true;
+    private static final ModConfigSpec.BooleanValue LINE_RITES_ENABLED;
+    public static final List<String> DEFAULT_NPC_LINE_WEIGHTS = List.of("mikael=1", "finn=1", "elijah=1", "kol=1", "rebekah=1", "klaus=1");
+    private static final ModConfigSpec.ConfigValue<List<? extends String>> NPC_LINE_WEIGHTS;
+    public static final int DEFAULT_RING_RADIUS = 8;
+    private static final ModConfigSpec.IntValue RING_MAX_RADIUS;
+    public static final int DEFAULT_IMPRISONMENT_SECONDS = 30;
+    private static final ModConfigSpec.IntValue IMPRISONMENT_SECONDS;
     public static final double DEFAULT_LATENT_GENE_CHANCE = 0.15;
     private static final ModConfigSpec.DoubleValue LATENT_GENE_CHANCE;
     public static final double DEFAULT_ALPHA_BITE_DEATH_CHANCE = 0.10;
@@ -94,8 +106,18 @@ public final class SpeciesConfig {
                 .define("witch_bonus_enabled", DEFAULT_WITCH_BONUS);
         SIPHONER_CHANCE = b.comment("Chance that the Rite of Ancestral Calling makes a siphoner instead of a witch.")
                 .defineInRange("siphoner_chance", DEFAULT_SIPHONER_CHANCE, 0.0, 1.0);
-        SIRELINE_DEATH = b.comment("When an Original is killed with white oak, everyone they sired, and everyone those sired, dies with them (offline players on their next login).")
-                .define("sireline_death", DEFAULT_SIRELINE_DEATH);
+        ORIGINAL_LINE_DEATH = b.comment("When an Original is killed with white oak, everyone in their line dies with them (vampires, hybrids and creatures; offline players on their next login). Someone freed from the line by a rite is spared.")
+                .define("original_line_death", DEFAULT_ORIGINAL_LINE_DEATH);
+        ORIGINAL_VISIBILITY = b.comment("discovered: a player sees the Original of their line as \"?\" until the Rite of Revelation finds it. always: a player always sees the Original of their line.")
+                .defineInList("original_visibility", LINE_DISCOVERED, new java.util.ArrayList<>(List.of(LINE_DISCOVERED, LINE_ALWAYS)));
+        LINE_RITES_ENABLED = b.comment("Switches the Rite of the Broken Line and the Rite of the Imprisoned Original on or off.")
+                .define("line_rites_enabled", DEFAULT_LINE_RITES);
+        NPC_LINE_WEIGHTS = b.comment("How likely each Original is to be the root of a new NPC vampire's line: name=weight. A bad entry is skipped; a weight below 0 counts as 0.")
+                .defineList("npc_line_weights", DEFAULT_NPC_LINE_WEIGHTS, () -> "klaus=1", o -> o instanceof String);
+        RING_MAX_RADIUS = b.comment("The mountain ash circle of the Rite of the Imprisoned Original must close within this many blocks of the rite's centre.")
+                .defineInRange("imprisonment_ring_max_radius", DEFAULT_RING_RADIUS, 2, 16);
+        IMPRISONMENT_SECONDS = b.comment("How long the Original must stay trapped in the circle for the Rite of the Imprisoned Original to work, in seconds.")
+                .defineInRange("imprisonment_rite_seconds", DEFAULT_IMPRISONMENT_SECONDS, 5, 300);
         LATENT_GENE_CHANCE = b.comment("Chance that a player carries the hidden werewolf gene, rolled once at first login.")
                 .defineInRange("latent_gene_chance", DEFAULT_LATENT_GENE_CHANCE, 0.0, 1.0);
         ALPHA_BITE_DEATH_CHANCE = b.comment("Chance that an Alpha's bite kills the human instead of turning them.")
@@ -409,23 +431,124 @@ public final class SpeciesConfig {
         }
     }
 
-    private static volatile Boolean sirelineDeathOverride;
+    private static volatile Boolean originalLineDeathOverride;
 
-    /** For tests: pins {@link #sirelineDeath()}; null clears it. */
+    /** For tests: pins {@link #originalLineDeath()}; null clears it. */
     @VisibleForTesting
-    public static void overrideSirelineDeath(Boolean value) {
-        sirelineDeathOverride = value;
+    public static void overrideOriginalLineDeath(Boolean value) {
+        originalLineDeathOverride = value;
     }
 
-    public static boolean sirelineDeath() {
-        Boolean pinned = sirelineDeathOverride;
+    public static boolean originalLineDeath() {
+        Boolean pinned = originalLineDeathOverride;
         if (pinned != null) {
             return pinned;
         }
         try {
-            return SIRELINE_DEATH.get();
+            return ORIGINAL_LINE_DEATH.get();
         } catch (IllegalStateException notLoaded) {
-            return DEFAULT_SIRELINE_DEATH;
+            return DEFAULT_ORIGINAL_LINE_DEATH;
+        }
+    }
+
+    private static volatile Boolean originalVisibilityAlwaysOverride;
+
+    /** For tests: pins {@link #originalVisibilityAlways()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideOriginalVisibility(Boolean always) {
+        originalVisibilityAlwaysOverride = always;
+    }
+
+    /** {@code original_visibility = always}; false is the default {@code discovered}. */
+    public static boolean originalVisibilityAlways() {
+        Boolean pinned = originalVisibilityAlwaysOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return LINE_ALWAYS.equals(ORIGINAL_VISIBILITY.get());
+        } catch (IllegalStateException notLoaded) {
+            return false;
+        }
+    }
+
+    private static volatile Boolean lineRitesOverride;
+
+    /** For tests: pins {@link #lineRitesEnabled()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideLineRites(Boolean value) {
+        lineRitesOverride = value;
+    }
+
+    public static boolean lineRitesEnabled() {
+        Boolean pinned = lineRitesOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return LINE_RITES_ENABLED.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_LINE_RITES;
+        }
+    }
+
+    private static volatile List<String> npcLineWeightsOverride;
+
+    /** For tests: pins {@link #npcLineWeights()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideNpcLineWeights(List<String> value) {
+        npcLineWeightsOverride = value;
+    }
+
+    public static List<String> npcLineWeights() {
+        List<String> pinned = npcLineWeightsOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return List.copyOf(NPC_LINE_WEIGHTS.get());
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_NPC_LINE_WEIGHTS;
+        }
+    }
+
+    private static volatile Integer ringRadiusOverride;
+
+    /** For tests: pins {@link #ringRadius()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideRingRadius(Integer value) {
+        ringRadiusOverride = value;
+    }
+
+    public static int ringRadius() {
+        Integer pinned = ringRadiusOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return RING_MAX_RADIUS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_RING_RADIUS;
+        }
+    }
+
+    private static volatile Integer imprisonmentSecondsOverride;
+
+    /** For tests: pins {@link #imprisonmentSeconds()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideImprisonmentSeconds(Integer value) {
+        imprisonmentSecondsOverride = value;
+    }
+
+    public static int imprisonmentSeconds() {
+        Integer pinned = imprisonmentSecondsOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return IMPRISONMENT_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_IMPRISONMENT_SECONDS;
         }
     }
 

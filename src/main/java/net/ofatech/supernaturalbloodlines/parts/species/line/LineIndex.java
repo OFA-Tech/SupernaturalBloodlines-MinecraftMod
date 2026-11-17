@@ -189,6 +189,13 @@ public final class LineIndex extends SavedData {
         }
     }
 
+    /** For tests, which share one world: an Original whose line died is alive again. */
+    public void unmarkDead(UUID root) {
+        if (dead.remove(root)) {
+            setDirty();
+        }
+    }
+
     public boolean isDead(UUID root) {
         return dead.contains(root);
     }

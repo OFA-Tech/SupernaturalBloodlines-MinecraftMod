@@ -102,17 +102,13 @@ class SirelineIndexTest {
     }
 
     @Test
-    void pendingDeathsAreTakenOnceAndSurviveSaveAndLoad() {
+    void pendingMobDeathsAreTakenOnceAndSurviveSaveAndLoad() {
         SirelineIndex idx = new SirelineIndex();
-        idx.addPendingPlayer(A);
         idx.addPendingMob(B);
         assertTrue(idx.isPendingMob(B));
         assertFalse(idx.isPendingMob(A));
         SirelineIndex back = SirelineIndex.load(idx.save(new CompoundTag(), null), null);
-        assertTrue(back.takePendingPlayer(A));
-        assertFalse(back.takePendingPlayer(A));
         assertTrue(back.takePendingMob(B));
         assertFalse(back.isPendingMob(B));
-        assertFalse(back.takePendingPlayer(B));
     }
 }

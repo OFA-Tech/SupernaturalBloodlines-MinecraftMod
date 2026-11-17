@@ -66,10 +66,13 @@ import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCommand
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCompulsionGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SeveranceGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SeveranceRiteGameTests;
-import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineDeathGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.LineDeathGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.LineGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.line.LineDeath;
+import net.ofatech.supernaturalbloodlines.parts.species.line.Lines;
+import net.ofatech.supernaturalbloodlines.parts.species.line.NpcLines;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.BloodlineCommand;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.Compulsion;
-import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineDeath;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.InfectionTracker;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder;
@@ -154,7 +157,9 @@ public final class SpeciesPart {
         InfectionTracker.register();
         SireCall.register();
         Compulsion.register();
-        SirelineDeath.register();
+        Lines.register(); // after SireRecorder: it hears the sires SireRecorder writes down
+        NpcLines.register();
+        LineDeath.register();
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> BloodlineCommand.register(e.getDispatcher()));
         HybridTraits.register(); // always: it strips the saved modifier when Werewolves is gone
         RankEffects.register(); // always, for the same reason
@@ -223,7 +228,8 @@ public final class SpeciesPart {
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.SpeciesHubGameTests.class);
             e.register(SirelineCommandGameTests.class);
             e.register(SirelineCompulsionGameTests.class);
-            e.register(SirelineDeathGameTests.class);
+            e.register(LineGameTests.class);
+            e.register(LineDeathGameTests.class);
             e.register(SeveranceGameTests.class);
             e.register(SeveranceRiteGameTests.class);
             e.register(TurningGameTests.class);

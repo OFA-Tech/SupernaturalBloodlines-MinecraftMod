@@ -1,13 +1,8 @@
-package net.ofatech.supernaturalbloodlines.parts.species.sireline;
+package net.ofatech.supernaturalbloodlines.parts.species.line;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -24,84 +19,72 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.Supernatural;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
+import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
-import net.ofatech.supernaturalbloodlines.parts.species.SpeciesData;
 import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex;
 
 /**
- * The optional sireline death ({@code sireline_death}, off by default). When an Original or Original hybrid really dies to white
- * oak, everyone below them in the sireline dies: online players at once (once, with {@link #DAMAGE_TYPE}, which gets past
- * invulnerability, armor, effects and totems), offline players the next time they log in, loaded creatures on the spot, unloaded ones
- * when their chunk next loads. Nothing is loaded to do it. An Original further down the line (our state allows a sired
- * Original) survives with their branch. The dead leave the index and lose their sire.
+ * Line death ({@code original_line_death}, on by default; R122). When an Original really dies to white oak, everyone in their line
+ * dies: online players at once (with {@link #DAMAGE_TYPE}, which gets past invulnerability, armor, effects and totems), offline
+ * players the next time they log in, loaded creatures on the spot, unloaded ones when their chunk next loads. Nothing is loaded
+ * to do it. The Original is never in their own line, and someone freed from it by a rite is not a member.
  */
-public final class SirelineDeath {
+public final class LineDeath {
     public static final ResourceKey<DamageType> DAMAGE_TYPE = ResourceKey.create(Registries.DAMAGE_TYPE,
             ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "sireline"));
-    private static final String PLAYER = "minecraft:player";
 
-    private SirelineDeath() {
+    private LineDeath() {
     }
 
     public static void register() {
         // last, and not for a death something else cancelled: the Original really died
-        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LivingDeathEvent.class, SirelineDeath::onDeath);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LivingDeathEvent.class, LineDeath::onDeath);
         // before SireRecorder's login sync, which would index a sire that is about to be cleared
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
                 onLogin(p);
             }
         });
-        NeoForge.EVENT_BUS.addListener(SirelineDeath::onJoin);
+        NeoForge.EVENT_BUS.addListener(LineDeath::onJoin);
     }
 
     private static void onDeath(LivingDeathEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p && SpeciesConfig.sirelineDeath() && OriginalRules.isOriginal(BloodlineAccess.get(p).species())
+        if (e.getEntity() instanceof ServerPlayer p && SpeciesConfig.originalLineDeath() && OriginalRules.isOriginal(BloodlineAccess.get(p).species())
                 && OriginalRules.isWhiteOakKill(e.getSource())) {
-            run(p);
+            run(p.server, p.getUUID());
         }
     }
 
-    /** Walks everyone below the Original (each only once, so a cycle ends) and sentences them. */
-    public static void run(ServerPlayer original) {
-        MinecraftServer server = original.server;
-        SirelineIndex index = SirelineIndex.get(original.serverLevel());
-        SpeciesData originals = SpeciesData.get(server);
-        Set<UUID> seen = new HashSet<>();
-        seen.add(original.getUUID());
-        Deque<UUID> work = new ArrayDeque<>();
-        work.add(original.getUUID());
-        List<SirelineIndex.Node> doomed = new ArrayList<>();
-        while (!work.isEmpty()) {
-            for (SirelineIndex.Node child : index.childrenOf(work.poll())) {
-                if (!seen.add(child.id()) || (PLAYER.equals(child.entityType()) && isOriginal(server, originals, child.id()))) {
-                    continue;
-                }
-                doomed.add(child);
-                work.add(child.id());
-            }
-        }
-        Set<UUID> kept = new HashSet<>();
-        for (SirelineIndex.Node n : doomed) {
-            if (!PLAYER.equals(n.entityType())) {
-                discard(server, index, n.id());
-            } else if (SireCall.player(server, n.id()) instanceof ServerPlayer online) {
-                if (!slay(online)) {
+    /** The one entry point: {@code root}'s whole line dies. A boss Original who dies to white oak calls it with {@code NpcOriginal.X.uuid()}. */
+    public static void run(MinecraftServer server, UUID root) {
+        LineIndex index = LineIndex.get(server);
+        SirelineIndex sirelines = SirelineIndex.get(server.overworld());
+        Component name = Lines.rootName(server, root);
+        for (LineIndex.Member m : index.membersOf(root)) {
+            if (!m.player()) {
+                discard(server, sirelines, m.id());
+                index.remove(m.id());
+            } else if (SireCall.player(server, m.id()) instanceof ServerPlayer online) {
+                online.sendSystemMessage(Component.translatable("supernaturalbloodlines.line.death", name));
+                if (slay(online)) {
+                    index.remove(m.id());
+                } else {
                     // something kept them alive: they stay in the line, owing the death for their next login
-                    index.addPendingPlayer(n.id());
-                    kept.add(n.id());
+                    index.addOwed(m.id(), root);
                 }
             } else {
-                index.addPendingPlayer(n.id());
+                // offline: still a member, until they log in and pay
+                index.addOwed(m.id(), root);
             }
         }
-        doomed.stream().filter(n -> !kept.contains(n.id())).forEach(n -> index.remove(n.id()));
-    }
-
-    private static boolean isOriginal(MinecraftServer server, SpeciesData originals, UUID id) {
-        ServerPlayer online = SireCall.player(server, id);
-        return online != null ? OriginalRules.isOriginal(BloodlineAccess.get(online).species()) : originals.isOriginal(id);
+        if (NpcOriginal.byUuid(root).isPresent()) {
+            index.markDead(root);
+        }
     }
 
     /**
@@ -110,7 +93,7 @@ public final class SirelineDeath {
      *
      * @return whether the player is dead now
      */
-    static boolean slay(ServerPlayer p) {
+    public static boolean slay(ServerPlayer p) {
         if (!p.isDeadOrDying()) {
             DamageSource blow = p.damageSources().source(DAMAGE_TYPE);
             if (!OriginalRules.killThroughDying(p, blow)) {
@@ -131,7 +114,8 @@ public final class SirelineDeath {
     }
 
     /** A creature in a level that is loaded goes; one that is not is owed, and goes when it loads. */
-    private static void discard(MinecraftServer server, SirelineIndex index, UUID id) {
+    private static void discard(MinecraftServer server, SirelineIndex sirelines, UUID id) {
+        sirelines.remove(id);
         for (ServerLevel level : server.getAllLevels()) {
             // getEntity only finds what is loaded: it never loads a chunk
             Entity e = level.getEntity(id);
@@ -140,18 +124,29 @@ public final class SirelineDeath {
                 return;
             }
         }
-        index.addPendingMob(id);
+        sirelines.addPendingMob(id);
     }
 
     /**
-     * A player who was offline for the death pays now, once. Only a player who still has a sire pays: after a crash the player
-     * file may already show the death (no sire, a new life) while the index has rolled back to still owing it.
+     * A player who was offline for the death pays now, once, if they are still in that line and still supernatural: someone cured or
+     * freed in the meantime owes nothing. The Original is named only if the player has discovered them.
      */
     public static void onLogin(ServerPlayer p) {
-        SirelineIndex index = SirelineIndex.get(p.serverLevel());
-        if (index.takePendingPlayer(p.getUUID()) && BloodlineAccess.get(p).sire() != null && !slay(p)) {
-            index.addPendingPlayer(p.getUUID());
-        }
+        LineIndex index = LineIndex.get(p.server);
+        index.takeOwed(p.getUUID()).ifPresent(root -> {
+            if (!index.rootOf(p.getUUID()).filter(root::equals).isPresent() || !Supernatural.is(p)) {
+                return;
+            }
+            Component who = LineRules.showsRoot(BloodlineAccess.get(p).knownLine(), root, SpeciesConfig.originalVisibilityAlways())
+                    ? Lines.rootName(p.server, root)
+                    : Component.translatable("supernaturalbloodlines.line.unknown_original");
+            p.sendSystemMessage(Component.translatable("supernaturalbloodlines.line.death_login", who));
+            if (slay(p)) {
+                index.remove(p.getUUID());
+            } else {
+                index.addOwed(p.getUUID(), root);
+            }
+        });
     }
 
     /** A creature that was owed a death does not join the world. */
