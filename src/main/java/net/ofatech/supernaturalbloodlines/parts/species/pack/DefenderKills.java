@@ -53,24 +53,9 @@ public final class DefenderKills {
             return;
         }
         LivingEntity target = mob.getTarget();
-        if (target instanceof Villager || (target instanceof ServerPlayer t && t != killer && samePack(killer, t))) {
+        if (target instanceof Villager || (target instanceof ServerPlayer t && t != killer && PackIndex.get(killer.serverLevel()).samePackNow(killer.getUUID(), t.getUUID()))) {
             PackAccess.applyPack(killer, PackEvent.DEFENDER_KILL, PackContext.defaults());
         }
-    }
-
-    @Nullable
-    private static UUID leaderOf(ServerPlayer p) {
-        WolfState w = PackAccess.wolf(p);
-        if (w.lineage() == Lineage.NONE) {
-            return null;
-        }
-        return PackAccess.isAlpha(w.rank()) ? p.getUUID() : w.packAlpha();
-    }
-
-    /** Both are werewolves under the same Alpha (or one is the Alpha). */
-    private static boolean samePack(ServerPlayer a, ServerPlayer b) {
-        UUID leader = leaderOf(a);
-        return leader != null && leader.equals(leaderOf(b));
     }
 
     /**

@@ -254,7 +254,7 @@ public final class WerewolfBiteGameTests {
         lookup(alpha, omega, human);
         try {
             helper.assertTrue(PackCommand.invite(omega, alpha) != null, "an Omega invited");
-            helper.assertTrue(PackCommand.invite(alpha, human) != null, "an Alpha invited a human");
+            helper.assertTrue(PackCommand.invite(alpha, human) == null, "an Alpha could not invite a human as a Packmate (plan 14)");
             helper.assertTrue(PackCommand.invite(alpha, alpha) != null, "an Alpha invited themselves");
             helper.assertTrue(PackCommand.invite(alpha, omega) == null, "the invitation was refused");
             String token = PackCommand.requests().tokenOf(alpha.getUUID(), omega.getUUID()).orElse(null);
@@ -357,7 +357,14 @@ public final class WerewolfBiteGameTests {
         BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
         try {
             PackIndex index = PackIndex.get(helper.getLevel());
+            ServerPlayer rival = wolf(helper, Rank.ALPHA, null);
+            lookup(alpha, beta, witch, human, rival);
             helper.assertTrue(PackCommand.emissary(beta, witch) != null, "a Beta named an emissary");
+            // only someone who is in the pack already can be named: invite them first (they join as a Packmate)
+            helper.assertTrue(PackCommand.emissary(alpha, witch) != null && index.emissaryOf(alpha.getUUID()).isEmpty(), "a player outside the pack was named");
+            helper.assertTrue(!index.inPack(witch.getUUID()), "naming an Emissary pulled them into the pack");
+            helper.assertTrue(PackCommand.invite(alpha, witch) == null
+                    && PackCommand.accept(witch, PackCommand.requests().tokenOf(alpha.getUUID(), witch.getUUID()).orElseThrow()) == null, "the witch could not join");
             helper.assertTrue(PackCommand.emissary(alpha, human) != null, "a non-witch became the emissary");
             for (Species s : List.of(Species.SIPHONER, Species.HERETIC, Species.TRIBRID)) {
                 BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(s).build());
@@ -366,20 +373,27 @@ public final class WerewolfBiteGameTests {
             BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
             helper.assertTrue(PackCommand.emissary(alpha, witch) == null, "the witch was refused");
             helper.assertTrue(witch.getUUID().equals(index.emissaryOf(alpha.getUUID()).orElse(null)), "the emissary was not stored");
-            // a witch serves one Alpha: a second Alpha cannot take them until the first lets go
-            ServerPlayer rival = wolf(helper, Rank.ALPHA, null);
             try {
-                helper.assertTrue(PackCommand.emissary(alpha, witch) == null, "the first Alpha lost their emissary");
+                // a witch serves one Alpha: a second Alpha cannot name them (they are no member of that pack)
                 helper.assertTrue(PackCommand.emissary(rival, witch) != null, "a second Alpha took another Alpha's emissary");
                 helper.assertTrue(alpha.getUUID().equals(index.emissaryAlpha(witch.getUUID()).orElse(null)), "the emissary changed hands");
                 helper.assertTrue(PackCommand.emissary(alpha, null) == null && index.emissaryOf(alpha.getUUID()).isEmpty(), "the emissary was not released");
+
+                // an Emissary who leaves the pack is nobody's Emissary, and cannot be named again until they are back in it
+                helper.assertTrue(PackCommand.emissary(alpha, witch) == null, "the first Alpha could not name them again");
+                helper.assertTrue(PackCommand.leave(witch) == null, "the witch could not leave the pack");
+                helper.assertTrue(index.emissaryOf(alpha.getUUID()).isEmpty(), "an Emissary who left the pack is still named");
+                helper.assertTrue(PackCommand.emissary(alpha, witch) != null, "named an Emissary who is not in the pack any more");
+                helper.assertTrue(PackCommand.invite(rival, witch) == null
+                        && PackCommand.accept(witch, PackCommand.requests().tokenOf(rival.getUUID(), witch.getUUID()).orElseThrow()) == null, "the witch could not join the rival's pack");
                 helper.assertTrue(PackCommand.emissary(rival, witch) == null, "a free witch was refused");
                 helper.assertTrue(PackCommand.emissary(rival, null) == null, "the rival could not let go");
-                helper.assertTrue(PackCommand.emissary(alpha, witch) == null, "the first Alpha could not take them back");
+                helper.assertTrue(PackCommand.leave(witch) == null, "the witch could not leave the rival's pack");
             } finally {
                 index.setEmissary(rival.getUUID(), null);
                 clean(rival);
-            }            helper.assertTrue(PackCommand.emissary(alpha, null) == null && index.emissaryOf(alpha.getUUID()).isEmpty(), "the emissary was not cleared");
+            }
+            helper.assertTrue(PackCommand.emissary(alpha, null) == null && index.emissaryOf(alpha.getUUID()).isEmpty(), "the emissary was not cleared");
 
             helper.assertTrue(PackCommand.anchor(human, alpha) != null, "a human set an anchor");
             helper.assertTrue(PackCommand.anchor(beta, beta) != null, "someone anchored themselves");
@@ -387,6 +401,7 @@ public final class WerewolfBiteGameTests {
             helper.assertTrue(human.getUUID().equals(index.anchorOf(beta.getUUID()).orElse(null)), "the anchor was not stored");
             helper.assertTrue(PackCommand.anchor(beta, null) == null && index.anchorOf(beta.getUUID()).isEmpty(), "the anchor was not cleared");
         } finally {
+            SireCall.overridePlayerLookup(null);
             clean(alpha, beta, witch, human);
         }
         helper.succeed();

@@ -256,4 +256,61 @@ class PackRulesTest {
         assertNull(out.packAlpha());
         assertEquals(0, out.betaSince());
     }
+
+    // ---- stacked Alpha sparks (plan 14) ----
+
+    @Test
+    void aVictimsSparksAreAllTakenExceptATrueAlphasOwn() {
+        assertEquals(1, PackRules.transferableSparks(1, false));
+        assertEquals(3, PackRules.transferableSparks(3, false));
+        assertEquals(0, PackRules.transferableSparks(1, true), "a True Alpha with none stacked has nothing to take");
+        assertEquals(2, PackRules.transferableSparks(3, true), "a True Alpha loses only the stacked ones");
+        assertEquals(0, PackRules.transferableSparks(0, true), "a count that is not there is one spark");
+    }
+
+    @Test
+    void aKillersSparksAddUpToTheCapAndANonAlphaStartsFromNothing() {
+        assertEquals(2, PackRules.sparksAfterSteal(1, true, 1, 5));
+        assertEquals(5, PackRules.sparksAfterSteal(3, true, 4, 5), "past the cap");
+        assertEquals(3, PackRules.sparksAfterSteal(1, false, 3, 5), "a non-Alpha takes all three: the rank spark and two stacked");
+        assertEquals(1, PackRules.sparksAfterSteal(1, true, 1, 1), "a cap of 1 turns stacking off");
+        assertEquals(1, PackRules.sparksAfterSteal(0, false, 0, 5));
+    }
+
+    @Test
+    void everySparkPastTheFirstAddsTenPercentAndOneRoarTierUpToTheCap() {
+        assertEquals(1.0, PackRules.sparkScale(1, 5), 1e-9);
+        assertEquals(1.2, PackRules.sparkScale(3, 5), 1e-9);
+        assertEquals(1.4, PackRules.sparkScale(9, 5), 1e-9, "the cap stops it");
+        assertEquals(1.0, PackRules.sparkScale(0, 5), 1e-9);
+        assertEquals(0, PackRules.roarTier(1, 5));
+        assertEquals(2, PackRules.roarTier(3, 5));
+        assertEquals(4, PackRules.roarTier(9, 5));
+    }
+
+    @Test
+    void theRankAndEveryStackedSparkGoTogether() {
+        WolfState stacked = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(Rank.ALPHA).sparks(4).build();
+        assertEquals(1, PackRules.apply(stacked, PackEvent.SPARK_LOST, PackContext.defaults()).state().sparks());
+        assertEquals(Rank.OMEGA, PackRules.apply(stacked, PackEvent.SPARK_LOST, PackContext.defaults()).state().rank());
+        assertEquals(1, PackRules.apply(stacked, PackEvent.SPARK_GIVEN_UP, new PackContext(UUID.randomUUID(), 0, 5, 0, 0, 0, true)).state().sparks());
+        WolfState beta = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(Rank.BETA).sparks(1).build();
+        assertEquals(1, PackRules.apply(beta, PackEvent.SPARK_INHERITED, PackContext.defaults()).state().sparks(), "an heir gets one spark");
+        WolfState truth = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(Rank.TRUE_ALPHA).sparks(3).build();
+        assertTrue(PackRules.apply(truth, PackEvent.SPARK_LOST, PackContext.defaults()).refused(), "a True Alpha's spark is never lost");
+        assertTrue(PackRules.apply(truth, PackEvent.SPARK_GIVEN_UP, PackContext.defaults()).refused());
+    }
+
+    @Test
+    void aWolfStateWithNoSparkCountIsOneSparkAndTheCountSurvivesTheCodec() {
+        WolfState w = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(Rank.ALPHA).sparks(3).build();
+        var encoded = WolfState.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, w).getOrThrow();
+        assertEquals(3, WolfState.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, encoded).getOrThrow().sparks());
+        var old = encoded.getAsJsonObject();
+        old.remove("sparks");
+        assertEquals(1, WolfState.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, old).getOrThrow().sparks(), "an old save has one spark");
+        old.addProperty("sparks", -4);
+        assertEquals(1, WolfState.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, old).getOrThrow().sparks(), "a bad count is one");
+        assertEquals(1, WolfState.NONE.sparks());
+    }
 }

@@ -151,6 +151,7 @@ public final class BloodlineAccess {
                                     BloodlineState before, BloodlineState after) {
         if (before.species() == after.species() && before.wolf().lineage() == after.wolf().lineage()
                 && before.wolf().rank() == after.wolf().rank() && before.wolf().killedInnocent() == after.wolf().killedInnocent()
+                && before.wolf().sparks() == after.wolf().sparks()
                 && before.markKills() == after.markKills()
                 && before.ghoul() == after.ghoul() && before.inTurning() == after.inTurning()
                 && Objects.equals(before.sire(), after.sire()) && before.bondBroken() == after.bondBroken()

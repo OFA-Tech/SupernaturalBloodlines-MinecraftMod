@@ -58,11 +58,13 @@ final class DevDemo {
     private static HubView populated(HubView v) {
         SupernaturalState s = v.state().toBuilder().skills(Set.of("S-HYB-1", "S-HYB-2", "S-VAM-1", "S-VAM-2", "S-WOL-1", "S-WOL-5", "S-WOL-7"))
                 .sp(6).spEarned(11).build();
-        List<HubSocial.Member> pack = List.of(new HubSocial.Member("Derek", "alpha", true), new HubSocial.Member("Liam", "beta", true),
+        // the player leads the demo pack (the first of the list), so the kick and ally actions can be photographed
+        String me = v.player().getName().getString();
+        List<HubSocial.Member> pack = List.of(new HubSocial.Member(me, "alpha", true), new HubSocial.Member("Derek", "coalpha", true), new HubSocial.Member("Liam", "beta", true),
                 new HubSocial.Member("Malia", "beta", false), new HubSocial.Member("Isaac", "beta", true), new HubSocial.Member("Deaton", "emissary", true),
-                // packmates, brothers and NPCs are not ranks the server sends yet (plans 14 and 15): shown here so the ring's colours can be seen
-                new HubSocial.Member("Stiles", "packmate", true), new HubSocial.Member("Lydia", "packmate", false), new HubSocial.Member("Ashen", "brother", true),
-                new HubSocial.Member("Slime", "npc", true), new HubSocial.Member("Goblin", "npc", true));
+                new HubSocial.Member("Stiles", "packmate", true), new HubSocial.Member("Lydia", "packmate", false), new HubSocial.Member("Scott", "ally", true),
+                // brothers and NPCs are plan 15's ranks, not sent yet: shown here so the ring's colours can be seen
+                new HubSocial.Member("Ashen", "brother", true), new HubSocial.Member("Slime", "npc", true), new HubSocial.Member("Goblin", "npc", true));
         HubSnapshotPayload.Family family = new HubSnapshotPayload.Family(Optional.of("Klaus"), false, List.of("Tyler", "Ana", "Bo", "Cy", "Di"),
                 List.of("Mikael"), List.of(new HubSocial.Kin("Tyler", 0), new HubSocial.Kin("Ana", 0), new HubSocial.Kin("Bo", 0), new HubSocial.Kin("Cy", 0),
                         new HubSocial.Kin("Di", 0)));

@@ -40,6 +40,11 @@ public final class BloodlinePage implements HubPageView {
             y = heading(f, r, y + 4, KEY + "five");
             y = PageKit.wrapped(f, Component.translatable(KEY + "five_count", snap.fiveCount()), r.x() + 4, y, r.w() - 4, t.ink());
         }
+        net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf = f.view.bloodline().wolf();
+        if (wolf.sparks() > 1 && (wolf.rank() == net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.ALPHA || wolf.rank() == net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.TRUE_ALPHA)) {
+            y = heading(f, r, y + 4, KEY + "sparks");
+            y = PageKit.wrapped(f, Component.translatable(KEY + "sparks_count", wolf.sparks()), r.x() + 4, y, r.w() - 4, t.ink());
+        }
         f.end(y);
 
         Rect s = f.region(HubLayout.SIDE);

@@ -94,6 +94,16 @@ The per-rung rows (SP, EP, tasks and their targets) are the spec's ladder tables
 | elder_vampire | 900 | 20 | 0.02 | self_regeneration | a plain vampire, one step under the Primordial Vampire |
 | alpha_primeval | 900 | 25 | 0.03 | godwolf_sense | a plain werewolf must not out-stat the hybrid apex before the True Alpha x1.5 (1000 to 900) |
 
+## Stacked sparks and the absent leader (plan 14)
+
+| Value | Setting | Why |
+|---|---|---|
+| Sparks one wolf can hold | `max_stacked_sparks` = 5 | Four steals on top of the own spark. Each is a kill of an Alpha from outside the pack, a rare and risky act: five is a long hunt, and a cap keeps one wolf from out-scaling everything. 1 turns it off. |
+| Bonus per spark past the first | +10% of the Alpha attack (+20%) and health (+4) bonuses, so +2% attack and +0.4 health each (five sparks: +28% attack, +5.6 health, with a True Alpha ×1.1 on top) | Small on purpose: the first spark is the rank, the stacked ones are a trophy, not a second rank. The numbers stay below a True Alpha''s. |
+| Roar tier per spark past the first | +1 Strength tier for the pack (Strength V at five) | The pack feels the leader''s stack, not only the leader. The Roar still lasts 30 s with a 60 s cooldown. |
+| True Alpha | own spark never taken, stacked ones can be | Keeps the rule that killing a True Alpha is just a death, and the True Alpha''s reward is not a thing to farm. |
+| Absent leader | `absent_leader_days` = 7 (0 = off) | A week is a normal break for a player and a long enough one for a pack to need a leader. The old leader keeps the spark and can challenge for the lead, so it costs them a seat, not the rank. |
+
 ## What the 2026-11-16 pass changed
 
 | Id | Before | After | Why |

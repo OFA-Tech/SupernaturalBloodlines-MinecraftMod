@@ -135,12 +135,17 @@ public final class MarkTracker {
         if (killer == null || killer == victim || e.getSource().is(SirelineDeath.DAMAGE_TYPE)) {
             return;
         }
-        if (killer instanceof ServerPlayer k && isPrey(victim)) {
+        if (killer instanceof ServerPlayer k && isPrey(victim) && !samePack(k, victim)) {
             killedPrey(k);
         }
-        if (victim instanceof ServerPlayer v && BloodlineAccess.get(v).species() == Species.HUNTER_OF_THE_FIVE && isPrey(killer)) {
+        if (victim instanceof ServerPlayer v && BloodlineAccess.get(v).species() == Species.HUNTER_OF_THE_FIVE && isPrey(killer) && !samePack(v, killer)) {
             killedMarkedHunter(v, killer);
         }
+    }
+
+    /** Two players of one pack (plan 14), or who left it a moment ago: a kill between them gives no mark and no curse, in either direction. */
+    static boolean samePack(Entity a, Entity b) {
+        return net.neoforged.fml.ModList.get().isLoaded("werewolves") && net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.samePack(a, b);
     }
 
     private static void killedPrey(ServerPlayer killer) {

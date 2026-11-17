@@ -159,14 +159,27 @@ public final class AlphaBite {
         } else if (roll.getAsDouble() < SpeciesConfig.alphaBiteDeathChance()) {
             // after Vampirism's setFactionAndLevel has returned. execute() would run it at once on the server thread; tell() queues it
             p.server.tell(new TickTask(p.server.getTickCount(), () -> reject(p)));
+        } else if (!joinsPackOf(p, alpha)) {
+            // already in another pack: not moved. They are bitten (and the sire is the biter); as a Packmate they become a Beta of their own pack
+            if (!PackAccess.applyPack(p, PackEvent.BITTEN_BY_WILD, PackContext.defaults()).refused()) {
+                SireRecorder.record(alpha, PackAccess.nameOf(p.server, alpha), p);
+            }
         } else {
-            PackContext c = new PackContext(alpha, 0, p.level().getGameTime(), 0, 30L * 24000, 300, true);
+            // the pack is the biter's LEADER's (a second Alpha's bite joins the pack they are in); the sire stays the biter
+            UUID leader = PackIndex.get(p.serverLevel()).leaderOf(alpha);
+            PackContext c = new PackContext(leader, 0, p.level().getGameTime(), 0, 30L * 24000, 300, true);
             PackOutcome out = PackAccess.applyPack(p, PackEvent.BITTEN_BY_ALPHA, c);
             if (!out.refused()) {
                 // the pack index follows the wolf state's packAlpha; the sire is the Alpha (first sire wins)
                 SireRecorder.record(alpha, PackAccess.nameOf(p.server, alpha), p);
             }
         }
+    }
+
+    /** False when the bitten is already a member of a pack that is not the biter''s. */
+    private static boolean joinsPackOf(ServerPlayer bitten, UUID biter) {
+        PackIndex index = PackIndex.get(bitten.serverLevel());
+        return index.alphaOf(bitten.getUUID()).map(theirs -> theirs.equals(index.leaderOf(biter))).orElse(true);
     }
 
     /** The body refuses the bite: they leave the werewolves and die of the {@code rejected_bite} (a totem does not save them). */

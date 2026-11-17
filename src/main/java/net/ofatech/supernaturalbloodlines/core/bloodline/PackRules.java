@@ -17,19 +17,50 @@ public final class PackRules {
             case JOINED_PACK -> joinedPack(w, c);
             case LEFT_PACK -> leftPack(w);
             case KILLED_ALPHA -> killedAlpha(w);
-            case SPARK_INHERITED -> isWerewolf(w) && !isAlpha(w) ? ok(w.toBuilder().rank(Rank.ALPHA).packAlpha(null).build()) : ok(w);
+            case SPARK_INHERITED -> isWerewolf(w) && !isAlpha(w) ? ok(w.toBuilder().rank(Rank.ALPHA).packAlpha(null).sparks(1).build()) : ok(w);
             case SPARK_GIVEN_UP -> w.rank() == Rank.TRUE_ALPHA ? refuse(w, "true_alpha_keeps_spark")
                     : isAlpha(w)
-                    ? ok(w.toBuilder().rank(Rank.BETA).packAlpha(c.otherAlpha()).betaSince(c.gameTime()).build())
+                    ? ok(w.toBuilder().rank(Rank.BETA).packAlpha(c.otherAlpha()).betaSince(c.gameTime()).sparks(1).build())
                     : ok(w);
             // the spark is gone (stolen, or passed on with the faction): an Alpha with nothing left is an Omega. A True Alpha never loses it.
             case SPARK_LOST -> w.rank() == Rank.TRUE_ALPHA ? refuse(w, "true_alpha_keeps_spark")
-                    : isAlpha(w) ? ok(w.toBuilder().rank(Rank.OMEGA).packAlpha(null).betaSince(0).build()) : ok(w);
+                    : isAlpha(w) ? ok(w.toBuilder().rank(Rank.OMEGA).packAlpha(null).betaSince(0).sparks(1).build()) : ok(w);
             case TRUE_ALPHA_EARNED -> trueAlpha(w, c);
             // Only a werewolf's eyes turn blue; the caller sends GENE_AWAKENED first when a kill awakens a human.
             case KILLED_INNOCENT -> isWerewolf(w) ? ok(w.toBuilder().killedInnocent(true).build()) : ok(w);
             case DEFENDER_KILL -> ok(w.toBuilder().defenderKills(w.defenderKills() + 1).build());
         };
+    }
+
+    // ---- stacked Alpha sparks (plan 14, the Deucalion factor) ----
+
+    /** Each spark beyond the first adds this much to the Alpha rank's attack and health bonuses. */
+    public static final double SPARK_BONUS = 0.10;
+
+    /**
+     * How many of a victim's sparks a killer takes: all of them, except that a True Alpha's own spark is never taken, only the
+     * ones stacked on it. 0 means there is nothing to steal (a True Alpha with no extras: just a death).
+     */
+    public static int transferableSparks(int victimSparks, boolean victimTrueAlpha) {
+        int count = Math.max(1, victimSparks);
+        return victimTrueAlpha ? count - 1 : count;
+    }
+
+    /** The killer's sparks after a steal: their own (0 for a non-Alpha, who becomes an Alpha by the first one) plus what they took, up to {@code cap}. */
+    public static int sparksAfterSteal(int killerSparks, boolean killerIsAlpha, int taken, int cap) {
+        int own = killerIsAlpha ? Math.max(1, killerSparks) : 0;
+        return Math.max(1, Math.min(Math.max(1, cap), own + Math.max(0, taken)));
+    }
+
+    /** What the Alpha rank's attribute bonuses are multiplied by: +10% for every spark beyond the first (up to {@code cap}). */
+    public static double sparkScale(int sparks, int cap) {
+        int extra = Math.max(0, Math.min(Math.max(1, sparks), Math.max(1, cap)) - 1);
+        return 1 + SPARK_BONUS * extra;
+    }
+
+    /** The Alpha Roar's Strength amplifier: Strength I with one spark, one tier higher for each extra one. */
+    public static int roarTier(int sparks, int cap) {
+        return Math.max(0, Math.min(Math.max(1, sparks), Math.max(1, cap)) - 1);
     }
 
     private static boolean isWerewolf(WolfState w) {

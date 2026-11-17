@@ -32,14 +32,14 @@ public final class PackPage implements HubPageView {
         int y = f.begin(HubLayout.MAIN);
         y = PageKit.title(f, Component.translatable(KEY + "title"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
-        y = PageKit.wrapped(f, Component.translatable(KEY + "rank", Component.translatable(KEY + "rank." + wolf.rank().name().toLowerCase(Locale.ROOT))),
+        y = PageKit.wrapped(f, Component.translatable(KEY + "rank", BookPackPage.rankLabel(wolf)),
                 r.x(), y + 6, r.w(), t.ink()) + 3;
         y = PageKit.wrapped(f, Component.translatable(KEY + "members").withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
         if (pack.isEmpty()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "alone"), r.x() + 4, y, r.w() - 4, t.muted());
         }
         for (HubSocial.Member m : pack) {
-            Component rank = Component.translatable(KEY + "member." + m.rank());
+            Component rank = Component.translatable(KEY + "member." + m.base()).copy().append(m.sparks() > 1 ? " \u00d7" + m.sparks() : "");
             int rw = f.font().width(rank);
             f.g.fill(r.x() + 1, y + 2, r.x() + 5, y + 6, m.online() ? 0xFF2f6e4a : 0xFF9a8566);
             String name = f.font().plainSubstrByWidth(m.name(), r.w() - 10 - rw - 4);

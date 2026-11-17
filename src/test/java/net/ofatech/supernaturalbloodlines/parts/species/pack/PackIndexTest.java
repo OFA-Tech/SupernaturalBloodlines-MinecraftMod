@@ -6,120 +6,302 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.UUID;
-import net.minecraft.nbt.CompoundTag;
 import org.junit.jupiter.api.Test;
 
+/** The index's own rules, without a world. */
 class PackIndexTest {
-    private static UUID id() {
-        return UUID.randomUUID();
+    private static final UUID A = new UUID(0, 1);
+    private static final UUID B = new UUID(0, 2);
+    private static final UUID C = new UUID(0, 3);
+    private static final UUID M = new UUID(0, 4);
+
+    @Test
+    void anAllianceIsMadeBothWaysOnceAndNeverWithYourself() {
+        PackIndex i = new PackIndex();
+        assertFalse(i.ally(A, A), "allied with themselves");
+        assertTrue(i.ally(A, B));
+        assertFalse(i.ally(A, B), "the same alliance twice");
+        assertFalse(i.ally(B, A), "the same alliance from the other side");
+        assertTrue(i.alliesOf(A).contains(B) && i.alliesOf(B).contains(A), "not both ways");
+        assertTrue(i.unally(B, A));
+        assertTrue(i.alliesOf(A).isEmpty() && i.alliesOf(B).isEmpty());
     }
 
     @Test
-    void joinAndLeave() {
+    void onlyALeaderAllies() {
         PackIndex i = new PackIndex();
-        UUID alpha = id();
-        UUID a = id();
-        UUID b = id();
-        assertTrue(i.join(alpha, a));
-        assertTrue(i.join(alpha, b));
-        assertEquals(List.of(a, b), i.betasOf(alpha));
-        assertEquals(alpha, i.alphaOf(a).orElseThrow());
-        i.leave(a);
-        assertTrue(i.alphaOf(a).isEmpty());
-        assertEquals(List.of(b), i.betasOf(alpha));
+        i.join(A, M);
+        assertFalse(i.ally(M, B), "a member allied");
+        assertFalse(i.ally(B, M), "allied with a member");
+        assertTrue(i.ally(A, B));
+        assertTrue(i.alliedPlayers(M, B) && i.alliedPlayers(B, M), "a member is covered by their pack's alliance");
+        assertFalse(i.alliedPlayers(A, M), "the same pack is not allied with itself");
     }
 
     @Test
-    void aBetaNeverSwitchesPackThroughJoin() {
+    void anEmissaryWhoLeavesOrIsKickedIsNobodysEmissaryAndAJoiningLeaderLosesTheirOwn() {
         PackIndex i = new PackIndex();
-        UUID one = id();
-        UUID two = id();
-        UUID beta = id();
-        assertTrue(i.join(one, beta));
-        assertFalse(i.join(two, beta));
-        assertEquals(one, i.alphaOf(beta).orElseThrow());
-        assertFalse(i.join(one, one));
+        UUID witch = new UUID(0, 9);
+        i.join(A, witch);
+        i.setEmissary(A, witch);
+        assertTrue(i.kick(witch));
+        assertTrue(i.emissaryOf(A).isEmpty() && i.emissaryAlpha(witch).isEmpty(), "a kicked Emissary is still named");
+
+        i.join(A, witch);
+        i.setEmissary(A, witch);
+        i.leave(witch);
+        assertTrue(i.emissaryOf(A).isEmpty(), "an Emissary who left is still named");
+
+        // a leader who joins another pack no longer has an Emissary of their own
+        i.join(B, witch);
+        i.setEmissary(B, witch);
+        assertTrue(i.join(A, B));
+        assertTrue(i.emissaryOf(B).isEmpty(), "a joined leader kept their Emissary");
     }
 
     @Test
-    void transferMovesTheWholePackAndDropsTheOldAlpha() {
+    void noticesAreAShortListPerPlayerKeptInOrderAndSurviveASave() {
         PackIndex i = new PackIndex();
-        UUID old = id();
-        UUID heir = id();
-        UUID other = id();
-        i.join(old, heir);
-        i.join(old, other);
-        i.setEmissary(old, id());
-        i.transfer(old, heir);
-        assertTrue(i.alphaOf(heir).isEmpty());
-        assertEquals(List.of(other), i.betasOf(heir));
-        assertTrue(i.betasOf(old).isEmpty());
-        assertTrue(i.emissaryOf(old).isEmpty());
+        for (int n = 0; n < PackIndex.MAX_NOTICES + 3; n++) {
+            i.addNotice(A, "k", Integer.toString(n));
+        }
+        i.addNotice(B, "other", "x");
+        assertEquals(PackIndex.MAX_NOTICES, i.noticeCount(A), "the list is not capped");
+        PackIndex back = PackIndex.load(i.save(new net.minecraft.nbt.CompoundTag(), null), null);
+        List<String[]> got = back.takeNotices(A);
+        assertEquals(PackIndex.MAX_NOTICES, got.size());
+        assertEquals("3", got.get(0)[1], "the oldest were not the ones dropped");
+        assertEquals("10", got.get(got.size() - 1)[1]);
+        assertEquals(1, back.takeNotices(B).size());
+        assertTrue(back.takeNotices(A).isEmpty(), "a notice came twice");
     }
 
     @Test
-    void transferLeavesATombstoneForTheOldAlphaUntilTheyAreAlphaAgain() {
+    void aDamagedEntryIsSkippedAndTheRestOfTheIndexLoads() {
         PackIndex i = new PackIndex();
-        UUID old = id();
-        UUID heir = id();
-        i.join(old, heir);
-        i.transfer(old, heir);
-        assertTrue(i.isFormerAlpha(old));
-        assertFalse(i.isFormerAlpha(heir));
-        i.clearFormerAlpha(old);
-        assertFalse(i.isFormerAlpha(old));
-        // the new Alpha of a transfer is not a former one, even if they were once
-        i.markFormerAlpha(heir);
-        i.join(old, id());
-        i.transfer(old, heir);
-        assertFalse(i.isFormerAlpha(heir));
+        i.join(A, M);
+        i.setStrength(A, 1005);
+        i.addNotice(M, "k", "v");
+        net.minecraft.nbt.CompoundTag tag = i.save(new net.minecraft.nbt.CompoundTag(), null);
+        // two damaged entries in the middle of good ones: a list entry that is no compound with ids, and an id that is no uuid
+        net.minecraft.nbt.ListTag members = tag.getList("members", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        members.add(0, new net.minecraft.nbt.CompoundTag());
+        tag.put("members", members);
+        net.minecraft.nbt.ListTag former = new net.minecraft.nbt.ListTag();
+        former.add(new net.minecraft.nbt.IntArrayTag(new int[] {1, 2}));
+        tag.put("former_alphas", former);
+        net.minecraft.nbt.ListTag notices = tag.getList("notices", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        notices.add(0, new net.minecraft.nbt.CompoundTag());
+        tag.put("notices", notices);
+
+        PackIndex back = PackIndex.load(tag, null);
+        assertEquals(A, back.leaderOf(M), "the good member was lost with the bad entry");
+        assertEquals(1005, back.strengthOf(A));
+        assertEquals(1, back.takeNotices(M).size(), "the good notice was lost with the bad one");
     }
 
     @Test
-    void dissolvingAPackFreesItsBetasAndMarksThemForTheirNextLogin() {
+    void samePackNeedsTwoPlayersInOnePack() {
         PackIndex i = new PackIndex();
-        UUID alpha = id();
-        UUID a = id();
-        UUID b = id();
-        i.join(alpha, a);
-        i.join(alpha, b);
-        i.dissolve(alpha);
-        assertTrue(i.betasOf(alpha).isEmpty());
-        assertTrue(i.alphaOf(a).isEmpty());
-        assertTrue(i.isFormerAlpha(alpha));
-        assertTrue(i.takeDissolved(a));
-        assertFalse(i.takeDissolved(a));
-        assertTrue(i.takeDissolved(b));
-        assertFalse(i.takeDissolved(id()));
+        assertFalse(i.samePackNow(A, A));
+        assertFalse(i.samePackNow(A, B), "two strangers");
+        i.join(A, M);
+        assertTrue(i.samePackNow(A, M) && i.samePackNow(M, A));
+        assertFalse(i.samePackNow(M, M));
+        assertFalse(i.samePackNow(M, B));
+        assertTrue(i.isLeader(A) && !i.isLeader(M) && i.isLeader(B));
     }
 
     @Test
-    void tombstonesAndDissolvedBetasSurviveSaveAndLoad() {
+    void aLeaderWhoJoinsBringsTheirMembersAndTheirAlliesGoWithTheLeadership() {
         PackIndex i = new PackIndex();
-        UUID alpha = id();
-        UUID beta = id();
-        i.join(alpha, beta);
-        i.dissolve(alpha);
-        PackIndex back = PackIndex.load(i.save(new CompoundTag(), null), null);
-        assertTrue(back.isFormerAlpha(alpha));
-        assertTrue(back.takeDissolved(beta));
+        i.join(B, M);
+        i.ally(B, C);
+        assertTrue(i.join(A, B));
+        assertEquals(List.of(M, B), i.betasOf(A), "the members come along, the leader after them");
+        assertTrue(i.alliesOf(B).isEmpty(), "a member has no alliance of their own");
+        // the leadership moves to B: the alliance of the pack goes with it
+        i.ally(A, C);
+        i.promote(A, B);
+        assertTrue(i.alliesOf(B).contains(C) && i.alliesOf(A).isEmpty());
+        assertTrue(i.alliedPlayers(A, C), "the old leader is still in the allied pack");
+        assertEquals(B, i.leaderOf(A), "the old leader does not follow the new one");
+        assertEquals(B, i.leaderOf(M), "a member does not follow the new leader");
+        assertEquals(B, i.leaderOf(B));
+        assertTrue(i.isLeader(B) && !i.isLeader(A) && !i.isLeader(M));
+        assertEquals(java.util.Set.of(M, A), new java.util.HashSet<>(i.betasOf(B)));
     }
 
     @Test
-    void survivesSaveAndLoad() {
+    void aStartMovesEveryRecordedTimeForwardByExactlyTheDowntime() {
         PackIndex i = new PackIndex();
-        UUID alpha = id();
-        UUID beta = id();
-        UUID witch = id();
-        UUID anchor = id();
-        i.join(alpha, beta);
-        i.setEmissary(alpha, witch);
-        i.setAnchor(beta, anchor);
-        PackIndex back = PackIndex.load(i.save(new CompoundTag(), null), null);
-        assertEquals(alpha, back.alphaOf(beta).orElseThrow());
-        assertEquals(witch, back.emissaryOf(alpha).orElseThrow());
-        assertEquals(anchor, back.anchorOf(beta).orElseThrow());
-        back.setAnchor(beta, null);
-        assertTrue(back.anchorOf(beta).isEmpty());
+        i.setLastSeen(A, 100);
+        i.setLastSeen(B, 200);
+        i.shiftLastSeen(9_000, 1_000_000);
+        assertEquals(9_100L, i.lastSeen(A).orElseThrow());
+        assertEquals(9_200L, i.lastSeen(B).orElseThrow());
+        assertTrue(i.lastSeen(C).isEmpty(), "somebody the index never saw got a time");
+        i.shiftLastSeen(0, 1_000_000);
+        i.shiftLastSeen(-5, 1_000_000);
+        assertEquals(9_100L, i.lastSeen(A).orElseThrow(), "a gap that is not positive moved the times");
+    }
+
+    @Test
+    void theAliveTimeSurvivesASaveAndAnOldWorldHasNone() {
+        PackIndex i = new PackIndex();
+        assertEquals(0L, i.aliveAt());
+        i.setAliveAt(123_456L);
+        net.minecraft.nbt.CompoundTag tag = i.save(new net.minecraft.nbt.CompoundTag(), null);
+        assertEquals(123_456L, PackIndex.load(tag, null).aliveAt());
+        tag.remove("alive_at");
+        assertEquals(0L, PackIndex.load(tag, null).aliveAt(), "a world from before it was recorded must read as never recorded");
+        tag.putString("alive_at", "not a number");
+        assertEquals(0L, PackIndex.load(tag, null).aliveAt(), "a damaged value is no time");
+    }
+    @Test
+    void theNoticeThatSaysYouLostTheLeadIsNeverDroppedForRoom() {
+        PackIndex i = new PackIndex();
+        i.addNotice(A, PackIndex.KEPT_NOTICE, "x");
+        for (int n = 0; n < PackIndex.MAX_NOTICES + 5; n++) {
+            i.addNotice(A, "k", Integer.toString(n));
+        }
+        List<String[]> got = i.takeNotices(A);
+        assertEquals(PackIndex.MAX_NOTICES, got.size());
+        assertEquals(PackIndex.KEPT_NOTICE, got.get(0)[0], "the absence notice was dropped to make room");
+        assertEquals("12", got.get(got.size() - 1)[1], "the newest one is gone");
+    }
+
+    @Test
+    void someoneWhoLeftByChoiceAMomentAgoStillCountsForAKillUntilTheGraceEnds() {
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            PackIndex i = new PackIndex();
+            i.join(A, M);
+            i.leaveVoluntarily(M);
+            assertFalse(i.samePackNow(A, M), "they are not in it any more");
+            assertTrue(i.killsInPack(M, A, 10) && i.killsInPack(A, M, 10), "leaving a moment ago must not free a kill: a lone leader matches who left them");
+            assertFalse(i.killsInPack(M, A, 0), "the switch at 0 is off");
+            assertFalse(i.killsInPack(M, B, 10), "a stranger is no member");
+            assertFalse(i.killsInPack(M, M, 10), "nobody is their own pack mate");
+            assertTrue(i.onlyByGrace(M, A, 10) && !i.onlyByGrace(M, A, 0));
+            clock[0] += 10 * 60_000L - 1;
+            assertTrue(i.killsInPack(M, A, 10), "ten minutes minus a millisecond");
+            clock[0] += 1;
+            assertFalse(i.killsInPack(M, A, 10), "ten minutes");
+        } finally {
+            PackIndex.overrideClock(null);
+        }
+    }
+
+    @Test
+    void aKickAnUnchosenLeaveAndADissolvedPackGetNoGrace() {
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            PackIndex i = new PackIndex();
+            i.join(A, M);
+            i.kick(M);
+            assertFalse(i.killsInPack(A, M, 10), "a kicked member is an outsider at once");
+            i.join(A, M);
+            i.leave(M); // the other leaves (a steal, a state change): not a choice
+            assertFalse(i.killsInPack(A, M, 10));
+            i.join(A, M);
+            i.join(A, B);
+            i.dissolve(A);
+            assertFalse(i.killsInPack(M, B, 10), "a dissolved pack is no pack to be held to");
+            assertFalse(i.killsInPack(M, A, 10));
+        } finally {
+            PackIndex.overrideClock(null);
+        }
+    }
+
+    @Test
+    void theGraceSurvivesJoiningAnotherPackAndAChangeOfLeaderOfTheOldOne() {
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            PackIndex i = new PackIndex();
+            i.join(A, M);
+            i.join(A, B);
+            i.leaveVoluntarily(M);
+            // leaves A, joins a friend's pack C: a kill on A's pack is still a kill inside it
+            i.join(C, M);
+            assertTrue(i.killsInPack(M, A, 10) && i.killsInPack(M, B, 10), "joining a friend's pack freed the kill on the old one");
+            // the old pack changes leader meanwhile: A steps down for B
+            i.promote(A, B);
+            assertTrue(i.killsInPack(M, B, 10), "the new leader of the old pack is no longer found");
+            assertTrue(i.killsInPack(M, A, 10), "the old leader, now a member, is no longer found");
+            // and the friend's pack counts as well, for as long as they are in it
+            assertTrue(i.killsInPack(M, C, 10));
+            clock[0] += 11 * 60_000L;
+            assertFalse(i.killsInPack(M, B, 10), "the grace never ended");
+            assertTrue(i.killsInPack(M, C, 10), "the pack they are in now is theirs for good");
+        } finally {
+            PackIndex.overrideClock(null);
+        }
+    }
+
+    @Test
+    void aShiftNeverMovesATimeIntoTheFuture() {
+        PackIndex i = new PackIndex();
+        i.setLastSeen(A, 900);
+        i.setLastSeen(B, 5_000);
+        i.shiftLastSeen(10_000, 1_000);
+        assertEquals(1_000L, i.lastSeen(A).orElseThrow(), "capped at the present");
+        assertEquals(5_000L, i.lastSeen(B).orElseThrow(), "a time that was in the future already is left, not pulled back");
+    }
+
+    @Test
+    void theGraceFollowsTheLeadershipWhenAPackIsTransferred() {
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            PackIndex i = new PackIndex();
+            i.join(A, M);
+            i.join(A, B);
+            i.leaveVoluntarily(M);
+            i.transfer(A, B); // A loses the lead and leaves; B takes the pack
+            assertTrue(i.killsInPack(M, B, 10), "the grace was lost when the pack changed hands");
+            assertFalse(i.killsInPack(M, C, 10));
+        } finally {
+            PackIndex.overrideClock(null);
+        }
+    }
+
+    @Test
+    void aVoluntaryKickRemembersTheGraceAndAPlainOneDoesNot() {
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            PackIndex i = new PackIndex();
+            i.join(A, M);
+            i.kick(M, true);
+            assertTrue(i.killsInPack(M, A, 10) && i.leftRecently(M, 10), "somebody who left the party themselves has the grace");
+            i.join(A, B);
+            i.kick(B, false);
+            assertFalse(i.killsInPack(B, A, 10) || i.leftRecently(B, 10), "a plain kick has none");
+        } finally {
+            PackIndex.overrideClock(null);
+        }
+    }
+
+    @Test
+    void rememberLeftNeedsTheMemberStillInThePack() {
+        long[] clock = {5_000_000L};
+        PackIndex.overrideClock(() -> clock[0]);
+        try {
+            PackIndex i = new PackIndex();
+            i.join(A, M);
+            i.leave(M);          // what a werewolf Beta''s state change does before anything else can
+            i.rememberLeft(M);   // too late: nothing to remember (this is the bug /pack leave works around by calling it first)
+            assertFalse(i.leftRecently(M, 10));
+            i.join(A, M);
+            i.rememberLeft(M);
+            i.leave(M);
+            assertTrue(i.leftRecently(M, 10), "noted first, the grace survives the removal");
+        } finally {
+            PackIndex.overrideClock(null);
+        }
     }
 }

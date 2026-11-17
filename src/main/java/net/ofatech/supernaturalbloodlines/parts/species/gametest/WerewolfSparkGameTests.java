@@ -142,20 +142,19 @@ public final class WerewolfSparkGameTests {
             helper.assertTrue(t.rank() == Rank.ALPHA && t.stoleSpark() && t.packAlpha() == null, "the thief is " + t);
             WolfState old = state(alpha);
             helper.assertTrue(old.rank() == Rank.OMEGA && old.packAlpha() == null, "the old Alpha is " + old);
-            helper.assertTrue(state(beta).packAlpha().equals(thief.getUUID()), "the online Beta was not moved: " + state(beta));
-            helper.assertTrue(isIn(index, thief.getUUID(), beta) && isIn(index, thief.getUUID(), offlineBeta), "the index did not move the pack");
+            // the thief takes the spark and not the pack (plan 14): with no second Alpha to lead it, it dissolves
+            helper.assertTrue(state(beta).rank() == Rank.OMEGA && state(beta).packAlpha() == null, "the online Beta of a dissolved pack is " + state(beta));
+            helper.assertTrue(index.betasOf(thief.getUUID()).isEmpty() && index.alphaOf(beta.getUUID()).isEmpty() && index.alphaOf(offlineBeta.getUUID()).isEmpty(), "the thief got the pack");
             helper.assertTrue(index.betasOf(alpha.getUUID()).isEmpty() && index.alphaOf(alpha.getUUID()).isEmpty(), "the old Alpha still has a pack");
             helper.assertTrue(index.isFormerAlpha(alpha.getUUID()) && !index.isFormerAlpha(thief.getUUID()), "no tombstone for the old Alpha");
 
-            // the Beta that was offline is moved when it logs in
+            // the Beta that was offline becomes an Omega when it logs in, and is told why
             PackIndex.login(offlineBeta);
-            helper.assertTrue(thief.getUUID().equals(state(offlineBeta).packAlpha()) && isIn(index, thief.getUUID(), offlineBeta),
-                    "the offline Beta went back to the old Alpha: " + state(offlineBeta));
+            helper.assertTrue(state(offlineBeta).rank() == Rank.OMEGA && state(offlineBeta).packAlpha() == null, "the offline Beta of a dissolved pack is " + state(offlineBeta));
 
-            // an Alpha who already leads a pack keeps it and adopts the victim's Betas
+            // another Alpha takes the spark from the thief in turn
             kill(other, thief);
             helper.assertTrue(state(other).rank() == Rank.ALPHA && state(other).stoleSpark(), "the second Alpha is " + state(other));
-            helper.assertTrue(isIn(index, other.getUUID(), beta) && isIn(index, other.getUUID(), offlineBeta), "the merged pack is missing a Beta");
             helper.assertTrue(state(thief).rank() == Rank.OMEGA, "the thief kept the spark: " + state(thief));
         } finally {
             clean(alpha, beta, offlineBeta, thief, human, other);
@@ -164,7 +163,7 @@ public final class WerewolfSparkGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void betaKillingOwnAlphaTakesPack(GameTestHelper helper) {
+    public static void aBetaKillingTheirOwnAlphaChangesNothing(GameTestHelper helper) {
         ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
         ServerPlayer killer = wolf(helper, Rank.BETA, alpha.getUUID());
         ServerPlayer second = wolf(helper, Rank.BETA, alpha.getUUID());
@@ -173,16 +172,9 @@ public final class WerewolfSparkGameTests {
             PackIndex index = PackIndex.get(helper.getLevel());
             helper.assertTrue(isIn(index, alpha.getUUID(), killer) && isIn(index, alpha.getUUID(), second), "the pack was not indexed");
             kill(killer, alpha);
-            WolfState k = state(killer);
-            helper.assertTrue(k.rank() == Rank.ALPHA && k.packAlpha() == null && k.stoleSpark(), "the killer is " + k);
-            helper.assertTrue(index.alphaOf(killer.getUUID()).isEmpty(), "the new Alpha is still a Beta in the index");
-            helper.assertTrue(isIn(index, killer.getUUID(), second) && killer.getUUID().equals(state(second).packAlpha()),
-                    "the rest of the pack did not follow: " + state(second));
-            WolfState old = state(alpha);
-            helper.assertTrue(old.rank() == Rank.OMEGA && old.packAlpha() == null, "the old Alpha is " + old);
-            helper.assertTrue(index.betasOf(alpha.getUUID()).isEmpty() && index.alphaOf(alpha.getUUID()).isEmpty(), "the old Alpha is still in a pack");
-            // the Beta days were kept: a True Alpha candidate does not start over
-            helper.assertTrue(state(second).betaSince() == 1, "a Beta's days were reset: " + state(second));
+            helper.assertTrue(state(killer).rank() == Rank.BETA && !state(killer).stoleSpark() && alpha.getUUID().equals(state(killer).packAlpha()), "the killer is " + state(killer));
+            helper.assertTrue(state(alpha).rank() == Rank.ALPHA && state(alpha).sparks() == 1 && !index.isFormerAlpha(alpha.getUUID()), "the victim is " + state(alpha));
+            helper.assertTrue(isIn(index, alpha.getUUID(), killer) && isIn(index, alpha.getUUID(), second) && index.isLeader(alpha.getUUID()), "the pack moved");
         } finally {
             clean(alpha, killer, second);
         }
