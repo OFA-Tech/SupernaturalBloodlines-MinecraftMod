@@ -326,6 +326,9 @@ public final class PackDuel {
             for (String[] n : PackIndex.get(server.overworld()).takeNotices(back.getUUID())) {
                 back.sendSystemMessage(Component.translatable(n[0], n[1]));
             }
+            // a late return into a duel that still waits for the other one: it is not over for either of them yet
+            BOARD.on(back.getUUID()).filter(x -> x.isAway(back.getUUID())).ifPresent(x -> back.sendSystemMessage(
+                    Component.translatable(KEY + "resumed_waiting", name(server, x.other(back.getUUID())))));
             return;
         }
         if (d.paused()) {
@@ -361,9 +364,13 @@ public final class PackDuel {
         PackIndex index = PackIndex.get(server.overworld());
         boolean applied = settle(server, r);
         if (!applied) {
-            // called off ("the pack changed"): whoever is not here finds out at their next login, the winner as well as the loser
-            tell(server, r.loser(), KEY + "off.pack", "", leaving);
-            tell(server, r.winner(), KEY + "off.pack", "", leaving);
+            // called off ("the pack changed"): settle told whoever is online; the one who is disconnecting and the one who is away
+            // find out at their next login, the winner as well as the loser
+            for (UUID id : new UUID[] {r.loser(), r.winner()}) {
+                if (!isHere(server, id, leaving)) {
+                    index.addNotice(id, KEY + "off.pack", "");
+                }
+            }
             return;
         }
         UUID leads = index.leaderOf(r.loser());
@@ -501,10 +508,11 @@ public final class PackDuel {
             }
             UUID x = a.player();
             UUID y = d.other(x);
-            boolean xHere = SireCall.player(server, x) != null; // came back, but late
-            if (!xHere && d.isAway(y) && SireCall.player(server, y) == null) {
+            // x, whose own window is over, may be back by now (late) or still away: either way the other one is still waited for
+            // while they are away with time left. If y comes back in time, x forfeits then; if y's window ends too, nobody wins
+            if (d.isAway(y) && SireCall.player(server, y) == null) {
                 if (d.awayEnd(y) > now) {
-                    continue; // the other one still has time: wait for them
+                    continue;
                 }
                 BOARD.callOffBoth(d, now);
                 for (UUID id : new UUID[] {x, y}) {
