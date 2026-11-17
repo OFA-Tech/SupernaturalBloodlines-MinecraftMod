@@ -582,6 +582,14 @@ All frames 1920 x 1080, text at least 16 Figma px, contrast 4.5:1 for text and 3
 
 Process for the rebuild: Operate mode, the existing three looks, no new decoration; one frame per row, each opened as a PNG and checked for clipping before the next. Export to `C:\Users\caiom\AppData\Local\Temp\opencode\ui-first-v1\`.
 
+### Drawn (2026-11-17)
+
+Figma file `USFBf74c4I2BWDyfmRxFZO`, page "UI-first v1", 32 frames at 1920 x 1080. PNGs (1920 x 1080) are in `C:\Users\caiom\AppData\Local\Temp\opencode\ui-first-v1\`, numbered 01 to 32 in the order below. Frame ids: Nav `46:2` `46:335` `46:582`; Home `48:2` `48:445` `47:839`; Profile `49:2` (Grimoire, challenge the leader) `50:2` (Blood Moon, leader views a Packmate, pack-bonus wording for owner review) `51:2` (Tensura, own profile); knowledge states `51:267` `51:565` `51:863`; challenge blocked states `52:285`; duel `53:2` (in progress) `53:196` (paused, waiting 45 s); requests and toast `53:449`; confirm dialogs `55:2`; Pack `56:2` `58:2`; Bloodline `59:2` `59:342`; Skills with Loadout `58:912` `58:1237`; Settings `67:351` `60:354` `66:2`; Admin (Tensura) `63:213` species, `63:586` core and search, `63:996` debug, `64:2` OP view of a profile, `64:334` parts and gamerules empty state, plus Grimoire and Blood Moon variants `65:2`.
+
+Added later the same day (PNGs 33 to 51, plus re-exports of 02, 05, 08, 10 to 12 and 14): Home for a Ghoul `70:2` `70:332` `70:551`; Home with no species `71:2` `71:326`; no pack, Pack and own Profile `71:495` `71:809`; True Alpha Profile `72:2` `72:359`; True Alpha Pack `72:612` `72:1003` `72:1302`; full Blood Moon and Tensura shells for Bloodline `74:2` `74:255`, Skills `74:539` `74:775`, Settings `74:1040` `74:1299`; the "taking a spark ends your path to True Alpha" dialogs `74:1588`.
+
+Owner rulings on those frames: a Ghoul keeps Home, Path, Guide and Settings open (the rest locked); the True Alpha warning shows for every Beta or Omega whose path is still open, before an Alpha Trial or a steal that would give them a spark; heal has no warning (the Alpha gives up the spark, the healed player does not become an Alpha) and is a plain confirm, "Give up your spark to heal X? You become a Beta." The Admin Grimoire and Blood Moon frames stay strips.
+
 ## Appendix B: how the planned features slot in
 
 | Planned feature | Slots into |
