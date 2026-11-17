@@ -35,10 +35,10 @@ public final class DuelBoard {
         private final UUID leader;
         private Phase phase = Phase.ASKED;
         private long expires;
-        // a duelist who lost their connection: the duel waits for them until pauseEnd, and its own clock stands still meanwhile
-        private UUID pausedBy;
-        private long pausedAt;
-        private long pauseEnd;
+        // the duelists who lost their connection, each with their own deadline {left at, window ends}: the duel waits for them
+        // while any of them is away, and its own clock stands still meanwhile
+        private final java.util.Map<UUID, long[]> away = new java.util.LinkedHashMap<>();
+        private long pauseStart;
         // who has used their one wait already: a second disconnect of the same duelist is a forfeit, whatever the window
         private final java.util.Set<UUID> spentPauses = new java.util.HashSet<>();
 
@@ -60,13 +60,24 @@ public final class DuelBoard {
             return phase;
         }
 
-        /** The duelist whose connection dropped, or null when the duel is not paused. */
+        /** The first duelist whose connection dropped, or null when the duel is not paused. */
         public UUID pausedBy() {
-            return pausedBy;
+            return away.isEmpty() ? null : away.keySet().iterator().next();
         }
 
-        public long pauseEnd() {
-            return pauseEnd;
+        /** Whether anybody is away: a paused duel has no clock, and judges nothing. */
+        public boolean paused() {
+            return !away.isEmpty();
+        }
+
+        public boolean isAway(UUID p) {
+            return away.containsKey(p);
+        }
+
+        /** The tick the wait of {@code p} ends, or 0 when they are not away. */
+        public long awayEnd(UUID p) {
+            long[] a = away.get(p);
+            return a == null ? 0 : a[1];
         }
 
         /** Whether {@code p} has had their one wait in this duel already. */
@@ -183,36 +194,60 @@ public final class DuelBoard {
 
     /**
      * {@code player} lost their connection in a duel that is on: it waits {@code windowTicks} for them, and its own clock stops.
-     * Each duelist gets one wait per duel.
-     * @return false when there is no duel on for them, it is waiting for the other one already, or they have had their wait
+     * Each duelist has their own deadline, and the other one may be away at the same time. Each duelist gets one wait per duel.
+     * @return false when there is no duel on for them, or they have had their wait
      */
     public boolean pause(UUID player, long now, long windowTicks) {
         Optional<Duel> d = on(player);
-        if (d.isEmpty() || d.get().pausedBy != null || d.get().spentPauses.contains(player)) {
+        if (d.isEmpty() || d.get().spentPauses.contains(player)) {
             return false;
         }
         d.get().spentPauses.add(player);
-        d.get().pausedBy = player;
-        d.get().pausedAt = now;
-        d.get().pauseEnd = now + Math.max(0, windowTicks);
+        if (d.get().away.isEmpty()) {
+            d.get().pauseStart = now;
+        }
+        d.get().away.put(player, new long[] {now, now + Math.max(0, windowTicks)});
         return true;
     }
 
-    /** {@code player} is back in time: the duel goes on, with the time it still had when they left (the wait is not counted). */
+    /**
+     * {@code player} is back in time. When nobody else is away the duel goes on, with the time it still had when the first of them
+     * left (the wait is not counted); otherwise it stays paused for the other one. Empty when they were not away or are late.
+     */
     public Optional<Duel> resume(UUID player, long now) {
-        Optional<Duel> d = duels.stream().filter(x -> player.equals(x.pausedBy) && now < x.pauseEnd).findFirst();
+        Optional<Duel> d = duels.stream().filter(x -> x.away.containsKey(player) && now < x.away.get(player)[1]).findFirst();
         d.ifPresent(x -> {
-            x.expires += now - x.pausedAt;
-            x.pausedBy = null;
+            x.away.remove(player);
+            if (x.away.isEmpty()) {
+                x.expires += now - x.pauseStart;
+            }
         });
         return d;
     }
 
-    /** The duels whose wait ran out: the one who did not come back has lost them (the caller settles that). */
-    public List<Duel> expiredPauses(long now) {
-        return duels.stream().filter(d -> d.pausedBy != null && d.pauseEnd <= now).toList();
+    /** One duelist whose wait has run out while still away. */
+    public record Away(Duel duel, UUID player) {
     }
 
+    /** Every duelist whose own wait ran out while they were still away. */
+    public List<Away> expiredAway(long now) {
+        List<Away> out = new ArrayList<>();
+        for (Duel d : duels) {
+            for (Map.Entry<UUID, long[]> e : d.away.entrySet()) {
+                if (e.getValue()[1] <= now) {
+                    out.add(new Away(d, e.getKey()));
+                }
+            }
+        }
+        return out;
+    }
+
+    /** Ends a duel without a winner (both of them stayed away): the pair is barred like for any call-off. */
+    public void callOffBoth(Duel d, long now) {
+        duels.remove(d);
+        forget(d);
+        bar(d.challenger, d.leader, now);
+    }
     /** A blow from {@code attacker} on {@code victim}: kept (for the combat credit of what follows) only if they are each other's opponent in a duel that is on. */
     public void recordHit(UUID victim, UUID attacker, long now) {
         on(victim).filter(d -> d.other(victim).equals(attacker)).ifPresent(d -> hits.put(victim, new Hit(attacker, now)));
@@ -269,7 +304,7 @@ public final class DuelBoard {
 
     private List<Duel> sweep(long now) {
         // a paused duel has no clock: its 2 minutes do not run while somebody is away
-        List<Duel> gone = duels.stream().filter(d -> d.pausedBy == null && d.expires < now).toList();
+        List<Duel> gone = duels.stream().filter(d -> d.away.isEmpty() && d.expires < now).toList();
         duels.removeAll(gone);
         gone.forEach(this::forget);
         for (Duel d : gone) {

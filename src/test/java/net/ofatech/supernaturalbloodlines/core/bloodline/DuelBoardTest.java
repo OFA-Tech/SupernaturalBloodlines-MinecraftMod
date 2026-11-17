@@ -252,12 +252,12 @@ class DuelBoardTest {
         challenge(b, CHALLENGER, LEADER, 0);
         b.accept(LEADER, 1);
         b.pause(LEADER, 100, 200); // until 300
-        assertTrue(b.expiredPauses(299).isEmpty(), "reported before the window ended");
+        assertTrue(b.expiredAway(299).isEmpty(), "reported before the window ended");
         assertTrue(b.resume(LEADER, 300).isEmpty(), "resumed on the tick the window ended");
-        assertEquals(1, b.expiredPauses(300).size());
-        assertEquals(LEADER, b.expiredPauses(300).get(0).pausedBy());
+        assertEquals(1, b.expiredAway(300).size());
+        assertEquals(LEADER, b.expiredAway(300).get(0).player());
         assertTrue(b.defeat(LEADER, 301).isPresent(), "a paused duel cannot be lost");
-        assertTrue(b.expiredPauses(302).isEmpty(), "reported again after it was settled");
+        assertTrue(b.expiredAway(302).isEmpty(), "reported again after it was settled");
     }
 
     @Test
@@ -267,8 +267,8 @@ class DuelBoardTest {
         assertFalse(b.pause(CHALLENGER, 5, 100), "a challenge nobody accepted was paused");
         b.accept(LEADER, 6);
         assertTrue(b.pause(CHALLENGER, 7, 100));
-        assertFalse(b.pause(LEADER, 8, 100), "the second to leave was waited for too");
-        assertTrue(b.resume(LEADER, 9).isEmpty(), "somebody who never left resumed it");
+        assertTrue(b.pause(LEADER, 8, 100), "the second to leave was not waited for: each duelist has a window of their own");
+        assertTrue(b.on(LEADER).orElseThrow().isAway(CHALLENGER) && b.on(LEADER).orElseThrow().isAway(LEADER), "both are not away");
         assertFalse(b.pause(THIRD, 8, 100), "a third player paused a duel");
     }
 
@@ -283,9 +283,46 @@ class DuelBoardTest {
         assertTrue(b.resume(CHALLENGER, 10).isPresent());
         assertFalse(b.pause(CHALLENGER, 20, 100), "a second wait was given to the same duelist");
         assertTrue(b.pause(LEADER, 21, 100), "the other duelist's own wait was taken from them");
+        assertTrue(b.on(LEADER).orElseThrow().paused() && b.on(LEADER).orElseThrow().isAway(LEADER) && !b.on(LEADER).orElseThrow().isAway(CHALLENGER));
         b.clear();
         challenge(b, CHALLENGER, LEADER, 1000);
         b.accept(LEADER, 1001);
         assertTrue(b.pause(CHALLENGER, 1002, 100), "a new duel did not give a new wait");
+    }
+
+    @Test
+    void theDuelStaysPausedWhileEitherIsAwayAndItsClockOnlyRunsAgainWhenBothAreBack() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        b.accept(LEADER, 10); // until 10 + TIMEOUT
+        b.pause(CHALLENGER, 100, 1200);
+        b.pause(LEADER, 150, 1200);
+        assertEquals(1200L + 100, b.on(CHALLENGER).orElseThrow().awayEnd(CHALLENGER));
+        assertEquals(1350L, b.on(CHALLENGER).orElseThrow().awayEnd(LEADER));
+        assertTrue(b.resume(CHALLENGER, 400).isPresent());
+        assertTrue(b.on(CHALLENGER).orElseThrow().paused(), "the duel went on while the other one is away");
+        assertTrue(b.expire(10 + DuelBoard.TIMEOUT_TICKS + 10_000).isEmpty(), "a duel that waits for one of them ran out");
+        assertTrue(b.resume(LEADER, 700).isPresent());
+        assertFalse(b.on(CHALLENGER).orElseThrow().paused());
+        // the clock stood still from the first one's leaving (100) to the last one's return (700)
+        assertTrue(b.expire(10 + DuelBoard.TIMEOUT_TICKS + 599).isEmpty(), "the wait was counted against the duel");
+        assertEquals(1, b.expire(10 + DuelBoard.TIMEOUT_TICKS + 601).size());
+    }
+
+    @Test
+    void eachWindowEndsOnItsOwnAndABothAwayDuelCanBeCalledOffWithTheBar() {
+        DuelBoard b = new DuelBoard();
+        challenge(b, CHALLENGER, LEADER, 0);
+        b.accept(LEADER, 1);
+        b.pause(CHALLENGER, 100, 200);   // ends 300
+        b.pause(LEADER, 150, 200);       // ends 350
+        assertEquals(1, b.expiredAway(300).size());
+        assertEquals(CHALLENGER, b.expiredAway(300).get(0).player());
+        assertEquals(2, b.expiredAway(350).size());
+        assertTrue(b.resume(CHALLENGER, 299).isPresent(), "back in time was refused");
+        assertTrue(b.resume(LEADER, 350).isEmpty(), "a late return resumed the duel");
+        b.callOffBoth(b.on(LEADER).orElseThrow(), 360);
+        assertTrue(b.all().isEmpty());
+        assertEquals(Optional.of(Refusal.PAIR_CALLED_OFF), b.challenge(CHALLENGER, LEADER, 361), "the pair was not barred");
     }
 }

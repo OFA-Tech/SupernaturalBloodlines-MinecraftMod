@@ -203,6 +203,13 @@ public final class PackDuel {
         UUID opponent = duel.other(loser.getUUID());
         if (duel.pausedBy() != null) {
             // the other one is away and cannot be given the win or the loss: a death in the meantime ends the duel, it does not settle it
+            // whoever is away cannot read it now: they find it at their next login
+            PackIndex index = PackIndex.get(loser.server.overworld());
+            for (UUID id : new UUID[] {duel.challenger(), duel.leader()}) {
+                if (duel.isAway(id)) {
+                    index.addNotice(id, KEY + "off.died", "");
+                }
+            }
             callOff(loser.server, loser.getUUID(), Reason.DIED);
             return;
         }
@@ -284,8 +291,10 @@ public final class PackDuel {
 
     /**
      * {@code leaver} lost their connection (or logged out). A challenge nobody accepted yet is just called off. A duel that is on
-     * waits for them for {@code duel_reconnect_seconds}: it is paused and the other one is told how long they have; with 0 it is
-     * lost at once. If the other one is away already, there is nobody left to wait for and it is called off.
+     * waits for them for {@code duel_reconnect_seconds}: it is paused and the other one is told how long they have. Every duelist
+     * has a window of their own and the duel stays paused while either is away, so the other one leaving too wins nothing: what
+     * happens at the end of the windows is {@link #settleExpiredAway}. With 0 seconds, or when the one wait of this duel was used
+     * already, the disconnect is a forfeit at once.
      */
     public static void forfeit(MinecraftServer server, ServerPlayer leaver) {
         if (stopping || !server.isRunning()) {
@@ -297,26 +306,16 @@ public final class PackDuel {
             return;
         }
         int seconds = SpeciesConfig.duelReconnectSeconds();
-        if (duel.pausedBy() != null && !duel.pausedBy().equals(leaver.getUUID())) {
-            // the other one left first and has been waited for: they lose it, and this one wins it (they are leaving too, and read it later)
-            settleForfeit(server, duel.pausedBy(), leaver.getUUID());
-            return;
-        }
-        if (seconds <= 0 || duel.pauseSpent(leaver.getUUID())) {
-            settleForfeit(server, leaver.getUUID(), leaver.getUUID()); // no wait, or the one wait of this duel was used already
-            return;
-        }
         long now = server.overworld().getGameTime();
-        if (!BOARD.pause(leaver.getUUID(), now, seconds * 20L)) {
-            callOff(server, leaver.getUUID(), Reason.LOGOUT);
+        if (seconds <= 0 || duel.pauseSpent(leaver.getUUID()) || !BOARD.pause(leaver.getUUID(), now, seconds * 20L)) {
+            settleForfeit(server, leaver.getUUID(), leaver.getUUID());
             return;
         }
         ServerPlayer other = SireCall.player(server, duel.other(leaver.getUUID()));
-        if (other != null) {
+        if (other != null && !duel.isAway(other.getUUID())) {
             other.sendSystemMessage(Component.translatable(KEY + "disconnected", name(server, leaver.getUUID()), seconds));
         }
     }
-
     /** A duelist who was away is back (a login): if the wait is not over the duel goes on, and both are told. */
     public static void onLogin(MinecraftServer server, ServerPlayer back) {
         long now = server.overworld().getGameTime();
@@ -326,6 +325,14 @@ public final class PackDuel {
             // the login already delivered the notices: what that settled would wait for the next one
             for (String[] n : PackIndex.get(server.overworld()).takeNotices(back.getUUID())) {
                 back.sendSystemMessage(Component.translatable(n[0], n[1]));
+            }
+            return;
+        }
+        if (d.paused()) {
+            // the other one is away as well, with a window of their own: the duel stays paused for them, unless that window is over
+            check(server);
+            if (BOARD.all().contains(d)) {
+                back.sendSystemMessage(Component.translatable(KEY + "resumed_waiting", name(server, d.other(back.getUUID()))));
             }
             return;
         }
@@ -354,9 +361,9 @@ public final class PackDuel {
         PackIndex index = PackIndex.get(server.overworld());
         boolean applied = settle(server, r);
         if (!applied) {
-            if (!isHere(server, r.loser(), leaving)) {
-                index.addNotice(r.loser(), KEY + "off.pack", "");
-            }
+            // called off ("the pack changed"): whoever is not here finds out at their next login, the winner as well as the loser
+            tell(server, r.loser(), KEY + "off.pack", "", leaving);
+            tell(server, r.winner(), KEY + "off.pack", "", leaving);
             return;
         }
         UUID leads = index.leaderOf(r.loser());
@@ -372,6 +379,15 @@ public final class PackDuel {
             SireCall.player(server, r.loser()).sendSystemMessage(Component.translatable(lostKey, name(server, leads)));
         } else {
             index.addNotice(r.loser(), lostKey, name(server, leads));
+        }
+    }
+
+    /** Tells {@code id} now when they are here (online and not the one disconnecting), or leaves a notice for their next login. */
+    private static void tell(MinecraftServer server, UUID id, String key, String arg, @Nullable UUID leaving) {
+        if (isHere(server, id, leaving)) {
+            SireCall.player(server, id).sendSystemMessage(Component.translatable(key, arg));
+        } else {
+            PackIndex.get(server.overworld()).addNotice(id, key, arg);
         }
     }
 
@@ -422,15 +438,21 @@ public final class PackDuel {
             if (d.phase() == DuelBoard.Phase.ON && (reason == Reason.DIED || reason == Reason.KILLED || reason == Reason.RANGE || reason == Reason.FAR)) {
                 BOARD.bar(d.challenger(), d.leader(), now); // dying of something else, or being killed by a third player, is no way out for free either
             }
-            tellOff(server, new UUID[] {d.challenger(), d.leader()}, reason, reason == Reason.LOGOUT ? player : null);
+            // a challenge that was only asked has no bar to speak of: its text for another dimension says nothing about ten minutes
+            String key = reason == Reason.FAR && d.phase() == DuelBoard.Phase.ASKED ? "far_asked" : reason.name().toLowerCase(java.util.Locale.ROOT);
+            tellOff(server, new UUID[] {d.challenger(), d.leader()}, key, reason == Reason.LOGOUT ? player : null);
         }
     }
 
     private static void tellOff(MinecraftServer server, UUID[] both, Reason reason, @Nullable UUID except) {
+        tellOff(server, both, reason.name().toLowerCase(java.util.Locale.ROOT), except);
+    }
+
+    private static void tellOff(MinecraftServer server, UUID[] both, String key, @Nullable UUID except) {
         for (UUID id : both) {
             ServerPlayer p = id.equals(except) ? null : SireCall.player(server, id);
             if (p != null) {
-                p.sendSystemMessage(Component.translatable(KEY + "off." + reason.name().toLowerCase(java.util.Locale.ROOT)));
+                p.sendSystemMessage(Component.translatable(KEY + "off." + key));
             }
         }
     }
@@ -442,12 +464,10 @@ public final class PackDuel {
             tellOff(server, new UUID[] {d.challenger(), d.leader()}, Reason.TIMEOUT, null);
         }
         // somebody who did not come back in time forfeits
-        for (DuelBoard.Duel d : BOARD.expiredPauses(now)) {
-            settleForfeit(server, d.pausedBy());
-        }
+        settleExpiredAway(server, now);
         PackIndex index = PackIndex.get(server.overworld());
         for (DuelBoard.Duel d : BOARD.all()) {
-            if (d.pausedBy() != null) {
+            if (d.paused()) {
                 continue; // waiting for somebody: nothing about it is judged until they are back or the wait is over
             }
             ServerPlayer c = SireCall.player(server, d.challenger());
@@ -468,6 +488,33 @@ public final class PackDuel {
         }
     }
 
+    /**
+     * Everybody whose own wait ran out while they were still away. Somebody who is still away forfeits, unless the other one is away
+     * as well with time left: a duel is not won by whoever left first while the other has not had their window (that one is waited
+     * for). If both windows ran out with both still away nobody wins: the duel is called off, the pair is barred and both are told.
+     */
+    static void settleExpiredAway(MinecraftServer server, long now) {
+        for (DuelBoard.Away a : BOARD.expiredAway(now)) {
+            DuelBoard.Duel d = a.duel();
+            if (!BOARD.all().contains(d)) {
+                continue; // settled or called off a moment ago, in this same pass
+            }
+            UUID x = a.player();
+            UUID y = d.other(x);
+            boolean xHere = SireCall.player(server, x) != null; // came back, but late
+            if (!xHere && d.isAway(y) && SireCall.player(server, y) == null) {
+                if (d.awayEnd(y) > now) {
+                    continue; // the other one still has time: wait for them
+                }
+                BOARD.callOffBoth(d, now);
+                for (UUID id : new UUID[] {x, y}) {
+                    tell(server, id, KEY + "off.both_away", "", null);
+                }
+                continue;
+            }
+            settleForfeit(server, x);
+        }
+    }
     /** The server is about to stop: the board is cleared first, so the logouts of the shutdown settle nothing. */
     public static void onStopping() {
         stopping = true;
