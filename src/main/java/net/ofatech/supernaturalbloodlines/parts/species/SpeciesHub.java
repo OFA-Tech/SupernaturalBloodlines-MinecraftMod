@@ -60,8 +60,11 @@ final class SpeciesHub {
         List<String> names = new ArrayList<>();
         List<Boolean> hidden = new ArrayList<>();
         ancestors(server, sirelines, sireId, names, hidden);
-        return new HubSocial.Social(sire, sired, ModList.get().isLoaded("werewolves") ? pack(p, server) : List.of(),
-                FiveRoster.get(p.serverLevel()).size(), names, line, rites(server), origin(p, hidden));
+        List<HubSocial.Member> pack = ModList.get().isLoaded("werewolves") ? pack(p, server) : List.of();
+        List<HubSocial.Person> people = new ArrayList<>();
+        sire.filter(n -> !n.isEmpty() && sireId != null).ifPresent(n -> people.add(new HubSocial.Person(n, sireId)));
+        sirelines.childrenOf(p.getUUID()).forEach(c -> people.add(new HubSocial.Person(c.name(), c.id())));
+        return new HubSocial.Social(sire, sired, pack, FiveRoster.get(p.serverLevel()).size(), names, line, rites(server), origin(p, hidden), people);
     }
 
     static final int MAX_LINE = 64;
@@ -196,6 +199,6 @@ final class SpeciesHub {
 
     private static HubSocial.Member member(MinecraftServer server, UUID id, String rank) {
         String name = PackAccess.nameOf(server, id);
-        return new HubSocial.Member(name == null ? id.toString() : name, rank, server.getPlayerList().getPlayer(id) != null);
+        return new HubSocial.Member(name == null ? id.toString() : name, rank, server.getPlayerList().getPlayer(id) != null, Optional.of(id));
     }
 }

@@ -6,14 +6,53 @@ import java.util.Locale;
 import java.util.Optional;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 
-/** The hub's pages, in ribbon order. Which ones show depends on the installed mods and the player's races. Pure, no client classes. */
+/**
+ * The hub's pages, in nav order (the IA doc, 3.2). Which ones show depends on the installed mods, the player's races, their pack and their
+ * permission. {@link #LOADOUT} is only an alias: it opens Skills on its Loadout tab and is never in the nav. Pure, no client classes.
+ */
 public enum HubPage {
-    PATH, SKILLS, QUESTS, RITES, BLOODLINE, PACK, GUIDE, LOADOUT;
+    HOME(Group.NONE), PATH(Group.ME), SKILLS(Group.ME), QUESTS(Group.ME), RITES(Group.MAGIC), BLOODLINE(Group.PEOPLE), PACK(Group.PEOPLE),
+    GUIDE(Group.HELP), SETTINGS(Group.SYSTEM), ADMIN(Group.SYSTEM), LOADOUT(Group.ME);
 
-    /** The races and installed mods a page's visibility depends on. */
-    public record Context(SupernaturalRace creature, Optional<SupernaturalRace> magic, boolean werewolves, boolean enchanted, boolean loadout) {
+    /** What the nav groups pages under: Me, Magic, People, Help, System (Home stands alone). */
+    public enum Group {
+        NONE, ME, MAGIC, PEOPLE, HELP, SYSTEM;
+
+        public String langKey() {
+            return "supernaturalbloodlines.hub.group." + name().toLowerCase(Locale.ROOT);
+        }
+    }
+
+    private final Group group;
+
+    HubPage(Group group) {
+        this.group = group;
+    }
+
+    public Group group() {
+        return group;
+    }
+
+    /**
+     * The races and installed mods a page's visibility depends on. {@code op} is the client's own {@code hasPermissions(2)} (it only decides what is
+     * drawn; the server checks every payload again); {@code inPack} is whether the player has a pack, whatever their race.
+     */
+    public record Context(SupernaturalRace creature, Optional<SupernaturalRace> magic, boolean werewolves, boolean enchanted, boolean loadout,
+                          boolean op, boolean inPack) {
+        public Context(SupernaturalRace creature, Optional<SupernaturalRace> magic, boolean werewolves, boolean enchanted, boolean loadout) {
+            this(creature, magic, werewolves, enchanted, loadout, false, false);
+        }
+
         public Context(SupernaturalRace creature, Optional<SupernaturalRace> magic, boolean werewolves, boolean enchanted) {
-            this(creature, magic, werewolves, enchanted, false);
+            this(creature, magic, werewolves, enchanted, false, false, false);
+        }
+
+        public Context withOp(boolean op) {
+            return new Context(creature, magic, werewolves, enchanted, loadout, op, inPack);
+        }
+
+        public Context withPack(boolean inPack) {
+            return new Context(creature, magic, werewolves, enchanted, loadout, op, inPack);
         }
     }
 
@@ -23,27 +62,29 @@ public enum HubPage {
 
     public boolean visible(Context c) {
         return switch (this) {
-            case PATH, SKILLS, QUESTS, BLOODLINE, GUIDE -> true;
-            // the ability HUD part brings the slots to arrange; without it there is nothing to assign (the Skills page keeps its own tab)
-            case LOADOUT -> c.loadout();
+            case HOME, PATH, SKILLS, QUESTS, BLOODLINE, GUIDE, SETTINGS -> true;
+            // the alias of a Skills tab: never a page of its own
+            case LOADOUT -> false;
             case RITES -> c.enchanted();
-            // a current member of the werewolf faction or a hybrid type; a former werewolf (cured, or turned a vampire) keeps no pack page
-            case PACK -> c.werewolves() && wolfRace(c.creature());
+            // in a pack (any race: a witch Emissary, a Packmate), or a werewolf-type race with Werewolves; a former werewolf with no pack keeps none
+            case PACK -> c.inPack() || (c.werewolves() && wolfRace(c.creature()));
+            case ADMIN -> c.op();
         };
     }
 
-    /** A Ghoul sees Path (the turning and its clock) and the Guide; every other page asks them to complete the turning first. */
+    /** A Ghoul keeps Home, Path, the Guide and Settings; every other page asks them to complete the turning first. */
     public boolean locked(Context c) {
-        return c.creature() == SupernaturalRace.GHOUL && this != PATH && this != GUIDE;
+        return c.creature() == SupernaturalRace.GHOUL && this != HOME && this != PATH && this != GUIDE && this != SETTINGS;
     }
 
     public static List<HubPage> visiblePages(Context c) {
         return Arrays.stream(values()).filter(p -> p.visible(c)).toList();
     }
 
-    /** {@code wanted} when it shows, else the first page (a page can go away while the screen is open, for example on leaving a pack). */
+    /** {@code wanted} when it shows, else Home (a page can go away while the screen is open: leaving a pack, losing operator rights). */
     public static HubPage orFirst(HubPage wanted, Context c) {
-        return wanted.visible(c) ? wanted : PATH;
+        HubPage w = wanted == LOADOUT ? SKILLS : wanted;
+        return w.visible(c) ? w : HOME;
     }
 
     private static boolean wolfRace(SupernaturalRace r) {
