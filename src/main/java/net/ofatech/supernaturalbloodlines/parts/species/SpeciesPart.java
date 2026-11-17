@@ -235,6 +235,7 @@ public final class SpeciesPart {
             e.register(SirelineCommandGameTests.class);
             e.register(SirelineCompulsionGameTests.class);
             e.register(LineGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineHubGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineRiteGameTests.class);
             // the ring tests need the artifacts part's mountain ash block, found by id: the species part does not import it
             if (net.minecraft.core.registries.BuiltInRegistries.BLOCK.containsKey(net.ofatech.supernaturalbloodlines.parts.species.line.Imprisonment.RING_BLOCK)) {

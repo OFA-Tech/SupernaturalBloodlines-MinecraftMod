@@ -161,6 +161,12 @@ public final class SirelineIndex extends SavedData {
         return out;
     }
 
+    /** The entity type the child was recorded with ({@code minecraft:player} for a player); empty for an id that is only a sire. */
+    public Optional<String> entityTypeOf(UUID child) {
+        Link l = links.get(child);
+        return l == null ? Optional.empty() : Optional.of(l.entityType());
+    }
+
     public Optional<UUID> sireOf(UUID child) {
         Link l = links.get(child);
         return l == null ? Optional.empty() : Optional.of(l.sire());

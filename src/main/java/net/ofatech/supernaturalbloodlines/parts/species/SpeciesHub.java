@@ -23,6 +23,12 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
+import net.ofatech.supernaturalbloodlines.core.Supernatural;
+import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
+import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
+import net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex;
+import net.ofatech.supernaturalbloodlines.parts.species.line.Lines;
+import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 
 /** The hub's view of other players from this part's indexes: names, ranks and online flags only. */
 final class SpeciesHub {
@@ -42,24 +48,52 @@ final class SpeciesHub {
         List<String> sired = sirelines.childrenOf(p.getUUID()).stream().map(SirelineIndex.Node::name).toList();
         List<HubSocial.Kin> line = SirelineTree.below(sirelines, p.getUUID()).stream().limit(MAX_LINE)
                 .map(l -> new HubSocial.Kin(l.name(), l.depth())).toList();
+        List<String> names = new ArrayList<>();
+        List<Boolean> hidden = new ArrayList<>();
+        ancestors(server, sirelines, sireId, names, hidden);
         return new HubSocial.Social(sire, sired, ModList.get().isLoaded("werewolves") ? pack(p, server) : List.of(),
-                FiveRoster.get(p.serverLevel()).size(), ancestors(server, sirelines, sireId), line, rites(server));
+                FiveRoster.get(p.serverLevel()).size(), names, line, rites(server), origin(p, hidden));
     }
 
     static final int MAX_ANCESTORS = 8;
     static final int MAX_LINE = 64;
 
-    /** The sire's sire and up, nearest first; a cycle (a sire turned by their own descendant) ends the climb. */
-    private static List<String> ancestors(MinecraftServer server, SirelineIndex sirelines, UUID sire) {
-        List<String> out = new ArrayList<>();
+    /**
+     * The sire's sire and up, nearest first; a cycle (a sire turned by their own descendant) ends the climb. An ancestor recorded as a
+     * creature is hidden: drawn as "?" and sent with no name.
+     */
+    private static void ancestors(MinecraftServer server, SirelineIndex sirelines, UUID sire, List<String> names, List<Boolean> hidden) {
         java.util.Set<UUID> seen = new java.util.HashSet<>();
         UUID at = sire == null ? null : sirelines.sireOf(sire).orElse(null);
-        while (at != null && out.size() < MAX_ANCESTORS && seen.add(at)) {
+        while (at != null && names.size() < MAX_ANCESTORS && seen.add(at)) {
             UUID id = at;
-            out.add(sirelines.nameOf(id).or(() -> Optional.ofNullable(PackAccess.nameOf(server, id))).orElse(""));
+            // the top of a chain has no link of its own, so no recorded type: it keeps its name, as before
+            boolean creature = sirelines.entityTypeOf(id).map(t -> !"minecraft:player".equals(t)).orElse(false);
+            names.add(creature ? "" : sirelines.nameOf(id).or(() -> Optional.ofNullable(PackAccess.nameOf(server, id))).orElse(""));
+            hidden.add(creature);
             at = sirelines.sireOf(id).orElse(null);
         }
-        return out;
+    }
+
+    /** Where the player stands in a line (R120 to R127): the root only when they have discovered it, and never an undiscovered name. */
+    private static HubSocial.Origin origin(ServerPlayer p, List<Boolean> ancestorHidden) {
+        MinecraftServer server = p.server;
+        LineIndex index = LineIndex.get(server);
+        Optional<LineIndex.Freed> freed = index.freedOf(p.getUUID());
+        boolean original = OriginalRules.isOriginal(BloodlineAccess.get(p).species());
+        LineRules.State state = LineRules.state(original, Supernatural.is(p), freed.isPresent(), index.rootOf(p.getUUID()).isPresent());
+        UUID known = BloodlineAccess.get(p).knownLine();
+        boolean always = SpeciesConfig.originalVisibilityAlways();
+        Optional<String> root = state == LineRules.State.IN_LINE ? Lines.visibleRoot(p).map(r -> rootName(server, r)) : Optional.empty();
+        Optional<String> freedFrom = freed.filter(f -> LineRules.showsRoot(known, f.from(), always)).map(f -> rootName(server, f.from()));
+        HubSocial.FreedKind kind = freed.filter(f -> state == LineRules.State.FREE).map(f -> f.kind() == LineIndex.Kind.IMPRISONED ? HubSocial.FreedKind.IMPRISONED : HubSocial.FreedKind.BROKEN_LINE)
+                .orElse(HubSocial.FreedKind.NONE);
+        return new HubSocial.Origin(state, root, state == LineRules.State.FREE ? freedFrom : Optional.empty(), kind, ancestorHidden);
+    }
+
+    /** An NPC Original goes as {@code npc:<id>} (the client translates it); a player's name as it is. */
+    private static String rootName(MinecraftServer server, UUID root) {
+        return NpcOriginal.byUuid(root).map(o -> "npc:" + o.id()).orElseGet(() -> Lines.rootName(server, root).getString());
     }
 
     /** This mod's rites the server loaded (their part and mods are on), read back through Enchanted's own codec. */
