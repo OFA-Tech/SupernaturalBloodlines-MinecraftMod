@@ -62,14 +62,21 @@ public final class LineTestPlayer extends FakePlayer {
         c.getSiblings().forEach(s -> flatten(s, out));
     }
 
+    /** Other mods message a species change too (Tensura's learned skills): only this mod's own messages are kept. */
+    private void keep(Component message) {
+        if (message.getContents() instanceof TranslatableContents t && t.getKey().contains("supernaturalbloodlines")) {
+            messages.add(message);
+        }
+    }
+
     @Override
     public void sendSystemMessage(Component message) {
-        messages.add(message);
+        keep(message);
     }
 
     @Override
     public void displayClientMessage(Component message, boolean actionBar) {
-        messages.add(message);
+        keep(message);
     }
 
     @Override

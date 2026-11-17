@@ -69,6 +69,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.gametest.SeveranceRiteGa
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.LineDeathGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.LineGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineDeath;
+import net.ofatech.supernaturalbloodlines.parts.species.line.LineWarning;
 import net.ofatech.supernaturalbloodlines.parts.species.line.Lines;
 import net.ofatech.supernaturalbloodlines.parts.species.line.NpcLines;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.BloodlineCommand;
@@ -160,6 +161,7 @@ public final class SpeciesPart {
         Lines.register(); // after SireRecorder: it hears the sires SireRecorder writes down
         NpcLines.register();
         LineDeath.register();
+        LineWarning.register();
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> BloodlineCommand.register(e.getDispatcher()));
         HybridTraits.register(); // always: it strips the saved modifier when Werewolves is gone
         RankEffects.register(); // always, for the same reason
@@ -230,6 +232,8 @@ public final class SpeciesPart {
             e.register(SirelineCompulsionGameTests.class);
             e.register(LineGameTests.class);
             e.register(LineDeathGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineDiscoveryGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineWarningGameTests.class);
             e.register(SeveranceGameTests.class);
             e.register(SeveranceRiteGameTests.class);
             e.register(TurningGameTests.class);
