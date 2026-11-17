@@ -66,6 +66,27 @@ public final class ProfileKnowledge extends SavedData {
         setDirty();
     }
 
+    /** The pack changed hands: its pool goes to the new leader (joined with any the new leader already had). */
+    public void movePool(UUID oldLeader, UUID newLeader) {
+        KnownFacts pool = pools.remove(oldLeader);
+        if (pool != null && !oldLeader.equals(newLeader)) {
+            owned(pools, newLeader).mergeFrom(pool);
+            setDirty();
+        }
+    }
+
+    /** The pack dissolved: nobody leads it, so its pool is dropped (what members already learned stays with them). */
+    public void dropPool(UUID leader) {
+        if (pools.remove(leader) != null) {
+            setDirty();
+        }
+    }
+
+    /** Whether the pack led by {@code leader} has a pool (for tests). */
+    public boolean hasPool(UUID leader) {
+        return pools.containsKey(leader);
+    }
+
     private static KnownFacts owned(LinkedHashMap<UUID, KnownFacts> map, UUID owner) {
         KnownFacts k = map.remove(owner);
         if (k == null) {

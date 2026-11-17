@@ -154,6 +154,28 @@ public final class PackDuelGameTests {
         helper.succeed();
     }
 
+    /** What the pack has discovered follows the pack to its new leader. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void thePacksDiscoveriesFollowTheDuelWinner(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        online(leader, second);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.ofatech.supernaturalbloodlines.parts.species.profile.ProfileKnowledge pool = net.ofatech.supernaturalbloodlines.parts.species.profile.ProfileKnowledge.get(helper.getLevel());
+        java.util.UUID subject = java.util.UUID.randomUUID();
+        try {
+            helper.assertTrue(join(leader, second), "the pack could not be built");
+            pool.discover(index, leader.getUUID(), subject, java.util.EnumSet.of(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.GENES));
+            helper.assertTrue(pool.hasPool(leader.getUUID()), "the pool was not made");
+            helper.assertTrue(win(second, leader) && index.isLeader(second.getUUID()), "the duel was not won");
+            helper.assertTrue(pool.hasPool(second.getUUID()) && !pool.hasPool(leader.getUUID()), "the pool did not move to the winner");
+            helper.assertTrue(pool.known(index, second.getUUID(), subject).contains(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.GENES), "the new leader lost the discovery");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theChallengerWhoWinsLeadsAndNobodyLosesTheSpark(GameTestHelper helper) {
         ServerPlayer leader = alpha(helper, 6, 1.5);

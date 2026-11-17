@@ -36,6 +36,8 @@ public final class SpeciesProfiles implements ProfileService.Source {
 
     public static void register() {
         ProfileService.set(new SpeciesProfiles());
+        PackIndex.onLeadershipMoved((old, next) -> withStorage(k -> k.movePool(old, next)));
+        PackIndex.onDissolved(leader -> withStorage(k -> k.dropPool(leader)));
         // a gene or a line an observer discovers about themselves is a discovery of their pack too
         BloodlineAccess.addDiscoveryListener((p, change) -> {
             BloodlineState before = change.before();
@@ -51,6 +53,13 @@ public final class SpeciesProfiles implements ProfileService.Source {
                 ProfileKnowledge.get(p.serverLevel()).discover(packs(p), p.getUUID(), p.getUUID(), learned);
             }
         });
+    }
+
+    private static void withStorage(java.util.function.Consumer<ProfileKnowledge> action) {
+        var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server != null) {
+            action.accept(ProfileKnowledge.get(server.overworld()));
+        }
     }
 
     @Nullable

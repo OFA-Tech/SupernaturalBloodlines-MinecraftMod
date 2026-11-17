@@ -484,7 +484,21 @@ public final class PackIndex extends SavedData {
         setDirty();
     }
 
+    private static final java.util.List<java.util.function.BiConsumer<UUID, UUID>> LEADERSHIP_MOVED = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private static final java.util.List<java.util.function.Consumer<UUID>> DISSOLVE_LISTENERS = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    /** Told (old leader, new leader) whenever a pack changes hands, by a duel, an absence, a spark handover or a succession: whatever is kept per leader follows. */
+    public static void onLeadershipMoved(java.util.function.BiConsumer<UUID, UUID> listener) {
+        LEADERSHIP_MOVED.add(listener);
+    }
+
+    /** Told the leader of a pack that dissolved. */
+    public static void onDissolved(java.util.function.Consumer<UUID> listener) {
+        DISSOLVE_LISTENERS.add(listener);
+    }
+
     private void moveLeadership(UUID old, UUID next) {
+        LEADERSHIP_MOVED.forEach(l -> l.accept(old, next));
         UUID emissary = emissaryOf.remove(old);
         if (emissary != null && !emissaryOf.containsKey(next)) {
             emissaryOf.put(next, emissary);
@@ -618,6 +632,7 @@ public final class PackIndex extends SavedData {
             alphaOf.remove(beta);
             dissolved.add(beta);
         }
+        DISSOLVE_LISTENERS.forEach(l -> l.accept(alpha));
         emissaryOf.remove(alpha);
         allies.remove(alpha);
         allies.values().forEach(s -> s.remove(alpha));
