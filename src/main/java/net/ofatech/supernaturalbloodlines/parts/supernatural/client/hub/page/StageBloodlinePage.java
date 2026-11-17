@@ -42,7 +42,7 @@ public final class StageBloodlinePage extends LinePageBase {
         }
         if (m.state() == LineRules.State.NOT_VAMPIRE) {
             int y = f.begin(moon ? BookKit.MOON : BookKit.FULL);
-            f.end(EmptyState.render(f, region, y, "bloodline", HubPage.GUIDE));
+            f.end(EmptyState.render(f, region, y, "bloodline", HubPage.GUIDE, HubPage.PACK));
             return;
         }
         Rect stage = region;

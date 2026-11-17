@@ -36,7 +36,7 @@ public final class GrimoireBloodlinePage extends LinePageBase {
         Rect r = f.region(BookKit.MAIN);
         int y = BookKit.head(f, BookKit.MAIN, Component.translatable(LinePageSupport.KEY + "title"), Component.translatable(BOOK + "subtitle"));
         if (m.state() == LineRules.State.NOT_VAMPIRE) {
-            EmptyState.render(f, r, y, "bloodline", HubPage.GUIDE);
+            EmptyState.render(f, r, y, "bloodline", HubPage.GUIDE, HubPage.PACK);
             f.end(r.bottom());
             return;
         }

@@ -23,7 +23,8 @@ class LineLangTest {
     void theNotAVampireCardHasTheMockupsWords() throws IOException {
         JsonObject l = lang();
         assertEquals("No bloodline yet.", l.get("supernaturalbloodlines.hub.empty.bloodline.title").getAsString());
-        assertEquals("Only vampires, hybrids and werewolves have a family tree.", l.get("supernaturalbloodlines.hub.empty.bloodline.body").getAsString());
+        assertEquals("Only vampires and hybrids have a family tree. Werewolves follow their pack on the Pack page.", l.get("supernaturalbloodlines.hub.empty.bloodline.body").getAsString());
+        assertEquals("Pack \u203a", l.get("supernaturalbloodlines.hub.empty.bloodline.button2").getAsString());
         assertEquals("No tree yet", l.get("supernaturalbloodlines.hub.empty.bloodline.caption").getAsString());
         assertEquals("Open Guide", l.get("supernaturalbloodlines.hub.empty.bloodline.button").getAsString());
     }
