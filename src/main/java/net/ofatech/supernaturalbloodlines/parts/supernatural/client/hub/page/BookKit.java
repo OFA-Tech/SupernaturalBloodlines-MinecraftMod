@@ -166,7 +166,7 @@ public final class BookKit {
     }
 
     /** The face of a player by name: their own skin when they are known to the client, the default skin otherwise. */
-    static void face(GuiGraphics g, String name, int x, int y, int size) {
+    public static void face(GuiGraphics g, String name, int x, int y, int size) {
         Minecraft mc = Minecraft.getInstance();
         PlayerInfo info = mc.getConnection() == null ? null : mc.getConnection().getPlayerInfo(name);
         var skin = info != null ? info.getSkin() : DefaultPlayerSkin.get(java.util.UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(java.nio.charset.StandardCharsets.UTF_8)));
@@ -174,7 +174,7 @@ public final class BookKit {
     }
 
     /** A face in a ring of {@code border}. */
-    static void portrait(GuiGraphics g, String name, int cx, int cy, int size, int border, int paper) {
+    public static void portrait(GuiGraphics g, String name, int cx, int cy, int size, int border, int paper) {
         KitDraw.shape(g, Shapes.Shape.ROUND, cx - size / 2 - 2, cy - size / 2 - 2, size + 4, border);
         KitDraw.shape(g, Shapes.Shape.ROUND, cx - size / 2 - 1, cy - size / 2 - 1, size + 2, paper);
         face(g, name, cx - size / 2 + 1, cy - size / 2 + 1, Math.max(6, size - 2));

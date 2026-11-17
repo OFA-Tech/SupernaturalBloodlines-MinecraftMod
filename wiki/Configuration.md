@@ -71,7 +71,12 @@ All under `[species]`.
 | `only_alphas_turn` | `true` | | A werewolf player below Alpha cannot infect a human (R92, the Teen Wolf rule). **Off:** Werewolves' own rule: any werewolf's bite can infect (it then records no pack and no sire). |
 | `witch_bonus_enabled` | `true` | | Witches, heretics and tribrids get **altar range x1.5** and **rite power cost x0.75**. Siphoned power is always usable. |
 | `siphoner_chance` | `0.25` | 0.0 to 1.0 | Chance that the Rite of Ancestral Calling makes a **siphoner** instead of a witch. |
-| `sireline_death` | `false` | | When an Original is killed with white oak, everyone they sired, and everyone those sired, dies with them (offline players on their next login). |
+| `original_line_death` | `true` | | When an Original is killed with white oak, everyone in their line dies with them (offline players on their next login). Replaces `sireline_death`. |
+| `original_visibility` | `discovered` | `discovered`, `always` | Whether a player sees the Original of their line (`?` until the Rite of Revelation) or always. |
+| `line_rites_enabled` | `true` | | Switches the Rite of the Broken Line and the Rite of the Imprisoned Original on or off. |
+| `npc_line_weights` | all `1` | `name=weight` | How likely each Original is the root of a new NPC vampire's line. |
+| `imprisonment_ring_max_radius` | `8` | 2 to 16 | The mountain ash circle of the Imprisoned rite must close within this many blocks. |
+| `imprisonment_rite_seconds` | `30` | 5 to 300 | How long the Original must stay trapped. |
 | `latent_gene_chance` | `0.15` | 0.0 to 1.0 | Chance that a player carries the hidden werewolf gene, rolled **once at first login**. Changing it does not re-roll players who already logged in. |
 | `doppelganger_gene_chance` | `0.05` | 0.0 to 1.0 | Chance that a player carries the hidden doppelgänger gene, rolled **once** at the first login after it exists. Changing it does not re-roll players who were already rolled. It can sit next to the werewolf gene. |
 | `gene_visibility` | `discovered` | `discovered` or `always` | `discovered`: a player sees each gene as Unknown until the Rite of Lineage (Reveal), the Rite of Revelation, a Doppelgänger Blood rite with their taglock, or a werewolf awakening finds it. `always`: a player always sees their own genes. Never shown to other players. |

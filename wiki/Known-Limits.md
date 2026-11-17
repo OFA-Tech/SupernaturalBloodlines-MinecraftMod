@@ -108,3 +108,6 @@ If you find something that behaves differently from this wiki, please [open an i
 - **A leader who is away with no second Alpha keeps the lead.** There is nobody to hand the pack to, and a second Alpha who is away too is not a successor either (so two absent Alphas never pass the lead back and forth).
 - **A defeat by lava moves the loser out of it only to a spot they can see from where they stand** (a ray from their eyes that hits no block: never through a wall) and only when the server sees them standing in lava; the 5 seconds of Fire Resistance are given in every case.
 - **A member the leader removes from the pack's Open Parties and Claims party is treated as having left it by choice**: Open Parties and Claims does not say who removed them, so they leave the pack and get the same kill grace as `/pack leave`. (Only the owner, who is the leader, can remove people from the party, so it is the leader's own doing; a kick with `/pack kick` is the way to remove someone without the grace.)
+
+- **Original lines:** a rite target must be online. NPC Originals arrive with the boss update, so until then only creatures and players hold NPC roots. A world from before lines gets its line index rebuilt at login (a player) or when the creature first loads.
+

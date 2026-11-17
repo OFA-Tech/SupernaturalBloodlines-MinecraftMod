@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubThemeViews;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookBloodlinePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.GrimoireBloodlinePage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookGuidePage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookPackPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookQuestsPage;
@@ -49,7 +49,7 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
     private final HubPageView skills = new BookSkillsPage();
     private final HubPageView quests = new BookQuestsPage();
     private final HubPageView rites = new BookRitesPage();
-    private final HubPageView bloodline = new BookBloodlinePage();
+    private final HubPageView bloodline = new GrimoireBloodlinePage();
     private final HubPageView pack = new BookPackPage();
     private final HubPageView guide = new BookGuidePage();
 

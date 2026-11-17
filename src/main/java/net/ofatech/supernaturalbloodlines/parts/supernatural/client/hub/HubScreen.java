@@ -536,6 +536,20 @@ public final class HubScreen extends Screen {
         return true;
     }
 
+    /** The id of the target that has the keyboard focus, or null. */
+    @Nullable
+    public String focusId() {
+        return focus;
+    }
+
+    /** Puts the keyboard focus on a target of this frame by id: a page that walks its own tree with the arrows moves it this way. */
+    public void focusOn(String id) {
+        keyboard = true;
+        focus = id;
+        scrollToFocus = true;
+        triggerImmediateNarration(false);
+    }
+
     private void moveFocus(int delta) {
         keyboard = true;
         focus = HubFocus.move(FocusOrder.order(targets.stream().map(Target::id).toList()), focus, delta);

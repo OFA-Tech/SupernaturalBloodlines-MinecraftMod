@@ -52,11 +52,13 @@ class LineTreeTest {
 
     @Test
     void humansAndTheLostHaveNoRoot() {
-        for (State s : List.of(State.NOT_VAMPIRE, State.SIRE_UNKNOWN)) {
-            Model m = LineTree.build(origin(s, null), "Me", Optional.empty(), false, List.of(), List.of());
-            assertEquals(List.of("line:you"), ids(m));
-            assertTrue(m.links().isEmpty());
-        }
+        Model human = LineTree.build(origin(State.NOT_VAMPIRE, null), "Me", Optional.empty(), false, List.of(), List.of());
+        assertEquals(List.of("line:you"), ids(human));
+        assertTrue(human.links().isEmpty());
+        // a vampire nobody recorded the sire of: a "?" above them
+        Model lost = LineTree.build(origin(State.SIRE_UNKNOWN, null), "Me", Optional.empty(), false, List.of(), List.of());
+        assertEquals(List.of("line:sire", "line:you"), ids(lost));
+        assertTrue(lost.node("line:sire").orElseThrow().hidden());
         assertEquals(List.of("line:sire", "line:you"),
                 ids(LineTree.build(origin(State.SIRE_UNKNOWN, null), "Me", Optional.of("S"), false, List.of(), List.of())));
     }

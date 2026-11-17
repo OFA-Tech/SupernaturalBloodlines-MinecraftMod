@@ -21,7 +21,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiContext;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookBloodlinePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageBloodlinePage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageGuidePage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageLoadoutPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageQuestsPage;
@@ -62,7 +62,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     private final HubPageView pack = new BookPackPage(BloodMoonLayout.RIGHT, BloodMoonLayout.MOON);
     private final HubPageView quests = new StageQuestsPage();
     private final HubPageView rites = new StageRitesPage();
-    private final HubPageView bloodline = new BookBloodlinePage(true);
+    private final HubPageView bloodline = new StageBloodlinePage(StageBloodlinePage.Look.MOON);
     private final HubPageView guide = new StageGuidePage();
     private final HubPageView loadout = new StageLoadoutPage();
 
@@ -106,7 +106,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     @Override
     public void drawOverlay(HubScreen.Frame f, HubPage page) {
         boolean cards = switch (page) {
-            case BLOODLINE, GUIDE -> true;
+            case GUIDE -> true;
             case SKILLS -> skills.legacyActive();
             default -> false;
         };

@@ -13,12 +13,12 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
  * What a page with nothing to show says: an empty hexagon, one plain sentence ("You run alone."), one line of what to do and one button that opens the page
  * that explains it. The copy is the language file's ({@code hub.empty.<kind>.title|body|button}); the colours are the theme's.
  */
-final class EmptyState {
+public final class EmptyState {
     private EmptyState() {
     }
 
     /** Draws the state centred in {@code area} from {@code top} down and returns the y under it; the button opens {@code open}. */
-    static int render(HubScreen.Frame f, Rect area, int top, String kind, HubPage open) {
+    public static int render(HubScreen.Frame f, Rect area, int top, String kind, HubPage open) {
         HubTheme t = f.theme();
         String key = PageKit.HUB + "empty." + kind + ".";
         int w = Math.min(area.w() - 8, 200);

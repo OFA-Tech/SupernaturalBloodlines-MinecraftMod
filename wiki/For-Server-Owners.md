@@ -96,7 +96,7 @@ NeoForge **COMMON** configs are **not synced from the server**: each side reads 
 - **All of `[parts]`** (and the same mods installed).
 - **`supernaturalbloodlines-species_tensura.toml`:** `layers`, `undead_treatment_enabled`, `apex_evolutions_enabled`, `evolution_progress_multiplier`. Tensura's undead checks and the evolution screen run **on the client too**, so a mismatch gives wrong screens (a missing apex option). `evolution_progress_multiplier` only matters on the server.
 - **`moon_bound_werewolves`, `full_form_level`** in the common file.
-- The other values (`max_originals_per_world`, `max_five`, chances, `sireline_death`) are used by the **server** only, but equal values avoid confusion.
+- The other values (`max_originals_per_world`, `max_five`, chances, `original_line_death`) are used by the **server** only, but equal values avoid confusion.
 
 If `apex_evolutions_enabled` differs, the client shows the apex race and the server **silently refuses the pick**, with nothing in the log.
 
@@ -117,7 +117,7 @@ A simple way: keep one `config/` folder in your modpack and ship it to everyone.
 | Starved and Usurper | (Tensura skills) | n/a | They don't check for subordinates, so a sire with them can drain or rob a sired player. Nothing in this mod changes it. |
 | Original cap | `max_originals_per_world` | 0 (no cap) | Originals are very hard to kill. Consider a cap. |
 | The Five | `max_five` | 5 | |
-| Sireline death | `sireline_death` | off | A white oak kill of one Original can wipe their whole line, offline players included. |
+| Line death | `original_line_death` | on | A white oak kill of one Original kills their whole line, offline players included. Replaces `sireline_death`. |
 | Moon control | `moon_bound_werewolves` | on | Off: everyone shifts at will. |
 | Eclipse | `lunar_eclipse_chance` | 3% | 0 turns eclipses off. One flag for the whole server. |
 | Hidden gene | `latent_gene_chance` | 15% | rolled once per player at first login |

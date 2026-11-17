@@ -11,7 +11,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageV
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPages;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubThemeViews;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookBloodlinePage;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageBloodlinePage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookPackPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookSkillsPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageGuidePage;
@@ -58,7 +58,7 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     private final HubPageView skills = new BookSkillsPage(true, Shapes.Shape.HEX);
     private final HubPageView quests = new StageQuestsPage();
     private final HubPageView rites = new StageRitesPage();
-    private final HubPageView bloodline = new BookBloodlinePage(true);
+    private final HubPageView bloodline = new StageBloodlinePage(StageBloodlinePage.Look.TENSURA);
     private final HubPageView pack = new BookPackPage(BookPackPage.Style.TENSURA);
     private final HubPageView guide = new StageGuidePage();
     private final HubPageView loadout = new StageLoadoutPage();
@@ -100,7 +100,7 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         title = null;
         detailDrawn = false;
         lockedNow = page.locked(f.view.context());
-        boolean panels = page == HubPage.BLOODLINE || page == HubPage.GUIDE || page.locked(f.view.context());
+        boolean panels = page == HubPage.GUIDE || page.locked(f.view.context());
         if (panels) {
             for (String region : List.of(HubLayout.MAIN, HubLayout.SIDE)) {
                 Rect r = TensuraHubLayout.panel(f.region(region));

@@ -97,6 +97,10 @@ public final class LineTree {
                     links.add(new Link(upper, SIRE, LinkStyle.SOLID));
                 }
                 upper = SIRE;
+            } else if (state == LineRules.State.SIRE_UNKNOWN) {
+                // somebody turned this player and nobody recorded who: a "?" above them
+                nodes.add(new Node(SIRE, Kind.SIRE, "", true, row++));
+                upper = SIRE;
             }
         }
         nodes.add(new Node(YOU, Kind.YOU, you, false, row++));

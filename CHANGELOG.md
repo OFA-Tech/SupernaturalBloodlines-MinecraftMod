@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased (plan 17a, Original bloodlines)
+
+### Added
+- Every vampire belongs to the line of an Original (players and NPC vampires; a creature turned by a player takes theirs). Config: `original_visibility`, `npc_line_weights`, `line_rites_enabled`, `imprisonment_ring_max_radius`, `imprisonment_rite_seconds`.
+- The Rite of Revelation also reveals the Original of your line; the Bloodline page shows it as "?" until then.
+- Rite of the Broken Line (frees the target only) and Rite of the Imprisoned Original (frees the target's branch; the Original must stay inside a closed mountain ash circle for 30 s). Both need a witch-type performer and a lunar eclipse.
+- A warning to the line when their Original is desiccated, in the dying state or downed.
+- The Bloodline page in the three themes: the line as a tree with the crowned Original, a broken link and an open padlock for the freed, and the five states.
+
+### Changed
+- `original_line_death` (on by default) replaces `sireline_death`: a white oak kill of an Original kills their whole line, not only the ones the sire tree reaches.
+
+### Removed
+- `sireline_death` (it was off by default; the old key is ignored).
 ## Unreleased (plan 16b, Grimoire v2)
 
 ### Changed
