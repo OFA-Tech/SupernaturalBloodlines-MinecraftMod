@@ -6,6 +6,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubPresence;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -25,7 +28,7 @@ import java.util.WeakHashMap;
  * data reload ({@code OnDatapackSyncEvent} fires for both), with the server's mod and part sets so the client prunes it the same way.
  */
 public final class LadderNet {
-    private static final String PROTOCOL = "1";
+    private static final String PROTOCOL = "2";
 
     private LadderNet() {
     }
@@ -33,6 +36,9 @@ public final class LadderNet {
     public static void register(IEventBus modBus) {
         modBus.addListener(LadderNet::onRegister);
         NeoForge.EVENT_BUS.addListener((OnDatapackSyncEvent e) -> e.getRelevantPlayers().forEach(LadderNet::sendTable));
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> HubPresence.forget(e.getEntity().getUUID()));
+        // a request opened or answered reaches the player now (the toast needs it with the hub closed), not at the next hub open
+        HubRequests.onChanged(LadderNet::sendRequests);
     }
 
     private static void onRegister(RegisterPayloadHandlersEvent event) {
@@ -59,11 +65,31 @@ public final class LadderNet {
                 ctx.enqueueWork(() -> {
                     if (ctx.player() instanceof ServerPlayer p && snapshotDue(p)) {
                         PacketDistributor.sendToPlayer(p, HubSnapshotPayload.of(p));
+                        sendRequests(p);
                     }
                 }));
         // the client handler is only named on a client, so a dedicated server never links the client class
         registrar.playToClient(HubSnapshotPayload.TYPE, HubSnapshotPayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
                 ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.HubClientHandlers::snapshot
+                : (payload, ctx) -> { });
+        registrar.playToServer(HubOpenPayload.TYPE, HubOpenPayload.STREAM_CODEC, (payload, ctx) ->
+                ctx.enqueueWork(() -> HubPresence.set(ctx.player().getUUID(), payload.open())));
+        registrar.playToServer(AdminSetPayload.TYPE, AdminSetPayload.STREAM_CODEC, AdminNet::onSet);
+        registrar.playToServer(AdminRequestPayload.TYPE, AdminRequestPayload.STREAM_CODEC, AdminNet::onRequest);
+        registrar.playToServer(HubCommandPayload.TYPE, HubCommandPayload.STREAM_CODEC, HubCommands::onCommand);
+        registrar.playToClient(AdminSnapshotPayload.TYPE, AdminSnapshotPayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
+                ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.AdminClient::snapshot
+                : (payload, ctx) -> { });
+        registrar.playToClient(HubCommandReplyPayload.TYPE, HubCommandReplyPayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
+                ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.AdminClient::reply
+                : (payload, ctx) -> { });
+        registrar.playToClient(HubRequestsPayload.TYPE, HubRequestsPayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
+                ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient::receive
+                : (payload, ctx) -> { });
+        registrar.playToServer(ProfileRequestPayload.TYPE, ProfileRequestPayload.STREAM_CODEC, ProfileNet::onRequest);
+        registrar.playToServer(AdminProfileRequestPayload.TYPE, AdminProfileRequestPayload.STREAM_CODEC, ProfileNet::onAdminRequest);
+        registrar.playToClient(ProfilePayload.TYPE, ProfilePayload.STREAM_CODEC, FMLEnvironment.dist.isClient()
+                ? net.ofatech.supernaturalbloodlines.parts.supernatural.client.ProfileClient::receive
                 : (payload, ctx) -> { });
         registrar.playToClient(SkillTablePayload.TYPE, SkillTablePayload.STREAM_CODEC, (payload, ctx) ->
                 ctx.enqueueWork(() -> {
@@ -91,6 +117,13 @@ public final class LadderNet {
         }
         LAST_SNAPSHOT.put(p, now);
         return true;
+    }
+
+    /** Sends the player their open requests, if their client has the channel (a fake player's connection has none). */
+    public static void sendRequests(ServerPlayer p) {
+        if (p.connection != null && p.connection.getConnection().isConnected() && p.connection.hasChannel(HubRequestsPayload.TYPE)) {
+            PacketDistributor.sendToPlayer(p, HubRequestsPayload.of(p));
+        }
     }
 
     public static void sendTable(ServerPlayer p) {

@@ -284,6 +284,132 @@ public final class WerewolfBiteGameTests {
         helper.succeed();
     }
 
+    /**
+     * P2: the hub's Accept button ran "pack accept" with no token, which was an incomplete command, so nobody ever joined. The command now
+     * answers the newest open invitation, and the hub's snapshot lists that invitation with its token for the Requests card.
+     */
+    private static boolean joinPack(ServerPlayer leader, ServerPlayer member) {
+        return PackCommand.invite(leader, member) == null && PackCommand.accept(member, PackCommand.requests().tokenOf(leader.getUUID(), member.getUUID()).orElseThrow()) == null;
+    }
+
+    /**
+     * Hub IA 3.7: what an observer may learn of a person comes from the server's own indexes. A stranger gets no fields at all, a pack-mate
+     * the pack's facts, and a secret (genes) only once somebody has discovered it; the pack's pool teaches a newcomer, and leaving keeps it.
+     */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aNonMemberCannotLearnAMembersSpecies(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer member = wolf(helper, Rank.OMEGA, null);
+        ServerPlayer stranger = TestPlayers.createDuelist(helper);
+        ServerPlayer newcomer = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, member, stranger, newcomer);
+        var species = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES;
+        var genes = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.GENES;
+        var pack = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.PACK;
+        try {
+            helper.assertTrue(joinPack(alpha, member), "the pack could not be built");
+            var forStranger = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(stranger, member.getUUID());
+            helper.assertTrue(forStranger.facts().isEmpty() && !forStranger.opView(), "a stranger was told " + forStranger.facts());
+            var forAlpha = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID());
+            helper.assertTrue(forAlpha.facts().containsKey(species) && forAlpha.facts().containsKey(pack), "a pack-mate was told only " + forAlpha.facts().keySet());
+            helper.assertTrue(!forAlpha.facts().containsKey(genes), "a gene nobody discovered was shown to the pack");
+
+            // the member discovers their own gene: the pack knows it at once, the stranger still knows nothing
+            BloodlineAccess.set(member, BloodlineAccess.get(member).toBuilder().revealedGenes(java.util.Set.of(net.ofatech.supernaturalbloodlines.core.bloodline.Genes.WEREWOLF)).build());
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts().containsKey(genes), "the pack did not learn a discovery");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(stranger, member.getUUID()).facts().isEmpty(), "a discovery reached a stranger");
+
+            // a newcomer receives the pool, and leaving the pack keeps what they know but not the live facts
+            helper.assertTrue(joinPack(alpha, newcomer), "the newcomer could not join");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(newcomer, member.getUUID()).facts().containsKey(genes), "the newcomer was not given the pool");
+            helper.assertTrue(PackCommand.leave(newcomer) == null, "the newcomer could not leave");
+            var after = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(newcomer, member.getUUID());
+            helper.assertTrue(after.facts().containsKey(genes) && !after.facts().containsKey(pack) && !after.facts().containsKey(species), "after leaving they know " + after.facts().keySet());
+        } finally {
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, member, stranger, newcomer);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void hubAcceptRunsTheTokenCommand(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer omega = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, omega);
+        try {
+            helper.assertTrue(PackCommand.invite(alpha, omega) == null, "the invitation was refused");
+            String token = PackCommand.requests().tokenOf(alpha.getUUID(), omega.getUUID()).orElseThrow();
+            var pending = net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(omega);
+            helper.assertTrue(pending.size() == 1 && pending.get(0).kind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.PACK_INVITE
+                    && pending.get(0).token().equals(token) && pending.get(0).ticksLeft() == net.ofatech.supernaturalbloodlines.parts.species.sireline.CallRequests.TTL_TICKS,
+                    "the Requests card data is " + pending);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(alpha).isEmpty(), "the inviter was shown the invitation");
+
+            helper.assertTrue(dispatch(omega, "pack accept") == 1, "pack accept with no token failed");
+            w(helper, omega, alpha);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(omega).isEmpty(), "the answered invitation is still listed");
+            helper.assertTrue(dispatch(omega, "pack accept") == 0, "a second accept with nothing open worked");
+        } finally {
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, omega);
+        }
+        helper.succeed();
+    }
+
+    /** Runs a typed command as {@code p} with permission 0; an unknown or incomplete command is an error, not a quiet 0. */
+    private static int dispatch(ServerPlayer p, String command) {
+        net.minecraft.commands.CommandSource sink = new net.minecraft.commands.CommandSource() {
+            @Override
+            public void sendSystemMessage(net.minecraft.network.chat.Component c) {
+            }
+
+            @Override
+            public boolean acceptsSuccess() {
+                return true;
+            }
+
+            @Override
+            public boolean acceptsFailure() {
+                return true;
+            }
+
+            @Override
+            public boolean shouldInformAdmins() {
+                return false;
+            }
+        };
+        var stack = new net.minecraft.commands.CommandSourceStack(sink, p.position(), p.getRotationVector(), (net.minecraft.server.level.ServerLevel) p.level(), 0,
+                p.getGameProfile().getName(), p.getDisplayName(), p.server, p);
+        try {
+            return p.server.getCommands().getDispatcher().execute(command, stack);
+        } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+            throw new AssertionError("\"" + command + "\" is not a command: " + e.getMessage());
+        }
+    }
+
+    /** The member actions of the profile page name a person by UUID: the commands take one where they take a name. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void memberActionsTakeAUuid(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer omega = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, omega);
+        try {
+            helper.assertTrue(PackCommand.invite(alpha, omega) == null && PackCommand.accept(omega, PackCommand.requests().tokenOf(alpha.getUUID(), omega.getUUID()).orElseThrow()) == null,
+                    "the control invitation failed");
+            helper.assertTrue(dispatch(alpha, "pack kick " + omega.getUUID()) == 1, "kicking by UUID failed");
+            helper.assertTrue(PackIndex.get(helper.getLevel()).alphaOf(omega.getUUID()).isEmpty(), "the kicked member is still in the pack");
+        } finally {
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, omega);
+        }
+        helper.succeed();
+    }
+
+    private static void w(GameTestHelper helper, ServerPlayer member, ServerPlayer alpha) {
+        helper.assertTrue(alpha.getUUID().equals(PackIndex.get(helper.getLevel()).alphaOf(member.getUUID()).orElse(null)), "the accepted invitation did not put them in the pack");
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void secondInviteReplacesTheFirst(GameTestHelper helper) {
         ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);

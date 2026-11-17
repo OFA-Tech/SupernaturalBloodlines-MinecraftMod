@@ -117,6 +117,7 @@ public final class SupernaturalPart {
             e.register(PredatorsThirstGameTests.class);
             e.register(ModSkillGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.HubGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.AdminGameTests.class);
             if (ModList.get().isLoaded("tensura") && EnabledParts.isEnabled("supernaturalTensura")) {
                 e.register(TensuraEpGameTests.class);
             }
