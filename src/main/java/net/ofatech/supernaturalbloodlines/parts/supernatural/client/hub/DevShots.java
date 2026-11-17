@@ -11,6 +11,7 @@ import net.minecraft.client.tutorial.TutorialSteps;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.DevShotsGate;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import org.lwjgl.glfw.GLFW;
 
@@ -121,13 +122,25 @@ public final class DevShots {
         NeoForge.EVENT_BUS.addListener(d::tick);
         SupernaturalBloodlines.LOGGER.warn("DEVSHOTS on: {} shots queued (development only)", shots.size());
     }
+
+    /** Moves the pointer only in a focused window, and never in hidden mode (the owner's real cursor must not move). */
+    private static void parkCursor(Minecraft mc, double x, double y) {
+        long window = mc.getWindow().getWindow();
+        boolean focused = GLFW.glfwGetWindowAttrib(window, GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE;
+        if (DevShotsGate.mayMoveCursor(DevShotsGate.hidden(), focused)) {
+            GLFW.glfwSetCursorPos(window, x, y);
+        }
+    }
+
     private void tick(ClientTickEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
         if (done) {
             return;
         }
         if (!sized && mc.getWindow() != null) {
-            GLFW.glfwSetWindowSize(mc.getWindow().getWindow(), width, height);
+            if (DevShotsGate.mayResizeWindow(DevShotsGate.hidden())) {
+                GLFW.glfwSetWindowSize(mc.getWindow().getWindow(), width, height);
+            }
             sized = true;
         }
         if (mc.player == null || mc.level == null) {
@@ -164,11 +177,11 @@ public final class DevShots {
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.alt = "alt".equals(s.hud());
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.idle = "idle".equals(s.hud());
             if (s.hud() != null) {
-                GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 1, 1);
+                parkCursor(mc, 1, 1);
                 wait = 1;
                 return;
             }
-            GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 1, 1); // a hover tooltip would cover the page
+            parkCursor(mc, 1, 1); // a hover tooltip would cover the page
             HubClient.remember(s.page());
             HubClient.open(s.page());
             if (s.menu() && mc.screen instanceof HubScreen hs) {
@@ -178,7 +191,7 @@ public final class DevShots {
             return;
         }
         // the pointer in the screen's corner, so no stray tooltip is in the picture
-        org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), 0, 0);
+        parkCursor(mc, 0, 0);
         if (++wait < SETTLE_TICKS) {
             return;
         }

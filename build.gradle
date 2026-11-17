@@ -108,6 +108,16 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
+        // Dev screenshots with a hidden window (runSafeShots): own game dir, so the normal run/ config is never touched.
+        // See docs/safe-screenshots.md. Never start it while someone plays fullscreen unless scripts/dev/focus-watch.ps1 wraps it.
+        safeShots {
+            client()
+            gameDirectory = project.file('run-safeshots')
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'supernaturalbloodlines.devshots.hidden', 'true'
+            programArguments.addAll '--width', '1920', '--height', '1080'
+        }
+
         // This run config launches GameTestServer and runs all registered gametests, then exits.
         // By default, the server will crash when no gametests are provided.
         // The gametest system is also enabled by default for other run configs under the /test command.
@@ -306,6 +316,21 @@ if (project.hasProperty('partsOff')) {
         finalizedBy restoreParts
     }
 }
+
+// runSafeShots: the hidden window needs the dummy early-window provider (earlyWindowControl=false, otherwise FML shows its own window first)
+// and no vsync (a hidden window is not paced by the compositor). Both live only in run-safeshots/, never in run/.
+tasks.register('prepareSafeShots') {
+    def dir = file('run-safeshots')
+    doLast {
+        new File(dir, 'config').mkdirs()
+        new File(dir, 'config/fml.toml').text = 'earlyWindowControl = false\n'
+        def want = [enableVsync: 'false', pauseOnLostFocus: 'false', fullscreen: 'false', maxFps: '60']
+        def options = new File(dir, 'options.txt')
+        def kept = options.exists() ? options.readLines().findAll { l -> !want.keySet().any { l.startsWith(it + ':') } } : []
+        options.text = (kept + want.collect { k, v -> "$k:$v".toString() }).join('\n') + '\n'
+    }
+}
+tasks.named('runSafeShots') { dependsOn 'prepareSafeShots' }
 
 tasks.named('test') {
     useJUnitPlatform()
