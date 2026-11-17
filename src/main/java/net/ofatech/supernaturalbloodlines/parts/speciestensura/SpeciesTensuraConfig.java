@@ -23,7 +23,11 @@ public final class SpeciesTensuraConfig {
     private static final ModConfigSpec.DoubleValue EVOLUTION_MULTIPLIER;
     private static final ModConfigSpec.BooleanValue SIRE_LINK;
     private static final ModConfigSpec.BooleanValue SIRE_NAMING;
+    private static final ModConfigSpec.BooleanValue SEVERANCE_CLEARS_NAME;
+    private static final ModConfigSpec.BooleanValue RESIRE_NAMING_REWARD;
 
+    private static volatile Boolean severanceClearsNameOverride;
+    private static volatile Boolean resireNamingRewardOverride;
     private static volatile Boolean undeadOverride;
     private static volatile Boolean apexOverride;
     private static volatile Boolean sireLinkOverride;
@@ -109,6 +113,14 @@ public final class SpeciesTensuraConfig {
                         "It is tried when the link is made and when the sired or the sire logs in, and needs the sire online with enough magicule.",
                         "It needs sire_subordinate_link_enabled. Off: siring names nobody.")
                 .define("sire_naming_enabled", true);
+        SEVERANCE_CLEARS_NAME = b.comment("The Rite of Severance (R101b) also clears the sired player's Tensura name when the severed sire is their Tensura owner,",
+                        "so someone else can name them later. The EP and stats the naming gave are kept. An owner that is not the severed sire is left alone, and so is the name.",
+                        "Off: the severance frees the owner and the name stays.")
+                .define("severance_clears_name", true);
+        RESIRE_NAMING_REWARD = b.comment("A sire naming a player whose name a severance cleared pays Tensura's EP and stat reward again, as a first naming does.",
+                        "Off: that re-naming still names the player and the sire still pays Tensura's cost, but the sired gets no EP and stat reward a second time.",
+                        "Only a sire's naming of their bound or severed sired is affected; a naming by anyone else is Tensura's own.")
+                .define("resire_naming_reward", true);
         SPEC = b.build();
         LAYER_TABLE = new Cached<>("layers", "SPECIES=skill,skill|magicule|aura|undead", LAYERS::get, LayerTable::parse);
         RANK_TABLE = new Cached<>("rank_skills", "ALPHA|TRUE_ALPHA|BORN_LEVEL5=skill,skill", RANK_SKILLS::get, RankSkillTable::parse);
@@ -149,6 +161,26 @@ public final class SpeciesTensuraConfig {
     /** For tests: null goes back to the config. */
     public static void overrideSireNaming(Boolean value) {
         sireNamingOverride = value;
+    }
+
+    /** For tests: null goes back to the config. */
+    public static void overrideSeveranceClearsName(Boolean value) {
+        severanceClearsNameOverride = value;
+    }
+
+    /** For tests: null goes back to the config. */
+    public static void overrideResireNamingReward(Boolean value) {
+        resireNamingRewardOverride = value;
+    }
+
+    public static boolean severanceClearsName() {
+        Boolean forced = severanceClearsNameOverride;
+        return forced != null ? forced : read(SEVERANCE_CLEARS_NAME);
+    }
+
+    public static boolean resireNamingReward() {
+        Boolean forced = resireNamingRewardOverride;
+        return forced != null ? forced : read(RESIRE_NAMING_REWARD);
     }
 
     public static boolean sireLink() {

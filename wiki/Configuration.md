@@ -101,6 +101,8 @@ All under `[artifacts]`.
 | `evolution_progress_multiplier` | `1.25` (1.0 to 10.0) | A player with a species gets this multiple of the EP Tensura credits them (**EP gain only**: evolution requirements are never touched). The name is old; the value is kept from earlier versions. Server side only. **1.0 turns it off.** |
 | `sire_subordinate_link_enabled` | `true` | A sired creature or player becomes the sire's Tensura subordinate. A sired player then cannot hurt the sire or the sire's other sired (one way); owner and sired count as allied; a demon lord sire's harvest festival gifts them. **Off:** no link is made or removed. |
 | `sire_naming_enabled` | `true` | Siring **names the sired player in Tensura automatically**, with their own current name (no new name). The sire pays Tensura's magicule cost, the sired gets Tensura's EP and stats, **never** a race evolution (LOW). `playerNaming=false` and the sired's own naming toggle do not block it. Tried at the link and at the next login of the sired or the sire (the sire must be online and able to pay). Needs `sire_subordinate_link_enabled`. Off: siring names nobody. |
+| `severance_clears_name` | `true` | The Rite of Severance also clears the sired player's Tensura name when the severed sire is their Tensura owner (the EP and stats the naming gave stay), so someone else can name them. Off: the owner goes and the name stays. |
+| `resire_naming_reward` | `true` | A sire naming a player whose name a severance cleared pays Tensura's reward again. Off: the re-naming still names the player and costs the sire as usual, but gives the sired no EP and stats a second time. |
 
 ### Default `layers`
 

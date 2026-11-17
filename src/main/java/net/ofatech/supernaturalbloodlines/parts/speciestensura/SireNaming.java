@@ -14,6 +14,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 
 /**
@@ -26,6 +27,10 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
  * sire also loses max magicule. Tensura's other checks stay (the sire's health and EP against the sired, an insane sire), and a
  * refusal leaves the sired unnamed; so does a sire who is offline or short of magicules. The attempt is made when the link is made
  * and again whenever the sired or the sire logs in. Without a sire link (switch off, a Tensura owner already there) nothing is named.
+ * <p>
+ * After a Rite of Severance cleared the name ({@link SubordinateLink#SEVERED_KEY}) the sire's naming of the bound sired is a
+ * re-naming: with {@code resire_naming_reward} off Tensura's EP and stat reward (its first event value) is set to 0 and the rest,
+ * the sire's cost included, is unchanged.
  */
 public final class SireNaming {
     private SireNaming() {}
@@ -39,10 +44,20 @@ public final class SireNaming {
      * sire. Whoever names (the automatic naming is LOW already, a hand naming through Tensura's menu is not), the sire's naming of
      * their bound sired is LOW. Tensura's max-magicule loss roll then follows the LOW chance.
      */
-    private static EventResult onNaming(LivingEntity target, Player namer, Changeable<Double> cost, Changeable<Double> epGain,
+    private static EventResult onNaming(LivingEntity target, Player namer, Changeable<Double> epGain, Changeable<Double> cost,
                                         Changeable<NamingType> type, Changeable<String> name) {
-        if (namer != null && target instanceof ServerPlayer sired && type.get() != NamingType.LOW && namer.getUUID().equals(BloodlineAccess.get(sired).boundSire())) {
-            type.set(NamingType.LOW);
+        if (namer != null && target instanceof ServerPlayer sired) {
+            BloodlineState state = BloodlineAccess.get(sired);
+            boolean severed = sired.getPersistentData().getBoolean(SubordinateLink.SEVERED_KEY);
+            // the recorded sire of a severed player is no sire any more, but their hand naming must not evolve the player either
+            boolean sire = namer.getUUID().equals(state.boundSire()) || namer.getUUID().equals(state.severedSire());
+            if (sire && type.get() != NamingType.LOW) {
+                type.set(NamingType.LOW);
+            }
+            // a severance cleared the name: this is a re-naming, and the switch can take the reward away (the cost stays)
+            if (sire && severed && !SpeciesTensuraConfig.resireNamingReward()) {
+                epGain.set(0.0);
+            }
         }
         return EventResult.pass();
     }
@@ -85,6 +100,9 @@ public final class SireNaming {
                 existence.setNameable(false);
                 existence.markDirty();
             }
+        }
+        if (existence.getName() != null) {
+            sired.getPersistentData().remove(SubordinateLink.SEVERED_KEY);
         }
         return existence.getName() != null;
     }
