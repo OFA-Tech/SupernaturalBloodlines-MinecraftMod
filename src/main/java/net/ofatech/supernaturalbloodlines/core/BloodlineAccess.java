@@ -93,7 +93,7 @@ public final class BloodlineAccess {
     public static BloodlineState clientView(BloodlineState s, boolean viewerIsSubject, boolean alwaysVisible) {
         // the layer's tracking is server business (which skills this mod granted), not something to send out
         BloodlineState stripped = Genes.forClient(s.withTrackingOf(BloodlineState.NONE), viewerIsSubject, alwaysVisible);
-        BloodlineState.Builder b = stripped.toBuilder().pendingSire(null).vampireBloodUntil(0);
+        BloodlineState.Builder b = stripped.toBuilder().pendingSire(null).vampireBloodUntil(0).knownLine(null);
         if (!viewerIsSubject) {
             b.sire(null);
         }

@@ -15,6 +15,13 @@ class GeneViewTest {
     }
 
     @Test
+    void knownLineNeverReachesAClient() {
+        BloodlineState s = BloodlineState.NONE.toBuilder().knownLine(java.util.UUID.randomUUID()).build();
+        assertNull(net.ofatech.supernaturalbloodlines.core.BloodlineAccess.clientView(s, true).knownLine());
+        assertNull(net.ofatech.supernaturalbloodlines.core.BloodlineAccess.clientView(s, false).knownLine());
+    }
+
+    @Test
     void undiscoveredGenesAreUnknownAndCarryNoValue() {
         BloodlineState view = Genes.forClient(carrier(), true, false);
         assertEquals(Knowledge.UNKNOWN, Genes.ofClient(view, WEREWOLF));

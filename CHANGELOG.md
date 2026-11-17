@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased (plan 17a, Original bloodlines)
+
+### Upgrading
+- Line death is now ON by default, offline players included. Set `original_line_death = false` to keep the old behaviour. `sireline_death` is ignored. The server logs one warning at start if its species config still has the old key.
+- Deaths the old rule still owed offline players are paid at their next login as deaths of their new line. With `original_line_death = false` they are dropped (and logged), not paid.
+
+### Added
+- Every vampire belongs to the line of an Original (players and NPC vampires; a creature turned by a player takes theirs). Config: `original_visibility`, `npc_line_weights`, `line_rites_enabled`, `imprisonment_ring_max_radius`, `imprisonment_rite_seconds`.
+- The Rite of Revelation also reveals the Original of your line; the Bloodline page shows it as "?" until then.
+- Rite of the Broken Line (frees the target only) and Rite of the Imprisoned Original (frees the target's branch; the Original must stay inside a closed mountain ash circle for 30 s). Both need a witch-type performer and a lunar eclipse (which needs Werewolves).
+- A warning to the line when a player Original is desiccated, in the dying state or downed (NPC Originals arrive with the boss update).
+- The Bloodline page in the three themes: the line as a tree with the crowned Original, a broken link and an open padlock for the freed, and the five states.
+
+### Changed
+- `original_line_death` (on by default) replaces `sireline_death`: a white oak kill of an Original kills their whole line, not only the ones the sire tree reaches.
+
+### Removed
+- `sireline_death` (it was off by default; the old key is ignored, and an offline death it owed turns into one of the new line at the player's next login).
+
 ## Unreleased (plan 16b, Grimoire v2)
 
 ### Changed

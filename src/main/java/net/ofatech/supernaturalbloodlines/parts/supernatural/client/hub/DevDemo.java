@@ -48,7 +48,7 @@ final class DevDemo {
 
     /** Nothing yet: no pack, no sire or children, no open task (the three empty states). */
     private static HubView empty(HubView v) {
-        HubSnapshotPayload.Family none = new HubSnapshotPayload.Family(Optional.empty(), false, List.of(), List.of(), List.of());
+        HubSnapshotPayload.Family none = HubSnapshotPayload.Family.NONE;
         HubSnapshotPayload snap = new HubSnapshotPayload(none, List.of(), 0, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),
                 v.snapshot().rites());
         List<HubModel.LadderView> done = v.ladders().stream().map(l -> new HubModel.LadderView(l.race(), l.rungs(), Optional.empty(), List.of())).toList();
@@ -67,7 +67,7 @@ final class DevDemo {
                 new HubSocial.Member("Ashen", "brother", true), new HubSocial.Member("Slime", "npc", true), new HubSocial.Member("Goblin", "npc", true));
         HubSnapshotPayload.Family family = new HubSnapshotPayload.Family(Optional.of("Klaus"), false, List.of("Tyler", "Ana", "Bo", "Cy", "Di"),
                 List.of("Mikael"), List.of(new HubSocial.Kin("Tyler", 0), new HubSocial.Kin("Ana", 0), new HubSocial.Kin("Bo", 0), new HubSocial.Kin("Cy", 0),
-                        new HubSocial.Kin("Di", 0)));
+                        new HubSocial.Kin("Di", 0)), HubSocial.Origin.NONE);
         List<HubSocial.Rite> rites = new ArrayList<>();
         rites.addAll(v.snapshot().rites());
         HubSnapshotPayload snap = new HubSnapshotPayload(family, pack, 2, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),

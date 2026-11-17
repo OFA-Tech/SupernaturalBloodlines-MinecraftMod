@@ -23,10 +23,19 @@ class BloodlineStateTest {
                 true, true, 123L, UUID.fromString("00000000-0000-0000-0000-0000000000b2"), 50, 999L, 7, "x:y",
                 4, true, 888L, true, wolf, Set.of("tensura:drain", "tensura:charm"),
                 UUID.fromString("00000000-0000-0000-0000-0000000000a1"), true, 5000L, 12000, true, true,
-                Set.of(Genes.WEREWOLF, Genes.DOPPELGANGER));
+                Set.of(Genes.WEREWOLF, Genes.DOPPELGANGER), UUID.fromString("00000000-0000-0000-0000-0000000000d4"));
 
         JsonElement json = BloodlineState.CODEC.encodeStart(JsonOps.INSTANCE, s).getOrThrow();
         assertEquals(s, BloodlineState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());
+    }
+
+    @Test
+    void knownLineRoundTripsAndOldSavesLoad() {
+        UUID u = UUID.fromString("00000000-0000-0000-0000-0000000000d4");
+        BloodlineState s = BloodlineState.NONE.toBuilder().knownLine(u).build();
+        JsonElement json = BloodlineState.CODEC.encodeStart(JsonOps.INSTANCE, s).getOrThrow();
+        assertEquals(u, BloodlineState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow().knownLine());
+        assertNull(decode("{\"species\":\"ORIGINAL\"}").knownLine());
     }
 
     @Test

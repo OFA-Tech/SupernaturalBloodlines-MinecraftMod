@@ -34,8 +34,16 @@ public final class SirelineIndex extends SavedData {
     private static final String TYPE = "type";
     private static final String ID = "id";
     private static final String LAST_NAME = "name";
-    private static final String PENDING_PLAYERS = "pendingDeaths";
     private static final String PENDING_MOBS = "pendingMobs";
+    private static final String PENDING_STAMPS = "pendingMobStamps";
+    private static final String AT = "at";
+    /** The key of the old sireline death's offline players: read so their debt is not lost (see {@code LineDeath.onLogin}). */
+    private static final String LEGACY_PLAYERS = "pendingDeaths";
+    private static final String PENDING_TICKS = "pendingMobTicks";
+    /** A creature owed a death that never loads again is forgotten after this much game time (30 days of 20 ticks a second). */
+    public static final long PENDING_MAX_AGE_TICKS = 51_840_000L;
+    /** The stamp of a debt saved before debts had game time: it gets the time of the first prune. */
+    private static final long UNSTAMPED = -1L;
 
     private record Link(UUID sire, String entityType) {
     }
@@ -44,10 +52,10 @@ public final class SirelineIndex extends SavedData {
     private final Map<UUID, Link> links = new LinkedHashMap<>();
     private final Map<UUID, Set<UUID>> children = new HashMap<>();
     private final Map<UUID, String> names = new HashMap<>();
-    // the sireline death's debts: players who were offline and creatures that were not loaded when their line died
-    private final Set<UUID> pendingPlayers = new LinkedHashSet<>();
-    // shortcut: a creature that never loads again (its chunk is gone or never visited) stays here forever, so the set only grows; add an expiry per entry or prune on chunk unload events when it matters
-    private final Set<UUID> pendingMobs = new LinkedHashSet<>();
+    // line death's debts of creatures that were not loaded when their line died (players owe it through LineIndex), with when they were added
+    private final Map<UUID, Long> pendingMobs = new LinkedHashMap<>();
+    // players the old sireline death owed a death while offline: paid or dropped at their next login
+    private final Set<UUID> legacyPlayers = new LinkedHashSet<>();
 
     SirelineIndex() {
     }
@@ -68,11 +76,24 @@ public final class SirelineIndex extends SavedData {
             CompoundTag e = (CompoundTag) t;
             idx.link(NbtUtils.loadUUID(e.get(SIRE)), NbtUtils.loadUUID(e.get(CHILD)), e.getString(TYPE));
         }
-        for (Tag t : tag.getList(PENDING_PLAYERS, Tag.TAG_INT_ARRAY)) {
-            idx.pendingPlayers.add(NbtUtils.loadUUID(t));
-        }
+        // nothing is pruned here: there is no game time yet. The plain list and the first stamped format (wall clock) have none.
         for (Tag t : tag.getList(PENDING_MOBS, Tag.TAG_INT_ARRAY)) {
-            idx.pendingMobs.add(NbtUtils.loadUUID(t));
+            idx.pendingMobs.putIfAbsent(NbtUtils.loadUUID(t), UNSTAMPED);
+        }
+        for (Tag t : tag.getList(PENDING_STAMPS, Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            if (e.contains(ID)) {
+                idx.pendingMobs.putIfAbsent(NbtUtils.loadUUID(e.get(ID)), UNSTAMPED);
+            }
+        }
+        for (Tag t : tag.getList(PENDING_TICKS, Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            if (e.contains(ID) && e.contains(AT)) {
+                idx.pendingMobs.put(NbtUtils.loadUUID(e.get(ID)), e.getLong(AT));
+            }
+        }
+        for (Tag t : tag.getList(LEGACY_PLAYERS, Tag.TAG_INT_ARRAY)) {
+            idx.legacyPlayers.add(NbtUtils.loadUUID(t));
         }
         return idx;
     }
@@ -96,8 +117,17 @@ public final class SirelineIndex extends SavedData {
             known.add(e);
         });
         tag.put(NAMES, known);
-        tag.put(PENDING_PLAYERS, uuids(pendingPlayers));
-        tag.put(PENDING_MOBS, uuids(pendingMobs));
+        ListTag stamps = new ListTag();
+        pendingMobs.forEach((id, at) -> {
+            CompoundTag e = new CompoundTag();
+            e.put(ID, NbtUtils.createUUID(id));
+            e.putLong(AT, at);
+            stamps.add(e);
+        });
+        tag.put(PENDING_TICKS, stamps);
+        // shortcut: the plain list is kept for one release so that going back to the previous version keeps its debts; drop it after that
+        tag.put(PENDING_MOBS, uuids(pendingMobs.keySet()));
+        tag.put(LEGACY_PLAYERS, uuids(legacyPlayers));
         return tag;
     }
 
@@ -167,6 +197,12 @@ public final class SirelineIndex extends SavedData {
         return out;
     }
 
+    /** The entity type the child was recorded with ({@code minecraft:player} for a player); empty for an id that is only a sire. */
+    public Optional<String> entityTypeOf(UUID child) {
+        Link l = links.get(child);
+        return l == null ? Optional.empty() : Optional.of(l.entityType());
+    }
+
     public Optional<UUID> sireOf(UUID child) {
         Link l = links.get(child);
         return l == null ? Optional.empty() : Optional.of(l.sire());
@@ -183,33 +219,54 @@ public final class SirelineIndex extends SavedData {
         return false;
     }
 
-    public void addPendingPlayer(UUID id) {
-        if (pendingPlayers.add(id)) {
+    /** @param gameTime the overworld's game time now */
+    public void addPendingMob(UUID id, long gameTime) {
+        prunePending(gameTime);
+        if (pendingMobs.putIfAbsent(id, gameTime) == null) {
             setDirty();
         }
     }
 
-    /** @return true once: the player owes a death, and now it is paid */
-    public boolean takePendingPlayer(UUID id) {
-        boolean owed = pendingPlayers.remove(id);
+    /** Stamps the debts that have no game time yet with {@code now}, and forgets those owed for more than {@link #PENDING_MAX_AGE_TICKS}. */
+    public void prunePending(long now) {
+        boolean changed = false;
+        for (var it = pendingMobs.entrySet().iterator(); it.hasNext();) {
+            var entry = it.next();
+            if (entry.getValue() == UNSTAMPED) {
+                entry.setValue(now);
+                changed = true;
+            } else if (now - entry.getValue() > PENDING_MAX_AGE_TICKS) {
+                it.remove();
+                changed = true;
+            }
+        }
+        if (changed) {
+            setDirty();
+        }
+    }
+
+    public boolean isPendingMob(UUID id) {
+        return pendingMobs.containsKey(id);
+    }
+
+    public boolean takePendingMob(UUID id) {
+        boolean owed = pendingMobs.remove(id) != null;
         if (owed) {
             setDirty();
         }
         return owed;
     }
 
-    public void addPendingMob(UUID id) {
-        if (pendingMobs.add(id)) {
+    /** For tests: a player the old sireline death owed. */
+    public void addLegacyPendingPlayer(UUID id) {
+        if (legacyPlayers.add(id)) {
             setDirty();
         }
     }
 
-    public boolean isPendingMob(UUID id) {
-        return pendingMobs.contains(id);
-    }
-
-    public boolean takePendingMob(UUID id) {
-        boolean owed = pendingMobs.remove(id);
+    /** @return true once: the old sireline death owed this player a death; the caller resolves their line */
+    public boolean takeLegacyPendingPlayer(UUID id) {
+        boolean owed = legacyPlayers.remove(id);
         if (owed) {
             setDirty();
         }

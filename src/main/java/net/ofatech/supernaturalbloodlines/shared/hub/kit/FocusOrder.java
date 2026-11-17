@@ -32,6 +32,7 @@ public final class FocusOrder {
         if (id.startsWith("panel:")) {
             return Zone.PANEL;
         }
+        // ids starting "line:" (the Bloodline page's tree) are stage targets, and the page registers them root first, then the chain, then the sired
         return Zone.STAGE;
     }
 

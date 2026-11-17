@@ -102,17 +102,82 @@ class SirelineIndexTest {
     }
 
     @Test
-    void pendingDeathsAreTakenOnceAndSurviveSaveAndLoad() {
+    void pendingMobDeathsAreTakenOnceAndSurviveSaveAndLoad() {
         SirelineIndex idx = new SirelineIndex();
-        idx.addPendingPlayer(A);
-        idx.addPendingMob(B);
+        idx.addPendingMob(B, 100);
         assertTrue(idx.isPendingMob(B));
         assertFalse(idx.isPendingMob(A));
         SirelineIndex back = SirelineIndex.load(idx.save(new CompoundTag(), null), null);
-        assertTrue(back.takePendingPlayer(A));
-        assertFalse(back.takePendingPlayer(A));
         assertTrue(back.takePendingMob(B));
         assertFalse(back.isPendingMob(B));
-        assertFalse(back.takePendingPlayer(B));
+    }
+
+    @Test
+    void pendingMobsAreForgottenAfterThirtyDaysOfGameTime() {
+        long budget = 51_840_000L;
+        SirelineIndex idx = new SirelineIndex();
+        idx.addPendingMob(A, 1_000);
+        idx.addPendingMob(B, 2_000);
+        idx.prunePending(1_000 + budget);
+        assertTrue(idx.isPendingMob(A), "exactly at the budget is still owed");
+        idx.prunePending(1_000 + budget + 1);
+        assertFalse(idx.isPendingMob(A), "past the budget it is forgotten");
+        assertTrue(idx.isPendingMob(B));
+        // adding prunes too, so the set cannot grow without bound
+        UUID c = UUID.randomUUID();
+        idx.addPendingMob(c, 2_000 + budget + 1);
+        assertFalse(idx.isPendingMob(B));
+        assertTrue(idx.isPendingMob(c));
+    }
+
+    @Test
+    void theWallClockPlaysNoPart() {
+        SirelineIndex idx = new SirelineIndex();
+        // a game that has run a day has a game time of 1,728,000 ticks: a wall clock of 1.7 trillion milliseconds would be forgotten at once
+        idx.addPendingMob(A, 1_728_000L);
+        idx.prunePending(1_728_000L + 1_000);
+        assertTrue(idx.isPendingMob(A));
+    }
+
+    @Test
+    void debtsWithoutGameTimeAreNotPrunedAtLoadAndAgeFromTheFirstPrune() {
+        long budget = 51_840_000L;
+        // saves from before debts had game time: the plain list, and the first stamped format (wall clock milliseconds)
+        CompoundTag old = new CompoundTag();
+        net.minecraft.nbt.ListTag ids = new net.minecraft.nbt.ListTag();
+        ids.add(net.minecraft.nbt.NbtUtils.createUUID(A));
+        old.put("pendingMobs", ids);
+        net.minecraft.nbt.ListTag stamps = new net.minecraft.nbt.ListTag();
+        CompoundTag stamp = new CompoundTag();
+        stamp.put("id", net.minecraft.nbt.NbtUtils.createUUID(B));
+        stamp.putLong("at", 5L);
+        stamps.add(stamp);
+        old.put("pendingMobStamps", stamps);
+        SirelineIndex loaded = SirelineIndex.load(old, null);
+        assertTrue(loaded.isPendingMob(A) && loaded.isPendingMob(B), "pruned at load");
+        loaded.prunePending(10_000); // the first prune gives them a time
+        assertTrue(loaded.isPendingMob(A) && loaded.isPendingMob(B));
+        loaded.prunePending(10_000 + budget + 1);
+        assertFalse(loaded.isPendingMob(A) || loaded.isPendingMob(B));
+    }
+
+    @Test
+    void thePlainPendingListIsStillWrittenForARollback() {
+        SirelineIndex idx = new SirelineIndex();
+        idx.addPendingMob(A, 10);
+        CompoundTag saved = idx.save(new CompoundTag(), null);
+        net.minecraft.nbt.ListTag plain = saved.getList("pendingMobs", net.minecraft.nbt.Tag.TAG_INT_ARRAY);
+        assertEquals(1, plain.size());
+        assertEquals(A, net.minecraft.nbt.NbtUtils.loadUUID(plain.get(0)));
+        assertTrue(SirelineIndex.load(saved, null).isPendingMob(A));
+    }
+
+    @Test
+    void legacyPlayersSurviveSaveAndLoad() {
+        SirelineIndex idx = new SirelineIndex();
+        idx.addLegacyPendingPlayer(B);
+        SirelineIndex back = SirelineIndex.load(idx.save(new CompoundTag(), null), null);
+        assertTrue(back.takeLegacyPendingPlayer(B));
+        assertFalse(back.takeLegacyPendingPlayer(B));
     }
 }

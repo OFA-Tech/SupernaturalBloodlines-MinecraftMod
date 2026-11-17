@@ -1,0 +1,218 @@
+package net.ofatech.supernaturalbloodlines.parts.species.line;
+
+import de.teamlapen.vampirism.api.entity.convertible.IConvertedCreature;
+import de.teamlapen.vampirism.api.entity.vampire.IVampire;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.Supernatural;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
+import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
+import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex;
+
+/**
+ * Line death ({@code original_line_death}, on by default; R122). When an Original really dies to white oak, everyone in their line
+ * dies: online players at once (with {@link #DAMAGE_TYPE}, which gets past invulnerability, armor, effects and totems), offline
+ * players the next time they log in, loaded creatures on the spot, unloaded ones when their chunk next loads. Nothing is loaded
+ * to do it. The Original is never in their own line, and someone freed from it by a rite is not a member.
+ */
+public final class LineDeath {
+    public static final ResourceKey<DamageType> DAMAGE_TYPE = ResourceKey.create(Registries.DAMAGE_TYPE,
+            ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "sireline"));
+
+    private LineDeath() {
+    }
+
+    public static void register() {
+        // last, and not for a death something else cancelled: the Original really died
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LivingDeathEvent.class, LineDeath::onDeath);
+        // before SireRecorder's login sync, which would index a sire that is about to be cleared
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (PlayerEvent.PlayerLoggedInEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                onLogin(p);
+            }
+        });
+        NeoForge.EVENT_BUS.addListener(LineDeath::onJoin);
+        // stamps debts that have none yet (older saves) and forgets the ones owed for 30 days of game time
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStartedEvent e) ->
+                SirelineIndex.get(e.getServer().overworld()).prunePending(e.getServer().overworld().getGameTime()));
+    }
+
+    private static void onDeath(LivingDeathEvent e) {
+        if (e.getEntity() instanceof ServerPlayer p && SpeciesConfig.originalLineDeath() && OriginalRules.isOriginal(BloodlineAccess.get(p).species())
+                && OriginalRules.isWhiteOakKill(e.getSource())
+                && LineRules.killerCounts(p.getUUID(), e.getSource().getEntity() == null ? null : e.getSource().getEntity().getUUID())) {
+            run(p.server, p.getUUID());
+        }
+    }
+
+    /** The one entry point: {@code root}'s whole line dies. A boss Original who dies to white oak calls it with {@code NpcOriginal.X.uuid()}. */
+    public static void run(MinecraftServer server, UUID root) {
+        LineIndex index = LineIndex.get(server);
+        SirelineIndex sirelines = SirelineIndex.get(server.overworld());
+        for (LineIndex.Member m : index.membersOf(root)) {
+            if (!m.player()) {
+                discard(server, sirelines, m.id());
+                index.remove(m.id());
+            } else if (SireCall.player(server, m.id()) instanceof ServerPlayer online) {
+                online.sendSystemMessage(Component.translatable("supernaturalbloodlines.line.death", Lines.shownName(server, online, root)));
+                if (slay(online)) {
+                    index.remove(m.id());
+                } else {
+                    // something kept them alive: they stay in the line, owing the death for their next login
+                    index.addOwed(m.id(), root);
+                }
+            } else {
+                // offline: still a member, until they log in and pay
+                index.addOwed(m.id(), root);
+            }
+        }
+        if (NpcOriginal.byUuid(root).isPresent()) {
+            index.markDead(root);
+        }
+        discardLoaded(server, root);
+    }
+
+    /**
+     * Un-sired NPC vampires hold their line on the creature alone, so the index cannot list them: the ones that are loaded go now, the ones that
+     * are not are turned away when they load ({@link #onJoin}, through {@code LineIndex.isDead}).
+     */
+    private static void discardLoaded(MinecraftServer server, UUID root) {
+        for (ServerLevel level : server.getAllLevels()) {
+            List<Entity> doomed = new ArrayList<>();
+            for (Entity e : level.getAllEntities()) {
+                if (dies(e) && e.hasData(SpeciesRegistries.LINE) && root.equals(e.getData(SpeciesRegistries.LINE))) {
+                    doomed.add(e);
+                }
+            }
+            doomed.forEach(Entity::discard);
+        }
+    }
+
+    /**
+     * Kills the player (if they are not dead already) and, once they really are dead, ends their sire: the line is broken.
+     * A player in Vampirism's dying state ignores every hit, so they are killed through it.
+     *
+     * @return whether the player is dead now
+     */
+    public static boolean slay(ServerPlayer p) {
+        if (!p.isDeadOrDying()) {
+            DamageSource blow = p.damageSources().source(DAMAGE_TYPE);
+            if (!OriginalRules.killThroughDying(p, blow)) {
+                p.hurt(blow, Float.MAX_VALUE);
+            }
+            if (!p.isDeadOrDying()) {
+                p.kill();
+            }
+        }
+        if (!p.isDeadOrDying()) {
+            return false;
+        }
+        BloodlineState s = BloodlineAccess.get(p);
+        if (s.sire() != null) {
+            BloodlineAccess.set(p, s.toBuilder().sire(null).build());
+        }
+        return true;
+    }
+
+    /**
+     * Line death takes vampires and players only. Vampirism's converted animals and villagers are {@code IVampire} too (through
+     * {@code IConvertedCreature}), but they are animals bitten by a vampire, not vampires: they are never killed, discarded or given a line.
+     */
+    public static boolean dies(Entity e) {
+        return e instanceof IVampire && !(e instanceof IConvertedCreature<?>);
+    }
+
+    /** A creature in a level that is loaded goes (if it is a vampire); one that is not loaded is owed, and goes when it loads (if it is one). */
+    private static void discard(MinecraftServer server, SirelineIndex sirelines, UUID id) {
+        sirelines.remove(id);
+        for (ServerLevel level : server.getAllLevels()) {
+            // getEntity only finds what is loaded: it never loads a chunk
+            Entity e = level.getEntity(id);
+            if (e != null) {
+                if (dies(e)) {
+                    e.discard();
+                }
+                return;
+            }
+        }
+        sirelines.addPendingMob(id, server.overworld().getGameTime());
+    }
+
+    /**
+     * A player who was offline for the death pays now, once, if they are still in that line and still supernatural: someone cured or
+     * freed in the meantime owes nothing. The Original is named only if the player has discovered them. A death the old sireline death
+     * owed is turned into one of this line first (the Original found from the recorded sires), or dropped when there is none.
+     */
+    public static void onLogin(ServerPlayer p) {
+        LineIndex index = LineIndex.get(p.server);
+        SirelineIndex sirelines = SirelineIndex.get(p.serverLevel());
+        if (sirelines.takeLegacyPendingPlayer(p.getUUID())) {
+            if (!SpeciesConfig.originalLineDeath()) {
+                SupernaturalBloodlines.LOGGER.warn("Dropping a sireline death owed to {}: original_line_death is off", p.getGameProfile().getName());
+            } else {
+                // the old rule removed the doomed player's sire link from the index, so heal may find nothing: climb from the sire the player still has
+                Optional<UUID> root = Lines.heal(p).filter(r -> !r.equals(p.getUUID()));
+                if (root.isEmpty()) {
+                    root = Lines.climbFrom(p.server, sirelines, p.getUUID(), Optional.ofNullable(BloodlineAccess.get(p).sire())).filter(r -> !r.equals(p.getUUID()));
+                    // heal would have put them in the line; the debt only applies to someone who is in it
+                    root.ifPresent(r -> index.setRoot(p.getUUID(), r, true));
+                }
+                if (root.isPresent()) {
+                    index.addOwed(p.getUUID(), root.get());
+                } else {
+                    SupernaturalBloodlines.LOGGER.warn("Dropping a sireline death owed to {}: no Original is recorded above them", p.getGameProfile().getName());
+                }
+            }
+        }
+        index.takeOwed(p.getUUID()).ifPresent(root -> {
+            if (!LineRules.owedStillApplies(root, index.rootOf(p.getUUID()), Supernatural.is(p))) {
+                return;
+            }
+            p.sendSystemMessage(Component.translatable("supernaturalbloodlines.line.death_login", Lines.shownName(p.server, p, root)));
+            if (slay(p)) {
+                index.remove(p.getUUID());
+            } else {
+                index.addOwed(p.getUUID(), root);
+            }
+        });
+    }
+
+    /** A creature that was owed a death does not join the world, and neither does one of a line that is already dead. */
+    public static void onJoin(EntityJoinLevelEvent e) {
+        if (e.getLevel().isClientSide || e.getEntity() instanceof Player) {
+            return;
+        }
+        ServerLevel level = (ServerLevel) e.getLevel();
+        Entity entity = e.getEntity();
+        boolean owed = SirelineIndex.get(level).takePendingMob(entity.getUUID());
+        // a creature that is not a vampire (a converted animal) is let in: the debt of its line is not one it pays
+        if (dies(entity) && (owed || (entity.hasData(SpeciesRegistries.LINE) && LineIndex.get(level.getServer()).isDead(entity.getData(SpeciesRegistries.LINE))))) {
+            e.setCanceled(true);
+        }
+    }
+}

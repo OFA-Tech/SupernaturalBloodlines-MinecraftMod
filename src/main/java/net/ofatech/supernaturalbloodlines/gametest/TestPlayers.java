@@ -174,7 +174,7 @@ public final class TestPlayers {
         return p;
     }
 
-    private static ServerPlayer noSpawnProtection(GameTestHelper helper, ServerPlayer p) {
+    public static ServerPlayer noSpawnProtection(GameTestHelper helper, ServerPlayer p) {
         place(helper, p);
         try {
             // the 60 tick respawn protection only counts down in tick(), which a FakePlayer never runs

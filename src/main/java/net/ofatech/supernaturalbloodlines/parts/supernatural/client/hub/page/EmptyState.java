@@ -13,12 +13,20 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
  * What a page with nothing to show says: an empty hexagon, one plain sentence ("You run alone."), one line of what to do and one button that opens the page
  * that explains it. The copy is the language file's ({@code hub.empty.<kind>.title|body|button}); the colours are the theme's.
  */
-final class EmptyState {
+public final class EmptyState {
     private EmptyState() {
     }
 
     /** Draws the state centred in {@code area} from {@code top} down and returns the y under it; the button opens {@code open}. */
-    static int render(HubScreen.Frame f, Rect area, int top, String kind, HubPage open) {
+    public static int render(HubScreen.Frame f, Rect area, int top, String kind, HubPage open) {
+        return render(f, area, top, kind, open, null);
+    }
+
+    /**
+     * As above, with a second action under the button when {@code second} is a page this player can see: its label is {@code hub.empty.<kind>.button2}
+     * (a page the player cannot see, like the Pack page for a human, gets no action).
+     */
+    public static int render(HubScreen.Frame f, Rect area, int top, String kind, HubPage open, @org.jetbrains.annotations.Nullable HubPage second) {
         HubTheme t = f.theme();
         String key = PageKit.HUB + "empty." + kind + ".";
         int w = Math.min(area.w() - 8, 200);
@@ -27,7 +35,13 @@ final class EmptyState {
         int hex = 34;
         KitDraw.shape(f.g, Shapes.Shape.HEX, x + (w - hex) / 2, y, hex, t.muted());
         KitDraw.shape(f.g, Shapes.Shape.HEX, x + (w - hex) / 2 + 2, y + 2, hex - 4, t.paper());
-        y += hex + 10;
+        y += hex + 4;
+        if (net.minecraft.client.resources.language.I18n.exists(key + "caption")) {
+            Component caption = Component.translatable(key + "caption");
+            f.g.drawString(f.font(), caption, x + (w - f.font().width(caption)) / 2, y, t.muted(), false);
+            y += 10;
+        }
+        y += 6;
         Component title = Component.translatable(key + "title");
         var pose = f.g.pose();
         pose.pushPose();
@@ -50,6 +64,22 @@ final class EmptyState {
         if (f.focused("empty:" + kind)) {
             KitDraw.focusRing(f.g, button, t.focusColor());
         }
-        return button.bottom() + 6;
+        int bottom = button.bottom();
+        if (second != null && second.visible(f.view.context())) {
+            Component label2 = Component.translatable(key + "button2");
+            String id2 = "empty:" + kind + ":2";
+            int w2 = Math.min(w, f.font().width(label2) + 24);
+            Rect b2 = new Rect(x + (w - w2) / 2, bottom + 6, w2, 16);
+            boolean hot2 = f.hovered(b2) || f.focused(id2);
+            f.g.fill(b2.x(), b2.y(), b2.right(), b2.bottom(), t.accent());
+            f.g.fill(b2.x() + 1, b2.y() + 1, b2.right() - 1, b2.bottom() - 1, hot2 ? (t.accent() & 0xFFFFFF) | 0x44000000 : t.paper());
+            f.g.drawString(f.font(), label2, b2.x() + (b2.w() - f.font().width(label2)) / 2, b2.y() + 4, t.accent(), false);
+            f.target(id2, b2, List.of(label2), () -> f.screen().setPage(second));
+            if (f.focused(id2)) {
+                KitDraw.focusRing(f.g, b2, t.focusColor());
+            }
+            bottom = b2.bottom();
+        }
+        return bottom + 6;
     }
 }

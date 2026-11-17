@@ -15,6 +15,7 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
+import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 
 /**
@@ -27,8 +28,9 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
      * The player's line: the sire (and whether the bond is severed), the sire's sire and up, those the player sired, and everyone below.
      * Names only.
      */
-    public record Family(Optional<String> sire, boolean severed, List<String> sired, List<String> ancestors, List<HubSocial.Kin> line) {
-        public static final Family NONE = new Family(Optional.empty(), false, List.of(), List.of(), List.of());
+    public record Family(Optional<String> sire, boolean severed, List<String> sired, List<String> ancestors, List<HubSocial.Kin> line,
+                         HubSocial.Origin origin) {
+        public static final Family NONE = new Family(Optional.empty(), false, List.of(), List.of(), List.of(), HubSocial.Origin.NONE);
 
         public Family {
             sired = cap(sired);
@@ -66,12 +68,39 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
             ByteBufCodecs.stringUtf8(64), HubSocial.Rite::faction,
             HubSocial.Rite::new);
 
+    private static final StreamCodec<ByteBuf, LineRules.State> LINE_STATE = ByteBufCodecs.stringUtf8(16).map(
+            s -> {
+                try {
+                    return LineRules.State.valueOf(s);
+                } catch (IllegalArgumentException unknown) {
+                    return LineRules.State.NOT_VAMPIRE;
+                }
+            }, LineRules.State::name);
+
+    private static final StreamCodec<ByteBuf, HubSocial.FreedKind> FREED_KIND = ByteBufCodecs.stringUtf8(16).map(
+            s -> {
+                try {
+                    return HubSocial.FreedKind.valueOf(s);
+                } catch (IllegalArgumentException unknown) {
+                    return HubSocial.FreedKind.NONE;
+                }
+            }, HubSocial.FreedKind::name);
+
+    private static final StreamCodec<ByteBuf, HubSocial.Origin> ORIGIN = StreamCodec.composite(
+            LINE_STATE, HubSocial.Origin::state,
+            ByteBufCodecs.optional(NAME), HubSocial.Origin::root,
+            ByteBufCodecs.optional(NAME), HubSocial.Origin::freedFrom,
+            FREED_KIND, HubSocial.Origin::freedKind,
+            ByteBufCodecs.BOOL.apply(ByteBufCodecs.list(HubSocial.MAX_ANCESTORS)), HubSocial.Origin::ancestorHidden,
+            HubSocial.Origin::new);
+
     private static final StreamCodec<ByteBuf, Family> FAMILY = StreamCodec.composite(
             ByteBufCodecs.optional(NAME), Family::sire,
             ByteBufCodecs.BOOL, Family::severed,
             NAME.apply(ByteBufCodecs.list(MAX_NAMES)), Family::sired,
             NAME.apply(ByteBufCodecs.list(MAX_NAMES)), Family::ancestors,
             KIN.apply(ByteBufCodecs.list(MAX_NAMES)), Family::line,
+            ORIGIN, Family::origin,
             Family::new);
 
     private static final StreamCodec<ByteBuf, Genes.Knowledge> KNOWLEDGE = ByteBufCodecs.stringUtf8(16).map(
@@ -115,7 +144,7 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
         Map<String, Genes.Knowledge> genes = new LinkedHashMap<>();
         Genes.ALL.forEach(g -> genes.put(g, Genes.ofClient(view, g)));
         HubSocial.Social social = HubSocial.of(p);
-        return new HubSnapshotPayload(new Family(social.sire(), own.bondBroken(), social.sired(), social.ancestors(), social.line()),
+        return new HubSnapshotPayload(new Family(social.sire(), own.bondBroken(), social.sired(), social.ancestors(), social.line(), social.origin()),
                 social.pack(), social.fiveCount(), genes, social.rites());
     }
 

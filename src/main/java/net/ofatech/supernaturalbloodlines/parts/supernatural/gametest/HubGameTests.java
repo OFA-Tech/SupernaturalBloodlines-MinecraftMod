@@ -18,6 +18,7 @@ import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.EnabledParts;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
+import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotPayload;
 
@@ -47,6 +48,28 @@ public final class HubGameTests {
             }
         } finally {
             BloodlineAccess.set(beta, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    /** The line of the player crosses the wire as it is: states, names, the freed kind and which ancestors are hidden. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void snapshotRoundTripsTheOrigin(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        var previous = HubSocial.source();
+        try {
+            for (HubSocial.Origin origin : List.of(HubSocial.Origin.NONE,
+                    new HubSocial.Origin(LineRules.State.FREE, Optional.of("npc:klaus"), Optional.of("npc:klaus"), HubSocial.FreedKind.IMPRISONED, List.of(true, false)),
+                    new HubSocial.Origin(LineRules.State.IN_LINE, Optional.empty(), Optional.empty(), HubSocial.FreedKind.NONE, List.of()))) {
+                HubSocial.set(x -> new HubSocial.Social(Optional.empty(), List.of(), List.of(), 0, List.of("A", "B"), List.of(), List.of(), origin));
+                HubSnapshotPayload payload = HubSnapshotPayload.of(p);
+                helper.assertTrue(payload.family().origin().equals(origin), "the origin changed on the way into the payload: " + payload.family().origin());
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                HubSnapshotPayload.STREAM_CODEC.encode(buf, payload);
+                helper.assertTrue(HubSnapshotPayload.STREAM_CODEC.decode(buf).equals(payload), "the origin does not survive the wire: " + origin);
+            }
+        } finally {
+            HubSocial.set(previous);
         }
         helper.succeed();
     }

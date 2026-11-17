@@ -25,6 +25,7 @@
 - [Werewolves and packs](Werewolves-And-Packs)
 - [Hunters of the Five](Hunters-Of-The-Five)
 - [Sirelines](Sirelines)
+- [Original Bloodlines](Original-Bloodlines)
 - [Rite of Severance](Rite-Of-Severance)
 
 **Integrations**

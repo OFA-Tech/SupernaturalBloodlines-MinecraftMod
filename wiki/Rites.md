@@ -176,6 +176,11 @@ Breaks a sired player's whole sire bond. Full details on [Rite of Severance](Rit
 | Performer | a **witch, siphoner, heretic or tribrid** |
 | Condition | the **night of a full moon** (full-moon day and time of day 12786 to 23216; noon is refused) |
 | Target | the sired player on the centre (else the caster). No consent check. |
-| Result | the bond is broken; the sire stays recorded and sireline death still applies |
+| Result | the bond is broken; the sire stays recorded and line death still applies |
 
 Note: every rite that says "full moon" needs the night of the full moon, like this one.
+
+## Rite of the Broken Line and Rite of the Imprisoned Original
+
+Witch-type performer, lunar eclipse. The Broken Line frees one player from an Original's line; the Imprisoned Original frees a player and their whole branch, with the Original, brought down (downed, dying or desiccated), held inside a closed mountain ash circle for 30 seconds. Neither rite asks the target: a witch can free an unwilling player. See [Original Bloodlines](Original-Bloodlines).
+

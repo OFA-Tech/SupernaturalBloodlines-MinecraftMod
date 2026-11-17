@@ -138,7 +138,7 @@ public final class SireRecorder {
 
     /** A player's name, online or from the profile cache; null when the server does not know it. */
     @Nullable
-    static String nameOfId(MinecraftServer server, UUID id) {
+    public static String nameOfId(MinecraftServer server, UUID id) {
         ServerPlayer online = server.getPlayerList().getPlayer(id);
         if (online != null) {
             return online.getGameProfile().getName();

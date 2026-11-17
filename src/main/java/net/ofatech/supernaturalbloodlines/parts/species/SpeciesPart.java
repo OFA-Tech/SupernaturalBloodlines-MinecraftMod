@@ -66,10 +66,14 @@ import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCommand
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineCompulsionGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SeveranceGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SeveranceRiteGameTests;
-import net.ofatech.supernaturalbloodlines.parts.species.gametest.SirelineDeathGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.LineDeathGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.LineGameTests;
+import net.ofatech.supernaturalbloodlines.parts.species.line.LineDeath;
+import net.ofatech.supernaturalbloodlines.parts.species.line.LineWarning;
+import net.ofatech.supernaturalbloodlines.parts.species.line.Lines;
+import net.ofatech.supernaturalbloodlines.parts.species.line.NpcLines;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.BloodlineCommand;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.Compulsion;
-import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineDeath;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.InfectionTracker;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder;
@@ -86,6 +90,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.rite.RevelationRiteFacto
 import net.ofatech.supernaturalbloodlines.parts.species.rite.AncestralCallingRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.HybridBloodRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.rite.SeveranceRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.species.rite.BrokenLineRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.species.rite.ImprisonedOriginalRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.species.witch.Siphoning;
 import net.ofatech.supernaturalbloodlines.parts.species.witch.VampireJoin;
 import net.ofatech.supernaturalbloodlines.parts.species.original.Downed;
@@ -111,6 +117,7 @@ public final class SpeciesPart {
     private SpeciesPart() {}
 
     public static void init(IEventBus modBus, ModContainer container) {
+        LegacyConfig.register(); // reads the file before NeoForge loads it
         container.registerConfig(ModConfig.Type.COMMON, SpeciesConfig.SPEC, SpeciesConfig.FILE);
         // the faction rites (vampirism_enchanted part) now run with the real context and through the executor
         FactionRiteHooks.install((p, faction, time) -> SpeciesContext.of(p, faction, time, null), OutcomeExecutor::run);
@@ -124,6 +131,8 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(OriginalBloodRiteFactory.ID, OriginalBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(HybridBloodRiteFactory.ID, HybridBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(SeveranceRiteFactory.ID, SeveranceRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(BrokenLineRiteFactory.ID, BrokenLineRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(ImprisonedOriginalRiteFactory.ID, ImprisonedOriginalRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(AncestralCallingRiteFactory.ID, AncestralCallingRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(LineageRiteFactory.ID, LineageRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(DoppelgangerBloodRiteFactory.ID, DoppelgangerBloodRiteFactory.CODEC);
@@ -154,7 +163,10 @@ public final class SpeciesPart {
         InfectionTracker.register();
         SireCall.register();
         Compulsion.register();
-        SirelineDeath.register();
+        Lines.register(); // after SireRecorder: it hears the sires SireRecorder writes down
+        NpcLines.register();
+        LineDeath.register();
+        LineWarning.register();
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> BloodlineCommand.register(e.getDispatcher()));
         HybridTraits.register(); // always: it strips the saved modifier when Werewolves is gone
         RankEffects.register(); // always, for the same reason
@@ -223,7 +235,16 @@ public final class SpeciesPart {
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.SpeciesHubGameTests.class);
             e.register(SirelineCommandGameTests.class);
             e.register(SirelineCompulsionGameTests.class);
-            e.register(SirelineDeathGameTests.class);
+            e.register(LineGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineHubGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineRiteGameTests.class);
+            // the ring tests need the artifacts part's mountain ash block, found by id: the species part does not import it
+            if (net.minecraft.core.registries.BuiltInRegistries.BLOCK.containsKey(net.ofatech.supernaturalbloodlines.parts.species.line.Imprisonment.RING_BLOCK)) {
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineRiteRingGameTests.class);
+            }
+            e.register(LineDeathGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineDiscoveryGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.LineWarningGameTests.class);
             e.register(SeveranceGameTests.class);
             e.register(SeveranceRiteGameTests.class);
             e.register(TurningGameTests.class);

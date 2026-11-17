@@ -96,7 +96,7 @@ NeoForge **COMMON** configs are **not synced from the server**: each side reads 
 - **All of `[parts]`** (and the same mods installed).
 - **`supernaturalbloodlines-species_tensura.toml`:** `layers`, `undead_treatment_enabled`, `apex_evolutions_enabled`, `evolution_progress_multiplier`. Tensura's undead checks and the evolution screen run **on the client too**, so a mismatch gives wrong screens (a missing apex option). `evolution_progress_multiplier` only matters on the server.
 - **`moon_bound_werewolves`, `full_form_level`** in the common file.
-- The other values (`max_originals_per_world`, `max_five`, chances, `sireline_death`) are used by the **server** only, but equal values avoid confusion.
+- The other values (`max_originals_per_world`, `max_five`, chances, `original_line_death`) are used by the **server** only, but equal values avoid confusion.
 
 If `apex_evolutions_enabled` differs, the client shows the apex race and the server **silently refuses the pick**, with nothing in the log.
 
@@ -117,11 +117,17 @@ A simple way: keep one `config/` folder in your modpack and ship it to everyone.
 | Starved and Usurper | (Tensura skills) | n/a | They don't check for subordinates, so a sire with them can drain or rob a sired player. Nothing in this mod changes it. |
 | Original cap | `max_originals_per_world` | 0 (no cap) | Originals are very hard to kill. Consider a cap. |
 | The Five | `max_five` | 5 | |
-| Sireline death | `sireline_death` | off | A white oak kill of one Original can wipe their whole line, offline players included. |
+| Line death | `original_line_death` | on | A white oak kill of one Original kills their whole line, offline players included. Replaces `sireline_death`. |
 | Moon control | `moon_bound_werewolves` | on | Off: everyone shifts at will. |
 | Eclipse | `lunar_eclipse_chance` | 3% | 0 turns eclipses off. One flag for the whole server. |
 | Hidden gene | `latent_gene_chance` | 15% | rolled once per player at first login |
 | True Alpha farming | (design) | | The 300 defender kills can be farmed at a mob spawner beside a villager. |
+
+## Upgrading to line death
+
+Line death is now ON by default, offline players included. Set `original_line_death = false` to keep the old behaviour. `sireline_death` is ignored. A server that had `sireline_death` in `supernaturalbloodlines-species.toml` is told once in the log when it starts. Offline players who owed a death to the old rule still pay it at their next login (as a death of their new line, or dropped if no Original is recorded above them). With `original_line_death = false` those old debts are dropped (and logged), not paid.
+
+Line death only takes vampires and players: a converted animal or villager is never killed or removed by it. The Original's own white oak does not start it (see [Original Bloodlines](Original-Bloodlines)).
 
 ## Operators
 - A bad entry in `layers` or `rank_skills` is **ignored**, logged at **ERROR** when the config loads, and every **operator (permission level 2)** is told in chat on login: "species_tensura: N invalid entries in the config were ignored (see the server log)."

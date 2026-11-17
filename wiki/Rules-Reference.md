@@ -44,7 +44,7 @@ The species rules, with their ids (the "R" numbers used in the code, the changel
 | **R33** | The White Oak Ash Dagger desiccates an Original (30 minutes, until pulled out). It hurts any non-human who wields it. |
 | **R34** | Only The Cure works on Originals. |
 | **R35** | An **Original hybrid needs the gene**: a natural gene awakened by a kill (bound), or the gene from the Rite of Lineage (Awaken) (bound). The Rite of the Moon without the gene is refused. On a bound hybrid it breaks the curse. |
-| **R36** | Sireline death is a config switch, **off** by default. |
+| **R36** | Replaced by R122 (line death, on by default; the old `sireline_death` switch is gone). |
 
 ## Hybrids
 
@@ -113,6 +113,19 @@ The species rules, with their ids (the "R" numbers used in the code, the changel
 | **R101b** | The **Rite of Severance** breaks the whole sire bond of a sired player: no Tensura owner link, no sire naming exception, they can hurt their sire (R43 ends), no `/bloodline call`, and the sire's compelled creatures no longer spare them. **The sire stays recorded** (the tree shows it) and **sireline death still applies** (blood, not bond). A new sire replaces the old one and ends the severance. Performer: a witch, siphoner, heretic or tribrid at an altar, with the sired in the circle. Cost: **the night of a full moon**, 6000 power, **Sire's Blood** of the sired's own sire (taken with a silver blade and a glass bottle) and a **Spirit of Otherwhere**. Siring itself needs no consent. See [Rite of Severance](Rite-Of-Severance). |
 | **R102** | Werewolf ranks grant Tensura skills, and the race is kept. |
 | **R103** | Hunters and werewolves can't be undead or daemon races. **Exception:** an apex race of this mod, for vampire-type species only (Original, Original hybrid, hybrid, heretic, tribrid). |
+
+## Original bloodlines (R120 to R127)
+
+| Id | Rule |
+|---|---|
+| **R120** | Every vampire belongs to the **line of one Original**, stored server-wide: a player Original's own UUID, or one of six fixed NPC roots (Mikael, Finn, Elijah, Kol, Rebekah, Klaus). An Original is the root of their own line and never a member of it. A player made Original is the root of their own line even if an Original sired them; the branch below them moves with them. |
+| **R121** | A child of an Original joins that Original's line; a child of a member joins the member's root; a child of a sire with no line has none. A player turned by an NPC inherits the NPC's line. Vampirism vampire creatures get a weighted NPC root when they first appear (not the types in `#line_exempt`); an un-sired one keeps it on the creature alone, a sired one is a member of the line. A cured player leaves it. |
+| **R122** | **Line death** (`original_line_death`, on by default): killing an Original or Original hybrid with white oak kills every vampire and player in their line (never a converted animal or villager). Only a melee white-oak blow by someone other than the Original counts: the Original's own white oak, or a death with no killer, does nothing. Offline players pay at login, once, if still in the line and still supernatural. Someone freed by a rite survives. |
+| **R123** | A player sees the Original of their line as **?** until they discover it (`original_visibility`: `discovered` or `always`). The Rite of Revelation (which also reveals genes) discovers it; discovery is per player. Player ancestors are visible, NPC ancestors and an NPC sire are **?**. |
+| **R124** | When an Original lies open to white oak (desiccated, in the dying state or downed), every online member of the line is warned once per opening. A member who has not discovered the Original is never told the name. |
+| **R125** | **Rite of the Broken Line** (witch-type, lunar eclipse): frees only the target, who becomes the head of their own line (not an Original) and keeps their sire bond; the people they sired stay in the line. Wrong blood, a wrong Original and an open ring all give the same plain refusal, "The rite fails." |
+| **R126** | **Rite of the Imprisoned Original** (harder, lunar eclipse): the Original must be brought down (downed, in the dying state or desiccated) and stay inside a closed mountain ash circle for the whole rite; it frees the target's whole branch, never the Original's whole line. |
+| **R127** | `line_rites_enabled` switches both rites. A freed player's record says which rite freed them. |
 
 ## Apex races (R100)
 

@@ -54,7 +54,7 @@ The shared pieces every hub theme is built from. Package `net.ofatech.supernatur
 
 ## The Grimoire's book pages
 
-`BookKit` (drop cap, leaders, wax seal, red link, footnote, small text, face) and `BookSkillsPage`, `BookQuestsPage`, `BookRitesPage`, `BookBloodlinePage`, `BookPackPage`, `BookGuidePage` are the Grimoire's own views; `GrimoireTheme.view(page)` returns them and the other two looks keep the shared pages. Path is `PathPage(true)`.
+`BookKit` (drop cap, leaders, wax seal, red link, footnote, small text, face) and `BookSkillsPage`, `BookQuestsPage`, `BookRitesPage`, `GrimoireBloodlinePage`, `BookPackPage`, `BookGuidePage` are the Grimoire's own views; `GrimoireTheme.view(page)` returns them and the other two looks keep the shared pages. Path is `PathPage(true)`.
 
 ### Demo data for the dev shots
 
@@ -70,3 +70,8 @@ The shared pieces every hub theme is built from. Package `net.ofatech.supernatur
 ## Performance (the 16 review)
 
 Every shape (a slot, a medallion, the Blood Moon's disc and halo, the Ghoul's grey moon, the glow behind the stage, the HUD's cooldown pie and blood ring) is painted once by a pure function (`Shapes`, `Bake`, `PieSweep`) into a `DynamicTexture` (`BakedTexture`, at most 96 kept, cleared on a resource reload) and drawn with one blit, tinted. A square is one fill; a round or hexagonal shape falls back to its few merged runs (`Shapes.runs`) if a texture cannot be made. The HUD's texts (the mode pill, the Alt tooltips) are translated, measured and wrapped once a tick, not every frame, and Bite's blood and the moon warning are read in `LiveHud.tick`. `HudSource` is the one seam between the layer and its data (`LiveHud` for the game, `HudDemo` for the dev screenshots).
+
+## The Bloodline page (plan 17a)
+
+`LineTree` (pure) decides the nodes (the crowned Original or `?`, up to two ancestors, the sire, you, up to three sired), the links (solid, broken, faint), the arrow-key walk and the narration; `LineTreeLayout` places them per theme. The Grimoire draws ink on the left page and the selection on the right; the Blood Moon hangs the chain under the moon with the detail in the bottom bar; Tensura uses hexes with the detail in the info pane. States: Original, not a vampire (empty state), sire unknown, in a line, free.
+
