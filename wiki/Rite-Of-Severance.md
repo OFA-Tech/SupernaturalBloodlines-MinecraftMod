@@ -46,6 +46,7 @@ Textures for both items are placeholders.
 For the sired who goes through it, the bond is gone:
 
 - no **Tensura owner** link (and a Tensura owner set by a real **naming** is cleared too, but **only if it was the severed sire**; someone else's owner stays, and so does the name)
+- no **Tensura name** when the severed sire was your Tensura owner: your "named" status is gone, so another namer can name you later, but the **EP and stats** the naming gave you **stay**. A new sire names you again and you get Tensura's naming reward again. Settings in `supernaturalbloodlines-species_tensura.toml`: `severance_clears_name` (default on; off keeps the name) and `resire_naming_reward` (default on; off: the re-naming gives you no reward)
 - the sire's **naming exception** no longer applies
 - a hybrid can **hurt their sire** again (R43 ends)
 - the sire can't use **`/bloodline call`** on them

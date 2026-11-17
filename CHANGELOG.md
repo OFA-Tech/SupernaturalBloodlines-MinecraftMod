@@ -2,6 +2,10 @@
 
 ## Unreleased (plan 16b, Grimoire v2)
 
+### Changed
+
+- **The Rite of Severance clears the Tensura name (R101b, owner ruling).** When the severed sire is the player's Tensura owner, the player's Tensura "named" status is cleared too, so someone else can name them later; the EP and stats the naming gave stay. An owner who is not the severed sire is left alone, and so is the name. New COMMON config `severance_clears_name` (default on; off keeps the name) in `supernaturalbloodlines-species_tensura.toml`. Re-siring after a severance names the player again and pays Tensura's naming reward again; the new COMMON config `resire_naming_reward` (default on) turns that reward off (the new sire still pays Tensura's cost and the player is still named). No mixin. Fixes the order in `SubordinateLink` (the owner was already cleared when the severance looked for it, so a name clear would never have run).
+
 ### Added
 
 - **Plan 14, review round 8.** A duelist who logs in late (after their own window) while the other one is still away with time left no longer forfeits at once: the duel keeps waiting for the other and tells the late one so; they forfeit when the other returns in time, and nobody wins when the other's window ends too. A result that could not be applied tells each online player once (it was told twice).

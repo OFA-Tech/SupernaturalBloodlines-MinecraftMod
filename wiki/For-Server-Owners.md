@@ -110,6 +110,8 @@ A simple way: keep one `config/` folder in your modpack and ship it to everyone.
 | Evolution boost | `evolution_progress_multiplier` | 1.25 | a player with a species gains 25% more EP. It speeds up EP gain only: no evolution requirement is skipped. 1.0 turns it off. |
 | Apex races | `apex_evolutions_enabled` | on | An apex race costs **2,000,000 EP** (the same as a divine human) and gives more max health than the divine tier. Every value is in `docs/balance.md`. No apex race is bloodless: all of them can be bitten. |
 | Sire naming | `sire_naming_enabled` | on | Siring **names the sired player in Tensura automatically** (their own name; the sire pays the magicule cost, the sired gets EP and stats). **`playerNaming=false` does not block it.** Turn it off if your naming rule is meant to be absolute. Siring needs no consent; the Rite of Severance is the way out. |
+| Severance clears the name | `severance_clears_name` | on | The Rite of Severance also clears the sired player's Tensura name when the severed sire was their owner (EP and stats stay). |
+| Re-siring reward | `resire_naming_reward` | on | Off: naming a player again after a severance gives them no EP and stats reward (the sire still pays). |
 | Severance | (rite) | n/a | A witch type can sever an **unwilling** player in the circle (no consent check), and a sired witch type can sever herself. A new sire replaces the old one, tree and sireline death included. |
 | Sire link | `sire_subordinate_link_enabled` | on | A sired player can't hurt their sire or the sire's other sired. Also true for a bitten Beta and their Alpha. |
 | Starved and Usurper | (Tensura skills) | n/a | They don't check for subordinates, so a sire with them can drain or rob a sired player. Nothing in this mod changes it. |
