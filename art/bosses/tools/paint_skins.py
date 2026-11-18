@@ -406,121 +406,146 @@ def peter_hale(burned=False):
 
 
 def risen(s):
-    """Peter, burned: third-degree burns dominate. Charred black, red-raw patches and mottled glossy scar
-    tissue, worst on the left side of the face; singed hair; charred trouser rags; only a light film of grave soil."""
-    SKIN = (206, 178, 162)
-    CHAR = [(16, 12, 12), (28, 20, 18), (42, 28, 24)]
-    RAW = [(176, 46, 44), (140, 34, 36), (198, 74, 64)]
-    SCAR = [(198, 122, 114), (176, 100, 98), (220, 160, 150)]
-    for part in ('body', 'rarm', 'larm'):
-        s.fill_part(part, SKIN, 0.04, 5, skin=True)
-    for part in ('rleg', 'lleg'):
-        s.fill_part(part, SKIN, 0.04, 6, skin=True)
+    """Peter, burned (hospital-coma / Season 6 look). Structured burns, 8-colour burn palette:
+    charred black and brown cores with a few ember cracks, raw red and pink wet rims, smooth pale-pink scar
+    tissue, intact skin. Heaviest on the left side of the face (viewer's right), left arm and torso; the right
+    side of the face stays recognisably Peter with dark, partly singed hair. No clothes except burned scraps and
+    gauze bandages (hospital burn-ward look)."""
+    P_INTACT = (214, 186, 170)
+    P_SCAR_L, P_SCAR_M = (218, 168, 158), (198, 132, 124)
+    P_RAW_PINK, P_RAW_RED = (198, 84, 80), (166, 42, 44)
+    P_CHAR_BROWN, P_CHAR_BLACK, P_EMBER = (56, 38, 32), (22, 18, 18), (196, 74, 36)
+    HAIR, HAIR_SINGE = (36, 28, 26), (76, 64, 58)
+    GAUZE, SOOT = (214, 208, 196), (96, 86, 80)
+
+    for part in ('head', 'body', 'rarm', 'larm', 'rleg', 'lleg'):
+        s.fill_part(part, P_INTACT, 0.02, 5, skin=True)
     for part in ('jacket', 'rsleeve', 'lsleeve', 'rpants', 'lpants', 'hat'):
         s.clear_part(part)
 
-    def burn(part, side, lx, ly, bias):
-        fx, fy, fw, fh = s.face(part, side)
-        pos = (fx + lx, fy + ly)
-        if s.px[pos][3] == 0:
-            return
-        f = hsh((fx + lx) // 3, (fy + ly) // 3, 401) * 0.5 + hsh((fx + lx) // 2, (fy + ly) // 2, 402) * 0.32 + hsh(fx + lx, fy + ly, 403) * 0.18 + bias
-        n = int(hsh(fx + lx, fy + ly, 404) * 3) % 3
-        if f < 0.26:
-            c = CHAR[n]
-            if hsh(fx + lx, fy + ly, 405) < 0.1:
-                c = (150, 44, 30)  # ember crack
-        elif f < 0.40:
-            c = RAW[n]
-        elif f < 0.68:
-            c = SCAR[n]
-        else:
-            c = mixc(SKIN, (150, 120, 110), 0.25 + 0.2 * hsh(fx + lx, fy + ly, 406))
-        s.set(part, side, lx, ly, c, 255, False)
+    # burn blobs per face: (cx, cy, radius, strength); level = strength * (1 - dist/radius)
+    B = {
+        ('head', 'front'): [(6.2, 3.8, 4.6, 1.0), (5.5, 6.6, 3.0, 0.9), (1.0, 6.8, 2.2, 0.5), (3.5, 0.5, 2.5, 0.45)],
+        ('head', 'left'): [(3.5, 4.0, 6.0, 1.0)],
+        ('head', 'right'): [(5.0, 6.0, 2.6, 0.5)],
+        ('head', 'top'): [(5.5, 3.5, 4.0, 0.9)],
+        ('head', 'back'): [(5.0, 4.0, 3.6, 0.8)],
+        ('head', 'bottom'): [(5.0, 4.0, 3.5, 0.8)],
+        ('body', 'front'): [(5.5, 4.5, 5.2, 1.0), (2.0, 9.5, 3.4, 0.55), (5.5, 10.0, 3.2, 0.8)],
+        ('body', 'back'): [(2.5, 5.0, 5.0, 0.95), (6.0, 9.5, 3.2, 0.8)],
+        ('body', 'left'): [(2.0, 6.0, 6.5, 1.0)],
+        ('body', 'right'): [(2.0, 5.0, 3.5, 0.6)],
+        ('body', 'top'): [(4.0, 2.0, 3.5, 0.7)],
+        ('larm', 'front'): [(2.0, 5.0, 6.8, 1.0)], ('larm', 'back'): [(2.0, 6.5, 6.5, 1.0)],
+        ('larm', 'left'): [(2.0, 6.0, 7.0, 1.0)], ('larm', 'right'): [(2.0, 5.0, 5.5, 0.9)],
+        ('larm', 'top'): [(2.0, 2.0, 3.0, 0.8)], ('larm', 'bottom'): [(2.0, 2.0, 3.0, 0.9)],
+        ('rarm', 'front'): [(2.0, 9.5, 4.2, 0.85), (2.0, 1.0, 2.6, 0.5)], ('rarm', 'back'): [(2.0, 8.0, 4.5, 0.8)],
+        ('rarm', 'left'): [(2.0, 4.0, 3.5, 0.5)], ('rarm', 'right'): [(2.0, 9.0, 4.0, 0.8)],
+        ('rarm', 'bottom'): [(2.0, 2.0, 3.0, 0.8)],
+        ('lleg', 'front'): [(2.0, 4.0, 5.5, 0.9), (2.0, 10.0, 3.0, 0.7)], ('lleg', 'back'): [(2.0, 5.0, 5.5, 0.9)],
+        ('lleg', 'left'): [(2.0, 6.0, 6.5, 0.95)], ('lleg', 'right'): [(2.0, 8.0, 4.0, 0.7)],
+        ('rleg', 'front'): [(2.0, 9.5, 3.8, 0.7)], ('rleg', 'back'): [(2.0, 8.0, 4.0, 0.6)],
+        ('rleg', 'right'): [(2.0, 8.5, 4.0, 0.6)], ('rleg', 'left'): [(2.0, 4.0, 3.0, 0.4)],
+    }
 
-    def burn_part(part, sides, bias_fn):
-        for side in sides:
+    def level(part, side, lx, ly):
+        fx, fy, fw, fh = s.face(part, side)
+        best = 0.0
+        for cx, cy, r, st in B.get((part, side), []):
+            d = ((lx - cx) ** 2 + (ly - cy) ** 2) ** 0.5
+            best = max(best, st * (1.0 - d / r))
+        return best + (hsh((fx + lx) // 3, (fy + ly) // 3, 501) - 0.5) * 0.08
+
+    def burn_color(part, side, lx, ly):
+        fx, fy, fw, fh = s.face(part, side)
+        L = level(part, side, lx, ly)
+        gx, gy = fx + lx, fy + ly
+        if L > 0.62:
+            if 0.62 < L < 0.8 and hsh(gx, gy, 502) < 0.1:
+                return P_EMBER
+            return P_CHAR_BROWN if hsh(gx // 2, gy // 2, 503) < 0.4 else P_CHAR_BLACK
+        if L > 0.42:
+            return P_RAW_RED if hsh(gx // 2, gy // 2, 504) < 0.45 else P_RAW_PINK
+        if L > 0.22:
+            return P_SCAR_M if hsh(gx // 3, gy // 3, 505) < 0.45 else P_SCAR_L
+        return None
+
+    for part in ('head', 'body', 'rarm', 'larm', 'rleg', 'lleg'):
+        for side in ('top', 'bottom', 'right', 'front', 'left', 'back'):
             fx, fy, fw, fh = s.face(part, side)
             for ly in range(fh):
                 for lx in range(fw):
-                    burn(part, side, lx, ly, bias_fn(side, lx, ly, fw, fh))
-
-    # head: the character's left side of the face (viewer's right) is the ruined one
-    def head_bias(side, lx, ly, fw, fh):
-        b = 0.0
-        if side == 'front':
-            if ly in (3, 4) and lx in (1, 2, 5, 6):
-                return 9.0  # leave brows and eyes (set below)
-            if ly == 6 and lx in (3, 4):
-                return 9.0  # lips
-            b = -0.24 if lx >= 4 else 0.04
-        elif side == 'left':
-            b = -0.28
-        elif side == 'right':
-            b = 0.08
-        elif side == 'top':
-            b = -0.1
-        return b
-    burn_part('head', ('top', 'bottom', 'right', 'front', 'left', 'back'), head_bias)
-    # eyes: right one intact, left one clouded; lips stay readable
+                    if part == 'head' and side == 'front' and ((ly in (3, 4) and lx in (1, 2, 5, 6)) or (ly == 6 and lx in (3, 4))):
+                        continue
+                    c = burn_color(part, side, lx, ly)
+                    if c is not None:
+                        s.set(part, side, lx, ly, c, 255, False)
+    # face details: intact right eye, clouded left eye, brows, lips
     s.set('head', 'front', 1, 4, WHITE); s.set('head', 'front', 2, 4, (96, 140, 152))
-    s.set('head', 'front', 5, 4, (178, 184, 188)); s.set('head', 'front', 6, 4, (204, 206, 208))
-    s.set('head', 'front', 1, 3, (30, 22, 18)); s.set('head', 'front', 2, 3, (30, 22, 18))
-    s.set('head', 'front', 3, 6, (150, 70, 66)); s.set('head', 'front', 4, 6, (150, 70, 66))
-    # singed hair: short charred remnants on the right side, scalp scarring on the left
-    for lx in range(8):
-        for ly in range(1 + lx % 2):
-            if hsh(lx, ly, 410) < 0.7:
-                s.set('head', 'front', lx, ly, shade((34, 28, 26), 0.9 + 0.3 * hsh(lx, ly, 411)))
-    for lx in range(0, 4):
+    s.set('head', 'front', 5, 4, (186, 190, 194)); s.set('head', 'front', 6, 4, (206, 208, 210))
+    s.set('head', 'front', 1, 3, HAIR); s.set('head', 'front', 2, 3, HAIR)
+    s.set('head', 'front', 5, 3, P_RAW_PINK); s.set('head', 'front', 6, 3, P_SCAR_M)
+    s.set('head', 'front', 3, 6, (160, 80, 76)); s.set('head', 'front', 4, 6, (160, 80, 76))
+    # hair: dark on the right side, partly singed (grey-brown tips); scalp on the left is burned bare
+    for lx in range(0, 5):
+        for ly in range(0, 2 if lx < 3 else 1):
+            s.set('head', 'front', lx, ly, HAIR if (lx + ly) % 3 else HAIR_SINGE)
+    for lx in range(0, 5):
         for ly in range(8):
-            if hsh(lx, ly, 412) < 0.6:
-                s.set('head', 'top', lx, ly, shade((30, 24, 22), 0.9 + 0.3 * hsh(lx, ly, 413)))
-    for ly in range(0, 4):
-        for lx in range(8):
-            if hsh(lx, ly, 414) < 0.45:
-                s.set('head', 'back', lx, ly, (26, 22, 22))
-    for ly in range(0, 2):
-        for lx in range(8):
-            if hsh(lx, ly, 415) < 0.3:
-                s.set('hat', 'top', lx, ly, (22, 20, 20))
-                s.set('hat', 'back', lx, ly, (28, 24, 22))
-    # torso and arms: worst on the left side (viewer's right) and at the hands
-    burn_part('body', ('top', 'bottom', 'right', 'front', 'left', 'back'), lambda side, lx, ly, fw, fh: -0.06 + (-0.12 if (side == 'front' and lx >= 4) else 0) + 0.1 * (ly / fh) * 0)
-    burn_part('rarm', ('top', 'bottom', 'right', 'front', 'left', 'back'), lambda side, lx, ly, fw, fh: -0.02 - (0.18 if ly >= 9 else 0))
-    burn_part('larm', ('top', 'bottom', 'right', 'front', 'left', 'back'), lambda side, lx, ly, fw, fh: -0.14 - (0.18 if ly >= 9 else 0))
-    # legs: charred trouser rags above, burned skin below
-    for part in ('rleg', 'lleg'):
-        burn_part(part, ('top', 'bottom', 'right', 'front', 'left', 'back'), lambda side, lx, ly, fw, fh: -0.08)
+            s.set('head', 'top', lx, ly, HAIR if ly % 4 else HAIR_SINGE)
+    for lx in range(0, 8):
+        for ly in range(0, 4):
+            if lx < 5 or ly < 1:
+                s.set('head', 'back', lx, ly, HAIR if (lx + ly) % 4 else HAIR_SINGE)
+    for lx in range(0, 6):
+        for ly in range(0, 3):
+            s.set('head', 'right', lx, ly, HAIR if ly < 2 else HAIR_SINGE)
+    # light stubble on the intact right jaw only
+    for ly in (5, 6, 7):
+        for lx in (0, 1, 2):
+            if hsh(lx, ly, 510) < 0.55:
+                s.set('head', 'front', lx, ly, (150, 122, 112))
+    # burned scraps and gauze: second layer
+    # torso: charred remnant of a shirt over the left hip, gauze wrap across the chest
+    for ly in range(8, 12):
+        for lx in range(4, 8):
+            if hsh(lx // 2, ly // 2, 512) < 0.75:
+                s.set('jacket', 'front', lx, ly, P_CHAR_BLACK if hsh(lx, ly, 513) < 0.6 else P_CHAR_BROWN)
+    for lx in range(0, 8):
+        s.set('jacket', 'front', lx, 5 + (1 if lx > 4 else 0), GAUZE); s.set('jacket', 'front', lx, 6 + (1 if lx > 4 else 0), shade(GAUZE, 0.88))
+    for side in ('left', 'right'):
+        for lx in range(4):
+            s.set('jacket', side, lx, 5, GAUZE); s.set('jacket', side, lx, 6, shade(GAUZE, 0.88))
+    for lx in range(0, 8):
+        s.set('jacket', 'back', lx, 5, GAUZE); s.set('jacket', 'back', lx, 6, shade(GAUZE, 0.88))
+    s.set('jacket', 'front', 6, 6, SOOT); s.set('jacket', 'front', 7, 7, SOOT)
+    # right forearm: gauze wrap; left sleeve: a charred scrap at the shoulder
+    for side in SIDES:
+        fw = s.face('rsleeve', side)[2]
+        for lx in range(fw):
+            for ly in (5, 6, 7):
+                s.set('rsleeve', side, lx, ly, GAUZE if ly != 7 else shade(GAUZE, 0.85))
+    s.set('rsleeve', 'front', 1, 6, SOOT)
+    for side in SIDES:
+        fw = s.face('lsleeve', side)[2]
+        for lx in range(fw):
+            for ly in range(0, 3):
+                if hsh(lx, ly, 514) < 0.8:
+                    s.set('lsleeve', side, lx, ly, P_CHAR_BLACK if hsh(lx, ly, 515) < 0.6 else P_CHAR_BROWN)
+    # legs: charred scraps of trousers at the hips and left thigh, gauze round the left shin
+    for part in ('rpants', 'lpants'):
         for side in SIDES:
             fw = s.face(part, side)[2]
-            for ly in range(0, 7):
+            for ly in range(0, 5):
                 for lx in range(fw):
-                    if hsh(lx, ly, 420 + len(side)) > ly * 0.1:
-                        s.set(part, side, lx, ly, shade((26, 22, 22), 0.9 + 0.5 * hsh(lx, ly, 421)))
-    # second layer: charred tatters of the shirt, coat and trousers, still glowing in places
-    TAT = [(14, 12, 12), (24, 18, 16), (36, 26, 22)]
-    for part, rows, p in (('jacket', 12, 0.34), ('rsleeve', 8, 0.4), ('lsleeve', 7, 0.4), ('rpants', 7, 0.34), ('lpants', 7, 0.42)):
-        for side in SIDES:
-            fx, fy, fw, fh = s.face(part, side)
-            for ly in range(rows):
-                for lx in range(fw):
-                    n = hsh((fx + lx) // 2, (fy + ly) // 2, 430) * 0.6 + hsh(fx + lx, fy + ly, 431) * 0.4
-                    if n < p * (1.3 - ly / max(1, rows)) * (0.9 if part == 'jacket' else 1.0):
-                        c = TAT[int(hsh(fx + lx, fy + ly, 432) * 3) % 3]
-                        if hsh(fx + lx, fy + ly, 433) < 0.07:
-                            c = (176, 60, 34)
-                        s.set(part, side, lx, ly, c)
-    # light film of grave soil on the lower legs, hands and shoulders only
-    MUD = [(40, 30, 24), (54, 40, 30), (70, 52, 38)]
-    for part in ('rleg', 'lleg', 'rarm', 'larm', 'body'):
-        for side in ('right', 'front', 'left', 'back'):
-            fx, fy, fw, fh = s.face(part, side)
-            for ly in range(fh):
-                for lx in range(fw):
-                    low = ly >= 9 if part != 'body' else ly <= 1
-                    if s.px[fx + lx, fy + ly][3] and low and hsh((fx + lx) // 2, (fy + ly) // 2, 440) < 0.35:
-                        s.set(part, side, lx, ly, MUD[int(hsh(fx + lx, fy + ly, 441) * 3) % 3])
+                    if hsh((lx + (0 if part == 'rpants' else 7)) // 2, ly // 2, 516) < (0.85 - ly * 0.14) * (1.0 if part == 'lpants' else 0.7):
+                        s.set(part, side, lx, ly, P_CHAR_BLACK if hsh(lx, ly, 517) < 0.65 else P_CHAR_BROWN)
+    for side in SIDES:
+        fw = s.face('lpants', side)[2]
+        for lx in range(fw):
+            for ly in (8, 9, 10):
+                s.set('lpants', side, lx, ly, GAUZE if ly != 10 else shade(GAUZE, 0.85))
+    s.set('lpants', 'front', 1, 9, SOOT)
 
 
 def kol():
@@ -810,26 +835,33 @@ def sebastien_valet():
     tricorn, greyish-white coat with blue cuffs, buff waistcoat, black cravat, buff breeches, black gaiters."""
     s = Skin(False, 909)
     SK, HAIR = (214, 170, 136), (52, 36, 28)
-    head(s, SK, HAIR, (84, 58, 40), brow=(40, 28, 22), lips=(168, 92, 82), hair_rows=1, fringe=0.4, back_rows=6, side_rows=4, hair_amp=0.12)
-    stubble(s, SK, 0.5)
-    for ly in (6, 7):  # light stubble and a shaved chin line
-        for lx in (2, 5):
-            s.set('head', 'front', lx, ly, mixc(SK, (92, 66, 52), 0.35), skin=True)
-    # natural hair, queued at the nape with a black ribbon
-    for ly in range(5, 8):
-        s.set('hat', 'back', 3, ly, shade(HAIR, 1.1 if ly % 2 else 0.9)); s.set('hat', 'back', 4, ly, shade(HAIR, 0.9 if ly % 2 else 1.1))
-    s.rect('hat', 'back', 3, 4, 2, 1, (22, 20, 24))
-    # black tricorn: felt crown, silver-white lace edge, brass-and-white cockade
-    FELT, LACE, COCK = (28, 26, 30), (212, 210, 204), (226, 222, 214)
+    head(s, SK, HAIR, (84, 58, 40), brow=(40, 28, 22), lips=(168, 92, 82), hair_rows=1, fringe=0.4, back_rows=4, side_rows=4, hair_amp=0.12)
+    stubble(s, SK, 0.22)  # light stubble only
+    # natural hair pulled back and tied into a queue (ponytail): black ribbon at the nape, tail hangs on the coat back
+    RIB = (20, 18, 22)
+    for lx in (3, 4):
+        for ly in range(4, 8):
+            s.set('hat', 'back', lx, ly, shade(HAIR, 0.85 + 0.3 * ((lx + ly) % 2)))
+    s.rect('hat', 'back', 3, 4, 2, 1, RIB); s.set('hat', 'back', 2, 4, shade(RIB, 1.8)); s.set('hat', 'back', 5, 4, shade(RIB, 1.8))  # ribbon and bow
+    # tricorn: black felt, silver-white lace edge, three upturned points (front and both back corners)
+    FELT, LACE, COCK = (26, 24, 28), (226, 224, 218), (240, 238, 232)
+    edge = {'front': [3, 2, 2, 1, 1, 2, 2, 3], 'back': [3, 3, 2, 1, 1, 2, 3, 3],
+            'right': [1, 2, 3, 3, 3, 3, 2, 1], 'left': [1, 2, 3, 3, 3, 3, 2, 1]}
+    for side, prof in edge.items():
+        for lx in range(8):
+            e = prof[lx]
+            for ly in range(0, e + 1):
+                if ly == e and e > 0:
+                    s.set('hat', side, lx, ly, LACE)
+                elif ly < e:
+                    s.set('hat', side, lx, ly, shade(FELT, 1.0 + 0.12 * hsh(lx, ly, 3)))
     for lx in range(8):
         for ly in range(8):
-            s.set('hat', 'top', lx, ly, shade(FELT, 1.0 + 0.15 * hsh(lx, ly, 3)))
-        s.set('hat', 'front', lx, 0, FELT); s.set('hat', 'front', lx, 1, FELT)
-    for side in ('right', 'left', 'back'):
-        for lx in range(8):
-            s.set('hat', side, lx, 0, FELT); s.set('hat', side, lx, 1, FELT); s.set('hat', side, lx, 2, LACE if lx % 2 == 0 else FELT)
-    s.rect('hat', 'right', 5, 0, 2, 2, COCK); s.set('hat', 'right', 6, 1, (190, 154, 64))
-    s.rect('hat', 'left', 1, 0, 2, 2, COCK); s.set('hat', 'left', 1, 1, (190, 154, 64))
+            border = lx in (0, 7) or ly in (0, 7)
+            s.set('hat', 'top', lx, ly, LACE if border else shade(FELT, 1.0 + 0.12 * hsh(lx, ly, 4)))
+    for lx in range(1, 7):  # crown fold lines on top
+        s.set('hat', 'top', lx, 3, shade(FELT, 1.5)); s.set('hat', 'top', lx, 4, shade(FELT, 1.5))
+    s.rect('hat', 'right', 5, 0, 2, 2, COCK); s.set('hat', 'right', 6, 1, (190, 154, 64))  # cockade
     COAT, CUFF, BUTTON, WAIST, BREECH = (190, 182, 162), (52, 76, 124), (192, 156, 66), (204, 184, 138), (196, 180, 150)
     CRAV, GAIT = (30, 28, 34), (30, 28, 30)
     body_cloth(s, WAIST, amp=0.05, seed=91, weave=1)
@@ -865,6 +897,11 @@ def sebastien_valet():
     for side in ('right', 'left', 'back'):
         s.hband('jacket', 11, shade(COAT, 0.85), sides=(side,))
     s.rect('jacket', 'back', 3, 6, 2, 6, CUFF)  # blue-lined back vent
+    for ly in range(0, 6):  # the queue hanging over the collar
+        for lx in (3, 4):
+            s.set('jacket', 'back', lx, ly, shade(HAIR, 0.85 + 0.3 * ((lx + ly) % 2)))
+    s.rect('jacket', 'back', 2, 5, 4, 1, RIB)
+    s.set('jacket', 'back', 2, 6, RIB); s.set('jacket', 'back', 5, 6, RIB)
     # white buff-leather cross-belt and a black cartridge box on the left hip
     BELT = (226, 218, 198)
     for i in range(9):
