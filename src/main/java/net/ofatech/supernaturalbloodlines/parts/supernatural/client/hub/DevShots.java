@@ -112,7 +112,7 @@ public final class DevShots {
             HubClientConfig.ThemeId.valueOf(theme.toUpperCase(Locale.ROOT)); // a look that does not exist is a bad flag now, not a crash in the middle of the run
             List<HubPage> pages = new ArrayList<>();
             String variant = null;
-            if (parts.length > 1 && (parts[1].toLowerCase(Locale.ROOT).startsWith("profile") || parts[1].equalsIgnoreCase("true_alpha_dialog") || parts[1].toLowerCase(Locale.ROOT).startsWith("admin_"))) {
+            if (parts.length > 1 && (parts[1].toLowerCase(Locale.ROOT).startsWith("profile") || parts[1].equalsIgnoreCase("true_alpha_dialog") || parts[1].equalsIgnoreCase("pack_invite") || parts[1].toLowerCase(Locale.ROOT).startsWith("admin_"))) {
                 // a route or a section of a page: profile, profile_beta, profile_stranger, profile_op, admin_debug, admin_speciesTensura, admin_search_max ...
                 variant = parts[1].toLowerCase(Locale.ROOT).equals(parts[1]) ? parts[1] : parts[1];
                 pages.add(variant.startsWith("admin_") ? HubPage.ADMIN : HubPage.PACK);

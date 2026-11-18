@@ -79,7 +79,7 @@ class HubLangCoverageTest {
             }
         }
         List<String> actionIds = List.of("leave", "anchor_clear", "challenge", "accept_duel", "decline_duel", "invite", "emissary", "emissary_clear", "heal", "kick",
-                "ally_remove", "anchor", "call", "severance", "open_admin");
+                "ally_remove", "anchor", "severance", "open_admin");
         for (String id : actionIds) {
             keys.add(H + "profile.action." + id);
         }

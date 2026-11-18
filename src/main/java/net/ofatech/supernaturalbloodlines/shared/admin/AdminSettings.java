@@ -41,6 +41,11 @@ public final class AdminSettings {
         CLIENT_COPY_SAVED.add(listener);
     }
 
+    /** Takes a listener back out (a test must not leave its own behind). */
+    public static void removeClientCopySaved(java.util.function.Consumer<net.minecraft.server.MinecraftServer> listener) {
+        CLIENT_COPY_SAVED.remove(listener);
+    }
+
     /** The real handler calls it after a successful save of a key whose {@link SettingEntry#clientCopy()} is set. */
     public static void clientCopySaved(net.minecraft.server.MinecraftServer server) {
         CLIENT_COPY_SAVED.forEach(l -> l.accept(server));

@@ -357,10 +357,9 @@ public final class PackIndex extends SavedData {
         }
     }
 
-    /** When {@code id} last left (wall clock milliseconds), if the index ever saw it. */
     /**
      * Since when {@code id} has been in their pack: a member's own join, a leader's the first join of any member they lead (the pack's age).
-     * Empty for someone in no pack, or a pack from before joins were recorded.
+     * Empty for someone in no pack, or a leader none of whose members has a recorded join (a pack from before joins were recorded is stamped when the index loads).
      */
     public Optional<Long> inPackSince(UUID id) {
         if (!inPack(id) && !isLeader(id)) {
@@ -373,6 +372,7 @@ public final class PackIndex extends SavedData {
         return alphaOf.entrySet().stream().filter(e -> e.getValue().equals(id)).map(e -> joinedAt.get(e.getKey())).filter(java.util.Objects::nonNull).min(Long::compare);
     }
 
+    /** When {@code id} last left (wall clock milliseconds), if the index ever saw it. */
     public Optional<Long> lastSeen(UUID id) {
         return Optional.ofNullable(lastSeen.get(id));
     }
@@ -483,11 +483,16 @@ public final class PackIndex extends SavedData {
             return false;
         }
         long at = now();
+        boolean wasLeader = !betasOf(beta).isEmpty();
         for (UUID own : betasOf(beta)) {
             alphaOf.put(own, alpha);
         }
         alphaOf.put(beta, alpha);
         joinedAt.put(beta, at);
+        if (wasLeader) {
+            // a leader who joins another pack brings their members and, with them, what their pack has discovered
+            LEADERSHIP_MOVED.forEach(l -> l.accept(beta, alpha));
+        }
         emissaryOf.remove(beta); // a leader who joins another pack no longer has an Emissary of their own
         allies.remove(beta);
         allies.values().forEach(s -> s.remove(beta));
@@ -497,10 +502,11 @@ public final class PackIndex extends SavedData {
 
     /** {@code next} (a member) leads, {@code old} stays in the pack as a member; allies and the emissary go with the leadership. */
     public void promote(UUID old, UUID next) {
+        long age = inPackSince(old).orElse(now()); // the old leader has been in this pack since it began, not since now
         alphaOf.remove(next);
         alphaOf.replaceAll((member, a) -> a.equals(old) ? next : a);
         alphaOf.put(old, next);
-        joinedAt.put(old, now());
+        joinedAt.put(old, age);
         joinedAt.remove(next);
         moveLeadership(old, next);
         setDirty();
@@ -760,6 +766,15 @@ public final class PackIndex extends SavedData {
             } catch (RuntimeException bad) {
                 skipped(JOINED_AT, bad);
             }
+        }
+        // members of a pack from before joins were recorded start counting now (days since this version), and the stamp is saved so it does not move
+        long stamped = now();
+        boolean backfilled = false;
+        for (UUID member : i.alphaOf.keySet()) {
+            backfilled |= i.joinedAt.putIfAbsent(member, stamped) == null;
+        }
+        if (backfilled) {
+            i.setDirty();
         }
         i.aliveAt = tag.contains(ALIVE_AT, Tag.TAG_LONG) ? Math.max(0, tag.getLong(ALIVE_AT)) : 0;
         for (Tag t : tag.getList(STRENGTHS, Tag.TAG_COMPOUND)) {

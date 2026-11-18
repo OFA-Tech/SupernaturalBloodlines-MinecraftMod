@@ -12,6 +12,13 @@ class RankBonusTextTest {
     }
 
     @Test
+    void aSuppressorTakesTheAlphaPerksButNotTheOmegasPenalty() {
+        assertEquals(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.NONE, RankEffects.effectiveRank(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.ALPHA, true));
+        assertEquals(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.ALPHA, RankEffects.effectiveRank(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.ALPHA, false));
+        assertEquals(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.OMEGA, RankEffects.effectiveRank(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.OMEGA, true));
+    }
+
+    @Test
     void theScaleStacksTheTrueAlphaAndTheSparks() {
         assertEquals(1.0, RankEffects.alphaScale(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.ALPHA, -1, 5), 1e-9);
         assertEquals(1.1, RankEffects.alphaScale(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.TRUE_ALPHA, -1, 5), 1e-9);

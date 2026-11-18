@@ -51,6 +51,11 @@ function Get-TreeIds($rows, [int]$rootId) {
     @($ids)
 }
 
+# The java processes to stop on a trip: those that are both a watched java process and inside the guarded run's tree. A java window that is not ours is reported, never returned. Pure.
+function Get-StopSet($newPids, [int]$fgPid, $javaPids, $tree) {
+    @($newPids + $fgPid | Where-Object { $javaPids -contains $_ -and $tree -contains $_ } | Select-Object -Unique)
+}
+
 if ($SelfTest) {
     $rows = @(
         [pscustomobject]@{ ProcessId = 2; ParentProcessId = 1 }, [pscustomobject]@{ ProcessId = 3; ParentProcessId = 2 },
@@ -75,6 +80,11 @@ if ($SelfTest) {
     if (-not (Get-Trip $b $n $true @(99))) { $fail += 'new visible java window must trip' }
     $b2 = CloneSnap $b; $b2.Visible[77] = 99
     if (Get-Trip $b2 (CloneSnap $b2) $false @(99)) { $fail += 'a java window visible from the start is the baseline' }
+    # the player's own java (pid 50, in front and visible) is not in the guarded run's tree: it must never be stopped
+    $stop = Get-StopSet @(50, 3) 50 @(3, 50) @(1, 2, 3)
+    if ($stop -contains 50) { $fail += 'a java pid outside the guarded tree was in the stop set' }
+    if (($stop -join ',') -ne '3') { $fail += "the stop set was $($stop -join ',') not 3" }
+    if (@(Get-StopSet @() 99 @(99) @()).Count -ne 0) { $fail += 'an empty tree must stop nothing' }
     $fail += $failTree
     if ($fail) { $fail | ForEach-Object { Write-Host "SELFTEST FAIL: $_" }; exit 1 }
     Write-Host 'SELFTEST ok'
@@ -135,7 +145,7 @@ while ((Get-Date) -lt $deadline -and -not ($child -and $child.HasExited)) {
         $new = @($now.Visible.Keys | Where-Object { -not $base.Visible.ContainsKey($_) } | ForEach-Object { $now.Visible[$_] })
         # only what the guarded run started is stopped: a java window that is not ours (the player's own game, an IDE) is reported, never killed
         $tree = if ($child) { Get-TreeIds (Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId) $child.Id } else { @() }
-        foreach ($p in ($new + $now.FgPid | Where-Object { (Get-JavaPids) -contains $_ -and $tree -contains $_ } | Select-Object -Unique)) { Stop-Process -Id $p -Force -ErrorAction SilentlyContinue }
+        foreach ($p in (Get-StopSet $new $now.FgPid (Get-JavaPids) $tree)) { Stop-Process -Id $p -Force -ErrorAction SilentlyContinue }
         if ($child -and -not $child.HasExited) { & taskkill /PID $child.Id /T /F | Out-Null }
         exit 2
     }

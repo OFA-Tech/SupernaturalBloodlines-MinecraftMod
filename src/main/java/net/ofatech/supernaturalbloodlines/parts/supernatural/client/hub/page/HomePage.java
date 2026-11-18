@@ -18,6 +18,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Flow;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 
@@ -164,6 +165,13 @@ public final class HomePage implements HubPageView {
     /** The longest a request has been seen with, so its bar drains from full: the server sends only what is left. */
     private static final java.util.Map<String, Integer> PEAK = new java.util.HashMap<>();
 
+    /** Drops the peaks of requests that are no longer listed (and all of them when {@code open} is empty), so the map does not grow over a long session. */
+    public static void prunePeaks(List<HubRequests.Request> open) {
+        java.util.Set<String> keep = new java.util.HashSet<>();
+        open.forEach(q -> keep.add(q.token() + q.from()));
+        PEAK.keySet().retainAll(keep);
+    }
+
     private int card(HubScreen.Frame f, Rect r, int y, HubRequests.Request q) {
         HubTheme t = f.theme();
         String id = "stage:request:" + q.kind() + ":" + q.token() + q.from();
@@ -216,7 +224,7 @@ public final class HomePage implements HubPageView {
             if (i < answers.size()) {
                 Answer a = answers.get(i);
                 Component tip = q.kind() == HubRequests.Kind.COMPULSION ? Component.translatable(KEY + "answer." + a.label() + ".tip") : null;
-                PageWidgets.hinted(f, id + ":" + a.label(), b, labels.get(i), true, a.primary(), tip,
+                PageWidgets.described(f, id + ":" + a.label(), b, labels.get(i), true, a.primary(), tip,
                         () -> HubClient.runCommand(a.rowId(), a.usesToken() ? List.of(q.token()) : List.of()));
             } else {
                 PageWidgets.button(f, id + ":dismiss", b, labels.get(i), true, false, null, () -> RequestsClient.dismiss(q));
@@ -284,7 +292,7 @@ public final class HomePage implements HubPageView {
         Rect row = new Rect(s.x(), y, s.w(), 18);
         BookKit.face(f.g, name, s.x(), y + 1, 16);
         String tid = "stage:person:" + name;
-        f.g.drawString(f.font(), f.font().plainSubstrByWidth(name, s.w() - 24 - f.font().width(role)), s.x() + 20, y + 5, id != null && (f.hovered(row) || f.focused(tid)) ? t.accent() : t.ink(), false);
+        f.g.drawString(f.font(), LabelFit.cut(name, s.w() - 24 - f.font().width(role), f.font()::width), s.x() + 20, y + 5, id != null && (f.hovered(row) || f.focused(tid)) ? t.accent() : t.ink(), false);
         f.g.drawString(f.font(), role, row.right() - f.font().width(role), y + 5, t.muted(), false);
         f.target(tid, row, List.of(Component.literal(name), role), id == null ? null : () -> f.screen().openProfile(id, name));
         if (f.focused(tid)) {

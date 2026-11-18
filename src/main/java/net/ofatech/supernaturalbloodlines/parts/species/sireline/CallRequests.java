@@ -46,6 +46,19 @@ public final class CallRequests {
                 .map(e -> Map.entry(e.getKey(), e.getValue())).toList();
     }
 
+    /** The open request under {@code token} for {@code sired}, left in place; an expired one is dropped and not returned. */
+    public Optional<Request> peek(String token, UUID sired, long now) {
+        Request r = open.get(token);
+        if (r == null || !r.sired().equals(sired)) {
+            return Optional.empty();
+        }
+        if (r.expires() < now) {
+            open.remove(token);
+            return Optional.empty();
+        }
+        return Optional.of(r);
+    }
+
     public Optional<Request> take(String token, UUID sired, long now) {
         Request r = open.get(token);
         if (r == null || !r.sired().equals(sired)) {
@@ -58,6 +71,11 @@ public final class CallRequests {
     /** A player logged out: their requests, as caller or as sired, are void. */
     public void forget(UUID player) {
         open.values().removeIf(r -> r.caller().equals(player) || r.sired().equals(player));
+    }
+
+    /** A player logged out: only the requests that were SENT TO them are void. What they asked of others stays open until it runs out (the other may still answer while they are away). */
+    public void forgetFor(UUID sired) {
+        open.values().removeIf(r -> r.sired().equals(sired));
     }
 
     int size() {

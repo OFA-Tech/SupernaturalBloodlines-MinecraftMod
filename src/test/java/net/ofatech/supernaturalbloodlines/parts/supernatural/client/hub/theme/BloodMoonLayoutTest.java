@@ -28,6 +28,15 @@ class BloodMoonLayoutTest {
     }
 
     @Test
+    void theMoonAndItsGlowAreCappedOnAHugeWindowButNotOnASmallOne() {
+        assertEquals(BloodMoonLayout.MAX_MOON_RADIUS, BloodMoonLayout.glowRadius(new Rect(0, 0, 8000, 6000)));
+        assertEquals(BloodMoonLayout.MAX_MOON_RADIUS, BloodMoonLayout.moonRadius(new Rect(0, 0, 8000, 6000)));
+        assertEquals(67, BloodMoonLayout.glowRadius(new Rect(0, 0, 200, 90)), "a small stage keeps its own size");
+        assertEquals(12, BloodMoonLayout.moonRadius(new Rect(0, 0, 10, 10)), "the floor of 12 stays");
+        assertEquals(92, BloodMoonLayout.moonRadius(new Rect(0, 0, 200, 200)));
+    }
+
+    @Test
     void everythingFitsTheScreen() {
         for (int[] s : SCREENS) {
             String at = s[0] + "x" + s[1];

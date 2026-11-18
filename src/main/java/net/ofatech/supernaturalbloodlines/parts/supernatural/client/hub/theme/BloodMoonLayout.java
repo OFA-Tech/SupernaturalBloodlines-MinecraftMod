@@ -28,6 +28,19 @@ public final class BloodMoonLayout {
     /** Below this many GUI pixels a rail button's label flag would sit on the content, so it is left out. */
     static final int FLAG_MIN_WIDTH = 560;
 
+    /** The most the moon or its glow may measure from the middle: a 4K window at GUI scale 1 would otherwise bake a picture of thousands of pixels square. */
+    public static final int MAX_MOON_RADIUS = 400;
+
+    /** The glow behind the stage: as wide as the stage allows, never more than {@link #MAX_MOON_RADIUS}. */
+    public static int glowRadius(Rect stage) {
+        return Math.min(MAX_MOON_RADIUS, Math.min(stage.w() / 2, stage.h() * 3 / 4));
+    }
+
+    /** The moon disc in {@code area}: what fits less a margin, at least 12, never more than {@link #MAX_MOON_RADIUS}. */
+    public static int moonRadius(Rect area) {
+        return Math.min(MAX_MOON_RADIUS, Math.max(12, Math.min(area.w(), area.h()) / 2 - 8));
+    }
+
     private BloodMoonLayout() {
     }
 

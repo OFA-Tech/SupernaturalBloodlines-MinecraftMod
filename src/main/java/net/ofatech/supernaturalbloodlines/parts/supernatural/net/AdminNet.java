@@ -77,6 +77,10 @@ public final class AdminNet {
         LIMITER.forget(player);
     }
 
+    static boolean tellOnce(ServerPlayer p) {
+        return LIMITER.tellOnce(p.getUUID(), p.serverLevel().getGameTime());
+    }
+
     static boolean allowedRate(ServerPlayer p) {
         return LIMITER.tryAcquire(p.getUUID(), p.serverLevel().getGameTime(), PER_SECOND);
     }

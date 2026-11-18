@@ -9,6 +9,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 
 /**
@@ -41,7 +42,7 @@ public final class StageGuidePage implements HubPageView {
             }
             f.g.drawString(f.font(), String.format("%02d", i + 1), r.x() + 6, y + 4, t.muted(), false);
             Component name = Component.translatable(GuideChapters.titleKey(id));
-            f.g.drawString(f.font(), f.font().plainSubstrByWidth(name.getString(), r.w() - 34), r.x() + 26, y + 4, on ? t.ink() : t.muted(), false);
+            f.g.drawString(f.font(), LabelFit.cut(name.getString(), r.w() - 34, f.font()::width), r.x() + 26, y + 4, on ? t.ink() : t.muted(), false);
             String target = "chapter:" + id;
             f.target(target, hit, List.of(name), () -> chapter = id);
             if (f.focused(target)) {

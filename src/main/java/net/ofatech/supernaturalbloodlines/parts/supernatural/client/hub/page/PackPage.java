@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 
 /**
@@ -42,7 +43,7 @@ public final class PackPage implements HubPageView {
             Component rank = Component.translatable(KEY + "member." + m.base()).copy().append(m.sparks() > 1 ? " \u00d7" + m.sparks() : "");
             int rw = f.font().width(rank);
             f.g.fill(r.x() + 1, y + 2, r.x() + 5, y + 6, m.online() ? 0xFF2f6e4a : 0xFF9a8566);
-            String name = f.font().plainSubstrByWidth(m.name(), r.w() - 10 - rw - 4);
+            String name = LabelFit.cut(m.name(), r.w() - 10 - rw - 4, f.font()::width);
             f.g.drawString(f.font(), name, r.x() + 9, y, t.ink(), false);
             f.g.drawString(f.font(), rank, r.right() - rw, y, t.muted(), false);
             Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, PageKit.LINE + 1);
@@ -75,7 +76,7 @@ public final class PackPage implements HubPageView {
         }
         boolean alpha = wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA;
         boolean leads = !pack.isEmpty() && pack.get(0).name().equals(f.view.player().getName().getString());
-        sy = PackInvite.render(f, s, sy + 6, leads || (pack.isEmpty() && alpha), PackInvite.idsOf(f));
+        sy = PackInvite.render(f, s, sy + 6, leads || (pack.isEmpty() && alpha));
         f.end(sy);
     }
 

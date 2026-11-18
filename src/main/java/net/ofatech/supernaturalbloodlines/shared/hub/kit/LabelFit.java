@@ -57,11 +57,18 @@ public final class LabelFit {
             return text;
         }
         int room = width - measure.applyAsInt(ELLIPSIS);
-        int end = text.length();
-        while (end > 0 && measure.applyAsInt(text.substring(0, end)) > room) {
-            end--;
+        // the longest prefix that fits, by bisection: a prefix is never narrower than a shorter one, so a long text takes log n measures, not n
+        int lo = 0;
+        int hi = text.length();
+        while (lo < hi) {
+            int mid = (lo + hi + 1) >>> 1;
+            if (measure.applyAsInt(text.substring(0, mid)) <= room) {
+                lo = mid;
+            } else {
+                hi = mid - 1;
+            }
         }
-        return end == 0 ? "" : text.substring(0, end).stripTrailing() + ELLIPSIS;
+        return lo == 0 ? "" : text.substring(0, lo).stripTrailing() + ELLIPSIS;
     }
 
     /** The width a ladder label may use: the gap between two rungs, less a margin, never more than {@code max}. */

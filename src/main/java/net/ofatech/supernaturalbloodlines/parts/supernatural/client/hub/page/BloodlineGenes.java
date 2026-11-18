@@ -9,6 +9,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScree
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotPayload;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 
 /** The genes in stoppered vials, as the server lets this client know them (Unknown until discovered). Shared by the three Bloodline pages. */
 public final class BloodlineGenes {
@@ -30,9 +31,9 @@ public final class BloodlineGenes {
             Component name = Component.translatable(LinePageSupport.KEY + "gene." + gene);
             Component value = Component.translatable(LinePageSupport.KEY + "gene_value." + k.name().toLowerCase(Locale.ROOT));
             int mid = vx + 13;
-            String shown = f.font().plainSubstrByWidth(name.getString().replace(" gene", ""), step);
+            String shown = LabelFit.cut(name.getString().replace(" gene", ""), step, f.font()::width);
             f.g.drawString(f.font(), shown, mid - f.font().width(shown) / 2, y + 52, t.ink(), false);
-            String v = f.font().plainSubstrByWidth(value.getString(), step);
+            String v = LabelFit.cut(value.getString(), step, f.font()::width);
             f.g.drawString(f.font(), v, mid - f.font().width(v) / 2, y + 61, k == Genes.Knowledge.TRUE ? t.good() : t.muted(), false);
             f.target("gene:" + gene, new Rect(vx - 4, y, 34, HEIGHT), List.of(name.copy().append(": ").append(value),
                     Component.translatable(LinePageSupport.KEY + "gene_hint").withStyle(ChatFormatting.GRAY)), null);
@@ -57,8 +58,8 @@ public final class BloodlineGenes {
             Component name = Component.translatable(LinePageSupport.KEY + "gene." + gene);
             Component value = Component.translatable(LinePageSupport.KEY + "gene_value." + k.name().toLowerCase(Locale.ROOT));
             int tx = vx + 15;
-            f.g.drawString(f.font(), f.font().plainSubstrByWidth(name.getString().replace(" gene", ""), step - 18), tx, y + 4, t.ink(), false);
-            f.g.drawString(f.font(), f.font().plainSubstrByWidth(value.getString(), step - 18), tx, y + 14, k == Genes.Knowledge.TRUE ? t.good() : t.muted(), false);
+            f.g.drawString(f.font(), LabelFit.cut(name.getString().replace(" gene", ""), step - 18, f.font()::width), tx, y + 4, t.ink(), false);
+            f.g.drawString(f.font(), LabelFit.cut(value.getString(), step - 18, f.font()::width), tx, y + 14, k == Genes.Knowledge.TRUE ? t.good() : t.muted(), false);
             f.target("gene:" + gene, new Rect(vx - 2, y, step, 27), List.of(name.copy().append(": ").append(value),
                     Component.translatable(LinePageSupport.KEY + "gene_hint").withStyle(ChatFormatting.GRAY)), null);
         }

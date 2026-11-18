@@ -10,6 +10,34 @@ import org.junit.jupiter.api.Test;
 
 class PickableTest {
     @Test
+    void whatTheCapLeavesOutIsCountedAndWhoLeftIsDropped() {
+        List<Person> online = new java.util.ArrayList<>();
+        for (int i = 0; i < 45; i++) {
+            online.add(new Person(new UUID(9, i), "P" + i, i));
+        }
+        UUID me = new UUID(9, 0);
+        assertEquals(14, Pickable.beyondCap(online, me, Set.of()), "44 eligible, 30 shown");
+        assertEquals(0, Pickable.beyondCap(online.subList(0, 20), me, Set.of()));
+        List<Person> offered = Pickable.of(online, me, Set.of());
+        Set<UUID> left = new java.util.HashSet<>(offered.stream().map(Person::id).toList());
+        left.remove(offered.get(0).id());
+        assertEquals(29, Pickable.stillHere(offered, left).size());
+        assertEquals(false, Pickable.stillHere(offered, left).contains(offered.get(0)));
+    }
+
+    @Test
+    void aBigServerIsCappedToTheNearestThirty() {
+        List<Person> online = new java.util.ArrayList<>();
+        for (int i = 0; i < 200; i++) {
+            online.add(new Person(new UUID(9, i), "P" + i, 200 - i));
+        }
+        List<Person> picked = Pickable.of(online, new UUID(0, 0), Set.of());
+        assertEquals(Pickable.MAX, picked.size());
+        assertEquals("P199", picked.get(0).name(), "the nearest first");
+        assertEquals("P170", picked.get(29).name());
+    }
+
+    @Test
     void youAndTheExcludedAreLeftOutAndTheNearestComeFirst() {
         UUID me = UUID.randomUUID();
         UUID in = UUID.randomUUID();

@@ -101,9 +101,12 @@ public final class BookKit {
         f.g.drawString(font, v, x + w - font.width(v), y, valueColor, false);
         int from = x + font.width(l) + 3;
         int to = x + w - font.width(v) - 3;
-        for (int dx = from; dx < to; dx += 3) {
-            f.g.fill(dx, y + 7, dx + 1, y + 8, t.muted() & 0x80FFFFFF | 0x80000000);
-        }
+        int dotColor = t.muted() & 0x80FFFFFF | 0x80000000;
+        KitDraw.batch(f.g, () -> {
+            for (int dx = from; dx < to; dx += 3) {
+                f.g.fill(dx, y + 7, dx + 1, y + 8, dotColor);
+            }
+        });
         return y + 11;
     }
 

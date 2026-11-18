@@ -18,8 +18,9 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileSer
  * Server to client: the facts of one person that this player may know, and no others. A fact that is not in the map is unknown and the client
  * draws "?"; an empty value list is an explicit "none". The map never says what was left out, and never carries the relation.
  * Kept apart from the hub snapshot, which stays names, ranks and online flags.
+ *
+ * @param npc the subject is not a player (a creature or an ancestor of the viewer's line), so the page offers no player actions
  */
-/** {@code npc}: the subject is not a player (a creature or an ancestor of the viewer's line), so the page offers no player actions. */
 public record ProfilePayload(UUID subject, boolean opView, boolean npc, Map<Fact, List<String>> facts) implements CustomPacketPayload {
     public static final Type<ProfilePayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "profile"));
 

@@ -23,6 +23,30 @@ class LabelFitTest {
     private static final List<String> RUNGS = List.of("Awakened", "Unbound", "Thirst Mastered", "Venom", "Packbound", "Moonblood", "Alpha of Alphas", "True Alpha");
 
     @Test
+    void cutFindsTheSameLongestPrefixAsAStepByStepScanButInLogarithmicMeasures() {
+        String text = "Endure thirst of 15 or more (days) and then some more words after";
+        for (int width = 0; width <= text.length() * 6 + 6; width++) {
+            int w = width;
+            String expected = text;
+            if (NORMAL.applyAsInt(text) > w) {
+                int room = w - NORMAL.applyAsInt("\u2026");
+                int end = text.length();
+                while (end > 0 && NORMAL.applyAsInt(text.substring(0, end)) > room) {
+                    end--;
+                }
+                expected = end == 0 ? "" : text.substring(0, end).stripTrailing() + "\u2026";
+            }
+            assertEquals(expected, LabelFit.cut(text, w, NORMAL), "width " + w);
+        }
+        int[] calls = {0};
+        LabelFit.cut(text.repeat(40), 100, s -> {
+            calls[0]++;
+            return s.length() * 6;
+        });
+        assertTrue(calls[0] <= 20, "cut measured " + calls[0] + " times for a text of " + text.length() * 40 + " characters");
+    }
+
+    @Test
     void aLabelWrapsAtSpacesAndEndsWithAnEllipsisOnlyWhenItMust() {
         assertEquals(List.of("Rite of the", "Silver Moon"), LabelFit.wrap("Rite of the Silver Moon", 70, 2, NORMAL));
         assertEquals(List.of("Rite of"), LabelFit.wrap("Rite of", 70, 2, NORMAL));

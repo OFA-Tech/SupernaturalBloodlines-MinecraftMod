@@ -11,6 +11,17 @@ class RateLimiterTest {
     private static final UUID B = UUID.randomUUID();
 
     @Test
+    void aFloodIsToldOncePerSecondNotOncePerPayload() {
+        RateLimiter r = new RateLimiter();
+        assertTrue(r.tellOnce(A, 100));
+        for (long t = 101; t < 120; t++) {
+            assertFalse(r.tellOnce(A, t), "told again at " + t);
+        }
+        assertTrue(r.tellOnce(A, 120), "the next second is told again");
+        assertTrue(r.tellOnce(B, 101), "another player has their own");
+    }
+
+    @Test
     void allowsTheLimitPerSecondAndRefusesTheRest() {
         RateLimiter r = new RateLimiter();
         for (int i = 0; i < 10; i++) {

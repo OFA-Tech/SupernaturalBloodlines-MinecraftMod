@@ -167,6 +167,7 @@ public final class HubScreen extends Screen {
             return;
         }
         HubView view = HubView.of(minecraft.player);
+        lastView = view; // the key and click handlers between two frames read this one, not a rebuild
         visible = HubPage.visiblePages(view.context());
         if (page != HubPage.LOADOUT || !view.context().loadout()) {
             HubPage shown = HubPage.orFirst(page, view.context());
@@ -283,9 +284,16 @@ public final class HubScreen extends Screen {
         return p.locked(view.context()) ? HubPages.locked() : views != null ? views.view(p) : HubPages.shared(p);
     }
 
+    /** The view the last frame was drawn from: building one reads a dozen things off the player, and an input event needs only the page it belongs to. */
+    @Nullable
+    private HubView lastView;
+
     @Nullable
     private HubPageView currentView() {
-        return minecraft == null || minecraft.player == null ? null : viewOf(page, HubView.of(minecraft.player));
+        if (minecraft == null || minecraft.player == null) {
+            return null;
+        }
+        return viewOf(page, lastView != null ? lastView : HubView.of(minecraft.player));
     }
 
     private ConfirmLayout dialogLayout() {
@@ -363,6 +371,7 @@ public final class HubScreen extends Screen {
             }
             case "profile_op" -> openProfile(DevDemo.id("Derek|op"), "Derek", true);
             case "true_alpha_dialog" -> warnTrueAlpha(() -> { });
+            case "pack_invite" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackInvite.devOpen();
             case "profile_dialog" -> {
                 openProfile(DevDemo.id("Derek"), "Derek");
                 confirm(Component.translatable("supernaturalbloodlines.hub.profile.action.heal"), Component.translatable("supernaturalbloodlines.hub.profile.confirm.heal", "Derek"),
@@ -734,6 +743,8 @@ public final class HubScreen extends Screen {
     @Override
     public void removed() {
         super.removed();
+        lastView = null;
+        net.ofatech.supernaturalbloodlines.shared.hub.AdminHandoff.take(); // an offer nobody took must not preselect a person in a later session
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackInvite.reset();
         HubClient.sendOpen(false);
     }

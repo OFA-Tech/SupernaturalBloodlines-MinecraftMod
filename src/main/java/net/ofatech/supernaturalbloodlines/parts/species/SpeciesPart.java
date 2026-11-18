@@ -205,6 +205,7 @@ public final class SpeciesPart {
             DefenderKills.register();
             EyeSync.register();
             NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> PackCommand.register(e.getDispatcher()));
+            NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> PackCommand.forget(e.getEntity().getUUID()));
             FormControl.register();
             BloodThirst.register();
             Venom.register();

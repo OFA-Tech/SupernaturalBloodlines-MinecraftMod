@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.VampirismSkillAccess;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
@@ -99,7 +100,7 @@ public final class SkillsPage implements HubPageView {
             if (room < 12) {
                 break;
             }
-            Component label = Component.literal(f.font().plainSubstrByWidth(full.getString(), room));
+            Component label = Component.literal(LabelFit.cut(full.getString(), room, f.font()::width));
             int w = f.font().width(label);
             Rect hit = new Rect(x - 1, y - 1, w + 2, 11);
             int color = t == tab ? f.theme().accent() : f.theme().muted();
@@ -186,7 +187,7 @@ public final class SkillsPage implements HubPageView {
         }
         t.drawRungMark(f.g, r.x(), y, mark);
         int nw = f.font().width(note);
-        String text = f.font().plainSubstrByWidth(name.getString(), r.w() - HubTheme.MARK - 4 - nw - 4);
+        String text = LabelFit.cut(name.getString(), r.w() - HubTheme.MARK - 4 - nw - 4, f.font()::width);
         f.g.drawString(f.font(), text, r.x() + HubTheme.MARK + 4, y + 1, mark == RungStatus.LOCKED ? t.muted() : t.ink(), false);
         f.g.drawString(f.font(), note, r.right() - nw, y + 1, t.muted(), false);
         f.target(id, hit, tooltip, select);

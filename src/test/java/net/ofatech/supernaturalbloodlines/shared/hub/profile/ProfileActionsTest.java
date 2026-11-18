@@ -16,10 +16,10 @@ import org.junit.jupiter.api.Test;
 
 class ProfileActionsTest {
     private static final UUID ID = UUID.randomUUID();
-    private static final Viewer AS_LEADER = new Viewer(true, true, false, true, false, true, false);
-    private static final Viewer AS_COALPHA = new Viewer(true, false, true, true, false, true, false);
-    private static final Viewer AS_BETA = new Viewer(true, false, false, false, false, true, false);
-    private static final Viewer AS_LONER = new Viewer(false, false, false, false, false, false, false);
+    private static final Viewer AS_LEADER = new Viewer(true, true, false, true, false, true);
+    private static final Viewer AS_COALPHA = new Viewer(true, false, true, true, false, true);
+    private static final Viewer AS_BETA = new Viewer(true, false, false, false, false, true);
+    private static final Viewer AS_LONER = new Viewer(false, false, false, false, false, false);
 
     private static Subject other(Role role) {
         return new Subject(ID, "Hayley", false, role, false, false);
@@ -68,7 +68,7 @@ class ProfileActionsTest {
     @Test
     void healIsAnyAlphasAndNotATrueAlphas() {
         assertTrue(ProfileActions.of(AS_COALPHA, other(BETA), false).stream().anyMatch(a -> a.id().equals("heal") && a.enabled()));
-        Viewer trueAlpha = new Viewer(true, true, false, true, true, true, false);
+        Viewer trueAlpha = new Viewer(true, true, false, true, true, true);
         Action heal = ProfileActions.of(trueAlpha, other(BETA), false).stream().filter(a -> a.id().equals("heal")).findFirst().orElseThrow();
         assertFalse(heal.enabled());
         assertEquals("true_alpha", heal.disabled(), "stays visible with its reason");
@@ -81,7 +81,7 @@ class ProfileActionsTest {
     void yourOwnProfileHasLeaveAndTheAnchorClear() {
         Subject me = new Subject(ID, "Me", true, NONE, false, false);
         assertEquals(List.of("leave", "anchor_clear"), ids(AS_BETA, me));
-        assertEquals(List.of("anchor_clear"), ids(new Viewer(false, false, false, false, false, true, false), me));
+        assertEquals(List.of("anchor_clear"), ids(new Viewer(false, false, false, false, false, true), me));
         assertEquals(List.of(), ids(AS_LONER, me));
         Action leave = ProfileActions.of(AS_LEADER, me, false).get(0);
         assertFalse(leave.enabled());
@@ -90,10 +90,11 @@ class ProfileActionsTest {
     }
 
     @Test
-    void aCallerCallsTheirSiredAndTheSiredCanSeverTheirSire() {
-        Viewer caller = new Viewer(false, false, false, false, false, false, true);
-        assertEquals(List.of("call"), ids(caller, new Subject(ID, "Kid", false, NONE, true, false)));
-        assertEquals(List.of(), ids(AS_LONER, new Subject(ID, "Kid", false, NONE, true, false)), "only a caller calls");
+    void thereIsNoCallActionPerPersonAndTheSiredCanSeverTheirSire() {
+        // B3 calls everyone the player sired: it lives on the Bloodline page, never on one person's page
+        for (Viewer v : List.of(AS_LEADER, AS_COALPHA, AS_BETA, AS_LONER)) {
+            assertFalse(ids(v, new Subject(ID, "Kid", false, NONE, true, false)).contains("call"), "a per-person call action came back");
+        }
         List<Action> sire = ProfileActions.of(AS_LONER, new Subject(ID, "Mom", false, NONE, false, true), false);
         assertEquals(ProfileActions.Kind.OPEN_RITES, sire.get(0).kind());
         assertEquals("", sire.get(0).rowId(), "a link sends no command");
@@ -109,7 +110,7 @@ class ProfileActionsTest {
 
     @Test
     void atMostOnePrimaryAndEveryCommandRowExistsWithTheRightTarget() {
-        for (Viewer v : List.of(AS_LEADER, AS_COALPHA, AS_BETA, AS_LONER, new Viewer(true, true, true, true, false, true, true))) {
+        for (Viewer v : List.of(AS_LEADER, AS_COALPHA, AS_BETA, AS_LONER, new Viewer(true, true, true, true, false, true))) {
             for (Role r : Role.values()) {
                 for (boolean sired : new boolean[] {false, true}) {
                     Subject s = new Subject(ID, "X", false, r, sired, !sired);

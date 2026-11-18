@@ -17,6 +17,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubRites;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,7 @@ public final class RitesPage implements HubPageView {
             if (l == chosen) {
                 f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
             }
-            String name = f.font().plainSubstrByWidth(name(l.rite()).getString(), r.w() - pw - 6);
+            String name = LabelFit.cut(name(l.rite()).getString(), r.w() - pw - 6, f.font()::width);
             f.g.drawString(f.font(), name, r.x(), y, t.ink(), false);
             f.g.drawString(f.font(), power, r.right() - pw, y, t.muted(), false);
             String id = "rite:" + l.rite().id();

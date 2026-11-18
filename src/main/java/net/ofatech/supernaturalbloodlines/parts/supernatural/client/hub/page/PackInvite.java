@@ -24,12 +24,39 @@ public final class PackInvite {
     private enum Mode { NONE, INVITE, ALLY }
 
     private static Mode mode = Mode.NONE;
+    /** Built when a picker opens, not every frame: the list of players is read off the connection and sorted once per press. */
+    private static List<Pickable.Person> offered = List.of();
+    private static int beyond;
+
+    private static void toggle(Mode wanted, HubScreen.Frame f) {
+        mode = mode == wanted ? Mode.NONE : wanted;
+        List<Pickable.Person> all = online();
+        offered = mode == Mode.NONE ? List.of() : Pickable.of(all, f.view.player().getUUID(), idsOf(f));
+        beyond = mode == Mode.NONE ? 0 : Pickable.beyondCap(all, f.view.player().getUUID(), idsOf(f));
+    }
 
     private PackInvite() {}
+
+    private static boolean demo;
+
+    /** Development only (the dev screenshots): the Invite picker open with a made-up list of players, 14 more than the cap. */
+    public static void devOpen() {
+        mode = Mode.INVITE;
+        demo = true;
+        offered = new ArrayList<>();
+        String[] names = {"Aria", "Bram", "Cleo", "Dax", "Eira", "Finn", "Gwen", "Hale", "Iris", "Jory", "Kade", "Lena"};
+        for (int k = 0; k < names.length; k++) {
+            offered.add(new Pickable.Person(new UUID(31, k), names[k], k < 8 ? 6 + k * 9 : -1));
+        }
+        beyond = 14;
+    }
 
     /** The hub closed: the next one starts with no picker open. */
     public static void reset() {
         mode = Mode.NONE;
+        offered = List.of();
+        beyond = 0;
+        demo = false;
     }
 
     /** True while a picker is open. */
@@ -45,8 +72,8 @@ public final class PackInvite {
         Component ally = Component.translatable(key + "ally_btn");
         List<Integer> widths = List.of(PageWidgets.widthOf(f.font(), invite), PageWidgets.widthOf(f.font(), ally));
         Flow.Result flow = Flow.wrap(new Rect(r.x(), y, r.w(), 0), widths, PageWidgets.H, PageWidgets.GAP);
-        PageWidgets.button(f, "stage:pack:invite", flow.rects().get(0), invite, mayInvite, mode == Mode.INVITE, why, () -> mode = mode == Mode.INVITE ? Mode.NONE : Mode.INVITE);
-        PageWidgets.button(f, "stage:pack:ally", flow.rects().get(1), ally, mayInvite, mode == Mode.ALLY, why, () -> mode = mode == Mode.ALLY ? Mode.NONE : Mode.ALLY);
+        PageWidgets.button(f, "stage:pack:invite", flow.rects().get(0), invite, mayInvite, mode == Mode.INVITE, why, () -> toggle(Mode.INVITE, f));
+        PageWidgets.button(f, "stage:pack:ally", flow.rects().get(1), ally, mayInvite, mode == Mode.ALLY, why, () -> toggle(Mode.ALLY, f));
         if (!mayInvite) {
             mode = Mode.NONE;
         }
@@ -54,17 +81,21 @@ public final class PackInvite {
     }
 
     /** The players to pick from, under the pressed button, in {@code r}; {@code card} puts them on a card of the page's paper (over what is beneath). Returns the y under them. */
-    static int picker(HubScreen.Frame f, Rect r, int y, Set<UUID> members, boolean card) {
+    static int picker(HubScreen.Frame f, Rect r, int y, boolean card) {
         if (mode == Mode.NONE) {
             return y;
         }
         HubTheme t = f.theme();
         String key = PageKit.HUB + "pack.";
         Component title = Component.translatable(key + (mode == Mode.INVITE ? "invite_who" : "ally_who"));
-        List<Pickable.Person> people = Pickable.of(online(), f.view.player().getUUID(), members);
+        List<Pickable.Person> people = demo ? offered : Pickable.stillHere(offered, onlineIds());
         int pad = card ? 4 : 0;
         Rect in = new Rect(r.x() + pad, y + pad, r.w() - 2 * pad, 0);
-        List<Integer> pw = people.stream().map(p -> PageWidgets.widthOf(f.font(), Component.literal(p.name()))).toList();
+        Component more = beyond > 0 ? Component.translatable(key + "pick_more", beyond) : null;
+        List<Integer> pw = new ArrayList<>(people.stream().map(p -> PageWidgets.widthOf(f.font(), Component.literal(p.name()))).toList());
+        if (more != null) {
+            pw.add(PageWidgets.widthOf(f.font(), more));
+        }
         Flow.Result pf = Flow.wrap(new Rect(in.x(), in.y() + PageKit.LINE + 2, in.w(), 0), pw, PageWidgets.H, 3);
         int none = people.isEmpty() ? f.font().split(Component.translatable(key + "pick_none"), in.w()).size() * PageKit.LINE : 0;
         int bottom = (people.isEmpty() ? in.y() + PageKit.LINE + 2 + none : pf.bottom()) + pad;
@@ -84,19 +115,33 @@ public final class PackInvite {
             PageWidgets.button(f, "stage:pack:pick:" + p.name(), pf.rects().get(i), Component.literal(p.name()), true, false, tip, () -> {
                 HubClient.runCommand(row, List.of(p.id().toString()));
                 mode = Mode.NONE;
+                offered = List.of();
             });
+        }
+        if (more != null) {
+            // the cap is the nearest 30: the rest are not listed, and the row says how many
+            PageWidgets.button(f, "stage:pack:pick:more", pf.rects().get(people.size()), more, false, false, Component.translatable(key + "pick_more_why"), null);
         }
         return bottom + 3;
     }
 
     /** Both together, one under the other: for a column with room. */
-    static int render(HubScreen.Frame f, Rect r, int y, boolean mayInvite, Set<UUID> members) {
+    static int render(HubScreen.Frame f, Rect r, int y, boolean mayInvite) {
         y = buttons(f, r, y, mayInvite);
         if (!mayInvite) {
             return PageKit.wrapped(f, Component.translatable(PageKit.HUB + "pack.invite_why"), r.x(), y, r.w(), f.theme().muted());
         }
-        return picker(f, r, y, members, false);
+        return picker(f, r, y, false);
     }
+    private static Set<UUID> onlineIds() {
+        Minecraft mc = Minecraft.getInstance();
+        Set<UUID> out = new HashSet<>();
+        if (mc.getConnection() != null) {
+            mc.getConnection().getOnlinePlayers().forEach(info -> out.add(info.getProfile().getId()));
+        }
+        return out;
+    }
+
     private static List<Pickable.Person> online() {
         Minecraft mc = Minecraft.getInstance();
         List<Pickable.Person> out = new ArrayList<>();

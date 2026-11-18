@@ -12,16 +12,18 @@ import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
+import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.line.Lines;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.RankEffects;
-import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Relation;
@@ -138,7 +140,7 @@ public final class SpeciesProfiles implements ProfileService.Source {
             case RANK -> relation == Relation.ALLY_LEADER ? Optional.of(List.of("ally")) : Optional.ofNullable(who).map(w -> List.of(rank(w, packs)));
             case LEVEL -> Optional.ofNullable(who).map(w -> List.of(Integer.toString(VampirismAPI.factionPlayerHandler(w).getCurrentLevel())));
             case PACK_DAYS -> packs == null ? Optional.empty() : packs.inPackSince(subject).map(since -> List.of(Long.toString(daysSince(since))));
-            case BONUS -> who == null ? Optional.empty() : RankEffects.bonusText(PackAccess.wolf(who), VampirismSupernatural.isWerewolf(who)).map(List::of);
+            case BONUS -> who == null ? Optional.empty() : RankEffects.bonusText(who).map(List::of);
             case PACK -> packs == null ? Optional.empty() : Optional.of(packs.inPack(subject) ? List.of(String.valueOf(nameOf(server, packs.leaderOf(subject)))) : List.of());
             case PRESENCE -> Optional.of(List.of(who != null ? "online" : "offline"));
             case SIRE -> sire(observer, subject);
@@ -192,7 +194,17 @@ public final class SpeciesProfiles implements ProfileService.Source {
         if (relation == Relation.SELF) {
             return Optional.of(Lines.visibleRoot(observer).map(r -> List.of(Lines.rootName(server, r).getString())).orElse(List.of()));
         }
-        return Optional.of(lines.rootOf(subject).map(r -> List.of(Lines.rootName(server, r).getString())).orElse(List.of()));
+        Optional<UUID> root = lines.rootOf(subject);
+        if (root.isEmpty()) {
+            return Optional.of(List.of());
+        }
+        // the root a person has actually discovered of themselves, the same rule their own Bloodline page uses: where the index has moved the root on
+        // (an Original who fell, a line freed) the new one stays a secret to them, so it must stay one to their pack too
+        // shortcut: what a player has discovered of their line (knownLine) is read from their live data, so an offline packmate's line is "?" (the page says why),
+        // upgrade by reading it from a saved copy of knownLine kept in the profile knowledge when they log out
+        ServerPlayer who = online(server, subject);
+        boolean shown = who != null && LineRules.showsRoot(BloodlineAccess.get(who).knownLine(), root.get(), SpeciesConfig.originalVisibilityAlways());
+        return shown ? Optional.of(List.of(Lines.rootName(server, root.get()).getString())) : Optional.empty();
     }
 
     private static Optional<List<String>> genes(ServerPlayer observer, @Nullable ServerPlayer who, Relation relation) {

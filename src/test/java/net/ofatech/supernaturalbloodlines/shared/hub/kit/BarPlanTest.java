@@ -65,6 +65,13 @@ class BarPlanTest {
     }
 
     @Test
+    void theOverflowButtonHasRoomForTheWordMoreNotJustDots() {
+        BarPlan p = BarPlan.of(bar(320), QUESTS, 2, 34 * 6);
+        // "More" is 4 glyphs of 6 px in the test measure, with 3 px of padding each side
+        assertTrue(p.overflow().w() >= 4 * 6 + 6, "the overflow button is " + p.overflow().w() + " px wide: no room for its word");
+    }
+
+    @Test
     void theSameAtEveryWidthFromTheSmallestUp() {
         for (int w : new int[] {320, 360, 426, 480, 640, 960}) {
             Rect b = bar(w);

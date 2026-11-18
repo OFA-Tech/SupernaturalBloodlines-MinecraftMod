@@ -191,9 +191,10 @@ public final class ProfilePage implements HubPageView {
             int h = vy - rowTop + 3;
             Rect cell = new Rect(x - 1, rowTop - 1, cw + 2, h - 1);
             String id = "panel:fact:" + fact.name();
-            List<Component> tip = known == null
-                    ? List.of(label, Component.translatable(KEY + "unknown_tip"), Component.translatable(KEY + "howto." + fact.name().toLowerCase(Locale.ROOT)))
-                    : List.of(label, text);
+            List<Component> tip = known != null ? List.of(label, text)
+                    : net.ofatech.supernaturalbloodlines.shared.supernatural.profile.UnknownReason.whileOffline(fact, payload.facts())
+                            ? List.of(label, Component.translatable(KEY + "unknown_offline"))
+                            : List.of(label, Component.translatable(KEY + "unknown_tip"), Component.translatable(KEY + "howto." + fact.name().toLowerCase(Locale.ROOT)));
             f.target(id, cell, tip, null);
             if (f.focused(id)) {
                 t.drawFocus(f.g, cell);
@@ -259,7 +260,13 @@ public final class ProfilePage implements HubPageView {
             Runnable run = switch (a.kind()) {
                 case COMMAND -> () -> HubClient.runCommand(a.rowId(), a.args(route.id()));
                 case OPEN_RITES -> () -> f.screen().setPage(HubPage.RITES);
-                case OPEN_ADMIN -> () -> f.screen().setPage(HubPage.ADMIN);
+                case OPEN_ADMIN -> () -> {
+                    // only where Admin can be reached: an offer to a page that is not there would wait for a later visit
+                    if (HubPage.visiblePages(f.view.context()).contains(HubPage.ADMIN)) {
+                        net.ofatech.supernaturalbloodlines.shared.hub.AdminHandoff.offer(route.id(), route.name());
+                        f.screen().setPage(HubPage.ADMIN);
+                    }
+                };
             };
             Runnable press = a.confirm()
                     ? () -> f.confirm(label, Component.translatable(KEY + "confirm." + a.id(), route.name()), label, run)
@@ -347,7 +354,7 @@ public final class ProfilePage implements HubPageView {
         SupernaturalRace race = f.view.races().get(0);
         boolean alpha = wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA;
         ProfileActions.Viewer viewer = new ProfileActions.Viewer(!snap.pack().isEmpty(), leader, alpha && !leader, alpha, wolf.rank() == WolfState.Rank.TRUE_ALPHA,
-                HubPage.isWolfType(race), race == SupernaturalRace.ORIGINAL || race == SupernaturalRace.HYBRID || race == SupernaturalRace.ORIGINAL_HYBRID || race == SupernaturalRace.TRIBRID);
+                HubPage.isWolfType(race));
         boolean sire = snap.sire().filter(n -> !n.isEmpty()).flatMap(snap::idOf).filter(route.id()::equals).isPresent();
         boolean sired = snap.people().stream().anyMatch(p -> p.id().equals(route.id()) && snap.sired().contains(p.name()));
         boolean npc = payload != null && payload.npc();

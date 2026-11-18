@@ -16,6 +16,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubAlmanac;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
@@ -132,7 +133,7 @@ public final class PathPage implements HubPageView {
         int color = row.status() == RungStatus.LOCKED ? t.muted() : current ? t.accent() : t.ink();
         Component status = status(ladder, row);
         int sw = f.font().width(status);
-        String name = f.font().plainSubstrByWidth(PageKit.rung(row).getString(), r.w() - HubTheme.MARK - 4 - sw - 4);
+        String name = LabelFit.cut(PageKit.rung(row).getString(), r.w() - HubTheme.MARK - 4 - sw - 4, f.font()::width);
         f.g.drawString(f.font(), name, r.x() + HubTheme.MARK + 4, y + 1, color, false);
         f.g.drawString(f.font(), status, r.right() - sw, y + 1, current ? t.accent() : t.muted(), false);
         if (current && row.tasks() > 0) {

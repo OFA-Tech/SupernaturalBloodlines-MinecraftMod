@@ -73,6 +73,7 @@ public final class AdminPage implements HubPageView {
 
     private static volatile String devSection;
 
+
     /** Development only (the dev screenshots): the section the next frame shows, or "search:text" to type into the search box. */
     public static void devSection(String section) {
         devSection = section;
@@ -114,6 +115,13 @@ public final class AdminPage implements HubPageView {
             }
         }
         lastRender = now;
+        // "Open in Admin" on a profile: the debug actions, with that person already picked
+        var handed = net.ofatech.supernaturalbloodlines.shared.hub.AdminHandoff.take();
+        if (handed.isPresent()) {
+            player = handed.get().id();
+            playerName = handed.get().name();
+            section = DEBUG;
+        }
         String dev = devSection;
         if (dev != null) {
             devSection = null;
@@ -298,7 +306,7 @@ public final class AdminPage implements HubPageView {
         int x = r.x() + 2;
         if (number) {
             Rect minus = new Rect(x, y, PageWidgets.H, PageWidgets.H);
-            PageWidgets.hinted(f, id + ":minus", minus, Component.literal("-"), true, false, Component.translatable(KEY + "less", label), () -> step(row, -1));
+            PageWidgets.stepper(f, id + ":minus", minus, Component.literal("-"), true, Component.translatable(KEY + "less", label), () -> step(row, -1));
             x = minus.right() + 2;
         }
         int applyW = PageWidgets.widthOf(f.font(), Component.translatable(KEY + "apply"));
@@ -313,7 +321,7 @@ public final class AdminPage implements HubPageView {
         x = box.right() + 2;
         if (number) {
             Rect plus = new Rect(x, y, PageWidgets.H, PageWidgets.H);
-            PageWidgets.hinted(f, id + ":plus", plus, Component.literal("+"), true, false, Component.translatable(KEY + "more", label), () -> step(row, 1));
+            PageWidgets.stepper(f, id + ":plus", plus, Component.literal("+"), true, Component.translatable(KEY + "more", label), () -> step(row, 1));
             x = plus.right() + 2;
         }
         Rect apply = new Rect(x, y, applyW, PageWidgets.H);

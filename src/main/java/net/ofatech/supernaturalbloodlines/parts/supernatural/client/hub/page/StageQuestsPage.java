@@ -106,7 +106,7 @@ public final class StageQuestsPage implements HubPageView {
         int cw = f.font().width(count);
         int barW = Math.max(30, Math.min(w / 3, 110));
         int textW = w - tw - barW - cw - 26;
-        f.g.drawString(f.font(), f.font().plainSubstrByWidth(PageKit.text(row.text()).getString(), textW), box.x() + tw + 10, box.y() + 8, t.ink(), false);
+        f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(PageKit.text(row.text()).getString(), textW, f.font()::width), box.x() + tw + 10, box.y() + 8, t.ink(), false);
         t.drawBar(f.g, new Rect(box.right() - barW - cw - 12, box.y() + 10, barW, 5), frac);
         f.g.drawString(f.font(), count, box.right() - cw - 6, box.y() + 8, claimable ? t.good() : t.muted(), false);
         TaskCard.target(f, row, box);

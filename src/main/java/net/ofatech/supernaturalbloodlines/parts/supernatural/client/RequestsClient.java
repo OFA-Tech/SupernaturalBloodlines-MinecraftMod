@@ -20,6 +20,8 @@ public final class RequestsClient {
             }
             requests = payload.requests();
             receivedAt = System.nanoTime();
+            DISMISSED.retainAll(HubRequests.stillHidden(DISMISSED, requests));
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.HomePage.prunePeaks(requests);
         });
     }
 
@@ -69,6 +71,7 @@ public final class RequestsClient {
     public static void clear() {
         DISMISSED.clear();
         requests = List.of();
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.HomePage.prunePeaks(List.of());
     }
 }
 

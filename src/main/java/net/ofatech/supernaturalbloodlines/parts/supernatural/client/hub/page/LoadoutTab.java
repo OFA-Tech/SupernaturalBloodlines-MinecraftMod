@@ -12,6 +12,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScree
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hud.ClientIcons;
 import net.ofatech.supernaturalbloodlines.shared.hud.LoadoutAccess;
 
@@ -64,7 +65,7 @@ public final class LoadoutTab {
         }
         boolean grey = e.greyedReason() != null;
         ClientIcons.draw(f.g, e.icon(), r.x(), y, 16, grey ? 0.4f : 1f);
-        String text = f.font().plainSubstrByWidth(e.name().getString(), r.w() - 22);
+        String text = LabelFit.cut(e.name().getString(), r.w() - 22, f.font()::width);
         f.g.drawString(f.font(), text, r.x() + 20, y + 4, grey ? t.muted() : t.ink(), false);
         List<Component> tip = new java.util.ArrayList<>(List.of(e.name()));
         if (e.note() != null) {
@@ -105,7 +106,7 @@ public final class LoadoutTab {
             f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
         }
         String key = LoadoutAccess.keyLabel(i);
-        f.g.drawString(f.font(), f.font().plainSubstrByWidth(key, 22), r.x(), y + 4, t.accent(), false);
+        f.g.drawString(f.font(), LabelFit.cut(key, 22, f.font()::width), r.x(), y + 4, t.accent(), false);
         Component label = Component.translatable(KEY + "empty");
         int color = t.muted();
         if (id.isPresent()) {
@@ -114,7 +115,7 @@ public final class LoadoutTab {
             color = e == null || e.greyedReason() != null ? t.muted() : t.ink();
             ClientIcons.draw(f.g, e == null ? id.get() : e.icon(), r.x() + 24, y, 16, e == null ? 0.4f : 1f);
         }
-        f.g.drawString(f.font(), f.font().plainSubstrByWidth(label.getString(), r.w() - 70), r.x() + 44, y + 4, color, false);
+        f.g.drawString(f.font(), LabelFit.cut(label.getString(), r.w() - 70, f.font()::width), r.x() + 44, y + 4, color, false);
         String slotId = "loadout:slot:" + i;
         f.target(slotId, hit, List.of(label), () -> apply(model.pickSlot(i)));
         if (f.focused(slotId)) {

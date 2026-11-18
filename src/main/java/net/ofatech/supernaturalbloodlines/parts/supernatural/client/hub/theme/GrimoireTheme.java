@@ -97,11 +97,13 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
         paper(g, lp);
         paper(g, rp);
         // the gutter: the paper darkens towards the spine
-        for (int i = 0; i < 8; i++) {
-            int a = (0x50 - i * 10) << 24;
-            g.fill(lp.right() - 1 - i, lp.y(), lp.right() - i, lp.bottom(), a | 0x46280a);
-            g.fill(rp.x() + i, rp.y(), rp.x() + i + 1, rp.bottom(), a | 0x46280a);
-        }
+        KitDraw.batch(g, () -> {
+            for (int i = 0; i < 8; i++) {
+                int a = (0x50 - i * 10) << 24;
+                g.fill(lp.right() - 1 - i, lp.y(), lp.right() - i, lp.bottom(), a | 0x46280a);
+                g.fill(rp.x() + i, rp.y(), rp.x() + i + 1, rp.bottom(), a | 0x46280a);
+            }
+        });
         g.fill(lp.right(), b.y() + 2, rp.x(), b.bottom() - 2, 0xFF2a1708);
         g.fill(lp.right() + 1, b.y() + 2, lp.right() + 2, b.bottom() - 2, 0xFF5a3a1c);
         g.fill(rp.x() - 2, b.y() + 2, rp.x() - 1, b.bottom() - 2, 0xFF5a3a1c);
@@ -275,12 +277,14 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
     @Override
     public void drawRule(GuiGraphics g, int x, int y, int w) {
         int fade = Math.max(1, w / 6);
-        g.fill(x + fade, y, x + w - fade, y + 1, 0xFF8a6a3a);
-        for (int i = 0; i < fade; i++) {
-            int a = (0xFF * i / fade) << 24;
-            g.fill(x + i, y, x + i + 1, y + 1, a | 0x8a6a3a);
-            g.fill(x + w - 1 - i, y, x + w - i, y + 1, a | 0x8a6a3a);
-        }
+        KitDraw.batch(g, () -> {
+            g.fill(x + fade, y, x + w - fade, y + 1, 0xFF8a6a3a);
+            for (int i = 0; i < fade; i++) {
+                int a = (0xFF * i / fade) << 24;
+                g.fill(x + i, y, x + i + 1, y + 1, a | 0x8a6a3a);
+                g.fill(x + w - 1 - i, y, x + w - i, y + 1, a | 0x8a6a3a);
+            }
+        });
     }
 
     @Override

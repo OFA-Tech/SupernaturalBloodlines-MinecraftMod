@@ -16,6 +16,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScree
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
@@ -59,7 +60,7 @@ public final class BookRitesPage implements HubPageView {
             KitDraw.shape(f.g, Shapes.Shape.ROUND, r.x() + 6, y + 6, 6, ring);
             Component power = Component.translatable(BOOK + "power", String.format("%,d", l.rite().power()));
             int pw = BookKit.smallWidth(f, power.getString());
-            String name = f.font().plainSubstrByWidth(RitesPage.name(l.rite()).getString(), r.w() - 24);
+            String name = LabelFit.cut(RitesPage.name(l.rite()).getString(), r.w() - 24, f.font()::width);
             f.g.drawString(f.font(), name, r.x() + 22, y + 1, sel ? t.accent() : t.ink(), false);
             BookKit.small(f, Component.translatable(BOOK + (l.forYou() ? "yours" : "anyone")), r.x() + 22, y + 12, r.w() - 24 - pw - 4, l.forYou() ? t.good() : t.muted());
             BookKit.small(f, power, r.right() - pw, y + 12, pw + 4, GOLD);

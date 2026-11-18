@@ -10,6 +10,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineColors;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineTree;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineTreeLayout;
@@ -207,7 +208,7 @@ public final class GrimoireBloodlinePage extends LinePageBase {
     private static int linePill(HubScreen.Frame f, Detail.Field field, Rect s, int y) {
         HubTheme t = f.theme();
         f.g.drawString(f.font(), field.label(), s.x(), y + 2, t.ink(), false);
-        String text = f.font().plainSubstrByWidth(field.value().getString(), s.w() - f.font().width(field.label()) - 34);
+        String text = LabelFit.cut(field.value().getString(), s.w() - f.font().width(field.label()) - 34, f.font()::width);
         int w = f.font().width(text) + 22;
         Rect pill = new Rect(s.right() - w, y, w, 13);
         f.g.fill(pill.x(), pill.y(), pill.right(), pill.bottom(), LineColors.FREE_PILL);

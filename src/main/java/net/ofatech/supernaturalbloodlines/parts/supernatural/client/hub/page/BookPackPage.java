@@ -12,6 +12,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.PackRing;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
@@ -263,7 +264,7 @@ public final class BookPackPage implements HubPageView {
         }
         boolean mayInvite = leads(f, pack) || (pack.isEmpty() && (wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA));
         if (style != Style.BOOK) {
-            y = PackInvite.render(f, r, y + 2, mayInvite, PackInvite.idsOf(f));
+            y = PackInvite.render(f, r, y + 2, mayInvite);
         }
         f.end(y);
         if (style == Style.BOOK) {
@@ -336,7 +337,7 @@ public final class BookPackPage implements HubPageView {
             // nobody beside you: the empty state instead of an empty ring
             EmptyState.render(f, s, top + Math.max(0, (s.bottom() - top - 150) / 2), "pack", HubPage.GUIDE);
             if (style == Style.BOOK) {
-                PackInvite.picker(f, new Rect(s.x(), top, s.w(), 0), top, PackInvite.idsOf(f), true);
+                PackInvite.picker(f, new Rect(s.x(), top, s.w(), 0), top, true);
             }
             f.end(s.bottom());
             return;
@@ -366,7 +367,7 @@ public final class BookPackPage implements HubPageView {
             int color = (slot.member().role().color() & 0xFFFFFF) | ((int) (slot.alpha() * 255) << 24);
             BookKit.portrait(f.g, slot.member().id(), slot.x(), slot.y(), size, color, t.paper());
             if (named) {
-                String n = f.font().plainSubstrByWidth(slot.member().id(), 56);
+                String n = LabelFit.cut(slot.member().id(), 56, f.font()::width);
                 int nw = BookKit.smallWidth(f, n);
                 int side = Math.abs(slot.x() - cx) > radius / 2 ? (slot.x() > cx ? 1 : -1) : 0;
                 int nx = side == 0 ? slot.x() - nw / 2 : side > 0 ? slot.x() + size / 2 + 3 : slot.x() - size / 2 - 3 - nw;
@@ -383,7 +384,7 @@ public final class BookPackPage implements HubPageView {
         BookKit.small(f, Component.translatable(BOOK + "legend"), s.x(), s.bottom() - legend + 1, areaW, t.muted());
         if (style == Style.BOOK) {
             // the players to pick from, on a card over the top of the ring
-            PackInvite.picker(f, new Rect(s.x(), top, s.w(), 0), top, PackInvite.idsOf(f), true);
+            PackInvite.picker(f, new Rect(s.x(), top, s.w(), 0), top, true);
         }
         f.end(s.bottom());
     }

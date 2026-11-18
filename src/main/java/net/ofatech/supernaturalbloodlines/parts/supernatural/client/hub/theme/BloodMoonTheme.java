@@ -104,7 +104,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         Rect stage = l.region(BloodMoonLayout.MOON);
         int cx = stage.x() + stage.w() * 2 / 5;
         int cy = stage.y() + stage.h() / 2;
-        int radius = Math.min(stage.w() / 2, stage.h() * 3 / 4);
+        int radius = BloodMoonLayout.glowRadius(stage);
         // the glow is baked once at a capped size and stretched: it is a soft blur, so a 128 pixel diameter (radius {@link #GLOW_PX}, 64) is plenty, and the texture does not change with the window
         if (radius > 0) {
             BakedTexture.blitScaled(g, BakedTexture.get(BakedTexture.Key.of("glow", GLOW_PX), 2 * GLOW_PX, 2 * GLOW_PX, Bake.glow(GLOW_PX)), cx - radius, cy - radius,
@@ -143,7 +143,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         GuiGraphics g = ctx.g();
         int cx = area.x() + area.w() / 2;
         int cy = area.y() + area.h() / 2;
-        int r = Math.max(12, Math.min(area.w(), area.h()) / 2 - 8);
+        int r = BloodMoonLayout.moonRadius(area);
         // the halo, the disc lit up to the progress and the craters are one baked picture (a new one only when the radius or the progress step changes)
         int step = Bake.step(data.progress());
         int size = Bake.moonSize(r);
@@ -211,8 +211,9 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
             boolean hot = ctx.hovered(more) || ctx.focused("detail:more");
             g.fill(more.x(), more.y(), more.right(), more.bottom(), EDGE);
             g.fill(more.x() + 1, more.y() + 1, more.right() - 1, more.bottom() - 1, hot || overflowOpen ? 0xFF3a1822 : PILL);
-            g.drawString(font, "\u2026", more.x() + (more.w() - font.width("\u2026")) / 2, more.y() + 4, ink(), false);
-            ctx.target("detail:more", more, List.of(Component.translatable("supernaturalbloodlines.hub.more")), () -> overflowOpen = !overflowOpen);
+            String moreLabel = LabelFit.cut(Component.translatable("supernaturalbloodlines.hub.more").getString(), more.w() - 6, font::width);
+            g.drawString(font, moreLabel, more.x() + (more.w() - font.width(moreLabel)) / 2, more.y() + 4, ink(), false);
+            ctx.target("detail:more", more, List.of(Component.translatable("supernaturalbloodlines.hub.more_actions")), () -> overflowOpen = !overflowOpen);
             if (overflowOpen) {
                 // the actions that did not fit, stacked above the bar
                 int y = r.y() - 2;
