@@ -85,15 +85,16 @@ def the_cure():
 
 
 # ---------------------------------------------------------------- rings
-def ring(light, mid, dark, out, stone, wide=0.0):
+def ring(light, mid, dark, out, stone, cx=7.5, cy=11.0, orx=5.6, ory=4.6, irx=2.6, iry=2.0):
+    """Small shank (hole shrunk) with a stone that dominates the top of the icon."""
     c = Canvas()
     for y in range(16):
         for x in range(16):
-            v = ((x - 7.5) / 6.0) ** 2 + ((y - 9.5) / 5.6) ** 2
-            h = ((x - 7.5) / (3.4 - wide)) ** 2 + ((y - 9.5) / (3.2 - wide)) ** 2
+            v = ((x - cx) / orx) ** 2 + ((y - cy) / ory) ** 2
+            h = ((x - cx) / irx) ** 2 + ((y - cy) / iry) ** 2
             if v <= 1 and h > 1:
                 s = x + y
-                c.d(x, y, light if s < 14 else (mid if s < 19 else dark))
+                c.d(x, y, light if s < 16 else (mid if s < 20 else dark))
     stone(c, light, mid, dark)
     c.outline(out)
     return c
@@ -102,36 +103,43 @@ def ring(light, mid, dark, out, stone, wide=0.0):
 @icon
 def sun_ring():
     def stone(c, l, m, d):
-        c.r(5, 1, 10, 5, l)
-        c.r(5, 5, 10, 5, m)
-        c.r(6, 2, 9, 4, "#1f3a9a")
-        c.r(6, 2, 7, 3, "#3d5fc0")
-        c.pts("#e8c850", (8, 3), (9, 2))
-    return ring("#d4dae4", "#9aa3b4", "#6a7388", "#2a3042", stone, wide=0.4)
+        c.r(4, 2, 11, 8, l)
+        c.pts(l, (5, 1), (6, 1), (7, 1), (8, 1), (9, 1), (10, 1))
+        c.r(4, 8, 11, 8, m)
+        c.r(5, 2, 10, 7, "#1f3a9a")
+        c.r(5, 2, 6, 4, "#3d5fc0")
+        c.r(9, 6, 10, 7, "#152a78")
+        c.pts("#a8c0f0", (5, 2), (6, 3))
+        c.pts("#e8c850", (7, 3), (9, 3), (7, 4), (8, 4), (9, 4), (8, 5))
+        c.pts("#e8c850", (6, 6))
+    return ring("#e0e6ee", "#a2abbc", "#6a7388", "#232a3c", stone)
 
 
 @icon
 def moon_ring():
     def stone(c, l, m, d):
-        c.r(5, 1, 10, 5, l)
-        c.r(5, 5, 10, 5, m)
-        c.r(6, 2, 9, 4, "#eef2f6")
-        c.r(8, 3, 9, 4, "#c4d2e6")
-        c.pts("#ffffff", (6, 2), (7, 2))
-    return ring("#d4dae4", "#9aa3b4", "#6a7388", "#2a3042", stone, wide=0.4)
+        c.ell(7.5, 4.5, 4.6, 4.6, l)
+        c.pts(l, (7, 0), (8, 0))
+        c.ell(7.5, 4.5, 3.4, 3.4, "#d0dcf2")
+        c.ell(7.2, 4.2, 2.6, 2.6, "#f2f6fb")
+        c.ell(6.6, 3.6, 1.4, 1.4, "#ffffff")
+        c.pts("#a8bce6", (10, 5), (10, 6), (9, 7), (8, 7), (7, 7))
+        c.pts("#cfe0ff", (9, 3), (10, 4))
+        c.pts(m, (3, 4), (12, 4), (7, 9), (8, 9))
+    return ring("#dde4f0", "#9fa9be", "#667090", "#232a3c", stone, cx=7.5, cy=11.5, orx=5.2, ory=4.2, irx=2.4, iry=1.9)
 
 
 @icon
 def resurrection_ring():
     def stone(c, l, m, d):
-        c.r(4, 1, 11, 5, l)
-        c.r(4, 5, 11, 5, m)
-        c.r(5, 2, 10, 4, "#14141c")
-        c.r(5, 2, 7, 2, "#3a3a4c")
-        c.pts("#54546a", (10, 4))
-        c.pts(d, (4, 1), (11, 1))
-        c.pts(m, (3, 9), (12, 9), (3, 11), (12, 11))
-    return ring("#d4dae4", "#9aa3b4", "#6a7388", "#22242e", stone, wide=0.6)
+        c.r(3, 1, 12, 8, "#b9c0cc")
+        c.r(3, 8, 12, 8, "#6a7388")
+        c.r(4, 2, 11, 7, "#0e0e14")
+        c.r(4, 2, 7, 3, "#2a2a38")
+        c.pts("#4a4a5e", (4, 2), (5, 2), (4, 3), (11, 6), (10, 7))
+        c.pts("#e8ecf2", (3, 1), (12, 1), (3, 8), (12, 8))
+        c.pts("#4a5164", (2, 9), (13, 9), (3, 10), (12, 10))
+    return ring("#c8d0dc", "#8a93a6", "#4e566a", "#171b28", stone, cx=7.5, cy=11.5, orx=6.4, ory=4.6, irx=2.4, iry=1.7)
 
 
 # ---------------------------------------------------------------- poppets

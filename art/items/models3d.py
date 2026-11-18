@@ -39,9 +39,9 @@ MODELS = {}
 
 
 class M:
-    def __init__(self, name, preset=GEN, scale=1.0, lift=0.0):
+    def __init__(self, name, preset=GEN, scale=1.0, lift=0.0, glift=0.0, fp=None):
         self.name, self.cubes, self.pal = name, [], {}
-        self.preset, self.scale, self.lift = preset, scale, lift
+        self.preset, self.scale, self.lift, self.glift, self.fp = preset, scale, lift, glift, fp
         self.extra_tex = {}
 
     def col(self, h):
@@ -92,10 +92,47 @@ class M:
         self.box(cx - r, cy - q, z0, cx + r, cy + q, z1, c)
         self.box(cx - q, cy - r, z0 + 0.004, cx + q, cy + r, z1 - 0.004, c)
 
+    def bbox(self):
+        import math
+        lo, hi = [1e9] * 3, [-1e9] * 3
+        for c in self.cubes:
+            if c.get("tex"):
+                continue
+            for i in range(8):
+                p = [c["f"][k] if not (i >> k) & 1 else c["t"][k] for k in range(3)]
+                if "r" in c:
+                    ax = "xyz".index(c["r"][0])
+                    a = math.radians(c["r"][1])
+                    u, v = [k for k in range(3) if k != ax]
+                    du, dv = p[u] - c["o"][u], p[v] - c["o"][v]
+                    p[u] = c["o"][u] + du * math.cos(a) - dv * math.sin(a)
+                    p[v] = c["o"][v] + du * math.sin(a) + dv * math.cos(a)
+                for k in range(3):
+                    lo[k], hi[k] = min(lo[k], p[k]), max(hi[k], p[k])
+        return lo, hi
+
+    def recenter(self):
+        """Move a prop so its bounding box is centred on (8,8,8), like a sprite, and drop it onto the ground like one."""
+        lo, hi = self.bbox()
+        d = [8 - (lo[k] + hi[k]) / 2 for k in range(3)]
+        for c in self.cubes:
+            c["f"] = [round(c["f"][k] + d[k], 4) for k in range(3)]
+            c["t"] = [round(c["t"][k] + d[k], 4) for k in range(3)]
+            if "o" in c:
+                c["o"] = [round(c["o"][k] + d[k], 4) for k in range(3)]
+        self.glift += -(4 - (hi[1] - lo[1]) * 0.25 * self.scale)
+
     def spec(self):
-        return {"name": self.name, "palette": list(self.pal), "cubes": self.cubes,
-                "display": {k: {"rotation": r, "translation": [t[0], t[1] + self.lift, t[2]], "scale": [s * self.scale] * 3}
-                            for k, (r, t, s) in self.preset.items()}, "extra_tex": self.extra_tex}
+        if self.preset is GEN and not getattr(self, "_rc", False):
+            self._rc = True
+            self.recenter()
+        disp = {}
+        for k, (r, t, s) in self.preset.items():
+            if self.fp and k.startswith("firstperson"):
+                r, t = self.fp.get("r_" + k[-9:-4], r), self.fp.get("t", t)
+            dy = self.lift + (self.glift if k == "ground" else 0.0)
+            disp[k] = {"rotation": r, "translation": [t[0], t[1] + dy, t[2]], "scale": [s * self.scale] * 3}
+        return {"name": self.name, "palette": list(self.pal), "cubes": self.cubes, "display": disp, "extra_tex": self.extra_tex}
 
 
 def model(fn):
@@ -184,7 +221,7 @@ def the_elixir():
 
 # ---------------------------------------------------------------- rings
 def ring(name, band, band_hi, band_lo, stone_fn, thick=2.0, size=1.0):
-    m = M(name, scale=1.7, lift=0.0)
+    m = M(name, scale=0.5)
     t = thick
     z0, z1 = 8 - 1.0, 8 + 1.0
     m.box(6, 3.5, z0, 10, 3.5 + t, z1, {"side": band, "u": band_hi, "d": band_lo})
@@ -231,7 +268,7 @@ def resurrection_ring():
 
 # ---------------------------------------------------------------- poppets
 def poppet(name, cloth, hi, lo, stitch, sym):
-    m = M(name, scale=1.2)
+    m = M(name, scale=0.95)
     m.box(5.5, 9.0, 6.5, 10.5, 14.0, 9.5, {"side": cloth, "u": hi, "d": lo})
     m.box(6.3, 11.2, 6.4, 7.0, 11.9, 6.5, "#1e1410")
     m.box(9.0, 11.2, 6.4, 9.7, 11.9, 6.5, "#1e1410")
@@ -355,7 +392,7 @@ def hearing_device():
 
 @model
 def moonstone():
-    m = M("moonstone", scale=1.15)
+    m = M("moonstone", scale=0.95)
     c = {"side": "#eceeea", "u": "#f8faf8", "d": "#b4c2cc"}
     m.cyl(8, 8, 3.8, 2.5, 10.5, c)
     m.cyl(8, 8, 2.6, 1.2, 2.5, {"side": "#cdd3d4", "u": "#eceeea", "d": "#b4c2cc"})
@@ -504,7 +541,7 @@ def vervain_tea():
 
 # ---------------------------------------------------------------- boss rewards
 def book(name, cover, cover_hi, cover_lo, trim, deco, ribbon=None):
-    m = M(name, scale=1.05)
+    m = M(name, scale=0.9)
     m.box(3.0, 0.5, 6.0, 13.0, 14.5, 6.7, {"side": cover_lo, "u": cover_lo, "d": cover_lo})
     m.box(3.5, 0.9, 6.7, 12.5, 14.1, 9.3, {"side": "#efe3c0", "u": "#c8b48a", "d": "#c8b48a", "w": cover_lo})
     m.box(3.0, 0.5, 9.3, 13.0, 14.5, 10.0, {"side": cover, "u": cover_hi, "d": cover_lo})
@@ -557,7 +594,7 @@ def memory_claws():
 
 @model
 def mantle_of_the_beast():
-    m = M("mantle_of_the_beast", scale=1.0)
+    m = M("mantle_of_the_beast", scale=0.85)
     b, l, h, d = "#2b2640", "#433c5f", "#5f5785", "#0c0912"
     m.box(5.5, 10.0, 5.5, 10.5, 15.0, 10.5, {"side": b, "u": h, "d": b})
     m.box(6.4, 10.8, 5.3, 9.6, 14.0, 5.5, d)
@@ -661,4 +698,5 @@ def write_all():
 
 if __name__ == "__main__":
     write_all()
+
 

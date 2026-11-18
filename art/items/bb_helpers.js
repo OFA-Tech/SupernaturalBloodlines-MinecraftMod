@@ -7,11 +7,11 @@
   const MODELS = ROOT + 'src/main/resources/assets/supernaturalbloodlines/models/item/';
   const BBM = ROOT + 'art/blockbench/items/';
   const SPEC = ROOT + 'art/items/spec3d/';
-  const TEMP = 'C:/Users/caiom/AppData/Local/Temp/opencode/item-art/v2/';
+  const TEMP = 'C:/Users/caiom/AppData/Local/Temp/opencode/item-art/v3/';
   const PREV = ROOT + 'art/previews/items/';
   const NS = 'supernaturalbloodlines:item/';
   const FACES = ['north', 'east', 'south', 'west', 'up', 'down'];
-  const pv = () => Preview.all.find(p => p.id === 'mcp_offscreen_sbitems_gui');
+  const pv = () => Preview.all.find(p => p.id === (window.SB && window.SB.viewId || 'mcp_offscreen_sbitems_gui'));
   const b64 = f => 'data:image/png;base64,' + fs.readFileSync(f).toString('base64');
   const proj = n => ModelProject.all.find(p => p.name === 'item_' + n);
   function use(n) { const p = proj(n); if (!p) throw new Error('no project ' + n); p.select(); if (Project !== p) throw new Error('select ' + n); return p; }
@@ -29,7 +29,7 @@
     Canvas.pivot_marker.visible = pm; if (tp) tp.add(Transformer); if (grid) grid.visible = gv; if (og) og.visible = ov;
     write(file, buf);
   }
-  const SB = window.SB = {};
+  const SB = window.SB = window.SB || {};
 
   SB.build = function (n) {
     use(n);
@@ -85,7 +85,7 @@
   const CAMS = {
     tp: { load: 'loadThirdRight', bar: ['player'], cam: { position: [70, 20, 0], target: [0, 15, 0], projection: 'perspective', fov: 32, locked_angle: null } },
     ground: { load: 'loadGround', bar: ['block'], cam: { position: [-26, 14, -26], target: [0, 2, 0], projection: 'perspective', fov: 34, locked_angle: null } },
-    fp: { load: 'loadFirstRight', bar: ['monitor'], cam: { position: [0, 24, 32.4], target: [0, 24, 0], projection: 'perspective', fov: 105, locked_angle: null } },
+    fp: { load: 'loadFirstRight', bar: ['monitor'], cam: { position: [0, 24, 32.4], target: [0, 24, 0], projection: 'perspective', fov: 70, locked_angle: null } },
   };
 
   SB.shots = function (n, views) {
@@ -126,11 +126,15 @@
       Cube.all.forEach(c => { c.visibility = c.name === n; });
       Canvas.updateVisibility ? Canvas.updateVisibility() : Canvas.updateAll();
       pv().loadAnglePreset({ position: [0, 8, -60], target: [0, 8, 0], projection: 'orthographic', zoom: 0.7, locked_angle: null });
+      const oc = pv().camera; oc.left = -6.4; oc.right = 6.4; oc.top = 6.4; oc.bottom = -6.4; oc.updateProjectionMatrix();
       render(n + '_gui.png');
     }
     return names;
   };
 })();
+
+
+
 
 
 
