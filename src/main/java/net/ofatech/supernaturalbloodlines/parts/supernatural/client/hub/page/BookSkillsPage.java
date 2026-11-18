@@ -206,8 +206,10 @@ public final class BookSkillsPage implements HubPageView {
         // by words, and a word that is too long ends in an ellipsis instead of being broken in the middle. A node on the sides of the ring has its name
         // beside it, outward (above or below it the name would run into the neighbour); the top and bottom ones keep it over or under
         int dx = n.x() - cx;
-        boolean beside = Math.abs(dx) * 2 > radius;
-        int room = beside ? (dx > 0 ? page.right() - (n.x() + size / 2 + 3) : n.x() - size / 2 - 3 - page.x()) : labelWidth;
+        int sideRoom = dx > 0 ? page.right() - (n.x() + size / 2 + 3) : n.x() - size / 2 - 3 - page.x();
+        // a node near the page edge has no room beside it for even a short name: it goes over or under the node instead of running off the page
+        boolean beside = Math.abs(dx) * 2 > radius && sideRoom >= 30;
+        int room = beside ? sideRoom : labelWidth;
         List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(SkillsPage.name(row).getString(), Math.max(24, Math.min(110, room)), 2, f.font()::width);
         int height = lines.size() * 9;
         int ly = beside ? n.y() - height / 2 : n.y() >= cy ? n.y() + size / 2 + 2 : n.y() - size / 2 - 2 - height;

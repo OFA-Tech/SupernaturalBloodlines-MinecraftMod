@@ -133,7 +133,7 @@ public final class ProfilePage implements HubPageView {
         Component chip = rank == null || rank.isEmpty() ? null : value(Fact.RANK, rank);
         // beside the portrait when the name and the chip fit there, else under it (a narrow column must not squeeze or cut them)
         int besideX = r.x() + face + 8;
-        boolean beside = r.right() - besideX >= Math.max(f.font().width(route.name()), chip == null ? 0 : f.font().width(chip) + 8);
+        boolean beside = r.right() - besideX >= Math.max(f.font().width(route.name()) + (leader ? 12 : 0), chip == null ? 0 : f.font().width(chip) + 8);
         int tx = beside ? besideX : r.x();
         int top = beside ? y : y + face + 3;
         int ty = PageKit.title(f, Component.literal(route.name()), tx, top, r.right() - tx - (leader ? 12 : 0), t.accent());
