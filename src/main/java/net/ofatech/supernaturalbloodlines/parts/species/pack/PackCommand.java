@@ -55,6 +55,12 @@ public final class PackCommand {
         return ALLY_REQUESTS;
     }
 
+    /** A player logged out: the invitations and alliance requests they made or were sent are void, as a sire's call is. */
+    public static void forget(UUID player) {
+        REQUESTS.forget(player);
+        ALLY_REQUESTS.forget(player);
+    }
+
     public static void register(CommandDispatcher<CommandSourceStack> d) {
         // /pack is also a short word other mods use; /sb pack is the same tree under our own prefix (13d)
         com.mojang.brigadier.tree.LiteralCommandNode<CommandSourceStack> pack = d.register(Commands.literal("pack")

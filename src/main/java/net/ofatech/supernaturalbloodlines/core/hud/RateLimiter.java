@@ -14,6 +14,7 @@ public final class RateLimiter {
     private static final class Window {
         long start;
         int count;
+        long toldAt = Long.MIN_VALUE / 2;
     }
 
     private final Map<UUID, Window> windows = new ConcurrentHashMap<>();
@@ -27,6 +28,18 @@ public final class RateLimiter {
                 w.count = 0;
             }
             return ++w.count <= limitPerSecond;
+        }
+    }
+
+    /** True once per window for a player who is over the rate: a flood is told "too quick" once a second, not once per payload (the reply would double the flood). */
+    public boolean tellOnce(UUID player, long nowTick) {
+        Window w = windows.computeIfAbsent(player, k -> new Window());
+        synchronized (w) {
+            if (nowTick < w.toldAt || nowTick - w.toldAt >= WINDOW_TICKS) {
+                w.toldAt = nowTick;
+                return true;
+            }
+            return false;
         }
     }
 

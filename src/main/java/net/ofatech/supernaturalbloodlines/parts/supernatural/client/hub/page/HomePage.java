@@ -164,6 +164,13 @@ public final class HomePage implements HubPageView {
     /** The longest a request has been seen with, so its bar drains from full: the server sends only what is left. */
     private static final java.util.Map<String, Integer> PEAK = new java.util.HashMap<>();
 
+    /** Drops the peaks of requests that are no longer listed (and all of them when {@code open} is empty), so the map does not grow over a long session. */
+    public static void prunePeaks(List<HubRequests.Request> open) {
+        java.util.Set<String> keep = new java.util.HashSet<>();
+        open.forEach(q -> keep.add(q.token() + q.from()));
+        PEAK.keySet().retainAll(keep);
+    }
+
     private int card(HubScreen.Frame f, Rect r, int y, HubRequests.Request q) {
         HubTheme t = f.theme();
         String id = "stage:request:" + q.kind() + ":" + q.token() + q.from();

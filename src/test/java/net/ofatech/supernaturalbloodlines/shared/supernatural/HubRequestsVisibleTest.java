@@ -29,6 +29,16 @@ class HubRequestsVisibleTest {
     }
 
     @Test
+    void aHidingEndsWithItsRequestSoANewChallengeFromTheSamePersonShowsAgain() {
+        HubRequests.Request challenge = new HubRequests.Request(HubRequests.Kind.CHALLENGE, A, "Klaus", "", 600);
+        Set<String> hidden = Set.of(HubRequests.key(challenge), HubRequests.key(LIVE));
+        // the challenge is gone from what the server lists; the call is still there
+        assertEquals(Set.of(HubRequests.key(LIVE)), HubRequests.stillHidden(hidden, List.of(LIVE)));
+        assertEquals(Set.of(), HubRequests.stillHidden(hidden, List.of()));
+        assertEquals(List.of(challenge), HubRequests.visible(List.of(challenge), HubRequests.stillHidden(hidden, List.of()), r -> r.ticksLeft()));
+    }
+
+    @Test
     void aDuelIsNeverARequest() {
         assertEquals(List.of(), HubRequests.visible(List.of(DUEL), Set.of(), r -> r.ticksLeft()));
     }

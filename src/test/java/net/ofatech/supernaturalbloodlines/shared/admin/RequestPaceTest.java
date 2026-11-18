@@ -17,8 +17,15 @@ class RequestPaceTest {
 
     @Test
     void anOpenPageWithASnapshotDoesNotAskAndAReopenedOneDoes() {
-        assertFalse(RequestPace.due(0, 9000, true, 9016));
+        assertFalse(RequestPace.due(8000, 9000, true, 9016));
         assertTrue(RequestPace.due(0, 1000, true, 9016));
+    }
+
+    @Test
+    void anOpenPageKeepsAskingEveryTenSeconds() {
+        assertFalse(RequestPace.due(5000, 14_990, true, 14_999));
+        assertTrue(RequestPace.due(5000, 15_000, true, 15_001), "a long-open page never refreshed");
+        assertFalse(RequestPace.due(14_000, 15_000, true, 15_001), "the 1.5 s floor was broken");
     }
 }
 

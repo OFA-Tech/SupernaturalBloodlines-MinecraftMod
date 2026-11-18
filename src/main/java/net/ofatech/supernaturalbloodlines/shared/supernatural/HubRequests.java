@@ -35,6 +35,12 @@ public final class HubRequests {
         return all.stream().filter(r -> r.kind() != Kind.DUEL && !hidden.contains(key(r)) && ticksLeft.applyAsInt(r) > 0).toList();
     }
 
+    /** What a hidden key keeps hiding: only a request that is still in the list. A challenge has no token, so a new one from the same person has the same key as the old one; once the old is gone its hiding goes with it. */
+    public static java.util.Set<String> stillHidden(java.util.Set<String> hidden, List<Request> all) {
+        java.util.Set<String> open = all.stream().map(HubRequests::key).collect(java.util.stream.Collectors.toSet());
+        return hidden.stream().filter(open::contains).collect(java.util.stream.Collectors.toSet());
+    }
+
     /** How many open requests the player has hidden. */
     public static int hiddenCount(List<Request> all, java.util.Set<String> hidden, java.util.function.ToIntFunction<Request> ticksLeft) {
         return (int) all.stream().filter(r -> r.kind() != Kind.DUEL && hidden.contains(key(r)) && ticksLeft.applyAsInt(r) > 0).count();
