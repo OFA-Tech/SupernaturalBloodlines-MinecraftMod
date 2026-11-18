@@ -1,43 +1,25 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.ArrayList;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.List;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Set;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.ChatFormatting;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.network.chat.Component;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.resources.ResourceLocation;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.supernatural.TaskSpec;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubRites;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import org.jetbrains.annotations.Nullable;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 
 /**
  * Rites: your rite tasks (with their claim stamps), then this mod's rites the server has loaded, yours first ({@link HubRites}); the

@@ -1,37 +1,22 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import java.util.HashMap;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.List;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Map;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Optional;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.network.chat.Component;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.resources.ResourceLocation;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.hud.LoadoutTabModel;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hud.ClientIcons;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hud.LoadoutAccess;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 
 /**
  * Loadout for the Blood Moon and Tensura: "Your hand", six round slots with their keys (R F V / Z X C, left and right of the hotbar), and "Abilities you

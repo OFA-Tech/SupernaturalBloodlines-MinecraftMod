@@ -1,29 +1,18 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.List;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Locale;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.ChatFormatting;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.client.Minecraft;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.network.chat.Component;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 
 /**
  * Pack: your rank and the pack's members (from the snapshot: names, ranks, who is online) on the left; on the right the {@code /pack}

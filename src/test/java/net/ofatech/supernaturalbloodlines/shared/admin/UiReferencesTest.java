@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
-import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import org.junit.jupiter.api.Test;
 
 /**
