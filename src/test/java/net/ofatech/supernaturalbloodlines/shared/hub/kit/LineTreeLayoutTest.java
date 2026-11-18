@@ -131,13 +131,13 @@ class LineTreeLayoutTest {
         LineTree.Model free = models().get(2);
         for (Rect region : GRIMOIRE_REGIONS) {
             Map<String, Rect> g = LineTreeLayout.grimoire(region, free, LineTreeLayout.portraitFor(region, free));
-            assertTrue(g.get("line:you").y() - g.get("line:sire").bottom() >= LineTreeLayout.BREAK_GAP, "grimoire " + region + ": the gap above you is only " + (g.get("line:you").y() - g.get("line:sire").bottom()));
+            assertTrue(g.get("line:you").y() - g.get("line:sire").bottom() >= 10, "grimoire " + region + ": the gap above you is only " + (g.get("line:you").y() - g.get("line:sire").bottom()));
         }
         Rect region = new Rect(40, 36, 360, 190);
         Rect bar = new Rect(48, 232, 344, 38);
         Map<String, Rect> moon = LineTreeLayout.moon(region, bar, free);
-        assertTrue(moon.get("line:you").y() - moon.get("line:sire").bottom() >= LineTreeLayout.BREAK_GAP, "moon: the gap above you is " + (moon.get("line:you").y() - moon.get("line:sire").bottom()));
+        assertTrue(moon.get("line:you").y() - moon.get("line:sire").bottom() >= 10, "moon: the gap above you is " + (moon.get("line:you").y() - moon.get("line:sire").bottom()));
         Map<String, Rect> hex = LineTreeLayout.tensura(new Rect(100, 30, 250, 200), new Rect(358, 30, 126, 200), free);
-        assertTrue(hex.get("line:you").y() - hex.get("line:sire").bottom() >= LineTreeLayout.BREAK_GAP, "tensura: the gap above you is " + (hex.get("line:you").y() - hex.get("line:sire").bottom()));
+        assertTrue(hex.get("line:you").y() - hex.get("line:sire").bottom() >= 10, "tensura: the gap above you is " + (hex.get("line:you").y() - hex.get("line:sire").bottom()));
     }
 }
