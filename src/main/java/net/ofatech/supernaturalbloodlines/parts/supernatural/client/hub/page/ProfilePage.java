@@ -10,6 +10,8 @@ import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.ProfileClient;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient;
+import net.ofatech.supernaturalbloodlines.shared.hub.profile.DuelView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
@@ -93,6 +95,20 @@ public final class ProfilePage implements HubPageView {
         y = PageKit.title(f, Component.literal(route.name()), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 6;
+        var duel = duelWith(route.id());
+        if (duel.isPresent()) {
+            DuelView v = duel.get();
+            Component line = Component.translatable(v.langKey(), v.opponent().isEmpty() ? route.name() : v.opponent(), v.clock());
+            int h = f.font().split(line, r.w() - 8).size() * PageKit.LINE + 4;
+            f.g.fill(r.x(), y, r.right(), y + h, t.accent());
+            int yy = y + 2;
+            for (var l : f.font().split(line, r.w() - 8)) {
+                f.g.drawString(f.font(), l, r.x() + 4, yy, Contrast.bestText(t.accent()), false);
+                yy += PageKit.LINE;
+            }
+            f.target("panel:duel", new Rect(r.x(), y, r.w(), h), List.of(line), null);
+            y += h + 4;
+        }
         if (payload == null) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "loading"), r.x(), y, r.w(), t.muted());
         } else {
@@ -120,6 +136,13 @@ public final class ProfilePage implements HubPageView {
             sy = PageKit.wrapped(f, Component.translatable(KEY + "legend"), s.x(), sy, s.w(), t.ink());
             f.end(sy);
         }
+    }
+
+    /** The viewer's own duel when its opponent is this person; the clock counts down from what the server last said. */
+    static java.util.Optional<DuelView> duelWith(UUID subject) {
+        var d = RequestsClient.duel();
+        return d == null || !d.from().equals(subject) ? java.util.Optional.empty()
+                : DuelView.of(d.token(), d.fromName(), RequestsClient.ticksLeft(d));
     }
 
     private int fact(HubScreen.Frame f, Rect r, int y, Fact fact, ProfilePayload payload) {
@@ -171,7 +194,7 @@ public final class ProfilePage implements HubPageView {
                 HubPage.isWolfType(race), race == SupernaturalRace.ORIGINAL || race == SupernaturalRace.HYBRID || race == SupernaturalRace.ORIGINAL_HYBRID || race == SupernaturalRace.TRIBRID);
         boolean sire = snap.sire().filter(n -> !n.isEmpty()).flatMap(snap::idOf).filter(route.id()::equals).isPresent();
         boolean sired = snap.people().stream().anyMatch(p -> p.id().equals(route.id()) && snap.sired().contains(p.name()));
-        ProfileActions.Subject subject = new ProfileActions.Subject(route.id(), route.name(), isSelf, role, sired, sire);
+        ProfileActions.Subject subject = new ProfileActions.Subject(route.id(), route.name(), isSelf, role, sired, sire, duelWith(route.id()).isPresent());
         Detail.Builder d = Detail.of(Component.literal(route.name()));
         d.subtitle(isSelf ? Component.translatable(KEY + "you") : role == ProfileActions.Role.NONE ? Component.translatable(KEY + "no_bond")
                 : Component.translatable(PageKit.HUB + "pack.member." + role.name().toLowerCase(Locale.ROOT).replace("challenger", "coalpha_challenger")));

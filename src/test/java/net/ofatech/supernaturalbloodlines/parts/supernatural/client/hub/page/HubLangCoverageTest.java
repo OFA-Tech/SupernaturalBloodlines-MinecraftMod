@@ -72,6 +72,11 @@ class HubLangCoverageTest {
         }
         keys.add(H + "profile.disabled.leader");
         keys.add(H + "profile.disabled.true_alpha");
+        keys.add(H + "profile.disabled.in_duel");
+        for (var ph : net.ofatech.supernaturalbloodlines.shared.hub.profile.DuelView.Phase.values()) {
+            keys.add(H + "profile.duel." + lower(ph));
+        }
+        keys.add(H + "group.operator");
         for (String s : AdminEntries.SECTIONS) {
             keys.add(H + "admin.section." + s);
         }

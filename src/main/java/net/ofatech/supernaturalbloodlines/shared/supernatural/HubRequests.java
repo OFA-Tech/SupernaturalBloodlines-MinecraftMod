@@ -12,7 +12,8 @@ import net.minecraft.server.level.ServerPlayer;
  * Only what the chat line already told the player: who asked, the token that answers, the ticks left.
  */
 public final class HubRequests {
-    public enum Kind { SIRE_CALL, PACK_INVITE, ALLY_INVITE, CHALLENGE, COMPULSION }
+    /** DUEL is not a request: it is the player's own duel (token {@code asked}, {@code on} or {@code paused}), sent on the same channel so the Profile can show it. */
+    public enum Kind { SIRE_CALL, PACK_INVITE, ALLY_INVITE, CHALLENGE, COMPULSION, DUEL }
 
     /** The id used when nobody asked (a compulsion is the player's own). */
     public static final UUID NOBODY = new UUID(0, 0);

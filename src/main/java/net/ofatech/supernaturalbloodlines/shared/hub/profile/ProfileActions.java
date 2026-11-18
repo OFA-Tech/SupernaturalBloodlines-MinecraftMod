@@ -20,7 +20,10 @@ public final class ProfileActions {
     }
 
     /** @param self the viewer's own profile; {@code sired} one of the viewer's sired; {@code sire} the viewer's sire */
-    public record Subject(UUID id, String name, boolean self, Role role, boolean sired, boolean sire) {
+    public record Subject(UUID id, String name, boolean self, Role role, boolean sired, boolean sire, boolean inDuel) {
+        public Subject(UUID id, String name, boolean self, Role role, boolean sired, boolean sire) {
+            this(id, name, self, role, sired, sire, false);
+        }
     }
 
     public enum Kind { COMMAND, OPEN_RITES, OPEN_ADMIN }
@@ -66,7 +69,7 @@ public final class ProfileActions {
         }
         boolean inMyPack = v.inPack() && s.role() != Role.NONE && s.role() != Role.ALLY;
         if (v.coalpha() && s.role() == Role.LEADER) {
-            out.add(new Action("challenge", Kind.COMMAND, "P8", true, true, true, null, true));
+            out.add(new Action("challenge", Kind.COMMAND, "P8", true, true, !s.inDuel(), s.inDuel() ? "in_duel" : null, true));
         }
         if (v.leader() && s.role() == Role.CHALLENGER) {
             out.add(new Action("accept_duel", Kind.COMMAND, "P9", false, true, true, null, false));

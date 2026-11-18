@@ -27,7 +27,12 @@ public final class RequestsClient {
 
     /** What waits for an answer and has not been dismissed: Home, the badge and the toast all read this. */
     public static List<HubRequests.Request> requests() {
-        return requests.stream().filter(r -> !DISMISSED.contains(key(r))).toList();
+        return requests.stream().filter(r -> r.kind() != HubRequests.Kind.DUEL && !DISMISSED.contains(key(r))).toList();
+    }
+
+    /** The player's own duel, if any (it rides with the requests but is not one): the Profile of the opponent shows it. */
+    public static HubRequests.Request duel() {
+        return requests.stream().filter(r -> r.kind() == HubRequests.Kind.DUEL).findFirst().orElse(null);
     }
 
     private static String key(HubRequests.Request r) {

@@ -83,6 +83,19 @@ final class SpeciesHub {
                 out.add(new HubRequests.Request(HubRequests.Kind.CHALLENGE, d.challenger(), name == null ? "" : name, "", left(d.expires(), now)));
             });
         }
+        if (ModList.get().isLoaded("werewolves")) {
+            PackDuel.board().all().stream().filter(d -> d.involves(p.getUUID())).findFirst().ifPresent(d -> {
+                UUID other = d.other(p.getUUID());
+                boolean asked = d.phase() == net.ofatech.supernaturalbloodlines.core.bloodline.DuelBoard.Phase.ASKED;
+                if (asked && d.leader().equals(p.getUUID())) {
+                    return; // the one asked sees the challenge as a request
+                }
+                String name = PackAccess.nameOf(server, other);
+                String token = d.paused() ? "paused" : asked ? "asked" : "on";
+                long until = d.paused() ? d.awayEnd(d.pausedBy()) : d.expires();
+                out.add(new HubRequests.Request(HubRequests.Kind.DUEL, other, name == null ? "" : name, token, left(until, now)));
+            });
+        }
         for (var choice : Compulsion.openChoices(p.getUUID(), now)) {
             out.add(new HubRequests.Request(HubRequests.Kind.COMPULSION, HubRequests.NOBODY, "", choice.getKey(), left(choice.getValue(), now)));
         }
