@@ -93,6 +93,10 @@ public final class HubScreen extends Screen {
 
     @Override
     public void tick() {
+        // an open hub tells the server so now and then, or the server stops counting it as open
+        if (minecraft != null && minecraft.player != null && minecraft.player.tickCount % 400 == 0) {
+            HubClient.keepAlive();
+        }
         if (HubClientConfig.theme() != themeId) {
             applyTheme();
             scroll.clear();
@@ -730,6 +734,7 @@ public final class HubScreen extends Screen {
     @Override
     public void removed() {
         super.removed();
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackInvite.reset();
         HubClient.sendOpen(false);
     }
 

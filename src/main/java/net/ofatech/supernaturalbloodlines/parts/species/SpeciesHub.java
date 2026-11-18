@@ -131,7 +131,7 @@ final class SpeciesHub {
 
     /** Recorded as a creature, or one of the six NPC Originals. The top of a chain has no link of its own and no recorded type: it is taken for a player, as before. */
     private static boolean isCreature(SirelineIndex sirelines, UUID id) {
-        return NpcOriginal.byUuid(id).isPresent() || sirelines.entityTypeOf(id).map(t -> !"minecraft:player".equals(t)).orElse(false);
+        return sirelines.isCreature(id);
     }
 
     /** Where the player stands in a line (R120 to R127): the root only when they have discovered it, and never an undiscovered name. */

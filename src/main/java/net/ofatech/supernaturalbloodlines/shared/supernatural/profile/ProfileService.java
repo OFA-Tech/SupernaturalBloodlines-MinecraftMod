@@ -98,7 +98,8 @@ public final class ProfileService {
     private static Profile build(Source s, ServerPlayer observer, UUID subject, Relation relation, boolean opView) {
         Set<Fact> discovered = relation == Relation.OP_VIEW ? EnumSet.noneOf(Fact.class) : s.discovered(observer, subject, relation);
         final Relation used = relation;
-        return new Profile(subject, opView, relation == Relation.NPC_CREATURE || relation == Relation.NPC_ANCESTOR, ProfileView.build(relation, discovered, f -> s.read(observer, subject, used, f)));
+        Map<Fact, List<String>> facts = ProfileView.build(relation, discovered, f -> s.read(observer, subject, used, f));
+        return new Profile(subject, opView, ProfileView.npc(relation, facts), facts);
     }
 }
 

@@ -15,6 +15,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.shared.admin.AdminAccess;
 import net.ofatech.supernaturalbloodlines.shared.admin.AdminCommands;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
 
 /**
  * Runs a {@link HubCommandPayload}: the row must be in {@code AdminCommands}, the arguments must fit it, and the typed command runs as the
@@ -73,6 +74,14 @@ public final class HubCommands {
             SupernaturalBloodlines.LOGGER.warn("{} (permission {}) tried the OP command row {} from the hub and was refused", p.getGameProfile().getName(), level, row.get().id());
             return false;
         }
+        if (p.server.getCommands().getDispatcher().getRoot().getChild(row.get().root()) == null) {
+            reply.accept(failure(row.get().id(), "unavailable")); // the part that owns this command is off on this server
+            return false;
+        }
+        if (isClosedToken(p, row.get(), payload.args())) {
+            reply.accept(failure(row.get().id(), "answered"));
+            return false;
+        }
         Optional<String> command = AdminCommands.command(row.get(), payload.args(), uuid -> nameOrUuid(p, uuid));
         if (command.isEmpty()) {
             reply.accept(failure(row.get().id(), "bad_arguments"));
@@ -84,6 +93,18 @@ public final class HubCommands {
         p.server.getCommands().performPrefixedCommand(source, command.get());
         reply.accept(new HubCommandReplyPayload(row.get().id(), worked[0], capture.lines));
         return true;
+    }
+
+    /** A token the player already answered, or that ran out: nothing is open under it any more. Rows without a token, and a call that leaves an optional one out, are never closed. */
+    private static boolean isClosedToken(ServerPlayer p, AdminCommands.Row row, List<String> args) {
+        List<AdminCommands.Arg> form = row.args();
+        for (int i = 0; i < form.size() && i < args.size(); i++) {
+            if (form.get(i).name().equals("token") && !args.get(i).isEmpty()) {
+                String token = args.get(i);
+                return HubRequests.of(p).stream().noneMatch(r -> token.equals(r.token()));
+            }
+        }
+        return false;
     }
 
     /** The name of the player with this UUID if they are online (the commands that take a player argument want a name), else the UUID itself (the ones that take a member by string know it). */
@@ -98,8 +119,12 @@ public final class HubCommands {
 
     static void onCommand(HubCommandPayload payload, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            if (ctx.player() instanceof ServerPlayer p && AdminNet.allowedRate(p)) {
-                run(p, AdminNet.levelOf(p), payload, ServerPlayer::createCommandSourceStack, r -> PacketDistributor.sendToPlayer(p, r));
+            if (ctx.player() instanceof ServerPlayer p) {
+                if (AdminNet.allowedRate(p)) {
+                    run(p, AdminNet.levelOf(p), payload, ServerPlayer::createCommandSourceStack, r -> PacketDistributor.sendToPlayer(p, r));
+                } else {
+                    PacketDistributor.sendToPlayer(p, failure(payload.rowId(), "too_quick"));
+                }
             }
         });
     }

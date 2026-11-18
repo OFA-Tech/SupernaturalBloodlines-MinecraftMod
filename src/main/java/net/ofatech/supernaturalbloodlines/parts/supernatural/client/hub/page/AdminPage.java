@@ -63,6 +63,7 @@ public final class AdminPage implements HubPageView {
     @Nullable
     private AdminSnapshotPayload seen;
     private long lastRender;
+    private long lastSent;
     private UUID player;
     private String playerName = "";
     private int speciesAt;
@@ -105,10 +106,11 @@ public final class AdminPage implements HubPageView {
     public void render(HubScreen.Frame f) {
         HubTheme t = f.theme();
         long now = System.currentTimeMillis();
-        if (AdminClient.snapshot() == null || now - lastRender > 1500) {
+        if (net.ofatech.supernaturalbloodlines.shared.admin.RequestPace.due(lastSent, lastRender, AdminClient.snapshot() != null, now)) {
             var c = Minecraft.getInstance().getConnection();
             if (c != null && c.hasChannel(AdminRequestPayload.TYPE)) {
                 PacketDistributor.sendToServer(AdminRequestPayload.INSTANCE);
+                lastSent = now;
             }
         }
         lastRender = now;

@@ -43,6 +43,9 @@ public final class AdminNet {
             case NOT_OP -> SupernaturalBloodlines.LOGGER.warn("{} (permission {}) tried to change admin setting {} and was refused", p.getGameProfile().getName(), level, payload.id());
             case OK -> {
                 SupernaturalBloodlines.LOGGER.info("{} set {} = {}", p.getGameProfile().getName(), payload.id(), payload.value());
+                if (AdminEntries.find(AdminEntries.ALL, AdminEntries.RULES, payload.id()).map(SettingEntry::clientCopy).orElse(false)) {
+                    AdminSettings.clientCopySaved(p.server);
+                }
                 reply.accept(snapshot(Optional.of(AdminSnapshotPayload.Outcome.of(payload.id(), result))));
             }
             default -> {
@@ -67,6 +70,11 @@ public final class AdminNet {
                 PacketDistributor.sendToPlayer(p, snapshot(Optional.empty()));
             }
         });
+    }
+
+    /** A player left: their place in the rate limiter goes with them. */
+    public static void forget(java.util.UUID player) {
+        LIMITER.forget(player);
     }
 
     static boolean allowedRate(ServerPlayer p) {

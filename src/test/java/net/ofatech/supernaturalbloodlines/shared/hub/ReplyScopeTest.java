@@ -19,6 +19,14 @@ class ReplyScopeTest {
     }
 
     @Test
+    void theDebugRowsAreExactlyTheAdminActionsOfTheCommandTable() {
+        for (var r : net.ofatech.supernaturalbloodlines.shared.admin.AdminCommands.ALL) {
+            assertTrue(ReplyScope.isDebug(r.id()) == (r.ui() == net.ofatech.supernaturalbloodlines.shared.admin.AdminCommands.Ui.ADMIN_ACTION), r.id());
+        }
+        assertFalse(ReplyScope.isDebug("nonsense"));
+    }
+
+    @Test
     void aPlayersOwnCommandsAnswerWhereTheyWereRun() {
         for (String row : new String[] {"B3", "B4", "P1", "P3", "P8", "P15"}) {
             for (HubPage p : HubPage.values()) {

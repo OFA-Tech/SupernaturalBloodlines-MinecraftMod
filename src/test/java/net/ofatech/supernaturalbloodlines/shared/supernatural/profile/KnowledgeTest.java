@@ -22,7 +22,7 @@ class KnowledgeTest {
         DOC.put(Relation.OTHER_IN_LINE,    "K K ? ? ? ? ? ? ? ? ? ?");
         DOC.put(Relation.NPC_CREATURE,     "K K ? ? ? ? ? ? ? ? ? ?");
         DOC.put(Relation.NPC_ANCESTOR,     "D ? ? ? ? ? ? ? ? ? ? ?");
-        DOC.put(Relation.STRANGER,         "K ? ? ? ? ? K ? ? ? ? ?");
+        DOC.put(Relation.STRANGER,         "? ? ? ? ? ? ? ? ? ? ? ?");
         DOC.put(Relation.STRANGER_OFFLINE, "? ? ? ? ? ? ? ? ? ? ? ?");
         DOC.put(Relation.OP_VIEW,          "K K K K K K K K K K K K");
     }
@@ -56,10 +56,10 @@ class KnowledgeTest {
     }
 
     @Test
-    void aStrangerKnowsNothingBeyondTheNameAndTheOnlineDot() {
+    void aStrangerKnowsNothing() {
+        // the client already has a stranger's name and online dot from its own player list, so the table has no exception to make
         for (Fact f : Fact.values()) {
-            boolean known = f == Fact.NAME || f == Fact.PRESENCE;
-            assertEquals(known ? Visibility.KNOWN : Visibility.UNKNOWN, Knowledge.visible(Relation.STRANGER, f), f.name());
+            assertEquals(Visibility.UNKNOWN, Knowledge.visible(Relation.STRANGER, f), f.name());
         }
     }
 

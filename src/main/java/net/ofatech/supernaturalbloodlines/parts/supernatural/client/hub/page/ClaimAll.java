@@ -10,6 +10,17 @@ import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
 final class ClaimAll {
     private ClaimAll() {}
 
+    /** How long the button stays shut after a press when the server never answers. */
+    static final long TIMEOUT_MS = 5000;
+
+    /**
+     * Whether a press is still waiting for the server: some task that was sent is still claimable in what the client has, and it was sent a moment ago.
+     * Until then the button stays shut, so one press cannot be sent twice.
+     */
+    static boolean waiting(Set<String> sent, long sentAt, List<String> claimableNow, long now) {
+        return !sent.isEmpty() && now - sentAt < TIMEOUT_MS && claimableNow.stream().anyMatch(sent::contains);
+    }
+
     static List<String> ids(List<HubModel.LadderView> ladders) {
         Set<String> out = new LinkedHashSet<>();
         for (HubModel.LadderView l : ladders) {

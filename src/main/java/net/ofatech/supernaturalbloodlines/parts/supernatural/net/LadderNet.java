@@ -36,7 +36,10 @@ public final class LadderNet {
     public static void register(IEventBus modBus) {
         modBus.addListener(LadderNet::onRegister);
         NeoForge.EVENT_BUS.addListener((OnDatapackSyncEvent e) -> e.getRelevantPlayers().forEach(LadderNet::sendTable));
-        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> HubPresence.forget(e.getEntity().getUUID()));
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
+            HubPresence.forget(e.getEntity().getUUID());
+            AdminNet.forget(e.getEntity().getUUID());
+        });
         // a request opened or answered reaches the player now (the toast needs it with the hub closed), not at the next hub open
         HubRequests.onChanged(LadderNet::sendRequests);
     }
@@ -63,6 +66,9 @@ public final class LadderNet {
                 }));
         registrar.playToServer(HubSnapshotRequestPayload.TYPE, HubSnapshotRequestPayload.STREAM_CODEC, (payload, ctx) ->
                 ctx.enqueueWork(() -> {
+                    if (ctx.player() instanceof ServerPlayer p) {
+                        HubPresence.touch(p.getUUID());
+                    }
                     if (ctx.player() instanceof ServerPlayer p && snapshotDue(p)) {
                         PacketDistributor.sendToPlayer(p, HubSnapshotPayload.of(p));
                         sendRequests(p);

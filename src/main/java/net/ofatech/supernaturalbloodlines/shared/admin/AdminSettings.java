@@ -32,7 +32,19 @@ public final class AdminSettings {
         void setRule(SettingEntry rule, Object boxed);
     }
 
+    private static final List<java.util.function.Consumer<net.minecraft.server.MinecraftServer>> CLIENT_COPY_SAVED = new java.util.concurrent.CopyOnWriteArrayList<>();
+
     private AdminSettings() {}
+
+    /** A part that has COMMON keys its clients also read calls this to push them at once when the hub saves one (the file watcher would only get there later). */
+    public static void onClientCopySaved(java.util.function.Consumer<net.minecraft.server.MinecraftServer> listener) {
+        CLIENT_COPY_SAVED.add(listener);
+    }
+
+    /** The real handler calls it after a successful save of a key whose {@link SettingEntry#clientCopy()} is set. */
+    public static void clientCopySaved(net.minecraft.server.MinecraftServer server) {
+        CLIENT_COPY_SAVED.forEach(l -> l.accept(server));
+    }
 
     public static Result apply(int permissionLevel, String id, SettingValue value, Writer writer) {
         return apply(AdminEntries.ALL, AdminEntries.RULES, permissionLevel, id, value, writer);

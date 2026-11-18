@@ -16,7 +16,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class AdminCommands {
     /** Where the player or the OP uses it. */
-    public enum Ui { HUB_BUTTON, ADMIN_ACTION, CHAT_ONLY }
+    /** {@code PAGE}: the command only shows something (the tree, the pack info), which its page already draws, so it has no button of its own. */
+    public enum Ui { HUB_BUTTON, ADMIN_ACTION, CHAT_ONLY, PAGE }
 
     /** @param level the permission level Brigadier asks; {@code reason} is why a {@code CHAT_ONLY} row has no button; {@code page} is the hub place that holds it */
     public record Row(String id, String form, int level, Ui ui, @Nullable String reason, String page) {
@@ -62,6 +63,7 @@ public final class AdminCommands {
         private static final Pattern UUID_TEXT = Pattern.compile("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
         private static final Pattern NAME = Pattern.compile("[A-Za-z0-9_.-]{1,32}");
         private static final Pattern TOKEN = Pattern.compile("[0-9a-f]{8}");
+        private static final Pattern INTEGER = Pattern.compile("-?\\d+");
         private static final Pattern WORD = Pattern.compile("[A-Za-z0-9_:.-]{1,64}");
 
         public boolean isPerson() {
@@ -83,6 +85,10 @@ public final class AdminCommands {
                 case "token" -> TOKEN.matcher(value).matches();
                 case "value" -> value.equals("true") || value.equals("false");
                 case "n" -> {
+                    // Brigadier's integer reader takes a leading "-" but not "+", and no spaces: Integer.parseInt alone would let "+5" through
+                    if (!INTEGER.matcher(value).matches()) {
+                        yield false;
+                    }
                     try {
                         Integer.parseInt(value);
                         yield true;
@@ -98,7 +104,7 @@ public final class AdminCommands {
     private static final String ROOT = "supernaturalbloodlines debug";
 
     public static final List<Row> ALL = List.of(
-            row("B1", "bloodline tree", 0, Ui.HUB_BUTTON, "BLOODLINE"),
+            row("B1", "bloodline tree", 0, Ui.PAGE, "BLOODLINE"),
             row("B2", "bloodline tree <player>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("B3", "bloodline call", 0, Ui.HUB_BUTTON, "BLOODLINE"),
             row("B4", "bloodline accept <token>", 0, Ui.HUB_BUTTON, "REQUESTS"),
@@ -116,7 +122,7 @@ public final class AdminCommands {
             row("P9", "pack challenge accept", 0, Ui.HUB_BUTTON, "PACK"),
             row("P10", "pack challenge decline", 0, Ui.HUB_BUTTON, "PACK"),
             row("P11", "pack heal <player>", 0, Ui.HUB_BUTTON, "PACK"),
-            row("P12", "pack info", 0, Ui.HUB_BUTTON, "PACK"),
+            row("P12", "pack info", 0, Ui.PAGE, "PACK"),
             row("P13", "pack emissary [player]", 0, Ui.HUB_BUTTON, "PACK"),
             row("P14", "pack roar", 0, Ui.HUB_BUTTON, "PACK"),
             row("P15", "pack anchor [player]", 0, Ui.HUB_BUTTON, "PACK"),

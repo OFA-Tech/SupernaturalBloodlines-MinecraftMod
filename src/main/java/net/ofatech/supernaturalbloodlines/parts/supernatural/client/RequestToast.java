@@ -54,10 +54,8 @@ public final class RequestToast {
         int h = lines.size() * 10 + 2 * PAD - 1;
         g.fill(X, Y, X + W, Y + h, PAPER);
         for (int i = 0; i < lines.size(); i++) {
-            for (var line : font.split(lines.get(i), W - 2 * PAD)) {
-                g.drawString(font, line, X + PAD, Y + PAD + i * 10, i == 0 ? INK : MUTED, false);
-                break;
-            }
+            // a line that does not fit ends in an ellipsis, as everywhere in the hub, instead of being cut off silently
+            g.drawString(font, net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(lines.get(i).getString(), W - 2 * PAD, font::width), X + PAD, Y + PAD + i * 10, i == 0 ? INK : MUTED, false);
         }
     }
 }

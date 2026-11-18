@@ -23,14 +23,19 @@ public final class ProfileView {
         }
         for (Fact f : Fact.values()) {
             boolean base = Knowledge.visible(relation, f) == Visibility.KNOWN;
-            if (relation == Relation.STRANGER) {
-                base = false;
-            }
             if (base || discovered.contains(f)) {
                 out.add(f);
             }
         }
         return out;
+    }
+
+    /**
+     * Whether the profile says "this is an NPC": only when some fact is sent, so an NPC Original the observer has not discovered answers exactly like
+     * a stranger (the flag alone would name the Original).
+     */
+    public static boolean npc(Relation relation, Map<Fact, List<String>> facts) {
+        return (relation == Relation.NPC_CREATURE || relation == Relation.NPC_ANCESTOR) && !facts.isEmpty();
     }
 
     /** The facts to send, each with its value parts: an empty list is an explicit "none" (no pack, no sire), an absent fact is unknown. */

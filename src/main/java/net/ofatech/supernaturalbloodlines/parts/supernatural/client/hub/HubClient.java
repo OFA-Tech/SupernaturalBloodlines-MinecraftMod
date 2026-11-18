@@ -45,6 +45,7 @@ public final class HubClient {
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> {
             snapshot = HubSnapshotPayload.EMPTY;
             RETURN.clear();
+            RequestsClient.clear();
         });
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Opening e) -> {
             if (e.getNewScreen() instanceof DeathScreen) {
@@ -178,6 +179,14 @@ public final class HubClient {
     public static void newSession() {
         openedThisSession = false;
         lastPage = HubPage.HOME;
+    }
+
+    /** Asks for a snapshot again: the server takes that as "still open" (see {@code HubPresence}). */
+    static void keepAlive() {
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null && DevShots.demo() == null && connection.hasChannel(HubSnapshotRequestPayload.TYPE)) {
+            PacketDistributor.sendToServer(HubSnapshotRequestPayload.INSTANCE);
+        }
     }
 
     static void open(HubPage page) {

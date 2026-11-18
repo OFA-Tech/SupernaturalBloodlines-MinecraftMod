@@ -316,6 +316,85 @@ public final class WerewolfBiteGameTests {
         helper.succeed();
     }
 
+    /** A packmate's profile of a pack-mate carries the days in the pack (from the pack index's join time) and the Alpha rank's bonus (the numbers the rank really sets). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPackmatesProfileCarriesDaysInThePackAndTheBonus(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer member = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, member);
+        long[] now = {1_000_000_000_000L};
+        net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.overrideClock(() -> now[0]);
+        try {
+            helper.assertTrue(joinPack(alpha, member), "the pack could not be built");
+            now[0] += 3 * 86_400_000L + 1000;
+            var ofAlpha = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(member, alpha.getUUID()).facts();
+            var ofMember = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts();
+            var days = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.PACK_DAYS;
+            var bonus = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.BONUS;
+            helper.assertTrue(List.of("3").equals(ofMember.get(days)), "the member's days in the pack were " + ofMember.get(days));
+            helper.assertTrue(List.of("3").equals(ofAlpha.get(days)), "the pack's age was " + ofAlpha.get(days));
+            var expected = net.ofatech.supernaturalbloodlines.parts.species.pack.RankEffects.bonusText(net.ofatech.supernaturalbloodlines.core.BloodlineAccess.get(alpha).wolf(), true);
+            helper.assertTrue(expected.isPresent() && List.of(expected.get()).equals(ofAlpha.get(bonus)), "the Alpha's bonus was " + ofAlpha.get(bonus) + " not " + expected);
+            helper.assertTrue(!ofMember.containsKey(bonus), "an Omega was shown a bonus: " + ofMember.get(bonus));
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.overrideClock(System::currentTimeMillis);
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, member);
+        }
+        helper.succeed();
+    }
+
+    /** An NPC Original the observer has not discovered answers like a stranger: no facts and no NPC flag (the flag alone would name the Original); once discovered it is an NPC. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anUndiscoveredNpcOriginalAnswersLikeAStranger(GameTestHelper helper) {
+        ServerPlayer me = wolf(helper, Rank.ALPHA, null);
+        lookup(me);
+        java.util.UUID original = net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.values()[0].uuid();
+        var sirelines = net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel());
+        var name = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.NAME;
+        try {
+            sirelines.add(original, me.getUUID(), "minecraft:player", "Me");
+            var before = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(me, original);
+            helper.assertTrue(!before.npc() && before.facts().isEmpty(), "an undiscovered Original was told: npc=" + before.npc() + " " + before.facts());
+            net.ofatech.supernaturalbloodlines.parts.species.profile.ProfileKnowledge.get(helper.getLevel()).discover(null, me.getUUID(), original, java.util.Set.of(name));
+            var after = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(me, original);
+            helper.assertTrue(after.npc() && after.facts().containsKey(name), "a discovered Original was not shown: npc=" + after.npc() + " " + after.facts());
+        } finally {
+            sirelines.remove(me.getUUID());
+            SireCall.overridePlayerLookup(null);
+            clean(me);
+        }
+        helper.succeed();
+    }
+
+    /** The sire fact never names an NPC Original or a creature (the hub's own Bloodline page shows those as "?"), and a pack-mate's genes are only the ones that player has discovered. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aProfileNeverNamesACreatureSireOrUndiscoveredGenes(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer member = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, member);
+        var sirelines = net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel());
+        java.util.UUID original = net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.values()[0].uuid();
+        var sire = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SIRE;
+        var genes = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.GENES;
+        try {
+            helper.assertTrue(joinPack(alpha, member), "the pack could not be built");
+            sirelines.add(original, member.getUUID(), "minecraft:player", "Member");
+            var ofMember = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts();
+            helper.assertTrue(!ofMember.containsKey(sire), "an NPC Original sire was named: " + ofMember.get(sire));
+            // the member's werewolf gene is rolled (wolf() sets it) but undiscovered: a packmate learns it only through a discovery, and then only what was discovered
+            net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(member, net.ofatech.supernaturalbloodlines.core.BloodlineAccess.get(member).toBuilder()
+                    .revealedGenes(java.util.Set.of(net.ofatech.supernaturalbloodlines.core.bloodline.Genes.WEREWOLF)).build());
+            var shown = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts().get(genes);
+            helper.assertTrue(shown != null && shown.contains("doppelganger:unknown") && shown.stream().anyMatch(g -> g.startsWith("werewolf:") && !g.endsWith(":unknown")), "the genes shown were " + shown);
+        } finally {
+            sirelines.remove(member.getUUID());
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, member);
+        }
+        helper.succeed();
+    }
+
     /**
      * Hub IA 3.7: what an observer may learn of a person comes from the server's own indexes. A stranger gets no fields at all, a pack-mate
      * the pack's facts, and a secret (genes) only once somebody has discovered it; the pack's pool teaches a newcomer, and leaving keeps it.

@@ -31,6 +31,17 @@ class AdminCommandsTest {
     }
 
     @Test
+    void aNumberArgumentMatchesWhatBrigadierReads() {
+        AdminCommands.Arg n = new AdminCommands.Arg("n", false);
+        for (String ok : new String[] {"5", "-5", "0", "-0"}) {
+            assertTrue(n.accepts(ok), ok);
+        }
+        for (String bad : new String[] {"+5", " 5", "5 ", "5.0", "0x5", "", "-", "99999999999"}) {
+            assertFalse(n.accepts(bad), "[" + bad + "]");
+        }
+    }
+
+    @Test
     void aChatOnlyRowSaysWhy() {
         for (AdminCommands.Row r : AdminCommands.ALL) {
             if (r.ui() == AdminCommands.Ui.CHAT_ONLY) {

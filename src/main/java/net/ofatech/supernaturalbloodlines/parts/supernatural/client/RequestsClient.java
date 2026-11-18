@@ -27,7 +27,16 @@ public final class RequestsClient {
 
     /** What waits for an answer and has not been dismissed: Home, the badge and the toast all read this. */
     public static List<HubRequests.Request> requests() {
-        return requests.stream().filter(r -> r.kind() != HubRequests.Kind.DUEL && !DISMISSED.contains(key(r))).toList();
+        return HubRequests.visible(requests, DISMISSED, RequestsClient::ticksLeft);
+    }
+
+    /** How many open requests are hidden: Home offers to show them again. */
+    public static int hiddenCount() {
+        return HubRequests.hiddenCount(requests, DISMISSED, RequestsClient::ticksLeft);
+    }
+
+    public static void showHidden() {
+        DISMISSED.clear();
     }
 
     /** The player's own duel, if any (it rides with the requests but is not one): the Profile of the opponent shows it. */
@@ -36,10 +45,10 @@ public final class RequestsClient {
     }
 
     private static String key(HubRequests.Request r) {
-        return r.kind() + ":" + r.from() + ":" + r.token();
+        return HubRequests.key(r);
     }
 
-    /** Hides a card on this client only: an invitation has no decline command, so declining is waiting or dismissing. */
+    /** Hides a card on this client only (it comes back with "Show hidden" or when it is asked again): an invitation has no decline command, so declining is waiting or hiding. */
     public static void dismiss(HubRequests.Request r) {
         DISMISSED.add(key(r));
     }

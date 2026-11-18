@@ -25,6 +25,21 @@ public final class HubRequests {
     public record Request(Kind kind, UUID from, String fromName, String token, int ticksLeft) {
     }
 
+    /** What identifies a card on the client: kind, who asked and the token. */
+    public static String key(Request r) {
+        return r.kind() + ":" + r.from() + ":" + r.token();
+    }
+
+    /** What the hub and the toast show: no duel (it rides along but is not a request), nothing hidden by the player, nothing whose time has run out. */
+    public static List<Request> visible(List<Request> all, java.util.Set<String> hidden, java.util.function.ToIntFunction<Request> ticksLeft) {
+        return all.stream().filter(r -> r.kind() != Kind.DUEL && !hidden.contains(key(r)) && ticksLeft.applyAsInt(r) > 0).toList();
+    }
+
+    /** How many open requests the player has hidden. */
+    public static int hiddenCount(List<Request> all, java.util.Set<String> hidden, java.util.function.ToIntFunction<Request> ticksLeft) {
+        return (int) all.stream().filter(r -> r.kind() != Kind.DUEL && hidden.contains(key(r)) && ticksLeft.applyAsInt(r) > 0).count();
+    }
+
     private static volatile Function<ServerPlayer, List<Request>> source = p -> List.of();
     private static volatile Consumer<ServerPlayer> changed = p -> { };
 

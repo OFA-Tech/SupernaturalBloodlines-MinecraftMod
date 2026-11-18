@@ -64,6 +64,8 @@ public final class SpeciesTensuraSync {
                 server.execute(() -> server.getPlayerList().getPlayers().forEach(SpeciesTensuraSync::send));
             }
         });
+        // the hub saved one of the keys clients read: no waiting for the file watcher
+        net.ofatech.supernaturalbloodlines.shared.admin.AdminSettings.onClientCopySaved(server -> server.execute(() -> server.getPlayerList().getPlayers().forEach(SpeciesTensuraSync::send)));
         if (FMLEnvironment.dist.isClient()) {
             SpeciesTensuraClient.register();
         }

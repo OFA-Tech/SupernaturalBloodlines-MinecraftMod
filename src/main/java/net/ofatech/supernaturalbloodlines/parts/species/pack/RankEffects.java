@@ -78,11 +78,7 @@ public final class RankEffects {
         if (rank != Rank.OMEGA && SUPPRESSORS.stream().anyMatch(s -> s.test(p))) {
             rank = Rank.NONE;
         }
-        double scale = rank == Rank.TRUE_ALPHA ? TRUE_ALPHA_SCALE : 1;
-        // every spark stacked on the first adds 10% to the Alpha bonuses (the Deucalion factor)
-        if (werewolf) {
-            scale *= PackRules.sparkScale(wolf.sparks(), SpeciesConfig.maxStackedSparks());
-        }
+        double scale = alphaScale(rank, werewolf ? wolf.sparks() : -1, SpeciesConfig.maxStackedSparks());
         boolean alpha = rank == Rank.ALPHA || rank == Rank.TRUE_ALPHA;
         set(p, Attributes.ATTACK_DAMAGE, rank == Rank.OMEGA ? OMEGA_PENALTY : alpha ? round(ALPHA_ATTACK * scale) : 0, Operation.ADD_MULTIPLIED_TOTAL);
         set(p, Attributes.MOVEMENT_SPEED, rank == Rank.OMEGA ? OMEGA_PENALTY : 0, Operation.ADD_MULTIPLIED_TOTAL);
@@ -90,6 +86,31 @@ public final class RankEffects {
         if (p.getHealth() > p.getMaxHealth()) {
             p.setHealth(p.getMaxHealth());
         }
+    }
+
+    /** What the Alpha bonuses are multiplied by: the True Alpha's 1.1, and +10% for every spark stacked on the first (the Deucalion factor); a negative {@code sparks} means no werewolf faction. */
+    public static double alphaScale(Rank rank, int sparks, int cap) {
+        double scale = rank == Rank.TRUE_ALPHA ? TRUE_ALPHA_SCALE : 1;
+        return sparks < 0 ? scale : scale * PackRules.sparkScale(sparks, cap);
+    }
+
+    /** The pack bonus a wolf's rank gives, as the hub words it ("+20% attack, +4 max health"); empty when the rank gives none. The same numbers {@link #apply} sets. */
+    public static java.util.Optional<String> bonusText(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf, boolean werewolf) {
+        Rank rank = werewolf ? wolf.rank() : Rank.NONE;
+        if (rank != Rank.ALPHA && rank != Rank.TRUE_ALPHA) {
+            return java.util.Optional.empty();
+        }
+        double scale = alphaScale(rank, wolf.sparks(), SpeciesConfig.maxStackedSparks());
+        return java.util.Optional.of(bonusText(round(ALPHA_ATTACK * scale), round(ALPHA_HEALTH * scale)));
+    }
+
+    /** {@code attack} is a fraction (0.24), {@code health} hearts-points (4.8): "+24% attack, +4.8 max health". */
+    public static String bonusText(double attack, double health) {
+        return "+" + trim(Math.round(attack * 1000) / 10.0) + "% attack, +" + trim(health) + " max health";
+    }
+
+    private static String trim(double v) {
+        return v == Math.rint(v) ? Long.toString((long) v) : Double.toString(Math.round(v * 10) / 10.0);
     }
 
     private static double round(double v) {

@@ -20,12 +20,17 @@ import net.ofatech.supernaturalbloodlines.shared.hub.profile.Pickable;
  * The Invite and Ally controls of the Pack page: two buttons and, under the one pressed, a list of the players online (nearest first). A pick sends the
  * same server-checked command as the typed one ({@code pack invite <player>}, {@code pack ally invite <player>}); the server says why when it refuses.
  */
-final class PackInvite {
+public final class PackInvite {
     private enum Mode { NONE, INVITE, ALLY }
 
     private static Mode mode = Mode.NONE;
 
     private PackInvite() {}
+
+    /** The hub closed: the next one starts with no picker open. */
+    public static void reset() {
+        mode = Mode.NONE;
+    }
 
     /** True while a picker is open. */
     static boolean picking() {
@@ -56,7 +61,7 @@ final class PackInvite {
         HubTheme t = f.theme();
         String key = PageKit.HUB + "pack.";
         Component title = Component.translatable(key + (mode == Mode.INVITE ? "invite_who" : "ally_who"));
-        List<Pickable.Person> people = Pickable.of(online(), f.view.player().getUUID(), mode == Mode.INVITE ? members : Set.of());
+        List<Pickable.Person> people = Pickable.of(online(), f.view.player().getUUID(), members);
         int pad = card ? 4 : 0;
         Rect in = new Rect(r.x() + pad, y + pad, r.w() - 2 * pad, 0);
         List<Integer> pw = people.stream().map(p -> PageWidgets.widthOf(f.font(), Component.literal(p.name()))).toList();

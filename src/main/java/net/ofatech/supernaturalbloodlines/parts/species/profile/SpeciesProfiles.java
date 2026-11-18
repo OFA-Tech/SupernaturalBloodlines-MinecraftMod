@@ -18,6 +18,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.line.Lines;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.RankEffects;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact;
@@ -135,14 +137,34 @@ public final class SpeciesProfiles implements ProfileService.Source {
                     : Optional.ofNullable(who).map(w -> List.of(BloodlineAccess.get(w).species().name()));
             case RANK -> relation == Relation.ALLY_LEADER ? Optional.of(List.of("ally")) : Optional.ofNullable(who).map(w -> List.of(rank(w, packs)));
             case LEVEL -> Optional.ofNullable(who).map(w -> List.of(Integer.toString(VampirismAPI.factionPlayerHandler(w).getCurrentLevel())));
+            case PACK_DAYS -> packs == null ? Optional.empty() : packs.inPackSince(subject).map(since -> List.of(Long.toString(daysSince(since))));
+            case BONUS -> who == null ? Optional.empty() : RankEffects.bonusText(PackAccess.wolf(who), VampirismSupernatural.isWerewolf(who)).map(List::of);
             case PACK -> packs == null ? Optional.empty() : Optional.of(packs.inPack(subject) ? List.of(String.valueOf(nameOf(server, packs.leaderOf(subject)))) : List.of());
             case PRESENCE -> Optional.of(List.of(who != null ? "online" : "offline"));
-            case SIRE -> Optional.of(SirelineIndex.get(observer.serverLevel()).sireOf(subject).map(id -> List.of(String.valueOf(nameOf(server, id)))).orElse(List.of()));
+            case SIRE -> sire(observer, subject);
             case LINE -> line(observer, subject, relation);
             case GENES -> genes(observer, who, relation);
             case ANCHOR -> packs == null ? Optional.empty() : Optional.of(packs.anchorOf(subject).map(id -> List.of(String.valueOf(nameOf(server, id)))).orElse(List.of()));
             default -> Optional.empty();
         };
+    }
+
+    /** Whole days from {@code since} (wall-clock millis) to now; never negative. */
+    static long daysSince(long since) {
+        return Math.max(0, (PackIndex.now() - since) / 86_400_000L);
+    }
+
+    /** The sire's name; "none" for no sire, and nothing (shown as "?") when the sire is an NPC Original or a creature: the same rule the hub's own Bloodline page uses. */
+    private static Optional<List<String>> sire(ServerPlayer observer, UUID subject) {
+        SirelineIndex sirelines = SirelineIndex.get(observer.serverLevel());
+        Optional<UUID> sire = sirelines.sireOf(subject);
+        if (sire.isEmpty()) {
+            return Optional.of(List.of());
+        }
+        if (sirelines.isCreature(sire.get())) {
+            return Optional.empty();
+        }
+        return Optional.of(List.of(String.valueOf(nameOf(observer.server, sire.get()))));
     }
 
     @Nullable
@@ -177,12 +199,9 @@ public final class SpeciesProfiles implements ProfileService.Source {
         if (who == null) {
             return Optional.empty();
         }
-        BloodlineState state = BloodlineAccess.get(who);
-        if (relation == Relation.SELF) {
-            BloodlineState view = BloodlineAccess.clientView(state, true);
-            return Optional.of(Genes.ALL.stream().map(g -> g + ":" + Genes.ofClient(view, g).name().toLowerCase(java.util.Locale.ROOT)).toList());
-        }
-        return Optional.of(List.of(Genes.WEREWOLF + ":" + state.wolf().latentGene(), Genes.DOPPELGANGER + ":" + state.doppelgangerGene()));
+        // only the genes the subject has themselves discovered (Genes.forClient), for the subject and for a packmate alike: a gene nobody has found stays "unknown"
+        BloodlineState view = BloodlineAccess.clientView(BloodlineAccess.get(who), true);
+        return Optional.of(Genes.ALL.stream().map(g -> g + ":" + Genes.ofClient(view, g).name().toLowerCase(java.util.Locale.ROOT)).toList());
     }
 }
 

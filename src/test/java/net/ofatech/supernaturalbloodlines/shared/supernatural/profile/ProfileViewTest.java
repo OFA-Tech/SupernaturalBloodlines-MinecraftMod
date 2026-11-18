@@ -27,6 +27,22 @@ class ProfileViewTest {
     }
 
     @Test
+    void aDiscoveredFactIsShownWhateverTheRelationsLetterSays() {
+        // the table says "?" for an ally's level genes; a discovery (a pooled one, an ability) still shows it
+        assertEquals(EnumSet.of(Fact.NAME, Fact.SPECIES, Fact.RANK, Fact.PACK, Fact.PACK_DAYS, Fact.PRESENCE, Fact.GENES), ProfileView.shown(Relation.ALLY_LEADER, EnumSet.of(Fact.GENES)));
+        assertEquals(EnumSet.of(Fact.GENES), ProfileView.shown(Relation.STRANGER, EnumSet.of(Fact.GENES)));
+        assertFalse(ProfileView.shown(Relation.ALLY_LEADER, NOTHING).contains(Fact.GENES));
+    }
+
+    @Test
+    void theNpcFlagIsSentOnlyWithFactsSoAnUndiscoveredOriginalLooksLikeAStranger() {
+        assertFalse(ProfileView.npc(Relation.NPC_ANCESTOR, Map.of()), "the flag alone names the Original");
+        assertTrue(ProfileView.npc(Relation.NPC_ANCESTOR, Map.of(Fact.NAME, List.of("x"))));
+        assertTrue(ProfileView.npc(Relation.NPC_CREATURE, Map.of(Fact.NAME, List.of("x"))));
+        assertFalse(ProfileView.npc(Relation.STRANGER, Map.of(Fact.NAME, List.of("x"))));
+    }
+
+    @Test
     void aStrangersProfileHasNoFieldsAndNothingWasEvenRead() {
         Reader r = new Reader();
         assertTrue(ProfileView.build(Relation.STRANGER, NOTHING, r).isEmpty());

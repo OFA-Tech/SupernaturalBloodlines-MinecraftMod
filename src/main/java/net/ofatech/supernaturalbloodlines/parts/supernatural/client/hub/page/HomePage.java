@@ -67,6 +67,9 @@ public final class HomePage implements HubPageView {
         f.end(sy);
     }
 
+    private java.util.Set<String> claimSent = java.util.Set.of();
+    private long claimSentAt;
+
     private static int section(HubScreen.Frame f, Rect r, int y, String key) {
         return PageKit.wrapped(f, Component.translatable(KEY + key).withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), f.theme().accent());
     }
@@ -79,10 +82,16 @@ public final class HomePage implements HubPageView {
         if (ready.isEmpty()) {
             return PageKit.wrapped(f, Component.translatable(KEY + "caught_up"), r.x(), y, r.w(), t.muted());
         }
-        y = PageKit.wrapped(f, Component.translatable(KEY + "ready", ready.size()), r.x(), y, r.w(), t.ink());
+        boolean waiting = ClaimAll.waiting(claimSent, claimSentAt, ready, System.currentTimeMillis());
+        // one summary line: what is ready, or that it was sent and the server has not answered yet
+        y = PageKit.wrapped(f, waiting ? Component.translatable(KEY + "claiming", claimSent.size()) : Component.translatable(KEY + "ready", ready.size()), r.x(), y, r.w(), t.ink());
         Component label = Component.translatable(KEY + "claim_all");
         Rect b = new Rect(r.x(), y + 2, Math.min(r.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
-        PageWidgets.button(f, "stage:home:claim_all", b, label, true, true, null, () -> ready.forEach(f::claim));
+        PageWidgets.button(f, "stage:home:claim_all", b, label, !waiting, true, waiting ? Component.translatable(KEY + "claiming", claimSent.size()) : null, () -> {
+            claimSent = new java.util.HashSet<>(ready);
+            claimSentAt = System.currentTimeMillis();
+            ready.forEach(f::claim);
+        });
         return b.bottom() + 2;
     }
 
@@ -132,12 +141,24 @@ public final class HomePage implements HubPageView {
         y = section(f, r, y, "waiting_title");
         List<HubRequests.Request> open = RequestsClient.requests();
         if (open.isEmpty()) {
-            return PageKit.wrapped(f, Component.translatable(KEY + "nothing"), r.x(), y, r.w(), t.muted());
+            return hidden(f, r, PageKit.wrapped(f, Component.translatable(KEY + "nothing"), r.x(), y, r.w(), t.muted()));
         }
         for (HubRequests.Request q : open) {
             y = card(f, r, y + 2, q);
         }
-        return y;
+        return hidden(f, r, y);
+    }
+
+    /** "Show hidden (2)": the cards the player hid come back. Shown with or without any card in view. */
+    private int hidden(HubScreen.Frame f, Rect r, int y) {
+        int n = RequestsClient.hiddenCount();
+        if (n == 0) {
+            return y;
+        }
+        Component label = Component.translatable(KEY + "show_hidden", n);
+        Rect b = new Rect(r.x(), y + 2, Math.min(r.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
+        PageWidgets.button(f, "stage:home:show_hidden", b, label, true, false, null, RequestsClient::showHidden);
+        return b.bottom() + 2;
     }
 
     /** The longest a request has been seen with, so its bar drains from full: the server sends only what is left. */
@@ -194,13 +215,20 @@ public final class HomePage implements HubPageView {
             Rect b = flow.rects().get(i);
             if (i < answers.size()) {
                 Answer a = answers.get(i);
-                PageWidgets.button(f, id + ":" + a.label(), b, labels.get(i), true, a.primary(), null,
+                Component tip = q.kind() == HubRequests.Kind.COMPULSION ? Component.translatable(KEY + "answer." + a.label() + ".tip") : null;
+                PageWidgets.button(f, id + ":" + a.label(), b, labels.get(i), true, a.primary(), tip,
                         () -> HubClient.runCommand(a.rowId(), a.usesToken() ? List.of(q.token()) : List.of()));
             } else {
                 PageWidgets.button(f, id + ":dismiss", b, labels.get(i), true, false, null, () -> RequestsClient.dismiss(q));
             }
         }
         int bottom = flow.bottom() + 3;
+        if (q.kind() == HubRequests.Kind.COMPULSION) {
+            // what each choice does, in one line each, so the buttons are not a guess
+            for (Answer a : answers) {
+                bottom = PageKit.wrapped(f, Component.translatable(KEY + "answer." + a.label() + ".tip"), x, bottom, w, t.muted()) + 1;
+            }
+        }
         f.g.fill(r.x(), top, r.right(), bottom, (t.accent() & 0xFFFFFF) | 0x14000000);
         f.g.renderOutline(r.x(), top, r.w(), bottom - top, (t.accent() & 0xFFFFFF) | 0x88000000);
         return bottom + 3;

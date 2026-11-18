@@ -7,8 +7,10 @@ import java.util.Set;
 
 /**
  * The knowledge table (hub IA 3.7): what an observer in each relation may know about a subject. Pure. One row per relation, one letter per
- * fact in {@link Fact} order: {@code K} known, {@code D} known once discovered, {@code ?} never sent. The server reads and sends only what
- * this allows, so a client cannot be made to show a secret by anything it asks for.
+ * fact in {@link Fact} order: {@code K} known, {@code D} known once discovered, {@code ?} not known to this relation. A fact the observer has
+ * discovered anyway (their own record, their pack's pool, an ability) is shown whatever its letter says, so {@code ?} means "not by the relation
+ * alone", not "never". The server reads and sends only what is shown (see {@link ProfileView#shown}), so a client cannot be made to show a secret
+ * by anything it asks for.
  */
 public final class Knowledge {
     //                                       NAME SPECIES RANK LEVEL PACK PACK_DAYS PRESENCE SIRE LINE GENES ANCHOR BONUS
@@ -23,7 +25,7 @@ public final class Knowledge {
         TABLE.put(Relation.OTHER_IN_LINE,    "KK??????????");
         TABLE.put(Relation.NPC_CREATURE,     "KK??????????");
         TABLE.put(Relation.NPC_ANCESTOR,     "D???????????");
-        TABLE.put(Relation.STRANGER,         "K?????K?????");
+        TABLE.put(Relation.STRANGER,         "????????????");
         TABLE.put(Relation.STRANGER_OFFLINE, "????????????");
         TABLE.put(Relation.OP_VIEW,          "KKKKKKKKKKKK");
     }
