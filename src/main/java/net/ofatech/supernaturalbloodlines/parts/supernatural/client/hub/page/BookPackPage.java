@@ -261,7 +261,8 @@ public final class BookPackPage implements HubPageView {
                     () -> BloodlinePage.command("pack challenge decline"));
             y = dy + 13;
         }
-        y = BookKit.small(f, Component.translatable(BOOK + "invite"), r.x(), y + 2, r.w(), t.muted());
+        boolean alpha = wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA;
+        y = PackInvite.render(f, r, y + 2, leads(f, pack) || (pack.isEmpty() && alpha), PackInvite.idsOf(f));
         f.end(y);
         if (style == Style.BOOK) {
             int sy = r.bottom() - BookKit.SEAL;

@@ -36,6 +36,22 @@ class HubLangCoverageTest {
     }
 
     @Test
+    void noPlayerFacingTextTellsThePlayerToTypeACommandOrDumpsAState() throws Exception {
+        JsonObject lang = lang();
+        List<String> bad = new ArrayList<>();
+        for (var e : lang.entrySet()) {
+            if (!e.getKey().startsWith("supernaturalbloodlines.hub.") || !e.getValue().isJsonPrimitive()) {
+                continue;
+            }
+            String v = e.getValue().getAsString();
+            if (v.matches("(?s).*(type|run|use|enter) /.*") || v.matches("(?s).*\\s/(pack|bloodline|supernaturalbloodlines) .*") || v.contains("State[")) {
+                bad.add(e.getKey() + " = " + v);
+            }
+        }
+        assertTrue(bad.isEmpty(), "text that sends the player to the command line, or prints a raw state: " + bad);
+    }
+
+    @Test
     void everyControlOfTheNewPagesHasWords() throws Exception {
         JsonObject lang = lang();
         List<String> keys = new ArrayList<>();

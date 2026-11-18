@@ -64,7 +64,7 @@ final class DevDemo {
                 new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.PACK_INVITE, id("Derek"), "Derek", "0f0f0f0f", 4000),
                 new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.COMPULSION, net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.NOBODY, "", "11223344", 3000)));
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.AdminClient.demo(net.ofatech.supernaturalbloodlines.parts.supernatural.net.AdminNet.snapshot(Optional.empty()),
-                new net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubCommandReplyPayload("D1", true, List.of(net.minecraft.network.chat.Component.literal(me + ": BloodlineState[species=VAMPIRE, sire=Klaus]"))));
+                new net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubCommandReplyPayload("D1", true, List.of(net.minecraft.network.chat.Component.literal(me + ": BloodlineState[species=HYBRID, sire=Klaus]"))));
     }
 
     static HubView apply(HubView v) {
@@ -145,7 +145,11 @@ final class DevDemo {
         family.sired().forEach(n -> people.add(new HubSocial.Person(n, id(n))));
         HubSnapshotPayload snap = new HubSnapshotPayload(family, pack, 2, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),
                 rites, people);
-        return new HubView(v.player(), v.bloodline(), s, v.races(), HubModel.ladders(LadderTable.clientCopy(), s, v.races(), HubView.levels(v.player())), v.skills(), snap,
+        // one person, everywhere: Dev is the hybrid werewolf who leads the demo pack as an Alpha with a bitten-then-born line
+        var wolf = v.bloodline().wolf().toBuilder().lineage(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.BORN)
+                .rank(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.ALPHA).sparks(1).build();
+        var dev = v.bloodline().toBuilder().species(net.ofatech.supernaturalbloodlines.core.bloodline.Species.HYBRID).wolf(wolf).build();
+        return new HubView(v.player(), dev, s, v.races(), HubModel.ladders(LadderTable.clientCopy(), s, v.races(), HubView.levels(v.player())), v.skills(), snap,
                 v.context().withOp(true).withPack(true));
     }
 }

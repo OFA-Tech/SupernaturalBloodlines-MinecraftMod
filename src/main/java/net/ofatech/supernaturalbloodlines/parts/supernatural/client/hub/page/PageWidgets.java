@@ -90,7 +90,7 @@ final class PageWidgets {
     /** The newest reply of a command the hub ran, wrapped, in the ink colour when it worked and the warning red when not. Returns the y under it. */
     static int reply(HubScreen.Frame f, Rect r, int y) {
         var reply = AdminClient.reply();
-        if (reply == null || reply.lines().isEmpty()) {
+        if (reply == null || reply.lines().isEmpty() || !net.ofatech.supernaturalbloodlines.shared.hub.ReplyScope.shownOn(reply.rowId(), f.screen().page())) {
             return y;
         }
         int color = reply.success() ? f.theme().ink() : warn(f.theme());
