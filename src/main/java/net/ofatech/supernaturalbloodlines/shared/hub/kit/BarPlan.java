@@ -7,10 +7,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Where the buttons of a floating bar go, for any width. The title keeps its full width while it can; the primary button comes next; the secondary buttons
- * follow while they fit, and what does not fit moves behind an overflow "..." button. Pure, so a test can hold it to a 320 pixel screen.
+ * follow while they fit, and what does not fit moves behind an overflow "More" button. Pure, so a test can hold it to a 320 pixel screen.
  *
  * @param pills    one rectangle per action, in the order given; null for an action that moved behind the overflow button
- * @param overflow the "..." button, or null when everything fits
+ * @param overflow the "More" button, or null when everything fits
  * @param title    the room left to the title and its text (from the bar's left padding)
  * @param hidden   the indexes of the actions behind the overflow button
  */
@@ -20,7 +20,8 @@ public record BarPlan(List<@Nullable Rect> pills, @Nullable Rect overflow, int t
     public static final int PILL_H = 16;
     public static final int MIN_TITLE = 60;
     public static final int MIN_PILL = 40;
-    public static final int OVERFLOW_W = 20;
+    /** Wide enough for the word "More" on it (a bare "..." says nothing to someone who has not met it). */
+    public static final int OVERFLOW_W = 34;
 
     /**
      * @param widths  the width each action's label needs (without padding), in order

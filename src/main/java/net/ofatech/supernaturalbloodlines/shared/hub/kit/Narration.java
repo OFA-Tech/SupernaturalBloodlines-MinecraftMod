@@ -11,6 +11,11 @@ public final class Narration {
     private Narration() {
     }
 
+    /** True when a button is named by its hint, not its label: a "-" or "+" stepper means nothing alone, "Lower Max health" does. */
+    public static boolean namedByHint(boolean hinted, boolean hasHint) {
+        return hinted && hasHint;
+    }
+
     /**
      * @param pageTitle     the page the hub shows
      * @param focusTooltip  the lines of the focused target's tooltip (its name first), or null when nothing has the focus

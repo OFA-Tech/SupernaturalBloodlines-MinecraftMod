@@ -211,7 +211,8 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
             boolean hot = ctx.hovered(more) || ctx.focused("detail:more");
             g.fill(more.x(), more.y(), more.right(), more.bottom(), EDGE);
             g.fill(more.x() + 1, more.y() + 1, more.right() - 1, more.bottom() - 1, hot || overflowOpen ? 0xFF3a1822 : PILL);
-            g.drawString(font, "\u2026", more.x() + (more.w() - font.width("\u2026")) / 2, more.y() + 4, ink(), false);
+            String moreLabel = LabelFit.cut(Component.translatable("supernaturalbloodlines.hub.more").getString(), more.w() - 6, font::width);
+            g.drawString(font, moreLabel, more.x() + (more.w() - font.width(moreLabel)) / 2, more.y() + 4, ink(), false);
             ctx.target("detail:more", more, List.of(Component.translatable("supernaturalbloodlines.hub.more")), () -> overflowOpen = !overflowOpen);
             if (overflowOpen) {
                 // the actions that did not fit, stacked above the bar

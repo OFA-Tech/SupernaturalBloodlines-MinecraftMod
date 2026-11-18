@@ -53,8 +53,10 @@ final class PageWidgets {
         int text = primary || hot ? Contrast.bestText(fill) : enabled ? t.ink() : t.muted();
         String shown = LabelFit.cut(label.getString(), r.w() - 6, f.font()::width);
         f.g.drawString(f.font(), shown, r.x() + (r.w() - f.font().width(shown)) / 2, r.y() + (r.h() - 8) / 2, text, false);
-        List<Component> tip = new ArrayList<>(List.of(label));
-        if ((always || !enabled) && why != null) {
+        // a stepper symbol is named by what it changes, so the first thing narrated and shown is "Lower Max health", not "-"
+        boolean byHint = net.ofatech.supernaturalbloodlines.shared.hub.kit.Narration.namedByHint(always, why != null);
+        List<Component> tip = new ArrayList<>(List.of(byHint ? why : label));
+        if (!byHint && !enabled && why != null) {
             tip.add(why);
         }
         f.target(id, r, tip, enabled ? action : null);
