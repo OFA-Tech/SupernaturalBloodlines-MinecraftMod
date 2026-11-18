@@ -73,11 +73,7 @@ public final class RankEffects {
     }
 
     private static void apply(ServerPlayer p, boolean werewolf, net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf) {
-        Rank rank = werewolf ? wolf.rank() : Rank.NONE;
-        // a suppressor (the lunar eclipse) takes the perks away, not the Omega's penalty
-        if (rank != Rank.OMEGA && SUPPRESSORS.stream().anyMatch(s -> s.test(p))) {
-            rank = Rank.NONE;
-        }
+        Rank rank = effectiveRank(p, werewolf, wolf);
         double scale = alphaScale(rank, werewolf ? wolf.sparks() : -1, SpeciesConfig.maxStackedSparks());
         boolean alpha = rank == Rank.ALPHA || rank == Rank.TRUE_ALPHA;
         set(p, Attributes.ATTACK_DAMAGE, rank == Rank.OMEGA ? OMEGA_PENALTY : alpha ? round(ALPHA_ATTACK * scale) : 0, Operation.ADD_MULTIPLIED_TOTAL);
@@ -88,6 +84,16 @@ public final class RankEffects {
         }
     }
 
+    /** The rank whose perks are in force for {@code p} now: none outside the werewolf faction, and none while a suppressor (the lunar eclipse) says so. The one rule {@link #apply} and the hub's bonus line share. */
+    public static Rank effectiveRank(ServerPlayer p, boolean werewolf, net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf) {
+        return effectiveRank(werewolf ? wolf.rank() : Rank.NONE, SUPPRESSORS.stream().anyMatch(s -> s.test(p)));
+    }
+
+    /** A suppressor takes the perks away, not the Omega's penalty. Pure. */
+    public static Rank effectiveRank(Rank rank, boolean suppressed) {
+        return rank != Rank.OMEGA && suppressed ? Rank.NONE : rank;
+    }
+
     /** What the Alpha bonuses are multiplied by: the True Alpha's 1.1, and +10% for every spark stacked on the first (the Deucalion factor); a negative {@code sparks} means no werewolf faction. */
     public static double alphaScale(Rank rank, int sparks, int cap) {
         double scale = rank == Rank.TRUE_ALPHA ? TRUE_ALPHA_SCALE : 1;
@@ -95,8 +101,10 @@ public final class RankEffects {
     }
 
     /** The pack bonus a wolf's rank gives, as the hub words it ("+20% attack, +4 max health"); empty when the rank gives none. The same numbers {@link #apply} sets. */
-    public static java.util.Optional<String> bonusText(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf, boolean werewolf) {
-        Rank rank = werewolf ? wolf.rank() : Rank.NONE;
+    public static java.util.Optional<String> bonusText(ServerPlayer p) {
+        boolean werewolf = VampirismSupernatural.isWerewolf(p);
+        var wolf = PackAccess.wolf(p);
+        Rank rank = effectiveRank(p, werewolf, wolf); // the eclipse takes the perks away, so it takes the bonus line too
         if (rank != Rank.ALPHA && rank != Rank.TRUE_ALPHA) {
             return java.util.Optional.empty();
         }

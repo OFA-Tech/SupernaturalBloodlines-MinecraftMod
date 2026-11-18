@@ -316,6 +316,39 @@ public final class WerewolfBiteGameTests {
         helper.succeed();
     }
 
+    /** A packmate sees the line root only as far as that player has discovered it: when the index moves the root to another Original, the new one stays hidden. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPacksProfileNeverShowsARootThePlayerHasNotDiscovered(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer member = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, member);
+        var line = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.LINE;
+        java.util.UUID first = net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.values()[0].uuid();
+        java.util.UUID second = net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.values()[1].uuid();
+        var index = net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex.get(helper.getLevel().getServer());
+        net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.overrideOriginalVisibility(false);
+        try {
+            helper.assertTrue(joinPack(alpha, member), "the pack could not be built");
+            index.setRoot(member.getUUID(), first, true);
+            // the member discovers the root of their own line: the pack learns it
+            BloodlineAccess.set(member, BloodlineAccess.get(member).toBuilder().knownLine(first).build());
+            String firstName = net.ofatech.supernaturalbloodlines.parts.species.line.Lines.rootName(helper.getLevel().getServer(), first).getString();
+            String secondName = net.ofatech.supernaturalbloodlines.parts.species.line.Lines.rootName(helper.getLevel().getServer(), second).getString();
+            var shown = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts().get(line);
+            helper.assertTrue(List.of(firstName).equals(shown), "the discovered root was shown as " + shown);
+            // the root moves on (the Original fell, the line was reassigned): what the member has not discovered must not reach the pack
+            index.setRoot(member.getUUID(), second, true);
+            var after = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts().get(line);
+            helper.assertTrue(after == null || !after.contains(secondName), "an undiscovered root was shown to the pack: " + after);
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.overrideOriginalVisibility(null);
+            index.remove(member.getUUID());
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, member);
+        }
+        helper.succeed();
+    }
+
     /** A packmate's profile of a pack-mate carries the days in the pack (from the pack index's join time) and the Alpha rank's bonus (the numbers the rank really sets). */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aPackmatesProfileCarriesDaysInThePackAndTheBonus(GameTestHelper helper) {
@@ -333,8 +366,11 @@ public final class WerewolfBiteGameTests {
             var bonus = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.BONUS;
             helper.assertTrue(List.of("3").equals(ofMember.get(days)), "the member's days in the pack were " + ofMember.get(days));
             helper.assertTrue(List.of("3").equals(ofAlpha.get(days)), "the pack's age was " + ofAlpha.get(days));
-            var expected = net.ofatech.supernaturalbloodlines.parts.species.pack.RankEffects.bonusText(net.ofatech.supernaturalbloodlines.core.BloodlineAccess.get(alpha).wolf(), true);
-            helper.assertTrue(expected.isPresent() && List.of(expected.get()).equals(ofAlpha.get(bonus)), "the Alpha's bonus was " + ofAlpha.get(bonus) + " not " + expected);
+            // literals and the modifiers the rank really sets, not the function under test
+            var attack = alpha.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).getModifier(net.ofatech.supernaturalbloodlines.parts.species.pack.RankEffects.MODIFIER_ID);
+            var health = alpha.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).getModifier(net.ofatech.supernaturalbloodlines.parts.species.pack.RankEffects.MODIFIER_ID);
+            helper.assertTrue(attack != null && health != null && attack.amount() == 0.2 && health.amount() == 4.0, "the rank sets " + attack + " / " + health);
+            helper.assertTrue(List.of("+20% attack, +4 max health").equals(ofAlpha.get(bonus)), "the Alpha's bonus was " + ofAlpha.get(bonus));
             helper.assertTrue(!ofMember.containsKey(bonus), "an Omega was shown a bonus: " + ofMember.get(bonus));
         } finally {
             net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.overrideClock(System::currentTimeMillis);

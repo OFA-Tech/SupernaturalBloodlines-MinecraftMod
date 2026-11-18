@@ -197,13 +197,13 @@ public final class SirelineIndex extends SavedData {
         return out;
     }
 
-    /** The entity type the child was recorded with ({@code minecraft:player} for a player); empty for an id that is only a sire. */
     /** Recorded as a creature, or one of the six NPC Originals. The top of a chain has no link of its own and no recorded type: it is taken for a player. */
     public boolean isCreature(UUID id) {
         return net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.byUuid(id).isPresent()
                 || entityTypeOf(id).map(t -> !"minecraft:player".equals(t)).orElse(false);
     }
 
+    /** The entity type the child was recorded with ({@code minecraft:player} for a player); empty for an id that is only a sire. */
     public Optional<String> entityTypeOf(UUID child) {
         Link l = links.get(child);
         return l == null ? Optional.empty() : Optional.of(l.entityType());
