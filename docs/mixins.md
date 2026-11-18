@@ -53,6 +53,10 @@ Config `supernaturalbloodlines.supernatural.mixins.json`, plugin `SupernaturalMi
 
 No mixin. Tensura's menu tab for the hub (plan 12 phase 12e Task 5) is added with `ScreenEvent.Init.Post` (`TensuraMenuTab`), so the reserved slot stays unused. If an update to Tensura ever stops the event from placing it, the reserved mixin goes here, `require = 0`, with a switch in `supernaturalbloodlines-supernatural_tensura.toml`.
 
+## celestials (0 of 3)
+
+No mixin. The Blue Moon rite cost is one more factor in the species part's existing RiteCostMixin hook (RiteCost.begin), the Blood Moon bite bonus is a Vampirism event listener, the Super Blue Moon spare is a predicate in ForcedShift, and Enhanced Celestials 2 itself is read by reflection (EcReflect), so none of it needs a mixin. EC's own mixins (LivingEntity, Mob, Player, Entity, NaturalSpawner, Block, menus, TimeCommand, LevelRenderer, lightmap) do not overlap ours.
+
 ## Access transformers
 
 Not a mixin and not counted in the budget. `META-INF/accesstransformer.cfg` makes `Entity.setSharedFlag(int, boolean)` and `getSharedFlag(int)` public, so the species part's `client/HunterSenseClient` can outline entities on one client (see docs/parts/species.md, Hunters: instinct, sense).

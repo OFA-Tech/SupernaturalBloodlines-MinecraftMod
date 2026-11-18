@@ -43,9 +43,16 @@ public final class ForcedShift {
     }
 
     private static final List<FormBlock> BLOCKS = new CopyOnWriteArrayList<>();
+    // reasons to cancel only the forced shift (a Super Blue Moon)
+    private static final List<Predicate<ServerPlayer>> SPARES = new CopyOnWriteArrayList<>();
     private static boolean registered;
 
     private ForcedShift() {
+    }
+
+    /** A condition under which the full moon does not force the shift (the player may still shift at will). Does not register the gate: a part that grants control does. */
+    public static void addForcedSpare(Predicate<ServerPlayer> spared) {
+        SPARES.add(spared);
     }
 
     /** A condition that cancels every Werewolves form action of the player (the roar's permit does not lift it). */
@@ -123,7 +130,7 @@ public final class ForcedShift {
             }
         }
         if (isForced(e)) {
-            if (MoonControl.of(p) != MoonControl.Control.NONE || halvedAndSpared(p) || moonCalmSpares(p)) {
+            if (MoonControl.of(p) != MoonControl.Control.NONE || halvedAndSpared(p) || moonCalmSpares(p) || SPARES.stream().anyMatch(s -> s.test(p))) {
                 e.setCanceled(true);
             }
         } else if (e.getAction() instanceof WerewolfFormAction form && MoonControl.moonBound() && !allowedAtWill(p, form)) {

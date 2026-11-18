@@ -44,7 +44,7 @@ public final class StagePathPage implements HubPageView {
         Rect stage = f.region(BookKit.MOON);
         int top = f.begin(BookKit.MOON);
         top += LadderTabs.render(f, stage.x(), top, stage.w());
-        int almanacH = 22;
+        int almanacH = AlmanacEvents.next(AlmanacEvents.events(f)).isPresent() ? 37 : 22; // a second row for the next lunar event
         int ladderH = ladder == null ? 0 : HEX + 22 + (staggered(f, ladder, stage) ? 18 : 0);
         int size = Math.max(50, Math.min(stage.w() - 20, stage.bottom() - top - almanacH - ladderH - 8));
         Rect circle = new Rect(stage.x() + (stage.w() - size) / 2, top + 2, size, size);
@@ -99,14 +99,20 @@ public final class StagePathPage implements HubPageView {
         HubTheme t = f.theme();
         BookKit.outline(f.g, box, (t.paper() & 0xFFFFFF) | 0xCC000000, (t.muted() & 0xFFFFFF) | 0x77000000);
         int phase = f.view.player().level().getMoonPhase();
+        var events = AlmanacEvents.events(f);
+        var next = AlmanacEvents.next(events);
         int x = box.x() + 8;
-        int y = box.y() + (box.h() - 8) / 2;
+        int y = box.y() + (box.h() - 8 - (next.isPresent() ? 14 : 0)) / 2;
+        int day = 0;
         for (int p : HubAlmanac.phases(phase, 6)) {
             KitDraw.icon(f.g, Icons.moon(p), x, y, 8, p == 0 ? 0xFFffd36b : t.muted());
+            AlmanacEvents.ring(f, events, day++, x, y, 8, t.accent());
             x += 11;
         }
         Component line = PathActions.almanacLine(phase);
         f.g.drawString(f.font(), LabelFit.cut(line.getString(), box.right() - x - 10, f.font()::width), x + 6, y, t.accent(), false);
+        next.ifPresent(e -> f.g.drawString(f.font(), LabelFit.cut(AlmanacEvents.line(e).getString(), box.w() - 16, f.font()::width), box.x() + 8, y + 14,
+                AlmanacEvents.color(e, t.accent()), false));
     }
 
     private void detail(HubScreen.Frame f, HubModel.LadderView ladder) {

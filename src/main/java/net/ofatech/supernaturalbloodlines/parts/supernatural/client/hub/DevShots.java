@@ -51,6 +51,7 @@ public final class DevShots {
     private int wait;
     private int worldTicks;
     private boolean sized;
+    private boolean lunarSet;
     private boolean opened;
     private boolean done;
 
@@ -160,6 +161,10 @@ public final class DevShots {
         Minecraft mc = Minecraft.getInstance();
         if (done) {
             return;
+        }
+        if (!lunarSet && Boolean.getBoolean(PROPERTY + ".lunar")) {
+            lunarSet = true;
+            DevDemo.lunar(); // not at registration: the celestials part installs its (empty) source after it
         }
         if (!sized && mc.getWindow() != null) {
             if (DevShotsGate.mayResizeWindow(DevShotsGate.hidden())) {

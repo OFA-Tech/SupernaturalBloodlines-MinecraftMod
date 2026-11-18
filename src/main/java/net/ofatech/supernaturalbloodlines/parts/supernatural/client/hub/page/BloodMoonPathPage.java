@@ -43,8 +43,9 @@ public final class BloodMoonPathPage implements HubPageView {
         y0 += LadderTabs.render(f, stage.x(), y0, Math.max(60, col.x() - 14 - stage.x()));
         int labels = 78;
         Rect area = new Rect(stage.x(), y0, Math.max(60, col.x() - 14 - stage.x()), stage.bottom() - y0);
-        int size = Math.max(60, Math.min(area.w() - labels, area.h() - 34));
-        Rect moon = new Rect(area.x() + labels + Math.max(0, (area.w() - labels - size) / 2), area.y() + (area.h() - 18 - size) / 2, size, size);
+        int event = AlmanacEvents.next(AlmanacEvents.events(f)).isPresent() ? 12 : 0; // one more line under the moon for the next lunar event
+        int size = Math.max(60, Math.min(area.w() - labels, area.h() - 34 - event));
+        Rect moon = new Rect(area.x() + labels + Math.max(0, (area.w() - labels - size) / 2), area.y() + (area.h() - 18 - event - size) / 2, size, size);
         f.emblem(moon);
         if (ladder != null) {
             gems(f, ladder, area, moon);
@@ -96,10 +97,15 @@ public final class BloodMoonPathPage implements HubPageView {
         int phase = f.view.player().level().getMoonPhase();
         int y = area.bottom() - 12;
         int x = area.x() + 2;
+        var events = AlmanacEvents.events(f);
+        int day = 0;
         for (int p : HubAlmanac.phases(phase, 6)) {
             KitDraw.icon(f.g, Icons.moon(p), x, y, 8, p == 0 ? 0xFFffd36b : t.muted());
+            AlmanacEvents.ring(f, events, day++, x, y, 8, t.accent());
             x += 10;
         }
+        AlmanacEvents.next(events).ifPresent(e -> BookKit.small(f, Component.literal(net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(
+                AlmanacEvents.line(e).getString(), area.w() - 4, s -> BookKit.smallWidth(f, s))), area.x() + 2, area.bottom() - 24, area.w() - 4, AlmanacEvents.color(e, t.accent())));
         Component line = PathActions.almanacLine(phase);
         int room = Math.max(30, area.right() - x - 8);
         BookKit.small(f, Component.literal(net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(line.getString(), room, s -> BookKit.smallWidth(f, s))), x + 4, y + 1, room, t.muted());

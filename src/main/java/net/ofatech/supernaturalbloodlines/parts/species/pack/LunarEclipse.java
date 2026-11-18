@@ -5,6 +5,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.DoubleSupplier;
 import java.util.function.Function;
 import net.minecraft.core.HolderLookup;
+import net.ofatech.supernaturalbloodlines.core.moon.EclipseSignal;
 import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -157,7 +158,10 @@ public final class LunarEclipse {
     }
 
     private static void changed(MinecraftServer server, boolean on) {
-        server.getPlayerList().broadcastSystemMessage(Component.translatable(on ? START_MESSAGE : END_MESSAGE), false);
+        // with Enhanced Celestials showing the eclipse as its own event, its chat notice replaces ours
+        if (!EclipseSignal.fire(server, on)) {
+            server.getPlayerList().broadcastSystemMessage(Component.translatable(on ? START_MESSAGE : END_MESSAGE), false);
+        }
         for (ServerPlayer p : players.apply(server)) {
             EclipsePayload.send(p, new EclipsePayload(on));
             RankEffects.sync(p);

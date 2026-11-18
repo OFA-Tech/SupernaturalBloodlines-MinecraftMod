@@ -18,6 +18,7 @@ Switch a part off in [`supernaturalbloodlines-common.toml`](Configuration#core-s
 | **artifacts** | ● | ● | | ○ | ○ |
 | **supernatural** | ● | ○ | | ○ | |
 | **hud** | ○ | | ○ | ○ | |
+| **celestials** | ○ | ○ | | ○ | |
 | **supernatural_tensura** | ● | ○ | ● | ○ | |
 
 Parts that build on another part:
@@ -98,6 +99,13 @@ So switching **vampirism_enchanted** off also turns off **species**, **species_t
 - **Does:** the [Ability HUD](Ability-HUD). So far the **Bite action** (needs Vampirism): what a bite does for your form. The HUD itself, the keymap and the one blood value come in the next phases.
 - **Mixins:** 2 of 3 (with Tensura, a skill in the next preset can be fired: Tensura refuses it otherwise, switch `next_preset_active`; with Tensura and Vampirism, Tensura's vampire race ability can feed a thirsty healthy vampire, switch `tensura_feed_fills_blood`). Reserved: the Controls list. **Config files:** `supernaturalbloodlines-hud.toml` (common) and `supernaturalbloodlines-hud-client.toml` (client).
 - **Off:** no Bite action.
+
+## celestials
+
+- **Config key:** `celestials`. **Mods:** none. [Enhanced Celestials 2](Enhanced-Celestials) is an optional extra, reached by reflection.
+- **Does:** Blood, Blue, Harvest and super moons from Enhanced Celestials change a few numbers (bite blood, rite cost, the forced shift, our crops), our lunar eclipse shows up as an Enhanced Celestials event, and the hub's almanac shows the coming events.
+- **Mixins:** 0 of 3. **Config file:** `supernaturalbloodlines-celestials.toml`.
+- **Off, or without Enhanced Celestials:** nothing changes.
 
 ## Always on (core)
 

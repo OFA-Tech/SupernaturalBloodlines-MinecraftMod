@@ -87,6 +87,15 @@ If you find something that behaves differently from this wiki, please [open an i
   - A slot key also fires with Ctrl or Shift held (Alt must work for Tensura's mode change).
   - **Creative and spectator mode show no Vampirism blood bar.** Vampirism itself does not draw its blood bar when the game mode has no hunger (`hasExperience()` is false), so with `blood_in_food_spot = false` a vampire in creative sees no blood value at all (in survival and adventure Vampirism's bar is back above the hotbar). With the setting on, the blood in Tensura's food spot shows in every game mode.
 
+## Enhanced Celestials 2 (optional)
+
+- **Not checked in a real game.** Tested only with a stand-in for Enhanced Celestials and against its jars (Core 2.0.3.4, Default Lunar Events 2.0.1.4, checked with javap). A first two-client run, with and without it, is still to do. Enhanced Celestials is young (about three months): if an update changes its API, the part logs one warning and the lunar events are ignored; nothing else breaks.
+- **An event is not a full moon.** A Blood, Blue or Harvest Moon can fall on any phase. Rites that need the full moon, the Werewolves forced shift and werewolf moon control still follow the real moon.
+- **Four jars.** Enhanced Celestials 2 Core has no events of its own: you also need Default Lunar Events (for Blood, Blue, Harvest and super moons), CorgiLib and Data Anchor. With the core alone only our lunar eclipse shows up.
+- **NPC werewolf packs and the full-moon bosses do not exist yet**, so the Blood Moon pack chance and the super moon boss weight (`blood_moon_pack_chance_factor`, `super_moon_boss_weight`) change nothing today.
+- **The "Tonight: Blood Moon" line on Home and a Guide paragraph are not built.** Only the almanac on the Path page shows the events.
+- **The eclipse light.** The red light of our eclipse as an Enhanced Celestials event is a guess (`c0403a`); it may need a different colour once someone has seen it.
+
 ## Packs (plan 14)
 
 - **The party link has not been seen with the real Open Parties and Claims running.** It is written against the 0.33.0 jar (and the Team Claims 1.5.0 fork, which has the same classes) with javap, reached by reflection, and tested with a stand-in. Five failed calls in a row log one warning and turn it off for the rest of the session; a single failure changes nothing.

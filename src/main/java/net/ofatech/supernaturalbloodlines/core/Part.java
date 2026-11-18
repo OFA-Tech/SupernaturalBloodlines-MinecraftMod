@@ -20,7 +20,9 @@ public enum Part {
             List.of("vampirism")),
     SUPERNATURAL_TENSURA("supernaturalTensura", "net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.SupernaturalTensuraPart",
             List.of("vampirism", "tensura")),
-    HUD("hud", "net.ofatech.supernaturalbloodlines.parts.hud.HudPart", List.of());
+    HUD("hud", "net.ofatech.supernaturalbloodlines.parts.hud.HudPart", List.of()),
+    // no required mods: Enhanced Celestials 2 is found at runtime, and without it the part does nothing
+    CELESTIALS("celestials", "net.ofatech.supernaturalbloodlines.parts.celestials.CelestialsPart", List.of());
 
     private final String configKey;
     private final String initClass;

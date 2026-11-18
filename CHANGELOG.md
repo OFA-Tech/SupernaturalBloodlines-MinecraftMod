@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased (celestials: Enhanced Celestials 2)
+
+### Upgrading
+- **Nothing changes unless Enhanced Celestials 2 is installed.** There is a new part switch `parts.celestials` (on by default, restart required) and a new file `supernaturalbloodlines-celestials.toml`. Enhanced Celestials is optional (any version loads; 2.0.3.x is the tested one) and is never bundled.
+
+### Added
+- New part `celestials`, reading Enhanced Celestials 2 lunar events by reflection (no mixin, no dependency). An event is a second layer on top of the real moon: rites, the Werewolves forced shift and moon control keep following the real full moon.
+- Blood Moon: a vampire's bite gives x1.25 blood (`blood_moon_bite_bonus`). Blue Moon: every rite costs x0.8 altar power (`blue_moon_rite_cost`). Super moons: the Rite of the Moon, the Silver Moon and Immortality cost x0.75 (`super_moon_rite_cost`). Super Blue Moon: the Werewolves forced shift is skipped for everybody (`super_blue_skips_forced_shift`). Harvest Moon: vervain and the wolfsbane strains drop double (they are in EC's `harvest_moon_crops` tag).
+- Our lunar eclipse is shown as an Enhanced Celestials event (moon colour, light, EC's chat notice instead of ours). Our own roll, chance and gameplay are unchanged; with another event already running nothing is mirrored and our own notice is sent.
+- The hub's almanac (all three looks) rings the days that have an event and says "Blood Moon in 3 days."
+- Two reserved keys for features that do not exist yet: `blood_moon_pack_chance_factor` (NPC packs) and `super_moon_boss_weight` (full-moon bosses).
+- `-PecJars=<folder>` (build): puts Enhanced Celestials' jars, downloaded by hand, on the dev run classpath for a manual check. Off by default.
+
+### Changed
+- `EclipseClient` no longer draws its own moon disc when Enhanced Celestials already colours the moon for our eclipse (the fog and sky tint stay).
+- The Admin page has a section Celestials, and the Parts list one more switch.
+
 ## Unreleased (UI first: the hub pages)
 
 ### Upgrading
