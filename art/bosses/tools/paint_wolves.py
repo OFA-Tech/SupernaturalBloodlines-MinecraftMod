@@ -86,7 +86,7 @@ class Tex:
         for lx in range(7):
             c = self.get(o[0] + lx, o[1] + 1)
             if c:
-                self.local('head', 'north', lx, 1, tuple(int(v * 0.5) for v in c[:3]))
+                self.local('head', 'north', lx, 1, tuple(int(v * self.cfg.get('brow_dark', 0.5)) for v in c[:3]))
         for lx0 in (1, 4):
             for dx in (0, 1):
                 if socket:
@@ -99,6 +99,8 @@ class Tex:
                 self.local(part, face, 0 if face == 'west' else 5, 2, halo)
 
     def teeth(self, bone, shadow):
+        if self.cfg.get('fangs'):
+            return self.fangs(bone, shadow)
         for part in ('snoutTeeth', 'jawTeeth'):
             for x, y, p, f, lx, ly, fw, fh in self.faces({part}):
                 if f in ('up', 'down'):
@@ -107,6 +109,23 @@ class Tex:
                 col = bone if fang else mix(bone, shadow, 0.55)
                 if ly == 0:
                     col = mix(col, shadow, 0.35)  # gum line
+                self.put(x, y, col)
+
+    def fangs(self, bone, gum):
+        """Snout with a jagged white row of fangs over a dark mouth line."""
+        dark = (34, 6, 12)
+        for part in ('snoutTeeth', 'jawTeeth'):
+            for x, y, p, f, lx, ly, fw, fh in self.faces({part}):
+                if f in ('up', 'down'):
+                    continue
+                tip = lx % 2 == 0
+                if part == 'snoutTeeth':
+                    if ly == 0:
+                        col = (52, 44, 62)
+                    else:
+                        col = (244, 240, 226) if tip else dark
+                else:
+                    col = (244, 240, 226) if tip else dark
                 self.put(x, y, col)
 
     def mouth(self, inner, tongue):
@@ -291,7 +310,7 @@ def make(cfg, path):
 
 # ---------------------------------------------------------------- variants
 MANE = ['neck', 'neckFluff', 'neckFluffLeft', 'neckFluffRight', 'neckFluffBottom', 'headFluff', 'headSidburnLeft', 'headSidburnRight']
-DEMON_HAIR = {'headFluff', 'neckFluff', 'neckFluffLeft', 'neckFluffRight', 'neckFluffBottom', 'headSidburnLeft', 'headSidburnRight'}
+DEMON_HAIR = {'headFluff', 'neckFluff', 'neckFluffLeft', 'neckFluffRight', 'neckFluffBottom'}
 HAIR_RAMP = [(7, 7, 13), (16, 16, 26), (28, 28, 42), (44, 44, 60)]
 
 
@@ -306,7 +325,7 @@ def demon_detail(t):
 
 
 def demon_late(t):
-    t.brow((118, 132, 156), (22, 26, 40))
+    t.brow((112, 126, 150), (52, 62, 84))
     t.patches((84, 40, 52), {'earLeft', 'earRight', 'earLeft2', 'earRight2'}, 4, 1, 9)
 
 
@@ -315,7 +334,7 @@ DEMON = dict(
     fur=[(38, 46, 62), (56, 68, 88), (76, 90, 112), (98, 112, 134), (122, 136, 156)],
     part_fur={p: HAIR_RAMP for p in DEMON_HAIR},
     bias={'bodyFluff': 0.06, 'jawFluff': 0.04, 'snout': 0.03},
-    eye=(255, 40, 32), eye_halo=(176, 18, 22), socket=(10, 12, 20), nose=(34, 28, 44), mouth=(96, 14, 22), tongue=(120, 24, 34),
+    eye=(255, 40, 32), eye_halo=(176, 18, 22), socket=None, brow_dark=0.85, fangs=True, nose=(62, 56, 78), mouth=(96, 14, 22), tongue=(120, 24, 34),
     teeth=(232, 228, 212), teeth_shadow=(110, 100, 96), ear=(92, 42, 58), claw=(22, 24, 34), pad=(26, 30, 44),
     detail=demon_detail, late=demon_late)
 

@@ -64,6 +64,41 @@ def hat_hair(s, hair, p=0.85, back_rows=5, side_rows=3, front_rows=1, top=True, 
             sp('back', lx, ly)
 
 
+def hat_slick(s, hair, back_rows=4, side_rows=2):
+    """Slicked-back hair on the hat layer: smooth, flat, fully filled, combed front to back (no tufts)."""
+    for lx in range(8):
+        for ly in range(8):
+            s.set('hat', 'top', lx, ly, shade(hair, 1.0 + 0.07 * ((lx % 3) - 1) + 0.02 * (ly % 2)))
+        s.set('hat', 'front', lx, 0, shade(hair, 0.96))
+    for side, xs in (('right', range(0, 6)), ('left', range(2, 8))):
+        for ly in range(side_rows):
+            for lx in xs:
+                s.set('hat', side, lx, ly, shade(hair, 0.94 + 0.04 * (ly % 2)))
+    for ly in range(back_rows):
+        for lx in range(8):
+            s.set('hat', 'back', lx, ly, shade(hair, 0.92 + 0.07 * ((lx % 3) - 1)))
+
+
+def trimmed_beard(s, skin, c, lips):
+    """Short trimmed beard and stubble along the jaw; mouth stays visible."""
+    B = mixc(skin, c, 0.62)
+    S = mixc(skin, c, 0.4)
+    for ly in (6, 7):
+        for lx in range(8):
+            if ly == 6 and lx in (3, 4):
+                continue
+            s.set('head', 'front', lx, ly, shade(B, 0.92 + 0.16 * hsh(lx, ly, 61)), skin=False)
+    for lx in (2, 5):
+        s.set('head', 'front', lx, 5, S)
+    for ly in (5, 6, 7):
+        for lx in ((6, 7) if ly == 5 else (4, 5, 6, 7)):
+            s.set('head', 'right', lx, ly, shade(B if ly > 5 else S, 0.94 + 0.12 * hsh(lx, ly, 62)))
+        for lx in ((0, 1) if ly == 5 else (0, 1, 2, 3)):
+            s.set('head', 'left', lx, ly, shade(B if ly > 5 else S, 0.94 + 0.12 * hsh(lx, ly, 63)))
+    s.noisy('head', 'bottom', 0, 0, 8, 8, B, 0.08, 64)
+    s.set('head', 'front', 3, 6, lips); s.set('head', 'front', 4, 6, lips)
+
+
 def beard(s, c, rows=(5, 8), mouth=True, hat=True):
     r0, r1 = rows
     for ly in range(r0, r1):
@@ -237,7 +272,7 @@ def mikael():
         if hsh(lx, 3, 5) < 0.4:
             s.set('head', 'top', lx, 2 + lx % 3, (158, 154, 146))
     stubble(s, SK, 0.4)
-    hat_hair(s, HAIR, 0.5, back_rows=3, side_rows=2, front_rows=1, seed=3)
+    hat_slick(s, HAIR, back_rows=4, side_rows=2)
     BLK, SHIRT = (24, 24, 28), (32, 32, 38)
     body_cloth(s, SHIRT, amp=0.05, seed=7, weave=1)
     s.set('body', 'front', 3, 0, SK, skin=True); s.set('body', 'front', 4, 0, SK, skin=True)
@@ -322,8 +357,8 @@ def peter_hale(burned=False):
     head(s, SK, HAIR, (96, 140, 152), brow=(30, 22, 18), hair_rows=1, fringe=0.1, back_rows=5, side_rows=3, hair_amp=0.1)
     for lx in range(8):  # slicked-back sheen
         s.set('head', 'top', lx, 1 + lx % 2, (60, 48, 40))
-    beard(s, (46, 34, 28), rows=(5, 8), hat=True)
-    hat_hair(s, HAIR, 0.45, back_rows=3, side_rows=2, front_rows=1, seed=8)
+    trimmed_beard(s, SK, (46, 34, 28), (176, 98, 92))
+    hat_slick(s, HAIR, back_rows=4, side_rows=2)
     CAM, CAML = (188, 146, 98), (206, 166, 116)
     WHITE, WHD = (234, 232, 228), (200, 198, 196)
     H1, H2 = (70, 70, 78), (50, 50, 58)
@@ -345,7 +380,7 @@ def peter_hale(burned=False):
         for side in SIDES:
             s.noisy(part, side, 0, 0, s.face(part, side)[2], 10, CAM, 0.06, 82)
         s.noisy(part, 'top', 0, 0, 4, 4, CAM, 0.06, 82)
-    legs_cloth(s, (36, 38, 44), seed=83); boots(s, (22, 20, 20), rows=(9, 12), sole=(10, 10, 10))
+    legs_cloth(s, (58, 60, 68), seed=83, weave=1); boots(s, (22, 20, 20), rows=(10, 12), sole=(10, 10, 10))
     # camel wool overcoat, open at the front, wide lapels
     overlay(s, 'jacket', CAM, rows=(0, 12), amp=0.07, seed=84, weave=1)
     for ly in range(0, 12):
@@ -363,8 +398,8 @@ def peter_hale(burned=False):
         overlay(s, part, CAM, rows=(0, 10), amp=0.07, seed=85, weave=1)
         s.hband(part, 9, shade(CAM, 0.82))
     for part in ('rpants', 'lpants'):
-        overlay(s, part, CAM, rows=(0, 8), amp=0.07, seed=86, weave=1, sides=('right', 'left', 'back', 'front'))
-        s.hband(part, 7, shade(CAM, 0.85))
+        overlay(s, part, CAM, rows=(0, 6), amp=0.07, seed=86, weave=1, sides=('right', 'left', 'back', 'front'))
+        s.hband(part, 5, shade(CAM, 0.8))
     if burned:
         risen(s)
     return s
@@ -487,7 +522,7 @@ def elijah():
     SK, HAIR = (222, 190, 164), (92, 66, 46)
     head(s, SK, HAIR, (122, 94, 52), brow=(70, 50, 36), hair_rows=1, fringe=0.3, back_rows=5, side_rows=3, hair_amp=0.08)
     s.set('head', 'front', 5, 1, shade(HAIR, 1.3))
-    hat_hair(s, HAIR, 0.5, back_rows=3, side_rows=2, front_rows=1, seed=2)
+    hat_slick(s, HAIR, back_rows=4, side_rows=2)
     SUIT, SUITL = (32, 34, 40), (46, 48, 56)
     SHIRT = (234, 234, 238)
     body_cloth(s, SHIRT, amp=0.03, seed=31)
@@ -587,7 +622,7 @@ def finn():
     stubble(s, SK, 0.2)
     for lx in range(8):
         s.set('head', 'top', lx, 1 + lx % 2, shade(HAIR, 1.3))
-    hat_hair(s, HAIR, 0.5, back_rows=3, side_rows=2, front_rows=1, seed=6)
+    hat_slick(s, HAIR, back_rows=4, side_rows=2)
     COAT, SHIRT, TIE = (94, 96, 102), (228, 228, 230), (54, 54, 62)
     body_cloth(s, SHIRT, amp=0.03, seed=61)
     s.rect('body', 'front', 3, 0, 2, 1, SK, skin=True)

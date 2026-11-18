@@ -20,7 +20,7 @@ All art is original. Wikis, show descriptions and fan skins were used as inspira
 | `finn.png` | player | grey dress coat over a white shirt and dark tie, dark trousers, black shoes; brown hair slicked back, hazel-green eyes | coat tails on the pants layers |
 | `freya.png` | **slim arms** | black leather jacket over a charcoal top, dark jeans, black boots; long dirty-blonde hair, green eyes, smoky liner | pendant on a cord. Possible future NPC/boss |
 | `deucalion_human.png` | player | dark charcoal knit sweater with vertical ribs, lighter grey textured shawl collar and shoulder panels, dark trousers; short swept dirty-blond hair, blue eyes | no coat, cane or glasses |
-| `peter_hale.png` | player | camel wool overcoat (lapels, open) over a dark grey herringbone waistcoat and a white open-collar shirt, dark trousers; slicked-back dark hair, short beard, blue-green eyes | coat tails on the pants layers |
+| `peter_hale.png` | player | camel wool overcoat (lapels, open) over a dark grey herringbone waistcoat and a white open-collar shirt, dark trousers; slicked-back dark hair, short trimmed beard and stubble (mouth visible), blue-green eyes | coat to knee level on the pants layers, charcoal trousers and dark shoes below |
 | `peter_hale_burned.png` | player | the risen look: stripped to rotted trousers, pale bare skin showing through caked grave soil | mud and soil clumps on both layers, beard and hair clotted with dirt; eyes, brows and mouth left readable |
 | `sebastien_valet.png` | player | burgundy justaucorps, gold braid, cream breeches, white stockings | 1760s French aristocrat: powdered wig with queue and ribbon, lace jabot and cuffs (unchanged this round) |
 | `beast_host.png` | player | linen shirt, brown vest, grey trousers, worn red scarf | plain village man, the Beast's host (unchanged this round) |
@@ -31,7 +31,7 @@ All four use the Werewolves mod beast model (`WerewolfBeastModel`) UV layout exa
 
 | File | Palette | Notes |
 |---|---|---|
-| `deucalion_demon_wolf.png` | blue-grey **skin** (not fur), dark swept-back hair on the head and neck, red eyes | heavy brow ridge, wrinkled snout, pointed ears with dark-red inner, full mouth of pale fangs, dark claws. Only the hair parts are cut out; the body is smooth skin with muscle shading and dark veins |
+| `deucalion_demon_wolf.png` | blue-grey **skin** (not fur), dark swept-back hair on the head and neck, red eyes | heavy brow ridge, wrinkled snout, pointed ears with dark-red inner, jagged row of white fangs over a dark mouth line, dark claws. Only the hair parts are cut out; the body is smooth skin with muscle shading and dark veins |
 | `peter_hale_wolf.png` | dark blue-grey body, shaggy black mane over neck, shoulders and back, red eyes, white claws and fangs | **Needs a quadruped pose or model later** (the Werewolves beast model is a hunched biped; the show's Alpha moves on all fours). GeckoLib upgrade candidate. |
 | `klaus_hybrid.png` | warm tan-brown fur, cream chest, dark saddle, black branching hybrid veins, yellow eyes | the show never shows a full wolf form clearly, so the coat follows his dirty-blond/brown colouring |
 | `beast_of_gevaudan.png` | black-brown fur with russet back streaks and a pale underbelly mark, dull red veins, bone-white face plates, white-blue eyes | brow band, skull cap, cheek guards (the flat sideburn planes), muzzle ridge, spine ridge, shoulder and forearm plates. Meant to render at about 2×, so details are 2–4 px blocks |
