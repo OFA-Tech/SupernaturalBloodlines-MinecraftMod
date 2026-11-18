@@ -57,6 +57,15 @@ public final class HubClient {
                     : mc.screen instanceof HubScreen ? HubReturn.OnScreen.HUB : HubReturn.OnScreen.OTHER;
             RETURN.tick(now, mc.screen == null ? null : mc.screen.getClass().getName()).ifPresent(HubClient::open);
         });
+        // a name in a request message links here: the hub opens on that person (client only, the server is never asked to run it)
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.RegisterClientCommandsEvent e) -> e.getDispatcher().register(
+                net.minecraft.commands.Commands.literal(net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.COMMAND)
+                        .then(net.minecraft.commands.Commands.argument("id", net.minecraft.commands.arguments.UuidArgument.uuid())
+                                .then(net.minecraft.commands.Commands.argument("name", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                                        .executes(ctx -> {
+                                            openProfile(net.minecraft.commands.arguments.UuidArgument.getUuid(ctx, "id"), com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "name"));
+                                            return 1;
+                                        })))));
         HubHooks.setHubOpener(HubClient::open);
         HubHooks.addTheme(new HubHooks.Theme(HubClientConfig.ThemeId.GRIMOIRE.id(), () -> true, GrimoireTheme::new));
         HubHooks.addTheme(new HubHooks.Theme(HubClientConfig.ThemeId.BLOOD_MOON.id(), () -> true, BloodMoonTheme::new));
@@ -149,6 +158,14 @@ public final class HubClient {
         boolean home = HubClientConfig.openOnHome() ? !openedThisSession || waiting : waiting;
         openedThisSession = true;
         open(home ? HubPage.HOME : lastPage);
+    }
+
+    /** The hub on Home, then on that person's Profile (from a chat name). */
+    static void openProfile(java.util.UUID id, String name) {
+        open(HubPage.HOME);
+        if (Minecraft.getInstance().screen instanceof HubScreen s) {
+            s.openProfile(id, name);
+        }
     }
 
     /** The "answer request" key: Home, with the first request focused. */

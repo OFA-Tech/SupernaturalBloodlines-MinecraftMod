@@ -128,7 +128,7 @@ public final class PackDuel {
         Component accept = Component.translatable(KEY + "accept").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pack challenge accept"))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(KEY + "accept_hover", PackCommand.name(challenger)))));
-        leader.sendSystemMessage(Component.translatable(KEY + "asked", PackCommand.name(challenger)).append(" ").append(accept));
+        leader.sendSystemMessage(Component.translatable(KEY + "asked", net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(PackCommand.name(challenger), challenger.getUUID())).append(" ").append(accept));
         challenger.sendSystemMessage(Component.translatable(KEY + "sent", PackCommand.name(leader)));
         HubRequests.changed(leader);
         return null;

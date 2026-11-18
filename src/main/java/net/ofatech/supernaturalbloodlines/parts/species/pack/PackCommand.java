@@ -193,7 +193,7 @@ public final class PackCommand {
             return error("target_has_pack", name(target));
         }
         long now = alpha.serverLevel().getGameTime();
-        target.sendSystemMessage(inviteMessage(name(alpha), REQUESTS.open(alpha.getUUID(), target.getUUID(), now), index.betasOf(target.getUUID()).size()));
+        target.sendSystemMessage(inviteMessage(net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(name(alpha), alpha.getUUID()), REQUESTS.open(alpha.getUUID(), target.getUUID(), now), index.betasOf(target.getUUID()).size()));
         alpha.sendSystemMessage(Component.translatable(KEY + "invited", name(target)));
         HubRequests.changed(target);
         return null;
@@ -201,6 +201,10 @@ public final class PackCommand {
 
     /** The invitation text: who asks, and (when the invited one leads a pack of their own) that it comes along. */
     public static Component inviteMessage(String alphaName, String token, int bringing) {
+        return inviteMessage(Component.literal(alphaName), token, bringing);
+    }
+
+    public static Component inviteMessage(Component alphaName, String token, int bringing) {
         Component accept = Component.translatable(KEY + "accept").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pack accept " + token))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(KEY + "accept_hover", alphaName))));
@@ -334,7 +338,7 @@ public final class PackCommand {
         String token = ALLY_REQUESTS.open(leader.getUUID(), target.getUUID(), leader.serverLevel().getGameTime());
         Component accept = Component.translatable(KEY + "accept").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pack ally accept " + token)));
-        target.sendSystemMessage(Component.translatable(KEY + "ally_invite", name(leader)).append(" ").append(accept));
+        target.sendSystemMessage(Component.translatable(KEY + "ally_invite", net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(name(leader), leader.getUUID())).append(" ").append(accept));
         leader.sendSystemMessage(Component.translatable(KEY + "ally_invited", name(target)));
         HubRequests.changed(target);
         return null;

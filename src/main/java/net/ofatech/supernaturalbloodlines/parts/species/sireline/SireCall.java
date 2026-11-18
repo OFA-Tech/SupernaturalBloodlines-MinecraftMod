@@ -100,7 +100,7 @@ public final class SireCall {
                 ServerPlayer target = player(caller.server, sired.id());
                 // a sired player whose bond was severed (R101b) cannot be called
                 if (target != null && target != caller && !BloodlineAccess.get(target).bondBroken()) {
-                    target.sendSystemMessage(requestMessage(caller.getGameProfile().getName(), REQUESTS.open(caller.getUUID(), target.getUUID(), now)));
+                    target.sendSystemMessage(requestMessage(net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(caller.getGameProfile().getName(), caller.getUUID()), REQUESTS.open(caller.getUUID(), target.getUUID(), now)));
                     HubRequests.changed(target);
                     players++;
                 }
@@ -142,6 +142,10 @@ public final class SireCall {
     }
 
     public static Component requestMessage(String callerName, String token) {
+        return requestMessage(Component.literal(callerName), token);
+    }
+
+    public static Component requestMessage(Component callerName, String token) {
         Component accept = Component.translatable(KEY + "accept").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/bloodline accept " + token))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(KEY + "accept_hover", callerName))));
