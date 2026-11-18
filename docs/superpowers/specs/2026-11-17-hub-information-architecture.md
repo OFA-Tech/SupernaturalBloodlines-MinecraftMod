@@ -439,9 +439,9 @@ Key: **K** always known to this observer. **D** known only once discovered (by a
 
 Rules behind the table:
 
-1. **Pack shares everything the pack knows, at once.** On joining you receive the pack's pool; when anyone in the pack discovers a fact about someone, every current member knows it; leaving the pack keeps what you already know about people but stops live updates (`PRESENCE`, `PACK`, `ANCHOR`, `BONUS`).
+1. **Pack shares everything the pack knows, at once, only while you are in it.** What anyone in the pack discovers goes to the pack's pool, and every current member reads the pool (a member who joins later reads it from the day they join). It is read, never copied: **leaving, being kicked or the pack dissolving takes the pool away (owner ruling, 2026-11-18)** and a former member keeps only what they discovered themselves. Live facts (`PRESENCE`, `PACK`, `ANCHOR`, `BONUS`) also stop with the relation.
 2. **Pooling does not invent knowledge.** A gene nobody has discovered stays unknown to the carrier's own pack too. That is the reading recommended in open question 1; the literal reading ("a pack member's genes are simply shown to the whole pack") is option B there.
-3. **Discoveries are per observer and permanent,** like the Rite of Revelation today ("Discovery is per player, so your sired don't learn it when you do"). Stored on the observer as `known[subject] = set of facts`, capped (for example 256 subjects), plus a pool in the pack's saved data.
+3. **Your own discoveries are per observer and permanent,** like the Rite of Revelation today ("Discovery is per player, so your sired don't learn it when you do"). Stored on the observer as `known[subject] = set of facts`, capped (for example 256 subjects), plus a pool in the pack's saved data.
 4. **Values are live.** A known fact is re-read when the Profile opens; the client never shows a stored copy. (Option: a "known as of" stamp for facts about people outside your pack; open question 13.)
 5. **The client may be asked, never trusted.** The client sends only a subject id (a player UUID, or an opaque per-session token for an NPC). The server derives the relationship from its own pack and line indexes.
 6. **Never send an unknown field,** and never send a relationship the observer does not have. A stranger's payload has no fields.

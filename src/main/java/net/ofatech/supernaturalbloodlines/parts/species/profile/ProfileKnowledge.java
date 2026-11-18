@@ -21,9 +21,10 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.KnownFacts;
 
 /**
- * What each player has discovered about other people, and the pool of what each pack has discovered. A discovery is per observer and stays
- * (leaving a pack keeps it); a discovery made by anyone in a pack goes to every current member at once and to the pack's pool for whoever
- * joins next. It never invents a fact: only {@link #discover} writes. Sizes are capped ({@link KnownFacts#MAX_SUBJECTS} subjects each,
+ * What each player has discovered about other people, and the pool of what each pack has discovered. A player's own discoveries are theirs for
+ * good. What anyone in a pack discovers also goes to the pack's pool, and a member READS the pool while they are in the pack, but is never given a
+ * copy: leaving, being kicked or the pack dissolving takes the pool away from them, and they keep only what they discovered themselves. It never
+ * invents a fact: only {@link #discover} writes. Sizes are capped ({@link KnownFacts#MAX_SUBJECTS} subjects each,
  * {@value #MAX_OWNERS} owners), and a save that is damaged or from another version loads what it can instead of failing.
  */
 public final class ProfileKnowledge extends SavedData {
@@ -37,22 +38,17 @@ public final class ProfileKnowledge extends SavedData {
         return level.getServer().overworld().getDataStorage().computeIfAbsent(new Factory<>(ProfileKnowledge::new, ProfileKnowledge::load, null), NAME);
     }
 
-    /** What {@code observer} knows of {@code subject}: their own discoveries and, while they are in a pack, the pack's pool (kept once seen). */
+    /** What {@code observer} knows of {@code subject}: their own discoveries and, only while they are in a pack, the pack's pool (read, never copied into their own). */
     public Set<Fact> known(PackIndex packs, UUID observer, UUID subject) {
         // a read never creates an entry: a profile asked for by someone nobody has discovered anything for must not push a real observer out of the capped map
         Set<Fact> out = EnumSet.copyOf(peek(observers, observer).facts(subject));
         if (packs != null && packs.inPack(observer)) {
-            Set<Fact> pooled = peek(pools, packs.leaderOf(observer)).facts(subject);
-            if (!out.containsAll(pooled)) {
-                out.addAll(pooled);
-                owned(observers, observer).add(subject, pooled);
-                setDirty();
-            }
+            out.addAll(peek(pools, packs.leaderOf(observer)).facts(subject));
         }
         return out;
     }
 
-    /** {@code observer} learned {@code facts} of {@code subject}. A pack-mate learns it too, at once, and so does the pack's pool. */
+    /** {@code observer} learned {@code facts} of {@code subject}. They are theirs for good; while they are in a pack the pack's pool gets them too, and the pack-mates read them from there. */
     public void discover(PackIndex packs, UUID observer, UUID subject, Collection<Fact> facts) {
         if (facts.isEmpty()) {
             return;
@@ -60,9 +56,6 @@ public final class ProfileKnowledge extends SavedData {
         owned(observers, observer).add(subject, facts);
         if (packs != null && packs.inPack(observer)) {
             owned(pools, packs.leaderOf(observer)).add(subject, facts);
-            for (UUID member : packs.pack(observer)) {
-                owned(observers, member).add(subject, facts);
-            }
         }
         setDirty();
     }
@@ -76,7 +69,7 @@ public final class ProfileKnowledge extends SavedData {
         }
     }
 
-    /** The pack dissolved: nobody leads it, so its pool is dropped (what members already learned stays with them). */
+    /** The pack dissolved: nobody leads it, so its pool is dropped (and nobody is in the pack to read it). */
     public void dropPool(UUID leader) {
         if (pools.remove(leader) != null) {
             setDirty();

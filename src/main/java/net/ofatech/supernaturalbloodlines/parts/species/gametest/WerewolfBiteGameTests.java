@@ -292,6 +292,36 @@ public final class WerewolfBiteGameTests {
         return PackCommand.invite(leader, member) == null && PackCommand.accept(member, PackCommand.requests().tokenOf(leader.getUUID(), member.getUUID()).orElseThrow()) == null;
     }
 
+    /** A member who leaves, or is kicked, no longer reads what the rest of the pack discovered: only their own remains (the real leave and kick commands). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMemberWhoLeavesOrIsKickedLosesThePoolsDiscoveries(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer mate = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, mate);
+        var pool = net.ofatech.supernaturalbloodlines.parts.species.profile.ProfileKnowledge.get(helper.getLevel());
+        var line = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.LINE;
+        var genes = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.GENES;
+        java.util.UUID subject = new java.util.UUID(77, 77);
+        try {
+            for (boolean kicked : new boolean[] {false, true}) {
+                helper.assertTrue(joinPack(alpha, mate), "the pack could not be built");
+                var index = net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.get(helper.getLevel());
+                pool.discover(index, alpha.getUUID(), subject, java.util.EnumSet.of(line));
+                pool.discover(index, mate.getUUID(), subject, java.util.EnumSet.of(genes));
+                helper.assertTrue(pool.known(index, mate.getUUID(), subject).contains(line), "a member did not read the pool");
+                var out = kicked ? PackCommand.kick(alpha, mate.getUUID(), "mate") : PackCommand.leave(mate);
+                helper.assertTrue(out == null, (kicked ? "kick" : "leave") + " refused: " + out);
+                var left = pool.known(index, mate.getUUID(), subject);
+                helper.assertTrue(left.equals(java.util.EnumSet.of(genes)), (kicked ? "a kicked" : "a departed") + " member knew " + left + " (only their own GENES stays)");
+            }
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.get(helper.getLevel()).kick(mate.getUUID());
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, mate);
+        }
+        helper.succeed();
+    }
+
     /** Hub IA 3.7: an NPC in the observer's own line shows its name and species and nothing else, and is marked as no player; a stranger is not. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void anNpcInYourLineShowsOnlyItsNameAndSpecies(GameTestHelper helper) {

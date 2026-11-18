@@ -10,6 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.KnownFacts;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,70 @@ class ProfileKnowledgeTest {
         assertEquals(evictedBefore, k.evictedOwners());
         assertEquals(0, new ProfileKnowledge().evictedOwners(), "the counter belongs to one index, not to the server run");
         assertEquals(EnumSet.of(Fact.GENES), k.known(null, real, subject), "the real observer was pushed out by strangers");
+    }
+
+    private static final UUID LEAD = new UUID(5, 1);
+    private static final UUID MATE = new UUID(5, 2);
+    private static final UUID OTHER = new UUID(5, 3);
+    private static final UUID SUBJECT = new UUID(5, 9);
+
+    /** Leader LEAD with members MATE and OTHER; OTHER discovers the line of SUBJECT, MATE discovers the genes of SUBJECT on their own account. */
+    private static PackIndex pack(ProfileKnowledge k) {
+        PackIndex packs = new PackIndex();
+        assertTrue(packs.join(LEAD, MATE));
+        assertTrue(packs.join(LEAD, OTHER));
+        k.discover(packs, OTHER, SUBJECT, EnumSet.of(Fact.LINE));
+        k.discover(packs, MATE, SUBJECT, EnumSet.of(Fact.GENES));
+        return packs;
+    }
+
+    @Test
+    void aPacksDiscoveriesAreReadByEveryMemberWhileTheyAreIn() {
+        ProfileKnowledge k = new ProfileKnowledge();
+        PackIndex packs = pack(k);
+        assertEquals(EnumSet.of(Fact.LINE, Fact.GENES), k.known(packs, MATE, SUBJECT));
+        assertEquals(EnumSet.of(Fact.LINE, Fact.GENES), k.known(packs, LEAD, SUBJECT));
+    }
+
+    @Test
+    void aMemberWhoLeavesKeepsOnlyWhatTheyDiscoveredThemselves() {
+        ProfileKnowledge k = new ProfileKnowledge();
+        PackIndex packs = pack(k);
+        k.known(packs, MATE, SUBJECT); // reading while in the pack must not copy the pool into their own
+        packs.leaveVoluntarily(MATE);
+        assertEquals(EnumSet.of(Fact.GENES), k.known(packs, MATE, SUBJECT), "the pack's pool still counted after leaving");
+    }
+
+    @Test
+    void aKickedMemberLosesThePoolToo() {
+        ProfileKnowledge k = new ProfileKnowledge();
+        PackIndex packs = pack(k);
+        k.known(packs, OTHER, SUBJECT);
+        assertTrue(packs.kick(OTHER));
+        assertEquals(EnumSet.of(Fact.LINE), k.known(packs, OTHER, SUBJECT), "a kicked member kept what the others found (only their own LINE stays)");
+        assertEquals(EnumSet.of(Fact.LINE, Fact.GENES), k.known(packs, MATE, SUBJECT), "the rest of the pack lost something");
+    }
+
+    @Test
+    void whenThePackDissolvesNobodyKeepsThePoolButTheirOwn() {
+        ProfileKnowledge k = new ProfileKnowledge();
+        PackIndex packs = pack(k);
+        k.known(packs, MATE, SUBJECT);
+        packs.dissolve(LEAD);
+        k.dropPool(LEAD);
+        assertEquals(EnumSet.of(Fact.GENES), k.known(packs, MATE, SUBJECT));
+        assertEquals(EnumSet.of(Fact.LINE), k.known(packs, OTHER, SUBJECT));
+        assertTrue(k.known(packs, LEAD, SUBJECT).isEmpty(), "the leader never discovered anything themselves");
+    }
+
+    @Test
+    void aMemberWhoJoinsLaterReadsThePoolFromTheDayTheyJoin() {
+        ProfileKnowledge k = new ProfileKnowledge();
+        PackIndex packs = pack(k);
+        UUID late = new UUID(5, 4);
+        assertTrue(k.known(packs, late, SUBJECT).isEmpty());
+        assertTrue(packs.join(LEAD, late));
+        assertEquals(EnumSet.of(Fact.LINE, Fact.GENES), k.known(packs, late, SUBJECT));
     }
 
     @Test
