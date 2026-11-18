@@ -54,10 +54,10 @@ final class AlmanacEvents {
         return HubAlmanac.step(base, iconSize, !view.byDay().isEmpty());
     }
 
-    /** A ring in the event's colour round the moon icon of day {@code day} ({@code size} wide at {@code x}, {@code y}), with the event line as its tooltip. */
-    static void ring(HubScreen.Frame f, LunarMoodClient.View view, int day, int x, int y, int size, int fallback) {
+    /** A ring round the moon icon of day {@code day} ({@code size} wide at {@code x}, {@code y}), with the event line as its tooltip: the event's colour, or the theme's accent when that colour would not stand out from the page. */
+    static void ring(HubScreen.Frame f, LunarMoodClient.View view, int day, int x, int y, int size) {
         view.onDay(day).ifPresent(e -> {
-            int color = e.color() >= 0 ? 0xFF000000 | e.color() : fallback;
+            int color = HubAlmanac.ringColor(e.color(), f.theme().paper(), f.theme().accent());
             int reach = HubAlmanac.RING_REACH;
             KitDraw.tickRing(f.g, x + size / 2, y + size / 2, size / 2 + reach, 16, 1f, color, color);
             f.target("lunar:" + day, new Rect(x - reach, y - reach, size + 2 * reach, size + 2 * reach), List.of(line(e)), null);

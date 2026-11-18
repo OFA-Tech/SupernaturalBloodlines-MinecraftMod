@@ -39,7 +39,7 @@ public final class CelestialsPartOffGameTests {
         };
     }
 
-    private static final LunarMoods.Tuning ON = new LunarMoods.Tuning(0.8, 0.75, 1.25, 0.5, 2.0, true);
+    private static final LunarMoods.Tuning ON = new LunarMoods.Tuning(0.8, 0.75, 1.25, true);
 
     @GameTest(template = "empty", templateNamespace = SupernaturalBloodlines.MODID)
     public static void theSwitchGovernsTheHooks(GameTestHelper helper) {

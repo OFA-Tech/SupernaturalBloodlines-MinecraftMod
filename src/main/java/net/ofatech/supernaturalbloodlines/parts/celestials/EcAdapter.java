@@ -22,6 +22,9 @@ public interface EcAdapter {
     /** The scheduled events by days from today (0 = tonight), below {@code days}. Works on both sides. */
     Map<Integer, Event> upcoming(Level level, int days);
 
+    /** Whether Enhanced Celestials has loaded the lunar event {@code id} (our datapack file decoded). Server only. */
+    boolean knows(ServerLevel level, ResourceLocation id);
+
     /** Starts the event {@code id} tonight. False when another event is running, or the event is not known. Server only. */
     boolean start(ServerLevel level, ResourceLocation id);
 

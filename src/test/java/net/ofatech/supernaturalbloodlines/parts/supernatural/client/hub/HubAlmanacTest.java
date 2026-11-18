@@ -31,9 +31,6 @@ class HubAlmanacTest {
     @Test
     void anEventSitsOnItsDayAndTheNextOneIsTheNearest() {
         List<LunarSource.Upcoming> events = List.of(event(2, "blood_moon"), event(4, "super_moon"), event(30, "blue_moon"));
-        assertEquals(2, HubAlmanac.eventOn(events, 2).orElseThrow().days());
-        assertTrue(HubAlmanac.eventOn(events, 4).orElseThrow().mood().superMoon());
-        assertTrue(HubAlmanac.eventOn(events, 3).isEmpty());
         assertEquals(2, HubAlmanac.next(events).orElseThrow().days());
         assertEquals(0, HubAlmanac.next(List.of(event(0, "blue_moon"), event(5, "blood_moon"))).orElseThrow().days(), "tonight counts");
     }
@@ -56,8 +53,20 @@ class HubAlmanacTest {
     }
 
     @Test
+    void aRingColourThatDoesNotStandOutFromThePageFallsBack() {
+        int accent = 0xFFB8860B;
+        int parchment = 0xF3E5C0;
+        int blood = 0xFF5555;
+        int dark = 0x1A0A0A;
+        assertEquals(0xFF000000 | blood, HubAlmanac.ringColor(blood, dark, accent), "red on a dark page has contrast");
+        assertEquals(accent, HubAlmanac.ringColor(blood, parchment, accent), "light red on parchment is below 3:1");
+        assertEquals(accent, HubAlmanac.ringColor(0xF0E0B0, parchment, accent), "parchment on parchment");
+        assertEquals(accent, HubAlmanac.ringColor(-1, dark, accent), "an event with no colour");
+        assertTrue(HubAlmanac.contrast(0x000000, 0xFFFFFF) > 20);
+    }
+
+    @Test
     void noEventsMeansNothingToDraw() {
         assertTrue(HubAlmanac.next(List.of()).isEmpty());
-        assertTrue(HubAlmanac.eventOn(List.of(), 0).isEmpty());
     }
 }

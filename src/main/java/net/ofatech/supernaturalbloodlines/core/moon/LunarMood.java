@@ -57,15 +57,7 @@ public record LunarMood(Kind kind, boolean superMoon) {
         return kind == Kind.BLOOD ? bonus : 1;
     }
 
-    /** For NPC werewolf packs (not built yet): the chance factor of a Blood Moon. */
-    public double packChanceFactor(double factor) {
-        return kind == Kind.BLOOD ? factor : 1;
-    }
 
-    /** For the full-moon bosses (not built yet): the spawn weight factor of a super moon. */
-    public double bossWeight(double weight) {
-        return superMoon ? weight : 1;
-    }
 
     /** A Super Blue Moon skips the Werewolves forced shift for everybody, when the switch is on. */
     public boolean sparesForcedShift(boolean switchOn) {

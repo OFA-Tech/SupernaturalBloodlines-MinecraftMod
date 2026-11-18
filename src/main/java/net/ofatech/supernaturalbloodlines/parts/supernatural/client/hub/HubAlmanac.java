@@ -15,10 +15,6 @@ public final class HubAlmanac {
         return Math.floorMod(8 - phase, 8);
     }
 
-    /** The lunar event on day {@code day} (days from today) of a list sorted nearest first, if any. */
-    public static Optional<LunarSource.Upcoming> eventOn(List<LunarSource.Upcoming> events, int day) {
-        return events.stream().filter(e -> e.days() == day).findFirst();
-    }
 
     /** The almanac's row: this many days, from today. */
     public static final int ROW = 6;
@@ -32,6 +28,29 @@ public final class HubAlmanac {
     public static List<LunarSource.Upcoming> listed(List<LunarSource.Upcoming> events) {
         List<LunarSource.Upcoming> inRow = events.stream().filter(e -> e.days() >= 0 && e.days() < ROW).toList();
         return inRow.isEmpty() ? next(events).map(List::of).orElse(List.of()) : inRow;
+    }
+
+    /** Least contrast (WCAG) a ring must have against the page. */
+    public static final double RING_CONTRAST = 3.0;
+
+    private static double luminance(int rgb) {
+        double[] c = {(rgb >> 16 & 0xFF) / 255.0, (rgb >> 8 & 0xFF) / 255.0, (rgb & 0xFF) / 255.0};
+        for (int i = 0; i < 3; i++) {
+            c[i] = c[i] <= 0.03928 ? c[i] / 12.92 : Math.pow((c[i] + 0.055) / 1.055, 2.4);
+        }
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    }
+
+    /** The WCAG contrast ratio of two colours (alpha ignored). */
+    public static double contrast(int rgbA, int rgbB) {
+        double a = luminance(rgbA);
+        double b = luminance(rgbB);
+        return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    }
+
+    /** The colour of a ring: the event's ({@code event} RGB, -1 for none) when it has {@link #RING_CONTRAST} against the page's {@code paper}, else {@code fallback}. Opaque. */
+    public static int ringColor(int event, int paper, int fallback) {
+        return event >= 0 && contrast(event, paper) >= RING_CONTRAST ? 0xFF000000 | event : fallback;
     }
 
     /** The distance between two moon icons of {@code iconSize}: {@code base} as it is, or wider when rings are drawn so that neighbours' rings never touch. */

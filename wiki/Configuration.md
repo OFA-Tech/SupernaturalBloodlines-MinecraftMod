@@ -170,8 +170,6 @@ Only does anything with [Enhanced Celestials 2](Enhanced-Celestials). A factor o
 | `blue_moon_rite_cost` | `0.8` | Altar power cost of every rite on a Blue Moon, as a factor (0.1 to 1). It never allows a full-moon rite on another night. |
 | `super_moon_rite_cost` | `0.75` | Cost of the Rite of the Moon, the Silver Moon and Immortality on a super moon, on top of the Blue Moon factor (0.1 to 1). |
 | `super_blue_skips_forced_shift` | `true` | A Super Blue Moon does not force the Werewolves full-moon shift on anybody. |
-| `blood_moon_pack_chance_factor` | `0.5` | Reserved for NPC werewolf packs (not built yet). Nothing reads it today. |
-| `super_moon_boss_weight` | `2.0` | Reserved for the full-moon bosses (not built yet). Nothing reads it today. |
 
 ## supernatural (client): `supernaturalbloodlines-hub-client.toml`
 

@@ -26,6 +26,11 @@ public final class EclipseSignal {
         LISTENERS.add(listener);
     }
 
+    /** For tests in this package: forgets every listener. */
+    static void clear() {
+        LISTENERS.clear();
+    }
+
     /** Tells every listener. One that fails is logged and does not stop the others or the eclipse. */
     public static void fire(MinecraftServer server, boolean on) {
         for (Listener l : LISTENERS) {

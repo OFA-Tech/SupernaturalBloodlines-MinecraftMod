@@ -4,9 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 class EclipseSignalTest {
+    @AfterEach
+    void clear() {
+        EclipseSignal.clear();
+    }
+
     @Test
     void aBrokenListenerDoesNotStopTheOthersOrTheEclipse() {
         List<String> seen = new ArrayList<>();

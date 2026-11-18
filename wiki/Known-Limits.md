@@ -92,7 +92,8 @@ If you find something that behaves differently from this wiki, please [open an i
 - **Not checked in a real game.** Tested only with a stand-in for Enhanced Celestials and against its jars (Core 2.0.3.4, Default Lunar Events 2.0.1.4, checked with javap). A first two-client run, with and without it, is still to do. Enhanced Celestials is young (about three months): if an update changes its API, the part logs one warning and the lunar events are ignored; nothing else breaks.
 - **An event is not a full moon.** A Blood, Blue or Harvest Moon can fall on any phase. Rites that need the full moon, the Werewolves forced shift and werewolf moon control still follow the real moon.
 - **Four jars.** Enhanced Celestials 2 Core has no events of its own: you also need Default Lunar Events (for Blood, Blue, Harvest and super moons), CorgiLib and Data Anchor. With the core alone only our lunar eclipse shows up.
-- **NPC werewolf packs and the full-moon bosses do not exist yet**, so the Blood Moon pack chance and the super moon boss weight (`blood_moon_pack_chance_factor`, `super_moon_boss_weight`) change nothing today.
+- **NPC werewolf packs and the full-moon bosses do not exist yet**, so the Blood Moon does not change their chance and a super moon does not change their weight today. Those settings come with them.
+- **Removing the mod in the middle of a lunar eclipse** (with Enhanced Celestials installed) makes Enhanced Celestials log an error about our event and forget its saved forecast (the next lunar events are rolled again). End the eclipse first: `/supernaturalbloodlines debug eclipse stop`.
 - **The "Tonight: Blood Moon" line on Home and a Guide paragraph are not built.** Only the almanac on the Path page shows the events.
 - **The eclipse light.** The red light of our eclipse as an Enhanced Celestials event is a guess (`c0403a`); it may need a different colour once someone has seen it.
 

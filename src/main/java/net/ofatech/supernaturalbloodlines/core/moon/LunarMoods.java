@@ -1,6 +1,9 @@
 package net.ofatech.supernaturalbloodlines.core.moon;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import net.minecraft.world.level.Level;
@@ -9,19 +12,38 @@ import org.slf4j.LoggerFactory;
 
 /**
  * The one place that asks the {@link LunarSource}. A source that throws is answered with "no mood", never with an exception on a tick; after
- * {@link #MAX_FAILURES} failures in a row the source is dropped for good (and logged once), so "no lunar mood from now on" is true.
+ * {@link #MAX_FAILURES} failures in a row of one kind of call the source is dropped for good (and logged), so "no lunar mood from now on" is true.
+ * The kinds are counted apart, because the server asks for the mood each tick and the client asks for the schedule: a good answer of one must not
+ * hide the other one's failures.
  */
 public final class LunarMoods {
     /** The numbers of the celestials config. {@link #OFF} changes nothing; it is what is used while the celestials part is off. */
-    public record Tuning(double blueRiteCost, double superRiteCost, double bloodBite, double bloodPackChance, double superBossWeight, boolean superBlueSkipsForcedShift) {
-        public static final Tuning OFF = new Tuning(1, 1, 1, 1, 1, false);
+    public record Tuning(double blueRiteCost, double superRiteCost, double bloodBite, boolean superBlueSkipsForcedShift) {
+        public static final Tuning OFF = new Tuning(1, 1, 1, false);
+    }
+
+    /** What is being asked of the source; each has its own failure count. */
+    public enum Call {
+        /** The running mood (server and client, every tick). */
+        NOW,
+        /** The schedule (the hub, once a second). */
+        AHEAD,
+        /** Starting or ending our event in Enhanced Celestials. */
+        MIRROR
     }
 
     static final int MAX_FAILURES = 3;
     private static final Logger LOGGER = LoggerFactory.getLogger(LunarMoods.class);
+    private static final AtomicInteger[] FAILURES = {new AtomicInteger(), new AtomicInteger(), new AtomicInteger()};
+    private static final AtomicBoolean WARNED = new AtomicBoolean();
     private static volatile LunarSource source = LunarSource.NONE;
     private static volatile Supplier<Tuning> tuning = () -> Tuning.OFF;
-    private static volatile int failures;
+
+    /** The mood of one level at one game tick: it is asked for several times a tick (every rite's cost, the client's draw). */
+    private record Cached(WeakReference<Level> level, long tick, LunarMood mood) {
+    }
+
+    private static volatile Cached cached;
 
     private LunarMoods() {
     }
@@ -29,7 +51,11 @@ public final class LunarMoods {
     public static void use(LunarSource value, Supplier<Tuning> numbers) {
         source = value == null ? LunarSource.NONE : value;
         tuning = numbers == null ? () -> Tuning.OFF : numbers;
-        failures = 0;
+        for (AtomicInteger f : FAILURES) {
+            f.set(0);
+        }
+        WARNED.set(false);
+        cached = null;
     }
 
     /** The source now in use ({@link LunarSource#NONE} when there is none, or after it failed for good). */
@@ -37,27 +63,62 @@ public final class LunarMoods {
         return source;
     }
 
-    /** Runs {@code call}; its answer, or {@code fallback} when it throws. The {@link #MAX_FAILURES}th failure in a row drops the source. */
-    static <T> T guarded(Supplier<T> call, T fallback) {
+    /** Whether there is a source: false without Enhanced Celestials and after the source was dropped. */
+    public static boolean active() {
+        return source != LunarSource.NONE;
+    }
+
+    /** Forgets the mood of this tick: for a change this mod made itself (our eclipse starting in Enhanced Celestials). */
+    public static void refresh() {
+        cached = null;
+    }
+
+    /**
+     * Runs {@code call}; its answer, or {@code fallback} when it throws. The first failure of all is logged at warn, the others at debug. The
+     * {@link #MAX_FAILURES}th failure in a row of this kind drops the source.
+     */
+    public static <T> T guarded(Call kind, Supplier<T> call, T fallback) {
+        AtomicInteger failures = FAILURES[kind.ordinal()];
         try {
             T answer = call.get();
-            failures = 0;
+            failures.set(0);
             return answer;
         } catch (RuntimeException | LinkageError e) {
-            if (++failures >= MAX_FAILURES && source != LunarSource.NONE) {
+            if (WARNED.compareAndSet(false, true)) {
+                LOGGER.warn("The lunar source failed ({}): {}", kind, e.toString());
+            } else {
+                LOGGER.debug("The lunar source failed ({}): {}", kind, e.toString());
+            }
+            if (failures.incrementAndGet() >= MAX_FAILURES && source != LunarSource.NONE) {
                 source = LunarSource.NONE;
-                LOGGER.warn("The lunar source failed {} times in a row, so there is no lunar mood from now on: {}", MAX_FAILURES, e.toString());
+                cached = null;
+                LOGGER.warn("The lunar source failed {} times in a row, so there is no lunar mood from now on", MAX_FAILURES);
             }
             return fallback;
         }
     }
 
     public static LunarMood now(Level level) {
-        return level == null ? LunarMood.NONE : guarded(() -> source.now(level), LunarMood.NONE);
+        if (level == null || source == LunarSource.NONE) {
+            return LunarMood.NONE;
+        }
+        Cached c = cached;
+        long tick = level.getGameTime();
+        if (c != null && c.tick == tick && c.level.get() == level) {
+            return c.mood;
+        }
+        LunarSource s = source;
+        LunarMood mood = guarded(Call.NOW, () -> s.now(level), LunarMood.NONE);
+        cached = new Cached(new WeakReference<>(level), tick, mood);
+        return mood;
     }
 
     public static List<LunarSource.Upcoming> ahead(Level level, int days) {
-        return level == null ? List.of() : guarded(() -> source.ahead(level, days), List.of());
+        if (level == null || source == LunarSource.NONE) {
+            return List.of();
+        }
+        LunarSource s = source;
+        return guarded(Call.AHEAD, () -> s.ahead(level, days), List.of());
     }
 
     /**
@@ -79,21 +140,13 @@ public final class LunarMoods {
 
     /** What a vampire's bite gives, as a factor. */
     public static double biteFactor(Level level) {
-        return now(level).biteFactor(tuning.get().bloodBite());
-    }
-
-    /** NPC packs (not built yet): the chance factor tonight. */
-    public static double packChanceFactor(Level level) {
-        return now(level).packChanceFactor(tuning.get().bloodPackChance());
-    }
-
-    /** Full-moon bosses (not built yet): the spawn weight factor tonight. */
-    public static double bossWeight(Level level) {
-        return now(level).bossWeight(tuning.get().superBossWeight());
+        LunarMood mood = now(level);
+        return mood.isNone() ? 1 : mood.biteFactor(tuning.get().bloodBite());
     }
 
     public static boolean sparesForcedShift(Level level) {
-        return now(level).sparesForcedShift(tuning.get().superBlueSkipsForcedShift());
+        LunarMood mood = now(level);
+        return !mood.isNone() && mood.sparesForcedShift(tuning.get().superBlueSkipsForcedShift());
     }
 
     /** True when the mood of {@code level} is our own eclipse drawn by Enhanced Celestials: the client then leaves the moon to it. */

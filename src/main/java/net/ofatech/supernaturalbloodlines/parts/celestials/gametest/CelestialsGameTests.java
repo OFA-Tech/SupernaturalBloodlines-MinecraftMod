@@ -36,6 +36,10 @@ public final class CelestialsGameTests {
     /** The real start-up, with no Enhanced Celestials in the runtime: no adapter was made and the source is the empty one. Nothing here calls {@code install(null)} first. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theRealStartUpWithoutEcLinksNothing(GameTestHelper helper) {
+        if (net.neoforged.fml.ModList.get().isLoaded(CelestialsPart.EC_MOD)) {
+            helper.succeed(); // a run with -PecJars: CelestialsRealEcGameTests is the one that matters
+            return;
+        }
         helper.assertFalse(CelestialsPart.linkedAtInit(), "the start-up linked an Enhanced Celestials that is not there");
         helper.assertTrue(CelestialsPart.adapter() == null, "an adapter is installed without Enhanced Celestials");
         helper.assertTrue(LunarMoods.source() == LunarSource.NONE, "a lunar source is in use without Enhanced Celestials");
@@ -47,7 +51,7 @@ public final class CelestialsGameTests {
         CelestialsPart.install(null);
         helper.assertTrue(LunarMoods.now(helper.getLevel()).isNone(), "a mood without Enhanced Celestials");
         helper.assertTrue(LunarMoods.riteCost(helper.getLevel(), true) == 1 && LunarMoods.riteCost(helper.getLevel(), false) == 1, "a rite cost factor without a mood");
-        helper.assertTrue(LunarMoods.biteFactor(helper.getLevel()) == 1 && LunarMoods.packChanceFactor(helper.getLevel()) == 1 && LunarMoods.bossWeight(helper.getLevel()) == 1, "a factor without a mood");
+        helper.assertTrue(LunarMoods.biteFactor(helper.getLevel()) == 1, "a factor without a mood");
         helper.assertFalse(LunarMoods.sparesForcedShift(helper.getLevel()), "the forced shift was spared without a mood");
         helper.assertTrue(LunarMoods.ahead(helper.getLevel(), 100).isEmpty(), "events without Enhanced Celestials");
         helper.assertFalse(LunarMoods.ecDrawsEclipse(helper.getLevel()), "the client would leave the moon to Enhanced Celestials");
@@ -70,9 +74,13 @@ public final class CelestialsGameTests {
         };
         LunarMoods.use(broken, net.ofatech.supernaturalbloodlines.parts.celestials.CelestialsConfig::tuning);
         try {
+            // the mood is cached for a tick, so each call stands for a tick of its own
             helper.assertTrue(LunarMoods.now(level).isNone(), "a broken source gave a mood");
             helper.assertTrue(LunarMoods.ahead(level, 6).isEmpty(), "a broken source gave events");
-            helper.assertTrue(LunarMoods.source() == broken, "the source was dropped after two failures");
+            LunarMoods.refresh();
+            helper.assertTrue(LunarMoods.now(level).isNone(), "a broken source gave a mood");
+            helper.assertTrue(LunarMoods.source() == broken, "the source was dropped after two failures of each kind");
+            LunarMoods.refresh();
             helper.assertTrue(LunarMoods.now(level).isNone(), "a broken source gave a mood");
             helper.assertTrue(LunarMoods.source() == LunarSource.NONE, "the source is still in use after repeated failures");
             helper.assertTrue(LunarMoods.riteCost(level, true) == 1 && LunarMoods.biteFactor(level) == 1, "a factor after the source was dropped");
@@ -82,6 +90,54 @@ public final class CelestialsGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBrokenMirrorStopsBeingAskedAfterThreeTries(GameTestHelper helper) {
+        MinecraftServer server = helper.getLevel().getServer();
+        FakeEc ec = new FakeEc();
+        ec.broken = true;
+        with(ec, () -> {
+            for (int i = 0; i < 6; i++) {
+                EclipseSignal.fire(server, i % 2 == 0);
+            }
+            helper.assertTrue(ec.calls.size() == 3, "a broken Enhanced Celestials was asked " + ec.calls.size() + " times, not 3: " + ec.calls);
+            helper.assertFalse(LunarMoods.active(), "the source is still in use");
+        });
+        helper.succeed();
+    }
+
+    /** Synchronous on purpose: other tests swap the shared source between ticks, so a wait across ticks would be flaky. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theMoodIsAskedOncePerLevelAndTick(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var other = level.getServer().getLevel(net.minecraft.world.level.Level.NETHER);
+        int[] asked = {0};
+        LunarMoods.use(new LunarSource() {
+            @Override
+            public LunarMood now(net.minecraft.world.level.Level l) {
+                asked[0]++;
+                return LunarMood.NONE;
+            }
+
+            @Override
+            public List<Upcoming> ahead(net.minecraft.world.level.Level l, int days) {
+                return List.of();
+            }
+        }, net.ofatech.supernaturalbloodlines.parts.celestials.CelestialsConfig::tuning);
+        try {
+            LunarMoods.now(level);
+            LunarMoods.now(level);
+            LunarMoods.biteFactor(level);
+            helper.assertTrue(asked[0] == 1, "the source was asked " + asked[0] + " times in one tick");
+            LunarMoods.now(other);
+            helper.assertTrue(asked[0] == 2, "another level shared the cache: " + asked[0]);
+            LunarMoods.refresh();
+            LunarMoods.now(other);
+            helper.assertTrue(asked[0] == 3, "refresh did not drop the cached mood: " + asked[0]);
+        } finally {
+            CelestialsPart.install(null);
+        }
+        helper.succeed();
+    }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theMoodFollowsTheRunningEvent(GameTestHelper helper) {
         var level = helper.getLevel();
@@ -100,7 +156,7 @@ public final class CelestialsGameTests {
             helper.assertTrue(LunarMoods.riteCost(level, false) == 0.8, "a super moon discounted a rite that does not need the full moon: " + LunarMoods.riteCost(level, false));
             helper.assertTrue(Math.abs(LunarMoods.riteCost(level, true) - 0.6) < 1e-9, "the Super Blue Moon full-moon rite cost is " + LunarMoods.riteCost(level, true));
             helper.assertTrue(LunarMoods.sparesForcedShift(level), "a Super Blue Moon did not spare the forced shift");
-            helper.assertTrue(LunarMoods.bossWeight(level) == 2.0, "the boss weight");
+
         });
         with(new FakeEc().running("super_moon"), () -> {
             helper.assertTrue(LunarMoods.riteCost(level, true) == 0.75 && LunarMoods.riteCost(level, false) == 1, "a super moon rite cost");

@@ -12,12 +12,12 @@ An Enhanced Celestials event is **a second layer on top of the real moon**. A Bl
 
 | Event | What changes |
 |---|---|
-| **Blood Moon** | A vampire's bite gives **x1.25 blood** (`blood_moon_bite_bonus`). Enhanced Celestials' own spawn changes apply to our mobs too. (A smaller chance of NPC werewolf packs is planned; they do not exist yet.) |
+| **Blood Moon** | A vampire's bite gives **x1.25 blood** (`blood_moon_bite_bonus`). Enhanced Celestials' own spawn changes apply to our mobs too. |
 | **Blue Moon** | Every rite costs **x0.8 altar power** (`blue_moon_rite_cost`). It never lets you perform a full-moon rite on a night that is not a full moon. |
 | **Harvest Moon** | Our crops (vervain and the wolfsbane strains) are put in Enhanced Celestials' list of Harvest Moon crops, so they should drop **double**, like the vanilla ones (not yet checked in a game). |
 | **Super moons** (always a full moon) | The Rite of the Moon, the Silver Moon and Immortality cost **x0.75** (`super_moon_rite_cost`), on top of the Blue Moon discount. |
 | **Super Blue Moon** | The Werewolves **forced full-moon shift is skipped for everybody** (`super_blue_skips_forced_shift`, on by default): one calm full moon. Shifting at will follows the usual rule. |
-| **Our lunar eclipse** | It becomes an Enhanced Celestials event: the moon turns dark orange, the light turns red, and our chat notice is sent as always (Enhanced Celestials may add its own: not yet checked in a game). If another event is already running, our eclipse still happens (the werewolf weakness is ours) and our own chat line and sky are used. |
+| **Our lunar eclipse** | It becomes an Enhanced Celestials event: the moon turns dark orange and the light turns red. Our chat notice is the only one. If another event is already running, our eclipse still happens (the werewolf weakness is ours) and our own chat line and sky are used. |
 
 Every number is in [Configuration](Configuration#celestials-supernaturalbloodlines-celestialstoml) and on the Admin page of the [hub](Supernatural-Hub). `1` turns an effect off. The part switch is `celestials` (restart required); without Enhanced Celestials, or with the part off, nothing changes.
 

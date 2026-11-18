@@ -96,12 +96,27 @@ final class EcReflect implements EcAdapter {
         }
         Map<?, ?> byDays = call(upcomingByDays, f.get());
         for (Map.Entry<?, ?> e : byDays.entrySet()) {
-            int day = ((Number) e.getKey()).intValue();
-            if (day >= 0 && day < days) {
-                out.put(day, eventOf((Holder<?>) e.getValue()));
+            try {
+                int day = ((Number) e.getKey()).intValue();
+                if (day >= 0 && day < days) {
+                    out.put(day, eventOf((Holder<?>) e.getValue()));
+                }
+            } catch (RuntimeException bad) {
+                // one entry we cannot read (an event without a key) does not hide the others
+                LOGGER.debug("A scheduled lunar event could not be read: {}", bad.toString());
             }
         }
         return out;
+    }
+
+    private Holder<?> holderOf(ServerLevel level, ResourceLocation id) {
+        Registry<?> events = level.registryAccess().registry(ResourceKey.createRegistryKey(EVENT_REGISTRY)).orElse(null);
+        return events == null ? null : events.getHolder(id).orElse(null);
+    }
+
+    @Override
+    public boolean knows(ServerLevel level, ResourceLocation id) {
+        return holderOf(level, id) != null;
     }
 
     @Override
@@ -110,16 +125,15 @@ final class EcReflect implements EcAdapter {
         if (f.isEmpty() || (Boolean) call(isEventActive, f.get())) {
             return false;
         }
-        Registry<?> events = level.registryAccess().registry(ResourceKey.createRegistryKey(EVENT_REGISTRY)).orElse(null);
-        Optional<? extends Holder<?>> holder = events == null ? Optional.empty() : events.getHolder(id);
-        if (holder.isEmpty()) {
+        Holder<?> holder = holderOf(level, id);
+        if (holder == null) {
             if (!warnedMissingEvent) {
                 warnedMissingEvent = true;
                 LOGGER.warn("Enhanced Celestials has no lunar event {} (is this mod's datapack disabled?), so our eclipse is not shown as one", id);
             }
             return false;
         }
-        call(setTonight, f.get(), holder.get());
+        call(setTonight, f.get(), holder);
         return true;
     }
 

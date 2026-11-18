@@ -42,8 +42,6 @@ class LunarMoodTest {
         assertEquals(1, none.riteCost(true, 0.8, 0.75));
         assertEquals(1, none.riteCost(false, 0.8, 0.75));
         assertEquals(1, none.biteFactor(1.25));
-        assertEquals(1, none.packChanceFactor(0.5));
-        assertEquals(1, none.bossWeight(2));
         assertFalse(none.sparesForcedShift(true));
     }
 
@@ -61,15 +59,12 @@ class LunarMoodTest {
         assertEquals(1, new LunarMood(Kind.NONE, true).riteCost(false, 0.8, 0.75));
         assertEquals(0.8 * 0.75, new LunarMood(Kind.BLUE, true).riteCost(true, 0.8, 0.75));
         assertEquals(0.8, new LunarMood(Kind.BLUE, true).riteCost(false, 0.8, 0.75));
-        assertEquals(2, new LunarMood(Kind.BLOOD, true).bossWeight(2));
-        assertEquals(1, new LunarMood(Kind.BLOOD, false).bossWeight(2));
     }
 
     @Test
     void aBloodMoonIsForBitesAndPacksOnly() {
         LunarMood blood = new LunarMood(Kind.BLOOD, false);
         assertEquals(1.25, blood.biteFactor(1.25));
-        assertEquals(0.5, blood.packChanceFactor(0.5));
         assertEquals(1, blood.riteCost(true, 0.8, 0.75));
         assertFalse(blood.sparesForcedShift(true));
     }

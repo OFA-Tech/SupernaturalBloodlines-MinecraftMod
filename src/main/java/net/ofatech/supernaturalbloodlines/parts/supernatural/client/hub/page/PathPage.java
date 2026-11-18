@@ -58,6 +58,12 @@ public final class PathPage implements HubPageView {
         HubView v = f.view;
         HubTheme t = f.theme();
         Rect r = f.region(HubLayout.MAIN);
+        // with lunar events the almanac is pinned at the foot of the page (the scrolling part never hides it); without them it stays in the flow, as before
+        boolean pin = book && !AlmanacEvents.view(f).isEmpty();
+        int pinH = pin ? almanacHeight(f, r) : 0;
+        if (pin) {
+            f.reserve(HubLayout.MAIN, pinH + 4);
+        }
         int y = f.begin(HubLayout.MAIN);
         f.g.drawString(f.font(), Component.translatable(KEY + "book_of"), r.x(), y, t.muted(), false);
         y = PageKit.title(f, v.player().getName(), r.x(), y + PageKit.LINE, r.w(), t.accent());
@@ -82,10 +88,21 @@ public final class PathPage implements HubPageView {
         t.drawRule(f.g, r.x(), y, r.w());
         y += 4;
         y = PageKit.wrapped(f, Component.translatable(KEY + "sp", v.state().sp(), v.state().spEarned()), r.x(), y, r.w(), t.ink());
-        if (book) {
+        if (book && !pin) {
             y = almanac(f, r, y + 4);
         }
         f.end(y);
+        if (pin) {
+            almanac(f, r, r.bottom() - pinH);
+        }
+    }
+
+    /** The height {@link #almanac} takes in {@code r}: the label, the moons with room for rings, the full-moon line and every event line, wrapped. */
+    private static int almanacHeight(HubScreen.Frame f, Rect r) {
+        var view = AlmanacEvents.view(f);
+        int lift = view.byDay().isEmpty() ? 0 : 4;
+        int fullH = f.font().split(PathActions.almanacLine(f.view.player().level().getMoonPhase()), r.w()).size() * PageKit.LINE;
+        return PageKit.LINE + 14 + 2 * lift + fullH + AlmanacEvents.height(f, view, r.w(), PageKit.LINE);
     }
 
     /** The almanac: the next six moons from the level's day, and when the full moon rises. */
@@ -101,7 +118,7 @@ public final class PathPage implements HubPageView {
         int day = 0;
         for (int p : HubAlmanac.phases(phase, HubAlmanac.ROW)) {
             KitDraw.icon(f.g, Icons.moon(p), x, y + PageKit.LINE + lift, 12, p == 0 ? 0xFFB8860B : t.ink());
-            AlmanacEvents.ring(f, view, day++, x, y + PageKit.LINE + lift, 12, t.accent());
+            AlmanacEvents.ring(f, view, day++, x, y + PageKit.LINE + lift, 12);
             x += step;
         }
         Component line = PathActions.almanacLine(phase);

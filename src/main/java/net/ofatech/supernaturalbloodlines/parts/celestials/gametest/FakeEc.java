@@ -17,6 +17,8 @@ public final class FakeEc implements EcAdapter {
     public Optional<Event> running = Optional.empty();
     public final Map<Integer, Event> schedule = new TreeMap<>();
     public final List<String> calls = new ArrayList<>();
+    /** When set, starting and ending an event throws, like an Enhanced Celestials that changed. */
+    public boolean broken;
 
     public static Event event(String path) {
         return new Event(ResourceLocation.fromNamespaceAndPath(DLE, path), 0xFF5555);
@@ -44,8 +46,16 @@ public final class FakeEc implements EcAdapter {
     }
 
     @Override
+    public boolean knows(ServerLevel level, ResourceLocation id) {
+        return true;
+    }
+
+    @Override
     public boolean start(ServerLevel level, ResourceLocation id) {
         calls.add("start " + id);
+        if (broken) {
+            throw new IllegalStateException("EC changed its API");
+        }
         if (running.isPresent()) {
             return false;
         }
@@ -56,6 +66,9 @@ public final class FakeEc implements EcAdapter {
     @Override
     public boolean stop(ServerLevel level, ResourceLocation id) {
         calls.add("stop " + id);
+        if (broken) {
+            throw new IllegalStateException("EC changed its API");
+        }
         if (running.isEmpty() || !running.get().id().equals(id)) {
             return false;
         }
