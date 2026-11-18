@@ -371,6 +371,7 @@ public final class HubScreen extends Screen {
             }
             case "profile_op" -> openProfile(DevDemo.id("Derek|op"), "Derek", true);
             case "true_alpha_dialog" -> warnTrueAlpha(() -> { });
+            case "pack_invite" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackInvite.devOpen();
             case "profile_dialog" -> {
                 openProfile(DevDemo.id("Derek"), "Derek");
                 confirm(Component.translatable("supernaturalbloodlines.hub.profile.action.heal"), Component.translatable("supernaturalbloodlines.hub.profile.confirm.heal", "Derek"),

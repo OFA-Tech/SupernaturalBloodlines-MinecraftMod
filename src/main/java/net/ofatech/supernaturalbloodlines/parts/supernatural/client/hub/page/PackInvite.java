@@ -37,11 +37,26 @@ public final class PackInvite {
 
     private PackInvite() {}
 
+    private static boolean demo;
+
+    /** Development only (the dev screenshots): the Invite picker open with a made-up list of players, 14 more than the cap. */
+    public static void devOpen() {
+        mode = Mode.INVITE;
+        demo = true;
+        offered = new ArrayList<>();
+        String[] names = {"Aria", "Bram", "Cleo", "Dax", "Eira", "Finn", "Gwen", "Hale", "Iris", "Jory", "Kade", "Lena"};
+        for (int k = 0; k < names.length; k++) {
+            offered.add(new Pickable.Person(new UUID(31, k), names[k], k < 8 ? 6 + k * 9 : -1));
+        }
+        beyond = 14;
+    }
+
     /** The hub closed: the next one starts with no picker open. */
     public static void reset() {
         mode = Mode.NONE;
         offered = List.of();
         beyond = 0;
+        demo = false;
     }
 
     /** True while a picker is open. */
@@ -73,7 +88,7 @@ public final class PackInvite {
         HubTheme t = f.theme();
         String key = PageKit.HUB + "pack.";
         Component title = Component.translatable(key + (mode == Mode.INVITE ? "invite_who" : "ally_who"));
-        List<Pickable.Person> people = Pickable.stillHere(offered, onlineIds());
+        List<Pickable.Person> people = demo ? offered : Pickable.stillHere(offered, onlineIds());
         int pad = card ? 4 : 0;
         Rect in = new Rect(r.x() + pad, y + pad, r.w() - 2 * pad, 0);
         Component more = beyond > 0 ? Component.translatable(key + "pick_more", beyond) : null;
