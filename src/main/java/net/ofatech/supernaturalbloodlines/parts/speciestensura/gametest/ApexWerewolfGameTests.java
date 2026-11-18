@@ -2,7 +2,9 @@ package net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest;
 
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.werewolves.api.WReference;
+import dev.architectury.event.EventResult;
 import io.github.manasmods.manascore.race.api.RaceAPI;
+import io.github.manasmods.manascore.race.api.RaceEvents;
 import java.util.EnumSet;
 import java.util.List;
 import net.minecraft.gametest.framework.GameTest;
@@ -24,6 +26,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesLayer;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexFallback;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.PrimevalBoost;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.PlayerRaces;
 
@@ -79,10 +82,11 @@ public final class ApexWerewolfGameTests {
         return LadderTable.current().get(race).rungs().size() - 1;
     }
 
-    /** D1 and D2: a plain werewolf is offered {@code alpha_primeval} from a saint of the human-like lines and from Spirit Beast on Beastfolk. */
+    /** D1 and D2: an Alpha werewolf (the apex is for those who hold a spark, see the gate test below) is offered {@code alpha_primeval} from a saint of the human-like lines and from Spirit Beast on Beastfolk. */
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void plainWerewolfIsOfferedAlphaPrimeval(GameTestHelper helper) {
+    public static void alphaWerewolfIsOfferedAlphaPrimeval(GameTestHelper helper) {
         ServerPlayer p = werewolf(helper, Species.NONE);
+        rank(p, WolfState.Rank.ALPHA);
         for (String id : new String[] {"tensura:human_saint", "tensura:elf_saint", "tensura:spirit_beast", "tensura:divine_beast"}) {
             setRace(p, id);
             helper.assertTrue(offers(p, "alpha_primeval"), "a werewolf on " + id + " is not offered the apex race: " + offered(p));
@@ -104,6 +108,7 @@ public final class ApexWerewolfGameTests {
             return;
         }
         ServerPlayer p = werewolf(helper, Species.NONE);
+        rank(p, WolfState.Rank.ALPHA);
         setRace(p, "tensura:spirit_beast");
         setLadder(p, SupernaturalRace.WEREWOLF, top(SupernaturalRace.WEREWOLF) - 1);
         helper.assertTrue(!offersApex(p), "offered below L-WOL-6: " + offered(p));
@@ -116,6 +121,7 @@ public final class ApexWerewolfGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void witchWerewolfOfferedBothApexes(GameTestHelper helper) {
         ServerPlayer p = werewolf(helper, Species.WITCH);
+        rank(p, WolfState.Rank.ALPHA);
         helper.assertTrue(PlayerRaces.of(p).equals(List.of(SupernaturalRace.WEREWOLF, SupernaturalRace.WITCH)), "not a witch werewolf");
         if (laddersGateApex()) {
             setLadder(p, SupernaturalRace.WEREWOLF, top(SupernaturalRace.WEREWOLF));
@@ -137,6 +143,7 @@ public final class ApexWerewolfGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void siphonerWerewolfOnSpiritBeastIsOfferedVoidSiphon(GameTestHelper helper) {
         ServerPlayer p = werewolf(helper, Species.SIPHONER);
+        rank(p, WolfState.Rank.ALPHA);
         setRace(p, "tensura:spirit_beast");
         helper.assertTrue(offers(p, "alpha_primeval") && offers(p, "void_siphon"), "a siphoner werewolf on Spirit Beast is not offered both: " + offered(p));
         helper.succeed();
@@ -254,6 +261,47 @@ public final class ApexWerewolfGameTests {
         BloodlineAccess.set(legacy, BloodlineAccess.get(legacy).toBuilder().wolf(BloodlineAccess.get(legacy).wolf().toBuilder().preApex("").build()).build());
         rank(legacy, WolfState.Rank.OMEGA);
         helper.assertTrue("tensura:spirit_beast".equals(race(legacy)), "a wolf with no record went to " + race(legacy));
+        helper.succeed();
+    }
+
+    /** SET_RACE fires before the change and a later listener can refuse it: a refused evolution must leave nothing recorded. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aRefusedEvolutionIntoTheApexIsNotRecorded(GameTestHelper helper) {
+        ServerPlayer p = werewolf(helper, Species.NONE); // on tensura:human_saint
+        RaceEvents.SetRaceEvent refuse = (oldRace, entity, newRace, flag, changeable, message) ->
+                entity == p && newRace != null && APEX.equals(newRace.getRaceId().toString()) ? EventResult.interruptFalse() : EventResult.pass();
+        RaceEvents.SET_RACE.register(refuse);
+        try {
+            setRace(p, APEX);
+            ApexFallback.settle(p);
+            helper.assertTrue("tensura:human_saint".equals(race(p)), "the refusal did not hold: " + race(p));
+            helper.assertTrue(BloodlineAccess.get(p).wolf().preApex().isEmpty(), "a refused evolution was recorded: " + BloodlineAccess.get(p).wolf().preApex());
+        } finally {
+            RaceEvents.SET_RACE.unregister(refuse);
+        }
+        setRace(p, APEX);
+        ApexFallback.settle(p);
+        helper.assertTrue("tensura:human_saint".equals(BloodlineAccess.get(p).wolf().preApex()), "an evolution that went through was not recorded: " + BloodlineAccess.get(p).wolf().preApex());
+        helper.succeed();
+    }
+
+    /** Alpha and True Alpha reach the apex: a Beta (one who fell back, say) is not offered it, an Alpha is. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aWerewolfIsOfferedTheApexOnlyWhileTheyHoldASpark(GameTestHelper helper) {
+        if (!laddersGateApex()) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer p = werewolf(helper, Species.NONE);
+        setLadder(p, SupernaturalRace.WEREWOLF, top(SupernaturalRace.WEREWOLF));
+        rank(p, WolfState.Rank.BETA);
+        helper.assertTrue(!offers(p, "alpha_primeval"), "a Beta was offered the apex: " + offered(p));
+        rank(p, WolfState.Rank.ALPHA);
+        helper.assertTrue(offers(p, "alpha_primeval"), "an Alpha was not offered it: " + offered(p));
+        rank(p, WolfState.Rank.TRUE_ALPHA);
+        helper.assertTrue(offers(p, "alpha_primeval"), "a True Alpha was not offered it: " + offered(p));
+        VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
+        helper.assertTrue(!offersApex(p), "a dormant True Alpha was offered an apex: " + offered(p));
         helper.succeed();
     }
 

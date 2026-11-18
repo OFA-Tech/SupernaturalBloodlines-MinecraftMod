@@ -51,7 +51,7 @@ public final class PackLeader {
         if (!p.level().isClientSide) {
             PackIndex index = PackIndex.get(p.serverLevel());
             index.setStrength(p.getUUID(), strengthOf(p, wolf));
-            index.setSparks(p.getUUID(), PackRules.effectiveSparks(wolf.rank(), wolf.sparks(), SpeciesConfig.maxStackedSparks(), VampirismSupernatural.isWerewolf(p)));
+            index.setSparks(p.getUUID(), PackAccess.effectiveSparks(wolf, VampirismSupernatural.isWerewolf(p)));
         }
     }
 }

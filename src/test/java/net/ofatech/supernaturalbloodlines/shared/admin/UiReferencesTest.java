@@ -105,5 +105,21 @@ class UiReferencesTest {
         assertTrue(AdminCommands.byId("B1").orElseThrow().ui() == AdminCommands.Ui.PAGE);
         assertTrue(AdminCommands.byId("P12").orElseThrow().ui() == AdminCommands.Ui.PAGE);
     }
-}
 
+    @Test
+    void turningTheProtectionOffIsAlwaysAskedFirst() throws Exception {
+        String source = hubSource();
+        int at = -1;
+        int found = 0;
+        while ((at = source.indexOf("runCommand(\"P17\"", at + 1)) >= 0) {
+            found++;
+            String before = source.substring(Math.max(0, at - 500), at);
+            assertTrue(before.contains("confirm("), "P17 (pack protect off confirm) is run without a dialog before it");
+        }
+        assertTrue(found >= 1, "no page runs P17");
+        for (var action : net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions.of(new net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions.Viewer(false, false, false, false, false, false, true, true),
+                new net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions.Subject(java.util.UUID.randomUUID(), "Me", true, net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions.Role.NONE, false, false), false)) {
+            assertTrue(!action.rowId().equals("P17") || action.confirm(), "the Profile runs P17 with no question");
+        }
+    }
+}

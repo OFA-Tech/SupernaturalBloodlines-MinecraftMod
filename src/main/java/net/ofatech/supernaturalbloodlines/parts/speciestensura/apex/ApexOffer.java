@@ -11,6 +11,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.ApexFallbackRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.mixin.SpeciesTensuraMixinPlugin;
@@ -32,14 +33,17 @@ public final class ApexOffer {
     /**
      * The apex races offered from this Tensura race, in the order of the player's races (creature, then magic): the saint tier or higher of a
      * human-like line, the lord tier of the vampire line or the spirit beast tier of Beastfolk, for the races {@link ApexLines} allows on that
-     * line, and only once the player has reached the apex rung of that race's ladder ({@code rungReached}; always true without the supernatural part).
+     * line, and only once the player has reached the apex rung of that race's ladder ({@code rungReached}; always true without the supernatural part). A werewolf is offered {@code alpha_primeval} only while they hold a spark ({@code holdsSpark}: an Alpha, or a True Alpha who is a werewolf now).
      * A Potential is not a hunter of the Five: only the species gets the hunters' apex.
      */
-    public static List<String> apexIdsFor(Species species, List<SupernaturalRace> races, String currentRaceId, Predicate<SupernaturalRace> rungReached) {
+    public static List<String> apexIdsFor(Species species, List<SupernaturalRace> races, String currentRaceId, Predicate<SupernaturalRace> rungReached, boolean holdsSpark) {
         List<String> out = new ArrayList<>();
         for (SupernaturalRace race : races) {
             if (race == SupernaturalRace.HUNTER && species != Species.HUNTER_OF_THE_FIVE) {
                 continue;
+            }
+            if (race == SupernaturalRace.WEREWOLF && !holdsSpark) {
+                continue; // Alpha and True Alpha reach the apex: a Beta or Omega (one who fell back, say) is not offered it
             }
             ApexSpec.forRace(race).filter(spec -> ApexLines.qualifies(race, currentRaceId, races) && rungReached.test(race))
                     .map(ApexSpec::id).filter(id -> !out.contains(id)).ifPresent(out::add);
@@ -54,7 +58,8 @@ public final class ApexOffer {
         }
         try {
             List<String> ids = apexIdsFor(BloodlineAccess.get(player).species(), PlayerRaces.of(player), instance.getRaceId().toString(),
-                    race -> LadderQuery.apexRungReached(player, race));
+                    race -> LadderQuery.apexRungReached(player, race),
+                    ApexFallbackRules.holds(BloodlineAccess.get(player).wolf().rank(), PlayerRaces.of(player).contains(SupernaturalRace.WEREWOLF)));
             List<ManasRace> out = null;
             for (String id : ids) {
                 ManasRace apex = RaceAPI.getRaceRegistry().get(ResourceLocation.fromNamespaceAndPath(ApexSpec.RACE_NAMESPACE, id));

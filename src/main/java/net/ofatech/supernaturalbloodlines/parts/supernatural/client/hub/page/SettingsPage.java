@@ -53,6 +53,26 @@ public final class SettingsPage implements HubPageView {
         y = PageKit.title(f, Component.translatable(KEY + "title"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 6;
+        var wolf = f.view.bloodline().wolf();
+        if (PackRules.pathOpen(wolf)) {
+            // a server-side choice of the player's own (not a config key): the command is the server's, the toggle only sends it
+            Component label = Component.translatable(KEY + "protect");
+            int top = y + 4;
+            y = PageKit.wrapped(f, label, r.x() + 4, top, r.w() - 44, t.ink());
+            Rect b = new Rect(r.right() - 36, top - 1, 36, PageWidgets.H);
+            boolean on = wolf.protectPath();
+            PageWidgets.toggle(f, "stage:settings:protect", b, on, label, () -> {
+                if (on) {
+                    // the same question the Profile asks: turning it off can end the path (Stay is the safe answer)
+                    f.confirm(Component.translatable(PageKit.HUB + "profile.action.protect_off"), Component.translatable(PageKit.HUB + "profile.confirm.protect_off"),
+                            Component.translatable(PageKit.HUB + "profile.action.protect_off"), () -> HubClient.runCommand("P17", List.of()));
+                } else {
+                    HubClient.runCommand("P16", List.of());
+                }
+            });
+            y = PageKit.wrapped(f, Component.translatable(KEY + "protect.about"), r.x() + 4, Math.max(y, b.bottom()) + 1, r.w() - 4, t.muted());
+        }
+
         String section = "";
         for (SettingEntry e : PlayerSettings.ENTRIES) {
             if (!applies(e) || AdminSpecs.value(e).isEmpty()) {
@@ -63,17 +83,6 @@ public final class SettingsPage implements HubPageView {
                 y = PageKit.wrapped(f, Component.translatable(KEY + "section." + section).withStyle(ChatFormatting.BOLD), r.x(), y + 3, r.w(), t.accent());
             }
             y = row(f, r, y, e);
-        }
-        var wolf = f.view.bloodline().wolf();
-        if (PackRules.pathOpen(wolf)) {
-            // a server-side choice of the player's own (not a config key): the command is the server's, the toggle only sends it
-            Component label = Component.translatable(KEY + "protect");
-            int top = y + 4;
-            y = PageKit.wrapped(f, label, r.x() + 4, top, r.w() - 44, t.ink());
-            Rect b = new Rect(r.right() - 36, top - 1, 36, PageWidgets.H);
-            boolean on = wolf.protectPath();
-            PageWidgets.toggle(f, "stage:settings:protect", b, on, label, () -> HubClient.runCommand(on ? "P17" : "P16", List.of()));
-            y = PageKit.wrapped(f, Component.translatable(KEY + "protect.about"), r.x() + 4, Math.max(y, b.bottom()) + 1, r.w() - 4, t.muted());
         }
         y = PageKit.wrapped(f, Component.translatable(KEY + "section.keys").withStyle(ChatFormatting.BOLD), r.x(), y + 6, r.w(), t.accent());
         y = key(f, r, y, "key.supernaturalbloodlines.hub", HubKeybinds.HUB.getTranslatedKeyMessage());

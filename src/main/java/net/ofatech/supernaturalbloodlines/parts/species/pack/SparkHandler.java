@@ -121,8 +121,9 @@ public final class SparkHandler {
     /**
      * A werewolf player kills an Alpha from <b>outside</b> their pack (the Deucalion factor): they take every spark the victim
      * had, on top of their own when they are an Alpha already (up to {@code max_stacked_sparks}); a werewolf who was no Alpha
-     * becomes one. The victim, who had them all, is an Omega with no pack to lead. A True Alpha's own spark is never taken, only
-     * the ones stacked on it, so killing one with none is just a death.
+     * becomes one. The victim, who had them all, is an Omega with no pack to lead. A True Alpha's spark is theirs by nature and
+     * is never taken, and a True Alpha who kills takes nothing. A killer whose path to True Alpha is open and protected destroys the spark
+     * instead of taking it ({@link PackRules#stealBy}).
      *
      * <p>A kill inside the pack, outside a duel, changes nothing at all (owner ruling): no spark, no lead, no rank. Anyone who
      * is no werewolf killing an Alpha changes nothing either.
@@ -151,7 +152,8 @@ public final class SparkHandler {
         }
         if (verdict == PackRules.Steal.PROTECTED) {
             // a kill cannot ask first: with the path still open and protected, the spark is destroyed and nobody takes it
-            killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_destroyed"));
+            // an unprovoked kill is an innocent one and turns the eyes blue (the next lines of onDeath), which closes the path on its own: say so
+            killer.sendSystemMessage(Component.translatable(isInnocent(killer, victim) ? "supernaturalbloodlines.pack.spark_destroyed_innocent" : "supernaturalbloodlines.pack.spark_destroyed"));
             PackMembers.tell(killer.server, victim.getUUID(), "supernaturalbloodlines.pack.spark_destroyed_victim", killer.getGameProfile().getName());
         } else {
             boolean killerIsAlpha = PackAccess.isAlpha(PackAccess.wolf(killer).rank());

@@ -72,9 +72,14 @@ final class PageWidgets {
     }
 
     /** A switch with its state in words ("On" / "Off"): one press flips it. */
-    static void toggle(HubScreen.Frame f, String id, Rect r, boolean on, Component tip, Runnable flip) {
+    static void toggle(HubScreen.Frame f, String id, Rect r, boolean on, Component setting, Runnable flip) {
         Component word = Component.translatable("supernaturalbloodlines.hub.switch." + (on ? "on" : "off"));
-        button(f, id, r, word, true, on, tip, flip);
+        draw(f, id, r, word, true, on, toggleName(setting, on), Tip.NAME, flip);
+    }
+
+    /** What a switch is called in the tooltip and the narration: the setting and its state ("Protect my True Alpha path: On"), not a bare "On". */
+    static Component toggleName(Component setting, boolean on) {
+        return Component.empty().append(setting).append(": ").append(Component.translatable("supernaturalbloodlines.hub.switch." + (on ? "on" : "off")));
     }
 
     /** A box with the text being typed (a caret when {@code editing}), or the value when not. */

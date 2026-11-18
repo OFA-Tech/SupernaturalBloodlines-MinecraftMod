@@ -127,7 +127,7 @@ public final class AdminCommands {
             row("P14", "pack roar", 0, Ui.HUB_BUTTON, "PACK"),
             row("P15", "pack anchor [player]", 0, Ui.HUB_BUTTON, "PACK"),
             row("P16", "pack protect on", 0, Ui.HUB_BUTTON, "PACK"),
-            row("P17", "pack protect off", 0, Ui.HUB_BUTTON, "PACK"),
+            row("P17", "pack protect off confirm", 0, Ui.HUB_BUTTON, "PACK"),
             row("D1", ROOT + " get <player>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D2", ROOT + " set <player> <species>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D3", ROOT + " event <player> <event>", 2, Ui.ADMIN_ACTION, "ADMIN"),

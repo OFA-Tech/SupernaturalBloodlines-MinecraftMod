@@ -255,6 +255,7 @@ public final class SparkRulesGameTests {
         try {
             RankEffects.sync(truth);
             helper.assertTrue(state(truth).sparks() == 1, "the test needs a stored count of one");
+            helper.assertTrue(PackIndex.get(helper.getLevel()).sparksOf(truth.getUUID()) == cap, "the pack index does not hold the full count: " + PackIndex.get(helper.getLevel()).sparksOf(truth.getUUID())); // what the pack's rows show
             helper.assertTrue(Math.abs(truth.getMaxHealth() - full) < 0.01, "the bonus is not the full one: " + truth.getMaxHealth() + " vs " + full);
             helper.assertTrue(AlphaRoar.roar(truth, 10) == null, "the Roar was refused");
             var strength = beta.getEffect(MobEffects.DAMAGE_BOOST);
@@ -324,6 +325,85 @@ public final class SparkRulesGameTests {
             clean(helper, healer, patient);
         }
         helper.succeed();
+    }
+
+    /** The tombstone of an ex-Alpha is the one record from before this version: at login it marks them as having held a spark; a dormant True Alpha's is not that. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anExAlphaWithATombstoneIsMarkedAsHavingHeldASparkAtLogin(GameTestHelper helper) {
+        ServerPlayer ex = wolf(helper, Rank.OMEGA, null, 1, 1.5);
+        ServerPlayer clean = wolf(helper, Rank.OMEGA, null, 1, 2.5);
+        ServerPlayer dormant = wolf(helper, Rank.TRUE_ALPHA, null, 1, 3.5);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        online(ex, clean, dormant);
+        try {
+            index.markFormerAlpha(ex.getUUID());
+            index.markFormerAlpha(dormant.getUUID());
+            helper.assertTrue(PackRules.pathOpen(state(ex)), "control: the path was closed before the login");
+            PackIndex.login(ex);
+            PackIndex.login(clean);
+            PackIndex.login(dormant);
+            helper.assertTrue(state(ex).heldSpark() && !PackRules.pathOpen(state(ex)), "the ex-Alpha kept an open path: " + state(ex));
+            helper.assertTrue(!state(clean).heldSpark() && PackRules.pathOpen(state(clean)), "someone with no history was marked: " + state(clean));
+            helper.assertTrue(!state(dormant).heldSpark() && state(dormant).rank() == Rank.TRUE_ALPHA, "a dormant True Alpha was marked: " + state(dormant));
+        } finally {
+            index.clearFormerAlpha(ex.getUUID());
+            index.clearFormerAlpha(dormant.getUUID());
+            clean(helper, ex, clean, dormant);
+        }
+        helper.succeed();
+    }
+
+    /** Turning the protection off asks twice in the hub, so the typed command must too: a bare "off" is no command. And it means nothing to a player with no lineage. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void protectOffNeedsConfirmAndMeansNothingWithoutALineage(GameTestHelper helper) {
+        ServerPlayer wolf = wolf(helper, Rank.OMEGA, null, 1, 1.5);
+        ServerPlayer human = TestPlayers.createDuelist(helper);
+        var server = helper.getLevel().getServer();
+        var dispatcher = server.getCommands().getDispatcher();
+        try {
+            var source = wolf.createCommandSourceStack();
+            helper.assertTrue(dispatcher.parse("pack protect off", source).getContext().getCommand() == null, "a bare /pack protect off is a command");
+            helper.assertTrue(dispatcher.parse("pack protect off confirm", source).getContext().getCommand() != null, "/pack protect off confirm is no command");
+            helper.assertTrue(dispatcher.parse("pack protect on", source).getContext().getCommand() != null, "/pack protect on is no command");
+            helper.assertTrue(PackCommand.protect(human, false) != null && BloodlineAccess.get(human).wolf().protectPath(), "a human changed a setting of a path they do not have");
+            helper.assertTrue(PackCommand.protect(wolf, false) == null && !state(wolf).protectPath(), "the werewolf could not turn it off");
+        } finally {
+            clean(helper, wolf);
+        }
+        helper.succeed();
+    }
+
+    /** A protected killer whose victim was not fighting them is told the truth: the kill is innocent, the eyes turn blue and the path is closed anyway. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aProtectedKillerIsToldWhenTheKillWasInnocentAnyway(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist fought = talkingWolf(helper, Rank.OMEGA, 1.5);
+        TestPlayers.TalkingDuelist unprovoked = talkingWolf(helper, Rank.OMEGA, 2.5);
+        ServerPlayer a = alpha(helper, 5, 3.5);
+        ServerPlayer b = alpha(helper, 5, 4.5);
+        online(fought, unprovoked, a, b);
+        try {
+            a.setLastHurtMob(fought);
+            kill(fought, a);
+            helper.assertTrue(fought.received("supernaturalbloodlines.pack.spark_destroyed") && !fought.received("supernaturalbloodlines.pack.spark_destroyed_innocent"),
+                    "a kill in a fight was not told as a plain destroyed spark: " + fought.keys());
+            helper.assertTrue(PackRules.pathOpen(state(fought)), "the path closed after a fair fight");
+            kill(unprovoked, b);
+            helper.assertTrue(unprovoked.received("supernaturalbloodlines.pack.spark_destroyed_innocent") && !unprovoked.received("supernaturalbloodlines.pack.spark_destroyed"),
+                    "an unprovoked kill was told 'you keep your path': " + unprovoked.keys());
+            helper.assertTrue(state(unprovoked).killedInnocent() && !PackRules.pathOpen(state(unprovoked)), "the blue eyes did not close the path: " + state(unprovoked));
+        } finally {
+            clean(helper, fought, unprovoked, a, b);
+        }
+        helper.succeed();
+    }
+
+    private static TestPlayers.TalkingDuelist talkingWolf(GameTestHelper helper, Rank rank, double x) {
+        TestPlayers.TalkingDuelist p = TestPlayers.createTalkingDuelist(helper);
+        p.setPos(helper.absoluteVec(new Vec3(x, 1, 1.5)));
+        BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().wolf(WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(rank).geneRolled(true).build()).build());
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "the test wolf could not join the werewolves");
+        PackLeader.refresh(p);
+        return p;
     }
 
     /** A cure of an Alpha keeps what they held: the spark history outlives the wolf layer. */

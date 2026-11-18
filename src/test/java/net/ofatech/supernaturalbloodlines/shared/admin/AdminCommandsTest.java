@@ -76,7 +76,7 @@ class AdminCommandsTest {
         assertEquals(List.of("pack emissary <>", "pack emissary"), row("P13").shapes());
         assertEquals(List.of("pack challenge <>"), row("P8").shapes());
         assertEquals(List.of("pack protect on"), row("P16").shapes());
-        assertEquals(List.of("pack protect off"), row("P17").shapes());
+        assertEquals(List.of("pack protect off confirm"), row("P17").shapes());
     }
 
     @Test
