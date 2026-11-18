@@ -53,6 +53,7 @@ public final class HomePage implements HubPageView {
         y = PageKit.title(f, Component.translatable(KEY + "title"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y = waiting(f, r, y + 6);
+        y = next(f, r, y + 6);
         y = you(f, r, y + 6);
         f.end(y);
         PageWidgets.info(f, Component.translatable(KEY + "title"), Component.translatable(KEY + "info"));
@@ -68,6 +69,21 @@ public final class HomePage implements HubPageView {
 
     private static int section(HubScreen.Frame f, Rect r, int y, String key) {
         return PageKit.wrapped(f, Component.translatable(KEY + key).withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), f.theme().accent());
+    }
+
+    /** The next step: what is ready to claim, with one button that claims all of it the way each single claim does. */
+    private int next(HubScreen.Frame f, Rect r, int y) {
+        HubTheme t = f.theme();
+        y = section(f, r, y, "next_title");
+        List<String> ready = ClaimAll.ids(f.view.ladders());
+        if (ready.isEmpty()) {
+            return PageKit.wrapped(f, Component.translatable(KEY + "caught_up"), r.x(), y, r.w(), t.muted());
+        }
+        y = PageKit.wrapped(f, Component.translatable(KEY + "ready", ready.size()), r.x(), y, r.w(), t.ink());
+        Component label = Component.translatable(KEY + "claim_all");
+        Rect b = new Rect(r.x(), y + 2, Math.min(r.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
+        PageWidgets.button(f, "stage:home:claim_all", b, label, true, true, null, () -> ready.forEach(f::claim));
+        return b.bottom() + 2;
     }
 
     private int you(HubScreen.Frame f, Rect r, int y) {

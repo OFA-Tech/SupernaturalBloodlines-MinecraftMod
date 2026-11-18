@@ -77,6 +77,11 @@ class HubLangCoverageTest {
             keys.add(H + "profile.duel." + lower(ph));
         }
         keys.add(H + "group.operator");
+        keys.add(H + "profile.link");
+        keys.add(H + "profile.npc");
+        for (String k : List.of("next_title", "caught_up", "ready", "claim_all")) {
+            keys.add(H + "home." + k);
+        }
         for (String s : AdminEntries.SECTIONS) {
             keys.add(H + "admin.section." + s);
         }
