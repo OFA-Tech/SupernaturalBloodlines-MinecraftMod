@@ -127,9 +127,12 @@ public final class ProfilePage implements HubPageView {
         List<String> known = payload.facts().get(fact);
         Component label = Component.translatable(KEY + "fact." + fact.name().toLowerCase(Locale.ROOT));
         Component shown = known == null ? Component.translatable(KEY + "unknown") : value(fact, known);
-        int lw = Math.min(r.w() / 2, f.font().width(label) + 6);
+        // a label that takes more than 5/8 of a narrow column (Tensura's) goes on its own line, the value under it
+        boolean stacked = f.font().width(label) + 6 > r.w() * 5 / 8;
+        int lw = stacked ? 8 : f.font().width(label) + 6;
         f.g.drawString(f.font(), label, r.x() + 4, y, t.muted(), false);
-        int vy = y;
+        int vy = stacked ? y + PageKit.LINE : y;
+        int top = vy;
         for (var line : f.font().split(shown, r.w() - lw - 4)) {
             f.g.drawString(f.font(), line, r.x() + lw + 4, vy, known == null ? t.muted() : t.ink(), false);
             vy += PageKit.LINE;
