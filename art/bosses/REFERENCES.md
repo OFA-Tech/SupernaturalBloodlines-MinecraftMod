@@ -17,3 +17,9 @@ Always research each character and item (wikis, show stills, fan skins) before d
 - **Peter Hale, human:** slicked-back dark hair, a short beard, a camel/tan wool overcoat over a dark grey herringbone waistcoat and a white open-collar shirt.
 - **Peter Hale, burned or risen:** at his resurrection he is covered in dark mud and soil, with pale skin showing through. Use this for the burned/risen variant: charred and dirt-streaked, not neat scars.
 - **Mikael Mikaelson:** short slicked grey-blond hair, light stubble, pale blue eyes; an all-black outfit (black jacket over a black shirt, black belt with a buckle). He holds the white oak stake upright: a pale silver-white carved stake. NOT Viking leathers or a beard. Our current Mikael is wrong.
+
+## Round 5 findings (agent research)
+- **Sebastien Valet** is a French soldier of the 1760s (Seven Years' War, returned to Gévaudan; actor Gilles Marini), not a vampire-like aristocrat: healthy tan skin, dark natural hair, greyish-white infantry coat with coloured cuffs, tricorn. Sources: tvline.com Gilles Marini casting item, yahoo.com Maid of Gévaudan recap, thesupernaturalfoxsisters.com recap, fortticonderoga.org and militaryheritage.com on French uniforms.
+- **Peter Hale burned:** third-degree burns over 75% of his body (teen-wolf-pack wiki), face burned on the left side, "burned from head to toe" in Season 6. Charred black, red-raw and mottled scar tissue; mud only as a light film.
+- **Klaus** also wears a black leather moto jacket (wornontv.net). **Freya** wears a brown leather jacket (shopyourtv.com / wornontv.net). **Beast host** is Mason Hewitt: medium-brown skin, dark brown eyes, short dark brown hair.
+- Fandom pages return 403 to direct fetches; search-result excerpts, Wikipedia, recap sites and mirrors were used instead. Planet Minecraft images stay blocked (403).
