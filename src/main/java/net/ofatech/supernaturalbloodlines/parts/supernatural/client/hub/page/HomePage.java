@@ -55,6 +55,7 @@ public final class HomePage implements HubPageView {
         y = you(f, r, y + 6);
         y = next(f, r, y + 6);
         y = world(f, r, y + 6);
+        y = doNow(f, r, y + 6);
         f.end(y);
         PageWidgets.info(f, Component.translatable(KEY + "title"), Component.translatable(KEY + "info"));
 
@@ -62,7 +63,6 @@ public final class HomePage implements HubPageView {
         int sy = f.begin(HubLayout.SIDE);
         sy = waiting(f, s, sy);
         sy = people(f, s, sy + 6);
-        sy = doNow(f, s, sy + 6);
         sy = PageWidgets.reply(f, s, sy + 4);
         f.end(sy);
     }

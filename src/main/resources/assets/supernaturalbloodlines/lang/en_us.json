@@ -630,7 +630,7 @@
   "supernaturalbloodlines.hub.home.sired": "You sired %s",
   "supernaturalbloodlines.hub.home.full_moon": "Tonight is the full moon.",
   "supernaturalbloodlines.hub.home.moon_in": "The full moon is in %s days.",
-  "supernaturalbloodlines.hub.home.pack_count": "%s in your pack, %s online. Open a face to see their profile.",
+  "supernaturalbloodlines.hub.home.pack_count": "%s in your pack, %s online.",
   "supernaturalbloodlines.hub.home.why.no_sired": "You have sired nobody yet.",
   "supernaturalbloodlines.hub.home.why.not_line": "Only an Original, a Hybrid or a Tribrid can call.",
   "supernaturalbloodlines.hub.home.why.not_alpha": "Only an Alpha can roar.",

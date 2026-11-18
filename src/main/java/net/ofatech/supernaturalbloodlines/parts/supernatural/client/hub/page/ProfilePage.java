@@ -132,7 +132,7 @@ public final class ProfilePage implements HubPageView {
         int tx = r.x() + face + 8;
         int ty = PageKit.title(f, Component.literal(route.name()), tx, y, r.right() - tx, t.accent());
         if (leader) {
-            BookPackPage.crown(f, Math.min(r.right() - 8, tx + f.font().width(route.name()) * 2 + 4), y + 3);
+            BookPackPage.crown(f, Math.min(r.right() - 8, tx + (int) (f.font().width(route.name()) * 1.5f) + 5), y + 3);
         }
         List<String> rank = payload == null ? null : payload.facts().get(Fact.RANK);
         if (rank != null && !rank.isEmpty()) {
@@ -167,7 +167,7 @@ public final class ProfilePage implements HubPageView {
             Component text = known == null ? Component.translatable(KEY + "unknown") : value(fact, known);
             String caps = label.getString().toUpperCase(Locale.ROOT);
             int vy;
-            if (f.font().width(caps) + 8 + f.font().width(text) <= cw) {
+            if (cols == 1 && f.font().width(caps) + 8 + f.font().width(text) <= cw) {
                 // a short value stays on the label's line, at the right edge
                 f.g.drawString(f.font(), caps, x, rowTop, t.muted(), false);
                 f.g.drawString(f.font(), text, x + cw - f.font().width(text), rowTop, known == null ? t.muted() : t.ink(), false);
@@ -324,9 +324,11 @@ public final class ProfilePage implements HubPageView {
         UUID self = f.view.player().getUUID();
         boolean isSelf = route.id().equals(self);
         ProfileActions.Role role = ProfileActions.Role.NONE;
+        String base = "";
         for (HubSocial.Member m : snap.pack()) {
             if (m.id().filter(route.id()::equals).isPresent()) {
                 role = ProfileActions.roleOf(m.base());
+                base = m.base();
             }
         }
         boolean leader = false;
@@ -343,7 +345,7 @@ public final class ProfilePage implements HubPageView {
         boolean npc = payload != null && payload.npc();
         ProfileActions.Subject subject = new ProfileActions.Subject(route.id(), route.name(), isSelf, role, sired, sire, duelWith(route.id()).isPresent(), npc);
         Component sub = isSelf ? Component.translatable(KEY + "you") : npc ? Component.translatable(KEY + "npc") : role == ProfileActions.Role.NONE ? Component.translatable(KEY + "no_bond")
-                : Component.translatable(PageKit.HUB + "pack.member." + role.name().toLowerCase(Locale.ROOT).replace("challenger", "coalpha_challenger"));
+                : Component.translatableWithFallback(PageKit.HUB + "pack.member." + base, HubModel.pretty(base));
         return new ActionView(ProfileActions.of(viewer, subject, f.view.context().op() && !route.op()), sub, route.id(), npc);
     }
 }
