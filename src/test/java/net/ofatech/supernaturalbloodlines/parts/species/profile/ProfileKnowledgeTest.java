@@ -24,12 +24,13 @@ class ProfileKnowledgeTest {
         UUID real = new UUID(7, 7);
         UUID subject = new UUID(8, 8);
         k.discover(null, real, subject, Set.of(Fact.GENES));
-        int evictedBefore = ProfileKnowledge.evictedOwners();
+        int evictedBefore = k.evictedOwners();
         for (int i = 0; i < ProfileKnowledge.MAX_OWNERS * 2; i++) {
             assertTrue(k.known(null, new UUID(1, i), subject).isEmpty());
         }
         assertEquals(1, k.observerCount(), "reads created entries");
-        assertEquals(evictedBefore, ProfileKnowledge.evictedOwners());
+        assertEquals(evictedBefore, k.evictedOwners());
+        assertEquals(0, new ProfileKnowledge().evictedOwners(), "the counter belongs to one index, not to the server run");
         assertEquals(EnumSet.of(Fact.GENES), k.known(null, real, subject), "the real observer was pushed out by strangers");
     }
 

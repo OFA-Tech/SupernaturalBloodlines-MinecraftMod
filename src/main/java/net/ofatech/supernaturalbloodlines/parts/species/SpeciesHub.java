@@ -52,7 +52,7 @@ final class SpeciesHub {
         UUID sireId = BloodlineAccess.get(p).sire();
         // a creature sire is "?" like a creature ancestor: an empty name
         Optional<String> sire = sireId == null ? Optional.empty()
-                : isCreature(sirelines, sireId) ? Optional.of("")
+                : sirelines.isCreature(sireId) ? Optional.of("")
                 : sirelines.nameOf(sireId).or(() -> Optional.ofNullable(PackAccess.nameOf(server, sireId)));
         List<String> sired = sirelines.childrenOf(p.getUUID()).stream().map(SirelineIndex.Node::name).toList();
         List<HubSocial.Kin> line = SirelineTree.below(sirelines, p.getUUID()).stream().limit(MAX_LINE)
@@ -60,7 +60,7 @@ final class SpeciesHub {
         List<String> names = new ArrayList<>();
         List<Boolean> hidden = new ArrayList<>();
         ancestors(server, sirelines, sireId, names, hidden);
-        List<HubSocial.Member> pack = ModList.get().isLoaded("werewolves") ? pack(p, server) : List.of();
+        List<HubSocial.Member> pack = werewolves() ? pack(p, server) : List.of();
         List<HubSocial.Person> people = new ArrayList<>();
         sire.filter(n -> !n.isEmpty() && sireId != null).ifPresent(n -> people.add(new HubSocial.Person(n, sireId)));
         sirelines.childrenOf(p.getUUID()).forEach(c -> people.add(new HubSocial.Person(c.name(), c.id())));
@@ -69,13 +69,18 @@ final class SpeciesHub {
 
     static final int MAX_LINE = 64;
 
+    /** The pack, its requests and its duels exist only with the Werewolves mod. */
+    private static boolean werewolves() {
+        return ModList.get().isLoaded("werewolves");
+    }
+
     /** The requests still open to the player, for the hub's Requests card: who asked, the answer's token and the ticks left. */
     static List<HubRequests.Request> requests(ServerPlayer p) {
         MinecraftServer server = p.server;
         long now = p.serverLevel().getGameTime();
         List<HubRequests.Request> out = new ArrayList<>();
         tokens(out, HubRequests.Kind.SIRE_CALL, SireCall.requests(), p, server, now);
-        if (ModList.get().isLoaded("werewolves")) {
+        if (werewolves()) {
             tokens(out, HubRequests.Kind.PACK_INVITE, PackCommand.requests(), p, server, now);
             tokens(out, HubRequests.Kind.ALLY_INVITE, PackCommand.allyRequests(), p, server, now);
             PackDuel.board().asked(p.getUUID(), now).ifPresent(d -> {
@@ -120,7 +125,7 @@ final class SpeciesHub {
         UUID at = sire == null ? null : sirelines.sireOf(sire).orElse(null);
         while (at != null && names.size() < HubSocial.MAX_ANCESTORS && seen.add(at)) {
             UUID id = at;
-            boolean creature = isCreature(sirelines, id);
+            boolean creature = sirelines.isCreature(id);
             names.add(creature ? "" : sirelines.nameOf(id).or(() -> Optional.ofNullable(PackAccess.nameOf(server, id))).orElse(""));
             hidden.add(creature);
             at = sirelines.sireOf(id).orElse(null);
@@ -128,10 +133,6 @@ final class SpeciesHub {
     }
 
     /** Recorded as a creature, or one of the six NPC Originals. The top of a chain has no link of its own and no recorded type: it is taken for a player, as before. */
-    private static boolean isCreature(SirelineIndex sirelines, UUID id) {
-        return sirelines.isCreature(id);
-    }
-
     /** Where the player stands in a line (R120 to R127): the root only when they have discovered it, and never an undiscovered name. */
     private static HubSocial.Origin origin(ServerPlayer p, List<Boolean> ancestorHidden) {
         MinecraftServer server = p.server;

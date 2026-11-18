@@ -24,15 +24,9 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
  * ranks and online flags of others; the genes are the subject's own, as their client may know them (unknown until discovered).
  */
 public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes,
-                                 List<HubSocial.Rite> rites, List<HubSocial.Person> people, Map<String, java.util.UUID> ids) implements CustomPacketPayload {
+                                 List<HubSocial.Rite> rites, List<HubSocial.Person> people) implements CustomPacketPayload {
     public HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes, List<HubSocial.Rite> rites) {
         this(family, pack, fiveCount, genes, rites, List.of());
-    }
-
-    /** What goes over the wire: {@code ids} is not sent, it is worked out once from the people and the pack. */
-    public HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes, List<HubSocial.Rite> rites,
-                              List<HubSocial.Person> people) {
-        this(family, pack, fiveCount, genes, rites, people, Map.of());
     }
 
     /**
@@ -138,7 +132,22 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
         genes = Map.copyOf(genes);
         rites = cap(rites);
         people = cap(people);
-        ids = index(pack, people);
+    }
+
+    /** The name index of the snapshot asked last: a client holds one snapshot at a time and the pages ask per frame, so it is built once per snapshot and is no part of the record (nor of its equality or its wire format). */
+    private record Indexed(HubSnapshotPayload of, Map<String, java.util.UUID> ids) {
+    }
+
+    private static volatile Indexed last;
+
+    /** Name to id for everyone the server named. */
+    public Map<String, java.util.UUID> ids() {
+        Indexed i = last;
+        if (i == null || i.of != this) {
+            i = new Indexed(this, index(pack, people));
+            last = i;
+        }
+        return i.ids;
     }
 
     /** Name to id for everyone the server named, built once (the pages ask per frame); the first of a name wins: the sire and the sired before the pack. */
@@ -151,7 +160,7 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
 
     /** The id a click on this name opens a Profile with, if the server named one (the sire, someone sired, a pack member). */
     public Optional<java.util.UUID> idOf(String name) {
-        return Optional.ofNullable(ids.get(name));
+        return Optional.ofNullable(ids().get(name));
     }
 
     private static <T> List<T> cap(List<T> l) {

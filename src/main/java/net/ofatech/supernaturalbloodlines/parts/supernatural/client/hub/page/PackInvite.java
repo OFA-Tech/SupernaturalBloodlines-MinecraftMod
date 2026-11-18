@@ -24,12 +24,20 @@ public final class PackInvite {
     private enum Mode { NONE, INVITE, ALLY }
 
     private static Mode mode = Mode.NONE;
+    /** Built when a picker opens, not every frame: the list of players is read off the connection and sorted once per press. */
+    private static List<Pickable.Person> offered = List.of();
+
+    private static void toggle(Mode wanted, HubScreen.Frame f) {
+        mode = mode == wanted ? Mode.NONE : wanted;
+        offered = mode == Mode.NONE ? List.of() : Pickable.of(online(), f.view.player().getUUID(), idsOf(f));
+    }
 
     private PackInvite() {}
 
     /** The hub closed: the next one starts with no picker open. */
     public static void reset() {
         mode = Mode.NONE;
+        offered = List.of();
     }
 
     /** True while a picker is open. */
@@ -45,8 +53,8 @@ public final class PackInvite {
         Component ally = Component.translatable(key + "ally_btn");
         List<Integer> widths = List.of(PageWidgets.widthOf(f.font(), invite), PageWidgets.widthOf(f.font(), ally));
         Flow.Result flow = Flow.wrap(new Rect(r.x(), y, r.w(), 0), widths, PageWidgets.H, PageWidgets.GAP);
-        PageWidgets.button(f, "stage:pack:invite", flow.rects().get(0), invite, mayInvite, mode == Mode.INVITE, why, () -> mode = mode == Mode.INVITE ? Mode.NONE : Mode.INVITE);
-        PageWidgets.button(f, "stage:pack:ally", flow.rects().get(1), ally, mayInvite, mode == Mode.ALLY, why, () -> mode = mode == Mode.ALLY ? Mode.NONE : Mode.ALLY);
+        PageWidgets.button(f, "stage:pack:invite", flow.rects().get(0), invite, mayInvite, mode == Mode.INVITE, why, () -> toggle(Mode.INVITE, f));
+        PageWidgets.button(f, "stage:pack:ally", flow.rects().get(1), ally, mayInvite, mode == Mode.ALLY, why, () -> toggle(Mode.ALLY, f));
         if (!mayInvite) {
             mode = Mode.NONE;
         }
@@ -61,7 +69,7 @@ public final class PackInvite {
         HubTheme t = f.theme();
         String key = PageKit.HUB + "pack.";
         Component title = Component.translatable(key + (mode == Mode.INVITE ? "invite_who" : "ally_who"));
-        List<Pickable.Person> people = Pickable.of(online(), f.view.player().getUUID(), members);
+        List<Pickable.Person> people = offered;
         int pad = card ? 4 : 0;
         Rect in = new Rect(r.x() + pad, y + pad, r.w() - 2 * pad, 0);
         List<Integer> pw = people.stream().map(p -> PageWidgets.widthOf(f.font(), Component.literal(p.name()))).toList();
@@ -84,6 +92,7 @@ public final class PackInvite {
             PageWidgets.button(f, "stage:pack:pick:" + p.name(), pf.rects().get(i), Component.literal(p.name()), true, false, tip, () -> {
                 HubClient.runCommand(row, List.of(p.id().toString()));
                 mode = Mode.NONE;
+                offered = List.of();
             });
         }
         return bottom + 3;

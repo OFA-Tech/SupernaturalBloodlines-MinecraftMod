@@ -89,10 +89,10 @@ public final class ProfileKnowledge extends SavedData {
     }
 
     private static final KnownFacts NOTHING = new KnownFacts();
-    private static int evicted;
+    private int evicted;
 
     /** How many owners the cap has pushed out since the server started (for tests); the first is logged. */
-    public static int evictedOwners() {
+    public int evictedOwners() {
         return evicted;
     }
 
@@ -104,7 +104,7 @@ public final class ProfileKnowledge extends SavedData {
         return map.getOrDefault(owner, NOTHING);
     }
 
-    private static KnownFacts owned(LinkedHashMap<UUID, KnownFacts> map, UUID owner) {
+    private KnownFacts owned(LinkedHashMap<UUID, KnownFacts> map, UUID owner) {
         KnownFacts k = map.remove(owner);
         if (k == null) {
             k = new KnownFacts();
@@ -130,8 +130,8 @@ public final class ProfileKnowledge extends SavedData {
 
     public static ProfileKnowledge load(CompoundTag tag, HolderLookup.Provider registries) {
         ProfileKnowledge k = new ProfileKnowledge();
-        read(tag, "observers", k.observers);
-        read(tag, "pools", k.pools);
+        k.read(tag, "observers", k.observers);
+        k.read(tag, "pools", k.pools);
         return k;
     }
 
@@ -159,7 +159,7 @@ public final class ProfileKnowledge extends SavedData {
     }
 
     /** Lenient: a wrong tag type, a bad id or a fact this version does not know skips that entry only; more owners than the cap keep the newest. */
-    private static void read(CompoundTag tag, String key, LinkedHashMap<UUID, KnownFacts> into) {
+    private void read(CompoundTag tag, String key, LinkedHashMap<UUID, KnownFacts> into) {
         if (!tag.contains(key, Tag.TAG_LIST)) {
             return;
         }
@@ -179,6 +179,7 @@ public final class ProfileKnowledge extends SavedData {
                 owned(into, owner).mergeFrom(KnownFacts.fromStrings(raw));
             } catch (RuntimeException damaged) {
                 // this entry is lost, the rest of the save is not
+                net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("Skipped a damaged profile knowledge entry: {}", damaged.toString());
             }
         }
     }

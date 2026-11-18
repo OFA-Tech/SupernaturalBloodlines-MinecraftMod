@@ -350,7 +350,8 @@ public final class AdminGameTests {
             return;
         }
         int[] pushed = {0};
-        AdminSettings.onClientCopySaved(server -> pushed[0]++);
+        java.util.function.Consumer<net.minecraft.server.MinecraftServer> counter = server -> pushed[0]++;
+        AdminSettings.onClientCopySaved(counter);
         boolean before = (Boolean) AdminSpecs.value(e).orElseThrow().get();
         List<AdminSnapshotPayload> replies = new ArrayList<>();
         try {
@@ -360,6 +361,7 @@ public final class AdminGameTests {
             helper.assertTrue(set(p, 2, KEY, new SettingValue.Int(level()), new Counting(p), replies).ok() && pushed[0] == atKey, "a key clients do not read was pushed");
         } finally {
             set(p, 2, e.id(), new SettingValue.Bool(before), new Counting(p), new ArrayList<>());
+            AdminSettings.removeClientCopySaved(counter);
         }
         helper.succeed();
     }
