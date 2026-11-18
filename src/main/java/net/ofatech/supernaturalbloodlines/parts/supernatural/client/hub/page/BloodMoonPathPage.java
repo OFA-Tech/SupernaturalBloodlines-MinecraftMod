@@ -82,7 +82,7 @@ public final class BloodMoonPathPage implements HubPageView {
             int gy = cy + (int) Math.round(radius * Math.sin(angle)) - 4;
             t.drawRungMark(f.g, gx, gy, row.status());
             Component name = PageKit.rung(row);
-            String text = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(name.getString(), 120, f.font()::width);
+            String text = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(name.getString(), Math.max(24, Math.min(120, gx - 6 - area.x())), f.font()::width); // never wider than the room left of its mark
             int tw = BookKit.smallWidth(f, text);
             int color = row.status() == net.ofatech.supernaturalbloodlines.shared.hub.RungStatus.LOCKED ? t.muted() : row.status() == net.ofatech.supernaturalbloodlines.shared.hub.RungStatus.CURRENT ? t.accent() : t.ink();
             BookKit.small(f, Component.literal(text), Math.max(area.x(), gx - 4 - tw), gy + 1, tw + 4, color);

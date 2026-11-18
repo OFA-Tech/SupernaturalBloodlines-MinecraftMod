@@ -174,13 +174,13 @@ public final class BookSkillsPage implements HubPageView {
         f.emblem(centre);
         int labelWidth = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.radialWidth(radius, count, 36, 110);
         for (int i = 0; i < rows.size(); i++) {
-            node(f, s, rows.get(i), ring.get(i), cy, rows.get(i) == chosen, labelWidth);
+            node(f, s, rows.get(i), ring.get(i), cx, cy, radius, rows.get(i) == chosen, labelWidth);
         }
         f.end(s.bottom());
     }
 
     /** One skill: owned is filled, available is ringed in gold, locked is a faint dotted ring; its icon inside and its name in two small lines. */
-    private void node(HubScreen.Frame f, Rect page, HubSkills.Row row, Radial.Node n, int cy, boolean selected, int labelWidth) {
+    private void node(HubScreen.Frame f, Rect page, HubSkills.Row row, Radial.Node n, int cx, int cy, int radius, boolean selected, int labelWidth) {
         HubTheme t = f.theme();
         boolean known = row.state() == HubSkills.State.OWNED || row.state() == HubSkills.State.COVERED;
         boolean locked = row.state() == HubSkills.State.LOCKED || row.state() == HubSkills.State.DORMANT;
@@ -203,14 +203,18 @@ public final class BookSkillsPage implements HubPageView {
             KitDraw.shape(f.g, shape, x + 2, y + 2, size - 4, t.paper());
             KitDraw.icon(f.g, icon, n.x() - 6, n.y() - 6, 12, t.ink());
         }
-        // by words, and a word that is too long ends in an ellipsis instead of being broken in the middle
-        List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(SkillsPage.name(row).getString(), labelWidth, 2, f.font()::width);
+        // by words, and a word that is too long ends in an ellipsis instead of being broken in the middle. A node on the sides of the ring has its name
+        // beside it, outward (above or below it the name would run into the neighbour); the top and bottom ones keep it over or under
+        int dx = n.x() - cx;
+        boolean beside = Math.abs(dx) * 2 > radius;
+        int room = beside ? (dx > 0 ? page.right() - (n.x() + size / 2 + 3) : n.x() - size / 2 - 3 - page.x()) : labelWidth;
+        List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(SkillsPage.name(row).getString(), Math.max(24, Math.min(110, room)), 2, f.font()::width);
         int height = lines.size() * 9;
-        int ly = n.y() >= cy ? n.y() + size / 2 + 2 : n.y() - size / 2 - 2 - height;
+        int ly = beside ? n.y() - height / 2 : n.y() >= cy ? n.y() + size / 2 + 2 : n.y() - size / 2 - 2 - height;
         int color = selected ? t.accent() : locked ? t.muted() : t.ink();
         for (var line : lines) {
             int lw = f.font().width(line);
-            int lx = Math.max(page.x(), Math.min(page.right() - lw, n.x() - lw / 2));
+            int lx = beside ? (dx > 0 ? n.x() + size / 2 + 3 : n.x() - size / 2 - 3 - lw) : Math.max(page.x(), Math.min(page.right() - lw, n.x() - lw / 2));
             f.g.drawString(f.font(), line, lx, ly, color, false);
             ly += 9;
         }

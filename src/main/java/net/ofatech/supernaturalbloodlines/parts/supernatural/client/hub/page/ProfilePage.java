@@ -11,6 +11,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.ProfileClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient;
+import net.ofatech.supernaturalbloodlines.shared.hub.profile.DuelChecks;
 import net.ofatech.supernaturalbloodlines.shared.hub.profile.DuelView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
@@ -62,16 +63,15 @@ public final class ProfilePage implements HubPageView {
         return out;
     }
 
+    /** The facts of the grid, in reading order; the rank is a chip, and shows here only while it is unknown. */
+    private static final List<Fact> GRID = List.of(Fact.SPECIES, Fact.LEVEL, Fact.PACK, Fact.PACK_DAYS, Fact.PRESENCE, Fact.SIRE, Fact.LINE, Fact.GENES, Fact.ANCHOR);
+
     @Override
     public void render(HubScreen.Frame f) {
         HubScreen.ProfileRoute route = f.screen().profile();
         HubTheme t = f.theme();
         ProfilePayload payload = route == null ? null : ProfileClient.of(route.id());
         Rect r = f.region(HubLayout.MAIN);
-        Rect bar = f.layout().chrome().detail();
-        if (bar != null && bar.h() < 60 && bar.y() > r.y()) {
-            f.reserve(HubLayout.MAIN, Math.max(0, r.bottom() - bar.y() + 4)); // the Blood Moon's floating bar sits over the foot of the page
-        }
         int y = f.begin(HubLayout.MAIN);
         if (route == null) {
             f.end(y);
@@ -92,50 +92,213 @@ public final class ProfilePage implements HubPageView {
             }
             y += h + 4;
         }
-        y = PageKit.title(f, Component.literal(route.name()), r.x(), y, r.w(), t.accent());
-        t.drawRule(f.g, r.x(), y + 2, r.w());
-        y += 6;
+        y = identity(f, r, y, route, payload);
+        if (payload == null) {
+            y = PageKit.wrapped(f, Component.translatable(KEY + "loading"), r.x(), y + 2, r.w(), t.muted());
+        } else {
+            y = grid(f, r, y + 4, payload);
+            List<String> bonus = payload.facts().get(Fact.BONUS);
+            if (bonus != null && !bonus.isEmpty()) {
+                y = bonusCard(f, r, y + 2, bonus.get(0));
+            }
+        }
+        f.end(y);
+
+        ActionView av = actions(f, route, payload);
+        Rect pane = f.layout().chrome().detail();
+        boolean paneHasRoom = pane != null && pane.h() >= 60;
+        Rect s = f.region(HubLayout.SIDE);
+        int sy = f.begin(HubLayout.SIDE);
+        sy = side(f, s, sy, route, av, !paneHasRoom);
+        sy = PageWidgets.reply(f, s, sy + 2);
+        f.end(sy);
+        if (paneHasRoom) {
+            // the tall pane says who this is and what a ? means
+            Detail.Builder d = Detail.of(Component.literal(route.name())).subtitle(av.subtitle());
+            if (route.op()) {
+                d.kicker(Component.translatable(KEY + "op_kicker"));
+            }
+            f.detail(d.body(Component.translatable(KEY + "legend")).build());
+        }
+    }
+
+    /** The portrait, the name (with the leader's crown) and the rank chip. */
+    private int identity(HubScreen.Frame f, Rect r, int y, HubScreen.ProfileRoute route, ProfilePayload payload) {
+        HubTheme t = f.theme();
+        int face = r.w() >= 150 ? 40 : 28;
+        boolean leader = payload != null && payload.facts().get(Fact.RANK) != null && payload.facts().get(Fact.RANK).contains("alpha");
+        BookKit.portrait(f.g, route.name(), r.x() + face / 2 + 1, y + face / 2 + 1, face, route.id().equals(f.view.player().getUUID()) ? t.accent() : t.muted(), t.paper());
+        int tx = r.x() + face + 8;
+        int ty = PageKit.title(f, Component.literal(route.name()), tx, y, r.right() - tx, t.accent());
+        if (leader) {
+            BookPackPage.crown(f, Math.min(r.right() - 8, tx + f.font().width(route.name()) * 2 + 4), y + 3);
+        }
+        List<String> rank = payload == null ? null : payload.facts().get(Fact.RANK);
+        if (rank != null && !rank.isEmpty()) {
+            Component chip = value(Fact.RANK, rank);
+            int w = f.font().width(chip) + 8;
+            int cy = Math.max(ty + 1, y + face - 11);
+            f.g.fill(tx, cy, tx + w, cy + 11, (t.accent() & 0xFFFFFF) | 0xFF000000);
+            f.g.drawString(f.font(), chip, tx + 4, cy + 2, Contrast.bestText(t.accent()), false);
+        }
+        return y + Math.max(face + 2, ty - y);
+    }
+
+    /** The facts as cells: the label small over its value, two columns where the page is wide, one where it is not, so a short value stays beside its label. */
+    private int grid(HubScreen.Frame f, Rect r, int y, ProfilePayload payload) {
+        HubTheme t = f.theme();
+        int cols = r.w() >= 180 ? 2 : 1;
+        int cw = (r.w() - (cols - 1) * 6) / cols;
+        List<Fact> shown = new ArrayList<>(GRID);
+        if (!payload.facts().containsKey(Fact.RANK)) {
+            shown.add(0, Fact.RANK);
+        }
+        if (!payload.facts().containsKey(Fact.BONUS)) {
+            shown.add(Fact.BONUS);
+        }
+        int col = 0;
+        int rowTop = y;
+        int rowH = 0;
+        for (Fact fact : shown) {
+            int x = r.x() + col * (cw + 6);
+            List<String> known = payload.facts().get(fact);
+            Component label = Component.translatable(KEY + "fact." + fact.name().toLowerCase(Locale.ROOT));
+            Component text = known == null ? Component.translatable(KEY + "unknown") : value(fact, known);
+            f.g.drawString(f.font(), label.getString().toUpperCase(Locale.ROOT), x, rowTop, t.muted(), false);
+            int vy = rowTop + 10;
+            for (var line : f.font().split(text, cw)) {
+                f.g.drawString(f.font(), line, x, vy, known == null ? t.muted() : t.ink(), false);
+                vy += PageKit.LINE;
+            }
+            int h = vy - rowTop + 3;
+            Rect cell = new Rect(x - 1, rowTop - 1, cw + 2, h - 1);
+            String id = "panel:fact:" + fact.name();
+            List<Component> tip = known == null
+                    ? List.of(label, Component.translatable(KEY + "unknown_tip"), Component.translatable(KEY + "howto." + fact.name().toLowerCase(Locale.ROOT)))
+                    : List.of(label, text);
+            f.target(id, cell, tip, null);
+            if (f.focused(id)) {
+                t.drawFocus(f.g, cell);
+            }
+            rowH = Math.max(rowH, h);
+            if (++col == cols) {
+                col = 0;
+                rowTop += rowH;
+                rowH = 0;
+            }
+        }
+        return col == 0 ? rowTop : rowTop + rowH;
+    }
+
+    private int bonusCard(HubScreen.Frame f, Rect r, int y, String text) {
+        HubTheme t = f.theme();
+        Component title = Component.translatable(KEY + "bonus_title");
+        var lines = f.font().split(Component.literal(text), r.w() - 10);
+        int h = 14 + lines.size() * PageKit.LINE + 4;
+        f.g.fill(r.x(), y, r.right(), y + h, (t.accent() & 0xFFFFFF) | 0x22000000);
+        f.g.renderOutline(r.x(), y, r.w(), h, t.accent());
+        f.g.drawString(f.font(), title, r.x() + 5, y + 4, t.accent(), false);
+        int ly = y + 14;
+        for (var line : lines) {
+            f.g.drawString(f.font(), line, r.x() + 5, ly, t.ink(), false);
+            ly += PageKit.LINE;
+        }
+        f.target("panel:fact:BONUS", new Rect(r.x(), y, r.w(), h), List.of(title, Component.literal(text)), null);
+        return y + h + 2;
+    }
+
+    /** What the relationship allows, with the words the page needs around it. */
+    private record ActionView(List<ProfileActions.Action> actions, Component subtitle, UUID subject, boolean npc) {
+    }
+
+    /** The right page (or card, or column): what can be done with this person, each with what it does or why it is off, and the duel's rules. */
+    private int side(HubScreen.Frame f, Rect s, int y, HubScreen.ProfileRoute route, ActionView av, boolean legend) {
+        HubTheme t = f.theme();
         var duel = duelWith(route.id());
         if (duel.isPresent()) {
             DuelView v = duel.get();
             Component line = Component.translatable(v.langKey(), v.opponent().isEmpty() ? route.name() : v.opponent(), v.clock());
-            int h = f.font().split(line, r.w() - 8).size() * PageKit.LINE + 4;
-            f.g.fill(r.x(), y, r.right(), y + h, t.accent());
+            int h = f.font().split(line, s.w() - 8).size() * PageKit.LINE + 4;
+            f.g.fill(s.x(), y, s.right(), y + h, t.accent());
             int yy = y + 2;
-            for (var l : f.font().split(line, r.w() - 8)) {
-                f.g.drawString(f.font(), l, r.x() + 4, yy, Contrast.bestText(t.accent()), false);
+            for (var l : f.font().split(line, s.w() - 8)) {
+                f.g.drawString(f.font(), l, s.x() + 4, yy, Contrast.bestText(t.accent()), false);
                 yy += PageKit.LINE;
             }
-            f.target("panel:duel", new Rect(r.x(), y, r.w(), h), List.of(line), null);
+            f.target("panel:duel", new Rect(s.x(), y, s.w(), h), List.of(line), null);
             y += h + 4;
         }
-        if (payload == null) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "loading"), r.x(), y, r.w(), t.muted());
-        } else {
-            for (Map.Entry<String, List<Fact>> group : GROUPS.entrySet()) {
-                y = PageKit.wrapped(f, Component.translatable(KEY + "group." + group.getKey()).withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
-                for (Fact fact : group.getValue()) {
-                    y = fact(f, r, y, fact, payload);
-                }
-                y += 3;
+        y = PageKit.title(f, Component.translatable(KEY + "actions_title"), s.x(), y, s.w(), t.accent());
+        t.drawRule(f.g, s.x(), y + 2, s.w());
+        y += 6;
+        if (av.actions().isEmpty()) {
+            y = PageKit.wrapped(f, Component.translatable(KEY + (av.npc() ? "no_actions_npc" : "no_actions"), route.name()), s.x(), y, s.w(), t.muted());
+        }
+        boolean challenge = false;
+        for (ProfileActions.Action a : av.actions()) {
+            Component label = Component.translatable(KEY + "action." + a.id());
+            Component why = a.disabled() == null ? null : Component.translatable(KEY + "disabled." + a.disabled());
+            Runnable run = switch (a.kind()) {
+                case COMMAND -> () -> HubClient.runCommand(a.rowId(), a.args(route.id()));
+                case OPEN_RITES -> () -> f.screen().setPage(HubPage.RITES);
+                case OPEN_ADMIN -> () -> f.screen().setPage(HubPage.ADMIN);
+            };
+            Runnable press = a.confirm()
+                    ? () -> f.confirm(label, Component.translatable(KEY + "confirm." + a.id(), route.name()), label, run)
+                    : run;
+            Rect btn = new Rect(s.x(), y, Math.min(s.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
+            PageWidgets.button(f, "stage:profile:act:" + a.id(), btn, label, a.enabled(), a.primary(), why, press);
+            y = btn.bottom() + 1;
+            y = PageKit.wrapped(f, Component.translatable(KEY + "action." + a.id() + ".what", route.name()), s.x(), y, s.w(), t.muted());
+            if (why != null) {
+                y = PageKit.wrapped(f, why, s.x(), y, s.w(), PageWidgets.warn(t));
             }
+            y += 4;
+            challenge |= a.id().equals("challenge");
         }
-        if (bar != null && bar.h() < 60) {
-            // the Blood Moon has no side column of its own: the legend closes the page
-            y = PageKit.wrapped(f, Component.translatable(KEY + "legend"), r.x(), y + 2, r.w(), t.muted());
+        if (challenge) {
+            y = rules(f, s, y + 2, route);
         }
-        y = PageWidgets.reply(f, r, y + 2);
-        f.end(y);
+        if (legend) {
+            y = PageKit.wrapped(f, Component.translatable(KEY + "legend_title").withStyle(ChatFormatting.BOLD), s.x(), y + 4, s.w(), t.accent());
+            y = PageKit.wrapped(f, Component.translatable(KEY + "legend"), s.x(), y, s.w(), t.muted());
+        }
+        return y;
+    }
 
-        f.detail(detail(f, route, payload));
-        if (f.layout().chrome().detail() != null && f.layout().chrome().detail().h() >= 60) {
-            // the actions went to the theme's own pane or bar: this page says what a ? means
-            Rect s = f.region(HubLayout.SIDE);
-            int sy = f.begin(HubLayout.SIDE);
-            sy = PageKit.wrapped(f, Component.translatable(KEY + "legend_title").withStyle(ChatFormatting.BOLD), s.x(), sy, s.w(), t.accent());
-            sy = PageKit.wrapped(f, Component.translatable(KEY + "legend"), s.x(), sy, s.w(), t.ink());
-            f.end(sy);
+    /** "The rules, and where you stand": each rule of the duel with a tick, a cross or a question mark (the server's to say). */
+    private int rules(HubScreen.Frame f, Rect s, int y, HubScreen.ProfileRoute route) {
+        HubTheme t = f.theme();
+        y = PageKit.wrapped(f, Component.translatable(KEY + "rules_title").withStyle(ChatFormatting.BOLD), s.x(), y, s.w(), t.accent());
+        y = PageKit.wrapped(f, Component.translatable(KEY + "rule.loser"), s.x(), y, s.w(), t.ink());
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        var other = mc.level == null ? null : mc.level.getPlayerByUUID(route.id());
+        double distance = other == null || mc.player == null ? -1 : other.distanceTo(mc.player);
+        for (DuelChecks.Check c : DuelChecks.of(distance, RequestsClient.duel() != null)) {
+            Component rule = Component.translatable(KEY + "rule." + c.key());
+            String mark = switch (c.state()) {
+                case OK -> "\u2713";
+                case FAIL -> "x";
+                case UNKNOWN -> "?";
+            };
+            int color = switch (c.state()) {
+                case OK -> t.good();
+                case FAIL -> PageWidgets.warn(t);
+                case UNKNOWN -> t.muted();
+            };
+            String right = mark + (c.detail().isEmpty() ? "" : " " + c.detail());
+            int rw = f.font().width(right);
+            var lines = f.font().split(rule, s.w() - rw - 6);
+            int ly = y;
+            for (var line : lines) {
+                f.g.drawString(f.font(), line, s.x(), ly, t.ink(), false);
+                ly += PageKit.LINE;
+            }
+            f.g.drawString(f.font(), right, s.right() - rw, y, color, false);
+            f.target("panel:rule:" + c.key(), new Rect(s.x(), y - 1, s.w(), ly - y + 1), List.of(rule, Component.translatable(KEY + "rule.state." + c.state().name().toLowerCase(Locale.ROOT))), null);
+            y = ly + 2;
         }
+        return y;
     }
 
     /** The viewer's own duel when its opponent is this person; the clock counts down from what the server last said. */
@@ -145,35 +308,8 @@ public final class ProfilePage implements HubPageView {
                 : DuelView.of(d.token(), d.fromName(), RequestsClient.ticksLeft(d));
     }
 
-    private int fact(HubScreen.Frame f, Rect r, int y, Fact fact, ProfilePayload payload) {
-        HubTheme t = f.theme();
-        List<String> known = payload.facts().get(fact);
-        Component label = Component.translatable(KEY + "fact." + fact.name().toLowerCase(Locale.ROOT));
-        Component shown = known == null ? Component.translatable(KEY + "unknown") : value(fact, known);
-        // a label that takes more than 5/8 of a narrow column (Tensura's) goes on its own line, the value under it
-        boolean stacked = f.font().width(label) + 6 > r.w() * 5 / 8;
-        int lw = stacked ? 8 : f.font().width(label) + 6;
-        f.g.drawString(f.font(), label, r.x() + 4, y, t.muted(), false);
-        int vy = stacked ? y + PageKit.LINE : y;
-        int top = vy;
-        for (var line : f.font().split(shown, r.w() - lw - 4)) {
-            f.g.drawString(f.font(), line, r.x() + lw + 4, vy, known == null ? t.muted() : t.ink(), false);
-            vy += PageKit.LINE;
-        }
-        Rect row = new Rect(r.x(), y - 1, r.w(), Math.max(vy - y, PageKit.LINE) + 1);
-        String id = "panel:fact:" + fact.name();
-        List<Component> tip = known == null
-                ? List.of(label, Component.translatable(KEY + "unknown_tip"), Component.translatable(KEY + "howto." + fact.name().toLowerCase(Locale.ROOT)))
-                : List.of(label, shown);
-        f.target(id, row, tip, null);
-        if (f.focused(id)) {
-            t.drawFocus(f.g, row);
-        }
-        return y + Math.max(vy - y, PageKit.LINE);
-    }
-
-    /** The actions of the relationship, as the theme's Detail: pack and sire facts come from the hub snapshot, which is all the client has. */
-    private Detail detail(HubScreen.Frame f, HubScreen.ProfileRoute route, ProfilePayload payload) {
+    /** The actions of the relationship: pack and sire facts come from the hub snapshot, which is all the client has. */
+    private ActionView actions(HubScreen.Frame f, HubScreen.ProfileRoute route, ProfilePayload payload) {
         var snap = f.view.snapshot();
         UUID self = f.view.player().getUUID();
         boolean isSelf = route.id().equals(self);
@@ -194,25 +330,10 @@ public final class ProfilePage implements HubPageView {
                 HubPage.isWolfType(race), race == SupernaturalRace.ORIGINAL || race == SupernaturalRace.HYBRID || race == SupernaturalRace.ORIGINAL_HYBRID || race == SupernaturalRace.TRIBRID);
         boolean sire = snap.sire().filter(n -> !n.isEmpty()).flatMap(snap::idOf).filter(route.id()::equals).isPresent();
         boolean sired = snap.people().stream().anyMatch(p -> p.id().equals(route.id()) && snap.sired().contains(p.name()));
-        ProfileActions.Subject subject = new ProfileActions.Subject(route.id(), route.name(), isSelf, role, sired, sire, duelWith(route.id()).isPresent(), payload != null && payload.npc());
-        Detail.Builder d = Detail.of(Component.literal(route.name()));
-        d.subtitle(isSelf ? Component.translatable(KEY + "you") : payload != null && payload.npc() ? Component.translatable(KEY + "npc") : role == ProfileActions.Role.NONE ? Component.translatable(KEY + "no_bond")
-                : Component.translatable(PageKit.HUB + "pack.member." + role.name().toLowerCase(Locale.ROOT).replace("challenger", "coalpha_challenger")));
-        if (route.op()) {
-            d.kicker(Component.translatable(KEY + "op_kicker"));
-        }
-        for (ProfileActions.Action a : ProfileActions.of(viewer, subject, f.view.context().op() && !route.op())) {
-            Component label = Component.translatable(KEY + "action." + a.id());
-            Component why = a.disabled() == null ? null : Component.translatable(KEY + "disabled." + a.disabled());
-            Detail.Confirm confirm = a.confirm() ? new Detail.Confirm(label, Component.translatable(KEY + "confirm." + a.id(), route.name())) : null;
-            Runnable run = switch (a.kind()) {
-                case COMMAND -> () -> HubClient.runCommand(a.rowId(), a.args(route.id()));
-                case OPEN_RITES -> () -> f.screen().setPage(HubPage.RITES);
-                case OPEN_ADMIN -> () -> f.screen().setPage(HubPage.ADMIN);
-            };
-            d.action(new Detail.Action(a.id(), label, a.primary(), a.enabled(), why, confirm, run));
-        }
-        return d.build();
+        boolean npc = payload != null && payload.npc();
+        ProfileActions.Subject subject = new ProfileActions.Subject(route.id(), route.name(), isSelf, role, sired, sire, duelWith(route.id()).isPresent(), npc);
+        Component sub = isSelf ? Component.translatable(KEY + "you") : npc ? Component.translatable(KEY + "npc") : role == ProfileActions.Role.NONE ? Component.translatable(KEY + "no_bond")
+                : Component.translatable(PageKit.HUB + "pack.member." + role.name().toLowerCase(Locale.ROOT).replace("challenger", "coalpha_challenger"));
+        return new ActionView(ProfileActions.of(viewer, subject, f.view.context().op() && !route.op()), sub, route.id(), npc);
     }
 }
-

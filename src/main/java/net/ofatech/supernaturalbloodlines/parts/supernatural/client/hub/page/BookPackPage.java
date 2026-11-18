@@ -334,9 +334,10 @@ public final class BookPackPage implements HubPageView {
             f.end(s.bottom());
             return;
         }
-        int legend = 10 * Math.max(1, Math.min(3, f.font().split(Component.translatable(BOOK + "legend"), s.w()).size())) + 2;
         // on the Blood Moon stage the ledger card takes the right of it, so the ring is centred in what is left
         int areaW = style == Style.MOON ? Math.max(60, f.region("right").x() - 14 - s.x()) : s.w();
+        // the legend is drawn at the width of that area, 9 pixels a line: the room kept for it is that many lines, whole
+        int legend = 9 * Math.max(1, f.font().split(Component.translatable(BOOK + "legend"), areaW).size()) + 3;
         int cy = top + (s.bottom() - legend - top) / 2;
         int cx = s.x() + areaW / 2;
         List<PackRing.Member> members = new ArrayList<>();

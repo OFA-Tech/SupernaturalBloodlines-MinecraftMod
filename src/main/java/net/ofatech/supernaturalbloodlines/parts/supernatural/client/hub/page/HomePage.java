@@ -86,17 +86,36 @@ public final class HomePage implements HubPageView {
         return b.bottom() + 2;
     }
 
+    /** The viewer as a card: portrait, name, chips for pack rank and species, and the numbers that matter. */
     private int you(HubScreen.Frame f, Rect r, int y) {
         HubTheme t = f.theme();
         y = section(f, r, y, "you");
+        String name = f.view.player().getGameProfile().getName();
+        int face = 28;
+        BookKit.portrait(f.g, name, r.x() + face / 2 + 1, y + 2 + face / 2, face, t.accent(), t.paper());
+        int tx = r.x() + face + 8;
+        int ty = PageKit.title(f, Component.literal(name), tx, y + 2, r.right() - tx, t.ink());
+        WolfState wolf = f.view.bloodline().wolf();
+        List<Component> chips = new ArrayList<>();
+        if (wolf.rank() != WolfState.Rank.NONE) {
+            chips.add(BookPackPage.rankLabel(wolf));
+        }
         List<Component> races = new ArrayList<>();
         f.view.races().forEach(race -> races.add(PageKit.race(race)));
-        Component race = races.size() > 1 ? Component.empty().append(races.get(0)).append(" + ").append(races.get(1)) : races.get(0);
-        y = PageKit.wrapped(f, Component.literal(f.view.player().getGameProfile().getName() + " \u00b7 ").append(race), r.x(), y, r.w(), t.ink());
-        WolfState wolf = f.view.bloodline().wolf();
-        if (wolf.rank() != WolfState.Rank.NONE) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "rank", BookPackPage.rankLabel(wolf)), r.x(), y, r.w(), t.ink());
+        chips.add(races.size() > 1 ? Component.empty().append(races.get(0)).append(" + ").append(races.get(1)) : races.get(0));
+        int cx = tx;
+        int cy = ty + 1;
+        for (Component chip : chips) {
+            int w = f.font().width(chip) + 8;
+            if (cx + w > r.right() && cx > tx) {
+                cx = tx;
+                cy += 12;
+            }
+            f.g.fill(cx, cy, cx + w, cy + 11, (t.accent() & 0xFFFFFF) | 0x33000000);
+            f.g.drawString(f.font(), chip, cx + 4, cy + 2, t.ink(), false);
+            cx += w + 4;
         }
+        y = Math.max(y + 2 + face + 4, cy + 14);
         y = PageKit.wrapped(f, Component.translatable(KEY + "sp", f.view.state().sp()), r.x(), y, r.w(), t.ink());
         if (f.view.ghoul()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "ghoul"), r.x(), y + 2, r.w(), t.muted());
@@ -105,10 +124,9 @@ public final class HomePage implements HubPageView {
         }
         Rect self = new Rect(r.x(), y + 2, Math.min(r.w(), PageWidgets.widthOf(f.font(), Component.translatable(KEY + "profile"))), PageWidgets.H);
         PageWidgets.button(f, "stage:home:profile", self, Component.translatable(KEY + "profile"), true, false, null,
-                () -> f.screen().openProfile(f.view.player().getUUID(), f.view.player().getGameProfile().getName()));
+                () -> f.screen().openProfile(f.view.player().getUUID(), name));
         return self.bottom() + 2;
     }
-
     private int waiting(HubScreen.Frame f, Rect r, int y) {
         HubTheme t = f.theme();
         y = section(f, r, y, "waiting_title");
@@ -122,23 +140,47 @@ public final class HomePage implements HubPageView {
         return y;
     }
 
+    /** The longest a request has been seen with, so its bar drains from full: the server sends only what is left. */
+    private static final java.util.Map<String, Integer> PEAK = new java.util.HashMap<>();
+
     private int card(HubScreen.Frame f, Rect r, int y, HubRequests.Request q) {
         HubTheme t = f.theme();
         String id = "stage:request:" + q.kind() + ":" + q.token() + q.from();
         Component what = Component.translatable("supernaturalbloodlines.hub.request.kind." + q.kind().name().toLowerCase(Locale.ROOT));
-        int left = (RequestsClient.ticksLeft(q) + 19) / 20;
+        int ticks = RequestsClient.ticksLeft(q);
+        int left = (ticks + 19) / 20;
+        int peak = PEAK.merge(q.token() + q.from(), ticks, Math::max);
         int top = y;
-        if (!q.fromName().isEmpty() && !q.from().equals(HubRequests.NOBODY)) {
+        int x = r.x() + 5;
+        int w = r.w() - 10;
+        boolean named = !q.fromName().isEmpty() && !q.from().equals(HubRequests.NOBODY);
+        int face = 16;
+        int tx = named ? x + face + 4 : x;
+        Component clock = Component.literal(left / 60 + ":" + String.format("%02d", left % 60));
+        int cw = f.font().width(clock);
+        int ty = y + 3;
+        if (named) {
+            BookKit.face(f.g, q.fromName(), x, ty, face);
             Component who = Component.literal(q.fromName());
-            Rect nameRect = new Rect(r.x() + 5, y, Math.min(r.w() - 5, f.font().width(who) + 2), PageKit.LINE);
-            f.g.drawString(f.font(), who, nameRect.x(), y, f.hovered(nameRect) || f.focused(id) ? t.accent() : t.ink(), false);
-            f.target(id, nameRect, List.of(who, Component.translatable(KEY + "open_profile")), () -> f.screen().openProfile(q.from(), q.fromName()));
+            Rect nameRect = new Rect(tx, ty, Math.min(w - face - 4 - cw - 4, f.font().width(who) + 2), PageKit.LINE);
+            f.g.drawString(f.font(), who, nameRect.x(), ty, f.hovered(nameRect) || f.focused(id) ? t.accent() : t.ink(), false);
+            f.target(id, new Rect(x, ty, face + 4 + nameRect.w(), face), List.of(who, Component.translatable(KEY + "open_profile")), () -> f.screen().openProfile(q.from(), q.fromName()));
             if (f.focused(id)) {
                 t.drawFocus(f.g, nameRect);
             }
-            y += PageKit.LINE;
         }
-        y = PageKit.wrapped(f, Component.translatable(KEY + "request", what, left), r.x() + 5, y, r.w() - 5, t.muted());
+        f.g.drawString(f.font(), clock, x + w - cw, ty, left <= 10 ? PageWidgets.warn(t) : t.muted(), false);
+        int textW = x + w - tx - cw - 4;
+        int ky = named ? ty + PageKit.LINE : ty;
+        for (var line : f.font().split(what, Math.max(20, textW))) {
+            f.g.drawString(f.font(), line, tx, ky, t.muted(), false);
+            ky += PageKit.LINE;
+        }
+        y = Math.max(ky, named ? ty + face : ky) + 2;
+        int barW = w;
+        f.g.fill(x, y, x + barW, y + 3, (t.muted() & 0xFFFFFF) | 0x44000000);
+        f.g.fill(x, y, x + Math.max(1, (int) (barW * (ticks / (double) Math.max(1, peak)))), y + 3, t.accent());
+        y += 7;
         List<Answer> answers = answers(q.kind());
         List<Component> labels = new ArrayList<>();
         answers.forEach(a -> labels.add(Component.translatable(KEY + "answer." + a.label())));
@@ -147,7 +189,7 @@ public final class HomePage implements HubPageView {
             labels.add(Component.translatable(KEY + "answer.dismiss"));
         }
         List<Integer> widths = labels.stream().map(c -> PageWidgets.widthOf(f.font(), c)).toList();
-        Flow.Result flow = Flow.wrap(new Rect(r.x() + 5, y + 1, r.w() - 5, 0), widths, PageWidgets.H, PageWidgets.GAP);
+        Flow.Result flow = Flow.wrap(new Rect(x, y, w, 0), widths, PageWidgets.H, PageWidgets.GAP);
         for (int i = 0; i < labels.size(); i++) {
             Rect b = flow.rects().get(i);
             if (i < answers.size()) {
@@ -158,10 +200,12 @@ public final class HomePage implements HubPageView {
                 PageWidgets.button(f, id + ":dismiss", b, labels.get(i), true, false, null, () -> RequestsClient.dismiss(q));
             }
         }
-        f.g.fill(r.x(), top, r.x() + 2, flow.bottom(), t.accent());
-        return flow.bottom() + 3;
+        int bottom = flow.bottom() + 3;
+        f.g.fill(r.x(), top, r.right(), bottom, (t.accent() & 0xFFFFFF) | 0x14000000);
+        f.g.renderOutline(r.x(), top, r.w(), bottom - top, (t.accent() & 0xFFFFFF) | 0x88000000);
+        return bottom + 3;
     }
-
+    /** The pack and the people of your line as faces: a click opens the Profile; the dot says who is online and the crown who leads. */
     private int people(HubScreen.Frame f, Rect s, int y) {
         HubTheme t = f.theme();
         y = section(f, s, y, "people");
@@ -170,67 +214,101 @@ public final class HomePage implements HubPageView {
         if (pack.isEmpty()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "no_pack"), s.x(), y, s.w(), t.muted());
         }
-        for (HubSocial.Member m : pack) {
-            y = person(f, s, y, m.name(), m.id().orElse(null), Component.translatableWithFallback(PageKit.HUB + "pack.member." + m.base(), HubModel.pretty(m.base())), m.online());
+        int face = 16;
+        int step = face + 4;
+        int perRow = Math.max(1, s.w() / step);
+        int online = 0;
+        for (int i = 0; i < pack.size(); i++) {
+            HubSocial.Member m = pack.get(i);
+            int fx = s.x() + (i % perRow) * step;
+            int fy = y + 6 + (i / perRow) * (face + 8);
+            Rect hit = new Rect(fx, fy, face, face);
+            BookKit.face(f.g, m.name(), fx, fy, face);
+            f.g.fill(fx + face - 4, fy + face + 1, fx + face, fy + face + 4, m.online() ? 0xFF2F6E4A : 0xFF9A8566);
+            if (i == 0 && !m.base().equals("ally")) {
+                BookPackPage.crown(f, fx + 4, fy - 6);
+            }
+            online += m.online() ? 1 : 0;
+            String tid = "stage:person:" + m.name();
+            Component role = Component.translatableWithFallback(PageKit.HUB + "pack.member." + m.base(), HubModel.pretty(m.base()));
+            UUID id = m.id().orElse(null);
+            f.target(tid, hit, List.of(Component.literal(m.name()), role, Component.translatable(KEY + "open_profile")), id == null ? null : () -> f.screen().openProfile(id, m.name()));
+            if (f.focused(tid) || (id != null && f.hovered(hit))) {
+                t.drawFocus(f.g, hit);
+            }
+        }
+        if (!pack.isEmpty()) {
+            y += 6 + ((pack.size() - 1) / perRow + 1) * (face + 8);
+            y = PageKit.wrapped(f, Component.translatable(KEY + "pack_count", pack.size(), online), s.x(), y, s.w(), t.muted());
         }
         if (snap.sire().filter(n -> !n.isEmpty()).isPresent()) {
             String n = snap.sire().get();
-            y = person(f, s, y, n, snap.idOf(n).orElse(null), Component.translatable(KEY + "sire"), false);
+            y = person(f, s, y + 2, n, snap.idOf(n).orElse(null), Component.translatable(KEY + "sire"));
         }
         if (!snap.sired().isEmpty()) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "sired", snap.sired().size()), s.x(), y, s.w(), t.ink());
+            y = PageKit.wrapped(f, Component.translatable(KEY + "sired", snap.sired().size()), s.x(), y + 2, s.w(), t.ink());
         }
         return y;
     }
 
-    private int person(HubScreen.Frame f, Rect s, int y, String name, UUID id, Component role, boolean online) {
+    private int person(HubScreen.Frame f, Rect s, int y, String name, UUID id, Component role) {
         HubTheme t = f.theme();
-        Rect row = new Rect(s.x(), y, s.w(), PageKit.LINE + 1);
-        f.g.fill(row.x() + 1, y + 2, row.x() + 5, y + 6, online ? 0xFF2F6E4A : 0xFF9A8566);
-        String shown = f.font().plainSubstrByWidth(name, s.w() - 12 - f.font().width(role) - 4);
+        Rect row = new Rect(s.x(), y, s.w(), 18);
+        BookKit.face(f.g, name, s.x(), y + 1, 16);
         String tid = "stage:person:" + name;
-        f.g.drawString(f.font(), shown, row.x() + 9, y, id != null && (f.hovered(row) || f.focused(tid)) ? t.accent() : t.ink(), false);
-        f.g.drawString(f.font(), role, row.right() - f.font().width(role), y, t.muted(), false);
+        f.g.drawString(f.font(), f.font().plainSubstrByWidth(name, s.w() - 24 - f.font().width(role)), s.x() + 20, y + 5, id != null && (f.hovered(row) || f.focused(tid)) ? t.accent() : t.ink(), false);
+        f.g.drawString(f.font(), role, row.right() - f.font().width(role), y + 5, t.muted(), false);
         f.target(tid, row, List.of(Component.literal(name), role), id == null ? null : () -> f.screen().openProfile(id, name));
         if (f.focused(tid)) {
             t.drawFocus(f.g, row);
         }
-        return y + PageKit.LINE + 1;
+        return y + 20;
     }
 
+    /** A moon disc (lit by the phase) with the days to the full one. */
     private int world(HubScreen.Frame f, Rect s, int y) {
         HubTheme t = f.theme();
         y = section(f, s, y, "world");
         int phase = Math.floorMod(f.view.player().level().getMoonPhase(), 8);
         int days = Math.floorMod(8 - phase, 8);
-        return PageKit.wrapped(f, days == 0 ? Component.translatable(KEY + "full_moon") : Component.translatable(KEY + "moon_in", days), s.x(), y, s.w(), t.ink());
+        int d = 16;
+        int cx = s.x() + d / 2;
+        int cy = y + 2 + d / 2;
+        double lit = 1 - Math.abs(phase - 0) / 4.0; // 0 = full, 4 = new
+        for (int dy = -d / 2; dy < d / 2; dy++) {
+            int half = (int) Math.round(Math.sqrt(Math.max(0, (d / 2.0) * (d / 2.0) - (dy + 0.5) * (dy + 0.5))));
+            f.g.fill(cx - half, cy + dy, cx + half, cy + dy + 1, (t.muted() & 0xFFFFFF) | 0xFF000000);
+            int litHalf = (int) Math.round(half * Math.max(0, lit));
+            f.g.fill(cx - litHalf, cy + dy, cx + litHalf, cy + dy + 1, 0xFFE8D9A8);
+        }
+        Component now = days == 0 ? Component.translatable(KEY + "full_moon") : Component.translatable(KEY + "moon_in", days);
+        int tx = s.x() + d + 6;
+        int ny = PageKit.wrapped(f, now, tx, y + 2, s.right() - tx, t.ink());
+        return Math.max(ny, y + 2 + d + 2);
     }
 
+    /** What the viewer can do now, each with a button; one that does not apply is off and says why. */
     private int doNow(HubScreen.Frame f, Rect s, int y) {
+        HubTheme t = f.theme();
         y = section(f, s, y, "do");
-        List<Component> labels = new ArrayList<>();
-        List<Runnable> actions = new ArrayList<>();
-        List<String> ids = new ArrayList<>();
         SupernaturalRace race = f.view.races().get(0);
-        if (!f.view.snapshot().sired().isEmpty() && (race == SupernaturalRace.ORIGINAL || race == SupernaturalRace.HYBRID || race == SupernaturalRace.ORIGINAL_HYBRID || race == SupernaturalRace.TRIBRID)) {
-            labels.add(Component.translatable(KEY + "call"));
-            ids.add("call");
-            actions.add(() -> HubClient.runCommand("B3", List.of()));
+        boolean line = race == SupernaturalRace.ORIGINAL || race == SupernaturalRace.HYBRID || race == SupernaturalRace.ORIGINAL_HYBRID || race == SupernaturalRace.TRIBRID;
+        boolean alpha = f.view.bloodline().wolf().rank().ordinal() >= WolfState.Rank.ALPHA.ordinal();
+        record Do(String id, Component label, boolean on, String why, Runnable run) {
         }
-        if (f.view.bloodline().wolf().rank().ordinal() >= WolfState.Rank.ALPHA.ordinal()) {
-            labels.add(Component.translatable(KEY + "roar"));
-            ids.add("roar");
-            actions.add(() -> HubClient.runCommand("P14", List.of()));
+        List<Do> all = new ArrayList<>();
+        all.add(new Do("call", Component.translatable(KEY + "call"), line && !f.view.snapshot().sired().isEmpty(), line ? "no_sired" : "not_line", () -> HubClient.runCommand("B3", List.of())));
+        all.add(new Do("roar", Component.translatable(KEY + "roar"), alpha, "not_alpha", () -> HubClient.runCommand("P14", List.of())));
+        all.add(new Do("quests", Component.translatable(KEY + "open_quests"), true, "", () -> f.screen().setPage(HubPage.QUESTS)));
+        for (Do d : all) {
+            Rect b = new Rect(s.x(), y + 2, Math.min(s.w(), PageWidgets.widthOf(f.font(), d.label())), PageWidgets.H);
+            Component why = d.on() ? null : Component.translatable(KEY + "why." + d.why());
+            PageWidgets.button(f, "stage:do:" + d.id(), b, d.label(), d.on(), false, why, d.run());
+            y = b.bottom();
+            if (why != null) {
+                y = PageKit.wrapped(f, why, s.x() + 2, y + 1, s.w() - 2, t.muted());
+            }
         }
-        labels.add(Component.translatable(KEY + "open_quests"));
-        ids.add("quests");
-        actions.add(() -> f.screen().setPage(HubPage.QUESTS));
-        List<Integer> widths = labels.stream().map(c -> PageWidgets.widthOf(f.font(), c)).toList();
-        Flow.Result flow = Flow.wrap(new Rect(s.x(), y + 2, s.w(), 0), widths, PageWidgets.H, PageWidgets.GAP);
-        for (int i = 0; i < labels.size(); i++) {
-            PageWidgets.button(f, "stage:do:" + ids.get(i), flow.rects().get(i), labels.get(i), true, false, null, actions.get(i));
-        }
-        return flow.bottom();
+        return y;
     }
 }
-

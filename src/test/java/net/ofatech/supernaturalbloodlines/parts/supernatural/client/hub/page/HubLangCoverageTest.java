@@ -94,6 +94,13 @@ class HubLangCoverageTest {
         }
         keys.add(H + "group.operator");
         keys.add(H + "profile.link");
+        for (String id : actionIds) {
+            keys.add(H + "profile.action." + id + ".what");
+        }
+        for (String k : List.of("bonus_title", "actions_title", "no_actions", "no_actions_npc", "rules_title", "rule.loser", "rule.dimension", "rule.range", "rule.cooldown", "rule.free",
+                "rule.state.ok", "rule.state.fail", "rule.state.unknown")) {
+            keys.add(H + "profile." + k);
+        }
         keys.add(H + "profile.npc");
         for (String k : List.of("next_title", "caught_up", "ready", "claim_all")) {
             keys.add(H + "home." + k);
