@@ -557,12 +557,12 @@ public final class WerewolfBiteGameTests {
             helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts().containsKey(genes), "the pack did not learn a discovery");
             helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(stranger, member.getUUID()).facts().isEmpty(), "a discovery reached a stranger");
 
-            // a newcomer receives the pool, and leaving the pack keeps what they know but not the live facts
+            // a newcomer reads the pool while they are in the pack; leaving takes the pool away (owner ruling), and the live facts with it
             helper.assertTrue(joinPack(alpha, newcomer), "the newcomer could not join");
             helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(newcomer, member.getUUID()).facts().containsKey(genes), "the newcomer was not given the pool");
             helper.assertTrue(PackCommand.leave(newcomer) == null, "the newcomer could not leave");
             var after = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(newcomer, member.getUUID());
-            helper.assertTrue(after.facts().containsKey(genes) && !after.facts().containsKey(pack) && !after.facts().containsKey(species), "after leaving they know " + after.facts().keySet());
+            helper.assertTrue(!after.facts().containsKey(genes) && !after.facts().containsKey(pack) && !after.facts().containsKey(species), "after leaving they still know " + after.facts().keySet());
         } finally {
             SireCall.overridePlayerLookup(null);
             clean(alpha, member, stranger, newcomer);
