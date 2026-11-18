@@ -60,7 +60,7 @@ public final class PackBonusGameTests {
     private static ServerPlayer wolf(GameTestHelper helper, Rank rank, Lineage lineage, UUID packAlpha, int level, double x) {
         ServerPlayer p = TestPlayers.createDuelist(helper);
         p.setPos(helper.absoluteVec(new Vec3(x, 1, 1.5)));
-        WolfState w = WolfState.NONE.toBuilder().lineage(lineage).rank(rank).geneRolled(true).packAlpha(packAlpha)
+        WolfState w = WolfState.NONE.toBuilder().lineage(lineage).rank(rank).geneRolled(true).protectPath(false).packAlpha(packAlpha)
                 .betaSince(rank == Rank.BETA ? 1 : 0).build();
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().wolf(w).build());
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, level), "the test wolf could not join the werewolves");

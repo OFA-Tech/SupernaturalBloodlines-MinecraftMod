@@ -54,9 +54,9 @@ class AdminCommandsTest {
     @Test
     void rowsPerRootAreSevenFifteenAndTen() {
         assertEquals(7, AdminCommands.ALL.stream().filter(r -> r.root().equals("bloodline")).count());
-        assertEquals(15, AdminCommands.ALL.stream().filter(r -> r.root().equals("pack")).count());
+        assertEquals(17, AdminCommands.ALL.stream().filter(r -> r.root().equals("pack")).count());
         assertEquals(10, AdminCommands.ALL.stream().filter(r -> r.root().equals("supernaturalbloodlines")).count());
-        assertEquals(32, AdminCommands.ALL.size());
+        assertEquals(34, AdminCommands.ALL.size());
     }
 
     @Test
@@ -75,6 +75,8 @@ class AdminCommandsTest {
     void anOptionalArgumentGivesTwoShapes() {
         assertEquals(List.of("pack emissary <>", "pack emissary"), row("P13").shapes());
         assertEquals(List.of("pack challenge <>"), row("P8").shapes());
+        assertEquals(List.of("pack protect on"), row("P16").shapes());
+        assertEquals(List.of("pack protect off"), row("P17").shapes());
     }
 
     @Test

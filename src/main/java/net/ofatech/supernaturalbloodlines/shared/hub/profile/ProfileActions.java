@@ -14,9 +14,16 @@ public final class ProfileActions {
     /** The role of a person in the viewer's pack, from the hub snapshot's rank words. */
     public enum Role { NONE, LEADER, COALPHA, CHALLENGER, BETA, PACKMATE, EMISSARY, ALLY }
 
-    /** @param leader the viewer leads their pack; {@code coalpha} is a second Alpha of it; {@code trueAlpha} cannot give up the spark */
-    public record Viewer(boolean inPack, boolean leader, boolean coalpha, boolean alphaRank, boolean trueAlpha, boolean werewolf) {
+    /**
+     * @param leader the viewer leads their pack; {@code coalpha} is a second Alpha of it; {@code trueAlpha} cannot give up the spark;
+     *               {@code pathOpen} their path to True Alpha is still open and {@code protecting} they chose to protect it
+     */
+    public record Viewer(boolean inPack, boolean leader, boolean coalpha, boolean alphaRank, boolean trueAlpha, boolean werewolf, boolean pathOpen, boolean protecting) {
         public static final Viewer NONE = new Viewer(false, false, false, false, false, false);
+
+        public Viewer(boolean inPack, boolean leader, boolean coalpha, boolean alphaRank, boolean trueAlpha, boolean werewolf) {
+            this(inPack, leader, coalpha, alphaRank, trueAlpha, werewolf, false, false);
+        }
     }
 
     /** @param self the viewer's own profile; {@code sired} one of the viewer's sired; {@code sire} the viewer's sire */
@@ -68,6 +75,11 @@ public final class ProfileActions {
             }
             if (v.werewolf()) {
                 out.add(new Action("anchor_clear", Kind.COMMAND, "P15", false, false, true, null, false));
+            }
+            if (v.pathOpen()) {
+                // turning the protection off can end the path, so that one asks first (Stay is the safe answer)
+                out.add(v.protecting() ? new Action("protect_off", Kind.COMMAND, "P17", false, false, true, null, true)
+                        : new Action("protect_on", Kind.COMMAND, "P16", false, false, true, null, false));
             }
             return out;
         }

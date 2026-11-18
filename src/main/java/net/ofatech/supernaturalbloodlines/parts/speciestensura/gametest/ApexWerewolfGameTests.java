@@ -195,4 +195,80 @@ public final class ApexWerewolfGameTests {
         helper.assertTrue(!truth.getAttribute(Attributes.MAX_HEALTH).hasModifier(PrimevalBoost.ID), "the bonus stayed with the part off");
         helper.succeed();
     }
+
+    private static final String APEX = NS + ":alpha_primeval";
+
+    /** Owner rule 5: an alpha_primeval who loses the spark (stolen, given away, cured) goes back to the race before; it returns with the spark. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anApexWolfWhoLosesTheSparkFallsBackAndTheRaceReturnsWithIt(GameTestHelper helper) {
+        ServerPlayer p = werewolf(helper, Species.NONE); // on tensura:human_saint
+        setRace(p, APEX);
+        rank(p, WolfState.Rank.ALPHA);
+        helper.assertTrue(APEX.equals(race(p)), "an Alpha with a spark is not on the apex race: " + race(p));
+        helper.assertTrue("tensura:human_saint".equals(BloodlineAccess.get(p).wolf().preApex()), "the race before was not recorded: " + BloodlineAccess.get(p).wolf().preApex());
+
+        rank(p, WolfState.Rank.OMEGA); // the spark was stolen or given away
+        helper.assertTrue("tensura:human_saint".equals(race(p)), "the race did not fall back: " + race(p));
+        helper.assertTrue(!net.ofatech.supernaturalbloodlines.shared.tensura.PrimevalAlpha.active(p), "the apex stayed active without a spark");
+
+        rank(p, WolfState.Rank.ALPHA); // a spark again
+        helper.assertTrue(APEX.equals(race(p)), "the apex race did not come back with the spark: " + race(p));
+        helper.succeed();
+    }
+
+    /** A True Alpha who goes dormant (cured, out of the werewolves) falls back as well, and the apex returns on the rejoin. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDormantTrueAlphaFallsBackAndTheApexReturnsOnTheRejoin(GameTestHelper helper) {
+        ServerPlayer p = werewolf(helper, Species.NONE);
+        setRace(p, APEX);
+        rank(p, WolfState.Rank.TRUE_ALPHA);
+        helper.assertTrue(APEX.equals(race(p)), "control: not on the apex race");
+        VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
+        helper.assertTrue("tensura:human_saint".equals(race(p)), "the dormant True Alpha kept the apex race: " + race(p));
+        helper.assertTrue(BloodlineAccess.get(p).wolf().rank() == WolfState.Rank.TRUE_ALPHA, "the rank was lost (R91)");
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not rejoin");
+        helper.assertTrue(APEX.equals(race(p)), "the apex race did not return on the rejoin: " + race(p));
+        helper.succeed();
+    }
+
+    /** Only a change counts, and only the player's own evolution is theirs to keep: a wolf who never had a spark stays, and one who evolved on is not sent back. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theFallbackLeavesAWolfWhoNeverHeldASparkAndOneWhoEvolvedOn(GameTestHelper helper) {
+        ServerPlayer never = werewolf(helper, Species.NONE);
+        setRace(never, APEX);
+        rank(never, WolfState.Rank.BETA);
+        rank(never, WolfState.Rank.OMEGA);
+        helper.assertTrue(APEX.equals(race(never)), "a wolf with no spark was sent back: " + race(never));
+
+        ServerPlayer moved = werewolf(helper, Species.NONE);
+        setRace(moved, APEX);
+        rank(moved, WolfState.Rank.ALPHA);
+        rank(moved, WolfState.Rank.OMEGA);
+        setRace(moved, "tensura:elf"); // their own choice, after the fall
+        rank(moved, WolfState.Rank.ALPHA);
+        helper.assertTrue("tensura:elf".equals(race(moved)), "the race they chose was overwritten: " + race(moved));
+
+        ServerPlayer legacy = werewolf(helper, Species.NONE);
+        setRace(legacy, APEX);
+        rank(legacy, WolfState.Rank.ALPHA);
+        BloodlineAccess.set(legacy, BloodlineAccess.get(legacy).toBuilder().wolf(BloodlineAccess.get(legacy).wolf().toBuilder().preApex("").build()).build());
+        rank(legacy, WolfState.Rank.OMEGA);
+        helper.assertTrue("tensura:spirit_beast".equals(race(legacy)), "a wolf with no record went to " + race(legacy));
+        helper.succeed();
+    }
+
+    /** Owner rule 4: the True Alpha's full-spark bonus stacks with the apex x1.5 (the Primeval boost is a separate modifier on top). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theTrueAlphaFullSparkBonusStacksWithTheApexBoost(GameTestHelper helper) {
+        ServerPlayer truth = werewolf(helper, Species.NONE);
+        setRace(truth, APEX);
+        rank(truth, WolfState.Rank.TRUE_ALPHA);
+        SpeciesLayer.sync(truth);
+        double attack = value(truth, Attributes.ATTACK_DAMAGE);
+        helper.assertTrue(truth.getAttribute(Attributes.MAX_HEALTH).hasModifier(PrimevalBoost.ID), "the apex x1.5 is not on");
+        // the rank's own bonus (+20% attack x1.1 x1.4 at the default cap of 5 sparks) is a separate modifier from the apex boost: both are there
+        helper.assertTrue(Math.abs(value(truth, Attributes.MAX_HEALTH) - (20 + 900 + 450 + 6.16)) < 0.01, "health " + value(truth, Attributes.MAX_HEALTH));
+        helper.assertTrue(attack > 0, "no attack");
+        helper.succeed();
+    }
 }

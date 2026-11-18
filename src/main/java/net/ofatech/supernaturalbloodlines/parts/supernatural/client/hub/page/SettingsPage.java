@@ -9,6 +9,8 @@ import net.minecraft.client.gui.screens.options.controls.ControlsScreen;
 import net.minecraft.network.chat.Component;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.ModConfigSpec;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackRules;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.HubKeybinds;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
@@ -61,6 +63,17 @@ public final class SettingsPage implements HubPageView {
                 y = PageKit.wrapped(f, Component.translatable(KEY + "section." + section).withStyle(ChatFormatting.BOLD), r.x(), y + 3, r.w(), t.accent());
             }
             y = row(f, r, y, e);
+        }
+        var wolf = f.view.bloodline().wolf();
+        if (PackRules.pathOpen(wolf)) {
+            // a server-side choice of the player's own (not a config key): the command is the server's, the toggle only sends it
+            Component label = Component.translatable(KEY + "protect");
+            int top = y + 4;
+            y = PageKit.wrapped(f, label, r.x() + 4, top, r.w() - 44, t.ink());
+            Rect b = new Rect(r.right() - 36, top - 1, 36, PageWidgets.H);
+            boolean on = wolf.protectPath();
+            PageWidgets.toggle(f, "stage:settings:protect", b, on, label, () -> HubClient.runCommand(on ? "P17" : "P16", List.of()));
+            y = PageKit.wrapped(f, Component.translatable(KEY + "protect.about"), r.x() + 4, Math.max(y, b.bottom()) + 1, r.w() - 4, t.muted());
         }
         y = PageKit.wrapped(f, Component.translatable(KEY + "section.keys").withStyle(ChatFormatting.BOLD), r.x(), y + 6, r.w(), t.accent());
         y = key(f, r, y, "key.supernaturalbloodlines.hub", HubKeybinds.HUB.getTranslatedKeyMessage());

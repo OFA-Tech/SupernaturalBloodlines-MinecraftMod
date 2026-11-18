@@ -5,6 +5,8 @@ import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackLeadership;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackRules;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 
 /**
@@ -49,7 +51,7 @@ public final class PackLeader {
         if (!p.level().isClientSide) {
             PackIndex index = PackIndex.get(p.serverLevel());
             index.setStrength(p.getUUID(), strengthOf(p, wolf));
-            index.setSparks(p.getUUID(), wolf.sparks());
+            index.setSparks(p.getUUID(), PackRules.effectiveSparks(wolf.rank(), wolf.sparks(), SpeciesConfig.maxStackedSparks(), VampirismSupernatural.isWerewolf(p)));
         }
     }
 }

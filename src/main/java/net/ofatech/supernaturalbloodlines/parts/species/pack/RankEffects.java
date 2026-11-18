@@ -64,7 +64,7 @@ public final class RankEffects {
 
     private static void apply(ServerPlayer p, boolean werewolf, net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf) {
         Rank rank = effectiveRank(p, werewolf, wolf);
-        double scale = alphaScale(rank, werewolf ? wolf.sparks() : -1, SpeciesConfig.maxStackedSparks());
+        double scale = alphaScale(rank, werewolf ? PackRules.effectiveSparks(wolf.rank(), wolf.sparks(), SpeciesConfig.maxStackedSparks(), true) : -1, SpeciesConfig.maxStackedSparks());
         boolean alpha = rank == Rank.ALPHA || rank == Rank.TRUE_ALPHA;
         set(p, Attributes.ATTACK_DAMAGE, rank == Rank.OMEGA ? OMEGA_PENALTY : alpha ? round(ALPHA_ATTACK * scale) : 0, Operation.ADD_MULTIPLIED_TOTAL);
         set(p, Attributes.MOVEMENT_SPEED, rank == Rank.OMEGA ? OMEGA_PENALTY : 0, Operation.ADD_MULTIPLIED_TOTAL);
@@ -98,7 +98,7 @@ public final class RankEffects {
         if (rank != Rank.ALPHA && rank != Rank.TRUE_ALPHA) {
             return java.util.Optional.empty();
         }
-        double scale = alphaScale(rank, wolf.sparks(), SpeciesConfig.maxStackedSparks());
+        double scale = alphaScale(rank, PackRules.effectiveSparks(wolf.rank(), wolf.sparks(), SpeciesConfig.maxStackedSparks(), werewolf), SpeciesConfig.maxStackedSparks());
         return java.util.Optional.of(bonusText(round(ALPHA_ATTACK * scale), round(ALPHA_HEALTH * scale)));
     }
 

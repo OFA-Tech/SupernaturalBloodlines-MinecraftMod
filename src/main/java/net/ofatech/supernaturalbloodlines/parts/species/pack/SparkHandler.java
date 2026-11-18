@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The Alpha spark (R93): stolen by killing an Alpha from outside their pack (the Deucalion factor stacks the victim's on the
  * killer's), inherited by the strongest second Alpha, else the strongest online Beta, when the Alpha leaves the werewolves
- * or is cured, given up to heal someone. A True Alpha keeps it: it cannot be stolen, inherited or given up. Also what a kill means for the killer's eyes (an innocent: a villager,
+ * or is cured; given up to heal someone it is destroyed. A True Alpha keeps it: it cannot be stolen, inherited or given up, and a True Alpha never steals one. Also what a kill means for the killer's eyes (an innocent: a villager,
  * or a player who was not attacking them). Ordinary deaths keep rank and spark. Touched only behind
  * {@code ModList.isLoaded("werewolves")}.
  * <p>
@@ -143,31 +143,31 @@ public final class SparkHandler {
         boolean victimTrue = PackAccess.wolf(victim).rank() == Rank.TRUE_ALPHA;
         int taken = PackRules.transferableSparks(PackAccess.wolf(victim).sparks(), victimTrue);
         if (taken <= 0) {
-            return false;
+            return false; // a True Alpha's spark is theirs by nature: nothing to take
         }
-        boolean killerIsAlpha = PackAccess.isAlpha(PackAccess.wolf(killer).rank());
-        int killerSparks = PackAccess.wolf(killer).sparks();
-        if (PackAccess.applyPack(killer, PackEvent.KILLED_ALPHA, PackContext.defaults()).refused()) {
-            return false;
+        PackRules.Steal verdict = PackRules.stealBy(PackAccess.wolf(killer));
+        if (verdict == PackRules.Steal.NEVER) {
+            return false; // a True Alpha takes nothing: the Alpha they killed keeps the spark
         }
-        int cap = SpeciesConfig.maxStackedSparks();
-        int now = PackRules.sparksAfterSteal(killerSparks, killerIsAlpha, taken, cap);
-        PackAccess.setSparks(killer, now);
-        // told: how many they hold now, and that the cap stopped some of them; the victim learns it too (at their next login if away)
-        killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_gained", now, cap));
-        if ((killerIsAlpha ? Math.max(1, killerSparks) : 0) + taken > cap) {
-            killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_capped", cap));
-        }
-        if (!victimTrue) {
+        if (verdict == PackRules.Steal.PROTECTED) {
+            // a kill cannot ask first: with the path still open and protected, the spark is destroyed and nobody takes it
+            killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_destroyed"));
+            PackMembers.tell(killer.server, victim.getUUID(), "supernaturalbloodlines.pack.spark_destroyed_victim", killer.getGameProfile().getName());
+        } else {
+            boolean killerIsAlpha = PackAccess.isAlpha(PackAccess.wolf(killer).rank());
+            int killerSparks = PackAccess.wolf(killer).sparks();
+            if (PackAccess.applyPack(killer, PackEvent.KILLED_ALPHA, PackContext.defaults()).refused()) {
+                return false;
+            }
+            int cap = SpeciesConfig.maxStackedSparks();
+            int now = PackRules.sparksAfterSteal(killerSparks, killerIsAlpha, taken, cap);
+            PackAccess.setSparks(killer, now);
+            // told: how many they hold now, and that the cap stopped some of them; the victim learns it too (at their next login if away)
+            killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_gained", now, cap));
+            if ((killerIsAlpha ? Math.max(1, killerSparks) : 0) + taken > cap) {
+                killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_capped", cap));
+            }
             PackMembers.tell(killer.server, victim.getUUID(), "supernaturalbloodlines.pack.spark_lost", killer.getGameProfile().getName());
-        } else if (PackAccess.wolf(victim).sparks() > 1) {
-            // their own True spark stays: only the sparks stacked on it were taken
-            PackMembers.tell(killer.server, victim.getUUID(), "supernaturalbloodlines.pack.spark_lost_stacked", killer.getGameProfile().getName());
-        }
-        if (victimTrue) {
-            // the True spark stays: only the stacked ones went, and they are an Alpha as before
-            PackAccess.setSparks(victim, 1);
-            return true;
         }
         boolean victimLeads = index.isLeader(victim.getUUID());
         PackAccess.applyPack(victim, PackEvent.SPARK_LOST, PackContext.defaults()); // the rules also clear every stacked spark with the rank
@@ -200,7 +200,7 @@ public final class SparkHandler {
         passOn(p);
     }
 
-    /** The best heir of {@code alpha}: the highest-level online Beta of their pack who is still a werewolf. */
+    /** The best heir of {@code alpha}: the highest-level online Beta of their pack who is still a werewolf and does not protect an open True Alpha path (an inheritance cannot ask them first). */
     @Nullable
     static ServerPlayer heirOf(ServerPlayer alpha) {
         ServerPlayer best = null;
@@ -208,7 +208,7 @@ public final class SparkHandler {
         for (UUID id : PackIndex.get(alpha.serverLevel()).betasOf(alpha.getUUID())) {
             ServerPlayer b = SireCall.player(alpha.server, id);
             if (b == null || b == alpha || !VampirismSupernatural.isWerewolf(b) || PackAccess.wolf(b).rank() != Rank.BETA
-                    || !alpha.getUUID().equals(PackAccess.wolf(b).packAlpha())) {
+                    || !alpha.getUUID().equals(PackAccess.wolf(b).packAlpha()) || !PackRules.mayInherit(PackAccess.wolf(b))) {
                 continue;
             }
             int level = VampirismAPI.factionPlayerHandler(b).getCurrentLevel();
@@ -307,15 +307,15 @@ public final class SparkHandler {
     }
 
     /**
-     * The Alpha sacrifices the spark: it goes to the heir and the Alpha stays in the pack as a Beta. With nobody to take it
-     * the pack dissolves and the Alpha is an Omega.
+     * The Alpha gives the spark up to heal someone: it is destroyed, nobody inherits it and the healed player stays what they were (a Beta stays a Beta).
+     * A second Alpha stays in the pack as a Beta of its leader. A leader hands the pack to the strongest other Alpha and stays as a Beta of it; with
+     * no other Alpha the pack dissolves and they are an Omega.
      */
     static void giveUp(ServerPlayer alpha) {
         tellReset(alpha);
         PackIndex own = PackIndex.get(alpha.serverLevel());
         UUID theirLeader = own.alphaOf(alpha.getUUID()).orElse(null);
         if (theirLeader != null) {
-            // a second Alpha has no pack to hand over: the spark goes, they stay in the pack as a Beta of its leader
             PackAccess.applyPack(alpha, PackEvent.SPARK_GIVEN_UP, context(theirLeader, alpha.level().getGameTime()));
             return;
         }
@@ -325,14 +325,8 @@ public final class SparkHandler {
             PackAccess.applyPack(alpha, PackEvent.SPARK_GIVEN_UP, context(coHeir, alpha.level().getGameTime()));
             return;
         }
-        ServerPlayer heir = heirOf(alpha);
-        if (heir == null) {
-            dissolve(alpha);
-            PackAccess.applyPack(alpha, PackEvent.SPARK_LOST, PackContext.defaults());
-            return;
-        }
-        handOver(alpha, heir);
-        PackAccess.applyPack(alpha, PackEvent.SPARK_GIVEN_UP, context(heir.getUUID(), alpha.level().getGameTime()));
+        dissolve(alpha);
+        PackAccess.applyPack(alpha, PackEvent.SPARK_LOST, PackContext.defaults());
     }
 
     private static void handOver(ServerPlayer from, ServerPlayer heir) {

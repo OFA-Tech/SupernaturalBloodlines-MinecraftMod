@@ -53,7 +53,7 @@ There are two hidden genes, and a player can carry both.
 | **Omega** | no pack: a wild bite, leaving a pack, or losing the spark | **-10%** attack and movement speed |
 | **Beta** | in an Alpha's pack | pack bonus and Regeneration when the pack is gathered |
 | **Alpha** | the spark | **+20%** attack, **+4** max health, red eyes, the Roar |
-| **True Alpha** | earned | the Alpha perks x1.1 (**+22%**, **+4.4**) |
+| **True Alpha** | earned the hard way | the Alpha perks x1.1, and **full sparks by nature** (see [Two paths](#two-paths-alpha-and-true-alpha)): **+30.8%** attack and **+6.16** max health at the default cap of 5 |
 
 Perks only apply while in the werewolf faction (a cured True Alpha keeps the rank, dormant: no attribute perks and no Tensura rank skills until they rejoin). During a lunar eclipse the positive perks stop; the Omega penalty does not.
 
@@ -76,10 +76,22 @@ Eyes show as two glowing dust particles at eye height every half second while a 
 
 | How | What happens |
 |---|---|
-| **Stolen** | a werewolf kills an **Alpha from outside their pack** (never a True Alpha's own spark, see below): they take **every spark the victim had** and the victim becomes an **Omega** (the [stacked sparks](#stacked-sparks) of the Deucalion factor). An Alpha who steals **keeps their own spark and gains the victim's on top**; a werewolf who was no Alpha becomes one. They take the spark and **not the pack**: the strongest other Alpha leads it, and with none it dissolves. **A kill inside the pack, outside a duel, changes nothing at all**: no spark, no lead, no rank, no blue eyes and no gene awakening, whoever kills whom (Beta, second Alpha or leader). **Leaving the pack just before the kill gains nothing**: someone who left it **by choice** (with `/pack leave`, or by leaving its party) in the last `left_pack_grace_minutes` (10) still counts as a member. A kick gets no such grace. Ordinary deaths (a mob, a fall, lava, a player who is no werewolf) keep rank and spark; **an ordinary death of the leader keeps them leading**. |
-| **Inherited** | the leader leaves the werewolves or is cured: the pack goes to the **strongest second Alpha** first (online or not); with none, the spark goes to the **highest-level online Beta**; with nobody online the pack **dissolves** and its members are told (now, or at their next login). A second Alpha who is cured stays in the pack as a Packmate. |
-| **Given up** | `/pack heal <player>`: an **Alpha** (not a True Alpha) within 4 blocks of a player gives the spark away to fully heal them and cure hybrid venom and wolfsbane (all strains). The Alpha stays in the pack as a Beta of the heir. |
+| **Stolen** | a werewolf kills an **Alpha from outside their pack** (never a True Alpha's, see below, and **a True Alpha never steals**: the Alpha they kill keeps the spark): they take **every spark the victim had** and the victim becomes an **Omega** (the [stacked sparks](#stacked-sparks) of the Deucalion factor). An Alpha who steals **keeps their own spark and gains the victim's on top**; a werewolf who was no Alpha becomes one. They take the spark and **not the pack**: the strongest other Alpha leads it, and with none it dissolves. **A kill inside the pack, outside a duel, changes nothing at all**: no spark, no lead, no rank, no blue eyes and no gene awakening, whoever kills whom (Beta, second Alpha or leader). **Leaving the pack just before the kill gains nothing**: someone who left it **by choice** (with `/pack leave`, or by leaving its party) in the last `left_pack_grace_minutes` (10) still counts as a member. A kick gets no such grace. **If the killer is a Beta or Omega whose path to True Alpha is still open and who protects it** (the default, see [Two paths](#two-paths-alpha-and-true-alpha)), the spark is **destroyed instead**: they get nothing and keep the path. Ordinary deaths (a mob, a fall, lava, a player who is no werewolf) keep rank and spark; **an ordinary death of the leader keeps them leading**. |
+| **Inherited** | the leader leaves the werewolves or is cured: the pack goes to the **strongest second Alpha** first (online or not); with none, the spark goes to the **highest-level online Beta who does not protect an open True Alpha path** (an inheritance cannot ask first, so a protected Beta is passed over); with nobody left the pack **dissolves** and its members are told (now, or at their next login). A second Alpha who is cured stays in the pack as a Packmate. |
+| **Given up** | `/pack heal <player>`: an **Alpha** (not a True Alpha) within 4 blocks of a player gives the spark up to fully heal them and cure hybrid venom and wolfsbane (all strains). **The spark is destroyed**: nobody inherits it and the healed player stays what they were (a Beta stays a Beta). The Alpha becomes a Beta of the pack (an Omega if the pack dissolves). If they led, the strongest other Alpha leads the pack; with no other Alpha it dissolves. The healer held a spark, so their path to True Alpha is closed. |
 | **Earned** | a Beta becomes a **True Alpha**, who keeps the spark for good |
+
+### Two paths: Alpha and True Alpha
+
+**Alpha and True Alpha are exclusive.** Anyone who has **ever held a normal spark can never become a True Alpha**, however they got it: stolen, inherited, won in the Alpha Trial, or any other road. A True Alpha is earned only as a Beta or Omega who never held one. Whoever is an Alpha when a world is updated counts as having held a spark; True Alphas are unchanged.
+
+**The warning.** Every Beta or Omega whose path is still open sees "**Taking a spark ends your path to True Alpha for good**" before an action that would give them a normal spark (the Alpha Trial). The safe button, "**Keep my path**", is focused first. A pack inheritance or a duel or absence hand-over needs no dialog: duels and absences only move the lead between Alphas who already hold a spark, and an inheritance passes over a protected Beta.
+
+**Protect my True Alpha path.** A kill cannot ask first, so each player has the setting **Protect my True Alpha path** (on by default while the path is open): a kill that would steal a spark destroys it instead, and a pack inheritance skips them. Turn it off on your own Profile ("Stop protecting my path", it asks first) or in Settings. It does nothing once the path is closed (a held spark, or blue eyes).
+
+### Apex fallback
+
+An **Alpha Primeval** who loses the Alpha spark (stolen, given away, cured), or a True Alpha who goes dormant, goes back to the race they had before Alpha Primeval (it is remembered when they evolve; a player from before this version goes to Spirit Beast). The apex skills stay locked until they hold a spark again (or the True Alpha is active again): then the race and its skills come back. A wolf who never held a spark, and one who evolved on by their own choice, are left alone. The True Alpha's full-spark bonus **stacks** with the Alpha Primeval x1.5.
 
 ### Becoming a True Alpha
 
@@ -89,7 +101,7 @@ Checked every minute (1200 ticks), for Betas in the werewolf faction:
 - **30 in-game days** as a Beta
 - **300 defender kills**: a hostile mob killed while it was targeting a villager or a pack mate
 - **no innocent kill** (blue eyes)
-- **never stole a spark**
+- **never held a spark** (stolen, inherited, won in the Alpha Trial or any other road; see [Two paths](#two-paths-alpha-and-true-alpha))
 
 There is **no limit** on True Alphas per world. When it happens: "Your eyes burn red: you have earned the spark. You are a True Alpha."
 
@@ -109,7 +121,8 @@ With Tensura, a human who becomes a werewolf becomes a Tensura **beastfolk**. As
 | `/pack accept <token>` | what the **[Accept]** button runs |
 | `/pack leave` | leave your pack (a Beta becomes an Omega). The leader cannot leave. |
 | `/pack info` | show your pack |
-| `/pack heal <player>` | give up the spark to heal |
+| `/pack heal <player>` | give up the spark to heal (it is destroyed) |
+| `/pack protect on\|off` | protect your path to True Alpha (hub: Profile, Settings) |
 | `/pack roar` | the Alpha Roar |
 | `/pack emissary [player]` | name a member of your pack (a witch, siphoner, heretic or tribrid) as your Emissary (no name clears it) |
 | `/pack anchor [player]` | name your anchor (no name clears it) |
@@ -151,7 +164,7 @@ The **Deucalion factor**: an Alpha who kills an Alpha from outside their pack ke
 |---|---|
 | **Count** | every Alpha has 1 spark; a steal adds **all** the victim's to the killer's, up to `max_stacked_sparks` (default **5**, 1 turns it off). A werewolf who was no Alpha becomes one with the victim's count (the first spark is the rank, the rest are stacked). |
 | **Each spark past the first** | **+10%** to the Alpha rank's attack and health bonuses (the True Alpha's ×1.1 on top) and **one tier of Strength** for the pack from the Alpha Roar (Strength I with one spark, II with two, up to V). |
-| **A True Alpha** | can stack too, but their own spark is never taken: if they are killed, the killer gets only the stacked extras, and with none stacked it is just a death. |
+| **A True Alpha** | never stacks (they cannot steal) and nothing is taken from them: they count as holding `max_stacked_sparks` while active (full bonus and the top Roar tier), and as one spark while dormant. Extras stacked before the rule are absorbed into the full count. |
 | **Lost** | the cure, `/pack heal`, losing the faction and being robbed of the spark drop every stacked spark together with the rank. |
 | **Shown** | "Alpha ×3" on the Alpha's row in every theme, in the Pack page's rank line and in the Bloodline page. |
 

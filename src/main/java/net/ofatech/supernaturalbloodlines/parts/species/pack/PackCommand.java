@@ -102,6 +102,9 @@ public final class PackCommand {
                 .then(Commands.literal("heal")
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(c -> run(c, heal(self(c), EntityArgument.getPlayer(c, "player"))))))
+                .then(Commands.literal("protect")
+                        .then(Commands.literal("on").executes(c -> run(c, protect(self(c), true))))
+                        .then(Commands.literal("off").executes(c -> run(c, protect(self(c), false)))))
                 .then(Commands.literal("info").executes(c -> info(c.getSource(), self(c))))
                 .then(Commands.literal("emissary")
                         .executes(c -> run(c, emissary(self(c), null)))
@@ -424,6 +427,20 @@ public final class PackCommand {
         SparkHandler.giveUp(alpha);
         target.sendSystemMessage(Component.translatable(KEY + "healed", name(alpha)));
         alpha.sendSystemMessage(Component.translatable(KEY + "gave_up", name(target)));
+        return null;
+    }
+
+    /**
+     * "Protect my True Alpha path": while the path is open, no spark is forced on the player (a kill that would steal one destroys it, a pack
+     * inheritance passes them over). On by default. It can always be changed; it only does anything while the path is open.
+     */
+    @Nullable
+    public static Component protect(ServerPlayer p, boolean on) {
+        WolfState w = PackAccess.wolf(p);
+        if (w.protectPath() != on) {
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().wolf(w.toBuilder().protectPath(on).build()).build());
+        }
+        p.sendSystemMessage(Component.translatable(KEY + (on ? "protect_on" : "protect_off")));
         return null;
     }
 

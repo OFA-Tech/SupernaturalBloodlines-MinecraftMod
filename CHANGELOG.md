@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased (spark rules)
+
+### Upgrading
+- **Alpha and True Alpha are now two separate paths.** Anyone who has ever held a normal spark can never become a True Alpha, however they got it (stolen, inherited, won in the Alpha Trial). The old rule only looked at stolen sparks. **Migration:** everyone who is an Alpha when you update counts as having held a spark (it is read from the rank on load, so nothing is rewritten and nothing to run); existing True Alphas are unchanged. A Beta or Omega who has never held a spark keeps their path.
+- A True Alpha now counts as holding `max_stacked_sparks` while active (full bonus and the top Roar tier), cannot steal a spark, and cannot have one stolen. Sparks they stacked before this version are absorbed into the full count.
+- Giving up a spark to heal now destroys it: the healed player stays what they were (no new Alpha). If the healer led the pack, the strongest other Alpha leads it; with none the pack dissolves.
+- New player setting "protect my True Alpha path" (on by default while the path is open). Where a spark would be forced on a Beta or Omega with an open path (a kill, a pack inheritance), it is destroyed or skipped instead.
+- An `alpha_primeval` who loses their spark (or a True Alpha who goes dormant) goes back to the race they had before; the race and its skills return when the spark does.
+
+### Removed
+- The per-person Call action on a Profile (the Call button of the Bloodline page does the same for the whole line).
+
+### Changed
+- The "+N more" of the Invite picker is a plain line with its reason, a cut label that only fits the ellipsis shows it, and a pack request from an offline sender says "request" for invites and alliances alike.
+
 ## Unreleased (UI first: the hub pages)
 
 ### Upgrading

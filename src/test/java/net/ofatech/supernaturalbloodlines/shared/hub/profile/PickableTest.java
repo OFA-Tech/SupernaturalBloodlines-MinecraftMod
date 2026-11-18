@@ -21,8 +21,8 @@ class PickableTest {
         List<Person> offered = Pickable.of(online, me, Set.of());
         Set<UUID> left = new java.util.HashSet<>(offered.stream().map(Person::id).toList());
         left.remove(offered.get(0).id());
-        assertEquals(29, Pickable.stillHere(offered, left).size());
-        assertEquals(false, Pickable.stillHere(offered, left).contains(offered.get(0)));
+        assertEquals(29, Pickable.stillHere(offered, left::contains).size());
+        assertEquals(false, Pickable.stillHere(offered, left::contains).contains(offered.get(0)));
     }
 
     @Test

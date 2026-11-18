@@ -71,7 +71,7 @@ public final class WerewolfSparkGameTests {
     private static ServerPlayer wolf(GameTestHelper helper, Rank rank, UUID packAlpha, int level) {
         ServerPlayer p = TestPlayers.createDuelist(helper);
         p.setPos(helper.absoluteVec(new Vec3(1.5, 1, 1.5)));
-        WolfState w = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(rank).geneRolled(true).packAlpha(packAlpha)
+        WolfState w = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(rank).geneRolled(true).protectPath(false).packAlpha(packAlpha)
                 .betaSince(rank == Rank.BETA ? 1 : 0).build();
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().wolf(w).build());
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, level), "the test wolf could not join the werewolves");
@@ -269,11 +269,11 @@ public final class WerewolfSparkGameTests {
                 helper.assertFalse(patient.hasEffect(effect(id)), id + " was not removed");
                 helper.assertTrue(far.hasEffect(effect(id)), id + " was removed from someone who was not healed");
             }
-            helper.assertTrue(state(heir).rank() == Rank.ALPHA && state(heir).packAlpha() == null && !state(heir).stoleSpark(), "the heir is " + state(heir));
-            WolfState giver = state(alpha);
-            helper.assertTrue(giver.rank() == Rank.BETA && heir.getUUID().equals(giver.packAlpha()), "the giver is " + giver);
-            helper.assertTrue(isIn(index, heir.getUUID(), alpha) && isIn(index, heir.getUUID(), second), "the pack did not follow the spark");
-            helper.assertTrue(heir.getUUID().equals(state(second).packAlpha()), "the other Beta is " + state(second));
+            // the spark is destroyed: nobody inherits it (not the strongest Beta, not the healed one) and, with no other Alpha, the pack dissolves
+            helper.assertTrue(state(heir).rank() == Rank.OMEGA && state(second).rank() == Rank.OMEGA && state(heir).packAlpha() == null, "a Beta of the dissolved pack is " + state(heir));
+            helper.assertTrue(state(alpha).rank() == Rank.OMEGA && state(alpha).heldSpark(), "the giver is " + state(alpha));
+            helper.assertTrue(index.betasOf(alpha.getUUID()).isEmpty() && index.alphaOf(heir.getUUID()).isEmpty(), "the pack was not dissolved");
+            helper.assertTrue(state(patient).rank() == Rank.NONE, "the healed one became something: " + state(patient));
         } finally {
             clean(alpha, heir, second, patient, far);
         }
@@ -353,7 +353,7 @@ public final class WerewolfSparkGameTests {
         online(truth, first, second);
         try {
             PackIndex index = PackIndex.get(helper.getLevel());
-            assertRank(helper, truth, 0.22, 0, 4.4);
+            assertRank(helper, truth, 0.308, 0, 6.16);
             VampirismAPI.factionPlayerHandler(truth).leaveFaction(false);
             helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA, "the cured True Alpha is " + state(truth).rank());
             assertRank(helper, truth, 0, 0, 0);
@@ -363,7 +363,7 @@ public final class WerewolfSparkGameTests {
 
             VampirismAPI.factionPlayerHandler(truth).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1);
             helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA && state(truth).packAlpha() == null, "the rejoined wolf is " + state(truth));
-            assertRank(helper, truth, 0.22, 0, 4.4);
+            assertRank(helper, truth, 0.308, 0, 6.16);
             helper.assertTrue(index.betasOf(truth.getUUID()).isEmpty() && state(first).rank() == Rank.OMEGA && state(second).rank() == Rank.OMEGA,
                     "the dissolved pack came back: " + state(first) + " " + state(second));
             helper.assertTrue(!index.isFormerAlpha(truth.getUUID()), "the True Alpha is marked as having lost the spark");
@@ -407,7 +407,7 @@ public final class WerewolfSparkGameTests {
             online(truth, strong, weak);
             try {
                 PackIndex index = PackIndex.get(helper.getLevel());
-                assertRank(helper, truth, 0.22, 0, 4.4);
+                assertRank(helper, truth, 0.308, 0, 6.16);
                 cure(truth, event);
                 helper.assertTrue(!VampirismSupernatural.isWerewolf(truth), event + ": the cured True Alpha is still a werewolf");
                 helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA && state(truth).lineage() == Lineage.BITTEN, event + ": the cure wiped the rank: " + state(truth));
@@ -417,7 +417,7 @@ public final class WerewolfSparkGameTests {
                 // and they are True Alpha again on rejoining, with no pack
                 VampirismAPI.factionPlayerHandler(truth).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1);
                 helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA, event + ": the rejoined wolf is " + state(truth));
-                assertRank(helper, truth, 0.22, 0, 4.4);
+                assertRank(helper, truth, 0.308, 0, 6.16);
                 helper.assertTrue(index.betasOf(truth.getUUID()).isEmpty() && !index.isFormerAlpha(truth.getUUID()), event + ": the pack came back or the tombstone stayed");
             } finally {
                 clean(truth, strong, weak);
@@ -673,7 +673,7 @@ public final class WerewolfSparkGameTests {
         ServerPlayer few = wolf(helper, Rank.BETA, UUID.randomUUID(), max);
         UUID old = UUID.randomUUID();
         try {
-            WolfState ready = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(Rank.BETA).packAlpha(old).geneRolled(true)
+            WolfState ready = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(Rank.BETA).packAlpha(old).geneRolled(true).protectPath(false)
                     .betaSince(NOW - 30L * 24000).defenderKills(300).build();
             Map<ServerPlayer, WolfState> setup = new HashMap<>();
             setup.put(candidate, ready);
@@ -729,12 +729,12 @@ public final class WerewolfSparkGameTests {
             assertRank(helper, p, 0.20, 0, 4);
             helper.assertTrue(p.getMaxHealth() == 24f, "max health is " + p.getMaxHealth());
             BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().wolf(w.toBuilder().rank(Rank.TRUE_ALPHA).build()).build());
-            assertRank(helper, p, 0.22, 0, 4.4);
+            assertRank(helper, p, 0.308, 0, 6.16);
 
             // a login (or any later sync) neither stacks nor loses them
             RankEffects.sync(p);
             RankEffects.sync(p);
-            assertRank(helper, p, 0.22, 0, 4.4);
+            assertRank(helper, p, 0.308, 0, 6.16);
 
             // out of the faction, a cured wolf has no perks and no penalties
             VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
@@ -743,7 +743,7 @@ public final class WerewolfSparkGameTests {
             // a True Alpha keeps the spark: dormant while cured, back with the perks on rejoining
             helper.assertTrue(state(p).rank() == Rank.TRUE_ALPHA, "the cured True Alpha is " + state(p).rank());
             VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1);
-            assertRank(helper, p, 0.22, 0, 4.4);
+            assertRank(helper, p, 0.308, 0, 6.16);
         } finally {
             clean(p);
         }

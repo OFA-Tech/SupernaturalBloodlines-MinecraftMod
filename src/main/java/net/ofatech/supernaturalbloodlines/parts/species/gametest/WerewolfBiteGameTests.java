@@ -47,7 +47,7 @@ public final class WerewolfBiteGameTests {
 
     private static ServerPlayer wolf(GameTestHelper helper, Rank rank, UUID packAlpha) {
         ServerPlayer p = TestPlayers.createDuelist(helper);
-        WolfState w = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(rank).geneRolled(true).packAlpha(packAlpha).build();
+        WolfState w = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(rank).geneRolled(true).protectPath(false).packAlpha(packAlpha).build();
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().wolf(w).build());
         helper.assertTrue(WerewolfFaction.join(p), "the test wolf could not join the werewolves");
         return p;
