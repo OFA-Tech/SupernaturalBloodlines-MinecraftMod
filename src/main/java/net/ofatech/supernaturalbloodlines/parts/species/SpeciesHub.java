@@ -132,7 +132,6 @@ final class SpeciesHub {
         }
     }
 
-    /** Recorded as a creature, or one of the six NPC Originals. The top of a chain has no link of its own and no recorded type: it is taken for a player, as before. */
     /** Where the player stands in a line (R120 to R127): the root only when they have discovered it, and never an undiscovered name. */
     private static HubSocial.Origin origin(ServerPlayer p, List<Boolean> ancestorHidden) {
         MinecraftServer server = p.server;

@@ -35,15 +35,22 @@ final class PageWidgets {
 
     /** A button: {@code primary} filled in the accent; {@code why} is shown instead of the action when it is off. */
     static void button(HubScreen.Frame f, String id, Rect r, Component label, boolean enabled, boolean primary, @Nullable Component why, @Nullable Runnable action) {
-        draw(f, id, r, label, enabled, primary, why, false, action);
+        draw(f, id, r, label, enabled, primary, why, Tip.WHEN_OFF, action);
     }
 
-    /** A button whose hint is always in its tooltip and narration (not only when disabled): a bare "+" or "-" says what it changes. */
-    static void hinted(HubScreen.Frame f, String id, Rect r, Component label, boolean enabled, boolean primary, Component hint, @Nullable Runnable action) {
-        draw(f, id, r, label, enabled, primary, hint, true, action);
+    /** A symbol button ("+", "-"): the hint says what it changes ("Lower Max health") and is its name, in the tooltip and in the narration. */
+    static void stepper(HubScreen.Frame f, String id, Rect r, Component symbol, boolean enabled, Component hint, @Nullable Runnable action) {
+        draw(f, id, r, symbol, enabled, false, hint, Tip.NAME, action);
     }
 
-    private static void draw(HubScreen.Frame f, String id, Rect r, Component label, boolean enabled, boolean primary, @Nullable Component why, boolean always, @Nullable Runnable action) {
+    /** A button with a line that is always shown under its name (what it will do), not only when it is off. */
+    static void described(HubScreen.Frame f, String id, Rect r, Component label, boolean enabled, boolean primary, @Nullable Component what, @Nullable Runnable action) {
+        draw(f, id, r, label, enabled, primary, what, Tip.ALWAYS, action);
+    }
+
+    private enum Tip { WHEN_OFF, ALWAYS, NAME }
+
+    private static void draw(HubScreen.Frame f, String id, Rect r, Component label, boolean enabled, boolean primary, @Nullable Component why, Tip mode, @Nullable Runnable action) {
         HubTheme t = f.theme();
         boolean hot = enabled && (f.hovered(r) || f.focused(id));
         int fill = primary ? (enabled ? t.accent() : t.muted()) : hot ? t.good() : t.paper();
@@ -53,10 +60,9 @@ final class PageWidgets {
         int text = primary || hot ? Contrast.bestText(fill) : enabled ? t.ink() : t.muted();
         String shown = LabelFit.cut(label.getString(), r.w() - 6, f.font()::width);
         f.g.drawString(f.font(), shown, r.x() + (r.w() - f.font().width(shown)) / 2, r.y() + (r.h() - 8) / 2, text, false);
-        // a stepper symbol is named by what it changes, so the first thing narrated and shown is "Lower Max health", not "-"
-        boolean byHint = net.ofatech.supernaturalbloodlines.shared.hub.kit.Narration.namedByHint(always, why != null);
+        boolean byHint = mode == Tip.NAME && why != null;
         List<Component> tip = new ArrayList<>(List.of(byHint ? why : label));
-        if (!byHint && !enabled && why != null) {
+        if (!byHint && why != null && (mode == Tip.ALWAYS || !enabled)) {
             tip.add(why);
         }
         f.target(id, r, tip, enabled ? action : null);

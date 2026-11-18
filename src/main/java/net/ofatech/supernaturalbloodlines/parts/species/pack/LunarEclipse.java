@@ -100,8 +100,7 @@ public final class LunarEclipse {
             }
         });
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> EclipseCommand.register(e.getDispatcher()));
-        RankEffects.addSuppressor(p -> active(p.server));
-        PackBonus.addSuppressor(p -> active(p.server));
+        net.ofatech.supernaturalbloodlines.parts.species.pack.PerkSuppressors.add(p -> active(p.server)); // one list: the rank perks and the pack bonus both read it
     }
 
     /** Once a second: ends an eclipse that is over, and rolls for one at dusk of a full-moon night (once per night, only with someone online). */

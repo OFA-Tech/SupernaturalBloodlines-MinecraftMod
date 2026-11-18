@@ -191,9 +191,10 @@ public final class ProfilePage implements HubPageView {
             int h = vy - rowTop + 3;
             Rect cell = new Rect(x - 1, rowTop - 1, cw + 2, h - 1);
             String id = "panel:fact:" + fact.name();
-            List<Component> tip = known == null
-                    ? List.of(label, Component.translatable(KEY + "unknown_tip"), Component.translatable(KEY + "howto." + fact.name().toLowerCase(Locale.ROOT)))
-                    : List.of(label, text);
+            List<Component> tip = known != null ? List.of(label, text)
+                    : net.ofatech.supernaturalbloodlines.shared.supernatural.profile.UnknownReason.whileOffline(fact, payload.facts())
+                            ? List.of(label, Component.translatable(KEY + "unknown_offline"))
+                            : List.of(label, Component.translatable(KEY + "unknown_tip"), Component.translatable(KEY + "howto." + fact.name().toLowerCase(Locale.ROOT)));
             f.target(id, cell, tip, null);
             if (f.focused(id)) {
                 t.drawFocus(f.g, cell);
@@ -260,8 +261,11 @@ public final class ProfilePage implements HubPageView {
                 case COMMAND -> () -> HubClient.runCommand(a.rowId(), a.args(route.id()));
                 case OPEN_RITES -> () -> f.screen().setPage(HubPage.RITES);
                 case OPEN_ADMIN -> () -> {
-                    net.ofatech.supernaturalbloodlines.shared.hub.AdminHandoff.offer(route.id(), route.name());
-                    f.screen().setPage(HubPage.ADMIN);
+                    // only where Admin can be reached: an offer to a page that is not there would wait for a later visit
+                    if (HubPage.visiblePages(f.view.context()).contains(HubPage.ADMIN)) {
+                        net.ofatech.supernaturalbloodlines.shared.hub.AdminHandoff.offer(route.id(), route.name());
+                        f.screen().setPage(HubPage.ADMIN);
+                    }
                 };
             };
             Runnable press = a.confirm()

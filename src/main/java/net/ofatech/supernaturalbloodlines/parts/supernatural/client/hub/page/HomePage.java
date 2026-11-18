@@ -224,7 +224,7 @@ public final class HomePage implements HubPageView {
             if (i < answers.size()) {
                 Answer a = answers.get(i);
                 Component tip = q.kind() == HubRequests.Kind.COMPULSION ? Component.translatable(KEY + "answer." + a.label() + ".tip") : null;
-                PageWidgets.hinted(f, id + ":" + a.label(), b, labels.get(i), true, a.primary(), tip,
+                PageWidgets.described(f, id + ":" + a.label(), b, labels.get(i), true, a.primary(), tip,
                         () -> HubClient.runCommand(a.rowId(), a.usesToken() ? List.of(q.token()) : List.of()));
             } else {
                 PageWidgets.button(f, id + ":dismiss", b, labels.get(i), true, false, null, () -> RequestsClient.dismiss(q));

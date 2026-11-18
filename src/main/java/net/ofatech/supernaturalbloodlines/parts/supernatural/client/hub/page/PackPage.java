@@ -76,7 +76,7 @@ public final class PackPage implements HubPageView {
         }
         boolean alpha = wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA;
         boolean leads = !pack.isEmpty() && pack.get(0).name().equals(f.view.player().getName().getString());
-        sy = PackInvite.render(f, s, sy + 6, leads || (pack.isEmpty() && alpha), PackInvite.idsOf(f));
+        sy = PackInvite.render(f, s, sy + 6, leads || (pack.isEmpty() && alpha));
         f.end(sy);
     }
 

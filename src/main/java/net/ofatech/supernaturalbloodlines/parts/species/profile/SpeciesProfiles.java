@@ -200,6 +200,8 @@ public final class SpeciesProfiles implements ProfileService.Source {
         }
         // the root a person has actually discovered of themselves, the same rule their own Bloodline page uses: where the index has moved the root on
         // (an Original who fell, a line freed) the new one stays a secret to them, so it must stay one to their pack too
+        // shortcut: what a player has discovered of their line (knownLine) is read from their live data, so an offline packmate's line is "?" (the page says why),
+        // upgrade by reading it from a saved copy of knownLine kept in the profile knowledge when they log out
         ServerPlayer who = online(server, subject);
         boolean shown = who != null && LineRules.showsRoot(BloodlineAccess.get(who).knownLine(), root.get(), SpeciesConfig.originalVisibilityAlways());
         return shown ? Optional.of(List.of(Lines.rootName(server, root.get()).getString())) : Optional.empty();

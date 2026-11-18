@@ -306,7 +306,7 @@ public final class AdminPage implements HubPageView {
         int x = r.x() + 2;
         if (number) {
             Rect minus = new Rect(x, y, PageWidgets.H, PageWidgets.H);
-            PageWidgets.hinted(f, id + ":minus", minus, Component.literal("-"), true, false, Component.translatable(KEY + "less", label), () -> step(row, -1));
+            PageWidgets.stepper(f, id + ":minus", minus, Component.literal("-"), true, Component.translatable(KEY + "less", label), () -> step(row, -1));
             x = minus.right() + 2;
         }
         int applyW = PageWidgets.widthOf(f.font(), Component.translatable(KEY + "apply"));
@@ -321,7 +321,7 @@ public final class AdminPage implements HubPageView {
         x = box.right() + 2;
         if (number) {
             Rect plus = new Rect(x, y, PageWidgets.H, PageWidgets.H);
-            PageWidgets.hinted(f, id + ":plus", plus, Component.literal("+"), true, false, Component.translatable(KEY + "more", label), () -> step(row, 1));
+            PageWidgets.stepper(f, id + ":plus", plus, Component.literal("+"), true, Component.translatable(KEY + "more", label), () -> step(row, 1));
             x = plus.right() + 2;
         }
         Rect apply = new Rect(x, y, applyW, PageWidgets.H);

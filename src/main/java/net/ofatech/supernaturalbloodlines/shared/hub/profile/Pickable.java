@@ -28,5 +28,21 @@ public final class Pickable {
         out.sort(Comparator.comparing((Person p) -> p.distance() < 0).thenComparingDouble(Person::distance).thenComparing(Person::name, String.CASE_INSENSITIVE_ORDER));
         return out.size() > MAX ? List.copyOf(out.subList(0, MAX)) : out;
     }
+
+    /** How many eligible players {@link #of} left out for the cap (shown as "+N more"). */
+    public static int beyondCap(List<Person> online, UUID self, Set<UUID> except) {
+        int eligible = 0;
+        for (Person p : online) {
+            if (!p.id().equals(self) && !except.contains(p.id())) {
+                eligible++;
+            }
+        }
+        return Math.max(0, eligible - MAX);
+    }
+
+    /** {@code offered} without those who have left {@code stillOnline} since the list was built. */
+    public static List<Person> stillHere(List<Person> offered, Set<UUID> stillOnline) {
+        return offered.stream().filter(p -> stillOnline.contains(p.id())).toList();
+    }
 }
 

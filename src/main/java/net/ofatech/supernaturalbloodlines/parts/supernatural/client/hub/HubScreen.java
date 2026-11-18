@@ -743,6 +743,7 @@ public final class HubScreen extends Screen {
     public void removed() {
         super.removed();
         lastView = null;
+        net.ofatech.supernaturalbloodlines.shared.hub.AdminHandoff.take(); // an offer nobody took must not preselect a person in a later session
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackInvite.reset();
         HubClient.sendOpen(false);
     }

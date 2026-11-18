@@ -1,9 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
 import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Predicate;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -34,9 +31,6 @@ public final class RankEffects {
     static final double ALPHA_HEALTH = 4;
     static final double TRUE_ALPHA_SCALE = 1.1;
 
-    // the lunar eclipse takes the perks away, not the Omega penalty (plan 9, task 5): a source says "not now" and calls sync when that changes
-    private static final List<Predicate<ServerPlayer>> SUPPRESSORS = new CopyOnWriteArrayList<>();
-
     private RankEffects() {
     }
 
@@ -51,10 +45,6 @@ public final class RankEffects {
                 apply(p, e.getCurrentFaction() != null && "werewolves:werewolf".equals(e.getCurrentFaction().getID().toString()));
             }
         });
-    }
-
-    public static void addSuppressor(Predicate<ServerPlayer> suppressed) {
-        SUPPRESSORS.add(suppressed);
     }
 
     private static void syncIfPlayer(net.minecraft.world.entity.player.Player p) {
@@ -86,7 +76,7 @@ public final class RankEffects {
 
     /** The rank whose perks are in force for {@code p} now: none outside the werewolf faction, and none while a suppressor (the lunar eclipse) says so. The one rule {@link #apply} and the hub's bonus line share. */
     public static Rank effectiveRank(ServerPlayer p, boolean werewolf, net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf) {
-        return effectiveRank(werewolf ? wolf.rank() : Rank.NONE, SUPPRESSORS.stream().anyMatch(s -> s.test(p)));
+        return effectiveRank(werewolf ? wolf.rank() : Rank.NONE, PerkSuppressors.any(p));
     }
 
     /** A suppressor takes the perks away, not the Omega's penalty. Pure. */

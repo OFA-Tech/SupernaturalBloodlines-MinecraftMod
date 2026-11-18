@@ -4,8 +4,6 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Predicate;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -39,14 +37,7 @@ public final class PackBonus {
     public static final int CAP = 5;
     public static final int REGEN_TICKS = 120;
 
-    // the lunar eclipse takes the bonus away: a source says "not now" (its start and end call tick)
-    private static final List<Predicate<ServerPlayer>> SUPPRESSORS = new CopyOnWriteArrayList<>();
-
     private PackBonus() {
-    }
-
-    public static void addSuppressor(Predicate<ServerPlayer> suppressed) {
-        SUPPRESSORS.add(suppressed);
     }
 
     public static void register() {
@@ -80,7 +71,7 @@ public final class PackBonus {
     /** One pass for one player: a non-Alpha is only cleaned of a bonus they should not have. */
     public static void tick(ServerPlayer alpha) {
         if (!PackAccess.isAlpha(PackAccess.wolf(alpha).rank()) || !VampirismSupernatural.isWerewolf(alpha)
-                || SUPPRESSORS.stream().anyMatch(s -> s.test(alpha))) {
+                || PerkSuppressors.any(alpha)) {
             set(alpha, 0);
             return;
         }

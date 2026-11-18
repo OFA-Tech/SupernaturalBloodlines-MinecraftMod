@@ -88,6 +88,19 @@ class UiReferencesTest {
         }
     }
     @Test
+    void everySymbolButtonIsAStepperNamedByWhatItChanges() throws Exception {
+        List<String> bad = new ArrayList<>();
+        for (String line : hubSource().split("\\R")) {
+            boolean symbol = line.contains("Component.literal(\"+\")") || line.contains("Component.literal(\"-\")");
+            if (symbol && (line.contains("button(") || line.contains("described(")) && !line.contains("PageWidgets.stepper(")) {
+                bad.add(line.trim());
+            }
+        }
+        assertTrue(bad.isEmpty(), "a bare + or - button that is not a stepper (it would be narrated as a symbol): " + bad);
+        assertTrue(hubSource().contains("PageWidgets.stepper("), "the Admin steppers are gone");
+    }
+
+    @Test
     void aViewOnlyRowIsMarkedAsAPageNotAButton() {
         assertTrue(AdminCommands.byId("B1").orElseThrow().ui() == AdminCommands.Ui.PAGE);
         assertTrue(AdminCommands.byId("P12").orElseThrow().ui() == AdminCommands.Ui.PAGE);

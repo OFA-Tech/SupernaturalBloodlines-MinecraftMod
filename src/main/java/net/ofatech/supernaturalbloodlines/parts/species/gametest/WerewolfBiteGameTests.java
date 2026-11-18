@@ -359,6 +359,36 @@ public final class WerewolfBiteGameTests {
         helper.succeed();
     }
 
+    /** An offline packmate's line is not sent (what they have discovered is read from their live data), and the profile says they are offline so the page can say why. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOfflinePackmatesLineIsUnknownAndTheProfileSaysOffline(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer member = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, member);
+        var line = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.LINE;
+        var presence = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.PRESENCE;
+        java.util.UUID root = net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.values()[0].uuid();
+        var index = net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex.get(helper.getLevel().getServer());
+        net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.overrideOriginalVisibility(false);
+        try {
+            helper.assertTrue(joinPack(alpha, member), "the pack could not be built");
+            index.setRoot(member.getUUID(), root, true);
+            BloodlineAccess.set(member, BloodlineAccess.get(member).toBuilder().knownLine(root).build());
+            var online = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts();
+            helper.assertTrue(online.containsKey(line) && List.of("online").equals(online.get(presence)), "online, the line was " + online.get(line) + " and presence " + online.get(presence));
+            lookup(alpha); // the member is away
+            var away = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts();
+            helper.assertTrue(!away.containsKey(line), "an offline packmate's line was sent: " + away.get(line));
+            helper.assertTrue(List.of("offline").equals(away.get(presence)), "the profile did not say they are offline: " + away.get(presence));
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.overrideOriginalVisibility(null);
+            index.remove(member.getUUID());
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, member);
+        }
+        helper.succeed();
+    }
+
     /** A packmate sees the line root only as far as that player has discovered it: when the index moves the root to another Original, the new one stays hidden. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aPacksProfileNeverShowsARootThePlayerHasNotDiscovered(GameTestHelper helper) {
