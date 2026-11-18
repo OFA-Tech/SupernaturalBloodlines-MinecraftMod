@@ -28,7 +28,7 @@ Tokens last 60 seconds (calls) or 5 seconds (compulsion choices), are tied to on
 | `/pack leave` | anyone in a pack | leave the pack (a werewolf Beta becomes an Omega). The leader can't; a second Alpha or a Packmate can. |
 | `/pack info` | a pack member | the pack: its leader, members, Emissary, allies and your anchor |
 | `/pack heal <player>` | an **Alpha** | give the spark up (it is destroyed, nobody inherits it) to fully heal someone within 4 blocks, curing hybrid venom and wolfsbane. The Alpha becomes a Beta. Not for a True Alpha. |
-| `/pack protect on\|off` | anyone | **protect my True Alpha path** (on by default while it is open): no spark is forced on you by a kill or a pack inheritance. In the hub: your own Profile and Settings. |
+| `/pack protect on\|off` | anyone | **protect my True Alpha path** (on by default while it is open): a kill that would steal a spark destroys it instead (a pack inheritance can still give you one). In the hub: your own Profile and Settings. |
 | `/pack roar` | an **Alpha** or True Alpha | the Alpha Roar (60 s cooldown). Same as the **Alpha Roar** [key bind](Key-Binds). |
 | `/pack emissary [player]` | the **leader** | name a witch, siphoner, heretic or tribrid who is **already a member** of the pack (invite them first) as your Emissary. Without a name it clears it. |
 | `/pack anchor [player]` | a werewolf | name a player as your **anchor**. Without a name it clears it. |

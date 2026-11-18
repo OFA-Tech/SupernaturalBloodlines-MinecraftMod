@@ -24,6 +24,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Flow;
+import net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions;
 
 /**
  * The player's own client settings: the look (theme, which page opens), the HUD, and the key binds, read-only with a shortcut to Controls.
@@ -62,12 +63,12 @@ public final class SettingsPage implements HubPageView {
             Rect b = new Rect(r.right() - 36, top - 1, 36, PageWidgets.H);
             boolean on = wolf.protectPath();
             PageWidgets.toggle(f, "stage:settings:protect", b, on, label, () -> {
-                if (on) {
-                    // the same question the Profile asks: turning it off can end the path (Stay is the safe answer)
-                    f.confirm(Component.translatable(PageKit.HUB + "profile.action.protect_off"), Component.translatable(PageKit.HUB + "profile.confirm.protect_off"),
-                            Component.translatable(PageKit.HUB + "profile.action.protect_off"), () -> HubClient.runCommand("P17", List.of()));
+                ProfileActions.Action a = ProfileActions.protectAction(on); // the same action, and the same question, as the Profile
+                if (a.confirm()) {
+                    f.confirm(Component.translatable(PageKit.HUB + "profile.action." + a.id()), Component.translatable(PageKit.HUB + "profile.confirm." + a.id()),
+                            Component.translatable(PageKit.HUB + "profile.action." + a.id()), () -> HubClient.runCommand(a.rowId(), List.of()));
                 } else {
-                    HubClient.runCommand("P16", List.of());
+                    HubClient.runCommand(a.rowId(), List.of());
                 }
             });
             y = PageKit.wrapped(f, Component.translatable(KEY + "protect.about"), r.x() + 4, Math.max(y, b.bottom()) + 1, r.w() - 4, t.muted());

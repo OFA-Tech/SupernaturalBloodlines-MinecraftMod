@@ -156,30 +156,30 @@ public final class SparkRulesGameTests {
         helper.succeed();
     }
 
-    /** An inheritance cannot ask: a Beta who protects an open path is passed over, one who does not (or has none left) inherits; with none the pack dissolves. */
+    /** Protection covers kills only (owner ruling): an inheritance gives the spark to the strongest Beta even if they protect an open path, and that closes it; the pack goes on. */
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aPackInheritancePassesOverABetaWhoProtectsTheirPath(GameTestHelper helper) {
+    public static void aPackInheritanceStillGivesTheSparkToAProtectedBetaAndClosesTheirPath(GameTestHelper helper) {
         ServerPlayer leader = alpha(helper, 6, 1.5);
-        ServerPlayer protectedBeta = wolf(helper, Rank.BETA, leader.getUUID(), 9, 2.5);
-        ServerPlayer open = wolf(helper, Rank.BETA, leader.getUUID(), 2, 3.5);
-        protect(open, false);
-        online(leader, protectedBeta, open);
+        ServerPlayer protectedBeta = wolf(helper, Rank.BETA, leader.getUUID(), 12, 2.5);
+        ServerPlayer other = wolf(helper, Rank.BETA, leader.getUUID(), 2, 3.5);
+        online(leader, protectedBeta, other);
         PackIndex index = PackIndex.get(helper.getLevel());
         try {
+            helper.assertTrue(PackRules.pathOpen(state(protectedBeta)) && state(protectedBeta).protectPath(), "control: the strongest Beta protects an open path");
             VampirismAPI.factionPlayerHandler(leader).leaveFaction(false); // cured: the spark passes on
-            helper.assertTrue(state(open).rank() == Rank.ALPHA && state(open).heldSpark(), "the Beta who does not protect did not inherit: " + state(open));
-            helper.assertTrue(state(protectedBeta).rank() == Rank.BETA && PackRules.pathOpen(state(protectedBeta)), "the protected Beta was forced a spark: " + state(protectedBeta));
-            helper.assertTrue(index.leaderOf(protectedBeta.getUUID()).equals(open.getUUID()), "the pack did not follow the heir");
+            helper.assertTrue(state(protectedBeta).rank() == Rank.ALPHA && state(protectedBeta).heldSpark() && !PackRules.pathOpen(state(protectedBeta)),
+                    "the protected Beta did not inherit, or their path stayed open: " + state(protectedBeta));
+            helper.assertTrue(index.leaderOf(other.getUUID()).equals(protectedBeta.getUUID()) && state(other).rank() == Rank.BETA, "the pack did not go on under the heir");
         } finally {
-            clean(helper, leader, protectedBeta, open);
+            clean(helper, leader, protectedBeta, other);
         }
+        // protection never dissolves a pack: with only protected Betas the strongest still inherits
         ServerPlayer lead2 = alpha(helper, 6, 1.5);
         ServerPlayer only = wolf(helper, Rank.BETA, lead2.getUUID(), 9, 2.5);
         online(lead2, only);
         try {
             VampirismAPI.factionPlayerHandler(lead2).leaveFaction(false);
-            helper.assertTrue(state(only).rank() != Rank.ALPHA && PackRules.pathOpen(state(only)), "the only (protected) Beta was forced a spark: " + state(only));
-            helper.assertTrue(index.leaderOf(only.getUUID()).equals(only.getUUID()) || !index.alphaOf(only.getUUID()).isPresent(), "the pack was not dissolved");
+            helper.assertTrue(state(only).rank() == Rank.ALPHA && !PackRules.pathOpen(state(only)), "the only (protected) Beta did not inherit: " + state(only));
         } finally {
             clean(helper, lead2, only);
         }
@@ -353,6 +353,26 @@ public final class SparkRulesGameTests {
         helper.succeed();
     }
 
+    /** A True Alpha's own client is told the full count even with no pack row (it does not know the cap); a dormant one, and an Alpha, see their own. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTrueAlphasOwnClientIsToldTheFullSparkCount(GameTestHelper helper) {
+        ServerPlayer truth = wolf(helper, Rank.TRUE_ALPHA, null, 1, 1.5);
+        ServerPlayer alpha = alpha(helper, 2, 2.5);
+        online(truth, alpha);
+        try {
+            int cap = SpeciesConfig.maxStackedSparks();
+            helper.assertTrue(cap > 1, "control: the cap is one");
+            helper.assertTrue(BloodlineAccess.ownView(truth, BloodlineAccess.get(truth)).wolf().sparks() == cap, "the True Alpha's own view has " + BloodlineAccess.ownView(truth, BloodlineAccess.get(truth)).wolf().sparks());
+            helper.assertTrue(BloodlineAccess.ownView(alpha, BloodlineAccess.get(alpha)).wolf().sparks() == state(alpha).sparks(), "an Alpha's own view is not their own count");
+            helper.assertTrue(BloodlineAccess.clientView(BloodlineAccess.get(truth), false).wolf().sparks() <= 1, "another player was told the True Alpha's full count");
+            VampirismAPI.factionPlayerHandler(truth).leaveFaction(false);
+            helper.assertTrue(BloodlineAccess.ownView(truth, BloodlineAccess.get(truth)).wolf().sparks() == 1, "a dormant True Alpha's view still has the full count");
+        } finally {
+            clean(helper, truth, alpha);
+        }
+        helper.succeed();
+    }
+
     /** Turning the protection off asks twice in the hub, so the typed command must too: a bare "off" is no command. And it means nothing to a player with no lineage. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void protectOffNeedsConfirmAndMeansNothingWithoutALineage(GameTestHelper helper) {
@@ -362,7 +382,15 @@ public final class SparkRulesGameTests {
         var dispatcher = server.getCommands().getDispatcher();
         try {
             var source = wolf.createCommandSourceStack();
-            helper.assertTrue(dispatcher.parse("pack protect off", source).getContext().getCommand() == null, "a bare /pack protect off is a command");
+            helper.assertTrue(PackCommand.protect(wolf, true) == null, "control");
+            var bare = dispatcher.parse("pack protect off", source);
+            helper.assertTrue(bare.getContext().getCommand() != null && bare.getExceptions().isEmpty(), "a bare /pack protect off is a parse error, not a hint");
+            try {
+                dispatcher.execute(bare);
+            } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+                helper.fail("a bare /pack protect off is a parse error: " + e.getMessage());
+            }
+            helper.assertTrue(state(wolf).protectPath(), "a bare /pack protect off changed the setting");
             helper.assertTrue(dispatcher.parse("pack protect off confirm", source).getContext().getCommand() != null, "/pack protect off confirm is no command");
             helper.assertTrue(dispatcher.parse("pack protect on", source).getContext().getCommand() != null, "/pack protect on is no command");
             helper.assertTrue(PackCommand.protect(human, false) != null && BloodlineAccess.get(human).wolf().protectPath(), "a human changed a setting of a path they do not have");

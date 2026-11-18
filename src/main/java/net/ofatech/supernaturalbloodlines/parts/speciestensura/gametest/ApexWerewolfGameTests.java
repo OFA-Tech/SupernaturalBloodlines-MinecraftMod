@@ -285,6 +285,29 @@ public final class ApexWerewolfGameTests {
         helper.succeed();
     }
 
+    /** A change seen earlier in the same tick is recorded before a later one (here a refused one) replaces it, and before the player logs out. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anEarlierChangeOfTheSameTickIsSettledBeforeALaterOneAndOnLogout(GameTestHelper helper) {
+        ServerPlayer p = werewolf(helper, Species.NONE); // on tensura:human_saint
+        RaceEvents.SetRaceEvent refuse = (oldRace, entity, newRace, flag, changeable, message) ->
+                entity == p && newRace != null && "tensura:elf_saint".equals(newRace.getRaceId().toString()) ? EventResult.interruptFalse() : EventResult.pass();
+        RaceEvents.SET_RACE.register(refuse);
+        try {
+            setRace(p, APEX);
+            setRace(p, "tensura:elf_saint"); // refused: it must not take the first change's record with it
+            ApexFallback.settle(p);
+            helper.assertTrue(APEX.equals(race(p)), "control: the refusal did not hold: " + race(p));
+            helper.assertTrue("tensura:human_saint".equals(BloodlineAccess.get(p).wolf().preApex()), "the first change was lost: " + BloodlineAccess.get(p).wolf().preApex());
+        } finally {
+            RaceEvents.SET_RACE.unregister(refuse);
+        }
+        ServerPlayer q = werewolf(helper, Species.NONE);
+        setRace(q, APEX);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent(q));
+        helper.assertTrue("tensura:human_saint".equals(BloodlineAccess.get(q).wolf().preApex()), "a change was dropped at logout: " + BloodlineAccess.get(q).wolf().preApex());
+        helper.succeed();
+    }
+
     /** Alpha and True Alpha reach the apex: a Beta (one who fell back, say) is not offered it, an Alpha is. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aWerewolfIsOfferedTheApexOnlyWhileTheyHoldASpark(GameTestHelper helper) {

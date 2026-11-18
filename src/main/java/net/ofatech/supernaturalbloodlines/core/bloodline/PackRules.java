@@ -61,11 +61,6 @@ public final class PackRules {
         return pathOpen(killer) && killer.protectPath() ? Steal.PROTECTED : Steal.TAKES;
     }
 
-    /** Whether a spark may be passed to {@code w} without asking (a pack inheritance has no dialog): not when it would end a path they protect. */
-    public static boolean mayInherit(WolfState w) {
-        return !(pathOpen(w) && w.protectPath());
-    }
-
     /**
      * The sparks that count for the bonus and the Roar: a True Alpha who is active (a werewolf now) always holds the {@code cap}, whatever
      * was stacked on them before; anyone else their own count. Dormant, the True Alpha's count is the plain one.

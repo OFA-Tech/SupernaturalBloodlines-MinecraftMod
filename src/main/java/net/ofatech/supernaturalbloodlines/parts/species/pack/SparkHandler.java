@@ -202,7 +202,7 @@ public final class SparkHandler {
         passOn(p);
     }
 
-    /** The best heir of {@code alpha}: the highest-level online Beta of their pack who is still a werewolf and does not protect an open True Alpha path (an inheritance cannot ask them first). */
+    /** The best heir of {@code alpha}: the highest-level online Beta of their pack who is still a werewolf. A protected True Alpha path covers kills only (owner ruling): the heir takes the spark even with an open path, and that closes it. */
     @Nullable
     static ServerPlayer heirOf(ServerPlayer alpha) {
         ServerPlayer best = null;
@@ -210,7 +210,7 @@ public final class SparkHandler {
         for (UUID id : PackIndex.get(alpha.serverLevel()).betasOf(alpha.getUUID())) {
             ServerPlayer b = SireCall.player(alpha.server, id);
             if (b == null || b == alpha || !VampirismSupernatural.isWerewolf(b) || PackAccess.wolf(b).rank() != Rank.BETA
-                    || !alpha.getUUID().equals(PackAccess.wolf(b).packAlpha()) || !PackRules.mayInherit(PackAccess.wolf(b))) {
+                    || !alpha.getUUID().equals(PackAccess.wolf(b).packAlpha())) {
                 continue;
             }
             int level = VampirismAPI.factionPlayerHandler(b).getCurrentLevel();

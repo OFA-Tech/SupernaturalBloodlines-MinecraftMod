@@ -128,6 +128,7 @@ public final class AdminCommands {
             row("P15", "pack anchor [player]", 0, Ui.HUB_BUTTON, "PACK"),
             row("P16", "pack protect on", 0, Ui.HUB_BUTTON, "PACK"),
             row("P17", "pack protect off confirm", 0, Ui.HUB_BUTTON, "PACK"),
+        new Row("P18", "pack protect off", 0, Ui.CHAT_ONLY, "only a reminder to add confirm: the hub asks first and then runs P17", "PACK"),
             row("D1", ROOT + " get <player>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D2", ROOT + " set <player> <species>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D3", ROOT + " event <player> <event>", 2, Ui.ADMIN_ACTION, "ADMIN"),

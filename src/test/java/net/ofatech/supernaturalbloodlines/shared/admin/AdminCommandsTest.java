@@ -54,9 +54,9 @@ class AdminCommandsTest {
     @Test
     void rowsPerRootAreSevenFifteenAndTen() {
         assertEquals(7, AdminCommands.ALL.stream().filter(r -> r.root().equals("bloodline")).count());
-        assertEquals(17, AdminCommands.ALL.stream().filter(r -> r.root().equals("pack")).count());
+        assertEquals(18, AdminCommands.ALL.stream().filter(r -> r.root().equals("pack")).count());
         assertEquals(10, AdminCommands.ALL.stream().filter(r -> r.root().equals("supernaturalbloodlines")).count());
-        assertEquals(34, AdminCommands.ALL.size());
+        assertEquals(35, AdminCommands.ALL.size());
     }
 
     @Test

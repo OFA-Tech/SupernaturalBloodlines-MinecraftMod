@@ -18,6 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.ApexFallbackRules;
@@ -42,6 +43,11 @@ public final class ApexFallback {
         RaceEvents.SET_RACE.register(ApexFallback::onSetRace);
         BloodlineAccess.addListener(ApexFallback::onBloodline);
         NeoForge.EVENT_BUS.addListener(ApexFallback::onFaction);
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                settle(p); // a change seen this tick is recorded before they go, not dropped with the map entry
+            }
+        });
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> {
             if (!PENDING.isEmpty()) {
                 new ArrayList<>(PENDING.keySet()).forEach(id -> {
@@ -71,6 +77,7 @@ public final class ApexFallback {
         // SET_RACE fires before the change and a later listener can still refuse it (ManasCore's setRace returns false on a refusal), so nothing is
         // recorded here: settle() records it once the race is really the new one (the next tick, or before the next thing that reads it)
         if (!busy && newRace != null && entity instanceof ServerPlayer p && !p.level().isClientSide) {
+            settle(p); // an earlier change of the same tick, before this one can replace it (a refused one would drop it)
             PENDING.put(p.getUUID(), new Pending(oldRace == null ? null : oldRace.getRaceId().toString(), newRace.getRaceId().toString()));
         }
         return EventResult.pass();

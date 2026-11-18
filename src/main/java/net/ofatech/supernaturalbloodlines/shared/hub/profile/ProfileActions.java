@@ -45,6 +45,12 @@ public final class ProfileActions {
      * @param withTarget whether the row takes the subject's UUID
      * @param danger    asks first with the safe button focused; {@code confirm} names the lang key of its body (empty: no dialog)
      */
+    /** The one switch of "protect my True Alpha path", for the Profile and for Settings: turning it off can end the path, so that one asks first (Stay is the safe answer). */
+    public static Action protectAction(boolean protecting) {
+        return protecting ? new Action("protect_off", Kind.COMMAND, "P17", false, false, true, null, true)
+                : new Action("protect_on", Kind.COMMAND, "P16", false, false, true, null, false);
+    }
+
     public record Action(String id, Kind kind, String rowId, boolean withTarget, boolean primary, boolean enabled, @Nullable String disabled,
                          boolean confirm) {
         public List<String> args(UUID subject) {
@@ -77,9 +83,7 @@ public final class ProfileActions {
                 out.add(new Action("anchor_clear", Kind.COMMAND, "P15", false, false, true, null, false));
             }
             if (v.pathOpen()) {
-                // turning the protection off can end the path, so that one asks first (Stay is the safe answer)
-                out.add(v.protecting() ? new Action("protect_off", Kind.COMMAND, "P17", false, false, true, null, true)
-                        : new Action("protect_on", Kind.COMMAND, "P16", false, false, true, null, false));
+                out.add(protectAction(v.protecting()));
             }
             return out;
         }

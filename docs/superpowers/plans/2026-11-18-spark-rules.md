@@ -21,7 +21,7 @@
 ## Interpretations (not spelled out by the owner)
 
 - **A kill cannot show a dialog:** the player setting "protect my True Alpha path" (`WolfState.protectPath`, default on, only matters while the path is open). On: the stolen spark is destroyed and the killer gets nothing. Off: the spark is taken (and the path ends).
-- **A pack inheritance cannot ask either** (cure of the leader, leaving the werewolves): a Beta who protects an open path is passed over; with nobody left the pack dissolves.
+- **Protection covers kills only (owner ruling, round 2):** a pack inheritance (cure of the leader, leaving the werewolves) still passes the spark to the strongest Beta, protected or not, and that closes their path. Protection never dissolves a pack.
 - **Duel and absence** hand the lead only between Alphas who already hold a spark, so no one takes a spark there and no dialog is needed (pinned by a GameTest).
 - **The Alpha Trial** is still a hook: `AlphaTrial.win(beta, warned)` refuses an unwarned Beta whose path is open. The trial's own UI (plan 15) shows `HubScreen.warnTrueAlpha` and passes `true`.
 - **"Open path"** = werewolf Beta or Omega, no held spark, no blue eyes (an innocent kill already closes it).
@@ -31,7 +31,7 @@
 
 ## Tasks
 
-- [x] **1. Pure rows.** `WolfState` gets `held_spark` (forced true for an Alpha or a thief, so old saves migrate), `protect_path`, `pre_apex`; `BloodlineRules.clearedWolf` keeps them through a cure. `PackRules`: `true_alpha_held_spark`, `true_alpha_never_steals`, `transferableSparks` 0 for a True Alpha, `pathOpen`, `stealBy`, `mayInherit`, `effectiveSparks`. New `ApexFallbackRules`. Tests: `PackRulesTest`, `ApexFallbackRulesTest`, `BloodlineRulesTest`.
+- [x] **1. Pure rows.** `WolfState` gets `held_spark` (forced true for an Alpha or a thief, so old saves migrate), `protect_path`, `pre_apex`; `BloodlineRules.clearedWolf` keeps them through a cure. `PackRules`: `true_alpha_held_spark`, `true_alpha_never_steals`, `transferableSparks` 0 for a True Alpha, `pathOpen`, `stealBy`, `effectiveSparks`. New `ApexFallbackRules`. Tests: `PackRulesTest`, `ApexFallbackRulesTest`, `BloodlineRulesTest`.
 - [x] **2. Glue.** `SparkHandler.steal` (never / protected / takes), `giveUp` without an heir, `heirOf` skips protected Betas; `AlphaTrial.win(beta, warned)`; `RankEffects`/`AlphaRoar`/`PackLeader` use `effectiveSparks`; `/pack protect on|off` (P16, P17); `ApexFallback` (species_tensura).
 - [x] **3. Hub.** Profile self actions `protect_on`/`protect_off` (off asks first), a Settings toggle, the warning dialog with "Keep my path", heal texts.
 - [x] **4. GameTests.** `SparkRulesGameTests` (steal protected/unprotected, trial, inheritance, duel, absence, True Alpha never steals, full sparks active/dormant, heal with and without a co-Alpha, spark history after a heal and a cure), `ApexWerewolfGameTests` (fallback, dormant True Alpha, evolved-on, legacy, stacking). Existing tests that relied on the old rules were moved to the new ones (their wolves do not protect their path; True Alpha numbers are the full-spark ones).
@@ -42,4 +42,4 @@
 ## Verification
 
 - `gradlew test` and `runGameTestServer` green; the 10-run matrix (`build`, the full GameTests, `-PnoWerewolves -PnoCurios`, `-PnoLinkedMods`, and `-PpartsOff` for species, artifacts, speciesTensura, supernatural, supernaturalTensura, hud).
-- Mutants (each fails a test when reverted): held spark no longer blocks True Alpha, True Alpha steals (rule row and handler), no protection, inheritance forces a spark, True Alpha without full sparks, True Alpha robbed, trial does not ask, heal gives an heir, no apex fallback, cure forgets the spark history.
+- Mutants (each fails a test when reverted): held spark no longer blocks True Alpha, True Alpha steals (rule row and handler), no protection, (the old "inheritance forces a spark" mutant is gone with the rule), True Alpha without full sparks, True Alpha robbed, trial does not ask, heal gives an heir, no apex fallback, cure forgets the spark history.

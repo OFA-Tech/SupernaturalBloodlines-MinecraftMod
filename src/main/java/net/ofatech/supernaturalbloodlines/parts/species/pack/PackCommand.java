@@ -106,6 +106,7 @@ public final class PackCommand {
                         .then(Commands.literal("on").executes(c -> run(c, protect(self(c), true))))
                         .then(Commands.literal("off")
                                 // turning it off can end the path, so the typed command asks to be told twice, as the hub asks first
+                                .executes(c -> run(c, error("protect_confirm")))
                                 .then(Commands.literal("confirm").executes(c -> run(c, protect(self(c), false))))))
                 .then(Commands.literal("info").executes(c -> info(c.getSource(), self(c))))
                 .then(Commands.literal("emissary")
@@ -433,8 +434,8 @@ public final class PackCommand {
     }
 
     /**
-     * "Protect my True Alpha path": while the path is open, no spark is forced on the player (a kill that would steal one destroys it, a pack
-     * inheritance passes them over). On by default. It can always be changed; it only does anything while the path is open.
+     * "Protect my True Alpha path": while the path is open, no spark is forced on the player (a kill that would steal one destroys it; a pack
+     * inheritance is not covered). On by default. It can always be changed; it only does anything while the path is open.
      */
     @Nullable
     public static Component protect(ServerPlayer p, boolean on) {

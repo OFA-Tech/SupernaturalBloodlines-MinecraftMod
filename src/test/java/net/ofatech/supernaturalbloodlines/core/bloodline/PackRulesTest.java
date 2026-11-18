@@ -367,9 +367,6 @@ class PackRulesTest {
         assertEquals(PackRules.Steal.TAKES, PackRules.stealBy(beta.toBuilder().protectPath(false).build()), "their choice");
         assertEquals(PackRules.Steal.TAKES, PackRules.stealBy(beta.toBuilder().heldSpark(true).build()), "a closed path has nothing to protect");
         assertEquals(PackRules.Steal.TAKES, PackRules.stealBy(wolf(Lineage.BITTEN, Rank.ALPHA)), "an Alpha stacks");
-        assertFalse(PackRules.mayInherit(beta), "an inheritance cannot ask, so it passes them over");
-        assertTrue(PackRules.mayInherit(beta.toBuilder().protectPath(false).build()));
-        assertTrue(PackRules.mayInherit(beta.toBuilder().heldSpark(true).build()));
     }
 
     @Test

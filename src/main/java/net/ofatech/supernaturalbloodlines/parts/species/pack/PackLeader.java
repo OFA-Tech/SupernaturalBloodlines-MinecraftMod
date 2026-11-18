@@ -20,9 +20,13 @@ public final class PackLeader {
     }
 
     public static void register() {
+        net.ofatech.supernaturalbloodlines.core.BloodlineAccess.useOwnSparks(PackAccess::effectiveSparks);
         NeoForge.EVENT_BUS.addListener((PlayerFactionEvent.FactionLevelChanged e) -> {
             if (e.getPlayer().getPlayer() instanceof ServerPlayer p && !p.level().isClientSide) {
                 refresh(p);
+                if (PackAccess.wolf(p).rank() == net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.TRUE_ALPHA) {
+                    net.ofatech.supernaturalbloodlines.core.BloodlineAccess.sendTo(p, p); // a True Alpha's full sparks come and go with the faction
+                }
             }
         });
     }
