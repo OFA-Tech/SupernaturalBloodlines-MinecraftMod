@@ -1,1 +1,15 @@
-{ "parent": "minecraft:item/generated", "textures": { "layer0": "supernaturalbloodlines:item/true_alpha_spark" } }
+{
+  "loader": "neoforge:separate_transforms",
+  "gui_light": "front",
+  "base": {
+    "parent": "supernaturalbloodlines:item/true_alpha_spark_3d"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "supernaturalbloodlines:item/true_alpha_spark"
+      }
+    }
+  }
+}

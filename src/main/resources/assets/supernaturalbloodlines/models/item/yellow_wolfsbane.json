@@ -1,1 +1,15 @@
-{ "parent": "minecraft:item/generated", "textures": { "layer0": "supernaturalbloodlines:item/yellow_wolfsbane" } }
+{
+  "loader": "neoforge:separate_transforms",
+  "gui_light": "front",
+  "base": {
+    "parent": "supernaturalbloodlines:item/yellow_wolfsbane_3d"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "supernaturalbloodlines:item/yellow_wolfsbane"
+      }
+    }
+  }
+}
