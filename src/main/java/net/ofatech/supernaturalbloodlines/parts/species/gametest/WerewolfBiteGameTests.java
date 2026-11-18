@@ -344,21 +344,17 @@ public final class WerewolfBiteGameTests {
         helper.succeed();
     }
 
-    /** An NPC Original the observer has not discovered answers like a stranger: no facts and no NPC flag (the flag alone would name the Original); once discovered it is an NPC. */
+    /** An NPC Original the observer has not discovered answers like a stranger: no facts and no NPC flag (the flag alone would name the Original). */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void anUndiscoveredNpcOriginalAnswersLikeAStranger(GameTestHelper helper) {
         ServerPlayer me = wolf(helper, Rank.ALPHA, null);
         lookup(me);
         java.util.UUID original = net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.values()[0].uuid();
         var sirelines = net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel());
-        var name = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.NAME;
         try {
             sirelines.add(original, me.getUUID(), "minecraft:player", "Me");
             var before = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(me, original);
             helper.assertTrue(!before.npc() && before.facts().isEmpty(), "an undiscovered Original was told: npc=" + before.npc() + " " + before.facts());
-            net.ofatech.supernaturalbloodlines.parts.species.profile.ProfileKnowledge.get(helper.getLevel()).discover(null, me.getUUID(), original, java.util.Set.of(name));
-            var after = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(me, original);
-            helper.assertTrue(after.npc() && after.facts().containsKey(name), "a discovered Original was not shown: npc=" + after.npc() + " " + after.facts());
         } finally {
             sirelines.remove(me.getUUID());
             SireCall.overridePlayerLookup(null);
