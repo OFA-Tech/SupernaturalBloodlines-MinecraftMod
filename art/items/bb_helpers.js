@@ -7,7 +7,7 @@
   const MODELS = ROOT + 'src/main/resources/assets/supernaturalbloodlines/models/item/';
   const BBM = ROOT + 'art/blockbench/items/';
   const SPEC = ROOT + 'art/items/spec3d/';
-  const TEMP = 'C:/Users/caiom/AppData/Local/Temp/opencode/item-art/v3/';
+  const TEMP = 'C:/Users/caiom/AppData/Local/Temp/opencode/item-art/v4/';
   const PREV = ROOT + 'art/previews/items/';
   const NS = 'supernaturalbloodlines:item/';
   const FACES = ['north', 'east', 'south', 'west', 'up', 'down'];
@@ -145,6 +145,68 @@
     return i;
   };
 
+  // Skinned players wearing the exported models/curio/*.json. Skin PNGs are read from SKIN (vanilla steve/alex, kept out of the repo).
+  // Entity-to-world: right arm pivot x = -5 (+5 left), arm bottom at world y = 12, ring centre 2.5 px above it (local y 9.5 of a 10 px arm).
+  SB.playerSetup = function (SKIN, rings) {
+    const p = proj('ring_worn_preview'); p.select(); if (Project !== p) throw new Error('select player');
+    Cube.all.slice().forEach(c => c.remove(false)); Texture.all.slice().forEach(t => t.remove(false));
+    const CUR = MODELS.replace('models/item/', 'models/curio/');
+    const skins = {
+      wide: new Texture({ name: 'steve.png' }).fromDataURL(b64(SKIN + 'wide_steve.png')).add(false),
+      slim: new Texture({ name: 'alex.png' }).fromDataURL(b64(SKIN + 'slim_alex.png')).add(false),
+    };
+    const pals = {};
+    const S = 0.25;
+    const box = (name, tex, from, to, u, v, w, h, d) => {
+      const c = new Cube({ name, from, to, autouv: 0, box_uv: false }).init();
+      const f = c.faces, U = a => a * S;
+      f.west.uv = [U(u), U(v + d), U(u + d), U(v + d + h)];
+      f.north.uv = [U(u + d), U(v + d), U(u + d + w), U(v + d + h)];
+      f.east.uv = [U(u + d + w), U(v + d), U(u + 2 * d + w), U(v + d + h)];
+      f.south.uv = [U(u + 2 * d + w), U(v + d), U(u + 2 * d + 2 * w), U(v + d + h)];
+      f.up.uv = [U(u + d), U(v + d), U(u + d + w), U(v)];
+      f.down.uv = [U(u + d + w), U(v), U(u + d + 2 * w), U(v + d)];
+      for (const k of FACES) f[k].texture = tex.uuid;
+    };
+    const inf = (a, e) => [a[0] - e, a[1] - e, a[2] - e];
+    const sup = (a, e) => [a[0] + e, a[1] + e, a[2] + e];
+    const out = [];
+    rings.forEach((r, i) => {
+      const slim = r.slim, tex = slim ? skins.slim : skins.wide, aw = slim ? 3 : 4;
+      const z0 = (i - (rings.length - 1) / 2) * 22;
+      const B = (n, f, t, u, v, w, h, d, e) => box(n + '_' + i, tex, e ? inf([f[0], f[1], f[2] + z0], e) : [f[0], f[1], f[2] + z0], e ? sup([t[0], t[1], t[2] + z0], e) : [t[0], t[1], t[2] + z0], u, v, w, h, d);
+      B('head', [-4, 24, -4], [4, 32, 4], 0, 0, 8, 8, 8); B('hat', [-4, 24, -4], [4, 32, 4], 32, 0, 8, 8, 8, 0.5);
+      B('body', [-4, 12, -2], [4, 24, 2], 16, 16, 8, 12, 4); B('jacket', [-4, 12, -2], [4, 24, 2], 16, 32, 8, 12, 4, 0.25);
+      B('rleg', [-4, 0, -2], [0, 12, 2], 0, 16, 4, 12, 4); B('rpants', [-4, 0, -2], [0, 12, 2], 0, 32, 4, 12, 4, 0.25);
+      B('lleg', [0, 0, -2], [4, 12, 2], 16, 48, 4, 12, 4); B('lpants', [0, 0, -2], [4, 12, 2], 0, 48, 4, 12, 4, 0.25);
+      B('rarm', [-4 - aw, 12, -2], [-4, 24, 2], 40, 16, aw, 12, 4); B('rsleeve', [-4 - aw, 12, -2], [-4, 24, 2], 40, 32, aw, 12, 4, 0.25);
+      B('larm', [4, 12, -2], [4 + aw, 24, 2], 32, 48, aw, 12, 4); B('lsleeve', [4, 12, -2], [4 + aw, 24, 2], 48, 48, aw, 12, 4, 0.25);
+      const m = JSON.parse(fs.readFileSync(CUR + r.ring + (slim ? '_slim' : '') + '.json'));
+      const tf = m.textures['0'].split(':')[1];
+      if (!pals[tf]) pals[tf] = new Texture({ name: tf.split('/').pop() + '.png' }).fromDataURL(b64(TEX + tf.replace('item/', '') + '.png')).add(false);
+      const cx = -5 + (slim ? -0.5 : -1);
+      for (const e of m.elements) {
+        // renderer chain: translate(cx, 9.5), XP180 (flips y and z), so z is mirrored and y maps to 12.5 + (my - 8)
+        const c = new Cube({ name: e.name + '_' + i, from: [cx + e.from[0] - 8, 12.5 + e.from[1] - 8, -(e.to[2] - 8) + z0], to: [cx + e.to[0] - 8, 12.5 + e.to[1] - 8, -(e.from[2] - 8) + z0], autouv: 0, box_uv: false }).init();
+        const fm = { north: 'south', south: 'north' };
+        for (const k of FACES) {
+          const src = e.faces[fm[k] || k];
+          if (src) { c.faces[k].uv = src.uv; c.faces[k].texture = pals[tf].uuid; } else c.faces[k].texture = false;
+        }
+      }
+      out.push(z0);
+    });
+    Canvas.updateAll(); unselectAllElements();
+    return out;
+  };
+
+  SB.playerShot = function (file, cam) {
+    const p = proj('ring_worn_preview'); p.select(); unselectAllElements();
+    pv().loadAnglePreset({ position: cam.position, target: cam.target, projection: 'perspective', fov: cam.fov, locked_angle: null });
+    render(file);
+    return file;
+  };
+
   SB.armShots = function () {
     const p = proj('ring_worn_preview'); p.select(); unselectAllElements();
     const v = pv();
@@ -183,6 +245,8 @@
     return names;
   };
 })();
+
+
 
 
 

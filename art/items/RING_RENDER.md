@@ -2,8 +2,11 @@
 
 Assets only; no Java was written. A Curios `ICurioRenderer` draws one of these models on the player's arm while the ring is equipped.
 
+## What the ring looks like
+Small jewellery at the hand, not a cuff: a **1 px tall, 0.4 px thick silver band at the very bottom of the arm** (the lowest pixel, where the hand is), wrapping the outer face and half of the front and back faces. It is open on the inner side of the arm (against the body). On the outer face (the back of the hand when the arm hangs) sits a **stone of 2 x 1.2 px, raised 0.5 px**, with one highlight pixel. Stones: sun = royal blue lapis with a gold fleck; moon = dark blue-black **kyanite** with a lighter blue streak; resurrection (Gilbert) = black onyx. See `art/previews/items/ring_worn_preview.png` (full body, classic and slim, then close-ups of the six variants).
+
 ## Models
-`assets/supernaturalbloodlines/models/curio/<ring>[_slim][_left].json` for `sun_ring`, `moon_ring`, `resurrection_ring` (12 files). Textures are `textures/item/3d/curio_<ring>.png` (a 16x16 flat-colour palette, shared by all four variants). Blockbench sources: `art/blockbench/items/item_curio_<ring>.bbmodel` (classic, right arm). Rebuild with `py art/items/curio.py`.
+`assets/supernaturalbloodlines/models/curio/<ring>[_slim][_left].json` for `sun_ring`, `moon_ring`, `resurrection_ring` (12 files). Textures are `textures/item/3d/curio_<ring>.png` (a 16x16 flat-colour palette shared by the four variants). Blockbench sources: `art/blockbench/items/item_curio_<ring>.bbmodel` (classic, right arm). Rebuild with `py art/items/curio.py`.
 
 | File | Use for |
 |---|---|
@@ -12,33 +15,32 @@ Assets only; no Java was written. A Curios `ICurioRenderer` draws one of these m
 | `<ring>_slim.json` | right arm, slim (Alex, 3 px wide) |
 | `<ring>_slim_left.json` | left arm, slim |
 
-Each is a plain block model (no display transforms, no parent) in 0..16 block-model units, **1 unit = 1 pixel of the player model**. The ring is built upright: band axis = the arm axis, centre of the band at (8, 8, 8), stone on the **-X** side of the band for the right-arm files and **+X** for the `_left` files, which is the outward side of the hand when the arm hangs down. The band is 0.55 px thick and 1.2 px tall, 0.1 px clear of the 0.25 px sleeve layer, so it sits over sleeves and bare skin without z-fighting. The stone is 0.6 px proud of the band.
+Each is a plain block model (no display transforms, no parent) in 0..16 block-model units, **1 unit = 1 pixel of the player model**. It is authored upright (y up) with the ring centre at (8, 8, 8): the band is at y 7.5..8.5, the stone on the **-X** side for the right-arm files and **+X** for the `_left` files, which is the outward side when the arm hangs down. The band is 0.3 px clear of the arm skin, so it sits over the 0.25 px sleeve layer.
 
 ## Where it attaches
-- **Bone:** the arm `ModelPart` of `PlayerModel`: `rightArm` / `leftArm`. Apply `arm.translateAndRotate(poseStack)` first, so the ring follows arm swing, sneaking and item-use poses. Do not attach to the hand item layer, the ring is not held.
-- **Which hand:** slot index 0 on the right arm, index 1 on the left (or the Curios `SlotContext.index()` parity). A single ring goes on the right arm.
-- **Arm-local pose** (ModelPart space: +Y is down, +Z is the player's back, pixel units; the arm pivot is at the shoulder; the arm cube spans y = -2..10 so its **bottom (hand end) is y = 10**):
+- **Bone:** the arm `ModelPart` of `PlayerModel`: `rightArm` / `leftArm`. Apply `arm.translateAndRotate(poseStack)` first so the ring follows arm swing, sneaking and use poses. It is not a held item.
+- **Which hand:** Curios slot index 0 on the right arm, index 1 on the left. A single ring goes on the right arm.
+- **Arm-local pose** (ModelPart space: +Y is down, the front of the player is -Z, pixel units; the arm cube spans y = -2..10, so its **bottom (hand end) is y = 10**):
 
 | Arm | Offset to the ring centre (x, y, z) px | Model file |
 |---|---|---|
-| Classic right | (-1.0, 8.5, 0) | `<ring>.json` |
-| Classic left | (+1.0, 8.5, 0) | `<ring>_left.json` |
-| Slim right | (-0.5, 8.5, 0) | `<ring>_slim.json` |
-| Slim left | (+0.5, 8.5, 0) | `<ring>_slim_left.json` |
+| Classic right | (-1.0, 9.5, 0) | `<ring>.json` |
+| Classic left | (+1.0, 9.5, 0) | `<ring>_left.json` |
+| Slim right | (-0.5, 9.5, 0) | `<ring>_slim.json` |
+| Slim left | (+0.5, 9.5, 0) | `<ring>_slim_left.json` |
 
-  y = 8.5 puts the band's lower edge 0.9 px above the end of the arm, i.e. a ring at the wrist/knuckles end of the hand. x is the centre of the arm cube (classic cube x = -3..1 / -1..3, slim -2..1 / -1..2).
-- **Scale:** 1.0. One model unit is one player pixel. Convert to blocks with the usual `1/16`: the pose is already in blocks after `translateAndRotate`, so translate by `offset / 16`, and the model keeps its native 16-unit block space.
-- **Rotation:** the models are authored y-up and the arm space is y-down, so rotate 180 degrees about X before rendering: `Axis.XP.rotationDegrees(180)`. This keeps the stone on the outer X side and flips Z only (the models are symmetric in Z except for stone details).
-- **Recentre:** the model centre is (8, 8, 8) block-model units, so after the rotation do `translate(-0.5, -0.5, -0.5)` and render the baked model (`ItemRenderer.renderModelLists` / `BlockRenderDispatcher`-style quad render with the item atlas, `LightTexture.FULL_BRIGHT` is not needed).
+  y = 9.5 puts the band at arm-local y 9..10 (the lowest pixel), with the stone at y 8.8..10. x is the centre of the arm cube (classic cube x = -3..1 right, -1..3 left; slim -2..1 and -1..2).
+- **Scale:** 1.0. One model unit is one player pixel.
+- **Rotation:** the models are y-up and arm space is y-down, so rotate 180 degrees about X before rendering: `Axis.XP.rotationDegrees(180)`. That keeps the stone on the outer X side and mirrors Z, which only matters for the stone details (they are symmetric enough that nothing needs a fix).
+- **Recentre:** the model centre is (8, 8, 8) block-model units, so after the rotation translate by (-0.5, -0.5, -0.5) blocks and render the baked model.
 
-Pseudo-order (for the coder, not code to copy): `armPart.translateAndRotate` -> `translate(ox/16, 8.5/16, 0)` -> `mulPose(XP 180)` -> `translate(-0.5, -0.5, -0.5)` -> render the baked curio model.
+Order for the coder (not code to copy): `armPart.translateAndRotate` -> `translate(ox/16, 9.5/16, 0)` -> `mulPose(XP 180)` -> `translate(-0.5, -0.5, -0.5)` -> render the baked curio model. The preview was built with exactly this transform (the models mirrored in Z, offset (-5 + ox, 12.5) in a y-up player).
 
 ## Slim versus classic
-Pick by the player's skin model (`PlayerSkin.model() == SLIM`). Slim uses the `_slim*` files, whose band is 1 px narrower in X (inner half-width 1.85 px against 2.35 px) and whose offset is half a pixel closer to the body (see table). Z width is the same (4 px).
+Pick by the player's skin model (`PlayerSkin.model() == SLIM`). Slim uses the `_slim*` files, whose band hugs a 3 px arm (outer face 0.5 px closer to the body) and uses the slim offsets above. Z width is the same (4 px).
 
 ## Notes
 - Hide the ring when the arm is hidden (spectator, invisibility) and when the player model is not the vanilla `PlayerModel`.
 - Crouching, swimming and elytra need no special case: the ring is attached to the arm part.
-- A second ring of the same type on the other hand uses the `_left` file; do not mirror with a negative scale (it flips face winding).
-- Preview of the result: `art/previews/items/ring_worn_preview.png` (classic row top, slim row bottom; back three-quarter left, side right; sun, moon, resurrection from left to right in each row, extra arms at the edges are the neighbouring rows).
-- Held item model (what `sun_ring.json` shows in hands, on the ground and in frames) is a different, deliberately small model: third/first person transforms put the band around the end of the arm/hand with the stone up; see `models3d.py` `RING`.
+- Do not mirror with a negative scale to get the left hand (it flips face winding); use the `_left` files.
+- The held item model (what `sun_ring.json` shows in hands, on the ground and in frames) is a separate small model; see `models3d.py` `RING`.

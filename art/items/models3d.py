@@ -257,8 +257,9 @@ def sun_ring():
 def moon_ring():
     def stone(m):
         m.box(6.0, 12.4, 6.6, 10.0, 13.0, 9.4, "#d4dae4")
-        m.cyl(8, 8, 1.7, 13.0, 14.8, {"side": "#eef2f6", "u": "#ffffff", "d": "#c4d2e6"})
-        m.box(6.8, 13.4, 6.2, 7.6, 14.2, 6.5, "#ffffff")
+        m.cyl(8, 8, 1.7, 13.0, 14.8, {"side": "#16264a", "u": "#2a4580", "d": "#0c1530"})
+        m.box(7.0, 14.3, 6.6, 9.4, 14.5, 7.1, "#6fa6dc")
+        m.box(6.8, 13.4, 6.2, 7.4, 14.0, 6.5, "#e8f4ff")
     r = ring("moon_ring", "#aab3c4", "#d4dae4", "#6a7388", stone)
     return r
 

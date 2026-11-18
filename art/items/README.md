@@ -11,7 +11,7 @@ Every item has two models: a 16x16 sprite for the GUI and a small 3D model for h
 
 ## Items (45)
 - **Blood and vials:** `original_blood`, `doppelganger_blood`, `hybrid_blood`, `sires_blood`, `klaus_blood` (red blood told apart by cork, band, flecks), `the_cure` (slim red vial, silver cap), `the_true_cure` (white-blue), `the_elixir` (gold flask).
-- **Rings:** `sun_ring` (silver, lapis), `moon_ring` (silver, milky moonstone), `resurrection_ring` (silver, black onyx); the held 3D rings are small and oriented so the band wraps the end of the arm with the stone up (worn, not held like a tool). Worn-on-arm models for a Curios renderer are in `models/curio/` (12 files), see [RING_RENDER.md](RING_RENDER.md).
+- **Rings:** `sun_ring` (silver, lapis), `moon_ring` (silver, dark blue kyanite), `resurrection_ring` (silver, black onyx); the held 3D rings are small and oriented so the band wraps the end of the arm with the stone up (worn, not held like a tool). Worn-on-arm models for a Curios renderer are in `models/curio/` (12 files), see [RING_RENDER.md](RING_RENDER.md).
 - **Poppets:** `sun_poppet`, `silver_poppet`, `spirit_poppet`: stitched cloth dolls.
 - **Blades:** `silver_dagger`, `white_oak_ash_dagger`, `white_oak_stake`, `mikaels_stake`, `taser`, `valet_pike` (diagonal handheld transforms; the pike is held like a spear).
 - **Gear and gems:** `hearing_device`, `vampire_compass` (brass case, animated dial on the 3D model too), `moonstone`, `memory_claws`, `mantle_of_the_beast`, `kol_grimoire`, `esther_grimoire`.
