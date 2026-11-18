@@ -129,20 +129,28 @@ public final class ProfilePage implements HubPageView {
         int face = f.layout().chrome().detail() != null && f.layout().chrome().detail().h() >= 60 ? 48 : r.w() >= 150 ? 40 : 28;
         boolean leader = payload != null && payload.facts().get(Fact.RANK) != null && payload.facts().get(Fact.RANK).contains("alpha");
         BookKit.portrait(f.g, route.name(), r.x() + face / 2 + 1, y + face / 2 + 1, face, route.id().equals(f.view.player().getUUID()) ? t.accent() : t.muted(), t.paper());
-        int tx = r.x() + face + 8;
-        int ty = PageKit.title(f, Component.literal(route.name()), tx, y, r.right() - tx, t.accent());
-        if (leader) {
-            BookPackPage.crown(f, Math.min(r.right() - 8, tx + (int) (f.font().width(route.name()) * 1.5f) + 5), y + 3);
-        }
         List<String> rank = payload == null ? null : payload.facts().get(Fact.RANK);
-        if (rank != null && !rank.isEmpty()) {
-            Component chip = value(Fact.RANK, rank);
-            int w = f.font().width(chip) + 8;
-            int cy = Math.max(ty + 1, y + face - 11);
-            f.g.fill(tx, cy, tx + w, cy + 11, (t.accent() & 0xFFFFFF) | 0xFF000000);
-            f.g.drawString(f.font(), chip, tx + 4, cy + 2, Contrast.bestText(t.accent()), false);
+        Component chip = rank == null || rank.isEmpty() ? null : value(Fact.RANK, rank);
+        // beside the portrait when the name and the chip fit there, else under it (a narrow column must not squeeze or cut them)
+        int besideX = r.x() + face + 8;
+        boolean beside = r.right() - besideX >= Math.max(f.font().width(route.name()), chip == null ? 0 : f.font().width(chip) + 8);
+        int tx = beside ? besideX : r.x();
+        int top = beside ? y : y + face + 3;
+        int ty = PageKit.title(f, Component.literal(route.name()), tx, top, r.right() - tx - (leader ? 12 : 0), t.accent());
+        if (leader) {
+            int nameW = ty - top > PageKit.LINE + 2 ? r.right() - tx - 12 : (int) (f.font().width(route.name()) * (f.font().width(route.name()) * 1.5f <= r.right() - tx - 12 ? 1.5f : 1f));
+            BookPackPage.crown(f, Math.min(r.right() - 8, tx + nameW + 5), top + 3);
         }
-        return y + Math.max(face + 2, ty - y);
+        int bottom = ty;
+        if (chip != null) {
+            String text = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(chip.getString(), r.right() - tx - 8, f.font()::width);
+            int w = f.font().width(text) + 8;
+            int cy = beside ? Math.max(ty + 1, y + face - 11) : ty + 1;
+            f.g.fill(tx, cy, tx + w, cy + 11, (t.accent() & 0xFFFFFF) | 0xFF000000);
+            f.g.drawString(f.font(), text, tx + 4, cy + 2, Contrast.bestText(t.accent()), false);
+            bottom = beside ? ty : cy + 11;
+        }
+        return beside ? y + Math.max(face + 2, bottom - y) : bottom + 3;
     }
 
     /** The facts as cells: the label small over its value, two columns where the page is wide, one where it is not, so a short value stays beside its label. */
