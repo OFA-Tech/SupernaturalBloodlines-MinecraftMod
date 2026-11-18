@@ -30,6 +30,7 @@ public record HubView(Player player, BloodlineState bloodline, SupernaturalState
         HubPage.Context c = new HubPage.Context(races.get(0), races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty(),
                 ModList.get().isLoaded("werewolves"), ModList.get().isLoaded("enchanted"),
                 net.ofatech.supernaturalbloodlines.shared.hud.LoadoutAccess.available());
+        c = c.withOp(p.hasPermissions(2)).withPack(!snap.pack().isEmpty());
         HubView view = new HubView(p, b, s, races, HubModel.ladders(LadderTable.clientCopy(), s, races, levels(p)), SkillTable.clientCopy(), snap, c);
         java.util.function.UnaryOperator<HubView> dev = HubDev.view();
         return dev == null ? view : dev.apply(view);

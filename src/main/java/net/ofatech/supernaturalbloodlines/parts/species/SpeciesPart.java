@@ -1,5 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.species;
 
+import java.util.List;
+import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
+import net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfSkillRuleGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SkillRuleGameTests;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry;
@@ -119,6 +122,13 @@ public final class SpeciesPart {
     public static void init(IEventBus modBus, ModContainer container) {
         LegacyConfig.register(); // reads the file before NeoForge loads it
         container.registerConfig(ModConfig.Type.COMMON, SpeciesConfig.SPEC, SpeciesConfig.FILE);
+        AdminSpecs.register(SpeciesConfig.FILE, SpeciesConfig.SPEC);
+        net.ofatech.supernaturalbloodlines.parts.species.profile.SpeciesProfiles.register();
+        AdminSpecs.choices(SpeciesConfig.FILE + ":species.original_visibility", List.of(SpeciesConfig.LINE_DISCOVERED, SpeciesConfig.LINE_ALWAYS));
+        AdminSpecs.choices(SpeciesConfig.FILE + ":species.gene_visibility", List.of(SpeciesConfig.GENES_DISCOVERED, SpeciesConfig.GENES_ALWAYS));
+        AdminSpecs.choices(SpeciesConfig.FILE + ":species.doppelganger_rite_taglock", List.of(SpeciesConfig.TAGLOCK_DOPPELGANGER, SpeciesConfig.TAGLOCK_HUMAN));
+        AdminSpecs.choices(SpeciesConfig.FILE + ":species.hybrid_transition_blood", List.of(SpeciesConfig.TRANSITION_BLOOD_ORIGINAL_HYBRID, SpeciesConfig.TRANSITION_BLOOD_ORIGINAL));
+        AdminSpecs.lineCheck(SpeciesConfig.FILE + ":species.npc_line_weights", line -> !LineRules.parseWeights(List.of(line)).isEmpty());
         // the faction rites (vampirism_enchanted part) now run with the real context and through the executor
         FactionRiteHooks.install((p, faction, time) -> SpeciesContext.of(p, faction, time, null), OutcomeExecutor::run);
         BloodlineAccess.addListener((p, change) -> SpeciesData.get(p.server).setOriginal(p.getUUID(), isOriginal(change.after().species())));

@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.artifacts;
 
+import net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ArtifactsWerewolfSkillRuleGameTests;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.ArtifactsSkillRuleGameTests;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry;
@@ -35,6 +36,7 @@ public final class ArtifactsPart {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, ArtifactsConfig.SPEC, ArtifactsConfig.FILE);
+        AdminSpecs.register(ArtifactsConfig.FILE, ArtifactsConfig.SPEC);
         boolean curios = ModList.get().isLoaded("curios");
         boolean werewolves = ModList.get().isLoaded("werewolves");
         // before the datapacks load, so the rite JSONs can name this factory

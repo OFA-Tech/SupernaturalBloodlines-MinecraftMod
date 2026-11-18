@@ -219,7 +219,8 @@ public final class BookPackPage implements HubPageView {
             if (leads) {
                 tip.add(1, Component.translatable(KEY + "leader"));
             }
-            f.target(id, hit, tip, () -> selected = m.name());
+            tip.add(Component.translatable(KEY + "open_profile"));
+            f.target(id, hit, tip, openProfile(f, m.name()));
             if (f.focused(id)) {
                 KitDraw.focusRing(f.g, hit, t.focusColor());
             }
@@ -260,18 +261,34 @@ public final class BookPackPage implements HubPageView {
                     () -> BloodlinePage.command("pack challenge decline"));
             y = dy + 13;
         }
-        y = BookKit.small(f, Component.translatable(BOOK + "invite"), r.x(), y + 2, r.w(), t.muted());
+        boolean mayInvite = leads(f, pack) || (pack.isEmpty() && (wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA));
+        if (style != Style.BOOK) {
+            y = PackInvite.render(f, r, y + 2, mayInvite, PackInvite.idsOf(f));
+        }
         f.end(y);
         if (style == Style.BOOK) {
+            // the foot of the page: the seal, the two invite buttons beside it and, under them, the way out
             int sy = r.bottom() - BookKit.SEAL;
             BookKit.seal(f, "pack:accept", Component.translatable(BOOK + "accept"), true, r.x(), sy, () -> BloodlinePage.command("pack accept"),
                     List.of(Component.translatable(KEY + "accept")));
+            PackInvite.buttons(f, new Rect(r.x() + BookKit.SEAL + 8, sy + 2, r.w() - BookKit.SEAL - 8, PageWidgets.H), sy + 2, mayInvite);
             if (!pack.isEmpty()) {
-                BookKit.link(f, "pack:leave", Component.translatable(KEY + "leave"), r.x() + BookKit.SEAL + 8, sy + 14, List.of(Component.translatable(KEY + "leave")),
+                BookKit.link(f, "pack:leave", Component.translatable(KEY + "leave"), r.x() + BookKit.SEAL + 8, sy + 24, List.of(Component.translatable(KEY + "leave")),
                         () -> f.confirm(Component.translatable(BOOK + "leave_title"), Component.translatable(BOOK + "leave_body"), Component.translatable(BOOK + "leave_yes"),
                                 () -> BloodlinePage.command("pack leave")));
             }
         }
+    }
+
+    /** A click on a member (portrait or ledger row) selects them and opens their Profile when the snapshot named an id for them. */
+    private Runnable openProfile(HubScreen.Frame f, String name) {
+        java.util.UUID id = f.view.snapshot().pack().stream().filter(m -> m.name().equals(name)).flatMap(m -> m.id().stream()).findFirst().orElse(null);
+        return () -> {
+            selected = name;
+            if (id != null) {
+                f.screen().openProfile(id, name);
+            }
+        };
     }
 
     /** The Blood Moon's floating bar and Tensura's info pane: the chosen member (or the pack) and what the command allows. */
@@ -318,12 +335,16 @@ public final class BookPackPage implements HubPageView {
         if (pack.isEmpty()) {
             // nobody beside you: the empty state instead of an empty ring
             EmptyState.render(f, s, top + Math.max(0, (s.bottom() - top - 150) / 2), "pack", HubPage.GUIDE);
+            if (style == Style.BOOK) {
+                PackInvite.picker(f, new Rect(s.x(), top, s.w(), 0), top, PackInvite.idsOf(f), true);
+            }
             f.end(s.bottom());
             return;
         }
-        int legend = 10 * Math.max(1, Math.min(3, f.font().split(Component.translatable(BOOK + "legend"), s.w()).size())) + 2;
         // on the Blood Moon stage the ledger card takes the right of it, so the ring is centred in what is left
         int areaW = style == Style.MOON ? Math.max(60, f.region("right").x() - 14 - s.x()) : s.w();
+        // the legend is drawn at the width of that area, 9 pixels a line: the room kept for it is that many lines, whole
+        int legend = 9 * Math.max(1, f.font().split(Component.translatable(BOOK + "legend"), areaW).size()) + 3;
         int cy = top + (s.bottom() - legend - top) / 2;
         int cx = s.x() + areaW / 2;
         List<PackRing.Member> members = new ArrayList<>();
@@ -353,13 +374,17 @@ public final class BookPackPage implements HubPageView {
                 BookKit.small(f, Component.literal(n), Math.max(s.x(), Math.min(s.x() + areaW - nw - 2, nx)), ny, nw + 4, slot.member().role().small() ? t.muted() : t.ink());
             }
             f.target("ring:" + slot.member().id(), new Rect(slot.x() - size / 2 - 2, slot.y() - size / 2 - 2, size + 4, size + 4),
-                    List.of(Component.literal(slot.member().id())), () -> selected = slot.member().id());
+                    List.of(Component.literal(slot.member().id()), Component.translatable(KEY + "open_profile")), openProfile(f, slot.member().id()));
         }
         if (ring.hidden() > 0) {
             Component more = Component.translatable(BOOK + "ring_more", ring.hidden());
             f.g.drawString(f.font(), more, cx - f.font().width(more) / 2, cy + inner + 14, t.muted(), false);
         }
         BookKit.small(f, Component.translatable(BOOK + "legend"), s.x(), s.bottom() - legend + 1, areaW, t.muted());
+        if (style == Style.BOOK) {
+            // the players to pick from, on a card over the top of the ring
+            PackInvite.picker(f, new Rect(s.x(), top, s.w(), 0), top, PackInvite.idsOf(f), true);
+        }
         f.end(s.bottom());
     }
 }

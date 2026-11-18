@@ -48,6 +48,11 @@ public final class DuelBoard {
             this.expires = expires;
         }
 
+        /** The game tick the request or the duel runs out. */
+        public long expires() {
+            return expires;
+        }
+
         public UUID challenger() {
             return challenger;
         }

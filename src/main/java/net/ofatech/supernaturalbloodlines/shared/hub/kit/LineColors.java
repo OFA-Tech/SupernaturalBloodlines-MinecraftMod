@@ -7,6 +7,9 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 public final class LineColors {
     public static final double MIN_RATIO = 3.0;
     public static final int GOLD = 0xFFC9962B;
+    /** The green pill of a freed line (Grimoire) and the ink on it: the ink is at least 4.5:1 on it (a contrast test holds both). */
+    public static final int FREE_PILL = 0xFF2F6E4A;
+    public static final int FREE_PILL_INK = 0xFFF6F0DC;
     public static final int MOON_RED = 0xFFE05A5A;
     public static final int MOON_THREAD = 0xFF8A2F3A;
     public static final int MOON_RING = 0xFF6A3A44;

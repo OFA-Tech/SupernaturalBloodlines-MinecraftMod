@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.speciestensura;
 
+import java.util.List;
+import net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SpeciesTensuraSkillRuleGameTests;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -27,7 +29,11 @@ public final class SpeciesTensuraPart {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, SpeciesTensuraConfig.SPEC, SpeciesTensuraConfig.FILE);
+        AdminSpecs.register(SpeciesTensuraConfig.FILE, SpeciesTensuraConfig.SPEC);
+        AdminSpecs.lineCheck(SpeciesTensuraConfig.FILE + ":layers", line -> LayerTable.parse(List.of(line)).rejected().isEmpty());
+        AdminSpecs.lineCheck(SpeciesTensuraConfig.FILE + ":rank_skills", line -> RankSkillTable.parse(List.of(line)).rejected().isEmpty());
         ConfigWarning.register(modBus);
+        SpeciesTensuraSync.register(modBus);
         ApexRaces.register();
         if (!ApexOffer.hookApplied()) {
             SupernaturalBloodlines.LOGGER.warn("species_tensura: the ManasRaceInstance.getNextEvolutions hook is not in place, "
@@ -46,6 +52,7 @@ public final class SpeciesTensuraPart {
         // the part is only initialised when its mods are present, so the tests only exist then
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(SpeciesLayerGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SpeciesTensuraSyncGameTests.class);
             e.register(ApexGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexUndeadSwitchGameTests.class);
             e.register(SirelineTensuraGameTests.class);

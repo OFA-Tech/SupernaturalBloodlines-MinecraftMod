@@ -32,6 +32,10 @@ public final class SpeciesTensuraConfig {
     private static volatile Boolean apexOverride;
     private static volatile Boolean sireLinkOverride;
     private static volatile Boolean sireNamingOverride;
+    // what the server of the world this client joined says for the three keys clients also read (null: use the local file)
+    private static volatile LayerTable pushedTable;
+    private static volatile Boolean pushedUndead;
+    private static volatile Boolean pushedApex;
 
     /** A string-list option parsed into a table; parsed again only when the config hands out a new list (a reload). */
     private static final class Cached<T> {
@@ -129,7 +133,38 @@ public final class SpeciesTensuraConfig {
     private SpeciesTensuraConfig() {}
 
     public static LayerTable table() {
-        return LAYER_TABLE.get();
+        LayerTable pushed = pushedTable;
+        return pushed != null ? pushed : LAYER_TABLE.get();
+    }
+
+    /** Client side: the server's values for {@code layers}, {@code undead_treatment_enabled} and {@code apex_evolutions_enabled} win over this client's own file until {@link #clearPushed}. */
+    public static void applyPushed(List<String> layers, boolean undead, boolean apex) {
+        pushedTable = LayerTable.parse(layers).table();
+        pushedUndead = undead;
+        pushedApex = apex;
+    }
+
+    public static void clearPushed() {
+        pushedTable = null;
+        pushedUndead = null;
+        pushedApex = null;
+    }
+
+    /** What this side's own config says for the three keys clients also read, ignoring anything pushed: what a server sends its clients. */
+    public static List<String> localLayers() {
+        try {
+            return LAYERS.get().stream().map(String.class::cast).toList();
+        } catch (IllegalStateException notLoaded) {
+            return LayerTable.DEFAULTS;
+        }
+    }
+
+    public static boolean localUndeadTreatment() {
+        return read(UNDEAD_TREATMENT);
+    }
+
+    public static boolean localApexEnabled() {
+        return read(APEX_ENABLED);
     }
 
     public static RankSkillTable rankSkills() {
@@ -206,6 +241,9 @@ public final class SpeciesTensuraConfig {
         if (forced != null) {
             return forced;
         }
+        if (pushedApex != null) {
+            return pushedApex;
+        }
         try {
             return APEX_ENABLED.get();
         } catch (IllegalStateException notLoaded) {
@@ -225,6 +263,9 @@ public final class SpeciesTensuraConfig {
         Boolean forced = undeadOverride;
         if (forced != null) {
             return forced;
+        }
+        if (pushedUndead != null) {
+            return pushedUndead;
         }
         try {
             return UNDEAD_TREATMENT.get();

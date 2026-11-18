@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.hud;
 
+import net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -28,8 +29,10 @@ public final class HudPart {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, HudConfig.SPEC, HudConfig.FILE);
+        AdminSpecs.register(HudConfig.FILE, HudConfig.SPEC);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             container.registerConfig(ModConfig.Type.CLIENT, HudClientConfig.SPEC, HudClientConfig.FILE);
+            AdminSpecs.registerClient(HudClientConfig.FILE, HudClientConfig.SPEC); // the hub's Settings page edits these
             HudClient.register(modBus);
         }
         BiteService.register();

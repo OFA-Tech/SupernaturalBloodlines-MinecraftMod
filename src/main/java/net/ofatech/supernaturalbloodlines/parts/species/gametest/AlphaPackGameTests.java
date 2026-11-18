@@ -778,6 +778,37 @@ public final class AlphaPackGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void anAbsentLeadersPoolMovesToTheNewLeaderAndADissolvedPackLosesIt(GameTestHelper helper) {
+        UUID goneId = UUID.randomUUID();
+        ServerPlayer strong = alpha(helper, 9, 1.5);
+        ServerPlayer beta = wolf(helper, Rank.BETA, goneId, 1, 2.5);
+        online(strong, beta);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.ofatech.supernaturalbloodlines.parts.species.profile.ProfileKnowledge pool = net.ofatech.supernaturalbloodlines.parts.species.profile.ProfileKnowledge.get(helper.getLevel());
+        UUID subject = UUID.randomUUID();
+        long now = System.currentTimeMillis();
+        try {
+            index.join(goneId, strong.getUUID());
+            index.join(goneId, beta.getUUID());
+            index.setStrength(strong.getUUID(), 1009);
+            pool.discover(index, beta.getUUID(), subject, java.util.EnumSet.of(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.LINE));
+            helper.assertTrue(pool.hasPool(goneId), "the pool was not made under the leader");
+            index.setLastSeen(goneId, now - 8 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackAbsence.check(helper.getLevel().getServer(), now) == 1 && index.isLeader(strong.getUUID()), "the absent leader was not deposed");
+            helper.assertTrue(pool.hasPool(strong.getUUID()) && !pool.hasPool(goneId), "the pool did not follow the new leader");
+            helper.assertTrue(pool.known(index, strong.getUUID(), subject).contains(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.LINE), "the new leader lost the discovery");
+
+            index.dissolve(strong.getUUID());
+            helper.assertTrue(!pool.hasPool(strong.getUUID()), "a dissolved pack kept its pool");
+        } finally {
+            index.leave(goneId);
+            index.takeNotices(goneId);
+            clean(helper, strong, beta);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void anAbsentLeadersPartyMovesToTheNewLeaderToo(GameTestHelper helper) {
         UUID goneId = UUID.randomUUID();
         ServerPlayer strong = alpha(helper, 9, 1.5);

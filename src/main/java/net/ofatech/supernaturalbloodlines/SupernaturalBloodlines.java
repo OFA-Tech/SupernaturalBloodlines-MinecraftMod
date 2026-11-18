@@ -36,6 +36,7 @@ public final class SupernaturalBloodlines {
     public SupernaturalBloodlines(IEventBus modBus, ModContainer container) {
         LOGGER.info("Supernatural Bloodlines loading");
         container.registerConfig(ModConfig.Type.COMMON, Config.COMMON);
+        net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs.register(Config.FILE, Config.COMMON);
 
         // always registered (not in a part): data of a disabled part must still decode its conditions
         CONDITIONS.register(modBus);

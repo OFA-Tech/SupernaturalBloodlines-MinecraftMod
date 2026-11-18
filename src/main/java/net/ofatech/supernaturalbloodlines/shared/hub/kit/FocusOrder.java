@@ -7,7 +7,7 @@ import java.util.OptionalInt;
 
 /**
  * Keyboard order of the hub: Tab moves nav, then stage, then panel, then actions. A target's zone comes from its id, so a page needs no
- * change. Number keys 1 to 8 jump to a page. Pure.
+ * change. Number keys 0 (Home) and 1 to 9 jump to a page. Pure.
  */
 public final class FocusOrder {
     public enum Zone {
@@ -15,9 +15,11 @@ public final class FocusOrder {
     }
 
     static final int KEY_1 = 49;
-    static final int KEY_8 = 56;
+    static final int KEY_0 = 48;
+    static final int KEY_9 = 57;
     static final int KP_1 = 321;
-    static final int KP_8 = 328;
+    static final int KP_0 = 320;
+    static final int KP_9 = 329;
 
     private FocusOrder() {
     }
@@ -43,12 +45,17 @@ public final class FocusOrder {
         return out;
     }
 
-    /** The page index a number key (top row or keypad, 1 to 8) asks for, when that many pages show. */
+    /** True for the key 0 (top row or keypad): Home. */
+    public static boolean isHomeKey(int glfwKey) {
+        return glfwKey == KEY_0 || glfwKey == KP_0;
+    }
+
+    /** The index among the pages after Home that a number key (top row or keypad, 1 to 9) asks for, when that many pages show. */
     public static OptionalInt pageForKey(int glfwKey, int pageCount) {
         int i;
-        if (glfwKey >= KEY_1 && glfwKey <= KEY_8) {
+        if (glfwKey >= KEY_1 && glfwKey <= KEY_9) {
             i = glfwKey - KEY_1;
-        } else if (glfwKey >= KP_1 && glfwKey <= KP_8) {
+        } else if (glfwKey >= KP_1 && glfwKey <= KP_9) {
             i = glfwKey - KP_1;
         } else {
             return OptionalInt.empty();

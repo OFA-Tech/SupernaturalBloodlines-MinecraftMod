@@ -66,7 +66,7 @@ public final class LabelFit {
 
     /** The width a ladder label may use: the gap between two rungs, less a margin, never more than {@code max}. */
     public static int ladderWidth(int step, int max) {
-        return Math.max(24, Math.min(max, step - 4));
+        return Math.max(24, Math.min(max, step - 8));
     }
 
     /** True when a ladder label's longest word does not fit the gap between rungs: the labels then alternate between two rows and get twice the width. */

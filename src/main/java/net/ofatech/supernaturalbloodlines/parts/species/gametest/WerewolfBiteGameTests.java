@@ -284,6 +284,231 @@ public final class WerewolfBiteGameTests {
         helper.succeed();
     }
 
+    /**
+     * P2: the hub's Accept button ran "pack accept" with no token, which was an incomplete command, so nobody ever joined. The command now
+     * answers the newest open invitation, and the hub's snapshot lists that invitation with its token for the Requests card.
+     */
+    private static boolean joinPack(ServerPlayer leader, ServerPlayer member) {
+        return PackCommand.invite(leader, member) == null && PackCommand.accept(member, PackCommand.requests().tokenOf(leader.getUUID(), member.getUUID()).orElseThrow()) == null;
+    }
+
+    /** Hub IA 3.7: an NPC in the observer's own line shows its name and species and nothing else, and is marked as no player; a stranger is not. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anNpcInYourLineShowsOnlyItsNameAndSpecies(GameTestHelper helper) {
+        ServerPlayer me = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer stranger = TestPlayers.createDuelist(helper);
+        lookup(me, stranger);
+        java.util.UUID thrall = java.util.UUID.randomUUID();
+        var sirelines = net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel());
+        try {
+            sirelines.add(me.getUUID(), thrall, "vampirism:advanced_vampire", "Thrall");
+            var profile = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(me, thrall);
+            helper.assertTrue(profile.npc() && profile.facts().keySet().equals(java.util.EnumSet.of(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.NAME,
+                    net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES)), "an NPC of the line was told " + profile.facts().keySet() + " npc=" + profile.npc());
+            helper.assertTrue(profile.facts().get(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES).equals(List.of("advanced_vampire")), "the species is " + profile.facts());
+            var other = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(stranger, thrall);
+            helper.assertTrue(!other.npc() && other.facts().isEmpty(), "a stranger was told about the NPC: " + other.facts());
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(me, stranger.getUUID()).npc(), "a player was marked as an NPC");
+        } finally {
+            sirelines.remove(thrall);
+            SireCall.overridePlayerLookup(null);
+        }
+        helper.succeed();
+    }
+
+    /** A packmate's profile of a pack-mate carries the days in the pack (from the pack index's join time) and the Alpha rank's bonus (the numbers the rank really sets). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPackmatesProfileCarriesDaysInThePackAndTheBonus(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer member = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, member);
+        long[] now = {1_000_000_000_000L};
+        net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.overrideClock(() -> now[0]);
+        try {
+            helper.assertTrue(joinPack(alpha, member), "the pack could not be built");
+            now[0] += 3 * 86_400_000L + 1000;
+            var ofAlpha = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(member, alpha.getUUID()).facts();
+            var ofMember = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts();
+            var days = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.PACK_DAYS;
+            var bonus = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.BONUS;
+            helper.assertTrue(List.of("3").equals(ofMember.get(days)), "the member's days in the pack were " + ofMember.get(days));
+            helper.assertTrue(List.of("3").equals(ofAlpha.get(days)), "the pack's age was " + ofAlpha.get(days));
+            var expected = net.ofatech.supernaturalbloodlines.parts.species.pack.RankEffects.bonusText(net.ofatech.supernaturalbloodlines.core.BloodlineAccess.get(alpha).wolf(), true);
+            helper.assertTrue(expected.isPresent() && List.of(expected.get()).equals(ofAlpha.get(bonus)), "the Alpha's bonus was " + ofAlpha.get(bonus) + " not " + expected);
+            helper.assertTrue(!ofMember.containsKey(bonus), "an Omega was shown a bonus: " + ofMember.get(bonus));
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.overrideClock(System::currentTimeMillis);
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, member);
+        }
+        helper.succeed();
+    }
+
+    /** An NPC Original the observer has not discovered answers like a stranger: no facts and no NPC flag (the flag alone would name the Original). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anUndiscoveredNpcOriginalAnswersLikeAStranger(GameTestHelper helper) {
+        ServerPlayer me = wolf(helper, Rank.ALPHA, null);
+        lookup(me);
+        java.util.UUID original = net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.values()[0].uuid();
+        var sirelines = net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel());
+        try {
+            sirelines.add(original, me.getUUID(), "minecraft:player", "Me");
+            var before = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(me, original);
+            helper.assertTrue(!before.npc() && before.facts().isEmpty(), "an undiscovered Original was told: npc=" + before.npc() + " " + before.facts());
+        } finally {
+            sirelines.remove(me.getUUID());
+            SireCall.overridePlayerLookup(null);
+            clean(me);
+        }
+        helper.succeed();
+    }
+
+    /** The sire fact never names an NPC Original or a creature (the hub's own Bloodline page shows those as "?"), and a pack-mate's genes are only the ones that player has discovered. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aProfileNeverNamesACreatureSireOrUndiscoveredGenes(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer member = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, member);
+        var sirelines = net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel());
+        java.util.UUID original = net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.values()[0].uuid();
+        var sire = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SIRE;
+        var genes = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.GENES;
+        try {
+            helper.assertTrue(joinPack(alpha, member), "the pack could not be built");
+            sirelines.add(original, member.getUUID(), "minecraft:player", "Member");
+            var ofMember = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts();
+            helper.assertTrue(!ofMember.containsKey(sire), "an NPC Original sire was named: " + ofMember.get(sire));
+            // the member's werewolf gene is rolled (wolf() sets it) but undiscovered: a packmate learns it only through a discovery, and then only what was discovered
+            net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(member, net.ofatech.supernaturalbloodlines.core.BloodlineAccess.get(member).toBuilder()
+                    .revealedGenes(java.util.Set.of(net.ofatech.supernaturalbloodlines.core.bloodline.Genes.WEREWOLF)).build());
+            var shown = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts().get(genes);
+            helper.assertTrue(shown != null && shown.contains("doppelganger:unknown") && shown.stream().anyMatch(g -> g.startsWith("werewolf:") && !g.endsWith(":unknown")), "the genes shown were " + shown);
+        } finally {
+            sirelines.remove(member.getUUID());
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, member);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Hub IA 3.7: what an observer may learn of a person comes from the server's own indexes. A stranger gets no fields at all, a pack-mate
+     * the pack's facts, and a secret (genes) only once somebody has discovered it; the pack's pool teaches a newcomer, and leaving keeps it.
+     */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aNonMemberCannotLearnAMembersSpecies(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer member = wolf(helper, Rank.OMEGA, null);
+        ServerPlayer stranger = TestPlayers.createDuelist(helper);
+        ServerPlayer newcomer = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, member, stranger, newcomer);
+        var species = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES;
+        var genes = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.GENES;
+        var pack = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.PACK;
+        try {
+            helper.assertTrue(joinPack(alpha, member), "the pack could not be built");
+            var forStranger = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(stranger, member.getUUID());
+            helper.assertTrue(forStranger.facts().isEmpty() && !forStranger.opView(), "a stranger was told " + forStranger.facts());
+            var forAlpha = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID());
+            helper.assertTrue(forAlpha.facts().containsKey(species) && forAlpha.facts().containsKey(pack), "a pack-mate was told only " + forAlpha.facts().keySet());
+            helper.assertTrue(!forAlpha.facts().containsKey(genes), "a gene nobody discovered was shown to the pack");
+
+            // the member discovers their own gene: the pack knows it at once, the stranger still knows nothing
+            BloodlineAccess.set(member, BloodlineAccess.get(member).toBuilder().revealedGenes(java.util.Set.of(net.ofatech.supernaturalbloodlines.core.bloodline.Genes.WEREWOLF)).build());
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(alpha, member.getUUID()).facts().containsKey(genes), "the pack did not learn a discovery");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(stranger, member.getUUID()).facts().isEmpty(), "a discovery reached a stranger");
+
+            // a newcomer receives the pool, and leaving the pack keeps what they know but not the live facts
+            helper.assertTrue(joinPack(alpha, newcomer), "the newcomer could not join");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(newcomer, member.getUUID()).facts().containsKey(genes), "the newcomer was not given the pool");
+            helper.assertTrue(PackCommand.leave(newcomer) == null, "the newcomer could not leave");
+            var after = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(newcomer, member.getUUID());
+            helper.assertTrue(after.facts().containsKey(genes) && !after.facts().containsKey(pack) && !after.facts().containsKey(species), "after leaving they know " + after.facts().keySet());
+        } finally {
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, member, stranger, newcomer);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void hubAcceptRunsTheTokenCommand(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer omega = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, omega);
+        try {
+            helper.assertTrue(PackCommand.invite(alpha, omega) == null, "the invitation was refused");
+            String token = PackCommand.requests().tokenOf(alpha.getUUID(), omega.getUUID()).orElseThrow();
+            var pending = net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(omega);
+            helper.assertTrue(pending.size() == 1 && pending.get(0).kind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.PACK_INVITE
+                    && pending.get(0).token().equals(token) && pending.get(0).ticksLeft() == net.ofatech.supernaturalbloodlines.parts.species.sireline.CallRequests.TTL_TICKS,
+                    "the Requests card data is " + pending);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(alpha).isEmpty(), "the inviter was shown the invitation");
+
+            helper.assertTrue(dispatch(omega, "pack accept") == 1, "pack accept with no token failed");
+            w(helper, omega, alpha);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(omega).isEmpty(), "the answered invitation is still listed");
+            helper.assertTrue(dispatch(omega, "pack accept") == 0, "a second accept with nothing open worked");
+        } finally {
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, omega);
+        }
+        helper.succeed();
+    }
+
+    /** Runs a typed command as {@code p} with permission 0; an unknown or incomplete command is an error, not a quiet 0. */
+    private static int dispatch(ServerPlayer p, String command) {
+        net.minecraft.commands.CommandSource sink = new net.minecraft.commands.CommandSource() {
+            @Override
+            public void sendSystemMessage(net.minecraft.network.chat.Component c) {
+            }
+
+            @Override
+            public boolean acceptsSuccess() {
+                return true;
+            }
+
+            @Override
+            public boolean acceptsFailure() {
+                return true;
+            }
+
+            @Override
+            public boolean shouldInformAdmins() {
+                return false;
+            }
+        };
+        var stack = new net.minecraft.commands.CommandSourceStack(sink, p.position(), p.getRotationVector(), (net.minecraft.server.level.ServerLevel) p.level(), 0,
+                p.getGameProfile().getName(), p.getDisplayName(), p.server, p);
+        try {
+            return p.server.getCommands().getDispatcher().execute(command, stack);
+        } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+            throw new AssertionError("\"" + command + "\" is not a command: " + e.getMessage());
+        }
+    }
+
+    /** The member actions of the profile page name a person by UUID: the commands take one where they take a name. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void memberActionsTakeAUuid(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer omega = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, omega);
+        try {
+            helper.assertTrue(PackCommand.invite(alpha, omega) == null && PackCommand.accept(omega, PackCommand.requests().tokenOf(alpha.getUUID(), omega.getUUID()).orElseThrow()) == null,
+                    "the control invitation failed");
+            helper.assertTrue(dispatch(alpha, "pack kick " + omega.getUUID()) == 1, "kicking by UUID failed");
+            helper.assertTrue(PackIndex.get(helper.getLevel()).alphaOf(omega.getUUID()).isEmpty(), "the kicked member is still in the pack");
+        } finally {
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, omega);
+        }
+        helper.succeed();
+    }
+
+    private static void w(GameTestHelper helper, ServerPlayer member, ServerPlayer alpha) {
+        helper.assertTrue(alpha.getUUID().equals(PackIndex.get(helper.getLevel()).alphaOf(member.getUUID()).orElse(null)), "the accepted invitation did not put them in the pack");
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void secondInviteReplacesTheFirst(GameTestHelper helper) {
         ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);

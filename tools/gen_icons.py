@@ -19,7 +19,7 @@ NAMES = [
     "moon_new", "moon_waxing_crescent", "moon_first_quarter", "moon_waxing_gibbous", "moon_full", "moon_waning_gibbous",
     "moon_last_quarter", "moon_waning_crescent",
     "sun", "shield", "fang", "vial", "question", "info", "plus", "arrow_left", "arrow_right", "claw", "heart", "key",
-    "boot", "eye", "voice", "spark", "bolt",
+    "boot", "eye", "voice", "spark", "bolt", "home", "settings", "admin", "bell",
 ]
 
 
@@ -228,6 +228,24 @@ def draw(name):
         c.poly([(8, 1), (10, 6), (15, 8), (10, 10), (8, 15), (6, 10), (1, 8), (6, 6)])
     elif name == "bolt":
         c.poly([(9, 1), (3, 9), (7, 9), (6, 15), (13, 6), (8, 6)])
+    elif name == "home":
+        c.poly([(8, 1.5), (14.5, 8), (12.5, 8), (12.5, 14), (3.5, 14), (3.5, 8), (1.5, 8)])
+        c.rect(6, 9, 9, 14, True, 0)
+    elif name == "settings":
+        c.ring(8, 8, 4.6, 2.2)
+        for ang in range(0, 360, 45):
+            x = 8 + 6.2 * math.cos(math.radians(ang))
+            y = 8 + 6.2 * math.sin(math.radians(ang))
+            c.disc(x, y, 1.3)
+    elif name == "admin":
+        c.poly([(8, 1), (14, 3.5), (14, 8), (8, 15), (2, 8), (2, 3.5)])
+        c.rect(7, 4, 8, 9, True, 0)
+        c.rect(7, 11, 8, 12, True, 0)
+    elif name == "bell":
+        c.disc(8, 7, 4.5)
+        c.rect(3, 7, 12, 11)
+        c.rect(2, 11, 13, 12)
+        c.disc(8, 14, 1.6)
     else:
         raise SystemExit("no drawing for " + name)
     return c

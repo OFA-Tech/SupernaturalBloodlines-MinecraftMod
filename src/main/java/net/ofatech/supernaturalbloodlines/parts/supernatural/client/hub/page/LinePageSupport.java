@@ -64,13 +64,22 @@ public final class LinePageSupport {
 
     /** The line under a node's name: "Original · crowned", "Hybrid · you", "sired". */
     public static Component caption(HubScreen.Frame f, LineTree.Model m, LineTree.Node n) {
+        return caption(f, m, n, Integer.MAX_VALUE);
+    }
+
+    /** The caption, and for a hidden node the shorter wording ("NPC · unnamed") when the full one does not fit {@code room}. */
+    public static Component caption(HubScreen.Frame f, LineTree.Model m, LineTree.Node n, int room) {
         return switch (n.kind()) {
-            case ROOT -> Component.translatable(KEY + (n.hidden() ? "cap.root_hidden" : "cap.root"));
-            case ANCESTOR -> Component.translatable(KEY + (n.hidden() ? "cap.ancestor_hidden" : "cap.ancestor"));
+            case ROOT -> Component.translatable(KEY + (n.hidden() ? shortIfTight(f, "cap.root_hidden", room) : "cap.root"));
+            case ANCESTOR -> Component.translatable(KEY + (n.hidden() ? shortIfTight(f, "cap.ancestor_hidden", room) : "cap.ancestor"));
             case SIRE -> Component.translatable(KEY + (n.hidden() ? "cap.sire_unknown" : "cap.sire"));
             case YOU -> m.state() == LineRules.State.ORIGINAL ? Component.translatable(KEY + "cap.you_original") : Component.translatable(KEY + "cap.you", race(f));
             case DESCENDANT -> Component.translatable(KEY + "cap.down");
         };
+    }
+
+    private static String shortIfTight(HubScreen.Frame f, String key, int room) {
+        return f.font().width(Component.translatable(KEY + key)) <= room ? key : key + ".short";
     }
 
     /** What the narrator says about a node, as a sentence. */
@@ -111,6 +120,11 @@ public final class LinePageSupport {
 
     /** The selection's detail, drawn as the page opposite, the bar or the info pane. Only the player's own node carries the actions. */
     public static Detail detail(HubScreen.Frame f, LineTree.Model m, LineTree.Node n) {
+        return detail(f, m, n, false);
+    }
+
+    /** {@code genes}: add the genes as a field (the Tensura pane, when the stage has no room for the vials). */
+    public static Detail detail(HubScreen.Frame f, LineTree.Model m, LineTree.Node n, boolean genes) {
         HubSocial.Origin o = origin(f);
         Detail.Builder b = Detail.of(name(n)).subtitle(Component.translatable(KEY + "selected", caption(f, m, n)));
         if (n.kind() != LineTree.Kind.YOU) {
@@ -122,8 +136,15 @@ public final class LinePageSupport {
         b.field(Component.translatable(KEY + "field.sire"), snap.sire().filter(s -> !s.isEmpty()).<Component>map(Component::literal)
                 .orElse(Component.translatable(sired ? KEY + "sire_unknown" : KEY + "no_sire")));
         b.field(Component.translatable(KEY + "field.line"), lineText(m, o));
+        if (genes) {
+            b.field(Component.translatable(KEY + "genes"), BloodlineGenes.count(snap));
+        }
         b.body(note(m, o));
         boolean mayCall = mayCall(f);
+        boolean noSireAtAll = m.state() == LineRules.State.ORIGINAL;
+        if (noSireAtAll) {
+            return b.build(); // an Original has no sire to call, sever from or break from: the page says so in words instead of offering buttons
+        }
         b.action(new Detail.Action("call", Component.translatable(KEY + "act.call"), true, mayCall,
                 mayCall ? null : Component.translatable(KEY + "act.why_cannot_call"), null, () -> command("bloodline call")));
         boolean original = m.state() == LineRules.State.ORIGINAL || m.state() == LineRules.State.NOT_VAMPIRE;
@@ -167,17 +188,19 @@ public final class LinePageSupport {
 
     /** A small open padlock: the body, and a shackle that does not close. */
     public static void openLock(GuiGraphics g, int x, int y, int color) {
-        g.fill(x, y + 4, x + 7, y + 9, color);
-        g.fill(x + 1, y, x + 3, y + 4, color);
-        g.fill(x + 3, y, x + 6, y + 1, color);
-        g.fill(x + 5, y + 1, x + 6, y + 2, color);
+        g.fill(x, y + 4, x + 7, y + 9, color); // the body
+        g.fill(x + 2, y + 5, x + 3, y + 7, 0x55000000); // the keyhole, a darker notch
+        g.fill(x + 1, y + 1, x + 2, y + 4, color); // the shackle: the left post, the arch and a short right post that stops short (open)
+        g.fill(x + 2, y, x + 5, y + 1, color);
+        g.fill(x + 5, y + 1, x + 6, y + 3, color);
     }
 
     /** The padlock badge on the player's portrait: a disc with the open lock. */
     public static void padlock(HubScreen.Frame f, Rect portrait, int disc, int lock) {
-        int size = Math.max(10, portrait.w() * 2 / 3);
-        int x = portrait.right() - size * 2 / 3;
-        int y = portrait.y() - size / 3;
+        int size = Math.max(11, portrait.w() * 5 / 8);
+        // at the foot, to the left: the break, its tag and the label are above and to the right of the portrait
+        int x = portrait.x() - size * 2 / 3;
+        int y = portrait.bottom() - size * 3 / 4;
         KitDraw.shape(f.g, Shapes.Shape.ROUND, x, y, size, disc);
         openLock(f.g, x + (size - 7) / 2, y + (size - 9) / 2, lock);
     }

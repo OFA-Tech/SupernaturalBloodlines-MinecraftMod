@@ -12,7 +12,11 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
  */
 public final class HubSocial {
     /** @param rank {@code alpha}, {@code beta}, {@code emissary} and so on; an Alpha with stacked sparks carries the count after a colon ({@code alpha:3}) */
-    public record Member(String name, String rank, boolean online) {
+    public record Member(String name, String rank, boolean online, Optional<java.util.UUID> id) {
+        public Member(String name, String rank, boolean online) {
+            this(name, rank, online, Optional.empty());
+        }
+
         /** The rank without the spark count: {@code alpha:3} is {@code alpha}. */
         public String base() {
             int i = rank.indexOf(':');
@@ -35,6 +39,10 @@ public final class HubSocial {
 
     /** One of the family below the player: {@code depth} 1 is sired by them, 2 by those, and so on. */
     public record Kin(String name, int depth) {
+    }
+
+    /** A person the hub already names (the sire, someone sired, a pack member) and the id a click on them opens a Profile with. Nothing else about them. */
+    public record Person(String name, java.util.UUID id) {
     }
 
     /**
@@ -78,10 +86,16 @@ public final class HubSocial {
      * @param line      everyone below the player, depth-first
      */
     public record Social(Optional<String> sire, List<String> sired, List<Member> pack, int fiveCount, List<String> ancestors, List<Kin> line,
-                         List<Rite> rites, Origin origin) {
+                         List<Rite> rites, Origin origin, List<Person> people) {
         public static final Social NONE = new Social(Optional.empty(), List.of(), List.of(), 0, List.of(), List.of(), List.of(), Origin.NONE);
 
+        public Social(Optional<String> sire, List<String> sired, List<Member> pack, int fiveCount, List<String> ancestors, List<Kin> line,
+                      List<Rite> rites, Origin origin) {
+            this(sire, sired, pack, fiveCount, ancestors, line, rites, origin, List.of());
+        }
+
         public Social {
+            people = List.copyOf(people);
             sired = List.copyOf(sired);
             pack = List.copyOf(pack);
             ancestors = List.copyOf(ancestors);

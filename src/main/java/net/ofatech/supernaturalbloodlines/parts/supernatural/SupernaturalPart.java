@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural;
 
+import net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.ModSkillGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.PredatorsThirstGameTests;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.BloodSkillGameTests;
@@ -51,6 +52,7 @@ public final class SupernaturalPart {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, SupernaturalConfig.SPEC, SupernaturalConfig.FILE);
+        AdminSpecs.register(SupernaturalConfig.FILE, SupernaturalConfig.SPEC);
         NeoForge.EVENT_BUS.addListener((AddReloadListenerEvent e) -> {
             e.addListener(new LadderReloadListener());
             e.addListener(new SkillReloadListener());
@@ -59,6 +61,7 @@ public final class SupernaturalPart {
         LadderNet.register(modBus);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             container.registerConfig(ModConfig.Type.CLIENT, HubClientConfig.SPEC, HubClientConfig.FILE);
+            AdminSpecs.registerClient(HubClientConfig.FILE, HubClientConfig.SPEC);
             HubKeybinds.register(modBus);
         }
         LadderQuery.set(new LadderQuery.Provider() {
@@ -115,6 +118,7 @@ public final class SupernaturalPart {
             e.register(PredatorsThirstGameTests.class);
             e.register(ModSkillGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.HubGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.supernatural.gametest.AdminGameTests.class);
             if (ModList.get().isLoaded("tensura") && EnabledParts.isEnabled("supernaturalTensura")) {
                 e.register(TensuraEpGameTests.class);
             }

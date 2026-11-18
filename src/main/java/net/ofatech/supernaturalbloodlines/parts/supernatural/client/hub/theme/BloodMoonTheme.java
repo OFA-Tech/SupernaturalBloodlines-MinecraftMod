@@ -72,6 +72,16 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     }
 
     @Override
+    public HubLayout layout(int width, int height, java.util.List<HubPage> pages, int seals) {
+        return BloodMoonLayout.of(width, height, pages, seals);
+    }
+
+    @Override
+    public void drawGroupHeading(GuiGraphics g, Rect r, HubPage.Group group) {
+        g.fill(r.x(), r.y(), r.right(), r.bottom(), group == HubPage.Group.OPERATOR ? GOLD : EDGE);
+    }
+
+    @Override
     public HubPageView view(HubPage page) {
         return switch (page) {
             case PATH -> path;
@@ -120,7 +130,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
                 f.g.renderOutline(c.x(), c.y(), c.w(), c.h(), EDGE);
             }
         }
-        if ((page == HubPage.PATH && !f.view.ghoul()) || page == HubPage.PACK) {
+        if ((page == HubPage.PATH && !f.view.ghoul()) || (page == HubPage.PACK && f.screen().profile() == null)) {
             Rect c = BloodMoonLayout.card(f.region(BloodMoonLayout.RIGHT));
             f.g.fill(c.x(), c.y(), c.right(), c.bottom(), 0xE61a0a10);
             f.g.renderOutline(c.x(), c.y(), c.w(), c.h(), EDGE);
@@ -184,7 +194,9 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
                 primary = i;
             }
         }
-        BarPlan plan = BarPlan.of(r, widths, primary, font.width(d.title()) + (d.pips() > 0 ? d.pips() * 6 + 6 : 0));
+        // a line about the selection needs room to be read: the text keeps at least 45% of the bar and the buttons that do not fit go behind "..."
+        int want = Math.max(font.width(d.title()) + (d.pips() > 0 ? d.pips() * 6 + 6 : 0), d.body().isEmpty() ? 0 : r.w() * 45 / 100);
+        BarPlan plan = BarPlan.of(r, widths, primary, want);
         List<Detail.Action> shown = new ArrayList<>();
         List<Rect> rects = new ArrayList<>();
         for (int i = 0; i < d.actions().size(); i++) {
@@ -225,7 +237,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
             KitDraw.pips(g, x + font.width(title) + 6, r.y() + 8, d.pips(), d.pipsFilled(), RED, 0xFF4a2430);
         }
         int by = r.y() + 17;
-        for (String line : LabelFit.wrap(d.body().isEmpty() ? "" : d.body().get(0).getString(), textW, 2, font::width)) {
+        for (String line : LabelFit.wrap(d.body().isEmpty() ? "" : d.body().get(0).getString(), textW, 2, font::width)) { // two lines, the whole of them: the bar is wide enough for the text
             if (by + 8 > r.bottom() - 3) {
                 break;
             }
@@ -282,6 +294,17 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         KitDraw.shape(g, Shapes.Shape.ROUND, r.x(), r.y(), r.w(), selected ? 0xFFffb3a3 : EDGE);
         KitDraw.shape(g, Shapes.Shape.ROUND, r.x() + 1, r.y() + 1, r.w() - 2, selected ? RED : CARD);
         KitDraw.icon(g, Icons.of(page), r.x() + (r.w() - 12) / 2, r.y() + (r.h() - 12) / 2, 12, selected ? 0xFFfff1ea : 0xFF8A5966);
+        if (page.group() == HubPage.Group.OPERATOR) {
+            // a dashed gold ring: twelve dots round the button
+            double cx = r.x() + r.w() / 2.0;
+            double cy = r.y() + r.h() / 2.0;
+            double rad = r.w() / 2.0 - 1;
+            for (int k = 0; k < 12; k++) {
+                int dx = (int) Math.round(cx + Math.cos(k * Math.PI / 6) * rad);
+                int dy = (int) Math.round(cy + Math.sin(k * Math.PI / 6) * rad);
+                g.fill(dx - 1, dy - 1, dx + 1, dy + 1, GOLD);
+            }
+        }
         if (selected && g.guiWidth() >= BloodMoonLayout.FLAG_MIN_WIDTH) {
             Font font = Minecraft.getInstance().font;
             String label = Component.translatable(page.langKey()).getString();

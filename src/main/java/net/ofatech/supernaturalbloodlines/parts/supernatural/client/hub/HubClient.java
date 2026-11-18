@@ -16,6 +16,8 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotPayload;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubOpenPayload;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotRequestPayload;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 
@@ -25,7 +27,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
  */
 public final class HubClient {
     private static volatile HubSnapshotPayload snapshot = HubSnapshotPayload.EMPTY;
-    private static HubPage lastPage = HubPage.PATH;
+    private static HubPage lastPage = HubPage.HOME;
     private static final HubReturn RETURN = new HubReturn();
 
     private HubClient() {
@@ -43,6 +45,7 @@ public final class HubClient {
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> {
             snapshot = HubSnapshotPayload.EMPTY;
             RETURN.clear();
+            RequestsClient.clear();
         });
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Opening e) -> {
             if (e.getNewScreen() instanceof DeathScreen) {
@@ -55,6 +58,15 @@ public final class HubClient {
                     : mc.screen instanceof HubScreen ? HubReturn.OnScreen.HUB : HubReturn.OnScreen.OTHER;
             RETURN.tick(now, mc.screen == null ? null : mc.screen.getClass().getName()).ifPresent(HubClient::open);
         });
+        // a name in a request message links here: the hub opens on that person (client only, the server is never asked to run it)
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.RegisterClientCommandsEvent e) -> e.getDispatcher().register(
+                net.minecraft.commands.Commands.literal(net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.COMMAND)
+                        .then(net.minecraft.commands.Commands.argument("id", net.minecraft.commands.arguments.UuidArgument.uuid())
+                                .then(net.minecraft.commands.Commands.argument("name", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                                        .executes(ctx -> {
+                                            openProfile(net.minecraft.commands.arguments.UuidArgument.getUuid(ctx, "id"), com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "name"));
+                                            return 1;
+                                        })))));
         HubHooks.setHubOpener(HubClient::open);
         HubHooks.addTheme(new HubHooks.Theme(HubClientConfig.ThemeId.GRIMOIRE.id(), () -> true, GrimoireTheme::new));
         HubHooks.addTheme(new HubHooks.Theme(HubClientConfig.ThemeId.BLOOD_MOON.id(), () -> true, BloodMoonTheme::new));
@@ -139,8 +151,42 @@ public final class HubClient {
         }
     }
 
+    private static boolean openedThisSession;
+
+    /** Home the first time in a session and whenever a request waits, else the page the player left (the Settings option "open on" can force either). */
     public static void open() {
-        open(lastPage);
+        boolean waiting = !RequestsClient.requests().isEmpty();
+        boolean home = HubClientConfig.openOnHome() ? !openedThisSession || waiting : waiting;
+        openedThisSession = true;
+        open(home ? HubPage.HOME : lastPage);
+    }
+
+    /** The hub on Home, then on that person's Profile (from a chat name). */
+    static void openProfile(java.util.UUID id, String name) {
+        open(HubPage.HOME);
+        if (Minecraft.getInstance().screen instanceof HubScreen s) {
+            s.openProfile(id, name);
+        }
+    }
+
+    /** The "answer request" key: Home, with the first request focused. */
+    public static void openRequests() {
+        openedThisSession = true;
+        open(HubPage.HOME);
+    }
+
+    /** Back in the main menu: the next world starts a new session. */
+    public static void newSession() {
+        openedThisSession = false;
+        lastPage = HubPage.HOME;
+    }
+
+    /** Asks for a snapshot again: the server takes that as "still open" (see {@code HubPresence}). */
+    static void keepAlive() {
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null && DevShots.demo() == null && connection.hasChannel(HubSnapshotRequestPayload.TYPE)) {
+            PacketDistributor.sendToServer(HubSnapshotRequestPayload.INSTANCE);
+        }
     }
 
     static void open(HubPage page) {
@@ -153,5 +199,35 @@ public final class HubClient {
         }
         lastPage = page;
         mc.setScreen(new HubScreen(page));
+        sendOpen(true);
+    }
+
+    /** Runs one of our commands by its row id (see {@code AdminCommands}); the server rebuilds the typed command, Brigadier checks it, and the reply comes back. */
+    public static void runCommand(String rowId, java.util.List<String> args) {
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null && connection.hasChannel(net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubCommandPayload.TYPE)) {
+            PacketDistributor.sendToServer(new net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubCommandPayload(rowId, args));
+        }
+    }
+
+    /** Asks for a person's profile; the OP view only goes out from Admin and the server answers it only to permission level 2. */
+    static void requestProfile(java.util.UUID id, boolean op) {
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection == null || DevShots.demo() != null) { // the dev screenshots show made-up people: nothing is asked of the server
+            return;
+        }
+        if (op && connection.hasChannel(net.ofatech.supernaturalbloodlines.parts.supernatural.net.AdminProfileRequestPayload.TYPE)) {
+            PacketDistributor.sendToServer(new net.ofatech.supernaturalbloodlines.parts.supernatural.net.AdminProfileRequestPayload(id));
+        } else if (!op && connection.hasChannel(net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfileRequestPayload.TYPE)) {
+            PacketDistributor.sendToServer(new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfileRequestPayload(id));
+        }
+    }
+
+    /** Tells the server whether the hub is open, so a request made to this player waits longer while they can answer it. */
+    static void sendOpen(boolean open) {
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null && connection.hasChannel(HubOpenPayload.TYPE)) {
+            PacketDistributor.sendToServer(new HubOpenPayload(open));
+        }
     }
 }

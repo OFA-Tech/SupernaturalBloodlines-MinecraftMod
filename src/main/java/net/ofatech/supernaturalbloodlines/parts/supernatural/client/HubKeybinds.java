@@ -21,13 +21,25 @@ public final class HubKeybinds {
     public static final KeyMapping HUB = new KeyMapping("key.supernaturalbloodlines.hub", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_HOME, PackKeybinds.CATEGORY);
 
+    /** Unbound by default: Home with the first waiting request focused, for a player who answers from the corner toast. */
+    public static final KeyMapping ANSWER = new KeyMapping("key.supernaturalbloodlines.answer_request", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_UNKNOWN, PackKeybinds.CATEGORY);
+
     private HubKeybinds() {
     }
 
     public static void register(IEventBus modBus) {
-        modBus.addListener((RegisterKeyMappingsEvent e) -> e.register(HUB));
+        modBus.addListener((RegisterKeyMappingsEvent e) -> {
+            e.register(HUB);
+            e.register(ANSWER);
+        });
         HubClient.register();
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> {
+            while (ANSWER.consumeClick()) {
+                if (Minecraft.getInstance().screen == null) {
+                    HubClient.openRequests();
+                }
+            }
             while (HUB.consumeClick()) {
                 if (Minecraft.getInstance().screen == null) {
                     HubClient.open();

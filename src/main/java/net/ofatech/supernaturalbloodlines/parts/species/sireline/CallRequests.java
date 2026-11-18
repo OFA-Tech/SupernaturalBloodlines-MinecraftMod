@@ -31,6 +31,21 @@ public final class CallRequests {
                 .map(Map.Entry::getKey).findFirst();
     }
 
+    /** The token of the newest request still open for {@code sired}: what a button with no token answers. */
+    public Optional<String> latestFor(UUID sired, long now) {
+        return open.entrySet().stream()
+                .filter(e -> e.getValue().sired().equals(sired) && e.getValue().expires() >= now)
+                .max(java.util.Comparator.comparingLong(e -> e.getValue().expires())).map(Map.Entry::getKey);
+    }
+
+    /** Every request still open for {@code sired}, newest first, with its token. */
+    public java.util.List<Map.Entry<String, Request>> openFor(UUID sired, long now) {
+        return open.entrySet().stream()
+                .filter(e -> e.getValue().sired().equals(sired) && e.getValue().expires() >= now)
+                .sorted(java.util.Comparator.comparingLong((Map.Entry<String, Request> e) -> e.getValue().expires()).reversed())
+                .map(e -> Map.entry(e.getKey(), e.getValue())).toList();
+    }
+
     public Optional<Request> take(String token, UUID sired, long now) {
         Request r = open.get(token);
         if (r == null || !r.sired().equals(sired)) {

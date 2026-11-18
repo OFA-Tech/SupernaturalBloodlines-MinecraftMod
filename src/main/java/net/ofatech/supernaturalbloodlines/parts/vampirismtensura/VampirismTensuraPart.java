@@ -1,5 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.vampirismtensura;
 
+import java.util.List;
+import net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
@@ -16,6 +18,9 @@ public final class VampirismTensuraPart {
 
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, VampireSyncConfig.SPEC, VampireSyncConfig.FILE);
+        AdminSpecs.register(VampireSyncConfig.FILE, VampireSyncConfig.SPEC);
+        AdminSpecs.lineCheck(VampireSyncConfig.FILE + ":race_level_floor", line -> VampireMapping.parse(VampireMapping.DEFAULT_CURE_RACE, List.of(line), 20).rejected().isEmpty());
+        AdminSpecs.lineCheck(VampireSyncConfig.FILE + ":werewolf_skill_grants", line -> SkillGrantSpec.parse(List.of(line)).rejected().isEmpty());
         // Architectury calls SET_RACE listeners in registration order: a hunter whose new race is undead has to leave
         // the hunters before VampireSync tries to make them a vampire (it refuses while they are still a hunter)
         FactionRaceRules.register();

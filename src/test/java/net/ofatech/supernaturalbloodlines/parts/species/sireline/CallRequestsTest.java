@@ -61,4 +61,23 @@ class CallRequestsTest {
     void anUnknownTokenIsNothing() {
         assertTrue(new CallRequests().take("nope", SIRED, 0).isEmpty());
     }
+
+    @Test
+    void theHubListsOnlyTheOpenRequestsOfThePlayerNewestFirstAndNeverAnExpiredOne() {
+        CallRequests r = new CallRequests();
+        String old = r.open(CALLER, SIRED, 100);
+        String newer = r.open(OTHER, SIRED, 200);
+        r.open(CALLER, OTHER, 300); // somebody else's
+        var open = r.openFor(SIRED, 250);
+        assertEquals(2, open.size());
+        assertEquals(newer, open.get(0).getKey(), "newest first");
+        assertEquals(old, open.get(1).getKey());
+        assertEquals(newer, r.latestFor(SIRED, 250).orElseThrow(), "a button with no token answers the newest");
+        // the older one has run out, the newer is on its last tick, then it too is gone
+        assertEquals(1, r.openFor(SIRED, 100 + CallRequests.TTL_TICKS + 1).size());
+        assertEquals(newer, r.latestFor(SIRED, 200 + CallRequests.TTL_TICKS).orElseThrow());
+        assertTrue(r.latestFor(SIRED, 200 + CallRequests.TTL_TICKS + 1).isEmpty());
+        assertTrue(r.openFor(SIRED, 200 + CallRequests.TTL_TICKS + 1).isEmpty());
+        assertTrue(r.latestFor(UUID.randomUUID(), 0).isEmpty());
+    }
 }

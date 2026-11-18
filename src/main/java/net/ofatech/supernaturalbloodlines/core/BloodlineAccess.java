@@ -36,6 +36,7 @@ public final class BloodlineAccess {
     private static final String GUARD_KEY = "core:bloodline_listeners";
 
     private static final List<BiConsumer<ServerPlayer, BloodlineChange>> LISTENERS = new CopyOnWriteArrayList<>();
+    private static final List<BiConsumer<ServerPlayer, BloodlineChange>> DISCOVERY_LISTENERS = new CopyOnWriteArrayList<>();
     // changes made by listeners while a player's fan-out is running; only exists during the outer call
     private static final ThreadLocal<Map<UUID, Deque<BloodlineChange>>> PENDING = ThreadLocal.withInitial(HashMap::new);
 
@@ -61,6 +62,23 @@ public final class BloodlineAccess {
             }
         }
         notifyListeners(LISTENERS, p, p.getUUID(), before, s);
+        notifyDiscovery(p, before, s);
+    }
+
+    /** A gene newly revealed or a line newly known: a discovery. The main listeners skip such changes, so these have a list of their own. */
+    private static void notifyDiscovery(ServerPlayer p, BloodlineState before, BloodlineState after) {
+        if (DISCOVERY_LISTENERS.isEmpty() || before.revealedGenes().containsAll(after.revealedGenes())
+                && (after.knownLine() == null || after.knownLine().equals(before.knownLine()))) {
+            return;
+        }
+        BloodlineChange change = new BloodlineChange(before, after);
+        for (BiConsumer<ServerPlayer, BloodlineChange> l : DISCOVERY_LISTENERS) {
+            try {
+                l.accept(p, change);
+            } catch (RuntimeException e) {
+                SupernaturalBloodlines.LOGGER.error("Bloodline discovery listener failed", e);
+            }
+        }
     }
 
     /**
@@ -118,6 +136,11 @@ public final class BloodlineAccess {
 
     public static void addListener(BiConsumer<ServerPlayer, BloodlineChange> l) {
         LISTENERS.add(l);
+    }
+
+    /** Hears every change that reveals a gene or makes a line known to the player, and only those. */
+    public static void addDiscoveryListener(BiConsumer<ServerPlayer, BloodlineChange> l) {
+        DISCOVERY_LISTENERS.add(l);
     }
 
     public static void syncToSelf(ServerPlayer p) {

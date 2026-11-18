@@ -247,6 +247,42 @@ public final class SirelineCompulsionGameTests {
         helper.succeed();
     }
 
+    /** Owner ruling: a choice waits 30 s while the target has the hub open, and the hub's snapshot lists it with the ticks left. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void choiceWaitsThirtySecondsWhileTheHubIsOpen(GameTestHelper helper) {
+        ServerPlayer caster = caster(helper);
+        Villager v = villager(helper, 6);
+        net.ofatech.supernaturalbloodlines.shared.supernatural.HubPresence.set(caster.getUUID(), true);
+        try {
+            gaze(caster, v);
+            click(caster, v);
+            String token = token(helper, caster, v);
+            long now = helper.getLevel().getGameTime();
+            var pending = net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(caster);
+            helper.assertTrue(pending.size() == 1 && pending.get(0).kind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.COMPULSION
+                    && pending.get(0).token().equals(token) && pending.get(0).ticksLeft() == Compulsion.HUB_OPEN_CHOICE_TICKS, "the Requests card data is " + pending);
+            helper.assertTrue(Compulsion.choose(caster, token, "discount", now + Compulsion.HUB_OPEN_CHOICE_TICKS + 1) != null, "an answer after 30 seconds worked");
+
+            Compulsion.clearGuard(caster.getUUID());
+            click(caster, v);
+            String again = token(helper, caster, v);
+            helper.assertTrue(Compulsion.choose(caster, again, "discount", now + Compulsion.HUB_OPEN_CHOICE_TICKS) == null, "an answer on the last tick of 30 seconds was refused");
+
+            // with the hub closed it is the short window again
+            net.ofatech.supernaturalbloodlines.shared.supernatural.HubPresence.set(caster.getUUID(), false);
+            Compulsion.clearGuard(caster.getUUID());
+            click(caster, v);
+            String closed = token(helper, caster, v);
+            helper.assertTrue(Compulsion.choose(caster, closed, "discount", now + Compulsion.CHOICE_TICKS + 1) != null, "the short window was longer than 5 seconds with the hub closed");
+        } finally {
+            net.ofatech.supernaturalbloodlines.shared.supernatural.HubPresence.forget(caster.getUUID());
+            cleanUp(caster);
+            Compulsion.clearGuard(caster.getUUID());
+            v.discard();
+        }
+        helper.succeed();
+    }
+
     // ---- lesser vampires ----
 
     @GameTest(template = "empty", templateNamespace = NS)

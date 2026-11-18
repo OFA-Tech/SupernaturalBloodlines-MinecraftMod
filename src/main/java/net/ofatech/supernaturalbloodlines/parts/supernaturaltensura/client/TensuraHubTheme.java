@@ -75,6 +75,17 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     }
 
     @Override
+    public HubLayout layout(int width, int height, List<HubPage> pages, int seals) {
+        return TensuraHubLayout.of(width, height, pages, seals);
+    }
+
+    @Override
+    public void drawGroupHeading(GuiGraphics g, Rect r, HubPage.Group group) {
+        String text = Component.translatable(group.langKey()).getString().toUpperCase(java.util.Locale.ROOT);
+        g.drawString(Minecraft.getInstance().font, text, r.x() + 2, r.y() + 1, group == HubPage.Group.OPERATOR ? GOLD : MUTED, false);
+    }
+
+    @Override
     public HubPageView view(HubPage page) {
         return switch (page) {
             case PATH -> path;
@@ -163,7 +174,7 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
                     MUTED, pane.bottom() - 8);
         }
         boolean wide = !layout.tabs().isEmpty() && layout.tabs().get(0).w() > 40;
-        if (wide) {
+        if (wide && layout.headings().isEmpty()) {
             Rect first = layout.tabs().get(0);
             caption(g, font, Component.translatable("supernaturalbloodlines.hub.tensura.pages"), first.x(), first.y() - 9);
         }
@@ -216,6 +227,9 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     public void drawTab(GuiGraphics g, Rect r, HubPage page, boolean selected, boolean focused) {
         row(g, r, selected, false, Component.translatable(page.langKey()).getString(), selected ? TEAL : TEXT, () ->
                 KitDraw.icon(g, Icons.of(page), r.x() + 4, r.y() + (r.h() - 10) / 2, 10, selected ? TEAL : TEXT));
+        if (page.group() == HubPage.Group.OPERATOR) {
+            KitDraw.dashed(g, r, GOLD);
+        }
         if (focused) {
             drawFocus(g, r);
         }
@@ -346,15 +360,29 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
             y += 8;
         }
         y += 3;
+        // the fields are what the reader looks up: they keep their room and the text above them gives way (it ends with an ellipsis)
+        int fieldsH = 0;
+        for (Detail.Field fl : d.fields()) {
+            fieldsH += fieldHeight(font, fl, w);
+        }
+        int bodyLimit = d.fields().isEmpty() ? limit : Math.max(y, limit - fieldsH);
         for (Component line : d.body()) {
-            y = text(g, font, line, x, y, w, TEXT, limit) + 3;
+            y = text(g, font, line, x, y, w, TEXT, bodyLimit) + 3;
         }
         for (Detail.Field fl : d.fields()) {
-            if (y + 18 > limit) {
+            int h = fieldHeight(font, fl, w);
+            if (y + h - 3 > limit) {
                 break;
             }
-            caption(g, font, fl.label(), x, y);
-            y = text(g, font, fl.value(), x, y + 9, w, TEXT, limit) + 3;
+            String label = fl.label().getString().toUpperCase(java.util.Locale.ROOT);
+            if (inline(font, fl, w)) {
+                g.drawString(font, label, x, y, MUTED, false);
+                g.drawString(font, fl.value().getString(), x + w - font.width(fl.value()), y, TEXT, false);
+                y += h;
+            } else {
+                caption(g, font, fl.label(), x, y);
+                y = text(g, font, fl.value(), x, y + 9, w, TEXT, limit) + 3;
+            }
         }
         if (d.reward() != null && y + 12 <= limit) {
             y = text(g, font, d.reward(), x, y, w, GOLD, limit) + 3;
@@ -383,6 +411,15 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
             y += h + 4;
         }
         KitDraw.detailActions(ctx, this, buttons, d);
+    }
+
+    /** A field whose label and value fit side by side takes one line. */
+    private static boolean inline(Font font, Detail.Field fl, int w) {
+        return font.width(fl.label().getString().toUpperCase(java.util.Locale.ROOT)) + font.width(fl.value()) + 8 <= w;
+    }
+
+    private static int fieldHeight(Font font, Detail.Field fl, int w) {
+        return inline(font, fl, w) ? 13 : 9 + 10 * Math.max(1, font.split(fl.value(), w).size()) + 3;
     }
 
     /** The text wrapped to {@code w}, as many lines as fit above {@code limit}; when it does not all fit the last line ends with an ellipsis instead of stopping silently. */

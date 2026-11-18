@@ -50,6 +50,7 @@ public final class PackIndex extends SavedData {
     private static final String NOTICES = "notices";
     private static final String SPARKS = "sparks";
     private static final String LAST_SEEN = "last_seen";
+    private static final String JOINED_AT = "joined_at";
     private static final String ALIVE_AT = "alive_at";
     private static final String KEY = "key";
     private static final String VALUE = "value";
@@ -78,6 +79,8 @@ public final class PackIndex extends SavedData {
     private final Map<UUID, Integer> sparks = new HashMap<>();
     // when (wall clock, milliseconds) a member of a pack was last seen: logged out, or renewed every hour while online (only members are recorded)
     private final Map<UUID, Long> lastSeen = new HashMap<>();
+    // when a member joined the pack they are in now (wall-clock millis, {@link #now}); the hub shows it as days in the pack
+    private final Map<UUID, Long> joinedAt = new HashMap<>();
     // the last wall-clock time the server was known to be running (0: never recorded): the gap to the next start is downtime, not an absence
     private long aliveAt;
 
@@ -355,6 +358,21 @@ public final class PackIndex extends SavedData {
     }
 
     /** When {@code id} last left (wall clock milliseconds), if the index ever saw it. */
+    /**
+     * Since when {@code id} has been in their pack: a member's own join, a leader's the first join of any member they lead (the pack's age).
+     * Empty for someone in no pack, or a pack from before joins were recorded.
+     */
+    public Optional<Long> inPackSince(UUID id) {
+        if (!inPack(id) && !isLeader(id)) {
+            return Optional.empty();
+        }
+        Long own = joinedAt.get(id);
+        if (own != null && alphaOf.containsKey(id)) {
+            return Optional.of(own);
+        }
+        return alphaOf.entrySet().stream().filter(e -> e.getValue().equals(id)).map(e -> joinedAt.get(e.getKey())).filter(java.util.Objects::nonNull).min(Long::compare);
+    }
+
     public Optional<Long> lastSeen(UUID id) {
         return Optional.ofNullable(lastSeen.get(id));
     }
@@ -464,10 +482,12 @@ public final class PackIndex extends SavedData {
         if (alpha.equals(beta) || alphaOf.containsKey(beta) || alphaOf.containsKey(alpha)) {
             return false;
         }
+        long at = now();
         for (UUID own : betasOf(beta)) {
             alphaOf.put(own, alpha);
         }
         alphaOf.put(beta, alpha);
+        joinedAt.put(beta, at);
         emissaryOf.remove(beta); // a leader who joins another pack no longer has an Emissary of their own
         allies.remove(beta);
         allies.values().forEach(s -> s.remove(beta));
@@ -480,11 +500,27 @@ public final class PackIndex extends SavedData {
         alphaOf.remove(next);
         alphaOf.replaceAll((member, a) -> a.equals(old) ? next : a);
         alphaOf.put(old, next);
+        joinedAt.put(old, now());
+        joinedAt.remove(next);
         moveLeadership(old, next);
         setDirty();
     }
 
+    private static final java.util.List<java.util.function.BiConsumer<UUID, UUID>> LEADERSHIP_MOVED = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private static final java.util.List<java.util.function.Consumer<UUID>> DISSOLVE_LISTENERS = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    /** Told (old leader, new leader) whenever a pack changes hands, by a duel, an absence, a spark handover or a succession: whatever is kept per leader follows. */
+    public static void onLeadershipMoved(java.util.function.BiConsumer<UUID, UUID> listener) {
+        LEADERSHIP_MOVED.add(listener);
+    }
+
+    /** Told the leader of a pack that dissolved. */
+    public static void onDissolved(java.util.function.Consumer<UUID> listener) {
+        DISSOLVE_LISTENERS.add(listener);
+    }
+
     private void moveLeadership(UUID old, UUID next) {
+        LEADERSHIP_MOVED.forEach(l -> l.accept(old, next));
         UUID emissary = emissaryOf.remove(old);
         if (emissary != null && !emissaryOf.containsKey(next)) {
             emissaryOf.put(next, emissary);
@@ -516,6 +552,7 @@ public final class PackIndex extends SavedData {
         if (was == null) {
             return false;
         }
+        joinedAt.remove(member);
         emissaryOf.values().removeIf(member::equals);
         dissolved.add(member);
         setDirty();
@@ -555,6 +592,7 @@ public final class PackIndex extends SavedData {
 
     public void leave(UUID beta) {
         if (alphaOf.remove(beta) != null) {
+            joinedAt.remove(beta);
             emissaryOf.values().removeIf(beta::equals);
             setDirty();
         }
@@ -604,6 +642,7 @@ public final class PackIndex extends SavedData {
         alphaOf.remove(newAlpha);
         alphaOf.replaceAll((beta, a) -> a.equals(oldAlpha) ? newAlpha : a);
         alphaOf.remove(oldAlpha);
+        joinedAt.remove(newAlpha);
         moveLeadership(oldAlpha, newAlpha);
         // somebody who left the old pack a moment ago left the pack that is now the new Alpha's
         leftAt.replaceAll((id, l) -> l.leader.equals(oldAlpha) ? new Left(newAlpha, l.at) : l);
@@ -616,8 +655,10 @@ public final class PackIndex extends SavedData {
     public void dissolve(UUID alpha) {
         for (UUID beta : betasOf(alpha)) {
             alphaOf.remove(beta);
+            joinedAt.remove(beta);
             dissolved.add(beta);
         }
+        DISSOLVE_LISTENERS.forEach(l -> l.accept(alpha));
         emissaryOf.remove(alpha);
         allies.remove(alpha);
         allies.values().forEach(s -> s.remove(alpha));
@@ -710,6 +751,14 @@ public final class PackIndex extends SavedData {
                 i.lastSeen.put(NbtUtils.loadUUID(e.get(KEY)), e.getLong(VALUE));
             } catch (RuntimeException bad) {
                 skipped(LAST_SEEN, bad);
+            }
+        }
+        for (Tag t : tag.getList(JOINED_AT, Tag.TAG_COMPOUND)) {
+            try {
+                CompoundTag e = (CompoundTag) t;
+                i.joinedAt.put(NbtUtils.loadUUID(e.get(KEY)), e.getLong(VALUE));
+            } catch (RuntimeException bad) {
+                skipped(JOINED_AT, bad);
             }
         }
         i.aliveAt = tag.contains(ALIVE_AT, Tag.TAG_LONG) ? Math.max(0, tag.getLong(ALIVE_AT)) : 0;
@@ -813,6 +862,14 @@ public final class PackIndex extends SavedData {
             seen.add(e);
         });
         tag.put(LAST_SEEN, seen);
+        ListTag joined = new ListTag();
+        joinedAt.forEach((id, t) -> {
+            CompoundTag e = new CompoundTag();
+            e.put(KEY, NbtUtils.createUUID(id));
+            e.putLong(VALUE, t);
+            joined.add(e);
+        });
+        tag.put(JOINED_AT, joined);
         tag.putLong(ALIVE_AT, aliveAt);
         ListTag strong = new ListTag();
         strengths.forEach((id, s) -> {

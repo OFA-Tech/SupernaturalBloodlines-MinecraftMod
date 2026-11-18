@@ -42,11 +42,15 @@ public final class StageLoadoutPage implements HubPageView {
         y = BookKit.caps(f, Component.translatable(PageKit.HUB + "loadout.hand"), r.x(), y, t.muted());
         int tile = 36;
         int gap = 8;
+        // the six slots go in as many rows as the column needs (a narrow one holds three), none cut at its edge
+        int perRow = Math.max(1, (r.w() + gap) / (tile + gap));
+        int rows = 0;
         for (int i = 0; i < Loadout.SLOTS && i < slots.size(); i++) {
-            Rect box = new Rect(r.x() + i * (tile + gap), y + 2, tile, tile);
+            Rect box = new Rect(r.x() + (i % perRow) * (tile + gap), y + 2 + (i / perRow) * (tile + 22), tile, tile);
             slot(f, box, i, slots.get(i), byId);
+            rows = i / perRow + 1;
         }
-        y += tile + 22;
+        y += rows * (tile + 22);
         y = PageKit.wrapped(f, Component.translatable(KEY + "keys"), r.x(), y, r.w(), t.muted()) + 6;
         y = BookKit.caps(f, Component.translatable(PageKit.HUB + "loadout.known"), r.x(), y, t.muted());
         int cols = Math.max(1, r.w() / (tile + gap + 12));

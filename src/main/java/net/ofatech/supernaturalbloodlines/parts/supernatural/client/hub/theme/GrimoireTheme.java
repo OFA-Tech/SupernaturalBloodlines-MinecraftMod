@@ -78,6 +78,11 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
     }
 
     @Override
+    public HubLayout layout(int width, int height, java.util.List<HubPage> pages, int seals) {
+        return GrimoireLayout.of(width, height, pages, seals);
+    }
+
+    @Override
     public void drawFrame(GuiGraphics g, HubLayout l) {
         g.fill(0, 0, g.guiWidth(), g.guiHeight(), 0xA0100707);
         Rect b = l.frame();
@@ -133,13 +138,28 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
         }
     }
 
+    /** The index tab colour family of a nav group: the same ink on each, so the colour tells the group and never carries the meaning alone. */
+    public static int tabColor(HubPage.Group group, boolean selected) {
+        return switch (group) {
+            case NONE, ME -> selected ? 0xFF9A1820 : 0xFF6A1A20;
+            case MAGIC -> selected ? 0xFF6A2E8A : 0xFF45205C;
+            case PEOPLE -> selected ? 0xFF8A5A14 : 0xFF5E3C10;
+            case HELP -> selected ? 0xFF2E7A4A : 0xFF1F5232;
+            case SYSTEM -> selected ? 0xFF5A5058 : 0xFF3C343C;
+            case OPERATOR -> selected ? 0xFF2A2024 : 0xFF1C1416;
+        };
+    }
+
     @Override
     public void drawTab(GuiGraphics g, Rect r, HubPage page, boolean selected, boolean focused) {
         int w = selected ? r.w() + 4 : r.w();
         g.fill(r.x(), r.y() - 1, r.x() + w + 1, r.bottom() + 1, LEATHER_DARK);
-        g.fill(r.x(), r.y(), r.x() + w, r.bottom(), selected ? 0xFF9A1820 : 0xFF6A1A20);
+        g.fill(r.x(), r.y(), r.x() + w, r.bottom(), tabColor(page.group(), selected));
         if (selected) {
             g.renderOutline(r.x() + 1, r.y() + 1, w - 2, r.h() - 2, GOLD);
+        }
+        if (page.group() == HubPage.Group.OPERATOR) {
+            KitDraw.dashed(g, new Rect(r.x() + 1, r.y(), w - 1, r.h()), GOLD);
         }
         KitDraw.icon(g, Icons.of(page), r.x() + 4 + (w - 4 - 12) / 2, r.y() + (r.h() - 12) / 2, 12, selected ? 0xFFFFE3A0 : 0xFFE8B0B0);
         if (focused) {

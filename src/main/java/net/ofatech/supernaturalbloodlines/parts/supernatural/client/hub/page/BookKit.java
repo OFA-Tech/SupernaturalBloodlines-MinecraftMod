@@ -93,9 +93,10 @@ public final class BookKit {
         Font font = f.font();
         int lw = font.width(label);
         int vw = Math.min(font.width(value), Math.max(w / 3, w - lw - 8));
-        String v = font.plainSubstrByWidth(value.getString(), vw);
+        // both end in an ellipsis when they do not fit, like every other label in the hub
+        String v = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(value.getString(), vw, font::width);
         int room = w - font.width(v) - 8;
-        String l = lw > room ? font.plainSubstrByWidth(label.getString(), Math.max(8, room)) : label.getString();
+        String l = lw > room ? net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(label.getString(), Math.max(8, room), font::width) : label.getString();
         f.g.drawString(font, l, x, y, t.ink(), false);
         f.g.drawString(font, v, x + w - font.width(v), y, valueColor, false);
         int from = x + font.width(l) + 3;

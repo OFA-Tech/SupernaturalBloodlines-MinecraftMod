@@ -132,6 +132,78 @@ public final class PackDuelGameTests {
         return start(challenger, leader) && finish(challenger, leader).isCanceled();
     }
 
+    /** The challenge is one of the hub's requests: the leader is asked, with the time left, and it is gone once answered. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aChallengeIsARequestUntilItIsAnswered(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        online(leader, second);
+        try {
+            helper.assertTrue(join(leader, second), "the pack could not be built");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(leader).isEmpty(), "a request before any challenge");
+            helper.assertTrue(PackDuel.challenge(second, id(leader)) == null, "the challenge was refused");
+            var open = net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(leader);
+            helper.assertTrue(open.size() == 1 && open.get(0).kind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.CHALLENGE
+                    && open.get(0).from().equals(second.getUUID()) && open.get(0).token().isEmpty() && open.get(0).ticksLeft() == DuelBoard.TIMEOUT_TICKS, "the leader's requests are " + open);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(second).stream().allMatch(r -> r.kind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.DUEL), "the challenger was shown a request");
+            helper.assertTrue(PackDuel.decline(leader) == null, "the decline failed");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(leader).isEmpty(), "an answered challenge is still a request");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    /** The player's own duel rides with the requests (not as one): asked for the challenger, on for both, and gone when it is called off. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theDuelStateReachesTheProfile(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        online(leader, second);
+        try {
+            helper.assertTrue(join(leader, second), "the pack could not be built");
+            helper.assertTrue(PackDuel.challenge(second, id(leader)) == null, "the challenge was refused");
+            var asked = net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(second);
+            helper.assertTrue(asked.size() == 1 && asked.get(0).kind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.DUEL
+                    && asked.get(0).token().equals("asked") && asked.get(0).from().equals(leader.getUUID()), "the challenger sees " + asked);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(leader).stream().noneMatch(r -> r.kind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.DUEL),
+                    "the one asked got a duel entry as well as the challenge");
+            helper.assertTrue(PackDuel.accept(leader) == null, "the accept failed");
+            for (ServerPlayer p : new ServerPlayer[] {leader, second}) {
+                var mine = net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(p);
+                helper.assertTrue(mine.size() == 1 && mine.get(0).token().equals("on") && mine.get(0).from().equals(p == leader ? second.getUUID() : leader.getUUID()), p.getScoreboardName() + " sees " + mine);
+            }
+            PackDuel.callOff(helper.getLevel().getServer(), second.getUUID(), net.ofatech.supernaturalbloodlines.core.bloodline.DuelBoard.Reason.TIMEOUT);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(second).isEmpty() && net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.of(leader).isEmpty(),
+                    "a duel that was called off is still shown");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    /** What the pack has discovered follows the pack to its new leader. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void thePacksDiscoveriesFollowTheDuelWinner(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        online(leader, second);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.ofatech.supernaturalbloodlines.parts.species.profile.ProfileKnowledge pool = net.ofatech.supernaturalbloodlines.parts.species.profile.ProfileKnowledge.get(helper.getLevel());
+        java.util.UUID subject = java.util.UUID.randomUUID();
+        try {
+            helper.assertTrue(join(leader, second), "the pack could not be built");
+            pool.discover(index, leader.getUUID(), subject, java.util.EnumSet.of(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.GENES));
+            helper.assertTrue(pool.hasPool(leader.getUUID()), "the pool was not made");
+            helper.assertTrue(win(second, leader) && index.isLeader(second.getUUID()), "the duel was not won");
+            helper.assertTrue(pool.hasPool(second.getUUID()) && !pool.hasPool(leader.getUUID()), "the pool did not move to the winner");
+            helper.assertTrue(pool.known(index, second.getUUID(), subject).contains(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.GENES), "the new leader lost the discovery");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theChallengerWhoWinsLeadsAndNobodyLosesTheSpark(GameTestHelper helper) {
         ServerPlayer leader = alpha(helper, 6, 1.5);

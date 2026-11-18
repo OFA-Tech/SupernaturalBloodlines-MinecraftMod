@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
+import net.ofatech.supernaturalbloodlines.shared.hub.NavGroups;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 
 /**
@@ -29,23 +31,63 @@ public final class TensuraHubLayout {
     private TensuraHubLayout() {
     }
 
+    /** The height of a group heading (its text is 8 high). */
+    static final int HEADING = 9;
+    static final int GROUP_GAP = 3;
+    /** A row is never squeezed below this; when headings would, the groups get a plain gap instead. */
+    static final int MIN_STEP = 13;
+
     public static HubLayout of(int width, int height, int tabs, int seals) {
+        return of(width, height, NavGroups.noGaps(tabs), List.of(), seals, false);
+    }
+
+    public static HubLayout of(int width, int height, List<HubPage> pages, int seals) {
+        int[] gaps = NavGroups.gaps(pages);
+        List<NavGroups.Heading> heads = NavGroups.headings(pages);
+        Rect nav = nav(frameOf(width, height));
+        boolean wide = nav.w() > 40;
+        int rows = pages.size() + seals;
+        int mods = seals > 0 ? 6 + CAPTION : 0;
+        // headings when they fit with rows of at least MIN_STEP, a plain gap otherwise (and the old "Pages" caption on top)
+        boolean withHeadings = wide && rows > 0 && (nav.h() - heads.size() * HEADING - mods) / rows >= MIN_STEP;
+        return of(width, height, gaps, withHeadings ? heads : List.of(), seals, withHeadings);
+    }
+
+    static Rect frameOf(int width, int height) {
+        int w = Math.min(MAX_W, width - 2 * MARGIN);
+        int h = Math.min(MAX_H, height - 2 * MARGIN);
+        return new Rect((width - w) / 2, (height - h) / 2, w, h);
+    }
+
+    private static HubLayout of(int width, int height, int[] gaps, List<NavGroups.Heading> headings, int seals, boolean withHeadings) {
+        int tabs = gaps.length;
         int w = Math.min(MAX_W, width - 2 * MARGIN);
         int h = Math.min(MAX_H, height - 2 * MARGIN);
         Rect frame = new Rect((width - w) / 2, (height - h) / 2, w, h);
         Rect nav = nav(frame);
         // every row fits: the step shrinks on a small screen
         int rows = tabs + seals;
-        int avail = nav.h() - 2 * CAPTION - (seals > 0 ? 6 : 0);
-        int step = Math.max(13, Math.min(18, rows == 0 ? 18 : avail / rows));
+        int gapPx = withHeadings ? 0 : NavGroups.total(gaps) * GROUP_GAP;
+        int avail = nav.h() - (withHeadings ? headings.size() * HEADING + CAPTION : 2 * CAPTION) - gapPx - (seals > 0 ? 6 : 0);
+        int step = Math.max(MIN_STEP, Math.min(18, rows == 0 ? 18 : avail / rows));
         int rowH = step - 2;
         List<Rect> pages = new ArrayList<>();
-        int y = nav.y() + CAPTION;
+        List<Rect> heads = new ArrayList<>();
+        int y = nav.y() + (withHeadings ? 0 : CAPTION);
+        int hi = 0;
         for (int i = 0; i < tabs; i++) {
-            pages.add(new Rect(nav.x(), y + i * step, nav.w(), rowH));
+            if (withHeadings && hi < headings.size() && headings.get(hi).tab() == i) {
+                heads.add(new Rect(nav.x(), y, nav.w(), HEADING));
+                y += HEADING;
+                hi++;
+            } else if (!withHeadings) {
+                y += gaps[i] * GROUP_GAP;
+            }
+            pages.add(new Rect(nav.x(), y, nav.w(), rowH));
+            y += step;
         }
         List<Rect> mods = new ArrayList<>();
-        int modsTop = y + tabs * step + 6 + CAPTION;
+        int modsTop = y + 6 + CAPTION;
         for (int i = 0; i < seals; i++) {
             mods.add(new Rect(nav.x(), modsTop + i * step, nav.w(), rowH));
         }
@@ -60,7 +102,7 @@ public final class TensuraHubLayout {
         int counterW = Math.max(60, Math.min(250, themeButton.x() - (frame.x() + 150) - 8));
         Rect counters = new Rect(themeButton.x() - 8 - counterW, frame.y() + 7, counterW, 10);
         return new HubLayout(frame, Map.of(MOON, stage, FULL, stage, HubLayout.MAIN, main, HubLayout.SIDE, side), pages, mods,
-                new HubLayout.Chrome(themeButton, close, stage, counters, pane));
+                new HubLayout.Chrome(themeButton, close, stage, counters, pane), heads);
     }
 
     static Rect nav(Rect frame) {

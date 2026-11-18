@@ -1,6 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
+import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -125,8 +128,9 @@ public final class PackDuel {
         Component accept = Component.translatable(KEY + "accept").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/pack challenge accept"))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(KEY + "accept_hover", PackCommand.name(challenger)))));
-        leader.sendSystemMessage(Component.translatable(KEY + "asked", PackCommand.name(challenger)).append(" ").append(accept));
+        leader.sendSystemMessage(Component.translatable(KEY + "asked", net.ofatech.supernaturalbloodlines.shared.supernatural.ProfileLink.name(PackCommand.name(challenger), challenger.getUUID())).append(" ").append(accept));
         challenger.sendSystemMessage(Component.translatable(KEY + "sent", PackCommand.name(leader)));
+        HubRequests.changed(leader);
         return null;
     }
 
@@ -154,6 +158,7 @@ public final class PackDuel {
             return far;
         }
         BOARD.accept(leader.getUUID(), now);
+        HubRequests.changed(leader);
         Component on = Component.translatable(KEY + "on", PackCommand.name(challenger), PackCommand.name(leader));
         challenger.sendSystemMessage(on);
         leader.sendSystemMessage(on);
@@ -167,6 +172,7 @@ public final class PackDuel {
         if (d == null) {
             return PackCommand.error("duel_none");
         }
+        HubRequests.changed(leader);
         ServerPlayer challenger = SireCall.player(leader.server, d.challenger());
         if (challenger != null) {
             challenger.sendSystemMessage(Component.translatable(KEY + "off.declined", PackCommand.name(leader)));
@@ -493,6 +499,30 @@ public final class PackDuel {
                 callOff(server, d.challenger(), why); // an on duel that is called off for the range (or by a death) also bars the pair
             }
         }
+        pushStates(server);
+    }
+
+    // what each duelist was last told (phase and whether paused): a change, or the end of the duel, reaches their hub within one check
+    private static final Map<UUID, String> TOLD = new HashMap<>();
+
+    private static void pushStates(MinecraftServer server) {
+        Map<UUID, String> now = new HashMap<>();
+        for (DuelBoard.Duel d : BOARD.all()) {
+            String sig = d.phase() + (d.paused() ? "/paused" : "");
+            now.put(d.challenger(), sig);
+            now.put(d.leader(), sig);
+        }
+        java.util.Set<UUID> changed = new java.util.HashSet<>(TOLD.keySet());
+        changed.addAll(now.keySet());
+        changed.removeIf(id -> java.util.Objects.equals(TOLD.get(id), now.get(id)));
+        TOLD.clear();
+        TOLD.putAll(now);
+        for (UUID id : changed) {
+            ServerPlayer p = SireCall.player(server, id);
+            if (p != null) {
+                HubRequests.changed(p);
+            }
+        }
     }
 
     /**
@@ -536,6 +566,7 @@ public final class PackDuel {
 
     /** For tests: nothing is left on the board. */
     public static void reset() {
+        TOLD.clear();
         stopping = false;
         BOARD.clear();
     }

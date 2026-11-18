@@ -129,10 +129,13 @@ public final class GrimoireBloodlinePage extends LinePageBase {
         Rect hit;
         if (n.kind() == LineTree.Kind.DESCENDANT) {
             String name = fit(f, LinePageSupport.name(n), 70);
-            f.g.drawString(f.font(), name, r.x() + r.w() / 2 - f.font().width(name) / 2, r.bottom() + 3, t.ink(), false);
+            // a label is centred under its portrait but never past the page edge
+            int nx = Math.max(area.x(), Math.min(area.right() - f.font().width(name), r.x() + r.w() / 2 - f.font().width(name) / 2));
+            f.g.drawString(f.font(), name, nx, r.bottom() + 3, t.ink(), false);
             if (n.id().equals("line:down:" + (kidCount(m) - 1)) && m.hiddenBelow() > 0) {
                 String more = Component.translatable(LinePageSupport.KEY + "more_sired", m.hiddenBelow()).getString();
-                f.g.drawString(f.font(), more, r.x() + r.w() / 2 - f.font().width(more) / 2, r.bottom() + 12, t.muted(), false);
+                int mx = Math.max(area.x(), Math.min(area.right() - f.font().width(more), r.x() + r.w() / 2 - f.font().width(more) / 2));
+                f.g.drawString(f.font(), more, mx, r.bottom() + 12, t.muted(), false);
             }
             hit = new Rect(r.x() - 8, r.y(), r.w() + 16, r.h() + 12);
         } else {
@@ -140,7 +143,7 @@ public final class GrimoireBloodlinePage extends LinePageBase {
             int room = LineTreeLayout.labelRoom(area, r) - 8;
             String name = fit(f, LinePageSupport.name(n), room);
             f.g.drawString(f.font(), name, x, r.y() + r.h() / 2 - 9, you ? t.accent() : t.ink(), false);
-            f.g.drawString(f.font(), fit(f, LinePageSupport.caption(f, m, n), room), x, r.y() + r.h() / 2, t.muted(), false);
+            f.g.drawString(f.font(), fit(f, LinePageSupport.caption(f, m, n, room), room), x, r.y() + r.h() / 2, t.muted(), false);
             hit = new Rect(r.x() - 2, r.y() - 2, Math.max(r.w() + 4, area.right() - r.x() + 2), r.h() + 4);
         }
         nodeTarget(f, m, n, hit);
@@ -157,23 +160,72 @@ public final class GrimoireBloodlinePage extends LinePageBase {
         Detail d = LinePageSupport.detail(f, m, selectedNode(m));
         int y = none ? BookKit.head(f, BookKit.SIDE, Component.translatable(LinePageSupport.KEY + "genes"), Component.translatable(BOOK + "genes_sub"))
                 : BookKit.head(f, BookKit.SIDE, d.title(), d.subtitle());
+        // a page too short for the seal and the tall vials (the 480 x 270 GUI) keeps every part by making each one smaller
+        boolean tight = s.h() < TIGHT_BELOW;
         if (!none) {
             for (Detail.Field field : d.fields()) {
-                y = BookKit.leader(f, field.label(), field.value(), s.x(), y + 1, s.w(), t.ink());
+                if (field.label().equals(Component.translatable(LinePageSupport.KEY + "field.line")) && m.state() == LineRules.State.FREE) {
+                    y = linePill(f, field, s, y + 1);
+                } else {
+                    y = BookKit.leader(f, field.label(), field.value(), s.x(), y + 1, s.w(), t.ink());
+                }
             }
             for (Component body : d.body()) {
-                y = BookKit.small(f, body, s.x(), y + 3, s.w(), t.muted());
+                if (tight) {
+                    // two lines, the second ending with an ellipsis: the whole note is in the margin and the tooltip of the line
+                    for (String line : net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(body.getString(), s.w(), 2, f.font()::width)) {
+                        f.g.drawString(f.font(), line, s.x(), y + 3, t.muted(), false);
+                        y += 9;
+                    }
+                    y += 3;
+                } else {
+                    y = BookKit.small(f, body, s.x(), y + 3, s.w(), t.muted());
+                }
             }
             if (!d.actions().isEmpty()) {
-                y = actions(f, d, s, y + 4, t);
+                y = tight ? links(f, d, s, y + 2, t) : actions(f, d, s, y + 4, t);
             }
-            y = PageKit.title(f, Component.translatable(LinePageSupport.KEY + "genes"), s.x(), y + 4, s.w(), t.ink());
-            t.drawRule(f.g, s.x(), y + 2, s.w());
-            y += 6;
+            if (tight) {
+                y = PageKit.wrapped(f, Component.translatable(LinePageSupport.KEY + "genes").withStyle(net.minecraft.ChatFormatting.BOLD), s.x(), y, s.w(), t.ink());
+            } else {
+                y = PageKit.title(f, Component.translatable(LinePageSupport.KEY + "genes"), s.x(), y + 4, s.w(), t.ink());
+                t.drawRule(f.g, s.x(), y + 2, s.w());
+                y += 6;
+            }
         }
-        y = BloodlineGenes.draw(f, s, y + 2, f.view.snapshot());
-        y = BookKit.small(f, Component.translatable(LinePageSupport.KEY + "gene_hint"), s.x(), y, s.w(), t.muted());
+        y = tight && !none ? BloodlineGenes.drawCompact(f, s, y + 1, f.view.snapshot()) : BloodlineGenes.draw(f, s, y + 2, f.view.snapshot());
+        if (!tight || none) {
+            y = BookKit.small(f, Component.translatable(LinePageSupport.KEY + "gene_hint"), s.x(), y, s.w(), t.muted());
+        }
         f.end(y);
+    }
+
+    /** The page is tight below this many GUI pixels (the 480 x 270 GUI gives about 190). */
+    static final int TIGHT_BELOW = 240;
+
+    /** "Line  [padlock Free of Klaus's line]": the green pill that says a freed line. */
+    private static int linePill(HubScreen.Frame f, Detail.Field field, Rect s, int y) {
+        HubTheme t = f.theme();
+        f.g.drawString(f.font(), field.label(), s.x(), y + 2, t.ink(), false);
+        String text = f.font().plainSubstrByWidth(field.value().getString(), s.w() - f.font().width(field.label()) - 34);
+        int w = f.font().width(text) + 22;
+        Rect pill = new Rect(s.right() - w, y, w, 13);
+        f.g.fill(pill.x(), pill.y(), pill.right(), pill.bottom(), LineColors.FREE_PILL);
+        LinePageSupport.openLock(f.g, pill.x() + 4, pill.y() + 2, LineColors.FREE_PILL_INK);
+        f.g.drawString(f.font(), text, pill.x() + 15, pill.y() + 3, LineColors.FREE_PILL_INK, false);
+        return y + 15;
+    }
+
+    /** The actions as red links with a chevron, one under another: the primary first. For a page with no room for the wax seal. */
+    private static int links(HubScreen.Frame f, Detail d, Rect s, int y, HubTheme t) {
+        t.drawRule(f.g, s.x(), y, s.w());
+        y += 4;
+        for (Detail.Action a : d.actions()) {
+            Component label = Component.literal(fit(f, a.label(), s.w() - 14) + (a.enabled() ? " \u203a" : ""));
+            BookKit.link(f, "bloodline:" + a.id(), label, s.x(), y, List.of(a.disabledReason() != null && !a.enabled() ? a.disabledReason() : a.label()), a.enabled() ? a.run() : null);
+            y += 11;
+        }
+        return y + 1;
     }
 
     /** The wax Call seal, and Severance and Broken Line as red links beside it. */

@@ -39,3 +39,7 @@ eye
 voice
 spark
 bolt
+home
+settings
+admin
+bell

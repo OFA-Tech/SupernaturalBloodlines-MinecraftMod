@@ -47,7 +47,13 @@ public final class HubScreen extends Screen {
     public record Target(String id, Rect rect, @Nullable String region, boolean shown, List<Component> tooltip, @Nullable Runnable action) {
     }
 
+    /** A person's Profile is a route, not a page: the origin page stays lit in the nav and Esc or Backspace goes back to it. */
+    public record ProfileRoute(java.util.UUID id, String name, boolean op, HubPage origin) {
+    }
+
     private HubPage page;
+    @Nullable
+    private ProfileRoute profile;
     private String selectedTask;
     private String focus;
     private boolean scrollToFocus;
@@ -87,6 +93,10 @@ public final class HubScreen extends Screen {
 
     @Override
     public void tick() {
+        // an open hub tells the server so now and then, or the server stops counting it as open
+        if (minecraft != null && minecraft.player != null && minecraft.player.tickCount % 400 == 0) {
+            HubClient.keepAlive();
+        }
         if (HubClientConfig.theme() != themeId) {
             applyTheme();
             scroll.clear();
@@ -97,8 +107,48 @@ public final class HubScreen extends Screen {
         return page;
     }
 
+    @Nullable
+    public ProfileRoute profile() {
+        return profile;
+    }
+
+    /** Opens the Profile of a person from the page the player is on; the server answers with what this player may know of them. */
+    public void openProfile(java.util.UUID id, String name) {
+        openProfile(id, name, false);
+    }
+
+    /** {@code op}: the OP view, reached only from Admin; the server answers it only to permission level 2. */
+    public void openProfile(java.util.UUID id, String name, boolean op) {
+        HubPage origin = profile != null ? profile.origin() : page == HubPage.LOADOUT ? HubPage.SKILLS : page;
+        profile = new ProfileRoute(id, name, op, origin);
+        scroll.clear();
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.ProfileClient.clear();
+        HubClient.requestProfile(id, op);
+        triggerImmediateNarration(true);
+    }
+
+    /** One step back: a Profile to its origin, the Loadout to Skills. False when there is nothing to go back to (Esc then closes the hub). */
+    public boolean back() {
+        if (profile != null) {
+            HubPage origin = profile.origin();
+            profile = null;
+            scroll.clear();
+            if (origin != page) {
+                setPage(origin);
+            }
+            triggerImmediateNarration(true);
+            return true;
+        }
+        if (page == HubPage.LOADOUT) {
+            setPage(HubPage.SKILLS);
+            return true;
+        }
+        return false;
+    }
+
     public void setPage(HubPage p) {
-        if (p != page) {
+        if (p != page || profile != null) {
+            profile = null;
             page = p;
             scroll.clear();
             HubClient.remember(p);
@@ -118,27 +168,51 @@ public final class HubScreen extends Screen {
         }
         HubView view = HubView.of(minecraft.player);
         visible = HubPage.visiblePages(view.context());
-        setPage(HubPage.orFirst(page, view.context()));
+        if (page != HubPage.LOADOUT || !view.context().loadout()) {
+            HubPage shown = HubPage.orFirst(page, view.context());
+            if (shown != page) {
+                setPage(shown);
+            }
+        }
+        HubPage navPage = profile != null ? profile.origin() : page == HubPage.LOADOUT ? HubPage.SKILLS : page;
         List<HubHooks.Launcher> launchers = HubHooks.launchers();
-        layout = theme.layout(width, height, visible.size(), launchers.size());
+        layout = theme.layout(width, height, visible, launchers.size());
         theme.drawFrame(g, layout);
         maxScroll.clear();
         reserved.clear();
         emblemRect = null;
         Frame f = new Frame(g, mouseX, mouseY, view);
+        List<net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request> requests = net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient.requests();
         for (int i = 0; i < visible.size(); i++) {
             HubPage p = visible.get(i);
             Rect r = layout.tabs().get(i);
             boolean locked = p.locked(view.context());
-            f.targets.add(new Target("tab:" + p.name(), r, null, true, locked ? List.of(Component.translatable(p.langKey()), Component.translatable("supernaturalbloodlines.hub.locked.tab"))
-                    : List.of(Component.translatable(p.langKey())), () -> setPage(p)));
-            theme.drawTab(g, r, p, p == page, f.focused("tab:" + p.name()));
+            List<Component> tabTip = new ArrayList<>();
+            tabTip.add(Component.translatable(p.langKey()));
+            if (p.group() != HubPage.Group.NONE) {
+                tabTip.add(Component.translatable(p.group().langKey()).withStyle(net.minecraft.ChatFormatting.GRAY));
+            }
+            if (p == HubPage.HOME && !requests.isEmpty()) {
+                tabTip.add(Component.translatable("supernaturalbloodlines.hub.home.waiting", requests.size()).withStyle(net.minecraft.ChatFormatting.GOLD));
+            }
+            if (locked) {
+                tabTip.add(Component.translatable("supernaturalbloodlines.hub.locked.tab"));
+            }
+            f.targets.add(new Target("tab:" + p.name(), r, null, true, tabTip, () -> setPage(p)));
+            theme.drawTab(g, r, p, p == navPage, f.focused("tab:" + p.name()));
+            if (p == HubPage.HOME && !requests.isEmpty()) {
+                badge(g, r, requests.size());
+            }
             if (locked) {
                 // dimmed, with a lock over it: the page opens (to say what it needs) but the tab reads as shut
                 g.fill(r.x(), r.y(), r.right(), r.bottom(), (theme.paper() & 0xFFFFFF) | 0x99000000);
                 boolean row = r.w() > 2 * r.h(); // a wide list row gets its lock at the end, a round or square button in the middle
                 KitDraw.icon(g, net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons.LOCK, row ? r.right() - 13 : r.x() + (r.w() - 10) / 2, r.y() + (r.h() - 10) / 2, 10, theme.muted());
             }
+        }
+        var headings = net.ofatech.supernaturalbloodlines.shared.hub.NavGroups.headings(visible);
+        for (int i = 0; i < Math.min(headings.size(), layout.headings().size()); i++) {
+            theme.drawGroupHeading(g, layout.headings().get(i), headings.get(i).group());
         }
         for (int i = 0; i < launchers.size(); i++) {
             HubHooks.Launcher l = launchers.get(i);
@@ -176,6 +250,20 @@ public final class HubScreen extends Screen {
         tooltip(g, mouseX, mouseY);
     }
 
+    /** The red dot with a number over a nav entry: how many requests wait. */
+    private void badge(GuiGraphics g, Rect r, int count) {
+        String n = count > 9 ? "9+" : String.valueOf(count);
+        int w = Math.max(10, font.width(n) + 4);
+        int x = Math.min(r.right() - w, width - w - 1);
+        int y = Math.max(1, r.y() - 3);
+        g.fill(x, y, x + w, y + 10, BADGE);
+        g.drawString(font, n, x + (w - font.width(n)) / 2, y + 1, BADGE_TEXT, false);
+    }
+
+    /** White on this red is 5.1:1 (checked by a test). */
+    public static final int BADGE = 0xFFB3261E;
+    public static final int BADGE_TEXT = 0xFFFFFFFF;
+
     /** Pixels at the bottom of a region that a page keeps for something pinned (a wax seal), set by {@link Frame#reserve} before {@link Frame#begin}. */
     private final Map<String, Integer> reserved = new java.util.HashMap<>();
 
@@ -189,6 +277,9 @@ public final class HubScreen extends Screen {
     /** The view of a page in the current theme; the page answers keys and drags first, see {@link #keyPressed}. */
     private HubPageView viewOf(HubPage p, HubView view) {
         HubThemeViews views = theme instanceof HubThemeViews v ? v : null;
+        if (profile != null) {
+            return HubPages.profile();
+        }
         return p.locked(view.context()) ? HubPages.locked() : views != null ? views.view(p) : HubPages.shared(p);
     }
 
@@ -240,6 +331,49 @@ public final class HubScreen extends Screen {
 
     public void setLadder(int index) {
         ladderChoice = index;
+    }
+
+    /**
+     * The hook for the warning before a spark would end the path to True Alpha: asks first, Stay is the safe answer, and {@code proceed} runs only on a
+     * deliberate yes. The caller decides with {@code TrueAlphaWarning.applies} whether to ask at all.
+     */
+    public void warnTrueAlpha(Runnable proceed) {
+        confirm(Component.translatable("supernaturalbloodlines.hub.true_alpha.title"), Component.translatable("supernaturalbloodlines.hub.true_alpha.body"),
+                Component.translatable("supernaturalbloodlines.hub.confirm.stay"), Component.translatable("supernaturalbloodlines.hub.true_alpha.yes"), proceed);
+    }
+
+    /** Development only (the dev screenshots): puts the screen in a route or section no click is needed for. */
+    void devVariant(String variant) {
+        if (variant.startsWith("line_")) {
+            return; // only the line state (DevShots sets it before the screen opens)
+        }
+        switch (variant) {
+            case "profile" -> openProfile(DevDemo.id("Derek"), "Derek");
+            case "profile_beta" -> openProfile(DevDemo.id("Liam"), "Liam");
+            case "profile_stranger" -> openProfile(DevDemo.id("Stranger"), "Stranger");
+            case "profile_sire" -> openProfile(DevDemo.id("Klaus"), "Klaus");
+            case "profile_sired" -> openProfile(DevDemo.id("Tyler"), "Tyler");
+            case "profile_self" -> {
+                if (minecraft != null && minecraft.player != null) {
+                    openProfile(minecraft.player.getUUID(), minecraft.player.getGameProfile().getName());
+                }
+            }
+            case "profile_leader" -> {
+                openProfile(DevDemo.id("Derek|lead"), "Derek");
+            }
+            case "profile_op" -> openProfile(DevDemo.id("Derek|op"), "Derek", true);
+            case "true_alpha_dialog" -> warnTrueAlpha(() -> { });
+            case "profile_dialog" -> {
+                openProfile(DevDemo.id("Derek"), "Derek");
+                confirm(Component.translatable("supernaturalbloodlines.hub.profile.action.heal"), Component.translatable("supernaturalbloodlines.hub.profile.confirm.heal", "Derek"),
+                        Component.translatable("supernaturalbloodlines.hub.confirm.stay"), Component.translatable("supernaturalbloodlines.hub.profile.action.heal"), () -> { });
+            }
+            default -> {
+                if (variant.startsWith("admin_")) {
+                    net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.AdminPage.devSection(variant.substring(6));
+                }
+            }
+        }
     }
 
     /** Development only (the dev screenshots): opens the look menu. */
@@ -509,9 +643,14 @@ public final class HubScreen extends Screen {
             return true;
         }
         boolean plain = (modifiers & (GLFW.GLFW_MOD_SHIFT | GLFW.GLFW_MOD_CONTROL | GLFW.GLFW_MOD_ALT | GLFW.GLFW_MOD_SUPER)) == 0;
-        var jump = plain ? FocusOrder.pageForKey(key, visible.size()) : java.util.OptionalInt.empty();
+        if (plain && FocusOrder.isHomeKey(key)) {
+            setPage(HubPage.HOME);
+            return true;
+        }
+        List<HubPage> numbered = visible.stream().filter(p -> p != HubPage.HOME).toList();
+        var jump = plain ? FocusOrder.pageForKey(key, numbered.size()) : java.util.OptionalInt.empty();
         if (jump.isPresent()) {
-            setPage(visible.get(jump.getAsInt()));
+            setPage(numbered.get(jump.getAsInt()));
             return true;
         }
         boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
@@ -521,6 +660,12 @@ public final class HubScreen extends Screen {
             case GLFW.GLFW_KEY_UP -> moveFocus(-1);
             case GLFW.GLFW_KEY_LEFT -> setPage(HubFocus.page(visible, page, -1));
             case GLFW.GLFW_KEY_RIGHT -> setPage(HubFocus.page(visible, page, 1));
+            case GLFW.GLFW_KEY_ESCAPE -> {
+                if (!back()) {
+                    return super.keyPressed(key, scanCode, modifiers);
+                }
+            }
+            case GLFW.GLFW_KEY_BACKSPACE -> back();
             case GLFW.GLFW_KEY_PAGE_DOWN -> pageScroll(1);
             case GLFW.GLFW_KEY_PAGE_UP -> pageScroll(-1);
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> {
@@ -534,6 +679,12 @@ public final class HubScreen extends Screen {
             }
         }
         return true;
+    }
+
+    @Override
+    public boolean charTyped(char c, int modifiers) {
+        HubPageView v = dialog == null && !menu ? currentView() : null;
+        return v != null && v.charTyped(c, modifiers) || super.charTyped(c, modifiers);
     }
 
     /** The id of the target that has the keyboard focus, or null. */
@@ -563,7 +714,9 @@ public final class HubScreen extends Screen {
         Target t = target(focus);
         List<String> tip = t == null ? null : t.tooltip().stream().map(Component::getString).toList();
         String focused = dialog == null ? null : (dialog.confirmFocused() ? dialogYes : dialogSafe).getString();
-        for (String line : Narration.lines(Component.translatable(page.langKey()).getString(), tip,
+        String where = profile != null ? Component.translatable("supernaturalbloodlines.hub.profile.narration", profile.name()).getString()
+                : Component.translatable(page.langKey()).getString();
+        for (String line : Narration.lines(where, tip,
                 dialog == null ? null : dialogTitle.getString(), dialog == null ? null : dialogBody.getString(), focused)) {
             output.add(NarratedElementType.TITLE, line);
         }
@@ -576,6 +729,13 @@ public final class HubScreen extends Screen {
         if (layout != null && layout.regions().containsKey(region)) {
             scroll.put(region, HubFocus.pageScroll(scroll.getOrDefault(region, 0), maxScroll.getOrDefault(region, 0), viewport(region), direction));
         }
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackInvite.reset();
+        HubClient.sendOpen(false);
     }
 
     @Override

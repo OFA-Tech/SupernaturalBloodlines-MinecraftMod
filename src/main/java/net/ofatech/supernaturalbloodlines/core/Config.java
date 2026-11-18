@@ -1,9 +1,11 @@
 package net.ofatech.supernaturalbloodlines.core;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 
 /** The COMMON config spec. Early (pre-config) reads of the part switches live in {@link EarlySwitches}. */
 public final class Config {
+    public static final String FILE = SupernaturalBloodlines.MODID + "-common.toml";
     public static final ModConfigSpec COMMON;
     public static final int DEFAULT_FULL_FORM_LEVEL = 8;
     public static final ModConfigSpec.IntValue FULL_FORM_LEVEL;

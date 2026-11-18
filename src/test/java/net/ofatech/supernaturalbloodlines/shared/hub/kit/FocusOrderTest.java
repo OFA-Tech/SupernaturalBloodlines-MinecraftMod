@@ -28,9 +28,12 @@ class FocusOrderTest {
         assertEquals(OptionalInt.of(0), FocusOrder.pageForKey(49, 6));
         assertEquals(OptionalInt.of(5), FocusOrder.pageForKey(54, 6));
         assertTrue(FocusOrder.pageForKey(55, 6).isEmpty(), "key 7 with six pages does nothing");
-        assertEquals(OptionalInt.of(7), FocusOrder.pageForKey(328, 8));
+        assertEquals(OptionalInt.of(7), FocusOrder.pageForKey(328, 9));
         assertEquals(OptionalInt.of(2), FocusOrder.pageForKey(323, 8));
-        assertTrue(FocusOrder.pageForKey(57, 8).isEmpty(), "9 is not a page key");
+        assertEquals(OptionalInt.of(8), FocusOrder.pageForKey(57, 9), "9 is the ninth page after Home (Admin for an operator)");
+        assertTrue(FocusOrder.pageForKey(57, 8).isEmpty(), "key 9 with eight pages does nothing");
+        assertTrue(FocusOrder.pageForKey(48, 9).isEmpty(), "0 is Home, not a position");
+        assertTrue(FocusOrder.isHomeKey(48) && FocusOrder.isHomeKey(320) && !FocusOrder.isHomeKey(49));
         assertTrue(FocusOrder.pageForKey(65, 8).isEmpty());
     }
 }

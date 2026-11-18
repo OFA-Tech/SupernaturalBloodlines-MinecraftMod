@@ -13,7 +13,7 @@ public enum Icons {
     MOON_NEW, MOON_WAXING_CRESCENT, MOON_FIRST_QUARTER, MOON_WAXING_GIBBOUS, MOON_FULL, MOON_WANING_GIBBOUS, MOON_LAST_QUARTER,
     MOON_WANING_CRESCENT,
     SUN, SHIELD, FANG, VIAL, QUESTION, INFO, PLUS, ARROW_LEFT, ARROW_RIGHT, CLAW, HEART, KEY,
-    BOOT, EYE, VOICE, SPARK, BOLT;
+    BOOT, EYE, VOICE, SPARK, BOLT, HOME, SETTINGS, ADMIN, BELL;
 
     public static final int CELL = 16;
     public static final int COLUMNS = 16;
@@ -36,6 +36,9 @@ public enum Icons {
     /** The sprite of a hub page (its tab, its rail button, its list row). */
     public static Icons of(net.ofatech.supernaturalbloodlines.shared.hub.HubPage page) {
         return switch (page) {
+            case HOME -> HOME;
+            case SETTINGS -> SETTINGS;
+            case ADMIN -> ADMIN;
             case PATH -> PATH;
             case SKILLS -> SKILLS;
             case QUESTS -> QUESTS;

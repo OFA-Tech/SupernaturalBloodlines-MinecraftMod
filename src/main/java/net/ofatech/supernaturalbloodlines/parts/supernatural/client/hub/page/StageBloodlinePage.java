@@ -25,6 +25,8 @@ public final class StageBloodlinePage extends LinePageBase {
     private static final int RED_DIM = LineColors.atLeast(LineColors.MOON_THREAD, LineColors.MOON_SKY_TOP, LineColors.MIN_RATIO);
     private static final int MOON_RING = LineColors.atLeast(LineColors.MOON_RING, LineColors.MOON_SKY_TOP, LineColors.MIN_RATIO);
     private final Look look;
+    /** The x of the leftmost faint thread, which the margin note must stay clear of. */
+    private int noteEdge = Integer.MAX_VALUE;
 
     public StageBloodlinePage(Look look) {
         this.look = look;
@@ -49,17 +51,31 @@ public final class StageBloodlinePage extends LinePageBase {
         Rect pane = detail != null ? detail : new Rect(stage.right(), stage.y(), 0, stage.h());
         Map<String, Rect> rects = moon ? LineTreeLayout.moon(stage, detail != null ? detail : new Rect(0, stage.bottom(), 1, 1), m) : LineTreeLayout.tensura(stage, pane, m);
         draw(f, m, rects, stage, t, moon);
-        f.detail(LinePageSupport.detail(f, m, selectedNode(m)));
+        Rect vials = moon ? null : tensuraVials(stage, pane, rects);
+        // Tensura puts the genes in the info pane when the stage has no room for the vials; the Blood Moon says them in one line of the stage
+        f.detail(LinePageSupport.detail(f, m, selectedNode(m), !moon && vials == null));
         if (moon) {
             moonGenes(f, stage, rects);
-        } else {
-            tensuraGenes(f, stage, pane, rects);
+        } else if (vials != null) {
+            tensuraGenes(f, stage, vials);
         }
     }
 
     private void draw(HubScreen.Frame f, LineTree.Model m, Map<String, Rect> rects, Rect stage, HubTheme t, boolean moon) {
         int line = moon ? RED_DIM : t.muted();
         int hot = moon ? RED : t.accent();
+        noteEdge = Integer.MAX_VALUE;
+        Rect you = rects.get(LineTree.YOU);
+        for (LineTree.Link l : m.links()) {
+            Rect fu = rects.get(l.upper());
+            Rect fl = rects.get(l.lower());
+            if (l.style() == LineTree.LinkStyle.FAINT && fu != null && fl != null && you != null) {
+                int tx = fu.x() + fu.w() / 2 + (fl.x() + fl.w() / 2 < fu.x() + fu.w() / 2 ? -fu.w() / 2 - 6 : fu.w() / 2 + 6);
+                if (tx < you.x() + you.w() / 2) {
+                    noteEdge = Math.min(noteEdge, tx);
+                }
+            }
+        }
         for (LineTree.Link l : m.links()) {
             Rect up = rects.get(l.upper());
             Rect low = rects.get(l.lower());
@@ -92,6 +108,12 @@ public final class StageBloodlinePage extends LinePageBase {
                     f.g.fill(cx, y, cx + 1, Math.min(y + 2, y1), RED);
                 }
             }
+            // the break: two short slanted strokes across the gap
+            f.g.fill(cx - 3, mid - 3, cx - 1, mid - 2, RED);
+            f.g.fill(cx - 1, mid - 2, cx + 1, mid - 1, RED);
+            f.g.fill(cx + 1, mid - 1, cx + 3, mid, RED);
+            f.g.fill(cx - 3, mid + 1, cx - 1, mid + 2, RED);
+            f.g.fill(cx - 1, mid + 2, cx + 1, mid + 3, RED);
             String tag = Component.translatable(LinePageSupport.KEY + (look == Look.MOON ? "margin.broken" : "severed_label")).getString();
             int w = f.font().width(tag) + 8;
             Rect hit = new Rect(cx + 8, mid - 6, w, 12);
@@ -101,11 +123,12 @@ public final class StageBloodlinePage extends LinePageBase {
                 f.g.drawString(f.font(), tag, hit.x() + 4, hit.y() + 2, RED, false);
             } else {
                 // the label sits left of the link: when the stage has no room there it is left out (the tooltip has it)
-                int room = cx - 10 - stage.x();
+                int edge = Math.min(cx - 10, noteEdge - 4);
+                int room = edge - stage.x();
                 if (room >= 24) {
                     String shown = fit(f, Component.literal(tag), room);
-                    f.g.drawString(f.font(), shown, cx - 10 - f.font().width(shown), mid - 4, RED, false);
-                    hit = new Rect(cx - 12 - f.font().width(shown), mid - 6, f.font().width(shown) + 16, 12);
+                    f.g.drawString(f.font(), shown, edge - f.font().width(shown), mid - 4, RED, false);
+                    hit = new Rect(edge - 2 - f.font().width(shown), mid - 6, f.font().width(shown) + 16, 12);
                 } else {
                     hit = new Rect(cx - 8, mid - 6, 16, 12);
                 }
@@ -147,49 +170,47 @@ public final class StageBloodlinePage extends LinePageBase {
             f.g.drawString(f.font(), cap, r.x() + r.w() / 2 - f.font().width(cap) / 2, r.bottom() + 12, t.muted(), false);
             hit = new Rect(r.x() - 14, r.y(), r.w() + 28, r.h() + 22);
         } else {
-            int x = r.right() + 8;
-            int room = LineTreeLayout.labelRoom(stage, r) - 8;
+            int x = r.right() + 12; // the faint threads run 6 px off the ring: the text starts clear of them
+            int room = LineTreeLayout.labelRoom(stage, r) - 12;
             f.g.drawString(f.font(), fit(f, LinePageSupport.name(n), room), x, r.y() + r.h() / 2 - 9, you ? (moon ? RED : t.accent()) : t.ink(), false);
-            f.g.drawString(f.font(), fit(f, LinePageSupport.caption(f, m, n), room), x, r.y() + r.h() / 2, t.muted(), false);
+            f.g.drawString(f.font(), fit(f, LinePageSupport.caption(f, m, n, room), room), x, r.y() + r.h() / 2, t.muted(), false);
             hit = new Rect(r.x() - 2, r.y() - 2, Math.max(r.w() + 4, Math.min(160, room) + r.w() + 12), r.h() + 4);
         }
         nodeTarget(f, m, n, hit);
     }
 
-    /** The Blood Moon has no room beside a tall tree: the genes are two lines at the right of the stage when it is wide enough. */
+    /** The Blood Moon says the genes in one line at the top right of the stage, and the red thread's legend in at most two lines at the bottom right. */
     private void moonGenes(HubScreen.Frame f, Rect stage, Map<String, Rect> rects) {
         Rect you = rects.get(LineTree.YOU);
         int x = Math.max(you.right() + 120, stage.x() + stage.w() * 62 / 100);
         int w = stage.right() - x;
-        if (w < 80) {
+        if (w < 60) {
             return;
         }
-        int y = stage.bottom() - 40 - 4 - 9;
-        List<Component> lines = BloodlineGenes.lines(f.view.snapshot());
-        for (int i = 0; i < lines.size(); i++) {
-            f.g.drawString(f.font(), f.font().plainSubstrByWidth(lines.get(i).getString(), w), x, y - (lines.size() - i) * 10, f.theme().muted(), false);
-        }
-        String thread = Component.translatable(LinePageSupport.KEY + "thread").getString();
-        if (LinePageSupport.origin(f).state() == LineRules.State.IN_LINE || LinePageSupport.origin(f).freedKind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial.FreedKind.BROKEN_LINE) {
-            int ty = y + 2;
+        String genes = fit(f, BloodlineGenes.summary(f.view.snapshot()), w);
+        f.g.drawString(f.font(), genes, stage.right() - f.font().width(genes), stage.y() + 4, f.theme().muted(), false);
+        var origin = LinePageSupport.origin(f);
+        if (origin.state() == LineRules.State.IN_LINE || origin.freedKind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial.FreedKind.BROKEN_LINE) {
+            // at most two lines; a legend that runs longer ends with an ellipsis instead of stopping mid-sentence
+            List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(Component.translatable(LinePageSupport.KEY + "thread").getString(), w - 34, 2, f.font()::width);
+            int ty = stage.bottom() - lines.size() * 9 - 2;
             f.g.fill(x, ty + 4, x + 26, ty + 5, RED);
-            int ly = ty;
-            for (var line : f.font().split(Component.literal(thread), w - 34)) {
-                f.g.drawString(f.font(), line, x + 32, ly, f.theme().muted(), false);
-                ly += 9;
+            for (int i = 0; i < lines.size(); i++) {
+                f.g.drawString(f.font(), lines.get(i), x + 32, ty + i * 9, f.theme().muted(), false);
             }
         }
     }
 
     /** Tensura: the vials in the free column between the tree and the pane. */
-    private void tensuraGenes(HubScreen.Frame f, Rect stage, Rect pane, Map<String, Rect> rects) {
+    private static Rect tensuraVials(Rect stage, Rect pane, Map<String, Rect> rects) {
         int treeRight = rects.values().stream().mapToInt(Rect::right).max().orElse(stage.x()) + 140;
         int x = Math.max(treeRight, stage.x() + stage.w() * 56 / 100);
         int w = Math.min(pane.x() - 8, stage.right()) - x;
-        if (w < 60) {
-            return;
-        }
-        Rect area = new Rect(x, stage.y() + 6, w, BloodlineGenes.HEIGHT);
+        return w < 60 ? null : new Rect(x, stage.y() + 6, w, BloodlineGenes.HEIGHT);
+    }
+
+    private void tensuraGenes(HubScreen.Frame f, Rect stage, Rect area) {
+        int x = area.x();
         String head = Component.translatable(LinePageSupport.KEY + "genes").getString().toUpperCase(java.util.Locale.ROOT);
         f.g.drawString(f.font(), head, x, stage.y() - 4, f.theme().muted(), false);
         BloodlineGenes.draw(f, area, stage.y() + 8, f.view.snapshot());

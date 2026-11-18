@@ -35,7 +35,17 @@ public abstract class LinePageBase implements HubPageView {
 
     /** Registers a node: hover tells what the narrator says, a click selects it, the focus ring follows the keyboard. */
     protected final void nodeTarget(HubScreen.Frame f, LineTree.Model m, LineTree.Node n, Rect hit) {
-        f.target(n.id(), hit, List.of(LinePageSupport.narration(m, n)), () -> selected = n.id());
+        // the sire and the people you sired open their Profile; the root and the ancestors you cannot name stay a plain selection
+        boolean person = (n.kind() == LineTree.Kind.SIRE || n.kind() == LineTree.Kind.DESCENDANT) && !n.hidden() && !n.name().isEmpty();
+        java.util.UUID who = person ? f.view.snapshot().idOf(n.name()).orElse(null) : null;
+        List<net.minecraft.network.chat.Component> tip = who == null ? List.of(LinePageSupport.narration(m, n))
+                : List.of(LinePageSupport.narration(m, n), net.minecraft.network.chat.Component.translatable("supernaturalbloodlines.hub.bloodline.open_profile"));
+        f.target(n.id(), hit, tip, () -> {
+            selected = n.id();
+            if (who != null) {
+                f.screen().openProfile(who, n.name());
+            }
+        });
         if (f.focused(n.id())) {
             KitDraw.focusRing(f.g, hit, f.theme().focusColor());
         }
