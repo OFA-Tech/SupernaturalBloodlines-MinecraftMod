@@ -73,6 +73,11 @@ public final class CallRequests {
         open.values().removeIf(r -> r.caller().equals(player) || r.sired().equals(player));
     }
 
+    /** A player logged out: only the requests that were SENT TO them are void. What they asked of others stays open until it runs out (the other may still answer while they are away). */
+    public void forgetFor(UUID sired) {
+        open.values().removeIf(r -> r.sired().equals(sired));
+    }
+
     int size() {
         return open.size();
     }

@@ -6,7 +6,8 @@
 - **Update the server and every client together.** The hub payloads moved to protocol `2`: a client and a server on different versions have no channel to each other (nothing breaks, but the hub shows no server data).
 - **The Admin page writes the COMMON tomls.** An operator (permission level 2 or more) can change COMMON config keys from the hub; the change is saved to the server's file at once. Client files (`*-client.toml`) are never written by Admin. A key that needs a restart says so.
 - **There is a new save file:** `supernaturalbloodlines_profile_knowledge` (what each player has discovered about others, and each pack's pool). It is created on first use; nothing to migrate. The pack index also records when each member joined (days in the pack); members who were already in a pack before this version start counting from the first world load on this version.
-- **Back the world up before updating, and do not downgrade.** The new `supernaturalbloodlines_profile_knowledge` file and the join times in the pack index are unknown to an older version: it ignores them, and the next save drops them (the discoveries and the day counts are lost, nothing else).
+- **Pack invitations:** an invitation or alliance request is voided when the player it was sent TO logs out. One whose sender is only offline stays open until it runs out; answering it then says the sender is offline and keeps it.
+- **Back the world up before updating.** A downgrade is safe for the rest of the world but not lossless: an older version does not know the join times in the pack index, so its next save drops them, and re-upgrading starts the day counts again. The discoveries file `supernaturalbloodlines_profile_knowledge` is left untouched and unused by an older version, so the discoveries are back when you upgrade again.
 
 ## Unreleased (plan 17a, Original bloodlines)
 

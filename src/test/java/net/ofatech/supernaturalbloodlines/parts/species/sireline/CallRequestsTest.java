@@ -21,6 +21,16 @@ class CallRequestsTest {
     }
 
     @Test
+    void aLogoutVoidsOnlyWhatWasSentToThePlayerNotWhatTheyAsked() {
+        CallRequests r = new CallRequests();
+        String sent = r.open(CALLER, SIRED, 100);
+        String got = r.open(OTHER, CALLER, 100);
+        r.forgetFor(CALLER);
+        assertTrue(r.peek(sent, SIRED, 150).isPresent(), "a request the leaving player SENT was voided");
+        assertTrue(r.peek(got, CALLER, 150).isEmpty(), "a request sent TO the leaving player stayed");
+    }
+
+    @Test
     void peekingLeavesTheRequestInPlaceAndDropsAnExpiredOne() {
         CallRequests r = new CallRequests();
         String token = r.open(CALLER, SIRED, 100);

@@ -17,7 +17,7 @@ class RequestPaceTest {
 
     @Test
     void anOpenPageWithASnapshotDoesNotAskAndAReopenedOneDoes() {
-        assertFalse(RequestPace.due(8000, 9000, true, 9016));
+        assertFalse(RequestPace.due(0, 9000, true, 9016));
         assertTrue(RequestPace.due(0, 1000, true, 9016));
     }
 

@@ -55,10 +55,10 @@ public final class PackCommand {
         return ALLY_REQUESTS;
     }
 
-    /** A player logged out: the invitations and alliance requests they made or were sent are void, as a sire's call is. */
+    /** A player logged out: the invitations and alliance requests SENT TO them are void. Those they sent stay open until they run out, so an inviter who steps away is answered "offline" and the invitation survives (see {@link #accept}). */
     public static void forget(UUID player) {
-        REQUESTS.forget(player);
-        ALLY_REQUESTS.forget(player);
+        REQUESTS.forgetFor(player);
+        ALLY_REQUESTS.forgetFor(player);
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> d) {
@@ -241,7 +241,10 @@ public final class PackCommand {
         if (alpha == null) {
             return error("alpha_offline"); // only offline: the invitation stays open for the rest of its minute
         }
-        REQUESTS.take(token, p.getUUID(), now);
+        if (REQUESTS.take(token, p.getUUID(), now).isEmpty()) {
+            HubRequests.changed(p);
+            return error("expired"); // answered, or run out, between the peek and the take
+        }
         HubRequests.changed(p);
         if (!isActiveAlpha(alpha)) {
             return error("alpha_gone");
@@ -367,7 +370,10 @@ public final class PackCommand {
         if (other == null) {
             return error("alpha_offline"); // only offline: the request stays open for the rest of its minute
         }
-        ALLY_REQUESTS.take(token, p.getUUID(), now);
+        if (ALLY_REQUESTS.take(token, p.getUUID(), now).isEmpty()) {
+            HubRequests.changed(p);
+            return error("expired");
+        }
         HubRequests.changed(p);
         PackIndex index = PackIndex.get(p.serverLevel());
         if (!isActiveAlpha(other) || !isActiveAlpha(p)) {

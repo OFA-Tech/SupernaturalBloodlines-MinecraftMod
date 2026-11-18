@@ -325,12 +325,33 @@ public final class WerewolfBiteGameTests {
         try {
             helper.assertTrue(PackCommand.invite(alpha, member) == null, "the invitation was not made");
             String token = PackCommand.requests().tokenOf(alpha.getUUID(), member.getUUID()).orElseThrow();
-            lookup(member); // the inviter is off the server for a moment
+            // the inviter logs out through the real event, and the lookup stops finding them
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent(alpha));
+            lookup(member);
+            helper.assertTrue(PackCommand.requests().tokenOf(alpha.getUUID(), member.getUUID()).isPresent(), "the inviter's logout voided the invitation they sent");
             var refused = PackCommand.accept(member, token);
             helper.assertTrue(refused != null && refused.getString().contains("offline"), "an offline inviter was answered " + refused);
             helper.assertTrue(PackCommand.requests().tokenOf(alpha.getUUID(), member.getUUID()).isPresent(), "the token was used up by an answer that did nothing");
             lookup(alpha, member);
             helper.assertTrue(PackCommand.accept(member, token) == null, "the kept invitation could not be accepted when the inviter was back");
+        } finally {
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, member);
+        }
+        helper.succeed();
+    }
+
+    /** An invitation is void when the INVITEE logs out (the real event): the token is gone, and so is an alliance request sent to them. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anInviteesLogoutVoidsWhatWasSentToThem(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer member = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, member);
+        try {
+            helper.assertTrue(PackCommand.invite(alpha, member) == null, "the invitation was not made");
+            helper.assertTrue(PackCommand.requests().tokenOf(alpha.getUUID(), member.getUUID()).isPresent(), "no token to start with");
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent(member));
+            helper.assertTrue(PackCommand.requests().tokenOf(alpha.getUUID(), member.getUUID()).isEmpty(), "the invitee's logout left the invitation open");
         } finally {
             SireCall.overridePlayerLookup(null);
             clean(alpha, member);
