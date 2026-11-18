@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
+import net.ofatech.supernaturalbloodlines.shared.hub.NavGroups;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 
 /**
@@ -29,13 +31,33 @@ public final class BloodMoonLayout {
     private BloodMoonLayout() {
     }
 
+    /** The pixels of one gap unit between nav groups; a divider line is drawn in the middle of it. */
+    static final int GROUP_GAP = 5;
+
     public static HubLayout of(int width, int height, int tabs, int seals) {
+        return of(width, height, NavGroups.noGaps(tabs), List.of(), seals);
+    }
+
+    public static HubLayout of(int width, int height, List<HubPage> pages, int seals) {
+        return of(width, height, NavGroups.gaps(pages), NavGroups.headings(pages), seals);
+    }
+
+    private static HubLayout of(int width, int height, int[] gaps, List<NavGroups.Heading> headings, int seals) {
+        int tabs = gaps.length;
         Rect screen = new Rect(0, 0, width, height);
-        int step = Math.min(28, tabs <= 1 ? 28 : (height - TOP - EDGE - RAIL) / (tabs - 1));
+        int step = Math.min(28, tabs <= 1 ? 28 : (height - TOP - EDGE - RAIL - NavGroups.total(gaps) * GROUP_GAP) / (tabs - 1));
         List<Rect> rail = new ArrayList<>();
         int size = Math.max(14, Math.min(RAIL, step - 1)); // ten buttons on the smallest GUI shrink a little instead of overlapping
+        int shift = 0;
         for (int i = 0; i < tabs; i++) {
-            rail.add(new Rect(EDGE, TOP + i * step, size, size));
+            shift += gaps[i] * GROUP_GAP;
+            rail.add(new Rect(EDGE, TOP + i * step + shift, size, size));
+        }
+        List<Rect> dividers = new ArrayList<>();
+        for (NavGroups.Heading h : headings) {
+            Rect below = rail.get(h.tab());
+            // the divider sits in the gap above the first button of its group
+            dividers.add(new Rect(below.x() + 3, below.y() - (gaps[h.tab()] * GROUP_GAP + 2) / 2 - 1, Math.max(4, below.w() - 6), 1));
         }
         Rect close = new Rect(width - EDGE - 14, EDGE + 4, 14, 14);
         Rect themeButton = new Rect(close.x() - 6 - RAIL, EDGE, RAIL, RAIL);
@@ -60,7 +82,7 @@ public final class BloodMoonLayout {
         Rect main = new Rect(left, fullTop, half, fullH).inset(5);
         Rect side = new Rect(left + half + GAP, fullTop, right - left - half - GAP, fullH).inset(5);
         return new HubLayout(screen, Map.of(MOON, stage, FULL, new Rect(left, fullTop, right - left, bar.y() - GAP - fullTop), RIGHT, col.inset(5), HEAD, head, HubLayout.MAIN, main, HubLayout.SIDE, side), rail, portals,
-                new HubLayout.Chrome(themeButton, close, stage, counters, bar));
+                new HubLayout.Chrome(themeButton, close, stage, counters, bar), dividers);
     }
 
     /** The card behind a content region. */

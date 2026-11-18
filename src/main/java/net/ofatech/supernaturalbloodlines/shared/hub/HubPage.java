@@ -12,11 +12,11 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
  */
 public enum HubPage {
     HOME(Group.NONE), PATH(Group.ME), SKILLS(Group.ME), QUESTS(Group.ME), RITES(Group.MAGIC), BLOODLINE(Group.PEOPLE), PACK(Group.PEOPLE),
-    GUIDE(Group.HELP), SETTINGS(Group.SYSTEM), ADMIN(Group.SYSTEM), LOADOUT(Group.ME);
+    GUIDE(Group.HELP), SETTINGS(Group.SYSTEM), ADMIN(Group.OPERATOR), LOADOUT(Group.ME);
 
-    /** What the nav groups pages under: Me, Magic, People, Help, System (Home stands alone). */
+    /** What the nav groups pages under: Me, Magic, People, Help, System (Home stands alone); Admin is apart, under Operator. */
     public enum Group {
-        NONE, ME, MAGIC, PEOPLE, HELP, SYSTEM;
+        NONE, ME, MAGIC, PEOPLE, HELP, SYSTEM, OPERATOR;
 
         public String langKey() {
             return "supernaturalbloodlines.hub.group." + name().toLowerCase(Locale.ROOT);

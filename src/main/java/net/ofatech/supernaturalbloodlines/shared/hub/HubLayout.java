@@ -9,7 +9,10 @@ import org.jetbrains.annotations.Nullable;
  * The shared page views draw into {@link #MAIN} and {@link #SIDE}; a theme with another shape names its own regions and supplies its own
  * views for them ({@link HubTheme#view}). Pure.
  */
-public record HubLayout(Rect frame, Map<String, Rect> regions, List<Rect> tabs, List<Rect> seals, Chrome chrome) {
+/**
+ * {@code headings} are the nav group headings or dividers, in the order of {@link NavGroups#headings}; a theme that only leaves a gap has none.
+ */
+public record HubLayout(Rect frame, Map<String, Rect> regions, List<Rect> tabs, List<Rect> seals, Chrome chrome, List<Rect> headings) {
     /**
      * The parts of a theme that are not content: the theme switch, a close button, the emblem rectangle (a page may draw it elsewhere with
      * {@code Frame.emblem(Rect)}), where SP and EP show, and where a selection's detail goes. A null rectangle means the theme has none of it
@@ -23,7 +26,11 @@ public record HubLayout(Rect frame, Map<String, Rect> regions, List<Rect> tabs, 
         }
     }
     public HubLayout(Rect frame, Map<String, Rect> regions, List<Rect> tabs, List<Rect> seals) {
-        this(frame, regions, tabs, seals, Chrome.NONE);
+        this(frame, regions, tabs, seals, Chrome.NONE, List.of());
+    }
+
+    public HubLayout(Rect frame, Map<String, Rect> regions, List<Rect> tabs, List<Rect> seals, Chrome chrome) {
+        this(frame, regions, tabs, seals, chrome, List.of());
     }
 
     /** The main content: the story, the list. */
@@ -36,6 +43,7 @@ public record HubLayout(Rect frame, Map<String, Rect> regions, List<Rect> tabs, 
         chrome = chrome == null ? Chrome.NONE : chrome;
         tabs = List.copyOf(tabs);
         seals = List.copyOf(seals);
+        headings = List.copyOf(headings);
     }
 
     public Rect region(String name) {

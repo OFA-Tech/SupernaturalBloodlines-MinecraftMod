@@ -172,7 +172,7 @@ public final class HubScreen extends Screen {
         }
         HubPage navPage = profile != null ? profile.origin() : page == HubPage.LOADOUT ? HubPage.SKILLS : page;
         List<HubHooks.Launcher> launchers = HubHooks.launchers();
-        layout = theme.layout(width, height, visible.size(), launchers.size());
+        layout = theme.layout(width, height, visible, launchers.size());
         theme.drawFrame(g, layout);
         maxScroll.clear();
         reserved.clear();
@@ -205,6 +205,10 @@ public final class HubScreen extends Screen {
                 boolean row = r.w() > 2 * r.h(); // a wide list row gets its lock at the end, a round or square button in the middle
                 KitDraw.icon(g, net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons.LOCK, row ? r.right() - 13 : r.x() + (r.w() - 10) / 2, r.y() + (r.h() - 10) / 2, 10, theme.muted());
             }
+        }
+        var headings = net.ofatech.supernaturalbloodlines.shared.hub.NavGroups.headings(visible);
+        for (int i = 0; i < Math.min(headings.size(), layout.headings().size()); i++) {
+            theme.drawGroupHeading(g, layout.headings().get(i), headings.get(i).group());
         }
         for (int i = 0; i < launchers.size(); i++) {
             HubHooks.Launcher l = launchers.get(i);

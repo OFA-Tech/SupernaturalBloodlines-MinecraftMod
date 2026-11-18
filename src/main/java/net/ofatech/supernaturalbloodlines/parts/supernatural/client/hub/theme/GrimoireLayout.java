@@ -1,6 +1,8 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme;
 
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
+import net.ofatech.supernaturalbloodlines.shared.hub.NavGroups;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +42,19 @@ public final class GrimoireLayout {
     private GrimoireLayout() {
     }
 
+    /** The pixels of one gap unit between nav groups. */
+    static final int GROUP_GAP = 3;
+
     public static HubLayout of(int width, int height, int tabs, int seals) {
+        return of(width, height, NavGroups.noGaps(tabs), seals);
+    }
+
+    public static HubLayout of(int width, int height, List<HubPage> pages, int seals) {
+        return of(width, height, NavGroups.gaps(pages), seals);
+    }
+
+    private static HubLayout of(int width, int height, int[] gaps, int seals) {
+        int tabs = gaps.length;
         int bookW = Math.min(MAX_W, width - 2 * MARGIN - TAB_OUT);
         int bookH = Math.min(MAX_H, height - MARGIN - SEAL_ROW);
         Rect book = new Rect((width - bookW - TAB_OUT) / 2, MARGIN + Math.max(0, (height - MARGIN - SEAL_ROW - bookH) / 2), bookW, bookH);
@@ -50,9 +64,12 @@ public final class GrimoireLayout {
         List<Rect> tabRects = new ArrayList<>();
         int top = Math.max(book.y() + 12, TOAST_CLEAR);
         // the tabs share the edge above the close button: the pitch shrinks (never below a pressable 12) when ten of them would not fit
-        int pitch = tabs <= 0 ? TAB_H + TAB_GAP : Math.max(12 + TAB_GAP, Math.min(TAB_H + TAB_GAP, (book.bottom() - 18 - top) / tabs));
+        int room = book.bottom() - 18 - top - NavGroups.total(gaps) * GROUP_GAP;
+        int pitch = tabs <= 0 ? TAB_H + TAB_GAP : Math.max(12 + TAB_GAP, Math.min(TAB_H + TAB_GAP, room / tabs));
+        int shift = 0;
         for (int i = 0; i < tabs; i++) {
-            tabRects.add(new Rect(book.right() - 4, top + i * pitch, TAB_OUT + 4, pitch - TAB_GAP));
+            shift += gaps[i] * GROUP_GAP;
+            tabRects.add(new Rect(book.right() - 4, top + i * pitch + shift, TAB_OUT + 4, pitch - TAB_GAP));
         }
         List<Rect> wax = new ArrayList<>();
         for (int i = 0; i < seals; i++) {

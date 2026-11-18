@@ -18,6 +18,15 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiContext;
 public interface HubTheme {
     HubLayout layout(int width, int height, int tabs, int seals);
 
+    /** The layout for these visible pages: a theme that marks the nav groups overrides it (a gap, a divider, a heading). */
+    default HubLayout layout(int width, int height, java.util.List<HubPage> pages, int seals) {
+        return layout(width, height, pages.size(), seals);
+    }
+
+    /** A group heading or divider in the rect the layout gave it; most themes only leave a gap. */
+    default void drawGroupHeading(GuiGraphics g, Rect r, HubPage.Group group) {
+    }
+
     void drawFrame(GuiGraphics g, HubLayout layout);
 
     void drawTab(GuiGraphics g, Rect r, HubPage page, boolean selected, boolean focused);

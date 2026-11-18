@@ -75,6 +75,17 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     }
 
     @Override
+    public HubLayout layout(int width, int height, List<HubPage> pages, int seals) {
+        return TensuraHubLayout.of(width, height, pages, seals);
+    }
+
+    @Override
+    public void drawGroupHeading(GuiGraphics g, Rect r, HubPage.Group group) {
+        String text = Component.translatable(group.langKey()).getString().toUpperCase(java.util.Locale.ROOT);
+        g.drawString(Minecraft.getInstance().font, text, r.x() + 2, r.y() + 1, group == HubPage.Group.OPERATOR ? GOLD : MUTED, false);
+    }
+
+    @Override
     public HubPageView view(HubPage page) {
         return switch (page) {
             case PATH -> path;
@@ -163,7 +174,7 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
                     MUTED, pane.bottom() - 8);
         }
         boolean wide = !layout.tabs().isEmpty() && layout.tabs().get(0).w() > 40;
-        if (wide) {
+        if (wide && layout.headings().isEmpty()) {
             Rect first = layout.tabs().get(0);
             caption(g, font, Component.translatable("supernaturalbloodlines.hub.tensura.pages"), first.x(), first.y() - 9);
         }
@@ -216,6 +227,9 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     public void drawTab(GuiGraphics g, Rect r, HubPage page, boolean selected, boolean focused) {
         row(g, r, selected, false, Component.translatable(page.langKey()).getString(), selected ? TEAL : TEXT, () ->
                 KitDraw.icon(g, Icons.of(page), r.x() + 4, r.y() + (r.h() - 10) / 2, 10, selected ? TEAL : TEXT));
+        if (page.group() == HubPage.Group.OPERATOR) {
+            KitDraw.dashed(g, r, GOLD);
+        }
         if (focused) {
             drawFocus(g, r);
         }

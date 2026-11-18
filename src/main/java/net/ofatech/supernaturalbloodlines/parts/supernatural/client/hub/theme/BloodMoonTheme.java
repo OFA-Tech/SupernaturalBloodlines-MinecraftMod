@@ -72,6 +72,16 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     }
 
     @Override
+    public HubLayout layout(int width, int height, java.util.List<HubPage> pages, int seals) {
+        return BloodMoonLayout.of(width, height, pages, seals);
+    }
+
+    @Override
+    public void drawGroupHeading(GuiGraphics g, Rect r, HubPage.Group group) {
+        g.fill(r.x(), r.y(), r.right(), r.bottom(), group == HubPage.Group.OPERATOR ? GOLD : EDGE);
+    }
+
+    @Override
     public HubPageView view(HubPage page) {
         return switch (page) {
             case PATH -> path;
@@ -282,6 +292,17 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         KitDraw.shape(g, Shapes.Shape.ROUND, r.x(), r.y(), r.w(), selected ? 0xFFffb3a3 : EDGE);
         KitDraw.shape(g, Shapes.Shape.ROUND, r.x() + 1, r.y() + 1, r.w() - 2, selected ? RED : CARD);
         KitDraw.icon(g, Icons.of(page), r.x() + (r.w() - 12) / 2, r.y() + (r.h() - 12) / 2, 12, selected ? 0xFFfff1ea : 0xFF8A5966);
+        if (page.group() == HubPage.Group.OPERATOR) {
+            // a dashed gold ring: twelve dots round the button
+            double cx = r.x() + r.w() / 2.0;
+            double cy = r.y() + r.h() / 2.0;
+            double rad = r.w() / 2.0 - 1;
+            for (int k = 0; k < 12; k++) {
+                int dx = (int) Math.round(cx + Math.cos(k * Math.PI / 6) * rad);
+                int dy = (int) Math.round(cy + Math.sin(k * Math.PI / 6) * rad);
+                g.fill(dx - 1, dy - 1, dx + 1, dy + 1, GOLD);
+            }
+        }
         if (selected && g.guiWidth() >= BloodMoonLayout.FLAG_MIN_WIDTH) {
             Font font = Minecraft.getInstance().font;
             String label = Component.translatable(page.langKey()).getString();
