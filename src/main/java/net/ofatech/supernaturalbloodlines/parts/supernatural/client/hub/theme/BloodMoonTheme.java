@@ -194,7 +194,9 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
                 primary = i;
             }
         }
-        BarPlan plan = BarPlan.of(r, widths, primary, font.width(d.title()) + (d.pips() > 0 ? d.pips() * 6 + 6 : 0));
+        // a line about the selection needs room to be read: the text keeps at least 45% of the bar and the buttons that do not fit go behind "..."
+        int want = Math.max(font.width(d.title()) + (d.pips() > 0 ? d.pips() * 6 + 6 : 0), d.body().isEmpty() ? 0 : r.w() * 45 / 100);
+        BarPlan plan = BarPlan.of(r, widths, primary, want);
         List<Detail.Action> shown = new ArrayList<>();
         List<Rect> rects = new ArrayList<>();
         for (int i = 0; i < d.actions().size(); i++) {
@@ -235,7 +237,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
             KitDraw.pips(g, x + font.width(title) + 6, r.y() + 8, d.pips(), d.pipsFilled(), RED, 0xFF4a2430);
         }
         int by = r.y() + 17;
-        for (String line : LabelFit.wrap(d.body().isEmpty() ? "" : d.body().get(0).getString(), textW, 2, font::width)) {
+        for (String line : LabelFit.wrap(d.body().isEmpty() ? "" : d.body().get(0).getString(), textW, 2, font::width)) { // two lines, the whole of them: the bar is wide enough for the text
             if (by + 8 > r.bottom() - 3) {
                 break;
             }

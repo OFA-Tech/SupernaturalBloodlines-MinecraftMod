@@ -340,6 +340,9 @@ public final class HubScreen extends Screen {
 
     /** Development only (the dev screenshots): puts the screen in a route or section no click is needed for. */
     void devVariant(String variant) {
+        if (variant.startsWith("line_")) {
+            return; // only the line state (DevShots sets it before the screen opens)
+        }
         switch (variant) {
             case "profile" -> openProfile(DevDemo.id("Derek"), "Derek");
             case "profile_beta" -> openProfile(DevDemo.id("Liam"), "Liam");

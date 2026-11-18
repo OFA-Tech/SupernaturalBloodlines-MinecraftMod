@@ -111,6 +111,11 @@ public final class LinePageSupport {
 
     /** The selection's detail, drawn as the page opposite, the bar or the info pane. Only the player's own node carries the actions. */
     public static Detail detail(HubScreen.Frame f, LineTree.Model m, LineTree.Node n) {
+        return detail(f, m, n, false);
+    }
+
+    /** {@code genes}: add the genes as a field (the Tensura pane, when the stage has no room for the vials). */
+    public static Detail detail(HubScreen.Frame f, LineTree.Model m, LineTree.Node n, boolean genes) {
         HubSocial.Origin o = origin(f);
         Detail.Builder b = Detail.of(name(n)).subtitle(Component.translatable(KEY + "selected", caption(f, m, n)));
         if (n.kind() != LineTree.Kind.YOU) {
@@ -122,6 +127,9 @@ public final class LinePageSupport {
         b.field(Component.translatable(KEY + "field.sire"), snap.sire().filter(s -> !s.isEmpty()).<Component>map(Component::literal)
                 .orElse(Component.translatable(sired ? KEY + "sire_unknown" : KEY + "no_sire")));
         b.field(Component.translatable(KEY + "field.line"), lineText(m, o));
+        if (genes) {
+            b.field(Component.translatable(KEY + "genes"), BloodlineGenes.summary(snap));
+        }
         b.body(note(m, o));
         boolean mayCall = mayCall(f);
         boolean noSireAtAll = m.state() == LineRules.State.ORIGINAL;
@@ -181,8 +189,9 @@ public final class LinePageSupport {
     /** The padlock badge on the player's portrait: a disc with the open lock. */
     public static void padlock(HubScreen.Frame f, Rect portrait, int disc, int lock) {
         int size = Math.max(13, portrait.w() * 3 / 4);
-        int x = portrait.right() - size * 2 / 3;
-        int y = portrait.y() - size / 3;
+        // at the foot, to the left: the break, its tag and the label are above and to the right of the portrait
+        int x = portrait.x() - size / 3;
+        int y = portrait.bottom() - size * 2 / 3;
         KitDraw.shape(f.g, Shapes.Shape.ROUND, x, y, size, disc);
         openLock(f.g, x + (size - 7) / 2, y + (size - 9) / 2, lock);
     }

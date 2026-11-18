@@ -48,5 +48,16 @@ class NewPagesContrastTest {
         assertTrue(Contrast.ratio(RequestToast.INK, ground) >= TEXT, "the toast's first line");
         assertTrue(Contrast.ratio(RequestToast.MUTED, ground) >= TEXT, "the toast's second and third lines");
     }
-}
 
+    @Test
+    void theFreedLinePillAndTheNavTabsAreReadable() {
+        assertTrue(Contrast.ratio(net.ofatech.supernaturalbloodlines.shared.hub.kit.LineColors.FREE_PILL_INK, net.ofatech.supernaturalbloodlines.shared.hub.kit.LineColors.FREE_PILL) >= TEXT, "the text on the green pill");
+        // every Grimoire index tab colour carries its icon (3:1 for a graphic), chosen or not
+        for (net.ofatech.supernaturalbloodlines.shared.hub.HubPage.Group g : net.ofatech.supernaturalbloodlines.shared.hub.HubPage.Group.values()) {
+            assertTrue(Contrast.ratio(0xFFE8B0B0, GrimoireTheme.tabColor(g, false)) >= 3.0, g + " tab, resting");
+            assertTrue(Contrast.ratio(0xFFFFE3A0, GrimoireTheme.tabColor(g, true)) >= 3.0, g + " tab, chosen");
+        }
+        // the Blood Moon's gold divider and the Tensura heading text on its panel
+        assertTrue(Contrast.ratio(0xFF8fb2c4, 0xFF0b1e2e) >= 3.0, "the Tensura heading on its panel");
+    }
+}

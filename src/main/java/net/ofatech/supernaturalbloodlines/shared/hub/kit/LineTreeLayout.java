@@ -19,6 +19,12 @@ public final class LineTreeLayout {
     private static final int MIN_GAP = 2;
     private static final int MAX_GAP = 18;
     private static final int KID_GAP = 6;
+    /** The room a broken link keeps between the sire and you: the torn ink, the break mark and its label sit in it. */
+    public static final int BREAK_GAP = 12;
+
+    static boolean broken(LineTree.Model m) {
+        return m.links().stream().anyMatch(l -> l.style() == LineTree.LinkStyle.BROKEN);
+    }
 
     private LineTreeLayout() {
     }
@@ -40,7 +46,7 @@ public final class LineTreeLayout {
     private static boolean fits(int height, LineTree.Model m, int ring) {
         long chain = m.nodes().stream().filter(n -> !isKid(n)).count();
         boolean kids = m.nodes().stream().anyMatch(LineTreeLayout::isKid);
-        return CROWN + chain * ring + (chain - 1) * (MIN_GAP + 2) + (kids ? KID_GAP + ring + KID_LABEL : 0) <= height;
+        return CROWN + chain * ring + (chain - 1) * (MIN_GAP + 2) + (broken(m) ? BREAK_GAP : 0) + (kids ? KID_GAP + ring + KID_LABEL : 0) <= height;
     }
 
     /** The room to the right of a chain node's portrait for its name and caption. */
@@ -55,7 +61,12 @@ public final class LineTreeLayout {
 
     /** The moon's disc at the top of the region, centred over the tree. */
     public static Rect moonDisc(Rect region) {
-        int d = Math.max(30, Math.min(Math.min(region.h() * 38 / 100, region.w() * 50 / 100), 120));
+        return moonDisc(region, 38);
+    }
+
+    /** {@code pct}: how much of the height the disc may take; a tall chain under it asks for less. */
+    static Rect moonDisc(Rect region, int pct) {
+        int d = Math.max(30, Math.min(Math.min(region.h() * pct / 100, region.w() * 50 / 100), 120));
         int cx = region.x() + region.w() * 38 / 100;
         cx = Math.max(region.x() + d / 2, Math.min(region.right() - d / 2, cx));
         return new Rect(cx - d / 2, region.y() + 2, d, d);
@@ -67,11 +78,13 @@ public final class LineTreeLayout {
      */
     public static Map<String, Rect> moon(Rect region, Rect bar, LineTree.Model m) {
         Rect usable = region.bottom() > bar.y() ? new Rect(region.x(), region.y(), region.w(), Math.max(20, bar.y() - 4 - region.y())) : region;
-        Rect disc = moonDisc(usable);
         Map<String, Rect> out = new LinkedHashMap<>();
         boolean crowned = m.nodes().stream().anyMatch(n -> n.kind() == LineTree.Kind.ROOT)
                 || m.state() == LineRules.State.ORIGINAL;
         LineTree.Node first = m.nodes().get(0);
+        // a chain of three or more under the moon, or a broken link in it, asks for a smaller disc so the nodes keep their gaps
+        long under = m.nodes().stream().filter(n -> !isKid(n) && (!crowned || !n.id().equals(first.id()))).count();
+        Rect disc = moonDisc(usable, under >= 3 || broken(m) ? 28 : 38);
         int inner = Math.max(16, disc.w() * 48 / 100);
         if (crowned) {
             out.put(first.id(), new Rect(disc.x() + (disc.w() - inner) / 2, disc.y() + (disc.h() - inner) / 2, inner, inner));
@@ -112,7 +125,14 @@ public final class LineTreeLayout {
             kidBlock = kids.isEmpty() ? 0 : KID_GAP + ring + KID_LABEL;
             avail = bottom - top - kidBlock;
         }
-        int gap = n <= 1 ? 0 : Math.max(MIN_GAP, Math.min(MAX_GAP, (avail - n * ring) / (n - 1)));
+        boolean broken = broken(m);
+        int extra = broken ? BREAK_GAP - MIN_GAP : 0;
+        while (broken && n > 1 && ring > 8 && n * ring + (n - 1) * MIN_GAP + extra > avail) {
+            ring--;
+            kidBlock = kids.isEmpty() ? 0 : KID_GAP + ring + KID_LABEL;
+            avail = bottom - top - kidBlock;
+        }
+        int gap = n <= 1 ? 0 : Math.max(MIN_GAP, Math.min(MAX_GAP, (avail - n * ring - extra) / (n - 1)));
         double half = (kids.size() - 1) / 2.0;
         int step = kids.isEmpty() ? 0 : Math.max(ring + 6, Math.min(80, area.w() / Math.max(2, kids.size())));
         int cx = area.x() + (int) (area.w() * cxFraction);
@@ -121,9 +141,11 @@ public final class LineTreeLayout {
         cx = lo > hi ? area.x() + area.w() / 2 : Math.max(lo, Math.min(hi, cx));
         Map<String, Rect> out = new LinkedHashMap<>();
         int y = top;
-        for (LineTree.Node node : chain) {
+        for (int i = 0; i < chain.size(); i++) {
+            LineTree.Node node = chain.get(i);
             out.put(node.id(), new Rect(cx - ring / 2, y, ring, ring));
-            y += ring + gap;
+            boolean aboveYou = broken && i + 1 < chain.size() && chain.get(i + 1).id().equals(LineTree.YOU);
+            y += ring + (aboveYou ? Math.max(gap, BREAK_GAP) : gap);
         }
         int ky = bottom - KID_LABEL - ring;
         for (int i = 0; i < kids.size(); i++) {

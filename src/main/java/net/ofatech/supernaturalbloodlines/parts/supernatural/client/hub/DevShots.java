@@ -60,6 +60,17 @@ public final class DevShots {
         return v == null || v.equalsIgnoreCase("false") ? null : v.toLowerCase(Locale.ROOT);
     }
 
+    /** Set by a {@code bloodline_<state>} shot, so one run photographs every line state. */
+    private static volatile String originOverride;
+
+    static String origin() {
+        if (originOverride != null) {
+            return originOverride;
+        }
+        String v = System.getProperty(PROPERTY + ".origin");
+        return v == null || v.isBlank() ? null : v.toLowerCase(Locale.ROOT);
+    }
+
     private DevShots(List<Shot> shots, String world, boolean quit, int width, int height) {
         this.shots = shots;
         this.world = world;
@@ -105,6 +116,10 @@ public final class DevShots {
                 // a route or a section of a page: profile, profile_beta, profile_stranger, profile_op, admin_debug, admin_speciesTensura, admin_search_max ...
                 variant = parts[1].toLowerCase(Locale.ROOT).equals(parts[1]) ? parts[1] : parts[1];
                 pages.add(variant.startsWith("admin_") ? HubPage.ADMIN : HubPage.PACK);
+            } else if (parts.length > 1 && parts[1].toLowerCase(Locale.ROOT).startsWith("line_")) {
+                // the Bloodline page in one line state: line_original, line_none, line_unknown, line_inline, line_inline_unknown, line_free, line_free_unknown
+                variant = parts[1].toLowerCase(Locale.ROOT);
+                pages.add(HubPage.BLOODLINE);
             } else if (parts.length < 2 || parts[1].equalsIgnoreCase("all")) {
                 pages.addAll(List.of(HubPage.values()));
             } else if (parts[1].equalsIgnoreCase("menu")) {
@@ -191,6 +206,7 @@ public final class DevShots {
                 return;
             }
             parkCursor(mc, 1, 1); // a hover tooltip would cover the page
+            originOverride = s.variant() != null && s.variant().startsWith("line_") ? s.variant().substring(5) : null;
             HubClient.remember(s.page());
             HubClient.open(s.page());
             if (s.menu() && mc.screen instanceof HubScreen hs) {

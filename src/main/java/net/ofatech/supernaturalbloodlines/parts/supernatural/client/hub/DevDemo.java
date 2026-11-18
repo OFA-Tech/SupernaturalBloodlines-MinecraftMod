@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
+import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalState;
@@ -79,7 +80,31 @@ final class DevDemo {
             both.add(new HubModel.LadderView(SupernaturalRace.WITCH, first.rungs(), first.active(), first.tasks()));
             return new HubView(base.player(), base.bloodline(), base.state(), base.races(), both, base.skills(), base.snapshot(), base.context());
         }
-        return base;
+        return withOrigin(base);
+    }
+
+    /** {@code .origin=original|none|unknown|inline|inline_unknown|free|free_unknown}: the line state of the Bloodline page. */
+    private static HubView withOrigin(HubView v) {
+        String mode = DevShots.origin();
+        if (mode == null) {
+            return v;
+        }
+        HubSnapshotPayload.Family f = v.snapshot().family();
+        Optional<String> klaus = Optional.of("npc:klaus");
+        Optional<String> none = Optional.empty();
+        List<HubSocial.Kin> kids = f.line();
+        HubSnapshotPayload.Family fam = switch (mode) {
+            case "original" -> new HubSnapshotPayload.Family(none, false, f.sired(), List.of(), kids, new HubSocial.Origin(LineRules.State.ORIGINAL, none, none, HubSocial.FreedKind.NONE, List.of()));
+            case "none" -> HubSnapshotPayload.Family.NONE;
+            case "unknown" -> new HubSnapshotPayload.Family(none, false, f.sired(), List.of(), kids, new HubSocial.Origin(LineRules.State.SIRE_UNKNOWN, none, none, HubSocial.FreedKind.NONE, List.of()));
+            case "inline" -> new HubSnapshotPayload.Family(Optional.of("Tyler"), false, f.sired(), List.of(""), kids, new HubSocial.Origin(LineRules.State.IN_LINE, klaus, none, HubSocial.FreedKind.NONE, List.of(true)));
+            case "inline_unknown" -> new HubSnapshotPayload.Family(Optional.of("Tyler"), false, f.sired(), List.of(""), kids, new HubSocial.Origin(LineRules.State.IN_LINE, none, none, HubSocial.FreedKind.NONE, List.of(true)));
+            case "free" -> new HubSnapshotPayload.Family(Optional.of("Tyler"), false, f.sired(), List.of(""), kids, new HubSocial.Origin(LineRules.State.FREE, none, klaus, HubSocial.FreedKind.BROKEN_LINE, List.of(true)));
+            case "free_unknown" -> new HubSnapshotPayload.Family(Optional.of("Tyler"), false, f.sired(), List.of(""), kids, new HubSocial.Origin(LineRules.State.FREE, none, none, HubSocial.FreedKind.BROKEN_LINE, List.of(true)));
+            default -> f;
+        };
+        HubSnapshotPayload s = v.snapshot();
+        return new HubView(v.player(), v.bloodline(), v.state(), v.races(), v.ladders(), v.skills(), new HubSnapshotPayload(fam, s.pack(), s.fiveCount(), s.genes(), s.rites()), v.context());
     }
 
     /** A Ghoul with 14:20 left to finish turning: Path and Guide open, the rest locked. */

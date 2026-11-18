@@ -40,6 +40,31 @@ public final class BloodlineGenes {
         return y + HEIGHT + 4;
     }
 
+    /** Two genes side by side, each a small vial with its name and value beside it: for a page too short for the tall vials. */
+    public static int drawCompact(HubScreen.Frame f, Rect area, int y, HubSnapshotPayload snap) {
+        HubTheme t = f.theme();
+        int n = Genes.ALL.size();
+        int step = area.w() / Math.max(1, n);
+        for (int i = 0; i < n; i++) {
+            String gene = Genes.ALL.get(i);
+            Genes.Knowledge k = snap.genes().getOrDefault(gene, Genes.Knowledge.UNKNOWN);
+            int vx = area.x() + step * i + 2;
+            f.g.fill(vx + 3, y, vx + 7, y + 3, 0xFF7A5238);
+            f.g.fill(vx, y + 3, vx + 10, y + 26, t.ink());
+            f.g.fill(vx + 1, y + 4, vx + 9, y + 25, t.paper());
+            int level = k == Genes.Knowledge.TRUE ? 15 : k == Genes.Knowledge.FALSE ? 5 : 4;
+            f.g.fill(vx + 1, y + 25 - level, vx + 9, y + 25, k == Genes.Knowledge.TRUE ? 0xFFB8903A : 0xFFC8BBA0);
+            Component name = Component.translatable(LinePageSupport.KEY + "gene." + gene);
+            Component value = Component.translatable(LinePageSupport.KEY + "gene_value." + k.name().toLowerCase(Locale.ROOT));
+            int tx = vx + 15;
+            f.g.drawString(f.font(), f.font().plainSubstrByWidth(name.getString().replace(" gene", ""), step - 18), tx, y + 4, t.ink(), false);
+            f.g.drawString(f.font(), f.font().plainSubstrByWidth(value.getString(), step - 18), tx, y + 14, k == Genes.Knowledge.TRUE ? t.good() : t.muted(), false);
+            f.target("gene:" + gene, new Rect(vx - 2, y, step, 27), List.of(name.copy().append(": ").append(value),
+                    Component.translatable(LinePageSupport.KEY + "gene_hint").withStyle(ChatFormatting.GRAY)), null);
+        }
+        return y + 29;
+    }
+
     /** A stoppered vial: the cork, a glass body, and a liquid that is full and gold when known, low and pale when not. */
     private static void vial(HubScreen.Frame f, int x, int y, Genes.Knowledge k) {
         HubTheme t = f.theme();
@@ -52,6 +77,12 @@ public final class BloodlineGenes {
         if (k == Genes.Knowledge.UNKNOWN) {
             f.g.drawString(f.font(), "?", x + 13 - f.font().width("?") / 2, y + 22, t.muted(), false);
         }
+    }
+
+    /** "Genes: 1 of 2 known": the one line a place with no room for vials says. */
+    public static Component summary(HubSnapshotPayload snap) {
+        long known = Genes.ALL.stream().filter(g -> snap.genes().getOrDefault(g, Genes.Knowledge.UNKNOWN) != Genes.Knowledge.UNKNOWN).count();
+        return Component.translatable(LinePageSupport.KEY + "genes_known", known, Genes.ALL.size());
     }
 
     /** The genes as plain lines, for a place too narrow for vials. */

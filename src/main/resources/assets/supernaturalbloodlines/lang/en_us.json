@@ -1023,6 +1023,7 @@
   "supernaturalbloodlines.hub.bloodline.five": "The Five",
   "supernaturalbloodlines.hub.bloodline.five_count": "%s of the Five are marked.",
   "supernaturalbloodlines.hub.bloodline.genes": "Genes",
+  "supernaturalbloodlines.hub.bloodline.genes_known": "Genes: %s of %s known",
   "supernaturalbloodlines.hub.bloodline.gene.werewolf": "Werewolf gene",
   "supernaturalbloodlines.hub.bloodline.gene.doppelganger": "Doppelgänger gene",
   "supernaturalbloodlines.hub.bloodline.gene_value.unknown": "Unknown ?",
