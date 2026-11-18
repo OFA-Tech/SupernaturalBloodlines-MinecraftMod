@@ -16,11 +16,6 @@ public interface EcAdapter {
         }
     }
 
-    @FunctionalInterface
-    interface Change {
-        void changed(ServerLevel level, ResourceLocation previous, ResourceLocation next);
-    }
-
     /** The event that is running now; empty for the normal moon. Works on both sides. */
     Optional<Event> active(Level level);
 
@@ -32,7 +27,4 @@ public interface EcAdapter {
 
     /** Ends the running event when it is {@code id}. False when it is another one. Server only. */
     boolean stop(ServerLevel level, ResourceLocation id);
-
-    /** Calls {@code listener} (server side) whenever the running event changes. */
-    void onChanged(Change listener);
 }

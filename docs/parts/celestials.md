@@ -21,23 +21,23 @@ An EC event never replaces the real moon. `MoonRule.isFullMoon*`, the rites' "ne
 
 ## The eclipse mirror
 
-Our roll stays the source of truth (`LunarEclipse`, 3%, its SavedData, its gameplay). When it starts, `EclipseSignal` tells the part, which asks EC to start our event `supernaturalbloodlines:lunar_eclipse` tonight (`setLunarEventTonight`); when it ends, EC's event is removed (`removeLunarEvent(0)`). The event is a datapack file of ours (`data/supernaturalbloodlines/enhancedcelestials2core/lunar/event/lunar_eclipse.json` and four modifiers: sky light, moon colour, name colour, the two chat texts). EC then draws the moon colour and light, plays the notice (**so with EC our own chat line is not sent**), and the hub's almanac can name it. If EC already runs another event the mirror is skipped, our chat line is sent and the gameplay still runs.
+Our roll stays the source of truth (`LunarEclipse`, 3%, its SavedData, its gameplay). When it starts, `EclipseSignal` tells the part, which asks EC to start our event `supernaturalbloodlines:lunar_eclipse` tonight (`setLunarEventTonight`); when it ends, EC's event is removed (`removeLunarEvent(0)`). The event is a datapack file of ours (`data/supernaturalbloodlines/enhancedcelestials2core/lunar/event/lunar_eclipse.json` and four modifiers: sky light, moon colour, name colour, the two chat texts). EC then draws the moon colour and light, and the hub's almanac can name it. **Our own chat line is always sent**, mirrored or not. The EC text components of the event stay in the datapack, so EC may announce it too (two lines) until that is seen in a game. **Owner rule 9 (EC's notice replaces ours) is deferred**: it needs a real-game check that EC announces a mirrored start and a `removeLunarEvent` end (see the checklist). If EC already runs another event the mirror is skipped and the gameplay still runs.
 
 Client: `EclipseClient` keeps its fog tint and its red sky disc always, and skips only its moon disc when this client's own EC forecast says the running event is ours (`LunarMoods.ecDrawsEclipse`). A client without EC on a server with EC still gets all of ours.
 
 ## The hub
 
-The almanac of the three Path pages (Grimoire `PathPage`, Blood Moon `BloodMoonPathPage`, Tensura `StagePathPage`) draws a ring in the event's name colour on the day's moon (tooltip: "Blood Moon in 3 days.") and a line "Blood Moon in 3 days." under the full-moon line. The data is `LunarMoodClient` (read once per game tick). Without events the pages are exactly as before.
+The almanac of the three Path pages (Grimoire `PathPage`, Blood Moon `BloodMoonPathPage`, Tensura `StagePathPage`) draws a ring in the event's name colour on the day's moon (tooltip: "Blood Moon in 3 days.") and a line "Blood Moon in 3 days." under the full-moon line. Every event of the six-day row is a text line, in the theme's ink (the event colour is only on the ring), wrapped so the day count is never cut; the ring has a tooltip. The icons are spaced so neighbouring rings never touch (`HubAlmanac.step`). The data is `LunarMoodClient`, read from EC once a second and cached. Without events the pages are exactly as before.
 
 ## Layout
 
 - `core/moon/` (pure but `Level` in the source interface): `LunarMood`, `LunarSource`, `LunarMoods` (the facade and the `Tuning` numbers), `EclipseSignal`.
-- `parts/celestials/`: `CelestialsPart` (init, install), `CelestialsConfig`, `EcAdapter` (what the part needs), `EcReflect` (the only class that names EC types, by reflection), `EcSource`, `BloodMoonBite` (links Vampirism), `SuperBlueMoon` (links Werewolves), `gametest/` (`FakeEc` and the tests).
+- `parts/celestials/`: `CelestialsPart` (init, install), `CelestialsConfig`, `EcAdapter` (what the part needs), `EcReflect` (the only class that names EC types, by reflection; no change listener: nothing needs it, and one would run inside EC's tick), `EcSource`, `BloodMoonBite` (links Vampirism), `SuperBlueMoon` (links Werewolves), `gametest/` (`FakeEc` and the tests).
 - Hooks in other parts: `RiteCost` (species), `ForcedShift.addForcedSpare` (shared), `LunarEclipse.changed` and `EclipseClient` (the notice and the moon disc), `HubAlmanac`/`AlmanacEvents` (hub).
 
 ## Checked against the EC jars (core 2.0.3.4, Default Lunar Events 2.0.1.4, by javap)
 
-- `registerLunarEventChanged(LunarEventChangeListener)`; the listener is `onLunarEventChanged(ServerLevel, Holder previous, Holder new)`: `LunarForecast.tick` calls `notifyEventSwitched(lastTickEvent, current)`, which fires `(level, previous, new)`. `EcReflectTest` pins that order.
+- The change listener (`registerLunarEventChanged`, `onLunarEventChanged(ServerLevel, Holder previous, Holder new)`) was read too, and is **not used**: it was only a debug log, and a throwing listener would run inside EC's tick.
 - An event instance runs from `day*24000 + night_start_time (12500)` (or "now" for `setLunarEventTonight`) to `day*24000 + 23999`, the end of the day number. Our eclipse ends at 23216, so the mirror is removed at our end (`removeLunarEvent(0)` shortens the active instance to "now").
 - `setLunarEventTonight` has no clear-sky check (only the command and the scheduler have); it throws on the client.
 - EC's client does **not** tint the fog or the sky dome: its mixins change only the moon colour, texture and size and the lightmap's sky colour. So our fog and sky tint stay ours.
@@ -47,10 +47,18 @@ The almanac of the three Path pages (Grimoire `PathPage`, Blood Moon `BloodMoonP
 
 - [x] Pure logic and the factors: `LunarMoodTest`, `LunarMoodsTest`, `EclipseSignalTest`, `HubAlmanacTest`.
 - [x] The reflection against stand-ins with EC's names and signatures: `EcReflectTest` (cannot prove the real mod; `start` needs a `ServerLevel`, covered by the fake only).
-- [x] GameTests with a fake EC: no EC changes nothing, every mood, the schedule, the eclipse mirror and the single notice, a broken source, the bite, the forced shift, the rite cost (`CelestialsGameTests` and its siblings).
+- [x] GameTests with a fake EC: the real start-up links nothing without EC, no EC changes nothing, every mood, the schedule, the eclipse mirror, our chat line on a real eclipse start and end with and without EC (`CelestialsEclipseNoticeGameTests`), a broken source (dropped for good after 3 failures in a row), the bite, the forced shift with no other part's gate (the `-PpartsOff=species,artifacts` run), the rite cost (`CelestialsGameTests` and its siblings). An `EcReflect` stub with a missing member makes `create` fail and leaves no adapter (`EcReflectTest`).
 - [x] `-PpartsOff=celestials`: `CelestialsPartOffGameTests` sees the part's hooks present on, absent off.
 - [x] Every config key has an Admin row (`AdminEntries`, section `celestials`; `AdminCoverageTest`).
 - [x] Hub shots in the three themes with stand-in events: `docs/superpowers/design/celestials/` (`*-events.png`, and `*-no-ec.png` for the unchanged look).
 - [ ] **Not seen in a real game:** two clients with EC 2.0.3.x and Default Lunar Events (core, add-on, CorgiLib, Data Anchor), one without EC. In particular: that the client forecast carries the schedule (the rings), that `requires_clear_skies` does not stop our mirrored event, the look of our `sky_light_color` (`c0403a`, a milder red than the first design's `8c0808` because the lightmap multiplies by it), and the chat notice.
+- [ ] **EC announcing our mirrored event** (owner rule 9, deferred): start a mirrored eclipse with EC installed and see whether EC sends its chat text at the start and at the end (`removeLunarEvent`). Only if it does can our own line be skipped; until then both may show.
 - [ ] NPC packs and the plan 17 bosses do not exist yet: `packChanceFactor` and `bossWeight` have no reader.
 - [ ] The Home "Tonight: Blood Moon" block and a Guide paragraph (design 2b) are not built.
+
+## Things to know
+
+- **The datapack files load regardless of the part switch**: the harvest tag (`enhancedcelestials2defaultlunarevents:harvest_moon_crops`) and the `lunar_eclipse` event are data, so switching the part off with EC installed leaves them in place (inert only because nothing asks for the event).
+- **Before switching the part off or removing the mod, end the eclipse or wait for dawn.** A mirrored EC event that is running keeps running with nobody to remove it; it ends by itself at the end of its day.
+- **The Harvest Moon doubling is unverified.** The tag is the one Default Lunar Events reads for its crop drops (javap), but a doubled drop has not been seen in a game with our crops.
+- **`-PecJars=<folder>`** takes EC's jars, downloaded by hand (All Rights Reserved: never committed): Enhanced Celestials 2 Core NeoForge 1.21.1 `2.0.3.4` (`Enhanced-Celestials-2-Core-NeoForge-1.21.1-2.0.3.4.jar`, SHA-256 `AFC0C3A1D142FCD8A1EA2E35D40A6C0C9E8B606FA4C84AD3BA18AB5311AF03DE` for the jar read with javap), Default Lunar Events NeoForge 1.21.1 `2.0.1.4` (SHA-256 `085C3376DDE5A84C0885DB3AB7EEE09105D0D7DD0A176808D05ECF73ECAECF79`), CorgiLib and Data Anchor (the versions their pages name as required by core 2.0.3.4). Untested with this build.

@@ -12,7 +12,7 @@ import net.ofatech.supernaturalbloodlines.parts.celestials.EcAdapter;
 
 /** An Enhanced Celestials stand-in for the tests: one running event, a schedule, and a record of what the part asked of it. */
 public final class FakeEc implements EcAdapter {
-    public static final String DLE = "enhancedcelestials2defaultlunarevents";
+    public static final String DLE = net.ofatech.supernaturalbloodlines.core.moon.LunarMood.EC_DEFAULT_NAMESPACE;
 
     public Optional<Event> running = Optional.empty();
     public final Map<Integer, Event> schedule = new TreeMap<>();
@@ -61,9 +61,5 @@ public final class FakeEc implements EcAdapter {
         }
         running = Optional.empty();
         return true;
-    }
-
-    @Override
-    public void onChanged(Change listener) {
     }
 }

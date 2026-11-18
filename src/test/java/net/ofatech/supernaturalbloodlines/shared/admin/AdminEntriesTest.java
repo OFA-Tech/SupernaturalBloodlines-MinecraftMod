@@ -41,10 +41,11 @@ class AdminEntriesTest {
     }
 
     @Test
-    void onlyTheReservedMixinSwitchIsHidden() {
-        List<SettingEntry> hidden = AdminEntries.ALL.stream().filter(SettingEntry::isHidden).toList();
-        assertEquals(1, hidden.size());
-        assertEquals(AdminEntries.HUD_FILE + ":mixins.hide_in_controls_mixin", hidden.get(0).id());
+    void onlyTheReservedKeysAreHidden() {
+        Set<String> hidden = AdminEntries.ALL.stream().filter(SettingEntry::isHidden).map(SettingEntry::id).collect(Collectors.toSet());
+        assertEquals(Set.of(AdminEntries.HUD_FILE + ":mixins.hide_in_controls_mixin",
+                AdminEntries.CELESTIALS_FILE + ":blood_moon_pack_chance_factor",
+                AdminEntries.CELESTIALS_FILE + ":super_moon_boss_weight"), hidden);
     }
 
     @Test

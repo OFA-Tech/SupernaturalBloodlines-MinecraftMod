@@ -23,10 +23,9 @@ public final class CelestialsWolfGameTests {
     private CelestialsWolfGameTests() {
     }
 
-    /** Whether the forced full-moon shift (a form action activated inside the player's own tick) is cancelled. */
+    /** Whether the forced full-moon shift (a form action activated inside the player's own tick) is cancelled. The gate is the part's own: nothing is registered here. */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static boolean forcedShiftCancelled(ServerPlayer p) {
-        ForcedShift.register();
         ForcedShift.enterTick(p);
         try {
             var event = new ActionEvent.ActionActivatedEvent(VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow(), (IAction) ModActions.BEAST_FORM.get(), 0, 0);

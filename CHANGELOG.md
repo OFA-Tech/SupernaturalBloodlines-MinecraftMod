@@ -8,7 +8,7 @@
 ### Added
 - New part `celestials`, reading Enhanced Celestials 2 lunar events by reflection (no mixin, no dependency). An event is a second layer on top of the real moon: rites, the Werewolves forced shift and moon control keep following the real full moon.
 - Blood Moon: a vampire's bite gives x1.25 blood (`blood_moon_bite_bonus`). Blue Moon: every rite costs x0.8 altar power (`blue_moon_rite_cost`). Super moons: the Rite of the Moon, the Silver Moon and Immortality cost x0.75 (`super_moon_rite_cost`). Super Blue Moon: the Werewolves forced shift is skipped for everybody (`super_blue_skips_forced_shift`). Harvest Moon: vervain and the wolfsbane strains drop double (they are in EC's `harvest_moon_crops` tag).
-- Our lunar eclipse is shown as an Enhanced Celestials event (moon colour, light, EC's chat notice instead of ours). Our own roll, chance and gameplay are unchanged; with another event already running nothing is mirrored and our own notice is sent.
+- Our lunar eclipse is shown as an Enhanced Celestials event (moon colour and light; our own chat notice is always sent). Our own roll, chance and gameplay are unchanged; with another event already running nothing is mirrored and our own notice is sent.
 - The hub's almanac (all three looks) rings the days that have an event and says "Blood Moon in 3 days."
 - Two reserved keys for features that do not exist yet: `blood_moon_pack_chance_factor` (NPC packs) and `super_moon_boss_weight` (full-moon bosses).
 - `-PecJars=<folder>` (build): puts Enhanced Celestials' jars, downloaded by hand, on the dev run classpath for a manual check. Off by default.

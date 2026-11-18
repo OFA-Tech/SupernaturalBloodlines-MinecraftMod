@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.moon.LunarMood;
 import net.ofatech.supernaturalbloodlines.core.moon.LunarMoods;
 
 /**
@@ -91,7 +92,7 @@ public final class RiteCost {
             }
             siphonFactor = LadderQuery.value(performer, "S-SIP-4", "payment_factor", 1.0);
         }
-        extra *= LunarMoods.riteCost(level, isRite(level, type, FULL_MOON_RITES));
+        extra *= LunarMoods.riteCost(level, () -> isRite(level, type, LunarMood.FULL_MOON_RITES));
         Split s = split(base, witch, WitchAltarBonus.emissaryApplies(level, caster), emissary, extra, siphonFactor, available);
         if (s.siphoned() > 0) {
             PENDING.set(new Pending(p, s.siphoned()));
@@ -101,9 +102,6 @@ public final class RiteCost {
 
     /** The two Rites of Lineage (data type {@code supernaturalbloodlines:lineage}): their cost is the ones Ancestral Voice halves. */
     static final Set<String> LINEAGE_RITES = Set.of("supernaturalbloodlines:rite_of_lineage_reveal", "supernaturalbloodlines:rite_of_lineage_awaken");
-
-    /** The rites that need the full moon and that a super moon makes cheaper (Severance also needs it, and is left out on purpose). */
-    static final Set<String> FULL_MOON_RITES = Set.of("supernaturalbloodlines:rite_of_the_moon", "supernaturalbloodlines:silver_moon", "supernaturalbloodlines:immortality");
 
     private static boolean isLineageRite(Level level, @Nullable RiteType type) {
         return isRite(level, type, LINEAGE_RITES);

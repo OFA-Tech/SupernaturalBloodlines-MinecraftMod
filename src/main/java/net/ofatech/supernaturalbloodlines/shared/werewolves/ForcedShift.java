@@ -28,7 +28,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
  * {@code ActionEvent.ActionActivatedEvent}; a voluntary shift arrives from a network packet, outside any player tick.
  * So a form action activated while this player is being ticked is the forced one. Links Werewolves: call
  * {@link #register} only behind {@code ModList.isLoaded("werewolves")}. Every part that grants control calls it; only
- * the first call does anything.
+ * the first call registers the listeners (a later {@link #register} still turns the at-will rule on).
  */
 public final class ForcedShift {
     // PlayerTickEvent also fires on the client thread of a singleplayer game, hence the thread-local
@@ -46,6 +46,8 @@ public final class ForcedShift {
     // reasons to cancel only the forced shift (a Super Blue Moon)
     private static final List<Predicate<ServerPlayer>> SPARES = new CopyOnWriteArrayList<>();
     private static boolean registered;
+    // R96 (at-will shifts only with control) is the rule of the parts that grant control; a gate registered only to spare the forced shift leaves it off
+    private static volatile boolean atWillRule;
 
     private ForcedShift() {
     }
@@ -66,6 +68,16 @@ public final class ForcedShift {
     }
 
     public static synchronized void register() {
+        atWillRule = true;
+        registerGate();
+    }
+
+    /** The gate without the at-will rule: for a part that only spares the forced shift (the celestials part), whatever else is on. */
+    public static synchronized void registerSparesOnly() {
+        registerGate();
+    }
+
+    private static void registerGate() {
         if (registered) {
             return;
         }
@@ -133,7 +145,7 @@ public final class ForcedShift {
             if (MoonControl.of(p) != MoonControl.Control.NONE || halvedAndSpared(p) || moonCalmSpares(p) || SPARES.stream().anyMatch(s -> s.test(p))) {
                 e.setCanceled(true);
             }
-        } else if (e.getAction() instanceof WerewolfFormAction form && MoonControl.moonBound() && !allowedAtWill(p, form)) {
+        } else if (atWillRule && e.getAction() instanceof WerewolfFormAction form && MoonControl.moonBound() && !allowedAtWill(p, form)) {
             // R96: without control a werewolf shifts only when the full moon forces it
             e.setCanceled(true);
             p.displayClientMessage(Component.translatable(NO_CONTROL_MESSAGE), true);

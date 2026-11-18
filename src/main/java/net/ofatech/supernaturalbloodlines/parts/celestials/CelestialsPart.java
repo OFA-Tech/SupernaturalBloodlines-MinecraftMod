@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.celestials;
 
+import java.util.concurrent.Callable;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -8,12 +9,14 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.moon.EclipseSignal;
+import net.ofatech.supernaturalbloodlines.core.moon.LunarMood;
 import net.ofatech.supernaturalbloodlines.core.moon.LunarMoods;
 import net.ofatech.supernaturalbloodlines.core.moon.LunarSource;
-import net.ofatech.supernaturalbloodlines.core.EnabledParts;
 import net.ofatech.supernaturalbloodlines.parts.celestials.gametest.CelestialsGameTests;
+import net.ofatech.supernaturalbloodlines.parts.celestials.gametest.CelestialsEclipseNoticeGameTests;
 import net.ofatech.supernaturalbloodlines.parts.celestials.gametest.CelestialsRiteGameTests;
 import net.ofatech.supernaturalbloodlines.parts.celestials.gametest.CelestialsVampireGameTests;
+import net.ofatech.supernaturalbloodlines.core.EnabledParts;
 import net.ofatech.supernaturalbloodlines.parts.celestials.gametest.CelestialsWolfGameTests;
 import net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs;
 import org.jetbrains.annotations.Nullable;
@@ -27,9 +30,10 @@ import org.jetbrains.annotations.VisibleForTesting;
 public final class CelestialsPart {
     public static final String EC_MOD = "enhancedcelestials2core";
     /** Our lunar eclipse as an EC event (a datapack file of ours that EC reads when it is installed). */
-    public static final ResourceLocation ECLIPSE_EVENT = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "lunar_eclipse");
+    public static final ResourceLocation ECLIPSE_EVENT = ResourceLocation.fromNamespaceAndPath(LunarMood.ECLIPSE_NAMESPACE, LunarMood.ECLIPSE_PATH);
 
     private static volatile EcAdapter ec;
+    private static volatile boolean linkedAtInit;
 
     private CelestialsPart() {
     }
@@ -37,10 +41,17 @@ public final class CelestialsPart {
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, CelestialsConfig.SPEC, CelestialsConfig.FILE);
         AdminSpecs.register(CelestialsConfig.FILE, CelestialsConfig.SPEC);
-        install(find());
+        install(ModList.get().isLoaded(EC_MOD) ? tryCreate(EcReflect::create) : null);
+        linkedAtInit = ec != null;
         EclipseSignal.add((server, on) -> {
             EcAdapter adapter = ec;
-            return adapter != null && (on ? adapter.start(server.overworld(), ECLIPSE_EVENT) : adapter.stop(server.overworld(), ECLIPSE_EVENT));
+            if (adapter != null) {
+                if (on) {
+                    adapter.start(server.overworld(), ECLIPSE_EVENT);
+                } else {
+                    adapter.stop(server.overworld(), ECLIPSE_EVENT);
+                }
+            }
         });
         if (ModList.get().isLoaded("vampirism")) {
             BloodMoonBite.register();
@@ -50,6 +61,9 @@ public final class CelestialsPart {
         }
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(CelestialsGameTests.class);
+            if (EnabledParts.isEnabled("species")) {
+                e.register(CelestialsEclipseNoticeGameTests.class);
+            }
             if (ModList.get().isLoaded("vampirism")) {
                 e.register(CelestialsVampireGameTests.class);
                 if (ModList.get().isLoaded("werewolves")) {
@@ -63,7 +77,9 @@ public final class CelestialsPart {
         SupernaturalBloodlines.LOGGER.info("CelestialsPart enabled, Enhanced Celestials {}", ec == null ? "not used" : "linked");
     }
 
-    /** Makes {@code adapter} (null for none) the source of the lunar mood. */
+    /**
+     * Makes {@code adapter} (null for none) the source of the lunar mood.
+     */
     @VisibleForTesting
     public static void install(@Nullable EcAdapter adapter) {
         ec = adapter;
@@ -71,17 +87,25 @@ public final class CelestialsPart {
         LunarMoods.use(source, CelestialsConfig::tuning);
     }
 
+    /** True when the real start-up linked Enhanced Celestials (never true in the test runtime, which has none). */
+    @VisibleForTesting
+    public static boolean linkedAtInit() {
+        return linkedAtInit;
+    }
+
+    /** The adapter in use; null when there is no Enhanced Celestials (or its API is not the one this build knows). */
+    @VisibleForTesting
+    public static @Nullable EcAdapter adapter() {
+        return ec;
+    }
+
+    /** The adapter {@code create} builds, or null (with one warning) when it cannot: no half-working adapter is ever used. */
+    @VisibleForTesting
     @Nullable
-    private static EcAdapter find() {
-        if (!ModList.get().isLoaded(EC_MOD)) {
-            return null;
-        }
+    static EcAdapter tryCreate(Callable<? extends EcAdapter> create) {
         try {
-            EcAdapter adapter = EcReflect.create();
-            adapter.onChanged((level, previous, next) ->
-                    SupernaturalBloodlines.LOGGER.debug("Lunar event in {}: {} -> {}", level.dimension().location(), previous, next));
-            return adapter;
-        } catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
+            return create.call();
+        } catch (Exception | LinkageError e) {
             SupernaturalBloodlines.LOGGER.warn("Enhanced Celestials 2 is installed but its API is not what this build knows ({}); the lunar events are ignored", e.toString());
             return null;
         }

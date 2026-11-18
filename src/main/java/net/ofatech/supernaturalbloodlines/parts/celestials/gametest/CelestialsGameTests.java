@@ -9,11 +9,13 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.moon.EclipseSignal;
 import net.ofatech.supernaturalbloodlines.core.moon.LunarMood;
 import net.ofatech.supernaturalbloodlines.core.moon.LunarMoods;
+import net.ofatech.supernaturalbloodlines.core.moon.LunarSource;
 import net.ofatech.supernaturalbloodlines.parts.celestials.CelestialsPart;
-import net.ofatech.supernaturalbloodlines.parts.species.pack.LunarEclipse;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubAlmanac;
 
-/** The lunar mood and the eclipse mirror, with a fake Enhanced Celestials (the test runtime has none). Needs no linked mod. */
+/**
+ * The lunar mood and the eclipse mirror, with a fake Enhanced Celestials (the test runtime has none). Needs no linked mod and reaches other
+ * parts only through {@code core/moon}; what needs the eclipse part is in {@link CelestialsEclipseNoticeGameTests}.
+ */
 @PrefixGameTestTemplate(false)
 public final class CelestialsGameTests {
     private static final String NS = SupernaturalBloodlines.MODID;
@@ -31,9 +33,17 @@ public final class CelestialsGameTests {
         }
     }
 
+    /** The real start-up, with no Enhanced Celestials in the runtime: no adapter was made and the source is the empty one. Nothing here calls {@code install(null)} first. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theRealStartUpWithoutEcLinksNothing(GameTestHelper helper) {
+        helper.assertFalse(CelestialsPart.linkedAtInit(), "the start-up linked an Enhanced Celestials that is not there");
+        helper.assertTrue(CelestialsPart.adapter() == null, "an adapter is installed without Enhanced Celestials");
+        helper.assertTrue(LunarMoods.source() == LunarSource.NONE, "a lunar source is in use without Enhanced Celestials");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void withoutEcNothingChanges(GameTestHelper helper) {
-        MinecraftServer server = helper.getLevel().getServer();
         CelestialsPart.install(null);
         helper.assertTrue(LunarMoods.now(helper.getLevel()).isNone(), "a mood without Enhanced Celestials");
         helper.assertTrue(LunarMoods.riteCost(helper.getLevel(), true) == 1 && LunarMoods.riteCost(helper.getLevel(), false) == 1, "a rite cost factor without a mood");
@@ -41,14 +51,13 @@ public final class CelestialsGameTests {
         helper.assertFalse(LunarMoods.sparesForcedShift(helper.getLevel()), "the forced shift was spared without a mood");
         helper.assertTrue(LunarMoods.ahead(helper.getLevel(), 100).isEmpty(), "events without Enhanced Celestials");
         helper.assertFalse(LunarMoods.ecDrawsEclipse(helper.getLevel()), "the client would leave the moon to Enhanced Celestials");
-        helper.assertFalse(EclipseSignal.fire(server, true) || EclipseSignal.fire(server, false), "the eclipse part was told to skip its own notice");
         helper.succeed();
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aBrokenSourceMeansNoMoodNotAnException(GameTestHelper helper) {
+    public static void aBrokenSourceMeansNoMoodNotAnExceptionAndIsDroppedForGood(GameTestHelper helper) {
         var level = helper.getLevel();
-        LunarMoods.use(new net.ofatech.supernaturalbloodlines.core.moon.LunarSource() {
+        LunarSource broken = new LunarSource() {
             @Override
             public LunarMood now(net.minecraft.world.level.Level l) {
                 throw new IllegalStateException("EC changed its API");
@@ -58,10 +67,15 @@ public final class CelestialsGameTests {
             public List<Upcoming> ahead(net.minecraft.world.level.Level l, int days) {
                 throw new NoSuchMethodError("EC changed its API");
             }
-        }, net.ofatech.supernaturalbloodlines.parts.celestials.CelestialsConfig::tuning);
+        };
+        LunarMoods.use(broken, net.ofatech.supernaturalbloodlines.parts.celestials.CelestialsConfig::tuning);
         try {
-            helper.assertTrue(LunarMoods.now(level).isNone() && LunarMoods.riteCost(level, true) == 1 && LunarMoods.biteFactor(level) == 1, "a broken source gave a mood");
+            helper.assertTrue(LunarMoods.now(level).isNone(), "a broken source gave a mood");
             helper.assertTrue(LunarMoods.ahead(level, 6).isEmpty(), "a broken source gave events");
+            helper.assertTrue(LunarMoods.source() == broken, "the source was dropped after two failures");
+            helper.assertTrue(LunarMoods.now(level).isNone(), "a broken source gave a mood");
+            helper.assertTrue(LunarMoods.source() == LunarSource.NONE, "the source is still in use after repeated failures");
+            helper.assertTrue(LunarMoods.riteCost(level, true) == 1 && LunarMoods.biteFactor(level) == 1, "a factor after the source was dropped");
         } finally {
             CelestialsPart.install(null);
         }
@@ -107,49 +121,34 @@ public final class CelestialsGameTests {
         ec.schedule.put(2, FakeEc.event("blood_moon"));
         ec.schedule.put(40, FakeEc.event("blue_moon"));
         with(ec, () -> {
-            var level = helper.getLevel();
-            var near = LunarMoods.ahead(level, 6);
+            var near = LunarMoods.ahead(helper.getLevel(), 6);
             helper.assertTrue(near.size() == 2 && near.get(0).days() == 2 && near.get(1).days() == 4, "the next six days: " + near);
-            helper.assertTrue(HubAlmanac.next(LunarMoods.ahead(level, 100)).orElseThrow().days() == 2, "the next event is not the nearest");
-            helper.assertTrue(HubAlmanac.eventOn(near, 4).orElseThrow().mood().superMoon(), "the day 4 event is not a super moon");
-            helper.assertTrue(HubAlmanac.eventOn(near, 3).isEmpty(), "an event on a day with none");
+            helper.assertTrue(near.get(1).mood().superMoon(), "the day 4 event is not a super moon");
             helper.assertTrue(near.get(0).nameKey().equals("lunar.event.enhancedcelestials2defaultlunarevents.blood_moon"), "the name key is " + near.get(0).nameKey());
         });
         helper.succeed();
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void ourEclipseIsMirroredAndOnlyOneNoticeIsSent(GameTestHelper helper) {
+    public static void ourEclipseIsMirroredIntoEnhancedCelestials(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
-        LunarEclipse.overridePlayers(s -> List.of());
         FakeEc free = new FakeEc();
-        try {
-            with(free, () -> {
-                helper.assertTrue(LunarEclipse.start(server), "the eclipse did not start");
-                helper.assertTrue(free.calls.equals(List.of("start supernaturalbloodlines:lunar_eclipse")), "the mirror asked for " + free.calls);
-                helper.assertTrue(LunarMoods.now(helper.getLevel()).kind() == LunarMood.Kind.ECLIPSE, "Enhanced Celestials is not showing the eclipse");
-                helper.assertTrue(LunarMoods.ecDrawsEclipse(helper.getLevel()), "the client would not leave the moon to Enhanced Celestials");
-                helper.assertTrue(LunarEclipse.active(server), "the eclipse gameplay did not start");
-                helper.assertTrue(LunarEclipse.stop(server), "the eclipse did not stop");
-                helper.assertTrue(free.running.isEmpty() && free.calls.size() == 2, "the mirror stayed: " + free.calls);
-                // the notice: Enhanced Celestials sends it, so the eclipse part skips its own
-                helper.assertTrue(EclipseSignal.fire(server, true), "no notice was left to Enhanced Celestials");
-                free.running = java.util.Optional.empty();
-            });
-            // another event is running: nothing is mirrored (the eclipse part keeps its own chat line), and the gameplay still runs
-            FakeEc busy = new FakeEc().running("blood_moon");
-            with(busy, () -> {
-                helper.assertFalse(EclipseSignal.fire(server, true), "a start was announced although a Blood Moon is running");
-                helper.assertTrue(LunarEclipse.start(server), "the eclipse did not start in a Blood Moon");
-                helper.assertTrue(busy.running.orElseThrow().id().getPath().equals("blood_moon"), "the Blood Moon was replaced");
-                helper.assertTrue(LunarEclipse.active(server), "the eclipse gameplay did not run in a Blood Moon");
-                helper.assertTrue(LunarEclipse.stop(server), "the eclipse did not stop");
-                helper.assertTrue(busy.running.isPresent(), "the end of our eclipse ended the Blood Moon");
-            });
-        } finally {
-            LunarEclipse.stop(server);
-            LunarEclipse.overridePlayers(null);
-        }
+        with(free, () -> {
+            EclipseSignal.fire(server, true);
+            helper.assertTrue(free.calls.equals(List.of("start supernaturalbloodlines:lunar_eclipse")), "the mirror asked for " + free.calls);
+            helper.assertTrue(LunarMoods.now(helper.getLevel()).kind() == LunarMood.Kind.ECLIPSE, "Enhanced Celestials is not showing the eclipse");
+            helper.assertTrue(LunarMoods.ecDrawsEclipse(helper.getLevel()), "the client would not leave the moon to Enhanced Celestials");
+            EclipseSignal.fire(server, false);
+            helper.assertTrue(free.running.isEmpty() && free.calls.size() == 2, "the mirror stayed: " + free.calls);
+        });
+        // another event is running: it is not replaced, and its own end is not taken for ours
+        FakeEc busy = new FakeEc().running("blood_moon");
+        with(busy, () -> {
+            EclipseSignal.fire(server, true);
+            helper.assertTrue(busy.running.orElseThrow().id().getPath().equals("blood_moon"), "the Blood Moon was replaced");
+            EclipseSignal.fire(server, false);
+            helper.assertTrue(busy.running.isPresent(), "the end of our eclipse ended the Blood Moon");
+        });
         helper.succeed();
     }
 }

@@ -39,6 +39,23 @@ class HubAlmanacTest {
     }
 
     @Test
+    void everyEventOfTheRowIsListedNotOnlyTheNearest() {
+        List<LunarSource.Upcoming> events = List.of(event(1, "blue_moon"), event(3, "blood_moon"), event(5, "super_moon"), event(30, "blue_moon"));
+        assertEquals(List.of(1, 3, 5), HubAlmanac.listed(events).stream().map(LunarSource.Upcoming::days).toList());
+        assertEquals(List.of(30), HubAlmanac.listed(List.of(event(30, "blood_moon"))).stream().map(LunarSource.Upcoming::days).toList(), "none in the row: the nearest beyond it");
+        assertTrue(HubAlmanac.listed(List.of()).isEmpty());
+    }
+
+    @Test
+    void ringsNeverTouchTheirNeighbours() {
+        assertEquals(14, HubAlmanac.step(14, 12, false), "no rings: the step is as it was");
+        int step = HubAlmanac.step(14, 12, true);
+        assertTrue(step - 12 >= 2 * HubAlmanac.RING_REACH, "two rings overlap at step " + step);
+        int small = HubAlmanac.step(10, 8, true);
+        assertTrue(small - 8 >= 2 * HubAlmanac.RING_REACH, "two small rings overlap at step " + small);
+    }
+
+    @Test
     void noEventsMeansNothingToDraw() {
         assertTrue(HubAlmanac.next(List.of()).isEmpty());
         assertTrue(HubAlmanac.eventOn(List.of(), 0).isEmpty());

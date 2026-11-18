@@ -2,7 +2,6 @@ package net.ofatech.supernaturalbloodlines.parts.celestials;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -13,13 +12,17 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Enhanced Celestials 2 by reflection: the mod is All Rights Reserved and has no public API artifact, so nothing of it is a build
  * dependency. Everything is resolved once in {@link #create}; a member that is missing (the API is young) makes {@code create} throw and
- * the part logs one warning and stays without a mood. The names and signatures were read from core 2.0.3.4 with javap.
+ * the part logs one warning and stays without a mood. The names and signatures were read from core 2.0.3.4 with javap. EC's change
+ * listener is deliberately not used: nothing needs it, and a listener runs inside EC's own tick.
  */
 final class EcReflect implements EcAdapter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EcReflect.class);
     private static final String CORE = "dev.corgitaco.enhancedcelestials2core.";
     private static final ResourceLocation EVENT_REGISTRY = ResourceLocation.parse("enhancedcelestials2core:lunar/event");
 
@@ -30,10 +33,9 @@ final class EcReflect implements EcAdapter {
     private final Method setTonight;
     private final Method removeEvent;
     private final Method nameColor;
-    private final Method register;
-    private final Class<?> listenerType;
+    private volatile boolean warnedMissingEvent;
 
-    private EcReflect(Class<?> core, Class<?> forecast, Class<?> event, Class<?> events, Class<?> listener) throws ReflectiveOperationException {
+    private EcReflect(Class<?> core, Class<?> forecast, Class<?> event) throws ReflectiveOperationException {
         forecastOf = core.getMethod("lunarForecastWorldData", Level.class);
         isEventActive = forecast.getMethod("isEventActive");
         currentHolder = forecast.getMethod("currentLunarEventHolder");
@@ -41,17 +43,18 @@ final class EcReflect implements EcAdapter {
         setTonight = forecast.getMethod("setLunarEventTonight", Holder.class);
         removeEvent = forecast.getMethod("removeLunarEvent", long.class);
         nameColor = event.getMethod("getNameColor");
-        listenerType = listener;
-        register = events.getMethod("registerLunarEventChanged", listener);
     }
 
     static EcReflect create() throws ReflectiveOperationException {
         ClassLoader loader = EcReflect.class.getClassLoader();
-        return new EcReflect(Class.forName(CORE + "EnhancedCelestials", true, loader),
+        return create(Class.forName(CORE + "EnhancedCelestials", true, loader),
                 Class.forName(CORE + "api.lunarevent.LunarForecast", true, loader),
-                Class.forName(CORE + "api.lunarevent.LunarEvent", true, loader),
-                Class.forName(CORE + "api.EnhancedCelestialsEvents", true, loader),
-                Class.forName(CORE + "api.lunarevent.LunarEventChangeListener", true, loader));
+                Class.forName(CORE + "api.lunarevent.LunarEvent", true, loader));
+    }
+
+    /** Looks every member up on these three classes. Throws when one is missing, so there is no half-working adapter. */
+    static EcReflect create(Class<?> core, Class<?> forecast, Class<?> event) throws ReflectiveOperationException {
+        return new EcReflect(core, forecast, event);
     }
 
     private static <T> T call(Method m, Object on, Object... args) {
@@ -66,10 +69,13 @@ final class EcReflect implements EcAdapter {
         }
     }
 
+    private static ResourceLocation idOf(Holder<?> holder) {
+        return holder.unwrapKey().map(ResourceKey::location).orElseThrow();
+    }
+
     private Event eventOf(Holder<?> holder) {
-        ResourceLocation id = holder.unwrapKey().map(ResourceKey::location).orElseThrow();
         Optional<TextColor> color = call(nameColor, holder.value());
-        return new Event(id, color.map(TextColor::getValue).orElse(-1));
+        return new Event(idOf(holder), color.map(TextColor::getValue).orElse(-1));
     }
 
     @Override
@@ -107,6 +113,10 @@ final class EcReflect implements EcAdapter {
         Registry<?> events = level.registryAccess().registry(ResourceKey.createRegistryKey(EVENT_REGISTRY)).orElse(null);
         Optional<? extends Holder<?>> holder = events == null ? Optional.empty() : events.getHolder(id);
         if (holder.isEmpty()) {
+            if (!warnedMissingEvent) {
+                warnedMissingEvent = true;
+                LOGGER.warn("Enhanced Celestials has no lunar event {} (is this mod's datapack disabled?), so our eclipse is not shown as one", id);
+            }
             return false;
         }
         call(setTonight, f.get(), holder.get());
@@ -120,27 +130,5 @@ final class EcReflect implements EcAdapter {
             return false;
         }
         return call(removeEvent, f.get(), 0L);
-    }
-
-    @Override
-    public void onChanged(Change listener) {
-        Object proxy = Proxy.newProxyInstance(listenerType.getClassLoader(), new Class<?>[] {listenerType}, (self, method, args) -> {
-            if (method.getName().equals("onLunarEventChanged")) {
-                // (ServerLevel, previous, new): read from LunarForecast.notifyEventSwitched, which passes the old holder first
-                listener.changed((ServerLevel) args[0], idOf((Holder<?>) args[1]), idOf((Holder<?>) args[2]));
-                return null;
-            }
-            return switch (method.getName()) {
-                case "hashCode" -> System.identityHashCode(self);
-                case "equals" -> self == args[0];
-                case "toString" -> "SupernaturalBloodlines lunar listener";
-                default -> null;
-            };
-        });
-        call(register, null, proxy);
-    }
-
-    private static ResourceLocation idOf(Holder<?> holder) {
-        return holder.unwrapKey().map(ResourceKey::location).orElseThrow();
     }
 }

@@ -103,11 +103,11 @@ public final class AdminEntries {
         all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "resire_naming_reward", BOOL));
 
         String ce = "celestials";
-        all.add(SettingEntry.of(CELESTIALS_FILE, ce, "blood_moon_pack_chance_factor", DOUBLE));
+        all.add(SettingEntry.of(CELESTIALS_FILE, ce, "blood_moon_pack_chance_factor", DOUBLE).hide(RESERVED));
         all.add(SettingEntry.of(CELESTIALS_FILE, ce, "blood_moon_bite_bonus", DOUBLE));
         all.add(SettingEntry.of(CELESTIALS_FILE, ce, "blue_moon_rite_cost", DOUBLE));
         all.add(SettingEntry.of(CELESTIALS_FILE, ce, "super_moon_rite_cost", DOUBLE));
-        all.add(SettingEntry.of(CELESTIALS_FILE, ce, "super_moon_boss_weight", DOUBLE));
+        all.add(SettingEntry.of(CELESTIALS_FILE, ce, "super_moon_boss_weight", DOUBLE).hide(RESERVED));
         all.add(SettingEntry.of(CELESTIALS_FILE, ce, "super_blue_skips_forced_shift", BOOL));
         ALL = List.copyOf(all);
     }

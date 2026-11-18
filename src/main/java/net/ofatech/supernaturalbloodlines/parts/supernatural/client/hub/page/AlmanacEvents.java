@@ -1,7 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import java.util.List;
-import java.util.Optional;
 import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.moon.LunarSource;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubAlmanac;
@@ -10,22 +9,18 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.LunarMoo
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 
-/** What the almanacs of the three themes add for Enhanced Celestials events: a ring on the day's moon and a "Blood Moon in 3 days" line. Nothing without events. */
+/**
+ * What the almanacs of the three themes add for Enhanced Celestials events: a ring on the day's moon (in the event's colour, which is the only
+ * place that colour is used) and one text line per event, in the theme's own ink so it reads on every look. Nothing without events.
+ */
 final class AlmanacEvents {
     private static final String KEY = PageKit.HUB + "path.";
-    /** A ring is drawn this many pixels outside the icon. */
-    private static final int REACH = 3;
 
     private AlmanacEvents() {
     }
 
-    static List<LunarSource.Upcoming> events(HubScreen.Frame f) {
-        return LunarMoodClient.upcoming(f.view.player().level());
-    }
-
-    /** The nearest scheduled event, when there is one. */
-    static Optional<LunarSource.Upcoming> next(List<LunarSource.Upcoming> events) {
-        return HubAlmanac.next(events);
+    static LunarMoodClient.View view(HubScreen.Frame f) {
+        return LunarMoodClient.view(f.view.player().level());
     }
 
     /** The event's name from its translation key; an event whose language file is missing shows its id, titled ("blood_moon" is "Blood Moon"). */
@@ -45,17 +40,27 @@ final class AlmanacEvents {
                 : e.days() == 1 ? Component.translatable(KEY + "event_tomorrow", name) : Component.translatable(KEY + "event_in", name, e.days());
     }
 
-    static int color(LunarSource.Upcoming e, int fallback) {
-        return e.color() >= 0 ? 0xFF000000 | e.color() : fallback;
+    /** The height of all the lines at {@code width}, each wrapped and {@code lineHeight} tall. */
+    static int height(HubScreen.Frame f, LunarMoodClient.View view, int width, int lineHeight) {
+        int h = 0;
+        for (LunarSource.Upcoming e : view.lines()) {
+            h += f.font().split(line(e), Math.max(8, width)).size() * lineHeight;
+        }
+        return h;
     }
 
-    /** A ring in the event's colour round the moon icon of day {@code day} ({@code size} wide at {@code x}, {@code y}), with the event's name as its tooltip. */
-    static void ring(HubScreen.Frame f, List<LunarSource.Upcoming> events, int day, int x, int y, int size, int fallback) {
-        HubAlmanac.eventOn(events, day).ifPresent(e -> {
-            int color = color(e, fallback);
-            KitDraw.tickRing(f.g, x + size / 2, y + size / 2, size / 2 + REACH, 16, 1f, color, color);
-            f.target("lunar:" + day, new Rect(x - REACH, y - REACH, size + 2 * REACH, size + 2 * REACH),
-                    List.of(line(e)), null);
+    /** The distance between two moon icons: wider when there are rings. */
+    static int step(LunarMoodClient.View view, int base, int iconSize) {
+        return HubAlmanac.step(base, iconSize, !view.byDay().isEmpty());
+    }
+
+    /** A ring in the event's colour round the moon icon of day {@code day} ({@code size} wide at {@code x}, {@code y}), with the event line as its tooltip. */
+    static void ring(HubScreen.Frame f, LunarMoodClient.View view, int day, int x, int y, int size, int fallback) {
+        view.onDay(day).ifPresent(e -> {
+            int color = e.color() >= 0 ? 0xFF000000 | e.color() : fallback;
+            int reach = HubAlmanac.RING_REACH;
+            KitDraw.tickRing(f.g, x + size / 2, y + size / 2, size / 2 + reach, 16, 1f, color, color);
+            f.target("lunar:" + day, new Rect(x - reach, y - reach, size + 2 * reach, size + 2 * reach), List.of(line(e)), null);
         });
     }
 }

@@ -95,19 +95,19 @@ public final class PathPage implements HubPageView {
         int phase = level.getMoonPhase();
         f.g.drawString(f.font(), Component.translatable(KEY + "almanac"), r.x(), y, t.muted(), false);
         int x = r.x();
-        var events = AlmanacEvents.events(f);
-        int lift = events.isEmpty() ? 0 : 4; // room for the rings above and below the moons
+        var view = AlmanacEvents.view(f);
+        int lift = view.byDay().isEmpty() ? 0 : 4; // room for the rings above and below the moons
+        int step = AlmanacEvents.step(view, 14, 12);
         int day = 0;
-        for (int p : HubAlmanac.phases(phase, 6)) {
+        for (int p : HubAlmanac.phases(phase, HubAlmanac.ROW)) {
             KitDraw.icon(f.g, Icons.moon(p), x, y + PageKit.LINE + lift, 12, p == 0 ? 0xFFB8860B : t.ink());
-            AlmanacEvents.ring(f, events, day++, x, y + PageKit.LINE + lift, 12, t.accent());
-            x += 14;
+            AlmanacEvents.ring(f, view, day++, x, y + PageKit.LINE + lift, 12, t.accent());
+            x += step;
         }
         Component line = PathActions.almanacLine(phase);
         y = PageKit.wrapped(f, line, r.x(), y + PageKit.LINE + 14 + 2 * lift, r.w(), t.accent());
-        var next = AlmanacEvents.next(events);
-        if (next.isPresent()) {
-            y = PageKit.wrapped(f, AlmanacEvents.line(next.get()), r.x(), y, r.w(), AlmanacEvents.color(next.get(), t.accent()));
+        for (var e : view.lines()) {
+            y = PageKit.wrapped(f, AlmanacEvents.line(e), r.x(), y, r.w(), t.ink());
         }
         return y;
     }

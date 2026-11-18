@@ -2,10 +2,12 @@ package net.ofatech.supernaturalbloodlines.parts.celestials;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.corgitaco.enhancedcelestials2core.EnhancedCelestials;
-import dev.corgitaco.enhancedcelestials2core.api.EnhancedCelestialsEvents;
 import dev.corgitaco.enhancedcelestials2core.api.lunarevent.LunarEvent;
 import dev.corgitaco.enhancedcelestials2core.api.lunarevent.LunarForecast;
 import java.util.ArrayList;
@@ -99,13 +101,38 @@ class EcReflectTest {
         assertFalse(ec.stop(null, ours), "nothing is running any more");
     }
 
-    @Test
-    void theListenerGetsLevelPreviousNewInThatOrder() throws Exception {
-        EcReflect ec = EcReflect.create();
-        List<String> seen = new ArrayList<>();
-        ec.onChanged((level, previous, next) -> seen.add(previous + " -> " + next));
-        EnhancedCelestialsEvents.fireLunarEventChanged(null, holder("a", "before", -1), holder("a", "after", -1));
-        assertEquals(List.of("a:before -> a:after"), seen);
+    /** A forecast class that has every member but {@code removeLunarEvent}: an EC that changed. */
+    public static class ForecastWithoutRemove {
+        public boolean isEventActive() {
+            return false;
+        }
+
+        public Holder<LunarEvent> currentLunarEventHolder() {
+            return null;
+        }
+
+        public it.unimi.dsi.fastutil.longs.Long2ObjectRBTreeMap<Holder<LunarEvent>> upcomingEventsByDaysInAdvance() {
+            return null;
+        }
+
+        public void setLunarEventTonight(Holder<LunarEvent> event) {
+        }
     }
 
+    @Test
+    void aMissingMemberMakesCreateFailAndLeavesNoAdapter() {
+        assertThrows(NoSuchMethodException.class, () -> EcReflect.create(EnhancedCelestials.class, ForecastWithoutRemove.class, LunarEvent.class));
+        assertNull(CelestialsPart.tryCreate(() -> EcReflect.create(EnhancedCelestials.class, ForecastWithoutRemove.class, LunarEvent.class)), "a half-working adapter was made");
+        assertNotNull(CelestialsPart.tryCreate(() -> EcReflect.create(EnhancedCelestials.class, LunarForecast.class, LunarEvent.class)));
+    }
+
+    @Test
+    void aMissingClassIsAlsoNoAdapter() {
+        assertNull(CelestialsPart.tryCreate(() -> {
+            throw new ClassNotFoundException("dev.corgitaco.enhancedcelestials2core.EnhancedCelestials");
+        }));
+        assertNull(CelestialsPart.tryCreate(() -> {
+            throw new NoClassDefFoundError("x");
+        }));
+    }
 }

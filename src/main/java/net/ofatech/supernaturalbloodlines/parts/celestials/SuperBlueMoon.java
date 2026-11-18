@@ -9,6 +9,8 @@ final class SuperBlueMoon {
     }
 
     static void register() {
+        // the spare only counts in a registered gate; species and artifacts register it, but with both off nobody does (and the at-will rule stays theirs)
+        ForcedShift.registerSparesOnly();
         ForcedShift.addForcedSpare(p -> LunarMoods.sparesForcedShift(p.level()));
     }
 }
