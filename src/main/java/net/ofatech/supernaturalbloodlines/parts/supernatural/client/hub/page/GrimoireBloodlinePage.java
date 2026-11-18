@@ -143,7 +143,7 @@ public final class GrimoireBloodlinePage extends LinePageBase {
             int room = LineTreeLayout.labelRoom(area, r) - 8;
             String name = fit(f, LinePageSupport.name(n), room);
             f.g.drawString(f.font(), name, x, r.y() + r.h() / 2 - 9, you ? t.accent() : t.ink(), false);
-            f.g.drawString(f.font(), fit(f, LinePageSupport.caption(f, m, n), room), x, r.y() + r.h() / 2, t.muted(), false);
+            f.g.drawString(f.font(), fit(f, LinePageSupport.caption(f, m, n, room), room), x, r.y() + r.h() / 2, t.muted(), false);
             hit = new Rect(r.x() - 2, r.y() - 2, Math.max(r.w() + 4, area.right() - r.x() + 2), r.h() + 4);
         }
         nodeTarget(f, m, n, hit);
@@ -171,14 +171,27 @@ public final class GrimoireBloodlinePage extends LinePageBase {
                 }
             }
             for (Component body : d.body()) {
-                y = BookKit.small(f, body, s.x(), y + 3, s.w(), t.muted());
+                if (tight) {
+                    // two lines, the second ending with an ellipsis: the whole note is in the margin and the tooltip of the line
+                    for (String line : net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(body.getString(), s.w(), 2, f.font()::width)) {
+                        f.g.drawString(f.font(), line, s.x(), y + 3, t.muted(), false);
+                        y += 9;
+                    }
+                    y += 3;
+                } else {
+                    y = BookKit.small(f, body, s.x(), y + 3, s.w(), t.muted());
+                }
             }
             if (!d.actions().isEmpty()) {
-                y = tight ? links(f, d, s, y + 3, t) : actions(f, d, s, y + 4, t);
+                y = tight ? links(f, d, s, y + 2, t) : actions(f, d, s, y + 4, t);
             }
-            y = PageKit.title(f, Component.translatable(LinePageSupport.KEY + "genes"), s.x(), y + (tight ? 1 : 4), s.w(), t.ink());
-            t.drawRule(f.g, s.x(), y + 2, s.w());
-            y += 6;
+            if (tight) {
+                y = PageKit.wrapped(f, Component.translatable(LinePageSupport.KEY + "genes").withStyle(net.minecraft.ChatFormatting.BOLD), s.x(), y, s.w(), t.ink());
+            } else {
+                y = PageKit.title(f, Component.translatable(LinePageSupport.KEY + "genes"), s.x(), y + 4, s.w(), t.ink());
+                t.drawRule(f.g, s.x(), y + 2, s.w());
+                y += 6;
+            }
         }
         y = tight && !none ? BloodlineGenes.drawCompact(f, s, y + 1, f.view.snapshot()) : BloodlineGenes.draw(f, s, y + 2, f.view.snapshot());
         if (!tight || none) {
@@ -210,9 +223,9 @@ public final class GrimoireBloodlinePage extends LinePageBase {
         for (Detail.Action a : d.actions()) {
             Component label = Component.literal(fit(f, a.label(), s.w() - 14) + (a.enabled() ? " \u203a" : ""));
             BookKit.link(f, "bloodline:" + a.id(), label, s.x(), y, List.of(a.disabledReason() != null && !a.enabled() ? a.disabledReason() : a.label()), a.enabled() ? a.run() : null);
-            y += 12;
+            y += 11;
         }
-        return y + 2;
+        return y + 1;
     }
 
     /** The wax Call seal, and Severance and Broken Line as red links beside it. */

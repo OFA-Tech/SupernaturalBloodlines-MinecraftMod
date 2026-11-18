@@ -173,7 +173,7 @@ public final class StageBloodlinePage extends LinePageBase {
             int x = r.right() + 12; // the faint threads run 6 px off the ring: the text starts clear of them
             int room = LineTreeLayout.labelRoom(stage, r) - 12;
             f.g.drawString(f.font(), fit(f, LinePageSupport.name(n), room), x, r.y() + r.h() / 2 - 9, you ? (moon ? RED : t.accent()) : t.ink(), false);
-            f.g.drawString(f.font(), fit(f, LinePageSupport.caption(f, m, n), room), x, r.y() + r.h() / 2, t.muted(), false);
+            f.g.drawString(f.font(), fit(f, LinePageSupport.caption(f, m, n, room), room), x, r.y() + r.h() / 2, t.muted(), false);
             hit = new Rect(r.x() - 2, r.y() - 2, Math.max(r.w() + 4, Math.min(160, room) + r.w() + 12), r.h() + 4);
         }
         nodeTarget(f, m, n, hit);
@@ -191,11 +191,11 @@ public final class StageBloodlinePage extends LinePageBase {
         f.g.drawString(f.font(), genes, stage.right() - f.font().width(genes), stage.y() + 4, f.theme().muted(), false);
         var origin = LinePageSupport.origin(f);
         if (origin.state() == LineRules.State.IN_LINE || origin.freedKind() == net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial.FreedKind.BROKEN_LINE) {
-            var lines = f.font().split(Component.translatable(LinePageSupport.KEY + "thread"), w - 34);
-            int shown = Math.min(2, lines.size());
-            int ty = stage.bottom() - shown * 9 - 2;
+            // at most two lines; a legend that runs longer ends with an ellipsis instead of stopping mid-sentence
+            List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(Component.translatable(LinePageSupport.KEY + "thread").getString(), w - 34, 2, f.font()::width);
+            int ty = stage.bottom() - lines.size() * 9 - 2;
             f.g.fill(x, ty + 4, x + 26, ty + 5, RED);
-            for (int i = 0; i < shown; i++) {
+            for (int i = 0; i < lines.size(); i++) {
                 f.g.drawString(f.font(), lines.get(i), x + 32, ty + i * 9, f.theme().muted(), false);
             }
         }

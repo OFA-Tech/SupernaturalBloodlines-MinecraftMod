@@ -79,6 +79,12 @@ public final class BloodlineGenes {
         }
     }
 
+    /** "1 of 2 known", for a field already labelled Genes. */
+    public static Component count(HubSnapshotPayload snap) {
+        long known = Genes.ALL.stream().filter(g -> snap.genes().getOrDefault(g, Genes.Knowledge.UNKNOWN) != Genes.Knowledge.UNKNOWN).count();
+        return Component.translatable(LinePageSupport.KEY + "genes_count", known, Genes.ALL.size());
+    }
+
     /** "Genes: 1 of 2 known": the one line a place with no room for vials says. */
     public static Component summary(HubSnapshotPayload snap) {
         long known = Genes.ALL.stream().filter(g -> snap.genes().getOrDefault(g, Genes.Knowledge.UNKNOWN) != Genes.Knowledge.UNKNOWN).count();

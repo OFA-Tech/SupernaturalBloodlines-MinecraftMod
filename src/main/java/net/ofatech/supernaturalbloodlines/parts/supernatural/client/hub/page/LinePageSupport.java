@@ -64,13 +64,22 @@ public final class LinePageSupport {
 
     /** The line under a node's name: "Original · crowned", "Hybrid · you", "sired". */
     public static Component caption(HubScreen.Frame f, LineTree.Model m, LineTree.Node n) {
+        return caption(f, m, n, Integer.MAX_VALUE);
+    }
+
+    /** The caption, and for a hidden node the shorter wording ("NPC · unnamed") when the full one does not fit {@code room}. */
+    public static Component caption(HubScreen.Frame f, LineTree.Model m, LineTree.Node n, int room) {
         return switch (n.kind()) {
-            case ROOT -> Component.translatable(KEY + (n.hidden() ? "cap.root_hidden" : "cap.root"));
-            case ANCESTOR -> Component.translatable(KEY + (n.hidden() ? "cap.ancestor_hidden" : "cap.ancestor"));
+            case ROOT -> Component.translatable(KEY + (n.hidden() ? shortIfTight(f, "cap.root_hidden", room) : "cap.root"));
+            case ANCESTOR -> Component.translatable(KEY + (n.hidden() ? shortIfTight(f, "cap.ancestor_hidden", room) : "cap.ancestor"));
             case SIRE -> Component.translatable(KEY + (n.hidden() ? "cap.sire_unknown" : "cap.sire"));
             case YOU -> m.state() == LineRules.State.ORIGINAL ? Component.translatable(KEY + "cap.you_original") : Component.translatable(KEY + "cap.you", race(f));
             case DESCENDANT -> Component.translatable(KEY + "cap.down");
         };
+    }
+
+    private static String shortIfTight(HubScreen.Frame f, String key, int room) {
+        return f.font().width(Component.translatable(KEY + key)) <= room ? key : key + ".short";
     }
 
     /** What the narrator says about a node, as a sentence. */
@@ -128,7 +137,7 @@ public final class LinePageSupport {
                 .orElse(Component.translatable(sired ? KEY + "sire_unknown" : KEY + "no_sire")));
         b.field(Component.translatable(KEY + "field.line"), lineText(m, o));
         if (genes) {
-            b.field(Component.translatable(KEY + "genes"), BloodlineGenes.summary(snap));
+            b.field(Component.translatable(KEY + "genes"), BloodlineGenes.count(snap));
         }
         b.body(note(m, o));
         boolean mayCall = mayCall(f);
@@ -188,10 +197,10 @@ public final class LinePageSupport {
 
     /** The padlock badge on the player's portrait: a disc with the open lock. */
     public static void padlock(HubScreen.Frame f, Rect portrait, int disc, int lock) {
-        int size = Math.max(13, portrait.w() * 3 / 4);
+        int size = Math.max(11, portrait.w() * 5 / 8);
         // at the foot, to the left: the break, its tag and the label are above and to the right of the portrait
-        int x = portrait.x() - size / 3;
-        int y = portrait.bottom() - size * 2 / 3;
+        int x = portrait.x() - size * 2 / 3;
+        int y = portrait.bottom() - size * 3 / 4;
         KitDraw.shape(f.g, Shapes.Shape.ROUND, x, y, size, disc);
         openLock(f.g, x + (size - 7) / 2, y + (size - 9) / 2, lock);
     }
