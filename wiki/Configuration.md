@@ -30,6 +30,7 @@ Switch a part off to keep it disabled even when its mods are installed. All defa
 | `speciesTensura` | `true` | [species_tensura](Tensura-Integration#the-species-layer-part-species_tensura) | Vampirism, Enchanted, Tensura, and the species part |
 | `artifacts` | `true` | artifacts ([items](Items-And-Blocks)) | Vampirism, Enchanted, and the vampirismEnchanted part |
 | `hud` | `true` | [hud](Ability-HUD) | none (Tensura, Vampirism and Werewolves are optional extras) |
+| `celestials` | `true` | [celestials](Enhanced-Celestials) | none (Enhanced Celestials 2 is optional; without it the part does nothing) |
 
 The switches are read straight from the file early at startup (the config system loads too late for mixins), so a missing file, a missing key, or a bad value means **on**.
 
@@ -158,6 +159,17 @@ Common (server):
 | `[mixins]` `hide_in_controls_mixin` | `true` | Reserved: guards a mixin that does not exist yet. |
 
 Client (each player's own): `hud_enabled` (`true`), `hide_covered_keys` (`true`), `hide_tensura_skill_hud` (`true`), `blood_in_food_spot` (`true`), `tracker_anchor` (`TOP_CENTER`), `mode` (`AUTO`, `TENSURA` or `SUPERNATURAL`). `hide_covered_keys` is live: it unbinds and hides the [covered keys](Key-Binds#covered-keys-and-how-to-get-them-back) and, when turned off, gives your recorded binds back (the record is `config/supernaturalbloodlines-hud-keys.json`). `hud_enabled` turns the whole ability HUD (slots, keys, the blood in Tensura's food spot) on or off; `hide_tensura_skill_hud` hides Tensura's own skill HUD while ours is shown; `blood_in_food_spot` shows a vampire's blood in Tensura's food spot (see [Ability HUD](Ability-HUD)); `mode` picks the mode the HUD starts in.
+
+## celestials: `supernaturalbloodlines-celestials.toml`
+
+Only does anything with [Enhanced Celestials 2](Enhanced-Celestials). A factor of `1` turns that effect off. All of them are on the hub's Admin page (section Celestials).
+
+| Key | Default | What it does |
+|---|---|---|
+| `blood_moon_bite_bonus` | `1.25` | A vampire's bite gives this many times the blood on a Blood Moon (1 to 5). |
+| `blue_moon_rite_cost` | `0.8` | Altar power cost of every rite on a Blue Moon, as a factor (0.1 to 1). It never allows a full-moon rite on another night. |
+| `super_moon_rite_cost` | `0.75` | Cost of the Rite of the Moon, the Silver Moon and Immortality on a super moon, on top of the Blue Moon factor (0.1 to 1). |
+| `super_blue_skips_forced_shift` | `true` | A Super Blue Moon does not force the Werewolves full-moon shift on anybody. |
 
 ## supernatural (client): `supernaturalbloodlines-hub-client.toml`
 

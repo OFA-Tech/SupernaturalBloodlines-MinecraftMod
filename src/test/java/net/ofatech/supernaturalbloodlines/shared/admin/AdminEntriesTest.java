@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 
 class AdminEntriesTest {
     @Test
-    void sixtyKeysWithUniqueIds() {
-        assertEquals(60, AdminEntries.ALL.size());
+    void sixtyFiveKeysWithUniqueIds() {
+        assertEquals(65, AdminEntries.ALL.size());
         Set<String> seen = new HashSet<>();
         for (SettingEntry e : AdminEntries.ALL) {
             assertTrue(seen.add(e.id()), "duplicate id " + e.id());
@@ -42,9 +42,8 @@ class AdminEntriesTest {
 
     @Test
     void onlyTheReservedMixinSwitchIsHidden() {
-        List<SettingEntry> hidden = AdminEntries.ALL.stream().filter(SettingEntry::isHidden).toList();
-        assertEquals(1, hidden.size());
-        assertEquals(AdminEntries.HUD_FILE + ":mixins.hide_in_controls_mixin", hidden.get(0).id());
+        Set<String> hidden = AdminEntries.ALL.stream().filter(SettingEntry::isHidden).map(SettingEntry::id).collect(Collectors.toSet());
+        assertEquals(Set.of(AdminEntries.HUD_FILE + ":mixins.hide_in_controls_mixin"), hidden);
     }
 
     @Test

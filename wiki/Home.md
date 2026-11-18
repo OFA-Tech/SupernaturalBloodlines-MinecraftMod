@@ -38,6 +38,7 @@
 
 - [Tensura integration](Tensura-Integration)
 - [Enchanted integration](Enchanted-Integration)
+- [Enhanced Celestials 2](Enhanced-Celestials) (optional: Blood, Blue, Harvest and super moons)
 
 ## Reference
 

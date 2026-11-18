@@ -2,6 +2,8 @@ package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import net.ofatech.supernaturalbloodlines.core.moon.LunarSource;
 
 /** The moon, as the almanac shows it: the next few phases and the days to the full moon. Vanilla phase 0 is the full moon, one phase a day, eight in all. Pure. */
 public final class HubAlmanac {
@@ -11,6 +13,54 @@ public final class HubAlmanac {
     /** Days until the next full moon: 0 when it is the full moon today. */
     public static int daysToFull(int phase) {
         return Math.floorMod(8 - phase, 8);
+    }
+
+
+    /** The almanac's row: this many days, from today. */
+    public static final int ROW = 6;
+    /** The room round a moon icon that a ring takes, on each side. */
+    public static final int RING_REACH = 2;
+
+    /**
+     * Every event of the row's days as a text line (nearest first); when none falls in the row, the nearest one beyond it, so "Blood Moon in 31 days"
+     * is still said. Empty without events.
+     */
+    public static List<LunarSource.Upcoming> listed(List<LunarSource.Upcoming> events) {
+        List<LunarSource.Upcoming> inRow = events.stream().filter(e -> e.days() >= 0 && e.days() < ROW).toList();
+        return inRow.isEmpty() ? next(events).map(List::of).orElse(List.of()) : inRow;
+    }
+
+    /** Least contrast (WCAG) a ring must have against the page. */
+    public static final double RING_CONTRAST = 3.0;
+
+    private static double luminance(int rgb) {
+        double[] c = {(rgb >> 16 & 0xFF) / 255.0, (rgb >> 8 & 0xFF) / 255.0, (rgb & 0xFF) / 255.0};
+        for (int i = 0; i < 3; i++) {
+            c[i] = c[i] <= 0.03928 ? c[i] / 12.92 : Math.pow((c[i] + 0.055) / 1.055, 2.4);
+        }
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    }
+
+    /** The WCAG contrast ratio of two colours (alpha ignored). */
+    public static double contrast(int rgbA, int rgbB) {
+        double a = luminance(rgbA);
+        double b = luminance(rgbB);
+        return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    }
+
+    /** The colour of a ring: the event's ({@code event} RGB, -1 for none) when it has {@link #RING_CONTRAST} against the page's {@code paper}, else {@code fallback}. Opaque. */
+    public static int ringColor(int event, int paper, int fallback) {
+        return event >= 0 && contrast(event, paper) >= RING_CONTRAST ? 0xFF000000 | event : fallback;
+    }
+
+    /** The distance between two moon icons of {@code iconSize}: {@code base} as it is, or wider when rings are drawn so that neighbours' rings never touch. */
+    public static int step(int base, int iconSize, boolean rings) {
+        return rings ? Math.max(base, iconSize + 2 * RING_REACH + 2) : base;
+    }
+
+    /** The nearest lunar event of a list sorted nearest first (today's counts), if any. */
+    public static Optional<LunarSource.Upcoming> next(List<LunarSource.Upcoming> events) {
+        return events.stream().filter(e -> e.days() >= 0).findFirst();
     }
 
     /** The vanilla phases of {@code count} days, starting today. */

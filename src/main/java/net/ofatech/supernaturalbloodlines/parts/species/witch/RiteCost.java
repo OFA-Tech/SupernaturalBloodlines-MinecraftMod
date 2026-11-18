@@ -14,6 +14,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.moon.LunarMood;
+import net.ofatech.supernaturalbloodlines.core.moon.LunarMoods;
 
 /**
  * The one rite cost hook (called from the chalk mixin): the witch discount, then the siphoner's own power, then whatever
@@ -90,6 +92,7 @@ public final class RiteCost {
             }
             siphonFactor = LadderQuery.value(performer, "S-SIP-4", "payment_factor", 1.0);
         }
+        extra *= LunarMoods.riteCost(level, () -> isRite(level, type, LunarMood.FULL_MOON_RITES));
         Split s = split(base, witch, WitchAltarBonus.emissaryApplies(level, caster), emissary, extra, siphonFactor, available);
         if (s.siphoned() > 0) {
             PENDING.set(new Pending(p, s.siphoned()));
@@ -101,11 +104,15 @@ public final class RiteCost {
     static final Set<String> LINEAGE_RITES = Set.of("supernaturalbloodlines:rite_of_lineage_reveal", "supernaturalbloodlines:rite_of_lineage_awaken");
 
     private static boolean isLineageRite(Level level, @Nullable RiteType type) {
+        return isRite(level, type, LINEAGE_RITES);
+    }
+
+    private static boolean isRite(Level level, @Nullable RiteType type, Set<String> ids) {
         if (type == null) {
             return false;
         }
         ResourceLocation id = level.registryAccess().registryOrThrow(EData.RITE_TYPES_REGISTRY).getKey(type);
-        return id != null && LINEAGE_RITES.contains(id.toString());
+        return id != null && ids.contains(id.toString());
     }
 
     public static void commit() {

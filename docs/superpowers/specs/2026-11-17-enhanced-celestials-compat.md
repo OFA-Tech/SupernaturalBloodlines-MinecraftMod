@@ -1,6 +1,8 @@
 # Enhanced Celestials 2 compatibility (design, 2026-11-17)
 
-Status: research and proposal. Nothing is built, nothing is added to the build. Every number below was read from the 1.21.1 NeoForge jars (javap and their datapacks), not from the pages; the things I could not check are marked **unverified**.
+**Update 2026-11-18: built** (plan `docs/superpowers/plans/2026-11-18-celestials.md`, checklist `docs/parts/celestials.md`). The owner approved all eleven recommendations of (f). Three "unverified" items are now checked against the jars: the listener order is `(ServerLevel, previous, new)`; an event instance ends at `day*24000 + 23999` (our eclipse ends at 23216, so the mirror is removed at our end); EC's client does **not** tint the fog or the sky dome (only the moon and the lightmap), so our fog and sky tint stay and only our moon disc is skipped. The part has no required mod (so it can be tested without EC).
+
+Status (original text): research and proposal. Nothing is built, nothing is added to the build. Every number below was read from the 1.21.1 NeoForge jars (javap and their datapacks), not from the pages; the things I could not check are marked **unverified**.
 
 ## 0. What the mod is (research)
 

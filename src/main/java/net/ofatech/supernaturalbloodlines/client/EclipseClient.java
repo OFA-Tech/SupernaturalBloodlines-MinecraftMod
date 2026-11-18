@@ -17,6 +17,7 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.ofatech.supernaturalbloodlines.core.moon.LunarMoods;
 import org.joml.Matrix4f;
 
 /**
@@ -39,6 +40,8 @@ public final class EclipseClient {
     private static final int DISC_STEPS = 48;
     private static boolean active;
     private static boolean listening;
+    private static long askedAt = -1;
+    private static boolean ecMoon;
 
     private EclipseClient() {}
 
@@ -67,6 +70,16 @@ public final class EclipseClient {
         return active && mc.level != null && mc.level.dimension() == Level.OVERWORLD;
     }
 
+    /** Asked once per game tick, not per frame: the answer reads Enhanced Celestials' forecast. */
+    private static boolean ecDrawsMoon(Minecraft mc) {
+        long now = mc.level.getGameTime();
+        if (now != askedAt) {
+            askedAt = now;
+            ecMoon = LunarMoods.ecDrawsEclipse(mc.level);
+        }
+        return ecMoon;
+    }
+
     private static float mix(float from, float to) {
         return from + (to - from) * STRENGTH;
     }
@@ -90,12 +103,15 @@ public final class EclipseClient {
         // the vanilla sky disc: flat, 16 blocks up, 512 across, so the tint reaches the horizon
         disc(modelView, 16f, 512f, SKY_TINT, SKY_ALPHA);
 
-        // the moon, where vanilla draws it (the sky turns with the time of day)
-        PoseStack pose = new PoseStack();
-        pose.mulPose(modelView);
-        pose.mulPose(Axis.YP.rotationDegrees(-90f));
-        pose.mulPose(Axis.XP.rotationDegrees(Minecraft.getInstance().level.getTimeOfDay(partialTick) * 360f));
-        disc(pose.last().pose(), -MOON_DISTANCE, MOON_RADIUS, MOON_TINT, moonAlpha);
+        // the moon, where vanilla draws it (the sky turns with the time of day); not when Enhanced Celestials already colours it for our eclipse
+        // (it recolours the moon and the light only, so the sky and fog tint stay ours)
+        if (!ecDrawsMoon(mc)) {
+            PoseStack pose = new PoseStack();
+            pose.mulPose(modelView);
+            pose.mulPose(Axis.YP.rotationDegrees(-90f));
+            pose.mulPose(Axis.XP.rotationDegrees(Minecraft.getInstance().level.getTimeOfDay(partialTick) * 360f));
+            disc(pose.last().pose(), -MOON_DISTANCE, MOON_RADIUS, MOON_TINT, moonAlpha);
+        }
 
         RenderSystem.enableCull();
         RenderSystem.enableDepthTest();

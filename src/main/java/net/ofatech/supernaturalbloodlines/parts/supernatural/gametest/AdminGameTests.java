@@ -183,7 +183,7 @@ public final class AdminGameTests {
             }
             helper.assertTrue(row.clientCopy() == e.clientCopy() && row.restart() == (e.restart() == SettingEntry.Restart.SERVER_RESTART), "flags of " + row.id());
         }
-        helper.assertTrue(seen.contains(KEY) && seen.stream().filter(id -> id.contains(":parts.")).count() == 9, "the core rows are missing: " + seen);
+        helper.assertTrue(seen.contains(KEY) && seen.stream().filter(id -> id.contains(":parts.")).count() == net.ofatech.supernaturalbloodlines.core.Part.values().length, "the core rows are missing: " + seen);
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         AdminSnapshotPayload.STREAM_CODEC.encode(buf, s);
         helper.assertTrue(AdminSnapshotPayload.STREAM_CODEC.decode(buf).equals(s), "the snapshot does not survive the wire");

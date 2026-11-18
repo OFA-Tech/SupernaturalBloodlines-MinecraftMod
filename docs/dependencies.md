@@ -21,6 +21,8 @@ Version values live in `gradle.properties`.
 | Curios | `top.theillusivec4.curios:curios-neoforge:9.5.1+1.21.1` (`api` classifier for compile) | `maven.theillusivec4.top` | api jar | full jar | artifacts part: rings in a Curios `ring` slot (`curios_version`). Optional: without it rings work from the inventory |
 
 
+**Enhanced Celestials 2 is not in this table: it is not a dependency at all.** It is All Rights Reserved and has no public source or Maven artifact, so nothing of it is compiled against, bundled or copied, and the celestials part reads it by reflection (parts/celestials/EcReflect, resolved once; a missing member logs one warning and turns the lunar source off). Tested with Enhanced Celestials 2 Core 2.0.3.4 and Default Lunar Events 2.0.1.4 (which also need CorgiLib and Data Anchor). For a manual check in the dev client, download the four jars yourself and run Gradle with `-PecJars=<folder of the jars>`; they go to `localRuntime` only when that property is set (off by default, so CI and the GameTests never have EC).
+
 The OFA pack runs Accessories, which ships a Curios compatibility layer, so the Curios API is the one targeted. Curios classes are only loaded behind `ModList.isLoaded("curios")` (`parts/artifacts/curios/CuriosSlots`).
 
 ## Where the coordinates came from

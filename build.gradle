@@ -235,6 +235,12 @@ dependencies {
     if (werewolvesRuntime) {
         localRuntime("de.teamlapen.werewolves:Werewolves:${werewolves_version}") { transitive = false }
     }
+    // Enhanced Celestials 2 (All Rights Reserved, no Maven artifact): -PecJars=<folder with its jars> puts them on the dev run classpath, for a manual
+    // check of the celestials part. The four jars are core, Default Lunar Events, CorgiLib and Data Anchor, downloaded by hand. Off by default, so CI and
+    // the GameTests never have it.
+    if (project.hasProperty('ecJars')) {
+        localRuntime(fileTree(dir: project.property('ecJars'), include: '*.jar'))
+    }
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

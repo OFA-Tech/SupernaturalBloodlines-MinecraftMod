@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.ofatech.supernaturalbloodlines.core.Config;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.ArtifactsConfig;
+import net.ofatech.supernaturalbloodlines.parts.celestials.CelestialsConfig;
 import net.ofatech.supernaturalbloodlines.parts.hud.HudConfig;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudClientConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
@@ -41,6 +42,7 @@ class AdminCoverageTest {
             new Known(ArtifactsConfig.FILE, ArtifactsConfig.SPEC, true, "ArtifactsConfig.java"),
             new Known(SpeciesConfig.FILE, SpeciesConfig.SPEC, true, "SpeciesConfig.java"),
             new Known(SpeciesTensuraConfig.FILE, SpeciesTensuraConfig.SPEC, true, "SpeciesTensuraConfig.java"),
+            new Known(CelestialsConfig.FILE, CelestialsConfig.SPEC, true, "CelestialsConfig.java"),
             new Known(HudClientConfig.FILE, HudClientConfig.SPEC, false, "HudClientConfig.java"),
             new Known(HubClientConfig.FILE, HubClientConfig.SPEC, false, "HubClientConfig.java"));
 
