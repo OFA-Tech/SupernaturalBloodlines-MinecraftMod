@@ -130,7 +130,9 @@ public final class SpeciesProfiles implements ProfileService.Source {
         PackIndex packs = packs(observer);
         return switch (fact) {
             case NAME -> Optional.ofNullable(nameOf(server, subject)).map(List::of);
-            case SPECIES -> Optional.ofNullable(who).map(w -> List.of(BloodlineAccess.get(w).species().name()));
+            case SPECIES -> relation == Relation.NPC_CREATURE
+                    ? SirelineIndex.get(observer.serverLevel()).entityTypeOf(subject).map(type -> List.of(type.substring(type.indexOf(':') + 1)))
+                    : Optional.ofNullable(who).map(w -> List.of(BloodlineAccess.get(w).species().name()));
             case RANK -> relation == Relation.ALLY_LEADER ? Optional.of(List.of("ally")) : Optional.ofNullable(who).map(w -> List.of(rank(w, packs)));
             case LEVEL -> Optional.ofNullable(who).map(w -> List.of(Integer.toString(VampirismAPI.factionPlayerHandler(w).getCurrentLevel())));
             case PACK -> packs == null ? Optional.empty() : Optional.of(packs.inPack(subject) ? List.of(String.valueOf(nameOf(server, packs.leaderOf(subject)))) : List.of());

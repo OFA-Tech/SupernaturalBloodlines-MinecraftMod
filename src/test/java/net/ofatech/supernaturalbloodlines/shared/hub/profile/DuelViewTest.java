@@ -34,5 +34,12 @@ class DuelViewTest {
         assertEquals("challenge", inDuel.get(0).id());
         assertTrue(!inDuel.get(0).enabled() && "in_duel".equals(inDuel.get(0).disabled()));
     }
-}
 
+    @Test
+    void anNpcOffersNoPlayerActionsToAnyViewer() {
+        UUID id = UUID.randomUUID();
+        var leader = new ProfileActions.Viewer(true, true, false, true, false, true, true);
+        assertTrue(ProfileActions.of(leader, new ProfileActions.Subject(id, "Thrall", false, Role.NONE, true, false, false, true), true).isEmpty());
+        assertTrue(!ProfileActions.of(leader, new ProfileActions.Subject(id, "Kid", false, Role.NONE, true, false, false, false), false).isEmpty());
+    }
+}

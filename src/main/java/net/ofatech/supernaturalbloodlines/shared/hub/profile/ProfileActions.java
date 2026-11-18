@@ -20,9 +20,13 @@ public final class ProfileActions {
     }
 
     /** @param self the viewer's own profile; {@code sired} one of the viewer's sired; {@code sire} the viewer's sire */
-    public record Subject(UUID id, String name, boolean self, Role role, boolean sired, boolean sire, boolean inDuel) {
+    public record Subject(UUID id, String name, boolean self, Role role, boolean sired, boolean sire, boolean inDuel, boolean npc) {
+        public Subject(UUID id, String name, boolean self, Role role, boolean sired, boolean sire, boolean inDuel) {
+            this(id, name, self, role, sired, sire, inDuel, false);
+        }
+
         public Subject(UUID id, String name, boolean self, Role role, boolean sired, boolean sire) {
-            this(id, name, self, role, sired, sire, false);
+            this(id, name, self, role, sired, sire, false, false);
         }
     }
 
@@ -66,6 +70,9 @@ public final class ProfileActions {
                 out.add(new Action("anchor_clear", Kind.COMMAND, "P15", false, false, true, null, false));
             }
             return out;
+        }
+        if (s.npc()) {
+            return out; // not a player: nothing to invite, challenge, anchor or kick (their page only says what is known)
         }
         boolean inMyPack = v.inPack() && s.role() != Role.NONE && s.role() != Role.ALLY;
         if (v.coalpha() && s.role() == Role.LEADER) {

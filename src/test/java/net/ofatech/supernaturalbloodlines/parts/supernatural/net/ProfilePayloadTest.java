@@ -34,13 +34,13 @@ class ProfilePayloadTest {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         ProfilePayload.STREAM_CODEC.encode(buf, p);
         assertEquals(p, ProfilePayload.STREAM_CODEC.decode(buf));
-        assertEquals(18, buf.writerIndex(), "a UUID, the OP flag and an empty map are all that crosses the wire");
+        assertEquals(19, buf.writerIndex(), "a UUID, the OP flag, the NPC flag and an empty map are all that crosses the wire");
     }
 
     @Test
     void thePayloadNeverNamesTheRelationOrWhatWasLeftOut() {
         List<String> components = Stream.of(ProfilePayload.class.getRecordComponents()).map(RecordComponent::getName).toList();
-        assertEquals(List.of("subject", "opView", "facts"), components);
+        assertEquals(List.of("subject", "opView", "npc", "facts"), components, "only whether it is no player is said about the subject, never the relation");
     }
 
     @Test

@@ -553,6 +553,7 @@
   "supernaturalbloodlines.hub.profile.duel.on": "Duel in progress with %s: %s left.",
   "supernaturalbloodlines.hub.profile.duel.paused": "Duel paused, waiting for %s to come back (%s).",
   "supernaturalbloodlines.hub.profile.link": "Open their profile",
+  "supernaturalbloodlines.hub.profile.npc": "Not a player: someone in your family line",
   "supernaturalbloodlines.hub.profile.disabled.in_duel": "You are in a duel with them already",
   "supernaturalbloodlines.hub.home.waiting": "%s waiting for your answer",
   "supernaturalbloodlines.hub.request.kind.sire_call": "Sire's call",

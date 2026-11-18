@@ -127,7 +127,7 @@ public final class ProfilePage implements HubPageView {
         y = PageWidgets.reply(f, r, y + 2);
         f.end(y);
 
-        f.detail(detail(f, route));
+        f.detail(detail(f, route, payload));
         if (f.layout().chrome().detail() != null && f.layout().chrome().detail().h() >= 60) {
             // the actions went to the theme's own pane or bar: this page says what a ? means
             Rect s = f.region(HubLayout.SIDE);
@@ -173,7 +173,7 @@ public final class ProfilePage implements HubPageView {
     }
 
     /** The actions of the relationship, as the theme's Detail: pack and sire facts come from the hub snapshot, which is all the client has. */
-    private Detail detail(HubScreen.Frame f, HubScreen.ProfileRoute route) {
+    private Detail detail(HubScreen.Frame f, HubScreen.ProfileRoute route, ProfilePayload payload) {
         var snap = f.view.snapshot();
         UUID self = f.view.player().getUUID();
         boolean isSelf = route.id().equals(self);
@@ -194,9 +194,9 @@ public final class ProfilePage implements HubPageView {
                 HubPage.isWolfType(race), race == SupernaturalRace.ORIGINAL || race == SupernaturalRace.HYBRID || race == SupernaturalRace.ORIGINAL_HYBRID || race == SupernaturalRace.TRIBRID);
         boolean sire = snap.sire().filter(n -> !n.isEmpty()).flatMap(snap::idOf).filter(route.id()::equals).isPresent();
         boolean sired = snap.people().stream().anyMatch(p -> p.id().equals(route.id()) && snap.sired().contains(p.name()));
-        ProfileActions.Subject subject = new ProfileActions.Subject(route.id(), route.name(), isSelf, role, sired, sire, duelWith(route.id()).isPresent());
+        ProfileActions.Subject subject = new ProfileActions.Subject(route.id(), route.name(), isSelf, role, sired, sire, duelWith(route.id()).isPresent(), payload != null && payload.npc());
         Detail.Builder d = Detail.of(Component.literal(route.name()));
-        d.subtitle(isSelf ? Component.translatable(KEY + "you") : role == ProfileActions.Role.NONE ? Component.translatable(KEY + "no_bond")
+        d.subtitle(isSelf ? Component.translatable(KEY + "you") : payload != null && payload.npc() ? Component.translatable(KEY + "npc") : role == ProfileActions.Role.NONE ? Component.translatable(KEY + "no_bond")
                 : Component.translatable(PageKit.HUB + "pack.member." + role.name().toLowerCase(Locale.ROOT).replace("challenger", "coalpha_challenger")));
         if (route.op()) {
             d.kicker(Component.translatable(KEY + "op_kicker"));

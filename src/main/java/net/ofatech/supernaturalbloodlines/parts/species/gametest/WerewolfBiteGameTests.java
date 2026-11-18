@@ -292,6 +292,30 @@ public final class WerewolfBiteGameTests {
         return PackCommand.invite(leader, member) == null && PackCommand.accept(member, PackCommand.requests().tokenOf(leader.getUUID(), member.getUUID()).orElseThrow()) == null;
     }
 
+    /** Hub IA 3.7: an NPC in the observer's own line shows its name and species and nothing else, and is marked as no player; a stranger is not. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anNpcInYourLineShowsOnlyItsNameAndSpecies(GameTestHelper helper) {
+        ServerPlayer me = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer stranger = TestPlayers.createDuelist(helper);
+        lookup(me, stranger);
+        java.util.UUID thrall = java.util.UUID.randomUUID();
+        var sirelines = net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel());
+        try {
+            sirelines.add(me.getUUID(), thrall, "vampirism:advanced_vampire", "Thrall");
+            var profile = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(me, thrall);
+            helper.assertTrue(profile.npc() && profile.facts().keySet().equals(java.util.EnumSet.of(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.NAME,
+                    net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES)), "an NPC of the line was told " + profile.facts().keySet() + " npc=" + profile.npc());
+            helper.assertTrue(profile.facts().get(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES).equals(List.of("advanced_vampire")), "the species is " + profile.facts());
+            var other = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(stranger, thrall);
+            helper.assertTrue(!other.npc() && other.facts().isEmpty(), "a stranger was told about the NPC: " + other.facts());
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(me, stranger.getUUID()).npc(), "a player was marked as an NPC");
+        } finally {
+            sirelines.remove(thrall);
+            SireCall.overridePlayerLookup(null);
+        }
+        helper.succeed();
+    }
+
     /**
      * Hub IA 3.7: what an observer may learn of a person comes from the server's own indexes. A stranger gets no fields at all, a pack-mate
      * the pack's facts, and a secret (genes) only once somebody has discovered it; the pack's pool teaches a newcomer, and leaving keeps it.

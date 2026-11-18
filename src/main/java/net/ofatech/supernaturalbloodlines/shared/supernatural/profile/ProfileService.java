@@ -15,9 +15,13 @@ import net.ofatech.supernaturalbloodlines.shared.admin.AdminAccess;
  */
 public final class ProfileService {
     /** @param opView true only for {@link #ofForOp}: the Admin page's own view, never the player-facing one */
-    public record Profile(UUID subject, boolean opView, Map<Fact, List<String>> facts) {
+    public record Profile(UUID subject, boolean opView, boolean npc, Map<Fact, List<String>> facts) {
         public Profile {
             facts = Map.copyOf(facts);
+        }
+
+        public Profile(UUID subject, boolean opView, Map<Fact, List<String>> facts) {
+            this(subject, opView, false, facts);
         }
     }
 
@@ -94,7 +98,7 @@ public final class ProfileService {
     private static Profile build(Source s, ServerPlayer observer, UUID subject, Relation relation, boolean opView) {
         Set<Fact> discovered = relation == Relation.OP_VIEW ? EnumSet.noneOf(Fact.class) : s.discovered(observer, subject, relation);
         final Relation used = relation;
-        return new Profile(subject, opView, ProfileView.build(relation, discovered, f -> s.read(observer, subject, used, f)));
+        return new Profile(subject, opView, relation == Relation.NPC_CREATURE || relation == Relation.NPC_ANCESTOR, ProfileView.build(relation, discovered, f -> s.read(observer, subject, used, f)));
     }
 }
 

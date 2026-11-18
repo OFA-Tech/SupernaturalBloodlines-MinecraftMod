@@ -19,7 +19,8 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileSer
  * draws "?"; an empty value list is an explicit "none". The map never says what was left out, and never carries the relation.
  * Kept apart from the hub snapshot, which stays names, ranks and online flags.
  */
-public record ProfilePayload(UUID subject, boolean opView, Map<Fact, List<String>> facts) implements CustomPacketPayload {
+/** {@code npc}: the subject is not a player (a creature or an ancestor of the viewer's line), so the page offers no player actions. */
+public record ProfilePayload(UUID subject, boolean opView, boolean npc, Map<Fact, List<String>> facts) implements CustomPacketPayload {
     public static final Type<ProfilePayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "profile"));
 
     private static final StreamCodec<ByteBuf, Fact> FACT = ByteBufCodecs.stringUtf8(16).map(Fact::valueOf, Fact::name);
@@ -27,6 +28,7 @@ public record ProfilePayload(UUID subject, boolean opView, Map<Fact, List<String
     public static final StreamCodec<ByteBuf, ProfilePayload> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, ProfilePayload::subject,
             ByteBufCodecs.BOOL, ProfilePayload::opView,
+            ByteBufCodecs.BOOL, ProfilePayload::npc,
             ByteBufCodecs.map(c -> new EnumMap<Fact, List<String>>(Fact.class), FACT, ByteBufCodecs.stringUtf8(128).apply(ByteBufCodecs.list(8)), Fact.values().length),
             ProfilePayload::facts,
             ProfilePayload::new);
@@ -35,8 +37,12 @@ public record ProfilePayload(UUID subject, boolean opView, Map<Fact, List<String
         facts = Map.copyOf(facts);
     }
 
+    public ProfilePayload(UUID subject, boolean opView, Map<Fact, List<String>> facts) {
+        this(subject, opView, false, facts);
+    }
+
     public static ProfilePayload of(ProfileService.Profile profile) {
-        return new ProfilePayload(profile.subject(), profile.opView(), profile.facts());
+        return new ProfilePayload(profile.subject(), profile.opView(), profile.npc(), profile.facts());
     }
 
     @Override
