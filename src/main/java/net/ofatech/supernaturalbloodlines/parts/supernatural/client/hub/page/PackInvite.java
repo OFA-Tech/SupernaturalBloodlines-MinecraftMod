@@ -27,9 +27,13 @@ final class PackInvite {
 
     private PackInvite() {}
 
-    /** @param mayInvite the viewer leads a pack, or is an Alpha with none yet; {@code members} are left out of the lists (they are in already) */
-    static int render(HubScreen.Frame f, Rect r, int y, boolean mayInvite, Set<UUID> members) {
-        HubTheme t = f.theme();
+    /** True while a picker is open. */
+    static boolean picking() {
+        return mode != Mode.NONE;
+    }
+
+    /** The Invite and Ally buttons in a row; {@code mayInvite} is the viewer leading a pack, or being an Alpha with none yet. Returns the y under them. */
+    static int buttons(HubScreen.Frame f, Rect r, int y, boolean mayInvite) {
         String key = PageKit.HUB + "pack.";
         Component why = Component.translatable(key + "invite_why");
         Component invite = Component.translatable(key + "invite_btn");
@@ -38,20 +42,36 @@ final class PackInvite {
         Flow.Result flow = Flow.wrap(new Rect(r.x(), y, r.w(), 0), widths, PageWidgets.H, PageWidgets.GAP);
         PageWidgets.button(f, "stage:pack:invite", flow.rects().get(0), invite, mayInvite, mode == Mode.INVITE, why, () -> mode = mode == Mode.INVITE ? Mode.NONE : Mode.INVITE);
         PageWidgets.button(f, "stage:pack:ally", flow.rects().get(1), ally, mayInvite, mode == Mode.ALLY, why, () -> mode = mode == Mode.ALLY ? Mode.NONE : Mode.ALLY);
-        y = flow.bottom() + 3;
         if (!mayInvite) {
-            return PageKit.wrapped(f, why, r.x(), y, r.w(), t.muted());
+            mode = Mode.NONE;
         }
+        return flow.bottom() + 3;
+    }
+
+    /** The players to pick from, under the pressed button, in {@code r}; {@code card} puts them on a card of the page's paper (over what is beneath). Returns the y under them. */
+    static int picker(HubScreen.Frame f, Rect r, int y, Set<UUID> members, boolean card) {
         if (mode == Mode.NONE) {
             return y;
         }
-        y = PageKit.wrapped(f, Component.translatable(key + (mode == Mode.INVITE ? "invite_who" : "ally_who")).withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
+        HubTheme t = f.theme();
+        String key = PageKit.HUB + "pack.";
+        Component title = Component.translatable(key + (mode == Mode.INVITE ? "invite_who" : "ally_who"));
         List<Pickable.Person> people = Pickable.of(online(), f.view.player().getUUID(), mode == Mode.INVITE ? members : Set.of());
-        if (people.isEmpty()) {
-            return PageKit.wrapped(f, Component.translatable(key + "pick_none"), r.x(), y, r.w(), t.muted());
-        }
+        int pad = card ? 4 : 0;
+        Rect in = new Rect(r.x() + pad, y + pad, r.w() - 2 * pad, 0);
         List<Integer> pw = people.stream().map(p -> PageWidgets.widthOf(f.font(), Component.literal(p.name()))).toList();
-        Flow.Result pf = Flow.wrap(new Rect(r.x(), y, r.w(), 0), pw, PageWidgets.H, 3);
+        Flow.Result pf = Flow.wrap(new Rect(in.x(), in.y() + PageKit.LINE + 2, in.w(), 0), pw, PageWidgets.H, 3);
+        int none = people.isEmpty() ? f.font().split(Component.translatable(key + "pick_none"), in.w()).size() * PageKit.LINE : 0;
+        int bottom = (people.isEmpty() ? in.y() + PageKit.LINE + 2 + none : pf.bottom()) + pad;
+        if (card) {
+            f.g.fill(r.x(), y, r.right(), bottom, 0xFF000000 | t.paper());
+            f.g.renderOutline(r.x(), y, r.w(), bottom - y, t.accent());
+        }
+        f.g.drawString(f.font(), title.copy().withStyle(ChatFormatting.BOLD), in.x(), in.y(), t.accent(), false);
+        if (people.isEmpty()) {
+            PageKit.wrapped(f, Component.translatable(key + "pick_none"), in.x(), in.y() + PageKit.LINE + 2, in.w(), t.muted());
+            return bottom + 3;
+        }
         String row = mode == Mode.INVITE ? "P1" : "P5";
         for (int i = 0; i < people.size(); i++) {
             Pickable.Person p = people.get(i);
@@ -61,9 +81,17 @@ final class PackInvite {
                 mode = Mode.NONE;
             });
         }
-        return pf.bottom() + 3;
+        return bottom + 3;
     }
 
+    /** Both together, one under the other: for a column with room. */
+    static int render(HubScreen.Frame f, Rect r, int y, boolean mayInvite, Set<UUID> members) {
+        y = buttons(f, r, y, mayInvite);
+        if (!mayInvite) {
+            return PageKit.wrapped(f, Component.translatable(PageKit.HUB + "pack.invite_why"), r.x(), y, r.w(), f.theme().muted());
+        }
+        return picker(f, r, y, members, false);
+    }
     private static List<Pickable.Person> online() {
         Minecraft mc = Minecraft.getInstance();
         List<Pickable.Person> out = new ArrayList<>();

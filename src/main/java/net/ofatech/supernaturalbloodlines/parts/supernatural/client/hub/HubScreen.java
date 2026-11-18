@@ -354,6 +354,9 @@ public final class HubScreen extends Screen {
                     openProfile(minecraft.player.getUUID(), minecraft.player.getGameProfile().getName());
                 }
             }
+            case "profile_leader" -> {
+                openProfile(DevDemo.id("Derek|lead"), "Derek");
+            }
             case "profile_op" -> openProfile(DevDemo.id("Derek|op"), "Derek", true);
             case "true_alpha_dialog" -> warnTrueAlpha(() -> { });
             case "profile_dialog" -> {

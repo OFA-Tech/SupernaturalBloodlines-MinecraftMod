@@ -207,6 +207,7 @@ public final class DevShots {
             }
             parkCursor(mc, 1, 1); // a hover tooltip would cover the page
             originOverride = s.variant() != null && s.variant().startsWith("line_") ? s.variant().substring(5) : null;
+            DevDemo.second = "profile_leader".equals(s.variant());
             HubClient.remember(s.page());
             HubClient.open(s.page());
             if (s.menu() && mc.screen instanceof HubScreen hs) {

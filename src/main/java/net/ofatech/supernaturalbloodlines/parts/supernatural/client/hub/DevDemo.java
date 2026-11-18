@@ -21,6 +21,8 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
  */
 final class DevDemo {
     private static boolean installed;
+    /** Development only: the demo pack is led by Derek and the viewer is its second Alpha (the challenge shots). */
+    static boolean second;
 
     private DevDemo() {
     }
@@ -58,6 +60,9 @@ final class DevDemo {
         // the OP view: every field, whatever the OP knows or not
         map.put(id("Derek|op"), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(id("Derek|op"), true, facts("NAME", "Derek", "SPECIES", "werewolf", "RANK", "coalpha",
                 "LEVEL", "9", "PACK", me, "PACK_DAYS", "12", "SIRE", "", "LINE", "Mikael", "GENES", "werewolf|doppelganger", "ANCHOR", me, "PRESENCE", "online", "BONUS", "+20% attack")));
+        // the pack seen as a second Alpha: Derek leads (his own id, so the Profile finds him in the ledger)
+        map.put(id("Derek|lead"), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(id("Derek|lead"), false, facts("NAME", "Derek", "SPECIES", "werewolf",
+                "RANK", "alpha", "LEVEL", "9", "PACK", "Derek", "PACK_DAYS", "21", "SIRE", "", "LINE", "", "GENES", "werewolf", "PRESENCE", "online", "BONUS", "+24% attack, +4.8 max health")));
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.ProfileClient.demo(map);
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient.demo(List.of(
                 new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.SIRE_CALL, id("Klaus"), "Klaus", "ab12cd34", 5000),
@@ -130,7 +135,9 @@ final class DevDemo {
                 .sp(6).spEarned(11).build();
         // the player leads the demo pack (the first of the list), so the kick and ally actions can be photographed
         String me = v.player().getName().getString();
-        List<HubSocial.Member> pack = List.of(new HubSocial.Member(me, "alpha", true, Optional.of(v.player().getUUID())), new HubSocial.Member("Derek", "coalpha", true, Optional.of(id("Derek"))),
+        List<HubSocial.Member> pack = second ? List.of(new HubSocial.Member("Derek", "alpha", true, Optional.of(id("Derek|lead"))), new HubSocial.Member(me, "coalpha", true, Optional.of(v.player().getUUID())),
+                new HubSocial.Member("Liam", "beta", true, Optional.of(id("Liam"))), new HubSocial.Member("Malia", "beta", false, Optional.of(id("Malia"))))
+                : List.of(new HubSocial.Member(me, "alpha", true, Optional.of(v.player().getUUID())), new HubSocial.Member("Derek", "coalpha", true, Optional.of(id("Derek"))),
                 new HubSocial.Member("Liam", "beta", true, Optional.of(id("Liam"))),
                 new HubSocial.Member("Malia", "beta", false, Optional.of(id("Malia"))), new HubSocial.Member("Isaac", "beta", true, Optional.of(id("Isaac"))), new HubSocial.Member("Deaton", "emissary", true, Optional.of(id("Deaton"))),
                 new HubSocial.Member("Stiles", "packmate", true, Optional.of(id("Stiles"))), new HubSocial.Member("Lydia", "packmate", false, Optional.of(id("Lydia"))), new HubSocial.Member("Scott", "ally", true, Optional.of(id("Scott"))),

@@ -261,15 +261,19 @@ public final class BookPackPage implements HubPageView {
                     () -> BloodlinePage.command("pack challenge decline"));
             y = dy + 13;
         }
-        boolean alpha = wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA;
-        y = PackInvite.render(f, r, y + 2, leads(f, pack) || (pack.isEmpty() && alpha), PackInvite.idsOf(f));
+        boolean mayInvite = leads(f, pack) || (pack.isEmpty() && (wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA));
+        if (style != Style.BOOK) {
+            y = PackInvite.render(f, r, y + 2, mayInvite, PackInvite.idsOf(f));
+        }
         f.end(y);
         if (style == Style.BOOK) {
+            // the foot of the page: the seal, the two invite buttons beside it and, under them, the way out
             int sy = r.bottom() - BookKit.SEAL;
             BookKit.seal(f, "pack:accept", Component.translatable(BOOK + "accept"), true, r.x(), sy, () -> BloodlinePage.command("pack accept"),
                     List.of(Component.translatable(KEY + "accept")));
+            PackInvite.buttons(f, new Rect(r.x() + BookKit.SEAL + 8, sy + 2, r.w() - BookKit.SEAL - 8, PageWidgets.H), sy + 2, mayInvite);
             if (!pack.isEmpty()) {
-                BookKit.link(f, "pack:leave", Component.translatable(KEY + "leave"), r.x() + BookKit.SEAL + 8, sy + 14, List.of(Component.translatable(KEY + "leave")),
+                BookKit.link(f, "pack:leave", Component.translatable(KEY + "leave"), r.x() + BookKit.SEAL + 8, sy + 24, List.of(Component.translatable(KEY + "leave")),
                         () -> f.confirm(Component.translatable(BOOK + "leave_title"), Component.translatable(BOOK + "leave_body"), Component.translatable(BOOK + "leave_yes"),
                                 () -> BloodlinePage.command("pack leave")));
             }
@@ -331,6 +335,9 @@ public final class BookPackPage implements HubPageView {
         if (pack.isEmpty()) {
             // nobody beside you: the empty state instead of an empty ring
             EmptyState.render(f, s, top + Math.max(0, (s.bottom() - top - 150) / 2), "pack", HubPage.GUIDE);
+            if (style == Style.BOOK) {
+                PackInvite.picker(f, new Rect(s.x(), top, s.w(), 0), top, PackInvite.idsOf(f), true);
+            }
             f.end(s.bottom());
             return;
         }
@@ -374,6 +381,10 @@ public final class BookPackPage implements HubPageView {
             f.g.drawString(f.font(), more, cx - f.font().width(more) / 2, cy + inner + 14, t.muted(), false);
         }
         BookKit.small(f, Component.translatable(BOOK + "legend"), s.x(), s.bottom() - legend + 1, areaW, t.muted());
+        if (style == Style.BOOK) {
+            // the players to pick from, on a card over the top of the ring
+            PackInvite.picker(f, new Rect(s.x(), top, s.w(), 0), top, PackInvite.idsOf(f), true);
+        }
         f.end(s.bottom());
     }
 }

@@ -52,16 +52,16 @@ public final class HomePage implements HubPageView {
         int y = f.begin(HubLayout.MAIN);
         y = PageKit.title(f, Component.translatable(KEY + "title"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
-        y = waiting(f, r, y + 6);
-        y = next(f, r, y + 6);
         y = you(f, r, y + 6);
+        y = next(f, r, y + 6);
+        y = world(f, r, y + 6);
         f.end(y);
         PageWidgets.info(f, Component.translatable(KEY + "title"), Component.translatable(KEY + "info"));
 
         Rect s = f.region(HubLayout.SIDE);
         int sy = f.begin(HubLayout.SIDE);
-        sy = people(f, s, sy);
-        sy = world(f, s, sy + 6);
+        sy = waiting(f, s, sy);
+        sy = people(f, s, sy + 6);
         sy = doNow(f, s, sy + 6);
         sy = PageWidgets.reply(f, s, sy + 4);
         f.end(sy);
@@ -277,9 +277,9 @@ public final class HomePage implements HubPageView {
         double lit = 1 - Math.abs(phase - 0) / 4.0; // 0 = full, 4 = new
         for (int dy = -d / 2; dy < d / 2; dy++) {
             int half = (int) Math.round(Math.sqrt(Math.max(0, (d / 2.0) * (d / 2.0) - (dy + 0.5) * (dy + 0.5))));
-            f.g.fill(cx - half, cy + dy, cx + half, cy + dy + 1, (t.muted() & 0xFFFFFF) | 0xFF000000);
+            f.g.fill(cx - half, cy + dy, cx + half, cy + dy + 1, 0xFF5E5050);
             int litHalf = (int) Math.round(half * Math.max(0, lit));
-            f.g.fill(cx - litHalf, cy + dy, cx + litHalf, cy + dy + 1, 0xFFE8D9A8);
+            f.g.fill(cx - litHalf, cy + dy, cx + litHalf, cy + dy + 1, 0xFFF4D98A);
         }
         Component now = days == 0 ? Component.translatable(KEY + "full_moon") : Component.translatable(KEY + "moon_in", days);
         int tx = s.x() + d + 6;

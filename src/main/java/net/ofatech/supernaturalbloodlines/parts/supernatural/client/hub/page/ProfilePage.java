@@ -118,14 +118,15 @@ public final class ProfilePage implements HubPageView {
             if (route.op()) {
                 d.kicker(Component.translatable(KEY + "op_kicker"));
             }
-            f.detail(d.body(Component.translatable(KEY + "legend")).build());
+            boolean anyUnknown = payload != null && !route.op() && Fact.values().length > payload.facts().size();
+            f.detail((anyUnknown ? d.body(Component.translatable(KEY + "legend")) : d).build());
         }
     }
 
     /** The portrait, the name (with the leader's crown) and the rank chip. */
     private int identity(HubScreen.Frame f, Rect r, int y, HubScreen.ProfileRoute route, ProfilePayload payload) {
         HubTheme t = f.theme();
-        int face = r.w() >= 150 ? 40 : 28;
+        int face = f.layout().chrome().detail() != null && f.layout().chrome().detail().h() >= 60 ? 48 : r.w() >= 150 ? 40 : 28;
         boolean leader = payload != null && payload.facts().get(Fact.RANK) != null && payload.facts().get(Fact.RANK).contains("alpha");
         BookKit.portrait(f.g, route.name(), r.x() + face / 2 + 1, y + face / 2 + 1, face, route.id().equals(f.view.player().getUUID()) ? t.accent() : t.muted(), t.paper());
         int tx = r.x() + face + 8;
@@ -164,11 +165,20 @@ public final class ProfilePage implements HubPageView {
             List<String> known = payload.facts().get(fact);
             Component label = Component.translatable(KEY + "fact." + fact.name().toLowerCase(Locale.ROOT));
             Component text = known == null ? Component.translatable(KEY + "unknown") : value(fact, known);
-            f.g.drawString(f.font(), label.getString().toUpperCase(Locale.ROOT), x, rowTop, t.muted(), false);
-            int vy = rowTop + 10;
-            for (var line : f.font().split(text, cw)) {
-                f.g.drawString(f.font(), line, x, vy, known == null ? t.muted() : t.ink(), false);
-                vy += PageKit.LINE;
+            String caps = label.getString().toUpperCase(Locale.ROOT);
+            int vy;
+            if (f.font().width(caps) + 8 + f.font().width(text) <= cw) {
+                // a short value stays on the label's line, at the right edge
+                f.g.drawString(f.font(), caps, x, rowTop, t.muted(), false);
+                f.g.drawString(f.font(), text, x + cw - f.font().width(text), rowTop, known == null ? t.muted() : t.ink(), false);
+                vy = rowTop + PageKit.LINE;
+            } else {
+                f.g.drawString(f.font(), caps, x, rowTop, t.muted(), false);
+                vy = rowTop + 10;
+                for (var line : f.font().split(text, cw)) {
+                    f.g.drawString(f.font(), line, x, vy, known == null ? t.muted() : t.ink(), false);
+                    vy += PageKit.LINE;
+                }
             }
             int h = vy - rowTop + 3;
             Rect cell = new Rect(x - 1, rowTop - 1, cw + 2, h - 1);
