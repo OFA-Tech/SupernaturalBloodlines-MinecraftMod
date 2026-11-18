@@ -9,11 +9,15 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
 public final class RequestsClient {
     private static volatile List<HubRequests.Request> requests = List.of();
     private static volatile long receivedAt;
+    private static volatile boolean demo;
 
     private RequestsClient() {}
 
     public static void receive(HubRequestsPayload payload, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
+            if (demo) {
+                return; // the dev screenshots keep their made-up requests
+            }
             requests = payload.requests();
             receivedAt = System.nanoTime();
         });
@@ -33,6 +37,13 @@ public final class RequestsClient {
     /** Hides a card on this client only: an invitation has no decline command, so declining is waiting or dismissing. */
     public static void dismiss(HubRequests.Request r) {
         DISMISSED.add(key(r));
+    }
+
+    /** Development only (the dev screenshots): requests that were never sent. */
+    public static void demo(List<HubRequests.Request> demo) {
+        RequestsClient.demo = true;
+        requests = List.copyOf(demo);
+        receivedAt = System.nanoTime();
     }
 
     /** Ticks left of {@code r} now: what the server said, less what has passed since it said it (20 ticks a second). */

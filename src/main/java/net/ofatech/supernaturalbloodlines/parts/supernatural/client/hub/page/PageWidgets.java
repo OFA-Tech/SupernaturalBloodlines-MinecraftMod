@@ -79,6 +79,14 @@ final class PageWidgets {
         }
     }
 
+    /** A tall info pane (Tensura's) has no content of its own on these pages: a title and a line say what the page is. The Blood Moon's short bar and the Grimoire's page opposite are left alone. */
+    static void info(HubScreen.Frame f, Component title, Component body) {
+        Rect d = f.layout().chrome().detail();
+        if (d != null && d.h() >= 60) {
+            f.detail(net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail.of(title).body(body).build());
+        }
+    }
+
     /** The newest reply of a command the hub ran, wrapped, in the ink colour when it worked and the warning red when not. Returns the y under it. */
     static int reply(HubScreen.Frame f, Rect r, int y) {
         var reply = AdminClient.reply();

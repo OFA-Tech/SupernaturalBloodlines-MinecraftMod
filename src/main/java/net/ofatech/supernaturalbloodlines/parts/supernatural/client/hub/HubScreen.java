@@ -165,7 +165,10 @@ public final class HubScreen extends Screen {
         HubView view = HubView.of(minecraft.player);
         visible = HubPage.visiblePages(view.context());
         if (page != HubPage.LOADOUT || !view.context().loadout()) {
-            setPage(HubPage.orFirst(page, view.context()));
+            HubPage shown = HubPage.orFirst(page, view.context());
+            if (shown != page) {
+                setPage(shown);
+            }
         }
         HubPage navPage = profile != null ? profile.origin() : page == HubPage.LOADOUT ? HubPage.SKILLS : page;
         List<HubHooks.Launcher> launchers = HubHooks.launchers();
@@ -320,6 +323,33 @@ public final class HubScreen extends Screen {
 
     public void setLadder(int index) {
         ladderChoice = index;
+    }
+
+    /** Development only (the dev screenshots): puts the screen in a route or section no click is needed for. */
+    void devVariant(String variant) {
+        switch (variant) {
+            case "profile" -> openProfile(DevDemo.id("Derek"), "Derek");
+            case "profile_beta" -> openProfile(DevDemo.id("Liam"), "Liam");
+            case "profile_stranger" -> openProfile(DevDemo.id("Stranger"), "Stranger");
+            case "profile_sire" -> openProfile(DevDemo.id("Klaus"), "Klaus");
+            case "profile_sired" -> openProfile(DevDemo.id("Tyler"), "Tyler");
+            case "profile_self" -> {
+                if (minecraft != null && minecraft.player != null) {
+                    openProfile(minecraft.player.getUUID(), minecraft.player.getGameProfile().getName());
+                }
+            }
+            case "profile_op" -> openProfile(DevDemo.id("Derek|op"), "Derek", true);
+            case "profile_dialog" -> {
+                openProfile(DevDemo.id("Derek"), "Derek");
+                confirm(Component.translatable("supernaturalbloodlines.hub.profile.action.heal"), Component.translatable("supernaturalbloodlines.hub.profile.confirm.heal", "Derek"),
+                        Component.translatable("supernaturalbloodlines.hub.confirm.stay"), Component.translatable("supernaturalbloodlines.hub.profile.action.heal"), () -> { });
+            }
+            default -> {
+                if (variant.startsWith("admin_")) {
+                    net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.AdminPage.devSection(variant.substring(6));
+                }
+            }
+        }
     }
 
     /** Development only (the dev screenshots): opens the look menu. */

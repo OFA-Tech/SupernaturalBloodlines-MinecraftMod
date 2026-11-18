@@ -67,7 +67,7 @@ public final class AdminEdit {
 
     /** The label of a key's last path part when no lang entry exists: {@code full_form_level} reads "Full form level". */
     public static String humanize(String id) {
-        String last = id.substring(Math.max(id.lastIndexOf('.'), id.lastIndexOf(':')) + 1).replace('_', ' ');
+        String last = id.substring(Math.max(id.lastIndexOf('.'), id.lastIndexOf(':')) + 1).replace('_', ' ').replaceAll("([a-z])([A-Z])", "$1 $2").toLowerCase(Locale.ROOT);
         return last.isEmpty() ? id : Character.toUpperCase(last.charAt(0)) + last.substring(1);
     }
 

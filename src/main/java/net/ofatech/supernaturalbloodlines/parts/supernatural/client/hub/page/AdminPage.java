@@ -70,6 +70,13 @@ public final class AdminPage implements HubPageView {
     private int raceAt;
     private int number = 100;
 
+    private static volatile String devSection;
+
+    /** Development only (the dev screenshots): the section the next frame shows, or "search:text" to type into the search box. */
+    public static void devSection(String section) {
+        devSection = section;
+    }
+
     /** What the page does with a snapshot that carries the outcome of an edit: saved, or refused with the server's words. */
     private void absorb(AdminSnapshotPayload snap) {
         seen = snap;
@@ -105,6 +112,20 @@ public final class AdminPage implements HubPageView {
             }
         }
         lastRender = now;
+        String dev = devSection;
+        if (dev != null) {
+            devSection = null;
+            while (!search.text().isEmpty()) {
+                search.backspace();
+            }
+            if (dev.startsWith("search_")) {
+                for (char ch : dev.substring(7).toCharArray()) {
+                    search.type(ch);
+                }
+            } else {
+                section = dev;
+            }
+        }
         AdminSnapshotPayload snap = AdminClient.snapshot();
         if (snap != null && snap != seen) {
             absorb(snap);
@@ -126,6 +147,7 @@ public final class AdminPage implements HubPageView {
             y = settings(f, r, y + 4, snap);
         }
         f.end(y);
+        PageWidgets.info(f, Component.translatable(KEY + "title"), Component.translatable(KEY + "debug_note"));
 
         Rect s = f.region(HubLayout.SIDE);
         int sy = f.begin(HubLayout.SIDE);
@@ -185,10 +207,15 @@ public final class AdminPage implements HubPageView {
         String id = "stage:admin:row:" + row.id();
         Component label = Component.translatableWithFallback(KEY + "key." + row.id(), AdminEdit.humanize(row.id()));
         Component idLine = Component.literal(row.id()).withStyle(ChatFormatting.GRAY);
-        y = PageKit.wrapped(f, label, r.x() + 2, y, r.w() - 2, t.ink());
+        boolean inline = row.kind() == SettingKind.BOOL;
+        int labelW = inline ? r.w() - 2 - 40 : r.w() - 2;
+        int labelTop = y;
+        y = PageKit.wrapped(f, label, r.x() + 2, y, labelW, t.ink());
         List<Component> badges = new ArrayList<>();
         AdminEdit.State state = AdminEdit.state(row.current(), row.def(), draftOf(row), refused.contains(row.id()), saved.contains(row.id()));
-        badges.add(Component.translatable(KEY + (row.restart() ? "restart" : "live")));
+        if (row.restart()) {
+            badges.add(Component.translatable(KEY + "restart"));
+        }
         if (state != AdminEdit.State.DEFAULT) {
             badges.add(Component.translatable(KEY + "state." + state.name().toLowerCase(Locale.ROOT)));
         }
@@ -201,7 +228,7 @@ public final class AdminPage implements HubPageView {
         switch (row.kind()) {
             case BOOL -> {
                 boolean on = Boolean.parseBoolean(AdminEdit.format(row.current()));
-                Rect b = new Rect(r.x() + 2, y, 36, PageWidgets.H);
+                Rect b = new Rect(r.right() - 36, labelTop, 36, PageWidgets.H);
                 PageWidgets.toggle(f, id, b, on, Component.translatable(KEY + "toggle_tip"), () -> {
                     if (row.restart()) {
                         f.confirm(Component.translatable(KEY + "restart_title"), Component.translatable(KEY + "restart_body", label),
@@ -210,7 +237,7 @@ public final class AdminPage implements HubPageView {
                         send(row.id(), new SettingValue.Bool(!on));
                     }
                 });
-                controlsY = b.bottom();
+                controlsY = Math.max(y, b.bottom());
             }
             case CHOICE -> {
                 List<Integer> widths = new ArrayList<>();
@@ -231,6 +258,10 @@ public final class AdminPage implements HubPageView {
             default -> controlsY = typed(f, r, y, row, id, label, tip);
         }
         y = controlsY + 1;
+        if (badges.isEmpty() && !refused.contains(row.id())) {
+            f.target(id + ":info", new Rect(r.x(), labelTop, r.w() - 40, Math.max(PageKit.LINE, y - labelTop)), tip, null);
+            return y;
+        }
         StringBuilder line = new StringBuilder();
         for (Component b : badges) {
             line.append(line.length() == 0 ? "" : " \u00b7 ").append(b.getString());

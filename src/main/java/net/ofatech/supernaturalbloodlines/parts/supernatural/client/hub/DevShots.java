@@ -32,9 +32,13 @@ public final class DevShots {
     private static final int WORLD_TICKS = 100;
 
     /** @param hud null for a hub page; otherwise "normal", "alt" or "idle": the ability HUD in game with demo slots, in the look of {@code theme} */
-    private record Shot(String theme, HubPage page, int scale, boolean menu, String hud) {
+    private record Shot(String theme, HubPage page, int scale, boolean menu, String hud, String variant) {
         Shot(String theme, HubPage page, int scale, boolean menu) {
-            this(theme, page, scale, menu, null);
+            this(theme, page, scale, menu, null, null);
+        }
+
+        Shot(String theme, HubPage page, int scale, boolean menu, String hud) {
+            this(theme, page, scale, menu, hud, null);
         }
     }
 
@@ -96,7 +100,12 @@ public final class DevShots {
             String theme = parts[0].toLowerCase(Locale.ROOT);
             HubClientConfig.ThemeId.valueOf(theme.toUpperCase(Locale.ROOT)); // a look that does not exist is a bad flag now, not a crash in the middle of the run
             List<HubPage> pages = new ArrayList<>();
-            if (parts.length < 2 || parts[1].equalsIgnoreCase("all")) {
+            String variant = null;
+            if (parts.length > 1 && (parts[1].toLowerCase(Locale.ROOT).startsWith("profile") || parts[1].toLowerCase(Locale.ROOT).startsWith("admin_"))) {
+                // a route or a section of a page: profile, profile_beta, profile_stranger, profile_op, admin_debug, admin_speciesTensura, admin_search_max ...
+                variant = parts[1].toLowerCase(Locale.ROOT).equals(parts[1]) ? parts[1] : parts[1];
+                pages.add(variant.startsWith("admin_") ? HubPage.ADMIN : HubPage.PACK);
+            } else if (parts.length < 2 || parts[1].equalsIgnoreCase("all")) {
                 pages.addAll(List.of(HubPage.values()));
             } else if (parts[1].equalsIgnoreCase("menu")) {
                 pages.add(HubPage.PATH); // the look menu open over the Path
@@ -106,7 +115,7 @@ public final class DevShots {
             }
             for (int scale : scales) {
                 for (HubPage p : pages) {
-                    shots.add(new Shot(theme, p, scale, menuShots));
+                    shots.add(new Shot(theme, p, scale, menuShots, null, variant));
                 }
             }
         }
@@ -187,6 +196,9 @@ public final class DevShots {
             if (s.menu() && mc.screen instanceof HubScreen hs) {
                 hs.devOpenMenu();
             }
+            if (s.variant() != null && mc.screen instanceof HubScreen hs) {
+                hs.devVariant(s.variant());
+            }
             wait = 1;
             return;
         }
@@ -198,7 +210,7 @@ public final class DevShots {
         File dir = new File(mc.gameDirectory, "screenshots/devshots");
         dir.mkdirs();
         String tag = demo() == null || demo().equals("true") ? "" : "-" + demo();
-        String name = "devshots/" + (s.hud() != null ? "hud-" : "") + s.theme() + "-" + (s.hud() != null ? s.hud() : s.menu() ? "menu" : s.page().name().toLowerCase(Locale.ROOT)) + tag + "-s" + mc.options.guiScale().get() + ".png";
+        String name = "devshots/" + (s.hud() != null ? "hud-" : "") + s.theme() + "-" + (s.hud() != null ? s.hud() : s.menu() ? "menu" : s.variant() != null ? s.variant() : s.page().name().toLowerCase(Locale.ROOT)) + tag + "-s" + mc.options.guiScale().get() + ".png";
         Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), c -> { });
         SupernaturalBloodlines.LOGGER.warn("DEVSHOTS {}", name);
         index++;

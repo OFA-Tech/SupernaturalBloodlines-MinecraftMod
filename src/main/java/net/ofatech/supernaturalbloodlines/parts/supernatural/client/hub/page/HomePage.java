@@ -10,6 +10,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
@@ -50,9 +51,10 @@ public final class HomePage implements HubPageView {
         int y = f.begin(HubLayout.MAIN);
         y = PageKit.title(f, Component.translatable(KEY + "title"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
-        y = you(f, r, y + 6);
         y = waiting(f, r, y + 6);
+        y = you(f, r, y + 6);
         f.end(y);
+        PageWidgets.info(f, Component.translatable(KEY + "title"), Component.translatable(KEY + "info"));
 
         Rect s = f.region(HubLayout.SIDE);
         int sy = f.begin(HubLayout.SIDE);
@@ -108,7 +110,7 @@ public final class HomePage implements HubPageView {
         String id = "stage:request:" + q.kind() + ":" + q.token() + q.from();
         Component what = Component.translatable("supernaturalbloodlines.hub.request.kind." + q.kind().name().toLowerCase(Locale.ROOT));
         int left = (RequestsClient.ticksLeft(q) + 19) / 20;
-        f.g.fill(r.x(), y, r.x() + 2, y + 2 * PageKit.LINE + PageWidgets.H + 4, t.accent());
+        int top = y;
         if (!q.fromName().isEmpty() && !q.from().equals(HubRequests.NOBODY)) {
             Component who = Component.literal(q.fromName());
             Rect nameRect = new Rect(r.x() + 5, y, Math.min(r.w() - 5, f.font().width(who) + 2), PageKit.LINE);
@@ -139,6 +141,7 @@ public final class HomePage implements HubPageView {
                 PageWidgets.button(f, id + ":dismiss", b, labels.get(i), true, false, null, () -> RequestsClient.dismiss(q));
             }
         }
+        f.g.fill(r.x(), top, r.x() + 2, flow.bottom(), t.accent());
         return flow.bottom() + 3;
     }
 
@@ -151,7 +154,7 @@ public final class HomePage implements HubPageView {
             y = PageKit.wrapped(f, Component.translatable(KEY + "no_pack"), s.x(), y, s.w(), t.muted());
         }
         for (HubSocial.Member m : pack) {
-            y = person(f, s, y, m.name(), m.id().orElse(null), Component.translatable(PageKit.HUB + "pack.member." + m.base()), m.online());
+            y = person(f, s, y, m.name(), m.id().orElse(null), Component.translatableWithFallback(PageKit.HUB + "pack.member." + m.base(), HubModel.pretty(m.base())), m.online());
         }
         if (snap.sire().filter(n -> !n.isEmpty()).isPresent()) {
             String n = snap.sire().get();

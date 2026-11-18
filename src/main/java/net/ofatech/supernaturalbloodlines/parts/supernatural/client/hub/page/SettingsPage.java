@@ -73,6 +73,7 @@ public final class SettingsPage implements HubPageView {
         });
         f.end(b.bottom() + 2);
 
+        PageWidgets.info(f, Component.translatable(KEY + "title"), Component.translatable(KEY + "about_text"));
         Rect s = f.region(HubLayout.SIDE);
         int sy = f.begin(HubLayout.SIDE);
         sy = PageKit.title(f, Component.translatable(KEY + "about"), s.x(), sy, s.w(), t.accent());
@@ -96,16 +97,17 @@ public final class SettingsPage implements HubPageView {
         HubTheme t = f.theme();
         ModConfigSpec.ConfigValue cv = AdminSpecs.value(e).orElseThrow();
         Component label = label(e);
-        y = PageKit.wrapped(f, label, r.x() + 4, y + 1, r.w() - 4, t.ink());
+        int top = y + 1;
+        y = PageKit.wrapped(f, label, r.x() + 4, top, e.kind() == SettingKind.BOOL ? r.w() - 44 : r.w() - 4, t.ink());
         String id = "stage:settings:" + e.dottedPath();
         if (e.kind() == SettingKind.BOOL) {
-            Rect b = new Rect(r.x() + 4, y, 36, PageWidgets.H);
+            Rect b = new Rect(r.right() - 36, top - 1, 36, PageWidgets.H);
             boolean on = (Boolean) cv.get();
             PageWidgets.toggle(f, id, b, on, label, () -> {
                 cv.set(!on);
                 cv.save();
             });
-            return b.bottom() + 2;
+            return Math.max(y, b.bottom()) + 2;
         }
         Object current = cv.get();
         Object[] options = current instanceof Enum<?> en ? en.getDeclaringClass().getEnumConstants() : new Object[0];

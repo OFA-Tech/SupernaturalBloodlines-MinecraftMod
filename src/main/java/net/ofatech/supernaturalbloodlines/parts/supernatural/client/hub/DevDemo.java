@@ -19,11 +19,56 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
  * changes nothing on the server and is reached only from {@link DevShots}.
  */
 final class DevDemo {
+    private static boolean installed;
+
     private DevDemo() {
+    }
+
+    /** A made-up person's id: the same name is the same id in every frame. */
+    static java.util.UUID id(String name) {
+        return java.util.UUID.nameUUIDFromBytes(("devdemo:" + name).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    private static java.util.Map<net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact, List<String>> facts(String... kv) {
+        java.util.Map<net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact, List<String>> out = new java.util.EnumMap<>(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.class);
+        for (int i = 0; i + 1 < kv.length; i += 2) {
+            out.put(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.valueOf(kv[i]), kv[i + 1].isEmpty() ? List.of() : List.of(kv[i + 1].split("\\|")));
+        }
+        return out;
+    }
+
+    /** The profiles, requests and admin data of the demo, set once (a client view only). */
+    private static void install(HubView v) {
+        if (installed) {
+            return;
+        }
+        installed = true;
+        String me = v.player().getName().getString();
+        var map = new java.util.HashMap<java.util.UUID, net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload>();
+        map.put(id("Derek"), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(id("Derek"), false, facts("NAME", "Derek", "SPECIES", "werewolf",
+                "RANK", "coalpha", "LEVEL", "9", "PACK", me, "PACK_DAYS", "12", "SIRE", "", "LINE", "", "GENES", "werewolf", "ANCHOR", me, "PRESENCE", "online", "BONUS", "+20% attack, +4 max health")));
+        map.put(id("Liam"), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(id("Liam"), false, facts("NAME", "Liam", "SPECIES", "werewolf",
+                "RANK", "beta", "LEVEL", "4", "PACK", me, "PACK_DAYS", "3", "SIRE", "", "LINE", "", "ANCHOR", "Derek", "PRESENCE", "online", "BONUS", "")));
+        map.put(id("Stranger"), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(id("Stranger"), false, java.util.Map.of()));
+        map.put(id("Klaus"), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(id("Klaus"), false, facts("NAME", "Klaus", "SPECIES", "vampire", "LEVEL", "14", "PRESENCE", "online")));
+        map.put(id("Tyler"), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(id("Tyler"), false, facts("NAME", "Tyler", "SPECIES", "hybrid", "LEVEL", "7", "SIRE", me)));
+        map.put(v.player().getUUID(), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(v.player().getUUID(), false, facts("NAME", me, "SPECIES", "original_hybrid",
+                "RANK", "alpha", "LEVEL", "12", "PACK", me, "PACK_DAYS", "40", "SIRE", "Klaus", "LINE", "", "GENES", "werewolf", "ANCHOR", "", "PRESENCE", "online", "BONUS", "+25% attack")));
+        // the OP view: every field, whatever the OP knows or not
+        map.put(id("Derek|op"), new net.ofatech.supernaturalbloodlines.parts.supernatural.net.ProfilePayload(id("Derek|op"), true, facts("NAME", "Derek", "SPECIES", "werewolf", "RANK", "coalpha",
+                "LEVEL", "9", "PACK", me, "PACK_DAYS", "12", "SIRE", "", "LINE", "Mikael", "GENES", "werewolf|doppelganger", "ANCHOR", me, "PRESENCE", "online", "BONUS", "+20% attack")));
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.ProfileClient.demo(map);
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient.demo(List.of(
+                new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.SIRE_CALL, id("Klaus"), "Klaus", "ab12cd34", 5000),
+                new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.PACK_INVITE, id("Derek"), "Derek", "0f0f0f0f", 4000),
+                new net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Request(net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.Kind.COMPULSION, net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests.NOBODY, "", "11223344", 3000)));
+        net.ofatech.supernaturalbloodlines.parts.supernatural.client.AdminClient.demo(net.ofatech.supernaturalbloodlines.parts.supernatural.net.AdminNet.snapshot(Optional.empty()),
+                new net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubCommandReplyPayload("D1", true, List.of(net.minecraft.network.chat.Component.literal(me + ": BloodlineState[species=VAMPIRE, sire=Klaus]"))));
     }
 
     static HubView apply(HubView v) {
         String mode = DevShots.demo();
+        install(v);
         if ("ghoul".equals(mode)) {
             return ghoul(v);
         }
@@ -41,7 +86,7 @@ final class DevDemo {
     private static HubView ghoul(HubView v) {
         List<SupernaturalRace> races = List.of(SupernaturalRace.GHOUL);
         HubPage.Context c = v.context();
-        HubPage.Context ghoul = new HubPage.Context(SupernaturalRace.GHOUL, Optional.empty(), c.werewolves(), c.enchanted(), c.loadout());
+        HubPage.Context ghoul = new HubPage.Context(SupernaturalRace.GHOUL, Optional.empty(), c.werewolves(), c.enchanted(), c.loadout(), false, false);
         return new HubView(v.player(), v.bloodline().toBuilder().ghoul(true).turningTicksLeft(17_200).build(), v.state(), races,
                 HubModel.ladders(LadderTable.clientCopy(), v.state(), races, Map.of()), v.skills(), v.snapshot(), ghoul);
     }
@@ -60,9 +105,10 @@ final class DevDemo {
                 .sp(6).spEarned(11).build();
         // the player leads the demo pack (the first of the list), so the kick and ally actions can be photographed
         String me = v.player().getName().getString();
-        List<HubSocial.Member> pack = List.of(new HubSocial.Member(me, "alpha", true), new HubSocial.Member("Derek", "coalpha", true), new HubSocial.Member("Liam", "beta", true),
-                new HubSocial.Member("Malia", "beta", false), new HubSocial.Member("Isaac", "beta", true), new HubSocial.Member("Deaton", "emissary", true),
-                new HubSocial.Member("Stiles", "packmate", true), new HubSocial.Member("Lydia", "packmate", false), new HubSocial.Member("Scott", "ally", true),
+        List<HubSocial.Member> pack = List.of(new HubSocial.Member(me, "alpha", true, Optional.of(v.player().getUUID())), new HubSocial.Member("Derek", "coalpha", true, Optional.of(id("Derek"))),
+                new HubSocial.Member("Liam", "beta", true, Optional.of(id("Liam"))),
+                new HubSocial.Member("Malia", "beta", false, Optional.of(id("Malia"))), new HubSocial.Member("Isaac", "beta", true, Optional.of(id("Isaac"))), new HubSocial.Member("Deaton", "emissary", true, Optional.of(id("Deaton"))),
+                new HubSocial.Member("Stiles", "packmate", true, Optional.of(id("Stiles"))), new HubSocial.Member("Lydia", "packmate", false, Optional.of(id("Lydia"))), new HubSocial.Member("Scott", "ally", true, Optional.of(id("Scott"))),
                 // brothers and NPCs are plan 15's ranks, not sent yet: shown here so the ring's colours can be seen
                 new HubSocial.Member("Ashen", "brother", true), new HubSocial.Member("Slime", "npc", true), new HubSocial.Member("Goblin", "npc", true));
         HubSnapshotPayload.Family family = new HubSnapshotPayload.Family(Optional.of("Klaus"), false, List.of("Tyler", "Ana", "Bo", "Cy", "Di"),
@@ -70,9 +116,11 @@ final class DevDemo {
                         new HubSocial.Kin("Di", 0)), HubSocial.Origin.NONE);
         List<HubSocial.Rite> rites = new ArrayList<>();
         rites.addAll(v.snapshot().rites());
+        List<HubSocial.Person> people = new ArrayList<>(List.of(new HubSocial.Person("Klaus", id("Klaus"))));
+        family.sired().forEach(n -> people.add(new HubSocial.Person(n, id(n))));
         HubSnapshotPayload snap = new HubSnapshotPayload(family, pack, 2, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),
-                rites);
+                rites, people);
         return new HubView(v.player(), v.bloodline(), s, v.races(), HubModel.ladders(LadderTable.clientCopy(), s, v.races(), HubView.levels(v.player())), v.skills(), snap,
-                v.context());
+                v.context().withOp(true).withPack(true));
     }
 }

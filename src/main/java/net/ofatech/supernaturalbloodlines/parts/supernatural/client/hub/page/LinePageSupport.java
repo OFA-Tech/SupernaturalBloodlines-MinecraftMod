@@ -124,6 +124,10 @@ public final class LinePageSupport {
         b.field(Component.translatable(KEY + "field.line"), lineText(m, o));
         b.body(note(m, o));
         boolean mayCall = mayCall(f);
+        boolean noSireAtAll = m.state() == LineRules.State.ORIGINAL;
+        if (noSireAtAll) {
+            return b.build(); // an Original has no sire to call, sever from or break from: the page says so in words instead of offering buttons
+        }
         b.action(new Detail.Action("call", Component.translatable(KEY + "act.call"), true, mayCall,
                 mayCall ? null : Component.translatable(KEY + "act.why_cannot_call"), null, () -> command("bloodline call")));
         boolean original = m.state() == LineRules.State.ORIGINAL || m.state() == LineRules.State.NOT_VAMPIRE;
@@ -167,15 +171,16 @@ public final class LinePageSupport {
 
     /** A small open padlock: the body, and a shackle that does not close. */
     public static void openLock(GuiGraphics g, int x, int y, int color) {
-        g.fill(x, y + 4, x + 7, y + 9, color);
-        g.fill(x + 1, y, x + 3, y + 4, color);
-        g.fill(x + 3, y, x + 6, y + 1, color);
-        g.fill(x + 5, y + 1, x + 6, y + 2, color);
+        g.fill(x, y + 4, x + 7, y + 9, color); // the body
+        g.fill(x + 2, y + 5, x + 3, y + 7, 0x55000000); // the keyhole, a darker notch
+        g.fill(x + 1, y + 1, x + 2, y + 4, color); // the shackle: the left post, the arch and a short right post that stops short (open)
+        g.fill(x + 2, y, x + 5, y + 1, color);
+        g.fill(x + 5, y + 1, x + 6, y + 3, color);
     }
 
     /** The padlock badge on the player's portrait: a disc with the open lock. */
     public static void padlock(HubScreen.Frame f, Rect portrait, int disc, int lock) {
-        int size = Math.max(10, portrait.w() * 2 / 3);
+        int size = Math.max(13, portrait.w() * 3 / 4);
         int x = portrait.right() - size * 2 / 3;
         int y = portrait.y() - size / 3;
         KitDraw.shape(f.g, Shapes.Shape.ROUND, x, y, size, disc);

@@ -187,7 +187,7 @@ public final class HubClient {
     /** Asks for a person's profile; the OP view only goes out from Admin and the server answers it only to permission level 2. */
     static void requestProfile(java.util.UUID id, boolean op) {
         var connection = Minecraft.getInstance().getConnection();
-        if (connection == null) {
+        if (connection == null || DevShots.demo() != null) { // the dev screenshots show made-up people: nothing is asked of the server
             return;
         }
         if (op && connection.hasChannel(net.ofatech.supernaturalbloodlines.parts.supernatural.net.AdminProfileRequestPayload.TYPE)) {

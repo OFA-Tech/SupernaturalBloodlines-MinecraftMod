@@ -13,15 +13,24 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubCommandReply
 public final class AdminClient {
     private static volatile AdminSnapshotPayload snapshot;
     private static volatile HubCommandReplyPayload reply;
+    private static volatile boolean demo;
 
     private AdminClient() {}
 
     public static void snapshot(AdminSnapshotPayload payload, IPayloadContext ctx) {
-        ctx.enqueueWork(() -> snapshot = payload);
+        ctx.enqueueWork(() -> {
+            if (!demo) {
+                snapshot = payload;
+            }
+        });
     }
 
     public static void reply(HubCommandReplyPayload payload, IPayloadContext ctx) {
-        ctx.enqueueWork(() -> reply = payload);
+        ctx.enqueueWork(() -> {
+            if (!demo) {
+                reply = payload;
+            }
+        });
     }
 
     /** The newest snapshot, or null before the server answered. */
@@ -37,6 +46,13 @@ public final class AdminClient {
     public static List<Component> replyLines() {
         HubCommandReplyPayload r = reply;
         return r == null ? List.of() : r.lines();
+    }
+
+    /** Development only (the dev screenshots): a snapshot and a reply that no server sent. */
+    public static void demo(AdminSnapshotPayload snap, HubCommandReplyPayload last) {
+        demo = true;
+        snapshot = snap;
+        reply = last;
     }
 
     public static void clear() {

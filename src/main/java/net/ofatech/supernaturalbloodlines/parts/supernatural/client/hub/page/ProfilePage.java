@@ -66,6 +66,10 @@ public final class ProfilePage implements HubPageView {
         HubTheme t = f.theme();
         ProfilePayload payload = route == null ? null : ProfileClient.of(route.id());
         Rect r = f.region(HubLayout.MAIN);
+        Rect bar = f.layout().chrome().detail();
+        if (bar != null && bar.h() < 60 && bar.y() > r.y()) {
+            f.reserve(HubLayout.MAIN, Math.max(0, r.bottom() - bar.y() + 4)); // the Blood Moon's floating bar sits over the foot of the page
+        }
         int y = f.begin(HubLayout.MAIN);
         if (route == null) {
             f.end(y);
@@ -103,8 +107,15 @@ public final class ProfilePage implements HubPageView {
         y = PageWidgets.reply(f, r, y + 2);
         f.end(y);
 
-        Rect s = f.region(HubLayout.SIDE);
         f.detail(detail(f, route));
+        if (f.layout().chrome().detail() != null) {
+            // the actions went to the theme's own pane or bar: this page says what a ? means
+            Rect s = f.region(HubLayout.SIDE);
+            int sy = f.begin(HubLayout.SIDE);
+            sy = PageKit.wrapped(f, Component.translatable(KEY + "legend_title").withStyle(ChatFormatting.BOLD), s.x(), sy, s.w(), t.accent());
+            sy = PageKit.wrapped(f, Component.translatable(KEY + "legend"), s.x(), sy, s.w(), t.ink());
+            f.end(sy);
+        }
     }
 
     private int fact(HubScreen.Frame f, Rect r, int y, Fact fact, ProfilePayload payload) {
