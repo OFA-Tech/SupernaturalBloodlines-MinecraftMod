@@ -21,11 +21,11 @@
       new Cube({ name, from, to, origin: pivot, uv_offset: uv, inflate, box_uv: true }).addTo(g).init();
     }
   }
-  if (cfg.cane) {
-    // held in front of the right hand; box UV nets sit in free skin space (56,16) and (56,32)
-    const g = new Group({ name: 'cane_prop', origin: [6, 12, -3] }).init();
-    new Cube({ name: 'cane_shaft', from: [5.5, 0, -3.5], to: [6.5, 13, -2.5], origin: [6, 12, -3], uv_offset: [56, 16], box_uv: true }).addTo(g).init();
-    new Cube({ name: 'cane_knob', from: [5, 13, -4], to: [7, 15, -2], origin: [6, 12, -3], uv_offset: [56, 32], box_uv: true }).addTo(g).init();
+  if (cfg.stake) {
+    // white oak stake held upright in the right fist; box UV nets in free skin space (56,16) 8x12 and (56,30) 4x4
+    const g = new Group({ name: 'stake_prop', origin: [6, 12, -3] }).init();
+    new Cube({ name: 'stake_shaft', from: [5, 12, -4], to: [7, 22, -2], origin: [6, 12, -3], uv_offset: [56, 16], box_uv: true }).addTo(g).init();
+    new Cube({ name: 'stake_tip', from: [5.5, 22, -3.5], to: [6.5, 25, -2.5], origin: [6, 12, -3], uv_offset: [56, 30], box_uv: true }).addTo(g).init();
   }
   const tex = new Texture({ name: cfg.name + '.png' }).fromPath(cfg.texPath).add(false);
   Cube.all.forEach(c => c.applyTexture(tex, true));

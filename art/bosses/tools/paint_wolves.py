@@ -40,16 +40,18 @@ class Tex:
 
     def base(self):
         c = self.cfg
+        cut = c.get('cut', FLUFF)
+        amp = c.get('noise', 0.95)
         for x, y, p, f, lx, ly, fw, fh in self.faces():
             n = hsh(x, y // 2, self.seed) * 0.55 + hsh(x, y, self.seed + 7) * 0.45
-            t = 0.5 + (n - 0.5) * 0.95
-            t += (SHADE[f] - 1.0) * 1.1
+            t = 0.5 + (n - 0.5) * amp
+            t += (SHADE[f] - 1.0) * c.get('shade', 1.1)
             t += c.get('bias', {}).get(p, 0.0)
             if p.startswith(('leg', 'foot', 'arm', 'finger', 'thumb')):
                 t -= 0.12 * (ly / max(1, fh))
-            col = ramp(c['fur'], t)
+            col = ramp(c.get('part_fur', {}).get(p, c['fur']), t)
             a = 255
-            if p in FLUFF and f not in ('up', 'down') and fh > 1:
+            if p in cut and f not in ('up', 'down') and fh > 1:
                 tt = ly / (fh - 1)
                 if tt > 0.45 and hsh(x, y, self.seed + 3) < (tt - 0.35) * 1.3:
                     a = 0
@@ -79,17 +81,22 @@ class Tex:
                 self.local(part, face, lx + i, ly + j, col, a)
 
     # ---- details ----
-    def eyes(self, core, halo):
-        for lx in (1, 5):
-            self.local('head', 'north', lx, 2, core)
-            self.local('head', 'north', lx, 3, halo)
-            self.local('head', 'north', lx - 1 if lx == 5 else lx + 1, 2, halo)
-        for lx in (0, 2, 4, 6):  # brow shadow
-            pass
+    def eyes(self, core, halo, socket=None):
+        o = self.face_origin('head', 'north')
         for lx in range(7):
-            c = self.get(*(lambda o: (o[0] + lx, o[1] + 1))(self.face_origin('head', 'north')))
-            if c and lx not in (1, 5):
-                self.local('head', 'north', lx, 1, tuple(int(v * 0.55) for v in c[:3]))
+            c = self.get(o[0] + lx, o[1] + 1)
+            if c:
+                self.local('head', 'north', lx, 1, tuple(int(v * 0.5) for v in c[:3]))
+        for lx0 in (1, 4):
+            for dx in (0, 1):
+                if socket:
+                    self.local('head', 'north', lx0 + dx, 1, socket)
+                self.local('head', 'north', lx0 + dx, 2, core)
+                self.local('head', 'north', lx0 + dx, 3, halo)
+            self.local('head', 'north', lx0 - 1 if lx0 == 1 else lx0 + 2, 2, halo)
+        for part in ('head',):
+            for face in ('east', 'west'):
+                self.local(part, face, 0 if face == 'west' else 5, 2, halo)
 
     def teeth(self, bone, shadow):
         for part in ('snoutTeeth', 'jawTeeth'):
@@ -224,12 +231,41 @@ class Tex:
                     self.rect(part, 'up', max(0, o[2] // 2 - 1), ly, 2 if o[2] > 3 else 1, 1, bone)
         for part in ('neck', 'body', 'hip'):
             o = self.face_origin(part, 'north') or self.face_origin(part, 'south')
+        # cheek guards: the flat sideburn planes become bone plates
+        for part in ('headSidburnLeft', 'headSidburnRight'):
+            for x, y, pt, f, lx, ly, fw, fh in self.faces({part}):
+                self.put(x, y, edge if (lx == fw - 1 or ly == fh - 1 or lx == 0) else bone)
         # bone crack lines
         rng = random.Random(self.seed + 99)
         for x, y, p, f, lx, ly, fw, fh in self.faces({'head', 'snout', 'jaw'}):
             c = self.get(x, y)
             if c and tuple(c[:3]) == tuple(bone) and rng.random() < 0.12:
                 self.put(x, y, crack)
+
+    def wrinkles(self, col, parts, step=2, p=0.8, seed=21):
+        """Horizontal creases (wrinkled snout, brow)."""
+        for x, y, pt, f, lx, ly, fw, fh in self.faces(parts, {'north', 'east', 'west', 'up'}):
+            if ly % step == 1 and hsh(lx, ly, self.seed + seed) < p and self.get(x, y)[3] > 0:
+                self.put(x, y, mix(tuple(self.get(x, y)[:3]), col, 0.7))
+
+    def brow(self, ridge, shadow):
+        o = self.face_origin('head', 'north')
+        for lx in range(7):
+            self.local('head', 'north', lx, 0, ridge)
+            if lx not in (0, 3, 6):
+                self.local('head', 'north', lx, 1, shadow)
+        for face in ('east', 'west'):
+            self.rect('head', face, 0, 0, 6, 1, ridge)
+
+    def strands(self, parts, cols, density=0.5, seed=31):
+        """Hair strand texture: vertical streaks in the given ramp (swept-back hair, mane)."""
+        for x, y, p, f, lx, ly, fw, fh in self.faces(parts):
+            c = self.get(x, y)
+            if not c or c[3] == 0:
+                continue
+            n = hsh(x, 0, self.seed + seed) * 0.6 + hsh(x, y // 3, self.seed + seed + 1) * 0.4
+            t = (n - 0.5) * density * 2 + 0.5 + (SHADE[f] - 1.0)
+            self.put(x, y, ramp(cols, t), c[3])
 
     def write(self, path):
         im = Image.new('RGBA', (W, H), (0, 0, 0, 0))
@@ -249,84 +285,106 @@ def make(cfg, path):
     t.ears(cfg['ear'])
     t.claws(cfg['claw'], cfg['pad'])
     cfg.get('late', lambda t: None)(t)
-    t.eyes(cfg['eye'], cfg['eye_halo'])
+    t.eyes(cfg['eye'], cfg['eye_halo'], cfg.get('socket'))
     return t.write(path)
 
 
 # ---------------------------------------------------------------- variants
+MANE = ['neck', 'neckFluff', 'neckFluffLeft', 'neckFluffRight', 'neckFluffBottom', 'headFluff', 'headSidburnLeft', 'headSidburnRight']
+DEMON_HAIR = {'headFluff', 'neckFluff', 'neckFluffLeft', 'neckFluffRight', 'neckFluffBottom', 'headSidburnLeft', 'headSidburnRight'}
+HAIR_RAMP = [(7, 7, 13), (16, 16, 26), (28, 28, 42), (44, 44, 60)]
+
+
 def demon_detail(t):
-    # charred, split skin: bare scorched patches and dull ember cracks
-    t.patches((52, 40, 38), None, 26, 3, 1)
-    t.patches((86, 38, 30), {'body', 'neck', 'armRight', 'armLeft', 'legRight', 'legLeft', 'head'}, 14, 2, 2)
-    t.veins((170, 52, 22), None, 70, 9, 3, glow=(95, 24, 14))
-    t.veins((236, 96, 30), {'body', 'armRight', 'armLeft', 'head', 'legRight', 'legLeft'}, 22, 5, 4)
-    t.patches((140, 135, 128), {'head', 'neck', 'body'}, 8, 1, 5)  # ash dust
+    # skin, not fur: smooth blue-grey with muscle definition, creases and a heavy brow ridge
+    t.patches((34, 42, 58), {'body', 'hip', 'armRight', 'armLeft', 'armRight2', 'armLeft2', 'legRight', 'legLeft', 'legRight2', 'legLeft2'}, 34, 2, 1)
+    t.patches((110, 124, 146), {'body', 'neck', 'armRight', 'armLeft', 'legRight', 'legLeft'}, 16, 1, 2, face={'up', 'north'})
+    t.veins((40, 50, 72), {'body', 'neck', 'armRight', 'armLeft', 'armRight2', 'armLeft2', 'legRight', 'legLeft', 'head'}, 36, 8, 3)
+    t.wrinkles((26, 30, 44), {'snout', 'nose', 'head', 'neck'}, step=2, p=0.85)
+    t.wrinkles((30, 34, 50), {'jaw', 'armRight', 'armLeft', 'body'}, step=3, p=0.5, seed=7)
+    t.strands(DEMON_HAIR, HAIR_RAMP, density=0.55)
+
+
+def demon_late(t):
+    t.brow((118, 132, 156), (22, 26, 40))
+    t.patches((84, 40, 52), {'earLeft', 'earRight', 'earLeft2', 'earRight2'}, 4, 1, 9)
 
 
 DEMON = dict(
-    seed=11,
-    fur=[(10, 8, 8), (20, 15, 14), (33, 25, 23), (49, 38, 34), (70, 55, 48)],
-    bias={'bodyFluff': 0.05, 'jawFluff': 0.0},
-    eye=(255, 40, 28), eye_halo=(150, 14, 12), nose=(30, 14, 14), mouth=(95, 16, 16), tongue=(120, 24, 24),
-    teeth=(196, 186, 160), teeth_shadow=(86, 70, 58), ear=(80, 36, 32), claw=(64, 58, 54), pad=(34, 16, 14),
-    detail=demon_detail)
+    seed=11, noise=0.5, shade=1.5, cut=DEMON_HAIR,
+    fur=[(38, 46, 62), (56, 68, 88), (76, 90, 112), (98, 112, 134), (122, 136, 156)],
+    part_fur={p: HAIR_RAMP for p in DEMON_HAIR},
+    bias={'bodyFluff': 0.06, 'jawFluff': 0.04, 'snout': 0.03},
+    eye=(255, 40, 32), eye_halo=(176, 18, 22), socket=(10, 12, 20), nose=(34, 28, 44), mouth=(96, 14, 22), tongue=(120, 24, 34),
+    teeth=(232, 228, 212), teeth_shadow=(110, 100, 96), ear=(92, 42, 58), claw=(22, 24, 34), pad=(26, 30, 44),
+    detail=demon_detail, late=demon_late)
 
 
 def peter_detail(t):
-    t.patches((150, 88, 80), {'body', 'armLeft', 'armRight', 'neck', 'head', 'hip', 'legLeft'}, 18, 3, 1)   # burn scarring
-    t.patches((196, 128, 116), {'head', 'armLeft', 'neck', 'body'}, 10, 2, 2)
-    t.veins((24, 14, 14), None, 40, 7, 3)
-    # matted pale muzzle and chest
-    t.patches((120, 112, 100), {'snout', 'jaw', 'bodyFluff', 'neckFluffBottom', 'jawFluff'}, 12, 2, 4)
-    # claw-mark slashes
-    t.veins((166, 70, 60), {'head', 'body', 'neck'}, 10, 6, 5)
+    t.patches((14, 18, 26), None, 20, 3, 1)
+    t.patches((86, 96, 116), {'snout', 'jaw', 'head', 'armRight2', 'armLeft2', 'legRight2', 'legLeft2'}, 8, 1, 2, face={'up', 'north'})
+    t.veins((6, 8, 12), None, 24, 7, 3)
+    t.wrinkles((12, 14, 22), {'snout', 'nose'}, step=2, p=0.9)  # snarl
+    # shaggy black mane over the neck, shoulders and back
+    t.strands(MANE, [(3, 3, 5), (9, 9, 13), (17, 17, 24), (30, 30, 42)], density=0.8)
+
+
+def peter_late(t):
+    mane = [(3, 3, 5), (9, 9, 13), (17, 17, 24), (30, 30, 42)]
+    for x, y, p, f, lx, ly, fw, fh in t.faces({'body', 'hip', 'tail', 'tail2', 'tail3'}, {'up'}):
+        c = t.get(x, y)
+        if c and c[3]:
+            t.put(x, y, ramp(mane, hsh(x, 0, 71) * 0.6 + hsh(x, y // 3, 72) * 0.4 + 0.1))
+    for x, y, p, f, lx, ly, fw, fh in t.faces({'body'}, {'east', 'west', 'north', 'south'}):
+        c = t.get(x, y)
+        if c and c[3] and ly < 4:
+            t.put(x, y, ramp(mane, hsh(x, 0, 73) * 0.6 + 0.1))
 
 
 PETER = dict(
-    seed=23,
-    fur=[(44, 40, 38), (70, 63, 58), (98, 90, 82), (128, 118, 106), (160, 148, 134)],
-    bias={'bodyFluff': 0.14, 'jawFluff': 0.1, 'snout': 0.06, 'jaw': 0.06},
-    eye=(235, 28, 24), eye_halo=(130, 16, 14), nose=(18, 12, 12), mouth=(110, 22, 22), tongue=(150, 40, 44),
-    teeth=(222, 214, 190), teeth_shadow=(104, 88, 72), ear=(120, 70, 64), claw=(92, 84, 76), pad=(46, 28, 26),
-    detail=peter_detail)
+    seed=23, noise=1.0, shade=1.15,
+    fur=[(26, 32, 46), (40, 50, 68), (58, 70, 92), (80, 94, 118), (104, 120, 146)],
+    part_fur={p: [(3, 3, 5), (9, 9, 13), (17, 17, 24), (30, 30, 42)] for p in MANE},
+    bias={'snout': 0.08, 'jaw': 0.06, 'bodyFluff': 0.0},
+    eye=(255, 36, 30), eye_halo=(160, 14, 16), socket=(6, 6, 10), nose=(6, 6, 8), mouth=(92, 12, 18), tongue=(130, 24, 30),
+    teeth=(244, 242, 234), teeth_shadow=(122, 116, 110), ear=(40, 30, 40), claw=(238, 236, 226), pad=(20, 20, 28),
+    detail=peter_detail, late=peter_late)
 
 
 def klaus_detail(t):
-    # darker saddle along the back and legs: lighter belly already via bias
-    t.patches((78, 54, 36), {'body', 'neck', 'hip', 'tail', 'tail2', 'tail3', 'head'}, 14, 3, 1, face={'up', 'east', 'west'})
-    t.patches((206, 176, 130), {'bodyFluff', 'neckFluffBottom', 'jawFluff', 'snout', 'jaw'}, 10, 2, 2)
-    # black hybrid veins, longest from the eyes and across the chest and limbs
-    t.veins((10, 8, 8), None, 90, 11, 3)
-    t.veins((10, 8, 8), {'head'}, 22, 6, 6)
-    t.veins((10, 8, 8), {'armRight', 'armLeft', 'armRight2', 'armLeft2', 'legRight', 'legLeft'}, 24, 8, 7)
+    t.patches((76, 52, 34), {'body', 'neck', 'hip', 'tail', 'tail2', 'tail3', 'head', 'armRight', 'armLeft', 'legRight', 'legLeft'}, 12, 3, 1, face={'up'})
+    t.patches((214, 184, 138), {'bodyFluff', 'neckFluffBottom', 'jawFluff', 'snout', 'jaw'}, 8, 2, 2)
+    # black hybrid veins radiating from the eyes, plus a few on the limbs
+    t.veins((8, 6, 6), {'head', 'snout'}, 26, 7, 3)
+    t.veins((8, 6, 6), {'neck', 'body', 'armRight', 'armLeft', 'armRight2', 'armLeft2', 'legRight', 'legLeft'}, 20, 8, 7)
 
 
 KLAUS = dict(
-    seed=37,
-    fur=[(76, 52, 34), (104, 74, 48), (132, 98, 64), (160, 124, 82), (188, 152, 108)],
+    seed=37, noise=0.7,
+    fur=[(92, 64, 42), (120, 86, 56), (148, 110, 72), (176, 138, 92), (204, 168, 118)],
     bias={'bodyFluff': 0.2, 'jawFluff': 0.16, 'snout': 0.08, 'jaw': 0.1, 'neckFluffBottom': 0.18},
-    eye=(255, 224, 40), eye_halo=(190, 150, 20), nose=(24, 14, 12), mouth=(130, 36, 38), tongue=(170, 62, 66),
-    teeth=(236, 228, 204), teeth_shadow=(120, 100, 80), ear=(150, 96, 84), claw=(60, 50, 44), pad=(52, 36, 28),
+    eye=(255, 222, 40), eye_halo=(214, 160, 20), socket=(14, 8, 6), nose=(22, 12, 10), mouth=(130, 36, 38), tongue=(170, 62, 66),
+    teeth=(244, 238, 216), teeth_shadow=(130, 108, 86), ear=(150, 96, 84), claw=(54, 44, 38), pad=(52, 36, 28),
     detail=klaus_detail)
 
 
 def beast_detail(t):
-    t.patches((10, 7, 6), None, 26, 4, 1)
-    t.patches((70, 48, 34), {'body', 'neck', 'hip', 'armRight', 'armLeft', 'legRight', 'legLeft'}, 22, 3, 2)
-    # dull red veins, thick, on limbs, neck and chest
-    t.veins((126, 14, 18), {'armRight', 'armLeft', 'armRight2', 'armLeft2', 'legRight', 'legLeft', 'legRight2', 'legLeft2', 'neck', 'body', 'hip'}, 46, 9, 3, glow=(52, 8, 10))
+    t.patches((8, 6, 6), None, 22, 4, 1)
+    t.patches((122, 82, 48), {'body', 'neck', 'hip', 'armRight', 'armLeft', 'legRight', 'legLeft', 'head', 'tail'}, 16, 3, 2, face={'up'})  # russet back streaks
+    t.patches((186, 160, 120), {'bodyFluff', 'neckFluffBottom'}, 6, 3, 4)  # pale underbelly mark
+    t.veins((150, 18, 24), {'armRight', 'armLeft', 'armRight2', 'armLeft2', 'legRight', 'legLeft', 'legRight2', 'legLeft2', 'neck', 'body', 'hip', 'head'}, 56, 10, 3, glow=(68, 10, 12))
 
 
 def beast_late(t):
-    t.plates((228, 218, 192), (112, 94, 72), (74, 60, 48))
+    t.plates((232, 224, 200), (92, 74, 56), (60, 46, 36))
 
 
 BEAST = dict(
-    seed=53,
-    fur=[(14, 10, 8), (34, 23, 16), (56, 39, 27), (82, 58, 40), (112, 82, 57)],
-    bias={'bodyFluff': 0.08, 'neckFluff': 0.06},
-    eye=(226, 242, 255), eye_halo=(112, 170, 235), nose=(14, 9, 9), mouth=(84, 14, 16), tongue=(104, 18, 22),
-    teeth=(206, 196, 172), teeth_shadow=(72, 58, 46), ear=(66, 30, 28), claw=(150, 140, 120), pad=(26, 14, 12),
+    seed=53, noise=0.9, shade=1.3,
+    fur=[(10, 8, 8), (24, 17, 13), (44, 30, 21), (74, 50, 32), (112, 76, 46)],
+    bias={'bodyFluff': 0.1, 'neckFluff': 0.06},
+    eye=(236, 248, 255), eye_halo=(116, 178, 248), socket=(4, 4, 8), nose=(12, 8, 8), mouth=(84, 14, 16), tongue=(104, 18, 22),
+    teeth=(222, 212, 186), teeth_shadow=(70, 56, 44), ear=(70, 30, 28), claw=(170, 160, 138), pad=(26, 14, 12),
     detail=beast_detail, late=beast_late)
 
 OUT = {'deucalion_demon_wolf': DEMON, 'peter_hale_wolf': PETER, 'klaus_hybrid': KLAUS, 'beast_of_gevaudan': BEAST}
