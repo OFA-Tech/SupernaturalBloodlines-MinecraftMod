@@ -15,8 +15,8 @@ public final class ProfileActions {
     public enum Role { NONE, LEADER, COALPHA, CHALLENGER, BETA, PACKMATE, EMISSARY, ALLY }
 
     /** @param leader the viewer leads their pack; {@code coalpha} is a second Alpha of it; {@code trueAlpha} cannot give up the spark */
-    public record Viewer(boolean inPack, boolean leader, boolean coalpha, boolean alphaRank, boolean trueAlpha, boolean werewolf, boolean caller) {
-        public static final Viewer NONE = new Viewer(false, false, false, false, false, false, false);
+    public record Viewer(boolean inPack, boolean leader, boolean coalpha, boolean alphaRank, boolean trueAlpha, boolean werewolf) {
+        public static final Viewer NONE = new Viewer(false, false, false, false, false, false);
     }
 
     /** @param self the viewer's own profile; {@code sired} one of the viewer's sired; {@code sire} the viewer's sire */
@@ -102,9 +102,6 @@ public final class ProfileActions {
         }
         if (v.werewolf()) {
             out.add(new Action("anchor", Kind.COMMAND, "P15", true, false, true, null, false));
-        }
-        if (s.sired() && v.caller()) {
-            out.add(new Action("call", Kind.COMMAND, "B3", false, false, true, null, false));
         }
         if (s.sire()) {
             out.add(new Action("severance", Kind.OPEN_RITES, "", false, false, true, null, false));

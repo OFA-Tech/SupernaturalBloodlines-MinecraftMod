@@ -21,6 +21,17 @@ class CallRequestsTest {
     }
 
     @Test
+    void peekingLeavesTheRequestInPlaceAndDropsAnExpiredOne() {
+        CallRequests r = new CallRequests();
+        String token = r.open(CALLER, SIRED, 100);
+        assertEquals(CALLER, r.peek(token, SIRED, 150).orElseThrow().caller());
+        assertEquals(CALLER, r.peek(token, SIRED, 150).orElseThrow().caller(), "a peek used the request up");
+        assertTrue(r.peek(token, OTHER, 150).isEmpty());
+        assertTrue(r.peek(token, SIRED, 100 + CallRequests.TTL_TICKS + 1).isEmpty());
+        assertEquals(0, r.size(), "an expired request stayed");
+    }
+
+    @Test
     void someoneElseCannotUseTheToken() {
         CallRequests r = new CallRequests();
         String token = r.open(CALLER, SIRED, 100);

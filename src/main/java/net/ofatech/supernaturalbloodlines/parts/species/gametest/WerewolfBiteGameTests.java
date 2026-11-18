@@ -316,6 +316,28 @@ public final class WerewolfBiteGameTests {
         helper.succeed();
     }
 
+    /** An invitation whose inviter is only offline stays open (nothing taken), and answers once they are back. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anInvitationFromAnOfflineInviterIsKept(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, null);
+        ServerPlayer member = wolf(helper, Rank.OMEGA, null);
+        lookup(alpha, member);
+        try {
+            helper.assertTrue(PackCommand.invite(alpha, member) == null, "the invitation was not made");
+            String token = PackCommand.requests().tokenOf(alpha.getUUID(), member.getUUID()).orElseThrow();
+            lookup(member); // the inviter is off the server for a moment
+            var refused = PackCommand.accept(member, token);
+            helper.assertTrue(refused != null && refused.getString().contains("offline"), "an offline inviter was answered " + refused);
+            helper.assertTrue(PackCommand.requests().tokenOf(alpha.getUUID(), member.getUUID()).isPresent(), "the token was used up by an answer that did nothing");
+            lookup(alpha, member);
+            helper.assertTrue(PackCommand.accept(member, token) == null, "the kept invitation could not be accepted when the inviter was back");
+        } finally {
+            SireCall.overridePlayerLookup(null);
+            clean(alpha, member);
+        }
+        helper.succeed();
+    }
+
     /** A packmate sees the line root only as far as that player has discovered it: when the index moves the root to another Original, the new one stays hidden. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aPacksProfileNeverShowsARootThePlayerHasNotDiscovered(GameTestHelper helper) {

@@ -73,6 +73,7 @@ public final class AdminPage implements HubPageView {
 
     private static volatile String devSection;
 
+
     /** Development only (the dev screenshots): the section the next frame shows, or "search:text" to type into the search box. */
     public static void devSection(String section) {
         devSection = section;
@@ -114,6 +115,13 @@ public final class AdminPage implements HubPageView {
             }
         }
         lastRender = now;
+        // "Open in Admin" on a profile: the debug actions, with that person already picked
+        var handed = net.ofatech.supernaturalbloodlines.shared.hub.AdminHandoff.take();
+        if (handed.isPresent()) {
+            player = handed.get().id();
+            playerName = handed.get().name();
+            section = DEBUG;
+        }
         String dev = devSection;
         if (dev != null) {
             devSection = null;

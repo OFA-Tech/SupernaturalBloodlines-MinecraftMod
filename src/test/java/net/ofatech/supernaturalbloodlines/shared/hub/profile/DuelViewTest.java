@@ -27,7 +27,7 @@ class DuelViewTest {
     @Test
     void aDuelWithThemDisablesTheChallengeWithItsReason() {
         UUID id = UUID.randomUUID();
-        var viewer = new ProfileActions.Viewer(true, false, true, true, false, true, false);
+        var viewer = new ProfileActions.Viewer(true, false, true, true, false, true);
         var open = ProfileActions.of(viewer, new ProfileActions.Subject(id, "Hayley", false, Role.LEADER, false, false, false), false);
         var inDuel = ProfileActions.of(viewer, new ProfileActions.Subject(id, "Hayley", false, Role.LEADER, false, false, true), false);
         assertTrue(open.get(0).enabled() && open.get(0).disabled() == null);
@@ -38,7 +38,7 @@ class DuelViewTest {
     @Test
     void anNpcOffersNoPlayerActionsToAnyViewer() {
         UUID id = UUID.randomUUID();
-        var leader = new ProfileActions.Viewer(true, true, false, true, false, true, true);
+        var leader = new ProfileActions.Viewer(true, true, false, true, false, true);
         assertTrue(ProfileActions.of(leader, new ProfileActions.Subject(id, "Thrall", false, Role.NONE, true, false, false, true), true).isEmpty());
         assertTrue(!ProfileActions.of(leader, new ProfileActions.Subject(id, "Kid", false, Role.NONE, true, false, false, false), false).isEmpty());
     }

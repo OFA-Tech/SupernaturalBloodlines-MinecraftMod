@@ -46,6 +46,19 @@ public final class CallRequests {
                 .map(e -> Map.entry(e.getKey(), e.getValue())).toList();
     }
 
+    /** The open request under {@code token} for {@code sired}, left in place; an expired one is dropped and not returned. */
+    public Optional<Request> peek(String token, UUID sired, long now) {
+        Request r = open.get(token);
+        if (r == null || !r.sired().equals(sired)) {
+            return Optional.empty();
+        }
+        if (r.expires() < now) {
+            open.remove(token);
+            return Optional.empty();
+        }
+        return Optional.of(r);
+    }
+
     public Optional<Request> take(String token, UUID sired, long now) {
         Request r = open.get(token);
         if (r == null || !r.sired().equals(sired)) {

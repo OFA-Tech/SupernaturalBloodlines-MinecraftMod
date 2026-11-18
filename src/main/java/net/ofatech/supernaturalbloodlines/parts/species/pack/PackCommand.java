@@ -226,20 +226,25 @@ public final class PackCommand {
     @Nullable
     public static Component accept(ServerPlayer p, String token) {
         long now = p.serverLevel().getGameTime();
-        CallRequests.Request r = REQUESTS.take(token, p.getUUID(), now).orElse(null);
-        HubRequests.changed(p);
+        CallRequests.Request r = REQUESTS.peek(token, p.getUUID(), now).orElse(null);
         if (r == null) {
+            HubRequests.changed(p);
             return error("expired");
         }
         ServerPlayer alpha = SireCall.player(p.server, r.caller());
-        if (alpha == null || !isActiveAlpha(alpha)) {
+        if (alpha == null) {
+            return error("alpha_offline"); // only offline: the invitation stays open for the rest of its minute
+        }
+        REQUESTS.take(token, p.getUUID(), now);
+        HubRequests.changed(p);
+        if (!isActiveAlpha(alpha)) {
             return error("alpha_gone");
         }
         WolfState w = PackAccess.wolf(p);
         PackIndex index = PackIndex.get(p.serverLevel());
         // the inviter must still lead: a pack that changed hands since the invitation is no longer the one they were asked to join
         if (!index.isLeader(alpha.getUUID())) {
-            return error("not_leader");
+            return error("stale_invite");
         }
         UUID leader = alpha.getUUID();
         // a Beta keeps their pack until /pack leave: a second invitation or bite never switches it
@@ -347,19 +352,24 @@ public final class PackCommand {
     @Nullable
     public static Component allyAccept(ServerPlayer p, String token) {
         long now = p.serverLevel().getGameTime();
-        CallRequests.Request r = ALLY_REQUESTS.take(token, p.getUUID(), now).orElse(null);
-        HubRequests.changed(p);
+        CallRequests.Request r = ALLY_REQUESTS.peek(token, p.getUUID(), now).orElse(null);
         if (r == null) {
+            HubRequests.changed(p);
             return error("expired");
         }
         ServerPlayer other = SireCall.player(p.server, r.caller());
+        if (other == null) {
+            return error("alpha_offline"); // only offline: the request stays open for the rest of its minute
+        }
+        ALLY_REQUESTS.take(token, p.getUUID(), now);
+        HubRequests.changed(p);
         PackIndex index = PackIndex.get(p.serverLevel());
-        if (other == null || !isActiveAlpha(other) || !isActiveAlpha(p)) {
+        if (!isActiveAlpha(other) || !isActiveAlpha(p)) {
             return error("alpha_gone");
         }
         // both must still lead the packs the alliance was asked between
         if (!index.isLeader(other.getUUID()) || !index.isLeader(p.getUUID())) {
-            return error("not_leader");
+            return error("stale_invite");
         }
         if (!index.ally(p.getUUID(), other.getUUID())) {
             return error("refused");
