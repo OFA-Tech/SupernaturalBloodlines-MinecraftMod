@@ -1,21 +1,37 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import java.util.ArrayList;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.List;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Locale;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.PackRing;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import org.jetbrains.annotations.Nullable;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 
 /**
  * Pack: the portrait ring round the sigil (Alphas red, Betas gold, Packmates blue, Brothers brown, the rest small and pale) and the actions the
@@ -366,7 +382,7 @@ public final class BookPackPage implements HubPageView {
             int color = (slot.member().role().color() & 0xFFFFFF) | ((int) (slot.alpha() * 255) << 24);
             BookKit.portrait(f.g, slot.member().id(), slot.x(), slot.y(), size, color, t.paper());
             if (named) {
-                String n = f.font().plainSubstrByWidth(slot.member().id(), 56);
+                String n = LabelFit.cut(slot.member().id(), 56, f.font()::width);
                 int nw = BookKit.smallWidth(f, n);
                 int side = Math.abs(slot.x() - cx) > radius / 2 ? (slot.x() > cx ? 1 : -1) : 0;
                 int nx = side == 0 ? slot.x() - nw / 2 : side > 0 ? slot.x() + size / 2 + 3 : slot.x() - size / 2 - 3 - nw;

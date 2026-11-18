@@ -7,7 +7,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Where a theme puts things: the frame, named content regions, one tab per visible page (in page order) and one seal per launcher.
  * The shared page views draw into {@link #MAIN} and {@link #SIDE}; a theme with another shape names its own regions and supplies its own
- * views for them ({@link HubTheme#view}). {@code headings} are the nav group headings or dividers, in the order of {@link NavGroups#headings}; a theme that only leaves a gap has none.
+ * views for them ({@link HubTheme#view}).
+ *
+ * @param headings the nav group headings or dividers, in the order of {@link NavGroups#headings}; a theme that only leaves a gap has none
  */
 public record HubLayout(Rect frame, Map<String, Rect> regions, List<Rect> tabs, List<Rect> seals, Chrome chrome, List<Rect> headings) {
     /**
@@ -22,6 +24,11 @@ public record HubLayout(Rect frame, Map<String, Rect> regions, List<Rect> tabs, 
             return new Chrome(r, close, emblem, counters, detail);
         }
     }
+    /** The main content: the story, the list. */
+    public static final String MAIN = "main";
+    /** The detail of what is chosen in the main region. */
+    public static final String SIDE = "side";
+
     public HubLayout(Rect frame, Map<String, Rect> regions, List<Rect> tabs, List<Rect> seals) {
         this(frame, regions, tabs, seals, Chrome.NONE, List.of());
     }
@@ -29,11 +36,6 @@ public record HubLayout(Rect frame, Map<String, Rect> regions, List<Rect> tabs, 
     public HubLayout(Rect frame, Map<String, Rect> regions, List<Rect> tabs, List<Rect> seals, Chrome chrome) {
         this(frame, regions, tabs, seals, chrome, List.of());
     }
-
-    /** The main content: the story, the list. */
-    public static final String MAIN = "main";
-    /** The detail of what is chosen in the main region. */
-    public static final String SIDE = "side";
 
     public HubLayout {
         regions = Map.copyOf(regions);

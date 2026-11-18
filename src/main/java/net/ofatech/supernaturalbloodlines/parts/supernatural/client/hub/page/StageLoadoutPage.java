@@ -1,21 +1,37 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import java.util.HashMap;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.List;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Map;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Optional;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.resources.ResourceLocation;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.hud.LoadoutTabModel;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hud.ClientIcons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hud.LoadoutAccess;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 
 /**
  * Loadout for the Blood Moon and Tensura: "Your hand", six round slots with their keys (R F V / Z X C, left and right of the hotbar), and "Abilities you
@@ -86,7 +102,7 @@ public final class StageLoadoutPage implements HubPageView {
             f.g.drawString(f.font(), "+", box.x() + box.w() / 2 - 2, box.y() + box.h() / 2 - 4, t.muted(), false);
         }
         f.g.drawString(f.font(), LoadoutAccess.keyLabel(i), box.x() + 3, box.y() + 3, t.accent(), false);
-        String name = f.font().plainSubstrByWidth(label.getString(), box.w() + 6);
+        String name = LabelFit.cut(label.getString(), box.w() + 6, f.font()::width);
         f.g.drawString(f.font(), name, box.x() + (box.w() - f.font().width(name)) / 2, box.bottom() + 3, picked ? t.accent() : t.ink(), false);
         String target = "loadout:slot:" + i;
         f.target(target, box, List.of(label), () -> apply(model.pickSlot(i)));
@@ -101,7 +117,7 @@ public final class StageLoadoutPage implements HubPageView {
         boolean grey = e.greyedReason() != null;
         BookKit.outline(f.g, box, t.paper(), picked ? t.accent() : (t.muted() & 0xFFFFFF) | 0x66000000);
         ClientIcons.draw(f.g, e.icon(), box.x() + (box.w() - 16) / 2, box.y() + (box.h() - 16) / 2, 16, grey ? 0.4f : 1f);
-        String name = f.font().plainSubstrByWidth(e.name().getString(), box.w() + 10);
+        String name = LabelFit.cut(e.name().getString(), box.w() + 10, f.font()::width);
         f.g.drawString(f.font(), name, box.x() + (box.w() - f.font().width(name)) / 2, box.bottom() + 3, grey ? t.muted() : t.ink(), false);
         List<Component> tip = new java.util.ArrayList<>(List.of(e.name()));
         if (e.note() != null) {

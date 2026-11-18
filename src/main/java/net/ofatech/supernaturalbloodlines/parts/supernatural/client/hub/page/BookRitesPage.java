@@ -1,25 +1,45 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import java.util.ArrayList;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.List;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Set;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.client.player.LocalPlayer;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.resources.ResourceLocation;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.world.entity.player.Player;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubRites;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import org.jetbrains.annotations.Nullable;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 
 /**
  * The Grimoire's Rites: an index of the rites with their altar power and whether you can perform them, on the left; on the facing page the chosen
@@ -59,7 +79,7 @@ public final class BookRitesPage implements HubPageView {
             KitDraw.shape(f.g, Shapes.Shape.ROUND, r.x() + 6, y + 6, 6, ring);
             Component power = Component.translatable(BOOK + "power", String.format("%,d", l.rite().power()));
             int pw = BookKit.smallWidth(f, power.getString());
-            String name = f.font().plainSubstrByWidth(RitesPage.name(l.rite()).getString(), r.w() - 24);
+            String name = LabelFit.cut(RitesPage.name(l.rite()).getString(), r.w() - 24, f.font()::width);
             f.g.drawString(f.font(), name, r.x() + 22, y + 1, sel ? t.accent() : t.ink(), false);
             BookKit.small(f, Component.translatable(BOOK + (l.forYou() ? "yours" : "anyone")), r.x() + 22, y + 12, r.w() - 24 - pw - 4, l.forYou() ? t.good() : t.muted());
             BookKit.small(f, power, r.right() - pw, y + 12, pw + 4, GOLD);

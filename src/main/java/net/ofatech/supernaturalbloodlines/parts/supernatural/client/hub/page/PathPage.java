@@ -1,26 +1,47 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.ArrayList;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.List;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Optional;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.ChatFormatting;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.network.chat.MutableComponent;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.neoforged.fml.ModList;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubAlmanac;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubView;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 
 /** Path: the left page is your story and your ladders (rungs as chapters), the right page the next rung's tasks with their claim stamps. */
 public final class PathPage implements HubPageView {
@@ -132,7 +153,7 @@ public final class PathPage implements HubPageView {
         int color = row.status() == RungStatus.LOCKED ? t.muted() : current ? t.accent() : t.ink();
         Component status = status(ladder, row);
         int sw = f.font().width(status);
-        String name = f.font().plainSubstrByWidth(PageKit.rung(row).getString(), r.w() - HubTheme.MARK - 4 - sw - 4);
+        String name = LabelFit.cut(PageKit.rung(row).getString(), r.w() - HubTheme.MARK - 4 - sw - 4, f.font()::width);
         f.g.drawString(f.font(), name, r.x() + HubTheme.MARK + 4, y + 1, color, false);
         f.g.drawString(f.font(), status, r.right() - sw, y + 1, current ? t.accent() : t.muted(), false);
         if (current && row.tasks() > 0) {

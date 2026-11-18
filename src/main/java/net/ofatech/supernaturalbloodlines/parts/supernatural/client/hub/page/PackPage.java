@@ -1,17 +1,29 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.List;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Locale;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.ChatFormatting;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.client.Minecraft;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 
 /**
  * Pack: your rank and the pack's members (from the snapshot: names, ranks, who is online) on the left; on the right the {@code /pack}
@@ -42,7 +54,7 @@ public final class PackPage implements HubPageView {
             Component rank = Component.translatable(KEY + "member." + m.base()).copy().append(m.sparks() > 1 ? " \u00d7" + m.sparks() : "");
             int rw = f.font().width(rank);
             f.g.fill(r.x() + 1, y + 2, r.x() + 5, y + 6, m.online() ? 0xFF2f6e4a : 0xFF9a8566);
-            String name = f.font().plainSubstrByWidth(m.name(), r.w() - 10 - rw - 4);
+            String name = LabelFit.cut(m.name(), r.w() - 10 - rw - 4, f.font()::width);
             f.g.drawString(f.font(), name, r.x() + 9, y, t.ink(), false);
             f.g.drawString(f.font(), rank, r.right() - rw, y, t.muted(), false);
             Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, PageKit.LINE + 1);

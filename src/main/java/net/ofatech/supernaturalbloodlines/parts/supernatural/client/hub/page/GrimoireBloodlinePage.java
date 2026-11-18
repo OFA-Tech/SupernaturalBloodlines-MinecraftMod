@@ -1,20 +1,35 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import java.util.List;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Map;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.util.FormattedCharSequence;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineColors;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineTree;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LineTreeLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 
 /**
  * The Grimoire's Bloodline: the line in ink on the left page (the crowned Original at the top, "?" until discovered; a break as torn red ink with a
@@ -207,7 +222,7 @@ public final class GrimoireBloodlinePage extends LinePageBase {
     private static int linePill(HubScreen.Frame f, Detail.Field field, Rect s, int y) {
         HubTheme t = f.theme();
         f.g.drawString(f.font(), field.label(), s.x(), y + 2, t.ink(), false);
-        String text = f.font().plainSubstrByWidth(field.value().getString(), s.w() - f.font().width(field.label()) - 34);
+        String text = LabelFit.cut(field.value().getString(), s.w() - f.font().width(field.label()) - 34, f.font()::width);
         int w = f.font().width(text) + 22;
         Rect pill = new Rect(s.right() - w, y, w, 13);
         f.g.fill(pill.x(), pill.y(), pill.right(), pill.bottom(), LineColors.FREE_PILL);

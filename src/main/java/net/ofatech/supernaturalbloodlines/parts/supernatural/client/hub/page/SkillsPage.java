@@ -1,32 +1,59 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.VampirismSkillAccess;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import de.teamlapen.vampirism.api.VampirismAPI;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import de.teamlapen.vampirism.api.VampirismRegistries;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import de.teamlapen.vampirism.api.entity.factions.IPlayableFaction;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import de.teamlapen.vampirism.api.entity.player.skills.ISkill;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import de.teamlapen.vampirism.api.entity.player.skills.ISkillHandler;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.ArrayList;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Comparator;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.List;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Locale;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import java.util.Optional;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.client.resources.language.I18n;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.world.entity.player.Player;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubSkills;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.BuySkillPayload;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.UnlockModSkillPayload;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import org.jetbrains.annotations.Nullable;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 
 /**
  * Skills: our trees (bought with our SP through {@code BuySkillPayload}), the player's Vampirism or Werewolves tree (unlocked through
@@ -99,7 +126,7 @@ public final class SkillsPage implements HubPageView {
             if (room < 12) {
                 break;
             }
-            Component label = Component.literal(f.font().plainSubstrByWidth(full.getString(), room));
+            Component label = Component.literal(LabelFit.cut(full.getString(), room, f.font()::width));
             int w = f.font().width(label);
             Rect hit = new Rect(x - 1, y - 1, w + 2, 11);
             int color = t == tab ? f.theme().accent() : f.theme().muted();
@@ -186,7 +213,7 @@ public final class SkillsPage implements HubPageView {
         }
         t.drawRungMark(f.g, r.x(), y, mark);
         int nw = f.font().width(note);
-        String text = f.font().plainSubstrByWidth(name.getString(), r.w() - HubTheme.MARK - 4 - nw - 4);
+        String text = LabelFit.cut(name.getString(), r.w() - HubTheme.MARK - 4 - nw - 4, f.font()::width);
         f.g.drawString(f.font(), text, r.x() + HubTheme.MARK + 4, y + 1, mark == RungStatus.LOCKED ? t.muted() : t.ink(), false);
         f.g.drawString(f.font(), note, r.right() - nw, y + 1, t.muted(), false);
         f.target(id, hit, tooltip, select);

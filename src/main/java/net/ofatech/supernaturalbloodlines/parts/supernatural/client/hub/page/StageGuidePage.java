@@ -1,15 +1,25 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import java.util.List;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.GuideChapters;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 
 /**
  * The Guide for the Blood Moon and Tensura: a chapter list card (the first row says what you are) and a chapter card, with Previous and Next in the
@@ -41,7 +51,7 @@ public final class StageGuidePage implements HubPageView {
             }
             f.g.drawString(f.font(), String.format("%02d", i + 1), r.x() + 6, y + 4, t.muted(), false);
             Component name = Component.translatable(GuideChapters.titleKey(id));
-            f.g.drawString(f.font(), f.font().plainSubstrByWidth(name.getString(), r.w() - 34), r.x() + 26, y + 4, on ? t.ink() : t.muted(), false);
+            f.g.drawString(f.font(), LabelFit.cut(name.getString(), r.w() - 34, f.font()::width), r.x() + 26, y + 4, on ? t.ink() : t.muted(), false);
             String target = "chapter:" + id;
             f.target(target, hit, List.of(name), () -> chapter = id);
             if (f.focused(target)) {

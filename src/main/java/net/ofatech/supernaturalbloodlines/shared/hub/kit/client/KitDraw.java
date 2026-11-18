@@ -156,16 +156,18 @@ public final class KitDraw {
     /** The keyboard focus ring, one pixel outside {@code r}, two pixels wide. */
     /** A dashed outline (3 on, 2 off), for what is apart from the rest: Admin in the nav. */
     public static void dashed(GuiGraphics g, Rect r, int color) {
-        for (int x = r.x(); x < r.right(); x += 5) {
-            int x2 = Math.min(r.right(), x + 3);
-            g.fill(x, r.y(), x2, r.y() + 1, color);
-            g.fill(x, r.bottom() - 1, x2, r.bottom(), color);
-        }
-        for (int y = r.y(); y < r.bottom(); y += 5) {
-            int y2 = Math.min(r.bottom(), y + 3);
-            g.fill(r.x(), y, r.x() + 1, y2, color);
-            g.fill(r.right() - 1, y, r.right(), y2, color);
-        }
+        batch(g, () -> {
+            for (int x = r.x(); x < r.right(); x += 5) {
+                int x2 = Math.min(r.right(), x + 3);
+                g.fill(x, r.y(), x2, r.y() + 1, color);
+                g.fill(x, r.bottom() - 1, x2, r.bottom(), color);
+            }
+            for (int y = r.y(); y < r.bottom(); y += 5) {
+                int y2 = Math.min(r.bottom(), y + 3);
+                g.fill(r.x(), y, r.x() + 1, y2, color);
+                g.fill(r.right() - 1, y, r.right(), y2, color);
+            }
+        });
     }
 
     public static void focusRing(GuiGraphics g, Rect r, int color) {
