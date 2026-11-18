@@ -74,6 +74,28 @@ public final class HubGameTests {
         helper.succeed();
     }
 
+    /** The ids that let a click open a Profile ride only on people the snapshot already names, and survive the wire. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void snapshotCarriesIdsOnlyForNamedPeople(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        var previous = HubSocial.source();
+        java.util.UUID sire = java.util.UUID.randomUUID();
+        java.util.UUID mate = java.util.UUID.randomUUID();
+        try {
+            HubSocial.set(x -> new HubSocial.Social(Optional.of("Klaus"), List.of(), List.of(new HubSocial.Member("Derek", "beta", true, Optional.of(mate))), 0, List.of(), List.of(), List.of(),
+                    HubSocial.Origin.NONE, List.of(new HubSocial.Person("Klaus", sire))));
+            HubSnapshotPayload s = HubSnapshotPayload.of(p);
+            helper.assertTrue(s.idOf("Klaus").equals(Optional.of(sire)) && s.idOf("Derek").equals(Optional.of(mate)), "the ids of the named people are missing");
+            helper.assertTrue(s.idOf("Nobody Named").isEmpty(), "an id for a person the snapshot does not name");
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            HubSnapshotPayload.STREAM_CODEC.encode(buf, s);
+            helper.assertTrue(HubSnapshotPayload.STREAM_CODEC.decode(buf).equals(s), "the ids do not survive the wire");
+        } finally {
+            HubSocial.set(previous);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void snapshotHasNoOtherPlayersAttachments(GameTestHelper helper) {
         ServerPlayer sire = TestPlayers.create(helper);

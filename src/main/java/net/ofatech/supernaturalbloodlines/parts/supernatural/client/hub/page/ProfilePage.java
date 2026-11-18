@@ -104,11 +104,15 @@ public final class ProfilePage implements HubPageView {
                 y += 3;
             }
         }
+        if (bar != null && bar.h() < 60) {
+            // the Blood Moon has no side column of its own: the legend closes the page
+            y = PageKit.wrapped(f, Component.translatable(KEY + "legend"), r.x(), y + 2, r.w(), t.muted());
+        }
         y = PageWidgets.reply(f, r, y + 2);
         f.end(y);
 
         f.detail(detail(f, route));
-        if (f.layout().chrome().detail() != null) {
+        if (f.layout().chrome().detail() != null && f.layout().chrome().detail().h() >= 60) {
             // the actions went to the theme's own pane or bar: this page says what a ? means
             Rect s = f.region(HubLayout.SIDE);
             int sy = f.begin(HubLayout.SIDE);

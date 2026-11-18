@@ -325,6 +325,15 @@ public final class HubScreen extends Screen {
         ladderChoice = index;
     }
 
+    /**
+     * The hook for the warning before a spark would end the path to True Alpha: asks first, Stay is the safe answer, and {@code proceed} runs only on a
+     * deliberate yes. The caller decides with {@code TrueAlphaWarning.applies} whether to ask at all.
+     */
+    public void warnTrueAlpha(Runnable proceed) {
+        confirm(Component.translatable("supernaturalbloodlines.hub.true_alpha.title"), Component.translatable("supernaturalbloodlines.hub.true_alpha.body"),
+                Component.translatable("supernaturalbloodlines.hub.confirm.stay"), Component.translatable("supernaturalbloodlines.hub.true_alpha.yes"), proceed);
+    }
+
     /** Development only (the dev screenshots): puts the screen in a route or section no click is needed for. */
     void devVariant(String variant) {
         switch (variant) {
@@ -339,6 +348,7 @@ public final class HubScreen extends Screen {
                 }
             }
             case "profile_op" -> openProfile(DevDemo.id("Derek|op"), "Derek", true);
+            case "true_alpha_dialog" -> warnTrueAlpha(() -> { });
             case "profile_dialog" -> {
                 openProfile(DevDemo.id("Derek"), "Derek");
                 confirm(Component.translatable("supernaturalbloodlines.hub.profile.action.heal"), Component.translatable("supernaturalbloodlines.hub.profile.confirm.heal", "Derek"),
