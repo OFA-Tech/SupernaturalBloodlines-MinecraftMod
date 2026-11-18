@@ -105,6 +105,57 @@
     return views;
   };
 
+  SB.bbOnly = function (n) {
+    use(n); unselectAllElements();
+    const bb = Codecs.project.compile({ compressed: false });
+    fs.writeFileSync(BBM + 'item_' + n + '.bbmodel', typeof bb === 'string' ? bb : JSON.stringify(bb));
+    return n;
+  };
+
+  // Right arms (classic + slim) wearing the exported models/curio/*.json, one arm per ring, spread along z.
+  SB.armSetup = function () {
+    const p = proj('ring_worn_preview'); p.select(); if (Project !== p) throw new Error('select arm');
+    Cube.all.slice().forEach(c => c.remove(false)); Texture.all.slice().forEach(t => t.remove(false));
+    const CUR = MODELS.replace('models/item/', 'models/curio/');
+    const arm = new Texture({ name: 'arm_palette.png' }).fromDataURL(b64(ROOT + 'art/items/arm_palette.png')).add(false);
+    const texCache = {};
+    const rings = ['sun_ring', 'moon_ring', 'resurrection_ring'];
+    let i = 0;
+    for (const slim of [false, true]) for (const ring of rings) {
+      const dz = (i - 2.5) * 6.2; i++;
+      const hx = slim ? 1.5 : 2;
+      const px = [[0.5, 0.5], [1.5, 0.5], [2.5, 0.5]];
+      const add = (name, from, to, u) => {
+        const c = new Cube({ name, from, to, autouv: 0, box_uv: false }).init();
+        for (const f of FACES) { c.faces[f].uv = [u + .2, .2, u + .8, .8]; c.faces[f].texture = arm.uuid; }
+      };
+      add('arm_skin_' + i, [8 - hx, 6.5, 8 - 2 + dz], [8 + hx, 12, 8 + 2 + dz], 0);
+      add('arm_sleeve_' + i, [8 - hx - 0.25, 12, 8 - 2.25 + dz], [8 + hx + 0.25, 14.5, 8 + 2.25 + dz], 1);
+      const m = JSON.parse(fs.readFileSync(CUR + ring + (slim ? '_slim' : '') + '.json'));
+      const tf = m.textures['0'].split(':')[1];
+      if (!texCache[tf]) texCache[tf] = new Texture({ name: tf.split('/').pop() + '.png' }).fromDataURL(b64(TEX + tf.replace('item/', '') + '.png')).add(false);
+      for (const e of m.elements) {
+        const c = new Cube({ name: e.name + '_' + i, from: [e.from[0], e.from[1], e.from[2] + dz], to: [e.to[0], e.to[1], e.to[2] + dz], autouv: 0, box_uv: false }).init();
+        for (const f of FACES) {
+          if (e.faces[f]) { c.faces[f].uv = e.faces[f].uv; c.faces[f].texture = texCache[tf].uuid; } else c.faces[f].texture = false;
+        }
+      }
+    }
+    Canvas.updateAll(); unselectAllElements();
+    return i;
+  };
+
+  SB.armShots = function () {
+    const p = proj('ring_worn_preview'); p.select(); unselectAllElements();
+    const v = pv();
+    const views = { side: { position: [-52, 10, 0], target: [0, 10, 0], fov: 40 }, front34: { position: [-36, 15, -42], target: [0, 9.5, 0], fov: 40 } };
+    for (const [k, c] of Object.entries(views)) {
+      v.loadAnglePreset({ position: c.position, target: c.target, projection: 'perspective', fov: c.fov, locked_angle: null });
+      render('ring_worn_' + k + '.png');
+    }
+    return Object.keys(views);
+  };
+
   SB.guiSetup = function (names) {
     const p = proj('gui_icons'); p.select(); if (Project !== p) throw new Error('select gui');
     for (const n of names) {
@@ -132,6 +183,7 @@
     return names;
   };
 })();
+
 
 
 

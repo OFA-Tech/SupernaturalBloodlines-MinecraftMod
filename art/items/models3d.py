@@ -32,6 +32,15 @@ TOOL = {  # item/handheld transforms, for diagonal blades
     "head": ([0, 180, 0], [0, 13, 7], 1.0),
     "fixed": ([0, 180, 0], [0, 0, 0], 1.0),
 }
+RING = {  # rings are worn, not held: the band sits around the end of the arm/hand, stone facing outward
+    "thirdperson_righthand": ([0, 0, -90], [0, 0, 0], 0.4),
+    "thirdperson_lefthand": ([0, 0, 90], [0, 0, 0], 0.4),
+    "firstperson_righthand": ([0, 0, 0], [1.13, 3.2, 1.13], 0.3),
+    "firstperson_lefthand": ([0, 0, 0], [1.13, 3.2, 1.13], 0.3),
+    "ground": ([0, 0, 0], [0, 2, 0], 0.45),
+    "head": ([0, 180, 0], [0, 13, 7], 0.6),
+    "fixed": ([0, 180, 0], [0, 0, 0], 0.7),
+}
 FACES = ("north", "east", "south", "west", "up", "down")
 KEY = {"n": "north", "e": "east", "s": "south", "w": "west", "u": "up", "d": "down"}
 
@@ -120,16 +129,15 @@ class M:
             c["t"] = [round(c["t"][k] + d[k], 4) for k in range(3)]
             if "o" in c:
                 c["o"] = [round(c["o"][k] + d[k], 4) for k in range(3)]
-        self.glift += -(4 - (hi[1] - lo[1]) * 0.25 * self.scale)
+        gs = self.preset["ground"][2]
+        self.glift += -(4 - (hi[1] - lo[1]) * 0.5 * gs * self.scale)
 
     def spec(self):
-        if self.preset is GEN and not getattr(self, "_rc", False):
+        if (self.preset is GEN or self.preset is RING) and not getattr(self, "_rc", False):
             self._rc = True
             self.recenter()
         disp = {}
         for k, (r, t, s) in self.preset.items():
-            if self.fp and k.startswith("firstperson"):
-                r, t = self.fp.get("r_" + k[-9:-4], r), self.fp.get("t", t)
             dy = self.lift + (self.glift if k == "ground" else 0.0)
             disp[k] = {"rotation": r, "translation": [t[0], t[1] + dy, t[2]], "scale": [s * self.scale] * 3}
         return {"name": self.name, "palette": list(self.pal), "cubes": self.cubes, "display": disp, "extra_tex": self.extra_tex}
@@ -221,7 +229,7 @@ def the_elixir():
 
 # ---------------------------------------------------------------- rings
 def ring(name, band, band_hi, band_lo, stone_fn, thick=2.0, size=1.0):
-    m = M(name, scale=0.5)
+    m = M(name, preset=RING)
     t = thick
     z0, z1 = 8 - 1.0, 8 + 1.0
     m.box(6, 3.5, z0, 10, 3.5 + t, z1, {"side": band, "u": band_hi, "d": band_lo})
