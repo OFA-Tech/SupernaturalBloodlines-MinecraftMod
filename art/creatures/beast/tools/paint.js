@@ -58,7 +58,7 @@
     const L = 3 + Math.floor(col * 5);
     const n = hash(Math.floor(u / 2), Math.floor((v + col * L * 3) / L), fid);
     let i = 2.2 + shade * 0.85 + (n - 0.5) * 2.6 + (hash(Math.floor(u / 3), Math.floor(v / 4), fid + 3) - 0.5) * 1.4;
-    if (m === 'tuft') i += 0.6 + (1 - Math.min(1, v / 7)) * 0.4;
+    if (m === 'tuft') i += 0.8 + Math.min(1, v / 6) * 0.9 + (n > 0.7 ? 0.8 : 0);
     let c = sample(RAMP.fur, i);
     if (o.belly) {
       const t = (o.belly[0] - wy) / (o.belly[0] - o.belly[1]);
