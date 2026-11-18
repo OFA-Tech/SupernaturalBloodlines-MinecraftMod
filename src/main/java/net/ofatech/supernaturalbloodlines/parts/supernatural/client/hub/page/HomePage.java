@@ -87,7 +87,7 @@ public final class HomePage implements HubPageView {
         y = PageKit.wrapped(f, waiting ? Component.translatable(KEY + "claiming", claimSent.size()) : Component.translatable(KEY + "ready", ready.size()), r.x(), y, r.w(), t.ink());
         Component label = Component.translatable(KEY + "claim_all");
         Rect b = new Rect(r.x(), y + 2, Math.min(r.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
-        PageWidgets.button(f, "stage:home:claim_all", b, label, !waiting, true, waiting ? Component.translatable(KEY + "claiming", claimSent.size()) : null, () -> {
+        PageWidgets.button(f, "stage:home:claim_all", b, label, !waiting, true, Component.translatable(KEY + "claiming", claimSent.size()), () -> {
             claimSent = new java.util.HashSet<>(ready);
             claimSentAt = System.currentTimeMillis();
             ready.forEach(f::claim);
@@ -216,7 +216,7 @@ public final class HomePage implements HubPageView {
             if (i < answers.size()) {
                 Answer a = answers.get(i);
                 Component tip = q.kind() == HubRequests.Kind.COMPULSION ? Component.translatable(KEY + "answer." + a.label() + ".tip") : null;
-                PageWidgets.button(f, id + ":" + a.label(), b, labels.get(i), true, a.primary(), tip,
+                PageWidgets.hinted(f, id + ":" + a.label(), b, labels.get(i), true, a.primary(), tip,
                         () -> HubClient.runCommand(a.rowId(), a.usesToken() ? List.of(q.token()) : List.of()));
             } else {
                 PageWidgets.button(f, id + ":dismiss", b, labels.get(i), true, false, null, () -> RequestsClient.dismiss(q));

@@ -24,9 +24,15 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
  * ranks and online flags of others; the genes are the subject's own, as their client may know them (unknown until discovered).
  */
 public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes,
-                                 List<HubSocial.Rite> rites, List<HubSocial.Person> people) implements CustomPacketPayload {
+                                 List<HubSocial.Rite> rites, List<HubSocial.Person> people, Map<String, java.util.UUID> ids) implements CustomPacketPayload {
     public HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes, List<HubSocial.Rite> rites) {
         this(family, pack, fiveCount, genes, rites, List.of());
+    }
+
+    /** What goes over the wire: {@code ids} is not sent, it is worked out once from the people and the pack. */
+    public HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes, List<HubSocial.Rite> rites,
+                              List<HubSocial.Person> people) {
+        this(family, pack, fiveCount, genes, rites, people, Map.of());
     }
 
     /**
@@ -132,13 +138,20 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
         genes = Map.copyOf(genes);
         rites = cap(rites);
         people = cap(people);
+        ids = index(pack, people);
+    }
+
+    /** Name to id for everyone the server named, built once (the pages ask per frame); the first of a name wins: the sire and the sired before the pack. */
+    private static Map<String, java.util.UUID> index(List<HubSocial.Member> pack, List<HubSocial.Person> people) {
+        Map<String, java.util.UUID> out = new java.util.HashMap<>();
+        people.forEach(p -> out.putIfAbsent(p.name(), p.id()));
+        pack.stream().filter(m -> m.id().isPresent()).forEach(m -> out.putIfAbsent(m.name(), m.id().get()));
+        return Map.copyOf(out);
     }
 
     /** The id a click on this name opens a Profile with, if the server named one (the sire, someone sired, a pack member). */
     public Optional<java.util.UUID> idOf(String name) {
-        return java.util.stream.Stream.concat(people.stream().map(p -> java.util.Map.entry(p.name(), p.id())),
-                pack.stream().filter(m -> m.id().isPresent()).map(m -> java.util.Map.entry(m.name(), m.id().get())))
-                .filter(e -> e.getKey().equals(name)).map(java.util.Map.Entry::getValue).findFirst();
+        return Optional.ofNullable(ids.get(name));
     }
 
     private static <T> List<T> cap(List<T> l) {

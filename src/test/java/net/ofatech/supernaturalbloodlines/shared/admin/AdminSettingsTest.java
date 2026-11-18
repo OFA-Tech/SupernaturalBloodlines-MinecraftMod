@@ -108,6 +108,18 @@ class AdminSettingsTest {
     }
 
     @Test
+    void aClientFileIsNeverWritableByTheAdminPathButStillReadable() {
+        SettingEntry client = SettingEntry.of(FILE, "t", "grp.n", SettingKind.INT);
+        AdminSpecs.forget(FILE);
+        AdminSpecs.registerClient(FILE, spec);
+        Recording w = new Recording();
+        assertEquals(AdminSettings.Status.UNKNOWN, AdminSettings.apply(List.of(client), RULES, 2, client.id(), new SettingValue.Int(7), w).status());
+        assertTrue(w.calls.isEmpty(), "writer calls " + w.calls);
+        assertTrue(AdminSpecs.value(client).isPresent(), "the Settings page still reads it");
+        assertTrue(AdminSpecs.isClient(FILE));
+    }
+
+    @Test
     void anInvalidValueNeverReachesTheWriterAndTheOldValueStays() {
         Recording w = new Recording();
         AdminSettings.Result r = AdminSettings.apply(KEYS, RULES, 2, N.id(), new SettingValue.Int(11), w);

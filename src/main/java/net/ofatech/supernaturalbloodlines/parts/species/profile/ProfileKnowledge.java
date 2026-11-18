@@ -39,9 +39,10 @@ public final class ProfileKnowledge extends SavedData {
 
     /** What {@code observer} knows of {@code subject}: their own discoveries and, while they are in a pack, the pack's pool (kept once seen). */
     public Set<Fact> known(PackIndex packs, UUID observer, UUID subject) {
-        Set<Fact> out = EnumSet.copyOf(owned(observers, observer).facts(subject));
+        // a read never creates an entry: a profile asked for by someone nobody has discovered anything for must not push a real observer out of the capped map
+        Set<Fact> out = EnumSet.copyOf(peek(observers, observer).facts(subject));
         if (packs != null && packs.inPack(observer)) {
-            Set<Fact> pooled = owned(pools, packs.leaderOf(observer)).facts(subject);
+            Set<Fact> pooled = peek(pools, packs.leaderOf(observer)).facts(subject);
             if (!out.containsAll(pooled)) {
                 out.addAll(pooled);
                 owned(observers, observer).add(subject, pooled);
@@ -87,6 +88,22 @@ public final class ProfileKnowledge extends SavedData {
         return pools.containsKey(leader);
     }
 
+    private static final KnownFacts NOTHING = new KnownFacts();
+    private static int evicted;
+
+    /** How many owners the cap has pushed out since the server started (for tests); the first is logged. */
+    public static int evictedOwners() {
+        return evicted;
+    }
+
+    public int observerCount() {
+        return observers.size();
+    }
+
+    private static KnownFacts peek(LinkedHashMap<UUID, KnownFacts> map, UUID owner) {
+        return map.getOrDefault(owner, NOTHING);
+    }
+
     private static KnownFacts owned(LinkedHashMap<UUID, KnownFacts> map, UUID owner) {
         KnownFacts k = map.remove(owner);
         if (k == null) {
@@ -95,6 +112,9 @@ public final class ProfileKnowledge extends SavedData {
         map.put(owner, k);
         while (map.size() > MAX_OWNERS) {
             map.remove(map.keySet().iterator().next());
+            if (evicted++ == 0) {
+                net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.LOGGER.warn("Profile knowledge is full ({} owners): the least recently active player's discoveries are being dropped", MAX_OWNERS);
+            }
         }
         return k;
     }

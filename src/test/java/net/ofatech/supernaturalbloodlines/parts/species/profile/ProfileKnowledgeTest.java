@@ -19,6 +19,21 @@ class ProfileKnowledgeTest {
     private static final UUID THEM = UUID.randomUUID();
 
     @Test
+    void askingForAProfileNeverCreatesAnEntryOrPushesARealObserverOut() {
+        ProfileKnowledge k = new ProfileKnowledge();
+        UUID real = new UUID(7, 7);
+        UUID subject = new UUID(8, 8);
+        k.discover(null, real, subject, Set.of(Fact.GENES));
+        int evictedBefore = ProfileKnowledge.evictedOwners();
+        for (int i = 0; i < ProfileKnowledge.MAX_OWNERS * 2; i++) {
+            assertTrue(k.known(null, new UUID(1, i), subject).isEmpty());
+        }
+        assertEquals(1, k.observerCount(), "reads created entries");
+        assertEquals(evictedBefore, ProfileKnowledge.evictedOwners());
+        assertEquals(EnumSet.of(Fact.GENES), k.known(null, real, subject), "the real observer was pushed out by strangers");
+    }
+
+    @Test
     void whatIsDiscoveredIsSavedAndLoadedBack() {
         ProfileKnowledge k = new ProfileKnowledge();
         k.discover(null, ME, THEM, EnumSet.of(Fact.GENES, Fact.LINE));

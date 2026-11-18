@@ -117,14 +117,19 @@ public final class HubCommands {
         return new HubCommandReplyPayload(rowId.length() > 8 ? "" : rowId, false, List.of(Component.translatable(KEY + key)));
     }
 
+    /** One payload from a player: over their rate it is answered "too quick" instead of dropped, so a double click is not silence. */
+    public static boolean dispatch(ServerPlayer p, boolean withinRate, int level, HubCommandPayload payload, Function<ServerPlayer, CommandSourceStack> stack, Consumer<HubCommandReplyPayload> reply) {
+        if (!withinRate) {
+            reply.accept(failure(payload.rowId(), "too_quick"));
+            return false;
+        }
+        return run(p, level, payload, stack, reply);
+    }
+
     static void onCommand(HubCommandPayload payload, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             if (ctx.player() instanceof ServerPlayer p) {
-                if (AdminNet.allowedRate(p)) {
-                    run(p, AdminNet.levelOf(p), payload, ServerPlayer::createCommandSourceStack, r -> PacketDistributor.sendToPlayer(p, r));
-                } else {
-                    PacketDistributor.sendToPlayer(p, failure(payload.rowId(), "too_quick"));
-                }
+                dispatch(p, AdminNet.allowedRate(p), AdminNet.levelOf(p), payload, ServerPlayer::createCommandSourceStack, r -> PacketDistributor.sendToPlayer(p, r));
             }
         });
     }

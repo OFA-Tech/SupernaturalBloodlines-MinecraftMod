@@ -4,7 +4,7 @@
 
 .DESCRIPTION
   Polls GetForegroundWindow, GetCursorPos and IsWindowVisible (for the windows of the java/javaw processes) every -IntervalMs.
-  On the first change it prints what changed, stops the guarded run and the java windows' processes, and exits 2.
+  On the first change it prints what changed, stops the guarded run and the java processes it started (its process tree, never anyone else's), and exits 2.
   Exit codes: 0 = nothing changed (or the guarded command's own exit code), 2 = tripped, 1 = bad use or failed self test.
   Read-only toward the desktop: it never moves the cursor, focuses or sends keys.
 
@@ -38,7 +38,27 @@ function Get-Trip($base, $now, [bool]$javaOnly, $javaPids) {
     return $null
 }
 
+# The ids of a process and of everything it started: rows are objects with ProcessId and ParentProcessId. Pure.
+function Get-TreeIds($rows, [int]$rootId) {
+    $ids = [System.Collections.Generic.HashSet[int]]::new()
+    [void]$ids.Add($rootId)
+    do {
+        $grew = $false
+        foreach ($r in $rows) {
+            if ($ids.Contains([int]$r.ParentProcessId) -and $ids.Add([int]$r.ProcessId)) { $grew = $true }
+        }
+    } while ($grew)
+    @($ids)
+}
+
 if ($SelfTest) {
+    $rows = @(
+        [pscustomobject]@{ ProcessId = 2; ParentProcessId = 1 }, [pscustomobject]@{ ProcessId = 3; ParentProcessId = 2 },
+        [pscustomobject]@{ ProcessId = 10; ParentProcessId = 9 }, [pscustomobject]@{ ProcessId = 11; ParentProcessId = 1 })
+    $tree = Get-TreeIds $rows 1
+    $failTree = @()
+    if (($tree | Sort-Object) -join "," -ne "1,2,3,11") { $failTree += "the tree of 1 was $($tree -join ",")" }
+    if ($tree -contains 10 -or $tree -contains 9) { $failTree += "a process outside the guarded run was in its tree" }
     $b = @{ Fg = 10; FgPid = 1; FgName = 'notepad'; Cursor = '5,5'; Visible = @{} }
     function CloneSnap($o) { @{ Fg = $o.Fg; FgPid = $o.FgPid; FgName = $o.FgName; Cursor = $o.Cursor; Visible = @{} + $o.Visible } }
     $fail = @()
@@ -55,6 +75,7 @@ if ($SelfTest) {
     if (-not (Get-Trip $b $n $true @(99))) { $fail += 'new visible java window must trip' }
     $b2 = CloneSnap $b; $b2.Visible[77] = 99
     if (Get-Trip $b2 (CloneSnap $b2) $false @(99)) { $fail += 'a java window visible from the start is the baseline' }
+    $fail += $failTree
     if ($fail) { $fail | ForEach-Object { Write-Host "SELFTEST FAIL: $_" }; exit 1 }
     Write-Host 'SELFTEST ok'
     exit 0
@@ -112,7 +133,9 @@ while ((Get-Date) -lt $deadline -and -not ($child -and $child.HasExited)) {
     if ($trip) {
         Write-Host "focus-watch TRIP at $(Get-Date -Format HH:mm:ss.fff): $trip"
         $new = @($now.Visible.Keys | Where-Object { -not $base.Visible.ContainsKey($_) } | ForEach-Object { $now.Visible[$_] })
-        foreach ($p in ($new + $now.FgPid | Where-Object { (Get-JavaPids) -contains $_ } | Select-Object -Unique)) { Stop-Process -Id $p -Force -ErrorAction SilentlyContinue }
+        # only what the guarded run started is stopped: a java window that is not ours (the player's own game, an IDE) is reported, never killed
+        $tree = if ($child) { Get-TreeIds (Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId) $child.Id } else { @() }
+        foreach ($p in ($new + $now.FgPid | Where-Object { (Get-JavaPids) -contains $_ -and $tree -contains $_ } | Select-Object -Unique)) { Stop-Process -Id $p -Force -ErrorAction SilentlyContinue }
         if ($child -and -not $child.HasExited) { & taskkill /PID $child.Id /T /F | Out-Null }
         exit 2
     }

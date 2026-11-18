@@ -7,10 +7,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Where a theme puts things: the frame, named content regions, one tab per visible page (in page order) and one seal per launcher.
  * The shared page views draw into {@link #MAIN} and {@link #SIDE}; a theme with another shape names its own regions and supplies its own
- * views for them ({@link HubTheme#view}). Pure.
- */
-/**
- * {@code headings} are the nav group headings or dividers, in the order of {@link NavGroups#headings}; a theme that only leaves a gap has none.
+ * views for them ({@link HubTheme#view}). {@code headings} are the nav group headings or dividers, in the order of {@link NavGroups#headings}; a theme that only leaves a gap has none.
  */
 public record HubLayout(Rect frame, Map<String, Rect> regions, List<Rect> tabs, List<Rect> seals, Chrome chrome, List<Rect> headings) {
     /**

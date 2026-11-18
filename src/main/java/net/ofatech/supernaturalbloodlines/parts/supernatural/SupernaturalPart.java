@@ -61,7 +61,7 @@ public final class SupernaturalPart {
         LadderNet.register(modBus);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             container.registerConfig(ModConfig.Type.CLIENT, HubClientConfig.SPEC, HubClientConfig.FILE);
-            AdminSpecs.register(HubClientConfig.FILE, HubClientConfig.SPEC);
+            AdminSpecs.registerClient(HubClientConfig.FILE, HubClientConfig.SPEC);
             HubKeybinds.register(modBus);
         }
         LadderQuery.set(new LadderQuery.Provider() {

@@ -306,6 +306,64 @@ public final class AdminGameTests {
         helper.succeed();
     }
 
+    private static boolean says(HubCommandReplyPayload r, String key) {
+        return r != null && !r.success() && r.lines().stream().anyMatch(c -> c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().equals("supernaturalbloodlines.hub.command." + key));
+    }
+
+    /** A token nothing is open under any more (answered or run out) is answered "already answered" and never run; a command whose part is off says it is not available. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aClosedTokenAndAMissingCommandAreAnsweredNotRun(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        List<HubCommandReplyPayload> out = new ArrayList<>();
+        boolean bloodline = p.server.getCommands().getDispatcher().getRoot().getChild("bloodline") != null;
+        if (bloodline) {
+            HubCommandReplyPayload closed = run(p, 0, 0, "B4", List.of("deadbeef"), out);
+            helper.assertTrue(says(closed, "answered"), "a token nothing is open under was answered " + closed);
+        }
+        out.clear();
+        if (p.server.getCommands().getDispatcher().getRoot().getChild("pack") == null) {
+            HubCommandReplyPayload missing = run(p, 0, 0, "P3", List.of(), out);
+            helper.assertTrue(says(missing, "unavailable"), "a command of a part that is off was answered " + missing);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPlayerOverTheirRateIsToldTooQuick(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        List<HubCommandReplyPayload> out = new ArrayList<>();
+        boolean ran = HubCommands.dispatch(p, false, 0, new HubCommandPayload("P3", List.of()), x -> stack(x, 0), out::add);
+        helper.assertTrue(!ran && out.size() == 1 && says(out.get(0), "too_quick") && out.get(0).rowId().equals("P3"), "over the rate: " + out);
+        out.clear();
+        HubCommands.dispatch(p, true, 0, new HubCommandPayload("ZZ", List.of()), x -> stack(x, 0), out::add);
+        helper.assertTrue(out.size() == 1 && says(out.get(0), "unknown"), "within the rate the route ran: " + out);
+        helper.succeed();
+    }
+
+    /** Saving a key the clients also read pushes it at once (the file watcher would only get there later); a key they do not read pushes nothing. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSavedClientCopyKeyIsBroadcastAtOnce(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        SettingEntry e = AdminEntries.ALL.stream().filter(SettingEntry::clientCopy).filter(x -> x.kind() == SettingKind.BOOL).findFirst().orElseThrow();
+        if (AdminSpecs.value(e).isEmpty()) {
+            helper.succeed(); // the part that owns it is off
+            return;
+        }
+        int[] pushed = {0};
+        AdminSettings.onClientCopySaved(server -> pushed[0]++);
+        boolean before = (Boolean) AdminSpecs.value(e).orElseThrow().get();
+        List<AdminSnapshotPayload> replies = new ArrayList<>();
+        try {
+            helper.assertTrue(set(p, 2, e.id(), new SettingValue.Bool(!before), new Counting(p), replies).ok(), "the OP save failed");
+            helper.assertTrue(pushed[0] == 1, "a saved client key was pushed " + pushed[0] + " times");
+            int atKey = pushed[0];
+            helper.assertTrue(set(p, 2, KEY, new SettingValue.Int(level()), new Counting(p), replies).ok() && pushed[0] == atKey, "a key clients do not read was pushed");
+        } finally {
+            set(p, 2, e.id(), new SettingValue.Bool(before), new Counting(p), new ArrayList<>());
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void opDebugRowRunsAndAnswersInPageAndChat(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.create(helper);

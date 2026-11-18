@@ -60,6 +60,9 @@ public final class AdminSettings {
             return Result.of(Status.UNKNOWN);
         }
         SettingEntry entry = found.get();
+        if (AdminSpecs.isClient(entry.file())) {
+            return Result.of(Status.UNKNOWN); // a CLIENT file is the player's own, never an operator's to write
+        }
         if (entry.isHidden()) {
             return Result.of(Status.HIDDEN);
         }

@@ -417,7 +417,7 @@ Duel in progress (a state of the profile, not a page): the opponent, the time le
 
 Fields: `NAME`, `SPECIES`, `RANK`, `LEVEL`, `PACK`, `PACK_DAYS`, `PRESENCE` (online or last seen), `SIRE`, `LINE`, `GENES`, `ANCHOR`, `BONUS`.
 
-Key: **K** always known to this observer. **D** known only once discovered (by a rite or ability below, or pooled by the pack) and then stays known. **?** never sent.
+Key: **K** always known to this observer. **D** known only once discovered (by a rite or ability below, or pooled by the pack) and then stays known. **?** not known to this relation: not sent, unless the observer has discovered the fact anyway (their own record, their pack's pool, an ability), and then it is shown whatever its letter says. A stranger's own letters are all **?**: the client already has their name and online dot from its own player list.
 
 | Observer's relation to the subject | NAME | SPECIES | RANK, LEVEL | PACK, PACK_DAYS | PRESENCE | SIRE | LINE | GENES | ANCHOR | BONUS |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -433,7 +433,7 @@ Key: **K** always known to this observer. **D** known only once discovered (by a
 | Rite of Lineage (Reveal) (on yourself) | | | | | | | | werewolf gene | | |
 | Rite of Doppelgänger Blood, with their taglock | | | | | | | | their doppelgänger gene | | |
 | Memory Claws (Peter Hale's reward, plan 17) | | | | | | their sire | | their genes (respecting `gene_visibility`) | | |
-| **A stranger** you can see by name (online list) | K | ? | ? | ? | online | ? | ? | ? | ? | ? |
+| **A stranger** you can see by name (online list) | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | **A stranger offline** you never met | not listed | | | | | | | | | |
 | **An OP in Admin's OP view** | K | K | K | K | K | K | K | K | K | K (banner "OP view", never in the player-facing Profile) |
 

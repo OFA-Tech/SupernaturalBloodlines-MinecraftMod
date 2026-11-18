@@ -740,6 +740,8 @@
   "supernaturalbloodlines.hub.admin.restart_title": "Needs a restart",
   "supernaturalbloodlines.hub.admin.restart_body": "Change %s? It takes effect after the next restart, and the server and every client must match.",
   "supernaturalbloodlines.hub.admin.apply": "Apply",
+  "supernaturalbloodlines.hub.admin.less": "Lower %s",
+  "supernaturalbloodlines.hub.admin.more": "Raise %s",
   "supernaturalbloodlines.hub.admin.refused": "The server refused this value.",
   "supernaturalbloodlines.hub.admin.list_tip": "One entry per line. Enter adds a line; Ctrl+Enter applies.",
   "supernaturalbloodlines.hub.admin.list_help": "One entry per line.",

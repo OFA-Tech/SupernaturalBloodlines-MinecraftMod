@@ -32,7 +32,7 @@ public final class HudPart {
         AdminSpecs.register(HudConfig.FILE, HudConfig.SPEC);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             container.registerConfig(ModConfig.Type.CLIENT, HudClientConfig.SPEC, HudClientConfig.FILE);
-            AdminSpecs.register(HudClientConfig.FILE, HudClientConfig.SPEC); // the hub's Settings page edits these
+            AdminSpecs.registerClient(HudClientConfig.FILE, HudClientConfig.SPEC); // the hub's Settings page edits these
             HudClient.register(modBus);
         }
         BiteService.register();

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased (UI first: the hub pages)
+
+### Upgrading
+- **Update the server and every client together.** The hub payloads moved to protocol `2`: a client and a server on different versions have no channel to each other (nothing breaks, but the hub shows no server data).
+- **The Admin page writes the COMMON tomls.** An operator (permission level 2 or more) can change COMMON config keys from the hub; the change is saved to the server's file at once. Client files (`*-client.toml`) are never written by Admin. A key that needs a restart says so.
+- **There is a new save file:** `supernaturalbloodlines_profile_knowledge` (what each player has discovered about others, and each pack's pool). It is created on first use; nothing to migrate. The pack index also records when each member joined (days in the pack); members who were already in a pack before this version show no day count (a "?").
+
 ## Unreleased (plan 17a, Original bloodlines)
 
 ### Upgrading

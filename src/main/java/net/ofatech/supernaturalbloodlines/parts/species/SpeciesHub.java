@@ -82,8 +82,6 @@ final class SpeciesHub {
                 String name = PackAccess.nameOf(server, d.challenger());
                 out.add(new HubRequests.Request(HubRequests.Kind.CHALLENGE, d.challenger(), name == null ? "" : name, "", left(d.expires(), now)));
             });
-        }
-        if (ModList.get().isLoaded("werewolves")) {
             PackDuel.board().all().stream().filter(d -> d.involves(p.getUUID())).findFirst().ifPresent(d -> {
                 UUID other = d.other(p.getUUID());
                 boolean asked = d.phase() == net.ofatech.supernaturalbloodlines.core.bloodline.DuelBoard.Phase.ASKED;

@@ -36,6 +36,11 @@ public final class RequestToast {
         return List.of(who, Component.translatable("supernaturalbloodlines.hub.toast.left", seconds), Component.translatable("supernaturalbloodlines.hub.toast.key", key));
     }
 
+    /** What is drawn of each line: the whole line, or its start and an ellipsis when it is wider than {@code width}. Never a silent cut. */
+    public static List<String> fitted(List<Component> lines, int width, java.util.function.ToIntFunction<String> measure) {
+        return lines.stream().map(c -> net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(c.getString(), width, measure)).toList();
+    }
+
     @SubscribeEvent
     public static void onRender(RenderGuiEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
@@ -53,9 +58,9 @@ public final class RequestToast {
         List<Component> lines = lines(r, (left + 19) / 20, HubKeybinds.ANSWER.isUnbound() ? HubKeybinds.HUB.getTranslatedKeyMessage() : HubKeybinds.ANSWER.getTranslatedKeyMessage());
         int h = lines.size() * 10 + 2 * PAD - 1;
         g.fill(X, Y, X + W, Y + h, PAPER);
-        for (int i = 0; i < lines.size(); i++) {
-            // a line that does not fit ends in an ellipsis, as everywhere in the hub, instead of being cut off silently
-            g.drawString(font, net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(lines.get(i).getString(), W - 2 * PAD, font::width), X + PAD, Y + PAD + i * 10, i == 0 ? INK : MUTED, false);
+        List<String> shown = fitted(lines, W - 2 * PAD, font::width);
+        for (int i = 0; i < shown.size(); i++) {
+            g.drawString(font, shown.get(i), X + PAD, Y + PAD + i * 10, i == 0 ? INK : MUTED, false);
         }
     }
 }

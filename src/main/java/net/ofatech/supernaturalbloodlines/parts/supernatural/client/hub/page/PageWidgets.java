@@ -35,6 +35,15 @@ final class PageWidgets {
 
     /** A button: {@code primary} filled in the accent; {@code why} is shown instead of the action when it is off. */
     static void button(HubScreen.Frame f, String id, Rect r, Component label, boolean enabled, boolean primary, @Nullable Component why, @Nullable Runnable action) {
+        draw(f, id, r, label, enabled, primary, why, false, action);
+    }
+
+    /** A button whose hint is always in its tooltip and narration (not only when disabled): a bare "+" or "-" says what it changes. */
+    static void hinted(HubScreen.Frame f, String id, Rect r, Component label, boolean enabled, boolean primary, Component hint, @Nullable Runnable action) {
+        draw(f, id, r, label, enabled, primary, hint, true, action);
+    }
+
+    private static void draw(HubScreen.Frame f, String id, Rect r, Component label, boolean enabled, boolean primary, @Nullable Component why, boolean always, @Nullable Runnable action) {
         HubTheme t = f.theme();
         boolean hot = enabled && (f.hovered(r) || f.focused(id));
         int fill = primary ? (enabled ? t.accent() : t.muted()) : hot ? t.good() : t.paper();
@@ -45,7 +54,7 @@ final class PageWidgets {
         String shown = LabelFit.cut(label.getString(), r.w() - 6, f.font()::width);
         f.g.drawString(f.font(), shown, r.x() + (r.w() - f.font().width(shown)) / 2, r.y() + (r.h() - 8) / 2, text, false);
         List<Component> tip = new ArrayList<>(List.of(label));
-        if (!enabled && why != null) {
+        if ((always || !enabled) && why != null) {
             tip.add(why);
         }
         f.target(id, r, tip, enabled ? action : null);

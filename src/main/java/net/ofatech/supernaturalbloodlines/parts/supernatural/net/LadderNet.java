@@ -28,6 +28,10 @@ import java.util.WeakHashMap;
  * data reload ({@code OnDatapackSyncEvent} fires for both), with the server's mod and part sets so the client prunes it the same way.
  */
 public final class LadderNet {
+    /**
+     * Optional, so a client or server without this part still connects; but the channel only exists between two sides on the same version, so a
+     * server and its clients on different protocol numbers cannot talk (the hub shows nothing from the server). Raise it with any payload change.
+     */
     private static final String PROTOCOL = "2";
 
     private LadderNet() {
