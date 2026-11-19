@@ -3,7 +3,8 @@
 Textures: `src/main/resources/assets/supernaturalbloodlines/textures/entity/boss/`
 Blockbench projects: `art/blockbench/bosses/<asset>.bbmodel` (Modded Entity format, texture embedded)
 Previews (front | back | ¾, wolves also a head close-up): `art/previews/bosses/<asset>.png`
-Generators (re-run to rebuild every texture): `art/bosses/tools/` (`paint_skins.py`, `paint_wolves.py`; Blockbench scripts `bb_*.js`).
+Generators (re-run to rebuild every texture): `art/bosses/tools/` (`paint_skins.py`, `paint_wolves.py`, `paint_tricorn.py`; Blockbench scripts `bb_*.js`).
+Item model: `models/item/sebastien_tricorn.json` with `textures/item/sebastien_tricorn.png` (see "Sebastien's tricorn" below).
 Owner's reference notes: `art/bosses/REFERENCES.md`.
 
 All art is original. Wikis, show descriptions and fan skins were used as inspiration and colour reference only; no pixels were copied. Planet Minecraft blocks image downloads (HTTP 403), so for the Originals the fan skins could only be checked by page title and tags, and the looks come from the show wikis below.
@@ -19,10 +20,10 @@ All art is original. Wikis, show descriptions and fan skins were used as inspira
 | `rebekah.png` | **slim arms** | cream blouse, grey wool coat, dark jeans, brown boots; long icy-blonde waves, light blue eyes, pale skin with a few freckles | long gold pendant necklace; hair spills over the coat on the jacket layer |
 | `finn.png` | player | grey dress coat over a white shirt and dark tie, dark trousers, black shoes; brown hair slicked back, hazel-green eyes | coat tails on the pants layers |
 | `freya.png` | **slim arms** | brown leather jacket over a charcoal top, dark jeans, black boots; long dirty-blonde hair, green eyes, smoky liner | pendant on a cord. Possible future NPC/boss |
-| `deucalion_human.png` | player | dark charcoal knit sweater with vertical ribs, lighter grey textured shawl collar and shoulder panels, dark trousers; short swept dirty-blond hair, blue eyes | no coat, cane or glasses |
+| `deucalion_human.png` | player | dark charcoal knit sweater with clean vertical ribs, lighter grey textured (checker-knit) shawl collar and shoulder panels, dark trousers; short swept sandy-blond hair in three-tone strands, blue eyes | no coat, cane or glasses. No random noise: every tone is placed by a regular pattern, so nothing speckles |
 | `peter_hale.png` | player | camel wool overcoat (lapels, open) over a dark grey herringbone waistcoat and a white open-collar shirt, dark trousers; slicked-back dark hair, short trimmed beard and stubble (mouth visible), blue-green eyes | coat to knee level on the pants layers, charcoal trousers and dark shoes below |
-| `peter_hale_burned.png` | player | hospital-coma / Season 6 burn look, 8-colour burn palette: charred black and brown cores with ember cracks, raw red and pink rims, smooth pale-pink scar tissue, intact skin | burns are connected regions, heaviest on the left side of the face (viewer's right, clouded eye), left arm and torso; right face stays recognisably Peter with dark, partly singed hair. No clothes except burned scraps (left hip, shoulder, thighs) and gauze bandages (chest, right forearm, left shin), all on the second layer |
-| `sebastien_valet.png` | player | French line-infantry soldier of the 1760s: undyed greyish-white wool coat with blue cuffs and turn-backs and brass buttons, buff waistcoat, black cravat, white buff cross-belt, buff breeches, black gaiters | black tricorn on the hat layer (silver-white lace edge, raised front and sides, cockade); natural dark hair tied in a queue with a black ribbon at the nape, tail and bow hanging on the coat back; clean face with light stubble; healthy tan skin, no pale vampire look |
+| `peter_hale_burned.png` | player | Season 1 burned look: intact skin, ridged ruddy scar, raw red, char brown and black; grey button shirt, black leather jacket, charcoal trousers | one burn field in 3D runs from the right side of his face (viewer's left, as in the 1x04 and 1x09 stills) down the right arm, across the chest and back, to the right hip; a smaller one takes the left hand. Skin grades intact, scar, raw, char towards each centre. The jacket survives only on his left, the shirt is burned through along the swath with a black and scorched-brown fringe, the right trouser leg is burned open. Right half of the face stays recognisably Peter (clouded eye on the burned side) |
+| `sebastien_valet.png` | player | French line-infantry soldier of the 1760s: undyed greyish-white wool coat with blue cuffs and turn-backs and brass buttons, buff waistcoat, black cravat, white buff cross-belt, buff breeches, black gaiters | bare-headed on the skin: natural dark hair pulled back into a queue with a black ribbon at the nape, tail and bow hanging on the coat back; clean face with light stubble; healthy tan skin. His tricorn is a 3D item model, not paint (the preview shows it worn) |
 | `beast_host.png` | player | linen button-up shirt, brown vest, grey trousers; medium-brown skin, dark brown eyes, short dark brown hair | the Beast's host, Mason Hewitt in the show; village clothes for the mod |
 
 ## Werewolf-model textures (128×64)
@@ -35,6 +36,15 @@ All four use the Werewolves mod beast model (`WerewolfBeastModel`) UV layout exa
 | `peter_hale_wolf.png` | dark blue-grey body, shaggy black mane over neck, shoulders and back, red eyes, white claws and fangs | **Needs a quadruped pose or model later** (the Werewolves beast model is a hunched biped; the show's Alpha moves on all fours). GeckoLib upgrade candidate. |
 | `klaus_hybrid.png` | warm tan-brown fur, cream chest, dark saddle, black branching hybrid veins, yellow eyes | the show never shows a full wolf form clearly, so the coat follows his dirty-blond/brown colouring |
 | `beast_of_gevaudan.png` | black-brown fur with russet back streaks and a pale underbelly mark, dull red veins, bone-white face plates, white-blue eyes | brow band, skull cap, cheek guards (the flat sideburn planes), muzzle ridge, spine ridge, shoulder and forearm plates. Meant to render at about 2×, so details are 2–4 px blocks |
+
+## Sebastien's tricorn (3D item model)
+
+`models/item/sebastien_tricorn.json` (10 cuboids, plain 1.21.1 Java item model) and `textures/item/sebastien_tricorn.png` (16x16, 1 texel per model unit, the same density as a skin). Blockbench project: `art/blockbench/bosses/sebastien_tricorn.bbmodel`. Rebuild with `paint_tricorn.py` and `bb_tricorn.js`.
+
+- Black felt, low crown, the brim cocked up on three sides into a point at the front, a gold lace edge, and a black ribbon cockade with a gold loop and button on the wearer's left.
+- A square head cannot sit inside a true triangle of a sensible size, so the two long sides are each a 45-degree front panel plus a straight side panel. It is 14 wide and 18 long on an 8-wide head.
+- `display.head` (scale 1.6, up 17.6) makes one model unit one skin pixel and sits the brim one pixel below the top of the head. It was checked in Blockbench on the player model (last two views of `art/previews/bosses/sebastien_tricorn.png`), not in the game.
+- **Not wired yet.** There is no `sebastien_tricorn` item in the code. Register one and put it in Sebastien's head slot: `CustomHeadLayer` then draws it with the head transform. Until then he is bare-headed, as he is in the show's stills.
 
 ## Sources
 
@@ -66,6 +76,14 @@ All four use the Werewolves mod beast model (`WerewolfBeastModel`) UV layout exa
 - **Deucalion (human)** — also teen-wolf-pack.fandom.com/wiki/Gideon_Emery and yourprops.com (screen-worn wardrobe listing, page body not readable); sandy-blond hair and blue eyes confirmed by two wikis.
 - **Peter Hale (human)** — also hleatherjackets.com and usajacket.com Teen Wolf: The Movie replica listings (brown wool-blend lapel coat).
 - **Beast host (Mason Hewitt)** — teen-wolf-pack.fandom.com/wiki/Mason_Hewitt (medium-brown skin, dark brown eyes, short dark brown hair, button-up shirts), heroes-and-villain.fandom.com/wiki/Mason_Hewitt, en.wikipedia.org/wiki/Khylin_Rhambo.
+
+### Round 6 sources (polish pass)
+
+- **Deucalion, human** — teen-wolf-pack.fandom.com/wiki/Deucalion ("sandy blond hair", blue eyes, "button-up shirts and sweaters in neutral colors"); stills `File:3x01 Deucalion and Scott 2.jpg` (dark shawl-collar sweater), `File:3x04 Deucalion.png` and `File:5x14 Deucalion 5.png` (short hair swept up and across, light stubble); owner's reference for the grey collar and shoulder panels.
+- **Peter Hale, burned** — stills `File:1x04 peter hale burnt.jpg` (ridged ruddy scar tissue from forehead to neck on the right side of his face, hairline burned back at that temple) and `File:1x09 peter burned face.png` (same side; grey button shirt, black leather jacket); teenwolfwiki.com/Peter_Hale+Season_1 ("burned and broken for six years", "burned to a crisp" in Code Breaker); heroes-and-villain.fandom.com/wiki/Peter_Hale (burned three times, burn marks on the side of his face until Wolf's Bane). The stills put the burn on his right; round 5 had it on his left from a blog post.
+- **Tricorn** — Metropolitan Museum 26.56.88 (commons.wikimedia.org `File:Tricorne MET 26.56.88.jpg`: black wool, metallic gold lace edge, gold loop and button, black ribbon cockade; the felt and ribbon colours are sampled from it); commons.wikimedia.org `File:Hatt m1763.jpg` (army hat of 1763: felt cocked hat with a tape-bound edge); fashionhistory.fitnyc.edu/tricorne-hat ("generally dark", "often edged with a gold braided trim", worn point forward); en.wikipedia.org/wiki/Tricorne (low crown, brim cocked on three sides, gold or silver lace, a cockade on military hats); Kronoskaf's French regulars in North America, quoted on theminiaturespage.com/boards/msg.mv?id=307469 ("black tricorne laced gold with a black cockade"). The lace reuses the brass of his coat buttons, since French hats were laced in the button colour.
+- **Sebastien Valet** — teen-wolf-pack.fandom.com/wiki/Sebastien_Valet (olive skin, black hair "long enough to pull back with a ribbon", his Seven Years' War uniform); stills `File:5x18 Sebastien.gif`, `File:5x18 Sebastien dies.jpg` (bare-headed, long dark hair, white shirt).
+- Fandom pages still return 403, but the wiki's `api.php` (page text and image lists) and `static.wikia.nocookie.net` images can be fetched.
 
 ## Source of the werewolf UV layout
 
