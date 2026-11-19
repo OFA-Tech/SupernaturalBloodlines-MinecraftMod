@@ -54,7 +54,8 @@ public final class CommandCoverageGameTests {
         // a row whose root is registered must have its form; a root that is off (no species part, no Werewolves) has none
         List<String> noForm = new ArrayList<>();
         for (AdminCommands.Row r : AdminCommands.ALL) {
-            if (root.getChild(r.root()) == null || (r.form().contains(" debug eclipse") && !has(root, r.root(), "debug", "eclipse"))) {
+            if (root.getChild(r.root()) == null || (r.form().contains(" debug eclipse") && !has(root, r.root(), "debug", "eclipse"))
+                    || (r.form().contains(" debug npcpack") && !has(root, r.root(), "debug", "npcpack"))) {
                 continue;
             }
             for (String shape : r.shapes()) {

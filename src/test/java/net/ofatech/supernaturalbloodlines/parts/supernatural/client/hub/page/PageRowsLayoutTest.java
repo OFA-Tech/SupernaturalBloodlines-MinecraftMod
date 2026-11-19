@@ -49,7 +49,7 @@ class PageRowsLayoutTest {
             acts.add(h + "admin.act." + a);
         }
         rows.add(acts);
-        rows.add(List.of(h + "admin.act.eclipse_start", h + "admin.act.eclipse_stop"));
+        rows.add(List.of(h + "admin.act.eclipse_start", h + "admin.act.eclipse_stop", h + "admin.act.npc_pack"));
         rows.add(List.of(h + "theme.grimoire", h + "theme.blood_moon", h + "theme.tensura"));
         rows.add(List.of(h + "settings.controls", h + "home.profile"));
         return rows;

@@ -12,7 +12,7 @@ An Enhanced Celestials event is **a second layer on top of the real moon**. A Bl
 
 | Event | What changes |
 |---|---|
-| **Blood Moon** | A vampire's bite gives **x1.25 blood** (`blood_moon_bite_bonus`). Enhanced Celestials' own spawn changes apply to our mobs too. |
+| **Blood Moon** | A vampire's bite gives **x1.25 blood** (`blood_moon_bite_bonus`). Wild werewolf packs may spawn as on a full moon, at **half the chance** (`blood_moon_pack_chance_factor`). Enhanced Celestials' own spawn changes apply to our mobs too. |
 | **Blue Moon** | Every rite costs **x0.8 altar power** (`blue_moon_rite_cost`). It never lets you perform a full-moon rite on a night that is not a full moon. |
 | **Harvest Moon** | Our crops (vervain and the wolfsbane strains) are put in Enhanced Celestials' list of Harvest Moon crops, so they should drop **double**, like the vanilla ones (not yet checked in a game). |
 | **Super moons** (always a full moon) | The Rite of the Moon, the Silver Moon and Immortality cost **x0.75** (`super_moon_rite_cost`), on top of the Blue Moon discount. |

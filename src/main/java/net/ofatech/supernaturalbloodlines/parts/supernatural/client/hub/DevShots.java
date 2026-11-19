@@ -230,12 +230,22 @@ public final class DevShots {
         }
         // the pointer in the screen's corner, so no stray tooltip is in the picture
         parkCursor(mc, 0, 0);
+        // dev only: the screen after the wheel (.scroll=true) or after the keyboard moved the focus to a target (.focus=<id>)
+        if (wait == SETTLE_TICKS - 6 && mc.screen instanceof HubScreen hs) {
+            if (Boolean.getBoolean(PROPERTY + ".scroll")) {
+                hs.devScrollToEnd();
+            }
+            String focusId = System.getProperty(PROPERTY + ".focus");
+            if (focusId != null && !focusId.isBlank()) {
+                hs.focusOn(focusId);
+            }
+        }
         if (++wait < SETTLE_TICKS) {
             return;
         }
         File dir = new File(mc.gameDirectory, "screenshots/devshots");
         dir.mkdirs();
-        String tag = demo() == null || demo().equals("true") ? "" : "-" + demo();
+        String tag = (demo() == null || demo().equals("true") ? "" : "-" + demo()) + (Boolean.getBoolean(PROPERTY + ".scroll") ? "-scrolled" : "") + (System.getProperty(PROPERTY + ".focus") != null ? "-focus" : "");
         String name = "devshots/" + (s.hud() != null ? "hud-" : "") + s.theme() + "-" + (s.hud() != null ? s.hud() : s.menu() ? "menu" : s.variant() != null ? s.variant() : s.page().name().toLowerCase(Locale.ROOT)) + tag + "-s" + mc.options.guiScale().get() + ".png";
         Screenshot.grab(mc.gameDirectory, name, mc.getMainRenderTarget(), c -> { });
         SupernaturalBloodlines.LOGGER.warn("DEVSHOTS {}", name);

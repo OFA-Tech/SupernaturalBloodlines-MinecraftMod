@@ -160,6 +160,18 @@ public final class BookPackPage implements HubPageView {
                 ? Component.empty().append(name).append(" \u00d7" + sparks) : name;
     }
 
+    /** For a weak spark that carries no growth time (a save from before the field): the default of {@code weak_spark_grow_days}. */
+    static final int DEFAULT_GROW_TICKS = 3 * 24000;
+
+    /** "A weaker spark is growing in you: ready in about 2 days." while the viewer holds one (R145); empty otherwise. Only the viewer's own state: it is shown to nobody else. */
+    static java.util.Optional<Component> weakLine(WolfState wolf) {
+        if (wolf.weakSparks() <= 0) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of(Component.translatable("supernaturalbloodlines.pack.weak_spark_line",
+                net.ofatech.supernaturalbloodlines.core.bloodline.WeakSparkRules.daysLeft(wolf.weak(), DEFAULT_GROW_TICKS)));
+    }
+
     /** The sparks the server counts for the viewer: their own row of the pack (a True Alpha's full count included), else the plain count. */
     static int ownSparks(HubScreen.Frame f) {
         java.util.UUID self = f.view.player().getUUID();
@@ -193,6 +205,9 @@ public final class BookPackPage implements HubPageView {
         }
         int y = BookKit.head(f, ledgerRegion, Component.translatable(KEY + "title"), Component.translatable(BOOK + "subtitle"));
         y = PageKit.title(f, Component.translatable(KEY + "rank", rankLabel(f, wolf)), r.x(), y, r.w(), t.accent());
+        if (weakLine(wolf).isPresent()) {
+            y = PageKit.wrapped(f, weakLine(wolf).get(), r.x(), y, r.w(), t.muted()) + 2;
+        }
         if (pack.isEmpty()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "alone"), r.x(), y + 2, r.w(), t.muted());
         }

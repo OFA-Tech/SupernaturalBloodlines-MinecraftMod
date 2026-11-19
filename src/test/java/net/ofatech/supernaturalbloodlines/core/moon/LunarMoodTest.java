@@ -42,12 +42,15 @@ class LunarMoodTest {
         assertEquals(1, none.riteCost(true, 0.8, 0.75));
         assertEquals(1, none.riteCost(false, 0.8, 0.75));
         assertEquals(1, none.biteFactor(1.25));
+        assertEquals(1, none.packChance(0.5));
         assertFalse(none.sparesForcedShift(true));
     }
 
     @Test
     void aBlueMoonCutsEveryRiteAndNeverAllowsOneOnAnotherNight() {
         LunarMood blue = new LunarMood(Kind.BLUE, false);
+        assertEquals(1, blue.packChance(0.5), "only a Blood Moon changes the pack chance");
+        assertEquals(1, new LunarMood(Kind.HARVEST, false).packChance(0.5));
         assertEquals(0.8, blue.riteCost(false, 0.8, 0.75));
         assertEquals(0.8, blue.riteCost(true, 0.8, 0.75), "a plain Blue Moon is not a super moon");
         assertEquals(1, blue.biteFactor(1.25));
@@ -65,6 +68,8 @@ class LunarMoodTest {
     void aBloodMoonIsForBitesAndPacksOnly() {
         LunarMood blood = new LunarMood(Kind.BLOOD, false);
         assertEquals(1.25, blood.biteFactor(1.25));
+        assertEquals(0.5, blood.packChance(0.5), "a Blood Moon spawns NPC packs at its share of the chance (R143)");
+        assertEquals(0.5, new LunarMood(Kind.BLOOD, true).packChance(0.5), "a super Blood Moon too");
         assertEquals(1, blood.riteCost(true, 0.8, 0.75));
         assertFalse(blood.sparesForcedShift(true));
     }

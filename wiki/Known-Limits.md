@@ -122,3 +122,8 @@ If you find something that behaves differently from this wiki, please [open an i
 - **Line rites have no consent check:** a witch can free an unwilling player, as with Severance.
 - **Original lines:** a rite target must be online and in the same world as the circle. Both line rites need a lunar eclipse, and the eclipse comes from Werewolves: without it the rites cannot be performed. NPC Originals arrive with the boss update: until then there is no NPC Original to kill or desiccate, so line death and the line warnings only happen for player Originals (the NPC roots only group creatures). A world from before lines gets its line index rebuilt at login (a player) or when the creature first loads.
 
+## Wild packs (plan 15b)
+- A pack spawns once per player per night; there is no way to ask for another or to cancel it.
+- A weaker spark grows with online time, not active time: someone away from the keyboard grows it.
+- Wolf Spirits are vanilla wolves tamed to the caster, not the Werewolves mod's own spirit wolf.
+- The wild wolves cannot be recruited yet (a later plan).

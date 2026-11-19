@@ -124,3 +124,12 @@ Builder numbers, all tunable: Rite of the Broken Line 12000 power (2x Severance'
 ## Plan 15a: the moon calendar (R140 to R142)
 - `delayed_awakening_nights` 1 (range 0 to 3): the gene's kill is a deliberate act, so waiting one dusk keeps it from being a mid-fight surprise; 0 restores the old instant awakening.
 - `full_moon_sleep` `off`: the owner decided on werewolves only as the scope when it is turned on; it is off by default so no world changes silently. Dusk is 12000, before the 12786 forced-shift window, so nobody sleeps through the night's start.
+
+## Plan 15b: NPC packs, the weaker spark, Surge and Spirits (R143 to R146)
+All numbers are drafts to tune after a playtest; each is a config key.
+- `npc_pack_chance` 0.35 per player per full-moon night (about one night in three), `npc_lone_wolf_chance` 0.5, `npc_pack_alpha_chance` 0.7 (a pack without an Alpha has no spark to give), 3 to 5 wolves (the Alpha leads only as many as the Werewolves mod lets it), `npc_max_packs_per_night` 3 per dimension so a big server is not buried. Spawn 24 to 48 blocks away, in the dark, no village within 2 chunks.
+- `blood_moon_pack_chance_factor` 0.5 (the owner: half), celestials config.
+- Feral: attack x1.2, speed x1.1 on a dark full-moon night: small, the wolves are already strong.
+- Weak spark: 3 online days to grow, at most 2 held, 3 game days between two: slower than a steal and bounded, so the forest Alphas are not farmed.
+- Surge: 24 blocks, Regeneration II 20 s, Absorption II 30 s, Strength I and Speed I 45 s; the caster then Weakness I and Slowness I for 30 s; cooldown 240 s. Howling Werewolf's numbers are much larger; ours is the light pack version.
+- Spirits: 3 for 180 s, cooldown 90 s (Howling: 5 for 240 s, 60 s).

@@ -59,6 +59,11 @@ public record LunarMood(Kind kind, boolean superMoon) {
 
 
 
+    /** NPC werewolf packs spawn on a Blood Moon at {@code factor} of the full-moon chance (R143). */
+    public double packChance(double factor) {
+        return kind == Kind.BLOOD ? factor : 1;
+    }
+
     /** A Super Blue Moon skips the Werewolves forced shift for everybody, when the switch is on. */
     public boolean sparesForcedShift(boolean switchOn) {
         return switchOn && superMoon && kind == Kind.BLUE;

@@ -15,6 +15,8 @@ Config `supernaturalbloodlines.vampirism_tensura.mixins.json`, plugin `Vampirism
 | vampirism_tensura | `RaceUtilsSunMixin` | `RaceUtils.isUnderSun(LivingEntity)` (HEAD, returns false) | `VampireRace.onTick` adds Weakness, Slowness and Mining Fatigue (amplifier 3) whenever `isUnderSun` is true, before it ever calls `shouldBurn`. Faction vampires skip them too: Vampirism's sun handling wins (its own sun damage, nausea and weakness by level). The same method gates Tensura's bat form under sun, so a faction vampire may use it by day. Only faction-vampire players are affected; the night/moon-phase branch of `onTick` is unchanged. | `parts.vampirismTensura` |
 
 ## species (3 of 3)
+Plan 15b added no mixin: the NPC packs, the weaker spark, Surge and Spirits use NeoForge events only (`EntityTickEvent`, `LivingChangeTargetEvent`, `LivingDeathEvent`, `LivingDropsEvent`, `LevelTickEvent`).
+
 
 Config `supernaturalbloodlines.species.mixins.json`, plugin `SpeciesMixinPlugin`, package `mixin.species`. Applies only when Vampirism and Enchanted are installed and `parts.species` is not `false`. The witch bonus has its own switch, `witch_bonus_enabled` in `supernaturalbloodlines-species.toml`: if an Enchanted update makes a mixin miss (`require = 0`), the bonus is simply missing and the log says so; the switch turns the bonus off on purpose.
 

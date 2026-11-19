@@ -41,6 +41,7 @@ class LunarMoodsTest {
         assertTrue(LunarMoods.ahead(null, 6).isEmpty());
         assertEquals(1, LunarMoods.riteCost(null, true));
         assertEquals(1, LunarMoods.biteFactor(null));
+        assertEquals(1, LunarMoods.packChance(null));
         assertFalse(LunarMoods.sparesForcedShift(null));
         assertFalse(LunarMoods.ecDrawsEclipse(null));
     }
@@ -95,6 +96,7 @@ class LunarMoodsTest {
         assertEquals(1, off.blueRiteCost());
         assertEquals(1, off.superRiteCost());
         assertEquals(1, off.bloodBite());
+        assertEquals(1, off.bloodMoonPackChance());
         assertFalse(off.superBlueSkipsForcedShift());
     }
 }

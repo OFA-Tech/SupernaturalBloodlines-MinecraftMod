@@ -114,6 +114,8 @@ public final class PackCommand {
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(c -> run(c, emissary(self(c), EntityArgument.getPlayer(c, "player"))))))
                 .then(Commands.literal("roar").executes(c -> run(c, AlphaRoar.roar(self(c)))))
+                .then(Commands.literal("surge").executes(c -> run(c, net.ofatech.supernaturalbloodlines.parts.species.npc.PackSkills.surge(self(c)))))
+                .then(Commands.literal("spirits").executes(c -> run(c, net.ofatech.supernaturalbloodlines.parts.species.npc.PackSkills.spirits(self(c)))))
                 .then(Commands.literal("anchor")
                         .executes(c -> run(c, anchor(self(c), null)))
                         .then(Commands.argument("player", EntityArgument.player())

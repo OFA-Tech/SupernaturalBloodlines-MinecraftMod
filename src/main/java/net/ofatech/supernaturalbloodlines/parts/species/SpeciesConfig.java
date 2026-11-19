@@ -82,6 +82,22 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.ConfigValue<String> FULL_MOON_SLEEP;
     public static final int DEFAULT_DELAYED_AWAKENING_NIGHTS = 1;
     private static final ModConfigSpec.IntValue DELAYED_AWAKENING_NIGHTS;
+    private static final ModConfigSpec.BooleanValue NPC_PACKS_ENABLED;
+    private static final ModConfigSpec.DoubleValue NPC_PACK_CHANCE;
+    private static final ModConfigSpec.DoubleValue NPC_LONE_WOLF_CHANCE;
+    private static final ModConfigSpec.DoubleValue NPC_PACK_ALPHA_CHANCE;
+    private static final ModConfigSpec.IntValue NPC_PACK_MIN_SIZE;
+    private static final ModConfigSpec.IntValue NPC_PACK_MAX_SIZE;
+    private static final ModConfigSpec.IntValue NPC_MAX_PACKS_PER_NIGHT;
+    private static final ModConfigSpec.BooleanValue NPC_PACK_DAWN_DESPAWN;
+    private static final ModConfigSpec.DoubleValue FERAL_ATTACK_FACTOR;
+    private static final ModConfigSpec.DoubleValue FERAL_SPEED_FACTOR;
+    private static final ModConfigSpec.BooleanValue NPC_ALPHA_SPARK_ENABLED;
+    private static final ModConfigSpec.IntValue WEAK_SPARK_GROW_DAYS;
+    private static final ModConfigSpec.IntValue WEAK_SPARK_MAX_HELD;
+    private static final ModConfigSpec.IntValue WEAK_SPARK_COOLDOWN_DAYS;
+    private static final ModConfigSpec.BooleanValue MOONBLOOD_SURGE_ENABLED;
+    private static final ModConfigSpec.BooleanValue WOLF_SPIRITS_ENABLED;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -144,6 +160,38 @@ public final class SpeciesConfig {
                 .defineInList("full_moon_sleep", SLEEP_OFF, new java.util.ArrayList<>(java.util.List.of(SLEEP_OFF, SLEEP_WEREWOLVES, SLEEP_EVERYONE)));
         DELAYED_AWAKENING_NIGHTS = b.comment("R142: a human who carries the hidden werewolf gene and kills a villager or a player awakens at the next dusk, or this many dusks later, not at once. 0 awakens at once, as before. The Rite of Lineage and a wild bite are not delayed.")
                 .defineInRange("delayed_awakening_nights", DEFAULT_DELAYED_AWAKENING_NIGHTS, 0, 3);
+        NPC_PACKS_ENABLED = b.comment("R143: wild NPC werewolf packs (Werewolves' own Alpha leading wolves) and lone wolves spawn near players on full-moon nights. Off: none, and the Alphas of the Werewolves mod give no weaker spark either way (that has its own switch).")
+                .define("npc_packs_enabled", true);
+        NPC_PACK_CHANCE = b.comment("Chance per player per full-moon night that a pack spawns near them. A Blood Moon night that is not a full moon rolls at blood_moon_pack_chance_factor of it (celestials config).")
+                .defineInRange("npc_pack_chance", 0.35, 0.0, 1.0);
+        NPC_LONE_WOLF_CHANCE = b.comment("Chance per player per full-moon night, apart from the pack, that a lone werewolf spawns near them.")
+                .defineInRange("npc_lone_wolf_chance", 0.5, 0.0, 1.0);
+        NPC_PACK_ALPHA_CHANCE = b.comment("Chance that a spawned pack is led by an Alpha (which can drop a weaker spark). Without one it is leaderless wolves.")
+                .defineInRange("npc_pack_alpha_chance", 0.7, 0.0, 1.0);
+        NPC_PACK_MIN_SIZE = b.comment("Fewest wolves in a spawned pack (not counting the Alpha).")
+                .defineInRange("npc_pack_min_size", 3, 1, 8);
+        NPC_PACK_MAX_SIZE = b.comment("Most wolves in a spawned pack (not counting the Alpha). An Alpha can lead only as many as the Werewolves mod lets it.")
+                .defineInRange("npc_pack_max_size", 5, 1, 8);
+        NPC_MAX_PACKS_PER_NIGHT = b.comment("Most packs one dimension may spawn in one night, so a big server is not buried.")
+                .defineInRange("npc_max_packs_per_night", 3, 0, 20);
+        NPC_PACK_DAWN_DESPAWN = b.comment("Wild NPC wolves with no player within 24 blocks leave at dawn. Recruited ones never do.")
+                .define("npc_pack_dawn_despawn", true);
+        FERAL_ATTACK_FACTOR = b.comment("R144: a wild werewolf on a dark full-moon night hits this many times as hard. 1 = no change.")
+                .defineInRange("feral_attack_factor", 1.2, 1.0, 3.0);
+        FERAL_SPEED_FACTOR = b.comment("R144: a wild werewolf on a dark full-moon night moves this many times as fast. 1 = no change.")
+                .defineInRange("feral_speed_factor", 1.1, 1.0, 2.0);
+        NPC_ALPHA_SPARK_ENABLED = b.comment("R145: killing an Alpha of the Werewolves mod (a natural forest one or a pack's) gives a werewolf a weaker spark that grows while they are online. Off: it gives nothing.")
+                .define("npc_alpha_spark_enabled", true);
+        WEAK_SPARK_GROW_DAYS = b.comment("Online days a weaker spark takes to grow into a normal one.")
+                .defineInRange("weak_spark_grow_days", 3, 1, 30);
+        WEAK_SPARK_MAX_HELD = b.comment("Most weaker sparks one player may hold at a time.")
+                .defineInRange("weak_spark_max_held", 2, 1, 5);
+        WEAK_SPARK_COOLDOWN_DAYS = b.comment("Game days between two weaker sparks for one player, so a forest Alpha is not farmed. 0 = none.")
+                .defineInRange("weak_spark_cooldown_days", 3, 0, 30);
+        MOONBLOOD_SURGE_ENABLED = b.comment("R146: Moonblood Surge, a werewolf in a pack buffs the pack within 24 blocks and pays for it afterwards (/pack surge).")
+                .define("moonblood_surge_enabled", true);
+        WOLF_SPIRITS_ENABLED = b.comment("R146: Wolf Spirits, an Alpha calls three spirit wolves that fight for the pack for three minutes (/pack spirits).")
+                .define("wolf_spirits_enabled", true);
         b.pop();
         SPEC = b.build();
     }
@@ -353,6 +401,36 @@ public final class SpeciesConfig {
 
     private static volatile net.ofatech.supernaturalbloodlines.core.moon.SleepRules.Mode fullMoonSleepOverride;
     private static volatile Integer delayedAwakeningOverride;
+    private static volatile NpcTuning npcOverride;
+
+    /** The numbers of plan 15b: what the NPC packs, the weaker spark and the two pack abilities read. */
+    public record NpcTuning(boolean packs, net.ofatech.supernaturalbloodlines.core.bloodline.NpcSpawnRules.Tuning spawn, boolean dawnDespawn, double feralAttack,
+                            double feralSpeed, boolean alphaSpark, int growDays, int maxHeld, int cooldownDays, boolean surge, boolean spirits) {
+        public static final NpcTuning DEFAULT = new NpcTuning(true, new net.ofatech.supernaturalbloodlines.core.bloodline.NpcSpawnRules.Tuning(0.35, 0.5, 0.7, 3, 5, 3),
+                true, 1.2, 1.1, true, 3, 2, 3, true, true);
+    }
+
+    /** For tests: pins {@link #npc()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideNpc(NpcTuning value) {
+        npcOverride = value;
+    }
+
+    /** The NPC pack numbers; the defaults before the config loads. */
+    public static NpcTuning npc() {
+        NpcTuning pinned = npcOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return new NpcTuning(NPC_PACKS_ENABLED.get(), new net.ofatech.supernaturalbloodlines.core.bloodline.NpcSpawnRules.Tuning(NPC_PACK_CHANCE.get(),
+                    NPC_LONE_WOLF_CHANCE.get(), NPC_PACK_ALPHA_CHANCE.get(), NPC_PACK_MIN_SIZE.get(), NPC_PACK_MAX_SIZE.get(), NPC_MAX_PACKS_PER_NIGHT.get()),
+                    NPC_PACK_DAWN_DESPAWN.get(), FERAL_ATTACK_FACTOR.get(), FERAL_SPEED_FACTOR.get(), NPC_ALPHA_SPARK_ENABLED.get(), WEAK_SPARK_GROW_DAYS.get(),
+                    WEAK_SPARK_MAX_HELD.get(), WEAK_SPARK_COOLDOWN_DAYS.get(), MOONBLOOD_SURGE_ENABLED.get(), WOLF_SPIRITS_ENABLED.get());
+        } catch (IllegalStateException notLoaded) {
+            return NpcTuning.DEFAULT;
+        }
+    }
 
     /** For tests: pins {@link #fullMoonSleep()}; null clears it. */
     @VisibleForTesting

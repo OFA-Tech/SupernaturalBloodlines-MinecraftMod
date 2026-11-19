@@ -167,6 +167,7 @@ Only does anything with [Enhanced Celestials 2](Enhanced-Celestials). A factor o
 | Key | Default | What it does |
 |---|---|---|
 | `blood_moon_bite_bonus` | `1.25` | A vampire's bite gives this many times the blood on a Blood Moon (1 to 5). |
+| `blood_moon_pack_chance_factor` | `0.5` | A Blood Moon night that is not a full moon spawns wild werewolf packs at this share of the full-moon chance (0 to 1). |
 | `blue_moon_rite_cost` | `0.8` | Altar power cost of every rite on a Blue Moon, as a factor (0.1 to 1). It never allows a full-moon rite on another night. |
 | `super_moon_rite_cost` | `0.75` | Cost of the Rite of the Moon, the Silver Moon and Immortality on a super moon, on top of the Blue Moon factor (0.1 to 1). |
 | `super_blue_skips_forced_shift` | `true` | A Super Blue Moon does not force the Werewolves full-moon shift on anybody. |
@@ -188,4 +189,17 @@ All data a part ships (rites, recipes, loot, tags, EP, altar blocks) is loaded o
 | Key | Default | Values | What it does |
 |---|---|---|---|
 | `full_moon_sleep` | `off` | `off`, `werewolves`, `everyone` | Who cannot use a bed in the Overworld from dusk on a full-moon night. Admin > Species. |
+| `npc_packs_enabled` | `true` | | Wild NPC werewolf packs roam on full-moon nights. |
+| `npc_pack_chance` | `0.35` | 0 to 1 | Chance per player per full-moon night that a pack spawns near them (a Blood Moon night rolls at `blood_moon_pack_chance_factor` of it). |
+| `npc_lone_wolf_chance` | `0.5` | 0 to 1 | The same, for a lone wolf, apart from the pack. |
+| `npc_pack_alpha_chance` | `0.7` | 0 to 1 | Chance a pack has an Alpha (the one that can drop a weaker spark). |
+| `npc_pack_min_size`, `npc_pack_max_size` | `3`, `5` | 1 to 8 | Wolves in a pack, not counting the Alpha (it leads only as many as the Werewolves mod lets it). |
+| `npc_max_packs_per_night` | `3` | 0 to 20 | Most packs one dimension spawns in a night. |
+| `npc_pack_dawn_despawn` | `true` | | Wild wolves with no player within 24 blocks leave at dawn. |
+| `feral_attack_factor`, `feral_speed_factor` | `1.2`, `1.1` | 1 to 3, 1 to 2 | A wild werewolf in the dark on a full-moon night. 1 = no change. |
+| `npc_alpha_spark_enabled` | `true` | | Killing an Alpha of the Werewolves mod gives a werewolf a weaker spark. |
+| `weak_spark_grow_days` | `3` | 1 to 30 | Online days a weaker spark takes to grow. |
+| `weak_spark_max_held` | `2` | 1 to 5 | Weaker sparks one player may hold. |
+| `weak_spark_cooldown_days` | `3` | 0 to 30 | Game days between two weaker sparks for one player. |
+| `moonblood_surge_enabled`, `wolf_spirits_enabled` | `true` | | The two pack abilities. |
 | `delayed_awakening_nights` | `1` | 0 to 3 | A human's werewolf gene awakens at the next dusk (N dusks later) after the kill, not at once. 0 = at once. Admin > Species. |

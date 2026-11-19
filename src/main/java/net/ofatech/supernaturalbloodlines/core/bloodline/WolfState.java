@@ -18,17 +18,56 @@ import java.util.UUID;
  *                    who stole one, always has (set on load, so a world from before this field migrates by itself)
  * @param protectPath the player's own choice, on by default: while the path to True Alpha is open, no spark is forced on them (see {@link PackRules#pathOpen})
  * @param preApex     the Tensura race the player had before {@code alpha_primeval} ("" for none): where they go back to while they hold no spark
+ * @param weak        the weaker sparks of NPC Alphas (plan 15b, R145): they count for nothing until they have grown
  */
 public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean latentGene, boolean killedInnocent,
                         @Nullable UUID packAlpha, long betaSince, int defenderKills, boolean stoleSpark,
-                        Set<String> grantedSkills, int sparks, boolean heldSpark, boolean protectPath, String preApex) {
+                        Set<String> grantedSkills, int sparks, boolean heldSpark, boolean protectPath, String preApex, Weak weak) {
+
+    /**
+     * The weaker sparks an NPC Alpha gave (R145): how many are held, how many online ticks the oldest has grown, and the game day the last one was
+     * given plus one (the cooldown; 0 is never); {@code need} is the online ticks the spark growing now takes, fixed when it starts (the
+     * hub shows the days left from it, so it never guesses the setting; 0 = the setting decides). They count for nothing (not toward the cap, not toward the bonus) and cannot be stolen: they are not in {@code sparks}.
+     */
+    public record Weak(int held, int progress, long day, int need) {
+        public static final Weak NONE = new Weak(0, 0, 0, 0);
+        public static final Codec<Weak> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.lenientOptionalFieldOf("held", 0).forGetter(Weak::held),
+                Codec.INT.lenientOptionalFieldOf("progress", 0).forGetter(Weak::progress),
+                Codec.LONG.lenientOptionalFieldOf("day", 0L).forGetter(Weak::day),
+                Codec.INT.lenientOptionalFieldOf("need", 0).forGetter(Weak::need)).apply(i, Weak::new));
+
+        /** Without the growth time: the setting at the time decides (a save from before the field). */
+        public Weak(int held, int progress, long day) {
+            this(held, progress, day, 0);
+        }
+
+        public Weak {
+            held = Math.max(0, held);
+            progress = held == 0 ? 0 : Math.max(0, progress);
+            need = held == 0 ? 0 : Math.max(0, need);
+        }
+    }
+
+    /** Without the weak sparks: none. */
+    public WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean latentGene, boolean killedInnocent,
+                     @Nullable UUID packAlpha, long betaSince, int defenderKills, boolean stoleSpark, Set<String> grantedSkills,
+                     int sparks, boolean heldSpark, boolean protectPath, String preApex) {
+        this(lineage, rank, geneRolled, latentGene, killedInnocent, packAlpha, betaSince, defenderKills, stoleSpark, grantedSkills, sparks, heldSpark,
+                protectPath, preApex, Weak.NONE);
+    }
+
+    public int weakSparks() {
+        return weak.held();
+    }
+
 
     public enum Lineage { NONE, BORN, BITTEN }
 
     public enum Rank { NONE, OMEGA, BETA, ALPHA, TRUE_ALPHA }
 
     public static final WolfState NONE =
-            new WolfState(Lineage.NONE, Rank.NONE, false, false, false, null, 0, 0, false, Set.of(), 1, false, true, "");
+            new WolfState(Lineage.NONE, Rank.NONE, false, false, false, null, 0, 0, false, Set.of(), 1, false, true, "", Weak.NONE);
 
     /** Without a spark count: one spark, the Alpha's own. */
     public WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean latentGene, boolean killedInnocent,
@@ -39,7 +78,7 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
     /** Without the spark history, the protection choice and the pre-apex race: the defaults. */
     public WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean latentGene, boolean killedInnocent,
                      @Nullable UUID packAlpha, long betaSince, int defenderKills, boolean stoleSpark, Set<String> grantedSkills, int sparks) {
-        this(lineage, rank, geneRolled, latentGene, killedInnocent, packAlpha, betaSince, defenderKills, stoleSpark, grantedSkills, sparks, false, true, "");
+        this(lineage, rank, geneRolled, latentGene, killedInnocent, packAlpha, betaSince, defenderKills, stoleSpark, grantedSkills, sparks, false, true, "", Weak.NONE);
     }
 
     public static final Codec<WolfState> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -62,9 +101,10 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
             Codec.INT.lenientOptionalFieldOf("sparks", 1).forGetter(WolfState::sparks),
             Codec.BOOL.lenientOptionalFieldOf("held_spark", false).forGetter(WolfState::heldSpark),
             Codec.BOOL.lenientOptionalFieldOf("protect_path", true).forGetter(WolfState::protectPath),
-            Codec.STRING.lenientOptionalFieldOf("pre_apex", "").forGetter(WolfState::preApex)
-    ).apply(i, (lineage, rank, rolled, latent, innocent, alpha, since, kills, stole, skills, sparks, held, protect, apex) ->
-            new WolfState(lineage, rank, rolled, latent, innocent, alpha.orElse(null), since, kills, stole, new HashSet<>(skills), sparks, held, protect, apex)));
+            Codec.STRING.lenientOptionalFieldOf("pre_apex", "").forGetter(WolfState::preApex),
+            Weak.CODEC.lenientOptionalFieldOf("weak", Weak.NONE).forGetter(WolfState::weak)
+    ).apply(i, (lineage, rank, rolled, latent, innocent, alpha, since, kills, stole, skills, sparks, held, protect, apex, weak) ->
+            new WolfState(lineage, rank, rolled, latent, innocent, alpha.orElse(null), since, kills, stole, new HashSet<>(skills), sparks, held, protect, apex, weak)));
 
     public WolfState {
         lineage = lineage == null ? Lineage.NONE : lineage;
@@ -72,6 +112,7 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
         grantedSkills = grantedSkills == null ? Set.of() : Set.copyOf(grantedSkills);
         sparks = Math.max(1, sparks);
         preApex = preApex == null ? "" : preApex;
+        weak = weak == null ? Weak.NONE : weak;
         // an Alpha holds a spark, and whoever stole one held it: the history of a save from before the field is read off the rank
         heldSpark = heldSpark || stoleSpark || rank == Rank.ALPHA;
     }
@@ -95,6 +136,7 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
         private boolean heldSpark;
         private boolean protectPath;
         private String preApex;
+        private Weak weak;
 
         private Builder(WolfState w) {
             lineage = w.lineage;
@@ -111,6 +153,7 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
             heldSpark = w.heldSpark;
             protectPath = w.protectPath;
             preApex = w.preApex;
+            weak = w.weak;
         }
 
         public Builder lineage(Lineage v) { lineage = v; return this; }
@@ -127,10 +170,11 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
         public Builder heldSpark(boolean v) { heldSpark = v; return this; }
         public Builder protectPath(boolean v) { protectPath = v; return this; }
         public Builder preApex(String v) { preApex = v; return this; }
+        public Builder weak(Weak v) { weak = v; return this; }
 
         public WolfState build() {
             return new WolfState(lineage, rank, geneRolled, latentGene, killedInnocent, packAlpha, betaSince,
-                    defenderKills, stoleSpark, grantedSkills, sparks, heldSpark, protectPath, preApex);
+                    defenderKills, stoleSpark, grantedSkills, sparks, heldSpark, protectPath, preApex, weak);
         }
     }
 }

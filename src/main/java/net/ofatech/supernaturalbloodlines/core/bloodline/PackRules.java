@@ -24,7 +24,7 @@ public final class PackRules {
                     : ok(w);
             // the spark is gone (stolen, or passed on with the faction): an Alpha with nothing left is an Omega. A True Alpha never loses it.
             case SPARK_LOST -> w.rank() == Rank.TRUE_ALPHA ? refuse(w, "true_alpha_keeps_spark")
-                    : isAlpha(w) ? ok(w.toBuilder().rank(Rank.OMEGA).packAlpha(null).betaSince(0).sparks(1).build()) : ok(w);
+                    : isAlpha(w) ? ok(w.toBuilder().rank(Rank.OMEGA).packAlpha(null).betaSince(0).sparks(1).weak(WeakSparkRules.lost(w.weak())).build()) : ok(w);
             case TRUE_ALPHA_EARNED -> trueAlpha(w, c);
             // Only a werewolf's eyes turn blue; the caller sends GENE_AWAKENED first when a kill awakens a human.
             case KILLED_INNOCENT -> isWerewolf(w) ? ok(w.toBuilder().killedInnocent(true).build()) : ok(w);
@@ -190,6 +190,7 @@ public final class PackRules {
             return refuse(w, "true_alpha_held_spark");
         }
         // an Alpha leads: they leave the pack they were a Beta in
-        return ok(w.toBuilder().rank(Rank.TRUE_ALPHA).packAlpha(null).betaSince(0).sparks(1).build());
+        // a True Alpha holds no weaker spark (R145)
+        return ok(w.toBuilder().rank(Rank.TRUE_ALPHA).packAlpha(null).betaSince(0).sparks(1).weak(WeakSparkRules.lost(w.weak())).build());
     }
 }
