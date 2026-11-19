@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased (spark rules)
+
+### Upgrading
+- **Alpha and True Alpha are now two separate paths.** Anyone who has ever held a normal spark can never become a True Alpha, however they got it (stolen, inherited, won in the Alpha Trial). The old rule only looked at stolen sparks. **Migration:** everyone who is an Alpha when you update counts as having held a spark (it is read from the rank on load, so nothing is rewritten and nothing to run); existing True Alphas are unchanged. A Beta or Omega who has never held a spark keeps their path. An ex-Alpha the pack index still has a tombstone for is marked at their next login. **Limit (shortcut):** an ex-Alpha who lost the spark before this version and has no tombstone in the pack index is not caught: they count as never having held one, and nothing can recover it because the history was never recorded.
+- **Back up `playerdata` before updating and do not roll back.** The wolf layer gains three fields (`held_spark`, `protect_path`, `pre_apex`); an older version drops them on its next save, which would reopen the True Alpha path for every ex-Alpha.
+- A True Alpha now counts as holding `max_stacked_sparks` while active (full bonus and the top Roar tier), cannot steal a spark, and cannot have one stolen. Sparks they stacked before this version are absorbed into the full count.
+- Giving up a spark to heal now destroys it: the healed player stays what they were (no new Alpha). If the healer led the pack, the strongest other Alpha leads it; with none the pack dissolves.
+- New player setting "protect my True Alpha path" (on by default while the path is open; `/pack protect on`, and `/pack protect off confirm` to turn it off, which the hub asks to confirm). Protection covers **kills only**: a kill that would steal a spark destroys it instead. A pack inheritance (the leader is cured or leaves) still passes the spark to the strongest Beta, protected or not, and that closes their path; protection never dissolves a pack. A kill cannot ask, so it never shows the warning; **the Alpha Trial warning ("Taking a spark ends your path to True Alpha for good", with "Keep my path" focused first) waits for plan 15**, when the trial exists. A protected kill of someone who was not fighting you still turns the eyes blue and closes the path, and says so.
+- `alpha_primeval` is offered only to a werewolf who holds a spark (an Alpha, or a True Alpha who is active), so a Beta who fell back cannot evolve again.
+- An `alpha_primeval` who loses their spark (or a True Alpha who goes dormant) goes back to the race they had before; the race and its skills return when the spark does.
+
+### Removed
+- The per-person Call action on a Profile (the Call button of the Bloodline page does the same for the whole line).
+
+### Changed
+- The "+N more" of the Invite picker is a plain line with its reason, a cut label that only fits the ellipsis shows it, and a pack request from an offline sender says "request" for invites and alliances alike.
+
 ## Unreleased (celestials: Enhanced Celestials 2)
 
 ### Upgrading

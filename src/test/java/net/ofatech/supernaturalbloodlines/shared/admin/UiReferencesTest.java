@@ -105,5 +105,20 @@ class UiReferencesTest {
         assertTrue(AdminCommands.byId("B1").orElseThrow().ui() == AdminCommands.Ui.PAGE);
         assertTrue(AdminCommands.byId("P12").orElseThrow().ui() == AdminCommands.Ui.PAGE);
     }
-}
 
+    @Test
+    void turningTheProtectionOffIsAlwaysAskedFirstWhereverItIsOffered() {
+        // the Profile and Settings both take their action from ProfileActions.protectAction, so one check covers both pages
+        var off = net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions.protectAction(true);
+        var on = net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions.protectAction(false);
+        assertEquals("P17", off.rowId());
+        assertTrue(off.confirm(), "turning the protection off runs with no question");
+        assertEquals("P16", on.rowId());
+        assertTrue(!on.confirm(), "turning it on asks, which is only noise");
+        var self = new net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions.Subject(java.util.UUID.randomUUID(), "Me", true, net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions.Role.NONE, false, false);
+        var profile = net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions.of(new net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions.Viewer(false, false, false, false, false, true, true, true), self, false);
+        assertTrue(profile.contains(off), "the Profile does not offer the confirmed action while the path is open and protected");
+        var closed = net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions.of(new net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions.Viewer(true, true, false, true, false, true, false, true), self, false);
+        assertTrue(closed.stream().noneMatch(a -> a.rowId().equals("P17") || a.rowId().equals("P16")), "an Alpha (a closed path) is offered the protection switch");
+    }
+}

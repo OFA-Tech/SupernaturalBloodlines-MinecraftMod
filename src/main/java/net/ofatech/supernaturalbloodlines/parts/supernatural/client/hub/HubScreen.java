@@ -347,7 +347,7 @@ public final class HubScreen extends Screen {
      */
     public void warnTrueAlpha(Runnable proceed) {
         confirm(Component.translatable("supernaturalbloodlines.hub.true_alpha.title"), Component.translatable("supernaturalbloodlines.hub.true_alpha.body"),
-                Component.translatable("supernaturalbloodlines.hub.confirm.stay"), Component.translatable("supernaturalbloodlines.hub.true_alpha.yes"), proceed);
+                Component.translatable("supernaturalbloodlines.hub.true_alpha.keep"), Component.translatable("supernaturalbloodlines.hub.true_alpha.yes"), proceed);
     }
 
     /** Development only (the dev screenshots): puts the screen in a route or section no click is needed for. */

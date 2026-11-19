@@ -34,10 +34,12 @@ class LabelFitTest {
                 while (end > 0 && NORMAL.applyAsInt(text.substring(0, end)) > room) {
                     end--;
                 }
-                expected = end == 0 ? "" : text.substring(0, end).stripTrailing() + "\u2026";
+                expected = end == 0 ? (room >= 0 ? "\u2026" : "") : text.substring(0, end).stripTrailing() + "\u2026";
             }
             assertEquals(expected, LabelFit.cut(text, w, NORMAL), "width " + w);
         }
+        assertEquals("\u2026", LabelFit.cut(text, 6, NORMAL), "only the ellipsis fits: a bare ellipsis, not nothing");
+        assertEquals("", LabelFit.cut(text, 5, NORMAL), "not even the ellipsis fits");
         int[] calls = {0};
         LabelFit.cut(text.repeat(40), 100, s -> {
             calls[0]++;

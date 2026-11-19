@@ -82,6 +82,16 @@ class ProfileActionsTest {
         Subject me = new Subject(ID, "Me", true, NONE, false, false);
         assertEquals(List.of("leave", "anchor_clear"), ids(AS_BETA, me));
         assertEquals(List.of("anchor_clear"), ids(new Viewer(false, false, false, false, false, true), me));
+        // the protection toggle: only while the True Alpha path is open; turning it off asks first
+        Viewer open = new Viewer(false, false, false, false, false, false, true, true);
+        assertEquals(List.of("protect_off"), ids(open, me));
+        assertTrue(ProfileActions.of(open, me, false).get(0).confirm(), "turning it off can end the path");
+        Viewer off = new Viewer(false, false, false, false, false, false, true, false);
+        assertEquals(List.of("protect_on"), ids(off, me));
+        assertFalse(ProfileActions.of(off, me, false).get(0).confirm());
+        assertEquals("P16", ProfileActions.of(off, me, false).get(0).rowId());
+        assertEquals("P17", ProfileActions.of(open, me, false).get(0).rowId());
+        assertEquals(List.of(), ids(new Viewer(false, false, false, false, false, false, false, true), me), "a closed path has nothing to protect");
         assertEquals(List.of(), ids(AS_LONER, me));
         Action leave = ProfileActions.of(AS_LEADER, me, false).get(0);
         assertFalse(leave.enabled());

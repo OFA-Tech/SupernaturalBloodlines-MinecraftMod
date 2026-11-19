@@ -52,7 +52,7 @@ public final class BloodlineAccess {
         p.setData(ModAttachments.BLOODLINE, s);
         // fake/mock players have no connection channel; sending to them would throw
         if (canReceive(p)) {
-            PacketDistributor.sendToPlayer(p, new BloodlineSyncPayload(p.getId(), clientView(s, true)));
+            PacketDistributor.sendToPlayer(p, new BloodlineSyncPayload(p.getId(), ownView(p, s)));
         }
         // one send per tracker, so a fake tracker cannot stop the real ones
         BloodlineSyncPayload others = new BloodlineSyncPayload(p.getId(), clientView(s, false));
@@ -134,6 +134,24 @@ public final class BloodlineAccess {
         }
     }
 
+    private static volatile java.util.function.ToIntFunction<ServerPlayer> ownSparks = null;
+
+    /** The species part tells the core how many sparks the server counts for a player (a True Alpha holds the full count), so their own client shows the same. */
+    public static void useOwnSparks(java.util.function.ToIntFunction<ServerPlayer> count) {
+        ownSparks = count;
+    }
+
+    /** What the player's own client is told: their state with the sparks the server counts in the wolf layer (the client does not know the cap). */
+    public static BloodlineState ownView(ServerPlayer p, BloodlineState s) {
+        BloodlineState view = clientView(s, true);
+        java.util.function.ToIntFunction<ServerPlayer> count = ownSparks;
+        if (count == null) {
+            return view;
+        }
+        int n = Math.max(1, count.applyAsInt(p));
+        return n == view.wolf().sparks() ? view : view.toBuilder().wolf(view.wolf().toBuilder().sparks(n).build()).build();
+    }
+
     public static void addListener(BiConsumer<ServerPlayer, BloodlineChange> l) {
         LISTENERS.add(l);
     }
@@ -150,7 +168,7 @@ public final class BloodlineAccess {
     /** Sends {@code subject}'s state to {@code to}. */
     public static void sendTo(ServerPlayer to, Player subject) {
         if (canReceive(to)) {
-            PacketDistributor.sendToPlayer(to, new BloodlineSyncPayload(subject.getId(), clientView(get(subject), to == subject)));
+            PacketDistributor.sendToPlayer(to, new BloodlineSyncPayload(subject.getId(), to == subject ? ownView(to, get(subject)) : clientView(get(subject), false)));
         }
     }
 

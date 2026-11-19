@@ -14,9 +14,16 @@ public final class ProfileActions {
     /** The role of a person in the viewer's pack, from the hub snapshot's rank words. */
     public enum Role { NONE, LEADER, COALPHA, CHALLENGER, BETA, PACKMATE, EMISSARY, ALLY }
 
-    /** @param leader the viewer leads their pack; {@code coalpha} is a second Alpha of it; {@code trueAlpha} cannot give up the spark */
-    public record Viewer(boolean inPack, boolean leader, boolean coalpha, boolean alphaRank, boolean trueAlpha, boolean werewolf) {
+    /**
+     * @param leader the viewer leads their pack; {@code coalpha} is a second Alpha of it; {@code trueAlpha} cannot give up the spark;
+     *               {@code pathOpen} their path to True Alpha is still open and {@code protecting} they chose to protect it
+     */
+    public record Viewer(boolean inPack, boolean leader, boolean coalpha, boolean alphaRank, boolean trueAlpha, boolean werewolf, boolean pathOpen, boolean protecting) {
         public static final Viewer NONE = new Viewer(false, false, false, false, false, false);
+
+        public Viewer(boolean inPack, boolean leader, boolean coalpha, boolean alphaRank, boolean trueAlpha, boolean werewolf) {
+            this(inPack, leader, coalpha, alphaRank, trueAlpha, werewolf, false, false);
+        }
     }
 
     /** @param self the viewer's own profile; {@code sired} one of the viewer's sired; {@code sire} the viewer's sire */
@@ -38,6 +45,12 @@ public final class ProfileActions {
      * @param withTarget whether the row takes the subject's UUID
      * @param danger    asks first with the safe button focused; {@code confirm} names the lang key of its body (empty: no dialog)
      */
+    /** The one switch of "protect my True Alpha path", for the Profile and for Settings: turning it off can end the path, so that one asks first (Stay is the safe answer). */
+    public static Action protectAction(boolean protecting) {
+        return protecting ? new Action("protect_off", Kind.COMMAND, "P17", false, false, true, null, true)
+                : new Action("protect_on", Kind.COMMAND, "P16", false, false, true, null, false);
+    }
+
     public record Action(String id, Kind kind, String rowId, boolean withTarget, boolean primary, boolean enabled, @Nullable String disabled,
                          boolean confirm) {
         public List<String> args(UUID subject) {
@@ -68,6 +81,9 @@ public final class ProfileActions {
             }
             if (v.werewolf()) {
                 out.add(new Action("anchor_clear", Kind.COMMAND, "P15", false, false, true, null, false));
+            }
+            if (v.pathOpen()) {
+                out.add(protectAction(v.protecting()));
             }
             return out;
         }

@@ -68,7 +68,7 @@ public final class LabelFit {
                 hi = mid - 1;
             }
         }
-        return lo == 0 ? "" : text.substring(0, lo).stripTrailing() + ELLIPSIS;
+        return lo == 0 ? (room >= 0 ? ELLIPSIS : "") : text.substring(0, lo).stripTrailing() + ELLIPSIS;
     }
 
     /** The width a ladder label may use: the gap between two rungs, less a margin, never more than {@code max}. */

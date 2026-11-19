@@ -17,7 +17,7 @@ public final class PackRules {
             case JOINED_PACK -> joinedPack(w, c);
             case LEFT_PACK -> leftPack(w);
             case KILLED_ALPHA -> killedAlpha(w);
-            case SPARK_INHERITED -> isWerewolf(w) && !isAlpha(w) ? ok(w.toBuilder().rank(Rank.ALPHA).packAlpha(null).sparks(1).build()) : ok(w);
+            case SPARK_INHERITED -> isWerewolf(w) && !isAlpha(w) ? ok(w.toBuilder().rank(Rank.ALPHA).packAlpha(null).sparks(1).heldSpark(true).build()) : ok(w);
             case SPARK_GIVEN_UP -> w.rank() == Rank.TRUE_ALPHA ? refuse(w, "true_alpha_keeps_spark")
                     : isAlpha(w)
                     ? ok(w.toBuilder().rank(Rank.BETA).packAlpha(c.otherAlpha()).betaSince(c.gameTime()).sparks(1).build())
@@ -37,13 +37,36 @@ public final class PackRules {
     /** Each spark beyond the first adds this much to the Alpha rank's attack and health bonuses. */
     public static final double SPARK_BONUS = 0.10;
 
-    /**
-     * How many of a victim's sparks a killer takes: all of them, except that a True Alpha's own spark is never taken, only the
-     * ones stacked on it. 0 means there is nothing to steal (a True Alpha with no extras: just a death).
-     */
+    /** How many of a victim's sparks a killer takes: all of them. A True Alpha's spark is theirs by nature and is never taken (0: just a death). */
     public static int transferableSparks(int victimSparks, boolean victimTrueAlpha) {
-        int count = Math.max(1, victimSparks);
-        return victimTrueAlpha ? count - 1 : count;
+        return victimTrueAlpha ? 0 : Math.max(1, victimSparks);
+    }
+
+    /** What a kill of an Alpha means for the killer: they take the spark, or it is destroyed to protect their path, or a True Alpha takes nothing. */
+    public enum Steal { TAKES, PROTECTED, NEVER }
+
+    /**
+     * Whether the path to True Alpha is still open: a werewolf Beta or Omega who never held a spark and never killed an innocent (blue eyes).
+     * Taking a spark closes it for good, so it is what every warning and the protection look at.
+     */
+    public static boolean pathOpen(WolfState w) {
+        return w.lineage() != Lineage.NONE && (w.rank() == Rank.BETA || w.rank() == Rank.OMEGA) && !w.heldSpark() && !w.killedInnocent();
+    }
+
+    /** What {@code killer} does with the spark of an Alpha they killed: a True Alpha never steals; one with an open, protected path destroys it instead. */
+    public static Steal stealBy(WolfState killer) {
+        if (killer.rank() == Rank.TRUE_ALPHA) {
+            return Steal.NEVER;
+        }
+        return pathOpen(killer) && killer.protectPath() ? Steal.PROTECTED : Steal.TAKES;
+    }
+
+    /**
+     * The sparks that count for the bonus and the Roar: a True Alpha who is active (a werewolf now) always holds the {@code cap}, whatever
+     * was stacked on them before; anyone else their own count. Dormant, the True Alpha's count is the plain one.
+     */
+    public static int effectiveSparks(Rank rank, int sparks, int cap, boolean active) {
+        return rank == Rank.TRUE_ALPHA && active ? Math.max(1, cap) : Math.max(1, sparks);
     }
 
     /** The killer's sparks after a steal: their own (0 for a non-Alpha, who becomes an Alpha by the first one) plus what they took, up to {@code cap}. */
@@ -132,7 +155,10 @@ public final class PackRules {
         if (!isWerewolf(w)) {
             return refuse(w, "not_werewolf");
         }
-        WolfState.Builder b = w.toBuilder().stoleSpark(true);
+        if (w.rank() == Rank.TRUE_ALPHA) {
+            return refuse(w, "true_alpha_never_steals");
+        }
+        WolfState.Builder b = w.toBuilder().stoleSpark(true).heldSpark(true);
         if (!isAlpha(w)) {
             b.rank(Rank.ALPHA).packAlpha(null).betaSince(0);
         }
@@ -160,10 +186,10 @@ public final class PackRules {
         if (w.defenderKills() < c.defenderKillsNeeded()) {
             return refuse(w, "true_alpha_defender_kills");
         }
-        if (w.stoleSpark()) {
-            return refuse(w, "true_alpha_stole_spark");
+        if (w.heldSpark() || w.stoleSpark()) {
+            return refuse(w, "true_alpha_held_spark");
         }
         // an Alpha leads: they leave the pack they were a Beta in
-        return ok(w.toBuilder().rank(Rank.TRUE_ALPHA).packAlpha(null).betaSince(0).build());
+        return ok(w.toBuilder().rank(Rank.TRUE_ALPHA).packAlpha(null).betaSince(0).sparks(1).build());
     }
 }

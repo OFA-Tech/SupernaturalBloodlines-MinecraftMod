@@ -177,7 +177,8 @@ final class DevDemo {
                 rites, people);
         // one person, everywhere: Dev is the hybrid werewolf who leads the demo pack as an Alpha with a bitten-then-born line
         var wolf = v.bloodline().wolf().toBuilder().lineage(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.BORN)
-                .rank(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.ALPHA).sparks(1).build();
+                .rank("beta".equals(System.getProperty("supernaturalbloodlines.devshots.demo.rank")) ? net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.BETA
+                        : net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.ALPHA).heldSpark(!"beta".equals(System.getProperty("supernaturalbloodlines.devshots.demo.rank"))).sparks(1).build(); // an Alpha has held a spark (so no protect switch); demo.rank=beta: a Beta whose path is open
         var dev = v.bloodline().toBuilder().species(net.ofatech.supernaturalbloodlines.core.bloodline.Species.HYBRID).wolf(wolf).build();
         return new HubView(v.player(), dev, s, v.races(), HubModel.ladders(LadderTable.clientCopy(), s, v.races(), HubView.levels(v.player())), v.skills(), snap,
                 v.context().withOp(true).withPack(true));

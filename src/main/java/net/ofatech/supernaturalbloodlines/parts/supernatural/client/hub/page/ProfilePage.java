@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.ProfileClient;
@@ -354,7 +355,7 @@ public final class ProfilePage implements HubPageView {
         SupernaturalRace race = f.view.races().get(0);
         boolean alpha = wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA;
         ProfileActions.Viewer viewer = new ProfileActions.Viewer(!snap.pack().isEmpty(), leader, alpha && !leader, alpha, wolf.rank() == WolfState.Rank.TRUE_ALPHA,
-                HubPage.isWolfType(race));
+                HubPage.isWolfType(race), PackRules.pathOpen(wolf), wolf.protectPath());
         boolean sire = snap.sire().filter(n -> !n.isEmpty()).flatMap(snap::idOf).filter(route.id()::equals).isPresent();
         boolean sired = snap.people().stream().anyMatch(p -> p.id().equals(route.id()) && snap.sired().contains(p.name()));
         boolean npc = payload != null && payload.npc();
