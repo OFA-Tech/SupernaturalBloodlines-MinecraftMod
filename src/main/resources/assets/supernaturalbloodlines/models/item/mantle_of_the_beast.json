@@ -1,0 +1,15 @@
+{
+  "loader": "neoforge:separate_transforms",
+  "gui_light": "front",
+  "base": {
+    "parent": "supernaturalbloodlines:item/mantle_of_the_beast_3d"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "supernaturalbloodlines:item/mantle_of_the_beast"
+      }
+    }
+  }
+}

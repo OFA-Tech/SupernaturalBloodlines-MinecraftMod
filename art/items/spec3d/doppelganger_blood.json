@@ -1,0 +1,410 @@
+{
+ "name": "doppelganger_blood",
+ "palette": [
+  "#9fb8c4",
+  "#a8142c",
+  "#cfe3ea",
+  "#d86070",
+  "#3aa8b8",
+  "#e8dcc0",
+  "#6b4f2a",
+  "#8a6a3a"
+ ],
+ "cubes": [
+  {
+   "n": "doppelganger_blood_0",
+   "f": [
+    4.8,
+    1.2,
+    6.016
+   ],
+   "t": [
+    11.2,
+    1.8,
+    9.984
+   ],
+   "c": {
+    "north": 0,
+    "east": 0,
+    "south": 0,
+    "west": 0,
+    "up": 0,
+    "down": 0
+   }
+  },
+  {
+   "n": "doppelganger_blood_1",
+   "f": [
+    6.016,
+    1.204,
+    4.8
+   ],
+   "t": [
+    9.984,
+    1.796,
+    11.2
+   ],
+   "c": {
+    "north": 0,
+    "east": 0,
+    "south": 0,
+    "west": 0,
+    "up": 0,
+    "down": 0
+   }
+  },
+  {
+   "n": "doppelganger_blood_2",
+   "f": [
+    5.0,
+    1.8,
+    6.14
+   ],
+   "t": [
+    11.0,
+    7.8,
+    9.86
+   ],
+   "c": {
+    "north": 1,
+    "east": 1,
+    "south": 1,
+    "west": 1,
+    "up": 2,
+    "down": 2
+   }
+  },
+  {
+   "n": "doppelganger_blood_3",
+   "f": [
+    6.14,
+    1.804,
+    5.0
+   ],
+   "t": [
+    9.86,
+    7.796,
+    11.0
+   ],
+   "c": {
+    "north": 1,
+    "east": 1,
+    "south": 1,
+    "west": 1,
+    "up": 2,
+    "down": 2
+   }
+  },
+  {
+   "n": "doppelganger_blood_4",
+   "f": [
+    6.65,
+    1.8,
+    4.98
+   ],
+   "t": [
+    7.25,
+    7.0,
+    5.1
+   ],
+   "c": {
+    "north": 3,
+    "east": 3,
+    "south": 3,
+    "west": 3,
+    "up": 3,
+    "down": 3
+   }
+  },
+  {
+   "n": "doppelganger_blood_5",
+   "f": [
+    5.6,
+    7.8,
+    6.512
+   ],
+   "t": [
+    10.4,
+    8.8,
+    9.488
+   ],
+   "c": {
+    "north": 2,
+    "east": 2,
+    "south": 2,
+    "west": 2,
+    "up": 2,
+    "down": 2
+   }
+  },
+  {
+   "n": "doppelganger_blood_6",
+   "f": [
+    6.512,
+    7.804,
+    5.6
+   ],
+   "t": [
+    9.488,
+    8.796,
+    10.4
+   ],
+   "c": {
+    "north": 2,
+    "east": 2,
+    "south": 2,
+    "west": 2,
+    "up": 2,
+    "down": 2
+   }
+  },
+  {
+   "n": "doppelganger_blood_7",
+   "f": [
+    6.8,
+    8.8,
+    6.8
+   ],
+   "t": [
+    9.2,
+    11.8,
+    9.2
+   ],
+   "c": {
+    "north": 2,
+    "east": 2,
+    "south": 2,
+    "west": 2,
+    "up": 2,
+    "down": 2
+   }
+  },
+  {
+   "n": "doppelganger_blood_8",
+   "f": [
+    6.65,
+    10.2,
+    6.65
+   ],
+   "t": [
+    9.35,
+    10.9,
+    9.35
+   ],
+   "c": {
+    "north": 4,
+    "east": 4,
+    "south": 4,
+    "west": 4,
+    "up": 4,
+    "down": 4
+   }
+  },
+  {
+   "n": "doppelganger_blood_9",
+   "f": [
+    6.3,
+    11.8,
+    6.946
+   ],
+   "t": [
+    9.7,
+    12.6,
+    9.054
+   ],
+   "c": {
+    "north": 2,
+    "east": 2,
+    "south": 2,
+    "west": 2,
+    "up": 2,
+    "down": 2
+   }
+  },
+  {
+   "n": "doppelganger_blood_10",
+   "f": [
+    6.946,
+    11.804,
+    6.3
+   ],
+   "t": [
+    9.054,
+    12.596,
+    9.7
+   ],
+   "c": {
+    "north": 2,
+    "east": 2,
+    "south": 2,
+    "west": 2,
+    "up": 2,
+    "down": 2
+   }
+  },
+  {
+   "n": "doppelganger_blood_11",
+   "f": [
+    6.26,
+    2.8,
+    10.98
+   ],
+   "t": [
+    9.74,
+    6.2,
+    11.15
+   ],
+   "c": {
+    "north": 5,
+    "east": 5,
+    "south": 5,
+    "west": 5,
+    "up": 5,
+    "down": 5
+   }
+  },
+  {
+   "n": "doppelganger_blood_12",
+   "f": [
+    6.8,
+    12.6,
+    6.8
+   ],
+   "t": [
+    9.2,
+    14.8,
+    9.2
+   ],
+   "c": {
+    "north": 6,
+    "east": 6,
+    "south": 6,
+    "west": 6,
+    "up": 7,
+    "down": 6
+   }
+  }
+ ],
+ "display": {
+  "thirdperson_righthand": {
+   "rotation": [
+    0,
+    90,
+    45
+   ],
+   "translation": [
+    0,
+    1.0,
+    0
+   ],
+   "scale": [
+    0.65,
+    0.65,
+    0.65
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    0,
+    -90,
+    -45
+   ],
+   "translation": [
+    0,
+    1.0,
+    0
+   ],
+   "scale": [
+    0.65,
+    0.65,
+    0.65
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    -90,
+    25
+   ],
+   "translation": [
+    1.13,
+    3.2,
+    1.13
+   ],
+   "scale": [
+    0.68,
+    0.68,
+    0.68
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    90,
+    -25
+   ],
+   "translation": [
+    1.13,
+    3.2,
+    1.13
+   ],
+   "scale": [
+    0.68,
+    0.68,
+    0.68
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    1.3999999999999995,
+    0
+   ],
+   "scale": [
+    0.5,
+    0.5,
+    0.5
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    180,
+    0
+   ],
+   "translation": [
+    0,
+    13.0,
+    7
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    180,
+    0
+   ],
+   "translation": [
+    0,
+    0.0,
+    0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  }
+ },
+ "extra_tex": {}
+}
