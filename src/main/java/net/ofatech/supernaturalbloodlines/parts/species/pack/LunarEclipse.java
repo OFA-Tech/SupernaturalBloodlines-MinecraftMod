@@ -2,9 +2,11 @@ package net.ofatech.supernaturalbloodlines.parts.species.pack;
 
 import java.util.Collection;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiConsumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Function;
 import net.minecraft.core.HolderLookup;
+import net.ofatech.supernaturalbloodlines.core.moon.EclipseSignal;
 import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -43,6 +45,8 @@ public final class LunarEclipse {
     private static final int CHECK_PERIOD = 20;
     private static final DoubleSupplier RANDOM = () -> ThreadLocalRandom.current().nextDouble();
 
+    private static final BiConsumer<MinecraftServer, Component> DEFAULT_NOTICE = (server, line) -> server.getPlayerList().broadcastSystemMessage(line, false);
+    private static volatile BiConsumer<MinecraftServer, Component> notice = DEFAULT_NOTICE;
     private static volatile DoubleSupplier roll = RANDOM;
     private static volatile Function<MinecraftServer, Collection<ServerPlayer>> players = s -> s.getPlayerList().getPlayers();
 
@@ -156,12 +160,20 @@ public final class LunarEclipse {
     }
 
     private static void changed(MinecraftServer server, boolean on) {
-        server.getPlayerList().broadcastSystemMessage(Component.translatable(on ? START_MESSAGE : END_MESSAGE), false);
+        // our line is always sent, also when Enhanced Celestials is told to show the eclipse as its own event: that EC announces a mirrored event is not verified in a game
+        EclipseSignal.fire(server, on);
+        notice.accept(server, Component.translatable(on ? START_MESSAGE : END_MESSAGE));
         for (ServerPlayer p : players.apply(server)) {
             EclipsePayload.send(p, new EclipsePayload(on));
             RankEffects.sync(p);
             PackBonus.tick(p);
         }
+    }
+
+    /** For tests: where the chat line of a start or an end goes; null resets to the server's chat. */
+    @VisibleForTesting
+    public static void overrideNotice(@Nullable BiConsumer<MinecraftServer, Component> sink) {
+        notice = sink != null ? sink : DEFAULT_NOTICE;
     }
 
     /** For tests: who counts as online (mock players are not in the player list); null resets. */

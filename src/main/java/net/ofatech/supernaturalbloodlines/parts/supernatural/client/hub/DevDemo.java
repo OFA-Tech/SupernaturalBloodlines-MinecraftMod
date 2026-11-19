@@ -72,6 +72,29 @@ final class DevDemo {
                 new net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubCommandReplyPayload("D1", true, List.of(net.minecraft.network.chat.Component.literal(me + ": BloodlineState[species=HYBRID, sire=Klaus]"))));
     }
 
+    /**
+     * {@code .lunar=true}: stand-in lunar events for the almanac shots (a Blood Moon in 2 days, a Super Moon in 4, a Blue Moon in 30), because Enhanced
+     * Celestials is not in the dev runtime. Goes through the same {@code LunarMoods} the real source uses.
+     */
+    static void lunar() {
+        String dle = net.ofatech.supernaturalbloodlines.core.moon.LunarMood.EC_DEFAULT_NAMESPACE;
+        List<net.ofatech.supernaturalbloodlines.core.moon.LunarSource.Upcoming> events = List.of(
+                new net.ofatech.supernaturalbloodlines.core.moon.LunarSource.Upcoming(2, net.ofatech.supernaturalbloodlines.core.moon.LunarMood.ofEvent(dle, "blood_moon"), 0xFF5555, "lunar.event." + dle + ".blood_moon"),
+                new net.ofatech.supernaturalbloodlines.core.moon.LunarSource.Upcoming(4, net.ofatech.supernaturalbloodlines.core.moon.LunarMood.ofEvent(dle, "super_moon"), 0x9A7BFF, "lunar.event." + dle + ".super_moon"),
+                new net.ofatech.supernaturalbloodlines.core.moon.LunarSource.Upcoming(30, net.ofatech.supernaturalbloodlines.core.moon.LunarMood.ofEvent(dle, "blue_moon"), 0x55AAFF, "lunar.event." + dle + ".blue_moon"));
+        net.ofatech.supernaturalbloodlines.core.moon.LunarMoods.use(new net.ofatech.supernaturalbloodlines.core.moon.LunarSource() {
+            @Override
+            public net.ofatech.supernaturalbloodlines.core.moon.LunarMood now(net.minecraft.world.level.Level level) {
+                return net.ofatech.supernaturalbloodlines.core.moon.LunarMood.NONE;
+            }
+
+            @Override
+            public List<Upcoming> ahead(net.minecraft.world.level.Level level, int days) {
+                return events.stream().filter(e -> e.days() < days).toList();
+            }
+        }, null);
+    }
+
     static HubView apply(HubView v) {
         String mode = DevShots.demo();
         install(v);

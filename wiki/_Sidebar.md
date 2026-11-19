@@ -31,6 +31,7 @@
 **Integrations**
 - [Tensura](Tensura-Integration)
 - [Enchanted](Enchanted-Integration)
+- [Enhanced Celestials 2](Enhanced-Celestials)
 
 **Reference**
 - [Rules reference](Rules-Reference)

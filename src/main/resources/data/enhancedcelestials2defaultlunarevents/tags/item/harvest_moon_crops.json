@@ -1,0 +1,8 @@
+{
+    "replace": false,
+    "values": [
+        { "id": "supernaturalbloodlines:vervain", "required": false },
+        { "id": "supernaturalbloodlines:northern_blue_wolfsbane", "required": false },
+        { "id": "supernaturalbloodlines:yellow_wolfsbane", "required": false }
+    ]
+}

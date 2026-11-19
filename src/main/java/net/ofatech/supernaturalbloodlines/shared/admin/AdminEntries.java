@@ -27,9 +27,10 @@ public final class AdminEntries {
     public static final String ARTIFACTS_FILE = MOD + "-artifacts.toml";
     public static final String SPECIES_FILE = MOD + "-species.toml";
     public static final String SPECIES_TENSURA_FILE = MOD + "-species_tensura.toml";
+    public static final String CELESTIALS_FILE = MOD + "-celestials.toml";
 
     /** The section ids, in the order the page lists them. */
-    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "species", "speciesTensura");
+    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "species", "speciesTensura", "celestials");
 
     public static final String RESERVED = "reserved: the key does nothing";
 
@@ -100,6 +101,12 @@ public final class AdminEntries {
         all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "sire_naming_enabled", BOOL));
         all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "severance_clears_name", BOOL));
         all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "resire_naming_reward", BOOL));
+
+        String ce = "celestials";
+        all.add(SettingEntry.of(CELESTIALS_FILE, ce, "blood_moon_bite_bonus", DOUBLE));
+        all.add(SettingEntry.of(CELESTIALS_FILE, ce, "blue_moon_rite_cost", DOUBLE));
+        all.add(SettingEntry.of(CELESTIALS_FILE, ce, "super_moon_rite_cost", DOUBLE));
+        all.add(SettingEntry.of(CELESTIALS_FILE, ce, "super_blue_skips_forced_shift", BOOL));
         ALL = List.copyOf(all);
     }
 

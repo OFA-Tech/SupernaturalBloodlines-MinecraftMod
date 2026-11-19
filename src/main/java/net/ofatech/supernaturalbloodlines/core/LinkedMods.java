@@ -24,6 +24,7 @@ public final class LinkedMods {
         m.put("werewolves", "2.0.3");
         m.put("enchanted", "4.2.7");
         m.put("curios", "9.5");
+        m.put("enhancedcelestials2core", "2.0.3");
         return Map.copyOf(m);
     }
 

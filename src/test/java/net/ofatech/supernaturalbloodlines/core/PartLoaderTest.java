@@ -14,8 +14,17 @@ import org.junit.jupiter.api.Test;
 
 class PartLoaderTest {
     @Test
-    void noModsMeansOnlyTheHudPart() {
-        assertEquals(EnumSet.of(Part.HUD), PartLoader.enabledParts(id -> false, p -> true));
+    void noModsMeansOnlyTheModFreeParts() {
+        assertEquals(EnumSet.of(Part.HUD, Part.CELESTIALS), PartLoader.enabledParts(id -> false, p -> true));
+    }
+
+    @Test
+    void celestialsNeedsNoModAndSwitchesOff() {
+        assertTrue(Part.CELESTIALS.requiredMods().isEmpty());
+        assertTrue(Part.CELESTIALS.requiredParts().isEmpty());
+        assertEquals("celestials", Part.CELESTIALS.configKey());
+        assertFalse(PartLoader.enabledParts(id -> true, p -> p != Part.CELESTIALS).contains(Part.CELESTIALS));
+        assertEquals(EnumSet.complementOf(EnumSet.of(Part.CELESTIALS)), PartLoader.enabledParts(id -> true, p -> p != Part.CELESTIALS));
     }
 
     @Test
@@ -63,13 +72,13 @@ class PartLoaderTest {
     @Test
     void vampirismAndEnchantedOnly() {
         Set<String> loaded = Set.of("vampirism", "enchanted");
-        assertEquals(EnumSet.of(Part.VAMPIRISM_ENCHANTED, Part.SPECIES, Part.ARTIFACTS, Part.SUPERNATURAL, Part.HUD),
+        assertEquals(EnumSet.of(Part.VAMPIRISM_ENCHANTED, Part.SPECIES, Part.ARTIFACTS, Part.SUPERNATURAL, Part.HUD, Part.CELESTIALS),
                 PartLoader.enabledParts(loaded::contains, p -> true));
     }
 
     @Test
     void supernaturalNeedsOnlyVampirism() {
-        assertEquals(EnumSet.of(Part.SUPERNATURAL, Part.HUD), PartLoader.enabledParts(Set.of("vampirism")::contains, p -> true));
+        assertEquals(EnumSet.of(Part.SUPERNATURAL, Part.HUD, Part.CELESTIALS), PartLoader.enabledParts(Set.of("vampirism")::contains, p -> true));
         assertFalse(PartLoader.enabledParts(id -> !id.equals("vampirism"), p -> true).contains(Part.SUPERNATURAL));
     }
 

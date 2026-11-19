@@ -152,6 +152,15 @@ config="${mod_id}.devshots.mixins.json"
     versionRange="[0,)"
     ordering="AFTER"
     side="BOTH"
+
+# Enhanced Celestials 2 (core 2.0.3.x, tested; with its add-on Default Lunar Events 2.0.1.x, CorgiLib and Data Anchor): the celestials part reads its lunar
+# events by reflection (the mod is All Rights Reserved, so it is no build dependency). Any version loads; LinkedMods warns for one beyond 2.0.3.
+[[dependencies.${mod_id}]]
+    modId="enhancedcelestials2core"
+    type="optional"
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="BOTH"
 [[dependencies.${mod_id}]]
     modId="curios"
     type="optional"

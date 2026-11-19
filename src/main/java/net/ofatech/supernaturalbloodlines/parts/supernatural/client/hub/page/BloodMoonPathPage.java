@@ -43,8 +43,9 @@ public final class BloodMoonPathPage implements HubPageView {
         y0 += LadderTabs.render(f, stage.x(), y0, Math.max(60, col.x() - 14 - stage.x()));
         int labels = 78;
         Rect area = new Rect(stage.x(), y0, Math.max(60, col.x() - 14 - stage.x()), stage.bottom() - y0);
-        int size = Math.max(60, Math.min(area.w() - labels, area.h() - 34));
-        Rect moon = new Rect(area.x() + labels + Math.max(0, (area.w() - labels - size) / 2), area.y() + (area.h() - 18 - size) / 2, size, size);
+        int event = eventRoom(f, area); // lines under the moon for the lunar events
+        int size = Math.max(60, Math.min(area.w() - labels, area.h() - 34 - event));
+        Rect moon = new Rect(area.x() + labels + Math.max(0, (area.w() - labels - size) / 2), area.y() + (area.h() - 18 - event - size) / 2, size, size);
         f.emblem(moon);
         if (ladder != null) {
             gems(f, ladder, area, moon);
@@ -91,14 +92,28 @@ public final class BloodMoonPathPage implements HubPageView {
         }
     }
 
+    /** The height the event lines take under the moon (0 without events). */
+    private static int eventRoom(HubScreen.Frame f, Rect area) {
+        int h = AlmanacEvents.height(f, AlmanacEvents.view(f), area.w() - 4, 9);
+        return h == 0 ? 0 : h + 4;
+    }
+
     private static void almanac(HubScreen.Frame f, Rect area) {
         HubTheme t = f.theme();
         int phase = f.view.player().level().getMoonPhase();
         int y = area.bottom() - 12;
         int x = area.x() + 2;
-        for (int p : HubAlmanac.phases(phase, 6)) {
+        var view = AlmanacEvents.view(f);
+        int step = AlmanacEvents.step(view, 10, 8);
+        int day = 0;
+        for (int p : HubAlmanac.phases(phase, HubAlmanac.ROW)) {
             KitDraw.icon(f.g, Icons.moon(p), x, y, 8, p == 0 ? 0xFFffd36b : t.muted());
-            x += 10;
+            AlmanacEvents.ring(f, view, day++, x, y, 8);
+            x += step;
+        }
+        int ey = y - 4 - AlmanacEvents.height(f, view, area.w() - 4, 9); // the event lines sit above the row, wrapped, in the theme's ink
+        for (var e : view.lines()) {
+            ey = BookKit.small(f, AlmanacEvents.line(e), area.x() + 2, ey, area.w() - 4, t.ink()) - 1;
         }
         Component line = PathActions.almanacLine(phase);
         int room = Math.max(30, area.right() - x - 8);
