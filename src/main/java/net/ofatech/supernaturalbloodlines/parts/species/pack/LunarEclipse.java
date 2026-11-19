@@ -125,13 +125,19 @@ public final class LunarEclipse {
         }
     }
 
-    /** After a start: a stored eclipse that is already over (the server was off through the dawn) is dropped, without a word. */
+    /**
+     * After a start: a stored eclipse that is already over (the server was off through the dawn) is dropped, without a word. Then the eclipse is signalled as it
+     * stands: Enhanced Celestials' mirror of it was ended at the shutdown (a restart inside an eclipse night would otherwise leave the sky without it), and a stale
+     * mirror of an eclipse that is over is ended. No chat line and no packet: the players are not here yet, and nothing changed for them.
+     */
     public static void onServerStarted(MinecraftServer server) {
         Data d = data(server);
-        if (d.eclipseNight != NONE && !isActive(d, server.overworld().getDayTime())) {
+        boolean active = isActive(d, server.overworld().getDayTime());
+        if (d.eclipseNight != NONE && !active) {
             d.eclipseNight = NONE;
             d.setDirty();
         }
+        EclipseSignal.fire(server, active);
     }
 
     /** Starts the eclipse of tonight (of the next night once the dawn has come). False when one is already running. */

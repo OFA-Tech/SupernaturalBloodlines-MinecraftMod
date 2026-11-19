@@ -17,17 +17,20 @@ class GuideChaptersTest {
     @Test
     void whatYouAreComesFirstThenHowTheHubWorks() {
         List<String> c = GuideChapters.forRaces(SupernaturalRace.HYBRID, Optional.of(SupernaturalRace.WITCH), true, true, true);
-        assertEquals(List.of("race_hybrid", "race_witch", "hub", "path", "skills", "quests", "rites", "bloodline", "pack", "loadout", "moon"), c);
+        assertEquals(List.of("race_hybrid", "race_witch", "hub", "path", "skills", "quests", "rites", "bloodline", "pack", "trial", "loadout", "moon"), c);
     }
 
     @Test
     void aChapterThatDoesNotApplyIsLeftOut() {
         List<String> vampire = GuideChapters.forRaces(SupernaturalRace.VAMPIRE, Optional.empty(), true, false, false);
         assertFalse(vampire.contains("pack"), "a vampire has no pack");
+        assertFalse(vampire.contains("trial"), "a vampire has no Alpha Trial");
         assertFalse(vampire.contains("rites"), "no Enchanted, no rites");
         assertFalse(vampire.contains("loadout"), "no HUD part, no loadout");
         assertTrue(vampire.contains("hub") && vampire.contains("moon"));
         assertFalse(GuideChapters.forRaces(SupernaturalRace.WEREWOLF, Optional.empty(), false, true, true).contains("pack"), "no Werewolves, no pack");
+        assertFalse(GuideChapters.forRaces(SupernaturalRace.WEREWOLF, Optional.empty(), false, true, true).contains("trial"), "no Werewolves, no Alpha Trial");
+        assertTrue(GuideChapters.forRaces(SupernaturalRace.WEREWOLF, Optional.empty(), true, true, true).contains("trial"), "a werewolf is told about the Alpha Trial");
     }
 
     @Test

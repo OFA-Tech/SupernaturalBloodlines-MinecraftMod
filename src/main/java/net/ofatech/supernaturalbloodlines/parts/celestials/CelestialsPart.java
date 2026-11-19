@@ -9,6 +9,8 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.moon.EclipseSignal;
 import net.ofatech.supernaturalbloodlines.core.moon.LunarMood;
@@ -61,6 +63,13 @@ public final class CelestialsPart {
                 SupernaturalBloodlines.LOGGER.info("Enhanced Celestials knows our lunar event {}: {}", ECLIPSE_EVENT, known);
             }
         });
+        NeoForge.EVENT_BUS.addListener((ServerStoppingEvent e) -> stopMirror(ec, e.getServer()));
+        NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> {
+            // with no eclipse of ours to say what is true (the species part or Werewolves is off), a mirror saved by an earlier run is stale
+            if (!EnabledParts.isEnabled("species") || !ModList.get().isLoaded("werewolves")) {
+                stopMirror(ec, e.getServer());
+            }
+        });
         if (ModList.get().isLoaded("vampirism")) {
             BloodMoonBite.register();
         }
@@ -93,10 +102,37 @@ public final class CelestialsPart {
      */
     @VisibleForTesting
     public static void install(@Nullable EcAdapter adapter) {
+        EcAdapter old = ec;
         ec = adapter;
         LunarSource source = adapter == null ? LunarSource.NONE : new EcSource(adapter);
         LunarMoods.use(source, CelestialsConfig::tuning);
+        if (old != null && old != adapter) {
+            stopMirror(old, ServerLifecycleHooks.getCurrentServer()); // the link ends (the part goes off): our eclipse must not stay on in Enhanced Celestials
+        }
     }
+
+    /**
+     * Ends our mirrored eclipse in Enhanced Celestials, if it is running there: on server stop (Enhanced Celestials saves its running event, so it would still be on at
+     * the next start while our own eclipse is not) and when the link is dropped. Never throws: a broken Enhanced Celestials has nothing to stop.
+     */
+    @VisibleForTesting
+    public static void stopMirror(@Nullable EcAdapter adapter, @Nullable net.minecraft.server.MinecraftServer server) {
+        if (adapter == null || server == null) {
+            return;
+        }
+        try {
+            adapter.stop(server.overworld(), ECLIPSE_EVENT);
+        } catch (RuntimeException | LinkageError e) {
+            if (STOP_WARNED.compareAndSet(false, true)) {
+                SupernaturalBloodlines.LOGGER.warn("Could not stop our lunar event in Enhanced Celestials (the next failures are logged at debug): {}", e.toString());
+            } else {
+                SupernaturalBloodlines.LOGGER.debug("Could not stop our lunar event in Enhanced Celestials: {}", e.toString());
+            }
+        }
+        LunarMoods.refresh();
+    }
+
+    private static final java.util.concurrent.atomic.AtomicBoolean STOP_WARNED = new java.util.concurrent.atomic.AtomicBoolean();
 
     /** True when the real start-up linked Enhanced Celestials (never true in the test runtime, which has none). */
     @VisibleForTesting

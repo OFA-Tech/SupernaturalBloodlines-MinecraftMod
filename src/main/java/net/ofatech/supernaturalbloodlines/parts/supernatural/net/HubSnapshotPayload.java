@@ -131,6 +131,7 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
     private static final StreamCodec<ByteBuf, WorldNowHook.Flags> WORLD = StreamCodec.composite(
             ByteBufCodecs.BOOL, WorldNowHook.Flags::sleepRule,
             ByteBufCodecs.BOOL, WorldNowHook.Flags::awakeningPending,
+            ByteBufCodecs.VAR_INT, WorldNowHook.Flags::trial,
             WorldNowHook.Flags::new);
 
     private static final StreamCodec<ByteBuf, HubSocial.Npc> NPC = StreamCodec.of(

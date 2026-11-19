@@ -26,6 +26,17 @@ public final class EclipseSignal {
         LISTENERS.add(listener);
     }
 
+    /** For tests in this package: the listeners now installed, so a test can put them back (the production listener of the Celestials part must survive it). */
+    static List<Listener> snapshot() {
+        return List.copyOf(LISTENERS);
+    }
+
+    /** For tests in this package: replaces every listener with {@code saved} (from {@link #snapshot}). */
+    static void restore(List<Listener> saved) {
+        LISTENERS.clear();
+        LISTENERS.addAll(saved);
+    }
+
     /** For tests in this package: forgets every listener. */
     static void clear() {
         LISTENERS.clear();

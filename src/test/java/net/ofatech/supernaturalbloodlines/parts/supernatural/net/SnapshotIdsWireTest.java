@@ -43,6 +43,7 @@ class SnapshotIdsWireTest {
                 HubSnapshotPayload back = HubSnapshotPayload.STREAM_CODEC.decode(buf);
                 assertEquals(sleep, back.world().sleepRule(), "sleep rule " + sleep + "/" + stirs);
                 assertEquals(stirs, back.world().awakeningPending(), "pending " + sleep + "/" + stirs);
+                assertEquals(0, back.world().trial(), "trial " + sleep + "/" + stirs);
                 assertEquals(0, buf.readableBytes(), "nothing left on the wire");
             }
         }
@@ -53,8 +54,8 @@ class SnapshotIdsWireTest {
      * misread each other's bytes). This pins the bytes of an empty snapshot with both flags set, and the protocol they belong to. If you change
      * the snapshot, this fails: raise {@code LadderNet.PROTOCOL} and update both constants here, in the same commit.
      */
-    private static final String GOLDEN_PROTOCOL = "4";
-    private static final String GOLDEN_HEX = "00000000000b4e4f545f56414d504952450000044e4f4e45000000000000010100";
+    private static final String GOLDEN_PROTOCOL = "5";
+    private static final String GOLDEN_HEX = "00000000000b4e4f545f56414d504952450000044e4f4e4500000000000001010000";
 
     @Test
     void theSnapshotWireFormatAndTheProtocolNumberChangeTogether() {
@@ -77,5 +78,16 @@ class SnapshotIdsWireTest {
         HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of());
         assertEquals(net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.NONE, s.world());
     }
-}
 
+    @Test
+    void theTrialNoticeSurvivesTheWire() {
+        for (int trial = 0; trial <= 2; trial++) {
+            HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of(), List.of(),
+                    new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(false, false, trial));
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            HubSnapshotPayload.STREAM_CODEC.encode(buf, s);
+            assertEquals(trial, HubSnapshotPayload.STREAM_CODEC.decode(buf).world().trial());
+        }
+        assertEquals(2, new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(false, false, 99).trial(), "a bad value from the wire is clamped");
+    }
+}

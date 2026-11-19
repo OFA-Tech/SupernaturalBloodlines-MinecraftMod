@@ -62,7 +62,8 @@ class HubAlmanacTest {
         assertEquals(accent, HubAlmanac.ringColor(blood, parchment, accent), "light red on parchment is below 3:1");
         assertEquals(accent, HubAlmanac.ringColor(0xF0E0B0, parchment, accent), "parchment on parchment");
         assertEquals(accent, HubAlmanac.ringColor(-1, dark, accent), "an event with no colour");
-        assertTrue(HubAlmanac.contrast(0x000000, 0xFFFFFF) > 20);
+        assertTrue(net.ofatech.supernaturalbloodlines.shared.hub.Contrast.ratio(0x000000, 0xFFFFFF) > 20);
+        assertTrue(HubAlmanac.mayPin(100, 200) && !HubAlmanac.mayPin(101, 200), "a pinned almanac may take at most half of the page");
     }
 
     @Test

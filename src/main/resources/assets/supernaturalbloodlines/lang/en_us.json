@@ -1392,5 +1392,10 @@
   "supernaturalbloodlines.hub.pack.wolves.why_owner_release": "Only its owner frees it.",
   "supernaturalbloodlines.hub.pack.wolves.line.contribution_over": "Contribution: none. The pack holds more Brothers than it may, so this one rests and counts for nothing.",
   "supernaturalbloodlines.hub.pack.wolves.close": "Back to the ring",
-  "supernaturalbloodlines.hub.pack.wolves.close_tip": "Close the profile and show the ring of the pack again."
+  "supernaturalbloodlines.hub.pack.wolves.close_tip": "Close the profile and show the ring of the pack again.",
+  "supernaturalbloodlines.hub.home.trial_possible": "The Alpha Trial can be taken tonight: stand in beast form at a circle and perform the rite.",
+  "supernaturalbloodlines.hub.home.trial_running": "Your Alpha Trial is running. Beat the moon-crowned Alpha before dawn, and stay near it.",
+  "supernaturalbloodlines.hub.home.open_trial": "Open the Rites page",
+  "supernaturalbloodlines.hub.guide.trial": "The Alpha Trial",
+  "supernaturalbloodlines.hub.guide.trial.body": "A werewolf Beta or Omega who has reached the trial level can face the moon-crowned Alpha on a full-moon night: stand in beast form at a circle and perform the Alpha Trial rite (it is on the Rites page). Win and you earn a spark: a Beta becomes a second Alpha of the pack, an Omega leads a pack of their own. Lose the fight, leave it, or let dawn come and the trial is lost. If your path to True Alpha is still open, winning would end it for good, so you are asked first. Home tells you when a trial can be taken tonight, and when yours is running."
 }

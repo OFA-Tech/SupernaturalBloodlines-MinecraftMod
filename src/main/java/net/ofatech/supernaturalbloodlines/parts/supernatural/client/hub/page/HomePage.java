@@ -336,6 +336,16 @@ public final class HomePage implements HubPageView {
         if (flags.awakeningPending()) {
             y = PageKit.wrapped(f, Component.translatable(MoonPage.KEY + "stirs"), s.x(), y, s.w(), t.ink());
         }
+        if (flags.trial() != net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.TRIAL_NONE) {
+            boolean running = flags.trial() == net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.TRIAL_RUNNING;
+            y = PageKit.wrapped(f, Component.translatable(KEY + (running ? "trial_running" : "trial_possible")), s.x(), y + 2, s.w(), running ? PageWidgets.warn(t) : t.accent());
+            if (!running) {
+                Component rites = Component.translatable(KEY + "open_trial");
+                Rect tb = new Rect(s.x(), y + 2, Math.min(s.w(), PageWidgets.widthOf(f.font(), rites)), PageWidgets.H);
+                PageWidgets.button(f, "stage:home:trial", tb, rites, true, false, null, () -> f.screen().setPage(HubPage.RITES));
+                y = tb.bottom() + 2;
+            }
+        }
         Component label = Component.translatable(KEY + "open_moon");
         Rect b = new Rect(s.x(), y + 2, Math.min(s.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
         PageWidgets.button(f, "stage:home:moon", b, label, true, false, null, f.screen()::openMoon);

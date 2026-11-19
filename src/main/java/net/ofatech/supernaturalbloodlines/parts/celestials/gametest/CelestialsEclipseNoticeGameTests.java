@@ -70,4 +70,36 @@ public final class CelestialsEclipseNoticeGameTests {
         helper.assertTrue(busy.running.orElseThrow().id().getPath().equals("blood_moon"), "the Blood Moon was replaced");
         helper.succeed();
     }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aRestartInsideAnEclipseMirrorsItAgainAndAStaleMirrorIsEnded(GameTestHelper helper) {
+        MinecraftServer server = helper.getLevel().getServer();
+        FakeEc ec = new FakeEc();
+        LunarEclipse.overridePlayers(s -> List.of());
+        LunarEclipse.overrideNotice((s, line) -> {
+        });
+        try {
+            CelestialsPart.install(ec);
+            helper.assertTrue(LunarEclipse.start(server) && ec.running.isPresent(), "setup: the eclipse did not start mirrored");
+            CelestialsPart.stopMirror(ec, server); // the shutdown
+            helper.assertTrue(ec.running.isEmpty() && LunarEclipse.active(server), "setup: the shutdown did not end the mirror of an eclipse that is still on");
+            LunarEclipse.onServerStarted(server); // the start
+            helper.assertTrue(ec.running.isPresent(), "the restart did not mirror the eclipse that is still on");
+            LunarEclipse.onServerStarted(server);
+            helper.assertTrue(ec.running.isPresent() && ec.calls.stream().filter(c -> c.startsWith("start")).count() <= 3, "a second start looped: " + ec.calls);
+            // the eclipse ended while the server was off, but the saved event of Enhanced Celestials still shows ours
+            LunarEclipse.stop(server);
+            helper.assertTrue(ec.running.isEmpty() && !LunarEclipse.active(server), "setup: the eclipse did not end");
+            ec.start(server.overworld(), CelestialsPart.ECLIPSE_EVENT);
+            helper.assertTrue(ec.running.isPresent(), "setup: the stale mirror was not made");
+            LunarEclipse.onServerStarted(server);
+            helper.assertTrue(ec.running.isEmpty(), "a stale mirror of an eclipse that is over stayed on");
+        } finally {
+            LunarEclipse.stop(server);
+            CelestialsPart.install(null);
+            LunarEclipse.overrideNotice(null);
+            LunarEclipse.overridePlayers(null);
+        }
+        helper.succeed();
+    }
 }

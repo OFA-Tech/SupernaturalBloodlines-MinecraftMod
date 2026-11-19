@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased (cleanup 1)
+
+### Upgrading
+- **The network protocol is now 5**: the hub snapshot carries whether an Alpha Trial can be taken tonight or is running (Home shows it). Update the client and the server together.
+- Our lunar eclipse mirrored into Enhanced Celestials is ended when the server stops and when the link to Enhanced Celestials is dropped, and it is mirrored again at the next start if the eclipse is still on (a restart inside an eclipse night keeps the eclipse sky); a mirror left over from an eclipse that is over is ended at the start.
+
+### Added
+- **Home:** a line under the moon says when the Alpha Trial can be taken tonight (with a button to the Rites page) and when it is running. **Guide:** a chapter on the Alpha Trial for werewolves.
+
+### Fixed
+- A pinned almanac on the Path page that would take more than half of the page stays in the flow instead. A broken Enhanced Celestials call and a broken mirror each get their own warning in the log. The almanac ring contrast uses the hub's one contrast function.
+
 ## Unreleased (plan 15d: NPC pack members)
 
 ### Upgrading

@@ -99,4 +99,19 @@ class LunarMoodsTest {
         assertEquals(1, off.bloodMoonPackChance());
         assertFalse(off.superBlueSkipsForcedShift());
     }
+
+    @Test
+    void eachKindOfFailureIsWarnedOnceOnItsOwn() {
+        LunarMoods.use(LunarSource.NONE, () -> LunarMoods.Tuning.OFF);
+        assertFalse(LunarMoods.warned(LunarMoods.Call.NOW) || LunarMoods.warned(LunarMoods.Call.MIRROR));
+        LunarMoods.guarded(LunarMoods.Call.NOW, () -> {
+            throw new IllegalStateException("EC changed");
+        }, 0);
+        assertTrue(LunarMoods.warned(LunarMoods.Call.NOW));
+        assertFalse(LunarMoods.warned(LunarMoods.Call.MIRROR), "a broken mood read must not use up the warning of a broken mirror");
+        LunarMoods.guarded(LunarMoods.Call.MIRROR, () -> {
+            throw new IllegalStateException("EC changed again");
+        }, false);
+        assertTrue(LunarMoods.warned(LunarMoods.Call.MIRROR));
+    }
 }
