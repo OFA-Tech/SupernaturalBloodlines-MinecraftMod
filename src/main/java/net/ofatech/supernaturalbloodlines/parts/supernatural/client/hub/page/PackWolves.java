@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -13,10 +14,12 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScree
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Flow;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.profile.NpcActions;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * "Pack wolves" (R148, R149): the recruited wolves and Tensura subordinates of the pack, one row each (head, name, source, order, distance, health), and under the
@@ -29,6 +32,12 @@ public final class PackWolves {
     private static final int ROW = 20;
 
     private int selected;
+    private static volatile int devSelected;
+
+    /** Development only (the dev screenshots): the next Pack page drawn opens this wolf's profile. */
+    public static void devSelect(int token) {
+        devSelected = token;
+    }
 
     /** The token of the chosen member, 0 for none (a dev screenshot picks one). */
     public void select(int token) {
@@ -36,9 +45,13 @@ public final class PackWolves {
     }
 
     /** Draws the section from {@code y} and returns where it ends. Nothing at all when the pack has no wolves and the viewer cannot recruit one. */
-    public int render(HubScreen.Frame f, Rect r, int y, boolean werewolf) {
+    public int render(HubScreen.Frame f, Rect r, int y, boolean werewolf, boolean inlineProfile) {
         HubTheme t = f.theme();
         List<HubSocial.Npc> npcs = f.view.snapshot().npcs();
+        if (devSelected != 0) {
+            selected = devSelected;
+            devSelected = 0;
+        }
         if (npcs.isEmpty() && !werewolf) {
             return y;
         }
@@ -71,7 +84,7 @@ public final class PackWolves {
             }
             y += ROW + 1;
         }
-        if (chosen != null) {
+        if (chosen != null && inlineProfile) {
             y = profile(f, r, y + 2, chosen);
         }
         if (werewolf) {
@@ -117,24 +130,20 @@ public final class PackWolves {
         y = PageKit.title(f, Component.translatable(KEY + "profile", n.name()), r.x(), y, r.w(), t.ink());
         t.drawRule(f.g, r.x(), y, r.w());
         y += 3;
-        y = line(f, r, y, "identity", n.ours() ? Component.translatable(KEY + "species_beast") : Component.translatable(KEY + "species_subordinate", typeName(n)),
-                Component.translatable(KEY + "rank_of", sourceName(n), n.owner()));
-        y = line(f, r, y, n.days() < 0 ? "bonds_unknown" : "bonds", Component.literal(n.owner()), Component.literal(String.valueOf(Math.max(0, n.days()))));
-        y = line(f, r, y, !n.loaded() ? "presence_away" : n.distance() >= 0 ? "presence_near" : "presence_far", Component.literal(String.valueOf(n.distance())),
-                Component.literal(n.health() + "%"));
-        y = line(f, r, y, "contribution", Component.literal(String.format(java.util.Locale.ROOT, "%.2f", n.weightPercent() / 100.0)));
-        for (String unknown : List.of("sire", "line", "genes", "anchor")) {
-            Component label = Component.translatable(KEY + "unknown." + unknown);
-            f.g.drawString(f.font(), label, r.x() + 4, y, t.muted(), false);
-            Rect hit = new Rect(r.x() + 3, y - 1, f.font().width(label) + 2, PageKit.LINE + 1);
-            String id = "npc:?" + unknown;
-            f.target(id, hit, List.of(label, Component.translatable(KEY + "unknown." + unknown + ".how")), null);
-            if (f.focused(id)) {
-                t.drawFocus(f.g, hit);
-            }
-            y += PageKit.LINE + 1;
+        for (Component line : lines(n)) {
+            y = PageKit.wrapped(f, line, r.x() + 4, y, r.w() - 4, t.ink()) + 1;
         }
-        return orders(f, r, y + 3, n);
+        Component unknown = Component.translatable(KEY + "unknown.all");
+        List<Component> how = new ArrayList<>(List.of(unknown));
+        for (String what : List.of("sire", "line", "genes", "anchor")) {
+            how.add(Component.translatable(KEY + "unknown." + what + ".how"));
+        }
+        y = PageKit.wrapped(f, unknown, r.x() + 4, y, r.w() - 4, t.muted());
+        Rect unknownHit = new Rect(r.x() + 3, y - PageKit.LINE - 1, r.w() - 4, PageKit.LINE + 1);
+        f.target("npc:unknown", unknownHit, how, null);
+        if (f.focused("npc:unknown")) {
+            t.drawFocus(f.g, unknownHit);
+        }        return orders(f, r, y + 3, n);
     }
 
     private static Component typeName(HubSocial.Npc n) {
@@ -142,8 +151,39 @@ public final class PackWolves {
         return id == null ? Component.literal("?") : BuiltInRegistries.ENTITY_TYPE.getOptional(id).map(e -> e.getDescription()).orElse(Component.literal("?"));
     }
 
-    private static int line(HubScreen.Frame f, Rect r, int y, String key, Component... args) {
-        return PageKit.wrapped(f, Component.translatable(KEY + "line." + key, (Object[]) args), r.x() + 4, y, r.w() - 4, f.theme().ink()) + 1;
+    /** Identity, bonds, presence and contribution, in this order. */
+    private static List<Component> lines(HubSocial.Npc n) {
+        return List.of(
+                line("identity", n.ours() ? Component.translatable(KEY + "species_beast") : Component.translatable(KEY + "species_subordinate", typeName(n)),
+                        Component.translatable(KEY + "rank_of", sourceName(n), n.owner())),
+                line(n.days() < 0 ? "bonds_unknown" : "bonds", Component.literal(n.owner()), Component.literal(String.valueOf(Math.max(0, n.days())))),
+                line(!n.loaded() ? "presence_away" : n.distance() >= 0 ? "presence_near" : "presence_far", Component.literal(String.valueOf(n.distance())), Component.literal(n.health() + "%")),
+                line("contribution", Component.literal(String.format(java.util.Locale.ROOT, "%.2f", n.weightPercent() / 100.0))));
+    }
+
+    private static Component line(String key, Component... args) {
+        return Component.translatable(KEY + "line." + key, (Object[]) args);
+    }
+
+    /** The wolf the viewer picked, if it is still in the snapshot. */
+    @Nullable
+    public HubSocial.Npc chosen(HubScreen.Frame f) {
+        return f.view.snapshot().npcs().stream().filter(n -> n.token() == selected).findFirst().orElse(null);
+    }
+
+    /** The same profile and orders for a theme's info pane (the Blood Moon's bar, Tensura's pane). */
+    public Detail detail(HubSocial.Npc n) {
+        Detail.Builder d = Detail.of(Component.literal(n.name())).subtitle(Component.translatable(KEY + "rank_of", sourceName(n), n.owner()));
+        for (Component line : lines(n)) {
+            d.body(line);
+        }
+        d.field(Component.translatable(KEY + "unknown.all"), Component.translatable(KEY + "unknown.how"));
+        for (NpcActions.Act a : NpcActions.of(n)) {
+            Detail.Confirm confirm = a.confirm() ? new Detail.Confirm(Component.translatable(KEY + "release_title", n.name()), Component.translatable(KEY + "release_body")) : null;
+            d.action(new Detail.Action("npc_" + a.id(), a.current() && !a.id().equals("hunt") && !a.id().equals("sort") ? Component.literal("\u2022 ").append(label(a, n)) : label(a, n), false, a.enabled(), a.enabled() ? null : Component.translatable(KEY + "why_" + a.why()), confirm,
+                    () -> HubClient.runCommand(a.rowId(), a.args())));
+        }
+        return d.build();
     }
 
     /** Follow, Guard, Rest, Hunt, Sort, Release (from {@link NpcActions}): each off with a reason when it cannot work now. */
@@ -165,8 +205,8 @@ public final class PackWolves {
 
     private static Component label(NpcActions.Act a, HubSocial.Npc n) {
         return switch (a.id()) {
-            case "hunt" -> Component.translatable(KEY + (n.hunt() ? "hunt_off" : "hunt_on"));
-            case "sort" -> Component.translatable(KEY + (n.sort() ? "sort_off" : "sort_on"));
+            case "hunt" -> Component.translatable(KEY + (n.hunt() ? "hunt_on" : "hunt_off"));
+            case "sort" -> Component.translatable(KEY + (n.sort() ? "sort_on" : "sort_off"));
             case "release" -> Component.translatable(KEY + "release");
             default -> Component.translatable(KEY + "order." + a.id());
         };

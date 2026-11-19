@@ -251,7 +251,7 @@ public final class BookPackPage implements HubPageView {
             }
             y += stacked ? 21 : 11;
         }
-        y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE);
+        y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, style == Style.BOOK);
         t.drawRule(f.g, r.x(), y + 3, r.w());
         y += 9;
         if (style == Style.BOOK && chosen != null) {
@@ -319,6 +319,11 @@ public final class BookPackPage implements HubPageView {
 
     /** The Blood Moon's floating bar and Tensura's info pane: the chosen member (or the pack) and what the command allows. */
     private void detail(HubScreen.Frame f, WolfState wolf, List<HubSocial.Member> pack, @Nullable HubSocial.Member chosen) {
+        HubSocial.Npc pickedWolf = wolves.chosen(f);
+        if (pickedWolf != null) {
+            f.detail(wolves.detail(pickedWolf));
+            return;
+        }
         Component title = chosen != null ? Component.literal(chosen.name()) : Component.translatable(KEY + "title");
         Component body = chosen != null ? Component.translatable(KEY + (chosen.online() ? "online" : "offline")) : Component.translatable(BOOK + "subtitle");
         Detail.Builder d = Detail.of(title).body(body);

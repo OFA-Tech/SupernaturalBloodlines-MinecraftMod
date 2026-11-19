@@ -58,7 +58,7 @@ public final class PackPage implements HubPageView {
             }
             y += PageKit.LINE + 1;
         }
-        y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE);
+        y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, true);
         f.end(y);
 
         Rect s = f.region(HubLayout.SIDE);
