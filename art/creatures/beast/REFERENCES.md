@@ -1,39 +1,49 @@
 # La Bête du Gévaudan: references
 
-All art in this folder is original. The references below were looked at for silhouette, proportion, colour, face and movement; no pixels or meshes were copied. The still frames were downloaded only to a temp folder to be looked at while modelling and are not in the repo.
+This model is the second, independent take on the Beast; the owner picked it over the first, which is now only in git history (last at commit `63b4613`). I read the first version's `REFERENCES.md` and the spec, then gathered my own stills. I did not open its geometry, texture, build tools or previews until this version was committed.
 
-## What was checked, and what it showed
+All art here is original. The stills were only looked at and sampled for colour, in a temp folder; none is in the repo. The wiki's image host answers 403, so each still was fetched from its Wayback Machine copy (`web.archive.org/web/2024if_/<image url>`).
 
-| # | Source | What was taken from it |
+## Read first
+
+- The first version's `REFERENCES.md`, in git history (its sources and its three corrections to the brief: no bone or skull parts, a short tail, mane tufts instead of spikes).
+- `docs/superpowers/specs/2026-11-17-beast-of-gevaudan.md` (main checkout): season 5, no mask, about twice an Alpha, smoky shadow body, white-blue eyes, red veins, Roar, leap, collapse at 25% health.
+
+## My own references
+
+| # | Source | What I took from it |
 |---|---|---|
-| 1 | Teen Wolf Wiki, "The Beast of Gevaudan" (teen-wolf-pack.fandom.com/wiki/The_Beast_of_Gevaudan). The page itself returns 403, so the wikitext was read through the MediaWiki API: `api.php?action=parse&page=The_Beast_of_Gevaudan&prop=wikitext`. | The "Physical Appearance" section: a bigger version of an Alpha's beast form, **almost twice the size**, **more fur**, **large red visible veins**, a **feline face** with an **oversized mouth and no lips**, a body that looks like **black smoke or shadow**, and eyes that are **entirely glowing white-blue**, "electric blue", with no iris. Hair colour: black. Trivia: a black, smoky aura. Gerard's legend: "oil-black, solid and shapeless, a shadow pretending to be real". |
-| 2 | Show still, 5x15 "A Credible Threat" (teen-wolf-pack.fandom.com/wiki/File:5x15_La_Bete.png) | The strongest silhouette reference. It is **hunched, on all fours, with a head carried low between huge shoulders and a heavy hump**. The head is **small for the body**, with **two pointed cat ears**, **two narrow, angled white-blue eyes** and a **wide mouth full of irregular teeth**. The coat is near-black, with **lighter silver-grey fur on the chest and belly**. The arms are long and thick, ending in **long claws**. There is **no skull, no exposed ribs and no bone armour**. |
-| 3 | Show still, 5x19 "The Beast of Beacon Hills" (File:5x19_The_Beast.png) | The face close up: a **broad, flat cat-like head**, short muzzle, **pointed ears set high**, eyes slanted down toward the nose (angry), and a **ragged toothy mouth**. Dark, matted, ridged fur. |
-| 4 | Show still, episode 5x17, the Beast carrying Liam past the school buses at night (File:5x17_Liam_vs_beast.png) | Mid-leap pose: **long arms**, **digitigrade hind legs**, a **lean, powerful torso under a bulky shoulder mass**. Movement: it crouches and then springs. |
-| 5 | Show still, 5x20 "Apotheosis" (File:5x20_Cerberus_briefly_overpowers_the_Beast.png) | The glowing eye shape and the grin of dense, uneven teeth at the closest range; the dark, textured, almost leathery fur. |
-| 6 | The Dread Doctors' fresco, 5x10 (File:5x10_dread_doctors_painting.jpg) | How the show draws the Beast as an **upright bipedal brute with long clawed arms**: the basis for the `rear_up` animation. |
-| 7 | DeviantArt, "Teen Wolf Reboot - Beast of Gevaudan" by Asanbonsam (deviantart.com/asanbonsam/art/Teen-Wolf-Reboot---Beast-of-Gevaudan-662834324), fan critique and redesign | Fan reading of the on-screen design: a **"hulking black brute"** with **no visible tail** (the critic's complaint), compared with the historical beast's long tail. Used as a second opinion that the show's Beast is bulky and heavy, not sleek. The artwork itself was not copied. |
-| 8 | Teen Wolf Wiki, "Werewolf" (teen-wolf-pack.fandom.com, MediaWiki API, section 3) and the existing round-2 boss notes in `art/bosses/REFERENCES.md` | Context for the Alpha beast form the Beast is "twice" of, and the palette already used by the other Teen Wolf wolf textures in this mod, so the Beast sits next to them. |
-| 9 | Wikipedia, "Beast of Gévaudan" (historical beast) | Real-life descriptions: tawny or russet fur, a dark stripe down the back, a tail longer than a wolf's ending in a tuft, great teeth and claws, bounding "as if flying" across fields. Used for the **dorsal mane/stripe**, the **tail tuft** and the leaping movement. |
-| 10 | `docs/superpowers/specs/2026-11-17-beast-of-gevaudan.md` (main checkout) | Gameplay rules: about **2x scale**, a boss with a **Roar**, a **leap** at range, **regeneration**, a **collapse at 25% health** (phase 3), a **smoky shadow body**, and the owner's answer that it is **season 5 with no mask**. |
-| 11 | Reddit r/TeenWolf thread on the painting having red eyes while the Beast has white-blue ones (reddit.com/r/TeenWolf/comments/491zv2) | Search snippet only (the page itself loaded empty). Confirms the **white-blue glowing eyes** as the Beast's identifying feature. |
-| 12 | Teen Wolf Wiki, "Supernatural Eyes" (teen-wolf-pack.fandom.com/wiki/Supernatural_Eyes) | Search snippet: the Beast's eye gallery, white-blue, unlike red, blue or gold Werewolf eyes. |
+| 1 | Still, 5x14 "The Sword and the Spirit", the Beast roaring through a hole in a wall (teenwolf.fandom.com, `File:Teen-Wolf-Season-5-Episode-14-Sword-and-Spirit-Beast-Roar.jpg`) | The open mouth: long thin fangs, top and bottom, spaced apart on a dark mouth, and a dull tongue. Eye colour. The `roar` pose. |
+| 2 | Still, 5x15 "Amplification", close-up from the front (teenwolf.fandom.com, `File:Teen-Wolf-Season-5-Episode-15-Amplification-Beast-closeup.jpg`) | The main shape reference. A broad, flat, domed head carried below the shoulders; small pointed ears at the top corners, leaning outwards; slanted eyes that drop towards the nose; a lipless grin as wide as the face; huge shoulders and long arms set wide, like a gorilla. Fur colours. |
+| 3 | Still, 5x18 "Maid of Gévaudan", the Beast at the mountain ash barrier (teenwolf.fandom.com, `File:Teen Wolf Season 5 Episode 18 Maid of Gevaudan The beast at the barrier.jpg`) | The only still that shows the **red veins** clearly: thin lines over the shoulder, upper arm and neck. Smoke curling off the body. |
+| 4 | Still, 5x18, the Beast coming down the steps (teenwolf.fandom.com, `File:Teen Wolf Season 5 Episode 18 Maid of Gevaudan The beast on the steps.jpg`) | The stance on all fours: weight on the knuckles, back sloping down to small hindquarters, a fuzzy outline. Rim-light colour. No tail visible. |
+| 5 | Still, 5x12 "Damnatio Memoriae", the claws (teen-wolf-pack.fandom.com, `File:5x12 Beast of Gevaudan claws.jpg`) | Long, curved, pale horn-coloured claws on dark, bare fingers. Claw and finger colours. |
+| 6 | Still, 5x17 "A Credible Threat" (teen-wolf-pack.fandom.com, `File:5x17 the beast of gevaudan.png`) | Same view as #2 from another episode: confirms the head, ears and grin are the design and not one frame's lighting. |
+| 7 | Teen Wolf Wiki text, "La Bête du Gévaudan" (teenwolf.fandom.com/wiki/La_Bête_du_Gévaudan) and "The Beast of Gevaudan" (teen-wolf-pack.fandom.com), read through web search | "Almost twice the size" of an Alpha, more fur, large red visible veins, feline face, oversized lipless mouth, black smoke or shadow, eyes entirely glowing white-blue. |
+| 8 | CBR, "10 Scariest Creatures in Teen Wolf, Ranked" (cbr.com/teen-wolf-scariest-creatures-villains) | Second opinion on what viewers remember of it: sheer size and strength, a shapeshifter stronger than an Alpha. Backs the heavy build. |
+| 9 | TVLine recap of 5x18 (tvline.com/recaps/teen-wolf-recap-season-5-episode-18-beast-revealed-interview-686735) | The reviewer calls it an "overgrown Stitch": the wide grin and big head are what people see first. I made the head a little larger than the first version describes. |
 
-## Corrections to the brief, from the references
+## What the stills changed, against the first version's notes
 
-- **No bone or skull features.** The brief said the Beast was "partly skeletal" with exposed ribs and a skull-like muzzle. None of the show stills, the wiki or the spec show that. (The spec also says there is no skull mask: those belong to the Dread Doctors.) The model therefore uses **fur, a feline face and teeth**, and keeps bone-white only for **teeth and claws**.
-- **A tail is kept but made short and heavy.** The brief lists a segmented tail; the show's Beast barely shows one (fan critique, #7). The tail is three thick segments with a tuft, carried low.
-- **"Mane or bone spikes" became mane tufts.** Instead of spikes, the Beast gets ragged fur tufts along the neck, shoulder hump and back (the historical dorsal stripe, #9, and the show's matted ridged fur).
+- **No tail.** None of my stills shows one. I put a short smoke wisp at the rump instead (`wisp_tail`), which the collapse animation fades out.
+- **Smooth domed head, no cheek ruff.** The fur reads as a ragged outline on the hump and elbows, not on the face.
+- **The grin is the face.** Teeth are separate needle fangs on thin planes with gaps, upper and lower rows interlocking, over a dark gum. A solid row read as a pale band at this size.
 
-## What each reference decided
+## Palette
 
-| Feature | Decided by |
-|---|---|
-| Hunched all-fours stance, low head, huge shoulder hump | #2, #4 |
-| Small head with pointed cat ears, wide toothy mouth | #2, #3, #5, #1 |
-| Narrow, angled, glowing white-blue eyes | #1, #3, #5, #11 |
-| Near-black matted fur with silver-grey belly and chest | #1, #2 |
-| Red veins | #1 |
-| Long clawed arms, digitigrade hind legs, crouch-and-spring motion | #4, #9 |
-| Rears up like the fresco | #6, #10 |
-| Roar, collapse, 2x size | #10 |
+Every colour in `tools/paint.py` is a median taken from a region of one of the stills with `PIL` (the sampling script ran in the temp folder).
+
+| Use | Colours | From |
+|---|---|---|
+| Fur, dark to light | `#070809 #121212 #161616 #191b20 #1f272d #262e36 #2f3a42 #36414b` | #2 and #6, body, by brightness band |
+| Chest, belly, lower flanks, muzzle and inner ear (paler, matted) | `#191b20 #1d2226 #263036 #323e44 #3c474f #4d5b60` | #2, chest and teeth-in-shadow bands |
+| Rim light flecks | `#667987` | #4, brightest 3% of the body |
+| Bare fingers and pads | `#110e05 #131105 #181406 #1d1a07` | #5, fingers |
+| Claws, base to tip | `#5e5433 #7b6d45 #aa9767 #c6b381` | #5, claws |
+| Gums and mouth | `#070809 #1b1b1b #1e1e1e #24272c` | #1 mouth, #2 between the teeth |
+| Tongue and palate | `#2f2321 #302523 #3d3230 #4a3f3d #5a4f4d` | #1, reddest pixels in the mouth |
+| Teeth | `#62635d #787470 #cbbcc7 #e4d3dc` | #1 (unlit), #3 (lit by its own eyes) |
+| Eyes: core, glow, halo | `#edfdfd #9caecb #434f65` | #1 |
+| Veins | `#6a2c34 #461a1f` | **derived**, see below |
+
+**The veins are the only derived colours.** Still #3 is graded teal, so the veins there measure `#272938` on hide of `#0e2b3a`: about 2.8 times the hide's red, with the same green and blue. Applying that ratio to the ungraded hide from #2 (`#262e36` and `#191b20`) gives `#6a2c34` and `#461a1f`. The wiki text (#7) says the veins are red, which is what the ratio produces.

@@ -1,258 +1,305 @@
-// risky_eval: (0,eval)(anims.js)(cfg). cfg = {name}. Rebuilds every animation of the named GeckoLib project.
-// Rotations are degrees added to the bone's rest rotation (Blockbench convention: +x tips a bone's far end toward -z, i.e. forward/up
-// for things hanging down, nose-up for things pointing forward); positions are model units. Keys are [time, [x,y,z], easing?, easingArg?].
-(function (cfg) {
-  const proj = ModelProject.all.find(p => p.name === cfg.name);
-  if (!proj) throw new Error('project not found: ' + cfg.name);
-  proj.select();
-  Animation.all.slice().forEach(a => a.remove(false, false));
+// node anims.js <spec.json> <out animation.json>
+// The Beast's ten animations, written straight to GeckoLib's animation format (Bedrock 1.8.0 + per-keyframe easing).
+// Rotation signs, as GeckoLib and Blockbench play them:
+//   +X: a part in front of its pivot dips, a hanging limb swings back.  +Y: turns to the creature's left.
+//   +Z: rolls to the creature's right (a hanging left limb swings outwards).
+// An easing belongs to the keyframe it is written on and shapes the move that arrives there.
+const fs = require('fs');
 
-  const PI2 = Math.PI * 2, C = Math.cos, S = Math.sin, r2 = v => Math.round(v * 100) / 100;
-  const ID = 'animation.beast_of_gevaudan.';
-  const defs = [];
-  const mk = (name, length, loop, fn) => defs.push({ name, length, loop, fn });
-  const mir = v => [v[0], -v[1], -v[2]];
+const ID = 'animation.beast_of_gevaudan.';
+const spec = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const boneNames = new Set(spec.bones.map(b => b.name));
+const out = { format_version: '1.8.0', geckolib_format_version: 2, animations: {} };
+const num = n => Math.round(n * 1000) / 1000;
+const SINE = 'easeInOutSine';
 
-  const wave = (L, n, f) => {
-    const out = [];
-    for (let i = 0; i <= n; i++) out.push([r2(L * i / n), f(PI2 * i / n, i / n).map(r2)]);
-    return out;
-  };
-  const pos = (v) => v;
-
-  mk('idle', 4, 'loop', (T) => {
-    const L = 4;
-    T('chest', 'scale', wave(L, 8, p => [1 + 0.012 * S(p), 1 + 0.03 * S(p), 1 + 0.02 * S(p)]));
-    T('body', 'rotation', wave(L, 8, p => [0.8 * S(p), 0, 0.5 * S(p + 1)]));
-    T('body', 'position', wave(L, 8, p => [0, 0.35 * S(p), 0]));
-    T('neck', 'rotation', wave(L, 8, p => [-1.6 * S(p) + 1, 3 * S(p * 1 + 0.5), 0]));
-    T('head', 'rotation', wave(L, 8, p => [1.8 * S(p + 1.2), 5 * S(p + 2.2), 2 * S(p)]));
-    T('jaw', 'rotation', wave(L, 8, p => [-(9 + 2.5 * S(p + 1.6)), 0, 0]));
-    T('ear_l', 'rotation', [[0, [0, 0, 0]], [2.2, [0, 0, 0]], [2.4, [-8, 0, -6], 'easeOutQuad'], [2.6, [0, 0, 0], 'easeInOutSine'], [4, [0, 0, 0]]]);
-    T('ear_r', 'rotation', [[0, [0, 0, 0]], [3.1, [0, 0, 0]], [3.3, [-8, 0, 6], 'easeOutQuad'], [3.5, [0, 0, 0], 'easeInOutSine'], [4, [0, 0, 0]]]);
-    T('arm_l_upper', 'rotation', wave(L, 8, p => [1.5 * S(p), 0, 0]));
-    T('arm_r_upper', 'rotation', wave(L, 8, p => [-1.5 * S(p), 0, 0]));
-    T('tail_1', 'rotation', wave(L, 8, p => [0, 7 * S(p), 0]));
-    T('tail_2', 'rotation', wave(L, 8, p => [0, 9 * S(p - 0.6), 0]));
-    T('tail_3', 'rotation', wave(L, 8, p => [0, 11 * S(p - 1.2), 0]));
-    ['mane_1', 'mane_2', 'mane_3', 'spike_shoulder_1', 'spike_shoulder_2', 'spike_shoulder_3', 'spike_back_1', 'spike_back_2', 'spike_back_3']
-      .forEach((b, i) => T(b, 'rotation', wave(L, 8, p => [4 * S(p + i * 0.7), 0, 0])));
-  });
-
-  const gait = (L, A, mode) => (T) => {
-    const bound = mode === 'run';
-    const ph = (side) => bound ? 0 : (side === 'l' ? 0 : Math.PI);
-    ['l', 'r'].forEach(side => {
-      const f = side === 'l' ? 1 : 1;
-      const pf = ph(side), pb = bound ? Math.PI * 0.85 : (side === 'l' ? Math.PI : 0);
-      T('arm_' + side + '_upper', 'rotation', wave(L, 12, p => [A * 20 * C(p + pf), 0, 0]));
-      T('arm_' + side + '_lower', 'rotation', wave(L, 12, p => [-(A * 4 + A * 30 * Math.max(0, -S(p + pf))), 0, 0]));
-      T('hand_' + side, 'rotation', wave(L, 12, p => [A * 4 + A * 20 * Math.max(0, -S(p + pf)) - A * 8 * C(p + pf), 0, 0]));
-      T('leg_' + side + '_upper', 'rotation', wave(L, 12, p => [A * 15 * C(p + pb), 0, 0]));
-      T('leg_' + side + '_lower', 'rotation', wave(L, 12, p => [-A * 24 * Math.max(0, -S(p + pb)) + A * 6 * C(p + pb), 0, 0]));
-      T('foot_' + side, 'rotation', wave(L, 12, p => [A * 14 * Math.max(0, -S(p + pb)) - A * 6 * C(p + pb), 0, 0]));
-      T('paw_' + side, 'rotation', wave(L, 12, p => [-A * 6 * Math.max(0, -S(p + pb)) + A * 10 * Math.max(0, S(p + pb)), 0, 0]));
-    });
-    T('root', 'position', wave(L, 12, p => [0, bound ? 2.6 * (0.5 + 0.5 * S(p)) - 1 : 0.9 * C(2 * p), 0]));
-    T('body', 'rotation', wave(L, 12, p => [bound ? 5 * S(p + 0.4) : 0.8 * S(2 * p), 0, bound ? 0 : 1.8 * C(p)]));
-    T('chest', 'rotation', wave(L, 12, p => [bound ? -4 * S(p + 0.4) : 0, bound ? 0 : -4 * C(p), bound ? 0 : -1.5 * C(p)]));
-    T('neck', 'rotation', wave(L, 12, p => [bound ? -6 + 3 * S(p + 1) : 0, bound ? 0 : 3 * C(p), 0]));
-    T('head', 'rotation', wave(L, 12, p => [bound ? 2 * S(p + 2) : 1.2 * S(2 * p), 0, 0]));
-    T('jaw', 'rotation', wave(L, 12, p => [bound ? -(14 + 4 * S(p)) : -(7 + S(2 * p)), 0, 0]));
-    T('tail_1', 'rotation', wave(L, 12, p => [bound ? -14 : 0, (bound ? 4 : 11) * S(p - 0.3), 0]));
-    T('tail_2', 'rotation', wave(L, 12, p => [bound ? -12 : 0, (bound ? 6 : 12) * S(p - 0.9), 0]));
-    T('tail_3', 'rotation', wave(L, 12, p => [bound ? -8 : 0, (bound ? 8 : 14) * S(p - 1.5), 0]));
-    ['mane_1', 'mane_2', 'mane_3', 'spike_shoulder_1', 'spike_shoulder_2', 'spike_shoulder_3', 'spike_back_1', 'spike_back_2', 'spike_back_3']
-      .forEach((b, i) => T(b, 'rotation', wave(L, 12, p => [(bound ? 9 : 4) * S(2 * p + i * 0.6) + (bound ? 14 : 0), 0, 0])));
-  };
-  mk('walk', 1.2, 'loop', gait(1.2, 1, 'walk'));
-  mk('run', 0.7, 'loop', gait(0.7, 1.7, 'run'));
-
-  mk('attack_bite', 1, 'once', (T) => {
-    const E = 'easeInOutSine';
-    T('root', 'position', [[0, [0, 0, 0]], [0.32, [0, -3, 4], 'easeOutQuad'], [0.46, [0, -1, -12], 'easeInExpo'], [0.62, [0, -1, -12]], [1, [0, 0, 0], E]]);
-    T('body', 'rotation', [[0, [0, 0, 0]], [0.32, [-4, 0, 0], 'easeOutQuad'], [0.46, [5, 0, 0], 'easeInQuad'], [0.62, [5, 0, 0]], [1, [0, 0, 0], E]]);
-    T('chest', 'rotation', [[0, [0, 0, 0]], [0.32, [6, 0, 0], 'easeOutQuad'], [0.46, [-3, 0, 0], 'easeInQuad'], [0.62, [-3, 0, 0]], [1, [0, 0, 0], E]]);
-    T('neck', 'rotation', [[0, [0, 0, 0]], [0.32, [22, 0, 0], 'easeOutQuad'], [0.46, [-16, 0, 0], 'easeInQuad'], [0.62, [-16, 0, 0]], [1, [0, 0, 0], E]]);
-    T('head', 'rotation', [[0, [0, 0, 0]], [0.32, [16, 0, 0], 'easeOutQuad'], [0.46, [-2, 0, 0], 'easeInQuad'], [0.62, [-2, 4, 0]], [1, [0, 0, 0], E]]);
-    T('jaw', 'rotation', [[0, [-3, 0, 0]], [0.32, [-52, 0, 0], 'easeOutBack', 0.6], [0.46, [-60, 0, 0], 'easeInQuad'], [0.52, [-2, 0, 0], 'easeInExpo'], [0.64, [-2, 0, 0]], [1, [-3, 0, 0], E]]);
-    T('arm_l_upper', 'rotation', [[0, [0, 0, 0]], [0.32, [-24, 0, -6], 'easeOutQuad'], [0.46, [30, 0, 2], 'easeInQuad'], [0.62, [30, 0, 0]], [1, [0, 0, 0], E]]);
-    T('arm_r_upper', 'rotation', [[0, [0, 0, 0]], [0.32, [-24, 0, 6], 'easeOutQuad'], [0.46, [30, 0, -2], 'easeInQuad'], [0.62, [30, 0, 0]], [1, [0, 0, 0], E]]);
-    T('arm_l_lower', 'rotation', [[0, [0, 0, 0]], [0.32, [-18, 0, 0], 'easeOutQuad'], [0.46, [-6, 0, 0], 'easeInQuad'], [1, [0, 0, 0], E]]);
-    T('arm_r_lower', 'rotation', [[0, [0, 0, 0]], [0.32, [-18, 0, 0], 'easeOutQuad'], [0.46, [-6, 0, 0], 'easeInQuad'], [1, [0, 0, 0], E]]);
-    ['l', 'r'].forEach(s => {
-      T('leg_' + s + '_upper', 'rotation', [[0, [0, 0, 0]], [0.32, [14, 0, 0], 'easeOutQuad'], [0.46, [-8, 0, 0], 'easeInQuad'], [1, [0, 0, 0], E]]);
-      T('leg_' + s + '_lower', 'rotation', [[0, [0, 0, 0]], [0.32, [-12, 0, 0], 'easeOutQuad'], [0.46, [8, 0, 0], 'easeInQuad'], [1, [0, 0, 0], E]]);
-    });
-    T('tail_1', 'rotation', [[0, [0, 0, 0]], [0.32, [-6, 0, 0], 'easeOutQuad'], [0.46, [8, 0, 0]], [1, [0, 0, 0], E]]);
-    T('ear_l', 'rotation', [[0, [0, 0, 0]], [0.32, [0, 0, -8], 'easeOutQuad'], [0.46, [18, 0, -8]], [1, [0, 0, 0], E]]);
-    T('ear_r', 'rotation', [[0, [0, 0, 0]], [0.32, [0, 0, 8], 'easeOutQuad'], [0.46, [18, 0, 8]], [1, [0, 0, 0], E]]);
-  });
-
-  mk('attack_swipe', 1.1, 'once', (T) => {
-    const E = 'easeInOutSine';
-    T('root', 'position', [[0, [0, 0, 0]], [0.4, [3, -3, 3], 'easeOutQuad'], [0.58, [-4, -1, -8], 'easeInQuad'], [0.76, [-4, -1, -8]], [1.1, [0, 0, 0], E]]);
-    T('chest', 'rotation', [[0, [0, 0, 0]], [0.4, [4, 16, 0], 'easeOutQuad'], [0.58, [-6, -26, 0], 'easeInCubic'], [0.76, [-6, -26, 0]], [1.1, [0, 0, 0], E]]);
-    T('body', 'rotation', [[0, [0, 0, 0]], [0.4, [0, 6, -2], 'easeOutQuad'], [0.58, [0, -10, 2], 'easeInCubic'], [0.76, [0, -10, 2]], [1.1, [0, 0, 0], E]]);
-    T('neck', 'rotation', [[0, [0, 0, 0]], [0.4, [10, 12, 0], 'easeOutQuad'], [0.58, [-14, -22, 0], 'easeInQuad'], [0.76, [-14, -22, 0]], [1.1, [0, 0, 0], E]]);
-    T('head', 'rotation', [[0, [0, 0, 0]], [0.4, [8, 4, 0], 'easeOutQuad'], [0.58, [-6, -10, 0]], [1.1, [0, 0, 0], E]]);
-    T('jaw', 'rotation', [[0, [-3, 0, 0]], [0.4, [-20, 0, 0], 'easeOutQuad'], [0.58, [-36, 0, 0], 'easeInQuad'], [0.8, [-30, 0, 0]], [1.1, [-3, 0, 0], E]]);
-    T('arm_l_upper', 'rotation', [[0, [0, 0, 0]], [0.4, [-64, 0, -34], 'easeOutQuad'], [0.58, [52, 0, 34], 'easeInCubic'], [0.76, [52, 0, 34]], [1.1, [0, 0, 0], E]]);
-    T('arm_l_lower', 'rotation', [[0, [0, 0, 0]], [0.4, [-52, 0, 0], 'easeOutQuad'], [0.58, [10, 0, 0], 'easeInCubic'], [1.1, [0, 0, 0], E]]);
-    T('hand_l', 'rotation', [[0, [0, 0, 0]], [0.4, [20, 0, 0], 'easeOutQuad'], [0.58, [-18, 0, 0], 'easeInCubic'], [1.1, [0, 0, 0], E]]);
-    T('arm_r_upper', 'rotation', [[0, [0, 0, 0]], [0.4, [10, 0, 6], 'easeOutQuad'], [0.58, [-8, 0, -4]], [1.1, [0, 0, 0], E]]);
-    ['l', 'r'].forEach(s => {
-      T('leg_' + s + '_upper', 'rotation', [[0, [0, 0, 0]], [0.4, [10, 0, 0], 'easeOutQuad'], [0.58, [-6, 0, 0]], [1.1, [0, 0, 0], E]]);
-    });
-    T('tail_1', 'rotation', [[0, [0, 0, 0]], [0.4, [0, -14, 0], 'easeOutQuad'], [0.58, [0, 22, 0]], [1.1, [0, 0, 0], E]]);
-    T('tail_2', 'rotation', [[0, [0, 0, 0]], [0.45, [0, -10, 0], 'easeOutQuad'], [0.68, [0, 24, 0]], [1.1, [0, 0, 0], E]]);
-  });
-
-  mk('roar', 2.6, 'once', (T) => {
-    const E = 'easeInOutSine';
-    const shake = (amp, t0, t1, n) => {
-      const out = [];
-      for (let i = 0; i <= n; i++) { const t = t0 + (t1 - t0) * i / n; out.push([r2(t), [r2(amp * (i % 2 ? 1 : -1) * 0.5), r2(amp * (i % 2 ? -1 : 1)), 0]]); }
-      return out;
-    };
-    T('root', 'position', [[0, [0, 0, 0]], [0.6, [0, -2, 2], 'easeOutQuad'], [0.9, [0, 3, 0], 'easeOutBack', 0.8], [1.9, [0, 3, 0]], [2.6, [0, 0, 0], E]]);
-    T('body', 'rotation', [[0, [0, 0, 0]], [0.6, [-3, 0, 0], 'easeOutQuad'], [0.9, [12, 0, 0], 'easeOutBack', 0.7], [1.9, [12, 0, 0]], [2.6, [0, 0, 0], E]]);
-    T('chest', 'rotation', [[0, [0, 0, 0]], [0.6, [-4, 0, 0], 'easeOutQuad'], [0.9, [16, 0, 0], 'easeOutBack', 0.7], [1.9, [16, 0, 0]], [2.6, [0, 0, 0], E]]);
-    T('chest', 'scale', [[0, [1, 1, 1]], [0.6, [0.98, 0.97, 0.98], E], [0.95, [1.07, 1.08, 1.06], 'easeOutQuad'], [1.9, [1.07, 1.08, 1.06]], [2.6, [1, 1, 1], E]]);
-    T('neck', 'rotation', [[0, [0, 0, 0]], [0.6, [-6, 0, 0], 'easeOutQuad'], [0.9, [34, 0, 0], 'easeOutBack', 0.7], [1.9, [34, 0, 0]], [2.6, [0, 0, 0], E]]);
-    T('head', 'rotation', [[0, [0, 0, 0]], [0.6, [-6, 0, 0], 'easeOutQuad'], [0.9, [18, 0, 0], 'easeOutBack', 0.7], ...shake(2.2, 1.0, 1.8, 16).map(k => [k[0], [18 + k[1][0], k[1][1] * 0.3, k[1][1]]]), [1.9, [18, 0, 0]], [2.6, [0, 0, 0], E]]);
-    T('jaw', 'rotation', [[0, [-3, 0, 0]], [0.6, [-6, 0, 0], 'easeOutQuad'], [0.9, [-58, 0, 0], 'easeOutBack', 0.6], ...shake(3, 1.0, 1.8, 16).map(k => [k[0], [-58 + k[1][0] * 2, 0, 0]]), [1.9, [-58, 0, 0]], [2.6, [-3, 0, 0], E]]);
-    ['l', 'r'].forEach(s => {
-      const k = s === 'l' ? -1 : 1;
-      T('arm_' + s + '_upper', 'rotation', [[0, [0, 0, 0]], [0.6, [-10, 0, 0], 'easeOutQuad'], [0.9, [-24, 0, 18 * k], 'easeOutBack', 0.7], [1.9, [-24, 0, 18 * k]], [2.6, [0, 0, 0], E]]);
-      T('arm_' + s + '_lower', 'rotation', [[0, [0, 0, 0]], [0.9, [-14, 0, 0], E], [1.9, [-14, 0, 0]], [2.6, [0, 0, 0], E]]);
-      T('leg_' + s + '_upper', 'rotation', [[0, [0, 0, 0]], [0.6, [8, 0, 0], 'easeOutQuad'], [0.9, [-4, 0, 0], 'easeOutBack', 0.7], [1.9, [-4, 0, 0]], [2.6, [0, 0, 0], E]]);
-      T('ear_' + s, 'rotation', [[0, [0, 0, 0]], [0.9, [-14, 0, -12 * k], 'easeOutQuad'], [1.9, [-14, 0, -12 * k]], [2.6, [0, 0, 0], E]]);
-    });
-    T('tail_1', 'rotation', [[0, [0, 0, 0]], [0.9, [-16, 0, 0], E], [1.9, [-16, 0, 0]], [2.6, [0, 0, 0], E]]);
-    ['mane_1', 'mane_2', 'mane_3', 'spike_shoulder_1', 'spike_shoulder_2', 'spike_shoulder_3', 'spike_back_1', 'spike_back_2', 'spike_back_3']
-      .forEach((b, i) => {
-        T(b, 'rotation', [[0, [0, 0, 0]], [0.9, [-18, 0, 0], 'easeOutQuad'], [1.9, [-18, 0, 0]], [2.6, [0, 0, 0], E]]);
-        T(b, 'scale', [[0, [1, 1, 1]], [0.9, [1.25, 1.45, 1.25], 'easeOutQuad'], [1.9, [1.25, 1.45, 1.25]], [2.6, [1, 1, 1], E]]);
-      });
-  });
-
-  mk('rear_up', 3.2, 'once', (T) => {
-    const E = 'easeInOutSine';
-    const t = [0, 0.5, 1.3, 2.1, 2.8, 3.2];
-    const seq = (a, b, c, d, e, f, ease) => [[t[0], a], [t[1], b, 'easeOutQuad'], [t[2], c, 'easeOutBack', 0.9], [t[3], d, E], [t[4], e, E], [t[5], f, E]];
-    T('root', 'position', seq([0, 0, 0], [0, -3, 4], [0, 3, 8], [0, 4, 8], [0, 2, 3], [0, 0, 0]));
-    T('body', 'rotation', seq([0, 0, 0], [-5, 0, 0], [46, 0, 0], [46, 0, 0], [20, 0, 0], [0, 0, 0]));
-    T('chest', 'rotation', seq([0, 0, 0], [-6, 0, 0], [26, 0, 0], [26, 0, 0], [12, 0, 0], [0, 0, 0]));
-    T('neck', 'rotation', seq([0, 0, 0], [-4, 0, 0], [-30, 0, 0], [-34, 0, 0], [-14, 0, 0], [0, 0, 0]));
-    T('head', 'rotation', seq([0, 0, 0], [-6, 0, 0], [-14, 0, 0], [-6, 0, 0], [-4, 0, 0], [0, 0, 0]));
-    T('jaw', 'rotation', seq([-3, 0, 0], [-8, 0, 0], [-30, 0, 0], [-8, 0, 0], [-6, 0, 0], [-3, 0, 0]));
-    T('leg_l_upper', 'rotation', seq([0, 0, 0], [12, 0, 0], [-68, 0, 0], [-68, 0, 0], [-30, 0, 0], [0, 0, 0]));
-    T('leg_r_upper', 'rotation', seq([0, 0, 0], [12, 0, 0], [-68, 0, 0], [-68, 0, 0], [-30, 0, 0], [0, 0, 0]));
-    T('leg_l_lower', 'rotation', seq([0, 0, 0], [-10, 0, 0], [26, 0, 0], [26, 0, 0], [12, 0, 0], [0, 0, 0]));
-    T('leg_r_lower', 'rotation', seq([0, 0, 0], [-10, 0, 0], [26, 0, 0], [26, 0, 0], [12, 0, 0], [0, 0, 0]));
-    T('foot_l', 'rotation', seq([0, 0, 0], [0, 0, 0], [-18, 0, 0], [-18, 0, 0], [-8, 0, 0], [0, 0, 0]));
-    T('foot_r', 'rotation', seq([0, 0, 0], [0, 0, 0], [-18, 0, 0], [-18, 0, 0], [-8, 0, 0], [0, 0, 0]));
-    T('paw_l', 'rotation', seq([0, 0, 0], [0, 0, 0], [10, 0, 0], [10, 0, 0], [4, 0, 0], [0, 0, 0]));
-    T('paw_r', 'rotation', seq([0, 0, 0], [0, 0, 0], [10, 0, 0], [10, 0, 0], [4, 0, 0], [0, 0, 0]));
-    ['l', 'r'].forEach(s => {
-      const k = s === 'l' ? -1 : 1;
-      T('arm_' + s + '_upper', 'rotation', seq([0, 0, 0], [-14, 0, 0], [-66, 0, 24 * k], [-40, 0, 40 * k], [-30, 0, 8 * k], [0, 0, 0]));
-      T('arm_' + s + '_lower', 'rotation', seq([0, 0, 0], [-16, 0, 0], [-30, 0, 0], [-22, 0, 0], [-14, 0, 0], [0, 0, 0]));
-      T('hand_' + s, 'rotation', seq([0, 0, 0], [8, 0, 0], [26, 0, 0], [18, 0, 0], [10, 0, 0], [0, 0, 0]));
-      T('ear_' + s, 'rotation', seq([0, 0, 0], [0, 0, 0], [-10, 0, -10 * k], [-10, 0, -10 * k], [0, 0, 0], [0, 0, 0]));
-    });
-    T('tail_1', 'rotation', seq([0, 0, 0], [-6, 0, 0], [-30, 0, 0], [-30, 0, 0], [-10, 0, 0], [0, 0, 0]));
-    T('tail_2', 'rotation', seq([0, 0, 0], [0, 0, 0], [-14, 0, 0], [-14, 0, 0], [-6, 0, 0], [0, 0, 0]));
-    ['mane_1', 'mane_2', 'mane_3', 'spike_shoulder_1', 'spike_shoulder_2', 'spike_shoulder_3'].forEach(b => {
-      T(b, 'scale', seq([1, 1, 1], [1, 1, 1], [1.2, 1.35, 1.2], [1.2, 1.35, 1.2], [1.05, 1.1, 1.05], [1, 1, 1]));
-    });
-  });
-
-  mk('hurt', 0.6, 'once', (T) => {
-    const E = 'easeInOutSine';
-    T('root', 'position', [[0, [0, 0, 0]], [0.1, [1.5, 0, 4], 'easeOutQuad'], [0.6, [0, 0, 0], E]]);
-    T('body', 'rotation', [[0, [0, 0, 0]], [0.1, [4, 0, -3], 'easeOutQuad'], [0.6, [0, 0, 0], E]]);
-    T('chest', 'rotation', [[0, [0, 0, 0]], [0.1, [8, -8, 3], 'easeOutQuad'], [0.6, [0, 0, 0], E]]);
-    T('neck', 'rotation', [[0, [0, 0, 0]], [0.1, [18, -12, 0], 'easeOutQuad'], [0.6, [0, 0, 0], E]]);
-    T('head', 'rotation', [[0, [0, 0, 0]], [0.1, [10, -10, 6], 'easeOutQuad'], [0.22, [4, 8, -5], E], [0.6, [0, 0, 0], E]]);
-    T('jaw', 'rotation', [[0, [-3, 0, 0]], [0.1, [-34, 0, 0], 'easeOutQuad'], [0.6, [-3, 0, 0], E]]);
-    ['l', 'r'].forEach(s => {
-      T('arm_' + s + '_upper', 'rotation', [[0, [0, 0, 0]], [0.1, [-16, 0, s === 'l' ? -10 : 10], 'easeOutQuad'], [0.6, [0, 0, 0], E]]);
-      T('leg_' + s + '_upper', 'rotation', [[0, [0, 0, 0]], [0.1, [-8, 0, 0], 'easeOutQuad'], [0.6, [0, 0, 0], E]]);
-      T('ear_' + s, 'rotation', [[0, [0, 0, 0]], [0.1, [-16, 0, s === 'l' ? -14 : 14], 'easeOutQuad'], [0.6, [0, 0, 0], E]]);
-    });
-    T('tail_1', 'rotation', [[0, [0, 0, 0]], [0.1, [-12, 10, 0], 'easeOutQuad'], [0.6, [0, 0, 0], E]]);
-  });
-
-  mk('death', 3, 'hold', (T) => {
-    const E = 'easeInOutSine';
-    T('root', 'position', [[0, [0, 0, 0]], [0.5, [0, 1, 3], 'easeOutQuad'], [1.3, [0, -13, 4], 'easeInQuad'], [1.9, [14, -11, 6], 'easeInOutCubic'], [2.2, [16, -13, 6], 'easeOutBounce', 0.35], [3, [16, -13, 6]]]);
-    T('root', 'rotation', [[0, [0, 0, 0]], [1.3, [0, 0, 0]], [1.9, [0, 0, -52], 'easeInOutCubic'], [2.2, [0, 0, -78], 'easeOutBounce', 0.35], [3, [0, 0, -78]]]);
-    T('body', 'rotation', [[0, [0, 0, 0]], [0.5, [10, 0, 0], 'easeOutQuad'], [1.3, [-8, 0, 0], 'easeInQuad'], [2.2, [-6, 8, 0], E], [3, [-6, 8, 0]]]);
-    T('chest', 'rotation', [[0, [0, 0, 0]], [0.5, [18, 0, 0], 'easeOutQuad'], [1.3, [-12, 0, 0], 'easeInQuad'], [2.2, [-14, 18, 0], E], [3, [-14, 18, 0]]]);
-    T('neck', 'rotation', [[0, [0, 0, 0]], [0.5, [34, 0, 0], 'easeOutQuad'], [1.3, [-24, 0, 0], 'easeInQuad'], [2.2, [-18, 24, 0], E], [3, [-18, 24, 0]]]);
-    T('head', 'rotation', [[0, [0, 0, 0]], [0.5, [14, 0, 6], 'easeOutQuad'], [1.3, [-10, 0, 0], 'easeInQuad'], [2.2, [-6, 14, 8], E], [3, [-6, 14, 8]]]);
-    T('jaw', 'rotation', [[0, [-3, 0, 0]], [0.5, [-46, 0, 0], 'easeOutQuad'], [1.3, [-20, 0, 0], E], [2.2, [-14, 0, 0], E], [3, [-14, 0, 0]]]);
-    ['l', 'r'].forEach(s => {
-      const k = s === 'l' ? -1 : 1;
-      T('arm_' + s + '_upper', 'rotation', [[0, [0, 0, 0]], [0.5, [-30, 0, 10 * k], 'easeOutQuad'], [1.3, [38, 0, 6 * k], 'easeInQuad'], [2.2, [30, 0, 22 * k], E], [3, [30, 0, 22 * k]]]);
-      T('arm_' + s + '_lower', 'rotation', [[0, [0, 0, 0]], [0.5, [-20, 0, 0]], [1.3, [-74, 0, 0], 'easeInQuad'], [2.2, [-50, 0, 0], E], [3, [-50, 0, 0]]]);
-      T('hand_' + s, 'rotation', [[0, [0, 0, 0]], [1.3, [34, 0, 0], 'easeInQuad'], [2.2, [20, 0, 0], E], [3, [20, 0, 0]]]);
-      T('leg_' + s + '_upper', 'rotation', [[0, [0, 0, 0]], [0.5, [-10, 0, 0], 'easeOutQuad'], [1.3, [24, 0, 0], 'easeInQuad'], [2.2, [30, 0, 10 * k], E], [3, [30, 0, 10 * k]]]);
-      T('leg_' + s + '_lower', 'rotation', [[0, [0, 0, 0]], [1.3, [-26, 0, 0], 'easeInQuad'], [2.2, [-30, 0, 0], E], [3, [-30, 0, 0]]]);
-      T('ear_' + s, 'rotation', [[0, [0, 0, 0]], [0.5, [-12, 0, -14 * k], 'easeOutQuad'], [1.3, [20, 0, 18 * k], E], [3, [24, 0, 24 * k]]]);
-    });
-    T('tail_1', 'rotation', [[0, [0, 0, 0]], [1.3, [14, 0, 0]], [2.2, [10, 20, 0], E], [3, [10, 20, 0]]]);
-    T('tail_2', 'rotation', [[0, [0, 0, 0]], [1.3, [8, 0, 0]], [2.2, [6, 24, 0], E], [3, [6, 24, 0]]]);
-    ['mane_1', 'mane_2', 'mane_3', 'spike_shoulder_1', 'spike_shoulder_2', 'spike_shoulder_3', 'spike_back_1', 'spike_back_2', 'spike_back_3'].forEach(b => {
-      T(b, 'rotation', [[0, [0, 0, 0]], [0.5, [-12, 0, 0], 'easeOutQuad'], [1.3, [20, 0, 0], E], [3, [30, 0, 0]]]);
-    });
-  });
-
-  mk('collapse', 3.4, 'hold', (T) => {
-    const E = 'easeInOutSine';
-    T('root', 'position', [[0, [0, 0, 0]], [0.4, [0, 1, 2], 'easeOutQuad'], [1.2, [0, -11, 5], 'easeInOutCubic'], [1.5, [0, -12, 5], 'easeOutBounce', 0.3], [3.4, [0, -12, 5]]]);
-    T('body', 'rotation', [[0, [0, 0, 0]], [0.4, [6, 0, 0], 'easeOutQuad'], [1.2, [-10, 0, 0], 'easeInOutCubic'], [3.4, [-10, 0, 0]]]);
-    T('chest', 'rotation', [[0, [0, 0, 0]], [0.4, [12, 0, 0], 'easeOutQuad'], [1.2, [-16, 0, 0], 'easeInOutCubic'], [1.5, [-14, 0, 0]], [2.1, [-17, 0, 0], E], [2.7, [-14, 0, 0], E], [3.4, [-17, 0, 0], E]]);
-    T('chest', 'scale', [[0, [1, 1, 1]], [1.5, [1, 1, 1]], [2.1, [1.02, 1.05, 1.03], E], [2.7, [1, 1, 1], E], [3.4, [1.02, 1.05, 1.03], E]]);
-    T('neck', 'rotation', [[0, [0, 0, 0]], [0.4, [22, 0, 0], 'easeOutQuad'], [1.2, [-30, 6, 0], 'easeInOutCubic'], [3.4, [-34, 10, 0], E]]);
-    T('head', 'rotation', [[0, [0, 0, 0]], [0.4, [10, 0, 0], 'easeOutQuad'], [1.2, [-12, 4, 4], 'easeInOutCubic'], [3.4, [-14, 8, 6], E]]);
-    T('jaw', 'rotation', [[0, [-3, 0, 0]], [0.4, [-30, 0, 0], 'easeOutQuad'], [1.2, [-12, 0, 0], E], [1.8, [-20, 0, 0], E], [2.4, [-10, 0, 0], E], [3.0, [-20, 0, 0], E], [3.4, [-14, 0, 0], E]]);
-    ['l', 'r'].forEach(s => {
-      const k = s === 'l' ? -1 : 1;
-      T('arm_' + s + '_upper', 'rotation', [[0, [0, 0, 0]], [0.4, [-24, 0, 6 * k], 'easeOutQuad'], [1.2, [34, 0, 12 * k], 'easeInOutCubic'], [3.4, [34, 0, 12 * k]]]);
-      T('arm_' + s + '_lower', 'rotation', [[0, [0, 0, 0]], [0.4, [-14, 0, 0]], [1.2, [-66, 0, 0], 'easeInOutCubic'], [3.4, [-66, 0, 0]]]);
-      T('hand_' + s, 'rotation', [[0, [0, 0, 0]], [1.2, [30, 0, 0], 'easeInOutCubic'], [3.4, [30, 0, 0]]]);
-      T('leg_' + s + '_upper', 'rotation', [[0, [0, 0, 0]], [0.4, [-8, 0, 0], 'easeOutQuad'], [1.2, [22, 0, 0], 'easeInOutCubic'], [3.4, [22, 0, 0]]]);
-      T('leg_' + s + '_lower', 'rotation', [[0, [0, 0, 0]], [1.2, [-22, 0, 0], 'easeInOutCubic'], [3.4, [-22, 0, 0]]]);
-      T('ear_' + s, 'rotation', [[0, [0, 0, 0]], [0.4, [-10, 0, -10 * k]], [1.2, [14, 0, 16 * k], E], [3.4, [18, 0, 20 * k]]]);
-    });
-    T('tail_1', 'rotation', [[0, [0, 0, 0]], [1.2, [12, 0, 0], E], [3.4, [12, 0, 0]]]);
-    ['mane_1', 'mane_2', 'mane_3', 'spike_shoulder_1', 'spike_shoulder_2', 'spike_shoulder_3'].forEach(b => {
-      T(b, 'rotation', [[0, [0, 0, 0]], [1.2, [16, 0, 0], E], [3.4, [22, 0, 0]]]);
-    });
-  });
-
-  const ch = { rotation: 'rotation', position: 'position', scale: 'scale' };
-  const out = [];
-  for (const d of defs) {
-    const anim = new Animation({ name: ID + d.name, loop: d.loop, length: d.length, snapping: 24, anim_time_update: '', blend_weight: '', start_delay: '', loop_delay: '' }).add(false);
-    let nkf = 0;
-    const T = (bone, channel, keys) => {
-      const g = Group.all.find(x => x.name === bone);
-      if (!g) throw new Error('bone not found: ' + bone + ' (anim ' + d.name + ')');
-      const ba = anim.getBoneAnimator(g);
-      keys.forEach(k => {
-        const [t, v, ease, arg] = k;
-        const o = { channel: ch[channel], time: t, interpolation: 'linear', data_points: [{ x: v[0], y: v[1], z: v[2] }] };
-        const kf = ba.addKeyframe(o);
-        if (ease) { kf.easing = ease; if (arg !== undefined) kf.easingArgs = [arg]; }
-        nkf++;
-      });
-    };
-    d.fn(T);
-    out.push(d.name + ':' + nkf);
+// tracks: { bone: { r|p|s: [[time, [x,y,z], easing?], ...] } }
+function anim(name, length, loop, tracks) {
+  const bones = {};
+  for (const [bone, chans] of Object.entries(tracks)) {
+    if (!boneNames.has(bone)) throw new Error(name + ': no bone ' + bone);
+    const o = {};
+    for (const [ch, keys] of Object.entries(chans)) {
+      const t = {};
+      for (const [time, vec, easing] of keys) {
+        if (time < 0 || time > length + 1e-6) throw new Error(name + '/' + bone + ': key outside the animation at ' + time);
+        const v = vec.map(num);
+        t[num(time).toFixed(3).replace(/0+$/, '').replace(/\.$/, '.0')] = easing ? { vector: v, easing } : v;
+      }
+      o[{ r: 'rotation', p: 'position', s: 'scale' }[ch]] = t;
+    }
+    bones[bone] = o;
   }
-  return out;
-})
+  const a = { animation_length: length, bones };
+  if (loop) a.loop = loop;
+  out.animations[ID + name] = a;
+}
+
+// Four poses a quarter-cycle apart, played as a loop of length T starting at phase `shift` (0 or 0.5).
+function cyc(T, poses, shift = 0, ease = SINE) {
+  const k = shift ? 2 : 0;
+  return [0, 1, 2, 3, 4].map(i => [T * i / 4, poses[(i + k) % 4], i ? ease : undefined]);
+}
+const xs = (...v) => v.map(x => [x, 0, 0]);
+const ys = (...v) => v.map(y => [0, y, 0]);
+const zs = (...v) => v.map(z => [0, 0, z]);
+
+// ------------------------------------------------------------------ idle: slow breath, a watching head, bristling fur
+{
+  const T = 4;
+  anim('idle', T, true, {
+    body: { p: [[0, [0, 0, 0]], [2, [0, -0.5, 0], SINE], [4, [0, 0, 0], SINE]] },
+    chest: { r: [[0, [0, 0, 0]], [2, [1.5, 0, 0], SINE], [4, [0, 0, 0], SINE]], s: [[0, [1, 1, 1]], [1.8, [1.025, 1.02, 1], SINE], [4, [1, 1, 1], SINE]] },
+    arm_left: { r: [[0, [0, 0, 0]], [2, [-1.5, 0, 0], SINE], [4, [0, 0, 0], SINE]] },
+    arm_right: { r: [[0, [0, 0, 0]], [2, [-1.5, 0, 0], SINE], [4, [0, 0, 0], SINE]] },
+    neck: { r: [[0, [0, 0, 0]], [1.3, [-2, 5, 0], SINE], [2.9, [1, -6, 0], SINE], [4, [0, 0, 0], SINE]] },
+    head: { r: [[0, [0, 0, 0]], [1.3, [-1, 6, 2], SINE], [2.9, [2, -7, -2], SINE], [4, [0, 0, 0], SINE]] },
+    jaw: { r: [[0, [0, 0, 0]], [1.6, [0, 0, 0]], [2.0, [7, 0, 0], 'easeOutQuad'], [2.6, [5, 0, 0], SINE], [3.1, [0, 0, 0], 'easeInQuad'], [4, [0, 0, 0]]] },
+    ear_left: { r: [[0, [0, 0, 0]], [2.5, [0, 0, 0]], [2.6, [14, 0, 10], 'easeOutQuad'], [2.8, [0, 0, 0], 'easeInOutQuad'], [4, [0, 0, 0]]] },
+    ear_right: { r: [[0, [0, 0, 0]], [0.7, [0, 0, 0]], [0.8, [14, 0, -10], 'easeOutQuad'], [1.0, [0, 0, 0], 'easeInOutQuad'], [4, [0, 0, 0]]] },
+    mane_front: { r: [[0, [0, 0, 0]], [1, [-8, 0, 0], SINE], [2, [3, 0, 0], SINE], [3, [-6, 0, 0], SINE], [4, [0, 0, 0], SINE]] },
+    mane_crest: { r: [[0, [0, 0, 0]], [1.2, [0, 0, 5], SINE], [3.2, [0, 0, -5], SINE], [4, [0, 0, 0], SINE]] },
+    mane_rear: { r: [[0, [0, 0, 0]], [1.4, [7, 0, 0], SINE], [2.6, [-4, 0, 0], SINE], [4, [0, 0, 0], SINE]] },
+    wisp_tail: { r: [[0, [0, 0, 0]], [1, [5, 14, 0], SINE], [2, [-4, 0, 0], SINE], [3, [5, -14, 0], SINE], [4, [0, 0, 0], SINE]] },
+    hand_right: { r: [[0, [0, 0, 0]], [3.0, [0, 0, 0]], [3.25, [-9, 0, 0], 'easeOutQuad'], [3.6, [0, 0, 0], 'easeInQuad'], [4, [0, 0, 0]]] },
+  });
+}
+
+// ------------------------------------------------------------------ walk: knuckle-walk, diagonal pairs
+{
+  const T = 1.2;
+  const arm = xs(-20, 0, 20, -4), fore = xs(6, 0, -6, -34), hand = xs(-12, 0, 14, 26);
+  const leg = xs(-20, 0, 22, -6), shin = xs(6, 0, -8, 28), foot = xs(-6, 0, 18, -22);
+  anim('walk', T, true, {
+    body: { p: cyc(T, [[0, -1.2, 0], [0, 0, 0], [0, -1.2, 0], [0, 0, 0]]), r: cyc(T, zs(2, 0, -2, 0)) },
+    waist: { r: cyc(T, ys(3, 0, -3, 0)) },
+    chest: { r: cyc(T, ys(-7, 0, 7, 0)) },
+    neck: { r: cyc(T, [[2, 2, 0], [-1, 0, 0], [2, -2, 0], [-1, 0, 0]]) },
+    head: { r: cyc(T, [[1, 2, -2], [-1, 0, 0], [1, -2, 2], [-1, 0, 0]]) },
+    jaw: { r: cyc(T, xs(3, 5, 3, 5)) },
+    arm_left: { r: cyc(T, arm) }, forearm_left: { r: cyc(T, fore) }, hand_left: { r: cyc(T, hand) },
+    arm_right: { r: cyc(T, arm, 0.5) }, forearm_right: { r: cyc(T, fore, 0.5) }, hand_right: { r: cyc(T, hand, 0.5) },
+    leg_right: { r: cyc(T, leg) }, shin_right: { r: cyc(T, shin) }, foot_right: { r: cyc(T, foot) },
+    leg_left: { r: cyc(T, leg, 0.5) }, shin_left: { r: cyc(T, shin, 0.5) }, foot_left: { r: cyc(T, foot, 0.5) },
+    mane_front: { r: cyc(T, xs(4, -4, 4, -4)) },
+    mane_crest: { r: cyc(T, zs(4, 0, -4, 0)) },
+    mane_rear: { r: cyc(T, xs(-5, 5, -5, 5)) },
+    wisp_tail: { r: cyc(T, [[4, 10, 0], [-4, 0, 0], [4, -10, 0], [-4, 0, 0]]) },
+  });
+}
+
+// ------------------------------------------------------------------ run: bounding charge, arms together then legs
+{
+  const T = 0.7;
+  const arm = xs(-28, 0, 22, -24), fore = xs(0, 0, -10, -28), hand = xs(-12, 5, 24, 0);
+  const leg = xs(26, -15, -36, 10), shin = xs(-10, 45, 10, 0), foot = xs(25, -30, -8, 10);
+  const out3 = (keys, z) => keys.map(([t, v, e]) => [t, [v[0], 0, z], e]);
+  anim('run', T, true, {
+    body: { p: cyc(T, [[0, -1.5, 0], [0, -2.5, 0], [0, -1, 0], [0, 3, 0]]), r: cyc(T, xs(6, 2, -4, -8)) },
+    waist: { r: cyc(T, xs(-4, 6, 12, -8)) },
+    chest: { r: cyc(T, xs(0, 3, 4, -4)) },
+    neck: { r: cyc(T, xs(-4, -8, -10, 10)) },
+    head: { r: cyc(T, xs(-2, -4, -6, 8)) },
+    jaw: { r: cyc(T, xs(8, 14, 8, 14)) },
+    ear_left: { r: cyc(T, [[25, 0, 6], [28, 0, 6], [25, 0, 6], [28, 0, 6]]) },
+    ear_right: { r: cyc(T, [[25, 0, -6], [28, 0, -6], [25, 0, -6], [28, 0, -6]]) },
+    arm_left: { r: out3(cyc(T, arm), 6) }, forearm_left: { r: cyc(T, fore) }, hand_left: { r: cyc(T, hand) },
+    arm_right: { r: out3(cyc(T, arm), -6) }, forearm_right: { r: cyc(T, fore) }, hand_right: { r: cyc(T, hand) },
+    leg_left: { r: cyc(T, leg) }, shin_left: { r: cyc(T, shin) }, foot_left: { r: cyc(T, foot) },
+    leg_right: { r: cyc(T, leg) }, shin_right: { r: cyc(T, shin) }, foot_right: { r: cyc(T, foot) },
+    mane_front: { r: cyc(T, xs(20, 14, 22, 12)) },
+    mane_crest: { r: cyc(T, zs(5, -5, 5, -5)) },
+    mane_rear: { r: cyc(T, xs(22, 14, 20, 12)) },
+    wisp_tail: { r: cyc(T, [[-18, 6, 0], [-26, 0, 0], [-16, -6, 0], [-28, 0, 0]]) },
+  });
+}
+
+// ------------------------------------------------------------------ attack_bite: coil back, lunge, snap, worry
+anim('attack_bite', 1.0, false, {
+  body: { p: [[0, [0, 0, 0]], [0.3, [0, -1, 2.5], 'easeOutQuad'], [0.42, [0, -1.5, -5], 'easeInExpo'], [0.7, [0, -1, -3], SINE], [1, [0, 0, 0], SINE]] },
+  chest: { r: [[0, [0, 0, 0]], [0.3, [-5, 0, 0], 'easeOutQuad'], [0.42, [7, 0, 0], 'easeInExpo'], [1, [0, 0, 0], SINE]] },
+  neck: { r: [[0, [0, 0, 0]], [0.3, [-16, 0, 0], 'easeOutQuad'], [0.42, [12, 0, 0], 'easeInExpo'], [0.58, [10, 8, 0], SINE], [0.7, [10, -8, 0], SINE], [1, [0, 0, 0], SINE]] },
+  head: { r: [[0, [0, 0, 0]], [0.3, [-14, 0, 0], 'easeOutQuad'], [0.42, [6, 0, 0], 'easeInExpo'], [0.58, [4, 6, 12], SINE], [0.7, [4, -6, -12], SINE], [0.82, [2, 3, 6], SINE], [1, [0, 0, 0], SINE]] },
+  jaw: { r: [[0, [0, 0, 0]], [0.3, [46, 0, 0], 'easeOutBack'], [0.4, [48, 0, 0]], [0.46, [0, 0, 0], 'easeInExpo'], [0.82, [0, 0, 0]], [0.9, [8, 0, 0], SINE], [1, [0, 0, 0], SINE]] },
+  ear_left: { r: [[0, [0, 0, 0]], [0.3, [28, 0, 8], 'easeOutQuad'], [0.8, [22, 0, 6]], [1, [0, 0, 0], SINE]] },
+  ear_right: { r: [[0, [0, 0, 0]], [0.3, [28, 0, -8], 'easeOutQuad'], [0.8, [22, 0, -6]], [1, [0, 0, 0], SINE]] },
+  arm_left: { r: [[0, [0, 0, 0]], [0.3, [-6, 0, 0], 'easeOutQuad'], [0.42, [14, 0, 4], 'easeInExpo'], [1, [0, 0, 0], SINE]] },
+  arm_right: { r: [[0, [0, 0, 0]], [0.3, [-6, 0, 0], 'easeOutQuad'], [0.42, [14, 0, -4], 'easeInExpo'], [1, [0, 0, 0], SINE]] },
+  forearm_left: { r: [[0, [0, 0, 0]], [0.42, [-10, 0, 0], 'easeInExpo'], [1, [0, 0, 0], SINE]] },
+  forearm_right: { r: [[0, [0, 0, 0]], [0.42, [-10, 0, 0], 'easeInExpo'], [1, [0, 0, 0], SINE]] },
+  leg_left: { r: [[0, [0, 0, 0]], [0.3, [-6, 0, 0], 'easeOutQuad'], [0.42, [12, 0, 0], 'easeInExpo'], [1, [0, 0, 0], SINE]] },
+  leg_right: { r: [[0, [0, 0, 0]], [0.3, [-6, 0, 0], 'easeOutQuad'], [0.42, [12, 0, 0], 'easeInExpo'], [1, [0, 0, 0], SINE]] },
+  mane_front: { r: [[0, [0, 0, 0]], [0.3, [-18, 0, 0], 'easeOutQuad'], [0.46, [16, 0, 0], 'easeInExpo'], [1, [0, 0, 0], SINE]] },
+  mane_rear: { r: [[0, [0, 0, 0]], [0.3, [-14, 0, 0], 'easeOutQuad'], [0.5, [14, 0, 0], 'easeInExpo'], [1, [0, 0, 0], SINE]] },
+  wisp_tail: { r: [[0, [0, 0, 0]], [0.3, [14, 0, 0], 'easeOutQuad'], [0.46, [-20, 0, 0], 'easeInExpo'], [1, [0, 0, 0], SINE]] },
+});
+
+// ------------------------------------------------------------------ attack_swipe: left arm rears up and rakes across
+anim('attack_swipe', 1.1, false, {
+  body: { p: [[0, [0, 0, 0]], [0.35, [-1.5, 0.5, 1], 'easeOutQuad'], [0.5, [1.5, -1.5, -3], 'easeInQuad'], [1.1, [0, 0, 0], SINE]], r: [[0, [0, 0, 0]], [0.35, [0, 0, 4], 'easeOutQuad'], [0.5, [0, 0, -5], 'easeInQuad'], [1.1, [0, 0, 0], SINE]] },
+  waist: { r: [[0, [0, 0, 0]], [0.35, [-6, 6, 0], 'easeOutQuad'], [0.5, [6, -8, 0], 'easeInQuad'], [1.1, [0, 0, 0], SINE]] },
+  chest: { r: [[0, [0, 0, 0]], [0.35, [-8, 14, 4], 'easeOutQuad'], [0.5, [8, -22, -6], 'easeInQuad'], [0.64, [8, -26, -6], 'easeOutQuad'], [1.1, [0, 0, 0], SINE]] },
+  neck: { r: [[0, [0, 0, 0]], [0.35, [4, -10, 0], 'easeOutQuad'], [0.5, [0, 16, 0], 'easeInQuad'], [1.1, [0, 0, 0], SINE]] },
+  head: { r: [[0, [0, 0, 0]], [0.35, [-4, -6, -6], 'easeOutQuad'], [0.5, [4, 10, 8], 'easeInQuad'], [1.1, [0, 0, 0], SINE]] },
+  jaw: { r: [[0, [0, 0, 0]], [0.35, [22, 0, 0], 'easeOutQuad'], [0.64, [26, 0, 0]], [1.1, [0, 0, 0], SINE]] },
+  arm_left: { r: [[0, [0, 0, 0]], [0.35, [-105, 0, 38], 'easeOutBack'], [0.5, [-38, 0, -30], 'easeInQuad'], [0.64, [-6, 0, -36], 'easeOutQuad'], [1.1, [0, 0, 0], SINE]] },
+  forearm_left: { r: [[0, [0, 0, 0]], [0.35, [-50, 0, 0], 'easeOutQuad'], [0.5, [-6, 0, 0], 'easeInQuad'], [0.64, [-22, 0, 0], 'easeOutQuad'], [1.1, [0, 0, 0], SINE]] },
+  hand_left: { r: [[0, [0, 0, 0]], [0.35, [-30, 0, 0], 'easeOutQuad'], [0.5, [28, 0, 0], 'easeInQuad'], [1.1, [0, 0, 0], SINE]] },
+  arm_right: { r: [[0, [0, 0, 0]], [0.35, [6, 0, -4], 'easeOutQuad'], [0.5, [10, 0, -8], 'easeInQuad'], [1.1, [0, 0, 0], SINE]] },
+  forearm_right: { r: [[0, [0, 0, 0]], [0.5, [-12, 0, 0], 'easeInQuad'], [1.1, [0, 0, 0], SINE]] },
+  mane_front: { r: [[0, [0, 0, 0]], [0.35, [-14, 0, 0], 'easeOutQuad'], [0.5, [12, 0, 0], 'easeInQuad'], [1.1, [0, 0, 0], SINE]] },
+  mane_crest: { r: [[0, [0, 0, 0]], [0.35, [0, 0, -10], 'easeOutQuad'], [0.5, [0, 0, 14], 'easeInQuad'], [1.1, [0, 0, 0], SINE]] },
+  wisp_tail: { r: [[0, [0, 0, 0]], [0.35, [0, -22, 0], 'easeOutQuad'], [0.55, [0, 28, 0], 'easeInQuad'], [1.1, [0, 0, 0], SINE]] },
+});
+
+// ------------------------------------------------------------------ roar: gathers low, rears up on the hind legs with the arms flung wide, bellows upward, and drops back
+{
+  const G = 0.45, U = 0.85, H = 1.95, D = 2.3, E = 2.6;
+  // gather pose, risen pose, end-of-hold pose, landing pose
+  const arc = (g, u, h, d) => [[0, [0, 0, 0]], [G, g, 'easeOutQuad'], [U, u, 'easeOutBack'], [H, h, SINE], [D, d, 'easeInQuad'], [E, [0, 0, 0], 'easeOutBack']];
+  const shake = (pose) => {
+    const keys = [];
+    let s = 1;
+    for (let t = U + 0.11; t < H - 0.05; t += 0.11) { keys.push([t, pose(s)]); s = -s; }
+    return keys;
+  };
+  const limb = (z) => ({
+    arm: { r: arc([8, 0, 0], [12, 0, 40 * z], [18, 0, 34 * z], [-4, 0, 4 * z]) },
+    forearm: { r: arc([-14, 0, 0], [-62, 0, 0], [-54, 0, 0], [-4, 0, 0]) },
+    hand: { r: arc([0, 0, 0], [-26, 0, 0], [-32, 0, 0], [0, 0, 0]) },
+    leg: { r: arc([-12, 0, 0], [10, 0, 6 * z], [10, 0, 6 * z], [-6, 0, 0]) },
+    shin: { r: arc([18, 0, 0], [-14, 0, 0], [-14, 0, 0], [10, 0, 0]) },
+    foot: { r: arc([-8, 0, 0], [4, 0, 0], [4, 0, 0], [-4, 0, 0]) },
+    ear: { r: [[0, [0, 0, 0]], [U, [34, 0, 10 * z], 'easeOutQuad'], [H, [34, 0, 10 * z]], [E, [0, 0, 0], SINE]] },
+  });
+  const sides = {};
+  for (const [s, z] of [['left', 1], ['right', -1]]) for (const [part, tracks] of Object.entries(limb(z))) sides[part + '_' + s] = tracks;
+  const bristle = (g, u, h, sc) => ({
+    r: [[0, [0, 0, 0]], [G, g, 'easeOutQuad'], [U, u, 'easeOutBack'], [1.2, h, SINE], [1.55, u, SINE], [H, h, SINE], [D, g, 'easeInQuad'], [E, [0, 0, 0], SINE]],
+    s: [[0, [1, 1, 1]], [U, sc, 'easeOutBack'], [H, sc], [E, [1, 1, 1], SINE]],
+  });
+  anim('roar', E, false, {
+    body: { p: arc([0, -3, 1], [0, 2.5, 3], [0, 2.5, 3], [0, -2, 0]) },
+    waist: { r: arc([6, 0, 0], [-48, 0, 0], [-50, 0, 0], [5, 0, 0]) },
+    chest: { r: arc([5, 0, 0], [-14, 0, 0], [-16, 0, 0], [7, 0, 0]), s: [[0, [1, 1, 1]], [G, [1.06, 1.05, 1], 'easeOutQuad'], [U, [1, 1, 1], 'easeOutQuad'], [E, [1, 1, 1]]] },
+    neck: { r: arc([12, 0, 0], [16, 0, 0], [18, 0, 0], [-6, 0, 0]) },
+    head: { r: [[0, [0, 0, 0]], [G, [10, 0, 0], 'easeOutQuad'], [U, [8, 0, 0], 'easeOutBack'], ...shake(s => [8 + s, 0, 4 * s]), [H, [10, 0, 0]], [D, [-4, 0, 0], 'easeInQuad'], [E, [0, 0, 0], SINE]] },
+    jaw: { r: [[0, [0, 0, 0]], [G, [4, 0, 0]], [U, [60, 0, 0], 'easeOutBack'], ...shake(s => [57 + 3 * s, 0, 0]), [H, [52, 0, 0]], [D, [8, 0, 0], 'easeInQuad'], [E, [0, 0, 0], SINE]] },
+    ...sides,
+    mane_front: bristle([14, 0, 0], [-24, 0, 0], [-18, 0, 0], [1.1, 1.35, 1]),
+    mane_crest: bristle([0, 0, 0], [0, 0, 6], [0, 0, -6], [1, 1.35, 1.05]),
+    mane_rear: bristle([10, 0, 0], [-20, 0, 0], [-14, 0, 0], [1.1, 1.35, 1]),
+    wisp_tail: bristle([10, 0, 0], [-28, 10, 0], [-24, -10, 0], [1, 1.3, 1.3]),
+  });
+}
+
+// ------------------------------------------------------------------ rear_up: crouch, stand on the hind legs with arms wide, slam down
+anim('rear_up', 3.2, false, {
+  body: { p: [[0, [0, 0, 0]], [0.5, [0, -3, 1], 'easeOutQuad'], [1.1, [0, 3, 3], 'easeOutBack'], [2.3, [0, 3, 3]], [2.7, [0, -2.5, 0], 'easeInQuad'], [3.2, [0, 0, 0], 'easeOutBack']] },
+  waist: { r: [[0, [0, 0, 0]], [0.5, [6, 0, 0], 'easeOutQuad'], [1.1, [-52, 0, 0], 'easeOutBack'], [1.7, [-49, 0, 3], SINE], [2.3, [-53, 0, -3], SINE], [2.7, [5, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], 'easeOutBack']] },
+  chest: { r: [[0, [0, 0, 0]], [0.5, [4, 0, 0], 'easeOutQuad'], [1.1, [-18, 0, 0], 'easeOutBack'], [2.3, [-20, 0, 0], SINE], [2.7, [8, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], 'easeOutBack']] },
+  neck: { r: [[0, [0, 0, 0]], [0.5, [-8, 0, 0], 'easeOutQuad'], [1.1, [34, 0, 0], 'easeOutQuad'], [2.3, [30, 0, 0], SINE], [2.7, [-6, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  head: { r: [[0, [0, 0, 0]], [1.1, [22, 0, 0], 'easeOutQuad'], [1.5, [16, 8, 0], SINE], [1.9, [18, -8, 0], SINE], [2.3, [20, 0, 0], SINE], [2.7, [-4, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  jaw: { r: [[0, [0, 0, 0]], [0.9, [6, 0, 0]], [1.2, [44, 0, 0], 'easeOutBack'], [2.2, [40, 0, 0]], [2.6, [6, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  arm_left: { r: [[0, [0, 0, 0]], [0.5, [8, 0, 0], 'easeOutQuad'], [1.1, [-38, 0, 46], 'easeOutBack'], [1.7, [-44, 0, 50], SINE], [2.3, [-60, 0, 40], SINE], [2.7, [-4, 0, 4], 'easeInQuad'], [3.2, [0, 0, 0], 'easeOutBack']] },
+  arm_right: { r: [[0, [0, 0, 0]], [0.5, [8, 0, 0], 'easeOutQuad'], [1.1, [-38, 0, -46], 'easeOutBack'], [1.7, [-44, 0, -50], SINE], [2.3, [-60, 0, -40], SINE], [2.7, [-4, 0, -4], 'easeInQuad'], [3.2, [0, 0, 0], 'easeOutBack']] },
+  forearm_left: { r: [[0, [0, 0, 0]], [0.5, [-14, 0, 0], 'easeOutQuad'], [1.1, [-52, 0, 0], 'easeOutBack'], [2.3, [-40, 0, 0], SINE], [2.7, [-4, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  forearm_right: { r: [[0, [0, 0, 0]], [0.5, [-14, 0, 0], 'easeOutQuad'], [1.1, [-52, 0, 0], 'easeOutBack'], [2.3, [-40, 0, 0], SINE], [2.7, [-4, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  hand_left: { r: [[0, [0, 0, 0]], [1.1, [-28, 0, 0], 'easeOutBack'], [2.3, [-34, 0, 0], SINE], [2.7, [0, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0]]] },
+  hand_right: { r: [[0, [0, 0, 0]], [1.1, [-28, 0, 0], 'easeOutBack'], [2.3, [-34, 0, 0], SINE], [2.7, [0, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0]]] },
+  leg_left: { r: [[0, [0, 0, 0]], [0.5, [-12, 0, 0], 'easeOutQuad'], [1.1, [10, 0, 6], 'easeOutBack'], [2.3, [10, 0, 6]], [2.7, [-6, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  leg_right: { r: [[0, [0, 0, 0]], [0.5, [-12, 0, 0], 'easeOutQuad'], [1.1, [10, 0, -6], 'easeOutBack'], [2.3, [10, 0, -6]], [2.7, [-6, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  shin_left: { r: [[0, [0, 0, 0]], [0.5, [18, 0, 0], 'easeOutQuad'], [1.1, [-14, 0, 0], 'easeOutBack'], [2.3, [-14, 0, 0]], [2.7, [10, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  shin_right: { r: [[0, [0, 0, 0]], [0.5, [18, 0, 0], 'easeOutQuad'], [1.1, [-14, 0, 0], 'easeOutBack'], [2.3, [-14, 0, 0]], [2.7, [10, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  foot_left: { r: [[0, [0, 0, 0]], [0.5, [-8, 0, 0], 'easeOutQuad'], [1.1, [4, 0, 0], 'easeOutBack'], [2.3, [4, 0, 0]], [2.7, [-4, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  foot_right: { r: [[0, [0, 0, 0]], [0.5, [-8, 0, 0], 'easeOutQuad'], [1.1, [4, 0, 0], 'easeOutBack'], [2.3, [4, 0, 0]], [2.7, [-4, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  mane_front: { r: [[0, [0, 0, 0]], [1.1, [-20, 0, 0], 'easeOutBack'], [2.3, [-16, 0, 0], SINE], [2.7, [18, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  mane_rear: { r: [[0, [0, 0, 0]], [1.1, [-16, 0, 0], 'easeOutBack'], [2.3, [-12, 0, 0], SINE], [2.7, [16, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+  wisp_tail: { r: [[0, [0, 0, 0]], [1.1, [-30, 0, 0], 'easeOutQuad'], [1.7, [-26, 12, 0], SINE], [2.3, [-30, -12, 0], SINE], [2.7, [14, 0, 0], 'easeInQuad'], [3.2, [0, 0, 0], SINE]] },
+});
+
+// ------------------------------------------------------------------ hurt: a recoil to its right with a snarl
+anim('hurt', 0.6, false, {
+  body: { p: [[0, [0, 0, 0]], [0.12, [1.5, -1.5, 2.5], 'easeOutQuad'], [0.6, [0, 0, 0], SINE]], r: [[0, [0, 0, 0]], [0.12, [-3, 0, 5], 'easeOutQuad'], [0.6, [0, 0, 0], SINE]] },
+  chest: { r: [[0, [0, 0, 0]], [0.12, [-4, -10, 4], 'easeOutQuad'], [0.6, [0, 0, 0], SINE]] },
+  neck: { r: [[0, [0, 0, 0]], [0.12, [-10, -14, 0], 'easeOutQuad'], [0.6, [0, 0, 0], SINE]] },
+  head: { r: [[0, [0, 0, 0]], [0.12, [-10, -18, 14], 'easeOutQuad'], [0.3, [-4, -8, 6], SINE], [0.6, [0, 0, 0], SINE]] },
+  jaw: { r: [[0, [0, 0, 0]], [0.12, [30, 0, 0], 'easeOutQuad'], [0.4, [14, 0, 0], SINE], [0.6, [0, 0, 0], SINE]] },
+  ear_left: { r: [[0, [0, 0, 0]], [0.12, [32, 0, 10], 'easeOutQuad'], [0.6, [0, 0, 0], SINE]] },
+  ear_right: { r: [[0, [0, 0, 0]], [0.12, [32, 0, -10], 'easeOutQuad'], [0.6, [0, 0, 0], SINE]] },
+  arm_left: { r: [[0, [0, 0, 0]], [0.12, [-14, 0, 10], 'easeOutQuad'], [0.6, [0, 0, 0], SINE]] },
+  forearm_left: { r: [[0, [0, 0, 0]], [0.12, [-22, 0, 0], 'easeOutQuad'], [0.6, [0, 0, 0], SINE]] },
+  arm_right: { r: [[0, [0, 0, 0]], [0.12, [-6, 0, -4], 'easeOutQuad'], [0.6, [0, 0, 0], SINE]] },
+  mane_front: { r: [[0, [0, 0, 0]], [0.12, [-22, 0, 0], 'easeOutQuad'], [0.6, [0, 0, 0], SINE]] },
+  mane_rear: { r: [[0, [0, 0, 0]], [0.12, [-18, 0, 0], 'easeOutQuad'], [0.6, [0, 0, 0], SINE]] },
+  wisp_tail: { r: [[0, [0, 0, 0]], [0.12, [20, 16, 0], 'easeOutQuad'], [0.6, [0, 0, 0], SINE]] },
+});
+
+// ------------------------------------------------------------------ death: a last roar, the arms give way, it rolls onto its right side
+{
+  const limp = (s) => ({
+    ['arm_' + s]: { r: [[0, [0, 0, 0]], [0.5, [-8, 0, 0], 'easeOutQuad'], [1.3, [26, 0, 0], 'easeInQuad'], [2.0, [-24, 0, s === 'left' ? -14 : 8], SINE], [3, [-28, 0, s === 'left' ? -18 : 10], SINE]] },
+    ['forearm_' + s]: { r: [[0, [0, 0, 0]], [1.3, [-58, 0, 0], 'easeInQuad'], [2.0, [-30, 0, 0], SINE], [3, [-26, 0, 0], SINE]] },
+    ['hand_' + s]: { r: [[0, [0, 0, 0]], [1.3, [30, 0, 0], 'easeInQuad'], [2.0, [38, 0, 0], SINE], [3, [42, 0, 0], SINE]] },
+    ['leg_' + s]: { r: [[0, [0, 0, 0]], [1.3, [-18, 0, 0], 'easeInQuad'], [2.0, [14, 0, s === 'left' ? -12 : 6], SINE], [3, [18, 0, s === 'left' ? -14 : 6], SINE]] },
+    ['shin_' + s]: { r: [[0, [0, 0, 0]], [1.3, [28, 0, 0], 'easeInQuad'], [2.0, [10, 0, 0], SINE], [3, [6, 0, 0], SINE]] },
+    ['foot_' + s]: { r: [[0, [0, 0, 0]], [1.3, [-16, 0, 0], 'easeInQuad'], [2.0, [22, 0, 0], SINE], [3, [26, 0, 0], SINE]] },
+  });
+  anim('death', 3.0, 'hold_on_last_frame', {
+    body: {
+      p: [[0, [0, 0, 0]], [0.5, [0, 1, 2], 'easeOutQuad'], [1.3, [0, -8, -1], 'easeInQuad'], [2.0, [3, -8, 0], 'easeOutBounce'], [3, [3, -8, 0]]],
+      r: [[0, [0, 0, 0]], [0.5, [-6, 0, 0], 'easeOutQuad'], [1.3, [8, 0, 10], 'easeInQuad'], [2.0, [0, 0, 84], 'easeOutBounce'], [3, [0, 0, 84]]],
+    },
+    waist: { r: [[0, [0, 0, 0]], [0.5, [-12, 0, 0], 'easeOutQuad'], [1.3, [8, 0, 0], 'easeInQuad'], [2.0, [6, 8, 0], SINE], [3, [8, 10, 0], SINE]] },
+    chest: { r: [[0, [0, 0, 0]], [0.5, [-8, 0, 0], 'easeOutQuad'], [1.3, [8, 0, 0], 'easeInQuad'], [2.0, [4, 6, 0], SINE], [2.5, [3, 6, 0], SINE], [3, [5, 6, 0], SINE]], s: [[0, [1, 1, 1]], [2.0, [1, 1, 1]], [2.5, [1.03, 1.02, 1], SINE], [3, [0.98, 0.98, 1], SINE]] },
+    neck: { r: [[0, [0, 0, 0]], [0.5, [-24, 0, 0], 'easeOutBack'], [1.3, [10, 0, 0], 'easeInQuad'], [2.0, [8, 16, 0], SINE], [3, [12, 22, 0], SINE]] },
+    head: { r: [[0, [0, 0, 0]], [0.5, [-24, 0, 0], 'easeOutBack'], [0.8, [-20, 6, 0], SINE], [1.3, [8, 0, 0], 'easeInQuad'], [2.0, [0, 14, -10], SINE], [3, [4, 18, -14], SINE]] },
+    jaw: { r: [[0, [0, 0, 0]], [0.5, [52, 0, 0], 'easeOutBack'], [1.1, [44, 0, 0]], [1.4, [10, 0, 0], 'easeInQuad'], [2.0, [24, 0, 0], 'easeOutQuad'], [3, [18, 0, 0], SINE]] },
+    ear_left: { r: [[0, [0, 0, 0]], [0.5, [30, 0, 8], 'easeOutQuad'], [3, [36, 0, 12], SINE]] },
+    ear_right: { r: [[0, [0, 0, 0]], [0.5, [30, 0, -8], 'easeOutQuad'], [3, [36, 0, -12], SINE]] },
+    ...limp('left'),
+    ...limp('right'),
+    mane_front: { r: [[0, [0, 0, 0]], [0.5, [-22, 0, 0], 'easeOutBack'], [2.0, [16, 0, 0], SINE], [3, [26, 0, 0], SINE]], s: [[0, [1, 1, 1]], [2.0, [1, 1, 1]], [3, [1, 0.55, 1], SINE]] },
+    mane_crest: { r: [[0, [0, 0, 0]], [2.0, [0, 0, 8], SINE], [3, [0, 0, 12], SINE]], s: [[0, [1, 1, 1]], [2.0, [1, 1, 1]], [3, [1, 0.55, 1], SINE]] },
+    mane_rear: { r: [[0, [0, 0, 0]], [0.5, [-18, 0, 0], 'easeOutBack'], [2.0, [16, 0, 0], SINE], [3, [26, 0, 0], SINE]], s: [[0, [1, 1, 1]], [2.0, [1, 1, 1]], [3, [1, 0.55, 1], SINE]] },
+    wisp_tail: { r: [[0, [0, 0, 0]], [0.5, [20, 0, 0], 'easeOutQuad'], [2.0, [-10, 18, 0], SINE], [3, [-16, 24, 0], SINE]], s: [[0, [1, 1, 1]], [2.0, [1, 1, 1]], [3, [1, 0.5, 0.6], SINE]] },
+  });
+}
+
+// ------------------------------------------------------------------ collapse (phase 3): it shudders, sinks onto its belly, and the shadow leaves it
+{
+  const fold = (s) => {
+    const z = s === 'left' ? 1 : -1;
+    return {
+      ['arm_' + s]: { r: [[0, [0, 0, 0]], [0.6, [-4, 0, 3 * z], SINE], [1.6, [6, 0, 10 * z], 'easeInQuad'], [3.4, [8, 0, 12 * z], SINE]] },
+      ['forearm_' + s]: { r: [[0, [0, 0, 0]], [0.6, [-8, 0, 0], SINE], [1.6, [-56, 0, 0], 'easeInQuad'], [3.4, [-58, 0, 0], SINE]] },
+      ['hand_' + s]: { r: [[0, [0, 0, 0]], [1.6, [48, 0, 0], 'easeInQuad'], [3.4, [50, 0, 0], SINE]] },
+      ['leg_' + s]: { r: [[0, [0, 0, 0]], [0.6, [-6, 0, 0], SINE], [1.6, [-48, 0, 8 * z], 'easeInQuad'], [3.4, [-50, 0, 10 * z], SINE]] },
+      ['shin_' + s]: { r: [[0, [0, 0, 0]], [0.6, [8, 0, 0], SINE], [1.6, [80, 0, 0], 'easeInQuad'], [3.4, [82, 0, 0], SINE]] },
+      ['foot_' + s]: { r: [[0, [0, 0, 0]], [1.6, [-14, 0, 0], 'easeInQuad'], [3.4, [-14, 0, 0], SINE]] },
+    };
+  };
+  const fade = (r, t0 = 1.6) => ({ r, s: [[0, [1, 1, 1]], [t0, [1.15, 1.4, 1.15], 'easeOutQuad'], [t0 + 0.8, [0.05, 0.05, 0.05], 'easeInQuad'], [3.4, [0.05, 0.05, 0.05]]] });
+  anim('collapse', 3.4, 'hold_on_last_frame', {
+    body: {
+      p: [[0, [0, 0, 0]], [0.2, [0.8, 0, 0], SINE], [0.4, [-0.8, -0.5, 0], SINE], [0.6, [0, -1, 0], SINE], [1.6, [0, -16.5, -2], 'easeOutBounce'], [3.4, [0, -17, -2], SINE]],
+      r: [[0, [0, 0, 0]], [0.2, [0, 0, 4], SINE], [0.4, [0, 0, -4], SINE], [0.6, [0, 0, 2], SINE], [1.6, [0, 0, 0], 'easeInQuad'], [2.4, [0, 0, 0]], [3.4, [0, 0, 5], SINE]],
+    },
+    waist: { r: [[0, [0, 0, 0]], [0.6, [-4, 0, 0], SINE], [1.6, [10, 0, 0], 'easeInQuad'], [3.4, [12, 0, 0], SINE]] },
+    chest: { r: [[0, [0, 0, 0]], [0.6, [-3, 0, 0], SINE], [1.6, [6, 0, 0], 'easeInQuad'], [3.4, [7, 0, 0], SINE]], s: [[0, [1, 1, 1]], [2.2, [1.03, 1.03, 1], SINE], [3.4, [0.97, 0.97, 1], SINE]] },
+    neck: { r: [[0, [0, 0, 0]], [0.2, [-6, 8, 0], SINE], [0.4, [-6, -8, 0], SINE], [0.6, [-10, 0, 0], SINE], [1.6, [4, 0, 0], 'easeInQuad'], [2.4, [6, 0, 0], SINE], [3.4, [8, 10, 0], SINE]] },
+    head: { r: [[0, [0, 0, 0]], [0.2, [-4, 8, 8], SINE], [0.4, [-4, -8, -8], SINE], [0.6, [-10, 0, 0], SINE], [1.6, [-22, 0, 0], 'easeInQuad'], [2.4, [-24, 0, 0], SINE], [3.4, [-22, 6, -10], SINE]] },
+    jaw: { r: [[0, [0, 0, 0]], [0.6, [34, 0, 0], 'easeOutQuad'], [1.5, [26, 0, 0]], [1.7, [2, 0, 0], 'easeInQuad'], [2.4, [12, 0, 0], SINE], [3.4, [6, 0, 0], SINE]] },
+    ear_left: { r: [[0, [0, 0, 0]], [0.6, [26, 0, 8], SINE], [3.4, [38, 0, 14], SINE]] },
+    ear_right: { r: [[0, [0, 0, 0]], [0.6, [26, 0, -8], SINE], [3.4, [38, 0, -14], SINE]] },
+    ...fold('left'),
+    ...fold('right'),
+    mane_front: fade([[0, [0, 0, 0]], [1.6, [-26, 0, 0], 'easeOutQuad'], [3.4, [-30, 0, 0]]]),
+    mane_crest: fade([[0, [0, 0, 0]], [1.6, [0, 0, 6], 'easeOutQuad'], [3.4, [0, 0, -6]]], 1.7),
+    mane_rear: fade([[0, [0, 0, 0]], [1.6, [-22, 0, 0], 'easeOutQuad'], [3.4, [-26, 0, 0]]], 1.8),
+    wisp_tail: fade([[0, [0, 0, 0]], [1.6, [30, 0, 0], 'easeOutQuad'], [3.4, [34, 0, 0]]], 1.9),
+  });
+}
+
+fs.writeFileSync(process.argv[3], JSON.stringify(out, null, 2) + '\n');
+console.log(Object.entries(out.animations).map(([k, a]) => `${k.slice(ID.length)} ${a.animation_length}s ${a.loop || 'once'} ${Object.keys(a.bones).length} bones`).join('\n'));

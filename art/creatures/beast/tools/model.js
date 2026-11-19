@@ -1,5 +1,5 @@
 // node model.js <out spec.json>
-// The Beast of Gevaudan (Fable version): bones, cubes and box-UV packing, in Blockbench space.
+// The Beast of Gevaudan: bones, cubes and box-UV packing, in Blockbench space.
 // Front is -Z, up is +Y, the creature's left is +X. 1 unit = 1 px = 1/16 block, built at final size.
 // Bones have no rest rotation: every tilt is a cube rotation, so animation axes stay world-aligned.
 const fs = require('fs');
@@ -48,10 +48,10 @@ function rotX(p, origin, d) {
 // ---------------------------------------------------------------- trunk
 const root = bone('root', null, [0, 0, 0]);
 const body = bone('body', 'root', [0, 25, 14]);
-box(body, 'pelvis', [-6.5, 18.5, 9.5], [6.5, 29.5, 19.5], { rot: [5, 0, 0] });
+box(body, 'pelvis', [-7.5, 18, 9], [7.5, 30, 20], { rot: [5, 0, 0] });
 
 const waist = bone('waist', 'body', [0, 26, 10]);
-box(waist, 'belly', [-6, 20, -2.5], [6, 31, 10.5], { rot: [12, 0, 0], tone: -1 });
+box(waist, 'belly', [-6.5, 19.5, -2.5], [6.5, 31.5, 10.5], { rot: [12, 0, 0] });
 
 const chest = bone('chest', 'waist', [0, 29, -1]);
 const RIB = { origin: [0, 30, -9], rot: [22, 0, 0] };
@@ -122,20 +122,20 @@ function side(s) {
   const hand = bone('hand_' + L, 'forearm_' + L, X(W));
   bx(hand, 'hand', [11.5, 0, -23], [19.5, 4, -15], { mat: 'paw' });
   for (const [i, x] of [12.5, 14.5, 16.5, 18.5].entries()) {
-    bx(hand, 'claw_' + (i + 1), [x - 0.5, 0.5, -27], [x + 0.5, 2.5, -23], { rot: [-16, 0, 0], origin: [x, 2, -23], mat: 'claw' });
+    bx(hand, 'claw_' + (i + 1), [x - 0.5, 1, -27], [x + 0.5, 3, -23], { rot: [-12, 0, 0], origin: [x, 2.5, -23], mat: 'claw' });
   }
-  bx(hand, 'claw_thumb', [10.5, 0.5, -24], [11.5, 2.5, -21], { rot: [-16, 30, 0], origin: [11.5, 2, -21], mat: 'claw' });
+  bx(hand, 'claw_thumb', [10.5, 1, -24], [11.5, 3, -21], { rot: [-12, 30, 0], origin: [11.5, 2.5, -21], mat: 'claw' });
 
   // hind leg: hip H, knee K, hock A, ball of the foot B
-  const H = [6.5, 25, 15], K = [8.5, 13, 8.5], A = [8, 7, 17.5], B = [8, 1.5, 13.5];
+  const H = [7, 25, 15], K = [9, 13, 8.5], A = [8.5, 7, 17.5], B = [8.5, 2.2, 13.5];
   const leg = bone('leg_' + L, 'body', X(H));
-  sg(leg, 'thigh', [7, 27, 16], K, 7, 10);
+  sg(leg, 'thigh', [7.5, 28, 16.5], K, 8, 12);
   const shin = bone('shin_' + L, 'leg_' + L, X(K));
-  sg(shin, 'shin', K, A, 5, 6);
+  sg(shin, 'shin', K, A, 6, 7);
   const foot = bone('foot_' + L, 'shin_' + L, X(A));
-  sg(foot, 'metatarsus', A, B, 4, 4);
-  bx(foot, 'toes', [5.5, 0, 7], [10.5, 2, 14], { mat: 'paw' });
-  for (const [i, x] of [6, 8, 10].entries()) {
+  sg(foot, 'metatarsus', A, B, 5, 5, { extra: 0 });
+  bx(foot, 'toes', [5.5, 0, 7], [11.5, 2, 14], { mat: 'paw' });
+  for (const [i, x] of [6.5, 8.5, 10.5].entries()) {
     bx(foot, 'toe_claw_' + (i + 1), [x - 0.5, 0, 5], [x + 0.5, 1, 7], { mat: 'claw' });
   }
 }
@@ -154,17 +154,23 @@ for (const c of all) {
   c.uvw = 2 * d + 2 * w;
   c.uvh = d + h;
 }
-let x = 0, y = 0, rowH = 0;
+// each cube goes on the first shelf with room left, so small parts fill the ends of earlier rows
+const shelves = [];
 for (const c of [...all].sort((a, b) => b.uvh - a.uvh || b.uvw - a.uvw)) {
-  if (x + c.uvw > TEX_W) { x = 0; y += rowH + 1; rowH = 0; }
-  c.uv = [x, y];
-  x += c.uvw + 1;
-  rowH = Math.max(rowH, c.uvh);
+  let s = shelves.find(s => s.x + c.uvw <= TEX_W);
+  if (!s) {
+    const last = shelves[shelves.length - 1];
+    s = { x: 0, y: last ? last.y + last.h : 0, h: c.uvh };
+    shelves.push(s);
+  }
+  c.uv = [s.x, s.y];
+  s.x += c.uvw + 1;
 }
-const used = y + rowH;
+const top = shelves[shelves.length - 1];
+const used = top.y + top.h;
 const TEX_H = used <= 128 ? 128 : 256;
 if (used > TEX_H) throw new Error('texture overflow: ' + used);
 
-const out = { name: 'beast_gevaudan_fable', texture: [TEX_W, TEX_H], bones };
+const out = { name: 'beast_of_gevaudan', texture: [TEX_W, TEX_H], bones };
 fs.writeFileSync(process.argv[2], JSON.stringify(out));
 console.log(`bones ${bones.length}, cubes ${all.length}, uv rows used ${used}/${TEX_H}`);

@@ -138,11 +138,24 @@ def paint(cube, img):
     outer = "east" if left else "west"
 
     if mat in ("fur", "chest", "skull", "snout", "brow", "jaw", "ear", "nose"):
-        ramp, base = (CHEST, 2) if mat == "chest" else (FUR, 3 + tone)
+        ramp, base = (CHEST, 3) if mat == "chest" else (FUR, 3 + tone)
         if mat in ("brow", "nose"):
             base = 1
         for d, f in F.items():
             fur(f, rnd, ramp, base, lit.get(d, 0))
+
+    # paler underbelly: the chest fur carries on along the lower flanks and underside, so the trunk has shape from the side
+    under = {"ribcage": 0.55, "belly": 0.35, "pelvis": 0.6}.get(name)
+    if under:
+        for d in ("east", "west"):
+            f = F[d]
+            for c in range(f.w):
+                edge = f.h * under + rnd.uniform(-1.5, 1.5)
+                for r in range(f.h):
+                    if r > edge:
+                        f.put(c, r, CHEST[2] if r < edge + 1.5 else CHEST[rnd.choice([2, 3, 3, 4])])
+        for c, r in F["down"].cells():
+            F["down"].put(c, r, CHEST[rnd.choice([2, 3, 3, 4])])
 
     if name == "ribcage":
         f = F["north"]  # pale matted chest fur running up from the pecs
@@ -162,11 +175,6 @@ def paint(cube, img):
         for c, r in f.cells():
             if rnd.random() < 0.07:
                 f.put(c, r, RIM)
-    elif name == "belly":
-        f = F["down"]
-        for c, r in f.cells():
-            if 2 <= c < f.w - 2 and rnd.random() < 0.7:
-                f.put(c, r, CHEST[rnd.choice([0, 1, 1, 2])])
     elif name == "neck":
         f = F["down"]
         for c, r in f.cells():
