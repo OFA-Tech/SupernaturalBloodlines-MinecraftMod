@@ -108,7 +108,7 @@ public final class HomePage implements HubPageView {
         WolfState wolf = f.view.bloodline().wolf();
         List<Component> chips = new ArrayList<>();
         if (wolf.rank() != WolfState.Rank.NONE) {
-            chips.add(BookPackPage.rankLabel(wolf));
+            chips.add(BookPackPage.rankLabel(f, wolf));
         }
         List<Component> races = new ArrayList<>();
         f.view.races().forEach(race -> races.add(PageKit.race(race)));

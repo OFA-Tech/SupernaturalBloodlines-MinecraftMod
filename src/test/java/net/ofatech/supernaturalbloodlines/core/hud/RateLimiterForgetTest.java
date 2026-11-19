@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-/** Reviewer-written (tester panel). Fails if forget() is a no-op: the player's used place would still refuse them after a rejoin. */
-class RateLimiterForgetPanelTest {
+/** Fails if forget() is a no-op: the player's used place would still refuse them after a rejoin. */
+class RateLimiterForgetTest {
     private static final UUID A = new UUID(3, 3);
 
     @Test

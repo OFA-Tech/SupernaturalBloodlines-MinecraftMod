@@ -153,10 +153,18 @@ public final class BookPackPage implements HubPageView {
     }
 
     /** "Alpha", or "Alpha ×3" with stacked sparks. */
-    static Component rankLabel(WolfState wolf) {
+    static Component rankLabel(HubScreen.Frame f, WolfState wolf) {
         Component name = Component.translatable("supernaturalbloodlines.hub.pack.rank." + wolf.rank().name().toLowerCase(Locale.ROOT));
-        return wolf.sparks() > 1 && (wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA)
-                ? Component.empty().append(name).append(" \u00d7" + wolf.sparks()) : name;
+        int sparks = ownSparks(f); // the server's count: a True Alpha's full sparks are in their own row of the pack
+        return sparks > 1 && (wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA)
+                ? Component.empty().append(name).append(" \u00d7" + sparks) : name;
+    }
+
+    /** The sparks the server counts for the viewer: their own row of the pack (a True Alpha's full count included), else the plain count. */
+    static int ownSparks(HubScreen.Frame f) {
+        java.util.UUID self = f.view.player().getUUID();
+        return f.view.snapshot().pack().stream().filter(m -> m.id().filter(self::equals).isPresent()).mapToInt(HubSocial.Member::sparks)
+                .findFirst().orElse(f.view.bloodline().wolf().sparks());
     }
 
     private static Component rankName(HubSocial.Member m) {
@@ -184,7 +192,7 @@ public final class BookPackPage implements HubPageView {
             f.reserve(ledgerRegion, BookKit.SEAL + 8); // the ACCEPT seal is pinned at the foot of the page
         }
         int y = BookKit.head(f, ledgerRegion, Component.translatable(KEY + "title"), Component.translatable(BOOK + "subtitle"));
-        y = PageKit.title(f, Component.translatable(KEY + "rank", rankLabel(wolf)), r.x(), y, r.w(), t.accent());
+        y = PageKit.title(f, Component.translatable(KEY + "rank", rankLabel(f, wolf)), r.x(), y, r.w(), t.accent());
         if (pack.isEmpty()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "alone"), r.x(), y + 2, r.w(), t.muted());
         }
@@ -298,7 +306,7 @@ public final class BookPackPage implements HubPageView {
         Component body = chosen != null ? Component.translatable(KEY + (chosen.online() ? "online" : "offline")) : Component.translatable(BOOK + "subtitle");
         Detail.Builder d = Detail.of(title).body(body);
         if (style == Style.TENSURA) {
-            d.field(Component.translatable(KEY + "rank", rankLabel(wolf)), Component.empty());
+            d.field(Component.translatable(KEY + "rank", rankLabel(f, wolf)), Component.empty());
             if (chosen != null && !pack.isEmpty() && chosen == pack.get(0) && !chosen.base().equals("ally")) {
                 d.field(Component.translatable(KEY + "role"), Component.translatable(KEY + "leader"));
             }

@@ -293,6 +293,7 @@ public final class SpeciesPart {
                 e.register(PackBonusGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AlphaPackGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.PackReviewGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.SparkRulesGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.PackDuelGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.FreeWillGameTests.class);
                 e.register(EclipseElectricityGameTests.class);

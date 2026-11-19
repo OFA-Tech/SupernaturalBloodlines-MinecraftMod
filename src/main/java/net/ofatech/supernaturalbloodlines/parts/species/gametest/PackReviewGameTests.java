@@ -63,7 +63,7 @@ public final class PackReviewGameTests {
     private static ServerPlayer wolf(GameTestHelper helper, Rank rank, UUID packAlpha, int level, double x) {
         ServerPlayer p = TestPlayers.createDuelist(helper);
         p.setPos(helper.absoluteVec(new Vec3(x, 1, 1.5)));
-        WolfState w = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(rank).geneRolled(true).packAlpha(packAlpha)
+        WolfState w = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(rank).geneRolled(true).protectPath(false).packAlpha(packAlpha)
                 .betaSince(rank == Rank.BETA ? 1 : 0).build();
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().wolf(w).build());
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, level), "the test wolf could not join the werewolves");
@@ -90,7 +90,7 @@ public final class PackReviewGameTests {
     private static TalkingDuelist talkingBeta(GameTestHelper helper, UUID leader, double x) {
         TalkingDuelist p = TestPlayers.createTalkingDuelist(helper);
         p.setPos(helper.absoluteVec(new Vec3(x, 1, 1.5)));
-        WolfState w = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(Rank.BETA).packAlpha(leader).geneRolled(true).build();
+        WolfState w = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(Rank.BETA).packAlpha(leader).geneRolled(true).protectPath(false).build();
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().wolf(w).build());
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "the test wolf could not join the werewolves");
         PackIndex.get(helper.getLevel()).join(leader, p.getUUID());
@@ -572,19 +572,18 @@ public final class PackReviewGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aTrueAlphaLosesOnlyTheStackedSparksAndKeepsTheirOwn(GameTestHelper helper) {
+    public static void aTrueAlphaNeverStealsSoNothingStacksAndNothingIsTakenFromOne(GameTestHelper helper) {
         ServerPlayer truth = wolf(helper, Rank.TRUE_ALPHA, null, 5, 1.5);
         ServerPlayer victim = alpha(helper, 5, 2.5);
         ServerPlayer thief = wolf(helper, Rank.OMEGA, null, 1, 3.5);
         ServerPlayer rival = alpha(helper, 5, 4.5);
         online(truth, victim, thief, rival);
         try {
+            // a True Alpha never steals, so nothing stacks on theirs; and what they hold is theirs by nature: nobody takes any of it
             kill(truth, victim);
-            helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA && state(truth).sparks() == 2, "the True Alpha did not stack: " + state(truth));
+            helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA && state(truth).sparks() == 1 && state(victim).rank() == Rank.ALPHA, "the True Alpha stole: " + state(truth) + " / " + state(victim));
             kill(rival, truth);
-            helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA && state(truth).sparks() == 1, "the True spark was taken or the extras stayed: " + state(truth));
-            helper.assertTrue(state(rival).rank() == Rank.ALPHA && state(rival).sparks() == 2, "the killer took " + (state(rival).sparks() - 1) + " instead of the one stacked");
-            // with none stacked, killing one is just a death
+            helper.assertTrue(state(truth).rank() == Rank.TRUE_ALPHA && state(rival).rank() == Rank.ALPHA && state(rival).sparks() == 1, "the killer took from a True Alpha: " + state(rival));
             kill(thief, truth);
             helper.assertTrue(state(thief).rank() == Rank.OMEGA && state(truth).rank() == Rank.TRUE_ALPHA, "a True Alpha's own spark was taken");
         } finally {
@@ -1118,7 +1117,7 @@ public final class PackReviewGameTests {
     // ---- True Alpha victims, and the cure line ----
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aTrueAlphaVictimIsToldOnlyAboutTheSparksStackedOnTheirs(GameTestHelper helper) {
+    public static void aTrueAlphaVictimIsToldNothingBecauseNothingIsTaken(GameTestHelper helper) {
         TalkingDuelist killer = talkingAlpha(helper, 5, 1.5);
         TalkingDuelist stacked = talkingAlpha(helper, 5, 2.5);
         TalkingDuelist plain = talkingAlpha(helper, 5, 3.5);
@@ -1127,10 +1126,10 @@ public final class PackReviewGameTests {
             for (TalkingDuelist t : new TalkingDuelist[] {stacked, plain}) {
                 BloodlineAccess.set(t, BloodlineAccess.get(t).toBuilder().wolf(state(t).toBuilder().rank(Rank.TRUE_ALPHA).build()).build());
             }
-            PackAccess.setSparks(stacked, 2);
+            PackAccess.setSparks(stacked, 2); // legacy extras: absorbed into the full count, not takeable
             kill(killer, stacked);
-            helper.assertTrue(stacked.received("supernaturalbloodlines.pack.spark_lost_stacked") && !stacked.received("supernaturalbloodlines.pack.spark_lost"),
-                    "the True Alpha with a stacked spark was told the wrong thing: " + stacked.keys());
+            helper.assertTrue(!stacked.received("supernaturalbloodlines.pack.spark_lost_stacked") && !stacked.received("supernaturalbloodlines.pack.spark_lost") && state(killer).sparks() == 1,
+                    "the True Alpha with legacy extras was told a spark was taken: " + stacked.keys());
             kill(killer, plain);
             helper.assertTrue(!plain.received("supernaturalbloodlines.pack.spark_lost") && !plain.received("supernaturalbloodlines.pack.spark_lost_stacked"),
                     "a True Alpha with nothing stacked was told a spark was taken: " + plain.keys());

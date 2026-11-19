@@ -102,6 +102,12 @@ public final class PackCommand {
                 .then(Commands.literal("heal")
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(c -> run(c, heal(self(c), EntityArgument.getPlayer(c, "player"))))))
+                .then(Commands.literal("protect")
+                        .then(Commands.literal("on").executes(c -> run(c, protect(self(c), true))))
+                        .then(Commands.literal("off")
+                                // turning it off can end the path, so the typed command asks to be told twice, as the hub asks first
+                                .executes(c -> run(c, error("protect_confirm")))
+                                .then(Commands.literal("confirm").executes(c -> run(c, protect(self(c), false))))))
                 .then(Commands.literal("info").executes(c -> info(c.getSource(), self(c))))
                 .then(Commands.literal("emissary")
                         .executes(c -> run(c, emissary(self(c), null)))
@@ -405,7 +411,7 @@ public final class PackCommand {
         return null;
     }
 
-    /** An Alpha gives up the spark to fully heal a player within 4 blocks and cure their wolfsbane and hybrid venom (R93). With no online heir the pack dissolves and the giver is left an Omega. */
+    /** An Alpha gives up the spark to fully heal a player within 4 blocks and cure their wolfsbane and hybrid venom (R93). The spark is destroyed: nobody inherits it. A second Alpha stays a Beta of the leader, a leader hands the pack to the strongest other Alpha and stays as its Beta, and with no other Alpha the pack dissolves and the giver is an Omega. */
     @Nullable
     public static Component heal(ServerPlayer alpha, ServerPlayer target) {
         if (!isActiveAlpha(alpha)) {
@@ -424,6 +430,23 @@ public final class PackCommand {
         SparkHandler.giveUp(alpha);
         target.sendSystemMessage(Component.translatable(KEY + "healed", name(alpha)));
         alpha.sendSystemMessage(Component.translatable(KEY + "gave_up", name(target)));
+        return null;
+    }
+
+    /**
+     * "Protect my True Alpha path": while the path is open, no spark is forced on the player (a kill that would steal one destroys it; a pack
+     * inheritance is not covered). On by default. It can always be changed; it only does anything while the path is open.
+     */
+    @Nullable
+    public static Component protect(ServerPlayer p, boolean on) {
+        WolfState w = PackAccess.wolf(p);
+        if (w.lineage() == Lineage.NONE) {
+            return error("protect_none"); // no werewolf, no path: nothing is changed
+        }
+        if (w.protectPath() != on) {
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().wolf(w.toBuilder().protectPath(on).build()).build());
+        }
+        p.sendSystemMessage(Component.translatable(KEY + (on ? "protect_on" : "protect_off")));
         return null;
     }
 

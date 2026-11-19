@@ -168,7 +168,7 @@ class PackRulesTest {
         assertRefused(PackRules.apply(fewKills, TRUE_ALPHA_EARNED, ctx()), fewKills, "true_alpha_defender_kills");
 
         WolfState thief = eligible().toBuilder().stoleSpark(true).build();
-        assertRefused(PackRules.apply(thief, TRUE_ALPHA_EARNED, ctx()), thief, "true_alpha_stole_spark");
+        assertRefused(PackRules.apply(thief, TRUE_ALPHA_EARNED, ctx()), thief, "true_alpha_held_spark");
     }
 
     @Test
@@ -264,7 +264,7 @@ class PackRulesTest {
         assertEquals(1, PackRules.transferableSparks(1, false));
         assertEquals(3, PackRules.transferableSparks(3, false));
         assertEquals(0, PackRules.transferableSparks(1, true), "a True Alpha with none stacked has nothing to take");
-        assertEquals(2, PackRules.transferableSparks(3, true), "a True Alpha loses only the stacked ones");
+        assertEquals(0, PackRules.transferableSparks(3, true), "a True Alpha's count is theirs by nature: nothing is taken, stacked or not");
         assertEquals(0, PackRules.transferableSparks(0, true), "a count that is not there is one spark");
     }
 
@@ -312,5 +312,82 @@ class PackRulesTest {
         old.addProperty("sparks", -4);
         assertEquals(1, WolfState.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, old).getOrThrow().sparks(), "a bad count is one");
         assertEquals(1, WolfState.NONE.sparks());
+    }
+
+    // ---- plan 18: two separate paths, the spark history and the warning ----
+
+    @Test
+    void holdingASparkByAnyRoadClosesThePathForGood() {
+        WolfState inherited = PackRules.apply(eligible(), SPARK_INHERITED, ctx()).state();
+        assertTrue(inherited.heldSpark(), "an inherited spark is a held one");
+        WolfState trial = PackRules.apply(eligible(), SPARK_INHERITED, ctx()).state().toBuilder().rank(Rank.OMEGA).build();
+        assertRefused(PackRules.apply(trial.toBuilder().betaSince(1_000_000 - DAYS_30).defenderKills(300).build(), TRUE_ALPHA_EARNED, ctx()),
+                trial.toBuilder().betaSince(1_000_000 - DAYS_30).defenderKills(300).build(), "true_alpha_held_spark");
+        WolfState stolen = PackRules.apply(eligible(), KILLED_ALPHA, ctx()).state();
+        assertTrue(stolen.heldSpark() && stolen.stoleSpark());
+        WolfState held = eligible().toBuilder().heldSpark(true).build();
+        assertRefused(PackRules.apply(held, TRUE_ALPHA_EARNED, ctx()), held, "true_alpha_held_spark");
+        assertEquals(Rank.TRUE_ALPHA, PackRules.apply(eligible(), TRUE_ALPHA_EARNED, ctx()).state().rank(), "who never held one still earns it");
+    }
+
+    @Test
+    void anAlphaAlwaysCountsAsHavingHeldASparkSoAnOldSaveMigrates() {
+        assertTrue(wolf(Lineage.BITTEN, Rank.ALPHA).heldSpark(), "an Alpha of a world from before the field");
+        assertTrue(wolf(Lineage.BITTEN, Rank.ALPHA).toBuilder().rank(Rank.OMEGA).build().heldSpark(), "and it outlives the spark");
+        assertFalse(wolf(Lineage.BITTEN, Rank.TRUE_ALPHA).heldSpark(), "an existing True Alpha is unchanged");
+        assertFalse(eligible().heldSpark());
+        assertTrue(wolf(Lineage.BITTEN, Rank.OMEGA).toBuilder().stoleSpark(true).build().heldSpark(), "a thief held it");
+        var old = com.google.gson.JsonParser.parseString("{\"lineage\":\"BITTEN\",\"rank\":\"ALPHA\"}");
+        WolfState decoded = WolfState.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, old).getOrThrow();
+        assertTrue(decoded.rank() == Rank.ALPHA && decoded.heldSpark() && decoded.protectPath() && decoded.preApex().isEmpty(), "the defaults of a save with none of the new fields: " + decoded);
+    }
+
+    @Test
+    void aTrueAlphaNeverStealsAndNothingIsTakenFromOne() {
+        WolfState truth = wolf(Lineage.BITTEN, Rank.TRUE_ALPHA);
+        assertRefused(PackRules.apply(truth, KILLED_ALPHA, ctx()), truth, "true_alpha_never_steals");
+        assertEquals(PackRules.Steal.NEVER, PackRules.stealBy(truth));
+        assertEquals(0, PackRules.transferableSparks(5, true));
+    }
+
+    @Test
+    void theWarningAndTheProtectionLookAtTheSamePathOpenRule() {
+        WolfState beta = eligible();
+        assertTrue(PackRules.pathOpen(beta) && PackRules.pathOpen(beta.toBuilder().rank(Rank.OMEGA).build()));
+        assertFalse(PackRules.pathOpen(beta.toBuilder().heldSpark(true).build()), "a held spark closed it");
+        assertFalse(PackRules.pathOpen(beta.toBuilder().killedInnocent(true).build()), "blue eyes closed it");
+        assertFalse(PackRules.pathOpen(wolf(Lineage.BITTEN, Rank.ALPHA)) || PackRules.pathOpen(wolf(Lineage.BITTEN, Rank.TRUE_ALPHA)), "an Alpha has no path to warn");
+        assertFalse(PackRules.pathOpen(WolfState.NONE), "a human has none");
+    }
+
+    @Test
+    void aKillWithAnOpenProtectedPathDestroysTheSparkInsteadOfGivingIt() {
+        WolfState beta = eligible();
+        assertEquals(PackRules.Steal.PROTECTED, PackRules.stealBy(beta), "on by default while open");
+        assertEquals(PackRules.Steal.TAKES, PackRules.stealBy(beta.toBuilder().protectPath(false).build()), "their choice");
+        assertEquals(PackRules.Steal.TAKES, PackRules.stealBy(beta.toBuilder().heldSpark(true).build()), "a closed path has nothing to protect");
+        assertEquals(PackRules.Steal.TAKES, PackRules.stealBy(wolf(Lineage.BITTEN, Rank.ALPHA)), "an Alpha stacks");
+    }
+
+    @Test
+    void aTrueAlphaHoldsTheFullCountWhileActiveAndThePlainOneWhileDormant() {
+        assertEquals(5, PackRules.effectiveSparks(Rank.TRUE_ALPHA, 1, 5, true));
+        assertEquals(5, PackRules.effectiveSparks(Rank.TRUE_ALPHA, 3, 5, true), "stacked extras are absorbed, not added");
+        assertEquals(1, PackRules.effectiveSparks(Rank.TRUE_ALPHA, 1, 5, false), "dormant: the bonus is off");
+        assertEquals(3, PackRules.effectiveSparks(Rank.ALPHA, 3, 5, true), "an Alpha has what they took");
+        assertEquals(1, PackRules.effectiveSparks(Rank.ALPHA, 0, 5, true));
+        assertEquals(1.4, PackRules.sparkScale(PackRules.effectiveSparks(Rank.TRUE_ALPHA, 1, 5, true), 5), 1e-9, "full bonus");
+        assertEquals(4, PackRules.roarTier(PackRules.effectiveSparks(Rank.TRUE_ALPHA, 1, 5, true), 5), "top Roar tier");
+    }
+
+    @Test
+    void healingGivesTheSparkUpWithNoHeirAndANonAlphaStaysWhatTheyWere() {
+        WolfState alpha = wolf(Lineage.BITTEN, Rank.ALPHA).toBuilder().sparks(3).build();
+        WolfState gave = PackRules.apply(alpha, SPARK_GIVEN_UP, new PackContext(ALPHA, 0, 5, 0, 0, 0, true)).state();
+        assertEquals(Rank.BETA, gave.rank());
+        assertEquals(1, gave.sparks());
+        assertTrue(gave.heldSpark(), "they held it");
+        WolfState patient = eligible();
+        assertEquals(patient, PackRules.apply(patient, SPARK_GIVEN_UP, ctx()).state(), "the healed one gets no spark and stays a Beta");
     }
 }

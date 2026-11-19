@@ -640,6 +640,16 @@ class BloodlineRulesTest {
     }
 
     @Test
+    void aCureClearsTheWolfLayerButNotWhatTheyHeldOrChose() {
+        WolfState wolf = ALPHA_WOLF.toBuilder().protectPath(false).preApex("tensura:human_saint").build();
+        Outcome o = run(BloodlineState.NONE.toBuilder().wolf(wolf).build(), DRANK_THE_CURE, ctx().withFaction(BaseFaction.WEREWOLF));
+        assertWolfLayerGone(o.state());
+        assertTrue(o.state().wolf().heldSpark(), "the spark history must outlive the cure, or a cured Alpha could become a True Alpha");
+        assertFalse(o.state().wolf().protectPath(), "their protection choice is theirs");
+        assertEquals("tensura:human_saint", o.state().wolf().preApex(), "the race before the apex is where they go back to");
+    }
+
+    @Test
     void cureRemovesEverythingEvenOriginal() {
         BloodlineState s = st(Species.ORIGINAL_HYBRID).toBuilder().sire(U).hybridCurseBound(true).turnedAt(5)
                 .markKills(3).hunterCurse(true).witchLayer(true).build();

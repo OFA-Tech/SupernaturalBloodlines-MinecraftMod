@@ -27,17 +27,19 @@ public final class PackInvite {
     /** Built when a picker opens, not every frame: the list of players is read off the connection and sorted once per press. */
     private static List<Pickable.Person> offered = List.of();
     private static int beyond;
+    /** The tick {@code beyond} was last counted: counting reads and sorts the whole player list, so a picker does it a few times a second, not every frame. */
+    private static int beyondTick = -1000;
 
     private static void toggle(Mode wanted, HubScreen.Frame f) {
         mode = mode == wanted ? Mode.NONE : wanted;
         List<Pickable.Person> all = online();
         offered = mode == Mode.NONE ? List.of() : Pickable.of(all, f.view.player().getUUID(), idsOf(f));
-        beyond = mode == Mode.NONE ? 0 : Pickable.beyondCap(all, f.view.player().getUUID(), idsOf(f));
     }
 
     private PackInvite() {}
 
     private static boolean demo;
+    private static final int BEYOND_EVERY = 10;
 
     /** Development only (the dev screenshots): the Invite picker open with a made-up list of players, 14 more than the cap. */
     public static void devOpen() {
@@ -56,6 +58,7 @@ public final class PackInvite {
         mode = Mode.NONE;
         offered = List.of();
         beyond = 0;
+        beyondTick = -1000;
         demo = false;
     }
 
@@ -88,24 +91,29 @@ public final class PackInvite {
         HubTheme t = f.theme();
         String key = PageKit.HUB + "pack.";
         Component title = Component.translatable(key + (mode == Mode.INVITE ? "invite_who" : "ally_who"));
-        List<Pickable.Person> people = demo ? offered : Pickable.stillHere(offered, onlineIds());
+        List<Pickable.Person> people = demo ? offered : Pickable.stillHere(offered, PackInvite::stillHere);
+        if (!demo && Math.abs(f.view.player().tickCount - beyondTick) >= BEYOND_EVERY) {
+            beyond = Pickable.beyondCap(online(), f.view.player().getUUID(), idsOf(f)); // players come and go while it is open
+            beyondTick = f.view.player().tickCount;
+        }
         int pad = card ? 4 : 0;
         Rect in = new Rect(r.x() + pad, y + pad, r.w() - 2 * pad, 0);
-        Component more = beyond > 0 ? Component.translatable(key + "pick_more", beyond) : null;
-        List<Integer> pw = new ArrayList<>(people.stream().map(p -> PageWidgets.widthOf(f.font(), Component.literal(p.name()))).toList());
-        if (more != null) {
-            pw.add(PageWidgets.widthOf(f.font(), more));
-        }
+        Component more = beyond > 0 ? Component.translatable(key + "pick_more", beyond).append(" ").append(Component.translatable(key + "pick_more_why")) : null;
+        int moreH = more == null ? 0 : f.font().split(more, in.w()).size() * PageKit.LINE + 2;
+        List<Integer> pw = people.stream().map(p -> PageWidgets.widthOf(f.font(), Component.literal(p.name()))).toList();
         Flow.Result pf = Flow.wrap(new Rect(in.x(), in.y() + PageKit.LINE + 2, in.w(), 0), pw, PageWidgets.H, 3);
         int none = people.isEmpty() ? f.font().split(Component.translatable(key + "pick_none"), in.w()).size() * PageKit.LINE : 0;
-        int bottom = (people.isEmpty() ? in.y() + PageKit.LINE + 2 + none : pf.bottom()) + pad;
+        int bottom = (people.isEmpty() ? in.y() + PageKit.LINE + 2 + none : pf.bottom()) + moreH + pad;
         if (card) {
             f.g.fill(r.x(), y, r.right(), bottom, 0xFF000000 | t.paper());
             f.g.renderOutline(r.x(), y, r.w(), bottom - y, t.accent());
         }
         f.g.drawString(f.font(), title.copy().withStyle(ChatFormatting.BOLD), in.x(), in.y(), t.accent(), false);
         if (people.isEmpty()) {
-            PageKit.wrapped(f, Component.translatable(key + "pick_none"), in.x(), in.y() + PageKit.LINE + 2, in.w(), t.muted());
+            int below = PageKit.wrapped(f, Component.translatable(key + "pick_none"), in.x(), in.y() + PageKit.LINE + 2, in.w(), t.muted());
+            if (more != null) {
+                PageKit.wrapped(f, more, in.x(), below + 2, in.w(), t.muted()); // under "no one", not over it
+            }
             return bottom + 3;
         }
         String row = mode == Mode.INVITE ? "P1" : "P5";
@@ -119,8 +127,8 @@ public final class PackInvite {
             });
         }
         if (more != null) {
-            // the cap is the nearest 30: the rest are not listed, and the row says how many
-            PageWidgets.button(f, "stage:pack:pick:more", pf.rects().get(people.size()), more, false, false, Component.translatable(key + "pick_more_why"), null);
+            // the cap is the nearest 30: the rest are not listed, and a plain line says how many and why (not a button that does nothing)
+            PageKit.wrapped(f, more, in.x(), pf.bottom() + 2, in.w(), t.muted());
         }
         return bottom + 3;
     }
@@ -133,13 +141,9 @@ public final class PackInvite {
         }
         return picker(f, r, y, false);
     }
-    private static Set<UUID> onlineIds() {
+    private static boolean stillHere(UUID id) {
         Minecraft mc = Minecraft.getInstance();
-        Set<UUID> out = new HashSet<>();
-        if (mc.getConnection() != null) {
-            mc.getConnection().getOnlinePlayers().forEach(info -> out.add(info.getProfile().getId()));
-        }
-        return out;
+        return mc.getConnection() != null && mc.getConnection().getPlayerInfo(id) != null;
     }
 
     private static List<Pickable.Person> online() {

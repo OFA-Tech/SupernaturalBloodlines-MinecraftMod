@@ -79,11 +79,11 @@ class HubLangCoverageTest {
             }
         }
         List<String> actionIds = List.of("leave", "anchor_clear", "challenge", "accept_duel", "decline_duel", "invite", "emissary", "emissary_clear", "heal", "kick",
-                "ally_remove", "anchor", "severance", "open_admin");
+                "ally_remove", "anchor", "severance", "open_admin", "protect_on", "protect_off");
         for (String id : actionIds) {
             keys.add(H + "profile.action." + id);
         }
-        for (String id : List.of("leave", "challenge", "heal", "kick", "ally_remove")) {
+        for (String id : List.of("leave", "challenge", "heal", "kick", "ally_remove", "protect_off")) {
             keys.add(H + "profile.confirm." + id);
         }
         keys.add(H + "profile.disabled.leader");
@@ -117,13 +117,16 @@ class HubLangCoverageTest {
         for (String s : List.of("look", "hud", "keys")) {
             keys.add(H + "settings.section." + s);
         }
+        keys.add(H + "true_alpha.keep");
+        keys.add(H + "settings.protect");
+        keys.add(H + "settings.protect.about");
         List<String> missing = keys.stream().filter(k -> !lang.has(k)).toList();
         assertTrue(missing.isEmpty(), "controls with no words in en_us.json: " + missing);
     }
 
     @Test
     void everyProfileActionRowIsAKnownCommandRow() {
-        for (String row : List.of("P1", "P3", "P4", "P7", "P8", "P9", "P10", "P11", "P13", "P15", "B3")) {
+        for (String row : List.of("P1", "P3", "P4", "P7", "P8", "P9", "P10", "P11", "P13", "P15", "P16", "P17", "B3")) {
             assertTrue(AdminCommands.byId(row).isPresent(), row);
         }
     }

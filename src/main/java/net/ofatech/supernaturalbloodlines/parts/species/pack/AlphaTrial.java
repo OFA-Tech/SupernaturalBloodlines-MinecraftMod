@@ -4,6 +4,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import org.jetbrains.annotations.Nullable;
@@ -16,10 +17,17 @@ public final class AlphaTrial {
     private AlphaTrial() {
     }
 
-    /** @return the error to show, or null when the Beta is an Alpha now */
+    /**
+     * @param warned the player saw the {@code TrueAlphaWarning} and chose to take the spark; without it a Beta whose path to True Alpha is still
+     *               open is refused (winning ends that path for good), so no trial can close it by surprise
+     * @return the error to show, or null when the Beta is an Alpha now
+     */
     @Nullable
-    public static Component win(ServerPlayer beta) {
+    public static Component win(ServerPlayer beta, boolean warned) {
         PackIndex index = PackIndex.get(beta.serverLevel());
+        if (!warned && PackRules.pathOpen(PackAccess.wolf(beta))) {
+            return Component.translatable("supernaturalbloodlines.pack.trial_warn");
+        }
         if (PackAccess.wolf(beta).rank() != Rank.BETA || !VampirismSupernatural.isWerewolf(beta) || index.alphaOf(beta.getUUID()).isEmpty()) {
             return Component.translatable("supernaturalbloodlines.pack.trial_no");
         }

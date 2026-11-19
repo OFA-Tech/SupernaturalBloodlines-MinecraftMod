@@ -11,22 +11,35 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-/** The Teen Wolf layer of a player: lineage, rank, pack and spark. */
+/**
+ * The Teen Wolf layer of a player: lineage, rank, pack and spark.
+ *
+ * @param heldSpark   the player has held a normal spark at some time (stolen, inherited, won): they can never be a True Alpha. An Alpha, and anyone
+ *                    who stole one, always has (set on load, so a world from before this field migrates by itself)
+ * @param protectPath the player's own choice, on by default: while the path to True Alpha is open, no spark is forced on them (see {@link PackRules#pathOpen})
+ * @param preApex     the Tensura race the player had before {@code alpha_primeval} ("" for none): where they go back to while they hold no spark
+ */
 public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean latentGene, boolean killedInnocent,
                         @Nullable UUID packAlpha, long betaSince, int defenderKills, boolean stoleSpark,
-                        Set<String> grantedSkills, int sparks) {
+                        Set<String> grantedSkills, int sparks, boolean heldSpark, boolean protectPath, String preApex) {
 
     public enum Lineage { NONE, BORN, BITTEN }
 
     public enum Rank { NONE, OMEGA, BETA, ALPHA, TRUE_ALPHA }
 
     public static final WolfState NONE =
-            new WolfState(Lineage.NONE, Rank.NONE, false, false, false, null, 0, 0, false, Set.of(), 1);
+            new WolfState(Lineage.NONE, Rank.NONE, false, false, false, null, 0, 0, false, Set.of(), 1, false, true, "");
 
     /** Without a spark count: one spark, the Alpha's own. */
     public WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean latentGene, boolean killedInnocent,
                      @Nullable UUID packAlpha, long betaSince, int defenderKills, boolean stoleSpark, Set<String> grantedSkills) {
         this(lineage, rank, geneRolled, latentGene, killedInnocent, packAlpha, betaSince, defenderKills, stoleSpark, grantedSkills, 1);
+    }
+
+    /** Without the spark history, the protection choice and the pre-apex race: the defaults. */
+    public WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean latentGene, boolean killedInnocent,
+                     @Nullable UUID packAlpha, long betaSince, int defenderKills, boolean stoleSpark, Set<String> grantedSkills, int sparks) {
+        this(lineage, rank, geneRolled, latentGene, killedInnocent, packAlpha, betaSince, defenderKills, stoleSpark, grantedSkills, sparks, false, true, "");
     }
 
     public static final Codec<WolfState> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -46,15 +59,21 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
                         return sorted;
                     }),
             // stacked Alpha sparks (plan 14): an old save has none, which is one
-            Codec.INT.lenientOptionalFieldOf("sparks", 1).forGetter(WolfState::sparks)
-    ).apply(i, (lineage, rank, rolled, latent, innocent, alpha, since, kills, stole, skills, sparks) ->
-            new WolfState(lineage, rank, rolled, latent, innocent, alpha.orElse(null), since, kills, stole, new HashSet<>(skills), sparks)));
+            Codec.INT.lenientOptionalFieldOf("sparks", 1).forGetter(WolfState::sparks),
+            Codec.BOOL.lenientOptionalFieldOf("held_spark", false).forGetter(WolfState::heldSpark),
+            Codec.BOOL.lenientOptionalFieldOf("protect_path", true).forGetter(WolfState::protectPath),
+            Codec.STRING.lenientOptionalFieldOf("pre_apex", "").forGetter(WolfState::preApex)
+    ).apply(i, (lineage, rank, rolled, latent, innocent, alpha, since, kills, stole, skills, sparks, held, protect, apex) ->
+            new WolfState(lineage, rank, rolled, latent, innocent, alpha.orElse(null), since, kills, stole, new HashSet<>(skills), sparks, held, protect, apex)));
 
     public WolfState {
         lineage = lineage == null ? Lineage.NONE : lineage;
         rank = rank == null ? Rank.NONE : rank;
         grantedSkills = grantedSkills == null ? Set.of() : Set.copyOf(grantedSkills);
         sparks = Math.max(1, sparks);
+        preApex = preApex == null ? "" : preApex;
+        // an Alpha holds a spark, and whoever stole one held it: the history of a save from before the field is read off the rank
+        heldSpark = heldSpark || stoleSpark || rank == Rank.ALPHA;
     }
 
     public Builder toBuilder() {
@@ -73,6 +92,9 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
         private boolean stoleSpark;
         private Set<String> grantedSkills;
         private int sparks;
+        private boolean heldSpark;
+        private boolean protectPath;
+        private String preApex;
 
         private Builder(WolfState w) {
             lineage = w.lineage;
@@ -86,6 +108,9 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
             stoleSpark = w.stoleSpark;
             grantedSkills = w.grantedSkills;
             sparks = w.sparks;
+            heldSpark = w.heldSpark;
+            protectPath = w.protectPath;
+            preApex = w.preApex;
         }
 
         public Builder lineage(Lineage v) { lineage = v; return this; }
@@ -99,10 +124,13 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
         public Builder stoleSpark(boolean v) { stoleSpark = v; return this; }
         public Builder grantedSkills(Set<String> v) { grantedSkills = v; return this; }
         public Builder sparks(int v) { sparks = v; return this; }
+        public Builder heldSpark(boolean v) { heldSpark = v; return this; }
+        public Builder protectPath(boolean v) { protectPath = v; return this; }
+        public Builder preApex(String v) { preApex = v; return this; }
 
         public WolfState build() {
             return new WolfState(lineage, rank, geneRolled, latentGene, killedInnocent, packAlpha, betaSince,
-                    defenderKills, stoleSpark, grantedSkills, sparks);
+                    defenderKills, stoleSpark, grantedSkills, sparks, heldSpark, protectPath, preApex);
         }
     }
 }

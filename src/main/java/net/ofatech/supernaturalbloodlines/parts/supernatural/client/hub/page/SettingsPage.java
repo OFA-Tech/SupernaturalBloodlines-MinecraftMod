@@ -9,6 +9,8 @@ import net.minecraft.client.gui.screens.options.controls.ControlsScreen;
 import net.minecraft.network.chat.Component;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.ModConfigSpec;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackRules;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.HubKeybinds;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
@@ -22,6 +24,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Flow;
+import net.ofatech.supernaturalbloodlines.shared.hub.profile.ProfileActions;
 
 /**
  * The player's own client settings: the look (theme, which page opens), the HUD, and the key binds, read-only with a shortcut to Controls.
@@ -51,6 +54,26 @@ public final class SettingsPage implements HubPageView {
         y = PageKit.title(f, Component.translatable(KEY + "title"), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 6;
+        var wolf = f.view.bloodline().wolf();
+        if (PackRules.pathOpen(wolf)) {
+            // a server-side choice of the player's own (not a config key): the command is the server's, the toggle only sends it
+            Component label = Component.translatable(KEY + "protect");
+            int top = y + 4;
+            y = PageKit.wrapped(f, label, r.x() + 4, top, r.w() - 44, t.ink());
+            Rect b = new Rect(r.right() - 36, top - 1, 36, PageWidgets.H);
+            boolean on = wolf.protectPath();
+            PageWidgets.toggle(f, "stage:settings:protect", b, on, label, () -> {
+                ProfileActions.Action a = ProfileActions.protectAction(on); // the same action, and the same question, as the Profile
+                if (a.confirm()) {
+                    f.confirm(Component.translatable(PageKit.HUB + "profile.action." + a.id()), Component.translatable(PageKit.HUB + "profile.confirm." + a.id()),
+                            Component.translatable(PageKit.HUB + "profile.action." + a.id()), () -> HubClient.runCommand(a.rowId(), List.of()));
+                } else {
+                    HubClient.runCommand(a.rowId(), List.of());
+                }
+            });
+            y = PageKit.wrapped(f, Component.translatable(KEY + "protect.about"), r.x() + 4, Math.max(y, b.bottom()) + 1, r.w() - 4, t.muted());
+        }
+
         String section = "";
         for (SettingEntry e : PlayerSettings.ENTRIES) {
             if (!applies(e) || AdminSpecs.value(e).isEmpty()) {

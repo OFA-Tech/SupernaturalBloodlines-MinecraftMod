@@ -13,7 +13,7 @@ class ApexOfferTest {
     private static final Predicate<SupernaturalRace> OPEN = r -> true;
 
     private static List<String> offer(Species species, List<SupernaturalRace> races, String tensuraRace) {
-        return ApexOffer.apexIdsFor(species, races, tensuraRace, OPEN);
+        return ApexOffer.apexIdsFor(species, races, tensuraRace, OPEN, true);
     }
 
     @Test
@@ -82,7 +82,14 @@ class ApexOfferTest {
     void eachApexNeedsItsOwnTopRung() {
         Predicate<SupernaturalRace> onlyWerewolf = r -> r == WEREWOLF;
         assertEquals(List.of("alpha_primeval"),
-                ApexOffer.apexIdsFor(Species.WITCH, List.of(WEREWOLF, WITCH), "tensura:human_saint", onlyWerewolf));
-        assertTrue(ApexOffer.apexIdsFor(Species.HYBRID, List.of(HYBRID), "tensura:vampire_lord", onlyWerewolf).isEmpty());
+                ApexOffer.apexIdsFor(Species.WITCH, List.of(WEREWOLF, WITCH), "tensura:human_saint", onlyWerewolf, true));
+        assertTrue(ApexOffer.apexIdsFor(Species.HYBRID, List.of(HYBRID), "tensura:vampire_lord", onlyWerewolf, true).isEmpty());
+    }
+
+    @Test
+    void aWerewolfIsOfferedTheApexOnlyWhileTheyHoldASpark() {
+        assertEquals(List.of("alpha_primeval"), ApexOffer.apexIdsFor(Species.NONE, List.of(WEREWOLF), "tensura:spirit_beast", OPEN, true));
+        assertTrue(ApexOffer.apexIdsFor(Species.NONE, List.of(WEREWOLF), "tensura:spirit_beast", OPEN, false).isEmpty(), "a Beta or Omega, or a dormant True Alpha, was offered it");
+        assertEquals(List.of("primordial_vampire"), ApexOffer.apexIdsFor(Species.ORIGINAL, List.of(ORIGINAL), "tensura:elf_saint", OPEN, false), "the spark gate is for the werewolf apex only");
     }
 }

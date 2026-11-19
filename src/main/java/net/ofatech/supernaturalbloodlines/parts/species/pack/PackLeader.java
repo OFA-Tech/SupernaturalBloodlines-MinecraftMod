@@ -5,6 +5,8 @@ import de.teamlapen.vampirism.api.event.PlayerFactionEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackLeadership;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackRules;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 
 /**
@@ -18,9 +20,13 @@ public final class PackLeader {
     }
 
     public static void register() {
+        net.ofatech.supernaturalbloodlines.core.BloodlineAccess.useOwnSparks(PackAccess::effectiveSparks);
         NeoForge.EVENT_BUS.addListener((PlayerFactionEvent.FactionLevelChanged e) -> {
             if (e.getPlayer().getPlayer() instanceof ServerPlayer p && !p.level().isClientSide) {
                 refresh(p);
+                if (PackAccess.wolf(p).rank() == net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.TRUE_ALPHA) {
+                    net.ofatech.supernaturalbloodlines.core.BloodlineAccess.sendTo(p, p); // a True Alpha's full sparks come and go with the faction
+                }
             }
         });
     }
@@ -49,7 +55,7 @@ public final class PackLeader {
         if (!p.level().isClientSide) {
             PackIndex index = PackIndex.get(p.serverLevel());
             index.setStrength(p.getUUID(), strengthOf(p, wolf));
-            index.setSparks(p.getUUID(), wolf.sparks());
+            index.setSparks(p.getUUID(), PackAccess.effectiveSparks(wolf, VampirismSupernatural.isWerewolf(p)));
         }
     }
 }

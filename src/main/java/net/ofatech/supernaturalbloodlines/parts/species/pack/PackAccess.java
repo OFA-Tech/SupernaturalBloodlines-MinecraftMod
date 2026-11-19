@@ -37,6 +37,15 @@ public final class PackAccess {
         return rank == WolfState.Rank.ALPHA || rank == WolfState.Rank.TRUE_ALPHA;
     }
 
+    /** The sparks that count for the bonus and the Roar: a True Alpha who is a werewolf holds {@code max_stacked_sparks}, anyone else their own count ({@link PackRules#effectiveSparks}). */
+    public static int effectiveSparks(WolfState w, boolean werewolf) {
+        return PackRules.effectiveSparks(w.rank(), w.sparks(), net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.maxStackedSparks(), werewolf);
+    }
+
+    public static int effectiveSparks(ServerPlayer p) {
+        return effectiveSparks(wolf(p), net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural.isWerewolf(p));
+    }
+
     /** Sets how many Alpha sparks {@code p} holds (stored with the wolf layer; the rank and the Roar read it). */
     public static void setSparks(ServerPlayer p, int count) {
         WolfState w = wolf(p);

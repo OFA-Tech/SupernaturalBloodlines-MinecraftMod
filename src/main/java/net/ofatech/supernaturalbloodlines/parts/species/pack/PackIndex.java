@@ -179,6 +179,11 @@ public final class PackIndex extends SavedData {
             PackAccess.applyPack(p, PackEvent.LEFT_PACK, PackContext.defaults());
         }
         WolfState w = PackAccess.wolf(p);
+        // shortcut: only an ex-Alpha the index still has a tombstone for is marked as having held a spark; one who lost it before this version without a tombstone is not caught and counts as never having held one, upgrade: none possible, the history was never recorded
+        if (index.isFormerAlpha(p.getUUID()) && w.rank() != WolfState.Rank.TRUE_ALPHA && !w.heldSpark()) {
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().wolf(w.toBuilder().heldSpark(true).build()).build());
+            w = PackAccess.wolf(p);
+        }
         UUID indexed = index.alphaOf(p.getUUID()).orElse(null);
         if (w.packAlpha() != null && indexed != null && !indexed.equals(w.packAlpha())
                 && (index.isFormerAlpha(w.packAlpha()) || indexed.equals(index.leaderOf(w.packAlpha())))) {

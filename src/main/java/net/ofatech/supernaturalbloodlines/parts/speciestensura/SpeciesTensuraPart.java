@@ -45,6 +45,7 @@ public final class SpeciesTensuraPart {
         SpeciesLayer.register();
         if (ModList.get().isLoaded("werewolves")) {
             RankSkills.register();
+            net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexFallback.register();
         }
         GhoulRace.register();
         SubordinateLink.register();

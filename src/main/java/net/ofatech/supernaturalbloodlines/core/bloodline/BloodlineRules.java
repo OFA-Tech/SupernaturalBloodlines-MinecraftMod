@@ -175,7 +175,9 @@ public final class BloodlineRules {
      * spark (plan 10): the rank, the lineage that makes it count and the tracked rank skills stay, dormant until they rejoin.
      */
     private static WolfState clearedWolf(WolfState w) {
-        WolfState.Builder b = WolfState.NONE.toBuilder().geneRolled(w.geneRolled()).latentGene(w.latentGene());
+        // what the player was and chose outlives a cure: a spark once held keeps the True Alpha path shut, and the pre-apex race is where they go back to
+        WolfState.Builder b = WolfState.NONE.toBuilder().geneRolled(w.geneRolled()).latentGene(w.latentGene())
+                .heldSpark(w.heldSpark()).protectPath(w.protectPath()).preApex(w.preApex());
         if (w.rank() == WolfState.Rank.TRUE_ALPHA) {
             b.rank(WolfState.Rank.TRUE_ALPHA).lineage(w.lineage()).grantedSkills(w.grantedSkills());
         }

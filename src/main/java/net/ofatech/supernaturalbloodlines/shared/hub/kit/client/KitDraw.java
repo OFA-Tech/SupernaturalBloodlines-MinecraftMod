@@ -27,7 +27,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.TickRing;
 
 /**
  * The kit's widgets, drawn with a theme's own colours: the pure kit classes say where, this puts the pixels there. Client only; nothing
- * here picks a colour of its own except the focus ring, the pack roles and the model.
+ * here picks a colour of its own except the pack roles and the model.
  */
 public final class KitDraw {
     private static final ResourceLocation ATLAS = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, Icons.TEXTURE);
@@ -170,6 +170,7 @@ public final class KitDraw {
         });
     }
 
+    /** The focus ring: a 2 px frame drawn 2 px outside {@code r}, in {@code color} (the theme's focus colour). */
     public static void focusRing(GuiGraphics g, Rect r, int color) {
         int x1 = r.x() - 2;
         int y1 = r.y() - 2;

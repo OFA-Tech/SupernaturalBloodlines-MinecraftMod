@@ -153,7 +153,7 @@ public final class AlphaRoar {
         for (UUID id : pack) {
             ServerPlayer beta = SireCall.player(p.server, id);
             if (inRange(p, beta, PACK_RANGE * range)) {
-                beta.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, BUFF_TICKS, PackRules.roarTier(PackAccess.wolf(p).sparks(), SpeciesConfig.maxStackedSparks())));
+                beta.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, BUFF_TICKS, PackRules.roarTier(PackAccess.effectiveSparks(p), SpeciesConfig.maxStackedSparks())));
                 beta.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, BUFF_TICKS, 0));
                 PERMIT_UNTIL.put(id, now + BUFF_TICKS);
                 if (packAttack > 0) {
