@@ -37,7 +37,10 @@ public final class CelestialsGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theRealStartUpWithoutEcLinksNothing(GameTestHelper helper) {
         if (net.neoforged.fml.ModList.get().isLoaded(CelestialsPart.EC_MOD)) {
-            helper.succeed(); // a run with -PecJars: CelestialsRealEcGameTests is the one that matters
+            // a run with -PecJars: the start-up linked the real one, and CelestialsRealEcGameTests checks what it does
+            helper.assertTrue(CelestialsPart.linkedAtInit(), "Enhanced Celestials is loaded but the start-up did not link it");
+            helper.assertTrue(CelestialsPart.adapter() != null && LunarMoods.active(), "Enhanced Celestials is loaded but no adapter or no lunar source is in use");
+            helper.succeed();
             return;
         }
         helper.assertFalse(CelestialsPart.linkedAtInit(), "the start-up linked an Enhanced Celestials that is not there");
@@ -204,6 +207,34 @@ public final class CelestialsGameTests {
             helper.assertTrue(busy.running.orElseThrow().id().getPath().equals("blood_moon"), "the Blood Moon was replaced");
             EclipseSignal.fire(server, false);
             helper.assertTrue(busy.running.isPresent(), "the end of our eclipse ended the Blood Moon");
+        });
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void ourMirroredEclipseEndsWhenTheLinkEndsOrTheServerStops(GameTestHelper helper) {
+        MinecraftServer server = helper.getLevel().getServer();
+        FakeEc a = new FakeEc();
+        CelestialsPart.install(a);
+        try {
+            EclipseSignal.fire(server, true);
+            helper.assertTrue(a.running.isPresent(), "setup: the mirror did not start");
+            CelestialsPart.install(null); // the part goes off, or the link is dropped
+            helper.assertTrue(a.running.isEmpty(), "our eclipse stayed on in Enhanced Celestials after the link ended");
+        } finally {
+            CelestialsPart.install(null);
+        }
+        FakeEc b = new FakeEc();
+        with(b, () -> {
+            EclipseSignal.fire(server, true);
+            helper.assertTrue(b.running.isPresent(), "setup: the second mirror did not start");
+            CelestialsPart.stopMirror(b, server); // the server is stopping
+            helper.assertTrue(b.running.isEmpty(), "our eclipse stayed on in Enhanced Celestials after the server stopped");
+        });
+        FakeEc busy = new FakeEc().running("blood_moon");
+        with(busy, () -> {
+            CelestialsPart.stopMirror(busy, server);
+            helper.assertTrue(busy.running.isPresent(), "stopping our mirror ended the Blood Moon");
         });
         helper.succeed();
     }

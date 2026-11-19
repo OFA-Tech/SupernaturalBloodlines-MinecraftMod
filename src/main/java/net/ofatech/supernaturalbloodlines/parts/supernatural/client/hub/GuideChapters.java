@@ -11,7 +11,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
  */
 public final class GuideChapters {
     /** Chapters every player gets, in reading order; each is skipped when it does not apply (see {@link #forRaces}). */
-    static final List<String> GENERAL = List.of("hub", "path", "skills", "quests", "rites", "bloodline", "pack", "loadout", "moon");
+    static final List<String> GENERAL = List.of("hub", "path", "skills", "quests", "rites", "bloodline", "pack", "trial", "loadout", "moon");
 
     private GuideChapters() {
     }
@@ -36,7 +36,7 @@ public final class GuideChapters {
         for (String id : GENERAL) {
             boolean show = switch (id) {
                 case "rites" -> enchanted;
-                case "pack" -> werewolves && isWolf(creature);
+                case "pack", "trial" -> werewolves && isWolf(creature);
                 case "loadout" -> loadout;
                 default -> true;
             };

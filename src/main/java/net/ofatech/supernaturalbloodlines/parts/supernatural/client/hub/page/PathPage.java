@@ -61,8 +61,10 @@ public final class PathPage implements HubPageView {
         HubTheme t = f.theme();
         Rect r = f.region(HubLayout.MAIN);
         // with lunar events the almanac is pinned at the foot of the page (the scrolling part never hides it); without them it stays in the flow, as before
-        boolean pin = book && !AlmanacEvents.view(f).isEmpty();
-        int pinH = pin ? almanacHeight(f, r) : 0;
+        // and only while it leaves the scrolling part at least half of the page: a long almanac (many events) stays in the flow instead of eating the page
+        int wantH = book && !AlmanacEvents.view(f).isEmpty() ? almanacHeight(f, r) : 0;
+        boolean pin = wantH > 0 && HubAlmanac.mayPin(wantH, r.h());
+        int pinH = pin ? wantH : 0;
         if (pin) {
             f.reserve(HubLayout.MAIN, pinH + 4);
         }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import net.ofatech.supernaturalbloodlines.core.moon.LunarSource;
 import net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar;
+import net.ofatech.supernaturalbloodlines.shared.hub.Contrast;
 
 /** The moon, as the almanac shows it: the next few phases and the days to the full moon. Vanilla phase 0 is the full moon, one phase a day, eight in all. Pure. */
 public final class HubAlmanac {
@@ -45,24 +46,14 @@ public final class HubAlmanac {
     /** Least contrast (WCAG) a ring must have against the page. */
     public static final double RING_CONTRAST = 3.0;
 
-    private static double luminance(int rgb) {
-        double[] c = {(rgb >> 16 & 0xFF) / 255.0, (rgb >> 8 & 0xFF) / 255.0, (rgb & 0xFF) / 255.0};
-        for (int i = 0; i < 3; i++) {
-            c[i] = c[i] <= 0.03928 ? c[i] / 12.92 : Math.pow((c[i] + 0.055) / 1.055, 2.4);
-        }
-        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-    }
-
-    /** The WCAG contrast ratio of two colours (alpha ignored). */
-    public static double contrast(int rgbA, int rgbB) {
-        double a = luminance(rgbA);
-        double b = luminance(rgbB);
-        return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-    }
-
     /** The colour of a ring: the event's ({@code event} RGB, -1 for none) when it has {@link #RING_CONTRAST} against the page's {@code paper}, else {@code fallback}. Opaque. */
     public static int ringColor(int event, int paper, int fallback) {
-        return event >= 0 && contrast(event, paper) >= RING_CONTRAST ? 0xFF000000 | event : fallback;
+        return event >= 0 && Contrast.ratio(event, paper) >= RING_CONTRAST ? 0xFF000000 | event : fallback;
+    }
+
+    /** Whether the pinned almanac may sit at the foot of the page: it must leave at least half of the page to the scrolling part, else it stays in the flow. */
+    public static boolean mayPin(int pinHeight, int regionHeight) {
+        return pinHeight <= regionHeight / 2;
     }
 
     /** The distance between two moon icons of {@code iconSize}: {@code base} as it is, or wider when rings are drawn so that neighbours' rings never touch. */

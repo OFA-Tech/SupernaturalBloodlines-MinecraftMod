@@ -9,9 +9,24 @@ import net.minecraft.server.level.ServerPlayer;
  * the whole of what the server adds.
  */
 public final class WorldNowHook {
-    /** @param sleepRule the full-moon sleep rule applies to this player on a full-moon night; @param awakeningPending a werewolf gene waits for a dusk */
-    public record Flags(boolean sleepRule, boolean awakeningPending) {
-        public static final Flags NONE = new Flags(false, false);
+    /**
+     * @param sleepRule        the full-moon sleep rule applies to this player on a full-moon night
+     * @param awakeningPending a werewolf gene waits for a dusk
+     * @param trial            the Alpha Trial (R147): {@link #TRIAL_NONE}, {@link #TRIAL_POSSIBLE} (could be started tonight) or {@link #TRIAL_RUNNING}
+     */
+    public record Flags(boolean sleepRule, boolean awakeningPending, int trial) {
+        public static final int TRIAL_NONE = 0;
+        public static final int TRIAL_POSSIBLE = 1;
+        public static final int TRIAL_RUNNING = 2;
+        public static final Flags NONE = new Flags(false, false, TRIAL_NONE);
+
+        public Flags(boolean sleepRule, boolean awakeningPending) {
+            this(sleepRule, awakeningPending, TRIAL_NONE);
+        }
+
+        public Flags {
+            trial = Math.max(TRIAL_NONE, Math.min(TRIAL_RUNNING, trial));
+        }
     }
 
     private static volatile Function<ServerPlayer, Flags> source = p -> Flags.NONE;

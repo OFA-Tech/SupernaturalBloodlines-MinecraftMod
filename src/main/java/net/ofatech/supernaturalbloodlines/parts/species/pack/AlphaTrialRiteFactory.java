@@ -68,6 +68,16 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
         formOverride = value;
     }
 
+    /** What Home says about {@code p}'s trial tonight: running, possible (the gate would let them begin in beast form), or nothing. */
+    public static TrialRules.Notice noticeOf(ServerPlayer p) {
+        var level = p.serverLevel();
+        var wolf = PackAccess.wolf(p);
+        TrialRules.Refusal refusal = TrialRules.gate(SpeciesConfig.trial().enabled(), wolf, VampirismSupernatural.isWerewolf(p),
+                VampirismAPI.factionPlayerHandler(p).getCurrentLevel(), SpeciesConfig.trial().minLevel(),
+                MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), true, false, false, false);
+        return TrialRules.notice(AlphaTrialBoss.running(level, p.getUUID()), refusal);
+    }
+
     /** Whether a werewolf player is in a transformed form now (a beast, not the human shape). */
     public static boolean transformed(ServerPlayer p) {
         var pinned = formOverride;

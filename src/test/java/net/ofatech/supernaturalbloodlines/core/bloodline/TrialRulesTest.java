@@ -133,4 +133,15 @@ class TrialRulesTest {
         assertFalse(TrialRules.mayHurt(UUID.randomUUID(), me, false), "a stranger");
         assertTrue(TrialRules.mayHurt(null, me, false), "the world is no stranger");
     }
+
+    @Test
+    void homeSaysRunningPossibleOrNothing() {
+        assertEquals(TrialRules.Notice.RUNNING, TrialRules.notice(true, Refusal.ALREADY), "a running trial");
+        assertEquals(TrialRules.Notice.RUNNING, TrialRules.notice(true, Refusal.NONE));
+        assertEquals(TrialRules.Notice.POSSIBLE, TrialRules.notice(false, Refusal.NONE));
+        assertEquals(TrialRules.Notice.POSSIBLE, TrialRules.notice(false, Refusal.NEEDS_WARNING), "the warning is a step, not a reason to say nothing");
+        for (Refusal no : new Refusal[] {Refusal.OFF, Refusal.NOT_WEREWOLF, Refusal.RANK, Refusal.LEVEL, Refusal.NOT_NIGHT}) {
+            assertEquals(TrialRules.Notice.NONE, TrialRules.notice(false, no), no.name());
+        }
+    }
 }

@@ -14,6 +14,22 @@ public final class TrialRules {
 
     public enum Fail { NONE, CHALLENGER_DEAD, TOO_FAR, OTHER_DIMENSION, NIGHT_OVER }
 
+    /** What Home says about the trial: nothing, that one could be started tonight, or that one is running. */
+    public enum Notice { NONE, POSSIBLE, RUNNING }
+
+    /**
+     * The Home notice for a player: {@code RUNNING} while their trial runs; {@code POSSIBLE} when the gate would let them begin if they stood in beast form (the form
+     * and the warning are things they do next, not reasons to say nothing); else {@code NONE}.
+     *
+     * @param refusalInForm the gate asked with {@code transformed = true}, no trial running and the warning not an obstacle
+     */
+    public static Notice notice(boolean running, Refusal refusalInForm) {
+        if (running) {
+            return Notice.RUNNING;
+        }
+        return refusalInForm == Refusal.NONE || refusalInForm == Refusal.NEEDS_WARNING ? Notice.POSSIBLE : Notice.NONE;
+    }
+
     /** The boss leaves its challenger alone this long (30 s) before the trial is lost, and 48 blocks is too far. */
     public static final int LEASH_TICKS = 600;
     public static final double LEASH_BLOCKS = 48;

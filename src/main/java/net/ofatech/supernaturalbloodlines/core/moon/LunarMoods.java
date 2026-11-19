@@ -35,7 +35,8 @@ public final class LunarMoods {
     static final int MAX_FAILURES = 3;
     private static final Logger LOGGER = LoggerFactory.getLogger(LunarMoods.class);
     private static final AtomicInteger[] FAILURES = {new AtomicInteger(), new AtomicInteger(), new AtomicInteger()};
-    private static final AtomicBoolean WARNED = new AtomicBoolean();
+    /** One warning per kind of call: a broken Calendar read must not hide a broken mirror. */
+    private static final AtomicBoolean[] WARNED = {new AtomicBoolean(), new AtomicBoolean(), new AtomicBoolean()};
     private static volatile LunarSource source = LunarSource.NONE;
     private static volatile Supplier<Tuning> tuning = () -> Tuning.OFF;
 
@@ -48,13 +49,20 @@ public final class LunarMoods {
     private LunarMoods() {
     }
 
+    /** For tests: whether a failure of this kind was logged at warn since the source was set. */
+    static boolean warned(Call kind) {
+        return WARNED[kind.ordinal()].get();
+    }
+
     public static void use(LunarSource value, Supplier<Tuning> numbers) {
         source = value == null ? LunarSource.NONE : value;
         tuning = numbers == null ? () -> Tuning.OFF : numbers;
         for (AtomicInteger f : FAILURES) {
             f.set(0);
         }
-        WARNED.set(false);
+        for (AtomicBoolean w : WARNED) {
+            w.set(false);
+        }
         cached = null;
     }
 
@@ -74,7 +82,7 @@ public final class LunarMoods {
     }
 
     /**
-     * Runs {@code call}; its answer, or {@code fallback} when it throws. The first failure of all is logged at warn, the others at debug. The
+     * Runs {@code call}; its answer, or {@code fallback} when it throws. The first failure of each kind is logged at warn (with the exception), the others at debug. The
      * {@link #MAX_FAILURES}th failure in a row of this kind drops the source.
      */
     public static <T> T guarded(Call kind, Supplier<T> call, T fallback) {
@@ -84,7 +92,7 @@ public final class LunarMoods {
             failures.set(0);
             return answer;
         } catch (RuntimeException | LinkageError e) {
-            if (WARNED.compareAndSet(false, true)) {
+            if (WARNED[kind.ordinal()].compareAndSet(false, true)) {
                 LOGGER.warn("The lunar source failed ({}): {}", kind, e.toString());
             } else {
                 LOGGER.debug("The lunar source failed ({}): {}", kind, e.toString());

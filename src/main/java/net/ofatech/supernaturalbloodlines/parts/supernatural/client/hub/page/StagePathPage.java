@@ -94,7 +94,6 @@ public final class StagePathPage implements HubPageView {
         return LadderLabels.staggered(ladder.rungs().stream().map(r -> PageKit.rung(r).getString()).toList(), stage.w(), HEX, s -> BookKit.smallWidth(f, s));
     }
 
-    /** The next moons in a box with the days to the full moon. */
     /** The width the full-moon line has beside the six moons of an almanac box {@code boxW} wide. */
     private static int fullMoonWidth(int step, int boxW) {
         return Math.max(40, boxW - 8 - HubAlmanac.ROW * step - 10 - 6);
@@ -109,6 +108,7 @@ public final class StagePathPage implements HubPageView {
         return view.isEmpty() && fullH <= PageKit.LINE ? 22 : 7 + Math.max(14, fullH) + eventH + 4;
     }
 
+    /** The next moons in a box with the days to the full moon. */
     private static void almanac(HubScreen.Frame f, Rect box) {
         HubTheme t = f.theme();
         BookKit.outline(f.g, box, (t.paper() & 0xFFFFFF) | 0xCC000000, (t.muted() & 0xFFFFFF) | 0x77000000);
