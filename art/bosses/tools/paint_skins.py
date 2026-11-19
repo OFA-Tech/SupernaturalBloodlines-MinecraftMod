@@ -2,7 +2,7 @@
 Run: python paint_skins.py <out_dir> [name ...]"""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from skin_lib import Skin, shade, mixc, hsh, SIDES
+from skin_lib import Skin, shade, mixc, hsh, SIDES, BASE_OF
 
 WHITE = (238, 238, 240)
 
@@ -315,39 +315,82 @@ def mikael():
 
 
 def deucalion_human():
+    """Short dark-brown hair, dark stubble, blind clouded eyes behind dark glasses (stills 3x01, 3x07, 3x10,
+    5x14, 6x19). The glasses are the only thing on the hat layer, so hiding that layer takes them off.
+    No random noise anywhere (it read as speckle): every tone is placed by a regular pattern."""
     s = Skin(False, 707)
-    SK, HAIR = (212, 178, 150), (170, 144, 98)
-    head(s, SK, HAIR, (88, 132, 178), brow=(120, 98, 64), hair_rows=1, fringe=0.65, back_rows=5, side_rows=3, hair_amp=0.14)
-    stubble(s, SK, 0.35)
+    SK, HAIR = (212, 178, 150), (92, 68, 50)
+    CLOUD, RIM = (188, 196, 200), (206, 176, 172)  # clouded iris, reddened white
+    LENS, GLINT, FRAME = (26, 26, 30), (70, 67, 66), (44, 42, 42)
+    ALL = ('top', 'bottom') + SIDES
+
+    def fill(part, fn, sides=ALL, rows=None):
+        for side in sides:
+            fx, fy, fw, fh = s.face(part, side)
+            for ly in range(*(rows if rows and side in SIDES else (0, fh))):
+                for lx in range(fw):
+                    c = fn(side, lx, ly)
+                    if c:
+                        s.set(part, side, lx, ly, c)
+
+    def strand(lx, ly, k=1.0):  # swept strands: three tones in diagonal streaks
+        return shade(HAIR, k * (1.1, 0.98, 0.86)[(lx + ly // 2) % 3])
+
+    # face: smooth skin, dark stubble along the jaw and chin
+    fill('head', lambda side, lx, ly: shade(SK, {'front': 1.0, 'top': 1.0, 'bottom': 0.84}.get(side, 0.95) * (0.95 if side in SIDES and ly >= 6 else 1.0)))
+    STUB, STUB_L = mixc(SK, HAIR, 0.5), mixc(SK, HAIR, 0.26)
+    for lx in range(8):
+        s.set('head', 'front', lx, 7, STUB)
+        if lx not in (3, 4):
+            s.set('head', 'front', lx, 6, STUB if lx in (0, 1, 6, 7) else STUB_L)
+    for lx in (0, 7):
+        s.set('head', 'front', lx, 5, STUB_L)
+    for side, xs in (('right', (5, 6, 7)), ('left', (0, 1, 2))):
+        for lx in xs:
+            s.set('head', side, lx, 5, STUB_L); s.set('head', side, lx, 6, STUB); s.set('head', side, lx, 7, STUB)
+    s.set('head', 'front', 1, 4, RIM); s.set('head', 'front', 2, 4, CLOUD)
+    s.set('head', 'front', 5, 4, CLOUD); s.set('head', 'front', 6, 4, RIM)
+    for lx in (1, 2, 5, 6):
+        s.set('head', 'front', lx, 3, shade(HAIR, 0.72))
+    s.set('head', 'front', 3, 5, shade(SK, 0.9)); s.set('head', 'front', 4, 5, shade(SK, 0.94))
     s.set('head', 'front', 3, 6, (160, 96, 88)); s.set('head', 'front', 4, 6, (160, 96, 88))
-    hat_hair(s, HAIR, 0.75, back_rows=3, side_rows=2, front_rows=2, seed=7)  # swept, voluminous top
-    SW, SWL = (38, 40, 46), (122, 124, 130)
-    # dark knit sweater (base), lighter textured grey shawl collar and shoulder panels (second layer)
-    for side in SIDES:
-        ribbed(s, 'body', SW, sides=(side,), seed=21)
-    s.noisy('body', 'top', 0, 0, 8, 4, SW, 0.05, 22)
-    arms_skin(s, SK)
+    # short dark-brown hair, swept up and to one side
+    fill('head', lambda side, lx, ly: strand(lx, ly), sides=('top',))
+    fill('head', lambda side, lx, ly: strand(lx, ly, 0.94), sides=('front',), rows=(0, 1))
+    for lx in range(0, 5):  # the swept fringe drops one row on his right
+        s.set('head', 'front', lx, 1, strand(lx, 1, 0.9))
+    fill('head', lambda side, lx, ly: strand(lx, ly, 0.9 if ly == 4 else 0.96), sides=('back',), rows=(0, 5))
+    for side, xs, burn in (('right', range(0, 6), (6, 7)), ('left', range(2, 8), (0, 1))):
+        for ly in range(3):
+            for lx in (range(8) if ly < 2 else xs):
+                s.set('head', side, lx, ly, strand(lx, ly, 0.94))
+        for lx in burn:
+            s.set('head', side, lx, 3, shade(HAIR, 0.82))
+    # dark glasses (hat layer): two lenses over brow and eye, bridge, arms back to the ears
+    for x0 in (1, 5):
+        s.rect('hat', 'front', x0, 3, 2, 2, LENS); s.set('hat', 'front', x0, 3, GLINT)
+    for lx in (0, 3, 4, 7):
+        s.set('hat', 'front', lx, 3, FRAME)
+    s.rect('hat', 'right', 4, 3, 4, 1, FRAME); s.rect('hat', 'left', 0, 3, 4, 1, FRAME)
+    # dark knit sweater (base): clean vertical ribs
+    SW, SWL, TRO, BOOT = (38, 40, 46), (122, 124, 130), (30, 32, 38), (24, 22, 22)
+    rib = lambda c, lx, hi=1.12, lo=0.88: shade(c, hi if lx % 2 == 0 else lo)
+    knit = lambda c, lx, ly: shade(c, 1.08 if (lx + ly) % 2 else 0.92)  # textured collar knit
+    fill('body', lambda side, lx, ly: shade(SW, 0.6) if side == 'bottom' else SW if side == 'top' else rib(shade(SW, 0.8 if ly == 11 else 1.0), lx))
     for part in ('rarm', 'larm'):
-        ribbed(s, part, SW, rows=(0, 10), seed=23)
-        s.noisy(part, 'top', 0, 0, 4, 4, SWL, 0.06, 24)
-        s.hband(part, 9, shade(SW, 0.75))
-    legs_cloth(s, (30, 32, 38), seed=25); boots(s, (24, 22, 22), rows=(9, 12), sole=(10, 10, 12))
-    overlay(s, 'jacket', SWL, rows=(0, 2), amp=0.1, seed=26)
-    ribbed(s, 'jacket', SWL, rows=(0, 2), seed=27, hi=1.08, lo=0.9)
-    lobes = {0: (1, 2, 5, 6), 1: (1, 2, 5, 6), 2: (1, 2, 5, 6), 3: (2, 5), 4: (2, 5), 5: (3, 4)}
+        fill(part, lambda side, lx, ly: SK if side == 'bottom' or (side in SIDES and ly >= 10) else SWL if side == 'top'
+             else shade(SW, 0.75) if ly == 9 else rib(SW, lx))
+    for part in ('rleg', 'lleg'):
+        fill(part, lambda side, lx, ly: (10, 10, 12) if side == 'bottom' or (side in SIDES and ly == 11)
+             else BOOT if side in SIDES and ly >= 9 else TRO)
+    # lighter grey textured shawl collar and shoulder panels (second layer)
+    fill('jacket', lambda side, lx, ly: knit(SWL, lx, ly), sides=('right', 'left', 'back'), rows=(0, 2))
+    lobes = {0: (0, 1, 2, 5, 6, 7), 1: (0, 1, 2, 5, 6, 7), 2: (1, 2, 5, 6), 3: (2, 5), 4: (2, 5), 5: (3, 4)}
     for ly, xs in lobes.items():
         for lx in xs:
-            s.set('jacket', 'front', lx, ly, shade(SWL, 1.1 if (lx + ly) % 2 else 0.9))
-    for lx in (3, 4):
-        for ly in range(0, 3):
-            s.clear('jacket', 'front', lx, ly)
-    s.hband('jacket', 0, shade(SWL, 1.1), sides=('back',)); s.hband('jacket', 1, shade(SWL, 0.9), sides=('back',))
+            s.set('jacket', 'front', lx, ly, knit(SWL, lx, ly))
     for part in ('rsleeve', 'lsleeve'):
-        overlay(s, part, SWL, rows=(0, 4), amp=0.1, seed=28)
-        ribbed(s, part, SWL, rows=(0, 4), seed=29, hi=1.08, lo=0.9)
-        s.hband(part, 3, shade(SWL, 0.78))
-    for part in ('rpants', 'lpants'):
-        overlay(s, part, (30, 32, 38), rows=(0, 2), amp=0.06, seed=30, p=0.5)
+        fill(part, lambda side, lx, ly: shade(SWL, 0.78) if ly == 3 else knit(SWL, lx, ly), sides=SIDES, rows=(0, 4))
     return s
 
 
@@ -406,32 +449,164 @@ def peter_hale(burned=False):
 
 
 def risen(s):
-    """Peter's resurrection: stripped to rotted trousers, pale bare skin, grave soil on top."""
-    PALE = (214, 204, 202)
-    for part in ('body', 'rarm', 'larm'):
-        s.fill_part(part, PALE, 0.05, 5, skin=True)
+    """Peter, burned (Season 1 stills 1x04 / 1x09). One burn field in 3D model space drives everything, so the
+    damage is continuous across faces and limbs instead of separate blotches. It starts on the right side of his
+    face (viewer's left, as in the stills), runs down the right arm and diagonally across the chest and back.
+    Skin goes intact -> waxy pink-brown scar -> dark crust -> grey-black flaking char, with raw red only in a
+    few splits (burned, not bloody). The fire took the outer layers first: the
+    black leather jacket survives only on his left, the grey shirt is burned through along the swath with a
+    scorched fringe, and the right trouser leg is burned open."""
+    INTACT = (214, 186, 170)
+    SCAR_D, SCAR_M, SHEEN = (146, 100, 90), (172, 124, 110), (206, 166, 150)  # dull pink-brown, waxy highlight
+    RAW, CRUST = (142, 52, 48), (74, 60, 56)
+    CHAR_K, CHAR_G, ASH = (30, 29, 30), (62, 60, 60), (104, 100, 98)
+    HAIR, SINGE = (36, 28, 26), (76, 64, 58)
+    SHIRT, SHIRT_D, BUTTON = (88, 92, 100), (66, 70, 78), (150, 150, 158)
+    LEATH, LEATH_HI = (28, 30, 34), (70, 76, 74)
+    TROU, SHOE, SCORCH = (58, 60, 68), (22, 20, 20), (38, 30, 28)
+    BASE = ('head', 'body', 'rarm', 'larm', 'rleg', 'lleg')
+    ALL = ('top', 'bottom') + SIDES
+    # part origin in front-view model pixels: x from the viewer's left, y down, z front to back
+    ORG = {'head': (4, 0, -2), 'body': (4, 8, 0), 'rarm': (0, 8, 0), 'larm': (12, 8, 0), 'rleg': (4, 20, 0), 'lleg': (8, 20, 0)}
+
+    def pos(part, side, lx, ly):
+        x0, y0, z0 = ORG[BASE_OF.get(part, part)]
+        w, h, d = s.P[part][2:]
+        return {'front': (x0 + lx, y0 + ly, z0), 'back': (x0 + w - 1 - lx, y0 + ly, z0 + d - 1),
+                'right': (x0, y0 + ly, z0 + d - 1 - lx), 'left': (x0 + w - 1, y0 + ly, z0 + lx),
+                'top': (x0 + lx, y0, z0 + d - 1 - ly), 'bottom': (x0 + lx, y0 + h - 1, z0 + d - 1 - ly)}[side]
+
+    # burn sources: (a, b, radius, strength); level = strength * (1 - distance to segment ab / radius)
+    SRC = [
+        ((4.0, 0.0, -2.0), (4.0, 7.5, -2.0), 6.5, 1.0),     # right temple, cheek and jaw
+        ((0.0, 8.0, 1.5), (0.0, 19.5, 1.5), 5.5, 1.0),      # right arm, outer side, shoulder to hand
+        ((3.0, 8.5, 0.0), (6.5, 14.0, 0.0), 3.2, 0.78),     # swath across the chest
+        ((3.0, 8.5, 3.0), (6.0, 15.0, 3.0), 3.2, 0.78),     # and down the back
+        ((4.0, 20.0, 1.5), (4.0, 24.0, 1.5), 5.0, 1.0),     # right hip and thigh, outer side
+        ((15.0, 18.5, 1.5), (15.0, 19.5, 1.5), 4.0, 0.85),  # left wrist and hand
+    ]
+
+    def vnoise(p, scale, seed):
+        """Smooth 3D value noise in 0..1."""
+        q = [v / scale + 100.0 for v in p]
+        i = [int(v) for v in q]
+        f = [(v - int(v)) ** 2 * (3 - 2 * (v - int(v))) for v in q]
+        out = 0.0
+        for dx in (0, 1):
+            for dy in (0, 1):
+                for dz in (0, 1):
+                    w = (f[0] if dx else 1 - f[0]) * (f[1] if dy else 1 - f[1]) * (f[2] if dz else 1 - f[2])
+                    out += w * hsh(i[0] + dx + 57 * (i[2] + dz), i[1] + dy, seed)
+        return out
+
+    def level(p, reach=1.0):
+        best = 0.0
+        for a, b, r, st in SRC:
+            ab = [b[i] - a[i] for i in range(3)]
+            n = sum(v * v for v in ab)
+            t = max(0.0, min(1.0, sum((p[i] - a[i]) * ab[i] for i in range(3)) / n)) if n else 0.0
+            d = sum((p[i] - a[i] - ab[i] * t) ** 2 for i in range(3)) ** 0.5
+            best = max(best, st * (1.0 - d / (r * reach)))
+        return best + 0.36 * (vnoise(p, 3.5, 501) - 0.5)  # organic edges instead of perfect arcs
+
+    def skin(L, p):
+        n = vnoise(p, 2.2, 777)  # its contour lines give winding scar ridges and flake edges
+        if L > 0.84:  # char: grey-black, flaking
+            return ASH if n > 0.66 else CHAR_G if n > 0.52 else CHAR_K
+        if L > 0.68:  # crust over the deepest burns; raw only where it has split
+            return RAW if n < 0.3 else CHAR_K if n > 0.62 else CRUST
+        if L > 0.44:  # mottled scar with a waxy sheen along the ridges
+            return SHEEN if 0.47 < n < 0.53 else SCAR_M if n >= 0.53 else SCAR_D
+        if L > 0.22:
+            return SHEEN if n > 0.6 else SCAR_M
+        return INTACT
+
+    def cloth(part, side, lx, ly):
+        """Shirt, trousers and shoes on the base layer, or None where they are gone."""
+        if part == 'head' or (side == 'bottom' and part in ('rarm', 'larm')):
+            return None
+        if part in ('rleg', 'lleg'):
+            if side == 'bottom' or (side in SIDES and ly >= 10):
+                return (10, 10, 10) if side == 'bottom' or ly == 11 else SCORCH if part == 'rleg' else SHOE
+            return shade(TROU, 0.9 if side in ('right', 'left') else 1.0)
+        if part in ('rarm', 'larm') and side in SIDES and ly >= 10:
+            return None  # hands
+        if part == 'body' and side == 'front':
+            if ly == 0 and lx in (3, 4):
+                return None  # open collar
+            if ly < 2 and lx in (2, 5):
+                return shade(SHIRT, 1.15)
+            if lx == 4:
+                return BUTTON if ly % 3 == 2 else SHIRT_D
+        if side in SIDES and ly == (9 if part != 'body' else 11):
+            return SHIRT_D  # cuff and hem
+        return shade(SHIRT, 0.6 if side == 'bottom' else 1.0)
+
     for part in ('jacket', 'rsleeve', 'lsleeve', 'rpants', 'lpants', 'hat'):
         s.clear_part(part)
-    for part in ('rleg', 'lleg'):
-        s.fill_part(part, PALE, 0.05, 6, skin=True, rows=(8, 12), sides=('right', 'front', 'left', 'back'))
-        legs_rot = (38, 38, 44)
-        for side in SIDES:
-            fw = s.face(part, side)[2]
-            for ly in range(0, 8):
-                for lx in range(fw):
-                    if hsh(lx, ly, 17) > ly * 0.04:
-                        s.set(part, side, lx, ly, shade(legs_rot, 0.9 + 0.2 * hsh(lx, ly, 18)))
-    hat_hair(s, (30, 24, 20), 0.55, back_rows=3, side_rows=2, front_rows=1, seed=19)
-    mud(s, p_cloth=0.6, p_skin=0.45)
-    LUMP = [(34, 26, 20), (50, 38, 28), (66, 50, 36)]  # caked soil on the second layer
-    for part in ('jacket', 'rsleeve', 'lsleeve', 'rpants', 'lpants'):
-        for side in SIDES:
+    for part in BASE:
+        for side in ALL:
             fx, fy, fw, fh = s.face(part, side)
             for ly in range(fh):
                 for lx in range(fw):
-                    clump = hsh((fx + lx) // 2, (fy + ly) // 2, 301) * 0.6 + hsh(fx + lx, fy + ly, 302) * 0.4
-                    if clump < 0.3 + 0.2 * ly / max(1, fh - 1):
-                        s.set(part, side, lx, ly, LUMP[int(hsh(fx + lx, fy + ly, 303) * 3) % 3])
+                    p = pos(part, side, lx, ly)
+                    L = level(p)
+                    c = cloth(part, side, lx, ly)
+                    if c is None or L > 0.5:
+                        c = skin(L, p)
+                    elif L > 0.44:
+                        c = CHAR_K  # burned edge of the cloth
+                    elif L > 0.38:
+                        c = SCORCH
+                    s.set(part, side, lx, ly, c)
+
+    # hair: dark and slicked on his left, singed towards the burn, gone on the right
+    def hair(side, lx, ly):
+        L = level(pos('head', side, lx, ly))
+        if L < 0.5:
+            s.set('head', side, lx, ly, SINGE if L > 0.36 else shade(HAIR, 1.25 if (lx if side != 'top' else ly) % 3 == 0 else 1.0))
+    for lx in range(8):
+        for ly in range(8):
+            hair('top', lx, ly)
+        for ly in range(5):
+            hair('back', lx, ly)
+        hair('front', lx, 0)
+        for ly in range(3):
+            hair('left', lx, ly); hair('right', lx, ly)
+    # face, hand-placed over the field (I intact, S sheen, M/D scar, C crust, G/K char, r raw split, H hair,
+    # b brow, w eye white, i iris, c clouded eye, m mouth, t stubble)
+    FACE = ['KGHHHHHH',
+            'GCDMSIII',
+            'KCDDMIII',
+            'GCrDSbbI',
+            'GCcDIiwI',
+            'KGCDIIII',
+            'KGCDmmtI',
+            'KKGCMttt']
+    KEY = {'I': INTACT, 'S': SHEEN, 'M': SCAR_M, 'D': SCAR_D, 'C': CRUST, 'G': CHAR_G, 'K': CHAR_K, 'r': RAW, 'H': HAIR,
+           'b': HAIR, 'w': WHITE, 'i': (96, 140, 152), 'c': (186, 190, 194), 'm': (160, 80, 76), 't': mixc(INTACT, HAIR, 0.22)}
+    for ly, row in enumerate(FACE):
+        for lx, k in enumerate(row):
+            s.set('head', 'front', lx, ly, KEY[k])
+    s.set('head', 'front', 4, 5, shade(INTACT, 0.92))  # nose shadow
+
+    # what is left of the leather jacket (second layer): only where the fire did not reach
+    for part, rows in (('jacket', 10), ('lsleeve', 10), ('rsleeve', 10)):
+        for side in SIDES:
+            fx, fy, fw, fh = s.face(part, side)
+            for lx in range(fw):
+                for ly in range(rows - (1 if (lx + fx) % 3 == 0 else 0)):  # ragged hem
+                    if part == 'jacket' and side == 'front' and lx in (3, 4):
+                        continue  # worn open
+                    L = level(pos(part, side, lx, ly), 2.0)
+                    if L < 0.5:
+                        seam = ly < 5 and lx == 5 if part == 'jacket' and side == 'front' else ly == 8 and part == 'lsleeve'
+                        s.set(part, side, lx, ly, CHAR_K if L > 0.44 else SCORCH if L > 0.38 else LEATH_HI if seam else LEATH)
+        fx, fy, fw, fh = s.face(part, 'top')
+        for lx in range(fw):
+            for ly in range(fh):
+                if level(pos(part, 'top', lx, ly), 2.0) < 0.38:
+                    s.set(part, 'top', lx, ly, LEATH)
 
 
 def kol():
@@ -491,6 +666,18 @@ def klaus():
         s.hband(part, 5, shade(H, 0.75))
     legs_cloth(s, (40, 46, 64), seed=23); boots(s, (62, 44, 34), rows=(9, 12))
     SIL, GOLD, CORD = (190, 196, 206), (206, 168, 72), (90, 62, 44)
+    LEATH = (22, 22, 26)  # black leather moto jacket (WornOnTV), open over the henley
+    overlay(s, 'jacket', LEATH, rows=(0, 10), amp=0.08, seed=26)
+    for ly in range(0, 10):
+        for lx in (2, 3, 4, 5):
+            s.clear('jacket', 'front', lx, ly)
+    for i in range(6):
+        s.set('jacket', 'front', 1, i, (46, 46, 54)); s.set('jacket', 'front', 6, i, (46, 46, 54))
+    s.set('jacket', 'front', 1, 8, (150, 150, 158)); s.set('jacket', 'front', 6, 8, (150, 150, 158))
+    s.hband('jacket', 9, (12, 12, 14))
+    for part in ('rsleeve', 'lsleeve'):
+        overlay(s, part, LEATH, rows=(0, 5), amp=0.08, seed=27)
+        s.hband(part, 4, (12, 12, 14))
     s.line('jacket', 'front', [(2, 0), (5, 0), (2, 1), (5, 1), (3, 2), (4, 2)], SIL)
     s.line('jacket', 'front', [(1, 0), (6, 0), (1, 1), (6, 1), (1, 2), (6, 2), (2, 3), (5, 3), (3, 4), (4, 4)], CORD)
     s.line('jacket', 'front', [(2, 2), (5, 2), (2, 4), (5, 4), (3, 5), (4, 5)], GOLD)
@@ -664,7 +851,7 @@ def freya():
             for lx in (range(0, 4) if side == 'right' else range(4, 8)):
                 s.set('head', side, lx, ly, shade(HAIR, 0.88 + 0.22 * hsh(lx, ly, 8)))
     hat_hair(s, HAIR, 0.9, back_rows=8, side_rows=6, front_rows=2, seed=9)
-    LEATH, TOP, JEAN = (26, 26, 30), (54, 54, 62), (32, 36, 50)
+    LEATH, TOP, JEAN = (98, 64, 40), (46, 46, 54), (32, 36, 50)
     body_cloth(s, TOP, amp=0.05, seed=111)
     s.rect('body', 'front', 3, 0, 2, 1, SK, skin=True)
     # pendant on a cord
@@ -681,9 +868,9 @@ def freya():
         for lx in (3, 4):
             s.clear('jacket', 'front', lx, ly)
     for i in range(5):
-        s.set('jacket', 'front', 2, i, (44, 44, 52)); s.set('jacket', 'front', 5, i, (44, 44, 52))
+        s.set('jacket', 'front', 2, i, (128, 88, 58)); s.set('jacket', 'front', 5, i, (128, 88, 58))
     s.set('jacket', 'front', 2, 9, (170, 172, 180)); s.set('jacket', 'front', 5, 9, (170, 172, 180))
-    s.hband('jacket', 9, (14, 14, 16))
+    s.hband('jacket', 9, (62, 40, 26))
     for ly in range(0, 9):
         for lx in range(1, 7):
             if hsh(lx, ly, 5) < 0.95 - ly * 0.04:
@@ -697,7 +884,7 @@ def freya():
             s.set('jacket', 'front', lx, ly, shade(HAIR, 0.95 + 0.2 * hsh(lx, ly, 8)))
     for part in ('rsleeve', 'lsleeve'):
         overlay(s, part, LEATH, rows=(0, 10), amp=0.08, seed=115)
-        s.hband(part, 9, (14, 14, 16)); s.set(part, 'front', 1, 4, (60, 60, 68))
+        s.hband(part, 9, (62, 40, 26)); s.set(part, 'front', 1, 4, (128, 88, 58))
     for part in ('rpants', 'lpants'):
         overlay(s, part, JEAN, rows=(0, 2), amp=0.06, seed=116, p=0.6)
         s.hband(part, 8, (14, 14, 18), sides=('front', 'back', 'right', 'left'))
@@ -705,98 +892,102 @@ def freya():
 
 
 def sebastien_valet():
+    """French line-infantry soldier of the 1760s (Seven Years' War), home in Gevaudan: natural queued hair,
+    greyish-white coat with blue cuffs, buff waistcoat, black cravat, buff breeches, black gaiters."""
     s = Skin(False, 909)
-    SK = (238, 218, 204)
-    WIG, WIGD = (238, 236, 232), (200, 198, 204)
-    head(s, SK, WIG, (74, 52, 40), brow=(120, 112, 112), lips=(176, 84, 92), hair_rows=2, fringe=0.2, back_rows=5, side_rows=3, hair_amp=0.05, sideburn=False)
-    s.set('head', 'front', 2, 2, (50, 36, 34)); s.set('head', 'front', 6, 5, (50, 36, 34))  # patch/beauty mark
-    s.set('head', 'front', 1, 5, (232, 160, 160)); s.set('head', 'front', 6, 5, (232, 164, 160))  # rouge
-    s.set('head', 'front', 6, 5, (50, 36, 34))
-    for lx in range(8):
-        s.set('head', 'front', lx, 0, WIG)
-    # powdered wig: curled side rolls, queue tied with a black ribbon
-    WIGD = (214, 212, 220)
-    curl = lambda lx, ly: WIG if ((lx // 2 + ly // 2) % 2 == 0) else mixc(WIG, WIGD, 0.55 + 0.3 * hsh(lx, ly, 3))
-    for side, xs in (('right', range(2, 8)), ('left', range(0, 6))):
-        for ly in range(0, 6):
-            for lx in xs:
-                s.set('hat', side, lx, ly, curl(lx, ly))
-        for lx in xs:  # rolled curls at the bottom edge
-            s.set('hat', side, lx, 5, WIGD if lx % 2 else WIG)
-    for lx in range(8):
-        for ly in range(0, 2):
-            s.set('hat', 'front', lx, ly, curl(lx, ly))
-    for lx in range(8):
-        for ly in range(0, 8):
-            s.set('hat', 'top', lx, ly, curl(lx, ly))
-    for ly in range(0, 6):
-        for lx in range(8):
-            s.set('hat', 'back', lx, ly, curl(lx, ly))
+    SK, HAIR = (214, 170, 136), (52, 36, 28)
+    head(s, SK, HAIR, (84, 58, 40), brow=(40, 28, 22), lips=(168, 92, 82), hair_rows=1, fringe=0, back_rows=4, side_rows=4, hair_amp=0.12)
+    stubble(s, SK, 0.22)  # light stubble only
+    # natural hair pulled back and tied into a queue (ponytail): black ribbon at the nape, tail hangs on the coat back
+    RIB = (20, 18, 22)
     for lx in (3, 4):
-        for ly in range(6, 8):
-            s.set('hat', 'back', lx, ly, WIG if ly == 6 else WIGD)
-    RIB = (30, 26, 34)
-    s.rect('hat', 'back', 3, 5, 2, 1, RIB); s.set('hat', 'back', 2, 5, shade(RIB, 1.6)); s.set('hat', 'back', 5, 5, shade(RIB, 1.6))
-    s.set('hat', 'back', 3, 6, RIB); s.set('hat', 'back', 4, 6, RIB)
-    BURG, GOLD, CREAM, LACE = (112, 28, 46), (208, 168, 66), (236, 222, 184), (244, 242, 238)
-    body_cloth(s, CREAM, amp=0.04, seed=91)
-    for ly in range(1, 11):  # embroidered waistcoat
-        if ly % 2 == 0:
-            s.set('body', 'front', 2, ly, GOLD); s.set('body', 'front', 5, ly, GOLD)
+        for ly in range(4, 8):
+            s.set('hat', 'back', lx, ly, shade(HAIR, 0.85 + 0.3 * ((lx + ly) % 2)))
+    s.rect('hat', 'back', 3, 4, 2, 1, RIB); s.set('hat', 'back', 2, 4, shade(RIB, 1.8)); s.set('hat', 'back', 5, 4, shade(RIB, 1.8))  # ribbon and bow
+    # no painted hat: the tricorn is a 3D item model (models/item/sebastien_tricorn.json) worn in the head slot
+    COAT, CUFF, BUTTON, WAIST, BREECH = (190, 182, 162), (52, 76, 124), (192, 156, 66), (204, 184, 138), (196, 180, 150)
+    CRAV, GAIT = (30, 28, 34), (30, 28, 30)
+    body_cloth(s, WAIST, amp=0.05, seed=91, weave=1)
+    s.rect('body', 'front', 2, 0, 4, 1, CRAV); s.rect('body', 'front', 3, 1, 2, 1, CRAV)  # black cravat
+    for ly in range(2, 11, 2):
+        s.set('body', 'front', 4, ly, BUTTON); s.set('body', 'front', 3, ly, shade(WAIST, 0.85))
     arms_skin(s, SK)
     for part in ('rarm', 'larm'):
         for side in SIDES:
-            s.noisy(part, side, 0, 0, s.face(part, side)[2], 8, BURG, 0.05, 92)
-            s.rect(part, side, 0, 8, s.face(part, side)[2], 3, LACE)
-        s.noisy(part, 'top', 0, 0, 4, 4, BURG, 0.05, 92)
-    legs_cloth(s, (230, 218, 190), rows=(0, 6), seed=93, amp=0.03)
+            fw = s.face(part, side)[2]
+            s.noisy(part, side, 0, 0, fw, 8, COAT, 0.04, 92)
+            s.rect(part, side, 0, 8, fw, 3, CUFF)
+            s.rect(part, side, 0, 10, fw, 1, (232, 230, 224))  # linen cuff edge
+        s.noisy(part, 'top', 0, 0, 4, 4, COAT, 0.04, 92)
+    legs_cloth(s, BREECH, rows=(0, 6), seed=93, amp=0.03)
     for part in ('rleg', 'lleg'):
         for side in SIDES:
             fw = s.face(part, side)[2]
-            s.noisy(part, side, 0, 6, fw, 4, (240, 238, 232), 0.03, 94)
-            s.noisy(part, side, 0, 10, fw, 2, (22, 20, 24), 0.05, 95)
-            s.rect(part, side, 0, 5, fw, 1, GOLD)
-        s.set(part, 'front', 1, 10, GOLD); s.set(part, 'front', 2, 10, GOLD)
-    overlay(s, 'jacket', BURG, rows=(0, 12), amp=0.05, seed=96)
-    for ly in range(0, 12):
-        for lx in (3, 4):
+            s.noisy(part, side, 0, 6, fw, 5, GAIT, 0.05, 94)
+            s.rect(part, side, 0, 11, fw, 1, (58, 40, 28))  # shoe
+            s.rect(part, side, 0, 5, fw, 1, (176, 142, 60))  # garter at the knee
+        for ly in (7, 9):
+            s.set(part, 'right', 1, ly, (130, 128, 126)); s.set(part, 'left', 2, ly, (130, 128, 126))
+        s.noisy(part, 'bottom', 0, 0, 4, 4, (16, 14, 16), 0.04, 95)
+    # coat: greyish-white, collarless, blue cuffs and turn-backs, brass buttons
+    overlay(s, 'jacket', COAT, rows=(0, 12), amp=0.04, seed=96)
+    for ly in range(0, 11):
+        for lx in (2, 3, 4, 5):
             s.clear('jacket', 'front', lx, ly)
-    for ly in range(0, 12):
-        s.set('jacket', 'front', 2, ly, GOLD); s.set('jacket', 'front', 5, ly, GOLD)
     for ly in range(1, 11, 2):
-        s.set('jacket', 'front', 1, ly, GOLD); s.set('jacket', 'front', 6, ly, GOLD)
-    s.rect('jacket', 'front', 3, 0, 2, 4, LACE)  # jabot
-    for ly in range(0, 4):
-        s.set('jacket', 'front', 3 if ly % 2 else 4, ly, (206, 204, 210))
-    s.rect('jacket', 'front', 2, 0, 4, 1, LACE)
-    s.rect('jacket', 'back', 3, 3, 2, 9, shade(BURG, 0.7)); s.hband('jacket', 11, GOLD, sides=SIDES)
-    s.hband('jacket', 9, shade(BURG, 0.7), sides=SIDES)
-    s.rect('jacket', 'left', 0, 8, 4, 2, (24, 20, 24)); s.rect('jacket', 'left', 0, 8, 1, 2, GOLD)  # sword hanger
+        s.set('jacket', 'front', 1, ly, BUTTON); s.set('jacket', 'front', 6, ly, BUTTON)
+    s.rect('jacket', 'front', 1, 8, 2, 3, CUFF); s.rect('jacket', 'front', 5, 8, 2, 3, CUFF)  # blue turn-backs
+    for side in ('right', 'left', 'back'):
+        s.hband('jacket', 11, shade(COAT, 0.85), sides=(side,))
+    s.rect('jacket', 'back', 3, 6, 2, 6, CUFF)  # blue-lined back vent
+    for ly in range(0, 6):  # the queue hanging over the collar
+        for lx in (3, 4):
+            s.set('jacket', 'back', lx, ly, shade(HAIR, 0.85 + 0.3 * ((lx + ly) % 2)))
+    s.rect('jacket', 'back', 2, 5, 4, 1, RIB)
+    s.set('jacket', 'back', 2, 6, RIB); s.set('jacket', 'back', 5, 6, RIB)
+    # white buff-leather cross-belt and a black cartridge box on the left hip
+    BELT = (226, 218, 198)
+    for i in range(9):
+        s.set('jacket', 'front', min(6, 1 + i * 6 // 8), min(11, 1 + i), BELT)
+        s.set('jacket', 'front', min(7, 2 + i * 6 // 8), min(11, 1 + i), BELT)
+    for i in range(8):
+        s.set('jacket', 'back', 6 - i * 5 // 7, 1 + i, BELT)
+    s.rect('jacket', 'left', 0, 8, 3, 3, (26, 24, 26)); s.set('jacket', 'left', 1, 9, (190, 156, 66))
+    s.rect('jacket', 'front', 6, 9, 2, 3, (26, 24, 26))
     for part in ('rsleeve', 'lsleeve'):
-        overlay(s, part, BURG, rows=(0, 7), amp=0.05, seed=97)
+        overlay(s, part, COAT, rows=(0, 8), amp=0.04, seed=97)
         for side in SIDES:
             fw = s.face(part, side)[2]
-            s.rect(part, side, 0, 7, fw, 1, GOLD)
-            for lx in range(fw):
-                s.set(part, side, lx, 8, LACE); s.set(part, side, lx, 9, shade(LACE, 0.88) if lx % 2 else LACE)
-                if lx % 2 == 0:
-                    s.set(part, side, lx, 10, shade(LACE, 0.94))
+            s.rect(part, side, 0, 7, fw, 1, shade(COAT, 0.88))
+            s.rect(part, side, 0, 8, fw, 3, CUFF)
+        s.set(part, 'front', 1, 8, BUTTON); s.set(part, 'front', 2, 8, BUTTON)
     for part in ('rpants', 'lpants'):
-        overlay(s, part, (230, 218, 190), rows=(0, 5), amp=0.03, seed=98)
+        overlay(s, part, COAT, rows=(0, 5), amp=0.04, seed=98)  # coat skirts to above the knee
         for side in SIDES:
-            s.hband(part, 5, GOLD, sides=(side,))
-        s.set(part, 'front', 1, 10, GOLD); s.set(part, 'front', 2, 10, GOLD)
+            s.hband(part, 4, shade(COAT, 0.82), sides=(side,))
+    # a little campaign dirt
+    for part in ('jacket', 'rpants', 'lpants'):
+        for side in ('front', 'back', 'right', 'left'):
+            fx, fy, fw, fh = s.face(part, side)
+            for ly in range(fh):
+                for lx in range(fw):
+                    if s.px[fx + lx, fy + ly][3] and hsh(fx + lx, fy + ly, 77) < 0.05:
+                        s.set(part, side, lx, ly, mixc(s.px[fx + lx, fy + ly][:3], (110, 92, 70), 0.5))
     return s
 
 
 def beast_host():
+    """The Beast's host (Mason Hewitt in the show): medium-brown skin, dark brown eyes, short dark brown hair,
+    button-up shirt; village clothes for the mod."""
     s = Skin(False, 1010)
-    SK, HAIR = (222, 184, 154), (92, 66, 46)
-    head(s, SK, HAIR, (122, 94, 60), brow=(70, 50, 36), hair_rows=2, fringe=0.7, back_rows=5, side_rows=3, hair_amp=0.16)
-    s.set('head', 'front', 3, 6, (190, 108, 102)); s.set('head', 'front', 4, 6, (190, 108, 102))
-    hat_hair(s, HAIR, 0.6, back_rows=4, side_rows=2, front_rows=2, seed=9)
-    LIN, VEST, PANT, SCARF = (196, 184, 150), (96, 72, 50), (88, 84, 76), (150, 66, 58)
+    SK, HAIR = (150, 104, 76), (38, 28, 24)
+    head(s, SK, HAIR, (46, 32, 24), brow=(30, 22, 18), lips=(150, 84, 76), hair_rows=1, fringe=0.3, back_rows=4, side_rows=3, hair_amp=0.1, white=(232, 228, 222))
+    hat_slick(s, HAIR, back_rows=3, side_rows=1)
+    LIN, VEST, PANT = (196, 184, 150), (96, 72, 50), (88, 84, 76)
     body_cloth(s, LIN, amp=0.08, seed=101, weave=1)
+    s.rect('body', 'front', 3, 0, 2, 2, SK, skin=True)
+    for ly in range(2, 11, 2):
+        s.set('body', 'front', 4, ly, (140, 128, 100))
     arms_skin(s, SK)
     for part in ('rarm', 'larm'):
         for side in SIDES:
@@ -812,18 +1003,17 @@ def beast_host():
         s.set('jacket', 'front', 2, ly, (180, 150, 90))
     s.rect('jacket', 'front', 5, 7, 2, 2, shade(VEST, 0.8)); s.hband('jacket', 10, shade(VEST, 0.8))
     s.rect('jacket', 'back', 3, 2, 2, 9, shade(VEST, 0.85))
-    # worn red scarf
-    overlay(s, 'jacket', SCARF, rows=(0, 2), amp=0.1, seed=105)
-    s.rect('jacket', 'front', 2, 2, 2, 1, SCARF); s.rect('jacket', 'front', 2, 3, 1, 3, SCARF); s.rect('jacket', 'front', 2, 5, 1, 1, shade(SCARF, 0.7))
+    overlay(s, 'jacket', shade(LIN, 0.95), rows=(0, 2), amp=0.08, seed=105)  # open shirt collar
+    for lx in (3, 4):
+        s.clear('jacket', 'front', lx, 0); s.clear('jacket', 'front', lx, 1)
     for part in ('rsleeve', 'lsleeve'):
-        overlay(s, part, LIN, rows=(0, 6), amp=0.08, seed=106, p=0.0)
         for side in SIDES:
             s.rect(part, side, 0, 6, s.face(part, side)[2], 1, shade(LIN, 0.9))
         s.hband(part, 0, shade(VEST, 1.1), sides=SIDES)
     for part in ('rpants', 'lpants'):
         overlay(s, part, PANT, rows=(0, 3), amp=0.08, seed=107, p=0.7)
         s.hband(part, 8, (110, 90, 66)); s.hband(part, 9, (110, 90, 66))
-    s.rect('lpants', 'front', 1, 4, 2, 2, shade(PANT, 0.75)); s.set('lpants', 'front', 1, 4, (130, 124, 110))  # patch
+    s.rect('lpants', 'front', 1, 4, 2, 2, shade(PANT, 0.75)); s.set('lpants', 'front', 1, 4, (130, 124, 110))
     return s
 
 
