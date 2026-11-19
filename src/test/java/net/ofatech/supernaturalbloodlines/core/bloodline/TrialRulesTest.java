@@ -119,6 +119,13 @@ class TrialRulesTest {
     }
 
     @Test
+    void theWarningCannotBeShownToAClientWithoutTheChannel() {
+        assertTrue(TrialRules.canShowWarning(true, true));
+        assertFalse(TrialRules.canShowWarning(true, false), "a connected player whose game does not know the packet");
+        assertTrue(TrialRules.canShowWarning(false, false), "no connection at all is a test player, let through");
+    }
+
+    @Test
     void onlyTheChallengerAndTheirSideMayHurtTheBoss() {
         UUID me = UUID.randomUUID();
         assertTrue(TrialRules.mayHurt(me, me, false));

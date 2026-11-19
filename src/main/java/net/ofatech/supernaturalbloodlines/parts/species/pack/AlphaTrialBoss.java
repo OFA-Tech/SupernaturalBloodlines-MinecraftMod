@@ -16,10 +16,13 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -64,9 +67,19 @@ public final class AlphaTrialBoss {
             }
         });
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGH, LivingIncomingDamageEvent.class, AlphaTrialBoss::onDamage);
-        NeoForge.EVENT_BUS.addListener((LivingDeathEvent e) -> {
-            if (e.getEntity() instanceof Mob m && !m.level().isClientSide && isBoss(m)) {
+        // LOWEST, and never a death something else already cancelled: a boss that did not die is no win
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, (LivingDeathEvent e) -> {
+            if (!e.isCanceled() && e.getEntity() instanceof Mob m && !m.level().isClientSide && isBoss(m)) {
                 died(m);
+            }
+        });
+        // a boss that leaves the level any other way (its chunk unloads, it changes dimension) must not leave its bar and its trial behind
+        NeoForge.EVENT_BUS.addListener((EntityLeaveLevelEvent e) -> {
+            if (e.getEntity() instanceof Mob m && !m.level().isClientSide && isBoss(m)) {
+                Entity.RemovalReason why = m.getRemovalReason();
+                if (why != Entity.RemovalReason.KILLED && why != Entity.RemovalReason.DISCARDED) {
+                    end(m, m.getData(SpeciesRegistries.TRIAL_MARK));
+                }
             }
         });
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> reset());
@@ -80,6 +93,12 @@ public final class AlphaTrialBoss {
         }
     }
 
+    /** For tests: whether a boss bar is still kept for this boss. */
+    @VisibleForTesting
+    public static boolean hasBar(UUID boss) {
+        return BARS.containsKey(boss);
+    }
+
     @VisibleForTesting
     public static void reset() {
         BARS.values().forEach(ServerBossEvent::removeAllPlayers);
@@ -91,16 +110,24 @@ public final class AlphaTrialBoss {
         return e instanceof Mob && e.hasData(SpeciesRegistries.TRIAL_MARK) && e.getData(SpeciesRegistries.TRIAL_MARK).challenger() != null;
     }
 
-    /** Whether {@code challenger} has a trial running (a live boss). */
+    /**
+     * Whether {@code challenger} has a trial running: a live boss in the map, or any <b>loaded</b> boss that carries their mark (the map is forgotten
+     * on a restart and when a boss leaves the level). Best effort: a boss sitting in a chunk that is not loaded is not seen, so a second trial can
+     * start; when the old one loads again its own tick finds the newer one and sends itself away ({@link #tick}).
+     */
     public static boolean running(ServerLevel level, UUID challenger) {
         UUID boss = RUNNING.get(challenger);
-        if (boss == null) {
-            return false;
+        if (boss != null) {
+            if (level.getEntity(boss) instanceof Mob m && m.isAlive() && isBoss(m)) {
+                return true;
+            }
+            RUNNING.remove(challenger);
         }
-        if (level.getEntity(boss) instanceof Mob m && m.isAlive() && isBoss(m)) {
-            return true;
+        for (Entity e : level.getAllEntities()) {
+            if (e instanceof Mob m && m.isAlive() && isBoss(m) && challenger.equals(m.getData(SpeciesRegistries.TRIAL_MARK).challenger())) {
+                return true;
+            }
         }
-        RUNNING.remove(challenger);
         return false;
     }
 
@@ -145,7 +172,17 @@ public final class AlphaTrialBoss {
         }
         TrialMark mark = boss.getData(SpeciesRegistries.TRIAL_MARK);
         UUID id = mark.challenger();
-        RUNNING.putIfAbsent(id, boss.getUUID());
+        UUID known = RUNNING.putIfAbsent(id, boss.getUUID());
+        // an older boss that was in an unloaded chunk while a newer trial began: the newer one is the trial, this one just goes
+        if (known != null && !known.equals(boss.getUUID()) && level.getEntity(known) instanceof Mob other && other.isAlive() && isBoss(other)) {
+            beastsOf(level, boss, mark).forEach(Entity::discard);
+            ServerBossEvent stale = BARS.remove(boss.getUUID());
+            if (stale != null) {
+                stale.removeAllPlayers();
+            }
+            boss.discard();
+            return;
+        }
         ServerPlayer challenger = SireCall.player(level.getServer(), id);
         // dead: lost at once; in another dimension: lost at once; far away or logged out: the leash runs for 30 seconds
         boolean dead = challenger != null && (!challenger.isAlive() || challenger.isSpectator());
@@ -220,7 +257,10 @@ public final class AlphaTrialBoss {
                 challenger.sendSystemMessage(error);
             }
         } else if (challenger != null) {
-            challenger.sendSystemMessage(Component.translatable(KEY + "lost.too_far"));
+            // the real reason: dead, in another dimension, or just too far (the leash is the stand-in for any distance)
+            boolean alive = challenger.isAlive() && !challenger.isSpectator();
+            TrialRules.Fail why = TrialRules.failure(alive, challenger.level() == level, TrialRules.LEASH_TICKS, false);
+            challenger.sendSystemMessage(Component.translatable(KEY + "lost." + why.name().toLowerCase(java.util.Locale.ROOT)));
         }
     }
 
@@ -239,6 +279,10 @@ public final class AlphaTrialBoss {
         if (!(e.getEntity() instanceof Mob boss) || boss.level().isClientSide || !isBoss(boss)) {
             return;
         }
+        if (ownerlessProjectile(e.getSource())) {
+            e.setCanceled(true);
+            return;
+        }
         UUID attacker = attackerPlayer(e.getSource());
         if (attacker == null) {
             return;
@@ -251,10 +295,23 @@ public final class AlphaTrialBoss {
         }
     }
 
-    /** The player behind a hit: the attacker, the shooter of an arrow, or the owner of a Wolf Spirit; null when no player is behind it. */
+    /**
+     * The player behind a hit: the attacker, the shooter of an arrow, the owner of a Wolf Spirit or of any tamed pet; null when no player is behind it.
+     * A hit by a projectile nobody shot (a dispenser, a trap) is no player's and is {@link #ownerlessProjectile refused} too; a fall, fire, magic and
+     * the like (no entity at all) are the world's and do count.
+     */
     @Nullable
     static UUID attackerPlayer(DamageSource source) {
         Entity direct = source.getEntity() != null ? source.getEntity() : source.getDirectEntity();
-        return direct instanceof LivingEntity living ? Friends.playerOf(living) : null;
+        if (!(direct instanceof LivingEntity living)) {
+            return null;
+        }
+        UUID player = Friends.playerOf(living);
+        return player != null ? player : living instanceof OwnableEntity pet ? pet.getOwnerUUID() : null;
+    }
+
+    /** A projectile with nobody behind it: a dispenser's arrow can be fired by anyone, so it cannot hurt a trial boss. */
+    static boolean ownerlessProjectile(DamageSource source) {
+        return source.getEntity() == null && source.getDirectEntity() instanceof Projectile;
     }
 }

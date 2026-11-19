@@ -39,6 +39,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFacto
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
+import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport;
 
 /** Plan 15c: the Alpha Trial (R147): the win, the rite and its warning, the boss. Werewolves only. */
@@ -54,7 +55,15 @@ public final class AlphaTrialGameTests {
     // ---- helpers ----
 
     private static ServerPlayer wolf(GameTestHelper helper, Rank rank, boolean heldSpark) {
-        ServerPlayer p = TestPlayers.createMortal(helper);
+        return wolfify(helper, TestPlayers.createMortal(helper), rank, heldSpark);
+    }
+
+    /** A werewolf who records what they are told. */
+    private static RecordingPlayer recWolf(GameTestHelper helper, Rank rank, boolean heldSpark) {
+        return (RecordingPlayer) wolfify(helper, RecordingPlayer.create(helper), rank, heldSpark);
+    }
+
+    private static ServerPlayer wolfify(GameTestHelper helper, ServerPlayer p, Rank rank, boolean heldSpark) {
         WolfState w = WolfState.NONE.toBuilder().lineage(Lineage.BITTEN).rank(rank).geneRolled(true).heldSpark(heldSpark).build();
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().wolf(w).build());
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 12), "the test wolf could not join the werewolves");
@@ -504,13 +513,233 @@ public final class AlphaTrialGameTests {
                 var tag = boss.saveWithoutId(new net.minecraft.nbt.CompoundTag());
                 helper.assertTrue(tag.toString().contains("trial_mark"), "the mark is not saved with the entity");
                 AlphaTrialBoss.reset(); // a restart forgets the maps
-                helper.assertTrue(!AlphaTrialBoss.running(helper.getLevel(), challenger.getUUID()), "control: the map was not forgotten");
+                // the map is gone, but the loaded boss still carries the mark: a second trial for this player is refused (best effort, loaded bosses only)
+                helper.assertTrue(AlphaTrialBoss.running(helper.getLevel(), challenger.getUUID()), "a loaded boss with the mark was not seen after the map was forgotten");
+                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), challenger, true).endsWith("already"), "a second trial started beside a loaded boss");
                 AlphaTrialBoss.tickNow(boss);
                 helper.assertTrue(AlphaTrialBoss.running(helper.getLevel(), challenger.getUUID()), "the boss did not find its trial again");
                 helper.assertTrue(mark.challenger().equals(boss.getData(SpeciesRegistries.TRIAL_MARK).challenger()), "the challenger changed");
             });
         } finally {
             clean(helper, found, challenger);
+        }
+        helper.succeed();
+    }
+
+    // ---- panel round 1 ----
+
+    private static void clearItems(GameTestHelper helper) {
+        RiteTestSupport.clearDropped(helper);
+    }
+
+    private static List<ItemStack> trialItems() {
+        return List.of(new ItemStack(SpeciesRegistries.MOONSTONE.get()), new ItemStack(RiteTestSupport.item("werewolves:silver_ingot")), new ItemStack(Items.BONE, 8));
+    }
+
+    /** The challenger is the caster: someone standing on the centre is never given a boss or a warning by another player's rite. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aRiteIsNeverStartedForSomeoneElseOnTheCentre(GameTestHelper helper) {
+        RecordingPlayer caster = recWolf(helper, Rank.BETA, true);
+        ServerPlayer onCentre = wolf(helper, Rank.BETA, false); // an open path: a warning would be sent to them
+        online(caster, onCentre);
+        try {
+            SpeciesConfig.overrideTrial(EASY);
+            AlphaTrialRiteFactory.overrideTransformed(p -> true);
+            caster.setPos(RiteTestSupport.centre(helper).getX() + 6.5, RiteTestSupport.centre(helper).getY() + 1, RiteTestSupport.centre(helper).getZ() + 0.5);
+            helper.getLevel().addNewPlayer(caster);
+            RiteTestSupport.place(helper, onCentre);
+            atNight(helper, fullNight(), () -> RiteTestSupport.start(helper, "alpha_trial", caster, trialItems()));
+            helper.assertTrue(bosses(helper).isEmpty() && AlphaTrialBoss.bossOf(helper.getLevel(), onCentre.getUUID()) == null, "a boss came for the player on the centre");
+            helper.assertTrue(AlphaTrialBoss.bossOf(helper.getLevel(), caster.getUUID()) == null, "the caster got a boss while someone else stood on the centre");
+            helper.assertTrue(!AlphaTrialRiteFactory.LEDGER.confirm(onCentre.getUUID(), helper.getLevel().getGameTime()), "a warning was recorded for the player on the centre");
+            helper.assertTrue(caster.receivedOnActionBar("supernaturalbloodlines.trial.not_alone"), "the caster was not told");
+            helper.assertTrue(RiteTestSupport.dropped(helper, "minecraft:bone") == 8, "the ingredients did not come back: " + RiteTestSupport.dropped(helper, "minecraft:bone"));
+            helper.assertTrue(state(onCentre).rank() == Rank.BETA, "the player on the centre was changed");
+            // control: with the centre empty the same caster, and nobody else, gets the trial
+            clearItems(helper);
+            RiteTestSupport.remove(helper, onCentre);
+            atNight(helper, fullNight(), () -> RiteTestSupport.start(helper, "alpha_trial", caster, trialItems()));
+            helper.assertTrue(AlphaTrialBoss.bossOf(helper.getLevel(), caster.getUUID()) != null, "the caster alone could not start the trial: " + caster);
+        } finally {
+            helper.getLevel().removePlayerImmediately(caster, Entity.RemovalReason.DISCARDED);
+            clearItems(helper);
+            clean(helper, bosses(helper), caster, onCentre);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBossThatLeavesTheLevelEndsItsBarAndItsTrial(GameTestHelper helper) {
+        ServerPlayer challenger = wolf(helper, Rank.BETA, true);
+        online(challenger);
+        List<Mob> found = new ArrayList<>();
+        try {
+            SpeciesConfig.overrideTrial(EASY);
+            atNight(helper, fullNight(), () -> {
+                Mob boss = begin(helper, challenger);
+                found.add(boss);
+                helper.assertTrue(AlphaTrialBoss.hasBar(boss.getUUID()), "control: the boss has no bar");
+                boss.setRemoved(Entity.RemovalReason.UNLOADED_TO_CHUNK); // what an unloading chunk does
+                helper.assertTrue(!AlphaTrialBoss.hasBar(boss.getUUID()), "the bar of a boss that left the level stayed");
+                helper.assertTrue(!AlphaTrialBoss.running(helper.getLevel(), challenger.getUUID()), "the trial of a boss that left the level still runs");
+                Mob second = begin(helper, challenger);
+                found.add(second);
+                helper.assertTrue(second != boss, "no second trial");
+            });
+        } finally {
+            clean(helper, found, challenger);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOlderBossComingBackSendsItselfAwayWhenANewerTrialRuns(GameTestHelper helper) {
+        ServerPlayer challenger = wolf(helper, Rank.BETA, true);
+        online(challenger);
+        List<Mob> found = new ArrayList<>();
+        try {
+            SpeciesConfig.overrideTrial(EASY);
+            atNight(helper, fullNight(), () -> {
+                Mob older = begin(helper, challenger);
+                found.add(older);
+                // a newer trial began while the older boss was away (its chunk unloaded): the same challenger, a second boss
+                Mob newer = AlphaTrialBoss.spawn(helper.getLevel(), spot(helper).offset(0, 0, 6), challenger);
+                helper.assertTrue(newer != null, "no second boss");
+                found.add(newer);
+                AlphaTrialBoss.tickNow(older);
+                helper.assertTrue(older.isRemoved(), "the older boss stayed beside the newer trial");
+                helper.assertTrue(!newer.isRemoved() && AlphaTrialBoss.bossOf(helper.getLevel(), challenger.getUUID()) == newer, "the newer trial was disturbed");
+            });
+        } finally {
+            clean(helper, found, challenger);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOmegaIsToldItLeadsAPackAndABetaThatItIsASecondAlpha(GameTestHelper helper) {
+        RecordingPlayer omega = recWolf(helper, Rank.OMEGA, true);
+        RecordingPlayer beta = recWolf(helper, Rank.BETA, true);
+        RecordingPlayer leader = recWolf(helper, Rank.ALPHA, true);
+        online(omega, beta, leader);
+        try {
+            PackIndex.get(helper.getLevel()).join(leader.getUUID(), beta.getUUID());
+            helper.assertTrue(AlphaTrial.win(omega, true) == null, "the Omega could not win");
+            helper.assertTrue(omega.received("supernaturalbloodlines.pack.trial_won_omega") && !omega.received("supernaturalbloodlines.pack.trial_won"), "the Omega was told the wrong thing");
+            helper.assertTrue(AlphaTrial.win(beta, true) == null, "the Beta could not win");
+            helper.assertTrue(beta.received("supernaturalbloodlines.pack.trial_won") && !beta.received("supernaturalbloodlines.pack.trial_won_omega"), "the Beta was told the wrong thing");
+        } finally {
+            clean(helper, List.of(), omega, beta, leader);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anExpiredOrUnknownAnswerIsToldInChatAndAGoodOneToo(GameTestHelper helper) {
+        RecordingPlayer p = recWolf(helper, Rank.BETA, false);
+        online(p);
+        try {
+            long now = helper.getLevel().getGameTime();
+            helper.assertTrue(!AlphaTrialRiteFactory.answer(p), "an answer with no warning was believed");
+            helper.assertTrue(p.received("supernaturalbloodlines.trial.warn_expired"), "the player was not told the warning ran out");
+            AlphaTrialRiteFactory.LEDGER.warn(p.getUUID(), now - 100000); // a warning that has run out
+            helper.assertTrue(!AlphaTrialRiteFactory.answer(p), "an expired warning was believed");
+            AlphaTrialRiteFactory.LEDGER.warn(p.getUUID(), now);
+            helper.assertTrue(AlphaTrialRiteFactory.answer(p), "a fresh warning was not believed");
+            helper.assertTrue(p.received("supernaturalbloodlines.trial.confirmed") && !p.receivedOnActionBar("supernaturalbloodlines.trial.confirmed"), "the confirmation is not a chat line");
+        } finally {
+            clean(helper, List.of(), p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBossKilledWhileTheChallengerIsDeadOrFarSaysWhy(GameTestHelper helper) {
+        RecordingPlayer dead = recWolf(helper, Rank.BETA, true);
+        RecordingPlayer far = recWolf(helper, Rank.BETA, true);
+        online(dead, far);
+        List<Mob> found = new ArrayList<>();
+        try {
+            SpeciesConfig.overrideTrial(EASY);
+            atNight(helper, fullNight(), () -> {
+                Mob a = begin(helper, dead);
+                found.add(a);
+                dead.setHealth(0f);
+                a.hurt(a.damageSources().generic(), 1_000_000f);
+                helper.assertTrue(dead.received("supernaturalbloodlines.trial.lost.challenger_dead") && !dead.received("supernaturalbloodlines.trial.lost.too_far"), "a dead challenger was told they were too far");
+                dead.setHealth(dead.getMaxHealth());
+            });
+            atNight(helper, fullNight(), () -> {
+                Mob b = begin(helper, far);
+                found.add(b);
+                far.setPos(b.position().add(100, 0, 0));
+                b.hurt(far.damageSources().playerAttack(far), 1_000_000f);
+                helper.assertTrue(far.received("supernaturalbloodlines.trial.lost.too_far"), "a far challenger was not told they were too far");
+                helper.assertTrue(state(far).rank() == Rank.BETA, "a win from too far gave the spark");
+            });
+        } finally {
+            dead.setHealth(dead.getMaxHealth());
+            clean(helper, found, dead, far);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDeathSomethingElseCancelledIsNoWin(GameTestHelper helper) {
+        ServerPlayer challenger = wolf(helper, Rank.BETA, true);
+        online(challenger);
+        List<Mob> found = new ArrayList<>();
+        try {
+            SpeciesConfig.overrideTrial(EASY);
+            atNight(helper, fullNight(), () -> {
+                Mob boss = begin(helper, challenger);
+                found.add(boss);
+                var event = new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(boss, challenger.damageSources().playerAttack(challenger));
+                event.setCanceled(true);
+                net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(event);
+                helper.assertTrue(state(challenger).rank() == Rank.BETA, "a cancelled death won the trial");
+                helper.assertTrue(AlphaTrialBoss.running(helper.getLevel(), challenger.getUUID()) && !boss.isRemoved(), "a cancelled death ended the trial");
+            });
+        } finally {
+            clean(helper, found, challenger);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aStrangersPetAndAnOwnerlessArrowCannotHurtTheBossButTheChallengersPetCan(GameTestHelper helper) {
+        ServerPlayer challenger = wolf(helper, Rank.BETA, true);
+        ServerPlayer stranger = wolf(helper, Rank.ALPHA, true);
+        online(challenger, stranger);
+        List<Mob> found = new ArrayList<>();
+        try {
+            SpeciesConfig.overrideTrial(EASY);
+            atNight(helper, fullNight(), () -> {
+                Mob boss = begin(helper, challenger);
+                found.add(boss);
+                float full = boss.getHealth();
+                net.minecraft.world.entity.animal.Wolf strangersWolf = EntityType.WOLF.create(helper.getLevel());
+                strangersWolf.tame(stranger);
+                found.add(strangersWolf);
+                boss.hurt(boss.damageSources().mobAttack(strangersWolf), 10f);
+                helper.assertTrue(boss.getHealth() == full, "a stranger's tamed wolf hurt the boss");
+                var arrow = EntityType.ARROW.create(helper.getLevel());
+                boss.invulnerableTime = 0;
+                boss.hurt(boss.damageSources().arrow(arrow, null), 10f);
+                helper.assertTrue(boss.getHealth() == full, "an arrow nobody shot hurt the boss");
+                net.minecraft.world.entity.animal.Wolf mine = EntityType.WOLF.create(helper.getLevel());
+                mine.tame(challenger);
+                found.add(mine);
+                boss.invulnerableTime = 0;
+                boss.hurt(boss.damageSources().mobAttack(mine), 10f);
+                helper.assertTrue(boss.getHealth() < full, "the challenger's own wolf could not hurt the boss");
+                float after = boss.getHealth();
+                boss.invulnerableTime = 0;
+                boss.hurt(boss.damageSources().fall(), 5f);
+                helper.assertTrue(boss.getHealth() < after, "the world (a fall) could not hurt the boss");
+            });
+        } finally {
+            clean(helper, found, challenger, stranger);
         }
         helper.succeed();
     }

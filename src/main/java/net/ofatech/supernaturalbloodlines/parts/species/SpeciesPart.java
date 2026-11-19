@@ -251,9 +251,8 @@ public final class SpeciesPart {
                     (payload, ctx) -> ctx.enqueueWork(net.ofatech.supernaturalbloodlines.shared.hub.TrialWarnHook::fire));
             registrar.playToServer(net.ofatech.supernaturalbloodlines.core.network.TrialConfirmPayload.TYPE, net.ofatech.supernaturalbloodlines.core.network.TrialConfirmPayload.STREAM_CODEC,
                     (payload, ctx) -> ctx.enqueueWork(() -> {
-                        if (ctx.player() instanceof ServerPlayer p && ModList.get().isLoaded("werewolves")
-                                && net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.LEDGER.confirm(p.getUUID(), p.level().getGameTime())) {
-                            p.displayClientMessage(Component.translatable("supernaturalbloodlines.trial.confirmed"), true);
+                        if (ctx.player() instanceof ServerPlayer p && ModList.get().isLoaded("werewolves")) {
+                            net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.answer(p);
                         }
                     }));
             registrar.playToClient(RoarEffectPayload.TYPE, RoarEffectPayload.STREAM_CODEC, (payload, ctx) ->

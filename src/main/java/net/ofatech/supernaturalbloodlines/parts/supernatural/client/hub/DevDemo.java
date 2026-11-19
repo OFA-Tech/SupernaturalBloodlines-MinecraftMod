@@ -184,7 +184,9 @@ final class DevDemo {
                 .rank("beta".equals(System.getProperty("supernaturalbloodlines.devshots.demo.rank")) ? net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.BETA
                         : net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.ALPHA).heldSpark(!"beta".equals(System.getProperty("supernaturalbloodlines.devshots.demo.rank"))).sparks(1).weak("true".equals(System.getProperty("supernaturalbloodlines.devshots.demo.weak")) ? new net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Weak(1, 30000, 6) : net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Weak.NONE).build(); // demo.weak=true: a weaker spark is growing. An Alpha has held a spark (so no protect switch); demo.rank=beta: a Beta whose path is open
         var dev = v.bloodline().toBuilder().species(net.ofatech.supernaturalbloodlines.core.bloodline.Species.HYBRID).wolf(wolf).build();
-        return new HubView(v.player(), dev, s, v.races(), HubModel.ladders(LadderTable.clientCopy(), s, v.races(), HubView.levels(v.player())), v.skills(), snap,
+        // the Beta of the Alpha Trial shots is a werewolf (the Rites page lists the trial for werewolves first)
+        List<SupernaturalRace> races = "beta".equals(System.getProperty("supernaturalbloodlines.devshots.demo.rank")) ? List.of(SupernaturalRace.WEREWOLF) : v.races();
+        return new HubView(v.player(), dev, s, races, HubModel.ladders(LadderTable.clientCopy(), s, races, HubView.levels(v.player())), v.skills(), snap,
                 v.context().withOp(true).withPack(true));
     }
 }

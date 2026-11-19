@@ -4,7 +4,6 @@ import com.mojang.serialization.MapCodec;
 import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.werewolves.util.FormHelper;
 import java.util.List;
-import java.util.Optional;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactory;
 import net.favouriteless.enchanted.common.enchanted.circle_magic.rites.Rite;
 import net.minecraft.core.BlockPos;
@@ -12,19 +11,20 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.TrialConfirmLedger;
+import net.minecraft.server.level.ServerLevel;
 import net.ofatech.supernaturalbloodlines.core.bloodline.TrialRules;
 import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
 import net.ofatech.supernaturalbloodlines.core.network.TrialWarnPayload;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.npc.NpcPackSpawner;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
-import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.RiteTargets;
 import net.ofatech.supernaturalbloodlines.shared.hub.profile.TrueAlphaWarning;
 
 /**
@@ -89,8 +89,13 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
             case NONE -> {
             }
             case NEEDS_WARNING -> {
+                boolean connected = !(p instanceof FakePlayer) && p.connection != null;
+                // a client without the mod has no way to show the warning, so nothing is recorded: it could never be answered
+                if (!TrialRules.canShowWarning(connected, connected && p.connection.hasChannel(TrialWarnPayload.TYPE))) {
+                    return KEY + "warn_unavailable";
+                }
                 LEDGER.warn(p.getUUID(), now);
-                if (!(p instanceof FakePlayer) && p.connection != null && p.connection.hasChannel(TrialWarnPayload.TYPE)) {
+                if (connected) {
                     PacketDistributor.sendToPlayer(p, TrialWarnPayload.INSTANCE);
                 }
                 return KEY + "warn_sent";
@@ -111,6 +116,25 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
         return null;
     }
 
+    /**
+     * The answer of the player's hub to the warning (the {@code TrialConfirmPayload}): believed only for a warning the server sent, and then the rite
+     * may start for two minutes. A late or unknown answer is told so, in chat, because the hub is closed by then.
+     * @return whether the answer was believed
+     */
+    public static boolean answer(ServerPlayer p) {
+        if (LEDGER.confirm(p.getUUID(), p.level().getGameTime())) {
+            p.sendSystemMessage(Component.translatable(KEY + "confirmed"));
+            return true;
+        }
+        p.sendSystemMessage(Component.translatable(KEY + "warn_expired"));
+        return false;
+    }
+
+    /** Players other than {@code caster} standing on the circle's centre block (or the block above it), who could be mistaken for the performer. */
+    static List<ServerPlayer> othersOnCentre(ServerLevel level, BlockPos centre, ServerPlayer caster) {
+        return level.getEntitiesOfClass(ServerPlayer.class, new AABB(centre).expandTowards(0, 1, 0), p -> p != caster && p.isAlive() && !p.isSpectator());
+    }
+
     private static final class AlphaTrialRite extends Rite {
         AlphaTrialRite(BaseRiteParams base, RiteParams params) {
             super(base, params);
@@ -121,14 +145,17 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
             if (!ModList.get().isLoaded("werewolves")) {
                 return cancel();
             }
-            Optional<ServerPlayer> found = RiteTargets.centrePlayerOrCaster(this, params, level);
-            if (found.isEmpty()) {
+            // the challenger is the CASTER and nobody else: whoever stands on the centre cannot be given a boss, or a warning, by someone else's rite
+            if (!(level.getPlayerByUUID(params.caster) instanceof ServerPlayer caster)) {
                 return cancel();
             }
-            ServerPlayer performer = found.get();
-            String refusal = tryStart(level, getPos(), performer, transformed(performer));
+            if (!othersOnCentre(level, getPos(), caster).isEmpty()) {
+                caster.displayClientMessage(Component.translatable(KEY + "not_alone"), true);
+                return cancel();
+            }
+            String refusal = tryStart(level, getPos(), caster, transformed(caster));
             if (refusal != null) {
-                performer.displayClientMessage(Component.translatable(refusal, SpeciesConfig.trial().minLevel()), true);
+                caster.displayClientMessage(Component.translatable(refusal, SpeciesConfig.trial().minLevel()), true);
                 return cancel();
             }
             return false;

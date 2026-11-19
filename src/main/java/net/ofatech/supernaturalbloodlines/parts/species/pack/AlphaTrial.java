@@ -43,7 +43,7 @@ public final class AlphaTrial {
             PackIndex.KEEP_PACK.set(false);
         }
         PackLeader.refresh(player);
-        player.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.trial_won"));
+        player.sendSystemMessage(Component.translatable(beta ? "supernaturalbloodlines.pack.trial_won" : "supernaturalbloodlines.pack.trial_won_omega"));
         return null;
     }
 }

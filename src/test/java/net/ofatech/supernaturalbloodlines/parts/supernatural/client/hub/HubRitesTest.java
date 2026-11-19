@@ -9,6 +9,9 @@ import com.google.gson.JsonParser;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
+import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 import org.junit.jupiter.api.Test;
@@ -24,26 +27,22 @@ class HubRitesTest {
     private static final HubSocial.Rite FIVE = rite("rite_of_the_five", 10000, "hunter");
     private static final HubSocial.Rite HYBRID_BLOOD = rite("hybrid_blood", 1000, "");
 
-    private static net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage l, net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank r, boolean held) {
-        return net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.NONE.toBuilder().lineage(l).rank(r).heldSpark(held).build();
+    private static WolfState wolf(Lineage l, Rank r, boolean held) {
+        return WolfState.NONE.toBuilder().lineage(l).rank(r).heldSpark(held).build();
     }
 
     @Test
-    void theAlphaTrialCardWarnsABetaOrOmegaWithAnOpenPath() {
-        var L = net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.BITTEN;
-        var R = net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.class;
-        assertEquals(List.of("ask", "warn_path"), HubRites.trialNotes(wolf(L, R.getEnumConstants()[2], false)), "a Beta whose path is open");
-        assertEquals(List.of("ask", "warn_path"), HubRites.trialNotes(wolf(L, R.getEnumConstants()[1], false)), "an Omega whose path is open");
+    void theAlphaTrialCardWarnsABetaOrOmegaWithAnOpenPathAndTheWarningComesFirst() {
+        assertEquals(List.of("warn_path", "ask"), HubRites.trialNotes(wolf(Lineage.BITTEN, Rank.BETA, false)), "a Beta whose path is open");
+        assertEquals(List.of("warn_path", "ask"), HubRites.trialNotes(wolf(Lineage.BITTEN, Rank.OMEGA, false)), "an Omega whose path is open");
     }
 
     @Test
     void theAlphaTrialCardDoesNotWarnWhenThePathIsClosedOrSaysWhoCannotTryIt() {
-        var L = net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.BITTEN;
-        var R = net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.class.getEnumConstants();
-        assertEquals(List.of("ask"), HubRites.trialNotes(wolf(L, R[2], true)), "a Beta who held a spark has no path to lose");
-        assertEquals(List.of("ask", "not_eligible"), HubRites.trialNotes(wolf(L, R[3], true)), "an Alpha");
-        assertEquals(List.of("ask", "not_eligible"), HubRites.trialNotes(wolf(L, R[4], false)), "a True Alpha");
-        assertEquals(List.of("ask", "not_eligible"), HubRites.trialNotes(wolf(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.NONE, R[2], false)), "a human");
+        assertEquals(List.of("ask"), HubRites.trialNotes(wolf(Lineage.BITTEN, Rank.BETA, true)), "a Beta who held a spark has no path to lose");
+        assertEquals(List.of("not_eligible", "ask"), HubRites.trialNotes(wolf(Lineage.BITTEN, Rank.ALPHA, true)), "an Alpha");
+        assertEquals(List.of("not_eligible", "ask"), HubRites.trialNotes(wolf(Lineage.BITTEN, Rank.TRUE_ALPHA, false)), "a True Alpha");
+        assertEquals(List.of("not_eligible", "ask"), HubRites.trialNotes(wolf(Lineage.NONE, Rank.BETA, false)), "a human");
     }
 
     @Test

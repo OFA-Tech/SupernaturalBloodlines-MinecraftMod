@@ -53,6 +53,11 @@ public final class TrialRules {
         return warnApplies && !confirmed ? Refusal.NEEDS_WARNING : Refusal.NONE;
     }
 
+    /** Whether the warning can be shown to a player: one with no connection (a test player) is let through, one whose client has no channel for it is not. */
+    public static boolean canShowWarning(boolean hasConnection, boolean hasChannel) {
+        return !hasConnection || hasChannel;
+    }
+
     /** The phase of the fight: 0 above two thirds of the health, 1 above one third, 2 below. */
     public static int phase(float health, float max) {
         if (max <= 0) {

@@ -5,6 +5,7 @@
 ### Upgrading
 - **New rite, the Alpha Trial** (`alpha_trial_enabled`, default on; needs Werewolves). A transformed werewolf Beta or Omega of level 10 or more (`alpha_trial_min_level`) performs it on a full-moon night; a moon-crowned Alpha (`alpha_trial_hp_factor` times the health, default 3) answers. Winning gives the performer a spark of their own (a Beta becomes a second Alpha of their pack, an Omega the Alpha of a new pack), so it ends their path to True Alpha for good. A Beta or Omega whose path is still open is **refused once and shown the True Alpha warning in the hub** before anything is taken; the server then lets the rite start for two minutes. Set `alpha_trial_enabled = false` to take the rite away.
 - **New network packets** (`trial_warn`, `trial_confirm`, both optional): a client without the mod simply misses the warning, and the rite stays refused for it.
+- The rite's challenger is **the player who performs it** (the caster); if someone else stands on the circle's centre the rite is cancelled and the ingredients come back. A player who gave a spark up may take the trial again.
 - Saves are read as before: the boss mark of a mob defaults to nothing.
 - **Rolling back:** going back to a build before 15c leaves a running trial's boss as an ordinary Alpha with no bar and no end (it stays until killed, and then gives the weaker spark), and a player who won keeps their spark. The `alpha_trial.json` rite disappears with the build.
 

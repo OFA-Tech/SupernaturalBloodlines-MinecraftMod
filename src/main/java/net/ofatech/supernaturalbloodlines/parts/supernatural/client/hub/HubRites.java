@@ -31,19 +31,20 @@ public final class HubRites {
     }
 
     /**
-     * The lang suffixes (under {@code hub.rites.trial.}) the Alpha Trial card shows for this wolf: always what it asks; the warning when winning would end
-     * their path to True Alpha; or that only a werewolf Beta or Omega can try it. Pure.
+     * The lang suffixes (under {@code hub.rites.trial.}) the Alpha Trial card shows for this wolf, the important one first: the warning when winning would end
+     * their path to True Alpha, or that only a werewolf Beta or Omega can try it; then always what it asks. Pure.
      */
     public static List<String> trialNotes(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState w) {
         List<String> out = new ArrayList<>();
-        out.add("ask");
         boolean eligible = w.lineage() != net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.NONE
                 && (w.rank() == net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.BETA || w.rank() == net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.OMEGA);
+        // what matters to this player first (the warning, or why they cannot), then what it asks
         if (!eligible) {
             out.add("not_eligible");
         } else if (net.ofatech.supernaturalbloodlines.shared.hub.profile.TrueAlphaWarning.applies(w.rank(), net.ofatech.supernaturalbloodlines.core.bloodline.PackRules.pathOpen(w))) {
             out.add("warn_path");
         }
+        out.add("ask");
         return out;
     }
 
