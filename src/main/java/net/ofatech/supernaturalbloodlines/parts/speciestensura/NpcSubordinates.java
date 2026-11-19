@@ -11,6 +11,7 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcBond;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcBond.Source;
+import net.ofatech.supernaturalbloodlines.core.bloodline.NpcRules;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.npc.NpcIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.npc.NpcMembers;
@@ -80,8 +81,10 @@ public final class NpcSubordinates {
         if (existing.isPresent() && existing.get().source() != Source.TENSURA) {
             return true; // a Brother that is also somebody's subordinate stays a Brother
         }
-        UUID owner = SpeciesTensuraConfig.subordinatesJoin() && sub.isTame() ? packOwnerOf(level, sub.getOwnerUUID()) : null;
-        if (owner == null) {
+        UUID owner = packOwnerOf(level, sub.getOwnerUUID());
+        boolean joins = owner != null && NpcRules.tensuraJoins(SpeciesTensuraConfig.subordinatesJoin(), sub.isTame(), PackIndex.get(level).inPack(sub.getOwnerUUID()),
+                !PackIndex.get(level).inPack(sub.getOwnerUUID()), existing.isPresent(), countInPack(level, owner), SpeciesTensuraConfig.maxTensuraMembers());
+        if (!joins) {
             if (existing.isPresent()) {
                 NpcMembers.unbind(m);
             }
@@ -90,9 +93,6 @@ public final class NpcSubordinates {
         if (existing.isPresent() && existing.get().owner().equals(owner)) {
             NpcMembers.touch(m);
             return true;
-        }
-        if (existing.isEmpty() && countInPack(level, owner) >= Math.max(0, SpeciesTensuraConfig.maxTensuraMembers())) {
-            return false;
         }
         ServerPlayer ownerPlayer = level.getServer().getPlayerList().getPlayer(owner);
         NpcMembers.bind(m, ownerPlayer, NpcBond.tensura(owner, level.getGameTime()));

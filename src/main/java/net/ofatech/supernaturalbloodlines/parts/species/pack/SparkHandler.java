@@ -86,7 +86,10 @@ public final class SparkHandler {
     @Nullable
     public static Entity killerOf(LivingEntity victim, DamageSource source) {
         Entity killer = source.getEntity();
-        return killer != null ? killer : victim.getKillCredit();
+        killer = killer != null ? killer : victim.getKillCredit();
+        // a pack member (a Brother, a Tensura subordinate) is never the killer of a spark, and gives its owner none
+        boolean member = killer != null && net.ofatech.supernaturalbloodlines.parts.species.npc.NpcMembers.bondOf(killer).isPresent();
+        return killer == null || net.ofatech.supernaturalbloodlines.core.bloodline.NpcRules.mayTakeSpark(killer instanceof ServerPlayer, member) ? killer : null;
     }
 
     private static void onDeath(LivingDeathEvent e) {

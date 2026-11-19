@@ -108,4 +108,22 @@ public final class NpcRules {
     public static boolean hasOurOrders(Source source) {
         return source == Source.BROTHER;
     }
+
+    /**
+     * Whether a Tensura subordinate is a member of a pack now (R149): the bridge is on, it is tamed, its Tensura owner is a player in a pack or a Brother of
+     * one (one step only: the subordinate of a subordinate never joins), and the pack has room unless it is a member already (a member is never put out
+     * for the cap).
+     */
+    public static boolean tensuraJoins(boolean enabled, boolean tame, boolean ownerInPack, boolean ownerIsBrotherOfPackMember, boolean alreadyMember,
+                                       int countInPack, int max) {
+        if (!enabled || !tame || !(ownerInPack || ownerIsBrotherOfPackMember)) {
+            return false;
+        }
+        return alreadyMember || countInPack < Math.max(0, max);
+    }
+
+    /** Only a player takes a spark (R148): the credit of a pack member (a Brother, a subordinate) never reaches the owner or anyone. */
+    public static boolean mayTakeSpark(boolean killerIsPlayer, boolean killerIsMember) {
+        return killerIsPlayer && !killerIsMember;
+    }
 }

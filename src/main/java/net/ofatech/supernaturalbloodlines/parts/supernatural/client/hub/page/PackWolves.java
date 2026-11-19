@@ -1,170 +1,174 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SpawnEggItem;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Flow;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
+import net.ofatech.supernaturalbloodlines.shared.hub.profile.NpcActions;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * "Pack wolves" on the Pack page (R148, R149): the pack's recruited wolves and Tensura subordinates as rows under the players (name, what it is, what it was told),
- * and, for the one picked, its NPC profile: identity, bonds, presence, what it adds to the pack bonus and the things the hub never shows about an NPC (sire, line,
- * genes: a "?" with how to find out). Actions for a Brother that the viewer may command: Follow, Guard, Rest, Hunt and Sort on or off, Release (asks first).
- * A Tensura subordinate keeps Tensura's own orders, so it only shows the reason. The wolf is named by the ledger's token, never by an entity id.
+ * "Pack wolves" (R148, R149): the recruited wolves and Tensura subordinates of the pack, one row each (head, name, source, order, distance, health), and under the
+ * chosen one its profile (identity, bonds, presence, contribution, what an NPC does not have) with the orders as buttons. Every button runs a command row
+ * (P21 to P24, see {@link NpcActions}) so the server's own checks apply. A Tensura subordinate keeps Tensura's orders: its buttons are off and say why.
+ * Every row and button is a focus target, so the keyboard reaches the profile too. Drawn by every Pack page.
  */
 public final class PackWolves {
     private static final String KEY = PageKit.HUB + "pack.wolves.";
+    private static final int ROW = 20;
 
-    private int picked;
+    private int selected;
 
-    public PackWolves() {
+    /** The token of the chosen member, 0 for none (a dev screenshot picks one). */
+    public void select(int token) {
+        selected = token;
     }
 
-    /**
-     * The whole section for a Pack page: the rows, the picked wolf's profile with its actions, and (for a werewolf) the "Recruit a wolf" link to the Rites page.
-     * Returns the new y.
-     */
+    /** Draws the section from {@code y} and returns where it ends. Nothing at all when the pack has no wolves and the viewer cannot recruit one. */
     public int render(HubScreen.Frame f, Rect r, int y, boolean werewolf) {
-        List<HubSocial.Npc> npcs = f.view.snapshot().npcs();
-        HubSocial.Npc chosen = npcs.stream().filter(n -> n.token() == picked).findFirst().orElse(null);
-        y = rows(f, r, y, npcs, chosen, token -> picked = token);
-        if (chosen != null) {
-            y = profile(f, r, y, chosen);
-            y = links(f, r, y, chosen);
-        }
-        if (werewolf) {
-            BookKit.link(f, "pack:recruit", Component.translatable(KEY + "recruit"), r.x(), y + 2, List.of(Component.translatable(KEY + "recruit_for")),
-                    () -> f.screen().setPage(net.ofatech.supernaturalbloodlines.shared.hub.HubPage.RITES));
-            y += 14;
-        }
-        return y;
-    }
-
-    /** The row lines of the page: one per wolf, the picked one tinted. Returns the new y. */
-    static int rows(HubScreen.Frame f, Rect r, int y, List<HubSocial.Npc> npcs, @Nullable HubSocial.Npc chosen, java.util.function.IntConsumer pick) {
         HubTheme t = f.theme();
-        y = PageKit.wrapped(f, Component.translatable(KEY + "title"), r.x(), y + 2, r.w(), t.accent());
-        if (npcs.isEmpty()) {
-            return PageKit.wrapped(f, Component.translatable(KEY + "none"), r.x(), y, r.w(), t.muted());
+        List<HubSocial.Npc> npcs = f.view.snapshot().npcs();
+        if (npcs.isEmpty() && !werewolf) {
+            return y;
         }
+        y = PageKit.wrapped(f, Component.translatable(KEY + "title").withStyle(ChatFormatting.BOLD), r.x(), y + 2, r.w(), t.accent());
+        if (npcs.isEmpty()) {
+            y = PageKit.wrapped(f, Component.translatable(KEY + "none"), r.x() + 4, y, r.w() - 4, t.muted());
+        }
+        HubSocial.Npc chosen = null;
         for (HubSocial.Npc n : npcs) {
-            Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, 11);
-            if (chosen != null && chosen.token() == n.token()) {
+            boolean on = n.token() == selected;
+            if (on) {
+                chosen = n;
+            }
+            Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, ROW);
+            if (on) {
                 f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
             }
-            Component what = what(n);
-            BookKit.leader(f, Component.literal(net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(n.name(), Math.max(20, r.w() - f.font().width(what) - 14), f.font()::width)),
-                    what, r.x() + 4, y, r.w() - 4, t.muted());
+            f.g.renderItem(icon(n), r.x() + 1, y + 1);
+            int textX = r.x() + 21;
+            int barW = 34;
+            int room = r.w() - 22 - barW - 4;
+            f.g.drawString(f.font(), LabelFit.cut(n.name(), room, f.font()::width), textX, y, t.ink(), false);
+            Component sub = Component.empty().append(sourceName(n)).append(" \u00b7 ").append(orderName(n)).append(n.distance() >= 0 ? " \u00b7 " + n.distance() + " m" : "");
+            f.g.drawString(f.font(), LabelFit.cut(sub.getString(), room, f.font()::width), textX, y + 10, t.muted(), false);
+            bar(f, r.right() - barW, y + 4, barW, n);
             String id = "npc:" + n.token();
-            f.target(id, hit, List.of(Component.literal(n.name()), what, Component.translatable(KEY + (n.loaded() ? "here" : "away"))), () -> pick.accept(n.token()));
+            f.target(id, hit, tooltip(n), () -> selected = on ? 0 : n.token());
             if (f.focused(id)) {
-                KitDraw.focusRing(f.g, hit, t.focusColor());
+                t.drawFocus(f.g, hit);
             }
-            y += 11;
+            y += ROW + 1;
+        }
+        if (chosen != null) {
+            y = profile(f, r, y + 2, chosen);
+        }
+        if (werewolf) {
+            Component label = Component.translatable(KEY + "recruit");
+            Rect b = new Rect(r.x(), y + 3, PageWidgets.widthOf(f.font(), label), PageWidgets.H);
+            PageWidgets.button(f, "pack:recruit", b, label, true, false, Component.translatable(KEY + "recruit_tip"), () -> f.screen().setPage(HubPage.RITES));
+            y = b.bottom() + 3;
         }
         return y;
     }
 
-    /** "Brother, guarding" or "Subordinate". */
-    static Component what(HubSocial.Npc n) {
-        Component source = Component.translatable(KEY + "source." + n.source());
-        return n.ours() && !n.order().isEmpty() ? Component.empty().append(source).append(", ").append(Component.translatable(KEY + "order." + n.order())) : source;
+    private static ItemStack icon(HubSocial.Npc n) {
+        ResourceLocation id = ResourceLocation.tryParse(n.type());
+        var type = id == null ? null : BuiltInRegistries.ENTITY_TYPE.getOptional(id).orElse(null);
+        SpawnEggItem egg = type == null ? null : SpawnEggItem.byId(type);
+        return egg == null ? new ItemStack(Items.BONE) : new ItemStack(egg);
     }
 
-    /** The picked wolf's profile, as lines of text. Returns the new y. */
-    static int profile(HubScreen.Frame f, Rect r, int y, HubSocial.Npc n) {
+    private static Component sourceName(HubSocial.Npc n) {
+        return Component.translatable(KEY + "source." + n.source());
+    }
+
+    private static Component orderName(HubSocial.Npc n) {
+        return n.ours() ? Component.translatable(KEY + "order." + n.order()) : Component.translatable(KEY + "tensura_orders_short");
+    }
+
+    private static List<Component> tooltip(HubSocial.Npc n) {
+        return List.of(Component.literal(n.name()), Component.translatable(KEY + "of", sourceName(n), n.owner()), orderName(n),
+                Component.translatable(KEY + (n.loaded() ? "loaded" : "not_loaded")), Component.translatable(KEY + "open_profile"));
+    }
+
+    private static void bar(HubScreen.Frame f, int x, int y, int w, HubSocial.Npc n) {
+        f.g.fill(x, y, x + w, y + 4, 0xFF3A2A2A);
+        if (n.health() >= 0) {
+            int hp = Math.max(1, w * Math.min(100, n.health()) / 100);
+            f.g.fill(x, y, x + hp, y + 4, n.health() > 50 ? 0xFF2F6E4A : n.health() > 25 ? 0xFFB08A2E : 0xFF9A2A2A);
+        }
+    }
+
+    /** The NPC profile: what the viewer may know about it. Sire, line, genes and anchor are "?" (an NPC has none a player can learn), each with its how-to. */
+    private int profile(HubScreen.Frame f, Rect r, int y, HubSocial.Npc n) {
         HubTheme t = f.theme();
-        y = PageKit.title(f, Component.literal(n.name()), r.x(), y + 2, r.w(), t.ink());
-        for (Component line : profileLines(n)) {
-            y = PageKit.wrapped(f, line, r.x(), y, r.w(), t.muted());
+        y = PageKit.title(f, Component.translatable(KEY + "profile", n.name()), r.x(), y, r.w(), t.ink());
+        t.drawRule(f.g, r.x(), y, r.w());
+        y += 3;
+        y = line(f, r, y, "identity", n.ours() ? Component.translatable(KEY + "species_beast") : Component.translatable(KEY + "species_subordinate", typeName(n)),
+                Component.translatable(KEY + "rank_of", sourceName(n), n.owner()));
+        y = line(f, r, y, n.days() < 0 ? "bonds_unknown" : "bonds", Component.literal(n.owner()), Component.literal(String.valueOf(Math.max(0, n.days()))));
+        y = line(f, r, y, !n.loaded() ? "presence_away" : n.distance() >= 0 ? "presence_near" : "presence_far", Component.literal(String.valueOf(n.distance())),
+                Component.literal(n.health() + "%"));
+        y = line(f, r, y, "contribution", Component.literal(String.format(java.util.Locale.ROOT, "%.2f", n.weightPercent() / 100.0)));
+        for (String unknown : List.of("sire", "line", "genes", "anchor")) {
+            Component label = Component.translatable(KEY + "unknown." + unknown);
+            f.g.drawString(f.font(), label, r.x() + 4, y, t.muted(), false);
+            Rect hit = new Rect(r.x() + 3, y - 1, f.font().width(label) + 2, PageKit.LINE + 1);
+            String id = "npc:?" + unknown;
+            f.target(id, hit, List.of(label, Component.translatable(KEY + "unknown." + unknown + ".how")), null);
+            if (f.focused(id)) {
+                t.drawFocus(f.g, hit);
+            }
+            y += PageKit.LINE + 1;
         }
-        return y + 2;
+        return orders(f, r, y + 3, n);
     }
 
-    /** Identity, bonds, presence, contribution and the unknowns, in this order. Pure apart from lang. */
-    static List<Component> profileLines(HubSocial.Npc n) {
-        List<Component> out = new ArrayList<>();
-        out.add(Component.translatable(KEY + "identity", kind(n.type()), Component.translatable(KEY + "source." + n.source())));
-        out.add(Component.translatable(KEY + "bonds", n.owner(), n.days()));
-        out.add(n.loaded() ? Component.translatable(KEY + "presence_here", n.distance() < 0 ? Component.translatable(KEY + "far") : Component.literal(n.distance() + " m"), Math.max(0, n.health()))
-                : Component.translatable(KEY + "presence_away"));
-        out.add(Component.translatable(KEY + "contribution", n.weightPercent()));
-        out.add(Component.translatable(KEY + "unknown"));
-        return out;
+    private static Component typeName(HubSocial.Npc n) {
+        ResourceLocation id = ResourceLocation.tryParse(n.type());
+        return id == null ? Component.literal("?") : BuiltInRegistries.ENTITY_TYPE.getOptional(id).map(e -> e.getDescription()).orElse(Component.literal("?"));
     }
 
-    private static Component kind(String typeId) {
-        ResourceLocation id = ResourceLocation.tryParse(typeId);
-        return id != null && BuiltInRegistries.ENTITY_TYPE.containsKey(id) ? BuiltInRegistries.ENTITY_TYPE.get(id).getDescription() : Component.literal(typeId);
+    private static int line(HubScreen.Frame f, Rect r, int y, String key, Component... args) {
+        return PageKit.wrapped(f, Component.translatable(KEY + "line." + key, (Object[]) args), r.x() + 4, y, r.w() - 4, f.theme().ink()) + 1;
     }
 
-    /** Whether each action is on offer for this wolf and, when not, why (a lang suffix). Pure. */
-    public static String refusal(HubSocial.Npc n) {
-        if (!n.canOrder()) {
-            return "not_yours";
-        }
-        if (!n.ours()) {
-            return "tensura";
-        }
-        return n.loaded() ? "" : "not_loaded";
-    }
-
-    /** The actions of the picked wolf, each with the command it runs (typed command text, server-checked). */
-    public static List<Action> actions(HubSocial.Npc n) {
-        String why = refusal(n);
-        List<Action> out = new ArrayList<>();
-        for (String order : List.of("follow", "guard", "rest")) {
-            out.add(new Action("order_" + order, "order." + order, "pack npc order " + n.token() + " " + order, why, false, order.equals(n.order())));
-        }
-        out.add(new Action("hunt", n.hunt() ? "hunt_off" : "hunt_on", "pack npc hunt " + n.token(), why, false, false));
-        out.add(new Action("sort", n.sort() ? "sort_off" : "sort_on", "pack npc sort " + n.token(), why.equals("not_loaded") ? why : why, false, false));
-        out.add(new Action("release", "release", "pack npc release " + n.token(), why.equals("not_loaded") ? "" : why, true, false));
-        return out;
-    }
-
-    /** One button: {@code lang} a suffix of the pack.wolves keys, {@code why} empty when it is on offer, {@code confirm} whether it asks first, {@code current} the order now. */
-    public record Action(String id, String lang, String command, String why, boolean confirm, boolean current) {
-        public boolean enabled() {
-            return why.isEmpty();
-        }
-    }
-
-    /** The links of the Grimoire's ledger. Returns the new y. */
-    static int links(HubScreen.Frame f, Rect r, int y, HubSocial.Npc n) {
-        for (Action a : actions(n)) {
-            Component label = Component.translatable(KEY + a.lang());
-            List<Component> tip = List.of(a.enabled() ? label : Component.translatable(KEY + "why." + a.why()));
-            Runnable run = !a.enabled() ? null : a.confirm()
-                    ? () -> f.confirm(Component.translatable(KEY + "release_title", n.name()), Component.translatable(KEY + "release_body"), label, () -> BloodlinePage.command(a.command()))
-                    : () -> BloodlinePage.command(a.command());
-            BookKit.link(f, "npc:" + n.token() + ":" + a.id(), a.current() ? Component.literal("\u2022 ").append(label) : label, r.x(), y, tip, run);
-            y += 12;
-        }
-        return y;
-    }
-
-    /** The same actions in a theme's detail strip or info pane. */
-    static void detailActions(HubScreen.Frame f, Detail.Builder d, HubSocial.Npc n) {
-        for (Action a : actions(n)) {
-            Component label = Component.translatable(KEY + a.lang());
+    /** Follow, Guard, Rest, Hunt, Sort, Release (from {@link NpcActions}): each off with a reason when it cannot work now. */
+    private int orders(HubScreen.Frame f, Rect r, int y, HubSocial.Npc n) {
+        List<NpcActions.Act> acts = NpcActions.of(n);
+        List<Component> labels = acts.stream().map(a -> label(a, n)).toList();
+        Flow.Result flow = Flow.wrap(new Rect(r.x(), y, r.w(), 0), labels.stream().map(c -> PageWidgets.widthOf(f.font(), c)).toList(), PageWidgets.H, 3);
+        for (int i = 0; i < acts.size(); i++) {
+            NpcActions.Act a = acts.get(i);
             Runnable run = a.confirm()
-                    ? () -> f.confirm(Component.translatable(KEY + "release_title", n.name()), Component.translatable(KEY + "release_body"), label, () -> BloodlinePage.command(a.command()))
-                    : () -> BloodlinePage.command(a.command());
-            d.action(new Detail.Action("npc_" + a.id(), a.current() ? Component.literal("\u2022 ").append(label) : label, false, a.enabled(),
-                    a.enabled() ? null : Component.translatable(KEY + "why." + a.why()), null, run));
+                    ? () -> f.confirm(Component.translatable(KEY + "release_title", n.name()), Component.translatable(KEY + "release_body"), Component.translatable(KEY + "release"),
+                            () -> HubClient.runCommand(a.rowId(), a.args()))
+                    : () -> HubClient.runCommand(a.rowId(), a.args());
+            PageWidgets.button(f, "npc:" + n.token() + ":" + a.id(), flow.rects().get(i), labels.get(i), a.enabled(), a.current(),
+                    a.enabled() ? null : Component.translatable(KEY + "why_" + a.why()), run);
         }
+        return flow.bottom() + 2;
     }
 
-    /** Lowercase source word for a lang suffix. */
-    static String lower(String s) {
-        return s.toLowerCase(Locale.ROOT);
+    private static Component label(NpcActions.Act a, HubSocial.Npc n) {
+        return switch (a.id()) {
+            case "hunt" -> Component.translatable(KEY + (n.hunt() ? "hunt_off" : "hunt_on"));
+            case "sort" -> Component.translatable(KEY + (n.sort() ? "sort_off" : "sort_on"));
+            case "release" -> Component.translatable(KEY + "release");
+            default -> Component.translatable(KEY + "order." + a.id());
+        };
     }
 }

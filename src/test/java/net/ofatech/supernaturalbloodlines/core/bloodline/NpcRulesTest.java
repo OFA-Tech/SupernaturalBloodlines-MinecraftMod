@@ -191,4 +191,37 @@ class NpcRulesTest {
         assertTrue(out.stream().allMatch(s -> s.count() <= s.max()));
         assertEquals(List.of(), SortRules.sort(List.of(), id -> 0));
     }
+
+    @Test
+    void aBrotherHuntsOnlyAtNightOnPostAfterItsPeriodAndNotInAFight() {
+        long period = 12000;
+        assertTrue(NpcRules.huntDue(true, true, Order.GUARD, true, period, period, false));
+        assertTrue(NpcRules.huntDue(true, true, Order.REST, true, Long.MAX_VALUE, period, false), "the first trip is due at once");
+        assertFalse(NpcRules.huntDue(false, true, Order.GUARD, true, period, period, false), "the switch");
+        assertFalse(NpcRules.huntDue(true, false, Order.GUARD, true, period, period, false), "Hunt off");
+        assertFalse(NpcRules.huntDue(true, true, Order.FOLLOW, true, period, period, false), "a follower has no post to come back to");
+        assertFalse(NpcRules.huntDue(true, true, Order.GUARD, false, period, period, false), "daytime");
+        assertFalse(NpcRules.huntDue(true, true, Order.GUARD, true, period - 1, period, false), "too soon");
+        assertFalse(NpcRules.huntDue(true, true, Order.GUARD, true, period, period, true), "in a fight");
+    }
+
+    @Test
+    void aTensuraSubordinateJoinsOnlyOneStepDownAndWithinTheCap() {
+        assertTrue(NpcRules.tensuraJoins(true, true, true, false, false, 0, 6), "a subordinate of a pack member");
+        assertTrue(NpcRules.tensuraJoins(true, true, false, true, false, 5, 6), "a subordinate of a Brother of a pack member, the last place");
+        assertFalse(NpcRules.tensuraJoins(true, true, false, false, false, 0, 6), "the subordinate of a subordinate, or of nobody in a pack");
+        assertFalse(NpcRules.tensuraJoins(false, true, true, false, false, 0, 6), "the bridge is switched off");
+        assertFalse(NpcRules.tensuraJoins(true, false, true, false, false, 0, 6), "an untamed one");
+        assertFalse(NpcRules.tensuraJoins(true, true, true, false, false, 6, 6), "the pack is full");
+        assertTrue(NpcRules.tensuraJoins(true, true, true, false, true, 6, 6), "a member is not put out for the cap");
+        assertFalse(NpcRules.tensuraJoins(true, true, true, false, false, 0, 0), "a cap of 0 is nobody");
+    }
+
+    @Test
+    void aMemberNeverTakesTheSpark() {
+        assertTrue(NpcRules.mayTakeSpark(true, false));
+        assertFalse(NpcRules.mayTakeSpark(false, true), "a Brother that kills an Alpha");
+        assertFalse(NpcRules.mayTakeSpark(false, false), "any other mob");
+        assertFalse(NpcRules.mayTakeSpark(true, true), "never a member, whatever it is");
+    }
 }

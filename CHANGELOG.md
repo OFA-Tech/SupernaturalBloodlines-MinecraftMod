@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased (plan 15d: NPC pack members)
+
+### Upgrading
+- **New rite, the Werewolf Brother** (`npc_recruit_enabled`, default on; needs Werewolves). Any werewolf may call a wild werewolf beast that stands in a small circle and has been wounded to half its health or less (never an Alpha, a trial boss or a wolf that already has a pack). **2 Brothers per player, 6 per pack** (`max_npc_members_per_player`, `max_npc_members_per_pack`). A Brother has Follow, Guard and Rest, can hunt on quiet nights (`npc_hunt_trips`) and tidy a chest (`npc_chest_sort`), counts as half a Beta toward the pack bonus (`npc_weight_brother`, its share of the bonus capped by `npc_bonus_share`), gets the pack's Regeneration, Roar and protection, and **never takes a spark**. A Brother keeps its bond and rests where it stands while its owner is offline or dead.
+- **With Tensura (`species_tensura`):** the subordinates of every pack member (a Brother's too, one step only) join the pack as members, keep Tensura's own orders, and count `npc_weight_tensura` (default 0.25) each, up to `max_tensura_members_per_pack` (6). `tensura_subordinates_join = false` takes them out again; nothing else of them is touched.
+- A pack's own Guards and its allies never attack each other.
+- **The network protocol is now 4**: the hub snapshot carries the pack's wolves. A client on 3 and a server on 4 (or the other way round) will not exchange hub data; update both.
+- Saves are read as before: a mob's `npc_bond` and the `supernaturalbloodlines_npc_index` file are new and optional.
+- **Rolling back:** a Brother stays a plain wolf (its name tag stays), and its bond and the ledger are ignored.
+
+### Added
+- Pack page: a "Pack wolves" section (rows, an inline profile for the chosen one, orders, Hunt, Sort, Release, Recruit). Admin > Debug: list the pack wolves, release a player's. 11 new settings in Admin > Species and 2 in Admin > Species and Tensura.
+
 ## Unreleased (plan 15c: the Alpha Trial)
 
 ### Upgrading
