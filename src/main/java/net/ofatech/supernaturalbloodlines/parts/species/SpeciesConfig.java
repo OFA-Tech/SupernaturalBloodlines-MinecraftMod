@@ -98,6 +98,42 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.IntValue WEAK_SPARK_COOLDOWN_DAYS;
     private static final ModConfigSpec.BooleanValue MOONBLOOD_SURGE_ENABLED;
     private static final ModConfigSpec.BooleanValue WOLF_SPIRITS_ENABLED;
+    private static final ModConfigSpec.BooleanValue NPC_RECRUIT_ENABLED;
+    private static final ModConfigSpec.IntValue MAX_NPC_MEMBERS_PER_PLAYER;
+    private static final ModConfigSpec.IntValue MAX_NPC_MEMBERS_PER_PACK;
+    private static final ModConfigSpec.BooleanValue NPC_HUNT_TRIPS;
+    private static final ModConfigSpec.IntValue NPC_HUNT_PERIOD_MINUTES;
+    private static final ModConfigSpec.BooleanValue NPC_CHEST_SORT;
+    private static final ModConfigSpec.DoubleValue NPC_WEIGHT_BROTHER;
+    private static final ModConfigSpec.DoubleValue NPC_WEIGHT_TENSURA;
+    private static final ModConfigSpec.DoubleValue NPC_BONUS_SHARE;
+    private static volatile MemberTuning memberOverride;
+
+    /** The numbers of the pack's NPC members (plan 15d, R148). */
+    public record MemberTuning(boolean recruit, int perPlayer, int perPack, boolean huntTrips, int huntPeriodMinutes, boolean chestSort, double weightBrother,
+                               double weightTensura, double bonusShare) {
+        public static final MemberTuning DEFAULT = new MemberTuning(true, 2, 6, true, 10, true, 0.5, 0.25, 0.4);
+    }
+
+    /** For tests: pins {@link #members()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideMembers(MemberTuning value) {
+        memberOverride = value;
+    }
+
+    public static MemberTuning members() {
+        MemberTuning pinned = memberOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return new MemberTuning(NPC_RECRUIT_ENABLED.get(), MAX_NPC_MEMBERS_PER_PLAYER.get(), MAX_NPC_MEMBERS_PER_PACK.get(), NPC_HUNT_TRIPS.get(),
+                    NPC_HUNT_PERIOD_MINUTES.get(), NPC_CHEST_SORT.get(), NPC_WEIGHT_BROTHER.get(), NPC_WEIGHT_TENSURA.get(), NPC_BONUS_SHARE.get());
+        } catch (IllegalStateException notLoaded) {
+            return MemberTuning.DEFAULT;
+        }
+    }
+
     private static final ModConfigSpec.BooleanValue ALPHA_TRIAL_ENABLED;
     private static final ModConfigSpec.IntValue ALPHA_TRIAL_MIN_LEVEL;
     private static final ModConfigSpec.DoubleValue ALPHA_TRIAL_HP_FACTOR;
@@ -225,6 +261,24 @@ public final class SpeciesConfig {
                 .defineInRange("alpha_trial_min_level", 10, 1, 14);
         ALPHA_TRIAL_HP_FACTOR = b.comment("The trial boss (an Alpha of the Werewolves mod) has this many times the health of an ordinary one.")
                 .defineInRange("alpha_trial_hp_factor", 3.0, 1.0, 10.0);
+        NPC_RECRUIT_ENABLED = b.comment("R148: a werewolf may take a beaten wild wolf into their pack with the Rite of the Werewolf Brother. Off: the rite refuses; members already recruited stay.")
+                .define("npc_recruit_enabled", true);
+        MAX_NPC_MEMBERS_PER_PLAYER = b.comment("Most wolves one werewolf may recruit with the Rite of the Werewolf Brother.")
+                .defineInRange("max_npc_members_per_player", 2, 0, 8);
+        MAX_NPC_MEMBERS_PER_PACK = b.comment("Most recruited wolves in one whole pack, whoever recruited them.")
+                .defineInRange("max_npc_members_per_pack", 6, 0, 24);
+        NPC_HUNT_TRIPS = b.comment("A Brother with Hunt on, resting or on guard at night, kills a few animals near its post now and then and puts what they drop in a chest within 12 blocks. Off: none.")
+                .define("npc_hunt_trips", true);
+        NPC_HUNT_PERIOD_MINUTES = b.comment("Minutes between two hunting trips of one Brother.")
+                .defineInRange("npc_hunt_period_minutes", 10, 1, 120);
+        NPC_CHEST_SORT = b.comment("A Brother with Sort on tidies the chest it stores a hunt in: partial stacks merged, then ordered. Off: it only drops what it carries in.")
+                .define("npc_chest_sort", true);
+        NPC_WEIGHT_BROTHER = b.comment("What a recruited Brother counts for toward the pack bonus (a player counts 1).")
+                .defineInRange("npc_weight_brother", 0.5, 0.0, 1.0);
+        NPC_WEIGHT_TENSURA = b.comment("What a Tensura subordinate of a pack member counts for toward the pack bonus (a player counts 1).")
+                .defineInRange("npc_weight_tensura", 0.25, 0.0, 1.0);
+        NPC_BONUS_SHARE = b.comment("The most of the pack bonus's cap that NPC members may supply: 0.4 means two of the five 5% steps. So wolves alone never reach the full bonus.")
+                .defineInRange("npc_bonus_share", 0.4, 0.0, 1.0);
         b.pop();
         SPEC = b.build();
     }

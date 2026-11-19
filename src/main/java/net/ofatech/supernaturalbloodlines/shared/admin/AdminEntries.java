@@ -95,6 +95,15 @@ public final class AdminEntries {
         for (String key : List.of("npc_packs_enabled", "npc_pack_dawn_despawn", "npc_alpha_spark_enabled", "moonblood_surge_enabled", "wolf_spirits_enabled")) {
             species(all, key, BOOL);
         }
+        for (String key : List.of("npc_recruit_enabled", "npc_hunt_trips", "npc_chest_sort")) {
+            species(all, key, BOOL);
+        }
+        for (String key : List.of("max_npc_members_per_player", "max_npc_members_per_pack", "npc_hunt_period_minutes")) {
+            species(all, key, INT);
+        }
+        for (String key : List.of("npc_weight_brother", "npc_weight_tensura", "npc_bonus_share")) {
+            species(all, key, DOUBLE);
+        }
         species(all, "alpha_trial_enabled", BOOL);
         species(all, "alpha_trial_min_level", INT);
         species(all, "alpha_trial_hp_factor", DOUBLE);
@@ -112,6 +121,8 @@ public final class AdminEntries {
         all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "apex_evolutions_enabled", BOOL).withClientCopy());
         all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "evolution_progress_multiplier", DOUBLE));
         all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "sire_subordinate_link_enabled", BOOL));
+        all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "tensura_subordinates_join", BOOL));
+        all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "max_tensura_members_per_pack", INT));
         all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "sire_naming_enabled", BOOL));
         all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "severance_clears_name", BOOL));
         all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "resire_naming_reward", BOOL));

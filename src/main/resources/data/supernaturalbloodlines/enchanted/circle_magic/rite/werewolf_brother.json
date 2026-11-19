@@ -1,0 +1,19 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:moonstone", "count": 1 },
+        { "id": "minecraft:beef", "count": 1 },
+        { "id": "werewolves:silver_nugget", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:small_circle": "enchanted:ritual_chalk"
+    },
+    "power": 6000,
+    "factory": {
+        "type": "supernaturalbloodlines:werewolf_brother",
+        "faction": "werewolf"
+    }
+}

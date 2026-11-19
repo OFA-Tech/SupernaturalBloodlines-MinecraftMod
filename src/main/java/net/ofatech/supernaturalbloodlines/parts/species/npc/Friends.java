@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.species.npc;
 
 import java.util.UUID;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
@@ -33,11 +34,26 @@ public final class Friends {
         return FriendRules.friends(index.leaderOf(owner), index.leaderOf(otherPlayer), index.alliedPlayers(owner, otherPlayer));
     }
 
-    /** The player an entity stands for: itself, or the owner of a Wolf Spirit. */
+    /**
+     * Whether a hit between two entities is between friends, when at least one of them is an NPC of a pack (a Wolf Spirit, a Brother, a Tensura subordinate):
+     * the same owner, the same pack or allied packs. Two players are not judged here ({@code AllyProtection} has its own rule for them).
+     */
+    public static boolean npcFriendly(@Nullable Entity attacker, Entity victim) {
+        if (!(attacker instanceof LivingEntity a) || !(victim instanceof LivingEntity v) || a == v || !(a instanceof Mob || v instanceof Mob)) {
+            return false;
+        }
+        UUID pa = playerOf(a);
+        return pa != null && playerOf(v) != null && ofOwner(v.level(), pa, v);
+    }
+
+    /** The player an entity stands for: itself, the owner of a Wolf Spirit, or the owner of a member of their pack (a Brother, a Tensura subordinate). */
     @Nullable
     public static UUID playerOf(LivingEntity e) {
         if (e instanceof Player p) {
             return p.getUUID();
+        }
+        if (e instanceof Mob m && m.hasData(SpeciesRegistries.NPC_BOND)) {
+            return m.getData(SpeciesRegistries.NPC_BOND).owner(); // a member of a pack stands for its owner
         }
         if (e instanceof Mob m && m.hasData(SpeciesRegistries.NPC_MARK)) {
             NpcMark mark = m.getData(SpeciesRegistries.NPC_MARK);

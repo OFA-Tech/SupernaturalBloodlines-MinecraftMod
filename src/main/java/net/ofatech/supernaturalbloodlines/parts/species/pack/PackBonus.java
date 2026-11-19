@@ -88,11 +88,21 @@ public final class PackBonus {
                 doubled += PackAccess.wolf(beta).lineage() == Lineage.BITTEN ? 2 : 1;
             }
         }
-        double bonus = bonusFor(near.size(), doubled, betasNeeded(alpha));
+        // the pack's recruited wolves and Tensura subordinates count too, by weight, with their share of the sum capped (R148, R149)
+        List<net.minecraft.world.entity.Mob> members = net.ofatech.supernaturalbloodlines.parts.species.npc.NpcMembers.near(alpha, RANGE);
+        double npcWeight = 0;
+        for (net.minecraft.world.entity.Mob m : members) {
+            npcWeight += net.ofatech.supernaturalbloodlines.parts.species.npc.NpcMembers.weight(m.getData(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.NPC_BOND));
+        }
+        double bonus = net.ofatech.supernaturalbloodlines.core.bloodline.NpcRules.bonus(near.size(), doubled, npcWeight, betasNeeded(alpha),
+                net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.members().bonusShare());
         set(alpha, bonus);
         if (bonus > 0) {
             for (ServerPlayer beta : near) {
                 beta.addEffect(new MobEffectInstance(MobEffects.REGENERATION, REGEN_TICKS, 0, true, true));
+            }
+            for (net.minecraft.world.entity.Mob m : members) {
+                m.addEffect(new MobEffectInstance(MobEffects.REGENERATION, REGEN_TICKS, 0, true, true));
             }
         }
     }
