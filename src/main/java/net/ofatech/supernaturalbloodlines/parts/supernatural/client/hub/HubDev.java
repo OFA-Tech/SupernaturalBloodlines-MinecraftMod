@@ -42,15 +42,17 @@ public final class HubDev {
         return handsFull;
     }
 
-    private static volatile net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar.Night night;
+    private static volatile Integer phase;
 
-    /** {@code .night=full_moon|blood_moon|eclipse}: what tonight is in the pictures, whatever the dev world's clock says (null: the real answer). */
-    static void night(net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar.Night value) {
-        night = value;
+    /** {@code .phase=0..7}: the moon phase the hub shows in the pictures, so the calendar, the almanac and "tonight" all follow it (null: the real one). */
+    static void phase(Integer value) {
+        phase = value;
     }
 
-    public static net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar.Night night() {
-        return night;
+    /** The moon phase the hub shows: the level's, unless a dev picture pins it. */
+    public static int moonPhase(net.minecraft.world.level.Level level) {
+        Integer pinned = phase;
+        return pinned != null ? pinned : level.getMoonPhase();
     }
 
     /** Replaces the hub's view of the player with demo data (a client view only; nothing is sent or changed on the server). */

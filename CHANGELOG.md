@@ -5,6 +5,8 @@
 ### Upgrading
 - **A werewolf gene now awakens at dusk, not at once** (`delayed_awakening_nights`, default 1). A human with the hidden gene who kills a villager or a player is told "something stirs in your blood" and awakens at the next dusk (the overworld clock). The Rite of Lineage and a wild bite are not delayed. Set it to 0 for the old behaviour. The wait is kept through death and logout; joining a faction ends it. **Limit (shortcut):** a player who is offline at dusk awakens at their next login (the check runs only for online players).
 - New `full_moon_sleep` (default `off`; `werewolves` or `everyone`): from dusk on a full-moon night the bed refuses the players it names. Nothing changes until an operator turns it on.
+- **Server and clients must update together.** The hub snapshot gained two fields (the full-moon sleep rule and a waiting awakening), so the hub channel's protocol number went from 2 to 3. A client or server still on the old number cannot use the hub channel (the hub shows nothing from the server, and the game still connects: the channel is optional); update both sides.
+- A frozen world clock (`doDaylightCycle` off) no longer holds a delayed awakening for ever: it also awakens after `delayed_awakening_nights` days of game time since the kill. A queue made by an earlier build of this branch (a single number) is not read; it was never released.
 
 ### Added
 - The hub's **moon calendar**: the next 16 days of moons with the full moons marked and Enhanced Celestials events ringed. Click the almanac on the Path page, or "Moon calendar" on Home; Esc goes back. Home's "The world now" also says what tonight is, and tells you when the sleep rule applies to you or an awakening is waiting. Both settings have Admin rows.

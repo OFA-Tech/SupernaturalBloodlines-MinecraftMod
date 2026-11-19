@@ -13,7 +13,7 @@ public final class HubAlmanac {
 
     /** Days until the next full moon: 0 when it is the full moon today. */
     public static int daysToFull(int phase) {
-        return Math.floorMod(8 - phase, 8);
+        return MoonCalendar.daysToFull(phase);
     }
 
 

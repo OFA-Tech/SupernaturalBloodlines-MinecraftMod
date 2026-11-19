@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubDev;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.network.chat.Component;
@@ -100,7 +101,7 @@ public final class BloodMoonPathPage implements HubPageView {
 
     private static void almanac(HubScreen.Frame f, Rect area) {
         HubTheme t = f.theme();
-        int phase = f.view.player().level().getMoonPhase();
+        int phase = HubDev.moonPhase(f.view.player().level());
         int y = area.bottom() - 12;
         int x = area.x() + 2;
         var view = AlmanacEvents.view(f);

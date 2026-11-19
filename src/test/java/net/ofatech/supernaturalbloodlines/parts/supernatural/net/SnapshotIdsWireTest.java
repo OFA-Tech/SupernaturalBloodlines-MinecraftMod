@@ -48,6 +48,30 @@ class SnapshotIdsWireTest {
         }
     }
 
+    /**
+     * The wire format of the hub snapshot and the protocol number go together: a client and a server on different formats must not connect (they would
+     * misread each other's bytes). This pins the bytes of an empty snapshot with both flags set, and the protocol they belong to. If you change
+     * the snapshot, this fails: raise {@code LadderNet.PROTOCOL} and update both constants here, in the same commit.
+     */
+    private static final String GOLDEN_PROTOCOL = "3";
+    private static final String GOLDEN_HEX = "00000000000b4e4f545f56414d504952450000044e4f4e450000000000000101";
+
+    @Test
+    void theSnapshotWireFormatAndTheProtocolNumberChangeTogether() {
+        HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of(), List.of(),
+                new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(true, true));
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        HubSnapshotPayload.STREAM_CODEC.encode(buf, s);
+        byte[] bytes = new byte[buf.readableBytes()];
+        buf.readBytes(bytes);
+        StringBuilder hex = new StringBuilder();
+        for (byte b : bytes) {
+            hex.append(String.format("%02x", b));
+        }
+        assertEquals(GOLDEN_HEX, hex.toString(), "the snapshot's bytes changed: raise LadderNet.PROTOCOL and update GOLDEN_HEX and GOLDEN_PROTOCOL");
+        assertEquals(GOLDEN_PROTOCOL, LadderNet.PROTOCOL, "the protocol number does not go with the snapshot's wire format");
+    }
+
     @Test
     void aSnapshotBuiltWithoutTheFlagsSaysNeither() {
         HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of());

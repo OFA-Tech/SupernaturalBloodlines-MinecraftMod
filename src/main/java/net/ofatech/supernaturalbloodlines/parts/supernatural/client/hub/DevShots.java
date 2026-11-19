@@ -143,9 +143,9 @@ public final class DevShots {
             HubDev.handsFull(true);
         }
         HubDev.noTensura(Boolean.getBoolean(PROPERTY + ".noTensura"));
-        String night = System.getProperty(PROPERTY + ".night");
-        if (night != null && !night.isBlank()) {
-            HubDev.night(net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar.Night.valueOf(night.trim().toUpperCase(Locale.ROOT)));
+        String phase = System.getProperty(PROPERTY + ".phase");
+        if (phase != null && !phase.isBlank()) {
+            HubDev.phase(Math.floorMod(Integer.parseInt(phase.trim()), 8));
         }
         HubDev.quiet(true);
         NeoForge.EVENT_BUS.addListener(d::tick);

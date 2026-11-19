@@ -189,7 +189,7 @@ public final class SpeciesPart {
         net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.set(p -> new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(
                 net.ofatech.supernaturalbloodlines.core.moon.SleepRules.appliesTo(SpeciesConfig.fullMoonSleep(),
                         net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural.isWerewolf(p)),
-                net.ofatech.supernaturalbloodlines.parts.species.moon.DelayedAwakening.pending(p)));
+                net.ofatech.supernaturalbloodlines.parts.species.moon.AwakeningQueue.pending(p)));
         if (ModList.get().isLoaded("werewolves")) {
             net.ofatech.supernaturalbloodlines.parts.species.moon.DelayedAwakening.register();
             FormBlocks.register();

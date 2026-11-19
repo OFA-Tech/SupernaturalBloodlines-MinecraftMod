@@ -25,9 +25,10 @@ import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.werewolves.We
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The hidden werewolf gene (R10, R11): rolled once at first login, awakened for a human by a villager or player kill.
- * A vampire's awakening (R24) stays with {@link GeneAwakening}; a hunter's gene stays latent. Touched only behind
- * {@code ModList.isLoaded("werewolves")}.
+ * The hidden werewolf gene (R10, R11): rolled once at first login; a villager or player kill of a human carrier queues the awakening for a
+ * dusk (R142, {@link DelayedAwakening}), or does it at once with {@code delayed_awakening_nights = 0}. {@link #awakenHuman} is the awakening itself,
+ * also used by the Rite of Lineage. A vampire's awakening (R24) stays with {@link GeneAwakening}; a hunter's gene stays latent. Registered, and
+ * so reached, only when Werewolves is loaded.
  */
 public final class GeneHandler {
     private static final DoubleSupplier RANDOM = () -> ThreadLocalRandom.current().nextDouble();

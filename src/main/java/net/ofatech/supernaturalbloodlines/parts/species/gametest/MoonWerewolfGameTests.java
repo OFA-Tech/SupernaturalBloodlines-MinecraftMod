@@ -27,6 +27,7 @@ import net.ofatech.supernaturalbloodlines.core.moon.SleepRules.Mode;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
+import net.ofatech.supernaturalbloodlines.parts.species.moon.AwakeningQueue;
 import net.ofatech.supernaturalbloodlines.parts.species.moon.DelayedAwakening;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.GeneHandler;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook;
@@ -97,8 +98,9 @@ public final class MoonWerewolfGameTests {
             level.setDayTime(1000);
             killVillager(helper, p);
             helper.assertTrue(BloodlineAccess.get(p).wolf().lineage() == WolfState.Lineage.NONE && !werewolf(p), "the kill awakened them at once");
-            helper.assertTrue(DelayedAwakening.pending(p), "nothing was queued");
-            helper.assertTrue(DelayedAwakening.dueOf(p) == MoonRule.NIGHT_START, "due at " + DelayedAwakening.dueOf(p) + ", not the first dusk");
+            helper.assertTrue(AwakeningQueue.pending(p), "nothing was queued");
+            helper.assertTrue(AwakeningQueue.of(p).queuedAt() == level.getGameTime(), "the game time of the kill was not kept");
+            helper.assertTrue(AwakeningQueue.dueOf(p) == MoonRule.NIGHT_START, "due at " + AwakeningQueue.dueOf(p) + ", not the first dusk");
             helper.assertTrue(WorldNowHook.of(p).awakeningPending(), "the hub flag did not show it");
         } finally {
             SpeciesConfig.overrideDelayedAwakeningNights(null);
@@ -119,11 +121,11 @@ public final class MoonWerewolfGameTests {
             killVillager(helper, p);
             level.setDayTime(MoonRule.NIGHT_START - 1);
             DelayedAwakening.check(p);
-            helper.assertTrue(DelayedAwakening.pending(p) && !werewolf(p), "it awakened before dusk");
+            helper.assertTrue(AwakeningQueue.pending(p) && !werewolf(p), "it awakened before dusk");
             level.setDayTime(MoonRule.NIGHT_START);
             DelayedAwakening.check(p);
             helper.assertTrue(werewolf(p) && BloodlineAccess.get(p).wolf().lineage() == WolfState.Lineage.BORN, "it did not awaken at dusk: " + BloodlineAccess.get(p).wolf());
-            helper.assertTrue(!DelayedAwakening.pending(p), "the queue was not cleared");
+            helper.assertTrue(!AwakeningQueue.pending(p), "the queue was not cleared");
         } finally {
             SpeciesConfig.overrideDelayedAwakeningNights(null);
             level.setDayTime(saved);
@@ -139,7 +141,7 @@ public final class MoonWerewolfGameTests {
         SpeciesConfig.overrideDelayedAwakeningNights(0);
         try {
             killVillager(helper, p);
-            helper.assertTrue(werewolf(p) && !DelayedAwakening.pending(p), "0 nights did not awaken at once");
+            helper.assertTrue(werewolf(p) && !AwakeningQueue.pending(p), "0 nights did not awaken at once");
         } finally {
             SpeciesConfig.overrideDelayedAwakeningNights(null);
             VampirismAPI.factionPlayerHandler(p).leaveFaction(true);
@@ -157,13 +159,39 @@ public final class MoonWerewolfGameTests {
         try {
             level.setDayTime(1000);
             killVillager(helper, p);
-            long due = DelayedAwakening.dueOf(p);
+            long due = AwakeningQueue.dueOf(p);
             level.setDayTime(5000);
             killVillager(helper, p);
-            helper.assertTrue(DelayedAwakening.dueOf(p) == due, "the due time moved from " + due + " to " + DelayedAwakening.dueOf(p));
+            helper.assertTrue(AwakeningQueue.dueOf(p) == due, "the due time moved from " + due + " to " + AwakeningQueue.dueOf(p));
         } finally {
             SpeciesConfig.overrideDelayedAwakeningNights(null);
             level.setDayTime(saved);
+            BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    /** doDaylightCycle=false: the day time never reaches the dusk, so the game time since the kill has to do it. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aFrozenClockStillAwakensAfterTheNights(GameTestHelper helper) {
+        ServerPlayer p = carrier(helper);
+        ServerLevel level = helper.getLevel();
+        long saved = level.getDayTime();
+        SpeciesConfig.overrideDelayedAwakeningNights(1);
+        try {
+            level.setDayTime(1000);
+            killVillager(helper, p);
+            long game = level.getGameTime();
+            AwakeningQueue.set(p, new AwakeningRules.Pending(AwakeningQueue.dueOf(p), game - 24000L + 1)); // one tick short of a day, the clock still at 1000
+            DelayedAwakening.check(p);
+            helper.assertTrue(AwakeningQueue.pending(p) && !werewolf(p), "it awakened a tick early on a frozen clock");
+            AwakeningQueue.set(p, new AwakeningRules.Pending(AwakeningQueue.dueOf(p), game - 24000L));
+            DelayedAwakening.check(p);
+            helper.assertTrue(werewolf(p) && !AwakeningQueue.pending(p), "a frozen clock never awakened it");
+        } finally {
+            SpeciesConfig.overrideDelayedAwakeningNights(null);
+            level.setDayTime(saved);
+            VampirismAPI.factionPlayerHandler(p).leaveFaction(true);
             BloodlineAccess.set(p, BloodlineState.NONE);
         }
         helper.succeed();
@@ -175,7 +203,7 @@ public final class MoonWerewolfGameTests {
         SpeciesConfig.overrideDelayedAwakeningNights(1);
         try {
             killVillager(helper, p);
-            helper.assertTrue(!DelayedAwakening.pending(p), "someone with no gene was queued");
+            helper.assertTrue(!AwakeningQueue.pending(p), "someone with no gene was queued");
         } finally {
             SpeciesConfig.overrideDelayedAwakeningNights(null);
         }
@@ -194,7 +222,7 @@ public final class MoonWerewolfGameTests {
             VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
             level.setDayTime(MoonRule.NIGHT_START + 100);
             DelayedAwakening.check(p);
-            helper.assertTrue(!DelayedAwakening.pending(p), "the queue stayed");
+            helper.assertTrue(!AwakeningQueue.pending(p), "the queue stayed");
             helper.assertTrue(!werewolf(p) && BloodlineAccess.get(p).wolf().lineage() == WolfState.Lineage.NONE, "a vampire was awakened as a wolf");
         } finally {
             SpeciesConfig.overrideDelayedAwakeningNights(null);
@@ -214,7 +242,7 @@ public final class MoonWerewolfGameTests {
             level.setDayTime(1000);
             SpeciesConfig.overrideDelayedAwakeningNights(2);
             killVillager(helper, p);
-            helper.assertTrue(DelayedAwakening.dueOf(p) == AwakeningRules.due(1000, 2), "two nights was not due after two dusks");
+            helper.assertTrue(AwakeningQueue.dueOf(p) == AwakeningRules.due(1000, 2), "two nights was not due after two dusks");
             SpeciesConfig.overrideDelayedAwakeningNights(0);
             DelayedAwakening.check(p);
             helper.assertTrue(werewolf(p), "the awakening stayed queued with the setting at 0");
@@ -231,9 +259,9 @@ public final class MoonWerewolfGameTests {
     public static void theQueueIsKeptThroughDeath(GameTestHelper helper) {
         ServerPlayer before = carrier(helper);
         ServerPlayer after = TestPlayers.createMortal(helper);
-        before.setData(SpeciesRegistries.PENDING_AWAKENING, 12786L);
+        before.setData(SpeciesRegistries.PENDING_AWAKENING, new AwakeningRules.Pending(12786L, 77L));
         after.restoreFrom(before, false);
-        helper.assertTrue(after.getData(SpeciesRegistries.PENDING_AWAKENING) == 12786L, "the new body forgot the queue: " + after.getData(SpeciesRegistries.PENDING_AWAKENING));
+        helper.assertTrue(after.getData(SpeciesRegistries.PENDING_AWAKENING).equals(new AwakeningRules.Pending(12786L, 77L)), "the new body forgot the queue: " + after.getData(SpeciesRegistries.PENDING_AWAKENING));
         helper.succeed();
     }
 

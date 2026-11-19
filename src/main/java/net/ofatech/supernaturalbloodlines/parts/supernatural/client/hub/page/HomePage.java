@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubDev;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -305,7 +306,7 @@ public final class HomePage implements HubPageView {
     private int world(HubScreen.Frame f, Rect s, int y) {
         HubTheme t = f.theme();
         y = section(f, s, y, "world");
-        int phase = Math.floorMod(f.view.player().level().getMoonPhase(), 8);
+        int phase = Math.floorMod(HubDev.moonPhase(f.view.player().level()), 8);
         int days = Math.floorMod(8 - phase, 8);
         int d = 16;
         int cx = s.x() + d / 2;

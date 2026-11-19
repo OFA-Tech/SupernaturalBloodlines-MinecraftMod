@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubDev;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -28,18 +29,14 @@ public final class MoonPage implements HubPageView {
 
     /** What tonight is for this client: the moon, the time, Enhanced Celestials' mood and the eclipse the server announced. */
     public static MoonCalendar.Night tonight(Level level) {
-        MoonCalendar.Night dev = net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubDev.night();
-        if (dev != null) {
-            return dev;
-        }
-        return MoonCalendar.tonight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime(), LunarMoods.now(level), EclipseClient.running());
+        return MoonCalendar.tonight(level.dimensionType().hasFixedTime(), HubDev.moonPhase(level), level.getDayTime(), LunarMoods.now(level), EclipseClient.running());
     }
 
     @Override
     public void render(HubScreen.Frame f) {
         HubTheme t = f.theme();
         Level level = f.view.player().level();
-        int phase = Math.floorMod(level.getMoonPhase(), 8);
+        int phase = Math.floorMod(HubDev.moonPhase(level), 8);
         var events = AlmanacEvents.view(f);
 
         Rect r = f.region(HubLayout.MAIN);
