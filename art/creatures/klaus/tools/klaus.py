@@ -1,4 +1,4 @@
-"""Klaus Mikaelson's hybrid wolf form (TVD / The Originals): a large dark wolf with golden hybrid eyes and a double set of fangs.
+"""Klaus Mikaelson's hybrid wolf form (TVD / The Originals): a large ash-brown wolf with golden hybrid eyes and a double set of fangs.
 Run: python klaus.py <repo_root>   (uses ../../wolves/tools/wolflib.py)"""
 import sys, os, math
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'wolves', 'tools'))
@@ -36,7 +36,7 @@ def build():
     m.cube('head', 'snout', (-2.3, 18.2, -33.5), (4.6, 3.9, 7.5), 'snout', den=2)
     m.cube('head', 'bridge', (-1.7, 21.9, -33), (3.4, 1.3, 7), 'snout', den=2)
     m.cube('head', 'nose', (-1.3, 20.6, -34.3), (2.6, 1.9, 1.0), 'nose', den=2)
-    m.cube('head', 'lip_up', (-2.75, 17.5, -33.3), (5.5, 1.1, 7.2), 'lip')
+    m.cube('head', 'lip_up', (-2.6, 17.75, -33.2), (5.2, 0.7, 7.1), 'lip')
     m.cube('head', 'fang_up_l', (1.95, 14.9, -32.4), (0.85, 2.9, 0.9), 'tooth', den=2)      # the long vampire fang
     m.cube('head', 'fang_up2_l', (1.95, 16.0, -30.4), (0.8, 1.8, 0.9), 'tooth', den=2)      # the werewolf fang behind it
     m.cube('head', 'molar_up_l', (2.0, 16.5, -28.9), (0.7, 1.2, 2.2), 'tooth', den=2)
@@ -45,10 +45,10 @@ def build():
     m.cube('head', 'eye_l', (1.3, 21.9, -26.85), (2.4, 1.4, 0.7), 'eye', den=3, rot=V(0, 0, -14), pivot=(2.5, 22.6, -26.5))
     m.cube('head', 'vein_l', (2.1, 19.6, -26.75), (1.9, 2.3, 0.4), 'vein', den=4)
     m.cube('head', 'cheek_l', (3.3, 17.6, -25.5), (1.6, 4.4, 5.5), 'fur')
-    m.cube('head', 'cheek_tuft_l', (3.5, 16.0, -23.6), (1.6, 3.8, 3.4), 'ruff', rot=V(0, 0, -18), pivot=(4.3, 19.6, -22))
+    m.cube('head', 'cheek_tuft_l', (3.4, 15.4, -24.4), (2.0, 4.8, 4.6), 'ruff', rot=V(0, 0, -18), pivot=(4.3, 19.8, -22))
     m.bone('jaw', 'head', (0, 18.3, -24.5), V(6, 0, 0))
     m.cube('jaw', 'jaw', (-1.9, 16.1, -32.8), (3.8, 2.2, 9.3), 'snout', den=2)
-    m.cube('jaw', 'chin', (-2.1, 15.7, -32.3), (4.2, 1.0, 8), 'lip')
+    m.cube('jaw', 'chin', (-2.1, 15.7, -32.3), (4.2, 1.0, 8), 'snout')
     m.cube('jaw', 'fang_lo_l', (0.8, 18.3, -32.6), (0.8, 1.9, 0.8), 'tooth', den=2)
     m.cube('jaw', 'molar_lo_l', (1.0, 18.3, -29.5), (0.7, 0.9, 2.4), 'tooth', den=2)
     m.cube('jaw', 'incisors_lo', (-0.9, 18.3, -32.7), (1.8, 0.8, 0.5), 'tooth', den=2)
@@ -66,10 +66,10 @@ def build():
 
     def paw(bone, j, x0, w):
         z = j[1] - 3.8
-        m.cube(bone, bone, (x0, 0, z), (w, 2.1, 5.4), 'fur_dark')
+        m.cube(bone, bone, (x0, 0, z), (w, 2.1, 5.4), 'fur_leg')
         for k in range(4):
             x = x0 + 0.05 + k * (w - 0.1) / 4
-            m.cube(bone, 'toe%d_l' % k, (x, 0, z - 1.5), ((w - 0.1) / 4 - 0.1, 1.3, 1.7), 'fur_dark')
+            m.cube(bone, 'toe%d_l' % k, (x, 0, z - 1.5), ((w - 0.1) / 4 - 0.1, 1.3, 1.7), 'fur_leg')
             m.cube(bone, 'claw%d_l' % k, (x + 0.1, 0, z - 2.7), ((w - 0.1) / 4 - 0.3, 0.8, 1.3), 'claw')
 
     sh = (19.5, -8.5)
@@ -87,49 +87,48 @@ def build():
     m.bone('shin_l', 'hindleg_l', (4.8, kn[0], kn[1]))
     hk = seg('shin_l', 'shin_l', 3.1, 3.4, 3.8, kn, 8.6, 38, 'fur_leg')
     m.bone('hock_l', 'shin_l', (4.8, hk[0], hk[1]))
-    an = seg('hock_l', 'mt_l', 3.3, 3.0, 2.8, hk, 3.6, -10, 'fur_dark')
+    an = seg('hock_l', 'mt_l', 3.3, 3.0, 2.8, hk, 3.6, -10, 'fur_leg')
     m.bone('foot_l', 'hock_l', (4.8, an[0], an[1]))
     paw('foot_l', an, 3.0, 3.6)
     FORE[:], HIND[:] = [sh, el, wr], [hip, kn, hk, an]
-    # tail: carried low, three bones
+    # tail: bushy, carried low, three bones
     m.bone('tail1', 'body', (0, 21.8, 14.5), V(-32, 0, 0))
     m.cube('tail1', 'tail1', (-1.9, 19.6, 14), (3.8, 4.2, 8), 'fur')
     m.bone('tail2', 'tail1', (0, 21.5, 21.5), V(-12, 0, 0))
-    m.cube('tail2', 'tail2', (-2.4, 18.8, 21), (4.8, 5.2, 8), 'ruff')
+    m.cube('tail2', 'tail2', (-2.7, 18.5, 21), (5.4, 5.8, 8), 'ruff')
     m.bone('tail3', 'tail2', (0, 21.2, 28.5), V(-8, 0, 0))
-    m.cube('tail3', 'tail3', (-1.9, 19.2, 28.5), (3.8, 4.4, 5), 'ruff')
-    m.cube('tail3', 'tail_tip', (-1.2, 19.8, 33), (2.4, 3, 2.5), 'fur_dark')
+    m.cube('tail3', 'tail3', (-2.3, 18.9, 28.5), (4.6, 5, 5), 'ruff')
+    m.cube('tail3', 'tail_tip', (-1.5, 19.5, 33), (3, 3.6, 2.5), 'fur_dark')
     m.mirror()
 
-    def tufts(bone, tag, rows, y, lean):
-        for ri, (z, xs) in enumerate(rows):
-            for i, x in enumerate(xs):
-                r1, r2 = hrand(tag, ri, i, 1), hrand(tag, ri, i, 2)
-                m.cube(bone, '%s_%d_%d' % (tag, ri, i), (x - 1.4, y - 0.4, z - 1.4), (2.8, 2.4 + r1 * 1.2, 2.8), 'ruff',
-                       rot=V(-(lean + r2 * 20), (r1 - 0.5) * 20, -x * 5), pivot=(x, y, z))
+    def pelt(bone, tag, rows, lean):
+        """Overlapping slabs of long fur lying back along the spine: a low thick ridge, not spikes. rows = (z, y, width)."""
+        for ri, (z, y, w) in enumerate(rows):
+            r = hrand(tag, ri)
+            m.cube(bone, '%s_%d' % (tag, ri), (-w / 2, y - 0.5, z - 2.4), (w, 1.9 + r * 0.4, 4.8), 'ruff',
+                   rot=V(-(lean + r * 4), 0, 0), pivot=(0, y, z))
 
-    # neck ruff, chest fluff and the hackles along the spine: separate bones so they bristle on their own
+    # thick neck ruff, chest fluff and the hackles along the spine: separate bones so they bristle on their own
     m.bone('ruff', 'neck', (0, 22, -15))
-    m.cube('ruff', 'ruff_side_l', (3.0, 15.4, -19.5), (1.9, 8, 8.5), 'ruff', rot=V(0, 0, -7), pivot=(3.9, 23.5, -15))
-    m.cube('ruff', 'ruff_side_r', (-4.9, 15.4, -19.5), (1.9, 8, 8.5), 'ruff', rot=V(0, 0, 7), pivot=(-3.9, 23.5, -15))
-    m.cube('ruff', 'throat', (-2.6, 13.8, -19.5), (5.2, 3.4, 8), 'belly')
-    tufts('ruff', 'nape', [(-18, (-1.7, 1.7)), (-15, (-2, 0, 2)), (-12, (-1.7, 1.7))], 24.2, 30)
+    for sx, tag in ((1, 'l'), (-1, 'r')):          # two overlapping locks a side, so the collar is not one flat plate
+        for k, (x, y, z, w, h, d, flare) in enumerate(((3.0, 15.6, -20.2, 2.4, 8.4, 5.2, 6), (2.9, 14.8, -15.6, 2.2, 8.8, 5.4, 11))):
+            m.cube('ruff', 'ruff_side%d_%s' % (k, tag), (x if sx > 0 else -x - w, y, z), (w, h, d), 'ruff', rot=V(0, 0, -sx * flare), pivot=(sx * 3.9, 23.5, z + d / 2))
+    m.cube('ruff', 'throat', (-3.4, 12.8, -20), (6.8, 4.4, 9), 'belly')
+    pelt('ruff', 'nape', [(-18.5, 24.3, 6.2), (-15.5, 24.4, 6.8), (-12.5, 24.4, 7.0)], 8)
     m.bone('chest_ruff', 'body', (0, 17, -13))
     for i in range(4):
         fx, r = i / 3 * 2 - 1, hrand('cr', i)
         m.cube('chest_ruff', 'chest_tuft_%d' % i, (fx * 3.6 - 1.5, 11 + r, -14.6 + r * 0.6), (3, 6.5 + r * 1.5, 2.2), 'belly',
                rot=V(-8 - r * 10, 0, -fx * 7), pivot=(fx * 3.6, 18, -14))
     m.bone('hackles', 'body', (0, 24, -6))
-    tufts('hackles', 'hackle', [(-10, (-2, 0, 2)), (-7, (-1.5, 1.5)), (-4, (-2, 0, 2)), (-1, (-1.3, 1.3)), (2, (0,)), (5, (-1, 1))], 24.0, 38)
+    pelt('hackles', 'hackle', [(-10.5, 24.7, 7.0), (-7.5, 24.7, 6.6), (-4.5, 24.6, 6.0), (-1.5, 23.8, 5.2), (1.5, 23.5, 4.4), (4.5, 23.4, 3.6)], 10)
     return m
 
 
-# Dark wolf: the hue of the old flat texture's dark saddle (76,52,34), taken down to near-black (see REFERENCES.md).
-FUR = [hexc(c) for c in ('0b0908', '13100e', '1c1714', '27201b', '342a23', '43362c', '584838')]
-DARK = [hexc(c) for c in ('070605', '0d0b0a', '141110', '1d1916', '28221d')]
-BELLY = [hexc(c) for c in ('17130f', '221c17', '2f2720', '3e332a', '504235')]
-RUFF = [hexc(c) for c in ('080706', '100d0b', '191411', '241d18', '322820', '463829', '5e4c3b')]
-SNOUT = [hexc(c) for c in ('0d0b0a', '16120f', '201a16', '2c241e', '3b3028')]
+# Coat (owner's still, see REFERENCES.md): ash-brown, "pretty much like his hair colour, but brownish". Each anchor is a colour the mod
+# already uses for Klaus, mixed half and half with its own grey: saddle (76,52,34) -> 42362d, brow (108,84,56) -> 615547,
+# hair (164,136,92) -> 978973, cream fur (214,184,138) -> c8b9a2. The other steps are in-betweens and one shadow below the saddle.
+COAT = [hexc(c) for c in ('2e2620', '42362d', '524539', '615547', '7c6f5d', '978973', 'b0a18a', 'c8b9a2', 'd9cdb8')]
 LIP = [hexc(c) for c in ('060505', '0c0a0a', '151011', '20171a')]
 NOSE = [hexc(c) for c in ('050505', '0b0b0c', '141415', '232325')]
 # the rest are the values of the old flat Klaus texture (art/bosses/tools/paint_wolves.py)
@@ -140,31 +139,59 @@ EYE, EYE_HALO, EYE_HOT, VEIN, EAR_IN = (255, 222, 40), (214, 160, 20), (255, 244
 SH = {'up': 0.10, 'north': 0.02, 'south': -0.04, 'east': -0.02, 'west': -0.02, 'down': -0.2}
 
 
-def strand(ctx, base, axis, seed, k=1.4, kl=0.17):
-    """Fur value: strands run along `axis` (high noise frequency across, low along), lit from above."""
+def strand(ctx, axis, seed, k=1.4, kl=0.17):
+    """Fur grain around 0: strands run along `axis` (high noise frequency across, low along), lit from above."""
     p = ctx['p']
     f = [k, k, k]
     f[axis] = kl
-    t = base + (fbm(p[0] * f[0], p[1] * f[1], p[2] * f[2], seed, 2) - 0.5) * 0.62 + SH[ctx['face']] * 1.5
-    t += (fbm(p[0] * 0.15, p[1] * 0.15, p[2] * 0.15, seed + 9, 2) - 0.5) * 0.28 - 0.2 * (1 - ctx['lp'][1])
+    t = (fbm(p[0] * f[0], p[1] * f[1], p[2] * f[2], seed, 2) - 0.5) * 0.5 + SH[ctx['face']]
+    t += (fbm(p[0] * 0.15, p[1] * 0.15, p[2] * 0.15, seed + 9, 2) - 0.5) * 0.2 - 0.12 * (1 - ctx['lp'][1])
     return t + (hrand(ctx['i'], ctx['j'], len(ctx['cube']['name'])) - 0.5) * 0.05
 
 
+def coat(ctx, base, axis, seed):
+    """`base` picks the place on the coat ramp: about 0.2 saddle, 0.5 flank, 0.8 cream."""
+    return ramp(COAT, base + strand(ctx, axis, seed))
+
+
 def sh_fur(ctx):
-    c = ramp(FUR, strand(ctx, 0.56, 2, 3))
-    return tuple(int(k * 0.6) for k in c) if ctx['face'] == 'north' and ctx['cube']['name'].startswith('brow') else c
+    """Trunk, neck and head: a darker saddle along the top of the back, a lighter neck and face, a mid-brown crown."""
+    n, bone, y = ctx['cube']['name'], ctx['cube']['bone'], ctx['p'][1]
+    if bone == 'head':
+        if n.startswith('brow'):
+            return coat(ctx, 0.3 if ctx['face'] == 'north' else 0.42, 2, 3)
+        return coat(ctx, 0.84 if n.startswith('cheek') else 0.46 if ctx['face'] == 'up' else 0.72, 2, 3)
+    if n == 'chest' and ctx['face'] == 'north':
+        return coat(ctx, 0.8, 1, 7)                                                   # cream chest
+    saddle = max(0.0, min(1.0, (y - 17.5) / 6.0))
+    return coat(ctx, (0.68 - 0.2 * saddle) if bone == 'neck' else (0.62 - 0.32 * saddle), 2, 3)
 
 
 def sh_ruff(ctx):
-    t = strand(ctx, 0.2 + 0.24 * ctx['lp'][1], 1, 11, 1.5, 0.12)
-    return ramp(RUFF, t + (0.25 if ctx['lp'][1] > 0.7 and hrand(ctx['i'], ctx['j'], 4) > 0.85 else 0))   # grizzled tips
+    """Long fur. The hackles and nape carry the saddle on; the neck ruff and cheek tufts are cream; the tail darkens to its tip."""
+    n, y = ctx['cube']['name'], ctx['lp'][1]
+    if n.startswith(('hackle', 'nape')):
+        base = 0.16 + 0.1 * y
+    elif n.startswith('tail'):
+        base = 0.54 - 0.2 * ctx['lp'][2] - (0.12 if ctx['face'] == 'up' else 0)
+    else:
+        base = 0.64 + 0.14 * y
+    return ramp(COAT, base + strand(ctx, 1, 11, 1.5, 0.12) + (0.12 if y > 0.7 and hrand(ctx['i'], ctx['j'], 4) > 0.85 else 0))
+
+
+def sh_snout(ctx):
+    """Pale muzzle sides and chin under a dark muzzle top."""
+    n, f = ctx['cube']['name'], ctx['face']
+    if n == 'chin' and f == 'up':
+        return ramp(MOUTH, 0.2 + fbm(ctx['p'][0] * 0.9, 0, ctx['p'][2] * 0.9, 2) * 0.4)
+    top = n == 'bridge' or (n == 'snout' and (f == 'up' or ctx['lp'][1] > 0.8))
+    return ramp(COAT, (0.24 if top else 0.8) + strand(ctx, 2, 13, 1.6, 0.3))
 
 
 def sh_lip(ctx):
-    n, f = ctx['cube']['name'], ctx['face']
-    if (f == 'down' and n == 'lip_up') or (f == 'up' and n == 'chin'):
+    if ctx['face'] == 'down':
         return ramp(MOUTH, 0.2 + fbm(ctx['p'][0] * 0.9, 0, ctx['p'][2] * 0.9, 2) * 0.4)
-    return ramp(LIP, 0.45 + fbm(ctx['p'][0] * 0.7, ctx['p'][1] * 0.7, ctx['p'][2] * 0.7, 3) * 0.4 + SH[f])
+    return ramp(LIP, 0.45 + fbm(ctx['p'][0] * 0.7, ctx['p'][1] * 0.7, ctx['p'][2] * 0.7, 3) * 0.4 + SH[ctx['face']])
 
 
 def sh_nose(ctx):
@@ -179,9 +206,9 @@ def sh_tooth(ctx):
 
 
 def sh_ear(ctx):
-    c = sh_fur(ctx)
+    c = coat(ctx, 0.5 - 0.22 * ctx['lp'][1] - (0.14 if ctx['cube']['name'].startswith('ear_tip') else 0), 1, 3)   # dark tips
     if ctx['face'] == 'north' and 0.2 < ctx['fx'] < 0.8 and ctx['fy'] > 0.1:
-        return tuple(int(c[k] * 0.5 + EAR_IN[k] * 0.25) for k in range(3))
+        return tuple(int(c[k] * 0.5 + EAR_IN[k] * 0.4) for k in range(3))
     return c
 
 
@@ -199,20 +226,20 @@ def sh_eye(ctx):
 
 
 def sh_vein(ctx):
-    """Bare skin under the eye with the black hybrid veins running down from it."""
+    """The black hybrid veins running down the face fur under each eye."""
     if ctx['face'] == 'north':
         for k, (cx, ln) in enumerate(((0.2, 0.75), (0.5, 1.0), (0.8, 0.6))):
             if ctx['fy'] < ln and abs(ctx['fx'] - cx - 0.1 * math.sin(ctx['fy'] * 6 + k * 2)) < 0.07:
                 return VEIN
-    return ramp(SNOUT, 0.72 + SH[ctx['face']])
+    return coat(ctx, 0.66, 2, 3)
 
 
 SHADERS = {
-    'fur': sh_fur, 'ruff': sh_ruff, 'lip': sh_lip, 'nose': sh_nose, 'tooth': sh_tooth, 'ear': sh_ear, 'eye': sh_eye, 'vein': sh_vein,
-    'fur_leg': lambda ctx: ramp(FUR, strand(ctx, 0.5, 1, 5)),
-    'fur_dark': lambda ctx: ramp(DARK, strand(ctx, 0.5, 1, 6)),
-    'belly': lambda ctx: ramp(BELLY, strand(ctx, 0.45, 1, 7, 1.2)),
-    'snout': lambda ctx: ramp(SNOUT, strand(ctx, 0.5, 2, 13, 1.6, 0.3)),
+    'fur': sh_fur, 'ruff': sh_ruff, 'snout': sh_snout, 'lip': sh_lip, 'nose': sh_nose, 'tooth': sh_tooth, 'ear': sh_ear,
+    'eye': sh_eye, 'vein': sh_vein,
+    'fur_leg': lambda ctx: coat(ctx, 0.64, 1, 5),
+    'fur_dark': lambda ctx: coat(ctx, 0.1, 1, 6),
+    'belly': lambda ctx: coat(ctx, 0.84, 1, 7),
     'claw': lambda ctx: ramp(CLAW, 0.3 + (1 - ctx['lp'][2]) * 0.5 + SH[ctx['face']]),
     'tongue': lambda ctx: ramp(MOUTH, 0.5 + fbm(ctx['p'][0] * 0.8, 0, ctx['p'][2] * 0.8, 2) * 0.5 + SH[ctx['face']]),
 }
@@ -277,7 +304,7 @@ def build_anims():
 
     def bristle(a, ks):
         """Hackles and ruff stand up by scaling from their roots: ks = (time, amount 0..1, easing)."""
-        K(a, 'hackles', [(t, V(1, 1 + 0.7 * k, 1), e) for t, k, e in ks], 'scale')
+        K(a, 'hackles', [(t, V(1, 1 + 0.45 * k, 1), e) for t, k, e in ks], 'scale')
         K(a, 'ruff', [(t, V(1 + 0.14 * k, 1 + 0.1 * k, 1), e) for t, k, e in ks], 'scale')
 
     # --- idle: watchful; slow look around, ears turning, tail and hackles stirring, a slow pant

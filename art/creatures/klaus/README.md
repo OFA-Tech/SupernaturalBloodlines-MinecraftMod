@@ -11,7 +11,7 @@ loader and preview scripts). Assets only: no Java, no dependency changes. Source
 | Glow mask | `textures/entity/boss/klaus_hybrid_geo_glowmask.png` (the golden irises only, for `AutoGlowingGeoLayer`) |
 | Blockbench | `art/blockbench/creatures/klaus_hybrid.bbmodel` |
 | Previews | `art/previews/creatures/klaus_hybrid_*.png` |
-| Size | 123 cubes, 27 bones, 256x128; 2.1 blocks to the ear tips, 1.5 at the shoulder, 0.9 wide, 4 long with the tail |
+| Size | 114 cubes, 27 bones, 256x128; 2.1 blocks to the ear tips, 1.5 at the shoulder, 0.9 wide, 4 long with the tail |
 
 All paths under `src/main/resources/assets/supernaturalbloodlines/`. Facing is -Z, left is +X, paws on y=0.
 `geckolib_validate_model` (with animations): valid, 0 errors. Its only warning is a missing mod ID, which the exported files do not need.
@@ -40,11 +40,14 @@ entity's speed to that. `death` moves `root`, so the entity must not add its own
 
 ## Decisions
 - **A real wolf, not a monster.** The wiki describes wolf forms as natural wolves, only larger and more feral. Long legs, deep chest,
-  tucked waist, low tail; the hybrid shows in the face.
+  tucked waist, thick ruff, bushy low tail; the hybrid shows in the face.
 - **Hybrid face.** Golden iris on a black sclera, slanted angry; two upper fangs a side (the long vampire fang, a shorter wolf fang
-  behind it); black veins on bare skin under each eye.
-- **Coat.** Near-black with a brown cast; see the colour decision in `REFERENCES.md`. This differs from the tan flat texture
-  `klaus_hybrid.png`, which is left untouched.
+  behind it); black veins running down the face fur under each eye.
+- **Coat.** Ash-brown and grizzled, from the owner's show still ("pretty much like his hair colour, but brownish"): cream-tan face,
+  cheeks, neck ruff, chest and belly; a darker saddle, muzzle top, ear tips and tail tip. How each colour was derived is in
+  `REFERENCES.md`. The flat texture `klaus_hybrid.png` is left untouched.
+- **Fur, not spikes.** The hackles and nape are overlapping slabs of long fur lying back along the spine; the neck ruff is two
+  overlapping locks a side. They swell when the wolf bristles (bite, howl, the flinch of death) and lie low otherwise.
 
 ## Rebuilding
 `python art/creatures/klaus/tools/klaus.py <repo>` writes geo, texture, glow mask and animations (Python 3 + Pillow, uses
