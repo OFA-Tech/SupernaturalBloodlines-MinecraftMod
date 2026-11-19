@@ -106,6 +106,7 @@ public final class BloodMoonPathPage implements HubPageView {
         var view = AlmanacEvents.view(f);
         int step = AlmanacEvents.step(view, 10, 8);
         int day = 0;
+        AlmanacEvents.link(f, x, y, step, 8);
         for (int p : HubAlmanac.phases(phase, HubAlmanac.ROW)) {
             KitDraw.icon(f.g, Icons.moon(p), x, y, 8, p == 0 ? 0xFFffd36b : t.muted());
             AlmanacEvents.ring(f, view, day++, x, y, 8);

@@ -42,6 +42,17 @@ public final class HubDev {
         return handsFull;
     }
 
+    private static volatile net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar.Night night;
+
+    /** {@code .night=full_moon|blood_moon|eclipse}: what tonight is in the pictures, whatever the dev world's clock says (null: the real answer). */
+    static void night(net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar.Night value) {
+        night = value;
+    }
+
+    public static net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar.Night night() {
+        return night;
+    }
+
     /** Replaces the hub's view of the player with demo data (a client view only; nothing is sent or changed on the server). */
     static void view(UnaryOperator<HubView> override) {
         view = override;

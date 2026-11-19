@@ -54,6 +54,19 @@ final class AlmanacEvents {
         return HubAlmanac.step(base, iconSize, !view.byDay().isEmpty());
     }
 
+    /**
+     * The whole row of moons is a door to the moon calendar (R140): registered before the rings, so a ring's tooltip wins the hover while the click
+     * (the rings have no action) still reaches this one. {@code step} is the distance between icons, {@code size} their size.
+     */
+    static void link(HubScreen.Frame f, int x, int y, int step, int size) {
+        int reach = HubAlmanac.RING_REACH;
+        Rect row = new Rect(x - reach, y - reach, step * HubAlmanac.ROW, size + 2 * reach);
+        f.target("lunar:calendar", row, List.of(Component.translatable(KEY + "calendar_open")), () -> f.screen().openMoon());
+        if (f.focused("lunar:calendar")) {
+            f.theme().drawFocus(f.g, row);
+        }
+    }
+
     /** A ring round the moon icon of day {@code day} ({@code size} wide at {@code x}, {@code y}), with the event line as its tooltip: the event's colour, or the theme's accent when that colour would not stand out from the page. */
     static void ring(HubScreen.Frame f, LunarMoodClient.View view, int day, int x, int y, int size) {
         view.onDay(day).ifPresent(e -> {

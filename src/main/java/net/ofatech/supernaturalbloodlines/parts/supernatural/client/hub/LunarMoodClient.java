@@ -20,8 +20,17 @@ public final class LunarMoodClient {
     static final int REFRESH_TICKS = 20;
 
     /** What the almanac draws: the events of the row by day (the rings), the lines to write, and whether there is anything at all. */
-    public record View(Map<Integer, LunarSource.Upcoming> byDay, List<LunarSource.Upcoming> lines) {
-        static final View NONE = new View(Map.of(), List.of());
+    public record View(Map<Integer, LunarSource.Upcoming> byDay, List<LunarSource.Upcoming> lines, Map<Integer, LunarSource.Upcoming> calendar) {
+        static final View NONE = new View(Map.of(), List.of(), Map.of());
+
+        public View(Map<Integer, LunarSource.Upcoming> byDay, List<LunarSource.Upcoming> lines) {
+            this(byDay, lines, Map.of());
+        }
+
+        /** The event of a day of the 16-day moon calendar (R140). */
+        public Optional<LunarSource.Upcoming> onCalendarDay(int day) {
+            return Optional.ofNullable(calendar.get(day));
+        }
 
         public boolean isEmpty() {
             return lines.isEmpty();
@@ -64,6 +73,6 @@ public final class LunarMoodClient {
                 byDay.putIfAbsent(e.days(), e);
             }
         }
-        return new View(Map.copyOf(byDay), HubAlmanac.listed(events));
+        return new View(Map.copyOf(byDay), HubAlmanac.listed(events), HubAlmanac.calendarEvents(events));
     }
 }

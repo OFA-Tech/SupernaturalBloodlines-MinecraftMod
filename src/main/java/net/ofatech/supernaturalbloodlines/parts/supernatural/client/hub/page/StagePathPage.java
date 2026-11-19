@@ -118,6 +118,7 @@ public final class StagePathPage implements HubPageView {
         int fullH = f.font().split(PathActions.almanacLine(phase), fullMoonWidth(step, box.w())).size() * PageKit.LINE;
         int y = view.isEmpty() && fullH <= PageKit.LINE ? box.y() + (box.h() - 8) / 2 : box.y() + 7;
         int day = 0;
+        AlmanacEvents.link(f, x, y, step, 8);
         for (int p : HubAlmanac.phases(phase, HubAlmanac.ROW)) {
             KitDraw.icon(f.g, Icons.moon(p), x, y, 8, p == 0 ? 0xFFffd36b : t.muted());
             AlmanacEvents.ring(f, view, day++, x, y, 8);

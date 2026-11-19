@@ -137,6 +137,10 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> PENDING_WILD =
             ATTACHMENTS.register("pending_wild", () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL).build());
 
+    /** The overworld day time at which this player's werewolf gene awakens (R142); 0 when nothing waits. Kept through death. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Long>> PENDING_AWAKENING =
+            ATTACHMENTS.register("pending_awakening", () -> AttachmentType.builder(() -> 0L).serialize(Codec.LONG).copyOnDeath().build());
+
     /** The discount a compelled villager gives, until it runs out; see {@link VillagerDiscount}. Use {@code hasData}. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<VillagerDiscount>> VILLAGER_DISCOUNT =
             ATTACHMENTS.register("villager_discount", () -> AttachmentType.builder(() -> new VillagerDiscount(Util.NIL_UUID, 0, 0))

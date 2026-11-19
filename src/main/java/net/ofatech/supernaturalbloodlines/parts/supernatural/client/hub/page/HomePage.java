@@ -320,7 +320,25 @@ public final class HomePage implements HubPageView {
         Component now = days == 0 ? Component.translatable(KEY + "full_moon") : Component.translatable(KEY + "moon_in", days);
         int tx = s.x() + d + 6;
         int ny = PageKit.wrapped(f, now, tx, y + 2, s.right() - tx, t.ink());
-        return Math.max(ny, y + 2 + d + 2);
+        y = Math.max(ny, y + 2 + d + 2);
+        // R140: what tonight is, what the rules say to this player, and the way to the calendar
+        var night = MoonPage.tonight(f.view.player().level());
+        if (night != net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar.Night.NONE) {
+            y = PageKit.wrapped(f, Component.translatable(MoonPage.KEY + "night." + night.name().toLowerCase(Locale.ROOT)), s.x(), y, s.w(), t.ink());
+        }
+        var flags = f.view.snapshot().world();
+        boolean fullNight = night == net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar.Night.FULL_MOON
+                || night == net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar.Night.ECLIPSE;
+        if (fullNight && flags.sleepRule()) {
+            y = PageKit.wrapped(f, Component.translatable(MoonPage.KEY + "no_sleep"), s.x(), y, s.w(), t.ink());
+        }
+        if (flags.awakeningPending()) {
+            y = PageKit.wrapped(f, Component.translatable(MoonPage.KEY + "stirs"), s.x(), y, s.w(), t.ink());
+        }
+        Component label = Component.translatable(KEY + "open_moon");
+        Rect b = new Rect(s.x(), y + 2, Math.min(s.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
+        PageWidgets.button(f, "stage:home:moon", b, label, true, false, null, f.screen()::openMoon);
+        return b.bottom() + 2;
     }
 
     /** What the viewer can do now, each with a button; one that does not apply is off and says why. */

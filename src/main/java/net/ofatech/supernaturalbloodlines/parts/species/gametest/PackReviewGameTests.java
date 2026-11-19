@@ -957,6 +957,7 @@ public final class PackReviewGameTests {
         ServerPlayer carrier2 = human(helper, 7.5);
         online(leader, killer, mate, stranger, carrier, carrierMate, carrier2);
         PackIndex index = PackIndex.get(helper.getLevel());
+        net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.overrideDelayedAwakeningNights(0); // R142 delays the awakening by default
         try {
             helper.assertTrue(join(leader, mate) && join(leader, carrier) && join(leader, carrierMate), "the Packmates could not join");
             kill(killer, mate);
@@ -972,6 +973,7 @@ public final class PackReviewGameTests {
             kill(carrier2, stranger);
             helper.assertTrue(state(carrier2).lineage() != Lineage.NONE, "the control kill no longer awakens the gene");
         } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.overrideDelayedAwakeningNights(null);
             clean(helper, leader, killer, mate, stranger, carrier, carrierMate, carrier2);
         }
         helper.succeed();

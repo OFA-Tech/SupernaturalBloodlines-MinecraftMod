@@ -113,10 +113,10 @@ public final class DevShots {
             HubClientConfig.ThemeId.valueOf(theme.toUpperCase(Locale.ROOT)); // a look that does not exist is a bad flag now, not a crash in the middle of the run
             List<HubPage> pages = new ArrayList<>();
             String variant = null;
-            if (parts.length > 1 && (parts[1].toLowerCase(Locale.ROOT).startsWith("profile") || parts[1].equalsIgnoreCase("true_alpha_dialog") || parts[1].equalsIgnoreCase("pack_invite") || parts[1].toLowerCase(Locale.ROOT).startsWith("admin_"))) {
+            if (parts.length > 1 && (parts[1].toLowerCase(Locale.ROOT).startsWith("profile") || parts[1].equalsIgnoreCase("true_alpha_dialog") || parts[1].equalsIgnoreCase("pack_invite") || parts[1].equalsIgnoreCase("moon") || parts[1].toLowerCase(Locale.ROOT).startsWith("admin_"))) {
                 // a route or a section of a page: profile, profile_beta, profile_stranger, profile_op, admin_debug, admin_speciesTensura, admin_search_max ...
                 variant = parts[1].toLowerCase(Locale.ROOT).equals(parts[1]) ? parts[1] : parts[1];
-                pages.add(variant.startsWith("admin_") ? HubPage.ADMIN : HubPage.PACK);
+                pages.add(variant.startsWith("admin_") ? HubPage.ADMIN : variant.equals("moon") ? HubPage.PATH : HubPage.PACK);
             } else if (parts.length > 1 && parts[1].toLowerCase(Locale.ROOT).startsWith("line_")) {
                 // the Bloodline page in one line state: line_original, line_none, line_unknown, line_inline, line_inline_unknown, line_free, line_free_unknown
                 variant = parts[1].toLowerCase(Locale.ROOT);
@@ -143,6 +143,10 @@ public final class DevShots {
             HubDev.handsFull(true);
         }
         HubDev.noTensura(Boolean.getBoolean(PROPERTY + ".noTensura"));
+        String night = System.getProperty(PROPERTY + ".night");
+        if (night != null && !night.isBlank()) {
+            HubDev.night(net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar.Night.valueOf(night.trim().toUpperCase(Locale.ROOT)));
+        }
         HubDev.quiet(true);
         NeoForge.EVENT_BUS.addListener(d::tick);
         SupernaturalBloodlines.LOGGER.warn("DEVSHOTS on: {} shots queued (development only)", shots.size());

@@ -130,6 +130,7 @@ public final class WerewolfPackGameTests {
     public static void geneAwakensOnVillagerKill(GameTestHelper helper) {
         ServerPlayer killer = withGene(TestPlayers.createMortal(helper), Species.NONE);
         ServerPlayer playerKiller = withGene(TestPlayers.createMortal(helper), Species.NONE);
+        SpeciesConfig.overrideDelayedAwakeningNights(0); // R142 delays the awakening by default; MoonWerewolfGameTests covers that
         try {
             Villager v = villager(helper);
             v.hurt(killer.damageSources().playerAttack(killer), 1000f); // a real death, not a posted event
@@ -141,6 +142,7 @@ public final class WerewolfPackGameTests {
             kill(playerKiller, TestPlayers.createMortal(helper));
             assertBornOmega(helper, playerKiller);
         } finally {
+            SpeciesConfig.overrideDelayedAwakeningNights(null);
             reset(killer);
             reset(playerKiller);
         }

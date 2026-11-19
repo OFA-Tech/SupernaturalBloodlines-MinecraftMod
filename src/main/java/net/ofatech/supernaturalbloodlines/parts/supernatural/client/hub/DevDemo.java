@@ -174,7 +174,7 @@ final class DevDemo {
         List<HubSocial.Person> people = new ArrayList<>(List.of(new HubSocial.Person("Klaus", id("Klaus"))));
         family.sired().forEach(n -> people.add(new HubSocial.Person(n, id(n))));
         HubSnapshotPayload snap = new HubSnapshotPayload(family, pack, 2, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),
-                rites, people);
+                rites, people, new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(true, true));
         // one person, everywhere: Dev is the hybrid werewolf who leads the demo pack as an Alpha with a bitten-then-born line
         var wolf = v.bloodline().wolf().toBuilder().lineage(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.BORN)
                 .rank(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.ALPHA).sparks(1).build();

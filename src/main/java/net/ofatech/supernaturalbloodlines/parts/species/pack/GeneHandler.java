@@ -19,6 +19,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackOutcome;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.GeneAwakening;
+import net.ofatech.supernaturalbloodlines.parts.species.moon.DelayedAwakening;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.werewolves.WerewolfFaction;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +71,12 @@ public final class GeneHandler {
                 || FactionRiteFactory.baseFaction(VampirismAPI.factionPlayerHandler(killer)) != BaseFaction.NONE) {
             return;
         }
-        awakenHuman(killer, PackEvent.GENE_AWAKENED);
+        // R142: the awakening comes at a later dusk; 0 nights is at once
+        if (SpeciesConfig.delayedAwakeningNights() > 0) {
+            DelayedAwakening.queue(killer);
+        } else {
+            awakenHuman(killer, PackEvent.GENE_AWAKENED);
+        }
     }
 
     /**

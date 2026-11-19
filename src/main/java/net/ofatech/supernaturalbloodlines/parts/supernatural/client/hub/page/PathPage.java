@@ -117,6 +117,7 @@ public final class PathPage implements HubPageView {
         int lift = view.byDay().isEmpty() ? 0 : 4; // room for the rings above and below the moons
         int step = AlmanacEvents.step(view, 14, 12);
         int day = 0;
+        AlmanacEvents.link(f, x, y + PageKit.LINE + lift, step, 12);
         for (int p : HubAlmanac.phases(phase, HubAlmanac.ROW)) {
             KitDraw.icon(f.g, Icons.moon(p), x, y + PageKit.LINE + lift, 12, p == 0 ? 0xFFB8860B : t.ink());
             AlmanacEvents.ring(f, view, day++, x, y + PageKit.LINE + lift, 12);

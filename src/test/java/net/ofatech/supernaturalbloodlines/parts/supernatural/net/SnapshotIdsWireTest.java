@@ -31,5 +31,27 @@ class SnapshotIdsWireTest {
         assertEquals(s.rites(), back.rites(), "rites");
         assertEquals(s, back);
     }
+
+    @Test
+    void theWorldNowFlagsSurviveTheWireInEveryCombination() {
+        for (boolean sleep : new boolean[] {false, true}) {
+            for (boolean stirs : new boolean[] {false, true}) {
+                HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of(), List.of(),
+                        new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(sleep, stirs));
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                HubSnapshotPayload.STREAM_CODEC.encode(buf, s);
+                HubSnapshotPayload back = HubSnapshotPayload.STREAM_CODEC.decode(buf);
+                assertEquals(sleep, back.world().sleepRule(), "sleep rule " + sleep + "/" + stirs);
+                assertEquals(stirs, back.world().awakeningPending(), "pending " + sleep + "/" + stirs);
+                assertEquals(0, buf.readableBytes(), "nothing left on the wire");
+            }
+        }
+    }
+
+    @Test
+    void aSnapshotBuiltWithoutTheFlagsSaysNeither() {
+        HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of());
+        assertEquals(net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.NONE, s.world());
+    }
 }
 
