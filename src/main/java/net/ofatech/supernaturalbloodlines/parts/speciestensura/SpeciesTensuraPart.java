@@ -45,10 +45,12 @@ public final class SpeciesTensuraPart {
         SpeciesLayer.register();
         if (ModList.get().isLoaded("werewolves")) {
             RankSkills.register();
+            NpcSubordinates.register();
             net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexFallback.register();
         }
         GhoulRace.register();
         SubordinateLink.register();
+        NpcSubordinates.register();
         SireNaming.register();
         // the part is only initialised when its mods are present, so the tests only exist then
         modBus.addListener((RegisterGameTestsEvent e) -> {

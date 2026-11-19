@@ -121,4 +121,30 @@ public final class NpcCommands {
         return NpcMembers.ofPack(sender.serverLevel(), packs.pack(sender.getUUID())).stream()
                 .map(e -> (Component) Component.translatable(KEY + "list_row", e.token(), e.name(), Component.translatable(KEY + "source." + e.source().name().toLowerCase(java.util.Locale.ROOT)))).toList();
     }
+
+    /** Every member of every pack, for an operator: one line each with its owner (the ledger's owner id when the player is not online). */
+    public static List<Component> listAll(net.minecraft.server.MinecraftServer server) {
+        return NpcIndex.get(server.overworld()).all().stream().map(e -> {
+            ServerPlayer o = server.getPlayerList().getPlayer(e.owner());
+            return (Component) Component.translatable(KEY + "list_all_row", e.token(), e.name(), Component.translatable(KEY + "source." + e.source().name().toLowerCase(java.util.Locale.ROOT)),
+                    o != null ? o.getName().getString() : e.owner().toString());
+        }).toList();
+    }
+
+    /** Releases every Brother of a player and takes the bond off every Tensura subordinate they gave a place; returns how many. */
+    public static int releaseAllOf(net.minecraft.server.MinecraftServer server, java.util.UUID owner) {
+        int n = 0;
+        for (NpcIndex.Entry e : NpcIndex.get(server.overworld()).ownedBy(owner)) {
+            Optional<Mob> mob = NpcMembers.live(server, e.npc());
+            if (mob.isPresent() && e.source() == NpcBond.Source.BROTHER) {
+                NpcMembers.release(mob.get());
+            } else if (mob.isPresent()) {
+                NpcMembers.unbind(mob.get());
+            } else {
+                NpcIndex.get(server.overworld()).remove(e.npc());
+            }
+            n++;
+        }
+        return n;
+    }
 }
