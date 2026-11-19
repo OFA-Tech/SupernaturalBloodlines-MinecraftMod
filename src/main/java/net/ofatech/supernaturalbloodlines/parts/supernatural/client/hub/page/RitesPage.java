@@ -29,12 +29,16 @@ public final class RitesPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "rites.";
 
     @Nullable
-    private String selected = devSelected;
+    private String selected;
     private static String devSelected;
 
     /** Development only (the dev screenshots): the rite the next Rites page starts on. */
     public static void devSelect(String id) {
         devSelected = id;
+    }
+
+    static String devSelected() {
+        return devSelected;
     }
 
     @Override
@@ -44,7 +48,7 @@ public final class RitesPage implements HubPageView {
         f.view.ladders().forEach(l -> l.tasks().stream().filter(RitesPage::isRite).forEach(tasks::add));
         Set<String> asked = HubRites.fromLadders(LadderTable.clientCopy(), f.view.races());
         List<HubRites.Listed> rites = HubRites.list(f.view.snapshot().rites(), f.view.races(), asked);
-        HubRites.Listed chosen = rites.stream().filter(l -> l.rite().id().equals(selected)).findFirst().orElse(rites.isEmpty() ? null : rites.get(0));
+        HubRites.Listed chosen = rites.stream().filter(l -> l.rite().id().equals(selected != null ? selected : devSelected)).findFirst().orElse(rites.isEmpty() ? null : rites.get(0));
 
         Rect r = f.region(HubLayout.MAIN);
         int y = f.begin(HubLayout.MAIN);

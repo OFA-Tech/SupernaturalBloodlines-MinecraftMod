@@ -330,7 +330,8 @@ tasks.register('prepareSafeShots') {
     doLast {
         new File(dir, 'config').mkdirs()
         new File(dir, 'config/fml.toml').text = 'earlyWindowControl = false\n'
-        def want = [enableVsync: 'false', pauseOnLostFocus: 'false', fullscreen: 'false', maxFps: '60']
+        // onboardAccessibility: a fresh game dir would stop on the accessibility screen and never reach the title screen the shots wait for
+        def want = [enableVsync: 'false', pauseOnLostFocus: 'false', fullscreen: 'false', maxFps: '60', onboardAccessibility: 'false']
         def options = new File(dir, 'options.txt')
         def kept = options.exists() ? options.readLines().findAll { l -> !want.keySet().any { l.startsWith(it + ':') } } : []
         options.text = (kept + want.collect { k, v -> "$k:$v".toString() }).join('\n') + '\n'

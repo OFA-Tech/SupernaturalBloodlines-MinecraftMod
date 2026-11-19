@@ -44,7 +44,7 @@ public final class StageRitesPage implements HubPageView {
         HubTheme t = f.theme();
         Set<String> asked = HubRites.fromLadders(LadderTable.clientCopy(), f.view.races());
         List<HubRites.Listed> rites = HubRites.list(f.view.snapshot().rites(), f.view.races(), asked);
-        HubRites.Listed chosen = rites.stream().filter(l -> l.rite().id().equals(selected)).findFirst().orElse(rites.isEmpty() ? null : rites.get(0));
+        HubRites.Listed chosen = rites.stream().filter(l -> l.rite().id().equals(selected != null ? selected : RitesPage.devSelected())).findFirst().orElse(rites.isEmpty() ? null : rites.get(0));
 
         BookKit.moonHead(f, Component.translatable(KEY + "title"), Component.translatable(BOOK + "subtitle_short"));
         Rect s = f.region(BookKit.FULL);
