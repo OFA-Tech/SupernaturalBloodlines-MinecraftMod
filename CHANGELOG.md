@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased (plan 15d: NPC pack members)
+
+### Upgrading
+- **New rite, the Werewolf Brother** (`npc_recruit_enabled`, default on; needs Werewolves). Any werewolf may call a wild werewolf beast that stands in a small circle and has been wounded to half its health or less (never an Alpha, a trial boss or a wolf that already has a pack). **2 Brothers per player, 6 per pack** (`max_npc_members_per_player`, `max_npc_members_per_pack`). A Brother has Follow, Guard and Rest, can hunt on quiet nights (`npc_hunt_trips`) and tidy a chest (`npc_chest_sort`), counts as half a Beta toward the pack bonus (`npc_weight_brother`, its share of the bonus capped by `npc_bonus_share`), gets the pack's Regeneration, Roar and protection, and **never takes a spark**. A Brother keeps its bond and rests where it stands while its owner is offline or dead.
+- **With Tensura (`species_tensura`):** the subordinates of every pack member (a Brother's too, one step only) join the pack as members, keep Tensura's own orders, and count `npc_weight_tensura` (default 0.25) each, up to `max_tensura_members_per_pack` (6). `tensura_subordinates_join = false` takes them out again; nothing else of them is touched.
+- A pack's own Guards and its allies never attack each other.
+- **The network protocol is now 4**: the hub snapshot carries the pack's wolves. A client on 3 and a server on 4 (or the other way round) will not exchange hub data; update both.
+- Saves are read as before: a mob's `npc_bond` and the `supernaturalbloodlines_npc_index` file are new and optional.
+- **Rolling back:** a Brother stays a plain wolf (its name tag stays) and its bond and the ledger are ignored. **A Brother that loads while the mod is rolled back (or while the part is off) loses its bond** the next time it is loaded with the update, so release the rows of your Brothers (Pack page, Release) before you go back; the ledger heals itself on the update (an entry for a wolf with no bond is removed, a bond with no entry is written again).
+- **Brothers and containers:** a Brother only tidies and fills a plain chest, trapped chest or barrel that its owner could open (a claim or any protection mod that cancels the owner's right click on it keeps it out), never a furnace, hopper, shulker box or machine, and never drops what does not fit: leftovers stay where the animal fell. It does not hunt or tidy while its owner is offline.
+- **Who may do what:** the pack's leader may give another member's Brother orders and toggle Hunt and Sort; only the owner releases it.
+- **A wolf that transforms** (the Werewolves mod swaps the wolf and the human form for a new entity) keeps its bond, token and name; a Brother that leaves the world in any other way (discarded by another mod, `/kill`-like removal that is not a death) is forgotten and its owner told.
+- **Chest checks need the owner near:** the "may its owner open it" check is made only while the owner is in the Brother's dimension and within 64 blocks of its post; otherwise the Brother stores and sorts nothing. A Brother loaded with a bond but no ledger entry (a wolf freed while unloaded, or a damaged save) is freed.
+- **Over the cap:** when a player joins a pack and it goes over 6 Brothers, the newest rest where they stand and count for nothing until room is made.
+
+### Added
+- Pack page: a "Pack wolves" section (rows, an inline profile for the chosen one, orders, Hunt, Sort, Release, Recruit). Admin > Debug: list the pack wolves, release a player's. 11 new settings in Admin > Species and 2 in Admin > Species and Tensura.
+
 ## Unreleased (plan 15c: the Alpha Trial)
 
 ### Upgrading

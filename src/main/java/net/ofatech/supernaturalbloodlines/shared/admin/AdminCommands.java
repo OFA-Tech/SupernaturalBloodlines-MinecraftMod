@@ -130,7 +130,12 @@ public final class AdminCommands {
             row("P17", "pack protect off confirm", 0, Ui.HUB_BUTTON, "PACK"),
             row("P19", "pack surge", 0, Ui.HUB_BUTTON, "PACK"),
             row("P20", "pack spirits", 0, Ui.HUB_BUTTON, "PACK"),
-        new Row("P18", "pack protect off", 0, Ui.CHAT_ONLY, "only a reminder to add confirm: the hub asks first and then runs P17", "PACK"),
+            row("P21", "pack npc order <npc> <order>", 0, Ui.HUB_BUTTON, "PACK"),
+            row("P22", "pack npc hunt <npc>", 0, Ui.HUB_BUTTON, "PACK"),
+            row("P23", "pack npc sort <npc>", 0, Ui.HUB_BUTTON, "PACK"),
+            row("P24", "pack npc release <npc>", 0, Ui.HUB_BUTTON, "PACK"),
+            new Row("P25", "pack npc list", 0, Ui.CHAT_ONLY, "the Pack page lists the wolves as rows; the command only prints the same list in chat", "PACK"),
+            new Row("P18", "pack protect off", 0, Ui.CHAT_ONLY, "only a reminder to add confirm: the hub asks first and then runs P17", "PACK"),
             row("D1", ROOT + " get <player>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D2", ROOT + " set <player> <species>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D3", ROOT + " event <player> <event>", 2, Ui.ADMIN_ACTION, "ADMIN"),
@@ -141,7 +146,9 @@ public final class AdminCommands {
             row("D8", ROOT + " supernatural <player> rung <race> <n>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D9", ROOT + " eclipse start", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D10", ROOT + " eclipse stop", 2, Ui.ADMIN_ACTION, "ADMIN"),
-            row("D11", ROOT + " npcpack", 2, Ui.ADMIN_ACTION, "ADMIN"));
+            row("D11", ROOT + " npcpack", 2, Ui.ADMIN_ACTION, "ADMIN"),
+            row("D12", ROOT + " npcs list", 2, Ui.ADMIN_ACTION, "ADMIN"),
+            row("D13", ROOT + " npcs release <player>", 2, Ui.ADMIN_ACTION, "ADMIN"));
 
     private AdminCommands() {}
 

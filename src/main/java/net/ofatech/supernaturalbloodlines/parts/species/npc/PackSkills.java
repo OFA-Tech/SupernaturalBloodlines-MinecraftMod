@@ -85,6 +85,12 @@ public final class PackSkills {
                 member.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 900, 0));
             }
         }
+        for (net.minecraft.world.entity.Mob member : NpcMembers.near(p, PackSkillRules.SURGE_RANGE)) {
+            member.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 400, 1));
+            member.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 600, 1));
+            member.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 900, 0));
+            member.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 900, 0));
+        }
         // the price: it is paid by whoever called it
         p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, PackSkillRules.SURGE_AFTER_TICKS, 0));
         p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, PackSkillRules.SURGE_AFTER_TICKS, 0));

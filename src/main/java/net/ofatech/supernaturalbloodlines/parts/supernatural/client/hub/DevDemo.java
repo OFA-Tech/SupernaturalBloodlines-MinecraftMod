@@ -163,9 +163,7 @@ final class DevDemo {
                 : List.of(new HubSocial.Member(me, "alpha", true, Optional.of(v.player().getUUID())), new HubSocial.Member("Derek", "coalpha", true, Optional.of(id("Derek"))),
                 new HubSocial.Member("Liam", "beta", true, Optional.of(id("Liam"))),
                 new HubSocial.Member("Malia", "beta", false, Optional.of(id("Malia"))), new HubSocial.Member("Isaac", "beta", true, Optional.of(id("Isaac"))), new HubSocial.Member("Deaton", "emissary", true, Optional.of(id("Deaton"))),
-                new HubSocial.Member("Stiles", "packmate", true, Optional.of(id("Stiles"))), new HubSocial.Member("Lydia", "packmate", false, Optional.of(id("Lydia"))), new HubSocial.Member("Scott", "ally", true, Optional.of(id("Scott"))),
-                // brothers and NPCs are plan 15's ranks, not sent yet: shown here so the ring's colours can be seen
-                new HubSocial.Member("Ashen", "brother", true), new HubSocial.Member("Slime", "npc", true), new HubSocial.Member("Goblin", "npc", true));
+                new HubSocial.Member("Stiles", "packmate", true, Optional.of(id("Stiles"))), new HubSocial.Member("Lydia", "packmate", false, Optional.of(id("Lydia"))), new HubSocial.Member("Scott", "ally", true, Optional.of(id("Scott"))));
         HubSnapshotPayload.Family family = new HubSnapshotPayload.Family(Optional.of("Klaus"), false, List.of("Tyler", "Ana", "Bo", "Cy", "Di"),
                 List.of("Mikael"), List.of(new HubSocial.Kin("Tyler", 0), new HubSocial.Kin("Ana", 0), new HubSocial.Kin("Bo", 0), new HubSocial.Kin("Cy", 0),
                         new HubSocial.Kin("Di", 0)), HubSocial.Origin.NONE);
@@ -175,10 +173,14 @@ final class DevDemo {
             rites.add(new HubSocial.Rite(HubRites.TRIAL, 12000, List.of("1 supernaturalbloodlines:moonstone", "1 werewolves:silver_ingot", "8 minecraft:bone"),
                     List.of("enchanted:medium_circle"), "supernaturalbloodlines:alpha_trial", "werewolf"));
         }
+        if (rites.stream().noneMatch(r -> r.id().equals("supernaturalbloodlines:werewolf_brother"))) {
+            rites.add(new HubSocial.Rite("supernaturalbloodlines:werewolf_brother", 6000, List.of("1 supernaturalbloodlines:moonstone", "1 minecraft:beef", "1 werewolves:silver_nugget"),
+                    List.of("enchanted:small_circle"), "supernaturalbloodlines:werewolf_brother", "werewolf"));
+        }
         List<HubSocial.Person> people = new ArrayList<>(List.of(new HubSocial.Person("Klaus", id("Klaus"))));
         family.sired().forEach(n -> people.add(new HubSocial.Person(n, id(n))));
         HubSnapshotPayload snap = new HubSnapshotPayload(family, pack, 2, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),
-                rites, people, new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(true, true));
+                rites, people, new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(true, true), npcs());
         // one person, everywhere: Dev is the hybrid werewolf who leads the demo pack as an Alpha with a bitten-then-born line
         var wolf = v.bloodline().wolf().toBuilder().lineage(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.BORN)
                 .rank("beta".equals(System.getProperty("supernaturalbloodlines.devshots.demo.rank")) ? net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.BETA
@@ -188,5 +190,14 @@ final class DevDemo {
         List<SupernaturalRace> races = "beta".equals(System.getProperty("supernaturalbloodlines.devshots.demo.rank")) ? List.of(SupernaturalRace.WEREWOLF) : v.races();
         return new HubView(v.player(), dev, s, races, HubModel.ladders(LadderTable.clientCopy(), s, races, HubView.levels(v.player())), v.skills(), snap,
                 v.context().withOp(true).withPack(true));
+    }
+
+    /** The pack's wolves of the demo: two Brothers of the viewer (one hunting, one following), a Tensura subordinate, and a Brother of another member that the viewer may only look at. */
+    private static List<HubSocial.Npc> npcs() {
+        return List.of(
+                new HubSocial.Npc(1, "Ashen", "werewolves:werewolf_beast", "brother", "guard", true, true, true, 12, 80, 4, "Dev", true, true, 50),
+                new HubSocial.Npc(2, "Ember", "werewolves:werewolf_beast", "brother", "follow", false, false, true, 3, 45, 1, "Dev", true, true, 50),
+                new HubSocial.Npc(3, "Rimuru's Wolf", "tensura:direwolf", "subordinate", "", false, false, true, 7, 100, 2, "Liam", true, false, 25),
+                new HubSocial.Npc(4, "Pale", "werewolves:werewolf_beast", "brother", "rest", false, false, true, 20, 70, 3, "Derek", true, false, 50));
     }
 }

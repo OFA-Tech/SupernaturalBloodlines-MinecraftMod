@@ -22,6 +22,10 @@ public final class SpeciesTensuraConfig {
     private static final ModConfigSpec.BooleanValue APEX_ENABLED;
     private static final ModConfigSpec.DoubleValue EVOLUTION_MULTIPLIER;
     private static final ModConfigSpec.BooleanValue SIRE_LINK;
+    private static final ModConfigSpec.BooleanValue SUBORDINATES_JOIN;
+    private static final ModConfigSpec.IntValue MAX_TENSURA_MEMBERS;
+    private static volatile Boolean subordinatesJoinOverride;
+    private static volatile Integer maxTensuraMembersOverride;
     private static final ModConfigSpec.BooleanValue SIRE_NAMING;
     private static final ModConfigSpec.BooleanValue SEVERANCE_CLEARS_NAME;
     private static final ModConfigSpec.BooleanValue RESIRE_NAMING_REWARD;
@@ -107,6 +111,10 @@ public final class SpeciesTensuraConfig {
                         "It speeds up EP gain only: the evolution requirements and their progress are Tensura's own. The old name says 'progress' because it used to scale the progress; the key is kept so existing configs keep their value.",
                         "Applied as a modifier on Tensura's aura and magicule gain attributes, refreshed within 10 seconds of a change.")
                 .defineInRange("evolution_progress_multiplier", 1.25, 1.0, 10.0);
+        SUBORDINATES_JOIN = b.comment("R149: a Tensura subordinate of a pack member (or of a member's recruited wolf) is itself a member of the pack: it keeps Tensura's own orders, gets the pack's Regeneration, Roar and protection, and counts for a fraction toward the pack bonus. Off: none join, and those that did are released.")
+                .define("tensura_subordinates_join", true);
+        MAX_TENSURA_MEMBERS = b.comment("Most Tensura subordinates one whole pack counts as members.")
+                .defineInRange("max_tensura_members_per_pack", 6, 0, 24);
         SIRE_LINK = b.comment("A sired creature or player becomes the sire's Tensura subordinate (its permanent owner is the sire). R101.",
                         "Tensura then treats the pair as owner and subordinate: the sired cannot hurt the sire or the sire's other sired (the sire can still hurt them),",
                         "they count as allied, and a demon lord sire's harvest festival gifts them. Off: no link is made or removed.")
@@ -186,6 +194,30 @@ public final class SpeciesTensuraConfig {
     /** For tests: simulates the apex hook being off. Null goes back to the config. */
     public static void overrideApexEnabled(Boolean value) {
         apexOverride = value;
+    }
+
+    /** For tests: null goes back to the config. */
+    public static void overrideSubordinatesJoin(Boolean value) {
+        subordinatesJoinOverride = value;
+    }
+
+    /** For tests: null goes back to the config. */
+    public static void overrideMaxTensuraMembers(Integer value) {
+        maxTensuraMembersOverride = value;
+    }
+
+    public static boolean subordinatesJoin() {
+        Boolean forced = subordinatesJoinOverride;
+        return forced != null ? forced : read(SUBORDINATES_JOIN);
+    }
+
+    public static int maxTensuraMembers() {
+        Integer forced = maxTensuraMembersOverride;
+        try {
+            return forced != null ? forced : MAX_TENSURA_MEMBERS.get();
+        } catch (IllegalStateException notLoaded) {
+            return 6;
+        }
     }
 
     /** For tests: null goes back to the config. */

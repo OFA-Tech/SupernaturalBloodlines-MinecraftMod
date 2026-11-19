@@ -24,7 +24,27 @@ public final class NpcPackCommand {
         d.register(Commands.literal(SupernaturalBloodlines.MODID)
                 .requires(s -> s.hasPermission(2))
                 .then(Commands.literal("debug")
-                        .then(Commands.literal("npcpack").executes(NpcPackCommand::run))));
+                        .then(Commands.literal("npcpack").executes(NpcPackCommand::run))
+                        .then(Commands.literal("npcs")
+                                .then(Commands.literal("list").executes(c -> {
+                                    var rows = NpcCommands.listAll(c.getSource().getServer());
+                                    if (rows.isEmpty()) {
+                                        c.getSource().sendSuccess(() -> Component.translatable("supernaturalbloodlines.npc.list_none"), false);
+                                    }
+                                    rows.forEach(r -> c.getSource().sendSuccess(() -> r, false));
+                                    return Math.max(1, rows.size());
+                                }))
+                                .then(Commands.literal("release").then(Commands.argument("player", net.minecraft.commands.arguments.GameProfileArgument.gameProfile()).executes(c -> {
+                                    // a player who is not online (or never logged in since the profile cache forgot them) is named by profile, so their wolves can be freed too
+                                    var profiles = net.minecraft.commands.arguments.GameProfileArgument.getGameProfiles(c, "player");
+                                    int total = 0;
+                                    for (com.mojang.authlib.GameProfile who : profiles) {
+                                        int n = NpcCommands.releaseAllOf(c.getSource().getServer(), who.getId());
+                                        total += n;
+                                        c.getSource().sendSuccess(() -> Component.translatable("supernaturalbloodlines.npc.released_all", n, who.getName()), true);
+                                    }
+                                    return Math.max(1, total);
+                                }))))));
     }
 
     private static int run(CommandContext<CommandSourceStack> c) {

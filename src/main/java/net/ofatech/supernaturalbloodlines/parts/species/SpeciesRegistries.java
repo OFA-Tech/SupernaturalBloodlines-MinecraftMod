@@ -142,6 +142,11 @@ public final class SpeciesRegistries {
             ATTACHMENTS.register("npc_mark", () -> AttachmentType.<net.ofatech.supernaturalbloodlines.core.bloodline.NpcMark>builder(() -> net.ofatech.supernaturalbloodlines.core.bloodline.NpcMark.wild(0, 0))
                     .serialize(net.ofatech.supernaturalbloodlines.core.bloodline.NpcMark.CODEC).build());
 
+    /** Makes a mob a member of a player's pack (plan 15d, R148, R149): whose, how it came, its order. Absent on every other mob. Use {@code hasData}. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<net.ofatech.supernaturalbloodlines.core.bloodline.NpcBond>> NPC_BOND =
+            ATTACHMENTS.register("npc_bond", () -> AttachmentType.<net.ofatech.supernaturalbloodlines.core.bloodline.NpcBond>builder(() -> net.ofatech.supernaturalbloodlines.core.bloodline.NpcBond.NONE)
+                    .serialize(net.ofatech.supernaturalbloodlines.core.bloodline.NpcBond.CODEC).build());
+
     /** Marks the boss of an Alpha Trial (plan 15c, R147): the challenger, the beasts' pack id, the night, the phase and how long the challenger has been away. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<net.ofatech.supernaturalbloodlines.core.bloodline.TrialMark>> TRIAL_MARK =
             ATTACHMENTS.register("trial_mark", () -> AttachmentType.<net.ofatech.supernaturalbloodlines.core.bloodline.TrialMark>builder(() -> new net.ofatech.supernaturalbloodlines.core.bloodline.TrialMark(null, 0, 0, 0, 0))

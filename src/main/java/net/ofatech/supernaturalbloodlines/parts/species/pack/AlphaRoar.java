@@ -164,6 +164,11 @@ public final class AlphaRoar {
                 }
             }
         }
+        // the pack's NPC members get the buff too (Strength, Speed); they are not "other werewolves", so the forced-form part never touches them (R148)
+        for (net.minecraft.world.entity.Mob member : net.ofatech.supernaturalbloodlines.parts.species.npc.NpcMembers.near(p, PACK_RANGE * range)) {
+            member.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, BUFF_TICKS, PackRules.roarTier(PackAccess.effectiveSparks(p), SpeciesConfig.maxStackedSparks())));
+            member.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, BUFF_TICKS, 0));
+        }
         for (ServerPlayer other : players.apply(p.server)) {
             if (other != p && !pack.contains(other.getUUID()) && !index.alliedPlayers(p.getUUID(), other.getUUID()) && VampirismSupernatural.isWerewolf(other) && inRange(p, other, SUBMIT_RANGE * range)) {
                 VampirismAPI.factionPlayerHandler(other).getCurrentFactionPlayer()

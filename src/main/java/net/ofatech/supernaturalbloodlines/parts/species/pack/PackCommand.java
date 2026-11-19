@@ -116,6 +116,38 @@ public final class PackCommand {
                 .then(Commands.literal("roar").executes(c -> run(c, AlphaRoar.roar(self(c)))))
                 .then(Commands.literal("surge").executes(c -> run(c, net.ofatech.supernaturalbloodlines.parts.species.npc.PackSkills.surge(self(c)))))
                 .then(Commands.literal("spirits").executes(c -> run(c, net.ofatech.supernaturalbloodlines.parts.species.npc.PackSkills.spirits(self(c)))))
+                .then(Commands.literal("npc")
+                        .then(Commands.literal("order")
+                                .then(Commands.argument("token", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1))
+                                        .then(Commands.argument("order", StringArgumentType.word())
+                                                .suggests((c, b) -> {
+                                                    for (net.ofatech.supernaturalbloodlines.core.bloodline.NpcBond.Order o : net.ofatech.supernaturalbloodlines.core.bloodline.NpcBond.Order.values()) {
+                                                        b.suggest(o.name().toLowerCase(java.util.Locale.ROOT));
+                                                    }
+                                                    return b.buildFuture();
+                                                })
+                                                .executes(c -> run(c, net.ofatech.supernaturalbloodlines.parts.species.npc.NpcCommands.order(self(c),
+                                                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "token"), StringArgumentType.getString(c, "order")))))))
+                        .then(Commands.literal("hunt")
+                                .then(Commands.argument("token", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1))
+                                        .executes(c -> run(c, net.ofatech.supernaturalbloodlines.parts.species.npc.NpcCommands.toggleHunt(self(c),
+                                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "token"))))))
+                        .then(Commands.literal("sort")
+                                .then(Commands.argument("token", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1))
+                                        .executes(c -> run(c, net.ofatech.supernaturalbloodlines.parts.species.npc.NpcCommands.toggleSort(self(c),
+                                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "token"))))))
+                        .then(Commands.literal("release")
+                                .then(Commands.argument("token", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1))
+                                        .executes(c -> run(c, net.ofatech.supernaturalbloodlines.parts.species.npc.NpcCommands.release(self(c),
+                                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "token"))))))
+                        .then(Commands.literal("list").executes(c -> {
+                            var rows = net.ofatech.supernaturalbloodlines.parts.species.npc.NpcCommands.list(self(c));
+                            if (rows.isEmpty()) {
+                                c.getSource().sendSuccess(() -> Component.translatable("supernaturalbloodlines.npc.list_none"), false);
+                            }
+                            rows.forEach(r -> c.getSource().sendSuccess(() -> r, false));
+                            return rows.size();
+                        })))
                 .then(Commands.literal("anchor")
                         .executes(c -> run(c, anchor(self(c), null)))
                         .then(Commands.argument("player", EntityArgument.player())

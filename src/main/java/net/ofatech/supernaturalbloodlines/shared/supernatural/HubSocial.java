@@ -137,4 +137,35 @@ public final class HubSocial {
     public static Social of(ServerPlayer p) {
         return source.apply(p);
     }
+
+    /**
+     * A wolf (or Tensura subordinate) of the viewer's pack, as the Pack page and the NPC profile show it. {@code token} is the ledger's short id (never an entity
+     * id), {@code source} {@code brother} or {@code subordinate}, {@code order} {@code follow}, {@code guard} or {@code rest} (empty for a subordinate: Tensura's
+     * own orders), {@code health} a percent (-1 when it is not loaded), {@code distance} blocks (-1 when not loaded or in another dimension), {@code days} how
+     * long it has been in the pack, {@code owner} the owner's name, {@code canOrder} whether the viewer is its owner or the leader of its owner's pack, {@code mine} whether the viewer is its owner (only the owner releases it).
+     */
+    public record Npc(int token, String name, String type, String source, String order, boolean hunt, boolean sort, boolean loaded, int distance, int health,
+                      int days, String owner, boolean canOrder, boolean mine, int weightPercent) {
+        public boolean ours() {
+            return source.equals("brother");
+        }
+    }
+
+    public static final int MAX_NPCS = 64;
+
+    private static volatile Function<ServerPlayer, List<Npc>> npcSource = p -> List.of();
+
+    /** The species part installs where the pack's NPC members come from; without it the hub shows none. */
+    public static void setNpcs(Function<ServerPlayer, List<Npc>> function) {
+        npcSource = function;
+    }
+
+    public static Function<ServerPlayer, List<Npc>> npcSource() {
+        return npcSource;
+    }
+
+    public static List<Npc> npcsOf(ServerPlayer p) {
+        List<Npc> all = npcSource.apply(p);
+        return List.copyOf(all.subList(0, Math.min(all.size(), MAX_NPCS)));
+    }
 }

@@ -171,6 +171,12 @@ public final class NpcPackBrain {
         }
     }
 
+    /** A wolf that joins a pack (or is released) drops its night's feral bonus at once: it is no longer ticked here. */
+    public static void release(Mob m) {
+        modifier(m.getAttribute(Attributes.ATTACK_DAMAGE), FERAL_ID, 0);
+        modifier(m.getAttribute(Attributes.MOVEMENT_SPEED), FERAL_SPEED_ID, 0);
+    }
+
     /** Whether the wolf carries the feral bonus now (a test reads it). */
     public static boolean isFeral(Mob m) {
         AttributeInstance a = m.getAttribute(Attributes.ATTACK_DAMAGE);

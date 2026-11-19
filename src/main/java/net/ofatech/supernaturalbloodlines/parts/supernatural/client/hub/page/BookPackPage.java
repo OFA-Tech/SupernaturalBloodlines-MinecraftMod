@@ -34,6 +34,7 @@ public final class BookPackPage implements HubPageView {
 
     @Nullable
     private String selected;
+    private final PackWolves wolves = new PackWolves();
     private final Style style;
     private final String ledgerRegion;
     private final String ringRegion;
@@ -250,6 +251,7 @@ public final class BookPackPage implements HubPageView {
             }
             y += stacked ? 21 : 11;
         }
+        y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, false);
         t.drawRule(f.g, r.x(), y + 3, r.w());
         y += 9;
         if (style == Style.BOOK && chosen != null) {
@@ -317,6 +319,11 @@ public final class BookPackPage implements HubPageView {
 
     /** The Blood Moon's floating bar and Tensura's info pane: the chosen member (or the pack) and what the command allows. */
     private void detail(HubScreen.Frame f, WolfState wolf, List<HubSocial.Member> pack, @Nullable HubSocial.Member chosen) {
+        HubSocial.Npc pickedWolf = wolves.chosen(f);
+        if (pickedWolf != null) {
+            f.detail(wolves.detail(pickedWolf, style == Style.MOON));
+            return;
+        }
         Component title = chosen != null ? Component.literal(chosen.name()) : Component.translatable(KEY + "title");
         Component body = chosen != null ? Component.translatable(KEY + (chosen.online() ? "online" : "offline")) : Component.translatable(BOOK + "subtitle");
         Detail.Builder d = Detail.of(title).body(body);
@@ -356,7 +363,15 @@ public final class BookPackPage implements HubPageView {
         HubTheme t = f.theme();
         Rect s = f.region(ringRegion);
         int top = f.begin(ringRegion);
-        if (pack.isEmpty()) {
+        HubSocial.Npc pickedWolf = wolves.chosen(f);
+        if (style == Style.BOOK && pickedWolf != null) {
+            // the Grimoire's ledger scrolls: the picked wolf's profile and orders are drawn on the right page, in full view, in place of the ring until it is closed
+            int py = wolves.profile(f, new Rect(s.x(), top, s.w(), s.bottom() - top), top, pickedWolf);
+            BookKit.link(f, "pack:wolf_close", Component.translatable(KEY + "wolves.close"), s.x(), py + 4, List.of(Component.translatable(KEY + "wolves.close_tip")), wolves::close);
+            f.end(py + 18);
+            return;
+        }
+        if (pack.isEmpty() && f.view.snapshot().npcs().isEmpty()) {
             // nobody beside you: the empty state instead of an empty ring
             EmptyState.render(f, s, top + Math.max(0, (s.bottom() - top - 150) / 2), "pack", HubPage.GUIDE);
             if (style == Style.BOOK) {
@@ -373,6 +388,7 @@ public final class BookPackPage implements HubPageView {
         int cx = s.x() + areaW / 2;
         List<PackRing.Member> members = new ArrayList<>();
         pack.stream().filter(m -> !m.name().equals(f.view.player().getName().getString()) && !m.base().equals("ally")).forEach(m -> members.add(new PackRing.Member(m.name(), role(m.rank()))));
+        f.view.snapshot().npcs().forEach(n -> members.add(new PackRing.Member(n.name(), role(n.source()))));
         int face = members.size() > 8 ? 12 : 16;
         // the faces sit on a ring; their names go outward (beside the side ones, over the top ones, under the bottom ones), small, inside the page
         int radius = Math.max(26, Math.min(areaW / 2 - 52, (s.bottom() - legend - top) / 2 - face / 2 - 12));

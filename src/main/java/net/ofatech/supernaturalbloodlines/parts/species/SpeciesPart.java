@@ -148,6 +148,7 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(LineageRiteFactory.ID, LineageRiteFactory.CODEC);
         if (ModList.get().isLoaded("werewolves")) {
             RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.ID, net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.CODEC);
+            RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.species.npc.WerewolfBrotherRiteFactory.ID, net.ofatech.supernaturalbloodlines.parts.species.npc.WerewolfBrotherRiteFactory.CODEC);
         }
         RiteFactoryRegistry.get().register(DoppelgangerBloodRiteFactory.ID, DoppelgangerBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(RevelationRiteFactory.ID, RevelationRiteFactory.CODEC);
@@ -220,6 +221,10 @@ public final class SpeciesPart {
             net.ofatech.supernaturalbloodlines.parts.species.npc.WeakSpark.register();
             net.ofatech.supernaturalbloodlines.parts.species.npc.PackSkills.register();
             net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialBoss.register();
+            // plan 15d: the pack's NPC members: their orders, hunting trips and chest sorting
+            net.ofatech.supernaturalbloodlines.parts.species.npc.NpcOrders.register();
+            net.ofatech.supernaturalbloodlines.parts.species.npc.NpcLedger.register();
+            net.ofatech.supernaturalbloodlines.parts.species.npc.NpcHunt.register();
             NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.LEDGER.clear());
             NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> net.ofatech.supernaturalbloodlines.parts.species.npc.NpcPackCommand.register(e.getDispatcher()));
             NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> PackCommand.register(e.getDispatcher()));
@@ -300,6 +305,7 @@ public final class SpeciesPart {
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.MoonWerewolfGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.NpcPackGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.NpcMemberGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AlphaTrialGameTests.class);
                 e.register(GeneWerewolfGameTests.class);
                 e.register(DoppelgangerRiteGameTests.class);

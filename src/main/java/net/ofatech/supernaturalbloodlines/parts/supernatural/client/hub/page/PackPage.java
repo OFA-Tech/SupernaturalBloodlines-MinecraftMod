@@ -23,6 +23,7 @@ public final class PackPage implements HubPageView {
     private static final long CONFIRM_TICKS = 100;
 
     private long confirmUntil;
+    private final PackWolves wolves = new PackWolves();
 
     @Override
     public void render(HubScreen.Frame f) {
@@ -57,6 +58,7 @@ public final class PackPage implements HubPageView {
             }
             y += PageKit.LINE + 1;
         }
+        y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, true);
         f.end(y);
 
         Rect s = f.region(HubLayout.SIDE);

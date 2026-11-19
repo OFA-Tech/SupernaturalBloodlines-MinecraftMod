@@ -409,6 +409,9 @@ public final class AdminPage implements HubPageView {
         acts.add(new Act("rung", "D8", List.of(cycle(races, raceAt).id(), String.valueOf(Math.max(0, Math.min(20, number))))));
         acts.add(new Act("gene_on", "B7", List.of("true")));
         acts.add(new Act("gene_off", "B7", List.of("false")));
+        if (net.neoforged.fml.ModList.get().isLoaded("werewolves")) {
+            acts.add(new Act("npc_release", "D13", List.of()));
+        }
         y = PageKit.wrapped(f, Component.translatable(KEY + "params").withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
         List<Component> pl = List.of(Component.literal(cycle(species, speciesAt).name()), Component.literal(cycle(events, eventAt).name()),
                 Component.literal(cycle(races, raceAt).id()), Component.literal(String.valueOf(number)));
@@ -439,13 +442,14 @@ public final class AdminPage implements HubPageView {
         y = af.bottom() + 4;
         // the pack command exists only with Werewolves (the species part registers it then), so the button does too
         boolean npc = net.neoforged.fml.ModList.get().isLoaded("werewolves");
-        List<Component> eclipse = npc ? List.of(Component.translatable(KEY + "act.eclipse_start"), Component.translatable(KEY + "act.eclipse_stop"), Component.translatable(KEY + "act.npc_pack"))
+        List<Component> eclipse = npc ? List.of(Component.translatable(KEY + "act.eclipse_start"), Component.translatable(KEY + "act.eclipse_stop"), Component.translatable(KEY + "act.npc_pack"), Component.translatable(KEY + "act.npc_list"))
                 : List.of(Component.translatable(KEY + "act.eclipse_start"), Component.translatable(KEY + "act.eclipse_stop"));
         Flow.Result ef = Flow.wrap(new Rect(r.x(), y, r.w(), 0), eclipse.stream().map(c -> PageWidgets.widthOf(f.font(), c)).toList(), PageWidgets.H, 3);
         PageWidgets.button(f, "stage:admin:act:eclipse_start", ef.rects().get(0), eclipse.get(0), true, false, null, () -> HubClient.runCommand("D9", List.of()));
         PageWidgets.button(f, "stage:admin:act:eclipse_stop", ef.rects().get(1), eclipse.get(1), true, false, null, () -> HubClient.runCommand("D10", List.of()));
         if (npc) {
             PageWidgets.button(f, "stage:admin:act:npc_pack", ef.rects().get(2), eclipse.get(2), true, false, null, () -> HubClient.runCommand("D11", List.of()));
+            PageWidgets.button(f, "stage:admin:act:npc_list", ef.rects().get(3), eclipse.get(3), true, false, null, () -> HubClient.runCommand("D12", List.of()));
         }
         return ef.bottom();
     }

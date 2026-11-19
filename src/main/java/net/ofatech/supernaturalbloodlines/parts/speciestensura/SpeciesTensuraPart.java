@@ -45,10 +45,12 @@ public final class SpeciesTensuraPart {
         SpeciesLayer.register();
         if (ModList.get().isLoaded("werewolves")) {
             RankSkills.register();
+            NpcSubordinates.register();
             net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexFallback.register();
         }
         GhoulRace.register();
         SubordinateLink.register();
+        NpcSubordinates.register();
         SireNaming.register();
         // the part is only initialised when its mods are present, so the tests only exist then
         modBus.addListener((RegisterGameTestsEvent e) -> {
@@ -66,6 +68,7 @@ public final class SpeciesTensuraPart {
             }
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(RankSkillsGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.NpcSubordinatesGameTests.class);
                 e.register(ApexWerewolfGameTests.class);
             }
             // these link Werewolves classes, and the werewolf level grants live in vampirism_tensura

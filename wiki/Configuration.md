@@ -202,4 +202,11 @@ All data a part ships (rites, recipes, loot, tags, EP, altar blocks) is loaded o
 | `weak_spark_max_held` | `2` | 1 to 5 | Weaker sparks one player may hold. |
 | `weak_spark_cooldown_days` | `3` | 0 to 30 | Game days between two weaker sparks for one player. |
 | `moonblood_surge_enabled`, `wolf_spirits_enabled` | `true` | | The two pack abilities. |
+| `npc_recruit_enabled` | `true` | | The Werewolf Brother rite works. |
+| `max_npc_members_per_player`, `max_npc_members_per_pack` | `2`, `6` | 0 to 8, 0 to 24 | Brothers one werewolf may keep, and a whole pack. |
+| `npc_hunt_trips`, `npc_chest_sort` | `true` | | A Brother with Hunt on hunts on quiet nights; a Brother with Sort on tidies the chest by its post. |
+| `npc_hunt_period_minutes` | `10` | 1 to 120 | Minutes between two hunting trips of one Brother. |
+| `npc_weight_brother`, `npc_weight_tensura` | `0.5`, `0.25` | 0 to 1 | What a Brother and a Tensura subordinate count toward the pack bonus (a Beta is 1). |
+| `npc_bonus_share` | `0.4` | 0 to 1 | The most of the bonus the wolves may give, as a share of its cap. |
+| `tensura_subordinates_join`, `max_tensura_members_per_pack` | `true`, `6` | 0 to 24 | In `supernaturalbloodlines-species_tensura.toml`: the subordinates of pack members join the pack, up to the cap. |
 | `delayed_awakening_nights` | `1` | 0 to 3 | A human's werewolf gene awakens at the next dusk (N dusks later) after the kill, not at once. 0 = at once. Admin > Species. |
