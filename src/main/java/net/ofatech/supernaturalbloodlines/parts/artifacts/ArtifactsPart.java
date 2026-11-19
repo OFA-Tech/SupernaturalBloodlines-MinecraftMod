@@ -46,6 +46,9 @@ public final class ArtifactsPart {
         MountainAsh.register(modBus);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modBus.addListener(ArtifactsClient::onClientSetup);
+            if (curios) {
+                modBus.addListener(net.ofatech.supernaturalbloodlines.parts.artifacts.client.RingRenderers::registerModels);
+            }
         }
         CompassPrivacy.register();
         AshDagger.register();

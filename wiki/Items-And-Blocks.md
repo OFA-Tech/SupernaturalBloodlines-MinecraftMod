@@ -24,7 +24,7 @@ Status effects of this part: **Shocked** (Slowness I, no natural regeneration, n
 
 ## Rings and wards
 
-Part `artifacts`. Rings sit in a **Curios `ring` slot** if Curios is installed, or **anywhere in your inventory** (hotbar, armor, offhand) if not. Curios is optional. All the rings are bound to **one player** by their rite; a ring bound to someone else, or unbound, does nothing. A ring's tooltip says "Bound to X" or "Not bound to anyone". Rings cannot be rebound.
+Part `artifacts`. Rings sit in a **Curios `ring` slot** if Curios is installed, or **anywhere in your inventory** (hotbar, armor, offhand) if not. Curios is optional. All the rings are bound to **one player** by their rite; a ring bound to someone else, or unbound, does nothing. A ring's tooltip says "Bound to X" or "Not bound to anyone". Rings cannot be rebound. With Curios, a worn ring is drawn on your arm (a thin silver band with a stone: lapis for the Sun Ring, kyanite for the Moon Ring, onyx for the Resurrection Ring). Curios gives the ring slot one place unless your pack makes it bigger, so the ring shows on the right arm; a second slot shows on the left.
 
 | In-game name | What it does | How to get it |
 |---|---|---|
