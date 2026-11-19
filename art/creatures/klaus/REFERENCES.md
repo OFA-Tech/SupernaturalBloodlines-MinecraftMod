@@ -25,7 +25,7 @@ thicker neck ruff and cheek tufts, the bushier tail.
 | Source | Taken from it |
 |---|---|
 | https://vampirediaries.fandom.com/wiki/Werewolf (Appearance, Werewolf Transformation) | Wolf forms are "quite similar to natural wolves", but with "glowing yellow or orange eyes, wicked fangs, a larger size, and a much more feral and predatory appearance", "size ... comparable to fully grown humans": a natural wolf build, about 1.5 blocks at the shoulder, not a monster like Peter's Alpha. "Their irises turn golden-yellow, their sclera turns black": golden iris on a black sclera. Coat colour differs per wolf (Tyler dark brown, Mason white and grey, Jules light brown, Hayley tan and brown), so there is no species colour. |
-| https://vampirediaries.fandom.com/wiki/Hybrid (The Original Hybrid, Lycanthrope Enhancement) | Klaus "can display both sets of vampire and werewolf fangs": two upper fangs a side, a long vampire fang with a shorter wolf fang behind it. Dark veins under the eyes of the vampire face: the vein patch under each eye. His strength peaks "in his werewolf form". |
+| https://vampirediaries.fandom.com/wiki/Hybrid (The Original Hybrid, Lycanthrope Enhancement) | Klaus "can display both sets of vampire and werewolf fangs": two upper fangs a side, a long vampire fang with a shorter wolf fang behind it. Dark veins under the eyes of the vampire face: first painted black, now only a soft dark tear-line under each eye. His strength peaks "in his werewolf form". |
 | https://vampirediaries.fandom.com/wiki/Shapeshifting (Hybrids) | Image caption "Klaus shows his werewolf like fangs and yellow irises": the eye colour is yellow, not orange or red. Hybrids turn at will and keep the form "unusually long". |
 | https://vampirediaries.fandom.com/wiki/Transformation_Control | Klaus "remained a wolf for 2 days" after breaking the curse and killed throughout: a predator, hence the permanent snarl (jaw rests 6 degrees open) and the bristling hackles. |
 | https://vampirediaries.fandom.com/wiki/The_Sun_Also_Rises and https://en.wikipedia.org/wiki/The_Sun_Also_Rises_(The_Vampire_Diaries) | The episode: the transformation begins at the ritual; the wolf itself is not shown. |
@@ -38,15 +38,17 @@ thicker neck ruff and cheek tufts, the bushier tail.
 
 ## Colour
 The coat is one ramp, `COAT` in `tools/klaus.py`. The owner's still reads as ash-grey with a brown tint, and he ties it to the hair,
-so each anchor is **a colour the mod already uses for Klaus, mixed half and half with its own grey**:
+so each anchor is **a colour the mod already uses for Klaus, mixed 70% with its own grey and darkened 12%**. A first pass at 50% grey
+and no darkening came out pale and beige next to the still, so it went one step darker and greyer:
 
 | Anchor | From | Ashed | Where |
 |---|---|---|---|
-| saddle | old flat texture's dark saddle `(76,52,34)` | `#42362d` | back, hackles, top of the muzzle, brow, ear tips, tail tip |
-| brow | hair brow `(108,84,56)` | `#615547` | crown, upper flank, tail |
-| hair | hair `(164,136,92)` | `#978973` | flank and legs: the body colour |
-| cream | old flat texture's cream fur `(214,184,138)` | `#c8b9a2` | face, cheeks, neck ruff, chest, belly, chin |
+| saddle | old flat texture's dark saddle `(76,52,34)` | `#352f2a` | back, hackles, top of the muzzle, brow, ear tips, tail tip |
+| brow | hair brow `(108,84,56)` | `#4f4942` | crown, upper flank, tail |
+| hair | hair `(164,136,92)` | `#7c7469` | flank and legs: the body colour |
+| cream | old flat texture's cream fur `(214,184,138)` | `#a79f93` | face, cheeks, neck ruff, chest, belly, chin |
 
-The steps between are in-betweens, with one shadow below the saddle (`#2e2620`) and one highlight above the cream (`#d9cdb8`).
-Eyes, teeth, mouth, tongue, claws and veins are the old texture's values unchanged. Only the eye's hot centre `(255,244,150)` is new:
+The steps between are in-betweens, with one shadow below the saddle (`#26221f`) and one highlight above the cream (`#b9b2a7`).
+Eyes, teeth, mouth, tongue and claws are the old texture's values unchanged. The black veins under the eyes read as odd marks on
+the light face, so they are now one soft tear-line in a darker coat tone. Only the eye's hot centre `(255,244,150)` is new:
 a highlight of the same yellow. The first version's near-black coat is gone.

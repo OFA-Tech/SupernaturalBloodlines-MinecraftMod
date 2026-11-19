@@ -42,8 +42,8 @@ entity's speed to that. `death` moves `root`, so the entity must not add its own
 - **A real wolf, not a monster.** The wiki describes wolf forms as natural wolves, only larger and more feral. Long legs, deep chest,
   tucked waist, thick ruff, bushy low tail; the hybrid shows in the face.
 - **Hybrid face.** Golden iris on a black sclera, slanted angry; two upper fangs a side (the long vampire fang, a shorter wolf fang
-  behind it); black veins running down the face fur under each eye.
-- **Coat.** Ash-brown and grizzled, from the owner's show still ("pretty much like his hair colour, but brownish"): cream-tan face,
+  behind it); a soft dark tear-line under each eye where the veins would be.
+- **Coat.** Ash-grey with a brown tint, grizzled, from the owner's show still ("pretty much like his hair colour, but brownish"): grey-cream face,
   cheeks, neck ruff, chest and belly; a darker saddle, muzzle top, ear tips and tail tip. How each colour was derived is in
   `REFERENCES.md`. The flat texture `klaus_hybrid.png` is left untouched.
 - **Fur, not spikes.** The hackles and nape are overlapping slabs of long fur lying back along the spine; the neck ruff is two

@@ -125,17 +125,18 @@ def build():
     return m
 
 
-# Coat (owner's still, see REFERENCES.md): ash-brown, "pretty much like his hair colour, but brownish". Each anchor is a colour the mod
-# already uses for Klaus, mixed half and half with its own grey: saddle (76,52,34) -> 42362d, brow (108,84,56) -> 615547,
-# hair (164,136,92) -> 978973, cream fur (214,184,138) -> c8b9a2. The other steps are in-betweens and one shadow below the saddle.
-COAT = [hexc(c) for c in ('2e2620', '42362d', '524539', '615547', '7c6f5d', '978973', 'b0a18a', 'c8b9a2', 'd9cdb8')]
+# Coat (owner's still, see REFERENCES.md): ash-grey with a brown tint, "pretty much like his hair colour, but brownish". Each anchor
+# is a colour the mod already uses for Klaus, mixed 70% with its own grey and darkened 12%: saddle (76,52,34) -> 352f2a,
+# brow (108,84,56) -> 4f4942, hair (164,136,92) -> 7c7469, cream fur (214,184,138) -> a79f93. The rest are in-betweens, one shadow
+# below the saddle and one highlight above the cream.
+COAT = [hexc(c) for c in ('26221f', '352f2a', '423c36', '4f4942', '665f56', '7c7469', '928a7e', 'a79f93', 'b9b2a7')]
 LIP = [hexc(c) for c in ('060505', '0c0a0a', '151011', '20171a')]
 NOSE = [hexc(c) for c in ('050505', '0b0b0c', '141415', '232325')]
 # the rest are the values of the old flat Klaus texture (art/bosses/tools/paint_wolves.py)
 TOOTH = [hexc(c) for c in ('826c56', 'b9a98a', 'dccfb0', 'f4eed8')]
 CLAW = [hexc(c) for c in ('1a1512', '2a221d', '362c26', '4a3d34')]
 MOUTH = [hexc(c) for c in ('5a181b', '822426', '963135', 'aa3e42')]
-EYE, EYE_HALO, EYE_HOT, VEIN, EAR_IN = (255, 222, 40), (214, 160, 20), (255, 244, 150), (8, 6, 6), (150, 96, 84)
+EYE, EYE_HALO, EYE_HOT, EAR_IN = (255, 222, 40), (214, 160, 20), (255, 244, 150), (150, 96, 84)
 SH = {'up': 0.10, 'north': 0.02, 'south': -0.04, 'east': -0.02, 'west': -0.02, 'down': -0.2}
 
 
@@ -226,11 +227,9 @@ def sh_eye(ctx):
 
 
 def sh_vein(ctx):
-    """The black hybrid veins running down the face fur under each eye."""
-    if ctx['face'] == 'north':
-        for k, (cx, ln) in enumerate(((0.2, 0.75), (0.5, 1.0), (0.8, 0.6))):
-            if ctx['fy'] < ln and abs(ctx['fx'] - cx - 0.1 * math.sin(ctx['fy'] * 6 + k * 2)) < 0.07:
-                return VEIN
+    """Face fur under the eye with one soft dark tear-line: all that is left of the hybrid's veins (owner: keep it subtle)."""
+    if ctx['face'] == 'north' and ctx['fy'] < 0.8 and abs(ctx['fx'] - 0.5 - 0.1 * math.sin(ctx['fy'] * 6)) < 0.07:
+        return coat(ctx, 0.36, 2, 3)
     return coat(ctx, 0.66, 2, 3)
 
 
