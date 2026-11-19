@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased (plan 15b: NPC werewolf packs)
+
+### Upgrading
+- **Wild werewolf packs now roam on full-moon nights** (`npc_packs_enabled`, default on): once per player per night an Alpha of the Werewolves mod and 3 to 5 wolves, and sometimes a lone wolf, appear 24 to 48 blocks away in the dark, away from villages, and hunt vampires first, then hunters, then players, then prey. A Blood Moon on another night does it at half the chance. Set `npc_packs_enabled = false` to keep the old world. Wild wolves bite like any wild werewolf (a bitten human becomes an Omega).
+- **Killing an Alpha of the Werewolves mod now gives a werewolf a weaker spark** (`npc_alpha_spark_enabled`, default on, natural forest Alphas included). It grows into a normal spark while its holder is online (3 days), counts for nothing until then, cannot be stolen, and is lost on a cure. A Beta or Omega whose path to True Alpha is open and protected destroys it instead. Set `npc_alpha_spark_enabled = false` for the old behaviour.
+- The Celestials config has a new `blood_moon_pack_chance_factor` (default 0.5; PR #37 had removed it).
+- Saves are read as before: the new `weak` field of the wolf layer and the NPC mark of a mob default to nothing.
+
+### Added
+- Moonblood Surge (a werewolf in a pack: a buff for the pack within 24 blocks, paid for afterwards) and Wolf Spirits (an Alpha: three spirit wolves for three minutes), as granted abilities on the Home page and `/sb pack surge` and `/sb pack spirits`.
+- Admin: 16 new settings (Admin > Species) and a "Spawn NPC pack" debug button.
+- **Limit:** a pack spawns once per player per night, so a night with a pack is a fact of the world for that player; there is no "leave the area" cancel. A weak spark grows with online time, not active time (an AFK holder grows it).
+
 ## Unreleased (plan 15a: the moon calendar)
 
 ### Upgrading

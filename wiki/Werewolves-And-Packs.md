@@ -261,3 +261,9 @@ See [Tensura integration](Tensura-Integration#werewolf-rank-skills): Alpha and T
 - The Taser spends a charge on any hit.
 
 See [Known limits](Known-Limits) for the rest.
+
+## Wild packs and the weaker spark (plan 15b)
+- **Wild packs.** On a **full-moon night** (a lunar eclipse counts as one, and an Enhanced Celestials **Blood Moon** on another night at half the chance), once per player per night, a pack of wild werewolves led by an Alpha of the Werewolves mod, and sometimes a lone wolf, appears 24 to 48 blocks from you, in the dark and away from villages. They leave at dawn when nobody is near. `npc_packs_enabled` turns it off.
+- **What they hunt:** a vampire first, then a hunter, then another player, then prey (sheep, cows, pigs, chickens, rabbits, goats). They hunt together and are **feral** (stronger and faster) in the dark on a full-moon night. A Wolf Spirit never hurts its owner, their pack or an allied pack.
+- **The weaker spark.** If you are a werewolf and you kill an Alpha of the Werewolves mod (a wild pack's or a forest one), a weaker spark takes root in you at once. It grows while you are online (3 days); until then it counts for nothing, is not part of your spark count and cannot be stolen. When grown it becomes a normal spark: an Omega or Beta becomes an Alpha, and the path to True Alpha closes. If your path is **open and protected** the spark is destroyed instead and your path is kept. You can hold two at a time and take one every three days. A cure, or becoming a True Alpha, loses it. Your own profile and the Pack page say when it will be ready; nobody else sees it.
+- **Moonblood Surge** (`/pack surge`, a werewolf in a pack): the pack within 24 blocks gets a buff; you pay with Weakness and Slowness for 30 s. **Wolf Spirits** (`/pack spirits`, an Alpha): three spirit wolves for three minutes. Both are on the Home page, are refused in a lunar eclipse, and have a cooldown.

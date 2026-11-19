@@ -12,7 +12,7 @@ An EC event never replaces the real moon. `MoonRule.isFullMoon*`, the rites' "ne
 
 | EC event | Effect | Key |
 |---|---|---|
-| Blood Moon (any phase) | a vampire's bite gives x1.25 blood (rounded half up, an emptied bite stays empty). | `blood_moon_bite_bonus` |
+| Blood Moon (any phase) | a vampire's bite gives x1.25 blood (rounded half up, an emptied bite stays empty). On a night that is not a full moon NPC werewolf packs (plan 15b) spawn at half the chance, through `LunarMoods.packChance`. | `blood_moon_bite_bonus`, `blood_moon_pack_chance_factor` |
 | Blue Moon (any phase) | every rite costs x0.8 altar power (the species part's `RiteCost.begin`). It never lets a full-moon rite run on another night | `blue_moon_rite_cost` |
 | Harvest Moon | our crops (vervain, the two wolfsbane strains) are in EC's item tag `enhancedcelestials2defaultlunarevents:harvest_moon_crops` (a datapack file, `required: false`), so they drop x2 | none (unverified: no doubled drop has been seen in a game) |
 | any super moon (full moon only) | Rite of the Moon, Silver Moon and Immortality cost x0.75, on top of the Blue Moon factor. | `super_moon_rite_cost` |
