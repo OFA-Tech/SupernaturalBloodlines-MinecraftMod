@@ -252,7 +252,7 @@ public final class HubScreen extends Screen {
         }
         chrome(f, mouseX, mouseY);
         HubThemeViews views = theme instanceof HubThemeViews v ? v : null;
-        if (views != null) {
+        if (views != null && !moon) { // the moon calendar is drawn the same in every theme: not over the origin page's own furniture
             views.drawOverlay(f, page);
         }
         viewOf(page, view).render(f);

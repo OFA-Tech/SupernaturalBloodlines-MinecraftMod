@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased (plan 15a: the moon calendar)
+
+### Upgrading
+- **A werewolf gene now awakens at dusk, not at once** (`delayed_awakening_nights`, default 1). A human with the hidden gene who kills a villager or a player is told "something stirs in your blood" and awakens at the next dusk (the overworld clock). The Rite of Lineage and a wild bite are not delayed. Set it to 0 for the old behaviour. The wait is kept through death and logout; joining a faction ends it. **Limit (shortcut):** a player who is offline at dusk awakens at their next login (the check runs only for online players).
+- New `full_moon_sleep` (default `off`; `werewolves` or `everyone`): from dusk on a full-moon night the bed refuses the players it names. Nothing changes until an operator turns it on.
+
+### Added
+- The hub's **moon calendar**: the next 16 days of moons with the full moons marked and Enhanced Celestials events ringed. Click the almanac on the Path page, or "Moon calendar" on Home; Esc goes back. Home's "The world now" also says what tonight is, and tells you when the sleep rule applies to you or an awakening is waiting. Both settings have Admin rows.
+
 ## Unreleased (spark rules)
 
 ### Upgrading

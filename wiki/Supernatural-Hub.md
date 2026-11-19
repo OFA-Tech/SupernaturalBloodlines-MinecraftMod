@@ -85,3 +85,7 @@ Change it in [Configuration](Configuration#supernatural-client-supernaturalblood
 - **The look button** opens a menu of the three looks with the one in use ticked. Without Tensura the Tensura look is greyed with "needs Tensura", and there is no EP, no Tensura race line and no **T** seal.
 - **Keys.** Tab and Shift+Tab walk every button and row, Enter presses, 1 to 8 jump to a page, the arrows turn pages or move in a ring, Esc closes (or cancels a question), and the hub key (default Home) closes it. Every irreversible action (leaving a pack, clearing a slot) asks first, and Esc or Stay is always the safe answer.
 - **Small windows.** The Tensura look shrinks its page list to icons under 340 GUI pixels wide, so the stage keeps its room.
+
+## The moon calendar
+
+Click the moon almanac on the Path page, or "Moon calendar" on Home, for the next 16 days of moons: full moons are in the accent colour, a ring marks a day with an Enhanced Celestials event, and the side shows tonight, the full moons and the events. Esc (or "Back") returns to the page you came from. Home's "The world now" also says when a full-moon sleep rule applies to you and when something stirs in your blood.

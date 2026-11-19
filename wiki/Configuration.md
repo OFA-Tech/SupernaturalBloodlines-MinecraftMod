@@ -182,3 +182,10 @@ A **CLIENT** config: each player picks their own, the server never reads it. It 
 ## Part data and the load condition
 
 All data a part ships (rites, recipes, loot, tags, EP, altar blocks) is loaded only when its part is on and its mods are installed (the condition `supernaturalbloodlines:part_enabled`). Switching a part off in `[parts]` removes its data too. See [For server owners](For-Server-Owners#switching-parts-off).
+
+### Moon rules (plan 15a)
+
+| Key | Default | Values | What it does |
+|---|---|---|---|
+| `full_moon_sleep` | `off` | `off`, `werewolves`, `everyone` | Who cannot use a bed in the Overworld from dusk on a full-moon night. Admin > Species. |
+| `delayed_awakening_nights` | `1` | 0 to 3 | A human's werewolf gene awakens at the next dusk (N dusks later) after the kill, not at once. 0 = at once. Admin > Species. |
