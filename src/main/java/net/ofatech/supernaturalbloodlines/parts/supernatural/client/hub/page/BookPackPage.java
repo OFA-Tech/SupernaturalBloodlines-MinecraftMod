@@ -34,6 +34,7 @@ public final class BookPackPage implements HubPageView {
 
     @Nullable
     private String selected;
+    private final PackWolves wolves = new PackWolves();
     private final Style style;
     private final String ledgerRegion;
     private final String ringRegion;
@@ -250,6 +251,7 @@ public final class BookPackPage implements HubPageView {
             }
             y += stacked ? 21 : 11;
         }
+        y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE);
         t.drawRule(f.g, r.x(), y + 3, r.w());
         y += 9;
         if (style == Style.BOOK && chosen != null) {
@@ -356,7 +358,7 @@ public final class BookPackPage implements HubPageView {
         HubTheme t = f.theme();
         Rect s = f.region(ringRegion);
         int top = f.begin(ringRegion);
-        if (pack.isEmpty()) {
+        if (pack.isEmpty() && f.view.snapshot().npcs().isEmpty()) {
             // nobody beside you: the empty state instead of an empty ring
             EmptyState.render(f, s, top + Math.max(0, (s.bottom() - top - 150) / 2), "pack", HubPage.GUIDE);
             if (style == Style.BOOK) {
@@ -373,6 +375,7 @@ public final class BookPackPage implements HubPageView {
         int cx = s.x() + areaW / 2;
         List<PackRing.Member> members = new ArrayList<>();
         pack.stream().filter(m -> !m.name().equals(f.view.player().getName().getString()) && !m.base().equals("ally")).forEach(m -> members.add(new PackRing.Member(m.name(), role(m.rank()))));
+        f.view.snapshot().npcs().forEach(n -> members.add(new PackRing.Member(n.name(), role(n.source()))));
         int face = members.size() > 8 ? 12 : 16;
         // the faces sit on a ring; their names go outward (beside the side ones, over the top ones, under the bottom ones), small, inside the page
         int radius = Math.max(26, Math.min(areaW / 2 - 52, (s.bottom() - legend - top) / 2 - face / 2 - 12));
