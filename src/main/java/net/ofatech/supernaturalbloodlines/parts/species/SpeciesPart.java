@@ -146,6 +146,9 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(ImprisonedOriginalRiteFactory.ID, ImprisonedOriginalRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(AncestralCallingRiteFactory.ID, AncestralCallingRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(LineageRiteFactory.ID, LineageRiteFactory.CODEC);
+        if (ModList.get().isLoaded("werewolves")) {
+            RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.ID, net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.CODEC);
+        }
         RiteFactoryRegistry.get().register(DoppelgangerBloodRiteFactory.ID, DoppelgangerBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(RevelationRiteFactory.ID, RevelationRiteFactory.CODEC);
         BloodlineAccess.useGeneVisibility(SpeciesConfig::genesAlwaysVisible);
@@ -216,6 +219,8 @@ public final class SpeciesPart {
             net.ofatech.supernaturalbloodlines.parts.species.npc.NpcPackBrain.register();
             net.ofatech.supernaturalbloodlines.parts.species.npc.WeakSpark.register();
             net.ofatech.supernaturalbloodlines.parts.species.npc.PackSkills.register();
+            net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialBoss.register();
+            NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.LEDGER.clear());
             NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> net.ofatech.supernaturalbloodlines.parts.species.npc.NpcPackCommand.register(e.getDispatcher()));
             NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> PackCommand.register(e.getDispatcher()));
             NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> PackCommand.forget(e.getEntity().getUUID()));
@@ -241,6 +246,16 @@ public final class SpeciesPart {
                     }
                 }
             }));
+            // the Alpha Trial warning: the server sends it when the rite was refused for an open True Alpha path; the answer comes back as a confirm
+            registrar.playToClient(net.ofatech.supernaturalbloodlines.core.network.TrialWarnPayload.TYPE, net.ofatech.supernaturalbloodlines.core.network.TrialWarnPayload.STREAM_CODEC,
+                    (payload, ctx) -> ctx.enqueueWork(net.ofatech.supernaturalbloodlines.shared.hub.TrialWarnHook::fire));
+            registrar.playToServer(net.ofatech.supernaturalbloodlines.core.network.TrialConfirmPayload.TYPE, net.ofatech.supernaturalbloodlines.core.network.TrialConfirmPayload.STREAM_CODEC,
+                    (payload, ctx) -> ctx.enqueueWork(() -> {
+                        if (ctx.player() instanceof ServerPlayer p && ModList.get().isLoaded("werewolves")
+                                && net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.LEDGER.confirm(p.getUUID(), p.level().getGameTime())) {
+                            p.displayClientMessage(Component.translatable("supernaturalbloodlines.trial.confirmed"), true);
+                        }
+                    }));
             registrar.playToClient(RoarEffectPayload.TYPE, RoarEffectPayload.STREAM_CODEC, (payload, ctx) ->
                     ctx.enqueueWork(() -> RoarClient.show(payload.playerId(), payload.ticks())));
         });
@@ -286,6 +301,7 @@ public final class SpeciesPart {
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.MoonWerewolfGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.NpcPackGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AlphaTrialGameTests.class);
                 e.register(GeneWerewolfGameTests.class);
                 e.register(DoppelgangerRiteGameTests.class);
                 e.register(SirelineHybridGameTests.class);

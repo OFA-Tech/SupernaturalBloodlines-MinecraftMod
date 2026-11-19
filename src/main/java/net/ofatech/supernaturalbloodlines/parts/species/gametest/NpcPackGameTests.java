@@ -121,8 +121,9 @@ public final class NpcPackGameTests {
     }
 
     private static Mob mob(GameTestHelper helper, String id, double x) {
-        Mob m = (Mob) type(id).spawn(helper.getLevel(), helper.absolutePos(new BlockPos((int) x, 1, 2)), MobSpawnType.COMMAND);
-        helper.assertTrue(m != null, "could not spawn " + id);
+        // placed, not just created: an Alpha beside a weak player is refused entry by the Werewolves mod unless it has a level (see NpcPackSpawner.place)
+        Mob m = NpcPackSpawner.place(helper.getLevel(), NpcPackSpawner.asMob(type(id)), helper.absolutePos(new BlockPos((int) x, 1, 2)), NpcPackSpawner.HALF_LEVEL);
+        helper.assertTrue(m != null, "could not place " + id + " in the world");
         return m;
     }
 
@@ -176,6 +177,7 @@ public final class NpcPackGameTests {
             found.addAll(spawned);
             helper.assertTrue(spawned.size() >= 3, "a pack and a lone wolf were expected, got " + spawned.size());
             helper.assertTrue(found.stream().filter(m -> m instanceof IWerewolfAlpha).count() == 1, "no Alpha leads the pack: " + found.stream().map(m -> m.getType().toString()).toList());
+            helper.assertTrue(found.stream().allMatch(m -> m.isAddedToLevel() && level.getEntity(m.getUUID()) == m), "a wolf of the pack is not in the world (the Alpha is refused entry without a level)");
             // the Alpha leads only as many wolves as the Werewolves mod lets it (read at run time), so the pack is the Alpha, that many (three at most) and the lone wolf
             Mob lead = found.stream().filter(m -> m instanceof IWerewolfAlpha).findFirst().orElseThrow();
             int wolves = Math.min(3, ((de.teamlapen.vampirism.api.entity.IEntityLeader) lead).getMaxFollowerCount());

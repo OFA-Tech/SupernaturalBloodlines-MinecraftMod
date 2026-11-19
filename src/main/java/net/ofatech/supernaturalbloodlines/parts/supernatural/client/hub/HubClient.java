@@ -33,7 +33,19 @@ public final class HubClient {
     private HubClient() {
     }
 
+    /**
+     * The Alpha Trial was refused for an open True Alpha path (R147): the hub opens on the Rites page and shows the warning; "take the spark" answers the
+     * server, which then lets the rite start. The screen is the same one the Rites page and the profile use ({@link HubScreen#warnTrueAlpha}).
+     */
+    static void onTrialWarning() {
+        open(HubPage.RITES);
+        if (Minecraft.getInstance().screen instanceof HubScreen s) {
+            s.warnTrueAlpha(() -> net.neoforged.neoforge.network.PacketDistributor.sendToServer(net.ofatech.supernaturalbloodlines.core.network.TrialConfirmPayload.INSTANCE));
+        }
+    }
+
     public static void register() {
+        net.ofatech.supernaturalbloodlines.shared.hub.TrialWarnHook.set(HubClient::onTrialWarning);
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.TrackHud.register();
         net.ofatech.supernaturalbloodlines.shared.hud.HudStyle.install(() -> switch (HubClientConfig.theme()) {
             case BLOOD_MOON -> net.ofatech.supernaturalbloodlines.shared.hud.HudStyle.Style.BLOOD_MOON;

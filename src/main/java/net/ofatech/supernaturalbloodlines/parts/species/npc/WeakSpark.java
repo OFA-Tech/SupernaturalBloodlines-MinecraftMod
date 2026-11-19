@@ -45,7 +45,8 @@ public final class WeakSpark {
 
     private static void onDeath(LivingDeathEvent e) {
         LivingEntity victim = e.getEntity();
-        if (victim.level().isClientSide || !(victim instanceof IWerewolfAlpha)) {
+        // the boss of the Alpha Trial gives the trial's own spark, never a weaker one (R147)
+        if (victim.level().isClientSide || !(victim instanceof IWerewolfAlpha) || victim.hasData(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.TRIAL_MARK)) {
             return;
         }
         if (SparkHandler.killerOf(victim, e.getSource()) instanceof ServerPlayer killer) {

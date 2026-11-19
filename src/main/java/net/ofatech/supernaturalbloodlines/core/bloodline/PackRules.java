@@ -26,6 +26,7 @@ public final class PackRules {
             case SPARK_LOST -> w.rank() == Rank.TRUE_ALPHA ? refuse(w, "true_alpha_keeps_spark")
                     : isAlpha(w) ? ok(w.toBuilder().rank(Rank.OMEGA).packAlpha(null).betaSince(0).sparks(1).weak(WeakSparkRules.lost(w.weak())).build()) : ok(w);
             case TRUE_ALPHA_EARNED -> trueAlpha(w, c);
+            case TRIAL_WON -> trialWon(w);
             // Only a werewolf's eyes turn blue; the caller sends GENE_AWAKENED first when a kill awakens a human.
             case KILLED_INNOCENT -> isWerewolf(w) ? ok(w.toBuilder().killedInnocent(true).build()) : ok(w);
             case DEFENDER_KILL -> ok(w.toBuilder().defenderKills(w.defenderKills() + 1).build());
@@ -163,6 +164,15 @@ public final class PackRules {
             b.rank(Rank.ALPHA).packAlpha(null).betaSince(0);
         }
         return ok(b.build());
+    }
+
+    // R147: the Alpha Trial gives the spark to a werewolf Beta (a second Alpha of the pack they are in) or an Omega (an Alpha of a pack of their own). The spark
+    // is held for good, so the path to True Alpha is closed; the weaker sparks they had are gone.
+    private static PackOutcome trialWon(WolfState w) {
+        if (!isWerewolf(w) || (w.rank() != Rank.BETA && w.rank() != Rank.OMEGA)) {
+            return refuse(w, "trial_no");
+        }
+        return ok(w.toBuilder().rank(Rank.ALPHA).packAlpha(null).sparks(1).heldSpark(true).weak(WeakSparkRules.lost(w.weak())).build());
     }
 
     // R91: checked in the order blue eyes, level, beta days, defender kills, spark.

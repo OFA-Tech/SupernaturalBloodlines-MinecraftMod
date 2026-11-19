@@ -118,6 +118,7 @@ public final class StageRitesPage implements HubPageView {
         Component shape = rite.shapes().isEmpty() ? Component.literal("-") : RitesPage.shapeName(rite.shapes().get(0));
         Detail.Builder d = Detail.of(RitesPage.name(rite)).subtitle(Component.translatable(BOOK + "sub", shape, String.format("%,d", rite.power())))
                 .body(items.isEmpty() ? Component.translatable(BOOK + "no_items") : Component.translatable(BOOK + "needs", items.stream().map(Component::getString).reduce((a, b) -> a + ", " + b).orElse("")));
+        RitesPage.trialNotes(rite, f.view.bloodline().wolf()).forEach(d::body);
         HubHooks.Launcher book = HubHooks.launchers().stream().filter(x -> x.id().equals("enchanted")).findFirst().orElse(null);
         d.action(new Detail.Action("book", Component.translatable(BOOK + "enchanted_short"), false, book != null, null, null, () -> f.screen().launch(book)));
         d.action("circle", Component.translatable(BOOK + (circle ? "back" : "show_circle")), true, true, () -> circle = !circle);

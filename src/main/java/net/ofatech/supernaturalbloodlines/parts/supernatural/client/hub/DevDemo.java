@@ -171,6 +171,10 @@ final class DevDemo {
                         new HubSocial.Kin("Di", 0)), HubSocial.Origin.NONE);
         List<HubSocial.Rite> rites = new ArrayList<>();
         rites.addAll(v.snapshot().rites());
+        if (rites.stream().noneMatch(r -> r.id().equals(HubRites.TRIAL))) {
+            rites.add(new HubSocial.Rite(HubRites.TRIAL, 12000, List.of("1 supernaturalbloodlines:moonstone", "1 werewolves:silver_ingot", "8 minecraft:bone"),
+                    List.of("enchanted:medium_circle"), "supernaturalbloodlines:alpha_trial", "werewolf"));
+        }
         List<HubSocial.Person> people = new ArrayList<>(List.of(new HubSocial.Person("Klaus", id("Klaus"))));
         family.sired().forEach(n -> people.add(new HubSocial.Person(n, id(n))));
         HubSnapshotPayload snap = new HubSnapshotPayload(family, pack, 2, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),

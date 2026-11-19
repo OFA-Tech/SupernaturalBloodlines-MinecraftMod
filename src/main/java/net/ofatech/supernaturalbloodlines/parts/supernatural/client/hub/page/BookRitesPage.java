@@ -96,6 +96,9 @@ public final class BookRitesPage implements HubPageView {
         if (rite.items().isEmpty()) {
             sy = PageKit.wrapped(f, Component.translatable(BOOK + "no_items"), s.x(), sy, s.w(), t.muted());
         }
+        for (Component note : RitesPage.trialNotes(rite, f.view.bloodline().wolf())) {
+            sy = PageKit.wrapped(f, note, s.x(), sy + 2, s.w(), t.accent());
+        }
         sy += 6;
         HubHooks.Launcher book = HubHooks.launchers().stream().filter(l -> l.id().equals("enchanted")).findFirst().orElse(null);
         BookKit.link(f, "link:enchanted", Component.translatable(BOOK + "open_book"), s.x(), sy, List.of(Component.translatable(BOOK + "open_book")),

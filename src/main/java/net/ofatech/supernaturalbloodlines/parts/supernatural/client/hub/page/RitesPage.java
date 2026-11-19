@@ -29,7 +29,13 @@ public final class RitesPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "rites.";
 
     @Nullable
-    private String selected;
+    private String selected = devSelected;
+    private static String devSelected;
+
+    /** Development only (the dev screenshots): the rite the next Rites page starts on. */
+    public static void devSelect(String id) {
+        devSelected = id;
+    }
 
     @Override
     public void render(HubScreen.Frame f) {
@@ -94,12 +100,27 @@ public final class RitesPage implements HubPageView {
             }
             sy = PageKit.wrapped(f, Component.translatable(chosen.forYou() ? KEY + "yours" : KEY + "anyone"), s.x(), sy + 3, s.w(),
                     chosen.forYou() ? t.good() : t.muted());
+            for (Component note : trialNotes(rite, f.view.bloodline().wolf())) {
+                sy = PageKit.wrapped(f, note, s.x(), sy + 3, s.w(), t.accent());
+            }
         }
         boolean witch = f.view.races().contains(SupernaturalRace.WITCH) || f.view.races().contains(SupernaturalRace.SIPHONER);
         t.drawRule(f.g, s.x(), sy + 3, s.w());
         sy = PageKit.wrapped(f, Component.translatable(KEY + (witch ? "witch" : "not_witch")), s.x(), sy + 7, s.w(), t.muted());
         sy = PageKit.wrapped(f, Component.translatable(KEY + "book"), s.x(), sy + 3, s.w(), t.muted());
         f.end(sy);
+    }
+
+    /** The extra lines of the Alpha Trial card (what it asks, the warning or the reason), empty for any other rite. */
+    static List<Component> trialNotes(HubSocial.Rite rite, net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf) {
+        if (!rite.id().equals(HubRites.TRIAL)) {
+            return List.of();
+        }
+        List<Component> out = new ArrayList<>();
+        for (String key : HubRites.trialNotes(wolf)) {
+            out.add(Component.translatable(KEY + "trial." + key));
+        }
+        return out;
     }
 
     static Component name(HubSocial.Rite rite) {

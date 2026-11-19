@@ -140,15 +140,49 @@ public final class NpcPackSpawner {
 
     /** The Werewolves mod's entity classes extend a Vampirism class that is not on this build's compile path, so their types are handled as plain mobs. */
     @SuppressWarnings("unchecked")
-    private static EntityType<? extends Mob> asMob(EntityType<?> type) {
+    public static EntityType<? extends Mob> asMob(EntityType<?> type) {
         return (EntityType<? extends Mob>) type;
     }
 
     @Nullable
     private static Mob spawn(ServerLevel level, EntityType<? extends Mob> type, BlockPos pos, NpcMark mark) {
-        Mob m = type.spawn(level, pos, MobSpawnType.EVENT);
+        // an Alpha is made at half its highest level: the Werewolves mod would work a level out from the players near it and refuse to let an Alpha in
+        // beside a weak one (see place)
+        Mob m = place(level, type, pos, ModEntities.ALPHA_WEREWOLF.getId().equals(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(type)) ? HALF_LEVEL : NO_LEVEL);
         if (m != null) {
             m.setData(SpeciesRegistries.NPC_MARK, mark);
+        }
+        return m;
+    }
+
+    /** {@link #place}: leave the level to the Werewolves mod. */
+    public static final int NO_LEVEL = -1;
+    /** {@link #place}: half the highest level of the entity. */
+    public static final int HALF_LEVEL = -2;
+    /** {@link #place}: the highest level of the entity. */
+    public static final int MAX_LEVEL = -3;
+
+    /**
+     * Makes {@code type} at {@code pos} and puts it in the world, or returns null when it did not get in. The Werewolves mod (through Vampirism) cancels
+     * the join of a leveled mob that has no level yet when the players near it are too weak for it (an Alpha beside a low-level werewolf): it would be
+     * returned by {@code EntityType.spawn} but never exist. Giving it a level first, as that rule asks, is how it gets in.
+     */
+    @Nullable
+    public static Mob place(ServerLevel level, EntityType<? extends Mob> type, BlockPos pos, int preset) {
+        Mob m = type.create(level);
+        if (m == null) {
+            return null;
+        }
+        m.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.random.nextFloat() * 360f, 0f);
+        m.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null);
+        if (preset != NO_LEVEL && m instanceof de.teamlapen.vampirism.api.difficulty.IAdjustableLevel leveled) {
+            int max = leveled.getMaxEntityLevel();
+            leveled.setEntityLevel(preset == MAX_LEVEL ? max : Math.max(1, max / 2));
+        }
+        level.addFreshEntityWithPassengers(m);
+        if (!m.isAddedToLevel()) {
+            m.discard();
+            return null;
         }
         return m;
     }

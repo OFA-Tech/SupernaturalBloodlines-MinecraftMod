@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class AdminEntriesTest {
     @Test
     void sixtyFiveKeysWithUniqueIds() {
-        assertEquals(84, AdminEntries.ALL.size());
+        assertEquals(87, AdminEntries.ALL.size());
         Set<String> seen = new HashSet<>();
         for (SettingEntry e : AdminEntries.ALL) {
             assertTrue(seen.add(e.id()), "duplicate id " + e.id());
