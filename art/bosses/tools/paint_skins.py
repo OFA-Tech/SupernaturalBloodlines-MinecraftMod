@@ -315,9 +315,13 @@ def mikael():
 
 
 def deucalion_human():
-    """No random noise anywhere (it read as speckle): every tone is placed by a regular pattern."""
+    """Short dark-brown hair, dark stubble, blind clouded eyes behind dark glasses (stills 3x01, 3x07, 3x10,
+    5x14, 6x19). The glasses are the only thing on the hat layer, so hiding that layer takes them off.
+    No random noise anywhere (it read as speckle): every tone is placed by a regular pattern."""
     s = Skin(False, 707)
-    SK, HAIR, IRIS = (212, 178, 150), (170, 144, 98), (88, 132, 178)
+    SK, HAIR = (212, 178, 150), (92, 68, 50)
+    CLOUD, RIM = (188, 196, 200), (206, 176, 172)  # clouded iris, reddened white
+    LENS, GLINT, FRAME = (26, 26, 30), (70, 67, 66), (44, 42, 42)
     ALL = ('top', 'bottom') + SIDES
 
     def fill(part, fn, sides=ALL, rows=None):
@@ -332,25 +336,29 @@ def deucalion_human():
     def strand(lx, ly, k=1.0):  # swept strands: three tones in diagonal streaks
         return shade(HAIR, k * (1.1, 0.98, 0.86)[(lx + ly // 2) % 3])
 
-    # face: smooth skin, soft jaw shadow, even stubble band
+    # face: smooth skin, dark stubble along the jaw and chin
     fill('head', lambda side, lx, ly: shade(SK, {'front': 1.0, 'top': 1.0, 'bottom': 0.84}.get(side, 0.95) * (0.95 if side in SIDES and ly >= 6 else 1.0)))
-    STUB = mixc(SK, shade(SK, 0.8), 0.45)
+    STUB, STUB_L = mixc(SK, HAIR, 0.5), mixc(SK, HAIR, 0.26)
     for lx in range(8):
         s.set('head', 'front', lx, 7, STUB)
         if lx not in (3, 4):
-            s.set('head', 'front', lx, 6, mixc(SK, STUB, 0.6))
+            s.set('head', 'front', lx, 6, STUB if lx in (0, 1, 6, 7) else STUB_L)
+    for lx in (0, 7):
+        s.set('head', 'front', lx, 5, STUB_L)
     for side, xs in (('right', (5, 6, 7)), ('left', (0, 1, 2))):
         for lx in xs:
-            s.set('head', side, lx, 7, STUB)
-    s.set('head', 'front', 1, 4, WHITE); s.set('head', 'front', 2, 4, IRIS)
-    s.set('head', 'front', 5, 4, IRIS); s.set('head', 'front', 6, 4, WHITE)
+            s.set('head', side, lx, 5, STUB_L); s.set('head', side, lx, 6, STUB); s.set('head', side, lx, 7, STUB)
+    s.set('head', 'front', 1, 4, RIM); s.set('head', 'front', 2, 4, CLOUD)
+    s.set('head', 'front', 5, 4, CLOUD); s.set('head', 'front', 6, 4, RIM)
     for lx in (1, 2, 5, 6):
-        s.set('head', 'front', lx, 3, (120, 98, 64))
+        s.set('head', 'front', lx, 3, shade(HAIR, 0.72))
     s.set('head', 'front', 3, 5, shade(SK, 0.9)); s.set('head', 'front', 4, 5, shade(SK, 0.94))
     s.set('head', 'front', 3, 6, (160, 96, 88)); s.set('head', 'front', 4, 6, (160, 96, 88))
-    # short sandy hair, swept up and to one side
+    # short dark-brown hair, swept up and to one side
     fill('head', lambda side, lx, ly: strand(lx, ly), sides=('top',))
     fill('head', lambda side, lx, ly: strand(lx, ly, 0.94), sides=('front',), rows=(0, 1))
+    for lx in range(0, 5):  # the swept fringe drops one row on his right
+        s.set('head', 'front', lx, 1, strand(lx, 1, 0.9))
     fill('head', lambda side, lx, ly: strand(lx, ly, 0.9 if ly == 4 else 0.96), sides=('back',), rows=(0, 5))
     for side, xs, burn in (('right', range(0, 6), (6, 7)), ('left', range(2, 8), (0, 1))):
         for ly in range(3):
@@ -358,11 +366,12 @@ def deucalion_human():
                 s.set('head', side, lx, ly, strand(lx, ly, 0.94))
         for lx in burn:
             s.set('head', side, lx, 3, shade(HAIR, 0.82))
-    fill('hat', lambda side, lx, ly: strand(lx, ly, 1.04), sides=('top',))  # volume on the second layer
-    fill('hat', lambda side, lx, ly: strand(lx, ly), sides=SIDES, rows=(0, 1))
-    for lx in range(0, 5):  # the swept quiff drops one row on his right
-        s.set('hat', 'front', lx, 1, strand(lx, 1, 0.92))
-    fill('hat', lambda side, lx, ly: strand(lx, ly, 0.94), sides=('back',), rows=(1, 3))
+    # dark glasses (hat layer): two lenses over brow and eye, bridge, arms back to the ears
+    for x0 in (1, 5):
+        s.rect('hat', 'front', x0, 3, 2, 2, LENS); s.set('hat', 'front', x0, 3, GLINT)
+    for lx in (0, 3, 4, 7):
+        s.set('hat', 'front', lx, 3, FRAME)
+    s.rect('hat', 'right', 4, 3, 4, 1, FRAME); s.rect('hat', 'left', 0, 3, 4, 1, FRAME)
     # dark knit sweater (base): clean vertical ribs
     SW, SWL, TRO, BOOT = (38, 40, 46), (122, 124, 130), (30, 32, 38), (24, 22, 22)
     rib = lambda c, lx, hi=1.12, lo=0.88: shade(c, hi if lx % 2 == 0 else lo)
@@ -443,13 +452,14 @@ def risen(s):
     """Peter, burned (Season 1 stills 1x04 / 1x09). One burn field in 3D model space drives everything, so the
     damage is continuous across faces and limbs instead of separate blotches. It starts on the right side of his
     face (viewer's left, as in the stills), runs down the right arm and diagonally across the chest and back.
-    Skin goes intact -> ridged ruddy scar -> raw red -> cracked char. The fire took the outer layers first: the
+    Skin goes intact -> waxy pink-brown scar -> dark crust -> grey-black flaking char, with raw red only in a
+    few splits (burned, not bloody). The fire took the outer layers first: the
     black leather jacket survives only on his left, the grey shirt is burned through along the swath with a
     scorched fringe, and the right trouser leg is burned open."""
     INTACT = (214, 186, 170)
-    SCAR_L, SCAR_D = (198, 132, 124), (160, 96, 90)
-    RAW, RAW_P = (166, 42, 44), (198, 84, 80)
-    CHAR_B, CHAR_K = (56, 38, 32), (22, 18, 18)
+    SCAR_D, SCAR_M, SHEEN = (146, 100, 90), (172, 124, 110), (206, 166, 150)  # dull pink-brown, waxy highlight
+    RAW, CRUST = (142, 52, 48), (74, 60, 56)
+    CHAR_K, CHAR_G, ASH = (30, 29, 30), (62, 60, 60), (104, 100, 98)
     HAIR, SINGE = (36, 28, 26), (76, 64, 58)
     SHIRT, SHIRT_D, BUTTON = (88, 92, 100), (66, 70, 78), (150, 150, 158)
     LEATH, LEATH_HI = (28, 30, 34), (70, 76, 74)
@@ -500,15 +510,15 @@ def risen(s):
         return best + 0.36 * (vnoise(p, 3.5, 501) - 0.5)  # organic edges instead of perfect arcs
 
     def skin(L, p):
-        n = vnoise(p, 2.2, 777)  # its contour lines give winding scar ridges and crust edges
-        if L > 0.78:
-            return CHAR_K if L > 0.92 or n > 0.5 else CHAR_B
-        if L > 0.56:
-            return CHAR_B if n > 0.6 else RAW_P if n < 0.4 else RAW
-        if L > 0.38:
-            return SCAR_L if 0.42 < n < 0.56 else SCAR_D
+        n = vnoise(p, 2.2, 777)  # its contour lines give winding scar ridges and flake edges
+        if L > 0.84:  # char: grey-black, flaking
+            return ASH if n > 0.66 else CHAR_G if n > 0.52 else CHAR_K
+        if L > 0.68:  # crust over the deepest burns; raw only where it has split
+            return RAW if n < 0.3 else CHAR_K if n > 0.62 else CRUST
+        if L > 0.44:  # mottled scar with a waxy sheen along the ridges
+            return SHEEN if 0.47 < n < 0.53 else SCAR_M if n >= 0.53 else SCAR_D
         if L > 0.22:
-            return SCAR_L
+            return SHEEN if n > 0.6 else SCAR_M
         return INTACT
 
     def cloth(part, side, lx, ly):
@@ -563,18 +573,18 @@ def risen(s):
         hair('front', lx, 0)
         for ly in range(3):
             hair('left', lx, ly); hair('right', lx, ly)
-    # face, hand-placed over the field (I intact, S/D scar, R raw, B/K char, H hair, b brow, w eye white,
-    # i iris, c clouded eye, m mouth, t stubble)
-    FACE = ['KBHHHHHH',
-            'BBRDSIII',
-            'KBRDDIII',
-            'BRRDSbbI',
-            'BRcDIiwI',
-            'KBRDIIII',
-            'KBRDmmtI',
-            'KKBRDttt']
-    KEY = {'I': INTACT, 'S': SCAR_L, 'D': SCAR_D, 'R': RAW, 'B': CHAR_B, 'K': CHAR_K, 'H': HAIR, 'b': HAIR, 'w': WHITE,
-           'i': (96, 140, 152), 'c': (186, 190, 194), 'm': (160, 80, 76), 't': mixc(INTACT, HAIR, 0.22)}
+    # face, hand-placed over the field (I intact, S sheen, M/D scar, C crust, G/K char, r raw split, H hair,
+    # b brow, w eye white, i iris, c clouded eye, m mouth, t stubble)
+    FACE = ['KGHHHHHH',
+            'GCDMSIII',
+            'KCDDMIII',
+            'GCrDSbbI',
+            'GCcDIiwI',
+            'KGCDIIII',
+            'KGCDmmtI',
+            'KKGCMttt']
+    KEY = {'I': INTACT, 'S': SHEEN, 'M': SCAR_M, 'D': SCAR_D, 'C': CRUST, 'G': CHAR_G, 'K': CHAR_K, 'r': RAW, 'H': HAIR,
+           'b': HAIR, 'w': WHITE, 'i': (96, 140, 152), 'c': (186, 190, 194), 'm': (160, 80, 76), 't': mixc(INTACT, HAIR, 0.22)}
     for ly, row in enumerate(FACE):
         for lx, k in enumerate(row):
             s.set('head', 'front', lx, ly, KEY[k])
