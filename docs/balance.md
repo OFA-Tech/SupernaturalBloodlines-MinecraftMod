@@ -117,7 +117,7 @@ The per-rung rows (SP, EP, tasks and their targets) are the spec's ladder tables
 
 Kept as they were, because the owner set them: the apex EP (2,000,000), the EP boost x1.25, the True Alpha x1.5, the True Alpha conditions (max level, 30 days as a Beta, 300 defender kills), S-WOL-8 being granted and not bought, and the rite and quest rules of the spec. Checked and left alone: every other draft value (the vampire feed blood 3, the Rite of Revelation's 1,000 power, the hub key J, the siphon and rite numbers).
 
-## Original lines (plan 17a)
+## Original lines (PR #34)
 
 Builder numbers, all tunable: Rite of the Broken Line 12000 power (2x Severance's 6000); Rite of the Imprisoned Original 36000 power (6x), 30 s hold (`imprisonment_rite_seconds`), ring radius 8 (`imprisonment_ring_max_radius`); NPC line weights equal (`npc_line_weights`). The Imprisoned rite is harder because it frees a branch and needs the Original held.
 

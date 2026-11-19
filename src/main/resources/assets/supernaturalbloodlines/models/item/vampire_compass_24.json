@@ -1,1 +1,18 @@
-{ "parent": "minecraft:item/generated", "textures": { "layer0": "supernaturalbloodlines:item/vampire_compass_24" } }
+{
+  "loader": "neoforge:separate_transforms",
+  "gui_light": "front",
+  "base": {
+    "parent": "supernaturalbloodlines:item/vampire_compass_3d",
+    "textures": {
+      "face": "supernaturalbloodlines:item/vampire_compass_24"
+    }
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "supernaturalbloodlines:item/vampire_compass_24"
+      }
+    }
+  }
+}

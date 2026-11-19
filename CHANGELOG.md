@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased (plan 17a: art lands, rings are worn)
+
+### Changed
+- **Item art:** about 30 existing items and the Vampire Compass look different. Each item has a 16x16 sprite in the inventory and a small 3D model in the hand, on the ground and in frames. Ids, names and behaviour are unchanged; the compass still has its 32 needle frames.
+
+### Added
+- **Worn rings (needs Curios):** the Sun, Moon and Resurrection Rings are drawn on your arm. Classic and slim arms, right and left. Curios gives the ring slot one place unless a pack raises it, so the ring shows on the right arm.
+- New art for the bosses (skins, GeckoLib models for Klaus's hybrid, Deucalion's Demon Wolf, Peter's Alpha and the Beast of Gévaudan) is in the jar. No boss uses it yet.
+
+### Developer
+- `ItemShots` (hidden-window item and ring screenshots), `ItemModelCoverageTest` and `ItemModelCoverageGameTests` (every item model has an item, every item has a model and a lang key), `CompassModelTest`, `RingPoseTest`. The four superseded Werewolves-model boss textures moved to `art/legacy`. Plan 17 (the bosses) is in `docs/superpowers/plans/2026-11-19-bosses.md`; its 15 open questions are decided.
+
 ## Unreleased (cleanup 1)
 
 ### Upgrading
