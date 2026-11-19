@@ -58,6 +58,7 @@ class AwakeningRulesTest {
 
     @Test
     void turningTheSettingOffReleasesItAtOnce() {
-        assertTrue(AwakeningRules.isDue(0, 24000L * 3, 0));
+        assertTrue(AwakeningRules.isDue(0, 1000, 0), "a due time just ahead, with the setting at 0");
+        assertFalse(AwakeningRules.isDue(0, 1000, 1), "the same with one night: not yet");
     }
 }
