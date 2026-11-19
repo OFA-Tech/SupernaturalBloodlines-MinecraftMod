@@ -68,6 +68,7 @@ public final class SpeciesTensuraPart {
             }
             if (ModList.get().isLoaded("werewolves")) {
                 e.register(RankSkillsGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.NpcSubordinatesGameTests.class);
                 e.register(ApexWerewolfGameTests.class);
             }
             // these link Werewolves classes, and the werewolf level grants live in vampirism_tensura
