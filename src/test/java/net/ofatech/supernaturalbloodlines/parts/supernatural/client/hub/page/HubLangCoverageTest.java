@@ -111,7 +111,7 @@ class HubLangCoverageTest {
         for (String s : List.of("debug", "parts")) {
             keys.add(H + "admin.section." + s);
         }
-        for (String a : List.of("get", "show", "backfill", "reset", "tree", "set", "event", "sp", "rung", "gene_on", "gene_off", "eclipse_start", "eclipse_stop")) {
+        for (String a : List.of("get", "show", "backfill", "reset", "tree", "set", "event", "sp", "rung", "gene_on", "gene_off", "eclipse_start", "eclipse_stop", "npc_pack")) {
             keys.add(H + "admin.act." + a);
         }
         for (String s : List.of("look", "hud", "keys")) {

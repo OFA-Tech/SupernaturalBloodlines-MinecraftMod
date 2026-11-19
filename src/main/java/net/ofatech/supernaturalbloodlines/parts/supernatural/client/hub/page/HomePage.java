@@ -354,6 +354,9 @@ public final class HomePage implements HubPageView {
         List<Do> all = new ArrayList<>();
         all.add(new Do("call", Component.translatable(KEY + "call"), line && !f.view.snapshot().sired().isEmpty(), line ? "no_sired" : "not_line", () -> HubClient.runCommand("B3", List.of())));
         all.add(new Do("roar", Component.translatable(KEY + "roar"), alpha, "not_alpha", () -> HubClient.runCommand("P14", List.of())));
+        boolean wolf = f.view.bloodline().wolf().lineage() != WolfState.Lineage.NONE;
+        all.add(new Do("surge", Component.translatable(KEY + "surge"), wolf && f.view.snapshot().pack().size() > 1, wolf ? "no_pack" : "not_werewolf", () -> HubClient.runCommand("P19", List.of())));
+        all.add(new Do("spirits", Component.translatable(KEY + "spirits"), alpha, "not_alpha", () -> HubClient.runCommand("P20", List.of())));
         all.add(new Do("quests", Component.translatable(KEY + "open_quests"), true, "", () -> f.screen().setPage(HubPage.QUESTS)));
         for (Do d : all) {
             Rect b = new Rect(s.x(), y + 2, Math.min(s.w(), PageWidgets.widthOf(f.font(), d.label())), PageWidgets.H);

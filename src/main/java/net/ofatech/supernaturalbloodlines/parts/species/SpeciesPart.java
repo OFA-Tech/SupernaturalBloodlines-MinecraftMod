@@ -211,6 +211,12 @@ public final class SpeciesPart {
             SparkHandler.register(); // after GeneHandler: an awakening comes before the innocent kill that caused it
             DefenderKills.register();
             EyeSync.register();
+            // plan 15b: the NPC packs, the weaker spark and the two pack abilities
+            net.ofatech.supernaturalbloodlines.parts.species.npc.NpcPackSpawner.register();
+            net.ofatech.supernaturalbloodlines.parts.species.npc.NpcPackBrain.register();
+            net.ofatech.supernaturalbloodlines.parts.species.npc.WeakSpark.register();
+            net.ofatech.supernaturalbloodlines.parts.species.npc.PackSkills.register();
+            NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> net.ofatech.supernaturalbloodlines.parts.species.npc.NpcPackCommand.register(e.getDispatcher()));
             NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> PackCommand.register(e.getDispatcher()));
             NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> PackCommand.forget(e.getEntity().getUUID()));
             FormControl.register();

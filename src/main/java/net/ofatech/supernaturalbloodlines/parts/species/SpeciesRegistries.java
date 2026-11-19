@@ -137,6 +137,11 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> PENDING_WILD =
             ATTACHMENTS.register("pending_wild", () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL).build());
 
+    /** Marks a mob as a wild NPC werewolf of a spawned pack or a Wolf Spirit (plan 15b); absent on every other mob. Use {@code hasData}. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<net.ofatech.supernaturalbloodlines.core.bloodline.NpcMark>> NPC_MARK =
+            ATTACHMENTS.register("npc_mark", () -> AttachmentType.<net.ofatech.supernaturalbloodlines.core.bloodline.NpcMark>builder(() -> net.ofatech.supernaturalbloodlines.core.bloodline.NpcMark.wild(0, 0))
+                    .serialize(net.ofatech.supernaturalbloodlines.core.bloodline.NpcMark.CODEC).build());
+
     /** What waits of this player's delayed werewolf awakening (R142): the day time it is due and the game time it was queued; due 0 is nothing. Kept through death. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<net.ofatech.supernaturalbloodlines.core.bloodline.AwakeningRules.Pending>> PENDING_AWAKENING =
             ATTACHMENTS.register("pending_awakening", () -> AttachmentType.builder(() -> net.ofatech.supernaturalbloodlines.core.bloodline.AwakeningRules.Pending.NONE)

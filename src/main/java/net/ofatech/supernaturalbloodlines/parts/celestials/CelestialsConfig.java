@@ -13,6 +13,7 @@ public final class CelestialsConfig {
     private static final ModConfigSpec.DoubleValue BLUE_MOON_RITE_COST;
     private static final ModConfigSpec.DoubleValue SUPER_MOON_RITE_COST;
     public static final ModConfigSpec.BooleanValue SUPER_BLUE_SKIPS_FORCED_SHIFT;
+    private static final ModConfigSpec.DoubleValue BLOOD_MOON_PACK_CHANCE_FACTOR;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -24,6 +25,8 @@ public final class CelestialsConfig {
                 .defineInRange("super_moon_rite_cost", 0.75, 0.1, 1.0);
         SUPER_BLUE_SKIPS_FORCED_SHIFT = b.comment("A Super Blue Moon (a full moon that is also calm) does not force the Werewolves full-moon shift on anybody. The shift at will still follows the moon-bound rule.")
                 .define("super_blue_skips_forced_shift", true);
+        BLOOD_MOON_PACK_CHANCE_FACTOR = b.comment("NPC werewolf packs (plan 15b): on a Blood Moon night that is not a full moon they spawn at this share of the full-moon chance. 1 = as on a full moon, 0 = never.")
+                .defineInRange("blood_moon_pack_chance_factor", 0.5, 0.0, 1.0);
         SPEC = b.build();
     }
 
@@ -33,9 +36,9 @@ public final class CelestialsConfig {
     /** The numbers as the lunar mood reads them. Before the config loads the defaults are used. */
     public static LunarMoods.Tuning tuning() {
         try {
-            return new LunarMoods.Tuning(BLUE_MOON_RITE_COST.get(), SUPER_MOON_RITE_COST.get(), BLOOD_MOON_BITE_BONUS.get(), SUPER_BLUE_SKIPS_FORCED_SHIFT.get());
+            return new LunarMoods.Tuning(BLUE_MOON_RITE_COST.get(), SUPER_MOON_RITE_COST.get(), BLOOD_MOON_BITE_BONUS.get(), SUPER_BLUE_SKIPS_FORCED_SHIFT.get(), BLOOD_MOON_PACK_CHANCE_FACTOR.get());
         } catch (IllegalStateException notLoaded) {
-            return new LunarMoods.Tuning(BLUE_MOON_RITE_COST.getDefault(), SUPER_MOON_RITE_COST.getDefault(), BLOOD_MOON_BITE_BONUS.getDefault(), SUPER_BLUE_SKIPS_FORCED_SHIFT.getDefault());
+            return new LunarMoods.Tuning(BLUE_MOON_RITE_COST.getDefault(), SUPER_MOON_RITE_COST.getDefault(), BLOOD_MOON_BITE_BONUS.getDefault(), SUPER_BLUE_SKIPS_FORCED_SHIFT.getDefault(), BLOOD_MOON_PACK_CHANCE_FACTOR.getDefault());
         }
     }
 }

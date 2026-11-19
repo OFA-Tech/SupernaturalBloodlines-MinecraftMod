@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory;
  */
 public final class LunarMoods {
     /** The numbers of the celestials config. {@link #OFF} changes nothing; it is what is used while the celestials part is off. */
-    public record Tuning(double blueRiteCost, double superRiteCost, double bloodBite, boolean superBlueSkipsForcedShift) {
-        public static final Tuning OFF = new Tuning(1, 1, 1, false);
+    public record Tuning(double blueRiteCost, double superRiteCost, double bloodBite, boolean superBlueSkipsForcedShift, double bloodMoonPackChance) {
+        public static final Tuning OFF = new Tuning(1, 1, 1, false, 1);
     }
 
     /** What is being asked of the source; each has its own failure count. */
@@ -142,6 +142,12 @@ public final class LunarMoods {
     public static double biteFactor(Level level) {
         LunarMood mood = now(level);
         return mood.isNone() ? 1 : mood.biteFactor(tuning.get().bloodBite());
+    }
+
+    /** The share of the full-moon NPC pack chance a Blood Moon night rolls at (R143); 1 without a mood. Only a Blood Moon changes it. */
+    public static double packChance(Level level) {
+        LunarMood mood = now(level);
+        return mood.isNone() ? 1 : mood.packChance(tuning.get().bloodMoonPackChance());
     }
 
     public static boolean sparesForcedShift(Level level) {

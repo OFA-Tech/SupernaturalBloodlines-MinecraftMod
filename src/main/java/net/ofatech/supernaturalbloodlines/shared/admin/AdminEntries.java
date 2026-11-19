@@ -92,6 +92,15 @@ public final class AdminEntries {
         species(all, "hybrid_transition_blood", CHOICE);
         species(all, "full_moon_sleep", CHOICE);
         species(all, "delayed_awakening_nights", INT);
+        for (String key : List.of("npc_packs_enabled", "npc_pack_dawn_despawn", "npc_alpha_spark_enabled", "moonblood_surge_enabled", "wolf_spirits_enabled")) {
+            species(all, key, BOOL);
+        }
+        for (String key : List.of("npc_pack_chance", "npc_lone_wolf_chance", "npc_pack_alpha_chance", "feral_attack_factor", "feral_speed_factor")) {
+            species(all, key, DOUBLE);
+        }
+        for (String key : List.of("npc_pack_min_size", "npc_pack_max_size", "npc_max_packs_per_night", "weak_spark_grow_days", "weak_spark_max_held", "weak_spark_cooldown_days")) {
+            species(all, key, INT);
+        }
 
         String st = "speciesTensura";
         all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "layers", LIST).withClientCopy());
@@ -106,6 +115,7 @@ public final class AdminEntries {
 
         String ce = "celestials";
         all.add(SettingEntry.of(CELESTIALS_FILE, ce, "blood_moon_bite_bonus", DOUBLE));
+        all.add(SettingEntry.of(CELESTIALS_FILE, ce, "blood_moon_pack_chance_factor", DOUBLE));
         all.add(SettingEntry.of(CELESTIALS_FILE, ce, "blue_moon_rite_cost", DOUBLE));
         all.add(SettingEntry.of(CELESTIALS_FILE, ce, "super_moon_rite_cost", DOUBLE));
         all.add(SettingEntry.of(CELESTIALS_FILE, ce, "super_blue_skips_forced_shift", BOOL));
