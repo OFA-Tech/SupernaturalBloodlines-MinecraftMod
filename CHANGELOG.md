@@ -10,7 +10,7 @@
 
 ### Added
 - Moonblood Surge (a werewolf in a pack: a buff for the pack within 24 blocks, paid for afterwards) and Wolf Spirits (an Alpha: three spirit wolves for three minutes), as granted abilities on the Home page and `/sb pack surge` and `/sb pack spirits`.
-- Admin: 16 new settings (Admin > Species) and a "Spawn NPC pack" debug button.
+- Admin: 17 new settings (Admin > Species) and a "Spawn NPC pack" debug button.
 - **Limit:** a pack spawns once per player per night, so a night with a pack is a fact of the world for that player; there is no "leave the area" cancel. A weak spark grows with online time, not active time (an AFK holder grows it).
 
 ## Unreleased (plan 15a: the moon calendar)
