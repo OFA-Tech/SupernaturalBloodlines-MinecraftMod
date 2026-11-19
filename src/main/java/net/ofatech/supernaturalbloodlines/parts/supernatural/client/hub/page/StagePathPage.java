@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubDev;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.network.chat.Component;
@@ -103,7 +104,7 @@ public final class StagePathPage implements HubPageView {
     private static int almanacHeight(HubScreen.Frame f, int boxW) {
         var view = AlmanacEvents.view(f);
         int step = AlmanacEvents.step(view, 11, 8);
-        int fullH = f.font().split(PathActions.almanacLine(f.view.player().level().getMoonPhase()), fullMoonWidth(step, boxW)).size() * PageKit.LINE;
+        int fullH = f.font().split(PathActions.almanacLine(HubDev.moonPhase(f.view.player().level())), fullMoonWidth(step, boxW)).size() * PageKit.LINE;
         int eventH = AlmanacEvents.height(f, view, boxW - 16, PageKit.LINE);
         return view.isEmpty() && fullH <= PageKit.LINE ? 22 : 7 + Math.max(14, fullH) + eventH + 4;
     }
@@ -111,13 +112,14 @@ public final class StagePathPage implements HubPageView {
     private static void almanac(HubScreen.Frame f, Rect box) {
         HubTheme t = f.theme();
         BookKit.outline(f.g, box, (t.paper() & 0xFFFFFF) | 0xCC000000, (t.muted() & 0xFFFFFF) | 0x77000000);
-        int phase = f.view.player().level().getMoonPhase();
+        int phase = HubDev.moonPhase(f.view.player().level());
         var view = AlmanacEvents.view(f);
         int step = AlmanacEvents.step(view, 11, 8);
         int x = box.x() + 8;
         int fullH = f.font().split(PathActions.almanacLine(phase), fullMoonWidth(step, box.w())).size() * PageKit.LINE;
         int y = view.isEmpty() && fullH <= PageKit.LINE ? box.y() + (box.h() - 8) / 2 : box.y() + 7;
         int day = 0;
+        AlmanacEvents.link(f, x, y, step, 8);
         for (int p : HubAlmanac.phases(phase, HubAlmanac.ROW)) {
             KitDraw.icon(f.g, Icons.moon(p), x, y, 8, p == 0 ? 0xFFffd36b : t.muted());
             AlmanacEvents.ring(f, view, day++, x, y, 8);

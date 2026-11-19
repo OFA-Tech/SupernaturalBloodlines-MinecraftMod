@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubDev;
 import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
@@ -102,7 +103,7 @@ public final class PathPage implements HubPageView {
     private static int almanacHeight(HubScreen.Frame f, Rect r) {
         var view = AlmanacEvents.view(f);
         int lift = view.byDay().isEmpty() ? 0 : 4;
-        int fullH = f.font().split(PathActions.almanacLine(f.view.player().level().getMoonPhase()), r.w()).size() * PageKit.LINE;
+        int fullH = f.font().split(PathActions.almanacLine(HubDev.moonPhase(f.view.player().level())), r.w()).size() * PageKit.LINE;
         return PageKit.LINE + 14 + 2 * lift + fullH + AlmanacEvents.height(f, view, r.w(), PageKit.LINE);
     }
 
@@ -110,13 +111,14 @@ public final class PathPage implements HubPageView {
     private static int almanac(HubScreen.Frame f, Rect r, int y) {
         HubTheme t = f.theme();
         var level = f.view.player().level();
-        int phase = level.getMoonPhase();
+        int phase = HubDev.moonPhase(level);
         f.g.drawString(f.font(), Component.translatable(KEY + "almanac"), r.x(), y, t.muted(), false);
         int x = r.x();
         var view = AlmanacEvents.view(f);
         int lift = view.byDay().isEmpty() ? 0 : 4; // room for the rings above and below the moons
         int step = AlmanacEvents.step(view, 14, 12);
         int day = 0;
+        AlmanacEvents.link(f, x, y + PageKit.LINE + lift, step, 12);
         for (int p : HubAlmanac.phases(phase, HubAlmanac.ROW)) {
             KitDraw.icon(f.g, Icons.moon(p), x, y + PageKit.LINE + lift, 12, p == 0 ? 0xFFB8860B : t.ink());
             AlmanacEvents.ring(f, view, day++, x, y + PageKit.LINE + lift, 12);

@@ -42,6 +42,19 @@ public final class HubDev {
         return handsFull;
     }
 
+    private static volatile Integer phase;
+
+    /** {@code .phase=0..7}: the moon phase the hub shows in the pictures, so the calendar, the almanac and "tonight" all follow it (null: the real one). */
+    static void phase(Integer value) {
+        phase = value;
+    }
+
+    /** The moon phase the hub shows: the level's, unless a dev picture pins it. */
+    public static int moonPhase(net.minecraft.world.level.Level level) {
+        Integer pinned = phase;
+        return pinned != null ? pinned : level.getMoonPhase();
+    }
+
     /** Replaces the hub's view of the player with demo data (a client view only; nothing is sent or changed on the server). */
     static void view(UnaryOperator<HubView> override) {
         view = override;

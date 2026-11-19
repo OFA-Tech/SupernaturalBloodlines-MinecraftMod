@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.client;
 
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubDev;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -192,7 +193,7 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         String race = HubHooks.tensura().map(info -> info.race().getString()).orElse(null);
         String ep = counters.epText();
         var level = Minecraft.getInstance().level;
-        int days = level == null ? -1 : HubAlmanac.daysToFull(level.getMoonPhase());
+        int days = level == null ? -1 : HubAlmanac.daysToFull(HubDev.moonPhase(level));
         String moon = days < 0 ? null : "\u0001" + (days == 0 ? "tonight" : days + (days == 1 ? " day" : " days"));
         String base = counters.spText() + (ep == null ? "" : " \u00b7 " + ep);
         String front = race == null ? "" : race + " \u00b7 ";

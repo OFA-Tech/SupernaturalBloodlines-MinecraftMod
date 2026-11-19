@@ -64,6 +64,7 @@ public final class GeneWerewolfGameTests {
     public static void awakeningRevealsWerewolfGene(GameTestHelper helper) {
         ServerPlayer human = TestPlayers.createMortal(helper);
         ServerPlayer vampire = TestPlayers.createMortal(helper);
+        SpeciesConfig.overrideDelayedAwakeningNights(0); // R142 delays a human's awakening by default; MoonWerewolfGameTests covers that
         try {
             BloodlineAccess.set(human, BloodlineState.NONE.toBuilder().wolf(GENE).doppelgangerGene(true).build());
             helper.assertTrue(BloodlineAccess.get(human).revealedGenes().isEmpty(), "the gene started revealed");
@@ -83,6 +84,7 @@ public final class GeneWerewolfGameTests {
             helper.assertTrue(BloodlineAccess.get(vampire).revealedGenes().equals(Set.of(Genes.WEREWOLF)),
                     "the vampire's awakening revealed " + BloodlineAccess.get(vampire).revealedGenes());
         } finally {
+            SpeciesConfig.overrideDelayedAwakeningNights(null);
             BloodlineAccess.set(human, BloodlineState.NONE);
             BloodlineAccess.set(vampire, BloodlineState.NONE);
         }

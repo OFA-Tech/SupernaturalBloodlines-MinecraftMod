@@ -46,6 +46,13 @@ public final class HubPages {
     private HubPages() {
     }
 
+    private static final HubPageView MOON = new net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.MoonPage();
+
+    /** The moon calendar route: one view for every theme, like the Profile. */
+    public static HubPageView moon() {
+        return MOON;
+    }
+
     /** The Profile route: one view for every theme, drawn into the same regions. */
     public static HubPageView profile() {
         return PROFILE;

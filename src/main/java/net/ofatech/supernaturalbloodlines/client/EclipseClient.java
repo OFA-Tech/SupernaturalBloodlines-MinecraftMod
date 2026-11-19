@@ -45,6 +45,11 @@ public final class EclipseClient {
 
     private EclipseClient() {}
 
+    /** Whether the server last told this client that a lunar eclipse is running (the hub's "world now" asks). */
+    public static boolean running() {
+        return active;
+    }
+
     public static void set(boolean on) {
         active = on;
         if (!listening) {

@@ -90,6 +90,8 @@ public final class AdminEntries {
         species(all, "gene_visibility", CHOICE);
         species(all, "doppelganger_rite_taglock", CHOICE);
         species(all, "hybrid_transition_blood", CHOICE);
+        species(all, "full_moon_sleep", CHOICE);
+        species(all, "delayed_awakening_nights", INT);
 
         String st = "speciesTensura";
         all.add(SettingEntry.of(SPECIES_TENSURA_FILE, st, "layers", LIST).withClientCopy());

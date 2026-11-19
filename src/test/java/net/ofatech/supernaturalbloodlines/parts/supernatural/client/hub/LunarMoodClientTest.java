@@ -29,6 +29,16 @@ class LunarMoodClientTest {
     }
 
     @Test
+    void theCalendarKeepsTheEventsOfSixteenDaysAndTheRowKeepsSix() {
+        var view = LunarMoodClient.build(List.of(event(2, "blood_moon"), event(10, "blue_moon"), event(15, "harvest_moon"), event(16, "super_moon")));
+        assertEquals(1, view.byDay().size(), "only the almanac row has rings on the Path pages");
+        assertTrue(view.onDay(2).isPresent() && view.onDay(10).isEmpty());
+        assertEquals(3, view.calendar().size());
+        assertTrue(view.onCalendarDay(10).isPresent() && view.onCalendarDay(15).isPresent());
+        assertTrue(view.onCalendarDay(16).isEmpty(), "day 16 is the 17th: outside the calendar");
+    }
+
+    @Test
     void noEventsMeansAnEmptyView() {
         assertTrue(LunarMoodClient.build(List.of()).isEmpty());
         assertTrue(LunarMoodClient.view(null).isEmpty());

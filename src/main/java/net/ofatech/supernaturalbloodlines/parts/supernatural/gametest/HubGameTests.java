@@ -108,7 +108,8 @@ public final class HubGameTests {
                 .revealedGenes(Set.of(Genes.DOPPELGANGER)).build());
         try {
             for (RecordComponent c : HubSnapshotPayload.class.getRecordComponents()) {
-                helper.assertTrue(Set.of(HubSnapshotPayload.Family.class, boolean.class, List.class, int.class, Map.class).contains(c.getType()),
+                helper.assertTrue(Set.of(HubSnapshotPayload.Family.class, boolean.class, List.class, int.class, Map.class,
+                        net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.class).contains(c.getType()), // Flags: the viewer's own two booleans
                         "the snapshot carries a " + c.getType().getSimpleName() + " (" + c.getName() + ")");
             }
             HubSnapshotPayload ofSire = HubSnapshotPayload.of(sire);

@@ -54,6 +54,8 @@ public final class HubScreen extends Screen {
     private HubPage page;
     @Nullable
     private ProfileRoute profile;
+    /** The moon calendar is a route over the page it was opened from, like a Profile: Esc goes back (R140). */
+    private boolean moon;
     private String selectedTask;
     private String focus;
     private boolean scrollToFocus;
@@ -120,6 +122,7 @@ public final class HubScreen extends Screen {
     /** {@code op}: the OP view, reached only from Admin; the server answers it only to permission level 2. */
     public void openProfile(java.util.UUID id, String name, boolean op) {
         HubPage origin = profile != null ? profile.origin() : page == HubPage.LOADOUT ? HubPage.SKILLS : page;
+        moon = false;
         profile = new ProfileRoute(id, name, op, origin);
         scroll.clear();
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.ProfileClient.clear();
@@ -127,8 +130,28 @@ public final class HubScreen extends Screen {
         triggerImmediateNarration(true);
     }
 
-    /** One step back: a Profile to its origin, the Loadout to Skills. False when there is nothing to go back to (Esc then closes the hub). */
+    public boolean moonOpen() {
+        return moon;
+    }
+
+    /** Opens the moon calendar over the current page. */
+    public void openMoon() {
+        if (!moon) {
+            moon = true;
+            profile = null;
+            scroll.clear();
+            triggerImmediateNarration(true);
+        }
+    }
+
+    /** One step back: the moon calendar or a Profile to its origin, the Loadout to Skills. False when there is nothing to go back to (Esc then closes the hub). */
     public boolean back() {
+        if (moon) {
+            moon = false;
+            scroll.clear();
+            triggerImmediateNarration(true);
+            return true;
+        }
         if (profile != null) {
             HubPage origin = profile.origin();
             profile = null;
@@ -147,8 +170,9 @@ public final class HubScreen extends Screen {
     }
 
     public void setPage(HubPage p) {
-        if (p != page || profile != null) {
+        if (p != page || profile != null || moon) {
             profile = null;
+            moon = false;
             page = p;
             scroll.clear();
             HubClient.remember(p);
@@ -228,7 +252,7 @@ public final class HubScreen extends Screen {
         }
         chrome(f, mouseX, mouseY);
         HubThemeViews views = theme instanceof HubThemeViews v ? v : null;
-        if (views != null) {
+        if (views != null && !moon) { // the moon calendar is drawn the same in every theme: not over the origin page's own furniture
             views.drawOverlay(f, page);
         }
         viewOf(page, view).render(f);
@@ -278,6 +302,9 @@ public final class HubScreen extends Screen {
     /** The view of a page in the current theme; the page answers keys and drags first, see {@link #keyPressed}. */
     private HubPageView viewOf(HubPage p, HubView view) {
         HubThemeViews views = theme instanceof HubThemeViews v ? v : null;
+        if (moon) {
+            return HubPages.moon();
+        }
         if (profile != null) {
             return HubPages.profile();
         }
@@ -356,6 +383,7 @@ public final class HubScreen extends Screen {
             return; // only the line state (DevShots sets it before the screen opens)
         }
         switch (variant) {
+            case "moon" -> openMoon();
             case "profile" -> openProfile(DevDemo.id("Derek"), "Derek");
             case "profile_beta" -> openProfile(DevDemo.id("Liam"), "Liam");
             case "profile_stranger" -> openProfile(DevDemo.id("Stranger"), "Stranger");
@@ -723,7 +751,8 @@ public final class HubScreen extends Screen {
         Target t = target(focus);
         List<String> tip = t == null ? null : t.tooltip().stream().map(Component::getString).toList();
         String focused = dialog == null ? null : (dialog.confirmFocused() ? dialogYes : dialogSafe).getString();
-        String where = profile != null ? Component.translatable("supernaturalbloodlines.hub.profile.narration", profile.name()).getString()
+        String where = moon ? Component.translatable("supernaturalbloodlines.hub.moon.title").getString()
+                : profile != null ? Component.translatable("supernaturalbloodlines.hub.profile.narration", profile.name()).getString()
                 : Component.translatable(page.langKey()).getString();
         for (String line : Narration.lines(where, tip,
                 dialog == null ? null : dialogTitle.getString(), dialog == null ? null : dialogBody.getString(), focused)) {

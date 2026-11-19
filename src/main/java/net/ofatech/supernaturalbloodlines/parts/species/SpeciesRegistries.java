@@ -137,6 +137,11 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> PENDING_WILD =
             ATTACHMENTS.register("pending_wild", () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL).build());
 
+    /** What waits of this player's delayed werewolf awakening (R142): the day time it is due and the game time it was queued; due 0 is nothing. Kept through death. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<net.ofatech.supernaturalbloodlines.core.bloodline.AwakeningRules.Pending>> PENDING_AWAKENING =
+            ATTACHMENTS.register("pending_awakening", () -> AttachmentType.builder(() -> net.ofatech.supernaturalbloodlines.core.bloodline.AwakeningRules.Pending.NONE)
+                    .serialize(net.ofatech.supernaturalbloodlines.core.bloodline.AwakeningRules.Pending.CODEC).copyOnDeath().build());
+
     /** The discount a compelled villager gives, until it runs out; see {@link VillagerDiscount}. Use {@code hasData}. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<VillagerDiscount>> VILLAGER_DISCOUNT =
             ATTACHMENTS.register("villager_discount", () -> AttachmentType.builder(() -> new VillagerDiscount(Util.NIL_UUID, 0, 0))

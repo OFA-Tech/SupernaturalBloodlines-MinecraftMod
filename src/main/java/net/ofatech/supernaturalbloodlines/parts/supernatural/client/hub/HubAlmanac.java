@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.ofatech.supernaturalbloodlines.core.moon.LunarSource;
+import net.ofatech.supernaturalbloodlines.core.moon.MoonCalendar;
 
 /** The moon, as the almanac shows it: the next few phases and the days to the full moon. Vanilla phase 0 is the full moon, one phase a day, eight in all. Pure. */
 public final class HubAlmanac {
@@ -12,7 +13,7 @@ public final class HubAlmanac {
 
     /** Days until the next full moon: 0 when it is the full moon today. */
     public static int daysToFull(int phase) {
-        return Math.floorMod(8 - phase, 8);
+        return MoonCalendar.daysToFull(phase);
     }
 
 
@@ -28,6 +29,17 @@ public final class HubAlmanac {
     public static List<LunarSource.Upcoming> listed(List<LunarSource.Upcoming> events) {
         List<LunarSource.Upcoming> inRow = events.stream().filter(e -> e.days() >= 0 && e.days() < ROW).toList();
         return inRow.isEmpty() ? next(events).map(List::of).orElse(List.of()) : inRow;
+    }
+
+    /** The events of the moon calendar's days, by day (the first event of a day wins). */
+    public static java.util.Map<Integer, LunarSource.Upcoming> calendarEvents(List<LunarSource.Upcoming> events) {
+        java.util.Map<Integer, LunarSource.Upcoming> out = new java.util.HashMap<>();
+        for (LunarSource.Upcoming e : events) {
+            if (e.days() >= 0 && e.days() < MoonCalendar.DAYS) {
+                out.putIfAbsent(e.days(), e);
+            }
+        }
+        return java.util.Map.copyOf(out);
     }
 
     /** Least contrast (WCAG) a ring must have against the page. */

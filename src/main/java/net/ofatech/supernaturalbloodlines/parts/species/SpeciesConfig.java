@@ -76,6 +76,12 @@ public final class SpeciesConfig {
     public static final String TRANSITION_BLOOD_ORIGINAL_HYBRID = "original_hybrid";
     public static final String TRANSITION_BLOOD_ORIGINAL = "original";
     private static final ModConfigSpec.ConfigValue<String> HYBRID_TRANSITION_BLOOD;
+    public static final String SLEEP_OFF = "off";
+    public static final String SLEEP_WEREWOLVES = "werewolves";
+    public static final String SLEEP_EVERYONE = "everyone";
+    private static final ModConfigSpec.ConfigValue<String> FULL_MOON_SLEEP;
+    public static final int DEFAULT_DELAYED_AWAKENING_NIGHTS = 1;
+    private static final ModConfigSpec.IntValue DELAYED_AWAKENING_NIGHTS;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -134,6 +140,10 @@ public final class SpeciesConfig {
                 .defineInList("doppelganger_rite_taglock", TAGLOCK_DOPPELGANGER, new java.util.ArrayList<>(java.util.List.of(TAGLOCK_DOPPELGANGER, TAGLOCK_HUMAN)));
         HYBRID_TRANSITION_BLOOD = b.comment("Whose Original's Blood starts the hybrid transition (R40). original_hybrid: only blood taken from an Original hybrid. original: blood from any Original or Original hybrid. A bottle made before the bottles recorded their source counts under either setting.")
                 .defineInList("hybrid_transition_blood", TRANSITION_BLOOD_ORIGINAL_HYBRID, new java.util.ArrayList<>(java.util.List.of(TRANSITION_BLOOD_ORIGINAL_HYBRID, TRANSITION_BLOOD_ORIGINAL)));
+        FULL_MOON_SLEEP = b.comment("R141: who cannot use a bed in the Overworld on a full-moon night, from dusk (tick 12000) to the morning. off: nobody. werewolves: players in the werewolf faction, in human form too, so a werewolf cannot sleep through the full moon before the forced shift. everyone: all players.")
+                .defineInList("full_moon_sleep", SLEEP_OFF, new java.util.ArrayList<>(java.util.List.of(SLEEP_OFF, SLEEP_WEREWOLVES, SLEEP_EVERYONE)));
+        DELAYED_AWAKENING_NIGHTS = b.comment("R142: a human who carries the hidden werewolf gene and kills a villager or a player awakens at the next dusk, or this many dusks later, not at once. 0 awakens at once, as before. The Rite of Lineage and a wild bite are not delayed.")
+                .defineInRange("delayed_awakening_nights", DEFAULT_DELAYED_AWAKENING_NIGHTS, 0, 3);
         b.pop();
         SPEC = b.build();
     }
@@ -338,6 +348,47 @@ public final class SpeciesConfig {
             return DOPPELGANGER_VILLAGER_CHANCE.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_DOPPELGANGER_VILLAGER_CHANCE;
+        }
+    }
+
+    private static volatile net.ofatech.supernaturalbloodlines.core.moon.SleepRules.Mode fullMoonSleepOverride;
+    private static volatile Integer delayedAwakeningOverride;
+
+    /** For tests: pins {@link #fullMoonSleep()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideFullMoonSleep(net.ofatech.supernaturalbloodlines.core.moon.SleepRules.Mode value) {
+        fullMoonSleepOverride = value;
+    }
+
+    /** {@code full_moon_sleep}. */
+    public static net.ofatech.supernaturalbloodlines.core.moon.SleepRules.Mode fullMoonSleep() {
+        var pinned = fullMoonSleepOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return net.ofatech.supernaturalbloodlines.core.moon.SleepRules.Mode.parse(FULL_MOON_SLEEP.get());
+        } catch (IllegalStateException notLoaded) {
+            return net.ofatech.supernaturalbloodlines.core.moon.SleepRules.Mode.OFF;
+        }
+    }
+
+    /** For tests: pins {@link #delayedAwakeningNights()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideDelayedAwakeningNights(Integer value) {
+        delayedAwakeningOverride = value;
+    }
+
+    /** {@code delayed_awakening_nights}. */
+    public static int delayedAwakeningNights() {
+        Integer pinned = delayedAwakeningOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return DELAYED_AWAKENING_NIGHTS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_DELAYED_AWAKENING_NIGHTS;
         }
     }
 

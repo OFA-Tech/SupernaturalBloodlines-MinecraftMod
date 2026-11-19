@@ -128,6 +128,7 @@ public final class SpeciesPart {
         AdminSpecs.choices(SpeciesConfig.FILE + ":species.gene_visibility", List.of(SpeciesConfig.GENES_DISCOVERED, SpeciesConfig.GENES_ALWAYS));
         AdminSpecs.choices(SpeciesConfig.FILE + ":species.doppelganger_rite_taglock", List.of(SpeciesConfig.TAGLOCK_DOPPELGANGER, SpeciesConfig.TAGLOCK_HUMAN));
         AdminSpecs.choices(SpeciesConfig.FILE + ":species.hybrid_transition_blood", List.of(SpeciesConfig.TRANSITION_BLOOD_ORIGINAL_HYBRID, SpeciesConfig.TRANSITION_BLOOD_ORIGINAL));
+        AdminSpecs.choices(SpeciesConfig.FILE + ":species.full_moon_sleep", List.of(SpeciesConfig.SLEEP_OFF, SpeciesConfig.SLEEP_WEREWOLVES, SpeciesConfig.SLEEP_EVERYONE));
         AdminSpecs.lineCheck(SpeciesConfig.FILE + ":species.npc_line_weights", line -> !LineRules.parseWeights(List.of(line)).isEmpty());
         // the faction rites (vampirism_enchanted part) now run with the real context and through the executor
         FactionRiteHooks.install((p, faction, time) -> SpeciesContext.of(p, faction, time, null), OutcomeExecutor::run);
@@ -184,7 +185,13 @@ public final class SpeciesPart {
         Electricity.register(); // always: Shocked and the Taser work on every supernatural
         TurningHandler.register(); // always: the turning is vampires only, no Werewolves needed
         GhoulGates.register();
+        net.ofatech.supernaturalbloodlines.parts.species.moon.FullMoonSleep.register(); // no Werewolves needed: "everyone" works without it
+        net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.set(p -> new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(
+                net.ofatech.supernaturalbloodlines.core.moon.SleepRules.appliesTo(SpeciesConfig.fullMoonSleep(),
+                        net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural.isWerewolf(p)),
+                net.ofatech.supernaturalbloodlines.parts.species.moon.AwakeningQueue.pending(p)));
         if (ModList.get().isLoaded("werewolves")) {
+            net.ofatech.supernaturalbloodlines.parts.species.moon.DelayedAwakening.register();
             FormBlocks.register();
             LunarEclipse.register();
             Anchors.register();
@@ -269,7 +276,9 @@ public final class SpeciesPart {
                     e.register(WerewolfSkillRuleGameTests.class);
                 }
             }
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.FullMoonSleepGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.MoonWerewolfGameTests.class);
                 e.register(GeneWerewolfGameTests.class);
                 e.register(DoppelgangerRiteGameTests.class);
                 e.register(SirelineHybridGameTests.class);

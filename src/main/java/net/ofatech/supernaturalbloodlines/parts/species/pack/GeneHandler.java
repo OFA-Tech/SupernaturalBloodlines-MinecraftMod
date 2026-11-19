@@ -19,14 +19,16 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackOutcome;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.GeneAwakening;
+import net.ofatech.supernaturalbloodlines.parts.species.moon.DelayedAwakening;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.werewolves.WerewolfFaction;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The hidden werewolf gene (R10, R11): rolled once at first login, awakened for a human by a villager or player kill.
- * A vampire's awakening (R24) stays with {@link GeneAwakening}; a hunter's gene stays latent. Touched only behind
- * {@code ModList.isLoaded("werewolves")}.
+ * The hidden werewolf gene (R10, R11): rolled once at first login; a villager or player kill of a human carrier queues the awakening for a
+ * dusk (R142, {@link DelayedAwakening}), or does it at once with {@code delayed_awakening_nights = 0}. {@link #awakenHuman} is the awakening itself,
+ * also used by the Rite of Lineage. A vampire's awakening (R24) stays with {@link GeneAwakening}; a hunter's gene stays latent. Registered, and
+ * so reached, only when Werewolves is loaded.
  */
 public final class GeneHandler {
     private static final DoubleSupplier RANDOM = () -> ThreadLocalRandom.current().nextDouble();
@@ -70,7 +72,12 @@ public final class GeneHandler {
                 || FactionRiteFactory.baseFaction(VampirismAPI.factionPlayerHandler(killer)) != BaseFaction.NONE) {
             return;
         }
-        awakenHuman(killer, PackEvent.GENE_AWAKENED);
+        // R142: the awakening comes at a later dusk; 0 nights is at once
+        if (SpeciesConfig.delayedAwakeningNights() > 0) {
+            DelayedAwakening.queue(killer);
+        } else {
+            awakenHuman(killer, PackEvent.GENE_AWAKENED);
+        }
     }
 
     /**

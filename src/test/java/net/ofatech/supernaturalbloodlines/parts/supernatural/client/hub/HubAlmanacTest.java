@@ -66,6 +66,15 @@ class HubAlmanacTest {
     }
 
     @Test
+    void theCalendarTakesTheEventsOfItsSixteenDays() {
+        List<LunarSource.Upcoming> events = List.of(event(-1, "blood_moon"), event(0, "blue_moon"), event(0, "super_moon"), event(15, "blood_moon"), event(16, "blue_moon"));
+        var calendar = HubAlmanac.calendarEvents(events);
+        assertEquals(java.util.Set.of(0, 15), calendar.keySet(), "yesterday and day 16 are outside");
+        assertEquals(LunarMood.Kind.BLUE, calendar.get(0).mood().kind(), "the first event of a day wins");
+        assertTrue(HubAlmanac.calendarEvents(List.of()).isEmpty());
+    }
+
+    @Test
     void noEventsMeansNothingToDraw() {
         assertTrue(HubAlmanac.next(List.of()).isEmpty());
     }

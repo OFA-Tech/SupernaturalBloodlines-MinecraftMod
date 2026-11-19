@@ -121,3 +121,6 @@ Kept as they were, because the owner set them: the apex EP (2,000,000), the EP b
 
 Builder numbers, all tunable: Rite of the Broken Line 12000 power (2x Severance's 6000); Rite of the Imprisoned Original 36000 power (6x), 30 s hold (`imprisonment_rite_seconds`), ring radius 8 (`imprisonment_ring_max_radius`); NPC line weights equal (`npc_line_weights`). The Imprisoned rite is harder because it frees a branch and needs the Original held.
 
+## Plan 15a: the moon calendar (R140 to R142)
+- `delayed_awakening_nights` 1 (range 0 to 3): the gene's kill is a deliberate act, so waiting one dusk keeps it from being a mid-fight surprise; 0 restores the old instant awakening.
+- `full_moon_sleep` `off`: the owner decided on werewolves only as the scope when it is turned on; it is off by default so no world changes silently. Dusk is 12000, before the 12786 forced-shift window, so nobody sleeps through the night's start.
