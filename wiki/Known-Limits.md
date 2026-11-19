@@ -126,4 +126,6 @@ If you find something that behaves differently from this wiki, please [open an i
 - A pack spawns once per player per night; there is no way to ask for another or to cancel it.
 - A weaker spark grows with online time, not active time: someone away from the keyboard grows it.
 - Wolf Spirits are vanilla wolves tamed to the caster, not the Werewolves mod's own spirit wolf.
-- The wild wolves cannot be recruited yet (a later plan).
+- Brothers: a hunting trip is one action, not a walk (the Brother does not travel to the animals and back), and it ignores Open Parties and Claims, so it stays within 48 blocks of its post. A Brother that is far from every player is not loaded and cannot be ordered until you go near it (its row stays on the Pack page).
+- The NPC profile is a panel under the Pack page's wolf rows, not a page of its own; sire, line, genes and anchor show "?" for a wolf.
+- A Tensura subordinate is listed on the Pack page but takes its orders in Tensura; only the subordinates of a pack member or of a Brother join, one step down.
