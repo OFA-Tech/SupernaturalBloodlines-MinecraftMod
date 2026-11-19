@@ -55,7 +55,8 @@ public final class CommandCoverageGameTests {
         List<String> noForm = new ArrayList<>();
         for (AdminCommands.Row r : AdminCommands.ALL) {
             if (root.getChild(r.root()) == null || (r.form().contains(" debug eclipse") && !has(root, r.root(), "debug", "eclipse"))
-                    || (r.form().contains(" debug npcpack") && !has(root, r.root(), "debug", "npcpack"))) {
+                    || (r.form().contains(" debug npcpack") && !has(root, r.root(), "debug", "npcpack"))
+                    || (r.form().contains(" debug npcs ") && !has(root, r.root(), "debug", "npcs"))) {
                 continue;
             }
             for (String shape : r.shapes()) {
