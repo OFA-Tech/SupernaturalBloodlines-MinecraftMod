@@ -238,7 +238,8 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
             KitDraw.pips(g, x + font.width(title) + 6, r.y() + 8, d.pips(), d.pipsFilled(), RED, 0xFF4a2430);
         }
         int by = r.y() + 17;
-        for (String line : LabelFit.wrap(d.body().isEmpty() ? "" : d.body().get(0).getString(), textW, 2, font::width)) { // two lines, the whole of them: the bar is wide enough for the text
+        String bodyText = d.body().stream().map(Component::getString).collect(java.util.stream.Collectors.joining(" "));
+        for (String line : LabelFit.wrap(bodyText, textW, 2, font::width)) { // two lines, the whole of them: the bar is wide enough for the text
             if (by + 8 > r.bottom() - 3) {
                 break;
             }

@@ -142,6 +142,11 @@ public final class SpeciesRegistries {
             ATTACHMENTS.register("npc_mark", () -> AttachmentType.<net.ofatech.supernaturalbloodlines.core.bloodline.NpcMark>builder(() -> net.ofatech.supernaturalbloodlines.core.bloodline.NpcMark.wild(0, 0))
                     .serialize(net.ofatech.supernaturalbloodlines.core.bloodline.NpcMark.CODEC).build());
 
+    /** Marks the boss of an Alpha Trial (plan 15c, R147): the challenger, the beasts' pack id, the night, the phase and how long the challenger has been away. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<net.ofatech.supernaturalbloodlines.core.bloodline.TrialMark>> TRIAL_MARK =
+            ATTACHMENTS.register("trial_mark", () -> AttachmentType.<net.ofatech.supernaturalbloodlines.core.bloodline.TrialMark>builder(() -> new net.ofatech.supernaturalbloodlines.core.bloodline.TrialMark(null, 0, 0, 0, 0))
+                    .serialize(net.ofatech.supernaturalbloodlines.core.bloodline.TrialMark.CODEC).build());
+
     /** What waits of this player's delayed werewolf awakening (R142): the day time it is due and the game time it was queued; due 0 is nothing. Kept through death. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<net.ofatech.supernaturalbloodlines.core.bloodline.AwakeningRules.Pending>> PENDING_AWAKENING =
             ATTACHMENTS.register("pending_awakening", () -> AttachmentType.builder(() -> net.ofatech.supernaturalbloodlines.core.bloodline.AwakeningRules.Pending.NONE)

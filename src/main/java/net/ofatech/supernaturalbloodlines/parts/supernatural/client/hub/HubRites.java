@@ -24,7 +24,28 @@ public final class HubRites {
     private static final Set<SupernaturalRace> WEREWOLF_SIDE = Set.of(SupernaturalRace.WEREWOLF, SupernaturalRace.HYBRID,
             SupernaturalRace.ORIGINAL_HYBRID, SupernaturalRace.TRIBRID);
 
+    /** The Alpha Trial rite (R147): the Rites page adds what it asks and, for the viewer, a warning or the reason they cannot yet. */
+    public static final String TRIAL = "supernaturalbloodlines:alpha_trial";
+
     private HubRites() {
+    }
+
+    /**
+     * The lang suffixes (under {@code hub.rites.trial.}) the Alpha Trial card shows for this wolf, the important one first: the warning when winning would end
+     * their path to True Alpha, or that only a werewolf Beta or Omega can try it; then always what it asks. Pure.
+     */
+    public static List<String> trialNotes(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState w) {
+        List<String> out = new ArrayList<>();
+        boolean eligible = w.lineage() != net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.NONE
+                && (w.rank() == net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.BETA || w.rank() == net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.OMEGA);
+        // what matters to this player first (the warning, or why they cannot), then what it asks
+        if (!eligible) {
+            out.add("not_eligible");
+        } else if (net.ofatech.supernaturalbloodlines.shared.hub.profile.TrueAlphaWarning.applies(w.rank(), net.ofatech.supernaturalbloodlines.core.bloodline.PackRules.pathOpen(w))) {
+            out.add("warn_path");
+        }
+        out.add("ask");
+        return out;
     }
 
     /** The rites the player's ladders ask for, on any rung. */

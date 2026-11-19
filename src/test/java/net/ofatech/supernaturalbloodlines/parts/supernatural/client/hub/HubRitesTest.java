@@ -9,6 +9,9 @@ import com.google.gson.JsonParser;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
+import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,32 @@ class HubRitesTest {
     private static final HubSocial.Rite CLEANSING = rite("cleansing_blood", 4000, "vampire");
     private static final HubSocial.Rite FIVE = rite("rite_of_the_five", 10000, "hunter");
     private static final HubSocial.Rite HYBRID_BLOOD = rite("hybrid_blood", 1000, "");
+
+    private static WolfState wolf(Lineage l, Rank r, boolean held) {
+        return WolfState.NONE.toBuilder().lineage(l).rank(r).heldSpark(held).build();
+    }
+
+    @Test
+    void theAlphaTrialCardWarnsABetaOrOmegaWithAnOpenPathAndTheWarningComesFirst() {
+        assertEquals(List.of("warn_path", "ask"), HubRites.trialNotes(wolf(Lineage.BITTEN, Rank.BETA, false)), "a Beta whose path is open");
+        assertEquals(List.of("warn_path", "ask"), HubRites.trialNotes(wolf(Lineage.BITTEN, Rank.OMEGA, false)), "an Omega whose path is open");
+    }
+
+    @Test
+    void theAlphaTrialCardDoesNotWarnWhenThePathIsClosedOrSaysWhoCannotTryIt() {
+        assertEquals(List.of("ask"), HubRites.trialNotes(wolf(Lineage.BITTEN, Rank.BETA, true)), "a Beta who held a spark has no path to lose");
+        assertEquals(List.of("not_eligible", "ask"), HubRites.trialNotes(wolf(Lineage.BITTEN, Rank.ALPHA, true)), "an Alpha");
+        assertEquals(List.of("not_eligible", "ask"), HubRites.trialNotes(wolf(Lineage.BITTEN, Rank.TRUE_ALPHA, false)), "a True Alpha");
+        assertEquals(List.of("not_eligible", "ask"), HubRites.trialNotes(wolf(Lineage.NONE, Rank.BETA, false)), "a human");
+    }
+
+    @Test
+    void theAlphaTrialIsListedForWerewolves() {
+        HubSocial.Rite trial = rite("alpha_trial", 12000, "werewolf");
+        assertEquals(HubRites.TRIAL, trial.id());
+        assertTrue(HubRites.forYou(trial, List.of(WEREWOLF), Set.of()));
+        assertFalse(HubRites.forYou(trial, List.of(VAMPIRE), Set.of()));
+    }
 
     @Test
     void theFactionSideDecides() {

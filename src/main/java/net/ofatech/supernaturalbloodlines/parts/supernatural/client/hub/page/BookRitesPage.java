@@ -41,7 +41,7 @@ public final class BookRitesPage implements HubPageView {
         f.view.ladders().forEach(l -> l.tasks().stream().filter(RitesPage::isRite).forEach(tasks::add));
         Set<String> asked = HubRites.fromLadders(LadderTable.clientCopy(), f.view.races());
         List<HubRites.Listed> rites = HubRites.list(f.view.snapshot().rites(), f.view.races(), asked);
-        HubRites.Listed chosen = rites.stream().filter(l -> l.rite().id().equals(selected)).findFirst().orElse(rites.isEmpty() ? null : rites.get(0));
+        HubRites.Listed chosen = rites.stream().filter(l -> l.rite().id().equals(selected != null ? selected : RitesPage.devSelected())).findFirst().orElse(rites.isEmpty() ? null : rites.get(0));
 
         Rect r = f.region(BookKit.MAIN);
         int y = BookKit.head(f, BookKit.MAIN, Component.translatable(KEY + "title"), Component.translatable(BOOK + "subtitle"));
@@ -95,6 +95,9 @@ public final class BookRitesPage implements HubPageView {
         }
         if (rite.items().isEmpty()) {
             sy = PageKit.wrapped(f, Component.translatable(BOOK + "no_items"), s.x(), sy, s.w(), t.muted());
+        }
+        for (Component note : RitesPage.trialNotes(rite, f.view.bloodline().wolf())) {
+            sy = PageKit.wrapped(f, note, s.x(), sy + 2, s.w(), t.accent());
         }
         sy += 6;
         HubHooks.Launcher book = HubHooks.launchers().stream().filter(l -> l.id().equals("enchanted")).findFirst().orElse(null);

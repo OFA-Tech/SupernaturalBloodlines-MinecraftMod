@@ -98,6 +98,33 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.IntValue WEAK_SPARK_COOLDOWN_DAYS;
     private static final ModConfigSpec.BooleanValue MOONBLOOD_SURGE_ENABLED;
     private static final ModConfigSpec.BooleanValue WOLF_SPIRITS_ENABLED;
+    private static final ModConfigSpec.BooleanValue ALPHA_TRIAL_ENABLED;
+    private static final ModConfigSpec.IntValue ALPHA_TRIAL_MIN_LEVEL;
+    private static final ModConfigSpec.DoubleValue ALPHA_TRIAL_HP_FACTOR;
+    private static volatile TrialTuning trialOverride;
+
+    /** The numbers of the Alpha Trial (plan 15c). */
+    public record TrialTuning(boolean enabled, int minLevel, double hpFactor) {
+        public static final TrialTuning DEFAULT = new TrialTuning(true, 10, 3.0);
+    }
+
+    /** For tests: pins {@link #trial()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideTrial(TrialTuning value) {
+        trialOverride = value;
+    }
+
+    public static TrialTuning trial() {
+        TrialTuning pinned = trialOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return new TrialTuning(ALPHA_TRIAL_ENABLED.get(), ALPHA_TRIAL_MIN_LEVEL.get(), ALPHA_TRIAL_HP_FACTOR.get());
+        } catch (IllegalStateException notLoaded) {
+            return TrialTuning.DEFAULT;
+        }
+    }
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -192,6 +219,12 @@ public final class SpeciesConfig {
                 .define("moonblood_surge_enabled", true);
         WOLF_SPIRITS_ENABLED = b.comment("R146: Wolf Spirits, an Alpha calls three spirit wolves that fight for the pack for three minutes (/pack spirits).")
                 .define("wolf_spirits_enabled", true);
+        ALPHA_TRIAL_ENABLED = b.comment("R147: the Alpha Trial rite (a full-moon night, a transformed Beta or Omega) calls a boss; winning gives a new Alpha spark. Off: the rite refuses.")
+                .define("alpha_trial_enabled", true);
+        ALPHA_TRIAL_MIN_LEVEL = b.comment("Lowest werewolf level that may try the Alpha Trial.")
+                .defineInRange("alpha_trial_min_level", 10, 1, 14);
+        ALPHA_TRIAL_HP_FACTOR = b.comment("The trial boss (an Alpha of the Werewolves mod) has this many times the health of an ordinary one.")
+                .defineInRange("alpha_trial_hp_factor", 3.0, 1.0, 10.0);
         b.pop();
         SPEC = b.build();
     }

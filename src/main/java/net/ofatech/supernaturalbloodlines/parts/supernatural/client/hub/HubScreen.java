@@ -399,6 +399,12 @@ public final class HubScreen extends Screen {
             }
             case "profile_op" -> openProfile(DevDemo.id("Derek|op"), "Derek", true);
             case "true_alpha_dialog" -> warnTrueAlpha(() -> { });
+            // the real flow: the server's warning packet fires this hook, which opens the Rites page and the dialog (the answer packet goes nowhere in a screenshot run)
+            case "trial_warn" -> {
+                net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect(HubRites.TRIAL);
+                net.ofatech.supernaturalbloodlines.shared.hub.TrialWarnHook.fire();
+            }
+            case "rites_trial" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect(HubRites.TRIAL);
             case "pack_invite" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackInvite.devOpen();
             case "profile_dialog" -> {
                 openProfile(DevDemo.id("Derek"), "Derek");

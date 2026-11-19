@@ -30,6 +30,16 @@ public final class RitesPage implements HubPageView {
 
     @Nullable
     private String selected;
+    private static String devSelected;
+
+    /** Development only (the dev screenshots): the rite the next Rites page starts on. */
+    public static void devSelect(String id) {
+        devSelected = id;
+    }
+
+    static String devSelected() {
+        return devSelected;
+    }
 
     @Override
     public void render(HubScreen.Frame f) {
@@ -38,7 +48,7 @@ public final class RitesPage implements HubPageView {
         f.view.ladders().forEach(l -> l.tasks().stream().filter(RitesPage::isRite).forEach(tasks::add));
         Set<String> asked = HubRites.fromLadders(LadderTable.clientCopy(), f.view.races());
         List<HubRites.Listed> rites = HubRites.list(f.view.snapshot().rites(), f.view.races(), asked);
-        HubRites.Listed chosen = rites.stream().filter(l -> l.rite().id().equals(selected)).findFirst().orElse(rites.isEmpty() ? null : rites.get(0));
+        HubRites.Listed chosen = rites.stream().filter(l -> l.rite().id().equals(selected != null ? selected : devSelected)).findFirst().orElse(rites.isEmpty() ? null : rites.get(0));
 
         Rect r = f.region(HubLayout.MAIN);
         int y = f.begin(HubLayout.MAIN);
@@ -94,12 +104,27 @@ public final class RitesPage implements HubPageView {
             }
             sy = PageKit.wrapped(f, Component.translatable(chosen.forYou() ? KEY + "yours" : KEY + "anyone"), s.x(), sy + 3, s.w(),
                     chosen.forYou() ? t.good() : t.muted());
+            for (Component note : trialNotes(rite, f.view.bloodline().wolf())) {
+                sy = PageKit.wrapped(f, note, s.x(), sy + 3, s.w(), t.accent());
+            }
         }
         boolean witch = f.view.races().contains(SupernaturalRace.WITCH) || f.view.races().contains(SupernaturalRace.SIPHONER);
         t.drawRule(f.g, s.x(), sy + 3, s.w());
         sy = PageKit.wrapped(f, Component.translatable(KEY + (witch ? "witch" : "not_witch")), s.x(), sy + 7, s.w(), t.muted());
         sy = PageKit.wrapped(f, Component.translatable(KEY + "book"), s.x(), sy + 3, s.w(), t.muted());
         f.end(sy);
+    }
+
+    /** The extra lines of the Alpha Trial card (what it asks, the warning or the reason), empty for any other rite. */
+    static List<Component> trialNotes(HubSocial.Rite rite, net.ofatech.supernaturalbloodlines.core.bloodline.WolfState wolf) {
+        if (!rite.id().equals(HubRites.TRIAL)) {
+            return List.of();
+        }
+        List<Component> out = new ArrayList<>();
+        for (String key : HubRites.trialNotes(wolf)) {
+            out.add(Component.translatable(KEY + "trial." + key));
+        }
+        return out;
     }
 
     static Component name(HubSocial.Rite rite) {

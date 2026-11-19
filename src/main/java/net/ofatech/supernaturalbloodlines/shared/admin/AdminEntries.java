@@ -95,6 +95,9 @@ public final class AdminEntries {
         for (String key : List.of("npc_packs_enabled", "npc_pack_dawn_despawn", "npc_alpha_spark_enabled", "moonblood_surge_enabled", "wolf_spirits_enabled")) {
             species(all, key, BOOL);
         }
+        species(all, "alpha_trial_enabled", BOOL);
+        species(all, "alpha_trial_min_level", INT);
+        species(all, "alpha_trial_hp_factor", DOUBLE);
         for (String key : List.of("npc_pack_chance", "npc_lone_wolf_chance", "npc_pack_alpha_chance", "feral_attack_factor", "feral_speed_factor")) {
             species(all, key, DOUBLE);
         }

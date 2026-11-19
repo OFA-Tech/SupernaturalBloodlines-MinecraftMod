@@ -314,7 +314,7 @@ public final class AlphaPackGameTests {
         online(leader, beta, omega);
         PackIndex index = PackIndex.get(helper.getLevel());
         try {
-            helper.assertTrue(AlphaTrial.win(omega, true) != null, "an Omega won the trial");
+            helper.assertTrue(AlphaTrial.win(leader, true) != null && state(leader).rank() == Rank.ALPHA, "an Alpha won the trial");
             helper.assertTrue(AlphaTrial.win(beta, true) == null, "the Beta could not win the trial");
             helper.assertTrue(state(beta).rank() == Rank.ALPHA, "the winner is " + state(beta));
             helper.assertTrue(leader.getUUID().equals(index.alphaOf(beta.getUUID()).orElse(null)), "the winner left the pack");

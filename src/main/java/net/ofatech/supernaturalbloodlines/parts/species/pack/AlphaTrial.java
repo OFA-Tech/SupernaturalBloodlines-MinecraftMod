@@ -10,37 +10,40 @@ import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupe
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The hook of the Alpha Trial (plan 15 builds the trial itself): a Beta who wins it becomes a second Alpha of the pack they are
- * in. They keep the pack, the pack keeps its leader until the strongest Alpha is someone else.
+ * What winning the Alpha Trial does (R147; the rite and the boss are {@code AlphaTrialRiteFactory} and {@code AlphaTrialBoss}): a werewolf Beta becomes a
+ * second Alpha of the pack they are in (they keep the pack, the pack keeps its leader until the strongest Alpha is someone else); an Omega becomes the
+ * Alpha of a pack of their own. Either way they hold a spark for good, so the path to True Alpha is closed.
  */
 public final class AlphaTrial {
     private AlphaTrial() {
     }
 
     /**
-     * @param warned the player saw the {@code TrueAlphaWarning} and chose to take the spark; without it a Beta whose path to True Alpha is still
+     * @param warned the player saw the {@code TrueAlphaWarning} and chose to take the spark; without it a Beta or Omega whose path to True Alpha is still
      *               open is refused (winning ends that path for good), so no trial can close it by surprise
-     * @return the error to show, or null when the Beta is an Alpha now
+     * @return the error to show, or null when the player is an Alpha now
      */
     @Nullable
-    public static Component win(ServerPlayer beta, boolean warned) {
-        PackIndex index = PackIndex.get(beta.serverLevel());
-        if (!warned && PackRules.pathOpen(PackAccess.wolf(beta))) {
+    public static Component win(ServerPlayer player, boolean warned) {
+        PackIndex index = PackIndex.get(player.serverLevel());
+        var wolf = PackAccess.wolf(player);
+        if (!warned && PackRules.pathOpen(wolf)) {
             return Component.translatable("supernaturalbloodlines.pack.trial_warn");
         }
-        if (PackAccess.wolf(beta).rank() != Rank.BETA || !VampirismSupernatural.isWerewolf(beta) || index.alphaOf(beta.getUUID()).isEmpty()) {
+        boolean beta = wolf.rank() == Rank.BETA;
+        if (!VampirismSupernatural.isWerewolf(player) || (beta && index.alphaOf(player.getUUID()).isEmpty())) {
             return Component.translatable("supernaturalbloodlines.pack.trial_no");
         }
-        PackIndex.KEEP_PACK.set(true);
+        PackIndex.KEEP_PACK.set(beta);
         try {
-            if (PackAccess.applyPack(beta, PackEvent.SPARK_INHERITED, PackContext.defaults()).refused()) {
+            if (PackAccess.applyPack(player, PackEvent.TRIAL_WON, PackContext.defaults()).refused()) {
                 return Component.translatable("supernaturalbloodlines.pack.trial_no");
             }
         } finally {
             PackIndex.KEEP_PACK.set(false);
         }
-        PackLeader.refresh(beta);
-        beta.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.trial_won"));
+        PackLeader.refresh(player);
+        player.sendSystemMessage(Component.translatable(beta ? "supernaturalbloodlines.pack.trial_won" : "supernaturalbloodlines.pack.trial_won_omega"));
         return null;
     }
 }
