@@ -107,6 +107,17 @@ public final class NpcRules {
         return rank < Math.max(0, packMax);
     }
 
+    /** How near the owner must be to a Brother's post for its containers to be looked at (the protection check fires a real right click at them). */
+    public static final double CONTAINER_OWNER_RANGE = 64;
+
+    /**
+     * Whether a Brother may look at containers at all: the protection check is the owner's right click on the block, which the game and the protection mods judge in
+     * the owner's own dimension and near the owner, so it means nothing for a post in another dimension and should not be fired at a chest far away.
+     */
+    public static boolean mayUseContainers(boolean ownerInSameDimension, double ownerDistanceSq) {
+        return ownerInSameDimension && ownerDistanceSq <= CONTAINER_OWNER_RANGE * CONTAINER_OWNER_RANGE;
+    }
+
     /** Whether the viewer may release a member: only its owner (the pack's leader may order it, not free it). */
     public static boolean mayRelease(boolean sendsAsOwner) {
         return sendsAsOwner;

@@ -228,6 +228,14 @@ class NpcRulesTest {
     }
 
     @Test
+    void aBrotherLooksAtContainersOnlyWithItsOwnerInTheSameDimensionAndNear() {
+        assertTrue(NpcRules.mayUseContainers(true, 0));
+        assertTrue(NpcRules.mayUseContainers(true, 64.0 * 64.0), "64 blocks is still near");
+        assertFalse(NpcRules.mayUseContainers(true, 64.0 * 64.0 + 1), "the owner is far: the protection check is not fired at a far chest");
+        assertFalse(NpcRules.mayUseContainers(false, 0), "the owner is in another dimension: a claim there would be judged in the wrong world");
+    }
+
+    @Test
     void onlyTheOwnerReleasesABrother() {
         assertTrue(NpcRules.mayRelease(true));
         assertFalse(NpcRules.mayRelease(false), "the leader of the pack gives orders but cannot free another member's wolf");

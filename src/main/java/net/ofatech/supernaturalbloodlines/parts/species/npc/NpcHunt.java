@@ -56,6 +56,11 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
  * ({@code CommonHooks.onRightClickBlock}) and a cancelled or denied one (a claim of Open Parties and Claims, any other protection mod) skips the block. That is the
  * smallest check that works with every protection mod; an unclaimed chest of another player cannot be told apart from one of the owner's, so a post is best
  * kept away from them. Shortcut: the Brother does not walk there and back, a trip is one action.
+ *
+ * <p>The check is a real right click offered to the game, so it has a side effect: other mods that listen to the right click see an event from the owner on that
+ * block (a log line, a "you cannot open this" message to the owner, a cooldown). It is therefore made only while the owner is in the Brother's own dimension and
+ * within {@link NpcRules#CONTAINER_OWNER_RANGE} blocks of the post (the claim is judged in the owner's dimension, so across dimensions it would mean nothing); with the owner
+ * further away or elsewhere the Brother still hunts but stores and sorts nothing, and the drops stay where the animals fell.
  */
 public final class NpcHunt {
     public static final int CHECK_PERIOD = 200;
@@ -140,7 +145,8 @@ public final class NpcHunt {
             return 0;
         }
         BlockPos post = bond.post() != 0 ? BlockPos.of(bond.post()) : m.blockPosition();
-        Container chest = findContainer(level, owner, post);
+        boolean inReach = NpcRules.mayUseContainers(owner.level() == level, owner.distanceToSqr(post.getX() + 0.5, post.getY(), post.getZ() + 0.5));
+        Container chest = inReach ? findContainer(level, owner, post) : null; // no store and no sort when the check could not be made
         int killed = 0;
         if (hunt) {
             List<LivingEntity> prey = level.getEntitiesOfClass(LivingEntity.class, new AABB(post).inflate(RANGE), NpcHunt::isPrey).stream()

@@ -175,6 +175,12 @@ public final class NpcMemberGameTests {
         return n;
     }
 
+    private static final java.util.concurrent.atomic.AtomicInteger clicks = new java.util.concurrent.atomic.AtomicInteger();
+
+    static {
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock e) -> clicks.incrementAndGet());
+    }
+
     private static List<Cow> cows(GameTestHelper helper, int n) {
         List<Cow> out = new ArrayList<>();
         for (int i = 0; i < n; i++) {
@@ -749,7 +755,20 @@ public final class NpcMemberGameTests {
             helper.getLevel().addFreshEntity(m); // the chunk loads
             helper.assertTrue(!NpcMembers.bondOf(m).isPresent(), "the released wolf got its bond back when it loaded");
             helper.assertTrue(index.of(m.getUUID()).isEmpty() && NpcMembers.brothers(helper.getLevel(), owner.getUUID()) == 0, "the released wolf is in the ledger again");
-            helper.assertTrue(index.releasedCount() == 0 || !index.takeReleased(m.getUUID()), "the release is remembered after it was applied");
+            // no list of the released is kept, so there is nothing to overflow: 300 wolves released while unloaded are all freed when they load
+            List<Mob> many = new ArrayList<>();
+            try {
+                for (int i = 0; i < 300; i++) {
+                    Mob far = (Mob) type("werewolves:werewolf_beast").create(helper.getLevel());
+                    far.setData(SpeciesRegistries.NPC_BOND, NpcBond.brother(owner.getUUID(), 0, 0)); // bonded, and no entry: freed while out of reach
+                    far.setPos(helper.absoluteVec(new Vec3(4.5, 1, 2.5)));
+                    many.add(far);
+                }
+                many.forEach(far -> helper.getLevel().addFreshEntity(far));
+                helper.assertTrue(many.stream().allMatch(far -> NpcMembers.bondOf(far).isEmpty()) && NpcMembers.brothers(helper.getLevel(), owner.getUUID()) == 0, "a released wolf came back after many others were released");
+            } finally {
+                many.forEach(Entity::discard);
+            }
         } finally {
             clean(helper, List.of(m), owner);
         }
@@ -794,6 +813,69 @@ public final class NpcMemberGameTests {
             helper.assertTrue(!NpcMembers.overCap(helper.getLevel(), n1.getUUID()) && NpcMembers.overCap(helper.getLevel(), n2.getUUID()), "a freed place did not go to the oldest extra");
         } finally {
             clean(helper, mobs, everyone.toArray(new ServerPlayer[0]));
+        }
+        helper.succeed();
+    }
+
+    // ---- panel round 2: the protection check needs the owner near, in the same dimension ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBrotherUsesNoChestWhileItsOwnerIsInAnotherDimension(GameTestHelper helper) {
+        ServerPlayer owner = wolf(helper, Rank.OMEGA, Lineage.BORN);
+        online(owner);
+        Mob b = brother(helper, owner, 4);
+        BlockPos chestAt = new BlockPos(6, 1, 4);
+        helper.setBlock(chestAt, Blocks.CHEST);
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(chestAt);
+        chest.setItem(0, new ItemStack(Items.COBBLESTONE, 20));
+        chest.setItem(7, new ItemStack(Items.COBBLESTONE, 20));
+        List<Cow> cows = cows(helper, 2);
+        ServerLevel home = (ServerLevel) owner.level();
+        try {
+            NpcBond hunting = bond(b).withOrder(NpcBond.Order.GUARD, helper.absolutePos(new BlockPos(4, 1, 4)).asLong()).withHunt(true).withSort(true);
+            b.setData(SpeciesRegistries.NPC_BOND, hunting);
+            // the claim is only protected in this world: the owner stands in the Nether, where the same click would be allowed
+            owner.setServerLevel(helper.getLevel().getServer().getLevel(net.minecraft.world.level.Level.NETHER));
+            clicks.set(0);
+            helper.assertTrue(NpcHunt.go(b, hunting, true, true) == 2, "the Brother did not hunt");
+            helper.assertTrue(clicks.get() == 0, "the protection check was fired for an owner in another dimension");
+            helper.assertTrue(stacks(chest, Items.COBBLESTONE) == 2 && count(chest, Items.BEEF) + count(chest, Items.LEATHER) == 0, "the chest was sorted or filled with the owner in another dimension");
+            owner.setServerLevel(home); // back in the Brother's world: the same trip may use the chest
+            helper.assertTrue(NpcHunt.go(b, hunting, false, true) == 0 && clicks.get() > 0 && stacks(chest, Items.COBBLESTONE) == 1, "the chest was not used with the owner in the same dimension");
+        } finally {
+            owner.setServerLevel(home);
+            cows.forEach(Entity::discard);
+            helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(new BlockPos(4, 1, 4))).inflate(30)).forEach(Entity::discard);
+            clean(helper, List.of(b), owner);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBrotherFiresNoProtectionCheckAtAChestFarFromItsOwner(GameTestHelper helper) {
+        ServerPlayer owner = wolf(helper, Rank.OMEGA, Lineage.BORN);
+        online(owner);
+        Mob b = brother(helper, owner, 4);
+        BlockPos chestAt = new BlockPos(6, 1, 4);
+        helper.setBlock(chestAt, Blocks.CHEST);
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(chestAt);
+        chest.setItem(0, new ItemStack(Items.COBBLESTONE, 20));
+        chest.setItem(7, new ItemStack(Items.COBBLESTONE, 20));
+        net.minecraft.world.phys.Vec3 here = owner.position();
+        try {
+            NpcBond sorting = bond(b).withOrder(NpcBond.Order.REST, helper.absolutePos(new BlockPos(4, 1, 4)).asLong()).withSort(true);
+            b.setData(SpeciesRegistries.NPC_BOND, sorting);
+            owner.setPos(here.x + 200, here.y, here.z); // far from the post
+            clicks.set(0);
+            NpcHunt.go(b, sorting, false, true);
+            helper.assertTrue(clicks.get() == 0, "a right click was fired at a chest 200 blocks from its owner");
+            helper.assertTrue(stacks(chest, Items.COBBLESTONE) == 2, "a chest far from its owner was sorted");
+            owner.setPos(helper.absoluteVec(new Vec3(4.5, 1, 1.5))); // near
+            NpcHunt.go(b, sorting, false, true);
+            helper.assertTrue(clicks.get() > 0 && stacks(chest, Items.COBBLESTONE) == 1, "a chest near its owner was not sorted");
+        } finally {
+            owner.setPos(here);
+            clean(helper, List.of(b), owner);
         }
         helper.succeed();
     }

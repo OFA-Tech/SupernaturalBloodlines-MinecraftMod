@@ -118,10 +118,8 @@ public final class NpcCommands {
         if (t.mob() != null) {
             NpcMembers.release(t.mob());
         } else {
-            // out of reach: the bond is still on the wolf in its chunk, so it is remembered and taken off when the wolf next joins a level (NpcLedger)
-            NpcIndex index = NpcIndex.get(sender.serverLevel());
-            index.remove(t.entry().npc());
-            index.markReleased(t.entry().npc());
+            // out of reach: the bond is still on the wolf in its chunk, but with no ledger entry NpcLedger frees it when it next joins a level
+            NpcIndex.get(sender.serverLevel()).remove(t.entry().npc());
         }
         sender.sendSystemMessage(Component.translatable(KEY + "released", t.entry().name()));
         return null;
@@ -153,10 +151,7 @@ public final class NpcCommands {
             } else if (mob.isPresent()) {
                 NpcMembers.unbind(mob.get());
             } else {
-                NpcIndex.get(server.overworld()).remove(e.npc());
-                if (e.source() == NpcBond.Source.BROTHER) {
-                    NpcIndex.get(server.overworld()).markReleased(e.npc()); // still bonded in its chunk: taken off when it loads
-                }
+                NpcIndex.get(server.overworld()).remove(e.npc()); // still bonded in its chunk: NpcLedger frees it when it loads
             }
             n++;
         }

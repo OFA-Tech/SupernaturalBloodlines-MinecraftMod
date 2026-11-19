@@ -12,6 +12,7 @@
 - **Brothers and containers:** a Brother only tidies and fills a plain chest, trapped chest or barrel that its owner could open (a claim or any protection mod that cancels the owner's right click on it keeps it out), never a furnace, hopper, shulker box or machine, and never drops what does not fit: leftovers stay where the animal fell. It does not hunt or tidy while its owner is offline.
 - **Who may do what:** the pack's leader may give another member's Brother orders and toggle Hunt and Sort; only the owner releases it.
 - **A wolf that transforms** (the Werewolves mod swaps the wolf and the human form for a new entity) keeps its bond, token and name; a Brother that leaves the world in any other way (discarded by another mod, `/kill`-like removal that is not a death) is forgotten and its owner told.
+- **Chest checks need the owner near:** the "may its owner open it" check is made only while the owner is in the Brother's dimension and within 64 blocks of its post; otherwise the Brother stores and sorts nothing. A Brother loaded with a bond but no ledger entry (a wolf freed while unloaded, or a damaged save) is freed.
 - **Over the cap:** when a player joins a pack and it goes over 6 Brothers, the newest rest where they stand and count for nothing until room is made.
 
 ### Added

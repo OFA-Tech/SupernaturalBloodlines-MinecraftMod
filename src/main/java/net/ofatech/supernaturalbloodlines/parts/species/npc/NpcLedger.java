@@ -19,8 +19,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
  * Keeps the ledger ({@link NpcIndex}) true to the world (R148). A member that leaves the world for good (discarded, not killed, not unloaded, not changing
  * dimension) is forgotten and its owner told, so a ghost entry never fills the caps. The Werewolves mod turns a wolf into a human (and back) by creating a NEW
  * entity beside the old one and discarding the old one: the bond is copied across (same token), so the member survives the transformation. A wolf that joins
- * a level and does not match the ledger is put right: an entry with no bond is removed, a bond with no entry is written down again, and a bond whose wolf was
- * released while it was not loaded is taken off.
+ * a level and does not match the ledger is put right: an entry with no bond is removed, and a bond with no entry is taken off (the wolf was released while it was
+ * not loaded, or its entry was lost: that member is freed).
  */
 public final class NpcLedger {
     private static final String KEY = "supernaturalbloodlines.npc.";
@@ -45,14 +45,16 @@ public final class NpcLedger {
     public static void onJoin(Mob m) {
         ServerLevel level = (ServerLevel) m.level();
         NpcIndex index = NpcIndex.get(level);
-        boolean bonded = NpcMembers.bondOf(m).isPresent();
-        if (bonded && index.takeReleased(m.getUUID())) {
-            NpcMembers.release(m); // freed while it was out of reach: the bond is taken off now
-        } else if (bonded) {
-            if (index.of(m.getUUID()).isEmpty()) {
-                NpcMembers.touch(m); // the ledger lost it: write it down again
+        var bond = NpcMembers.bondOf(m);
+        if (bond.isPresent() && index.of(m.getUUID()).isEmpty()) {
+            // a bond with no entry: its owner freed it while it was out of reach (the entry goes at once, the bond stays on the unloaded wolf), or the ledger lost it.
+            // Either way it is freed, never written down again: shortcut, a member whose entry was lost is freed, which is cheaper than a list of the released.
+            if (bond.get().source() == NpcBond.Source.BROTHER) {
+                NpcMembers.release(m);
+            } else {
+                NpcMembers.unbind(m); // a Tensura subordinate: NpcSubordinates looks at it next and joins it again if it still belongs
             }
-        } else if (index.of(m.getUUID()).isPresent()) {
+        } else if (bond.isEmpty() && index.of(m.getUUID()).isPresent()) {
             index.remove(m.getUUID()); // an entry for a wolf that has no bond (it was replaced, or the bond was lost): a ghost
         }
     }
