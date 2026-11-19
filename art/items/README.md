@@ -5,7 +5,7 @@ Every item has two models: a 16x16 sprite for the GUI and a small 3D model for h
 ## Pipeline
 1. `py art/items/gen_textures.py [--sheet out.png]`: sprites. Drawn in `icons.py` (uses `draw.py`) or as grids in `src/icons.txt`; 3D atlases of the stake and pike in `src/models.txt` (-> `textures/item/3d/`). Also recolours the 32 compass frames.
 2. `py art/items/models3d.py`: 3D models as flat-colour box assemblies -> `spec3d/<id>.json` + a palette texture `textures/item/3d/<id>.png`.
-3. `art/items/bb_helpers.js` (run inside Blockbench with `risky_eval`): builds one `item_<id>` Java Block project per spec, exports `<id>_3d.json` and `art/blockbench/items/item_<id>.bbmodel`, renders previews offscreen (`art/previews/items/<id>_gui|tp|ground.png`; `contact_sheet.png` from `sheet.py`).
+3. `art/items/bb_helpers.js` (run inside Blockbench with `risky_eval`, after setting `window.SB.root` to the repository folder; temp output goes to the OS temp folder): builds one `item_<id>` Java Block project per spec, exports `<id>_3d.json` and `art/blockbench/items/item_<id>.bbmodel`, renders previews offscreen (`art/previews/items/<id>_gui|tp|ground.png`; `contact_sheet.png` from `sheet.py`).
    Props are recentred on (8,8,8) like a sprite so the vanilla `item/generated` transforms put them where a sprite sits; `fp_ref_gen` / `fp_ref_tool` previews (a vanilla sprite with generated / handheld transforms) are the first-person reference, and `first_person_sheet.png` compares every item with them (`sheet_fp.py`).
 4. `py art/items/gen_models.py`: the `<id>.json` loader models; the compass keeps its `angle` overrides and each of its 32 frame models swaps the dial texture on the 3D case and the sprite.
 

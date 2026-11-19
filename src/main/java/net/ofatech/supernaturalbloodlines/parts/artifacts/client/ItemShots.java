@@ -46,7 +46,7 @@ import org.joml.Vector3f;
 /**
  * A development-only screenshot driver for item art, in the way of the hub's {@code DevShots}: inert unless the JVM has
  * {@code -Dsupernaturalbloodlines.devshots.items=<kinds>} with {@code sheet} (every item of ours in the GUI, on the ground and in a hand),
- * {@code compass} (the Vampire Compass needle toward eight directions) and {@code worn} (the three rings on classic and slim arms, standing and
+ * {@code compass} (the Vampire Compass needle toward eight directions), {@code bosses} (every boss player skin, seen from behind and from the front) and {@code worn} (the three rings on classic and slim arms, standing and
  * sneaking). {@code .tag=before|after} names the files, {@code .world=New World} picks the world, {@code .quit=true} leaves when done.
  * Pictures: {@code <game dir>/screenshots/itemshots/<tag>-<kind>[-n].png}. Run it with {@code runSafeShots} (hidden window).
  */
@@ -122,6 +122,10 @@ public final class ItemShots {
                 case "compass" -> {
                     screens.add(new SheetScreen(compassCells(mc), 72f, false));
                     names.add("compass");
+                }
+                case "bosses" -> {
+                    screens.add(new BossScreen());
+                    names.add("bosses");
                 }
                 case "worn" -> {
                     for (String ring : RingPose.RINGS) {
@@ -242,6 +246,69 @@ public final class ItemShots {
                     g.drawString(font, c.label(), x + 4, y, 0xFFFFFF, false);
                     drawModel(g, c.stack(), ItemDisplayContext.GUI, x + w / 2f, y + 50, size);
                     drawModel(g, c.stack(), ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, x + w / 2f, y + 120, size);
+                }
+            }
+        }
+
+        @Override
+        public boolean isPauseScreen() {
+            return false;
+        }
+    }
+
+    /** Every boss skin on a player model, from behind (first row of each pair) and from the front. The slim ones are the two women (art/bosses/README.md). */
+    private static final class BossScreen extends Screen {
+        private static final List<String> SKINS = List.of("mikael", "klaus", "elijah", "kol", "rebekah", "finn", "freya", "deucalion_human",
+                "peter_hale", "peter_hale_burned", "sebastien_valet", "beast_host");
+        private static final List<String> SLIM = List.of("rebekah", "freya");
+        private RemotePlayer[] players;
+
+        BossScreen() {
+            super(Component.empty());
+        }
+
+        @Override
+        public void render(GuiGraphics g, int mx, int my, float pt) {
+            g.fill(0, 0, width, height, 0xFF2B2B33);
+            Minecraft mc = Minecraft.getInstance();
+            if (players == null) {
+                players = new RemotePlayer[SKINS.size()];
+                for (int i = 0; i < players.length; i++) {
+                    String skin = SKINS.get(i);
+                    PlayerSkin ps = new PlayerSkin(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID,
+                            "textures/entity/boss/" + skin + ".png"), null, null, null,
+                            SLIM.contains(skin) ? PlayerSkin.Model.SLIM : PlayerSkin.Model.WIDE, true);
+                    players[i] = new RemotePlayer(mc.level, new GameProfile(UUID.nameUUIDFromBytes(skin.getBytes()), "")) {
+                        @Override
+                        public PlayerSkin getSkin() {
+                            return ps;
+                        }
+                    };
+                }
+            }
+            int cols = 6;
+            int w = width / cols;
+            int h = height / 4;
+            for (int row = 0; row < 4; row++) {
+                for (int col = 0; col < cols; col++) {
+                    RemotePlayer p = players[(row / 2) * cols + col];
+                    float yaw = row % 2 == 0 ? 0f : 180f;
+                    p.setYRot(yaw);
+                    p.yRotO = yaw;
+                    p.yBodyRot = yaw;
+                    p.yBodyRotO = yaw;
+                    p.yHeadRot = yaw;
+                    p.yHeadRotO = yaw;
+                    p.setXRot(0f);
+                    p.xRotO = 0f;
+                    int cx = col * w + w / 2;
+                    g.enableScissor(col * w, row * h, (col + 1) * w, (row + 1) * h);
+                    InventoryScreen.renderEntityInInventory(g, cx, row * h + h / 2 + 6, h / 2.1f, new Vector3f(0f, p.getBbHeight() / 2f, 0f),
+                            new Quaternionf().rotateZ((float) Math.PI), null, p);
+                    g.disableScissor();
+                    if (row % 2 == 0) {
+                        g.drawString(font, SKINS.get((row / 2) * cols + col), col * w + 3, row * h + 2, 0xFFFFFF, false);
+                    }
                 }
             }
         }

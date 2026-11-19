@@ -2,12 +2,13 @@
 // Builds item_<name> projects from art/items/spec3d/<name>.json, exports models/bbmodels, renders offscreen previews.
 (function () {
   const fs = require('fs');
-  const ROOT = 'D:/Development/OFA-TECH/sb-art-items/';
+  // Set window.SB.root to the repository folder before loading this file (it is eval'd, so it cannot know where it lives).
+  const ROOT = (window.SB && window.SB.root || (() => { throw new Error('set window.SB.root to the repository folder first'); })()).replace(/\\/g, '/').replace(/\/?$/, '/');
   const TEX = ROOT + 'src/main/resources/assets/supernaturalbloodlines/textures/item/';
   const MODELS = ROOT + 'src/main/resources/assets/supernaturalbloodlines/models/item/';
   const BBM = ROOT + 'art/blockbench/items/';
   const SPEC = ROOT + 'art/items/spec3d/';
-  const TEMP = 'C:/Users/caiom/AppData/Local/Temp/opencode/item-art/v4/';
+  const TEMP = require('os').tmpdir().replace(/\\/g, '/') + '/item-art/';
   const PREV = ROOT + 'art/previews/items/';
   const NS = 'supernaturalbloodlines:item/';
   const FACES = ['north', 'east', 'south', 'west', 'up', 'down'];
