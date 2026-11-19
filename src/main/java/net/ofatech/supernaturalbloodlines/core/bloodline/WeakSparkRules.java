@@ -45,7 +45,7 @@ public final class WeakSparkRules {
             return Grant.DESTROYED;
         }
         Weak weak = killer.weak();
-        if (weak.day() > 0 && today - weak.day() < cooldownDays) {
+        if (weak.day() > 0 && today - (weak.day() - 1) < cooldownDays) {
             return Grant.COOLDOWN;
         }
         if (weak.held() >= Math.max(1, maxHeld)) {
@@ -54,9 +54,9 @@ public final class WeakSparkRules {
         return Grant.GRANTED;
     }
 
-    /** One more weak spark, given on {@code today}; the one already growing keeps its progress. */
+    /** One more weak spark, given on {@code today}; the one already growing keeps its progress. The day is kept as {@code today + 1}, so that 0 can mean "never". */
     public static Weak given(Weak weak, long today) {
-        return new Weak(weak.held() + 1, weak.progress(), Math.max(1, today));
+        return new Weak(weak.held() + 1, weak.progress(), Math.max(0, today) + 1);
     }
 
     /** The result of growing: the state after {@code ticks} online ticks and whether one spark finished. */

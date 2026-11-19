@@ -63,17 +63,17 @@ public final class NpcPackSpawner {
 
     /**
      * One roll for every player of {@code players} who has not been rolled for tonight. {@code spots} finds the place a pack appears near a player (null:
-     * none); the tests give it a fixed one, the game a dark one away from villages. @return how many packs and lone wolves it spawned
+     * none); the tests give it a fixed one, the game a dark one away from villages. @return every wolf it spawned (an Alpha, a pack's wolves and lone wolves)
      */
-    public static int roll(ServerLevel level, java.util.Collection<ServerPlayer> players, DoubleSupplier dice, UnaryOperator<BlockPos> spots) {
+    public static List<Mob> roll(ServerLevel level, java.util.Collection<ServerPlayer> players, DoubleSupplier dice, UnaryOperator<BlockPos> spots) {
         SpeciesConfig.NpcTuning t = SpeciesConfig.npc();
         MoonCalendar.Night night = tonight(level);
         if (!t.packs() || night == MoonCalendar.Night.NONE) {
-            return 0;
+            return List.of();
         }
         long id = NpcSpawnRules.nightOf(level.getDayTime());
         NpcPackNights ledger = NpcPackNights.get(level);
-        int spawned = 0;
+        List<Mob> spawned = new ArrayList<>();
         for (ServerPlayer p : new ArrayList<>(players)) {
             if (p.isSpectator() || !NpcSpawnRules.mayRoll(ledger.lastNight(p.getUUID()), id, ledger.packsIn(id), t.spawn().maxPacksPerNight())) {
                 continue;
@@ -84,12 +84,16 @@ public final class NpcPackSpawner {
             if (spot == null) {
                 continue;
             }
-            if (plan.pack() && !spawnPackAt(level, spot, plan, id).isEmpty()) {
-                ledger.packSpawned(id);
-                spawned++;
+            if (plan.pack()) {
+                List<Mob> pack = spawnPackAt(level, spot, plan, id);
+                if (!pack.isEmpty()) {
+                    ledger.packSpawned(id);
+                    spawned.addAll(pack);
+                }
             }
-            if (plan.lone() && spawnLoneAt(level, spot, id) != null) {
-                spawned++;
+            Mob lone = plan.lone() ? spawnLoneAt(level, spot, id) : null;
+            if (lone != null) {
+                spawned.add(lone);
             }
         }
         return spawned;

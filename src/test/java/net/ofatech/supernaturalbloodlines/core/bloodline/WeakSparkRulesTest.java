@@ -57,11 +57,21 @@ class WeakSparkRulesTest {
 
     @Test
     void theCooldownCountsGameDays() {
-        WolfState w = free().toBuilder().weak(new Weak(1, 0, 10)).build();
+        WolfState w = free().toBuilder().weak(new Weak(1, 0, 11)).build(); // given on day 10 (the day is kept as day + 1)
         assertEquals(Grant.COOLDOWN, WeakSparkRules.grant(w, 10, 5, 3), "the same day");
         assertEquals(Grant.COOLDOWN, WeakSparkRules.grant(w, 12, 5, 3), "two days later");
         assertEquals(Grant.GRANTED, WeakSparkRules.grant(w, 13, 5, 3), "three days later");
         assertEquals(Grant.GRANTED, WeakSparkRules.grant(w, 10, 5, 0), "a cooldown of 0 is none");
+    }
+
+    @Test
+    void aSparkGivenOnDayZeroStillStartsTheCooldown() {
+        Weak w = WeakSparkRules.given(Weak.NONE, 0);
+        WolfState holder = free().toBuilder().weak(w).build();
+        assertEquals(Grant.COOLDOWN, WeakSparkRules.grant(holder, 0, 5, 3));
+        assertEquals(Grant.COOLDOWN, WeakSparkRules.grant(holder, 2, 5, 3));
+        assertEquals(Grant.GRANTED, WeakSparkRules.grant(holder, 3, 5, 3));
+        assertEquals(Grant.GRANTED, WeakSparkRules.grant(holder, 0, 5, 0), "a cooldown of 0 is none, even on the same day");
     }
 
     @Test
@@ -79,8 +89,9 @@ class WeakSparkRulesTest {
     @Test
     void givingOneKeepsTheOneAlreadyGrowing() {
         Weak w = WeakSparkRules.given(new Weak(1, 5000, 3), 9);
-        assertEquals(new Weak(2, 5000, 9), w);
-        assertEquals(new Weak(1, 0, 9), WeakSparkRules.given(Weak.NONE, 9));
+        assertEquals(new Weak(2, 5000, 10), w, "the day is kept as day + 1, so that 0 means never");
+        assertEquals(new Weak(1, 0, 10), WeakSparkRules.given(Weak.NONE, 9));
+        assertEquals(new Weak(1, 0, 1), WeakSparkRules.given(Weak.NONE, 0), "given on day 0 is not never");
     }
 
     @Test

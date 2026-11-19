@@ -26,7 +26,7 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
 
     /**
      * The weaker sparks an NPC Alpha gave (R145): how many are held, how many online ticks the oldest has grown, and the game day the last one was
-     * given (the cooldown). They count for nothing (not toward the cap, not toward the bonus) and cannot be stolen: they are not in {@code sparks}.
+     * given plus one (the cooldown; 0 is never). They count for nothing (not toward the cap, not toward the bonus) and cannot be stolen: they are not in {@code sparks}.
      */
     public record Weak(int held, int progress, long day) {
         public static final Weak NONE = new Weak(0, 0, 0);
