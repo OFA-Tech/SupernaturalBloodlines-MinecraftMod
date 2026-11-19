@@ -75,7 +75,7 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
         TrialRules.Refusal refusal = TrialRules.gate(SpeciesConfig.trial().enabled(), wolf, VampirismSupernatural.isWerewolf(p),
                 VampirismAPI.factionPlayerHandler(p).getCurrentLevel(), SpeciesConfig.trial().minLevel(),
                 MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), true, false, false, false);
-        return TrialRules.notice(AlphaTrialBoss.running(level, p.getUUID()), refusal);
+        return TrialRules.notice(() -> AlphaTrialBoss.running(level, p.getUUID()), refusal);
     }
 
     /** Whether a werewolf player is in a transformed form now (a beast, not the human shape). */

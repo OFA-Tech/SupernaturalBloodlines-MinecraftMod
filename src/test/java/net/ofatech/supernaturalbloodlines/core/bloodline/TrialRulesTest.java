@@ -136,12 +136,28 @@ class TrialRulesTest {
 
     @Test
     void homeSaysRunningPossibleOrNothing() {
-        assertEquals(TrialRules.Notice.RUNNING, TrialRules.notice(true, Refusal.ALREADY), "a running trial");
-        assertEquals(TrialRules.Notice.RUNNING, TrialRules.notice(true, Refusal.NONE));
-        assertEquals(TrialRules.Notice.POSSIBLE, TrialRules.notice(false, Refusal.NONE));
-        assertEquals(TrialRules.Notice.POSSIBLE, TrialRules.notice(false, Refusal.NEEDS_WARNING), "the warning is a step, not a reason to say nothing");
+        assertEquals(TrialRules.Notice.RUNNING, TrialRules.notice(() -> true, Refusal.ALREADY), "a running trial");
+        assertEquals(TrialRules.Notice.RUNNING, TrialRules.notice(() -> true, Refusal.NONE));
+        assertEquals(TrialRules.Notice.POSSIBLE, TrialRules.notice(() -> false, Refusal.NONE));
+        assertEquals(TrialRules.Notice.POSSIBLE, TrialRules.notice(() -> false, Refusal.NEEDS_WARNING), "the warning is a step, not a reason to say nothing");
         for (Refusal no : new Refusal[] {Refusal.OFF, Refusal.NOT_WEREWOLF, Refusal.RANK, Refusal.LEVEL, Refusal.NOT_NIGHT}) {
-            assertEquals(TrialRules.Notice.NONE, TrialRules.notice(false, no), no.name());
+            assertEquals(TrialRules.Notice.NONE, TrialRules.notice(() -> false, no), no.name());
         }
+    }
+
+    @Test
+    void aNonWerewolfIsAnsweredBeforeTheRunningLookup() {
+        assertEquals(TrialRules.Notice.NONE, TrialRules.notice(() -> {
+            throw new AssertionError("asked whether a trial runs for someone who is not a werewolf");
+        }, Refusal.NOT_WEREWOLF));
+    }
+
+    /** The Home notice goes over the wire as the ordinal of the enum: the two lists of names must stay in step. */
+    @Test
+    void theNoticeOrdinalsAreTheFlagsConstants() {
+        assertEquals(net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.TRIAL_NONE, TrialRules.Notice.NONE.ordinal());
+        assertEquals(net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.TRIAL_POSSIBLE, TrialRules.Notice.POSSIBLE.ordinal());
+        assertEquals(net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.TRIAL_RUNNING, TrialRules.Notice.RUNNING.ordinal());
+        assertEquals(3, TrialRules.Notice.values().length);
     }
 }

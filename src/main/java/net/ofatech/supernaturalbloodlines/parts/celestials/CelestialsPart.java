@@ -64,6 +64,12 @@ public final class CelestialsPart {
             }
         });
         NeoForge.EVENT_BUS.addListener((ServerStoppingEvent e) -> stopMirror(ec, e.getServer()));
+        NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> {
+            // with no eclipse of ours to say what is true (the species part or Werewolves is off), a mirror saved by an earlier run is stale
+            if (!EnabledParts.isEnabled("species") || !ModList.get().isLoaded("werewolves")) {
+                stopMirror(ec, e.getServer());
+            }
+        });
         if (ModList.get().isLoaded("vampirism")) {
             BloodMoonBite.register();
         }
@@ -117,10 +123,16 @@ public final class CelestialsPart {
         try {
             adapter.stop(server.overworld(), ECLIPSE_EVENT);
         } catch (RuntimeException | LinkageError e) {
-            SupernaturalBloodlines.LOGGER.debug("Could not stop our lunar event in Enhanced Celestials: {}", e.toString());
+            if (STOP_WARNED.compareAndSet(false, true)) {
+                SupernaturalBloodlines.LOGGER.warn("Could not stop our lunar event in Enhanced Celestials (the next failures are logged at debug): {}", e.toString());
+            } else {
+                SupernaturalBloodlines.LOGGER.debug("Could not stop our lunar event in Enhanced Celestials: {}", e.toString());
+            }
         }
         LunarMoods.refresh();
-}
+    }
+
+    private static final java.util.concurrent.atomic.AtomicBoolean STOP_WARNED = new java.util.concurrent.atomic.AtomicBoolean();
 
     /** True when the real start-up linked Enhanced Celestials (never true in the test runtime, which has none). */
     @VisibleForTesting

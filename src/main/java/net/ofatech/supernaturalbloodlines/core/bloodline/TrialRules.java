@@ -21,10 +21,14 @@ public final class TrialRules {
      * The Home notice for a player: {@code RUNNING} while their trial runs; {@code POSSIBLE} when the gate would let them begin if they stood in beast form (the form
      * and the warning are things they do next, not reasons to say nothing); else {@code NONE}.
      *
+     * @param running       asked only when the player could have a trial at all
      * @param refusalInForm the gate asked with {@code transformed = true}, no trial running and the warning not an obstacle
      */
-    public static Notice notice(boolean running, Refusal refusalInForm) {
-        if (running) {
+    public static Notice notice(java.util.function.BooleanSupplier running, Refusal refusalInForm) {
+        if (refusalInForm == Refusal.NOT_WEREWOLF) {
+            return Notice.NONE; // the cheap answer first: most players are not werewolves, and the running lookup is not asked for them
+        }
+        if (running.getAsBoolean()) {
             return Notice.RUNNING;
         }
         return refusalInForm == Refusal.NONE || refusalInForm == Refusal.NEEDS_WARNING ? Notice.POSSIBLE : Notice.NONE;
