@@ -195,9 +195,9 @@ final class DevDemo {
     /** The pack's wolves of the demo: two Brothers of the viewer (one hunting, one following), a Tensura subordinate, and a Brother of another member that the viewer may only look at. */
     private static List<HubSocial.Npc> npcs() {
         return List.of(
-                new HubSocial.Npc(1, "Ashen", "werewolves:werewolf_beast", "brother", "guard", true, true, true, 12, 80, 4, "Dev", true, 50),
-                new HubSocial.Npc(2, "Ember", "werewolves:werewolf_beast", "brother", "follow", false, false, true, 3, 45, 1, "Dev", true, 50),
-                new HubSocial.Npc(3, "Rimuru's Wolf", "tensura:direwolf", "subordinate", "", false, false, true, 7, 100, 2, "Liam", true, 25),
-                new HubSocial.Npc(4, "Pale", "werewolves:werewolf_beast", "brother", "rest", false, false, false, -1, -1, -1, "Derek", false, 50));
+                new HubSocial.Npc(1, "Ashen", "werewolves:werewolf_beast", "brother", "guard", true, true, true, 12, 80, 4, "Dev", true, true, 50),
+                new HubSocial.Npc(2, "Ember", "werewolves:werewolf_beast", "brother", "follow", false, false, true, 3, 45, 1, "Dev", true, true, 50),
+                new HubSocial.Npc(3, "Rimuru's Wolf", "tensura:direwolf", "subordinate", "", false, false, true, 7, 100, 2, "Liam", true, false, 25),
+                new HubSocial.Npc(4, "Pale", "werewolves:werewolf_beast", "brother", "rest", false, false, true, 20, 70, 3, "Derek", true, false, 50));
     }
 }

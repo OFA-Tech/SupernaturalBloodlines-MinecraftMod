@@ -235,8 +235,9 @@ final class SpeciesHub {
                     tensura ? "" : bond.map(b -> b.order().name().toLowerCase(java.util.Locale.ROOT)).orElse("rest"),
                     bond.map(net.ofatech.supernaturalbloodlines.core.bloodline.NpcBond::hunt).orElse(false), bond.map(net.ofatech.supernaturalbloodlines.core.bloodline.NpcBond::sort).orElse(false),
                     loaded, here ? (int) Math.round(mob.get().distanceTo(p)) : -1, loaded ? Math.round(100f * mob.get().getHealth() / Math.max(1f, mob.get().getMaxHealth())) : -1,
-                    since < 0 ? -1 : (int) Math.max(0, (level.getGameTime() - since) / 24000L), ownerName == null ? "" : ownerName, canOrder,
-                    (int) Math.round(100 * net.ofatech.supernaturalbloodlines.core.bloodline.NpcRules.weight(e.source(), SpeciesConfig.members().weightBrother(), SpeciesConfig.members().weightTensura()))));
+                    since < 0 ? -1 : (int) Math.max(0, (level.getGameTime() - since) / 24000L), ownerName == null ? "" : ownerName, canOrder, e.owner().equals(p.getUUID()),
+                    net.ofatech.supernaturalbloodlines.parts.species.npc.NpcMembers.overCap(level, e.npc()) ? 0
+                            : (int) Math.round(100 * net.ofatech.supernaturalbloodlines.core.bloodline.NpcRules.weight(e.source(), SpeciesConfig.members().weightBrother(), SpeciesConfig.members().weightTensura()))));
         }
         return out;
     }

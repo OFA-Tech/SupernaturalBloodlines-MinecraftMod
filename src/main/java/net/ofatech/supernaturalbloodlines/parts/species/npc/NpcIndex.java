@@ -31,6 +31,9 @@ public final class NpcIndex extends SavedData {
     private final Map<UUID, Entry> byNpc = new LinkedHashMap<>();
     private final Map<Integer, UUID> byToken = new HashMap<>();
     private int nextToken = 1;
+    /** Wolves released while their chunk was not loaded: the bond still sits on the entity, so it is taken off when the wolf next joins a level. Capped, oldest first out. */
+    private final java.util.Set<UUID> released = new java.util.LinkedHashSet<>();
+    public static final int MAX_RELEASED = 256;
 
     public static NpcIndex get(ServerLevel level) {
         return level.getServer().overworld().getDataStorage().computeIfAbsent(new Factory<>(NpcIndex::new, NpcIndex::load, null), NAME);
@@ -82,6 +85,41 @@ public final class NpcIndex extends SavedData {
         return e;
     }
 
+    /** Remembers that this wolf was freed while unloaded, so the bond that is still on it is dropped when it loads. */
+    public void markReleased(UUID npc) {
+        released.add(npc);
+        while (released.size() > MAX_RELEASED) {
+            released.remove(released.iterator().next());
+        }
+        setDirty();
+    }
+
+    /** Whether this wolf was freed while unloaded; forgets it when it was (the bond is about to be taken off). */
+    public boolean takeReleased(UUID npc) {
+        boolean was = released.remove(npc);
+        if (was) {
+            setDirty();
+        }
+        return was;
+    }
+
+    public int releasedCount() {
+        return released.size();
+    }
+
+    /** A wolf that was replaced by another entity (a Werewolves transformation): the same member under a new uuid, with the same token. */
+    public Optional<Entry> rekey(UUID old, UUID now) {
+        Entry e = byNpc.remove(old);
+        if (e == null) {
+            return Optional.empty();
+        }
+        Entry moved = new Entry(e.token(), now, e.owner(), e.source(), e.name(), e.type(), e.dim(), e.x(), e.y(), e.z(), e.seen());
+        byNpc.put(now, moved);
+        byToken.put(moved.token(), now);
+        setDirty();
+        return Optional.of(moved);
+    }
+
     public boolean remove(UUID npc) {
         Entry e = byNpc.remove(npc);
         if (e == null) {
@@ -111,6 +149,14 @@ public final class NpcIndex extends SavedData {
                 // a bad entry costs that entry only
             }
         }
+        ListTag gone = tag.getList("released", Tag.TAG_STRING);
+        for (int i = 0; i < gone.size(); i++) {
+            try {
+                n.released.add(UUID.fromString(gone.getString(i)));
+            } catch (IllegalArgumentException bad) {
+                // a bad entry costs that entry only
+            }
+        }
         return n;
     }
 
@@ -132,6 +178,9 @@ public final class NpcIndex extends SavedData {
             c.putLong("seen", e.seen());
             list.add(c);
         }
+        ListTag gone = new ListTag();
+        released.forEach(u -> gone.add(net.minecraft.nbt.StringTag.valueOf(u.toString())));
+        tag.put("released", gone);
         tag.put("members", list);
         tag.putInt("next", nextToken);
         return tag;

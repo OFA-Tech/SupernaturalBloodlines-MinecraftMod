@@ -87,11 +87,29 @@ public final class NpcRules {
     }
 
     /**
-     * Whether a Brother goes on a hunting trip now: the switch is on, it has Hunt on, it is not following (it rests or guards, so it has a post to come
-     * back to), it is night, the time since its last trip is up, and it is not in a fight.
+     * Whether a Brother goes on a hunting trip now: the switch is on, it has Hunt on, its owner is online, it is not following (it rests or guards, so it has a
+     * post to come back to), it is night, the time since its last trip is up, and it is not in a fight.
      */
-    public static boolean huntDue(boolean enabled, boolean hunt, Order effective, boolean night, long ticksSinceLast, long periodTicks, boolean fighting) {
-        return enabled && hunt && effective != Order.FOLLOW && night && ticksSinceLast >= periodTicks && !fighting;
+    public static boolean huntDue(boolean enabled, boolean hunt, Order effective, boolean ownerOnline, boolean night, long ticksSinceLast, long periodTicks, boolean fighting) {
+        return enabled && hunt && ownerOnline && effective != Order.FOLLOW && night && ticksSinceLast >= periodTicks && !fighting;
+    }
+
+    /** Whether a Brother tidies its chest now: like a hunting trip but at any hour, and it needs only Sort on. */
+    public static boolean sortDue(boolean enabled, boolean sort, Order effective, boolean ownerOnline, long ticksSinceLast, long periodTicks, boolean fighting) {
+        return enabled && sort && ownerOnline && effective != Order.FOLLOW && ticksSinceLast >= periodTicks && !fighting;
+    }
+
+    /**
+     * Whether the Brother at {@code rank} (0 for the oldest in the pack) is within the pack's cap. When a player joins a pack and it goes over the cap, the
+     * newest Brothers rest and count for nothing until room is made.
+     */
+    public static boolean withinCap(int rank, int packMax) {
+        return rank < Math.max(0, packMax);
+    }
+
+    /** Whether the viewer may release a member: only its owner (the pack's leader may order it, not free it). */
+    public static boolean mayRelease(boolean sendsAsOwner) {
+        return sendsAsOwner;
     }
 
     /** What a member really does now: its owner offline or dead means it rests where it stands; the bond itself is kept. */

@@ -143,6 +143,46 @@ public final class NpcMemberGameTests {
         return c == null ? null : c.getContents() instanceof TranslatableContents t ? t.getKey() : c.getString();
     }
 
+    /** Positions whose right click a (test) protection refuses: stands in for a claim of Open Parties and Claims. */
+    private static volatile BlockPos deny;
+
+    static {
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock e) -> {
+            BlockPos d = deny;
+            if (d != null && e.getPos().equals(d)) {
+                e.setCanceled(true);
+            }
+        });
+    }
+
+    private static int count(net.minecraft.world.Container c, net.minecraft.world.item.Item item) {
+        int n = 0;
+        for (int i = 0; i < c.getContainerSize(); i++) {
+            if (c.getItem(i).is(item)) {
+                n += c.getItem(i).getCount();
+            }
+        }
+        return n;
+    }
+
+    private static int stacks(net.minecraft.world.Container c, net.minecraft.world.item.Item item) {
+        int n = 0;
+        for (int i = 0; i < c.getContainerSize(); i++) {
+            if (c.getItem(i).is(item)) {
+                n++;
+            }
+        }
+        return n;
+    }
+
+    private static List<Cow> cows(GameTestHelper helper, int n) {
+        List<Cow> out = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            out.add(helper.spawn(EntityType.COW, new Vec3(3.5 + i, 1, 6.5)));
+        }
+        return out;
+    }
+
     private static double bonus(ServerPlayer p) {
         var a = p.getAttribute(Attributes.ATTACK_DAMAGE);
         var m = a == null ? null : a.getModifier(PackBonus.MODIFIER_ID);
@@ -294,7 +334,11 @@ public final class NpcMemberGameTests {
             helper.assertTrue("supernaturalbloodlines.npc.unknown".equals(key(NpcCommands.order(mate, t, "rest"))), "a pack mate who does not lead commanded it");
             helper.assertTrue("supernaturalbloodlines.npc.unknown".equals(key(NpcCommands.release(stranger, t))), "a stranger released it");
             helper.assertTrue(NpcCommands.order(leader, t, "rest") == null, "the leader of the pack was refused");
+            helper.assertTrue("supernaturalbloodlines.npc.release_owner".equals(key(NpcCommands.release(leader, t))) && b.hasData(SpeciesRegistries.NPC_BOND), "the leader freed another member's Brother");
+            helper.assertTrue(NpcCommands.order(owner, t, "follow") == null, "the owner could not make it follow");
+            helper.assertTrue("supernaturalbloodlines.npc.needs_post".equals(key(NpcCommands.toggleHunt(owner, t))) && !bond(b).hunt(), "Hunt was turned on for a follower");
             helper.assertTrue(NpcCommands.order(owner, t, "guard") == null, "the owner was refused");
+            helper.assertTrue(NpcCommands.toggleHunt(leader, t) == null && bond(b).hunt(), "the leader could not turn Hunt on for a guard");
             helper.assertTrue(NpcCommands.release(owner, t) == null && !b.hasData(SpeciesRegistries.NPC_BOND), "the owner could not release it");
             helper.assertTrue(NpcIndex.get(helper.getLevel()).of(b.getUUID()).isEmpty(), "the ledger kept a released wolf");
         } finally {
@@ -458,7 +502,7 @@ public final class NpcMemberGameTests {
             BlockPos post = helper.absolutePos(new BlockPos(4, 1, 4));
             NpcBond hunting = bond(b).withOrder(NpcBond.Order.GUARD, post.asLong()).withHunt(true).withSort(true);
             b.setData(SpeciesRegistries.NPC_BOND, hunting);
-            int killed = NpcHunt.go(b, hunting, true);
+            int killed = NpcHunt.go(b, hunting, true, true);
             helper.assertTrue(killed == 2, "two plain cows should have been hunted, got " + killed);
             helper.assertTrue(named.isAlive() && baby.isAlive(), "a named or baby animal was hunted");
             helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, new AABB(post).inflate(30)).isEmpty(), "loot lies on the ground instead of in the chest");
@@ -506,6 +550,250 @@ public final class NpcMemberGameTests {
             alpha.discard();
             mobs.addAll(helper.getLevel().getEntitiesOfClass(Mob.class, new AABB(owner.blockPosition()).inflate(24), m -> m.hasData(SpeciesRegistries.NPC_MARK)));
             clean(helper, mobs, owner);
+        }
+        helper.succeed();
+    }
+
+    // ---- panel round 1: containers, the ledger, release, the cap ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBrotherOnlyUsesPlainChestsAndBarrelsTheOwnerMayOpen(GameTestHelper helper) {
+        ServerPlayer owner = wolf(helper, Rank.OMEGA, Lineage.BORN);
+        online(owner);
+        Mob b = brother(helper, owner, 4);
+        BlockPos furnaceAt = new BlockPos(4, 1, 5);
+        BlockPos deniedAt = new BlockPos(5, 1, 3);
+        BlockPos barrelAt = new BlockPos(8, 1, 4);
+        helper.setBlock(furnaceAt, Blocks.FURNACE);
+        helper.setBlock(deniedAt, Blocks.CHEST);
+        helper.setBlock(barrelAt, Blocks.BARREL);
+        var furnace = (net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity) helper.getBlockEntity(furnaceAt);
+        furnace.setItem(0, new ItemStack(Items.COBBLESTONE, 5));
+        ChestBlockEntity denied = (ChestBlockEntity) helper.getBlockEntity(deniedAt);
+        denied.setItem(0, new ItemStack(Items.COBBLESTONE, 20));
+        denied.setItem(3, new ItemStack(Items.DIAMOND_SWORD));
+        denied.setItem(5, new ItemStack(Items.COBBLESTONE, 20));
+        var barrel = (net.minecraft.world.level.block.entity.BarrelBlockEntity) helper.getBlockEntity(barrelAt);
+        barrel.setItem(0, new ItemStack(Items.COBBLESTONE, 20));
+        barrel.setItem(2, new ItemStack(Items.COBBLESTONE, 20));
+        List<Cow> cows = cows(helper, 2);
+        try {
+            deny = helper.absolutePos(deniedAt);
+            NpcBond hunting = bond(b).withOrder(NpcBond.Order.GUARD, helper.absolutePos(new BlockPos(4, 1, 4)).asLong()).withHunt(true).withSort(true);
+            b.setData(SpeciesRegistries.NPC_BOND, hunting);
+            helper.assertTrue(NpcHunt.go(b, hunting, true, true) == 2, "the two cows were not hunted");
+            helper.assertTrue(furnace.getItem(0).getCount() == 5 && furnace.getItem(1).isEmpty() && furnace.getItem(2).isEmpty(), "a furnace was used as a store");
+            helper.assertTrue(denied.getItem(0).getCount() == 20 && denied.getItem(3).is(Items.DIAMOND_SWORD) && denied.getItem(5).getCount() == 20 && count(denied, Items.BEEF) == 0,
+                    "a chest the owner may not open was sorted or filled");
+            helper.assertTrue(stacks(barrel, Items.COBBLESTONE) == 1 && count(barrel, Items.COBBLESTONE) == 40, "the barrel the owner may open was not tidied");
+            helper.assertTrue(count(barrel, Items.BEEF) + count(barrel, Items.LEATHER) > 0, "the drops did not reach the barrel");
+            helper.assertTrue(helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(new BlockPos(4, 1, 4))).inflate(30)).isEmpty(), "items lie on the ground");
+        } finally {
+            deny = null;
+            cows.forEach(Entity::discard);
+            clean(helper, List.of(b), owner);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void leftoversStayWhereTheAnimalFellAndNothingIsLost(GameTestHelper helper) {
+        ServerPlayer owner = wolf(helper, Rank.OMEGA, Lineage.BORN);
+        online(owner);
+        Mob b = brother(helper, owner, 4);
+        BlockPos barrelAt = new BlockPos(6, 1, 4);
+        helper.setBlock(barrelAt, Blocks.BARREL);
+        var barrel = (net.minecraft.world.level.block.entity.BarrelBlockEntity) helper.getBlockEntity(barrelAt);
+        for (int i = 0; i < barrel.getContainerSize(); i++) {
+            barrel.setItem(i, new ItemStack(Items.COBBLESTONE, 64));
+        }
+        List<Cow> cows = cows(helper, 2);
+        try {
+            NpcBond hunting = bond(b).withOrder(NpcBond.Order.GUARD, helper.absolutePos(new BlockPos(4, 1, 4)).asLong()).withHunt(true).withSort(true);
+            b.setData(SpeciesRegistries.NPC_BOND, hunting);
+            helper.assertTrue(NpcHunt.go(b, hunting, true, true) == 2, "the cows were not hunted");
+            helper.assertTrue(count(barrel, Items.COBBLESTONE) == 64 * barrel.getContainerSize(), "the full barrel lost or gained stone");
+            helper.assertTrue(count(barrel, Items.BEEF) + count(barrel, Items.LEATHER) == 0, "something went into a full barrel");
+            int onGround = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(new BlockPos(4, 1, 6))).inflate(6)).stream().mapToInt(i -> i.getItem().getCount()).sum();
+            helper.assertTrue(onGround > 0, "the drops that did not fit vanished");
+            helper.assertTrue(helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(new BlockPos(4, 1, 4))).inflate(0.4)).isEmpty(), "leftovers were dropped at the post");
+        } finally {
+            helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(new BlockPos(4, 1, 4))).inflate(30)).forEach(Entity::discard);
+            cows.forEach(Entity::discard);
+            clean(helper, List.of(b), owner);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBrotherNeitherHuntsNorSortsWhileItsOwnerIsOffline(GameTestHelper helper) {
+        ServerPlayer owner = wolf(helper, Rank.OMEGA, Lineage.BORN);
+        online(owner);
+        Mob b = brother(helper, owner, 4);
+        BlockPos chestAt = new BlockPos(6, 1, 4);
+        helper.setBlock(chestAt, Blocks.CHEST);
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(chestAt);
+        chest.setItem(0, new ItemStack(Items.COBBLESTONE, 20));
+        chest.setItem(7, new ItemStack(Items.COBBLESTONE, 20));
+        List<Cow> cows = cows(helper, 2);
+        try {
+            NpcBond hunting = bond(b).withOrder(NpcBond.Order.GUARD, helper.absolutePos(new BlockPos(4, 1, 4)).asLong()).withHunt(true).withSort(true);
+            b.setData(SpeciesRegistries.NPC_BOND, hunting);
+            online(); // the owner leaves the server
+            helper.assertTrue(NpcHunt.maybeHunt(b, true) == 0 && cows.stream().allMatch(Entity::isAlive), "it hunted for an absent owner");
+            helper.assertTrue(NpcHunt.go(b, hunting, true, true) == 0 && cows.stream().allMatch(Entity::isAlive), "a trip with no owner killed animals");
+            helper.assertTrue(stacks(chest, Items.COBBLESTONE) == 2, "it sorted a chest for an absent owner");
+            online(owner); // the owner is back: the same Brother hunts
+            helper.assertTrue(NpcHunt.maybeHunt(b, true) == 2, "it did not hunt with its owner here");
+            helper.assertTrue(stacks(chest, Items.COBBLESTONE) == 1, "it did not sort with its owner here");
+        } finally {
+            cows.forEach(Entity::discard);
+            clean(helper, List.of(b), owner);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTransformedBrotherKeepsItsBondAndNoGhostIsLeft(GameTestHelper helper) {
+        ServerPlayer owner = wolf(helper, Rank.OMEGA, Lineage.BORN);
+        online(owner);
+        // a human werewolf that turns into a beast (the way a wild wolf is made), then recruited: its transformation back needs the first body
+        Mob human0 = wildWolf(helper, "werewolves:human_werewolf", 4, 1f);
+        Mob beast = (Mob) ((de.teamlapen.werewolves.api.entities.werewolf.WerewolfTransformable) human0).transformToWerewolf(de.teamlapen.werewolves.api.entities.werewolf.TransformType.TIME_LIMITED);
+        List<Mob> mobs = new ArrayList<>(List.of(human0, beast));
+        try {
+            beast.setHealth(beast.getMaxHealth() * 0.3f);
+            String refused = WerewolfBrotherRiteFactory.recruit(owner, beast);
+            helper.assertTrue(refused == null, "the recruit was refused: " + refused);
+            int token = token(helper, beast);
+            java.util.UUID beastId = beast.getUUID();
+            Mob human = (Mob) ((de.teamlapen.werewolves.api.entities.werewolf.WerewolfTransformable) beast).transformBack();
+            mobs.add(human);
+            helper.assertTrue(beast.isRemoved() && human != beast, "the transformation did not replace the wolf");
+            helper.assertTrue(NpcMembers.bondOf(human).filter(b -> b.owner().equals(owner.getUUID()) && b.source() == NpcBond.Source.BROTHER).isPresent(), "the human form lost the bond");
+            helper.assertTrue(NpcIndex.get(helper.getLevel()).of(beastId).isEmpty(), "a ghost entry is left for the old body");
+            helper.assertTrue(NpcIndex.get(helper.getLevel()).of(human.getUUID()).filter(e -> e.token() == token).isPresent(), "the member changed its token or was lost");
+            helper.assertTrue(NpcMembers.brothers(helper.getLevel(), owner.getUUID()) == 1, "the owner has more than one Brother after a transformation");
+            helper.assertTrue(human.hasCustomName(), "the name was lost");
+            Mob again = (Mob) ((de.teamlapen.werewolves.api.entities.werewolf.WerewolfTransformable) human).transformToWerewolf(de.teamlapen.werewolves.api.entities.werewolf.TransformType.TIME_LIMITED);
+            mobs.add(again);
+            helper.assertTrue(NpcMembers.bondOf(again).isPresent() && NpcIndex.get(helper.getLevel()).of(human.getUUID()).isEmpty()
+                    && NpcIndex.get(helper.getLevel()).of(again.getUUID()).filter(e -> e.token() == token).isPresent(), "the second transformation lost the member");
+            helper.assertTrue(NpcMembers.brothers(helper.getLevel(), owner.getUUID()) == 1, "a second body was counted");
+        } finally {
+            clean(helper, mobs, owner);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBrotherThatLeavesTheWorldIsForgottenAndAGhostEntryHeals(GameTestHelper helper) {
+        ServerPlayer owner = wolf(helper, Rank.OMEGA, Lineage.BORN);
+        online(owner);
+        Mob b = brother(helper, owner, 4);
+        Mob ghost = (Mob) type("werewolves:werewolf_beast").create(helper.getLevel());
+        NpcIndex index = NpcIndex.get(helper.getLevel());
+        List<Mob> mobs = new ArrayList<>(List.of(b, ghost));
+        try {
+            helper.assertTrue(NpcMembers.brothers(helper.getLevel(), owner.getUUID()) == 1, "setup");
+            b.discard(); // removed for good, with no successor: not a death, not an unload
+            helper.assertTrue(index.of(b.getUUID()).isEmpty() && NpcMembers.brothers(helper.getLevel(), owner.getUUID()) == 0, "a Brother that left the world still fills a place");
+            // an entry for a wolf that has no bond, and the wolf joins a level: the entry goes
+            index.put(ghost.getUUID(), owner.getUUID(), NpcBond.Source.BROTHER, "Ghost", "werewolves:werewolf_beast", "minecraft:overworld", 0, 0, 0, 0);
+            helper.assertTrue(NpcMembers.brothers(helper.getLevel(), owner.getUUID()) == 1, "the ghost was not written");
+            ghost.setPos(helper.absoluteVec(new Vec3(5.5, 1, 2.5)));
+            helper.getLevel().addFreshEntity(ghost);
+            helper.assertTrue(index.of(ghost.getUUID()).isEmpty() && NpcMembers.brothers(helper.getLevel(), owner.getUUID()) == 0, "a ledger entry for a wolf with no bond survived its joining");
+        } finally {
+            clean(helper, mobs, owner);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theRiteTakesOnlyBeastsAndPicksTheNearestRecruitableOne(GameTestHelper helper) {
+        ServerPlayer owner = wolf(helper, Rank.OMEGA, Lineage.BORN);
+        online(owner);
+        Mob taken = brother(helper, owner, 4);
+        Mob free = wildWolf(helper, "werewolves:werewolf_beast", 6, 0.3f);
+        Mob alpha = wildWolf(helper, de.teamlapen.werewolves.core.ModEntities.ALPHA_WEREWOLF.getId().toString(), 3, 0.3f);
+        Mob human = wildWolf(helper, "werewolves:human_werewolf", 5, 0.3f);
+        List<Mob> mobs = List.of(taken, free, alpha, human);
+        try {
+            BlockPos centre = helper.absolutePos(new BlockPos(4, 1, 2));
+            helper.assertTrue(WerewolfBrotherRiteFactory.wolfNear(helper.getLevel(), centre) == free, "the rite did not skip the bonded wolf, the Alpha and the human form that stand nearer");
+            helper.assertTrue(WerewolfBrotherRiteFactory.check(owner, human) == NpcRules.Refusal.NOT_A_WOLF, "the human form was taken");
+            free.discard();
+            helper.assertTrue(WerewolfBrotherRiteFactory.wolfNear(helper.getLevel(), centre) == null, "with no wolf left the rite still found one");
+        } finally {
+            clean(helper, mobs, owner);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBrotherReleasedWhileUnloadedStaysReleasedWhenItLoads(GameTestHelper helper) {
+        ServerPlayer owner = wolf(helper, Rank.OMEGA, Lineage.BORN);
+        online(owner);
+        NpcIndex index = NpcIndex.get(helper.getLevel());
+        // a Brother in a chunk that is not loaded: its bond is on the entity (not in the world yet), its entry is in the ledger
+        Mob m = (Mob) type("werewolves:werewolf_beast").create(helper.getLevel());
+        m.setData(SpeciesRegistries.NPC_BOND, NpcBond.brother(owner.getUUID(), 0, 0));
+        index.put(m.getUUID(), owner.getUUID(), NpcBond.Source.BROTHER, "Far", "werewolves:werewolf_beast", "minecraft:overworld", 0, 0, 0, 0);
+        try {
+            int t = index.of(m.getUUID()).orElseThrow().token();
+            helper.assertTrue(NpcMembers.live(helper.getLevel().getServer(), m.getUUID()).isEmpty(), "setup: the wolf is loaded");
+            helper.assertTrue(NpcCommands.release(owner, t) == null, "an unloaded Brother could not be released");
+            helper.assertTrue(index.of(m.getUUID()).isEmpty() && NpcMembers.brothers(helper.getLevel(), owner.getUUID()) == 0, "the entry stayed after the release");
+            m.setPos(helper.absoluteVec(new Vec3(4.5, 1, 2.5)));
+            helper.getLevel().addFreshEntity(m); // the chunk loads
+            helper.assertTrue(!NpcMembers.bondOf(m).isPresent(), "the released wolf got its bond back when it loaded");
+            helper.assertTrue(index.of(m.getUUID()).isEmpty() && NpcMembers.brothers(helper.getLevel(), owner.getUUID()) == 0, "the released wolf is in the ledger again");
+            helper.assertTrue(index.releasedCount() == 0 || !index.takeReleased(m.getUUID()), "the release is remembered after it was applied");
+        } finally {
+            clean(helper, List.of(m), owner);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPlayerJoiningAFullPackMakesTheNewestBrothersRest(GameTestHelper helper) {
+        ServerPlayer alpha = wolf(helper, Rank.ALPHA, Lineage.BORN);
+        List<ServerPlayer> betas = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            betas.add(wolf(helper, Rank.BETA, Lineage.BORN));
+        }
+        ServerPlayer newcomer = wolf(helper, Rank.BETA, Lineage.BORN);
+        List<ServerPlayer> everyone = new ArrayList<>(betas);
+        everyone.add(alpha);
+        everyone.add(newcomer);
+        online(everyone.toArray(new ServerPlayer[0]));
+        PackIndex packs = PackIndex.get(helper.getLevel());
+        List<Mob> mobs = new ArrayList<>();
+        try {
+            betas.forEach(b -> packs.join(alpha.getUUID(), b.getUUID()));
+            List<Mob> old = new ArrayList<>();
+            for (int i = 0; i < 3; i++) {
+                old.add(brother(helper, betas.get(i), 4 + i));
+                old.add(brother(helper, betas.get(i), 4 + i));
+            }
+            Mob n1 = brother(helper, newcomer, 7); // a lone werewolf may keep two
+            Mob n2 = brother(helper, newcomer, 8);
+            mobs.addAll(old);
+            mobs.add(n1);
+            mobs.add(n2);
+            packs.join(alpha.getUUID(), newcomer.getUUID()); // the pack now holds 8
+            helper.assertTrue(NpcMembers.brothersInPack(helper.getLevel(), alpha.getUUID()) == 8, "setup: the pack should hold 8");
+            helper.assertTrue(old.stream().noneMatch(m -> NpcMembers.overCap(helper.getLevel(), m.getUUID())), "an old Brother lost its place");
+            helper.assertTrue(NpcMembers.overCap(helper.getLevel(), n1.getUUID()) && NpcMembers.overCap(helper.getLevel(), n2.getUUID()), "the newest Brothers kept their place in a full pack");
+            helper.assertTrue(NpcMembers.near(alpha, 64).size() == 6 && !NpcMembers.near(alpha, 64).contains(n1), "the extra Brothers count for the pack");
+            n1.setData(SpeciesRegistries.NPC_BOND, bond(n1).withOrder(NpcBond.Order.GUARD, n1.blockPosition().asLong()));
+            helper.assertTrue(NpcMembers.effectiveOrder(helper.getLevel().getServer(), n1) == NpcBond.Order.REST, "an extra Brother did not rest");
+            // room is made: the older of the two takes a place
+            NpcMembers.release(old.get(0));
+            helper.assertTrue(!NpcMembers.overCap(helper.getLevel(), n1.getUUID()) && NpcMembers.overCap(helper.getLevel(), n2.getUUID()), "a freed place did not go to the oldest extra");
+        } finally {
+            clean(helper, mobs, everyone.toArray(new ServerPlayer[0]));
         }
         helper.succeed();
     }

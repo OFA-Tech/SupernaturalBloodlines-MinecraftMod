@@ -33,9 +33,9 @@ Tokens last 60 seconds (calls) or 5 seconds (compulsion choices), are tied to on
 | `/pack spirits` | an **Alpha** or True Alpha | Wolf Spirits: three spirit wolves for three minutes (90 s cooldown). Also a button on the Home page. |
 | `/pack npc order <number> follow\|guard\|rest` | the wolf's owner or the pack's leader | give a Brother an order. The Pack page has the same buttons; `<number>` is the one `/pack npc list` shows. |
 | `/pack npc hunt <number>`, `/pack npc sort <number>` | the same | turn a Brother's hunting trips, or its chest sorting, on or off. |
-| `/pack npc release <number>` | the same | free a Brother (it goes back to the wild). A Tensura subordinate is released in Tensura. |
+| `/pack npc release <number>` | the wolf's owner only | free a Brother (it goes back to the wild, even if it is out of reach: it is freed when it next loads). A Tensura subordinate is released in Tensura. |
 | `/pack npc list` | anyone | the wolves of your pack with their numbers (the Pack page shows them as rows). |
-| `/supernaturalbloodlines debug npcs list`, `... npcs release <player>` | operators | list every pack wolf, or release a player's. Admin > Debug has both. |
+| `/supernaturalbloodlines debug npcs list`, `... npcs release <player>` | operators | list every pack wolf, or release a player's (the player can be offline). Admin > Debug has both. |
 | `/pack roar` | an **Alpha** or True Alpha | the Alpha Roar (60 s cooldown). Same as the **Alpha Roar** [key bind](Key-Binds). |
 | `/pack emissary [player]` | the **leader** | name a witch, siphoner, heretic or tribrid who is **already a member** of the pack (invite them first) as your Emissary. Without a name it clears it. |
 | `/pack anchor [player]` | a werewolf | name a player as your **anchor**. Without a name it clears it. |

@@ -238,7 +238,11 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
             KitDraw.pips(g, x + font.width(title) + 6, r.y() + 8, d.pips(), d.pipsFilled(), RED, 0xFF4a2430);
         }
         int by = r.y() + 17;
-        String bodyText = d.body().stream().map(Component::getString).collect(java.util.stream.Collectors.joining(" "));
+        String bodyText = d.body().stream().map(Component::getString).collect(java.util.stream.Collectors.joining(" \u00b7 "));
+        if (d.body().size() > 1) {
+            // a bar of several lines of text shows them on one line, cut to fit: the whole of them are in the tooltip, one to a line
+            ctx.target("detail:body", new Rect(x, r.y() + 16, textW, Math.max(10, r.h() - 18)), d.body(), null);
+        }
         for (String line : LabelFit.wrap(bodyText, textW, 2, font::width)) { // two lines, the whole of them: the bar is wide enough for the text
             if (by + 8 > r.bottom() - 3) {
                 break;

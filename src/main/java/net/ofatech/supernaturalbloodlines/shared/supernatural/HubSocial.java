@@ -142,10 +142,10 @@ public final class HubSocial {
      * A wolf (or Tensura subordinate) of the viewer's pack, as the Pack page and the NPC profile show it. {@code token} is the ledger's short id (never an entity
      * id), {@code source} {@code brother} or {@code subordinate}, {@code order} {@code follow}, {@code guard} or {@code rest} (empty for a subordinate: Tensura's
      * own orders), {@code health} a percent (-1 when it is not loaded), {@code distance} blocks (-1 when not loaded or in another dimension), {@code days} how
-     * long it has been in the pack, {@code owner} the owner's name, {@code canOrder} whether the viewer is its owner or the leader of its owner's pack.
+     * long it has been in the pack, {@code owner} the owner's name, {@code canOrder} whether the viewer is its owner or the leader of its owner's pack, {@code mine} whether the viewer is its owner (only the owner releases it).
      */
     public record Npc(int token, String name, String type, String source, String order, boolean hunt, boolean sort, boolean loaded, int distance, int health,
-                      int days, String owner, boolean canOrder, int weightPercent) {
+                      int days, String owner, boolean canOrder, boolean mine, int weightPercent) {
         public boolean ours() {
             return source.equals("brother");
         }

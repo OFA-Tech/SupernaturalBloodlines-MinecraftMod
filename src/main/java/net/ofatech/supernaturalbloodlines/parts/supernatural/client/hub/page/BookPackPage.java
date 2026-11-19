@@ -251,7 +251,7 @@ public final class BookPackPage implements HubPageView {
             }
             y += stacked ? 21 : 11;
         }
-        y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, style == Style.BOOK);
+        y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, false);
         t.drawRule(f.g, r.x(), y + 3, r.w());
         y += 9;
         if (style == Style.BOOK && chosen != null) {
@@ -321,7 +321,7 @@ public final class BookPackPage implements HubPageView {
     private void detail(HubScreen.Frame f, WolfState wolf, List<HubSocial.Member> pack, @Nullable HubSocial.Member chosen) {
         HubSocial.Npc pickedWolf = wolves.chosen(f);
         if (pickedWolf != null) {
-            f.detail(wolves.detail(pickedWolf));
+            f.detail(wolves.detail(pickedWolf, style == Style.MOON));
             return;
         }
         Component title = chosen != null ? Component.literal(chosen.name()) : Component.translatable(KEY + "title");
@@ -363,6 +363,14 @@ public final class BookPackPage implements HubPageView {
         HubTheme t = f.theme();
         Rect s = f.region(ringRegion);
         int top = f.begin(ringRegion);
+        HubSocial.Npc pickedWolf = wolves.chosen(f);
+        if (style == Style.BOOK && pickedWolf != null) {
+            // the Grimoire's ledger scrolls: the picked wolf's profile and orders are drawn on the right page, in full view, in place of the ring until it is closed
+            int py = wolves.profile(f, new Rect(s.x(), top, s.w(), s.bottom() - top), top, pickedWolf);
+            BookKit.link(f, "pack:wolf_close", Component.translatable(KEY + "wolves.close"), s.x(), py + 4, List.of(Component.translatable(KEY + "wolves.close_tip")), wolves::close);
+            f.end(py + 18);
+            return;
+        }
         if (pack.isEmpty() && f.view.snapshot().npcs().isEmpty()) {
             // nobody beside you: the empty state instead of an empty ring
             EmptyState.render(f, s, top + Math.max(0, (s.bottom() - top - 150) / 2), "pack", HubPage.GUIDE);

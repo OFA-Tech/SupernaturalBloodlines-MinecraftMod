@@ -74,8 +74,7 @@ public final class PackWolves {
             int barW = 34;
             int room = r.w() - 22 - barW - 4;
             f.g.drawString(f.font(), LabelFit.cut(n.name(), room, f.font()::width), textX, y, t.ink(), false);
-            Component sub = Component.empty().append(sourceName(n)).append(" \u00b7 ").append(orderName(n)).append(n.distance() >= 0 ? " \u00b7 " + n.distance() + " m" : "");
-            f.g.drawString(f.font(), LabelFit.cut(sub.getString(), room, f.font()::width), textX, y + 10, t.muted(), false);
+            f.g.drawString(f.font(), LabelFit.cut(sub(n).getString(), room, f.font()::width), textX, y + 10, t.muted(), false);
             bar(f, r.right() - barW, y + 4, barW, n);
             String id = "npc:" + n.token();
             f.target(id, hit, tooltip(n), () -> selected = on ? 0 : n.token());
@@ -107,6 +106,15 @@ public final class PackWolves {
         return Component.translatable(KEY + "source." + n.source());
     }
 
+    /** The short line under a name: a Brother's order and how far it is, a subordinate's kind (the tooltip and the profile have the rest). */
+    static Component sub(HubSocial.Npc n) {
+        if (!n.ours()) {
+            return sourceName(n);
+        }
+        Component order = orderName(n);
+        return n.distance() >= 0 ? Component.empty().append(order).append(" \u00b7 " + n.distance() + " m") : order;
+    }
+
     private static Component orderName(HubSocial.Npc n) {
         return n.ours() ? Component.translatable(KEY + "order." + n.order()) : Component.translatable(KEY + "tensura_orders_short");
     }
@@ -125,7 +133,7 @@ public final class PackWolves {
     }
 
     /** The NPC profile: what the viewer may know about it. Sire, line, genes and anchor are "?" (an NPC has none a player can learn), each with its how-to. */
-    private int profile(HubScreen.Frame f, Rect r, int y, HubSocial.Npc n) {
+    int profile(HubScreen.Frame f, Rect r, int y, HubSocial.Npc n) {
         HubTheme t = f.theme();
         y = PageKit.title(f, Component.translatable(KEY + "profile", n.name()), r.x(), y, r.w(), t.ink());
         t.drawRule(f.g, r.x(), y, r.w());
@@ -143,7 +151,8 @@ public final class PackWolves {
         f.target("npc:unknown", unknownHit, how, null);
         if (f.focused("npc:unknown")) {
             t.drawFocus(f.g, unknownHit);
-        }        return orders(f, r, y + 3, n);
+        }
+        return orders(f, r, y + 3, n);
     }
 
     private static Component typeName(HubSocial.Npc n) {
@@ -158,11 +167,17 @@ public final class PackWolves {
                         Component.translatable(KEY + "rank_of", sourceName(n), n.owner())),
                 line(n.days() < 0 ? "bonds_unknown" : "bonds", Component.literal(n.owner()), Component.literal(String.valueOf(Math.max(0, n.days())))),
                 line(!n.loaded() ? "presence_away" : n.distance() >= 0 ? "presence_near" : "presence_far", Component.literal(String.valueOf(n.distance())), Component.literal(n.health() + "%")),
-                line("contribution", Component.literal(String.format(java.util.Locale.ROOT, "%.2f", n.weightPercent() / 100.0))));
+                n.ours() && n.weightPercent() == 0 ? line("contribution_over")
+                        : line("contribution", Component.literal(String.format(java.util.Locale.ROOT, "%.2f", n.weightPercent() / 100.0))));
     }
 
     private static Component line(String key, Component... args) {
         return Component.translatable(KEY + "line." + key, (Object[]) args);
+    }
+
+    /** Closes the profile (the Grimoire shows it on the right page, where it replaces the ring until closed). */
+    public void close() {
+        selected = 0;
     }
 
     /** The wolf the viewer picked, if it is still in the snapshot. */
@@ -172,16 +187,17 @@ public final class PackWolves {
     }
 
     /** The same profile and orders for a theme's info pane (the Blood Moon's bar, Tensura's pane). */
-    public Detail detail(HubSocial.Npc n) {
+    public Detail detail(HubSocial.Npc n, boolean floatingBar) {
         Detail.Builder d = Detail.of(Component.literal(n.name())).subtitle(Component.translatable(KEY + "rank_of", sourceName(n), n.owner()));
         for (Component line : lines(n)) {
             d.body(line);
         }
         d.field(Component.translatable(KEY + "unknown.all"), Component.translatable(KEY + "unknown.how"));
-        for (NpcActions.Act a : NpcActions.of(n)) {
+        for (NpcActions.Act a : floatingBar ? NpcActions.forBar(n) : NpcActions.of(n)) {
             Detail.Confirm confirm = a.confirm() ? new Detail.Confirm(Component.translatable(KEY + "release_title", n.name()), Component.translatable(KEY + "release_body")) : null;
-            d.action(new Detail.Action("npc_" + a.id(), a.current() && !a.id().equals("hunt") && !a.id().equals("sort") ? Component.literal("\u2022 ").append(label(a, n)) : label(a, n), false, a.enabled(), a.enabled() ? null : Component.translatable(KEY + "why_" + a.why()), confirm,
-                    () -> HubClient.runCommand(a.rowId(), a.args())));
+            boolean order = a.id().equals("follow") || a.id().equals("guard") || a.id().equals("rest");
+            d.action(new Detail.Action("npc_" + a.id(), a.current() && order ? Component.literal("\u2022 ").append(label(a, n)) : label(a, n), false, a.enabled(),
+                    a.enabled() ? null : Component.translatable(KEY + "why_" + a.why()), confirm, () -> HubClient.runCommand(a.rowId(), a.args())));
         }
         return d.build();
     }

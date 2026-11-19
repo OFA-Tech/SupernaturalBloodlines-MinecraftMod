@@ -148,12 +148,13 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
                 ByteBufCodecs.VAR_INT.encode(buf, n.days());
                 NAME.encode(buf, n.owner());
                 ByteBufCodecs.BOOL.encode(buf, n.canOrder());
+                ByteBufCodecs.BOOL.encode(buf, n.mine());
                 ByteBufCodecs.VAR_INT.encode(buf, n.weightPercent());
             },
             buf -> new HubSocial.Npc(ByteBufCodecs.VAR_INT.decode(buf), NAME.decode(buf), ID.decode(buf), ByteBufCodecs.stringUtf8(16).decode(buf),
                     ByteBufCodecs.stringUtf8(16).decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf),
                     ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), NAME.decode(buf),
-                    ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.VAR_INT.decode(buf)));
+                    ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.VAR_INT.decode(buf)));
 
     private static final StreamCodec<ByteBuf, List<HubSocial.Npc>> NPCS = NPC.apply(ByteBufCodecs.list(HubSocial.MAX_NPCS));
 

@@ -81,7 +81,7 @@ public final class NpcOrders {
             return;
         }
         ServerPlayer owner = SireCall.player(level.getServer(), bond.owner());
-        Order order = NpcMembers.effectiveOrder(level.getServer(), bond);
+        Order order = NpcMembers.effectiveOrder(level.getServer(), m);
         if (order != Order.REST) {
             ANCHOR.remove(m.getUUID());
         }

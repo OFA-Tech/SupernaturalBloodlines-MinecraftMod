@@ -1384,5 +1384,13 @@
   "supernaturalbloodlines.hub.pack.wolves.release_body": "It leaves your pack and goes back to the wild. You can only take it back by wounding it again.",
   "supernaturalbloodlines.hub.pack.wolves.why_tensura": "A Tensura subordinate keeps Tensura's own orders. Give them in Tensura.",
   "supernaturalbloodlines.hub.pack.wolves.why_owner": "Only its owner or the leader of the pack gives it orders.",
-  "supernaturalbloodlines.hub.pack.wolves.why_loaded": "It is too far away to hear you. Go near it first."
+  "supernaturalbloodlines.hub.pack.wolves.why_loaded": "It is too far away to hear you. Go near it first.",
+  "supernaturalbloodlines.npc.lost": "%s is gone from your pack: it left the world.",
+  "supernaturalbloodlines.npc.needs_post": "%s only hunts or sorts from its post: give it Guard or Rest first.",
+  "supernaturalbloodlines.npc.release_owner": "Only the owner of a Brother can free it. You can give it orders.",
+  "supernaturalbloodlines.hub.pack.wolves.why_follow": "It only hunts or sorts once it Guards or Rests: give it that order first.",
+  "supernaturalbloodlines.hub.pack.wolves.why_owner_release": "Only its owner frees it.",
+  "supernaturalbloodlines.hub.pack.wolves.line.contribution_over": "Contribution: none. The pack holds more Brothers than it may, so this one rests and counts for nothing.",
+  "supernaturalbloodlines.hub.pack.wolves.close": "Back to the ring",
+  "supernaturalbloodlines.hub.pack.wolves.close_tip": "Close the profile and show the ring of the pack again."
 }

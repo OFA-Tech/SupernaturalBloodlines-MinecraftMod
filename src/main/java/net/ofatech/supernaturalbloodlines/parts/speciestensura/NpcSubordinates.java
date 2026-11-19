@@ -83,7 +83,7 @@ public final class NpcSubordinates {
         }
         UUID owner = packOwnerOf(level, sub.getOwnerUUID());
         boolean joins = owner != null && NpcRules.tensuraJoins(SpeciesTensuraConfig.subordinatesJoin(), sub.isTame(), PackIndex.get(level).inPack(sub.getOwnerUUID()),
-                !PackIndex.get(level).inPack(sub.getOwnerUUID()), existing.isPresent(), countInPack(level, owner), SpeciesTensuraConfig.maxTensuraMembers());
+                !PackIndex.get(level).inPack(sub.getOwnerUUID()), existing.isPresent() && existing.get().owner().equals(owner), NpcMembers.countInPack(level, owner, Source.TENSURA), SpeciesTensuraConfig.maxTensuraMembers());
         if (!joins) {
             if (existing.isPresent()) {
                 NpcMembers.unbind(m);
@@ -97,15 +97,6 @@ public final class NpcSubordinates {
         ServerPlayer ownerPlayer = level.getServer().getPlayerList().getPlayer(owner);
         NpcMembers.bind(m, ownerPlayer, NpcBond.tensura(owner, level.getGameTime()));
         return true;
-    }
-
-    private static int countInPack(ServerLevel level, UUID player) {
-        int n = 0;
-        NpcIndex index = NpcIndex.get(level);
-        for (UUID id : PackIndex.get(level).pack(player)) {
-            n += index.count(id, Source.TENSURA);
-        }
-        return n;
     }
 
     /** For tests: the bond a subordinate has, if any. */

@@ -3,7 +3,7 @@ package net.ofatech.supernaturalbloodlines.parts.species.npc;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import de.teamlapen.werewolves.api.entities.werewolf.IWerewolf;
+import de.teamlapen.werewolves.core.ModEntities;
 import de.teamlapen.werewolves.api.entities.werewolf.IWerewolfAlpha;
 import java.util.Comparator;
 import java.util.List;
@@ -55,9 +55,19 @@ public record WerewolfBrotherRiteFactory(String faction) implements RiteFactory 
         return List.of();
     }
 
-    /** The nearest werewolf mob (never a player) within {@link #REACH} of {@code centre}, or null. */
+    /** A beast form of the Werewolves mod (the beast and the survivalist): the human form, the Alpha and the minion are not what this rite takes. */
+    public static boolean isBeast(Mob m) {
+        return m.getType() == ModEntities.WEREWOLF_BEAST.get() || m.getType() == ModEntities.WEREWOLF_SURVIVALIST.get();
+    }
+
+    /** Whether a mob is the kind the rite could take at all (a beast, alive, with no bond and no trial mark), before health and caps are looked at. */
+    public static boolean candidate(Mob m) {
+        return m.isAlive() && isBeast(m) && !(m instanceof IWerewolfAlpha) && !AlphaTrialBoss.isBoss(m) && NpcMembers.bondOf(m).isEmpty();
+    }
+
+    /** The nearest wolf the rite could take within {@link #REACH} of {@code centre} (a bonded wolf, an Alpha or a boss that stands nearer is skipped), or null. */
     public static Mob wolfNear(net.minecraft.server.level.ServerLevel level, BlockPos centre) {
-        return level.getEntitiesOfClass(Mob.class, new AABB(centre).inflate(REACH), m -> m instanceof IWerewolf && m.isAlive()).stream()
+        return level.getEntitiesOfClass(Mob.class, new AABB(centre).inflate(REACH), WerewolfBrotherRiteFactory::candidate).stream()
                 .min(Comparator.comparingDouble(m -> m.distanceToSqr(centre.getX() + 0.5, centre.getY(), centre.getZ() + 0.5))).orElse(null);
     }
 
@@ -65,7 +75,7 @@ public record WerewolfBrotherRiteFactory(String faction) implements RiteFactory 
     public static NpcRules.Refusal check(ServerPlayer owner, Mob target) {
         net.minecraft.server.level.ServerLevel level = owner.serverLevel();
         SpeciesConfig.MemberTuning t = SpeciesConfig.members();
-        return NpcRules.recruit(t.recruit(), VampirismSupernatural.isWerewolf(owner), target instanceof IWerewolf, target instanceof IWerewolfAlpha,
+        return NpcRules.recruit(t.recruit(), VampirismSupernatural.isWerewolf(owner), isBeast(target) || target instanceof IWerewolfAlpha, target instanceof IWerewolfAlpha,
                 AlphaTrialBoss.isBoss(target), NpcMembers.bondOf(target).isPresent(), target.getHealth() / Math.max(1f, target.getMaxHealth()),
                 NpcMembers.brothers(level, owner.getUUID()), t.perPlayer(), NpcMembers.brothersInPack(level, owner.getUUID()), t.perPack());
     }

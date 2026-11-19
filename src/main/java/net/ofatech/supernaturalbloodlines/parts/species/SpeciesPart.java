@@ -223,6 +223,7 @@ public final class SpeciesPart {
             net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialBoss.register();
             // plan 15d: the pack's NPC members: their orders, hunting trips and chest sorting
             net.ofatech.supernaturalbloodlines.parts.species.npc.NpcOrders.register();
+            net.ofatech.supernaturalbloodlines.parts.species.npc.NpcLedger.register();
             net.ofatech.supernaturalbloodlines.parts.species.npc.NpcHunt.register();
             NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.LEDGER.clear());
             NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> net.ofatech.supernaturalbloodlines.parts.species.npc.NpcPackCommand.register(e.getDispatcher()));

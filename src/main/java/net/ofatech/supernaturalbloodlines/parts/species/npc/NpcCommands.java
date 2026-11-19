@@ -79,6 +79,9 @@ public final class NpcCommands {
         if (ourOrders(bond) != null) {
             return ourOrders(bond);
         }
+        if (!bond.hunt() && bond.order() == Order.FOLLOW) {
+            return Component.translatable(KEY + "needs_post", t.mob().getDisplayName()); // a follower has no post to hunt from
+        }
         t.mob().setData(SpeciesRegistries.NPC_BOND, bond.withHunt(!bond.hunt()));
         sender.sendSystemMessage(Component.translatable(KEY + (bond.hunt() ? "hunt_off" : "hunt_on"), t.mob().getDisplayName()));
         return null;
@@ -93,6 +96,9 @@ public final class NpcCommands {
         if (ourOrders(bond) != null) {
             return ourOrders(bond);
         }
+        if (!bond.sort() && bond.order() == Order.FOLLOW) {
+            return Component.translatable(KEY + "needs_post", t.mob().getDisplayName());
+        }
         t.mob().setData(SpeciesRegistries.NPC_BOND, bond.withSort(!bond.sort()));
         sender.sendSystemMessage(Component.translatable(KEY + (bond.sort() ? "sort_off" : "sort_on"), t.mob().getDisplayName()));
         return null;
@@ -106,10 +112,16 @@ public final class NpcCommands {
         if (t.entry().source() != NpcBond.Source.BROTHER) {
             return Component.translatable(KEY + "tensura_orders"); // a Tensura subordinate is released by its Tensura owner, not here
         }
+        if (!NpcRules.mayRelease(t.entry().owner().equals(sender.getUUID()))) {
+            return Component.translatable(KEY + "release_owner"); // the leader gives orders; only the owner frees a wolf
+        }
         if (t.mob() != null) {
             NpcMembers.release(t.mob());
         } else {
-            NpcIndex.get(sender.serverLevel()).remove(t.entry().npc());
+            // out of reach: the bond is still on the wolf in its chunk, so it is remembered and taken off when the wolf next joins a level (NpcLedger)
+            NpcIndex index = NpcIndex.get(sender.serverLevel());
+            index.remove(t.entry().npc());
+            index.markReleased(t.entry().npc());
         }
         sender.sendSystemMessage(Component.translatable(KEY + "released", t.entry().name()));
         return null;
@@ -142,6 +154,9 @@ public final class NpcCommands {
                 NpcMembers.unbind(mob.get());
             } else {
                 NpcIndex.get(server.overworld()).remove(e.npc());
+                if (e.source() == NpcBond.Source.BROTHER) {
+                    NpcIndex.get(server.overworld()).markReleased(e.npc()); // still bonded in its chunk: taken off when it loads
+                }
             }
             n++;
         }

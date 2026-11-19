@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 /** The pack's wolves ride in the hub snapshot (protocol 4): they survive the wire and are cut at the cap. */
 class HubSnapshotNpcsTest {
     private static HubSocial.Npc npc(int token) {
-        return new HubSocial.Npc(token, "Ash " + token, "werewolves:wolf", "brother", "guard", true, false, true, 12, 64, 3, "Derek", true, 50);
+        return new HubSocial.Npc(token, "Ash " + token, "werewolves:wolf", "brother", "guard", true, false, true, 12, 64, 3, "Derek", true, false, 50);
     }
 
     @Test

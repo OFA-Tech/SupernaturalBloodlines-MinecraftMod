@@ -109,11 +109,39 @@ public final class NpcMembers {
     }
 
     public static int brothersInPack(ServerLevel level, UUID player) {
+        return countInPack(level, player, Source.BROTHER);
+    }
+
+    /** Members of one source that the whole pack of {@code player} has (a lone player is a pack of one). */
+    public static int countInPack(ServerLevel level, UUID player, Source source) {
         int n = 0;
+        NpcIndex index = NpcIndex.get(level);
         for (UUID id : PackIndex.get(level).pack(player)) {
-            n += brothers(level, id);
+            n += index.count(id, source);
         }
         return n;
+    }
+
+    /**
+     * Whether this Brother is one of those a pack holds beyond its cap (a player joined with Brothers of their own and the pack went over {@code max_npc_members_per_pack}):
+     * the oldest keep their place, the newest rest where they stand and count for nothing until room is made.
+     */
+    public static boolean overCap(ServerLevel level, UUID npc) {
+        NpcIndex index = NpcIndex.get(level);
+        var entry = index.of(npc);
+        if (entry.isEmpty() || entry.get().source() != Source.BROTHER) {
+            return false;
+        }
+        List<NpcIndex.Entry> brothers = new ArrayList<>(ofPack(level, PackIndex.get(level).pack(entry.get().owner())).stream().filter(e -> e.source() == Source.BROTHER).toList());
+        brothers.sort(java.util.Comparator.comparingInt(NpcIndex.Entry::token));
+        int rank = 0;
+        for (NpcIndex.Entry e : brothers) {
+            if (e.npc().equals(npc)) {
+                break;
+            }
+            rank++;
+        }
+        return !NpcRules.withinCap(rank, SpeciesConfig.members().perPack());
     }
 
     /** What a member counts for toward the pack bonus. */
@@ -130,7 +158,7 @@ public final class NpcMembers {
         List<Mob> out = new ArrayList<>();
         ServerLevel level = alpha.serverLevel();
         for (NpcIndex.Entry e : ofPack(level, PackIndex.get(level).pack(alpha.getUUID()))) {
-            if (level.getEntity(e.npc()) instanceof Mob m && m.isAlive() && bondOf(m).isPresent() && alpha.distanceToSqr(m) <= range * range) {
+            if (level.getEntity(e.npc()) instanceof Mob m && m.isAlive() && bondOf(m).isPresent() && alpha.distanceToSqr(m) <= range * range && !overCap(level, e.npc())) {
                 out.add(m);
             }
         }
@@ -141,7 +169,16 @@ public final class NpcMembers {
         return Optional.ofNullable(SireCall.player(server, owner));
     }
 
-    /** What a member does now: its order, or REST while its owner is offline or dead. */
+    /** What a member does now: its order, or REST while its owner is offline or dead, or while it is a Brother the pack holds beyond its cap. */
+    public static Order effectiveOrder(MinecraftServer server, Mob m) {
+        NpcBond bond = m.getData(SpeciesRegistries.NPC_BOND);
+        if (m.level() instanceof ServerLevel level && overCap(level, m.getUUID())) {
+            return Order.REST;
+        }
+        return effectiveOrder(server, bond);
+    }
+
+    /** The owner part only: its order, or REST while its owner is offline or dead. */
     public static Order effectiveOrder(MinecraftServer server, NpcBond bond) {
         ServerPlayer o = SireCall.player(server, bond.owner());
         return NpcRules.effectiveOrder(bond.order(), o != null, o != null && o.isAlive() && !o.isSpectator());

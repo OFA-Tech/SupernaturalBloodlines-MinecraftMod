@@ -193,18 +193,45 @@ class NpcRulesTest {
     }
 
     @Test
-    void aBrotherHuntsOnlyAtNightOnPostAfterItsPeriodAndNotInAFight() {
+    void aBrotherHuntsOnlyAtNightOnPostAfterItsPeriodWithItsOwnerHereAndNotInAFight() {
         long period = 12000;
-        assertTrue(NpcRules.huntDue(true, true, Order.GUARD, true, period, period, false));
-        assertTrue(NpcRules.huntDue(true, true, Order.REST, true, Long.MAX_VALUE, period, false), "the first trip is due at once");
-        assertFalse(NpcRules.huntDue(false, true, Order.GUARD, true, period, period, false), "the switch");
-        assertFalse(NpcRules.huntDue(true, false, Order.GUARD, true, period, period, false), "Hunt off");
-        assertFalse(NpcRules.huntDue(true, true, Order.FOLLOW, true, period, period, false), "a follower has no post to come back to");
-        assertFalse(NpcRules.huntDue(true, true, Order.GUARD, false, period, period, false), "daytime");
-        assertFalse(NpcRules.huntDue(true, true, Order.GUARD, true, period - 1, period, false), "too soon");
-        assertFalse(NpcRules.huntDue(true, true, Order.GUARD, true, period, period, true), "in a fight");
+        assertTrue(NpcRules.huntDue(true, true, Order.GUARD, true, true, period, period, false));
+        assertTrue(NpcRules.huntDue(true, true, Order.REST, true, true, Long.MAX_VALUE, period, false), "the first trip is due at once");
+        assertFalse(NpcRules.huntDue(false, true, Order.GUARD, true, true, period, period, false), "the switch");
+        assertFalse(NpcRules.huntDue(true, false, Order.GUARD, true, true, period, period, false), "Hunt off");
+        assertFalse(NpcRules.huntDue(true, true, Order.GUARD, false, true, period, period, false), "its owner is offline: it rests and hunts for nobody");
+        assertFalse(NpcRules.huntDue(true, true, Order.FOLLOW, true, true, period, period, false), "a follower has no post to come back to");
+        assertFalse(NpcRules.huntDue(true, true, Order.GUARD, true, false, period, period, false), "daytime");
+        assertFalse(NpcRules.huntDue(true, true, Order.GUARD, true, true, period - 1, period, false), "too soon");
+        assertFalse(NpcRules.huntDue(true, true, Order.GUARD, true, true, period, period, true), "in a fight");
     }
 
+    @Test
+    void aBrotherTidiesItsChestAtAnyHourWithItsOwnerHereAndNotFollowing() {
+        long period = 12000;
+        assertTrue(NpcRules.sortDue(true, true, Order.REST, true, period, period, false));
+        assertTrue(NpcRules.sortDue(true, true, Order.GUARD, true, Long.MAX_VALUE, period, false));
+        assertFalse(NpcRules.sortDue(false, true, Order.REST, true, period, period, false), "npc_chest_sort off");
+        assertFalse(NpcRules.sortDue(true, false, Order.REST, true, period, period, false), "Sort off");
+        assertFalse(NpcRules.sortDue(true, true, Order.REST, false, period, period, false), "its owner is offline");
+        assertFalse(NpcRules.sortDue(true, true, Order.FOLLOW, true, period, period, false), "following");
+        assertFalse(NpcRules.sortDue(true, true, Order.REST, true, period - 1, period, false), "too soon");
+        assertFalse(NpcRules.sortDue(true, true, Order.REST, true, period, period, true), "in a fight");
+    }
+
+    @Test
+    void thePacksOldestBrothersKeepTheirPlaceAndTheNewestRest() {
+        assertTrue(NpcRules.withinCap(0, 6));
+        assertTrue(NpcRules.withinCap(5, 6), "the sixth is the last place");
+        assertFalse(NpcRules.withinCap(6, 6), "the seventh rests");
+        assertFalse(NpcRules.withinCap(0, 0), "a cap of 0 is nobody");
+    }
+
+    @Test
+    void onlyTheOwnerReleasesABrother() {
+        assertTrue(NpcRules.mayRelease(true));
+        assertFalse(NpcRules.mayRelease(false), "the leader of the pack gives orders but cannot free another member's wolf");
+    }
     @Test
     void aTensuraSubordinateJoinsOnlyOneStepDownAndWithinTheCap() {
         assertTrue(NpcRules.tensuraJoins(true, true, true, false, false, 0, 6), "a subordinate of a pack member");

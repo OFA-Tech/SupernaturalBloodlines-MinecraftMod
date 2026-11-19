@@ -211,4 +211,28 @@ public final class NpcSubordinatesGameTests {
         }
         helper.succeed();
     }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMemberGivenToAFullPackDoesNotBypassItsCap(GameTestHelper helper) {
+        ServerPlayer a1 = wolf(helper, Rank.ALPHA);
+        ServerPlayer b1 = wolf(helper, Rank.BETA);
+        ServerPlayer a2 = wolf(helper, Rank.ALPHA);
+        ServerPlayer b2 = wolf(helper, Rank.BETA);
+        online(a1, b1, a2, b2);
+        PackIndex packs = PackIndex.get(helper.getLevel());
+        packs.join(a1.getUUID(), b1.getUUID());
+        packs.join(a2.getUUID(), b2.getUUID());
+        DirewolfEntity w1 = direwolf(helper, b1.getUUID(), 4.5);
+        DirewolfEntity w2 = direwolf(helper, b2.getUUID(), 5.5);
+        try {
+            SpeciesTensuraConfig.overrideMaxTensuraMembers(1);
+            helper.assertTrue(NpcSubordinates.evaluate(w1) && NpcSubordinates.evaluate(w2), "each pack should hold its own subordinate");
+            w1.setOwnerUUID(b2.getUUID()); // given to a member of the full pack
+            helper.assertTrue(!NpcSubordinates.evaluate(w1) && !w1.hasData(SpeciesRegistries.NPC_BOND), "a member that changed owner got into a full pack past its cap");
+            helper.assertTrue(NpcMembers.countInPack(helper.getLevel(), b2.getUUID(), NpcBond.Source.TENSURA) == 1, "the full pack holds more than its cap");
+        } finally {
+            clean(helper, List.of(w1, w2), a1, b1, a2, b2);
+        }
+        helper.succeed();
+    }
 }

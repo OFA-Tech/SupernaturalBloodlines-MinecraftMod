@@ -8,7 +8,11 @@
 - A pack's own Guards and its allies never attack each other.
 - **The network protocol is now 4**: the hub snapshot carries the pack's wolves. A client on 3 and a server on 4 (or the other way round) will not exchange hub data; update both.
 - Saves are read as before: a mob's `npc_bond` and the `supernaturalbloodlines_npc_index` file are new and optional.
-- **Rolling back:** a Brother stays a plain wolf (its name tag stays), and its bond and the ledger are ignored.
+- **Rolling back:** a Brother stays a plain wolf (its name tag stays) and its bond and the ledger are ignored. **A Brother that loads while the mod is rolled back (or while the part is off) loses its bond** the next time it is loaded with the update, so release the rows of your Brothers (Pack page, Release) before you go back; the ledger heals itself on the update (an entry for a wolf with no bond is removed, a bond with no entry is written again).
+- **Brothers and containers:** a Brother only tidies and fills a plain chest, trapped chest or barrel that its owner could open (a claim or any protection mod that cancels the owner's right click on it keeps it out), never a furnace, hopper, shulker box or machine, and never drops what does not fit: leftovers stay where the animal fell. It does not hunt or tidy while its owner is offline.
+- **Who may do what:** the pack's leader may give another member's Brother orders and toggle Hunt and Sort; only the owner releases it.
+- **A wolf that transforms** (the Werewolves mod swaps the wolf and the human form for a new entity) keeps its bond, token and name; a Brother that leaves the world in any other way (discarded by another mod, `/kill`-like removal that is not a death) is forgotten and its owner told.
+- **Over the cap:** when a player joins a pack and it goes over 6 Brothers, the newest rest where they stand and count for nothing until room is made.
 
 ### Added
 - Pack page: a "Pack wolves" section (rows, an inline profile for the chosen one, orders, Hunt, Sort, Release, Recruit). Admin > Debug: list the pack wolves, release a player's. 11 new settings in Admin > Species and 2 in Admin > Species and Tensura.
