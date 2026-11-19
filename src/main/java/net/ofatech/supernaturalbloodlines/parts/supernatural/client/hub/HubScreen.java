@@ -724,6 +724,11 @@ public final class HubScreen extends Screen {
         return v != null && v.charTyped(c, modifiers) || super.charTyped(c, modifiers);
     }
 
+    /** Development screenshots only: scrolls every region to its end, as a long page would be after the wheel. */
+    void devScrollToEnd() {
+        maxScroll.forEach((region, max) -> scroll.put(region, max));
+    }
+
     /** The id of the target that has the keyboard focus, or null. */
     @Nullable
     public String focusId() {

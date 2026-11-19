@@ -26,18 +26,26 @@ public record WolfState(Lineage lineage, Rank rank, boolean geneRolled, boolean 
 
     /**
      * The weaker sparks an NPC Alpha gave (R145): how many are held, how many online ticks the oldest has grown, and the game day the last one was
-     * given plus one (the cooldown; 0 is never). They count for nothing (not toward the cap, not toward the bonus) and cannot be stolen: they are not in {@code sparks}.
+     * given plus one (the cooldown; 0 is never); {@code need} is the online ticks the spark growing now takes, fixed when it starts (the
+     * hub shows the days left from it, so it never guesses the setting; 0 = the setting decides). They count for nothing (not toward the cap, not toward the bonus) and cannot be stolen: they are not in {@code sparks}.
      */
-    public record Weak(int held, int progress, long day) {
-        public static final Weak NONE = new Weak(0, 0, 0);
+    public record Weak(int held, int progress, long day, int need) {
+        public static final Weak NONE = new Weak(0, 0, 0, 0);
         public static final Codec<Weak> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.lenientOptionalFieldOf("held", 0).forGetter(Weak::held),
                 Codec.INT.lenientOptionalFieldOf("progress", 0).forGetter(Weak::progress),
-                Codec.LONG.lenientOptionalFieldOf("day", 0L).forGetter(Weak::day)).apply(i, Weak::new));
+                Codec.LONG.lenientOptionalFieldOf("day", 0L).forGetter(Weak::day),
+                Codec.INT.lenientOptionalFieldOf("need", 0).forGetter(Weak::need)).apply(i, Weak::new));
+
+        /** Without the growth time: the setting at the time decides (a save from before the field). */
+        public Weak(int held, int progress, long day) {
+            this(held, progress, day, 0);
+        }
 
         public Weak {
             held = Math.max(0, held);
             progress = held == 0 ? 0 : Math.max(0, progress);
+            need = held == 0 ? 0 : Math.max(0, need);
         }
     }
 

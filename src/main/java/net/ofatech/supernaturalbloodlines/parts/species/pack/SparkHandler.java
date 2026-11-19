@@ -84,7 +84,7 @@ public final class SparkHandler {
 
     /** The damage source's attacker, else the vanilla kill credit (the last attacker of a victim who fell or burned). */
     @Nullable
-    static Entity killerOf(LivingEntity victim, DamageSource source) {
+    public static Entity killerOf(LivingEntity victim, DamageSource source) {
         Entity killer = source.getEntity();
         return killer != null ? killer : victim.getKillCredit();
     }

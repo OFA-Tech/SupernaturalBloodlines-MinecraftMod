@@ -1,7 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.species.npc;
 
 import de.teamlapen.vampirism.api.entity.IEntityLeader;
-import de.teamlapen.werewolves.api.entities.werewolf.IWerewolfAlpha;
 import de.teamlapen.werewolves.core.ModEntities;
 import java.util.ArrayList;
 import java.util.List;
@@ -181,13 +180,27 @@ public final class NpcPackSpawner {
         return null;
     }
 
+    /**
+     * Ground for a debug pack near {@code pos}: the nearest free spot (two blocks of air over a solid floor) to its height, looking 8 blocks down and
+     * up (down first on a tie: the floor of the room, not the roof of it), so a roof or a cave does not decide it the way a heightmap would; null when there is none.
+     */
+    @Nullable
+    public static BlockPos groundNear(ServerLevel level, BlockPos pos) {
+        for (int d = 0; d <= 8; d++) {
+            for (int sign : d == 0 ? new int[] {1} : new int[] {-1, 1}) {
+                BlockPos p = pos.offset(0, d * sign, 0);
+                if (level.getBlockState(p).getCollisionShape(level, p).isEmpty() && level.getBlockState(p.above()).getCollisionShape(level, p.above()).isEmpty()
+                        && !level.getBlockState(p.below()).getCollisionShape(level, p.below()).isEmpty() && level.getFluidState(p).isEmpty()) {
+                    return p;
+                }
+            }
+        }
+        return null;
+    }
+
     static boolean isGoodSpot(ServerLevel level, BlockPos pos) {
         return !level.getBlockState(pos.below()).isAir() && level.getFluidState(pos.below()).isEmpty() && level.getFluidState(pos).isEmpty()
                 && level.getMaxLocalRawBrightness(pos) <= 7 && !level.isVillage(pos) && !level.isCloseToVillage(pos, 2);
     }
 
-    /** Whether {@code mob} is a werewolf Alpha of the Werewolves mod (natural or a pack's). */
-    public static boolean isAlpha(net.minecraft.world.entity.LivingEntity mob) {
-        return mob instanceof IWerewolfAlpha;
-    }
 }

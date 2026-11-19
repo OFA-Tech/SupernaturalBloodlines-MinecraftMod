@@ -7,6 +7,7 @@
 - **Killing an Alpha of the Werewolves mod now gives a werewolf a weaker spark** (`npc_alpha_spark_enabled`, default on, natural forest Alphas included). It grows into a normal spark while its holder is online (3 days), counts for nothing until then, cannot be stolen, and is lost on a cure. A Beta or Omega whose path to True Alpha is open and protected destroys it instead. Set `npc_alpha_spark_enabled = false` for the old behaviour.
 - The Celestials config has a new `blood_moon_pack_chance_factor` (default 0.5; PR #37 had removed it).
 - Saves are read as before: the new `weak` field of the wolf layer and the NPC mark of a mob default to nothing.
+- **Rolling back:** going back to a build before 15b loses the `weak` field of every player (their weaker sparks, with the time they had grown) and the `npc_mark` of every mob (the wild wolves and Wolf Spirits of the night become ordinary mobs: Werewolves' own wolves stay, tamed spirit wolves stay as ordinary wolves, and nothing removes them at dawn or after three minutes). Nothing else in a world changes; the ledger file `supernaturalbloodlines_npc_pack_nights.dat` can be deleted.
 
 ### Added
 - Moonblood Surge (a werewolf in a pack: a buff for the pack within 24 blocks, paid for afterwards) and Wolf Spirits (an Alpha: three spirit wolves for three minutes), as granted abilities on the Home page and `/sb pack surge` and `/sb pack spirits`.

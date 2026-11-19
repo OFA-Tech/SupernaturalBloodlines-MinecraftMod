@@ -54,25 +54,35 @@ public final class WeakSparkRules {
         return Grant.GRANTED;
     }
 
-    /** One more weak spark, given on {@code today}; the one already growing keeps its progress. The day is kept as {@code today + 1}, so that 0 can mean "never". */
-    public static Weak given(Weak weak, long today) {
-        return new Weak(weak.held() + 1, weak.progress(), Math.max(0, today) + 1);
+    /**
+     * One more weak spark, given on {@code today}; the one already growing keeps its progress and its time, a first one takes {@code growTicks}.
+     * The day is kept as {@code today + 1}, so that 0 can mean "never".
+     */
+    public static Weak given(Weak weak, long today, int growTicks) {
+        return new Weak(weak.held() + 1, weak.progress(), Math.max(0, today) + 1, weak.held() > 0 ? weak.need() : Math.max(1, growTicks));
     }
 
     /** The result of growing: the state after {@code ticks} online ticks and whether one spark finished. */
     public record Grown(Weak weak, boolean grown) {
     }
 
-    /** {@code ticks} more online ticks of growth; the oldest spark finishes at {@code growTicks} and the next one starts from nothing. */
+    /**
+     * {@code ticks} more online ticks of growth; the oldest spark finishes at the time it started with (the setting {@code growTicks} for one from
+     * before the field) and the next one starts from nothing, with the setting of that moment.
+     */
     public static Grown grow(Weak weak, int ticks, int growTicks) {
         if (weak.held() <= 0) {
             return new Grown(weak, false);
         }
         long progress = (long) weak.progress() + Math.max(0, ticks);
-        if (progress >= Math.max(1, growTicks)) {
-            return new Grown(new Weak(weak.held() - 1, 0, weak.day()), true);
+        if (progress >= needOf(weak, growTicks)) {
+            return new Grown(new Weak(weak.held() - 1, 0, weak.day(), Math.max(1, growTicks)), true);
         }
-        return new Grown(new Weak(weak.held(), (int) progress, weak.day()), false);
+        return new Grown(new Weak(weak.held(), (int) progress, weak.day(), weak.need()), false);
+    }
+
+    private static long needOf(Weak weak, int fallbackTicks) {
+        return Math.max(1, weak.need() > 0 ? weak.need() : fallbackTicks);
     }
 
     /** What a grown spark does for its holder now, by the rule of a steal: it becomes a normal spark, or withers to protect an open path. */
@@ -82,15 +92,15 @@ public final class WeakSparkRules {
 
     /** The weak sparks after a cure, a True Alpha earned or the rank lost: none (the day of the last one stays, so a cure is no way round the cooldown). */
     public static Weak lost(Weak weak) {
-        return new Weak(0, 0, weak.day());
+        return new Weak(0, 0, weak.day(), 0);
     }
 
-    /** Whole days of growth left for the hub ("grows in 2 days"), at least 1 while one is growing. */
-    public static int daysLeft(Weak weak, int growTicks) {
+    /** Whole days of growth left for the hub ("grows in 2 days"), at least 1 while one is growing; {@code fallbackTicks} is for a spark that carries no time. */
+    public static int daysLeft(Weak weak, int fallbackTicks) {
         if (weak.held() <= 0) {
             return 0;
         }
-        long left = Math.max(1, growTicks) - weak.progress();
+        long left = needOf(weak, fallbackTicks) - weak.progress();
         return (int) Math.max(1, (left + DAY - 1) / DAY);
     }
 }

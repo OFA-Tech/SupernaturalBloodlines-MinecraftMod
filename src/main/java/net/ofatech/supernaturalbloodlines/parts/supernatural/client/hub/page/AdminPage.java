@@ -437,11 +437,16 @@ public final class AdminPage implements HubPageView {
             PageWidgets.button(f, "stage:admin:act:" + a.id(), af.rects().get(i), labels.get(i), picked, false, need, run);
         }
         y = af.bottom() + 4;
-        List<Component> eclipse = List.of(Component.translatable(KEY + "act.eclipse_start"), Component.translatable(KEY + "act.eclipse_stop"), Component.translatable(KEY + "act.npc_pack"));
+        // the pack command exists only with Werewolves (the species part registers it then), so the button does too
+        boolean npc = net.neoforged.fml.ModList.get().isLoaded("werewolves");
+        List<Component> eclipse = npc ? List.of(Component.translatable(KEY + "act.eclipse_start"), Component.translatable(KEY + "act.eclipse_stop"), Component.translatable(KEY + "act.npc_pack"))
+                : List.of(Component.translatable(KEY + "act.eclipse_start"), Component.translatable(KEY + "act.eclipse_stop"));
         Flow.Result ef = Flow.wrap(new Rect(r.x(), y, r.w(), 0), eclipse.stream().map(c -> PageWidgets.widthOf(f.font(), c)).toList(), PageWidgets.H, 3);
         PageWidgets.button(f, "stage:admin:act:eclipse_start", ef.rects().get(0), eclipse.get(0), true, false, null, () -> HubClient.runCommand("D9", List.of()));
         PageWidgets.button(f, "stage:admin:act:eclipse_stop", ef.rects().get(1), eclipse.get(1), true, false, null, () -> HubClient.runCommand("D10", List.of()));
-        PageWidgets.button(f, "stage:admin:act:npc_pack", ef.rects().get(2), eclipse.get(2), true, false, null, () -> HubClient.runCommand("D11", List.of()));
+        if (npc) {
+            PageWidgets.button(f, "stage:admin:act:npc_pack", ef.rects().get(2), eclipse.get(2), true, false, null, () -> HubClient.runCommand("D11", List.of()));
+        }
         return ef.bottom();
     }
 

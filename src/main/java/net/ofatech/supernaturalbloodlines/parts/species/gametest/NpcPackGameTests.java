@@ -771,4 +771,98 @@ public final class NpcPackGameTests {
         helper.succeed();
     }
 
+
+    /** A Wolf Spirit does not breed (the puppy would stay for ever) and does not wear wolf armour (it would vanish with the spirit). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSpiritDoesNotBreedOrWearWolfArmour(GameTestHelper helper) {
+        ServerPlayer owner = wolf(helper, Rank.ALPHA, false);
+        List<Mob> spirits = new ArrayList<>();
+        Mob plain = mob(helper, "minecraft:wolf", 4);
+        Mob plain2 = mob(helper, "minecraft:wolf", 5);
+        try {
+            helper.assertTrue(PackSkills.spirits(owner, 100) == null, "no spirits");
+            spirits.addAll(spiritsOf(helper, owner));
+            Mob spirit = spirits.get(0);
+            var withSpirit = new net.neoforged.neoforge.event.entity.living.BabyEntitySpawnEvent(spirit, plain, null);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(withSpirit);
+            helper.assertTrue(withSpirit.isCanceled(), "a spirit bred");
+            var otherWay = new net.neoforged.neoforge.event.entity.living.BabyEntitySpawnEvent(plain, spirit, null);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(otherWay);
+            helper.assertTrue(otherWay.isCanceled(), "a spirit bred as the second parent");
+            var control = new net.neoforged.neoforge.event.entity.living.BabyEntitySpawnEvent(plain, plain2, null);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(control);
+            helper.assertTrue(!control.isCanceled(), "control: ordinary wolves can no longer breed");
+            owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.WOLF_ARMOR));
+            var armour = new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract(owner, net.minecraft.world.InteractionHand.MAIN_HAND, spirit);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(armour);
+            helper.assertTrue(armour.isCanceled(), "wolf armour was put on a spirit");
+            var armourOnPlain = new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract(owner, net.minecraft.world.InteractionHand.MAIN_HAND, plain);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(armourOnPlain);
+            helper.assertTrue(!armourOnPlain.isCanceled(), "control: wolf armour on an ordinary wolf was stopped");
+            owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack.EMPTY);
+        } finally {
+            plain.discard();
+            plain2.discard();
+            clean(helper, spirits, owner);
+        }
+        helper.succeed();
+    }
+
+    /** A spirit is never put inside a wall: with the caster in a stone pocket every one of many tries finds a free spot. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSpiritIsNotPutInsideBlocks(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ServerPlayer owner = TestPlayers.createMortal(helper);
+        BlockPos centre = owner.blockPosition();
+        List<BlockPos> stone = new ArrayList<>();
+        try {
+            for (int x = -3; x <= 3; x++) {
+                for (int z = -3; z <= 3; z++) {
+                    for (int y = -1; y <= 3; y++) {
+                        BlockPos p = centre.offset(x, y, z);
+                        boolean pocket = x == 0 && z == 0 && (y == 0 || y == 1);
+                        if (!pocket && level.getBlockState(p).isAir()) {
+                            level.setBlock(p, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
+                            stone.add(p);
+                        }
+                    }
+                }
+            }
+            for (int i = 0; i < 40; i++) {
+                BlockPos at = PackSkills.spiritSpot(level, owner);
+                helper.assertTrue(level.noCollision(EntityType.WOLF.getSpawnAABB(at.getX() + 0.5, at.getY(), at.getZ() + 0.5)), "a spirit was put inside a block at " + at.toShortString());
+            }
+        } finally {
+            stone.forEach(p -> level.setBlock(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3));
+            clean(helper, List.of(), owner);
+        }
+        helper.succeed();
+    }
+
+    /** The debug pack stands on the ground at the operator's height, not on top of a roof the way a heightmap would put it. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theDebugPackStandsOnGroundNotOnTheRoof(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos start = helper.absolutePos(new BlockPos(2, 1, 2));
+        List<BlockPos> roof = new ArrayList<>();
+        try {
+            BlockPos open = NpcPackSpawner.groundNear(level, start);
+            helper.assertTrue(open != null, "no ground near the start under the open sky");
+            for (int x = 0; x <= 4; x++) {
+                for (int z = 0; z <= 4; z++) {
+                    BlockPos p = start.offset(x - 2, 6, z - 2);
+                    level.setBlock(p, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
+                    roof.add(p);
+                }
+            }
+            BlockPos roofed = NpcPackSpawner.groundNear(level, start);
+            helper.assertTrue(open.equals(roofed), "a roof moved the ground from " + open + " to " + roofed);
+            int heightmapY = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, start).getY();
+            helper.assertTrue(heightmapY > roofed.getY() + 3, "control: a heightmap would have put the pack on the roof (" + heightmapY + " vs " + roofed.getY() + ")");
+            helper.assertTrue(NpcPackSpawner.groundNear(level, start.above(60)) == null, "ground found 60 blocks up in the air");
+        } finally {
+            roof.forEach(p -> level.setBlock(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3));
+        }
+        helper.succeed();
+    }
 }

@@ -37,6 +37,22 @@ public final class HubSocial {
         }
     }
 
+    /**
+     * The members of the viewer's pack the server counts for a Surge: everyone in the pack but the viewer, leaving out allied leaders (another pack) and
+     * the NPC rows (a Brother, a subordinate), who do not count toward the pack of players.
+     */
+    public static int surgeMates(List<Member> pack, java.util.UUID self) {
+        int n = 0;
+        for (Member m : pack) {
+            String base = m.base();
+            boolean me = m.id().isPresent() && m.id().get().equals(self);
+            if (!me && !base.equals("ally") && !base.equals("brother") && !base.equals("subordinate")) {
+                n++;
+            }
+        }
+        return n;
+    }
+
     /** One of the family below the player: {@code depth} 1 is sired by them, 2 by those, and so on. */
     public record Kin(String name, int depth) {
     }

@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -72,6 +71,18 @@ public final class NpcPackBrain {
             }
         });
         NeoForge.EVENT_BUS.addListener(NpcPackBrain::onRetarget);
+        // a Wolf Spirit does not breed (the puppy would stay for ever) and is not armoured (the armour would vanish with it)
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.living.BabyEntitySpawnEvent e) -> {
+            if ((e.getParentA() != null && isSpirit(e.getParentA())) || (e.getParentB() != null && isSpirit(e.getParentB()))) {
+                e.setCanceled(true);
+            }
+        });
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract e) -> {
+            if (e.getTarget() instanceof LivingEntity target && isSpirit(target) && e.getItemStack().is(net.minecraft.world.item.Items.WOLF_ARMOR)) {
+                e.setCanceled(true);
+                e.setCancellationResult(net.minecraft.world.InteractionResult.FAIL);
+            }
+        });
         // a Wolf Spirit drops and gives nothing
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.living.LivingDropsEvent e) -> {
             if (isSpirit(e.getEntity())) {
@@ -242,8 +253,4 @@ public final class NpcPackBrain {
         }
     }
 
-    /** A player the pack can see: only for {@link ServerPlayer} callers that need the same filter as the hunt. */
-    public static boolean hunted(ServerPlayer p) {
-        return tierOf(p) != null;
-    }
 }

@@ -3,7 +3,6 @@ package net.ofatech.supernaturalbloodlines.parts.species.npc;
 import de.teamlapen.werewolves.api.entities.werewolf.IWerewolfAlpha;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
@@ -18,6 +17,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WeakSparkRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.SparkHandler;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 
 /**
@@ -26,8 +26,8 @@ import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupe
  * online and, when grown, becomes a normal spark by the rules of a steal. Links Werewolves: registered only when it is loaded.
  */
 public final class WeakSpark {
-    /** Growth is written every 10 seconds, not every tick: a holder who logs out loses at most that. */
-    static final int PERIOD = 200;
+    /** Growth is written every minute, not every tick: a holder who logs out loses at most that (and a save is not rewritten every 10 seconds). */
+    static final int PERIOD = 1200;
     private static final String KEY = "supernaturalbloodlines.pack.";
 
     private WeakSpark() {
@@ -48,8 +48,7 @@ public final class WeakSpark {
         if (victim.level().isClientSide || !(victim instanceof IWerewolfAlpha)) {
             return;
         }
-        Entity credit = e.getSource().getEntity() != null ? e.getSource().getEntity() : victim.getKillCredit();
-        if (credit instanceof ServerPlayer killer) {
+        if (SparkHandler.killerOf(victim, e.getSource()) instanceof ServerPlayer killer) {
             killedAlpha(killer);
         }
     }
@@ -65,7 +64,7 @@ public final class WeakSpark {
         WeakSparkRules.Grant grant = WeakSparkRules.grant(wolf, today, t.maxHeld(), t.cooldownDays());
         switch (grant) {
             case GRANTED -> {
-                setWeak(killer, WeakSparkRules.given(wolf.weak(), today));
+                setWeak(killer, WeakSparkRules.given(wolf.weak(), today, t.growDays() * 24000));
                 killer.sendSystemMessage(Component.translatable(KEY + "weak_spark_gained", t.growDays()));
             }
             case DESTROYED -> killer.sendSystemMessage(Component.translatable(KEY + "weak_spark_destroyed"));

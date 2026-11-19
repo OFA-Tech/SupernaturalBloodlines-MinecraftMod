@@ -109,8 +109,7 @@ public final class PackSkills {
         ServerLevel level = p.serverLevel();
         long expires = level.getGameTime() + PackSkillRules.SPIRITS_LIFE_TICKS;
         for (int i = 0; i < PackSkillRules.SPIRITS_COUNT; i++) {
-            BlockPos at = p.blockPosition().offset(level.random.nextInt(5) - 2, 0, level.random.nextInt(5) - 2);
-            Wolf wolf = EntityType.WOLF.spawn(level, at, MobSpawnType.MOB_SUMMONED);
+            Wolf wolf = EntityType.WOLF.spawn(level, spiritSpot(level, p), MobSpawnType.MOB_SUMMONED);
             if (wolf != null) {
                 wolf.tame(p);
                 wolf.setOrderedToSit(false);
@@ -121,6 +120,17 @@ public final class PackSkills {
         }
         level.playSound(null, p.blockPosition(), SoundEvents.WOLF_GROWL, SoundSource.PLAYERS, 2.0f, 1.2f);
         return null;
+    }
+
+    /** A free spot within two blocks of the caster for a spirit (a few tries, so it is not put inside a wall), else the caster's own. */
+    public static BlockPos spiritSpot(ServerLevel level, ServerPlayer p) {
+        for (int i = 0; i < 6; i++) {
+            BlockPos at = p.blockPosition().offset(level.random.nextInt(5) - 2, 0, level.random.nextInt(5) - 2);
+            if (level.noCollision(EntityType.WOLF.getSpawnAABB(at.getX() + 0.5, at.getY(), at.getZ() + 0.5))) {
+                return at;
+            }
+        }
+        return p.blockPosition();
     }
 
     private static Component refusal(String skill, Refusal r, long now, long last, long cooldown) {

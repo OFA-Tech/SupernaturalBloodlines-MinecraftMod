@@ -66,7 +66,7 @@ class WeakSparkRulesTest {
 
     @Test
     void aSparkGivenOnDayZeroStillStartsTheCooldown() {
-        Weak w = WeakSparkRules.given(Weak.NONE, 0);
+        Weak w = WeakSparkRules.given(Weak.NONE, 0, GROW);
         WolfState holder = free().toBuilder().weak(w).build();
         assertEquals(Grant.COOLDOWN, WeakSparkRules.grant(holder, 0, 5, 3));
         assertEquals(Grant.COOLDOWN, WeakSparkRules.grant(holder, 2, 5, 3));
@@ -88,10 +88,10 @@ class WeakSparkRulesTest {
 
     @Test
     void givingOneKeepsTheOneAlreadyGrowing() {
-        Weak w = WeakSparkRules.given(new Weak(1, 5000, 3), 9);
-        assertEquals(new Weak(2, 5000, 10), w, "the day is kept as day + 1, so that 0 means never");
-        assertEquals(new Weak(1, 0, 10), WeakSparkRules.given(Weak.NONE, 9));
-        assertEquals(new Weak(1, 0, 1), WeakSparkRules.given(Weak.NONE, 0), "given on day 0 is not never");
+        Weak w = WeakSparkRules.given(new Weak(1, 5000, 3, 70_000), 9, GROW);
+        assertEquals(new Weak(2, 5000, 10, 70_000), w, "the day is kept as day + 1, so that 0 means never; the time of the one growing stays");
+        assertEquals(new Weak(1, 0, 10, GROW), WeakSparkRules.given(Weak.NONE, 9, GROW));
+        assertEquals(new Weak(1, 0, 1, GROW), WeakSparkRules.given(Weak.NONE, 0, GROW), "given on day 0 is not never");
     }
 
     @Test
@@ -103,7 +103,26 @@ class WeakSparkRulesTest {
 
     @Test
     void theNextSparkStartsFromNothing() {
-        assertEquals(new WeakSparkRules.Grown(new Weak(1, 0, 4), true), WeakSparkRules.grow(new Weak(2, GROW - 1, 4), 5, GROW));
+        assertEquals(new WeakSparkRules.Grown(new Weak(1, 0, 4, GROW), true), WeakSparkRules.grow(new Weak(2, GROW - 1, 4), 5, GROW));
+    }
+
+    @Test
+    void theGrowthTimeIsFixedWhenTheSparkStartsAndTheSettingIsNotGuessed() {
+        Weak w = WeakSparkRules.given(Weak.NONE, 5, 2 * 24000);
+        assertEquals(2 * 24000, w.need());
+        // the setting went up to 5 days afterwards: this one still takes its two
+        assertEquals(new WeakSparkRules.Grown(new Weak(0, 0, 6), true), WeakSparkRules.grow(new Weak(1, 2 * 24000 - 10, 6, 2 * 24000), 10, 5 * 24000));
+        assertEquals(new WeakSparkRules.Grown(new Weak(1, 2 * 24000 - 11, 6, 2 * 24000), false), WeakSparkRules.grow(new Weak(1, 2 * 24000 - 12, 6, 2 * 24000), 1, 5 * 24000));
+        // the next one starts with the setting of that moment
+        assertEquals(5 * 24000, WeakSparkRules.grow(new Weak(2, 2 * 24000 - 1, 6, 2 * 24000), 1, 5 * 24000).weak().need());
+    }
+
+    @Test
+    void theHubDaysComeFromTheSparksOwnTimeNotAGuess() {
+        assertEquals(7, WeakSparkRules.daysLeft(new Weak(1, 0, 1, 7 * 24000), 3 * 24000), "a 7 day spark says 7, whatever the fallback");
+        assertEquals(1, WeakSparkRules.daysLeft(new Weak(1, 0, 1, 24000), 3 * 24000));
+        assertEquals(3, WeakSparkRules.daysLeft(new Weak(1, 0, 1), 3 * 24000), "no time on it: the fallback");
+        assertEquals(6, WeakSparkRules.daysLeft(new Weak(1, 24000, 1, 7 * 24000), 3 * 24000));
     }
 
     @Test
@@ -120,7 +139,7 @@ class WeakSparkRulesTest {
 
     @Test
     void lostKeepsOnlyTheDay() {
-        assertEquals(new Weak(0, 0, 7), WeakSparkRules.lost(new Weak(2, 999, 7)));
+        assertEquals(new Weak(0, 0, 7), WeakSparkRules.lost(new Weak(2, 999, 7, 5000)));
     }
 
     @Test
@@ -183,15 +202,15 @@ class WeakSparkRulesTest {
 
     @Test
     void theWeakSparksSurviveTheCodec() {
-        WolfState w = wolf(Rank.BETA, false).toBuilder().weak(new Weak(2, 1234, 9)).build();
+        WolfState w = wolf(Rank.BETA, false).toBuilder().weak(new Weak(2, 1234, 9, 48000)).build();
         var json = WolfState.CODEC.encodeStart(JsonOps.INSTANCE, w).getOrThrow();
-        assertEquals(new Weak(2, 1234, 9), WolfState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow().weak());
+        assertEquals(new Weak(2, 1234, 9, 48000), WolfState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow().weak());
         assertTrue(json.getAsJsonObject().has("weak"));
     }
 
     @Test
     void aNegativeOrOrphanedProgressIsNormalised() {
-        assertEquals(new Weak(0, 0, 3), new Weak(-1, 500, 3));
-        assertEquals(new Weak(1, 0, 3), new Weak(1, -5, 3));
+        assertEquals(new Weak(0, 0, 3), new Weak(-1, 500, 3, 99));
+        assertEquals(new Weak(1, 0, 3), new Weak(1, -5, 3, -9));
     }
 }

@@ -33,10 +33,20 @@ public final class NpcPackCommand {
             return 0;
         }
         var level = p.serverLevel();
-        BlockPos at = p.blockPosition().relative(p.getDirection(), 8);
-        List<Mob> pack = NpcPackSpawner.spawnPackAt(level, level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at),
-                new NpcSpawnRules.Plan(true, true, 3, false), NpcSpawnRules.nightOf(level.getDayTime()));
-        c.getSource().sendSuccess(() -> Component.literal("An NPC werewolf pack of " + pack.size() + " stands 8 blocks ahead."), true);
+        // 8 blocks ahead, then 4, then where the operator stands: the first with ground at their height
+        BlockPos spot = null;
+        for (int ahead : new int[] {8, 4, 0}) {
+            spot = NpcPackSpawner.groundNear(level, p.blockPosition().relative(p.getDirection(), ahead));
+            if (spot != null) {
+                break;
+            }
+        }
+        List<Mob> pack = spot == null ? List.of() : NpcPackSpawner.spawnPackAt(level, spot, new NpcSpawnRules.Plan(true, true, 3, false), NpcSpawnRules.nightOf(level.getDayTime()));
+        if (pack.isEmpty()) {
+            c.getSource().sendFailure(Component.literal(spot == null ? "No ground for a pack near you." : "The pack could not be placed (peaceful difficulty or no room)."));
+            return 0;
+        }
+        c.getSource().sendSuccess(() -> Component.literal("An NPC werewolf pack of " + pack.size() + " stands near you."), true);
         return pack.size();
     }
 }
