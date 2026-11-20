@@ -27,6 +27,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.boss.BossForm;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
@@ -57,6 +58,11 @@ public final class KlausGameTests {
     private static final String NS = SupernaturalBloodlines.MODID;
     private static final String UNKNOWN = "supernaturalbloodlines.boss.notice.klaus.unknown";
     private static final String HINT = "supernaturalbloodlines.boss.notice.klaus.hint";
+    private static final String LOST_SCENT = "supernaturalbloodlines.boss.klaus.lost_scent";
+    private static final String COUNTDOWN = "supernaturalbloodlines.boss.klaus.countdown";
+    private static final String DAWN = "supernaturalbloodlines.boss.klaus.dawn";
+    private static final long NIGHT = 24000L * 20 + 15000;
+    private static final long MORNING = 24000L * 20 + 6000;
 
     private KlausGameTests() {
     }
@@ -100,6 +106,14 @@ public final class KlausGameTests {
         for (LineTestPlayer p : ps) {
             LineIndex.get(helper.getLevel().getServer()).remove(p.getUUID());
             BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+    }
+
+    /** Game ticks for an entity the level is not ticking: its own count goes up one a tick, as the level does, so what it does every ten ticks happens every ten. */
+    private static void run(KlausEntity k, int ticks) {
+        for (int i = 0; i < ticks && !k.isRemoved(); i++) {
+            k.tickCount++;
+            k.tick();
         }
     }
 
@@ -608,12 +622,11 @@ public final class KlausGameTests {
     public static void aKlausWhosePreyIsGoneWithdrawsAndMayComeAgain(GameTestHelper helper) {
         LineTestPlayer later = carrier(helper);
         try (BossTestRig rig = new BossTestRig(helper)) {
+            helper.getLevel().setDayTime(NIGHT);
             KlausEntity k = rig.spawnKlaus();
             k.setNoAi(true);
             k.hunt(UUID.randomUUID());
-            for (int i = 0; i < KlausRules.WITHDRAW_AFTER + 40 && !k.isRemoved(); i++) {
-                k.tick();
-            }
+            run(k, KlausRules.WITHDRAW_AFTER + 40);
             helper.assertTrue(k.isRemoved(), "a Klaus whose prey is gone is still standing");
             helper.assertTrue(rig.index.state(BossId.KLAUS) == BossState.LOST, "the index says " + rig.index.state(BossId.KLAUS));
             BossesConfig.override("klaus_warning_seconds", 0);
@@ -630,24 +643,326 @@ public final class KlausGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aKlausWithPreyHereStaysAndOneWhoIsDesiccatedNeverWithdraws(GameTestHelper helper) {
         try (BossTestRig rig = new BossTestRig(helper)) {
+            helper.getLevel().setDayTime(NIGHT);
             Villager prey = helper.spawn(EntityType.VILLAGER, new BlockPos(4, 1, 4));
             KlausEntity k = rig.spawnKlaus();
             k.setNoAi(true);
             k.hunt(prey.getUUID());
-            for (int i = 0; i < KlausRules.WITHDRAW_AFTER + 40; i++) {
-                k.tick();
-            }
+            run(k, KlausRules.WITHDRAW_AFTER + 40);
             helper.assertTrue(!k.isRemoved(), "he withdrew with his prey right there");
             k.hunt(UUID.randomUUID());
             k.desiccate();
-            for (int i = 0; i < KlausRules.WITHDRAW_AFTER + 40; i++) {
-                k.tick();
-            }
+            run(k, KlausRules.WITHDRAW_AFTER + 40);
             helper.assertTrue(!k.isRemoved(), "a fallen Original withdrew");
         }
         helper.succeed();
     }
 
+    // ---- the hunt tells the target what they are (R165) ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void beingHuntedRevealsTheGeneToTheTargetAndTheHowlIsForThemAlone(GameTestHelper helper) {
+        LineTestPlayer p = carrier(helper);
+        LineTestPlayer bystander = stranger(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().revealedGenes(java.util.Set.of()).build());
+            BloodlineAccess.set(bystander, BloodlineAccess.get(bystander).toBuilder().revealedGenes(java.util.Set.of()).build());
+            helper.assertTrue(!BloodlineAccess.get(p).revealedGenes().contains(Genes.DOPPELGANGER), "control: the gene was known already");
+            night(p, bystander);
+            BossDirector.useWorld(l -> List.of(p, bystander), null);
+            BossDirector.check(rig.server);
+            helper.assertTrue(BloodlineAccess.get(p).revealedGenes().contains(Genes.DOPPELGANGER), "the hunted player was not told, in the book, what they are");
+            helper.assertTrue(p.received(UNKNOWN), "no message: " + p.heard());
+            helper.assertTrue(p.notified().contains("minecraft:entity.wolf.howl"), "the howl did not reach the one he hunts: " + p.notified());
+            helper.assertTrue(bystander.received() == 0 && bystander.notified().isEmpty(), "somebody who is not hunted was told or heard: " + bystander.heard());
+            helper.assertTrue(!BloodlineAccess.get(bystander).revealedGenes().contains(Genes.DOPPELGANGER), "a bystander learned a gene");
+        } finally {
+            forget(helper, p, bystander);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theZeroWarningHuntRevealsTheGeneToo(GameTestHelper helper) {
+        LineTestPlayer p = carrier(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            BossesConfig.override("klaus_warning_seconds", 0);
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().revealedGenes(java.util.Set.of()).build());
+            night(p);
+            BossDirector.check(rig.server);
+            helper.assertTrue(BloodlineAccess.get(p).revealedGenes().contains(Genes.DOPPELGANGER), "the gene was not revealed when he came at once");
+            helper.assertTrue(p.notified().contains("minecraft:entity.wolf.howl"), "no howl for the target: " + p.notified());
+        } finally {
+            BossesConfig.override("klaus_warning_seconds", null);
+            forget(helper, p);
+        }
+        helper.succeed();
+    }
+
+    // ---- the warning counts down, and says when the hunt is off ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theWarningRemindsAtThirtyAndTenSecondsOnceEach(GameTestHelper helper) {
+        LineTestPlayer p = carrier(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(p);
+            BossDirector.check(rig.server);
+            long total = BossesConfig.klausWarningSeconds() * 20L;
+            BossClock.offsetForTests(total - 40 * 20L);
+            BossDirector.check(rig.server);
+            helper.assertTrue(p.count(COUNTDOWN) == 0, "a reminder at 40 seconds");
+            BossClock.offsetForTests(total - 29 * 20L);
+            BossDirector.check(rig.server);
+            BossDirector.check(rig.server);
+            helper.assertTrue(p.count(COUNTDOWN) == 1, "the 30 s reminder was shown " + p.count(COUNTDOWN) + " times");
+            helper.assertTrue(p.chat() == 2, "a reminder went to chat: " + p.chat());
+            BossClock.offsetForTests(total - 9 * 20L);
+            BossDirector.check(rig.server);
+            BossDirector.check(rig.server);
+            helper.assertTrue(p.count(COUNTDOWN) == 2 && p.heard().contains("[" + COUNTDOWN + "]10"), "the 10 s reminder: " + p.heard());
+            helper.assertTrue(klausOf(rig) == null, "he came before the time was up");
+        } finally {
+            forget(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theHuntIsCalledOffAndTheTargetToldWheneverTheTargetStopsBeingOne(GameTestHelper helper) {
+        String[] causes = {"died", "player hunt switched off", "peaceful", "spectator"};
+        for (String cause : causes) {
+            LineTestPlayer p = carrier(helper);
+            try (BossTestRig rig = new BossTestRig(helper)) {
+                night(p);
+                BossDirector.check(rig.server);
+                helper.assertTrue(rig.index.of(BossId.KLAUS).arriveAt > 0, cause + ": control: no arrival waits");
+                switch (cause) {
+                    case "died" -> p.setHealth(0.0F);
+                    case "player hunt switched off" -> BossesConfig.override("klaus_hunts_players", false);
+                    case "peaceful" -> BossDirector.useDifficulty(l -> net.minecraft.world.Difficulty.PEACEFUL);
+                    default -> p.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+                }
+                BossClock.offsetForTests(BossesConfig.klausWarningSeconds() * 20L + 5);
+                BossDirector.check(rig.server);
+                helper.assertTrue(klausOf(rig) == null, cause + ": he came anyway");
+                helper.assertTrue(rig.index.of(BossId.KLAUS).arriveAt == -1 && rig.index.of(BossId.KLAUS).target == null, cause + ": the arrival is still written down");
+                helper.assertTrue(p.count(LOST_SCENT) == 1, cause + ": the target was not told the wolf lost the scent: " + p.heard());
+            } finally {
+                BossesConfig.override("klaus_hunts_players", null);
+                forget(helper, p);
+            }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theHuntIsCalledOffAtOnceNotWhenTheTimeIsUp(GameTestHelper helper) {
+        LineTestPlayer p = carrier(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(p);
+            BossDirector.check(rig.server);
+            BossesConfig.override("klaus_hunts_players", false);
+            BossDirector.check(rig.server);
+            helper.assertTrue(rig.index.of(BossId.KLAUS).arriveAt == -1, "the arrival waited for its time although the target is no longer one");
+            helper.assertTrue(p.count(LOST_SCENT) == 1, "no message: " + p.heard());
+        } finally {
+            BossesConfig.override("klaus_hunts_players", null);
+            forget(helper, p);
+        }
+        helper.succeed();
+    }
+
+    // ---- the hunt that goes nowhere ends ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void atDawnHeWithdrawsAndMayComeAgain(GameTestHelper helper) {
+        LineTestPlayer prey = carrier(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(prey);
+            helper.getLevel().setDayTime(NIGHT);
+            KlausEntity k = rig.spawnKlaus();
+            k.setNoAi(true);
+            k.hunt(prey.getUUID());
+            run(k, 40);
+            helper.assertTrue(!k.isRemoved(), "control: he left in the middle of the night");
+            helper.getLevel().setDayTime(MORNING);
+            run(k, 12);
+            helper.assertTrue(k.isRemoved(), "he is still here at dawn");
+            helper.assertTrue(rig.index.state(BossId.KLAUS) == BossState.LOST, "the index says " + rig.index.state(BossId.KLAUS));
+            helper.assertTrue(prey.count(DAWN) == 1, "the hunted player was not told: " + prey.heard());
+        } finally {
+            forget(helper, prey);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aHuntWithoutAHitEndsAfterFourMinutesAndAHitStartsTheCountAgain(GameTestHelper helper) {
+        LineTestPlayer prey = carrier(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(prey);
+            helper.getLevel().setDayTime(NIGHT);
+            KlausEntity k = rig.spawnKlaus();
+            k.setNoAi(true);
+            k.hunt(prey.getUUID());
+            k.setPos(prey.getX() + 1, prey.getY(), prey.getZ());
+            k.setInvulnerable(true); // thousands of ticks in a test structure: he must not suffocate in its floor
+            run(k, KlausRules.GIVE_UP_AFTER - 400);
+            helper.assertTrue(!k.isRemoved(), "he gave up too soon, sinceHit " + k.sinceHit());
+            k.doHurtTarget(prey);
+            run(k, KlausRules.GIVE_UP_AFTER - 400);
+            helper.assertTrue(!k.isRemoved(), "a blow on his prey did not start the count again");
+            run(k, 600);
+            helper.assertTrue(k.isRemoved(), "he hunts for ever without a hit, sinceHit " + k.sinceHit());
+            helper.assertTrue(rig.index.state(BossId.KLAUS) == BossState.LOST, "the index says " + rig.index.state(BossId.KLAUS));
+            helper.assertTrue(prey.count(LOST_SCENT) == 1, "the hunted player was not told: " + prey.heard());
+        } finally {
+            forget(helper, prey);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBlowOnSomeoneElseDoesNotCountAsAHitOnHisPrey(GameTestHelper helper) {
+        LineTestPlayer prey = carrier(helper);
+        Villager other = helper.spawn(EntityType.VILLAGER, new BlockPos(4, 1, 4));
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(prey);
+            helper.getLevel().setDayTime(NIGHT);
+            KlausEntity k = rig.spawnKlaus();
+            k.setNoAi(true);
+            k.hunt(prey.getUUID());
+            k.setPos(prey.getX() + 1, prey.getY(), prey.getZ());
+            k.setInvulnerable(true); // thousands of ticks in a test structure: he must not suffocate in its floor
+            run(k, KlausRules.GIVE_UP_AFTER - 400);
+            k.doHurtTarget(other);
+            run(k, 800);
+            helper.assertTrue(k.isRemoved(), "a blow on a bystander kept the hunt alive");
+        } finally {
+            forget(helper, prey);
+        }
+        helper.succeed();
+    }
+
+    // ---- a desiccated Klaus stays a man ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDesiccatedKlausNeverShiftsEvenAgainstAWerewolf(GameTestHelper helper) {
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            KlausEntity k = rig.spawnKlaus();
+            k.desiccate();
+            helper.assertTrue(k.getHealth() / k.getMaxHealth() <= ShiftRules.SHIFT_AT_HEALTH, "control: he is not at half health");
+            for (int i = 0; i < 30; i++) {
+                k.tick();
+            }
+            helper.assertTrue(k.form() == BossForm.HUMAN && k.shiftTicks() == 0, "a fallen Klaus shifted: " + k.form());
+            helper.assertTrue(k.isDesiccated() && k.isNoAi(), "control: he got up");
+            k.recover();
+            for (int i = 0; i < 12; i++) {
+                k.tick();
+            }
+            helper.assertTrue(k.form() == BossForm.HUMAN, "full health after returning, and he shifted: " + k.form());
+        }
+        helper.succeed();
+    }
+
+    // ---- the swap ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theBodyIsSwappedOnOneTickWithTheHitboxSmokeHowlAndShake(GameTestHelper helper) {
+        List<String> seen = new java.util.ArrayList<>();
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            KlausEntity k = rig.spawnKlaus();
+            KlausEntity.observeSwap(e -> seen.add(e.form() + "@" + e.shiftTicks() + " h=" + e.getBbHeight()));
+            k.startShift();
+            for (int i = 1; i < ShiftRules.SWAP_TICK; i++) {
+                k.tick();
+                helper.assertTrue(Math.abs(k.getBbHeight() - 1.95F) < 1e-4, "the hitbox changed before the swap, at tick " + k.shiftTicks() + ": " + k.getBbHeight());
+            }
+            helper.assertTrue(seen.isEmpty(), "the swap happened early: " + seen);
+            k.tick();
+            helper.assertTrue(k.shiftTicks() == ShiftRules.SWAP_TICK && Math.abs(k.getBbHeight() - 1.5F) < 1e-4, "the hitbox is not the wolf's on the swap tick: " + k.getBbHeight() + " at " + k.shiftTicks());
+            helper.assertTrue(seen.size() == 1 && seen.get(0).startsWith("SHIFTING@" + ShiftRules.SWAP_TICK) && seen.get(0).endsWith("h=1.5"), "the swap effects ran " + seen);
+            for (int i = 0; i < ShiftRules.END_TICK; i++) {
+                k.tick();
+            }
+            helper.assertTrue(seen.size() == 1 && k.form() == BossForm.BEAST, "the swap ran again, or the shift did not end: " + seen + " " + k.form());
+        } finally {
+            KlausEntity.observeSwap(null);
+        }
+        helper.succeed();
+    }
+
+    // ---- the animation he plays (the client reads this; the server can ask the same question) ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDesiccatedWolfPlaysAndHoldsTheDeathAnimation(GameTestHelper helper) {
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            KlausEntity k = rig.spawnKlaus();
+            k.setForm(BossForm.BEAST);
+            helper.assertTrue(!KlausRules.animation(k.isDeadOrDying(), k.isDesiccated(), false, false, 0.0).equals("death"), "control: a standing wolf plays death");
+            k.desiccate();
+            helper.assertTrue(KlausRules.animation(k.isDeadOrDying(), k.isDesiccated(), false, false, 0.0).equals("death"), "a desiccated wolf does not play death");
+        }
+        helper.succeed();
+    }
+
+    // ---- Klaus's Blood: its tooltip, and when his line is gone ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void klausBloodSaysWhatItDoes(GameTestHelper helper) {
+        ItemStack blood = new ItemStack(BossItems.KLAUS_BLOOD.get());
+        List<net.minecraft.network.chat.Component> lines = new java.util.ArrayList<>();
+        blood.getItem().appendHoverText(blood, net.minecraft.world.item.Item.TooltipContext.of(helper.getLevel()), lines, net.minecraft.world.item.TooltipFlag.NORMAL);
+        helper.assertTrue(lines.stream().anyMatch(c -> c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().equals("item.supernaturalbloodlines.klaus_blood.tooltip")),
+                "no tooltip: " + lines);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void withHisLineDeadKlausBloodStillCuresButTurnsNobody(GameTestHelper helper) {
+        LineTestPlayer p = LineTestPlayer.create(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            LineIndex.get(rig.server).markDead(BossTestRig.KLAUS);
+            p.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, Venom.DURATION_TICKS));
+            ItemStack blood = new ItemStack(BossItems.KLAUS_BLOOD.get());
+            p.setItemInHand(InteractionHand.MAIN_HAND, blood.finishUsingItem(helper.getLevel(), p));
+            helper.assertTrue(!p.hasEffect(SpeciesRegistries.HYBRID_VENOM), "it did not cure the venom");
+            helper.assertTrue(!p.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT) && !p.hasData(SpeciesRegistries.BLOOD_SOURCE), "it marked the drinker for a sire who is gone");
+            helper.assertTrue(p.received("item.supernaturalbloodlines.klaus_blood.dead_line"), "the player was not told: " + p.heard());
+            helper.assertTrue(p.getMainHandItem().is(Items.GLASS_BOTTLE), "the bottle was not given back");
+        } finally {
+            LineIndex.get(helper.getLevel().getServer()).unmarkDead(BossTestRig.KLAUS);
+            BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    // ---- the mountain ash claim, as it really is ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void onlyAPackEmissarysLineHoldsKlausAndMikaelAPlainOneDoesNot(GameTestHelper helper) {
+        if (!net.minecraft.core.registries.BuiltInRegistries.BLOCK.containsKey(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(NS, "mountain_ash_line"))) {
+            helper.succeed(); // the artifacts part is off: there is no line to test
+            return;
+        }
+        ServerPlayer vampire = vampire(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            KlausEntity k = rig.spawnKlaus();
+            net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity m = rig.spawn();
+            BlockPos at = new BlockPos(6, 1, 6);
+            helper.setBlock(at, net.ofatech.supernaturalbloodlines.parts.artifacts.MountainAsh.LINE.get().defaultBlockState());
+            BlockPos abs = helper.absolutePos(at);
+            var level = helper.getLevel();
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(vampire, level, abs), "control: a plain line does not hold a vampire");
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(k, level, abs), "a plain line holds Klaus: the hint can say so");
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(m, level, abs), "a plain line holds Mikael: the hint can say so");
+            ((net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlockEntity) level.getBlockEntity(abs)).setEmissary(true);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(k, level, abs), "an Emissary's line does not hold Klaus");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(m, level, abs), "an Emissary's line does not hold Mikael");
+        }
+        helper.succeed();
+    }
     // ---- the operator ----
 
     @GameTest(template = "empty", templateNamespace = NS)

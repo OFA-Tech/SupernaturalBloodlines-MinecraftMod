@@ -3,6 +3,8 @@ package net.ofatech.supernaturalbloodlines.parts.bosses.entity.ai;
 import java.util.UUID;
 import java.util.function.Supplier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -27,6 +29,9 @@ public final class PreyGoal extends TargetGoal {
             return null;
         }
         Entity e = level.getEntity(id);
+        if (e == null && SireCall.player(level.getServer(), id) instanceof ServerPlayer p && p.level() == level) {
+            e = p; // the same lookup the other hunters use for players
+        }
         return e instanceof LivingEntity l && l.isAlive() ? l : null;
     }
 

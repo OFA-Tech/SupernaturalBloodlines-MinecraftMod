@@ -35,7 +35,7 @@ import org.joml.Vector3f;
 public final class BossShots {
     private static final String PROPERTY = "supernaturalbloodlines.devshots.bosses";
     private static final int WORLD_TICKS = 100;
-    private static final int SETTLE_TICKS = 10;
+    private static final int SETTLE_TICKS = 80;
 
     private final String boss;
     private final boolean quit = Boolean.getBoolean(PROPERTY + ".quit");
@@ -97,13 +97,18 @@ public final class BossShots {
         }
     }
 
-    /** One boss in a row of panels: each is a named entity at a yaw and a scale (a share of the screen height). */
-    private record Panel(String name, LivingEntity entity, float yaw, float scale, float lift) {
+    /**
+     * One panel of the sheet: a named entity at a yaw, with the size of what is drawn (the model, which is not the hitbox: the wolf''s ears reach 2.1
+     * blocks, its hitbox is 1.5) so every panel is fitted to its own cell and cannot spill into the next.
+     */
+    private record Panel(String name, LivingEntity entity, float yaw, float modelHeight, float modelWidth) {
     }
 
     private static final class PanelScreen extends Screen {
         private final boolean klaus;
         private List<Panel> panels;
+        private int columns;
+        private int rows;
 
         PanelScreen(boolean klaus) {
             super(Component.empty());
@@ -113,28 +118,45 @@ public final class BossShots {
         private List<Panel> build(Minecraft mc) {
             List<Panel> list = new ArrayList<>();
             if (klaus) {
-                list.add(new Panel("the man, from the front", klaus(mc, BossForm.HUMAN, 0), 180f, 3.0f, 0f));
-                list.add(new Panel("the man, from behind", klaus(mc, BossForm.HUMAN, 0), 0f, 3.0f, 0f));
-                list.add(new Panel("shifting, half way", klaus(mc, BossForm.SHIFTING, ShiftRules.SHIFT_TICKS / 2 + 5), 160f, 4.6f, 0f));
-                list.add(new Panel("the wolf, from the front", klaus(mc, BossForm.BEAST, ShiftRules.HOWL_TICKS), 150f, 4.6f, 0f));
-                list.add(new Panel("the wolf, from the side", klaus(mc, BossForm.BEAST, ShiftRules.HOWL_TICKS), 90f, 7.0f, 0f));
+                columns = 4;
+                rows = 2;
+                int swap = ShiftRules.SWAP_TICK;
+                list.add(new Panel("the man, from the front", klaus(mc, BossForm.HUMAN, 0, false), 180f, 1.95f, 1.3f));
+                list.add(new Panel("the man, from behind", klaus(mc, BossForm.HUMAN, 0, false), 0f, 1.95f, 1.3f));
+                list.add(new Panel("man, just before the swap", klaus(mc, BossForm.SHIFTING, swap - 1, false), 160f, 1.95f, 1.3f));
+                list.add(new Panel("wolf, just after the swap", klaus(mc, BossForm.SHIFTING, swap, false), 160f, 2.1f, 1.8f));
+                list.add(new Panel("the wolf, from the front", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, false), 180f, 2.1f, 1.8f));
+                list.add(new Panel("the wolf, from the side", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, false), 90f, 2.1f, 4.4f));
+                list.add(new Panel("the wolf, from behind", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, false), 0f, 2.1f, 1.8f));
+                list.add(new Panel("the wolf, desiccated", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, true), 140f, 1.2f, 3.2f));
             } else {
+                columns = 4;
+                rows = 1;
                 String[] names = {"from the front", "from the side", "from behind", "desiccated"};
                 float[] yaws = {180f, 90f, 0f, 0f};
                 for (int i = 0; i < 4; i++) {
                     MikaelEntity m = MikaelEntity.create(mc.level);
                     m.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(BossItems.MIKAELS_STAKE.get()));
                     m.lookDesiccated(i == 3);
-                    list.add(new Panel(names[i], m, yaws[i], i == 3 ? 5.5f : 2.6f, 0f));
+                    list.add(new Panel(names[i], m, yaws[i], i == 3 ? 0.9f : 1.95f, i == 3 ? 2.2f : 1.3f));
                 }
             }
             return list;
         }
 
-        private static KlausEntity klaus(Minecraft mc, BossForm form, int ticks) {
+        private static KlausEntity klaus(Minecraft mc, BossForm form, int ticks, boolean desiccated) {
             KlausEntity k = KlausEntity.create(mc.level);
             k.lookForm(form, ticks);
+            k.lookDesiccated(desiccated);
             return k;
+        }
+
+        /** The animations run on the entity''s own tick count, which nothing advances for an entity that is not in the level: advance it, so a held pose is reached. */
+        @Override
+        public void tick() {
+            if (panels != null) {
+                panels.forEach(p -> p.entity().tickCount++);
+            }
         }
 
         @Override
@@ -144,9 +166,12 @@ public final class BossShots {
             if (panels == null) {
                 panels = build(mc);
             }
-            int w = width / panels.size();
+            int cw = width / columns;
+            int ch = height / rows;
             for (int i = 0; i < panels.size(); i++) {
                 Panel p = panels.get(i);
+                int x0 = (i % columns) * cw;
+                int y0 = (i / columns) * ch;
                 LivingEntity m = p.entity();
                 m.setYRot(p.yaw());
                 m.yRotO = p.yaw();
@@ -154,10 +179,13 @@ public final class BossShots {
                 m.yBodyRotO = p.yaw();
                 m.yHeadRot = p.yaw();
                 m.yHeadRotO = p.yaw();
-                g.drawString(font, p.name(), i * w + 4, 4, 0xFFFFFF, false);
-                boolean flat = m instanceof NpcOriginalBoss b && b.isDesiccated();
-                InventoryScreen.renderEntityInInventory(g, i * w + (flat ? w - 30 : w / 2), height / 2 + 30, height / p.scale(), new Vector3f(0f, m.getBbHeight() / 2f, 0f),
-                        new Quaternionf().rotateZ((float) Math.PI), null, m);
+                float scale = Math.min(0.78f * (ch - 16) / p.modelHeight(), 0.92f * cw / p.modelWidth());
+                // the box centre is what is placed at the point, so lift or drop it to put the middle of what is drawn in the middle of the cell
+                int cy = y0 + 16 + (ch - 16) / 2 + Math.round((p.modelHeight() - m.getBbHeight()) / 2f * scale);
+                g.enableScissor(x0, y0, x0 + cw, y0 + ch);
+                g.drawString(font, p.name(), x0 + 4, y0 + 4, 0xFFFFFF, false);
+                InventoryScreen.renderEntityInInventory(g, x0 + cw / 2, cy, scale, new Vector3f(0f, m.getBbHeight() / 2f, 0f), new Quaternionf().rotateZ((float) Math.PI), null, m);
+                g.disableScissor();
             }
         }
 

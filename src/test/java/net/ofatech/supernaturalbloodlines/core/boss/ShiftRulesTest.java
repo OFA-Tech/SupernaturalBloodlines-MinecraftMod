@@ -42,10 +42,11 @@ class ShiftRulesTest {
     }
 
     @Test
-    void theWolfModelShowsFromHalfWayThrough() {
+    void theWolfModelShowsFromTheSwapTick() {
         assertFalse(ShiftRules.showsBeast(BossForm.HUMAN, 999));
-        assertFalse(ShiftRules.showsBeast(BossForm.SHIFTING, ShiftRules.SHIFT_TICKS / 2 - 1));
-        assertTrue(ShiftRules.showsBeast(BossForm.SHIFTING, ShiftRules.SHIFT_TICKS / 2));
+        assertFalse(ShiftRules.showsBeast(BossForm.SHIFTING, ShiftRules.SWAP_TICK - 1));
+        assertTrue(ShiftRules.showsBeast(BossForm.SHIFTING, ShiftRules.SWAP_TICK));
+        assertEquals(ShiftRules.SHIFT_TICKS / 2, ShiftRules.SWAP_TICK);
         assertTrue(ShiftRules.showsBeast(BossForm.BEAST, 0));
     }
 
@@ -58,19 +59,37 @@ class ShiftRulesTest {
 
     @Test
     void theWolfIsSmallerThanTheManButBroader() {
-        Size man = ShiftRules.dimensionsFor(BossForm.HUMAN);
-        Size wolf = ShiftRules.dimensionsFor(BossForm.BEAST);
+        Size man = ShiftRules.dimensionsFor(BossForm.HUMAN, 0);
+        Size wolf = ShiftRules.dimensionsFor(BossForm.BEAST, 0);
         assertEquals(new Size(0.6F, 1.95F), man);
         assertEquals(new Size(0.9F, 1.5F), wolf);
-        assertEquals(man, ShiftRules.dimensionsFor(BossForm.SHIFTING));
     }
 
     @Test
-    void theHowlPlaysFromTheStartOfTheShiftForItsLength() {
-        assertFalse(ShiftRules.howling(BossForm.HUMAN, 0));
-        assertTrue(ShiftRules.howling(BossForm.SHIFTING, 0));
-        assertTrue(ShiftRules.howling(BossForm.BEAST, ShiftRules.HOWL_TICKS - 1));
-        assertFalse(ShiftRules.howling(BossForm.BEAST, ShiftRules.HOWL_TICKS));
+    void theHitboxChangesOnTheSwapTickNotWhenTheShiftEnds() {
+        Size man = ShiftRules.dimensionsFor(BossForm.HUMAN, 0);
+        Size wolf = ShiftRules.dimensionsFor(BossForm.BEAST, 0);
+        assertEquals(man, ShiftRules.dimensionsFor(BossForm.SHIFTING, ShiftRules.SWAP_TICK - 1));
+        assertEquals(wolf, ShiftRules.dimensionsFor(BossForm.SHIFTING, ShiftRules.SWAP_TICK));
+        assertEquals(wolf, ShiftRules.dimensionsFor(BossForm.SHIFTING, ShiftRules.SHIFT_TICKS - 1));
+    }
+
+    @Test
+    void theHowlStartsAtTheSwapAndLastsItsLength() {
+        assertFalse(ShiftRules.howling(BossForm.HUMAN, ShiftRules.SWAP_TICK));
+        assertFalse(ShiftRules.howling(BossForm.SHIFTING, ShiftRules.SWAP_TICK - 1));
+        assertTrue(ShiftRules.howling(BossForm.SHIFTING, ShiftRules.SWAP_TICK));
+        assertTrue(ShiftRules.howling(BossForm.BEAST, ShiftRules.END_TICK - 1));
+        assertFalse(ShiftRules.howling(BossForm.BEAST, ShiftRules.END_TICK));
+        assertEquals(ShiftRules.SWAP_TICK + ShiftRules.HOWL_TICKS, ShiftRules.END_TICK);
+    }
+
+    @Test
+    void theShiftCounterCountsThroughTheHowlAndStopsAndOnlyForTheShifted() {
+        assertEquals(1, ShiftRules.nextTicks(BossForm.SHIFTING, 0));
+        assertEquals(ShiftRules.END_TICK, ShiftRules.nextTicks(BossForm.BEAST, ShiftRules.END_TICK - 1));
+        assertEquals(ShiftRules.END_TICK, ShiftRules.nextTicks(BossForm.BEAST, ShiftRules.END_TICK));
+        assertEquals(0, ShiftRules.nextTicks(BossForm.HUMAN, 0));
     }
 
     @Test

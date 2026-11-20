@@ -2,6 +2,10 @@ package net.ofatech.supernaturalbloodlines.parts.bosses.entity;
 
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -56,6 +60,7 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
     private static final EntityDataAccessor<Integer> SHIFT_TICKS = SynchedEntityData.defineId(KlausEntity.class, EntityDataSerializers.INT);
     private static final ResourceLocation BEAST_DAMAGE = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "klaus_beast_damage");
     private static final ResourceLocation BEAST_SPEED = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "klaus_beast_speed");
+    static final String LOST_SCENT = "supernaturalbloodlines.boss.klaus.lost_scent";
     private static final String CONTROLLER = "main";
     private static final String ATTACK = "attack";
 
@@ -63,6 +68,8 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
     @Nullable
     private UUID prey;
     private int strandedTicks;
+    /** Ticks since he last landed a blow on his prey; he gives up at {@link KlausRules#GIVE_UP_AFTER}. */
+    private int sinceHit;
 
     public KlausEntity(EntityType<? extends KlausEntity> type, Level level) {
         super(type, level);
@@ -117,6 +124,29 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
         refreshDimensions();
     }
 
+    private static volatile java.util.function.Consumer<KlausEntity> swapObserver;
+
+    /** Tests: told every time the body is swapped (the hitbox is already the wolf's then); null stops. */
+    public static void observeSwap(@Nullable java.util.function.Consumer<KlausEntity> observer) {
+        swapObserver = observer;
+    }
+
+    /**
+     * The body is swapped (tick {@link ShiftRules#SWAP_TICK}): the hitbox is the wolf's from this tick, a burst of smoke hides the change, he howls
+     * (the howl animation starts on the same tick) and the model shakes (the hurt tilt, which the client plays on the entity event).
+     */
+    private void swap(ServerLevel server) {
+        refreshDimensions();
+        server.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE, getX(), getY() + 0.9, getZ(), 40, 0.4, 0.6, 0.4, 0.04);
+        server.sendParticles(net.minecraft.core.particles.ParticleTypes.POOF, getX(), getY() + 0.6, getZ(), 20, 0.5, 0.4, 0.5, 0.08);
+        server.playSound(null, getX(), getY(), getZ(), net.minecraft.sounds.SoundEvents.WOLF_HOWL, net.minecraft.sounds.SoundSource.HOSTILE, 2.0F, 0.6F);
+        server.broadcastEntityEvent(this, (byte) 2);
+        java.util.function.Consumer<KlausEntity> o = swapObserver;
+        if (o != null) {
+            o.accept(this);
+        }
+    }
+
     /** Only how it looks (the forms the renderer reads), for the dev screenshots: no bonuses, no shift. */
     public void lookForm(BossForm form, int ticks) {
         entityData.set(FORM, form.ordinal());
@@ -150,14 +180,14 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
 
     @Override
     public EntityDimensions getDefaultDimensions(Pose pose) {
-        ShiftRules.Size size = ShiftRules.dimensionsFor(BossForm.of(entityData.get(FORM)));
+        ShiftRules.Size size = ShiftRules.dimensionsFor(BossForm.of(entityData.get(FORM)), entityData.get(SHIFT_TICKS));
         return EntityDimensions.scalable(size.width(), size.height());
     }
 
     @Override
     public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
         super.onSyncedDataUpdated(key);
-        if (FORM.equals(key)) {
+        if (FORM.equals(key) || SHIFT_TICKS.equals(key)) {
             refreshDimensions();
         }
     }
@@ -174,8 +204,13 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
             return;
         }
         BossForm form = form();
-        if (form != BossForm.HUMAN && shiftTicks() < ShiftRules.HOWL_TICKS) {
-            entityData.set(SHIFT_TICKS, shiftTicks() + 1);
+        int before = shiftTicks();
+        int counted = ShiftRules.nextTicks(form, before);
+        if (counted != before) {
+            entityData.set(SHIFT_TICKS, counted);
+            if (counted == ShiftRules.SWAP_TICK && form == BossForm.SHIFTING && level() instanceof ServerLevel server) {
+                swap(server);
+            }
         }
         BossForm after = ShiftRules.afterTick(form, shiftTicks());
         if (after != form) {
@@ -202,26 +237,45 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
         return prey;
     }
 
+    /** Ticks since he last landed a blow on his prey (the tests read it). */
+    public int sinceHit() {
+        return sinceHit;
+    }
+
     @Override
     protected void serverPeriod() {
         super.serverPeriod();
         LivingEntity fighting = getTarget();
-        if (ShiftRules.shouldShift(form(), getHealth() / getMaxHealth(), fighting != null && VampirismSupernatural.isWerewolf(fighting))) {
+        if (!isDesiccated() && ShiftRules.shouldShift(form(), getHealth() / getMaxHealth(), fighting != null && VampirismSupernatural.isWerewolf(fighting))) {
             startShift();
         }
         if (prey == null || isDesiccated() || level().getServer() == null) {
             strandedTicks = 0;
+            sinceHit = 0;
             return;
         }
         strandedTicks = KlausRules.stranded(PreyGoal.find(this, prey) != null, fighting != null) ? strandedTicks + 10 : 0;
-        if (KlausRules.withdraws(strandedTicks)) {
-            withdraw();
+        sinceHit += 10;
+        if (KlausRules.dawn(level().getDayTime())) {
+            withdraw("supernaturalbloodlines.boss.klaus.dawn");
+        } else if (KlausRules.givesUp(sinceHit)) {
+            withdraw(LOST_SCENT);
+        } else if (KlausRules.withdraws(strandedTicks)) {
+            withdraw(LOST_SCENT);
         }
     }
 
     /** He goes: the index says lost (so the director may send him again), the entity is gone. */
     public void withdraw() {
+        withdraw(null);
+    }
+
+    /** He goes, and the player he hunted (if they are here) is told why. */
+    private void withdraw(@Nullable String say) {
         if (level().getServer() != null) {
+            if (say != null && prey != null && SireCall.player(level().getServer(), prey) instanceof ServerPlayer p) {
+                p.displayClientMessage(Component.translatable(say), true);
+            }
             BossIndex.get(level().getServer()).apply(boss(), BossRules.Event.LOST);
         }
         discard();
@@ -244,6 +298,9 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
         boolean hit = super.doHurtTarget(target);
         if (hit) {
             triggerAnim(CONTROLLER, ATTACK);
+            if (prey != null && prey.equals(target.getUUID())) {
+                sinceHit = 0;
+            }
             if (target instanceof LivingEntity victim
                     && KlausRules.venomBite(form(), VampirismSupernatural.isVampire(victim), victim.hasEffect(SpeciesRegistries.HYBRID_VENOM))) {
                 victim.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, Venom.DURATION_TICKS));
@@ -263,6 +320,7 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
             tag.putUUID("prey", prey);
         }
         tag.putInt("stranded", strandedTicks);
+        tag.putInt("since_hit", sinceHit);
     }
 
     @Override
@@ -272,6 +330,7 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
         entityData.set(SHIFT_TICKS, tag.getInt("shift_ticks"));
         prey = tag.hasUUID("prey") ? tag.getUUID("prey") : null;
         strandedTicks = tag.getInt("stranded");
+        sinceHit = tag.getInt("since_hit");
         refreshDimensions();
     }
 
@@ -290,17 +349,14 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, CONTROLLER, 4, state -> {
             KlausEntity k = state.getAnimatable();
-            if (k.isDeadOrDying()) {
-                return state.setAndContinue(RawAnimation.begin().thenPlayAndHold("animation.klaus_hybrid.death"));
-            }
-            if (ShiftRules.howling(k.form(), k.shiftTicks())) {
-                return state.setAndContinue(RawAnimation.begin().thenPlay("animation.klaus_hybrid.howl"));
-            }
-            if (state.isMoving()) {
-                double speed = k.getDeltaMovement().horizontalDistance();
-                return state.setAndContinue(RawAnimation.begin().thenLoop(speed > 0.2 ? "animation.klaus_hybrid.run" : "animation.klaus_hybrid.walk"));
-            }
-            return state.setAndContinue(RawAnimation.begin().thenLoop("animation.klaus_hybrid.idle"));
+            String name = KlausRules.animation(k.isDeadOrDying(), k.isDesiccated(), ShiftRules.howling(k.form(), k.shiftTicks()), state.isMoving(),
+                    k.getDeltaMovement().horizontalDistance());
+            RawAnimation animation = RawAnimation.begin();
+            return state.setAndContinue(switch (name) {
+                case "death" -> animation.thenPlayAndHold("animation.klaus_hybrid.death");
+                case "howl" -> animation.thenPlay("animation.klaus_hybrid.howl");
+                default -> animation.thenLoop("animation.klaus_hybrid." + name);
+            });
         }).triggerableAnim(ATTACK, RawAnimation.begin().thenPlay("animation.klaus_hybrid.attack_bite")));
     }
 }

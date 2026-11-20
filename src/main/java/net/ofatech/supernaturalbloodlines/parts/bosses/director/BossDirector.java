@@ -24,6 +24,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
 import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
 import net.ofatech.supernaturalbloodlines.core.boss.BossFacts;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
@@ -429,6 +430,7 @@ public final class BossDirector {
             if (warning > 0) {
                 entry.target = p.getUUID();
                 entry.arriveAt = BossClock.nowTicks(overworld) + warning;
+                entry.reminded = 0;
                 index.setDirty();
                 noticeKlaus(p, BossesConfig.klausWarningSeconds());
                 return;
@@ -440,19 +442,37 @@ public final class BossDirector {
 
     /** The warning has run out: he comes if the one he was coming for is still here, and goes nowhere if they are not. */
     private static void klausArrives(MinecraftServer server, BossIndex index, BossIndex.Entry entry, ServerLevel overworld) {
-        if (!KlausRules.arrivalDue(BossClock.nowTicks(overworld), entry.arriveAt)) {
+        UUID id = entry.target;
+        ServerPlayer p = id == null ? null : SireCall.player(server, id);
+        long now = BossClock.nowTicks(overworld);
+        // the same questions as when he was announced, asked again at every look, not only when the time is up: the player may have died, left, changed
+        // dimension or gone to spectator, the switch may have been turned off, or the world made peaceful
+        boolean still = p != null && p.isAlive() && huntable(p) && difficulty.apply(overworld) != Difficulty.PEACEFUL;
+        boolean allowed = SpawnRules.refusal(new BossFacts(BossesConfig.enabled(BossId.KLAUS), modsPresent(BossId.KLAUS), index.state(BossId.KLAUS), false)).isEmpty();
+        if (!still || !allowed) {
+            entry.arriveAt = -1;
+            entry.target = null;
+            entry.reminded = 0;
+            index.setDirty();
+            if (p != null) {
+                p.displayClientMessage(Component.translatable("supernaturalbloodlines.boss.klaus.lost_scent"), true);
+            }
             return;
         }
-        UUID id = entry.target;
+        if (!KlausRules.arrivalDue(now, entry.arriveAt)) {
+            int seconds = KlausRules.reminder(entry.arriveAt - now, KlausRules.warningTicks(true, BossesConfig.klausWarningSeconds()), entry.reminded);
+            if (seconds > 0) {
+                entry.reminded = seconds;
+                index.setDirty();
+                p.displayClientMessage(Component.translatable("supernaturalbloodlines.boss.klaus.countdown", seconds), true);
+            }
+            return;
+        }
         entry.arriveAt = -1;
         entry.target = null;
+        entry.reminded = 0;
         index.setDirty();
-        ServerPlayer p = id == null ? null : SireCall.player(server, id);
-        boolean still = p != null && p.isAlive() && p.level() == overworld;
-        boolean allowed = SpawnRules.refusal(new BossFacts(BossesConfig.enabled(BossId.KLAUS), modsPresent(BossId.KLAUS), index.state(BossId.KLAUS), false)).isEmpty();
-        if (still && allowed) {
-            spawnKlaus(overworld, p, null);
-        }
+        spawnKlaus(overworld, p, null);
     }
 
     /**
@@ -488,11 +508,13 @@ public final class BossDirector {
                 SpeciesConfig.originalVisibilityAlways());
         String key = "supernaturalbloodlines.boss.notice.klaus." + (known ? "known" : "unknown") + (seconds > 0 ? "" : "_now");
         Component text = Component.translatable(key, seconds);
+        // being hunted is how a doppelganger finds out what they are (the show's way): the gene is discovered here, and the message says why
+        BloodlineAccess.reveal(target, Genes.DOPPELGANGER);
         target.displayClientMessage(text, true);
         target.sendSystemMessage(text);
         target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.klaus.hint"));
-        target.level().playSound(null, target.getX(), target.getY(), target.getZ(), net.minecraft.sounds.SoundEvents.WOLF_HOWL,
-                net.minecraft.sounds.SoundSource.HOSTILE, 1.5F, 0.7F);
+        // the howl is for the one he hunts, not for everybody near: nobody else is told who is hunted
+        target.playNotifySound(net.minecraft.sounds.SoundEvents.WOLF_HOWL, net.minecraft.sounds.SoundSource.HOSTILE, 1.5F, 0.7F);
     }
 
     @Nullable

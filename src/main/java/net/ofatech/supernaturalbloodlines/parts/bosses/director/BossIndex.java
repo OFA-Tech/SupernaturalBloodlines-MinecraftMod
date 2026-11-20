@@ -45,6 +45,8 @@ public final class BossIndex extends SavedData {
         public UUID target;
         /** Game time (ticks) at which a boss that was announced arrives; -1 when none waits (Klaus warns a hunted player first). */
         public long arriveAt = -1;
+        /** The seconds of the last countdown reminder shown to the hunted player (0 for none). */
+        public int reminded;
 
         CompoundTag save(BossId id) {
             CompoundTag t = new CompoundTag();
@@ -64,6 +66,7 @@ public final class BossIndex extends SavedData {
                 t.putUUID("target", target);
             }
             t.putLong("arrive_at", arriveAt);
+            t.putInt("reminded", reminded);
             return t;
         }
 
@@ -80,6 +83,7 @@ public final class BossIndex extends SavedData {
             e.lastRollDay = t.contains("last_roll_day") ? t.getLong("last_roll_day") : -1;
             e.target = t.hasUUID("target") ? t.getUUID("target") : null;
             e.arriveAt = t.contains("arrive_at") ? t.getLong("arrive_at") : -1;
+            e.reminded = t.getInt("reminded");
             return e;
         }
     }

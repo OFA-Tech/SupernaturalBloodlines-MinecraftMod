@@ -89,6 +89,59 @@ class KlausRulesTest {
     }
 
     @Test
+    void dawnIsOutsideTheFullMoonNightWindow() {
+        long day = 24000L * 20;
+        assertTrue(KlausRules.dawn(day + 6000), "noon");
+        assertTrue(KlausRules.dawn(day + net.ofatech.supernaturalbloodlines.core.moon.MoonRule.NIGHT_START), "the night window is open at its start, not before");
+        assertFalse(KlausRules.dawn(day + net.ofatech.supernaturalbloodlines.core.moon.MoonRule.NIGHT_START + 1));
+        assertFalse(KlausRules.dawn(day + 18000));
+        assertFalse(KlausRules.dawn(day + net.ofatech.supernaturalbloodlines.core.moon.MoonRule.NIGHT_END - 1));
+        assertTrue(KlausRules.dawn(day + net.ofatech.supernaturalbloodlines.core.moon.MoonRule.NIGHT_END));
+        assertTrue(KlausRules.dawn(-1), "a negative time of day wraps");
+    }
+
+    @Test
+    void heGivesUpAfterFourMinutesWithoutAHitAndNotBefore() {
+        assertEquals(4800, KlausRules.GIVE_UP_AFTER);
+        assertFalse(KlausRules.givesUp(KlausRules.GIVE_UP_AFTER - 10));
+        assertTrue(KlausRules.givesUp(KlausRules.GIVE_UP_AFTER));
+    }
+
+    @Test
+    void theRemindersComeAtThirtyAndTenSecondsOnceEach() {
+        long total = 90 * 20L;
+        assertEquals(0, KlausRules.reminder(31 * 20L, total, 0));
+        assertEquals(30, KlausRules.reminder(30 * 20L, total, 0));
+        assertEquals(0, KlausRules.reminder(25 * 20L, total, 30), "30 is not shown twice");
+        assertEquals(10, KlausRules.reminder(10 * 20L, total, 30));
+        assertEquals(0, KlausRules.reminder(5 * 20L, total, 10), "10 is not shown twice, and 30 does not come back");
+    }
+
+    @Test
+    void aLateLookShowsOnlyTheNearestReminder() {
+        assertEquals(10, KlausRules.reminder(8 * 20L, 90 * 20L, 0));
+        assertEquals(0, KlausRules.reminder(8 * 20L, 90 * 20L, 10));
+    }
+
+    @Test
+    void aShortWarningIsNotNaggedAtTheSecondsItIsNotLongerThan() {
+        assertEquals(0, KlausRules.reminder(30 * 20L, 30 * 20L, 0), "a 30 s warning has no 30 s reminder: it is the warning itself");
+        assertEquals(10, KlausRules.reminder(10 * 20L, 30 * 20L, 0));
+        assertEquals(0, KlausRules.reminder(5 * 20L, 10 * 20L, 0));
+        assertEquals(0, KlausRules.reminder(0L, 0L, 0));
+    }
+
+    @Test
+    void theWolfPlaysDeathWhenDyingOrDesiccatedThenHowlThenByItsSpeed() {
+        assertEquals("death", KlausRules.animation(true, false, false, false, 0));
+        assertEquals("death", KlausRules.animation(false, true, true, true, 1), "a desiccated wolf holds death whatever else is true");
+        assertEquals("howl", KlausRules.animation(false, false, true, true, 1));
+        assertEquals("run", KlausRules.animation(false, false, false, true, KlausRules.RUN_SPEED + 0.01));
+        assertEquals("walk", KlausRules.animation(false, false, false, true, KlausRules.RUN_SPEED));
+        assertEquals("idle", KlausRules.animation(false, false, false, false, 0.5));
+    }
+
+    @Test
     void onlyTheWolfBitesWithVenomAndOnlyAVampireNotAlreadyPoisoned() {
         assertTrue(KlausRules.venomBite(BossForm.BEAST, true, false));
         assertFalse(KlausRules.venomBite(BossForm.HUMAN, true, false));
