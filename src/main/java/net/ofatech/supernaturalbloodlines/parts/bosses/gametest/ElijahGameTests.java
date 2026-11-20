@@ -128,6 +128,12 @@ public final class ElijahGameTests {
             world(helper, DAY + 6000, holder);
             BossDirector.check(rig.server);
             helper.assertTrue(elijahOf(rig) != null, "the blood of an NPC Original did not call him");
+            elijahOf(rig).discard();
+            rig.index.forget(BossId.ELIJAH);
+            holder.getInventory().clearContent();
+            holder.getInventory().add(new ItemStack(BossItems.KLAUS_BLOOD.get()));
+            BossDirector.check(rig.server);
+            helper.assertTrue(elijahOf(rig) != null, "Klaus's Blood in the bag did not call him");
         } finally {
             forget(helper, holder, other);
         }
@@ -192,6 +198,21 @@ public final class ElijahGameTests {
             rig.index.of(BossId.ELIJAH).hostile = true;
             helper.assertTrue(e.hostileForGood() && e.wouldAttack(p), "after a broken oath he does not fight");
             helper.assertTrue(!e.wouldAttack(helper.spawn(EntityType.COW, new BlockPos(6, 1, 5))), "after a broken oath he attacks a cow");
+        } finally {
+            forget(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void rightClickingAStandingElijahTalksAndAFallenOneDoesNot(GameTestHelper helper) {
+        LineTestPlayer p = player(helper, null);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            ElijahEntity e = rig.spawnElijah();
+            helper.assertTrue(e.mobInteract(p, net.minecraft.world.InteractionHand.MAIN_HAND) == net.minecraft.world.InteractionResult.CONSUME, "a right click on a standing Elijah did not talk");
+            helper.assertTrue(e.mobInteract(p, net.minecraft.world.InteractionHand.OFF_HAND) == net.minecraft.world.InteractionResult.PASS, "the off hand talked too");
+            e.desiccate();
+            helper.assertTrue(e.mobInteract(p, net.minecraft.world.InteractionHand.MAIN_HAND) == net.minecraft.world.InteractionResult.PASS, "a fallen Elijah talked");
         } finally {
             forget(helper, p);
         }
@@ -354,6 +375,21 @@ public final class ElijahGameTests {
             helper.assertTrue(rig.index.oathOf(ranOut.getUUID()) < BossClock.today(rig.server.overworld()) && !rig.index.of(BossId.ELIJAH).hostile, "an oath that ran out broke");
         } finally {
             forget(helper, ranOut, never);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBlowThatDoesNoDamageIsNoAttack(GameTestHelper helper) {
+        LineTestPlayer p = null;
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            p = swornPlayer(helper, rig);
+            rig.spawnKlaus().hurt(p.damageSources().playerAttack(p), 0.0F);
+            helper.assertTrue(rig.index.oathOf(p.getUUID()) != DealRules.BROKEN, "a blow of no damage broke the oath");
+        } finally {
+            if (p != null) {
+                forget(helper, p);
+            }
         }
         helper.succeed();
     }

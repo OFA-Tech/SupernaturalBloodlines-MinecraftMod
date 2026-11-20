@@ -35,9 +35,9 @@ public final class DealRules {
         return until == NEVER && !elijahHostile && !elijahOpen;
     }
 
-    /** The victim of a blow, or of a desiccation: the oath is broken when the victim is Elijah or an NPC Original other than Mikael. */
+    /** The victim of a blow, or of a desiccation: the oath is broken when the victim is an NPC Original other than Mikael (Elijah is one: striking him breaks it too). */
     public static boolean breaks(BossId victim) {
-        return victim == BossId.ELIJAH || victim != BossId.MIKAEL && victim.npcOriginal().isPresent();
+        return victim != BossId.MIKAEL && victim.npcOriginal().isPresent();
     }
 
     /** {@code broken(oath, event)}: the oath is broken by this victim only while it binds. */
