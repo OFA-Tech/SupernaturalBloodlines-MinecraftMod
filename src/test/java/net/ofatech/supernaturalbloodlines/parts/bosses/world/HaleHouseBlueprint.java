@@ -192,6 +192,47 @@ public final class HaleHouseBlueprint {
             remove(CX, floor + dy, CZ);
         }
         set(CX, floor, CZ, "minecraft:dark_oak_planks");
+        pruneFloating();
+    }
+
+    /** A burned house is not a house of floating planks: a block that no chain of neighbours ties to the ground floor or the cellar is dropped. */
+    private void pruneFloating() {
+        java.util.Set<Long> keep = new java.util.HashSet<>();
+        java.util.ArrayDeque<Long> queue = new java.util.ArrayDeque<>();
+        for (Long k : cells.keySet()) {
+            if (k / ((long) W * D) <= PeterRules.FLOOR_LAYER) {
+                keep.add(k);
+                queue.add(k);
+            }
+        }
+        int[][] around = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+        while (!queue.isEmpty()) {
+            long k = queue.poll();
+            int x = (int) (k % W);
+            int z = (int) ((k / W) % D);
+            int y = (int) (k / ((long) W * D));
+            for (int[] d : around) {
+                int nx = x + d[0];
+                int ny = y + d[1];
+                int nz = z + d[2];
+                if (nx < 0 || ny < 0 || nz < 0 || nx >= W || ny >= H || nz >= D) {
+                    continue;
+                }
+                long nk = key(nx, ny, nz);
+                if (cells.containsKey(nk) && keep.add(nk)) {
+                    queue.add(nk);
+                }
+            }
+        }
+        cells.keySet().retainAll(keep);
+    }
+
+    /** Whether any block is left that is not tied to the ground (for the test). */
+    public boolean hasFloatingBlocks() {
+        HaleHouseBlueprint copy = this;
+        int before = copy.cells.size();
+        copy.pruneFloating();
+        return copy.cells.size() != before;
     }
 
     /** The structure NBT, the vanilla format: a palette of states, the blocks, and no entities. */

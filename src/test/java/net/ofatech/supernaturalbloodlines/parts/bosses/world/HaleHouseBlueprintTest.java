@@ -82,6 +82,11 @@ class HaleHouseBlueprintTest {
     }
 
     @Test
+    void nothingFloatsEveryBlockIsTiedToTheGroundByAChainOfNeighbours() {
+        assertFalse(HOUSE.hasFloatingBlocks(), "a block floats in the house");
+    }
+
+    @Test
     void theTemplateFileIsSmallAndGzipped() throws Exception {
         try (var in = HaleHouseBlueprintTest.class.getResourceAsStream(PATH)) {
             byte[] bytes = in.readAllBytes();

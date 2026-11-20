@@ -59,6 +59,16 @@ class BossTextTest {
     }
 
     @Test
+    void theGuideExplainsPeterTheHouseTheOnePeterTheFeralWolfTheRewardAndTheClawsConsent() throws Exception {
+        String guide = lang().get("supernaturalbloodlines.hub.guide.bosses.body").getAsString();
+        assertTrue(guide.contains("Peter Hale waits in a burned Hale house") && guide.contains("only one Peter"), "the Guide does not say there are many houses and one Peter");
+        assertTrue(guide.contains("feral") && guide.contains("not a boss") && guide.contains("3 to 4 blocks"), "the Guide does not say what feral means or how far he pounces");
+        assertTrue(guide.contains("the most to bring him down") && guide.contains("True Alpha takes none") && guide.contains("a player who is no werewolf is told so"), "the Guide leaves out who is paid");
+        assertTrue(guide.contains("Memory Claws") && guide.contains("sneak with a lead in their main hand") && guide.contains("PvP must be on") && guide.contains("as far as that player knows them"), "the Guide leaves out how the claws are consented to and what they show");
+        assertTrue(guide.contains("A server can switch the houses off") && guide.contains("A server can let him be found again"), "the Guide leaves out the settings");
+    }
+
+    @Test
     void theWordsOfKolAndFinnNeverNameThemBeforeTheyAreDiscoveredAndTheLinkRefusalNamesNoOriginal() throws Exception {
         JsonObject lang = lang();
         for (String k : new String[] {"supernaturalbloodlines.boss.notice.kol.unknown", "supernaturalbloodlines.boss.notice.finn.unknown"}) {

@@ -284,3 +284,13 @@ On a full moon night, once per world, **Deucalion** comes for a player Alpha who
 He dies like any wolf. **The player who does the most to bring him down takes his sparks** (4, unless the server changes it; a tie goes to the last blow, and a pet's damage is its owner's) by the rules of a stolen spark: a True Alpha takes nothing, an open and protected path to True Alpha destroys them, and the stack never goes above `max_stacked_sparks`. Someone who is no werewolf gets nothing, and a True Alpha takes none (but learns the Roar); the game tells them why. His pack gives no weak spark and no drops.
 
 A werewolf who kills him also learns the **Demon Wolf Roar** (it shows on the Skills page). On the Alpha Roar's key, after the ordinary roar, with a cooldown of its own (2 minutes), the other player Alphas within 32 blocks who are not in your pack are forced to shift, except where PvP is off, in spectator mode or on your own team. A Beta is not. It counts only while you are a werewolf, and only with the supernatural part on (the skill catalogue is its).
+
+## Peter Hale and the Hale house
+
+Needs Werewolves. A burned house (a **Hale house**) can generate in forests and taigas, far apart; a server can switch them off (`peter_house_enabled`) or make them rarer (`peter_house_chance`). There can be many, but there is **one Peter**: he is made when a player comes within 24 blocks of any house first, and the other houses stay empty.
+
+He is a burned man until he has met a full moon, then a whole one. At half health, or on a full moon night (`peter_feral_full_moon`), he drops to fours as the Alpha and does not change back. On a full moon night the wolf is **feral**: he attacks anything alive that is not a boss, whoever it is, and he pounces from 3 to 4 blocks away.
+
+He dies like any wolf, once. The **Memory Claws** lie where he fell, for anybody, and the player who did the most damage to him (a tie goes to the last blow; a pet counts for its owner) takes his one Alpha spark by the rules of a stolen spark: a True Alpha takes none, an open protected path destroys it, the stack never goes above `max_stacked_sparks`, and a player who is no werewolf is told so. `peter_respawn` lets him be found again after `peter_respawn_days`.
+
+**Memory Claws**: right-click another player to learn their sire and genes, shown on their Profile page as far as that player knows them. It never names a line and never discovers a gene. It works only on a player who agrees (they sneak with a lead in their main hand), where PvP is on and you may hurt them, and they are told. Every refusal reads the same. 12 uses, 30 seconds apart.

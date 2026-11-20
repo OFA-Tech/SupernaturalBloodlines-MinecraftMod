@@ -80,6 +80,10 @@ public final class BossShots {
             dealTick(mc);
             return;
         }
+        if (boss.equals("house")) {
+            houseTick(mc);
+            return;
+        }
         if (screen == null) {
             if (mc.options.guiScale().get() != 2) {
                 mc.options.guiScale().set(2);
@@ -99,6 +103,56 @@ public final class BossShots {
         if (quit) {
             mc.stop();
         }
+    }
+
+    /** The burned Hale house in the world: three pictures, {@code bossshots/house-<view>.png}, of a house placed with the real template on flat ground. */
+    private static final String[][] HOUSE_VIEWS = {
+        {"front", "tp @p 0.5 100 14.5 180 14"},
+        {"corner", "tp @p 13.5 104 13.5 135 20"},
+        {"inside", "tp @p 0.5 100 3.5 180 6"}};
+    private int houseStep = -1;
+    private int houseWait;
+
+    private static void command(net.minecraft.server.MinecraftServer server, String text) {
+        server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput().withPermission(4), text));
+    }
+
+    private void houseTick(Minecraft mc) {
+        var server = mc.getSingleplayerServer();
+        if (server == null) {
+            done = true;
+            return;
+        }
+        if (mc.options.guiScale().get() != 2) {
+            mc.options.guiScale().set(2);
+            mc.resizeDisplay();
+            return;
+        }
+        if (houseStep == -1) {
+            for (String c : new String[] {"gamemode creative @p", "time set 6000", "weather clear", "fill -16 90 -16 16 97 16 minecraft:stone", "fill -16 98 -16 16 98 16 minecraft:grass_block",
+                    "fill -16 99 -16 16 125 16 minecraft:air", "place template supernaturalbloodlines:hale_house -5 96 -4", HOUSE_VIEWS[0][1]}) {
+                command(server, c);
+            }
+            houseStep = 0;
+            houseWait = 0;
+            return;
+        }
+        if (++houseWait < 160) {
+            return;
+        }
+        String view = HOUSE_VIEWS[houseStep][0];
+        new File(mc.gameDirectory, "screenshots/bossshots").mkdirs();
+        Screenshot.grab(mc.gameDirectory, "bossshots/house-" + view + ".png", mc.getMainRenderTarget(), c -> { });
+        SupernaturalBloodlines.LOGGER.warn("BOSSSHOTS bossshots/house-{}.png", view);
+        houseWait = 0;
+        if (++houseStep >= HOUSE_VIEWS.length) {
+            done = true;
+            if (quit) {
+                mc.stop();
+            }
+            return;
+        }
+        command(server, HOUSE_VIEWS[houseStep][1]);
     }
 
     private static final String[] DEAL_THEMES = {"grimoire", "blood_moon", "tensura"};
@@ -172,6 +226,20 @@ public final class BossShots {
                 list.add(new Panel("the roar", deucalion(mc, BossForm.BEAST, swap + 20), 150f, 3.3f, 3.2f));
                 return list;
             }
+            if (boss.equals("peter")) {
+                columns = 4;
+                rows = 2;
+                int swap = ShiftRules.SWAP_TICK;
+                list.add(new Panel("burned, from the front", peter(mc, BossForm.HUMAN, 0, false), 180f, 1.95f, 1.3f));
+                list.add(new Panel("whole, from the front", peter(mc, BossForm.HUMAN, 0, true), 180f, 1.95f, 1.3f));
+                list.add(new Panel("man, just before the swap", peter(mc, BossForm.SHIFTING, swap - 1, true), 160f, 1.95f, 1.3f));
+                list.add(new Panel("wolf, just after the swap", peter(mc, BossForm.SHIFTING, swap, true), 160f, 2.0f, 1.9f));
+                list.add(new Panel("the wolf, from the front", peter(mc, BossForm.BEAST, ShiftRules.END_TICK, true), 180f, 2.0f, 1.9f));
+                list.add(new Panel("the wolf, from the side", peter(mc, BossForm.BEAST, ShiftRules.END_TICK, true), 90f, 2.0f, 4.8f));
+                list.add(new Panel("the wolf, from behind", peter(mc, BossForm.BEAST, ShiftRules.END_TICK, true), 0f, 2.0f, 1.9f));
+                list.add(new Panel("the wolf, three quarters", peter(mc, BossForm.BEAST, ShiftRules.END_TICK, true), 135f, 2.0f, 3.6f));
+                return list;
+            }
             if (boss.equals("klaus")) {
                 columns = 4;
                 rows = 2;
@@ -212,6 +280,12 @@ public final class BossShots {
             var d = net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity.create(mc.level);
             d.lookForm(form, ticks);
             return d;
+        }
+
+        private static net.ofatech.supernaturalbloodlines.parts.bosses.entity.PeterHaleEntity peter(Minecraft mc, BossForm form, int ticks, boolean metMoon) {
+            var p = net.ofatech.supernaturalbloodlines.parts.bosses.entity.PeterHaleEntity.create(mc.level);
+            p.lookForm(form, ticks, metMoon);
+            return p;
         }
 
         private static KlausEntity klaus(Minecraft mc, BossForm form, int ticks, boolean desiccated) {

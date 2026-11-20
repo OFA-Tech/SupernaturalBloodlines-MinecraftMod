@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased (plan 17g: Peter Hale and the Hale house)
+
+### Added
+- **Peter Hale** (part `bosses`; **needs Werewolves**; no Werewolves, no Peter, no houses). He waits in a **burned Hale house**, a one-piece jigsaw structure (`structure/hale_house.nbt`, two storeys and a cellar, a cold fireplace, a charred chest) in forests and taigas, spacing 40. Many houses can generate and there is **one Peter**: he is made when a player in the overworld comes within 24 blocks of a piece of any house and he has not been seen; the other houses stay empty. He is a burned man until he has met a full moon, then a whole one (`peter_hale_burned.png`, `peter_hale.png`); at half health, or on a full moon night, he shifts into the quadruped Alpha (GeckoLib) for good. As the wolf on a full moon night he is **feral**: he attacks anything alive that is not a boss, and he pounces from 3 to 4 blocks away (R181).
+- **His death pays once** (`boss_reward_on`): the **Memory Claws** lie where he fell, and his one Alpha spark goes to the player who did the most damage to him (a tie to the last blow; a pet counts for its owner), by the rules of a stolen spark: a True Alpha takes none, an open protected path destroys it, the cap holds, a player who is no werewolf is told so. A mob's hit never counts as a white oak kill (R182).
+- **The Memory Claws** (R182, R183): right-click a player who agrees to learn their sire and genes, shown on their Profile page as far as that player knows them. It never names a line and never discovers a gene; the target must sneak with a lead in the main hand, PvP must be on and the user may hurt them, and the target is told. Every refusal reads the same and costs nothing. 12 uses, 30 seconds apart.
+- Config (`supernaturalbloodlines-bosses.toml`): `peter_house_enabled` (true), `peter_house_chance` (0.5), `peter_feral_full_moon` (true), `peter_respawn` (false), `peter_respawn_days` (7). Every one is on the Admin page; `/boss peter_hale spawn|state|reset` works as for the others.
+- The Guide's bosses chapter has four paragraphs on him.
+
+### Rolling back
+Rolling back to a build without 17g loses the Peter entity (a Peter in the world is dropped), the Memory Claws in an inventory or a chest, the generated Hale houses (the blocks stay, the structure is forgotten), and `BossIndex` keeps a `peter_hale` entry that is ignored. Knowledge the claws wrote into a profile stays.
+
 ## Unreleased (plan 17f: Deucalion)
 
 ### Added

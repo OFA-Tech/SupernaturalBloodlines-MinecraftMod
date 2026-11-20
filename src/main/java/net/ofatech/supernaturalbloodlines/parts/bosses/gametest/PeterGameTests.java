@@ -582,6 +582,29 @@ public final class PeterGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void theClawsNeverNameAnNpcOriginalAsTheSireOrALine(GameTestHelper helper) {
+        LineTestPlayer user = LineTestPlayer.create(helper);
+        LineTestPlayer target = LineTestPlayer.create(helper);
+        known(user, target);
+        try {
+            LineTestPlayer.useRealHarm(true);
+            net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder.record(net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.KLAUS.uuid(), "Klaus", target);
+            agree(target);
+            ItemStack stack = claws();
+            ((net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem) stack.getItem()).interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+            var facts = ProfileService.of(user, target.getUUID()).facts();
+            helper.assertTrue(stack.getDamageValue() == 1 && facts.containsKey(Fact.GENES), "the claws did not work on a player sired by an NPC Original");
+            helper.assertTrue(!facts.containsKey(Fact.SIRE) && !facts.containsKey(Fact.LINE), "the claws named an NPC Original as the sire or a line: " + facts);
+            helper.assertTrue(facts.values().stream().flatMap(List::stream).noneMatch(s -> s.toLowerCase(java.util.Locale.ROOT).contains("klaus")), "the name of an NPC Original is in what the claws taught: " + facts);
+        } finally {
+            LineTestPlayer.useRealHarm(false);
+            SireCall.overridePlayerLookup(null);
+            net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel()).remove(target.getUUID());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void theClawsWorkOnNothingButAnotherPlayerAndNeverOnTheUserAndCostNothingWhenTheyFail(GameTestHelper helper) {
         LineTestPlayer user = LineTestPlayer.create(helper);
         known(user);
