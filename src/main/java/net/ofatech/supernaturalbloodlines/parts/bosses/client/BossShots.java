@@ -76,13 +76,17 @@ public final class BossShots {
         if (worldTicks++ < WORLD_TICKS) {
             return;
         }
+        if (boss.equals("deal")) {
+            dealTick(mc);
+            return;
+        }
         if (screen == null) {
             if (mc.options.guiScale().get() != 2) {
                 mc.options.guiScale().set(2);
                 mc.resizeDisplay();
                 return;
             }
-            screen = boss.equals("deal") ? ElijahDealScreen.demo(List.of("mikael", "finn", "kol", "rebekah", "klaus"), 7) : new PanelScreen(boss);
+            screen = new PanelScreen(boss);
             mc.setScreen(screen);
         }
         if (++wait < SETTLE_TICKS) {
@@ -97,8 +101,45 @@ public final class BossShots {
         }
     }
 
+    private static final String[] DEAL_THEMES = {"grimoire", "blood_moon", "tensura"};
+    private static final int[] DEAL_SCALES = {2, 4};
+    private static final int DEAL_SETTLE_TICKS = 20;
+    private int dealStep;
+
+    /** The offer dialog in each hub theme at each GUI scale: one picture each, {@code bossshots/deal-<theme>-s<scale>.png}. */
+    private void dealTick(Minecraft mc) {
+        int scale = DEAL_SCALES[dealStep / DEAL_THEMES.length];
+        String theme = DEAL_THEMES[dealStep % DEAL_THEMES.length];
+        if (mc.options.guiScale().get() != scale) {
+            mc.options.guiScale().set(scale);
+            mc.resizeDisplay();
+            screen = null;
+            return;
+        }
+        if (screen == null) {
+            screen = ElijahDealScreen.demo(List.of("mikael", "finn", "kol", "rebekah", "klaus"), 7, theme);
+            mc.setScreen(screen);
+            wait = 0;
+            return;
+        }
+        if (++wait < DEAL_SETTLE_TICKS) {
+            return;
+        }
+        new File(mc.gameDirectory, "screenshots/bossshots").mkdirs();
+        String name = "deal-" + theme + "-s" + scale;
+        Screenshot.grab(mc.gameDirectory, "bossshots/" + name + ".png", mc.getMainRenderTarget(), c -> { });
+        SupernaturalBloodlines.LOGGER.warn("BOSSSHOTS bossshots/{}.png", name);
+        screen = null;
+        if (++dealStep >= DEAL_THEMES.length * DEAL_SCALES.length) {
+            done = true;
+            if (quit) {
+                mc.stop();
+            }
+        }
+    }
+
     /**
-     * One panel of the sheet: a named entity at a yaw, with the size of what is drawn (the model, which is not the hitbox: the wolf''s ears reach 2.1
+     * One panel of the sheet: a named entity at a yaw, with the size of what is drawn (the model, which is not the hitbox: the wolf's ears reach 2.1
      * blocks, its hitbox is 1.5) so every panel is fitted to its own cell and cannot spill into the next.
      */
     private record Panel(String name, LivingEntity entity, float yaw, float modelHeight, float modelWidth) {
@@ -158,7 +199,7 @@ public final class BossShots {
             return k;
         }
 
-        /** The animations run on the entity''s own tick count, which nothing advances for an entity that is not in the level: advance it, so a held pose is reached. */
+        /** The animations run on the entity's own tick count, which nothing advances for an entity that is not in the level: advance it, so a held pose is reached. */
         @Override
         public void tick() {
             if (panels != null) {

@@ -49,7 +49,7 @@ public final class BossesPart {
             registrar.playToServer(net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealChoicePayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealChoicePayload.STREAM_CODEC,
                     (payload, ctx) -> ctx.enqueueWork(() -> {
                         if (ctx.player() instanceof net.minecraft.server.level.ServerPlayer p) {
-                            net.ofatech.supernaturalbloodlines.parts.bosses.deal.Deals.choose(p, payload.entityId(), payload.index());
+                            net.ofatech.supernaturalbloodlines.parts.bosses.deal.Deals.choose(p, payload.entityId(), payload.original());
                         }
                     }));
         });

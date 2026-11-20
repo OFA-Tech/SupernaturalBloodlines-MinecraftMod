@@ -2,9 +2,8 @@ package net.ofatech.supernaturalbloodlines.core.boss;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * R167: Elijah's deal. He gives a vial of the blood of one NPC Original (never his own) for an oath that lasts {@code elijah_oath_days}: not to harm
@@ -25,7 +24,7 @@ public final class DealRules {
         return today + Math.max(1, days);
     }
 
-    /** Whether the oath still binds: sworn (not {@link #NEVER}) and not past its last day. A broken oath is removed from the record, so it never binds again. */
+    /** Whether the oath still binds: sworn (not {@link #NEVER}) and not past its last day. A broken oath is recorded as {@link #BROKEN}, which never binds. */
     public static boolean binding(long until, long today) {
         return until != NEVER && today < until;
     }
@@ -46,21 +45,21 @@ public final class DealRules {
     }
 
     /**
-     * What the offer lists, in order: every NPC Original but Elijah, except the one whose line the player is in when they have not discovered it
-     * ({@code ownRoot} not equal to {@code knownRoot}): the vial would name it.
+     * What the offer lists, in order: every NPC Original but Elijah, the same for everybody. Leaving one out for a player would tell them, by the gap,
+     * which line they are in before they have discovered it. Picking their own line's Original is allowed: it gives a vial with a name on it, nothing more.
      */
-    public static List<NpcOriginal> options(@Nullable UUID ownRoot, @Nullable UUID knownRoot, boolean originalsAlwaysVisible) {
+    public static List<NpcOriginal> options() {
         List<NpcOriginal> out = new ArrayList<>();
         for (NpcOriginal o : NpcOriginal.values()) {
-            if (o == NpcOriginal.ELIJAH) {
-                continue;
+            if (o != NpcOriginal.ELIJAH) {
+                out.add(o);
             }
-            boolean own = o.uuid().equals(ownRoot);
-            if (own && !originalsAlwaysVisible && !o.uuid().equals(knownRoot)) {
-                continue;
-            }
-            out.add(o);
         }
         return out;
+    }
+
+    /** The Original this id names, when the offer lists it. */
+    public static Optional<NpcOriginal> choose(String id) {
+        return options().stream().filter(o -> o.id().equals(id)).findFirst();
     }
 }

@@ -1,65 +1,208 @@
 package net.ofatech.supernaturalbloodlines.parts.bosses.client;
 
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealChoicePayload;
 import net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload;
+import net.ofatech.supernaturalbloodlines.parts.bosses.deal.Deals;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.ChoiceLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.ChoiceModel;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.ConfirmLayout;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 /**
- * Elijah''s offer (R167): a small dialog, not a hub page. One button for each Original whose blood he may give, and "No deal". It sends the position of the
- * button, nothing else; the server decides what the position means.
+ * Elijah's offer (R167): a choice dialog in the hub's own look (the player's theme, the kit's confirm style), not a hub page. It says what you pick, the
+ * oath, for how many in-game days, and what breaking it costs; one button for each NPC Original he may give and "No deal". The list scrolls when it does
+ * not fit. It sends the id of the one chosen, nothing else; the server decides whether it was on offer.
  */
 public final class ElijahDealScreen extends Screen {
-    private static final int BUTTON_W = 160;
-    private static final int BUTTON_H = 20;
-    private final DealOfferPayload offer;
+    private static final int FALLBACK_PAPER = 0xFF1B1B22;
+    private static final int FALLBACK_ACCENT = 0xFFB02A3A;
+    private static final int FALLBACK_INK = 0xFFE8E8EE;
+    private static final int FALLBACK_FOCUS = 0xFFFFD84A;
 
-    private ElijahDealScreen(DealOfferPayload offer) {
+    private final DealOfferPayload offer;
+    @Nullable
+    private final String themeId;
+    private int paper = FALLBACK_PAPER;
+    private int accent = FALLBACK_ACCENT;
+    private int ink = FALLBACK_INK;
+    private int focusColor = FALLBACK_FOCUS;
+    @Nullable
+    private HubTheme theme;
+    private List<FormattedCharSequence> lines = List.of();
+    private ChoiceLayout layout;
+    private ChoiceModel model;
+
+    private ElijahDealScreen(DealOfferPayload offer, @Nullable String themeId) {
         super(Component.translatable("supernaturalbloodlines.boss.elijah.title"));
         this.offer = offer;
+        this.themeId = themeId;
     }
 
     public static void open(DealOfferPayload offer) {
-        Minecraft.getInstance().setScreen(new ElijahDealScreen(offer));
+        Minecraft.getInstance().setScreen(new ElijahDealScreen(offer, null));
     }
 
-    /** A screen for the screenshots: no network, the same widgets. */
-    public static Screen demo(List<String> originals, int days) {
-        return new ElijahDealScreen(new DealOfferPayload(0, days, originals));
+    /** A screen for the screenshots: no network, the same widgets, in the named hub theme ({@code themeId} null: the player's own). */
+    public static Screen demo(List<String> originals, int days, @Nullable String themeId) {
+        return new ElijahDealScreen(new DealOfferPayload(0, days, originals), themeId);
+    }
+
+    private Component pick() {
+        return Component.translatable("supernaturalbloodlines.boss.elijah.offer.pick");
+    }
+
+    private Component oath() {
+        return Component.translatable("supernaturalbloodlines.boss.elijah.offer.oath", Deals.days(offer.days()));
+    }
+
+    private Component penalty() {
+        return Component.translatable("supernaturalbloodlines.boss.elijah.offer.penalty");
+    }
+
+    private Component label(int index) {
+        return Component.translatable("supernaturalbloodlines.original." + offer.originals().get(index));
     }
 
     @Override
     protected void init() {
-        int x = (width - BUTTON_W) / 2;
-        int y = height / 2 - 20;
-        for (int i = 0; i < offer.originals().size(); i++) {
-            int answer = i;
-            addRenderableWidget(Button.builder(Component.translatable("supernaturalbloodlines.original." + offer.originals().get(i)), b -> answer(answer))
-                    .bounds(x, y + i * (BUTTON_H + 4), BUTTON_W, BUTTON_H).build());
+        theme = HubHooks.currentTheme(themeId).orElse(null);
+        if (theme != null) {
+            paper = theme.paper();
+            accent = theme.accent();
+            ink = theme.ink();
+            focusColor = theme.focusColor();
         }
-        addRenderableWidget(Button.builder(Component.translatable("supernaturalbloodlines.boss.elijah.no_deal"), b -> answer(-1))
-                .bounds(x, y + offer.originals().size() * (BUTTON_H + 4) + 8, BUTTON_W, BUTTON_H).build());
+        int w = ConfirmLayout.textWidth(width);
+        List<FormattedCharSequence> all = new ArrayList<>();
+        for (Component paragraph : List.of(pick(), oath(), penalty())) {
+            all.addAll(font.split(paragraph, w));
+        }
+        lines = all;
+        layout = ChoiceLayout.of(width, height, lines.size(), offer.originals().size());
+        model = new ChoiceModel(offer.originals().size(), layout.rows());
     }
 
-    private void answer(int index) {
+    @Override
+    public Component getNarrationMessage() {
+        return Component.empty().append(title).append(". ").append(pick()).append(" ").append(oath()).append(" ").append(penalty());
+    }
+
+    private static String plain(FormattedCharSequence line) {
+        StringBuilder sb = new StringBuilder();
+        line.accept((i, style, cp) -> {
+            sb.appendCodePoint(cp);
+            return true;
+        });
+        return sb.toString();
+    }
+
+    @Override
+    public void render(GuiGraphics g, int mx, int my, float partial) {
+        Rect panel = layout.panel();
+        KitDraw.dialogFrame(g, width, height, panel, paper, accent);
+        g.drawString(font, LabelFit.cut(title.getString(), panel.w() - 2 * ConfirmLayout.PAD, font::width), panel.x() + ConfirmLayout.PAD, panel.y() + ConfirmLayout.PAD, accent, false);
+        int shown = Math.min(lines.size(), layout.textLines());
+        int y = layout.text().y();
+        for (int i = 0; i < shown; i++) {
+            boolean cutOff = i == shown - 1 && lines.size() > shown;
+            if (cutOff) {
+                g.drawString(font, LabelFit.cut(plain(lines.get(i)) + "...", layout.text().w(), font::width), layout.text().x(), y, ink, false);
+            } else {
+                g.drawString(font, lines.get(i), layout.text().x(), y, ink, false);
+            }
+            y += ConfirmLayout.LINE;
+        }
+        int n = offer.originals().size();
+        boolean scrolls = model.scrolls();
+        for (int row = 0; row < layout.rows(); row++) {
+            int index = model.scroll() + row;
+            Rect r = layout.row(row, scrolls);
+            KitDraw.dialogButton(g, font, r, label(index), true, model.focus() == index || r.contains(mx, my), paper, accent, ink, focusColor);
+        }
+        if (scrolls && theme != null) {
+            theme.drawScrollbar(g, layout.list(), model.scroll(), n - layout.rows());
+        }
+        KitDraw.dialogButton(g, font, layout.decline(), Component.translatable("supernaturalbloodlines.boss.elijah.no_deal"), false,
+                model.focus() >= n || layout.decline().contains(mx, my), paper, accent, ink, focusColor);
+    }
+
+    @Override
+    public boolean keyPressed(int key, int scan, int modifiers) {
+        ChoiceModel.Key mapped = switch (key) {
+            case GLFW.GLFW_KEY_ESCAPE -> ChoiceModel.Key.ESCAPE;
+            case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> ChoiceModel.Key.ENTER;
+            case GLFW.GLFW_KEY_UP -> ChoiceModel.Key.UP;
+            case GLFW.GLFW_KEY_DOWN -> ChoiceModel.Key.DOWN;
+            case GLFW.GLFW_KEY_TAB -> ChoiceModel.Key.TAB;
+            default -> null;
+        };
+        if (mapped == null) {
+            return super.keyPressed(key, scan, modifiers);
+        }
+        answer(model.press(mapped));
+        return true;
+    }
+
+    @Override
+    public boolean mouseClicked(double mx, double my, int button) {
+        if (button != 0) {
+            return false;
+        }
+        if (layout.decline().contains(mx, my)) {
+            answer(model.click(-1));
+            return true;
+        }
+        for (int row = 0; row < layout.rows(); row++) {
+            if (layout.row(row, model.scrolls()).contains(mx, my)) {
+                answer(model.click(row));
+                return true;
+            }
+        }
+        return layout.panel().contains(mx, my);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mx, double my, double dx, double dy) {
+        if (dy != 0 && layout.list().contains(mx, my)) {
+            model.wheel(dy < 0 ? 1 : -1);
+            return true;
+        }
+        return super.mouseScrolled(mx, my, dx, dy);
+    }
+
+    private void answer(ChoiceModel.Answer a) {
+        switch (a.type()) {
+            case PICK -> send(offer.originals().get(a.index()));
+            case DECLINE -> send(Deals.NO_DEAL);
+            case CLOSE -> onClose();
+            case NONE -> { }
+        }
+    }
+
+    private void send(String original) {
         if (offer.entityId() != 0) {
-            PacketDistributor.sendToServer(new DealChoicePayload(offer.entityId(), index));
+            PacketDistributor.sendToServer(new DealChoicePayload(offer.entityId(), original));
         }
         onClose();
     }
 
     @Override
-    public void render(GuiGraphics g, int mx, int my, float partial) {
-        super.render(g, mx, my, partial);
-        int cx = width / 2;
-        int top = height / 2 - 20 - 38;
-        g.drawCenteredString(font, title, cx, top, 0xFFFFFF);
-        g.drawCenteredString(font, Component.translatable("supernaturalbloodlines.boss.elijah.offer", offer.days()), cx, top + 14, 0xC8C8D0);
+    public void renderBackground(GuiGraphics g, int mx, int my, float partial) {
+        // the dialog dims the world itself
     }
 
     @Override

@@ -221,6 +221,12 @@ public final class ElijahGameTests {
 
     // ---- the deal ----
 
+    private static final String GONE = "supernaturalbloodlines.boss.elijah.gone";
+    private static final String DONE = "supernaturalbloodlines.boss.elijah.done";
+    private static final String REFUSED = "supernaturalbloodlines.boss.elijah.refused";
+    private static final String DECLINED = "supernaturalbloodlines.boss.elijah.declined";
+    private static final List<String> ALL = List.of("mikael", "finn", "kol", "rebekah", "klaus");
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theDealGivesTheChosenVialSwearsTheOathAndIsMadeOnce(GameTestHelper helper) {
         LineTestPlayer p = player(helper, null);
@@ -229,16 +235,17 @@ public final class ElijahGameTests {
             ElijahEntity e = rig.spawnElijah();
             DealOfferPayload offer = Deals.talk(e, p);
             helper.assertTrue(offer != null && offer.entityId() == e.getId() && offer.days() == BossesConfig.elijahOathDays(), "no offer, or a wrong one: " + offer);
-            helper.assertTrue(offer.originals().equals(List.of("mikael", "finn", "kol", "rebekah", "klaus")), "the offer lists " + offer.originals());
-            Deals.choose(p, e.getId(), 2);
+            helper.assertTrue(offer.originals().equals(ALL), "the offer lists " + offer.originals());
+            Deals.choose(p, e.getId(), "kol");
             ItemStack vial = p.getInventory().items.stream().filter(s -> s.getItem() instanceof SiresBloodItem).findFirst().orElse(ItemStack.EMPTY);
             helper.assertTrue(!vial.isEmpty() && NpcOriginal.KOL.uuid().equals(SiresBloodItem.sourceOf(vial)), "the vial is not Kol's blood: " + vial);
             long today = BossClock.today(rig.server.overworld());
             helper.assertTrue(rig.index.oathOf(p.getUUID()) == DealRules.sworn(today, BossesConfig.elijahOathDays()), "the oath is " + rig.index.oathOf(p.getUUID()));
             helper.assertTrue(p.received(SWORN), "no word of the oath: " + p.heard());
-            Deals.choose(p, e.getId(), 0);
+            Deals.choose(p, e.getId(), "mikael");
             long vials = p.getInventory().items.stream().filter(s -> s.getItem() instanceof SiresBloodItem).count();
             helper.assertTrue(vials == 1, "a second deal gave a second vial: " + vials);
+            helper.assertTrue(p.received(DONE), "the second deal was refused in silence: " + p.heard());
             helper.assertTrue(Deals.talk(e, p) == null && p.received(KEEP), "a player with an oath was offered another deal: " + p.heard());
         } finally {
             forget(helper, p);
@@ -247,23 +254,26 @@ public final class ElijahGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void anAnswerFromAfarWithABadIndexOrToAFallenOrHostileElijahDoesNothing(GameTestHelper helper) {
+    public static void anAnswerFromAfarWithAnUnlistedIdOrToAFallenOrHostileElijahDoesNothingAndSaysSo(GameTestHelper helper) {
         LineTestPlayer p = player(helper, null);
         try (BossTestRig rig = new BossTestRig(helper)) {
             world(helper, DAY + 6000, p);
             ElijahEntity e = rig.spawnElijah();
-            Deals.choose(p, e.getId(), 99);
-            Deals.choose(p, e.getId() + 1000, 0);
+            Deals.choose(p, e.getId(), "elijah");
+            helper.assertTrue(p.received(REFUSED), "Elijah's own blood was offered, or the refusal was silent: " + p.heard());
+            Deals.choose(p, e.getId(), "nobody");
+            Deals.choose(p, e.getId() + 1000, "mikael");
+            helper.assertTrue(p.received(GONE), "an answer to an Elijah who is not there was silent: " + p.heard());
             p.setPos(e.getX() + Deals.REACH + 4, e.getY(), e.getZ());
-            Deals.choose(p, e.getId(), 0);
+            Deals.choose(p, e.getId(), "mikael");
             helper.assertTrue(rig.index.oathOf(p.getUUID()) == DealRules.NEVER, "a deal was made that should not have been: " + rig.index.oathOf(p.getUUID()));
             p.setPos(e.getX() + 1, e.getY(), e.getZ());
             e.desiccate();
-            Deals.choose(p, e.getId(), 0);
+            Deals.choose(p, e.getId(), "mikael");
             helper.assertTrue(rig.index.oathOf(p.getUUID()) == DealRules.NEVER, "a fallen Elijah made a deal");
             e.recover();
             rig.index.of(BossId.ELIJAH).hostile = true;
-            Deals.choose(p, e.getId(), 0);
+            Deals.choose(p, e.getId(), "mikael");
             helper.assertTrue(rig.index.oathOf(p.getUUID()) == DealRules.NEVER && Deals.talk(e, p) == null, "a hostile Elijah made a deal");
             helper.assertTrue(p.getInventory().items.stream().noneMatch(s -> s.getItem() instanceof SiresBloodItem), "a vial was given");
         } finally {
@@ -277,8 +287,9 @@ public final class ElijahGameTests {
         LineTestPlayer p = player(helper, null);
         try (BossTestRig rig = new BossTestRig(helper)) {
             ElijahEntity e = rig.spawnElijah();
-            Deals.choose(p, e.getId(), -1);
+            Deals.choose(p, e.getId(), Deals.NO_DEAL);
             helper.assertTrue(rig.index.oathOf(p.getUUID()) == DealRules.NEVER, "declining wrote an oath");
+            helper.assertTrue(p.received(DECLINED), "declining was not answered: " + p.heard());
             helper.assertTrue(Deals.talk(e, p) != null, "after declining he did not offer again");
         } finally {
             forget(helper, p);
@@ -287,26 +298,46 @@ public final class ElijahGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void theOfferNeverNamesTheLineOfSomeoneWhoHasNotDiscoveredIt(GameTestHelper helper) {
+    public static void theOfferIsTheSameForEveryoneSoItNeverGivesAwayWhichLineYouAreIn(GameTestHelper helper) {
         LineTestPlayer p = player(helper, null);
+        LineTestPlayer other = player(helper, null);
         try (BossTestRig rig = new BossTestRig(helper)) {
             LineIndex.get(rig.server).setRoot(p.getUUID(), NpcOriginal.KLAUS.uuid(), true);
             ElijahEntity e = rig.spawnElijah();
-            DealOfferPayload offer = Deals.talk(e, p);
-            helper.assertTrue(offer != null && !offer.originals().contains("klaus") && offer.originals().size() == 4, "the offer names an undiscovered line: " + (offer == null ? null : offer.originals()));
-            Deals.choose(p, e.getId(), 3);
-            helper.assertTrue(p.getInventory().items.stream().noneMatch(s -> s.getItem() instanceof SiresBloodItem && NpcOriginal.KLAUS.uuid().equals(SiresBloodItem.sourceOf(s))),
-                    "the player was handed the blood of the line they are in, without knowing it");
-            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().knownLine(NpcOriginal.KLAUS.uuid()).build());
-            rig.index.setOath(p.getUUID(), DealRules.NEVER);
-            DealOfferPayload known = Deals.talk(e, p);
-            helper.assertTrue(known != null && known.originals().contains("klaus"), "a line that was discovered is still left out");
+            DealOfferPayload mine = Deals.talk(e, p);
+            DealOfferPayload theirs = Deals.talk(e, other);
+            helper.assertTrue(mine != null && theirs != null && mine.originals().equals(ALL) && theirs.originals().equals(ALL),
+                    "the offer differs by line: " + (mine == null ? null : mine.originals()) + " and " + (theirs == null ? null : theirs.originals()));
+            Deals.choose(p, e.getId(), "klaus");
+            helper.assertTrue(p.getInventory().items.stream().anyMatch(s -> s.getItem() instanceof SiresBloodItem && NpcOriginal.KLAUS.uuid().equals(SiresBloodItem.sourceOf(s))),
+                    "the player who is in Klaus's line could not choose him");
+            helper.assertTrue(!p.received(REFUSED) && rig.index.oathOf(p.getUUID()) != DealRules.NEVER, "choosing their own line's Original was refused: " + p.heard());
+        } finally {
+            forget(helper, p, other);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void heStandsStillWhileAnOfferIsOpenAndWalksOnWhenItIsAnswered(GameTestHelper helper) {
+        LineTestPlayer p = player(helper, null);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            ElijahEntity e = rig.spawnElijah();
+            helper.assertTrue(!e.listening(), "control: he listens before anyone spoke");
+            Deals.talk(e, p);
+            helper.assertTrue(e.listening(), "he did not wait for the answer");
+            helper.getLevel().setDayTime(helper.getLevel().getDayTime() + Deals.LISTEN_TICKS + 5);
+            rig.server.overworld().setDayTime(rig.server.overworld().getDayTime());
+            Deals.choose(p, e.getId(), Deals.NO_DEAL);
+            helper.assertTrue(!e.listening(), "he kept waiting after the answer");
+            Deals.talk(e, p);
+            e.setTarget(p);
+            helper.assertTrue(!e.listening(), "he stood still with something to fight");
         } finally {
             forget(helper, p);
         }
         helper.succeed();
     }
-
     // ---- the oath ----
 
     private static LineTestPlayer swornPlayer(GameTestHelper helper, BossTestRig rig) {
@@ -389,6 +420,37 @@ public final class ElijahGameTests {
         } finally {
             if (p != null) {
                 forget(helper, p);
+            }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTamedAnimalStrikesForItsOwnerAndAWildOneDoesNot(GameTestHelper helper) {
+        LineTestPlayer owner = null;
+        LineTestPlayer bystander = null;
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            owner = swornPlayer(helper, rig);
+            bystander = swornPlayer(helper, rig);
+            world(helper, DAY + 6000, owner, bystander);
+            ElijahEntity elijah = rig.spawnElijah();
+            net.ofatech.supernaturalbloodlines.parts.bosses.entity.KlausEntity klaus = rig.spawnKlaus();
+            net.minecraft.world.entity.animal.Wolf wild = helper.spawnWithNoFreeWill(net.minecraft.world.entity.EntityType.WOLF, new net.minecraft.core.BlockPos(1, 1, 1));
+            klaus.hurt(wild.damageSources().mobAttack(wild), 2.0F);
+            helper.assertTrue(rig.index.oathOf(owner.getUUID()) != DealRules.BROKEN && !elijah.hostileForGood(), "a wild wolf broke somebody's oath");
+            net.minecraft.world.entity.animal.Wolf pet = helper.spawnWithNoFreeWill(net.minecraft.world.entity.EntityType.WOLF, new net.minecraft.core.BlockPos(2, 1, 1));
+            pet.tame(owner);
+            klaus.invulnerableTime = 0;
+            klaus.hurt(pet.damageSources().mobAttack(pet), 2.0F);
+            helper.assertTrue(rig.index.oathOf(owner.getUUID()) == DealRules.BROKEN, "the owner of the wolf that bit Klaus kept their oath: " + rig.index.oathOf(owner.getUUID()));
+            helper.assertTrue(rig.index.oathOf(bystander.getUUID()) != DealRules.BROKEN, "somebody else's oath broke with it");
+            helper.assertTrue(elijah.hostileForGood() && owner.received(BROKEN), "Elijah did not turn, or the owner was not told: " + owner.heard());
+        } finally {
+            if (owner != null) {
+                forget(helper, owner);
+            }
+            if (bystander != null) {
+                forget(helper, bystander);
             }
         }
         helper.succeed();

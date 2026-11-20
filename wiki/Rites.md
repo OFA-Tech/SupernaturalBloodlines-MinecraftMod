@@ -164,6 +164,7 @@ A ward refuses (and returns the ingredients) if the wrong faction stands on the 
 | Items | 2 **White Oak Ash**, 4 **Vervain**, **Enchanted Golden Apple** |
 | Condition | a **desiccated Original** (hit with the White Oak Ash Dagger) within **6 blocks** of the circle ("The rite needs a desiccated Original in the circle.") |
 | Result | **The Cure** |
+| After | The caster is told "The rite is done. Something old has noticed." A minute later (`rebekah_delay_seconds`) **Rebekah** comes for them, from 12 to 48 blocks away; a mountain ash line laid by a pack Emissary holds her. A Cure that was given or dropped does not call her. |
 
 ## Rite of Severance
 

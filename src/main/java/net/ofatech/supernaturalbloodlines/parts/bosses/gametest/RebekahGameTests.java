@@ -80,6 +80,20 @@ public final class RebekahGameTests {
         NeoForge.EVENT_BUS.post(new CureMadeEvent(helper.getLevel(), helper.absolutePos(new BlockPos(2, 1, 2)), p.getUUID()));
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void noOneIsToldSomethingNoticedWhenSheIsAlreadyOutThere(GameTestHelper helper) {
+        LineTestPlayer p = caster(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(p);
+            rig.index.apply(BossId.REBEKAH, net.ofatech.supernaturalbloodlines.core.boss.BossRules.Event.SPAWNED);
+            cureMadeBy(helper, p);
+            helper.assertTrue(!p.received("supernaturalbloodlines.boss.rebekah.rite"), "someone was told something noticed when she was already out there: " + p.heard());
+        } finally {
+            forget(helper, p);
+        }
+        helper.succeed();
+    }
+
     // ---- the Cure that sends her ----
 
     @GameTest(template = "empty", templateNamespace = NS)
@@ -90,6 +104,7 @@ public final class RebekahGameTests {
             cureMadeBy(helper, p);
             BossIndex17d e = new BossIndex17d(rig);
             helper.assertTrue(e.waiting() && rig.index.of(BossId.REBEKAH).target.equals(p.getUUID()), "the Cure did not put her on her way");
+            helper.assertTrue(p.received("supernaturalbloodlines.boss.rebekah.rite"), "the one who made the Cure was not told something noticed: " + p.heard());
             BossDirector.check(rig.server);
             helper.assertTrue(rebekahOf(rig) == null, "she came before the delay");
             BossClock.offsetForTests(BossesConfig.rebekahDelaySeconds() * 20L + 5);
@@ -100,6 +115,7 @@ public final class RebekahGameTests {
             double d = Math.sqrt(r.distanceToSqr(helper.absoluteVec(new net.minecraft.world.phys.Vec3(2.5, 1, 2.5))));
             helper.assertTrue(d <= RebekahRules.RADIUS + 2, "she came from " + d + " blocks from the circle");
             helper.assertTrue(p.received(UNKNOWN) && p.received(HINT), "the one she hunts was not told, or was told her name: " + p.heard());
+            helper.assertTrue(!p.heard().contains("Rebekah is here"), "the arrival named her to someone who has not discovered her");
         } finally {
             forget(helper, p);
         }

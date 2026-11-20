@@ -59,9 +59,39 @@ public final class ElijahEntity extends NpcOriginalBoss {
         return level() instanceof ServerLevel level && BossIndex.get(level.getServer()).of(BossId.ELIJAH).hostile;
     }
 
+    private long listenUntil;
+
+    /** He stands still and looks at whoever he made the offer to, for up to {@code ticks}, unless he has something to fight. */
+    public void listenFor(int ticks) {
+        listenUntil = level().getGameTime() + ticks;
+    }
+
+    public void stopListening() {
+        listenUntil = 0;
+    }
+
+    public boolean listening() {
+        return getTarget() == null && level().getGameTime() < listenUntil;
+    }
+
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.Goal() {
+            {
+                setFlags(java.util.EnumSet.of(Flag.MOVE, Flag.LOOK));
+            }
+
+            @Override
+            public boolean canUse() {
+                return listening();
+            }
+
+            @Override
+            public void start() {
+                getNavigation().stop();
+            }
+        });
         goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2, false));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.7));
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 12.0F));

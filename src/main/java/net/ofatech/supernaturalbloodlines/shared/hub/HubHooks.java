@@ -29,6 +29,17 @@ public final class HubHooks {
     }
 
     private static final List<Theme> THEMES = new CopyOnWriteArrayList<>();
+    private static volatile java.util.function.Function<String, Optional<HubTheme>> currentTheme = id -> Optional.empty();
+
+    /** The hub part sets how to get the player's hub theme (or the one named by {@code id}, for screenshots), so another part's screen can match it without naming the hub. */
+    public static void setCurrentTheme(java.util.function.Function<String, Optional<HubTheme>> resolver) {
+        currentTheme = resolver;
+    }
+
+    /** The theme the hub would show now ({@code id} null) or the named one, or empty when the hub part is not there. */
+    public static Optional<HubTheme> currentTheme(@org.jetbrains.annotations.Nullable String id) {
+        return currentTheme.apply(id);
+    }
 
     public static void addTheme(Theme theme) {
         THEMES.removeIf(o -> o.id().equals(theme.id()));

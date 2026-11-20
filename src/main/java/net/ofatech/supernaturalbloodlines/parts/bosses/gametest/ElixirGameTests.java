@@ -94,6 +94,36 @@ public final class ElixirGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void itDoesNotUndoATurningOrATransitionOrTheVoid(GameTestHelper helper) {
+        long now = helper.getLevel().getGameTime();
+        DamageSource mob = helper.getLevel().damageSources().lava();
+        LineTestPlayer p = holder(helper, 1);
+        try {
+            BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().vampireBloodUntil(now + 1000).build());
+            helper.assertTrue(!saved(p, mob), "the Elixir undid the death that turns someone who drank vampire blood");
+            BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().vampireBloodUntil(Math.max(1, now - 1)).build());
+            helper.assertTrue(saved(p, mob), "an old, ended vampire blood window kept the Elixir from working");
+            p.getInventory().add(new ItemStack(BossItems.THE_ELIXIR.get()));
+            BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().inTransition(true).unstable(true).build());
+            helper.assertTrue(!saved(p, mob), "the Elixir undid an unstable hybrid transition");
+            BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().inTransition(true).unstable(false).build());
+            helper.assertTrue(saved(p, mob), "a steady transition kept the Elixir from working");
+            p.getInventory().add(new ItemStack(BossItems.THE_ELIXIR.get()));
+            BloodlineAccess.set(p, BloodlineState.NONE);
+            if (net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.ORIGINAL_BLOOD_EFFECT.isBound()) {
+                p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.ORIGINAL_BLOOD_EFFECT, 1000));
+                helper.assertTrue(!saved(p, mob), "the Elixir undid a death with Original blood in the veins");
+                p.removeAllEffects();
+            }
+            helper.assertTrue(!saved(p, helper.getLevel().damageSources().fellOutOfWorld()), "the Elixir rescued someone from the void, to drop them again");
+            helper.assertTrue(elixirs(p) >= 1, "an Elixir was spent on a death it does not save");
+        } finally {
+            BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aDeathTheResurrectionRingWouldSaveIsLeftToTheRing(GameTestHelper helper) {
         LineTestPlayer p = holder(helper, 1);
         try {

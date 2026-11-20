@@ -480,6 +480,11 @@ public final class BossDirector {
         entry.dimension = e.level().dimension().location().toString();
         entry.pos = e.pos();
         index.setDirty();
+        ServerPlayer caster = SireCall.player(server, e.caster());
+        if (caster != null) {
+            caster.displayClientMessage(Component.translatable("supernaturalbloodlines.boss.rebekah.rite"), true);
+            caster.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.rebekah.rite"));
+        }
     }
 
     private static void rebekah(MinecraftServer server, BossIndex index) {

@@ -84,6 +84,7 @@ public final class HubClient {
                                             return 1;
                                         })))));
         HubHooks.setHubOpener(HubClient::open);
+        HubHooks.setCurrentTheme(HubClient::themeFor);
         HubHooks.addTheme(new HubHooks.Theme(HubClientConfig.ThemeId.GRIMOIRE.id(), () -> true, GrimoireTheme::new));
         HubHooks.addTheme(new HubHooks.Theme(HubClientConfig.ThemeId.BLOOD_MOON.id(), () -> true, BloodMoonTheme::new));
         HubHooks.addLauncher(new HubHooks.Launcher("vampirism", "V", 0xFFf4c9c9, Component.translatable("supernaturalbloodlines.hub.launcher.vampirism"),
@@ -99,6 +100,16 @@ public final class HubClient {
             HubHooks.addLauncher(new HubHooks.Launcher("enchanted", "E", 0xFFb7f0c4, Component.translatable("supernaturalbloodlines.hub.launcher.enchanted"),
                     "net.favouriteless.", () -> true, HubClient::openEnchantedBook));
         }
+    }
+
+    /**
+     * The theme the player has chosen (or the one named by {@code id}, for screenshots), as the hub itself shows it: a theme that is not there, or is of the
+     * wrong type, is the Grimoire. Other parts' screens ask for it through {@link HubHooks#currentTheme}.
+     */
+    static java.util.Optional<net.ofatech.supernaturalbloodlines.shared.hub.HubTheme> themeFor(String id) {
+        HubClientConfig.ThemeId wanted = id == null ? HubClientConfig.theme() : HubClientConfig.ThemeId.valueOf(id.toUpperCase(java.util.Locale.ROOT));
+        HubClientConfig.ThemeId shown = HubClientConfig.resolve(wanted, other -> HubHooks.theme(other).isPresent());
+        return java.util.Optional.of(HubHooks.theme(shown.id()).map(t -> t.factory().get()).orElseGet(GrimoireTheme::new));
     }
 
     // Werewolves draws its skill tree with Vampirism's own skills screen, so both seals open it and both own its package

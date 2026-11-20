@@ -10,7 +10,7 @@ import net.minecraft.world.item.TooltipFlag;
 
 /**
  * Elijah's reward (R168). It does nothing in the hand: carried in the inventory, it brings its holder back from the next death that is not a line death
- * or {@code /kill}, once ({@code ElixirEvents}).
+ * or {@code /kill}, once ({@code BossEvents17d}).
  */
 public final class TheElixirItem extends Item {
     public TheElixirItem(Properties properties) {

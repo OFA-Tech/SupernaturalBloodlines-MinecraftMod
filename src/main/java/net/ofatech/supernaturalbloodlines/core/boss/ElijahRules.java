@@ -2,7 +2,7 @@ package net.ofatech.supernaturalbloodlines.core.boss;
 
 /**
  * R170: Elijah comes once a day, with the chance {@code elijah_chance_per_day}, to a player who has discovered an Original or holds an Original's
- * blood, by day or by night, in the overworld, on the ground, and never in a world made peaceful. He is calm: he fights only if he is hit, or after an
+ * blood, by day or by night, in the overworld, on the ground, in any difficulty (he is calm, so a peaceful world keeps nothing away). He is calm: he fights only if he is hit, or after an
  * oath was broken.
  */
 public final class ElijahRules {

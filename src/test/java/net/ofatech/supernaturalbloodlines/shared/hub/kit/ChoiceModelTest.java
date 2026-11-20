@@ -1,0 +1,93 @@
+package net.ofatech.supernaturalbloodlines.shared.hub.kit;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.ChoiceModel.Key;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.ChoiceModel.Type;
+import org.junit.jupiter.api.Test;
+
+class ChoiceModelTest {
+    @Test
+    void theDeclineButtonHasTheFocusFirstSoEnterAloneSwearsNothing() {
+        ChoiceModel m = new ChoiceModel(5, 2);
+        assertEquals(5, m.focus());
+        assertEquals(Type.DECLINE, m.press(Key.ENTER).type());
+    }
+
+    @Test
+    void upAndDownMoveTheFocusAndTheListFollowsIt() {
+        ChoiceModel m = new ChoiceModel(5, 2);
+        assertEquals(Type.NONE, m.press(Key.UP).type());
+        assertEquals(4, m.focus());
+        assertEquals(3, m.scroll(), "the last choice is brought into view");
+        m.press(Key.UP);
+        m.press(Key.UP);
+        m.press(Key.UP);
+        assertEquals(1, m.focus());
+        assertEquals(1, m.scroll());
+        m.press(Key.UP);
+        assertEquals(0, m.scroll(), "going above the first row scrolls up");
+        m.press(Key.UP);
+        assertEquals(0, m.focus(), "up stops at the first");
+        for (int i = 0; i < 9; i++) {
+            m.press(Key.DOWN);
+        }
+        assertEquals(5, m.focus(), "down stops at the decline button");
+    }
+
+    @Test
+    void enterChoosesTheFocusedChoiceByItsPositionInTheWholeList() {
+        ChoiceModel m = new ChoiceModel(5, 2);
+        m.press(Key.UP);
+        m.press(Key.UP);
+        ChoiceModel.Answer a = m.press(Key.ENTER);
+        assertEquals(Type.PICK, a.type());
+        assertEquals(3, a.index());
+    }
+
+    @Test
+    void tabCyclesThroughEverythingAndBack() {
+        ChoiceModel m = new ChoiceModel(3, 3);
+        m.press(Key.TAB);
+        assertEquals(0, m.focus(), "after the decline button, the first choice");
+        m.press(Key.TAB);
+        m.press(Key.TAB);
+        m.press(Key.TAB);
+        assertEquals(3, m.focus());
+    }
+
+    @Test
+    void escapeOnlyClosesAndChoosesNothing() {
+        assertEquals(Type.CLOSE, new ChoiceModel(5, 2).press(Key.ESCAPE).type());
+    }
+
+    @Test
+    void theWheelMovesTheListNotTheFocusAndStopsAtBothEnds() {
+        ChoiceModel m = new ChoiceModel(5, 2);
+        m.wheel(-1);
+        assertEquals(0, m.scroll());
+        for (int i = 0; i < 9; i++) {
+            m.wheel(1);
+        }
+        assertEquals(3, m.scroll(), "the last two are the last page");
+        assertEquals(5, m.focus(), "the wheel does not move the focus");
+        assertTrue(m.scrolls());
+        assertFalse(new ChoiceModel(2, 2).scrolls());
+    }
+
+    @Test
+    void aClickOnARowChoosesThatChoiceWhateverTheScrollAndAClickOnNothingDoesNot() {
+        ChoiceModel m = new ChoiceModel(5, 2);
+        m.wheel(1);
+        m.wheel(1);
+        ChoiceModel.Answer a = m.click(1);
+        assertEquals(Type.PICK, a.type());
+        assertEquals(3, a.index());
+        assertEquals(Type.DECLINE, m.click(-1).type());
+        assertEquals(Type.NONE, m.click(2).type(), "a row that is not shown");
+        ChoiceModel few = new ChoiceModel(1, 3);
+        assertEquals(Type.NONE, few.click(1).type(), "a row past the last choice");
+    }
+}

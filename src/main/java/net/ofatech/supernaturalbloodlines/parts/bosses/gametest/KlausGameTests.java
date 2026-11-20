@@ -993,7 +993,7 @@ public final class KlausGameTests {
     // ---- the mountain ash claim, as it really is ----
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void onlyAPackEmissarysLineHoldsKlausAndMikaelAPlainOneDoesNot(GameTestHelper helper) {
+    public static void onlyAPackEmissarysLineHoldsKlausMikaelElijahAndRebekahAPlainOneDoesNot(GameTestHelper helper) {
         if (!net.minecraft.core.registries.BuiltInRegistries.BLOCK.containsKey(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(NS, "mountain_ash_line"))) {
             helper.succeed(); // the artifacts part is off: there is no line to test
             return;
@@ -1002,6 +1002,8 @@ public final class KlausGameTests {
         try (BossTestRig rig = new BossTestRig(helper)) {
             KlausEntity k = rig.spawnKlaus();
             net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity m = rig.spawn();
+            net.ofatech.supernaturalbloodlines.parts.bosses.entity.ElijahEntity elijah = rig.spawnElijah();
+            net.ofatech.supernaturalbloodlines.parts.bosses.entity.RebekahEntity rebekah = rig.spawnRebekah();
             BlockPos at = new BlockPos(6, 1, 6);
             helper.setBlock(at, net.ofatech.supernaturalbloodlines.parts.artifacts.MountainAsh.LINE.get().defaultBlockState());
             BlockPos abs = helper.absolutePos(at);
@@ -1009,9 +1011,13 @@ public final class KlausGameTests {
             helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(vampire, level, abs), "control: a plain line does not hold a vampire");
             helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(k, level, abs), "a plain line holds Klaus: the hint can say so");
             helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(m, level, abs), "a plain line holds Mikael: the hint can say so");
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(elijah, level, abs), "a plain line holds Elijah");
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(rebekah, level, abs), "a plain line holds Rebekah");
             ((net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlockEntity) level.getBlockEntity(abs)).setEmissary(true);
             helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(k, level, abs), "an Emissary's line does not hold Klaus");
             helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(m, level, abs), "an Emissary's line does not hold Mikael");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(elijah, level, abs), "an Emissary's line does not hold Elijah");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(rebekah, level, abs), "an Emissary's line does not hold Rebekah");
         }
         helper.succeed();
     }

@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
-import java.util.UUID;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import org.junit.jupiter.api.Test;
 
@@ -69,14 +68,19 @@ class DealRulesTest {
     }
 
     @Test
-    void theOptionsAreEveryNpcOriginalButElijahAndTheOwnUndiscoveredOne() {
-        UUID klaus = NpcOriginal.KLAUS.uuid();
-        List<NpcOriginal> all = DealRules.options(null, null, false);
+    void theOptionsAreEveryNpcOriginalButElijahTheSameForEverybody() {
+        List<NpcOriginal> all = DealRules.options();
         assertEquals(List.of(NpcOriginal.MIKAEL, NpcOriginal.FINN, NpcOriginal.KOL, NpcOriginal.REBEKAH, NpcOriginal.KLAUS), all);
         assertFalse(all.contains(NpcOriginal.ELIJAH), "never his own blood");
-        assertFalse(DealRules.options(klaus, null, false).contains(NpcOriginal.KLAUS), "the vial would name the line they are in");
-        assertTrue(DealRules.options(klaus, klaus, false).contains(NpcOriginal.KLAUS), "discovered, so no secret");
-        assertTrue(DealRules.options(klaus, null, true).contains(NpcOriginal.KLAUS), "every Original is shown to everybody");
-        assertEquals(all, DealRules.options(UUID.randomUUID(), null, false), "a line that is no NPC's takes nothing away");
+        assertTrue(all.contains(NpcOriginal.KLAUS), "leaving one out would tell a player which line they are in");
+    }
+
+    @Test
+    void anAnswerIsAnIdThatIsOnTheOfferAndNothingElse() {
+        assertEquals(NpcOriginal.KOL, DealRules.choose("kol").orElseThrow());
+        assertTrue(DealRules.choose("elijah").isEmpty(), "his own blood is not on offer");
+        assertTrue(DealRules.choose("").isEmpty());
+        assertTrue(DealRules.choose("nobody").isEmpty());
+        assertTrue(DealRules.choose("KOL").isEmpty(), "the id is exact");
     }
 }

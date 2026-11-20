@@ -20,7 +20,7 @@ import net.ofatech.supernaturalbloodlines.parts.bosses.entity.NpcOriginalBoss;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineDeath;
 import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 
-/** The listeners phase 17d adds: a blow that breaks Elijah''s oath, the Elixir that saves from a death, and the Cure that sends Rebekah. */
+/** The listeners phase 17d adds: a blow that breaks Elijah's oath, the Elixir that saves from a death, and the Cure that sends Rebekah. */
 public final class BossEvents17d {
     private BossEvents17d() {
     }
@@ -34,23 +34,25 @@ public final class BossEvents17d {
     }
 
     private static void onIncoming(LivingIncomingDamageEvent e) {
-        if (e.getEntity() instanceof NpcOriginalBoss victim && !victim.level().isClientSide && e.getSource().getEntity() instanceof ServerPlayer attacker && e.getAmount() > 0F) {
-            Deals.struck(attacker, victim);
+        if (e.getEntity() instanceof NpcOriginalBoss victim && !victim.level().isClientSide && e.getAmount() > 0F) {
+            // a tamed animal or a minion strikes for whoever owns it: the oath is about what you set on them too
+            ServerPlayer attacker = Deals.playerBehind(victim.level().getServer(), e.getSource().getEntity());
+            if (attacker != null) {
+                Deals.struck(attacker, victim);
+            }
         }
     }
 
     static ElixirRules.Kind kindOf(ServerPlayer p, DamageSource source) {
-        if (source.is(LineDeath.DAMAGE_TYPE)) {
-            return ElixirRules.Kind.LINE_DEATH;
-        }
-        if (source.is(DamageTypes.GENERIC_KILL)) {
-            return ElixirRules.Kind.KILL_COMMAND;
-        }
+        var state = BloodlineAccess.get(p);
         // an Original who is killed by white oak is the end that starts a line death: nothing may keep them from it
-        if (OriginalRules.isOriginal(BloodlineAccess.get(p).species()) && OriginalRules.isWhiteOakKill(source)) {
-            return ElixirRules.Kind.LINE_DEATH;
-        }
-        return ElixirRules.Kind.OTHER;
+        boolean originalEnd = OriginalRules.isOriginal(state.species()) && OriginalRules.isWhiteOakKill(source);
+        boolean turning = state.vampireBloodUntil() > p.level().getGameTime()
+                || net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.ORIGINAL_BLOOD_EFFECT.isBound()
+                && p.hasEffect(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.ORIGINAL_BLOOD_EFFECT)
+                || state.inTransition() && state.unstable();
+        return ElixirRules.classify(source.is(LineDeath.DAMAGE_TYPE), source.is(DamageTypes.GENERIC_KILL), originalEnd, turning,
+                source.is(DamageTypes.FELL_OUT_OF_WORLD));
     }
 
     private static void onDeath(LivingDeathEvent e) {

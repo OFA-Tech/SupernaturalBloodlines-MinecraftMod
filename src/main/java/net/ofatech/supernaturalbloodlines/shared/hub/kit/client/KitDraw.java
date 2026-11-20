@@ -387,9 +387,7 @@ public final class KitDraw {
         GuiGraphics g = ctx.g();
         Font font = ctx.font();
         Rect panel = l.panel();
-        g.fill(0, 0, screenW, screenH, 0xB0000000);
-        g.fill(panel.x() - 1, panel.y() - 1, panel.right() + 1, panel.bottom() + 1, theme.accent());
-        g.fill(panel.x(), panel.y(), panel.right(), panel.bottom(), theme.paper());
+        dialogFrame(g, screenW, screenH, panel, theme.paper(), theme.accent());
         g.drawString(font, LabelFit.cut(title.getString(), panel.w() - 2 * ConfirmLayout.PAD, font::width), panel.x() + ConfirmLayout.PAD, panel.y() + ConfirmLayout.PAD, theme.accent(), false);
         Rect text = l.text();
         int y = text.y();
@@ -403,13 +401,25 @@ public final class KitDraw {
     }
 
     private static void dialogButton(GuiGraphics g, Font font, HubTheme theme, Rect r, Component label, boolean primary, boolean focused) {
-        int fill = primary ? theme.accent() : theme.paper();
-        g.fill(r.x(), r.y(), r.right(), r.bottom(), theme.accent());
+        dialogButton(g, font, r, label, primary, focused, theme.paper(), theme.accent(), theme.ink(), theme.focusColor());
+    }
+
+    /** The dim and the bordered panel of a dialog, in a theme's paper and accent. */
+    public static void dialogFrame(GuiGraphics g, int screenW, int screenH, Rect panel, int paper, int accent) {
+        g.fill(0, 0, screenW, screenH, 0xB0000000);
+        g.fill(panel.x() - 1, panel.y() - 1, panel.right() + 1, panel.bottom() + 1, accent);
+        g.fill(panel.x(), panel.y(), panel.right(), panel.bottom(), paper);
+    }
+
+    /** A dialog button in a theme's colours; {@code primary} fills it with the accent. The label is cut to fit, never wrapped. */
+    public static void dialogButton(GuiGraphics g, Font font, Rect r, Component label, boolean primary, boolean focused, int paper, int accent, int ink, int focus) {
+        int fill = primary ? accent : paper;
+        g.fill(r.x(), r.y(), r.right(), r.bottom(), accent);
         g.fill(r.x() + 1, r.y() + 1, r.right() - 1, r.bottom() - 1, fill);
         String shown = LabelFit.cut(label.getString(), r.w() - 8, font::width);
-        g.drawString(font, shown, r.x() + (r.w() - font.width(shown)) / 2, r.y() + 4, primary ? Contrast.bestText(fill) : theme.ink(), false);
+        g.drawString(font, shown, r.x() + (r.w() - font.width(shown)) / 2, r.y() + 4, primary ? Contrast.bestText(fill) : ink, false);
         if (focused) {
-            focusRing(g, r, theme.focusColor());
+            focusRing(g, r, focus);
         }
     }
 }
