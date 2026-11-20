@@ -30,6 +30,13 @@ public final class BossesConfig {
     private static final ModConfigSpec.IntValue ELIJAH_OATH_DAYS;
     private static final ModConfigSpec.DoubleValue ELIXIR_HEAL_FRACTION;
     private static final ModConfigSpec.IntValue REBEKAH_DELAY_SECONDS;
+    private static final ModConfigSpec.IntValue KOL_MIN_MARK;
+    private static final ModConfigSpec.IntValue KOL_CLOAK_MINUTES;
+    private static final ModConfigSpec.IntValue KOL_GRIMOIRE_SP;
+    private static final ModConfigSpec.DoubleValue FINN_CHANCE_PER_ECLIPSE;
+    private static final ModConfigSpec.IntValue FINN_RITUAL_SECONDS;
+    private static final ModConfigSpec.IntValue LINK_SECONDS;
+    private static final ModConfigSpec.DoubleValue LINK_DAMAGE_SHARE;
     private static final java.util.Map<BossId, ModConfigSpec.BooleanValue> ENABLED = new java.util.EnumMap<>(BossId.class);
 
     static {
@@ -69,6 +76,20 @@ public final class BossesConfig {
                 .defineInRange("elixir_heal_fraction", 0.5, 0.05, 1.0);
         REBEKAH_DELAY_SECONDS = b.comment("How long after The Cure is made at the rite Rebekah arrives for whoever made it. 0 = at once.")
                 .defineInRange("rebekah_delay_seconds", 60, 0, 3600);
+        KOL_MIN_MARK = b.comment("How many prey kills (the mark) a Hunter of the Five needs before Kol comes for them, by night.")
+                .defineInRange("kol_min_mark", 12, 1, 20);
+        KOL_CLOAK_MINUTES = b.comment("Minutes the Rite of Cloaking hides its performer from the Vampire Compass and from a hunter's sense.")
+                .defineInRange("kol_cloak_minutes", 30, 1, 1440);
+        KOL_GRIMOIRE_SP = b.comment("Skill points (the one shared pool) Kol's Grimoire gives when it is read, once per grimoire.")
+                .defineInRange("kol_grimoire_sp", 5, 0, 100);
+        FINN_CHANCE_PER_ECLIPSE = b.comment("The chance, once on each lunar eclipse night, that Finn comes to a witch-type or vampire player and begins his ritual.")
+                .defineInRange("finn_chance_per_eclipse", 0.5, 0.0, 1.0);
+        FINN_RITUAL_SECONDS = b.comment("Seconds Finn's ritual takes. Left alone it hurts nobody: he withdraws and the people near are told.")
+                .defineInRange("finn_ritual_seconds", 120, 5, 3600);
+        LINK_SECONDS = b.comment("Seconds a Linking Spell holds two creatures together.")
+                .defineInRange("link_seconds", 60, 5, 3600);
+        LINK_DAMAGE_SHARE = b.comment("The part of the damage one linked creature takes that the other takes too. Never passed on again.")
+                .defineInRange("link_damage_share", 0.5, 0.0, 1.0);
         SPEC = b.build();
     }
 
@@ -166,6 +187,34 @@ public final class BossesConfig {
 
     public static double elixirHealFraction() {
         return pick("elixir_heal_fraction", ELIXIR_HEAL_FRACTION);
+    }
+
+    public static int kolMinMark() {
+        return pick("kol_min_mark", KOL_MIN_MARK);
+    }
+
+    public static int kolCloakMinutes() {
+        return pick("kol_cloak_minutes", KOL_CLOAK_MINUTES);
+    }
+
+    public static int kolGrimoireSp() {
+        return pick("kol_grimoire_sp", KOL_GRIMOIRE_SP);
+    }
+
+    public static double finnChance() {
+        return pick("finn_chance_per_eclipse", FINN_CHANCE_PER_ECLIPSE);
+    }
+
+    public static int finnRitualSeconds() {
+        return pick("finn_ritual_seconds", FINN_RITUAL_SECONDS);
+    }
+
+    public static int linkSeconds() {
+        return pick("link_seconds", LINK_SECONDS);
+    }
+
+    public static double linkDamageShare() {
+        return pick("link_damage_share", LINK_DAMAGE_SHARE);
     }
 
     public static int rebekahDelaySeconds() {

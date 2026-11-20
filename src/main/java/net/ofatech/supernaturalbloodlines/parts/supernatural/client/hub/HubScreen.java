@@ -405,6 +405,8 @@ public final class HubScreen extends Screen {
             }
             case "rites_trial" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect(HubRites.TRIAL);
             case "rites_brother" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:werewolf_brother");
+            case "rites_cloaking" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:rite_of_cloaking");
+            case "rites_linking" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:rite_of_linking");
             case "pack_wolf" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackWolves.devSelect(1);
             case "pack_wolf_tensura" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackWolves.devSelect(3);
             case "pack_wolf_other" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackWolves.devSelect(4);

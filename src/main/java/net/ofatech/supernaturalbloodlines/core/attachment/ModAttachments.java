@@ -52,6 +52,10 @@ public final class ModAttachments {
                     .copyOnDeath()
                     .build());
 
+    /** Until which game time the Rite of Cloaking hides this player from the compass and the hunters' sense (R172); not kept on death: a death ends the cloak. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Long>> CLOAK_UNTIL =
+            ATTACHMENTS.register("cloak_until", () -> AttachmentType.builder(() -> 0L).serialize(com.mojang.serialization.Codec.LONG).build());
+
     private ModAttachments() {
     }
 

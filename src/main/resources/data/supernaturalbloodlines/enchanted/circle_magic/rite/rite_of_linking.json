@@ -1,0 +1,18 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "bosses" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:esther_grimoire", "count": 1 },
+        { "id": "minecraft:lead", "count": 2 },
+        { "id": "minecraft:amethyst_shard", "count": 2 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 5000,
+    "factory": {
+        "type": "supernaturalbloodlines:linking_spell",
+        "faction": "witch"
+    }
+}

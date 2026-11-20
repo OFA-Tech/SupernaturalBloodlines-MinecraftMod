@@ -98,7 +98,8 @@ public final class HunterInstinct {
     /** Prey the hunter senses: alive, within range, not themself, no spectator, and prey by R81 (so no witches or siphoners). */
     @VisibleForTesting
     public static boolean senses(ServerPlayer hunter, LivingEntity e) {
-        return e != hunter && e.isAlive() && !e.isSpectator() && e.distanceToSqr(hunter) <= range(hunter) * range(hunter) && MarkTracker.isPrey(e);
+        return e != hunter && e.isAlive() && !e.isSpectator() && e.distanceToSqr(hunter) <= range(hunter) * range(hunter) && MarkTracker.isPrey(e)
+                && !net.ofatech.supernaturalbloodlines.core.boss.CloakAccess.cloaked(e);
     }
 
     /** Sends the prey within range, if the hunter has the kills for it. Nothing is sent when there is none. */

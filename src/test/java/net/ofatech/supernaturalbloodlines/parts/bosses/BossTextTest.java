@@ -39,6 +39,40 @@ class BossTextTest {
     }
 
     @Test
+    void everyKolFinnAndLinkSettingHasALabelAndEveryNewThingAName() throws Exception {
+        JsonObject lang = lang();
+        for (String k : new String[] {"kol_min_mark", "kol_cloak_minutes", "kol_grimoire_sp", "finn_chance_per_eclipse", "finn_ritual_seconds", "link_seconds", "link_damage_share"}) {
+            assertTrue(lang.has(label(k)), "no admin label for " + k);
+        }
+        for (String k : new String[] {"entity.supernaturalbloodlines.kol", "entity.supernaturalbloodlines.finn", "item.supernaturalbloodlines.kol_grimoire",
+                "item.supernaturalbloodlines.esther_grimoire", "rite.supernaturalbloodlines.rite_of_cloaking", "rite.supernaturalbloodlines.rite_of_linking",
+                "supernaturalbloodlines.refusal.cloak_not_witch", "supernaturalbloodlines.refusal.cloak_unread", "supernaturalbloodlines.rite.cloak_done",
+                "supernaturalbloodlines.refusal.link_needs_two", "supernaturalbloodlines.refusal.link_wont_hold", "supernaturalbloodlines.rite.link_done",
+                "supernaturalbloodlines.boss.notice.kol.unknown", "supernaturalbloodlines.boss.notice.kol.known", "supernaturalbloodlines.boss.notice.kol.hint",
+                "supernaturalbloodlines.boss.kol.gone", "supernaturalbloodlines.boss.notice.finn.unknown", "supernaturalbloodlines.boss.notice.finn.known",
+                "supernaturalbloodlines.boss.finn.done", "supernaturalbloodlines.boss.finn.broken", "item.supernaturalbloodlines.kol_grimoire.read",
+                "item.supernaturalbloodlines.kol_grimoire.already", "item.supernaturalbloodlines.kol_grimoire.tooltip", "item.supernaturalbloodlines.esther_grimoire.tooltip"}) {
+            assertTrue(lang.has(k), "no text for " + k);
+        }
+    }
+
+    @Test
+    void theWordsOfKolAndFinnNeverNameThemBeforeTheyAreDiscoveredAndTheLinkRefusalNamesNoOriginal() throws Exception {
+        JsonObject lang = lang();
+        for (String k : new String[] {"supernaturalbloodlines.boss.notice.kol.unknown", "supernaturalbloodlines.boss.notice.finn.unknown"}) {
+            String text = lang.get(k).getAsString();
+            assertTrue(!text.contains("Kol") && !text.contains("Finn") && !text.contains("Mikaelson"), k + ": " + text);
+        }
+        for (String k : new String[] {"supernaturalbloodlines.refusal.link_wont_hold", "supernaturalbloodlines.refusal.link_needs_two"}) {
+            assertTrue(!lang.get(k).getAsString().toLowerCase().contains("original"), k + " says Original");
+        }
+        String guide = lang.get("supernaturalbloodlines.hub.guide.bosses.body").getAsString();
+        assertTrue(guide.contains("Kol comes by night") && guide.contains("Finn comes on a lunar eclipse") && guide.contains("pack Emissary"), "the Guide does not explain Kol and Finn");
+        assertTrue(guide.contains("The ritual hurts nobody"), "the Guide does not say the ritual is harmless");
+        assertTrue(guide.contains("neither of them an Original"), "the Guide does not say the Linking Spell leaves Originals alone");
+    }
+
+    @Test
     void theOriginalsSwitchIsLabelled() throws Exception {
         assertTrue(lang().has(label("mikael_stakes_originals")));
     }

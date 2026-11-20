@@ -179,6 +179,8 @@ public final class BossShots {
                     NpcOriginalBoss m = switch (boss) {
                         case "elijah" -> net.ofatech.supernaturalbloodlines.parts.bosses.entity.ElijahEntity.create(mc.level);
                         case "rebekah" -> net.ofatech.supernaturalbloodlines.parts.bosses.entity.RebekahEntity.create(mc.level);
+                        case "kol" -> net.ofatech.supernaturalbloodlines.parts.bosses.entity.KolEntity.create(mc.level);
+                        case "finn" -> net.ofatech.supernaturalbloodlines.parts.bosses.entity.FinnEntity.create(mc.level);
                         default -> {
                             MikaelEntity mikael = MikaelEntity.create(mc.level);
                             mikael.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(BossItems.MIKAELS_STAKE.get()));

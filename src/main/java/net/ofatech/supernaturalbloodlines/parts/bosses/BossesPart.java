@@ -36,6 +36,12 @@ public final class BossesPart {
         container.registerConfig(ModConfig.Type.COMMON, BossesConfig.SPEC, BossesConfig.FILE);
         AdminSpecs.register(BossesConfig.FILE, BossesConfig.SPEC);
         AdminSpecs.choices(BossesConfig.FILE + ":boss_reward_on", BossesConfig.rewardChoices());
+        // before the datapacks load, so the rite JSONs can name these factories
+        net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.bosses.rite.CloakingRiteFactory.ID,
+                net.ofatech.supernaturalbloodlines.parts.bosses.rite.CloakingRiteFactory.CODEC);
+        net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.bosses.rite.LinkingRiteFactory.ID,
+                net.ofatech.supernaturalbloodlines.parts.bosses.rite.LinkingRiteFactory.CODEC);
+        net.ofatech.supernaturalbloodlines.parts.bosses.link.Links.register();
         BossRegistries.register(modBus);
         BossItems.register(modBus);
         // R158: a mob's white oak never counts as a white oak kill; Mikael's does only when the config says so
@@ -71,6 +77,9 @@ public final class BossesPart {
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.ElijahGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.RebekahGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.ElixirGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.KolGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.FinnGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.CloakLinkGameTests.class);
         });
         SupernaturalBloodlines.LOGGER.info("BossesPart enabled");
     }

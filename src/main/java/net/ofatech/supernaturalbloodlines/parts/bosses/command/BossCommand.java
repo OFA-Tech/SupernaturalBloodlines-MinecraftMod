@@ -78,6 +78,8 @@ public final class BossCommand {
             case KLAUS -> BossDirector.spawnKlaus(level, null, spot.get()).isPresent();
             case ELIJAH -> BossDirector.spawnElijah(level, null, spot.get()).isPresent();
             case REBEKAH -> BossDirector.spawnRebekah(level, p.blockPosition(), null, null).isPresent();
+            case KOL -> BossDirector.spawnKol(level, null, spot.get()).isPresent();
+            case FINN -> BossDirector.spawnFinn(level, null, spot.get()).isPresent();
             default -> BossDirector.spawnMikael(level, null, spot.get()).isPresent();
         };
         if (!made) {
