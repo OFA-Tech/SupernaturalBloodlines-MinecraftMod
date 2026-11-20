@@ -65,5 +65,9 @@ class DamageTallyTest {
         assertEquals(A, tie.top().orElseThrow(), "the higher order is the later hit");
         tie.add(B, 0.5F);
         assertEquals(B, tie.top().orElseThrow());
+        DamageTally later = new DamageTally();
+        later.put(A, 5F, 7);
+        later.add(B, 5F);
+        assertEquals(B, later.top().orElseThrow(), "a blow after a load is after every blow that was saved (the order is not reset to 0)");
     }
 }

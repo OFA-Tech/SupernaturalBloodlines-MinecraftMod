@@ -325,6 +325,9 @@ public final class DeucalionGameTests {
             helper.assertTrue(d.getBbWidth() > 1.0F, "the hitbox is not the wolf's at the swap: " + d.getBbWidth());
             run(d, ShiftRules.END_TICK + 5);
             helper.assertTrue(d.form() == BossForm.BEAST && !d.hatVisible(), "he is not the wolf after the shift, or the glasses are back: " + d.form());
+            helper.assertTrue(d.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) > d.getAttributeBaseValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 1.2
+                    && d.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) > d.getAttributeBaseValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * 1.4,
+                    "the wolf is not faster and harder than the man");
             d.setHealth(d.getMaxHealth());
             run(d, 40);
             helper.assertTrue(d.form() == BossForm.BEAST, "the wolf changed back");
@@ -761,6 +764,27 @@ public final class DeucalionGameTests {
             helper.assertTrue(trueAlpha.received(NOTICE), "the True Alpha was not warned: " + trueAlpha.heard());
         } finally {
             clean(trueAlpha);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theWarningNamesTheThresholdFromTheConfigNotAFixedNumber(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer p = wolf(helper, Rank.ALPHA, 7, true, 2.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(p);
+            BossesConfig.override("deucalion_min_sparks", 7);
+            BossDirector.check(rig.server);
+            helper.assertTrue(deucalionOf(rig) != null && p.received(NOTICE), "he did not come for 7 sparks with the minimum at 7");
+            helper.assertTrue(p.heard().contains("7"), "the warning does not give the minimum of the config: " + p.heard());
+            deucalionOf(rig).dismissPack();
+        } finally {
+            BossesConfig.override("deucalion_min_sparks", null);
+            clean(p);
         }
         helper.succeed();
     }
