@@ -12,11 +12,8 @@ public record LunarMood(Kind kind, boolean superMoon) {
     public static final String EC_DEFAULT_NAMESPACE = "enhancedcelestials2defaultlunarevents";
     public static final String ECLIPSE_NAMESPACE = "supernaturalbloodlines";
     public static final String ECLIPSE_PATH = "lunar_eclipse";
-    /** The rites that need the full moon and that a super moon makes cheaper (Severance and the Alpha Trial also need it, and are left out on purpose: {@link #FULL_MOON_NO_DISCOUNT}). A test keeps both sets equal to the rite data. */
+    /** The rites that need the full moon and that a super moon makes cheaper (Severance and the Alpha Trial also need it and are left out on purpose, see {@code FullMoonRitesDataTest}). A test keeps this and that list equal to the rite data. */
     public static final java.util.Set<String> FULL_MOON_RITES = java.util.Set.of("supernaturalbloodlines:rite_of_the_moon", "supernaturalbloodlines:silver_moon", "supernaturalbloodlines:immortality");
-
-    /** Full-moon rites that a super moon does not make cheaper. */
-    public static final java.util.Set<String> FULL_MOON_NO_DISCOUNT = java.util.Set.of("supernaturalbloodlines:rite_of_severance", "supernaturalbloodlines:alpha_trial");
 
     /** The mood of an Enhanced Celestials event id. Only the Default Lunar Events and our own eclipse are known; any other event is {@link #NONE}. */
     public static LunarMood ofEvent(String namespace, String path) {

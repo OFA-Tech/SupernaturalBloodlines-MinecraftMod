@@ -190,6 +190,39 @@ public final class OriginalHybridGameTests {
         helper.succeed();
     }
 
+    /** A caster who stands apart from the circle's centre: the one on the centre is the target. */
+    private static void placeApart(GameTestHelper helper, ServerPlayer p) {
+        p.setPos(net.minecraft.world.phys.Vec3.atBottomCenterOf(centre(helper)).add(4, 1, 0));
+        helper.getLevel().addNewPlayer(p);
+    }
+
+    /** The caster is not the target: a refusal must not tell the caster whether the stranger on the circle carries the gene. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void moonRiteRefusalTellsTheCasterNothingAboutTheTargetsGene(GameTestHelper helper) {
+        for (boolean gene : new boolean[] {false, true}) {
+            RecordingPlayer caster = RecordingPlayer.create(helper);
+            RecordingPlayer target = RecordingPlayer.create(helper);
+            place(helper, target);
+            placeApart(helper, caster);
+            try {
+                // a vampire who is not an Original: refused whether or not they carry the gene (an Original with it would be let through)
+                vampire(target, Species.NONE, gene);
+                atFullMoon(helper, true, () -> start(helper, "rite_of_the_moon", caster, moonItems()));
+                helper.assertTrue(!caster.receivedOnActionBar("supernaturalbloodlines.refusal.no_gene") && !caster.receivedOnActionBar("supernaturalbloodlines.refusal.not_original"),
+                        "the caster was told about the target's gene (gene " + gene + ")");
+                helper.assertTrue(caster.receivedOnActionBar("supernaturalbloodlines.rite.no_effect"), "the caster was not told the rite changes nothing (gene " + gene + ")");
+                helper.assertTrue(target.receivedOnActionBar(gene ? "supernaturalbloodlines.refusal.not_original" : "supernaturalbloodlines.refusal.no_gene"),
+                        "the target was not told why (gene " + gene + ")");
+            } finally {
+                remove(helper, caster);
+                remove(helper, target);
+                reset(caster);
+                reset(target);
+            }
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void moonRiteNeedsAFullMoon(GameTestHelper helper) {
         RecordingPlayer caster = RecordingPlayer.create(helper);

@@ -33,6 +33,16 @@ public final class HubRites {
     private HubRites() {
     }
 
+    /** What a rite costs besides its items: altar power, or (power 0) magicules from the caster for the Magicule Offering, or nothing else. */
+    public enum Cost { ALTAR, MAGICULES, NONE }
+
+    public static Cost cost(HubSocial.Rite rite) {
+        if (rite.power() > 0) {
+            return Cost.ALTAR;
+        }
+        return rite.factory().equals("supernaturalbloodlines:magicule_offering") ? Cost.MAGICULES : Cost.NONE;
+    }
+
     /**
      * The lang suffixes (under {@code hub.rites.trial.}) the Alpha Trial card shows for this wolf, the important one first: the warning when winning would end
      * their path to True Alpha, or that only a werewolf Beta or Omega can try it; then always what it asks. Pure.

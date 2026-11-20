@@ -67,7 +67,7 @@ public final class RitesPage implements HubPageView {
                 y = PageKit.wrapped(f, Component.translatable(KEY + (l.forYou() ? "for_you" : "others")).withStyle(ChatFormatting.BOLD),
                         r.x(), y + 3, r.w(), t.accent());
             }
-            Component power = Component.translatable(KEY + "power_short", l.rite().power());
+            Component power = powerShort(l.rite());
             int pw = f.font().width(power);
             Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, PageKit.LINE + 1);
             if (l == chosen) {
@@ -156,7 +156,30 @@ public final class RitesPage implements HubPageView {
 
     /** "Power: 6,000", or that the rite asks for none (it costs something else, which its description says). */
     static Component powerText(HubSocial.Rite rite) {
-        return rite.power() == 0 ? Component.translatable(KEY + "power_none") : Component.translatable(KEY + "power", String.format("%,d", rite.power()));
+        return switch (HubRites.cost(rite)) {
+            case ALTAR -> Component.translatable(KEY + "power", String.format("%,d", rite.power()));
+            case MAGICULES -> Component.translatable(KEY + "power_magicules");
+            case NONE -> Component.translatable(KEY + "power_none");
+        };
+    }
+
+    /** The cost in a list row: "6,000", or "magicules" / "no power" when the altar gives nothing. */
+    static Component powerShort(HubSocial.Rite rite) {
+        return switch (HubRites.cost(rite)) {
+            case ALTAR -> Component.translatable(KEY + "power_short", rite.power());
+            case MAGICULES -> Component.translatable(KEY + "power_short_magicules");
+            case NONE -> Component.translatable(KEY + "power_short_none");
+        };
+    }
+
+    /** The cost on a book card: "6,000 power", "costs magicules" or "no altar power". */
+    static Component powerCard(HubSocial.Rite rite) {
+        String book = PageKit.HUB + "book.rites.";
+        return switch (HubRites.cost(rite)) {
+            case ALTAR -> Component.translatable(book + "power", String.format("%,d", rite.power()));
+            case MAGICULES -> Component.translatable(book + "power_magicules");
+            case NONE -> Component.translatable(book + "power_none");
+        };
     }
 
     /** "medium circle, infernal chalk" for a {@code shape=chalk} pair of the wire; a shape without a chalk is only the shape. */

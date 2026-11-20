@@ -638,6 +638,30 @@ public final class OriginalGameTests {
         helper.succeed();
     }
 
+    /** The caster is not the one on the circle: a refusal must not tell them whether that player is an Original. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void originalBloodRefusalTellsAStrangerCasterNothing(GameTestHelper helper) {
+        clearDropped(helper);
+        RecordingPlayer caster = RecordingPlayer.create(helper);
+        RecordingPlayer target = RecordingPlayer.create(helper);
+        place(helper, target);
+        caster.setPos(net.minecraft.world.phys.Vec3.atBottomCenterOf(centre(helper)).add(4, 1, 0));
+        helper.getLevel().addNewPlayer(caster);
+        try {
+            BloodlineAccess.set(target, species(Species.WITCH));
+            start(helper, "original_blood", caster, List.of(new ItemStack(Items.GLASS_BOTTLE)));
+            helper.assertTrue(!caster.receivedOnActionBar(NOT_ORIGINAL), "the caster was told the one on the circle is not an Original");
+            helper.assertTrue(caster.receivedOnActionBar("supernaturalbloodlines.rite.no_effect"), "the caster was not told the rite changes nothing");
+            helper.assertTrue(target.receivedOnActionBar(NOT_ORIGINAL), "the one on the circle was not told");
+        } finally {
+            clearDropped(helper);
+            remove(helper, caster);
+            remove(helper, target);
+            reset(target);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void originalBloodRiteRefusesNonOriginals(GameTestHelper helper) {
         clearDropped(helper);

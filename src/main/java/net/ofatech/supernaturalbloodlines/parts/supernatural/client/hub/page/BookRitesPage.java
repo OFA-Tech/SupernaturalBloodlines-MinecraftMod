@@ -58,7 +58,7 @@ public final class BookRitesPage implements HubPageView {
             KitDraw.shape(f.g, Shapes.Shape.ROUND, r.x() + 1, y + 1, 16, ring);
             KitDraw.shape(f.g, Shapes.Shape.ROUND, r.x() + 3, y + 3, 12, t.paper());
             KitDraw.shape(f.g, Shapes.Shape.ROUND, r.x() + 6, y + 6, 6, ring);
-            Component power = Component.translatable(BOOK + "power", String.format("%,d", l.rite().power()));
+            Component power = RitesPage.powerCard(l.rite());
             int pw = BookKit.smallWidth(f, power.getString());
             String name = LabelFit.cut(RitesPage.name(l.rite()).getString(), r.w() - 24, f.font()::width);
             f.g.drawString(f.font(), name, r.x() + 22, y + 1, sel ? t.accent() : t.ink(), false);
@@ -115,7 +115,11 @@ public final class BookRitesPage implements HubPageView {
     /** "medium circle, infernal chalk · 6,000 altar power" (or no altar power), under a rite's name. */
     static Component sub(HubSocial.Rite rite) {
         Component circle = rite.shapes().isEmpty() ? Component.literal("-") : RitesPage.circleName(rite.shapes().get(0));
-        return rite.power() == 0 ? Component.translatable(BOOK + "sub_free", circle) : Component.translatable(BOOK + "sub", circle, String.format("%,d", rite.power()));
+        return switch (HubRites.cost(rite)) {
+            case ALTAR -> Component.translatable(BOOK + "sub", circle, String.format("%,d", rite.power()));
+            case MAGICULES -> Component.translatable(BOOK + "sub_magicules", circle);
+            case NONE -> Component.translatable(BOOK + "sub_free", circle);
+        };
     }
 
     /** The rite's circle as Enchanted draws it, with its items on rings, one under the other pages' heading; returns the y under it. */

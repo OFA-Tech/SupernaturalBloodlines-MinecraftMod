@@ -169,6 +169,13 @@ class RitesBookTest {
     }
 
     @Test
+    void theMoonRiteTextDoesNotTellTheCasterWhoCarriesTheGene() throws IOException {
+        String moon = String.join(" ", RitesBook.desc(RitesBook.lang(ROOT), "rite_of_the_moon").subList(1, 3)).toLowerCase();
+        assertFalse(moon.contains("gene"), "a refusal of this rite tells the caster nothing about the gene, so the text must not either");
+        assertTrue(moon.contains("would change nothing"));
+    }
+
+    @Test
     void theEclipseIsInTheText() throws IOException {
         for (String path : RitesBook.rites(ROOT)) {
             assertEquals(ECLIPSE_BY_CODE.contains(path), all(path).contains("lunar eclipse"), path);

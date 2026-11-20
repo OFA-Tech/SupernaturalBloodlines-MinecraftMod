@@ -69,6 +69,26 @@ public final class LineRiteGameTests {
 
     private static final String IMPRISONED_ID = "rite_of_the_imprisoned_original";
 
+    private static com.google.gson.JsonObject json(String s) {
+        return com.google.gson.JsonParser.parseString(s).getAsJsonObject();
+    }
+
+    /** Severance and the Alpha Trial are full-moon rites unless their file says otherwise: an old file or a datapack override without the key keeps the rule. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void fullMoonRitesWithoutTheKeyStillNeedTheMoon(GameTestHelper helper) {
+        var ops = com.mojang.serialization.JsonOps.INSTANCE;
+        var severance = net.ofatech.supernaturalbloodlines.parts.species.rite.SeveranceRiteFactory.CODEC.codec();
+        var trial = net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.CODEC.codec();
+        helper.assertTrue(severance.parse(ops, json("{}")).getOrThrow().requiresFullMoon(), "Severance without the key");
+        helper.assertTrue(trial.parse(ops, json("{\"faction\":\"werewolf\"}")).getOrThrow().requiresFullMoon(), "the Alpha Trial without the key");
+        helper.assertTrue(!severance.parse(ops, json("{\"requires_full_moon\":false}")).getOrThrow().requiresFullMoon(), "Severance with the key off");
+        helper.assertTrue(!trial.parse(ops, json("{\"requires_full_moon\":false}")).getOrThrow().requiresFullMoon(), "the Alpha Trial with the key off");
+        // the hub learns of the moon from the encoded factory: a true that equals the default must be written
+        helper.assertTrue(severance.encodeStart(ops, new net.ofatech.supernaturalbloodlines.parts.species.rite.SeveranceRiteFactory(true)).getOrThrow().getAsJsonObject().get("requires_full_moon").getAsBoolean(), "Severance is written back");
+        helper.assertTrue(trial.encodeStart(ops, new net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory("werewolf", true)).getOrThrow().getAsJsonObject().get("requires_full_moon").getAsBoolean(), "the Alpha Trial is written back");
+        helper.succeed();
+    }
+
     /** The circle, a witch at its edge, a player Original and a hybrid of their line, all "online". */
     static final class Rig {
         final GameTestHelper helper;

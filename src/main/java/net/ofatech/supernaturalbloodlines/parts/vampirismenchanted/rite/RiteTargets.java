@@ -12,6 +12,26 @@ public final class RiteTargets {
     private RiteTargets() {
     }
 
+    /** What the caster and the one on the circle are told for a refusal that is about that one; {@code target} is null when nobody else is told. */
+    public record Told(String caster, String target) {
+    }
+
+    /**
+     * A refusal that says something about the target (their gene, that they are an Original, a hybrid) goes to the target only: a caster who is not the
+     * target is told the rite would change nothing, so a refusal cannot be used to ask a stranger on the circle what they are.
+     */
+    public static Told refusalAbout(boolean casterIsTarget, String key) {
+        return casterIsTarget ? new Told(key, null) : new Told(FactionRiteFactory.NO_EFFECT, key);
+    }
+
+    public static void refuseAbout(net.minecraft.server.level.ServerPlayer caster, net.minecraft.server.level.ServerPlayer target, String key) {
+        Told told = refusalAbout(caster == target, key);
+        caster.displayClientMessage(net.minecraft.network.chat.Component.translatable(told.caster()), true);
+        if (told.target() != null) {
+            target.displayClientMessage(net.minecraft.network.chat.Component.translatable(told.target()), true);
+        }
+    }
+
     /**
      * The player standing on the circle's centre block, else the caster (if online). {@code params} is needed because
      * Enchanted keeps the caster id private to the rite and only hands it to {@code onStart}.

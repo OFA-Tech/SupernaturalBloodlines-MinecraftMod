@@ -39,7 +39,7 @@ public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) im
     /** {@code faction} is only what the Rites page reads to list it first for werewolves (the factory reads no faction from it). */
     public static final MapCodec<AlphaTrialRiteFactory> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.mapCodec(i -> i.group(
             com.mojang.serialization.Codec.STRING.optionalFieldOf("faction", "werewolf").forGetter(AlphaTrialRiteFactory::faction),
-            com.mojang.serialization.Codec.BOOL.optionalFieldOf("requires_full_moon", false).forGetter(AlphaTrialRiteFactory::requiresFullMoon)
+            net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory.fullMoonByDefault().forGetter(AlphaTrialRiteFactory::requiresFullMoon)
     ).apply(i, AlphaTrialRiteFactory::new));
     private static final String KEY = "supernaturalbloodlines.trial.";
 
@@ -89,17 +89,13 @@ public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) im
      * Starts a trial for {@code p} at the circle at {@code centre}, or says why not. Returns the refusal key (null when the boss stands), and sends the
      * warning when that is what is missing.
      */
-    public static String tryStart(net.minecraft.server.level.ServerLevel level, BlockPos centre, ServerPlayer p, boolean transformed) {
-        return tryStart(level, centre, p, transformed, true);
-    }
-
-    /** {@code needsFullMoon} is the rite file's {@code requires_full_moon}: false lets a server run the trial on any night. */
+    /** {@code needsFullMoon} is the rite file's {@code requires_full_moon}: false lets a server run the trial on any night, but never in daylight. */
     public static String tryStart(net.minecraft.server.level.ServerLevel level, BlockPos centre, ServerPlayer p, boolean transformed, boolean needsFullMoon) {
         long now = level.getGameTime();
         var wolf = PackAccess.wolf(p);
         TrialRules.Refusal refusal = TrialRules.gate(SpeciesConfig.trial().enabled(), wolf, VampirismSupernatural.isWerewolf(p),
                 VampirismAPI.factionPlayerHandler(p).getCurrentLevel(), SpeciesConfig.trial().minLevel(),
-                !needsFullMoon || MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), transformed,
+                MoonRule.nightFor(needsFullMoon, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), transformed,
                 AlphaTrialBoss.running(level, p.getUUID()), TrueAlphaWarning.applies(wolf.rank(), PackRules.pathOpen(wolf)), LEDGER.valid(p.getUUID(), now));
         switch (refusal) {
             case NONE -> {

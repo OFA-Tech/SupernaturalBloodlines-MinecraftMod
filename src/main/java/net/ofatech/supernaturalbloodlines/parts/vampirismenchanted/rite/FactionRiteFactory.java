@@ -65,6 +65,14 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             Codec.BOOL.optionalFieldOf("requires_full_moon", false).forGetter(FactionRiteFactory::requiresFullMoon)
     ).apply(i, FactionRiteFactory::new));
 
+    /**
+     * {@code requires_full_moon} for a rite that needs the moon unless its file says otherwise (Severance, the Alpha Trial): an old file without the
+     * key keeps the rule, and the key is always written back (a plain {@code optionalFieldOf(.., true)} leaves a true value out, and the hub reads it from there).
+     */
+    public static MapCodec<Boolean> fullMoonByDefault() {
+        return Codec.BOOL.optionalFieldOf("requires_full_moon").xmap(o -> o.orElse(true), Optional::of);
+    }
+
     public static <E extends Enum<E>> Codec<E> enumCodec(Class<E> type) {
         return Codec.STRING.comapFlatMap(name -> {
             try {
@@ -198,7 +206,12 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             BloodlineContext ctx = FactionRiteHooks.context(target, current, level.getGameTime());
             Outcome preview = BloodlineRules.apply(before, factory.event, ctx);
             if (preview.refused()) {
-                tell(caster, preview.refusalKey());
+                if (factory.event == BloodlineEvent.RITE_OF_THE_MOON) {
+                    // the Moon rite's refusals (no gene, not an Original) are two answers to "do they carry the gene?": the target is told, the caster is not
+                    RiteTargets.refuseAbout(caster, target, preview.refusalKey());
+                } else {
+                    tell(caster, preview.refusalKey());
+                }
                 return cancel();
             }
             if (preview.actions().isEmpty() && preview.state().equals(before)) {

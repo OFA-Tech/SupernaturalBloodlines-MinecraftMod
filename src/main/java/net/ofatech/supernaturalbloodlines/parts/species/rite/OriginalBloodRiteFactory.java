@@ -57,7 +57,7 @@ public record OriginalBloodRiteFactory() implements RiteFactory {
             ServerPlayer target = found.get();
             if (!OriginalRules.isOriginal(BloodlineAccess.get(target).species())) {
                 ServerPlayer caster = findEntity(params.caster) instanceof ServerPlayer p ? p : target;
-                caster.displayClientMessage(Component.translatable(NOT_ORIGINAL), true);
+                net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.RiteTargets.refuseAbout(caster, target, NOT_ORIGINAL);
                 return cancel();
             }
             int bottles = (int) LadderQuery.value(target, "S-ORI-2", "bottles", 1);

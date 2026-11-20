@@ -113,7 +113,7 @@ public final class StageRitesPage implements HubPageView {
             f.g.drawString(f.font(), name.get(k), tx, box.y() + 5 + 10 * k, sel ? t.accent() : t.ink(), false);
         }
         int py = box.y() + 5 + 10 * name.size() + 2;
-        BookKit.small(f, Component.translatable(BOOK + "power", String.format("%,d", l.rite().power())), tx, py, tw, GOLD);
+        BookKit.small(f, RitesPage.powerCard(l.rite()), tx, py, tw, GOLD);
         Component status = Component.translatable(BOOK + (l.forYou() ? "yours" : "anyone"));
         int sw = Math.min(tw, BookKit.smallWidth(f, status.getString()) + 8);
         f.g.fill(tx, py + 11, tx + sw, py + 22, l.forYou() ? (t.good() & 0xFFFFFF) | 0x55000000 : (t.muted() & 0xFFFFFF) | 0x33000000);

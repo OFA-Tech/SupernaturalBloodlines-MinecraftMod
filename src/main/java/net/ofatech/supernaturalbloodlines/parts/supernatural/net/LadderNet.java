@@ -32,7 +32,7 @@ public final class LadderNet {
      * Optional, so a client or server without this part still connects; but the channel only exists between two sides on the same version, so a
      * server and its clients on different protocol numbers cannot talk (the hub shows nothing from the server). Raise it with any payload change.
      */
-    static final String PROTOCOL = "7";
+    static final String PROTOCOL = "8";
 
     private LadderNet() {
     }

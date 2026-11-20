@@ -15,6 +15,17 @@ public final class MoonRule {
         return isFullMoon(hasFixedTime, phase) && timeOfDay > NIGHT_START && timeOfDay < NIGHT_END;
     }
 
+    /** Any night, full moon or not: the time of day inside the night window, in a dimension that has a day. */
+    public static boolean isNight(boolean hasFixedTime, long dayTime) {
+        long timeOfDay = Math.floorMod(dayTime, 24000L);
+        return !hasFixedTime && timeOfDay > NIGHT_START && timeOfDay < NIGHT_END;
+    }
+
+    /** The night a rite wants: a full-moon night when its file says {@code requires_full_moon}, else any night. */
+    public static boolean nightFor(boolean needsFullMoon, boolean hasFixedTime, int phase, long dayTime) {
+        return needsFullMoon ? isFullMoonNight(hasFixedTime, phase, dayTime) : isNight(hasFixedTime, dayTime);
+    }
+
     /** Dimensions with a fixed time (the Nether, the End) report phase 0 forever, which is not a full moon. */
     public static boolean isFullMoon(boolean hasFixedTime, int phase) {
         return !hasFixedTime && phase == 0;

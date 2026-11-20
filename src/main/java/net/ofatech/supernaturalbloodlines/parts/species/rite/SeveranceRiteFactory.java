@@ -37,7 +37,7 @@ public record SeveranceRiteFactory(boolean requiresFullMoon) implements RiteFact
     public static final String NO_BLOOD = "supernaturalbloodlines.refusal.severance_no_blood";
     public static final String DONE = "supernaturalbloodlines.rite.severance_done";
     public static final MapCodec<SeveranceRiteFactory> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.mapCodec(i -> i.group(
-            com.mojang.serialization.Codec.BOOL.optionalFieldOf("requires_full_moon", false).forGetter(SeveranceRiteFactory::requiresFullMoon)
+            FactionRiteFactory.fullMoonByDefault().forGetter(SeveranceRiteFactory::requiresFullMoon)
     ).apply(i, SeveranceRiteFactory::new));
 
     /** WITCH, SIPHONER, HERETIC and TRIBRID: the species that work magic (witch rites) or take it (siphoning). */

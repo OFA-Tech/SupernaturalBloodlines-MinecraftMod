@@ -56,7 +56,7 @@ public record HybridBloodRiteFactory() implements RiteFactory {
             ServerPlayer target = found.get();
             if (!HybridTraits.isHybrid(BloodlineAccess.get(target).species())) {
                 ServerPlayer caster = findEntity(params.caster) instanceof ServerPlayer p ? p : target;
-                caster.displayClientMessage(Component.translatable(NOT_HYBRID), true);
+                net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.RiteTargets.refuseAbout(caster, target, NOT_HYBRID);
                 return cancel();
             }
             level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5,
