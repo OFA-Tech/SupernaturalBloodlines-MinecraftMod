@@ -58,8 +58,8 @@ class DeucalionRulesTest {
     void theHitboxIsTheDemonWolfsFromTheSwapTick() {
         assertEquals(new ShiftRules.Size(0.6F, 1.95F), DeucalionRules.dimensionsFor(BossForm.HUMAN, 0));
         assertEquals(new ShiftRules.Size(0.6F, 1.95F), DeucalionRules.dimensionsFor(BossForm.SHIFTING, ShiftRules.SWAP_TICK - 1));
-        assertEquals(new ShiftRules.Size(1.1F, 2.0F), DeucalionRules.dimensionsFor(BossForm.SHIFTING, ShiftRules.SWAP_TICK));
-        assertEquals(new ShiftRules.Size(1.1F, 2.0F), DeucalionRules.dimensionsFor(BossForm.BEAST, 0));
+        assertEquals(new ShiftRules.Size(1.2F, 2.6F), DeucalionRules.dimensionsFor(BossForm.SHIFTING, ShiftRules.SWAP_TICK));
+        assertEquals(new ShiftRules.Size(1.2F, 2.6F), DeucalionRules.dimensionsFor(BossForm.BEAST, 0));
     }
 
     @Test

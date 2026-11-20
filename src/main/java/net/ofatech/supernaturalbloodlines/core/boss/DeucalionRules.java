@@ -34,9 +34,9 @@ public final class DeucalionRules {
         return distanceSquared <= SHIFT_RANGE * SHIFT_RANGE;
     }
 
-    /** The demon wolf is bigger than Klaus's: 1.1 wide and 2.0 at the shoulder, from the swap tick. */
+    /** The demon wolf is bigger than Klaus's: 1.2 wide and 2.6 tall, from the swap tick. */
     public static ShiftRules.Size dimensionsFor(BossForm form, int shiftTicks) {
-        return ShiftRules.showsBeast(form, shiftTicks) ? new ShiftRules.Size(1.1F, 2.0F) : new ShiftRules.Size(0.6F, 1.95F);
+        return ShiftRules.showsBeast(form, shiftTicks) ? new ShiftRules.Size(1.2F, 2.6F) : new ShiftRules.Size(0.6F, 1.95F);
     }
 
     /** The respawn, when the switch is on: at least {@code days} in-game days after the day he died. {@code diedDay} below 0 means nothing is written down. */
