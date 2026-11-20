@@ -62,6 +62,10 @@ Events (any case): `RITE_OF_IMMORTALITY`, `DIED_WITH_ORIGINAL_BLOOD`, `DRANK_DOP
 
 `debug eclipse` needs the `species` part and Werewolves. `get`, `set` and `event` are core: they work whatever parts are on.
 
+## `/supernaturalbloodlines boss <boss> ...` (part `bosses`, permission level 2)
+
+`spawn` (a boss near you, if the rules allow it), `state` (state, days to return, reward paid, times seen), `desiccate` (bring an NPC Original down), `return` (they get up now), `reset` (forget the boss: the world has never seen them, a dead one can come back; asks first on the Admin page). Only Mikael is in this version. Each one has a button in the hub's Admin page, section Bosses.
+
 ## Other commands you will use
 
 - `/vampirism level <faction> <level> [player]` and `/vampirism level none @s` (Vampirism): put a player in or out of a Vampirism faction. This mod's rules follow the change (the layer, the race, the sire).

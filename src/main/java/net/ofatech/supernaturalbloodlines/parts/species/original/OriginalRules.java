@@ -94,11 +94,26 @@ public final class OriginalRules {
         }
     }
 
-    /** A melee hit (not thorns, not a projectile) from someone holding a weapon in {@code #supernaturalbloodlines:white_oak}. */
+    private static volatile java.util.function.Predicate<LivingEntity> mobsThatCount = a -> false;
+
+    /**
+     * Plan 17: a mob's white oak hit never counts as a white oak kill (R158), unless this says it does for that mob. The bosses part installs
+     * "Mikael, when {@code mikael_stakes_originals} is on"; nothing else does.
+     */
+    public static void mobWhiteOakCounts(java.util.function.Predicate<LivingEntity> counts) {
+        mobsThatCount = counts == null ? a -> false : counts;
+    }
+
+    /** Whether this wielder's white oak counts: a player's always, a mob's only when {@link #mobWhiteOakCounts} says so. */
+    static boolean wields(LivingEntity attacker) {
+        return attacker.getMainHandItem().is(WhiteOak.TAG) && (attacker instanceof net.minecraft.world.entity.player.Player || mobsThatCount.test(attacker));
+    }
+
+    /** A melee hit (not thorns, not a projectile) from a player (or a mob that {@link #mobWhiteOakCounts} allows) holding a weapon in {@code #supernaturalbloodlines:white_oak}. */
     static boolean isWhiteOak(DamageSource source) {
         boolean melee = source.is(DamageTypes.PLAYER_ATTACK) || source.is(DamageTypes.MOB_ATTACK) || source.is(DamageTypes.MOB_ATTACK_NO_AGGRO);
         return melee && source.getDirectEntity() == source.getEntity()
-                && source.getDirectEntity() instanceof LivingEntity attacker && attacker.getMainHandItem().is(WhiteOak.TAG);
+                && source.getDirectEntity() instanceof LivingEntity attacker && wields(attacker);
     }
 
     /**
@@ -106,7 +121,7 @@ public final class OriginalRules {
      * (see {@link #endVampirismDying}). A bare {@code /kill} names nobody and is neither.
      */
     public static boolean isWhiteOakKill(DamageSource source) {
-        return isWhiteOak(source) || (source.is(DamageTypes.GENERIC_KILL) && source.getEntity() instanceof LivingEntity a && a.getMainHandItem().is(WhiteOak.TAG));
+        return isWhiteOak(source) || (source.is(DamageTypes.GENERIC_KILL) && source.getEntity() instanceof LivingEntity a && wields(a));
     }
 
     /** What the protection never applies to. */

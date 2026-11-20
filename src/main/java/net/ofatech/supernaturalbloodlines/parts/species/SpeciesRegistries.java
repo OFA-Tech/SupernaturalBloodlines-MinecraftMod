@@ -116,6 +116,10 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<String>> ORIGINAL_ROOT =
             ATTACHMENTS.register("original_root", () -> AttachmentType.builder(() -> "").serialize(Codec.STRING).build());
 
+    /** An NPC Original that is desiccated (open to white oak): the boss entities set it, the Imprisoned Original rite reads it ({@code Imprisonment.isDown}). */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> NPC_OPEN =
+            ATTACHMENTS.register("npc_open", () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL).build());
+
     /** The player or creature who infected this one with sanguinare, for a day; see {@link InfectionSire}. Not copied on death. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<InfectionSire>> INFECTION_SIRE =
             ATTACHMENTS.register("infection_sire", () -> AttachmentType.builder(() -> new InfectionSire(Util.NIL_UUID, "", 0))

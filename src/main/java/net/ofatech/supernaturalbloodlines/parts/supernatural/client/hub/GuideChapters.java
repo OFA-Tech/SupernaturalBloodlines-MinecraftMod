@@ -11,7 +11,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
  */
 public final class GuideChapters {
     /** Chapters every player gets, in reading order; each is skipped when it does not apply (see {@link #forRaces}). */
-    static final List<String> GENERAL = List.of("hub", "path", "skills", "quests", "rites", "bloodline", "pack", "trial", "loadout", "moon");
+    static final List<String> GENERAL = List.of("hub", "path", "skills", "quests", "rites", "bloodline", "pack", "trial", "loadout", "moon", "bosses");
 
     private GuideChapters() {
     }
@@ -30,6 +30,11 @@ public final class GuideChapters {
      * @param loadout    the ability HUD part is on (the loadout chapter)
      */
     public static List<String> forRaces(SupernaturalRace creature, Optional<SupernaturalRace> magic, boolean werewolves, boolean enchanted, boolean loadout) {
+        return forRaces(creature, magic, werewolves, enchanted, loadout, false);
+    }
+
+    /** @param bosses the bosses part is on (the bosses chapter) */
+    public static List<String> forRaces(SupernaturalRace creature, Optional<SupernaturalRace> magic, boolean werewolves, boolean enchanted, boolean loadout, boolean bosses) {
         List<String> out = new ArrayList<>();
         out.add("race_" + creature.id());
         magic.ifPresent(m -> out.add("race_" + m.id()));
@@ -38,6 +43,7 @@ public final class GuideChapters {
                 case "rites" -> enchanted;
                 case "pack", "trial" -> werewolves && isWolf(creature);
                 case "loadout" -> loadout;
+                case "bosses" -> bosses;
                 default -> true;
             };
             if (show && !out.contains(id)) {

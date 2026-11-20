@@ -66,6 +66,9 @@ public final class Imprisonment {
         if (e instanceof ServerPlayer p && (Downed.isDowned(p) || VampirismAPI.vampirePlayer(p).isDBNO())) {
             return true;
         }
+        if (e.hasData(SpeciesRegistries.NPC_OPEN) && e.getData(SpeciesRegistries.NPC_OPEN)) {
+            return true; // an NPC Original (plan 17) that is desiccated is down without the effect
+        }
         return BuiltInRegistries.MOB_EFFECT.getHolder(DESICCATED).map(e::hasEffect).orElse(false);
     }
 

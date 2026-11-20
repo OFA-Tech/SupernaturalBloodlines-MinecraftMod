@@ -102,6 +102,7 @@ public final class AdminCommands {
     }
 
     private static final String ROOT = "supernaturalbloodlines debug";
+    private static final String BOSS = "supernaturalbloodlines boss";
 
     public static final List<Row> ALL = List.of(
             row("B1", "bloodline tree", 0, Ui.PAGE, "BLOODLINE"),
@@ -148,7 +149,12 @@ public final class AdminCommands {
             row("D10", ROOT + " eclipse stop", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D11", ROOT + " npcpack", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("D12", ROOT + " npcs list", 2, Ui.ADMIN_ACTION, "ADMIN"),
-            row("D13", ROOT + " npcs release <player>", 2, Ui.ADMIN_ACTION, "ADMIN"));
+            row("D13", ROOT + " npcs release <player>", 2, Ui.ADMIN_ACTION, "ADMIN"),
+            row("X1", BOSS + " <boss> spawn", 2, Ui.ADMIN_ACTION, "ADMIN"),
+            row("X2", BOSS + " <boss> state", 2, Ui.ADMIN_ACTION, "ADMIN"),
+            row("X3", BOSS + " <boss> desiccate", 2, Ui.ADMIN_ACTION, "ADMIN"),
+            row("X4", BOSS + " <boss> return", 2, Ui.ADMIN_ACTION, "ADMIN"),
+            row("X5", BOSS + " <boss> reset", 2, Ui.ADMIN_ACTION, "ADMIN"));
 
     private AdminCommands() {}
 

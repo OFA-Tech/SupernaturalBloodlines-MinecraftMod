@@ -34,6 +34,12 @@ Part `artifacts`. Rings sit in a **Curios `ring` slot** if Curios is installed, 
 
 > **Release check pending:** with the ring in an **Accessories** slot (the OFA pack), the charge may be taken from a copy, so the ring could keep reviving. See [Known limits](Known-Limits).
 
+## Boss items (part `bosses`)
+
+| In-game name | What it does | How to get it |
+|---|---|---|
+| Mikael's Stake | A white oak sword that never breaks. It kills an Original who is desiccated, like the White Oak Stake. | Dropped by Mikael the first time he is brought down. |
+
 ## Other artifacts (part `artifacts`)
 
 | In-game name | What it does | How to get it |

@@ -12,7 +12,7 @@ On by default (`original_line_death`), for new and existing worlds alike: set it
 
 ## Breaking out
 
-The NPC Originals themselves arrive with the boss update: until then line death and the warnings only happen for player Originals. Both rites need a witch, siphoner, heretic or tribrid performer, a **lunar eclipse** (which comes from Werewolves), and bottles of Sire's Blood. Someone freed from a line is not touched by line death, and the Bloodline page shows a broken link and an open padlock.
+The NPC Originals are the bosses (part `bosses`); Mikael is the first. Line death and the warnings happen for them as for a player Original. Both rites need a witch, siphoner, heretic or tribrid performer, a **lunar eclipse** (which comes from Werewolves), and bottles of Sire's Blood. Someone freed from a line is not touched by line death, and the Bloodline page shows a broken link and an open padlock.
 
 | Rite | Frees | Needs |
 |---|---|---|
@@ -20,3 +20,8 @@ The NPC Originals themselves arrive with the boss update: until then line death 
 | **Rite of the Imprisoned Original** | the target and their whole branch | the target's blood, 3 white oak ash, 2 spirits of otherwhere; large circle; the Original **brought down** (downed, in Vampirism's dying state, or desiccated) and held on the centre inside a closed mountain ash ring (radius up to 8) for 30 seconds. Standing there is not enough: "The Original must be brought down first." |
 
 The target must be online and not an Original. **There is no consent step:** a witch can free an unwilling player, as with the Rite of Severance. Both rites work on player Originals. The power (12000 and 36000), the 30 seconds and the radius are tunable (`imprisonment_rite_seconds`, `imprisonment_ring_max_radius`, `line_rites_enabled`).
+
+## NPC Originals
+
+Mikael is the first of the six Originals who are not players (part osses). They are not Vampirism creatures: no sun, no bite. A blow that would kill one of them only **desiccates** them: they fall, with 1 health, drop a bottle of their blood (at most once every few days) and their line is warned. They get up after original_return_days days (5). **White oak kills one only while they are down**; on a standing one it only hurts (
+pc_original_stake_needs_open). A white oak death is for good, and the line dies with them. The Ash Dagger brings a standing one down. **Only a player's white oak kills an Original**: Mikael's own stake does not, so he cannot cause line death, and he does not hunt Originals or Original hybrids (`mikael_stakes_originals` turns that around, with a warning to the player he hunts). When an Original gets up again, their line is told. Each pays one reward, the first time they are brought down. Operators have /supernaturalbloodlines boss <boss> ... and a section in the Admin page.

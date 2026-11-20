@@ -14,6 +14,7 @@ A part is an optional feature set. It is enabled when every mod it requires is i
 | `SUPERNATURAL_TENSURA` | `supernaturalTensura` | vampirism, tensura | `SUPERNATURAL` | [supernatural_tensura](parts/supernatural_tensura.md) |
 | `HUD` | `hud` | none (Tensura, Vampirism and Werewolves are optional extras inside it) | | [hud](parts/hud.md) |
 | `CELESTIALS` | `celestials` | none (Enhanced Celestials 2 is found at runtime, by reflection; without it the part does nothing) | | [celestials](parts/celestials.md) |
+| `BOSSES` | `bosses` | vampirism, enchanted, geckolib | `SPECIES` | [bosses](parts/bosses.md) |
 
 The server and clients need the same part switches and the same linked mods.
 

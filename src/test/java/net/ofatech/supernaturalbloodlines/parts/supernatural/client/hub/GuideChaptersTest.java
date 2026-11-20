@@ -34,6 +34,14 @@ class GuideChaptersTest {
     }
 
     @Test
+    void theBossesChapterIsThereOnlyWithThePartAndComesLast() {
+        List<String> on = GuideChapters.forRaces(SupernaturalRace.VAMPIRE, Optional.empty(), true, true, true, true);
+        assertEquals("bosses", on.get(on.size() - 1));
+        assertFalse(GuideChapters.forRaces(SupernaturalRace.VAMPIRE, Optional.empty(), true, true, true, false).contains("bosses"));
+        assertFalse(GuideChapters.forRaces(SupernaturalRace.VAMPIRE, Optional.empty(), true, true, true).contains("bosses"), "the old overload must not show it");
+    }
+
+    @Test
     void everyChapterHasATitleAndATextInTheEnglishFile() throws Exception {
         JsonObject lang;
         try (var in = new InputStreamReader(GuideChaptersTest.class.getResourceAsStream("/assets/supernaturalbloodlines/lang/en_us.json"), StandardCharsets.UTF_8)) {
@@ -41,7 +49,7 @@ class GuideChaptersTest {
         }
         for (SupernaturalRace r : SupernaturalRace.values()) {
             for (SupernaturalRace m : SupernaturalRace.values()) {
-                for (String id : GuideChapters.forRaces(r, Optional.of(m), true, true, true)) {
+                for (String id : GuideChapters.forRaces(r, Optional.of(m), true, true, true, true)) {
                     assertTrue(lang.has(GuideChapters.titleKey(id)), "no title for " + id);
                     assertTrue(lang.has(GuideChapters.bodyKey(id)), "no text for " + id);
                 }

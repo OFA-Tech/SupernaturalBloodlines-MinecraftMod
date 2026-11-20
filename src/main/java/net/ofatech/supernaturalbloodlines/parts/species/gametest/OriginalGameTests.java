@@ -65,7 +65,7 @@ public final class OriginalGameTests {
 
     /** A player who takes damage, with the species set (and, for Originals proper, in the vampire faction). */
     private static ServerPlayer original(GameTestHelper helper, Species s) {
-        ServerPlayer p = TestPlayers.createMortal(helper);
+        ServerPlayer p = TestPlayers.createDuelist(helper); // other players can hurt it (the white oak kills are made by a player, R158)
         if (s == Species.ORIGINAL) {
             handler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1);
         }
@@ -74,6 +74,10 @@ public final class OriginalGameTests {
     }
 
     private static void reset(ServerPlayer p) {
+        if (pvpBefore != null) {
+            p.getServer().setPvpAllowed(pvpBefore);
+            pvpBefore = null;
+        }
         BloodlineAccess.set(p, BloodlineState.NONE);
     }
 
@@ -88,6 +92,25 @@ public final class OriginalGameTests {
             z.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(WhiteOak.STAKE.get()));
         }
         return z;
+    }
+
+    /** A player holding a white oak stake. R158: only a player's white oak counts (a mob's does not), so the kills below are made by one. */
+    private static Boolean pvpBefore;
+
+    private static ServerPlayer oakPlayer(GameTestHelper helper) {
+        var server = helper.getLevel().getServer();
+        if (pvpBefore == null) {
+            pvpBefore = server.isPvpAllowed();
+        }
+        server.setPvpAllowed(true); // a player's blow on a player is refused with PvP off; reset() puts it back
+        ServerPlayer killer = TestPlayers.create(helper);
+        killer.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(WhiteOak.STAKE.get()));
+        return killer;
+    }
+
+    private static DamageSource oakHit(GameTestHelper helper) {
+        ServerPlayer killer = oakPlayer(helper);
+        return killer.damageSources().playerAttack(killer);
     }
 
     private static DamageSource hitBy(GameTestHelper helper, Zombie z) {
@@ -209,8 +232,7 @@ public final class OriginalGameTests {
     public static void whiteOakKillsOriginalInstantly(GameTestHelper helper) {
         ServerPlayer p = original(helper, Species.ORIGINAL);
         try {
-            Zombie z = zombie(helper, true);
-            p.hurt(hitBy(helper, z), 1000f);
+            p.hurt(oakHit(helper), 1000f);
             helper.assertTrue(p.isDeadOrDying(), "white oak did not kill, health " + p.getHealth());
             helper.assertTrue(!dbno(p), "the dying state was left behind");
         } finally {
@@ -350,12 +372,12 @@ public final class OriginalGameTests {
         ServerPlayer instant = original(helper, Species.ORIGINAL_HYBRID);
         ServerPlayer downed = original(helper, Species.ORIGINAL_HYBRID);
         try {
-            instant.hurt(hitBy(helper, zombie(helper, true)), 1000f);
+            instant.hurt(oakHit(helper), 1000f);
             helper.assertTrue(instant.isDeadOrDying() && !Downed.isDowned(instant), "white oak did not kill a hybrid outright");
             downed.hurt(hitBy(helper, zombie(helper, false)), 1000f);
             helper.assertTrue(Downed.isDowned(downed), "not downed");
             downed.invulnerableTime = 0; // a FakePlayer never ticks, so the hit-cooldown of the first blow would swallow this one
-            downed.hurt(hitBy(helper, zombie(helper, true)), 1000f);
+            downed.hurt(oakHit(helper), 1000f);
             helper.assertTrue(downed.isDeadOrDying() && !Downed.isDowned(downed), "white oak did not finish a downed hybrid");
         } finally {
             reset(instant);
@@ -486,8 +508,8 @@ public final class OriginalGameTests {
             p.hurt(hitBy(helper, zombie(helper, false)), 1000f);
             helper.assertTrue(dbno(p) && !p.isDeadOrDying(), "not in Vampirism's dying state");
             p.invulnerableTime = 0;
-            Zombie oak = zombie(helper, true);
-            p.hurt(hitBy(helper, oak), 1000f);
+            ServerPlayer oak = oakPlayer(helper);
+            p.hurt(oak.damageSources().playerAttack(oak), 1000f);
             helper.assertTrue(p.isDeadOrDying(), "white oak did not kill an Original who was already dying, health " + p.getHealth());
             helper.assertTrue(!dbno(p), "the dying state was left behind");
             helper.assertTrue(deaths.stream().anyMatch(s -> s.getEntity() == oak), "the kill did not name the white oak attacker: " + deaths);
@@ -507,11 +529,23 @@ public final class OriginalGameTests {
             helper.assertTrue(!p.isDeadOrDying() && Downed.isDowned(p), "thorns from a stake-holder killed an Original");
             ServerPlayer other = original(helper, Species.ORIGINAL_HYBRID);
             try {
-                other.hurt(hitBy(helper, oak), 1000f);
+                other.hurt(oakHit(helper), 1000f);
                 helper.assertTrue(other.isDeadOrDying(), "a plain melee hit with the stake no longer kills");
             } finally {
                 reset(other);
             }
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMobsWhiteOakDoesNotKillAnOriginal(GameTestHelper helper) {
+        ServerPlayer p = original(helper, Species.ORIGINAL);
+        try {
+            p.hurt(hitBy(helper, zombie(helper, true)), 1000f);
+            helper.assertTrue(!p.isDeadOrDying() && dbno(p), "a zombie with a stake killed an Original (R158), health " + p.getHealth());
         } finally {
             reset(p);
         }

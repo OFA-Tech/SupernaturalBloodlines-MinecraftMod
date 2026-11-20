@@ -1,6 +1,7 @@
 {
     "replace": false,
     "values": [
-        { "id": "supernaturalbloodlines:white_oak_stake", "required": false }
+        { "id": "supernaturalbloodlines:white_oak_stake", "required": false },
+        { "id": "supernaturalbloodlines:mikaels_stake", "required": false }
     ]
 }
