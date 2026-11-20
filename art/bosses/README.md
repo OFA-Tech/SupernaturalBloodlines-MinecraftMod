@@ -1,7 +1,7 @@
 # Boss art (round 2, redone against the owner's references)
 
 Textures: `src/main/resources/assets/supernaturalbloodlines/textures/entity/boss/`
-Blockbench projects: `art/blockbench/bosses/<asset>.bbmodel` (Modded Entity format, texture embedded)
+Blockbench projects: `art/blockbench/bosses/<asset>.bbmodel` (Modded Entity format, texture embedded; the four old Werewolves-model wolf projects are in `art/legacy/blockbench/`, and the GeckoLib wolves in `art/blockbench/creatures/`)
 Previews (front | back | ¾, wolves also a head close-up): `art/previews/bosses/<asset>.png`
 Generators (re-run to rebuild every texture): `art/bosses/tools/` (`paint_skins.py`, `paint_wolves.py`, `paint_tricorn.py`; Blockbench scripts `bb_*.js`). `paint_skins.py klaus` ends with `klaus_skin_fix.py` (Klaus's hands, cuff and no paint squares), so a re-run gives the shipped `klaus.png` byte for byte in its pixels.
 Item model: `models/item/sebastien_tricorn.json` with `textures/item/sebastien_tricorn.png` (see "Sebastien's tricorn" below).
@@ -28,7 +28,7 @@ All art is original. Wikis, show descriptions and fan skins were used as inspira
 
 ## Werewolf-model textures (128×64)
 
-All four use the Werewolves mod beast model (`WerewolfBeastModel`) UV layout exactly. Eyes are 2 px wide and painted into the face; the mod's separate eye overlay layer, if used, stacks on top.
+**Superseded (plan 17): these four textures and their projects now live in `art/legacy/` and `art/legacy/blockbench/`; the game uses the GeckoLib wolves in `art/blockbench/creatures/`.** All four use the Werewolves mod beast model (`WerewolfBeastModel`) UV layout exactly. Eyes are 2 px wide and painted into the face; the mod's separate eye overlay layer, if used, stacks on top.
 
 | File | Palette | Notes |
 |---|---|---|
