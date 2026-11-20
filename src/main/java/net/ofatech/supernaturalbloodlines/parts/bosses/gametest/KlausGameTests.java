@@ -451,6 +451,11 @@ public final class KlausGameTests {
             k.lookForm(BossForm.BEAST, 33);
             UUID prey = UUID.randomUUID();
             k.hunt(prey);
+            helper.getLevel().setDayTime(NIGHT);
+            run(k, 30);
+            int since = k.sinceHit();
+            int ticks = k.shiftTicks();
+            helper.assertTrue(since > 0 && !k.isRemoved() && ticks > 33, "control: no count to save: " + since + ", " + ticks);
             CompoundTag tag = new CompoundTag();
             k.saveWithoutId(tag);
             KlausEntity again = KlausEntity.create(helper.getLevel());
@@ -458,7 +463,8 @@ public final class KlausGameTests {
             helper.assertTrue(again.form() == BossForm.BEAST, "the form was forgotten: " + again.form());
             helper.assertTrue(Math.abs(again.getBbHeight() - 1.5F) < 1e-4, "the hitbox was not the wolf's after a load: " + again.getBbHeight());
             helper.assertTrue(prey.equals(again.prey()), "the prey was forgotten");
-            helper.assertTrue(again.shiftTicks() == 33, "the ticks of the shift were forgotten: " + again.shiftTicks());
+            helper.assertTrue(again.shiftTicks() == ticks, "the ticks of the shift were forgotten: " + again.shiftTicks());
+            helper.assertTrue(again.sinceHit() == since, "the time since his last blow was forgotten: " + again.sinceHit() + " of " + since);
             again.setUUID(UUID.randomUUID()); // the saved one is still in the level: a second entity with its uuid is refused
             helper.assertTrue(helper.getLevel().addFreshEntity(again), "the loaded Klaus was not added to the level");
             helper.assertTrue(Math.abs(again.getAttributeValue(Attributes.ATTACK_DAMAGE) - base * (1 + ShiftRules.BEAST_DAMAGE_BONUS)) < 1e-6,

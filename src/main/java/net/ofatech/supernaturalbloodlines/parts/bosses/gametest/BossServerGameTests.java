@@ -123,6 +123,7 @@ public final class BossServerGameTests {
         e.lastRollDay = 17;
         e.target = target;
         e.arriveAt = 12345;
+        e.reminded = 30;
         var access = helper.getLevel().getServer().registryAccess();
         CompoundTag saved = index.save(new CompoundTag(), access);
         ListTag list = saved.getList("bosses", 10);
@@ -139,6 +140,7 @@ public final class BossServerGameTests {
         helper.assertTrue(r.dimension.equals("minecraft:overworld") && r.pos.equals(new BlockPos(5, 64, -9)), "place lost: " + r.pos);
         helper.assertTrue(r.returnDay == 42 && r.rewarded && r.appearances == 3 && r.bloodDay == 40 && r.lastRollDay == 17, "numbers lost");
         helper.assertTrue(r.arriveAt == 12345, "the arrival that was put off was lost: " + r.arriveAt);
+        helper.assertTrue(r.reminded == 30, "the last reminder shown was lost: " + r.reminded);
         helper.assertTrue(new BossIndex().of(BossId.KLAUS).arriveAt == -1, "a boss that has not been announced waits for an arrival");
         helper.assertTrue(back.state(BossId.KLAUS) == BossState.UNSEEN, "a bad entry was kept");
         helper.assertTrue(back.bossOf(entity).orElseThrow() == BossId.MIKAEL, "the entity is not found by its uuid");
