@@ -10,6 +10,7 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.hud.HudLayout;
 import net.ofatech.supernaturalbloodlines.core.hud.PillVisibility;
+import net.ofatech.supernaturalbloodlines.core.hud.SlotShape;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.shared.hud.HudStyle;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
@@ -55,7 +56,7 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
             float blood = src.blood();
             for (int i = 0; i < boxes.length; i++) {
                 boolean bite = !views[i].isEmpty() && ClientLoadout.BITE_ICON.equals(views[i].icon());
-                SlotArt.draw(g, mc.font, style, boxes[i], views[i], alpha, bite ? blood : -1f, pulse);
+                SlotArt.draw(g, mc.font, style, SlotShape.of(src.mode()), boxes[i], views[i], alpha, bite ? blood : -1f, pulse);
             }
             SlotMode mode = src.mode();
             if (mode != null) {

@@ -157,4 +157,42 @@ class LoadoutTest {
         assertFalse(Loadout.validSlot(6));
         assertTrue(Loadout.validSlot(5));
     }
+
+    private static final ResourceLocation ROAR = ResourceLocation.parse("supernaturalbloodlines:alpha_roar");
+
+    @Test
+    void anOfferedActionGoesInTheFirstEmptySlotAndBiteKeepsSlotOne() {
+        Loadout l = Loadout.DEFAULT.withBiteOffered().withActionOffered(ROAR);
+        assertEquals(Optional.of(Loadout.BITE), l.get(0));
+        assertEquals(Optional.of(ROAR), l.get(1), "the next empty slot");
+        assertEquals(Optional.of(ROAR), Loadout.DEFAULT.withActionOffered(ROAR).get(0), "without Bite it takes slot 1");
+    }
+
+    @Test
+    void anOfferedActionNeverOverwritesAndIsOfferedOnce() {
+        Loadout full = Loadout.DEFAULT;
+        for (int i = 0; i < Loadout.SLOTS; i++) {
+            full = full.with(i, JUMP);
+        }
+        Loadout after = full.withActionOffered(ROAR);
+        assertEquals(full.slots(), after.slots(), "no room: nothing is overwritten");
+        assertTrue(after.offered().contains(ROAR), "and it is spent");
+        assertEquals(after.with(2, null), after.with(2, null).withActionOffered(ROAR), "a spent offer is not repeated into a slot the player cleared");
+    }
+
+    @Test
+    void theOfferedSetSurvivesTheSaveAndAnOldSaveWithTheBiteFlagStillWorks() {
+        Loadout l = Loadout.DEFAULT.withBiteOffered().withActionOffered(ROAR).with(1, null);
+        assertEquals(l, roundTrip(l));
+        JsonObject tag = new JsonObject();
+        com.google.gson.JsonArray slots = new com.google.gson.JsonArray();
+        for (int i = 0; i < Loadout.SLOTS; i++) {
+            slots.add("");
+        }
+        tag.add("slots", slots);
+        tag.addProperty("bite_offered", false);
+        Loadout old = Loadout.CODEC.parse(JsonOps.INSTANCE, tag).getOrThrow(IllegalStateException::new);
+        assertFalse(old.biteOffered());
+        assertEquals(Optional.of(Loadout.BITE), old.withBiteOffered().get(0));
+    }
 }

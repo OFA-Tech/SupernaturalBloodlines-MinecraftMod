@@ -4,6 +4,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.ofatech.supernaturalbloodlines.core.hud.HudLayout;
 import net.ofatech.supernaturalbloodlines.core.hud.PieSweep;
+import net.ofatech.supernaturalbloodlines.core.hud.SlotShape;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
@@ -13,7 +14,7 @@ import net.ofatech.supernaturalbloodlines.shared.hud.ClientIcons;
 import net.ofatech.supernaturalbloodlines.shared.hud.HudStyle;
 
 /**
- * One slot in the shape of the hub's theme: an inked tile with a wax key badge (Grimoire), a round slot with a gold key letter (Blood Moon), a hexagon
+ * One slot, square in Tensura mode (every Tensura icon is square) and otherwise in the shape of the hub's theme: an inked tile with a wax key badge (Grimoire), a round slot with a gold key letter (Blood Moon), a hexagon
  * with a key tab (Tensura). On top of the shape, the same for all: the icon, a dark pie that sweeps clockwise as the cooldown runs out with the seconds in
  * the middle, a gold outline and halo while it is active, a lock on one that is not unlocked, and a ring of blood round Bite. Everything is multiplied by
  * {@code alpha}, which is how the HUD fades when idle.
@@ -40,12 +41,12 @@ final class SlotArt {
      * @param bloodRing 0 to 1 of a ring of blood round the slot, or a negative number for none (only Bite has one)
      * @param pulse     0 to 1, the halo's breathing
      */
-    static void draw(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box b, SlotView v, float alpha, float bloodRing, float pulse) {
+    static void draw(GuiGraphics g, Font font, HudStyle.Style style, SlotShape shape, HudLayout.Box b, SlotView v, float alpha, float bloodRing, float pulse) {
         int s = HudLayout.SLOT;
         if (v.active()) {
-            KitDraw.shape(g, shapeOf(style), b.x() - 2, b.y() - 2, s + 4, fade(0x00000000 | ((int) (0x22 + 0x22 * pulse) << 24) | 0xFFD36B, alpha));
+            KitDraw.shape(g, shapeOf(style, shape), b.x() - 2, b.y() - 2, s + 4, fade(0x00000000 | ((int) (0x22 + 0x22 * pulse) << 24) | 0xFFD36B, alpha));
         }
-        base(g, style, b, v.active(), alpha);
+        base(g, style, shape, b, v.active(), alpha);
         if (!v.isEmpty()) {
             boolean lock = locked(v);
             ClientIcons.draw(g, v.icon(), b.x() + 3, b.y() + 3, 16, (lock ? 0.35f : v.greyed() ? 0.45f : 1f) * alpha);
@@ -72,7 +73,11 @@ final class SlotArt {
         key(g, font, style, b, v.keyLabel(), alpha);
     }
 
-    private static Shapes.Shape shapeOf(HudStyle.Style style) {
+    /** Tensura mode is square whatever the theme (every Tensura icon is square); Supernatural mode takes the theme's shape. */
+    static Shapes.Shape shapeOf(HudStyle.Style style, SlotShape shape) {
+        if (shape == SlotShape.SQUARE) {
+            return Shapes.Shape.SQUARE;
+        }
         return switch (style) {
             case GRIMOIRE -> Shapes.Shape.SQUARE;
             case BLOOD_MOON -> Shapes.Shape.ROUND;
@@ -80,7 +85,7 @@ final class SlotArt {
         };
     }
 
-    private static void base(GuiGraphics g, HudStyle.Style style, HudLayout.Box b, boolean active, float alpha) {
+    private static void base(GuiGraphics g, HudStyle.Style style, SlotShape shape, HudLayout.Box b, boolean active, float alpha) {
         int s = HudLayout.SLOT;
         int edge = active ? GOLD : switch (style) {
             case GRIMOIRE -> 0xFF5A3A1E;
@@ -92,8 +97,8 @@ final class SlotArt {
             case BLOOD_MOON -> 0xFF140810;
             case TENSURA -> 0xFF0F2438;
         };
-        KitDraw.shape(g, shapeOf(style), b.x(), b.y(), s, fade(edge, alpha));
-        KitDraw.shape(g, shapeOf(style), b.x() + 1, b.y() + 1, s - 2, fade(0xE0000000 | face & 0xFFFFFF, alpha));
+        KitDraw.shape(g, shapeOf(style, shape), b.x(), b.y(), s, fade(edge, alpha));
+        KitDraw.shape(g, shapeOf(style, shape), b.x() + 1, b.y() + 1, s - 2, fade(0xE0000000 | face & 0xFFFFFF, alpha));
         if (style == HudStyle.Style.GRIMOIRE) {
             // an inked tile: a lighter paper line inside the edge
             g.renderOutline(b.x() + 2, b.y() + 2, s - 4, s - 4, fade(0x40E8D8B0, alpha));

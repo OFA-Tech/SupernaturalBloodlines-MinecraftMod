@@ -64,6 +64,9 @@ public final class HudPart {
                 }
                 if (ModList.get().isLoaded("werewolves")) {
                     e.register(BiteWerewolfGameTests.class);
+                    if (EnabledParts.isEnabled("species")) {
+                        e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.ActionRoarGameTests.class);
+                    }
                 }
             }
         });

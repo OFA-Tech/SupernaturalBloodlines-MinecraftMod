@@ -24,7 +24,7 @@ final class HudDemo implements HudSource {
                 new SlotView(icon("stick"), "V", 0.6f, 4, false, null, "Venom Fang", null),
                 new SlotView(icon("golden_apple"), "Z", 0f, 0, false, null, "Regeneration", null),
                 new SlotView(icon("ender_eye"), "X", 0f, 0, false, "supernaturalbloodlines.hud.slot.locked", "Moon Howl", null),
-                new SlotView(icon("blaze_powder"), "C", 0f, 0, false, null, "Bat Form", null)};
+                new SlotView(ResourceLocation.fromNamespaceAndPath("supernaturalbloodlines", "textures/gui/hud/alpha_roar.png"), "C", 0.5f, 30, false, null, "Alpha Roar", "Your pack gets Strength and Speed")};
     }
 
     /** A plain human with Tensura: Tensura skills only; the third skill is cooling down, the seconds counting down from 30 as the game runs. */

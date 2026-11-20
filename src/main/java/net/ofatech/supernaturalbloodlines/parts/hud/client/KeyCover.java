@@ -45,19 +45,7 @@ public final class KeyCover {
     }
 
     private static List<String> covered() {
-        List<String> ids = new ArrayList<>();
-        for (int i = 1; i <= 3; i++) {
-            ids.add("tensura.keybinding.ability.slot_" + i);
-        }
-        for (int i = 1; i <= 3; i++) {
-            ids.add("tensuraslots.keybinding.secondary_ability.slot_" + i);
-        }
-        ids.add("keys.vampirism.suck");
-        for (int i = 1; i <= 9; i++) {
-            ids.add("keys.vampirism.action" + i);
-        }
-        ids.add("keys.werewolves.bite");
-        return List.copyOf(ids);
+        return net.ofatech.supernaturalbloodlines.core.hud.CoveredKeyIds.all();
     }
 
     public static void register() {

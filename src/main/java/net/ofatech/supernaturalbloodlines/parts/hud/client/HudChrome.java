@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.hud.HudLayout;
 import net.ofatech.supernaturalbloodlines.core.hud.MoonClock;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
+import net.ofatech.supernaturalbloodlines.core.hud.SlotShape;
 import net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
@@ -135,7 +136,7 @@ final class HudChrome {
         }
         for (int i = 0; i < 6; i++) {
             HudLayout.Box slot = new HudLayout.Box(x + 4 + i * HudLayout.SLOT, y + 7 + 9 * head.size(), HudLayout.SLOT - 1, HudLayout.SLOT - 1);
-            SlotArt.draw(g, font, style, slot, views[i], alpha, -1f, 0f);
+            SlotArt.draw(g, font, style, SlotShape.of(other), slot, views[i], alpha, -1f, 0f);
         }
         return y;
     }

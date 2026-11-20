@@ -8,7 +8,13 @@
 - **Bite goes into slot 1 only for a player who can bite** (the `BiteRules` rule) and only if the slot is empty, once; a cleared Bite is never put back. A save from before this keeps its Bite as it is.
 - **The mode pill shows only after a mode switch (about 3 seconds, then fades) and while Alt is held**, and never over an action bar message. The "Slots: ..." action bar line on a switch is gone (it was drawn on the pill).
 
+- **Slots are square tiles in Tensura mode** (every Tensura skill icon is square), in the colours and key badge of the hub theme; Supernatural mode keeps the theme shape.
+- **Alpha Roar is a HUD action** (no key of its own any more): icon, cooldown sweep, put in the first empty slot for an Alpha or True Alpha (after Bite), never over a slot the player set. The server checks are the species part's own.
+- **Controls names**: "HUD: switch mode", "HUD slot 1" to "HUD slot 6".
+- **Werewolf leap = jump while sprinting** (`sprint_leap`, on by default, hub Settings): Werewolves' own packet, cooldown and checks; its Left Control key is covered by the HUD like the others.
+
 ### Fixed
+- **Tensura's skill HUD came back in the Status Menu** (and any Tensura screen): the flags were handed back while any `io.github.manasmods.*` screen was open; only Tensura's `SettingsScreen` needs them (javap: nothing else saves or previews `HudConfig`). No mixin.
 - **Tensura skill cooldowns stuck at "1s".** ManasCore's `ManasSkillInstance.getCoolDown` counts seconds (`SkillStorage.checkSkillTimers` runs every 20 server ticks and lowers it by 1); the HUD treated it as ticks and showed `(n + 19) / 20`, which is 1 for any cooldown up to 20 s. It now shows the seconds (`SkillCooldown`).
 - Two labels drawn on top of each other at the pill (the pill and the vanilla action bar line stand on the same pixels): they no longer show together. The pill, the mode panel and the slots do not overlap at GUI scales 2 to 4 (`HudLayoutTest`).
 

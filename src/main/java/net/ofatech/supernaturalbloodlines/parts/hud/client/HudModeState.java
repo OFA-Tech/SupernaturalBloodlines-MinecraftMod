@@ -60,6 +60,7 @@ public final class HudModeState {
     public static void reset() {
         switchedAt = Long.MIN_VALUE;
         HudActivity.reset();
+        net.ofatech.supernaturalbloodlines.parts.hud.net.ActionCooldowns.clear();
     }
 
     /** The mode key: switches, shows the panel of the other mode for three seconds, and remembers it. Nothing changes with only one mode on offer. */

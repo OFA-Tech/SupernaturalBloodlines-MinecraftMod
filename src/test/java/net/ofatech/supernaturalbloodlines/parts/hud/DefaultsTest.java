@@ -19,11 +19,12 @@ class DefaultsTest {
         assertEquals(true, clientDefault("hud_enabled"));
         assertEquals(net.ofatech.supernaturalbloodlines.core.hud.HudVisibility.AUTO, clientDefault("hud_visibility"));
         assertEquals(HudClientConfig.Mode.AUTO, clientDefault("mode"));
+        assertEquals(true, clientDefault("sprint_leap"));
         assertEquals(true, clientDefault("hide_covered_keys"));
         assertEquals(true, clientDefault("hide_tensura_skill_hud"));
         assertEquals(true, clientDefault("blood_in_food_spot"));
         assertEquals(net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_CENTER, clientDefault("tracker_anchor"));
-        assertEquals(7, HudClientConfig.SPEC.getSpec().valueMap().size(), "a client setting was added or removed: decide its player-ready default and list it here");
+        assertEquals(8, HudClientConfig.SPEC.getSpec().valueMap().size(), "a client setting was added or removed: decide its player-ready default and list it here");
     }
 
     @Test

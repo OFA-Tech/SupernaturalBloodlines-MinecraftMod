@@ -45,7 +45,7 @@ public final class BiteWerewolfGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aNewWerewolfGetsBiteInSlotOne(GameTestHelper helper) {
         ServerPlayer p = wolf(helper);
-        net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService.offerBite(p);
+        net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService.offerDefaults(p);
         var slot = net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService.get(p).get(0);
         helper.assertTrue(slot.equals(java.util.Optional.of(net.ofatech.supernaturalbloodlines.core.hud.Loadout.BITE)), "slot 1 is " + slot);
         helper.succeed();

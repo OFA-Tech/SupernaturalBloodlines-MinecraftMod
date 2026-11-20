@@ -7,6 +7,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.LoadoutSyncPayload;
+import net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -19,26 +20,34 @@ public final class LoadoutService {
     private LoadoutService() {
     }
 
-    /** Once a second per player: a player who can bite gets Bite in an empty slot 1 (see {@link #offerBite}). */
+    /** Once a second per player: what a player may have is put in an empty slot, once (see {@link #offerDefaults}). */
     public static void register() {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) -> {
             if (e.getEntity() instanceof ServerPlayer p && p.tickCount % 20 == 0 && !(p instanceof net.neoforged.neoforge.common.util.FakePlayer)) {
-                offerBite(p);
+                offerDefaults(p);
             }
         });
     }
 
     /**
-     * Gives Bite to a player who becomes a type that can bite (vampire, werewolf, and the hybrid types that bite), once, in slot 1, only if that slot is
-     * empty. A human gets nothing, a slot the player set is never overwritten, and a Bite the player cleared is never put back.
+     * Gives a player what they are now: Bite in an empty slot 1 for a type that can bite, then every {@link ExtraActions} they may use (the Alpha Roar for an
+     * Alpha) in the first empty slot, each once. A human gets nothing, a slot the player set is never overwritten, and an action the player cleared is never put back.
      */
-    public static void offerBite(ServerPlayer p) {
+    public static void offerDefaults(ServerPlayer p) {
         Loadout before = get(p);
-        if (before.biteOffered() || !net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService.canBite(p)) {
-            return;
+        Loadout next = before;
+        if (!next.biteOffered() && net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService.canBite(p)) {
+            next = next.withBiteOffered();
         }
-        p.setData(ModAttachments.HUD_LOADOUT, before.withBiteOffered());
-        sync(p);
+        for (ExtraActions.Action a : ExtraActions.all()) {
+            if (!next.offered().contains(a.id()) && a.available(p)) {
+                next = next.withActionOffered(a.id());
+            }
+        }
+        if (!next.equals(before)) {
+            p.setData(ModAttachments.HUD_LOADOUT, next);
+            sync(p);
+        }
     }
 
     public static Loadout get(ServerPlayer p) {
@@ -64,7 +73,12 @@ public final class LoadoutService {
         if (!Loadout.validSlot(slot)) {
             return KEY + "bad_slot";
         }
-        if (id != null && !Loadout.BITE.equals(id)) {
+        java.util.Optional<ExtraActions.Action> extra = id == null ? java.util.Optional.empty() : ExtraActions.get(id);
+        if (extra.isPresent()) {
+            if (!extra.get().available(p)) {
+                return KEY + "not_unlocked";
+            }
+        } else if (id != null && !Loadout.BITE.equals(id)) {
             if (!ModList.get().isLoaded("vampirism") || FactionActions.byId(id) == null) {
                 return KEY + "unknown_action";
             }

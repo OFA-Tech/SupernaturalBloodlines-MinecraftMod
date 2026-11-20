@@ -25,7 +25,7 @@ public final class LoadoutGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aPlainHumanHasNoBiteAndNothingIsOfferedToThem(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.createMortal(helper);
-        LoadoutService.offerBite(p);
+        LoadoutService.offerDefaults(p);
         Loadout l = LoadoutService.get(p);
         helper.assertTrue(l.slots().stream().allMatch(Optional::isEmpty), "a human has something in a slot: " + l);
         helper.assertTrue(!l.biteOffered(), "Bite was spent on a human");

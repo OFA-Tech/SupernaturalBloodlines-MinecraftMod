@@ -63,6 +63,8 @@ public final class HudNet {
         }));
         registrar.playToClient(LoadoutSyncPayload.TYPE, LoadoutSyncPayload.STREAM_CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> ctx.player().setData(ModAttachments.HUD_LOADOUT, payload.loadout())));
+        registrar.playToClient(ActionCooldownPayload.TYPE, ActionCooldownPayload.STREAM_CODEC,
+                (payload, ctx) -> ctx.enqueueWork(() -> ActionCooldowns.set(payload.action(), ctx.player().level().getGameTime(), payload.ticks())));
     }
 
     /** True when this payload is within the player's rate limit; every call counts. */

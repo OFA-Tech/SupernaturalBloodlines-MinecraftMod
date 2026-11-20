@@ -53,7 +53,7 @@ public final class LoadoutVampirismGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aNewVampireGetsBiteInSlotOne(GameTestHelper helper) {
         ServerPlayer p = vampire(helper);
-        LoadoutService.offerBite(p);
+        LoadoutService.offerDefaults(p);
         Loadout l = LoadoutService.get(p);
         helper.assertTrue(l.get(0).equals(Optional.of(Loadout.BITE)), "slot 1 is " + l.get(0));
         for (int i = 1; i < Loadout.SLOTS; i++) {
@@ -69,12 +69,12 @@ public final class LoadoutVampirismGameTests {
         helper.assertTrue(VampirismAPI.factionPlayerHandler(set).setFactionAndLevel(VReference.VAMPIRE_FACTION, 4), "could not make a vampire");
         unlock(set, action);
         helper.assertTrue(LoadoutService.set(set, 0, action) == null, "the player could not set slot 1");
-        LoadoutService.offerBite(set);
+        LoadoutService.offerDefaults(set);
         helper.assertTrue(LoadoutService.get(set).get(0).equals(Optional.of(action)), "a slot the player set was overwritten: " + LoadoutService.get(set).get(0));
         ServerPlayer cleared = vampire(helper);
-        LoadoutService.offerBite(cleared);
+        LoadoutService.offerDefaults(cleared);
         helper.assertTrue(LoadoutService.set(cleared, 0, null) == null, "clearing slot 1 was refused");
-        LoadoutService.offerBite(cleared);
+        LoadoutService.offerDefaults(cleared);
         helper.assertTrue(LoadoutService.get(cleared).get(0).isEmpty(), "a cleared Bite was put back");
         helper.succeed();
     }
@@ -82,10 +82,10 @@ public final class LoadoutVampirismGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void biteArrivesWhenAHumanBecomesAVampire(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.createMortal(helper);
-        LoadoutService.offerBite(p);
+        LoadoutService.offerDefaults(p);
         helper.assertTrue(LoadoutService.get(p).get(0).isEmpty(), "a human had Bite");
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
-        LoadoutService.offerBite(p);
+        LoadoutService.offerDefaults(p);
         helper.assertTrue(LoadoutService.get(p).get(0).equals(Optional.of(Loadout.BITE)), "the new vampire has " + LoadoutService.get(p).get(0));
         helper.succeed();
     }
@@ -124,7 +124,7 @@ public final class LoadoutVampirismGameTests {
         ServerPlayer p = vampire(helper);
         ResourceLocation action = anActionOf(VReference.VAMPIRE_FACTION);
         unlock(p, action);
-        LoadoutService.offerBite(p);
+        LoadoutService.offerDefaults(p);
         // the player is cured: no faction. The list is kept, but nothing new can be put in
         helper.assertTrue(LoadoutService.set(p, 2, action) == null, "setup: the unlocked action was refused");
         VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(null, 0);
