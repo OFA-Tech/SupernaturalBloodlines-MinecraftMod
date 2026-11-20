@@ -50,6 +50,73 @@ class BossServerSafetyTest {
         assertTrue(bad.isEmpty(), "client classes named where a dedicated server loads them: " + bad);
     }
 
+    /** The lines of BossesPart (outside imports) that name a class of the client folder. */
+    static List<Integer> clientNamingLines(List<String> lines) {
+        List<Integer> at = new ArrayList<>();
+        for (int i = 0; i < lines.size(); i++) {
+            String l = lines.get(i);
+            if (!l.startsWith("import ") && (l.contains("BossRenderers") || l.contains("BossShots"))) {
+                at.add(i);
+            }
+        }
+        return at;
+    }
+
+    @Test
+    void thePartNamesItsClientClassesOnlyInsideTheClientGuard() throws Exception {
+        List<String> lines = Files.readAllLines(root().resolve("BossesPart.java"));
+        int guard = -1;
+        for (int i = 0; i < lines.size(); i++) {
+            if (lines.get(i).contains("FMLEnvironment.dist == Dist.CLIENT")) {
+                guard = i;
+            }
+        }
+        assertTrue(guard >= 0, "the client guard is gone from BossesPart");
+        int end = guard + 1;
+        while (!lines.get(end).equals("        }")) {
+            end++;
+        }
+        List<Integer> naming = clientNamingLines(lines);
+        assertTrue(!naming.isEmpty(), "BossesPart no longer registers the renderers");
+        for (int i : naming) {
+            assertTrue(i > guard && i < end, "BossesPart names a client class outside the Dist.CLIENT guard, line " + (i + 1) + ": " + lines.get(i).trim());
+        }
+    }
+
+    @Test
+    void noClassOutsideTheClientFolderNamesTheClientFolderExceptThePartThatGuardsIt() throws Exception {
+        List<String> bad = new ArrayList<>();
+        try (Stream<Path> files = Files.walk(root())) {
+            for (Path f : files.filter(p -> p.toString().endsWith(".java")).toList()) {
+                String rel = root().relativize(f).toString().replace('\\', '/');
+                if (rel.startsWith("client/") || rel.equals("BossesPart.java") || rel.startsWith("gametest/")) {
+                    continue;
+                }
+                for (String line : Files.readAllLines(f)) {
+                    if (line.contains("parts.bosses.client")) {
+                        bad.add(rel + ": " + line.trim());
+                    }
+                }
+            }
+        }
+        assertTrue(bad.isEmpty(), "a server class names the client folder: " + bad);
+    }
+
+    @Test
+    void theGeckoLibRendererAndModelAreNamedOnlyUnderClient() throws Exception {
+        List<String> users = new ArrayList<>();
+        try (Stream<Path> files = Files.walk(root())) {
+            for (Path f : files.filter(p -> p.toString().endsWith(".java")).toList()) {
+                String rel = root().relativize(f).toString().replace('\\', '/');
+                // the GameTest that proves the renderer cannot load on a server names it in a string, to try to load it
+                if (!rel.startsWith("gametest/") && (Files.readString(f).contains("software.bernie.geckolib.renderer") || Files.readString(f).contains("software.bernie.geckolib.model"))) {
+                    users.add(rel);
+                }
+            }
+        }
+        assertTrue(!users.isEmpty() && users.stream().allMatch(u -> u.startsWith("client/")), "GeckoLib renderer or model used outside client/: " + users);
+    }
+
     @Test
     void theCheckSeesAnImportOfAClientClass(@org.junit.jupiter.api.io.TempDir Path tmp) throws Exception {
         Files.writeString(tmp.resolve("Bad.java"), "package x;\nimport net.minecraft.client.Minecraft;\nclass Bad {}\n");

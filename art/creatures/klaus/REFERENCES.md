@@ -37,18 +37,25 @@ thicker neck ruff and cheek tufts, the bushier tail.
 | `art/bosses/tools/paint_skins.py` (`klaus()`) | The mod's own colours for Klaus's hair `(164,136,92)` and brow `(108,84,56)`: the starting point for "like his hair colour". |
 
 ## Colour
-The coat is one ramp, `COAT` in `tools/klaus.py`. The owner's still reads as ash-grey with a brown tint, and he ties it to the hair,
-so each anchor is **a colour the mod already uses for Klaus, mixed 70% with its own grey and darkened 12%**. A first pass at 50% grey
-and no darkening came out pale and beige next to the still, so it went one step darker and greyer:
+The coat is one ramp of nine steps, `COAT` in `tools/klaus.py`. The owner's still reads as ash-grey with a brown tint, and he ties
+it to the hair, so **every step has the hue of the mod's Klaus hair `(164,136,92)` (about 37°) at roughly half its saturation**
+(the hair is 0.44):
 
-| Anchor | From | Ashed | Where |
+| Steps | Colours | Saturation | Where |
 |---|---|---|---|
-| saddle | old flat texture's dark saddle `(76,52,34)` | `#352f2a` | back, hackles, top of the muzzle, brow, ear tips, tail tip |
-| brow | hair brow `(108,84,56)` | `#4f4942` | crown, upper flank, tail |
-| hair | hair `(164,136,92)` | `#7c7469` | flank and legs: the body colour |
-| cream | old flat texture's cream fur `(214,184,138)` | `#a79f93` | face, cheeks, neck ruff, chest, belly, chin |
+| shadow, saddle | `#26221c` `#353027` `#423c31` | 0.26 | back, hackles, top of the muzzle, brow, ear tips, tail tip |
+| mid | `#4f483b` `#645b4b` `#766b58` | 0.25 | crown, flank, legs, tail: the body colour |
+| light | `#867a67` `#968a76` `#a29682` | 0.23 to 0.20 | face, cheeks, neck ruff, chest, belly, chin |
 
-The steps between are in-betweens, with one shadow below the saddle (`#26221f`) and one highlight above the cream (`#b9b2a7`).
+History, so the next pass does not repeat it:
+- A first pass (anchors mixed 50% with grey) came out pale and beige next to the still.
+- The second (70% grey, darkened 12%, `#26221f` to `#b9b2a7`) was approved from Blockbench renders, but **in the game it read as plain
+  pale grey**: saturation 0.10 to 0.20, a coat mean of 0.16 against the hair's 0.44. The brown did not survive the game's lighting.
+- This ramp (2026-11-20) keeps the dark values and the hue, lifts the saturation to about 0.25 and pulls the light end down from
+  `(185,178,167)` to about `(150,138,118)`, so the chest, face and legs stay brownish instead of washing out. Measured over the
+  coat pixels of the texture: mean saturation 0.16 before, 0.25 after (dark 0.19 to 0.26, mid 0.16 to 0.25, light 0.14 to 0.22).
+  Only the ramp changed: same UV layout, same eye and glow pixels.
+
 Eyes, teeth, mouth, tongue and claws are the old texture's values unchanged. The black veins under the eyes read as odd marks on
 the light face, so they are now one soft tear-line in a darker coat tone. Only the eye's hot centre `(255,244,150)` is new:
 a highlight of the same yellow. The first version's near-black coat is gone.

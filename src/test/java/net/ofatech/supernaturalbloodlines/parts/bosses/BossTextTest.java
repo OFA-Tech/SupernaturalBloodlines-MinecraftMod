@@ -53,6 +53,48 @@ class BossTextTest {
     }
 
     @Test
+    void klausIsNamedWarnedAboutAndExplained() throws Exception {
+        JsonObject lang = lang();
+        for (String k : new String[] {"unknown", "known", "unknown_now", "known_now", "hint"}) {
+            assertTrue(lang.has("supernaturalbloodlines.boss.notice.klaus." + k), k);
+        }
+        assertTrue(lang.get("supernaturalbloodlines.boss.notice.klaus.unknown").getAsString().contains("%s seconds"), "the warning does not say how long");
+        String hint = lang.get("supernaturalbloodlines.boss.notice.klaus.hint").getAsString();
+        assertTrue(hint.contains("hybrid wolf") && hint.contains("venom"), "the hint does not name the threat: " + hint);
+        assertTrue(hint.contains("laid by a pack Emissary"), "the hint claims more of mountain ash than is true: " + hint);
+        assertEquals("Klaus", lang.get("entity.supernaturalbloodlines.klaus").getAsString());
+        assertEquals("Klaus's Blood", lang.get("item.supernaturalbloodlines.klaus_blood").getAsString());
+        String body = lang.get("supernaturalbloodlines.hub.guide.bosses.body").getAsString();
+        assertTrue(body.contains("Klaus comes on a full moon") && body.contains("Werewolves must be installed") && body.contains("His Blood cures it"), body);
+        assertTrue(!body.contains("90"), "the Guide names a number a server can change: " + body);
+        assertTrue(body.contains("only works on vampires"), "the Guide does not say who the venom is for");
+        assertTrue(body.contains("switch the player hunt off"), "the Guide does not mention the player hunt switch");
+        assertTrue(body.contains("find out they carry the gene"), "the Guide does not say that being hunted reveals the gene");
+        assertTrue(body.contains("laid by a pack Emissary"), "the Guide claims more of mountain ash than is true");
+    }
+
+    @Test
+    void theHuntMessageSaysWhyAndTheOtherLinesAreThere() throws Exception {
+        JsonObject lang = lang();
+        for (String k : new String[] {"unknown", "known", "unknown_now", "known_now"}) {
+            String text = lang.get("supernaturalbloodlines.boss.notice.klaus." + k).getAsString();
+            assertTrue(text.contains("you carry the doppelgänger gene"), k + ": " + text);
+        }
+        assertEquals("The wolf lost your scent.", lang.get("supernaturalbloodlines.boss.klaus.lost_scent").getAsString());
+        assertTrue(lang.get("supernaturalbloodlines.boss.klaus.countdown").getAsString().contains("%s seconds"));
+        assertTrue(lang.has("supernaturalbloodlines.boss.klaus.dawn"));
+        assertEquals("Cures werewolf venom. Counts as an Original hybrid's blood for the hybrid transition.", lang.get("item.supernaturalbloodlines.klaus_blood.tooltip").getAsString());
+        assertTrue(lang.has("item.supernaturalbloodlines.klaus_blood.dead_line"));
+    }
+
+    @Test
+    void theKlausSettingsAreLabelled() throws Exception {
+        for (String k : new String[] {"klaus_chance_per_full_moon", "klaus_hunts_players", "klaus_warning_seconds"}) {
+            assertTrue(lang().has(label(k)), k);
+        }
+    }
+
+    @Test
     void theHomeLinesAreThereForAStandingAndAFallenBossNamedOrNot() throws Exception {
         JsonObject lang = lang();
         for (String k : new String[] {"boss_near", "boss_near_named", "boss_fallen", "boss_fallen_named"}) {
@@ -66,7 +108,7 @@ class BossTextTest {
     void theHintsAndTheRisingAreWritten() throws Exception {
         JsonObject lang = lang();
         assertEquals("White oak only works on an Original who is down.", lang.get("supernaturalbloodlines.boss.white_oak_closed").getAsString());
-        assertTrue(lang.get("supernaturalbloodlines.boss.notice.mikael.hint").getAsString().contains("Mountain ash will hold him."));
+        assertTrue(lang.get("supernaturalbloodlines.boss.notice.mikael.hint").getAsString().contains("laid by a pack Emissary will hold him"));
         assertTrue(lang.get("supernaturalbloodlines.line.risen_named").getAsString().contains("Your line is safe again."));
         assertTrue(lang.get("supernaturalbloodlines.line.risen_hidden").getAsString().contains("Your line is safe again."));
         assertTrue(lang.get("supernaturalbloodlines.boss.bar.desiccated").getAsString().contains("desiccated"));

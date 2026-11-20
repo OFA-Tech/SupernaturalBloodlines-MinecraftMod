@@ -19,6 +19,7 @@ import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBars;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossClock;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossDirector;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
+import net.ofatech.supernaturalbloodlines.parts.bosses.entity.KlausEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity;
 import net.ofatech.supernaturalbloodlines.parts.species.item.WhiteOak;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex;
@@ -28,12 +29,14 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 /** A boss with fixed facts for the GameTests (plan 17, "BossTestRig"): the index starts clean, the world is put back at the end. */
 final class BossTestRig implements AutoCloseable {
     static final UUID MIKAEL = NpcOriginal.MIKAEL.uuid();
+    static final UUID KLAUS = NpcOriginal.KLAUS.uuid();
 
     final GameTestHelper helper;
     final MinecraftServer server;
     final BossIndex index;
     final long dayTime;
     MikaelEntity mikael;
+    KlausEntity klaus;
 
     BossTestRig(GameTestHelper helper) {
         this.helper = helper;
@@ -50,6 +53,12 @@ final class BossTestRig implements AutoCloseable {
         }
         index.forget(BossId.MIKAEL);
         LineIndex.get(server).unmarkDead(MIKAEL);
+        var oldKlaus = BossDirector.bossEntity(server, BossId.KLAUS);
+        if (oldKlaus != null) {
+            oldKlaus.discard();
+        }
+        index.forget(BossId.KLAUS);
+        LineIndex.get(server).unmarkDead(KLAUS);
         LineWarning.reset();
         BossBars.reset();
         BossesConfig.override("original_return_days", null);
@@ -69,6 +78,17 @@ final class BossTestRig implements AutoCloseable {
     MikaelEntity spawn() {
         mikael = BossDirector.spawnMikael(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
         return mikael;
+    }
+
+    /** Klaus, made the way the director makes him, standing 2 blocks into the test. */
+    KlausEntity spawnKlaus() {
+        klaus = BossDirector.spawnKlaus(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+        return klaus;
+    }
+
+    /** The item entities of this kind lying near this entity. */
+    long dropsNear(net.minecraft.world.entity.Entity e, Item item) {
+        return helper.getLevel().getEntitiesOfClass(ItemEntity.class, e.getBoundingBox().inflate(6.0), i -> i.getItem().is(item)).size();
     }
 
     /** A player holding a white oak stake, and the blow it makes. */
@@ -113,6 +133,9 @@ final class BossTestRig implements AutoCloseable {
         BossDirector.useRingCheck(null);
         BossDirector.useDifficulty(null);
         BossDirector.useGround(null);
+        BossDirector.useMods(null);
+        BossDirector.useMoon(null);
+        BossDirector.useVillagers(null);
         SireCall.overridePlayerLookup(null);
         LineWarning.overridePlayers(null);
         reset();

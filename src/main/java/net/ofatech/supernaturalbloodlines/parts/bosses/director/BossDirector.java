@@ -14,6 +14,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -22,6 +24,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
 import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
 import net.ofatech.supernaturalbloodlines.core.boss.BossFacts;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
@@ -29,14 +32,19 @@ import net.ofatech.supernaturalbloodlines.core.boss.BossRules;
 import net.ofatech.supernaturalbloodlines.core.boss.BossState;
 import net.ofatech.supernaturalbloodlines.core.boss.BossWeight;
 import net.ofatech.supernaturalbloodlines.core.boss.DesiccationRules;
+import net.ofatech.supernaturalbloodlines.core.boss.KlausRules;
 import net.ofatech.supernaturalbloodlines.core.boss.MikaelRules;
+import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
 import net.ofatech.supernaturalbloodlines.core.boss.SpawnRules;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
+import net.ofatech.supernaturalbloodlines.parts.bosses.entity.KlausEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.NpcOriginalBoss;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.doppelganger.DoppelgangerVillagers;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook;
 import net.ofatech.supernaturalbloodlines.parts.species.line.Imprisonment;
@@ -128,6 +136,7 @@ public final class BossDirector {
             }
         }
         mikael(server, index);
+        klaus(server, index);
     }
 
     // ---- lost bosses ----
@@ -330,12 +339,182 @@ public final class BossDirector {
         return new WorldNowHook.BossNear(index.state(best) == BossState.OPEN ? WorldNowHook.BossNear.FALLEN : WorldNowHook.BossNear.STANDING, known ? best.id() : "");
     }
 
+    private static volatile java.util.function.Predicate<BossId> modsHook;
+    private static volatile java.util.function.Predicate<ServerLevel> moonHook;
+    private static volatile java.util.function.Function<ServerLevel, java.util.Collection<Villager>> villagers = DoppelgangerVillagers::loaded;
+
+    /** Tests: which villagers count as doppelgangers (the real list has every test villager in the world); null puts the real list back. */
+    @VisibleForTesting
+    public static void useVillagers(@Nullable java.util.function.Function<ServerLevel, java.util.Collection<Villager>> loaded) {
+        villagers = loaded == null ? DoppelgangerVillagers::loaded : loaded;
+    }
+
+    /** Tests: whether the mods of a boss are there (the matrix runs without Werewolves, but its rules are still tested); null puts the real answer back. */
+    @VisibleForTesting
+    public static void useMods(@Nullable java.util.function.Predicate<BossId> present) {
+        modsHook = present;
+    }
+
+    /** Tests: whether it is a full moon night; the moon phase follows the time of day, which the tests must not move. Null puts the real answer back. */
+    @VisibleForTesting
+    public static void useMoon(@Nullable java.util.function.Predicate<ServerLevel> fullMoonNight) {
+        moonHook = fullMoonNight;
+    }
+
     /** Whether this boss's mods are there; Mikael needs nothing beyond the part. */
     public static boolean modsPresent(BossId boss) {
+        java.util.function.Predicate<BossId> hook = modsHook;
+        if (hook != null) {
+            return hook.test(boss);
+        }
         return switch (boss) {
             case KLAUS, DEUCALION, PETER_HALE, BEAST_OF_GEVAUDAN -> ModList.get().isLoaded("werewolves");
             default -> true;
         };
+    }
+
+    // ---- Klaus ----
+
+    private static boolean fullMoonNight(ServerLevel level) {
+        java.util.function.Predicate<ServerLevel> hook = moonHook;
+        return hook != null ? hook.test(level) : MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime());
+    }
+
+    /** Whether the player has the doppelganger gene and may be hunted (R162). */
+    private static boolean huntable(ServerPlayer p) {
+        return BloodlineAccess.get(p).doppelgangerGene()
+                && KlausRules.eligible(new KlausRules.Target(true, true, p.level().dimension() == Level.OVERWORLD, p.isSpectator(), true), BossesConfig.klausHuntsPlayers());
+    }
+
+    private static void klaus(MinecraftServer server, BossIndex index) {
+        BossId boss = BossId.KLAUS;
+        BossIndex.Entry entry = index.of(boss);
+        ServerLevel overworld = server.overworld();
+        if (entry.arriveAt >= 0) {
+            klausArrives(server, index, entry, overworld);
+            return;
+        }
+        BossFacts facts = new BossFacts(BossesConfig.enabled(boss), modsPresent(boss), index.state(boss), false);
+        if (SpawnRules.refusal(facts).isPresent() || !fullMoonNight(overworld) || difficulty.apply(overworld) == Difficulty.PEACEFUL) {
+            return;
+        }
+        long today = DesiccationRules.dayOf(overworld.getDayTime());
+        if (entry.lastRollDay == today) {
+            return;
+        }
+        List<ServerPlayer> here = players.apply(overworld);
+        List<LivingEntity> targets = new ArrayList<>();
+        for (ServerPlayer p : here) {
+            if (huntable(p)) {
+                targets.add(p);
+            }
+        }
+        for (Villager v : villagers.apply(overworld)) {
+            boolean near = here.stream().anyMatch(p -> p.level() == overworld && p.distanceToSqr(v) <= (double) KlausRules.VILLAGER_RANGE * KlausRules.VILLAGER_RANGE);
+            if (v.isAlive() && KlausRules.eligible(new KlausRules.Target(false, true, true, false, near), BossesConfig.klausHuntsPlayers())) {
+                targets.add(v);
+            }
+        }
+        if (targets.isEmpty()) {
+            return;
+        }
+        // one roll a night, the first time somebody could be hunted
+        entry.lastRollDay = today;
+        index.setDirty();
+        if (!KlausRules.picks(true, true, BossWeight.chance(BossesConfig.klausChance(), 1.0), roll.getAsDouble())) {
+            return;
+        }
+        LivingEntity target = targets.get(Math.min(targets.size() - 1, (int) (roll.getAsDouble() * targets.size())));
+        if (target instanceof ServerPlayer p) {
+            long warning = KlausRules.warningTicks(true, BossesConfig.klausWarningSeconds());
+            if (warning > 0) {
+                entry.target = p.getUUID();
+                entry.arriveAt = BossClock.nowTicks(overworld) + warning;
+                entry.reminded = 0;
+                index.setDirty();
+                noticeKlaus(p, BossesConfig.klausWarningSeconds());
+                return;
+            }
+            noticeKlaus(p, 0);
+        }
+        spawnKlaus(overworld, target, null);
+    }
+
+    /** The warning has run out: he comes if the one he was coming for is still here, and goes nowhere if they are not. */
+    private static void klausArrives(MinecraftServer server, BossIndex index, BossIndex.Entry entry, ServerLevel overworld) {
+        UUID id = entry.target;
+        ServerPlayer p = id == null ? null : SireCall.player(server, id);
+        long now = BossClock.nowTicks(overworld);
+        // the same questions as when he was announced, asked again at every look, not only when the time is up: the player may have died, left, changed
+        // dimension or gone to spectator, the switch may have been turned off, or the world made peaceful
+        boolean still = p != null && p.isAlive() && huntable(p) && difficulty.apply(overworld) != Difficulty.PEACEFUL;
+        boolean allowed = SpawnRules.refusal(new BossFacts(BossesConfig.enabled(BossId.KLAUS), modsPresent(BossId.KLAUS), index.state(BossId.KLAUS), false)).isEmpty();
+        if (!still || !allowed) {
+            entry.arriveAt = -1;
+            entry.target = null;
+            entry.reminded = 0;
+            index.setDirty();
+            if (p != null) {
+                p.displayClientMessage(Component.translatable("supernaturalbloodlines.boss.klaus.lost_scent"), true);
+            }
+            return;
+        }
+        if (!KlausRules.arrivalDue(now, entry.arriveAt)) {
+            int seconds = KlausRules.reminder(entry.arriveAt - now, KlausRules.warningTicks(true, BossesConfig.klausWarningSeconds()), entry.reminded);
+            if (seconds > 0) {
+                entry.reminded = seconds;
+                index.setDirty();
+                p.displayClientMessage(Component.translatable("supernaturalbloodlines.boss.klaus.countdown", seconds), true);
+            }
+            return;
+        }
+        entry.arriveAt = -1;
+        entry.target = null;
+        entry.reminded = 0;
+        index.setDirty();
+        spawnKlaus(overworld, p, null);
+    }
+
+    /**
+     * Makes Klaus, 24 to 40 blocks from {@code target} (6 to 24 when there is no ground that far, or at {@code at} when it is given), and writes it down. Empty
+     * when there is no ground for him. The caller has already asked {@link SpawnRules}.
+     */
+    public static Optional<KlausEntity> spawnKlaus(ServerLevel level, @Nullable LivingEntity target, @Nullable BlockPos at) {
+        BlockPos pos = at != null ? at : target == null ? null
+                : ground.find(level, target.blockPosition(), 24, 40).or(() -> ground.find(level, target.blockPosition(), 6, 24)).orElse(null);
+        if (pos == null) {
+            return Optional.empty();
+        }
+        KlausEntity k = KlausEntity.create(level);
+        k.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.random.nextFloat() * 360F, 0F);
+        k.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null);
+        k.applyFactors();
+        k.hunt(target == null ? null : target.getUUID());
+        level.addFreshEntity(k);
+        BossIndex index = BossIndex.get(level.getServer());
+        BossIndex.Entry entry = index.of(BossId.KLAUS);
+        index.apply(BossId.KLAUS, BossRules.Event.SPAWNED);
+        entry.appearances++;
+        entry.target = target == null ? null : target.getUUID();
+        entry.arriveAt = -1;
+        index.adopt(BossId.KLAUS, k.getUUID(), level.dimension().location().toString(), pos);
+        index.setDirty();
+        return Optional.of(k);
+    }
+
+    /** "A wolf is howling for you" (his name once the player knows the Original, R123), on the action bar and in chat, with a howl, the time left and the hint. */
+    static void noticeKlaus(ServerPlayer target, int seconds) {
+        boolean known = LineRules.showsRoot(BloodlineAccess.get(target).knownLine(), BossId.KLAUS.npcOriginal().orElseThrow().uuid(),
+                SpeciesConfig.originalVisibilityAlways());
+        String key = "supernaturalbloodlines.boss.notice.klaus." + (known ? "known" : "unknown") + (seconds > 0 ? "" : "_now");
+        Component text = Component.translatable(key, seconds);
+        // being hunted is how a doppelganger finds out what they are (the show's way): the gene is discovered here, and the message says why
+        BloodlineAccess.reveal(target, Genes.DOPPELGANGER);
+        target.displayClientMessage(text, true);
+        target.sendSystemMessage(text);
+        target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.klaus.hint"));
+        // the howl is for the one he hunts, not for everybody near: nobody else is told who is hunted
+        target.playNotifySound(net.minecraft.sounds.SoundEvents.WOLF_HOWL, net.minecraft.sounds.SoundSource.HOSTILE, 1.5F, 0.7F);
     }
 
     @Nullable

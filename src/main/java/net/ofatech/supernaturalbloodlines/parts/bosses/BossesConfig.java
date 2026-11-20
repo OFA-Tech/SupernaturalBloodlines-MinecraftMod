@@ -23,6 +23,9 @@ public final class BossesConfig {
     private static final ModConfigSpec.IntValue MIKAEL_MIN_RUNG;
     private static final ModConfigSpec.DoubleValue MIKAEL_NIGHT_CHANCE;
     private static final ModConfigSpec.BooleanValue MIKAEL_STAKES_ORIGINALS;
+    private static final ModConfigSpec.DoubleValue KLAUS_CHANCE_PER_FULL_MOON;
+    private static final ModConfigSpec.BooleanValue KLAUS_HUNTS_PLAYERS;
+    private static final ModConfigSpec.IntValue KLAUS_WARNING_SECONDS;
     private static final java.util.Map<BossId, ModConfigSpec.BooleanValue> ENABLED = new java.util.EnumMap<>(BossId.class);
 
     static {
@@ -48,6 +51,12 @@ public final class BossesConfig {
                 .defineInRange("mikael_night_chance", 0.15, 0.0, 1.0);
         MIKAEL_STAKES_ORIGINALS = b.comment("Off (the default): Mikael does not hunt Originals or Original hybrids, and his white oak never counts as a white oak kill, so he cannot cause line death. On: he hunts them too, his stake kills an Original outright (R32) and the line dies with them. The hunted player is warned.")
                 .define("mikael_stakes_originals", false);
+        KLAUS_CHANCE_PER_FULL_MOON = b.comment("The chance, once each full moon night, that Klaus comes for a doppelganger (needs Werewolves). A villager doppelganger must be within 64 blocks of a player.")
+                .defineInRange("klaus_chance_per_full_moon", 0.35, 0.0, 1.0);
+        KLAUS_HUNTS_PLAYERS = b.comment("Whether Klaus hunts players who have the doppelganger gene, not only villagers. A player is warned first.")
+                .define("klaus_hunts_players", true);
+        KLAUS_WARNING_SECONDS = b.comment("How long before he arrives a hunted player is warned (a villager is never warned). 0 = he arrives at once.")
+                .defineInRange("klaus_warning_seconds", 90, 0, 600);
         SPEC = b.build();
     }
 
@@ -121,6 +130,18 @@ public final class BossesConfig {
 
     public static boolean mikaelStakesOriginals() {
         return pick("mikael_stakes_originals", MIKAEL_STAKES_ORIGINALS);
+    }
+
+    public static double klausChance() {
+        return pick("klaus_chance_per_full_moon", KLAUS_CHANCE_PER_FULL_MOON);
+    }
+
+    public static boolean klausHuntsPlayers() {
+        return pick("klaus_hunts_players", KLAUS_HUNTS_PLAYERS);
+    }
+
+    public static int klausWarningSeconds() {
+        return pick("klaus_warning_seconds", KLAUS_WARNING_SECONDS);
     }
 
     public static double mikaelNightChance() {

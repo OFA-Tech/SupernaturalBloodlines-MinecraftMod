@@ -80,7 +80,7 @@ All under `[species]`.
 | `imprisonment_rite_seconds` | `30` | 5 to 300 | How long the Original must stay trapped. |
 | `latent_gene_chance` | `0.15` | 0.0 to 1.0 | Chance that a player carries the hidden werewolf gene, rolled **once at first login**. Changing it does not re-roll players who already logged in. |
 | `doppelganger_gene_chance` | `0.05` | 0.0 to 1.0 | Chance that a player carries the hidden doppelgänger gene, rolled **once** at the first login after it exists. Changing it does not re-roll players who were already rolled. It can sit next to the werewolf gene. |
-| `gene_visibility` | `discovered` | `discovered` or `always` | `discovered`: a player sees each gene as Unknown until the Rite of Lineage (Reveal), the Rite of Revelation, a Doppelgänger Blood rite with their taglock, or a werewolf awakening finds it. `always`: a player always sees their own genes. Never shown to other players. |
+| `gene_visibility` | `discovered` | `discovered` or `always` | `discovered`: a player sees each gene as Unknown until the Rite of Lineage (Reveal), the Rite of Revelation, a Doppelgänger Blood rite with their taglock, a werewolf awakening, or (the doppelgänger gene) being hunted by Klaus finds it. `always`: a player always sees their own genes. Never shown to other players. |
 | `doppelganger_villager_chance` | `0.005` | 0.0 to 1.0 | Chance that a villager is a **doppelgänger**, rolled **once**, the first time the villager is loaded (new spawns, breeding, village villagers, and old villagers after the update). Unlimited per world. It looks and trades like any villager. |
 | `doppelganger_rite_taglock` | `doppelganger` | `doppelganger` or `human` | Whose taglock the Rite of Doppelgänger Blood accepts. `doppelganger`: a doppelgänger villager or a player with the gene. `human`: any human-like villager or player (the old behaviour). The owner must be nearby or online either way. |
 | `alpha_bite_death_chance` | `0.10` | 0.0 to 1.0 | Chance that an Alpha's bite **kills** the human instead of turning them. |
@@ -174,7 +174,7 @@ Only does anything with [Enhanced Celestials 2](Enhanced-Celestials). A factor o
 
 ## bosses: `supernaturalbloodlines-bosses.toml`
 
-Needs the species part and GeckoLib. All of them are on the hub's Admin page (section Bosses). Only Mikael is in the game so far; the other `<boss>_enabled` switches are there for the next phases and do nothing yet.
+Needs the species part and GeckoLib. All of them are on the hub's Admin page (section Bosses). Mikael and Klaus are in the game so far; the other `<boss>_enabled` switches are there for the next phases and do nothing yet. Klaus needs Werewolves.
 
 | Key | Default | What it does |
 |---|---|---|
@@ -188,6 +188,9 @@ Needs the species part and GeckoLib. All of them are on the hub's Admin page (se
 | `boss_damage_factor` | `1.0` | Every boss's attack damage is multiplied by this (0.1 to 10). |
 | `mikael_min_rung` | `3` | The lowest rung of the vampire ladder (0 to 6) at which Mikael hunts a vampire player. |
 | `mikael_night_chance` | `0.15` | The chance, once each night, that Mikael comes for a vampire player of that rung. |
+| `klaus_chance_per_full_moon` | `0.35` | 0 to 1 | The chance, once each full moon night, that Klaus comes for a doppelgänger (a villager with a player within 64 blocks, or a player with the gene). Needs Werewolves. |
+| `klaus_hunts_players` | `true` | | Whether Klaus hunts players who carry the doppelgänger gene, not only villagers. A player is warned first. |
+| `klaus_warning_seconds` | `90` | 0 to 600 | How long before he arrives a hunted player is warned. A villager is never warned. 0 = he arrives at once. |
 | `mikael_stakes_originals` | `false` | Off: Mikael does not hunt Originals or Original hybrids, and his white oak never counts as a white oak kill, so he cannot start line death. On: he hunts them, his stake kills an Original outright and their line dies with them; the hunted player is warned. |
 
 ## supernatural (client): `supernaturalbloodlines-hub-client.toml`

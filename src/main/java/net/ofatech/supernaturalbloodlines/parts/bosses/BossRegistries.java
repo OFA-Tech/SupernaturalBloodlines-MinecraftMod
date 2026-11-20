@@ -8,6 +8,7 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.parts.bosses.entity.KlausEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity;
 
 /** The bosses part's entity types (the first of the mod). Server and client both load this; nothing client-side is named here. */
@@ -17,11 +18,17 @@ public final class BossRegistries {
     public static final DeferredHolder<EntityType<?>, EntityType<MikaelEntity>> MIKAEL = ENTITY_TYPES.register("mikael",
             () -> EntityType.Builder.of(MikaelEntity::new, MobCategory.MISC).sized(0.6F, 1.95F).clientTrackingRange(10).fireImmune().build("mikael"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<KlausEntity>> KLAUS = ENTITY_TYPES.register("klaus",
+            () -> EntityType.Builder.of(KlausEntity::new, MobCategory.MISC).sized(0.6F, 1.95F).clientTrackingRange(10).fireImmune().build("klaus"));
+
     private BossRegistries() {
     }
 
     static void register(IEventBus modBus) {
         ENTITY_TYPES.register(modBus);
-        modBus.addListener((EntityAttributeCreationEvent e) -> e.put(MIKAEL.get(), MikaelEntity.attributes().build()));
+        modBus.addListener((EntityAttributeCreationEvent e) -> {
+            e.put(MIKAEL.get(), MikaelEntity.attributes().build());
+            e.put(KLAUS.get(), KlausEntity.attributes().build());
+        });
     }
 }

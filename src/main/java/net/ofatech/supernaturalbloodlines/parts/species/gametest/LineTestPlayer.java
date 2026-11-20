@@ -75,6 +75,18 @@ public final class LineTestPlayer extends FakePlayer {
         return chat;
     }
 
+    private final List<String> sounds = new ArrayList<>();
+
+    /** The sounds sent to this player alone ({@code playNotifySound}), by registry id: a sound the world plays for everybody near is not here. */
+    public List<String> notified() {
+        return sounds;
+    }
+
+    @Override
+    public void playNotifySound(net.minecraft.sounds.SoundEvent sound, net.minecraft.sounds.SoundSource source, float volume, float pitch) {
+        sounds.add(sound.getLocation().toString());
+    }
+
     @Override
     public void sendSystemMessage(Component message) {
         int before = messages.size();
