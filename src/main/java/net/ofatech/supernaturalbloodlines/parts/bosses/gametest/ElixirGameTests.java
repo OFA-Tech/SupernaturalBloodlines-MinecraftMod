@@ -108,6 +108,32 @@ public final class ElixirGameTests {
         helper.succeed();
     }
 
+    @SuppressWarnings("unchecked")
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theRealResurrectionRingGoesBeforeTheElixirAndTheElixirTakesOverWhenTheRingIsEmpty(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("artifacts")) {
+            helper.succeed(); // no ring in this run
+            return;
+        }
+        ServerPlayer victim = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.createMortal(helper);
+        net.minecraft.world.entity.Mob vampire = helper.spawnWithNoFreeWill(
+                (net.minecraft.world.entity.EntityType<net.minecraft.world.entity.Mob>) net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.get(
+                        net.minecraft.resources.ResourceLocation.parse("vampirism:vampire")), new net.minecraft.core.BlockPos(1, 1, 1));
+        ItemStack ring = new ItemStack(net.ofatech.supernaturalbloodlines.parts.artifacts.ArtifactItems.RESURRECTION_RING.get());
+        ring.set(net.ofatech.supernaturalbloodlines.parts.artifacts.ArtifactItems.CHARGES.get(), 1);
+        victim.getInventory().items.set(5, ring);
+        victim.getInventory().items.set(6, new ItemStack(BossItems.THE_ELIXIR.get()));
+        victim.invulnerableTime = 0;
+        victim.hurt(victim.damageSources().mobAttack(vampire), 1000f);
+        helper.assertTrue(victim.isAlive() && elixirs(victim) == 1, "the ring did not go first: alive " + victim.isAlive() + ", Elixirs " + elixirs(victim));
+        helper.assertTrue(ring.getOrDefault(net.ofatech.supernaturalbloodlines.parts.artifacts.ArtifactItems.CHARGES.get(), -1) == 0, "the ring was not spent");
+        victim.invulnerableTime = 0;
+        victim.setHealth(victim.getMaxHealth());
+        victim.hurt(victim.damageSources().mobAttack(vampire), 1000f);
+        helper.assertTrue(victim.isAlive() && elixirs(victim) == 0, "with the ring empty the Elixir did not take over: alive " + victim.isAlive() + ", Elixirs " + elixirs(victim));
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void withoutAnElixirNothingIsSaved(GameTestHelper helper) {
         LineTestPlayer p = holder(helper, 0);
