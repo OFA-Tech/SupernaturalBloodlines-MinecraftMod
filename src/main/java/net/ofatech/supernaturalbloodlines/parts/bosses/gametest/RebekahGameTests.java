@@ -118,8 +118,11 @@ public final class RebekahGameTests {
         LineTestPlayer p = caster(helper);
         try (BossTestRig rig = new BossTestRig(helper)) {
             world(p);
-            p.getInventory().add(new ItemStack(net.ofatech.supernaturalbloodlines.parts.artifacts.ArtifactItems.THE_CURE.get()));
-            helper.getLevel().addFreshEntity(new ItemEntity(helper.getLevel(), p.getX(), p.getY(), p.getZ(), new ItemStack(net.ofatech.supernaturalbloodlines.parts.artifacts.ArtifactItems.THE_CURE.get())));
+            // the real Cure when the artifacts part is there, a bottle otherwise: either way nothing here is the rite, so nothing is an event
+            ItemStack cure = net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("artifacts")
+                    ? new ItemStack(net.ofatech.supernaturalbloodlines.parts.artifacts.ArtifactItems.THE_CURE.get()) : new ItemStack(Items.GLASS_BOTTLE);
+            p.getInventory().add(cure.copy());
+            helper.getLevel().addFreshEntity(new ItemEntity(helper.getLevel(), p.getX(), p.getY(), p.getZ(), cure.copy()));
             BossClock.offsetForTests(100_000);
             BossDirector.check(rig.server);
             helper.assertTrue(rig.index.of(BossId.REBEKAH).arriveAt == -1 && rebekahOf(rig) == null, "a Cure that was given sent her");
