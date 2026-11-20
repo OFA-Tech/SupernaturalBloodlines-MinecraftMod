@@ -69,13 +69,25 @@ public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) im
         formOverride = value;
     }
 
+    /** The rite's own {@code requires_full_moon}, read back from the loaded rite (true when the rite is not loaded or its file does not say). */
+    public static boolean needsFullMoon(net.minecraft.server.level.ServerLevel level) {
+        var registry = level.registryAccess().registryOrThrow(net.favouriteless.enchanted.common.init.EData.RITE_TYPES_REGISTRY);
+        var type = registry.get(ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "alpha_trial"));
+        return type == null || net.ofatech.supernaturalbloodlines.parts.species.SpeciesHub.requiresFullMoon(net.ofatech.supernaturalbloodlines.parts.species.SpeciesHub.factoryOf(level.registryAccess(), type));
+    }
+
     /** What Home says about {@code p}'s trial tonight: running, possible (the gate would let them begin in beast form), or nothing. */
     public static TrialRules.Notice noticeOf(ServerPlayer p) {
+        return noticeOf(p, needsFullMoon(p.serverLevel()));
+    }
+
+    /** {@link #noticeOf(ServerPlayer)} for a rite that needs the full moon ({@code true}) or only a night. */
+    public static TrialRules.Notice noticeOf(ServerPlayer p, boolean needsFullMoon) {
         var level = p.serverLevel();
         var wolf = PackAccess.wolf(p);
         TrialRules.Refusal refusal = TrialRules.gate(SpeciesConfig.trial().enabled(), wolf, VampirismSupernatural.isWerewolf(p),
                 VampirismAPI.factionPlayerHandler(p).getCurrentLevel(), SpeciesConfig.trial().minLevel(),
-                MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), true, false, false, false);
+                MoonRule.nightFor(needsFullMoon, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), true, false, false, false);
         return TrialRules.notice(() -> AlphaTrialBoss.running(level, p.getUUID()), refusal);
     }
 
@@ -87,9 +99,9 @@ public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) im
 
     /**
      * Starts a trial for {@code p} at the circle at {@code centre}, or says why not. Returns the refusal key (null when the boss stands), and sends the
-     * warning when that is what is missing.
+     * warning when that is what is missing. {@code needsFullMoon} is the rite file's {@code requires_full_moon}: false lets a server run the trial on any
+     * night, but never in daylight.
      */
-    /** {@code needsFullMoon} is the rite file's {@code requires_full_moon}: false lets a server run the trial on any night, but never in daylight. */
     public static String tryStart(net.minecraft.server.level.ServerLevel level, BlockPos centre, ServerPlayer p, boolean transformed, boolean needsFullMoon) {
         long now = level.getGameTime();
         var wolf = PackAccess.wolf(p);
@@ -113,7 +125,7 @@ public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) im
                 return KEY + "warn_sent";
             }
             default -> {
-                return KEY + refusal.name().toLowerCase(java.util.Locale.ROOT);
+                return KEY + TrialRules.refusalKey(refusal, needsFullMoon);
             }
         }
         BlockPos spot = NpcPackSpawner.groundNear(level, centre.offset(5, 0, 0));

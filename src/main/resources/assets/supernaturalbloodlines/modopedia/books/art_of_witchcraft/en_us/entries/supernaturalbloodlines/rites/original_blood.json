@@ -19,7 +19,16 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "The one on the centre (the caster if nobody does) must be an Original or an Original hybrid. An Original's ladder can raise the number of bottles above one.\n\nAnyone else is refused: nothing is made and the bottle comes back.",
+          "text": "The Original on the centre must be an Original or an Original hybrid. Someone else's blood needs their consent: they must sneak on the centre. An Original's ladder can raise the number of bottles above one.",
+          "header": "Original's Blood"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Without the consent, or if the one on the centre is not an Original, nothing is made, the bottle comes back and the caster is told only that the rite would change nothing: it never says who is an Original.",
           "header": "Original's Blood"
         }
       ]

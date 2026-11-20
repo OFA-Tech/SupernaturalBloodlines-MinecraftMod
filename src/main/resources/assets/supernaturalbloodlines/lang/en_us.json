@@ -1577,8 +1577,8 @@
   "supernaturalbloodlines.hub.rites.desc.hearing_device.2": "Anyone can perform it. A player is stunned only where PvP is on (and not in creative or spectator mode).",
   "supernaturalbloodlines.hub.rites.desc.hearing_device.3": "The device needs 60 seconds to recharge after each use.",
   "supernaturalbloodlines.hub.rites.desc.hybrid_blood.1": "Fills a bottle with Hybrid's Blood from the hybrid on the centre.",
-  "supernaturalbloodlines.hub.rites.desc.hybrid_blood.2": "The one on the centre (the caster if nobody does) must be a hybrid, an Original hybrid or a tribrid. Werewolves must be installed.",
-  "supernaturalbloodlines.hub.rites.desc.hybrid_blood.3": "Anyone else is refused: nothing is made and the bottle comes back.",
+  "supernaturalbloodlines.hub.rites.desc.hybrid_blood.2": "The hybrid on the centre must be a hybrid, an Original hybrid or a tribrid. Someone else's blood needs their consent: they must sneak on the centre. Werewolves must be installed.",
+  "supernaturalbloodlines.hub.rites.desc.hybrid_blood.3": "Without the consent, or if the one on the centre is not a hybrid, nothing is made, the bottle comes back and the caster is told only that the rite would change nothing: it never says who is a hybrid.",
   "supernaturalbloodlines.hub.rites.desc.immortality.1": "Turns the human on the centre into an Original vampire.",
   "supernaturalbloodlines.hub.rites.desc.immortality.2": "Full-moon night only. The target must be human: no faction and no species. A villager must stand in the circle: it is the sacrifice, and it is killed.",
   "supernaturalbloodlines.hub.rites.desc.immortality.3": "A server can cap how many Originals exist; at the cap the rite is refused and the ingredients come back.",
@@ -1586,8 +1586,8 @@
   "supernaturalbloodlines.hub.rites.desc.magicule_offering.2": "Anyone can perform it. The magicules come from the caster, not from the altar, so this rite asks for no altar power. Tensura must be installed.",
   "supernaturalbloodlines.hub.rites.desc.magicule_offering.3": "With too few magicules it fails: nothing is taken and the items come back.",
   "supernaturalbloodlines.hub.rites.desc.original_blood.1": "Fills a bottle with Original's Blood that names the Original on the centre.",
-  "supernaturalbloodlines.hub.rites.desc.original_blood.2": "The one on the centre (the caster if nobody does) must be an Original or an Original hybrid. An Original's ladder can raise the number of bottles above one.",
-  "supernaturalbloodlines.hub.rites.desc.original_blood.3": "Anyone else is refused: nothing is made and the bottle comes back.",
+  "supernaturalbloodlines.hub.rites.desc.original_blood.2": "The Original on the centre must be an Original or an Original hybrid. Someone else's blood needs their consent: they must sneak on the centre. An Original's ladder can raise the number of bottles above one.",
+  "supernaturalbloodlines.hub.rites.desc.original_blood.3": "Without the consent, or if the one on the centre is not an Original, nothing is made, the bottle comes back and the caster is told only that the rite would change nothing: it never says who is an Original.",
   "supernaturalbloodlines.hub.rites.desc.purification.1": "Strikes every undead creature within 8 blocks of the centre with holy damage (8 by default, 4 hearts). It hits Tensura undead and vanilla undead.",
   "supernaturalbloodlines.hub.rites.desc.purification.2": "Anyone can perform it. Tensura must be installed; it needs nothing from Vampirism.",
   "supernaturalbloodlines.hub.rites.desc.purification.3": "It does not tell friend from foe: undead allies within 8 blocks are hit too, and the reach is wider than the circle.",
@@ -1656,5 +1656,9 @@
   "supernaturalbloodlines.hub.book.rites.power_none": "no altar power",
   "supernaturalbloodlines.hub.book.rites.sub_magicules": "%s · costs magicules",
   "supernaturalbloodlines.hub.book.rites.no_book": "Enchanted's book is not available: Enchanted or Modopedia is not installed.",
-  "supernaturalbloodlines.book.entry_missing": "This rite has no page in Enchanted's book."
+  "supernaturalbloodlines.book.entry_missing": "This rite has no page in Enchanted's book.",
+  "supernaturalbloodlines.rite.sneak_to_give_blood": "Sneak on the centre to give your blood.",
+  "supernaturalbloodlines.refusal.no_original_blood_in_you": "The rite found no Original's blood in you.",
+  "supernaturalbloodlines.refusal.no_hybrid_blood_in_you": "The rite found no hybrid's blood in you.",
+  "supernaturalbloodlines.trial.not_night_any": "The Alpha Trial can only be taken at night."
 }

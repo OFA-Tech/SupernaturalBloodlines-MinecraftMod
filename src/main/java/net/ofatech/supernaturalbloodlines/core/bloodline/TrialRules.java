@@ -14,6 +14,14 @@ public final class TrialRules {
 
     public enum Fail { NONE, CHALLENGER_DEAD, TOO_FAR, OTHER_DIMENSION, NIGHT_OVER }
 
+    /** The lang key (after {@code trial.}) that says why the gate refused: the night is "full-moon night" or just "night" by the rite's own setting. */
+    public static String refusalKey(Refusal refusal, boolean needsFullMoon) {
+        if (refusal == Refusal.NOT_NIGHT && !needsFullMoon) {
+            return "not_night_any";
+        }
+        return refusal.name().toLowerCase(java.util.Locale.ROOT);
+    }
+
     /** What Home says about the trial: nothing, that one could be started tonight, or that one is running. */
     public enum Notice { NONE, POSSIBLE, RUNNING }
 

@@ -638,9 +638,12 @@ public final class OriginalGameTests {
         helper.succeed();
     }
 
-    /** The caster is not the one on the circle: a refusal must not tell them whether that player is an Original. */
-    @GameTest(template = "empty", templateNamespace = NS)
-    public static void originalBloodRefusalTellsAStrangerCasterNothing(GameTestHelper helper) {
+    /** What a stranger on the circle and the one who asked for their blood were told, and what was made. */
+    private record Asked(String caster, String target, int blood, int bottles) {
+    }
+
+    /** {@code rite} asked of {@code species} standing on the centre, by a caster who stands apart; {@code sneak} is whether the one on the centre agrees. */
+    private static Asked askedFor(GameTestHelper helper, String rite, String bloodItem, Species species, boolean sneak) {
         clearDropped(helper);
         RecordingPlayer caster = RecordingPlayer.create(helper);
         RecordingPlayer target = RecordingPlayer.create(helper);
@@ -648,20 +651,56 @@ public final class OriginalGameTests {
         caster.setPos(net.minecraft.world.phys.Vec3.atBottomCenterOf(centre(helper)).add(4, 1, 0));
         helper.getLevel().addNewPlayer(caster);
         try {
-            BloodlineAccess.set(target, species(Species.WITCH));
-            start(helper, "original_blood", caster, List.of(new ItemStack(Items.GLASS_BOTTLE)));
-            helper.assertTrue(!caster.receivedOnActionBar(NOT_ORIGINAL), "the caster was told the one on the circle is not an Original");
-            helper.assertTrue(caster.receivedOnActionBar("supernaturalbloodlines.rite.no_effect"), "the caster was not told the rite changes nothing");
-            helper.assertTrue(target.receivedOnActionBar(NOT_ORIGINAL), "the one on the circle was not told");
+            BloodlineAccess.set(target, species(species));
+            target.setShiftKeyDown(sneak);
+            start(helper, rite, caster, List.of(new ItemStack(Items.GLASS_BOTTLE)));
+            return new Asked(caster.heard(), target.heard(), dropped(helper, bloodItem), dropped(helper, "minecraft:glass_bottle"));
         } finally {
             clearDropped(helper);
             remove(helper, caster);
             remove(helper, target);
             reset(target);
         }
+    }
+
+    private static final String NO_EFFECT = "supernaturalbloodlines.rite.no_effect";
+    private static final String SNEAK = "supernaturalbloodlines.rite.sneak_to_give_blood";
+
+    /**
+     * Original's Blood and Hybrid's Blood used to tell a caster, by a bottle or none (and the bottle names the species), who on the circle is an Original or a
+     * hybrid. Someone else's blood needs their consent, a sneak on the centre: without it the caster gets the same answer, the same cost and the ingredients
+     * back whatever the target is.
+     */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void bloodRitesTellACasterNothingWithoutTheTargetsConsent(GameTestHelper helper) {
+        String[][] rites = {{"original_blood", "supernaturalbloodlines:original_blood", "ORIGINAL"}, {"hybrid_blood", "supernaturalbloodlines:hybrid_blood", "HYBRID"}};
+        for (String[] r : rites) {
+            Asked right = askedFor(helper, r[0], r[1], Species.valueOf(r[2]), false);
+            Asked human = askedFor(helper, r[0], r[1], Species.NONE, false);
+            Asked witch = askedFor(helper, r[0], r[1], Species.WITCH, false);
+            helper.assertTrue(right.equals(human) && right.equals(witch), r[0] + ": the answer depends on the target: " + right + " / " + human + " / " + witch);
+            helper.assertTrue(right.caster().equals(NO_EFFECT), r[0] + ": the caster heard " + right.caster());
+            helper.assertTrue(right.target().equals(SNEAK), r[0] + ": the target heard " + right.target());
+            helper.assertTrue(right.blood() == 0 && right.bottles() == 1, r[0] + ": made " + right.blood() + ", bottles back " + right.bottles());
+        }
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void bloodRitesWorkWhenTheTargetSneaksAndTellTheWrongKindByTheirOwnWords(GameTestHelper helper) {
+        Asked original = askedFor(helper, "original_blood", "supernaturalbloodlines:original_blood", Species.ORIGINAL, true);
+        helper.assertTrue(original.blood() == 1 && original.bottles() == 0 && original.caster().isEmpty(), "an Original who sneaks: " + original);
+        Asked notOriginal = askedFor(helper, "original_blood", "supernaturalbloodlines:original_blood", Species.WITCH, true);
+        helper.assertTrue(notOriginal.blood() == 0 && notOriginal.bottles() == 1, "a witch who sneaks: " + notOriginal);
+        helper.assertTrue(notOriginal.caster().equals(NO_EFFECT), "the caster heard " + notOriginal.caster());
+        helper.assertTrue(notOriginal.target().equals("supernaturalbloodlines.refusal.no_original_blood_in_you"), "the target heard " + notOriginal.target());
+        Asked hybrid = askedFor(helper, "hybrid_blood", "supernaturalbloodlines:hybrid_blood", Species.TRIBRID, true);
+        helper.assertTrue(hybrid.blood() == 1 && hybrid.bottles() == 0 && hybrid.caster().isEmpty(), "a tribrid who sneaks: " + hybrid);
+        Asked notHybrid = askedFor(helper, "hybrid_blood", "supernaturalbloodlines:hybrid_blood", Species.NONE, true);
+        helper.assertTrue(notHybrid.blood() == 0 && notHybrid.bottles() == 1 && notHybrid.caster().equals(NO_EFFECT), "a human who sneaks: " + notHybrid);
+        helper.assertTrue(notHybrid.target().equals("supernaturalbloodlines.refusal.no_hybrid_blood_in_you"), "the target heard " + notHybrid.target());
+        helper.succeed();
+    }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void originalBloodRiteRefusesNonOriginals(GameTestHelper helper) {
         clearDropped(helper);

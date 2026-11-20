@@ -28,6 +28,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.TrialMark;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
+import net.ofatech.supernaturalbloodlines.core.bloodline.TrialRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Weak;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
@@ -312,7 +313,7 @@ public final class AlphaTrialGameTests {
             SpeciesConfig.overrideTrial(EASY);
             atNight(helper, fullNight() - 13000 + 6000, () -> {
                 String refused = AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true, false);
-                helper.assertTrue(refused != null && refused.endsWith("not_night"), "the trial started in daylight with the moon not asked for: " + refused);
+                helper.assertTrue(refused != null && refused.endsWith("not_night_any"), "the trial started in daylight with the moon not asked for, or the refusal says full moon: " + refused);
             });
             helper.assertTrue(bosses(helper).isEmpty(), "a refused trial left a boss");
             atNight(helper, 24000L * 8 * NEXT.incrementAndGet() + 24000 + 13000, () -> {
@@ -320,6 +321,28 @@ public final class AlphaTrialGameTests {
                 helper.assertTrue(started == null, "a night with no full moon, and the moon not asked for, did not start the trial: " + started);
                 String strict = AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true, true);
                 helper.assertTrue(strict != null, "the same night with the moon asked for started a second trial");
+                helper.assertTrue(strict.endsWith("already") || strict.endsWith("not_night"), "the refusal with the moon asked for: " + strict);
+            });
+        } finally {
+            clean(helper, bosses(helper), beta);
+        }
+        helper.succeed();
+    }
+
+    /** Home's "the trial can be taken tonight" follows the rite's own setting: with the full moon switched off, a night of any phase is enough. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void homeSaysTheTrialIsPossibleByTheRitesOwnMoonRule(GameTestHelper helper) {
+        ServerPlayer beta = wolf(helper, Rank.BETA, true);
+        online(beta);
+        try {
+            SpeciesConfig.overrideTrial(EASY);
+            helper.assertTrue(AlphaTrialRiteFactory.needsFullMoon(helper.getLevel()), "the shipped rite does not ask for the full moon");
+            atNight(helper, 24000L * 8 * NEXT.incrementAndGet() + 24000 + 13000, () -> {
+                helper.assertTrue(AlphaTrialRiteFactory.noticeOf(beta, false) == TrialRules.Notice.POSSIBLE, "a night with no full moon, the moon not asked for: no notice");
+                helper.assertTrue(AlphaTrialRiteFactory.noticeOf(beta, true) == TrialRules.Notice.NONE, "a night with no full moon, the moon asked for: a notice");
+            });
+            atNight(helper, fullNight() - 13000 + 6000, () -> {
+                helper.assertTrue(AlphaTrialRiteFactory.noticeOf(beta, false) == TrialRules.Notice.NONE, "a notice in daylight");
             });
         } finally {
             clean(helper, bosses(helper), beta);
