@@ -10,7 +10,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Breaks the sire bond of the one on the centre. The sire stays on record, but the bond is gone.",
+          "text": "Circle: medium circle, ritual chalk.\n\nBreaks the sire bond of the one on the centre. The sire stays on record, but the bond is gone.",
           "header": "Rite of Severance"
         }
       ]
@@ -28,7 +28,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "A refusal tells the caster why and gives the ingredients back.\n\nCircle: medium circle, ritual chalk.",
+          "text": "A refusal tells the caster why and gives the ingredients back.",
           "header": "Rite of Severance"
         }
       ]
@@ -37,7 +37,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:rite_of_severance"
+          "rite": "supernaturalbloodlines:rite_of_severance",
+          "header": "Rite of Severance"
         }
       ]
     }

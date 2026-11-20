@@ -12,8 +12,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Turns four bottles of blood and a stone into a Blood Stone, a block that adds power to an altar.\n\nAnyone can perform it. The blood bottles are Vampirism's.\n\nCircle: small circle, ritual chalk.",
-          "header": "Rite of Blood Offering"
+          "text": "Circle: small circle, ritual chalk.\n\nTurns four bottles of blood and a stone into a Blood Stone, a block that adds power to an altar.\n\nAnyone can perform it. The blood bottles are Vampirism's.",
+          "header": "Blood Offering"
         }
       ]
     },
@@ -21,7 +21,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:blood_offering"
+          "rite": "supernaturalbloodlines:blood_offering",
+          "header": "Blood Offering"
         }
       ]
     }

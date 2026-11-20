@@ -2,7 +2,7 @@
   "components": [
     {
       "type": "modopedia:header",
-      "text": "book.header.enchanted.circle_magic"
+      "text": "#header"
     },
     {
       "type": "modopedia:separator",

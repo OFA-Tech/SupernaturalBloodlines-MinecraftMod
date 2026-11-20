@@ -10,8 +10,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Tells the one on the centre, and only them, whether they carry the werewolf gene, and marks the gene as known to them.",
-          "header": "Rite of Lineage (Reveal)"
+          "text": "Circle: small circle, ritual chalk.\n\nTells the one on the centre, and only them, whether they carry the werewolf gene, and marks the gene as known to them.",
+          "header": "Lineage: Reveal"
         }
       ]
     },
@@ -19,8 +19,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Anyone can perform it. The target stands on the centre (the caster if nobody does). Werewolves must be installed.\n\nCircle: small circle, ritual chalk.",
-          "header": "Rite of Lineage (Reveal)"
+          "text": "Anyone can perform it. The target stands on the centre (the caster if nobody does). Werewolves must be installed.",
+          "header": "Lineage: Reveal"
         }
       ]
     },
@@ -28,7 +28,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:rite_of_lineage_reveal"
+          "rite": "supernaturalbloodlines:rite_of_lineage_reveal",
+          "header": "Lineage: Reveal"
         }
       ]
     }

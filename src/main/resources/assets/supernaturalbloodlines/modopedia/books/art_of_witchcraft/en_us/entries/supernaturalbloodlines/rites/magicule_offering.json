@@ -12,8 +12,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Condenses your magicules into one Condensed Magicule: it takes 5,000 magicules from you (the server's rite file can change that).",
-          "header": "Rite of Magicule Offering"
+          "text": "Circle: small circle, ritual chalk.\n\nCondenses your magicules into one Condensed Magicule: it takes 5,000 magicules from you (the server's rite file can change that).",
+          "header": "Magicule Offering"
         }
       ]
     },
@@ -22,16 +22,7 @@
         {
           "template": "modopedia:page/headered_text",
           "text": "Anyone can perform it. The magicules come from the caster, not from the altar, so this rite asks for no altar power. Tensura must be installed.\n\nWith too few magicules it fails: nothing is taken and the items come back.",
-          "header": "Rite of Magicule Offering"
-        }
-      ]
-    },
-    {
-      "components": [
-        {
-          "template": "modopedia:page/headered_text",
-          "text": "Circle: small circle, ritual chalk.",
-          "header": "Rite of Magicule Offering"
+          "header": "Magicule Offering"
         }
       ]
     },
@@ -39,7 +30,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:magicule_offering"
+          "rite": "supernaturalbloodlines:magicule_offering",
+          "header": "Magicule Offering"
         }
       ]
     }

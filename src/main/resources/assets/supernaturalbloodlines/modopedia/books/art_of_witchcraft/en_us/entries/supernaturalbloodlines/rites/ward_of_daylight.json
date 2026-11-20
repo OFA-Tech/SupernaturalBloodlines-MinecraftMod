@@ -12,7 +12,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Binds a Sun Ring to the one on the centre. While a vampire wears it, they take no sun damage.",
+          "text": "Circle: medium circle, ritual chalk.\n\nBinds a Sun Ring to the one on the centre. While a vampire wears it, they take no sun damage.",
           "header": "Ward of Daylight"
         }
       ]
@@ -30,7 +30,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "The Sun Ring does not stop the Weakness the sun gives.\n\nCircle: medium circle, ritual chalk.",
+          "text": "The Sun Ring does not stop the Weakness the sun gives.",
           "header": "Ward of Daylight"
         }
       ]
@@ -39,7 +39,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:ward_of_daylight"
+          "rite": "supernaturalbloodlines:ward_of_daylight",
+          "header": "Ward of Daylight"
         }
       ]
     }

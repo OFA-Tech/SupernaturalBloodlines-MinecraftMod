@@ -86,6 +86,44 @@ final class RitesBook {
             "vampire_compass", NS + ":vampire_compass", "hearing_device", NS + ":hearing_device", "rite_of_the_cure", NS + ":the_cure",
             "blood_offering", NS + ":blood_stone", "magicule_offering", NS + ":condensed_magicule");
 
+    /**
+     * The width in pixels of a string in Minecraft's default font (the book draws its headers in it, centred in a 100 pixel line): most characters are 6
+     * wide with their gap, the narrow ones less. "Rite of the Moon" is 81, as it measures on screen.
+     */
+    static int width(String s) {
+        int w = 0;
+        for (char c : s.toCharArray()) {
+            w += switch (c) {
+                case ' ' -> 4;
+                case '!', ',', '.', ':', ';', 'i', '|' -> 2;
+                case '\'', 'l', '`' -> 3;
+                case 'I', '[', ']', 't' -> 4;
+                case '"', '(', ')', '*', '<', '>', 'f', 'k', '{', '}' -> 5;
+                case '@', '~' -> 7;
+                default -> 6;
+            };
+        }
+        return w;
+    }
+
+    /** The widest header that stays inside the book's line (Modopedia's default line width is 100). */
+    static final int HEADER_WIDTH = 98;
+
+    /** A shorter header for the rites whose name does not fit; the entry's title (in the lists) is always the whole name. */
+    static final Map<String, String> SHORT = Map.ofEntries(
+            Map.entry("purification_holy_water", "Holy Purification"), Map.entry("rite_of_the_imprisoned_original", "Imprisoned Original"),
+            Map.entry("vampire_compass", "Vampire Compass"), Map.entry("doppelganger_blood", "Doppelg\u00e4nger"),
+            Map.entry("hearing_device", "Hearing Device"), Map.entry("rite_of_lineage_awaken", "Lineage: Awaken"),
+            Map.entry("rite_of_lineage_reveal", "Lineage: Reveal"), Map.entry("magicule_offering", "Magicule Offering"),
+            Map.entry("ancestral_calling", "Ancestral Calling"), Map.entry("curse_magicule_drain", "Magicule Drain"),
+            Map.entry("rite_of_the_broken_line", "The Broken Line"), Map.entry("cleansing_blood", "Cleansing Blood"),
+            Map.entry("silver_moon", "The Silver Moon"), Map.entry("original_blood", "Original's Blood"),
+            Map.entry("blood_offering", "Blood Offering"), Map.entry("hybrid_blood", "Hybrid's Blood"));
+
+    static String header(String path, String name) {
+        return width(name) <= HEADER_WIDTH ? name : SHORT.getOrDefault(path, name);
+    }
+
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     private RitesBook() {
@@ -108,11 +146,7 @@ final class RitesBook {
 
     /** The {@code hub.rites.desc} lines of a rite, in order, until the first gap. */
     static List<String> desc(JsonObject lang, String path) {
-        List<String> out = new ArrayList<>();
-        for (int i = 1; lang.has(DESC + path + "." + i); i++) {
-            out.add(lang.get(DESC + path + "." + i).getAsString());
-        }
-        return out;
+        return net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubRites.descKeys(NS + ":" + path, lang::has).stream().map(k -> lang.get(k).getAsString()).toList();
     }
 
     /** "medium circle, infernal chalk" for each circle of the rite file, joined with "and". */
@@ -170,8 +204,17 @@ final class RitesBook {
 
     static JsonObject entry(Path root, JsonObject lang, String path) throws IOException {
         String name = lang.get("rite." + NS + "." + path).getAsString();
-        List<String> parts = new ArrayList<>(desc(lang, path));
-        parts.add(circleLine(rite(root, path)));
+        String header = header(path, name);
+        String circle = circleLine(rite(root, path));
+        List<String> text = desc(lang, path);
+        // the circle line first; when the next line does not fit beside it the first page would be only that line, so it goes (the picture and the text say it)
+        List<String> parts = new ArrayList<>();
+        parts.add(circle);
+        parts.addAll(text);
+        List<String> texts = textPages(path, parts);
+        if (texts.get(0).equals(circle)) {
+            texts = textPages(path, text);
+        }
         JsonObject entry = new JsonObject();
         entry.addProperty("title", name);
         entry.add("icon", icon(ICON.get(path)));
@@ -181,12 +224,13 @@ final class RitesBook {
         }
         entry.add("assigned_items", assigned);
         JsonArray pages = new JsonArray();
-        for (String text : textPages(path, parts)) {
-            JsonObject c = component("modopedia:page/headered_text", "text", text);
-            c.addProperty("header", name);
+        for (String page : texts) {
+            JsonObject c = component("modopedia:page/headered_text", "text", page);
+            c.addProperty("header", header);
             pages.add(page(c));
         }
         JsonObject rite = component(NS + ":page/rite", "rite", NS + ":" + path);
+        rite.addProperty("header", header);
         pages.add(page(rite));
         entry.add("pages", pages);
         return entry;

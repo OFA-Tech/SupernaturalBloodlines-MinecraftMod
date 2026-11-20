@@ -35,7 +35,11 @@ class RitesBookTest {
         return base;
     }
 
-    /** The rites that the code only lets work on a full-moon night: the rite file says so with {@code requires_full_moon}. */
+    /**
+     * The rites that the code only lets work on a full-moon night: the rite file says so with {@code requires_full_moon}. The list is kept honest by the
+     * GameTests that run each of them at noon on the full-moon day ({@code moonRitesRefusedAtFullMoonNoon}, {@code aTrialThatDoesNotNeedTheFullMoonStillNeedsANight}),
+     * so a rite whose code and file drift apart fails there, not here.
+     */
     private static final Set<String> FULL_MOON_BY_CODE = Set.of("alpha_trial", "immortality", "rite_of_severance", "rite_of_the_moon", "silver_moon");
 
     /** The rites that need a lunar eclipse (the factory asks {@code LunarEclipse.active}). */
@@ -173,6 +177,61 @@ class RitesBookTest {
         String moon = String.join(" ", RitesBook.desc(RitesBook.lang(ROOT), "rite_of_the_moon").subList(1, 3)).toLowerCase();
         assertFalse(moon.contains("gene"), "a refusal of this rite tells the caster nothing about the gene, so the text must not either");
         assertTrue(moon.contains("would change nothing"));
+    }
+
+    @Test
+    void theHubAndTheBookShowTheSameLinesOfEveryRite() throws IOException {
+        JsonObject lang = RitesBook.lang(ROOT);
+        for (String path : RitesBook.rites(ROOT)) {
+            List<String> hub = net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubRites.descKeys(RitesBook.NS + ":" + path, lang::has);
+            List<String> book = RitesBook.desc(lang, path);
+            assertEquals(hub.size(), book.size(), path + ": the hub and the book show a different number of lines");
+            for (int i = 0; i < hub.size(); i++) {
+                assertEquals(lang.get(hub.get(i)).getAsString(), book.get(i), path + " line " + (i + 1));
+            }
+            // and the hub shows all of them: a fourth line is not cut off by a page that stops at three
+            assertEquals(hub.size(), lang.keySet().stream().filter(k -> k.startsWith(RitesBook.DESC + path + ".")).count(), path + ": a line the hub never shows");
+        }
+    }
+
+    @Test
+    void everyHeaderFitsTheBookLine() throws IOException {
+        JsonObject lang = RitesBook.lang(ROOT);
+        for (String path : RitesBook.rites(ROOT)) {
+            String header = RitesBook.header(path, lang.get("rite." + RitesBook.NS + "." + path).getAsString());
+            assertTrue(RitesBook.width(header) <= RitesBook.HEADER_WIDTH, path + ": \"" + header + "\" is " + RitesBook.width(header) + " pixels wide in a " + RitesBook.HEADER_WIDTH + " pixel line");
+        }
+        assertTrue(RitesBook.width("Rite of the Imprisoned Original") > RitesBook.HEADER_WIDTH, "the measure is not measuring: the longest name must be too wide");
+        assertEquals(81, RitesBook.width("Rite of the Moon"));
+    }
+
+    @Test
+    void everyEntryAndThePageAfterItCarryTheRitesOwnHeader() throws IOException {
+        JsonObject lang = RitesBook.lang(ROOT);
+        for (String path : RitesBook.rites(ROOT)) {
+            JsonObject entry = json(ROOT.resolve(RitesBook.BOOK).resolve("entries/" + RitesBook.NS + "/rites/" + path + ".json"));
+            String header = RitesBook.header(path, lang.get("rite." + RitesBook.NS + "." + path).getAsString());
+            int pages = 0;
+            for (JsonElement p : entry.getAsJsonArray("pages")) {
+                assertEquals(header, p.getAsJsonObject().getAsJsonArray("components").get(0).getAsJsonObject().get("header").getAsString(), path);
+                pages++;
+            }
+            assertTrue(pages >= 2, path);
+        }
+    }
+
+    @Test
+    void noRiteEndsOnAPageWithOnlyItsCircleLine() throws IOException {
+        for (String path : RitesBook.rites(ROOT)) {
+            JsonObject entry = json(ROOT.resolve(RitesBook.BOOK).resolve("entries/" + RitesBook.NS + "/rites/" + path + ".json"));
+            JsonArray pages = entry.getAsJsonArray("pages");
+            for (JsonElement p : pages) {
+                JsonObject lookup = p.getAsJsonObject().getAsJsonArray("components").get(0).getAsJsonObject();
+                if (lookup.has("text")) {
+                    assertFalse(lookup.get("text").getAsString().equals(RitesBook.circleLine(RitesBook.rite(ROOT, path))) && pages.size() > 2, path + ": a text page that is only the circle line");
+                }
+            }
+        }
     }
 
     @Test

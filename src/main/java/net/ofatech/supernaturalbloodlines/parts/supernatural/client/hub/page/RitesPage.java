@@ -124,15 +124,11 @@ public final class RitesPage implements HubPageView {
         f.end(sy);
     }
 
-    /** What a rite does in one or two lines (duration, who can perform it, what happens to others), when the rite has them in the lang file. */
+    /** What a rite does, who can perform it and what it costs: every line the lang file has for it (the book shows the same ones). */
     static List<Component> descriptions(HubSocial.Rite rite) {
-        ResourceLocation id = ResourceLocation.parse(rite.id());
         List<Component> out = new ArrayList<>();
-        for (int i = 1; i <= 2; i++) {
-            String key = KEY + "desc." + id.getPath() + "." + i;
-            if (net.minecraft.locale.Language.getInstance().has(key)) {
-                out.add(Component.translatable(key));
-            }
+        for (String key : HubRites.descKeys(rite.id(), net.minecraft.locale.Language.getInstance()::has)) {
+            out.add(Component.translatable(key));
         }
         return out;
     }

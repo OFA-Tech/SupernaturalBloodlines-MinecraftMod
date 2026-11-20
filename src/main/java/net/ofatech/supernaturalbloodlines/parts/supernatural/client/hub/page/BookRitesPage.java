@@ -106,7 +106,9 @@ public final class BookRitesPage implements HubPageView {
         }
         sy += 6;
         HubHooks.Launcher book = RitesPage.bookLauncher(rite);
-        BookKit.link(f, "link:enchanted", Component.translatable(BOOK + "open_book"), s.x(), sy, List.of(Component.translatable(BOOK + "open_book")),
+        // an "action:" id is in the keyboard's actions zone (Tab ends there, Shift+Tab from nothing starts there), not behind every rite of the list; when the book is not there it says why
+        BookKit.link(f, "action:enchanted", Component.translatable(BOOK + "open_book"), s.x(), sy,
+                List.of(book == null ? Component.translatable(BOOK + "no_book") : Component.translatable(BOOK + "open_book")),
                 book == null ? null : () -> f.screen().launch(book));
         sy = BookKit.small(f, Component.translatable(BOOK + "how"), s.x(), sy + 14, s.w(), t.muted());
         f.end(sy);

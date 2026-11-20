@@ -66,8 +66,15 @@ public final class StageRitesPage implements HubPageView {
                 y = BookKit.leader(f, RitesPage.item(entry), Component.translatable(BOOK + (have ? "in_hand" : "missing")).copy().append(have ? " \u2713" : ""), s.x() + 20, y,
                         s.w() - 40, have ? t.good() : t.accent());
             }
+            // a warning or a condition first, then what the rite does, who can perform it and what it costs: all of it, and the page scrolls
+            for (Component note : RitesPage.trialNotes(chosen.rite(), f.view.bloodline().wolf())) {
+                y = PageKit.wrapped(f, note, s.x() + 20, y + 2, s.w() - 40, t.accent());
+            }
             for (Component fact : RitesPage.facts(chosen.rite())) {
                 y = PageKit.wrapped(f, fact, s.x() + 20, y + 2, s.w() - 40, t.accent());
+            }
+            for (Component line : RitesPage.descriptions(chosen.rite())) {
+                y = PageKit.wrapped(f, line, s.x() + 20, y + 4, s.w() - 40, t.ink());
             }
             f.end(y);
         } else {
@@ -127,16 +134,14 @@ public final class StageRitesPage implements HubPageView {
 
     private void detail(HubScreen.Frame f, HubRites.Listed l) {
         HubSocial.Rite rite = l.rite();
-        List<Component> items = new ArrayList<>();
-        rite.items().forEach(e -> items.add(RitesPage.item(e)));
         Detail.Builder d = Detail.of(RitesPage.name(rite)).subtitle(BookRitesPage.sub(rite));
-        // the Alpha Trial's warning (or why it is not for you) comes first: the Blood Moon bar shows only the first two lines
+        // the bar and the pane cut what does not fit with an ellipsis, so they carry only what is short: a warning (the Alpha Trial's), a condition. What the
+        // rite does, who can perform it and what it costs are on the circle view, which scrolls like the Grimoire's page.
         RitesPage.trialNotes(rite, f.view.bloodline().wolf()).forEach(d::body);
-        RitesPage.descriptions(rite).forEach(d::body);
         RitesPage.facts(rite).forEach(d::body);
-        d.body(items.isEmpty() ? Component.translatable(BOOK + "no_items") : Component.translatable(BOOK + "needs", items.stream().map(Component::getString).reduce((a, b) -> a + ", " + b).orElse("")));
         HubHooks.Launcher book = RitesPage.bookLauncher(rite);
-        d.action(new Detail.Action("book", Component.translatable(BOOK + "enchanted_short"), false, book != null, null, null, () -> f.screen().launch(book)));
+        d.action(new Detail.Action("book", Component.translatable(BOOK + "enchanted_short"), false, book != null,
+                book == null ? Component.translatable(BOOK + "no_book") : null, null, () -> f.screen().launch(book)));
         d.action("circle", Component.translatable(BOOK + (circle ? "back" : "show_circle")), true, true, () -> circle = !circle);
         f.detail(d.build());
     }

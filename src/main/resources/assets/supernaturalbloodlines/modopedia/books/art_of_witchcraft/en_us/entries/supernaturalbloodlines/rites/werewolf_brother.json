@@ -10,7 +10,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Takes a beaten wild werewolf into your pack as a brother.",
+          "text": "Circle: small circle, ritual chalk.\n\nTakes a beaten wild werewolf into your pack as a brother.",
           "header": "Werewolf Brother"
         }
       ]
@@ -28,7 +28,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "You and your pack can have only so many brothers (a server setting). A refusal tells you why and gives the ingredients back.\n\nCircle: small circle, ritual chalk.",
+          "text": "You and your pack can have only so many brothers (a server setting). A refusal tells you why and gives the ingredients back.",
           "header": "Werewolf Brother"
         }
       ]
@@ -37,7 +37,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:werewolf_brother"
+          "rite": "supernaturalbloodlines:werewolf_brother",
+          "header": "Werewolf Brother"
         }
       ]
     }

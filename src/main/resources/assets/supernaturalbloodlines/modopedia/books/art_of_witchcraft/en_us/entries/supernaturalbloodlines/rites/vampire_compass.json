@@ -12,8 +12,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Makes a Vampire Compass: it points to the nearest vampire, hybrid or Original within 64 blocks. Sneak and use it to look for the nearest doppelgänger instead.\n\nAnyone can perform it.",
-          "header": "Rite of the Vampire Compass"
+          "text": "Circle: medium circle, ritual chalk.\n\nMakes a Vampire Compass: it points to the nearest vampire, hybrid or Original within 64 blocks. Sneak and use it to look for the nearest doppelgänger instead.\n\nAnyone can perform it.",
+          "header": "Vampire Compass"
         }
       ]
     },
@@ -21,8 +21,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Only the holder learns anything: the one it points at is never touched or told.\n\nCircle: medium circle, ritual chalk.",
-          "header": "Rite of the Vampire Compass"
+          "text": "Only the holder learns anything: the one it points at is never touched or told.",
+          "header": "Vampire Compass"
         }
       ]
     },
@@ -30,7 +30,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:vampire_compass"
+          "rite": "supernaturalbloodlines:vampire_compass",
+          "header": "Vampire Compass"
         }
       ]
     }

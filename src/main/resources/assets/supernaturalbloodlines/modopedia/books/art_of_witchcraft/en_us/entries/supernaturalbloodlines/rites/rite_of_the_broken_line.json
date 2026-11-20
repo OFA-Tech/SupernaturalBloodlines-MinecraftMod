@@ -10,8 +10,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Frees one player from the line of their Original. They become the head of a line of their own, not an Original: their sire bond stays and the ones they sired stay in the Original's line.",
-          "header": "Rite of the Broken Line"
+          "text": "Circle: medium circle, ritual chalk.\n\nFrees one player from the line of their Original. They become the head of a line of their own, not an Original: their sire bond stays and the ones they sired stay in the Original's line.",
+          "header": "The Broken Line"
         }
       ]
     },
@@ -20,7 +20,7 @@
         {
           "template": "modopedia:page/headered_text",
           "text": "Only a witch type can work it, under a lunar eclipse. It needs two bloods that pair: the Original's and the target's, who must be online here and not an Original.",
-          "header": "Rite of the Broken Line"
+          "header": "The Broken Line"
         }
       ]
     },
@@ -28,8 +28,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "A server can switch line rites off. A refusal gives the ingredients back.\n\nCircle: medium circle, ritual chalk.",
-          "header": "Rite of the Broken Line"
+          "text": "A server can switch line rites off. A refusal gives the ingredients back.",
+          "header": "The Broken Line"
         }
       ]
     },
@@ -37,7 +37,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:rite_of_the_broken_line"
+          "rite": "supernaturalbloodlines:rite_of_the_broken_line",
+          "header": "The Broken Line"
         }
       ]
     }

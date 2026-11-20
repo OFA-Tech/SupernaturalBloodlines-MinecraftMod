@@ -10,7 +10,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Links two living creatures in the circle for a while (60 seconds unless the server changes it): half the damage either takes, the other takes too.",
+          "text": "Circle: medium circle, ritual chalk.\n\nLinks two living creatures in the circle for a while (60 seconds unless the server changes it): a share of the damage either takes, the other takes too (half unless the server changes it).",
           "header": "Linking Spell"
         }
       ]
@@ -19,7 +19,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Only a witch type can work it. No NPC Original or boss can be linked. Another player must agree by sneaking in the circle with a lead in their main hand. A refusal always reads the same and costs the same.",
+          "text": "Only a witch type can work it. No NPC Original or boss can be linked. Another player must agree by sneaking in the circle with a lead in their main hand, and only where PvP is on.",
           "header": "Linking Spell"
         }
       ]
@@ -28,7 +28,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "A refusal still spends the lead, the amethyst and the altar's power. The grimoire always comes back.\n\nCircle: medium circle, ritual chalk.",
+          "text": "A refusal always reads the same and still spends the lead, the amethyst and the altar's power. The grimoire always comes back.",
           "header": "Linking Spell"
         }
       ]
@@ -37,7 +37,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:rite_of_linking"
+          "rite": "supernaturalbloodlines:rite_of_linking",
+          "header": "Linking Spell"
         }
       ]
     }

@@ -10,8 +10,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Washes the vampire side out of the one on the centre: a vampire becomes human again, a hybrid a plain werewolf, a tribrid a witch and a heretic a siphoner.",
-          "header": "Rite of Cleansing Blood"
+          "text": "Circle: medium circle, ritual chalk.\n\nWashes the vampire side out of the one on the centre: a vampire becomes human again, a hybrid a plain werewolf, a tribrid a witch and a heretic a siphoner.",
+          "header": "Cleansing Blood"
         }
       ]
     },
@@ -20,7 +20,7 @@
         {
           "template": "modopedia:page/headered_text",
           "text": "The target stands on the centre (the caster if nobody does) and must be on the vampire side. An Original or an Original hybrid cannot be cured by it.",
-          "header": "Rite of Cleansing Blood"
+          "header": "Cleansing Blood"
         }
       ]
     },
@@ -28,8 +28,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "A hybrid or a tribrid also loses its sire bond. A refusal gives the ingredients back.\n\nCircle: medium circle, ritual chalk.",
-          "header": "Rite of Cleansing Blood"
+          "text": "A hybrid or a tribrid also loses its sire bond. A refusal gives the ingredients back.",
+          "header": "Cleansing Blood"
         }
       ]
     },
@@ -37,7 +37,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:cleansing_blood"
+          "rite": "supernaturalbloodlines:cleansing_blood",
+          "header": "Cleansing Blood"
         }
       ]
     }

@@ -33,6 +33,18 @@ public final class HubRites {
     private HubRites() {
     }
 
+    /** The lang keys of a rite's description, in order, up to the first one that is missing: what the Rites page and the book (built from the same keys) show. */
+    public static List<String> descKeys(String riteId, java.util.function.Predicate<String> has) {
+        String path = riteId.substring(riteId.indexOf(':') + 1);
+        List<String> out = new ArrayList<>();
+        for (int i = 1; has.test(DESC + path + "." + i); i++) {
+            out.add(DESC + path + "." + i);
+        }
+        return out;
+    }
+
+    public static final String DESC = "supernaturalbloodlines.hub.rites.desc.";
+
     /** What a rite costs besides its items: altar power, or (power 0) magicules from the caster for the Magicule Offering, or nothing else. */
     public enum Cost { ALTAR, MAGICULES, NONE }
 

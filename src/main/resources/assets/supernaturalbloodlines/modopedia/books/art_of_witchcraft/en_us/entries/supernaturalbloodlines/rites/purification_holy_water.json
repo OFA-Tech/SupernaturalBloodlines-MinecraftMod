@@ -10,8 +10,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Strikes every undead creature within 8 blocks of the centre with holy damage (8 by default, 4 hearts). It hits Tensura undead and vanilla undead.\n\nAnyone can perform it. Tensura must be installed.",
-          "header": "Rite of Purification (Holy Water)"
+          "text": "The same purification, worked with holy water instead of glowstone dust: holy damage (8 by default, 4 hearts) to every undead creature within 8 blocks of the centre, Tensura undead and vanilla undead.",
+          "header": "Holy Purification"
         }
       ]
     },
@@ -19,8 +19,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "It does not tell friend from foe: undead allies within 8 blocks are hit too, and the reach is wider than the circle.\n\nCircle: medium circle, ritual chalk.",
-          "header": "Rite of Purification (Holy Water)"
+          "text": "Anyone can perform it. Tensura and Vampirism must be installed: the holy water is Vampirism's.\n\nIt does not tell friend from foe: undead allies within 8 blocks are hit too, and the reach is wider than the circle.",
+          "header": "Holy Purification"
         }
       ]
     },
@@ -28,7 +28,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:purification_holy_water"
+          "rite": "supernaturalbloodlines:purification_holy_water",
+          "header": "Holy Purification"
         }
       ]
     }

@@ -10,7 +10,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Calls the moon-crowned Alpha to the edge of the circle. Beat it before dawn to win a spark of your own.",
+          "text": "Circle: medium circle, ritual chalk.\n\nCalls the moon-crowned Alpha to the edge of the circle. Beat it before dawn to win a spark of your own.",
           "header": "Alpha Trial"
         }
       ]
@@ -28,7 +28,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "If your path to True Alpha is still open, winning would end it for good: you are asked first, and the rite starts only once you answer (within 2 minutes).\n\nCircle: medium circle, ritual chalk.",
+          "text": "If your path to True Alpha is still open, winning would end it for good: you are asked first, and the rite starts only once you answer (within 2 minutes).",
           "header": "Alpha Trial"
         }
       ]
@@ -37,7 +37,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:alpha_trial"
+          "rite": "supernaturalbloodlines:alpha_trial",
+          "header": "Alpha Trial"
         }
       ]
     }

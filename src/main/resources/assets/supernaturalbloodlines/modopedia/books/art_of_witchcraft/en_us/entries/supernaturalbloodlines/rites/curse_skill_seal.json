@@ -10,7 +10,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Curses the owner of the taglock: one of the skills they have learned is chosen, and it cannot be activated or switched on while the curse lasts. A sealed skill that is on is switched off.",
+          "text": "Circle: medium circle, infernal chalk.\n\nCurses the owner of the taglock: one of the skills they have learned is chosen, and it cannot be activated or switched on while the curse lasts. A sealed skill that is on is switched off.",
           "header": "Curse of Skill Seal"
         }
       ]
@@ -19,7 +19,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Anyone can cast it. The target is the owner of the taglock; Tensura must be installed.\n\nThe curse ends when the target dies. It needs infernal chalk, not ritual chalk.\n\nCircle: medium circle, infernal chalk.",
+          "text": "Anyone can cast it. The target is the owner of the taglock; Tensura must be installed.\n\nThe curse ends when the target dies. It needs infernal chalk, not ritual chalk.",
           "header": "Curse of Skill Seal"
         }
       ]
@@ -28,7 +28,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:curse_skill_seal"
+          "rite": "supernaturalbloodlines:curse_skill_seal",
+          "header": "Curse of Skill Seal"
         }
       ]
     }

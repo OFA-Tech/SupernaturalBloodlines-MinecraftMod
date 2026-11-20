@@ -10,8 +10,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Fills a bottle with Hybrid's Blood from the hybrid on the centre.\n\nThe one on the centre (the caster if nobody does) must be a hybrid, an Original hybrid or a tribrid. Werewolves must be installed.",
-          "header": "Rite of Hybrid's Blood"
+          "text": "Circle: small circle, ritual chalk.\n\nFills a bottle with Hybrid's Blood from the hybrid on the centre.",
+          "header": "Hybrid's Blood"
         }
       ]
     },
@@ -19,8 +19,8 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Anyone else is refused: nothing is made and the bottle comes back.\n\nCircle: small circle, ritual chalk.",
-          "header": "Rite of Hybrid's Blood"
+          "text": "The one on the centre (the caster if nobody does) must be a hybrid, an Original hybrid or a tribrid. Werewolves must be installed.\n\nAnyone else is refused: nothing is made and the bottle comes back.",
+          "header": "Hybrid's Blood"
         }
       ]
     },
@@ -28,7 +28,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:hybrid_blood"
+          "rite": "supernaturalbloodlines:hybrid_blood",
+          "header": "Hybrid's Blood"
         }
       ]
     }

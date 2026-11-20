@@ -98,7 +98,8 @@ public final class OriginalHybridGameTests {
         long before = level.getDayTime();
         long base = before - Math.floorMod(before, FULL_MOON_CYCLE);
         try {
-            for (String rite : List.of("rite_of_the_moon", "immortality", "silver_moon")) {
+            // the first three are faction rites, Severance has its own check: the rite file's requires_full_moon and the code must agree for every one
+            for (String rite : List.of("rite_of_the_moon", "immortality", "silver_moon", "rite_of_severance")) {
                 for (long timeOfDay : new long[] {6000L, 18000L}) {
                     RecordingPlayer caster = RecordingPlayer.create(helper);
                     place(helper, caster);

@@ -43,4 +43,9 @@ public final class RiteLayout {
     public static String shapeTexture(HubSocial.Circle c) {
         return "textures/gui/circle_magic_shapes/" + c.shape() + "_" + c.chalk() + ".png";
     }
+
+    /** The entry of one of our rites in Enchanted's book ({@code entries/supernaturalbloodlines/rites/<path>}); the book test pins this to the generated files. */
+    public static String bookEntry(String riteId) {
+        return "supernaturalbloodlines/rites/" + riteId.substring(riteId.indexOf(':') + 1);
+    }
 }

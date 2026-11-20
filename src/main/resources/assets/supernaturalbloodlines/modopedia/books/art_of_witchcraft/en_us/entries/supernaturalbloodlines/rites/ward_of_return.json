@@ -12,7 +12,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Makes a Resurrection Ring with 3 charges. Worn, it cancels the death of a human killed by something supernatural: full health, Regeneration II for 10 seconds, one charge.",
+          "text": "Circle: medium circle, ritual chalk.\n\nMakes a Resurrection Ring with 3 charges. Worn, it cancels the death of a human killed by something supernatural: full health, Regeneration II for 10 seconds, one charge.",
           "header": "Ward of Return"
         }
       ]
@@ -21,7 +21,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Anyone can perform it. The ring is not bound: whoever wears it is protected.\n\nIt saves only humans (no vampire or werewolf faction), only from supernatural killers and only while it has charges.",
+          "text": "Anyone can perform it. The ring is not bound: whoever wears it is protected.",
           "header": "Ward of Return"
         }
       ]
@@ -30,7 +30,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Circle: medium circle, ritual chalk.",
+          "text": "It saves only a human: no vampire or werewolf faction, and no species but Potential or Hunter of the Five. A witch or a siphoner is not saved. Only from supernatural killers, and only while it has charges.",
           "header": "Ward of Return"
         }
       ]
@@ -39,7 +39,8 @@
       "components": [
         {
           "template": "supernaturalbloodlines:page/rite",
-          "rite": "supernaturalbloodlines:ward_of_return"
+          "rite": "supernaturalbloodlines:ward_of_return",
+          "header": "Ward of Return"
         }
       ]
     }
