@@ -33,6 +33,7 @@ import net.ofatech.supernaturalbloodlines.core.boss.BossState;
 import net.ofatech.supernaturalbloodlines.core.boss.BossWeight;
 import net.ofatech.supernaturalbloodlines.core.boss.DesiccationRules;
 import net.ofatech.supernaturalbloodlines.core.boss.ElijahRules;
+import net.ofatech.supernaturalbloodlines.core.boss.DeucalionRules;
 import net.ofatech.supernaturalbloodlines.core.boss.KlausRules;
 import net.ofatech.supernaturalbloodlines.core.boss.RebekahRules;
 import net.ofatech.supernaturalbloodlines.core.boss.MikaelRules;
@@ -42,6 +43,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.ElijahEntity;
+import net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.KlausEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.RebekahEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity;
@@ -141,6 +143,7 @@ public final class BossDirector {
         }
         mikael(server, index);
         klaus(server, index);
+        deucalion(server, index);
         elijah(server, index);
         rebekah(server, index);
         kol(server, index);
@@ -822,6 +825,85 @@ public final class BossDirector {
         return Optional.of(k);
     }
 
+    // ---- Deucalion ----
+
+    private static boolean deucalionTarget(ServerPlayer p) {
+        boolean werewolf = net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural.isWerewolf(p);
+        var wolf = net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess.wolf(p);
+        // a True Alpha holds the full stack, so he does come for them (their reward is the Roar only)
+        return DeucalionRules.eligible(new DeucalionRules.Target(werewolf, net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess.isAlpha(wolf.rank()),
+                net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess.effectiveSparks(p),
+                p.level().dimension() == Level.OVERWORLD, p.isSpectator()), BossesConfig.deucalionMinSparks());
+    }
+
+    private static void deucalion(MinecraftServer server, BossIndex index) {
+        BossId boss = BossId.DEUCALION;
+        ServerLevel overworld = server.overworld();
+        long today = DesiccationRules.dayOf(overworld.getDayTime());
+        BossIndex.Entry entry = index.of(boss);
+        // the respawn, when it is switched on: his state and his reward start again (the day he died is written down in returnDay)
+        if (index.state(boss) == BossState.DEAD && DeucalionRules.mayRespawn(BossesConfig.deucalionRespawn(), BossClock.today(overworld), entry.returnDay, BossesConfig.deucalionRespawnDays())) {
+            index.forget(boss);
+            entry = index.of(boss);
+        }
+        BossFacts facts = new BossFacts(BossesConfig.enabled(boss), modsPresent(boss), index.state(boss), false);
+        if (SpawnRules.refusal(facts).isPresent() || !fullMoonNight(overworld) || difficulty.apply(overworld) == Difficulty.PEACEFUL || entry.lastRollDay == today) {
+            return;
+        }
+        List<ServerPlayer> targets = new ArrayList<>();
+        for (ServerPlayer p : players.apply(overworld)) {
+            if (deucalionTarget(p)) {
+                targets.add(p);
+            }
+        }
+        if (!DeucalionRules.picks(true, !targets.isEmpty())) {
+            return;
+        }
+        // one night, one try: when there is no ground for him he tries again the next full moon
+        entry.lastRollDay = today;
+        index.setDirty();
+        ServerPlayer target = targets.get(Math.min(targets.size() - 1, (int) (roll.getAsDouble() * targets.size())));
+        if (spawnDeucalion(overworld, target, null).isPresent()) {
+            noticeDeucalion(target);
+        }
+    }
+
+    /** Makes Deucalion 24 to 40 blocks from {@code target} (6 to 24 with no ground that far, or at {@code at}) with his pack, and writes it down. Empty when there is no ground for him. */
+    public static Optional<DeucalionEntity> spawnDeucalion(ServerLevel level, @Nullable LivingEntity target, @Nullable BlockPos at) {
+        BlockPos pos = at != null ? at : target == null ? null
+                : ground.find(level, target.blockPosition(), 24, 40).or(() -> ground.find(level, target.blockPosition(), 6, 24)).orElse(null);
+        if (pos == null) {
+            return Optional.empty();
+        }
+        DeucalionEntity d = DeucalionEntity.create(level);
+        d.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.random.nextFloat() * 360F, 0F);
+        d.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null);
+        d.applyFactors();
+        d.hunt(target == null ? null : target.getUUID());
+        level.addFreshEntity(d);
+        BossIndex index = BossIndex.get(level.getServer());
+        BossIndex.Entry entry = index.of(BossId.DEUCALION);
+        index.apply(BossId.DEUCALION, BossRules.Event.SPAWNED);
+        entry.appearances++;
+        entry.target = target == null ? null : target.getUUID();
+        entry.arriveAt = -1;
+        index.adopt(BossId.DEUCALION, d.getUUID(), level.dimension().location().toString(), pos);
+        index.setDirty();
+        if (ModList.get().isLoaded("werewolves")) {
+            DeucalionPack.summon(level, pos, BossesConfig.deucalionPackAlphas(), target, d.pack());
+        }
+        return Optional.of(d);
+    }
+
+    /** "He wants your sparks": on the action bar and in chat, with a howl for the hunted one alone. */
+    static void noticeDeucalion(ServerPlayer target) {
+        Component text = Component.translatable("supernaturalbloodlines.boss.notice.deucalion", BossesConfig.deucalionMinSparks());
+        target.displayClientMessage(text, true);
+        target.sendSystemMessage(text);
+        target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.deucalion.hint"));
+        target.playNotifySound(net.minecraft.sounds.SoundEvents.WOLF_HOWL, net.minecraft.sounds.SoundSource.HOSTILE, 1.5F, 0.5F);
+    }
+
     /** "A wolf is howling for you" (his name once the player knows the Original, R123), on the action bar and in chat, with a howl, the time left and the hint. */
     static void noticeKlaus(ServerPlayer target, int seconds) {
         boolean known = LineRules.showsRoot(BloodlineAccess.get(target).knownLine(), BossId.KLAUS.npcOriginal().orElseThrow().uuid(),
@@ -835,6 +917,13 @@ public final class BossDirector {
         target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.klaus.hint"));
         // the howl is for the one he hunts, not for everybody near: nobody else is told who is hunted
         target.playNotifySound(net.minecraft.sounds.SoundEvents.WOLF_HOWL, net.minecraft.sounds.SoundSource.HOSTILE, 1.5F, 0.7F);
+    }
+
+    /** The loaded body of a boss of any kind (Deucalion is no Original). */
+    @Nullable
+    public static net.ofatech.supernaturalbloodlines.parts.bosses.entity.BossNpc anyBossBody(MinecraftServer server, BossId boss) {
+        UUID id = BossIndex.get(server).of(boss).entity;
+        return id != null && find(server, id) instanceof net.ofatech.supernaturalbloodlines.parts.bosses.entity.BossNpc b ? b : null;
     }
 
     @Nullable

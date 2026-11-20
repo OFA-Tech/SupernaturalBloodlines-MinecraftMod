@@ -99,6 +99,7 @@ public final class AlphaRoar {
     @VisibleForTesting
     public static void reset() {
         LAST.clear();
+        DemonRoar.reset();
         PERMIT_UNTIL.clear();
         // the bonus is a transient modifier on a player who may still be online: take it off, do not just forget when it ends
         for (ServerPlayer holder : PACK_ATTACK_HOLDERS.values()) {
@@ -179,6 +180,7 @@ public final class AlphaRoar {
         }
         p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.WOLF_GROWL, SoundSource.PLAYERS, 3.0f, 0.5f);
         RoarEffectPayload.send(p, new RoarEffectPayload(p.getId(), BUFF_TICKS));
+        DemonRoar.after(p, now, players.apply(p.server));
         return null;
     }
 

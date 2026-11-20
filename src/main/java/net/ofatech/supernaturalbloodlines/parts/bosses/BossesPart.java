@@ -48,6 +48,7 @@ public final class BossesPart {
         // R158: a mob's white oak never counts as a white oak kill; Mikael's does only when the config says so
         net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules.mobWhiteOakCounts(a -> a instanceof net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity && BossesConfig.mikaelStakesOriginals());
         NpcOriginalEvents.register();
+        net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEvents.register();
         net.ofatech.supernaturalbloodlines.parts.bosses.deal.BossEvents17d.register();
         modBus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent e) -> {
             var registrar = e.registrar("1").optional();
@@ -75,6 +76,7 @@ public final class BossesPart {
             e.register(MikaelGameTests.class);
             e.register(BossReviewGameTests.class);
             e.register(KlausGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.DeucalionGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.ElijahGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.RebekahGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.ElixirGameTests.class);

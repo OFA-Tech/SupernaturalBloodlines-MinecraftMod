@@ -49,6 +49,11 @@ public final class WeakSpark {
         if (victim.level().isClientSide || !(victim instanceof IWerewolfAlpha) || victim.hasData(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.TRIAL_MARK)) {
             return;
         }
+        // an Alpha of Deucalion's pack gives nothing: the boss pays the sparks
+        if (victim.hasData(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.NPC_MARK)
+                && victim.getData(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.NPC_MARK).kind() == net.ofatech.supernaturalbloodlines.core.bloodline.NpcMark.Kind.BOSS_PACK) {
+            return;
+        }
         if (SparkHandler.killerOf(victim, e.getSource()) instanceof ServerPlayer killer) {
             killedAlpha(killer);
         }

@@ -208,7 +208,7 @@ public final class SkillsPage implements HubPageView {
         y = PageKit.title(f, name(row), r.x(), y, r.w(), t.accent());
         t.drawRule(f.g, r.x(), y + 2, r.w());
         y += 6;
-        String desc = PageKit.HUB + "skill_desc." + row.id();
+        String desc = PageKit.skillDescKey(row.id());
         if (I18n.exists(desc)) {
             y = PageKit.wrapped(f, Component.translatable(desc), r.x(), y, r.w(), t.ink()) + 3;
         }

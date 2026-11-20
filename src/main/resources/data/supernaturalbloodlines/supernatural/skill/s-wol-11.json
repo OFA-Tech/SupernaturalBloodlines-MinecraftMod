@@ -1,0 +1,8 @@
+{
+    "id": "S-WOL-11",
+    "name": "Demon Wolf Roar",
+    "cost": 0,
+    "granted_only": true,
+    "kinds": ["rule"],
+    "params": { "range": 32, "cooldown_ticks": 2400 }
+}

@@ -48,6 +48,16 @@ public abstract class BossNpc extends PathfinderMob {
         }
     }
 
+    /** The file name of the man's skin in {@code textures/entity/boss/}: the boss's id unless it says otherwise. */
+    public String skin() {
+        return boss().id();
+    }
+
+    /** Whether the hat layer of the man's skin is drawn (Deucalion's glasses go with the shift); the client reads it. */
+    public boolean hatVisible() {
+        return true;
+    }
+
     /** Whether the boss is lying down open to white oak; false for a boss that has no such state. */
     protected boolean isOpenNow() {
         return false;

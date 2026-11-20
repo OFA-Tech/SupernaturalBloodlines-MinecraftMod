@@ -59,6 +59,15 @@ final class BossTestRig implements AutoCloseable {
         }
         index.forget(BossId.KLAUS);
         LineIndex.get(server).unmarkDead(KLAUS);
+        var oldDeucalion = BossDirector.anyBossBody(server, BossId.DEUCALION);
+        if (oldDeucalion instanceof net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity d) {
+            d.dismissPack();
+        }
+        if (oldDeucalion != null) {
+            oldDeucalion.discard();
+        }
+        index.forget(BossId.DEUCALION);
+        BossesConfig.override("deucalion_pack_alphas", null);
         for (BossId other : new BossId[] {BossId.ELIJAH, BossId.REBEKAH, BossId.KOL, BossId.FINN}) {
             var e = BossDirector.bossEntity(server, other);
             if (e != null) {

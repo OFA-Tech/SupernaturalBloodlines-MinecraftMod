@@ -6,6 +6,7 @@
         { "id": "supernaturalbloodlines:elijah", "required": false },
         { "id": "supernaturalbloodlines:rebekah", "required": false },
         { "id": "supernaturalbloodlines:kol", "required": false },
-        { "id": "supernaturalbloodlines:finn", "required": false }
+        { "id": "supernaturalbloodlines:finn", "required": false },
+        { "id": "supernaturalbloodlines:deucalion", "required": false }
     ]
 }

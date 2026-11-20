@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +10,16 @@ class BookGuidePageTest {
     void aChapterWithALinkEndsBelowItsTextSoItsScrollingKnowsHowLongItIs() {
         for (int end : new int[] {0, 100, 383, 1294}) {
             assertEquals(end + 18, BookGuidePage.afterLink(end));
+        }
+    }
+
+    @Test
+    void aSkillsDescriptionKeyIsItsIdInLowerCaseUnderSkillDescAndTheRoarHasOne() throws Exception {
+        assertEquals("supernaturalbloodlines.hub.skill_desc.s-wol-11", PageKit.skillDescKey("S-WOL-11"));
+        assertEquals("supernaturalbloodlines.hub.skill_desc.s-vam-3", PageKit.skillDescKey("s-vam-3"));
+        try (var in = new java.io.InputStreamReader(BookGuidePageTest.class.getResourceAsStream("/assets/supernaturalbloodlines/lang/en_us.json"), java.nio.charset.StandardCharsets.UTF_8)) {
+            var lang = com.google.gson.JsonParser.parseReader(in).getAsJsonObject();
+            assertTrue(lang.has(PageKit.skillDescKey("S-WOL-11")), "the Roar has no description on the Skills page");
         }
     }
 

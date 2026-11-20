@@ -81,6 +81,37 @@ public final class BossServerGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void deucalionAndHisDemonWolfLoadAndRunOnADedicatedServerWhereTheRendererAndTheGlassesCannotLoad(GameTestHelper helper) {
+        helper.assertTrue(FMLEnvironment.dist == Dist.DEDICATED_SERVER, "this run is " + FMLEnvironment.dist + ", not a dedicated server");
+        helper.assertTrue(BuiltInRegistries.ENTITY_TYPE.containsKey(ResourceLocation.fromNamespaceAndPath(NS, "deucalion")), "the entity type is not registered");
+        helper.assertTrue(!loads("net.minecraft.client.Minecraft"), "client classes are present in this run, so it proves nothing");
+        helper.assertTrue(!loads("net.ofatech.supernaturalbloodlines.parts.bosses.client.ShiftRenderer") && !loads("net.ofatech.supernaturalbloodlines.parts.bosses.client.HumanoidBossRenderer"),
+                "a renderer loads on the server");
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            net.ofatech.supernaturalbloodlines.parts.bosses.director.BossDirector.useMods(b -> true);
+            var d = net.ofatech.supernaturalbloodlines.parts.bosses.director.BossDirector.spawnDeucalion(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+            for (int i = 0; i < 25; i++) {
+                d.tick();
+            }
+            helper.assertTrue(d.isAlive() && d.getType() == BossRegistries.DEUCALION.get(), "the entity did not survive its first second");
+            helper.assertTrue(d.hatVisible(), "the glasses are not drawn for the man (the rule is common code, the layer is the client's)");
+            d.startShift();
+            for (int i = 0; i < ShiftRules.SHIFT_TICKS + 5; i++) {
+                d.tick();
+            }
+            helper.assertTrue(d.form() == BossForm.BEAST && !d.hatVisible(), "the shift did not run on a server: " + d.form());
+            helper.assertTrue(d.getAnimatableInstanceCache() != null && d.getAnimatableInstanceCache().getManagerForId(d.getId()) != null, "GeckoLib's animation manager is not there");
+            CompoundTag tag = new CompoundTag();
+            d.saveWithoutId(tag);
+            var again = net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity.create(helper.getLevel());
+            again.load(tag);
+            helper.assertTrue(again.form() == BossForm.BEAST, "the form was lost through a save");
+            d.dismissPack();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void elijahRebekahAndTheDealLoadOnADedicatedServerWhereTheDialogCannot(GameTestHelper helper) {
         helper.assertTrue(FMLEnvironment.dist == Dist.DEDICATED_SERVER, "this run is " + FMLEnvironment.dist + ", not a dedicated server");
         helper.assertTrue(!loads("net.minecraft.client.gui.screens.Screen"), "client classes are present in this run, so it proves nothing");
