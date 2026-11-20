@@ -20,9 +20,14 @@ import org.jetbrains.annotations.Nullable;
 public final class LinkIndex extends SavedData {
     private static final String NAME = "supernaturalbloodlines_links";
 
-    public record Link(UUID a, UUID b, long until) {
+    public record Link(UUID a, UUID b, long until, boolean aPlayer, boolean bPlayer) {
         public UUID other(UUID me) {
             return me.equals(a) ? b : a;
+        }
+
+        /** Whether this side is a player: what a player owes is never stored for later. */
+        public boolean isPlayer(UUID e) {
+            return e.equals(a) ? aPlayer : e.equals(b) && bPlayer;
         }
 
         public boolean has(UUID e) {
@@ -43,7 +48,7 @@ public final class LinkIndex extends SavedData {
         for (int i = 0; i < list.size(); i++) {
             CompoundTag t = list.getCompound(i);
             if (t.hasUUID("a") && t.hasUUID("b")) {
-                index.links.add(new Link(t.getUUID("a"), t.getUUID("b"), t.getLong("until")));
+                index.links.add(new Link(t.getUUID("a"), t.getUUID("b"), t.getLong("until"), t.getBoolean("ap"), t.getBoolean("bp")));
             }
         }
         ListTag owed = tag.getList("pending", Tag.TAG_COMPOUND);
@@ -64,6 +69,8 @@ public final class LinkIndex extends SavedData {
             t.putUUID("a", l.a());
             t.putUUID("b", l.b());
             t.putLong("until", l.until());
+            t.putBoolean("ap", l.aPlayer());
+            t.putBoolean("bp", l.bPlayer());
             list.add(t);
         }
         tag.put("links", list);
@@ -88,8 +95,17 @@ public final class LinkIndex extends SavedData {
     }
 
     public void add(UUID a, UUID b, long until) {
-        links.add(new Link(a, b, until));
+        add(a, b, until, false, false);
+    }
+
+    public void add(UUID a, UUID b, long until, boolean aPlayer, boolean bPlayer) {
+        links.add(new Link(a, b, until, aPlayer, bPlayer));
         setDirty();
+    }
+
+    /** The links that ran out by {@code now}, still in the list. */
+    public List<Link> expiredAt(long now) {
+        return links.stream().filter(l -> !LinkRules.active(l.until(), now)).toList();
     }
 
     public void remove(Link link) {

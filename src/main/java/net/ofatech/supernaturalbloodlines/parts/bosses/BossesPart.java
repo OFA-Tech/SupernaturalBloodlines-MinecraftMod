@@ -42,6 +42,7 @@ public final class BossesPart {
         net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.bosses.rite.LinkingRiteFactory.ID,
                 net.ofatech.supernaturalbloodlines.parts.bosses.rite.LinkingRiteFactory.CODEC);
         net.ofatech.supernaturalbloodlines.parts.bosses.link.Links.register();
+        net.ofatech.supernaturalbloodlines.parts.bosses.item.CloakEvents.register();
         BossRegistries.register(modBus);
         BossItems.register(modBus);
         // R158: a mob's white oak never counts as a white oak kill; Mikael's does only when the config says so

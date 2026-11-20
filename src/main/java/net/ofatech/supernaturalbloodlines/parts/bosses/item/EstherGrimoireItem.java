@@ -22,5 +22,6 @@ public final class EstherGrimoireItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
         lines.add(Component.translatable("item.supernaturalbloodlines.esther_grimoire.tooltip").withStyle(ChatFormatting.GRAY));
+        lines.add(Component.translatable("item.supernaturalbloodlines.esther_grimoire.tooltip_who").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

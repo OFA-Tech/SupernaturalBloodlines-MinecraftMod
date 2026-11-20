@@ -31,6 +31,7 @@ public final class FinnGameTests {
     private static final String NS = SupernaturalBloodlines.MODID;
     private static final String UNKNOWN = "supernaturalbloodlines.boss.notice.finn.unknown";
     private static final String KNOWN = "supernaturalbloodlines.boss.notice.finn.known";
+    private static final String HINT = "supernaturalbloodlines.boss.notice.finn.hint";
     private static final String DONE = "supernaturalbloodlines.boss.finn.done";
     private static final String BROKEN = "supernaturalbloodlines.boss.finn.broken";
     private static final long DAY = 24000L * 20;
@@ -82,6 +83,7 @@ public final class FinnGameTests {
             helper.assertTrue(f != null && f.isAlive() && f.ritualing(), "he did not come and begin the ritual");
             helper.assertTrue(rig.index.state(BossId.FINN) == BossState.ACTIVE, "the index says " + rig.index.state(BossId.FINN));
             helper.assertTrue(p.received(UNKNOWN) && !p.received(KNOWN), "the notice named him: " + p.heard());
+            helper.assertTrue(p.received(HINT), "the notice does not say the ritual hurts no one: " + p.heard());
         } finally {
             forget(p);
         }

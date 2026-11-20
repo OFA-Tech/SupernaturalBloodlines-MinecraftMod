@@ -2,11 +2,12 @@ package net.ofatech.supernaturalbloodlines.core.boss;
 
 /**
  * R175: Finn comes under a lunar eclipse, once an eclipse night (one roll a day, at {@code finn_chance_per_eclipse}), to a witch-type or vampire player in the
- * overworld within 128 blocks. He builds a ritual of particles and channels it for {@code finn_ritual_seconds}. The ritual never harms anyone: if it is
+ * overworld. He builds a ritual of particles and channels it for {@code finn_ritual_seconds}. The ritual never harms anyone (the people within 128 blocks are told how it ended): if it is
  * left alone he withdraws, the people near are told, and he is back at the next eclipse after {@link #COOLDOWN_DAYS} days. Hurt for more than a fifth of his
  * health, or pulled more than 24 blocks from the ritual, he stops it and fights like anyone else (R176).
  */
 public final class FinnRules {
+    /** Who is told how his ritual ended: everyone this near (blocks). */
     public static final double RANGE = 128.0;
     public static final double LEASH = 24.0;
     public static final double INTERRUPT_DAMAGE_FRACTION = 0.20;
@@ -15,11 +16,11 @@ public final class FinnRules {
     private FinnRules() {
     }
 
-    public record Facts(boolean eclipse, boolean overworld, boolean witchOrVampire, double distance, boolean spectator) {
+    public record Facts(boolean eclipse, boolean overworld, boolean witchOrVampire, boolean spectator) {
     }
 
     public static boolean eligible(Facts f) {
-        return f.eclipse() && f.overworld() && f.witchOrVampire() && f.distance() <= RANGE && !f.spectator();
+        return f.eclipse() && f.overworld() && f.witchOrVampire() && !f.spectator();
     }
 
     /** One roll a day: once it was made on (or promised past) {@code lastRollDay}, not again that day. */

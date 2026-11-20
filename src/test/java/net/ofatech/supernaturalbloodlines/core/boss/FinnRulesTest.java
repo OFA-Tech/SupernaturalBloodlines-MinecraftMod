@@ -8,14 +8,12 @@ import org.junit.jupiter.api.Test;
 
 class FinnRulesTest {
     @Test
-    void heComesUnderAnEclipseForAWitchTypeOrVampireInTheOverworldWithinRange() {
-        assertTrue(FinnRules.eligible(new FinnRules.Facts(true, true, true, 100, false)));
-        assertTrue(FinnRules.eligible(new FinnRules.Facts(true, true, true, FinnRules.RANGE, false)), "exactly at the edge");
-        assertFalse(FinnRules.eligible(new FinnRules.Facts(false, true, true, 10, false)), "no eclipse");
-        assertFalse(FinnRules.eligible(new FinnRules.Facts(true, false, true, 10, false)), "not the overworld");
-        assertFalse(FinnRules.eligible(new FinnRules.Facts(true, true, false, 10, false)), "not a witch type or a vampire");
-        assertFalse(FinnRules.eligible(new FinnRules.Facts(true, true, true, FinnRules.RANGE + 1, false)), "too far");
-        assertFalse(FinnRules.eligible(new FinnRules.Facts(true, true, true, 10, true)), "a spectator");
+    void heComesUnderAnEclipseForAWitchTypeOrVampireInTheOverworld() {
+        assertTrue(FinnRules.eligible(new FinnRules.Facts(true, true, true, false)));
+        assertFalse(FinnRules.eligible(new FinnRules.Facts(false, true, true, false)), "no eclipse");
+        assertFalse(FinnRules.eligible(new FinnRules.Facts(true, false, true, false)), "not the overworld");
+        assertFalse(FinnRules.eligible(new FinnRules.Facts(true, true, false, false)), "not a witch type or a vampire");
+        assertFalse(FinnRules.eligible(new FinnRules.Facts(true, true, true, true)), "a spectator");
     }
 
     @Test

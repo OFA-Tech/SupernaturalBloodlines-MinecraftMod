@@ -47,7 +47,9 @@ class BossTextTest {
         for (String k : new String[] {"entity.supernaturalbloodlines.kol", "entity.supernaturalbloodlines.finn", "item.supernaturalbloodlines.kol_grimoire",
                 "item.supernaturalbloodlines.esther_grimoire", "rite.supernaturalbloodlines.rite_of_cloaking", "rite.supernaturalbloodlines.rite_of_linking",
                 "supernaturalbloodlines.refusal.cloak_not_witch", "supernaturalbloodlines.refusal.cloak_unread", "supernaturalbloodlines.rite.cloak_done",
-                "supernaturalbloodlines.refusal.link_needs_two", "supernaturalbloodlines.refusal.link_wont_hold", "supernaturalbloodlines.rite.link_done",
+                "supernaturalbloodlines.refusal.link_not_witch", "supernaturalbloodlines.refusal.link_wont_hold", "supernaturalbloodlines.rite.link_done",
+                "supernaturalbloodlines.rite.link_linked", "supernaturalbloodlines.rite.link_ended", "supernaturalbloodlines.rite.cloak_faded", "supernaturalbloodlines.boss.notice.finn.hint",
+                "item.supernaturalbloodlines.kol_grimoire.tooltip_who", "item.supernaturalbloodlines.esther_grimoire.tooltip_who", "supernaturalbloodlines.hub.scroll_more",
                 "supernaturalbloodlines.boss.notice.kol.unknown", "supernaturalbloodlines.boss.notice.kol.known", "supernaturalbloodlines.boss.notice.kol.hint",
                 "supernaturalbloodlines.boss.kol.gone", "supernaturalbloodlines.boss.notice.finn.unknown", "supernaturalbloodlines.boss.notice.finn.known",
                 "supernaturalbloodlines.boss.finn.done", "supernaturalbloodlines.boss.finn.broken", "item.supernaturalbloodlines.kol_grimoire.read",
@@ -63,13 +65,36 @@ class BossTextTest {
             String text = lang.get(k).getAsString();
             assertTrue(!text.contains("Kol") && !text.contains("Finn") && !text.contains("Mikaelson"), k + ": " + text);
         }
-        for (String k : new String[] {"supernaturalbloodlines.refusal.link_wont_hold", "supernaturalbloodlines.refusal.link_needs_two"}) {
+        for (String k : new String[] {"supernaturalbloodlines.refusal.link_wont_hold"}) {
             assertTrue(!lang.get(k).getAsString().toLowerCase().contains("original"), k + " says Original");
         }
         String guide = lang.get("supernaturalbloodlines.hub.guide.bosses.body").getAsString();
         assertTrue(guide.contains("Kol comes by night") && guide.contains("Finn comes on a lunar eclipse") && guide.contains("pack Emissary"), "the Guide does not explain Kol and Finn");
-        assertTrue(guide.contains("The ritual hurts nobody"), "the Guide does not say the ritual is harmless");
-        assertTrue(guide.contains("neither of them an Original"), "the Guide does not say the Linking Spell leaves Originals alone");
+        assertTrue(guide.contains("Left alone, the ritual hurts no one"), "the Guide does not say the ritual is harmless");
+        assertTrue(guide.contains("more than a fifth of his health"), "the Guide does not give the threshold that breaks the ritual");
+        assertTrue(guide.contains("It will not take an Original, a boss") && guide.contains("That is deliberate"), "the Guide does not explain the Linking Spell's refusals");
+        assertTrue(guide.contains("sneaking in the circle") && guide.contains("witch-type rite") && guide.contains("where PvP is off"), "the Guide leaves out who can be linked and who can work it");
+        assertTrue(guide.contains("30 minutes (a server setting)") && guide.contains("Dying ends the cloak"), "the Guide does not say how long the cloak lasts");
+        String kolAndFinn = guide.substring(guide.indexOf("Kol comes by night"), guide.indexOf("Nothing but white oak kills"));
+        for (String paragraph : kolAndFinn.split("\n\n")) {
+            assertTrue(paragraph.length() < 520, "a paragraph of the Guide is not short: " + paragraph.length());
+        }
+        JsonObject l = lang();
+        String hint = l.get("supernaturalbloodlines.boss.notice.finn.hint").getAsString();
+        assertEquals("Left alone, the ritual hurts no one. Hurt him badly and he will fight.", hint);
+        assertTrue(l.get("supernaturalbloodlines.boss.notice.kol.unknown").getAsString().contains("It knows how many you have hunted."), "Kol's notice does not say why");
+        assertTrue(l.get("supernaturalbloodlines.boss.notice.kol.known").getAsString().contains("how many you have hunted"));
+        assertEquals("The link will not hold.", l.get("supernaturalbloodlines.refusal.link_wont_hold").getAsString());
+        assertTrue(l.get("supernaturalbloodlines.rite.link_linked").getAsString().contains("%s%% of the damage either of you takes is shared"));
+        assertEquals("Your cloak fades.", l.get("supernaturalbloodlines.rite.cloak_faded").getAsString());
+        for (String rite : new String[] {"rite_of_cloaking", "rite_of_linking"}) {
+            for (int i = 1; i <= 2; i++) {
+                assertTrue(l.has("supernaturalbloodlines.hub.rites.desc." + rite + "." + i), rite + " has no description line " + i);
+            }
+        }
+        assertTrue(l.get("supernaturalbloodlines.hub.rites.desc.rite_of_cloaking.1").getAsString().contains("30 minutes"), "the cloak's duration is not in its description");
+        assertTrue(l.get("supernaturalbloodlines.hub.rites.desc.rite_of_linking.2").getAsString().contains("sneaking"), "who can be linked is not in the description");
+        assertTrue(l.get("item.supernaturalbloodlines.kol_grimoire.tooltip_who").getAsString().contains("witch, siphoner, heretic or tribrid"));
     }
 
     @Test

@@ -24,6 +24,14 @@ class CloakTest {
     }
 
     @Test
+    void aCloakThatWasMadeAndRanOutIsExpiredAndNoOtherIs() {
+        assertTrue(Cloak.expired(5000, 5000), "it ends on its tick");
+        assertTrue(Cloak.expired(5000, 9000));
+        assertFalse(Cloak.expired(5000, 4999), "still running");
+        assertFalse(Cloak.expired(Cloak.NONE, 9000), "never made: there is nothing to announce");
+    }
+
+    @Test
     void aNewCloakNeverCutsALongerOneShort() {
         long running = Cloak.until(0, 60);
         assertEquals(running, Cloak.renewed(running, 100, 1), "a short one made later does not shorten the long one");

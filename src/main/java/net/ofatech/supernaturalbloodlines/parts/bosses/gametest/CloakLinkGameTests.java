@@ -29,9 +29,12 @@ import net.ofatech.supernaturalbloodlines.parts.artifacts.ArtifactItems;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.item.VampireCompassItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossItems;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
+import net.ofatech.supernaturalbloodlines.parts.bosses.item.CloakEvents;
 import net.ofatech.supernaturalbloodlines.parts.bosses.link.LinkIndex;
 import net.ofatech.supernaturalbloodlines.parts.bosses.link.Links;
 import net.ofatech.supernaturalbloodlines.parts.bosses.rite.CloakingRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.bosses.rite.LinkingRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.LineTestPlayer;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
 import net.ofatech.supernaturalbloodlines.parts.species.hunter.HunterInstinct;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport;
@@ -147,72 +150,152 @@ public final class CloakLinkGameTests {
 
     // ---- the Linking Spell (R177) ----
 
-    @GameTest(template = "empty", templateNamespace = NS)
-    public static void theLinkingSpellRefusesOneCreatureThreeAndAnyOriginalWithOneAnswerForTheLastTwo(GameTestHelper helper) {
-        RecordingPlayer caster = RecordingPlayer.create(helper);
-        RiteTestSupport.place(helper, caster);
+    private static final String WONT_HOLD = LinkRules.WONT_HOLD;
+
+    /** A witch performing the rite from outside the circle (so she is not one of the two), with her messages recorded. */
+    private static RecordingPlayer witch(GameTestHelper helper) {
+        RecordingPlayer c = RecordingPlayer.create(helper);
+        BloodlineAccess.set(c, BloodlineState.NONE.toBuilder().species(Species.WITCH).witchLayer(true).build());
+        RiteTestSupport.place(helper, c);
         BlockPos at = RiteTestSupport.centre(helper);
-        try {
-            Cow a = helper.getLevel().getEntitiesOfClass(Cow.class, new net.minecraft.world.phys.AABB(at).inflate(5)).stream().findFirst().orElse(null);
-            helper.assertTrue(a == null, "control: the test cell is not empty");
-            // none
+        c.setPos(at.getX() + 0.5 + LinkingRiteFactory.RADIUS + 3, at.getY() + 1, at.getZ() + 0.5);
+        return c;
+    }
+
+    private static Cow cow(GameTestHelper helper, int x, int y, int z) {
+        return helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(x, y, z));
+    }
+
+    private static Sheep sheep(GameTestHelper helper, int x, int y, int z) {
+        return helper.spawnWithNoFreeWill(EntityType.SHEEP, new BlockPos(x, y, z));
+    }
+
+    /** What a refusal does, every time: one message, the same one; nothing linked; the lead and the amethyst gone; the grimoire back. */
+    private static void assertRefusedTheSameWay(GameTestHelper helper, RecordingPlayer caster, int refusals, String why) {
+        assertRefusedTheSameWay(helper, caster, refusals, why, 0);
+    }
+
+    private static void assertRefusedTheSameWay(GameTestHelper helper, RecordingPlayer caster, int refusals, String why, int links) {
+        LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        helper.assertTrue(caster.count(WONT_HOLD) == refusals, why + ": the answer was not given exactly once more: " + caster.heard());
+        helper.assertTrue(caster.heard().replace(WONT_HOLD, "").replace(",", "").isBlank(), why + ": the caster was told something else too: " + caster.heard());
+        helper.assertTrue(index.count() == links, why + ": a link was made: " + index.count());
+        helper.assertTrue(RiteTestSupport.dropped(helper, "supernaturalbloodlines:esther_grimoire") == 1, why + ": the grimoire did not come back");
+        helper.assertTrue(RiteTestSupport.dropped(helper, "minecraft:lead") == 0 && RiteTestSupport.dropped(helper, "minecraft:amethyst_shard") == 0,
+                why + ": the refusal was free: the ingredients came back");
+        RiteTestSupport.clearDropped(helper);
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void everyRefusalOfTheLinkingSpellIsTheSameMessageAndCostsTheSameSoItNeverNamesAnOriginalOrABoss(GameTestHelper helper) {
+        RecordingPlayer caster = witch(helper);
+        LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            index.clear();
+            int n = 0;
+            // none, one, three
             RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
-            helper.assertTrue(caster.receivedOnActionBar(LinkRules.NEEDS_TWO), "no creature: " + caster.heard());
-            RiteTestSupport.clearDropped(helper);
-            // one
-            Cow one = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(7, 1, 7));
+            assertRefusedTheSameWay(helper, caster, ++n, "no creature");
+            Cow one = cow(helper, 7, 1, 7);
             RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
-            helper.assertTrue(caster.count(LinkRules.NEEDS_TWO) == 2, "one creature was accepted");
-            RiteTestSupport.clearDropped(helper);
-            // three
-            Sheep two = helper.spawnWithNoFreeWill(EntityType.SHEEP, new BlockPos(9, 1, 7));
+            assertRefusedTheSameWay(helper, caster, ++n, "one creature");
+            Sheep two = sheep(helper, 9, 1, 7);
             Zombie three = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, new BlockPos(8, 1, 9));
             RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
-            helper.assertTrue(caster.count(LinkRules.NEEDS_TWO) == 3, "three creatures were accepted");
-            helper.assertTrue(LinkIndex.get(helper.getLevel().getServer()).count() == 0, "a link was made from a refused circle");
-            RiteTestSupport.clearDropped(helper);
+            assertRefusedTheSameWay(helper, caster, ++n, "three creatures");
             three.discard();
-            two.discard();
-            // an NPC Original, and a player Original: one answer
-            var elijah = net.ofatech.supernaturalbloodlines.parts.bosses.entity.ElijahEntity.create(helper.getLevel());
+            // an NPC Original and a boss of ours
+            var elijah = rig.spawnElijah();
             elijah.moveTo(helper.absoluteVec(new Vec3(8.5, 1, 9.5)));
-            helper.getLevel().addFreshEntity(elijah);
+            two.discard();
             RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
-            helper.assertTrue(caster.count(LinkRules.WONT_HOLD) == 1, "an NPC Original in the circle was linked or answered differently: " + caster.heard());
+            assertRefusedTheSameWay(helper, caster, ++n, "an NPC Original");
             elijah.discard();
-            RiteTestSupport.clearDropped(helper);
+            var kol = rig.spawnKol();
+            kol.moveTo(helper.absoluteVec(new Vec3(8.5, 1, 9.5)));
+            RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
+            assertRefusedTheSameWay(helper, caster, ++n, "a boss");
+            kol.discard();
+            // a player Original, standing in the circle (sneaking: she would consent, but she is an Original)
             RecordingPlayer original = RecordingPlayer.create(helper);
             BloodlineAccess.set(original, BloodlineState.NONE.toBuilder().species(Species.ORIGINAL).build());
             RiteTestSupport.place(helper, original);
+            original.setShiftKeyDown(true);
             RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
-            helper.assertTrue(caster.count(LinkRules.WONT_HOLD) == 2 && caster.count(LinkRules.NEEDS_TWO) == 3, "a player Original in the circle was not refused the same way as an NPC one: " + caster.heard());
+            assertRefusedTheSameWay(helper, caster, ++n, "a player Original");
             RiteTestSupport.remove(helper, original);
+            // already linked: the circle holds a cow that is linked to something far away, and a free sheep
+            Sheep partner = sheep(helper, 9, 1, 7);
+            Links.link(helper.getLevel().getServer(), one.getUUID(), java.util.UUID.randomUUID(), 60);
+            RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
+            assertRefusedTheSameWay(helper, caster, ++n, "an already linked creature", 1);
+            index.clear();
+            partner.discard();
+            // another player who does not agree, and one who does but where PvP is off
+            LineTestPlayer other = LineTestPlayer.create(helper);
+            RiteTestSupport.place(helper, other);
+            RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
+            assertRefusedTheSameWay(helper, caster, ++n, "a player who is not sneaking");
+            other.setShiftKeyDown(true);
+            boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+            helper.getLevel().getServer().setPvpAllowed(false);
+            try {
+                RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
+                assertRefusedTheSameWay(helper, caster, ++n, "a player where PvP is off");
+            } finally {
+                helper.getLevel().getServer().setPvpAllowed(pvp);
+            }
+            RiteTestSupport.remove(helper, other);
             one.discard();
         } finally {
+            index.clear();
             RiteTestSupport.remove(helper, caster);
         }
         helper.succeed();
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void theLinkingSpellLinksTwoCreaturesAndGivesTheGrimoireBack(GameTestHelper helper) {
+    public static void aPlayerWhoSneaksInTheCircleAgreesAndIsLinkedAndToldAndToldAgainWhenItEnds(GameTestHelper helper) {
+        RecordingPlayer caster = witch(helper);
+        RecordingPlayer other = RecordingPlayer.create(helper);
+        LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+        helper.getLevel().getServer().setPvpAllowed(true);
+        try {
+            index.clear();
+            RiteTestSupport.place(helper, other);
+            other.setShiftKeyDown(true);
+            Cow a = cow(helper, 7, 1, 7);
+            RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
+            long now = helper.getLevel().getGameTime();
+            helper.assertTrue(index.linked(other.getUUID(), now) && index.linked(a.getUUID(), now), "the sneaking player was not linked: " + caster.heard());
+            helper.assertTrue(index.of(other.getUUID()).orElseThrow().isPlayer(other.getUUID()) && !index.of(a.getUUID()).orElseThrow().isPlayer(a.getUUID()), "the link does not know who is a player");
+            helper.assertTrue(other.received(Links.LINKED), "the linked player was not told: " + other.heard());
+            helper.assertTrue(caster.received(LinkingRiteFactory.DONE), "the witch was not told");
+            Links.expire(helper.getLevel().getServer(), helper.getLevel().getServer().overworld().getGameTime() + 61 * 20);
+            helper.assertTrue(other.received(Links.ENDED) && index.count() == 0, "the player was not told the link ended: " + other.heard());
+        } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
+            index.clear();
+            RiteTestSupport.remove(helper, other);
+            RiteTestSupport.remove(helper, caster);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theWitchCanLinkHerselfToACreatureByStandingInTheCircle(GameTestHelper helper) {
         RecordingPlayer caster = RecordingPlayer.create(helper);
+        BloodlineAccess.set(caster, BloodlineState.NONE.toBuilder().species(Species.WITCH).witchLayer(true).build());
         RiteTestSupport.place(helper, caster);
         LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
         try {
             index.clear();
-            Cow a = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(7, 1, 7));
-            Sheep b = helper.spawnWithNoFreeWill(EntityType.SHEEP, new BlockPos(9, 1, 7));
+            Cow a = cow(helper, 7, 1, 7);
             RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
             long now = helper.getLevel().getGameTime();
-            helper.assertTrue(index.linked(a.getUUID(), now) && index.linked(b.getUUID(), now), "the two are not linked");
-            helper.assertTrue(index.of(a.getUUID()).orElseThrow().until() == now + BossesConfig.linkSeconds() * 20L, "the link does not last the setting");
-            helper.assertTrue(caster.receivedOnActionBar("supernaturalbloodlines.rite.link_done"), "the caster was not told");
-            helper.assertTrue(RiteTestSupport.dropped(helper, "supernaturalbloodlines:esther_grimoire") == 1, "the grimoire was not given back");
-            // a creature that is linked already is not linked again
-            RiteTestSupport.clearDropped(helper);
-            RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
-            helper.assertTrue(caster.count(LinkRules.WONT_HOLD) == 1 && index.count() == 1, "a linked creature was linked a second time");
+            helper.assertTrue(index.linked(caster.getUUID(), now) && index.linked(a.getUUID(), now), "she could not link herself to a creature: " + caster.heard());
+            helper.assertTrue(caster.received(Links.LINKED), "she was not told she is linked");
         } finally {
             index.clear();
             RiteTestSupport.remove(helper, caster);
@@ -220,6 +303,157 @@ public final class CloakLinkGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void onlyAWitchTypeCanWorkTheLinkingSpellAndAPlainPlayerGetsEverythingBack(GameTestHelper helper) {
+        RecordingPlayer plain = RecordingPlayer.create(helper);
+        RiteTestSupport.place(helper, plain);
+        BlockPos at = RiteTestSupport.centre(helper);
+        plain.setPos(at.getX() + 0.5 + LinkingRiteFactory.RADIUS + 3, at.getY() + 1, at.getZ() + 0.5);
+        LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        try {
+            index.clear();
+            cow(helper, 7, 1, 7);
+            sheep(helper, 9, 1, 7);
+            RiteTestSupport.start(helper, "rite_of_linking", plain, linkItems());
+            helper.assertTrue(plain.receivedOnActionBar(LinkRules.NOT_WITCH), "the plain player was not told why: " + plain.heard());
+            helper.assertTrue(index.count() == 0, "a plain player linked two creatures");
+            helper.assertTrue(RiteTestSupport.dropped(helper, "minecraft:lead") == 2 && RiteTestSupport.dropped(helper, "supernaturalbloodlines:esther_grimoire") == 1,
+                    "the ingredients were not all given back: a refusal about the performer says nothing about the circle");
+            helper.assertTrue(plain.count(WONT_HOLD) == 0, "the plain player got the circle's answer");
+        } finally {
+            index.clear();
+            RiteTestSupport.remove(helper, plain);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theCircleIsFlatAndSlimNotACubeAHighCreatureAndAFarOneAreNotInIt(GameTestHelper helper) {
+        RecordingPlayer caster = witch(helper);
+        LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        try {
+            index.clear();
+            Cow a = cow(helper, 7, 1, 7);
+            Sheep b = sheep(helper, 9, 1, 7);
+            Cow high = cow(helper, 8, 6, 8); // five blocks above the circle
+            Cow far = cow(helper, 15, 1, 8); // seven blocks along it, beyond the chalk
+            high.setNoGravity(true);
+            RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
+            long now = helper.getLevel().getGameTime();
+            helper.assertTrue(index.linked(a.getUUID(), now) && index.linked(b.getUUID(), now), "the two in the circle were not linked: " + caster.heard());
+            helper.assertTrue(!index.linked(high.getUUID(), now) && !index.linked(far.getUUID(), now), "a creature outside the circle was counted");
+            helper.assertTrue(caster.count(WONT_HOLD) == 0, "the creatures above and beyond the circle made it refuse");
+        } finally {
+            index.clear();
+            RiteTestSupport.remove(helper, caster);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSharedHitNeverSkipsAPlayersOwnHitCooldownButDoesForACreature(GameTestHelper helper) {
+        ServerPlayer player = TestPlayers.createVulnerable(helper);
+        player.setPos(helper.absoluteVec(new Vec3(5.5, 1, 5.5)));
+        helper.getLevel().addNewPlayer(player);
+        LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        try {
+            index.clear();
+            Cow a = cow(helper, 7, 1, 7);
+            Sheep s = sheep(helper, 9, 1, 7);
+            Links.link(helper.getLevel().getServer(), a, player, 60);
+            player.hurt(helper.getLevel().damageSources().generic(), 6.0F); // a hit of its own: now it has a hit cooldown
+            index.clear();
+            Links.link(helper.getLevel().getServer(), a, player, 60);
+            float before = player.getHealth();
+            a.invulnerableTime = 0;
+            a.hurt(helper.getLevel().damageSources().generic(), 4.0F); // a share of 2 lands inside the player's cooldown of a 6 hit
+            helper.assertTrue(player.getHealth() == before, "the share went through the player's own hit cooldown: " + before + " to " + player.getHealth());
+            index.clear();
+            a.setHealth(a.getMaxHealth());
+            Links.link(helper.getLevel().getServer(), a, s, 60);
+            s.hurt(helper.getLevel().damageSources().generic(), 2.0F); // the sheep has a hit cooldown of its own now
+            a.setHealth(a.getMaxHealth());
+            float sheepBefore = s.getHealth();
+            a.invulnerableTime = 0;
+            a.hurt(helper.getLevel().damageSources().generic(), 4.0F);
+            helper.assertTrue(s.getHealth() < sheepBefore, "the share did not reach a creature inside its cooldown");
+        } finally {
+            index.clear();
+            helper.getLevel().removePlayerImmediately(player, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void nothingIsEverOwedByAPlayerWhoIsNotLoadedAndACreatureOwesAtMostHalfItsHealthWhenItLoads(GameTestHelper helper) {
+        LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        try {
+            index.clear();
+            Cow a = cow(helper, 7, 1, 7);
+            java.util.UUID offlinePlayer = java.util.UUID.randomUUID();
+            index.add(a.getUUID(), offlinePlayer, helper.getLevel().getServer().overworld().getGameTime() + 1200, false, true);
+            for (int i = 0; i < 5; i++) {
+                a.invulnerableTime = 0;
+                a.hurt(helper.getLevel().damageSources().generic(), 2.0F);
+                a.setHealth(a.getMaxHealth());
+            }
+            helper.assertTrue(index.settle(offlinePlayer) == 0F, "damage was stored for a player who was not loaded");
+            index.clear();
+            java.util.UUID offlineCow = java.util.UUID.randomUUID();
+            index.add(a.getUUID(), offlineCow, helper.getLevel().getServer().overworld().getGameTime() + 1200, false, false);
+            for (int i = 0; i < 5; i++) {
+                a.invulnerableTime = 0;
+                a.hurt(helper.getLevel().damageSources().generic(), 2.0F);
+                a.setHealth(a.getMaxHealth());
+            }
+            helper.assertTrue(index.settle(offlineCow) > 0F, "nothing was stored for a creature that was not loaded");
+        } finally {
+            index.clear();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aCreatureThatLoadsTakesAtMostHalfItsMaximumHealthOfWhatItOwed(GameTestHelper helper) {
+        LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        index.clear();
+        Cow cow = EntityType.COW.create(helper.getLevel());
+        index.owe(cow.getUUID(), 20.0F);
+        cow.moveTo(helper.absoluteVec(new Vec3(7.5, 1, 7.5)));
+        cow.setNoAi(true);
+        helper.getLevel().addFreshEntity(cow);
+        helper.runAfterDelay(5, () -> {
+            float lost = cow.getMaxHealth() - cow.getHealth();
+            helper.assertTrue(lost > 0F && lost <= cow.getMaxHealth() * 0.5F + 0.01F, "the cow lost " + lost + " of " + cow.getMaxHealth() + ", not at most half");
+            index.clear();
+            cow.discard();
+            helper.succeed();
+        });
+    }
+
+    // ---- the cloak runs out ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aCloakThatRanOutIsAnnouncedOnceAndOneStillRunningIsNot(GameTestHelper helper) {
+        RecordingPlayer ran = RecordingPlayer.create(helper);
+        RecordingPlayer running = RecordingPlayer.create(helper);
+        RecordingPlayer none = RecordingPlayer.create(helper);
+        long now = helper.getLevel().getGameTime();
+        CloakAccess.set(ran, now - 1);
+        CloakAccess.set(running, now + 5000);
+        try {
+            CloakEvents.expire(List.of(ran, running, none), now);
+            helper.assertTrue(ran.receivedOnActionBar(CloakEvents.FADED), "nobody was told the cloak faded");
+            helper.assertTrue(CloakAccess.until(ran) == Cloak.NONE, "the faded cloak was not forgotten");
+            helper.assertTrue(!running.received(CloakEvents.FADED) && CloakAccess.cloaked(running), "a running cloak was announced or ended");
+            helper.assertTrue(!none.received(CloakEvents.FADED), "somebody who never had a cloak was told it faded");
+            CloakEvents.expire(List.of(ran), now + 10);
+            helper.assertTrue(ran.count(CloakEvents.FADED) == 1, "the fading was announced twice");
+        } finally {
+            CloakAccess.set(running, Cloak.NONE);
+        }
+        helper.succeed();
+    }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void linkedDamageIsSharedOnceAndNeverLoopsAndEndsWithADeathOrItsTime(GameTestHelper helper) {
         LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
@@ -298,7 +532,7 @@ public final class CloakLinkGameTests {
             index.clear();
             Cow a = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(7, 1, 7));
             java.util.UUID away = java.util.UUID.randomUUID();
-            Links.link(helper.getLevel().getServer(), a.getUUID(), away, 60);
+            Links.link(helper.getLevel().getServer(), a.getUUID(), away, 60); // a creature that is not loaded
             for (int i = 0; i < 20; i++) {
                 a.invulnerableTime = 0;
                 a.hurt(helper.getLevel().damageSources().generic(), 2.0F);

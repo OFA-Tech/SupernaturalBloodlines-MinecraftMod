@@ -645,8 +645,10 @@ public final class BossDirector {
         }
         List<ServerPlayer> eligible = new ArrayList<>();
         for (ServerPlayer p : players.apply(overworld)) {
-            if (p.level().dimension() == Level.OVERWORLD && !p.isSpectator() && (net.ofatech.supernaturalbloodlines.parts.species.rite.SeveranceRiteFactory.isWitchType(BloodlineAccess.get(p).species())
-                    || net.ofatech.supernaturalbloodlines.core.Supernatural.isVampiric(p))) {
+            if (net.ofatech.supernaturalbloodlines.core.boss.FinnRules.eligible(new net.ofatech.supernaturalbloodlines.core.boss.FinnRules.Facts(true,
+                    p.level().dimension() == Level.OVERWORLD,
+                    net.ofatech.supernaturalbloodlines.parts.species.rite.SeveranceRiteFactory.isWitchType(BloodlineAccess.get(p).species()) || net.ofatech.supernaturalbloodlines.core.Supernatural.isVampiric(p),
+                    p.isSpectator()))) {
                 eligible.add(p);
             }
         }
@@ -687,6 +689,7 @@ public final class BossDirector {
             Component text = Component.translatable("supernaturalbloodlines.boss.notice.finn." + (known ? "known" : "unknown"));
             target.displayClientMessage(text, true);
             target.sendSystemMessage(text);
+            target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.finn.hint"));
         }
         return Optional.of(e);
     }

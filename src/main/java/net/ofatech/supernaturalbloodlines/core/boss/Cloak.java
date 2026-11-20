@@ -24,4 +24,9 @@ public final class Cloak {
     public static boolean active(long until, long now) {
         return until > now;
     }
+
+    /** A cloak that was made and has run out: the one moment the player is told it faded. */
+    public static boolean expired(long until, long now) {
+        return until != NONE && until <= now;
+    }
 }

@@ -104,6 +104,9 @@ public final class RitesPage implements HubPageView {
             }
             sy = PageKit.wrapped(f, Component.translatable(chosen.forYou() ? KEY + "yours" : KEY + "anyone"), s.x(), sy + 3, s.w(),
                     chosen.forYou() ? t.good() : t.muted());
+            for (Component line : descriptions(rite)) {
+                sy = PageKit.wrapped(f, line, s.x(), sy + 3, s.w(), t.ink());
+            }
             for (Component note : trialNotes(rite, f.view.bloodline().wolf())) {
                 sy = PageKit.wrapped(f, note, s.x(), sy + 3, s.w(), t.accent());
             }
@@ -113,6 +116,19 @@ public final class RitesPage implements HubPageView {
         sy = PageKit.wrapped(f, Component.translatable(KEY + (witch ? "witch" : "not_witch")), s.x(), sy + 7, s.w(), t.muted());
         sy = PageKit.wrapped(f, Component.translatable(KEY + "book"), s.x(), sy + 3, s.w(), t.muted());
         f.end(sy);
+    }
+
+    /** What a rite does in one or two lines (duration, who can perform it, what happens to others), when the rite has them in the lang file. */
+    static List<Component> descriptions(HubSocial.Rite rite) {
+        ResourceLocation id = ResourceLocation.parse(rite.id());
+        List<Component> out = new ArrayList<>();
+        for (int i = 1; i <= 2; i++) {
+            String key = KEY + "desc." + id.getPath() + "." + i;
+            if (net.minecraft.locale.Language.getInstance().has(key)) {
+                out.add(Component.translatable(key));
+            }
+        }
+        return out;
     }
 
     /** The extra lines of the Alpha Trial card (what it asks, the warning or the reason), empty for any other rite. */

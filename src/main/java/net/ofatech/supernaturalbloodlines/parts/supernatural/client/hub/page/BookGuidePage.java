@@ -19,6 +19,11 @@ public final class BookGuidePage implements HubPageView {
     private static final String BOOK = PageKit.HUB + "book.guide.";
     private String chapter;
 
+    /** The page a chapter is on: every chapter is read on the Guide spread, so the Contents gives the spread's right-hand page, the one the footer shows. */
+    static int chapterPage() {
+        return 2 * HubPage.GUIDE.ordinal() + 2;
+    }
+
     static String roman(int n) {
         int[] v = {10, 9, 5, 4, 1};
         String[] s = {"X", "IX", "V", "IV", "I"};
@@ -53,7 +58,7 @@ public final class BookGuidePage implements HubPageView {
             }
             Component name = Component.translatable(GuideChapters.titleKey(id));
             f.g.drawString(f.font(), roman(i + 1) + ".", r.x(), y, on ? t.accent() : t.muted(), false);
-            BookKit.leader(f, name, Component.translatable(BOOK + "page", 2 * (i + 1) + 1), r.x() + 30, y, r.w() - 30, on ? t.accent() : t.muted());
+            BookKit.leader(f, name, Component.translatable(BOOK + "page", chapterPage()), r.x() + 30, y, r.w() - 30, on ? t.accent() : t.muted());
             String target = "chapter:" + id;
             f.target(target, hit, List.of(name), () -> chapter = id);
             if (f.focused(target)) {

@@ -61,5 +61,6 @@ public final class KolGrimoireItem extends Item {
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
         lines.add(Component.translatable(isRead(stack) ? "item.supernaturalbloodlines.kol_grimoire.tooltip_read" : "item.supernaturalbloodlines.kol_grimoire.tooltip",
                 BossesConfig.kolGrimoireSp()).withStyle(ChatFormatting.GRAY));
+        lines.add(Component.translatable("item.supernaturalbloodlines.kol_grimoire.tooltip_who").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

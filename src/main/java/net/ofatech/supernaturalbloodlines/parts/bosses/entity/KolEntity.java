@@ -105,7 +105,9 @@ public final class KolEntity extends NpcOriginalBoss {
             if (prey != null && SireCall.player(level().getServer(), prey) instanceof ServerPlayer p) {
                 p.displayClientMessage(net.minecraft.network.chat.Component.translatable("supernaturalbloodlines.boss.kol.gone"), true);
             }
-            BossIndex.get(level().getServer()).apply(boss(), BossRules.Event.LOST);
+            BossIndex index = BossIndex.get(level().getServer());
+            index.apply(boss(), BossRules.Event.LOST);
+            index.setDirty();
         }
         discard();
     }

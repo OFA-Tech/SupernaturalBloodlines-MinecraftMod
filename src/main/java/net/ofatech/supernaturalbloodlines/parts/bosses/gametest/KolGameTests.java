@@ -212,7 +212,9 @@ public final class KolGameTests {
             world(helper, NIGHT, prey);
             KolEntity k = rig.spawnKol();
             k.hunt(prey.getUUID());
+            rig.index.setDirty(false);
             k.withdraw();
+            helper.assertTrue(rig.index.isDirty(), "his leaving was not marked to be saved");
             helper.assertTrue(prey.received("supernaturalbloodlines.boss.kol.gone"), "the hunted one was not told: " + prey.heard());
             helper.assertTrue(rig.index.state(BossId.KOL) == BossState.LOST && k.isRemoved(), "he did not leave");
         } finally {
