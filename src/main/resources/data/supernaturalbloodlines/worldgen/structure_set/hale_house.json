@@ -1,0 +1,15 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "bosses" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "structures": [
+        { "structure": "supernaturalbloodlines:hale_house", "weight": 1 }
+    ],
+    "placement": {
+        "type": "minecraft:random_spread",
+        "spacing": 40,
+        "separation": 16,
+        "salt": 1713117
+    }
+}

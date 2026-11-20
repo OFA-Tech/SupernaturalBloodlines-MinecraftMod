@@ -42,6 +42,11 @@ public final class BossesConfig {
     private static final ModConfigSpec.IntValue DEUCALION_PACK_ALPHAS;
     private static final ModConfigSpec.BooleanValue DEUCALION_RESPAWN;
     private static final ModConfigSpec.IntValue DEUCALION_RESPAWN_DAYS;
+    private static final ModConfigSpec.BooleanValue PETER_HOUSE_ENABLED;
+    private static final ModConfigSpec.DoubleValue PETER_HOUSE_CHANCE;
+    private static final ModConfigSpec.BooleanValue PETER_FERAL_FULL_MOON;
+    private static final ModConfigSpec.BooleanValue PETER_RESPAWN;
+    private static final ModConfigSpec.IntValue PETER_RESPAWN_DAYS;
     private static final java.util.Map<BossId, ModConfigSpec.BooleanValue> ENABLED = new java.util.EnumMap<>(BossId.class);
 
     static {
@@ -105,6 +110,16 @@ public final class BossesConfig {
                 .define("deucalion_respawn", false);
         DEUCALION_RESPAWN_DAYS = b.comment("In-game days after his death before he may come again (only with deucalion_respawn on).")
                 .defineInRange("deucalion_respawn_days", 7, 1, 1000);
+        PETER_HOUSE_ENABLED = b.comment("Whether new chunks may generate the burned Hale house (Peter Hale waits in one of them). Needs Werewolves. Houses already generated stay.")
+                .define("peter_house_enabled", true);
+        PETER_HOUSE_CHANCE = b.comment("The chance that a house generates where the world has room for one (the places are far apart already, and only in forests and taigas). 0 to 1.")
+                .defineInRange("peter_house_chance", 0.5, 0.0, 1.0);
+        PETER_FERAL_FULL_MOON = b.comment("Peter shifts on a full moon night, and as the wolf he attacks anything alive on one (not other bosses, not players who cannot be hurt). Off: he shifts only at half health and fights only who hurts him or comes within 10 blocks.")
+                .define("peter_feral_full_moon", true);
+        PETER_RESPAWN = b.comment("Whether Peter may be found again after he died, and pay his reward again, once peter_respawn_days in-game days have passed. Off: he dies for good.")
+                .define("peter_respawn", false);
+        PETER_RESPAWN_DAYS = b.comment("In-game days after his death before he may be found again (only with peter_respawn on).")
+                .defineInRange("peter_respawn_days", 7, 1, 1000);
         SPEC = b.build();
     }
 
@@ -246,6 +261,26 @@ public final class BossesConfig {
 
     public static int deucalionRespawnDays() {
         return pick("deucalion_respawn_days", DEUCALION_RESPAWN_DAYS);
+    }
+
+    public static boolean peterHouseEnabled() {
+        return pick("peter_house_enabled", PETER_HOUSE_ENABLED);
+    }
+
+    public static double peterHouseChance() {
+        return pick("peter_house_chance", PETER_HOUSE_CHANCE);
+    }
+
+    public static boolean peterFeral() {
+        return pick("peter_feral_full_moon", PETER_FERAL_FULL_MOON);
+    }
+
+    public static boolean peterRespawn() {
+        return pick("peter_respawn", PETER_RESPAWN);
+    }
+
+    public static int peterRespawnDays() {
+        return pick("peter_respawn_days", PETER_RESPAWN_DAYS);
     }
 
     public static double linkDamageShare() {

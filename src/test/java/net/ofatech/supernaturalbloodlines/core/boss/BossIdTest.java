@@ -29,10 +29,10 @@ class BossIdTest {
     }
 
     @Test
-    void onlyTheFirstSevenHaveLandedInThisBuild() {
+    void onlyTheFirstEightHaveLandedInThisBuild() {
         for (BossId b : BossId.values()) {
             boolean landed = switch (b) {
-                case MIKAEL, KLAUS, ELIJAH, REBEKAH, KOL, FINN, DEUCALION -> true;
+                case MIKAEL, KLAUS, ELIJAH, REBEKAH, KOL, FINN, DEUCALION, PETER_HALE -> true;
                 default -> false;
             };
             assertEquals(landed, b.landed(), b.id());

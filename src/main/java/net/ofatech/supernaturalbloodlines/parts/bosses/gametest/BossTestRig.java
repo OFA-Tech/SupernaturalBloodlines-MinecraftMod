@@ -68,6 +68,14 @@ final class BossTestRig implements AutoCloseable {
         }
         index.forget(BossId.DEUCALION);
         BossesConfig.override("deucalion_pack_alphas", null);
+        var oldPeter = BossDirector.anyBossBody(server, BossId.PETER_HALE);
+        if (oldPeter != null) {
+            oldPeter.discard();
+        }
+        index.forget(BossId.PETER_HALE);
+        for (String key : new String[] {"peter_hale_enabled", "peter_respawn", "peter_respawn_days", "peter_feral_full_moon", "peter_house_enabled", "peter_house_chance"}) {
+            BossesConfig.override(key, null);
+        }
         for (BossId other : new BossId[] {BossId.ELIJAH, BossId.REBEKAH, BossId.KOL, BossId.FINN}) {
             var e = BossDirector.bossEntity(server, other);
             if (e != null) {
@@ -171,6 +179,7 @@ final class BossTestRig implements AutoCloseable {
         BossDirector.useDifficulty(null);
         BossDirector.useOnGround(null);
         BossDirector.useGround(null);
+        BossDirector.useHouses(null);
         BossDirector.useMods(null);
         BossDirector.useMoon(null);
         BossDirector.useEclipse(null);

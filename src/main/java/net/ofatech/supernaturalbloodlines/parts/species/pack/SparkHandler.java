@@ -208,6 +208,11 @@ public final class SparkHandler {
      * protected path destroys them. Touched only behind {@code ModList.isLoaded("werewolves")}.
      */
     public static net.ofatech.supernaturalbloodlines.core.boss.DeucalionRewardRules.Grant grantFromBoss(ServerPlayer killer, int sparks) {
+        return grantFromBoss(killer, sparks, "supernaturalbloodlines.boss.deucalion.reward_no_werewolf", "supernaturalbloodlines.boss.deucalion.reward_true_alpha");
+    }
+
+    /** As above, with the two lines of the boss who pays (for a killer who is no werewolf, and for a True Alpha): no branch is silent. */
+    public static net.ofatech.supernaturalbloodlines.core.boss.DeucalionRewardRules.Grant grantFromBoss(ServerPlayer killer, int sparks, String noWerewolfKey, String trueAlphaKey) {
         boolean werewolf = VampirismSupernatural.isWerewolf(killer);
         WolfState wolf = PackAccess.wolf(killer);
         int cap = SpeciesConfig.maxStackedSparks();
@@ -222,8 +227,8 @@ public final class SparkHandler {
                 }
             }
             // no branch is silent: the one who did the most is told why they take nothing
-            case NOT_A_WEREWOLF -> killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.deucalion.reward_no_werewolf"));
-            case NEVER -> killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.deucalion.reward_true_alpha"));
+            case NOT_A_WEREWOLF -> killer.sendSystemMessage(Component.translatable(noWerewolfKey));
+            case NEVER -> killer.sendSystemMessage(Component.translatable(trueAlphaKey));
         }
         return grant;
     }

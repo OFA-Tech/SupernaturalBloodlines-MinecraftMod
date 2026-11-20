@@ -14,6 +14,7 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.EstherGrimoireItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.KlausBloodItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.KolGrimoireItem;
+import net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.TheElixirItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.TheTrueCureItem;
 
@@ -42,6 +43,9 @@ public final class BossItems {
     /** Finn's reward: the key to the Linking Spell (R177). */
     public static final DeferredItem<EstherGrimoireItem> ESTHER_GRIMOIRE = ITEMS.register("esther_grimoire", () -> new EstherGrimoireItem(new Item.Properties()));
 
+    /** Peter's reward: the sire and the genes of a player who agrees to it, read on their Profile page (R182). */
+    public static final DeferredItem<MemoryClawsItem> MEMORY_CLAWS = ITEMS.register("memory_claws", () -> new MemoryClawsItem(new Item.Properties()));
+
     private BossItems() {
     }
 
@@ -57,6 +61,7 @@ public final class BossItems {
                 e.accept(THE_TRUE_CURE);
                 e.accept(KOL_GRIMOIRE);
                 e.accept(ESTHER_GRIMOIRE);
+                e.accept(MEMORY_CLAWS);
             }
         });
     }

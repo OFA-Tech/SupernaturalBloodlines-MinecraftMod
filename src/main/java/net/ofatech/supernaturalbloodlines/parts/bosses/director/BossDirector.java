@@ -34,6 +34,8 @@ import net.ofatech.supernaturalbloodlines.core.boss.BossWeight;
 import net.ofatech.supernaturalbloodlines.core.boss.DesiccationRules;
 import net.ofatech.supernaturalbloodlines.core.boss.ElijahRules;
 import net.ofatech.supernaturalbloodlines.core.boss.DeucalionRules;
+import net.ofatech.supernaturalbloodlines.core.boss.PeterRules;
+import net.ofatech.supernaturalbloodlines.parts.bosses.entity.PeterHaleEntity;
 import net.ofatech.supernaturalbloodlines.core.boss.KlausRules;
 import net.ofatech.supernaturalbloodlines.core.boss.RebekahRules;
 import net.ofatech.supernaturalbloodlines.core.boss.MikaelRules;
@@ -144,6 +146,7 @@ public final class BossDirector {
         mikael(server, index);
         klaus(server, index);
         deucalion(server, index);
+        peter(server, index);
         elijah(server, index);
         rebekah(server, index);
         kol(server, index);
@@ -698,6 +701,11 @@ public final class BossDirector {
     }
 
     // ---- Klaus ----
+    /** Whether it is a full moon night in this level now (the director's own answer, which the tests may pin). */
+    public static boolean fullMoonNightNow(ServerLevel level) {
+        return fullMoonNight(level);
+    }
+
     private static boolean fullMoonNight(ServerLevel level) {
         java.util.function.Predicate<ServerLevel> hook = moonHook;
         return hook != null ? hook.test(level) : MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime());
@@ -917,6 +925,101 @@ public final class BossDirector {
         target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.klaus.hint"));
         // the howl is for the one he hunts, not for everybody near: nobody else is told who is hunted
         target.playNotifySound(net.minecraft.sounds.SoundEvents.WOLF_HOWL, net.minecraft.sounds.SoundSource.HOSTILE, 1.5F, 0.7F);
+    }
+
+    // ---- Peter Hale ----
+
+    /** Where the nearest piece of a burned Hale house is to a point: its bounding box, or nothing. The real search looks at the structure references of the loaded chunks. */
+    @FunctionalInterface
+    public interface HouseFinder {
+        Optional<net.minecraft.world.level.levelgen.structure.BoundingBox> nearest(ServerLevel level, BlockPos from);
+    }
+
+    /** The tag of the structures that are a Hale house ({@code #supernaturalbloodlines:hale_house}). */
+    public static final net.minecraft.tags.TagKey<net.minecraft.world.level.levelgen.structure.Structure> HALE_HOUSE = net.minecraft.tags.TagKey.create(
+            net.minecraft.core.registries.Registries.STRUCTURE, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.MODID, "hale_house"));
+
+    private static volatile HouseFinder houses = BossDirector::realHouse;
+
+    /** Tests: where the houses are, because the test level generates none. {@code null} puts the real search back. */
+    @VisibleForTesting
+    public static void useHouses(@Nullable HouseFinder finder) {
+        houses = finder == null ? BossDirector::realHouse : finder;
+    }
+
+    /** The real search, whatever the test hook says: the nearest piece of a house to a point, or nothing. */
+    public static Optional<net.minecraft.world.level.levelgen.structure.BoundingBox> nearestHouse(ServerLevel level, BlockPos from) {
+        return realHouse(level, from);
+    }
+
+    /** A grid over the square of {@link PeterRules#HOUSE_RADIUS} around the point, at three heights, asked of the structure manager (a piece is 5 or more blocks across, so no house in range is missed). */
+    private static Optional<net.minecraft.world.level.levelgen.structure.BoundingBox> realHouse(ServerLevel level, BlockPos from) {
+        var manager = level.structureManager();
+        int[] offsets = PeterRules.scanOffsets();
+        for (int dx : offsets) {
+            for (int dz : offsets) {
+                if (!PeterRules.near((double) dx * dx + (double) dz * dz)) {
+                    continue;
+                }
+                for (int dy : new int[] {0, -8, 8}) {
+                    var start = manager.getStructureWithPieceAt(from.offset(dx, dy, dz), HALE_HOUSE);
+                    if (start.isValid()) {
+                        return Optional.of(start.getBoundingBox());
+                    }
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static void peter(MinecraftServer server, BossIndex index) {
+        BossId boss = BossId.PETER_HALE;
+        ServerLevel overworld = server.overworld();
+        BossIndex.Entry entry = index.of(boss);
+        // the respawn, when it is switched on: his state and his reward start again (the day he died is written down in returnDay)
+        if (index.state(boss) == BossState.DEAD && PeterRules.mayRespawn(BossesConfig.peterRespawn(), BossClock.today(overworld), entry.returnDay, BossesConfig.peterRespawnDays())) {
+            index.forget(boss);
+        }
+        BossFacts facts = new BossFacts(BossesConfig.enabled(boss), modsPresent(boss), index.state(boss), false);
+        if (SpawnRules.refusal(facts).isPresent() || difficulty.apply(overworld) == Difficulty.PEACEFUL) {
+            return;
+        }
+        for (ServerPlayer p : players.apply(overworld)) {
+            Optional<net.minecraft.world.level.levelgen.structure.BoundingBox> house = p.level().dimension() == Level.OVERWORLD && !p.isSpectator()
+                    ? houses.nearest(overworld, p.blockPosition()) : Optional.empty();
+            if (PeterRules.calledBy(p.level().dimension() == Level.OVERWORLD, p.isSpectator(), house.isPresent())) {
+                spawnPeter(overworld, house.get());
+                return;
+            }
+        }
+    }
+
+    /** Where he stands in a house: the middle of its footprint, one block above the floor (the cellar is below it). */
+    public static BlockPos peterSpot(net.minecraft.world.level.levelgen.structure.BoundingBox house) {
+        return new BlockPos(house.getCenter().getX(), house.minY() + PeterRules.SPAWN_OFFSET, house.getCenter().getZ());
+    }
+
+    /** Makes Peter in the house and writes it down. */
+    public static Optional<PeterHaleEntity> spawnPeter(ServerLevel level, net.minecraft.world.level.levelgen.structure.BoundingBox house) {
+        return spawnPeterAt(level, peterSpot(house));
+    }
+
+    /** Makes Peter at a spot (the house, or where a command says) and writes it down. His home is the spot. */
+    public static Optional<PeterHaleEntity> spawnPeterAt(ServerLevel level, BlockPos pos) {
+        PeterHaleEntity p = PeterHaleEntity.create(level);
+        p.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.random.nextFloat() * 360F, 0F);
+        p.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null);
+        p.applyFactors();
+        p.setHome(pos);
+        level.addFreshEntity(p);
+        BossIndex index = BossIndex.get(level.getServer());
+        BossIndex.Entry entry = index.of(BossId.PETER_HALE);
+        index.apply(BossId.PETER_HALE, BossRules.Event.SPAWNED);
+        entry.appearances++;
+        entry.arriveAt = -1;
+        index.adopt(BossId.PETER_HALE, p.getUUID(), level.dimension().location().toString(), pos);
+        index.setDirty();
+        return Optional.of(p);
     }
 
     /** The loaded body of a boss of any kind (Deucalion is no Original). */
