@@ -241,7 +241,8 @@ public final class RebekahGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
+    /** Own batch: other tests pin {@code boss_reward_on} to "death" for a while, and the config is global, so a test that needs the default must not share a batch with them. */
+    @GameTest(template = "empty", templateNamespace = NS, batch = "bossRewardDefault")
     public static void rebekahPaysTheTrueCureOnceWhenSheIsBroughtDown(GameTestHelper helper) {
         try (BossTestRig rig = new BossTestRig(helper)) {
             RebekahEntity r = rig.spawnRebekah();
