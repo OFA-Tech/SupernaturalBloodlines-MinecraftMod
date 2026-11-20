@@ -81,7 +81,7 @@ public record LinkingRiteFactory() implements RiteFactory {
             // links that ran out are taken out first: an old one must never stand in front of the new one
             Links.expire(level.getServer(), level.getGameTime());
             double rr = RADIUS * RADIUS;
-            List<LivingEntity> inside = level.getEntitiesOfClass(LivingEntity.class, new AABB(pos).inflate(RADIUS, HEIGHT + 2, RADIUS),
+            List<LivingEntity> inside = level.getEntitiesOfClass(LivingEntity.class, new AABB(pos).inflate(RADIUS, HEIGHT, RADIUS),
                     e -> e.isAlive() && !e.isSpectator() && !(e instanceof ArmorStand) && Math.abs(e.getY() - pos.getY()) <= HEIGHT
                             && (e.getX() - (pos.getX() + 0.5)) * (e.getX() - (pos.getX() + 0.5)) + (e.getZ() - (pos.getZ() + 0.5)) * (e.getZ() - (pos.getZ() + 0.5)) <= rr);
             LinkIndex index = LinkIndex.get(level.getServer());

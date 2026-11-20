@@ -196,6 +196,8 @@ public final class CloakLinkGameTests {
     public static void everyRefusalOfTheLinkingSpellIsTheSameMessageAndCostsTheSameSoItNeverNamesAnOriginalOrABoss(GameTestHelper helper) {
         RecordingPlayer caster = witch(helper);
         LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        boolean serverPvp = helper.getLevel().getServer().isPvpAllowed();
+        helper.getLevel().getServer().setPvpAllowed(true); // so it is the sneaking and the lead that decide, not the PvP switch
         try (BossTestRig rig = new BossTestRig(helper)) {
             index.clear();
             int n = 0;
@@ -260,6 +262,7 @@ public final class CloakLinkGameTests {
                 RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
                 assertRefusedTheSameWay(helper, caster, ++n, "a player where PvP is off");
             } finally {
+            helper.getLevel().getServer().setPvpAllowed(serverPvp);
                 helper.getLevel().getServer().setPvpAllowed(pvp);
             }
             RiteTestSupport.remove(helper, other);
@@ -761,10 +764,12 @@ public final class CloakLinkGameTests {
             index.clear();
             java.util.UUID a = java.util.UUID.randomUUID();
             java.util.UUID b = java.util.UUID.randomUUID();
-            index.add(a, b, 99999L);
+            java.util.UUID witch = java.util.UUID.randomUUID();
+            index.add(a, b, 99999L, true, false, witch);
             index.owe(a, 3.5F);
             LinkIndex again = LinkIndex.load(index.save(new net.minecraft.nbt.CompoundTag(), helper.getLevel().registryAccess()), helper.getLevel().registryAccess());
             helper.assertTrue(again.of(a).isPresent() && again.of(b).orElseThrow().until() == 99999L, "the link was lost through a save");
+            helper.assertTrue(witch.equals(again.of(a).orElseThrow().caster()) && again.of(a).orElseThrow().isPlayer(a) && !again.of(a).orElseThrow().isPlayer(b), "who made the link, and who is a player, was lost through a save");
             helper.assertTrue(Math.abs(again.settle(a) - 3.5F) < 0.01F, "what was owed was lost through a save");
         } finally {
             index.clear();
