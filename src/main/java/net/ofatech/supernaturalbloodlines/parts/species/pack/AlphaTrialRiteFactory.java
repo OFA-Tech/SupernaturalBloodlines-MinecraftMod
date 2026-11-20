@@ -39,7 +39,7 @@ public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) im
     /** {@code faction} is only what the Rites page reads to list it first for werewolves (the factory reads no faction from it). */
     public static final MapCodec<AlphaTrialRiteFactory> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.mapCodec(i -> i.group(
             com.mojang.serialization.Codec.STRING.optionalFieldOf("faction", "werewolf").forGetter(AlphaTrialRiteFactory::faction),
-            com.mojang.serialization.Codec.BOOL.optionalFieldOf("requires_full_moon", true).forGetter(AlphaTrialRiteFactory::requiresFullMoon)
+            com.mojang.serialization.Codec.BOOL.optionalFieldOf("requires_full_moon", false).forGetter(AlphaTrialRiteFactory::requiresFullMoon)
     ).apply(i, AlphaTrialRiteFactory::new));
     private static final String KEY = "supernaturalbloodlines.trial.";
 

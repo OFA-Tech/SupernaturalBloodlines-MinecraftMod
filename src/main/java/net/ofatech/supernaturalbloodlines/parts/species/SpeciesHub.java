@@ -37,7 +37,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.line.Lines;
 import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 
 /** The hub's view of other players from this part's indexes: names, ranks and online flags only. */
-final class SpeciesHub {
+public final class SpeciesHub {
     private SpeciesHub() {
     }
 
@@ -155,7 +155,7 @@ final class SpeciesHub {
     }
 
     /** This mod's rites the server loaded (their part and mods are on), read back through Enchanted's own codec. */
-    private static List<HubSocial.Rite> rites(MinecraftServer server) {
+    public static List<HubSocial.Rite> rites(MinecraftServer server) {
         List<HubSocial.Rite> out = new ArrayList<>();
         var registry = server.registryAccess().registryOrThrow(EData.RITE_TYPES_REGISTRY);
         var ops = RegistryOps.create(JsonOps.INSTANCE, server.registryAccess());
