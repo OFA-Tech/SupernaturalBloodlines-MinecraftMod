@@ -72,8 +72,9 @@ class BossTextTest {
         assertTrue(guide.contains("Kol comes by night") && guide.contains("Finn comes on a lunar eclipse") && guide.contains("pack Emissary"), "the Guide does not explain Kol and Finn");
         assertTrue(guide.contains("Left alone, the ritual hurts no one"), "the Guide does not say the ritual is harmless");
         assertTrue(guide.contains("more than a fifth of his health"), "the Guide does not give the threshold that breaks the ritual");
-        assertTrue(guide.contains("It will not take an Original, a boss") && guide.contains("That is deliberate"), "the Guide does not explain the Linking Spell's refusals");
-        assertTrue(guide.contains("sneaking in the circle") && guide.contains("witch-type rite") && guide.contains("where PvP is off"), "the Guide leaves out who can be linked and who can work it");
+        assertTrue(guide.contains("It will not take an NPC Original, a boss") && guide.contains("That is deliberate"), "the Guide does not explain the Linking Spell's refusals");
+        assertTrue(guide.contains("sneak in the circle holding a lead in their main hand") && guide.contains("witch-type rite") && guide.contains("where PvP is off") && guide.contains("a player Original may"), "the Guide leaves out who can be linked and how they agree");
+        assertTrue(guide.contains("11 blocks wide") && guide.contains("in your name"), "the Guide gives neither the circle's size nor whose damage it is");
         assertTrue(guide.contains("30 minutes (a server setting)") && guide.contains("Dying ends the cloak"), "the Guide does not say how long the cloak lasts");
         String kolAndFinn = guide.substring(guide.indexOf("Kol comes by night"), guide.indexOf("Nothing but white oak kills"));
         for (String paragraph : kolAndFinn.split("\n\n")) {
@@ -93,7 +94,7 @@ class BossTextTest {
             }
         }
         assertTrue(l.get("supernaturalbloodlines.hub.rites.desc.rite_of_cloaking.1").getAsString().contains("30 minutes"), "the cloak's duration is not in its description");
-        assertTrue(l.get("supernaturalbloodlines.hub.rites.desc.rite_of_linking.2").getAsString().contains("sneaking"), "who can be linked is not in the description");
+        assertTrue(l.get("supernaturalbloodlines.hub.rites.desc.rite_of_linking.2").getAsString().contains("sneaking in the circle with a lead"), "how a player agrees is not in the description");
         assertTrue(l.get("item.supernaturalbloodlines.kol_grimoire.tooltip_who").getAsString().contains("witch, siphoner, heretic or tribrid"));
     }
 

@@ -2,6 +2,12 @@
 
 ## Unreleased (plan 17e: Kol and Finn)
 
+### Changed (PR #49, round 2)
+- **A player Original can be linked** like anyone who agrees (Esther linked her children); only the NPC Originals, which are visibly bosses, are refused. It also removes the last way to learn who is an Original from a refusal.
+- **Consent is a deliberate act**: sneaking **and** a lead in the main hand (and PvP on).
+- A share is dealt **in the performer's name** (teams, claims, PvP logs and kill credit see them; to the performer herself it is plain magic damage); it still cannot loop.
+- The circle is **5.5 blocks** (11 wide, as drawn) and only creatures with their feet within 2 blocks of the altar count. Links that ran out are cleared at the start of the rite (an old one used to answer for the cow in front of the new one).
+
 ### Changed (the PR #49 panel)
 - **The Linking Spell asks consent and is a witch-type rite.** Another player must be sneaking inside the circle to agree, and only where PvP is on (the performer agrees by working it, so a witch can link herself to a creature). The circle is flat (6 blocks, 2 up and down), not a cube. A share never skips a player's own hit cooldown.
 - **Every refusal is one message, "The link will not hold.", at one cost**: the lead, the amethyst and the altar's power are spent, the grimoire comes back. Originals, bosses, a linked creature, a wrong count and a player who does not agree can no longer be told apart. This is deliberate and written in the Guide.

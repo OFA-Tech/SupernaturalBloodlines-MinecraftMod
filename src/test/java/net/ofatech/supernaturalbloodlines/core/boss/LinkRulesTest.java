@@ -30,13 +30,14 @@ class LinkRulesTest {
     }
 
     @Test
-    void aPlayerAgreesByPerformingOrBySneakingWhereTheyMayFight() {
-        assertTrue(LinkRules.consents(true, false, false), "the performer always agrees");
-        assertTrue(LinkRules.consents(true, true, true));
-        assertTrue(LinkRules.consents(false, true, true), "sneaking, PvP on");
-        assertFalse(LinkRules.consents(false, false, true), "standing there is not agreeing");
-        assertFalse(LinkRules.consents(false, true, false), "PvP is off: no other player is linked");
-        assertFalse(LinkRules.consents(false, false, false));
+    void aPlayerAgreesByPerformingOrBySneakingWithALeadWhereTheyMayFight() {
+        assertTrue(LinkRules.consents(true, false, false, false), "the performer always agrees");
+        assertTrue(LinkRules.consents(true, true, true, true));
+        assertTrue(LinkRules.consents(false, true, true, true), "sneaking with a lead, PvP on");
+        assertFalse(LinkRules.consents(false, true, false, true), "sneaking alone is an accident, not a yes");
+        assertFalse(LinkRules.consents(false, false, true, true), "holding a lead and standing there is not agreeing");
+        assertFalse(LinkRules.consents(false, true, true, false), "PvP is off: no other player is linked");
+        assertFalse(LinkRules.consents(false, false, false, false));
     }
 
     @Test

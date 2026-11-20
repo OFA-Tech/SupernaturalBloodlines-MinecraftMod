@@ -20,6 +20,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.ofatech.supernaturalbloodlines.core.boss.LinkRules;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The Linking Spell at work (R177): damage to one of two linked creatures is shared with the other, once, and the link ends with a death, a dimension change
@@ -57,7 +58,12 @@ public final class Links {
 
     /** Links two creatures for {@code seconds}; a player on either side is told. */
     public static void link(MinecraftServer server, Entity a, Entity b, int seconds) {
-        LinkIndex.get(server).add(a.getUUID(), b.getUUID(), server.overworld().getGameTime() + seconds * 20L, a instanceof Player, b instanceof Player);
+        link(server, a, b, seconds, null);
+    }
+
+    /** As above, made by {@code caster}: a share is dealt in their name, so teams, claims, PvP logs and kill credit see them. */
+    public static void link(MinecraftServer server, Entity a, Entity b, int seconds, @Nullable UUID caster) {
+        LinkIndex.get(server).add(a.getUUID(), b.getUUID(), server.overworld().getGameTime() + seconds * 20L, a instanceof Player, b instanceof Player, caster);
         tell(a, b, seconds);
         tell(b, a, seconds);
     }
@@ -126,17 +132,18 @@ public final class Links {
             end(server, index, link);
             return;
         }
-        deal(partner, share);
+        deal(partner, share, link.caster() == null || link.caster().equals(partner.getUUID()) ? null : find(server, link.caster()));
     }
 
     /** A share, dealt once: the partner is marked while it takes it, so the hit it makes cannot come back. Never skips a player's own hit cooldown. */
-    private static void deal(LivingEntity partner, float share) {
+    private static void deal(LivingEntity partner, float share, @Nullable Entity caster) {
         boolean added = SHARING.add(partner.getUUID());
         try {
             if (!(partner instanceof Player)) {
                 partner.invulnerableTime = 0;
             }
-            partner.hurt(partner.damageSources().magic(), share);
+            // the performer is the attacker (never the partner itself); the partner is marked as sharing, so this hit cannot be shared again
+            partner.hurt(caster instanceof LivingEntity ? partner.damageSources().indirectMagic(null, caster) : partner.damageSources().magic(), share);
         } finally {
             if (added) {
                 SHARING.remove(partner.getUUID());
@@ -169,7 +176,7 @@ public final class Links {
             // not inside the join itself: the entity is not in the level yet
             server.execute(() -> {
                 if (living.isAlive() && !living.isRemoved()) {
-                    deal(living, owed);
+                    deal(living, owed, null);
                 }
             });
         }

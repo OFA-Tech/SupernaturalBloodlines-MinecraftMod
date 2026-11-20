@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 public final class LinkIndex extends SavedData {
     private static final String NAME = "supernaturalbloodlines_links";
 
-    public record Link(UUID a, UUID b, long until, boolean aPlayer, boolean bPlayer) {
+    public record Link(UUID a, UUID b, long until, boolean aPlayer, boolean bPlayer, @Nullable UUID caster) {
         public UUID other(UUID me) {
             return me.equals(a) ? b : a;
         }
@@ -48,7 +48,7 @@ public final class LinkIndex extends SavedData {
         for (int i = 0; i < list.size(); i++) {
             CompoundTag t = list.getCompound(i);
             if (t.hasUUID("a") && t.hasUUID("b")) {
-                index.links.add(new Link(t.getUUID("a"), t.getUUID("b"), t.getLong("until"), t.getBoolean("ap"), t.getBoolean("bp")));
+                index.links.add(new Link(t.getUUID("a"), t.getUUID("b"), t.getLong("until"), t.getBoolean("ap"), t.getBoolean("bp"), t.hasUUID("caster") ? t.getUUID("caster") : null));
             }
         }
         ListTag owed = tag.getList("pending", Tag.TAG_COMPOUND);
@@ -71,6 +71,9 @@ public final class LinkIndex extends SavedData {
             t.putLong("until", l.until());
             t.putBoolean("ap", l.aPlayer());
             t.putBoolean("bp", l.bPlayer());
+            if (l.caster() != null) {
+                t.putUUID("caster", l.caster());
+            }
             list.add(t);
         }
         tag.put("links", list);
@@ -99,7 +102,11 @@ public final class LinkIndex extends SavedData {
     }
 
     public void add(UUID a, UUID b, long until, boolean aPlayer, boolean bPlayer) {
-        links.add(new Link(a, b, until, aPlayer, bPlayer));
+        add(a, b, until, aPlayer, bPlayer, null);
+    }
+
+    public void add(UUID a, UUID b, long until, boolean aPlayer, boolean bPlayer, @Nullable UUID caster) {
+        links.add(new Link(a, b, until, aPlayer, bPlayer, caster));
         setDirty();
     }
 
