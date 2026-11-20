@@ -1,0 +1,36 @@
+{
+  "title": "Rite of Revelation",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:spyglass"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Reveals every gene that was rolled for the owner of the taglock, yes or no for each, and the Original of their line.",
+          "header": "Rite of Revelation"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Needs a filled taglock of a player: a villager's is refused. The owner must be loaded or online, and only they are told.\n\nA refusal gives the ingredients back.\n\nCircle: small circle, ritual chalk.",
+          "header": "Rite of Revelation"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_revelation"
+        }
+      ]
+    }
+  ]
+}

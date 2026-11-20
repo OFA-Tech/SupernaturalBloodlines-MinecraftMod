@@ -1,0 +1,45 @@
+{
+  "title": "Linking Spell",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:lead"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Links two living creatures in the circle for a while (60 seconds unless the server changes it): half the damage either takes, the other takes too.",
+          "header": "Linking Spell"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Only a witch type can work it. No NPC Original or boss can be linked. Another player must agree by sneaking in the circle with a lead in their main hand. A refusal always reads the same and costs the same.",
+          "header": "Linking Spell"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "A refusal still spends the lead, the amethyst and the altar's power. The grimoire always comes back.\n\nCircle: medium circle, ritual chalk.",
+          "header": "Linking Spell"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_linking"
+        }
+      ]
+    }
+  ]
+}

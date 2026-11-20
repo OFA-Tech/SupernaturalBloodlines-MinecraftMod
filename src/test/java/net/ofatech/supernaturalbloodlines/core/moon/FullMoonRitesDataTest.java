@@ -28,6 +28,9 @@ class FullMoonRitesDataTest {
                 }
             }).map(p -> "supernaturalbloodlines:" + p.getFileName().toString().replace(".json", "")).collect(Collectors.toSet());
         }
-        assertEquals(fromData, LunarMood.FULL_MOON_RITES);
+        Set<String> both = new java.util.HashSet<>(LunarMood.FULL_MOON_RITES);
+        both.addAll(LunarMood.FULL_MOON_NO_DISCOUNT);
+        assertEquals(fromData, both);
+        assertEquals(Set.of(), LunarMood.FULL_MOON_RITES.stream().filter(LunarMood.FULL_MOON_NO_DISCOUNT::contains).collect(Collectors.toSet()), "a rite is discounted and not discounted");
     }
 }

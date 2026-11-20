@@ -1,0 +1,36 @@
+{
+  "title": "Curse of Magicule Drain",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:soul_sand"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Curses the owner of the taglock: every second they lose 0.5% of their maximum magicules (at least 1), or 1% when the caster has a cat familiar.",
+          "header": "Curse of Magicule Drain"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Anyone can cast it. The target is the owner of the taglock; Tensura must be installed.\n\nThe curse ends when the target dies. It needs infernal chalk, not ritual chalk.\n\nCircle: medium circle, infernal chalk.",
+          "header": "Curse of Magicule Drain"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:curse_magicule_drain"
+        }
+      ]
+    }
+  ]
+}

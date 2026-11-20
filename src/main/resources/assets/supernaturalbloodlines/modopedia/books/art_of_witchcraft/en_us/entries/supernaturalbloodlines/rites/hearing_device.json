@@ -1,0 +1,38 @@
+{
+  "title": "Rite of the Hearing Device",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:note_block"
+  },
+  "assigned_items": [
+    "supernaturalbloodlines:hearing_device"
+  ],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Makes a Hearing Device. Used, it stuns every supernatural creature within 5 blocks for 5 seconds (Slowness V and Nausea). You are spared.\n\nAnyone can perform it.\n\nThe device needs 60 seconds to recharge after each use.",
+          "header": "Rite of the Hearing Device"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.",
+          "header": "Rite of the Hearing Device"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:hearing_device"
+        }
+      ]
+    }
+  ]
+}

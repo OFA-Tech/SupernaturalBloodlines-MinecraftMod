@@ -1,0 +1,45 @@
+{
+  "title": "Rite of Lineage (Awaken)",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:bone"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Wakes the werewolf gene in the one on the centre: a human becomes a born werewolf, a vampire a bound hybrid and an Original a bound Original hybrid.",
+          "header": "Rite of Lineage (Awaken)"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Refused for hunters, for people who already are werewolves and for heretics. Werewolves must be installed.",
+          "header": "Rite of Lineage (Awaken)"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "A vampire or Original made a hybrid this way is bound: it cannot shift until the Rite of the Moon. A refusal gives the ingredients back.\n\nCircle: medium circle, ritual chalk.",
+          "header": "Rite of Lineage (Awaken)"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_lineage_awaken"
+        }
+      ]
+    }
+  ]
+}

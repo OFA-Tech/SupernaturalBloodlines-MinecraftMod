@@ -1,0 +1,29 @@
+{
+  "title": "Rite of Blood Offering",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:glass_bottle"
+  },
+  "assigned_items": [
+    "supernaturalbloodlines:blood_stone"
+  ],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Turns four bottles of blood and a stone into a Blood Stone, a block that adds power to an altar.\n\nAnyone can perform it. The blood bottles are Vampirism's.\n\nCircle: small circle, ritual chalk.",
+          "header": "Rite of Blood Offering"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:blood_offering"
+        }
+      ]
+    }
+  ]
+}

@@ -34,11 +34,12 @@ import net.ofatech.supernaturalbloodlines.shared.hub.profile.TrueAlphaWarning;
  * taken before they have chosen. Their answer lets the rite start within two minutes ({@link TrialConfirmLedger}). Every refusal cancels the rite, so
  * Enchanted gives the ingredients back.
  */
-public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
+public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) implements RiteFactory {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "alpha_trial");
     /** {@code faction} is only what the Rites page reads to list it first for werewolves (the factory reads no faction from it). */
     public static final MapCodec<AlphaTrialRiteFactory> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.mapCodec(i -> i.group(
-            com.mojang.serialization.Codec.STRING.optionalFieldOf("faction", "werewolf").forGetter(AlphaTrialRiteFactory::faction)
+            com.mojang.serialization.Codec.STRING.optionalFieldOf("faction", "werewolf").forGetter(AlphaTrialRiteFactory::faction),
+            com.mojang.serialization.Codec.BOOL.optionalFieldOf("requires_full_moon", true).forGetter(AlphaTrialRiteFactory::requiresFullMoon)
     ).apply(i, AlphaTrialRiteFactory::new));
     private static final String KEY = "supernaturalbloodlines.trial.";
 
@@ -47,7 +48,7 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
 
     @Override
     public Rite create(Rite.BaseRiteParams base, Rite.RiteParams params) {
-        return new AlphaTrialRite(base, params);
+        return new AlphaTrialRite(base, params, requiresFullMoon);
     }
 
     @Override
@@ -89,11 +90,16 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
      * warning when that is what is missing.
      */
     public static String tryStart(net.minecraft.server.level.ServerLevel level, BlockPos centre, ServerPlayer p, boolean transformed) {
+        return tryStart(level, centre, p, transformed, true);
+    }
+
+    /** {@code needsFullMoon} is the rite file's {@code requires_full_moon}: false lets a server run the trial on any night. */
+    public static String tryStart(net.minecraft.server.level.ServerLevel level, BlockPos centre, ServerPlayer p, boolean transformed, boolean needsFullMoon) {
         long now = level.getGameTime();
         var wolf = PackAccess.wolf(p);
         TrialRules.Refusal refusal = TrialRules.gate(SpeciesConfig.trial().enabled(), wolf, VampirismSupernatural.isWerewolf(p),
                 VampirismAPI.factionPlayerHandler(p).getCurrentLevel(), SpeciesConfig.trial().minLevel(),
-                MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), transformed,
+                !needsFullMoon || MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), transformed,
                 AlphaTrialBoss.running(level, p.getUUID()), TrueAlphaWarning.applies(wolf.rank(), PackRules.pathOpen(wolf)), LEDGER.valid(p.getUUID(), now));
         switch (refusal) {
             case NONE -> {
@@ -146,8 +152,11 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
     }
 
     private static final class AlphaTrialRite extends Rite {
-        AlphaTrialRite(BaseRiteParams base, RiteParams params) {
+        private final boolean requiresFullMoon;
+
+        AlphaTrialRite(BaseRiteParams base, RiteParams params, boolean requiresFullMoon) {
             super(base, params);
+            this.requiresFullMoon = requiresFullMoon;
         }
 
         @Override
@@ -163,7 +172,7 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
                 caster.displayClientMessage(Component.translatable(KEY + "not_alone"), true);
                 return cancel();
             }
-            String refusal = tryStart(level, getPos(), caster, transformed(caster));
+            String refusal = tryStart(level, getPos(), caster, transformed(caster), requiresFullMoon);
             if (refusal != null) {
                 caster.displayClientMessage(Component.translatable(refusal, SpeciesConfig.trial().minLevel()), true);
                 return cancel();

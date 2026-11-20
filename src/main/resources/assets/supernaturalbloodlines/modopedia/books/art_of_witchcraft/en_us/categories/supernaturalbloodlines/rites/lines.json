@@ -1,0 +1,15 @@
+{
+  "children": [],
+  "display_on_front_page": false,
+  "entries": [
+    "supernaturalbloodlines/rites/rite_of_the_broken_line",
+    "supernaturalbloodlines/rites/rite_of_the_imprisoned_original",
+    "supernaturalbloodlines/rites/rite_of_the_cure"
+  ],
+  "icon": {
+    "count": 1,
+    "id": "minecraft:white_dye"
+  },
+  "landing_text": "Rites that free someone from the line of their Original, and the rite that makes The Cure.",
+  "title": "Lines of the Originals"
+}

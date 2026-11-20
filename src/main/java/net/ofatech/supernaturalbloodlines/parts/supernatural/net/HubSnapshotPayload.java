@@ -81,14 +81,31 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
             ByteBufCodecs.VAR_INT, HubSocial.Kin::depth,
             HubSocial.Kin::new);
 
-    private static final StreamCodec<ByteBuf, HubSocial.Rite> RITE = StreamCodec.composite(
-            ID, HubSocial.Rite::id,
-            ByteBufCodecs.VAR_INT, HubSocial.Rite::power,
-            ID.apply(ByteBufCodecs.list(32)), HubSocial.Rite::items,
-            ID.apply(ByteBufCodecs.list(8)), HubSocial.Rite::shapes,
-            ID, HubSocial.Rite::factory,
-            ByteBufCodecs.stringUtf8(64), HubSocial.Rite::faction,
-            HubSocial.Rite::new);
+    private static final StreamCodec<ByteBuf, List<String>> RITE_IDS = ID.apply(ByteBufCodecs.list(32));
+    private static final StreamCodec<ByteBuf, List<String>> RITE_SHAPES = ID.apply(ByteBufCodecs.list(8));
+    private static final StreamCodec<ByteBuf, String> RITE_FACTION = ByteBufCodecs.stringUtf8(64);
+
+    // more than the six fields StreamCodec.composite takes
+    private static final StreamCodec<ByteBuf, HubSocial.Rite> RITE = new StreamCodec<>() {
+        @Override
+        public HubSocial.Rite decode(ByteBuf b) {
+            return new HubSocial.Rite(ID.decode(b), ByteBufCodecs.VAR_INT.decode(b), RITE_IDS.decode(b), RITE_SHAPES.decode(b), ID.decode(b),
+                    RITE_FACTION.decode(b), RITE_IDS.decode(b), ByteBufCodecs.BOOL.decode(b), ByteBufCodecs.VAR_INT.decode(b));
+        }
+
+        @Override
+        public void encode(ByteBuf b, HubSocial.Rite r) {
+            ID.encode(b, r.id());
+            ByteBufCodecs.VAR_INT.encode(b, r.power());
+            RITE_IDS.encode(b, r.items());
+            RITE_SHAPES.encode(b, r.shapes());
+            ID.encode(b, r.factory());
+            RITE_FACTION.encode(b, r.faction());
+            RITE_IDS.encode(b, r.sacrifices());
+            ByteBufCodecs.BOOL.encode(b, r.fullMoon());
+            ByteBufCodecs.VAR_INT.encode(b, r.tickPower());
+        }
+    };
 
     private static final StreamCodec<ByteBuf, LineRules.State> LINE_STATE = ByteBufCodecs.stringUtf8(16).map(
             s -> {

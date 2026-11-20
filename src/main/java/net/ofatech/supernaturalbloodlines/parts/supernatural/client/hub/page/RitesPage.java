@@ -9,6 +9,8 @@ import java.util.Set;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
@@ -92,9 +94,13 @@ public final class RitesPage implements HubPageView {
             HubSocial.Rite rite = chosen.rite();
             sy = PageKit.wrapped(f, name(rite), s.x(), sy, s.w(), t.accent());
             t.drawRule(f.g, s.x(), sy + 2, s.w());
-            sy = PageKit.wrapped(f, Component.translatable(KEY + "power", String.format("%,d", rite.power())), s.x(), sy + 6, s.w(), t.ink());
+            sy = RiteDiagram.draw(f, s, sy + 6, rite);
+            sy = PageKit.wrapped(f, powerText(rite), s.x(), sy, s.w(), t.ink());
             for (String shape : rite.shapes()) {
-                sy = PageKit.wrapped(f, Component.translatable(KEY + "circle", shapeName(shape)), s.x(), sy, s.w(), t.ink());
+                sy = PageKit.wrapped(f, Component.translatable(KEY + "circle", circleName(shape)), s.x(), sy, s.w(), t.ink());
+            }
+            for (Component fact : facts(rite)) {
+                sy = PageKit.wrapped(f, fact, s.x(), sy, s.w(), t.ink());
             }
             if (!rite.items().isEmpty()) {
                 sy = PageKit.wrapped(f, Component.translatable(KEY + "items"), s.x(), sy + 3, s.w(), t.ink());
@@ -146,6 +152,45 @@ public final class RitesPage implements HubPageView {
     static Component name(HubSocial.Rite rite) {
         ResourceLocation id = ResourceLocation.parse(rite.id());
         return Component.translatableWithFallback("rite." + id.getNamespace() + "." + id.getPath(), HubModel.pretty(id.getPath()));
+    }
+
+    /** "Power: 6,000", or that the rite asks for none (it costs something else, which its description says). */
+    static Component powerText(HubSocial.Rite rite) {
+        return rite.power() == 0 ? Component.translatable(KEY + "power_none") : Component.translatable(KEY + "power", String.format("%,d", rite.power()));
+    }
+
+    /** "medium circle, infernal chalk" for a {@code shape=chalk} pair of the wire; a shape without a chalk is only the shape. */
+    static Component circleName(String pair) {
+        HubSocial.Circle c = HubSocial.Circle.parse(pair);
+        return c.chalk().isEmpty() ? shapeName(c.shape()) : Component.translatable(KEY + "circle_chalk", shapeName(c.shape()), chalkName(c.chalk()));
+    }
+
+    static Component chalkName(String chalk) {
+        return Component.translatableWithFallback(KEY + "chalk." + chalk, HubModel.pretty(chalk));
+    }
+
+    /** What the circle picture cannot say: the creatures the rite takes, and that it works on a full-moon night only. */
+    static List<Component> facts(HubSocial.Rite rite) {
+        List<Component> out = new ArrayList<>();
+        if (!rite.sacrifices().isEmpty()) {
+            List<Component> names = new ArrayList<>();
+            for (String id : rite.sacrifices()) {
+                ResourceLocation type = ResourceLocation.tryParse(id);
+                names.add(type != null && BuiltInRegistries.ENTITY_TYPE.containsKey(type) ? BuiltInRegistries.ENTITY_TYPE.get(type).getDescription() : Component.literal(id));
+            }
+            out.add(Component.translatable(KEY + "sacrifice", ComponentUtils.formatList(names, Component.literal(", "))));
+        }
+        if (rite.fullMoon()) {
+            out.add(Component.translatable(KEY + "full_moon"));
+        }
+        return out;
+    }
+
+    /** The launcher that opens Enchanted's book on this rite's entry; null when the book is not there. */
+    static HubHooks.Launcher bookLauncher(HubSocial.Rite rite) {
+        HubHooks.Launcher any = HubHooks.launchers().stream().filter(l -> l.id().equals("enchanted")).findFirst().orElse(null);
+        return any == null ? null : new HubHooks.Launcher(any.id(), any.letter(), any.color(), any.name(), any.screenPackage(), any.available(),
+                () -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.book.EnchantedBook.openRite(rite.id()));
     }
 
     static Component shapeName(String shape) {

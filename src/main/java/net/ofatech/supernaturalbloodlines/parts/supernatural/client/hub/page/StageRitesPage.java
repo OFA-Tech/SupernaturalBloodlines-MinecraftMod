@@ -83,14 +83,16 @@ public final class StageRitesPage implements HubPageView {
         f.g.fill(box.x() + 1, box.y() + 1, box.right() - 1, box.bottom() - 1, t.paper());
         int cx = box.x() + 20;
         int cy = box.y() + 22;
-        int ring = l.forYou() ? t.good() : t.muted();
-        KitDraw.tickRing(f.g, cx, cy, 13, 28, 1f, ring, ring);
-        for (int i = 0; i < 4; i++) {
-            double a = Math.PI / 4 + Math.PI * i / 2;
-            int px = cx + (int) Math.round(13 * Math.cos(a));
-            int py = cy + (int) Math.round(13 * Math.sin(a));
-            f.g.fill(px - 2, py - 2, px + 2, py + 2, GOLD);
-        }
+        // the ring is the rite's own circle: its size by the shape, its colour by the chalk (white ritual, red infernal, purple otherwhere)
+        HubSocial.Circle circle = l.rite().circles().isEmpty() ? new HubSocial.Circle("medium_circle", "ritual_chalk") : l.rite().circles().get(0);
+        int radius = switch (circle.shape()) {
+            case "small_circle" -> 8;
+            case "large_circle" -> 17;
+            default -> 12;
+        };
+        int ring = RiteDiagram.chalkColor(circle);
+        KitDraw.tickRing(f.g, cx, cy, radius, radius * 2, 1f, ring, ring);
+        f.g.fill(cx - 2, cy - 2, cx + 2, cy + 2, GOLD);
         int tx = box.x() + 40;
         int tw = box.w() - 46;
         // the name in up to two lines, cut with an ellipsis only when even that does not fit
@@ -115,13 +117,13 @@ public final class StageRitesPage implements HubPageView {
         HubSocial.Rite rite = l.rite();
         List<Component> items = new ArrayList<>();
         rite.items().forEach(e -> items.add(RitesPage.item(e)));
-        Component shape = rite.shapes().isEmpty() ? Component.literal("-") : RitesPage.shapeName(rite.shapes().get(0));
-        Detail.Builder d = Detail.of(RitesPage.name(rite)).subtitle(Component.translatable(BOOK + "sub", shape, String.format("%,d", rite.power())));
+        Detail.Builder d = Detail.of(RitesPage.name(rite)).subtitle(BookRitesPage.sub(rite));
         // the Alpha Trial's warning (or why it is not for you) comes first: the Blood Moon bar shows only the first two lines
         RitesPage.trialNotes(rite, f.view.bloodline().wolf()).forEach(d::body);
+        RitesPage.facts(rite).forEach(d::body);
         RitesPage.descriptions(rite).forEach(d::body);
         d.body(items.isEmpty() ? Component.translatable(BOOK + "no_items") : Component.translatable(BOOK + "needs", items.stream().map(Component::getString).reduce((a, b) -> a + ", " + b).orElse("")));
-        HubHooks.Launcher book = HubHooks.launchers().stream().filter(x -> x.id().equals("enchanted")).findFirst().orElse(null);
+        HubHooks.Launcher book = RitesPage.bookLauncher(rite);
         d.action(new Detail.Action("book", Component.translatable(BOOK + "enchanted_short"), false, book != null, null, null, () -> f.screen().launch(book)));
         d.action("circle", Component.translatable(BOOK + (circle ? "back" : "show_circle")), true, true, () -> circle = !circle);
         f.detail(d.build());

@@ -166,11 +166,14 @@ final class SpeciesHub {
             }
             RiteType rite = entry.getValue();
             List<String> items = rite.getItems().stream().map(s -> s.getCount() + " " + net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(s.getItem())).toList();
-            List<String> shapes = rite.getShapes().keySet().stream().map(h -> h.unwrapKey().map(k -> k.location().toString()).orElse("?")).sorted().toList();
+            List<String> shapes = rite.getShapes().entrySet().stream().map(e -> e.getKey().unwrapKey().map(k -> k.location().toString()).orElse("?")
+                    + "=" + net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(e.getValue())).sorted().toList();
+            List<String> sacrifices = rite.getEntities().stream().map(t -> net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(t).toString()).toList();
             // the factory and its settings have no getters: read them back through Enchanted's own codec (a factory that cannot encode shows none)
             JsonObject factory = RiteType.CODEC.encodeStart(ops, rite).result().filter(JsonElement::isJsonObject).map(JsonElement::getAsJsonObject)
                     .filter(j -> j.has("factory") && j.get("factory").isJsonObject()).map(j -> j.getAsJsonObject("factory")).orElse(new JsonObject());
-            out.add(new HubSocial.Rite(id.toString(), rite.getPower(), items, shapes, string(factory, "type"), string(factory, "faction")));
+            boolean fullMoon = factory.has("requires_full_moon") && factory.get("requires_full_moon").isJsonPrimitive() && factory.get("requires_full_moon").getAsBoolean();
+            out.add(new HubSocial.Rite(id.toString(), rite.getPower(), items, shapes, string(factory, "type"), string(factory, "faction"), sacrifices, fullMoon, rite.getTickPower()));
         }
         out.sort(java.util.Comparator.comparing(HubSocial.Rite::id));
         return out;

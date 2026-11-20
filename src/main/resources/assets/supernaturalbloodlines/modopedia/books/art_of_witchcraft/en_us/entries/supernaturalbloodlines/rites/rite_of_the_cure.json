@@ -1,0 +1,47 @@
+{
+  "title": "Rite of the Cure",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:enchanted_golden_apple"
+  },
+  "assigned_items": [
+    "supernaturalbloodlines:the_cure"
+  ],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Makes The Cure: one drink removes every vampire, werewolf and species layer from whoever drinks it.",
+          "header": "Rite of the Cure"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Anyone can perform it, but a desiccated Original (or Original hybrid) player must be within 6 blocks of the centre, a little wider than the circle.",
+          "header": "Rite of the Cure"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Making The Cure calls Rebekah to hunt whoever made it, a short while after. Without a desiccated Original the rite is refused and the ingredients come back.\n\nCircle: medium circle, ritual chalk.",
+          "header": "Rite of the Cure"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_the_cure"
+        }
+      ]
+    }
+  ]
+}

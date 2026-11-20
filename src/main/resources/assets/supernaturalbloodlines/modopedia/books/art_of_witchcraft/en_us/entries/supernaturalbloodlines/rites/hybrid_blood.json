@@ -1,0 +1,36 @@
+{
+  "title": "Rite of Hybrid's Blood",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:glass_bottle"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Fills a bottle with Hybrid's Blood from the hybrid on the centre.\n\nThe one on the centre (the caster if nobody does) must be a hybrid, an Original hybrid or a tribrid. Werewolves must be installed.",
+          "header": "Rite of Hybrid's Blood"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Anyone else is refused: nothing is made and the bottle comes back.\n\nCircle: small circle, ritual chalk.",
+          "header": "Rite of Hybrid's Blood"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:hybrid_blood"
+        }
+      ]
+    }
+  ]
+}

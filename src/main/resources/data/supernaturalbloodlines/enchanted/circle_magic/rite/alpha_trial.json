@@ -14,6 +14,7 @@
     "power": 12000,
     "factory": {
         "type": "supernaturalbloodlines:alpha_trial",
-        "faction": "werewolf"
+        "faction": "werewolf",
+        "requires_full_moon": true
     }
 }

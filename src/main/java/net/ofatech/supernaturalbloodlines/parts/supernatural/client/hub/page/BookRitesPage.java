@@ -83,8 +83,7 @@ public final class BookRitesPage implements HubPageView {
             return;
         }
         HubSocial.Rite rite = chosen.rite();
-        int sy = BookKit.head(f, BookKit.SIDE, RitesPage.name(rite), Component.translatable(BOOK + "sub",
-                rite.shapes().isEmpty() ? Component.literal("-") : RitesPage.shapeName(rite.shapes().get(0)), String.format("%,d", rite.power())));
+        int sy = BookKit.head(f, BookKit.SIDE, RitesPage.name(rite), sub(rite));
         sy = circle(f, s, sy, rite);
         sy = BookKit.caps(f, Component.translatable(BOOK + "ingredients"), s.x(), sy, t.muted());
         Player p = f.view.player();
@@ -96,6 +95,9 @@ public final class BookRitesPage implements HubPageView {
         if (rite.items().isEmpty()) {
             sy = PageKit.wrapped(f, Component.translatable(BOOK + "no_items"), s.x(), sy, s.w(), t.muted());
         }
+        for (Component fact : RitesPage.facts(rite)) {
+            sy = PageKit.wrapped(f, fact, s.x(), sy + 2, s.w(), t.accent());
+        }
         for (Component line : RitesPage.descriptions(rite)) {
             sy = PageKit.wrapped(f, line, s.x(), sy + 4, s.w(), t.ink());
         }
@@ -103,35 +105,22 @@ public final class BookRitesPage implements HubPageView {
             sy = PageKit.wrapped(f, note, s.x(), sy + 2, s.w(), t.accent());
         }
         sy += 6;
-        HubHooks.Launcher book = HubHooks.launchers().stream().filter(l -> l.id().equals("enchanted")).findFirst().orElse(null);
+        HubHooks.Launcher book = RitesPage.bookLauncher(rite);
         BookKit.link(f, "link:enchanted", Component.translatable(BOOK + "open_book"), s.x(), sy, List.of(Component.translatable(BOOK + "open_book")),
                 book == null ? null : () -> f.screen().launch(book));
         sy = BookKit.small(f, Component.translatable(BOOK + "how"), s.x(), sy + 14, s.w(), t.muted());
         f.end(sy);
     }
 
-    /** The ink circle: an outer and an inner ring, a square at each point of the compass lit for an ingredient, and your focus in the middle. */
+    /** "medium circle, infernal chalk · 6,000 altar power" (or no altar power), under a rite's name. */
+    static Component sub(HubSocial.Rite rite) {
+        Component circle = rite.shapes().isEmpty() ? Component.literal("-") : RitesPage.circleName(rite.shapes().get(0));
+        return rite.power() == 0 ? Component.translatable(BOOK + "sub_free", circle) : Component.translatable(BOOK + "sub", circle, String.format("%,d", rite.power()));
+    }
+
+    /** The rite's circle as Enchanted draws it, with its items on rings, one under the other pages' heading; returns the y under it. */
     static int circle(HubScreen.Frame f, Rect s, int y, HubSocial.Rite rite) {
-        HubTheme t = f.theme();
-        int radius = Math.max(24, Math.min(s.w() / 2 - 10, 44));
-        int cx = s.x() + s.w() / 2;
-        int cy = y + radius + 6;
-        KitDraw.tickRing(f.g, cx, cy, radius, 72, 1f, t.ink(), t.ink());
-        KitDraw.tickRing(f.g, cx, cy, radius * 2 / 3, 48, 1f, t.muted(), t.muted());
-        int lit = rite.items().size();
-        for (int i = 0; i < 8; i++) {
-            double a = -Math.PI / 2 + Math.PI * i / 4;
-            int px = cx + (int) Math.round(radius * Math.cos(a));
-            int py = cy + (int) Math.round(radius * Math.sin(a));
-            boolean on = i < lit;
-            f.g.fill(px - 4, py - 4, px + 4, py + 4, t.ink());
-            f.g.fill(px - 3, py - 3, px + 3, py + 3, on ? 0xFFB8903A : t.paper());
-        }
-        f.g.fill(cx - 7, cy - 7, cx + 7, cy + 7, t.accent());
-        Component label = Component.translatable(BOOK + "focus");
-        int lw = BookKit.smallWidth(f, label.getString());
-        BookKit.small(f, label, cx - lw / 2, cy + 10, lw + 4, t.muted());
-        return cy + radius + 10;
+        return RiteDiagram.draw(f, s, y + 2, rite);
     }
 
     static boolean have(Player p, String entry) {

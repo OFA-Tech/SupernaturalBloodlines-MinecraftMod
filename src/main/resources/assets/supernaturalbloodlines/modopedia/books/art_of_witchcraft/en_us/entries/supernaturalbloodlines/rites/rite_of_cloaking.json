@@ -1,0 +1,36 @@
+{
+  "title": "Rite of Cloaking",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:phantom_membrane"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Hides you from the Vampire Compass and from a hunter's sense for a while (30 minutes unless the server changes it). Dying ends it.",
+          "header": "Rite of Cloaking"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Only a witch, siphoner, heretic or tribrid can work it, with a Kol's Grimoire that has been read. The grimoire comes back.\n\nCircle: medium circle, ritual chalk.",
+          "header": "Rite of Cloaking"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_cloaking"
+        }
+      ]
+    }
+  ]
+}

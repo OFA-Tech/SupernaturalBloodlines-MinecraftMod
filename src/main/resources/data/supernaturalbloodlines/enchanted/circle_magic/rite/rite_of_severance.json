@@ -11,6 +11,7 @@
     },
     "power": 6000,
     "factory": {
-        "type": "supernaturalbloodlines:severance"
+        "type": "supernaturalbloodlines:severance",
+        "requires_full_moon": true
     }
 }

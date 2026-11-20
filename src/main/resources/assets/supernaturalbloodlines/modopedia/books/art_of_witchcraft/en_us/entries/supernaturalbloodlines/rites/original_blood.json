@@ -1,0 +1,45 @@
+{
+  "title": "Rite of Original's Blood",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:glass_bottle"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Fills a bottle with Original's Blood that names the Original on the centre.",
+          "header": "Rite of Original's Blood"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The one on the centre (the caster if nobody does) must be an Original or an Original hybrid. An Original's ladder can raise the number of bottles above one.\n\nAnyone else is refused: nothing is made and the bottle comes back.",
+          "header": "Rite of Original's Blood"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: small circle, ritual chalk.",
+          "header": "Rite of Original's Blood"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:original_blood"
+        }
+      ]
+    }
+  ]
+}

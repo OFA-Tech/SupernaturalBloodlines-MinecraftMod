@@ -1,0 +1,36 @@
+{
+  "title": "Rite of Immortality",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:golden_apple"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Turns the human on the centre into an Original vampire.\n\nFull-moon night only. The target must be human: no faction and no species. A villager must stand in the circle as the sacrifice.",
+          "header": "Rite of Immortality"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "A server can cap how many Originals exist; at the cap the rite is refused and the ingredients come back.\n\nCircle: medium circle, ritual chalk.",
+          "header": "Rite of Immortality"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:immortality"
+        }
+      ]
+    }
+  ]
+}

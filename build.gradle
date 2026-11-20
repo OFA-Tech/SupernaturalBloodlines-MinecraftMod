@@ -203,6 +203,8 @@ dependencies {
     // Werewolves has no API classifier
     compileOnly("de.teamlapen.werewolves:Werewolves:${werewolves_version}") { transitive = false }
     compileOnly("net.favouriteless.enchanted:enchanted-neoforge-1.21.1:${enchanted_version}") { transitive = false }
+    // the book page that says a rite is off (extends Enchanted's rite page); the jar is only needed when Enchanted is there
+    compileOnly("net.favouriteless.modopedia:modopedia-neoforge-1.21.1:${modopedia_version}") { transitive = false }
     compileOnly("top.theillusivec4.curios:curios-neoforge:${curios_version}:api") { transitive = false }
     // Tensura and ManasCore (CurseForge only)
     compileOnly("curse.maven:tensura-reincarnated-643695:${tensura_file_id}") { transitive = false }

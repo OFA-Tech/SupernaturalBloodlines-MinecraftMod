@@ -1,0 +1,45 @@
+{
+  "title": "Rite of Ancestral Calling",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:amethyst_shard"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Awakens the magic in the one on the centre: they become a witch or, with a 25% chance (a server setting), a siphoner.",
+          "header": "Rite of Ancestral Calling"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The target stands on the centre (the caster if nobody does). It is refused for vampires, hunters, anyone who already has a species and anyone who is not human.",
+          "header": "Rite of Ancestral Calling"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The roll is made when the rite runs. A refusal is shown to the caster and gives the ingredients back.\n\nCircle: small circle, ritual chalk.",
+          "header": "Rite of Ancestral Calling"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:ancestral_calling"
+        }
+      ]
+    }
+  ]
+}
