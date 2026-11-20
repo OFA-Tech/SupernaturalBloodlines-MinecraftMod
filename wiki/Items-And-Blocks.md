@@ -40,8 +40,8 @@ Part `artifacts`. Rings sit in a **Curios `ring` slot** if Curios is installed, 
 |---|---|---|
 | Klaus's Blood | Drink it (32 ticks, stacks to 16, glass bottle back). Counts as the blood of an Original hybrid under either `hybrid_transition_blood`: a werewolf who dies with its effect starts the [hybrid transition](Hybrids-And-Original-Hybrids#the-transition) in Klaus's line. Also cures werewolf venom, like Hybrid's Blood. | Dropped by Klaus the first time he is brought down. |
 | The Elixir | Carry it (it does nothing in the hand): you come back from your next death that is not a line death, `/kill`, the white oak end of an Original, a death that is part of turning into something (vampire blood in your veins, an unstable hybrid transition) or the void, once, with half your health. A death the Resurrection Ring would save is left to the ring. Elijah's reward. |
-| Kol's Grimoire | Right-click to read it, once: 5 skill points (a setting) into your one pool. A read one is the key of the Rite of Cloaking, which gives it back. Kol's reward. |
-| Esther's Grimoire | Does nothing in the hand: the key of the Linking Spell, which gives it back. Finn's reward. |
+| Kol's Grimoire | Right-click to read it, once: 5 skill points (a setting) into your one pool. A read one is the key of the Rite of Cloaking, which only a witch type can work, and which gives it back. Kol's reward. |
+| Esther's Grimoire | Does nothing in the hand: the key of the Linking Spell (a witch-type rite), which always gives it back. Finn's reward. |
 | The True Cure | Drink it (glass bottle back): you are human again, even an Original, with no rite and no desiccation; the ones you sired keep their line. Rebekah's reward. |
 | Mikael's Stake | A white oak sword that never breaks. It kills an Original who is desiccated, like the White Oak Stake. | Dropped by Mikael the first time he is brought down. |
 

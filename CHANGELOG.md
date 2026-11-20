@@ -2,6 +2,14 @@
 
 ## Unreleased (plan 17e: Kol and Finn)
 
+### Changed (the PR #49 panel)
+- **The Linking Spell asks consent and is a witch-type rite.** Another player must be sneaking inside the circle to agree, and only where PvP is on (the performer agrees by working it, so a witch can link herself to a creature). The circle is flat (6 blocks, 2 up and down), not a cube. A share never skips a player's own hit cooldown.
+- **Every refusal is one message, "The link will not hold.", at one cost**: the lead, the amethyst and the altar's power are spent, the grimoire comes back. Originals, bosses, a linked creature, a wrong count and a player who does not agree can no longer be told apart. This is deliberate and written in the Guide.
+- Nothing is owed for a player who is not loaded; a creature that loads takes at most half its maximum health of what it owed. Linked players are told when it begins and when it ends. Bosses cannot be linked.
+- Finn's notice adds "Left alone, the ritual hurts no one. Hurt him badly and he will fight."; Kol's says "It knows how many you have hunted."; "Your cloak fades." when the Rite of Cloaking runs out; the Grimoires' tooltips say who can work the rites; the Rites page shows what each new rite does.
+- The Guide: Kol and Finn are in short paragraphs, with the cloak's 30 minutes and the threshold of a fifth of Finn's health. **The bosses chapter could not scroll at all** (a link under it returned a width that the page took for a height): it does now, a page with more below says so, and the Contents gives the page the footer shows (it said "p. 25" on a spread numbered 15 and 16).
+- `FinnRules.eligible` is what the director calls (it had a copy of the rule); Kol's leaving is written to the boss index like Finn's.
+
 ### Added
 - **Kol** (part `bosses`). By night, once a night, he comes for a Hunter of the Five whose mark has `kol_min_mark` (12) kills; fast, with a leap, and nothing else. A hunted player is told something fast is coming (his name only if discovered) and that a pack Emissary's mountain ash line will hold him. He withdraws after a minute with nobody to hunt.
 - **Kol's Grimoire.** Right-click reads it, once per copy: `kol_grimoire_sp` (5) skill points into the shared pool. The **Rite of Cloaking** (medium circle, 4000 power) needs a witch, siphoner, heretic or tribrid and a read grimoire, hides the performer from the Vampire Compass and from a Hunter of the Five's sense for `kol_cloak_minutes` (30), and gives the grimoire back. Two one-line checks (`VampireCompassItem`, `HunterInstinct.senses`), no mixin.
