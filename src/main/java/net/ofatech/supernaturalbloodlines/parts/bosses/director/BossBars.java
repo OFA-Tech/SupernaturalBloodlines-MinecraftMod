@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.parts.bosses.director;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,6 +14,7 @@ import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.BossNpc;
+import net.ofatech.supernaturalbloodlines.parts.bosses.entity.NpcOriginalBoss;
 import org.jetbrains.annotations.VisibleForTesting;
 
 /** One boss bar per boss, shown to the players within {@link #RANGE} blocks (the way {@code AlphaTrialBoss} does it). Gone with the entity. */
@@ -51,6 +53,9 @@ public final class BossBars {
         }
         ServerBossEvent bar = BARS.computeIfAbsent(boss.getUUID(),
                 id -> new ServerBossEvent(boss.getDisplayName(), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS));
+        boolean fallen = boss instanceof NpcOriginalBoss n && n.isDesiccated();
+        bar.setName(title(boss, fallen));
+        bar.setColor(fallen ? BossEvent.BossBarColor.YELLOW : BossEvent.BossBarColor.PURPLE);
         bar.setProgress(Math.max(0f, Math.min(1f, boss.getHealth() / boss.getMaxHealth())));
         for (ServerPlayer p : players) {
             if (p.distanceToSqr(boss) <= RANGE * RANGE) {
@@ -59,6 +64,16 @@ public final class BossBars {
                 bar.removePlayer(p);
             }
         }
+    }
+
+    /** The bar's name: the boss's own, and "(desiccated)" while an Original lies open to white oak. */
+    public static Component title(BossNpc boss, boolean fallen) {
+        return fallen ? Component.translatable("supernaturalbloodlines.boss.bar.desiccated", boss.getDisplayName()) : boss.getDisplayName();
+    }
+
+    @VisibleForTesting
+    public static ServerBossEvent barOf(UUID boss) {
+        return BARS.get(boss);
     }
 
     public static void remove(UUID boss) {

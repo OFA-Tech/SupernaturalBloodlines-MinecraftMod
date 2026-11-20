@@ -147,6 +147,7 @@ public final class AdminEntries {
         all.add(SettingEntry.of(BOSSES_FILE, bo, "boss_damage_factor", DOUBLE));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "mikael_min_rung", INT));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "mikael_night_chance", DOUBLE));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "mikael_stakes_originals", BOOL));
         ALL = List.copyOf(all);
     }
 

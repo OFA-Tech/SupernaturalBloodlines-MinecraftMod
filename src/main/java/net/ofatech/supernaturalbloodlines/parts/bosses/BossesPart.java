@@ -16,6 +16,7 @@ import net.ofatech.supernaturalbloodlines.parts.bosses.command.BossCommand;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBars;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossDirector;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.NpcOriginalEvents;
+import net.ofatech.supernaturalbloodlines.parts.bosses.gametest.BossReviewGameTests;
 import net.ofatech.supernaturalbloodlines.parts.bosses.gametest.BossServerGameTests;
 import net.ofatech.supernaturalbloodlines.parts.bosses.gametest.MikaelGameTests;
 import net.ofatech.supernaturalbloodlines.parts.bosses.gametest.NpcOriginalGameTests;
@@ -36,11 +37,13 @@ public final class BossesPart {
         AdminSpecs.choices(BossesConfig.FILE + ":boss_reward_on", BossesConfig.rewardChoices());
         BossRegistries.register(modBus);
         BossItems.register(modBus);
+        // R158: a mob's white oak never counts as a white oak kill; Mikael's does only when the config says so
+        net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules.mobWhiteOakCounts(a -> a instanceof net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity && BossesConfig.mikaelStakesOriginals());
         NpcOriginalEvents.register();
         BossDirector.register();
         BossBars.register();
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> BossCommand.register(e.getDispatcher()));
-        WorldNowHook.setBossNear(BossDirector::bossNear);
+        WorldNowHook.setBossNear(BossDirector::near);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modBus.addListener(BossRenderers::register);
             modBus.addListener((FMLClientSetupEvent e) -> BossShots.registerIfRequested());
@@ -49,6 +52,7 @@ public final class BossesPart {
             e.register(BossServerGameTests.class);
             e.register(NpcOriginalGameTests.class);
             e.register(MikaelGameTests.class);
+            e.register(BossReviewGameTests.class);
         });
         SupernaturalBloodlines.LOGGER.info("BossesPart enabled");
     }

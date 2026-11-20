@@ -346,13 +346,32 @@ public final class HomePage implements HubPageView {
                 y = tb.bottom() + 2;
             }
         }
-        if (flags.bossNear()) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "boss_near"), s.x(), y + 2, s.w(), PageWidgets.warn(t));
+        if (flags.bossNear() != net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.BossNear.NONE_KIND) {
+            y = bossLine(f, s, y + 2, flags);
         }
         Component label = Component.translatable(KEY + "open_moon");
         Rect b = new Rect(s.x(), y + 2, Math.min(s.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
         PageWidgets.button(f, "stage:home:moon", b, label, true, false, null, f.screen()::openMoon);
         return b.bottom() + 2;
+    }
+
+    /**
+     * A boss within 128 blocks. Its own marker (a diamond) and colour, so it is not read as the Alpha Trial line: crimson for one who walks, steel
+     * blue for an Original who lies fallen (and so is open to white oak). Named only when the player may know who it is.
+     */
+    private int bossLine(HubScreen.Frame f, Rect s, int y, net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags flags) {
+        boolean fallen = flags.bossNear() == net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.BossNear.FALLEN;
+        int color = fallen ? 0xFF3E6FA3 : 0xFFB02A2A;
+        String key = KEY + (fallen ? "boss_fallen" : "boss_near") + (flags.bossName().isEmpty() ? "" : "_named");
+        Component line = flags.bossName().isEmpty() ? Component.translatable(key)
+                : Component.translatable(key, Component.translatable("supernaturalbloodlines.boss.name." + flags.bossName()));
+        int cx = s.x() + 4;
+        int cy = y + 5;
+        for (int dy = -4; dy <= 4; dy++) {
+            int half = 4 - Math.abs(dy);
+            f.g.fill(cx - half, cy + dy, cx + half + 1, cy + dy + 1, color);
+        }
+        return PageKit.wrapped(f, line, s.x() + 12, y, s.w() - 12, color);
     }
 
     /** What the viewer can do now, each with a button; one that does not apply is off and says why. */

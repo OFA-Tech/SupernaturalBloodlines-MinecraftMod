@@ -37,6 +37,8 @@ import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.NpcOriginalBoss;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook;
 import net.ofatech.supernaturalbloodlines.parts.species.line.Imprisonment;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineWarning;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +62,14 @@ public final class BossDirector {
     private BossDirector() {
     }
 
+    /** The world is closing: what the director counted is forgotten (a count must not carry into the next world of the same process). */
+    @VisibleForTesting
+    public static void serverStopped() {
+        MISSES.clear();
+    }
+
     public static void register() {
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> serverStopped());
         NeoForge.EVENT_BUS.addListener((LevelTickEvent.Post e) -> {
             if (e.getLevel() instanceof ServerLevel level && level.dimension() == Level.OVERWORLD
                     && level.getGameTime() % Math.max(20L, BossesConfig.checkSeconds() * 20L) == 0) {
@@ -74,6 +83,33 @@ public final class BossDirector {
     public static void useWorld(@Nullable java.util.function.Function<ServerLevel, List<ServerPlayer>> who, @Nullable java.util.function.Function<ServerPlayer, MikaelRules.Facts> what) {
         players = who == null ? l -> new ArrayList<>(l.players()) : who;
         factsSource = what == null ? BossDirector::realFacts : what;
+    }
+
+    /** Where the ground is: the real search by default. */
+    @FunctionalInterface
+    public interface GroundFinder {
+        Optional<BlockPos> find(ServerLevel level, BlockPos from, int min, int max);
+    }
+
+    private static volatile GroundFinder ground = BossDirector::groundNear;
+
+    /** The spot the commands and the director use: {@link #groundNear} unless a test fixed one. */
+    public static Optional<BlockPos> findGround(ServerLevel level, BlockPos from, int min, int max) {
+        return ground.find(level, from, min, max);
+    }
+
+    /** Tests: a fixed spot, because the search looks at whatever the neighbouring test structures left standing. {@code null} puts the real one back. */
+    @VisibleForTesting
+    public static void useGround(@Nullable GroundFinder finder) {
+        ground = finder == null ? BossDirector::groundNear : finder;
+    }
+
+    private static volatile java.util.function.Function<ServerLevel, Difficulty> difficulty = ServerLevel::getDifficulty;
+
+    /** Tests: the difficulty the director sees. The GameTests run side by side, so one cannot switch the whole server to peaceful. {@code null} puts the real one back. */
+    @VisibleForTesting
+    public static void useDifficulty(@Nullable java.util.function.Function<ServerLevel, Difficulty> fixed) {
+        difficulty = fixed == null ? ServerLevel::getDifficulty : fixed;
     }
 
     /** Tests: the dice. {@code null} puts the real ones back. */
@@ -144,7 +180,7 @@ public final class BossDirector {
         BossFacts facts = new BossFacts(BossesConfig.enabled(boss), true, index.state(boss), false);
         ServerLevel overworld = server.overworld();
         if (SpawnRules.refusal(facts).isPresent() || !MikaelRules.isNight(overworld.getDayTime())
-                || overworld.getDifficulty() == Difficulty.PEACEFUL) {
+                || difficulty.apply(overworld) == Difficulty.PEACEFUL) {
             return;
         }
         long today = DesiccationRules.dayOf(overworld.getDayTime());
@@ -174,10 +210,29 @@ public final class BossDirector {
         return factsSource.apply(p);
     }
 
+    private static volatile java.util.function.BiPredicate<ServerLevel, BlockPos> ringCheck = (l, at) -> Imprisonment.ringClosed(l, at, ASH_RING_RADIUS);
+
+    /** Tests: the mountain ash ring check, to count its calls; null puts the real one back. */
+    @VisibleForTesting
+    public static void useRingCheck(@Nullable java.util.function.BiPredicate<ServerLevel, BlockPos> check) {
+        ringCheck = check == null ? (l, at) -> Imprisonment.ringClosed(l, at, ASH_RING_RADIUS) : check;
+    }
+
+    /** Whether the player is an Original or an Original hybrid: the two kinds Mikael's white oak would kill outright. */
+    public static boolean isOriginalPlayer(ServerPlayer p) {
+        return OriginalRules.isOriginal(BloodlineAccess.get(p).species());
+    }
+
+    /** The ring is looked for last, and only for a player who passes everything else: it walks every block around them. */
     private static MikaelRules.Facts realFacts(ServerPlayer p) {
-        boolean ring = p.level() instanceof ServerLevel l && Imprisonment.ringClosed(l, p.blockPosition(), ASH_RING_RADIUS);
-        return new MikaelRules.Facts(Supernatural.isVampiric(p), SupernaturalAccess.get(p).rung(SupernaturalRace.VAMPIRE), BossesConfig.mikaelMinRung(),
-                MikaelRules.isNight(p.level().getDayTime()), p.level().dimension() == Level.OVERWORLD, p.onGround(), ring);
+        boolean stakes = BossesConfig.mikaelStakesOriginals();
+        MikaelRules.Facts base = new MikaelRules.Facts(Supernatural.isVampiric(p), SupernaturalAccess.get(p).rung(SupernaturalRace.VAMPIRE), BossesConfig.mikaelMinRung(),
+                MikaelRules.isNight(p.level().getDayTime()), p.level().dimension() == Level.OVERWORLD, p.onGround(), false, isOriginalPlayer(p), stakes);
+        if (!MikaelRules.eligible(base) || !(p.level() instanceof ServerLevel l)) {
+            return base;
+        }
+        return new MikaelRules.Facts(base.vampire(), base.rung(), base.minRung(), base.night(), base.overworld(), base.onGround(),
+                ringCheck.test(l, p.blockPosition()), base.original(), base.stakesOriginals());
     }
 
     /**
@@ -185,7 +240,9 @@ public final class BossDirector {
      * The caller has already asked {@link SpawnRules}.
      */
     public static Optional<MikaelEntity> spawnMikael(ServerLevel level, @Nullable ServerPlayer target, @Nullable BlockPos at) {
-        BlockPos pos = at != null ? at : target == null ? null : groundNear(level, target.blockPosition(), 24, 40).orElse(null);
+        // 24 to 40 blocks away; when the terrain or the loaded chunks leave no ground there, closer (6 to 24) rather than not at all
+        BlockPos pos = at != null ? at : target == null ? null
+                : ground.find(level, target.blockPosition(), 24, 40).or(() -> ground.find(level, target.blockPosition(), 6, 24)).orElse(null);
         if (pos == null) {
             return Optional.empty();
         }
@@ -200,7 +257,7 @@ public final class BossDirector {
         index.apply(BossId.MIKAEL, BossRules.Event.SPAWNED);
         entry.appearances++;
         entry.target = target == null ? null : target.getUUID();
-        index.seen(BossId.MIKAEL, m.getUUID(), level.dimension().location().toString(), pos);
+        index.adopt(BossId.MIKAEL, m.getUUID(), level.dimension().location().toString(), pos);
         index.setDirty();
         if (target != null) {
             notice(target);
@@ -208,16 +265,28 @@ public final class BossDirector {
         return Optional.of(m);
     }
 
-    /** "A hunter in black is watching you", and the name once the player has discovered the Original (R123). */
-    private static void notice(ServerPlayer target) {
+    /**
+     * "A hunter in black is watching you" (the name once the player has discovered the Original, R123): on the action bar and in chat, with a sound,
+     * and the hint that mountain ash will hold him. A target who is an Original (only when {@code mikael_stakes_originals} is on) is told that his
+     * stake can end them and their line.
+     */
+    static void notice(ServerPlayer target) {
         boolean known = LineRules.showsRoot(BloodlineAccess.get(target).knownLine(), BossId.MIKAEL.npcOriginal().orElseThrow().uuid(),
                 SpeciesConfig.originalVisibilityAlways());
-        target.sendSystemMessage(Component.translatable(known ? "supernaturalbloodlines.boss.notice.mikael.known" : "supernaturalbloodlines.boss.notice.mikael.unknown"));
+        Component text = Component.translatable(known ? "supernaturalbloodlines.boss.notice.mikael.known" : "supernaturalbloodlines.boss.notice.mikael.unknown");
+        target.displayClientMessage(text, true);
+        target.sendSystemMessage(text);
+        target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.mikael.hint"));
+        if (isOriginalPlayer(target)) {
+            target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.mikael.stake"));
+        }
+        target.level().playSound(null, target.getX(), target.getY(), target.getZ(), net.minecraft.sounds.SoundEvents.WITHER_AMBIENT,
+                net.minecraft.sounds.SoundSource.HOSTILE, 1.0F, 0.6F);
     }
 
     /** A spot on the ground between {@code min} and {@code max} blocks from {@code from}: empty air above solid, no fluid. */
     public static Optional<BlockPos> groundNear(ServerLevel level, BlockPos from, int min, int max) {
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < 32; i++) {
             double angle = level.random.nextDouble() * Math.PI * 2;
             double dist = min + level.random.nextDouble() * (max - min);
             int x = from.getX() + (int) Math.round(Math.cos(angle) * dist);
@@ -234,18 +303,31 @@ public final class BossDirector {
         return Optional.empty();
     }
 
-    /** Whether a boss that is out there (or down) is within 128 blocks of the player: the Home page's "world now" line. */
-    public static boolean bossNear(ServerPlayer p) {
+    /** How far a boss may be for the Home page to mention it (blocks). */
+    public static final int NEAR_BLOCKS = 128;
+
+    /**
+     * The Home page's "world now" line: the nearest boss that is out there (standing) or down (fallen) within {@link #NEAR_BLOCKS} blocks, and its
+     * id when this player may know who it is (an NPC Original is named only to someone who has discovered them, R123); none when nothing is near.
+     */
+    public static WorldNowHook.BossNear near(ServerPlayer p) {
         BossIndex index = BossIndex.get(p.server);
-        ResourceLocation here = p.level().dimension().location();
+        String here = p.level().dimension().location().toString();
+        BossId best = null;
+        double bestDist = Double.MAX_VALUE;
         for (BossId boss : BossId.values()) {
             BossIndex.Entry e = index.of(boss);
-            if ((e.state == BossState.ACTIVE || e.state == BossState.OPEN) && e.dimension.equals(here.toString())
-                    && e.pos.distSqr(p.blockPosition()) <= 128.0 * 128.0) {
-                return true;
+            double d = e.pos.distSqr(p.blockPosition());
+            if ((e.state == BossState.ACTIVE || e.state == BossState.OPEN) && e.dimension.equals(here) && d <= (double) NEAR_BLOCKS * NEAR_BLOCKS && d < bestDist) {
+                best = boss;
+                bestDist = d;
             }
         }
-        return false;
+        if (best == null) {
+            return WorldNowHook.BossNear.NONE;
+        }
+        boolean known = best.npcOriginal().map(o -> LineRules.showsRoot(BloodlineAccess.get(p).knownLine(), o.uuid(), SpeciesConfig.originalVisibilityAlways())).orElse(true);
+        return new WorldNowHook.BossNear(index.state(best) == BossState.OPEN ? WorldNowHook.BossNear.FALLEN : WorldNowHook.BossNear.STANDING, known ? best.id() : "");
     }
 
     /** Whether this boss's mods are there; Mikael needs nothing beyond the part. */

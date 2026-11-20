@@ -40,9 +40,17 @@ public abstract class BossNpc extends PathfinderMob {
         super.tick();
         if (!level().isClientSide && tickCount % PERIOD == 0 && isAlive()) {
             BossBars.update(this);
-            BossIndex.get(level().getServer()).seen(boss(), getUUID(), level().dimension().location().toString(), blockPosition());
+            if (!BossIndex.get(level().getServer()).seen(boss(), getUUID(), level().dimension().location().toString(), blockPosition(), isOpenNow())) {
+                discard(); // the world has another one of this boss: this is the old one that came back
+                return;
+            }
             serverPeriod();
         }
+    }
+
+    /** Whether the boss is lying down open to white oak; false for a boss that has no such state. */
+    protected boolean isOpenNow() {
+        return false;
     }
 
     /** Called every {@value #PERIOD} ticks on the server while alive. */

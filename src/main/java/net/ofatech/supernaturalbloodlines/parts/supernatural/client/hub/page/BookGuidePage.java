@@ -36,6 +36,7 @@ public final class BookGuidePage implements HubPageView {
     public void render(HubScreen.Frame f) {
         HubPage.Context c = f.view.context();
         List<String> ids = GuideChapters.forRaces(c.creature(), c.magic(), c.werewolves(), c.enchanted(), c.loadout(), net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("bosses"));
+        chapter = GuideLinks.chapterOr(chapter);
         if (chapter == null || !ids.contains(chapter)) {
             chapter = ids.get(0);
         }
@@ -65,6 +66,11 @@ public final class BookGuidePage implements HubPageView {
         Rect s = f.region(BookKit.SIDE);
         int sy = BookKit.head(f, BookKit.SIDE, Component.translatable(GuideChapters.titleKey(chapter)), null);
         sy = BookKit.dropCap(f, Component.translatable(GuideChapters.bodyKey(chapter)), s.x(), sy, s.w(), t.ink());
+        if (GuideLinks.CHAPTER.equals(chapter)) {
+            Component to = Component.translatable(KEY + "bosses.link");
+            sy = BookKit.link(f, "guide:bloodline", to, s.x(), sy + 6, List.of(Component.translatable("supernaturalbloodlines.hub.page.bloodline")),
+                    () -> f.screen().setPage(net.ofatech.supernaturalbloodlines.shared.hub.HubPage.BLOODLINE));
+        }
         int at = ids.indexOf(chapter);
         if (at < ids.size() - 1) {
             String next = ids.get(at + 1);

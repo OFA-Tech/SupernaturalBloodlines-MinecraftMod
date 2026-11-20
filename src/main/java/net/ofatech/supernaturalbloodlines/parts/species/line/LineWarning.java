@@ -96,6 +96,26 @@ public final class LineWarning {
         }
     }
 
+    /**
+     * The Original of this root has got up again (a boss that was desiccated): the members who were warned are told, once, and the root is
+     * armed again. Nothing is sent for a root that was not open.
+     */
+    public static void risen(MinecraftServer server, UUID root) {
+        boolean was = LATCH.isOpen(root);
+        closed(root);
+        if (!was || !SpeciesConfig.originalLineDeath()) {
+            return;
+        }
+        for (LineIndex.Member m : LineIndex.get(server).membersOf(root)) {
+            ServerPlayer member = m.player() ? SireCall.player(server, m.id()) : null;
+            if (member != null) {
+                boolean named = LineRules.showsRoot(BloodlineAccess.get(member).knownLine(), root, SpeciesConfig.originalVisibilityAlways());
+                member.sendSystemMessage(named ? Component.translatable("supernaturalbloodlines.line.risen_named", Lines.rootName(server, root))
+                        : Component.translatable("supernaturalbloodlines.line.risen_hidden"));
+            }
+        }
+    }
+
     public static void closed(UUID root) {
         LATCH.close(root);
         DESICCATED_NOW.remove(root);

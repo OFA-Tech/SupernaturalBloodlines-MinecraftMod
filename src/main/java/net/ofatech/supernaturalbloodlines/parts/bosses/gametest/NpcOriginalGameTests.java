@@ -196,13 +196,13 @@ public final class NpcOriginalGameTests {
         try (BossTestRig rig = new BossTestRig(helper)) {
             BossesConfig.override("original_return_days", 5);
             online(child);
-            helper.getLevel().setDayTime(24000L * 10);
+            rig.day(10);
             MikaelEntity m = rig.spawn();
             m.desiccate();
-            helper.getLevel().setDayTime(24000L * 14);
+            rig.day(14);
             m.checkReturn();
             helper.assertTrue(m.isDesiccated(), "he got up a day early");
-            helper.getLevel().setDayTime(24000L * 15);
+            rig.day(15);
             m.checkReturn();
             helper.assertTrue(!m.isDesiccated() && m.getHealth() == m.getMaxHealth() && !m.isNoAi(), "he did not get up on the day");
             helper.assertTrue(!m.getData(SpeciesRegistries.NPC_OPEN) && rig.index.state(BossId.MIKAEL) == BossState.ACTIVE, "he is still open in the books");
@@ -219,7 +219,7 @@ public final class NpcOriginalGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void hisBloodDropsAtMostOncePerWindow(GameTestHelper helper) {
         try (BossTestRig rig = new BossTestRig(helper)) {
-            helper.getLevel().setDayTime(24000L * 10);
+            rig.day(10);
             MikaelEntity m = rig.spawn();
             m.desiccate();
             helper.assertTrue(rig.bloodBottles() == 1, "no bottle of his blood dropped: " + rig.bloodBottles());
@@ -227,7 +227,7 @@ public final class NpcOriginalGameTests {
             m.desiccate();
             helper.assertTrue(rig.bloodBottles() == 1, "a second bottle dropped inside the window: " + rig.bloodBottles());
             m.recover();
-            helper.getLevel().setDayTime(24000L * 16);
+            rig.day(16);
             m.desiccate();
             helper.assertTrue(rig.bloodBottles() == 2, "no bottle dropped in the next window: " + rig.bloodBottles());
         }

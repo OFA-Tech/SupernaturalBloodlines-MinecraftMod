@@ -24,7 +24,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
+import net.minecraft.server.level.ServerPlayer;
+import net.ofatech.supernaturalbloodlines.core.boss.BossRules;
 import net.ofatech.supernaturalbloodlines.core.boss.MikaelRules;
+import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossItems;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossRegistries;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.ai.NightHuntGoal;
@@ -34,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 public final class MikaelEntity extends NpcOriginalBoss {
     @Nullable
     private UUID prey;
+    private int strandedTicks;
 
     public MikaelEntity(EntityType<? extends MikaelEntity> type, Level level) {
         super(type, level);
@@ -66,6 +71,30 @@ public final class MikaelEntity extends NpcOriginalBoss {
     @Nullable
     public UUID prey() {
         return prey;
+    }
+
+    /** Prey gone (logged off, another dimension, dead) or a day with nobody to fight, for long enough: he withdraws and may come again. */
+    @Override
+    protected void serverPeriod() {
+        super.serverPeriod();
+        if (prey == null || isDesiccated() || level().getServer() == null) {
+            strandedTicks = 0;
+            return;
+        }
+        ServerPlayer p = SireCall.player(level().getServer(), prey);
+        boolean here = p != null && p.level() == level() && p.isAlive();
+        strandedTicks = MikaelRules.stranded(here, MikaelRules.isNight(level().getDayTime()), getTarget() != null) ? strandedTicks + 10 : 0;
+        if (MikaelRules.withdraws(strandedTicks)) {
+            withdraw();
+        }
+    }
+
+    /** He goes: the index says lost (so the director may send him again), the entity is gone. */
+    public void withdraw() {
+        if (level().getServer() != null) {
+            BossIndex.get(level().getServer()).apply(boss(), BossRules.Event.LOST);
+        }
+        discard();
     }
 
     @Override
@@ -108,12 +137,14 @@ public final class MikaelEntity extends NpcOriginalBoss {
         if (prey != null) {
             tag.putUUID("prey", prey);
         }
+        tag.putInt("stranded", strandedTicks);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         prey = tag.hasUUID("prey") ? tag.getUUID("prey") : null;
+        strandedTicks = tag.getInt("stranded");
     }
 
     public static MikaelEntity create(Level level) {

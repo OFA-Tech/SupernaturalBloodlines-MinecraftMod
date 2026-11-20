@@ -16,6 +16,7 @@ import net.ofatech.supernaturalbloodlines.core.boss.BossState;
 import net.ofatech.supernaturalbloodlines.core.boss.DesiccationRules;
 import net.ofatech.supernaturalbloodlines.core.boss.RewardRules;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
+import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossClock;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.item.SiresBloodItem;
@@ -63,6 +64,11 @@ public abstract class NpcOriginalBoss extends BossNpc {
         return entityData.get(DESICCATED);
     }
 
+    @Override
+    protected boolean isOpenNow() {
+        return isDesiccated();
+    }
+
     /** Only how it looks (the flag the renderer reads), for the dev screenshots: nothing else of the desiccation happens. */
     public void lookDesiccated(boolean on) {
         entityData.set(DESICCATED, on);
@@ -87,6 +93,10 @@ public abstract class NpcOriginalBoss extends BossNpc {
             setData(SpeciesRegistries.ORIGINAL_ROOT, original().id());
             setData(SpeciesRegistries.NPC_OPEN, isDesiccated());
             setNoAi(isDesiccated());
+            if (isDesiccated() && level() instanceof ServerLevel level) {
+                // after a restart the warning latch is empty: the line hears again that their Original lies open
+                LineWarning.opened(level.getServer(), original().uuid(), true);
+            }
         }
     }
 
@@ -95,11 +105,14 @@ public abstract class NpcOriginalBoss extends BossNpc {
         checkReturn();
     }
 
-    /** Gets up when the return day has come. The entity does it itself (every half second), so one that was asleep in an unloaded chunk returns when it loads. */
+    /**
+     * Gets up when the return day has come (days of game time, {@link BossClock}). The entity does it itself (every half second), so one that was
+     * asleep in an unloaded chunk returns when it loads.
+     */
     public void checkReturn() {
-        if (isDesiccated() && level().getServer() != null) {
-            var entry = BossIndex.get(level().getServer()).of(boss());
-            if (DesiccationRules.due(DesiccationRules.dayOf(level().getDayTime()), entry.returnDay)) {
+        if (isDesiccated() && level() instanceof ServerLevel level) {
+            var entry = BossIndex.get(level.getServer()).of(boss());
+            if (DesiccationRules.due(BossClock.today(level), entry.returnDay)) {
                 recover();
             }
         }
@@ -111,7 +124,7 @@ public abstract class NpcOriginalBoss extends BossNpc {
             return;
         }
         BossIndex index = BossIndex.get(level.getServer());
-        long today = DesiccationRules.dayOf(level.getDayTime());
+        long today = BossClock.today(level);
         entityData.set(DESICCATED, true);
         setData(SpeciesRegistries.NPC_OPEN, true);
         setTarget(null);
@@ -124,9 +137,12 @@ public abstract class NpcOriginalBoss extends BossNpc {
             entry.bloodDay = entry.returnDay;
             spawnAtLocation(SiresBloodItem.of(original().uuid(), capitalised(original().id())));
         }
-        pay(RewardRules.Defeat.DESICCATED);
+        boolean paid = pay(RewardRules.Defeat.DESICCATED);
         index.setDirty();
         LineWarning.opened(level.getServer(), original().uuid(), true);
+        if (paid) {
+            BossIndex.flush(level.getServer());
+        }
     }
 
     /** Gets up again: full health, the AI back, closed to white oak. */
@@ -139,22 +155,24 @@ public abstract class NpcOriginalBoss extends BossNpc {
         setNoAi(false);
         setHealth(getMaxHealth());
         BossIndex.get(level.getServer()).apply(boss(), BossRules.Event.RETURNED);
-        LineWarning.closed(original().uuid());
+        LineWarning.risen(level.getServer(), original().uuid());
     }
 
-    /** Pays the reward if the rules say so and marks it paid. */
-    public void pay(RewardRules.Defeat defeat) {
+    /** Pays the reward if the rules say so, marks it paid and writes the index to disk at once (a crash must not pay it twice). Whether it paid. */
+    public boolean pay(RewardRules.Defeat defeat) {
         if (!(level() instanceof ServerLevel level)) {
-            return;
+            return false;
         }
         BossIndex index = BossIndex.get(level.getServer());
         var entry = index.of(boss());
-        if (RewardRules.pays(BossesConfig.rewardOn(), defeat, entry.rewarded)) {
-            entry.rewarded = true;
-            index.setDirty();
-            ItemEntity drop = new ItemEntity(level, getX(), getY() + 0.5, getZ(), reward());
-            level.addFreshEntity(drop);
+        if (!RewardRules.pays(BossesConfig.rewardOn(), defeat, entry.rewarded)) {
+            return false;
         }
+        entry.rewarded = true;
+        index.setDirty();
+        level.addFreshEntity(new ItemEntity(level, getX(), getY() + 0.5, getZ(), reward()));
+        BossIndex.flush(level.getServer());
+        return true;
     }
 
     public BossState stateNow() {

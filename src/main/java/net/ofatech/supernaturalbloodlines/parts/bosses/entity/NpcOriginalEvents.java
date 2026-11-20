@@ -1,8 +1,13 @@
 package net.ofatech.supernaturalbloodlines.parts.bosses.entity;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,9 +16,11 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.boss.BossRules;
 import net.ofatech.supernaturalbloodlines.core.boss.DefeatRules;
+import net.ofatech.supernaturalbloodlines.core.boss.NoticeRules;
 import net.ofatech.supernaturalbloodlines.core.boss.RewardRules;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
@@ -25,15 +32,19 @@ import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 /** What a blow does to an NPC Original ({@link DefeatRules}), and what their death does to the world ({@link LineDeath}). */
 public final class NpcOriginalEvents {
     private static final ResourceLocation ASH_DAGGER = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "white_oak_ash_dagger");
+    /** When each player was last told that white oak needs a fallen Original (game ticks). */
+    private static final Map<UUID, Long> HINTED = new ConcurrentHashMap<>();
 
     private NpcOriginalEvents() {
     }
 
     public static void register() {
-        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, LivingIncomingDamageEvent.class, NpcOriginalEvents::onDamage);
+        // last, so the damage the other mods and the game have worked out is the one that is capped
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LivingIncomingDamageEvent.class, NpcOriginalEvents::onDamage);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LivingDamageEvent.Post.class, NpcOriginalEvents::afterDamage);
         // LOWEST, and never a death something else cancelled: a boss that did not die is no death
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LivingDeathEvent.class, NpcOriginalEvents::onDeath);
+        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> HINTED.clear());
     }
 
     static DefeatRules.Kind kindOf(DamageSource source) {
@@ -55,6 +66,9 @@ public final class NpcOriginalEvents {
         if (kind == DefeatRules.Kind.OTHER && (source.is(DamageTypes.GENERIC_KILL) || source.is(DamageTypes.FELL_OUT_OF_WORLD))) {
             return;
         }
+        if (kind == DefeatRules.Kind.WHITE_OAK && !boss.isDesiccated() && BossesConfig.stakeNeedsOpen() && source.getEntity() instanceof ServerPlayer attacker) {
+            hint(attacker);
+        }
         float amount = e.getAmount();
         boolean lethal = amount >= boss.getHealth() + boss.getAbsorptionAmount();
         DefeatRules.Verdict verdict = DefeatRules.verdict(kind, lethal, boss.isDesiccated(), BossesConfig.stakeNeedsOpen());
@@ -72,6 +86,16 @@ public final class NpcOriginalEvents {
                     boss.desiccate();
                 }
             }
+        }
+    }
+
+    /** R159: "White oak only works on an Original who is down", on the action bar, at most once every few seconds for each player. */
+    private static void hint(ServerPlayer attacker) {
+        long now = attacker.level().getGameTime();
+        Long last = HINTED.get(attacker.getUUID());
+        if (NoticeRules.due(last == null ? -1L : last, now)) {
+            HINTED.put(attacker.getUUID(), now);
+            attacker.displayClientMessage(Component.translatable("supernaturalbloodlines.boss.white_oak_closed"), true);
         }
     }
 
@@ -98,8 +122,8 @@ public final class NpcOriginalEvents {
         BossIndex.get(level.getServer()).apply(boss.boss(), BossRules.Event.KILLED);
         boss.pay(RewardRules.Defeat.DIED);
         LineWarning.closed(boss.original().uuid());
-        if (OriginalRules.isWhiteOakKill(e.getSource()) && SpeciesConfig.originalLineDeath()) {
-            // permanent: the whole line dies with them (LineDeath.run also marks the root dead)
+        // permanent, and only for a white oak death the rules allow: a closed Original that the stake cannot reach (npc_original_stake_needs_open) takes none
+        if (OriginalRules.isWhiteOakKill(e.getSource()) && SpeciesConfig.originalLineDeath() && (boss.isDesiccated() || !BossesConfig.stakeNeedsOpen())) {
             LineDeath.run(level.getServer(), boss.original().uuid());
         }
     }

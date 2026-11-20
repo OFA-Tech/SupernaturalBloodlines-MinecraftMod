@@ -73,7 +73,7 @@ public final class BossCommand {
             c.getSource().sendFailure(Component.translatable("supernaturalbloodlines.boss.cmd.refused", name(boss), Component.translatable("supernaturalbloodlines.boss.refusal." + refusal.get())));
             return 0;
         }
-        var spot = BossDirector.groundNear(level, p.blockPosition(), 4, 8);
+        var spot = BossDirector.findGround(level, p.blockPosition(), 4, 8);
         if (spot.isEmpty() || BossDirector.spawnMikael(level, null, spot.get()).isEmpty()) {
             c.getSource().sendFailure(Component.translatable("supernaturalbloodlines.boss.cmd.no_ground"));
             return 0;
@@ -90,7 +90,7 @@ public final class BossCommand {
         BossId boss = id.get();
         ServerLevel overworld = c.getSource().getServer().overworld();
         BossIndex.Entry e = BossIndex.get(c.getSource().getServer()).of(boss);
-        long left = e.state == BossState.OPEN ? DesiccationRules.daysLeft(DesiccationRules.dayOf(overworld.getDayTime()), e.returnDay) : 0;
+        long left = e.state == BossState.OPEN ? DesiccationRules.daysLeft(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossClock.today(overworld), e.returnDay) : 0;
         c.getSource().sendSuccess(() -> Component.translatable("supernaturalbloodlines.boss.cmd.state", name(boss),
                 Component.translatable("supernaturalbloodlines.boss.state." + e.state.name().toLowerCase(java.util.Locale.ROOT)), left, e.rewarded, e.appearances), false);
         return 1;

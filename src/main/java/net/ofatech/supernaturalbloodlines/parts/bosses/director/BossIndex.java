@@ -127,8 +127,26 @@ public final class BossIndex extends SavedData {
         return e.state;
     }
 
-    /** Where the boss is now: the entity that is it and its last place. */
-    public void seen(BossId boss, UUID entity, String dimension, BlockPos pos) {
+    /**
+     * Where the boss is now: the entity that is it and its last place. A boss written down as lost that shows itself again is found again
+     * (standing, or open when it is desiccated). Returns false for a second entity of a boss that is out there already (the old one that
+     * came back after a new one was made): the caller discards it.
+     */
+    public boolean seen(BossId boss, UUID entity, String dimension, BlockPos pos, boolean desiccated) {
+        Entry e = of(boss);
+        if ((e.state == BossState.ACTIVE || e.state == BossState.OPEN) && e.entity != null && !entity.equals(e.entity)) {
+            return false;
+        }
+        if (e.state == BossState.LOST) {
+            e.state = BossRules.next(e.state, desiccated ? BossRules.Event.FOUND_OPEN : BossRules.Event.FOUND);
+            setDirty();
+        }
+        adopt(boss, entity, dimension, pos);
+        return true;
+    }
+
+    /** Writes down that this entity is the boss, wherever the index thought it was. */
+    public void adopt(BossId boss, UUID entity, String dimension, BlockPos pos) {
         Entry e = of(boss);
         if (!entity.equals(e.entity) || !dimension.equals(e.dimension) || !pos.equals(e.pos)) {
             e.entity = entity;
@@ -136,6 +154,11 @@ public final class BossIndex extends SavedData {
             e.pos = pos.immutable();
             setDirty();
         }
+    }
+
+    /** Writes the index to disk now (the reward was just paid, and a crash must not pay it twice). */
+    public static void flush(MinecraftServer server) {
+        server.overworld().getDataStorage().save();
     }
 
     public Optional<BossId> bossOf(UUID entity) {

@@ -16,6 +16,7 @@ import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBars;
+import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossClock;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossDirector;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity;
@@ -52,6 +53,16 @@ final class BossTestRig implements AutoCloseable {
         LineWarning.reset();
         BossBars.reset();
         BossesConfig.override("original_return_days", null);
+    }
+
+    /** Makes it day number {@code n} for the desiccation clock (game time), without touching the world's time. */
+    void day(long n) {
+        BossClock.offsetForTests(n * 24000L + 100 - helper.getLevel().getGameTime());
+    }
+
+    /** The director puts him a few blocks from his target, not wherever the neighbouring tests left ground. */
+    static void fixedGround() {
+        BossDirector.useGround((level, from, min, max) -> java.util.Optional.of(from.offset(3, 0, 3)));
     }
 
     /** Mikael, made the way the director makes him, standing 2 blocks into the test. */
@@ -92,12 +103,16 @@ final class BossTestRig implements AutoCloseable {
 
     @Override
     public void close() {
+        BossClock.offsetForTests(0);
         helper.getLevel().setDayTime(dayTime);
         if (mikael != null) {
             drops().forEach(net.minecraft.world.entity.Entity::discard);
         }
         BossDirector.useRoll(null);
         BossDirector.useWorld(null, null);
+        BossDirector.useRingCheck(null);
+        BossDirector.useDifficulty(null);
+        BossDirector.useGround(null);
         SireCall.overridePlayerLookup(null);
         LineWarning.overridePlayers(null);
         reset();

@@ -22,6 +22,7 @@ public final class BossesConfig {
     private static final ModConfigSpec.DoubleValue BOSS_DAMAGE_FACTOR;
     private static final ModConfigSpec.IntValue MIKAEL_MIN_RUNG;
     private static final ModConfigSpec.DoubleValue MIKAEL_NIGHT_CHANCE;
+    private static final ModConfigSpec.BooleanValue MIKAEL_STAKES_ORIGINALS;
     private static final java.util.Map<BossId, ModConfigSpec.BooleanValue> ENABLED = new java.util.EnumMap<>(BossId.class);
 
     static {
@@ -45,6 +46,8 @@ public final class BossesConfig {
                 .defineInRange("mikael_min_rung", 3, 0, 6);
         MIKAEL_NIGHT_CHANCE = b.comment("The chance, once each night, that Mikael comes for a vampire player of that rung.")
                 .defineInRange("mikael_night_chance", 0.15, 0.0, 1.0);
+        MIKAEL_STAKES_ORIGINALS = b.comment("Off (the default): Mikael does not hunt Originals or Original hybrids, and his white oak never counts as a white oak kill, so he cannot cause line death. On: he hunts them too, his stake kills an Original outright (R32) and the line dies with them. The hunted player is warned.")
+                .define("mikael_stakes_originals", false);
         SPEC = b.build();
     }
 
@@ -114,6 +117,10 @@ public final class BossesConfig {
 
     public static int mikaelMinRung() {
         return pick("mikael_min_rung", MIKAEL_MIN_RUNG);
+    }
+
+    public static boolean mikaelStakesOriginals() {
+        return pick("mikael_stakes_originals", MIKAEL_STAKES_ORIGINALS);
     }
 
     public static double mikaelNightChance() {

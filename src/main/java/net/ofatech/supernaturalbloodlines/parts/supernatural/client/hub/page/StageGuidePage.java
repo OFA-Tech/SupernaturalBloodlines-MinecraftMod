@@ -25,6 +25,7 @@ public final class StageGuidePage implements HubPageView {
     public void render(HubScreen.Frame f) {
         HubPage.Context c = f.view.context();
         List<String> ids = GuideChapters.forRaces(c.creature(), c.magic(), c.werewolves(), c.enchanted(), c.loadout(), net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("bosses"));
+        chapter = GuideLinks.chapterOr(chapter);
         if (chapter == null || !ids.contains(chapter)) {
             chapter = ids.get(0);
         }
@@ -59,6 +60,7 @@ public final class StageGuidePage implements HubPageView {
         sy = PageKit.title(f, Component.translatable(GuideChapters.titleKey(chapter)), s.x(), sy, s.w(), t.ink());
         t.drawRule(f.g, s.x(), sy + 2, s.w());
         sy = PageKit.wrapped(f, Component.translatable(GuideChapters.bodyKey(chapter)), s.x(), sy + 8, s.w(), t.ink());
+        sy = GuideLinks.after(f, chapter, s, sy);
         f.end(sy);
 
         String prev = at > 0 ? ids.get(at - 1) : null;
