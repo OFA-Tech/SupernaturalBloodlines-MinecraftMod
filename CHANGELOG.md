@@ -2,18 +2,22 @@
 
 ## Unreleased (plan 17c: Klaus)
 
+### Changed
+- A plain mountain ash line never held Mikael or Klaus (only a pack Emissary's line stops the mobs of `#supernatural_mobs`): the hints and the Guide now say so, instead of "Mountain ash will hold him."
+
 ### Added
-- **Klaus** (part `bosses`; **needs Werewolves**). On a full moon night he comes for a doppelganger: a villager who is one with a player within 64 blocks, or a player who carries the gene (`klaus_hunts_players`). A hunted player gets a warning 90 seconds before he arrives (`klaus_warning_seconds`): the action bar, chat, a howl and "Mountain ash will hold him." A mountain ash line holds him. He shifts into a hybrid wolf at half health or against a werewolf (the first GeckoLib creature of the mod, with a glowing-eyes layer); the wolf is faster and hits harder, and its bite is werewolf venom. He withdraws after a minute with nobody to hunt, and can come again.
-- **Klaus's Blood**, his reward, the first time he is brought down: counts as the blood of an Original hybrid under either `hybrid_transition_blood` (so a werewolf who drinks it and dies starts the transition in Klaus's line) and cures werewolf venom.
+- **Klaus** (part `bosses`; **needs Werewolves**). On a full moon night he comes for a doppelganger: a villager who is one with a player within 64 blocks, or a player who carries the gene (`klaus_hunts_players`). A hunted player gets a warning 90 seconds before he arrives (`klaus_warning_seconds`): the action bar, chat, and a howl only they hear, with reminders at 30 and 10 seconds. **Being hunted tells a doppelgänger player that they carry the gene**, and the message says why. If the player dies, leaves or stops being a target, the hunt is called off and they are told the wolf lost the scent. A mountain ash line laid by a pack Emissary holds him (a plain one does not). He shifts into a hybrid wolf at half health or against a werewolf (the first GeckoLib creature of the mod, with a glowing-eyes layer); the wolf is faster and hits harder, and its bite is werewolf venom. He withdraws at dawn, after four minutes without landing a blow on his prey, or after a minute with nobody to hunt, and can come again. He never shifts while he lies desiccated; the swap from man to wolf has smoke, a howl and a shake.
+- **Klaus's Blood**, his reward, the first time he is brought down: counts as the blood of an Original hybrid under either `hybrid_transition_blood` (so a werewolf who drinks it and dies starts the transition in Klaus's line) and cures werewolf venom (and says so in its tooltip). With Klaus's line dead it still cures but turns nobody.
 - Config (`supernaturalbloodlines-bosses.toml`, 19 keys now): `klaus_chance_per_full_moon` (0.35), `klaus_hunts_players` (true), `klaus_warning_seconds` (90). All on the Admin page. `/supernaturalbloodlines boss klaus spawn|state|desiccate|return|reset`. The Guide's bosses chapter tells it.
 - Developer: `BossShots` takes `-Dsupernaturalbloodlines.devshots.bosses=klaus` (the man, half way through the shift, the wolf).
 
 ### Upgrading
-- Nothing to do. The boss index gains a field (`arrive_at`); an old index reads as "nobody is coming".
+- Nothing to do. The boss index gains two fields (`arrive_at`, `reminded`); an old index reads as "nobody is coming".
+- **Rolling back to a version without Klaus loses the Klaus entity and Klaus's Blood**: the world removes entities and items it does not know. The boss index entry for Klaus stays in the data and is ignored, and a Klaus who was out there is simply gone. Take a backup before you try the update.
 ## Unreleased (plan 17b: the first boss)
 
 ### Added
-- **Mikael** (new part `bosses`; needs Vampirism, Enchanted and GeckoLib, which Enchanted already needs). About once every few nights he comes for a vampire of rung 3 or higher who is on the ground outside a mountain ash ring, and tells them with a message. He feeds on the vampires he hits. A mountain ash line holds him. He drops **Mikael's Stake** (a white oak sword that never breaks) the first time he is brought down.
+- **Mikael** (new part `bosses`; needs Vampirism, Enchanted and GeckoLib, which Enchanted already needs). About once every few nights he comes for a vampire of rung 3 or higher who is on the ground outside a mountain ash ring, and tells them with a message. He feeds on the vampires he hits. A mountain ash line laid by a pack Emissary holds him (a plain one does not). He drops **Mikael's Stake** (a white oak sword that never breaks) the first time he is brought down.
 - **NPC Originals** work like player Originals: any blow that would kill one only **desiccates** them (they fall, drop a bottle of their blood at most once per window, and their line is warned). They get up after 5 days (`original_return_days`). **White oak kills one only while they are down** (`npc_original_stake_needs_open`); that death is for good and the line dies with them. The Ash Dagger brings a standing one down. Each pays one reward, once (`boss_reward_on`).
 - **Hub:** a Bosses section on the Admin page (spawn, state, desiccate, return, forget), a "The bosses" chapter in the Guide, and a line on Home when a boss is within 128 blocks. Commands: `/supernaturalbloodlines boss <boss> spawn|state|desiccate|return|reset`.
 - Config file `supernaturalbloodlines-bosses.toml` (16 keys).
