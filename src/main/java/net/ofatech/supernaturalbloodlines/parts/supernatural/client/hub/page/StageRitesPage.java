@@ -38,6 +38,12 @@ public final class StageRitesPage implements HubPageView {
     @Nullable
     private String selected;
     private boolean circle;
+    /** Development only (the screenshots): open on the circle view. */
+    private static volatile boolean devCircle;
+
+    public static void devCircle(boolean on) {
+        devCircle = on;
+    }
 
     @Override
     public void render(HubScreen.Frame f) {
@@ -46,6 +52,9 @@ public final class StageRitesPage implements HubPageView {
         List<HubRites.Listed> rites = HubRites.list(f.view.snapshot().rites(), f.view.races(), asked);
         HubRites.Listed chosen = rites.stream().filter(l -> l.rite().id().equals(selected != null ? selected : RitesPage.devSelected())).findFirst().orElse(rites.isEmpty() ? null : rites.get(0));
 
+        if (devCircle) {
+            circle = true;
+        }
         BookKit.moonHead(f, Component.translatable(KEY + "title"), Component.translatable(BOOK + "subtitle_short"));
         Rect s = f.region(BookKit.FULL);
         int top = f.begin(BookKit.FULL);
@@ -56,6 +65,9 @@ public final class StageRitesPage implements HubPageView {
                 boolean have = BookRitesPage.have(f.view.player(), entry);
                 y = BookKit.leader(f, RitesPage.item(entry), Component.translatable(BOOK + (have ? "in_hand" : "missing")).copy().append(have ? " \u2713" : ""), s.x() + 20, y,
                         s.w() - 40, have ? t.good() : t.accent());
+            }
+            for (Component fact : RitesPage.facts(chosen.rite())) {
+                y = PageKit.wrapped(f, fact, s.x() + 20, y + 2, s.w() - 40, t.accent());
             }
             f.end(y);
         } else {
@@ -120,8 +132,8 @@ public final class StageRitesPage implements HubPageView {
         Detail.Builder d = Detail.of(RitesPage.name(rite)).subtitle(BookRitesPage.sub(rite));
         // the Alpha Trial's warning (or why it is not for you) comes first: the Blood Moon bar shows only the first two lines
         RitesPage.trialNotes(rite, f.view.bloodline().wolf()).forEach(d::body);
-        RitesPage.facts(rite).forEach(d::body);
         RitesPage.descriptions(rite).forEach(d::body);
+        RitesPage.facts(rite).forEach(d::body);
         d.body(items.isEmpty() ? Component.translatable(BOOK + "no_items") : Component.translatable(BOOK + "needs", items.stream().map(Component::getString).reduce((a, b) -> a + ", " + b).orElse("")));
         HubHooks.Launcher book = RitesPage.bookLauncher(rite);
         d.action(new Detail.Action("book", Component.translatable(BOOK + "enchanted_short"), false, book != null, null, null, () -> f.screen().launch(book)));

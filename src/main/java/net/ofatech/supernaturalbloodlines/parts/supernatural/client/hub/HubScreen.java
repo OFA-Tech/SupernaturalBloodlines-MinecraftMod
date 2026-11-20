@@ -427,7 +427,9 @@ public final class HubScreen extends Screen {
             }
             default -> {
                 if (variant.startsWith("rites_")) {
-                    net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:" + variant.substring(6));
+                    boolean circle = variant.endsWith("_circle"); // rites_<path>_circle: the Blood Moon and Tensura pages on their circle view
+                    net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageRitesPage.devCircle(circle);
+                    net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:" + variant.substring(6, variant.length() - (circle ? 7 : 0)));
                 }
                 if (variant.startsWith("guide_")) {
                     net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.GuideLinks.devChapter(variant.substring(6));
