@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
 import net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService;
+import net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -69,6 +70,10 @@ public final class ActionService {
         if (release) {
             return null;
         }
+        Optional<ExtraActions.Action> extra = ExtraActions.get(id.get());
+        if (extra.isPresent()) {
+            return runExtra(p, extra.get());
+        }
         if (!ModList.get().isLoaded("vampirism")) {
             return refuse(p, BiteService.KEY + "needs_vampirism");
         }
@@ -81,6 +86,24 @@ public final class ActionService {
         }
         String perm = FactionActions.toggleFor(p, id.get(), targetEntityId);
         return perm == null ? null : refuse(p, KEY + perm);
+    }
+
+    /** An action another part owns (the Alpha Roar): it keeps its own checks; this only asks, shows its refusal, and tells the client the cooldown it started. */
+    @Nullable
+    private static String runExtra(ServerPlayer p, ExtraActions.Action action) {
+        if (p.isSpectator() || !p.isAlive() || p.isSleeping()) {
+            return refuse(p, KEY + "cannot_act");
+        }
+        if (!action.available(p)) {
+            return refuse(p, KEY + "not_unlocked");
+        }
+        Component error = action.trigger(p);
+        if (error != null) {
+            p.displayClientMessage(error, true);
+            return error.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t ? t.getKey() : KEY + "refused";
+        }
+        // the cooldown reaches the slot through ExtraActions.cooldownStarted, from the owner of the action, whichever path started it
+        return null;
     }
 
     private static String refuse(ServerPlayer p, String key) {

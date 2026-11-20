@@ -10,7 +10,11 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.core.network.RoarPayload;
 
-/** The Alpha Roar key. Unbound by default (the pack's keymap script binds it); client only. */
+/**
+ * The Alpha Roar key. Always registered, so a game or a server without the HUD still has a non-command way to roar. With the HUD the Roar is an action in a
+ * slot, so {@code KeyCover} unbinds and hides this key while the HUD can take over ({@code CoveredKeyIds}) and gives it back when it cannot. Unbound by
+ * default (the pack's keymap script binds it); client only.
+ */
 public final class PackKeybinds {
     public static final String CATEGORY = "key.categories.supernaturalbloodlines";
     public static final KeyMapping ALPHA_ROAR = new KeyMapping("key.supernaturalbloodlines.alpha_roar",

@@ -209,6 +209,9 @@ public final class DevShots {
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on = s.hud() != null;
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.alt = "alt".equals(s.hud());
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.idle = "idle".equals(s.hud());
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.switched = "switched".equals(s.hud());
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.human = "human".equals(s.hud()) || "cooldown".equals(s.hud());
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.cooldown = "cooldown".equals(s.hud());
             if (s.hud() != null) {
                 parkCursor(mc, 1, 1);
                 wait = 1;

@@ -2,11 +2,14 @@ package net.ofatech.supernaturalbloodlines.parts.hud.action;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
 import net.neoforged.fml.ModList;
+import net.ofatech.supernaturalbloodlines.core.hud.OfferNotice;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.LoadoutSyncPayload;
+import net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -18,6 +21,65 @@ public final class LoadoutService {
 
     private LoadoutService() {
     }
+
+    /** Once a second per player: what a player may have is put in an empty slot, once (see {@link #offerDefaults}). */
+    public static void register() {
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) ->
+                FULL_TOLD.removeIf(k -> k.startsWith(e.getEntity().getUUID() + "/")));
+        // a player who logs in during a cooldown gets the rest of it, so the slot's sweep is right from the first frame
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) {
+                for (ExtraActions.Action a : ExtraActions.all()) {
+                    int left = a.cooldownLeft(p);
+                    if (left > 0) {
+                        // the real total, so the sweep's fraction (left over total) is right from the first frame
+                        net.ofatech.supernaturalbloodlines.parts.hud.net.ActionCooldownPayload.sendRemaining(p, a.id(), Math.max(left, a.cooldownTicks(p)), left);
+                    }
+                }
+            }
+        });
+        ExtraActions.onCooldown(net.ofatech.supernaturalbloodlines.parts.hud.net.ActionCooldownPayload::send);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) -> {
+            if (e.getEntity() instanceof ServerPlayer p && p.tickCount % 20 == 0 && !(p instanceof net.neoforged.neoforge.common.util.FakePlayer)) {
+                offerDefaults(p);
+            }
+        });
+    }
+
+    /**
+     * Gives a player what they are now: Bite in an empty slot 1 for a type that can bite, then every {@link ExtraActions} they may use (the Alpha Roar for an
+     * Alpha) in the first empty slot, each once. A human gets nothing, a slot the player set is never overwritten, and an action the player cleared is never put back.
+     */
+    public static void offerDefaults(ServerPlayer p) {
+        Loadout before = get(p);
+        Loadout next = before;
+        if (!next.biteOffered() && net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService.canBite(p)) {
+            next = next.withBiteOffered();
+        }
+        java.util.List<Component> told = new java.util.ArrayList<>();
+        for (ExtraActions.Action a : ExtraActions.all()) {
+            if (!next.offered().contains(a.id()) && a.available(p)) {
+                Loadout after = next.withActionOffered(a.id());
+                OfferNotice notice = OfferNotice.of(next, after, a.id());
+                if (notice.kind() == OfferNotice.Kind.PLACED) {
+                    told.add(Component.translatable(KEY_OFFER + "placed", a.name(), notice.slot() + 1));
+                } else if (notice.kind() == OfferNotice.Kind.FULL && FULL_TOLD.add(p.getUUID() + "/" + a.id())) {
+                    told.add(Component.translatable(KEY_OFFER + "full", a.name()));
+                }
+                next = after;
+            }
+        }
+        if (!next.equals(before)) {
+            p.setData(ModAttachments.HUD_LOADOUT, next);
+            sync(p);
+        }
+        // one line per player and action: a full loadout is checked every second, and the player must not be nagged
+        told.forEach(m -> p.displayClientMessage(m, true));
+    }
+
+    private static final String KEY_OFFER = "supernaturalbloodlines.hud.offer.";
+    /** "player/action" pairs already told that there was no room, for this session. */
+    private static final java.util.Set<String> FULL_TOLD = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public static Loadout get(ServerPlayer p) {
         return p.getData(ModAttachments.HUD_LOADOUT);
@@ -42,7 +104,12 @@ public final class LoadoutService {
         if (!Loadout.validSlot(slot)) {
             return KEY + "bad_slot";
         }
-        if (id != null && !Loadout.BITE.equals(id)) {
+        java.util.Optional<ExtraActions.Action> extra = id == null ? java.util.Optional.empty() : ExtraActions.get(id);
+        if (extra.isPresent()) {
+            if (!extra.get().available(p)) {
+                return KEY + "not_unlocked";
+            }
+        } else if (id != null && !Loadout.BITE.equals(id)) {
             if (!ModList.get().isLoaded("vampirism") || FactionActions.byId(id) == null) {
                 return KEY + "unknown_action";
             }

@@ -995,6 +995,37 @@ public final class DeucalionGameTests {
         helper.succeed();
     }
 
+    /** The Demon Wolf Roar rides on the Alpha Roar itself, so a roar from the HUD slot (no key any more) shifts the rival Alpha too. Needs the hud part. */
+    @GameTest(template = "empty", templateNamespace = NS, batch = "hud_roar")
+    public static void theDemonWolfRoarWorksFromTheAlphaRoarSlot(GameTestHelper helper) {
+        if (!werewolves() || !skillsOn() || !net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("hud")) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer.useRealHarm(true);
+        helper.getLevel().getServer().setPvpAllowed(true);
+        LineTestPlayer roarer = wolf(helper, Rank.ALPHA, 4, false, 2.5);
+        LineTestPlayer rival = wolf(helper, Rank.ALPHA, 1, false, 22.5);
+        try {
+            helper.assertTrue(VampirismAPI.factionPlayerHandler(rival).setFactionAndLevel(WReference.WEREWOLF_FACTION, 14), "the rival could not be levelled");
+            night(roarer, rival);
+            unlockForms(rival);
+            give(roarer);
+            net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService.offerDefaults(roarer);
+            int slot = net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService.get(roarer).slotOf(net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.ALPHA_ROAR);
+            helper.assertTrue(slot >= 0, "the Alpha Roar was not put in a slot: " + net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService.get(roarer));
+            helper.assertTrue(!inForm(rival), "control: the rival is in a form before the roar");
+            String refusal = net.ofatech.supernaturalbloodlines.parts.hud.action.ActionService.trigger(roarer, slot, -1, false);
+            helper.assertTrue(refusal == null, "the Alpha Roar from its slot was refused: " + refusal);
+            helper.assertTrue(inForm(rival) && rival.received(SHIFTED), "the Demon Wolf Roar did not shift the rival from the slot: " + rival.heard());
+        } finally {
+            AlphaRoar.reset();
+            LineTestPlayer.useRealHarm(false);
+            clean(roarer, rival);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theRoarWorksOnTheAlphaRoarsKeyOnlyForWhoHoldsItWithItsOwnCooldown(GameTestHelper helper) {
         if (!werewolves() || !skillsOn()) {

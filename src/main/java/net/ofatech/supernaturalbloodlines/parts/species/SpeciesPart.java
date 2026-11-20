@@ -3,6 +3,8 @@ package net.ofatech.supernaturalbloodlines.parts.species;
 import java.util.List;
 import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
 import net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs;
+import net.ofatech.supernaturalbloodlines.client.PackKeybinds;
+import net.ofatech.supernaturalbloodlines.core.network.RoarPayload;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfSkillRuleGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SkillRuleGameTests;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry;
@@ -31,11 +33,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfPackGam
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfBiteGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfSparkGameTests;
 import net.minecraft.network.chat.Component;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.fml.loading.FMLEnvironment;
-import net.ofatech.supernaturalbloodlines.client.PackKeybinds;
 import net.ofatech.supernaturalbloodlines.client.RoarClient;
-import net.ofatech.supernaturalbloodlines.core.network.RoarPayload;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.PackBonusGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaBite;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar;
@@ -201,6 +199,7 @@ public final class SpeciesPart {
             LunarEclipse.register();
             Anchors.register();
             AlphaRoar.register();
+            net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.install(net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoarAction.INSTANCE);
             Emissary.register();
             TransitionHandler.register();
             GeneAwakening.register();
@@ -243,10 +242,10 @@ public final class SpeciesPart {
                     Downed.giveUp(p);
                 }
             }));
-            // the server decides rank and cooldown; a refusal comes back as an action bar message
+            // the server decides rank and cooldown; a refusal comes back as an action bar message (the key is always registered; a client with the HUD covers it)
             registrar.playToServer(RoarPayload.TYPE, RoarPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> {
                 if (ctx.player() instanceof ServerPlayer p && ModList.get().isLoaded("werewolves")) {
-                    Component error = AlphaRoar.roar(p);
+                    Component error = AlphaRoar.handlePayload(p);
                     if (error != null) {
                         p.displayClientMessage(error, true);
                     }
@@ -264,7 +263,7 @@ public final class SpeciesPart {
             registrar.playToClient(RoarEffectPayload.TYPE, RoarEffectPayload.STREAM_CODEC, (payload, ctx) ->
                     ctx.enqueueWork(() -> RoarClient.show(payload.playerId(), payload.ticks())));
         });
-        if (FMLEnvironment.dist == Dist.CLIENT && ModList.get().isLoaded("werewolves")) {
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT && ModList.get().isLoaded("werewolves")) {
             PackKeybinds.register(modBus);
         }
         modBus.addListener((RegisterGameTestsEvent e) -> {

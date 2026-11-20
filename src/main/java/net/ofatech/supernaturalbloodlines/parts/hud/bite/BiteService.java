@@ -78,6 +78,11 @@ public final class BiteService {
         return usable() ? BiteRules.decide(context(p)) : BiteAction.NONE;
     }
 
+    /** The player is a type that can bite: the same rule a press follows ({@link #actionFor}), so a human with nothing to bite with is not. */
+    public static boolean canBite(Player p) {
+        return actionFor(p) != BiteAction.NONE;
+    }
+
     /** Ticks until the next bite, 0 when ready. */
     public static int cooldownLeft(ServerPlayer p) {
         Long last = LAST_BITE.get(p.getUUID());

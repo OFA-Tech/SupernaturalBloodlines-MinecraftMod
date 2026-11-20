@@ -4,6 +4,8 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.ofatech.supernaturalbloodlines.core.hud.HudLayout;
 import net.ofatech.supernaturalbloodlines.core.hud.PieSweep;
+import net.ofatech.supernaturalbloodlines.core.hud.SlotBadge;
+import net.ofatech.supernaturalbloodlines.core.hud.SlotShape;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
@@ -13,7 +15,7 @@ import net.ofatech.supernaturalbloodlines.shared.hud.ClientIcons;
 import net.ofatech.supernaturalbloodlines.shared.hud.HudStyle;
 
 /**
- * One slot in the shape of the hub's theme: an inked tile with a wax key badge (Grimoire), a round slot with a gold key letter (Blood Moon), a hexagon
+ * One slot, square in Tensura mode (every Tensura icon is square) and otherwise in the shape of the hub's theme: an inked tile with a wax key badge (Grimoire), a round slot with a gold key letter (Blood Moon), a hexagon
  * with a key tab (Tensura). On top of the shape, the same for all: the icon, a dark pie that sweeps clockwise as the cooldown runs out with the seconds in
  * the middle, a gold outline and halo while it is active, a lock on one that is not unlocked, and a ring of blood round Bite. Everything is multiplied by
  * {@code alpha}, which is how the HUD fades when idle.
@@ -40,12 +42,12 @@ final class SlotArt {
      * @param bloodRing 0 to 1 of a ring of blood round the slot, or a negative number for none (only Bite has one)
      * @param pulse     0 to 1, the halo's breathing
      */
-    static void draw(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box b, SlotView v, float alpha, float bloodRing, float pulse) {
+    static void draw(GuiGraphics g, Font font, HudStyle.Style style, SlotShape shape, HudLayout.Box b, SlotView v, float alpha, float bloodRing, float pulse) {
         int s = HudLayout.SLOT;
         if (v.active()) {
-            KitDraw.shape(g, shapeOf(style), b.x() - 2, b.y() - 2, s + 4, fade(0x00000000 | ((int) (0x22 + 0x22 * pulse) << 24) | 0xFFD36B, alpha));
+            KitDraw.shape(g, shapeOf(style, shape), b.x() - 2, b.y() - 2, s + 4, fade(0x00000000 | ((int) (0x22 + 0x22 * pulse) << 24) | 0xFFD36B, alpha));
         }
-        base(g, style, b, v.active(), alpha);
+        base(g, style, shape, b, v.active(), alpha);
         if (!v.isEmpty()) {
             boolean lock = locked(v);
             ClientIcons.draw(g, v.icon(), b.x() + 3, b.y() + 3, 16, (lock ? 0.35f : v.greyed() ? 0.45f : 1f) * alpha);
@@ -56,9 +58,10 @@ final class SlotArt {
                     g.pose().pushPose();
                     g.pose().translate(0, 0, 200);
                     // a small label over the dimmed icon: "4s", at three quarters of the text size, with the font's own shadow
-                    String secs = v.cooldownSeconds() + "s";
-                    // at the top of the slot, so the key badge in the bottom corner never covers it
-                    g.drawString(font, secs, b.x() + (s - font.width(secs)) / 2, b.y() + 2, fade(0xFFFFFFFF, alpha), true);
+                    String secs = SlotBadge.timeLabel(v.cooldownSeconds());
+                    // opposite the key badge (SlotBadge): at the top, or at the bottom in the Tensura theme whose key tab hangs off the top left
+                    HudLayout.Box at = SlotBadge.seconds(SlotBadge.Look.valueOf(style.name()), b, font.width(secs));
+                    g.drawString(font, secs, at.x(), at.y(), fade(0xFFFFFFFF, alpha), true);
                     g.pose().popPose();
                 }
             }
@@ -70,9 +73,33 @@ final class SlotArt {
             ring(g, b, bloodRing, alpha);
         }
         key(g, font, style, b, v.keyLabel(), alpha);
+        if (shape.marked()) {
+            mark(g, b, alpha);
+        }
     }
 
-    private static Shapes.Shape shapeOf(HudStyle.Style style) {
+    private static final int TENSURA_TEAL = 0xFF3FD0D6;
+
+    /** The corner diamond of Tensura mode, with a dark rim so it reads on any frame. */
+    private static void mark(GuiGraphics g, HudLayout.Box slot, float alpha) {
+        HudLayout.Box m = SlotBadge.tensuraMark(slot);
+        for (int dy = -2; dy <= 2; dy++) {
+            int half = 2 - Math.abs(dy);
+            int y = m.y() + 2 + dy;
+            g.fill(m.x() + 2 - half - 1, y, m.x() + 2 + half + 2, y + 1, fade(0xFF0A1A28, alpha));
+        }
+        for (int dy = -1; dy <= 1; dy++) {
+            int half = 1 - Math.abs(dy);
+            int y = m.y() + 2 + dy;
+            g.fill(m.x() + 2 - half, y, m.x() + 2 + half + 1, y + 1, fade(TENSURA_TEAL, alpha));
+        }
+    }
+
+    /** Tensura mode is square whatever the theme (every Tensura icon is square); Supernatural mode takes the theme's shape. */
+    static Shapes.Shape shapeOf(HudStyle.Style style, SlotShape shape) {
+        if (shape == SlotShape.SQUARE) {
+            return Shapes.Shape.SQUARE;
+        }
         return switch (style) {
             case GRIMOIRE -> Shapes.Shape.SQUARE;
             case BLOOD_MOON -> Shapes.Shape.ROUND;
@@ -80,9 +107,9 @@ final class SlotArt {
         };
     }
 
-    private static void base(GuiGraphics g, HudStyle.Style style, HudLayout.Box b, boolean active, float alpha) {
+    private static void base(GuiGraphics g, HudStyle.Style style, SlotShape shape, HudLayout.Box b, boolean active, float alpha) {
         int s = HudLayout.SLOT;
-        int edge = active ? GOLD : switch (style) {
+        int edge = active ? GOLD : shape.marked() ? TENSURA_TEAL : switch (style) {
             case GRIMOIRE -> 0xFF5A3A1E;
             case BLOOD_MOON -> 0xFFE2493F;
             case TENSURA -> 0xFF3FD0D6;
@@ -92,8 +119,8 @@ final class SlotArt {
             case BLOOD_MOON -> 0xFF140810;
             case TENSURA -> 0xFF0F2438;
         };
-        KitDraw.shape(g, shapeOf(style), b.x(), b.y(), s, fade(edge, alpha));
-        KitDraw.shape(g, shapeOf(style), b.x() + 1, b.y() + 1, s - 2, fade(0xE0000000 | face & 0xFFFFFF, alpha));
+        KitDraw.shape(g, shapeOf(style, shape), b.x(), b.y(), s, fade(edge, alpha));
+        KitDraw.shape(g, shapeOf(style, shape), b.x() + 1, b.y() + 1, s - 2, fade(0xE0000000 | face & 0xFFFFFF, alpha));
         if (style == HudStyle.Style.GRIMOIRE) {
             // an inked tile: a lighter paper line inside the edge
             g.renderOutline(b.x() + 2, b.y() + 2, s - 4, s - 4, fade(0x40E8D8B0, alpha));
@@ -153,24 +180,22 @@ final class SlotArt {
         // at the normal size (nothing is under 8 GUI pixels): a letter, or the first two characters of a longer key name
         String text = label.length() > 2 ? label.substring(0, 2) : label;
         int w = font.width(text);
+        HudLayout.Box badge = SlotBadge.key(SlotBadge.Look.valueOf(style.name()), b, w);
         switch (style) {
             case GRIMOIRE -> {
                 // a red wax badge in the corner of the tile
-                int bw = Math.max(11, w + 5);
-                KitDraw.shape(g, Shapes.Shape.ROUND, b.right() - bw - 1, b.bottom() - 12, bw, fade(0xFF8E1A1A, alpha));
-                g.drawString(font, text, b.right() - bw - 1 + (bw - w) / 2, b.bottom() - 12 + (bw - 8) / 2, fade(0xFFF4E2C0, alpha), false);
+                KitDraw.shape(g, Shapes.Shape.ROUND, badge.x(), badge.y(), badge.w(), fade(0xFF8E1A1A, alpha));
+                g.drawString(font, text, badge.x() + (badge.w() - w) / 2, badge.y() + (badge.w() - 8) / 2, fade(0xFFF4E2C0, alpha), false);
             }
             case BLOOD_MOON -> {
-                // a gold letter on the ring's lower edge, on a dark plate so it reads over the icon
-                int x = b.x() + (HudLayout.SLOT - w) / 2;
-                g.fill(x - 1, b.bottom() - 9, x + w + 1, b.bottom() - 1, fade(0xB0140810, alpha));
-                g.drawString(font, text, x, b.bottom() - 9, fade(GOLD, alpha), false);
+                // a gold letter on a dark plate, nearly opaque, so it reads over any icon
+                g.fill(badge.x(), badge.y(), badge.right(), badge.bottom(), fade(0xF0140810, alpha));
+                g.drawString(font, text, badge.x() + 2, badge.y() + 1, fade(GOLD, alpha), false);
             }
             case TENSURA -> {
                 // a dark tab with a teal edge at the top left
-                int tw = w + 4;
-                g.fill(b.x() - 2, b.y() - 3, b.x() - 2 + tw, b.y() + 8, fade(0xFF3FD0D6, alpha));
-                g.fill(b.x() - 1, b.y() - 2, b.x() - 3 + tw, b.y() + 7, fade(0xFF0A1A28, alpha));
+                g.fill(badge.x(), badge.y(), badge.right(), badge.y() + 11, fade(0xFF3FD0D6, alpha));
+                g.fill(badge.x() + 1, badge.y() + 1, badge.right() - 1, badge.y() + 10, fade(0xFF0A1A28, alpha));
                 g.drawString(font, text, b.x(), b.y() - 1, fade(0xFF3FD0D6, alpha), false);
             }
             default -> { }

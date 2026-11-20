@@ -37,7 +37,8 @@ import org.jetbrains.annotations.VisibleForTesting;
 /**
  * The Alpha Roar (R94): the pack's Betas within 32 blocks get Strength I and Speed I for 30 s and may shift at will for
  * that time; other werewolves within 16 blocks are forced out of their form and slowed (Slowness II, 5 s). Only an Alpha
- * or True Alpha, once per 1200 ticks. The key press arrives as a {@code RoarPayload}; everything is decided here from
+ * or True Alpha, once per 1200 ticks. It starts from a HUD slot (the Alpha Roar is a HUD action: {@code AlphaRoarAction}), the Pack button, {@code /pack roar},
+ * or, only with the hud part off, the Roar key (a {@code RoarPayload}); everything is decided here from
  * server state. The cooldown is kept in memory per player and forgotten when the server stops (tick counts start again). A dead or spectating Alpha cannot roar, and nobody can during a lunar eclipse (refused with a message, no cooldown spent). Links Werewolves.
  */
 public final class AlphaRoar {
@@ -109,6 +110,42 @@ public final class AlphaRoar {
         PACK_ATTACK_UNTIL.clear();
     }
 
+    /** A dead, spectating or sleeping Alpha cannot roar, from any path (a slot, the key, the Pack button, {@code /pack roar}). Pure. */
+    public static boolean mayAct(boolean alive, boolean spectator, boolean sleeping) {
+        return alive && !spectator && !sleeping;
+    }
+
+    /** The Roar key's payloads per second, as many as the HUD's own ({@code rate_limit_per_second}'s default); a refused one counts as much as one that worked. */
+    public static final int PAYLOADS_PER_SECOND = 10;
+    private static final net.ofatech.supernaturalbloodlines.core.hud.RateLimiter PAYLOAD_LIMIT = new net.ofatech.supernaturalbloodlines.core.hud.RateLimiter();
+
+    /** True when this payload is within the player's rate limit; every call counts. */
+    public static boolean payloadAllowed(ServerPlayer p) {
+        return PAYLOAD_LIMIT.tryAcquire(p.getUUID(), p.server.getTickCount(), PAYLOADS_PER_SECOND);
+    }
+
+    /** Test hook: forgets the rate limit window of a player. */
+    public static void forgetPayloadLimit(ServerPlayer p) {
+        PAYLOAD_LIMIT.forget(p.getUUID());
+    }
+
+    /**
+     * The Roar key's payload: dropped silently over the rate limit (nothing is sent back, like the HUD's), else the same checks as every path ({@link #roar}),
+     * the sleeping check among them.
+     *
+     * @return the refusal to show in the action bar, null when it roared or was dropped
+     */
+    @Nullable
+    public static Component handlePayload(ServerPlayer p) {
+        return payloadAllowed(p) ? roar(p) : null;
+    }
+
+    /** Ticks of cooldown left (0 when ready). */
+    public static int cooldownLeft(ServerPlayer p) {
+        Long last = LAST.get(p.getUUID());
+        return last == null ? 0 : (int) Math.max(0, cooldown(p) - (p.server.getTickCount() - last));
+    }
+
     /** Ticks between two roars: 1200, or 800 with Roar's Echo (S-WOL-6) or the Primeval Roar (S-WOL-8, which is Roar's Echo and more). */
     public static int cooldown(ServerPlayer p) {
         return (int) Math.min(LadderQuery.value(p, "S-WOL-6", "cooldown_ticks", COOLDOWN), LadderQuery.value(p, "S-WOL-8", "cooldown_ticks", COOLDOWN));
@@ -134,7 +171,7 @@ public final class AlphaRoar {
         if (LunarEclipse.active(p.server)) {
             return Component.translatable(KEY + "roar_eclipse");
         }
-        if (!p.isAlive() || p.isSpectator()) {
+        if (!mayAct(p.isAlive(), p.isSpectator(), p.isSleeping())) {
             return Component.translatable(KEY + "roar_unavailable");
         }
         Long last = LAST.get(p.getUUID());
@@ -143,6 +180,8 @@ public final class AlphaRoar {
             return Component.translatable(KEY + "roar_cooldown", (cooldown - (now - last) + 19) / 20);
         }
         LAST.put(p.getUUID(), now);
+        // every path that roars (a HUD slot, the Pack button, /pack roar, the key without the HUD) tells the slot, so its sweep and seconds are right
+        net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.cooldownStarted(p, net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.ALPHA_ROAR, (int) cooldown);
 
         double range = rangeFactor(p);
         double packAttack = LadderQuery.value(p, "S-WOL-8", "pack_attack", 0);

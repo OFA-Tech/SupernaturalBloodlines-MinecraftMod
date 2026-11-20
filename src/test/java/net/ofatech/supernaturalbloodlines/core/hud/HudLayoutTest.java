@@ -79,4 +79,70 @@ class HudLayoutTest {
             }
         }
     }
+
+    /** GUI sizes of a 1280x720 and a 1920x1080 window at GUI scales 4, 3 and 2. */
+    private static final int[][] SCALES = {{320, 180}, {427, 240}, {480, 270}, {640, 360}, {960, 540}};
+
+    @Test
+    void thePillThePanelAndTheSlotsNeverShareAPixelAtGuiScales2To4() {
+        for (int[] s : SCALES) {
+            Box[] slots = HudLayout.slots(s[0], s[1]);
+            Box hotbar = HudLayout.hotbar(s[0], s[1]);
+            for (int textW : new int[] {60, 130, 200}) {
+                Box pill = HudLayout.pill(s[0], s[1], textW);
+                assertFalse(pill.overlaps(hotbar), "pill on the hotbar " + s[0] + "x" + s[1]);
+                for (Box slot : slots) {
+                    assertFalse(pill.overlaps(slot), "pill " + pill + " on " + slot + " " + s[0] + "x" + s[1] + " text " + textW);
+                }
+                for (int head : new int[] {1, 2}) {
+                    Box panel = HudLayout.preview(s[0], s[1], head);
+                    assertFalse(pill.overlaps(panel), "pill " + pill + " on the panel " + panel + " " + s[0] + "x" + s[1] + " text " + textW);
+                    for (Box slot : slots) {
+                        assertFalse(panel.overlaps(slot), "panel on " + slot + " " + s[0] + "x" + s[1]);
+                    }
+                    assertTrue(panel.x() >= 0 && panel.right() <= s[0] && panel.y() >= 0, "panel off screen " + panel + " " + s[0] + "x" + s[1]);
+                }
+            }
+        }
+    }
+
+    @Test
+    void theActionBarLineStandsOnThePill() {
+        // why the pill gives way (PillVisibility): at every size the two share pixels
+        for (int[] s : SCALES) {
+            assertTrue(HudLayout.pill(s[0], s[1], 130).overlaps(HudLayout.actionBar(s[0], s[1], 80)), s[0] + "x" + s[1]);
+        }
+    }
+
+    @Test
+    void theLiftedPillClearsTheMessageTheSlotsThePanelAndTheLeftTooltipAtGuiScales2To4() {
+        for (int[] s : SCALES) {
+            Box[] slots = HudLayout.slots(s[0], s[1]);
+            for (int textW : new int[] {60, 130, 200}) {
+                Box pill = HudLayout.pill(s[0], s[1], textW, true);
+                assertTrue(pill.x() >= 0 && pill.right() <= s[0] && pill.y() >= 0, "on screen " + pill + " " + s[0] + "x" + s[1]);
+                for (int msgW : new int[] {40, 120, 220}) {
+                    assertFalse(pill.overlaps(HudLayout.actionBar(s[0], s[1], msgW)), "the message " + msgW + " " + s[0] + "x" + s[1]);
+                }
+                for (Box slot : slots) {
+                    assertFalse(pill.overlaps(slot), "slot " + slot + " " + s[0] + "x" + s[1]);
+                }
+                for (int head : new int[] {1, 2}) {
+                    assertFalse(pill.overlaps(HudLayout.preview(s[0], s[1], head)), "panel " + s[0] + "x" + s[1] + " text " + textW);
+                }
+                for (int h : new int[] {40, 80}) {
+                    int top = HudLayout.leftTooltipTop(slots[0].y(), h, true);
+                    assertTrue(top + h <= pill.y() - 2, "the tooltip stands on the pill: " + top + "+" + h + " vs " + pill + " " + s[0] + "x" + s[1]);
+                }
+            }
+        }
+    }
+
+    @Test
+    void anUnliftedPillStillSitsOnTheMessageWhichIsWhyItLifts() {
+        for (int[] s : SCALES) {
+            assertTrue(HudLayout.pill(s[0], s[1], 130, false).overlaps(HudLayout.actionBar(s[0], s[1], 80)));
+            assertTrue(HudLayout.pill(s[0], s[1], 130, true).y() < HudLayout.pill(s[0], s[1], 130, false).y());
+        }
+    }
 }

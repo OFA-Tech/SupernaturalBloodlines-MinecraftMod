@@ -33,9 +33,6 @@ import net.ofatech.supernaturalbloodlines.core.hud.RecordFile;
 public final class KeyCover {
     public static final String FILE = SupernaturalBloodlines.MODID + "-hud-keys.json";
 
-    /** Tensura's three skill keys, Tensura Slots' three, Vampirism's suck and nine action toggles, and Werewolves' bite. */
-    public static final List<String> COVERED = covered();
-
     private static final RecordFile RECORD = new RecordFile(FMLPaths.CONFIGDIR.get().resolve(FILE), System::currentTimeMillis,
             m -> SupernaturalBloodlines.LOGGER.warn("Covered keys: {}", m));
     private static Boolean applied;
@@ -45,20 +42,11 @@ public final class KeyCover {
     }
 
     private static List<String> covered() {
-        List<String> ids = new ArrayList<>();
-        for (int i = 1; i <= 3; i++) {
-            ids.add("tensura.keybinding.ability.slot_" + i);
-        }
-        for (int i = 1; i <= 3; i++) {
-            ids.add("tensuraslots.keybinding.secondary_ability.slot_" + i);
-        }
-        ids.add("keys.vampirism.suck");
-        for (int i = 1; i <= 9; i++) {
-            ids.add("keys.vampirism.action" + i);
-        }
-        ids.add("keys.werewolves.bite");
-        return List.copyOf(ids);
+        return net.ofatech.supernaturalbloodlines.core.hud.CoveredKeyIds.all(HudClientConfig.sprintLeap());
     }
+
+    /** The list the keys were last applied with: when {@code sprint_leap} changes, the plan runs again so the leap key is restored or covered at once. */
+    private static List<String> appliedList;
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick(KeyCover::wantCover));
@@ -81,6 +69,11 @@ public final class KeyCover {
                 HudSend.canSend(SetLoadoutPayload.TYPE));
     }
 
+    /** Whether {@code name} is covered now: in the list the keys were last applied with (the leap key drops out while {@code sprint_leap} is off). */
+    public static boolean isCovered(String name) {
+        return (appliedList != null ? appliedList : covered()).contains(name);
+    }
+
     /** True while covering is in effect (the option is on and the record could be kept): only then are the keys hidden from Controls. */
     public static boolean covering() {
         return covering;
@@ -89,10 +82,12 @@ public final class KeyCover {
     private static void tick(BooleanSupplier hide) {
         Minecraft mc = Minecraft.getInstance();
         boolean want = hide.getAsBoolean();
-        if (mc.options == null || applied != null && applied == want) {
+        List<String> list = covered();
+        if (mc.options == null || applied != null && applied == want && list.equals(appliedList)) {
             return;
         }
         applied = want;
+        appliedList = list;
         try {
             apply(mc, want);
         } catch (RuntimeException e) {
@@ -132,7 +127,7 @@ public final class KeyCover {
                 mc.options.save();
             }
         };
-        CoverRun.Result result = CoverRun.run(keys, RECORD, COVERED, hide);
+        CoverRun.Result result = CoverRun.run(keys, RECORD, appliedList, hide);
         covering = hide && result.outcome() == CoverRun.Outcome.DONE;
         switch (result.outcome()) {
             case BLOCKED -> SupernaturalBloodlines.LOGGER.warn("Covered keys: not covering, an unreadable record is waiting ({}.bad-*); see the wiki, Key binds", FILE);

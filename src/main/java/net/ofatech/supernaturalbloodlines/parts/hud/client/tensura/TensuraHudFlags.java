@@ -11,6 +11,7 @@ import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.event.GameShuttingDownEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.core.hud.HudFlagGuard;
+import net.ofatech.supernaturalbloodlines.core.hud.HudFlagScreens;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudClientConfig;
 
 /**
@@ -20,9 +21,9 @@ import net.ofatech.supernaturalbloodlines.parts.hud.client.HudClientConfig;
  * <b>Where a lowered flag could be saved as false</b> (javap of Tensura and ManasCore): ManasCore saves a config only when someone calls
  * {@code ManasConfig.save()} or {@code ConfigRegistry.saveAllConfigs()}; in Tensura the only callers that reach {@code HudConfig.save()} are
  * {@code SettingsOptions.saveAll} (from {@code SettingsScreen} and its buttons), {@code OverlayHandler.savePositionById} and {@code saveScaleById}
- * (both from {@code SettingsScreen}). ManasCore itself calls {@code saveAllConfigs} from nowhere. So, as a rule, <b>while any screen of Tensura or
- * ManasCore ({@code io.github.manasmods.*}) is open the player's real value is handed back</b>, and the flag is lowered again the tick after the last
- * such screen closed; another mod that calls {@code saveAllConfigs} from one of its own screens or from a timer is not covered, which is why the flag
+ * (both from {@code SettingsScreen}). ManasCore itself calls {@code saveAllConfigs} from nowhere. So <b>only while Tensura's {@code SettingsScreen} is open the player's real
+ * value is handed back</b> ({@link HudFlagScreens}: every other Tensura screen, the Status Menu included, keeps the skill HUD hidden), and the flag is
+ * lowered again the tick after it closed; another mod that calls {@code saveAllConfigs} from one of its own screens or from a timer is not covered, which is why the flag
  * is also handed back on logout and on {@code GameShuttingDownEvent}. See {@link HudFlagGuard}. Linked to Tensura's client classes: only reached from
  * {@code HudClient} after {@code ModList.isLoaded("tensura")}.
  */
@@ -82,7 +83,7 @@ public final class TensuraHudFlags {
     }
 
     private static boolean manasScreenOpen(Screen s) {
-        return s != null && s.getClass().getName().startsWith("io.github.manasmods.");
+        return s != null && HudFlagScreens.handsBack(s.getClass().getName());
     }
 
     private static void restore() {

@@ -58,6 +58,7 @@ public final class ActionGameTests {
     static ServerPlayer vampire(GameTestHelper helper) {
         ServerPlayer p = BiteGameTests.vampire(helper);
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 4), "could not make a level 4 vampire");
+        LoadoutService.offerDefaults(p); // what the once-a-second check does for a new vampire
         return p;
     }
 
