@@ -16,7 +16,10 @@ import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.core.boss.BossState;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossRegistries;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
+import net.ofatech.supernaturalbloodlines.parts.bosses.entity.KlausEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity;
+import net.ofatech.supernaturalbloodlines.core.boss.BossForm;
+import net.ofatech.supernaturalbloodlines.core.boss.ShiftRules;
 
 /**
  * Plan 17b, "U6": the boss entities load and run on a dedicated server (this run has no client classes at all, so any reference to one from an entity,
@@ -42,6 +45,47 @@ public final class BossServerGameTests {
             helper.assertTrue(m.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) > 0, "it has no attributes");
         }
         helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void klausAndHisGeckoLibFormLoadAndRunOnADedicatedServerWhereTheRendererCannotLoad(GameTestHelper helper) {
+        helper.assertTrue(FMLEnvironment.dist == Dist.DEDICATED_SERVER, "this run is " + FMLEnvironment.dist + ", not a dedicated server");
+        helper.assertTrue(BuiltInRegistries.ENTITY_TYPE.containsKey(ResourceLocation.fromNamespaceAndPath(NS, "klaus")), "the entity type is not registered");
+        // the control: no client class is here, so a boss class that named one could not have loaded
+        helper.assertTrue(!loads("net.minecraft.client.Minecraft"), "client classes are present in this run, so it proves nothing");
+        helper.assertTrue(!loads("software.bernie.geckolib.renderer.GeoEntityRenderer"), "GeckoLib's renderer loads on the server: the proof needs a run without client classes");
+        helper.assertTrue(!loads("net.ofatech.supernaturalbloodlines.parts.bosses.client.ShiftRenderer"), "the shift renderer loads on the server");
+        helper.assertTrue(loads("software.bernie.geckolib.animatable.GeoEntity"), "GeckoLib's common animation API is not here");
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            KlausEntity k = rig.spawnKlaus();
+            for (int i = 0; i < 25; i++) {
+                k.tick();
+            }
+            helper.assertTrue(k.isAlive() && k.getType() == BossRegistries.KLAUS.get(), "the entity did not survive its first second");
+            k.startShift();
+            for (int i = 0; i < ShiftRules.SHIFT_TICKS + 5; i++) {
+                k.tick();
+            }
+            helper.assertTrue(k.form() == BossForm.BEAST, "the shift did not run on a server: " + k.form());
+            helper.assertTrue(k.getAnimatableInstanceCache() != null && k.getAnimatableInstanceCache().getManagerForId(k.getId()) != null, "GeckoLib's animation manager is not there");
+            k.doHurtTarget(helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.animal.Cow.class, k.getBoundingBox().inflate(20)).stream().findFirst()
+                    .orElseGet(() -> helper.spawn(net.minecraft.world.entity.EntityType.COW, new BlockPos(5, 1, 5)))); // the attack animation is triggered on a server too
+            CompoundTag tag = new CompoundTag();
+            k.saveWithoutId(tag);
+            KlausEntity again = KlausEntity.create(helper.getLevel());
+            again.load(tag);
+            helper.assertTrue(again.form() == BossForm.BEAST, "the form was lost through a save");
+        }
+        helper.succeed();
+    }
+
+    private static boolean loads(String name) {
+        try {
+            Class.forName(name, false, BossServerGameTests.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException | LinkageError | RuntimeException absent) { // the dist cleaner refuses a client class with a RuntimeException
+            return false;
+        }
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
@@ -78,6 +122,7 @@ public final class BossServerGameTests {
         e.bloodDay = 40;
         e.lastRollDay = 17;
         e.target = target;
+        e.arriveAt = 12345;
         var access = helper.getLevel().getServer().registryAccess();
         CompoundTag saved = index.save(new CompoundTag(), access);
         ListTag list = saved.getList("bosses", 10);
@@ -93,6 +138,8 @@ public final class BossServerGameTests {
         helper.assertTrue(r.state == BossState.OPEN && entity.equals(r.entity) && target.equals(r.target), "state or ids lost: " + r.state);
         helper.assertTrue(r.dimension.equals("minecraft:overworld") && r.pos.equals(new BlockPos(5, 64, -9)), "place lost: " + r.pos);
         helper.assertTrue(r.returnDay == 42 && r.rewarded && r.appearances == 3 && r.bloodDay == 40 && r.lastRollDay == 17, "numbers lost");
+        helper.assertTrue(r.arriveAt == 12345, "the arrival that was put off was lost: " + r.arriveAt);
+        helper.assertTrue(new BossIndex().of(BossId.KLAUS).arriveAt == -1, "a boss that has not been announced waits for an arrival");
         helper.assertTrue(back.state(BossId.KLAUS) == BossState.UNSEEN, "a bad entry was kept");
         helper.assertTrue(back.bossOf(entity).orElseThrow() == BossId.MIKAEL, "the entity is not found by its uuid");
         helper.succeed();

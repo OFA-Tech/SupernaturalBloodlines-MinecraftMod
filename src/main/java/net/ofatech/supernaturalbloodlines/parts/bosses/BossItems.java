@@ -11,6 +11,7 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.parts.bosses.item.KlausBloodItem;
 
 /** What the bosses part registers as items. Mikael's Stake is in {@code #supernaturalbloodlines:white_oak}, so it kills an open Original like the White Oak Stake. */
 public final class BossItems {
@@ -21,6 +22,10 @@ public final class BossItems {
             () -> new SwordItem(Tiers.IRON, new Item.Properties().attributes(SwordItem.createAttributes(Tiers.IRON, 3, -2.4F))
                     .component(DataComponents.UNBREAKABLE, new Unbreakable(true)).fireResistant()));
 
+    /** Klaus's reward: Original hybrid blood that also cures werewolf venom (R164). */
+    public static final DeferredItem<KlausBloodItem> KLAUS_BLOOD = ITEMS.register("klaus_blood",
+            () -> new KlausBloodItem(new Item.Properties().stacksTo(16).fireResistant()));
+
     private BossItems() {
     }
 
@@ -29,6 +34,9 @@ public final class BossItems {
         modBus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.COMBAT) {
                 e.accept(MIKAELS_STAKE);
+            }
+            if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) {
+                e.accept(KLAUS_BLOOD);
             }
         });
     }

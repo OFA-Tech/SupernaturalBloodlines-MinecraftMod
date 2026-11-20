@@ -18,6 +18,11 @@ public final class BossClock {
         return DesiccationRules.dayOf(level.getGameTime() + testOffset);
     }
 
+    /** The game time in ticks, on the same clock (and so the same test offset) as {@link #today}: when a hunted player's warning runs out. */
+    public static long nowTicks(ServerLevel level) {
+        return level.getGameTime() + testOffset;
+    }
+
     /** Tests: moves the clock by this many ticks without touching the world's time; 0 puts it back. */
     @VisibleForTesting
     public static void offsetForTests(long ticks) {

@@ -43,6 +43,8 @@ public final class BossIndex extends SavedData {
         /** The player a hunting boss came for. */
         @Nullable
         public UUID target;
+        /** Game time (ticks) at which a boss that was announced arrives; -1 when none waits (Klaus warns a hunted player first). */
+        public long arriveAt = -1;
 
         CompoundTag save(BossId id) {
             CompoundTag t = new CompoundTag();
@@ -61,6 +63,7 @@ public final class BossIndex extends SavedData {
             if (target != null) {
                 t.putUUID("target", target);
             }
+            t.putLong("arrive_at", arriveAt);
             return t;
         }
 
@@ -76,6 +79,7 @@ public final class BossIndex extends SavedData {
             e.bloodDay = t.getLong("blood_day");
             e.lastRollDay = t.contains("last_roll_day") ? t.getLong("last_roll_day") : -1;
             e.target = t.hasUUID("target") ? t.getUUID("target") : null;
+            e.arriveAt = t.contains("arrive_at") ? t.getLong("arrive_at") : -1;
             return e;
         }
     }

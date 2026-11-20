@@ -18,6 +18,7 @@ import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossDirector;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.NpcOriginalEvents;
 import net.ofatech.supernaturalbloodlines.parts.bosses.gametest.BossReviewGameTests;
 import net.ofatech.supernaturalbloodlines.parts.bosses.gametest.BossServerGameTests;
+import net.ofatech.supernaturalbloodlines.parts.bosses.gametest.KlausGameTests;
 import net.ofatech.supernaturalbloodlines.parts.bosses.gametest.MikaelGameTests;
 import net.ofatech.supernaturalbloodlines.parts.bosses.gametest.NpcOriginalGameTests;
 import net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs;
@@ -53,6 +54,7 @@ public final class BossesPart {
             e.register(NpcOriginalGameTests.class);
             e.register(MikaelGameTests.class);
             e.register(BossReviewGameTests.class);
+            e.register(KlausGameTests.class);
         });
         SupernaturalBloodlines.LOGGER.info("BossesPart enabled");
     }

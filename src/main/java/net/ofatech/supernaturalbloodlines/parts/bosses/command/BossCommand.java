@@ -74,7 +74,8 @@ public final class BossCommand {
             return 0;
         }
         var spot = BossDirector.findGround(level, p.blockPosition(), 4, 8);
-        if (spot.isEmpty() || BossDirector.spawnMikael(level, null, spot.get()).isEmpty()) {
+        boolean made = spot.isPresent() && (boss == BossId.KLAUS ? BossDirector.spawnKlaus(level, null, spot.get()).isPresent() : BossDirector.spawnMikael(level, null, spot.get()).isPresent());
+        if (!made) {
             c.getSource().sendFailure(Component.translatable("supernaturalbloodlines.boss.cmd.no_ground"));
             return 0;
         }

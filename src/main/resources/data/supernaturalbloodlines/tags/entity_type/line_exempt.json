@@ -1,6 +1,7 @@
 {
   "values": [
     { "id": "vampirism:vampire_baron", "required": false },
-        { "id": "supernaturalbloodlines:mikael", "required": false }
+        { "id": "supernaturalbloodlines:mikael", "required": false },
+        { "id": "supernaturalbloodlines:klaus", "required": false }
     ]
 }

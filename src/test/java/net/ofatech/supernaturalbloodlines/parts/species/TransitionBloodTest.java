@@ -1,6 +1,7 @@
 package net.ofatech.supernaturalbloodlines.parts.species;
 
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.core.boss.KlausRules;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionBlood;
 import org.junit.jupiter.api.Test;
 
@@ -30,6 +31,12 @@ class TransitionBloodTest {
         }
         assertFalse(TransitionBlood.accepts(true, "DRAGON"));
         assertFalse(TransitionBlood.accepts(false, ""));
+    }
+
+    @Test
+    void klausBloodIsTakenUnderEitherSetting() {
+        assertTrue(TransitionBlood.accepts(false, KlausRules.BLOOD_SPECIES.name()), "the default setting refuses Klaus's Blood");
+        assertTrue(TransitionBlood.accepts(true, KlausRules.BLOOD_SPECIES.name()), "the any-Original setting refuses Klaus's Blood");
     }
 
     @Test

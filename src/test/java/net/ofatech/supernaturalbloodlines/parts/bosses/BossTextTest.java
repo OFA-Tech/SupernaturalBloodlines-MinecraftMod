@@ -53,6 +53,27 @@ class BossTextTest {
     }
 
     @Test
+    void klausIsNamedWarnedAboutAndExplained() throws Exception {
+        JsonObject lang = lang();
+        for (String k : new String[] {"unknown", "known", "unknown_now", "known_now", "hint"}) {
+            assertTrue(lang.has("supernaturalbloodlines.boss.notice.klaus." + k), k);
+        }
+        assertTrue(lang.get("supernaturalbloodlines.boss.notice.klaus.unknown").getAsString().contains("%s seconds"), "the warning does not say how long");
+        assertEquals("Mountain ash will hold him.", lang.get("supernaturalbloodlines.boss.notice.klaus.hint").getAsString());
+        assertEquals("Klaus", lang.get("entity.supernaturalbloodlines.klaus").getAsString());
+        assertEquals("Klaus's Blood", lang.get("item.supernaturalbloodlines.klaus_blood").getAsString());
+        String body = lang.get("supernaturalbloodlines.hub.guide.bosses.body").getAsString();
+        assertTrue(body.contains("Klaus comes on a full moon") && body.contains("90 seconds") && body.contains("Werewolves must be installed") && body.contains("cures it"), body);
+    }
+
+    @Test
+    void theKlausSettingsAreLabelled() throws Exception {
+        for (String k : new String[] {"klaus_chance_per_full_moon", "klaus_hunts_players", "klaus_warning_seconds"}) {
+            assertTrue(lang().has(label(k)), k);
+        }
+    }
+
+    @Test
     void theHomeLinesAreThereForAStandingAndAFallenBossNamedOrNot() throws Exception {
         JsonObject lang = lang();
         for (String k : new String[] {"boss_near", "boss_near_named", "boss_fallen", "boss_fallen_named"}) {
