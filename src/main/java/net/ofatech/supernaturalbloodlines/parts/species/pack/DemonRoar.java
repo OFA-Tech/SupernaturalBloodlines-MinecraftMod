@@ -22,7 +22,7 @@ import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupe
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 
 /**
- * The Demon Wolf Roar (S-WOL-11, R172): the Alpha Roar's key, after the ordinary roar, with a cooldown of its own. Every other player Alpha within 32
+ * The Demon Wolf Roar (S-WOL-11, R180): the Alpha Roar's key, after the ordinary roar, with a cooldown of its own. Every other player Alpha within 32
  * blocks who is not in the roarer's pack is made to shift (the beast form, else a half form, else the human form: whichever of them the Werewolves mod lets
  * them take). Links Werewolves; called only from {@link AlphaRoar#roar}.
  */
@@ -40,10 +40,15 @@ public final class DemonRoar {
     public static List<ServerPlayer> targets(ServerPlayer roarer, Iterable<ServerPlayer> players) {
         PackIndex index = PackIndex.get(roarer.serverLevel());
         Set<UUID> pack = new HashSet<>(index.pack(roarer.getUUID()));
+        double range = LadderQuery.value(roarer, DemonRoarRules.SKILL, "range", DemonRoarRules.RANGE);
+        boolean pvp = roarer.server.isPvpAllowed();
         List<ServerPlayer> out = new java.util.ArrayList<>();
         for (ServerPlayer other : players) {
-            if (DemonRoarRules.shifts(VampirismSupernatural.isWerewolf(other), PackAccess.isAlpha(PackAccess.wolf(other).rank()), other == roarer,
-                    pack.contains(other.getUUID()), other.level() == roarer.level(), roarer.distanceToSqr(other))) {
+            // forcing a player is hurting a player: where PvP is off, in the same team and in spectator mode it does not happen
+            // (Open Parties and Claims' claims are not asked: the project has no claim check, only the party mirror)
+            DemonRoarRules.Candidate c = new DemonRoarRules.Candidate(VampirismSupernatural.isWerewolf(other), PackAccess.isAlpha(PackAccess.wolf(other).rank()), other == roarer,
+                    pack.contains(other.getUUID()), other.level() == roarer.level(), roarer.distanceToSqr(other), other.isSpectator(), other == roarer || roarer.canHarmPlayer(other));
+            if (DemonRoarRules.shifts(c, range, pvp)) {
                 out.add(other);
             }
         }
@@ -56,8 +61,9 @@ public final class DemonRoar {
             return;
         }
         long last = LAST.getOrDefault(p.getUUID(), -1L);
-        if (!DemonRoarRules.ready(last, now)) {
-            p.displayClientMessage(Component.translatable("supernaturalbloodlines.pack.demon_roar_cooldown", DemonRoarRules.secondsLeft(last, now)), true);
+        int cooldown = (int) LadderQuery.value(p, DemonRoarRules.SKILL, "cooldown_ticks", DemonRoarRules.COOLDOWN);
+        if (!DemonRoarRules.ready(last, now, cooldown)) {
+            p.displayClientMessage(Component.translatable("supernaturalbloodlines.pack.demon_roar_cooldown", DemonRoarRules.secondsLeft(last, now, cooldown)), true);
             return;
         }
         LAST.put(p.getUUID(), now);

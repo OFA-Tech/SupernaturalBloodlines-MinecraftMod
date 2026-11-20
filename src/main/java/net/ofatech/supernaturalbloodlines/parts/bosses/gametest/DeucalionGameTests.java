@@ -140,6 +140,11 @@ public final class DeucalionGameTests {
         NeoForge.EVENT_BUS.post(new LivingDeathEvent(d, killer.damageSources().playerAttack(killer)));
     }
 
+    /** Nothing was paid to this player: still no Alpha and no Roar. */
+    private static boolean unpaid(ServerPlayer p) {
+        return BloodlineAccess.get(p).wolf().rank() == Rank.OMEGA && !SupernaturalAccess.get(p).skills().contains(DemonRoarRules.SKILL);
+    }
+
     private static int stack(ServerPlayer p) {
         return BloodlineAccess.get(p).wolf().sparks();
     }
@@ -618,6 +623,229 @@ public final class DeucalionGameTests {
         helper.succeed();
     }
 
+    // ---- who is paid ----
+
+    private static void hit(DeucalionEntity d, net.minecraft.world.damagesource.DamageSource by, float amount) {
+        d.invulnerableTime = 0;
+        d.hurt(by, amount);
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theRewardGoesToThePlayerWhoDidTheMostNotToTheLastBlowAndAPetsDamageIsItsOwnersAndAMobsIsNobodys(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer a = wolf(helper, Rank.OMEGA, 0, false, 2.5);
+        LineTestPlayer b = wolf(helper, Rank.OMEGA, 0, false, 3.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(a, b);
+            DeucalionEntity d = BossDirector.spawnDeucalion(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+            hit(d, a.damageSources().playerAttack(a), 20F);
+            hit(d, b.damageSources().playerAttack(b), 10F);
+            net.minecraft.world.entity.animal.Wolf pet = helper.spawnWithNoFreeWill(EntityType.WOLF, new BlockPos(4, 1, 4));
+            pet.tame(b);
+            hit(d, helper.getLevel().damageSources().mobAttack(pet), 15F);
+            hit(d, helper.getLevel().damageSources().mobAttack(helper.spawn(EntityType.ZOMBIE, new BlockPos(5, 1, 5))), 100F);
+            hit(d, helper.getLevel().damageSources().magic(), 100F);
+            helper.assertTrue(b.getUUID().equals(d.tally().top().orElse(null)), "the one who did the most is not b (10 and the pet's 15 against a's 20): " + d.tally().entries());
+            helper.assertTrue(d.tally().entries().size() == 2, "a mob or the environment is in the tally: " + d.tally().entries());
+            kill(d, a); // a lands the last blow: it is not what counts
+            helper.assertTrue(stack(b) == 4 && SupernaturalAccess.get(b).skills().contains(DemonRoarRules.SKILL), "the one who did the most was not paid: " + stack(b));
+            helper.assertTrue(unpaid(a), "the last blow was paid");
+        } finally {
+            clean(a, b);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTieInTheDamageGoesToTheLastHitter(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        for (boolean aLast : new boolean[] {false, true}) {
+            LineTestPlayer a = wolf(helper, Rank.OMEGA, 0, false, 2.5);
+            LineTestPlayer b = wolf(helper, Rank.OMEGA, 0, false, 3.5);
+            try (BossTestRig rig = new BossTestRig(helper)) {
+                night(a, b);
+                DeucalionEntity d = BossDirector.spawnDeucalion(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+                LineTestPlayer first = aLast ? b : a;
+                LineTestPlayer last = aLast ? a : b;
+                hit(d, first.damageSources().playerAttack(first), 10F);
+                hit(d, last.damageSources().playerAttack(last), 10F);
+                kill(d, first);
+                helper.assertTrue(stack(last) == 4 && unpaid(first), "the tie did not go to the last hitter (aLast=" + aLast + "): " + stack(last) + " and " + stack(first));
+            } finally {
+                clean(a, b);
+            }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTopPlayerWhoIsNoWerewolfIsToldWhyAndNobodyElseIsPaid(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer plain = LineTestPlayer.create(helper);
+        LineTestPlayer wolf = wolf(helper, Rank.OMEGA, 0, false, 3.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(plain, wolf);
+            DeucalionEntity d = BossDirector.spawnDeucalion(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+            hit(d, plain.damageSources().playerAttack(plain), 50F);
+            hit(d, wolf.damageSources().playerAttack(wolf), 10F);
+            kill(d, wolf);
+            helper.assertTrue(plain.received("supernaturalbloodlines.boss.deucalion.reward_no_werewolf"), "the top player, no werewolf, was told nothing: " + plain.heard());
+            helper.assertTrue(unpaid(wolf), "the werewolf who landed the last blow was paid");
+            helper.assertTrue(rig.index.of(BossId.DEUCALION).rewarded, "the reward was kept for later");
+        } finally {
+            clean(plain, wolf);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTrueAlphaWhoDidTheMostIsToldTheyTakeNoSparkAndStillLearnsTheRoar(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer trueAlpha = wolf(helper, Rank.TRUE_ALPHA, 1, true, 2.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(trueAlpha);
+            DeucalionEntity d = BossDirector.spawnDeucalion(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+            hit(d, trueAlpha.damageSources().playerAttack(trueAlpha), 30F);
+            kill(d, trueAlpha);
+            helper.assertTrue(trueAlpha.received("supernaturalbloodlines.boss.deucalion.reward_true_alpha"), "the True Alpha was told nothing: " + trueAlpha.heard());
+            helper.assertTrue(stack(trueAlpha) == 1 && SupernaturalAccess.get(trueAlpha).skills().contains(DemonRoarRules.SKILL), "the True Alpha took a spark or did not learn the Roar");
+        } finally {
+            clean(trueAlpha);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theTallyIsSavedWithHimAndAnOfflineTopPlayerIsNobodyToPay(GameTestHelper helper) {
+        LineTestPlayer a = LineTestPlayer.create(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            BossDirector.useMods(b -> true);
+            DeucalionEntity d = BossDirector.spawnDeucalion(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+            d.tally().add(a.getUUID(), 12F);
+            CompoundTag tag = new CompoundTag();
+            d.saveWithoutId(tag);
+            DeucalionEntity again = DeucalionEntity.create(helper.getLevel());
+            again.load(tag);
+            helper.assertTrue(a.getUUID().equals(again.tally().top().orElse(null)) && again.tally().entries().get(a.getUUID()).amount() == 12F, "the tally was forgotten through a save: " + again.tally().entries());
+            d.dismissPack();
+        }
+        helper.succeed();
+    }
+
+    // ---- who is called ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTrueAlphaCountsAsHoldingTheFullStackSoHeComesForThemAndTheirRewardIsTheRoarOnly(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer trueAlpha = wolf(helper, Rank.TRUE_ALPHA, 1, true, 2.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(trueAlpha);
+            helper.assertTrue(PackAccess.effectiveSparks(trueAlpha) >= BossesConfig.deucalionMinSparks(), "control: a True Alpha does not count as holding enough: " + PackAccess.effectiveSparks(trueAlpha));
+            BossDirector.check(rig.server);
+            helper.assertTrue(deucalionOf(rig) != null, "he did not come for a True Alpha with the full stack");
+            helper.assertTrue(trueAlpha.received(NOTICE), "the True Alpha was not warned: " + trueAlpha.heard());
+        } finally {
+            clean(trueAlpha);
+        }
+        helper.succeed();
+    }
+
+    // ---- the pack that was asleep ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPackAlphaThatLoadsAfterHisNightIsOverGoesAndOneOfTheSameNightStaysAndAWildOneIsLeftAlone(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            var level = helper.getLevel();
+            level.setDayTime(NIGHT);
+            long today = level.getDayTime() / 24000L;
+            Mob member = net.ofatech.supernaturalbloodlines.parts.species.npc.NpcPackSpawner.spawnBossAlphas(level, helper.absolutePos(new BlockPos(3, 1, 3)), 1, today).get(0);
+            try {
+                java.util.function.BiPredicate<Boolean, Mob> joins = (disk, m) -> {
+                    var e = new net.neoforged.neoforge.event.entity.EntityJoinLevelEvent(m, level, disk);
+                    NeoForge.EVENT_BUS.post(e);
+                    return e.isCanceled();
+                };
+                helper.assertTrue(!joins.test(true, member), "a pack Alpha of this very night, in the dark, was sent away");
+                member.setData(SpeciesRegistries.NPC_MARK, NpcMark.bossPack(1, today - 1));
+                helper.assertTrue(joins.test(true, member), "a pack Alpha of an older night stayed");
+                helper.assertTrue(!joins.test(false, member), "a pack Alpha that was just made (not loaded) was sent away");
+                member.setData(SpeciesRegistries.NPC_MARK, NpcMark.bossPack(1, today));
+                level.setDayTime(MORNING);
+                helper.assertTrue(joins.test(true, member), "a pack Alpha loaded at dawn stayed");
+                level.setDayTime(NIGHT);
+                member.setData(SpeciesRegistries.NPC_MARK, NpcMark.wild(1, today - 5));
+                helper.assertTrue(!joins.test(true, member), "a wild wolf of an older night was sent away");
+            } finally {
+                member.discard();
+            }
+        }
+        helper.succeed();
+    }
+
+    // ---- the Roar and its limits ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theRoarSparesPlayersWhereThereIsNoPvpSpectatorsAndTheSameTeam(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer roarer = wolf(helper, Rank.ALPHA, 4, false, 2.5);
+        LineTestPlayer rival = wolf(helper, Rank.ALPHA, 1, false, 6.5);
+        LineTestPlayer.useRealHarm(true);
+        var server = helper.getLevel().getServer();
+        boolean pvp = server.isPvpAllowed();
+        var board = server.getScoreboard();
+        String teamName = "deu" + Integer.toHexString(helper.hashCode() & 0xfff);
+        try {
+            night(roarer, rival);
+            server.setPvpAllowed(true);
+            helper.assertTrue(DemonRoar.targets(roarer, List.of(roarer, rival)).equals(List.of(rival)), "control: the rival is not a target");
+            server.setPvpAllowed(false);
+            helper.assertTrue(DemonRoar.targets(roarer, List.of(roarer, rival)).isEmpty(), "the Roar forced a player where PvP is off");
+            server.setPvpAllowed(true);
+            rival.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+            helper.assertTrue(DemonRoar.targets(roarer, List.of(roarer, rival)).isEmpty(), "the Roar forced a spectator");
+            rival.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            var team = board.addPlayerTeam(teamName);
+            team.setAllowFriendlyFire(false);
+            board.addPlayerToTeam(roarer.getScoreboardName(), team);
+            board.addPlayerToTeam(rival.getScoreboardName(), team);
+            helper.assertTrue(roarer.getTeam() != null && rival.getTeam() != null, "control: the test players are not in the team");
+            helper.assertTrue(DemonRoar.targets(roarer, List.of(roarer, rival)).isEmpty(), "the Roar forced somebody of the roarer's own team");
+            team.setAllowFriendlyFire(true);
+            helper.assertTrue(DemonRoar.targets(roarer, List.of(roarer, rival)).equals(List.of(rival)), "a team that allows friendly fire is spared");
+        } finally {
+            LineTestPlayer.useRealHarm(false);
+            server.setPvpAllowed(pvp);
+            var t = board.getPlayerTeam(teamName);
+            if (t != null) {
+                board.removePlayerTeam(t);
+            }
+            clean(roarer, rival);
+        }
+        helper.succeed();
+    }
+
     // ---- the operator and the hint ----
 
     @GameTest(template = "empty", templateNamespace = NS)
@@ -719,6 +947,8 @@ public final class DeucalionGameTests {
             helper.succeed();
             return;
         }
+        LineTestPlayer.useRealHarm(true);
+        helper.getLevel().getServer().setPvpAllowed(true);
         LineTestPlayer roarer = wolf(helper, Rank.ALPHA, 4, false, 2.5);
         LineTestPlayer rival = wolf(helper, Rank.ALPHA, 1, false, 6.5);
         LineTestPlayer beta = wolf(helper, Rank.BETA, 0, false, 5.5);
@@ -735,6 +965,7 @@ public final class DeucalionGameTests {
         } finally {
             PackIndex.get(helper.getLevel()).leave(mate.getUUID());
             PackIndex.get(helper.getLevel()).leave(roarer.getUUID());
+            LineTestPlayer.useRealHarm(false);
             clean(roarer, rival, beta, far, mate);
         }
         helper.succeed();
@@ -746,6 +977,8 @@ public final class DeucalionGameTests {
             helper.succeed();
             return;
         }
+        LineTestPlayer.useRealHarm(true);
+        helper.getLevel().getServer().setPvpAllowed(true);
         LineTestPlayer roarer = wolf(helper, Rank.ALPHA, 4, false, 2.5);
         // 20 blocks away: out of the ordinary roar's 16 (which forces other werewolves out of their form), inside the Demon Wolf Roar's 32
         LineTestPlayer rival = wolf(helper, Rank.ALPHA, 1, false, 22.5);
@@ -781,6 +1014,7 @@ public final class DeucalionGameTests {
             helper.assertTrue(roarer.count("supernaturalbloodlines.pack.demon_roar_cooldown") == 1, "the Roar was still on its cooldown after 2400 ticks: " + roarer.heard());
             DemonRoar.reset();
         } finally {
+            LineTestPlayer.useRealHarm(false);
             clean(roarer, rival, beta);
         }
         helper.succeed();

@@ -55,6 +55,14 @@ class DeucalionRulesTest {
     }
 
     @Test
+    void aPackMemberThatLoadsAfterTheNightIsOverOrAtDawnGoes() {
+        assertFalse(DeucalionRules.packMemberStale(20, 20, false), "the same night, still dark");
+        assertTrue(DeucalionRules.packMemberStale(19, 20, false), "an older night");
+        assertTrue(DeucalionRules.packMemberStale(20, 20, true), "dawn of the same night");
+        assertFalse(DeucalionRules.packMemberStale(21, 20, false), "a mark from the future is not stale");
+    }
+
+    @Test
     void theHitboxIsTheDemonWolfsFromTheSwapTick() {
         assertEquals(new ShiftRules.Size(0.6F, 1.95F), DeucalionRules.dimensionsFor(BossForm.HUMAN, 0));
         assertEquals(new ShiftRules.Size(0.6F, 1.95F), DeucalionRules.dimensionsFor(BossForm.SHIFTING, ShiftRules.SWAP_TICK - 1));

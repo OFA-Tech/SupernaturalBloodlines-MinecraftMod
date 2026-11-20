@@ -167,7 +167,21 @@ public final class NpcPackGameTests {
                 probe.discard();
             }
             helper.assertTrue(all, "the chunks are not loaded yet");
-        }).thenExecute(body);
+        }).thenExecute(guarded(helper, body));
+        // a test that times out never reaches its body or its clean-up: let the chunks go a few ticks before the runner gives up
+        helper.runAfterDelay(95, () -> release(helper));
+    }
+
+    /** The body, and whatever way it ends (a failed assertion included) the chunks it held are let go: a failed test must not leave them forced for the next batch. */
+    static Runnable guarded(GameTestHelper helper, Runnable body) {
+        return () -> {
+            try {
+                body.run();
+            } catch (RuntimeException | Error e) {
+                release(helper);
+                throw e;
+            }
+        };
     }
 
     private static Mob mob(GameTestHelper helper, String id, double x) {
@@ -442,6 +456,25 @@ public final class NpcPackGameTests {
         Mob m = mob(helper, id, 5);
         m.discard();
         return m;
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTestThatFailsInsideItsBodyStillLetsItsChunksGo(GameTestHelper helper) {
+        BlockPos at = helper.absolutePos(new BlockPos(96, 1, 2));
+        net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(at);
+        HOLDS.merge(cp, 1, Integer::sum);
+        HELD.computeIfAbsent(helper, k -> new java.util.ArrayList<>()).add(cp);
+        boolean threw = false;
+        try {
+            guarded(helper, () -> {
+                throw new IllegalStateException("the body failed");
+            }).run();
+        } catch (IllegalStateException expected) {
+            threw = true;
+        }
+        helper.assertTrue(threw, "the failure of the body was swallowed");
+        helper.assertTrue(!HOLDS.containsKey(cp) && !HELD.containsKey(helper), "a failed body left its chunk held");
+        helper.succeed();
     }
 
     @GameTest(template = "empty", templateNamespace = NS)

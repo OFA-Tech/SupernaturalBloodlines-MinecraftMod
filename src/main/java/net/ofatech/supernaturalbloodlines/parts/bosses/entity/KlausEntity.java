@@ -66,11 +66,7 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
     private static final String ATTACK = "attack";
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    @Nullable
-    private UUID prey;
-    private int strandedTicks;
-    /** Ticks since he last landed a blow on his prey; he gives up at {@link KlausRules#GIVE_UP_AFTER}. */
-    private int sinceHit;
+    private final HuntState hunt = new HuntState();
 
     public KlausEntity(EntityType<? extends KlausEntity> type, Level level) {
         super(type, level);
@@ -138,7 +134,8 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
      * The body is swapped (tick {@link ShiftRules#SWAP_TICK}): the hitbox is the wolf's from this tick, a burst of smoke hides the change, he howls
      * (the howl animation starts on the same tick) and the model shakes (the hurt tilt, which the client plays on the entity event).
      */
-    private void swap(ServerLevel server) {
+    @Override
+    public void onSwap(ServerLevel server) {
         refreshDimensions();
         server.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE, getX(), getY() + 0.9, getZ(), 40, 0.4, 0.6, 0.4, 0.04);
         server.sendParticles(net.minecraft.core.particles.ParticleTypes.POOF, getX(), getY() + 0.6, getZ(), 20, 0.5, 0.4, 0.5, 0.08);
@@ -166,19 +163,12 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
     }
 
     private void beastBonuses(boolean on) {
-        bonus(Attributes.ATTACK_DAMAGE, BEAST_DAMAGE, ShiftRules.BEAST_DAMAGE_BONUS, on);
-        bonus(Attributes.MOVEMENT_SPEED, BEAST_SPEED, ShiftRules.BEAST_SPEED_BONUS, on);
+        ShiftCore.beastBonuses(this, BEAST_DAMAGE, BEAST_SPEED, on);
     }
 
-    private void bonus(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attribute, ResourceLocation id, double amount, boolean on) {
-        AttributeInstance a = getAttribute(attribute);
-        if (a == null) {
-            return;
-        }
-        a.removeModifier(id);
-        if (on) {
-            a.addTransientModifier(new AttributeModifier(id, amount, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
-        }
+    @Override
+    public void setShiftTicks(int ticks) {
+        entityData.set(SHIFT_TICKS, ticks);
     }
 
     @Override
@@ -197,29 +187,13 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
 
     @Override
     public void tick() {
-        // he stands still while he shifts: before the tick moves him, not after
-        if (!level().isClientSide && form() == BossForm.SHIFTING) {
-            getNavigation().stop();
-            setDeltaMovement(0.0, Math.min(0.0, getDeltaMovement().y), 0.0);
-        }
+        ShiftCore.hold(this, this);
         super.tick();
         // a fallen Klaus is not in the middle of anything: the shift counter, the swap and the howl wait until he gets up
         if (level().isClientSide || isDesiccated()) {
             return;
         }
-        BossForm form = form();
-        int before = shiftTicks();
-        int counted = ShiftRules.nextTicks(form, before);
-        if (counted != before) {
-            entityData.set(SHIFT_TICKS, counted);
-            if (counted == ShiftRules.SWAP_TICK && form == BossForm.SHIFTING && level() instanceof ServerLevel server) {
-                swap(server);
-            }
-        }
-        BossForm after = ShiftRules.afterTick(form, shiftTicks());
-        if (after != form) {
-            setForm(after);
-        }
+        ShiftCore.advance(this);
     }
 
     @Override
@@ -233,17 +207,17 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
     // ---- the hunt ----
 
     public void hunt(@Nullable UUID prey) {
-        this.prey = prey;
+        hunt.hunt(prey);
     }
 
     @Nullable
     public UUID prey() {
-        return prey;
+        return hunt.prey();
     }
 
     /** Ticks since he last landed a blow on his prey (the tests read it). */
     public int sinceHit() {
-        return sinceHit;
+        return hunt.sinceHit();
     }
 
     @Override
@@ -253,19 +227,11 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
         if (!isDesiccated() && ShiftRules.shouldShift(form(), getHealth() / getMaxHealth(), fighting != null && VampirismSupernatural.isWerewolf(fighting))) {
             startShift();
         }
-        if (prey == null || isDesiccated() || level().getServer() == null) {
-            strandedTicks = 0;
-            sinceHit = 0;
-            return;
-        }
-        strandedTicks = KlausRules.stranded(PreyGoal.find(this, prey) != null, fighting != null) ? strandedTicks + 10 : 0;
-        sinceHit += 10;
-        if (KlausRules.dawn(level().getDayTime())) {
-            withdraw("supernaturalbloodlines.boss.klaus.dawn");
-        } else if (KlausRules.givesUp(sinceHit)) {
-            withdraw(LOST_SCENT);
-        } else if (KlausRules.withdraws(strandedTicks)) {
-            withdraw(LOST_SCENT);
+        switch (hunt.period(this, !isDesiccated())) {
+            case DAWN -> withdraw("supernaturalbloodlines.boss.klaus.dawn");
+            case LOST -> withdraw(LOST_SCENT);
+            case NONE -> {
+            }
         }
     }
 
@@ -276,12 +242,7 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
 
     /** He goes, and the player he hunted (if they are here) is told why. */
     private void withdraw(@Nullable String say) {
-        if (level().getServer() != null) {
-            if (say != null && prey != null && SireCall.player(level().getServer(), prey) instanceof ServerPlayer p) {
-                p.displayClientMessage(Component.translatable(say), true);
-            }
-            BossIndex.get(level().getServer()).apply(boss(), BossRules.Event.LOST);
-        }
+        hunt.leave(this, say);
         discard();
     }
 
@@ -293,7 +254,7 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 12.0F));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        targetSelector.addGoal(2, new PreyGoal(this, () -> prey));
+        targetSelector.addGoal(2, new PreyGoal(this, () -> hunt.prey()));
     }
 
     /** R163: the bite of the wolf is werewolf venom (the effect itself, as Venom would give it: the faction rule is for players and Werewolves mobs). */
@@ -302,9 +263,7 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
         boolean hit = super.doHurtTarget(target);
         if (hit) {
             triggerAnim(CONTROLLER, ATTACK);
-            if (prey != null && prey.equals(target.getUUID())) {
-                sinceHit = 0;
-            }
+            hunt.landed(target);
             if (target instanceof LivingEntity victim
                     && KlausRules.venomBite(form(), VampirismSupernatural.isVampire(victim), victim.hasEffect(SpeciesRegistries.HYBRID_VENOM))) {
                 victim.addEffect(new MobEffectInstance(SpeciesRegistries.HYBRID_VENOM, Venom.DURATION_TICKS));
@@ -320,11 +279,7 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
         super.addAdditionalSaveData(tag);
         tag.putInt("form", form().ordinal());
         tag.putInt("shift_ticks", shiftTicks());
-        if (prey != null) {
-            tag.putUUID("prey", prey);
-        }
-        tag.putInt("stranded", strandedTicks);
-        tag.putInt("since_hit", sinceHit);
+        hunt.save(tag);
     }
 
     @Override
@@ -332,9 +287,7 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
         super.readAdditionalSaveData(tag);
         entityData.set(FORM, BossForm.of(tag.getInt("form")).ordinal());
         entityData.set(SHIFT_TICKS, tag.getInt("shift_ticks"));
-        prey = tag.hasUUID("prey") ? tag.getUUID("prey") : null;
-        strandedTicks = tag.getInt("stranded");
-        sinceHit = tag.getInt("since_hit");
+        hunt.load(tag);
         refreshDimensions();
     }
 

@@ -27,8 +27,7 @@ public final class DeucalionRewardRules {
         if (verdict == PackRules.Steal.PROTECTED) {
             return new Grant(Outcome.PROTECTED, killerSparks, false);
         }
-        int held = killerIsAlpha ? Math.max(1, killerSparks) : 0;
-        return new Grant(Outcome.GIVEN, PackRules.sparksAfterSteal(killerSparks, killerIsAlpha, bossSparks, cap), held + bossSparks > cap);
+        return new Grant(Outcome.GIVEN, PackRules.sparksAfterSteal(killerSparks, killerIsAlpha, bossSparks, cap), PackRules.capped(killerSparks, killerIsAlpha, bossSparks, cap));
     }
 
     public static boolean givesRoar(boolean werewolf) {

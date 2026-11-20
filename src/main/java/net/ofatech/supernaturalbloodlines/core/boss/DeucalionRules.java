@@ -9,7 +9,7 @@ public final class DeucalionRules {
     public static final float SHIFT_AT_HEALTH = 0.75F;
     public static final double SHIFT_RANGE = 8.0;
 
-    /** @param sparks the stacked sparks of the player's wolf state, 0 for no Alpha */
+    /** @param sparks the sparks that count ({@code PackAccess.effectiveSparks}): a True Alpha who is a werewolf holds the full stack, anyone else their own count */
     public record Target(boolean werewolf, boolean alpha, int sparks, boolean overworld, boolean spectator) {
     }
 
@@ -32,6 +32,14 @@ public final class DeucalionRules {
 
     public static boolean targetClose(double distanceSquared) {
         return distanceSquared <= SHIFT_RANGE * SHIFT_RANGE;
+    }
+
+    /**
+     * A member of his pack that loads (it was in a chunk nobody had loaded when he left or died) goes at once when the night it came is over, or at dawn: he is not
+     * here any more, and it would roam for ever. {@code markNight} is the day number of the night it came, {@code today} the day number now.
+     */
+    public static boolean packMemberStale(long markNight, long today, boolean dawn) {
+        return markNight < today || dawn;
     }
 
     /** The demon wolf is bigger than Klaus's: 1.2 wide and 2.6 tall, from the swap tick. */

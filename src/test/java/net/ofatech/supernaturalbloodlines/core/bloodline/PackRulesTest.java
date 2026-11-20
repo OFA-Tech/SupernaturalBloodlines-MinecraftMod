@@ -272,6 +272,11 @@ class PackRulesTest {
     void aKillersSparksAddUpToTheCapAndANonAlphaStartsFromNothing() {
         assertEquals(2, PackRules.sparksAfterSteal(1, true, 1, 5));
         assertEquals(5, PackRules.sparksAfterSteal(3, true, 4, 5), "past the cap");
+        assertTrue(PackRules.capped(3, true, 4, 5), "3 and 4 more is 7: the cap stopped two");
+        assertTrue(!PackRules.capped(3, true, 2, 5), "exactly the cap is not capped");
+        assertTrue(!PackRules.capped(3, false, 4, 5), "the 3 of one who is no Alpha count for nothing: 4 is under 5");
+        assertTrue(PackRules.capped(0, false, 6, 5), "a non-Alpha is capped too");
+        assertTrue(!PackRules.capped(0, true, 0, 5) && PackRules.capped(9, true, 0, 5), "nothing taken: capped only when they were over already");
         assertEquals(3, PackRules.sparksAfterSteal(1, false, 3, 5), "a non-Alpha takes all three: the rank spark and two stacked");
         assertEquals(1, PackRules.sparksAfterSteal(1, true, 1, 1), "a cap of 1 turns stacking off");
         assertEquals(1, PackRules.sparksAfterSteal(0, false, 0, 5));

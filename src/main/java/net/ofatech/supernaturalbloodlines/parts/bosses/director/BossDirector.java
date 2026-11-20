@@ -830,7 +830,9 @@ public final class BossDirector {
     private static boolean deucalionTarget(ServerPlayer p) {
         boolean werewolf = net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural.isWerewolf(p);
         var wolf = net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess.wolf(p);
-        return DeucalionRules.eligible(new DeucalionRules.Target(werewolf, net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess.isAlpha(wolf.rank()), wolf.sparks(),
+        // a True Alpha holds the full stack, so he does come for them (their reward is the Roar only)
+        return DeucalionRules.eligible(new DeucalionRules.Target(werewolf, net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess.isAlpha(wolf.rank()),
+                net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess.effectiveSparks(p),
                 p.level().dimension() == Level.OVERWORLD, p.isSpectator()), BossesConfig.deucalionMinSparks());
     }
 
@@ -895,7 +897,7 @@ public final class BossDirector {
 
     /** "He wants your sparks": on the action bar and in chat, with a howl for the hunted one alone. */
     static void noticeDeucalion(ServerPlayer target) {
-        Component text = Component.translatable("supernaturalbloodlines.boss.notice.deucalion");
+        Component text = Component.translatable("supernaturalbloodlines.boss.notice.deucalion", BossesConfig.deucalionMinSparks());
         target.displayClientMessage(text, true);
         target.sendSystemMessage(text);
         target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.deucalion.hint"));

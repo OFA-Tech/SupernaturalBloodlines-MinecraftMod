@@ -67,10 +67,8 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
     private static final String DROP = "drop";
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    @Nullable
-    private UUID prey;
-    private int strandedTicks;
-    private int sinceHit;
+    private final HuntState hunt = new HuntState();
+    private final net.ofatech.supernaturalbloodlines.core.boss.DamageTally tally = new net.ofatech.supernaturalbloodlines.core.boss.DamageTally();
     private boolean swipe;
     private final List<UUID> pack = new ArrayList<>();
 
@@ -145,19 +143,12 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
     }
 
     private void beastBonuses(boolean on) {
-        bonus(Attributes.ATTACK_DAMAGE, BEAST_DAMAGE, ShiftRules.BEAST_DAMAGE_BONUS, on);
-        bonus(Attributes.MOVEMENT_SPEED, BEAST_SPEED, ShiftRules.BEAST_SPEED_BONUS, on);
+        ShiftCore.beastBonuses(this, BEAST_DAMAGE, BEAST_SPEED, on);
     }
 
-    private void bonus(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attribute, ResourceLocation id, double amount, boolean on) {
-        AttributeInstance a = getAttribute(attribute);
-        if (a == null) {
-            return;
-        }
-        a.removeModifier(id);
-        if (on) {
-            a.addTransientModifier(new AttributeModifier(id, amount, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
-        }
+    @Override
+    public void setShiftTicks(int ticks) {
+        entityData.set(SHIFT_TICKS, ticks);
     }
 
     @Override
@@ -176,31 +167,17 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
 
     @Override
     public void tick() {
-        if (!level().isClientSide && form() == BossForm.SHIFTING) {
-            getNavigation().stop();
-            setDeltaMovement(0.0, Math.min(0.0, getDeltaMovement().y), 0.0);
-        }
+        ShiftCore.hold(this, this);
         super.tick();
         if (level().isClientSide) {
             return;
         }
-        BossForm form = form();
-        int before = shiftTicks();
-        int counted = ShiftRules.nextTicks(form, before);
-        if (counted != before) {
-            entityData.set(SHIFT_TICKS, counted);
-            if (counted == ShiftRules.SWAP_TICK && form == BossForm.SHIFTING && level() instanceof ServerLevel server) {
-                swap(server);
-            }
-        }
-        BossForm after = ShiftRules.afterTick(form, shiftTicks());
-        if (after != form) {
-            setForm(after);
-        }
+        ShiftCore.advance(this);
     }
 
     /** The body is swapped: the hitbox is the wolf's from this tick, smoke hides the change, he drops to fours and roars. */
-    private void swap(ServerLevel server) {
+    @Override
+    public void onSwap(ServerLevel server) {
         refreshDimensions();
         server.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE, getX(), getY() + 0.9, getZ(), 40, 0.4, 0.6, 0.4, 0.04);
         server.playSound(null, getX(), getY(), getZ(), net.minecraft.sounds.SoundEvents.WOLF_HOWL, net.minecraft.sounds.SoundSource.HOSTILE, 2.5F, 0.5F);
@@ -218,16 +195,21 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
     // ---- the hunt and the pack ----
 
     public void hunt(@Nullable UUID prey) {
-        this.prey = prey;
+        hunt.hunt(prey);
     }
 
     @Nullable
     public UUID prey() {
-        return prey;
+        return hunt.prey();
     }
 
     public int sinceHit() {
-        return sinceHit;
+        return hunt.sinceHit();
+    }
+
+    /** Who did the most to bring him down (R179): the damage players dealt to him, a pet's for its owner. */
+    public net.ofatech.supernaturalbloodlines.core.boss.DamageTally tally() {
+        return tally;
     }
 
     /** The Alphas that came with him (the director fills it). */
@@ -258,28 +240,17 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
         if (DeucalionRules.shouldShift(form(), getHealth() / getMaxHealth(), fighting != null && DeucalionRules.targetClose(distanceToSqr(fighting)), night)) {
             startShift();
         }
-        if (prey == null || level().getServer() == null) {
-            strandedTicks = 0;
-            sinceHit = 0;
-            return;
-        }
-        strandedTicks = KlausRules.stranded(PreyGoal.find(this, prey) != null, fighting != null) ? strandedTicks + 10 : 0;
-        sinceHit += 10;
-        if (KlausRules.dawn(level().getDayTime())) {
-            withdraw("supernaturalbloodlines.boss.deucalion.dawn");
-        } else if (KlausRules.givesUp(sinceHit) || KlausRules.withdraws(strandedTicks)) {
-            withdraw(LOST_SCENT);
+        switch (hunt.period(this, true)) {
+            case DAWN -> withdraw("supernaturalbloodlines.boss.deucalion.dawn");
+            case LOST -> withdraw(LOST_SCENT);
+            case NONE -> {
+            }
         }
     }
 
     /** He goes, his pack with him: the index says lost (so the director may send him again), and the one he hunted is told why. */
     public void withdraw(@Nullable String say) {
-        if (level().getServer() != null) {
-            if (say != null && prey != null && SireCall.player(level().getServer(), prey) instanceof ServerPlayer p) {
-                p.displayClientMessage(Component.translatable(say), true);
-            }
-            BossIndex.get(level().getServer()).apply(boss(), BossRules.Event.LOST);
-        }
+        hunt.leave(this, say);
         dismissPack();
         discard();
     }
@@ -292,7 +263,7 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 12.0F));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        targetSelector.addGoal(2, new PreyGoal(this, () -> prey));
+        targetSelector.addGoal(2, new PreyGoal(this, () -> hunt.prey()));
     }
 
     @Override
@@ -301,9 +272,7 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
         if (hit) {
             swipe = !swipe;
             triggerAnim(CONTROLLER, swipe ? SWIPE : BITE);
-            if (prey != null && prey.equals(target.getUUID())) {
-                sinceHit = 0;
-            }
+            hunt.landed(target);
         }
         return hit;
     }
@@ -315,11 +284,16 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
         super.addAdditionalSaveData(tag);
         tag.putInt("form", form().ordinal());
         tag.putInt("shift_ticks", shiftTicks());
-        if (prey != null) {
-            tag.putUUID("prey", prey);
-        }
-        tag.putInt("stranded", strandedTicks);
-        tag.putInt("since_hit", sinceHit);
+        hunt.save(tag);
+        net.minecraft.nbt.ListTag hits = new net.minecraft.nbt.ListTag();
+        tally.entries().forEach((id, entry) -> {
+            CompoundTag t = new CompoundTag();
+            t.putUUID("who", id);
+            t.putFloat("amount", entry.amount());
+            t.putLong("seq", entry.seq());
+            hits.add(t);
+        });
+        tag.put("damage", hits);
         net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
         pack.forEach(id -> list.add(NbtUtils.createUUID(id)));
         tag.put("pack", list);
@@ -330,9 +304,13 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
         super.readAdditionalSaveData(tag);
         entityData.set(FORM, BossForm.of(tag.getInt("form")).ordinal());
         entityData.set(SHIFT_TICKS, tag.getInt("shift_ticks"));
-        prey = tag.hasUUID("prey") ? tag.getUUID("prey") : null;
-        strandedTicks = tag.getInt("stranded");
-        sinceHit = tag.getInt("since_hit");
+        hunt.load(tag);
+        for (Tag t : tag.getList("damage", Tag.TAG_COMPOUND)) {
+            CompoundTag c = (CompoundTag) t;
+            if (c.hasUUID("who")) {
+                tally.put(c.getUUID("who"), c.getFloat("amount"), c.getLong("seq"));
+            }
+        }
         pack.clear();
         for (Tag t : tag.getList("pack", Tag.TAG_INT_ARRAY)) {
             pack.add(NbtUtils.loadUUID(t));

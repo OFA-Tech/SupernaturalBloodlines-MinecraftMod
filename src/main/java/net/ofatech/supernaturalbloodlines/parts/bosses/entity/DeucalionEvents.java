@@ -8,6 +8,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
@@ -16,22 +18,27 @@ import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.core.boss.BossRules;
 import net.ofatech.supernaturalbloodlines.core.boss.DemonRoarRules;
 import net.ofatech.supernaturalbloodlines.core.boss.DeucalionRewardRules;
+import net.ofatech.supernaturalbloodlines.core.boss.DeucalionRules;
+import net.ofatech.supernaturalbloodlines.core.boss.KlausRules;
 import net.ofatech.supernaturalbloodlines.core.boss.RewardRules;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
+import net.ofatech.supernaturalbloodlines.parts.bosses.deal.Deals;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossClock;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.SparkHandler;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.GrantedSkills;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * What Deucalion's death does (R171, R172) and what his pack never gives. A real death (not a prevented one) writes him down as dead and the day he died
- * (for {@code deucalion_respawn}), takes the pack with him, and pays the first time: {@link SparkHandler#grantFromBoss} for the killer, and the Demon Wolf
- * Roar to a werewolf killer. Only a player can be the killer: a mob's blow takes nothing and gives nothing, and the reward is spent all the same. The
- * Alphas of his pack give no drops and no experience (and no weak spark: {@code WeakSpark} skips them).
+ * What Deucalion's death does (R179, R180) and what his pack never gives. The damage players deal to him is counted (a pet's for its owner); a real death (not a
+ * prevented one) writes him down as dead and the day he died (for {@code deucalion_respawn}), takes the pack with him, and pays once to <b>the player who did the
+ * most to bring him down</b> (a tie goes to the last hitter): {@link SparkHandler#grantFromBoss} and, for a werewolf, the Roar. Mobs, tamed animals of nobody and the
+ * environment never count. A player who is paid nothing is told why. The Alphas of his pack give no drops and no experience (and no weak spark: {@code WeakSpark}
+ * skips them), and one that loads after his night is over goes at once.
  */
 public final class DeucalionEvents {
     private DeucalionEvents() {
@@ -40,7 +47,9 @@ public final class DeucalionEvents {
     public static void register() {
         // the skill counts while the one who holds it is a werewolf: a cured killer keeps it in the saved skills, inactive
         GrantedSkills.register(DemonRoarRules.SKILL, VampirismSupernatural::isWerewolf);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, true, LivingDamageEvent.Post.class, DeucalionEvents::onDamaged);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, false, LivingDeathEvent.class, DeucalionEvents::onDeath);
+        NeoForge.EVENT_BUS.addListener(EntityJoinLevelEvent.class, DeucalionEvents::onJoin);
         NeoForge.EVENT_BUS.addListener(LivingDropsEvent.class, e -> {
             if (isBossPack(e.getEntity())) {
                 e.setCanceled(true);
@@ -57,6 +66,23 @@ public final class DeucalionEvents {
         return e.hasData(SpeciesRegistries.NPC_MARK) && e.getData(SpeciesRegistries.NPC_MARK).kind() == NpcMark.Kind.BOSS_PACK;
     }
 
+    private static void onDamaged(LivingDamageEvent.Post e) {
+        if (e.getEntity() instanceof DeucalionEntity d && d.level() instanceof ServerLevel level) {
+            ServerPlayer who = Deals.playerBehind(level.getServer(), e.getSource().getEntity());
+            if (who != null) {
+                d.tally().add(who.getUUID(), e.getNewDamage());
+            }
+        }
+    }
+
+    /** A pack Alpha that was in an unloaded chunk when his night ended is gone as it loads. */
+    private static void onJoin(EntityJoinLevelEvent e) {
+        if (e.loadedFromDisk() && e.getLevel() instanceof ServerLevel level && isBossPack(e.getEntity())
+                && DeucalionRules.packMemberStale(e.getEntity().getData(SpeciesRegistries.NPC_MARK).night(), level.getDayTime() / 24000L, KlausRules.dawn(level.getDayTime()))) {
+            e.setCanceled(true);
+        }
+    }
+
     private static void onDeath(LivingDeathEvent e) {
         if (!(e.getEntity() instanceof DeucalionEntity d) || !(d.level() instanceof ServerLevel level)) {
             return;
@@ -65,22 +91,27 @@ public final class DeucalionEvents {
         index.apply(BossId.DEUCALION, BossRules.Event.KILLED);
         index.of(BossId.DEUCALION).returnDay = BossClock.today(level);
         d.dismissPack();
-        payReward(level, SparkHandler.killerOf(d, e.getSource()) instanceof ServerPlayer killer ? killer : null);
+        // a player's last blow counts even when nothing was tallied before it (a command, a one-shot): at least that much
+        if (d.tally().isEmpty() && SparkHandler.killerOf(d, e.getSource()) instanceof ServerPlayer killer) {
+            d.tally().add(killer.getUUID(), 1F);
+        }
+        ServerPlayer top = d.tally().top().map(id -> SireCall.player(level.getServer(), id)).orElse(null);
+        payReward(level, top);
         index.setDirty();
         BossIndex.flush(level.getServer());
     }
 
-    /** The reward, once: the sparks and the Roar for {@code killer}, who may be null. Whether it was paid. */
-    public static boolean payReward(ServerLevel level, @Nullable ServerPlayer killer) {
+    /** The reward, once: the sparks and the Roar for {@code recipient}, who may be null (nobody to pay). Whether it was paid. */
+    public static boolean payReward(ServerLevel level, @Nullable ServerPlayer recipient) {
         BossIndex index = BossIndex.get(level.getServer());
         BossIndex.Entry entry = index.of(BossId.DEUCALION);
         if (!RewardRules.pays(BossesConfig.rewardOn(), RewardRules.Defeat.DIED, entry.rewarded)) {
             return false;
         }
         entry.rewarded = true;
-        if (killer != null) {
-            SparkHandler.grantFromBoss(killer, BossesConfig.deucalionSparks());
-            giveRoar(killer);
+        if (recipient != null) {
+            SparkHandler.grantFromBoss(recipient, BossesConfig.deucalionSparks());
+            giveRoar(recipient);
         }
         return true;
     }

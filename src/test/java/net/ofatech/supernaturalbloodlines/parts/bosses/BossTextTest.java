@@ -83,6 +83,15 @@ class BossTextTest {
         JsonObject l = lang();
         String hint = l.get("supernaturalbloodlines.boss.notice.finn.hint").getAsString();
         assertEquals("Left alone, the ritual hurts no one. Hurt him badly and he will fight.", hint);
+        assertTrue(l.get("supernaturalbloodlines.boss.notice.deucalion").getAsString().contains("%s sparks"), "the warning does not give the threshold from the config");
+        assertTrue(l.get("supernaturalbloodlines.boss.notice.deucalion.hint").getAsString().contains("does the most"), "the hint does not say who is paid");
+        assertTrue(l.get("supernaturalbloodlines.hub.skill_desc.s-wol-11").getAsString().contains("player Alphas"), "the Roar's description is missing or does not say player Alphas");
+        assertTrue(l.get("supernaturalbloodlines.boss.deucalion.roar_given").getAsString().contains("other player Alphas"));
+        assertTrue(l.has("supernaturalbloodlines.boss.deucalion.reward_no_werewolf") && l.has("supernaturalbloodlines.boss.deucalion.reward_true_alpha"), "a branch of the reward is silent");
+        String deu = guide.substring(guide.indexOf("Deucalion comes on"), guide.indexOf("Nothing but white oak kills"));
+        assertTrue(deu.contains("the player who did the most to bring him down") && deu.contains("paid once") || deu.contains("The reward is paid once, to the player who did the most to bring him down"), "the Guide does not say who is paid");
+        assertTrue(deu.contains("A True Alpha counts as holding the full stack") && deu.contains("later full moon") && deu.contains("A server can let him come again"), "the Guide leaves out the True Alpha, leaving, or the respawn");
+        assertTrue(deu.contains("player Alphas") && deu.contains("PvP"), "the Guide does not say the Roar is for player Alphas and follows PvP");
         assertTrue(l.get("supernaturalbloodlines.boss.notice.kol.unknown").getAsString().contains("It knows how many you have hunted."), "Kol's notice does not say why");
         assertTrue(l.get("supernaturalbloodlines.boss.notice.kol.known").getAsString().contains("how many you have hunted"));
         assertEquals("The link will not hold.", l.get("supernaturalbloodlines.refusal.link_wont_hold").getAsString());
