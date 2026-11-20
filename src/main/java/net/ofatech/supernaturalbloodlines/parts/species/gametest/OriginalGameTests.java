@@ -654,13 +654,18 @@ public final class OriginalGameTests {
             BloodlineAccess.set(target, species(species));
             target.setShiftKeyDown(sneak);
             start(helper, rite, caster, List.of(new ItemStack(Items.GLASS_BOTTLE)));
-            return new Asked(caster.heard(), target.heard(), dropped(helper, bloodItem), dropped(helper, "minecraft:glass_bottle"));
+            return new Asked(ours(caster), ours(target), dropped(helper, bloodItem), dropped(helper, "minecraft:glass_bottle"));
         } finally {
             clearDropped(helper);
             remove(helper, caster);
             remove(helper, target);
             reset(target);
         }
+    }
+
+    /** What this mod said to the player (a species also makes other mods talk: skills learned). */
+    private static String ours(RecordingPlayer p) {
+        return java.util.Arrays.stream(p.heard().split(", ")).filter(k -> k.startsWith("supernaturalbloodlines.")).collect(java.util.stream.Collectors.joining(", "));
     }
 
     private static final String NO_EFFECT = "supernaturalbloodlines.rite.no_effect";
@@ -675,6 +680,9 @@ public final class OriginalGameTests {
     public static void bloodRitesTellACasterNothingWithoutTheTargetsConsent(GameTestHelper helper) {
         String[][] rites = {{"original_blood", "supernaturalbloodlines:original_blood", "ORIGINAL"}, {"hybrid_blood", "supernaturalbloodlines:hybrid_blood", "HYBRID"}};
         for (String[] r : rites) {
+            if (type(helper, r[0]) == null) {
+                continue; // Hybrid's Blood is there only with Werewolves
+            }
             Asked right = askedFor(helper, r[0], r[1], Species.valueOf(r[2]), false);
             Asked human = askedFor(helper, r[0], r[1], Species.NONE, false);
             Asked witch = askedFor(helper, r[0], r[1], Species.WITCH, false);
@@ -694,6 +702,10 @@ public final class OriginalGameTests {
         helper.assertTrue(notOriginal.blood() == 0 && notOriginal.bottles() == 1, "a witch who sneaks: " + notOriginal);
         helper.assertTrue(notOriginal.caster().equals(NO_EFFECT), "the caster heard " + notOriginal.caster());
         helper.assertTrue(notOriginal.target().equals("supernaturalbloodlines.refusal.no_original_blood_in_you"), "the target heard " + notOriginal.target());
+        if (type(helper, "hybrid_blood") == null) {
+            helper.succeed(); // Hybrid's Blood is there only with Werewolves
+            return;
+        }
         Asked hybrid = askedFor(helper, "hybrid_blood", "supernaturalbloodlines:hybrid_blood", Species.TRIBRID, true);
         helper.assertTrue(hybrid.blood() == 1 && hybrid.bottles() == 0 && hybrid.caster().isEmpty(), "a tribrid who sneaks: " + hybrid);
         Asked notHybrid = askedFor(helper, "hybrid_blood", "supernaturalbloodlines:hybrid_blood", Species.NONE, true);
