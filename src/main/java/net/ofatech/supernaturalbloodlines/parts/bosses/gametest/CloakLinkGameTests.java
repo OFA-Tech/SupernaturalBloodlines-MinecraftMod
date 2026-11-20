@@ -252,6 +252,40 @@ public final class CloakLinkGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void anExpiredLinkSharesNothingAndIsRemovedByTheNextHit(GameTestHelper helper) {
+        LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        try {
+            index.clear();
+            Cow a = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(7, 1, 7));
+            Sheep b = helper.spawnWithNoFreeWill(EntityType.SHEEP, new BlockPos(9, 1, 7));
+            index.add(a.getUUID(), b.getUUID(), helper.getLevel().getServer().overworld().getGameTime() - 1);
+            float before = b.getHealth();
+            a.hurt(helper.getLevel().damageSources().generic(), 4.0F);
+            helper.assertTrue(b.getHealth() == before, "an expired link still shared damage");
+            helper.assertTrue(index.count() == 0, "an expired link was not removed by the hit");
+        } finally {
+            index.clear();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLinkEndsWhenOneOfTheTwoTravelsToAnotherDimension(GameTestHelper helper) {
+        LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        try {
+            index.clear();
+            Cow a = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(7, 1, 7));
+            Sheep b = helper.spawnWithNoFreeWill(EntityType.SHEEP, new BlockPos(9, 1, 7));
+            Links.link(helper.getLevel().getServer(), a.getUUID(), b.getUUID(), 60);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent(a, net.minecraft.world.level.Level.NETHER));
+            helper.assertTrue(index.count() == 0, "the link outlived a trip to another dimension");
+        } finally {
+            index.clear();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aPartnerThatWasNotLoadedTakesTheDamageWhenItComesBackAndAtMostTheCap(GameTestHelper helper) {
         LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
         try {
@@ -271,6 +305,24 @@ public final class CloakLinkGameTests {
             index.clear();
         }
         helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void whatAnUnloadedPartnerOwesIsDealtWhenItJoinsTheLevel(GameTestHelper helper) {
+        LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        index.clear();
+        Cow cow = EntityType.COW.create(helper.getLevel());
+        index.owe(cow.getUUID(), 3.0F);
+        cow.moveTo(helper.absoluteVec(new Vec3(7.5, 1, 7.5)));
+        cow.setNoAi(true);
+        helper.getLevel().addFreshEntity(cow);
+        helper.runAfterDelay(5, () -> {
+            helper.assertTrue(cow.getHealth() < cow.getMaxHealth(), "the owed damage was not dealt when it joined: " + cow.getHealth());
+            helper.assertTrue(index.settle(cow.getUUID()) == 0F, "it still owes after paying");
+            index.clear();
+            cow.discard();
+            helper.succeed();
+        });
     }
 
     @GameTest(template = "empty", templateNamespace = NS)

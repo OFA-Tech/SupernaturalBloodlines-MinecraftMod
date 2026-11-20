@@ -38,6 +38,8 @@ Every rite in this mod is an **Enchanted circle-magic rite**: you draw a chalk c
 | [Rite of the Vampire Compass](#artifact-rites) | medium | 2,000 | | artifacts |
 | [Rite of the Hearing Device](#artifact-rites) | medium | 3,000 | | artifacts |
 | [Rite of Severance](#rite-of-severance) | medium | 6,000 | | species |
+| [Rite of Cloaking](#kols-and-esthers-grimoires) | medium | 4,000 | | bosses |
+| [Linking Spell](#kols-and-esthers-grimoires) | medium | 5,000 | | bosses |
 
 A rite listed with "Werewolves" is not loaded without it (its data file has a Werewolves condition).
 
@@ -185,3 +187,10 @@ Note: every rite that says "full moon" needs the night of the full moon, like th
 
 Witch-type performer, lunar eclipse. The Broken Line frees one player from an Original's line; the Imprisoned Original frees a player and their whole branch, with the Original, brought down (downed, dying or desiccated), held inside a closed mountain ash circle for 30 seconds. Neither rite asks the target: a witch can free an unwilling player. See [Original Bloodlines](Original-Bloodlines).
 
+## Kol's and Esther's grimoires
+
+Two rites that need a boss's reward as a key. The grimoire is **given back** when the rite works.
+
+**Rite of Cloaking** (medium circle, 4,000 power): Kol's Grimoire (read once, for its skill points), 2 phantom membrane, 1 ender pearl. A witch, siphoner, heretic or tribrid performs it. For `kol_cloak_minutes` (30) you are left out of the Vampire Compass and of a Hunter of the Five's sense. Dying ends the cloak. A plain player is told only a witch type can work it, and an unread grimoire is refused.
+
+**Linking Spell** (medium circle, 5,000 power): Esther's Grimoire, 2 lead, 2 amethyst shards. Exactly two living creatures stand in the circle (you do not count), and neither may be an Original or already linked: "The link will not hold." is the one answer to both, so it never tells you who is an Original. For `link_seconds` (60) half the damage one of them takes (`link_damage_share`) is dealt to the other, once, never back again. It ends when either dies, leaves the dimension, or its time runs out. A partner who is not loaded owes the damage until it loads (at most 20).

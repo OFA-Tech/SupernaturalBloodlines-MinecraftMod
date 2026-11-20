@@ -216,6 +216,23 @@ public final class FinnGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aFinnWhoIsBroughtDownStopsTheRitual(GameTestHelper helper) {
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            FinnEntity f = rig.spawnFinn();
+            f.setInvulnerable(true);
+            f.desiccate();
+            int before = f.ritualTicks();
+            for (int i = 0; i < 60; i++) {
+                f.tickCount++;
+                f.tick();
+            }
+            helper.assertTrue(f.ritualTicks() == before, "the ritual went on while he lay fallen: " + before + " to " + f.ritualTicks());
+            helper.assertTrue(!f.isRemoved(), "he withdrew while fallen");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void theRitualSurvivesASaveAndHeTargetsNobodyDuringIt(GameTestHelper helper) {
         try (BossTestRig rig = new BossTestRig(helper)) {
             FinnEntity f = rig.spawnFinn();

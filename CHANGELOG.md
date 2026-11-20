@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased (plan 17e: Kol and Finn)
+
+### Added
+- **Kol** (part `bosses`). By night, once a night, he comes for a Hunter of the Five whose mark has `kol_min_mark` (12) kills; fast, with a leap, and nothing else. A hunted player is told something fast is coming (his name only if discovered) and that a pack Emissary's mountain ash line will hold him. He withdraws after a minute with nobody to hunt.
+- **Kol's Grimoire.** Right-click reads it, once per copy: `kol_grimoire_sp` (5) skill points into the shared pool. The **Rite of Cloaking** (medium circle, 4000 power) needs a witch, siphoner, heretic or tribrid and a read grimoire, hides the performer from the Vampire Compass and from a Hunter of the Five's sense for `kol_cloak_minutes` (30), and gives the grimoire back. Two one-line checks (`VampireCompassItem`, `HunterInstinct.senses`), no mixin.
+- **Finn.** Under a lunar eclipse, one roll a night (`finn_chance_per_eclipse`, 0.5), he comes to a witch type or a vampire and works a ritual in a ring of particles for `finn_ritual_seconds` (120). **The ritual hurts nobody**: left alone he finishes it, the people near are told, and he leaves until a later eclipse (a week). Hurt for a fifth of his health or pulled 24 blocks from the ring, he breaks it off and fights.
+- **Esther's Grimoire** and the **Linking Spell** (medium circle, 5000 power): exactly two living creatures in the circle, never an Original, share damage for `link_seconds` (60) at `link_damage_share` (0.5), once and never in a loop; it ends with a death, a dimension change or its time. One answer for "an Original is there" and "already linked". Saved in `LinkIndex`; an unloaded partner takes what it owes when it loads (at most 20).
+- Config (`supernaturalbloodlines-bosses.toml`, 30 keys now): `kol_min_mark`, `kol_cloak_minutes`, `kol_grimoire_sp`, `finn_chance_per_eclipse`, `finn_ritual_seconds`, `link_seconds`, `link_damage_share`; all seven are Admin rows. The boss buttons and `boss kol|finn` commands of the Admin page include both. The two rites are on the Rites page (for witch types: "you can perform it").
+- Developer: `BossShots` takes `=kol` and `=finn`; `DevShots` takes `rites_cloaking` and `rites_linking`.
+
+### Changed
+- The Admin snapshot carries up to 160 rows (it was 128; the settings are 132 now).
+- `RecordingPlayer` (GameTest helper) can count and list the messages it got.
+
+### Upgrading
+- Nothing to do. `CLOAK_UNTIL` is a new attachment; a world without it reads "never cloaked". The boss index and the link list are new saved data.
+- **Rolling back to a version without Kol and Finn loses their entities, both grimoires and every running link**; the rites' data files are ignored.
+
 ## Unreleased (plan 17d: Elijah and Rebekah)
 
 ### Added

@@ -206,6 +206,22 @@ public final class KolGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void whenHeLosesTheTrailTheOneHeHuntedIsToldAndHeMayComeAgain(GameTestHelper helper) {
+        LineTestPlayer prey = hunter(helper, Species.HUNTER_OF_THE_FIVE, minMark());
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(helper, NIGHT, prey);
+            KolEntity k = rig.spawnKol();
+            k.hunt(prey.getUUID());
+            k.withdraw();
+            helper.assertTrue(prey.received("supernaturalbloodlines.boss.kol.gone"), "the hunted one was not told: " + prey.heard());
+            helper.assertTrue(rig.index.state(BossId.KOL) == BossState.LOST && k.isRemoved(), "he did not leave");
+        } finally {
+            forget(helper, prey);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void hisPreyAndHisPauseSurviveASave(GameTestHelper helper) {
         try (BossTestRig rig = new BossTestRig(helper)) {
             KolEntity k = rig.spawnKol();

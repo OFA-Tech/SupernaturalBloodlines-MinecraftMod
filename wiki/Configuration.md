@@ -174,7 +174,7 @@ Only does anything with [Enhanced Celestials 2](Enhanced-Celestials). A factor o
 
 ## bosses: `supernaturalbloodlines-bosses.toml`
 
-Needs the species part and GeckoLib. All of them are on the hub's Admin page (section Bosses). Mikael, Klaus, Elijah and Rebekah are in the game so far; the other `<boss>_enabled` switches are there for the next phases and do nothing yet. Klaus needs Werewolves.
+Needs the species part and GeckoLib. All of them are on the hub's Admin page (section Bosses). Mikael, Klaus, Elijah, Rebekah, Kol and Finn are in the game so far; the other `<boss>_enabled` switches are there for the next phases and do nothing yet. Klaus needs Werewolves.
 
 | Key | Default | What it does |
 |---|---|---|
@@ -194,6 +194,13 @@ Needs the species part and GeckoLib. All of them are on the hub's Admin page (se
 | `elijah_chance_per_day` | `0.05` | 0 to 1 | The chance, once each in-game day, that Elijah comes to a player who has discovered an Original or holds an NPC Original's blood, by day or by night. |
 | `elijah_oath_days` | `7` | 1 to 100 | In-game days the oath of Elijah's deal lasts: not to harm or desiccate any NPC Original but Mikael, and not to strike Elijah. Breaking it makes him hostile for good. |
 | `elixir_heal_fraction` | `0.5` | 0.05 to 1 | The share of their maximum health the Elixir gives back. |
+| `kol_min_mark` | `12` | 1 to 20 | Prey kills a Hunter of the Five needs before Kol comes for them, by night. |
+| `kol_cloak_minutes` | `30` | 1 to 1440 | Minutes the Rite of Cloaking hides its performer from the Vampire Compass and from a hunter's sense. |
+| `kol_grimoire_sp` | `5` | 0 to 100 | Skill points (the one shared pool) Kol's Grimoire gives when read, once per copy. |
+| `finn_chance_per_eclipse` | `0.5` | 0 to 1 | The chance, once each lunar eclipse night, that Finn comes to a witch type or a vampire and begins his ritual. |
+| `finn_ritual_seconds` | `120` | 5 to 3600 | Seconds Finn's ritual takes. Left alone it hurts nobody. |
+| `link_seconds` | `60` | 5 to 3600 | Seconds a Linking Spell holds two creatures together. |
+| `link_damage_share` | `0.5` | 0 to 1 | The part of the damage one linked creature takes that the other takes too (never passed on again). |
 | `rebekah_delay_seconds` | `60` | 0 to 3600 | How long after The Cure is made at the rite Rebekah arrives for whoever made it. |
 | `mikael_stakes_originals` | `false` | Off: Mikael does not hunt Originals or Original hybrids, and his white oak never counts as a white oak kill, so he cannot start line death. On: he hunts them, his stake kills an Original outright and their line dies with them; the hunted player is warned. |
 

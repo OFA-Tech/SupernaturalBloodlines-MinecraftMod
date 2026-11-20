@@ -128,6 +128,12 @@ The species rules, with their ids (the "R" numbers used in the code, the changel
 | **R168** | The Elixir saves from any death but a line death, `/kill`, the white oak end of an Original, a death that is part of turning into something (vampire blood still running, Original blood, an unstable hybrid transition) and the void, once; the Resurrection Ring goes first. |
 | **R169** | Rebekah answers a Cure made at the rite (not a given one) after `rebekah_delay_seconds`, only while she is unseen or lost, and hunts whoever cast it. |
 | **R170** | Elijah comes once a day to a player who knows an Original or holds an NPC Original's blood; he fights only after a broken oath or when hit. |
+| **R172** | The Rite of Cloaking hides its performer from the Vampire Compass and from a hunter's sense for `kol_cloak_minutes`; a new cloak never shortens a running one. |
+| **R173** | Kol comes by night, once a night, to a Hunter of the Five with at least `kol_min_mark` kills on the ground in the overworld; fast, with a leap; he withdraws after a minute with nobody to hunt. |
+| **R174** | Kol's Grimoire pays `kol_grimoire_sp` skill points once per copy; the Cloaking rite needs a witch type and a read grimoire and gives it back. |
+| **R175** | Finn comes under a lunar eclipse, one roll a night, to a witch type or a vampire; a finished ritual puts his next visit a week away. |
+| **R176** | Finn's ritual hurts nobody. Hurt him for a fifth of his health or pull him 24 blocks from the ring and he fights instead. |
+| **R177** | The Linking Spell links exactly two living creatures, never an Original; damage is shared once, never in a loop; it ends with a death, a dimension change or its time. |
 | **R171** | The True Cure is the same change as The Cure; an Original drinks it with no rite and their line is untouched. |
 | **R124** | When an Original lies open to white oak (desiccated, in the dying state or downed), every online member of the line is warned once per opening. A member who has not discovered the Original is never told the name. |
 | **R125** | **Rite of the Broken Line** (witch-type, lunar eclipse): frees only the target, who becomes the head of their own line (not an Original) and keeps their sire bond; the people they sired stay in the line. Wrong blood, a wrong Original and an open ring all give the same plain refusal, "The rite fails." |
