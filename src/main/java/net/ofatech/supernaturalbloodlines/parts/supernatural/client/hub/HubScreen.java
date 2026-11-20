@@ -426,6 +426,9 @@ public final class HubScreen extends Screen {
                         Component.translatable("supernaturalbloodlines.hub.confirm.stay"), Component.translatable("supernaturalbloodlines.hub.profile.action.heal"), () -> { });
             }
             default -> {
+                if (variant.startsWith("rites_")) {
+                    net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:" + variant.substring(6));
+                }
                 if (variant.startsWith("guide_")) {
                     net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.GuideLinks.devChapter(variant.substring(6));
                 }

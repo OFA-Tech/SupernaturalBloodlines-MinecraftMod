@@ -109,14 +109,21 @@ public final class DevShots {
                 }
                 continue;
             }
+            if (parts[0].equalsIgnoreCase("book")) {
+                // book:<rite path>[:last]: Enchanted's book on that rite's entry (its first spread, or the last one with the circle)
+                for (int scale : scales) {
+                    shots.add(new Shot("grimoire", HubPage.PATH, scale, false, null, "book_" + parts[1] + (parts.length > 2 ? "_" + parts[2] : "")));
+                }
+                continue;
+            }
             String theme = parts[0].toLowerCase(Locale.ROOT);
             HubClientConfig.ThemeId.valueOf(theme.toUpperCase(Locale.ROOT)); // a look that does not exist is a bad flag now, not a crash in the middle of the run
             List<HubPage> pages = new ArrayList<>();
             String variant = null;
-            if (parts.length > 1 && (parts[1].toLowerCase(Locale.ROOT).startsWith("profile") || parts[1].equalsIgnoreCase("true_alpha_dialog") || parts[1].equalsIgnoreCase("trial_warn") || parts[1].equalsIgnoreCase("rites_trial") || parts[1].equalsIgnoreCase("pack_invite") || parts[1].toLowerCase(Locale.ROOT).startsWith("pack_wolf") || parts[1].equalsIgnoreCase("rites_brother") || parts[1].equalsIgnoreCase("rites_cloaking") || parts[1].equalsIgnoreCase("rites_linking") || parts[1].equalsIgnoreCase("moon") || parts[1].toLowerCase(Locale.ROOT).startsWith("admin_") || parts[1].toLowerCase(Locale.ROOT).startsWith("guide_"))) {
+            if (parts.length > 1 && (parts[1].toLowerCase(Locale.ROOT).startsWith("profile") || parts[1].equalsIgnoreCase("true_alpha_dialog") || parts[1].equalsIgnoreCase("trial_warn") || parts[1].toLowerCase(Locale.ROOT).startsWith("rites_") || parts[1].equalsIgnoreCase("pack_invite") || parts[1].toLowerCase(Locale.ROOT).startsWith("pack_wolf") || parts[1].equalsIgnoreCase("rites_brother") || parts[1].equalsIgnoreCase("rites_cloaking") || parts[1].equalsIgnoreCase("rites_linking") || parts[1].equalsIgnoreCase("moon") || parts[1].toLowerCase(Locale.ROOT).startsWith("admin_") || parts[1].toLowerCase(Locale.ROOT).startsWith("guide_"))) {
                 // a route or a section of a page: profile, profile_beta, profile_stranger, profile_op, admin_debug, admin_speciesTensura, admin_search_max ...
                 variant = parts[1].toLowerCase(Locale.ROOT).equals(parts[1]) ? parts[1] : parts[1];
-                pages.add(variant.startsWith("guide_") ? HubPage.GUIDE : variant.startsWith("admin_") ? HubPage.ADMIN : variant.equals("moon") ? HubPage.PATH : variant.equals("trial_warn") || variant.equals("rites_trial") || variant.equals("rites_brother") || variant.equals("rites_cloaking") || variant.equals("rites_linking") ? HubPage.RITES : HubPage.PACK);
+                pages.add(variant.startsWith("rites_") ? HubPage.RITES : variant.startsWith("guide_") ? HubPage.GUIDE : variant.startsWith("admin_") ? HubPage.ADMIN : variant.equals("moon") ? HubPage.PATH : variant.equals("trial_warn") || variant.equals("rites_trial") || variant.equals("rites_brother") || variant.equals("rites_cloaking") || variant.equals("rites_linking") ? HubPage.RITES : HubPage.PACK);
             } else if (parts.length > 1 && parts[1].toLowerCase(Locale.ROOT).startsWith("line_")) {
                 // the Bloodline page in one line state: line_original, line_none, line_unknown, line_inline, line_inline_unknown, line_free, line_free_unknown
                 variant = parts[1].toLowerCase(Locale.ROOT);
@@ -215,6 +222,11 @@ public final class DevShots {
                 return;
             }
             parkCursor(mc, 1, 1); // a hover tooltip would cover the page
+            if (s.variant() != null && s.variant().startsWith("book_")) {
+                DevBook.open(s.variant().substring(5));
+                wait = 1;
+                return;
+            }
             originOverride = s.variant() != null && s.variant().startsWith("line_") ? s.variant().substring(5) : null;
             DevDemo.second = "profile_leader".equals(s.variant());
             HubClient.remember(s.page());
@@ -227,6 +239,9 @@ public final class DevShots {
             }
             wait = 1;
             return;
+        }
+        if (wait == SETTLE_TICKS - 6 && s.variant() != null && s.variant().endsWith("_last")) {
+            DevBook.turnToTheEnd();
         }
         // the pointer in the screen's corner, so no stray tooltip is in the picture
         parkCursor(mc, 0, 0);
