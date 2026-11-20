@@ -488,6 +488,24 @@ public final class ElijahGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void yourOwnBlowBreaksTheOathEvenWhenHeWasAlreadyAfterYou(GameTestHelper helper) {
+        LineTestPlayer p = null;
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            p = swornPlayer(helper, rig);
+            ElijahEntity elijah = rig.spawnElijah();
+            net.ofatech.supernaturalbloodlines.parts.bosses.entity.RebekahEntity rebekah = rig.spawnRebekah();
+            rebekah.setTarget(p);
+            strike(p, rebekah);
+            helper.assertTrue(rig.index.oathOf(p.getUUID()) == DealRules.BROKEN && elijah.hostileForGood(), "a blow of the player themselves was excused because she was after them");
+        } finally {
+            if (p != null) {
+                forget(helper, p);
+            }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void onlyTheOneHeListensToFreesHimAndOnlyByAnswering(GameTestHelper helper) {
         LineTestPlayer a = player(helper, null);
         LineTestPlayer b = player(helper, null);
