@@ -26,6 +26,10 @@ public final class BossesConfig {
     private static final ModConfigSpec.DoubleValue KLAUS_CHANCE_PER_FULL_MOON;
     private static final ModConfigSpec.BooleanValue KLAUS_HUNTS_PLAYERS;
     private static final ModConfigSpec.IntValue KLAUS_WARNING_SECONDS;
+    private static final ModConfigSpec.DoubleValue ELIJAH_CHANCE_PER_DAY;
+    private static final ModConfigSpec.IntValue ELIJAH_OATH_DAYS;
+    private static final ModConfigSpec.DoubleValue ELIXIR_HEAL_FRACTION;
+    private static final ModConfigSpec.IntValue REBEKAH_DELAY_SECONDS;
     private static final java.util.Map<BossId, ModConfigSpec.BooleanValue> ENABLED = new java.util.EnumMap<>(BossId.class);
 
     static {
@@ -57,6 +61,14 @@ public final class BossesConfig {
                 .define("klaus_hunts_players", true);
         KLAUS_WARNING_SECONDS = b.comment("How long before he arrives a hunted player is warned (a villager is never warned). 0 = he arrives at once.")
                 .defineInRange("klaus_warning_seconds", 90, 0, 600);
+        ELIJAH_CHANCE_PER_DAY = b.comment("The chance, once each in-game day, that Elijah comes to a player who has discovered an Original or holds an Original's blood (by day or by night).")
+                .defineInRange("elijah_chance_per_day", 0.05, 0.0, 1.0);
+        ELIJAH_OATH_DAYS = b.comment("In-game days the oath of Elijah's deal lasts: not to harm or desiccate any NPC Original but Mikael, and not to attack Elijah. Breaking it makes him hostile for good.")
+                .defineInRange("elijah_oath_days", 7, 1, 100);
+        ELIXIR_HEAL_FRACTION = b.comment("The part of their maximum health the Elixir gives back to the one it saves.")
+                .defineInRange("elixir_heal_fraction", 0.5, 0.05, 1.0);
+        REBEKAH_DELAY_SECONDS = b.comment("How long after The Cure is made at the rite Rebekah arrives for whoever made it. 0 = at once.")
+                .defineInRange("rebekah_delay_seconds", 60, 0, 3600);
         SPEC = b.build();
     }
 
@@ -142,6 +154,22 @@ public final class BossesConfig {
 
     public static int klausWarningSeconds() {
         return pick("klaus_warning_seconds", KLAUS_WARNING_SECONDS);
+    }
+
+    public static double elijahChance() {
+        return pick("elijah_chance_per_day", ELIJAH_CHANCE_PER_DAY);
+    }
+
+    public static int elijahOathDays() {
+        return pick("elijah_oath_days", ELIJAH_OATH_DAYS);
+    }
+
+    public static double elixirHealFraction() {
+        return pick("elixir_heal_fraction", ELIXIR_HEAL_FRACTION);
+    }
+
+    public static int rebekahDelaySeconds() {
+        return pick("rebekah_delay_seconds", REBEKAH_DELAY_SECONDS);
     }
 
     public static double mikaelNightChance() {

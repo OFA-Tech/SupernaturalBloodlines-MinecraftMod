@@ -151,6 +151,10 @@ public final class AdminEntries {
         all.add(SettingEntry.of(BOSSES_FILE, bo, "klaus_chance_per_full_moon", DOUBLE));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "klaus_hunts_players", BOOL));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "klaus_warning_seconds", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "elijah_chance_per_day", DOUBLE));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "elijah_oath_days", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "elixir_heal_fraction", DOUBLE));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "rebekah_delay_seconds", INT));
         ALL = List.copyOf(all);
     }
 

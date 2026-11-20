@@ -348,6 +348,52 @@ public final class KlausGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aWarnedArrivalIsDroppedWhenTheMoonSetsMeanwhile(GameTestHelper helper) {
+        LineTestPlayer p = carrier(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(p);
+            BossDirector.check(rig.server);
+            helper.assertTrue(rig.index.of(BossId.KLAUS).arriveAt > 0, "control: no arrival waits");
+            BossDirector.useMoon(l -> false);
+            BossClock.offsetForTests(BossesConfig.klausWarningSeconds() * 20L + 5);
+            BossDirector.check(rig.server);
+            helper.assertTrue(klausOf(rig) == null, "he came although the full moon night was over while the warning ran");
+            helper.assertTrue(rig.index.of(BossId.KLAUS).arriveAt == -1, "the arrival is still waiting");
+            helper.assertTrue(p.count(KlausEntity.LOST_SCENT) == 1, "the target was not told the wolf lost the scent: " + p.heard());
+        } finally {
+            forget(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aKlausWhoFallsMidShiftDoesNotSwapUntilHeGetsUp(GameTestHelper helper) {
+        List<String> seen = new java.util.ArrayList<>();
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            KlausEntity k = rig.spawnKlaus();
+            KlausEntity.observeSwap(e -> seen.add(e.form() + "@" + e.shiftTicks()));
+            k.startShift();
+            for (int i = 1; i < ShiftRules.SWAP_TICK; i++) {
+                k.tick();
+            }
+            int at = k.shiftTicks();
+            k.desiccate();
+            for (int i = 0; i < 40; i++) {
+                k.tick();
+            }
+            helper.assertTrue(k.form() == BossForm.SHIFTING && k.shiftTicks() == at, "a fallen Klaus went on shifting: " + k.form() + " at " + k.shiftTicks());
+            helper.assertTrue(seen.isEmpty() && Math.abs(k.getBbHeight() - 1.95F) < 1e-4, "a fallen Klaus swapped his body: " + seen + " " + k.getBbHeight());
+            k.recover();
+            for (int i = 0; i < 4; i++) {
+                k.tick();
+            }
+            helper.assertTrue(seen.size() == 1, "he did not swap once he got up: " + seen);
+        } finally {
+            KlausEntity.observeSwap(null);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void anArrivalForSomeoneWhoLeftIsDropped(GameTestHelper helper) {
         LineTestPlayer p = carrier(helper);
         try (BossTestRig rig = new BossTestRig(helper)) {

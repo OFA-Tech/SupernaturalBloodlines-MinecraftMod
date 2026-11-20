@@ -12,6 +12,8 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.KlausBloodItem;
+import net.ofatech.supernaturalbloodlines.parts.bosses.item.TheElixirItem;
+import net.ofatech.supernaturalbloodlines.parts.bosses.item.TheTrueCureItem;
 
 /** What the bosses part registers as items. Mikael's Stake is in {@code #supernaturalbloodlines:white_oak}, so it kills an open Original like the White Oak Stake. */
 public final class BossItems {
@@ -26,6 +28,12 @@ public final class BossItems {
     public static final DeferredItem<KlausBloodItem> KLAUS_BLOOD = ITEMS.register("klaus_blood",
             () -> new KlausBloodItem(new Item.Properties().stacksTo(16).fireResistant()));
 
+    /** Elijah's reward: one life back from any death but a line death or /kill (R168). */
+    public static final DeferredItem<TheElixirItem> THE_ELIXIR = ITEMS.register("the_elixir", () -> new TheElixirItem(new Item.Properties()));
+
+    /** Rebekah's reward: the cure an Original can drink without being desiccated (R171). */
+    public static final DeferredItem<TheTrueCureItem> THE_TRUE_CURE = ITEMS.register("the_true_cure", () -> new TheTrueCureItem(new Item.Properties()));
+
     private BossItems() {
     }
 
@@ -37,6 +45,8 @@ public final class BossItems {
             }
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) {
                 e.accept(KLAUS_BLOOD);
+                e.accept(THE_ELIXIR);
+                e.accept(THE_TRUE_CURE);
             }
         });
     }

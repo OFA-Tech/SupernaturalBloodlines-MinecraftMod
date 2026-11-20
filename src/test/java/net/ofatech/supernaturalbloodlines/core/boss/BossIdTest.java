@@ -29,9 +29,9 @@ class BossIdTest {
     }
 
     @Test
-    void onlyMikaelAndKlausHaveLandedInThisBuild() {
+    void onlyMikaelKlausElijahAndRebekahHaveLandedInThisBuild() {
         for (BossId b : BossId.values()) {
-            assertEquals(b == BossId.MIKAEL || b == BossId.KLAUS, b.landed(), b.id());
+            assertEquals(b == BossId.MIKAEL || b == BossId.KLAUS || b == BossId.ELIJAH || b == BossId.REBEKAH, b.landed(), b.id());
         }
     }
 

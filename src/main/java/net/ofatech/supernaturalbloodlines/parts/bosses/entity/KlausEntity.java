@@ -60,7 +60,8 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
     private static final EntityDataAccessor<Integer> SHIFT_TICKS = SynchedEntityData.defineId(KlausEntity.class, EntityDataSerializers.INT);
     private static final ResourceLocation BEAST_DAMAGE = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "klaus_beast_damage");
     private static final ResourceLocation BEAST_SPEED = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "klaus_beast_speed");
-    static final String LOST_SCENT = "supernaturalbloodlines.boss.klaus.lost_scent";
+    /** The action-bar line for a hunted player when the wolf gives up or the hunt is called off. */
+    public static final String LOST_SCENT = "supernaturalbloodlines.boss.klaus.lost_scent";
     private static final String CONTROLLER = "main";
     private static final String ATTACK = "attack";
 
@@ -200,7 +201,8 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
             setDeltaMovement(0.0, Math.min(0.0, getDeltaMovement().y), 0.0);
         }
         super.tick();
-        if (level().isClientSide) {
+        // a fallen Klaus is not in the middle of anything: the shift counter, the swap and the howl wait until he gets up
+        if (level().isClientSide || isDesiccated()) {
             return;
         }
         BossForm form = form();

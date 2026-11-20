@@ -41,7 +41,7 @@ public final class BloodlineRules {
             case GENE_AWAKENED_AS_VAMPIRE -> awakenAsHybrid(s, c, true);
             case RITE_OF_CLEANSING_BLOOD -> cure(s, c, false);
             case RITE_OF_THE_SILVER_MOON -> cure(s, c, true);
-            case DRANK_THE_CURE -> drankTheCure(s, c);
+            case DRANK_THE_CURE, DRANK_THE_TRUE_CURE -> drankTheCure(s, c); // the True Cure is the same change; what differs is who may hold it (R171)
             case LEFT_BASE_FACTION -> leftBaseFaction(s, c);
             case ANCESTRAL_CALLING_WITCH -> ancestralCalling(s, c, Species.WITCH);
             case ANCESTRAL_CALLING_SIPHONER -> ancestralCalling(s, c, Species.SIPHONER);

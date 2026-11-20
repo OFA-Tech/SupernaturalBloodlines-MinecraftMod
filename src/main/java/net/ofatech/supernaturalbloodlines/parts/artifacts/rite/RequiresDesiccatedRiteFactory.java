@@ -58,6 +58,8 @@ public record RequiresDesiccatedRiteFactory() implements RiteFactory {
                 return cancel();
             }
             level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, new ItemStack(ArtifactItems.THE_CURE.get())));
+            // U2: the one place The Cure is made, so the one signal Rebekah answers (server thread: the rite ticks in the chalk block entity)
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.ofatech.supernaturalbloodlines.core.boss.CureMadeEvent(level, pos, params.caster));
             return false;
         }
 

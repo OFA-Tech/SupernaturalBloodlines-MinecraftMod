@@ -13,6 +13,7 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
+import net.ofatech.supernaturalbloodlines.core.boss.DealRules;
 import net.ofatech.supernaturalbloodlines.core.boss.BossState;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossRegistries;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
@@ -79,6 +80,30 @@ public final class BossServerGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void elijahRebekahAndTheDealLoadOnADedicatedServerWhereTheDialogCannot(GameTestHelper helper) {
+        helper.assertTrue(FMLEnvironment.dist == Dist.DEDICATED_SERVER, "this run is " + FMLEnvironment.dist + ", not a dedicated server");
+        helper.assertTrue(!loads("net.minecraft.client.gui.screens.Screen"), "client classes are present in this run, so it proves nothing");
+        helper.assertTrue(!loads("net.ofatech.supernaturalbloodlines.parts.bosses.client.ElijahDealScreen"), "the deal dialog loads on the server");
+        helper.assertTrue(loads("net.ofatech.supernaturalbloodlines.parts.bosses.deal.Deals") && loads("net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload"),
+                "the server side of the deal does not load");
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            for (var boss : new net.minecraft.world.entity.LivingEntity[] {rig.spawnElijah(), rig.spawnRebekah()}) {
+                for (int i = 0; i < 25; i++) {
+                    boss.tick();
+                }
+                helper.assertTrue(boss.isAlive(), boss.getType() + " did not survive its first second on a server");
+                CompoundTag tag = new CompoundTag();
+                boss.saveWithoutId(tag);
+                helper.assertTrue(!tag.isEmpty(), "nothing was saved");
+            }
+            // the deal's answer reaches the server through its own handler, with no client class in the way
+            var elijah = net.ofatech.supernaturalbloodlines.parts.bosses.director.BossDirector.bossEntity(rig.server, net.ofatech.supernaturalbloodlines.core.boss.BossId.ELIJAH);
+            helper.assertTrue(elijah != null && elijah.getType() == BossRegistries.ELIJAH.get(), "Elijah is not the entity of his index entry");
+        }
+        helper.succeed();
+    }
+
     private static boolean loads(String name) {
         try {
             Class.forName(name, false, BossServerGameTests.class.getClassLoader());
@@ -124,6 +149,9 @@ public final class BossServerGameTests {
         e.target = target;
         e.arriveAt = 12345;
         e.reminded = 30;
+        e.hostile = true;
+        index.setOath(target, 77);
+        index.setOath(entity, DealRules.BROKEN);
         var access = helper.getLevel().getServer().registryAccess();
         CompoundTag saved = index.save(new CompoundTag(), access);
         ListTag list = saved.getList("bosses", 10);
@@ -141,6 +169,8 @@ public final class BossServerGameTests {
         helper.assertTrue(r.returnDay == 42 && r.rewarded && r.appearances == 3 && r.bloodDay == 40 && r.lastRollDay == 17, "numbers lost");
         helper.assertTrue(r.arriveAt == 12345, "the arrival that was put off was lost: " + r.arriveAt);
         helper.assertTrue(r.reminded == 30, "the last reminder shown was lost: " + r.reminded);
+        helper.assertTrue(back.of(BossId.MIKAEL).hostile && !new BossIndex().of(BossId.ELIJAH).hostile, "Elijah's anger was lost, or a new world starts angry");
+        helper.assertTrue(back.oathOf(target) == 77 && back.oathOf(entity) == DealRules.BROKEN && back.oathOf(UUID.randomUUID()) == DealRules.NEVER, "the oaths were lost: " + back.oathOf(target));
         helper.assertTrue(new BossIndex().of(BossId.KLAUS).arriveAt == -1, "a boss that has not been announced waits for an arrival");
         helper.assertTrue(back.state(BossId.KLAUS) == BossState.UNSEEN, "a bad entry was kept");
         helper.assertTrue(back.bossOf(entity).orElseThrow() == BossId.MIKAEL, "the entity is not found by its uuid");

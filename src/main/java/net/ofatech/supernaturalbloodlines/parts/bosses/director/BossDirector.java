@@ -32,14 +32,18 @@ import net.ofatech.supernaturalbloodlines.core.boss.BossRules;
 import net.ofatech.supernaturalbloodlines.core.boss.BossState;
 import net.ofatech.supernaturalbloodlines.core.boss.BossWeight;
 import net.ofatech.supernaturalbloodlines.core.boss.DesiccationRules;
+import net.ofatech.supernaturalbloodlines.core.boss.ElijahRules;
 import net.ofatech.supernaturalbloodlines.core.boss.KlausRules;
+import net.ofatech.supernaturalbloodlines.core.boss.RebekahRules;
 import net.ofatech.supernaturalbloodlines.core.boss.MikaelRules;
 import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
 import net.ofatech.supernaturalbloodlines.core.boss.SpawnRules;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
+import net.ofatech.supernaturalbloodlines.parts.bosses.entity.ElijahEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.KlausEntity;
+import net.ofatech.supernaturalbloodlines.parts.bosses.entity.RebekahEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.NpcOriginalBoss;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
@@ -137,6 +141,8 @@ public final class BossDirector {
         }
         mikael(server, index);
         klaus(server, index);
+        elijah(server, index);
+        rebekah(server, index);
     }
 
     // ---- lost bosses ----
@@ -373,8 +379,165 @@ public final class BossDirector {
         };
     }
 
-    // ---- Klaus ----
+    // ---- Elijah ----
 
+    /** What is true of this player for Elijah (R170): they know an Original (their own line''s, once discovered), or carry the blood of an NPC Original. */
+    public static ElijahRules.Facts elijahFacts(ServerPlayer p) {
+        boolean knows = BloodlineAccess.get(p).knownLine() != null;
+        boolean holds = false;
+        for (net.minecraft.world.item.ItemStack stack : p.getInventory().items) {
+            UUID source = stack.getItem() instanceof net.ofatech.supernaturalbloodlines.parts.species.item.SiresBloodItem
+                    ? net.ofatech.supernaturalbloodlines.parts.species.item.SiresBloodItem.sourceOf(stack) : null;
+            holds |= source != null && net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.byUuid(source).isPresent()
+                    || stack.getItem() == net.ofatech.supernaturalbloodlines.parts.bosses.BossItems.KLAUS_BLOOD.get();
+        }
+        return new ElijahRules.Facts(knows, holds, p.level().dimension() == Level.OVERWORLD, grounded.test(p), p.isSpectator());
+    }
+
+    private static volatile java.util.function.Predicate<ServerPlayer> grounded = ServerPlayer::onGround;
+
+    /** Tests: whether a player stands on the ground (a fake player never does); null puts the real answer back. */
+    @VisibleForTesting
+    public static void useOnGround(@Nullable java.util.function.Predicate<ServerPlayer> onGround) {
+        grounded = onGround == null ? ServerPlayer::onGround : onGround;
+    }
+
+    private static void elijah(MinecraftServer server, BossIndex index) {
+        BossId boss = BossId.ELIJAH;
+        BossFacts facts = new BossFacts(BossesConfig.enabled(boss), modsPresent(boss), index.state(boss), false);
+        ServerLevel overworld = server.overworld();
+        if (SpawnRules.refusal(facts).isPresent()) {
+            return;
+        }
+        long today = DesiccationRules.dayOf(overworld.getDayTime());
+        BossIndex.Entry entry = index.of(boss);
+        if (entry.lastRollDay == today) {
+            return;
+        }
+        List<ServerPlayer> eligible = new ArrayList<>();
+        for (ServerPlayer p : players.apply(overworld)) {
+            if (ElijahRules.eligible(elijahFacts(p))) {
+                eligible.add(p);
+            }
+        }
+        if (eligible.isEmpty()) {
+            return;
+        }
+        // one roll a day, the first time somebody could be visited; he is calm, so the day and a peaceful world are no reason to stay away
+        entry.lastRollDay = today;
+        index.setDirty();
+        if (roll.getAsDouble() < BossWeight.chance(BossesConfig.elijahChance(), 1.0)) {
+            ServerPlayer target = eligible.get(Math.min(eligible.size() - 1, (int) (roll.getAsDouble() * eligible.size())));
+            spawnElijah(overworld, target, null);
+        }
+    }
+
+    /** Makes Elijah 8 to 20 blocks from {@code target} (4 to 8 when there is no ground that far, or at {@code at}), and writes it down. */
+    public static Optional<ElijahEntity> spawnElijah(ServerLevel level, @Nullable ServerPlayer target, @Nullable BlockPos at) {
+        BlockPos pos = at != null ? at : target == null ? null
+                : ground.find(level, target.blockPosition(), 8, 20).or(() -> ground.find(level, target.blockPosition(), 4, 8)).orElse(null);
+        if (pos == null) {
+            return Optional.empty();
+        }
+        ElijahEntity e = ElijahEntity.create(level);
+        e.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.random.nextFloat() * 360F, 0F);
+        e.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null);
+        e.applyFactors();
+        level.addFreshEntity(e);
+        BossIndex index = BossIndex.get(level.getServer());
+        BossIndex.Entry entry = index.of(BossId.ELIJAH);
+        index.apply(BossId.ELIJAH, BossRules.Event.SPAWNED);
+        entry.appearances++;
+        index.adopt(BossId.ELIJAH, e.getUUID(), level.dimension().location().toString(), pos);
+        index.setDirty();
+        if (target != null) {
+            boolean known = LineRules.showsRoot(BloodlineAccess.get(target).knownLine(), BossId.ELIJAH.npcOriginal().orElseThrow().uuid(),
+                    SpeciesConfig.originalVisibilityAlways());
+            Component text = Component.translatable("supernaturalbloodlines.boss.notice.elijah." + (known ? "known" : "unknown"));
+            target.displayClientMessage(text, true);
+            target.sendSystemMessage(text);
+        }
+        return Optional.of(e);
+    }
+
+    // ---- Rebekah ----
+
+    /**
+     * The Rite of the Cure made a Cure (U2): she comes {@code rebekah_delay_seconds} later for whoever cast it, unless she lies down, is dead, is out there
+     * already or is switched off. A second Cure while she is already on her way does not move her.
+     */
+    public static void onCureMade(net.ofatech.supernaturalbloodlines.core.boss.CureMadeEvent e) {
+        MinecraftServer server = e.level().getServer();
+        BossIndex index = BossIndex.get(server);
+        BossId boss = BossId.REBEKAH;
+        BossIndex.Entry entry = index.of(boss);
+        BossFacts facts = new BossFacts(BossesConfig.enabled(boss), modsPresent(boss), index.state(boss), false);
+        if (e.caster() == null || SpawnRules.refusal(facts).isPresent() || !RebekahRules.answers(index.state(boss)) || entry.arriveAt >= 0) {
+            return;
+        }
+        entry.arriveAt = RebekahRules.arrivesAt(BossClock.nowTicks(server.overworld()), BossesConfig.rebekahDelaySeconds());
+        entry.target = e.caster();
+        entry.dimension = e.level().dimension().location().toString();
+        entry.pos = e.pos();
+        index.setDirty();
+    }
+
+    private static void rebekah(MinecraftServer server, BossIndex index) {
+        BossId boss = BossId.REBEKAH;
+        BossIndex.Entry entry = index.of(boss);
+        ServerLevel overworld = server.overworld();
+        if (entry.arriveAt < 0 || !RebekahRules.due(BossClock.nowTicks(overworld), entry.arriveAt)) {
+            return;
+        }
+        UUID who = entry.target;
+        BlockPos circle = entry.pos;
+        ServerLevel where = overworld;
+        for (ServerLevel level : server.getAllLevels()) {
+            if (level.dimension().location().toString().equals(entry.dimension)) {
+                where = level;
+            }
+        }
+        entry.arriveAt = -1;
+        entry.target = null;
+        index.setDirty();
+        boolean allowed = SpawnRules.refusal(new BossFacts(BossesConfig.enabled(boss), modsPresent(boss), index.state(boss), false)).isEmpty()
+                && RebekahRules.answers(index.state(boss)) && difficulty.apply(where) != Difficulty.PEACEFUL;
+        if (allowed && who != null) {
+            spawnRebekah(where, circle, SireCall.player(server, who), who);
+        }
+    }
+
+    /** Makes Rebekah 12 to 48 blocks from the circle (the nearest ground when there is none that far), hunting {@code who}, and writes it down. */
+    public static Optional<RebekahEntity> spawnRebekah(ServerLevel level, BlockPos circle, @Nullable ServerPlayer target, @Nullable UUID who) {
+        BlockPos pos = ground.find(level, circle, RebekahRules.NEAREST, RebekahRules.RADIUS).or(() -> ground.find(level, circle, 4, RebekahRules.NEAREST)).orElse(null);
+        if (pos == null) {
+            return Optional.empty();
+        }
+        RebekahEntity r = RebekahEntity.create(level);
+        r.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.random.nextFloat() * 360F, 0F);
+        r.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null);
+        r.applyFactors();
+        r.hunt(who);
+        level.addFreshEntity(r);
+        BossIndex index = BossIndex.get(level.getServer());
+        BossIndex.Entry entry = index.of(BossId.REBEKAH);
+        index.apply(BossId.REBEKAH, BossRules.Event.SPAWNED);
+        entry.appearances++;
+        entry.target = who;
+        index.adopt(BossId.REBEKAH, r.getUUID(), level.dimension().location().toString(), pos);
+        index.setDirty();
+        if (target != null) {
+            boolean known = LineRules.showsRoot(BloodlineAccess.get(target).knownLine(), BossId.REBEKAH.npcOriginal().orElseThrow().uuid(),
+                    SpeciesConfig.originalVisibilityAlways());
+            Component text = Component.translatable("supernaturalbloodlines.boss.notice.rebekah." + (known ? "known" : "unknown"));
+            target.displayClientMessage(text, true);
+            target.sendSystemMessage(text);
+            target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.rebekah.hint"));
+        }
+        return Optional.of(r);
+    }
+
+    // ---- Klaus ----
     private static boolean fullMoonNight(ServerLevel level) {
         java.util.function.Predicate<ServerLevel> hook = moonHook;
         return hook != null ? hook.test(level) : MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime());
@@ -447,7 +610,7 @@ public final class BossDirector {
         long now = BossClock.nowTicks(overworld);
         // the same questions as when he was announced, asked again at every look, not only when the time is up: the player may have died, left, changed
         // dimension or gone to spectator, the switch may have been turned off, or the world made peaceful
-        boolean still = p != null && p.isAlive() && huntable(p) && difficulty.apply(overworld) != Difficulty.PEACEFUL;
+        boolean still = p != null && p.isAlive() && huntable(p) && difficulty.apply(overworld) != Difficulty.PEACEFUL && fullMoonNight(overworld);
         boolean allowed = SpawnRules.refusal(new BossFacts(BossesConfig.enabled(BossId.KLAUS), modsPresent(BossId.KLAUS), index.state(BossId.KLAUS), false)).isEmpty();
         if (!still || !allowed) {
             entry.arriveAt = -1;
@@ -455,7 +618,7 @@ public final class BossDirector {
             entry.reminded = 0;
             index.setDirty();
             if (p != null) {
-                p.displayClientMessage(Component.translatable("supernaturalbloodlines.boss.klaus.lost_scent"), true);
+                p.displayClientMessage(Component.translatable(KlausEntity.LOST_SCENT), true);
             }
             return;
         }
