@@ -55,7 +55,7 @@ public final class Deals {
         if (DealRules.offers(until, false, elijah.isDesiccated())) {
             DealOfferPayload offer = new DealOfferPayload(elijah.getId(), BossesConfig.elijahOathDays(), ids());
             PacketDistributor.sendToPlayer(p, offer);
-            elijah.listenFor(LISTEN_TICKS);
+            elijah.listenFor(LISTEN_TICKS, p.getUUID());
             elijah.getLookControl().setLookAt(p);
             return offer;
         } else if (DealRules.binding(until, today)) {
@@ -81,7 +81,6 @@ public final class Deals {
             say(p, "gone");
             return;
         }
-        elijah.stopListening();
         if (p.distanceToSqr(elijah) > REACH * REACH) {
             say(p, "gone");
             return;
@@ -91,6 +90,8 @@ public final class Deals {
             say(p, "done");
             return;
         }
+        // they were within reach and could have been offered: this is an answer, whatever it says (and only theirs frees him)
+        elijah.stopListening(p.getUUID());
         if (answer.equals(NO_DEAL)) {
             say(p, "declined");
             return;
@@ -127,6 +128,11 @@ public final class Deals {
         return who instanceof ServerPlayer p ? p : null;
     }
 
+    /** Whether this blow, struck by {@code striker} for {@code owner}, is held against the owner (see {@link DealRules#counts}). */
+    public static boolean counts(ServerPlayer owner, @Nullable Entity striker, NpcOriginalBoss victim) {
+        return DealRules.counts(striker == owner, victim.getTarget() == owner || victim.getLastHurtByMob() == owner);
+    }
+
     /** A player struck an NPC Original: the oath breaks if it binds them and the victim is one it protects (R167). Elijah is hostile for good from then on. */
     public static void struck(ServerPlayer attacker, NpcOriginalBoss victim) {
         BossIndex index = BossIndex.get(attacker.server);
@@ -140,7 +146,7 @@ public final class Deals {
         BossIndex.flush(attacker.server);
         attacker.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.elijah.broken"));
         if (BossDirector.bossEntity(attacker.server, BossId.ELIJAH) instanceof ElijahEntity elijah) {
-            elijah.stopListening();
+            elijah.stopListening(null);
             elijah.setTarget(attacker);
         }
     }

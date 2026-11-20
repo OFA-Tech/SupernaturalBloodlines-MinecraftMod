@@ -37,7 +37,7 @@ public final class BossEvents17d {
         if (e.getEntity() instanceof NpcOriginalBoss victim && !victim.level().isClientSide && e.getAmount() > 0F) {
             // a tamed animal or a minion strikes for whoever owns it: the oath is about what you set on them too
             ServerPlayer attacker = Deals.playerBehind(victim.level().getServer(), e.getSource().getEntity());
-            if (attacker != null) {
+            if (attacker != null && Deals.counts(attacker, e.getSource().getEntity(), victim)) {
                 Deals.struck(attacker, victim);
             }
         }

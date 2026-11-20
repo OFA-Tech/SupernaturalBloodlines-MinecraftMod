@@ -457,6 +457,62 @@ public final class ElijahGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPetDefendingItsOwnerDoesNotBreakTheOath(GameTestHelper helper) {
+        LineTestPlayer owner = null;
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            owner = swornPlayer(helper, rig);
+            world(helper, DAY + 6000, owner);
+            ElijahEntity elijah = rig.spawnElijah();
+            net.ofatech.supernaturalbloodlines.parts.bosses.entity.RebekahEntity rebekah = rig.spawnRebekah();
+            net.minecraft.world.entity.animal.Wolf pet = helper.spawnWithNoFreeWill(net.minecraft.world.entity.EntityType.WOLF, new net.minecraft.core.BlockPos(2, 1, 1));
+            pet.tame(owner);
+            rebekah.setTarget(owner);
+            rebekah.hurt(pet.damageSources().mobAttack(pet), 2.0F);
+            helper.assertTrue(rig.index.oathOf(owner.getUUID()) != DealRules.BROKEN && !elijah.hostileForGood(), "the wolf defending its owner broke the oath");
+            rebekah.setTarget(null);
+            rebekah.setLastHurtByMob(owner);
+            rebekah.invulnerableTime = 0;
+            rebekah.hurt(pet.damageSources().mobAttack(pet), 2.0F);
+            helper.assertTrue(rig.index.oathOf(owner.getUUID()) != DealRules.BROKEN, "the wolf finishing what hurt its owner broke the oath");
+            rebekah.setLastHurtByMob(null);
+            rebekah.invulnerableTime = 0;
+            rebekah.hurt(pet.damageSources().mobAttack(pet), 2.0F);
+            helper.assertTrue(rig.index.oathOf(owner.getUUID()) == DealRules.BROKEN, "a wolf that attacked on its own did not break it");
+            helper.assertTrue(rig.index.oathOf(owner.getUUID()) != DealRules.NEVER, "control");
+        } finally {
+            if (owner != null) {
+                forget(helper, owner);
+            }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void onlyTheOneHeListensToFreesHimAndOnlyByAnswering(GameTestHelper helper) {
+        LineTestPlayer a = player(helper, null);
+        LineTestPlayer b = player(helper, null);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(helper, DAY + 6000, a, b);
+            ElijahEntity e = rig.spawnElijah();
+            Deals.talk(e, a);
+            helper.assertTrue(e.listening(), "control: he is not waiting");
+            Deals.choose(b, e.getId(), "nobody");
+            helper.assertTrue(e.listening(), "somebody else answering freed him from the one he was waiting for");
+            b.setPos(e.getX() + Deals.REACH + 4, e.getY(), e.getZ());
+            Deals.choose(a, e.getId() + 1000, "kol");
+            a.setPos(e.getX() + Deals.REACH + 4, e.getY(), e.getZ());
+            Deals.choose(a, e.getId(), Deals.NO_DEAL);
+            helper.assertTrue(e.listening(), "an answer from out of reach freed him");
+            a.setPos(e.getX() + 1, e.getY(), e.getZ());
+            Deals.choose(a, e.getId(), "nobody");
+            helper.assertTrue(!e.listening(), "the one he waits for gave a bad answer and he is still waiting");
+        } finally {
+            forget(helper, a, b);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aBlowFromAMobNeverBreaksAnOath(GameTestHelper helper) {
         LineTestPlayer p = null;
         try (BossTestRig rig = new BossTestRig(helper)) {

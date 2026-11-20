@@ -76,6 +76,14 @@ class DealRulesTest {
     }
 
     @Test
+    void aPetsBlowCountsAgainstItsOwnerOnlyWhenTheOriginalWasNotAfterThem() {
+        assertTrue(DealRules.counts(true, false), "their own blow");
+        assertTrue(DealRules.counts(true, true), "their own blow counts even when he was after them");
+        assertTrue(DealRules.counts(false, false), "a pet that attacks on its own");
+        assertFalse(DealRules.counts(false, true), "a pet defending its owner");
+    }
+
+    @Test
     void anAnswerIsAnIdThatIsOnTheOfferAndNothingElse() {
         assertEquals(NpcOriginal.KOL, DealRules.choose("kol").orElseThrow());
         assertTrue(DealRules.choose("elijah").isEmpty(), "his own blood is not on offer");

@@ -24,7 +24,7 @@ public final class ChoiceModel {
 
     public ChoiceModel(int choices, int rows) {
         this.choices = Math.max(0, choices);
-        this.rows = Math.max(1, rows);
+        this.rows = Math.max(0, rows);
         this.focus = this.choices;
     }
 
@@ -42,6 +42,9 @@ public final class ChoiceModel {
     }
 
     public Answer press(Key key) {
+        if (rows == 0 && (key == Key.UP || key == Key.DOWN || key == Key.TAB)) {
+            return Answer.NONE; // no choice is drawn, so none may have the focus: only the decline button can be reached
+        }
         switch (key) {
             case ESCAPE -> {
                 return new Answer(Type.CLOSE, -1);
@@ -59,7 +62,29 @@ public final class ChoiceModel {
 
     /** The wheel: {@code direction} is +1 (down) or -1 (up); it moves the list, not the focus. */
     public void wheel(int direction) {
+        if (rows == 0) {
+            return;
+        }
         scroll = Math.max(0, Math.min(Math.max(0, choices - rows), scroll + Integer.signum(direction)));
+    }
+
+    /** The mouse is over the row {@code row} of the visible list: it takes the focus. False when nothing changed or no such row is shown. */
+    public boolean focusRow(int row) {
+        int index = scroll + row;
+        if (row < 0 || row >= rows || index >= choices || focus == index) {
+            return false;
+        }
+        focus = index;
+        return true;
+    }
+
+    /** The mouse is over the decline button: it takes the focus. False when it had it already. */
+    public boolean focusDecline() {
+        if (focus == choices) {
+            return false;
+        }
+        focus = choices;
+        return true;
     }
 
     /** A click on the row {@code row} of the visible list (0 is the first one shown), or on the decline button when {@code row} is -1. */

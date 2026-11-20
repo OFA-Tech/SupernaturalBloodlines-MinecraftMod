@@ -15,7 +15,8 @@ public record ChoiceLayout(Rect panel, Rect text, Rect list, Rect decline, int t
     public static ChoiceLayout of(int screenW, int screenH, int bodyLines, int choices) {
         int w = Math.min(ConfirmLayout.MAX_W, screenW - 16);
         int chrome = ConfirmLayout.PAD + TITLE + GAP + GAP + ConfirmLayout.BUTTON_H + ConfirmLayout.PAD;
-        int limit = Math.max(chrome + ROW, screenH - 8);
+        // on a screen too small for it all, one line of text and one choice still fit (the panel then leaves the screen: nothing smaller can be used)
+        int limit = Math.max(chrome + ConfirmLayout.LINE + ROW, screenH - 8);
         int body = Math.max(1, bodyLines);
         int h = Math.min(limit, chrome + body * ConfirmLayout.LINE + Math.max(0, choices) * ROW);
         int space = h - chrome;

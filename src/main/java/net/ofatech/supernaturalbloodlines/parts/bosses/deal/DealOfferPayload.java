@@ -9,8 +9,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 
 /**
- * Server to client: Elijah offers this player a deal. {@code originals} are the ids of the Originals whose blood he may give, in order: the server
- * has already left out the one whose line the player is in when they have not discovered it, so nothing here is hidden knowledge. {@code days} is the oath.
+ * Server to client: Elijah offers this player a deal. {@code originals} are the ids of the NPC Originals whose blood he may give, in order: every one but
+ * Elijah, the same list for every player (leaving one out would tell a player which line they are in), so nothing here is hidden knowledge. {@code days}
+ * is the oath.
  */
 public record DealOfferPayload(int entityId, int days, List<String> originals) implements CustomPacketPayload {
     public static final Type<DealOfferPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "elijah_offer"));

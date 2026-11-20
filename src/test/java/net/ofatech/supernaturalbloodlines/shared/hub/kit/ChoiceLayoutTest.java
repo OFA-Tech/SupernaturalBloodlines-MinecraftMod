@@ -28,6 +28,18 @@ class ChoiceLayoutTest {
     }
 
     @Test
+    void evenAScreenTooSmallForItKeepsOneLineAndOneChoice() {
+        for (int h = 20; h <= 200; h += 10) {
+            for (int choices = 1; choices <= 6; choices++) {
+                ChoiceLayout l = ChoiceLayout.of(320, h, 9, choices);
+                assertTrue(l.rows() >= 1, "no choice is drawn at height " + h + " with " + choices + " choices");
+                assertTrue(l.textLines() >= 1);
+                assertFalse(l.list().overlaps(l.decline()) || l.text().overlaps(l.list()), "overlap at height " + h);
+            }
+        }
+    }
+
+    @Test
     void theOfferOfElijahFitsAtGuiScaleFourOn720pWithItsWholeTextAndTwoChoices() {
         // his text wraps to about 8 lines at that width; five choices do not fit, so the list scrolls
         ChoiceLayout l = ChoiceLayout.of(320, 180, 8, 5);

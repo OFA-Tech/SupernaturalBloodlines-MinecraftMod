@@ -73,6 +73,38 @@ class ChoiceModelTest {
     }
 
     @Test
+    void theMouseMovesTheFocusToTheRowOrTheDeclineButtonUnderIt() {
+        ChoiceModel m = new ChoiceModel(5, 2);
+        assertFalse(m.focusDecline(), "it had the focus already");
+        assertTrue(m.focusRow(1));
+        assertEquals(1, m.focus());
+        assertFalse(m.focusRow(1), "nothing changed");
+        m.wheel(1);
+        m.wheel(1);
+        assertTrue(m.focusRow(0));
+        assertEquals(2, m.focus(), "row 0 of a list scrolled by two is the third choice");
+        assertFalse(m.focusRow(2), "a row that is not shown");
+        assertFalse(m.focusRow(-1));
+        assertTrue(m.focusDecline());
+        assertEquals(5, m.focus());
+        assertFalse(new ChoiceModel(1, 3).focusRow(1), "a row past the last choice");
+    }
+
+    @Test
+    void whenNoChoiceIsDrawnNoChoiceCanHaveTheFocus() {
+        ChoiceModel m = new ChoiceModel(5, 0);
+        for (ChoiceModel.Key k : new ChoiceModel.Key[] {Key.UP, Key.UP, Key.TAB, Key.DOWN, Key.TAB}) {
+            m.press(k);
+            assertEquals(5, m.focus(), "the focus left the decline button for a choice nobody can see");
+        }
+        m.wheel(1);
+        assertEquals(0, m.scroll());
+        assertEquals(Type.NONE, m.click(0).type());
+        assertFalse(m.focusRow(0));
+        assertEquals(Type.DECLINE, m.press(Key.ENTER).type());
+    }
+
+    @Test
     void escapeOnlyClosesAndChoosesNothing() {
         assertEquals(Type.CLOSE, new ChoiceModel(5, 2).press(Key.ESCAPE).type());
     }

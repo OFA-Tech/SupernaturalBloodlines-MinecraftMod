@@ -9,8 +9,8 @@ import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 
 /**
- * Elijah's reward (R168). It does nothing in the hand: carried in the inventory, it brings its holder back from the next death that is not a line death
- * or {@code /kill}, once ({@code BossEvents17d}).
+ * Elijah's reward (R168). It does nothing in the hand: carried in the inventory, it brings its holder back from the next death that is not a line death,
+ * {@code /kill}, the white oak end of an Original, a death that is part of turning into something or the void, once ({@code BossEvents17d}).
  */
 public final class TheElixirItem extends Item {
     public TheElixirItem(Properties properties) {

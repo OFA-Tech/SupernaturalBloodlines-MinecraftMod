@@ -139,6 +139,10 @@ class BossTextTest {
         assertEquals("Choose whose blood you receive.", pick);
         assertTrue(oath.contains("%s") && oath.contains("harm or desiccate no NPC Original but Mikael, and do not strike me"), "the oath terms: " + oath);
         assertEquals("Break your word and I turn on you for good. No second deal.", penalty);
+        assertTrue(oath.contains("and anything you tame"), "the oath leaves out what you tame: " + oath);
+        assertTrue(lang.get("supernaturalbloodlines.boss.elijah.sworn").getAsString().contains("and anything you tame"));
+        String tooltip = lang.get("item.supernaturalbloodlines.the_elixir.tooltip").getAsString();
+        assertTrue(tooltip.contains("turning into something") && tooltip.contains("void") && tooltip.contains("/kill") && tooltip.contains("line death"), "the Elixir tooltip: " + tooltip);
         assertEquals("%s in-game day", lang.get("supernaturalbloodlines.boss.days.one").getAsString());
         assertEquals("%s in-game days", lang.get("supernaturalbloodlines.boss.days.other").getAsString());
         assertTrue(lang.get("supernaturalbloodlines.boss.elijah.sworn").getAsString().contains("harm or desiccate no NPC Original but Mikael"), "the chat line leaves the terms out");
@@ -157,6 +161,7 @@ class BossTextTest {
         String body = lang().get("supernaturalbloodlines.hub.guide.bosses.body").getAsString();
         assertTrue(body.contains("Elijah is calm") && body.contains("the Elixir") && body.contains("any but himself"), "the Elijah paragraph");
         assertTrue(body.contains("NPC Original") && body.contains("in-game days"), "the Guide says NPC Original and in-game days");
+        assertTrue(body.contains("anything you tame") && body.contains("turning into something, or the void"), "the Guide leaves out the tame and the Elixir's exceptions");
         assertTrue(body.contains("hostile for good") && body.contains("Mikael"), "the oath and its one exception");
         assertTrue(body.contains("Rebekah comes for whoever makes The Cure at the Rite of the Cure"), "the Rebekah paragraph");
         assertTrue(body.contains("A Cure that was given or dropped does not call her"), "she is not called by a given Cure");

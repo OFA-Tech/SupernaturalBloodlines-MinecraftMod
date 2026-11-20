@@ -60,14 +60,20 @@ public final class ElijahEntity extends NpcOriginalBoss {
     }
 
     private long listenUntil;
+    private java.util.UUID listenTo;
 
     /** He stands still and looks at whoever he made the offer to, for up to {@code ticks}, unless he has something to fight. */
-    public void listenFor(int ticks) {
+    public void listenFor(int ticks, java.util.UUID who) {
         listenUntil = level().getGameTime() + ticks;
+        listenTo = who;
     }
 
-    public void stopListening() {
-        listenUntil = 0;
+    /** He stops waiting: always when {@code who} is null (he has a fight now), else only if it is the one he was waiting for. */
+    public void stopListening(@org.jetbrains.annotations.Nullable java.util.UUID who) {
+        if (who == null || who.equals(listenTo)) {
+            listenUntil = 0;
+            listenTo = null;
+        }
     }
 
     public boolean listening() {

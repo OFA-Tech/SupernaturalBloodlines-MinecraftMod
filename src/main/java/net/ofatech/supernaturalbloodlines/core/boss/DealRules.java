@@ -45,6 +45,14 @@ public final class DealRules {
     }
 
     /**
+     * Whether a blow counts against the oath of {@code owner}: their own always does; a blow of something they tame (or a minion) only when the Original
+     * was not already after them, because then the animal is defending its owner and the owner has done nothing.
+     */
+    public static boolean counts(boolean byOwnerThemselves, boolean originalWasAfterOwner) {
+        return byOwnerThemselves || !originalWasAfterOwner;
+    }
+
+    /**
      * What the offer lists, in order: every NPC Original but Elijah, the same for everybody. Leaving one out for a player would tell them, by the gap,
      * which line they are in before they have discovered it. Picking their own line's Original is allowed: it gives a vial with a name on it, nothing more.
      */

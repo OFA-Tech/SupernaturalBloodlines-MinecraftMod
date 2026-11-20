@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.narration.NarratedElementType;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
@@ -18,6 +20,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.ChoiceLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.ChoiceModel;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.ConfirmLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Narration;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -101,6 +104,17 @@ public final class ElijahDealScreen extends Screen {
         return Component.empty().append(title).append(". ").append(pick()).append(" ").append(oath()).append(" ").append(penalty());
     }
 
+    /** The title and the offer, then the button that has the focus: the same lines as the hub's own dialogs (see {@link Narration}). */
+    @Override
+    protected void updateNarrationState(NarrationElementOutput output) {
+        int n = offer.originals().size();
+        Component focused = model.focus() < n ? label(model.focus()) : Component.translatable("supernaturalbloodlines.boss.elijah.no_deal");
+        String body = pick().getString() + " " + oath().getString() + " " + penalty().getString();
+        for (String line : Narration.lines(title.getString(), null, title.getString(), body, focused.getString())) {
+            output.add(NarratedElementType.TITLE, line);
+        }
+    }
+
     private static String plain(FormattedCharSequence line) {
         StringBuilder sb = new StringBuilder();
         line.accept((i, style, cp) -> {
@@ -131,13 +145,13 @@ public final class ElijahDealScreen extends Screen {
         for (int row = 0; row < layout.rows(); row++) {
             int index = model.scroll() + row;
             Rect r = layout.row(row, scrolls);
-            KitDraw.dialogButton(g, font, r, label(index), true, model.focus() == index || r.contains(mx, my), paper, accent, ink, focusColor);
+            KitDraw.dialogButton(g, font, r, label(index), true, model.focus() == index, paper, accent, ink, focusColor);
         }
         if (scrolls && theme != null) {
             theme.drawScrollbar(g, layout.list(), model.scroll(), n - layout.rows());
         }
         KitDraw.dialogButton(g, font, layout.decline(), Component.translatable("supernaturalbloodlines.boss.elijah.no_deal"), false,
-                model.focus() >= n || layout.decline().contains(mx, my), paper, accent, ink, focusColor);
+                model.focus() >= n, paper, accent, ink, focusColor);
     }
 
     @Override
@@ -153,8 +167,31 @@ public final class ElijahDealScreen extends Screen {
         if (mapped == null) {
             return super.keyPressed(key, scan, modifiers);
         }
-        answer(model.press(mapped));
+        ChoiceModel.Answer a = model.press(mapped);
+        answer(a);
+        if (a.type() == ChoiceModel.Type.NONE) {
+            triggerImmediateNarration(false); // the focus moved: say which button has it now
+        }
         return true;
+    }
+
+    /** The mouse moves the focus, so what is lit is always what Enter would do (and what the narrator last said). */
+    @Override
+    public void mouseMoved(double mx, double my) {
+        boolean moved = false;
+        if (layout.decline().contains(mx, my)) {
+            moved = model.focusDecline();
+        } else {
+            for (int row = 0; row < layout.rows(); row++) {
+                if (layout.row(row, model.scrolls()).contains(mx, my)) {
+                    moved = model.focusRow(row);
+                    break;
+                }
+            }
+        }
+        if (moved) {
+            triggerImmediateNarration(false);
+        }
     }
 
     @Override
