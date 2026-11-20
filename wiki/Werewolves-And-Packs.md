@@ -276,3 +276,11 @@ See [Known limits](Known-Limits) for the rest.
 - **A full pack.** If a player joins your pack and it then holds more than 6 Brothers, the newest ones rest and count for nothing until there is room.
 - **Peace.** A pack's own wolves and its allies never attack each other.
 - **With Tensura.** Every subordinate of a pack member (of a Brother too, one step only) joins the pack as a member, keeps Tensura's own orders, gets the pack's gifts and counts a quarter of a Beta, at most 6 per pack (`tensura_subordinates_join`).
+
+## Deucalion and the Demon Wolf Roar
+
+On a full moon night, once per world, **Deucalion** comes for a player Alpha who stacks at least 3 sparks (a server can change the number), in the overworld, and brings Alphas of his own pack. He walks as a man in glasses, drops to fours when he first falls below three quarters of his health or when his target is within 8 blocks at night, and does not change back. The hunted Alpha is told, with a howl for them alone. He leaves with the dawn, taking his pack with him. A mountain ash line laid by a pack Emissary holds him. Needs Werewolves.
+
+He dies like any wolf. **Whoever kills him takes his sparks** (4, unless the server changes it) by the rules of a stolen spark: a True Alpha takes nothing, an open and protected path to True Alpha destroys them, and the stack never goes above `max_stacked_sparks`. Someone who is no werewolf gets nothing. His pack gives no weak spark and no drops.
+
+A werewolf who kills him also learns the **Demon Wolf Roar** (it shows on the Skills page). On the Alpha Roar's key, after the ordinary roar, with a cooldown of its own (2 minutes), the other Alphas within 32 blocks who are not in your pack are forced to shift. A Beta is not. It counts only while you are a werewolf.

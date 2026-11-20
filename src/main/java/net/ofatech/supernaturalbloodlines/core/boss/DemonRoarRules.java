@@ -1,7 +1,7 @@
 package net.ofatech.supernaturalbloodlines.core.boss;
 
 /**
- * R172: the Demon Wolf Roar (S-WOL-11, granted by Deucalion's death). On the Alpha Roar's key, with a cooldown of its own, it makes the other Alphas
+ * R180: the Demon Wolf Roar (S-WOL-11, granted by Deucalion's death). On the Alpha Roar's key, with a cooldown of its own, it makes the other Alphas
  * within 32 blocks shift: player Alphas who are werewolves, not the roarer and not the roarer's own pack. A Beta is not an Alpha and does not shift.
  */
 public final class DemonRoarRules {

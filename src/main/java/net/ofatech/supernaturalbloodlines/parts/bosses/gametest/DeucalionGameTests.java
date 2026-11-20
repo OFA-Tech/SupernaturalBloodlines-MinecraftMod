@@ -555,6 +555,55 @@ public final class DeucalionGameTests {
         helper.succeed();
     }
 
+    // ---- the operator and the hint ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void onlyAPackEmissarysMountainAshLineHoldsDeucalionAPlainOneDoesNot(GameTestHelper helper) {
+        if (!net.minecraft.core.registries.BuiltInRegistries.BLOCK.containsKey(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(NS, "mountain_ash_line"))) {
+            helper.succeed(); // the artifacts part is off: there is no line to test
+            return;
+        }
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            BossDirector.useMods(b -> true);
+            DeucalionEntity d = BossDirector.spawnDeucalion(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+            BlockPos at = new BlockPos(6, 1, 6);
+            helper.setBlock(at, net.ofatech.supernaturalbloodlines.parts.artifacts.MountainAsh.LINE.get().defaultBlockState());
+            BlockPos abs = helper.absolutePos(at);
+            var level = helper.getLevel();
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(d, level, abs), "a plain line holds Deucalion: the hint says an Emissary's line does");
+            ((net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlockEntity) level.getBlockEntity(abs)).setEmissary(true);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(d, level, abs), "an Emissary's line does not hold Deucalion, but his hint says it does");
+            d.dismissPack();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theCommandSpawnsDeucalionWithHisPackAndResetsHimAndItRefusesWithoutWerewolves(GameTestHelper helper) {
+        BossTestRig.fixedGround();
+        LineTestPlayer op = LineTestPlayer.create(helper);
+        op.setPos(helper.absoluteVec(new Vec3(2.5, 1, 2.5)));
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            var source = op.createCommandSourceStack().withPermission(2);
+            var commands = rig.server.getCommands();
+            BossDirector.useMods(b -> false);
+            commands.performPrefixedCommand(source, "supernaturalbloodlines boss deucalion spawn");
+            helper.assertTrue(deucalionOf(rig) == null, "the command spawned him without Werewolves");
+            BossDirector.useMods(b -> true);
+            commands.performPrefixedCommand(source, "supernaturalbloodlines boss deucalion spawn");
+            DeucalionEntity d = deucalionOf(rig);
+            helper.assertTrue(d != null && rig.index.state(BossId.DEUCALION) == BossState.ACTIVE, "the command did not spawn him");
+            helper.assertTrue(!werewolves() || d.pack().size() == BossesConfig.deucalionPackAlphas(), "the command's Deucalion came with " + d.pack().size() + " Alphas");
+            commands.performPrefixedCommand(source, "supernaturalbloodlines boss deucalion reset");
+            helper.assertTrue(deucalionOf(rig) == null || deucalionOf(rig).isRemoved(), "the reset left him in the world");
+            helper.assertTrue(rig.index.state(BossId.DEUCALION) == BossState.UNSEEN, "the reset left him in the index: " + rig.index.state(BossId.DEUCALION));
+            helper.assertTrue(d.pack().isEmpty() && packNear(helper, d).isEmpty(), "the reset left his pack in the world");
+        } finally {
+            op.discard();
+        }
+        helper.succeed();
+    }
+
     // ---- the respawn ----
 
     @GameTest(template = "empty", templateNamespace = NS)

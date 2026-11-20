@@ -1,7 +1,7 @@
 package net.ofatech.supernaturalbloodlines.core.boss;
 
 /**
- * R170: Deucalion comes on a full moon night for a player Alpha who stacks at least {@code deucalion_min_sparks} sparks, once per world, and brings his
+ * R178: Deucalion comes on a full moon night for a player Alpha who stacks at least {@code deucalion_min_sparks} sparks, once per world, and brings his
  * Alpha pack. He walks as a man, drops to fours when he first falls below three quarters of his health or when his target is within 8 blocks at night,
  * and does not change back. He dies for good unless {@code deucalion_respawn} is on and enough days have passed.
  */

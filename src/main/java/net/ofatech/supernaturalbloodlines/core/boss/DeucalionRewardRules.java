@@ -3,7 +3,7 @@ package net.ofatech.supernaturalbloodlines.core.boss;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackRules;
 
 /**
- * R171: what the killer of Deucalion gets. His sparks go through the same ladder as a stolen spark ({@link PackRules#stealBy}): a killer who is no werewolf
+ * R179: what the killer of Deucalion gets. His sparks go through the same ladder as a stolen spark ({@link PackRules#stealBy}): a killer who is no werewolf
  * gets nothing (the spark goes nowhere and the Roar needs the faction); a True Alpha takes nothing; a killer whose path to True Alpha is open and
  * protected has the sparks destroyed; anybody else takes them, up to {@code max_stacked_sparks}. The Demon Wolf Roar is for a werewolf.
  */
