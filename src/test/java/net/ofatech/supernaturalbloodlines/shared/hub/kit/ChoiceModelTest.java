@@ -38,6 +38,20 @@ class ChoiceModelTest {
     }
 
     @Test
+    void walkingDownOffTheLastShownRowScrollsItIntoView() {
+        ChoiceModel m = new ChoiceModel(5, 2);
+        m.press(Key.TAB);
+        assertEquals(0, m.focus());
+        m.press(Key.DOWN);
+        assertEquals(0, m.scroll());
+        m.press(Key.DOWN);
+        assertEquals(2, m.focus());
+        assertEquals(1, m.scroll(), "the third choice is not on screen yet");
+        m.press(Key.DOWN);
+        assertEquals(2, m.scroll());
+    }
+
+    @Test
     void enterChoosesTheFocusedChoiceByItsPositionInTheWholeList() {
         ChoiceModel m = new ChoiceModel(5, 2);
         m.press(Key.UP);

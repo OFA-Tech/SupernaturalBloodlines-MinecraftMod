@@ -482,7 +482,6 @@ public final class BossDirector {
         index.setDirty();
         ServerPlayer caster = SireCall.player(server, e.caster());
         if (caster != null) {
-            caster.displayClientMessage(Component.translatable("supernaturalbloodlines.boss.rebekah.rite"), true);
             caster.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.rebekah.rite"));
         }
     }

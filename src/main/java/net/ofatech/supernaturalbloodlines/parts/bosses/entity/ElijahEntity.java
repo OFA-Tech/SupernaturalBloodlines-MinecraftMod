@@ -86,11 +86,6 @@ public final class ElijahEntity extends NpcOriginalBoss {
             public boolean canUse() {
                 return listening();
             }
-
-            @Override
-            public void start() {
-                getNavigation().stop();
-            }
         });
         goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2, false));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.7));
