@@ -124,9 +124,6 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
 
     public void setForm(BossForm form) {
         entityData.set(FORM, form.ordinal());
-        if (form == BossForm.HUMAN) {
-            entityData.set(SHIFT_TICKS, 0);
-        }
         if (!level().isClientSide) {
             beastBonuses(form == BossForm.BEAST);
         }

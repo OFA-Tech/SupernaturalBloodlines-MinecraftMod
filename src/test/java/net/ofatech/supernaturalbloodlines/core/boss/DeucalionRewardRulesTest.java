@@ -47,6 +47,8 @@ class DeucalionRewardRulesTest {
         assertTrue(g.capped());
         assertFalse(DeucalionRewardRules.sparks(true, Steal.TAKES, true, 2, 4, 6).capped(), "exactly the cap is not capped");
         assertTrue(DeucalionRewardRules.sparks(true, Steal.TAKES, false, 0, 7, 6).capped(), "a non-Alpha is capped too");
+        assertFalse(DeucalionRewardRules.sparks(true, Steal.TAKES, false, 3, 4, 6).capped(), "the stored 3 of one who is no Alpha count for nothing");
+        assertEquals(4, DeucalionRewardRules.sparks(true, Steal.TAKES, false, 3, 4, 6).sparksAfter());
     }
 
     @Test

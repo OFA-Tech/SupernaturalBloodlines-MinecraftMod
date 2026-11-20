@@ -411,10 +411,61 @@ public final class DeucalionGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aHuntWhoseBlowsLandOnSomebodyElseEndsAfterFourMinutesAndOneOnTheirPreyStartsTheCountAgain(GameTestHelper helper) {
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            BossDirector.useMods(b -> true);
+            helper.getLevel().setDayTime(NIGHT);
+            DeucalionEntity d = BossDirector.spawnDeucalion(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+            net.minecraft.world.entity.animal.Cow prey = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(30, 1, 2));
+            net.minecraft.world.entity.animal.Cow other = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(3, 1, 3));
+            for (var cow : List.of(prey, other)) {
+                cow.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(10_000);
+                cow.setHealth(10_000);
+            }
+            d.hunt(prey.getUUID());
+            d.setNoAi(true); // he stays where he is: nothing is hit but what the test hits
+            run(d, 100);
+            helper.assertTrue(d.sinceHit() >= 100 && !d.isRemoved(), "the count did not run: " + d.sinceHit());
+            d.doHurtTarget(other);
+            helper.assertTrue(d.sinceHit() >= 100, "a blow on somebody else started the count again");
+            d.doHurtTarget(prey);
+            helper.assertTrue(d.sinceHit() == 0, "a blow on his prey did not start the count again: " + d.sinceHit());
+            run(d, KlausRules.GIVE_UP_AFTER - 100);
+            helper.assertTrue(!d.isRemoved(), "he gave up before four minutes");
+            run(d, 200);
+            helper.assertTrue(d.isRemoved() && rig.index.state(BossId.DEUCALION) == BossState.LOST, "he did not give up after four minutes without a hit on a prey he could see");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void withNoGroundForHimTheNightIsSpentAndHeDoesNotTryAgainUntilTheNextFullMoon(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer p = wolf(helper, Rank.ALPHA, 4, true, 2.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(p);
+            BossDirector.useGround((level, from, min, max) -> java.util.Optional.empty());
+            BossDirector.check(rig.server);
+            helper.assertTrue(deucalionOf(rig) == null && !p.received(NOTICE), "he came with no ground, or the Alpha was told he did");
+            helper.assertTrue(rig.index.of(BossId.DEUCALION).lastRollDay != -1, "the night was not spent");
+            BossTestRig.fixedGround();
+            BossDirector.check(rig.server);
+            helper.assertTrue(deucalionOf(rig) == null, "he tried a second time on the same night");
+        } finally {
+            clean(p);
+        }
+        helper.succeed();
+    }
+
     // ---- his death ----
 
     private static BossTestRig dead(GameTestHelper helper, ServerPlayer killer, LineTestPlayer... others) {
         BossTestRig rig = new BossTestRig(helper);
+        rig.day(12);
         night(killer);
         DeucalionEntity d = BossDirector.spawnDeucalion(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
         kill(d, killer);
@@ -433,7 +484,9 @@ public final class DeucalionGameTests {
             helper.assertTrue(SupernaturalAccess.get(killer).skills().contains(DemonRoarRules.SKILL), "the killer did not learn the Roar");
             helper.assertTrue(killer.received("supernaturalbloodlines.pack.spark_gained") && killer.received("supernaturalbloodlines.boss.deucalion.roar_given"), "the killer was not told: " + killer.heard());
             helper.assertTrue(rig.index.state(BossId.DEUCALION) == BossState.DEAD && rig.index.of(BossId.DEUCALION).rewarded, "the index says " + rig.index.state(BossId.DEUCALION));
-            helper.assertTrue(rig.index.of(BossId.DEUCALION).returnDay == BossClock.today(helper.getLevel()), "the day he died was not written down");
+            helper.assertTrue(rig.index.of(BossId.DEUCALION).returnDay == 12 && BossClock.today(helper.getLevel()) == 12, "the day he died was not written down: " + rig.index.of(BossId.DEUCALION).returnDay);
+            DeucalionEvents.giveRoar(killer);
+            helper.assertTrue(killer.count("supernaturalbloodlines.boss.deucalion.roar_given") == 1, "the Roar was given twice");
             helper.assertTrue(DeucalionEvents.payReward(helper.getLevel(), killer) == false && stack(killer) == 4, "the reward was paid twice");
             helper.assertTrue(helper.getLevel().getEntitiesOfClass(Mob.class, new net.minecraft.world.phys.AABB(helper.absolutePos(new BlockPos(2, 1, 2))).inflate(60), DeucalionEvents::isBossPack).isEmpty(),
                     "his pack stayed after his death");
@@ -688,9 +741,11 @@ public final class DeucalionGameTests {
             return;
         }
         LineTestPlayer roarer = wolf(helper, Rank.ALPHA, 4, false, 2.5);
-        LineTestPlayer rival = wolf(helper, Rank.ALPHA, 1, false, 6.5);
-        LineTestPlayer beta = wolf(helper, Rank.BETA, 0, false, 5.5);
+        // 20 blocks away: out of the ordinary roar's 16 (which forces other werewolves out of their form), inside the Demon Wolf Roar's 32
+        LineTestPlayer rival = wolf(helper, Rank.ALPHA, 1, false, 22.5);
+        LineTestPlayer beta = wolf(helper, Rank.BETA, 0, false, 21.5);
         try {
+            helper.assertTrue(VampirismAPI.factionPlayerHandler(rival).setFactionAndLevel(WReference.WEREWOLF_FACTION, 14), "the rival could not be levelled");
             night(roarer, rival, beta);
             unlockForms(rival);
             unlockForms(beta);
@@ -703,6 +758,10 @@ public final class DeucalionGameTests {
             now += 5000;
             helper.assertTrue(AlphaRoar.roar(roarer, now) == null, "the Alpha Roar was refused with the skill");
             helper.assertTrue(inForm(rival) && rival.received(SHIFTED), "the rival Alpha was not forced to shift, or not told: " + rival.heard());
+            DemonRoar.reset(); // ready again at once: a rival who is in the form already must stay in it (a toggle would switch it off)
+            now += AlphaRoar.cooldown(roarer) + 10;
+            helper.assertTrue(AlphaRoar.roar(roarer, now) == null, "the Alpha Roar was refused again");
+            helper.assertTrue(inForm(rival), "a second Demon Wolf Roar switched the rival's form off");
             helper.assertTrue(!inForm(beta) && !beta.received(SHIFTED), "a Beta was shifted by the Demon Wolf Roar");
             helper.assertTrue(roarer.count("supernaturalbloodlines.pack.demon_roar_cooldown") == 0, "the Roar's cooldown message came on its first use");
             FormHelper.deactivateWerewolfActions((IWerewolfPlayer) VampirismAPI.factionPlayerHandler(rival).getCurrentFactionPlayer().orElseThrow());
