@@ -113,11 +113,11 @@ public final class BossShots {
         private List<Panel> build(Minecraft mc) {
             List<Panel> list = new ArrayList<>();
             if (klaus) {
-                list.add(new Panel("the man, from the front", klaus(mc, BossForm.HUMAN, 0), 180f, 2.6f, 0f));
-                list.add(new Panel("the man, from behind", klaus(mc, BossForm.HUMAN, 0), 0f, 2.6f, 0f));
-                list.add(new Panel("shifting, half way", klaus(mc, BossForm.SHIFTING, ShiftRules.SHIFT_TICKS / 2 + 5), 160f, 3.2f, 0f));
-                list.add(new Panel("the wolf, from the front", klaus(mc, BossForm.BEAST, ShiftRules.HOWL_TICKS), 150f, 3.4f, 0f));
-                list.add(new Panel("the wolf, from the side", klaus(mc, BossForm.BEAST, ShiftRules.HOWL_TICKS), 90f, 4.2f, 0f));
+                list.add(new Panel("the man, from the front", klaus(mc, BossForm.HUMAN, 0), 180f, 3.0f, 0f));
+                list.add(new Panel("the man, from behind", klaus(mc, BossForm.HUMAN, 0), 0f, 3.0f, 0f));
+                list.add(new Panel("shifting, half way", klaus(mc, BossForm.SHIFTING, ShiftRules.SHIFT_TICKS / 2 + 5), 160f, 4.6f, 0f));
+                list.add(new Panel("the wolf, from the front", klaus(mc, BossForm.BEAST, ShiftRules.HOWL_TICKS), 150f, 4.6f, 0f));
+                list.add(new Panel("the wolf, from the side", klaus(mc, BossForm.BEAST, ShiftRules.HOWL_TICKS), 90f, 7.0f, 0f));
             } else {
                 String[] names = {"from the front", "from the side", "from behind", "desiccated"};
                 float[] yaws = {180f, 90f, 0f, 0f};
