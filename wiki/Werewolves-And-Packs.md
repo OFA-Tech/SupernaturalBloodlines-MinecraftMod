@@ -283,4 +283,4 @@ On a full moon night, once per world, **Deucalion** comes for a player Alpha who
 
 He dies like any wolf. **Whoever kills him takes his sparks** (4, unless the server changes it) by the rules of a stolen spark: a True Alpha takes nothing, an open and protected path to True Alpha destroys them, and the stack never goes above `max_stacked_sparks`. Someone who is no werewolf gets nothing. His pack gives no weak spark and no drops.
 
-A werewolf who kills him also learns the **Demon Wolf Roar** (it shows on the Skills page). On the Alpha Roar's key, after the ordinary roar, with a cooldown of its own (2 minutes), the other Alphas within 32 blocks who are not in your pack are forced to shift. A Beta is not. It counts only while you are a werewolf.
+A werewolf who kills him also learns the **Demon Wolf Roar** (it shows on the Skills page). On the Alpha Roar's key, after the ordinary roar, with a cooldown of its own (2 minutes), the other Alphas within 32 blocks who are not in your pack are forced to shift. A Beta is not. It counts only while you are a werewolf, and only with the supernatural part on (the skill catalogue is its).

@@ -74,6 +74,11 @@ public final class DeucalionGameTests {
     private DeucalionGameTests() {
     }
 
+    /** The skill catalogue belongs to the supernatural part: without it S-WOL-11 is saved but inert, so a skill that counts cannot be tested. */
+    private static boolean skillsOn() {
+        return net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural");
+    }
+
     private static boolean werewolves() {
         return ModList.get().isLoaded("werewolves");
     }
@@ -329,6 +334,7 @@ public final class DeucalionGameTests {
         try (BossTestRig rig = new BossTestRig(helper)) {
             BossDirector.useMods(b -> true);
             DeucalionEntity d = BossDirector.spawnDeucalion(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+            d.setNoAi(true); // he stays where he is: the distances are the test's, not his walk's
             p.setPos(d.position().add(5.0, 0.0, 0.0));
             d.setTarget(p);
             helper.getLevel().setDayTime(MORNING);
@@ -736,7 +742,7 @@ public final class DeucalionGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theRoarWorksOnTheAlphaRoarsKeyOnlyForWhoHoldsItWithItsOwnCooldown(GameTestHelper helper) {
-        if (!werewolves()) {
+        if (!werewolves() || !skillsOn()) {
             helper.succeed();
             return;
         }
@@ -794,7 +800,7 @@ public final class DeucalionGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theRoarIsInactiveForAHolderWhoStoppedBeingAWerewolf(GameTestHelper helper) {
-        if (!werewolves()) {
+        if (!werewolves() || !skillsOn()) {
             helper.succeed();
             return;
         }
