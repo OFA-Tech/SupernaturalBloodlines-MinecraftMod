@@ -216,6 +216,12 @@ public final class CloakLinkGameTests {
             RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
             assertRefusedTheSameWay(helper, caster, ++n, "a boss");
             kol.discard();
+            // a boss that is not one of ours and not an Original: the Wither, which cannot change dimensions and is in the boss tag
+            var wither = helper.spawnWithNoFreeWill(EntityType.WITHER, new BlockPos(8, 1, 9));
+            wither.setNoAi(true);
+            RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
+            assertRefusedTheSameWay(helper, caster, ++n, "the Wither");
+            wither.discard();
             // a player Original, standing in the circle (sneaking: she would consent, but she is an Original)
             RecordingPlayer original = RecordingPlayer.create(helper);
             BloodlineAccess.set(original, BloodlineState.NONE.toBuilder().species(Species.ORIGINAL).build());
@@ -234,10 +240,11 @@ public final class CloakLinkGameTests {
             // another player who does not agree, and one who does but where PvP is off
             LineTestPlayer other = LineTestPlayer.create(helper);
             RiteTestSupport.place(helper, other);
+            boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+            helper.getLevel().getServer().setPvpAllowed(true); // so only the sneaking decides
             RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
             assertRefusedTheSameWay(helper, caster, ++n, "a player who is not sneaking");
             other.setShiftKeyDown(true);
-            boolean pvp = helper.getLevel().getServer().isPvpAllowed();
             helper.getLevel().getServer().setPvpAllowed(false);
             try {
                 RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
@@ -274,6 +281,31 @@ public final class CloakLinkGameTests {
             helper.assertTrue(caster.received(LinkingRiteFactory.DONE), "the witch was not told");
             Links.expire(helper.getLevel().getServer(), helper.getLevel().getServer().overworld().getGameTime() + 61 * 20);
             helper.assertTrue(other.received(Links.ENDED) && index.count() == 0, "the player was not told the link ended: " + other.heard());
+        } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
+            index.clear();
+            RiteTestSupport.remove(helper, other);
+            RiteTestSupport.remove(helper, caster);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void bothLinkedPlayersAreToldWhicheverSideTheyAreOn(GameTestHelper helper) {
+        RecordingPlayer caster = RecordingPlayer.create(helper);
+        RecordingPlayer other = RecordingPlayer.create(helper);
+        BloodlineAccess.set(caster, BloodlineState.NONE.toBuilder().species(Species.WITCH).witchLayer(true).build());
+        RiteTestSupport.place(helper, caster);
+        LinkIndex index = LinkIndex.get(helper.getLevel().getServer());
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+        helper.getLevel().getServer().setPvpAllowed(true);
+        try {
+            index.clear();
+            RiteTestSupport.place(helper, other);
+            other.setShiftKeyDown(true);
+            RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
+            helper.assertTrue(index.count() == 1, "the two players were not linked: " + caster.heard());
+            helper.assertTrue(caster.received(Links.LINKED) && other.received(Links.LINKED), "one of the two linked players was not told: " + caster.heard() + " / " + other.heard());
         } finally {
             helper.getLevel().getServer().setPvpAllowed(pvp);
             index.clear();
@@ -337,11 +369,19 @@ public final class CloakLinkGameTests {
             Sheep b = sheep(helper, 9, 1, 7);
             Cow high = cow(helper, 8, 6, 8); // five blocks above the circle
             Cow far = cow(helper, 15, 1, 8); // seven blocks along it, beyond the chalk
+            RiteTestSupport.centre(helper); // (the corner of the square that holds the circle is checked below)
             high.setNoGravity(true);
             RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
             long now = helper.getLevel().getGameTime();
             helper.assertTrue(index.linked(a.getUUID(), now) && index.linked(b.getUUID(), now), "the two in the circle were not linked: " + caster.heard());
             helper.assertTrue(!index.linked(high.getUUID(), now) && !index.linked(far.getUUID(), now), "a creature outside the circle was counted");
+            index.clear();
+            far.discard();
+            BlockPos centre = RiteTestSupport.centre(helper);
+            Cow corner = helper.spawnWithNoFreeWill(EntityType.COW, helper.absolutePos(new BlockPos(0, 0, 0)).equals(centre) ? new BlockPos(5, 1, 5) : new BlockPos(centre.getX() - helper.absolutePos(BlockPos.ZERO).getX() + 5, 1, centre.getZ() - helper.absolutePos(BlockPos.ZERO).getZ() + 5));
+            helper.assertTrue(corner.distanceToSqr(centre.getX() + 0.5, corner.getY(), centre.getZ() + 0.5) > LinkingRiteFactory.RADIUS * LinkingRiteFactory.RADIUS, "control: the corner cow is inside the circle");
+            RiteTestSupport.start(helper, "rite_of_linking", caster, linkItems());
+            helper.assertTrue(!index.linked(corner.getUUID(), helper.getLevel().getGameTime()), "a creature in the corner of the square, outside the round circle, was linked");
             helper.assertTrue(caster.count(WONT_HOLD) == 0, "the creatures above and beyond the circle made it refuse");
         } finally {
             index.clear();
