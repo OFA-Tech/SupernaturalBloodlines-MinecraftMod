@@ -26,6 +26,16 @@ public final class RecordingPlayer extends FakePlayer {
         return keys.contains(key);
     }
 
+    /** How many times this key was sent. */
+    public int count(String key) {
+        return (int) keys.stream().filter(key::equals).count();
+    }
+
+    /** Every key sent, in order: for a failure message. */
+    public String heard() {
+        return String.join(", ", keys);
+    }
+
     public boolean receivedOnActionBar(String key) {
         return actionBarKeys.contains(key);
     }

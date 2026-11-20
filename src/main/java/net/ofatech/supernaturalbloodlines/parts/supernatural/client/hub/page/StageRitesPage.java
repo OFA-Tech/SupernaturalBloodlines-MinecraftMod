@@ -119,6 +119,7 @@ public final class StageRitesPage implements HubPageView {
         Detail.Builder d = Detail.of(RitesPage.name(rite)).subtitle(Component.translatable(BOOK + "sub", shape, String.format("%,d", rite.power())));
         // the Alpha Trial's warning (or why it is not for you) comes first: the Blood Moon bar shows only the first two lines
         RitesPage.trialNotes(rite, f.view.bloodline().wolf()).forEach(d::body);
+        RitesPage.descriptions(rite).forEach(d::body);
         d.body(items.isEmpty() ? Component.translatable(BOOK + "no_items") : Component.translatable(BOOK + "needs", items.stream().map(Component::getString).reduce((a, b) -> a + ", " + b).orElse("")));
         HubHooks.Launcher book = HubHooks.launchers().stream().filter(x -> x.id().equals("enchanted")).findFirst().orElse(null);
         d.action(new Detail.Action("book", Component.translatable(BOOK + "enchanted_short"), false, book != null, null, null, () -> f.screen().launch(book)));

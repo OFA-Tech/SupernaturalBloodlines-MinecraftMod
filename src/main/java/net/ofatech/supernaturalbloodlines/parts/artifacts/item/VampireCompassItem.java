@@ -123,6 +123,7 @@ public class VampireCompassItem extends Item {
     private static Optional<LivingEntity> nearestVampire(Level level, Entity holder) {
         return level.getEntitiesOfClass(LivingEntity.class, holder.getBoundingBox().inflate(RANGE),
                         e -> e != holder && e.isAlive() && e.distanceToSqr(holder) <= (double) RANGE * RANGE && Supernatural.isVampiric(e)
+                                && !net.ofatech.supernaturalbloodlines.core.boss.CloakAccess.cloaked(e)
                                 && !(e instanceof Player p && (p.isCreative() || p.isSpectator())))
                 .stream().min(Comparator.comparingDouble(e -> e.distanceToSqr(holder)));
     }

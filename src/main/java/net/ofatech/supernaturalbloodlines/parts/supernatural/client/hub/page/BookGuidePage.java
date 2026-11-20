@@ -19,6 +19,16 @@ public final class BookGuidePage implements HubPageView {
     private static final String BOOK = PageKit.HUB + "book.guide.";
     private String chapter;
 
+    /** The page a chapter is on: every chapter is read on the Guide spread, so the Contents gives the spread's right-hand page, the one the footer shows. */
+    static int chapterPage() {
+        return 2 * HubPage.GUIDE.ordinal() + 2;
+    }
+
+    /** Where the chapter ends once the link to the Bloodline page is drawn under it: always lower than where its text ended. */
+    static int afterLink(int textEnd) {
+        return textEnd + 6 + 12;
+    }
+
     static String roman(int n) {
         int[] v = {10, 9, 5, 4, 1};
         String[] s = {"X", "IX", "V", "IV", "I"};
@@ -53,7 +63,7 @@ public final class BookGuidePage implements HubPageView {
             }
             Component name = Component.translatable(GuideChapters.titleKey(id));
             f.g.drawString(f.font(), roman(i + 1) + ".", r.x(), y, on ? t.accent() : t.muted(), false);
-            BookKit.leader(f, name, Component.translatable(BOOK + "page", 2 * (i + 1) + 1), r.x() + 30, y, r.w() - 30, on ? t.accent() : t.muted());
+            BookKit.leader(f, name, Component.translatable(BOOK + "page", chapterPage()), r.x() + 30, y, r.w() - 30, on ? t.accent() : t.muted());
             String target = "chapter:" + id;
             f.target(target, hit, List.of(name), () -> chapter = id);
             if (f.focused(target)) {
@@ -68,8 +78,10 @@ public final class BookGuidePage implements HubPageView {
         sy = BookKit.dropCap(f, Component.translatable(GuideChapters.bodyKey(chapter)), s.x(), sy, s.w(), t.ink());
         if (GuideLinks.CHAPTER.equals(chapter)) {
             Component to = Component.translatable(KEY + "bosses.link");
-            sy = BookKit.link(f, "guide:bloodline", to, s.x(), sy + 6, List.of(Component.translatable("supernaturalbloodlines.hub.page.bloodline")),
+            // BookKit.link returns the link's width, not a y: taking it for one made the chapter look 90 pixels long and switched its scrolling off
+            BookKit.link(f, "guide:bloodline", to, s.x(), sy + 6, List.of(Component.translatable("supernaturalbloodlines.hub.page.bloodline")),
                     () -> f.screen().setPage(net.ofatech.supernaturalbloodlines.shared.hub.HubPage.BLOODLINE));
+            sy = afterLink(sy);
         }
         int at = ids.indexOf(chapter);
         if (at < ids.size() - 1) {

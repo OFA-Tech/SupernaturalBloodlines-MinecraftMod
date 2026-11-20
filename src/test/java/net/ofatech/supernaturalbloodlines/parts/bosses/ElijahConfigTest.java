@@ -15,6 +15,17 @@ class ElijahConfigTest {
     }
 
     @Test
+    void kolAndFinnDefaultsAreTheOnesTheOwnerAccepted() {
+        assertEquals(12, BossesConfig.kolMinMark());
+        assertEquals(30, BossesConfig.kolCloakMinutes());
+        assertEquals(5, BossesConfig.kolGrimoireSp());
+        assertEquals(0.5, BossesConfig.finnChance());
+        assertEquals(120, BossesConfig.finnRitualSeconds());
+        assertEquals(60, BossesConfig.linkSeconds());
+        assertEquals(0.5, BossesConfig.linkDamageShare());
+    }
+
+    @Test
     void anOverrideWinsAndClearsAgain() {
         BossesConfig.override("elijah_oath_days", 2);
         assertEquals(2, BossesConfig.elijahOathDays());

@@ -54,6 +54,18 @@ class HubRitesTest {
     }
 
     @Test
+    void theWitchRitesAreForTheWitchTypesAndNobodyElse() {
+        HubSocial.Rite cloaking = rite("rite_of_cloaking", 4000, "witch");
+        for (var race : List.of(WITCH, SIPHONER, HERETIC, TRIBRID)) {
+            assertTrue(HubRites.forYou(cloaking, List.of(race), Set.of()), race.toString());
+        }
+        assertTrue(HubRites.forYou(cloaking, List.of(VAMPIRE, WITCH), Set.of()), "a vampire who is also a witch");
+        for (var race : List.of(HUMAN, VAMPIRE, ORIGINAL, WEREWOLF, HUNTER, HYBRID)) {
+            assertFalse(HubRites.forYou(cloaking, List.of(race), Set.of()), race.toString());
+        }
+    }
+
+    @Test
     void theFactionSideDecides() {
         assertTrue(HubRites.forYou(SILVER, List.of(HYBRID), Set.of()));
         assertTrue(HubRites.forYou(MOON, List.of(ORIGINAL), Set.of()));

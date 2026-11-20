@@ -38,6 +38,8 @@ Every rite in this mod is an **Enchanted circle-magic rite**: you draw a chalk c
 | [Rite of the Vampire Compass](#artifact-rites) | medium | 2,000 | | artifacts |
 | [Rite of the Hearing Device](#artifact-rites) | medium | 3,000 | | artifacts |
 | [Rite of Severance](#rite-of-severance) | medium | 6,000 | | species |
+| [Rite of Cloaking](#kols-and-esthers-grimoires) | medium | 4,000 | | bosses |
+| [Linking Spell](#kols-and-esthers-grimoires) | medium | 5,000 | | bosses |
 
 A rite listed with "Werewolves" is not loaded without it (its data file has a Werewolves condition).
 
@@ -185,3 +187,12 @@ Note: every rite that says "full moon" needs the night of the full moon, like th
 
 Witch-type performer, lunar eclipse. The Broken Line frees one player from an Original's line; the Imprisoned Original frees a player and their whole branch, with the Original, brought down (downed, dying or desiccated), held inside a closed mountain ash circle for 30 seconds. Neither rite asks the target: a witch can free an unwilling player. See [Original Bloodlines](Original-Bloodlines).
 
+## Kol's and Esther's grimoires
+
+Two rites that need a boss's reward as a key. The grimoire is **given back** when the rite works.
+
+**Rite of Cloaking** (medium circle, 4,000 power): Kol's Grimoire (read once, for its skill points), 2 phantom membrane, 1 ender pearl. A witch, siphoner, heretic or tribrid performs it. For `kol_cloak_minutes` (30) you are left out of the Vampire Compass and of a Hunter of the Five's sense. You are told when the cloak fades; dying ends it. A plain player is told only a witch type can work it, and an unread grimoire is refused.
+
+**Linking Spell** (medium circle, 5,000 power): Esther's Grimoire, 2 lead, 2 amethyst shards. Only a witch type can work it. Exactly two living creatures stand inside the chalk (it is 11 wide: within 5.5 blocks of the altar, feet within 2 blocks of it); you count if you stand in it, so you may link yourself to a creature. Neither may be one of the NPC Originals, a boss, or linked already. **A player, including a player Original, agrees by sneaking inside the circle with a lead in their main hand** (and PvP must be on): sneaking alone, or a lead alone, is not a yes. For `link_seconds` (60) half the damage one of them takes (`link_damage_share`) is dealt to the other in your name, once, never back again; a player's own hit cooldown is respected. It ends when either dies, leaves the dimension, or its time runs out, and a linked player is told at both ends.
+
+**Every refusal is the same**: "The link will not hold." It costs the lead, the amethyst and the altar's power, and the grimoire always comes back. That is deliberate, so a refusal never tells you who is a boss, whether somebody did not agree, or whether a creature was linked already. (A performer who is not a witch type is told so and gets everything back.) A partner who is not loaded owes a creature's share (never a player's) until it loads, and then takes at most half its health.

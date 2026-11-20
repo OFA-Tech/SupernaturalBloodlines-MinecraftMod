@@ -143,6 +143,8 @@ public final class BossDirector {
         klaus(server, index);
         elijah(server, index);
         rebekah(server, index);
+        kol(server, index);
+        finn(server, index);
     }
 
     // ---- lost bosses ----
@@ -381,7 +383,7 @@ public final class BossDirector {
 
     // ---- Elijah ----
 
-    /** What is true of this player for Elijah (R170): they know an Original (their own line''s, once discovered), or carry the blood of an NPC Original. */
+    /** What is true of this player for Elijah (R170): they know an Original (their own line's, once discovered), or carry the blood of an NPC Original. */
     public static ElijahRules.Facts elijahFacts(ServerPlayer p) {
         boolean knows = BloodlineAccess.get(p).knownLine() != null;
         boolean holds = false;
@@ -539,6 +541,157 @@ public final class BossDirector {
             target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.rebekah.hint"));
         }
         return Optional.of(r);
+    }
+
+    // ---- Kol ----
+
+    /** What is true of this player for Kol (R173). */
+    public static net.ofatech.supernaturalbloodlines.core.boss.KolRules.Facts kolFacts(ServerPlayer p) {
+        var state = BloodlineAccess.get(p);
+        return new net.ofatech.supernaturalbloodlines.core.boss.KolRules.Facts(state.species() == net.ofatech.supernaturalbloodlines.core.bloodline.Species.HUNTER_OF_THE_FIVE,
+                state.markKills(), p.level().dimension() == Level.OVERWORLD, grounded.test(p), p.isSpectator());
+    }
+
+    private static void kol(MinecraftServer server, BossIndex index) {
+        BossId boss = BossId.KOL;
+        BossFacts facts = new BossFacts(BossesConfig.enabled(boss), modsPresent(boss), index.state(boss), false);
+        ServerLevel overworld = server.overworld();
+        if (SpawnRules.refusal(facts).isPresent() || !MikaelRules.isNight(overworld.getDayTime())) {
+            return;
+        }
+        long today = DesiccationRules.dayOf(overworld.getDayTime());
+        BossIndex.Entry entry = index.of(boss);
+        if (entry.lastRollDay == today) {
+            return;
+        }
+        List<ServerPlayer> eligible = new ArrayList<>();
+        for (ServerPlayer p : players.apply(overworld)) {
+            if (net.ofatech.supernaturalbloodlines.core.boss.KolRules.eligible(kolFacts(p), BossesConfig.kolMinMark())) {
+                eligible.add(p);
+            }
+        }
+        if (eligible.isEmpty()) {
+            return;
+        }
+        // once a night: if he cannot be placed, or withdraws, he tries again the next one
+        entry.lastRollDay = today;
+        index.setDirty();
+        ServerPlayer target = eligible.get(Math.min(eligible.size() - 1, (int) (roll.getAsDouble() * eligible.size())));
+        spawnKol(overworld, target, null);
+    }
+
+    /** Makes Kol 16 to 32 blocks from {@code target} (8 to 16 when there is no ground that far, or at {@code at}), hunting them, and writes it down. */
+    public static Optional<net.ofatech.supernaturalbloodlines.parts.bosses.entity.KolEntity> spawnKol(ServerLevel level, @Nullable ServerPlayer target, @Nullable BlockPos at) {
+        BlockPos pos = at != null ? at : target == null ? null
+                : ground.find(level, target.blockPosition(), 16, 32).or(() -> ground.find(level, target.blockPosition(), 8, 16)).orElse(null);
+        if (pos == null) {
+            return Optional.empty();
+        }
+        var e = net.ofatech.supernaturalbloodlines.parts.bosses.entity.KolEntity.create(level);
+        e.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.random.nextFloat() * 360F, 0F);
+        e.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null);
+        e.applyFactors();
+        if (target != null) {
+            e.hunt(target.getUUID());
+        }
+        level.addFreshEntity(e);
+        BossIndex index = BossIndex.get(level.getServer());
+        BossIndex.Entry entry = index.of(BossId.KOL);
+        index.apply(BossId.KOL, BossRules.Event.SPAWNED);
+        entry.appearances++;
+        index.adopt(BossId.KOL, e.getUUID(), level.dimension().location().toString(), pos);
+        index.setDirty();
+        if (target != null) {
+            boolean known = LineRules.showsRoot(BloodlineAccess.get(target).knownLine(), BossId.KOL.npcOriginal().orElseThrow().uuid(),
+                    SpeciesConfig.originalVisibilityAlways());
+            Component text = Component.translatable("supernaturalbloodlines.boss.notice.kol." + (known ? "known" : "unknown"));
+            target.displayClientMessage(text, true);
+            target.sendSystemMessage(text);
+            target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.kol.hint"));
+        }
+        return Optional.of(e);
+    }
+
+    // ---- Finn ----
+
+    private static volatile java.util.function.Predicate<MinecraftServer> eclipse = net.ofatech.supernaturalbloodlines.parts.species.pack.LunarEclipse::active;
+
+    /** Tests: whether a lunar eclipse is running; null puts the real answer back. */
+    @VisibleForTesting
+    public static void useEclipse(@Nullable java.util.function.Predicate<MinecraftServer> running) {
+        eclipse = running == null ? net.ofatech.supernaturalbloodlines.parts.species.pack.LunarEclipse::active : running;
+    }
+
+    public static boolean eclipseNow(MinecraftServer server) {
+        return eclipse.test(server);
+    }
+
+    /** The players of this level, as the director sees them (a test may have fixed them: its fake players are not in the level's list). */
+    public static List<ServerPlayer> playersIn(ServerLevel level) {
+        return players.apply(level);
+    }
+
+    private static void finn(MinecraftServer server, BossIndex index) {
+        BossId boss = BossId.FINN;
+        BossFacts facts = new BossFacts(BossesConfig.enabled(boss), modsPresent(boss), index.state(boss), false);
+        ServerLevel overworld = server.overworld();
+        if (SpawnRules.refusal(facts).isPresent() || !eclipseNow(server)) {
+            return;
+        }
+        long today = DesiccationRules.dayOf(overworld.getDayTime());
+        BossIndex.Entry entry = index.of(boss);
+        if (!net.ofatech.supernaturalbloodlines.core.boss.FinnRules.mayRoll(entry.lastRollDay, today)) {
+            return;
+        }
+        List<ServerPlayer> eligible = new ArrayList<>();
+        for (ServerPlayer p : players.apply(overworld)) {
+            if (net.ofatech.supernaturalbloodlines.core.boss.FinnRules.eligible(new net.ofatech.supernaturalbloodlines.core.boss.FinnRules.Facts(true,
+                    p.level().dimension() == Level.OVERWORLD,
+                    net.ofatech.supernaturalbloodlines.parts.species.rite.SeveranceRiteFactory.isWitchType(BloodlineAccess.get(p).species()) || net.ofatech.supernaturalbloodlines.core.Supernatural.isVampiric(p),
+                    p.isSpectator()))) {
+                eligible.add(p);
+            }
+        }
+        if (eligible.isEmpty()) {
+            return;
+        }
+        // one roll a night, the first time somebody could be visited
+        entry.lastRollDay = today;
+        index.setDirty();
+        if (roll.getAsDouble() < BossWeight.chance(BossesConfig.finnChance(), 1.0)) {
+            ServerPlayer target = eligible.get(Math.min(eligible.size() - 1, (int) (roll.getAsDouble() * eligible.size())));
+            spawnFinn(overworld, target, null);
+        }
+    }
+
+    /** Makes Finn 32 to 64 blocks from {@code target} (16 to 32 when there is no ground that far, or at {@code at}), at the start of his ritual, and writes it down. */
+    public static Optional<net.ofatech.supernaturalbloodlines.parts.bosses.entity.FinnEntity> spawnFinn(ServerLevel level, @Nullable ServerPlayer target, @Nullable BlockPos at) {
+        BlockPos pos = at != null ? at : target == null ? null
+                : ground.find(level, target.blockPosition(), 32, 64).or(() -> ground.find(level, target.blockPosition(), 16, 32)).orElse(null);
+        if (pos == null) {
+            return Optional.empty();
+        }
+        var e = net.ofatech.supernaturalbloodlines.parts.bosses.entity.FinnEntity.create(level);
+        e.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.random.nextFloat() * 360F, 0F);
+        e.finalizeSpawn(level, level.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null);
+        e.applyFactors();
+        e.beginRitual(pos, BossesConfig.finnRitualSeconds());
+        level.addFreshEntity(e);
+        BossIndex index = BossIndex.get(level.getServer());
+        BossIndex.Entry entry = index.of(BossId.FINN);
+        index.apply(BossId.FINN, BossRules.Event.SPAWNED);
+        entry.appearances++;
+        index.adopt(BossId.FINN, e.getUUID(), level.dimension().location().toString(), pos);
+        index.setDirty();
+        if (target != null) {
+            boolean known = LineRules.showsRoot(BloodlineAccess.get(target).knownLine(), BossId.FINN.npcOriginal().orElseThrow().uuid(),
+                    SpeciesConfig.originalVisibilityAlways());
+            Component text = Component.translatable("supernaturalbloodlines.boss.notice.finn." + (known ? "known" : "unknown"));
+            target.displayClientMessage(text, true);
+            target.sendSystemMessage(text);
+            target.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.notice.finn.hint"));
+        }
+        return Optional.of(e);
     }
 
     // ---- Klaus ----

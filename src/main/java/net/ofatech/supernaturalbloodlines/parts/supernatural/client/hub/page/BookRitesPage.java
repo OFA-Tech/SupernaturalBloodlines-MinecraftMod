@@ -96,6 +96,9 @@ public final class BookRitesPage implements HubPageView {
         if (rite.items().isEmpty()) {
             sy = PageKit.wrapped(f, Component.translatable(BOOK + "no_items"), s.x(), sy, s.w(), t.muted());
         }
+        for (Component line : RitesPage.descriptions(rite)) {
+            sy = PageKit.wrapped(f, line, s.x(), sy + 4, s.w(), t.ink());
+        }
         for (Component note : RitesPage.trialNotes(rite, f.view.bloodline().wolf())) {
             sy = PageKit.wrapped(f, note, s.x(), sy + 2, s.w(), t.accent());
         }

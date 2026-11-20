@@ -1,0 +1,18 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "bosses" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:kol_grimoire", "count": 1 },
+        { "id": "minecraft:phantom_membrane", "count": 2 },
+        { "id": "minecraft:ender_pearl", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 4000,
+    "factory": {
+        "type": "supernaturalbloodlines:cloaking",
+        "faction": "witch"
+    }
+}

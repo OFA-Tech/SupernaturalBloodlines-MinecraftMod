@@ -258,7 +258,16 @@ public final class HubScreen extends Screen {
         targets = f.targets;
         for (Map.Entry<String, Integer> e : maxScroll.entrySet()) {
             if (e.getValue() > 0 && layout.regions().containsKey(e.getKey())) {
-                theme.drawScrollbar(g, viewport(e.getKey()), scroll.getOrDefault(e.getKey(), 0), e.getValue());
+                Rect vp = viewport(e.getKey());
+                int offset = scroll.getOrDefault(e.getKey(), 0);
+                theme.drawScrollbar(g, vp, offset, e.getValue());
+                if (net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.moreBelow(offset, e.getValue())) {
+                    Component more = Component.literal("\u25BC ").append(Component.translatable("supernaturalbloodlines.hub.scroll_more"));
+                    int w = font.width(more) + 6;
+                    int x = vp.right() - w - 4;
+                    g.fill(x, vp.bottom() - 11, x + w, vp.bottom() - 1, (theme.paper() & 0xFFFFFF) | 0xE0000000);
+                    g.drawString(font, more, x + 3, vp.bottom() - 10, theme.muted(), false);
+                }
             }
         }
         theme.drawFooter(f, layout, page);
@@ -405,6 +414,8 @@ public final class HubScreen extends Screen {
             }
             case "rites_trial" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect(HubRites.TRIAL);
             case "rites_brother" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:werewolf_brother");
+            case "rites_cloaking" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:rite_of_cloaking");
+            case "rites_linking" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:rite_of_linking");
             case "pack_wolf" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackWolves.devSelect(1);
             case "pack_wolf_tensura" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackWolves.devSelect(3);
             case "pack_wolf_other" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackWolves.devSelect(4);

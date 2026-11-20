@@ -177,6 +177,12 @@ final class DevDemo {
             rites.add(new HubSocial.Rite("supernaturalbloodlines:werewolf_brother", 6000, List.of("1 supernaturalbloodlines:moonstone", "1 minecraft:beef", "1 werewolves:silver_nugget"),
                     List.of("enchanted:small_circle"), "supernaturalbloodlines:werewolf_brother", "werewolf"));
         }
+        if (rites.stream().noneMatch(r -> r.id().equals("supernaturalbloodlines:rite_of_cloaking"))) {
+            rites.add(new HubSocial.Rite("supernaturalbloodlines:rite_of_cloaking", 4000, List.of("1 supernaturalbloodlines:kol_grimoire", "2 minecraft:phantom_membrane", "1 minecraft:ender_pearl"),
+                    List.of("enchanted:medium_circle"), "supernaturalbloodlines:cloaking", "witch"));
+            rites.add(new HubSocial.Rite("supernaturalbloodlines:rite_of_linking", 5000, List.of("1 supernaturalbloodlines:esther_grimoire", "2 minecraft:lead", "2 minecraft:amethyst_shard"),
+                    List.of("enchanted:medium_circle"), "supernaturalbloodlines:linking_spell", "witch"));
+        }
         List<HubSocial.Person> people = new ArrayList<>(List.of(new HubSocial.Person("Klaus", id("Klaus"))));
         family.sired().forEach(n -> people.add(new HubSocial.Person(n, id(n))));
         HubSnapshotPayload snap = new HubSnapshotPayload(family, pack, 2, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),

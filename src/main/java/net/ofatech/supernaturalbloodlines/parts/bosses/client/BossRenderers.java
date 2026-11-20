@@ -13,5 +13,7 @@ public final class BossRenderers {
         event.registerEntityRenderer(BossRegistries.KLAUS.get(), ShiftRenderer::new);
         event.registerEntityRenderer(BossRegistries.ELIJAH.get(), context -> new HumanoidBossRenderer<>(context, false));
         event.registerEntityRenderer(BossRegistries.REBEKAH.get(), context -> new HumanoidBossRenderer<>(context, true));
+        event.registerEntityRenderer(BossRegistries.KOL.get(), context -> new HumanoidBossRenderer<>(context, false));
+        event.registerEntityRenderer(BossRegistries.FINN.get(), context -> new HumanoidBossRenderer<>(context, false));
     }
 }

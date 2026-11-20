@@ -9,6 +9,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.ElijahEntity;
+import net.ofatech.supernaturalbloodlines.parts.bosses.entity.FinnEntity;
+import net.ofatech.supernaturalbloodlines.parts.bosses.entity.KolEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.KlausEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.RebekahEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity;
@@ -29,6 +31,12 @@ public final class BossRegistries {
     public static final DeferredHolder<EntityType<?>, EntityType<RebekahEntity>> REBEKAH = ENTITY_TYPES.register("rebekah",
             () -> EntityType.Builder.of(RebekahEntity::new, MobCategory.MISC).sized(0.6F, 1.8F).clientTrackingRange(10).fireImmune().build("rebekah"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<KolEntity>> KOL = ENTITY_TYPES.register("kol",
+            () -> EntityType.Builder.of(KolEntity::new, MobCategory.MISC).sized(0.6F, 1.8F).clientTrackingRange(10).fireImmune().build("kol"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<FinnEntity>> FINN = ENTITY_TYPES.register("finn",
+            () -> EntityType.Builder.of(FinnEntity::new, MobCategory.MISC).sized(0.6F, 1.8F).clientTrackingRange(10).fireImmune().build("finn"));
+
     private BossRegistries() {
     }
 
@@ -39,6 +47,8 @@ public final class BossRegistries {
             e.put(KLAUS.get(), KlausEntity.attributes().build());
             e.put(ELIJAH.get(), ElijahEntity.attributes().build());
             e.put(REBEKAH.get(), RebekahEntity.attributes().build());
+            e.put(KOL.get(), KolEntity.attributes().build());
+            e.put(FINN.get(), FinnEntity.attributes().build());
         });
     }
 }

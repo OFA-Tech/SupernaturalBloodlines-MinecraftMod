@@ -11,7 +11,9 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.parts.bosses.item.EstherGrimoireItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.KlausBloodItem;
+import net.ofatech.supernaturalbloodlines.parts.bosses.item.KolGrimoireItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.TheElixirItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.TheTrueCureItem;
 
@@ -34,6 +36,12 @@ public final class BossItems {
     /** Rebekah's reward: the cure an Original can drink without being desiccated (R171). */
     public static final DeferredItem<TheTrueCureItem> THE_TRUE_CURE = ITEMS.register("the_true_cure", () -> new TheTrueCureItem(new Item.Properties()));
 
+    /** Kol's reward: skill points once, and the key to the Rite of Cloaking (R174). */
+    public static final DeferredItem<KolGrimoireItem> KOL_GRIMOIRE = ITEMS.register("kol_grimoire", () -> new KolGrimoireItem(new Item.Properties()));
+
+    /** Finn's reward: the key to the Linking Spell (R177). */
+    public static final DeferredItem<EstherGrimoireItem> ESTHER_GRIMOIRE = ITEMS.register("esther_grimoire", () -> new EstherGrimoireItem(new Item.Properties()));
+
     private BossItems() {
     }
 
@@ -47,6 +55,8 @@ public final class BossItems {
                 e.accept(KLAUS_BLOOD);
                 e.accept(THE_ELIXIR);
                 e.accept(THE_TRUE_CURE);
+                e.accept(KOL_GRIMOIRE);
+                e.accept(ESTHER_GRIMOIRE);
             }
         });
     }

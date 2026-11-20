@@ -24,6 +24,9 @@ public final class HubRites {
     private static final Set<SupernaturalRace> WEREWOLF_SIDE = Set.of(SupernaturalRace.WEREWOLF, SupernaturalRace.HYBRID,
             SupernaturalRace.ORIGINAL_HYBRID, SupernaturalRace.TRIBRID);
 
+    /** The races that work or take magic: the rites marked "witch" (Cloaking, Linking Spell) are theirs. */
+    private static final Set<SupernaturalRace> WITCH_SIDE = Set.of(SupernaturalRace.WITCH, SupernaturalRace.SIPHONER, SupernaturalRace.HERETIC, SupernaturalRace.TRIBRID);
+
     /** The Alpha Trial rite (R147): the Rites page adds what it asks and, for the viewer, a warning or the reason they cannot yet. */
     public static final String TRIAL = "supernaturalbloodlines:alpha_trial";
 
@@ -75,6 +78,7 @@ public final class HubRites {
             case "werewolf" -> WEREWOLF_SIDE.contains(creature);
             case "vampire_or_werewolf" -> VAMPIRE_SIDE.contains(creature) || WEREWOLF_SIDE.contains(creature);
             case "hunter" -> creature == SupernaturalRace.HUNTER;
+            case "witch" -> races.stream().anyMatch(WITCH_SIDE::contains);
             case "none" -> creature == SupernaturalRace.HUMAN;
             default -> false;
         };

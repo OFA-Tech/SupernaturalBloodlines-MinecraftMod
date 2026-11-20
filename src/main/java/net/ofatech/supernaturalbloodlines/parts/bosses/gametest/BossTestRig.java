@@ -59,7 +59,7 @@ final class BossTestRig implements AutoCloseable {
         }
         index.forget(BossId.KLAUS);
         LineIndex.get(server).unmarkDead(KLAUS);
-        for (BossId other : new BossId[] {BossId.ELIJAH, BossId.REBEKAH}) {
+        for (BossId other : new BossId[] {BossId.ELIJAH, BossId.REBEKAH, BossId.KOL, BossId.FINN}) {
             var e = BossDirector.bossEntity(server, other);
             if (e != null) {
                 e.discard();
@@ -97,6 +97,16 @@ final class BossTestRig implements AutoCloseable {
     /** Elijah, made the way the director makes him, standing 2 blocks into the test. */
     net.ofatech.supernaturalbloodlines.parts.bosses.entity.ElijahEntity spawnElijah() {
         return BossDirector.spawnElijah(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+    }
+
+    /** Kol, made the way the director makes him (no prey), standing 2 blocks into the test. */
+    net.ofatech.supernaturalbloodlines.parts.bosses.entity.KolEntity spawnKol() {
+        return BossDirector.spawnKol(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+    }
+
+    /** Finn, made the way the director makes him (no target), standing 2 blocks into the test, at the start of his ritual. */
+    net.ofatech.supernaturalbloodlines.parts.bosses.entity.FinnEntity spawnFinn() {
+        return BossDirector.spawnFinn(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
     }
 
     /** Rebekah, made the way the director makes her (no prey), standing near the middle of the test. */
@@ -154,6 +164,7 @@ final class BossTestRig implements AutoCloseable {
         BossDirector.useGround(null);
         BossDirector.useMods(null);
         BossDirector.useMoon(null);
+        BossDirector.useEclipse(null);
         BossDirector.useVillagers(null);
         SireCall.overridePlayerLookup(null);
         LineWarning.overridePlayers(null);

@@ -25,7 +25,7 @@ public record AdminSnapshotPayload(List<AdminRows.Row> rows, Optional<Outcome> o
         }
     }
 
-    public static final int MAX_ROWS = 128;
+    public static final int MAX_ROWS = 160;
     public static final Type<AdminSnapshotPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "admin_snapshot"));
 
     private static final StreamCodec<ByteBuf, String> ID = ByteBufCodecs.stringUtf8(128);

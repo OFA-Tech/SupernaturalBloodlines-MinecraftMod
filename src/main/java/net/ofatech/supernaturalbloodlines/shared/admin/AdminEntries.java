@@ -155,6 +155,13 @@ public final class AdminEntries {
         all.add(SettingEntry.of(BOSSES_FILE, bo, "elijah_oath_days", INT));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "elixir_heal_fraction", DOUBLE));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "rebekah_delay_seconds", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "kol_min_mark", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "kol_cloak_minutes", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "kol_grimoire_sp", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "finn_chance_per_eclipse", DOUBLE));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "finn_ritual_seconds", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "link_seconds", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "link_damage_share", DOUBLE));
         ALL = List.copyOf(all);
     }
 
