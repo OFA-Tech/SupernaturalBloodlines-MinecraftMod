@@ -1,7 +1,11 @@
 package net.ofatech.supernaturalbloodlines.parts.bosses.gametest;
 
 import de.teamlapen.vampirism.api.VampirismAPI;
+import de.teamlapen.vampirism.api.entity.player.actions.IActionHandler;
 import de.teamlapen.werewolves.api.WReference;
+import de.teamlapen.werewolves.api.entities.player.IWerewolfPlayer;
+import de.teamlapen.werewolves.core.ModActions;
+import de.teamlapen.werewolves.util.FormHelper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -685,26 +689,48 @@ public final class DeucalionGameTests {
         }
         LineTestPlayer roarer = wolf(helper, Rank.ALPHA, 4, false, 2.5);
         LineTestPlayer rival = wolf(helper, Rank.ALPHA, 1, false, 6.5);
+        LineTestPlayer beta = wolf(helper, Rank.BETA, 0, false, 5.5);
         try {
-            night(roarer, rival);
+            night(roarer, rival, beta);
+            unlockForms(rival);
+            unlockForms(beta);
             helper.assertTrue(!LadderQuery.owns(roarer, DemonRoarRules.SKILL), "control: the roarer holds the Roar before it was given");
             long now = 100_000;
             helper.assertTrue(AlphaRoar.roar(roarer, now) == null, "the Alpha Roar was refused");
-            helper.assertTrue(!rival.received("supernaturalbloodlines.pack.demon_roar_shifted"), "the rival was shifted by a roar without the skill");
+            helper.assertTrue(!inForm(rival) && !rival.received(SHIFTED), "the rival was shifted by a roar without the skill");
             give(roarer);
             helper.assertTrue(LadderQuery.owns(roarer, DemonRoarRules.SKILL), "the Roar is not active for a werewolf who was given it");
             now += 5000;
             helper.assertTrue(AlphaRoar.roar(roarer, now) == null, "the Alpha Roar was refused with the skill");
-            helper.assertTrue(DemonRoar.targets(roarer, List.of(rival)).size() == 1 && roarer.count("supernaturalbloodlines.pack.demon_roar_cooldown") == 0,
-                    "the Roar's cooldown message came on its first use");
+            helper.assertTrue(inForm(rival) && rival.received(SHIFTED), "the rival Alpha was not forced to shift, or not told: " + rival.heard());
+            helper.assertTrue(!inForm(beta) && !beta.received(SHIFTED), "a Beta was shifted by the Demon Wolf Roar");
+            helper.assertTrue(roarer.count("supernaturalbloodlines.pack.demon_roar_cooldown") == 0, "the Roar's cooldown message came on its first use");
+            FormHelper.deactivateWerewolfActions((IWerewolfPlayer) VampirismAPI.factionPlayerHandler(rival).getCurrentFactionPlayer().orElseThrow());
+            helper.assertTrue(!inForm(rival), "control: the rival's form did not go");
             now += AlphaRoar.cooldown(roarer) + 10; // the Alpha Roar is ready again, the Demon Wolf Roar (2400) is not
             helper.assertTrue(AlphaRoar.roar(roarer, now) == null, "the second Alpha Roar was refused");
-            helper.assertTrue(roarer.count("supernaturalbloodlines.pack.demon_roar_cooldown") == 1, "the Roar's own cooldown was not told: " + roarer.heard());
+            helper.assertTrue(roarer.count("supernaturalbloodlines.pack.demon_roar_cooldown") == 1 && !inForm(rival), "the Roar's own cooldown did not hold: " + roarer.heard());
+            now += DemonRoarRules.COOLDOWN;
+            helper.assertTrue(AlphaRoar.roar(roarer, now) == null, "the third Alpha Roar was refused");
+            // (the rival's own form action is on a cooldown of its own for a while after it was switched off, so what is checked is the Roar's: no new refusal)
+            helper.assertTrue(roarer.count("supernaturalbloodlines.pack.demon_roar_cooldown") == 1, "the Roar was still on its cooldown after 2400 ticks: " + roarer.heard());
             DemonRoar.reset();
         } finally {
-            clean(roarer, rival);
+            clean(roarer, rival, beta);
         }
         helper.succeed();
+    }
+
+    private static final String SHIFTED = "supernaturalbloodlines.pack.demon_roar_shifted";
+
+    private static boolean inForm(ServerPlayer p) {
+        return FormHelper.isFormActionActive((IWerewolfPlayer) VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow());
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void unlockForms(ServerPlayer p) {
+        ((IActionHandler) VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow().getActionHandler())
+                .unlockActions(List.of(ModActions.BEAST_FORM.get(), ModActions.SURVIVAL_FORM.get(), ModActions.HUMAN_FORM.get()));
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
