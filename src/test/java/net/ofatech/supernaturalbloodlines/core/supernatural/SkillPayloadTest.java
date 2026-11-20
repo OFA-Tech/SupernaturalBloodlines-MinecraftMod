@@ -44,7 +44,7 @@ class SkillPayloadTest {
         SkillTable server = SkillDataTest.load(m -> !m.equals("tensura"), p -> !p.equals("species"));
         SkillTable client = roundTrip(server, m -> !m.equals("tensura"), p -> !p.equals("species"));
         same(server, client);
-        assertEquals(37, client.skills().size());
+        assertEquals(38, client.skills().size());
         assertEquals(2, client.quest("Q-VAM-6").orElseThrow().tasks().size(), "the species task is still there");
     }
 

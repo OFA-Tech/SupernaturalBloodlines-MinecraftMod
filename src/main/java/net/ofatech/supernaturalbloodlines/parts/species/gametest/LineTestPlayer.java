@@ -16,6 +16,24 @@ import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 public final class LineTestPlayer extends FakePlayer {
     private final List<Component> messages = new ArrayList<>();
     private int chat;
+    /** A fake player never harms a player (Neo's FakePlayer says no); a test of a rule that asks may turn the vanilla answer back on, and must turn it off. */
+    private static volatile boolean realHarm;
+
+    public static void useRealHarm(boolean on) {
+        realHarm = on;
+    }
+
+    @Override
+    public boolean canHarmPlayer(net.minecraft.world.entity.player.Player other) {
+        if (!realHarm) {
+            return super.canHarmPlayer(other);
+        }
+        if (getServer() == null || !getServer().isPvpAllowed()) {
+            return false;
+        }
+        var mine = getTeam();
+        return mine == null || !mine.isAlliedTo(other.getTeam()) || mine.isAllowFriendlyFire();
+    }
 
     private LineTestPlayer(GameTestHelper helper, UUID id) {
         super(helper.getLevel(), new GameProfile(id, "test-" + id.toString().substring(0, 8)));

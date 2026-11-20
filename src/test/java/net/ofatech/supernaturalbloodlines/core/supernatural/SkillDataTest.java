@@ -103,7 +103,7 @@ class SkillDataTest {
     @Test
     void theCatalogueIsTheSpecs() {
         SkillTable t = load(mod -> true);
-        assertEquals(41, t.skills().size());
+        assertEquals(42, t.skills().size());
         for (Map.Entry<String, Integer> e : COSTS.entrySet()) {
             SkillSpec s = t.skill(e.getKey()).orElseThrow(() -> new AssertionError("missing " + e.getKey()));
             assertEquals(e.getValue(), s.cost(), e.getKey());
@@ -177,7 +177,7 @@ class SkillDataTest {
     @Test
     void withoutTensuraOnlyTheTensuraSkillsGo() {
         SkillTable t = load(mod -> !mod.equals("tensura"));
-        assertEquals(41 - TENSURA.size(), t.skills().size());
+        assertEquals(42 - TENSURA.size(), t.skills().size());
         for (String id : TENSURA) {
             assertFalse(t.skill(id).isPresent(), id);
             for (SupernaturalRace race : SupernaturalRace.values()) {

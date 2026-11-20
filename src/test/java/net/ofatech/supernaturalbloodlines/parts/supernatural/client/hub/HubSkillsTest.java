@@ -72,6 +72,18 @@ class HubSkillsTest {
     }
 
     @Test
+    void aGrantedOnlySkillThatCountsIsOwnedNotDormant() {
+        SkillTable granted = SkillTable.parse(Map.of(
+                        "s-1", json(rule("S-1", 2)),
+                        "s-g", json("{\"id\":\"S-G\",\"name\":\"S-G\",\"cost\":0,\"granted_only\":true,\"kinds\":[\"rule\"]}")),
+                Map.of("werewolf", json("{\"skills\":[{\"skill\":\"S-1\",\"rung\":1}]}")),
+                mod -> true).table();
+        Map<String, Row> rows = byId(HubSkills.rows(granted, state(0, 1, "S-G"), List.of(WEREWOLF)));
+        assertEquals(State.OWNED, rows.get("S-G").state(), "a granted-only skill that counts shows as dormant");
+        assertNull(rows.get("S-G").race());
+    }
+
+    @Test
     void theRowOffersAPurchaseExactlyWhenTheServerWouldAcceptIt() {
         for (SupernaturalRace creature : List.of(WEREWOLF, GHOUL, VAMPIRE)) {
             SupernaturalState s = state(3, 1, "S-V");

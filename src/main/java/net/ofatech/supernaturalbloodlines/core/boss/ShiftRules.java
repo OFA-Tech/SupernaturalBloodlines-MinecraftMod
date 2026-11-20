@@ -34,6 +34,11 @@ public final class ShiftRules {
         return form == BossForm.HUMAN && healthFraction > 0F && (healthFraction <= SHIFT_AT_HEALTH || targetIsWerewolf);
     }
 
+    /** The hat layer of the man's skin (Deucalion's glasses, and nothing else): shown only while he is the man, hidden from the first tick of the shift. */
+    public static boolean hatVisible(BossForm form) {
+        return form == BossForm.HUMAN;
+    }
+
     /** How far along the shift is, 0 to 1. */
     public static float progress(int shiftTicks) {
         return Math.max(0F, Math.min(1F, shiftTicks / (float) SHIFT_TICKS));

@@ -266,14 +266,18 @@ public final class CompassGameTests {
                 helper.assertTrue(pointsAt(stack, near) || nearestGenePlayer(helper, p) != null && nearestGenePlayer(helper, p).distanceToSqr(p) < near.distanceToSqr(p),
                         "a nearer villager did not win over the far player");
             });
-            // the holder's own gene is not a target
+            // the holder's own gene is not a target. Only players count here: the villager above is still in the level, and the real index lists a
+            // villager the species part rolled as a doppelgänger when it joined (a lucky roll) and the villagers of tests beside this one, so the real
+            // index would make the answer depend on chance; this test's own index lists nothing
             BloodlineAccess.set(p, GENE);
             BloodlineAccess.set(carrier, BloodlineState.NONE);
-            ItemStack own = compass(CompassMode.DOPPELGANGERS);
-            update(helper, own, p);
-            ServerPlayer other = nearestGenePlayer(helper, p); // gene players of tests running beside this one
-            helper.assertTrue(other == null ? target(own) != null && target(own).isEmpty() : pointsAt(own, other),
-                    "the holder points at themself or at the wrong player: " + target(own));
+            withIndex(helper, () -> {
+                ItemStack own = compass(CompassMode.DOPPELGANGERS);
+                update(helper, own, p);
+                ServerPlayer other = nearestGenePlayer(helper, p); // gene players of tests running beside this one
+                helper.assertTrue(other == null ? target(own) != null && target(own).isEmpty() : pointsAt(own, other),
+                        "the holder points at themself or at the wrong player: " + target(own));
+            });
         } finally {
             leave(helper, p, carrier, plainPlayer);
             BloodlineAccess.set(p, BloodlineState.NONE);

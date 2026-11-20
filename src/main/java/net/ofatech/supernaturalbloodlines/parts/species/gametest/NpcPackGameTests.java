@@ -74,6 +74,7 @@ public final class NpcPackGameTests {
 
     private static void clean(GameTestHelper helper, List<? extends Entity> mobs, ServerPlayer... players) {
         mobs.forEach(Entity::discard);
+        release(helper);
         PackIndex index = PackIndex.get(helper.getLevel());
         for (ServerPlayer p : players) {
             if (VampirismAPI.factionPlayerHandler(p).getCurrentFaction() != null) {
@@ -120,10 +121,75 @@ public final class NpcPackGameTests {
         return BuiltInRegistries.ENTITY_TYPE.getOptional(ResourceLocation.parse(id)).orElseThrow(() -> new IllegalStateException("no entity " + id));
     }
 
+    /**
+     * The chunks this test holds loaded, by test. The test world loads the chunks of the structures and no others, so which chunks a test 25 blocks from its
+     * own structure has depends on what stands beside it (the order and the mix of the tests of a run): an entity added to a chunk that is not loaded is
+     * "added" but hidden, and nothing finds it.
+     */
+    private static final java.util.Map<GameTestHelper, java.util.List<net.minecraft.world.level.ChunkPos>> HELD = new java.util.HashMap<>();
+    private static final java.util.Map<net.minecraft.world.level.ChunkPos, Integer> HOLDS = new java.util.HashMap<>();
+    /** The chunks this class forced itself: the test runner forces chunks too, and taking its force away leaves the tests of the next batch waiting for ever. */
+    private static final java.util.Set<net.minecraft.world.level.ChunkPos> OURS = new java.util.HashSet<>();
+
+    private static void release(GameTestHelper helper) {
+        for (net.minecraft.world.level.ChunkPos cp : HELD.getOrDefault(helper, java.util.List.of())) {
+            if (HOLDS.merge(cp, -1, Integer::sum) <= 0) {
+                HOLDS.remove(cp);
+                if (OURS.remove(cp)) {
+                    helper.getLevel().setChunkForced(cp.x, cp.z, false);
+                }
+            }
+        }
+        HELD.remove(helper);
+    }
+
+    /** Holds the chunks at these x offsets, waits until something placed in each is found by a lookup (a tick or two), then runs {@code body}; {@link #clean} lets them go. */
+    private static void whenLoaded(GameTestHelper helper, double[] xs, Runnable body) {
+        List<BlockPos> spots = new java.util.ArrayList<>();
+        for (double x : xs) {
+            BlockPos at = helper.absolutePos(new BlockPos((int) x, 1, 2));
+            net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(at);
+            if (HOLDS.merge(cp, 1, Integer::sum) == 1 && !helper.getLevel().getForcedChunks().contains(cp.toLong())) {
+                helper.getLevel().setChunkForced(cp.x, cp.z, true);
+                OURS.add(cp);
+            }
+            HELD.computeIfAbsent(helper, k -> new java.util.ArrayList<>()).add(cp);
+            spots.add(at);
+        }
+        // the question that matters is whether something placed there is found: ask it with a marker, every tick, until the answer is yes
+        helper.startSequence().thenWaitUntil(() -> {
+            boolean all = true;
+            for (BlockPos s : spots) {
+                net.minecraft.world.entity.Entity probe = EntityType.MARKER.create(helper.getLevel());
+                probe.moveTo(s.getX() + 0.5, s.getY(), s.getZ() + 0.5);
+                helper.getLevel().addFreshEntity(probe);
+                all &= helper.getLevel().getEntity(probe.getUUID()) == probe;
+                probe.discard();
+            }
+            helper.assertTrue(all, "the chunks are not loaded yet");
+        }).thenExecute(guarded(helper, body));
+        // a test that times out never reaches its body or its clean-up: let the chunks go a few ticks before the runner gives up
+        helper.runAfterDelay(95, () -> release(helper));
+    }
+
+    /** The body, and whatever way it ends (a failed assertion included) the chunks it held are let go: a failed test must not leave them forced for the next batch. */
+    static Runnable guarded(GameTestHelper helper, Runnable body) {
+        return () -> {
+            try {
+                body.run();
+            } catch (RuntimeException | Error e) {
+                release(helper);
+                throw e;
+            }
+        };
+    }
+
     private static Mob mob(GameTestHelper helper, String id, double x) {
         // placed, not just created: an Alpha beside a weak player is refused entry by the Werewolves mod unless it has a level (see NpcPackSpawner.place)
         Mob m = NpcPackSpawner.place(helper.getLevel(), NpcPackSpawner.asMob(type(id)), helper.absolutePos(new BlockPos((int) x, 1, 2)), NpcPackSpawner.HALF_LEVEL);
         helper.assertTrue(m != null, "could not place " + id + " in the world");
+        // a mob added to a chunk that is not loaded is "there" and found by nothing: say so, instead of a wolf that "did not see" it
+        helper.assertTrue(helper.getLevel().getEntity(m.getUUID()) == m, id + " was placed at x " + x + " in a chunk that is not loaded: use whenLoaded");
         return m;
     }
 
@@ -393,7 +459,47 @@ public final class NpcPackGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTestThatFailsInsideItsBodyStillLetsItsChunksGo(GameTestHelper helper) {
+        BlockPos at = helper.absolutePos(new BlockPos(96, 1, 2));
+        net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(at);
+        HOLDS.merge(cp, 1, Integer::sum);
+        HELD.computeIfAbsent(helper, k -> new java.util.ArrayList<>()).add(cp);
+        boolean threw = false;
+        try {
+            guarded(helper, () -> {
+                throw new IllegalStateException("the body failed");
+            }).run();
+        } catch (IllegalStateException expected) {
+            threw = true;
+        }
+        helper.assertTrue(threw, "the failure of the body was swallowed");
+        helper.assertTrue(!HOLDS.containsKey(cp) && !HELD.containsKey(helper), "a failed body left its chunk held");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMobFarFromTheStructureIsFoundOnceTheTestHoldsItsChunk(GameTestHelper helper) {
+        // 96 blocks along: no structure of this test is near, so the test world has nothing loaded there until the test holds it
+        whenLoaded(helper, new double[] {96}, () -> {
+            Mob far = mob(helper, "werewolves:werewolf_beast", 96);
+            try {
+                helper.assertTrue(helper.getLevel().getEntity(far.getUUID()) == far, "a mob placed far away is not in the level");
+                helper.assertTrue(!helper.getLevel().getEntitiesOfClass(Mob.class, far.getBoundingBox().inflate(4), m -> m == far).isEmpty(), "a mob placed far away is not found by a search");
+                net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(far.blockPosition());
+                clean(helper, List.of(far));
+                // a neighbouring test's structure may be there and forced by the runner: what is ours to let go of is only what this class forced
+                helper.assertTrue(!OURS.contains(cp) && !HOLDS.containsKey(cp), "the chunk was kept loaded after the test");
+            } finally {
+                clean(helper, List.of(far));
+            }
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void thePackHuntsTogether(GameTestHelper helper) {
+        // the wolves are up to 45 blocks apart, which can be a chunk the test world did not load
+        whenLoaded(helper, new double[] {-20, 0, 25}, () -> {
         Mob a = wildWolf(helper, 0, 777);
         Mob vampire = mob(helper, "vampirism:vampire", 25);
         Mob b = wildWolf(helper, -20, 777);   // 45 blocks from the vampire: beyond its own sight, within the pack's
@@ -410,6 +516,7 @@ public final class NpcPackGameTests {
             clean(helper, all);
         }
         helper.succeed();
+        });
     }
 
     @GameTest(template = "empty", templateNamespace = NS)

@@ -116,7 +116,7 @@ public final class BookSkillsPage implements HubPageView {
         KitDraw.pips(f.g, r.x() + 1, y + 1, 1, known ? 1 : 0, t.accent(), t.muted());
         f.g.drawString(f.font(), Component.translatable(BOOK + (known ? "learned" : "not_learned")), r.x() + 12, y - 2, t.muted(), false);
         y += 11;
-        String desc = PageKit.HUB + "skill_desc." + row.id();
+        String desc = PageKit.skillDescKey(row.id());
         y = I18n.exists(desc) ? BookKit.dropCap(f, Component.translatable(desc), r.x(), y, r.w(), t.ink())
                 : PageKit.wrapped(f, SkillsPage.state(row), r.x(), y, r.w(), t.ink()) + 3;
         y += 4;

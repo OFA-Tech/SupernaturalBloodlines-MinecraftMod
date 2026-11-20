@@ -21,6 +21,11 @@ import org.jetbrains.annotations.Nullable;
 /** The drawing the pages share: wrapped text, task rows with their tags and stamps, and the words for the model's ids. */
 final class PageKit {
     static final String HUB = "supernaturalbloodlines.hub.";
+
+    /** The key of a skill's one-paragraph description: {@code hub.skill_desc.<id in lower case>}. */
+    static String skillDescKey(String skillId) {
+        return HUB + "skill_desc." + skillId.toLowerCase(java.util.Locale.ROOT);
+    }
     static final int LINE = 10;
 
     private PageKit() {

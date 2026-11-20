@@ -37,6 +37,11 @@ public final class BossesConfig {
     private static final ModConfigSpec.IntValue FINN_RITUAL_SECONDS;
     private static final ModConfigSpec.IntValue LINK_SECONDS;
     private static final ModConfigSpec.DoubleValue LINK_DAMAGE_SHARE;
+    private static final ModConfigSpec.IntValue DEUCALION_MIN_SPARKS;
+    private static final ModConfigSpec.IntValue DEUCALION_SPARKS;
+    private static final ModConfigSpec.IntValue DEUCALION_PACK_ALPHAS;
+    private static final ModConfigSpec.BooleanValue DEUCALION_RESPAWN;
+    private static final ModConfigSpec.IntValue DEUCALION_RESPAWN_DAYS;
     private static final java.util.Map<BossId, ModConfigSpec.BooleanValue> ENABLED = new java.util.EnumMap<>(BossId.class);
 
     static {
@@ -90,6 +95,16 @@ public final class BossesConfig {
                 .defineInRange("link_seconds", 60, 5, 3600);
         LINK_DAMAGE_SHARE = b.comment("The part of the damage one linked creature takes that the other takes too. Never passed on again.")
                 .defineInRange("link_damage_share", 0.5, 0.0, 1.0);
+        DEUCALION_MIN_SPARKS = b.comment("How many stacked sparks a player Alpha needs before Deucalion comes for them, on a full moon night (needs Werewolves).")
+                .defineInRange("deucalion_min_sparks", 3, 1, 10);
+        DEUCALION_SPARKS = b.comment("The sparks Deucalion's killer takes, by the rules of a stolen spark: nothing for a True Alpha or somebody who is no werewolf, destroyed for an open protected path, never above max_stacked_sparks.")
+                .defineInRange("deucalion_sparks", 4, 1, 10);
+        DEUCALION_PACK_ALPHAS = b.comment("How many Alphas of his own pack come with him. They give no weak spark and no drops, and go when he does.")
+                .defineInRange("deucalion_pack_alphas", 3, 0, 8);
+        DEUCALION_RESPAWN = b.comment("Whether Deucalion may come again after he died, and pay his reward again, once deucalion_respawn_days in-game days have passed. Off: he dies for good.")
+                .define("deucalion_respawn", false);
+        DEUCALION_RESPAWN_DAYS = b.comment("In-game days after his death before he may come again (only with deucalion_respawn on).")
+                .defineInRange("deucalion_respawn_days", 7, 1, 1000);
         SPEC = b.build();
     }
 
@@ -211,6 +226,26 @@ public final class BossesConfig {
 
     public static int linkSeconds() {
         return pick("link_seconds", LINK_SECONDS);
+    }
+
+    public static int deucalionMinSparks() {
+        return pick("deucalion_min_sparks", DEUCALION_MIN_SPARKS);
+    }
+
+    public static int deucalionSparks() {
+        return pick("deucalion_sparks", DEUCALION_SPARKS);
+    }
+
+    public static int deucalionPackAlphas() {
+        return pick("deucalion_pack_alphas", DEUCALION_PACK_ALPHAS);
+    }
+
+    public static boolean deucalionRespawn() {
+        return pick("deucalion_respawn", DEUCALION_RESPAWN);
+    }
+
+    public static int deucalionRespawnDays() {
+        return pick("deucalion_respawn_days", DEUCALION_RESPAWN_DAYS);
     }
 
     public static double linkDamageShare() {

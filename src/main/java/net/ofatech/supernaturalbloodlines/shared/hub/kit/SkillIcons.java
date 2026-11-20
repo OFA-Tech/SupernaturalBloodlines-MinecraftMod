@@ -17,7 +17,7 @@ public final class SkillIcons {
             Map.entry("s-wit-1", Icons.SPARK), Map.entry("s-wit-2", Icons.SPARK), Map.entry("s-wit-3", Icons.SHIELD), Map.entry("s-wit-4", Icons.VOICE),
             Map.entry("s-wit-5", Icons.EYE), Map.entry("s-wit-6", Icons.VOICE), Map.entry("s-wit-7", Icons.SHIELD),
             Map.entry("s-wol-1", Icons.SHIELD), Map.entry("s-wol-2", Icons.MOON_FULL), Map.entry("s-wol-3", Icons.EYE), Map.entry("s-wol-4", Icons.VIAL),
-            Map.entry("s-wol-5", Icons.HEART), Map.entry("s-wol-6", Icons.VOICE), Map.entry("s-wol-7", Icons.MOON_FULL), Map.entry("s-wol-8", Icons.CLAW));
+            Map.entry("s-wol-5", Icons.HEART), Map.entry("s-wol-6", Icons.VOICE), Map.entry("s-wol-7", Icons.MOON_FULL), Map.entry("s-wol-8", Icons.CLAW), Map.entry("s-wol-11", Icons.VOICE));
 
     private SkillIcons() {
     }

@@ -158,6 +158,20 @@ public final class BossShots {
 
         private List<Panel> build(Minecraft mc) {
             List<Panel> list = new ArrayList<>();
+            if (boss.equals("deucalion")) {
+                columns = 4;
+                rows = 2;
+                int swap = ShiftRules.SWAP_TICK;
+                list.add(new Panel("the man, glasses on", deucalion(mc, BossForm.HUMAN, 0), 180f, 1.95f, 1.3f));
+                list.add(new Panel("the man, from the side", deucalion(mc, BossForm.HUMAN, 0), 90f, 1.95f, 1.3f));
+                list.add(new Panel("shift, tick 5: no glasses", deucalion(mc, BossForm.SHIFTING, 5), 160f, 1.95f, 1.3f));
+                list.add(new Panel("wolf, just after the swap", deucalion(mc, BossForm.SHIFTING, swap), 160f, 3.3f, 2.6f));
+                list.add(new Panel("the wolf, from the front", deucalion(mc, BossForm.BEAST, ShiftRules.END_TICK), 180f, 3.3f, 2.6f));
+                list.add(new Panel("the wolf, from the side", deucalion(mc, BossForm.BEAST, ShiftRules.END_TICK), 90f, 3.3f, 5.2f));
+                list.add(new Panel("the wolf, from behind", deucalion(mc, BossForm.BEAST, ShiftRules.END_TICK), 0f, 3.3f, 2.6f));
+                list.add(new Panel("the roar", deucalion(mc, BossForm.BEAST, swap + 20), 150f, 3.3f, 3.2f));
+                return list;
+            }
             if (boss.equals("klaus")) {
                 columns = 4;
                 rows = 2;
@@ -192,6 +206,12 @@ public final class BossShots {
                 }
             }
             return list;
+        }
+
+        private static net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity deucalion(Minecraft mc, BossForm form, int ticks) {
+            var d = net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity.create(mc.level);
+            d.lookForm(form, ticks);
+            return d;
         }
 
         private static KlausEntity klaus(Minecraft mc, BossForm form, int ticks, boolean desiccated) {

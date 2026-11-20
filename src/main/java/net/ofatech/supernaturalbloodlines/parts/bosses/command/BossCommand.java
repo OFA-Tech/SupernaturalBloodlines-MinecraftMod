@@ -76,6 +76,7 @@ public final class BossCommand {
         var spot = BossDirector.findGround(level, p.blockPosition(), 4, 8);
         boolean made = spot.isPresent() && switch (boss) {
             case KLAUS -> BossDirector.spawnKlaus(level, null, spot.get()).isPresent();
+            case DEUCALION -> BossDirector.spawnDeucalion(level, null, spot.get()).isPresent();
             case ELIJAH -> BossDirector.spawnElijah(level, null, spot.get()).isPresent();
             case REBEKAH -> BossDirector.spawnRebekah(level, p.blockPosition(), null, null).isPresent();
             case KOL -> BossDirector.spawnKol(level, null, spot.get()).isPresent();
@@ -134,7 +135,10 @@ public final class BossCommand {
         }
         BossId boss = id.get();
         var server = c.getSource().getServer();
-        NpcOriginalBoss b = BossDirector.bossEntity(server, boss);
+        var b = BossDirector.anyBossBody(server, boss);
+        if (b instanceof net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity d) {
+            d.dismissPack();
+        }
         if (b != null) {
             b.discard();
         }

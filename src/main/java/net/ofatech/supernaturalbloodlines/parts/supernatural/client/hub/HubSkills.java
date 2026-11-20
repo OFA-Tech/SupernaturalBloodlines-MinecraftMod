@@ -66,7 +66,8 @@ public final class HubSkills {
         }
         for (String id : s.skills().stream().sorted().toList()) {
             if (!seen.contains(id)) {
-                table.skill(id).ifPresent(spec -> out.add(new Row(id, spec.name(), spec.cost(), null, null, State.DORMANT, null)));
+                // a granted-only skill is in no tree and counts while its rule holds: it is owned, not dormant
+                table.skill(id).ifPresent(spec -> out.add(new Row(id, spec.name(), spec.cost(), null, null, active.contains(id) ? State.OWNED : State.DORMANT, null)));
             }
         }
         return out;
