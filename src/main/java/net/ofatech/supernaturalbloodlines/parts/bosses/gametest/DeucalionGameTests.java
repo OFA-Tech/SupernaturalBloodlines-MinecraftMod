@@ -579,6 +579,17 @@ public final class DeucalionGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void deucalionIsExemptFromLinesLikeTheOtherBossesAndHisBiteStartsNone(GameTestHelper helper) {
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            BossDirector.useMods(b -> true);
+            DeucalionEntity d = BossDirector.spawnDeucalion(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+            helper.assertTrue(d.getType().is(net.ofatech.supernaturalbloodlines.parts.species.line.NpcLines.EXEMPT), "Deucalion is not in #line_exempt");
+            d.dismissPack();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void theCommandSpawnsDeucalionWithHisPackAndResetsHimAndItRefusesWithoutWerewolves(GameTestHelper helper) {
         BossTestRig.fixedGround();
         LineTestPlayer op = LineTestPlayer.create(helper);
