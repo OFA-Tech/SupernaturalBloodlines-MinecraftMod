@@ -191,6 +191,36 @@ public final class SparkHandler {
         }
         return true;
     }
+    /**
+     * A boss pays {@code sparks} to the one who killed it (plan 17, decision 8): the same ladder as {@link #steal} ({@link PackRules#stealBy}) and the same
+     * {@code max_stacked_sparks}, but nothing is taken from anybody. A killer who is no werewolf gets nothing; a True Alpha takes nothing; an open and
+     * protected path destroys them. Touched only behind {@code ModList.isLoaded("werewolves")}.
+     */
+    public static net.ofatech.supernaturalbloodlines.core.boss.DeucalionRewardRules.Grant grantFromBoss(ServerPlayer killer, int sparks) {
+        boolean werewolf = VampirismSupernatural.isWerewolf(killer);
+        WolfState wolf = PackAccess.wolf(killer);
+        int cap = SpeciesConfig.maxStackedSparks();
+        var grant = net.ofatech.supernaturalbloodlines.core.boss.DeucalionRewardRules.sparks(werewolf, PackRules.stealBy(wolf), PackAccess.isAlpha(wolf.rank()),
+                wolf.sparks(), sparks, cap);
+        switch (grant.outcome()) {
+            case PROTECTED -> killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_destroyed"));
+            case GIVEN -> {
+                if (PackAccess.applyPack(killer, PackEvent.KILLED_ALPHA, PackContext.defaults()).refused()) {
+                    return new net.ofatech.supernaturalbloodlines.core.boss.DeucalionRewardRules.Grant(
+                            net.ofatech.supernaturalbloodlines.core.boss.DeucalionRewardRules.Outcome.NEVER, wolf.sparks(), false);
+                }
+                PackAccess.setSparks(killer, grant.sparksAfter());
+                killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_gained", grant.sparksAfter(), cap));
+                if (grant.capped()) {
+                    killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_capped", cap));
+                }
+            }
+            default -> {
+            }
+        }
+        return grant;
+    }
+
     private static void onFaction(PlayerFactionEvent.FactionLevelChanged e) {
         // a dormant True Alpha is marked as not holding the spark while they are away (hasSpark, offline); rejoining wakes it
         if (e.getPlayer().getPlayer() instanceof ServerPlayer back && !back.level().isClientSide && e.getCurrentFaction() == WerewolfFaction.faction()

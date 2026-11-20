@@ -55,7 +55,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * a werewolf, and fights on as the hybrid wolf (GeckoLib, {@code klaus_hybrid}), whose bite is werewolf venom. The UUID, the health, the boss bar and the
  * index entry stay the same across the shift. This class names no client class: the renderer is in {@code client/}. GeckoLib's animation types are common code.
  */
-public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
+public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, ShiftBody {
     private static final EntityDataAccessor<Integer> FORM = SynchedEntityData.defineId(KlausEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> SHIFT_TICKS = SynchedEntityData.defineId(KlausEntity.class, EntityDataSerializers.INT);
     private static final ResourceLocation BEAST_DAMAGE = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "klaus_beast_damage");
@@ -105,10 +105,12 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity {
         builder.define(SHIFT_TICKS, 0);
     }
 
+    @Override
     public BossForm form() {
         return BossForm.of(entityData.get(FORM));
     }
 
+    @Override
     public int shiftTicks() {
         return entityData.get(SHIFT_TICKS);
     }

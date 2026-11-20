@@ -11,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
  * is the night it came), or a Wolf Spirit (its {@code owner} and the game time it {@code expires}). Saved with the entity, every field optional.
  */
 public record NpcMark(Kind kind, long packId, long night, long expires, @Nullable UUID owner) {
-    public enum Kind { WILD, SPIRIT }
+    /** {@code BOSS_PACK}: an Alpha of Deucalion's pack (plan 17f). It hunts like a wild wolf, gives no weak spark and no drops, and goes when he does. */
+    public enum Kind { WILD, SPIRIT, BOSS_PACK }
 
     public static final Codec<NpcMark> CODEC = RecordCodecBuilder.create(i -> i.group(
             BloodlineCodecs.enumByName(Kind.class, Kind.WILD).lenientOptionalFieldOf("kind", Kind.WILD).forGetter(NpcMark::kind),
@@ -23,6 +24,10 @@ public record NpcMark(Kind kind, long packId, long night, long expires, @Nullabl
 
     public static NpcMark wild(long packId, long night) {
         return new NpcMark(Kind.WILD, packId, night, 0, null);
+    }
+
+    public static NpcMark bossPack(long packId, long night) {
+        return new NpcMark(Kind.BOSS_PACK, packId, night, 0, null);
     }
 
     public static NpcMark spirit(UUID owner, long expires) {

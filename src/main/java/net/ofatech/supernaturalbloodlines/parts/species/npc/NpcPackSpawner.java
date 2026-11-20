@@ -125,6 +125,20 @@ public final class NpcPackSpawner {
         return out;
     }
 
+    /** Deucalion's pack: {@code count} Alphas scattered round {@code spot}, marked as his (they hunt like wild wolves and give no weak spark and no drops). */
+    public static List<Mob> spawnBossAlphas(ServerLevel level, BlockPos spot, int count, long night) {
+        NpcMark mark = NpcMark.bossPack(NpcPackNights.get(level).newPackId(), night);
+        List<Mob> out = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Mob alpha = place(level, asMob(ModEntities.ALPHA_WEREWOLF.get()), scatter(level, spot, level.random), HALF_LEVEL);
+            if (alpha != null) {
+                alpha.setData(SpeciesRegistries.NPC_MARK, mark);
+                out.add(alpha);
+            }
+        }
+        return out;
+    }
+
     @Nullable
     public static Mob spawnLoneAt(ServerLevel level, BlockPos spot, long night) {
         long packId = NpcPackNights.get(level).newPackId();

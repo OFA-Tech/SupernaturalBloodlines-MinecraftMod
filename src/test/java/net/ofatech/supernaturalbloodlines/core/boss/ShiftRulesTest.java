@@ -98,4 +98,11 @@ class ShiftRulesTest {
         assertEquals(BossForm.HUMAN, BossForm.of(-1));
         assertEquals(BossForm.HUMAN, BossForm.of(3));
     }
+
+    @Test
+    void theHatLayerIsDrawnOnlyWhileTheBossIsAManAndGoesFromTheFirstTickOfTheShift() {
+        assertTrue(ShiftRules.hatVisible(BossForm.HUMAN));
+        assertFalse(ShiftRules.hatVisible(BossForm.SHIFTING), "from the first tick of the shift");
+        assertFalse(ShiftRules.hatVisible(BossForm.BEAST));
+    }
 }
