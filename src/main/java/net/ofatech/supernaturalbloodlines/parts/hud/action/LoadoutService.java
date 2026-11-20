@@ -32,7 +32,8 @@ public final class LoadoutService {
                 for (ExtraActions.Action a : ExtraActions.all()) {
                     int left = a.cooldownLeft(p);
                     if (left > 0) {
-                        net.ofatech.supernaturalbloodlines.parts.hud.net.ActionCooldownPayload.send(p, a.id(), left);
+                        // the real total, so the sweep's fraction (left over total) is right from the first frame
+                        net.ofatech.supernaturalbloodlines.parts.hud.net.ActionCooldownPayload.sendRemaining(p, a.id(), Math.max(left, a.cooldownTicks(p)), left);
                     }
                 }
             }

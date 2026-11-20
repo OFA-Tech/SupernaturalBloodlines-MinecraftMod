@@ -242,10 +242,10 @@ public final class SpeciesPart {
                     Downed.giveUp(p);
                 }
             }));
-            // the server decides rank and cooldown; a refusal comes back as an action bar message (the key exists only with the hud part off)
+            // the server decides rank and cooldown; a refusal comes back as an action bar message (the key is always registered; a client with the HUD covers it)
             registrar.playToServer(RoarPayload.TYPE, RoarPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> {
                 if (ctx.player() instanceof ServerPlayer p && ModList.get().isLoaded("werewolves")) {
-                    Component error = AlphaRoar.roar(p);
+                    Component error = AlphaRoar.handlePayload(p);
                     if (error != null) {
                         p.displayClientMessage(error, true);
                     }

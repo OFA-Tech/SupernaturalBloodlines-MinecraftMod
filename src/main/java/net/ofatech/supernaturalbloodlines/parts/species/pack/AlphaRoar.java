@@ -109,6 +109,36 @@ public final class AlphaRoar {
         PACK_ATTACK_UNTIL.clear();
     }
 
+    /** A dead, spectating or sleeping Alpha cannot roar, from any path (a slot, the key, the Pack button, {@code /pack roar}). Pure. */
+    public static boolean mayAct(boolean alive, boolean spectator, boolean sleeping) {
+        return alive && !spectator && !sleeping;
+    }
+
+    /** The Roar key's payloads per second, as many as the HUD's own ({@code rate_limit_per_second}'s default); a refused one counts as much as one that worked. */
+    public static final int PAYLOADS_PER_SECOND = 10;
+    private static final net.ofatech.supernaturalbloodlines.core.hud.RateLimiter PAYLOAD_LIMIT = new net.ofatech.supernaturalbloodlines.core.hud.RateLimiter();
+
+    /** True when this payload is within the player's rate limit; every call counts. */
+    public static boolean payloadAllowed(ServerPlayer p) {
+        return PAYLOAD_LIMIT.tryAcquire(p.getUUID(), p.server.getTickCount(), PAYLOADS_PER_SECOND);
+    }
+
+    /** Test hook: forgets the rate limit window of a player. */
+    public static void forgetPayloadLimit(ServerPlayer p) {
+        PAYLOAD_LIMIT.forget(p.getUUID());
+    }
+
+    /**
+     * The Roar key's payload: dropped silently over the rate limit (nothing is sent back, like the HUD's), else the same checks as every path ({@link #roar}),
+     * the sleeping check among them.
+     *
+     * @return the refusal to show in the action bar, null when it roared or was dropped
+     */
+    @Nullable
+    public static Component handlePayload(ServerPlayer p) {
+        return payloadAllowed(p) ? roar(p) : null;
+    }
+
     /** Ticks of cooldown left (0 when ready). */
     public static int cooldownLeft(ServerPlayer p) {
         Long last = LAST.get(p.getUUID());
@@ -140,7 +170,7 @@ public final class AlphaRoar {
         if (LunarEclipse.active(p.server)) {
             return Component.translatable(KEY + "roar_eclipse");
         }
-        if (!p.isAlive() || p.isSpectator()) {
+        if (!mayAct(p.isAlive(), p.isSpectator(), p.isSleeping())) {
             return Component.translatable(KEY + "roar_unavailable");
         }
         Long last = LAST.get(p.getUUID());

@@ -42,7 +42,8 @@ class SprintLeapTest {
         List<String> ids = CoveredKeyIds.all();
         assertTrue(ids.contains("keys.werewolves.leap"), "Left Control is vanilla sprint: the leap key must go");
         assertTrue(ids.contains("keys.werewolves.bite"));
-        assertEquals(3 + 3 + 1 + 9 + 1 + 1, ids.size(), "3 Tensura + 3 Tensura Slots + suck + 9 actions + bite + leap");
+        assertEquals(3 + 3 + 1 + 9 + 1 + 1 + 1, ids.size(), "3 Tensura + 3 Tensura Slots + suck + 9 actions + bite + our Roar key + leap");
+        assertTrue(ids.contains("key.supernaturalbloodlines.alpha_roar"), "the Roar key is hidden while the HUD gives the Roar a slot");
     }
 
     @Test

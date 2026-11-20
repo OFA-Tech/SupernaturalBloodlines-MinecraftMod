@@ -2,44 +2,23 @@ package net.ofatech.supernaturalbloodlines.core.hud;
 
 import java.util.List;
 import java.util.Optional;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * Which mode the player chose, kept apart from which modes are on offer right now. The offer changes under the player's feet (a login, a respawn or a
- * dimension change leaves {@code HudStanding} unsynced for a few ticks, so Supernatural mode is briefly not available): the choice is stored only by
- * {@link #choose} (the mode key), never by reading the current mode, so an unavailable tick falls back for that tick only and the choice comes back with
- * the offer. Pure.
+ * Which mode to show. The memory of the player's choice is the client {@code mode} setting itself (the mode key writes it, the hub Settings page edits it),
+ * so a change in either applies at once and there is no second copy to drift. The modes on offer change under the player's feet (a login, a respawn or a
+ * dimension change leaves {@code HudStanding} unsynced for a few ticks, so Supernatural mode is briefly not available): that falls back for that tick only,
+ * and, since nothing is stored, the setting brings the choice back with the offer. Pure.
  */
 public final class ModeMemory {
-    @Nullable
-    private SlotMode chosen;
+    /** A freshly created player entity (login, respawn, dimension change) has had no time to receive its standing for this many ticks. */
+    public static final int STANDING_SETTLE_TICKS = 40;
 
-    /** The player pressed the mode key and landed on {@code mode}. */
-    public void choose(@Nullable SlotMode mode) {
-        chosen = mode;
+    private ModeMemory() {
     }
 
-    /** What the player chose, null before any choice (this session). */
-    @Nullable
-    public SlotMode chosen() {
-        return chosen;
-    }
-
-    /**
-     * The mode to show: the choice when it is on offer; else (no choice yet) the start mode of the saved setting; else the first mode on offer. Never stores
-     * what it returns.
-     */
-    public Optional<SlotMode> current(String setting, List<SlotMode> available) {
-        if (available.isEmpty()) {
-            return Optional.empty();
-        }
-        if (chosen != null && available.contains(chosen)) {
-            return Optional.of(chosen);
-        }
-        if (chosen == null) {
-            return SlotMode.start(setting, available);
-        }
-        return Optional.of(available.get(0));
+    /** The mode to show for the saved {@code setting} (AUTO, TENSURA or SUPERNATURAL) and the modes on offer: the setting's mode if on offer, else the first one. */
+    public static Optional<SlotMode> current(String setting, List<SlotMode> available) {
+        return SlotMode.start(setting, available);
     }
 
     /** The mode key does something only with two modes on offer. */
@@ -47,11 +26,18 @@ public final class ModeMemory {
         return available.size() > 1;
     }
 
+    public enum Hint { NONE, LOCKED, NOT_NOW }
+
     /**
-     * The mode key was pressed with Tensura and Vampirism installed but a player who is not supernatural: the key has nothing to switch to, and the player is
-     * told why instead of getting silence.
+     * What the mode key says when there is nothing to switch to, for a player with Tensura and Vampirism installed: that Supernatural mode unlocks when they
+     * become supernatural, or, while their standing may not have synced yet, only that it is not available right now.
+     *
+     * @param playerAgeTicks ticks the local player entity has existed
      */
-    public static boolean lockedHint(boolean tensura, boolean vampirism, boolean supernatural) {
-        return tensura && vampirism && !supernatural;
+    public static Hint hint(boolean tensura, boolean vampirism, boolean supernatural, int playerAgeTicks) {
+        if (!tensura || !vampirism || supernatural) {
+            return Hint.NONE;
+        }
+        return playerAgeTicks >= STANDING_SETTLE_TICKS ? Hint.LOCKED : Hint.NOT_NOW;
     }
 }

@@ -1,11 +1,11 @@
 # Key binds
 
-The mod's key binds are on the client only. First the hub (and, without the HUD part only, the Alpha Roar); the [HUD keys](#the-hud-keys-hud-part) are below.
+The mod's key binds are on the client only. First the hub and the Alpha Roar (which the HUD hides, see below); the [HUD keys](#the-hud-keys-hud-part) are below.
 
 | Key bind | Category in Controls | Default | Does |
 |---|---|---|---|
 | **Supernatural hub** | Supernatural Bloodlines | **Home** | Opens the [Supernatural hub](Supernatural-Hub); in the hub it closes it. Only exists with the supernatural part on. J was not used: it is JourneyMap's map, and = and - are map zoom keys. |
-| **Alpha Roar** | Supernatural Bloodlines | **unbound**; only registered while the **hud part is off** (with the HUD the Roar is an action in a slot: no key) and **Werewolves** is installed | The [Alpha Roar](Werewolves-And-Packs#alpha-roar) for a game without the HUD. Only an Alpha or True Alpha can use it; the server checks. Same as `/pack roar`. |
+| **Alpha Roar** | Supernatural Bloodlines | **unbound**; always registered when **Werewolves** is installed, but **hidden and unbound while the HUD works** (the Roar is then an action in a slot; the key comes back with `hide_covered_keys` off, with the HUD off, or on a server without the HUD) | The [Alpha Roar](Werewolves-And-Packs#alpha-roar) for a game or server without the HUD. Only an Alpha or True Alpha can use it; the server checks. Same as `/pack roar`. |
 
 Bind it in **Options > Controls > Key Binds**, under **Supernatural Bloodlines**.
 

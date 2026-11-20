@@ -11,8 +11,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.core.network.RoarPayload;
 
 /**
- * The Alpha Roar key, <b>only while the hud part is off</b>: with the HUD the Roar is an action in a slot (the hub's Slots tab) and has no key of its own.
- * Without the hud part an Alpha would have nothing but a command, so the key stays. Unbound by default (the pack's keymap script binds it); client only.
+ * The Alpha Roar key. Always registered, so a game or a server without the HUD still has a non-command way to roar. With the HUD the Roar is an action in a
+ * slot, so {@code KeyCover} unbinds and hides this key while the HUD can take over ({@code CoveredKeyIds}) and gives it back when it cannot. Unbound by
+ * default (the pack's keymap script binds it); client only.
  */
 public final class PackKeybinds {
     public static final String CATEGORY = "key.categories.supernaturalbloodlines";
@@ -23,9 +24,6 @@ public final class PackKeybinds {
     }
 
     public static void register(IEventBus modBus) {
-        if (net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("hud")) {
-            return;
-        }
         modBus.addListener((RegisterKeyMappingsEvent e) -> e.register(ALPHA_ROAR));
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> {
             while (ALPHA_ROAR.consumeClick()) {

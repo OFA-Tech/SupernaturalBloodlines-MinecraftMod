@@ -12,50 +12,49 @@ class ModeMemoryTest {
     private static final List<SlotMode> HUMAN = List.of(SlotMode.TENSURA);
 
     @Test
-    void anUnavailableTickFallsBackForThatTickOnlyAndTheChoiceComesBack() {
-        ModeMemory m = new ModeMemory();
-        m.choose(SlotMode.SUPERNATURAL);
-        assertEquals(SlotMode.SUPERNATURAL, m.current("AUTO", BOTH).orElseThrow());
+    void anUnavailableTickFallsBackForThatTickOnlyAndTheSettingBringsTheChoiceBack() {
+        // the setting is the memory: the mode key wrote SUPERNATURAL
+        assertEquals(SlotMode.SUPERNATURAL, ModeMemory.current("SUPERNATURAL", BOTH).orElseThrow());
         // login, respawn, dimension change: standing is not synced yet, so Supernatural mode is not on offer
-        assertEquals(SlotMode.TENSURA, m.current("AUTO", HUMAN).orElseThrow());
-        assertEquals(SlotMode.SUPERNATURAL, m.chosen(), "reading the current mode must not overwrite the choice");
-        assertEquals(SlotMode.SUPERNATURAL, m.current("AUTO", BOTH).orElseThrow(), "back with the offer");
+        assertEquals(SlotMode.TENSURA, ModeMemory.current("SUPERNATURAL", HUMAN).orElseThrow());
+        assertEquals(SlotMode.SUPERNATURAL, ModeMemory.current("SUPERNATURAL", BOTH).orElseThrow(), "back with the offer: nothing was overwritten");
     }
 
     @Test
     void severalUnavailableTicksStillKeepTheChoice() {
-        ModeMemory m = new ModeMemory();
-        m.choose(SlotMode.SUPERNATURAL);
         for (int i = 0; i < 5; i++) {
-            m.current("SUPERNATURAL", HUMAN);
+            ModeMemory.current("SUPERNATURAL", HUMAN);
         }
-        assertEquals(SlotMode.SUPERNATURAL, m.current("TENSURA", BOTH).orElseThrow());
+        assertEquals(SlotMode.SUPERNATURAL, ModeMemory.current("SUPERNATURAL", BOTH).orElseThrow());
     }
 
     @Test
-    void withNoChoiceTheSavedSettingStartsTheModeAndItIsNeverStored() {
-        ModeMemory m = new ModeMemory();
-        assertEquals(SlotMode.SUPERNATURAL, m.current("SUPERNATURAL", BOTH).orElseThrow());
-        assertEquals(SlotMode.TENSURA, m.current("SUPERNATURAL", HUMAN).orElseThrow(), "not on offer: what is");
-        assertEquals(null, m.chosen());
-        assertEquals(SlotMode.SUPERNATURAL, m.current("SUPERNATURAL", BOTH).orElseThrow());
+    void aChangeOfTheSettingAppliesAtOnce() {
+        assertEquals(SlotMode.TENSURA, ModeMemory.current("TENSURA", BOTH).orElseThrow());
+        assertEquals(SlotMode.SUPERNATURAL, ModeMemory.current("SUPERNATURAL", BOTH).orElseThrow(), "the hub Settings page picked it");
+        assertEquals(SlotMode.TENSURA, ModeMemory.current("AUTO", BOTH).orElseThrow(), "auto: Tensura when it is installed");
     }
 
     @Test
-    void aChoiceThatIsNotOnOfferFallsBackToTheFirstOne() {
-        ModeMemory m = new ModeMemory();
-        m.choose(SlotMode.TENSURA);
-        assertEquals(SlotMode.SUPERNATURAL, m.current("AUTO", List.of(SlotMode.SUPERNATURAL)).orElseThrow());
-        assertTrue(m.current("AUTO", List.of()).isEmpty());
+    void aModeThatIsNotOnOfferFallsBackToTheFirstOneAndNothingMeansNoHud() {
+        assertEquals(SlotMode.SUPERNATURAL, ModeMemory.current("TENSURA", List.of(SlotMode.SUPERNATURAL)).orElseThrow());
+        assertTrue(ModeMemory.current("AUTO", List.of()).isEmpty());
     }
 
     @Test
-    void theModeKeyNeedsTwoModesAndAHumanWithTensuraIsToldWhy() {
+    void theModeKeyNeedsTwoModes() {
         assertTrue(ModeMemory.canToggle(BOTH));
         assertFalse(ModeMemory.canToggle(HUMAN));
-        assertTrue(ModeMemory.lockedHint(true, true, false));
-        assertFalse(ModeMemory.lockedHint(true, true, true), "a supernatural player has two modes");
-        assertFalse(ModeMemory.lockedHint(false, true, false), "without Tensura there is no HUD to switch");
-        assertFalse(ModeMemory.lockedHint(true, false, false), "without Vampirism there is no Supernatural mode to wait for");
+    }
+
+    @Test
+    void aHumanWithTensuraIsToldWhySupernaturalModeIsMissingButOnlyOnceStandingHasHadTimeToSync() {
+        int old = ModeMemory.STANDING_SETTLE_TICKS;
+        assertEquals(ModeMemory.Hint.LOCKED, ModeMemory.hint(true, true, false, old));
+        assertEquals(ModeMemory.Hint.NOT_NOW, ModeMemory.hint(true, true, false, old - 1), "just logged in, respawned or changed dimension: it may simply not have arrived");
+        assertEquals(ModeMemory.Hint.NOT_NOW, ModeMemory.hint(true, true, false, 0));
+        assertEquals(ModeMemory.Hint.NONE, ModeMemory.hint(true, true, true, old), "a supernatural player has two modes");
+        assertEquals(ModeMemory.Hint.NONE, ModeMemory.hint(false, true, false, old), "without Tensura there is no HUD to switch");
+        assertEquals(ModeMemory.Hint.NONE, ModeMemory.hint(true, false, false, old), "without Vampirism there is no Supernatural mode to wait for");
     }
 }

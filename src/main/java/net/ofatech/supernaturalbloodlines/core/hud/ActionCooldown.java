@@ -11,6 +11,11 @@ public final class ActionCooldown {
         return passed < 0 || passed >= total ? 0 : (int) (total - passed);
     }
 
+    /** The tick a cooldown of {@code total} with {@code left} still to run was started at, for a cooldown the client learns about half way (a login). */
+    public static long startedAt(long now, int total, int left) {
+        return now - (total - Math.min(total, Math.max(0, left)));
+    }
+
     /** The seconds to show: counted up, so a cooldown that has not ended never reads 0. */
     public static int seconds(int leftTicks) {
         return (leftTicks + 19) / 20;

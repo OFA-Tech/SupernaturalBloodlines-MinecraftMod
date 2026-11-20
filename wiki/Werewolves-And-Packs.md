@@ -170,7 +170,7 @@ The **Deucalion factor**: an Alpha who kills an Alpha from outside their pack ke
 
 ### Alpha Roar
 
-A **slot action**: the mod puts **Alpha Roar** in your first empty HUD slot when you become an Alpha ("Alpha Roar added to slot N (hub › Slots)"; with every slot full it tells you to assign it in the hub, Slots tab), and the slot shows its cooldown. Also `/pack roar` and the Pack page button; with the HUD part off, an unbound **Alpha Roar** key. **60 second** cooldown. Alpha and True Alpha only, not during an eclipse ("The eclipse swallows your roar.").
+A **slot action**: the mod puts **Alpha Roar** in your first empty HUD slot when you become an Alpha ("Alpha Roar added to slot N (hub › Slots)"; with every slot full it tells you to assign it in the hub, Slots tab), and the slot shows its cooldown. Also `/pack roar` and the Pack page button; an unbound **Alpha Roar** key (hidden while the HUD works, there for a game or server without it). **60 second** cooldown. Alpha and True Alpha only, not during an eclipse ("The eclipse swallows your roar.").
 
 - **Pack Betas within 32 blocks:** Strength I (a tier higher for each [stacked spark](#stacked-sparks)) and Speed I for 30 s, and may shift at will for those 30 s.
 - **Other werewolves within 16 blocks:** drop their form and get Slowness II for 5 s ("X's roar forces your wolf down.").

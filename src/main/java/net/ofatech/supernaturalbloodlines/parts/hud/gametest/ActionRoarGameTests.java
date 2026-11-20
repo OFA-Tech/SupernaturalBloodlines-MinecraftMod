@@ -160,4 +160,22 @@ public final class ActionRoarGameTests {
         }
         helper.succeed();
     }
+
+    /** The Roar key's payload counts against the same limit as the HUD's ({@code 10} a second): the eleventh in a second is dropped, a refused one counts too. */
+    @GameTest(template = "empty", templateNamespace = NS, batch = "hud_roar")
+    public static void theRoarPayloadIsRateLimitedLikeTheHudsPayloads(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper, Rank.ALPHA);
+        net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar.forgetPayloadLimit(p);
+        int limit = net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar.PAYLOADS_PER_SECOND;
+        helper.assertTrue(limit == net.ofatech.supernaturalbloodlines.parts.hud.HudConfig.rateLimitPerSecond(), "the limits differ: " + limit);
+        for (int i = 0; i < limit; i++) {
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar.payloadAllowed(p), "payload " + i + " was dropped");
+        }
+        helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar.payloadAllowed(p), "the payload over the limit was not dropped");
+        net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar.handlePayload(p);
+        helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar.cooldownLeft(p) == 0, "a dropped payload still roared");
+        net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar.forgetPayloadLimit(p);
+        clean(p);
+        helper.succeed();
+    }
 }

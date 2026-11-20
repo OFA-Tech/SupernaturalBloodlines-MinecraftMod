@@ -33,8 +33,6 @@ import net.ofatech.supernaturalbloodlines.core.hud.RecordFile;
 public final class KeyCover {
     public static final String FILE = SupernaturalBloodlines.MODID + "-hud-keys.json";
 
-    /** Tensura's three skill keys, Tensura Slots' three, Vampirism's suck and nine action toggles, and Werewolves' bite. */
-
     private static final RecordFile RECORD = new RecordFile(FMLPaths.CONFIGDIR.get().resolve(FILE), System::currentTimeMillis,
             m -> SupernaturalBloodlines.LOGGER.warn("Covered keys: {}", m));
     private static Boolean applied;

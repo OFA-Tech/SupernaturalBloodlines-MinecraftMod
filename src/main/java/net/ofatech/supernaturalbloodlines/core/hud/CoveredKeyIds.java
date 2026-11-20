@@ -8,6 +8,8 @@ public final class CoveredKeyIds {
     public static final String WEREWOLVES_BITE = "keys.werewolves.bite";
     /** Werewolves' own leap key (Left Control by default, which is vanilla sprint); the leap is a jump while sprinting now ({@link SprintLeap}). */
     public static final String WEREWOLVES_LEAP = "keys.werewolves.leap";
+    /** Our own Alpha Roar key: the Roar is an action in a HUD slot while the HUD works, so the key is hidden then (it stays for a game or server without the HUD). */
+    public static final String ALPHA_ROAR_KEY = "key.supernaturalbloodlines.alpha_roar";
 
     private CoveredKeyIds() {
     }
@@ -33,6 +35,7 @@ public final class CoveredKeyIds {
             ids.add("keys.vampirism.action" + i);
         }
         ids.add(WEREWOLVES_BITE);
+        ids.add(ALPHA_ROAR_KEY);
         if (sprintLeap) {
             ids.add(WEREWOLVES_LEAP);
         }
