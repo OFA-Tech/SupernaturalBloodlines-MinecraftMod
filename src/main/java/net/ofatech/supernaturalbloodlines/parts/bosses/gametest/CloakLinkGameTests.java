@@ -87,12 +87,16 @@ public final class CloakLinkGameTests {
         try {
             BloodlineAccess.set(hunter, BloodlineState.NONE.toBuilder().species(Species.HUNTER_OF_THE_FIVE).markKills(8).build());
             hunter.setPos(helper.absoluteVec(new Vec3(1.5, 1, 1.5)));
-            ItemStack compass = new ItemStack(ArtifactItems.VAMPIRE_COMPASS.get());
+            // the compass is the artifacts part's: without it only the hunter's sense is tested
+            boolean compassOn = net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(NS, "vampire_compass"));
+            ItemStack compass = compassOn ? new ItemStack(ArtifactItems.VAMPIRE_COMPASS.get()) : ItemStack.EMPTY;
             vampire.setPos(helper.absoluteVec(new Vec3(12.5, 1, 12.5)));
             helper.getLevel().addNewPlayer(vampire);
-            VampireCompassItem.update(compass, helper.getLevel(), hunter);
-            Optional<GlobalPos> before = target(compass);
-            helper.assertTrue(before != null && before.isPresent() && before.get().pos().equals(caster.blockPosition()), "control: the compass does not find the caster first: " + before);
+            if (compassOn) {
+                VampireCompassItem.update(compass, helper.getLevel(), hunter);
+                Optional<GlobalPos> before = target(compass);
+                helper.assertTrue(before != null && before.isPresent() && before.get().pos().equals(caster.blockPosition()), "control: the compass does not find the caster first: " + before);
+            }
             helper.assertTrue(HunterInstinct.senses(hunter, caster), "control: the hunter does not sense the caster");
 
             RiteTestSupport.start(helper, "rite_of_cloaking", caster, cloakItems(true));
@@ -100,9 +104,11 @@ public final class CloakLinkGameTests {
             helper.assertTrue(CloakAccess.until(caster) == caster.level().getGameTime() + BossesConfig.kolCloakMinutes() * 1200L, "the cloak does not last the setting: " + CloakAccess.until(caster));
             helper.assertTrue(caster.receivedOnActionBar(CloakingRiteFactory.DONE), "the caster was not told");
             helper.assertTrue(RiteTestSupport.dropped(helper, "supernaturalbloodlines:kol_grimoire") == 1, "the grimoire was not given back");
-            VampireCompassItem.update(compass, helper.getLevel(), hunter);
-            Optional<GlobalPos> after = target(compass);
-            helper.assertTrue(after != null && after.isPresent() && after.get().pos().equals(vampire.blockPosition()), "the compass still points at the cloaked caster: " + after);
+            if (compassOn) {
+                VampireCompassItem.update(compass, helper.getLevel(), hunter);
+                Optional<GlobalPos> after = target(compass);
+                helper.assertTrue(after != null && after.isPresent() && after.get().pos().equals(vampire.blockPosition()), "the compass still points at the cloaked caster: " + after);
+            }
             helper.assertTrue(!HunterInstinct.senses(hunter, caster), "the hunter senses the cloaked caster");
             helper.assertTrue(HunterInstinct.senses(hunter, vampire), "the hunter no longer senses a vampire who is not cloaked");
             // it ends
