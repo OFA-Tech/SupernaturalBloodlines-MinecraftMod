@@ -89,8 +89,7 @@ public final class HubScreen extends Screen {
     private void applyTheme() {
         themeId = HubClientConfig.theme();
         // the themes are registered by the parts that bring them (HubHooks.addTheme); a missing one, or one of the wrong type, is the Grimoire
-        HubClientConfig.ThemeId shown = HubClientConfig.resolve(themeId, id -> HubHooks.theme(id).isPresent());
-        theme = HubHooks.theme(shown.id()).map(t -> t.factory().get()).orElseGet(GrimoireTheme::new);
+        theme = HubClient.themeFor(themeId.id()).orElseThrow();
     }
 
     @Override

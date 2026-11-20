@@ -47,6 +47,8 @@ public final class BossIndex extends SavedData {
         public long arriveAt = -1;
         /** The seconds of the last countdown reminder shown to the hunted player (0 for none). */
         public int reminded;
+        /** Elijah: an oath was broken, so he fights everybody for good and makes no more deals (R167). */
+        public boolean hostile;
 
         CompoundTag save(BossId id) {
             CompoundTag t = new CompoundTag();
@@ -67,6 +69,7 @@ public final class BossIndex extends SavedData {
             }
             t.putLong("arrive_at", arriveAt);
             t.putInt("reminded", reminded);
+            t.putBoolean("hostile", hostile);
             return t;
         }
 
@@ -84,11 +87,14 @@ public final class BossIndex extends SavedData {
             e.target = t.hasUUID("target") ? t.getUUID("target") : null;
             e.arriveAt = t.contains("arrive_at") ? t.getLong("arrive_at") : -1;
             e.reminded = t.getInt("reminded");
+            e.hostile = t.getBoolean("hostile");
             return e;
         }
     }
 
     private final Map<BossId, Entry> entries = new EnumMap<>(BossId.class);
+    /** Elijah's deals: each player to the last day of their oath ({@link net.ofatech.supernaturalbloodlines.core.boss.DealRules#BROKEN} once they broke it). Absent: never dealt. */
+    private final Map<UUID, Long> oaths = new java.util.HashMap<>();
 
     public static BossIndex get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(new Factory<>(BossIndex::new, BossIndex::load, null), NAME);
@@ -106,6 +112,13 @@ public final class BossIndex extends SavedData {
                 SupernaturalBloodlines.LOGGER.warn("Skipping a bad entry of the boss index: {}", bad.toString());
             }
         }
+        ListTag oathList = tag.getList("oaths", Tag.TAG_COMPOUND);
+        for (int i = 0; i < oathList.size(); i++) {
+            CompoundTag t = oathList.getCompound(i);
+            if (t.hasUUID("player")) {
+                index.oaths.put(t.getUUID("player"), t.getLong("until"));
+            }
+        }
         return index;
     }
 
@@ -114,7 +127,25 @@ public final class BossIndex extends SavedData {
         ListTag list = new ListTag();
         entries.forEach((id, e) -> list.add(e.save(id)));
         tag.put(BOSSES, list);
+        ListTag oathList = new ListTag();
+        oaths.forEach((player, until) -> {
+            CompoundTag t = new CompoundTag();
+            t.putUUID("player", player);
+            t.putLong("until", until);
+            oathList.add(t);
+        });
+        tag.put("oaths", oathList);
         return tag;
+    }
+
+    /** The last day of this player's oath, {@link net.ofatech.supernaturalbloodlines.core.boss.DealRules#NEVER} when they never dealt with Elijah. */
+    public long oathOf(UUID player) {
+        return oaths.getOrDefault(player, net.ofatech.supernaturalbloodlines.core.boss.DealRules.NEVER);
+    }
+
+    public void setOath(UUID player, long until) {
+        oaths.put(player, until);
+        setDirty();
     }
 
     /** The record of a boss, made on first look. Callers that change it call {@link #setDirty()}. */
@@ -181,6 +212,9 @@ public final class BossIndex extends SavedData {
     /** Forgets everything about a boss (the operator's reset). */
     public void forget(BossId boss) {
         entries.remove(boss);
+        if (boss == BossId.ELIJAH) {
+            oaths.clear(); // a world that has never seen him has no deals either
+        }
         setDirty();
     }
 }

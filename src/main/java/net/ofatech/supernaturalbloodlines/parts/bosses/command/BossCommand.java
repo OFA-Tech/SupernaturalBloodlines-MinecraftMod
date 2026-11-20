@@ -74,7 +74,12 @@ public final class BossCommand {
             return 0;
         }
         var spot = BossDirector.findGround(level, p.blockPosition(), 4, 8);
-        boolean made = spot.isPresent() && (boss == BossId.KLAUS ? BossDirector.spawnKlaus(level, null, spot.get()).isPresent() : BossDirector.spawnMikael(level, null, spot.get()).isPresent());
+        boolean made = spot.isPresent() && switch (boss) {
+            case KLAUS -> BossDirector.spawnKlaus(level, null, spot.get()).isPresent();
+            case ELIJAH -> BossDirector.spawnElijah(level, null, spot.get()).isPresent();
+            case REBEKAH -> BossDirector.spawnRebekah(level, p.blockPosition(), null, null).isPresent();
+            default -> BossDirector.spawnMikael(level, null, spot.get()).isPresent();
+        };
         if (!made) {
             c.getSource().sendFailure(Component.translatable("supernaturalbloodlines.boss.cmd.no_ground"));
             return 0;

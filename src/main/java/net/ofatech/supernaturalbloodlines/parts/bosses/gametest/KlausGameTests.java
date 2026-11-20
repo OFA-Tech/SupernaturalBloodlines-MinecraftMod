@@ -348,6 +348,52 @@ public final class KlausGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aWarnedArrivalIsDroppedWhenTheMoonSetsMeanwhile(GameTestHelper helper) {
+        LineTestPlayer p = carrier(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            night(p);
+            BossDirector.check(rig.server);
+            helper.assertTrue(rig.index.of(BossId.KLAUS).arriveAt > 0, "control: no arrival waits");
+            BossDirector.useMoon(l -> false);
+            BossClock.offsetForTests(BossesConfig.klausWarningSeconds() * 20L + 5);
+            BossDirector.check(rig.server);
+            helper.assertTrue(klausOf(rig) == null, "he came although the full moon night was over while the warning ran");
+            helper.assertTrue(rig.index.of(BossId.KLAUS).arriveAt == -1, "the arrival is still waiting");
+            helper.assertTrue(p.count(KlausEntity.LOST_SCENT) == 1, "the target was not told the wolf lost the scent: " + p.heard());
+        } finally {
+            forget(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aKlausWhoFallsMidShiftDoesNotSwapUntilHeGetsUp(GameTestHelper helper) {
+        List<String> seen = new java.util.ArrayList<>();
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            KlausEntity k = rig.spawnKlaus();
+            KlausEntity.observeSwap(e -> seen.add(e.form() + "@" + e.shiftTicks()));
+            k.startShift();
+            for (int i = 1; i < ShiftRules.SWAP_TICK; i++) {
+                k.tick();
+            }
+            int at = k.shiftTicks();
+            k.desiccate();
+            for (int i = 0; i < 40; i++) {
+                k.tick();
+            }
+            helper.assertTrue(k.form() == BossForm.SHIFTING && k.shiftTicks() == at, "a fallen Klaus went on shifting: " + k.form() + " at " + k.shiftTicks());
+            helper.assertTrue(seen.isEmpty() && Math.abs(k.getBbHeight() - 1.95F) < 1e-4, "a fallen Klaus swapped his body: " + seen + " " + k.getBbHeight());
+            k.recover();
+            for (int i = 0; i < 4; i++) {
+                k.tick();
+            }
+            helper.assertTrue(seen.size() == 1, "he did not swap once he got up: " + seen);
+        } finally {
+            KlausEntity.observeSwap(null);
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void anArrivalForSomeoneWhoLeftIsDropped(GameTestHelper helper) {
         LineTestPlayer p = carrier(helper);
         try (BossTestRig rig = new BossTestRig(helper)) {
@@ -947,7 +993,7 @@ public final class KlausGameTests {
     // ---- the mountain ash claim, as it really is ----
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void onlyAPackEmissarysLineHoldsKlausAndMikaelAPlainOneDoesNot(GameTestHelper helper) {
+    public static void onlyAPackEmissarysLineHoldsKlausMikaelElijahAndRebekahAPlainOneDoesNot(GameTestHelper helper) {
         if (!net.minecraft.core.registries.BuiltInRegistries.BLOCK.containsKey(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(NS, "mountain_ash_line"))) {
             helper.succeed(); // the artifacts part is off: there is no line to test
             return;
@@ -956,6 +1002,8 @@ public final class KlausGameTests {
         try (BossTestRig rig = new BossTestRig(helper)) {
             KlausEntity k = rig.spawnKlaus();
             net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity m = rig.spawn();
+            net.ofatech.supernaturalbloodlines.parts.bosses.entity.ElijahEntity elijah = rig.spawnElijah();
+            net.ofatech.supernaturalbloodlines.parts.bosses.entity.RebekahEntity rebekah = rig.spawnRebekah();
             BlockPos at = new BlockPos(6, 1, 6);
             helper.setBlock(at, net.ofatech.supernaturalbloodlines.parts.artifacts.MountainAsh.LINE.get().defaultBlockState());
             BlockPos abs = helper.absolutePos(at);
@@ -963,9 +1011,13 @@ public final class KlausGameTests {
             helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(vampire, level, abs), "control: a plain line does not hold a vampire");
             helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(k, level, abs), "a plain line holds Klaus: the hint can say so");
             helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(m, level, abs), "a plain line holds Mikael: the hint can say so");
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(elijah, level, abs), "a plain line holds Elijah");
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(rebekah, level, abs), "a plain line holds Rebekah");
             ((net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlockEntity) level.getBlockEntity(abs)).setEmissary(true);
             helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(k, level, abs), "an Emissary's line does not hold Klaus");
             helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(m, level, abs), "an Emissary's line does not hold Mikael");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(elijah, level, abs), "an Emissary's line does not hold Elijah");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.artifacts.block.MountainAshLineBlock.blocks(rebekah, level, abs), "an Emissary's line does not hold Rebekah");
         }
         helper.succeed();
     }

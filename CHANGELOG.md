@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased (plan 17d: Elijah and Rebekah)
+
+### Added
+- **Elijah** (part `bosses`). Calm. Once a day (`elijah_chance_per_day`, 0.05), by day or night, he comes to a player who has discovered an Original or carries an NPC Original's blood. **Right-click: the deal.** A small dialog offers the blood of one Original (never his own, and never the line you are in until you have discovered it) for an oath of `elijah_oath_days` (7): do not harm or desiccate any NPC Original but Mikael, and do not strike Elijah. One deal per player. Breaking the oath makes him hostile for good. His reward is **The Elixir**: carried, it brings you back from your next death that is not a line death, `/kill` or the white oak end of an Original, once (`elixir_heal_fraction`, 0.5); the Resurrection Ring goes first.
+- **Rebekah**. The Rite of the Cure now fires `CureMadeEvent`; `rebekah_delay_seconds` (60) later she comes for whoever cast it and hunts them. A Cure that was given or dropped does not call her. Her reward is **The True Cure**: an Original drinks it with no rite and no desiccation and is human again; the ones they sired keep their line (new bloodline event `DRANK_THE_TRUE_CURE`).
+- Config (`supernaturalbloodlines-bosses.toml`, 23 keys now): `elijah_chance_per_day`, `elijah_oath_days`, `elixir_heal_fraction`, `rebekah_delay_seconds`; all four are Admin rows. The boss buttons and commands of the Admin page now include both.
+- Developer: `BossShots` takes `-Dsupernaturalbloodlines.devshots.bosses=elijah` (with the deal dialog) and `=rebekah`.
+
+### Changed (the PR #48 panel)
+- **Elijah's offer no longer leaks.** It lists every NPC Original but Elijah, the same for everybody: a player in Kol's line used to see four buttons, not five, and so could tell which line they were in before discovering it. Choosing your own line's Original is allowed (the vial just has a name on it). The answer is now the Original's id, checked against the list on the server, and every refusal says why on the action bar.
+- **The dialog explains itself** and wears the hub's look: what you pick, the oath ("harm or desiccate no NPC Original but Mikael, and do not strike me"), "in-game days", and "Break your word and I turn on you for good. No second deal." It is drawn with the kit (the player's hub theme, `ChoiceLayout`, `ChoiceModel`), scrolls its buttons when they do not fit (GUI scale 4 at 720p), has the "No deal" button focused first so Enter alone swears nothing, and is read out by the narrator. Elijah stands still while the offer is open.
+- **Your pets and minions count.** A tamed animal or a Vampirism minion that strikes an NPC Original breaks its owner's oath.
+- **The Elixir** no longer undoes a turning or a transition (vampire blood in the veins, Original blood, an unstable hybrid transition) and does not rescue from the void.
+- The chat line of the oath carries the full terms; the reminder is plural-aware ("1 in-game day"); the rite tells its caster that something noticed it, and Rebekah's arrival says she is here. The True Cure is now The Cure with its own event (one class, not a copy). A mountain ash line laid by a pack Emissary holds Elijah and Rebekah too, a plain one does not (tested).
+
+### Fixed (round 2 of #47)
+- A Klaus who is desiccated in the middle of the shift no longer swaps his body, howls or goes on counting until he gets up.
+- A warned arrival of Klaus is dropped when the full moon night is over, like when the target stops being one.
+
+### Upgrading
+- Nothing to do. The boss index gains `hostile` and the list of oaths. New network messages (`elijah_offer`, `elijah_choice`) are optional: an older client is not refused, it just never sees the dialog.
+- **Rolling back to a version without Elijah and Rebekah loses their entities, the Elixir and the True Cure**; Elijah's oaths and anger stay in the boss index and are ignored. Take a backup before you try the update.
 ## Unreleased (plan 17c: Klaus)
 
 ### Changed

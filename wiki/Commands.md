@@ -64,7 +64,7 @@ Events (any case): `RITE_OF_IMMORTALITY`, `DIED_WITH_ORIGINAL_BLOOD`, `DRANK_DOP
 
 ## `/supernaturalbloodlines boss <boss> ...` (part `bosses`, permission level 2)
 
-`spawn` (a boss near you, if the rules allow it), `state` (state, days to return, reward paid, times seen), `desiccate` (bring an NPC Original down), `return` (they get up now), `reset` (forget the boss: the world has never seen them, a dead one can come back; asks first on the Admin page). Mikael and Klaus are in this version (Klaus needs Werewolves). Each one has a button in the hub's Admin page, section Bosses.
+`spawn` (a boss near you, if the rules allow it), `state` (state, days to return, reward paid, times seen), `desiccate` (bring an NPC Original down), `return` (they get up now), `reset` (forget the boss: the world has never seen them, a dead one can come back; asks first on the Admin page). Mikael, Klaus, Elijah and Rebekah are in this version (Klaus needs Werewolves). Each one has a button in the hub's Admin page, section Bosses.
 
 ## Other commands you will use
 

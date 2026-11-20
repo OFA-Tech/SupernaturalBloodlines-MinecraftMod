@@ -41,12 +41,25 @@ public final class BossesPart {
         // R158: a mob's white oak never counts as a white oak kill; Mikael's does only when the config says so
         net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules.mobWhiteOakCounts(a -> a instanceof net.ofatech.supernaturalbloodlines.parts.bosses.entity.MikaelEntity && BossesConfig.mikaelStakesOriginals());
         NpcOriginalEvents.register();
+        net.ofatech.supernaturalbloodlines.parts.bosses.deal.BossEvents17d.register();
+        modBus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent e) -> {
+            var registrar = e.registrar("1").optional();
+            registrar.playToClient(net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload.STREAM_CODEC,
+                    (payload, ctx) -> ctx.enqueueWork(() -> net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealClientHook.open(payload)));
+            registrar.playToServer(net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealChoicePayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealChoicePayload.STREAM_CODEC,
+                    (payload, ctx) -> ctx.enqueueWork(() -> {
+                        if (ctx.player() instanceof net.minecraft.server.level.ServerPlayer p) {
+                            net.ofatech.supernaturalbloodlines.parts.bosses.deal.Deals.choose(p, payload.entityId(), payload.original());
+                        }
+                    }));
+        });
         BossDirector.register();
         BossBars.register();
         NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> BossCommand.register(e.getDispatcher()));
         WorldNowHook.setBossNear(BossDirector::near);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modBus.addListener(BossRenderers::register);
+            net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealClientHook.install(net.ofatech.supernaturalbloodlines.parts.bosses.client.ElijahDealScreen::open);
             modBus.addListener((FMLClientSetupEvent e) -> BossShots.registerIfRequested());
         }
         modBus.addListener((RegisterGameTestsEvent e) -> {
@@ -55,6 +68,9 @@ public final class BossesPart {
             e.register(MikaelGameTests.class);
             e.register(BossReviewGameTests.class);
             e.register(KlausGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.ElijahGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.RebekahGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.ElixirGameTests.class);
         });
         SupernaturalBloodlines.LOGGER.info("BossesPart enabled");
     }

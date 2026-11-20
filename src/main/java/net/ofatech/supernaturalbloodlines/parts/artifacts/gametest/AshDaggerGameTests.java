@@ -489,6 +489,36 @@ public final class AshDaggerGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void cureRiteFiresTheCureMadeEventOnlyWhenItMakesACure(GameTestHelper helper) {
+        RecordingPlayer caster = RecordingPlayer.create(helper);
+        ServerPlayer original = original(helper, Species.ORIGINAL);
+        RiteTestSupport.place(helper, caster);
+        RiteTestSupport.place(helper, original);
+        List<net.ofatech.supernaturalbloodlines.core.boss.CureMadeEvent> seen = new java.util.ArrayList<>();
+        java.util.function.Consumer<net.ofatech.supernaturalbloodlines.core.boss.CureMadeEvent> listener = seen::add;
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.NORMAL, false, net.ofatech.supernaturalbloodlines.core.boss.CureMadeEvent.class, listener);
+        try {
+            RiteTestSupport.start(helper, "rite_of_the_cure", caster, cureItems());
+            helper.assertTrue(seen.isEmpty(), "the event fired for a rite that was refused: " + seen.size());
+            RiteTestSupport.clearDropped(helper);
+            original.addEffect(new MobEffectInstance(ArtifactItems.DESICCATED, 36000));
+            RiteTestSupport.start(helper, "rite_of_the_cure", caster, cureItems());
+            helper.assertTrue(RiteTestSupport.dropped(helper, "supernaturalbloodlines:the_cure") == 1, "control: no Cure was made");
+            helper.assertTrue(seen.size() == 1, "the event fired " + seen.size() + " times for one Cure");
+            helper.assertTrue(caster.getUUID().equals(seen.get(0).caster()), "the event does not name who cast the rite: " + seen.get(0).caster());
+            helper.assertTrue(seen.get(0).pos().distSqr(RiteTestSupport.centre(helper)) < 4, "the event is not at the circle: " + seen.get(0).pos());
+        } finally {
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(listener);
+            RiteTestSupport.remove(helper, caster);
+            RiteTestSupport.remove(helper, original);
+            if (EnabledParts.isEnabled("bosses")) {
+                net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex.get(helper.getLevel().getServer()).forget(net.ofatech.supernaturalbloodlines.core.boss.BossId.REBEKAH);
+            }
+        }
+        helper.succeed();
+    }
+
     // ---- The Cure ----
 
     @GameTest(template = "empty", templateNamespace = NS)

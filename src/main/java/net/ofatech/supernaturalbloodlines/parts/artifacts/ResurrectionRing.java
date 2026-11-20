@@ -35,18 +35,15 @@ public final class ResurrectionRing {
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener(PRIORITY, false, LivingDeathEvent.class, ResurrectionRing::onDeath);
+        net.ofatech.supernaturalbloodlines.core.boss.RingProbe.install((p, source) -> ring(p, source).isPresent());
     }
 
     private static void onDeath(LivingDeathEvent e) {
-        Entity attacker = e.getSource().getEntity();
-        if (!(e.getEntity() instanceof ServerPlayer p) || attacker == null || !Supernatural.is(attacker)) {
-            return;
-        }
-        if (!speciesAllowed(BloodlineAccess.get(p).species()) || VampirismSupernatural.isVampire(p) || VampirismSupernatural.isWerewolf(p)) {
+        if (!(e.getEntity() instanceof ServerPlayer p)) {
             return;
         }
         // read again here: the ring may have left the inventory since the damage was dealt
-        Optional<ItemStack> ring = ArtifactSlots.findWorn(p, ArtifactItems.RESURRECTION_RING.get(), s -> charges(s) > 0);
+        Optional<ItemStack> ring = ring(p, e.getSource());
         if (ring.isEmpty()) {
             return;
         }
@@ -55,6 +52,18 @@ public final class ResurrectionRing {
         e.setCanceled(true);
         p.setHealth(p.getMaxHealth());
         p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, REGENERATION_TICKS, 1));
+    }
+
+    /** The worn ring that would save {@code p} from this damage: a human killed by something supernatural, with a charge left. */
+    static Optional<ItemStack> ring(ServerPlayer p, net.minecraft.world.damagesource.DamageSource source) {
+        Entity attacker = source.getEntity();
+        if (attacker == null || !Supernatural.is(attacker)) {
+            return Optional.empty();
+        }
+        if (!speciesAllowed(BloodlineAccess.get(p).species()) || VampirismSupernatural.isVampire(p) || VampirismSupernatural.isWerewolf(p)) {
+            return Optional.empty();
+        }
+        return ArtifactSlots.findWorn(p, ArtifactItems.RESURRECTION_RING.get(), s -> charges(s) > 0);
     }
 
     private static int charges(ItemStack ring) {

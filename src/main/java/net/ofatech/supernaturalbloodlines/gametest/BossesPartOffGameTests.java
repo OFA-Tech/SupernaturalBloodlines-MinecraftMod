@@ -30,6 +30,12 @@ public final class BossesPartOffGameTests {
         helper.assertTrue(BuiltInRegistries.ITEM.containsKey(id("mikaels_stake")) == on, "item: part " + (on ? "on" : "off") + ", registry says " + !on);
         helper.assertTrue(BuiltInRegistries.ENTITY_TYPE.containsKey(id("klaus")) == on, "klaus: part " + (on ? "on" : "off") + ", registry says " + !on);
         helper.assertTrue(BuiltInRegistries.ITEM.containsKey(id("klaus_blood")) == on, "klaus_blood: part " + (on ? "on" : "off") + ", registry says " + !on);
+        for (String entity : new String[] {"elijah", "rebekah"}) {
+            helper.assertTrue(BuiltInRegistries.ENTITY_TYPE.containsKey(id(entity)) == on, entity + ": part " + (on ? "on" : "off") + ", registry says " + !on);
+        }
+        for (String item : new String[] {"the_elixir", "the_true_cure"}) {
+            helper.assertTrue(BuiltInRegistries.ITEM.containsKey(id(item)) == on, item + ": part " + (on ? "on" : "off") + ", registry says " + !on);
+        }
         boolean command = helper.getLevel().getServer().getCommands().getDispatcher().getRoot().getChild(SupernaturalBloodlines.MODID).getChild("boss") != null;
         helper.assertTrue(command == on, "command: part " + (on ? "on" : "off") + ", dispatcher says " + command);
         helper.succeed();

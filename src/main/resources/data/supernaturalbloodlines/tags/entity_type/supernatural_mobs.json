@@ -3,6 +3,8 @@
     "values": [
         { "id": "vampirism:ghost", "required": false },
         { "id": "supernaturalbloodlines:mikael", "required": false },
-        { "id": "supernaturalbloodlines:klaus", "required": false }
+        { "id": "supernaturalbloodlines:klaus", "required": false },
+        { "id": "supernaturalbloodlines:elijah", "required": false },
+        { "id": "supernaturalbloodlines:rebekah", "required": false }
     ]
 }

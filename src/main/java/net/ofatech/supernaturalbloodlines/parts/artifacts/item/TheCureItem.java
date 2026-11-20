@@ -25,23 +25,37 @@ import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionR
  */
 public class TheCureItem extends Item {
     public TheCureItem() {
-        super(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).food(new FoodProperties.Builder()
+        this(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).food(new FoodProperties.Builder()
                 .nutrition(0).saturationModifier(0f).alwaysEdible().usingConvertsTo(Items.GLASS_BOTTLE).build()));
+    }
+
+    /** For a cure with its own properties (The True Cure). */
+    protected TheCureItem(Item.Properties properties) {
+        super(properties);
+    }
+
+    /** What drinking it does to the drinker: the bloodline event. */
+    protected BloodlineEvent event() {
+        return BloodlineEvent.DRANK_THE_CURE;
     }
 
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         ItemStack left = super.finishUsingItem(stack, level, entity);
         if (!level.isClientSide && entity instanceof ServerPlayer p) {
-            cure(p);
+            apply(p, event());
         }
         return left;
     }
 
     /** What the drink does to {@code p}, whoever held the bottle. */
     public static void cure(ServerPlayer p) {
+        apply(p, BloodlineEvent.DRANK_THE_CURE);
+    }
+
+    protected static void apply(ServerPlayer p, BloodlineEvent event) {
         var ctx = FactionRiteHooks.context(p, FactionRiteFactory.baseFaction(VampirismAPI.factionPlayerHandler(p)), p.level().getGameTime());
-        Outcome out = BloodlineAccess.applyEvent(p, BloodlineEvent.DRANK_THE_CURE, ctx);
+        Outcome out = BloodlineAccess.applyEvent(p, event, ctx);
         FactionRiteHooks.run(p, out);
     }
 

@@ -59,6 +59,14 @@ final class BossTestRig implements AutoCloseable {
         }
         index.forget(BossId.KLAUS);
         LineIndex.get(server).unmarkDead(KLAUS);
+        for (BossId other : new BossId[] {BossId.ELIJAH, BossId.REBEKAH}) {
+            var e = BossDirector.bossEntity(server, other);
+            if (e != null) {
+                e.discard();
+            }
+            index.forget(other);
+            LineIndex.get(server).unmarkDead(other.npcOriginal().orElseThrow().uuid());
+        }
         LineWarning.reset();
         BossBars.reset();
         BossesConfig.override("original_return_days", null);
@@ -84,6 +92,16 @@ final class BossTestRig implements AutoCloseable {
     KlausEntity spawnKlaus() {
         klaus = BossDirector.spawnKlaus(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
         return klaus;
+    }
+
+    /** Elijah, made the way the director makes him, standing 2 blocks into the test. */
+    net.ofatech.supernaturalbloodlines.parts.bosses.entity.ElijahEntity spawnElijah() {
+        return BossDirector.spawnElijah(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+    }
+
+    /** Rebekah, made the way the director makes her (no prey), standing near the middle of the test. */
+    net.ofatech.supernaturalbloodlines.parts.bosses.entity.RebekahEntity spawnRebekah() {
+        return BossDirector.spawnRebekah(helper.getLevel(), helper.absolutePos(new BlockPos(2, 1, 2)), null, null).orElseThrow();
     }
 
     /** The item entities of this kind lying near this entity. */
@@ -132,6 +150,7 @@ final class BossTestRig implements AutoCloseable {
         BossDirector.useWorld(null, null);
         BossDirector.useRingCheck(null);
         BossDirector.useDifficulty(null);
+        BossDirector.useOnGround(null);
         BossDirector.useGround(null);
         BossDirector.useMods(null);
         BossDirector.useMoon(null);

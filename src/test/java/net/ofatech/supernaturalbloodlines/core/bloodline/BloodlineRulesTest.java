@@ -959,4 +959,53 @@ class BloodlineRulesTest {
         assertEquals(WolfState.Rank.TRUE_ALPHA, run(hybrid, RITE_OF_THE_SILVER_MOON, ctx().withFaction(BaseFaction.WEREWOLF)).state().wolf().rank());
         assertEquals(WolfState.Rank.TRUE_ALPHA, run(hybrid, DRANK_THE_CURE, ctx().withFaction(BaseFaction.WEREWOLF)).state().wolf().rank());
     }
-}
+
+    // ---- The True Cure (R171): the same change as The Cure, under its own event ----
+
+    @Test
+    void theTrueCureMakesAnOriginalHumanAndLeavesTheFaction() {
+        BloodlineState s = st(Species.ORIGINAL).toBuilder().sire(null).build();
+        Outcome o = run(s, DRANK_THE_TRUE_CURE, ctx().withFaction(BaseFaction.VAMPIRE));
+        assertEquals(Species.NONE, o.state().species());
+        assertEquals(List.of(Action.LEAVE_FACTION), o.actions());
+    }
+
+    @Test
+    void theTrueCureMakesAnOriginalHybridAndAHybridHumanToo() {
+        for (Species sp : new Species[] {Species.ORIGINAL_HYBRID, Species.HYBRID, Species.TRIBRID}) {
+            Outcome o = run(st(sp).toBuilder().hybridCurseBound(true).turnedAt(5).build(), DRANK_THE_TRUE_CURE, ctx().withFaction(BaseFaction.WEREWOLF));
+            assertEquals(Species.NONE, o.state().species(), sp.name());
+            assertFalse(o.state().hybridCurseBound(), sp.name());
+            assertEquals(0, o.state().turnedAt(), sp.name());
+            assertEquals(List.of(Action.LEAVE_FACTION), o.actions(), sp.name());
+        }
+    }
+
+    @Test
+    void theTrueCureClearsTheWolfLayerAndKeepsTheGeneLikeTheCure() {
+        WolfState wolf = WolfState.NONE.toBuilder().geneRolled(true).latentGene(true).build();
+        BloodlineState s = BloodlineState.NONE.toBuilder().wolf(wolf).build();
+        assertEquals(wolf, run(s, DRANK_THE_TRUE_CURE, ctx().withFaction(BaseFaction.WEREWOLF)).state().wolf());
+        assertWolfLayerGone(run(BloodlineState.NONE.toBuilder().wolf(ALPHA_WOLF).build(), DRANK_THE_TRUE_CURE, ctx().withFaction(BaseFaction.WEREWOLF)).state());
+    }
+
+    @Test
+    void theTrueCureOnAHumanDoesNothing() {
+        assertNoChange(run(BloodlineState.NONE, DRANK_THE_TRUE_CURE, ctx()), BloodlineState.NONE);
+    }
+
+    @Test
+    void theTrueCureAndTheCureAgreeForEverySpeciesAndFaction() {
+        for (Species sp : Species.values()) {
+            for (BaseFaction f : BaseFaction.values()) {
+                BloodlineState s = st(sp);
+                assertEquals(run(s, DRANK_THE_CURE, ctx().withFaction(f)), run(s, DRANK_THE_TRUE_CURE, ctx().withFaction(f)), sp + " " + f);
+            }
+        }
+    }
+
+    @Test
+    void aCuredOriginalLeavesTheirRecordedSireAloneSoNobodyIsRehomed() {
+        BloodlineState s = st(Species.ORIGINAL).toBuilder().sire(null).knownLine(U).build();
+        assertEquals(U, run(s, DRANK_THE_TRUE_CURE, ctx().withFaction(BaseFaction.VAMPIRE)).state().knownLine(), "what they discovered is theirs");
+    }}
