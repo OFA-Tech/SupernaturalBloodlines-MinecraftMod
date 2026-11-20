@@ -9,6 +9,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.hud.HudLayout;
+import net.ofatech.supernaturalbloodlines.core.hud.PillVisibility;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.shared.hud.HudStyle;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
@@ -49,26 +50,32 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         float alpha = HudActivity.alpha(busy);
         long time = mc.level == null ? 0 : mc.level.getGameTime();
         float pulse = 0.5f + 0.5f * (float) Math.sin(time * 0.25);
-        float blood = src.blood();
-        for (int i = 0; i < boxes.length; i++) {
-            boolean bite = !views[i].isEmpty() && ClientLoadout.BITE_ICON.equals(views[i].icon());
-            SlotArt.draw(g, mc.font, style, boxes[i], views[i], alpha, bite ? blood : -1f, pulse);
-        }
         int previewTop = -1;
-        SlotMode mode = src.mode();
-        if (mode != null) {
-            HudChrome.pill(g, mc.font, style, mode, g.guiWidth(), g.guiHeight(), alpha);
-            SlotMode other = src.other();
-            if ((alt || HudModeState.justSwitched()) && other != null) {
-                previewTop = HudChrome.preview(g, mc.font, style, other, src.otherViews(other), boxes, Math.max(alpha, 0.9f));
+        if (alpha > 0.01f) {
+            float blood = src.blood();
+            for (int i = 0; i < boxes.length; i++) {
+                boolean bite = !views[i].isEmpty() && ClientLoadout.BITE_ICON.equals(views[i].icon());
+                SlotArt.draw(g, mc.font, style, boxes[i], views[i], alpha, bite ? blood : -1f, pulse);
+            }
+            SlotMode mode = src.mode();
+            if (mode != null) {
+                // the pill is not drawn all the time: after a mode switch, and while Alt is held
+                float pillAlpha = PillVisibility.alpha(src.sinceSwitch(), alt, src.actionBar());
+                if (pillAlpha > 0f) {
+                    HudChrome.pill(g, mc.font, style, mode, g.guiWidth(), g.guiHeight(), Math.max(alpha, 0.9f) * pillAlpha);
+                }
+                SlotMode other = src.other();
+                if ((alt || HudModeState.justSwitched()) && other != null) {
+                    previewTop = HudChrome.preview(g, mc.font, style, other, src.otherViews(other), boxes, Math.max(alpha, 0.9f));
+                }
             }
         }
         long moon = src.moonTicks();
         if (moon > 0) {
             HudChrome.moon(g, mc.font, style, moon, g.guiWidth(), pulse);
         }
-        src.tracked().ifPresent(l -> HudChrome.tracker(g, mc.font, style, l, alpha, HudClientConfig.trackerAnchor(), src.bossBottom()));
-        if (alt) {
+        src.tracked().ifPresent(l -> HudChrome.tracker(g, mc.font, style, l, Math.max(alpha, HudActivity.FADED), HudClientConfig.trackerAnchor(), src.bossBottom()));
+        if (alt && alpha > 0.01f) {
             HudChrome.tooltips(g, mc.font, style, boxes, views, previewTop, alpha, src.cacheable());
         }
     }

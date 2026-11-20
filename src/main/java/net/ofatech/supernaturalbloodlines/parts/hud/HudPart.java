@@ -36,6 +36,7 @@ public final class HudPart {
             HudClient.register(modBus);
         }
         BiteService.register();
+        net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService.register();
         if (ModList.get().isLoaded("tensura") && ModList.get().isLoaded("vampirism")) {
             net.ofatech.supernaturalbloodlines.parts.hud.bite.TensuraFeed.register();
         }

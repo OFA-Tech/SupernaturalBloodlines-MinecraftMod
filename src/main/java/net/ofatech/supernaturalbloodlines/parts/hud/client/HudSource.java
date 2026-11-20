@@ -25,6 +25,12 @@ interface HudSource {
     /** True while Alt is held (or the demo says so): the tooltips and the panel show. */
     boolean alt();
 
+    /** Ticks since the mode key was pressed, negative when it was not (in this world). */
+    long sinceSwitch();
+
+    /** An action bar message is on screen. */
+    boolean actionBar();
+
     /** The share (0 to 1) of the blood ring round Bite, or a negative number for none. */
     float blood();
 

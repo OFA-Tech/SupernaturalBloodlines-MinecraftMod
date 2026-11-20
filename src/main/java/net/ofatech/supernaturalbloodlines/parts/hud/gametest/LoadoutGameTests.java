@@ -23,19 +23,19 @@ public final class LoadoutGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void newPlayerHasBiteInSlotOne(GameTestHelper helper) {
-        ServerPlayer p = TestPlayers.create(helper);
+    public static void aPlainHumanHasNoBiteAndNothingIsOfferedToThem(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.createMortal(helper);
+        LoadoutService.offerBite(p);
         Loadout l = LoadoutService.get(p);
-        helper.assertTrue(l.get(0).equals(Optional.of(Loadout.BITE)), "slot 1 is " + l.get(0));
-        for (int i = 1; i < Loadout.SLOTS; i++) {
-            helper.assertTrue(l.get(i).isEmpty(), "slot " + (i + 1) + " is not empty: " + l.get(i));
-        }
+        helper.assertTrue(l.slots().stream().allMatch(Optional::isEmpty), "a human has something in a slot: " + l);
+        helper.assertTrue(!l.biteOffered(), "Bite was spent on a human");
         helper.succeed();
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void biteCanMoveAndClear(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.create(helper);
+        helper.assertTrue(LoadoutService.set(p, 0, Loadout.BITE) == null, "Bite into slot 1 was refused");
         helper.assertTrue(LoadoutService.set(p, 3, Loadout.BITE) == null, "Bite into slot 4 was refused");
         helper.assertTrue(LoadoutService.set(p, 0, null) == null, "clearing slot 1 was refused");
         Loadout l = LoadoutService.get(p);
@@ -48,6 +48,7 @@ public final class LoadoutGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aClearedLoadoutIsNotPutBackAfterTheSaveRoundTrip(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.create(helper);
+        LoadoutService.set(p, 0, Loadout.BITE);
         LoadoutService.set(p, 0, null);
         net.minecraft.nbt.Tag saved = Loadout.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, LoadoutService.get(p)).getOrThrow();
         Loadout back = Loadout.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, saved).getOrThrow();
@@ -70,7 +71,6 @@ public final class LoadoutGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void loadoutSurvivesDeath(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.create(helper);
-        LoadoutService.set(p, 0, null);
         LoadoutService.set(p, 4, Loadout.BITE);
         ServerPlayer clone = TestPlayers.create(helper);
         clone.restoreFrom(p, false); // what a respawn does

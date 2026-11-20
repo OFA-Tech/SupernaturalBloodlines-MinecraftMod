@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased (HUD polish)
+
+### Changed
+- **`hud_visibility`** (client, on the hub Settings page): `auto` (default) hides the whole HUD after ten idle seconds (no slot press, no cooldown, no active toggle, no mode switch, no Alt) and shows it again at once; `always`; `hidden`. The fade is the transition.
+- **A plain human never sees Supernatural mode**: no slots, no pill, and Caps Lock stays on Tensura. With no Tensura the HUD shows nothing. It appears when the player becomes supernatural (a Vampirism faction, a species, the turning, a ghoul).
+- **Bite goes into slot 1 only for a player who can bite** (the `BiteRules` rule) and only if the slot is empty, once; a cleared Bite is never put back. A save from before this keeps its Bite as it is.
+- **The mode pill shows only after a mode switch (about 3 seconds, then fades) and while Alt is held**, and never over an action bar message. The "Slots: ..." action bar line on a switch is gone (it was drawn on the pill).
+
+### Fixed
+- **Tensura skill cooldowns stuck at "1s".** ManasCore's `ManasSkillInstance.getCoolDown` counts seconds (`SkillStorage.checkSkillTimers` runs every 20 server ticks and lowers it by 1); the HUD treated it as ticks and showed `(n + 19) / 20`, which is 1 for any cooldown up to 20 s. It now shows the seconds (`SkillCooldown`).
+- Two labels drawn on top of each other at the pill (the pill and the vanilla action bar line stand on the same pixels): they no longer show together. The pill, the mode panel and the slots do not overlap at GUI scales 2 to 4 (`HudLayoutTest`).
+
 ## Unreleased (plan 17e: Kol and Finn)
 
 ### Changed (PR #49, round 2)

@@ -12,19 +12,24 @@ import org.jetbrains.annotations.Nullable;
 /**
  * What the player put in the six Supernatural-mode slots: a Vampirism or Werewolves action id, or {@link #BITE}, or nothing. The ids are only names:
  * the server checks that an id may be assigned, and reads the id from here (never from a trigger packet). Duplicates are allowed. A new player has
- * Bite in slot 1; once cleared or moved it is never put back on its own, so the saved form always lists all six slots.
+ * nothing in any slot: Bite goes into slot 1 once, when the player first becomes a type that can bite ({@link #withBiteOffered}). Once cleared or moved
+ * it is never put back on its own, so the saved form always lists all six slots.
+ *
+ * @param biteOffered Bite has already been given to this player (or deliberately not, because slot 1 was in use): it is never offered again. A save made
+ *                    before this flag existed has it set, so a Bite the player cleared stays cleared.
  */
-public record Loadout(List<Optional<ResourceLocation>> slots) {
+public record Loadout(List<Optional<ResourceLocation>> slots, boolean biteOffered) {
     public static final int SLOTS = 6;
     /** The pseudo action our own Bite uses. */
     public static final ResourceLocation BITE = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "bite");
 
-    public static final Loadout DEFAULT = new Loadout(withBiteFirst());
+    public static final Loadout DEFAULT = new Loadout(emptySlots(), false);
 
     /** An empty string is an empty slot, so a cleared Bite survives a save; an id that does not parse is an empty slot too. */
     public static final Codec<Loadout> CODEC = RecordCodecBuilder.create(i -> i.group(
-            Codec.STRING.listOf().optionalFieldOf("slots").forGetter(l -> Optional.of(l.slots().stream().map(s -> s.map(ResourceLocation::toString).orElse("")).toList()))
-    ).apply(i, saved -> saved.map(Loadout::fromStrings).orElse(DEFAULT)));
+            Codec.STRING.listOf().optionalFieldOf("slots").forGetter(l -> Optional.of(l.slots().stream().map(s -> s.map(ResourceLocation::toString).orElse("")).toList())),
+            Codec.BOOL.optionalFieldOf("bite_offered").forGetter(l -> Optional.of(l.biteOffered()))
+    ).apply(i, (saved, offered) -> saved.map(s -> fromStrings(s, offered.orElse(true))).orElse(DEFAULT)));
 
     public Loadout {
         if (slots.size() != SLOTS) {
@@ -33,23 +38,22 @@ public record Loadout(List<Optional<ResourceLocation>> slots) {
         slots = List.copyOf(slots);
     }
 
-    private static List<Optional<ResourceLocation>> withBiteFirst() {
+    private static List<Optional<ResourceLocation>> emptySlots() {
         List<Optional<ResourceLocation>> list = new ArrayList<>();
-        list.add(Optional.of(BITE));
-        for (int i = 1; i < SLOTS; i++) {
+        for (int i = 0; i < SLOTS; i++) {
             list.add(Optional.empty());
         }
         return list;
     }
 
-    private static Loadout fromStrings(List<String> saved) {
+    private static Loadout fromStrings(List<String> saved, boolean biteOffered) {
         List<Optional<ResourceLocation>> list = new ArrayList<>(SLOTS);
         for (int i = 0; i < SLOTS; i++) {
             String text = i < saved.size() ? saved.get(i) : "";
             ResourceLocation id = text.isEmpty() ? null : ResourceLocation.tryParse(text);
             list.add(Optional.ofNullable(id));
         }
-        return new Loadout(list);
+        return new Loadout(list, biteOffered);
     }
 
     public static boolean validSlot(int slot) {
@@ -63,7 +67,22 @@ public record Loadout(List<Optional<ResourceLocation>> slots) {
     public Loadout with(int slot, @Nullable ResourceLocation id) {
         List<Optional<ResourceLocation>> list = new ArrayList<>(slots);
         list.set(slot, Optional.ofNullable(id));
-        return new Loadout(list);
+        return new Loadout(list, biteOffered);
+    }
+
+    /**
+     * Called when the player can bite: Bite goes into slot 1 the first time, and only if that slot is empty (a slot the player set is never overwritten).
+     * Either way it is not offered again, so a Bite the player clears later stays cleared. The same loadout when it was offered before.
+     */
+    public Loadout withBiteOffered() {
+        if (biteOffered) {
+            return this;
+        }
+        List<Optional<ResourceLocation>> list = new ArrayList<>(slots);
+        if (list.get(0).isEmpty()) {
+            list.set(0, Optional.of(BITE));
+        }
+        return new Loadout(list, true);
     }
 
     /**
@@ -85,7 +104,7 @@ public record Loadout(List<Optional<ResourceLocation>> slots) {
             }
             list.set(i, Optional.of(unlocked.get(next++)));
         }
-        return new Loadout(list);
+        return new Loadout(list, biteOffered);
     }
 
     public boolean contains(ResourceLocation id) {

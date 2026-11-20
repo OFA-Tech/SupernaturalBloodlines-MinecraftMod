@@ -100,11 +100,11 @@ final class HudChrome {
             pillMode = mode;
             pillTick = tick();
         }
-        String text = pillText;
-        int w = pillWidth + 22;
-        int x = screenW / 2 - w / 2;
-        int y = screenH - 22 - 52;
-        pillBox(g, style, x, y, w, 14, alpha);
+        HudLayout.Box box = HudLayout.pill(screenW, screenH, pillWidth);
+        int x = box.x();
+        int y = box.y();
+        String text = pillWidth + 22 > box.w() ? font.plainSubstrByWidth(pillText, box.w() - 22) : pillText;
+        pillBox(g, style, x, y, box.w(), box.h(), alpha);
         // the diamond that marks the mode
         for (int dy = -3; dy <= 3; dy++) {
             int half = 3 - Math.abs(dy);
@@ -114,7 +114,7 @@ final class HudChrome {
     }
 
     /** The preview panel's width: six slots and a little air; it stays in the right half of the screen even at 480 GUI pixels. */
-    static final int PREVIEW_W = 6 * HudLayout.SLOT + 8;
+    static final int PREVIEW_W = HudLayout.PREVIEW_W;
 
     /**
      * The panel with the other mode's six slots, in the theme's shape: "Caps Lock -> TENSURA". The head wraps to two lines when it has to.
@@ -125,9 +125,10 @@ final class HudChrome {
         String key = HudKeys.HUD_MODE.getTranslatedKeyMessage().getString();
         String name = Component.translatable("supernaturalbloodlines.hud.pill." + other.name().toLowerCase(Locale.ROOT)).getString();
         java.util.List<String> head = wrap(font, Component.translatable("supernaturalbloodlines.hud.pill.next", key, name).getString(), PREVIEW_W - 12, 2);
-        int h = 30 + 9 * head.size();
-        int x = Math.max(4, Math.min(boxes[3].right() - PREVIEW_W, g.guiWidth() - PREVIEW_W - 4));
-        int y = boxes[3].y() - h - 4;
+        HudLayout.Box panel = HudLayout.preview(g.guiWidth(), g.guiHeight(), head.size());
+        int h = panel.h();
+        int x = panel.x();
+        int y = panel.y();
         pillBox(g, style, x, y, PREVIEW_W, h, alpha);
         for (int i = 0; i < head.size(); i++) {
             g.drawString(font, head.get(i), x + 6, y + 5 + 9 * i, SlotArt.fade(ink(style), alpha), false);

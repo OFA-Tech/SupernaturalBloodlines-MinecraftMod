@@ -36,6 +36,39 @@ public final class HudLayout {
     private HudLayout() {
     }
 
+    public static final int PILL_H = 14;
+    /** The pill's top edge is this far above the bottom of the screen. */
+    public static final int PILL_ABOVE = 74;
+    /** The vanilla action bar line stands 68 px above the bottom, its 9 px text starting 4 px above that, so it falls inside the pill's band. */
+    public static final int ACTION_BAR_ABOVE = 72;
+    public static final int ACTION_BAR_H = 9;
+    /** The mode panel's width: six slots and a little air; it stays in the right half of the screen even at 480 GUI pixels. */
+    public static final int PREVIEW_W = 6 * SLOT + 8;
+
+    /**
+     * The mode pill, centred above the hotbar between the two columns: its text plus 22 px of edge and diamond, narrowed (the text is cut) when the columns
+     * stand closer than that.
+     */
+    public static Box pill(int screenW, int screenH, int textW) {
+        Box[] s = slots(screenW, screenH);
+        int room = Math.max(PILL_H, s[3].x() - s[0].right() - 2 * MARGIN);
+        int w = Math.min(textW + 22, room);
+        return new Box(screenW / 2 - w / 2, screenH - PILL_ABOVE, w, PILL_H);
+    }
+
+    /** The action bar line of {@code textW} px (the vanilla one: item pickup, bed, and the HUD's own refusals). */
+    public static Box actionBar(int screenW, int screenH, int textW) {
+        return new Box(screenW / 2 - textW / 2, screenH - ACTION_BAR_ABOVE, textW, ACTION_BAR_H);
+    }
+
+    /** The panel with the other mode's slots: above the right column, its head {@code headLines} (1 or 2) lines tall, never past the right edge. */
+    public static Box preview(int screenW, int screenH, int headLines) {
+        Box[] s = slots(screenW, screenH);
+        int h = 30 + 9 * headLines;
+        int x = Math.max(4, Math.min(s[3].right() - PREVIEW_W, screenW - PREVIEW_W - 4));
+        return new Box(x, s[3].y() - h - 4, PREVIEW_W, h);
+    }
+
     public static Box hotbar(int screenW, int screenH) {
         return new Box(screenW / 2 - HOTBAR_HALF, screenH - 22, 2 * HOTBAR_HALF, 22);
     }

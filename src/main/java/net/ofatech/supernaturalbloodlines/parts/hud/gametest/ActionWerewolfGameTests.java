@@ -35,6 +35,7 @@ public final class ActionWerewolfGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void hybridGetsWerewolfActions(GameTestHelper helper) {
         ServerPlayer p = BiteHybridGameTests.hybrid(helper, Species.HYBRID, 0);
+        LoadoutService.offerBite(p);
         ResourceLocation action = ActionGameTests.usableLasting(p, WReference.WEREWOLF_FACTION);
         helper.assertTrue(FactionActions.unlocked(p, action), "a hybrid does not have the werewolf action unlocked");
         helper.assertTrue(LoadoutService.set(p, 2, action) == null, "a hybrid was refused a werewolf action");

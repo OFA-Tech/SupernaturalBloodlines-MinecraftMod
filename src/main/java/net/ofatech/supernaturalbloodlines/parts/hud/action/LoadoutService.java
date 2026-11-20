@@ -19,6 +19,28 @@ public final class LoadoutService {
     private LoadoutService() {
     }
 
+    /** Once a second per player: a player who can bite gets Bite in an empty slot 1 (see {@link #offerBite}). */
+    public static void register() {
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) -> {
+            if (e.getEntity() instanceof ServerPlayer p && p.tickCount % 20 == 0 && !(p instanceof net.neoforged.neoforge.common.util.FakePlayer)) {
+                offerBite(p);
+            }
+        });
+    }
+
+    /**
+     * Gives Bite to a player who becomes a type that can bite (vampire, werewolf, and the hybrid types that bite), once, in slot 1, only if that slot is
+     * empty. A human gets nothing, a slot the player set is never overwritten, and a Bite the player cleared is never put back.
+     */
+    public static void offerBite(ServerPlayer p) {
+        Loadout before = get(p);
+        if (before.biteOffered() || !net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService.canBite(p)) {
+            return;
+        }
+        p.setData(ModAttachments.HUD_LOADOUT, before.withBiteOffered());
+        sync(p);
+    }
+
     public static Loadout get(ServerPlayer p) {
         return p.getData(ModAttachments.HUD_LOADOUT);
     }

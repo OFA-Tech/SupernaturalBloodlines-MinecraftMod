@@ -1,16 +1,22 @@
 package net.ofatech.supernaturalbloodlines.parts.hud.client;
 
 import net.minecraft.client.Minecraft;
+import net.ofatech.supernaturalbloodlines.core.hud.HudVisibility;
+import net.ofatech.supernaturalbloodlines.shared.hud.DevHud;
 
 /**
- * Whether the player is using the HUD: a slot key, the mode key, Alt, or a slot that is cooling down or active. After {@link #IDLE_TICKS} of none of these
- * the slots fade to {@link #FADED}, so the HUD does not stand out while it is not wanted.
+ * Whether the player is using the HUD: a slot key, the mode key, Alt, or a slot that is cooling down or active. With {@code hud_visibility = AUTO}, after
+ * {@link #IDLE_TICKS} of none of these the HUD fades out and stays gone until the next use; {@code ALWAYS} and {@code HIDDEN} ignore the use ({@link HudVisibility}).
+ * The fade is the transition between the two.
  */
 public final class HudActivity {
-    public static final int IDLE_TICKS = 200;
+    public static final int IDLE_TICKS = HudVisibility.IDLE_TICKS;
+    /** The opacity of the lines that stay while the slots are gone (the tracked task). */
     public static final float FADED = 0.4f;
     private static final long UNSET = Long.MIN_VALUE;
     private static long last = UNSET;
+    private static float shown = 1f;
+    private static long shownAt = UNSET;
 
     private HudActivity() {
     }
@@ -23,6 +29,8 @@ public final class HudActivity {
     /** Forgets the last use: a new world starts with a full-strength HUD whatever its game time. */
     static void reset() {
         last = UNSET; // armed again by the first frame in the new world (the old level may still be set while this runs)
+        shown = 1f;
+        shownAt = UNSET;
     }
 
     /** A key or the mode switch just happened. */
@@ -30,27 +38,25 @@ public final class HudActivity {
         last = now();
     }
 
-    /** 1 while the HUD is in use, {@link #FADED} after ten seconds of nothing. */
+    /** The HUD's opacity this frame, 1 while it is in use (or always shown), 0 once it has faded out. */
     public static float alpha(boolean busy) {
-        if (net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on) {
-            return net.ofatech.supernaturalbloodlines.shared.hud.DevHud.idle ? FADED : 1f;
+        if (DevHud.on) {
+            return DevHud.idle ? 0f : 1f;
         }
-        if (busy) {
+        if (busy || last == UNSET) {
             touch();
         }
-        if (last == UNSET) {
-            touch();
-        }
-        return alphaFor(idleTicks(last, now()));
+        long now = now();
+        float target = HudClientConfig.visibility().target(idleTicks(last, now));
+        // the first frame of a world, or a clock that went back: no fade, straight to where it belongs
+        long passed = shownAt == UNSET || now < shownAt ? HudVisibility.FADE_OUT_TICKS : now - shownAt;
+        shown = HudVisibility.approach(shown, target, passed);
+        shownAt = now;
+        return shown;
     }
 
     /** Ticks since the last use; a use that is "in the future" (game time restarts in every world) or never happened counts as just now. Pure. */
     static long idleTicks(long last, long now) {
         return last == UNSET || now < last ? 0 : now - last;
-    }
-
-    /** The alpha {@code idleTicks} after the last use; pure. */
-    public static float alphaFor(long idleTicks) {
-        return idleTicks > IDLE_TICKS ? FADED : 1f;
     }
 }

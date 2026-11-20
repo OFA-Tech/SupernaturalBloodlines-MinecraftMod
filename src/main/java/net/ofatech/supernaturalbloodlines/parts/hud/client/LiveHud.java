@@ -65,6 +65,16 @@ final class LiveHud implements HudSource {
     }
 
     @Override
+    public long sinceSwitch() {
+        return HudModeState.sinceSwitch();
+    }
+
+    @Override
+    public boolean actionBar() {
+        return Minecraft.getInstance().gui.overlayMessageTime > 0;
+    }
+
+    @Override
     public float blood() {
         return blood;
     }
