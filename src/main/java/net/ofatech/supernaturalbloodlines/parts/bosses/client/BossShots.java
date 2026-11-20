@@ -28,7 +28,7 @@ import org.joml.Vector3f;
 
 /**
  * A development-only screenshot driver for the bosses, in the way of {@code ItemShots}: inert unless the JVM has
- * {@code -Dsupernaturalbloodlines.devshots.bosses=mikael} (Mikael from the front, the side, behind and desiccated) or {@code =klaus} (the man from the front
+ * {@code -Dsupernaturalbloodlines.devshots.bosses=mikael} (Mikael from the front, the side, behind and desiccated) or {@code =elijah}, {@code =rebekah} (from the front, the side, behind and desiccated), {@code =deal} (Elijah's dialog) or {@code =klaus} (the man from the front
  * and behind, half way through the shift, and the wolf from the front and the side), into {@code <game dir>/screenshots/bossshots/<boss>.png}.
  * {@code .quit=true} leaves when done, {@code .world=New World} picks the world.
  */
@@ -82,7 +82,7 @@ public final class BossShots {
                 mc.resizeDisplay();
                 return;
             }
-            screen = new PanelScreen(boss.equals("klaus"));
+            screen = boss.equals("deal") ? ElijahDealScreen.demo(List.of("mikael", "finn", "kol", "rebekah", "klaus"), 7) : new PanelScreen(boss);
             mc.setScreen(screen);
         }
         if (++wait < SETTLE_TICKS) {
@@ -105,19 +105,19 @@ public final class BossShots {
     }
 
     private static final class PanelScreen extends Screen {
-        private final boolean klaus;
+        private final String boss;
         private List<Panel> panels;
         private int columns;
         private int rows;
 
-        PanelScreen(boolean klaus) {
+        PanelScreen(String boss) {
             super(Component.empty());
-            this.klaus = klaus;
+            this.boss = boss;
         }
 
         private List<Panel> build(Minecraft mc) {
             List<Panel> list = new ArrayList<>();
-            if (klaus) {
+            if (boss.equals("klaus")) {
                 columns = 4;
                 rows = 2;
                 int swap = ShiftRules.SWAP_TICK;
@@ -135,8 +135,15 @@ public final class BossShots {
                 String[] names = {"from the front", "from the side", "from behind", "desiccated"};
                 float[] yaws = {180f, 90f, 0f, 0f};
                 for (int i = 0; i < 4; i++) {
-                    MikaelEntity m = MikaelEntity.create(mc.level);
-                    m.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(BossItems.MIKAELS_STAKE.get()));
+                    NpcOriginalBoss m = switch (boss) {
+                        case "elijah" -> net.ofatech.supernaturalbloodlines.parts.bosses.entity.ElijahEntity.create(mc.level);
+                        case "rebekah" -> net.ofatech.supernaturalbloodlines.parts.bosses.entity.RebekahEntity.create(mc.level);
+                        default -> {
+                            MikaelEntity mikael = MikaelEntity.create(mc.level);
+                            mikael.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(BossItems.MIKAELS_STAKE.get()));
+                            yield mikael;
+                        }
+                    };
                     m.lookDesiccated(i == 3);
                     list.add(new Panel(names[i], m, yaws[i], i == 3 ? 0.9f : 1.95f, i == 3 ? 2.2f : 1.3f));
                 }

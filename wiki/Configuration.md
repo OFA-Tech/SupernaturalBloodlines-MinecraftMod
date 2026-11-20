@@ -174,7 +174,7 @@ Only does anything with [Enhanced Celestials 2](Enhanced-Celestials). A factor o
 
 ## bosses: `supernaturalbloodlines-bosses.toml`
 
-Needs the species part and GeckoLib. All of them are on the hub's Admin page (section Bosses). Mikael and Klaus are in the game so far; the other `<boss>_enabled` switches are there for the next phases and do nothing yet. Klaus needs Werewolves.
+Needs the species part and GeckoLib. All of them are on the hub's Admin page (section Bosses). Mikael, Klaus, Elijah and Rebekah are in the game so far; the other `<boss>_enabled` switches are there for the next phases and do nothing yet. Klaus needs Werewolves.
 
 | Key | Default | What it does |
 |---|---|---|
@@ -191,6 +191,10 @@ Needs the species part and GeckoLib. All of them are on the hub's Admin page (se
 | `klaus_chance_per_full_moon` | `0.35` | 0 to 1 | The chance, once each full moon night, that Klaus comes for a doppelgänger (a villager with a player within 64 blocks, or a player with the gene). Needs Werewolves. |
 | `klaus_hunts_players` | `true` | | Whether Klaus hunts players who carry the doppelgänger gene, not only villagers. A player is warned first. |
 | `klaus_warning_seconds` | `90` | 0 to 600 | How long before he arrives a hunted player is warned. A villager is never warned. 0 = he arrives at once. |
+| `elijah_chance_per_day` | `0.05` | 0 to 1 | The chance, once each in-game day, that Elijah comes to a player who has discovered an Original or holds an NPC Original's blood, by day or by night. |
+| `elijah_oath_days` | `7` | 1 to 100 | In-game days the oath of Elijah's deal lasts: not to harm or desiccate any NPC Original but Mikael, and not to strike Elijah. Breaking it makes him hostile for good. |
+| `elixir_heal_fraction` | `0.5` | 0.05 to 1 | The share of their maximum health the Elixir gives back. |
+| `rebekah_delay_seconds` | `60` | 0 to 3600 | How long after The Cure is made at the rite Rebekah arrives for whoever made it. |
 | `mikael_stakes_originals` | `false` | Off: Mikael does not hunt Originals or Original hybrids, and his white oak never counts as a white oak kill, so he cannot start line death. On: he hunts them, his stake kills an Original outright and their line dies with them; the hunted player is warned. |
 
 ## supernatural (client): `supernaturalbloodlines-hub-client.toml`

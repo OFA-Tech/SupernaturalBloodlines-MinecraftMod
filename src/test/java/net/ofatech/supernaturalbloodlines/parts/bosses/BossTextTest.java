@@ -114,4 +114,41 @@ class BossTextTest {
         assertTrue(lang.get("supernaturalbloodlines.boss.bar.desiccated").getAsString().contains("desiccated"));
         assertTrue(lang.has("supernaturalbloodlines.boss.notice.mikael.stake"));
     }
+
+    @Test
+    void theNewSettingsAndItemsOfPhase17dAreLabelledAndNamed() throws Exception {
+        JsonObject lang = lang();
+        for (String k : new String[] {"elijah_chance_per_day", "elijah_oath_days", "elixir_heal_fraction", "rebekah_delay_seconds"}) {
+            assertTrue(lang.has(label(k)), k);
+        }
+        for (String k : new String[] {"entity.supernaturalbloodlines.elijah", "entity.supernaturalbloodlines.rebekah", "item.supernaturalbloodlines.the_elixir",
+                "item.supernaturalbloodlines.the_true_cure", "item.supernaturalbloodlines.the_elixir.tooltip", "item.supernaturalbloodlines.the_true_cure.tooltip"}) {
+            assertTrue(lang.has(k), k);
+        }
+    }
+
+    @Test
+    void theDealAndTheNoticesAreWrittenAndNeverNameWhoIsNotKnown() throws Exception {
+        JsonObject lang = lang();
+        for (String k : new String[] {"title", "offer", "no_deal", "keep", "done", "declined", "sworn", "broken"}) {
+            assertTrue(lang.has("supernaturalbloodlines.boss.elijah." + k), k);
+        }
+        assertTrue(lang.get("supernaturalbloodlines.boss.elijah.offer").getAsString().contains("%s days"), "the offer must show the days of the oath");
+        String unknownElijah = lang.get("supernaturalbloodlines.boss.notice.elijah.unknown").getAsString();
+        String unknownRebekah = lang.get("supernaturalbloodlines.boss.notice.rebekah.unknown").getAsString();
+        assertTrue(!unknownElijah.contains("Elijah") && !unknownRebekah.contains("Rebekah"), "an undiscovered Original is named: " + unknownElijah + " / " + unknownRebekah);
+        assertTrue(lang.get("supernaturalbloodlines.boss.notice.elijah.known").getAsString().contains("Elijah"));
+        assertTrue(lang.get("supernaturalbloodlines.boss.notice.rebekah.known").getAsString().contains("Rebekah"));
+        assertTrue(lang.get("supernaturalbloodlines.boss.notice.rebekah.hint").getAsString().contains("laid by a pack Emissary"), "a claim about mountain ash that is not true");
+    }
+
+    @Test
+    void theGuideSaysWhatTheyDoAndOnlyWhatIsTrue() throws Exception {
+        String body = lang().get("supernaturalbloodlines.hub.guide.bosses.body").getAsString();
+        assertTrue(body.contains("Elijah is calm") && body.contains("the Elixir") && body.contains("not his own"), "the Elijah paragraph");
+        assertTrue(body.contains("hostile for good") && body.contains("Mikael"), "the oath and its one exception");
+        assertTrue(body.contains("Rebekah comes for whoever makes The Cure at the Rite of the Cure"), "the Rebekah paragraph");
+        assertTrue(body.contains("A Cure that was given or dropped does not call her"), "she is not called by a given Cure");
+        assertTrue(!body.contains("7 days") && !body.contains("60 seconds"), "the Guide names a number a server can change: " + body);
+    }
 }
