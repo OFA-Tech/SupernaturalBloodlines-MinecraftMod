@@ -1029,5 +1029,11 @@ if __name__ == '__main__':
     os.makedirs(out, exist_ok=True)
     for n in only:
         s = SKINS[n]()
-        s.save(os.path.join(out, n + '.png'))
+        path = os.path.join(out, n + '.png')
+        s.save(path)
+        if n == 'klaus':
+            # the hands, the cuff and the paint squares are not painted by klaus() above: klaus_skin_fix.py does them, so a re-run keeps the fix
+            from PIL import Image
+            import klaus_skin_fix
+            klaus_skin_fix.apply(Image.open(path).convert('RGBA')).save(path)
         print(n, {p: s.coverage(p) for p in ('hat', 'jacket', 'rsleeve', 'lsleeve', 'rpants', 'lpants')})

@@ -55,7 +55,7 @@ entity's speed to that. `death` moves `root`, so the entity must not add its own
 `bb_load.js`, `bb_bounds.js` and `bb_shot.js` and the bosses' `bb_save.js` on it.
 
 ## Known limits
-- Not run in the game yet; previews are Blockbench renders. No Java entity, renderer or glow layer is wired up.
+- The game side is wired (plan 17c): `KlausEntity`, `ShiftRenderer` and the glow layer in `parts/bosses`. The Blockbench previews in `art/previews/creatures/klaus_hybrid_*.png` are renders **of the coat from before the 17c art fix** (the browner, more saturated one): the embedded texture in `klaus_hybrid.bbmodel` is current, the preview images are stale until someone re-renders them with `bb_shot.js`. The in-game shots are in `docs/superpowers/design/bosses/17c/`.
 - No `hurt` animation (the wolves have one); not asked for here.
 - One trunk bone: the spine does not flex in the gallop. The hock is not animated on its own.
 - The `.bbmodel` stores the animation file's absolute path of the worktree it was saved from, like the wolves' files.
