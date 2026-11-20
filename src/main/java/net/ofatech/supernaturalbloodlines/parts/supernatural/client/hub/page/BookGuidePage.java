@@ -35,7 +35,7 @@ public final class BookGuidePage implements HubPageView {
     @Override
     public void render(HubScreen.Frame f) {
         HubPage.Context c = f.view.context();
-        List<String> ids = GuideChapters.forRaces(c.creature(), c.magic(), c.werewolves(), c.enchanted(), c.loadout());
+        List<String> ids = GuideChapters.forRaces(c.creature(), c.magic(), c.werewolves(), c.enchanted(), c.loadout(), net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("bosses"));
         if (chapter == null || !ids.contains(chapter)) {
             chapter = ids.get(0);
         }

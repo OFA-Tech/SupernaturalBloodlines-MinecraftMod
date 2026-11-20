@@ -18,6 +18,7 @@ Switch a part off in [`supernaturalbloodlines-common.toml`](Configuration#core-s
 | **artifacts** | ● | ● | | ○ | ○ |
 | **supernatural** | ● | ○ | | ○ | |
 | **hud** | ○ | | ○ | ○ | |
+| **bosses** | ? | ? | | | |
 | **celestials** | ○ | ○ | | ○ | |
 | **supernatural_tensura** | ● | ○ | ● | ○ | |
 
@@ -106,6 +107,13 @@ So switching **vampirism_enchanted** off also turns off **species**, **species_t
 - **Does:** Blood, Blue, Harvest and super moons from Enhanced Celestials change a few numbers (bite blood, rite cost, the forced shift, our crops), our lunar eclipse shows up as an Enhanced Celestials event, and the hub's almanac shows the coming events.
 - **Mixins:** 0 of 3. **Config file:** `supernaturalbloodlines-celestials.toml`.
 - **Off, or without Enhanced Celestials:** nothing changes.
+
+## bosses
+
+- **Config key:** `bosses`. **Mods:** Vampirism, Enchanted and GeckoLib (Enchanted already needs it); it needs the `species` part. Only **Mikael** is in this version.
+- **Does:** the first creatures of the mod. NPC Originals (the six who are not players) that the lines, line death, the warnings and the Imprisoned Original rite treat like a player Original, and Mikael, who hunts a high-ranking vampire at night. See [Original Bloodlines](Original-Bloodlines#npc-originals).
+- **Mixins:** 0 of 3. **Config file:** `supernaturalbloodlines-bosses.toml`.
+- **Off:** no boss, no Mikael's Stake, no `boss` command. The line rules stay as they were.
 
 ## Always on (core)
 

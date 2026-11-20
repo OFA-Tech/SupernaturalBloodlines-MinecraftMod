@@ -346,6 +346,9 @@ public final class HomePage implements HubPageView {
                 y = tb.bottom() + 2;
             }
         }
+        if (flags.bossNear()) {
+            y = PageKit.wrapped(f, Component.translatable(KEY + "boss_near"), s.x(), y + 2, s.w(), PageWidgets.warn(t));
+        }
         Component label = Component.translatable(KEY + "open_moon");
         Rect b = new Rect(s.x(), y + 2, Math.min(s.w(), PageWidgets.widthOf(f.font(), label)), PageWidgets.H);
         PageWidgets.button(f, "stage:home:moon", b, label, true, false, null, f.screen()::openMoon);

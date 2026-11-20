@@ -39,5 +39,8 @@ jobs:
       - name: Run GameTests with the celestials part off
         run: ./gradlew runGameTestServer -PpartsOff=celestials --console=plain
 
+      - name: Run GameTests with the bosses part off
+        run: ./gradlew runGameTestServer -PpartsOff=bosses --console=plain
+
       - name: Run GameTests with the species and artifacts parts off
         run: ./gradlew runGameTestServer "-PpartsOff=species,artifacts" --console=plain

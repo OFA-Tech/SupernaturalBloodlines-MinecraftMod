@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased (plan 17b: the first boss)
+
+### Added
+- **Mikael** (new part `bosses`; needs Vampirism, Enchanted and GeckoLib, which Enchanted already needs). About once every few nights he comes for a vampire of rung 3 or higher who is on the ground outside a mountain ash ring, and tells them with a message. He feeds on the vampires he hits. A mountain ash line holds him. He drops **Mikael's Stake** (a white oak sword that never breaks) the first time he is brought down.
+- **NPC Originals** work like player Originals: any blow that would kill one only **desiccates** them (they fall, drop a bottle of their blood at most once per window, and their line is warned). They get up after 5 days (`original_return_days`). **White oak kills one only while they are down** (`npc_original_stake_needs_open`); that death is for good and the line dies with them. The Ash Dagger brings a standing one down. Each pays one reward, once (`boss_reward_on`).
+- **Hub:** a Bosses section on the Admin page (spawn, state, desiccate, return, forget), a "The bosses" chapter in the Guide, and a line on Home when a boss is within 128 blocks. Commands: `/supernaturalbloodlines boss <boss> spawn|state|desiccate|return|reset`.
+- Config file `supernaturalbloodlines-bosses.toml` (15 keys).
+
+### Changed
+- The hub's network protocol is now **6** (the Home snapshot says whether a boss is near). A client of the old version cannot join; update both sides.
+
 ## Unreleased (plan 17a: art lands, rings are worn)
 
 ### Changed

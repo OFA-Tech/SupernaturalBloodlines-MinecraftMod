@@ -172,6 +172,23 @@ Only does anything with [Enhanced Celestials 2](Enhanced-Celestials). A factor o
 | `super_moon_rite_cost` | `0.75` | Cost of the Rite of the Moon, the Silver Moon and Immortality on a super moon, on top of the Blue Moon factor (0.1 to 1). |
 | `super_blue_skips_forced_shift` | `true` | A Super Blue Moon does not force the Werewolves full-moon shift on anybody. |
 
+## bosses: `supernaturalbloodlines-bosses.toml`
+
+Needs the species part and GeckoLib. All of them are on the hub's Admin page (section Bosses). Only Mikael is in the game so far; the other `<boss>_enabled` switches are there for the next phases and do nothing yet.
+
+| Key | Default | What it does |
+|---|---|---|
+| `boss_check_seconds` | `5` | How often the boss director looks at the world (1 to 120). |
+| `boss_bars_enabled` | `true` | A boss bar for players within 64 blocks of a boss. |
+| `original_return_days` | `5` | In-game days a desiccated NPC Original stays down before they get up again (1 to 100). Their blood drops at most once per window. |
+| `npc_original_stake_needs_open` | `true` | White oak kills an NPC Original only while they are desiccated. Off: it kills a standing one too. |
+| `boss_reward_on` | `first_defeat` | When a boss pays its reward, once: `first_defeat` (brought down or killed) or `death` (only when it dies). |
+| `mikael_enabled`, `klaus_enabled`, `elijah_enabled`, `kol_enabled`, `rebekah_enabled`, `finn_enabled`, `deucalion_enabled`, `peter_hale_enabled`, `beast_of_gevaudan_enabled` | `true` | Whether that boss can appear. |
+| `boss_health_factor` | `1.0` | Every boss's health is multiplied by this (0.1 to 10). |
+| `boss_damage_factor` | `1.0` | Every boss's attack damage is multiplied by this (0.1 to 10). |
+| `mikael_min_rung` | `3` | The lowest rung of the vampire ladder (0 to 6) at which Mikael hunts a vampire player. |
+| `mikael_night_chance` | `0.15` | The chance, once each night, that Mikael comes for a vampire player of that rung. |
+
 ## supernatural (client): `supernaturalbloodlines-hub-client.toml`
 
 A **CLIENT** config: each player picks their own, the server never reads it. It is the one file you may edit while the game runs; an open hub picks the change up at once and stays on its page.

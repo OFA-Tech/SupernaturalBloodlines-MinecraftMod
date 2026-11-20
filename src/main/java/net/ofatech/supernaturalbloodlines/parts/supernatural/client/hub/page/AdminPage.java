@@ -69,6 +69,7 @@ public final class AdminPage implements HubPageView {
     private int speciesAt;
     private int eventAt;
     private int raceAt;
+    private int bossAt;
     private int number = 100;
 
     private static volatile String devSection;
@@ -451,7 +452,29 @@ public final class AdminPage implements HubPageView {
             PageWidgets.button(f, "stage:admin:act:npc_pack", ef.rects().get(2), eclipse.get(2), true, false, null, () -> HubClient.runCommand("D11", List.of()));
             PageWidgets.button(f, "stage:admin:act:npc_list", ef.rects().get(3), eclipse.get(3), true, false, null, () -> HubClient.runCommand("D12", List.of()));
         }
-        return ef.bottom();
+        y = ef.bottom();
+        return net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("bosses") ? bosses(f, r, y + 4) : y;
+    }
+
+    /** The bosses part's hands on the director (rows X1 to X5): pick a boss, then spawn it here, read its state, bring it down, bring it back, or forget it. */
+    private int bosses(HubScreen.Frame f, Rect r, int y) {
+        HubTheme t = f.theme();
+        List<net.ofatech.supernaturalbloodlines.core.boss.BossId> landed = java.util.Arrays.stream(net.ofatech.supernaturalbloodlines.core.boss.BossId.values())
+                .filter(net.ofatech.supernaturalbloodlines.core.boss.BossId::landed).toList();
+        String pick = cycle(landed, bossAt).id();
+        y = PageKit.wrapped(f, Component.translatable(KEY + "bosses").withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
+        List<Component> labels = List.of(Component.translatable("supernaturalbloodlines.boss.name." + pick), Component.translatable(KEY + "act.boss_spawn"),
+                Component.translatable(KEY + "act.boss_state"), Component.translatable(KEY + "act.boss_desiccate"), Component.translatable(KEY + "act.boss_return"),
+                Component.translatable(KEY + "act.boss_reset"));
+        Flow.Result flow = Flow.wrap(new Rect(r.x(), y, r.w(), 0), labels.stream().map(c -> PageWidgets.widthOf(f.font(), c)).toList(), PageWidgets.H, 3);
+        PageWidgets.button(f, "stage:admin:boss:pick", flow.rects().get(0), labels.get(0), true, false, Component.translatable(KEY + "param_tip"), () -> bossAt++);
+        PageWidgets.button(f, "stage:admin:act:boss_spawn", flow.rects().get(1), labels.get(1), true, false, null, () -> HubClient.runCommand("X1", List.of(pick)));
+        PageWidgets.button(f, "stage:admin:act:boss_state", flow.rects().get(2), labels.get(2), true, false, null, () -> HubClient.runCommand("X2", List.of(pick)));
+        PageWidgets.button(f, "stage:admin:act:boss_desiccate", flow.rects().get(3), labels.get(3), true, false, null, () -> HubClient.runCommand("X3", List.of(pick)));
+        PageWidgets.button(f, "stage:admin:act:boss_return", flow.rects().get(4), labels.get(4), true, false, null, () -> HubClient.runCommand("X4", List.of(pick)));
+        PageWidgets.button(f, "stage:admin:act:boss_reset", flow.rects().get(5), labels.get(5), true, false, null,
+                () -> f.confirm(labels.get(5), Component.translatable(KEY + "confirm_boss_reset", labels.get(0)), labels.get(5), () -> HubClient.runCommand("X5", List.of(pick))));
+        return flow.bottom();
     }
 
     private int side(HubScreen.Frame f, Rect s, int y) {

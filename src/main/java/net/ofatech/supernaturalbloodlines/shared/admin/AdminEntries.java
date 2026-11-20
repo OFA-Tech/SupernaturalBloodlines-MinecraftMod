@@ -28,9 +28,10 @@ public final class AdminEntries {
     public static final String SPECIES_FILE = MOD + "-species.toml";
     public static final String SPECIES_TENSURA_FILE = MOD + "-species_tensura.toml";
     public static final String CELESTIALS_FILE = MOD + "-celestials.toml";
+    public static final String BOSSES_FILE = MOD + "-bosses.toml";
 
     /** The section ids, in the order the page lists them. */
-    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "species", "speciesTensura", "celestials");
+    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "species", "speciesTensura", "celestials", "bosses");
 
     public static final String RESERVED = "reserved: the key does nothing";
 
@@ -133,6 +134,19 @@ public final class AdminEntries {
         all.add(SettingEntry.of(CELESTIALS_FILE, ce, "blue_moon_rite_cost", DOUBLE));
         all.add(SettingEntry.of(CELESTIALS_FILE, ce, "super_moon_rite_cost", DOUBLE));
         all.add(SettingEntry.of(CELESTIALS_FILE, ce, "super_blue_skips_forced_shift", BOOL));
+        String bo = "bosses";
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "boss_check_seconds", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "boss_bars_enabled", BOOL));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "original_return_days", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "npc_original_stake_needs_open", BOOL));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "boss_reward_on", CHOICE));
+        for (net.ofatech.supernaturalbloodlines.core.boss.BossId boss : net.ofatech.supernaturalbloodlines.core.boss.BossId.values()) {
+            all.add(SettingEntry.of(BOSSES_FILE, bo, boss.id() + "_enabled", BOOL));
+        }
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "boss_health_factor", DOUBLE));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "boss_damage_factor", DOUBLE));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "mikael_min_rung", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "mikael_night_chance", DOUBLE));
         ALL = List.copyOf(all);
     }
 
