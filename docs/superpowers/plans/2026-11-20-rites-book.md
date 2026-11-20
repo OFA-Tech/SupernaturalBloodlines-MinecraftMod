@@ -123,3 +123,7 @@ Circle = chalk. All ritual chalk unless said. P = altar power. Needs = extra con
 7. `magicule_offering` costs magicules and no altar power; say so. DECIDED.
 8. `requires_full_moon` goes into the Severance and Alpha Trial JSON. DECIDED.
 9. A rite that is off shows placeholder text in the book. DECIDED.
+
+## 6. Built
+
+All five phases are in this branch. Shots: docs/superpowers/design/rites-book (hidden DevShots runs: Rites page in 3 themes at scales 2 and 4, and Enchanted's book chapter). The Enchanted book shots were taken with DevShots opening the book (book:<rite path>[:last]).
