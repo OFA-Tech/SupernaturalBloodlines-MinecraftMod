@@ -174,7 +174,7 @@ Only does anything with [Enhanced Celestials 2](Enhanced-Celestials). A factor o
 
 ## bosses: `supernaturalbloodlines-bosses.toml`
 
-Needs the species part and GeckoLib. All of them are on the hub's Admin page (section Bosses). Only Mikael is in the game so far; the other `<boss>_enabled` switches are there for the next phases and do nothing yet.
+Needs the species part and GeckoLib. All of them are on the hub's Admin page (section Bosses). Mikael and Klaus are in the game so far; the other `<boss>_enabled` switches are there for the next phases and do nothing yet. Klaus needs Werewolves.
 
 | Key | Default | What it does |
 |---|---|---|
@@ -188,6 +188,9 @@ Needs the species part and GeckoLib. All of them are on the hub's Admin page (se
 | `boss_damage_factor` | `1.0` | Every boss's attack damage is multiplied by this (0.1 to 10). |
 | `mikael_min_rung` | `3` | The lowest rung of the vampire ladder (0 to 6) at which Mikael hunts a vampire player. |
 | `mikael_night_chance` | `0.15` | The chance, once each night, that Mikael comes for a vampire player of that rung. |
+| `klaus_chance_per_full_moon` | `0.35` | 0 to 1 | The chance, once each full moon night, that Klaus comes for a doppelgänger (a villager with a player within 64 blocks, or a player with the gene). Needs Werewolves. |
+| `klaus_hunts_players` | `true` | | Whether Klaus hunts players who carry the doppelgänger gene, not only villagers. A player is warned first. |
+| `klaus_warning_seconds` | `90` | 0 to 600 | How long before he arrives a hunted player is warned. A villager is never warned. 0 = he arrives at once. |
 | `mikael_stakes_originals` | `false` | Off: Mikael does not hunt Originals or Original hybrids, and his white oak never counts as a white oak kill, so he cannot start line death. On: he hunts them, his stake kills an Original outright and their line dies with them; the hunted player is warned. |
 
 ## supernatural (client): `supernaturalbloodlines-hub-client.toml`

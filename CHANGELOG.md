@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased (plan 17c: Klaus)
+
+### Added
+- **Klaus** (part `bosses`; **needs Werewolves**). On a full moon night he comes for a doppelganger: a villager who is one with a player within 64 blocks, or a player who carries the gene (`klaus_hunts_players`). A hunted player gets a warning 90 seconds before he arrives (`klaus_warning_seconds`): the action bar, chat, a howl and "Mountain ash will hold him." A mountain ash line holds him. He shifts into a hybrid wolf at half health or against a werewolf (the first GeckoLib creature of the mod, with a glowing-eyes layer); the wolf is faster and hits harder, and its bite is werewolf venom. He withdraws after a minute with nobody to hunt, and can come again.
+- **Klaus's Blood**, his reward, the first time he is brought down: counts as the blood of an Original hybrid under either `hybrid_transition_blood` (so a werewolf who drinks it and dies starts the transition in Klaus's line) and cures werewolf venom.
+- Config (`supernaturalbloodlines-bosses.toml`, 19 keys now): `klaus_chance_per_full_moon` (0.35), `klaus_hunts_players` (true), `klaus_warning_seconds` (90). All on the Admin page. `/supernaturalbloodlines boss klaus spawn|state|desiccate|return|reset`. The Guide's bosses chapter tells it.
+- Developer: `BossShots` takes `-Dsupernaturalbloodlines.devshots.bosses=klaus` (the man, half way through the shift, the wolf).
+
+### Upgrading
+- Nothing to do. The boss index gains a field (`arrive_at`); an old index reads as "nobody is coming".
 ## Unreleased (plan 17b: the first boss)
 
 ### Added

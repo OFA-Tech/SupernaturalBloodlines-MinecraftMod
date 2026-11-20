@@ -38,6 +38,7 @@ Part `artifacts`. Rings sit in a **Curios `ring` slot** if Curios is installed, 
 
 | In-game name | What it does | How to get it |
 |---|---|---|
+| Klaus's Blood | Drink it (32 ticks, stacks to 16, glass bottle back). Counts as the blood of an Original hybrid under either `hybrid_transition_blood`: a werewolf who dies with its effect starts the [hybrid transition](Hybrids-And-Original-Hybrids#the-transition) in Klaus's line. Also cures werewolf venom, like Hybrid's Blood. | Dropped by Klaus the first time he is brought down. |
 | Mikael's Stake | A white oak sword that never breaks. It kills an Original who is desiccated, like the White Oak Stake. | Dropped by Mikael the first time he is brought down. |
 
 ## Other artifacts (part `artifacts`)

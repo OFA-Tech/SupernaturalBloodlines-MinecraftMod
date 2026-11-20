@@ -110,10 +110,10 @@ So switching **vampirism_enchanted** off also turns off **species**, **species_t
 
 ## bosses
 
-- **Config key:** `bosses`. **Mods:** Vampirism, Enchanted and GeckoLib (Enchanted already needs it); it needs the `species` part. Only **Mikael** is in this version.
-- **Does:** the first creatures of the mod. NPC Originals (the six who are not players) that the lines, line death, the warnings and the Imprisoned Original rite treat like a player Original, and Mikael, who hunts a high-ranking vampire at night. See [Original Bloodlines](Original-Bloodlines#npc-originals).
+- **Config key:** `bosses`. **Mods:** Vampirism, Enchanted and GeckoLib (Enchanted already needs it); it needs the `species` part. Only **Mikael** and **Klaus** are in this version (Klaus needs Werewolves).
+- **Does:** the first creatures of the mod. NPC Originals (the six who are not players) that the lines, line death, the warnings and the Imprisoned Original rite treat like a player Original, Mikael, who hunts a high-ranking vampire at night, and Klaus, who comes on a full moon for a doppelganger, shifts into a wolf at half health and bites with werewolf venom. See [Original Bloodlines](Original-Bloodlines#npc-originals).
 - **Mixins:** 0 of 3. **Config file:** `supernaturalbloodlines-bosses.toml`.
-- **Off:** no boss, no Mikael's Stake, no `boss` command. The line rules stay as they were.
+- **Off:** no boss, no Mikael's Stake, no Klaus's Blood, no `boss` command. The line rules stay as they were.
 
 ## Always on (core)
 

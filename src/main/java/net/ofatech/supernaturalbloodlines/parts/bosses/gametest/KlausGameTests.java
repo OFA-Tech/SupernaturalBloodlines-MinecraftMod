@@ -445,7 +445,8 @@ public final class KlausGameTests {
             helper.assertTrue(Math.abs(again.getBbHeight() - 1.5F) < 1e-4, "the hitbox was not the wolf's after a load: " + again.getBbHeight());
             helper.assertTrue(prey.equals(again.prey()), "the prey was forgotten");
             helper.assertTrue(again.shiftTicks() == 33, "the ticks of the shift were forgotten: " + again.shiftTicks());
-            helper.getLevel().addFreshEntity(again);
+            again.setUUID(UUID.randomUUID()); // the saved one is still in the level: a second entity with its uuid is refused
+            helper.assertTrue(helper.getLevel().addFreshEntity(again), "the loaded Klaus was not added to the level");
             helper.assertTrue(Math.abs(again.getAttributeValue(Attributes.ATTACK_DAMAGE) - base * (1 + ShiftRules.BEAST_DAMAGE_BONUS)) < 1e-6,
                     "the wolf lost its bite through a load: " + again.getAttributeValue(Attributes.ATTACK_DAMAGE));
             again.discard();
@@ -553,6 +554,24 @@ public final class KlausGameTests {
             helper.assertTrue(child.isDeadOrDying(), "a hybrid in Klaus's line did not die with him");
             helper.assertTrue(rig.index.state(BossId.KLAUS) == BossState.DEAD, "the index says " + rig.index.state(BossId.KLAUS));
             helper.assertTrue(rig.dropsNear(k, BossItems.KLAUS_BLOOD.get()) == 1, "the reward was paid twice");
+        } finally {
+            forget(helper, child);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aKlausWhoDiesOfAnythingButWhiteOakTakesNoLineWithHim(GameTestHelper helper) {
+        LineTestPlayer child = LineTestPlayer.create(helper);
+        BloodlineAccess.set(child, BloodlineAccess.get(child).toBuilder().species(Species.HYBRID).build());
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            LineIndex.get(rig.server).setRoot(child.getUUID(), BossTestRig.KLAUS, true);
+            night(child);
+            KlausEntity k = rig.spawnKlaus();
+            k.desiccate();
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(k, helper.getLevel().damageSources().genericKill()));
+            helper.assertTrue(rig.index.state(BossId.KLAUS) == BossState.DEAD, "control: the index says " + rig.index.state(BossId.KLAUS));
+            helper.assertTrue(!child.isDeadOrDying(), "a /kill on a fallen Klaus killed his line");
         } finally {
             forget(helper, child);
         }
