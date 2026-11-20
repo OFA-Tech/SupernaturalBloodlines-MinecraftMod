@@ -125,11 +125,11 @@ def build():
     return m
 
 
-# Coat (owner's still, see REFERENCES.md): ash-grey with a brown tint, "pretty much like his hair colour, but brownish". Each anchor
-# is a colour the mod already uses for Klaus, mixed 70% with its own grey and darkened 12%: saddle (76,52,34) -> 352f2a,
-# brow (108,84,56) -> 4f4942, hair (164,136,92) -> 7c7469, cream fur (214,184,138) -> a79f93. The rest are in-betweens, one shadow
-# below the saddle and one highlight above the cream.
-COAT = [hexc(c) for c in ('26221f', '352f2a', '423c36', '4f4942', '665f56', '7c7469', '928a7e', 'a79f93', 'b9b2a7')]
+# Coat (owner's still, see REFERENCES.md): ash-grey with a brown tint, "pretty much like his hair colour, but brownish". Every step
+# has the hue of the mod's Klaus hair (164,136,92), about 37 degrees, at roughly half its saturation (hair 0.44): 0.26 in the
+# shadows, 0.25 in the mids, easing to 0.20 at the top. The first ramp sat at 0.10-0.20 and read as plain pale grey in the game.
+# The light end stops near (150,138,118) so the chest, face and legs stay brownish instead of washing out.
+COAT = [hexc(c) for c in ('26221c', '353027', '423c31', '4f483b', '645b4b', '766b58', '867a67', '968a76', 'a29682')]
 LIP = [hexc(c) for c in ('060505', '0c0a0a', '151011', '20171a')]
 NOSE = [hexc(c) for c in ('050505', '0b0b0c', '141415', '232325')]
 # the rest are the values of the old flat Klaus texture (art/bosses/tools/paint_wolves.py)
