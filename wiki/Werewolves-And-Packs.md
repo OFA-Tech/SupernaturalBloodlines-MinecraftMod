@@ -276,3 +276,11 @@ See [Known limits](Known-Limits) for the rest.
 - **A full pack.** If a player joins your pack and it then holds more than 6 Brothers, the newest ones rest and count for nothing until there is room.
 - **Peace.** A pack's own wolves and its allies never attack each other.
 - **With Tensura.** Every subordinate of a pack member (of a Brother too, one step only) joins the pack as a member, keeps Tensura's own orders, gets the pack's gifts and counts a quarter of a Beta, at most 6 per pack (`tensura_subordinates_join`).
+
+## Deucalion and the Demon Wolf Roar
+
+On a full moon night, once per world, **Deucalion** comes for a player Alpha who stacks at least 3 sparks (a server can change the number; a True Alpha counts as holding the full stack), in the overworld, and brings Alphas of his own pack. He walks as a man in glasses, drops to fours when he first falls below three quarters of his health or when his target is within 8 blocks at night, and does not change back. The hunted Alpha is told, with a howl for them alone. He leaves with the dawn, taking his pack with him. A mountain ash line laid by a pack Emissary holds him. Needs Werewolves.
+
+He dies like any wolf. **The player who does the most to bring him down takes his sparks** (4, unless the server changes it; a tie goes to the last blow, and a pet's damage is its owner's) by the rules of a stolen spark: a True Alpha takes nothing, an open and protected path to True Alpha destroys them, and the stack never goes above `max_stacked_sparks`. Someone who is no werewolf gets nothing, and a True Alpha takes none (but learns the Roar); the game tells them why. His pack gives no weak spark and no drops.
+
+A werewolf who kills him also learns the **Demon Wolf Roar** (it shows on the Skills page). On the Alpha Roar (from its slot, its key or /pack roar), after the ordinary roar, with a cooldown of its own (2 minutes), the other player Alphas within 32 blocks who are not in your pack are forced to shift, except where PvP is off, in spectator mode or on your own team. A Beta is not. It counts only while you are a werewolf, and only with the supernatural part on (the skill catalogue is its).

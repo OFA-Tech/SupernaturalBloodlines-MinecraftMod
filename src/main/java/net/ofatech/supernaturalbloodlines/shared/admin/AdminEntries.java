@@ -162,6 +162,11 @@ public final class AdminEntries {
         all.add(SettingEntry.of(BOSSES_FILE, bo, "finn_ritual_seconds", INT));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "link_seconds", INT));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "link_damage_share", DOUBLE));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "deucalion_min_sparks", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "deucalion_sparks", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "deucalion_pack_alphas", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "deucalion_respawn", BOOL));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "deucalion_respawn_days", INT));
         ALL = List.copyOf(all);
     }
 

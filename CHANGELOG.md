@@ -22,6 +22,22 @@
 - **Tensura skill cooldowns stuck at "1s".** ManasCore's `ManasSkillInstance.getCoolDown` counts seconds (`SkillStorage.checkSkillTimers` runs every 20 server ticks and lowers it by 1); the HUD treated it as ticks and showed `(n + 19) / 20`, which is 1 for any cooldown up to 20 s. It now shows the seconds (`SkillCooldown`).
 - Two labels drawn on top of each other at the pill (the pill and the vanilla action bar line stand on the same pixels): they no longer show together. The pill, the mode panel and the slots do not overlap at GUI scales 2 to 4 (`HudLayoutTest`).
 
+## Unreleased (plan 17f: Deucalion)
+
+### Added
+- **Deucalion** (part `bosses`; **needs Werewolves**; no Werewolves, no Deucalion). On a full moon night, once per world, he comes for a **player Alpha who stacks at least `deucalion_min_sparks` (3) sparks**, in the overworld, and brings `deucalion_pack_alphas` (3) Alphas of his own pack. He walks as a man in glasses, drops to fours below three quarters of his health or when his target is within 8 blocks at night, and does not change back (R178). One entity with a synced form, like Klaus (GeckoLib wolf with a glow mask; the player model for the man). **The glasses are the only thing on the hat layer and go from the first tick of the shift** (`ShiftRules.hatVisible`). He leaves with the dawn (and his pack), or after a minute with nobody to hunt, or four minutes without a hit. The hunted Alpha is told with a howl for them alone.
+- **His pack** are real NPC Alphas through `NpcPackSpawner`, marked `NpcMark.Kind.BOSS_PACK`: they hunt like wild wolves, give **no weak spark and no drops**, and go when he does. (`WeakSpark` skips them; no other rule of it changed.)
+- **His death pays once** (`boss_reward_on`), to the player who did the most damage to him (a tie goes to the last blow; a pet counts for its owner; a mob or the environment for nobody). A player who is paid nothing is told why. A True Alpha counts as holding the full stack, so he comes for them too; their reward is the Roar only. That player takes `deucalion_sparks` (4) through the new `SparkHandler.grantFromBoss`, by the **same ladder as a stolen spark** (a True Alpha takes nothing, an open protected path destroys them, never above `max_stacked_sparks`, somebody who is no werewolf gets nothing), and a werewolf learns **the Demon Wolf Roar** (S-WOL-11, granted-only, R179). A mob's kill pays nothing to anybody and spends the reward; he is no Original, so no death of his touches a line.
+- **The Demon Wolf Roar** (S-WOL-11, R180): on the Alpha Roar (from its slot, its key or /pack roar), after it, with a cooldown of its own (2400 ticks), the other player Alphas within 32 blocks who are not in your pack are forced to shift (not where PvP is off, in spectator mode, or on your team) (the beast form, else a half form, else the human form: whichever the Werewolves mod lets them take). It does not shift a Beta. It counts only while the holder is a werewolf and only with the `supernatural` part on (its skill catalogue); with that part off the skill is saved but inert.
+- Config (`supernaturalbloodlines-bosses.toml`): `deucalion_min_sparks` (3), `deucalion_sparks` (4), `deucalion_pack_alphas` (3), `deucalion_respawn` (false), `deucalion_respawn_days` (7). With `deucalion_respawn` on he may come again, and pay again, that many in-game days after he died. All five are on the Admin page; `/supernaturalbloodlines boss deucalion spawn|state|reset` works with the rest (`desiccate` and `return` are for Originals).
+- The Guide's bosses chapter has a paragraph on him; the Skills page lists the Roar once it is yours.
+
+### Fixed
+- Two flaky GameTests, in their own commit: `thePackHuntsTogether` (the wolves are up to 45 blocks apart, in a chunk the test world had not loaded) and `pointsAtGenePlayerAnywhereInDimension` (it read the real doppelganger index, which lists a villager the species part rolled one).
+
+### Rolling back
+Rolling back to a build without 17f loses the Deucalion entity (a Deucalion in the world is dropped), the skill `S-WOL-11` in a player's saved skills (ignored), and `BOSS_PACK` marks (a pack Alpha already in the world reads as a wild one). Nothing else of the world changes. A killer's sparks stay as they are.
+
 ## Unreleased (plan 17e: Kol and Finn)
 
 ### Changed (PR #49, round 2)

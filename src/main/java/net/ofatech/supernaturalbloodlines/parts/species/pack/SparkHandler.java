@@ -159,19 +159,10 @@ public final class SparkHandler {
             killer.sendSystemMessage(Component.translatable(isInnocent(killer, victim) ? "supernaturalbloodlines.pack.spark_destroyed_innocent" : "supernaturalbloodlines.pack.spark_destroyed"));
             PackMembers.tell(killer.server, victim.getUUID(), "supernaturalbloodlines.pack.spark_destroyed_victim", killer.getGameProfile().getName());
         } else {
-            boolean killerIsAlpha = PackAccess.isAlpha(PackAccess.wolf(killer).rank());
-            int killerSparks = PackAccess.wolf(killer).sparks();
-            if (PackAccess.applyPack(killer, PackEvent.KILLED_ALPHA, PackContext.defaults()).refused()) {
+            if (!takeSparks(killer, taken)) {
                 return false;
             }
-            int cap = SpeciesConfig.maxStackedSparks();
-            int now = PackRules.sparksAfterSteal(killerSparks, killerIsAlpha, taken, cap);
-            PackAccess.setSparks(killer, now);
-            // told: how many they hold now, and that the cap stopped some of them; the victim learns it too (at their next login if away)
-            killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_gained", now, cap));
-            if ((killerIsAlpha ? Math.max(1, killerSparks) : 0) + taken > cap) {
-                killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_capped", cap));
-            }
+            // the victim learns it too (at their next login if away)
             PackMembers.tell(killer.server, victim.getUUID(), "supernaturalbloodlines.pack.spark_lost", killer.getGameProfile().getName());
         }
         boolean victimLeads = index.isLeader(victim.getUUID());
@@ -191,6 +182,52 @@ public final class SparkHandler {
         }
         return true;
     }
+    /**
+     * What a spark taken from anybody does to its taker: the rank, the new count (up to {@code max_stacked_sparks}) and the two lines that tell them. A steal and
+     * a boss's grant both end here. False when the pack rules refused the new rank (nothing changed).
+     */
+    private static boolean takeSparks(ServerPlayer killer, int taken) {
+        boolean killerIsAlpha = PackAccess.isAlpha(PackAccess.wolf(killer).rank());
+        int killerSparks = PackAccess.wolf(killer).sparks();
+        if (PackAccess.applyPack(killer, PackEvent.KILLED_ALPHA, PackContext.defaults()).refused()) {
+            return false;
+        }
+        int cap = SpeciesConfig.maxStackedSparks();
+        int now = PackRules.sparksAfterSteal(killerSparks, killerIsAlpha, taken, cap);
+        PackAccess.setSparks(killer, now);
+        killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_gained", now, cap));
+        if (PackRules.capped(killerSparks, killerIsAlpha, taken, cap)) {
+            killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_capped", cap));
+        }
+        return true;
+    }
+
+    /**
+     * A boss pays {@code sparks} to the one who killed it (plan 17, decision 8): the same ladder as {@link #steal} ({@link PackRules#stealBy}) and the same
+     * {@code max_stacked_sparks}, but nothing is taken from anybody. A killer who is no werewolf gets nothing; a True Alpha takes nothing; an open and
+     * protected path destroys them. Touched only behind {@code ModList.isLoaded("werewolves")}.
+     */
+    public static net.ofatech.supernaturalbloodlines.core.boss.DeucalionRewardRules.Grant grantFromBoss(ServerPlayer killer, int sparks) {
+        boolean werewolf = VampirismSupernatural.isWerewolf(killer);
+        WolfState wolf = PackAccess.wolf(killer);
+        int cap = SpeciesConfig.maxStackedSparks();
+        var grant = net.ofatech.supernaturalbloodlines.core.boss.DeucalionRewardRules.sparks(werewolf, PackRules.stealBy(wolf), PackAccess.isAlpha(wolf.rank()),
+                wolf.sparks(), sparks, cap);
+        switch (grant.outcome()) {
+            case PROTECTED -> killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.pack.spark_destroyed"));
+            case GIVEN -> {
+                if (!takeSparks(killer, sparks)) {
+                    return new net.ofatech.supernaturalbloodlines.core.boss.DeucalionRewardRules.Grant(
+                            net.ofatech.supernaturalbloodlines.core.boss.DeucalionRewardRules.Outcome.NEVER, wolf.sparks(), false);
+                }
+            }
+            // no branch is silent: the one who did the most is told why they take nothing
+            case NOT_A_WEREWOLF -> killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.deucalion.reward_no_werewolf"));
+            case NEVER -> killer.sendSystemMessage(Component.translatable("supernaturalbloodlines.boss.deucalion.reward_true_alpha"));
+        }
+        return grant;
+    }
+
     private static void onFaction(PlayerFactionEvent.FactionLevelChanged e) {
         // a dormant True Alpha is marked as not holding the spark while they are away (hasSpark, offline); rejoining wakes it
         if (e.getPlayer().getPlayer() instanceof ServerPlayer back && !back.level().isClientSide && e.getCurrentFaction() == WerewolfFaction.faction()

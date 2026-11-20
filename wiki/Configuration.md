@@ -201,6 +201,11 @@ Needs the species part and GeckoLib. All of them are on the hub's Admin page (se
 | `finn_ritual_seconds` | `120` | 5 to 3600 | Seconds Finn's ritual takes. Left alone it hurts nobody. |
 | `link_seconds` | `60` | 5 to 3600 | Seconds a Linking Spell holds two creatures together. |
 | `link_damage_share` | `0.5` | 0 to 1 | The part of the damage one linked creature takes that the other takes too (never passed on again). |
+| `deucalion_min_sparks` | `3` | 1 to 10 | Stacked sparks a player Alpha needs before Deucalion comes for them, on a full moon night (needs Werewolves). |
+| `deucalion_sparks` | `4` | 1 to 10 | The sparks his killer takes, by the rules of a stolen spark (nothing for a True Alpha or somebody who is no werewolf, destroyed for an open protected path, never above `max_stacked_sparks`). |
+| `deucalion_pack_alphas` | `3` | 0 to 8 | Alphas of his own pack that come with him. They give no weak spark and no drops, and go when he does. |
+| `deucalion_respawn` | `false` | | Whether he may come again, and pay again, `deucalion_respawn_days` after he died. |
+| `deucalion_respawn_days` | `7` | 1 to 1000 | In-game days after his death before he may come again (only with `deucalion_respawn` on). |
 | `rebekah_delay_seconds` | `60` | 0 to 3600 | How long after The Cure is made at the rite Rebekah arrives for whoever made it. |
 | `mikael_stakes_originals` | `false` | Off: Mikael does not hunt Originals or Original hybrids, and his white oak never counts as a white oak kill, so he cannot start line death. On: he hunts them, his stake kills an Original outright and their line dies with them; the hunted player is warned. |
 

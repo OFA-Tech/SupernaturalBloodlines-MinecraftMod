@@ -76,6 +76,12 @@ public final class PackRules {
         return Math.max(1, Math.min(Math.max(1, cap), own + Math.max(0, taken)));
     }
 
+    /** Whether the cap stopped some of what was taken: the killer's own sparks (0 for a non-Alpha) plus what they took is above {@code cap}. Shared by a steal and a boss's grant. */
+    public static boolean capped(int killerSparks, boolean killerIsAlpha, int taken, int cap) {
+        int own = killerIsAlpha ? Math.max(1, killerSparks) : 0;
+        return own + Math.max(0, taken) > Math.max(1, cap);
+    }
+
     /** What the Alpha rank's attribute bonuses are multiplied by: +10% for every spark beyond the first (up to {@code cap}). */
     public static double sparkScale(int sparks, int cap) {
         int extra = Math.max(0, Math.min(Math.max(1, sparks), Math.max(1, cap)) - 1);
