@@ -44,4 +44,23 @@ class SprintLeapTest {
         assertTrue(ids.contains("keys.werewolves.bite"));
         assertEquals(3 + 3 + 1 + 9 + 1 + 1, ids.size(), "3 Tensura + 3 Tensura Slots + suck + 9 actions + bite + leap");
     }
+
+    @Test
+    void theLeapKeyIsCoveredOnlyWhileTheSprintLeapReplacesIt() {
+        assertTrue(CoveredKeyIds.all(true).contains(CoveredKeyIds.WEREWOLVES_LEAP));
+        assertFalse(CoveredKeyIds.all(false).contains(CoveredKeyIds.WEREWOLVES_LEAP), "sprint_leap off: the key must work again");
+        assertTrue(CoveredKeyIds.all(false).contains(CoveredKeyIds.WEREWOLVES_BITE), "the other keys stay covered");
+        // and the plan that runs when the list changes gives a recorded leap bind back, even while covering
+        var plan = CoveredKeys.plan(java.util.Map.of(CoveredKeyIds.WEREWOLVES_LEAP, CoveredKeys.UNBOUND), java.util.Map.of(CoveredKeyIds.WEREWOLVES_LEAP, "key.keyboard.left.control"),
+                CoveredKeyIds.all(false), java.util.Map.of(CoveredKeyIds.WEREWOLVES_LEAP, "key.keyboard.left.control"), true);
+        assertEquals("key.keyboard.left.control", plan.set().get(CoveredKeyIds.WEREWOLVES_LEAP));
+    }
+
+    @Test
+    void aJumpThatNeverStartsDisarmsTheLeapButOneThatDoesDoesNot() {
+        assertFalse(SprintLeap.jumpBlocked(0, false));
+        assertFalse(SprintLeap.jumpBlocked(SprintLeap.JUMP_WINDOW - 1, false), "still inside the window");
+        assertTrue(SprintLeap.jumpBlocked(SprintLeap.JUMP_WINDOW, false), "never left the ground: a ceiling, a trapdoor, water");
+        assertFalse(SprintLeap.jumpBlocked(SprintLeap.JUMP_WINDOW + 5, true), "left the ground: the jump happened");
+    }
 }

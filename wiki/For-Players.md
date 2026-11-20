@@ -59,7 +59,7 @@ The Cure needs a *desiccated* Original: see [Rites](Rites#rite-of-the-cure).
 
 ## Keys
 
-The only key bind is **Alpha Roar** (unbound by default). See [Key binds](Key-Binds). All commands are on [Commands](Commands).
+The Alpha Roar has no key bind of its own: it is an action in a HUD slot (the mod puts it in your first empty slot when you become an Alpha; change it in the hub, Slots tab), or `/pack roar`. Without the HUD part it keeps an unbound **Alpha Roar** key (see [Key binds](Key-Binds)). All commands are on [Commands](Commands).
 
 ## The ability HUD
 

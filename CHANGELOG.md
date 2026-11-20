@@ -2,18 +2,22 @@
 
 ## Unreleased (HUD polish)
 
+### Upgrading (read first)
+- **Update the server and every client together.** The Alpha Roar key is gone when the HUD part is on, and the Roar is an action in a slot: an old client still sends `RoarPayload` (the server keeps accepting it for a game without the HUD part), and an old client has no slot for the new action; a new client on an old server has no Roar at all. Players who had bound the Roar key find it in the hub, Slots tab.
+
 ### Changed
-- **`hud_visibility`** (client, on the hub Settings page): `auto` (default) hides the whole HUD after ten idle seconds (no slot press, no cooldown, no active toggle, no mode switch, no Alt) and shows it again at once; `always`; `hidden`. The fade is the transition.
+- **`hud_visibility`** (client, on the hub Settings page): `auto` (default) hides the whole HUD after ten idle seconds (no slot press, no cooldown, no active toggle, no mode switch, no Alt) and shows it again at once; `always`; `hidden` (draws nothing, so Tensura's own skill HUD shows instead). The fade is the transition.
 - **A plain human never sees Supernatural mode**: no slots, no pill, and Caps Lock stays on Tensura. With no Tensura the HUD shows nothing. It appears when the player becomes supernatural (a Vampirism faction, a species, the turning, a ghoul).
 - **Bite goes into slot 1 only for a player who can bite** (the `BiteRules` rule) and only if the slot is empty, once; a cleared Bite is never put back. A save from before this keeps its Bite as it is.
-- **The mode pill shows only after a mode switch (about 3 seconds, then fades) and while Alt is held**, and never over an action bar message. The "Slots: ..." action bar line on a switch is gone (it was drawn on the pill).
-
-- **Slots are square tiles in Tensura mode** (every Tensura skill icon is square), in the colours and key badge of the hub theme; Supernatural mode keeps the theme shape.
-- **Alpha Roar is a HUD action** (no key of its own any more): icon, cooldown sweep, put in the first empty slot for an Alpha or True Alpha (after Bite), never over a slot the player set. The server checks are the species part's own.
+- **The mode pill shows only after a mode switch (about 3 seconds, then fades) and while Alt is held**. After a switch it gives way to an action bar message; with Alt held it shows anyway and lifts above the message. The "Slots: ..." action bar line on a switch is gone (it was drawn on the pill); the switch is said to the narrator instead.
+- **Slots are square tiles in Tensura mode** (every Tensura skill icon is square), in the colours and key badge of the hub theme, with a teal frame and a small teal corner diamond in every theme so the mode reads without the pill; Supernatural mode keeps the theme shape. The cooldown seconds stand opposite the key badge (no overlap in the Tensura theme; 100 s or more shows in minutes); the Blood Moon key letter has a dark plate.
+- **Alpha Roar is a HUD action** (no key of its own any more): icon, cooldown sweep, put in the first empty slot for an Alpha or True Alpha (after Bite) with the action bar line "Alpha Roar added to slot N (hub › Slots)", never over a slot the player set. With every slot full it says to assign it in the hub and is not marked as offered, so it goes in as soon as a slot is free. Its cooldown reaches the slot from every path (slot, Pack button, `/pack roar`) and on login. The server checks are the species part's own. With the hud part off the unbound Roar key stays.
 - **Controls names**: "HUD: switch mode", "HUD slot 1" to "HUD slot 6".
-- **Werewolf leap = jump while sprinting** (`sprint_leap`, on by default, hub Settings): Werewolves' own packet, cooldown and checks; its Left Control key is covered by the HUD like the others.
+- **Werewolf leap = jump while sprinting** (`sprint_leap`, on by default, hub Settings): Werewolves' own packet, cooldown and checks; its Left Control key is covered by the HUD like the others, but only while `sprint_leap` is on. The first auto-leap of a session says how to turn it off; a jump that never starts (a ceiling) does not leave the leap armed. Werewolves' own HUD already shows the leap cooldown.
 
 ### Fixed
+- **Supernatural mode was forgotten on login, respawn and dimension change** while the player's standing was not synced yet: the choice is kept apart from what is on offer now (`ModeMemory`).
+- A human with Tensura who presses Caps Lock is told that Supernatural mode unlocks when they become supernatural.
 - **Tensura's skill HUD came back in the Status Menu** (and any Tensura screen): the flags were handed back while any `io.github.manasmods.*` screen was open; only Tensura's `SettingsScreen` needs them (javap: nothing else saves or previews `HudConfig`). No mixin.
 - **Tensura skill cooldowns stuck at "1s".** ManasCore's `ManasSkillInstance.getCoolDown` counts seconds (`SkillStorage.checkSkillTimers` runs every 20 server ticks and lowers it by 1); the HUD treated it as ticks and showed `(n + 19) / 20`, which is 1 for any cooldown up to 20 s. It now shows the seconds (`SkillCooldown`).
 - Two labels drawn on top of each other at the pill (the pill and the vanilla action bar line stand on the same pixels): they no longer show together. The pill, the mode panel and the slots do not overlap at GUI scales 2 to 4 (`HudLayoutTest`).

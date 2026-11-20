@@ -98,7 +98,9 @@ public record Loadout(List<Optional<ResourceLocation>> slots, Set<ResourceLocati
 
     /**
      * Called when the player may have {@code id} (the Alpha Roar for an Alpha): it goes into the first empty slot, once. With Bite waiting for slot 1 this is
-     * called after it, so it takes the next empty one. A full loadout takes nothing and the id is spent anyway; a slot the player set is never overwritten.
+     * called after it, so it takes the next empty one. A slot the player set is never overwritten. <b>A full loadout takes nothing and the id is not marked as
+     * offered</b>: it is put in as soon as a slot is free (the player is told to assign it in the hub, see {@link OfferNotice}); once it has been put in, it is
+     * never put back after the player clears it.
      */
     public Loadout withActionOffered(ResourceLocation id) {
         if (offered.contains(id)) {
@@ -108,10 +110,15 @@ public record Loadout(List<Optional<ResourceLocation>> slots, Set<ResourceLocati
         for (int i = 0; i < SLOTS; i++) {
             if (list.get(i).isEmpty()) {
                 list.set(i, Optional.of(id));
-                break;
+                return new Loadout(list, withOffered(id));
             }
         }
-        return new Loadout(list, withOffered(id));
+        return this;
+    }
+
+    /** The first slot holding {@code id}, or -1. */
+    public int slotOf(ResourceLocation id) {
+        return slots.indexOf(Optional.of(id));
     }
 
     private Set<ResourceLocation> withOffered(ResourceLocation id) {

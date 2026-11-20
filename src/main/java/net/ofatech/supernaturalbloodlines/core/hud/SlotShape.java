@@ -8,6 +8,11 @@ public enum SlotShape {
     THEMED,
     SQUARE;
 
+    /** Tensura mode is also marked (a teal frame and a corner diamond, in every theme), so the mode reads without the pill: in Grimoire both modes are square. */
+    public boolean marked() {
+        return this == SQUARE;
+    }
+
     public static SlotShape of(SlotMode mode) {
         return mode == SlotMode.TENSURA ? SQUARE : THEMED;
     }

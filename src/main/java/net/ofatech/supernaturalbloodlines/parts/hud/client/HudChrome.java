@@ -92,7 +92,7 @@ final class HudChrome {
     }
 
     /** "SUPERNATURAL . Caps" centred over the hotbar. */
-    static void pill(GuiGraphics g, Font font, HudStyle.Style style, SlotMode mode, int screenW, int screenH, float alpha) {
+    static void pill(GuiGraphics g, Font font, HudStyle.Style style, SlotMode mode, int screenW, int screenH, float alpha, boolean lifted) {
         if (pillMode != mode || pillTick != tick()) {
             String key = HudKeys.HUD_MODE.getTranslatedKeyMessage().getString();
             String name = Component.translatable("supernaturalbloodlines.hud.pill." + mode.name().toLowerCase(Locale.ROOT)).getString();
@@ -101,7 +101,7 @@ final class HudChrome {
             pillMode = mode;
             pillTick = tick();
         }
-        HudLayout.Box box = HudLayout.pill(screenW, screenH, pillWidth);
+        HudLayout.Box box = HudLayout.pill(screenW, screenH, pillWidth, lifted);
         int x = box.x();
         int y = box.y();
         String text = pillWidth + 22 > box.w() ? font.plainSubstrByWidth(pillText, box.w() - 22) : pillText;
@@ -144,7 +144,7 @@ final class HudChrome {
      * What each slot is, as one panel above each column (Alt held): the key and name, what it does, and its cooldown or why it cannot be used. One panel per
      * column keeps the entries from covering each other; the left one stays in the left half of the screen and the right one stacks above the mode panel.
      */
-    static void tooltips(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box[] boxes, SlotView[] views, int previewTop, float alpha, boolean cacheable) {
+    static void tooltips(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box[] boxes, SlotView[] views, int previewTop, float alpha, boolean cacheable, boolean lifted) {
         int half = g.guiWidth() / 2;
         boolean fresh = !cacheable || columnsTick != tick() || columnsWidth != g.guiWidth() || columnsStyle != style;
         for (int col = 0; col < 2; col++) {
@@ -162,7 +162,7 @@ final class HudChrome {
             int h = 8 + 10 * lines.size();
             int x = col == 0 ? Math.max(4, top.x()) : Math.max(half + 2, Math.min(top.right() - w, g.guiWidth() - w - 4));
             // above the column (or the mode panel), but never off the top of the screen
-            int y = Math.max(2, (col == 1 && previewTop >= 0 ? previewTop : top.y()) - h - 6);
+            int y = col == 0 ? HudLayout.leftTooltipTop(top.y(), h, lifted) : Math.max(2, (col == 1 && previewTop >= 0 ? previewTop : top.y()) - h - 6);
             pillBox(g, style, x, y, w, h, Math.max(alpha, 0.95f));
             int ty = y + 5;
             for (int i = 0; i < lines.size(); i++) {

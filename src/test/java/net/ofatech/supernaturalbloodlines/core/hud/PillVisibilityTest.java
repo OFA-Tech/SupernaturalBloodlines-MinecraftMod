@@ -28,8 +28,14 @@ class PillVisibilityTest {
     }
 
     @Test
-    void anActionBarMessageHasThePlaceToItself() {
+    void afterASwitchAnActionBarMessageHasThePlaceToItself() {
         assertEquals(0f, PillVisibility.alpha(0, false, true));
-        assertEquals(0f, PillVisibility.alpha(-1, true, true));
+        assertEquals(0f, PillVisibility.alpha(30, false, true));
+    }
+
+    @Test
+    void altShowsThePillEvenOverAnActionBarMessage() {
+        assertEquals(1f, PillVisibility.alpha(-1, true, true));
+        assertEquals(1f, PillVisibility.alpha(0, true, true));
     }
 }

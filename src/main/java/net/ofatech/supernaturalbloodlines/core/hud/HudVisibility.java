@@ -33,4 +33,15 @@ public enum HudVisibility {
         float step = ticks / (float) (in ? FADE_IN_TICKS : FADE_OUT_TICKS);
         return in ? Math.min(target, current + step) : Math.max(target, current - step);
     }
+
+    /**
+     * One frame of the fade: where the opacity goes from {@code shown}, given when it was last moved. The first frame of a world ({@code haveLast} false) or a
+     * clock that went back (game time restarts in every world) takes a whole fade at once, so a new world does not start half faded.
+     *
+     * @param lastAt the game time of the previous frame
+     */
+    public static float step(float shown, boolean haveLast, long lastAt, long now, float target) {
+        long passed = !haveLast || now < lastAt ? FADE_OUT_TICKS : now - lastAt;
+        return approach(shown, target, passed);
+    }
 }

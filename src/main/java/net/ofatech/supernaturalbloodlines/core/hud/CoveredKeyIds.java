@@ -13,6 +13,14 @@ public final class CoveredKeyIds {
     }
 
     public static List<String> all() {
+        return all(true);
+    }
+
+    /**
+     * @param sprintLeap the client setting {@code sprint_leap}: Werewolves' leap key is covered only while the sprint leap replaces it. With it off the
+     *                   key must work again, so it is left out of the list and {@code CoverRun} restores a recorded bind of an id no longer listed.
+     */
+    public static List<String> all(boolean sprintLeap) {
         List<String> ids = new ArrayList<>();
         for (int i = 1; i <= 3; i++) {
             ids.add("tensura.keybinding.ability.slot_" + i);
@@ -25,7 +33,9 @@ public final class CoveredKeyIds {
             ids.add("keys.vampirism.action" + i);
         }
         ids.add(WEREWOLVES_BITE);
-        ids.add(WEREWOLVES_LEAP);
+        if (sprintLeap) {
+            ids.add(WEREWOLVES_LEAP);
+        }
         return List.copyOf(ids);
     }
 }

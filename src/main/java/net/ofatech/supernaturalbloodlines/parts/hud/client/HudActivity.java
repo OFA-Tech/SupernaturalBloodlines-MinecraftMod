@@ -48,9 +48,7 @@ public final class HudActivity {
         }
         long now = now();
         float target = HudClientConfig.visibility().target(idleTicks(last, now));
-        // the first frame of a world, or a clock that went back: no fade, straight to where it belongs
-        long passed = shownAt == UNSET || now < shownAt ? HudVisibility.FADE_OUT_TICKS : now - shownAt;
-        shown = HudVisibility.approach(shown, target, passed);
+        shown = HudVisibility.step(shown, shownAt != UNSET, shownAt, now, target);
         shownAt = now;
         return shown;
     }

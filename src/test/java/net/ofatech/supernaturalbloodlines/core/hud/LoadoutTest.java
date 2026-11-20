@@ -176,8 +176,10 @@ class LoadoutTest {
         }
         Loadout after = full.withActionOffered(ROAR);
         assertEquals(full.slots(), after.slots(), "no room: nothing is overwritten");
-        assertTrue(after.offered().contains(ROAR), "and it is spent");
-        assertEquals(after.with(2, null), after.with(2, null).withActionOffered(ROAR), "a spent offer is not repeated into a slot the player cleared");
+        assertFalse(after.offered().contains(ROAR), "and it is not spent: it goes in when a slot is free");
+        Loadout placed = after.with(2, null).withActionOffered(ROAR);
+        assertEquals(Optional.of(ROAR), placed.get(2));
+        assertEquals(placed.with(2, null), placed.with(2, null).withActionOffered(ROAR), "a spent offer is not repeated into a slot the player cleared");
     }
 
     @Test
@@ -194,5 +196,53 @@ class LoadoutTest {
         Loadout old = Loadout.CODEC.parse(JsonOps.INSTANCE, tag).getOrThrow(IllegalStateException::new);
         assertFalse(old.biteOffered());
         assertEquals(Optional.of(Loadout.BITE), old.withBiteOffered().get(0));
+    }
+
+    /** A save from before {@code bite_offered} and {@code offered} existed: only {@code slots}. Bite stays where the player left it, and nothing is offered again. */
+    @Test
+    void aLegacyLoadoutKeepsItsSlotsAndIsNeverOfferedAnythingAgain() {
+        JsonObject tag = new JsonObject();
+        com.google.gson.JsonArray slots = new com.google.gson.JsonArray();
+        slots.add("");
+        slots.add("vampirism:teleport");
+        tag.add("slots", slots);
+        Loadout l = Loadout.CODEC.parse(JsonOps.INSTANCE, tag).getOrThrow(IllegalStateException::new);
+        assertEquals(Optional.empty(), l.get(0), "a Bite the player cleared stays cleared");
+        assertEquals(Optional.of(ResourceLocation.parse("vampirism:teleport")), l.get(1));
+        assertTrue(l.biteOffered(), "a legacy save counts as already offered");
+        assertEquals(l, l.withBiteOffered(), "so slot 1 is not filled again");
+        assertEquals(l, roundTrip(l));
+    }
+
+    @Test
+    void aFullLoadoutTakesNoActionAndDoesNotMarkItOffered() {
+        ResourceLocation roar = ResourceLocation.parse("supernaturalbloodlines:alpha_roar");
+        Loadout full = Loadout.DEFAULT;
+        for (int i = 0; i < Loadout.SLOTS; i++) {
+            full = full.with(i, ResourceLocation.parse("vampirism:a" + i));
+        }
+        Loadout after = full.withActionOffered(roar);
+        assertEquals(full, after, "nothing is put in, and it is not marked as offered");
+        assertFalse(after.offered().contains(roar));
+        Loadout room = after.with(3, null).withActionOffered(roar);
+        assertEquals(Optional.of(roar), room.get(3), "as soon as a slot is free it goes in");
+        assertTrue(room.offered().contains(roar));
+        assertEquals(room.with(3, null), room.with(3, null).withActionOffered(roar), "and is never put back after the player clears it");
+    }
+
+    @Test
+    void theOfferNoticeSaysWhereItWentOrThatThereWasNoRoom() {
+        ResourceLocation roar = ResourceLocation.parse("supernaturalbloodlines:alpha_roar");
+        Loadout start = Loadout.DEFAULT.withBiteOffered();
+        OfferNotice placed = OfferNotice.of(start, start.withActionOffered(roar), roar);
+        assertEquals(OfferNotice.Kind.PLACED, placed.kind());
+        assertEquals(1, placed.slot(), "slot 2 (index 1), after Bite");
+        Loadout full = start;
+        for (int i = 1; i < Loadout.SLOTS; i++) {
+            full = full.with(i, ResourceLocation.parse("vampirism:a" + i));
+        }
+        assertEquals(OfferNotice.Kind.FULL, OfferNotice.of(full, full.withActionOffered(roar), roar).kind());
+        Loadout done = start.withActionOffered(roar);
+        assertEquals(OfferNotice.Kind.NONE, OfferNotice.of(done, done.withActionOffered(roar), roar).kind(), "told once");
     }
 }

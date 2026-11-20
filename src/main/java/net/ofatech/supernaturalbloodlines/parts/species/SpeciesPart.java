@@ -3,6 +3,8 @@ package net.ofatech.supernaturalbloodlines.parts.species;
 import java.util.List;
 import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
 import net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs;
+import net.ofatech.supernaturalbloodlines.client.PackKeybinds;
+import net.ofatech.supernaturalbloodlines.core.network.RoarPayload;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.WerewolfSkillRuleGameTests;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.SkillRuleGameTests;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry;
@@ -240,6 +242,15 @@ public final class SpeciesPart {
                     Downed.giveUp(p);
                 }
             }));
+            // the server decides rank and cooldown; a refusal comes back as an action bar message (the key exists only with the hud part off)
+            registrar.playToServer(RoarPayload.TYPE, RoarPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> {
+                if (ctx.player() instanceof ServerPlayer p && ModList.get().isLoaded("werewolves")) {
+                    Component error = AlphaRoar.roar(p);
+                    if (error != null) {
+                        p.displayClientMessage(error, true);
+                    }
+                }
+            }));
             // the Alpha Trial warning: the server sends it when the rite was refused for an open True Alpha path; the answer comes back as a confirm
             registrar.playToClient(net.ofatech.supernaturalbloodlines.core.network.TrialWarnPayload.TYPE, net.ofatech.supernaturalbloodlines.core.network.TrialWarnPayload.STREAM_CODEC,
                     (payload, ctx) -> ctx.enqueueWork(net.ofatech.supernaturalbloodlines.shared.hub.TrialWarnHook::fire));
@@ -252,6 +263,9 @@ public final class SpeciesPart {
             registrar.playToClient(RoarEffectPayload.TYPE, RoarEffectPayload.STREAM_CODEC, (payload, ctx) ->
                     ctx.enqueueWork(() -> RoarClient.show(payload.playerId(), payload.ticks())));
         });
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT && ModList.get().isLoaded("werewolves")) {
+            PackKeybinds.register(modBus);
+        }
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(SpeciesGameTests.class);
             e.register(OriginalGameTests.class);

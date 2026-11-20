@@ -7,7 +7,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
 import net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService;
-import net.ofatech.supernaturalbloodlines.parts.hud.net.ActionCooldownPayload;
 import net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +102,7 @@ public final class ActionService {
             p.displayClientMessage(error, true);
             return error.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t ? t.getKey() : KEY + "refused";
         }
-        ActionCooldownPayload.send(p, action.id(), action.cooldownTicks(p));
+        // the cooldown reaches the slot through ExtraActions.cooldownStarted, from the owner of the action, whichever path started it
         return null;
     }
 

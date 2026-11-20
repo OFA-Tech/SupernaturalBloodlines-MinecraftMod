@@ -37,6 +37,31 @@ public final class ExtraActions {
 
         /** The cooldown the action just started, in ticks, for the slot's sweep. */
         int cooldownTicks(ServerPlayer p);
+
+        /** Ticks of cooldown left now (0 when ready): sent to a player who logs in during one. */
+        int cooldownLeft(ServerPlayer p);
+    }
+
+    /** Hears every cooldown an action starts, whoever started it (a slot, a command, a hub button): the HUD part sends it to the player's slot. */
+    public interface CooldownListener {
+        void started(ServerPlayer p, ResourceLocation action, int ticks);
+    }
+
+    private static final List<CooldownListener> LISTENERS = new CopyOnWriteArrayList<>();
+
+    public static void onCooldown(CooldownListener l) {
+        LISTENERS.add(l);
+    }
+
+    public static void removeCooldownListener(CooldownListener l) {
+        LISTENERS.remove(l);
+    }
+
+    /** The owner of an action calls this when it starts a cooldown, from every path that can start it. */
+    public static void cooldownStarted(ServerPlayer p, ResourceLocation action, int ticks) {
+        for (CooldownListener l : LISTENERS) {
+            l.started(p, action, ticks);
+        }
     }
 
     private static final List<Action> ACTIONS = new CopyOnWriteArrayList<>();

@@ -2,7 +2,7 @@ package net.ofatech.supernaturalbloodlines.core.hud;
 
 /**
  * How visible the mode pill is. It is not drawn all the time (too much clutter): it shows for {@link #HOLD_TICKS} after a mode switch, then fades out over
- * {@link #FADE_TICKS}, and it shows while Alt is held. It gives way to an action bar message, which stands on the same pixels ({@link HudLayout#pill}).
+ * {@link #FADE_TICKS}, and it shows while Alt is held, whatever else is on screen (it then lifts above an action bar message, see {@link HudLayout#pill}). After a switch it gives way to an action bar message, which stands on the same pixels.
  * Pure.
  */
 public final class PillVisibility {
@@ -19,11 +19,11 @@ public final class PillVisibility {
      * @return 0 (not drawn) to 1 (full)
      */
     public static float alpha(long ticksSinceSwitch, boolean alt, boolean actionBarMessage) {
+        if (alt) {
+            return 1f; // asked for on purpose: it moves out of the message's way ({@link HudLayout#pill}) instead of giving way
+        }
         if (actionBarMessage) {
             return 0f;
-        }
-        if (alt) {
-            return 1f;
         }
         if (ticksSinceSwitch < 0 || ticksSinceSwitch >= HOLD_TICKS + FADE_TICKS) {
             return 0f;

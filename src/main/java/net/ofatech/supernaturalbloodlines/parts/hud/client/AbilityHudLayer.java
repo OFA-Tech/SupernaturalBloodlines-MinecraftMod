@@ -30,7 +30,7 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
     /** True while the HUD is on screen; Tensura's own skill HUD is hidden exactly then. */
     public static boolean shown() {
         Minecraft mc = Minecraft.getInstance();
-        return HudClientConfig.hudEnabled() && mc.player != null && !mc.options.hideGui && !mc.player.isSpectator() && HudModeState.current().isPresent();
+        return HudClientConfig.hudEnabled() && HudClientConfig.visibility() != net.ofatech.supernaturalbloodlines.core.hud.HudVisibility.HIDDEN && mc.player != null && !mc.options.hideGui && !mc.player.isSpectator() && HudModeState.current().isPresent();
     }
 
     @Override
@@ -63,7 +63,7 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
                 // the pill is not drawn all the time: after a mode switch, and while Alt is held
                 float pillAlpha = PillVisibility.alpha(src.sinceSwitch(), alt, src.actionBar());
                 if (pillAlpha > 0f) {
-                    HudChrome.pill(g, mc.font, style, mode, g.guiWidth(), g.guiHeight(), Math.max(alpha, 0.9f) * pillAlpha);
+                    HudChrome.pill(g, mc.font, style, mode, g.guiWidth(), g.guiHeight(), Math.max(alpha, 0.9f) * pillAlpha, alt && src.actionBar());
                 }
                 SlotMode other = src.other();
                 if ((alt || HudModeState.justSwitched()) && other != null) {
@@ -77,7 +77,7 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         }
         src.tracked().ifPresent(l -> HudChrome.tracker(g, mc.font, style, l, Math.max(alpha, HudActivity.FADED), HudClientConfig.trackerAnchor(), src.bossBottom()));
         if (alt && alpha > 0.01f) {
-            HudChrome.tooltips(g, mc.font, style, boxes, views, previewTop, alpha, src.cacheable());
+            HudChrome.tooltips(g, mc.font, style, boxes, views, previewTop, alpha, src.cacheable(), src.actionBar());
         }
     }
 }

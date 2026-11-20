@@ -1,9 +1,12 @@
 package net.ofatech.supernaturalbloodlines.parts.hud.client;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.neoforged.fml.ModList;
+import net.ofatech.supernaturalbloodlines.core.hud.ModeMemory;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
 
 /**
@@ -13,7 +16,7 @@ import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
 public final class HudModeState {
     private static final boolean TENSURA = ModList.get().isLoaded("tensura");
     private static final boolean VAMPIRISM = ModList.get().isLoaded("vampirism");
-    private static SlotMode mode;
+    private static final ModeMemory MEMORY = new ModeMemory();
 
     private HudModeState() {
     }
@@ -23,13 +26,9 @@ public final class HudModeState {
         return SlotMode.available(TENSURA, VAMPIRISM, HudStanding.supernatural());
     }
 
-    /** The current mode, empty when neither mod is installed (no HUD). */
+    /** The current mode, empty when no mode is on offer (no HUD). Reading it never changes the player's choice ({@link ModeMemory}). */
     public static Optional<SlotMode> current() {
-        List<SlotMode> available = available();
-        if (mode == null || !available.contains(mode)) {
-            mode = SlotMode.start(HudClientConfig.mode().name(), available).orElse(null);
-        }
-        return Optional.ofNullable(mode);
+        return MEMORY.current(HudClientConfig.mode().name(), available());
     }
 
     private static long switchedAt = Long.MIN_VALUE;
@@ -63,19 +62,30 @@ public final class HudModeState {
         net.ofatech.supernaturalbloodlines.parts.hud.net.ActionCooldowns.clear();
     }
 
-    /** The mode key: switches, shows the panel of the other mode for three seconds, and remembers it. Nothing changes with only one mode on offer. */
+    /**
+     * The mode key: switches, shows the panel of the other mode for three seconds, says the new mode to the narrator, and remembers the choice (here and in
+     * the client setting). With one mode on offer it does nothing, except for a human with Tensura, who is told when Supernatural mode unlocks.
+     */
     public static void toggle() {
-        SlotMode before = mode;
-        var level = Minecraft.getInstance().level;
+        Minecraft mc = Minecraft.getInstance();
+        List<SlotMode> available = available();
+        if (!ModeMemory.canToggle(available)) {
+            if (ModeMemory.lockedHint(TENSURA, VAMPIRISM, HudStanding.supernatural())) {
+                mc.gui.setOverlayMessage(Component.translatable("supernaturalbloodlines.hud.mode.locked"), false);
+            }
+            return;
+        }
+        var level = mc.level;
         if (level != null) {
             switchedAt = level.getGameTime();
         }
         HudActivity.touch();
-        List<SlotMode> available = available();
-        mode = SlotMode.next(current().orElse(SlotMode.TENSURA), available).orElse(null);
-        // no action bar line: it was drawn over the mode pill at the same place on the screen; the pill and the panel already say which mode it is
-        if (mode != null && available.size() > 1 && mode != before) {
-            HudClientConfig.rememberMode(HudClientConfig.Mode.valueOf(mode.name()));
+        SlotMode next = SlotMode.next(current().orElse(SlotMode.TENSURA), available).orElse(null);
+        MEMORY.choose(next);
+        if (next != null) {
+            // the pill is not narrated, so the switch is said once to the narrator
+            mc.getNarrator().sayNow(Component.translatable("supernaturalbloodlines.hud.mode." + next.name().toLowerCase(Locale.ROOT)));
+            HudClientConfig.rememberMode(HudClientConfig.Mode.valueOf(next.name()));
         }
     }
 }

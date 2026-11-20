@@ -1,11 +1,11 @@
 # Key binds
 
-The mod's key binds are on the client only. First the Alpha Roar and the hub; the [HUD keys](#the-hud-keys-hud-part) are below.
+The mod's key binds are on the client only. First the hub (and, without the HUD part only, the Alpha Roar); the [HUD keys](#the-hud-keys-hud-part) are below.
 
 | Key bind | Category in Controls | Default | Does |
 |---|---|---|---|
 | **Supernatural hub** | Supernatural Bloodlines | **Home** | Opens the [Supernatural hub](Supernatural-Hub); in the hub it closes it. Only exists with the supernatural part on. J was not used: it is JourneyMap's map, and = and - are map zoom keys. |
-| **Alpha Roar** | Supernatural Bloodlines | **unbound** (registered with no default key; only exists when **Werewolves** is installed) | The [Alpha Roar](Werewolves-And-Packs#alpha-roar). Only an Alpha or True Alpha can use it; the server checks. Same as `/pack roar`. |
+| **Alpha Roar** | Supernatural Bloodlines | **unbound**; only registered while the **hud part is off** (with the HUD the Roar is an action in a slot: no key) and **Werewolves** is installed | The [Alpha Roar](Werewolves-And-Packs#alpha-roar) for a game without the HUD. Only an Alpha or True Alpha can use it; the server checks. Same as `/pack roar`. |
 
 Bind it in **Options > Controls > Key Binds**, under **Supernatural Bloodlines**.
 
@@ -35,7 +35,7 @@ Nothing is deleted. Your bind for each is first written to `config/supernaturalb
 
 If you used "Reset All" in Controls, the covered keys are unbound again when you close it. **Removing the mod:** the restore code is in the jar, so **start the game once with `hide_covered_keys = false` (or `hud_enabled = false`, or just sit at the title screen) before you delete the jar**. If the jar is already gone, the keys stay unbound: bind them again in Controls (the old binds are listed in `config/supernaturalbloodlines-hud-keys.json`). These keys stay with their owners and are never touched: Tensura's Next/Previous Ability Mode (Alt, and Alt + scroll for presets), Race Ability and Status Menu, and Vampirism's action wheel, vision and skill screen.
 
-The server checks the roar itself: a press from someone who isn't an Alpha, or during a **lunar eclipse**, or during the **60 second** cooldown, does nothing but show a message in the action bar ("Only an Alpha can do that.", "You cannot roar for another N seconds.", "The eclipse swallows your roar.").
+The server checks the roar itself (from a slot, the key or the command): a use by someone who isn't an Alpha, or during a **lunar eclipse**, or during the **60 second** cooldown, does nothing but show a message in the action bar ("Only an Alpha can do that.", "You cannot roar for another N seconds.", "The eclipse swallows your roar.").
 
 ## Actions that use ordinary keys
 

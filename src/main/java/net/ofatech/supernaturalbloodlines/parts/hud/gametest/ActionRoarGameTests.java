@@ -90,6 +90,10 @@ public final class ActionRoarGameTests {
         }
         LoadoutService.offerDefaults(p);
         helper.assertTrue(!LoadoutService.get(p).contains(ExtraActions.ALPHA_ROAR), "the Roar was put over a slot: " + LoadoutService.get(p));
+        // not spent while there was no room: it goes in when a slot is free, and then it is never put back after a clear
+        LoadoutService.set(p, 3, null);
+        LoadoutService.offerDefaults(p);
+        helper.assertTrue(LoadoutService.get(p).get(3).equals(Optional.of(ExtraActions.ALPHA_ROAR)), "the Roar did not take the free slot: " + LoadoutService.get(p));
         LoadoutService.set(p, 3, null);
         LoadoutService.offerDefaults(p);
         helper.assertTrue(LoadoutService.get(p).get(3).isEmpty(), "a spent Roar came back: " + LoadoutService.get(p));
@@ -131,6 +135,29 @@ public final class ActionRoarGameTests {
         String refusal = ActionService.trigger(p, 4, -1, false);
         helper.assertTrue(refusal != null && refusal.endsWith("not_unlocked"), "a Beta roared from a kept slot: " + refusal);
         clean(p);
+        helper.succeed();
+    }
+
+    /** Every path that roars (a slot, the Pack button, {@code /pack roar}) tells the slot its cooldown: the species part reports it, not the slot's caller. */
+    @GameTest(template = "empty", templateNamespace = NS, batch = "hud_roar")
+    public static void aRoarFromAnyPathReportsItsCooldownToTheSlot(GameTestHelper helper) {
+        ServerPlayer p = wolf(helper, Rank.ALPHA);
+        java.util.List<Integer> heard = new java.util.ArrayList<>();
+        ExtraActions.CooldownListener l = (who, id, ticks) -> {
+            if (who == p && id.equals(ExtraActions.ALPHA_ROAR)) {
+                heard.add(ticks);
+            }
+        };
+        ExtraActions.onCooldown(l);
+        try {
+            net.minecraft.network.chat.Component refusal = net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar.roar(p); // what /pack roar and the Pack button call
+            helper.assertTrue(refusal == null, "the roar was refused: " + refusal);
+            helper.assertTrue(heard.size() == 1 && heard.get(0) > 0, "the cooldown was not reported once: " + heard);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoar.cooldownLeft(p) > 0, "no cooldown left to send on login");
+        } finally {
+            ExtraActions.removeCooldownListener(l);
+            clean(p);
+        }
         helper.succeed();
     }
 }

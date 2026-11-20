@@ -16,6 +16,6 @@ public final class SkillCooldown {
 
     /** How much of the cooldown is left (1 just started, 0 ready), against the longest one seen since the skill was ready. */
     public static float fraction(int left, int peak) {
-        return left <= 0 || peak <= 0 ? 0f : Math.min(1f, left / (float) peak);
+        return ActionCooldown.fraction(left, peak);
     }
 }

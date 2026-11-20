@@ -26,4 +26,18 @@ public final class SprintLeap {
                                      boolean unlocked, boolean onCooldown, boolean active, boolean screenOpen) {
         return setting && jumpPressed && sprinting && canJump && werewolf && transformed && unlocked && !onCooldown && !active && !screenOpen;
     }
+
+    /** Ticks after arming in which the jump must start (the player leaves the ground). */
+    public static final int JUMP_WINDOW = 3;
+
+    /**
+     * The jump that the leap was armed for never happened (a ceiling, a trapdoor, water, a screen that grabbed the key): the leap would stay on for the next
+     * jump, sprinting or not, so it is turned off again. Werewolves' own key has the same hole; ours closes it.
+     *
+     * @param ticksSinceArm ticks since the leap was switched on
+     * @param leftGround    the player was off the ground at some tick since
+     */
+    public static boolean jumpBlocked(int ticksSinceArm, boolean leftGround) {
+        return ticksSinceArm >= JUMP_WINDOW && !leftGround;
+    }
 }

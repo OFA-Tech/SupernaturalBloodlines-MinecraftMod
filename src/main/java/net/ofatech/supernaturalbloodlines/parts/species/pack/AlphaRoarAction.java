@@ -55,4 +55,9 @@ public final class AlphaRoarAction implements ExtraActions.Action {
     public int cooldownTicks(ServerPlayer p) {
         return AlphaRoar.cooldown(p);
     }
+
+    @Override
+    public int cooldownLeft(ServerPlayer p) {
+        return AlphaRoar.cooldownLeft(p);
+    }
 }

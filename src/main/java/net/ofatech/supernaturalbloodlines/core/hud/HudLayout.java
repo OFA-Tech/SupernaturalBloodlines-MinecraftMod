@@ -50,10 +50,32 @@ public final class HudLayout {
      * stand closer than that.
      */
     public static Box pill(int screenW, int screenH, int textW) {
+        return pill(screenW, screenH, textW, false);
+    }
+
+    /** How far the pill and the left column's tooltip rise above an action bar message while Alt is held. */
+    public static final int ALT_LIFT = ACTION_BAR_H + 6;
+
+    /**
+     * {@link #pill(int, int, int)}; {@code lifted} (Alt is held while an action bar message is up) moves it above the message and left of the screen's middle,
+     * so it clears the message, the slots and the mode panel (which stands in the right half).
+     */
+    public static Box pill(int screenW, int screenH, int textW, boolean lifted) {
         Box[] s = slots(screenW, screenH);
         int room = Math.max(PILL_H, s[3].x() - s[0].right() - 2 * MARGIN);
         int w = Math.min(textW + 22, room);
-        return new Box(screenW / 2 - w / 2, screenH - PILL_ABOVE, w, PILL_H);
+        int x = screenW / 2 - w / 2;
+        if (lifted) {
+            // the left half only (the mode panel stands in the right half), and its text is cut to what fits
+            w = Math.min(w, screenW / 2 - 2 - MARGIN);
+            x = Math.max(MARGIN, screenW / 2 - 2 - w);
+        }
+        return new Box(x, screenH - PILL_ABOVE - (lifted ? ALT_LIFT : 0), w, PILL_H);
+    }
+
+    /** The top of the left column's tooltip: above the column, and above the lifted pill too while an action bar message is up. */
+    public static int leftTooltipTop(int columnTop, int tooltipH, boolean lifted) {
+        return Math.max(2, columnTop - tooltipH - 6 - (lifted ? ALT_LIFT : 0));
     }
 
     /** The action bar line of {@code textW} px (the vanilla one: item pickup, bed, and the HUD's own refusals). */

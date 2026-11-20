@@ -28,12 +28,20 @@ import net.ofatech.supernaturalbloodlines.parts.hud.client.HudSend;
 public final class SprintLeapClient {
     private static final ResourceLocation LEAP = ResourceLocation.parse("werewolves:leap");
     private static boolean jumpWasDown;
+    /** Ticks since the leap was switched on by us, -1 when it is not waiting for a jump; and whether the player has left the ground since. */
+    private static int armedFor = -1;
+    private static boolean leftGround;
+    private static boolean hinted;
 
     private SprintLeapClient() {
     }
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Pre e) -> tick());
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> {
+            hinted = false;
+            armedFor = -1;
+        });
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -43,7 +51,14 @@ public final class SprintLeapClient {
         boolean down = mc.options.keyJump.isDown();
         boolean pressed = down && !jumpWasDown;
         jumpWasDown = down;
-        if (p == null || !pressed || !HudClientConfig.sprintLeap()) {
+        if (p == null) {
+            armedFor = -1;
+            return;
+        }
+        if (armedFor >= 0) {
+            watchArmed(p);
+        }
+        if (!pressed || !HudClientConfig.sprintLeap() || armedFor >= 0) {
             return;
         }
         Optional<IFactionPlayer<?>> fp = (Optional) VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer();
@@ -62,6 +77,35 @@ public final class SprintLeapClient {
         }
         HudSend.send(new ServerboundSimpleInputEventPacket(ServerboundSimpleInputEventPacket.Action.LEAP));
         handler.toggleAction(action, new Context());
+        armedFor = 0;
+        leftGround = false;
+        if (!hinted) {
+            hinted = true;
+            mc.gui.setOverlayMessage(net.minecraft.network.chat.Component.translatable("supernaturalbloodlines.hud.sprint_leap.hint"), false);
+        }
+    }
+
+    /** The leap is on and waiting for the jump: when the jump never starts it is switched off again (see {@link SprintLeap#jumpBlocked}). */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void watchArmed(LocalPlayer p) {
+        armedFor++;
+        leftGround |= !p.onGround();
+        if (!SprintLeap.jumpBlocked(armedFor, leftGround)) {
+            if (leftGround) {
+                armedFor = -1; // the jump started: the action is Werewolves' from here
+            }
+            return;
+        }
+        armedFor = -1;
+        Optional<IFactionPlayer<?>> fp = (Optional) VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer();
+        IAction action = net.ofatech.supernaturalbloodlines.parts.hud.client.vampirism.ClientActions.byId(LEAP);
+        if (fp.isPresent() && action instanceof ILastingAction lasting && fp.get() instanceof IWerewolfPlayer wolf) {
+            IActionHandler handler = (IActionHandler) wolf.getActionHandler();
+            if (handler.isActionActive(lasting)) {
+                HudSend.send(new ServerboundSimpleInputEventPacket(ServerboundSimpleInputEventPacket.Action.LEAP));
+                handler.toggleAction(action, new Context());
+            }
+        }
     }
 
     private record Context() implements IAction.ActivationContext {
