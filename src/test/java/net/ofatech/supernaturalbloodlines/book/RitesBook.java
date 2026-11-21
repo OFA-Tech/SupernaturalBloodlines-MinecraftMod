@@ -30,7 +30,7 @@ final class RitesBook {
     /** The unlock advancements (generated with the book: {@code known/<rite>} and {@code sealed/<rite>}). */
     static final String ADV = "src/main/resources/data/supernaturalbloodlines/advancement/rites";
     /** What fits on one line of the book's entry list (its text is 100 pixels wide; the label is cut or wraps beyond this many characters). */
-    static final int LABEL_CHARS = 32;
+    static final int LABEL_CHARS = 36;
     static final String KIND = "supernaturalbloodlines.rites.kind.";
     static final String KIND_SHORT = "supernaturalbloodlines.rites.kind_short.";
     static final String LORE = "supernaturalbloodlines.rites.lore.";
@@ -289,10 +289,35 @@ final class RitesBook {
         return "??? \u00b7 " + orList(parts);
     }
 
+    private static final String[] NUMERALS = {"I", "II", "III", "IV", "V", "VI"};
+
+    /**
+     * The list labels of one category, no two alike: rites that are learned the same way (two of Esther's, the two curses) get a numeral in the order of
+     * the list, so the lines of one list never read the same.
+     */
+    static Map<String, String> uniqueLabels(JsonObject lang, List<String> rites) {
+        Map<String, Integer> total = new java.util.HashMap<>();
+        for (String rite : rites) {
+            if (RiteUnlockTable.isGated(rite)) {
+                total.merge(label(lang, rite), 1, Integer::sum);
+            }
+        }
+        Map<String, Integer> seen = new java.util.HashMap<>();
+        Map<String, String> out = new java.util.LinkedHashMap<>();
+        for (String rite : rites) {
+            if (RiteUnlockTable.isGated(rite)) {
+                String base = label(lang, rite);
+                int n = seen.merge(base, 1, Integer::sum);
+                out.put(rite, total.get(base) > 1 ? base + " (" + NUMERALS[n - 1] + ")" : base);
+            }
+        }
+        return out;
+    }
+
     /** The "???" entry that stands for a gated rite while it is sealed: how it is learned, and nothing of the rite (no name, circle or item). */
-    static JsonObject sealedEntry(JsonObject lang, String path) {
+    static JsonObject sealedEntry(JsonObject lang, String path, String title) {
         JsonObject entry = new JsonObject();
-        entry.addProperty("title", label(lang, path));
+        entry.addProperty("title", title);
         entry.add("icon", icon("minecraft:honeycomb"));
         entry.add("assigned_items", new JsonArray());
         entry.addProperty("advancement", RiteAdvancements.sealed(path));
@@ -362,6 +387,10 @@ final class RitesBook {
     static Map<String, String> generate(Path root) throws IOException {
         JsonObject lang = lang(root);
         Map<String, String> out = new TreeMap<>();
+        Map<String, String> titles = new java.util.HashMap<>();
+        for (Cat cat : CATS) {
+            titles.putAll(uniqueLabels(lang, cat.rites()));
+        }
         List<String> all = rites(root);
         List<String> listed = new ArrayList<>();
         List<String> kids = new ArrayList<>();
@@ -389,7 +418,7 @@ final class RitesBook {
             }
             out.put(BOOK + "/entries/" + TOP + "/" + path + ".json", GSON.toJson(entry(root, lang, path)) + "\n");
             if (RiteUnlockTable.isGated(path)) {
-                out.put(BOOK + "/entries/" + RiteAdvancements.sealedEntry(path) + ".json", GSON.toJson(sealedEntry(lang, path)) + "\n");
+                out.put(BOOK + "/entries/" + RiteAdvancements.sealedEntry(path) + ".json", GSON.toJson(sealedEntry(lang, path, titles.get(path))) + "\n");
                 out.put(ADV + "/known/" + path + ".json", advancementJson());
                 out.put(ADV + "/sealed/" + path + ".json", advancementJson());
             }

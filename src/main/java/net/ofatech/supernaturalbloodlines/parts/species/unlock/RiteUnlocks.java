@@ -10,6 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.AdvancementEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -66,13 +67,25 @@ public final class RiteUnlocks {
         });
     }
 
+    /**
+     * The player's once-flags: under {@link Player#PERSISTED_NBT_TAG}, the part of the persistent data that survives death (a flag at the root is
+     * dropped at the respawn, and the player would be told and taught all over again).
+     */
+    public static CompoundTag flags(ServerPlayer p) {
+        CompoundTag data = p.getPersistentData();
+        if (!data.contains(Player.PERSISTED_NBT_TAG, net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+            data.put(Player.PERSISTED_NBT_TAG, new CompoundTag());
+        }
+        return data.getCompound(Player.PERSISTED_NBT_TAG);
+    }
+
     /** Whether this player has been told, once, that the rites moved into the book. Sets the flag. */
     public static boolean firstTime(ServerPlayer p) {
-        CompoundTag data = p.getPersistentData();
-        if (data.getBoolean(FLAG)) {
+        CompoundTag flags = flags(p);
+        if (flags.getBoolean(FLAG)) {
             return false;
         }
-        data.putBoolean(FLAG, true);
+        flags.putBoolean(FLAG, true);
         return true;
     }
 

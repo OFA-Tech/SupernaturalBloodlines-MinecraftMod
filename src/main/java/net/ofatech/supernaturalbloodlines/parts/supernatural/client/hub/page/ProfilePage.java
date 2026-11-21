@@ -1,5 +1,4 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +12,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.ProfileClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks;
 import net.ofatech.supernaturalbloodlines.shared.hub.profile.DuelChecks;
 import net.ofatech.supernaturalbloodlines.shared.hub.profile.DuelView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;

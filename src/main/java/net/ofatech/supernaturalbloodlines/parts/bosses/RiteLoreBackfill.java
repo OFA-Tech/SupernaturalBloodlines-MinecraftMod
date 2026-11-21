@@ -13,7 +13,9 @@ import net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks;
 
 /**
  * A world that already paid a boss's reward before the rites became learnable (plan {@code rites-unlock}) loses nothing: the first time a player logs
- * in, they learn the lore of every boss that has been rewarded in this world. Once per player; what is forgotten later stays forgotten.
+ * in, they learn the lore of every boss that has been rewarded in this world. That is permanent and world-wide, not tied to who was rewarded: it covers
+ * everyone who joins later too, so a boss rewarded once teaches its lore to every new player on their first login (accepted). Once per player; what is
+ * forgotten later stays forgotten.
  */
 public final class RiteLoreBackfill {
     private static final String FLAG = "supernaturalbloodlines_rites_lore_backfilled";
@@ -37,10 +39,10 @@ public final class RiteLoreBackfill {
 
     /** Teaches the lore of the rewarded bosses, once per player. Returns how many rites were new. */
     public static int backfill(ServerPlayer p) {
-        if (!EnabledParts.isEnabled("species") || p.getPersistentData().getBoolean(FLAG)) {
+        if (!EnabledParts.isEnabled("species") || RiteUnlocks.flags(p).getBoolean(FLAG)) {
             return 0;
         }
-        p.getPersistentData().putBoolean(FLAG, true);
+        RiteUnlocks.flags(p).putBoolean(FLAG, true);
         BossIndex index = BossIndex.get(p.server);
         java.util.List<String> rites = new java.util.ArrayList<>();
         LORE.forEach((boss, lore) -> {

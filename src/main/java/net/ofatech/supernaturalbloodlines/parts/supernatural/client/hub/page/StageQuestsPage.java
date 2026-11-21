@@ -122,8 +122,9 @@ public final class StageQuestsPage implements HubPageView {
         d.action(TrackHud.action(row.task().id(), row.state() == TaskState.CLAIMED));
         String rite = net.ofatech.supernaturalbloodlines.shared.hub.RiteLinkRule.riteOf(row.task());
         if (rite != null) {
-            d.action("open_book", Component.translatable(RiteTaskLink.LABEL), false, net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks.hasBook(),
-                    () -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks.open(rite));
+            d.action(new Detail.Action("open_book", Component.translatable(RiteTaskLink.LABEL), false, net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks.hasBook(),
+                    net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks.tip(rite, null), null,
+                    () -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks.open(rite)));
         }
         String id = row.task().id();
         d.action("claim", Component.translatable(BOOK + "claim"), true, row.state() == TaskState.CLAIMABLE, () -> f.claim(id));

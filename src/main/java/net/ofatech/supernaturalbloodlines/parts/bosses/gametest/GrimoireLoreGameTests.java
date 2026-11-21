@@ -88,4 +88,27 @@ public final class GrimoireLoreGameTests {
         }
         helper.succeed();
     }
+
+    /** Dying and respawning makes a new player object: the once-flags must come with it, or the notice and the backfill would run again. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theOnceFlagsSurviveDeath(GameTestHelper helper) {
+        LineTestPlayer before = LineTestPlayer.createWithAdvancements(helper);
+        RiteUnlocks.reconcile(before);
+        BossIndex index = BossIndex.get(helper.getLevel().getServer());
+        boolean finn = index.of(BossId.FINN).rewarded;
+        try {
+            index.of(BossId.FINN).rewarded = true;
+            helper.assertTrue(RiteUnlocks.firstTime(before), "control: the first login was not first");
+            helper.assertTrue(RiteLoreBackfill.backfill(before) > 0, "control: the backfill taught nothing");
+            LineTestPlayer after = LineTestPlayer.createWithAdvancements(helper);
+            RiteUnlocks.reconcile(after);
+            after.restoreFrom(before, false);
+            helper.assertTrue(!RiteUnlocks.firstTime(after), "the notice would be shown again after a death");
+            helper.assertTrue(RiteLoreBackfill.backfill(after) == 0 && !RiteUnlocks.done(after, RiteAdvancements.known("rite_of_linking")), "the backfill would run again after a death");
+            helper.assertTrue(!after.received("supernaturalbloodlines.rites.learned"), "a respawn was told it learned something: " + after.heard());
+        } finally {
+            index.of(BossId.FINN).rewarded = finn;
+        }
+        helper.succeed();
+    }
 }

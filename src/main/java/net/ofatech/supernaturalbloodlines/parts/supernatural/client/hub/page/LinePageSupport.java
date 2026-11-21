@@ -1,5 +1,4 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +7,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.bloodline.LineRules;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.net.HubSnapshotPayload;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;

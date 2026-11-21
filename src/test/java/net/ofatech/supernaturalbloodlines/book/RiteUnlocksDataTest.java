@@ -107,9 +107,42 @@ class RiteUnlocksDataTest {
                 assertFalse(hint.contains(name) || label.contains(name), rite + ": the hint or the label gives away " + other);
             }
             assertTrue(label.startsWith("??? \u00b7 "), rite + ": " + label);
-            // the list line is one line of the book: a label that is longer than this wraps or is cut
-            assertTrue(label.length() <= RitesBook.LABEL_CHARS, rite + ": the label is " + label.length() + " characters: " + label);
         }
+    }
+
+    /** The list line is one line of the book: a title longer than this is cut at the page edge. The numeral of a duplicate counts. */
+    @Test
+    void everySealedTitleFitsTheListLine() throws IOException {
+        for (String rite : RiteUnlockTable.GATED.keySet()) {
+            String title = read(RitesBook.BOOK + "/entries/" + RiteAdvancements.sealedEntry(rite) + ".json").get("title").getAsString();
+            assertTrue(title.length() <= RitesBook.LABEL_CHARS, rite + ": the title is " + title.length() + " characters: " + title);
+        }
+    }
+
+    /** Two lines of one list must never read the same (Esther's two rites, the two curses). */
+    @Test
+    void noTwoSealedTitlesInOneListAreAlike() throws IOException {
+        for (var cat : RitesBook.CATS) {
+            List<String> titles = new ArrayList<>();
+            for (String rite : cat.rites()) {
+                if (RiteUnlockTable.isGated(rite)) {
+                    titles.add(read(RitesBook.BOOK + "/entries/" + RiteAdvancements.sealedEntry(rite) + ".json").get("title").getAsString());
+                }
+            }
+            assertEquals(titles.size(), new HashSet<>(titles).size(), cat.id() + " has two alike: " + titles);
+        }
+    }
+
+    @Test
+    void theNumeralsFollowTheOrderOfTheList() throws IOException {
+        JsonObject lang = RitesBook.lang(ROOT);
+        var witches = RitesBook.uniqueLabels(lang, List.of("rite_of_severance", "rite_of_cloaking", "rite_of_linking"));
+        assertEquals("??? \u00b7 Esther's Grimoire (I)", witches.get("rite_of_severance"));
+        assertEquals("??? \u00b7 Kol's Grimoire", witches.get("rite_of_cloaking"));
+        assertEquals("??? \u00b7 Esther's Grimoire (II)", witches.get("rite_of_linking"));
+        var curses = RitesBook.uniqueLabels(lang, List.of("curse_magicule_drain", "curse_skill_seal"));
+        assertTrue(curses.get("curse_magicule_drain").endsWith("(I)") && curses.get("curse_skill_seal").endsWith("(II)"), curses.toString());
+        assertTrue(curses.get("curse_skill_seal").contains("with Tensura"), "the Tensura-only pages say so: " + curses);
     }
 
     @Test

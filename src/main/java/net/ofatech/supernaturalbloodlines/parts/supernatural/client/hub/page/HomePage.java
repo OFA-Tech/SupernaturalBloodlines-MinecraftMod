@@ -1,5 +1,4 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks;
 
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubDev;
 import java.util.ArrayList;
@@ -15,6 +14,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClien
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
