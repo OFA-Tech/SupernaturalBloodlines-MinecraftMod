@@ -7,8 +7,8 @@ const fr = figma.createFrame(); fr.name = fname; fr.x = FX; fr.y = FY; fr.resize
 const cv = new Cv(SW, SH), tx = [];
 const say = (s, x, y, o = {}) => tx.push([s, x, y, o]);
 const tw = (s) => Math.round(s.length * 5.3);
-const PAGES = ['Home', 'Path', 'Skills', 'Quests', 'Rites', 'Bloodline', 'Pack', 'Guide', 'Loadout'];
-const PICON = { Home: 'home', Path: 'moon', Skills: 'fang', Quests: 'scroll', Rites: 'sigil', Bloodline: 'drop', Pack: 'paw', Guide: 'book', Loadout: 'crown' };
+const PAGES = ['Home', 'Path', 'Skills', 'Quests', 'Bloodline', 'Pack', 'Guide', 'Loadout', 'Settings', 'Admin'];
+const PICON = { Home: 'home', Path: 'moon', Skills: 'fang', Quests: 'scroll', Bloodline: 'drop', Pack: 'paw', Guide: 'book', Loadout: 'crown', Settings: 'gear', Admin: 'shield' };
 const gold = { grimoire: GP.br, moon: MP.gold, tensura: TP.gold }[THEME];
 const paperC = K.paper;
 const panelBox = (x, y, w, h, kind) => { if (THEME === 'grimoire') { if (kind === 'card') K.inset(cv, x, y, w, h); } else if (kind === 'card') K.inset(cv, x, y, w, h); else K.panel(cv, x, y, w, h); };
@@ -109,8 +109,8 @@ if (THEME === 'moon') {
   TK.cover(cv, 8, 6, 944, 528); TK.title(cv, 14, 12, 932);
   say('《 Status · Home 》', 24, 14, { font: 'title', size: 10, c: TP.teal, k: 1.25 }); say('Werewolf · Alpha · 6 SP · 1,028 EP', 300, 15, { c: TP.mut, w: 360, align: 'CENTER' });
   TK.button(cv, 840, 14, 56, 12, 'normal', false); say('Theme ▾', 840, 16, { c: TP.text, w: 56, align: 'CENTER' }); say('✕', 926, 15, { c: TP.text });
-  [['ME', ['Home', 'Path', 'Skills', 'Quests']], ['MAGIC', ['Rites']], ['PEOPLE', ['Bloodline', 'Pack']], ['HELP', ['Guide']]].reduce((y, [g, ps]) => { say(g, 24, y, { c: TP.mut }); y += 11; ps.forEach((p) => { const sel = p === 'Home'; TK.tab(cv, 22, y, 134, 16, sel ? 'selected' : 'normal'); cv.blit(ICON[PICON[p]](16), 26, y); say(p, 46, y + 4, { c: sel ? TP.teal : TP.text, font: sel ? 'head' : 'body' }); if (sel) { cv.disc(142, y + 8, 5, 5, TP.warn); say('3', 137, y + 3, { c: TP.btnText, w: 10, align: 'CENTER' }); } y += 18; }); return y + 6; }, 34);
-  say('OTHER MODS', 24, 380, { c: TP.mut }); ['Vampirism', 'Werewolves', 'Enchanted', 'Tensura'].forEach((p, i) => { const y = 392 + i * 20; TK.tab(cv, 22, y, 134, 17, 'normal'); say(p, 36, y + 5, { c: TP.gold }); });
+  [['ME', ['Home', 'Path', 'Skills', 'Quests']], ['PEOPLE', ['Bloodline', 'Pack']], ['HELP', ['Guide', 'Loadout']], ['MORE', ['Settings', 'Admin']]].reduce((y, [g, ps]) => { say(g, 24, y, { c: TP.mut }); y += 11; ps.forEach((p) => { const sel = p === 'Home'; TK.tab(cv, 22, y, 134, 16, sel ? 'selected' : 'normal'); cv.blit(ICON[PICON[p]](16), 26, y); say(p, 46, y + 4, { c: sel ? TP.teal : TP.text, font: sel ? 'head' : 'body' }); if (sel) { cv.disc(142, y + 8, 5, 5, TP.warn); say('3', 137, y + 3, { c: TP.btnText, w: 10, align: 'CENTER' }); } y += 18; }); return y + 6; }, 34);
+  say('OTHER MODS', 24, 396, { c: TP.mut }); ['Vampirism', 'Werewolves', 'Enchanted', 'Tensura'].forEach((p, i) => { const y = 408 + i * 20; TK.tab(cv, 22, y, 134, 17, 'normal'); say(p, 36, y + 5, { c: TP.gold }); });
   youCard(166, 36, 232, 118); worldCard(166, 160, 232, 98); actions(166, 264, 460, 62); notices(172, 340, 440);
   nextCard(404, 36, 222, 94); peopleCard(404, 136, 222, 100);
   say('Waiting for you', 640, 38, { font: 'head', c: TP.text }); chip(740 + 4, 36, '3', 'accent');

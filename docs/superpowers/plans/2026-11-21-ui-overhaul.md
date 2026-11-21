@@ -140,6 +140,8 @@ Re-run (for edits): serve the `src` folder (`python srv.py 8765 <out>`), paste `
 
 **Goal:** The HUD drawn only from kit sprites, in the approved layout of the style guide.
 
+**Matches PR #56 (`fix/hud-mastery-klaus-sire`):** keys R, F, V (left column) and Z, X, C (right column); `HudLayout.slots` (22 px slots, 2 px gap) and `HudLayout.labels` (an Alt label on the outer side of each column, 20 px tall, centred on its slot's row; left labels end at the slot, right labels start at it); `SlotLabel` lines (line 1 the name, line 2 the cooldown or blocked reason first, then mastery as a percent or "Mastered", then a short description); `MasteryBar` (a 4 px backing with a 2 px track along the bottom edge of each slot in Tensura mode, the key badge and the cooldown seconds lifted 5 px over it); `SlotBadge` (Grimoire seal bottom right, Blood Moon plate bottom centre, Tensura tab top left). The style guide frames `HUD · <theme> · …` draw exactly these boxes.
+
 **Deliverables:** slot frames in the theme shape (Grimoire inked tile, Blood Moon round, Tensura-mode square with the teal mark), 16 px icons, key badges, cooldown sweep, active and ready glow, the blood ring on Bite, mastery bars, mode pill, Alt loadout panels, status card and moon clock; motion for the press, the ready glow and the flourishes; screenshots at GUI scales 2, 3 and 4 in the three themes and both modes.
 
 **Gate:** `SlotArtShapeTest`, `HudPanelsTest`, `HudContrastTest`, `HudModeStateTest`, `HudInputRulesTest` stay green, new tests for the kit-drawn slots; panel review.
@@ -148,13 +150,13 @@ Re-run (for edits): serve the `src` folder (`python srv.py 8765 <out>`), paste `
 
 # Phase 5: Hub screens on the kit
 
-**Goal:** Every hub page on the kit, one page group at a time, in this order unless a dependency says otherwise: Home, Path, Skills, Quests, Bloodline, Pack, Profile, Guide, Settings, Admin, then the dialogs (confirm, Elijah's deal). Rites and Loadout follow with their page group.
+**Goal:** Every hub page on the kit, one page group at a time, in this order unless a dependency says otherwise: Home, Path, Skills, Quests, Bloodline, Pack, Profile, Guide, Loadout, Settings, Admin, then the dialogs (confirm, Elijah's deal). There is no Rites page: PR #57 removes it, rites live in Enchanted's book, and the E seal opens that book. The nav order everywhere is Home, Path, Skills, Quests, Bloodline, Pack, Guide, Loadout, Settings, Admin.
 
 **Deliverables per screen:** the three theme views on the kit, the approved layout from the style guide (the layout tests are updated to the approved geometry in the same PR), page-turn and press motion, empty and long-text states, screenshots at GUI scales 2, 3 and 4 in the three themes.
 
 **Gate:** `ThemeContrastTest`, `NewPagesContrastTest`, `GhoulMoonContrastTest`, `FocusWalkTest`, `NarrationTest`, `LabelFitTest`, `HubLangCoverageTest`, `HubPagesTest`, `PageRowsLayoutTest`, `DetailLayoutTest`, `ChoiceLayoutTest` green; panel review per group.
 
-**Main files:** `parts/supernatural/client/hub/HubScreen.java`, `HubPages.java`, `HubThemeViews.java`, `HubView.java`, `theme/GrimoireTheme.java` + `GrimoireLayout.java`, `theme/BloodMoonTheme.java` + `BloodMoonLayout.java`, `parts/supernaturaltensura/client/TensuraHubTheme.java` + `TensuraHubLayout.java`; pages in `parts/supernatural/client/hub/page/` (`HomePage`, `PathPage`, `BloodMoonPathPage`, `StagePathPage`, `SkillsPage`, `BookSkillsPage`, `QuestsPage`, `BookQuestsPage`, `StageQuestsPage`, `TaskCard`, `BloodlinePage`, `GrimoireBloodlinePage`, `StageBloodlinePage`, `PackPage`, `BookPackPage`, `ProfilePage`, `GuidePage`, `BookGuidePage`, `StageGuidePage`, `SettingsPage`, `AdminPage`, `RitesPage`, `LoadoutPage`, `PageKit`, `PageWidgets`, `EmptyState`); `shared/hub/kit/ConfirmLayout.java`, `ChoiceLayout.java`, `DetailLayout.java`, `Detail.java`.
+**Main files:** `parts/supernatural/client/hub/HubScreen.java`, `HubPages.java`, `HubThemeViews.java`, `HubView.java`, `theme/GrimoireTheme.java` + `GrimoireLayout.java`, `theme/BloodMoonTheme.java` + `BloodMoonLayout.java`, `parts/supernaturaltensura/client/TensuraHubTheme.java` + `TensuraHubLayout.java`; pages in `parts/supernatural/client/hub/page/` (`HomePage`, `PathPage`, `BloodMoonPathPage`, `StagePathPage`, `SkillsPage`, `BookSkillsPage`, `QuestsPage`, `BookQuestsPage`, `StageQuestsPage`, `TaskCard`, `BloodlinePage`, `GrimoireBloodlinePage`, `StageBloodlinePage`, `PackPage`, `BookPackPage`, `ProfilePage`, `GuidePage`, `BookGuidePage`, `StageGuidePage`, `SettingsPage`, `AdminPage`, `LoadoutPage`, `PageKit`, `PageWidgets`, `EmptyState`); `shared/hub/kit/ConfirmLayout.java`, `ChoiceLayout.java`, `DetailLayout.java`, `Detail.java`.
 
 # Phase 6: Boss bars
 

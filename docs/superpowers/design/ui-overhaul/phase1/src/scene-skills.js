@@ -6,8 +6,8 @@ for (const n of PAGE.children.filter((c) => c.name === fname)) n.remove();
 const fr = figma.createFrame(); fr.name = fname; fr.x = FX; fr.y = FY; fr.resize(1920, 1080); fr.clipsContent = true; fr.fills = []; PAGE.appendChild(fr);
 const cv = new Cv(SW, SH), tx = [];
 const say = (s, x, y, o = {}) => tx.push([s, x, y, o]);
-const PAGES = ['Home', 'Path', 'Skills', 'Quests', 'Rites', 'Bloodline', 'Pack', 'Guide', 'Loadout'];
-const PICON = { Home: 'home', Path: 'moon', Skills: 'fang', Quests: 'scroll', Rites: 'sigil', Bloodline: 'drop', Pack: 'paw', Guide: 'book', Loadout: 'crown' };
+const PAGES = ['Home', 'Path', 'Skills', 'Quests', 'Bloodline', 'Pack', 'Guide', 'Loadout', 'Settings', 'Admin'];
+const PICON = { Home: 'home', Path: 'moon', Skills: 'fang', Quests: 'scroll', Bloodline: 'drop', Pack: 'paw', Guide: 'book', Loadout: 'crown', Settings: 'gear', Admin: 'shield' };
 const pips = (x, y, n, on, c) => { for (let i = 0; i < n; i++) { cv.disc(x + 3 + i * 9, y + 3, 3.5, 3.5, i < on ? c : withA(c, 70)); cv.ring(x + 3 + i * 9, y + 3, 3.5, 3.5, 1, i < on ? 0xFF000000 & 0x00000000 | withA(c, 255) : c); } };
 const nodeAt = (cx, cy, rx, ry, i) => { const a = -Math.PI / 2 + i * Math.PI / 6; return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]; };
 const lab = (s, nx, ny, c, font, back) => { const w = Math.round(s.length * 5.3) + 4; cv.rect(Math.round(nx - w / 2), ny + 13, w, 10, back); say(s, nx - 48, ny + 15, { c, w: 96, align: 'CENTER', font }); };
@@ -57,7 +57,7 @@ if (THEME === 'grimoire') {
   say('Skills', 38, 22, { font: 'title', size: 14, c: MP.text, k: 1.3 }); say('Bloodline · Werewolves · Vampirism', 38, 42, { c: MP.mut });
   say('6 SP  ·  1,028 EP', 640, 28, { c: MP.gold, w: 230, align: 'RIGHT', font: 'head' });
   MK.slot(cv, 884, 14, 24, 'normal'); cv.blit(ICON.moon(16), 888, 18); say('x', 926, 20, { c: MP.text, font: 'head' });
-  [0, 1, 2, 3, 4, 5, 6, 7, 8].forEach((i) => { const y = 54 + i * 32, sel = i === 2; MK.slot(cv, 20, y, 26, sel ? 'active' : 'normal'); cv.blit(ICON[PICON[PAGES[i]]](16), 25, y + 5); if (sel) { MK.plate(cv, 52, y + 6, 40, 14); say('Skills', 52, y + 9, { c: MP.text, w: 40, align: 'CENTER' }); } });
+  PAGES.forEach((_, i) => { const y = 50 + i * 30, sel = i === 2; MK.slot(cv, 20, y, 26, sel ? 'active' : 'normal'); cv.blit(ICON[PICON[PAGES[i]]](16), 25, y + 5); if (sel) { MK.plate(cv, 52, y + 6, 40, 14); say('Skills', 52, y + 9, { c: MP.text, w: 40, align: 'CENTER' }); } });
   ['V', 'W', 'E', 'T'].forEach((l, i) => { const y = 54 + i * 32; MK.slot(cv, 912, y + 20, 26, 'normal'); say(l, 912, y + 28, { c: MP.gold, w: 26, align: 'CENTER', font: 'head' }); });
   [['Bloodline · 6 SP', 'selected', 112], ['Werewolves · 8 pts', 'normal', 120], ['Vampirism · locked', 'disabled', 120]].forEach(([t, st, w], i, a) => { const x = 480 - 182 + a.slice(0, i).reduce((s, v) => s + v[2] + 6, 0); MK.tab(cv, x, 62, w, 14, st); say(t, x, 65, { c: st === 'disabled' ? rgba('#8A7071') : MP.text, w, align: 'CENTER' }); });
   MK.panel(cv, 120, 462, 720, 56);
@@ -72,8 +72,8 @@ if (THEME === 'grimoire') {
   // left list
   say('PAGES', 24, 34, { c: TP.mut });
   PAGES.forEach((p, i) => { const y = 46 + i * 20, sel = p === 'Skills'; TK.tab(cv, 22, y, 134, 17, sel ? 'selected' : 'normal'); cv.blit(ICON[PICON[p]](16), 26, y + 0); say(p, 46, y + 5, { c: sel ? TP.teal : TP.text, font: sel ? 'head' : 'body' }); });
-  say('OTHER MODS', 24, 234, { c: TP.mut });
-  ['Vampirism', 'Werewolves', 'Enchanted', 'Tensura'].forEach((p, i) => { const y = 246 + i * 20; TK.tab(cv, 22, y, 134, 17, 'normal'); say(p, 36, y + 5, { c: TP.gold }); });
+  say('OTHER MODS', 24, 262, { c: TP.mut });
+  ['Vampirism', 'Werewolves', 'Enchanted', 'Tensura'].forEach((p, i) => { const y = 274 + i * 20; TK.tab(cv, 22, y, 134, 17, 'normal'); say(p, 36, y + 5, { c: TP.gold }); });
   // centre graph
   [['Bloodline · 6 SP', 'selected', 110], ['Werewolves · 8 pts', 'normal', 120], ['Vampirism · locked', 'disabled', 120]].forEach(([t, st, w], i, a) => { const x = 170 + 20 + a.slice(0, i).reduce((s, v) => s + v[2] + 6, 0); TK.button(cv, x, 36, w, 14, st === 'selected' ? 'normal' : st, st === 'selected'); say(t, x, 39, { c: st === 'selected' ? TP.btnText : st === 'disabled' ? rgba('#5F7C8E') : TP.text, w, align: 'CENTER' }); });
   const cx = 424, cy = 292;

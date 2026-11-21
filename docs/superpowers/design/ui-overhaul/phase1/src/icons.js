@@ -11,6 +11,7 @@ const IR = {
   night: ramp(rgba('#0E0820'), rgba('#3A2A5E'), rgba('#22163E'), rgba('#140C28'), rgba('#2E2250'), rgba('#0E0820')),
   teal: ramp(rgba('#0F3A44'), rgba('#D8FEFF'), rgba('#3FD0D6'), rgba('#1F8A94'), rgba('#8EEAEE'), rgba('#17707A')),
   paper: ramp(rgba('#5A3A1A'), rgba('#FFF6DC'), rgba('#E9DDB8'), rgba('#BBA874'), rgba('#FFFFFF'), rgba('#A08C5A')),
+  steel: ramp(rgba('#2A2E36'), rgba('#E4EAF2'), rgba('#9AA4B4'), rgba('#5E6676'), rgba('#C2CAD8'), rgba('#454C5A')),
   paperD: ramp(rgba('#5A3A1A'), rgba('#E2D4A8'), rgba('#CDBB8A'), rgba('#9E8A58')),
 };
 const iconMask = (n, fn) => { const m = new Cv(n, n); fn(m, n / 32); return m; };
@@ -84,6 +85,18 @@ const ICON = {
     cv.bevel(iconMask(n, (m) => m.disc(16 * s, 25.6 * s, 10.5 * s, 3.2 * s, 1)), IR.paperD, 0, 0, n >= 32);
     if (n >= 32) { for (const y of [11, 14.5, 18]) cv.hl(Math.round(11 * s), Math.round(y * s), Math.round((y === 18 ? 7 : 11) * s), rgba('#6A4A28')); cv.bevel(iconMask(n, (m) => m.disc(21.4 * s, 21.4 * s, 3.4 * s, 3.4 * s, 1)), IR.blood, 0, 0, false); }
     else { cv.hl(5, 7, 6, rgba('#6A4A28')); cv.hl(5, 9, 6, rgba('#6A4A28')); cv.px(10, 11, rgba('#C01830')); }
+    return cv;
+  },
+  gear(n) {
+    const cv = new Cv(n, n), s = n / 32;
+    const m = iconMask(n, (mm) => { mm.disc(16 * s, 16 * s, 9.2 * s, 9.2 * s, 1); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; mm.disc((16 + Math.cos(a) * 11.2) * s, (16 + Math.sin(a) * 11.2) * s, 2.5 * s, 2.5 * s, 1); } const h = new Cv(n, n); h.disc(16 * s, 16 * s, 4 * s, 4 * s, 1); for (let i = 0; i < h.d.length; i++) if (h.d[i]) mm.d[i] = 0; });
+    cv.bevel(m, IR.steel, 0, 0, n >= 32);
+    return cv;
+  },
+  shield(n) {
+    const cv = new Cv(n, n), s = n / 32, P = (a) => a.map(([x, y]) => [x * s, y * s]);
+    cv.bevel(iconMask(n, (m) => m.poly(P([[6, 5], [26, 5], [26, 16], [21, 24], [16, 28], [11, 24], [6, 16]]), 1)), IR.gold, 0, 0, n >= 32);
+    cv.bevel(iconMask(n, (m) => m.poly(P([[10, 9], [22, 9], [22, 15.5], [18.5, 21], [16, 23], [13.5, 21], [10, 15.5]]), 1)), IR.blood, 0, 0, false);
     return cv;
   },
   home(n) {
