@@ -283,8 +283,9 @@ public final class BeastGameTests {
             helper.assertTrue(entry(rig).spiritUntil == helper.getLevel().getGameTime() + BossesConfig.beastSpiritSeconds() * 20L, "the Spirit's time is " + entry(rig).spiritUntil);
             helper.assertTrue(!b.isInvulnerable() && b.isInvulnerableTo(helper.getLevel().damageSources().magic()), "the falling Beast can still be hurt");
             // a body that is falling is not the index's: it is not discarded by the index, and it is gone when the collapse is over
+            b.tickCount = 9;
             run(b, 3);
-            helper.assertTrue(b.isAlive(), "the falling Beast was discarded at once");
+            helper.assertTrue(b.isAlive(), "the falling Beast was discarded by the index at its next look");
             run(b, BeastEntity.COLLAPSE_TICKS + 5);
             helper.assertTrue(b.isRemoved(), "the fallen Beast stayed");
             sweep(helper, rig);
@@ -332,7 +333,19 @@ public final class BeastGameTests {
         try (BossTestRig rig = new BossTestRig(helper)) {
             world(false);
             BeastEntity b = beast(helper, rig);
-            hit(b, helper.getLevel().damageSources().magic(), 1_000_000F);
+            int[] deaths = {0};
+            java.util.function.Consumer<net.neoforged.neoforge.event.entity.living.LivingDeathEvent> count = ev -> {
+                if (ev.getEntity() == b) {
+                    deaths[0]++;
+                }
+            };
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, true, net.neoforged.neoforge.event.entity.living.LivingDeathEvent.class, count);
+            try {
+                hit(b, helper.getLevel().damageSources().magic(), 1_000_000F);
+            } finally {
+                net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(count);
+            }
+            helper.assertTrue(deaths[0] == 0, "a blow made the Beast die: " + deaths[0] + " death events");
             helper.assertTrue(b.isAlive() && b.getHealth() >= 1F && b.getHealth() < 2F, "a blow killed it or left it at " + b.getHealth());
             BeastDirector.watch(helper.getLevel(), b);
             helper.assertTrue(entry(rig).phase == BeastPhase.SPIRIT, "a Beast at 1 health did not collapse");
@@ -341,6 +354,12 @@ public final class BeastGameTests {
             BeastEntity c = beast(helper, rig);
             hit(c, helper.getLevel().damageSources().genericKill(), 1_000_000F);
             helper.assertTrue(c.isAlive() && entry(rig).phase == BeastPhase.SPIRIT && c.collapsing(), "/kill ended the Beast instead of making it collapse: " + entry(rig).phase);
+            sweep(helper, rig);
+            rig.index.forget(BossId.BEAST_OF_GEVAUDAN);
+            BeastEntity d = beast(helper, rig);
+            var death = new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(d, helper.getLevel().damageSources().genericKill());
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(death);
+            helper.assertTrue(death.isCanceled(), "the Beast's death was not cancelled"); 
             sweep(helper, rig);
         }
         helper.succeed();
@@ -839,6 +858,25 @@ public final class BeastGameTests {
                 de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(wolf).leaveFaction(false);
             }
             RiteTestSupport.remove(helper, wolf);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSpiritThatDiesOfAnythingButThePikeHasGotAwayAndPaysNothing(GameTestHelper helper) {
+        LineTestPlayer a = player(helper, Rank.ALPHA, Species.NONE, 2.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, a);
+            BeastEntity beast = beast(helper, rig);
+            hit(beast, a.damageSources().playerAttack(a), 40F);
+            BeastDirector.collapse(helper.getLevel(), beast);
+            GevaudanSpiritEntity spirit = (GevaudanSpiritEntity) helper.getLevel().getEntity(entry(rig).spirit);
+            hit(spirit, helper.getLevel().damageSources().genericKill(), 1000F);
+            helper.assertTrue(!spirit.isAlive() && entry(rig).phase == BeastPhase.RETURN_PENDING && !entry(rig).rewarded, "a Spirit that died without the pike counted as killed: " + entry(rig).phase);
+            helper.assertTrue(a.getInventory().countItem(BossItems.MANTLE_OF_THE_BEAST.get()) == 0 && itemsNear(helper, spirit, BossItems.MANTLE_OF_THE_BEAST.get()) == 0, "a Mantle was paid");
+            sweep(helper, rig);
+        } finally {
+            clean(a);
         }
         helper.succeed();
     }
