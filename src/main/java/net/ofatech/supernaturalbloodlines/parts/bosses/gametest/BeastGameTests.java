@@ -12,6 +12,11 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Difficulty;
+import net.ofatech.supernaturalbloodlines.core.boss.FrequencyRules;
+import net.ofatech.supernaturalbloodlines.parts.bosses.rite.FrequencyRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
@@ -681,6 +686,159 @@ public final class BeastGameTests {
                 de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(wolf).leaveFaction(false);
             }
             clean(wolf);
+        }
+        helper.succeed();
+    }
+
+    // ---- the chance, the peace, one try a night ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theHostNeedsTheRollUnderTheChanceAndNoPeaceAndOneTryANightEvenAfterItDied(GameTestHelper helper) {
+        LineTestPlayer alpha = player(helper, Rank.ALPHA, Species.NONE, 2.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(true, alpha);
+            // the roll is over the chance: nothing, and that was the one try tonight
+            BossesConfig.override("beast_host_chance", 0.25);
+            BossDirector.useRoll(() -> 0.5);
+            BossDirector.check(rig.server);
+            helper.assertTrue(entry(rig).phase == BeastPhase.NONE && body(rig) == null, "a Host came on a roll over the chance");
+            BossDirector.useRoll(() -> 0.0);
+            BossDirector.check(rig.server);
+            helper.assertTrue(entry(rig).phase == BeastPhase.NONE, "a second try was made the same night");
+            // a new night, but in peace
+            entry(rig).lastRollDay = -1;
+            BossDirector.useDifficulty(l -> Difficulty.PEACEFUL);
+            BossDirector.check(rig.server);
+            helper.assertTrue(entry(rig).phase == BeastPhase.NONE, "a Host came in a peaceful world");
+            BossDirector.useDifficulty(null);
+            BossDirector.check(rig.server);
+            helper.assertTrue(entry(rig).phase == BeastPhase.HOST, "the Host did not come on a roll under the chance");
+            // it died: the night is lost, and no new Host the same night
+            hit(body(rig), helper.getLevel().damageSources().genericKill(), 1000F);
+            helper.assertTrue(entry(rig).phase == BeastPhase.FAILED, "the encounter is " + entry(rig).phase);
+            BossDirector.check(rig.server);
+            helper.assertTrue(entry(rig).phase == BeastPhase.FAILED && entry(rig).hostsMade == 1, "a Host was made again the same night");
+            entry(rig).lastRollDay = -1;
+            BossDirector.check(rig.server);
+            helper.assertTrue(entry(rig).phase == BeastPhase.HOST && entry(rig).hostsMade == 2, "a Host was not made again on a later night");
+            sweep(helper, rig);
+        } finally {
+            clean(alpha);
+        }
+        helper.succeed();
+    }
+
+    // ---- the rites ----
+
+    private static final long FULL_MOON_CYCLE = 24000L * 8;
+    private static final long NIGHT = 14000;
+
+    private static void atFullMoon(GameTestHelper helper, Runnable body) {
+        ServerLevel level = helper.getLevel();
+        long before = level.getDayTime();
+        long base = before - Math.floorMod(before, FULL_MOON_CYCLE);
+        level.setDayTime(base + NIGHT);
+        try {
+            helper.assertTrue(level.getMoonPhase() == 0, "could not set the moon, phase is " + level.getMoonPhase());
+            body.run();
+        } finally {
+            level.setDayTime(before);
+        }
+    }
+
+    private static boolean rite(GameTestHelper helper, String path) {
+        return RiteTestSupport.type(helper, path) != null;
+    }
+
+    private static RecordingPlayer performer(GameTestHelper helper, Species species) {
+        RecordingPlayer p = RecordingPlayer.create(helper);
+        BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(species).witchLayer(species == Species.WITCH).build());
+        RiteTestSupport.place(helper, p);
+        return p;
+    }
+
+    private static List<ItemStack> pikeItems(UUID blood) {
+        return List.of(SiresBloodItem.of(blood, "Somebody"), new ItemStack(Items.IRON_INGOT, 3), new ItemStack(Items.GLOWSTONE_DUST, 2));
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theValetPikeRiteMakesThePikeFromStrongBloodAndRefusesEveryOtherBloodTheSameWayAtTheSameCost(GameTestHelper helper) {
+        if (!rite(helper, "rite_of_the_valet_pike")) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer plain = player(helper, Rank.OMEGA, Species.NONE, 2.5);
+        LineTestPlayer hunter = player(helper, Rank.NONE, Species.HUNTER_OF_THE_FIVE, 3.5);
+        RecordingPlayer witch = performer(helper, Species.WITCH);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, plain, hunter);
+            atFullMoon(helper, () -> {
+                RiteTestSupport.start(helper, "rite_of_the_valet_pike", witch, pikeItems(hunter.getUUID()));
+                helper.assertTrue(witch.receivedOnActionBar(PikeRiteFactory.DONE), "the witch was not told the pike is made: " + witch.heard());
+                helper.assertTrue(RiteTestSupport.dropped(helper, "supernaturalbloodlines:valet_pike") == 1 && RiteTestSupport.dropped(helper, "minecraft:iron_ingot") == 0, "the pike is not in the circle, or the iron was given back");
+                RiteTestSupport.clearDropped(helper);
+                // a plain player's blood, the blood of nobody here, and the blood of somebody who has gone: the same message, and the ingredients are spent
+                for (UUID weak : new UUID[] {plain.getUUID(), UUID.randomUUID()}) {
+                    int before = witch.count(PikeRiteFactory.WEAK);
+                    RiteTestSupport.start(helper, "rite_of_the_valet_pike", witch, pikeItems(weak));
+                    helper.assertTrue(witch.count(PikeRiteFactory.WEAK) == before + 1 && !witch.received(PikeRiteFactory.NOT_WITCH), "a weak blood was not refused the one way: " + witch.heard());
+                    helper.assertTrue(RiteTestSupport.dropped(helper, "supernaturalbloodlines:valet_pike") == 0 && RiteTestSupport.dropped(helper, "minecraft:iron_ingot") == 0,
+                            "a refusal gave the ingredients back, or made a pike: " + RiteTestSupport.dropped(helper, "minecraft:iron_ingot"));
+                }
+                // somebody who is no witch type is told so, and everything comes back
+                RecordingPlayer plainCaster = performer(helper, Species.NONE);
+                RiteTestSupport.remove(helper, witch);
+                RiteTestSupport.start(helper, "rite_of_the_valet_pike", plainCaster, pikeItems(hunter.getUUID()));
+                helper.assertTrue(plainCaster.receivedOnActionBar(PikeRiteFactory.NOT_WITCH), "a plain caster was not told why");
+                helper.assertTrue(RiteTestSupport.dropped(helper, "minecraft:iron_ingot") == 3 && RiteTestSupport.dropped(helper, "supernaturalbloodlines:valet_pike") == 0, "a plain caster lost the ingredients, or made a pike");
+                RiteTestSupport.clearDropped(helper);
+                RiteTestSupport.remove(helper, plainCaster);
+            });
+        } finally {
+            RiteTestSupport.remove(helper, witch);
+            clean(plain, hunter);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theFrequencyRiteBringsTheHostOnceThenMakesItChangeThenSaysBusyAndGivesBackWhatItDidNotUse(GameTestHelper helper) {
+        if (!rite(helper, "rite_of_the_frequency") || !werewolves()) {
+            helper.succeed();
+            return;
+        }
+        RecordingPlayer wolf = performer(helper, Species.NONE);
+        helper.assertTrue(de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(wolf).setFactionAndLevel(de.teamlapen.werewolves.api.WReference.WEREWOLF_FACTION, 5), "the caster could not join the werewolves");
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(true);
+            List<ItemStack> items = List.of(with(BossItems.VALET_PIKE.get()), new ItemStack(RiteTestSupport.item("supernaturalbloodlines:hearing_device")), new ItemStack(Items.ECHO_SHARD));
+            atFullMoon(helper, () -> {
+                RiteTestSupport.start(helper, "rite_of_the_frequency", wolf, items);
+                helper.assertTrue(wolf.receivedOnActionBar(FrequencyRules.messageKey(FrequencyRules.Result.MAKE_HOST)) && entry(rig).phase == BeastPhase.HOST && entry(rig).hostsMade == 1,
+                        "the first frequency did not bring the Host: " + entry(rig).phase + " / " + wolf.heard());
+                helper.assertTrue(RiteTestSupport.dropped(helper, "supernaturalbloodlines:valet_pike") == 1 && RiteTestSupport.dropped(helper, "minecraft:echo_shard") == 0, "the pike did not come back, or the echo shard did");
+                RiteTestSupport.clearDropped(helper);
+                RiteTestSupport.start(helper, "rite_of_the_frequency", wolf, items);
+                helper.assertTrue(wolf.receivedOnActionBar(FrequencyRules.messageKey(FrequencyRules.Result.FORCE_CHANGE)) && entry(rig).phase == BeastPhase.BEAST && body(rig) instanceof BeastEntity,
+                        "the second frequency did not change the Host: " + entry(rig).phase);
+                RiteTestSupport.clearDropped(helper);
+                RiteTestSupport.start(helper, "rite_of_the_frequency", wolf, items);
+                helper.assertTrue(wolf.receivedOnActionBar(FrequencyRules.messageKey(FrequencyRules.Result.BUSY)) && entry(rig).phase == BeastPhase.BEAST, "a Beast already out was not answered with busy");
+                helper.assertTrue(RiteTestSupport.dropped(helper, "minecraft:echo_shard") == 1, "a refusal did not give the ingredients back");
+                RiteTestSupport.clearDropped(helper);
+                sweep(helper, rig);
+                rig.index.forget(BossId.BEAST_OF_GEVAUDAN);
+                BossesConfig.override("beast_of_gevaudan_enabled", false);
+                RiteTestSupport.start(helper, "rite_of_the_frequency", wolf, items);
+                helper.assertTrue(wolf.receivedOnActionBar(FrequencyRules.messageKey(FrequencyRules.Result.DISABLED)) && entry(rig).phase == BeastPhase.NONE, "the switched-off Beast answered the frequency");
+                RiteTestSupport.clearDropped(helper);
+            });
+            sweep(helper, rig);
+        } finally {
+            if (de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(wolf).getCurrentFaction() != null) {
+                de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(wolf).leaveFaction(false);
+            }
+            RiteTestSupport.remove(helper, wolf);
         }
         helper.succeed();
     }
