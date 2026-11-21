@@ -103,21 +103,17 @@ public final class MemorySnapshots extends SavedData {
     public static MemorySnapshots load(CompoundTag tag, HolderLookup.Provider registries) {
         MemorySnapshots out = new MemorySnapshots();
         for (Tag t : tag.getList("observers", Tag.TAG_COMPOUND)) {
-            try {
-                CompoundTag o = (CompoundTag) t;
-                if (!o.hasUUID("observer")) {
-                    continue;
+            CompoundTag o = (CompoundTag) t;
+            if (!o.hasUUID("observer")) {
+                continue;
+            }
+            for (Tag s : o.getList("memories", Tag.TAG_COMPOUND)) {
+                CompoundTag m = (CompoundTag) s;
+                if (m.hasUUID("subject")) {
+                    out.put(o.getUUID("observer"), m.getUUID("subject"),
+                            new Memory(m.contains("sire", Tag.TAG_LIST) ? strings(m.getList("sire", Tag.TAG_STRING)) : null,
+                                    m.contains("genes", Tag.TAG_LIST) ? strings(m.getList("genes", Tag.TAG_STRING)) : null));
                 }
-                for (Tag s : o.getList("memories", Tag.TAG_COMPOUND)) {
-                    CompoundTag m = (CompoundTag) s;
-                    if (m.hasUUID("subject")) {
-                        out.put(o.getUUID("observer"), m.getUUID("subject"),
-                                new Memory(m.contains("sire", Tag.TAG_LIST) ? strings(m.getList("sire", Tag.TAG_STRING)) : null,
-                                        m.contains("genes", Tag.TAG_LIST) ? strings(m.getList("genes", Tag.TAG_STRING)) : null));
-                    }
-                }
-            } catch (RuntimeException damaged) {
-                // a bad entry is skipped, not the file
             }
         }
         out.setDirty(false);

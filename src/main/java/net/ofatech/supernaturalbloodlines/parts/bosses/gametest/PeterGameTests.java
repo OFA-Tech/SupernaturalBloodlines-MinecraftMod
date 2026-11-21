@@ -792,7 +792,7 @@ public final class PeterGameTests {
             item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
             helper.assertTrue(user.received(net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem.LEARNED) && stack.getDamageValue() == 1, "the user was not told, or no use was spent: damage " + stack.getDamageValue() + ", heard " + user.heard() + why(target, user));
             helper.assertTrue(target.received(net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem.USED_ON), "the target was not told it was used on them");
-            helper.assertTrue(target.chat() == 1, "the target was not told in chat, where it stays: " + target.chat());
+            helper.assertTrue(target.chat() == 1 && target.count(net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem.USED_ON) == 2, "the target was not told on the action bar and in chat, where it stays: " + target.chat() + " " + target.heard());
             helper.assertTrue(user.getCooldowns().isOnCooldown(item), "no cooldown after a use");
             var facts = ProfileService.of(user, target.getUUID()).facts();
             helper.assertTrue(facts.containsKey(Fact.GENES) && facts.containsKey(Fact.SIRE), "the claws did not teach the sire and the genes: " + facts.keySet());
@@ -838,6 +838,24 @@ public final class PeterGameTests {
         } finally {
             restore(helper);
             BloodlineAccess.set(target, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSnapshotNeverShadowsWhatARelationAlreadyShowsLive(GameTestHelper helper) {
+        LineTestPlayer me = LineTestPlayer.create(helper);
+        known(helper, me);
+        try {
+            // a snapshot of themselves, taken while they had no sire; then they are sired: their own page shows the live sire
+            net.ofatech.supernaturalbloodlines.parts.species.profile.SpeciesProfiles.snapshot(me, me);
+            net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder.record(UUID.nameUUIDFromBytes("anna".getBytes()), "Anna", me);
+            var sire = ProfileService.of(me, me.getUUID()).facts().get(Fact.SIRE);
+            helper.assertTrue(sire != null && sire.equals(List.of("Anna")), "a stale snapshot shadowed the live sire on their own page: " + sire);
+        } finally {
+            restore(helper);
+            net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel()).remove(me.getUUID());
+            net.ofatech.supernaturalbloodlines.parts.species.profile.MemorySnapshots.get(helper.getLevel()).put(me.getUUID(), me.getUUID(), new net.ofatech.supernaturalbloodlines.parts.species.profile.MemorySnapshots.Memory(null, null));
         }
         helper.succeed();
     }
@@ -1105,10 +1123,26 @@ public final class PeterGameTests {
         var key = net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.STRUCTURE, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(NS, "hale_house"));
         var structure = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).get(key.location());
         var touched = new java.util.ArrayList<net.minecraft.world.level.chunk.ChunkAccess>();
+        var otherStructure = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).get(net.minecraft.resources.ResourceLocation.withDefaultNamespace("desert_pyramid"));
         try {
             BossesConfig.override("peter_house_enabled", true);
             BossesConfig.override("peter_house_chance", 1.0);
             var stub = generate(helper).orElseThrow();
+            // another structure whose pieces stand where the house will: it is no Hale house, so nobody is near one
+            var decoy = new net.minecraft.world.level.levelgen.structure.StructureStart(otherStructure, new net.minecraft.world.level.ChunkPos(helper.absolutePos(BlockPos.ZERO)), 0, stub.getPiecesBuilder().build());
+            var decoyBox = decoy.getBoundingBox();
+            var decoyChunk = level.getChunk(helper.absolutePos(BlockPos.ZERO));
+            touched.add(decoyChunk);
+            decoyChunk.setStartForStructure(otherStructure, decoy);
+            long decoyStartChunk = new net.minecraft.world.level.ChunkPos(helper.absolutePos(BlockPos.ZERO)).toLong();
+            for (int cx = decoyBox.minX() >> 4; cx <= decoyBox.maxX() >> 4; cx++) {
+                for (int cz = decoyBox.minZ() >> 4; cz <= decoyBox.maxZ() >> 4; cz++) {
+                    var c = level.getChunk(cx, cz);
+                    touched.add(c);
+                    c.addReferenceForStructure(otherStructure, decoyStartChunk);
+                }
+            }
+            helper.assertTrue(BossDirector.nearestHouse(level, new BlockPos(decoyBox.getCenter().getX() + 5, decoyBox.getCenter().getY(), decoyBox.getCenter().getZ())).isEmpty(), "another structure's pieces were taken for a Hale house");
             var start = new net.minecraft.world.level.levelgen.structure.StructureStart(structure, new net.minecraft.world.level.ChunkPos(helper.absolutePos(BlockPos.ZERO)), 0, stub.getPiecesBuilder().build());
             var chunk = level.getChunk(helper.absolutePos(BlockPos.ZERO));
             touched.add(chunk);
@@ -1123,6 +1157,11 @@ public final class PeterGameTests {
                 }
             }
             BlockPos inside = new BlockPos(box.getCenter().getX(), box.getCenter().getY(), box.getCenter().getZ());
+            // the chunks round a player 25 to 40 blocks from the nearest face are asked for, but nothing in them is within 24 blocks
+            for (int off = 25; off <= 40; off++) {
+                var far = BossDirector.nearestHouse(level, new BlockPos(box.maxX() + 1 + off, inside.getY(), inside.getZ()));
+                helper.assertTrue(far.isEmpty(), "a player " + off + " blocks from the nearest face found the house");
+            }
             var found = BossDirector.nearestHouse(level, inside.offset(10, 0, 0));
             helper.assertTrue(found.isPresent() && found.get().equals(box), "a player 10 blocks from a house did not find it: " + found);
             helper.assertTrue(BossDirector.nearestHouse(level, inside.offset(60, 0, 0)).isEmpty(), "a player 60 blocks from the house found it");
@@ -1131,9 +1170,11 @@ public final class PeterGameTests {
             for (var c : touched) {
                 var starts = new java.util.HashMap<>(c.getAllStarts());
                 starts.remove(structure);
+                starts.remove(otherStructure);
                 c.setAllStarts(starts);
                 var refs = new java.util.HashMap<>(c.getAllReferences());
                 refs.remove(structure);
+                refs.remove(otherStructure);
                 c.setAllReferences(refs);
             }
             BossesConfig.override("peter_house_enabled", null);

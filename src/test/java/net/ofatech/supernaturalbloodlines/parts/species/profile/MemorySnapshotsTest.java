@@ -67,6 +67,30 @@ class MemorySnapshotsTest {
     }
 
     @Test
+    void aSecondReadOfTheSameSubjectIsTheNewestSoTheOldestToGoIsAnotherOne() {
+        MemorySnapshots s = new MemorySnapshots();
+        for (int i = 0; i < MemorySnapshots.MAX_SUBJECTS; i++) {
+            s.put(USER, new UUID(0, i), memory("unknown"));
+        }
+        s.put(USER, new UUID(0, 0), memory("known"));
+        s.put(USER, new UUID(0, 1000), memory("unknown"));
+        assertTrue(s.of(USER, new UUID(0, 0)).isPresent(), "the one that was read again went first");
+        assertTrue(s.of(USER, new UUID(0, 1)).isEmpty(), "the oldest unread one stayed");
+    }
+
+    @Test
+    void aUserWhoReadsAgainIsTheNewestSoTheOldestUserToGoIsAnotherOne() {
+        MemorySnapshots s = new MemorySnapshots();
+        for (int i = 0; i < MemorySnapshots.MAX_OBSERVERS; i++) {
+            s.put(new UUID(1, i), SUBJECT, memory("unknown"));
+        }
+        s.put(new UUID(1, 0), OTHER, memory("unknown"));
+        s.put(new UUID(1, 5000), SUBJECT, memory("unknown"));
+        assertTrue(s.of(new UUID(1, 0), SUBJECT).isPresent(), "the user who read again went first");
+        assertTrue(s.of(new UUID(1, 1), SUBJECT).isEmpty(), "the user who had not read again stayed");
+    }
+
+    @Test
     void readingNeverMovesOrCreatesAnything() {
         MemorySnapshots s = new MemorySnapshots();
         s.put(USER, SUBJECT, memory("unknown"));

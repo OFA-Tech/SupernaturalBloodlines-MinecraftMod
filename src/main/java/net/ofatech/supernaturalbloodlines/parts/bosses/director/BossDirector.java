@@ -953,32 +953,25 @@ public final class BossDirector {
     }
 
     /**
-     * The house nearest to a point within {@link PeterRules#HOUSE_RADIUS} of one of its pieces, or nothing: the chunks that cover the square round the point are asked
-     * for the starts of a Hale house (one call each, 25 at most), and a piece counts by its distance to the point.
+     * A house with a piece within {@link PeterRules#HOUSE_RADIUS} of a point, or nothing: the chunks that cover the square round the point are asked for the starts of
+     * a Hale house (one call each, 25 at most), and a piece counts by its distance to the point.
      */
     private static Optional<net.minecraft.world.level.levelgen.structure.BoundingBox> realHouse(ServerLevel level, BlockPos from) {
         var manager = level.structureManager();
         int r = PeterRules.HOUSE_RADIUS;
-        net.minecraft.world.level.levelgen.structure.BoundingBox best = null;
-        double bestDistance = Double.MAX_VALUE;
         for (int cx = (from.getX() - r) >> 4; cx <= (from.getX() + r) >> 4; cx++) {
             for (int cz = (from.getZ() - r) >> 4; cz <= (from.getZ() + r) >> 4; cz++) {
                 for (var start : manager.startsForStructure(new net.minecraft.world.level.ChunkPos(cx, cz), s -> s.type() == net.ofatech.supernaturalbloodlines.parts.bosses.world.HaleHouse.TYPE.get())) {
-                    if (!start.isValid()) {
-                        continue;
-                    }
                     for (var piece : start.getPieces()) {
                         var b = piece.getBoundingBox();
-                        double d = PeterRules.boxDistanceSquared(from.getX() + 0.5, from.getY(), from.getZ() + 0.5, b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ());
-                        if (PeterRules.near(d) && d < bestDistance) {
-                            best = start.getBoundingBox();
-                            bestDistance = d;
+                        if (PeterRules.near(PeterRules.boxDistanceSquared(from.getX() + 0.5, from.getY(), from.getZ() + 0.5, b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ()))) {
+                            return Optional.of(start.getBoundingBox());
                         }
                     }
                 }
             }
         }
-        return Optional.ofNullable(best);
+        return Optional.empty();
     }
 
     private static void peter(MinecraftServer server, BossIndex index) {
@@ -997,11 +990,10 @@ public final class BossDirector {
             Optional<net.minecraft.world.level.levelgen.structure.BoundingBox> house = p.level().dimension() == Level.OVERWORLD && !p.isSpectator()
                     ? houses.nearest(overworld, p.blockPosition()) : Optional.empty();
             if (PeterRules.calledBy(p.level().dimension() == Level.OVERWORLD, p.isSpectator(), house.isPresent())) {
-                if (spawnPeter(overworld, house.get()).isPresent()) {
-                    // once, to the one who called him, and never his name: the house is not empty
-                    p.displayClientMessage(net.minecraft.network.chat.Component.translatable("supernaturalbloodlines.boss.notice.peter"), true);
-                    p.sendSystemMessage(net.minecraft.network.chat.Component.translatable("supernaturalbloodlines.boss.notice.peter.hint"));
-                }
+                spawnPeter(overworld, house.get());
+                // once, to the one who called him, and never his name: the house is not empty
+                p.displayClientMessage(net.minecraft.network.chat.Component.translatable("supernaturalbloodlines.boss.notice.peter"), true);
+                p.sendSystemMessage(net.minecraft.network.chat.Component.translatable("supernaturalbloodlines.boss.notice.peter.hint"));
                 return;
             }
         }

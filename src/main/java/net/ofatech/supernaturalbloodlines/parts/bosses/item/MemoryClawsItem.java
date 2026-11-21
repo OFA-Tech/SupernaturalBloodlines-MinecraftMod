@@ -51,7 +51,7 @@ public final class MemoryClawsItem extends Item {
         boolean consent = false;
         boolean facing = false;
         boolean mayHarm = false;
-        if (target instanceof ServerPlayer t && t != user) {
+        if (target instanceof ServerPlayer t) {
             consent = LinkRules.consents(false, t.isShiftKeyDown(), t.getMainHandItem().is(Items.LEAD), pvp);
             facing = looksAt(t, user);
             mayHarm = user.canHarmPlayer(t);

@@ -180,10 +180,6 @@ public final class PeterHaleEntity extends BossNpc implements GeoEntity, ShiftBo
     @Override
     public void tick() {
         ShiftCore.hold(this, this);
-        if (!level().isClientSide && pounceTicks > 0) {
-            // travel is paused (see travel): the model's root bone is what moves while the pounce plays
-            getNavigation().stop();
-        }
         super.tick();
         if (level().isClientSide) {
             return;

@@ -73,6 +73,6 @@ public final class MemoryClawsRules {
 
     /** The whole seconds left of a cooldown that has {@code remainingFraction} (0 to 1) of {@link #COOLDOWN_TICKS} to run; at least one while any is left. */
     public static int secondsLeft(float remainingFraction) {
-        return remainingFraction <= 0F ? 0 : Math.max(1, (int) Math.ceil(remainingFraction * COOLDOWN_TICKS / 20.0));
+        return remainingFraction <= 0F ? 0 : (int) Math.ceil(remainingFraction * COOLDOWN_TICKS / 20.0);
     }
 }
