@@ -27,8 +27,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineWarning;
 
 /**
- * {@code /supernaturalbloodlines boss <boss> spawn|state|desiccate|return|reset} (permission 2): the operator's hands on the director. Every form has an
- * Admin button (rows X1 to X5 of {@code AdminCommands}). {@code reset} is the Admin page's "Forget".
+ * {@code /supernaturalbloodlines boss <boss> spawn|state|desiccate|return|change|reset} (permission 2): the operator's hands on the director. Every form has an
+ * Admin button (rows X1 to X6 of {@code AdminCommands}). {@code reset} is the Admin page's "Forget".
  */
 public final class BossCommand {
     private BossCommand() {

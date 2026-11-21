@@ -154,7 +154,8 @@ public final class AdminCommands {
             row("X2", BOSS + " <boss> state", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("X3", BOSS + " <boss> desiccate", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("X4", BOSS + " <boss> return", 2, Ui.ADMIN_ACTION, "ADMIN"),
-            row("X5", BOSS + " <boss> reset", 2, Ui.ADMIN_ACTION, "ADMIN"));
+            row("X5", BOSS + " <boss> reset", 2, Ui.ADMIN_ACTION, "ADMIN"),
+            row("X6", BOSS + " <boss> change", 2, Ui.ADMIN_ACTION, "ADMIN"));
 
     private AdminCommands() {}
 

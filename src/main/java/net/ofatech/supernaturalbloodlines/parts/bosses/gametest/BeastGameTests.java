@@ -184,9 +184,9 @@ public final class BeastGameTests {
             GevaudanHostEntity h = (GevaudanHostEntity) body(rig);
             helper.assertTrue(h.getItemBySlot(EquipmentSlot.HEAD).is(BossItems.SEBASTIEN_TRICORN.get()), "the Host does not wear the tricorn");
             helper.assertTrue(rig.index.state(BossId.BEAST_OF_GEVAUDAN) == BossState.ACTIVE && h.getUUID().equals(entry(rig).entity), "the index does not hold the Host");
-            helper.assertTrue(alpha.count(BeastDirector.HOST_NOTICE) == 1 && alpha.count(BeastDirector.HOST_HINT) == 1, "the Alpha was not told exactly once: " + alpha.heard());
+            helper.assertTrue(alpha.count(BeastDirector.HOST_NOTICE) == 2 && alpha.count(BeastDirector.HOST_HINT) == 1 && alpha.chat() == 2, "the Alpha was not told once, on the action bar and in chat: " + alpha.heard());
             BossDirector.check(rig.server);
-            helper.assertTrue(entry(rig).hostsMade == 1, "a second Host came the same night");
+            helper.assertTrue(entry(rig).hostsMade == 1 && alpha.count(BeastDirector.HOST_NOTICE) == 2, "a second Host came the same night, or the Alpha was told again");
             sweep(helper, rig);
             // a Hunter of the Five calls it too
             rig.index.forget(BossId.BEAST_OF_GEVAUDAN);
@@ -359,6 +359,7 @@ public final class BeastGameTests {
             BeastDirector.watch(helper.getLevel(), beast);
             GevaudanSpiritEntity spirit = (GevaudanSpiritEntity) helper.getLevel().getEntity(entry(rig).spirit);
             float before = spirit.getHealth();
+            int sparksBefore = PackAccess.wolf(b).sparks();
             striker.setItemInHand(InteractionHand.MAIN_HAND, with(Items.DIAMOND_SWORD));
             hit(spirit, striker.damageSources().playerAttack(striker), 500F);
             hit(spirit, helper.getLevel().damageSources().magic(), 500F);
@@ -370,7 +371,7 @@ public final class BeastGameTests {
             helper.assertTrue(b.getInventory().countItem(BossItems.MANTLE_OF_THE_BEAST.get()) == 1 && a.getInventory().countItem(BossItems.MANTLE_OF_THE_BEAST.get()) == 0
                     && striker.getInventory().countItem(BossItems.MANTLE_OF_THE_BEAST.get()) == 0, "the Mantle did not go to the one who did the most, once");
             helper.assertTrue(b.received(BeastDirector.REWARD), "the one paid was not told: " + b.heard());
-            helper.assertTrue(PackAccess.wolf(b).sparks() == 0 && itemsNear(helper, spirit, BossItems.VALET_PIKE.get()) == 0, "a spark or a pike was paid");
+            helper.assertTrue(PackAccess.wolf(b).sparks() == sparksBefore && itemsNear(helper, spirit, BossItems.VALET_PIKE.get()) == 0, "a spark or a pike was paid");
             helper.assertTrue(!BeastDirector.pay(helper.getLevel(), striker, spirit.blockPosition()) && b.getInventory().countItem(BossItems.MANTLE_OF_THE_BEAST.get()) == 1, "it paid twice");
             helper.assertTrue(!(helper.getLevel().getEntity(entry(rig).entity) instanceof GevaudanHostEntity), "the Host was not let go");
             sweep(helper, rig);
@@ -470,6 +471,9 @@ public final class BeastGameTests {
         LineTestPlayer alpha = player(helper, Rank.ALPHA, Species.NONE, 4.5);
         LineTestPlayer truth = player(helper, Rank.TRUE_ALPHA, Species.NONE, 5.5);
         LineTestPlayer far = player(helper, Rank.OMEGA, Species.NONE, 14.5);
+        for (LineTestPlayer p : new LineTestPlayer[] {omega, beta, alpha, truth, far}) {
+            helper.getLevel().addNewPlayer(p);
+        }
         try (BossTestRig rig = new BossTestRig(helper)) {
             world(false, omega, beta, alpha, truth, far);
             BossesConfig.override("beast_roar_range", 8);
@@ -489,6 +493,9 @@ public final class BeastGameTests {
             zombie.discard();
             sweep(helper, rig);
         } finally {
+            for (LineTestPlayer p : new LineTestPlayer[] {omega, beta, alpha, truth, far}) {
+                helper.getLevel().removePlayerImmediately(p, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+            }
             clean(omega, beta, alpha, truth, far);
         }
         helper.succeed();
@@ -497,6 +504,7 @@ public final class BeastGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theBeastRearsUpWhenItHasATargetInRangeStandsStillWhileItRoarsAndWaitsItsCooldown(GameTestHelper helper) {
         LineTestPlayer victim = player(helper, Rank.OMEGA, Species.NONE, 3.5);
+        helper.getLevel().addNewPlayer(victim);
         try (BossTestRig rig = new BossTestRig(helper)) {
             world(false, victim);
             BeastEntity beast = beast(helper, rig);
@@ -517,6 +525,7 @@ public final class BeastGameTests {
             helper.assertTrue(beast.roarReady(now + BossesConfig.beastRoarCooldownSeconds() * 20L) && !beast.roarReady(now + BossesConfig.beastRoarCooldownSeconds() * 20L - 1), "the cooldown is not the setting");
             sweep(helper, rig);
         } finally {
+            helper.getLevel().removePlayerImmediately(victim, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
             clean(victim);
         }
         helper.succeed();

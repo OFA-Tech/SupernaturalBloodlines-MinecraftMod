@@ -1458,6 +1458,7 @@
   "supernaturalbloodlines.hub.admin.act.boss_desiccate": "Desiccate",
   "supernaturalbloodlines.hub.admin.act.boss_return": "Return now",
   "supernaturalbloodlines.hub.admin.act.boss_reset": "Forget",
+  "supernaturalbloodlines.hub.admin.act.boss_change": "Change",
   "supernaturalbloodlines.hub.admin.confirm_boss_reset": "Forget %s? The world will have never seen them: their reward can be paid again and a dead one can come back.",
   "supernaturalbloodlines.hub.guide.bosses": "The bosses",
   "supernaturalbloodlines.hub.home.boss_near": "Something old walks within 128 blocks of you.",
