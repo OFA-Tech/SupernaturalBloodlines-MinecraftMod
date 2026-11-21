@@ -39,7 +39,7 @@ The species rules, with their ids (the "R" numbers used in the code, the changel
 | Id | Rule |
 |---|---|
 | **R30** | Rite of Immortality: human-like, no faction, full moon, 12,000 power, a villager sacrificed, a world cap (unlimited by default). |
-| **R31** | Vampire faction, +20% attack, +4 max health. Can make Original's Blood. |
+| **R31** | Vampire faction, +20% attack, +4 max health. Can make Original's Blood (someone else's blood needs their consent: they sneak on the centre; without it the caster is told only that the rite would change nothing). |
 | **R32** | Non-white-oak lethal damage puts the Original into **Vampirism's dying state** (or this mod's own downed state for an Original hybrid). A **white oak** hit kills instantly. Void and `/kill` still kill. |
 | **R33** | The White Oak Ash Dagger desiccates an Original (30 minutes, until pulled out). It hurts any non-human who wields it. |
 | **R34** | Only The Cure works on Originals. |

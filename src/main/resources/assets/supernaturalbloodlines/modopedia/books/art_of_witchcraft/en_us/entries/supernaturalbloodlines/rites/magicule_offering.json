@@ -1,0 +1,39 @@
+{
+  "title": "Rite of Magicule Offering",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:amethyst_shard"
+  },
+  "assigned_items": [
+    "supernaturalbloodlines:condensed_magicule"
+  ],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: small circle, ritual chalk.\n\nCondenses your magicules into one Condensed Magicule: it takes 5,000 magicules from you (the server's rite file can change that).",
+          "header": "Magicule Offering"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Anyone can perform it. The magicules come from the caster, not from the altar, so this rite asks for no altar power. Tensura must be installed.\n\nWith too few magicules it fails: nothing is taken and the items come back.",
+          "header": "Magicule Offering"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:magicule_offering",
+          "header": "Magicule Offering"
+        }
+      ]
+    }
+  ]
+}

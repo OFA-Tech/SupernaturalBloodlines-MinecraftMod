@@ -59,7 +59,7 @@ Without Werewolves this still works. The result is the vampire faction plus the 
 - **Lethal damage does not kill you**, unless it is from a **White Oak** weapon, the void, or `/kill`:
   - A vampire Original goes into **Vampirism's own dying state** (the *Give up / Wait* screen).
   - An Original **hybrid** goes into this mod's own **downed** state: 30 seconds on the ground, unable to move or act, then back up at half health. A screen offers **Give up** or **Wait**.
-- You can make **Original's Blood** ([Rite of Original's Blood](Rites#species-and-cures)): a glass bottle on a small circle, 1000 power. Only Originals can do it; for anyone else the bottle comes back and the caster sees "Only an Original can do this."
+- You can make **Original's Blood** ([Rite of Original's Blood](Rites#species-and-cures)): a glass bottle on a small circle, 1000 power. Only Originals can do it; for anyone else the bottle comes back and the caster sees "Only an Original can do this." If someone else stands on the centre they must agree by **sneaking**: without that the caster only sees "The rite would change nothing." (the same for an Original and for anyone else, so the rite never tells who is an Original), and the one on the centre is asked to sneak.
 - You can compel villagers and lesser vampires, and call your sired. See [Sirelines](Sirelines).
 - With the Tensura part: skills `blood_mist`, `drain`, `charm`, `self_regeneration`, +20% max magicule, and **undead** treatment. See [Tensura integration](Tensura-Integration#the-species-layer-part-species_tensura).
 - Tensura apex race: **Primordial Vampire** (needs saint tier or higher, 2,000,000 EP).

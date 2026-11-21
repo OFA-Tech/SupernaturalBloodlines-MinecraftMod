@@ -1,0 +1,46 @@
+{
+  "title": "Rite of Severance",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:shears"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nBreaks the sire bond of the one on the centre. The sire stays on record, but the bond is gone.",
+          "header": "Rite of Severance"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Full-moon night only. Only a witch, siphoner, heretic or tribrid can work it. The target must be sired with the bond whole, and Sire's Blood of their own sire must be among the items.",
+          "header": "Rite of Severance"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "A refusal tells the caster why and gives the ingredients back.",
+          "header": "Rite of Severance"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_severance",
+          "header": "Rite of Severance"
+        }
+      ]
+    }
+  ]
+}

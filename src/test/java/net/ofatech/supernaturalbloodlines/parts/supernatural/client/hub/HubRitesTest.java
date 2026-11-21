@@ -27,6 +27,15 @@ class HubRitesTest {
     private static final HubSocial.Rite FIVE = rite("rite_of_the_five", 10000, "hunter");
     private static final HubSocial.Rite HYBRID_BLOOD = rite("hybrid_blood", 1000, "");
 
+    @Test
+    void aRiteWithNoAltarPowerSaysWhatItCostsInstead() {
+        assertEquals(HubRites.Cost.ALTAR, HubRites.cost(MOON));
+        var offering = new HubSocial.Rite("supernaturalbloodlines:magicule_offering", 0, List.of(), List.of(), "supernaturalbloodlines:magicule_offering", "");
+        assertEquals(HubRites.Cost.MAGICULES, HubRites.cost(offering));
+        var other = new HubSocial.Rite("supernaturalbloodlines:free", 0, List.of(), List.of(), "supernaturalbloodlines:faction_rite", "");
+        assertEquals(HubRites.Cost.NONE, HubRites.cost(other));
+    }
+
     private static WolfState wolf(Lineage l, Rank r, boolean held) {
         return WolfState.NONE.toBuilder().lineage(l).rank(r).heldSpark(held).build();
     }

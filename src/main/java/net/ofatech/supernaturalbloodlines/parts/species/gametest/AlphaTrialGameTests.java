@@ -28,6 +28,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.TrialMark;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
+import net.ofatech.supernaturalbloodlines.core.bloodline.TrialRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Weak;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
@@ -119,7 +120,7 @@ public final class AlphaTrialGameTests {
 
     /** Starts the trial for {@code p} at the circle and gives the boss back (null when it did not start). */
     private static Mob begin(GameTestHelper helper, ServerPlayer p) {
-        String refusal = AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), p, true);
+        String refusal = AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), p, true, true);
         helper.assertTrue(refusal == null, "the trial did not start: " + refusal);
         Mob boss = AlphaTrialBoss.bossOf(helper.getLevel(), p.getUUID());
         helper.assertTrue(boss != null, "the trial started but no boss stands (found " + bosses(helper).size() + " in the area, at " + spot(helper).toShortString() + ")");
@@ -226,11 +227,11 @@ public final class AlphaTrialGameTests {
         try {
             SpeciesConfig.overrideTrial(EASY);
             atNight(helper, fullNight(), () -> {
-                String first = AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true);
+                String first = AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true, true);
                 helper.assertTrue(first != null && first.endsWith("warn_sent"), "the first start was " + first);
                 helper.assertTrue(bosses(helper).isEmpty(), "a boss came before the warning was answered");
                 helper.assertTrue(state(beta).rank() == Rank.BETA, "the spark was taken before the player chose");
-                String again = AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true);
+                String again = AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true, true);
                 helper.assertTrue(again != null && again.endsWith("warn_sent") && bosses(helper).isEmpty(), "a second start without an answer went through: " + again);
                 helper.assertTrue(!AlphaTrialRiteFactory.LEDGER.confirm(java.util.UUID.randomUUID(), helper.getLevel().getGameTime()), "a stranger was believed");
                 helper.assertTrue(AlphaTrialRiteFactory.LEDGER.confirm(beta.getUUID(), helper.getLevel().getGameTime()), "the answer to a sent warning was not believed");
@@ -238,7 +239,7 @@ public final class AlphaTrialGameTests {
                 found.add(boss);
                 helper.assertTrue(boss instanceof IWerewolfAlpha, "the boss is not an Alpha");
                 helper.assertTrue(boss.getData(SpeciesRegistries.TRIAL_MARK).challenger().equals(beta.getUUID()), "the boss has the wrong challenger");
-                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true).endsWith("already"), "a second trial for the same player started");
+                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true, true).endsWith("already"), "a second trial for the same player started");
             });
         } finally {
             clean(helper, found, beta);
@@ -281,24 +282,70 @@ public final class AlphaTrialGameTests {
         try {
             SpeciesConfig.overrideTrial(new SpeciesConfig.TrialTuning(true, 13, 3.0));
             atNight(helper, fullNight(), () -> {
-                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true).endsWith("level"), "level 12 under a minimum of 13 started");
+                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true, true).endsWith("level"), "level 12 under a minimum of 13 started");
                 SpeciesConfig.overrideTrial(EASY);
-                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), alpha, true).endsWith("rank"), "an Alpha started");
-                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), human, true).endsWith("not_werewolf"), "a human started");
-                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, false).endsWith("not_transformed"), "a Beta in human shape started");
+                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), alpha, true, true).endsWith("rank"), "an Alpha started");
+                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), human, true, true).endsWith("not_werewolf"), "a human started");
+                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, false, true).endsWith("not_transformed"), "a Beta in human shape started");
                 SpeciesConfig.overrideTrial(new SpeciesConfig.TrialTuning(false, 1, 3.0));
-                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true).endsWith("off"), "alpha_trial_enabled = false started");
+                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true, true).endsWith("off"), "alpha_trial_enabled = false started");
             });
             atNight(helper, fullNight() - 13000 + 6000, () -> {
                 SpeciesConfig.overrideTrial(EASY);
-                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true).endsWith("not_night"), "the trial started in daylight");
+                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true, true).endsWith("not_night"), "the trial started in daylight");
             });
             atNight(helper, 24000L * 8 * NEXT.incrementAndGet() + 24000 + 13000, () -> {
-                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true).endsWith("not_night"), "the trial started on a night with no full moon");
+                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true, true).endsWith("not_night"), "the trial started on a night with no full moon");
             });
             helper.assertTrue(bosses(helper).isEmpty(), "a refused trial left a boss");
         } finally {
             clean(helper, bosses(helper), beta, alpha);
+        }
+        helper.succeed();
+    }
+
+    /** The rite file can switch the full moon off (requires_full_moon: false), but a trial is still a night's work: never in daylight. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTrialThatDoesNotNeedTheFullMoonStillNeedsANight(GameTestHelper helper) {
+        ServerPlayer beta = wolf(helper, Rank.BETA, true);
+        online(beta);
+        try {
+            SpeciesConfig.overrideTrial(EASY);
+            atNight(helper, fullNight() - 13000 + 6000, () -> {
+                String refused = AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true, false);
+                helper.assertTrue(refused != null && refused.endsWith("not_night_any"), "the trial started in daylight with the moon not asked for, or the refusal says full moon: " + refused);
+            });
+            helper.assertTrue(bosses(helper).isEmpty(), "a refused trial left a boss");
+            atNight(helper, 24000L * 8 * NEXT.incrementAndGet() + 24000 + 13000, () -> {
+                String started = AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true, false);
+                helper.assertTrue(started == null, "a night with no full moon, and the moon not asked for, did not start the trial: " + started);
+                String strict = AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), beta, true, true);
+                helper.assertTrue(strict != null, "the same night with the moon asked for started a second trial");
+                helper.assertTrue(strict.endsWith("already") || strict.endsWith("not_night"), "the refusal with the moon asked for: " + strict);
+            });
+        } finally {
+            clean(helper, bosses(helper), beta);
+        }
+        helper.succeed();
+    }
+
+    /** Home's "the trial can be taken tonight" follows the rite's own setting: with the full moon switched off, a night of any phase is enough. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void homeSaysTheTrialIsPossibleByTheRitesOwnMoonRule(GameTestHelper helper) {
+        ServerPlayer beta = wolf(helper, Rank.BETA, true);
+        online(beta);
+        try {
+            SpeciesConfig.overrideTrial(EASY);
+            helper.assertTrue(AlphaTrialRiteFactory.needsFullMoon(helper.getLevel()), "the shipped rite does not ask for the full moon");
+            atNight(helper, 24000L * 8 * NEXT.incrementAndGet() + 24000 + 13000, () -> {
+                helper.assertTrue(AlphaTrialRiteFactory.noticeOf(beta, false) == TrialRules.Notice.POSSIBLE, "a night with no full moon, the moon not asked for: no notice");
+                helper.assertTrue(AlphaTrialRiteFactory.noticeOf(beta, true) == TrialRules.Notice.NONE, "a night with no full moon, the moon asked for: a notice");
+            });
+            atNight(helper, fullNight() - 13000 + 6000, () -> {
+                helper.assertTrue(AlphaTrialRiteFactory.noticeOf(beta, false) == TrialRules.Notice.NONE, "a notice in daylight");
+            });
+        } finally {
+            clean(helper, bosses(helper), beta);
         }
         helper.succeed();
     }
@@ -515,7 +562,7 @@ public final class AlphaTrialGameTests {
                 AlphaTrialBoss.reset(); // a restart forgets the maps
                 // the map is gone, but the loaded boss still carries the mark: a second trial for this player is refused (best effort, loaded bosses only)
                 helper.assertTrue(AlphaTrialBoss.running(helper.getLevel(), challenger.getUUID()), "a loaded boss with the mark was not seen after the map was forgotten");
-                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), challenger, true).endsWith("already"), "a second trial started beside a loaded boss");
+                helper.assertTrue(AlphaTrialRiteFactory.tryStart(helper.getLevel(), spot(helper), challenger, true, true).endsWith("already"), "a second trial started beside a loaded boss");
                 AlphaTrialBoss.tickNow(boss);
                 helper.assertTrue(AlphaTrialBoss.running(helper.getLevel(), challenger.getUUID()), "the boss did not find its trial again");
                 helper.assertTrue(mark.challenger().equals(boss.getData(SpeciesRegistries.TRIAL_MARK).challenger()), "the challenger changed");

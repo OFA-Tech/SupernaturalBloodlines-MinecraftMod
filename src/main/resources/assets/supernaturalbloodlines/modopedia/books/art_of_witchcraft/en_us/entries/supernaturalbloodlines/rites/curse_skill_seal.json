@@ -1,0 +1,37 @@
+{
+  "title": "Curse of Skill Seal",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:soul_sand"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, infernal chalk.\n\nCurses the owner of the taglock: one of the skills they have learned is chosen, and it cannot be activated or switched on while the curse lasts. A sealed skill that is on is switched off.",
+          "header": "Curse of Skill Seal"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Anyone can cast it. The target is the owner of the taglock; Tensura must be installed.\n\nThe curse ends when the target dies. It needs infernal chalk, not ritual chalk.",
+          "header": "Curse of Skill Seal"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:curse_skill_seal",
+          "header": "Curse of Skill Seal"
+        }
+      ]
+    }
+  ]
+}

@@ -37,7 +37,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.line.Lines;
 import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 
 /** The hub's view of other players from this part's indexes: names, ranks and online flags only. */
-final class SpeciesHub {
+public final class SpeciesHub {
     private SpeciesHub() {
     }
 
@@ -155,10 +155,9 @@ final class SpeciesHub {
     }
 
     /** This mod's rites the server loaded (their part and mods are on), read back through Enchanted's own codec. */
-    private static List<HubSocial.Rite> rites(MinecraftServer server) {
+    public static List<HubSocial.Rite> rites(MinecraftServer server) {
         List<HubSocial.Rite> out = new ArrayList<>();
         var registry = server.registryAccess().registryOrThrow(EData.RITE_TYPES_REGISTRY);
-        var ops = RegistryOps.create(JsonOps.INSTANCE, server.registryAccess());
         for (var entry : registry.entrySet()) {
             ResourceLocation id = entry.getKey().location();
             if (!id.getNamespace().equals(SupernaturalBloodlines.MODID)) {
@@ -166,14 +165,27 @@ final class SpeciesHub {
             }
             RiteType rite = entry.getValue();
             List<String> items = rite.getItems().stream().map(s -> s.getCount() + " " + net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(s.getItem())).toList();
-            List<String> shapes = rite.getShapes().keySet().stream().map(h -> h.unwrapKey().map(k -> k.location().toString()).orElse("?")).sorted().toList();
-            // the factory and its settings have no getters: read them back through Enchanted's own codec (a factory that cannot encode shows none)
-            JsonObject factory = RiteType.CODEC.encodeStart(ops, rite).result().filter(JsonElement::isJsonObject).map(JsonElement::getAsJsonObject)
-                    .filter(j -> j.has("factory") && j.get("factory").isJsonObject()).map(j -> j.getAsJsonObject("factory")).orElse(new JsonObject());
-            out.add(new HubSocial.Rite(id.toString(), rite.getPower(), items, shapes, string(factory, "type"), string(factory, "faction")));
+            List<String> shapes = rite.getShapes().entrySet().stream().map(e -> e.getKey().unwrapKey().map(k -> k.location().toString()).orElse("?")
+                    + "=" + net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(e.getValue())).sorted().toList();
+            List<String> sacrifices = rite.getEntities().stream().map(t -> net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(t).toString()).toList();
+            JsonObject factory = factoryOf(server.registryAccess(), rite);
+            boolean fullMoon = factory.has("requires_full_moon") && factory.get("requires_full_moon").isJsonPrimitive() && factory.get("requires_full_moon").getAsBoolean();
+            out.add(new HubSocial.Rite(id.toString(), rite.getPower(), items, shapes, string(factory, "type"), string(factory, "faction"), sacrifices, fullMoon, rite.getTickPower()));
         }
         out.sort(java.util.Comparator.comparing(HubSocial.Rite::id));
         return out;
+    }
+
+    /** The factory and its settings have no getters: read them back through Enchanted's own codec (a factory that cannot encode shows none). */
+    public static JsonObject factoryOf(net.minecraft.core.HolderLookup.Provider registries, RiteType rite) {
+        var ops = RegistryOps.create(JsonOps.INSTANCE, registries);
+        return RiteType.CODEC.encodeStart(ops, rite).result().filter(JsonElement::isJsonObject).map(JsonElement::getAsJsonObject)
+                .filter(j -> j.has("factory") && j.get("factory").isJsonObject()).map(j -> j.getAsJsonObject("factory")).orElse(new JsonObject());
+    }
+
+    /** {@code requires_full_moon} of a rite's factory where its codec defaults it to true and always writes it (Severance, the Alpha Trial): absent means true. */
+    public static boolean requiresFullMoon(JsonObject factory) {
+        return !factory.has("requires_full_moon") || !factory.get("requires_full_moon").isJsonPrimitive() || factory.get("requires_full_moon").getAsBoolean();
     }
 
     private static String string(JsonObject o, String key) {

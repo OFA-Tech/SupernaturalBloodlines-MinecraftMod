@@ -1,0 +1,37 @@
+{
+  "title": "Rite of the Silver Moon",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:iron_ingot"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nRemoves the werewolf side: a werewolf becomes human again, a hybrid or a tribrid a plain vampire. The gene stays.",
+          "header": "The Silver Moon"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Full-moon night only. The target stands on the centre (the caster if nobody does) and must be on the werewolf side. An Original hybrid cannot be cured by it.\n\nWerewolves must be installed. A refusal gives the ingredients back.",
+          "header": "The Silver Moon"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:silver_moon",
+          "header": "The Silver Moon"
+        }
+      ]
+    }
+  ]
+}

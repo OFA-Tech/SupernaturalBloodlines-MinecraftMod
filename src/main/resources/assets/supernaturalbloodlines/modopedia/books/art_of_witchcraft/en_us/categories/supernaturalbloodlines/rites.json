@@ -1,0 +1,20 @@
+{
+  "children": [
+    "supernaturalbloodlines/rites/vampires",
+    "supernaturalbloodlines/rites/werewolves",
+    "supernaturalbloodlines/rites/witches",
+    "supernaturalbloodlines/rites/lines",
+    "supernaturalbloodlines/rites/artifacts",
+    "supernaturalbloodlines/rites/tensura"
+  ],
+  "entries": [
+    "supernaturalbloodlines/intro"
+  ],
+  "icon": {
+    "count": 1,
+    "id": "minecraft:ender_eye"
+  },
+  "landing_text": "The rites of Supernatural Bloodlines: vampires, werewolves, witches, the lines of the Originals and the things they make.\n\nThey are performed like any other circle magic.",
+  "sort_num": 6,
+  "title": "Supernatural Bloodlines"
+}

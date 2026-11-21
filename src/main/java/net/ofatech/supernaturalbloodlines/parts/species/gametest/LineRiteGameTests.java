@@ -49,6 +49,46 @@ public final class LineRiteGameTests {
     private LineRiteGameTests() {
     }
 
+    /** What the hub is told of a rite is what the rite file says: the creatures it takes, the full moon, the chalk of its circle. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void hubKnowsTheSacrificesTheMoonAndTheChalk(GameTestHelper helper) {
+        var rites = net.ofatech.supernaturalbloodlines.parts.species.SpeciesHub.rites(helper.getLevel().getServer());
+        var immortality = rites.stream().filter(r -> r.id().equals(NS + ":immortality")).findFirst().orElse(null);
+        helper.assertTrue(immortality != null, "immortality is not in the rites sent to the hub");
+        helper.assertTrue(immortality.sacrifices().equals(List.of("minecraft:villager")), "sacrifices " + immortality.sacrifices());
+        helper.assertTrue(immortality.fullMoon(), "immortality is a full-moon rite");
+        helper.assertTrue(immortality.shapes().equals(List.of("enchanted:medium_circle=enchanted:ritual_chalk")), "shapes " + immortality.shapes());
+        var severance = rites.stream().filter(r -> r.id().equals(NS + ":rite_of_severance")).findFirst().orElse(null);
+        helper.assertTrue(severance != null && severance.fullMoon(), "Severance is a full-moon rite and its file says so");
+        var imprisoned = rites.stream().filter(r -> r.id().equals(NS + ":" + IMPRISONED_ID)).findFirst().orElse(null);
+        // the Imprisoned rite also needs the artifacts part (its mountain ash), so it is only there when that is on
+        helper.assertTrue(imprisoned == null || imprisoned.circles().get(0).shape().equals("large_circle"), "the Imprisoned rite is drawn in the large circle");
+        helper.assertTrue(rites.stream().filter(r -> r.id().endsWith("hybrid_blood") || r.id().endsWith("original_blood")).noneMatch(r -> r.fullMoon()), "a rite with no moon says none");
+        helper.succeed();
+    }
+
+    private static final String IMPRISONED_ID = "rite_of_the_imprisoned_original";
+
+    private static com.google.gson.JsonObject json(String s) {
+        return com.google.gson.JsonParser.parseString(s).getAsJsonObject();
+    }
+
+    /** Severance and the Alpha Trial are full-moon rites unless their file says otherwise: an old file or a datapack override without the key keeps the rule. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void fullMoonRitesWithoutTheKeyStillNeedTheMoon(GameTestHelper helper) {
+        var ops = com.mojang.serialization.JsonOps.INSTANCE;
+        var severance = net.ofatech.supernaturalbloodlines.parts.species.rite.SeveranceRiteFactory.CODEC.codec();
+        var trial = net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory.CODEC.codec();
+        helper.assertTrue(severance.parse(ops, json("{}")).getOrThrow().requiresFullMoon(), "Severance without the key");
+        helper.assertTrue(trial.parse(ops, json("{\"faction\":\"werewolf\"}")).getOrThrow().requiresFullMoon(), "the Alpha Trial without the key");
+        helper.assertTrue(!severance.parse(ops, json("{\"requires_full_moon\":false}")).getOrThrow().requiresFullMoon(), "Severance with the key off");
+        helper.assertTrue(!trial.parse(ops, json("{\"requires_full_moon\":false}")).getOrThrow().requiresFullMoon(), "the Alpha Trial with the key off");
+        // the hub learns of the moon from the encoded factory: a true that equals the default must be written
+        helper.assertTrue(severance.encodeStart(ops, new net.ofatech.supernaturalbloodlines.parts.species.rite.SeveranceRiteFactory(true)).getOrThrow().getAsJsonObject().get("requires_full_moon").getAsBoolean(), "Severance is written back");
+        helper.assertTrue(trial.encodeStart(ops, new net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaTrialRiteFactory("werewolf", true)).getOrThrow().getAsJsonObject().get("requires_full_moon").getAsBoolean(), "the Alpha Trial is written back");
+        helper.succeed();
+    }
+
     /** The circle, a witch at its edge, a player Original and a hybrid of their line, all "online". */
     static final class Rig {
         final GameTestHelper helper;

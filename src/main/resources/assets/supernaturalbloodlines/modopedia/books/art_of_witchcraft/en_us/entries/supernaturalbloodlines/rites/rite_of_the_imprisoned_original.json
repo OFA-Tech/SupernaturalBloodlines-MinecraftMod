@@ -1,0 +1,55 @@
+{
+  "title": "Rite of the Imprisoned Original",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:iron_bars"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: large circle, ritual chalk.\n\nTraps an Original in a closed ring of mountain ash for the whole rite. At the end the target and their whole branch leave that Original's line, never the Original's whole line.",
+          "header": "Imprisoned Original"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Only a witch type can work it, under a lunar eclipse. Needs the target's bound Sire's Blood; the target must be online here and not an Original.",
+          "header": "Imprisoned Original"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Draw the ring first, inside the chalk and 6 blocks from the centre (a ring closing within 8 blocks works). The Original stands on the centre inside it, downed, dying or desiccated, and must be of the target's line.",
+          "header": "Imprisoned Original"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The rite lasts 30 seconds (a server setting) and is checked twice a second. A broken ring, an Original who escapes, the eclipse ending or the caster or target leaving ends it with no effect, and the ingredients are spent.",
+          "header": "Imprisoned Original"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_the_imprisoned_original",
+          "header": "Imprisoned Original"
+        }
+      ]
+    }
+  ]
+}

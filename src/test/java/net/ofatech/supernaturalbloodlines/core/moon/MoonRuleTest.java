@@ -28,6 +28,26 @@ class MoonRuleTest {
     }
 
     @Test
+    void anyNightIsTheNightWindowInADimensionWithADay() {
+        assertTrue(MoonRule.isNight(false, 13000));
+        assertTrue(MoonRule.isNight(false, 24000L * 3 + 18000));
+        assertFalse(MoonRule.isNight(false, 6000), "noon");
+        assertFalse(MoonRule.isNight(false, MoonRule.NIGHT_START));
+        assertFalse(MoonRule.isNight(false, MoonRule.NIGHT_END));
+        assertFalse(MoonRule.isNight(true, 13000), "a fixed-time dimension has no night");
+    }
+
+    @Test
+    void aRiteThatDoesNotNeedTheFullMoonStillNeedsANight() {
+        assertTrue(MoonRule.nightFor(true, false, 0, 13000));
+        assertFalse(MoonRule.nightFor(true, false, 3, 13000), "the full moon asked for, another phase");
+        assertTrue(MoonRule.nightFor(false, false, 3, 13000), "no moon asked for: a night of any phase");
+        assertFalse(MoonRule.nightFor(false, false, 3, 6000), "no moon asked for is not no night asked for");
+        assertFalse(MoonRule.nightFor(false, false, 0, 6000), "noon on the full-moon day");
+        assertFalse(MoonRule.nightFor(false, true, 3, 13000));
+    }
+
+    @Test
     void fixedTimeDimensionsNeverHaveAFullMoon() {
         assertFalse(MoonRule.isFullMoon(true, 0));
     }

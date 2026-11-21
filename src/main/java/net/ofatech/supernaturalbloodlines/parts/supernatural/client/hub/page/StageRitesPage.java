@@ -38,6 +38,12 @@ public final class StageRitesPage implements HubPageView {
     @Nullable
     private String selected;
     private boolean circle;
+    /** Development only (the screenshots): open on the circle view. */
+    private static volatile boolean devCircle;
+
+    public static void devCircle(boolean on) {
+        devCircle = on;
+    }
 
     @Override
     public void render(HubScreen.Frame f) {
@@ -46,6 +52,9 @@ public final class StageRitesPage implements HubPageView {
         List<HubRites.Listed> rites = HubRites.list(f.view.snapshot().rites(), f.view.races(), asked);
         HubRites.Listed chosen = rites.stream().filter(l -> l.rite().id().equals(selected != null ? selected : RitesPage.devSelected())).findFirst().orElse(rites.isEmpty() ? null : rites.get(0));
 
+        if (devCircle) {
+            circle = true;
+        }
         BookKit.moonHead(f, Component.translatable(KEY + "title"), Component.translatable(BOOK + "subtitle_short"));
         Rect s = f.region(BookKit.FULL);
         int top = f.begin(BookKit.FULL);
@@ -56,6 +65,16 @@ public final class StageRitesPage implements HubPageView {
                 boolean have = BookRitesPage.have(f.view.player(), entry);
                 y = BookKit.leader(f, RitesPage.item(entry), Component.translatable(BOOK + (have ? "in_hand" : "missing")).copy().append(have ? " \u2713" : ""), s.x() + 20, y,
                         s.w() - 40, have ? t.good() : t.accent());
+            }
+            // a warning or a condition first, then what the rite does, who can perform it and what it costs: all of it, and the page scrolls
+            for (Component note : RitesPage.trialNotes(chosen.rite(), f.view.bloodline().wolf())) {
+                y = PageKit.wrapped(f, note, s.x() + 20, y + 2, s.w() - 40, t.accent());
+            }
+            for (Component fact : RitesPage.facts(chosen.rite())) {
+                y = PageKit.wrapped(f, fact, s.x() + 20, y + 2, s.w() - 40, t.accent());
+            }
+            for (Component line : RitesPage.descriptions(chosen.rite())) {
+                y = PageKit.wrapped(f, line, s.x() + 20, y + 4, s.w() - 40, t.ink());
             }
             f.end(y);
         } else {
@@ -83,14 +102,16 @@ public final class StageRitesPage implements HubPageView {
         f.g.fill(box.x() + 1, box.y() + 1, box.right() - 1, box.bottom() - 1, t.paper());
         int cx = box.x() + 20;
         int cy = box.y() + 22;
-        int ring = l.forYou() ? t.good() : t.muted();
-        KitDraw.tickRing(f.g, cx, cy, 13, 28, 1f, ring, ring);
-        for (int i = 0; i < 4; i++) {
-            double a = Math.PI / 4 + Math.PI * i / 2;
-            int px = cx + (int) Math.round(13 * Math.cos(a));
-            int py = cy + (int) Math.round(13 * Math.sin(a));
-            f.g.fill(px - 2, py - 2, px + 2, py + 2, GOLD);
-        }
+        // the ring is the rite's own circle: its size by the shape, its colour by the chalk (white ritual, red infernal, purple otherwhere)
+        HubSocial.Circle circle = l.rite().circles().isEmpty() ? new HubSocial.Circle("medium_circle", "ritual_chalk") : l.rite().circles().get(0);
+        int radius = switch (circle.shape()) {
+            case "small_circle" -> 8;
+            case "large_circle" -> 17;
+            default -> 12;
+        };
+        int ring = RiteDiagram.chalkColor(circle);
+        KitDraw.tickRing(f.g, cx, cy, radius, radius * 2, 1f, ring, ring);
+        f.g.fill(cx - 2, cy - 2, cx + 2, cy + 2, GOLD);
         int tx = box.x() + 40;
         int tw = box.w() - 46;
         // the name in up to two lines, cut with an ellipsis only when even that does not fit
@@ -99,7 +120,7 @@ public final class StageRitesPage implements HubPageView {
             f.g.drawString(f.font(), name.get(k), tx, box.y() + 5 + 10 * k, sel ? t.accent() : t.ink(), false);
         }
         int py = box.y() + 5 + 10 * name.size() + 2;
-        BookKit.small(f, Component.translatable(BOOK + "power", String.format("%,d", l.rite().power())), tx, py, tw, GOLD);
+        BookKit.small(f, RitesPage.powerCard(l.rite()), tx, py, tw, GOLD);
         Component status = Component.translatable(BOOK + (l.forYou() ? "yours" : "anyone"));
         int sw = Math.min(tw, BookKit.smallWidth(f, status.getString()) + 8);
         f.g.fill(tx, py + 11, tx + sw, py + 22, l.forYou() ? (t.good() & 0xFFFFFF) | 0x55000000 : (t.muted() & 0xFFFFFF) | 0x33000000);
@@ -113,16 +134,14 @@ public final class StageRitesPage implements HubPageView {
 
     private void detail(HubScreen.Frame f, HubRites.Listed l) {
         HubSocial.Rite rite = l.rite();
-        List<Component> items = new ArrayList<>();
-        rite.items().forEach(e -> items.add(RitesPage.item(e)));
-        Component shape = rite.shapes().isEmpty() ? Component.literal("-") : RitesPage.shapeName(rite.shapes().get(0));
-        Detail.Builder d = Detail.of(RitesPage.name(rite)).subtitle(Component.translatable(BOOK + "sub", shape, String.format("%,d", rite.power())));
-        // the Alpha Trial's warning (or why it is not for you) comes first: the Blood Moon bar shows only the first two lines
+        Detail.Builder d = Detail.of(RitesPage.name(rite)).subtitle(BookRitesPage.sub(rite));
+        // the bar and the pane cut what does not fit with an ellipsis, so they carry only what is short: a warning (the Alpha Trial's), a condition. What the
+        // rite does, who can perform it and what it costs are on the circle view, which scrolls like the Grimoire's page.
         RitesPage.trialNotes(rite, f.view.bloodline().wolf()).forEach(d::body);
-        RitesPage.descriptions(rite).forEach(d::body);
-        d.body(items.isEmpty() ? Component.translatable(BOOK + "no_items") : Component.translatable(BOOK + "needs", items.stream().map(Component::getString).reduce((a, b) -> a + ", " + b).orElse("")));
-        HubHooks.Launcher book = HubHooks.launchers().stream().filter(x -> x.id().equals("enchanted")).findFirst().orElse(null);
-        d.action(new Detail.Action("book", Component.translatable(BOOK + "enchanted_short"), false, book != null, null, null, () -> f.screen().launch(book)));
+        RitesPage.facts(rite).forEach(d::body);
+        HubHooks.Launcher book = RitesPage.bookLauncher(rite);
+        d.action(new Detail.Action("book", Component.translatable(BOOK + "enchanted_short"), false, book != null,
+                book == null ? Component.translatable(BOOK + "no_book") : null, null, () -> f.screen().launch(book)));
         d.action("circle", Component.translatable(BOOK + (circle ? "back" : "show_circle")), true, true, () -> circle = !circle);
         f.detail(d.build());
     }

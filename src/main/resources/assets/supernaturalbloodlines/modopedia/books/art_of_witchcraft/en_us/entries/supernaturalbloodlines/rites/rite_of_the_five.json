@@ -1,0 +1,37 @@
+{
+  "title": "Rite of the Five",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:candle"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nMarks a hunter as a Hunter of the Five.\n\nThe target stands on the centre (the caster if nobody does): a hunter with no species, or a Potential. The Five must not be full (a server setting).",
+          "header": "Rite of the Five"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "A refusal tells the caster why and gives the ingredients back.",
+          "header": "Rite of the Five"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_the_five",
+          "header": "Rite of the Five"
+        }
+      ]
+    }
+  ]
+}

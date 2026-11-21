@@ -9,6 +9,8 @@ import java.util.Set;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
+import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LadderTable;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
@@ -65,7 +67,7 @@ public final class RitesPage implements HubPageView {
                 y = PageKit.wrapped(f, Component.translatable(KEY + (l.forYou() ? "for_you" : "others")).withStyle(ChatFormatting.BOLD),
                         r.x(), y + 3, r.w(), t.accent());
             }
-            Component power = Component.translatable(KEY + "power_short", l.rite().power());
+            Component power = powerShort(l.rite());
             int pw = f.font().width(power);
             Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, PageKit.LINE + 1);
             if (l == chosen) {
@@ -92,9 +94,13 @@ public final class RitesPage implements HubPageView {
             HubSocial.Rite rite = chosen.rite();
             sy = PageKit.wrapped(f, name(rite), s.x(), sy, s.w(), t.accent());
             t.drawRule(f.g, s.x(), sy + 2, s.w());
-            sy = PageKit.wrapped(f, Component.translatable(KEY + "power", String.format("%,d", rite.power())), s.x(), sy + 6, s.w(), t.ink());
+            sy = RiteDiagram.draw(f, s, sy + 6, rite);
+            sy = PageKit.wrapped(f, powerText(rite), s.x(), sy, s.w(), t.ink());
             for (String shape : rite.shapes()) {
-                sy = PageKit.wrapped(f, Component.translatable(KEY + "circle", shapeName(shape)), s.x(), sy, s.w(), t.ink());
+                sy = PageKit.wrapped(f, Component.translatable(KEY + "circle", circleName(shape)), s.x(), sy, s.w(), t.ink());
+            }
+            for (Component fact : facts(rite)) {
+                sy = PageKit.wrapped(f, fact, s.x(), sy, s.w(), t.ink());
             }
             if (!rite.items().isEmpty()) {
                 sy = PageKit.wrapped(f, Component.translatable(KEY + "items"), s.x(), sy + 3, s.w(), t.ink());
@@ -118,15 +124,11 @@ public final class RitesPage implements HubPageView {
         f.end(sy);
     }
 
-    /** What a rite does in one or two lines (duration, who can perform it, what happens to others), when the rite has them in the lang file. */
+    /** What a rite does, who can perform it and what it costs: every line the lang file has for it (the book shows the same ones). */
     static List<Component> descriptions(HubSocial.Rite rite) {
-        ResourceLocation id = ResourceLocation.parse(rite.id());
         List<Component> out = new ArrayList<>();
-        for (int i = 1; i <= 2; i++) {
-            String key = KEY + "desc." + id.getPath() + "." + i;
-            if (net.minecraft.locale.Language.getInstance().has(key)) {
-                out.add(Component.translatable(key));
-            }
+        for (String key : HubRites.descKeys(rite.id(), net.minecraft.locale.Language.getInstance()::has)) {
+            out.add(Component.translatable(key));
         }
         return out;
     }
@@ -146,6 +148,68 @@ public final class RitesPage implements HubPageView {
     static Component name(HubSocial.Rite rite) {
         ResourceLocation id = ResourceLocation.parse(rite.id());
         return Component.translatableWithFallback("rite." + id.getNamespace() + "." + id.getPath(), HubModel.pretty(id.getPath()));
+    }
+
+    /** "Power: 6,000", or that the rite asks for none (it costs something else, which its description says). */
+    static Component powerText(HubSocial.Rite rite) {
+        return switch (HubRites.cost(rite)) {
+            case ALTAR -> Component.translatable(KEY + "power", String.format("%,d", rite.power()));
+            case MAGICULES -> Component.translatable(KEY + "power_magicules");
+            case NONE -> Component.translatable(KEY + "power_none");
+        };
+    }
+
+    /** The cost in a list row: "6,000", or "magicules" / "no power" when the altar gives nothing. */
+    static Component powerShort(HubSocial.Rite rite) {
+        return switch (HubRites.cost(rite)) {
+            case ALTAR -> Component.translatable(KEY + "power_short", rite.power());
+            case MAGICULES -> Component.translatable(KEY + "power_short_magicules");
+            case NONE -> Component.translatable(KEY + "power_short_none");
+        };
+    }
+
+    /** The cost on a book card: "6,000 power", "costs magicules" or "no altar power". */
+    static Component powerCard(HubSocial.Rite rite) {
+        String book = PageKit.HUB + "book.rites.";
+        return switch (HubRites.cost(rite)) {
+            case ALTAR -> Component.translatable(book + "power", String.format("%,d", rite.power()));
+            case MAGICULES -> Component.translatable(book + "power_magicules");
+            case NONE -> Component.translatable(book + "power_none");
+        };
+    }
+
+    /** "medium circle, infernal chalk" for a {@code shape=chalk} pair of the wire; a shape without a chalk is only the shape. */
+    static Component circleName(String pair) {
+        HubSocial.Circle c = HubSocial.Circle.parse(pair);
+        return c.chalk().isEmpty() ? shapeName(c.shape()) : Component.translatable(KEY + "circle_chalk", shapeName(c.shape()), chalkName(c.chalk()));
+    }
+
+    static Component chalkName(String chalk) {
+        return Component.translatableWithFallback(KEY + "chalk." + chalk, HubModel.pretty(chalk));
+    }
+
+    /** What the circle picture cannot say: the creatures the rite takes, and that it works on a full-moon night only. */
+    static List<Component> facts(HubSocial.Rite rite) {
+        List<Component> out = new ArrayList<>();
+        if (!rite.sacrifices().isEmpty()) {
+            List<Component> names = new ArrayList<>();
+            for (String id : rite.sacrifices()) {
+                ResourceLocation type = ResourceLocation.tryParse(id);
+                names.add(type != null && BuiltInRegistries.ENTITY_TYPE.containsKey(type) ? BuiltInRegistries.ENTITY_TYPE.get(type).getDescription() : Component.literal(id));
+            }
+            out.add(Component.translatable(KEY + "sacrifice", ComponentUtils.formatList(names, Component.literal(", "))));
+        }
+        if (rite.fullMoon()) {
+            out.add(Component.translatable(KEY + "full_moon"));
+        }
+        return out;
+    }
+
+    /** The launcher that opens Enchanted's book on this rite's entry; null when the book is not there. */
+    static HubHooks.Launcher bookLauncher(HubSocial.Rite rite) {
+        HubHooks.Launcher any = HubHooks.launchers().stream().filter(l -> l.id().equals("enchanted")).findFirst().orElse(null);
+        return any == null ? null : new HubHooks.Launcher(any.id(), any.letter(), any.color(), any.name(), any.screenPackage(), any.available(),
+                () -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.book.EnchantedBook.openRite(rite.id()));
     }
 
     static Component shapeName(String shape) {
