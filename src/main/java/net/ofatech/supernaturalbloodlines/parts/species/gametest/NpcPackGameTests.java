@@ -153,6 +153,8 @@ public final class NpcPackGameTests {
                 helper.getLevel().setChunkForced(cp.x, cp.z, true);
                 OURS.add(cp);
             }
+            // the chunk's loading runs on other threads in real time while the test's own ticks come as fast as the server can make them, so waiting a number of ticks for it is a race under load: load it now
+            helper.getLevel().getChunk(cp.x, cp.z);
             HELD.computeIfAbsent(helper, k -> new java.util.ArrayList<>()).add(cp);
             spots.add(at);
         }
