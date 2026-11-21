@@ -752,11 +752,45 @@ public final class OriginalGameTests {
                 helper.assertTrue(!found.isEmpty(), "no Original's Blood was made from " + s);
                 helper.assertTrue(s.name().equals(found.get(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get())),
                         "the bottle records " + found.get(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get()) + ", expected " + s);
+                var stamp = net.ofatech.supernaturalbloodlines.parts.species.item.BloodStamp.read(found).orElse(null);
+                helper.assertTrue(stamp != null && stamp.kind() == net.ofatech.supernaturalbloodlines.core.blood.BloodKind.of(s) && !stamp.npc()
+                        && stamp.id().equals(source.getUUID()), "the stamp is " + stamp);
+                helper.assertTrue("?".equals(found.get(SpeciesRegistries.BLOOD_LABEL_COMPONENT.get())), "the label is " + found.get(SpeciesRegistries.BLOOD_LABEL_COMPONENT.get()));
             } finally {
                 clearDropped(helper);
                 remove(helper, source);
                 reset(source);
             }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void hybridBloodRiteStampsHybrid(GameTestHelper helper) {
+        if (type(helper, "hybrid_blood") == null) {
+            helper.succeed(); // Hybrid's Blood is there only with Werewolves
+            return;
+        }
+        clearDropped(helper);
+        RecordingPlayer source = RecordingPlayer.create(helper);
+        place(helper, source);
+        try {
+            BloodlineAccess.set(source, species(Species.HYBRID));
+            start(helper, "hybrid_blood", source, List.of(new ItemStack(Items.GLASS_BOTTLE)));
+            ItemStack found = ItemStack.EMPTY;
+            for (ItemEntity i : helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(centre(helper)).inflate(1.5))) {
+                if (i.getItem().is(SpeciesRegistries.HYBRID_BLOOD.get())) {
+                    found = i.getItem();
+                }
+            }
+            helper.assertTrue(!found.isEmpty(), "no Hybrid's Blood was made");
+            var stamp = net.ofatech.supernaturalbloodlines.parts.species.item.BloodStamp.read(found).orElse(null);
+            helper.assertTrue(stamp != null && stamp.kind() == net.ofatech.supernaturalbloodlines.core.blood.BloodKind.HYBRID && stamp.id().equals(source.getUUID()), "the stamp is " + stamp);
+            helper.assertTrue("?".equals(found.get(SpeciesRegistries.BLOOD_LABEL_COMPONENT.get())), "the label is " + found.get(SpeciesRegistries.BLOOD_LABEL_COMPONENT.get()));
+        } finally {
+            clearDropped(helper);
+            remove(helper, source);
+            reset(source);
         }
         helper.succeed();
     }}

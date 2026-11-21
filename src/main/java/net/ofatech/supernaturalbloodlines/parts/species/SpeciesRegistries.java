@@ -80,12 +80,28 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_SOURCE_NAME_COMPONENT =
             COMPONENTS.registerComponentType("blood_source_name", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
 
-    /** The species ({@code Species} name) of the one a bottle of Original's Blood was taken from, written when the rite fills it (R40a). A bottle without it was made before. */
+    /**
+     * The species ({@code Species} name) of the one a bottle of blood was taken from, written when the bottle is made (R40a, R210). A bottle without it was made before.
+     * Nothing about the source is secret-safe to send: the four source components keep their real saved value and sync as units (the client sees only that they
+     * exist), and {@link #BLOOD_LABEL_COMPONENT} is the one thing a tooltip may read.
+     */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_SOURCE_SPECIES_COMPONENT =
-            COMPONENTS.registerComponentType("blood_source_species", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
+            COMPONENTS.registerComponentType("blood_source_species", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(unit("")));
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> BLOOD_SOURCE_COMPONENT =
-            COMPONENTS.registerComponentType("blood_source", b -> b.persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC));
+            COMPONENTS.registerComponentType("blood_source", b -> b.persistent(UUIDUtil.CODEC).networkSynchronized(unit(Util.NIL_UUID)));
+
+    /** Whether the source was a mob (R210). Server-only value, unit-synced. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> BLOOD_SOURCE_NPC_COMPONENT =
+            COMPONENTS.registerComponentType("blood_source_npc", b -> b.persistent(Codec.BOOL).networkSynchronized(unit(false)));
+
+    /** The source's real name, kept on the server so a bottle can be traced; never sent to a client. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_SOURCE_PRIVATE_NAME_COMPONENT =
+            COMPONENTS.registerComponentType("blood_source_private_name", b -> b.persistent(Codec.STRING).networkSynchronized(unit("")));
+
+    /** What a tooltip shows: {@code "?"} for every secret kind, a common vampire's name otherwise. The only synced part of a stamped bottle. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_LABEL_COMPONENT =
+            COMPONENTS.registerComponentType("blood_label", b -> b.persistent(Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
 
     public static final DeferredHolder<MobEffect, OriginalBloodEffect> ORIGINAL_BLOOD_EFFECT =
             EFFECTS.register("original_blood", OriginalBloodEffect::new);
@@ -112,6 +128,11 @@ public final class SpeciesRegistries {
     /** Ticks left of the downed state (0 = not downed). Saved, so a relog resumes it. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> DOWNED =
             ATTACHMENTS.register("downed", () -> AttachmentType.builder(() -> 0).serialize(Codec.INT).build());
+
+    /** Game time each of this player's timed actions is ready again, by action id (see {@code ActionClock}). Saved and kept through death. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<java.util.Map<String, Long>>> ACTION_READY =
+            ATTACHMENTS.register("action_ready", () -> AttachmentType.<java.util.Map<String, Long>>builder(() -> new java.util.HashMap<String, Long>())
+                    .serialize(Codec.unboundedMap(Codec.STRING, Codec.LONG)).copyOnDeath().build());
 
     /**
      * Who sired this creature (a converted mob; players keep it in the bloodline state). Saved, not copied on death:
@@ -177,6 +198,12 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<VillagerDiscount>> VILLAGER_DISCOUNT =
             ATTACHMENTS.register("villager_discount", () -> AttachmentType.builder(() -> new VillagerDiscount(Util.NIL_UUID, 0, 0))
                     .serialize(VillagerDiscount.CODEC).build());
+
+    /** Sends nothing and reads as {@code value}: vanilla's {@code StreamCodec.unit} refuses to encode anything else, and a secret must not be sent at all. */
+    private static <T> net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, T> unit(T value) {
+        return net.minecraft.network.codec.StreamCodec.of((buf, ignored) -> {
+        }, buf -> value);
+    }
 
     private SpeciesRegistries() {}
 

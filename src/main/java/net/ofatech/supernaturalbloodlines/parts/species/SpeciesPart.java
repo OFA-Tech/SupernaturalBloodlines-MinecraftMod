@@ -189,6 +189,10 @@ public final class SpeciesPart {
         Electricity.register(); // always: Shocked and the Taser work on every supernatural
         TurningHandler.register(); // always: the turning is vampires only, no Werewolves needed
         GhoulGates.register();
+        net.ofatech.supernaturalbloodlines.parts.species.item.BloodBottles.register();
+        net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrops.register();
+        net.ofatech.supernaturalbloodlines.parts.species.item.BloodTooltip.register();
+        net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.install(net.ofatech.supernaturalbloodlines.parts.species.item.BottleBloodAction.INSTANCE);
         net.ofatech.supernaturalbloodlines.parts.species.moon.FullMoonSleep.register(); // no Werewolves needed: "everyone" works without it
         net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.set(p -> new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(
                 net.ofatech.supernaturalbloodlines.core.moon.SleepRules.appliesTo(SpeciesConfig.fullMoonSleep(),
@@ -294,6 +298,7 @@ public final class SpeciesPart {
             e.register(SeveranceGameTests.class);
             e.register(SeveranceRiteGameTests.class);
             e.register(TurningGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.BloodBottleGameTests.class);
             e.register(GhoulGameTests.class);
             e.register(GeneGameTests.class);
             e.register(DoppelgangerVillagerGameTests.class);
@@ -315,6 +320,7 @@ public final class SpeciesPart {
                 e.register(SirelineHybridGameTests.class);
                 e.register(HunterWerewolfGameTests.class);
                 e.register(HybridGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.BloodBottleWerewolfGameTests.class);
                 e.register(TurningWerewolfGameTests.class);
                 e.register(HybridTraitsGameTests.class);
                 e.register(OriginalHybridGameTests.class);

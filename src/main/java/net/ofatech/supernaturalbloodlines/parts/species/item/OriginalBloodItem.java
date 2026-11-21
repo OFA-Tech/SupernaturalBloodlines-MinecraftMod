@@ -1,6 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.species.item;
 
-import java.util.UUID;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -13,6 +12,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.core.blood.BloodBottleRules;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionBlood;
@@ -45,9 +45,14 @@ public final class OriginalBloodItem extends Item {
         if (!stack.has(SpeciesRegistries.BLOOD_SOURCE_COMPONENT)) {
             return InteractionResultHolder.pass(stack); // blood from nobody
         }
-        if (!mayDrink(stack, player)) {
-            // the bottle is kept; the player is told why (R40a)
-            if (!level.isClientSide) {
+        // the client is not told the source (R210), so it cannot judge the drink: the server decides and tells the player why
+        if (level.isClientSide || !(player instanceof ServerPlayer sp)) {
+            return ItemUtils.startUsingInstantly(level, player, hand);
+        }
+        if (refuses(sp, stack)) {
+            // the bottle is kept; a werewolf is told why (R40a)
+            BloodBottleRules.Drinker drinker = BloodBottles.drinkerOf(sp);
+            if (drinker == BloodBottleRules.Drinker.WEREWOLF || drinker == BloodBottleRules.Drinker.WEREWOLF_IN_TRANSITION) {
                 player.displayClientMessage(Component.translatable(REFUSED), true);
             }
             return InteractionResultHolder.fail(stack);
@@ -60,32 +65,32 @@ public final class OriginalBloodItem extends Item {
         return TransitionBlood.accepts(SpeciesConfig.transitionBloodAnyOriginal(), stack.get(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT));
     }
 
-    private static final net.minecraft.resources.ResourceLocation WEREWOLF_ID = net.minecraft.resources.ResourceLocation.parse("werewolves:werewolf");
+    /** Original's Blood is for the blood of an Original: a bottle the rules would refuse, or do nothing with (a werewolf and common blood), is kept. */
+    private static boolean refuses(ServerPlayer p, ItemStack stack) {
+        BloodBottleRules.Effect e = BloodBottles.decide(p, BloodBottles.sourceOf(stack));
+        return e == BloodBottleRules.Effect.REFUSED || e == BloodBottleRules.Effect.NO_EFFECT;
+    }
 
     /**
-     * Who may drink it. A werewolf, when the bottle's source may start the hybrid transition: {@code hybrid_transition_blood} gates only that. A player with no
-     * faction, a Ghoul, or someone in the turning, whatever the setting says: the blood is their pending sire for the vampire turning. Anyone else is refused.
+     * Who may drink it (R210): the rules of its kind, see {@link BloodBottles#decide}. A werewolf, when the bottle's source may start the hybrid transition;
+     * a player with no faction, a Ghoul, or someone in the turning, whatever {@code hybrid_transition_blood} says. Anyone else is refused.
      */
     public static boolean mayDrink(ItemStack stack, LivingEntity drinker) {
         if (!(drinker instanceof Player p)) {
             return false;
         }
-        var faction = de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
-        if (faction != null && WEREWOLF_ID.equals(faction.getID())) {
-            return startsTransition(stack);
-        }
-        var state = net.ofatech.supernaturalbloodlines.core.BloodlineAccess.get(p);
-        return faction == null || state.ghoul() || state.inTurning();
+        return !(p instanceof ServerPlayer sp) || !refuses(sp, stack);
     }
 
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
-        UUID source = stack.get(SpeciesRegistries.BLOOD_SOURCE_COMPONENT);
-        if (!mayDrink(stack, entity)) {
-            return stack; // not drunk by any other route either; nothing is used up
-        }
-        if (source != null && entity instanceof ServerPlayer player) {
-            BloodDrink.drank(player, source, stack.get(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT), false);
+        if (entity instanceof ServerPlayer player) {
+            if (refuses(player, stack)) {
+                return stack; // not drunk by any other route either; nothing is used up
+            }
+            BloodBottles.apply(player, BloodBottles.sourceOf(stack));
+        } else if (!mayDrink(stack, entity)) {
+            return stack;
         }
         return entity instanceof Player player ? ItemUtils.createFilledResult(stack, player, new ItemStack(Items.GLASS_BOTTLE)) : stack;
     }

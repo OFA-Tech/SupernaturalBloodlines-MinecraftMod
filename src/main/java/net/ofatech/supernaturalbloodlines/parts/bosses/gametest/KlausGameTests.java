@@ -609,6 +609,22 @@ public final class KlausGameTests {
         BloodlineAccess.set(p, BloodlineState.NONE);
     }
 
+    /** Q12: one bottle of Klaus's Blood is enough to put vampire blood in a human, and a human who then dies turns with Klaus as the pending sire. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void klausBloodAlsoPutsVampireBloodInAHuman(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.createMortal(helper);
+        try {
+            helper.assertTrue(drink(helper, p, new ItemStack(BossItems.KLAUS_BLOOD.get())), "the drink did not start");
+            helper.assertTrue(BloodlineAccess.get(p).vampireBloodUntil() != 0, "a human is not marked by Klaus's Blood");
+            p.hurt(helper.getLevel().damageSources().generic(), 1000f);
+            helper.assertTrue(BloodlineAccess.get(p).inTurning() && BossTestRig.KLAUS.equals(BloodlineAccess.get(p).pendingSire()),
+                    "no turning with Klaus as the pending sire: " + BloodlineAccess.get(p));
+        } finally {
+            forgetAll(helper, p);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void drinkingKlausBloodWithoutTurningLeavesNoSireAndNoLine(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.createMortal(helper);

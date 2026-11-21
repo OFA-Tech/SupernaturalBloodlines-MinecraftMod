@@ -57,7 +57,9 @@ public final class LoadoutVampirismGameTests {
         Loadout l = LoadoutService.get(p);
         helper.assertTrue(l.get(0).equals(Optional.of(Loadout.BITE)), "slot 1 is " + l.get(0));
         for (int i = 1; i < Loadout.SLOTS; i++) {
-            helper.assertTrue(l.get(i).isEmpty(), "slot " + (i + 1) + " is " + l.get(i));
+            // the species part offers Bottle my blood to a vampire who is not an Original (R211): the first free slot, nothing else
+            boolean bottleBlood = i == 1 && l.get(i).equals(Optional.of(net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.BOTTLE_BLOOD));
+            helper.assertTrue(l.get(i).isEmpty() || bottleBlood, "slot " + (i + 1) + " is " + l.get(i));
         }
         helper.succeed();
     }

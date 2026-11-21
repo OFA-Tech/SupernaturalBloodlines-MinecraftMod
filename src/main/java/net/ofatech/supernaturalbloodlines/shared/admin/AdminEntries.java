@@ -105,6 +105,8 @@ public final class AdminEntries {
         for (String key : List.of("npc_weight_brother", "npc_weight_tensura", "npc_bonus_share")) {
             species(all, key, DOUBLE);
         }
+        species(all, "bottle_blood_cooldown_seconds", INT);
+        species(all, "bottle_blood_health_cost", DOUBLE);
         species(all, "alpha_trial_enabled", BOOL);
         species(all, "alpha_trial_min_level", INT);
         species(all, "alpha_trial_hp_factor", DOUBLE);
