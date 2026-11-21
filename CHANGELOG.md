@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased (plan 18a: blood bottles carry their source)
+
+### Changed
+- **Update the server and every client together.** The four blood-source data components of an item (`blood_source`, `blood_source_species`, and the new `blood_source_npc`, `blood_source_private_name`) are now sent to a client as nothing at all, so a client cannot read an Original's UUID or species off a bottle, resolve a player's name, or tell an Original's bottle from a hybrid's. A client on the old version would read the new stacks wrongly. (The saved bottles are untouched: they keep their source and species on the server.)
+- **A bottle of blood tells only what it may.** The tooltip of a bottle names its source only for a common vampire ("Common vampire blood", "From <name>"); every other kind reads "Strange blood", for every kind alike, from the one synced label (`blood_label`: `?` or the common vampire's name).
+- **Every bottle records the kind of its source** (common vampire, Original, hybrid, Original hybrid, tribrid, heretic), not only Original's Blood: the two blood rites, the new Bottle my blood action and every `vampirism:vampire_blood_bottle` a vampire mob drops (an NPC Original's as an Original, Klaus's as an Original hybrid). A bottle that records nothing (loot, trades, task rewards, anything made before) counts as **common vampire blood**; old Original's Blood bottles keep their source and species (one with no species still reads as an Original hybrid's, so it is accepted under either `hybrid_transition_blood` setting).
+- **Drinking applies the kind's rules.** A human (no faction, a Ghoul, someone in the turning) is marked with vampire blood by any bottle; an Original's or an Original hybrid's blood also names the pending sire, so **Original's Blood and Klaus's Blood now also put vampire blood in a human** (one bottle is enough). A werewolf drinks Vampirism's vampire blood bottle for nothing (it is used up, "The blood does nothing for you."), a werewolf in the transition goes unstable on it, a vampire or a hunter keeps it. Original's Blood a werewolf may not use is still kept, with the same line as before.
+- Creative mode: a creative player's client sends stacks back through the same codec, so a stamped bottle they move comes back with no source and reads as unstamped (common vampire blood).
+
+### Added
+- **Bottle my blood**, a HUD / hub Slots action: a vampire of any kind except an Original or an Original hybrid fills a glass bottle with their own blood, for `bottle_blood_health_cost` health (default 3, never lethal) and a `bottle_blood_cooldown_seconds` cooldown (default 60). The bottle is stamped with their kind. An Original who asks hears the same "no blood to bottle" line as someone with no glass bottle. Both numbers have a hub Admin row. The action is put in a vampire's first free HUD slot once, like the Alpha Roar.
+- `ActionClock`: one saved cooldown per action id (kept through death and relog) for the actions of this plan.
+
+### Rolling back
+Rolling back drops the stamps (the unknown data components are discarded when an old build loads the world) and keeps every bottle drinkable; the saved `action_ready` attachment is ignored. Bottles then count as unrecorded, that is common vampire blood, except old Original's Blood bottles, which are exactly what they were. Bottle my blood disappears with the build.
 ## Unreleased (plan rites-unlock: rites live in Enchanted's book and unlock through species and lore)
 
 ### Changed

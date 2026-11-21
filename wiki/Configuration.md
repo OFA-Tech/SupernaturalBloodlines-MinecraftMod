@@ -62,6 +62,8 @@ All under `[species]`.
 | `max_originals_per_world` | `0` | 0 to 10000 | How many Originals (Original and Original hybrid) the world allows. **0 = unlimited.** Counts Originals who no longer log in. |
 | `transition_ticks` | `24000` | 20 to 24,000,000 | Play time a werewolf has to drink Doppelgänger Blood after dying with Original's Blood, in ticks. The same time a player has in the turning to drink human blood. |
 | `bite_vampire_cost` | `1` | 0 to 20 | How much of their own blood a vampire loses when biting a vampire (a bite on a vampire never feeds). |
+| `bottle_blood_cooldown_seconds` | `60` | 1 to 3600 | Seconds before a vampire (not an Original or an Original hybrid) can use the **Bottle my blood** action again. |
+| `bottle_blood_health_cost` | `3.0` | 0 to 19 | Health the **Bottle my blood** action costs. It never kills: it stops at 1 health. |
 | `vampire_blood_ticks` | `24000` | 20 to 24,000,000 | How long vampire blood stays in a player's system, in game ticks. Dying while it is there starts the turning. |
 | `max_five` | `5` | 1 to 10000 | How many Hunters of the Five the world allows. Lowering it later removes nobody: the Five can stay above it until marks are lost, and no new Rite of the Five works until there are fewer than this. |
 | `max_stacked_sparks` | `5` | 1 to 20 | The most [Alpha sparks](Werewolves-And-Packs#stacked-sparks) one werewolf can hold (an Alpha who kills an Alpha from outside their pack takes the victim's on top of their own). Each past the first adds 10% to the Alpha bonuses and a tier to the Roar's Strength. 1 turns it off. **Lowering it clamps the effects at once**; a holder above the new cap drops to it at their next steal. |
