@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased (HUD mastery bars, side labels, Klaus's Blood sires)
+
+### Added
+- **A mastery bar on every Tensura slot.** A thin bar on the top edge of the slot shows the skill's mastery, in the colour of the hub's theme (red for Grimoire, crimson for Blood Moon, teal for Tensura); a mastered skill has a full gold bar, and a resist skill that is still being learned has a grey-violet bar that fills up to the start of mastery. The numbers are the two ManasCore keeps on the skill instance and Tensura's own HUD reads on the client (`getMastery`, `getMaxMastery`); a skill with no maximum, an empty slot, and every Supernatural-mode slot show nothing. No setting: the bar follows `hud_enabled`.
+
+### Changed
+- **Hold Alt: each slot's label stands beside the slot** (right of the left column, left of the right column, on its own line) instead of two tall panels stacked above. A line is the key, the name, then the mode, why the slot cannot be used or its cooldown, and the mastery, cut with an ellipsis when it does not fit. It stays between the columns and the middle of the screen at GUI scales 2 to 4 (and down to a 171 x 96 window), clear of the pill, the action bar line and the mode panel. Narration is unchanged.
+- **Drinking Original's Blood or Klaus's Blood makes its source your sire** (`BloodDrink`, the one place that records a drink): your sire becomes the Original whose blood it was (Klaus for his blood), you join that Original's line, and the line stays a "?" on your Bloodline page until you discover it. Until now a drink recorded only the blood's source for the hybrid transition, so nothing showed until the transition finished. The first sire wins (a drink never replaces one), an Original is never sired by a drink, and Sire's Blood vials (Elijah's, a boss's) are still not drinkable. **Line death spares an online player who is not supernatural** (someone who only drank the blood and is no vampire yet); the offline rule already did.
+
 ## Unreleased (plan 17g: Peter Hale and the Hale house)
 
 ### Added

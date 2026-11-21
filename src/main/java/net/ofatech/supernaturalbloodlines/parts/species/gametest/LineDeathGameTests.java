@@ -357,6 +357,8 @@ public final class LineDeathGameTests {
     public static void aMemberWhoSurvivesKeepsTheirSireAndOwesTheDeath(GameTestHelper helper) {
         ServerPlayer o = mortal(helper, Species.ORIGINAL);
         ServerPlayer child = TestPlayers.create(helper);
+        // a member who is supernatural: line death spares someone who only drank the blood and is no vampire yet
+        BloodlineAccess.set(child, BloodlineAccess.get(child).toBuilder().species(Species.HYBRID).build());
         try {
             SireRecorder.record(o, child);
             online(o, child);

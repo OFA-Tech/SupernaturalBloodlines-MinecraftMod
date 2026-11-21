@@ -44,7 +44,9 @@ import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.LineTestPlayer;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.Venom;
+import net.ofatech.supernaturalbloodlines.parts.species.line.LineDeath;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex;
+import net.ofatech.supernaturalbloodlines.parts.species.line.Lines;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineWarning;
 import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
@@ -586,6 +588,68 @@ public final class KlausGameTests {
                 SpeciesConfig.overrideTransitionBloodAnyOriginal(null);
                 BloodlineAccess.set(p, BloodlineState.NONE);
             }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void drinkingKlausBloodMakesKlausTheSireAndTheRootAndTheLineStaysHidden(GameTestHelper helper) {
+        LineTestPlayer p = LineTestPlayer.create(helper);
+        // the Bloodline page shows a line only to someone on the vampire side
+        BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().species(Species.HYBRID).build());
+        try {
+            helper.assertTrue(drink(helper, p, new ItemStack(BossItems.KLAUS_BLOOD.get())), "the drink did not start");
+            helper.assertTrue(BossTestRig.KLAUS.equals(BloodlineAccess.get(p).sire()), "the sire is " + BloodlineAccess.get(p).sire());
+            helper.assertTrue(LineIndex.get(helper.getLevel().getServer()).rootOf(p.getUUID()).filter(BossTestRig.KLAUS::equals).isPresent(),
+                    "the line root is " + LineIndex.get(helper.getLevel().getServer()).rootOf(p.getUUID()));
+            helper.assertTrue(BloodlineAccess.get(p).knownLine() == null, "the line was discovered by drinking");
+            var origin = net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial.of(p).origin();
+            helper.assertTrue(origin.state() == net.ofatech.supernaturalbloodlines.core.bloodline.LineRules.State.IN_LINE && origin.root().isEmpty(),
+                    "the Bloodline page does not show a '?' root: " + origin);
+            Lines.learn(p, BossTestRig.KLAUS);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial.of(p).origin().root().isPresent(), "once discovered the root is not shown");
+        } finally {
+            forget(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOriginalsBloodAndAnOriginalDrinkerFollowTheSameRule(GameTestHelper helper) {
+        LineTestPlayer original = LineTestPlayer.create(helper);
+        LineTestPlayer drinker = LineTestPlayer.create(helper);
+        LineTestPlayer rival = LineTestPlayer.create(helper);
+        BloodlineAccess.set(original, BloodlineAccess.get(original).toBuilder().species(Species.ORIGINAL).build());
+        BloodlineAccess.set(rival, BloodlineAccess.get(rival).toBuilder().species(Species.ORIGINAL).build());
+        try {
+            ItemStack bottle = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
+            bottle.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), original.getUUID());
+            helper.assertTrue(drink(helper, drinker, bottle), "the drink did not start");
+            helper.assertTrue(original.getUUID().equals(BloodlineAccess.get(drinker).sire()), "the sire is " + BloodlineAccess.get(drinker).sire());
+            helper.assertTrue(LineIndex.get(helper.getLevel().getServer()).rootOf(drinker.getUUID()).filter(original.getUUID()::equals).isPresent(), "no line");
+            ItemStack second = new ItemStack(BossItems.KLAUS_BLOOD.get());
+            helper.assertTrue(drink(helper, drinker, second), "the second drink did not start");
+            helper.assertTrue(original.getUUID().equals(BloodlineAccess.get(drinker).sire()), "the first sire did not win: " + BloodlineAccess.get(drinker).sire());
+            helper.assertTrue(drink(helper, rival, new ItemStack(BossItems.KLAUS_BLOOD.get())), "an Original could not drink");
+            helper.assertTrue(BloodlineAccess.get(rival).sire() == null, "an Original was sired by a drink");
+        } finally {
+            forget(helper, original, drinker, rival);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void lineDeathLeavesAPlayerWhoOnlyDrankTheBlood(GameTestHelper helper) {
+        LineTestPlayer p = LineTestPlayer.create(helper);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            SireCall.overridePlayerLookup(id -> id.equals(p.getUUID()) ? p : null);
+            helper.assertTrue(drink(helper, p, new ItemStack(BossItems.KLAUS_BLOOD.get())), "the drink did not start");
+            LineDeath.run(rig.server, BossTestRig.KLAUS);
+            helper.assertTrue(!p.isDeadOrDying(), "a human who drank Klaus's Blood died with his line");
+            // this stand-in cannot be hurt, so "was struck" shows as a debt
+            helper.assertTrue(LineIndex.get(rig.server).takeOwed(p.getUUID()).isEmpty(), "line death went for a human who only drank the blood");
+        } finally {
+            forget(helper, p);
         }
         helper.succeed();
     }

@@ -130,11 +130,65 @@ class HudLayoutTest {
                 for (int head : new int[] {1, 2}) {
                     assertFalse(pill.overlaps(HudLayout.preview(s[0], s[1], head)), "panel " + s[0] + "x" + s[1] + " text " + textW);
                 }
-                for (int h : new int[] {40, 80}) {
-                    int top = HudLayout.leftTooltipTop(slots[0].y(), h, true);
-                    assertTrue(top + h <= pill.y() - 2, "the tooltip stands on the pill: " + top + "+" + h + " vs " + pill + " " + s[0] + "x" + s[1]);
+            }
+        }
+    }
+
+    /** The sizes above plus a narrow window, where both columns are lifted above the hotbar strip. */
+    private static final int[][] LABEL_SCREENS = {{320, 180}, {427, 240}, {480, 270}, {640, 360}, {960, 540}, {320, 240}, {213, 120}, {171, 96}};
+
+    @Test
+    void theLabelsStandBesideTheirSlotsInsideTheScreenAndTouchNothingElse() {
+        for (int[] s : LABEL_SCREENS) {
+            String at = s[0] + "x" + s[1];
+            Box[] slots = HudLayout.slots(s[0], s[1]);
+            Box[] labels = HudLayout.labels(s[0], s[1]);
+            assertEquals(6, labels.length, at);
+            Box hotbar = HudLayout.hotbar(s[0], s[1]);
+            Box offhand = HudLayout.offhand(s[0], s[1]);
+            Box attack = HudLayout.attackIndicator(s[0], s[1]);
+            for (int i = 0; i < labels.length; i++) {
+                Box l = labels[i];
+                assertTrue(l.w() >= 40, "room for text: " + l + " " + at);
+                assertTrue(l.x() >= 0 && l.right() <= s[0] && l.y() >= 0 && l.bottom() <= s[1], "off screen " + l + " " + at);
+                // left column: to the right of its slot; right column: to the left of its slot
+                if (i < 3) {
+                    assertTrue(l.x() >= slots[i].right(), "label " + i + " is not right of its slot " + at);
+                    assertTrue(l.right() <= s[0] / 2, "label " + i + " crosses the middle " + at);
+                } else {
+                    assertTrue(l.right() <= slots[i].x(), "label " + i + " is not left of its slot " + at);
+                    assertTrue(l.x() >= s[0] / 2, "label " + i + " crosses the middle " + at);
+                }
+                assertFalse(l.overlaps(hotbar) || l.overlaps(offhand) || l.overlaps(attack), "label " + i + " on the hotbar strip " + at);
+                for (Box slot : slots) {
+                    assertFalse(l.overlaps(slot), "label " + i + " on a slot " + at);
+                }
+                for (int j = i + 1; j < labels.length; j++) {
+                    assertFalse(l.overlaps(labels[j]), "label " + i + " on label " + j + " " + at);
+                }
+                for (boolean lifted : new boolean[] {false, true}) {
+                    for (int textW : new int[] {60, 130, 200}) {
+                        assertFalse(l.overlaps(HudLayout.pill(s[0], s[1], textW, lifted)), "label " + i + " on the pill " + at);
+                    }
+                }
+                for (int msgW : new int[] {40, 120, 220}) {
+                    assertFalse(l.overlaps(HudLayout.actionBar(s[0], s[1], msgW)), "label " + i + " on the action bar " + at);
+                }
+                for (int head : new int[] {1, 2}) {
+                    assertFalse(l.overlaps(HudLayout.preview(s[0], s[1], head)), "label " + i + " on the mode panel " + at);
                 }
             }
+        }
+    }
+
+    @Test
+    void theThreeLabelsOfAColumnStandOneUnderTheOtherInSlotOrder() {
+        for (int[] s : LABEL_SCREENS) {
+            Box[] l = HudLayout.labels(s[0], s[1]);
+            for (int col = 0; col < 2; col++) {
+                assertTrue(l[col * 3].y() < l[col * 3 + 1].y() && l[col * 3 + 1].y() < l[col * 3 + 2].y(), s[0] + "x" + s[1]);
+            }
+            assertEquals(l[0].y(), l[3].y());
         }
     }
 
