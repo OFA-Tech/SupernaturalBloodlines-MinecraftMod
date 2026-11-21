@@ -155,3 +155,7 @@ Adapt:
 ## 9. Not checked
 
 Nothing here ran: the advancement visibility behaviour is read from the 1.21.1 sources and Modopedia's code, not seen in game. The first phase-2 GameTest and a hidden shot of the book list settle it. Tensura's loot tables and Elijah's reward code were not read.
+
+## 10. Built (2026-11-21)
+
+All phases are on eature/rites-unlock (PR #55). Differences from the plan: the Torn Page's lore is inn, lijah, old_rites or curses; the hub keeps no rite list on the wire (protocol 9); performing teaches silently. Learned while building: an advancement with no equirements array can never be done, and Neo's fake players and the player list give them advancements that do nothing, so the GameTests use LineTestPlayer.createWithAdvancements. Shots are in docs/superpowers/design/rites-unlock. Tests: 13 unit mutants and 7 GameTest mutants, each killed by the test meant to catch it.
