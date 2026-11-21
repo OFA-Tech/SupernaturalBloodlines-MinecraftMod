@@ -206,6 +206,11 @@ Needs the species part and GeckoLib. All of them are on the hub's Admin page (se
 | `deucalion_pack_alphas` | `3` | 0 to 8 | Alphas of his own pack that come with him. They give no weak spark and no drops, and go when he does. |
 | `deucalion_respawn` | `false` | | Whether he may come again, and pay again, `deucalion_respawn_days` after he died. |
 | `deucalion_respawn_days` | `7` | 1 to 1000 | In-game days after his death before he may come again (only with `deucalion_respawn` on). |
+| `peter_house_enabled` | `true` | | Whether new chunks may generate a burned Hale house (needs Werewolves). Houses already generated stay (new chunks only). |
+| `peter_house_chance` | `0.5` | 0 to 1 | The chance a house generates where the world has room for one. |
+| `peter_feral_full_moon` | `true` | | Peter shifts on a full moon night and, as the wolf, attacks anything alive that is not a boss. Off: he shifts only at half health and fights who hurts him or comes within 10 blocks. |
+| `peter_respawn` | `false` | | Whether he may be found again, and pay again, `peter_respawn_days` after he died. |
+| `peter_respawn_days` | `7` | 1 to 1000 | In-game days after his death before he may be found again (only with `peter_respawn` on). |
 | `rebekah_delay_seconds` | `60` | 0 to 3600 | How long after The Cure is made at the rite Rebekah arrives for whoever made it. |
 | `mikael_stakes_originals` | `false` | Off: Mikael does not hunt Originals or Original hybrids, and his white oak never counts as a white oak kill, so he cannot start line death. On: he hunts them, his stake kills an Original outright and their line dies with them; the hunted player is warned. |
 

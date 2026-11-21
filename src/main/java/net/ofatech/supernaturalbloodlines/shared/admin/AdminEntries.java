@@ -167,6 +167,11 @@ public final class AdminEntries {
         all.add(SettingEntry.of(BOSSES_FILE, bo, "deucalion_pack_alphas", INT));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "deucalion_respawn", BOOL));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "deucalion_respawn_days", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "peter_house_enabled", BOOL));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "peter_house_chance", DOUBLE));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "peter_feral_full_moon", BOOL));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "peter_respawn", BOOL));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "peter_respawn_days", INT));
         ALL = List.copyOf(all);
     }
 

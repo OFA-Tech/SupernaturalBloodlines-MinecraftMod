@@ -77,6 +77,7 @@ public final class BossCommand {
         boolean made = spot.isPresent() && switch (boss) {
             case KLAUS -> BossDirector.spawnKlaus(level, null, spot.get()).isPresent();
             case DEUCALION -> BossDirector.spawnDeucalion(level, null, spot.get()).isPresent();
+            case PETER_HALE -> BossDirector.spawnPeterAt(level, spot.get()).isPresent();
             case ELIJAH -> BossDirector.spawnElijah(level, null, spot.get()).isPresent();
             case REBEKAH -> BossDirector.spawnRebekah(level, p.blockPosition(), null, null).isPresent();
             case KOL -> BossDirector.spawnKol(level, null, spot.get()).isPresent();

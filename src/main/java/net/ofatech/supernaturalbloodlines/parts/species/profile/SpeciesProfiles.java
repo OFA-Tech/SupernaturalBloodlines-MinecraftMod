@@ -25,6 +25,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Knowledge;
+import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Visibility;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Relation;
 import org.jetbrains.annotations.Nullable;
@@ -114,6 +116,10 @@ public final class SpeciesProfiles implements ProfileService.Source {
     @Override
     public Set<Fact> discovered(ServerPlayer observer, UUID subject, Relation relation) {
         Set<Fact> out = EnumSet.copyOf(ProfileKnowledge.get(observer.serverLevel()).known(packs(observer), observer.getUUID(), subject));
+        // what the Memory Claws taught: their own snapshot, theirs alone
+        if (MemorySnapshots.get(observer.serverLevel()).of(observer.getUUID(), subject).isPresent()) {
+            out.addAll(Knowledge.learnedBy(Knowledge.Ability.MEMORY_CLAWS));
+        }
         if (relation == Relation.SELF) {
             // what the rules already show a player of themselves: genes they know, a root they have discovered
             BloodlineState view = BloodlineAccess.clientView(BloodlineAccess.get(observer), true);
@@ -143,12 +149,32 @@ public final class SpeciesProfiles implements ProfileService.Source {
             case BONUS -> who == null ? Optional.empty() : RankEffects.bonusText(who).map(List::of);
             case PACK -> packs == null ? Optional.empty() : Optional.of(packs.inPack(subject) ? List.of(String.valueOf(nameOf(server, packs.leaderOf(subject)))) : List.of());
             case PRESENCE -> Optional.of(List.of(who != null ? "online" : "offline"));
-            case SIRE -> sire(observer, subject);
+            case SIRE -> remembered(observer, subject, relation, Fact.SIRE, MemorySnapshots.Memory::sire).orElseGet(() -> sire(observer, subject));
             case LINE -> line(observer, subject, relation);
-            case GENES -> genes(observer, who, relation);
+            case GENES -> remembered(observer, subject, relation, Fact.GENES, MemorySnapshots.Memory::genes).orElseGet(() -> genes(observer, who, relation));
             case ANCHOR -> packs == null ? Optional.empty() : Optional.of(packs.anchorOf(subject).map(id -> List.of(String.valueOf(nameOf(server, id)))).orElse(List.of()));
             default -> Optional.empty();
         };
+    }
+
+    /**
+     * What the observer read with the Memory Claws, as it was then: present only when there is a snapshot and the observer has no live way to the fact: the relation
+     * does not show it for free, and neither their own discoveries nor their pack's pool already give it to them (a pack-mate who joined later, a revelation). A
+     * snapshot with nothing in it for this fact reads as "?".
+     */
+    private static Optional<Optional<List<String>>> remembered(ServerPlayer observer, UUID subject, Relation relation, Fact fact,
+                                                               java.util.function.Function<MemorySnapshots.Memory, List<String>> pick) {
+        if (Knowledge.visible(relation, fact) == Visibility.KNOWN
+                || ProfileKnowledge.get(observer.serverLevel()).known(packs(observer), observer.getUUID(), subject).contains(fact)) {
+            return Optional.empty();
+        }
+        return MemorySnapshots.get(observer.serverLevel()).of(observer.getUUID(), subject).map(m -> Optional.ofNullable(pick.apply(m)));
+    }
+
+    /** The Memory Claws were used: the observer is given what {@code subject} knows of their sire and genes now, and not a word more later. */
+    public static void snapshot(ServerPlayer observer, ServerPlayer subject) {
+        MemorySnapshots.get(observer.serverLevel()).put(observer.getUUID(), subject.getUUID(),
+                new MemorySnapshots.Memory(sire(observer, subject.getUUID()).orElse(null), genes(observer, subject, Relation.STRANGER).orElse(null)));
     }
 
     /** Whole days from {@code since} (wall-clock millis) to now; never negative. */

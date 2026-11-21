@@ -40,6 +40,9 @@ public final class BossRegistries {
     public static final DeferredHolder<EntityType<?>, EntityType<net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity>> DEUCALION = ENTITY_TYPES.register("deucalion",
             () -> EntityType.Builder.of(net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity::new, MobCategory.MISC).sized(0.6F, 1.95F).clientTrackingRange(10).fireImmune().build("deucalion"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<net.ofatech.supernaturalbloodlines.parts.bosses.entity.PeterHaleEntity>> PETER_HALE = ENTITY_TYPES.register("peter_hale",
+            () -> EntityType.Builder.of(net.ofatech.supernaturalbloodlines.parts.bosses.entity.PeterHaleEntity::new, MobCategory.MISC).sized(0.6F, 1.95F).clientTrackingRange(10).fireImmune().build("peter_hale"));
+
     private BossRegistries() {
     }
 
@@ -53,6 +56,7 @@ public final class BossRegistries {
             e.put(KOL.get(), KolEntity.attributes().build());
             e.put(FINN.get(), FinnEntity.attributes().build());
             e.put(DEUCALION.get(), net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity.attributes().build());
+            e.put(PETER_HALE.get(), net.ofatech.supernaturalbloodlines.parts.bosses.entity.PeterHaleEntity.attributes().build());
         });
     }
 }

@@ -1,0 +1,12 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "bosses" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "type": "supernaturalbloodlines:hale_house",
+    "biomes": "#supernaturalbloodlines:hale_house_biomes",
+    "step": "surface_structures",
+    "spawn_overrides": {},
+    "terrain_adaptation": "beard_thin",
+    "start_pool": "supernaturalbloodlines:hale_house/start"
+}

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased (plan 17g: Peter Hale and the Hale house)
+
+### Added
+- **Peter Hale** (part `bosses`; **needs Werewolves**; no Werewolves, no Peter, no houses). He waits in a **burned Hale house**, a one-piece jigsaw structure (`structure/hale_house.nbt`, two storeys and a cellar, a cold fireplace, a charred chest) in forests and taigas, spacing 40. Many houses can generate and there is **one Peter**: he is made when a player in the overworld comes within 24 blocks of a piece of any house and he has not been seen; the other houses stay empty. He is a burned man until he has met a full moon, then a whole one (`peter_hale_burned.png`, `peter_hale.png`); at half health, or on a full moon night, he shifts into the quadruped Alpha (GeckoLib) for good. As the wolf on a full moon night he is **feral**: he attacks anything alive that is not a boss, and he pounces from 3 to 4 blocks away (R181).
+- **His death pays once** (`boss_reward_on`): the **Memory Claws** lie where he fell, and his one Alpha spark goes to the player who did the most damage to him (a tie to the last blow; a pet counts for its owner), by the rules of a stolen spark: a True Alpha takes none, an open protected path destroys it, the cap holds, a player who is no werewolf is told so. A mob's hit never counts as a white oak kill (R182).
+- **The Memory Claws** (R182, R183): right-click a player who agrees to learn their sire and genes, shown on their Profile page as far as that player knows them. It never names a line and never discovers a gene; the target must sneak with a lead in the main hand, PvP must be on and the user may hurt them, and the target is told. Every refusal reads the same and costs nothing. 12 uses, 30 seconds apart.
+- Config (`supernaturalbloodlines-bosses.toml`): `peter_house_enabled` (true), `peter_house_chance` (0.5), `peter_feral_full_moon` (true), `peter_respawn` (false), `peter_respawn_days` (7). Every one is on the Admin page; `/boss peter_hale spawn|state|reset` works as for the others.
+- **Panel review (round 1 of #53):** Peter pounces and bites only at what he can see (no pounce through a wall or a floor, and a wall put up mid-pounce saves its target); the player who calls him is told once that the house is not empty (never his name); the house chest holds a book about the fire and the Guide says how to find a house; the Memory Claws now need the target to **face** the user as well, give a **snapshot** (never a live feed; new saved data `supernaturalbloodlines_memory_snapshots`), say what is missing when refused, say so where PvP is off, tell the target in chat, show the seconds left, and the item keeps its own 30-second cooldown; his death pays at the last priority; houses are found by asking the chunks, not 290 points; the house is more burned and cleared of floating blocks.
+- The Guide's bosses chapter has four paragraphs on him.
+
+### Rolling back
+Rolling back to a build without 17g loses the Peter entity (a Peter in the world is dropped), the Memory Claws in an inventory or a chest, the generated Hale houses (the blocks stay, the structure is forgotten), and `BossIndex` keeps a `peter_hale` entry that is ignored. The snapshots the claws saved (`supernaturalbloodlines_memory_snapshots`) are ignored, and a profile read of an older build shows what it did.
+
 ## Unreleased (PR #52: the rites in Enchanted's book)
 
 ### Changed
