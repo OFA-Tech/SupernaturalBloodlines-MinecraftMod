@@ -76,6 +76,7 @@ public final class BossesPart {
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(BossServerGameTests.class);
             e.register(NpcOriginalGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.DesiccatedHitboxGameTests.class);
             e.register(MikaelGameTests.class);
             e.register(BossReviewGameTests.class);
             e.register(KlausGameTests.class);
