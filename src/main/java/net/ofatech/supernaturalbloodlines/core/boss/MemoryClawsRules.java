@@ -18,6 +18,7 @@ public final class MemoryClawsRules {
     public static final String REFUSED = "item.supernaturalbloodlines.memory_claws.refused";
     public static final String NOT_THIS = "item.supernaturalbloodlines.memory_claws.not_this";
     public static final String SELF = "item.supernaturalbloodlines.memory_claws.self";
+    public static final String WAIT = "item.supernaturalbloodlines.memory_claws.wait";
 
     public enum Target { PLAYER, OTHER }
 

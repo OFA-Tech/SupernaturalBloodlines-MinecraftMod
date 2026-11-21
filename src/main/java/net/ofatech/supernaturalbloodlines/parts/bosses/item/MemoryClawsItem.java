@@ -40,6 +40,11 @@ public final class MemoryClawsItem extends Item {
         if (player.level().isClientSide || !(player instanceof ServerPlayer user) || !(user.level() instanceof ServerLevel level)) {
             return target instanceof Player ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
+        // a cooldown stops a use of the item, not a use on somebody: so it is asked here, first, and says the same to everybody
+        if (user.getCooldowns().isOnCooldown(this)) {
+            user.displayClientMessage(Component.translatable(MemoryClawsRules.WAIT), true);
+            return InteractionResult.SUCCESS;
+        }
         MemoryClawsRules.Target kind = target instanceof ServerPlayer ? MemoryClawsRules.Target.PLAYER : MemoryClawsRules.Target.OTHER;
         boolean consent = target instanceof ServerPlayer t
                 && LinkRules.consents(false, t.isShiftKeyDown(), t.getMainHandItem().is(Items.LEAD), level.getServer().isPvpAllowed());

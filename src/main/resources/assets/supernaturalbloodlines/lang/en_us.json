@@ -1511,6 +1511,7 @@
   "item.supernaturalbloodlines.memory_claws.refused": "The memories will not come.",
   "item.supernaturalbloodlines.memory_claws.not_this": "The claws read the memories of a player, nothing else.",
   "item.supernaturalbloodlines.memory_claws.self": "The claws read another's memories, never your own.",
+  "item.supernaturalbloodlines.memory_claws.wait": "The memories are still settling. Wait a little.",
   "item.supernaturalbloodlines.memory_claws.learned": "You read the memories of %s. Open their Profile page.",
   "item.supernaturalbloodlines.memory_claws.used_on": "%s used the Memory Claws on you.",
   "supernaturalbloodlines.hub.admin.key.supernaturalbloodlines-bosses.toml:peter_house_enabled": "Peter: burned Hale houses generate",

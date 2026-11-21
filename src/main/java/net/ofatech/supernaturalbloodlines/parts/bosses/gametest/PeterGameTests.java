@@ -173,6 +173,7 @@ public final class PeterGameTests {
             helper.assertTrue(p.form() == BossForm.HUMAN && !p.metMoon(), "he came as a wolf, or has met a moon already: " + p.form());
             helper.assertTrue(BlockPos.containing(p.position()).equals(BossDirector.peterSpot(HOUSE)) || p.blockPosition().equals(BossDirector.peterSpot(HOUSE)), "he is not at the spot of the house: " + p.blockPosition());
             helper.assertTrue(p.home() != null && p.home().equals(BossDirector.peterSpot(HOUSE)), "his home is not the house: " + p.home());
+            helper.assertTrue(BossDirector.peterSpot(HOUSE).getY() == HOUSE.minY() + 4 && BossDirector.peterSpot(HOUSE).getX() == HOUSE.getCenter().getX(), "his spot is not one block above the floor layer, in the middle: " + BossDirector.peterSpot(HOUSE));
             helper.assertTrue(rig.index.state(BossId.PETER_HALE) == BossState.ACTIVE && rig.index.of(BossId.PETER_HALE).appearances == 1, "the index says " + rig.index.state(BossId.PETER_HALE));
             helper.assertTrue(p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) == 200.0, "his health is not the base");
             // the player walks to the other house: there is one Peter, and the index says so
@@ -335,7 +336,13 @@ public final class PeterGameTests {
             var kol = rig.spawnKol();
             kol.setPos(helper.absoluteVec(new Vec3(4.5, 1, 2.5)));
             helper.assertTrue(p.feral(), "the wolf is not feral on a full moon night");
-            helper.assertTrue(takes(p, 200) == villager, "a feral wolf did not take the villager (or took the boss nearer): " + p.getTarget());
+            for (int y = 1; y <= 4; y++) {
+                for (int z = 0; z < 8; z++) {
+                    helper.setBlock(new BlockPos(5, y, z), net.minecraft.world.level.block.Blocks.STONE);
+                }
+            }
+            helper.assertTrue(!p.hasLineOfSight(villager), "the wall does not hide the villager");
+            helper.assertTrue(takes(p, 200) == villager, "a feral wolf did not take a villager behind a wall (or took the boss nearer): " + p.getTarget());
             p.setTarget(null);
             villager.setHealth(villager.getMaxHealth());
             BossDirector.useMoon(l -> false);
@@ -388,6 +395,7 @@ public final class PeterGameTests {
             double moved = Math.sqrt(p.position().distanceToSqr(start.x, p.getY(), start.z));
             helper.assertTrue(Math.abs(moved - PeterRules.POUNCE_DISTANCE) < 0.3, "he ended " + moved + " blocks on, the animation moves the model " + PeterRules.POUNCE_DISTANCE);
             helper.assertTrue(villager.getHealth() < before, "the pounce did not hurt the target in reach");
+            helper.assertTrue(p.pauseLeft() > PeterRules.POUNCE_PAUSE - 40, "no pause after a pounce: " + p.pauseLeft());
             run(p, 5);
             helper.assertTrue(!p.pouncing(), "he pounced again while paused");
             p.discard();
@@ -422,8 +430,41 @@ public final class PeterGameTests {
             helper.assertTrue(rig.index.state(BossId.PETER_HALE) == BossState.DEAD && rig.index.of(BossId.PETER_HALE).rewarded && rig.index.of(BossId.PETER_HALE).returnDay == 9, "the index says " + rig.index.state(BossId.PETER_HALE));
             helper.assertTrue(!PeterEvents.pay(helper.getLevel(), p, b) && stack(b) == 3 && clawsNear(helper, p) == 1, "the reward was paid twice");
             ItemEntity claws = helper.getLevel().getEntitiesOfClass(ItemEntity.class, p.getBoundingBox().inflate(8.0), i -> i.getItem().is(BossItems.MEMORY_CLAWS.get())).get(0);
-            helper.assertTrue(claws.isInvulnerable(), "the claws can burn");
+            helper.assertTrue(claws.isInvulnerable() && claws.getAge() < 0, "the claws can burn or despawn: age " + claws.getAge());
             sweep(helper, p);
+        } finally {
+            clean(a, b);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aKillWithNoDamageTalliedBeforeItStillPaysTheKillerAndAPetsDamageIsItsOwnersAndAMobsIsNobodys(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer a = wolf(helper, Rank.ALPHA, 2, 2.5);
+        LineTestPlayer b = wolf(helper, Rank.ALPHA, 2, 3.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, List::of, a, b);
+            // nothing tallied: a one-shot by a player is still paid to that player
+            PeterHaleEntity p = peter(helper);
+            kill(p, a);
+            helper.assertTrue(stack(a) == 3 && stack(b) == 2, "a kill with an empty tally paid " + stack(a) + " and " + stack(b));
+            sweep(helper, p);
+            rig.index.forget(BossId.PETER_HALE);
+            // a pet: its damage is its owner's, a zombie's and the environment's are nobody's
+            PeterHaleEntity q = peter(helper);
+            hit(q, a.damageSources().playerAttack(a), 10F);
+            net.minecraft.world.entity.animal.Wolf pet = helper.spawnWithNoFreeWill(EntityType.WOLF, new BlockPos(4, 1, 4));
+            pet.tame(b);
+            hit(q, helper.getLevel().damageSources().mobAttack(pet), 15F);
+            hit(q, helper.getLevel().damageSources().mobAttack(helper.spawn(EntityType.ZOMBIE, new BlockPos(5, 1, 5))), 100F);
+            hit(q, helper.getLevel().damageSources().magic(), 100F);
+            helper.assertTrue(b.getUUID().equals(q.tally().top().orElse(null)) && q.tally().entries().size() == 2, "the pet's damage is not its owner's, or a mob counted: " + q.tally().entries());
+            sweep(helper, q);
+            q.discard();
         } finally {
             clean(a, b);
         }
@@ -577,6 +618,7 @@ public final class PeterGameTests {
             item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
             helper.assertTrue(user.received(net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem.LEARNED) && stack.getDamageValue() == 1, "the user was not told, or no use was spent: damage " + stack.getDamageValue() + ", heard " + user.heard());
             helper.assertTrue(target.received(net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem.USED_ON), "the target was not told it was used on them");
+            helper.assertTrue(user.getCooldowns().isOnCooldown(item), "no cooldown after a use");
             var facts = ProfileService.of(user, target.getUUID()).facts();
             helper.assertTrue(facts.containsKey(Fact.GENES) && facts.containsKey(Fact.SIRE), "the claws did not teach the sire and the genes: " + facts.keySet());
             helper.assertTrue(!facts.containsKey(Fact.LINE), "the claws named a line");
@@ -613,6 +655,31 @@ public final class PeterGameTests {
             LineTestPlayer.useRealHarm(false);
             restore(helper);
             net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel()).remove(target.getUUID());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theClawsWaitHalfAMinuteBetweenUsesWhoeverIsTheTarget(GameTestHelper helper) {
+        LineTestPlayer user = LineTestPlayer.create(helper);
+        LineTestPlayer target = LineTestPlayer.create(helper);
+        known(helper, user, target);
+        try {
+            LineTestPlayer.useRealHarm(true);
+            agree(target);
+            ItemStack stack = claws();
+            var item = (net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem) stack.getItem();
+            item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+            helper.assertTrue(stack.getDamageValue() == 1 && user.getCooldowns().isOnCooldown(item), "the first use did not work or started no cooldown");
+            item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+            helper.assertTrue(stack.getDamageValue() == 1 && user.received(net.ofatech.supernaturalbloodlines.core.boss.MemoryClawsRules.WAIT), "a second use at once was not refused with the wait message: " + user.heard());
+            // the wait is the same for a target who would be refused anyway: it tells nothing about them
+            LineTestPlayer other = LineTestPlayer.create(helper);
+            item.interactLivingEntity(stack, user, other, InteractionHand.MAIN_HAND);
+            helper.assertTrue(user.count(net.ofatech.supernaturalbloodlines.core.boss.MemoryClawsRules.WAIT) == 2 && !user.received(net.ofatech.supernaturalbloodlines.core.boss.MemoryClawsRules.REFUSED), "the wait did not come first: " + user.heard());
+        } finally {
+            LineTestPlayer.useRealHarm(false);
+            restore(helper);
         }
         helper.succeed();
     }
@@ -754,6 +821,10 @@ public final class PeterGameTests {
             var pieces = stub.get().getPiecesBuilder().build().pieces();
             helper.assertTrue(pieces.size() == 1, "the house is not one piece: " + pieces.size());
             BoundingBox box = pieces.get(0).getBoundingBox();
+            var chunkSource = helper.getLevel().getChunkSource();
+            int ground = chunkSource.getGenerator().getFirstFreeHeight(box.getCenter().getX(), box.getCenter().getZ(), net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, helper.getLevel(), chunkSource.randomState());
+            // the first free height is the air above the ground: the floor layer replaces the top block of the ground, so Peter stands on it at that height
+            helper.assertTrue(box.minY() + PeterRules.FLOOR_LAYER == ground - 1, "the floor layer is not the top block of the ground: minY " + box.minY() + ", first free height " + ground);
             helper.assertTrue(box.getYSpan() == 13 && Math.min(box.getXSpan(), box.getZSpan()) == 9 && Math.max(box.getXSpan(), box.getZSpan()) == 11, "the piece is " + box.getXSpan() + "x" + box.getYSpan() + "x" + box.getZSpan());
             BossesConfig.override("peter_house_chance", 0.0);
             helper.assertTrue(generate(helper).isEmpty(), "a chance of 0 generated a house");
