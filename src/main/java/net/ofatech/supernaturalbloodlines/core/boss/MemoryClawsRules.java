@@ -8,7 +8,7 @@ package net.ofatech.supernaturalbloodlines.core.boss;
  * anybody's line, and no gene is discovered by it.
  *
  * <p>It is a way of prying, so the target must <b>agree on purpose</b>: sneak, with a lead in the main hand, <b>looking at the user</b> (the look within about 25
- * degrees of the user's eyes, and a clear line to them), where PvP is on, and the user must be allowed to hurt them (no teams, no claims). Consent is asked before
+ * degrees of the user's eyes, and a clear line to them), where PvP is on, and the user must be allowed to hurt them (no team that forbids it). Consent is asked before
  * anything hidden is read, so a refusal tells nothing about the target and costs nothing, and every refusal says the same words. A target that is no player is refused with
  * its own line (what it is is plain to see), the claws never work on the user themselves, and where PvP is off they say so (that is the server's, not the target's).
  * A use spends one of {@link #USES} and starts a cooldown of {@link #COOLDOWN_TICKS}, which the item keeps itself.

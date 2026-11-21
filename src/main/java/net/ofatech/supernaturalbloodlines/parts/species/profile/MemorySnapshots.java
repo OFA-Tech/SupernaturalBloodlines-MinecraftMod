@@ -58,6 +58,17 @@ public final class MemorySnapshots extends SavedData {
         setDirty();
     }
 
+    /** Forgets what {@code observer} read of {@code subject} (a test's clean-up; nothing in the game takes a snapshot back). */
+    public void remove(UUID observer, UUID subject) {
+        LinkedHashMap<UUID, Memory> mine = byObserver.get(observer);
+        if (mine != null && mine.remove(subject) != null) {
+            if (mine.isEmpty()) {
+                byObserver.remove(observer);
+            }
+            setDirty();
+        }
+    }
+
     /** A read never creates an entry and never moves one. */
     public Optional<Memory> of(UUID observer, UUID subject) {
         LinkedHashMap<UUID, Memory> mine = byObserver.get(observer);

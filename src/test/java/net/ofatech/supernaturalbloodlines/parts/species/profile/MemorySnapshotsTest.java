@@ -91,6 +91,20 @@ class MemorySnapshotsTest {
     }
 
     @Test
+    void removingOneReadLeavesTheOthersAndDropsAnObserverWithNoneLeft() {
+        MemorySnapshots s = new MemorySnapshots();
+        s.put(USER, SUBJECT, memory("unknown"));
+        s.put(USER, OTHER, memory("unknown"));
+        s.remove(USER, SUBJECT);
+        assertTrue(s.of(USER, SUBJECT).isEmpty() && s.of(USER, OTHER).isPresent(), "the wrong read was removed");
+        s.remove(USER, OTHER);
+        assertEquals(0, s.observerCount(), "an observer with nothing left stays in the map");
+        s.remove(USER, SUBJECT);
+        s.remove(OTHER, SUBJECT);
+        assertEquals(0, s.observerCount(), "removing what is not there made an entry");
+    }
+
+    @Test
     void readingNeverMovesOrCreatesAnything() {
         MemorySnapshots s = new MemorySnapshots();
         s.put(USER, SUBJECT, memory("unknown"));

@@ -1512,7 +1512,7 @@
   "item.supernaturalbloodlines.memory_claws": "Memory Claws",
   "item.supernaturalbloodlines.memory_claws.tooltip": "Right-click a player to learn their sire and their genes, as they know them at that moment. It shows on their Profile page and is never updated. It never reveals a line, and never your own genes.",
   "item.supernaturalbloodlines.memory_claws.tooltip_consent": "Only on a player who agrees on purpose: they face you, sneak with a lead in their main hand, PvP is on, and you may hurt them (no teams). They are told. 12 uses, 30 seconds apart.",
-  "item.supernaturalbloodlines.memory_claws.refused": "The memories will not come. The other player must agree: face you, sneak, hold a lead in their main hand, with PvP on.",
+  "item.supernaturalbloodlines.memory_claws.refused": "The memories will not come. The other player must agree: face you, sneak, hold a lead in their main hand, with PvP on, and you are not on the same team.",
   "item.supernaturalbloodlines.memory_claws.pvp_off": "The claws cannot work here: PvP is off on this server.",
   "item.supernaturalbloodlines.memory_claws.usage": "Right-click a player who agrees, to read their sire and genes.",
   "item.supernaturalbloodlines.memory_claws.not_this": "The claws read the memories of a player, nothing else.",

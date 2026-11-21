@@ -855,7 +855,41 @@ public final class PeterGameTests {
         } finally {
             restore(helper);
             net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel()).remove(me.getUUID());
-            net.ofatech.supernaturalbloodlines.parts.species.profile.MemorySnapshots.get(helper.getLevel()).put(me.getUUID(), me.getUUID(), new net.ofatech.supernaturalbloodlines.parts.species.profile.MemorySnapshots.Memory(null, null));
+            net.ofatech.supernaturalbloodlines.parts.species.profile.MemorySnapshots.get(helper.getLevel()).remove(me.getUUID(), me.getUUID());
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void anOldSnapshotNeverHidesWhatThePackOrARevelationNowGivesTheUserLive(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer user = wolf(helper, Rank.ALPHA, 0, 2.5);
+        LineTestPlayer target = wolf(helper, Rank.BETA, 0, 3.5);
+        BloodlineAccess.set(target, BloodlineAccess.get(target).toBuilder().doppelgangerGene(true).doppelgangerRolled(true).build());
+        known(helper, user, target);
+        meet(helper, user, target);
+        var packs = net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.get(helper.getLevel());
+        try {
+            LineTestPlayer.useRealHarm(true);
+            agree(target);
+            ItemStack stack = claws();
+            clawsItem(stack).interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+            var snapshot = ProfileService.of(user, target.getUUID()).facts().get(Fact.GENES);
+            helper.assertTrue(snapshot != null && snapshot.stream().allMatch(s -> s.endsWith(":unknown")), "the claws did not give an all-unknown snapshot: " + snapshot);
+            // they join the same pack afterwards, and the target finds the gene: the pack's pool gives it to the user, live
+            helper.assertTrue(packs.join(user.getUUID(), target.getUUID()), "the two could not join a pack");
+            helper.assertTrue(ProfileService.of(user, target.getUUID()).facts().get(Fact.GENES).equals(snapshot), "the snapshot was not what the user read before anything was found");
+            BloodlineAccess.reveal(target, net.ofatech.supernaturalbloodlines.core.bloodline.Genes.DOPPELGANGER);
+            var live = ProfileService.of(user, target.getUUID()).facts().get(Fact.GENES);
+            helper.assertTrue(live != null && live.stream().anyMatch(s -> !s.endsWith(":unknown")), "the old snapshot hid what the pack gives the user live: " + live);
+        } finally {
+            packs.dissolve(user.getUUID());
+            restore(helper);
+            net.ofatech.supernaturalbloodlines.parts.species.profile.MemorySnapshots.get(helper.getLevel()).remove(user.getUUID(), target.getUUID());
+            clean(user, target);
         }
         helper.succeed();
     }

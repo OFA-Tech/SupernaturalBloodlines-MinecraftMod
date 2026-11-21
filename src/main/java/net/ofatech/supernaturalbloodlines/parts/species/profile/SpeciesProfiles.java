@@ -158,12 +158,14 @@ public final class SpeciesProfiles implements ProfileService.Source {
     }
 
     /**
-     * What the observer read with the Memory Claws, as it was then: present only for a fact the relation does not show for free (a sire reads live, a stranger
-     * reads the snapshot) and only when there is one. A snapshot with nothing in it for this fact reads as "?".
+     * What the observer read with the Memory Claws, as it was then: present only when there is a snapshot and the observer has no live way to the fact: the relation
+     * does not show it for free, and neither their own discoveries nor their pack's pool already give it to them (a pack-mate who joined later, a revelation). A
+     * snapshot with nothing in it for this fact reads as "?".
      */
     private static Optional<Optional<List<String>>> remembered(ServerPlayer observer, UUID subject, Relation relation, Fact fact,
                                                                java.util.function.Function<MemorySnapshots.Memory, List<String>> pick) {
-        if (Knowledge.visible(relation, fact) == Visibility.KNOWN) {
+        if (Knowledge.visible(relation, fact) == Visibility.KNOWN
+                || ProfileKnowledge.get(observer.serverLevel()).known(packs(observer), observer.getUUID(), subject).contains(fact)) {
             return Optional.empty();
         }
         return MemorySnapshots.get(observer.serverLevel()).of(observer.getUUID(), subject).map(m -> Optional.ofNullable(pick.apply(m)));

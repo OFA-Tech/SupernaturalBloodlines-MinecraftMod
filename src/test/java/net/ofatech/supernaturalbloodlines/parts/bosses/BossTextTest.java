@@ -84,7 +84,7 @@ class BossTextTest {
         }
         String claws = "item.supernaturalbloodlines.memory_claws.";
         String refused = lang.get(claws + "refused").getAsString();
-        assertTrue(refused.contains("face you") && refused.contains("sneak") && refused.contains("lead in their main hand") && refused.contains("PvP"), "the refusal does not say what the other player must do: " + refused);
+        assertTrue(refused.contains("face you") && refused.contains("sneak") && refused.contains("lead in their main hand") && refused.contains("PvP") && refused.contains("not on the same team"), "the refusal does not say what the other player must do: " + refused);
         assertTrue(lang.get(claws + "pvp_off").getAsString().contains("PvP is off"), "the claws do not say PvP is off");
         assertTrue(lang.get(claws + "wait").getAsString().contains("%s"), "the wait does not give the seconds left");
         assertTrue(lang.get(claws + "learned").getAsString().contains("Profile"), "the reader is not told where to look");
