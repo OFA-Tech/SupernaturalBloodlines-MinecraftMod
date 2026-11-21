@@ -99,7 +99,7 @@ public final class RiteSignalGameTests {
             helper.succeed();
             return;
         }
-        ServerPlayer p = TestPlayers.create(helper);
+        ServerPlayer p = net.ofatech.supernaturalbloodlines.parts.species.gametest.LineTestPlayer.createWithAdvancements(helper);
         BloodlineAccess.set(p, BloodlineState.NONE);
         p.setPos(Vec3.atBottomCenterOf(centre(helper)));
         helper.getLevel().addNewPlayer(p);

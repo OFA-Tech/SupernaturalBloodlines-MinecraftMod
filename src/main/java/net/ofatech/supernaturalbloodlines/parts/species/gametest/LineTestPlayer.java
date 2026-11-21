@@ -45,6 +45,25 @@ public final class LineTestPlayer extends FakePlayer {
         return p;
     }
 
+    private net.minecraft.server.PlayerAdvancements realAdvancements;
+
+    /**
+     * Neo's FakePlayer (and the player list, for one) has advancements that do nothing; the rite unlocks are advancements, so their tests need real ones.
+     * They are never saved: the file they would be read from and written to does not exist.
+     */
+    public static LineTestPlayer createWithAdvancements(GameTestHelper helper) {
+        LineTestPlayer p = create(helper);
+        var server = helper.getLevel().getServer();
+        p.realAdvancements = new net.minecraft.server.PlayerAdvancements(server.getFixerUpper(), server.getPlayerList(), server.getAdvancements(),
+                server.getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_ADVANCEMENTS_DIR).resolve(p.getUUID() + ".json"), p);
+        return p;
+    }
+
+    @Override
+    public net.minecraft.server.PlayerAdvancements getAdvancements() {
+        return realAdvancements != null ? realAdvancements : super.getAdvancements();
+    }
+
     /** Every key and literal in the messages this player got, arguments included, as one string. */
     public String heard() {
         StringBuilder sb = new StringBuilder();

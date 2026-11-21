@@ -20,7 +20,7 @@ public final class GrimoireLoreGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void kolsGrimoireTeachesCloakingEvenAfterItWasRead(GameTestHelper helper) {
-        LineTestPlayer p = LineTestPlayer.create(helper);
+        LineTestPlayer p = LineTestPlayer.createWithAdvancements(helper);
         RiteUnlocks.reconcile(p);
         ItemStack grimoire = new ItemStack(BossItems.KOL_GRIMOIRE.get());
         p.setItemInHand(InteractionHand.MAIN_HAND, grimoire);
@@ -38,7 +38,7 @@ public final class GrimoireLoreGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void esthersGrimoireTeachesLinkingAndSeveranceAndIsKept(GameTestHelper helper) {
-        LineTestPlayer p = LineTestPlayer.create(helper);
+        LineTestPlayer p = LineTestPlayer.createWithAdvancements(helper);
         RiteUnlocks.reconcile(p);
         ItemStack grimoire = new ItemStack(BossItems.ESTHER_GRIMOIRE.get());
         p.setItemInHand(InteractionHand.MAIN_HAND, grimoire);

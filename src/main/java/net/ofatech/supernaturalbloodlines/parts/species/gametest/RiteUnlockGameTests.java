@@ -25,7 +25,7 @@ public final class RiteUnlockGameTests {
     private RiteUnlockGameTests() {}
 
     private static ServerPlayer player(GameTestHelper helper, Species species) {
-        ServerPlayer p = LineTestPlayer.create(helper);
+        ServerPlayer p = LineTestPlayer.createWithAdvancements(helper);
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(species).build());
         return p;
     }

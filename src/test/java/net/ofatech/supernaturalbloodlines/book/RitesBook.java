@@ -275,6 +275,12 @@ final class RitesBook {
         criteria.add(RiteAdvancements.CRITERION, criterion);
         JsonObject adv = new JsonObject();
         adv.add("criteria", criteria);
+        // without it the advancement has no requirement at all and can never be done (a datapack advancement does not build it from the criteria)
+        JsonArray requirements = new JsonArray();
+        JsonArray all = new JsonArray();
+        all.add(RiteAdvancements.CRITERION);
+        requirements.add(all);
+        adv.add("requirements", requirements);
         return GSON.toJson(adv) + "\n";
     }
 

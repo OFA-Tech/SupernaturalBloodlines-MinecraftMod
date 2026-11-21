@@ -191,6 +191,8 @@ class RiteUnlocksDataTest {
                 JsonObject adv = read(RitesBook.ADV + "/" + kind + "/" + rite + ".json");
                 // no display (it would show a tab, a toast and a chat line) and no parent (a root is sent to the client exactly when it is done)
                 assertFalse(adv.has("display") || adv.has("parent") || adv.has("rewards"), rite + " " + kind);
+                assertEquals(List.of(List.of(RiteAdvancements.CRITERION)), adv.getAsJsonArray("requirements").asList().stream().map(a -> a.getAsJsonArray().asList().stream().map(JsonElement::getAsString).toList()).toList(),
+                        rite + " " + kind + ": without a requirement the advancement can never be done");
                 assertEquals("minecraft:impossible", adv.getAsJsonObject("criteria").getAsJsonObject(RiteAdvancements.CRITERION).get("trigger").getAsString());
             }
         }

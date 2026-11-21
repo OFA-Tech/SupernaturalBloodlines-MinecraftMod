@@ -54,7 +54,8 @@ public final class RiteUnlocks {
         });
         RiteLearned.set((p, riteId) -> {
             if (p instanceof ServerPlayer sp) {
-                learn(sp, riteId.substring(riteId.indexOf(':') + 1), true);
+                // said nothing: the player has just worked the rite, a line about having learned it would be noise (and a refusal test hears every line)
+                learn(sp, riteId.substring(riteId.indexOf(':') + 1), false);
             }
         });
     }

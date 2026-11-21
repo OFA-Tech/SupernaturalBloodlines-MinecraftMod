@@ -8,9 +8,39 @@ final class DevBook {
     }
 
     /** {@code <rite path>} or {@code <rite path>_last}. */
+    /**
+     * {@code book:<rite>[:last]} the rite's own entry; {@code book:sealed-<rite>} its "???" entry; {@code book:category-<id>} a category of our chapter (the list shows
+     * which entries are sealed); {@code -Dsupernaturalbloodlines.devshots.learn=<lore|rite|all>} teaches that first, as the command does.
+     */
     static void open(String spec) {
+        learn();
         String path = spec.endsWith("_last") ? spec.substring(0, spec.length() - 5) : spec;
-        net.ofatech.supernaturalbloodlines.parts.supernatural.client.book.EnchantedBook.openRite("supernaturalbloodlines:" + path);
+        if (path.startsWith("category-")) {
+            net.favouriteless.modopedia.client.BookOpenHandler.tryOpenCategory(net.ofatech.supernaturalbloodlines.parts.supernatural.client.book.EnchantedBook.BOOK,
+                    "supernaturalbloodlines/rites/" + path.substring(9));
+        } else if (path.startsWith("sealed-")) {
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.book.EnchantedBook.openEntry(
+                    net.ofatech.supernaturalbloodlines.core.rite.RiteAdvancements.sealedEntry(path.substring(7)));
+        } else {
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.book.EnchantedBook.openRite("supernaturalbloodlines:" + path);
+        }
+    }
+
+    private static void learn() {
+        String what = System.getProperty("supernaturalbloodlines.devshots.learn");
+        var server = Minecraft.getInstance().getSingleplayerServer();
+        if (what == null || what.isBlank() || server == null || Minecraft.getInstance().player == null) {
+            return;
+        }
+        java.util.UUID id = Minecraft.getInstance().player.getUUID();
+        server.execute(() -> {
+            var p = server.getPlayerList().getPlayer(id);
+            if (p != null) {
+                for (String rite : net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlockCommand.resolve(what)) {
+                    net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks.learn(p, rite, false);
+                }
+            }
+        });
     }
 
     /** Modopedia's screen turns its pages through a protected method; a screenshot has no mouse to click the arrow. */
