@@ -139,8 +139,16 @@ public final class TestPlayers {
             return keys.size();
         }
 
+        private final java.util.List<net.minecraft.network.chat.Component> messages = new java.util.ArrayList<>();
+
+        /** The first message that came with this key, whole (its arguments too), or null. */
+        public net.minecraft.network.chat.Component message(String key) {
+            return messages.stream().filter(m -> m.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().equals(key)).findFirst().orElse(null);
+        }
+
         @Override
         public void sendSystemMessage(net.minecraft.network.chat.Component message) {
+            messages.add(message);
             if (message.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t) {
                 keys.add(t.getKey());
             }
