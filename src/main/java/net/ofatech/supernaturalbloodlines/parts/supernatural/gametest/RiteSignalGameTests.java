@@ -95,7 +95,8 @@ public final class RiteSignalGameTests {
     /** A rite that worked teaches itself to the one who performed it (plan rites-unlock): the world that already ran rites loses nothing. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aRiteThatWorkedIsLearnedByItsPerformer(GameTestHelper helper) {
-        if (missing(helper, "ward_of_return")) {
+        // what a player knows of the rites is kept by the species part
+        if (missing(helper, "ward_of_return") || !net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("species")) {
             helper.succeed();
             return;
         }
