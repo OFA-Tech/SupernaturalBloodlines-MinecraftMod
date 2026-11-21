@@ -40,6 +40,8 @@ Every rite in this mod is an **Enchanted circle-magic rite**: you draw a chalk c
 | [Rite of Severance](#rite-of-severance) | medium | 6,000 | | species |
 | [Rite of Cloaking](#kols-and-esthers-grimoires) | medium | 4,000 | | bosses |
 | [Linking Spell](#kols-and-esthers-grimoires) | medium | 5,000 | | bosses |
+| [Rite of the Valet Pike](Werewolves-And-Packs#the-beast-of-gévaudan) | medium | 7,000 | full moon | bosses |
+| [Rite of the Frequency](Werewolves-And-Packs#the-beast-of-gévaudan) | medium | 8,000 | full moon | bosses |
 
 A rite listed with "Werewolves" is not loaded without it (its data file has a Werewolves condition).
 

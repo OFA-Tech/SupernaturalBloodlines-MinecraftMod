@@ -1,0 +1,37 @@
+{
+  "title": "Rite of the Frequency",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:echo_shard"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nCalls the Host of the Beast near you (once), or makes the Host that is waiting change now. A full-moon night only; it needs the Valet Pike (given back) and a Hearing Device.",
+          "header": "The Frequency"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "A werewolf works it. It needs Werewolves and the Beast switched on. If it cannot do anything it says why and gives everything back.",
+          "header": "The Frequency"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_the_frequency",
+          "header": "The Frequency"
+        }
+      ]
+    }
+  ]
+}

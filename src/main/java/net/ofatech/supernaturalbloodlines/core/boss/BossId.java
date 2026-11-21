@@ -7,7 +7,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 
 /** The nine once-per-world bosses (plan 17). {@code landed} is whether the build can spawn it yet; the others only have their switch. */
 public enum BossId {
-    MIKAEL(true), KLAUS(true), ELIJAH(true), KOL(true), REBEKAH(true), FINN(true), DEUCALION(true), PETER_HALE(true), BEAST_OF_GEVAUDAN(false);
+    MIKAEL(true), KLAUS(true), ELIJAH(true), KOL(true), REBEKAH(true), FINN(true), DEUCALION(true), PETER_HALE(true), BEAST_OF_GEVAUDAN(true);
 
     private final boolean landed;
 

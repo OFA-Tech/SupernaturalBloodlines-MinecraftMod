@@ -43,6 +43,15 @@ public final class BossRegistries {
     public static final DeferredHolder<EntityType<?>, EntityType<net.ofatech.supernaturalbloodlines.parts.bosses.entity.PeterHaleEntity>> PETER_HALE = ENTITY_TYPES.register("peter_hale",
             () -> EntityType.Builder.of(net.ofatech.supernaturalbloodlines.parts.bosses.entity.PeterHaleEntity::new, MobCategory.MISC).sized(0.6F, 1.95F).clientTrackingRange(10).fireImmune().build("peter_hale"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<net.ofatech.supernaturalbloodlines.parts.bosses.entity.GevaudanHostEntity>> GEVAUDAN_HOST = ENTITY_TYPES.register("gevaudan_host",
+            () -> EntityType.Builder.of(net.ofatech.supernaturalbloodlines.parts.bosses.entity.GevaudanHostEntity::new, MobCategory.MISC).sized(0.6F, 1.95F).clientTrackingRange(10).fireImmune().build("gevaudan_host"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEntity>> BEAST = ENTITY_TYPES.register("beast_of_gevaudan",
+            () -> EntityType.Builder.of(net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEntity::new, MobCategory.MISC).sized(2.4F, 3.0F).clientTrackingRange(12).fireImmune().build("beast_of_gevaudan"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<net.ofatech.supernaturalbloodlines.parts.bosses.entity.GevaudanSpiritEntity>> GEVAUDAN_SPIRIT = ENTITY_TYPES.register("gevaudan_spirit",
+            () -> EntityType.Builder.of(net.ofatech.supernaturalbloodlines.parts.bosses.entity.GevaudanSpiritEntity::new, MobCategory.MISC).sized(0.8F, 1.2F).clientTrackingRange(10).fireImmune().build("gevaudan_spirit"));
+
     private BossRegistries() {
     }
 
@@ -57,6 +66,9 @@ public final class BossRegistries {
             e.put(FINN.get(), FinnEntity.attributes().build());
             e.put(DEUCALION.get(), net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity.attributes().build());
             e.put(PETER_HALE.get(), net.ofatech.supernaturalbloodlines.parts.bosses.entity.PeterHaleEntity.attributes().build());
+            e.put(GEVAUDAN_HOST.get(), net.ofatech.supernaturalbloodlines.parts.bosses.entity.GevaudanHostEntity.attributes().build());
+            e.put(BEAST.get(), net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEntity.attributes().build());
+            e.put(GEVAUDAN_SPIRIT.get(), net.ofatech.supernaturalbloodlines.parts.bosses.entity.GevaudanSpiritEntity.attributes().build());
         });
     }
 }

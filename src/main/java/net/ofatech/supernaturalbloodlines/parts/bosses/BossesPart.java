@@ -41,6 +41,10 @@ public final class BossesPart {
                 net.ofatech.supernaturalbloodlines.parts.bosses.rite.CloakingRiteFactory.CODEC);
         net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.bosses.rite.LinkingRiteFactory.ID,
                 net.ofatech.supernaturalbloodlines.parts.bosses.rite.LinkingRiteFactory.CODEC);
+        net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.bosses.rite.PikeRiteFactory.ID,
+                net.ofatech.supernaturalbloodlines.parts.bosses.rite.PikeRiteFactory.CODEC);
+        net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry.get().register(net.ofatech.supernaturalbloodlines.parts.bosses.rite.FrequencyRiteFactory.ID,
+                net.ofatech.supernaturalbloodlines.parts.bosses.rite.FrequencyRiteFactory.CODEC);
         net.ofatech.supernaturalbloodlines.parts.bosses.link.Links.register();
         net.ofatech.supernaturalbloodlines.parts.bosses.item.CloakEvents.register();
         BossRegistries.register(modBus);
@@ -51,6 +55,8 @@ public final class BossesPart {
         NpcOriginalEvents.register();
         net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEvents.register();
         net.ofatech.supernaturalbloodlines.parts.bosses.entity.PeterEvents.register();
+        net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEvents.register();
+        net.ofatech.supernaturalbloodlines.parts.bosses.item.MantleEvents.register();
         net.ofatech.supernaturalbloodlines.parts.bosses.deal.BossEvents17d.register();
         modBus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent e) -> {
             var registrar = e.registrar("1").optional();
@@ -80,6 +86,7 @@ public final class BossesPart {
             e.register(KlausGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.DeucalionGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.PeterGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.BeastGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.ElijahGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.RebekahGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.ElixirGameTests.class);

@@ -287,4 +287,31 @@ class BossTextTest {
         assertTrue(body.contains("laid by a pack Emissary holds her, and Elijah too"), "the mountain ash claim for Elijah and Rebekah (the GameTest shows it is true)");
         assertTrue(!body.contains("7 days") && !body.contains("60 seconds"), "the Guide names a number a server can change: " + body);
     }
+
+    @Test
+    void theHostsNoticeNamesNothingAndEveryNewThingHasWordsInTheLang() throws Exception {
+        JsonObject lang = lang();
+        for (String k : new String[] {"supernaturalbloodlines.boss.notice.beast", "supernaturalbloodlines.boss.notice.beast.hint"}) {
+            String text = lang.get(k).getAsString().toLowerCase();
+            assertTrue(!text.contains("beast") && !text.contains("gevaudan") && !text.contains("g\u00e9vaudan") && !text.contains("valet"), k + " names what is coming: " + text);
+        }
+        for (String b : new String[] {"beast_host_chance", "beast_respects_ash", "beast_returns_once", "beast_spirit_seconds", "beast_roar_range", "beast_roar_seconds", "beast_roar_cooldown_seconds"}) {
+            assertTrue(lang.has(label(b)), "no admin label for " + b);
+        }
+        for (String k : new String[] {"entity.supernaturalbloodlines.gevaudan_host", "entity.supernaturalbloodlines.beast_of_gevaudan", "entity.supernaturalbloodlines.gevaudan_spirit",
+                "item.supernaturalbloodlines.valet_pike", "item.supernaturalbloodlines.mantle_of_the_beast", "item.supernaturalbloodlines.sebastien_tricorn",
+                "rite.supernaturalbloodlines.rite_of_the_valet_pike", "rite.supernaturalbloodlines.rite_of_the_frequency", "supernaturalbloodlines.hub.admin.act.boss_change",
+                "supernaturalbloodlines.refusal.pike_weak", "supernaturalbloodlines.refusal.pike_not_witch", "supernaturalbloodlines.rite.pike_done"}) {
+            assertTrue(lang.has(k), "no words for " + k);
+        }
+        // one answer for every way the pike rite can refuse the blood, so the rite tells nothing about the giver
+        assertTrue(lang.get("supernaturalbloodlines.refusal.pike_weak").getAsString().length() < 40, "the refusal says more than it should");
+        for (net.ofatech.supernaturalbloodlines.core.boss.FrequencyRules.Result r : net.ofatech.supernaturalbloodlines.core.boss.FrequencyRules.Result.values()) {
+            assertTrue(lang.has(net.ofatech.supernaturalbloodlines.core.boss.FrequencyRules.messageKey(r)), "no words for the frequency answer " + r);
+        }
+        String guide = lang.get("supernaturalbloodlines.hub.guide.bosses.body").getAsString();
+        for (String needle : new String[] {"Valet Pike", "Mantle", "Roar", "Rite of the Frequency", "quarter of its health", "mountain ash", "plain player"}) {
+            assertTrue(guide.contains(needle), "the Guide chapter does not say \"" + needle + "\"");
+        }
+    }
 }

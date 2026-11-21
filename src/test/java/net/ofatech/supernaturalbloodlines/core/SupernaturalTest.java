@@ -53,4 +53,17 @@ class SupernaturalTest {
         Supernatural.register(NO, NO, YES);
         assertTrue(Supernatural.isPrey(null));
     }
+
+    @Test
+    void aWerewolfLikeCreatureIsItsOwnListAndNeitherSupernaturalNorPreyByThat() {
+        assertFalse(Supernatural.isWerewolfLike(null));
+        Supernatural.registerWerewolfLike(NO);
+        assertFalse(Supernatural.isWerewolfLike(null));
+        Supernatural.registerWerewolfLike(YES);
+        assertTrue(Supernatural.isWerewolfLike(null), "registrations are OR-combined");
+        assertFalse(Supernatural.is(null) || Supernatural.isPrey(null) || Supernatural.isVampiric(null), "wolfsbane is the only thing this list says");
+        assertThrows(NullPointerException.class, () -> Supernatural.registerWerewolfLike(null));
+        Supernatural.clearForTests();
+        assertFalse(Supernatural.isWerewolfLike(null), "cleared with the others");
+    }
 }

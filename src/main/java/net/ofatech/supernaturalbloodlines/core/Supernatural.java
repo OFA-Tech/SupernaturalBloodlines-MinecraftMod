@@ -19,6 +19,7 @@ public final class Supernatural {
     private static final List<Predicate<Entity>> SUPERNATURAL = new CopyOnWriteArrayList<>();
     private static final List<Predicate<Entity>> VAMPIRIC = new CopyOnWriteArrayList<>();
     private static final List<Predicate<Entity>> PREY = new CopyOnWriteArrayList<>();
+    private static final List<Predicate<Entity>> WEREWOLF_LIKE = new CopyOnWriteArrayList<>();
 
     private Supernatural() {
     }
@@ -31,6 +32,15 @@ public final class Supernatural {
         SUPERNATURAL.add(isSupernatural);
         VAMPIRIC.add(isVampiric);
         PREY.add(isPrey);
+    }
+
+    /** A creature that wolfsbane works on though it has no werewolf faction (the Beast of Gevaudan): the artifacts part reads this next to the factions. */
+    public static void registerWerewolfLike(Predicate<Entity> test) {
+        WEREWOLF_LIKE.add(Objects.requireNonNull(test, "test"));
+    }
+
+    public static boolean isWerewolfLike(Entity e) {
+        return any(WEREWOLF_LIKE, e);
     }
 
     public static boolean is(Entity e) {
@@ -58,5 +68,6 @@ public final class Supernatural {
         SUPERNATURAL.clear();
         VAMPIRIC.clear();
         PREY.clear();
+        WEREWOLF_LIKE.clear();
     }
 }
