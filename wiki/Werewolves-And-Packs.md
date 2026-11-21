@@ -170,7 +170,7 @@ The **Deucalion factor**: an Alpha who kills an Alpha from outside their pack ke
 
 ### Alpha Roar
 
-Key bind **Alpha Roar** (unbound by default, category *Supernatural Bloodlines*) or `/pack roar`. **60 second** cooldown. Alpha and True Alpha only, not during an eclipse ("The eclipse swallows your roar.").
+A **slot action**: the mod puts **Alpha Roar** in your first empty HUD slot when you become an Alpha ("Alpha Roar added to slot N (hub › Slots)"; with every slot full it tells you to assign it in the hub, Slots tab), and the slot shows its cooldown. Also `/pack roar` and the Pack page button; an unbound **Alpha Roar** key (hidden while the HUD works, there for a game or server without it). **60 second** cooldown. Alpha and True Alpha only, not during an eclipse ("The eclipse swallows your roar.").
 
 - **Pack Betas within 32 blocks:** Strength I (a tier higher for each [stacked spark](#stacked-sparks)) and Speed I for 30 s, and may shift at will for those 30 s.
 - **Other werewolves within 16 blocks:** drop their form and get Slowness II for 5 s ("X's roar forces your wolf down.").
@@ -283,7 +283,7 @@ On a full moon night, once per world, **Deucalion** comes for a player Alpha who
 
 He dies like any wolf. **The player who does the most to bring him down takes his sparks** (4, unless the server changes it; a tie goes to the last blow, and a pet's damage is its owner's) by the rules of a stolen spark: a True Alpha takes nothing, an open and protected path to True Alpha destroys them, and the stack never goes above `max_stacked_sparks`. Someone who is no werewolf gets nothing, and a True Alpha takes none (but learns the Roar); the game tells them why. His pack gives no weak spark and no drops.
 
-A werewolf who kills him also learns the **Demon Wolf Roar** (it shows on the Skills page). On the Alpha Roar's key, after the ordinary roar, with a cooldown of its own (2 minutes), the other player Alphas within 32 blocks who are not in your pack are forced to shift, except where PvP is off, in spectator mode or on your own team. A Beta is not. It counts only while you are a werewolf, and only with the supernatural part on (the skill catalogue is its).
+A werewolf who kills him also learns the **Demon Wolf Roar** (it shows on the Skills page). On the Alpha Roar (from its slot, its key or /pack roar), after the ordinary roar, with a cooldown of its own (2 minutes), the other player Alphas within 32 blocks who are not in your pack are forced to shift, except where PvP is off, in spectator mode or on your own team. A Beta is not. It counts only while you are a werewolf, and only with the supernatural part on (the skill catalogue is its).
 
 ## Peter Hale and the Hale house
 

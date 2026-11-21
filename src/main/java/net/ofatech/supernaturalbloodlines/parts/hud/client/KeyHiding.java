@@ -55,7 +55,7 @@ public final class KeyHiding {
     private static void hide(List<KeyBindsList.Entry> entries) {
         entries.removeIf(en -> {
             String name = keyName(en);
-            return name != null && KeyCover.COVERED.contains(name);
+            return name != null && KeyCover.isCovered(name);
         });
         for (int i = entries.size() - 1; i >= 0; i--) {
             if (isCategory(entries.get(i)) && (i == entries.size() - 1 || isCategory(entries.get(i + 1)))) {

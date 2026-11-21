@@ -27,6 +27,9 @@ public final class HudClient {
             }
             TensuraHudFlags.register(AbilityHudLayer::shown, blood ? BloodInFoodSpot::hidesTensuraFood : () -> false);
         }
+        if (ModList.get().isLoaded("vampirism") && ModList.get().isLoaded("werewolves")) {
+            net.ofatech.supernaturalbloodlines.parts.hud.client.werewolves.SprintLeapClient.register();
+        }
         KeyCover.register();
         KeyHiding.register();
     }

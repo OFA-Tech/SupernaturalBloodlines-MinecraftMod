@@ -7,7 +7,10 @@ import java.util.Locale;
 import java.util.Optional;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.ofatech.supernaturalbloodlines.core.hud.ActionCooldown;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
+import net.ofatech.supernaturalbloodlines.parts.hud.net.ActionCooldowns;
+import net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.BiteView;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.ClientLoadout;
@@ -33,6 +36,15 @@ public final class ActionSlots {
         }
     }
 
+    /** An action another part owns (the Alpha Roar): its own icon and name, locked when the player may no longer use it, and the cooldown the server announced. */
+    private static SlotView extraView(LocalPlayer p, ExtraActions.Action a, String key) {
+        var level = p.level();
+        int total = ActionCooldowns.total(a.id());
+        int left = ActionCooldowns.left(a.id(), level.getGameTime());
+        return new SlotView(a.icon(), key, ActionCooldown.fraction(left, total), left > 0 ? ActionCooldown.seconds(left) : 0, false,
+                a.available(p) ? null : GREY_LOCKED, a.name().getString(), a.note().getString());
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static SlotView view(LocalPlayer p, ResourceLocation id, String key) {
         if (id == null) {
@@ -40,6 +52,10 @@ public final class ActionSlots {
         }
         if (Loadout.BITE.equals(id)) {
             return BiteView.slot(key);
+        }
+        var extra = ExtraActions.get(id);
+        if (extra.isPresent()) {
+            return extraView(p, extra.get(), key);
         }
         IAction action = ClientActions.byId(id);
         ResourceLocation icon = ClientActions.icon(id);

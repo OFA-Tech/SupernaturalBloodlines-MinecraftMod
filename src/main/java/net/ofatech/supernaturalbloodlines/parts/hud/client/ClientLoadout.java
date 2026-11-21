@@ -40,6 +40,11 @@ public final class ClientLoadout implements LoadoutAccess.Provider {
     public List<LoadoutAccess.Entry> assignable() {
         List<LoadoutAccess.Entry> list = new ArrayList<>();
         list.add(new LoadoutAccess.Entry(Loadout.BITE, Component.translatable("supernaturalbloodlines.hud.bite.name"), BITE_ICON, BiteView.note(), BiteView.greyed()));
+        for (var a : net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.all()) {
+            if (net.minecraft.client.Minecraft.getInstance().player != null && a.available(net.minecraft.client.Minecraft.getInstance().player)) {
+                list.add(new LoadoutAccess.Entry(a.id(), a.name(), a.icon(), a.note(), null));
+            }
+        }
         if (VAMPIRISM) {
             list.addAll(ClientActions.entries());
         }

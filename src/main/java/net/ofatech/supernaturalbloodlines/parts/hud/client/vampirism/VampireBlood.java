@@ -24,6 +24,11 @@ public final class VampireBlood {
         return f != null && VAMPIRE.equals(f.getID());
     }
 
+    /** The player has a Vampirism faction (vampire, werewolf or hunter). */
+    public static boolean hasFaction(Player p) {
+        return VampirismAPI.factionPlayerHandler(p).getCurrentFaction() != null;
+    }
+
     /** Vampirism's blood level of this player (0 to 20). */
     public static int level(Player p) {
         return VampirismAPI.vampirePlayer(p).getBloodStats().getBloodLevel();

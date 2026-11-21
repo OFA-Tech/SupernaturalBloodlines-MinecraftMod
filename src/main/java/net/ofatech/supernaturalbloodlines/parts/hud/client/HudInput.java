@@ -126,6 +126,7 @@ public final class HudInput {
         PRESSED_IN[slot] = null;
     }
     private static void press(LocalPlayer p, int slot, SlotMode mode) {
+        HudActivity.touch();
         if (mode == SlotMode.TENSURA) {
             TensuraInput.press(p, slot);
         } else if (mode != null && mode.offersBite()) {
