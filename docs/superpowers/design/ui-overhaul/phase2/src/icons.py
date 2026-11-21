@@ -168,7 +168,7 @@ def fangs(I, top=9.0, gum=True, blood=True):
     """The bite: a gum with two fangs, the left one longer (phase 1's first icon)."""
     lo = not I.big
     t = 4.5 if lo else top
-    I.shape('bone', [('p', [(6.5, t), (16, t), (15.4, 17), (11.6, 28), (8, 17.5)])])
+    I.shape('bone', [('p', [(6.5, t), (16, t), (15.4, 17), (11.6, 26.5), (8, 17.5)])])
     I.shape('bone', [('p', [(17.5, t), (26, t), (24.8, 16), (21.8, 25), (19, 17)])])
     if gum:
         if lo:
@@ -176,7 +176,7 @@ def fangs(I, top=9.0, gum=True, blood=True):
         else:
             I.shape('gum', [('r', 5, 4, 22, 6), ('d', 5, 7, 3), ('d', 27, 7, 3)])
     if blood and I.big:
-        I.shape('blood', [('d', 11.8, 30, 1.4), ('p', [(11.8, 28.4), (13, 29.8), (10.6, 29.8)])], False)
+        I.shape('blood', [('d', 11.8, 28.9, 1.4), ('p', [(11.8, 27.3), (13, 28.7), (10.6, 28.7)])], False)
     return I
 
 
@@ -315,17 +315,24 @@ def _(I):
         I.tx(5, 7, '#6A4A28', 6).tx(5, 9, '#6A4A28', 4).tx(10, 10, '#C01830', 2, 2)
 
 
+STAR16 = ['....##....', '....##....', '...####...', '##########', '.########.', '..######..', '..######..', '.###..###.', '.#......#.']
+
+
 @icon('rites')
 def _(I):
     I.shape('night', [('d', 16, 16, 13.5)])
     k = I.k
+    if not I.big:  # a line pentagram turns to mud at 16: a solid star on the dark seal
+        I.cv.bmp(STAR16, {'#': '#C9A6FF'}, 3, 3)
+        I.tx(7, 3, WHITE, 2, 1).tx(7, 7, '#FFD36B', 2, 2)
+        return
     I.cv.ring(16 * k, 16 * k, 11 * k, 11 * k, max(1, round(1.2 * k)), rgba('#8A5AD6'))
     pts = [(round(16 * k + math.cos(-math.pi / 2 + i * 2 * math.pi / 5) * 9.6 * k - 0.5), round(16 * k + math.sin(-math.pi / 2 + i * 2 * math.pi / 5) * 9.6 * k - 0.5)) for i in range(5)]
     for i in range(5):
         I.cv.line(*pts[i], *pts[(i + 2) % 5], rgba('#C9A6FF'))
     for x, y in pts:
         I.cv.px(x, y, WHITE)
-    I.tx(round(16 * k) - (1 if I.big else 0), round(16 * k) - (1 if I.big else 0), '#FFD36B', 2 if I.big else 1, 2 if I.big else 1)
+    I.tx(15, 15, '#FFD36B', 2, 2)
 
 
 @icon('bloodline')
@@ -610,11 +617,13 @@ def _(I):
 
 
 @icon('leap')
-def _(I):
-    I.shape('gold', [('a', 25, 29, 21, 2.6, 278, 338)], False)
-    paw(I, 20, 11.5, 0.66)
-    I.shape('bone', [('d', 5, 27, 1.5)], False)
-    I.shape('bone', [('d', 9.5, 28, 1.1)], False)
+def _(I):  # a paw print leaving the ground: the arrow head above it
+    if I.big:
+        I.shape('gold', [('l', 8.5, 10.5, 16, 3.5, 3.6), ('l', 16, 3.5, 23.5, 10.5, 3.6)])
+        paw(I, 16, 19.5, 0.8)
+    else:
+        I.bits('gold', ['...##...', '..####..', '.##..##.'], 4, 1)
+        I.bits('fur', ['...##..##...', '...##..##...', '##........##', '##..####..##', '...######...', '..########..', '..########..', '...##..##...'], 2, 6)
 
 
 # ================================ skills ================================
@@ -742,8 +751,13 @@ def _(I):  # Quick Draw
 
 @icon('s-sip-3')
 def _(I):  # Life Siphon
-    I.shape('blood', heart(13.5, 14, 0.94))
-    I.shape('violet', spiral(22.5, 22, 0.56, 3.2), False)
+    if I.big:
+        I.shape('blood', heart(13.5, 14, 0.94))
+        I.shape('violet', spiral(22.5, 22, 0.56, 3.2), False)
+    else:  # a whole heart, and one violet coil drawing from it
+        I.bits('blood', ['.###.###.', '#########', '#########', '#########', '.#######.', '..#####..', '...###...', '....#....'], 1, 2)
+        I.tx(2, 3, '#FFC8C2')
+        I.bits('violet', ['.###.', '#...#', '#.#.#', '#.###', '.#...'], 9, 9)
 
 
 @icon('s-sip-4')
@@ -803,7 +817,7 @@ def _(I):  # Blood Mist
     I.shape('redmoon', cloud)
     if I.big:
         I.paint([('a', 16.5, 12, 4.4, 1.2, 200, 330), ('a', 10, 16.5, 3, 1.2, 200, 320), ('a', 23, 16.5, 3, 1.2, 40, 150)], IR['redmoon'].sh, cloud)
-    for x, y, sc in ((9, 25, 0.26), (16, 27, 0.3), (23, 25, 0.26)):
+    for x, y, sc in ((9, 23.8, 0.26), (16, 25.4, 0.3), (23, 23.8, 0.26)):
         I.shape('blood', drop(x, y, sc), False)
 
 
@@ -818,10 +832,10 @@ def _(I):  # Predator's Thirst
 def _(I):  # Elder's Skin
     for i in range(5):
         a = math.pi + i * math.pi / 4
-        I.shape('gold', [('l', 16 + math.cos(a) * 8.6, 12 + math.sin(a) * 8.6, 16 + math.cos(a) * 12.6, 12 + math.sin(a) * 12.6, 2.6)], False)
-    I.shape('gold', [('d', 16, 12, 7.8)])
-    I.shape('steel', shield(16, 20, 0.72))
-    I.shape('sky', shield(16, 19.6, 0.4), False)
+        I.shape('gold', [('l', 16 + math.cos(a) * 8.2, 14 + math.sin(a) * 8.2, 16 + math.cos(a) * 11.4, 14 + math.sin(a) * 11.4, 2.6)], False)
+    I.shape('gold', [('d', 16, 14, 7.4)])
+    I.shape('steel', shield(16, 20.5, 0.7))
+    I.shape('sky', shield(16, 20.1, 0.38), False)
 
 
 @icon('s-wit-1')
@@ -914,8 +928,8 @@ def _(I):  # Pack Heart
 
 @icon('s-wol-6')
 def _(I):  # Roar's Echo
-    I.shape('gold', waves(5, 16, (8, 14.5), 2.6))
-    I.shape('bone', waves(5, 16, (21, 26.5), 2.4, 56, 124))
+    I.shape('gold', waves(6, 16, (6.5, 12), 2.6))
+    I.shape('bone', waves(6, 16, (17.5, 22.5), 2.4, 54, 126))
 
 
 @icon('s-wol-7')
@@ -1135,7 +1149,7 @@ def build():
         cells = []
         for g, members in GROUPS:
             for name in members:
-                cv = emit(draw(name, n), 'icons/%d/%s.png' % (n, name), '%s icon, %d px' % (g, n))
+                cv = emit(draw(name, n), 'sprites/icons/%d/%s.png' % (n, name), '%s icon, %d px' % (g, n))
                 cells.append((name, cv))
         sheet(os.path.join(PHASE2, 'icons-%d.png' % n), cells, rgba('#17171C'), zoom=3 if n == 32 else 4, bg2=rgba('#E9DDB8'), max_w=1500)
         sil = [(name, silhouette(cv, rgba('#101014'))) for name, cv in cells]

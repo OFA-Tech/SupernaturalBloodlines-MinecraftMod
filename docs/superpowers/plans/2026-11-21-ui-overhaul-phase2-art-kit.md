@@ -26,7 +26,7 @@
 - Text on a kit surface keeps a contrast of at least 4.5:1 (the pairs of the style guide).
 - Our own art only. References: the phase 1 style guide and the boss skins in `textures/entity/boss/` (colours and features only; portraits are drawn, not rendered).
 - Paths below are relative to `src/main/resources/assets/supernaturalbloodlines/textures/gui/`.
-- Nine-slice borders live in `phase2/manifest.json`. The sprites sit in `kit/`, not in `gui/sprites/`; phase 3 decides whether to move them there to use `blitSprite` with `.mcmeta` scaling.
+- Kit sprites and icons sit in `textures/gui/sprites/` (owner's answer after the first review), so phase 3 draws them with `blitSprite`. A sprite that scales has a `.mcmeta` next to it (`nine_slice` with its border, or `tile`); `phase2/manifest.json` lists the same values and each sprite id.
 
 ## What the code draws today (the source of the inventory)
 
@@ -54,7 +54,7 @@ Icons of Vampirism, Werewolves and Tensura actions stay those mods' own textures
 
 ## Inventory
 
-### A. Theme kit: `kit/<theme>/`, with `<theme>` one of `grimoire`, `bloodmoon`, `tensura` (the same 85 names in each)
+### A. Theme kit: `sprites/kit/<theme>/`, with `<theme>` one of `grimoire`, `bloodmoon`, `tensura` (the same 85 names in each)
 
 "9s" is a nine-slice with that border; "3s" is a three-slice along one axis. A canvas larger than the body leaves room for the glow or the focus ring, so every state of a control has the same canvas. The exact canvas and slice of every sprite are in `phase2/manifest.json`, which the generator writes.
 
@@ -101,7 +101,7 @@ Icons of Vampirism, Werewolves and Tensura actions stay those mods' own textures
 | `boss_bar_fill`, `boss_bar_fill_shifting` | 8 x 7 | tile | health, and the gold striped fill of a shift |
 | `boss_bar_tick` | 1 x 7 | none | ticks at 25, 50 and 75 % |
 
-### B. Shared HUD pieces: `kit/shared/`
+### B. Shared HUD pieces: `sprites/kit/shared/`
 
 | Sprite | Canvas | Used for |
 |---|---|---|
@@ -110,7 +110,7 @@ Icons of Vampirism, Werewolves and Tensura actions stay those mods' own textures
 | `mode_mark` | 7 x 7 | the corner diamond of Tensura mode |
 | `blood_full`, `blood_empty` | 9 x 9 | the blood points `BloodInFoodSpot` draws over the food bar |
 
-### C. Icons: `icons/32/<name>.png` (hub) and `icons/16/<name>.png` (HUD and lists), the same names in both
+### C. Icons: `sprites/icons/32/<name>.png` (hub) and `sprites/icons/16/<name>.png` (HUD and lists), the same names in both
 
 - **Pages (11):** `home`, `path`, `skills`, `quests`, `rites`, `bloodline`, `pack`, `guide`, `loadout`, `settings`, `admin`. (`rites` stays for the E seal that opens Enchanted's book; the page itself is gone.)
 - **Controls and status (15):** `check`, `lock`, `crown`, `dot`, `close`, `theme`, `launch`, `question`, `info`, `plus`, `arrow_left`, `arrow_right`, `bell`, `key`, `unknown`.
@@ -174,21 +174,23 @@ That is 115 icons at two sizes, 230 files. The 64 px size of the roadmap is left
 
 `mikael`, `klaus_human`, `klaus_shifting`, `klaus_wolf`, `elijah`, `rebekah`, `kol`, `finn`, `deucalion_human`, `deucalion_demon_wolf`, `peter_human`, `peter_wolf`, `beast_host`, `beast_beast`, `beast_spirit`.
 
-Faces are drawn from the skins: hair, skin and eye colours, beard, glasses, clothes at the collar. Wolves use the fur and eye colours of the geo textures.
+Faces are drawn from the skins: hair, skin and eye colours, beard, glasses, clothes at the collar. Wolves use the fur and eye colours of the geo textures. The three dark wolves differ in shape, following `art/bosses/README.md`: Deucalion's demon wolf has blue-grey skin, swept-back hair, a ridged brow and red eyes; Peter's wolf is black with a mane, the red glare of an Alpha and a scar through one eye; the Beast has russet streaks, bone-white brow band, skull cap, cheek guards and muzzle ridge, and white-blue eyes.
 
-### E. Title font: `font/title.png` and `assets/supernaturalbloodlines/font/title.json`
+### E. Title fonts: `textures/font/title.png`, `textures/font/title_gothic.png` and their `font/*.json`
 
 A 16 px line with a cap height of 11, an x-height of 8 and stems 2 texels wide. Cells of 12 x 16 in a 16-column atlas, 173 glyphs: ASCII 33 to 126, the Latin-1 letters (À to ÿ) with the accents composed over the base letters, and the typographic marks (dashes, curly quotes, ellipsis, bullet). The JSON has a `space` provider (5 px) and a `bitmap` provider (`height` 16, `ascent` 14); Minecraft trims each glyph's width itself.
+
+There are two fonts with the same metrics and the same 173 glyphs. `title` is the plain one, for Tensura. `title_gothic` is for Grimoire and Blood Moon: thick stems, hairline bars, pointed bowls, a flag on the head of each stem and a foot at its base, a hairline inside the round capitals. It keeps roman letter shapes so it reads at real size; punctuation and accents are shared with the plain font.
 
 ### F. Logo (direction B, Drop)
 
 | File | Size | Used for |
 |---|---|---|
 | `src/main/resources/logo.png` | 64 x 64 | the mod icon (`logoFile` in `neoforge.mods.toml`, wired in phase 8) |
-| `kit/shared/logo_128.png` | 128 x 128 | the 64 px tile at an exact 2x, for stores |
-| `kit/shared/logo_emblem.png` | 56 x 56 | the emblem alone, for the hub home page |
-| `kit/shared/logo_wordmark.png` | 131 x 34 | "SUPERNATURAL BLOODLINES" |
-| `kit/shared/logo_lockup.png` | 193 x 56 | emblem and wordmark together |
+| `sprites/kit/shared/logo_128.png` | 128 x 128 | the 64 px tile at an exact 2x, for stores |
+| `sprites/kit/shared/logo_emblem.png` | 56 x 56 | the emblem alone, for the hub home page |
+| `sprites/kit/shared/logo_wordmark.png` | 131 x 34 | "SUPERNATURAL BLOODLINES" |
+| `sprites/kit/shared/logo_lockup.png` | 193 x 56 | emblem and wordmark together |
 
 ---
 
@@ -208,7 +210,7 @@ A 16 px line with a cap height of 11, an x-height of 8 and stems 2 texels wide. 
 
 **Files:**
 - Create: `phase2/src/kit.py`
-- Create: `textures/gui/kit/{grimoire,bloodmoon,tensura}/*.png`, `textures/gui/kit/shared/*.png`
+- Create: `textures/gui/sprites/kit/{grimoire,bloodmoon,tensura}/*.png`, `textures/gui/sprites/kit/shared/*.png`, and a `.png.mcmeta` for each sprite that scales
 - Create: `phase2/kit-{grimoire,bloodmoon,tensura}.png`, `phase2/kit-shared.png` (contact sheets)
 
 - [x] **Step 1:** Port the three kit recipes of phase 1 and draw every sprite of table A, then table B.
@@ -219,7 +221,7 @@ A 16 px line with a cap height of 11, an x-height of 8 and stems 2 texels wide. 
 
 **Files:**
 - Create: `phase2/src/icons.py`
-- Create: `textures/gui/icons/32/*.png`, `textures/gui/icons/16/*.png`
+- Create: `textures/gui/sprites/icons/32/*.png`, `textures/gui/sprites/icons/16/*.png`
 - Create: `phase2/icons-32.png`, `phase2/icons-16.png` (each on a light and a dark ground, with the silhouette row)
 
 - [x] **Step 1:** Draw the motifs and the 115 icons of list C on the 32 grid, each with its own 16 px drawing where the 32 px one does not read.
@@ -231,7 +233,7 @@ A 16 px line with a cap height of 11, an x-height of 8 and stems 2 texels wide. 
 **Files:**
 - Create: `phase2/src/portraits.py`
 - Create: `textures/gui/boss/*.png` (15)
-- Create: `phase2/portraits.png`
+- Create: `phase2/portraits.png`, `phase2/portraits-wolves.png` (the three dark wolves at 8x)
 
 - [x] **Step 1:** Draw the 15 portraits of list D from the skin colours.
 - [x] **Step 2:** Review at real size inside each theme's portrait plate.
@@ -240,8 +242,8 @@ A 16 px line with a cap height of 11, an x-height of 8 and stems 2 texels wide. 
 
 **Files:**
 - Create: `phase2/src/font.py`
-- Create: `textures/font/title.png`, `assets/supernaturalbloodlines/font/title.json`
-- Create: `phase2/font-title.png` (the atlas and sample lines in English, German, Portuguese, French and Spanish), `phase2/font-title-themes.png`
+- Create: `textures/font/title.png`, `textures/font/title_gothic.png`, `assets/supernaturalbloodlines/font/title.json`, `font/title_gothic.json`
+- Create: `phase2/font-title.png` (the atlas and sample lines in English, German, Portuguese, French and Spanish), `phase2/font-title-gothic.png`, `phase2/font-title-themes.png`
 
 - [x] **Step 1:** Draw the glyphs and compose the accents.
 - [x] **Step 2:** Review the samples: even stem weight, even spacing, accents clear of the line above.
@@ -250,7 +252,7 @@ A 16 px line with a cap height of 11, an x-height of 8 and stems 2 texels wide. 
 
 **Files:**
 - Create: `phase2/src/logo.py`
-- Create: `src/main/resources/logo.png`, `textures/gui/kit/shared/logo_*.png`
+- Create: `src/main/resources/logo.png`, `textures/gui/sprites/kit/shared/logo_*.png`
 - Create: `phase2/logo.png` (contact sheet with the greyscale value check and the mod list row), `phase2/logo-128.png`
 
 - [x] **Step 1:** Draw the Drop emblem, the tile, the wordmark and the lockup.
@@ -275,12 +277,14 @@ A 16 px line with a cap height of 11, an x-height of 8 and stems 2 texels wide. 
 
 ## Result
 
-511 files: 255 theme sprites (85 x 3), 9 shared (5 HUD pieces and 4 logo files), 230 icons, 15 portraits, the font atlas and `logo.png`. Re-run with `python docs/superpowers/design/ui-overhaul/phase2/src/build.py all`; the run ends with the self-check of task 7.
+512 PNG files: 255 theme sprites (85 x 3), 9 shared (5 HUD pieces and 4 logo files), 230 icons, 15 portraits, 2 font atlases and `logo.png`; plus 124 `.mcmeta` files and 2 font JSON files. Re-run with `python docs/superpowers/design/ui-overhaul/phase2/src/build.py all`; the run ends with the self-check of task 7.
 
 Not done here, by the brief: no Java is wired (`Icons`, `SkillIcons`, `SlotArt`, `neoforge.mods.toml` are untouched) and nothing was checked in the running game. The real-size check in game at GUI scales 2, 3 and 4 belongs to the phase that first draws each sprite.
 
-## Open for the owner
+## Owner's answers (review of the kit)
 
-- Whether the store banner (phase 8) uses the lockup as it is.
-- Whether skills keep one icon each (42 drawn here) or go back to the 13 shared motifs.
-- Whether the sprites move to `textures/gui/sprites/` in phase 3, so `blitSprite` and `.mcmeta` nine-slices can be used.
+- Skills keep one icon each (42).
+- The sprites live in `textures/gui/sprites/` with `.mcmeta` scaling (done).
+- A second, gothic title font for Grimoire and Blood Moon; the plain one stays for Tensura (done).
+- The store banner (phase 8) uses the lockup as drawn.
+- Polish done: the 16 px `leap`, `rites` and `s-sip-3` redrawn; the three dark wolf portraits redrawn.

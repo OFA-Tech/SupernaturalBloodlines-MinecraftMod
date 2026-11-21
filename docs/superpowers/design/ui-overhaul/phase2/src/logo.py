@@ -129,10 +129,10 @@ def build():
     emb, til, wm = emblem(), tile(), wordmark()
     lock = Cv(56 + 6 + wm.w, 56).blit(emb, 0, 0).blit(wm, 62, round((56 - wm.h) / 2))
     emit(til, 'logo.png', 'the mod icon, 64 x 64 (logoFile)', root=RES)
-    emit(til.scaled(2), 'kit/shared/logo_128.png', 'the mod icon at an exact 2x, for stores')
-    emit(emb, 'kit/shared/logo_emblem.png', 'the emblem alone', glow=True)
-    emit(wm, 'kit/shared/logo_wordmark.png', 'the wordmark')
-    emit(lock, 'kit/shared/logo_lockup.png', 'emblem and wordmark', glow=True)
+    emit(til.scaled(2), 'sprites/kit/shared/logo_128.png', 'the mod icon at an exact 2x, for stores')
+    emit(emb, 'sprites/kit/shared/logo_emblem.png', 'the emblem alone', glow=True)
+    emit(wm, 'sprites/kit/shared/logo_wordmark.png', 'the wordmark')
+    emit(lock, 'sprites/kit/shared/logo_lockup.png', 'emblem and wordmark', glow=True)
     half = Cv(32, 32)
     for y in range(32):
         for x in range(32):

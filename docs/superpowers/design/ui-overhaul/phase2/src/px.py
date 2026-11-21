@@ -392,10 +392,27 @@ MANIFEST = []
 
 
 def emit(cv, rel, use, slice_=None, glow=False, root=GUI):
-    """Write one sprite and record it. `slice_` is (left, top, right, bottom) or None."""
-    cv.save(os.path.join(root, *rel.split('/')))
-    MANIFEST.append({'path': rel if root == GUI else os.path.relpath(os.path.join(root, *rel.split('/')), RES).replace('\\', '/'),
-                     'w': cv.w, 'h': cv.h, 'slice': list(slice_) if slice_ else None, 'glow': glow, 'use': use, '_cv': cv})
+    """Write one sprite and record it. `slice_` is (left, top, right, bottom), 'tile' or None (stretch).
+
+    A sprite under gui/sprites that scales gets the .mcmeta Minecraft reads for blitSprite (nine_slice or tile).
+    """
+    path = os.path.join(root, *rel.split('/'))
+    cv.save(path)
+    scaling = 'tile' if slice_ == 'tile' else 'nine_slice' if slice_ else 'stretch'
+    if rel.startswith('sprites/'):
+        meta = path + '.mcmeta'
+        if scaling == 'stretch':
+            if os.path.exists(meta):
+                os.remove(meta)
+        else:
+            body = {'type': scaling, 'width': cv.w, 'height': cv.h}
+            if scaling == 'nine_slice':
+                body['border'] = dict(zip(('left', 'top', 'right', 'bottom'), slice_))
+            with open(meta, 'w', encoding='utf8', newline='\n') as f:
+                json.dump({'gui': {'scaling': body}}, f, indent=2)
+                f.write('\n')
+    MANIFEST.append({'path': rel if root == GUI else os.path.relpath(path, RES).replace('\\', '/'), 'sprite': rel[len('sprites/'):-4] if rel.startswith('sprites/') else None,
+                     'w': cv.w, 'h': cv.h, 'scaling': scaling, 'slice': list(slice_) if scaling == 'nine_slice' else None, 'glow': glow, 'use': use, '_cv': cv})
     return cv
 
 

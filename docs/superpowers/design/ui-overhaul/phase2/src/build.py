@@ -63,7 +63,8 @@ def check():
             bad.append('partly transparent pixel in ' + m['path'])
         if '/icons/' in m['path']:
             b = cv.bounds()
-            if b is None or (cv.w > 12 and (b[0] < 1 or b[1] < 1 or b[2] > cv.w - 2 or b[3] > cv.h - 2)):
+            # at 32 px nothing touches the edge; at 16 px only an outline may (the style guide's 14 x 14 live area)
+            if b is None or (cv.w == 32 and (b[0] < 1 or b[1] < 1 or b[2] > cv.w - 2 or b[3] > cv.h - 2)):
                 bad.append('icon touches its canvas edge: ' + m['path'])
         if m['slice']:
             l, t, r, b = m['slice']
@@ -86,7 +87,8 @@ def write_manifest(parts):
         old[m['path']] = {k: v for k, v in m.items() if k != '_cv'}
     with open(path, 'w', encoding='utf8', newline='\n') as f:
         json.dump({'note': 'Every sprite of the phase 2 art kit. Paths are under assets/supernaturalbloodlines/textures/gui/ unless they start with assets/ or logo. '
-                           'slice = left, top, right, bottom of a nine-slice (a zero pair means a three-slice along the other axis). glow = has stepped alpha by design.',
+                           'sprite = the id for blitSprite (supernaturalbloodlines:<sprite>). scaling = what the .mcmeta next to the PNG says: stretch (no file), tile, or nine_slice with '
+                           'slice = left, top, right, bottom (a zero pair means a three-slice along the other axis). glow = has stepped alpha by design.',
                    'sprites': [old[k] for k in sorted(old)]}, f, indent=1)
         f.write('\n')
     print('manifest:', len(old), 'sprites')

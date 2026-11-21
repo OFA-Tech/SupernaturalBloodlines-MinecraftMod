@@ -554,7 +554,7 @@ class Moon(Kit):
             cv.rect(0, i * bh, 12, bh, c)
             if i:
                 cv.dash(0, i * bh, 12, cols[i - 1], 3, 3).dash(3, i * bh + 1, 9, cols[i - 1], 3, 3)
-        return cv, None
+        return cv, 'tile'
 
     def moon_disc(self, d):
         cv, r = Cv(d, d), d / 2
@@ -728,7 +728,7 @@ class Tensura(Kit):
     def bar_fill(self):
         P = self.P
         cv = Cv(6, 4).rect(0, 0, 6, 1, P.tealH).rect(0, 1, 6, 2, P.teal).rect(0, 3, 6, 1, rgba('#2AA0A8'))
-        return cv.vl(5, 0, 4, mix(P.void, P.teal, 0.5)), None  # a tile: one segment and its gap
+        return cv.vl(5, 0, 4, mix(P.void, P.teal, 0.5)), 'tile'  # one segment and its gap
 
     def plate(self):
         return Cv(24, 14).bevel(self.cut(22, 12), self.R.panel, 1, 1), (4, 4, 4, 4)
@@ -837,7 +837,7 @@ class Tensura(Kit):
         cv = Cv(24, 13).rect(0, 0, 24, 12, P.lit).hl(0, 12, 24, P.edge).hl(0, 0, 24, P.panelH)
         cv.bevel(diamond(7), self.R.pri, 3, 2)
         cv.hl(13, 5, 2, P.edgeH).hl(13, 7, 2, P.edgeH)
-        return cv
+        return cv, (16, 0, 0, 0)
 
     def slot(self, active):
         P = self.P
@@ -903,13 +903,18 @@ class Tensura(Kit):
 
 
 # =====================================================================================================================
+TILES = ('panel_texture', 'mastery_fill', 'mastery_fill_learning', 'mastery_fill_mastered', 'boss_bar_fill', 'boss_bar_fill_shifting')
+
+
 def build_theme(k):
     """Every sprite of one theme, in the order of the plan's table A. Returns [(name, Cv, slice)]."""
     out = []
 
     def add(name, got, use, glow=False):
         cv, sl = got if isinstance(got, tuple) else (got, None)
-        emit(cv, 'kit/%s/%s.png' % (k.id, name), use, sl, glow)
+        if name in TILES:
+            sl = 'tile'
+        emit(cv, 'sprites/kit/%s/%s.png' % (k.id, name), use, sl, glow)
         out.append((name, cv, sl))
 
     add('panel', k.panel(), 'page panels, cards, the status card')
@@ -986,27 +991,33 @@ def build_shared():
         f = Cv(16, 16)
         pie(f, 8, 8, 10, k / 32, with_a(BLACK, 175))
         sweep.blit(f, 0, k * 16)
-    out.append(('cooldown_sweep', emit(sweep, 'kit/shared/cooldown_sweep.png', 'cooldown pie, 33 frames of 16 x 16 (frame 0 empty)', None, True)))
+    out.append(('cooldown_sweep', emit(sweep, 'sprites/kit/shared/cooldown_sweep.png', 'cooldown pie, 33 frames of 16 x 16 (frame 0 empty)', None, True)))
     ring = Cv(32, 32 * 25)
     for step in range(25):
         lit = step * 72 // 24
         for i in range(72):
             a = 2 * math.pi * i / 72
             ring.rect(16 + round(math.sin(a) * 12.5) - 1, step * 32 + 16 - round(math.cos(a) * 12.5) - 1, 2, 2, rgba('#D8182E') if i < lit else rgba('#5A1018'))
-    out.append(('blood_ring', emit(ring, 'kit/shared/blood_ring.png', 'the ring of blood round Bite, 25 frames of 32 x 32')))
+    out.append(('blood_ring', emit(ring, 'sprites/kit/shared/blood_ring.png', 'the ring of blood round Bite, 25 frames of 32 x 32')))
     mark = Cv(7, 7).bevel(diamond(5), ramp(T.tealD, T.tealH, T.teal, '#2AA0A8'), 1, 1)
-    out.append(('mode_mark', emit(mark, 'kit/shared/mode_mark.png', 'the corner diamond of Tensura mode')))
+    out.append(('mode_mark', emit(mark, 'sprites/kit/shared/mode_mark.png', 'the corner diamond of Tensura mode')))
     full = ['....K....', '...KHK...', '...KRK...', '..KHRRK..', '.KHRRRDK.', '.KRWRRDK.', '.KRRRRDK.', '..KDDDK..', '...KKK...']
     pal = {'K': '#3A0A10', 'H': '#FF6A60', 'R': '#C01830', 'D': '#7A0E1E', 'W': '#FFC8C2'}
-    out.append(('blood_full', emit(Cv(9, 9).bmp(full, pal), 'kit/shared/blood_full.png', 'a blood point in the food bar, 9 x 9')))
+    out.append(('blood_full', emit(Cv(9, 9).bmp(full, pal), 'sprites/kit/shared/blood_full.png', 'a blood point in the food bar, 9 x 9')))
     empty = {'K': '#3A0A10', 'H': '#2A0A10', 'R': '#1C060A', 'D': '#14040A', 'W': '#2A0A10'}
-    out.append(('blood_empty', emit(Cv(9, 9).bmp(full, empty), 'kit/shared/blood_empty.png', 'an empty blood point, 9 x 9')))
+    out.append(('blood_empty', emit(Cv(9, 9).bmp(full, empty), 'sprites/kit/shared/blood_empty.png', 'an empty blood point, 9 x 9')))
     return out
 
 
 def kit_sheet(k, sprites, path):
     """Contact sheet of one theme: every sprite at 1x and 4x, then the nine-slices stretched the way the game will."""
     cells = [(n, c) for n, c, _ in sprites if c.h <= 80]
+    for n, c, s in sprites:
+        if c.h > 80:  # the banded sky: its top, tiled sideways
+            top = Cv(96, 110)
+            for x in range(0, 96, c.w):
+                top.blit(c, x, 0)
+            cells.append((n + ' (tiled, the top bands)', top))
     by = {n: (c, s) for n, c, s in sprites}
     demo = Cv(424, 150)
     pc, ps = by['panel']

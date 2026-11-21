@@ -121,9 +121,63 @@ def morph(a, b):
     return c
 
 
+def demon_wolf():
+    """Deucalion: blue-grey skin, not fur; dark swept-back hair, a heavy ridged brow, red eyes, a wrinkled snout."""
+    c = beast(ramp('#141B28', '#9AA8C4', '#5E7198', '#3C4C70', '#7688AC', '#2D3A52'), '#FF3A2A', '#1A1420', mouth=True, muzzle='#7688AC')
+    hair, ridge, groove = rgba('#10141E'), rgba('#B4C0D8'), rgba('#26324A')
+    c.rect(8, 4, 8, 2, hair).hl(9, 3, 6, hair).px(7, 5, hair).px(16, 5, hair).hl(10, 6, 4, hair)
+    c.hl(5, 9, 14, ridge).hl(5, 10, 14, groove).px(4, 10, groove).px(19, 10, groove)  # the brow ridge and its shadow
+    for x in (7, 10, 13, 16):
+        c.vl(x, 7, 2, groove)  # the ridges of the forehead
+    c.px(11, 9, groove).px(12, 9, groove).hl(10, 14, 4, groove).px(9, 15, groove).px(14, 15, groove)  # wrinkles over the snout
+    for x, y in ((4, 5), (5, 6), (19, 5), (18, 6), (4, 6), (19, 6)):
+        c.px(x, y, rgba('#6E1519'))  # dark red inside the ears
+    for x in (5, 18):
+        c.px(x, 11, rgba('#7A1218'))  # the eyes glow
+    return c
+
+
+def alpha_wolf():
+    """Peter: black fur and a shaggy mane, the red glare of an Alpha under a lowered brow, a burn scar over one eye."""
+    c = beast(ramp('#030304', '#6E6874', '#25222B', '#0E0D11', '#3A3640', '#17151A'), '#FF2A1A', '#2C2620', mouth=True, muzzle='#2E2B33')
+    fur, lit, black = rgba('#25222B'), rgba('#6E6874'), rgba('#030304')
+    for x, y in ((1, 12), (0, 14), (1, 16), (2, 18), (22, 12), (23, 14), (22, 16), (21, 18), (2, 14), (21, 14), (3, 19), (20, 19), (1, 15), (22, 15)):
+        c.px(x, y, fur)  # the mane breaks the outline
+    for x, y in ((0, 13), (1, 11), (23, 13), (22, 11), (2, 17), (21, 17)):
+        c.px(x, y, black)
+    for x, y in ((5, 8), (6, 9), (7, 9), (8, 10), (9, 10), (18, 8), (17, 9), (16, 9), (15, 10), (14, 10)):
+        c.px(x, y, black)  # the brow comes down to the nose: the glare
+    for x, y in ((5, 7), (6, 8), (7, 8), (18, 7), (17, 8), (16, 8)):
+        c.px(x, y, lit)
+    c.px(7, 11, rgba('#FFD0C0')).px(15, 11, rgba('#FFD0C0'))
+    for x in (5, 18):
+        c.px(x, 12, rgba('#8A1218'))
+    for x, y in ((18, 6), (17, 7), (17, 8), (16, 9), (16, 13), (15, 14), (15, 15), (14, 16)):
+        c.px(x, y, rgba('#B0625C'))  # the scar runs through the eye
+    c.px(17, 7, rgba('#D89088')).px(15, 14, rgba('#D89088'))
+    return c
+
+
+def gevaudan():
+    """The Beast: black-brown fur with russet streaks, bone-white brow band, skull cap, cheek guards and muzzle ridge, white-blue eyes."""
+    c = beast(ramp('#0A0706', '#6A5648', '#2E241E', '#16100C', '#463830', '#1E1612'), '#D8F0FF', '#2A1A18', mouth=True, muzzle='#463830')
+    bone, bone2, bone3, rus, rus2 = rgba('#F0E8D6'), rgba('#B5A98A'), rgba('#6A5E48'), rgba('#B0582A'), rgba('#7A3A1C')
+    for x, y in ((5, 4), (6, 5), (18, 4), (17, 5), (7, 7), (16, 7), (4, 8), (19, 8), (8, 18), (15, 18)):
+        c.px(x, y, rus)  # russet streaks
+    for x, y in ((6, 6), (17, 6), (5, 9), (18, 9), (7, 19), (16, 19)):
+        c.px(x, y, rus2)
+    c.rect(10, 5, 4, 3, bone).hl(10, 7, 4, bone2).px(10, 5, bone2).px(13, 5, bone2).hl(10, 8, 4, bone3)  # the skull cap
+    c.hl(5, 9, 14, bone).hl(5, 10, 14, bone2).px(5, 9, bone2).px(18, 9, bone2)  # the brow band
+    for x0, flip in ((3, False), (18, True)):  # cheek guards
+        c.rect(x0, 12, 3, 5, bone).vl(x0 + (0 if flip else 2), 12, 5, bone2).hl(x0, 16, 3, bone2).px(x0 + (2 if flip else 0), 12, bone2).hl(x0, 17, 3, bone3)
+    c.vl(11, 13, 3, bone).vl(12, 13, 3, bone2)  # the muzzle ridge
+    for x in (5, 18):
+        c.px(x, 11, rgba('#58A0D8')).px(x, 12, rgba('#2A5A8A'))
+    c.px(7, 11, WHITE).px(15, 11, WHITE)
+    return c
+
+
 TAN = ramp('#26221C', '#A29682', '#766B58', '#4F483B', '#867A67', '#353027')
-PETER = ramp('#050608', '#55505C', '#211F26', '#0C0B0E', '#34313A', '#141317')
-GEVAUDAN = ramp('#070809', '#56646E', '#262E36', '#121418', '#3C474F', '#191B20')
 
 
 def all_portraits():
@@ -146,13 +200,13 @@ def all_portraits():
                            shirt='#464650', collar='flat', stern=True))),
         ('deucalion_human', bust(dict(bg='#22262E', skin='tan', hair=('#543E2E', '#382A1E'), eye='#1A1A1E', beard='stubble', beard_c='#5A4636', glasses=True,
                                       coat=('#707277', '#54565C'), shirt='#2A2C33', collar='flat'))),
-        ('deucalion_demon_wolf', beast('demon', '#FF3A2A', '#1A1420', mouth=True, glow='#3A1420')),
+        ('deucalion_demon_wolf', demon_wolf()),
         ('peter_human', bust(dict(bg='#2C2620', skin='warm', hair=('#221A17', '#120E0C'), eye='#608C98', beard='full', beard_c='#3E3028', coat=('#CEA674', '#A88252'),
                                   shirt='#96969E', smirk=True))),
-        ('peter_wolf', beast(PETER, '#FF3A2A', '#2C2620', mouth=True, scar='#B0625C')),
+        ('peter_wolf', alpha_wolf()),
         ('beast_host', bust(dict(bg='#2A1A18', skin='brown', hair=('#241A17', '#140E0C'), eye='#2E2018', coat=('#96684C', '#74503A'), shirt='#BDB190',
                                  mouth='#7A4438', stern=True))),
-        ('beast_beast', beast(GEVAUDAN, '#FF9A2A', '#2A1A18', mouth=True, scar='#C8B8A0', glow='#4A1A1F')),
+        ('beast_beast', gevaudan()),
         ('beast_spirit', beast('ice', '#17707A', '#0E2630', muzzle='#FFFFFF', glow='#2A5A6A', nose='#58A0B2')),
     ]
 
@@ -168,5 +222,7 @@ def build():
         for name, cv in cells[:15:2]:
             framed = Cv(42, 42).blit(cv, 9, 9).blit(k.boss_plate('shifting' in name), 0, 0)
             cells.append(('%s, %s' % (name, k.id), framed))
+    wolves = [(n, c) for n, c in cells[:15] if n in ('deucalion_demon_wolf', 'peter_wolf', 'beast_beast')]
+    sheet(os.path.join(PHASE2, 'portraits-wolves.png'), wolves, rgba('#17171C'), zoom=8, max_w=900)
     sheet(os.path.join(PHASE2, 'portraits.png'), cells, rgba('#17171C'), zoom=5, max_w=1500)
     print('portraits', 15)
