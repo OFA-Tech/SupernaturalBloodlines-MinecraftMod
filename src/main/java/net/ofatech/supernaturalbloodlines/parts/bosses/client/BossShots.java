@@ -259,7 +259,7 @@ public final class BossShots {
                 columns = 4;
                 rows = 1;
                 String[] names = {"from the front", "from the side", "from behind", "desiccated"};
-                float[] yaws = {180f, 90f, 0f, 0f};
+                float[] yaws = {180f, 90f, 0f, 135f};
                 for (int i = 0; i < 4; i++) {
                     NpcOriginalBoss m = switch (boss) {
                         case "elijah" -> net.ofatech.supernaturalbloodlines.parts.bosses.entity.ElijahEntity.create(mc.level);
@@ -273,7 +273,7 @@ public final class BossShots {
                         }
                     };
                     m.lookDesiccated(i == 3);
-                    list.add(new Panel(names[i], m, yaws[i], i == 3 ? 0.9f : 1.95f, i == 3 ? 2.2f : 1.3f));
+                    list.add(new Panel(names[i], m, yaws[i], i == 3 ? 0.6f : 1.95f, i == 3 ? 2.2f : 1.3f));
                 }
             }
             return list;
@@ -313,6 +313,9 @@ public final class BossShots {
             if (panels == null) {
                 panels = build(mc);
             }
+            // .hitbox=true draws the boxes as F3+B does; .tilt=<degrees> looks down on the body from above (a lying body is seen best that way)
+            mc.getEntityRenderDispatcher().setRenderHitBoxes(Boolean.getBoolean(PROPERTY + ".hitbox"));
+            float tilt = (float) Math.toRadians(Float.parseFloat(System.getProperty(PROPERTY + ".tilt", "0")));
             int cw = width / columns;
             int ch = height / rows;
             for (int i = 0; i < panels.size(); i++) {
@@ -331,7 +334,7 @@ public final class BossShots {
                 int cy = y0 + 16 + (ch - 16) / 2 + Math.round((p.modelHeight() - m.getBbHeight()) / 2f * scale);
                 g.enableScissor(x0, y0, x0 + cw, y0 + ch);
                 g.drawString(font, p.name(), x0 + 4, y0 + 4, 0xFFFFFF, false);
-                InventoryScreen.renderEntityInInventory(g, x0 + cw / 2, cy, scale, new Vector3f(0f, m.getBbHeight() / 2f, 0f), new Quaternionf().rotateZ((float) Math.PI), null, m);
+                InventoryScreen.renderEntityInInventory(g, x0 + cw / 2, cy, scale, new Vector3f(0f, m.getBbHeight() / 2f, 0f), new Quaternionf().rotateZ((float) Math.PI).rotateX(tilt), null, m);
                 g.disableScissor();
             }
         }

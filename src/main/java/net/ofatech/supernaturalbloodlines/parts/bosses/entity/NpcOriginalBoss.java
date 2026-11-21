@@ -6,10 +6,13 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.ofatech.supernaturalbloodlines.core.bloodline.LyingBody;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import net.ofatech.supernaturalbloodlines.core.boss.BossRules;
 import net.ofatech.supernaturalbloodlines.core.boss.BossState;
@@ -62,6 +65,34 @@ public abstract class NpcOriginalBoss extends BossNpc {
 
     public boolean isDesiccated() {
         return entityData.get(DESICCATED);
+    }
+
+    /** R184: a desiccated Original lies on its back, so the box is the low, wide one the body fills, not the standing one. */
+    @Override
+    public EntityDimensions getDefaultDimensions(Pose pose) {
+        if (isDesiccated()) {
+            return EntityDimensions.scalable(LyingBody.LENGTH, LyingBody.HEIGHT).withEyeHeight(LyingBody.EYE_HEIGHT);
+        }
+        return standingDimensions(pose);
+    }
+
+    /** The box while standing; Klaus's depends on his form. */
+    protected EntityDimensions standingDimensions(Pose pose) {
+        return super.getDefaultDimensions(pose);
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (DESICCATED.equals(key)) {
+            refreshDimensions();
+        }
+    }
+
+    /** The wide lying box touches walls the standing one did not: that is no suffocation (a desiccated Original cannot be hurt below 1 anyway). */
+    @Override
+    public boolean isInWall() {
+        return !isDesiccated() && super.isInWall();
     }
 
     @Override

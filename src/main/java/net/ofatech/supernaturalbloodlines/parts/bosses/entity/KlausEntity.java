@@ -172,7 +172,7 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
     }
 
     @Override
-    public EntityDimensions getDefaultDimensions(Pose pose) {
+    protected EntityDimensions standingDimensions(Pose pose) {
         ShiftRules.Size size = ShiftRules.dimensionsFor(BossForm.of(entityData.get(FORM)), entityData.get(SHIFT_TICKS));
         return EntityDimensions.scalable(size.width(), size.height());
     }

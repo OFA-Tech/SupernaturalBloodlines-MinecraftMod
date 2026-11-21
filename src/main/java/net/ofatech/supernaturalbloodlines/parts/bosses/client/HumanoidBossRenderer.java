@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.bloodline.LyingBody;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.BossNpc;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.NpcOriginalBoss;
 
@@ -37,8 +38,10 @@ public final class HumanoidBossRenderer<T extends BossNpc> extends HumanoidMobRe
     protected void setupRotations(T boss, PoseStack poses, float bob, float yBodyRot, float partialTick, float scale) {
         super.setupRotations(boss, poses, bob, yBodyRot, partialTick, scale);
         if (boss instanceof NpcOriginalBoss original && original.isDesiccated()) {
-            poses.translate(0.0F, 0.1F, 0.0F);
+            // on its back, head toward -x, as vanilla draws a sleeper, but with the middle of the body over the entity and the back on the floor (R184)
+            poses.translate(LyingBody.LENGTH / 2.0F, LyingBody.HEIGHT / 2.0F, 0.0F);
             poses.mulPose(Axis.ZP.rotationDegrees(90.0F));
+            poses.mulPose(Axis.YP.rotationDegrees(270.0F));
         }
     }
 }
