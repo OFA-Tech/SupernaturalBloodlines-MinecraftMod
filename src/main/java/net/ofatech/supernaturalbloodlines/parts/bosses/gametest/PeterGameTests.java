@@ -850,26 +850,38 @@ public final class PeterGameTests {
         var level = helper.getLevel();
         var key = net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.STRUCTURE, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(NS, "hale_house"));
         var structure = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE).get(key.location());
+        var touched = new java.util.ArrayList<net.minecraft.world.level.chunk.ChunkAccess>();
         try {
             BossesConfig.override("peter_house_enabled", true);
             BossesConfig.override("peter_house_chance", 1.0);
             var stub = generate(helper).orElseThrow();
             var start = new net.minecraft.world.level.levelgen.structure.StructureStart(structure, new net.minecraft.world.level.ChunkPos(helper.absolutePos(BlockPos.ZERO)), 0, stub.getPiecesBuilder().build());
             var chunk = level.getChunk(helper.absolutePos(BlockPos.ZERO));
+            touched.add(chunk);
             chunk.setStartForStructure(structure, start);
             BoundingBox box = start.getBoundingBox();
             long startChunk = new net.minecraft.world.level.ChunkPos(helper.absolutePos(BlockPos.ZERO)).toLong();
             for (int cx = box.minX() >> 4; cx <= box.maxX() >> 4; cx++) {
                 for (int cz = box.minZ() >> 4; cz <= box.maxZ() >> 4; cz++) {
-                    level.getChunk(cx, cz).addReferenceForStructure(structure, startChunk);
+                    var c = level.getChunk(cx, cz);
+                    touched.add(c);
+                    c.addReferenceForStructure(structure, startChunk);
                 }
             }
             BlockPos inside = new BlockPos(box.getCenter().getX(), box.getCenter().getY(), box.getCenter().getZ());
             var found = BossDirector.nearestHouse(level, inside.offset(10, 0, 0));
             helper.assertTrue(found.isPresent() && found.get().equals(box), "a player 10 blocks from a house did not find it: " + found);
             helper.assertTrue(BossDirector.nearestHouse(level, inside.offset(60, 0, 0)).isEmpty(), "a player 60 blocks from the house found it");
-            chunk.setStartForStructure(structure, null);
         } finally {
+            // put the chunks back as they were: a null start left in the map crashes the next chunk that is generated around it
+            for (var c : touched) {
+                var starts = new java.util.HashMap<>(c.getAllStarts());
+                starts.remove(structure);
+                c.setAllStarts(starts);
+                var refs = new java.util.HashMap<>(c.getAllReferences());
+                refs.remove(structure);
+                c.setAllReferences(refs);
+            }
             BossesConfig.override("peter_house_enabled", null);
             BossesConfig.override("peter_house_chance", null);
         }
