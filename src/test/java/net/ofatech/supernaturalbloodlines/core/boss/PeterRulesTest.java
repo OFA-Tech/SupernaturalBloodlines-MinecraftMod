@@ -117,6 +117,8 @@ class PeterRulesTest {
         assertFalse(PeterRules.mayRespawn(false, 99, 5, 7), "the switch is off");
         assertFalse(PeterRules.mayRespawn(true, 99, -1, 7), "no death day written down");
         assertTrue(PeterRules.mayRespawn(true, 6, 5, 0), "zero days is one day");
+        assertFalse(PeterRules.mayRespawn(true, 5, 5, 0), "zero days is one day, so the day he died is too early");
+        assertFalse(PeterRules.mayRespawn(true, 5, 5, -3), "a negative number of days is one day");
     }
 
     @Test
