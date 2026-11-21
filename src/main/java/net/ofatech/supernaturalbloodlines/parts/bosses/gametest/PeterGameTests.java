@@ -531,12 +531,25 @@ public final class PeterGameTests {
     }
 
     /** The server knows these players by id (a fake player is in nobody's list), so a profile can be read about them. */
-    private static void known(ServerPlayer... ps) {
+    private static void known(GameTestHelper helper, ServerPlayer... ps) {
+        // the GameTest server has PvP off; the claws are a rule about PvP, so the test says which it is and puts it back
+        pvpBefore = helper.getLevel().getServer().isPvpAllowed();
+        helper.getLevel().getServer().setPvpAllowed(true);
         Map<UUID, ServerPlayer> m = new HashMap<>();
         for (ServerPlayer p : ps) {
             m.put(p.getUUID(), p);
         }
         SireCall.overridePlayerLookup(m::get);
+    }
+
+    private static Boolean pvpBefore;
+
+    private static void restore(GameTestHelper helper) {
+        SireCall.overridePlayerLookup(null);
+        if (pvpBefore != null) {
+            helper.getLevel().getServer().setPvpAllowed(pvpBefore);
+            pvpBefore = null;
+        }
     }
 
     private static void agree(ServerPlayer target) {
@@ -549,7 +562,7 @@ public final class PeterGameTests {
         LineTestPlayer user = LineTestPlayer.create(helper);
         LineTestPlayer target = LineTestPlayer.create(helper);
         BloodlineAccess.set(target, BloodlineAccess.get(target).toBuilder().doppelgangerGene(true).doppelgangerRolled(true).build());
-        known(user, target);
+        known(helper, user, target);
         try {
             LineTestPlayer.useRealHarm(true);
             ItemStack stack = claws();
@@ -562,7 +575,7 @@ public final class PeterGameTests {
             // consent
             agree(target);
             item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
-            helper.assertTrue(user.received(net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem.LEARNED) && stack.getDamageValue() == 1, "the user was not told, or no use was spent");
+            helper.assertTrue(user.received(net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem.LEARNED) && stack.getDamageValue() == 1, "the user was not told, or no use was spent: damage " + stack.getDamageValue() + ", heard " + user.heard());
             helper.assertTrue(target.received(net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem.USED_ON), "the target was not told it was used on them");
             var facts = ProfileService.of(user, target.getUUID()).facts();
             helper.assertTrue(facts.containsKey(Fact.GENES) && facts.containsKey(Fact.SIRE), "the claws did not teach the sire and the genes: " + facts.keySet());
@@ -575,7 +588,7 @@ public final class PeterGameTests {
             helper.assertTrue(!ProfileService.of(other, target.getUUID()).facts().containsKey(Fact.GENES), "somebody else learned from the user's claws");
         } finally {
             LineTestPlayer.useRealHarm(false);
-            SireCall.overridePlayerLookup(null);
+            restore(helper);
             BloodlineAccess.set(target, BloodlineState.NONE);
         }
         helper.succeed();
@@ -585,7 +598,7 @@ public final class PeterGameTests {
     public static void theClawsNeverNameAnNpcOriginalAsTheSireOrALine(GameTestHelper helper) {
         LineTestPlayer user = LineTestPlayer.create(helper);
         LineTestPlayer target = LineTestPlayer.create(helper);
-        known(user, target);
+        known(helper, user, target);
         try {
             LineTestPlayer.useRealHarm(true);
             net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder.record(net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.KLAUS.uuid(), "Klaus", target);
@@ -593,12 +606,12 @@ public final class PeterGameTests {
             ItemStack stack = claws();
             ((net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem) stack.getItem()).interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
             var facts = ProfileService.of(user, target.getUUID()).facts();
-            helper.assertTrue(stack.getDamageValue() == 1 && facts.containsKey(Fact.GENES), "the claws did not work on a player sired by an NPC Original");
+            helper.assertTrue(stack.getDamageValue() == 1 && facts.containsKey(Fact.GENES), "the claws did not work on a player sired by an NPC Original: damage " + stack.getDamageValue() + ", facts " + facts + ", user heard " + user.heard() + ", target ok " + target.isShiftKeyDown() + " " + target.getMainHandItem());
             helper.assertTrue(!facts.containsKey(Fact.SIRE) && !facts.containsKey(Fact.LINE), "the claws named an NPC Original as the sire or a line: " + facts);
             helper.assertTrue(facts.values().stream().flatMap(List::stream).noneMatch(s -> s.toLowerCase(java.util.Locale.ROOT).contains("klaus")), "the name of an NPC Original is in what the claws taught: " + facts);
         } finally {
             LineTestPlayer.useRealHarm(false);
-            SireCall.overridePlayerLookup(null);
+            restore(helper);
             net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel()).remove(target.getUUID());
         }
         helper.succeed();
@@ -607,7 +620,7 @@ public final class PeterGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theClawsWorkOnNothingButAnotherPlayerAndNeverOnTheUserAndCostNothingWhenTheyFail(GameTestHelper helper) {
         LineTestPlayer user = LineTestPlayer.create(helper);
-        known(user);
+        known(helper, user);
         try {
             LineTestPlayer.useRealHarm(true);
             ItemStack stack = claws();
@@ -621,7 +634,7 @@ public final class PeterGameTests {
             villager.discard();
         } finally {
             LineTestPlayer.useRealHarm(false);
-            SireCall.overridePlayerLookup(null);
+            restore(helper);
         }
         helper.succeed();
     }
@@ -630,7 +643,7 @@ public final class PeterGameTests {
     public static void theClawsFollowPvpAndTheRightToHarm(GameTestHelper helper) {
         LineTestPlayer user = LineTestPlayer.create(helper);
         LineTestPlayer target = LineTestPlayer.create(helper);
-        known(user, target);
+        known(helper, user, target);
         try {
             agree(target);
             ItemStack stack = claws();
@@ -660,7 +673,7 @@ public final class PeterGameTests {
             helper.assertTrue(stack.getDamageValue() == 0, "a lead alone was consent");
         } finally {
             LineTestPlayer.useRealHarm(false);
-            SireCall.overridePlayerLookup(null);
+            restore(helper);
         }
         helper.succeed();
     }
