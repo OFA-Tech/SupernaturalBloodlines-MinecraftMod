@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.hud.client;
 
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
+import net.ofatech.supernaturalbloodlines.core.hud.Mastery;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.shared.hud.DevHud;
@@ -33,10 +34,12 @@ final class HudDemo implements HudSource {
         long t = level == null ? 0 : level.getGameTime();
         int left = DevHud.cooldown ? 30 - (int) (t / 20 % 30) : 0;
         return new SlotView[] {
-                new SlotView(icon("iron_sword"), "R", 0f, 0, false, null, "Predator", null),
-                new SlotView(icon("bow"), "F", 0f, 0, false, null, "Sharp Sight", null),
-                new SlotView(icon("amethyst_shard"), "V", left / 30f, left, false, null, "Water Blade", null),
-                SlotView.EMPTY.withKey("Z"), SlotView.EMPTY.withKey("X"), SlotView.EMPTY.withKey("C")};
+                new SlotView(icon("iron_sword"), "R", 0f, 0, false, null, "Predator", null).withMastery(Mastery.of(42, 100, 0, false)).withDescription("Eats what it kills"),
+                new SlotView(icon("bow"), "F", 0f, 0, false, null, "Sharp Sight", null).withMastery(Mastery.of(100, 100, 0, true)).withDescription("Sees far and clear"),
+                new SlotView(icon("amethyst_shard"), "V", left / 30f, left, false, null, "Water Blade", "Blade mode").withMastery(Mastery.of(7, 100, 0, false)).withDescription("Cuts with water"),
+                new SlotView(icon("golden_apple"), "Z", 0f, 0, false, "supernaturalbloodlines.hud.slot.cannot_use", "Poison Resistance", null).withMastery(Mastery.of(-40, 100, 100, false)).withDescription("Resists poison"),
+                new SlotView(icon("ender_eye"), "X", 0f, 0, true, null, "Great Sage", null).withMastery(Mastery.of(88, 100, 100, false)).withDescription("Thinks for you"),
+                SlotView.EMPTY.withKey("C")};
     }
 
     @Override

@@ -431,9 +431,7 @@ public final class DeucalionGameTests {
             BossDirector.useMods(b -> true);
             helper.getLevel().setDayTime(NIGHT);
             DeucalionEntity d = BossDirector.spawnDeucalion(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
-            // inside the structure: the test world loads the chunks of the structures and no others, so a cow 30 blocks away can stand in a chunk that is not
-            // loaded (the neighbour decides), and then the hunt finds no prey (it gives up early) or the cow cannot be placed (a NullPointerException)
-            net.minecraft.world.entity.animal.Cow prey = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(6, 1, 5));
+            net.minecraft.world.entity.animal.Cow prey = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(6, 1, 2)); // near: 30 blocks away can be an unloaded chunk (depending on where the layout puts the test), and then he is "stranded"
             net.minecraft.world.entity.animal.Cow other = helper.spawnWithNoFreeWill(EntityType.COW, new BlockPos(3, 1, 3));
             for (var cow : List.of(prey, other)) {
                 cow.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(10_000);

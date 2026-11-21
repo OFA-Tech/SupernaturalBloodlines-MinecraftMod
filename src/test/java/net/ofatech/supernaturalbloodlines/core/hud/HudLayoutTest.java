@@ -130,14 +130,98 @@ class HudLayoutTest {
                 for (int head : new int[] {1, 2}) {
                     assertFalse(pill.overlaps(HudLayout.preview(s[0], s[1], head)), "panel " + s[0] + "x" + s[1] + " text " + textW);
                 }
+            }
+        }
+    }
+
+    @Test
+    void theFallbackPanelAboveTheLeftColumnClearsTheLiftedPillAtGuiScales2To4() {
+        for (int[] s : SCALES) {
+            Box[] slots = HudLayout.slots(s[0], s[1]);
+            for (int textW : new int[] {60, 130, 200}) {
+                Box pill = HudLayout.pill(s[0], s[1], textW, true);
                 for (int h : new int[] {40, 80}) {
                     int top = HudLayout.leftTooltipTop(slots[0].y(), h, true);
-                    assertTrue(top + h <= pill.y() - 2, "the tooltip stands on the pill: " + top + "+" + h + " vs " + pill + " " + s[0] + "x" + s[1]);
+                    assertTrue(top + h <= pill.y() - 2, "the panel stands on the pill: " + top + "+" + h + " vs " + pill + " " + s[0] + "x" + s[1]);
                 }
             }
         }
     }
 
+    /** 1920x1080 and 1280x720 windows at GUI scales 2 to 4 (the labels have room), then smaller ones, where the columns leave no room outside them. */
+    private static final int[][] ROOMY = {{960, 540}, {640, 360}, {480, 270}, {427, 240}};
+    private static final int[][] LABEL_SCREENS = {{960, 540}, {640, 360}, {480, 270}, {427, 240}, {320, 180}, {320, 240}, {213, 120}, {171, 96}};
+
+    @Test
+    void eachLabelIsLevelWithItsOwnSlotOnTheOuterSide() {
+        for (int[] s : LABEL_SCREENS) {
+            String at = s[0] + "x" + s[1];
+            Box[] slots = HudLayout.slots(s[0], s[1]);
+            Box[] labels = HudLayout.labels(s[0], s[1]);
+            assertEquals(6, labels.length, at);
+            for (int i = 0; i < labels.length; i++) {
+                int slotCentre = slots[i].y() + slots[i].h() / 2;
+                int labelCentre = labels[i].y() + labels[i].h() / 2;
+                assertTrue(Math.abs(slotCentre - labelCentre) <= 1, "label " + i + " centre " + labelCentre + " vs its slot's " + slotCentre + " on " + at);
+                if (i < 3) {
+                    assertTrue(labels[i].right() <= slots[i].x(), "label " + i + " is not left of its slot " + at);
+                } else {
+                    assertTrue(labels[i].x() >= slots[i].right(), "label " + i + " is not right of its slot " + at);
+                }
+            }
+        }
+    }
+
+    @Test
+    void labelsHaveRoomAtGuiScales2To4AndAreNeverDrawnWhereTheyWouldNotFit() {
+        for (int[] s : ROOMY) {
+            for (Box l : HudLayout.labels(s[0], s[1])) {
+                assertTrue(l.w() >= 56, "room for a name: " + l + " on " + s[0] + "x" + s[1]);
+            }
+        }
+        for (int[] s : LABEL_SCREENS) {
+            for (Box l : HudLayout.labels(s[0], s[1])) {
+                assertTrue(l.w() == 0 || l.w() >= HudLayout.LABEL_MIN_W, "a sliver of " + l.w() + " px on " + s[0] + "x" + s[1]);
+            }
+        }
+    }
+
+    @Test
+    void noLabelTouchesASlotThePillTheHotbarOrAnythingElseOfTheHud() {
+        for (int[] s : LABEL_SCREENS) {
+            String at = s[0] + "x" + s[1];
+            Box[] slots = HudLayout.slots(s[0], s[1]);
+            Box[] labels = HudLayout.labels(s[0], s[1]);
+            Box hotbar = HudLayout.hotbar(s[0], s[1]);
+            Box offhand = HudLayout.offhand(s[0], s[1]);
+            Box attack = HudLayout.attackIndicator(s[0], s[1]);
+            for (int i = 0; i < labels.length; i++) {
+                Box l = labels[i];
+                assertTrue(l.x() >= 0 && l.right() <= s[0] && l.y() >= 0 && l.bottom() <= s[1], "label " + i + " off screen " + l + " " + at);
+                if (l.w() == 0) {
+                    continue; // not drawn
+                }
+                assertFalse(l.overlaps(hotbar) || l.overlaps(offhand) || l.overlaps(attack), "label " + i + " on the hotbar strip " + at);
+                for (Box slot : slots) {
+                    assertFalse(l.overlaps(slot), "label " + i + " on a slot " + at);
+                }
+                for (int j = i + 1; j < labels.length; j++) {
+                    assertFalse(l.overlaps(labels[j]), "label " + i + " on label " + j + " " + at);
+                }
+                for (boolean lifted : new boolean[] {false, true}) {
+                    for (int textW : new int[] {60, 130, 200}) {
+                        assertFalse(l.overlaps(HudLayout.pill(s[0], s[1], textW, lifted)), "label " + i + " on the pill " + at);
+                    }
+                }
+                for (int msgW : new int[] {40, 120, 220}) {
+                    assertFalse(l.overlaps(HudLayout.actionBar(s[0], s[1], msgW)), "label " + i + " on the action bar " + at);
+                }
+                for (int head : new int[] {1, 2}) {
+                    assertFalse(l.overlaps(HudLayout.preview(s[0], s[1], head)), "label " + i + " on the mode panel " + at);
+                }
+            }
+        }
+    }
     @Test
     void anUnliftedPillStillSitsOnTheMessageWhichIsWhyItLifts() {
         for (int[] s : SCALES) {

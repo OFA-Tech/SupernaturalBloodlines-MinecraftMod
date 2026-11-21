@@ -135,6 +135,7 @@ final class BossTestRig implements AutoCloseable {
 
     /** Rebekah, made the way the director makes her (no prey), standing near the middle of the test. */
     net.ofatech.supernaturalbloodlines.parts.bosses.entity.RebekahEntity spawnRebekah() {
+        fixedGround(); // the director's own finder puts her 12 to 48 blocks off, in a chunk the test world may not have loaded (and her drops with her)
         return BossDirector.spawnRebekah(helper.getLevel(), helper.absolutePos(new BlockPos(2, 1, 2)), null, null).orElseThrow();
     }
 
