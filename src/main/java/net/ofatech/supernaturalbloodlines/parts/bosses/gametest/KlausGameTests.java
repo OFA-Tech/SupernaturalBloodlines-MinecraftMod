@@ -682,6 +682,198 @@ public final class KlausGameTests {
         helper.succeed();
     }
 
+    private static ServerPlayer talker(GameTestHelper helper) {
+        return TestPlayers.createTalkingDuelist(helper);
+    }
+
+    private static boolean told(ServerPlayer p, String key) {
+        return ((TestPlayers.TalkingDuelist) p).received(key);
+    }
+
+    private static void die(GameTestHelper helper, ServerPlayer p) {
+        p.hurt(helper.getLevel().damageSources().generic(), 1000f);
+    }
+
+    private static ItemStack originalsBlood(UUID source, Species species) {
+        ItemStack bottle = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
+        bottle.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), source);
+        bottle.set(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get(), species.name());
+        return bottle;
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void drinkingTellsThePlayerWhoseBloodIsInThemAndForHowLong(GameTestHelper helper) {
+        ServerPlayer p = talker(helper);
+        try {
+            helper.assertTrue(drink(helper, p, new ItemStack(BossItems.KLAUS_BLOOD.get())), "the drink did not start");
+            helper.assertTrue(told(p, net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrink.DRUNK), "the drinker was not told whose blood is in them");
+        } finally {
+            forgetAll(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTurningWhoseSireLineIsGoneDropsTheSireAndSaysSo(GameTestHelper helper) {
+        ServerPlayer p = talker(helper);
+        LineIndex index = LineIndex.get(helper.getLevel().getServer());
+        try {
+            net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.drankVampireBlood(p);
+            helper.assertTrue(drink(helper, p, new ItemStack(BossItems.KLAUS_BLOOD.get())), "the drink did not start");
+            die(helper, p);
+            helper.assertTrue(BloodlineAccess.get(p).inTurning(), "no turning");
+            index.markDead(BossTestRig.KLAUS);
+            net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.drankHumanBlood(p);
+            helper.assertTrue(VampirismAPI.factionPlayerHandler(p).getCurrentFaction() == VReference.VAMPIRE_FACTION, "the turning did not complete");
+            helper.assertTrue(BloodlineAccess.get(p).sire() == null && BloodlineAccess.get(p).pendingSire() == null && index.rootOf(p.getUUID()).isEmpty(),
+                    "sired into a dead line: " + BloodlineAccess.get(p));
+            helper.assertTrue(told(p, net.ofatech.supernaturalbloodlines.parts.species.turning.PendingSire.LINE_GONE), "the player was not told the line is gone");
+        } finally {
+            index.unmarkDead(BossTestRig.KLAUS);
+            forgetAll(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aHybridTransitionWhoseSireLineIsGoneDropsTheSireAndSaysSo(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer p = talker(helper);
+        LineIndex index = LineIndex.get(helper.getLevel().getServer());
+        try {
+            helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not make a werewolf");
+            helper.assertTrue(drink(helper, p, new ItemStack(BossItems.KLAUS_BLOOD.get())), "the drink did not start");
+            die(helper, p);
+            helper.assertTrue(BloodlineAccess.get(p).inTransition(), "no transition");
+            index.markDead(BossTestRig.KLAUS);
+            net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler.drankDoppelganger(p);
+            helper.assertTrue(BloodlineAccess.get(p).species() == Species.HYBRID && BloodlineAccess.get(p).sire() == null && index.rootOf(p.getUUID()).isEmpty(),
+                    "state " + BloodlineAccess.get(p));
+            helper.assertTrue(told(p, net.ofatech.supernaturalbloodlines.parts.species.turning.PendingSire.LINE_GONE), "the player was not told the line is gone");
+        } finally {
+            index.unmarkDead(BossTestRig.KLAUS);
+            forgetAll(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void originalBloodDrunkDuringTheTurningCountsAsTheSire(GameTestHelper helper) {
+        ServerPlayer p = talker(helper);
+        try {
+            net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.drankVampireBlood(p);
+            die(helper, p);
+            helper.assertTrue(BloodlineAccess.get(p).inTurning() && BloodlineAccess.get(p).pendingSire() == null, "state " + BloodlineAccess.get(p));
+            helper.assertTrue(drink(helper, p, new ItemStack(BossItems.KLAUS_BLOOD.get())), "the late drink did not start");
+            net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.drankHumanBlood(p);
+            assertSiredByKlausAndHidden(helper, p, "late drink");
+            helper.assertTrue(told(p, net.ofatech.supernaturalbloodlines.parts.species.turning.PendingSire.HIDDEN_LINE), "no line about the line they now belong to");
+        } finally {
+            forgetAll(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anExpiredEffectBeforeTheDeathIsNoPendingSire(GameTestHelper helper) {
+        ServerPlayer p = talker(helper);
+        try {
+            net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.drankVampireBlood(p);
+            helper.assertTrue(drink(helper, p, new ItemStack(BossItems.KLAUS_BLOOD.get())), "the drink did not start");
+            p.removeEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT); // what running out looks like: the attachment stays, the effect is gone
+            die(helper, p);
+            net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.drankHumanBlood(p);
+            helper.assertTrue(VampirismAPI.factionPlayerHandler(p).getCurrentFaction() == VReference.VAMPIRE_FACTION, "the turning did not complete");
+            helper.assertTrue(BloodlineAccess.get(p).sire() == null && !told(p, net.ofatech.supernaturalbloodlines.parts.species.turning.PendingSire.HIDDEN_LINE),
+                    "sired by blood that was gone: " + BloodlineAccess.get(p));
+        } finally {
+            forgetAll(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void withTwoSourcesTheLastDrinkWins(GameTestHelper helper) {
+        ServerPlayer p = talker(helper);
+        UUID elijah = net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.ELIJAH.uuid();
+        try {
+            net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.drankVampireBlood(p);
+            helper.assertTrue(drink(helper, p, new ItemStack(BossItems.KLAUS_BLOOD.get())), "the first drink did not start");
+            helper.assertTrue(drink(helper, p, originalsBlood(elijah, Species.ORIGINAL_HYBRID)), "the second drink did not start");
+            die(helper, p);
+            net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.drankHumanBlood(p);
+            helper.assertTrue(elijah.equals(BloodlineAccess.get(p).sire()), "the sire is " + BloodlineAccess.get(p).sire());
+            helper.assertTrue(LineIndex.get(helper.getLevel().getServer()).rootOf(p.getUUID()).filter(elijah::equals).isPresent(), "the line is not the last drink's");
+        } finally {
+            forgetAll(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aHumanMayDrinkAnyOriginalsBloodWhateverTheHybridSettingSaysAWerewolfMayNot(GameTestHelper helper) {
+        SpeciesConfig.overrideTransitionBloodAnyOriginal(false); // the default: only an Original hybrid's blood starts the hybrid transition
+        ServerPlayer human = talker(helper);
+        ServerPlayer wolf = talker(helper);
+        try {
+            helper.assertTrue(drink(helper, human, originalsBlood(net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.ELIJAH.uuid(), Species.ORIGINAL)),
+                    "a human could not drink a plain Original's Blood");
+            helper.assertTrue(human.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT), "no pending sire");
+            if (werewolves()) {
+                helper.assertTrue(VampirismAPI.factionPlayerHandler(wolf).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not make a werewolf");
+                helper.assertTrue(!drink(helper, wolf, originalsBlood(net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.ELIJAH.uuid(), Species.ORIGINAL)),
+                        "a werewolf drank a plain Original's Blood under the default setting");
+            }
+        } finally {
+            SpeciesConfig.overrideTransitionBloodAnyOriginal(null);
+            forgetAll(helper, human);
+            forgetAll(helper, wolf);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aRefusedJoinGivesBackThePreviousSire(GameTestHelper helper) {
+        ServerPlayer p = talker(helper);
+        java.util.function.Consumer<de.teamlapen.vampirism.api.event.PlayerFactionEvent.FactionLevelChangePre> refuse = e -> e.setCanceled(true);
+        try {
+            net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.drankVampireBlood(p);
+            helper.assertTrue(drink(helper, p, new ItemStack(BossItems.KLAUS_BLOOD.get())), "the drink did not start");
+            die(helper, p);
+            NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, de.teamlapen.vampirism.api.event.PlayerFactionEvent.FactionLevelChangePre.class, refuse);
+            try {
+                net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.drankHumanBlood(p);
+            } finally {
+                NeoForge.EVENT_BUS.unregister(refuse);
+            }
+            helper.assertTrue(BloodlineAccess.get(p).sire() == null && LineIndex.get(helper.getLevel().getServer()).rootOf(p.getUUID()).isEmpty(),
+                    "sired although the join was refused: " + BloodlineAccess.get(p));
+        } finally {
+            forgetAll(helper, p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theClientIsNotToldAnUndiscoveredNpcOriginalAsSire(GameTestHelper helper) {
+        BloodlineState sired = BloodlineState.NONE.toBuilder().sire(BossTestRig.KLAUS).build();
+        helper.assertTrue(BloodlineAccess.clientView(sired, true, false).sire() == null, "the client was given Klaus's UUID");
+        helper.assertTrue(BossTestRig.KLAUS.equals(BloodlineAccess.clientView(sired.toBuilder().knownLine(BossTestRig.KLAUS).build(), true, false).sire()),
+                "a discovered Original was hidden");
+        UUID player = UUID.randomUUID();
+        helper.assertTrue(player.equals(BloodlineAccess.clientView(BloodlineState.NONE.toBuilder().sire(player).build(), true, false).sire()), "a player's sire was hidden");
+        SpeciesConfig.overrideOriginalVisibility(true);
+        try {
+            helper.assertTrue(BossTestRig.KLAUS.equals(BloodlineAccess.clientView(sired, true, false).sire()), "original_visibility=always still hid him");
+        } finally {
+            SpeciesConfig.overrideOriginalVisibility(null);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void klausBloodCuresVenomAndIsNotASiresBottle(GameTestHelper helper) {
         ServerPlayer p = vampire(helper);

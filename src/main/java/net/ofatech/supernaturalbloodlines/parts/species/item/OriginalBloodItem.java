@@ -45,7 +45,7 @@ public final class OriginalBloodItem extends Item {
         if (!stack.has(SpeciesRegistries.BLOOD_SOURCE_COMPONENT)) {
             return InteractionResultHolder.pass(stack); // blood from nobody
         }
-        if (!startsTransition(stack)) {
+        if (!mayDrink(stack, player)) {
             // the bottle is kept; the player is told why (R40a)
             if (!level.isClientSide) {
                 player.displayClientMessage(Component.translatable(REFUSED), true);
@@ -60,10 +60,28 @@ public final class OriginalBloodItem extends Item {
         return TransitionBlood.accepts(SpeciesConfig.transitionBloodAnyOriginal(), stack.get(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT));
     }
 
+    /**
+     * {@code hybrid_transition_blood} gates only the hybrid transition, which only a werewolf drinker starts: anyone else may drink any Original's Blood (it is
+     * their pending sire for the vampire turning).
+     */
+    public static boolean mayDrink(ItemStack stack, LivingEntity drinker) {
+        return startsTransition(stack) || !isWerewolf(drinker);
+    }
+
+    private static boolean isWerewolf(LivingEntity e) {
+        if (!(e instanceof Player p)) {
+            return false;
+        }
+        var faction = de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
+        return faction != null && WEREWOLF_ID.equals(faction.getID());
+    }
+
+    private static final net.minecraft.resources.ResourceLocation WEREWOLF_ID = net.minecraft.resources.ResourceLocation.parse("werewolves:werewolf");
+
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         UUID source = stack.get(SpeciesRegistries.BLOOD_SOURCE_COMPONENT);
-        if (!startsTransition(stack)) {
+        if (!mayDrink(stack, entity)) {
             return stack; // not drunk by any other route either; nothing is used up
         }
         if (source != null && entity instanceof ServerPlayer player) {

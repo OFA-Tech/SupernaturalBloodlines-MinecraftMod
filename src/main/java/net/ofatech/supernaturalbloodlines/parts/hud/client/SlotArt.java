@@ -90,7 +90,7 @@ final class SlotArt {
         HudLayout.Box back = MasteryBar.box(slot);
         HudLayout.Box in = MasteryBar.inner(slot);
         g.fill(back.x(), back.y(), back.right(), back.bottom(), fade(0xC0000000 | MasteryBar.TRACK & 0xFFFFFF, alpha));
-        g.fill(in.x(), in.y(), in.right(), in.bottom(), fade(0xFF2A2F36, alpha));
+        g.fill(in.x(), in.y(), in.right(), in.bottom(), fade(MasteryBar.TRACK_INNER, alpha));
         int fill = MasteryBar.fill(m, in.w());
         if (fill > 0) {
             g.fill(in.x(), in.y(), in.x() + fill, in.bottom(), fade(MasteryBar.color(look, m.state()), alpha));

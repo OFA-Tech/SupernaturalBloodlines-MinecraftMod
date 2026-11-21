@@ -51,6 +51,7 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         float alpha = HudActivity.alpha(busy);
         long time = mc.level == null ? 0 : mc.level.getGameTime();
         float pulse = 0.5f + 0.5f * (float) Math.sin(time * 0.25);
+        int previewTop = -1;
         if (alpha > 0.01f) {
             float blood = src.blood();
             for (int i = 0; i < boxes.length; i++) {
@@ -66,7 +67,7 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
                 }
                 SlotMode other = src.other();
                 if ((alt || HudModeState.justSwitched()) && other != null) {
-                    HudChrome.preview(g, mc.font, style, other, src.otherViews(other), boxes, Math.max(alpha, 0.9f));
+                    previewTop = HudChrome.preview(g, mc.font, style, other, src.otherViews(other), boxes, Math.max(alpha, 0.9f));
                 }
             }
         }
@@ -76,7 +77,7 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         }
         src.tracked().ifPresent(l -> HudChrome.tracker(g, mc.font, style, l, Math.max(alpha, HudActivity.FADED), HudClientConfig.trackerAnchor(), src.bossBottom()));
         if (alt && alpha > 0.01f) {
-            HudChrome.labels(g, mc.font, style, views, alpha, src.cacheable());
+            HudChrome.labels(g, mc.font, style, boxes, views, previewTop, alpha, src.cacheable(), src.actionBar());
         }
     }
 }

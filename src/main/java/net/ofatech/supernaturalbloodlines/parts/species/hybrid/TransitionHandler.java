@@ -127,7 +127,12 @@ public final class TransitionHandler {
     }
 
     public static void drankDoppelganger(ServerPlayer p) {
+        if (BloodlineAccess.get(p).inTransition()) {
+            net.ofatech.supernaturalbloodlines.parts.species.turning.PendingSire.settle(p, false);
+        }
+        BloodlineState settled = BloodlineAccess.get(p);
         apply(p, BloodlineEvent.DRANK_DOPPELGANGER_BLOOD, null);
+        net.ofatech.supernaturalbloodlines.parts.species.turning.PendingSire.completed(p, settled);
     }
 
     /** Blood that is not Doppelgänger Blood, drunk during the transition. */

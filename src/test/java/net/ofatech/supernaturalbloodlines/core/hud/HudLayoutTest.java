@@ -134,6 +134,20 @@ class HudLayoutTest {
         }
     }
 
+    @Test
+    void theFallbackPanelAboveTheLeftColumnClearsTheLiftedPillAtGuiScales2To4() {
+        for (int[] s : SCALES) {
+            Box[] slots = HudLayout.slots(s[0], s[1]);
+            for (int textW : new int[] {60, 130, 200}) {
+                Box pill = HudLayout.pill(s[0], s[1], textW, true);
+                for (int h : new int[] {40, 80}) {
+                    int top = HudLayout.leftTooltipTop(slots[0].y(), h, true);
+                    assertTrue(top + h <= pill.y() - 2, "the panel stands on the pill: " + top + "+" + h + " vs " + pill + " " + s[0] + "x" + s[1]);
+                }
+            }
+        }
+    }
+
     /** 1920x1080 and 1280x720 windows at GUI scales 2 to 4 (the labels have room), then smaller ones, where the columns leave no room outside them. */
     private static final int[][] ROOMY = {{960, 540}, {640, 360}, {480, 270}, {427, 240}};
     private static final int[][] LABEL_SCREENS = {{960, 540}, {640, 360}, {480, 270}, {427, 240}, {320, 180}, {320, 240}, {213, 120}, {171, 96}};

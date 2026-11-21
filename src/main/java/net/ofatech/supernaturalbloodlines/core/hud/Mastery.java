@@ -8,8 +8,9 @@ import org.jetbrains.annotations.Nullable;
  * zero is a resist skill still being learned (it counts up from minus its learning requirement to zero, then mastery starts). Pure.
  *
  * @param fraction 0 to 1 of the bar
+ * @param learned  a resist skill whose learning is over (it is now being mastered, or is mastered)
  */
-public record Mastery(float fraction, State state) {
+public record Mastery(float fraction, State state, boolean learned) {
     public enum State { LEARNING, PROGRESS, MASTERED }
 
     /** Tensura's own HUD uses 100 when a skill does not say how much learning it needs. */
@@ -29,12 +30,12 @@ public record Mastery(float fraction, State state) {
         }
         if (mastery < 0) {
             int need = learningNeeded > 0 ? learningNeeded : DEFAULT_LEARNING;
-            return new Mastery(clamp((float) ((need - Math.abs(mastery)) / need)), State.LEARNING);
+            return new Mastery(clamp((float) ((need - Math.abs(mastery)) / need)), State.LEARNING, false);
         }
         if (mastered || mastery >= max) {
-            return new Mastery(1f, State.MASTERED);
+            return new Mastery(1f, State.MASTERED, learningNeeded > 0);
         }
-        return new Mastery(clamp((float) (mastery / max)), State.PROGRESS);
+        return new Mastery(clamp((float) (mastery / max)), State.PROGRESS, learningNeeded > 0);
     }
 
     public boolean mastered() {

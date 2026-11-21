@@ -112,6 +112,12 @@ class BloodlineRulesTest {
     }
 
     @Test
+    void leavingTheVampiresDropsThePendingSire() {
+        BloodlineState started = turning().toBuilder().pendingSire(U).build();
+        assertNull(run(started, LEFT_BASE_FACTION, ctx().withFaction(BaseFaction.VAMPIRE)).state().pendingSire());
+    }
+
+    @Test
     void theFirstSireWinsAndAFailedOrQuietTurningSiresNobody() {
         UUID other = UUID.fromString("00000000-0000-0000-0000-0000000000b2");
         BloodlineState started = turning().toBuilder().pendingSire(U).build();

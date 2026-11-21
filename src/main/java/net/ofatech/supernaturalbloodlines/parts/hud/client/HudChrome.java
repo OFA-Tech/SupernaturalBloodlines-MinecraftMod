@@ -137,42 +137,57 @@ final class HudChrome {
         return y;
     }
     /**
-     * What each slot is, held Alt: two lines beside each filled slot, on its outer side ({@link HudLayout#labels}), level with it: the name, then the mastery,
-     * why it cannot be used or its cooldown, the mode and a short description. The name is cut only when it is wider than the room; the second line is cut with
-     * an ellipsis. Nothing is stacked above the slots.
+     * What each slot is, held Alt: beside each filled slot, on its outer side ({@link HudLayout#labels}), level with it: the name, then why it cannot be used or its
+     * cooldown, the mastery, the mode and a short description (a blocked slot has a third line, so its reason is never cut). A column with no room outside it falls
+     * back to {@link #panels}, the panel above the column. Returns nothing.
      */
-    static void labels(GuiGraphics g, Font font, HudStyle.Style style, SlotView[] views, float alpha, boolean cacheable) {
+    static void labels(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box[] slots, SlotView[] views, int previewTop, float alpha, boolean cacheable, boolean lifted) {
         HudLayout.Box[] boxes = HudLayout.labels(g.guiWidth(), g.guiHeight());
         boolean fresh = !cacheable || labelsTick != tick() || labelsWidth != g.guiWidth() || labelsStyle != style;
-        for (int i = 0; i < boxes.length; i++) {
+        boolean[] fallback = new boolean[2];
+        // a blocked slot's label is the tall one (its reason wraps): drawn last, so it is never the one covered by its neighbour
+        for (int n = 0; n < boxes.length * 2; n++) {
+            int i = n % boxes.length;
             SlotView v = views[i];
             int room = boxes[i].w() - SlotLabel.PAD * 2;
-            if (v.isEmpty() || room < SlotLabel.MIN_ROOM) {
+            if (v.isEmpty() || v.greyed() != (n >= boxes.length)) {
+                continue;
+            }
+            if (room < SlotLabel.MIN_ROOM) {
+                fallback[i / 3] = true;
                 continue;
             }
             if (fresh || LABELS[i] == null) {
-                String[] raw = label(v);
-                LABELS[i] = new String[] {SlotLabel.fit(raw[0], room, font::width), SlotLabel.fit(raw[1], room, font::width)};
+                LABELS[i] = label(v, room, font::width);
             }
             String[] text = LABELS[i];
-            int w = Math.max(font.width(text[0]), font.width(text[1])) + SlotLabel.PAD * 2;
+            int widest = 0;
+            for (String line : text) {
+                widest = Math.max(widest, font.width(line));
+            }
+            int w = widest + SlotLabel.PAD * 2;
+            int h = 2 + 9 * text.length;
             HudLayout.Box box = boxes[i];
             int x = i < 3 ? box.right() - w : box.x();
-            pillBox(g, style, x, box.y(), w, box.h(), Math.max(alpha, 0.95f));
-            g.drawString(font, text[0], x + SlotLabel.PAD, box.y() + 2, SlotArt.fade(ink(style), 1f), false);
-            if (!text[1].isEmpty()) {
-                g.drawString(font, text[1], x + SlotLabel.PAD, box.y() + 11, SlotArt.fade(v.greyed() ? 0xFFFF7A70 : 0xFFB8B0B4, 1f), false);
+            int y = box.y() + (box.h() - h) / 2;
+            pillBox(g, style, x, y, w, h, Math.max(alpha, 0.95f));
+            g.drawString(font, text[0], x + SlotLabel.PAD, y + 2, SlotArt.fade(ink(style), 1f), false);
+            for (int k = 1; k < text.length; k++) {
+                g.drawString(font, text[k], x + SlotLabel.PAD, y + 2 + 9 * k, SlotArt.fade(v.greyed() ? 0xFFFF7A70 : 0xFFB8B0B4, 1f), false);
             }
         }
         labelsTick = tick();
         labelsWidth = g.guiWidth();
         labelsStyle = style;
+        if (fallback[0] || fallback[1]) {
+            panels(g, font, style, slots, views, previewTop, alpha, cacheable, lifted, fallback);
+        }
     }
 
-    private static String[] label(SlotView v) {
+    private static String[] label(SlotView v, int room, java.util.function.ToIntFunction<String> measure) {
         String state = v.greyed() ? Component.translatable(v.greyedReason()).getString()
                 : v.cooldownSeconds() > 0 ? Component.translatable("supernaturalbloodlines.hud.slot.cooldown", v.cooldownSeconds()).getString() : null;
-        return SlotLabel.lines(v.name(), mastery(v.mastery()), state, v.detail(), v.description());
+        return SlotLabel.lines(v.name(), v.greyed(), state, mastery(v.mastery()), v.detail(), v.description(), room, measure);
     }
     private static String mastery(net.ofatech.supernaturalbloodlines.core.hud.Mastery m) {
         if (m == null) {
@@ -181,9 +196,99 @@ final class HudChrome {
         return switch (m.state()) {
             case MASTERED -> Component.translatable("supernaturalbloodlines.hud.slot.mastered").getString();
             case LEARNING -> Component.translatable("supernaturalbloodlines.hud.slot.learning", SlotLabel.percent(m)).getString();
-            case PROGRESS -> Component.translatable("supernaturalbloodlines.hud.slot.mastery", SlotLabel.percent(m)).getString();
+            case PROGRESS -> Component.translatable(m.learned() ? "supernaturalbloodlines.hud.slot.learned" : "supernaturalbloodlines.hud.slot.mastery", SlotLabel.percent(m)).getString();
         };
     }
+
+    /** One column's fallback panel: its lines, each line's colour, and the panel's width. */
+    record Panel(java.util.List<String> lines, java.util.List<Integer> colors, int w) {
+    }
+
+    private static final Panel[] PANELS = new Panel[2];
+    private static long panelsTick = Long.MIN_VALUE;
+    private static int panelsWidth = -1;
+    private static HudStyle.Style panelsStyle;
+    /**
+     * The fallback of {@link #labels} where a column leaves no room beside it (a small window at a big GUI scale): what each slot is, as one panel above the column (Alt held): the key and name, what it does, and its cooldown or why it cannot be used. One panel per
+     * column keeps the entries from covering each other; the left one stays in the left half of the screen and the right one stacks above the mode panel.
+     */
+    static void panels(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box[] boxes, SlotView[] views, int previewTop, float alpha, boolean cacheable, boolean lifted, boolean[] columns) {
+        int half = g.guiWidth() / 2;
+        boolean fresh = !cacheable || panelsTick != tick() || panelsWidth != g.guiWidth() || panelsStyle != style;
+        for (int col = 0; col < 2; col++) {
+            if (!columns[col]) {
+                continue;
+            }
+            HudLayout.Box top = boxes[col * 3];
+            if (fresh) {
+                PANELS[col] = column(font, style, views, col, top, half, g.guiWidth());
+            }
+            Panel c = PANELS[col];
+            if (c == null) {
+                continue;
+            }
+            java.util.List<String> lines = c.lines();
+            java.util.List<Integer> colors = c.colors();
+            int w = c.w();
+            int h = 8 + 10 * lines.size();
+            int x = col == 0 ? Math.max(4, top.x()) : Math.max(half + 2, Math.min(top.right() - w, g.guiWidth() - w - 4));
+            // above the column (or the mode panel), but never off the top of the screen
+            int y = col == 0 ? HudLayout.leftTooltipTop(top.y(), h, lifted) : Math.max(2, (col == 1 && previewTop >= 0 ? previewTop : top.y()) - h - 6);
+            pillBox(g, style, x, y, w, h, Math.max(alpha, 0.95f));
+            int ty = y + 5;
+            for (int i = 0; i < lines.size(); i++) {
+                g.drawString(font, lines.get(i), x + 6, ty, SlotArt.fade(colors.get(i), 1f), false);
+                ty += 10;
+            }
+        }
+        panelsTick = tick();
+        panelsWidth = g.guiWidth();
+        panelsStyle = style;
+    }
+
+    /** The wrapped lines of one column's tooltip (null for a column with nothing in it). */
+    private static Panel column(Font font, HudStyle.Style style, SlotView[] views, int col, HudLayout.Box top, int half, int screenW) {
+        {
+            int limit = col == 0 ? Math.max(60, half - 2 - Math.max(4, top.x())) : Math.max(60, Math.min(screenW - 4, top.right()) - (half + 2));
+            int textW = Math.min(200, limit) - 12;
+            java.util.List<String> lines = new java.util.ArrayList<>();
+            java.util.List<Integer> colors = new java.util.ArrayList<>();
+            for (int i = col * 3; i < col * 3 + 3; i++) {
+                SlotView v = views[i];
+                if (v.isEmpty()) {
+                    continue;
+                }
+                for (String l : LabelFit.wrap((v.keyLabel().isEmpty() ? "" : v.keyLabel() + "  ") + v.name(), textW, 2, font::width)) {
+                    lines.add(l);
+                    colors.add(ink(style));
+                }
+                if (v.detail() != null) {
+                    for (String l : LabelFit.wrap(v.detail(), textW, 2, font::width)) {
+                        lines.add(l);
+                        colors.add(0xFFB8B0B4);
+                    }
+                }
+                if (v.greyed()) {
+                    for (String l : LabelFit.wrap(Component.translatable(v.greyedReason()).getString(), textW, 3, font::width)) {
+                        lines.add(l);
+                        colors.add(0xFFFF7A70);
+                    }
+                } else if (v.cooldownSeconds() > 0) {
+                    lines.add(Component.translatable("supernaturalbloodlines.hud.slot.cooldown", v.cooldownSeconds()).getString());
+                    colors.add(0xFFB8B0B4);
+                }
+            }
+            if (lines.isEmpty()) {
+                return null;
+            }
+            int widest = 0;
+            for (String l : lines) {
+                widest = Math.max(widest, font.width(l));
+            }
+            return new Panel(lines, colors, widest + 12);
+        }
+    }
+
 
     /** The full moon's warning: a gold moon and the time to the forced shift, top right. */
     static void moon(GuiGraphics g, Font font, HudStyle.Style style, long ticks, int screenW, float pulse) {

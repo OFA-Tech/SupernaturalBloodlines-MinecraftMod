@@ -46,6 +46,14 @@ class MasteryTest {
     }
 
     @Test
+    void aResistSkillWhoseLearningIsOverIsLearnedAndAPlainSkillIsNot() {
+        assertTrue(Mastery.of(10, 100, 100, false).learned());
+        assertTrue(Mastery.of(100, 100, 100, true).learned());
+        assertFalse(Mastery.of(10, 100, 0, false).learned());
+        assertFalse(Mastery.of(-10, 100, 100, false).learned(), "still being learned");
+    }
+
+    @Test
     void aSkillWithNoMaximumHasNoBar() {
         assertNull(Mastery.of(10, 0, 0, false));
         assertNull(Mastery.of(10, -1, 0, false));

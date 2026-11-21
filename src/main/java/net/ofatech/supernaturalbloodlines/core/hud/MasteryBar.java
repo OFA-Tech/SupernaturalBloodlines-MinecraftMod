@@ -12,6 +12,8 @@ public final class MasteryBar {
     public static final int GOLD = 0xFFFFD36B;
     public static final int LEARNING = 0xFF8E8AA8;
     public static final int TRACK = 0xFF05080C;
+    /** The track the fill runs along; every fill colour is at least 3:1 against it ({@code MasteryTest}). */
+    public static final int TRACK_INNER = 0xFF2A2F36;
     /** The backing's height. */
     public static final int HEIGHT = 4;
     /** How far the key badge and the seconds are lifted: the backing and a pixel of air. */
@@ -47,7 +49,7 @@ public final class MasteryBar {
             case MASTERED -> GOLD;
             case LEARNING -> LEARNING;
             case PROGRESS -> switch (look) {
-                case GRIMOIRE -> 0xFFC0392B;
+                case GRIMOIRE -> 0xFFE0554A;
                 case BLOOD_MOON -> 0xFFE2493F;
                 case TENSURA -> 0xFF3FD0D6;
             };

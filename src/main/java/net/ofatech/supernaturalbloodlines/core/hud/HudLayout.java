@@ -74,6 +74,11 @@ public final class HudLayout {
     }
 
     /** A label is two lines (the name, then mastery and a short description) and stands level with its slot: its centre is the slot's centre. */
+    /** The top of the left column's fallback panel: above the column, and above the lifted pill too while an action bar message is up. */
+    public static int leftTooltipTop(int columnTop, int tooltipH, boolean lifted) {
+        return Math.max(2, columnTop - tooltipH - 6 - (lifted ? ALT_LIFT : 0));
+    }
+
     public static final int LABEL_H = 20;
     /** Air between a column and its labels. */
     public static final int LABEL_AIR = 3;

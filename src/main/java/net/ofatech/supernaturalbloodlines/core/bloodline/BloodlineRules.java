@@ -169,7 +169,7 @@ public final class BloodlineRules {
 
     /** Leaving the vampires for good (a cure, the faction left): no longer a Ghoul, and nothing of the turning is left to finish. */
     private static BloodlineState.Builder humanAgain(BloodlineState.Builder b) {
-        return b.ghoul(false).turningTicksLeft(0).vampireBloodUntil(0);
+        return b.ghoul(false).turningTicksLeft(0).vampireBloodUntil(0).pendingSire(null);
     }
 
     private static BloodlineState.Builder clearTransition(BloodlineState.Builder b) {

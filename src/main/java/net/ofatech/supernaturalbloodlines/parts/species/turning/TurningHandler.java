@@ -134,15 +134,22 @@ public final class TurningHandler {
         if (!before.inTurning()) {
             return;
         }
+        PendingSire.settle(p, true);
+        BloodlineState settled = BloodlineAccess.get(p);
         Outcome[] out = new Outcome[1];
         GhoulGates.completing(p, () -> out[0] = apply(p, BloodlineEvent.TURNING_FED, null));
         boolean joins = out[0].actions().contains(Outcome.Action.JOIN_VAMPIRE);
         if (joins && VampirismAPI.factionPlayerHandler(p).getCurrentFaction() != VReference.VAMPIRE_FACTION) {
-            // the turning is over and what drank it is gone: Vampirism or another mod refused the join
+            // the turning is over and what drank it is gone: Vampirism or another mod refused the join, so the sire it gave goes too
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().sire(before.sire()).build());
+            if (before.sire() == null) {
+                net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex.get(p.server).remove(p.getUUID()); // the line it gave goes with the sire
+            }
             SupernaturalBloodlines.LOGGER.warn("TurningHandler: {} drank human blood but could not join the vampires", p.getGameProfile().getName());
             p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.join_refused"));
         } else if (joins || before.ghoul() && !BloodlineAccess.get(p).ghoul()) {
             p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.completed"));
+            PendingSire.completed(p, settled);
         }
     }
 

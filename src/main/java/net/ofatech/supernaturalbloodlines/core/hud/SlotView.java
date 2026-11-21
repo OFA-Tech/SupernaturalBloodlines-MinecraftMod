@@ -26,11 +26,6 @@ public record SlotView(@Nullable ResourceLocation icon, String keyLabel, float c
         this(icon, keyLabel, cooldown, cooldownSeconds, active, greyedReason, name, detail, null, null);
     }
 
-    public SlotView(@Nullable ResourceLocation icon, String keyLabel, float cooldown, int cooldownSeconds, boolean active,
-                    @Nullable String greyedReason, String name, @Nullable String detail, @Nullable Mastery mastery) {
-        this(icon, keyLabel, cooldown, cooldownSeconds, active, greyedReason, name, detail, mastery, null);
-    }
-
     public boolean isEmpty() {
         return icon == null;
     }
