@@ -200,6 +200,16 @@ public final class PeterHaleEntity extends BossNpc implements GeoEntity, ShiftBo
         }
     }
 
+    /** While the pounce plays the model's root bone is what moves: nothing of his own travel is added, whatever the navigation wants. */
+    @Override
+    public void travel(Vec3 input) {
+        if (!level().isClientSide && pounceTicks > 0) {
+            setDeltaMovement(Vec3.ZERO);
+            return;
+        }
+        super.travel(input);
+    }
+
     private void startPounce(LivingEntity target) {
         Vec3 to = target.position().subtract(position());
         Vec3 flat = new Vec3(to.x, 0.0, to.z);
