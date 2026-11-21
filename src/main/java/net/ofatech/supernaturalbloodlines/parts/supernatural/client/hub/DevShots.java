@@ -31,7 +31,7 @@ public final class DevShots {
     private static final int SETTLE_TICKS = 12;
     private static final int WORLD_TICKS = 100;
 
-    /** @param hud null for a hub page; otherwise "normal", "alt" or "idle": the ability HUD in game with demo slots, in the look of {@code theme} */
+    /** @param hud null for a hub page; otherwise "normal", "alt", "idle", "human" (Tensura mode, with mastery bars) or "humanalt": the ability HUD in game with demo slots, in the look of {@code theme} */
     private record Shot(String theme, HubPage page, int scale, boolean menu, String hud, String variant) {
         Shot(String theme, HubPage page, int scale, boolean menu) {
             this(theme, page, scale, menu, null, null);
@@ -192,6 +192,11 @@ public final class DevShots {
         }
         mc.options.tutorialStep = TutorialSteps.NONE;
         mc.getTutorial().setStep(TutorialSteps.NONE);
+        if (shots.stream().anyMatch(sh -> sh.hud() != null)) {
+            // the HUD shots are of the HUD: the demo player's aura (big yellow squares of particles) would cover it
+            mc.options.particles().set(net.minecraft.client.ParticleStatus.MINIMAL);
+            mc.particleEngine.setLevel(mc.level); // clears the live particles
+        }
         if (worldTicks++ < WORLD_TICKS) {
             return;
         }
@@ -214,10 +219,10 @@ public final class DevShots {
             HubClientConfig.setTheme(theme);
             mc.setScreen(null);
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on = s.hud() != null;
-            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.alt = "alt".equals(s.hud());
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.alt = "alt".equals(s.hud()) || "humanalt".equals(s.hud());
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.idle = "idle".equals(s.hud());
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.switched = "switched".equals(s.hud());
-            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.human = "human".equals(s.hud()) || "cooldown".equals(s.hud());
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.human = "human".equals(s.hud()) || "cooldown".equals(s.hud()) || "humanalt".equals(s.hud());
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.cooldown = "cooldown".equals(s.hud());
             if (s.hud() != null) {
                 parkCursor(mc, 1, 1);

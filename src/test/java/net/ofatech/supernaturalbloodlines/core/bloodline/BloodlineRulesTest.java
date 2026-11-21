@@ -96,6 +96,42 @@ class BloodlineRulesTest {
     }
 
     @Test
+    void anOriginalsBloodInThemIsThePendingSireOfTheTurningAndNothingElseIsSired() {
+        BloodlineState marked = BloodlineState.NONE.toBuilder().vampireBloodUntil(1000).build();
+        BloodlineState started = run(marked, DIED_WITH_VAMPIRE_BLOOD, ctx().withGameTime(5).withBloodSource(U)).state();
+        assertEquals(U, started.pendingSire());
+        assertNull(started.sire(), "dying with the blood does not sire yet");
+        assertNull(run(marked, DIED_WITH_VAMPIRE_BLOOD, ctx().withGameTime(5)).state().pendingSire());
+        // completing the turning makes the pending sire the sire, and clears it
+        Outcome done = run(started, TURNING_FED, ctx());
+        assertEquals(U, done.state().sire());
+        assertNull(done.state().pendingSire());
+        assertTrue(done.actions().contains(Action.JOIN_VAMPIRE));
+        // a Ghoul that finishes turning gets it too
+        assertEquals(U, run(started.toBuilder().ghoul(true).build(), TURNING_FED, ctx().withFaction(BaseFaction.VAMPIRE)).state().sire());
+    }
+
+    @Test
+    void leavingTheVampiresDropsThePendingSire() {
+        BloodlineState started = turning().toBuilder().pendingSire(U).build();
+        assertNull(run(started, LEFT_BASE_FACTION, ctx().withFaction(BaseFaction.VAMPIRE)).state().pendingSire());
+    }
+
+    @Test
+    void theFirstSireWinsAndAFailedOrQuietTurningSiresNobody() {
+        UUID other = UUID.fromString("00000000-0000-0000-0000-0000000000b2");
+        BloodlineState started = turning().toBuilder().pendingSire(U).build();
+        assertEquals(other, run(started.toBuilder().sire(other).build(), TURNING_FED, ctx()).state().sire());
+        assertEquals(U, run(started.toBuilder().sire(other).severedSire(other).build(), TURNING_FED, ctx()).state().sire(), "a severed sire is replaced");
+        Outcome failed = run(started, TURNING_FAILED, ctx());
+        assertNull(failed.state().sire());
+        assertNull(failed.state().pendingSire());
+        Outcome quiet = run(started, TURNING_FED, ctx().withFaction(BaseFaction.HUNTER));
+        assertNull(quiet.state().sire());
+        assertNull(quiet.state().pendingSire());
+    }
+
+    @Test
     void diedWithVampireBloodStartsTurning() {
         BloodlineState marked = BloodlineState.NONE.toBuilder().vampireBloodUntil(1000).build();
         Outcome o = run(marked, DIED_WITH_VAMPIRE_BLOOD, ctx().withGameTime(999).withTransitionTicks(7777));

@@ -112,10 +112,23 @@ public final class BloodlineAccess {
         // the layer's tracking is server business (which skills this mod granted), not something to send out
         BloodlineState stripped = Genes.forClient(s.withTrackingOf(BloodlineState.NONE), viewerIsSubject, alwaysVisible);
         BloodlineState.Builder b = stripped.toBuilder().pendingSire(null).vampireBloodUntil(0).knownLine(null);
-        if (!viewerIsSubject) {
+        if (!viewerIsSubject || hidesSire(s)) {
             b.sire(null);
         }
         return b.build();
+    }
+
+    /** A sire who is an NPC Original the subject has not discovered stays on the server: the client would name him from the UUID. */
+    private static boolean hidesSire(BloodlineState s) {
+        return s.sire() != null && net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.byUuid(s.sire()).isPresent()
+                && !net.ofatech.supernaturalbloodlines.core.bloodline.LineRules.showsRoot(s.knownLine(), s.sire(), originalsAlwaysVisible.getAsBoolean());
+    }
+
+    private static volatile BooleanSupplier originalsAlwaysVisible = () -> false;
+
+    /** The species part tells the core whether {@code original_visibility} is {@code always}. */
+    public static void useOriginalVisibility(BooleanSupplier always) {
+        originalsAlwaysVisible = always;
     }
 
     private static volatile BooleanSupplier genesAlwaysVisible = () -> false;
