@@ -30,6 +30,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.bloodline.LyingBody;
 import net.ofatech.supernaturalbloodlines.core.boss.BossForm;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.core.boss.BossRules;
@@ -175,6 +176,15 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
     protected EntityDimensions standingDimensions(Pose pose) {
         ShiftRules.Size size = ShiftRules.dimensionsFor(BossForm.of(entityData.get(FORM)), entityData.get(SHIFT_TICKS));
         return EntityDimensions.scalable(size.width(), size.height());
+    }
+
+    /** His wolf lies longer and higher than a man: a box of its own (R184, measured from its death pose). */
+    @Override
+    protected EntityDimensions lyingDimensions() {
+        if (ShiftRules.showsBeast(form(), shiftTicks())) {
+            return EntityDimensions.scalable(LyingBody.BEAST_LENGTH, LyingBody.BEAST_HEIGHT).withEyeHeight(LyingBody.BEAST_EYE_HEIGHT);
+        }
+        return super.lyingDimensions();
     }
 
     @Override

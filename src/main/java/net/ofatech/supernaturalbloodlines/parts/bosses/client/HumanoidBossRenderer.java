@@ -1,7 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.bosses.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelLayers;
@@ -39,9 +38,8 @@ public final class HumanoidBossRenderer<T extends BossNpc> extends HumanoidMobRe
         super.setupRotations(boss, poses, bob, yBodyRot, partialTick, scale);
         if (boss instanceof NpcOriginalBoss original && original.isDesiccated()) {
             // on its back, head toward -x, as vanilla draws a sleeper, but with the middle of the body over the entity and the back on the floor (R184)
-            poses.translate(LyingBody.LENGTH / 2.0F, LyingBody.HEIGHT / 2.0F, 0.0F);
-            poses.mulPose(Axis.ZP.rotationDegrees(90.0F));
-            poses.mulPose(Axis.YP.rotationDegrees(270.0F));
+            poses.translate(LyingBody.OFFSET_X, LyingBody.OFFSET_Y, 0.0F);
+            poses.mulPose(LyingBody.rotation());
         }
     }
 }

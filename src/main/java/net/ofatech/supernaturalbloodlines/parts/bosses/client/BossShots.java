@@ -204,6 +204,7 @@ public final class BossShots {
 
     private static final class PanelScreen extends Screen {
         private final String boss;
+        private final float tilt = (float) Math.toRadians(Float.parseFloat(System.getProperty(PROPERTY + ".tilt", "0")));
         private List<Panel> panels;
         private int columns;
         private int rows;
@@ -254,7 +255,9 @@ public final class BossShots {
                 list.add(new Panel("the wolf, from the front", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, false), 180f, 2.1f, 1.8f));
                 list.add(new Panel("the wolf, from the side", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, false), 90f, 2.1f, 4.4f));
                 list.add(new Panel("the wolf, from behind", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, false), 0f, 2.1f, 1.8f));
-                list.add(new Panel("the wolf, desiccated", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, true), 140f, 1.2f, 3.2f));
+                list.add(new Panel("the wolf, desiccated", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, true), 140f, 1.3f, 4.0f));
+                list.add(new Panel("the man, desiccated", klaus(mc, BossForm.HUMAN, 0, true), 135f, 0.6f, 2.2f));
+                columns = 5;
             } else {
                 columns = 4;
                 rows = 1;
@@ -315,7 +318,6 @@ public final class BossShots {
             }
             // .hitbox=true draws the boxes as F3+B does; .tilt=<degrees> looks down on the body from above (a lying body is seen best that way)
             mc.getEntityRenderDispatcher().setRenderHitBoxes(Boolean.getBoolean(PROPERTY + ".hitbox"));
-            float tilt = (float) Math.toRadians(Float.parseFloat(System.getProperty(PROPERTY + ".tilt", "0")));
             int cw = width / columns;
             int ch = height / rows;
             for (int i = 0; i < panels.size(); i++) {

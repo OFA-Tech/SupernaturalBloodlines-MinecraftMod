@@ -70,10 +70,34 @@ public abstract class NpcOriginalBoss extends BossNpc {
     /** R184: a desiccated Original lies on its back, so the box is the low, wide one the body fills, not the standing one. */
     @Override
     public EntityDimensions getDefaultDimensions(Pose pose) {
-        if (isDesiccated()) {
-            return EntityDimensions.scalable(LyingBody.LENGTH, LyingBody.HEIGHT).withEyeHeight(LyingBody.EYE_HEIGHT);
+        return isDesiccated() ? lyingDimensions() : standingDimensions(pose);
+    }
+
+    /** The box of the body that lies; Klaus's wolf has its own. */
+    protected EntityDimensions lyingDimensions() {
+        return EntityDimensions.scalable(LyingBody.LENGTH, LyingBody.HEIGHT).withEyeHeight(LyingBody.EYE_HEIGHT);
+    }
+
+    /**
+     * Vanilla looks for free room when the box grows. For the lying box it puts a 0.5 high body 0.725 above the floor (it looks for a place for the box's
+     * middle), and with no AI there is no gravity to bring it down. Getting up still asks, so a low ceiling does not keep him inside the stone.
+     */
+    @Override
+    public boolean fudgePositionAfterSizeChange(EntityDimensions old) {
+        return !isDesiccated() && super.fudgePositionAfterSizeChange(old);
+    }
+
+    /** A body on the floor is not shoved, and it does not shove a player aside with a box 1.8 wide. */
+    @Override
+    public boolean isPushable() {
+        return !isDesiccated() && super.isPushable();
+    }
+
+    @Override
+    protected void pushEntities() {
+        if (!isDesiccated()) {
+            super.pushEntities();
         }
-        return standingDimensions(pose);
     }
 
     /** The box while standing; Klaus's depends on his form. */
