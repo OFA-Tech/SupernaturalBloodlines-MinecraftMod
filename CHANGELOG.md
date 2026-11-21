@@ -10,6 +10,14 @@
 - The Guide's bosses chapter has four paragraphs on it; the Rites page and the rites in Enchanted's book list the two new rites. `Supernatural.registerWerewolfLike`: a creature that wolfsbane works on though it has no werewolf faction.
 - **Fixed (own commit):** `aHuntWhoseBlowsLandOnSomebodyElse...` (Deucalion) failed now and then because a cow 30 blocks from the test was in a chunk the test world had not loaded; the test keeps its prey inside its own structure.
 
+### Panel review (round 1 of #55)
+- **The pike counts only as a direct blow** (not a snowball, an arrow or a trident thrown while holding it). The **Rite of the Valet Pike** now checks the full moon itself (by day everything is given back), and the Valet Pike is **unbreakable** with a real tooltip. The **Rite of the Frequency** refuses a caster who is no werewolf and a circle outside the overworld, each with its own words and everything given back; a Host with no ground has its own answer; "busy", "over" and "no more hosts" are one: "The frequency is silent."
+- **The Host cannot be leashed, ridden, pushed or sent to another dimension**; a hit that does nothing says "He does not feel it."; a Host made again after a failed night no longer forgets that the Spirit had been back.
+- **The Mantle is kept for an absent top dealer** (never given to the striker) in the boss index and handed over at login; the striker and everyone near are told who it went to. Everyone who stood near when the Beast collapsed is told how it ends, wherever they are by then, and the first escape with `beast_returns_once` off has its own words.
+- **Stuck encounters:** a Host or Beast the index has lost fails the night (those near are told); a Spirit nobody can find 200 ticks after its time is taken as escaped; the collapse is written to disk.
+- **The Spirit** runs slower than a sprinting player and stops a second every four, looking back. **The Mantle's wrap** that finds no enemy is not spent and says nothing; it spares the wearer's pack and teammates, and players where PvP is off.
+- Texts: the Host notice says "out there" and the hint points at the witches' Rite of the Valet Pike; the Guide gives the "a server can change" clauses; the rites' descriptions name every ingredient and the Echo Shard; the Admin Change button has a tooltip.
+
 ### Rolling back
 Rolling back to a build without 17h loses the Host, the Beast and the Spirit (a Beast in the world is dropped), the Valet Pike and the Mantle in an inventory or a chest, and the encounter's record (its phase, how many Hosts were made, the damage tally) in the boss index; a Beast that was in the middle of the story is simply not there.
 

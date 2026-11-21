@@ -49,8 +49,9 @@ public final class BossItems {
     public static final DeferredItem<MemoryClawsItem> MEMORY_CLAWS = ITEMS.register("memory_claws", () -> new MemoryClawsItem(new Item.Properties()));
 
     /** What hurts the Spirit of Gevaudan, and nothing else does (R188); made by a rite, never dropped. */
-    public static final DeferredItem<SwordItem> VALET_PIKE = ITEMS.register("valet_pike",
-            () -> new SwordItem(Tiers.IRON, new Item.Properties().durability(64).attributes(SwordItem.createAttributes(Tiers.IRON, 4, -2.6F))));
+    public static final DeferredItem<net.ofatech.supernaturalbloodlines.parts.bosses.item.PikeItem> VALET_PIKE = ITEMS.register("valet_pike",
+            () -> new net.ofatech.supernaturalbloodlines.parts.bosses.item.PikeItem(Tiers.IRON, new Item.Properties().attributes(SwordItem.createAttributes(Tiers.IRON, 4, -2.6F))
+                    .component(DataComponents.UNBREAKABLE, new Unbreakable(true))));
 
     /** The Beast's one reward: a cloak whose Shadow Wrap a shifted werewolf type may use (R191). No spark, no pike. */
     public static final DeferredItem<MantleOfTheBeastItem> MANTLE_OF_THE_BEAST = ITEMS.register("mantle_of_the_beast",

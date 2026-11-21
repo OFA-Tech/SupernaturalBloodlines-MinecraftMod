@@ -14,6 +14,8 @@ import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+import net.ofatech.supernaturalbloodlines.core.boss.BeastRules;
 import net.minecraft.world.level.Level;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossRegistries;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BeastDirector;
@@ -37,8 +39,8 @@ public final class GevaudanSpiritEntity extends PathfinderMob {
     public static AttributeSupplier.Builder attributes() {
         return createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.3)
-                .add(Attributes.FLYING_SPEED, 0.5)
+                .add(Attributes.MOVEMENT_SPEED, 0.2)
+                .add(Attributes.FLYING_SPEED, 0.25)
                 .add(Attributes.FOLLOW_RANGE, 40.0);
     }
 
@@ -53,7 +55,7 @@ public final class GevaudanSpiritEntity extends PathfinderMob {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(1, new AvoidEntityGoal<>(this, Player.class, 24.0F, 1.2, 1.6));
+        goalSelector.addGoal(1, new AvoidEntityGoal<>(this, Player.class, 24.0F, 1.0, 1.2));
         goalSelector.addGoal(2, new RandomStrollGoal(this, 1.0));
     }
 
@@ -81,9 +83,41 @@ public final class GevaudanSpiritEntity extends PathfinderMob {
         return pikeHit;
     }
 
+    /**
+     * It runs slower than a sprinting player (never more than {@link BeastRules#SPIRIT_SPEED} blocks a tick, by the distance it really moved) and stops for a second
+     * every four, so a player on foot catches it.
+     */
+    @Override
+    public void travel(Vec3 input) {
+        if (level().isClientSide) {
+            super.travel(input);
+            return;
+        }
+        if (BeastRules.spiritPauses(tickCount)) {
+            setDeltaMovement(Vec3.ZERO);
+            getNavigation().stop();
+            return;
+        }
+        Vec3 before = position();
+        super.travel(input);
+        Vec3 moved = position().subtract(before);
+        double length = moved.length();
+        if (length > BeastRules.SPIRIT_SPEED) {
+            double keep = BeastRules.spiritSpeed(length) / length;
+            setPos(before.add(moved.scale(keep)));
+            setDeltaMovement(getDeltaMovement().scale(keep));
+        }
+    }
+
     @Override
     public void tick() {
         super.tick();
+        if (!level().isClientSide && BeastRules.spiritPauses(tickCount)) {
+            Player nearest = level().getNearestPlayer(this, 32.0);
+            if (nearest != null) {
+                getLookControl().setLookAt(nearest, 60.0F, 60.0F);
+            }
+        }
         if (level() instanceof ServerLevel server) {
             if (tickCount % 2 == 0) {
                 server.sendParticles(ParticleTypes.SMOKE, getX(), getY() + 0.8, getZ(), 6, 0.35, 0.5, 0.35, 0.01);

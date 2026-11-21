@@ -11,8 +11,8 @@ public final class PikeRules {
     /** The rung of the vampire or werewolf ladder from which the blood counts as advanced. */
     public static final int ADVANCED_RUNG = 4;
 
-    /** Who the blood belonged to, as the rite finds out when it runs. */
-    public enum Kind { PLAYER, NPC_ORIGINAL, OTHER, ABSENT }
+    /** Who the blood belonged to, as the rite finds out when it runs: a player who is here, an NPC Original, or nobody who counts (a creature, a giver who is gone). */
+    public enum Kind { PLAYER, NPC_ORIGINAL, ABSENT }
 
     public record Giver(Kind kind, Species species, int vampireRung, int werewolfRung, boolean alpha) {
         public static Giver of(Kind kind) {
@@ -27,7 +27,7 @@ public final class PikeRules {
     public static boolean qualifies(Giver g) {
         return switch (g.kind()) {
             case NPC_ORIGINAL -> true;
-            case OTHER, ABSENT -> false;
+            case ABSENT -> false;
             case PLAYER -> switch (g.species()) {
                 case ORIGINAL, ORIGINAL_HYBRID, HYBRID, TRIBRID, HUNTER_OF_THE_FIVE -> true;
                 default -> g.alpha() || g.vampireRung() >= ADVANCED_RUNG || g.werewolfRung() >= ADVANCED_RUNG;
@@ -35,9 +35,12 @@ public final class PikeRules {
         };
     }
 
-    /** What the Spirit takes from a blow: only the Valet Pike hurts it. */
-    public static boolean hurtsSpirit(boolean valetPike) {
-        return valetPike;
+    /**
+     * What the Spirit takes from a blow: only a <b>direct</b> blow of the Valet Pike (the pike in the striker's hand, not a snowball or an arrow thrown while holding it)
+     * hurts it.
+     */
+    public static boolean hurtsSpirit(boolean directBlow, boolean valetPike) {
+        return directBlow && valetPike;
     }
 
     /** A pike's blow on the Spirit ends the Beast for good, whatever the damage was. */

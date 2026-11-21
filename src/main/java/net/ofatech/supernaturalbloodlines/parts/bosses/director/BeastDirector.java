@@ -1,8 +1,11 @@
 package net.ofatech.supernaturalbloodlines.parts.bosses.director;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -23,6 +26,8 @@ import net.ofatech.supernaturalbloodlines.core.boss.BeastPhaseRules;
 import net.ofatech.supernaturalbloodlines.core.boss.BeastRules;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.core.boss.BossRules;
+import net.ofatech.supernaturalbloodlines.core.boss.BossState;
+import net.ofatech.supernaturalbloodlines.core.boss.PikeRules;
 import net.ofatech.supernaturalbloodlines.core.boss.DesiccationRules;
 import net.ofatech.supernaturalbloodlines.core.boss.RewardRules;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossItems;
@@ -52,10 +57,15 @@ public final class BeastDirector {
     public static final String COLLAPSE = "supernaturalbloodlines.boss.beast.collapse";
     public static final String ESCAPED = "supernaturalbloodlines.boss.beast.escaped";
     public static final String GONE = "supernaturalbloodlines.boss.beast.gone";
+    public static final String GONE_FINAL = "supernaturalbloodlines.boss.beast.gone_final";
     public static final String ENDED = "supernaturalbloodlines.boss.beast.ended";
     public static final String FAILED = "supernaturalbloodlines.boss.beast.failed";
     public static final String REWARD = "supernaturalbloodlines.boss.beast.reward";
     public static final String REWARD_DROPPED = "supernaturalbloodlines.boss.beast.reward_dropped";
+    public static final String REWARD_TO = "supernaturalbloodlines.boss.beast.reward_to";
+    public static final String REWARD_OWED = "supernaturalbloodlines.boss.beast.reward_owed";
+    public static final String REWARD_LATE = "supernaturalbloodlines.boss.beast.reward_late";
+    public static final String SOMEONE = "supernaturalbloodlines.boss.beast.someone";
 
     private BeastDirector() {
     }
@@ -81,6 +91,15 @@ public final class BeastDirector {
         }
         BossIndex.Entry entry = index.of(boss);
         ServerLevel overworld = server.overworld();
+        if (BeastPhaseRules.bodyLost(entry.phase, index.state(boss) == BossState.LOST)) {
+            bodyLost(server, index, entry);
+            return;
+        }
+        if (BeastPhaseRules.spiritOverdue(entry.phase, overworld.getGameTime(), entry.spiritUntil, spiritAlive(server, entry))) {
+            ServerLevel where = levelOf(server, entry.dimension);
+            resolveEscape(where, index, entry, entry.pos);
+            return;
+        }
         boolean moon = BossDirector.fullMoonNightNow(overworld);
         long day = dayOf(overworld);
         switch (entry.phase) {
@@ -93,6 +112,42 @@ public final class BeastDirector {
             default -> {
             }
         }
+    }
+
+    private static boolean spiritAlive(MinecraftServer server, BossIndex.Entry entry) {
+        return entry.spirit != null && BossDirector.find(server, entry.spirit) instanceof GevaudanSpiritEntity s && s.isAlive();
+    }
+
+    private static ServerLevel levelOf(MinecraftServer server, String dimension) {
+        for (ServerLevel level : server.getAllLevels()) {
+            if (level.dimension().location().toString().equals(dimension)) {
+                return level;
+            }
+        }
+        return server.overworld();
+    }
+
+    /** Every player of every dimension, once. */
+    static List<ServerPlayer> allPlayers(MinecraftServer server) {
+        List<ServerPlayer> out = new ArrayList<>();
+        Set<UUID> seen = new HashSet<>();
+        for (ServerLevel level : server.getAllLevels()) {
+            for (ServerPlayer p : BossDirector.playersIn(level)) {
+                if (seen.add(p.getUUID())) {
+                    out.add(p);
+                }
+            }
+        }
+        return out;
+    }
+
+    /** The index says the body of the Host or of the Beast is gone: the night is lost, and those who were near where it stood are told. */
+    private static void bodyLost(MinecraftServer server, BossIndex index, BossIndex.Entry entry) {
+        entry.phase = BeastPhaseRules.after(entry.phase, BeastPhaseRules.Event.BODY_LOST);
+        entry.spirit = null;
+        index.setDirty();
+        tellNear(levelOf(server, entry.dimension), entry.pos, Component.translatable(FAILED));
+        BossIndex.flush(server);
     }
 
     private static void roll(MinecraftServer server, BossIndex index, BossIndex.Entry entry, ServerLevel overworld, boolean moon, long day) {
@@ -139,8 +194,8 @@ public final class BeastDirector {
         entry.phaseDay = dayOf(level.getServer().overworld());
         entry.appearances++;
         entry.target = target == null ? null : target.getUUID();
-        entry.returned = false;
         entry.spirit = null;
+        entry.witnesses.clear();
         index.apply(BossId.BEAST_OF_GEVAUDAN, BossRules.Event.SPAWNED);
         index.adopt(BossId.BEAST_OF_GEVAUDAN, host.getUUID(), level.dimension().location().toString(), pos);
         index.setDirty();
@@ -225,10 +280,17 @@ public final class BeastDirector {
         entry.spirit = spirit.getUUID();
         entry.spiritUntil = level.getGameTime() + BossesConfig.beastSpiritSeconds() * 20L;
         level.addFreshEntity(spirit);
+        entry.witnesses.clear();
+        for (ServerPlayer p : allPlayers(level.getServer())) {
+            if (p.level() == level && p.blockPosition().distSqr(beast.blockPosition()) <= NEAR * NEAR) {
+                entry.witnesses.add(p.getUUID());
+            }
+        }
         index.setDirty();
         level.sendParticles(ParticleTypes.SOUL, beast.getX(), beast.getY() + 1.5, beast.getZ(), 40, 0.8, 1.0, 0.8, 0.03);
         level.playSound(null, beast.getX(), beast.getY(), beast.getZ(), SoundEvents.WITHER_DEATH, SoundSource.HOSTILE, 2.0F, 0.6F);
         tellNear(level, beast.blockPosition(), Component.translatable(COLLAPSE, BossesConfig.beastSpiritSeconds()));
+        BossIndex.flush(level.getServer());
     }
 
     // ---- the Spirit ----
@@ -249,17 +311,25 @@ public final class BeastDirector {
             return;
         }
         level.sendParticles(ParticleTypes.POOF, spirit.getX(), spirit.getY(), spirit.getZ(), 30, 0.5, 0.5, 0.5, 0.05);
+        resolveEscape(level, index, entry, spirit.blockPosition());
+    }
+
+    /**
+     * The Spirit is away (its body got there, or nobody can find it after its time and the grace): it comes back once, at half health, on a later full moon night; the
+     * second time (or the first, when {@code beast_returns_once} is off) it is gone for good and so is the Host. Everybody who stood near when the Beast fell is told.
+     */
+    private static void resolveEscape(ServerLevel level, BossIndex index, BossIndex.Entry entry, BlockPos at) {
         entry.spirit = null;
         BeastPhase next = BeastPhaseRules.next(BeastPhase.SPIRIT, 0.1F, false, 0, entry.returned, BossesConfig.beastReturnsOnce());
         entry.phase = next;
         if (next == BeastPhase.RETURN_PENDING) {
             entry.returned = true;
             entry.phaseDay = dayOf(level.getServer().overworld());
-            tellNear(level, spirit.blockPosition(), Component.translatable(ESCAPED));
+            tellWitnesses(level, entry, at, Component.translatable(ESCAPED));
         } else {
             endHost(level, index, entry);
             index.apply(BossId.BEAST_OF_GEVAUDAN, BossRules.Event.KILLED);
-            tellNear(level, spirit.blockPosition(), Component.translatable(GONE));
+            tellWitnesses(level, entry, at, Component.translatable(entry.returned ? GONE : GONE_FINAL));
         }
         index.setDirty();
         BossIndex.flush(level.getServer());
@@ -269,7 +339,7 @@ public final class BeastDirector {
     public static void killed(ServerLevel level, GevaudanSpiritEntity spirit, @Nullable ServerPlayer killer) {
         BossIndex index = BossIndex.get(level.getServer());
         BossIndex.Entry entry = index.of(BossId.BEAST_OF_GEVAUDAN);
-        if (entry.phase != BeastPhase.SPIRIT || !spirit.getUUID().equals(entry.spirit)) {
+        if (!PikeRules.endsBeast(entry.phase, spirit.pikeHit()) || !spirit.getUUID().equals(entry.spirit)) {
             return;
         }
         entry.spirit = null;
@@ -279,7 +349,7 @@ public final class BeastDirector {
         entry.returnDay = BossClock.today(level);
         level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, spirit.getX(), spirit.getY(), spirit.getZ(), 50, 0.6, 0.6, 0.6, 0.08);
         level.playSound(null, spirit.getX(), spirit.getY(), spirit.getZ(), SoundEvents.WITHER_BREAK_BLOCK, SoundSource.HOSTILE, 2.0F, 1.2F);
-        tellNear(level, spirit.blockPosition(), Component.translatable(ENDED));
+        tellWitnesses(level, entry, spirit.blockPosition(), Component.translatable(ENDED));
         pay(level, killer, spirit.blockPosition());
         index.setDirty();
         BossIndex.flush(level.getServer());
@@ -324,33 +394,106 @@ public final class BeastDirector {
     // ---- the reward ----
 
     /**
-     * The Mantle of the Beast, once: to the player who did the most to the Beast over the whole encounter (a tie goes to the last hitter, a pet's damage is its owner's),
-     * or else to the one whose pike ended it, or else where the Spirit fell. Everybody near is told where it went. Whether it was paid.
+     * The Mantle of the Beast, once: to the player who did the most to the Beast over the whole encounter if they are here (a tie goes to the last hitter, a pet's damage is its
+     * owner's); kept for them in the index, and handed over when they log in, if they are not (it is never given to somebody else); else to the one whose pike ended
+     * it; else on the ground where the Spirit fell. Everybody near (and the one who struck, wherever they are) is told who got it. Whether it was paid.
      */
     public static boolean pay(ServerLevel level, @Nullable ServerPlayer striker, BlockPos where) {
-        BossIndex index = BossIndex.get(level.getServer());
+        MinecraftServer server = level.getServer();
+        BossIndex index = BossIndex.get(server);
         BossIndex.Entry entry = index.of(BossId.BEAST_OF_GEVAUDAN);
         if (!RewardRules.pays(BossesConfig.rewardOn(), RewardRules.Defeat.DIED, entry.rewarded)) {
             return false;
         }
         entry.rewarded = true;
-        ServerPlayer top = entry.tally.top().map(id -> SireCall.player(level.getServer(), id)).orElse(null);
-        ServerPlayer owner = top != null ? top : striker;
-        ItemStack mantle = new ItemStack(BossItems.MANTLE_OF_THE_BEAST.get());
-        if (owner != null) {
-            owner.getInventory().placeItemBackInInventory(mantle);
-            owner.sendSystemMessage(Component.translatable(REWARD));
-        } else {
-            ItemEntity drop = new ItemEntity(level, where.getX() + 0.5, where.getY() + 0.5, where.getZ() + 0.5, mantle);
-            drop.setUnlimitedLifetime();
-            drop.setInvulnerable(true);
-            level.addFreshEntity(drop);
-            tellNear(level, where, Component.translatable(REWARD_DROPPED));
+        UUID topId = entry.tally.top().orElse(null);
+        ServerPlayer top = topId == null ? null : SireCall.player(server, topId);
+        switch (BeastRules.payee(topId != null, top != null, striker != null)) {
+            case TOP_ONLINE -> {
+                give(top);
+                top.sendSystemMessage(Component.translatable(REWARD));
+                announce(level, where, striker, top, REWARD_TO, nameOf(server, topId, top));
+            }
+            case TOP_OWED -> {
+                entry.owed.add(topId);
+                announce(level, where, striker, null, REWARD_OWED, nameOf(server, topId, null));
+            }
+            case STRIKER -> {
+                give(striker);
+                striker.sendSystemMessage(Component.translatable(REWARD));
+            }
+            case GROUND -> {
+                ItemEntity drop = new ItemEntity(level, where.getX() + 0.5, where.getY() + 0.5, where.getZ() + 0.5, new ItemStack(BossItems.MANTLE_OF_THE_BEAST.get()));
+                drop.setUnlimitedLifetime();
+                drop.setInvulnerable(true);
+                level.addFreshEntity(drop);
+                tellNear(level, where, Component.translatable(REWARD_DROPPED));
+            }
         }
         index.setDirty();
+        BossIndex.flush(server);
         return true;
     }
 
+    private static void give(ServerPlayer p) {
+        p.getInventory().placeItemBackInInventory(new ItemStack(BossItems.MANTLE_OF_THE_BEAST.get()));
+    }
+
+    /** The one the Mantle was kept for is here: it is handed over, with a word. Whether there was one. */
+    public static boolean deliverOwed(ServerPlayer p) {
+        MinecraftServer server = p.getServer();
+        BossIndex index = BossIndex.get(server);
+        if (!index.of(BossId.BEAST_OF_GEVAUDAN).owed.remove(p.getUUID())) {
+            return false;
+        }
+        give(p);
+        p.sendSystemMessage(Component.translatable(REWARD_LATE));
+        index.setDirty();
+        BossIndex.flush(server);
+        return true;
+    }
+
+    private static Component nameOf(MinecraftServer server, UUID id, @Nullable ServerPlayer online) {
+        if (online != null) {
+            return online.getDisplayName();
+        }
+        var cache = server.getProfileCache();
+        if (cache != null) {
+            var profile = cache.get(id);
+            if (profile.isPresent()) {
+                return Component.literal(profile.get().getName());
+            }
+        }
+        return Component.translatable(SOMEONE);
+    }
+
+    /** Tells everyone near {@code where}, and the one who struck wherever they are, but not {@code except}. */
+    private static void announce(ServerLevel level, BlockPos where, @Nullable ServerPlayer striker, @Nullable ServerPlayer except, String key, Component name) {
+        Set<UUID> told = new HashSet<>();
+        if (except != null) {
+            told.add(except.getUUID());
+        }
+        Component text = Component.translatable(key, name);
+        if (striker != null && told.add(striker.getUUID())) {
+            striker.sendSystemMessage(text);
+        }
+        for (ServerPlayer p : BossDirector.playersIn(level)) {
+            if (p.level() == level && p.blockPosition().distSqr(where) <= NEAR * NEAR && told.add(p.getUUID())) {
+                p.sendSystemMessage(text);
+            }
+        }
+    }
+
+    /** Everyone near {@code at} now, and everyone who stood near when the Beast fell and is still here, once. */
+    private static void tellWitnesses(ServerLevel level, BossIndex.Entry entry, BlockPos at, Component text) {
+        Set<UUID> told = new HashSet<>();
+        for (ServerPlayer p : allPlayers(level.getServer())) {
+            boolean near = p.level() == level && p.blockPosition().distSqr(at) <= NEAR * NEAR;
+            if ((near || entry.witnesses.contains(p.getUUID())) && told.add(p.getUUID())) {
+                p.sendSystemMessage(text);
+            }
+        }
+    }
     static void tellNear(ServerLevel level, BlockPos at, Component text) {
         for (ServerPlayer p : BossDirector.playersIn(level)) {
             if (p.level() == level && p.blockPosition().distSqr(at) <= NEAR * NEAR) {

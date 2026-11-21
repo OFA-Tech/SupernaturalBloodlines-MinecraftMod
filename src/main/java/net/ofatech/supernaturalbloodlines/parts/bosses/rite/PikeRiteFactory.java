@@ -29,16 +29,18 @@ import org.jetbrains.annotations.Nullable;
  * strong into the Valet Pike. How strong the blood must be is {@link PikeRules}: a plain player's is not enough. Every refusal reads the same ("the blood will not
  * take") and costs the same, so the rite cannot be used to find out what somebody is.
  */
-public record PikeRiteFactory() implements RiteFactory {
+public record PikeRiteFactory(boolean requiresFullMoon) implements RiteFactory {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "valet_pike");
     public static final String NOT_WITCH = "supernaturalbloodlines.refusal.pike_not_witch";
     public static final String WEAK = "supernaturalbloodlines.refusal.pike_weak";
     public static final String DONE = "supernaturalbloodlines.rite.pike_done";
-    public static final MapCodec<PikeRiteFactory> CODEC = MapCodec.unit(PikeRiteFactory::new);
+    public static final MapCodec<PikeRiteFactory> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.mapCodec(i -> i.group(
+            net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory.fullMoonByDefault().forGetter(PikeRiteFactory::requiresFullMoon)
+    ).apply(i, PikeRiteFactory::new));
 
     @Override
     public Rite create(Rite.BaseRiteParams base, Rite.RiteParams params) {
-        return new PikeRite(base, params);
+        return new PikeRite(base, params, requiresFullMoon);
     }
 
     @Override
@@ -69,13 +71,20 @@ public record PikeRiteFactory() implements RiteFactory {
     }
 
     private static final class PikeRite extends Rite {
-        PikeRite(BaseRiteParams base, RiteParams params) {
+        private final boolean requiresFullMoon;
+
+        PikeRite(BaseRiteParams base, RiteParams params, boolean requiresFullMoon) {
             super(base, params);
+            this.requiresFullMoon = requiresFullMoon;
         }
 
         @Override
         protected boolean onStart(RiteParams params) {
             if (!(findEntity(params.caster) instanceof ServerPlayer caster)) {
+                return cancel();
+            }
+            if (requiresFullMoon && !net.ofatech.supernaturalbloodlines.core.moon.MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime())) {
+                caster.displayClientMessage(Component.translatable(net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory.NEEDS_FULL_MOON), true);
                 return cancel();
             }
             if (!SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species())) {

@@ -63,6 +63,36 @@ class BeastRulesTest {
     }
 
     @Test
+    void theSpiritIsSlowerThanASprintingPlayerAndStopsToLookBackASecondInEveryFour() {
+        assertTrue(BeastRules.SPIRIT_SPEED < BeastRules.SPRINT_SPEED * 0.8, "the Spirit is not clearly slower than a player who sprints");
+        assertEquals(0.2, BeastRules.spiritSpeed(5.0), 1e-9, "a faster speed is cut");
+        assertEquals(0.1, BeastRules.spiritSpeed(0.1), 1e-9, "a slower one is left");
+        // the pause: ticks 60 to 79 of every 80
+        assertFalse(BeastRules.spiritPauses(0));
+        assertFalse(BeastRules.spiritPauses(59));
+        assertTrue(BeastRules.spiritPauses(60));
+        assertTrue(BeastRules.spiritPauses(79));
+        assertFalse(BeastRules.spiritPauses(80));
+        assertTrue(BeastRules.spiritPauses(140));
+        long paused = java.util.stream.LongStream.range(0, 800).filter(BeastRules::spiritPauses).count();
+        assertEquals(200, paused, "it pauses a quarter of the time");
+        // so over a whole cycle a player on foot gains on it
+        double spirit = (BeastRules.SPIRIT_PAUSE_PERIOD - BeastRules.SPIRIT_PAUSE_TICKS) * BeastRules.SPIRIT_SPEED;
+        double player = BeastRules.SPIRIT_PAUSE_PERIOD * BeastRules.SPRINT_SPEED;
+        assertTrue(player > spirit * 1.4, "a sprinting player gains only " + (player - spirit) + " blocks a cycle");
+    }
+
+    @Test
+    void theMantleGoesToTheOneWhoDidTheMostWhereverTheyAreAndNeverToAnotherWhileTheyAreAway() {
+        assertEquals(BeastRules.Payee.TOP_ONLINE, BeastRules.payee(true, true, true));
+        assertEquals(BeastRules.Payee.TOP_ONLINE, BeastRules.payee(true, true, false));
+        assertEquals(BeastRules.Payee.TOP_OWED, BeastRules.payee(true, false, true), "the striker must not get what is another's");
+        assertEquals(BeastRules.Payee.TOP_OWED, BeastRules.payee(true, false, false));
+        assertEquals(BeastRules.Payee.STRIKER, BeastRules.payee(false, false, true));
+        assertEquals(BeastRules.Payee.GROUND, BeastRules.payee(false, false, false));
+    }
+
+    @Test
     void shotsAreReducedAndNothingElseIs() {
         assertEquals(6.0F, BeastRules.damageTaken(true, 10F), 1e-6);
         assertEquals(10.0F, BeastRules.damageTaken(false, 10F), 1e-6);

@@ -47,15 +47,21 @@ public final class BeastEvents {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, LivingDamageEvent.Pre.class, BeastEvents::onPre);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, true, LivingDamageEvent.Post.class, BeastEvents::onDamaged);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, LivingDeathEvent.class, BeastEvents::onDeath);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent.class,
+                e -> {
+                    if (e.getEntity() instanceof ServerPlayer p) {
+                        BeastDirector.deliverOwed(p);
+                    }
+                });
     }
 
-    /** Whether the blow was made with the Valet Pike: the weapon the damage source names, or what the attacker holds. */
+    /**
+     * Whether the blow is a direct blow of the Valet Pike: the striker made it themselves (not a snowball, an arrow or a trident thrown while they hold the pike) and the
+     * weapon the damage source names is the pike. Nothing else counts.
+     */
     public static boolean pike(DamageSource source) {
         ItemStack weapon = source.getWeaponItem();
-        if (weapon != null && weapon.is(BossItems.VALET_PIKE.get())) {
-            return true;
-        }
-        return source.getEntity() instanceof LivingEntity attacker && attacker.getMainHandItem().is(BossItems.VALET_PIKE.get());
+        return PikeRules.hurtsSpirit(source.isDirect(), weapon != null && weapon.is(BossItems.VALET_PIKE.get()));
     }
 
     private static void onIncoming(LivingIncomingDamageEvent e) {
@@ -64,7 +70,7 @@ public final class BeastEvents {
             if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
                 return;
             }
-            if (PikeRules.hurtsSpirit(pike(source))) {
+            if (pike(source)) {
                 spirit.markPikeHit();
                 e.setAmount(Math.max(e.getAmount(), spirit.getMaxHealth()));
             } else {

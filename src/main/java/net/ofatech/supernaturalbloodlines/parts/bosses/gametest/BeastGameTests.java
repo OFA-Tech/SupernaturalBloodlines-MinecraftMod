@@ -17,6 +17,13 @@ import net.ofatech.supernaturalbloodlines.core.boss.FrequencyRules;
 import net.ofatech.supernaturalbloodlines.parts.bosses.rite.FrequencyRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.projectile.Snowball;
+import net.minecraft.world.scores.PlayerTeam;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackCommand;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
+import net.ofatech.supernaturalbloodlines.core.boss.BeastPhaseRules;
+import net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
@@ -756,10 +763,15 @@ public final class BeastGameTests {
     private static final long NIGHT = 14000;
 
     private static void atFullMoon(GameTestHelper helper, Runnable body) {
+        atFullMoonAt(helper, NIGHT, body);
+    }
+
+    /** The day of the full moon at this time of day (14000 is its night, 6000 its noon). */
+    private static void atFullMoonAt(GameTestHelper helper, long timeOfDay, Runnable body) {
         ServerLevel level = helper.getLevel();
         long before = level.getDayTime();
         long base = before - Math.floorMod(before, FULL_MOON_CYCLE);
-        level.setDayTime(base + NIGHT);
+        level.setDayTime(base + timeOfDay);
         try {
             helper.assertTrue(level.getMoonPhase() == 0, "could not set the moon, phase is " + level.getMoonPhase());
             body.run();
@@ -880,6 +892,414 @@ public final class BeastGameTests {
             sweep(helper, rig);
         } finally {
             clean(a);
+        }
+        helper.succeed();
+    }
+
+    // ---- panel round 1: the pike, the rites, the Host, the reward, the stuck encounter, the Spirit, the Mantle ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void onlyADirectBlowOfThePikeHurtsTheSpiritNotOneThrownOrShotWhileHoldingIt(GameTestHelper helper) {
+        LineTestPlayer striker = player(helper, Rank.NONE, Species.NONE, 2.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, striker);
+            BeastEntity beast = beast(helper, rig);
+            BeastDirector.collapse(helper.getLevel(), beast);
+            GevaudanSpiritEntity spirit = (GevaudanSpiritEntity) helper.getLevel().getEntity(entry(rig).spirit);
+            ServerLevel level = helper.getLevel();
+            striker.setItemInHand(InteractionHand.MAIN_HAND, with(BossItems.VALET_PIKE.get()));
+            Snowball ball = EntityType.SNOWBALL.create(level);
+            ball.setOwner(striker);
+            hit(spirit, level.damageSources().thrown(ball, striker), 500F);
+            // an arrow that says it was fired from the pike: the weapon is the pike, the blow is not direct
+            Arrow arrow = new Arrow(level, striker, new ItemStack(Items.ARROW), with(BossItems.VALET_PIKE.get()));
+            helper.assertTrue(arrow.getWeaponItem() != null && arrow.getWeaponItem().is(BossItems.VALET_PIKE.get()), "the control arrow does not carry the pike");
+            hit(spirit, level.damageSources().arrow(arrow, striker), 500F);
+            helper.assertTrue(spirit.isAlive() && !spirit.pikeHit() && entry(rig).phase == BeastPhase.SPIRIT, "something thrown or shot hurt the Spirit: " + entry(rig).phase);
+            helper.assertTrue(!BeastEvents.pike(level.damageSources().arrow(arrow, striker)) && !BeastEvents.pike(level.damageSources().thrown(ball, striker)), "a thrown or shot blow counts as the pike");
+            helper.assertTrue(BeastEvents.pike(striker.damageSources().playerAttack(striker)), "a direct blow of the pike does not count");
+            BeastDirector.killed(level, spirit, striker);
+            helper.assertTrue(spirit.isAlive() && entry(rig).phase == BeastPhase.SPIRIT && !entry(rig).rewarded, "a Spirit the pike had not touched was ended");
+            hit(spirit, striker.damageSources().playerAttack(striker), 1F);
+            helper.assertTrue(!spirit.isAlive() && entry(rig).phase == BeastPhase.KILLED, "the direct blow did not end it: " + entry(rig).phase);
+            helper.assertTrue(striker.count(BeastDirector.ENDED) == 1, "the end was not told: " + striker.heard());
+            sweep(helper, rig);
+        } finally {
+            clean(striker);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theValetPikeRiteWorksOnlyOnAFullMoonNightAndByDayGivesEverythingBack(GameTestHelper helper) {
+        if (!rite(helper, "rite_of_the_valet_pike")) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer hunter = player(helper, Rank.NONE, Species.HUNTER_OF_THE_FIVE, 3.5);
+        RecordingPlayer witch = performer(helper, Species.WITCH);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, hunter);
+            atFullMoonAt(helper, 6000, () -> {
+                RiteTestSupport.start(helper, "rite_of_the_valet_pike", witch, pikeItems(hunter.getUUID()));
+                helper.assertTrue(witch.receivedOnActionBar("supernaturalbloodlines.rite.needs_full_moon"), "the witch was not told it needs a full moon night: " + witch.heard());
+                helper.assertTrue(RiteTestSupport.dropped(helper, "supernaturalbloodlines:valet_pike") == 0 && RiteTestSupport.dropped(helper, "minecraft:iron_ingot") == 3,
+                        "a rite by day made a pike, or kept the iron: " + RiteTestSupport.dropped(helper, "minecraft:iron_ingot"));
+                RiteTestSupport.clearDropped(helper);
+            });
+            atFullMoon(helper, () -> {
+                RiteTestSupport.start(helper, "rite_of_the_valet_pike", witch, pikeItems(hunter.getUUID()));
+                helper.assertTrue(RiteTestSupport.dropped(helper, "supernaturalbloodlines:valet_pike") == 1, "the same rite at night did not make the pike");
+                RiteTestSupport.clearDropped(helper);
+            });
+        } finally {
+            RiteTestSupport.remove(helper, witch);
+            clean(hunter);
+        }
+        helper.succeed();
+    }
+
+    private static final String[] FREQUENCY_ITEMS = {"supernaturalbloodlines:valet_pike", "supernaturalbloodlines:hearing_device", "minecraft:echo_shard"};
+
+    private static List<ItemStack> frequencyItems() {
+        return List.of(with(BossItems.VALET_PIKE.get()), new ItemStack(RiteTestSupport.item("supernaturalbloodlines:hearing_device")), new ItemStack(Items.ECHO_SHARD));
+    }
+
+    private static void joinWerewolves(RecordingPlayer p, GameTestHelper helper) {
+        helper.assertTrue(de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(de.teamlapen.werewolves.api.WReference.WEREWOLF_FACTION, 5), "the caster could not join the werewolves");
+    }
+
+    private static void leaveWerewolves(RecordingPlayer p) {
+        if (de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).getCurrentFaction() != null) {
+            de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
+        }
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theFrequencyRiteRefusesACasterWhoIsNoWerewolfAndAGroundlessHostWithTheirOwnWordsAndGivesEverythingBack(GameTestHelper helper) {
+        if (!rite(helper, "rite_of_the_frequency") || !werewolves()) {
+            helper.succeed();
+            return;
+        }
+        RecordingPlayer plain = performer(helper, Species.NONE);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(true);
+            atFullMoon(helper, () -> {
+                RiteTestSupport.start(helper, "rite_of_the_frequency", plain, frequencyItems());
+                helper.assertTrue(plain.receivedOnActionBar(FrequencyRules.messageKey(FrequencyRules.Result.NOT_WEREWOLF)), "a caster who is no werewolf was not told so: " + plain.heard());
+                helper.assertTrue(entry(rig).phase == BeastPhase.NONE && entry(rig).hostsMade == 0, "a caster who is no werewolf brought the Host");
+                for (String id : FREQUENCY_ITEMS) {
+                    helper.assertTrue(RiteTestSupport.dropped(helper, id) == 1, "the refusal did not give back " + id);
+                }
+                RiteTestSupport.clearDropped(helper);
+                RiteTestSupport.remove(helper, plain);
+                // a werewolf, but no ground for the Host to stand on
+                RecordingPlayer wolf = performer(helper, Species.NONE);
+                joinWerewolves(wolf, helper);
+                BossDirector.useGround((level, from, min, max) -> java.util.Optional.empty());
+                RiteTestSupport.start(helper, "rite_of_the_frequency", wolf, frequencyItems());
+                helper.assertTrue(wolf.receivedOnActionBar(FrequencyRules.messageKey(FrequencyRules.Result.NO_GROUND)) && !wolf.receivedOnActionBar(FrequencyRules.messageKey(FrequencyRules.Result.BUSY)),
+                        "a Host with no ground was not given its own word: " + wolf.heard());
+                helper.assertTrue(entry(rig).phase == BeastPhase.NONE && entry(rig).hostsMade == 0, "a Host was made with no ground");
+                for (String id : FREQUENCY_ITEMS) {
+                    helper.assertTrue(RiteTestSupport.dropped(helper, id) == 1, "the groundless refusal did not give back " + id);
+                }
+                RiteTestSupport.clearDropped(helper);
+                leaveWerewolves(wolf);
+                RiteTestSupport.remove(helper, wolf);
+            });
+        } finally {
+            RiteTestSupport.remove(helper, plain);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theHostCannotBeLeashedCarriedPushedOrSentAwayAndAHitSaysHeDoesNotFeelItAndAFailedNightKeepsWhatTheStoryDid(GameTestHelper helper) {
+        LineTestPlayer striker = player(helper, Rank.NONE, Species.NONE, 2.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, striker);
+            GevaudanHostEntity h = host(helper);
+            helper.assertTrue(!h.canBeLeashed() && !h.isPushable() && !h.canChangeDimensions(helper.getLevel(), helper.getLevel()), "the Host can be leashed, pushed or sent to another dimension");
+            net.minecraft.world.entity.vehicle.Boat boat = helper.spawn(EntityType.BOAT, new BlockPos(6, 1, 6));
+            helper.assertTrue(!h.startRiding(boat, true) && h.getVehicle() == null, "the Host was put on a boat");
+            helper.assertTrue(!h.startRiding(boat) && h.getVehicle() == null, "the Host was put on a boat the other way");
+            boat.discard();
+            hit(h, striker.damageSources().playerAttack(striker), 50F);
+            helper.assertTrue(striker.count(GevaudanHostEntity.UNFELT) == 1, "the hit was not answered with one line: " + striker.heard());
+            hit(h, helper.getLevel().damageSources().source(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL, striker), 1000F);
+            helper.assertTrue(!h.isAlive() && striker.count(GevaudanHostEntity.UNFELT) == 1, "a /kill by a player was told he does not feel it, or did not kill him");
+            // the story stays as it was: the Spirit had come back once, the Host was lost, a new one is made, and he does not forget
+            sweep(helper, rig);
+            rig.index.forget(BossId.BEAST_OF_GEVAUDAN);
+            GevaudanHostEntity first = host(helper);
+            entry(rig).returned = true;
+            hit(first, helper.getLevel().damageSources().genericKill(), 1000F);
+            helper.assertTrue(entry(rig).phase == BeastPhase.FAILED && entry(rig).returned, "the failed night forgot the Spirit had been back");
+            GevaudanHostEntity again = host(helper);
+            helper.assertTrue(entry(rig).phase == BeastPhase.HOST && entry(rig).returned && again.isAlive(), "a new Host made the story forget what it did: returned is " + entry(rig).returned);
+            sweep(helper, rig);
+        } finally {
+            clean(striker);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theMantleIsKeptForAnAbsentTopDealerNeverGivenToTheStrikerAndHandedOverOnceAtLoginAndSurvivesASave(GameTestHelper helper) {
+        LineTestPlayer away = player(helper, Rank.ALPHA, Species.NONE, 2.5);
+        LineTestPlayer striker = player(helper, Rank.NONE, Species.NONE, 3.5);
+        LineTestPlayer near = player(helper, Rank.NONE, Species.NONE, 4.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            // the one who did the most is not among the players the server knows
+            world(false, striker, near);
+            entry(rig).tally.add(away.getUUID(), 500F);
+            entry(rig).tally.add(striker.getUUID(), 5F);
+            entry(rig).witnesses.add(striker.getUUID());
+            striker.setPos(striker.position().add(300, 0, 0));
+            helper.assertTrue(BeastDirector.pay(helper.getLevel(), striker, spot(helper)), "nothing was paid");
+            helper.assertTrue(entry(rig).owed.contains(away.getUUID()) && entry(rig).owed.size() == 1, "the Mantle is not kept for the one who did the most: " + entry(rig).owed);
+            helper.assertTrue(striker.getInventory().countItem(BossItems.MANTLE_OF_THE_BEAST.get()) == 0, "the striker was given what is another's");
+            helper.assertTrue(!striker.received(BeastDirector.REWARD) && striker.received(BeastDirector.REWARD_OWED), "the striker was not told, in its own line, where the Mantle went: " + striker.heard());
+            helper.assertTrue(near.received(BeastDirector.REWARD_OWED) && itemsNear(helper, near, BossItems.MANTLE_OF_THE_BEAST.get()) == 0, "those near were not told, or the Mantle fell on the ground");
+            helper.assertTrue(!rig.index.isDirty(), "the payment was not written to disk");
+            // it is in the saved record, with the witnesses
+            var registries = helper.getLevel().registryAccess();
+            CompoundTag saved = rig.index.save(new CompoundTag(), registries);
+            BossIndex reloaded = BossIndex.load(saved, registries);
+            helper.assertTrue(reloaded.of(BossId.BEAST_OF_GEVAUDAN).owed.contains(away.getUUID()) && reloaded.of(BossId.BEAST_OF_GEVAUDAN).witnesses.contains(striker.getUUID()),
+                    "the owed Mantle or the witnesses did not survive a save");
+            // it is handed over once, at login
+            helper.assertTrue(!BeastDirector.deliverOwed(striker) && striker.getInventory().countItem(BossItems.MANTLE_OF_THE_BEAST.get()) == 0, "somebody else logging in was given it");
+            helper.assertTrue(BeastDirector.deliverOwed(away), "the one it was kept for was not given it");
+            helper.assertTrue(away.getInventory().countItem(BossItems.MANTLE_OF_THE_BEAST.get()) == 1 && away.received(BeastDirector.REWARD_LATE) && entry(rig).owed.isEmpty(), "the hand-over is incomplete");
+            helper.assertTrue(!BeastDirector.deliverOwed(away) && away.getInventory().countItem(BossItems.MANTLE_OF_THE_BEAST.get()) == 1, "it was handed over twice");
+            sweep(helper, rig);
+        } finally {
+            clean(away, striker, near);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOnlineTopDealerGetsTheMantleAndTheStrikerAndEveryoneNearAreToldWhoDid(GameTestHelper helper) {
+        LineTestPlayer top = player(helper, Rank.ALPHA, Species.NONE, 2.5);
+        LineTestPlayer striker = player(helper, Rank.NONE, Species.NONE, 3.5);
+        LineTestPlayer near = player(helper, Rank.NONE, Species.NONE, 4.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, top, striker, near);
+            entry(rig).tally.add(top.getUUID(), 500F);
+            helper.assertTrue(BeastDirector.pay(helper.getLevel(), striker, spot(helper)), "nothing was paid");
+            helper.assertTrue(top.getInventory().countItem(BossItems.MANTLE_OF_THE_BEAST.get()) == 1 && top.received(BeastDirector.REWARD) && !top.received(BeastDirector.REWARD_TO), "the top dealer was not paid, or was told twice");
+            helper.assertTrue(striker.getInventory().countItem(BossItems.MANTLE_OF_THE_BEAST.get()) == 0 && striker.count(BeastDirector.REWARD_TO) == 1, "the striker has the Mantle or was not told who has it: " + striker.heard());
+            helper.assertTrue(near.count(BeastDirector.REWARD_TO) == 1 && entry(rig).owed.isEmpty(), "somebody near was not told once, or something is owed");
+            // the pay is once
+            helper.assertTrue(!BeastDirector.pay(helper.getLevel(), striker, spot(helper)) && top.getInventory().countItem(BossItems.MANTLE_OF_THE_BEAST.get()) == 1, "it paid twice");
+            sweep(helper, rig);
+        } finally {
+            clean(top, striker, near);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSpiritNobodyCanFindIsTakenAsEscapedAfterItsTimeAndTheGraceAndTheWitnessesAreToldWhereverTheyAreNow(GameTestHelper helper) {
+        LineTestPlayer witness = player(helper, Rank.NONE, Species.NONE, 2.5);
+        LineTestPlayer stranger = player(helper, Rank.NONE, Species.NONE, 3.5);
+        LineTestPlayer latecomer = player(helper, Rank.NONE, Species.NONE, 4.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, witness, stranger, latecomer);
+            Vec3 nearSpot = latecomer.position();
+            stranger.setPos(stranger.position().add(300, 0, 0));
+            latecomer.setPos(nearSpot.add(300, 0, 0));
+            BeastEntity beast = beast(helper, rig);
+            BeastDirector.collapse(helper.getLevel(), beast);
+            helper.assertTrue(entry(rig).witnesses.contains(witness.getUUID()) && !entry(rig).witnesses.contains(stranger.getUUID()), "the witnesses are " + entry(rig).witnesses);
+            helper.assertTrue(!rig.index.isDirty(), "the collapse was not written to disk");
+            GevaudanSpiritEntity spirit = (GevaudanSpiritEntity) helper.getLevel().getEntity(entry(rig).spirit);
+            witness.setPos(witness.position().add(300, 0, 0));
+            latecomer.setPos(nearSpot);
+            spirit.discard();
+            long now = helper.getLevel().getGameTime();
+            entry(rig).spiritUntil = now - (BeastPhaseRules.SPIRIT_GRACE_TICKS - 1);
+            BossDirector.check(rig.server);
+            helper.assertTrue(entry(rig).phase == BeastPhase.SPIRIT, "it was taken as escaped inside the grace: " + entry(rig).phase);
+            entry(rig).spiritUntil = now - BeastPhaseRules.SPIRIT_GRACE_TICKS;
+            BossDirector.check(rig.server);
+            helper.assertTrue(entry(rig).phase == BeastPhase.RETURN_PENDING && entry(rig).returned && entry(rig).spirit == null, "a Spirit nobody can find did not escape: " + entry(rig).phase);
+            helper.assertTrue(witness.count(BeastDirector.ESCAPED) == 1, "the witness, far away now, was not told it escaped: " + witness.heard());
+            helper.assertTrue(stranger.count(BeastDirector.ESCAPED) == 0, "somebody who was never near was told");
+            helper.assertTrue(latecomer.count(BeastDirector.ESCAPED) == 1, "somebody who came near after the collapse was not told: " + latecomer.heard());
+            BossDirector.check(rig.server);
+            helper.assertTrue(witness.count(BeastDirector.ESCAPED) == 1, "it escaped twice");
+            sweep(helper, rig);
+        } finally {
+            clean(witness, stranger, latecomer);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theSecondEscapeAndTheFirstWithReturnsOffAreToldToTheWitnessesInTheirOwnWords(GameTestHelper helper) {
+        LineTestPlayer witness = player(helper, Rank.NONE, Species.NONE, 2.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, witness);
+            Vec3 here = witness.position();
+            BeastEntity beast = beast(helper, rig);
+            BeastDirector.collapse(helper.getLevel(), beast);
+            witness.setPos(here.add(300, 0, 0));
+            BeastDirector.escape(helper.getLevel(), (GevaudanSpiritEntity) helper.getLevel().getEntity(entry(rig).spirit));
+            helper.assertTrue(witness.count(BeastDirector.ESCAPED) == 1 && witness.count(BeastDirector.GONE) == 0, "the first escape is not told as one that comes back");
+            witness.setPos(here);
+            helper.assertTrue(BeastDirector.change(helper.getLevel()), "the Host did not change again");
+            BeastDirector.collapse(helper.getLevel(), (BeastEntity) body(rig));
+            witness.setPos(here.add(300, 0, 0));
+            BeastDirector.escape(helper.getLevel(), (GevaudanSpiritEntity) helper.getLevel().getEntity(entry(rig).spirit));
+            helper.assertTrue(entry(rig).phase == BeastPhase.GONE && witness.count(BeastDirector.GONE) == 1 && witness.count(BeastDirector.GONE_FINAL) == 0, "the second escape is told wrongly: " + witness.heard());
+            sweep(helper, rig);
+            // with the return off the first escape is final, and says so in its own words
+            rig.index.forget(BossId.BEAST_OF_GEVAUDAN);
+            BossesConfig.override("beast_returns_once", false);
+            witness.setPos(here);
+            BeastEntity third = beast(helper, rig);
+            BeastDirector.collapse(helper.getLevel(), third);
+            witness.setPos(here.add(300, 0, 0));
+            BeastDirector.escape(helper.getLevel(), (GevaudanSpiritEntity) helper.getLevel().getEntity(entry(rig).spirit));
+            helper.assertTrue(entry(rig).phase == BeastPhase.GONE && witness.count(BeastDirector.GONE_FINAL) == 1 && witness.count(BeastDirector.GONE) == 1, "a first escape with the return off is told as the second: " + witness.heard());
+            sweep(helper, rig);
+        } finally {
+            clean(witness);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBeastOrAHostWhoseBodyIsGoneFailsTheNightAndThoseNearTheirLastPlaceAreTold(GameTestHelper helper) {
+        LineTestPlayer near = player(helper, Rank.NONE, Species.NONE, 2.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, near);
+            BeastEntity beast = beast(helper, rig);
+            beast.discard();
+            BossDirector.check(rig.server);
+            helper.assertTrue(entry(rig).phase == BeastPhase.BEAST, "one miss was enough to lose the Beast");
+            BossDirector.check(rig.server);
+            helper.assertTrue(entry(rig).phase == BeastPhase.FAILED && rig.index.state(BossId.BEAST_OF_GEVAUDAN) == BossState.LOST, "a vanished Beast did not fail the night: " + entry(rig).phase);
+            helper.assertTrue(near.count(BeastDirector.FAILED) == 1, "those near were not told once: " + near.heard());
+            BossDirector.check(rig.server);
+            helper.assertTrue(near.count(BeastDirector.FAILED) == 1 && entry(rig).phase == BeastPhase.FAILED, "the failure was told twice");
+            sweep(helper, rig);
+            // the same for a Host
+            rig.index.forget(BossId.BEAST_OF_GEVAUDAN);
+            GevaudanHostEntity h = host(helper);
+            h.discard();
+            BossDirector.check(rig.server);
+            BossDirector.check(rig.server);
+            helper.assertTrue(entry(rig).phase == BeastPhase.FAILED && near.count(BeastDirector.FAILED) == 2, "a vanished Host did not fail the night: " + entry(rig).phase);
+            // and a Host is made again once
+            helper.assertTrue(BeastDirector.spawnHost(helper.getLevel(), null, spot(helper)).isPresent() && entry(rig).phase == BeastPhase.HOST, "a Host was not made again after the failure");
+            sweep(helper, rig);
+        } finally {
+            clean(near);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theSpiritIsSlowerThanASprintingPlayerStopsEveryFourSecondsAndLooksBack(GameTestHelper helper) {
+        LineTestPlayer follower = player(helper, Rank.NONE, Species.NONE, 2.5);
+        helper.getLevel().addNewPlayer(follower);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, follower);
+            BeastEntity beast = beast(helper, rig);
+            BeastDirector.collapse(helper.getLevel(), beast);
+            GevaudanSpiritEntity spirit = (GevaudanSpiritEntity) helper.getLevel().getEntity(entry(rig).spirit);
+            spirit.setPos(helper.absoluteVec(new Vec3(8.5, 3.0, 8.5)));
+            // it runs: never faster than the cap, by the distance it really moves
+            spirit.tickCount = 10;
+            Vec3 before = spirit.position();
+            spirit.setDeltaMovement(3.0, 0.0, 0.0);
+            spirit.travel(new Vec3(0.0, 0.0, 1.0));
+            double moved = spirit.position().subtract(before).length();
+            helper.assertTrue(moved > 0.05 && moved <= BeastRules.SPIRIT_SPEED + 1e-6, "the Spirit moved " + moved + " blocks in a tick, the cap is " + BeastRules.SPIRIT_SPEED);
+            helper.assertTrue(moved < BeastRules.SPRINT_SPEED * 0.8, "a sprinting player does not clearly gain on it");
+            // it stops for a second every four
+            spirit.tickCount = 70;
+            before = spirit.position();
+            spirit.setDeltaMovement(3.0, 0.0, 0.0);
+            spirit.travel(new Vec3(0.0, 0.0, 1.0));
+            helper.assertTrue(spirit.position().equals(before) && spirit.getDeltaMovement().equals(Vec3.ZERO), "the Spirit moved while it paused");
+            // and it looks back at whoever follows
+            spirit.tickCount = 59;
+            run(spirit, 1);
+            helper.assertTrue(BeastRules.spiritPauses(spirit.tickCount) && Math.abs(spirit.getLookControl().getWantedX() - follower.getX()) < 1e-6
+                    && Math.abs(spirit.getLookControl().getWantedZ() - follower.getZ()) < 1e-6, "the Spirit did not look at the player behind it");
+            sweep(helper, rig);
+        } finally {
+            helper.getLevel().removePlayerImmediately(follower, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+            clean(follower);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theMantleWithNoEnemyStaysReadyAndSilentAndSparesPacksTeamsAndPlayersWherePvpIsOff(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer.useRealHarm(true);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+        helper.getLevel().getServer().setPvpAllowed(true);
+        LineTestPlayer wolf = player(helper, Rank.ALPHA, Species.NONE, 2.5);
+        LineTestPlayer mate = player(helper, Rank.ALPHA, Species.NONE, 3.5);
+        LineTestPlayer rival = player(helper, Rank.OMEGA, Species.NONE, 4.5);
+        LineTestPlayer teammate = player(helper, Rank.OMEGA, Species.NONE, 5.5);
+        LineTestPlayer[] inLevel = {wolf, mate, rival, teammate};
+        for (LineTestPlayer q : inLevel) {
+            helper.getLevel().addNewPlayer(q);
+        }
+        net.minecraft.world.scores.Scoreboard board = helper.getLevel().getServer().getScoreboard();
+        PlayerTeam team = board.addPlayerTeam("beast_mantle_test");
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, wolf, mate, rival, teammate);
+            MantleEvents.reset();
+            helper.assertTrue(de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(wolf).setFactionAndLevel(de.teamlapen.werewolves.api.WReference.WEREWOLF_FACTION, 5), "the wolf could not join the werewolves");
+            wolf.setItemInHand(InteractionHand.OFF_HAND, with(BossItems.MANTLE_OF_THE_BEAST.get()));
+            MantleEvents.useShifted(p -> true);
+            // nobody to wrap but the wearer's own pack, a teammate, and nobody else: nothing is wrapped, nothing is spent, nothing is said
+            helper.assertTrue(PackCommand.invite(wolf, mate) == null
+                    && PackCommand.accept(mate, PackCommand.requests().tokenOf(wolf.getUUID(), mate.getUUID()).orElseThrow()) == null, "the mate could not join the wolf's pack");
+            board.addPlayerToTeam(wolf.getScoreboardName(), team);
+            board.addPlayerToTeam(teammate.getScoreboardName(), team);
+            rival.setPos(wolf.position().add(40, 0, 0));
+            helper.getLevel().getServer().setPvpAllowed(false);
+            helper.assertTrue(MantleEvents.tick(wolf) == 0 && MantleEvents.readyAt(wolf.getUUID()) == 0 && !wolf.received(MantleEvents.WRAPPED), "a Mantle with no enemy was spent or said something: " + wolf.heard());
+            helper.getLevel().getServer().setPvpAllowed(true);
+            helper.assertTrue(MantleEvents.tick(wolf) == 0 && !mate.hasEffect(MobEffects.WEAKNESS) && !teammate.hasEffect(MobEffects.WEAKNESS), "the wrap took a packmate or a teammate");
+            helper.assertTrue(MantleEvents.readyAt(wolf.getUUID()) == 0 && !wolf.received(MantleEvents.WRAPPED), "a wrap that took nobody was spent: " + wolf.heard());
+            // a rival in reach: where PvP is off they are spared, where it is on they are wrapped and the wrap is spent
+            rival.setPos(wolf.position().add(2, 0, 0));
+            helper.getLevel().getServer().setPvpAllowed(false);
+            helper.assertTrue(MantleEvents.tick(wolf) == 0 && !rival.hasEffect(MobEffects.WEAKNESS), "the wrap took a player where PvP is off");
+            helper.getLevel().getServer().setPvpAllowed(true);
+            long now = helper.getLevel().getGameTime();
+            helper.assertTrue(MantleEvents.tick(wolf) == 1 && rival.hasEffect(MobEffects.WEAKNESS) && !mate.hasEffect(MobEffects.WEAKNESS) && !teammate.hasEffect(MobEffects.WEAKNESS), "the wrap did not take the one rival");
+            helper.assertTrue(MantleEvents.readyAt(wolf.getUUID()) == now + 2400 && wolf.received(MantleEvents.WRAPPED), "the wrap that took somebody was not spent and announced");
+        } finally {
+            MantleEvents.useShifted(null);
+            MantleEvents.reset();
+            board.removePlayerTeam(team);
+            for (LineTestPlayer q : inLevel) {
+                helper.getLevel().removePlayerImmediately(q, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+            }
+            helper.getLevel().getServer().setPvpAllowed(pvp);
+            PackIndex.get(helper.getLevel()).leave(mate.getUUID());
+            PackIndex.get(helper.getLevel()).leave(wolf.getUUID());
+            if (de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(wolf).getCurrentFaction() != null) {
+                de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(wolf).leaveFaction(false);
+            }
+            LineTestPlayer.useRealHarm(false);
+            clean(wolf, mate, rival, teammate);
         }
         helper.succeed();
     }

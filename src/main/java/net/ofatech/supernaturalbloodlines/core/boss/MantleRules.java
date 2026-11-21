@@ -27,6 +27,16 @@ public final class MantleRules {
         return now + COOLDOWN_SECONDS * 20L;
     }
 
+    /** The wrap spends its wait and says so only when it wrapped somebody: a Mantle that found no enemy is still ready. */
+    public static boolean spends(int wrapped) {
+        return wrapped > 0;
+    }
+
+    /** Whether another player may be wrapped: where PvP is on, when the wearer may hurt them (no team), and they are no creative or spectating player. */
+    public static boolean playerCanBeHurt(boolean pvpAllowed, boolean mayHarm, boolean creativeOrSpectator) {
+        return pvpAllowed && mayHarm && !creativeOrSpectator;
+    }
+
     /** Whether an enemy takes the wrap: in range (the edge included), not the wearer, not a packmate, and one who can be hurt. */
     public static boolean wraps(double distanceSquared, boolean wearer, boolean packmate, boolean canBeHurt) {
         return !wearer && !packmate && canBeHurt && distanceSquared <= RANGE * RANGE;

@@ -45,18 +45,18 @@ class PikeRulesTest {
     }
 
     @Test
-    void anNpcOriginalsBloodQualifiesAndACreaturesOrAnAbsentGiversDoesNot() {
+    void anNpcOriginalsBloodQualifiesAndAnAbsentGiversDoesNot() {
         assertTrue(PikeRules.qualifies(Giver.of(Kind.NPC_ORIGINAL)));
-        assertFalse(PikeRules.qualifies(Giver.of(Kind.OTHER)));
         assertFalse(PikeRules.qualifies(Giver.of(Kind.ABSENT)));
-        assertFalse(PikeRules.qualifies(new Giver(Kind.OTHER, Species.ORIGINAL, 6, 6, true)), "what the giver is does not matter for a creature");
         assertFalse(PikeRules.qualifies(new Giver(Kind.ABSENT, Species.ORIGINAL, 6, 6, true)), "nor for a giver who is not here");
     }
 
     @Test
     void onlyThePikeHurtsTheSpiritAndItsBlowEndsTheBeastOnlyForTheSpirit() {
-        assertTrue(PikeRules.hurtsSpirit(true));
-        assertFalse(PikeRules.hurtsSpirit(false));
+        assertTrue(PikeRules.hurtsSpirit(true, true));
+        assertFalse(PikeRules.hurtsSpirit(true, false), "a direct blow of something else");
+        assertFalse(PikeRules.hurtsSpirit(false, true), "a snowball or an arrow thrown while holding the pike is not a blow of it");
+        assertFalse(PikeRules.hurtsSpirit(false, false));
         assertTrue(PikeRules.endsBeast(BeastPhase.SPIRIT, true));
         assertFalse(PikeRules.endsBeast(BeastPhase.SPIRIT, false));
         for (BeastPhase p : BeastPhase.values()) {

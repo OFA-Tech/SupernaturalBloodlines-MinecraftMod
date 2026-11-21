@@ -293,8 +293,12 @@ class BossTextTest {
         JsonObject lang = lang();
         for (String k : new String[] {"supernaturalbloodlines.boss.notice.beast", "supernaturalbloodlines.boss.notice.beast.hint"}) {
             String text = lang.get(k).getAsString().toLowerCase();
-            assertTrue(!text.contains("beast") && !text.contains("gevaudan") && !text.contains("g\u00e9vaudan") && !text.contains("valet"), k + " names what is coming: " + text);
+            assertTrue(!text.contains("beast") && !text.contains("gevaudan") && !text.contains("g\u00e9vaudan"), k + " names what is coming: " + text);
         }
+        // the notice says nothing of the pike; the hint points at the witches' rite and nothing else
+        String notice = lang.get("supernaturalbloodlines.boss.notice.beast").getAsString();
+        assertTrue(!notice.toLowerCase().contains("valet") && notice.contains("out there") && !notice.contains("your land"), "the notice: " + notice);
+        assertTrue(lang.get("supernaturalbloodlines.boss.notice.beast.hint").getAsString().contains("Ask a witch about the Rite of the Valet Pike"), "the hint does not point at the witches' rite");
         for (String b : new String[] {"beast_host_chance", "beast_respects_ash", "beast_returns_once", "beast_spirit_seconds", "beast_roar_range", "beast_roar_seconds", "beast_roar_cooldown_seconds"}) {
             assertTrue(lang.has(label(b)), "no admin label for " + b);
         }
@@ -313,5 +317,84 @@ class BossTextTest {
         for (String needle : new String[] {"Valet Pike", "Mantle", "Roar", "Rite of the Frequency", "quarter of its health", "mountain ash", "plain player"}) {
             assertTrue(guide.contains(needle), "the Guide chapter does not say \"" + needle + "\"");
         }
+    }
+
+    private static String allMainSource() throws Exception {
+        StringBuilder all = new StringBuilder();
+        // the tests run in a folder under the project: walk up to the one that holds the sources
+        java.nio.file.Path root = java.nio.file.Path.of("").toAbsolutePath();
+        while (root != null && !java.nio.file.Files.isDirectory(root.resolve("src/main/java"))) {
+            root = root.getParent();
+        }
+        try (var files = java.nio.file.Files.walk(root.resolve("src/main/java"))) {
+            for (java.nio.file.Path f : (Iterable<java.nio.file.Path>) files.filter(q -> q.toString().endsWith(".java"))::iterator) {
+                all.append(java.nio.file.Files.readString(f, StandardCharsets.UTF_8));
+            }
+        }
+        return all.toString();
+    }
+
+    @Test
+    void everyWordOfTheBeastIsUsedBySomethingAndEveryIngredientOfItsRitesIsInTheirDescription() throws Exception {
+        JsonObject lang = lang();
+        String source = allMainSource();
+        java.util.Set<String> dynamic = new java.util.HashSet<>();
+        for (net.ofatech.supernaturalbloodlines.core.boss.FrequencyRules.Result r : net.ofatech.supernaturalbloodlines.core.boss.FrequencyRules.Result.values()) {
+            dynamic.add(net.ofatech.supernaturalbloodlines.core.boss.FrequencyRules.messageKey(r));
+        }
+        for (String prefix : new String[] {"supernaturalbloodlines.boss.beast.", "supernaturalbloodlines.rite.frequency.", "supernaturalbloodlines.refusal.pike", "supernaturalbloodlines.rite.pike",
+                "supernaturalbloodlines.boss.mantle.", "item.supernaturalbloodlines.valet_pike.", "item.supernaturalbloodlines.mantle_of_the_beast."}) {
+            for (String key : lang.keySet()) {
+                if (key.startsWith(prefix)) {
+                    assertTrue(dynamic.contains(key) || source.contains("\"" + key + "\""), "the lang key " + key + " is not used by anything");
+                }
+            }
+        }
+        // the rites' descriptions name every ingredient the rite json asks for
+        for (String rite : new String[] {"rite_of_the_valet_pike", "rite_of_the_frequency"}) {
+            StringBuilder desc = new StringBuilder();
+            for (int n = 1; lang.has("supernaturalbloodlines.hub.rites.desc." + rite + "." + n); n++) {
+                desc.append(lang.get("supernaturalbloodlines.hub.rites.desc." + rite + "." + n).getAsString().toLowerCase()).append(' ');
+                assertTrue(lang.get("supernaturalbloodlines.hub.rites.desc." + rite + "." + n).getAsString().length() <= 230, rite + "." + n + " is too long for the page");
+            }
+            try (var in = BossTextTest.class.getResourceAsStream("/data/supernaturalbloodlines/enchanted/circle_magic/rite/" + rite + ".json")) {
+                for (var item : JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonArray("items")) {
+                    String path = item.getAsJsonObject().get("id").getAsString().split(":")[1];
+                    String needle = switch (path) {
+                        case "iron_ingot" -> "iron";
+                        case "sires_blood" -> "sire's blood";
+                        default -> path.replace('_', ' ');
+                    };
+                    assertTrue(desc.toString().contains(needle), rite + " does not mention " + needle + " in its description");
+                }
+            }
+        }
+    }
+
+    @Test
+    void theBeastsTextsSayWhatTheCodeDoesAndTheGuideNamesTheSettings() throws Exception {
+        JsonObject lang = lang();
+        String pike = lang.get("supernaturalbloodlines.hub.rites.desc.rite_of_the_valet_pike.2").getAsString() + " " + lang.get("supernaturalbloodlines.hub.guide.bosses.body").getAsString();
+        assertTrue(pike.contains("rung 4 or higher") && pike.contains("Hunter of the Five") && pike.contains("an Alpha") && pike.contains("an Original, a hybrid or a tribrid") && pike.contains("NPC Original"),
+                "the pike's blood is not described the way the code checks it");
+        assertTrue(lang.get("supernaturalbloodlines.hub.rites.desc.rite_of_the_valet_pike.3").getAsString().contains("always reads the same and spends everything")
+                && lang.get("supernaturalbloodlines.hub.rites.desc.rite_of_the_valet_pike.3").getAsString().contains("gets everything back"), "the pike's refusals are not told apart");
+        assertTrue(lang.get("supernaturalbloodlines.hub.rites.desc.rite_of_the_frequency.1").getAsString().contains("echo shard"), "the frequency does not say it needs an echo shard");
+        String tip = lang.get("item.supernaturalbloodlines.valet_pike.tooltip").getAsString() + lang.get("item.supernaturalbloodlines.valet_pike.key").getAsString();
+        assertTrue(tip.contains("direct blow") && tip.contains("never breaks") && tip.contains("Rite of the Frequency") && tip.contains("key"), "the pike's tooltip: " + tip);
+        assertEquals("Makes the waiting Host become the Beast now", lang.get("supernaturalbloodlines.hub.admin.act.boss_change.tip").getAsString());
+        String guide = lang.get("supernaturalbloodlines.hub.guide.bosses.body").getAsString();
+        String beast = guide.substring(guide.indexOf("has a man to wear") - 20, guide.indexOf("Nothing but white oak kills"));
+        for (String clause : new String[] {"a server can change the chance", "a server can change the range", "a server can let it walk through ash", "a server can change that", "a server can make the first escape final",
+                "direct blow", "even if they are away", "it waits for them until they log in"}) {
+            assertTrue(beast.contains(clause), "the Guide's Beast chapter does not say \"" + clause + "\"");
+        }
+        for (String paragraph : beast.split("\n\n")) {
+            assertTrue(paragraph.length() < 520, "a paragraph of the Guide is not short: " + paragraph.length());
+        }
+        assertTrue(!guide.contains("no spark and no pike"), "the cryptic line is back");
+        assertTrue(lang.get("supernaturalbloodlines.boss.beast.gone").getAsString().contains("again") && !lang.get("supernaturalbloodlines.boss.beast.gone_final").getAsString().contains("again"),
+                "the two ends are not told in their own words");
+        assertEquals("He does not feel it.", lang.get("supernaturalbloodlines.boss.beast.unfelt").getAsString());
     }
 }

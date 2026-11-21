@@ -60,6 +60,10 @@ public final class BossIndex extends SavedData {
         public long spiritUntil;
         /** Who did what to the Beast across the whole encounter (the Beast is replaced by the Host when it collapses, so the count cannot live on the entity). */
         public final net.ofatech.supernaturalbloodlines.core.boss.DamageTally tally = new net.ofatech.supernaturalbloodlines.core.boss.DamageTally();
+        /** The players who were near when the Beast collapsed: told how it ends even if they have gone since. */
+        public final java.util.Set<UUID> witnesses = new java.util.LinkedHashSet<>();
+        /** Who the Mantle of the Beast is kept for: the one who did the most, who was not here when it was paid. It is handed over when they log in. */
+        public final java.util.Set<UUID> owed = new java.util.LinkedHashSet<>();
 
         CompoundTag save(BossId id) {
             CompoundTag t = new CompoundTag();
@@ -98,7 +102,28 @@ public final class BossIndex extends SavedData {
                 hits.add(h);
             });
             t.put("tally", hits);
+            t.put("witnesses", uuids(witnesses));
+            t.put("owed", uuids(owed));
             return t;
+        }
+
+        private static ListTag uuids(java.util.Set<UUID> set) {
+            ListTag list = new ListTag();
+            for (UUID id : set) {
+                CompoundTag c = new CompoundTag();
+                c.putUUID("id", id);
+                list.add(c);
+            }
+            return list;
+        }
+
+        private static void readUuids(CompoundTag t, String key, java.util.Set<UUID> into) {
+            for (Tag h : t.getList(key, Tag.TAG_COMPOUND)) {
+                CompoundTag c = (CompoundTag) h;
+                if (c.hasUUID("id")) {
+                    into.add(c.getUUID("id"));
+                }
+            }
         }
 
         static Entry load(CompoundTag t) {
@@ -122,6 +147,8 @@ public final class BossIndex extends SavedData {
             e.phaseDay = t.getLong("phase_day");
             e.spirit = t.hasUUID("spirit") ? t.getUUID("spirit") : null;
             e.spiritUntil = t.getLong("spirit_until");
+            readUuids(t, "witnesses", e.witnesses);
+            readUuids(t, "owed", e.owed);
             for (Tag h : t.getList("tally", Tag.TAG_COMPOUND)) {
                 CompoundTag c = (CompoundTag) h;
                 if (c.hasUUID("who")) {

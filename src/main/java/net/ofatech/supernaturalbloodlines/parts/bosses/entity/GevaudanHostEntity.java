@@ -1,6 +1,9 @@
 package net.ofatech.supernaturalbloodlines.parts.bosses.entity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -18,6 +21,7 @@ import net.minecraft.world.level.Level;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossItems;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossRegistries;
+import net.ofatech.supernaturalbloodlines.parts.bosses.deal.Deals;
 
 /**
  * The Host of the Beast of Gevaudan (R184): a soldier of the old kind, in the Valet's coat and tricorn, who stands where the director put him and does nothing but
@@ -27,6 +31,7 @@ import net.ofatech.supernaturalbloodlines.parts.bosses.BossRegistries;
 public final class GevaudanHostEntity extends BossNpc {
     /** The blocks he keeps within of where he was put. */
     public static final int WANDER = 12;
+    public static final String UNFELT = "supernaturalbloodlines.boss.beast.unfelt";
 
     public GevaudanHostEntity(EntityType<? extends GevaudanHostEntity> type, Level level) {
         super(type, level);
@@ -64,6 +69,36 @@ public final class GevaudanHostEntity extends BossNpc {
     @Override
     public boolean isInvulnerableTo(DamageSource source) {
         return super.isInvulnerableTo(source) || !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
+    }
+
+    /** A blow that does nothing says so, to the player behind it (a tamed animal's owner too): nobody wonders whether the game is broken. */
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (!level().isClientSide && isInvulnerableTo(source) && Deals.playerBehind(level().getServer(), source.getEntity()) instanceof ServerPlayer p) {
+            p.displayClientMessage(Component.translatable(UNFELT), true);
+        }
+        return super.hurt(source, amount);
+    }
+
+    // The encounter needs him where he is: he cannot be led away, carried off, pushed or sent to another dimension.
+    @Override
+    public boolean canBeLeashed() {
+        return false;
+    }
+
+    @Override
+    public boolean startRiding(Entity vehicle, boolean force) {
+        return false;
+    }
+
+    @Override
+    public boolean isPushable() {
+        return false;
+    }
+
+    @Override
+    public boolean canChangeDimensions(Level from, Level to) {
+        return false;
     }
 
     @Override

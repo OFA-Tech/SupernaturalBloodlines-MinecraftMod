@@ -16,7 +16,43 @@ public final class BeastRules {
     /** The most a wolfsbane poison pulse may take from it: northern blue stops its regeneration, it does not kill it. */
     public static final float WOLFSBANE_DAMAGE_CAP = 1.0F;
 
+    /** The fastest the Spirit goes, in blocks per tick: a sprinting player does {@link #SPRINT_SPEED}, so a player on foot gains on it. */
+    public static final double SPIRIT_SPEED = 0.2;
+    /** A sprinting player's speed in blocks per tick (5.612 blocks a second). */
+    public static final double SPRINT_SPEED = 0.2806;
+    /** Every {@value} ticks the Spirit stops... */
+    public static final int SPIRIT_PAUSE_PERIOD = 80;
+    /** ...for the last {@value} of them (a second), looking back at whoever follows. */
+    public static final int SPIRIT_PAUSE_TICKS = 20;
+
     private BeastRules() {
+    }
+
+    // ---- the Spirit on the run ----
+
+    /** Whether the Spirit stands still and looks back at this tick of its life. */
+    public static boolean spiritPauses(long tick) {
+        return tick % SPIRIT_PAUSE_PERIOD >= SPIRIT_PAUSE_PERIOD - SPIRIT_PAUSE_TICKS;
+    }
+
+    /** The distance it may cover in one tick: never more than {@link #SPIRIT_SPEED}. */
+    public static double spiritSpeed(double blocksPerTick) {
+        return Math.min(blocksPerTick, SPIRIT_SPEED);
+    }
+
+    // ---- the reward ----
+
+    public enum Payee { TOP_ONLINE, TOP_OWED, STRIKER, GROUND }
+
+    /**
+     * Where the Mantle goes: to the player who did the most damage if they are here, kept for them if they are not (it is never given to somebody else), else to
+     * the one who struck with the pike, else on the ground where the Spirit fell.
+     */
+    public static Payee payee(boolean topKnown, boolean topOnline, boolean strikerKnown) {
+        if (topKnown) {
+            return topOnline ? Payee.TOP_ONLINE : Payee.TOP_OWED;
+        }
+        return strikerKnown ? Payee.STRIKER : Payee.GROUND;
     }
 
     // ---- the Host: who calls it, when ----

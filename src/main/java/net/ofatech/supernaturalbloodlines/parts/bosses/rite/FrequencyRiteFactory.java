@@ -54,16 +54,17 @@ public record FrequencyRiteFactory() implements RiteFactory {
             }
             BossIndex.Entry entry = BossIndex.get(level.getServer()).of(BossId.BEAST_OF_GEVAUDAN);
             FrequencyRules.Result result = FrequencyRules.act(entry.phase, entry.hostsMade, BossDirector.modsPresent(BossId.BEAST_OF_GEVAUDAN),
-                    BossesConfig.enabled(BossId.BEAST_OF_GEVAUDAN), BossDirector.fullMoonNightNow(level.getServer().overworld()));
+                    BossesConfig.enabled(BossId.BEAST_OF_GEVAUDAN), net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural.isWerewolf(caster),
+                    level.dimension() == net.minecraft.world.level.Level.OVERWORLD, BossDirector.fullMoonNightNow(level.getServer().overworld()));
             boolean done = switch (result) {
                 case MAKE_HOST -> BeastDirector.spawnHost(level, caster, null).isPresent();
                 case FORCE_CHANGE -> BeastDirector.change(level.getServer().overworld());
                 default -> false;
             };
             if (!done) {
-                // a refusal tells the caster why and gives everything back; a Host that could not be placed or reached is the "busy" answer
-                caster.displayClientMessage(Component.translatable(FrequencyRules.messageKey(result == FrequencyRules.Result.MAKE_HOST || result == FrequencyRules.Result.FORCE_CHANGE
-                        ? FrequencyRules.Result.BUSY : result)), true);
+                // a refusal tells the caster why and gives everything back: a Host with no ground to stand on has its own answer, one that could not be reached is "silent"
+                FrequencyRules.Result why = result == FrequencyRules.Result.MAKE_HOST ? FrequencyRules.Result.NO_GROUND : result == FrequencyRules.Result.FORCE_CHANGE ? FrequencyRules.Result.BUSY : result;
+                caster.displayClientMessage(Component.translatable(FrequencyRules.messageKey(why)), true);
                 return cancel();
             }
             // the pike is a key, not an ingredient: it goes back to the circle

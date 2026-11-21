@@ -121,6 +121,35 @@ class BeastPhaseRulesTest {
     }
 
     @Test
+    void aLostBodyFailsTheEncounterOnlyWhereThereIsABodyToLose() {
+        assertEquals(BeastPhase.FAILED, BeastPhaseRules.after(BeastPhase.HOST, Event.BODY_LOST));
+        assertEquals(BeastPhase.FAILED, BeastPhaseRules.after(BeastPhase.BEAST, Event.BODY_LOST));
+        assertEquals(BeastPhase.FAILED, BeastPhaseRules.after(BeastPhase.RETURN_PENDING, Event.BODY_LOST));
+        for (BeastPhase p : new BeastPhase[] {BeastPhase.NONE, BeastPhase.SPIRIT, BeastPhase.GONE, BeastPhase.KILLED, BeastPhase.FAILED}) {
+            assertEquals(p, BeastPhaseRules.after(p, Event.BODY_LOST), p + " moved by a lost body");
+        }
+        assertTrue(BeastPhaseRules.bodyLost(BeastPhase.BEAST, true));
+        assertTrue(BeastPhaseRules.bodyLost(BeastPhase.HOST, true));
+        assertFalse(BeastPhaseRules.bodyLost(BeastPhase.HOST, false), "the index does not say lost");
+        assertFalse(BeastPhaseRules.bodyLost(BeastPhase.FAILED, true), "a failed encounter is not failed again");
+        assertFalse(BeastPhaseRules.bodyLost(BeastPhase.KILLED, true), "a dead Beast is not made a failure");
+    }
+
+    @Test
+    void aSpiritNobodyCanFindIsTakenAsEscapedOnlyAfterItsTimeAndTheGrace() {
+        long until = 1000;
+        assertFalse(BeastPhaseRules.spiritOverdue(BeastPhase.SPIRIT, until + 199, until, false), "inside the grace");
+        assertTrue(BeastPhaseRules.spiritOverdue(BeastPhase.SPIRIT, until + 200, until, false), "the grace ends at 200 ticks");
+        assertFalse(BeastPhaseRules.spiritOverdue(BeastPhase.SPIRIT, until + 5000, until, true), "a Spirit that is alive is never overdue");
+        for (BeastPhase p : BeastPhase.values()) {
+            if (p != BeastPhase.SPIRIT) {
+                assertFalse(BeastPhaseRules.spiritOverdue(p, until + 5000, until, false), p + " is overdue");
+            }
+        }
+        assertEquals(200, BeastPhaseRules.SPIRIT_GRACE_TICKS);
+    }
+
+    @Test
     void thePhaseKnowsWhereAHostStandsAndWhenTheStoryIsOver() {
         assertTrue(BeastPhase.HOST.hasHost() && BeastPhase.SPIRIT.hasHost() && BeastPhase.RETURN_PENDING.hasHost() && BeastPhase.GONE.hasHost() && BeastPhase.KILLED.hasHost());
         assertFalse(BeastPhase.NONE.hasHost() || BeastPhase.BEAST.hasHost() || BeastPhase.FAILED.hasHost());

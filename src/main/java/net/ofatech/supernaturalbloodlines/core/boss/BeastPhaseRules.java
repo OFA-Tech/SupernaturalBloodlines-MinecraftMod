@@ -13,7 +13,11 @@ public final class BeastPhaseRules {
     /** A Host can be made twice in a world: the first, and the one after the first died. */
     public static final int MAX_HOSTS = 2;
 
-    public enum Event { HOST_MADE, HOST_LOST, CHANGE, PIKE_HIT, RESET }
+    /** How long after its time is up a Spirit that is nowhere to be found is taken as escaped (the entity may be in a chunk that is not loaded). */
+    public static final int SPIRIT_GRACE_TICKS = 200;
+
+    /** BODY_LOST: the index says the body of the Host or of the Beast is gone (nothing killed it where anybody saw). */
+    public enum Event { HOST_MADE, HOST_LOST, CHANGE, PIKE_HIT, BODY_LOST, RESET }
 
     private BeastPhaseRules() {
     }
@@ -39,8 +43,19 @@ public final class BeastPhaseRules {
             case HOST_LOST -> phase == BeastPhase.HOST || phase == BeastPhase.SPIRIT || phase == BeastPhase.RETURN_PENDING ? BeastPhase.FAILED : phase;
             case CHANGE -> phase == BeastPhase.HOST || phase == BeastPhase.RETURN_PENDING ? BeastPhase.BEAST : phase;
             case PIKE_HIT -> phase == BeastPhase.SPIRIT ? BeastPhase.KILLED : phase;
+            case BODY_LOST -> phase == BeastPhase.HOST || phase == BeastPhase.BEAST || phase == BeastPhase.RETURN_PENDING ? BeastPhase.FAILED : phase;
             default -> phase;
         };
+    }
+
+    /** Whether the encounter has lost its body: the Host or the Beast is what the boss index follows, and it says LOST. */
+    public static boolean bodyLost(BeastPhase phase, boolean indexSaysLost) {
+        return indexSaysLost && after(phase, Event.BODY_LOST) != phase;
+    }
+
+    /** Whether a Spirit nobody can find is taken as escaped now: its time and the grace after it are over, and no Spirit entity is alive. */
+    public static boolean spiritOverdue(BeastPhase phase, long now, long spiritUntil, boolean spiritAlive) {
+        return phase == BeastPhase.SPIRIT && !spiritAlive && now >= spiritUntil + SPIRIT_GRACE_TICKS;
     }
 
     /** Whether a Host may be made: nothing started yet, or the first one died, and fewer than {@link #MAX_HOSTS} have been made. */

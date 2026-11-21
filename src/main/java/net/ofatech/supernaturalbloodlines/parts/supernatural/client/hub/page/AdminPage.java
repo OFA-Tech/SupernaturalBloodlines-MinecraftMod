@@ -480,7 +480,8 @@ public final class AdminPage implements HubPageView {
         PageWidgets.button(f, "stage:admin:act:boss_reset", flow.rects().get(5), labels.get(5), true, false, null,
                 () -> f.confirm(labels.get(5), Component.translatable(KEY + "confirm_boss_reset", labels.get(0)), labels.get(5), () -> HubClient.runCommand("X5", List.of(pick))));
         if (beast) {
-            PageWidgets.button(f, "stage:admin:act:boss_change", flow.rects().get(6), labels.get(6), true, false, null, () -> HubClient.runCommand("X6", List.of(pick)));
+            PageWidgets.button(f, "stage:admin:act:boss_change", flow.rects().get(6), labels.get(6), true, false, Component.translatable(KEY + "act.boss_change.tip"),
+                    () -> HubClient.runCommand("X6", List.of(pick)));
         }
         return flow.bottom();
     }
