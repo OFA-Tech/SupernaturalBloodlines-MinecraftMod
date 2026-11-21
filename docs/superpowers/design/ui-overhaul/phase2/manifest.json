@@ -1,0 +1,4608 @@
+{
+ "note": "Every sprite of the phase 2 art kit. Paths are under assets/supernaturalbloodlines/textures/gui/ unless they start with assets/ or logo. slice = left, top, right, bottom of a nine-slice (a zero pair means a three-slice along the other axis). glow = has stepped alpha by design.",
+ "sprites": [
+  {
+   "path": "assets/supernaturalbloodlines/textures/font/title.png",
+   "w": 192,
+   "h": 176,
+   "slice": null,
+   "glow": false,
+   "use": "title font atlas, cells of 12 x 16"
+  },
+  {
+   "path": "boss/beast_beast.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/beast_host.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/beast_spirit.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/deucalion_demon_wolf.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/deucalion_human.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/elijah.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/finn.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/klaus_human.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/klaus_shifting.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/klaus_wolf.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/kol.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/mikael.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/peter_human.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/peter_wolf.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "boss/rebekah.png",
+   "w": 24,
+   "h": 24,
+   "slice": null,
+   "glow": false,
+   "use": "boss portrait, 24 x 24"
+  },
+  {
+   "path": "icons/16/admin.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 16 px"
+  },
+  {
+   "path": "icons/16/alpha_roar.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 16 px"
+  },
+  {
+   "path": "icons/16/arrow_left.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/arrow_right.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/bell.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/bite.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 16 px"
+  },
+  {
+   "path": "icons/16/bloodline.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 16 px"
+  },
+  {
+   "path": "icons/16/bolt.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 16 px"
+  },
+  {
+   "path": "icons/16/boot.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 16 px"
+  },
+  {
+   "path": "icons/16/check.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/claw.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 16 px"
+  },
+  {
+   "path": "icons/16/close.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/crown.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/dot.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/drop.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 16 px"
+  },
+  {
+   "path": "icons/16/eye.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 16 px"
+  },
+  {
+   "path": "icons/16/fang.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 16 px"
+  },
+  {
+   "path": "icons/16/guide.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 16 px"
+  },
+  {
+   "path": "icons/16/heart.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 16 px"
+  },
+  {
+   "path": "icons/16/home.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 16 px"
+  },
+  {
+   "path": "icons/16/info.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/key.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/launch.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/leap.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 16 px"
+  },
+  {
+   "path": "icons/16/loadout.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 16 px"
+  },
+  {
+   "path": "icons/16/lock.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/moon_first_quarter.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 16 px"
+  },
+  {
+   "path": "icons/16/moon_full.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 16 px"
+  },
+  {
+   "path": "icons/16/moon_last_quarter.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 16 px"
+  },
+  {
+   "path": "icons/16/moon_new.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 16 px"
+  },
+  {
+   "path": "icons/16/moon_waning_crescent.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 16 px"
+  },
+  {
+   "path": "icons/16/moon_waning_gibbous.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 16 px"
+  },
+  {
+   "path": "icons/16/moon_waxing_crescent.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 16 px"
+  },
+  {
+   "path": "icons/16/moon_waxing_gibbous.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 16 px"
+  },
+  {
+   "path": "icons/16/moonblood_surge.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 16 px"
+  },
+  {
+   "path": "icons/16/pack.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 16 px"
+  },
+  {
+   "path": "icons/16/path.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 16 px"
+  },
+  {
+   "path": "icons/16/plus.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/question.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/quests.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 16 px"
+  },
+  {
+   "path": "icons/16/rank_alpha.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "ranks icon, 16 px"
+  },
+  {
+   "path": "icons/16/rank_beta.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "ranks icon, 16 px"
+  },
+  {
+   "path": "icons/16/rank_omega.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "ranks icon, 16 px"
+  },
+  {
+   "path": "icons/16/rank_true_alpha.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "ranks icon, 16 px"
+  },
+  {
+   "path": "icons/16/rites.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-hum-1.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-hum-2.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-hum-3.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-hun-1.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-hun-2.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-hun-3.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-hun-4.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-hun-5.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-hyb-1.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-hyb-2.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-ori-1.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-ori-2.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-ori-3.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-ori-4.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-sip-1.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-sip-2.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-sip-3.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-sip-4.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-sip-5.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-vam-1.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-vam-2.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-vam-3.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-vam-4.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-vam-5.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-vam-6.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-vam-7.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wit-1.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wit-2.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wit-3.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wit-4.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wit-5.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wit-6.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wit-7.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wol-1.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wol-11.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wol-2.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wol-3.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wol-4.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wol-5.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wol-6.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wol-7.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/s-wol-8.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "icons/16/settings.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 16 px"
+  },
+  {
+   "path": "icons/16/shield.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 16 px"
+  },
+  {
+   "path": "icons/16/skills.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 16 px"
+  },
+  {
+   "path": "icons/16/spark.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 16 px"
+  },
+  {
+   "path": "icons/16/species_ghoul.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 16 px"
+  },
+  {
+   "path": "icons/16/species_heretic.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 16 px"
+  },
+  {
+   "path": "icons/16/species_human.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 16 px"
+  },
+  {
+   "path": "icons/16/species_hunter.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 16 px"
+  },
+  {
+   "path": "icons/16/species_hybrid.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 16 px"
+  },
+  {
+   "path": "icons/16/species_original.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 16 px"
+  },
+  {
+   "path": "icons/16/species_original_hybrid.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 16 px"
+  },
+  {
+   "path": "icons/16/species_siphoner.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 16 px"
+  },
+  {
+   "path": "icons/16/species_tribrid.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 16 px"
+  },
+  {
+   "path": "icons/16/species_vampire.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 16 px"
+  },
+  {
+   "path": "icons/16/species_werewolf.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 16 px"
+  },
+  {
+   "path": "icons/16/species_witch.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 16 px"
+  },
+  {
+   "path": "icons/16/sun.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 16 px"
+  },
+  {
+   "path": "icons/16/tag_enc.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "tags icon, 16 px"
+  },
+  {
+   "path": "icons/16/tag_sb.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "tags icon, 16 px"
+  },
+  {
+   "path": "icons/16/tag_ten.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "tags icon, 16 px"
+  },
+  {
+   "path": "icons/16/tag_vmp.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "tags icon, 16 px"
+  },
+  {
+   "path": "icons/16/tag_ww.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "tags icon, 16 px"
+  },
+  {
+   "path": "icons/16/theme.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/thirst.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 16 px"
+  },
+  {
+   "path": "icons/16/unknown.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 16 px"
+  },
+  {
+   "path": "icons/16/vial.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 16 px"
+  },
+  {
+   "path": "icons/16/voice.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 16 px"
+  },
+  {
+   "path": "icons/16/wolf_spirits.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 16 px"
+  },
+  {
+   "path": "icons/32/admin.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 32 px"
+  },
+  {
+   "path": "icons/32/alpha_roar.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 32 px"
+  },
+  {
+   "path": "icons/32/arrow_left.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/arrow_right.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/bell.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/bite.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 32 px"
+  },
+  {
+   "path": "icons/32/bloodline.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 32 px"
+  },
+  {
+   "path": "icons/32/bolt.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 32 px"
+  },
+  {
+   "path": "icons/32/boot.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 32 px"
+  },
+  {
+   "path": "icons/32/check.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/claw.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 32 px"
+  },
+  {
+   "path": "icons/32/close.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/crown.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/dot.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/drop.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 32 px"
+  },
+  {
+   "path": "icons/32/eye.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 32 px"
+  },
+  {
+   "path": "icons/32/fang.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 32 px"
+  },
+  {
+   "path": "icons/32/guide.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 32 px"
+  },
+  {
+   "path": "icons/32/heart.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 32 px"
+  },
+  {
+   "path": "icons/32/home.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 32 px"
+  },
+  {
+   "path": "icons/32/info.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/key.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/launch.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/leap.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 32 px"
+  },
+  {
+   "path": "icons/32/loadout.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 32 px"
+  },
+  {
+   "path": "icons/32/lock.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/moon_first_quarter.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 32 px"
+  },
+  {
+   "path": "icons/32/moon_full.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 32 px"
+  },
+  {
+   "path": "icons/32/moon_last_quarter.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 32 px"
+  },
+  {
+   "path": "icons/32/moon_new.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 32 px"
+  },
+  {
+   "path": "icons/32/moon_waning_crescent.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 32 px"
+  },
+  {
+   "path": "icons/32/moon_waning_gibbous.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 32 px"
+  },
+  {
+   "path": "icons/32/moon_waxing_crescent.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 32 px"
+  },
+  {
+   "path": "icons/32/moon_waxing_gibbous.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 32 px"
+  },
+  {
+   "path": "icons/32/moonblood_surge.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 32 px"
+  },
+  {
+   "path": "icons/32/pack.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 32 px"
+  },
+  {
+   "path": "icons/32/path.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 32 px"
+  },
+  {
+   "path": "icons/32/plus.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/question.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/quests.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 32 px"
+  },
+  {
+   "path": "icons/32/rank_alpha.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "ranks icon, 32 px"
+  },
+  {
+   "path": "icons/32/rank_beta.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "ranks icon, 32 px"
+  },
+  {
+   "path": "icons/32/rank_omega.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "ranks icon, 32 px"
+  },
+  {
+   "path": "icons/32/rank_true_alpha.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "ranks icon, 32 px"
+  },
+  {
+   "path": "icons/32/rites.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-hum-1.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-hum-2.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-hum-3.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-hun-1.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-hun-2.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-hun-3.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-hun-4.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-hun-5.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-hyb-1.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-hyb-2.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-ori-1.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-ori-2.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-ori-3.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-ori-4.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-sip-1.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-sip-2.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-sip-3.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-sip-4.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-sip-5.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-vam-1.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-vam-2.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-vam-3.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-vam-4.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-vam-5.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-vam-6.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-vam-7.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wit-1.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wit-2.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wit-3.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wit-4.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wit-5.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wit-6.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wit-7.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wol-1.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wol-11.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wol-2.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wol-3.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wol-4.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wol-5.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wol-6.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wol-7.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/s-wol-8.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "icons/32/settings.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 32 px"
+  },
+  {
+   "path": "icons/32/shield.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 32 px"
+  },
+  {
+   "path": "icons/32/skills.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "pages icon, 32 px"
+  },
+  {
+   "path": "icons/32/spark.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 32 px"
+  },
+  {
+   "path": "icons/32/species_ghoul.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 32 px"
+  },
+  {
+   "path": "icons/32/species_heretic.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 32 px"
+  },
+  {
+   "path": "icons/32/species_human.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 32 px"
+  },
+  {
+   "path": "icons/32/species_hunter.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 32 px"
+  },
+  {
+   "path": "icons/32/species_hybrid.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 32 px"
+  },
+  {
+   "path": "icons/32/species_original.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 32 px"
+  },
+  {
+   "path": "icons/32/species_original_hybrid.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 32 px"
+  },
+  {
+   "path": "icons/32/species_siphoner.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 32 px"
+  },
+  {
+   "path": "icons/32/species_tribrid.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 32 px"
+  },
+  {
+   "path": "icons/32/species_vampire.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 32 px"
+  },
+  {
+   "path": "icons/32/species_werewolf.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 32 px"
+  },
+  {
+   "path": "icons/32/species_witch.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "bloodlines icon, 32 px"
+  },
+  {
+   "path": "icons/32/sun.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "sky icon, 32 px"
+  },
+  {
+   "path": "icons/32/tag_enc.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "tags icon, 32 px"
+  },
+  {
+   "path": "icons/32/tag_sb.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "tags icon, 32 px"
+  },
+  {
+   "path": "icons/32/tag_ten.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "tags icon, 32 px"
+  },
+  {
+   "path": "icons/32/tag_vmp.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "tags icon, 32 px"
+  },
+  {
+   "path": "icons/32/tag_ww.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "tags icon, 32 px"
+  },
+  {
+   "path": "icons/32/theme.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/thirst.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 32 px"
+  },
+  {
+   "path": "icons/32/unknown.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "controls icon, 32 px"
+  },
+  {
+   "path": "icons/32/vial.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 32 px"
+  },
+  {
+   "path": "icons/32/voice.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "motifs icon, 32 px"
+  },
+  {
+   "path": "icons/32/wolf_spirits.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 32 px"
+  },
+  {
+   "path": "kit/bloodmoon/bar_fill.png",
+   "w": 8,
+   "h": 4,
+   "slice": [
+    2,
+    0,
+    2,
+    0
+   ],
+   "glow": false,
+   "use": "progress bar fill"
+  },
+  {
+   "path": "kit/bloodmoon/bar_track.png",
+   "w": 16,
+   "h": 8,
+   "slice": [
+    4,
+    0,
+    4,
+    0
+   ],
+   "glow": false,
+   "use": "progress bar track"
+  },
+  {
+   "path": "kit/bloodmoon/boss_bar_fill.png",
+   "w": 8,
+   "h": 7,
+   "slice": null,
+   "glow": false,
+   "use": "boss health fill (tile)"
+  },
+  {
+   "path": "kit/bloodmoon/boss_bar_fill_shifting.png",
+   "w": 8,
+   "h": 7,
+   "slice": null,
+   "glow": false,
+   "use": "boss health fill during a shift (tile)"
+  },
+  {
+   "path": "kit/bloodmoon/boss_bar_tick.png",
+   "w": 1,
+   "h": 7,
+   "slice": null,
+   "glow": true,
+   "use": "ticks at 25, 50 and 75 %"
+  },
+  {
+   "path": "kit/bloodmoon/boss_bar_track.png",
+   "w": 18,
+   "h": 11,
+   "slice": [
+    5,
+    0,
+    5,
+    0
+   ],
+   "glow": false,
+   "use": "boss health track"
+  },
+  {
+   "path": "kit/bloodmoon/boss_frame.png",
+   "w": 32,
+   "h": 32,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "the boss bar card"
+  },
+  {
+   "path": "kit/bloodmoon/boss_name_plate.png",
+   "w": 24,
+   "h": 13,
+   "slice": [
+    8,
+    0,
+    8,
+    0
+   ],
+   "glow": false,
+   "use": "the boss name"
+  },
+  {
+   "path": "kit/bloodmoon/boss_portrait_plate.png",
+   "w": 42,
+   "h": 42,
+   "slice": null,
+   "glow": false,
+   "use": "drawn over the 24 x 24 portrait"
+  },
+  {
+   "path": "kit/bloodmoon/boss_portrait_plate_shifting.png",
+   "w": 42,
+   "h": 42,
+   "slice": null,
+   "glow": true,
+   "use": "the plate during a shift"
+  },
+  {
+   "path": "kit/bloodmoon/button_disabled.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    10,
+    0,
+    10,
+    0
+   ],
+   "glow": false,
+   "use": "secondary button, disabled"
+  },
+  {
+   "path": "kit/bloodmoon/button_focus.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    10,
+    0,
+    10,
+    0
+   ],
+   "glow": false,
+   "use": "secondary button, focus"
+  },
+  {
+   "path": "kit/bloodmoon/button_hover.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    10,
+    0,
+    10,
+    0
+   ],
+   "glow": true,
+   "use": "secondary button, hover"
+  },
+  {
+   "path": "kit/bloodmoon/button_normal.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    10,
+    0,
+    10,
+    0
+   ],
+   "glow": false,
+   "use": "secondary button, normal"
+  },
+  {
+   "path": "kit/bloodmoon/button_pressed.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    10,
+    0,
+    10,
+    0
+   ],
+   "glow": false,
+   "use": "secondary button, pressed"
+  },
+  {
+   "path": "kit/bloodmoon/button_primary_disabled.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    10,
+    0,
+    10,
+    0
+   ],
+   "glow": false,
+   "use": "primary button, disabled"
+  },
+  {
+   "path": "kit/bloodmoon/button_primary_focus.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    10,
+    0,
+    10,
+    0
+   ],
+   "glow": false,
+   "use": "primary button, focus"
+  },
+  {
+   "path": "kit/bloodmoon/button_primary_hover.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    10,
+    0,
+    10,
+    0
+   ],
+   "glow": true,
+   "use": "primary button, hover"
+  },
+  {
+   "path": "kit/bloodmoon/button_primary_normal.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    10,
+    0,
+    10,
+    0
+   ],
+   "glow": false,
+   "use": "primary button, normal"
+  },
+  {
+   "path": "kit/bloodmoon/button_primary_pressed.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    10,
+    0,
+    10,
+    0
+   ],
+   "glow": false,
+   "use": "primary button, pressed"
+  },
+  {
+   "path": "kit/bloodmoon/chip.png",
+   "w": 16,
+   "h": 12,
+   "slice": [
+    6,
+    0,
+    6,
+    0
+   ],
+   "glow": false,
+   "use": "rank and source tags, boss form chips: off"
+  },
+  {
+   "path": "kit/bloodmoon/chip_on.png",
+   "w": 16,
+   "h": 12,
+   "slice": [
+    6,
+    0,
+    6,
+    0
+   ],
+   "glow": false,
+   "use": "rank and source tags, boss form chips: on"
+  },
+  {
+   "path": "kit/bloodmoon/chip_shifting.png",
+   "w": 16,
+   "h": 12,
+   "slice": [
+    6,
+    0,
+    6,
+    0
+   ],
+   "glow": false,
+   "use": "rank and source tags, boss form chips: shifting"
+  },
+  {
+   "path": "kit/bloodmoon/corner_bl.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "corner fitting"
+  },
+  {
+   "path": "kit/bloodmoon/corner_br.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "corner fitting"
+  },
+  {
+   "path": "kit/bloodmoon/corner_tl.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "corner fitting"
+  },
+  {
+   "path": "kit/bloodmoon/corner_tr.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "corner fitting"
+  },
+  {
+   "path": "kit/bloodmoon/cover.png",
+   "w": 12,
+   "h": 272,
+   "slice": null,
+   "glow": false,
+   "use": "the hub background"
+  },
+  {
+   "path": "kit/bloodmoon/cover_art.png",
+   "w": 64,
+   "h": 64,
+   "slice": null,
+   "glow": true,
+   "use": "the theme's signature piece (cover boss, moon, title bar)"
+  },
+  {
+   "path": "kit/bloodmoon/divider.png",
+   "w": 16,
+   "h": 7,
+   "slice": [
+    4,
+    0,
+    4,
+    0
+   ],
+   "glow": false,
+   "use": "rules"
+  },
+  {
+   "path": "kit/bloodmoon/divider_gem.png",
+   "w": 15,
+   "h": 9,
+   "slice": null,
+   "glow": false,
+   "use": "the ornament at the middle of a rule"
+  },
+  {
+   "path": "kit/bloodmoon/face_plate.png",
+   "w": 20,
+   "h": 20,
+   "slice": null,
+   "glow": false,
+   "use": "the frame of the player's face"
+  },
+  {
+   "path": "kit/bloodmoon/flourish_bl.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "corner filigree"
+  },
+  {
+   "path": "kit/bloodmoon/flourish_br.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "corner filigree"
+  },
+  {
+   "path": "kit/bloodmoon/flourish_title.png",
+   "w": 48,
+   "h": 7,
+   "slice": null,
+   "glow": false,
+   "use": "the flourish under a page title"
+  },
+  {
+   "path": "kit/bloodmoon/flourish_tl.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "corner filigree"
+  },
+  {
+   "path": "kit/bloodmoon/flourish_tr.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "corner filigree"
+  },
+  {
+   "path": "kit/bloodmoon/focus.png",
+   "w": 12,
+   "h": 12,
+   "slice": [
+    3,
+    3,
+    3,
+    3
+   ],
+   "glow": false,
+   "use": "the 2 px focus ring"
+  },
+  {
+   "path": "kit/bloodmoon/gem_blue.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/bloodmoon/gem_gold.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/bloodmoon/gem_green.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/bloodmoon/gem_red.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/bloodmoon/gem_violet.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/bloodmoon/hud_label.png",
+   "w": 16,
+   "h": 16,
+   "slice": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "the Alt label box"
+  },
+  {
+   "path": "kit/bloodmoon/hud_pill.png",
+   "w": 24,
+   "h": 14,
+   "slice": [
+    8,
+    0,
+    8,
+    0
+   ],
+   "glow": false,
+   "use": "the mode pill"
+  },
+  {
+   "path": "kit/bloodmoon/inset.png",
+   "w": 16,
+   "h": 16,
+   "slice": [
+    3,
+    3,
+    3,
+    3
+   ],
+   "glow": false,
+   "use": "wells, list rows, text fields"
+  },
+  {
+   "path": "kit/bloodmoon/key_badge.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "key badge, one character"
+  },
+  {
+   "path": "kit/bloodmoon/key_badge_wide.png",
+   "w": 17,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "key badge, two characters"
+  },
+  {
+   "path": "kit/bloodmoon/mastery_fill.png",
+   "w": 2,
+   "h": 2,
+   "slice": null,
+   "glow": false,
+   "use": "mastery bar fill (tile)"
+  },
+  {
+   "path": "kit/bloodmoon/mastery_fill_learning.png",
+   "w": 2,
+   "h": 2,
+   "slice": null,
+   "glow": false,
+   "use": "mastery bar fill while learning (tile)"
+  },
+  {
+   "path": "kit/bloodmoon/mastery_fill_mastered.png",
+   "w": 2,
+   "h": 2,
+   "slice": null,
+   "glow": false,
+   "use": "mastery bar fill when mastered (tile)"
+  },
+  {
+   "path": "kit/bloodmoon/mastery_track.png",
+   "w": 18,
+   "h": 4,
+   "slice": [
+    2,
+    0,
+    2,
+    0
+   ],
+   "glow": false,
+   "use": "mastery bar track"
+  },
+  {
+   "path": "kit/bloodmoon/node_off.png",
+   "w": 34,
+   "h": 34,
+   "slice": null,
+   "glow": false,
+   "use": "skill node and medallion, off"
+  },
+  {
+   "path": "kit/bloodmoon/node_on.png",
+   "w": 34,
+   "h": 34,
+   "slice": null,
+   "glow": false,
+   "use": "skill node and medallion, on"
+  },
+  {
+   "path": "kit/bloodmoon/node_selected.png",
+   "w": 34,
+   "h": 34,
+   "slice": null,
+   "glow": true,
+   "use": "skill node and medallion, selected"
+  },
+  {
+   "path": "kit/bloodmoon/panel.png",
+   "w": 32,
+   "h": 32,
+   "slice": [
+    17,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "page panels, cards, the status card"
+  },
+  {
+   "path": "kit/bloodmoon/panel_texture.png",
+   "w": 64,
+   "h": 64,
+   "slice": null,
+   "glow": true,
+   "use": "a tile laid over a panel or the cover"
+  },
+  {
+   "path": "kit/bloodmoon/pip_off.png",
+   "w": 5,
+   "h": 5,
+   "slice": null,
+   "glow": false,
+   "use": "pip, empty"
+  },
+  {
+   "path": "kit/bloodmoon/pip_on.png",
+   "w": 5,
+   "h": 5,
+   "slice": null,
+   "glow": false,
+   "use": "pip, filled"
+  },
+  {
+   "path": "kit/bloodmoon/plate.png",
+   "w": 24,
+   "h": 14,
+   "slice": [
+    7,
+    0,
+    7,
+    0
+   ],
+   "glow": false,
+   "use": "counters and small name plates"
+  },
+  {
+   "path": "kit/bloodmoon/rung_current.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "rung mark, current"
+  },
+  {
+   "path": "kit/bloodmoon/rung_locked.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "rung mark, locked"
+  },
+  {
+   "path": "kit/bloodmoon/rung_reached.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "rung mark, reached"
+  },
+  {
+   "path": "kit/bloodmoon/scroll_thumb.png",
+   "w": 7,
+   "h": 14,
+   "slice": [
+    0,
+    5,
+    0,
+    5
+   ],
+   "glow": false,
+   "use": "scroll bar thumb"
+  },
+  {
+   "path": "kit/bloodmoon/scroll_thumb_hover.png",
+   "w": 7,
+   "h": 14,
+   "slice": [
+    0,
+    5,
+    0,
+    5
+   ],
+   "glow": false,
+   "use": "scroll bar thumb, hovered or dragged"
+  },
+  {
+   "path": "kit/bloodmoon/scroll_track.png",
+   "w": 7,
+   "h": 16,
+   "slice": [
+    0,
+    3,
+    0,
+    3
+   ],
+   "glow": false,
+   "use": "scroll bar track"
+  },
+  {
+   "path": "kit/bloodmoon/seal.png",
+   "w": 20,
+   "h": 20,
+   "slice": null,
+   "glow": false,
+   "use": "rail seals and launcher tiles, normal"
+  },
+  {
+   "path": "kit/bloodmoon/seal_hover.png",
+   "w": 20,
+   "h": 20,
+   "slice": null,
+   "glow": false,
+   "use": "rail seals and launcher tiles, hover"
+  },
+  {
+   "path": "kit/bloodmoon/seal_pressed.png",
+   "w": 20,
+   "h": 20,
+   "slice": null,
+   "glow": false,
+   "use": "rail seals and launcher tiles, pressed"
+  },
+  {
+   "path": "kit/bloodmoon/slot.png",
+   "w": 28,
+   "h": 28,
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot"
+  },
+  {
+   "path": "kit/bloodmoon/slot_active.png",
+   "w": 28,
+   "h": 28,
+   "slice": null,
+   "glow": true,
+   "use": "HUD slot, active"
+  },
+  {
+   "path": "kit/bloodmoon/slot_square.png",
+   "w": 28,
+   "h": 28,
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot in Tensura mode"
+  },
+  {
+   "path": "kit/bloodmoon/slot_square_active.png",
+   "w": 28,
+   "h": 28,
+   "slice": null,
+   "glow": true,
+   "use": "HUD slot in Tensura mode, active"
+  },
+  {
+   "path": "kit/bloodmoon/stamp.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "the stamp of a quest, not claimed"
+  },
+  {
+   "path": "kit/bloodmoon/stamp_lit.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "the stamp of a quest, claimed"
+  },
+  {
+   "path": "kit/bloodmoon/tab.png",
+   "w": 32,
+   "h": 16,
+   "slice": [
+    9,
+    0,
+    9,
+    0
+   ],
+   "glow": false,
+   "use": "page tab, normal"
+  },
+  {
+   "path": "kit/bloodmoon/tab_disabled.png",
+   "w": 32,
+   "h": 16,
+   "slice": [
+    9,
+    0,
+    9,
+    0
+   ],
+   "glow": false,
+   "use": "page tab, disabled"
+  },
+  {
+   "path": "kit/bloodmoon/tab_hover.png",
+   "w": 32,
+   "h": 16,
+   "slice": [
+    9,
+    0,
+    9,
+    0
+   ],
+   "glow": false,
+   "use": "page tab, hover"
+  },
+  {
+   "path": "kit/bloodmoon/tab_selected.png",
+   "w": 32,
+   "h": 16,
+   "slice": [
+    9,
+    0,
+    9,
+    0
+   ],
+   "glow": false,
+   "use": "page tab, selected"
+  },
+  {
+   "path": "kit/bloodmoon/task_claimable.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, claimable"
+  },
+  {
+   "path": "kit/bloodmoon/task_claimed.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, claimed"
+  },
+  {
+   "path": "kit/bloodmoon/task_frozen.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, frozen"
+  },
+  {
+   "path": "kit/bloodmoon/task_open.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, open"
+  },
+  {
+   "path": "kit/bloodmoon/task_unavailable.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, unavailable"
+  },
+  {
+   "path": "kit/bloodmoon/tooltip.png",
+   "w": 24,
+   "h": 24,
+   "slice": [
+    5,
+    5,
+    5,
+    5
+   ],
+   "glow": false,
+   "use": "tooltips and the detail popover"
+  },
+  {
+   "path": "kit/grimoire/bar_fill.png",
+   "w": 8,
+   "h": 4,
+   "slice": [
+    1,
+    0,
+    1,
+    0
+   ],
+   "glow": false,
+   "use": "progress bar fill"
+  },
+  {
+   "path": "kit/grimoire/bar_track.png",
+   "w": 16,
+   "h": 8,
+   "slice": [
+    3,
+    2,
+    3,
+    2
+   ],
+   "glow": false,
+   "use": "progress bar track"
+  },
+  {
+   "path": "kit/grimoire/boss_bar_fill.png",
+   "w": 8,
+   "h": 7,
+   "slice": null,
+   "glow": false,
+   "use": "boss health fill (tile)"
+  },
+  {
+   "path": "kit/grimoire/boss_bar_fill_shifting.png",
+   "w": 8,
+   "h": 7,
+   "slice": null,
+   "glow": false,
+   "use": "boss health fill during a shift (tile)"
+  },
+  {
+   "path": "kit/grimoire/boss_bar_tick.png",
+   "w": 1,
+   "h": 7,
+   "slice": null,
+   "glow": true,
+   "use": "ticks at 25, 50 and 75 %"
+  },
+  {
+   "path": "kit/grimoire/boss_bar_track.png",
+   "w": 18,
+   "h": 11,
+   "slice": [
+    3,
+    2,
+    3,
+    2
+   ],
+   "glow": false,
+   "use": "boss health track"
+  },
+  {
+   "path": "kit/grimoire/boss_frame.png",
+   "w": 32,
+   "h": 32,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "the boss bar card"
+  },
+  {
+   "path": "kit/grimoire/boss_name_plate.png",
+   "w": 24,
+   "h": 13,
+   "slice": [
+    7,
+    4,
+    7,
+    4
+   ],
+   "glow": false,
+   "use": "the boss name"
+  },
+  {
+   "path": "kit/grimoire/boss_portrait_plate.png",
+   "w": 42,
+   "h": 42,
+   "slice": null,
+   "glow": false,
+   "use": "drawn over the 24 x 24 portrait"
+  },
+  {
+   "path": "kit/grimoire/boss_portrait_plate_shifting.png",
+   "w": 42,
+   "h": 42,
+   "slice": null,
+   "glow": true,
+   "use": "the plate during a shift"
+  },
+  {
+   "path": "kit/grimoire/button_disabled.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "secondary button, disabled"
+  },
+  {
+   "path": "kit/grimoire/button_focus.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "secondary button, focus"
+  },
+  {
+   "path": "kit/grimoire/button_hover.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "secondary button, hover"
+  },
+  {
+   "path": "kit/grimoire/button_normal.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "secondary button, normal"
+  },
+  {
+   "path": "kit/grimoire/button_pressed.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "secondary button, pressed"
+  },
+  {
+   "path": "kit/grimoire/button_primary_disabled.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "primary button, disabled"
+  },
+  {
+   "path": "kit/grimoire/button_primary_focus.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "primary button, focus"
+  },
+  {
+   "path": "kit/grimoire/button_primary_hover.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "primary button, hover"
+  },
+  {
+   "path": "kit/grimoire/button_primary_normal.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "primary button, normal"
+  },
+  {
+   "path": "kit/grimoire/button_primary_pressed.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "primary button, pressed"
+  },
+  {
+   "path": "kit/grimoire/chip.png",
+   "w": 16,
+   "h": 12,
+   "slice": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "rank and source tags, boss form chips: off"
+  },
+  {
+   "path": "kit/grimoire/chip_on.png",
+   "w": 16,
+   "h": 12,
+   "slice": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "rank and source tags, boss form chips: on"
+  },
+  {
+   "path": "kit/grimoire/chip_shifting.png",
+   "w": 16,
+   "h": 12,
+   "slice": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "rank and source tags, boss form chips: shifting"
+  },
+  {
+   "path": "kit/grimoire/corner_bl.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "corner fitting"
+  },
+  {
+   "path": "kit/grimoire/corner_br.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "corner fitting"
+  },
+  {
+   "path": "kit/grimoire/corner_tl.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "corner fitting"
+  },
+  {
+   "path": "kit/grimoire/corner_tr.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "corner fitting"
+  },
+  {
+   "path": "kit/grimoire/cover.png",
+   "w": 50,
+   "h": 50,
+   "slice": [
+    13,
+    13,
+    13,
+    13
+   ],
+   "glow": false,
+   "use": "the hub background"
+  },
+  {
+   "path": "kit/grimoire/cover_art.png",
+   "w": 32,
+   "h": 32,
+   "slice": null,
+   "glow": false,
+   "use": "the theme's signature piece (cover boss, moon, title bar)"
+  },
+  {
+   "path": "kit/grimoire/divider.png",
+   "w": 16,
+   "h": 7,
+   "slice": [
+    4,
+    0,
+    4,
+    0
+   ],
+   "glow": false,
+   "use": "rules"
+  },
+  {
+   "path": "kit/grimoire/divider_gem.png",
+   "w": 15,
+   "h": 9,
+   "slice": null,
+   "glow": false,
+   "use": "the ornament at the middle of a rule"
+  },
+  {
+   "path": "kit/grimoire/face_plate.png",
+   "w": 20,
+   "h": 20,
+   "slice": null,
+   "glow": false,
+   "use": "the frame of the player's face"
+  },
+  {
+   "path": "kit/grimoire/flourish_bl.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "corner filigree"
+  },
+  {
+   "path": "kit/grimoire/flourish_br.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "corner filigree"
+  },
+  {
+   "path": "kit/grimoire/flourish_title.png",
+   "w": 48,
+   "h": 7,
+   "slice": null,
+   "glow": false,
+   "use": "the flourish under a page title"
+  },
+  {
+   "path": "kit/grimoire/flourish_tl.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "corner filigree"
+  },
+  {
+   "path": "kit/grimoire/flourish_tr.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "corner filigree"
+  },
+  {
+   "path": "kit/grimoire/focus.png",
+   "w": 12,
+   "h": 12,
+   "slice": [
+    3,
+    3,
+    3,
+    3
+   ],
+   "glow": false,
+   "use": "the 2 px focus ring"
+  },
+  {
+   "path": "kit/grimoire/gem_blue.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/grimoire/gem_gold.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/grimoire/gem_green.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/grimoire/gem_red.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/grimoire/gem_violet.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/grimoire/hud_label.png",
+   "w": 16,
+   "h": 16,
+   "slice": [
+    3,
+    3,
+    3,
+    3
+   ],
+   "glow": false,
+   "use": "the Alt label box"
+  },
+  {
+   "path": "kit/grimoire/hud_pill.png",
+   "w": 24,
+   "h": 14,
+   "slice": [
+    7,
+    4,
+    7,
+    4
+   ],
+   "glow": false,
+   "use": "the mode pill"
+  },
+  {
+   "path": "kit/grimoire/inset.png",
+   "w": 16,
+   "h": 16,
+   "slice": [
+    3,
+    3,
+    3,
+    3
+   ],
+   "glow": false,
+   "use": "wells, list rows, text fields"
+  },
+  {
+   "path": "kit/grimoire/key_badge.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "key badge, one character"
+  },
+  {
+   "path": "kit/grimoire/key_badge_wide.png",
+   "w": 17,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "key badge, two characters"
+  },
+  {
+   "path": "kit/grimoire/mastery_fill.png",
+   "w": 2,
+   "h": 2,
+   "slice": null,
+   "glow": false,
+   "use": "mastery bar fill (tile)"
+  },
+  {
+   "path": "kit/grimoire/mastery_fill_learning.png",
+   "w": 2,
+   "h": 2,
+   "slice": null,
+   "glow": false,
+   "use": "mastery bar fill while learning (tile)"
+  },
+  {
+   "path": "kit/grimoire/mastery_fill_mastered.png",
+   "w": 2,
+   "h": 2,
+   "slice": null,
+   "glow": false,
+   "use": "mastery bar fill when mastered (tile)"
+  },
+  {
+   "path": "kit/grimoire/mastery_track.png",
+   "w": 18,
+   "h": 4,
+   "slice": [
+    2,
+    0,
+    2,
+    0
+   ],
+   "glow": false,
+   "use": "mastery bar track"
+  },
+  {
+   "path": "kit/grimoire/node_off.png",
+   "w": 34,
+   "h": 34,
+   "slice": null,
+   "glow": false,
+   "use": "skill node and medallion, off"
+  },
+  {
+   "path": "kit/grimoire/node_on.png",
+   "w": 34,
+   "h": 34,
+   "slice": null,
+   "glow": false,
+   "use": "skill node and medallion, on"
+  },
+  {
+   "path": "kit/grimoire/node_selected.png",
+   "w": 34,
+   "h": 34,
+   "slice": null,
+   "glow": true,
+   "use": "skill node and medallion, selected"
+  },
+  {
+   "path": "kit/grimoire/panel.png",
+   "w": 32,
+   "h": 32,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "page panels, cards, the status card"
+  },
+  {
+   "path": "kit/grimoire/panel_texture.png",
+   "w": 64,
+   "h": 64,
+   "slice": null,
+   "glow": true,
+   "use": "a tile laid over a panel or the cover"
+  },
+  {
+   "path": "kit/grimoire/pip_off.png",
+   "w": 5,
+   "h": 5,
+   "slice": null,
+   "glow": false,
+   "use": "pip, empty"
+  },
+  {
+   "path": "kit/grimoire/pip_on.png",
+   "w": 5,
+   "h": 5,
+   "slice": null,
+   "glow": false,
+   "use": "pip, filled"
+  },
+  {
+   "path": "kit/grimoire/plate.png",
+   "w": 24,
+   "h": 14,
+   "slice": [
+    7,
+    0,
+    7,
+    0
+   ],
+   "glow": false,
+   "use": "counters and small name plates"
+  },
+  {
+   "path": "kit/grimoire/rung_current.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "rung mark, current"
+  },
+  {
+   "path": "kit/grimoire/rung_locked.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "rung mark, locked"
+  },
+  {
+   "path": "kit/grimoire/rung_reached.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "rung mark, reached"
+  },
+  {
+   "path": "kit/grimoire/scroll_thumb.png",
+   "w": 7,
+   "h": 14,
+   "slice": [
+    0,
+    4,
+    0,
+    4
+   ],
+   "glow": false,
+   "use": "scroll bar thumb"
+  },
+  {
+   "path": "kit/grimoire/scroll_thumb_hover.png",
+   "w": 7,
+   "h": 14,
+   "slice": [
+    0,
+    4,
+    0,
+    4
+   ],
+   "glow": false,
+   "use": "scroll bar thumb, hovered or dragged"
+  },
+  {
+   "path": "kit/grimoire/scroll_track.png",
+   "w": 7,
+   "h": 16,
+   "slice": [
+    0,
+    3,
+    0,
+    3
+   ],
+   "glow": false,
+   "use": "scroll bar track"
+  },
+  {
+   "path": "kit/grimoire/seal.png",
+   "w": 20,
+   "h": 20,
+   "slice": null,
+   "glow": false,
+   "use": "rail seals and launcher tiles, normal"
+  },
+  {
+   "path": "kit/grimoire/seal_hover.png",
+   "w": 20,
+   "h": 20,
+   "slice": null,
+   "glow": false,
+   "use": "rail seals and launcher tiles, hover"
+  },
+  {
+   "path": "kit/grimoire/seal_pressed.png",
+   "w": 20,
+   "h": 20,
+   "slice": null,
+   "glow": false,
+   "use": "rail seals and launcher tiles, pressed"
+  },
+  {
+   "path": "kit/grimoire/slot.png",
+   "w": 28,
+   "h": 28,
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot"
+  },
+  {
+   "path": "kit/grimoire/slot_active.png",
+   "w": 28,
+   "h": 28,
+   "slice": null,
+   "glow": true,
+   "use": "HUD slot, active"
+  },
+  {
+   "path": "kit/grimoire/slot_square.png",
+   "w": 28,
+   "h": 28,
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot in Tensura mode"
+  },
+  {
+   "path": "kit/grimoire/slot_square_active.png",
+   "w": 28,
+   "h": 28,
+   "slice": null,
+   "glow": true,
+   "use": "HUD slot in Tensura mode, active"
+  },
+  {
+   "path": "kit/grimoire/stamp.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "the stamp of a quest, not claimed"
+  },
+  {
+   "path": "kit/grimoire/stamp_lit.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "the stamp of a quest, claimed"
+  },
+  {
+   "path": "kit/grimoire/tab.png",
+   "w": 32,
+   "h": 16,
+   "slice": [
+    6,
+    4,
+    5,
+    4
+   ],
+   "glow": false,
+   "use": "page tab, normal"
+  },
+  {
+   "path": "kit/grimoire/tab_disabled.png",
+   "w": 32,
+   "h": 16,
+   "slice": [
+    6,
+    4,
+    5,
+    4
+   ],
+   "glow": false,
+   "use": "page tab, disabled"
+  },
+  {
+   "path": "kit/grimoire/tab_hover.png",
+   "w": 32,
+   "h": 16,
+   "slice": [
+    6,
+    4,
+    5,
+    4
+   ],
+   "glow": false,
+   "use": "page tab, hover"
+  },
+  {
+   "path": "kit/grimoire/tab_selected.png",
+   "w": 32,
+   "h": 16,
+   "slice": [
+    6,
+    4,
+    5,
+    4
+   ],
+   "glow": false,
+   "use": "page tab, selected"
+  },
+  {
+   "path": "kit/grimoire/task_claimable.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, claimable"
+  },
+  {
+   "path": "kit/grimoire/task_claimed.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, claimed"
+  },
+  {
+   "path": "kit/grimoire/task_frozen.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, frozen"
+  },
+  {
+   "path": "kit/grimoire/task_open.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, open"
+  },
+  {
+   "path": "kit/grimoire/task_unavailable.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, unavailable"
+  },
+  {
+   "path": "kit/grimoire/tooltip.png",
+   "w": 24,
+   "h": 24,
+   "slice": [
+    5,
+    5,
+    5,
+    5
+   ],
+   "glow": false,
+   "use": "tooltips and the detail popover"
+  },
+  {
+   "path": "kit/shared/blood_empty.png",
+   "w": 9,
+   "h": 9,
+   "slice": null,
+   "glow": false,
+   "use": "an empty blood point, 9 x 9"
+  },
+  {
+   "path": "kit/shared/blood_full.png",
+   "w": 9,
+   "h": 9,
+   "slice": null,
+   "glow": false,
+   "use": "a blood point in the food bar, 9 x 9"
+  },
+  {
+   "path": "kit/shared/blood_ring.png",
+   "w": 32,
+   "h": 800,
+   "slice": null,
+   "glow": false,
+   "use": "the ring of blood round Bite, 25 frames of 32 x 32"
+  },
+  {
+   "path": "kit/shared/cooldown_sweep.png",
+   "w": 16,
+   "h": 528,
+   "slice": null,
+   "glow": true,
+   "use": "cooldown pie, 33 frames of 16 x 16 (frame 0 empty)"
+  },
+  {
+   "path": "kit/shared/logo_128.png",
+   "w": 128,
+   "h": 128,
+   "slice": null,
+   "glow": false,
+   "use": "the mod icon at an exact 2x, for stores"
+  },
+  {
+   "path": "kit/shared/logo_emblem.png",
+   "w": 56,
+   "h": 56,
+   "slice": null,
+   "glow": true,
+   "use": "the emblem alone"
+  },
+  {
+   "path": "kit/shared/logo_lockup.png",
+   "w": 193,
+   "h": 56,
+   "slice": null,
+   "glow": true,
+   "use": "emblem and wordmark"
+  },
+  {
+   "path": "kit/shared/logo_wordmark.png",
+   "w": 131,
+   "h": 34,
+   "slice": null,
+   "glow": false,
+   "use": "the wordmark"
+  },
+  {
+   "path": "kit/shared/mode_mark.png",
+   "w": 7,
+   "h": 7,
+   "slice": null,
+   "glow": false,
+   "use": "the corner diamond of Tensura mode"
+  },
+  {
+   "path": "kit/tensura/bar_fill.png",
+   "w": 6,
+   "h": 4,
+   "slice": null,
+   "glow": false,
+   "use": "progress bar fill"
+  },
+  {
+   "path": "kit/tensura/bar_track.png",
+   "w": 16,
+   "h": 8,
+   "slice": [
+    2,
+    2,
+    2,
+    2
+   ],
+   "glow": false,
+   "use": "progress bar track"
+  },
+  {
+   "path": "kit/tensura/boss_bar_fill.png",
+   "w": 8,
+   "h": 7,
+   "slice": null,
+   "glow": false,
+   "use": "boss health fill (tile)"
+  },
+  {
+   "path": "kit/tensura/boss_bar_fill_shifting.png",
+   "w": 8,
+   "h": 7,
+   "slice": null,
+   "glow": false,
+   "use": "boss health fill during a shift (tile)"
+  },
+  {
+   "path": "kit/tensura/boss_bar_tick.png",
+   "w": 1,
+   "h": 7,
+   "slice": null,
+   "glow": true,
+   "use": "ticks at 25, 50 and 75 %"
+  },
+  {
+   "path": "kit/tensura/boss_bar_track.png",
+   "w": 18,
+   "h": 11,
+   "slice": [
+    2,
+    2,
+    2,
+    2
+   ],
+   "glow": false,
+   "use": "boss health track"
+  },
+  {
+   "path": "kit/tensura/boss_frame.png",
+   "w": 32,
+   "h": 32,
+   "slice": [
+    8,
+    8,
+    8,
+    8
+   ],
+   "glow": false,
+   "use": "the boss bar card"
+  },
+  {
+   "path": "kit/tensura/boss_name_plate.png",
+   "w": 24,
+   "h": 13,
+   "slice": [
+    6,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "the boss name"
+  },
+  {
+   "path": "kit/tensura/boss_portrait_plate.png",
+   "w": 42,
+   "h": 42,
+   "slice": null,
+   "glow": false,
+   "use": "drawn over the 24 x 24 portrait"
+  },
+  {
+   "path": "kit/tensura/boss_portrait_plate_shifting.png",
+   "w": 42,
+   "h": 42,
+   "slice": null,
+   "glow": true,
+   "use": "the plate during a shift"
+  },
+  {
+   "path": "kit/tensura/button_disabled.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "secondary button, disabled"
+  },
+  {
+   "path": "kit/tensura/button_focus.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "secondary button, focus"
+  },
+  {
+   "path": "kit/tensura/button_hover.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": true,
+   "use": "secondary button, hover"
+  },
+  {
+   "path": "kit/tensura/button_normal.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "secondary button, normal"
+  },
+  {
+   "path": "kit/tensura/button_pressed.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "secondary button, pressed"
+  },
+  {
+   "path": "kit/tensura/button_primary_disabled.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "primary button, disabled"
+  },
+  {
+   "path": "kit/tensura/button_primary_focus.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "primary button, focus"
+  },
+  {
+   "path": "kit/tensura/button_primary_hover.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": true,
+   "use": "primary button, hover"
+  },
+  {
+   "path": "kit/tensura/button_primary_normal.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "primary button, normal"
+  },
+  {
+   "path": "kit/tensura/button_primary_pressed.png",
+   "w": 28,
+   "h": 20,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "primary button, pressed"
+  },
+  {
+   "path": "kit/tensura/chip.png",
+   "w": 16,
+   "h": 12,
+   "slice": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "rank and source tags, boss form chips: off"
+  },
+  {
+   "path": "kit/tensura/chip_on.png",
+   "w": 16,
+   "h": 12,
+   "slice": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "rank and source tags, boss form chips: on"
+  },
+  {
+   "path": "kit/tensura/chip_shifting.png",
+   "w": 16,
+   "h": 12,
+   "slice": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "rank and source tags, boss form chips: shifting"
+  },
+  {
+   "path": "kit/tensura/corner_bl.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "corner fitting"
+  },
+  {
+   "path": "kit/tensura/corner_br.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "corner fitting"
+  },
+  {
+   "path": "kit/tensura/corner_tl.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "corner fitting"
+  },
+  {
+   "path": "kit/tensura/corner_tr.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "corner fitting"
+  },
+  {
+   "path": "kit/tensura/cover.png",
+   "w": 32,
+   "h": 32,
+   "slice": [
+    10,
+    10,
+    10,
+    10
+   ],
+   "glow": false,
+   "use": "the hub background"
+  },
+  {
+   "path": "kit/tensura/cover_art.png",
+   "w": 24,
+   "h": 13,
+   "slice": null,
+   "glow": false,
+   "use": "the theme's signature piece (cover boss, moon, title bar)"
+  },
+  {
+   "path": "kit/tensura/divider.png",
+   "w": 16,
+   "h": 7,
+   "slice": [
+    4,
+    0,
+    4,
+    0
+   ],
+   "glow": false,
+   "use": "rules"
+  },
+  {
+   "path": "kit/tensura/divider_gem.png",
+   "w": 15,
+   "h": 9,
+   "slice": null,
+   "glow": false,
+   "use": "the ornament at the middle of a rule"
+  },
+  {
+   "path": "kit/tensura/face_plate.png",
+   "w": 20,
+   "h": 20,
+   "slice": null,
+   "glow": false,
+   "use": "the frame of the player's face"
+  },
+  {
+   "path": "kit/tensura/flourish_bl.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "corner filigree"
+  },
+  {
+   "path": "kit/tensura/flourish_br.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "corner filigree"
+  },
+  {
+   "path": "kit/tensura/flourish_title.png",
+   "w": 48,
+   "h": 7,
+   "slice": null,
+   "glow": false,
+   "use": "the flourish under a page title"
+  },
+  {
+   "path": "kit/tensura/flourish_tl.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "corner filigree"
+  },
+  {
+   "path": "kit/tensura/flourish_tr.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "corner filigree"
+  },
+  {
+   "path": "kit/tensura/focus.png",
+   "w": 12,
+   "h": 12,
+   "slice": [
+    3,
+    3,
+    3,
+    3
+   ],
+   "glow": false,
+   "use": "the 2 px focus ring"
+  },
+  {
+   "path": "kit/tensura/gem_blue.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/tensura/gem_gold.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/tensura/gem_green.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/tensura/gem_red.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/tensura/gem_violet.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "gem"
+  },
+  {
+   "path": "kit/tensura/hud_label.png",
+   "w": 16,
+   "h": 16,
+   "slice": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "the Alt label box"
+  },
+  {
+   "path": "kit/tensura/hud_pill.png",
+   "w": 24,
+   "h": 14,
+   "slice": [
+    6,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "the mode pill"
+  },
+  {
+   "path": "kit/tensura/inset.png",
+   "w": 16,
+   "h": 16,
+   "slice": [
+    3,
+    3,
+    3,
+    3
+   ],
+   "glow": false,
+   "use": "wells, list rows, text fields"
+  },
+  {
+   "path": "kit/tensura/key_badge.png",
+   "w": 11,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "key badge, one character"
+  },
+  {
+   "path": "kit/tensura/key_badge_wide.png",
+   "w": 17,
+   "h": 11,
+   "slice": null,
+   "glow": false,
+   "use": "key badge, two characters"
+  },
+  {
+   "path": "kit/tensura/mastery_fill.png",
+   "w": 2,
+   "h": 2,
+   "slice": null,
+   "glow": false,
+   "use": "mastery bar fill (tile)"
+  },
+  {
+   "path": "kit/tensura/mastery_fill_learning.png",
+   "w": 2,
+   "h": 2,
+   "slice": null,
+   "glow": false,
+   "use": "mastery bar fill while learning (tile)"
+  },
+  {
+   "path": "kit/tensura/mastery_fill_mastered.png",
+   "w": 2,
+   "h": 2,
+   "slice": null,
+   "glow": false,
+   "use": "mastery bar fill when mastered (tile)"
+  },
+  {
+   "path": "kit/tensura/mastery_track.png",
+   "w": 18,
+   "h": 4,
+   "slice": [
+    2,
+    0,
+    2,
+    0
+   ],
+   "glow": false,
+   "use": "mastery bar track"
+  },
+  {
+   "path": "kit/tensura/node_off.png",
+   "w": 34,
+   "h": 34,
+   "slice": null,
+   "glow": false,
+   "use": "skill node and medallion, off"
+  },
+  {
+   "path": "kit/tensura/node_on.png",
+   "w": 34,
+   "h": 34,
+   "slice": null,
+   "glow": false,
+   "use": "skill node and medallion, on"
+  },
+  {
+   "path": "kit/tensura/node_selected.png",
+   "w": 34,
+   "h": 34,
+   "slice": null,
+   "glow": true,
+   "use": "skill node and medallion, selected"
+  },
+  {
+   "path": "kit/tensura/panel.png",
+   "w": 32,
+   "h": 32,
+   "slice": [
+    8,
+    8,
+    8,
+    8
+   ],
+   "glow": false,
+   "use": "page panels, cards, the status card"
+  },
+  {
+   "path": "kit/tensura/panel_texture.png",
+   "w": 64,
+   "h": 64,
+   "slice": null,
+   "glow": true,
+   "use": "a tile laid over a panel or the cover"
+  },
+  {
+   "path": "kit/tensura/pip_off.png",
+   "w": 5,
+   "h": 5,
+   "slice": null,
+   "glow": false,
+   "use": "pip, empty"
+  },
+  {
+   "path": "kit/tensura/pip_on.png",
+   "w": 5,
+   "h": 5,
+   "slice": null,
+   "glow": false,
+   "use": "pip, filled"
+  },
+  {
+   "path": "kit/tensura/plate.png",
+   "w": 24,
+   "h": 14,
+   "slice": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "counters and small name plates"
+  },
+  {
+   "path": "kit/tensura/rung_current.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "rung mark, current"
+  },
+  {
+   "path": "kit/tensura/rung_locked.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "rung mark, locked"
+  },
+  {
+   "path": "kit/tensura/rung_reached.png",
+   "w": 12,
+   "h": 12,
+   "slice": null,
+   "glow": false,
+   "use": "rung mark, reached"
+  },
+  {
+   "path": "kit/tensura/scroll_thumb.png",
+   "w": 7,
+   "h": 14,
+   "slice": [
+    0,
+    4,
+    0,
+    4
+   ],
+   "glow": false,
+   "use": "scroll bar thumb"
+  },
+  {
+   "path": "kit/tensura/scroll_thumb_hover.png",
+   "w": 7,
+   "h": 14,
+   "slice": [
+    0,
+    4,
+    0,
+    4
+   ],
+   "glow": false,
+   "use": "scroll bar thumb, hovered or dragged"
+  },
+  {
+   "path": "kit/tensura/scroll_track.png",
+   "w": 7,
+   "h": 16,
+   "slice": [
+    0,
+    3,
+    0,
+    3
+   ],
+   "glow": false,
+   "use": "scroll bar track"
+  },
+  {
+   "path": "kit/tensura/seal.png",
+   "w": 20,
+   "h": 20,
+   "slice": null,
+   "glow": false,
+   "use": "rail seals and launcher tiles, normal"
+  },
+  {
+   "path": "kit/tensura/seal_hover.png",
+   "w": 20,
+   "h": 20,
+   "slice": null,
+   "glow": false,
+   "use": "rail seals and launcher tiles, hover"
+  },
+  {
+   "path": "kit/tensura/seal_pressed.png",
+   "w": 20,
+   "h": 20,
+   "slice": null,
+   "glow": false,
+   "use": "rail seals and launcher tiles, pressed"
+  },
+  {
+   "path": "kit/tensura/slot.png",
+   "w": 28,
+   "h": 28,
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot"
+  },
+  {
+   "path": "kit/tensura/slot_active.png",
+   "w": 28,
+   "h": 28,
+   "slice": null,
+   "glow": true,
+   "use": "HUD slot, active"
+  },
+  {
+   "path": "kit/tensura/slot_square.png",
+   "w": 28,
+   "h": 28,
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot in Tensura mode"
+  },
+  {
+   "path": "kit/tensura/slot_square_active.png",
+   "w": 28,
+   "h": 28,
+   "slice": null,
+   "glow": true,
+   "use": "HUD slot in Tensura mode, active"
+  },
+  {
+   "path": "kit/tensura/stamp.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "the stamp of a quest, not claimed"
+  },
+  {
+   "path": "kit/tensura/stamp_lit.png",
+   "w": 16,
+   "h": 16,
+   "slice": null,
+   "glow": false,
+   "use": "the stamp of a quest, claimed"
+  },
+  {
+   "path": "kit/tensura/tab.png",
+   "w": 32,
+   "h": 16,
+   "slice": [
+    6,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "page tab, normal"
+  },
+  {
+   "path": "kit/tensura/tab_disabled.png",
+   "w": 32,
+   "h": 16,
+   "slice": [
+    6,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "page tab, disabled"
+  },
+  {
+   "path": "kit/tensura/tab_hover.png",
+   "w": 32,
+   "h": 16,
+   "slice": [
+    6,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "page tab, hover"
+  },
+  {
+   "path": "kit/tensura/tab_selected.png",
+   "w": 32,
+   "h": 16,
+   "slice": [
+    6,
+    4,
+    4,
+    4
+   ],
+   "glow": false,
+   "use": "page tab, selected"
+  },
+  {
+   "path": "kit/tensura/task_claimable.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, claimable"
+  },
+  {
+   "path": "kit/tensura/task_claimed.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, claimed"
+  },
+  {
+   "path": "kit/tensura/task_frozen.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, frozen"
+  },
+  {
+   "path": "kit/tensura/task_open.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, open"
+  },
+  {
+   "path": "kit/tensura/task_unavailable.png",
+   "w": 10,
+   "h": 10,
+   "slice": null,
+   "glow": false,
+   "use": "task box, unavailable"
+  },
+  {
+   "path": "kit/tensura/tooltip.png",
+   "w": 24,
+   "h": 24,
+   "slice": [
+    6,
+    6,
+    6,
+    6
+   ],
+   "glow": false,
+   "use": "tooltips and the detail popover"
+  },
+  {
+   "path": "logo.png",
+   "w": 64,
+   "h": 64,
+   "slice": null,
+   "glow": false,
+   "use": "the mod icon, 64 x 64 (logoFile)"
+  }
+ ]
+}
