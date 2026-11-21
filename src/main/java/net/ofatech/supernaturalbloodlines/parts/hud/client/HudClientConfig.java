@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.hud.client;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.hud.HudVisibility;
 
 /** The HUD's client settings. Each player picks their own. */
 public final class HudClientConfig {
@@ -10,6 +11,8 @@ public final class HudClientConfig {
     public static final String FILE = SupernaturalBloodlines.MODID + "-hud-client.toml";
     public static final ModConfigSpec SPEC;
     private static final ModConfigSpec.BooleanValue HUD_ENABLED;
+    private static final ModConfigSpec.EnumValue<HudVisibility> VISIBILITY;
+    private static final ModConfigSpec.BooleanValue SPRINT_LEAP;
     private static final ModConfigSpec.BooleanValue HIDE_COVERED_KEYS;
     private static final ModConfigSpec.BooleanValue HIDE_TENSURA_SKILL_HUD;
     private static final ModConfigSpec.BooleanValue BLOOD_IN_FOOD_SPOT;
@@ -19,6 +22,10 @@ public final class HudClientConfig {
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
         HUD_ENABLED = b.comment("Draw the ability HUD.").define("hud_enabled", true);
+        VISIBILITY = b.comment("When the ability HUD shows. AUTO: while you use it, and it fades out after ten idle seconds (no slot key, no cooldown running, no active toggle, no mode switch, Alt not held).",
+                "ALWAYS: never fades. HIDDEN: never drawn.").defineEnum("hud_visibility", HudVisibility.AUTO);
+        SPRINT_LEAP = b.comment("A werewolf in a transformed form leaps when jumping while sprinting (Werewolves' own leap, with its cooldown and checks). Its Left Control key is covered by the HUD.")
+                .define("sprint_leap", true);
         HIDE_COVERED_KEYS = b.comment("Unbind and hide the keys of other mods that the HUD covers. Off restores the binds recorded before.")
                 .define("hide_covered_keys", true);
         HIDE_TENSURA_SKILL_HUD = b.comment("Hide Tensura's own skill HUD while ours is on.").define("hide_tensura_skill_hud", true);
@@ -35,6 +42,18 @@ public final class HudClientConfig {
 
     public static boolean hudEnabled() {
         return read(HUD_ENABLED, true);
+    }
+
+    public static HudVisibility visibility() {
+        try {
+            return VISIBILITY.get();
+        } catch (IllegalStateException notLoaded) {
+            return HudVisibility.AUTO;
+        }
+    }
+
+    public static boolean sprintLeap() {
+        return read(SPRINT_LEAP, true);
     }
 
     public static boolean hideCoveredKeys() {

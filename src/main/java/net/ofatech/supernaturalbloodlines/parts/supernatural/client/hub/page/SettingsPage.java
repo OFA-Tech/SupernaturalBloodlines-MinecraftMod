@@ -37,6 +37,7 @@ public final class SettingsPage implements HubPageView {
     static boolean applies(SettingEntry e) {
         return switch (e.dottedPath()) {
             case "hide_tensura_skill_hud" -> ModList.get().isLoaded("tensura");
+            case "sprint_leap" -> ModList.get().isLoaded("werewolves") && ModList.get().isLoaded("vampirism");
             case "blood_in_food_spot" -> ModList.get().isLoaded("tensura") && ModList.get().isLoaded("vampirism");
             default -> true;
         };

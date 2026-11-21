@@ -14,6 +14,11 @@ public enum SlotMode {
         return this == SUPERNATURAL;
     }
 
+    /** The modes this player is offered: Supernatural only for a supernatural player ({@link SupernaturalStanding}), so a human has Tensura mode or no HUD at all. */
+    public static List<SlotMode> available(boolean tensuraLoaded, boolean vampirismLoaded, boolean supernaturalPlayer) {
+        return available(tensuraLoaded, vampirismLoaded && supernaturalPlayer);
+    }
+
     public static List<SlotMode> available(boolean tensuraLoaded, boolean vampirismLoaded) {
         List<SlotMode> modes = new ArrayList<>(2);
         if (tensuraLoaded) {

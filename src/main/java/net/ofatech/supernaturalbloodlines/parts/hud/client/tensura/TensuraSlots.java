@@ -10,6 +10,7 @@ import io.github.manasmods.tensura.storage.ability.IAbility;
 import net.minecraft.client.player.LocalPlayer;
 import net.ofatech.supernaturalbloodlines.core.hud.InputPlan;
 import net.ofatech.supernaturalbloodlines.core.hud.PresetPair;
+import net.ofatech.supernaturalbloodlines.core.hud.SkillCooldown;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudKeys;
 
@@ -57,11 +58,12 @@ public final class TensuraSlots {
         if (inst == null) {
             return new SlotView(skill.getSkillIcon(), key, 0f, 0, false, GREY_MISSING, name, null);
         }
+        // ManasCore counts a skill's cooldown in seconds (SkillStorage lowers it by 1 every 20 server ticks): see SkillCooldown
         int left = inst.onCoolDown(mode) ? inst.getCoolDown(mode) : 0;
         PEAK[hudSlot] = left == 0 ? 0 : Math.max(PEAK[hudSlot], left);
-        float fraction = left == 0 ? 0f : Math.min(1f, left / (float) PEAK[hudSlot]);
+        float fraction = SkillCooldown.fraction(left, PEAK[hudSlot]);
         String detail = skill instanceof TensuraSkill ts && inst.getModes() > 1 ? ts.getModeName(inst, mode).getString() : null;
-        return new SlotView(skill.getSkillIcon(), key, fraction, (left + 19) / 20, inst.isToggled(),
+        return new SlotView(skill.getSkillIcon(), key, fraction, SkillCooldown.seconds(left), inst.isToggled(),
                 inst.canInteractSkill(p) ? null : GREY_BLOCKED, name, detail);
     }
 }

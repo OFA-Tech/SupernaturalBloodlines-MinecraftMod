@@ -15,23 +15,38 @@ final class HudDemo implements HudSource {
 
     @Override
     public SlotView[] views() {
+        if (DevHud.human) {
+            return humanViews();
+        }
         return new SlotView[] {
                 new SlotView(ClientLoadout.BITE_ICON, "R", 0.35f, 7, false, null, "Bite", "Vampire feed (human form), blood 62%"),
                 new SlotView(icon("diamond_sword"), "F", 0f, 0, true, null, "Predator's Thirst", "toggled on"),
                 new SlotView(icon("stick"), "V", 0.6f, 4, false, null, "Venom Fang", null),
                 new SlotView(icon("golden_apple"), "Z", 0f, 0, false, null, "Regeneration", null),
                 new SlotView(icon("ender_eye"), "X", 0f, 0, false, "supernaturalbloodlines.hud.slot.locked", "Moon Howl", null),
-                new SlotView(icon("blaze_powder"), "C", 0f, 0, false, null, "Bat Form", null)};
+                new SlotView(ResourceLocation.fromNamespaceAndPath("supernaturalbloodlines", "textures/gui/hud/alpha_roar.png"), "C", 0.5f, 30, false, null, "Alpha Roar", "Your pack gets Strength and Speed")};
+    }
+
+    /** A plain human with Tensura: Tensura skills only; the third skill is cooling down, the seconds counting down from 30 as the game runs. */
+    private static SlotView[] humanViews() {
+        var level = net.minecraft.client.Minecraft.getInstance().level;
+        long t = level == null ? 0 : level.getGameTime();
+        int left = DevHud.cooldown ? 30 - (int) (t / 20 % 30) : 0;
+        return new SlotView[] {
+                new SlotView(icon("iron_sword"), "R", 0f, 0, false, null, "Predator", null),
+                new SlotView(icon("bow"), "F", 0f, 0, false, null, "Sharp Sight", null),
+                new SlotView(icon("amethyst_shard"), "V", left / 30f, left, false, null, "Water Blade", null),
+                SlotView.EMPTY.withKey("Z"), SlotView.EMPTY.withKey("X"), SlotView.EMPTY.withKey("C")};
     }
 
     @Override
     public SlotMode mode() {
-        return SlotMode.SUPERNATURAL;
+        return DevHud.human ? SlotMode.TENSURA : SlotMode.SUPERNATURAL;
     }
 
     @Override
     public SlotMode other() {
-        return SlotMode.TENSURA;
+        return DevHud.human ? null : SlotMode.TENSURA;
     }
 
     @Override
@@ -48,6 +63,16 @@ final class HudDemo implements HudSource {
     @Override
     public boolean alt() {
         return DevHud.alt;
+    }
+
+    @Override
+    public long sinceSwitch() {
+        return DevHud.switched ? 0 : -1;
+    }
+
+    @Override
+    public boolean actionBar() {
+        return false;
     }
 
     @Override

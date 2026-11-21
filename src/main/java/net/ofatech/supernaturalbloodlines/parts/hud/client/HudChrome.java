@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.hud.HudLayout;
 import net.ofatech.supernaturalbloodlines.core.hud.MoonClock;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
+import net.ofatech.supernaturalbloodlines.core.hud.SlotShape;
 import net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
@@ -91,7 +92,7 @@ final class HudChrome {
     }
 
     /** "SUPERNATURAL . Caps" centred over the hotbar. */
-    static void pill(GuiGraphics g, Font font, HudStyle.Style style, SlotMode mode, int screenW, int screenH, float alpha) {
+    static void pill(GuiGraphics g, Font font, HudStyle.Style style, SlotMode mode, int screenW, int screenH, float alpha, boolean lifted) {
         if (pillMode != mode || pillTick != tick()) {
             String key = HudKeys.HUD_MODE.getTranslatedKeyMessage().getString();
             String name = Component.translatable("supernaturalbloodlines.hud.pill." + mode.name().toLowerCase(Locale.ROOT)).getString();
@@ -100,11 +101,11 @@ final class HudChrome {
             pillMode = mode;
             pillTick = tick();
         }
-        String text = pillText;
-        int w = pillWidth + 22;
-        int x = screenW / 2 - w / 2;
-        int y = screenH - 22 - 52;
-        pillBox(g, style, x, y, w, 14, alpha);
+        HudLayout.Box box = HudLayout.pill(screenW, screenH, pillWidth, lifted);
+        int x = box.x();
+        int y = box.y();
+        String text = pillWidth + 22 > box.w() ? font.plainSubstrByWidth(pillText, box.w() - 22) : pillText;
+        pillBox(g, style, x, y, box.w(), box.h(), alpha);
         // the diamond that marks the mode
         for (int dy = -3; dy <= 3; dy++) {
             int half = 3 - Math.abs(dy);
@@ -114,7 +115,7 @@ final class HudChrome {
     }
 
     /** The preview panel's width: six slots and a little air; it stays in the right half of the screen even at 480 GUI pixels. */
-    static final int PREVIEW_W = 6 * HudLayout.SLOT + 8;
+    static final int PREVIEW_W = HudLayout.PREVIEW_W;
 
     /**
      * The panel with the other mode's six slots, in the theme's shape: "Caps Lock -> TENSURA". The head wraps to two lines when it has to.
@@ -125,16 +126,17 @@ final class HudChrome {
         String key = HudKeys.HUD_MODE.getTranslatedKeyMessage().getString();
         String name = Component.translatable("supernaturalbloodlines.hud.pill." + other.name().toLowerCase(Locale.ROOT)).getString();
         java.util.List<String> head = wrap(font, Component.translatable("supernaturalbloodlines.hud.pill.next", key, name).getString(), PREVIEW_W - 12, 2);
-        int h = 30 + 9 * head.size();
-        int x = Math.max(4, Math.min(boxes[3].right() - PREVIEW_W, g.guiWidth() - PREVIEW_W - 4));
-        int y = boxes[3].y() - h - 4;
+        HudLayout.Box panel = HudLayout.preview(g.guiWidth(), g.guiHeight(), head.size());
+        int h = panel.h();
+        int x = panel.x();
+        int y = panel.y();
         pillBox(g, style, x, y, PREVIEW_W, h, alpha);
         for (int i = 0; i < head.size(); i++) {
             g.drawString(font, head.get(i), x + 6, y + 5 + 9 * i, SlotArt.fade(ink(style), alpha), false);
         }
         for (int i = 0; i < 6; i++) {
             HudLayout.Box slot = new HudLayout.Box(x + 4 + i * HudLayout.SLOT, y + 7 + 9 * head.size(), HudLayout.SLOT - 1, HudLayout.SLOT - 1);
-            SlotArt.draw(g, font, style, slot, views[i], alpha, -1f, 0f);
+            SlotArt.draw(g, font, style, SlotShape.of(other), slot, views[i], alpha, -1f, 0f);
         }
         return y;
     }
@@ -142,7 +144,7 @@ final class HudChrome {
      * What each slot is, as one panel above each column (Alt held): the key and name, what it does, and its cooldown or why it cannot be used. One panel per
      * column keeps the entries from covering each other; the left one stays in the left half of the screen and the right one stacks above the mode panel.
      */
-    static void tooltips(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box[] boxes, SlotView[] views, int previewTop, float alpha, boolean cacheable) {
+    static void tooltips(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box[] boxes, SlotView[] views, int previewTop, float alpha, boolean cacheable, boolean lifted) {
         int half = g.guiWidth() / 2;
         boolean fresh = !cacheable || columnsTick != tick() || columnsWidth != g.guiWidth() || columnsStyle != style;
         for (int col = 0; col < 2; col++) {
@@ -160,7 +162,7 @@ final class HudChrome {
             int h = 8 + 10 * lines.size();
             int x = col == 0 ? Math.max(4, top.x()) : Math.max(half + 2, Math.min(top.right() - w, g.guiWidth() - w - 4));
             // above the column (or the mode panel), but never off the top of the screen
-            int y = Math.max(2, (col == 1 && previewTop >= 0 ? previewTop : top.y()) - h - 6);
+            int y = col == 0 ? HudLayout.leftTooltipTop(top.y(), h, lifted) : Math.max(2, (col == 1 && previewTop >= 0 ? previewTop : top.y()) - h - 6);
             pillBox(g, style, x, y, w, h, Math.max(alpha, 0.95f));
             int ty = y + 5;
             for (int i = 0; i < lines.size(); i++) {

@@ -9,6 +9,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments;
+import net.ofatech.supernaturalbloodlines.core.hud.ActionCooldown;
 import net.ofatech.supernaturalbloodlines.core.hud.RateLimiter;
 import net.ofatech.supernaturalbloodlines.parts.hud.HudConfig;
 import net.ofatech.supernaturalbloodlines.parts.hud.action.ActionService;
@@ -63,6 +64,11 @@ public final class HudNet {
         }));
         registrar.playToClient(LoadoutSyncPayload.TYPE, LoadoutSyncPayload.STREAM_CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> ctx.player().setData(ModAttachments.HUD_LOADOUT, payload.loadout())));
+        registrar.playToClient(ActionCooldownPayload.TYPE, ActionCooldownPayload.STREAM_CODEC,
+                (payload, ctx) -> ctx.enqueueWork(() -> {
+                    long now = ctx.player().level().getGameTime();
+                    ActionCooldowns.set(payload.action(), ActionCooldown.startedAt(now, payload.total(), payload.left()), payload.total());
+                }));
     }
 
     /** True when this payload is within the player's rate limit; every call counts. */

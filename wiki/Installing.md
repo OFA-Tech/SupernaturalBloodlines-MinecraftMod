@@ -43,7 +43,7 @@ Nothing else is needed. **Curios is optional**: without it the rings work from y
 
 - The mod registers items, blocks, effects and races, so a client without the same parts cannot join (registry mismatch).
 - It also reads **COMMON configs** on both sides (not synced): keep the part switches and the species_tensura options equal. See [For server owners](For-Server-Owners#common-configs-must-match).
-- A **dedicated server** runs fine: the client-only classes (the downed screen, the eye particles, the Hunter outline, the eclipse fog, the Alpha Roar key) are only loaded on a client.
+- A **dedicated server** runs fine: the client-only classes (the downed screen, the eye particles, the Hunter outline, the eclipse fog, the HUD, the Alpha Roar key) are only loaded on a client.
 
 ## Steps
 

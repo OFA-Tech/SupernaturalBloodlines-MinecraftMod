@@ -16,6 +16,8 @@ public final class PlayerSettings {
             SettingEntry.of(HUB_FILE, "look", "hub_theme", SettingKind.CHOICE),
             SettingEntry.of(HUB_FILE, "look", "open_on", SettingKind.CHOICE),
             SettingEntry.of(HUD_FILE, "hud", "hud_enabled", SettingKind.BOOL),
+            SettingEntry.of(HUD_FILE, "hud", "hud_visibility", SettingKind.CHOICE),
+            SettingEntry.of(HUD_FILE, "hud", "sprint_leap", SettingKind.BOOL),
             SettingEntry.of(HUD_FILE, "hud", "hide_covered_keys", SettingKind.BOOL),
             SettingEntry.of(HUD_FILE, "hud", "hide_tensura_skill_hud", SettingKind.BOOL),
             SettingEntry.of(HUD_FILE, "hud", "blood_in_food_spot", SettingKind.BOOL),
