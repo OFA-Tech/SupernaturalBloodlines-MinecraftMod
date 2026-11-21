@@ -35,7 +35,7 @@ public final class HubClient {
 
     /**
      * The Alpha Trial was refused for an open True Alpha path (R147): the hub opens on Home and shows the warning; "take the spark" answers the
-     * server, which then lets the rite start. The screen is the same one the Rites page and the profile use ({@link HubScreen#warnTrueAlpha}).
+     * server, which then lets the rite start. The screen is the same one the profile uses ({@link HubScreen#warnTrueAlpha}).
      */
     static void onTrialWarning() {
         open(HubPage.HOME);

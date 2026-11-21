@@ -98,4 +98,14 @@ class RiteUnlockTableTest {
         assertNotNull(RiteUnlockTable.GATED.get("silver_moon"));
         assertNull(RiteUnlockTable.GATED.get("purification"));
     }
+
+    @Test
+    void theChoicesAreAllEachGatedRiteAndEachLore() {
+        List<String> choices = RiteUnlockTable.choices();
+        assertEquals("all", choices.get(0));
+        assertTrue(choices.containsAll(RiteUnlockTable.GATED.keySet()), "a gated rite is not offered");
+        assertTrue(choices.containsAll(RiteUnlockTable.loreIds()), "a lore id is not offered");
+        assertEquals(1 + RiteUnlockTable.GATED.size() + RiteUnlockTable.loreIds().size(), choices.size());
+        assertFalse(choices.contains("purification"), "an open rite is not a choice: it cannot be learned or forgotten");
+    }
 }
