@@ -145,7 +145,7 @@ public final class PathPage implements HubPageView {
 
     /** "sired by X" (or "(bond severed)"), when the snapshot names a sire. Shared with the themes' own Path views. */
     static Optional<Component> sireLine(HubView v) {
-        return v.snapshot().sire().map(sire -> Component.translatable(v.snapshot().severed() ? KEY + "sire_severed" : KEY + "sire", sire));
+        return v.snapshot().sire().filter(sire -> !sire.isEmpty()).map(sire -> Component.translatable(v.snapshot().severed() ? KEY + "sire_severed" : KEY + "sire", sire));
     }
 
     /** "Tensura: race, EP" with Tensura and its part on. */

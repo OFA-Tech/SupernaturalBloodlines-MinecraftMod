@@ -203,7 +203,7 @@ class BossTextTest {
         assertTrue(lang.get("supernaturalbloodlines.boss.klaus.countdown").getAsString().contains("%s seconds"));
         assertTrue(lang.has("supernaturalbloodlines.boss.klaus.dawn"));
         String tip = lang.get("item.supernaturalbloodlines.klaus_blood.tooltip").getAsString();
-        for (String part : new String[] {"Cures werewolf venom", "hybrid transition", "vampire", "sire", "5 minutes", "before you die, or during the turning"}) {
+        for (String part : new String[] {"Cures werewolf venom", "hybrid transition", "before you die", "vampire", "sire", "%s minutes", "for the vampire turning only, a drink during the turning counts too"}) {
             assertTrue(tip.contains(part), "the tooltip does not say \"" + part + "\": " + tip);
         }
         assertTrue(lang.has("item.supernaturalbloodlines.klaus_blood.dead_line"));

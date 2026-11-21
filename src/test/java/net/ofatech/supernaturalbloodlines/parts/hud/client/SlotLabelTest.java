@@ -29,9 +29,9 @@ class SlotLabelTest {
 
     @Test
     void theNameIsKeptWholeWhenItFitsAndTheDescriptionIsTheFirstThingCut() {
-        int room = roomAtScale4();
+        int room = 120; // "Poison Resistance" is 102 wide
         String[] lines = SlotLabel.lines("Poison Resistance", false, null, "42%", null, "Resists every kind of poison there is", room, SlotLabelTest::width);
-        assertEquals("Poison Resistance".length() * 6 <= room ? "Poison Resistance" : lines[0], lines[0]);
+        assertEquals("Poison Resistance", lines[0]);
         assertEquals(2, lines.length);
         assertTrue(width(lines[1]) <= room && lines[1].startsWith("42% \u00b7 Resist") && lines[1].endsWith("\u2026"), lines[1]);
         // a name wider than the room is cut with an ellipsis, never run over
@@ -40,24 +40,25 @@ class SlotLabelTest {
     }
 
     @Test
-    void aBlockedSlotWrapsItsReasonToAThirdLineAndNeverCutsIt() {
-        int room = roomAtScale4();
-        String reason = "Cannot use it right now."; // what the lang gives; the test below has the long sentence
+    void aBlockedSlotPutsItsReasonFirstWholeAndTheRestAfterItWithinThreeLines() {
+        int room = 90; // "Cannot use it right now." is 144 wide: two lines
+        String reason = "Cannot use it right now.";
         String[] lines = SlotLabel.lines("Poison Resistance", true, reason, "Learning 60%", null, "Resists poison", room, SlotLabelTest::width);
-        assertEquals(3, lines.length, "name, reason and the rest, no more: " + String.join("|", lines));
-        assertTrue(String.join(" ", java.util.Arrays.copyOfRange(lines, 1, lines.length)).startsWith(reason), "the reason is whole over the lines after the name: " + String.join("|", lines));
-        for (String line : lines) {
-            assertTrue(width(line) <= room, line);
-        }
-        // and the same slot, not blocked, stays on two lines with the reason absent
+        assertEquals(java.util.List.of("Cannot use it", "right now."), java.util.List.of(lines).subList(1, lines.length), "the reason fills the room, the rest is dropped: " + String.join("|", lines));
+        // a short reason leaves a line for the rest, cut at the end
+        String[] one = SlotLabel.lines("Poison Resistance", true, "Locked", "Learning 60%", null, "Resists poison", room, SlotLabelTest::width);
+        assertEquals(3, one.length, String.join("|", one));
+        assertEquals("Locked", one[1]);
+        assertTrue(one[2].startsWith("Learning 60%") && width(one[2]) <= room, one[2]);
+        // the same slot, not blocked, is two lines: name and the state-less rest
         assertEquals(2, SlotLabel.lines("Poison Resistance", false, null, "Learning 60%", null, "Resists poison", room, SlotLabelTest::width).length);
     }
 
     @Test
-    void aLongReasonInANarrowLabelIsStillWholeAndTakesTheLinesItNeeds() {
+    void aLongReasonInANarrowLabelIsStillWholeAndNothingFollowsIt() {
         String reason = "This action is not unlocked for your faction.";
-        String[] lines = SlotLabel.lines("Bat form", true, reason, "42%", null, "Fly", roomAtScale4(), SlotLabelTest::width);
-        assertTrue(lines.length <= 5 && String.join(" ", java.util.Arrays.copyOfRange(lines, 1, lines.length)).startsWith(reason), String.join("|", lines));
+        String[] lines = SlotLabel.lines("Bat form", true, reason, "42%", null, "Fly", 90, SlotLabelTest::width);
+        assertEquals(reason, String.join(" ", java.util.Arrays.copyOfRange(lines, 1, lines.length)), String.join("|", lines));
     }
 
     @Test

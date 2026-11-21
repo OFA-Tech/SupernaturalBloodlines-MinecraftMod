@@ -103,6 +103,11 @@ public final class TransitionHandler {
         if (!p.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT)) {
             return;
         }
+        // a human may drink any Original's Blood, so the source is checked again here, under the setting as it is now
+        if (p.hasData(SpeciesRegistries.BLOOD_SOURCE_SPECIES)
+                && !TransitionBlood.accepts(net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.transitionBloodAnyOriginal(), p.getData(SpeciesRegistries.BLOOD_SOURCE_SPECIES))) {
+            return;
+        }
         UUID source = p.hasData(SpeciesRegistries.BLOOD_SOURCE) ? p.getData(SpeciesRegistries.BLOOD_SOURCE) : null;
         apply(p, BloodlineEvent.DIED_WITH_ORIGINAL_BLOOD, source);
     }
@@ -127,12 +132,13 @@ public final class TransitionHandler {
     }
 
     public static void drankDoppelganger(ServerPlayer p) {
-        if (BloodlineAccess.get(p).inTransition()) {
-            net.ofatech.supernaturalbloodlines.parts.species.turning.PendingSire.settle(p, false);
-        }
+        boolean inTransition = BloodlineAccess.get(p).inTransition();
+        boolean lineGone = inTransition && net.ofatech.supernaturalbloodlines.parts.species.turning.PendingSire.settle(p, false);
         BloodlineState settled = BloodlineAccess.get(p);
         apply(p, BloodlineEvent.DRANK_DOPPELGANGER_BLOOD, null);
-        net.ofatech.supernaturalbloodlines.parts.species.turning.PendingSire.completed(p, settled);
+        if (inTransition && !BloodlineAccess.get(p).inTransition()) {
+            net.ofatech.supernaturalbloodlines.parts.species.turning.PendingSire.completed(p, settled, lineGone);
+        }
     }
 
     /** Blood that is not Doppelgänger Blood, drunk during the transition. */

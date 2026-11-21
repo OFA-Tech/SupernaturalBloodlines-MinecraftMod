@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.line.Lines;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What drinking an Original's blood does, for every drinkable blood that names a source (Original's Blood, Klaus's Blood): the source is remembered as
@@ -20,9 +21,19 @@ public final class BloodDrink {
     private BloodDrink() {
     }
 
-    public static void drank(ServerPlayer player, UUID source) {
+    /**
+     * @param species     the source's species name when the blood records it (a bottle), for the hybrid transition's source check at death; null when it names none
+     * @param literalName Klaus's Blood is named after him, so his name is printed as it is; any other blood names the source only once the drinker has discovered the line
+     */
+    public static void drank(ServerPlayer player, UUID source, @Nullable String species, boolean literalName) {
         player.setData(SpeciesRegistries.BLOOD_SOURCE, source);
+        if (species == null) {
+            player.removeData(SpeciesRegistries.BLOOD_SOURCE_SPECIES);
+        } else {
+            player.setData(SpeciesRegistries.BLOOD_SOURCE_SPECIES, species);
+        }
         player.addEffect(new MobEffectInstance(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT, OriginalBloodEffect.DURATION_TICKS));
-        player.sendSystemMessage(Component.translatable(DRUNK, Lines.rootName(player.server, source), OriginalBloodEffect.DURATION_TICKS / 1200));
+        Component name = literalName ? Lines.rootName(player.server, source) : Lines.shownName(player.server, player, source);
+        player.sendSystemMessage(Component.translatable(DRUNK, name, OriginalBloodEffect.DURATION_TICKS / 1200));
     }
 }

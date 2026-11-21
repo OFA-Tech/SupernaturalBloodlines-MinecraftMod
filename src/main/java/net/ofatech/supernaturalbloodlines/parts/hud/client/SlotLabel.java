@@ -14,38 +14,51 @@ final class SlotLabel {
     /** A label with less text room than this is not drawn: it would be an ellipsis. */
     static final int MIN_ROOM = 24;
     private static final String SEP = " \u00b7 ";
-    /** A blocked slot's second block: enough lines for the reason (a sentence) to be whole in the narrowest label that is drawn; what comes after it may be cut. */
-    static final int MAX_BLOCKED_LINES = 4;
+    /** The most lines a label has, name included (what fits between two neighbouring slots); only a long reason takes more. */
+    static final int MAX_LINES = 3;
+    /** A reason is wrapped over at most this many lines, which is far more than any sentence of the mod needs in the narrowest label that is drawn. */
+    static final int REASON_LINES = 8;
 
     private SlotLabel() {
     }
 
     /**
      * The name (cut only when it is wider than the room); then, in this order, why the slot cannot be used or its cooldown, the mastery, the mode and a short
-     * description. A cut loses the end, so the description goes first. A slot that cannot be used wraps onto a third line, so the reason is never cut, and a label stays within three lines (which is what fits between two neighbouring slots) unless the reason alone needs more.
+     * description. A cut loses the end, so the description goes first. A slot that cannot be used puts its reason first, wrapped over as many lines as it needs
+     * (never cut); what follows takes the room left in {@link #MAX_LINES} lines, the number that fits between two neighbouring slots.
      *
-     * @return two lines, or three for a blocked slot whose second line does not fit (more only for a reason of three lines or more)
+     * @return the name, then one line, or for a blocked slot the reason's lines and, room permitting, one more
      */
     static String[] lines(String name, boolean blocked, @Nullable String state, @Nullable String mastery, @Nullable String detail, @Nullable String description,
                           int room, ToIntFunction<String> measure) {
-        List<String> parts = new ArrayList<>();
-        for (String p : new String[] {state, mastery, detail, description}) {
-            if (p != null && !p.isBlank()) {
-                parts.add(p.strip());
-            }
-        }
-        String rest = String.join(SEP, parts);
         List<String> out = new ArrayList<>();
         out.add(LabelFit.cut(name, room, measure));
-        List<String> reason = state == null ? List.of() : LabelFit.wrap(state.strip(), room, MAX_BLOCKED_LINES, measure);
-        if (blocked && reason.size() > 2) {
-            out.addAll(reason); // a long sentence in a narrow label: all of it, and nothing after it
-        } else if (blocked) {
-            out.addAll(LabelFit.wrap(rest, room, 2, measure)); // the reason is whole in these two lines (it fits one or two), what follows may be cut
-        } else {
-            out.add(LabelFit.cut(rest, room, measure));
+        boolean reasoned = blocked && state != null && !state.isBlank();
+        if (reasoned) {
+            out.addAll(LabelFit.wrap(state.strip(), room, REASON_LINES, measure));
+        }
+        String rest = join(reasoned ? null : state, mastery, detail, description);
+        int left = reasoned ? MAX_LINES - out.size() : 1;
+        if (left > 0 && !rest.isEmpty()) {
+            if (left == 1) {
+                out.add(LabelFit.cut(rest, room, measure));
+            } else {
+                out.addAll(LabelFit.wrap(rest, room, left, measure));
+            }
+        } else if (!reasoned && out.size() == 1) {
+            out.add("");
         }
         return out.toArray(new String[0]);
+    }
+
+    private static String join(@Nullable String... parts) {
+        List<String> kept = new ArrayList<>();
+        for (String p : parts) {
+            if (p != null && !p.isBlank()) {
+                kept.add(p.strip());
+            }
+        }
+        return String.join(SEP, kept);
     }
 
     static int percent(Mastery m) {

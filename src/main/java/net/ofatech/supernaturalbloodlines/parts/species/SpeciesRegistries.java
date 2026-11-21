@@ -97,6 +97,10 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<UUID>> BLOOD_SOURCE =
             ATTACHMENTS.register("blood_source", () -> AttachmentType.builder(() -> Util.NIL_UUID).serialize(UUIDUtil.CODEC).build());
 
+    /** The species ({@code Species} name) of the one whose blood the player drank last, for the hybrid transition's source check at death; absent for blood that names none. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<String>> BLOOD_SOURCE_SPECIES =
+            ATTACHMENTS.register("blood_source_species", () -> AttachmentType.builder(() -> "").serialize(com.mojang.serialization.Codec.STRING).build());
+
     /** Ticks left of the downed state (0 = not downed). Saved, so a relog resumes it. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> DOWNED =
             ATTACHMENTS.register("downed", () -> AttachmentType.builder(() -> 0).serialize(Codec.INT).build());

@@ -244,6 +244,11 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
         return family.sire();
     }
 
+    /** Whether the player has a sire at all: a sire the client may not be told (a creature, an undiscovered NPC Original) is an empty name, not an absent one. */
+    public boolean hasSire() {
+        return family.sire().isPresent();
+    }
+
     public boolean severed() {
         return family.severed();
     }

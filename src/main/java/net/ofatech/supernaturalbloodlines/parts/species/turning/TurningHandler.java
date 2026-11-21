@@ -134,7 +134,7 @@ public final class TurningHandler {
         if (!before.inTurning()) {
             return;
         }
-        PendingSire.settle(p, true);
+        boolean lineGone = PendingSire.settle(p, true);
         BloodlineState settled = BloodlineAccess.get(p);
         Outcome[] out = new Outcome[1];
         GhoulGates.completing(p, () -> out[0] = apply(p, BloodlineEvent.TURNING_FED, null));
@@ -149,7 +149,7 @@ public final class TurningHandler {
             p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.join_refused"));
         } else if (joins || before.ghoul() && !BloodlineAccess.get(p).ghoul()) {
             p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.completed"));
-            PendingSire.completed(p, settled);
+            PendingSire.completed(p, settled, lineGone);
         }
     }
 

@@ -16,8 +16,10 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrink;
+import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodEffect;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex;
 
 /**
@@ -49,7 +51,7 @@ public final class KlausBloodItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> lines, TooltipFlag flag) {
-        lines.add(Component.translatable("item.supernaturalbloodlines.klaus_blood.tooltip").withStyle(ChatFormatting.GRAY));
+        lines.add(Component.translatable("item.supernaturalbloodlines.klaus_blood.tooltip", OriginalBloodEffect.DURATION_TICKS / 1200).withStyle(ChatFormatting.GRAY));
     }
 
     @Override
@@ -60,7 +62,7 @@ public final class KlausBloodItem extends Item {
                 // his line is gone (he died to white oak): the blood still cures, but there is no sire left to turn anyone for
                 player.displayClientMessage(Component.translatable("item.supernaturalbloodlines.klaus_blood.dead_line"), true);
             } else {
-                BloodDrink.drank(player, NpcOriginal.KLAUS.uuid());
+                BloodDrink.drank(player, NpcOriginal.KLAUS.uuid(), Species.ORIGINAL_HYBRID.name(), true);
             }
         }
         return entity instanceof Player player ? ItemUtils.createFilledResult(stack, player, new ItemStack(Items.GLASS_BOTTLE)) : stack;

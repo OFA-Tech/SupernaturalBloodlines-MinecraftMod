@@ -60,23 +60,23 @@ public final class OriginalBloodItem extends Item {
         return TransitionBlood.accepts(SpeciesConfig.transitionBloodAnyOriginal(), stack.get(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT));
     }
 
+    private static final net.minecraft.resources.ResourceLocation WEREWOLF_ID = net.minecraft.resources.ResourceLocation.parse("werewolves:werewolf");
+
     /**
-     * {@code hybrid_transition_blood} gates only the hybrid transition, which only a werewolf drinker starts: anyone else may drink any Original's Blood (it is
-     * their pending sire for the vampire turning).
+     * Who may drink it. A werewolf, when the bottle's source may start the hybrid transition: {@code hybrid_transition_blood} gates only that. A player with no
+     * faction, a Ghoul, or someone in the turning, whatever the setting says: the blood is their pending sire for the vampire turning. Anyone else is refused.
      */
     public static boolean mayDrink(ItemStack stack, LivingEntity drinker) {
-        return startsTransition(stack) || !isWerewolf(drinker);
-    }
-
-    private static boolean isWerewolf(LivingEntity e) {
-        if (!(e instanceof Player p)) {
+        if (!(drinker instanceof Player p)) {
             return false;
         }
         var faction = de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
-        return faction != null && WEREWOLF_ID.equals(faction.getID());
+        if (faction != null && WEREWOLF_ID.equals(faction.getID())) {
+            return startsTransition(stack);
+        }
+        var state = net.ofatech.supernaturalbloodlines.core.BloodlineAccess.get(p);
+        return faction == null || state.ghoul() || state.inTurning();
     }
-
-    private static final net.minecraft.resources.ResourceLocation WEREWOLF_ID = net.minecraft.resources.ResourceLocation.parse("werewolves:werewolf");
 
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
@@ -85,7 +85,7 @@ public final class OriginalBloodItem extends Item {
             return stack; // not drunk by any other route either; nothing is used up
         }
         if (source != null && entity instanceof ServerPlayer player) {
-            BloodDrink.drank(player, source);
+            BloodDrink.drank(player, source, stack.get(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT), false);
         }
         return entity instanceof Player player ? ItemUtils.createFilledResult(stack, player, new ItemStack(Items.GLASS_BOTTLE)) : stack;
     }
