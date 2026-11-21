@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased (fix: the hitbox of a body that lies)
+
+### Fixed
+- **A desiccated NPC Original (Mikael, Klaus, Elijah, Rebekah, Kol, Finn) can be hit where the body lies.** The body was drawn lying down but the box was the standing one, so the white oak stake had to be aimed where the Original would have stood. A desiccated Original now has a low, wide box (1.8 by 0.5) and is drawn on its back with its middle over that box; the standing box comes back when they get up (R184). It stays on the floor (vanilla's search for room used to put the lying body 0.725 above it), is not pushed and pushes nobody, and Klaus's wolf has a box of its own (3.0 by 1.0, measured from its death pose).
+- **Test fix:** the Deucalion test `aHuntWhoseBlowsLandOnSomebodyElse...` kept its prey 30 blocks away, which is an unloaded chunk where some layouts put the test, so he left as stranded and CI failed in -PpartsOff=artifacts; the prey is 4 blocks away now.
+
+### Rolling back
+Nothing is stored: rolling back brings the old, standing box back.
+
+
 ## Unreleased (HUD mastery bars, side labels, Klaus's Blood sires)
 
 ### Added

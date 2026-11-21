@@ -383,7 +383,7 @@ public final class KlausGameTests {
                 k.tick();
             }
             helper.assertTrue(k.form() == BossForm.SHIFTING && k.shiftTicks() == at, "a fallen Klaus went on shifting: " + k.form() + " at " + k.shiftTicks());
-            helper.assertTrue(seen.isEmpty() && Math.abs(k.getBbHeight() - 1.95F) < 1e-4, "a fallen Klaus swapped his body: " + seen + " " + k.getBbHeight());
+            helper.assertTrue(seen.isEmpty() && k.getBbHeight() == net.ofatech.supernaturalbloodlines.core.bloodline.LyingBody.HEIGHT, "a fallen Klaus swapped his body (the box is the lying one, R184): " + seen + " " + k.getBbHeight());
             k.recover();
             for (int i = 0; i < 4; i++) {
                 k.tick();
