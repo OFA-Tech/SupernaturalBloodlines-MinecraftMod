@@ -62,7 +62,7 @@ A werewolf-type hit on a vampire applies the `Werewolf Venom` effect once (a sec
 - **Originals and Original hybrids** only get Weakness II for those 10 minutes.
 - **Milk does not cure it.** Only **Hybrid's Blood** does.
 
-**Hybrid's Blood** is made with the **Rite of Hybrid's Blood**: a glass bottle on a small circle (1000 power) with a **hybrid, Original hybrid or tribrid** standing on the circle. Original's Blood does *not* cure venom; **Klaus's Blood** does, as well as starting the transition. You drink it only while poisoned, and you get the glass bottle back.
+**Hybrid's Blood** is made with the **Rite of Hybrid's Blood**: a glass bottle on a small circle (1000 power) with a **hybrid, Original hybrid or tribrid** standing on the circle, who **sneaks** to give their blood if they are not the one performing the rite (without it the caster only sees "The rite would change nothing.", whoever stands there). Original's Blood does *not* cure venom; **Klaus's Blood** does, as well as starting the transition. You drink it only while poisoned, and you get the glass bottle back.
 
 ## Weaknesses
 

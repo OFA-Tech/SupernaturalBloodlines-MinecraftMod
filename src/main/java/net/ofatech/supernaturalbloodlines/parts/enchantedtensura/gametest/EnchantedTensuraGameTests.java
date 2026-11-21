@@ -353,6 +353,19 @@ public final class EnchantedTensuraGameTests {
         helper.succeed();
     }
 
+    /** The Rites page draws the circle it is sent: a curse in ritual chalk would never start, so the hub must be told infernal chalk. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void hubKnowsTheCursesNeedInfernalChalk(GameTestHelper helper) {
+        var rites = net.ofatech.supernaturalbloodlines.parts.species.SpeciesHub.rites(helper.getLevel().getServer());
+        for (String path : List.of("curse_magicule_drain", "curse_skill_seal")) {
+            var sent = rites.stream().filter(r -> r.id().equals(NS + ":" + path)).findFirst().orElse(null);
+            helper.assertTrue(sent != null, path + " is not in the rites sent to the hub");
+            helper.assertTrue(sent.shapes().equals(List.of("enchanted:medium_circle=enchanted:nether_chalk")), path + " is sent as " + sent.shapes());
+            helper.assertTrue(sent.circles().get(0).chalk().equals("nether_chalk"), path + " chalk");
+        }
+        helper.succeed();
+    }
+
     private static Rite startRite(GameTestHelper helper, String path, ServerPlayer caster, ServerPlayer victim) {
         ItemStack taglock = new ItemStack(EItems.TAGLOCK_FILLED.get());
         taglock.set(EDataComponents.ENTITY_REF.get(), EntityRefData.of(victim.getUUID(), "victim"));

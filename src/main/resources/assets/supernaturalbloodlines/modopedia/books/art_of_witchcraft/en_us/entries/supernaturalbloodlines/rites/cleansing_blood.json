@@ -1,0 +1,46 @@
+{
+  "title": "Rite of Cleansing Blood",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:golden_apple"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nWashes the vampire side out of the one on the centre: a vampire becomes human again, a hybrid a plain werewolf, a tribrid a witch and a heretic a siphoner.",
+          "header": "Cleansing Blood"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The target stands on the centre (the caster if nobody does) and must be on the vampire side. An Original or an Original hybrid cannot be cured by it.",
+          "header": "Cleansing Blood"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "A hybrid or a tribrid also loses its sire bond. A refusal gives the ingredients back.",
+          "header": "Cleansing Blood"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:cleansing_blood",
+          "header": "Cleansing Blood"
+        }
+      ]
+    }
+  ]
+}

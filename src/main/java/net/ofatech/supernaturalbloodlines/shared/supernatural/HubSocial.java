@@ -65,13 +65,39 @@ public final class HubSocial {
      * A rite of this mod the server has loaded (so its part and mods are on), as the hub lists it.
      *
      * @param items   "count id" per item
-     * @param shapes  the circle shape ids
+     * @param shapes  the circles as {@code shape=chalk} ({@code enchanted:medium_circle=enchanted:nether_chalk}); see {@link Rite#circles()}
      * @param factory the rite's factory type id; {@code faction} is its {@code faction} setting, or "" when it has none
+     * @param sacrifices the creatures the rite takes (entity type ids)
+     * @param fullMoon   the rite works on a full-moon night only ({@code requires_full_moon} in its factory)
+     * @param tickPower  the altar power it keeps drawing each tick while it runs
      */
-    public record Rite(String id, int power, List<String> items, List<String> shapes, String factory, String faction) {
+    public record Rite(String id, int power, List<String> items, List<String> shapes, String factory, String faction,
+                       List<String> sacrifices, boolean fullMoon, int tickPower) {
         public Rite {
             items = List.copyOf(items);
             shapes = List.copyOf(shapes);
+            sacrifices = List.copyOf(sacrifices);
+        }
+
+        public Rite(String id, int power, List<String> items, List<String> shapes, String factory, String faction) {
+            this(id, power, items, shapes, factory, faction, List.of(), false, 0);
+        }
+
+        /** The rite's circles; a shape sent without a chalk gets an empty chalk. */
+        public List<Circle> circles() {
+            return shapes.stream().map(Circle::parse).toList();
+        }
+    }
+
+    /** One circle of a rite: the shape and the chalk it is drawn in, as paths ({@code medium_circle}, {@code nether_chalk}). */
+    public record Circle(String shape, String chalk) {
+        public static Circle parse(String pair) {
+            int eq = pair.indexOf('=');
+            return new Circle(path(eq < 0 ? pair : pair.substring(0, eq)), eq < 0 ? "" : path(pair.substring(eq + 1)));
+        }
+
+        private static String path(String id) {
+            return id.substring(id.indexOf(':') + 1);
         }
     }
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased (PR #52: the rites in Enchanted's book)
+
+### Changed
+- **The network protocol is now 8**: the hub snapshot's rites carry the chalk of their circle, the creatures they sacrifice, whether they need the full moon and their tick power. A client on 7 and a server on 8 (or the other way round) will not exchange hub data; update both.
+- Rite of Severance and the Alpha Trial read `requires_full_moon` from their rite file (default true: a file or datapack override without the key keeps the rule). The Alpha Trial with the flag off still needs a night.
+- A refusal of the Rite of the Moon that says something about the one on the circle goes to that player; a caster who is somebody else is told the rite would change nothing.
+- **Original's Blood and Hybrid's Blood need the consent of someone else's blood** (R31a): when the one on the centre is not the caster they must sneak. Without it the caster is told only that the rite would change nothing (the same for an Original and for anyone else, with every ingredient back), and the one on the centre is asked to sneak; the bottle used to tell the caster who is an Original or a hybrid, and its species. A target who agreed but is of the wrong kind is told so in their own words.
+- The Alpha Trial's "can be taken tonight" notice on Home and its night refusal follow the rite's own `requires_full_moon` (a trial that does not need the full moon says "at night").
+
 ## Unreleased (HUD polish)
 
 ### Upgrading (read first)

@@ -1,0 +1,46 @@
+{
+  "title": "Rite of the Moon",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:clock"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nLets an Original with the werewolf gene become an Original hybrid, or frees a bound hybrid so that it can shift again.",
+          "header": "Rite of the Moon"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Full-moon night only. The target stands on the centre (the caster if nobody does); a villager and a wolf must stand in the circle: they are the sacrifice, and they are killed. Werewolves must be installed.",
+          "header": "Rite of the Moon"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Anyone else is refused: the caster is told only that the rite would change nothing, and the ingredients come back.",
+          "header": "Rite of the Moon"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_the_moon",
+          "header": "Rite of the Moon"
+        }
+      ]
+    }
+  ]
+}

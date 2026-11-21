@@ -1,0 +1,37 @@
+{
+  "title": "Rite of Doppelgänger Blood",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:diamond"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: small circle, ritual chalk.\n\nFills a bottle with Doppelgänger Blood from the owner of the taglock, and tells a player owner whether they carry the gene.",
+          "header": "Doppelgänger"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Needs a filled taglock of a doppelgänger villager or of a player who carries the gene (a server can allow any human). The owner must be loaded or online.\n\nA refusal tells the caster why and gives the ingredients back.",
+          "header": "Doppelgänger"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:doppelganger_blood",
+          "header": "Doppelgänger"
+        }
+      ]
+    }
+  ]
+}

@@ -98,7 +98,8 @@ public final class OriginalHybridGameTests {
         long before = level.getDayTime();
         long base = before - Math.floorMod(before, FULL_MOON_CYCLE);
         try {
-            for (String rite : List.of("rite_of_the_moon", "immortality", "silver_moon")) {
+            // the first three are faction rites, Severance has its own check: the rite file's requires_full_moon and the code must agree for every one
+            for (String rite : List.of("rite_of_the_moon", "immortality", "silver_moon", "rite_of_severance")) {
                 for (long timeOfDay : new long[] {6000L, 18000L}) {
                     RecordingPlayer caster = RecordingPlayer.create(helper);
                     place(helper, caster);
@@ -186,6 +187,39 @@ public final class OriginalHybridGameTests {
         } finally {
             remove(helper, caster);
             reset(caster);
+        }
+        helper.succeed();
+    }
+
+    /** A caster who stands apart from the circle's centre: the one on the centre is the target. */
+    private static void placeApart(GameTestHelper helper, ServerPlayer p) {
+        p.setPos(net.minecraft.world.phys.Vec3.atBottomCenterOf(centre(helper)).add(4, 1, 0));
+        helper.getLevel().addNewPlayer(p);
+    }
+
+    /** The caster is not the target: a refusal must not tell the caster whether the stranger on the circle carries the gene. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void moonRiteRefusalTellsTheCasterNothingAboutTheTargetsGene(GameTestHelper helper) {
+        for (boolean gene : new boolean[] {false, true}) {
+            RecordingPlayer caster = RecordingPlayer.create(helper);
+            RecordingPlayer target = RecordingPlayer.create(helper);
+            place(helper, target);
+            placeApart(helper, caster);
+            try {
+                // a vampire who is not an Original: refused whether or not they carry the gene (an Original with it would be let through)
+                vampire(target, Species.NONE, gene);
+                atFullMoon(helper, true, () -> start(helper, "rite_of_the_moon", caster, moonItems()));
+                helper.assertTrue(!caster.receivedOnActionBar("supernaturalbloodlines.refusal.no_gene") && !caster.receivedOnActionBar("supernaturalbloodlines.refusal.not_original"),
+                        "the caster was told about the target's gene (gene " + gene + ")");
+                helper.assertTrue(caster.receivedOnActionBar("supernaturalbloodlines.rite.no_effect"), "the caster was not told the rite changes nothing (gene " + gene + ")");
+                helper.assertTrue(target.receivedOnActionBar(gene ? "supernaturalbloodlines.refusal.not_original" : "supernaturalbloodlines.refusal.no_gene"),
+                        "the target was not told why (gene " + gene + ")");
+            } finally {
+                remove(helper, caster);
+                remove(helper, target);
+                reset(caster);
+                reset(target);
+            }
         }
         helper.succeed();
     }

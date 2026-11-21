@@ -1,0 +1,46 @@
+{
+  "title": "Werewolf Brother",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:beef"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: small circle, ritual chalk.\n\nTakes a beaten wild werewolf into your pack as a brother.",
+          "header": "Werewolf Brother"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Only a werewolf, of any rank, can perform it. The wolf (a beast or a survivalist, not an Alpha, a trial boss or one already bonded) must be within 4 blocks of the centre at half health or less. It is not an ingredient.",
+          "header": "Werewolf Brother"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "You and your pack can have only so many brothers (a server setting). A refusal tells you why and gives the ingredients back.",
+          "header": "Werewolf Brother"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:werewolf_brother",
+          "header": "Werewolf Brother"
+        }
+      ]
+    }
+  ]
+}

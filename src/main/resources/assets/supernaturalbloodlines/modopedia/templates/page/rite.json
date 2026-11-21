@@ -1,0 +1,18 @@
+{
+  "components": [
+    {
+      "type": "modopedia:header",
+      "text": "#header"
+    },
+    {
+      "type": "modopedia:separator",
+      "y": 10
+    },
+    {
+      "type": "supernaturalbloodlines:rite",
+      "rite": "#rite",
+      "x": 50,
+      "y": 17
+    }
+  ]
+}

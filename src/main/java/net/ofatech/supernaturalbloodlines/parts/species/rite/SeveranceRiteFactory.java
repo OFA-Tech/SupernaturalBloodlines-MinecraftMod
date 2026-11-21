@@ -31,12 +31,14 @@ import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.RiteTarg
  * the target's own sire, which the pure rules check ({@link BloodlineEvent#RITE_OF_SEVERANCE}). When anything is wrong the caster is told
  * and Enchanted gives the ingredients back.
  */
-public record SeveranceRiteFactory() implements RiteFactory {
+public record SeveranceRiteFactory(boolean requiresFullMoon) implements RiteFactory {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "severance");
     public static final String NOT_WITCH = "supernaturalbloodlines.refusal.severance_not_witch";
     public static final String NO_BLOOD = "supernaturalbloodlines.refusal.severance_no_blood";
     public static final String DONE = "supernaturalbloodlines.rite.severance_done";
-    public static final MapCodec<SeveranceRiteFactory> CODEC = MapCodec.unit(SeveranceRiteFactory::new);
+    public static final MapCodec<SeveranceRiteFactory> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.mapCodec(i -> i.group(
+            FactionRiteFactory.fullMoonByDefault().forGetter(SeveranceRiteFactory::requiresFullMoon)
+    ).apply(i, SeveranceRiteFactory::new));
 
     /** WITCH, SIPHONER, HERETIC and TRIBRID: the species that work magic (witch rites) or take it (siphoning). */
     public static boolean isWitchType(Species s) {
@@ -45,7 +47,7 @@ public record SeveranceRiteFactory() implements RiteFactory {
 
     @Override
     public Rite create(Rite.BaseRiteParams base, Rite.RiteParams params) {
-        return new SeveranceRite(base, params);
+        return new SeveranceRite(base, params, requiresFullMoon);
     }
 
     @Override
@@ -59,8 +61,11 @@ public record SeveranceRiteFactory() implements RiteFactory {
     }
 
     private static final class SeveranceRite extends Rite {
-        SeveranceRite(BaseRiteParams base, RiteParams params) {
+        private final boolean requiresFullMoon;
+
+        SeveranceRite(BaseRiteParams base, RiteParams params, boolean requiresFullMoon) {
             super(base, params);
+            this.requiresFullMoon = requiresFullMoon;
         }
 
         @Override
@@ -72,7 +77,7 @@ public record SeveranceRiteFactory() implements RiteFactory {
             ServerPlayer target = found.get();
             ServerPlayer caster = findEntity(params.caster) instanceof ServerPlayer p ? p : target;
 
-            if (!MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime())) {
+            if (requiresFullMoon && !MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime())) {
                 return refuse(caster, FactionRiteFactory.NEEDS_FULL_MOON);
             }
             if (!isWitchType(BloodlineAccess.get(caster).species())) {

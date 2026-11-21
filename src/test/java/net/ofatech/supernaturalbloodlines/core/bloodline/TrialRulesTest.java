@@ -160,4 +160,11 @@ class TrialRulesTest {
         assertEquals(net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.TRIAL_RUNNING, TrialRules.Notice.RUNNING.ordinal());
         assertEquals(3, TrialRules.Notice.values().length);
     }
+
+    @Test
+    void theRefusalForTheNightFollowsTheRitesMoonRule() {
+        assertEquals("not_night", TrialRules.refusalKey(TrialRules.Refusal.NOT_NIGHT, true));
+        assertEquals("not_night_any", TrialRules.refusalKey(TrialRules.Refusal.NOT_NIGHT, false));
+        assertEquals("rank", TrialRules.refusalKey(TrialRules.Refusal.RANK, false), "only the night refusal changes with the rule");
+    }
 }

@@ -1,0 +1,28 @@
+{
+  "title": "Supernatural Rites",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:ender_eye"
+  },
+  "assigned_items": [],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "These rites come with Supernatural Bloodlines and work like all circle magic: draw the golden heart glyph and the circle, put the items in it and activate it.\n\nThe basics: $(b)$(el:circle_magic/tutorial/performing_rites)Performing Rites$(/el)$(/b).",
+          "header": "Supernatural Rites"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Many of these rites act on whoever stands on the heart glyph in the centre. When nobody does, they act on whoever performs the rite.\n\nA rite a server has switched off shows a note in place of its circle.",
+          "header": "On the Centre"
+        }
+      ]
+    }
+  ]
+}

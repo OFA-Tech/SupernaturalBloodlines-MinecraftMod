@@ -1,0 +1,17 @@
+{
+  "children": [],
+  "display_on_front_page": false,
+  "entries": [
+    "supernaturalbloodlines/rites/curse_magicule_drain",
+    "supernaturalbloodlines/rites/curse_skill_seal",
+    "supernaturalbloodlines/rites/magicule_offering",
+    "supernaturalbloodlines/rites/purification",
+    "supernaturalbloodlines/rites/purification_holy_water"
+  ],
+  "icon": {
+    "count": 1,
+    "id": "minecraft:soul_sand"
+  },
+  "landing_text": "Rites that need Tensura: two curses, an offering of magicules and the purification of the undead.",
+  "title": "Tensura"
+}

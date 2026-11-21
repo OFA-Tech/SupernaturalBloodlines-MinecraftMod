@@ -34,11 +34,12 @@ import net.ofatech.supernaturalbloodlines.shared.hub.profile.TrueAlphaWarning;
  * taken before they have chosen. Their answer lets the rite start within two minutes ({@link TrialConfirmLedger}). Every refusal cancels the rite, so
  * Enchanted gives the ingredients back.
  */
-public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
+public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) implements RiteFactory {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "alpha_trial");
     /** {@code faction} is only what the Rites page reads to list it first for werewolves (the factory reads no faction from it). */
     public static final MapCodec<AlphaTrialRiteFactory> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.mapCodec(i -> i.group(
-            com.mojang.serialization.Codec.STRING.optionalFieldOf("faction", "werewolf").forGetter(AlphaTrialRiteFactory::faction)
+            com.mojang.serialization.Codec.STRING.optionalFieldOf("faction", "werewolf").forGetter(AlphaTrialRiteFactory::faction),
+            net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory.fullMoonByDefault().forGetter(AlphaTrialRiteFactory::requiresFullMoon)
     ).apply(i, AlphaTrialRiteFactory::new));
     private static final String KEY = "supernaturalbloodlines.trial.";
 
@@ -47,7 +48,7 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
 
     @Override
     public Rite create(Rite.BaseRiteParams base, Rite.RiteParams params) {
-        return new AlphaTrialRite(base, params);
+        return new AlphaTrialRite(base, params, requiresFullMoon);
     }
 
     @Override
@@ -68,13 +69,25 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
         formOverride = value;
     }
 
+    /** The rite's own {@code requires_full_moon}, read back from the loaded rite (true when the rite is not loaded or its file does not say). */
+    public static boolean needsFullMoon(net.minecraft.server.level.ServerLevel level) {
+        var registry = level.registryAccess().registryOrThrow(net.favouriteless.enchanted.common.init.EData.RITE_TYPES_REGISTRY);
+        var type = registry.get(ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "alpha_trial"));
+        return type == null || net.ofatech.supernaturalbloodlines.parts.species.SpeciesHub.requiresFullMoon(net.ofatech.supernaturalbloodlines.parts.species.SpeciesHub.factoryOf(level.registryAccess(), type));
+    }
+
     /** What Home says about {@code p}'s trial tonight: running, possible (the gate would let them begin in beast form), or nothing. */
     public static TrialRules.Notice noticeOf(ServerPlayer p) {
+        return noticeOf(p, needsFullMoon(p.serverLevel()));
+    }
+
+    /** {@link #noticeOf(ServerPlayer)} for a rite that needs the full moon ({@code true}) or only a night. */
+    public static TrialRules.Notice noticeOf(ServerPlayer p, boolean needsFullMoon) {
         var level = p.serverLevel();
         var wolf = PackAccess.wolf(p);
         TrialRules.Refusal refusal = TrialRules.gate(SpeciesConfig.trial().enabled(), wolf, VampirismSupernatural.isWerewolf(p),
                 VampirismAPI.factionPlayerHandler(p).getCurrentLevel(), SpeciesConfig.trial().minLevel(),
-                MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), true, false, false, false);
+                MoonRule.nightFor(needsFullMoon, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), true, false, false, false);
         return TrialRules.notice(() -> AlphaTrialBoss.running(level, p.getUUID()), refusal);
     }
 
@@ -86,14 +99,15 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
 
     /**
      * Starts a trial for {@code p} at the circle at {@code centre}, or says why not. Returns the refusal key (null when the boss stands), and sends the
-     * warning when that is what is missing.
+     * warning when that is what is missing. {@code needsFullMoon} is the rite file's {@code requires_full_moon}: false lets a server run the trial on any
+     * night, but never in daylight.
      */
-    public static String tryStart(net.minecraft.server.level.ServerLevel level, BlockPos centre, ServerPlayer p, boolean transformed) {
+    public static String tryStart(net.minecraft.server.level.ServerLevel level, BlockPos centre, ServerPlayer p, boolean transformed, boolean needsFullMoon) {
         long now = level.getGameTime();
         var wolf = PackAccess.wolf(p);
         TrialRules.Refusal refusal = TrialRules.gate(SpeciesConfig.trial().enabled(), wolf, VampirismSupernatural.isWerewolf(p),
                 VampirismAPI.factionPlayerHandler(p).getCurrentLevel(), SpeciesConfig.trial().minLevel(),
-                MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), transformed,
+                MoonRule.nightFor(needsFullMoon, level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime()), transformed,
                 AlphaTrialBoss.running(level, p.getUUID()), TrueAlphaWarning.applies(wolf.rank(), PackRules.pathOpen(wolf)), LEDGER.valid(p.getUUID(), now));
         switch (refusal) {
             case NONE -> {
@@ -111,7 +125,7 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
                 return KEY + "warn_sent";
             }
             default -> {
-                return KEY + refusal.name().toLowerCase(java.util.Locale.ROOT);
+                return KEY + TrialRules.refusalKey(refusal, needsFullMoon);
             }
         }
         BlockPos spot = NpcPackSpawner.groundNear(level, centre.offset(5, 0, 0));
@@ -146,8 +160,11 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
     }
 
     private static final class AlphaTrialRite extends Rite {
-        AlphaTrialRite(BaseRiteParams base, RiteParams params) {
+        private final boolean requiresFullMoon;
+
+        AlphaTrialRite(BaseRiteParams base, RiteParams params, boolean requiresFullMoon) {
             super(base, params);
+            this.requiresFullMoon = requiresFullMoon;
         }
 
         @Override
@@ -163,7 +180,7 @@ public record AlphaTrialRiteFactory(String faction) implements RiteFactory {
                 caster.displayClientMessage(Component.translatable(KEY + "not_alone"), true);
                 return cancel();
             }
-            String refusal = tryStart(level, getPos(), caster, transformed(caster));
+            String refusal = tryStart(level, getPos(), caster, transformed(caster), requiresFullMoon);
             if (refusal != null) {
                 caster.displayClientMessage(Component.translatable(refusal, SpeciesConfig.trial().minLevel()), true);
                 return cancel();

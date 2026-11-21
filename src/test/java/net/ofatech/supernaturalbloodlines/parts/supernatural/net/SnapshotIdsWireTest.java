@@ -54,7 +54,7 @@ class SnapshotIdsWireTest {
      * misread each other's bytes). This pins the bytes of an empty snapshot with both flags set, and the protocol they belong to. If you change
      * the snapshot, this fails: raise {@code LadderNet.PROTOCOL} and update both constants here, in the same commit.
      */
-    private static final String GOLDEN_PROTOCOL = "7";
+    private static final String GOLDEN_PROTOCOL = "8";
     private static final String GOLDEN_HEX = "00000000000b4e4f545f56414d504952450000044e4f4e45000000000000010100000000";
 
     @Test
@@ -71,6 +71,25 @@ class SnapshotIdsWireTest {
         }
         assertEquals(GOLDEN_HEX, hex.toString(), "the snapshot's bytes changed: raise LadderNet.PROTOCOL and update GOLDEN_HEX and GOLDEN_PROTOCOL");
         assertEquals(GOLDEN_PROTOCOL, LadderNet.PROTOCOL, "the protocol number does not go with the snapshot's wire format");
+    }
+
+    /** A rite on the wire (chalk, sacrifices, full moon, tick power) is what moved the protocol from 7 to 8: its bytes are pinned. */
+    private static final String GOLDEN_RITE_HEX = "00000000000b4e4f545f56414d504952450000044e4f4e45000000000103613a620501053120613a63012d656e6368616e7465643a736d616c6c5f636972636c653d656e6368616e7465643a6e65746865725f6368616c6b03613a660177010d6d696e6563726166743a636f77010200000000000000";
+
+    @Test
+    void aRitesBytesAndTheProtocolNumberChangeTogether() {
+        var rite = new HubSocial.Rite("a:b", 5, List.of("1 a:c"), List.of("enchanted:small_circle=enchanted:nether_chalk"), "a:f", "w", List.of("minecraft:cow"), true, 2);
+        HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of(rite));
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        HubSnapshotPayload.STREAM_CODEC.encode(buf, s);
+        byte[] bytes = new byte[buf.readableBytes()];
+        buf.readBytes(bytes);
+        StringBuilder hex = new StringBuilder();
+        for (byte b : bytes) {
+            hex.append(String.format("%02x", b));
+        }
+        assertEquals(GOLDEN_RITE_HEX, hex.toString(), "a rite's bytes changed: raise LadderNet.PROTOCOL and update GOLDEN_RITE_HEX and GOLDEN_PROTOCOL");
+        assertEquals("8", LadderNet.PROTOCOL);
     }
 
     @Test

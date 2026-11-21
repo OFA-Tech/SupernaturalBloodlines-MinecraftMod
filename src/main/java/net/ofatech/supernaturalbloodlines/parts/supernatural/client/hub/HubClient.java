@@ -99,6 +99,7 @@ public final class HubClient {
         if (ModList.get().isLoaded("enchanted") && ModList.get().isLoaded("modopedia")) {
             HubHooks.addLauncher(new HubHooks.Launcher("enchanted", "E", 0xFFb7f0c4, Component.translatable("supernaturalbloodlines.hub.launcher.enchanted"),
                     "net.favouriteless.", () -> true, HubClient::openEnchantedBook));
+            net.ofatech.supernaturalbloodlines.parts.supernatural.client.book.EnchantedBook.register();
         }
     }
 

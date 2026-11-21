@@ -1,0 +1,48 @@
+{
+  "title": "Ward of the Moon",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:amethyst_shard"
+  },
+  "assigned_items": [
+    "supernaturalbloodlines:moon_ring"
+  ],
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nBinds a Moon Ring to the one on the centre. While a werewolf wears it, they shift at will and are spared the forced full-moon shift.",
+          "header": "Ward of the Moon"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The target stands on the centre (the caster if nobody does) and must be a werewolf. An unbound Moon Ring must be among the items: a ring that is already bound is refused.",
+          "header": "Ward of the Moon"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Full forms need the Werewolves level the server sets; below it the ring gives half forms.",
+          "header": "Ward of the Moon"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:ward_of_the_moon",
+          "header": "Ward of the Moon"
+        }
+      ]
+    }
+  ]
+}

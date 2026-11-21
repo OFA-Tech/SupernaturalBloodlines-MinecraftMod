@@ -1,0 +1,19 @@
+{
+  "children": [],
+  "display_on_front_page": false,
+  "entries": [
+    "supernaturalbloodlines/rites/rite_of_lineage_reveal",
+    "supernaturalbloodlines/rites/rite_of_lineage_awaken",
+    "supernaturalbloodlines/rites/rite_of_the_moon",
+    "supernaturalbloodlines/rites/silver_moon",
+    "supernaturalbloodlines/rites/hybrid_blood",
+    "supernaturalbloodlines/rites/werewolf_brother",
+    "supernaturalbloodlines/rites/alpha_trial"
+  ],
+  "icon": {
+    "count": 1,
+    "id": "minecraft:bone"
+  },
+  "landing_text": "Rites of the moon and the wolf: the gene, the hybrids, the silver cure, the Alpha Trial and the brothers of the pack.",
+  "title": "Werewolves"
+}
