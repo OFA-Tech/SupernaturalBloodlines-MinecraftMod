@@ -51,10 +51,10 @@ public final class SpeciesHub {
         MinecraftServer server = p.getServer();
         SirelineIndex sirelines = SirelineIndex.get(p.serverLevel());
         UUID sireId = BloodlineAccess.get(p).sire();
-        // a creature sire is "?" like a creature ancestor: an empty name
+        // a creature sire (or one whose name is not known) is "?" like a creature ancestor: an empty name, so the page knows there is a sire
         Optional<String> sire = sireId == null ? Optional.empty()
                 : sirelines.isCreature(sireId) ? Optional.of("")
-                : sirelines.nameOf(sireId).or(() -> Optional.ofNullable(PackAccess.nameOf(server, sireId)));
+                : sirelines.nameOf(sireId).or(() -> Optional.ofNullable(PackAccess.nameOf(server, sireId))).or(() -> Optional.of(""));
         List<String> sired = sirelines.childrenOf(p.getUUID()).stream().map(SirelineIndex.Node::name).toList();
         List<HubSocial.Kin> line = SirelineTree.below(sirelines, p.getUUID()).stream().limit(MAX_LINE)
                 .map(l -> new HubSocial.Kin(l.name(), l.depth())).toList();

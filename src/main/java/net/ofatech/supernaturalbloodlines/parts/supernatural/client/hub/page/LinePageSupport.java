@@ -27,8 +27,7 @@ public final class LinePageSupport {
 
     public static LineTree.Model model(HubScreen.Frame f) {
         HubSnapshotPayload snap = f.view.snapshot();
-        return LineTree.build(snap.family().origin(), f.view.player().getName().getString(), f.view.bloodline().sire() == null && snap.sire().isEmpty()
-                        ? Optional.empty() : Optional.of(snap.sire().orElse("")),
+        return LineTree.build(snap.family().origin(), f.view.player().getName().getString(), snap.sire(),
                 snap.severed(), snap.family().ancestors(), snap.family().line());
     }
 
@@ -132,7 +131,7 @@ public final class LinePageSupport {
             return b.body(narration(m, n)).build();
         }
         HubSnapshotPayload snap = f.view.snapshot();
-        boolean sired = f.view.bloodline().sire() != null;
+        boolean sired = snap.hasSire();
         b.field(Component.translatable(KEY + "field.species"), race(f));
         b.field(Component.translatable(KEY + "field.sire"), snap.sire().filter(s -> !s.isEmpty()).<Component>map(Component::literal)
                 .orElse(Component.translatable(sired ? KEY + "sire_unknown" : KEY + "no_sire")));

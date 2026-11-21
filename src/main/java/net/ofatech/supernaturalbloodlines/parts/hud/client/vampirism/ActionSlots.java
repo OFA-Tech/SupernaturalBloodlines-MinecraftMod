@@ -65,7 +65,7 @@ public final class ActionSlots {
         String name = action.getName().getString();
         Optional<? extends IFactionPlayer<?>> current = ClientActions.current(p);
         if (current.isEmpty() || !ClientActions.unlocked(current.get(), action)) {
-            return new SlotView(icon, key, 0f, 0, false, GREY_LOCKED, name, null);
+            return new SlotView(icon, key, 0f, 0, false, GREY_LOCKED, name, null).withDescription(description(id));
         }
         IFactionPlayer fp = current.get();
         IActionHandler handler = fp.getActionHandler();
@@ -75,6 +75,13 @@ public final class ActionSlots {
         int seconds = onCooldown ? (int) Math.ceil(action.getCooldown(fp) * fraction / 20f) : 0;
         IAction.PERM perm = action.canUse(fp);
         boolean blocked = !active && perm != IAction.PERM.ALLOWED && perm != IAction.PERM.COOLDOWN;
-        return new SlotView(icon, key, fraction, seconds, active, blocked ? ACTION + perm.name().toLowerCase(Locale.ROOT) : null, name, null);
+        return new SlotView(icon, key, fraction, seconds, active, blocked ? ACTION + perm.name().toLowerCase(Locale.ROOT) : null, name, null).withDescription(description(id));
+    }
+
+    /** Vampirism's (and Werewolves') one-line description of an action, {@code action.<namespace>.<path>.desc}; null when the mod has none. */
+    @org.jetbrains.annotations.Nullable
+    static String description(ResourceLocation id) {
+        String key = "action." + id.getNamespace() + "." + id.getPath() + ".desc";
+        return net.minecraft.client.resources.language.I18n.exists(key) ? net.minecraft.client.resources.language.I18n.get(key) : null;
     }
 }

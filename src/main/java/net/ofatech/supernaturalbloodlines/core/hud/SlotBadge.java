@@ -20,20 +20,31 @@ public final class SlotBadge {
 
     /** The key badge: a round wax seal at the bottom right, a dark plate under the letter at the bottom, or a tab hanging off the top left. */
     public static Box key(Look look, Box slot, int labelW) {
+        return key(look, slot, labelW, 0);
+    }
+
+    /** {@link #key(Look, Box, int)} standing {@code lift} px higher, to clear the mastery bar along the bottom edge (the Tensura theme's tab is at the top and does not move). */
+    public static Box key(Look look, Box slot, int labelW, int lift) {
         return switch (look) {
             case GRIMOIRE -> {
                 int bw = Math.max(11, labelW + 5);
-                yield new Box(slot.right() - bw - 1, slot.bottom() - 12, bw, bw);
+                // lifted, the seal's lower edge is what clears the bar, however wide the key text makes it
+                yield new Box(slot.right() - bw - 1, slot.bottom() - (lift == 0 ? 12 : lift + Math.max(12, bw + 1)), bw, bw);
             }
-            case BLOOD_MOON -> new Box(slot.x() + (HudLayout.SLOT - labelW) / 2 - 2, slot.bottom() - 10, labelW + 4, 10);
+            case BLOOD_MOON -> new Box(slot.x() + (HudLayout.SLOT - labelW) / 2 - 2, slot.bottom() - 10 - lift, labelW + 4, 10);
             case TENSURA -> new Box(slot.x() - 2, slot.y() - 3, labelW + 4, 11);
         };
     }
 
     /** The cooldown's text, centred, away from the badge. */
     public static Box seconds(Look look, Box slot, int textW) {
+        return seconds(look, slot, textW, 0);
+    }
+
+    /** {@link #seconds(Look, Box, int)} standing {@code lift} px higher where it is at the bottom (the Tensura theme), to clear the mastery bar. */
+    public static Box seconds(Look look, Box slot, int textW, int lift) {
         int x = slot.x() + (HudLayout.SLOT - textW) / 2;
-        return new Box(x, look == Look.TENSURA ? slot.bottom() - 10 : slot.y() + 2, textW, TEXT_H);
+        return new Box(x, look == Look.TENSURA ? slot.bottom() - 10 - lift : slot.y() + 2, textW, TEXT_H);
     }
 
     /** The mark of Tensura mode: a small diamond on the top right corner, mostly outside the tile. */

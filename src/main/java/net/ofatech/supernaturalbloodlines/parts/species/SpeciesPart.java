@@ -151,6 +151,7 @@ public final class SpeciesPart {
         RiteFactoryRegistry.get().register(DoppelgangerBloodRiteFactory.ID, DoppelgangerBloodRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(RevelationRiteFactory.ID, RevelationRiteFactory.CODEC);
         BloodlineAccess.useGeneVisibility(SpeciesConfig::genesAlwaysVisible);
+        BloodlineAccess.useOriginalVisibility(SpeciesConfig::originalVisibilityAlways);
         DoppelgangerGene.register(); // genes and doppelgänger villagers need no Werewolves
         DoppelgangerVillagers.register();
         net.ofatech.supernaturalbloodlines.shared.species.DoppelgangerIndex.set(DoppelgangerVillagers::loaded); // for the Vampire Compass

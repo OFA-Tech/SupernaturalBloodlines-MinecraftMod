@@ -73,11 +73,42 @@ public final class HudLayout {
         return new Box(x, screenH - PILL_ABOVE - (lifted ? ALT_LIFT : 0), w, PILL_H);
     }
 
-    /** The top of the left column's tooltip: above the column, and above the lifted pill too while an action bar message is up. */
+    /** A label is two lines (the name, then mastery and a short description) and stands level with its slot: its centre is the slot's centre. */
+    /** The top of the left column's fallback panel: above the column, and above the lifted pill too while an action bar message is up. */
     public static int leftTooltipTop(int columnTop, int tooltipH, boolean lifted) {
         return Math.max(2, columnTop - tooltipH - 6 - (lifted ? ALT_LIFT : 0));
     }
 
+    public static final int LABEL_H = 20;
+    /** Air between a column and its labels. */
+    public static final int LABEL_AIR = 3;
+    /** Air between a label and the screen's edge. */
+    public static final int LABEL_EDGE = 2;
+    /** A label narrower than this is not drawn (a window so small that the column leaves no room beside it): the slot is still there. */
+    public static final int LABEL_MIN_W = 32;
+
+    /**
+     * The labels held Alt shows, one per slot in slot order, each beside its own slot on the OUTER side: left of the left column (the text ends at the
+     * slot) and right of the right column (the text starts at the slot), centred on the slot's row. Nothing else of the HUD stands out there (the pill, the
+     * mode panel, the hotbar, the offhand slot and the attack indicator are all between or above the columns), and every label stays on screen. A column
+     * with no room outside it (a small window at a big GUI scale) gets a label of width 0, which is not drawn.
+     */
+    public static Box[] labels(int screenW, int screenH) {
+        Box[] s = slots(screenW, screenH);
+        Box[] out = new Box[Loadout.SLOTS];
+        for (int i = 0; i < out.length; i++) {
+            int y = s[i].y() + (SLOT - LABEL_H) / 2;
+            if (i < 3) {
+                int w = s[i].x() - LABEL_AIR - LABEL_EDGE;
+                out[i] = w < LABEL_MIN_W ? new Box(Math.max(0, s[i].x() - LABEL_AIR), y, 0, LABEL_H) : new Box(LABEL_EDGE, y, w, LABEL_H);
+            } else {
+                int x = s[i].right() + LABEL_AIR;
+                int w = screenW - LABEL_EDGE - x;
+                out[i] = w < LABEL_MIN_W ? new Box(Math.min(x, screenW), y, 0, LABEL_H) : new Box(x, y, w, LABEL_H);
+            }
+        }
+        return out;
+    }
     /** The action bar line of {@code textW} px (the vanilla one: item pickup, bed, and the HUD's own refusals). */
     public static Box actionBar(int screenW, int screenH, int textW) {
         return new Box(screenW / 2 - textW / 2, screenH - ACTION_BAR_ABOVE, textW, ACTION_BAR_H);
