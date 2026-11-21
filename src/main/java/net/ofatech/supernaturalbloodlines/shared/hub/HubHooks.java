@@ -33,9 +33,9 @@ public final class HubHooks {
         }
 
         public static int dim(int argb) {
-            int r = (((argb >> 16) & 0xFF) + 0x70) / 2;
-            int g = (((argb >> 8) & 0xFF) + 0x70) / 2;
-            int b = ((argb & 0xFF) + 0x70) / 2;
+            int r = (((argb >> 16) & 0xFF) * 3 + 0x60 * 7) / 10;
+            int g = (((argb >> 8) & 0xFF) * 3 + 0x60 * 7) / 10;
+            int b = ((argb & 0xFF) * 3 + 0x60 * 7) / 10;
             return (argb & 0xFF000000) | (r << 16) | (g << 8) | b;
         }
     }

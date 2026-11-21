@@ -30,7 +30,7 @@ final class RitesBook {
     /** The unlock advancements (generated with the book: {@code known/<rite>} and {@code sealed/<rite>}). */
     static final String ADV = "src/main/resources/data/supernaturalbloodlines/advancement/rites";
     /** What fits on one line of the book's entry list (its text is 100 pixels wide; the label is cut or wraps beyond this many characters). */
-    static final int LABEL_CHARS = 38;
+    static final int LABEL_CHARS = 32;
     static final String KIND = "supernaturalbloodlines.rites.kind.";
     static final String KIND_SHORT = "supernaturalbloodlines.rites.kind_short.";
     static final String LORE = "supernaturalbloodlines.rites.lore.";
@@ -278,11 +278,13 @@ final class RitesBook {
         RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(rite);
         List<String> parts = new ArrayList<>();
         List<String> kinds = gate.kinds().stream().sorted().map(k -> lang.get(KIND_SHORT + k.name().toLowerCase()).getAsString()).toList();
-        if (kinds.size() > 2) {
-            parts.add(lang.get(KIND_SHORT + "several").getAsString());
-        } else {
-            parts.addAll(kinds);
+        // three kinds and a lore source do not fit one line: the lore, which is what a player can go and find, and the page says the rest
+        if (kinds.size() > 2 && !gate.lore().isEmpty()) {
+            kinds = List.of();
+        } else if (kinds.size() > 2) {
+            kinds = List.of(lang.get(KIND_SHORT + "several").getAsString());
         }
+        parts.addAll(kinds);
         gate.lore().stream().sorted().forEach(l -> parts.add(lang.get(LORE_SHORT + l).getAsString()));
         return "??? \u00b7 " + orList(parts);
     }

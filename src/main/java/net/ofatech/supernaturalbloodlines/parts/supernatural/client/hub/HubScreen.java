@@ -249,6 +249,9 @@ public final class HubScreen extends Screen {
                     blocked == null ? () -> HubClient.launch(l, page) : () -> net.minecraft.client.gui.components.toasts.SystemToast.add(net.minecraft.client.Minecraft.getInstance().getToasts(),
                             net.minecraft.client.gui.components.toasts.SystemToast.SystemToastId.PERIODIC_NOTIFICATION, blocked, null)));
             theme.drawLauncher(g, r, blocked == null ? l : l.dimmed(), r.contains(mouseX, mouseY) || f.focused(id));
+            if (blocked != null) {
+                g.fill(r.x(), r.y(), r.right(), r.bottom(), 0x66101010); // a theme that draws its own seal colour is dimmed too
+            }
             if (f.focused(id)) {
                 theme.drawFocus(g, r);
             }
