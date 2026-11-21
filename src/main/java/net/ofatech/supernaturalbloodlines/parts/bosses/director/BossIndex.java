@@ -49,6 +49,24 @@ public final class BossIndex extends SavedData {
         public int reminded;
         /** Elijah: an oath was broken, so he fights everybody for good and makes no more deals (R167). */
         public boolean hostile;
+        /** The Beast of Gevaudan's encounter (R184): where it is, how many Hosts were made, whether the Spirit already came back, and the day the Host was made or the Spirit got away. */
+        public net.ofatech.supernaturalbloodlines.core.boss.BeastPhase phase = net.ofatech.supernaturalbloodlines.core.boss.BeastPhase.NONE;
+        public int hostsMade;
+        public boolean returned;
+        public long phaseDay;
+        /** The Spirit entity and the game time at which it escapes. */
+        @Nullable
+        public UUID spirit;
+        public long spiritUntil;
+        /** Who did what to the Beast across the whole encounter (the Beast is replaced by the Host when it collapses, so the count cannot live on the entity). */
+        public final net.ofatech.supernaturalbloodlines.core.boss.DamageTally tally = new net.ofatech.supernaturalbloodlines.core.boss.DamageTally();
+        /** The players who were near when the Beast collapsed: told how it ends even if they have gone since. */
+        public final java.util.Set<UUID> witnesses = new java.util.LinkedHashSet<>();
+        /** Who the Mantle of the Beast is kept for: the one who did the most, who was not here when it was paid. It is handed over when they log in. */
+        public final java.util.Set<UUID> owed = new java.util.LinkedHashSet<>();
+        /** The game time at which the index began to say LOST (not saved; {@link #NOT_LOST} when it does not). */
+        public static final long NOT_LOST = Long.MIN_VALUE;
+        public long lostSince = NOT_LOST;
 
         CompoundTag save(BossId id) {
             CompoundTag t = new CompoundTag();
@@ -70,7 +88,45 @@ public final class BossIndex extends SavedData {
             t.putLong("arrive_at", arriveAt);
             t.putInt("reminded", reminded);
             t.putBoolean("hostile", hostile);
+            t.putString("phase", phase.name());
+            t.putInt("hosts_made", hostsMade);
+            t.putBoolean("returned", returned);
+            t.putLong("phase_day", phaseDay);
+            if (spirit != null) {
+                t.putUUID("spirit", spirit);
+            }
+            t.putLong("spirit_until", spiritUntil);
+            ListTag hits = new ListTag();
+            tally.entries().forEach((who, hit) -> {
+                CompoundTag h = new CompoundTag();
+                h.putUUID("who", who);
+                h.putFloat("amount", hit.amount());
+                h.putLong("seq", hit.seq());
+                hits.add(h);
+            });
+            t.put("tally", hits);
+            t.put("witnesses", uuids(witnesses));
+            t.put("owed", uuids(owed));
             return t;
+        }
+
+        private static ListTag uuids(java.util.Set<UUID> set) {
+            ListTag list = new ListTag();
+            for (UUID id : set) {
+                CompoundTag c = new CompoundTag();
+                c.putUUID("id", id);
+                list.add(c);
+            }
+            return list;
+        }
+
+        private static void readUuids(CompoundTag t, String key, java.util.Set<UUID> into) {
+            for (Tag h : t.getList(key, Tag.TAG_COMPOUND)) {
+                CompoundTag c = (CompoundTag) h;
+                if (c.hasUUID("id")) {
+                    into.add(c.getUUID("id"));
+                }
+            }
         }
 
         static Entry load(CompoundTag t) {
@@ -88,6 +144,20 @@ public final class BossIndex extends SavedData {
             e.arriveAt = t.contains("arrive_at") ? t.getLong("arrive_at") : -1;
             e.reminded = t.getInt("reminded");
             e.hostile = t.getBoolean("hostile");
+            e.phase = net.ofatech.supernaturalbloodlines.core.boss.BeastPhase.of(t.getString("phase"));
+            e.hostsMade = t.getInt("hosts_made");
+            e.returned = t.getBoolean("returned");
+            e.phaseDay = t.getLong("phase_day");
+            e.spirit = t.hasUUID("spirit") ? t.getUUID("spirit") : null;
+            e.spiritUntil = t.getLong("spirit_until");
+            readUuids(t, "witnesses", e.witnesses);
+            readUuids(t, "owed", e.owed);
+            for (Tag h : t.getList("tally", Tag.TAG_COMPOUND)) {
+                CompoundTag c = (CompoundTag) h;
+                if (c.hasUUID("who")) {
+                    e.tally.put(c.getUUID("who"), c.getFloat("amount"), c.getLong("seq"));
+                }
+            }
             return e;
         }
     }

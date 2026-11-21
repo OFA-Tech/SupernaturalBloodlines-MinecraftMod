@@ -47,10 +47,10 @@ final class RitesBook {
                     List.of("immortality", "cleansing_blood", "original_blood", "blood_offering", "rite_of_the_five")),
             new Cat("werewolves", "Werewolves", "minecraft:bone",
                     "Rites of the moon and the wolf: the gene, the hybrids, the silver cure, the Alpha Trial and the brothers of the pack.",
-                    List.of("rite_of_lineage_reveal", "rite_of_lineage_awaken", "rite_of_the_moon", "silver_moon", "hybrid_blood", "werewolf_brother", "alpha_trial")),
+                    List.of("rite_of_lineage_reveal", "rite_of_lineage_awaken", "rite_of_the_moon", "silver_moon", "hybrid_blood", "werewolf_brother", "alpha_trial", "rite_of_the_frequency")),
             new Cat("witches", "Witchcraft", "minecraft:amethyst_shard",
                     "Rites a witch works, or that call witchcraft awake: ancestral calling, hiding, linking, revealing genes, cutting a sire bond and drawing doppelg\u00e4nger blood.",
-                    List.of("ancestral_calling", "rite_of_revelation", "doppelganger_blood", "rite_of_severance", "rite_of_cloaking", "rite_of_linking")),
+                    List.of("ancestral_calling", "rite_of_revelation", "doppelganger_blood", "rite_of_severance", "rite_of_cloaking", "rite_of_linking", "rite_of_the_valet_pike")),
             new Cat("lines", "Lines of the Originals", "minecraft:white_dye",
                     "Rites that free someone from the line of their Original, and the rite that makes The Cure.",
                     List.of("rite_of_the_broken_line", "rite_of_the_imprisoned_original", "rite_of_the_cure")),
@@ -73,7 +73,7 @@ final class RitesBook {
             Map.entry("rite_of_cloaking", "minecraft:phantom_membrane"), Map.entry("rite_of_lineage_awaken", "minecraft:bone"),
             Map.entry("rite_of_lineage_reveal", "minecraft:paper"), Map.entry("rite_of_linking", "minecraft:lead"),
             Map.entry("rite_of_revelation", "minecraft:spyglass"), Map.entry("rite_of_severance", "minecraft:shears"),
-            Map.entry("rite_of_the_broken_line", "minecraft:chain"), Map.entry("rite_of_the_cure", "minecraft:enchanted_golden_apple"),
+            Map.entry("rite_of_the_broken_line", "minecraft:chain"), Map.entry("rite_of_the_cure", "minecraft:enchanted_golden_apple"), Map.entry("rite_of_the_frequency", "minecraft:echo_shard"), Map.entry("rite_of_the_valet_pike", "minecraft:iron_sword"),
             Map.entry("rite_of_the_five", "minecraft:candle"), Map.entry("rite_of_the_imprisoned_original", "minecraft:iron_bars"),
             Map.entry("rite_of_the_moon", "minecraft:clock"), Map.entry("silver_moon", "minecraft:iron_ingot"),
             Map.entry("vampire_compass", "minecraft:compass"), Map.entry("ward_of_daylight", "minecraft:sunflower"),
@@ -118,7 +118,8 @@ final class RitesBook {
             Map.entry("ancestral_calling", "Ancestral Calling"), Map.entry("curse_magicule_drain", "Magicule Drain"),
             Map.entry("rite_of_the_broken_line", "The Broken Line"), Map.entry("cleansing_blood", "Cleansing Blood"),
             Map.entry("silver_moon", "The Silver Moon"), Map.entry("original_blood", "Original's Blood"),
-            Map.entry("blood_offering", "Blood Offering"), Map.entry("hybrid_blood", "Hybrid's Blood"));
+            Map.entry("blood_offering", "Blood Offering"), Map.entry("hybrid_blood", "Hybrid's Blood"),
+            Map.entry("rite_of_the_frequency", "The Frequency"), Map.entry("rite_of_the_valet_pike", "The Valet Pike"));
 
     static String header(String path, String name) {
         return width(name) <= HEADER_WIDTH ? name : SHORT.getOrDefault(path, name);

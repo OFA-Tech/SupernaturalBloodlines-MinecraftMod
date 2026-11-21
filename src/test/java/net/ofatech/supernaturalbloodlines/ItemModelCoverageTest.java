@@ -30,8 +30,8 @@ class ItemModelCoverageTest {
     }
 
     /** Phases 17b to 17h register these; the five spark models are hub icons only (plan 17, open question 4). */
-    static final Set<String> NOT_REGISTERED_YET = Set.of("mantle_of_the_beast", "valet_pike", "alpha_spark", "true_alpha_spark", "npc_alpha_spark_0",
-            "npc_alpha_spark_1", "npc_alpha_spark_2", "sebastien_tricorn");
+    static final Set<String> NOT_REGISTERED_YET = Set.of("alpha_spark", "true_alpha_spark", "npc_alpha_spark_0",
+            "npc_alpha_spark_1", "npc_alpha_spark_2");
 
     static boolean isItemModel(String id) {
         return !id.endsWith("_3d") && !id.matches("vampire_compass_\\d+");

@@ -13,6 +13,9 @@ public final class BossRenderers {
         event.registerEntityRenderer(BossRegistries.KLAUS.get(), context -> new ShiftRenderer<>(context, "klaus_hybrid", "klaus_hybrid_geo", 0.6F));
         event.registerEntityRenderer(BossRegistries.DEUCALION.get(), context -> new ShiftRenderer<>(context, "deucalion_demon_wolf", "deucalion_demon_wolf_geo", 0.9F));
         event.registerEntityRenderer(BossRegistries.PETER_HALE.get(), context -> new ShiftRenderer<>(context, "peter_hale_alpha", "peter_hale_alpha_geo", 0.9F));
+        event.registerEntityRenderer(BossRegistries.GEVAUDAN_HOST.get(), context -> new HumanoidBossRenderer<>(context, false));
+        event.registerEntityRenderer(BossRegistries.BEAST.get(), BeastRenderer::new);
+        event.registerEntityRenderer(BossRegistries.GEVAUDAN_SPIRIT.get(), SpiritRenderer::new);
         event.registerEntityRenderer(BossRegistries.ELIJAH.get(), context -> new HumanoidBossRenderer<>(context, false));
         event.registerEntityRenderer(BossRegistries.REBEKAH.get(), context -> new HumanoidBossRenderer<>(context, true));
         event.registerEntityRenderer(BossRegistries.KOL.get(), context -> new HumanoidBossRenderer<>(context, false));

@@ -172,6 +172,13 @@ public final class AdminEntries {
         all.add(SettingEntry.of(BOSSES_FILE, bo, "peter_feral_full_moon", BOOL));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "peter_respawn", BOOL));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "peter_respawn_days", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_host_chance", DOUBLE));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_respects_ash", BOOL));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_returns_once", BOOL));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_spirit_seconds", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_roar_range", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_roar_seconds", INT));
+        all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_roar_cooldown_seconds", INT));
         ALL = List.copyOf(all);
     }
 

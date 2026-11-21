@@ -211,6 +211,13 @@ Needs the species part and GeckoLib. All of them are on the hub's Admin page (se
 | `peter_feral_full_moon` | `true` | | Peter shifts on a full moon night and, as the wolf, attacks anything alive that is not a boss. Off: he shifts only at half health and fights who hurts him or comes within 10 blocks. |
 | `peter_respawn` | `false` | | Whether he may be found again, and pay again, `peter_respawn_days` after he died. |
 | `peter_respawn_days` | `7` | 1 to 1000 | In-game days after his death before he may be found again (only with `peter_respawn` on). |
+| `beast_host_chance` | `0.25` | 0 to 1 | The chance, once on each full moon night while the Beast has not begun, that the Host of the Beast of Gévaudan appears to an Alpha, a True Alpha or a Hunter of the Five (needs Werewolves). A Host is made twice in a world at most. |
+| `beast_respects_ash` | `true` | | A line of mountain ash stops the Beast, and a closed ring of it round the Beast makes it collapse. Off: it walks through ash, and only its health collapses it. |
+| `beast_returns_once` | `true` | | The Spirit that escapes the Valet Pike returns once, at half health, on a later full moon night. Off: an escape is final. |
+| `beast_spirit_seconds` | `60` | 10 to 600 | Seconds the Spirit flees before it escapes. |
+| `beast_roar_range` | `16` | 4 to 48 | Blocks round the Beast that its Roar reaches. |
+| `beast_roar_seconds` | `6` | 1 to 60 | Seconds the Roar's fear (Weakness II and Darkness) lasts. Alphas and True Alphas are immune. |
+| `beast_roar_cooldown_seconds` | `20` | 5 to 300 | Seconds between two Roars. |
 | `rebekah_delay_seconds` | `60` | 0 to 3600 | How long after The Cure is made at the rite Rebekah arrives for whoever made it. |
 | `mikael_stakes_originals` | `false` | Off: Mikael does not hunt Originals or Original hybrids, and his white oak never counts as a white oak kill, so he cannot start line death. On: he hunts them, his stake kills an Original outright and their line dies with them; the hunted player is warned. |
 
