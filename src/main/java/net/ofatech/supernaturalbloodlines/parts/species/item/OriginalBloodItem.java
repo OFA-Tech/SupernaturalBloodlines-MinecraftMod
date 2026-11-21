@@ -4,7 +4,6 @@ import java.util.UUID;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -68,8 +67,7 @@ public final class OriginalBloodItem extends Item {
             return stack; // not drunk by any other route either; nothing is used up
         }
         if (source != null && entity instanceof ServerPlayer player) {
-            player.setData(SpeciesRegistries.BLOOD_SOURCE, source);
-            player.addEffect(new MobEffectInstance(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT, OriginalBloodEffect.DURATION_TICKS));
+            BloodDrink.drank(player, source);
         }
         return entity instanceof Player player ? ItemUtils.createFilledResult(stack, player, new ItemStack(Items.GLASS_BOTTLE)) : stack;
     }

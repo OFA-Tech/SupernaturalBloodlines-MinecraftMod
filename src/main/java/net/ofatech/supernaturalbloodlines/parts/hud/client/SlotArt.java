@@ -3,6 +3,8 @@ package net.ofatech.supernaturalbloodlines.parts.hud.client;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.ofatech.supernaturalbloodlines.core.hud.HudLayout;
+import net.ofatech.supernaturalbloodlines.core.hud.Mastery;
+import net.ofatech.supernaturalbloodlines.core.hud.MasteryBar;
 import net.ofatech.supernaturalbloodlines.core.hud.PieSweep;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotBadge;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotShape;
@@ -68,6 +70,9 @@ final class SlotArt {
             if (lock) {
                 KitDraw.icon(g, Icons.LOCK, b.x() + (s - 10) / 2, b.y() + (s - 10) / 2, 10, fade(0xFFE6E0D0, alpha));
             }
+            if (v.mastery() != null) {
+                masteryBar(g, font, style, b, v, alpha);
+            }
         }
         if (bloodRing >= 0f) {
             ring(g, b, bloodRing, alpha);
@@ -75,6 +80,22 @@ final class SlotArt {
         key(g, font, style, b, v.keyLabel(), alpha);
         if (shape.marked()) {
             mark(g, b, alpha);
+        }
+    }
+
+    /** The thin mastery bar of a Tensura skill: a dark backing, the track, and the fill in the theme's colour (gold once mastered, grey-violet while a resist skill is being learned). */
+    private static void masteryBar(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box slot, SlotView v, float alpha) {
+        SlotBadge.Look look = SlotBadge.Look.valueOf(style.name());
+        Mastery m = v.mastery();
+        String key = v.keyLabel().length() > 2 ? v.keyLabel().substring(0, 2) : v.keyLabel();
+        int labelW = key.isEmpty() ? 0 : font.width(key);
+        HudLayout.Box back = MasteryBar.box(look, slot, labelW);
+        HudLayout.Box in = MasteryBar.inner(look, slot, labelW);
+        g.fill(back.x(), back.y(), back.right(), back.bottom(), fade(0xC0000000 | MasteryBar.TRACK & 0xFFFFFF, alpha));
+        g.fill(in.x(), in.y(), in.right(), in.bottom(), fade(0xFF2A2F36, alpha));
+        int fill = MasteryBar.fill(m, in.w());
+        if (fill > 0) {
+            g.fill(in.x(), in.y(), in.x() + fill, in.bottom(), fade(MasteryBar.color(look, m.state()), alpha));
         }
     }
 

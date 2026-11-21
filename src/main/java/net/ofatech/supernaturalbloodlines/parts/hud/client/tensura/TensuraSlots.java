@@ -4,11 +4,13 @@ import io.github.manasmods.manascore.skill.api.ManasSkill;
 import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
 import io.github.manasmods.manascore.skill.api.SkillAPI;
 import io.github.manasmods.tensura.ability.TensuraSkill;
+import io.github.manasmods.tensura.ability.skill.resist.ResistSkill;
 import io.github.manasmods.tensura.storage.TensuraStorages;
 import io.github.manasmods.tensura.storage.ability.AbilitySlot;
 import io.github.manasmods.tensura.storage.ability.IAbility;
 import net.minecraft.client.player.LocalPlayer;
 import net.ofatech.supernaturalbloodlines.core.hud.InputPlan;
+import net.ofatech.supernaturalbloodlines.core.hud.Mastery;
 import net.ofatech.supernaturalbloodlines.core.hud.PresetPair;
 import net.ofatech.supernaturalbloodlines.core.hud.SkillCooldown;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
@@ -64,6 +66,12 @@ public final class TensuraSlots {
         float fraction = SkillCooldown.fraction(left, PEAK[hudSlot]);
         String detail = skill instanceof TensuraSkill ts && inst.getModes() > 1 ? ts.getModeName(inst, mode).getString() : null;
         return new SlotView(skill.getSkillIcon(), key, fraction, SkillCooldown.seconds(left), inst.isToggled(),
-                inst.canInteractSkill(p) ? null : GREY_BLOCKED, name, detail);
+                inst.canInteractSkill(p) ? null : GREY_BLOCKED, name, detail, mastery(p, skill, inst));
+    }
+
+    /** The same two numbers Tensura's own skill HUD reads on the client: {@code getMastery} against {@code getMaxMastery}, below zero while a resist skill is still being learned. */
+    static Mastery mastery(LocalPlayer p, ManasSkill skill, ManasSkillInstance inst) {
+        int learning = skill instanceof ResistSkill r ? r.getLearningPointRequirement() : 0;
+        return Mastery.of(inst.getMastery(), inst.getMaxMastery(), learning, inst.isMastered(p));
     }
 }

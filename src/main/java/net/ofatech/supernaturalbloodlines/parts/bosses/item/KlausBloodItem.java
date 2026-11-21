@@ -6,7 +6,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -18,7 +17,7 @@ import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
-import net.ofatech.supernaturalbloodlines.parts.species.item.OriginalBloodEffect;
+import net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrink;
 import net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex;
 
 /**
@@ -61,8 +60,7 @@ public final class KlausBloodItem extends Item {
                 // his line is gone (he died to white oak): the blood still cures, but there is no sire left to turn anyone for
                 player.displayClientMessage(Component.translatable("item.supernaturalbloodlines.klaus_blood.dead_line"), true);
             } else {
-                player.setData(SpeciesRegistries.BLOOD_SOURCE, NpcOriginal.KLAUS.uuid());
-                player.addEffect(new MobEffectInstance(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT, OriginalBloodEffect.DURATION_TICKS));
+                BloodDrink.drank(player, NpcOriginal.KLAUS.uuid());
             }
         }
         return entity instanceof Player player ? ItemUtils.createFilledResult(stack, player, new ItemStack(Items.GLASS_BOTTLE)) : stack;
