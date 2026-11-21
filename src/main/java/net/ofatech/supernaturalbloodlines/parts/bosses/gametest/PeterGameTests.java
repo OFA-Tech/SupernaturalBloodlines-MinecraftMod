@@ -390,7 +390,10 @@ public final class PeterGameTests {
             run(p, 8);
             helper.assertTrue(p.position().distanceToSqr(start.x, p.getY(), start.z) < 0.05 && p.pouncing(), "he walked during the pounce: " + p.position());
             float before = villager.getHealth();
-            run(p, PeterRules.POUNCE_TICKS);
+            // measured the tick it ends: after it he walks on to the target like any wolf
+            for (int i = 0; i < PeterRules.POUNCE_TICKS && p.pouncing(); i++) {
+                run(p, 1);
+            }
             helper.assertTrue(!p.pouncing(), "the pounce did not end");
             double moved = Math.sqrt(p.position().distanceToSqr(start.x, p.getY(), start.z));
             helper.assertTrue(Math.abs(moved - PeterRules.POUNCE_DISTANCE) < 0.3, "he ended " + moved + " blocks on, the animation moves the model " + PeterRules.POUNCE_DISTANCE);
