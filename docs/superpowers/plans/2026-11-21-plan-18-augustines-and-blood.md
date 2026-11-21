@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build, in our own code, the nine things the owner approved on 2026-11-20: Augustine vampires, Rip Heart, Hybrid Leap, the Cursed White Oak Ash Dagger, staged venom, four Vampirism tweaks, force-fed blood, dying-and-standing-up for the turning, and blood bottles that carry their source.
+**Goal:** Build, in our own code, the nine things the owner approved on 2026-11-20, and the Neck Snap skill added on 2026-11-21: Augustine vampires, Rip Heart, Hybrid Leap, the Cursed White Oak Ash Dagger, staged venom, four Vampirism tweaks, force-fed blood, dying-and-standing-up for the turning, blood bottles that carry their source, and Neck Snap (a targeted action like Rip Heart that lays vampires down for a while and kills the mortal and weak).
 
 **Architecture:** Pure rules go in `core` (JUnit-tested, no Minecraft classes). Behaviour is NeoForge events in the `species` part (blood, dying, Augustines, actions) and the `supernatural` part (skills data, Vampirism tweaks). **No new mixin anywhere**: `species` stays at 3 of 3, `supernatural` is untouched. Every new action is an `ExtraActions.Action`, so the hub's Slots tab and the HUD list it with no new screen. Nothing here depends on, or is compatible with, the "TVD Vampirism" mod.
 
@@ -39,10 +39,11 @@
 ## Review Focus
 
 1. **Oracle through Rip Heart:** a target at or under the threshold who is an Original gets the same action-bar line, the same cooldown and the same "done" feedback as one who is not; only the (missing) death differs. Pinned in 18d.
-2. **Secrets in synced data:** a stamped bottle's synced components and tooltip must not name an Original, hybrid, tribrid or heretic source, nor reveal its kind (a client can read components). Pinned in 18a.
-3. **Dying must still be killable and must not strand anyone:** void and `/kill` kill a player in the turning for real; a relog while dying resumes; giving up kills with the original blow and ends the turning; a second death after waking leaves the turning running as today; `PendingSire` still names the right sire. Pinned in 18b.
+2. **Secrets in synced data (owner override of Q14):** a stamped bottle's UUID, kind and name are **never sent to a client** (their network codec is a unit codec: the client sees only that the component exists). The one synced thing is a label for the tooltip: a common vampire's name, or "?" for every other kind. A modified client must not be able to read, resolve or even distinguish an Original's bottle from a hybrid's. Pinned in 18a.
+3. **Dying must still be killable and must not strand anyone:** void and `/kill` kill a player in the turning for real; a relog while dying resumes; giving up kills with the original blow and ends the turning; a second death after waking leaves the turning running as today; `PendingSire` still names the right sire. A snapped (18d2) player has no Give up and wakes on their own. Pinned in 18b and 18d2.
 4. **Force-feed edge targets:** self, creative/spectator, an NPC, an offline player, a target already marked, a werewolf in transition (existing rules: it goes unstable), a target with vervain (even willing), a claim that cancels the interaction. Pinned in 18f.
 5. **Config flips at runtime:** the mob-targeting tweaks apply to mobs that join the level after the flip; the altar tweak reaches clients through the settings copy; turning a tweak off puts nothing permanent on a player or mob. Pinned in 18i.
+6. **Neck Snap as a probe:** the snapper sees one line and one cooldown whatever the target is (Original, plain vampire, human, boss, werewolf). Only what is visible anyway differs (a vampire-type lies down, a mortal dies or staggers), and all vampire kinds lie down for the **same** time by default so the length is not a species test. Pinned in 18d2.
 
 ## Verified hooks (read from the real jars/sources in the Gradle cache)
 
@@ -59,7 +60,7 @@
 | Our turning | `TurningHandler.onDeath` (LOW, not cancelled events), `onRightClick` takes the click over because Vampirism's items refuse non-vampires; `PendingSire.settle/completed`; `BloodDrink.drank` | 18a/18b edit these in place |
 | Werewolves leap | `LeapAction` is a lasting action that only raises flying speed (`jump while sprinting`); no target, no damage | 18e writes a separate target leap; the sprint-leap stays as it is |
 
-**Not verified (listed in the final report):** a server-side guard for the altar packet; Vampirism's DBNO of a Ghoul under the GameTest harness (needs a real ticking `VampirePlayer`; 18b ships the test and a note if it can only run in a dev client); the new target goals in a live world (a GameTest checks the goal is present and picks the right player, not a full fight).
+**Not verified (listed in the final report):** a server-side guard for the altar packet; Vampirism's DBNO of a Ghoul under the GameTest harness (needs a real ticking `VampirePlayer`; 18b ships the test and a note if it can only run in a dev client); the new target goals in a live world (a GameTest checks the goal is present and picks the right player, not a full fight); **Neck Snap's claims check**: a snap does no real damage, so it asks Open Parties and Claims through `AttackEntityEvent` and a 0.01-damage `hurt` probe, and a claim mod that protects only by another event would not be consulted (the kill path is a real hit and is covered); how a snapped mob *looks* lying down (the pose depends on the renderer: an in-game check, and `Mob.setNoAi` is what is guaranteed); and the wiki's own pages "Neck Snapping" and "Temporary Death", which do not exist or are blocked (the species pages are cited instead).
 
 ## File structure (new files; every edit to an existing file is named in its task)
 
@@ -71,6 +72,8 @@ parts/species/item/BloodStamp.java   parts/species/item/BloodBottles.java   part
 parts/species/item/BloodTooltip.java parts/species/item/BottleBloodAction.java parts/species/item/AugustineSyringeItem.java
 parts/species/skill/ActionClock.java parts/species/skill/RipHeartAction.java    parts/species/hybrid/HybridLeap.java
 parts/species/blood/GiveBloodAction.java parts/species/blood/VampireBloodBuff.java
+core/hud/NeckSnapRules.java          parts/species/skill/NeckSnapAction.java        parts/species/item/SnappedEffect.java
+data/.../skill/s-vam-9.json          data/.../damage_type/neck_snap.json            data/.../tags/entity_type/snap_immune.json
 parts/species/augustine/AugustineRules.java  parts/species/augustine/AugustineGifts.java  (garlic, holy water, blood)
 parts/hud/action/HudTargets.java     parts/supernatural/tweaks/VampirismTweaks.java  parts/supernatural/tweaks/TweakSync.java
 data/.../supernatural/ladder/augustine.json  .../tree/augustine.json  .../skill/s-aug-1.json s-aug-2.json s-vam-8.json s-hyb-3.json
@@ -120,31 +123,39 @@ public final class BloodBottleRules {
 
 ### Task 2: Stamp, read and label a bottle
 
-**Files:** Modify `parts/species/SpeciesRegistries.java` (new component after line 87); Create `parts/species/item/BloodStamp.java`, `parts/species/item/BloodTooltip.java`; Test `parts/species/gametest/BloodBottleGameTests.java` (new class).
+**Files:** Modify `parts/species/SpeciesRegistries.java` (components at lines 80-88), `parts/species/item/OriginalBloodItem.java:45,60` (client-side `use` must tolerate a unit-synced species); Create `parts/species/item/BloodStamp.java`, `parts/species/item/BloodTooltip.java`; Test `parts/species/gametest/BloodBottleGameTests.java` (new class).
+
+**Owner override of Q14: nothing secret is synced.** Today `BLOOD_SOURCE_COMPONENT` (UUID) and `BLOOD_SOURCE_SPECIES_COMPONENT` (the species name) use `networkSynchronized(real codec)`, so any client can read an Original's UUID (and resolve a name through Mojang) and the species of every bottle. Change in this task:
+- `BLOOD_SOURCE_COMPONENT`, `BLOOD_SOURCE_SPECIES_COMPONENT` and the new `BLOOD_SOURCE_NPC_COMPONENT` (BOOL) and a new server-only `BLOOD_SOURCE_PRIVATE_NAME_COMPONENT` (STRING) keep their **persistent** codec and get `networkSynchronized(StreamCodec.unit(<neutral value>))` (`Util.NIL_UUID`, `""`, `false`, `""`). The client sees "the component exists" and nothing else (`stack.has(...)` still works for `OriginalBloodItem.use`).
+- New synced `BLOOD_LABEL_COMPONENT` (STRING): `"?"` for every secret kind, the source's display name for a common vampire (npc or player). Absent on an unstamped bottle. The tooltip reads only this.
+- `BLOOD_SOURCE_NAME_COMPONENT` (Sire's Blood only: the owner took it from their own sire, and it is never stamped by `BloodStamp`) stays as it is.
+- **Creative mode caveat (accepted, documented in the changelog):** a creative player's client sends stacks back through the network codec, so a stamped bottle they move comes back with neutral values. `BloodStamp.read` therefore treats a NIL UUID as "unstamped" (common vampire blood), never as an error.
+- The component codec change is a protocol change for item stacks: changelog says "update the server and every client together". Existing bottles in worlds keep their persistent values untouched.
 
 **Interfaces (produces):**
 ```java
-// SpeciesRegistries: DataComponentType<Boolean> BLOOD_SOURCE_NPC_COMPONENT  ("blood_source_npc", persistent BOOL)
 public final class BloodStamp {
-    public static void write(ItemStack stack, BloodSource s);   // sets BLOOD_SOURCE (uuid), BLOOD_SOURCE_SPECIES (kind.name() of a Species), BLOOD_SOURCE_NPC; sets the NAME component ONLY when !kind.secret()
-    public static Optional<BloodSource> read(ItemStack stack);  // empty for an unstamped bottle; name falls back to ""
+    public static void write(ItemStack stack, BloodSource s);   // sets uuid, species (the Species enum name, "NONE" for a common vampire), npc, private name, and the label ("?" when s.kind().secret())
+    public static Optional<BloodSource> read(ItemStack stack);  // empty for an unstamped bottle or a NIL uuid
     public static BloodKind kindOf(ItemStack stack);            // unstamped -> COMMON_VAMPIRE
 }
-public final class BloodTooltip { public static void append(ItemStack stack, List<Component> lines); } // COMMON: "Common vampire blood" + "From <name>" (name only when present); any secret kind: one line "Strange blood". Never a kind word, never a name.
+public final class BloodTooltip {   // client: an ItemTooltipEvent listener, so Vampirism's own bottle gets it too
+    public static void append(ItemStack stack, List<Component> lines);   // label absent: "Common vampire blood"; "?": one line "Strange blood"; a name: "Common vampire blood" + "From <name>". Never a kind word, never a secret's name.
+}
 ```
-Detail the implementer cannot guess: the species string stored for a source is the `Species` **enum name** (`ORIGINAL`, `HYBRID`, `NONE` for a common vampire) because `TransitionBlood.accepts` and `OriginalBloodItem` already read it that way; `BloodKind.parse` turns it back. The synced UUID is a pre-existing exposure (see Question 14).
+The species string is the `Species` **enum name** because `TransitionBlood.accepts` and `OriginalBloodItem` already read it that way; `BloodKind.parse` turns it back.
 
-- [ ] **Step 1: Write the failing GameTest** `stampWritesTheComponents` (stamp a bottle with an ORIGINAL source: `BloodStamp.read` returns it, **`BLOOD_SOURCE_NAME_COMPONENT` is absent**) and `tooltipNeverNamesASecret` (for each of the five secret kinds the tooltip has exactly one line and it contains neither the player name nor the kind; for COMMON it contains the name).
+- [ ] **Step 1: Write the failing GameTests** `stampWritesTheComponents` (stamp an ORIGINAL source: `BloodStamp.read` returns it; `BLOOD_LABEL_COMPONENT == "?"`), `nothingSecretIsSynced` (encode the stack with the real `ItemStack.STREAM_CODEC` and decode it: UUID is NIL, species `""`, private name `""`, npc `false`, label kept; the decoded stack reads as unstamped), `tooltipNeverNamesASecret` (for each of the five secret kinds the tooltip is exactly "Strange blood", no player name, no kind word; for COMMON it names the source), `creativeRoundTripReadsAsUnstamped`.
 - [ ] **Step 2: Run** `./gradlew runGameTestServer`; expect the class missing/failing.
-- [ ] **Step 3: Implement** `BloodStamp`, `BloodTooltip`, the component registration.
+- [ ] **Step 3: Implement** `BloodStamp`, `BloodTooltip`, the component changes.
 - [ ] **Step 4: Run** the matrix runs 1 and 4 (`species` off: the class must not load): PASS.
-- [ ] **Step 5: Commit** `feat(blood): a bottle remembers where its blood came from`.
+- [ ] **Step 5: Commit** `feat(blood): a bottle remembers where its blood came from, and tells no client`.
 
 ### Task 3: Stamp where bottles are made
 
 **Files:** Create `parts/species/item/BloodDrops.java`; Modify `parts/species/rite/OriginalBloodRiteFactory.java:62-70`, `parts/species/rite/HybridBloodRiteFactory.java`, `parts/species/sireline/SiresBlood.java`, `parts/species/SpeciesPart.java` (register `BloodDrops`).
 
-- [ ] **Step 1: Write the failing tests** (in `BloodBottleGameTests`): (a) `vampireMobDropIsStamped`: kill a Vampirism `advanced_vampire` mob with a drops list holding a `vampire_blood_bottle`; the dropped stack carries `kind COMMON_VAMPIRE`, the mob's UUID, `npc=true`. (b) `noBottleFromAHuman`: a zombie's drops are untouched. (c) `originalBloodRiteStampsKind`: the Rite output carries `ORIGINAL`/`ORIGINAL_HYBRID` of its source, `npc=false`, and **no name**. (d) `hybridBloodRiteStampsHybrid`. (e) `siresBloodKeepsItsNameAndGainsKind`: Sire's Blood (cannot be drunk, never shown to a third party, name is the owner's own knowledge) keeps `blood_source_name` and now has the kind and npc flag.
+- [ ] **Step 1: Write the failing tests** (in `BloodBottleGameTests`): (a) `vampireMobDropIsStamped`: kill a Vampirism `advanced_vampire` mob with a drops list holding a `vampire_blood_bottle`; the dropped stack carries `kind COMMON_VAMPIRE`, the mob's UUID, `npc=true`. (b) `noBottleFromAHuman`: a zombie's drops are untouched. (c) `originalBloodRiteStampsKind`: the Rite output carries `ORIGINAL`/`ORIGINAL_HYBRID` of its source, `npc=false`, and the label `"?"`. (d) `hybridBloodRiteStampsHybrid`. (e) `siresBloodKeepsItsNameAndGainsKind`: Sire's Blood (cannot be drunk; the performer took it from their own sire) keeps its synced `blood_source_name`; its UUID is now unit-synced like the others, and `SiresBloodItem.sourceOf` still reads it server-side (the Severance rite is server-only, so nothing breaks).
 - [ ] **Step 2: Implement** `BloodDrops.register()`: a `LivingDropsEvent` listener (server only) that, for a victim that `VampirismAPI.factionRegistry().getFaction(e) == VReference.VAMPIRE_FACTION` and is not a player, stamps each `ItemEntity` whose stack is in `#supernaturalbloodlines:vampire_blood` with `BloodSource(victim uuid, victim name, true, kind)`; `kind = ORIGINAL` when the victim has `SpeciesRegistries.ORIGINAL_ROOT` data naming an NPC Original other than Klaus, `ORIGINAL_HYBRID` for Klaus, else COMMON. Rite factories call `BloodStamp.write` instead of setting the components by hand.
 - [ ] **Step 3: Run** matrix 1, 3 (`-PnoLinkedMods`: the class must skip), 4: PASS.
 - [ ] **Step 4: Commit** `feat(blood): stamp the bottles that mobs and rites make`.
@@ -186,7 +197,7 @@ public final class ActionClock {   // one saved cooldown per action id, shared b
 ```
 Rules (R211): available to any player for whom `Supernatural.isVampiric(p)` and who is **not an Original or Original hybrid** (the Rite of Original's Blood stays the only way to bottle an Original; Question 13). Needs a `minecraft:glass_bottle` in the inventory (used up). Costs `bottle_blood_health_cost` health but never kills (stops at 1). Output: one `vampirism:vampire_blood_bottle` stamped `BloodSource(p, name, false, BloodKind.of(species))`, given to the inventory or dropped. Refusals (action bar, never revealing species): no bottle, cooldown, `cannot_act`. An Original asking gets the same "nothing to bottle" line as a player with no blood, so it never says "you are an Original".
 
-- [ ] **Step 1: Write the failing GameTests** `bottleBloodGivesAStampedBottle` (hybrid: kind HYBRID, name absent, uuid is the player's, a glass bottle used, health -3, cooldown set), `bottleBloodNeverKills` (at 2 health ends at 1), `bottleBloodRefusesOriginalsLikeAnEmptyPlayer` (identical message key for an Original and for a vampire with no glass bottle), `actionClockSurvivesDeath`.
+- [ ] **Step 1: Write the failing GameTests** `bottleBloodGivesAStampedBottle` (hybrid: kind HYBRID, label `?`, uuid is the player's, a glass bottle used, health -3, cooldown set), `bottleBloodNeverKills` (at 2 health ends at 1), `bottleBloodRefusesOriginalsLikeAnEmptyPlayer` (identical message key for an Original and for a vampire with no glass bottle), `actionClockSurvivesDeath`.
 - [ ] **Step 2: Run** and watch fail. **Step 3: Implement.** **Step 4: Run** matrix 1-12: PASS. **Step 5: Commit** `feat(blood): the bottle-my-blood action`.
 
 ### Task 6: Docs
@@ -210,16 +221,18 @@ PR `feature/plan-18b-dying-turning`. Independent of 18a. Read first: PR #56 (`Pe
 
 ### Task 2: The dying state for the turning
 
-**Files:** Modify `parts/species/original/Downed.java`, `DownedPayload.java`, `DownedScreen.java`, `parts/species/SpeciesPart.java:241` (handler passes both flags; bump `NETWORK_VERSION`), `parts/species/original/OriginalRules.java:128` (`bypassesProtection` becomes `public static`), lang.
+**Files:** Modify `parts/species/original/Downed.java`, `DownedPayload.java`, `DownedScreen.java`, `parts/species/SpeciesPart.java:241` (handler passes `payload.downed(), payload.mode()`; bump `NETWORK_VERSION`), `parts/species/SpeciesRegistries.java` (attachment `DOWNED_MODE`, Integer, serialized), `parts/species/original/OriginalRules.java:128` (`bypassesProtection` becomes `public static`), lang.
 
 **Interfaces (produces):**
 ```java
 // Downed
 public static void startDying(ServerPlayer p, DamageSource cause);   // = start(p, cause) made public for the turning
-public static boolean isDyingForTurning(ServerPlayer p);              // isDowned(p) && BloodlineAccess.get(p).inTurning(); an Original hybrid can never be in the turning, so the two flags are unambiguous
-// DownedPayload: record DownedPayload(boolean downed, boolean turning)   // screen text only
+public static boolean isDyingForTurning(ServerPlayer p);              // isDowned(p) && mode(p) == MODE_TURNING
+public static final int MODE_DYING = 0, MODE_TURNING = 1, MODE_SNAPPED = 2;   // MODE_SNAPPED is used by 18d2 only
+public static int mode(Player p);                                      // new saved attachment DOWNED_MODE (Integer, default MODE_DYING); set by every start*, reset by clear
+// DownedPayload: record DownedPayload(boolean downed, int mode)       // the screen text, and (18d2) whether it has buttons
 ```
-Behaviour: while `isDyingForTurning`, `TurningHandler.secondPassed` does not tick the clock (the 30 s of dying are free). `Downed.tick` at `left == 1` already wakes the player at half health: add the action-bar line `supernaturalbloodlines.turning.woke` when they are in the turning. `Downed.giveUp`: if `inTurning` (state), first `BloodlineAccess.applyEvent(p, TURNING_GAVE_UP, ...)`, then the existing `clear` + `kill(p, cause)` (the original blow, so the death message and kill credit are the real ones). The screen shows `downed.turning.title`/`downed.turning.hint` when `turning` is true; the buttons stay Give up / Wait.
+Behaviour: while `isDyingForTurning`, `TurningHandler.secondPassed` does not tick the clock (the 30 s of dying are free). `Downed.tick` at `left == 1` already wakes the player at half health: add the action-bar line `supernaturalbloodlines.turning.woke` when they are in the turning. `Downed.giveUp`: refused when `mode(p) == MODE_SNAPPED` (18d2); if `mode == MODE_TURNING`, first `BloodlineAccess.applyEvent(p, TURNING_GAVE_UP, ...)`, then the existing `clear` + `kill(p, cause)` (the original blow, so the death message and kill credit are the real ones). The screen shows `downed.turning.title`/`downed.turning.hint` when `mode == MODE_TURNING`; the buttons stay Give up / Wait (a `MODE_SNAPPED` screen, added in 18d2, shows only the title and "you are out cold", no buttons).
 
 - [ ] **Step 1: Write the failing GameTests** (`parts/species/gametest/TurningDyingGameTests.java`): `dyingScreenFlagIsSentForTheTurning` (assert the payload object through a recording player, as `ActionRoarGameTests` does), `giveUpEndsTheTurningAndKills` (state cleared, `vampireBloodUntil == 0`, player dead with the original source, **a respawn is a plain human with no turning**), `waitWakesAtHalfHealthInTheSamePlace` (position unchanged, `inTurning` still true, clock unchanged), `clockDoesNotTickWhileDying`, `relogWhileDyingResumes` (use the reload helper `AshDaggerGameTests` uses).
 - [ ] **Step 2:** run, watch fail. **Step 3:** implement. **Step 4:** run runs 1 and 4: PASS. **Step 5:** commit `feat(turning): the dying state of the turning`.
@@ -257,9 +270,23 @@ Rules (R200):
 
 ### Task 2: Every exhaustive switch and list
 
-**Files (each already matches the other vampire species; add `AUGUSTINE` to each):** `parts/vampirismenchanted/rite/FactionRiteFactory.java:115`, `parts/species/SpeciesSupernatural.java:26`, `parts/speciestensura/ApexRule.java:20` (undead treatment; **no apex race for an Augustine in 18**, so `ApexSpec` stays), `parts/species/pack/PackAccess.java:87` (`wolf_wrong_species`), `core/boss/PikeRules.java:32` (leave out: a Valet Pike hunts Originals, hybrids and the Five), `shared/tensura/ApexLines.java`, `core/supernatural/MigrationRules.java:200` (check, leave), `parts/supernatural/client/hub/page/LinePageSupport.java:103,113` (labels), `parts/species/profile/SpeciesProfiles.java` and `ProfileKnowledge.java` (**treat like Heretic: species is a fact the viewer must have discovered**; a test asserts a stranger's profile says Unknown), `shared/hub/kit/LineColors.java` (a colour), `core/Supernatural.java` (`isVampiric`).
+**Files (each already matches the other vampire species; add `AUGUSTINE` to each):** `parts/vampirismenchanted/rite/FactionRiteFactory.java:115`, `parts/species/SpeciesSupernatural.java:26`, `parts/speciestensura/ApexRule.java:20` (undead treatment, as every vampire species), `parts/species/pack/PackAccess.java:87` (`wolf_wrong_species`), `core/boss/PikeRules.java:32` (leave out: a Valet Pike hunts Originals, hybrids and the Five), `parts/supernatural/client/hub/page/LinePageSupport.java:103,113` (labels), `parts/species/profile/SpeciesProfiles.java` and `ProfileKnowledge.java` (**treat like Heretic: species is a fact the viewer must have discovered**; a test asserts a stranger's profile says Unknown), `shared/hub/kit/LineColors.java` (a colour), `core/Supernatural.java` (`isVampiric`).
 
 - [ ] **Step 1:** `./gradlew compileJava compileTestJava`: fix every non-exhaustive `switch` the compiler reports. **Step 2:** run the species and hud GameTests (run 1): the existing ones stay green. **Step 3: Commit** `feat(augustine): the species in every list`.
+
+### Task 2b: Augustines get a plain vampire's Tensura treatment (owner, Q3)
+
+**Rule (R200):** wherever Tensura-side code means "a plain vampire" (no species, in the Vampirism vampire faction), an Augustine counts too. One pure helper, `BloodlineRules.isPlainVampireLike(Species s)` = `s == NONE || s == AUGUSTINE`, used at each site below; nothing else is copied.
+
+**Files (found with `rg "Species.NONE|SupernaturalRace.VAMPIRE|elder_vampire" src/main`; every hit that means "plain vampire" is changed, the others are not):**
+- `parts/vampirismtensura/VampireSync.java:98` (R20a: the race becomes `tensura:vampire` for a no-species player whose race is exactly `tensura:human`): `isPlainVampireLike`.
+- `parts/speciestensura/SpeciesLayer.java:78` (`plainVampire`) and `LayerTable.specFor` (`:36-41`): an Augustine resolves to the `VAMPIRE` layer entry, so it gets a plain vampire's layer, skills, magicule bonus and EP rule, **not** a layer of its own (no `AUGUSTINE` key in `LayerTable.DEFAULTS`).
+- `parts/speciestensura/apex/ApexSpec.forRace` (`:43`): `case VAMPIRE, AUGUSTINE -> ELDER_VAMPIRE`; `shared/tensura/ApexLines.qualifies` (`:46`): `AUGUSTINE` joins the vampire line list; `core/supernatural/MigrationRules.java:202`: `"elder_vampire" -> List.of(VAMPIRE, AUGUSTINE)`; `parts/speciestensura/apex/ApexOffer`, `ApexFallback`, `ApexRace` and `shared/supernatural/ApexRaceQuery`: check each for `SupernaturalRace.VAMPIRE` and add `AUGUSTINE` where it stands for "plain vampire"; `parts/supernaturaltensura/ApexRaceReader` the same.
+- `parts/vampirismtensura/FactionRaceRules`, `VampireMapping`, `SkillGrantSpec` are keyed by the Vampirism **faction**, not the species: an Augustine already gets them; the test below pins it.
+- The ladder's Tensura rung is in Task 4 (`L-AUG-6`).
+
+- [ ] **Step 1: Write the failing GameTests** (`parts/speciestensura/gametest/AugustineTensuraGameTests.java`, runs only with Tensura): `augustineWhoIsHumanBecomesTensuraVampire` (R20a), `augustineKeepsAnElf` (race kept), `augustineGetsTheVampireLayer` (the same skills and magicule as a plain vampire at the same rung), `augustineIsOfferedElderVampire` (`ApexOffer` lists `elder_vampire` at the vampire-line apex tier, like `ApexGameTests:315`), `augustineApexNeedsTheTopRung` (`LadderQuery.apexRungReached` false below `L-AUG-6`, true at it), `augustineCuredFallsBackLikeAVampire` (the cure resets a race only if it is in the vampire line). Mirror the plain-vampire assertions in `ApexGameTests`, `SpeciesLayerGameTests` and `VampirismTensuraGameTests`, and run those unchanged.
+- [ ] **Step 2:** `./gradlew runGameTestServer`: FAIL. **Step 3:** implement the helper and each site. **Step 4:** runs 1, 2, 3 (`-PnoLinkedMods`: skipped), 6 (`speciestensura` off), 8 (`supernaturalTensura` off): PASS. **Step 5: Commit** `feat(augustine): a plain vampire's Tensura treatment`.
 
 ### Task 3: Stats, blood and the two gifts
 
@@ -284,7 +311,7 @@ Config keys in `supernaturalbloodlines-species.toml` (all with `AdminEntries` ro
 
 **Files:** Create `data/.../supernatural/ladder/augustine.json`, `tree/augustine.json`, `skill/s-aug-1.json`, `skill/s-aug-2.json`; Modify the lang file and `LadderDataGameTests` (the "every race has a ladder and a tree" check), `docs/parts/supernatural.md`.
 
-`ladder/augustine.json`: rungs `L-AUG-0` (Subject, 0/0), `L-AUG-1` (Tested, sp 2, ep 2000: `level` vampirism:vampire n=2, `feed` n=10), `L-AUG-2` (Refined, sp 3, ep 5000: `level` 4, `kill` category `vampire` n=3), `L-AUG-3` (Hunter-bred, sp 4, ep 15000: `level` 8, `signal compel` n=3 part `species`), `L-AUG-4` (Apex Predator, sp 4, ep 30000: `level` 12, `kill` category `hunter` n=10), `L-AUG-5` (Perfected, sp 5, ep 60000: `level` 14, `days_as` race `augustine` n=30). No Tensura rung (no apex in 18). Names are placeholders the owner may change in the lang.
+`ladder/augustine.json`: rungs `L-AUG-0` (Subject, 0/0), `L-AUG-1` (Tested, sp 2, ep 2000: `level` vampirism:vampire n=2, `feed` n=10), `L-AUG-2` (Refined, sp 3, ep 5000: `level` 4, `kill` category `vampire` n=3), `L-AUG-3` (Hunter-bred, sp 4, ep 15000: `level` 8, `signal compel` n=3 part `species`), `L-AUG-4` (Apex Predator, sp 4, ep 30000: `level` 12, `kill` category `hunter` n=10), `L-AUG-5` (Perfected, sp 5, ep 60000: `level` 14, `days_as` race `augustine` n=30), and **the same Tensura rung a plain vampire has** (owner, Q3): `L-AUG-6` copied from `L-VAM-6` (`"mods": ["tensura"]`, `"parts": ["supernaturalTensura"]`, tasks `tensura_tier` and `days_as` race `augustine` n=60). Names are placeholders the owner may change in the lang.
 `tree/augustine.json`: `S-VAM-1` r1, `S-VAM-3` r2, `S-VAM-4` r3, `{ "skill": "S-VAM-6", "rung": 2, "after": "S-VAM-1" }` (**no quest: an Augustine earns Predator's Thirst by growing**), `{ "skill": "S-AUG-1", "rung": 3, "after": "S-VAM-6" }`, `{ "skill": "S-AUG-2", "rung": 4, "after": "S-VAM-6" }`.
 `s-aug-1.json`: `{ "id": "S-AUG-1", "name": "Garlic Ward", "cost": 3, "kinds": ["rule"] }`. `s-aug-2.json`: `{ "id": "S-AUG-2", "name": "Blessed Skin", "cost": 3, "kinds": ["rule"], "params": { "holy_reduction": 0.5 } }`.
 
@@ -333,7 +360,7 @@ public static Result decide(float targetHealth, float threshold, boolean targetI
 
 ### Task 3: Rip Heart
 
-**Files:** Create `parts/species/skill/RipHeartAction.java`, `data/.../skill/s-vam-8.json`, `data/.../damage_type/rip_heart.json`; Modify `data/minecraft/tags/damage_type/{bypasses_armor,bypasses_resistance,bypasses_effects,is_player_attack}.json` (add `rip_heart`), `tree/vampire.json`, `tree/heretic.json`, `tree/augustine.json` (`{ "skill": "S-VAM-8", "rung": 5, "after": "S-VAM-6" }`; **not** in Original, hybrid, tribrid trees: Question 4), `SpeciesConfig`, `AdminEntries`, `ExtraActions` (`RIP_HEART`), `SpeciesPart.java:204`, lang, art.
+**Files:** Create `parts/species/skill/RipHeartAction.java`, `data/.../skill/s-vam-8.json`, `data/.../damage_type/rip_heart.json`; Modify `data/minecraft/tags/damage_type/{bypasses_armor,bypasses_resistance,bypasses_effects,is_player_attack}.json` (add `rip_heart`), **every vampiric tree** (owner, Q4: any vampire-like supernatural): `tree/vampire.json`, `augustine.json`, `heretic.json`, `original.json`, `original_hybrid.json`, `hybrid.json`, `tribrid.json`, each with `{ "skill": "S-VAM-8", "rung": R, "after": "S-VAM-6" }` where **R is the last rung that needs no Tensura**: 5 for vampire and Augustine, 4 for the other five (their rung 5 is the Tensura rung, so a skill there would be unreachable without Tensura; existing skills already sit on that rung and are not touched here). A Ghoul has no tree (it cannot level), so no Rip Heart. `OriginalRules.bypassesProtection` (made public in 18b) also returns true for the `rip_heart` damage type, so a heart-rip reaches a downed or snapped non-Original (an Original never gets `FINISH`). `SpeciesConfig`, `AdminEntries`, `ExtraActions` (`RIP_HEART`), `SpeciesPart.java:204`, lang, art.
 `s-vam-8.json`: `{ "id": "S-VAM-8", "name": "Rip Heart", "cost": 5, "kinds": ["rule"] }`. Config (species toml): `rip_heart_health` DOUBLE 10.0 [1,40], `rip_heart_cooldown_seconds` INT 60 [1,3600].
 `RipHeartAction.available(p)` = `LadderQuery.owns(p, "S-VAM-8")`. `trigger(p, target)`: target null -> `hud.action.rip_heart.no_target`; cooldown -> `ActionClock` line; then `RipHeartRules.decide`. `TOO_STRONG` -> `hud.action.rip_heart.refused`, no cooldown. `NO_EFFECT` (an Original: a player of species ORIGINAL/ORIGINAL_HYBRID via `OriginalRules.isOriginal`, or an entity with `SpeciesRegistries.ORIGINAL_ROOT` data) -> the **same success line and the same cooldown as `FINISH`**, no damage, no knockback. `FINISH` -> post `AttackEntityEvent(p, target)`; cancelled -> the same `refused` line, no cooldown (claims reveal nothing); else `target.hurt(rip_heart damage source with p as attacker, target.getHealth())`; `hurt` false (PvP off, claim, immunity) -> `refused`, no cooldown; true -> success line `hud.action.rip_heart.done` with the target's display name, `ActionClock.start`, `TaskSignals.fire(p, "rip_heart", 1)`. Creative/spectator targets: `refused`.
 
@@ -343,6 +370,64 @@ public static Result decide(float targetHealth, float threshold, boolean targetI
 ### Task 4: Docs
 
 - [ ] **R204** (Rip Heart, with the "Originals never" and the same-feedback sentence), R32 note, `docs/parts/species.md`, `docs/parts/hud.md`, balance, CHANGELOG. **Commit** `docs(skill): R204`.
+
+---
+
+## Phase 18d2: Neck Snap (new, owner 2026-11-21)
+
+PR `feature/plan-18d2-neck-snap`. Needs 18b (the `Downed` mode), 18d (`HudTargets`, target actions, `ActionClock`, the Rip Heart feedback pattern).
+
+**What the wiki says (vampirediaries.fandom.com, read through its API on 2026-11-21; the dedicated pages "Neck Snapping" and "Temporary Death" do not exist there, and the site answered 403 to a plain page fetch, so the species pages are the source):**
+- Vampire, https://vampirediaries.fandom.com/wiki/Vampire (Weaknesses, "Broken Neck"): "will not kill them, but it will render in a death-like state for varying amounts of time, depending on the diet and age"; the older vampire (Damon snapped by Alaric) "recovered quickly". No number is given anywhere.
+- Original vampire, https://vampirediaries.fandom.com/wiki/Original_Vampire (Physical Trauma): breaking the neck is "the most effective way to neutralize an Original ... however, this is temporarily as they will completely heal in a short amount of time".
+- Hybrids, https://vampirediaries.fandom.com/wiki/Hybrid: a werewolf-vampire hybrid, a witch-vampire hybrid and an Original hybrid are each in "temporary death ... they will revive a short time later"; a **witch-werewolf hybrid dies instantly**.
+- Augustine vampire, https://vampirediaries.fandom.com/wiki/Augustine_Vampire: the broken neck "will result in unconsciousness".
+- Human, https://vampirediaries.fandom.com/wiki/Human: "will result in instant death". Werewolf, https://vampirediaries.fandom.com/wiki/Werewolf: "when a werewolf's neck is broken, they stay dead" (and a temporary death of a vampire does not trigger the werewolf curse, so nobody here is cursed by a snap). Witch, https://vampirediaries.fandom.com/wiki/Witch: a snapped neck is a mortal weakness (a protection spell can get around it; we have none).
+- Not on the wiki, so ours: how many seconds, and any health threshold.
+
+**Rules (R214), all numbers config:**
+- The skill is `S-VAM-9` "Neck Snap", cost 4, `kinds: ["rule"]`, in **every vampiric tree** at the same rung as Rip Heart (`after: S-VAM-6`; see 18d Task 3 for the rungs). Ghouls have no tree.
+- Target kinds (`NeckSnapRules.Kind`): **VAMPIRE** (a plain vampire, a heretic, a Ghoul, or any player in the turning or the hybrid transition), **AUGUSTINE**, **HYBRID** (hybrid, tribrid), **ORIGINAL** (Original, Original hybrid), **BOSS** (an entity in `#supernaturalbloodlines:snap_immune`: every boss entity of the `bosses` part), **MORTAL** (everything else: humans, witches, siphoners, hunters, plain and witch werewolves, villagers, animals, mobs).
+- `SNAP` (VAMPIRE, AUGUSTINE, HYBRID, ORIGINAL, at **any** health): the target goes "dead for a while" and wakes on its own. `KILL` (MORTAL at or under `neck_snap_kill_health`, default 10, the Rip Heart number): the target dies. `STAGGER` (MORTAL above it): Slowness III and Weakness for `neck_snap_stagger_ticks` (60), no death (so a healthy human is not an instant kill; the wiki's "instant death" is kept for the weak). `NOTHING` (BOSS).
+- **Wake times** (seconds, config, kind by kind): the wiki says only "varying ... short", so the four keys exist but **all default to 60**; a lying-down time that differed by kind would tell an observer who is an Original (Review Focus 6). Keys: `neck_snap_vampire_seconds`, `neck_snap_augustine_seconds`, `neck_snap_hybrid_seconds`, `neck_snap_original_seconds`, each INT [5,1800]. (If the owner later wants "Originals wake sooner", this is the knob, and the plan states the trade.)
+- **The snapped state.** A player: `Downed.startSnapped(p, ticks)` (the existing machinery, mode `MODE_SNAPPED`): no health change, cannot act, takes no damage except what `OriginalRules.bypassesProtection` lets through (white oak and a heart-rip: "follow the existing rules"; a white oak hit on a snapped Original is a kill, and it opens R124's line warning exactly as a downed Original does today), screen with no buttons, wakes at the health they had, **no Give up** (the server refuses the payload). A mob: a new effect `supernaturalbloodlines:snapped` for the duration: `Mob.setNoAi(true)` and a sleeping pose where the renderer has one while it lasts, restored when it ends; incoming damage is cancelled except what `bypassesProtection` allows. Desiccation machinery is not reused: it is the `artifacts` part (a dagger, a lodged item, a 30-minute clock), and the snap must work with `artifacts` off.
+- **Feedback (no oracle).** Success, kill, stagger and "nothing" all give the snapper the same action-bar line `hud.action.neck_snap.done` (with the target's display name) and start the same cooldown (`neck_snap_cooldown_seconds`, default 45). The only different answers are `no_target`, `cooldown`, `cannot_act` and `refused`, and `refused` is given for claims, PvP off, a creative/spectator target, or a target already snapped, whatever the target is. What anyone can see anyway is allowed to differ: a vampire-type lies down, a mortal dies or staggers; that is the show. What stays hidden is **which** vampire kind it was.
+- Claims and PvP: post `AttackEntityEvent(p, target)` (cancelled -> `refused`), refuse a player target when `server.isPvpAllowed()` is false, then `target.hurt(neck_snap source, 0.01F)` must return true (the same call a claim or PvP mod answers for any hit; for `KILL` the real hit is `hurt(.., target.getHealth())`). The probe is unverified against Open Parties and Claims (see below).
+
+### Task 1: The pure rule
+
+**Files:** Create `core/hud/NeckSnapRules.java`; Test `NeckSnapRulesTest.java`.
+```java
+public enum Kind { VAMPIRE, AUGUSTINE, HYBRID, ORIGINAL, BOSS, MORTAL }
+public enum Result { SNAP, KILL, STAGGER, NOTHING }
+public static Result decide(Kind kind, float targetHealth, float killHealth);   // BOSS -> NOTHING; the four vampiric kinds -> SNAP at any health; MORTAL -> health <= killHealth ? KILL : STAGGER
+public static Kind kindOf(Species s, boolean vampireFaction, boolean ghoul, boolean inTurningOrTransition, boolean werewolfFaction, boolean boss);
+public static int ticks(Kind k, int vampireSec, int augustineSec, int hybridSec, int originalSec);  // seconds * 20; 0 for the other kinds
+```
+`kindOf` order: boss -> BOSS; ORIGINAL/ORIGINAL_HYBRID -> ORIGINAL; HYBRID/TRIBRID -> HYBRID; AUGUSTINE -> AUGUSTINE; HERETIC, `ghoul`, `vampireFaction`, `inTurningOrTransition` -> VAMPIRE; else MORTAL. (A witch-werewolf with no vampire layer is MORTAL: the wiki's "instant death".)
+- [ ] **Step 1: Write the tests:** one per kind and per branch (boundary `10.0 <= 10.0` KILL, `10.01` STAGGER; a witch-werewolf is MORTAL; a hybrid in the werewolf faction is HYBRID; a Ghoul is VAMPIRE; `ticks` for each kind). **Step 2:** `./gradlew test --tests '*NeckSnapRulesTest'`: FAIL. **Step 3:** implement. **Step 4:** PASS. **Step 5:** commit `feat(skill): the Neck Snap rule`.
+
+### Task 2: The snapped state
+
+**Files:** Modify `parts/species/original/Downed.java` (`startSnapped`, `tick` wake keeps health when `mode == MODE_SNAPPED`, `giveUp` refuses it, no screen re-open buttons), `DownedScreen.java` (no buttons and a `downed.snapped.title` for `MODE_SNAPPED`), `parts/species/original/OriginalRules.java` (a `LivingIncomingDamageEvent` for a snapped mob; `bypassesProtection` also true for `neck_snap`? **no**: only `rip_heart`, white oak, void, kill), `parts/species/SpeciesRegistries.java` (effect `SNAPPED`, class `parts/species/item/SnappedEffect.java`), lang, mob-effect icon.
+```java
+// Downed
+public static void startSnapped(ServerPlayer p, int ticks);   // DOWNED = ticks, DOWNED_MODE = MODE_SNAPPED, hold(p, true); health unchanged
+// SnappedEffect: onEffectAdded -> setNoAi(true) when the mob had AI, remembering it in an attachment; removed/expired -> restore; never applies to a Player (players use Downed)
+```
+- [ ] **Step 1: Write the failing GameTests** (`NeckSnapGameTests`, state part): `snappedPlayerCannotActOrBeHurt` (an attack on the player is cancelled; `AttackEntityEvent` by them is cancelled), `snappedPlayerWakesWithTheirHealth` (not half), `snappedPlayerCannotGiveUp` (the `DownedGiveUpPayload` handler returns without killing), `whiteOakKillsASnappedOriginal` (and `LineWarning` fires), `snappedMobHasNoAiThenRegainsIt`, `aMobThatAlreadyHadNoAiKeepsIt`, `relogWhileSnappedResumes`, `snapOverATurningDyingStateIsRefused`.
+- [ ] **Step 2:** run, fail. **Step 3:** implement. **Step 4:** runs 1 and 4 (`species` off): PASS. **Step 5:** commit `feat(skill): the snapped state`.
+
+### Task 3: The action
+
+**Files:** Create `parts/species/skill/NeckSnapAction.java`, `data/.../skill/s-vam-9.json` (`{ "id": "S-VAM-9", "name": "Neck Snap", "cost": 4, "kinds": ["rule"] }`), `data/.../damage_type/neck_snap.json`, `data/.../tags/entity_type/snap_immune.json` (every boss entity type of the `bosses` part, `"required": false`; the list is `BossRegistries`' entity types: Klaus, Elijah, Finn, Kol, Mikael, Rebekah, Peter Hale, Deucalion, the Beast and its host and spirit, `NpcOriginalBoss`, the Alpha Trial boss); Modify the seven vampiric `tree/*.json` (as 18d Task 3), `data/minecraft/tags/damage_type/{bypasses_armor,bypasses_effects,is_player_attack}.json` (add `neck_snap`), `ExtraActions` (`NECK_SNAP`), `SpeciesConfig` + `AdminEntries` (`neck_snap_cooldown_seconds` INT 45 [1,3600], `neck_snap_kill_health` DOUBLE 10 [1,40], `neck_snap_stagger_ticks` INT 60 [0,600], and the four wake keys above), `SpeciesPart`, lang, art.
+`NeckSnapAction.available(p)` = `LadderQuery.owns(p, "S-VAM-9")`. `trigger(p, target)`: `no_target`, `cooldown` (`ActionClock`), `cannot_act`; the claims/PvP checks above (`refused`); `NeckSnapRules.decide`; `SNAP` -> a player: `Downed.startSnapped`, a mob: `addEffect(SNAPPED, ticks)`; `KILL` -> `hurt` with the `neck_snap` source and `target.getHealth()` (false -> `refused`, no cooldown); `STAGGER` -> Slowness III + Weakness; `NOTHING` -> nothing. Then, **identically for all four results**: `hud.action.neck_snap.done`, `ActionClock.start`, `TaskSignals.fire(p, "neck_snap", 1)`.
+- [ ] **Step 1: Write the failing GameTests:** `snapsAPlainVampireForTheConfiguredTime` (60 s, wakes), `snapsAnOriginalTheSameTime` (**same ticks as a plain vampire; pins Review Focus 6**), `snapsAnAugustineAndAHybrid`, `snappedMobLiesDown`, `killsAWeakHumanAndWerewolfAndWitch` (health 6), `staggersAHealthyHuman` (not dead, Slowness III), `bossIsNotMovedButGetsTheSameLineAndCooldown`, `sameLineAndCooldownForEveryResult` (assert the action-bar key and `ActionClock.left` are equal across Original, vampire, human, boss), `claimCancelsIt` (cancel `AttackEntityEvent`; `refused`, no cooldown), `pvpOffRefusesAPlayer`, `creativeTargetRefused`, `alreadySnappedRefused`, `heartRipFinishesASnappedVampire` (Rip Heart on a snapped non-Original at 5 health kills it; on a snapped Original: same `done` line, no effect), `notAvailableWithoutTheSkill`, `slotShowsInTheHub`.
+- [ ] **Step 2:** run, fail. **Step 3:** implement. **Step 4:** matrix 1-12 (skips with `species` off; the skill data skips with `supernatural` off; `bosses` off: the tag is `required:false` and the immune list is empty): PASS. **Step 5:** commit `feat(skill): Neck Snap`.
+
+### Task 4: Docs
+
+- [ ] **R214** (the table above and the wiki citations, verbatim URLs), R32 and R124 notes (a snapped Original is open to white oak and warns its line), `docs/parts/species.md`, `docs/parts/hud.md`, `docs/balance.md`, CHANGELOG (new skill; a plain Neck Snap on an Original exposes it to white oak for the wake time: say so). **Commit** `docs(skill): R214`.
 
 ---
 
@@ -502,18 +587,22 @@ Creepers are not changed (Question 10). Mobs already in the level keep their goa
 |---|---|---|
 | `augustine_syringe` item model + texture (and 3D model like `white_oak_ash_dagger_3d`) | 18c | Wes's syringe: glass barrel, dark red/blue serum, brass plunger |
 | `cursed_white_oak_ash_dagger` item model + texture + 3D | 18g | the plain dagger's silhouette, black-purple ash, a faint violet glow; must read as "cursed" next to the plain one at 16x16 |
-| HUD icons `rip_heart.png`, `hybrid_leap.png`, `give_blood.png`, `bottle_blood.png` | 18a, 18d-f | `textures/gui/hud/`, the size of `alpha_roar.png` |
-| Skill icons S-AUG-1, S-AUG-2, S-VAM-8, S-HYB-3 | 18c-e | `SkillIcons` |
+| HUD icons `rip_heart.png`, `neck_snap.png`, `hybrid_leap.png`, `give_blood.png`, `bottle_blood.png` | 18a, 18d, 18d2, 18e, 18f | `textures/gui/hud/`, the size of `alpha_roar.png` |
+| Skill icons S-AUG-1, S-AUG-2, S-VAM-8, S-VAM-9, S-HYB-3 | 18c-e | `SkillIcons` |
+| Mob-effect icon `snapped` | 18d2 | `textures/mob_effect/snapped.png`, 18x18 |
+| "Out cold" screen art (optional): title card for `MODE_SNAPPED` | 18d2 | the plain title is the fallback |
 | Augustine species colour and emblem | 18c | `LineColors`, `EmblemData`, hub Bloodline page |
 | Rite icons (book) for Augustine and Cursed Dagger | 18c, 18g | reuse the item icons if the book accepts them |
 Until the art lands every task uses a placeholder (the `unknown.png` pattern) so GameTests and `ItemModelCoverageGameTests` pass.
 
-## Questions for the owner (each with my recommendation)
+## Questions for the owner (each with my recommendation) and the owner's answers
+
+**Owner's answers (2026-11-21): use my recommendation for all 16, except Q3, Q4 and Q14, which the owner changed; each of those three says so below.** Neck Snap (new) is in 18d2 and its three open points are Q17-Q19, decided by me and open to a veto.
 
 1. **Who can become an Augustine?** Recommend: a plain vampire (species none, not a Ghoul, no transition); no minimum level; the syringe on yourself or on a sneaking (consenting) vampire player; everyone else refused with one uniform line.
 2. **May an Augustine awaken as a hybrid?** Recommend: no (refused like a heretic); revisit if you want Augustine hybrids.
-3. **Tensura for Augustines?** Recommend: none in 18 (kept race, no layer, no apex). Say if you want an apex race later.
-4. **Who gets Rip Heart?** Recommend: the plain vampire, Augustine and heretic trees (rung 5, 5 SP), not Originals or hybrids. Defaults: 10 HP, 60 s cooldown, players and mobs. An Original at low health gets the *same* message and cooldown and takes nothing, so nobody can use it to find an Original.
+3. **Tensura for Augustines?** Recommend: none in 18. **Owner answer: Augustines are "vampires on a diet": the same Tensura treatment as a plain vampire (race, layer, apex, ladder hooks). Done in 18c Task 2b.**
+4. **Who gets Rip Heart?** Recommend: the plain vampire, Augustine and heretic trees. **Owner answer: every vampiric kind (vampire, Augustine, heretic, Original, Original hybrid, hybrid, tribrid); Ghouls have no tree.** The same applies to Neck Snap (18d2). Defaults: 10 HP, 60 s cooldown, players and mobs. An Original at low health gets the *same* message and cooldown and takes nothing, so nobody can use it to find an Original.
 5. **Rip Heart and PvP/claims:** recommend a refusal with one generic line, no cooldown.
 6. **Hybrid Leap numbers:** recommend range 12, damage 6, Weakness 5 s, cooldown 20 s, any form, hybrid and Original hybrid only (not tribrid), 4 SP. Confirm.
 7. **NPC Original hybrids (Klaus) and the daggers:** recommend NPC boss fights keep accepting both daggers (a soft-lock risk otherwise); only players are affected by the R33 change.
@@ -523,12 +612,16 @@ Until the art lands every task uses a placeholder (the `unknown.png` pattern) so
 11. **The blood buff:** Regeneration II lasts the whole window (24,000 ticks, 20 minutes) for anyone with vampire blood in them, a plain bottle included. That is what you asked for; recommend keeping it and adding the config switch `vampire_blood_buff_enabled` (done in 18f). Tell me if you want it shorter.
 12. **Do Original's Blood and Klaus's Blood also put vampire blood in a human?** Today they do not (a human needs a vampire-blood bottle too). Recommend yes, so one bottle is enough (18a does this).
 13. **Bottle my blood:** recommend: any vampire type except Originals and Original hybrids (the rite stays the only way to bottle an Original), costs 3 health (never lethal), a glass bottle, 60 s cooldown.
-14. **Tooltips and secrets:** recommend: a common vampire's bottle shows its kind and source name; every other kind says only "Strange blood", and the name of a secret source is never stored in a synced component. Note: the source UUID *is* synced today (pre-existing, `BLOOD_SOURCE_COMPONENT`); for a player Original it can be resolved to a name by a modified client through Mojang's API. Recommend accepting it for now, or I add a follow-up that syncs a unit codec and keeps the UUID server-side.
+14. **Tooltips and secrets:** recommend: a common vampire's bottle shows its kind and source name; every other kind says only "Strange blood". I recommended accepting the pre-existing synced UUID for now. **Owner override: fix it in 18a.** The UUID, the species and the private name now use a unit network codec (the client sees only that the component exists), and a synced label (`?` or a common vampire's name) feeds the tooltip. Costs: a creative player's moved bottle reads as unstamped; the component codec change means "update the server and every client together".
 15. **A real death after waking** (a mob kills you while you are still in the turning): recommend it keeps the turning, as today; only "Give up" fails it. Dying lasts 30 s (the existing `Downed` time); you wake at half health.
 16. **Network versions:** recommend bumping both registrars (done in 18b and 18i), with the "update together" note.
+17. **Neck Snap on the weak and the healthy mortal (decided, open to veto):** the wiki says a human dies at once; the plan kills a mortal only at or under `neck_snap_kill_health` (10, Rip Heart's number) and staggers a healthier one (Slowness III and Weakness, 3 s). Reason: an unconditional instant kill on any player is a PvP one-shot with a 45 s cooldown. Set the key to 40 to get the show's behaviour.
+18. **Wake times (decided, open to veto):** the wiki gives no number and says only "varying" (diet, age) and "short" for Originals and hybrids. All four per-kind keys default to 60 s so the lying-down time cannot identify an Original; the wiki's hint ("Originals recover sooner") is one config edit away, at the price of an Original being detectable by timing. Augustines get the same 60 s (the wiki says "unconsciousness"; they also lie down).
+19. **What a snap does to an Original (decided):** it lays them down like any vampire, and while they lie there white oak and a heart-rip follow the existing rules: white oak kills a snapped Original (and warns the line, R124); Rip Heart never does. So a snap opens an Original to a white oak hit for the wake time. If you do not want that, say so and the Original kind becomes `NOTHING` (same line and cooldown, no effect), the way Rip Heart treats them.
 
 ## Self-review
 
 - **Spec coverage:** 1 -> 18c; 2 -> 18d; 3 -> 18e (reconciled with the sprint-leap by one guard, not a second action); 4 -> 18g (R33 changed, migration note in Task 4); 5 -> 18h; 6 -> 18i (four COMMON keys, defaults false, Admin rows); 7 -> 18f (rules in `ForceFeedRules`, buff in `VampireBloodBuff`); 8 -> 18b (PR #56's `PendingSire` is re-tested, not changed); 9 -> 18a (stamped in drops, rites and the new action; tooltip; drinking by kind; unstamped = common). Not included: Inventory Sight, loot-table acquisition (no loot anywhere in this plan; the syringe is crafted, the rites are performed).
+- **Owner changes of 2026-11-21 are in:** Q3 (18c Task 2b and `L-AUG-6`), Q4 (every vampiric tree gets Rip Heart and Neck Snap), Q14 (18a Task 2: nothing secret is synced), Neck Snap (18d2, with the wiki citations). Order is now 18a, 18b, 18c, 18d, 18d2, 18e, 18f, then 18g/18h/18i in any order.
 - **Types:** `BloodKind`, `BloodSource`, `BloodBottleRules.Effect`, `BloodBottles.apply` (18a) are the only blood types 18f uses; `ActionClock` (18a Task 5) is used by 18d-f; `HudTargets.resolve` and `ExtraActions.Action.trigger(p, target)` (18d Task 1) by 18e and 18f; `Downed.startDying` and `TURNING_GAVE_UP` (18b) only by 18b.
 - **Proportion:** each phase's tests are named with the assertion they pin; bodies are left to the implementer except the three tables (blood, ForceFeed order, venom stages).
