@@ -5,6 +5,7 @@
     "id": "minecraft:diamond"
   },
   "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/doppelganger_blood",
   "pages": [
     {
       "components": [

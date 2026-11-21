@@ -8,7 +8,7 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 
 /**
  * Server to client: the Alpha Trial was refused once because the player's path to True Alpha is still open and winning would end it. The hub opens
- * on the Rites page with the True Alpha warning; the answer is a {@link TrialConfirmPayload}. It carries nothing.
+ * on Home with the True Alpha warning; the answer is a {@link TrialConfirmPayload}. It carries nothing.
  */
 public record TrialWarnPayload() implements CustomPacketPayload {
     public static final TrialWarnPayload INSTANCE = new TrialWarnPayload();

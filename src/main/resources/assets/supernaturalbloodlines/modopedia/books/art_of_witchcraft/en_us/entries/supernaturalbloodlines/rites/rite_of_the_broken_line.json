@@ -5,6 +5,7 @@
     "id": "minecraft:chain"
   },
   "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/rite_of_the_broken_line",
   "pages": [
     {
       "components": [

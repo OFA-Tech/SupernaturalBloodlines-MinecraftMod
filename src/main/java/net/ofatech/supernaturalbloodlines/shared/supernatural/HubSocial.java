@@ -61,46 +61,6 @@ public final class HubSocial {
     public record Person(String name, java.util.UUID id) {
     }
 
-    /**
-     * A rite of this mod the server has loaded (so its part and mods are on), as the hub lists it.
-     *
-     * @param items   "count id" per item
-     * @param shapes  the circles as {@code shape=chalk} ({@code enchanted:medium_circle=enchanted:nether_chalk}); see {@link Rite#circles()}
-     * @param factory the rite's factory type id; {@code faction} is its {@code faction} setting, or "" when it has none
-     * @param sacrifices the creatures the rite takes (entity type ids)
-     * @param fullMoon   the rite works on a full-moon night only ({@code requires_full_moon} in its factory)
-     * @param tickPower  the altar power it keeps drawing each tick while it runs
-     */
-    public record Rite(String id, int power, List<String> items, List<String> shapes, String factory, String faction,
-                       List<String> sacrifices, boolean fullMoon, int tickPower) {
-        public Rite {
-            items = List.copyOf(items);
-            shapes = List.copyOf(shapes);
-            sacrifices = List.copyOf(sacrifices);
-        }
-
-        public Rite(String id, int power, List<String> items, List<String> shapes, String factory, String faction) {
-            this(id, power, items, shapes, factory, faction, List.of(), false, 0);
-        }
-
-        /** The rite's circles; a shape sent without a chalk gets an empty chalk. */
-        public List<Circle> circles() {
-            return shapes.stream().map(Circle::parse).toList();
-        }
-    }
-
-    /** One circle of a rite: the shape and the chalk it is drawn in, as paths ({@code medium_circle}, {@code nether_chalk}). */
-    public record Circle(String shape, String chalk) {
-        public static Circle parse(String pair) {
-            int eq = pair.indexOf('=');
-            return new Circle(path(eq < 0 ? pair : pair.substring(0, eq)), eq < 0 ? "" : path(pair.substring(eq + 1)));
-        }
-
-        private static String path(String id) {
-            return id.substring(id.indexOf(':') + 1);
-        }
-    }
-
     /** How many of the sire's ancestors the snapshot carries (the server cuts the list, the codec bounds it). */
     public static final int MAX_ANCESTORS = 8;
 
@@ -128,12 +88,12 @@ public final class HubSocial {
      * @param line      everyone below the player, depth-first
      */
     public record Social(Optional<String> sire, List<String> sired, List<Member> pack, int fiveCount, List<String> ancestors, List<Kin> line,
-                         List<Rite> rites, Origin origin, List<Person> people) {
-        public static final Social NONE = new Social(Optional.empty(), List.of(), List.of(), 0, List.of(), List.of(), List.of(), Origin.NONE);
+                         Origin origin, List<Person> people) {
+        public static final Social NONE = new Social(Optional.empty(), List.of(), List.of(), 0, List.of(), List.of(), Origin.NONE);
 
         public Social(Optional<String> sire, List<String> sired, List<Member> pack, int fiveCount, List<String> ancestors, List<Kin> line,
-                      List<Rite> rites, Origin origin) {
-            this(sire, sired, pack, fiveCount, ancestors, line, rites, origin, List.of());
+                      Origin origin) {
+            this(sire, sired, pack, fiveCount, ancestors, line, origin, List.of());
         }
 
         public Social {
@@ -142,7 +102,6 @@ public final class HubSocial {
             pack = List.copyOf(pack);
             ancestors = List.copyOf(ancestors);
             line = List.copyOf(line);
-            rites = List.copyOf(rites);
         }
     }
 

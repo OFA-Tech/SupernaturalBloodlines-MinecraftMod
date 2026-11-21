@@ -65,7 +65,7 @@ public final class SpeciesHub {
         List<HubSocial.Person> people = new ArrayList<>();
         sire.filter(n -> !n.isEmpty() && sireId != null).ifPresent(n -> people.add(new HubSocial.Person(n, sireId)));
         sirelines.childrenOf(p.getUUID()).forEach(c -> people.add(new HubSocial.Person(c.name(), c.id())));
-        return new HubSocial.Social(sire, sired, pack, FiveRoster.get(p.serverLevel()).size(), names, line, rites(server), origin(p, hidden), people);
+        return new HubSocial.Social(sire, sired, pack, FiveRoster.get(p.serverLevel()).size(), names, line, origin(p, hidden), people);
     }
 
     static final int MAX_LINE = 64;
@@ -152,28 +152,6 @@ public final class SpeciesHub {
     /** An NPC Original goes as {@code npc:<id>} (the client translates it); a player's name as it is. */
     private static String rootName(MinecraftServer server, UUID root) {
         return NpcOriginal.byUuid(root).map(o -> "npc:" + o.id()).orElseGet(() -> Lines.rootName(server, root).getString());
-    }
-
-    /** This mod's rites the server loaded (their part and mods are on), read back through Enchanted's own codec. */
-    public static List<HubSocial.Rite> rites(MinecraftServer server) {
-        List<HubSocial.Rite> out = new ArrayList<>();
-        var registry = server.registryAccess().registryOrThrow(EData.RITE_TYPES_REGISTRY);
-        for (var entry : registry.entrySet()) {
-            ResourceLocation id = entry.getKey().location();
-            if (!id.getNamespace().equals(SupernaturalBloodlines.MODID)) {
-                continue;
-            }
-            RiteType rite = entry.getValue();
-            List<String> items = rite.getItems().stream().map(s -> s.getCount() + " " + net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(s.getItem())).toList();
-            List<String> shapes = rite.getShapes().entrySet().stream().map(e -> e.getKey().unwrapKey().map(k -> k.location().toString()).orElse("?")
-                    + "=" + net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(e.getValue())).sorted().toList();
-            List<String> sacrifices = rite.getEntities().stream().map(t -> net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(t).toString()).toList();
-            JsonObject factory = factoryOf(server.registryAccess(), rite);
-            boolean fullMoon = factory.has("requires_full_moon") && factory.get("requires_full_moon").isJsonPrimitive() && factory.get("requires_full_moon").getAsBoolean();
-            out.add(new HubSocial.Rite(id.toString(), rite.getPower(), items, shapes, string(factory, "type"), string(factory, "faction"), sacrifices, fullMoon, rite.getTickPower()));
-        }
-        out.sort(java.util.Comparator.comparing(HubSocial.Rite::id));
-        return out;
     }
 
     /** The factory and its settings have no getters: read them back through Enchanted's own codec (a factory that cannot encode shows none). */

@@ -36,7 +36,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.profile.TrueAlphaWarning;
  */
 public record AlphaTrialRiteFactory(String faction, boolean requiresFullMoon) implements RiteFactory {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "alpha_trial");
-    /** {@code faction} is only what the Rites page reads to list it first for werewolves (the factory reads no faction from it). */
+    /** {@code faction} is no longer read by anything (the Rites page it listed the rite on is gone) (the factory reads no faction from it). */
     public static final MapCodec<AlphaTrialRiteFactory> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.mapCodec(i -> i.group(
             com.mojang.serialization.Codec.STRING.optionalFieldOf("faction", "werewolf").forGetter(AlphaTrialRiteFactory::faction),
             net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory.fullMoonByDefault().forGetter(AlphaTrialRiteFactory::requiresFullMoon)

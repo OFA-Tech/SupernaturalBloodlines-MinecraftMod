@@ -5,6 +5,7 @@
     "id": "minecraft:iron_sword"
   },
   "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/rite_of_the_valet_pike",
   "pages": [
     {
       "components": [

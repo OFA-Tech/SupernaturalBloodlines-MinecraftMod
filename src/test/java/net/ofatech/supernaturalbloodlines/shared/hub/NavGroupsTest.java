@@ -8,19 +8,19 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class NavGroupsTest {
-    private static final List<HubPage> OP = List.of(HOME, PATH, SKILLS, QUESTS, RITES, BLOODLINE, PACK, GUIDE, SETTINGS, ADMIN);
+    private static final List<HubPage> OP = List.of(HOME, PATH, SKILLS, QUESTS, BLOODLINE, PACK, GUIDE, SETTINGS, ADMIN);
 
     @Test
     void aGapWhereTheGroupChangesAndAWiderOneBeforeAdmin() {
-        assertArrayEquals(new int[] {0, 1, 0, 0, 1, 1, 0, 1, 1, 2}, NavGroups.gaps(OP));
+        assertArrayEquals(new int[] {0, 1, 0, 0, 1, 0, 1, 1, 2}, NavGroups.gaps(OP));
     }
 
     @Test
     void aHiddenPageLeavesNoEmptyGroupAndHomeHasNoHeading() {
-        List<HubPage> noRitesNoAdmin = List.of(HOME, PATH, SKILLS, QUESTS, BLOODLINE, GUIDE, SETTINGS);
-        assertArrayEquals(new int[] {0, 1, 0, 0, 1, 1, 1}, NavGroups.gaps(noRitesNoAdmin));
-        assertEquals(List.of(Group.ME, Group.PEOPLE, Group.HELP, Group.SYSTEM), NavGroups.headings(noRitesNoAdmin).stream().map(NavGroups.Heading::group).toList());
-        assertEquals(1, NavGroups.headings(noRitesNoAdmin).get(0).tab());
+        List<HubPage> noPackNoAdmin = List.of(HOME, PATH, SKILLS, QUESTS, BLOODLINE, GUIDE, SETTINGS);
+        assertArrayEquals(new int[] {0, 1, 0, 0, 1, 1, 1}, NavGroups.gaps(noPackNoAdmin));
+        assertEquals(List.of(Group.ME, Group.PEOPLE, Group.HELP, Group.SYSTEM), NavGroups.headings(noPackNoAdmin).stream().map(NavGroups.Heading::group).toList());
+        assertEquals(1, NavGroups.headings(noPackNoAdmin).get(0).tab());
     }
 
     @Test

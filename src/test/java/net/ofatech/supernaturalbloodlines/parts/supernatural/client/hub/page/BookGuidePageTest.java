@@ -25,8 +25,8 @@ class BookGuidePageTest {
 
     @Test
     void theContentsGivesThePageTheSpreadsFooterShows() {
-        // the Guide is the 8th page of the hub: its spread is 15 and 16, and every chapter is read on it, so the Contents says 16 and never 25
-        assertEquals(16, BookGuidePage.chapterPage());
+        // the Guide is the 7th page of the hub: its spread is 13 and 14, and every chapter is read on it, so the Contents says 14 and never 25
+        assertEquals(14, BookGuidePage.chapterPage());
     }
 
     @Test

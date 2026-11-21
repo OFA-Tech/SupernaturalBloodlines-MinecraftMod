@@ -4,9 +4,8 @@
     "count": 1,
     "id": "minecraft:totem_of_undying"
   },
-  "assigned_items": [
-    "supernaturalbloodlines:resurrection_ring"
-  ],
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/ward_of_return",
   "pages": [
     {
       "components": [

@@ -20,7 +20,7 @@ class SnapshotIdsWireTest {
         var genes = new LinkedHashMap<String, Genes.Knowledge>();
         Genes.ALL.forEach(g -> genes.put(g, Genes.Knowledge.UNKNOWN));
         HubSnapshotPayload s = new HubSnapshotPayload(new HubSnapshotPayload.Family(Optional.of("Klaus"), false, List.of(), List.of(), List.of(), HubSocial.Origin.NONE),
-                List.of(new HubSocial.Member("Derek", "beta", true, Optional.of(mate))), 0, genes, List.of(), List.of(new HubSocial.Person("Klaus", sire)));
+                List.of(new HubSocial.Member("Derek", "beta", true, Optional.of(mate))), 0, genes, List.of(new HubSocial.Person("Klaus", sire)));
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         HubSnapshotPayload.STREAM_CODEC.encode(buf, s);
         HubSnapshotPayload back = HubSnapshotPayload.STREAM_CODEC.decode(buf);
@@ -28,7 +28,6 @@ class SnapshotIdsWireTest {
         assertEquals(s.pack(), back.pack(), "pack");
         assertEquals(s.people(), back.people(), "people");
         assertEquals(s.genes(), back.genes(), "genes");
-        assertEquals(s.rites(), back.rites(), "rites");
         assertEquals(s, back);
     }
 
@@ -36,7 +35,7 @@ class SnapshotIdsWireTest {
     void theWorldNowFlagsSurviveTheWireInEveryCombination() {
         for (boolean sleep : new boolean[] {false, true}) {
             for (boolean stirs : new boolean[] {false, true}) {
-                HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of(), List.of(),
+                HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of(),
                         new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(sleep, stirs));
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                 HubSnapshotPayload.STREAM_CODEC.encode(buf, s);
@@ -54,12 +53,12 @@ class SnapshotIdsWireTest {
      * misread each other's bytes). This pins the bytes of an empty snapshot with both flags set, and the protocol they belong to. If you change
      * the snapshot, this fails: raise {@code LadderNet.PROTOCOL} and update both constants here, in the same commit.
      */
-    private static final String GOLDEN_PROTOCOL = "8";
-    private static final String GOLDEN_HEX = "00000000000b4e4f545f56414d504952450000044e4f4e45000000000000010100000000";
+    private static final String GOLDEN_PROTOCOL = "9";
+    private static final String GOLDEN_HEX = "00000000000b4e4f545f56414d504952450000044e4f4e450000000000010100000000";
 
     @Test
     void theSnapshotWireFormatAndTheProtocolNumberChangeTogether() {
-        HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of(), List.of(),
+        HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of(),
                 new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(true, true));
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         HubSnapshotPayload.STREAM_CODEC.encode(buf, s);
@@ -73,35 +72,16 @@ class SnapshotIdsWireTest {
         assertEquals(GOLDEN_PROTOCOL, LadderNet.PROTOCOL, "the protocol number does not go with the snapshot's wire format");
     }
 
-    /** A rite on the wire (chalk, sacrifices, full moon, tick power) is what moved the protocol from 7 to 8: its bytes are pinned. */
-    private static final String GOLDEN_RITE_HEX = "00000000000b4e4f545f56414d504952450000044e4f4e45000000000103613a620501053120613a63012d656e6368616e7465643a736d616c6c5f636972636c653d656e6368616e7465643a6e65746865725f6368616c6b03613a660177010d6d696e6563726166743a636f77010200000000000000";
-
-    @Test
-    void aRitesBytesAndTheProtocolNumberChangeTogether() {
-        var rite = new HubSocial.Rite("a:b", 5, List.of("1 a:c"), List.of("enchanted:small_circle=enchanted:nether_chalk"), "a:f", "w", List.of("minecraft:cow"), true, 2);
-        HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of(rite));
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        HubSnapshotPayload.STREAM_CODEC.encode(buf, s);
-        byte[] bytes = new byte[buf.readableBytes()];
-        buf.readBytes(bytes);
-        StringBuilder hex = new StringBuilder();
-        for (byte b : bytes) {
-            hex.append(String.format("%02x", b));
-        }
-        assertEquals(GOLDEN_RITE_HEX, hex.toString(), "a rite's bytes changed: raise LadderNet.PROTOCOL and update GOLDEN_RITE_HEX and GOLDEN_PROTOCOL");
-        assertEquals("8", LadderNet.PROTOCOL);
-    }
-
     @Test
     void aSnapshotBuiltWithoutTheFlagsSaysNeither() {
-        HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of());
+        HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>());
         assertEquals(net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.NONE, s.world());
     }
 
     @Test
     void theTrialNoticeSurvivesTheWire() {
         for (int trial = 0; trial <= 2; trial++) {
-            HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of(), List.of(),
+            HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of(),
                     new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(false, false, trial));
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             HubSnapshotPayload.STREAM_CODEC.encode(buf, s);

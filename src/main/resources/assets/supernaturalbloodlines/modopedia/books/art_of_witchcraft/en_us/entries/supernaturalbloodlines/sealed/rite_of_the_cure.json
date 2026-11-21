@@ -1,0 +1,20 @@
+{
+  "title": "??? · witch or Elijah's Letter",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:honeycomb"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/sealed/rite_of_the_cure",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Unlocked by becoming a witch, or by reading Elijah's Letter, a Torn Page Elijah leaves behind.\n\nThe seal is unbroken.",
+          "header": "???"
+        }
+      ]
+    }
+  ]
+}

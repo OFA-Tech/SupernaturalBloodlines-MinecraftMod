@@ -49,7 +49,7 @@ class HubReturnTest {
     @Test
     void leavingTheWorldForgetsTheReturn() {
         HubReturn r = new HubReturn();
-        r.launched(HubPage.RITES, TENSURA);
+        r.launched(HubPage.QUESTS, TENSURA);
         r.clear(); // LoggingOut
         assertEquals(Optional.empty(), r.tick(OnScreen.NONE, null));
     }

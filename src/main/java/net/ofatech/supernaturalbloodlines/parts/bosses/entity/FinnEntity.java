@@ -69,6 +69,12 @@ public final class FinnEntity extends NpcOriginalBoss {
         return new ItemStack(BossItems.ESTHER_GRIMOIRE.get());
     }
 
+    /** Finn's Notes: the eclipse rites (the Broken Line, the Imprisoned Original). */
+    @Override
+    protected java.util.List<ItemStack> extraRewards() {
+        return java.util.List.of(net.ofatech.supernaturalbloodlines.parts.species.unlock.RitePageItem.of(net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.FINN));
+    }
+
     public boolean ritualing() {
         return ritualing;
     }

@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 class NavGroupsLayoutTest {
     private static final int[][] SCREENS = {{320, 240}, {480, 270}, {640, 360}, {960, 540}};
     private static final List<List<HubPage>> SETS = List.of(
-            List.of(HOME, PATH, SKILLS, QUESTS, RITES, BLOODLINE, PACK, GUIDE, SETTINGS, ADMIN),
+            List.of(HOME, PATH, SKILLS, QUESTS, BLOODLINE, PACK, GUIDE, SETTINGS, ADMIN),
             List.of(HOME, PATH, SKILLS, QUESTS, BLOODLINE, GUIDE, SETTINGS),
             List.of(HOME, PATH, GUIDE, SETTINGS));
 

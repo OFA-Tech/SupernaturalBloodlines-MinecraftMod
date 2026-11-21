@@ -5,6 +5,7 @@
     "id": "minecraft:bone"
   },
   "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/alpha_trial",
   "pages": [
     {
       "components": [

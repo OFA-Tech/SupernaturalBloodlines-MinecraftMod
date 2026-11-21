@@ -5,6 +5,7 @@
     "id": "minecraft:candle"
   },
   "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/rite_of_the_five",
   "pages": [
     {
       "components": [

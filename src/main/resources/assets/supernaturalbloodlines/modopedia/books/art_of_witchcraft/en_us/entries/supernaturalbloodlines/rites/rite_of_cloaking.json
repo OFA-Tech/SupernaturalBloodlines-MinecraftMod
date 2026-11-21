@@ -5,6 +5,7 @@
     "id": "minecraft:phantom_membrane"
   },
   "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/rite_of_cloaking",
   "pages": [
     {
       "components": [

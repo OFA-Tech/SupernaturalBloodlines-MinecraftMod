@@ -42,7 +42,6 @@ public enum Icons {
             case PATH -> PATH;
             case SKILLS -> SKILLS;
             case QUESTS -> QUESTS;
-            case RITES -> RITES;
             case BLOODLINE -> BLOODLINE;
             case PACK -> Icons.PACK;
             case GUIDE -> GUIDE;

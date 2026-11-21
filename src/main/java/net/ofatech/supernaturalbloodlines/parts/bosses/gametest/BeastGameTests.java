@@ -299,6 +299,15 @@ public final class BeastGameTests {
             helper.assertTrue(body(rig) instanceof GevaudanHostEntity, "the index does not hold the Host that stood up");
             GevaudanSpiritEntity spirit = (GevaudanSpiritEntity) helper.getLevel().getEntity(entry(rig).spirit);
             helper.assertTrue(spirit != null && spirit.isAlive(), "there is no Spirit");
+            if (net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("species")) {
+                var pages = helper.getLevel().getEntitiesOfClass(ItemEntity.class, b.getBoundingBox().inflate(8.0),
+                        i -> i.getItem().is(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.RITE_PAGE.get()));
+                helper.assertTrue(pages.size() == 1 && net.ofatech.supernaturalbloodlines.parts.species.unlock.RitePageItem.loreOf(pages.get(0).getItem()).equals("beast"),
+                        "the fall left " + pages.size() + " Valet's Notes");
+                BeastDirector.collapse(helper.getLevel(), b);
+                helper.assertTrue(helper.getLevel().getEntitiesOfClass(ItemEntity.class, b.getBoundingBox().inflate(8.0),
+                        i -> i.getItem().is(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.RITE_PAGE.get())).size() == 1, "a second look at the same fall left more notes");
+            }
             helper.assertTrue(entry(rig).spiritUntil == helper.getLevel().getGameTime() + BossesConfig.beastSpiritSeconds() * 20L, "the Spirit's time is " + entry(rig).spiritUntil);
             helper.assertTrue(!b.isInvulnerable() && b.isInvulnerableTo(helper.getLevel().damageSources().magic()), "the falling Beast can still be hurt");
             // a body that is falling is not the index's: it is not discarded by the index, and it is gone when the collapse is over

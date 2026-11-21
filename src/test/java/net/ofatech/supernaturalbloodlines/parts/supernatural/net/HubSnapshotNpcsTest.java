@@ -16,7 +16,7 @@ class HubSnapshotNpcsTest {
 
     @Test
     void theWolvesSurviveTheCodec() {
-        var snap = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, Map.of(), List.of(), List.of(), net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.NONE,
+        var snap = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, Map.of(), List.of(), net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.NONE,
                 List.of(npc(1), npc(2)));
         var buf = Unpooled.buffer();
         HubSnapshotPayload.STREAM_CODEC.encode(buf, snap);
@@ -29,7 +29,7 @@ class HubSnapshotNpcsTest {
         for (int i = 1; i <= 80; i++) {
             many.add(npc(i));
         }
-        var snap = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, Map.of(), List.of(), List.of(), net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.NONE, many);
+        var snap = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, Map.of(), List.of(), net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.NONE, many);
         assertEquals(HubSocial.MAX_NPCS, snap.npcs().size());
     }
 }

@@ -89,6 +89,7 @@ public final class QuestsPage implements HubPageView {
         if (hint != null && I18n.exists(hint)) {
             y = PageKit.wrapped(f, Component.translatable(hint), r.x(), y + 2, r.w(), t.muted());
         }
+        y = RiteTaskLink.add(f, row, r.x(), y, r.w());
         y = PageKit.wrapped(f, Component.translatable(PageKit.HUB + "task.state." + row.state().name().toLowerCase(java.util.Locale.ROOT)),
                 r.x(), y + 4, r.w(), row.state() == TaskState.CLAIMABLE ? t.good() : t.muted());
         if (row.state() == TaskState.CLAIMABLE) {

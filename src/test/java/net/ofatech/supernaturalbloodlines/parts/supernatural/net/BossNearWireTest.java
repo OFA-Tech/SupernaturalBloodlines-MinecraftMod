@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 /** Plan 17: which boss is near (and its name, when the player may know it) rides in the Home snapshot, and is cleaned on the way in. */
 class BossNearWireTest {
     private static HubSnapshotPayload snapshot(WorldNowHook.Flags flags) {
-        return new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, Map.of(), List.of(), List.of(), flags, List.of());
+        return new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, Map.of(), List.of(), flags, List.of());
     }
 
     @Test

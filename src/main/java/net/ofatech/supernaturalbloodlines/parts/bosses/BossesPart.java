@@ -58,6 +58,7 @@ public final class BossesPart {
         net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEvents.register();
         net.ofatech.supernaturalbloodlines.parts.bosses.item.MantleEvents.register();
         net.ofatech.supernaturalbloodlines.parts.bosses.deal.BossEvents17d.register();
+        net.ofatech.supernaturalbloodlines.parts.bosses.RiteLoreBackfill.register();
         modBus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent e) -> {
             var registrar = e.registrar("1").optional();
             registrar.playToClient(net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload.STREAM_CODEC,
@@ -92,6 +93,7 @@ public final class BossesPart {
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.RebekahGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.ElixirGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.KolGameTests.class);
+        e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.GrimoireLoreGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.FinnGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.CloakLinkGameTests.class);
         });

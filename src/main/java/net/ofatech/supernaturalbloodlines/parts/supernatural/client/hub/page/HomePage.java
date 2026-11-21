@@ -14,6 +14,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClien
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
@@ -342,7 +343,7 @@ public final class HomePage implements HubPageView {
             if (!running) {
                 Component rites = Component.translatable(KEY + "open_trial");
                 Rect tb = new Rect(s.x(), y + 2, Math.min(s.w(), PageWidgets.widthOf(f.font(), rites)), PageWidgets.H);
-                PageWidgets.button(f, "stage:home:trial", tb, rites, true, false, null, () -> f.screen().setPage(HubPage.RITES));
+                PageWidgets.button(f, "stage:home:trial", tb, rites, RiteLinks.hasBook(), false, RiteLinks.tip("alpha_trial", null), () -> RiteLinks.open("alpha_trial"));
                 y = tb.bottom() + 2;
             }
         }
@@ -390,6 +391,9 @@ public final class HomePage implements HubPageView {
         all.add(new Do("surge", Component.translatable(KEY + "surge"), wolf && net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial.surgeMates(f.view.snapshot().pack(), f.view.player().getUUID()) > 0, wolf ? "no_pack" : "not_werewolf", () -> HubClient.runCommand("P19", List.of())));
         all.add(new Do("spirits", Component.translatable(KEY + "spirits"), alpha, "not_alpha_spirits", () -> HubClient.runCommand("P20", List.of())));
         all.add(new Do("quests", Component.translatable(KEY + "open_quests"), true, "", () -> f.screen().setPage(HubPage.QUESTS)));
+        if (f.view.context().enchanted()) {
+            all.add(new Do("rites", Component.translatable(KEY + "rites_line"), RiteLinks.hasBook(), "no_book", HubClient::openEnchantedBook));
+        }
         for (Do d : all) {
             Rect b = new Rect(s.x(), y + 2, Math.min(s.w(), PageWidgets.widthOf(f.font(), d.label())), PageWidgets.H);
             Component why = d.on() ? null : Component.translatable(KEY + "why." + d.why());

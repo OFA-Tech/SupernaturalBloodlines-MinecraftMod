@@ -44,6 +44,11 @@ public abstract class NpcOriginalBoss extends BossNpc {
     /** What this boss pays the first time it is brought down (or killed, by {@code boss_reward_on}). */
     protected abstract ItemStack reward();
 
+    /** What else the boss leaves with its reward: a page of lore (Finn, Elijah), by default nothing. */
+    protected java.util.List<ItemStack> extraRewards() {
+        return java.util.List.of();
+    }
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
@@ -226,6 +231,9 @@ public abstract class NpcOriginalBoss extends BossNpc {
         entry.rewarded = true;
         index.setDirty();
         level.addFreshEntity(new ItemEntity(level, getX(), getY() + 0.5, getZ(), reward()));
+        for (ItemStack extra : extraRewards()) {
+            level.addFreshEntity(new ItemEntity(level, getX(), getY() + 0.5, getZ(), extra));
+        }
         BossIndex.flush(level.getServer());
         return true;
     }

@@ -12,6 +12,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.SupernaturalConfig;
+import net.ofatech.supernaturalbloodlines.shared.species.RiteLearned;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +35,6 @@ public final class RiteSignal {
     }
 
     public static void completed(Rite rite, Rite.RiteParams params) {
-        if (!SupernaturalConfig.riteCompleteSignal()) {
-            return;
-        }
         try {
             ServerLevel level = rite.getLevel();
             ResourceLocation id = level.registryAccess().registryOrThrow(EData.RITE_TYPES_REGISTRY).getKey(rite.getType());
@@ -47,6 +45,15 @@ public final class RiteSignal {
             Player target = online(level, params.target);
             if (target == null) {
                 target = centrePlayer(level, rite);
+            }
+            // performing teaches the rite to the performer (plan rites-unlock), whether or not the ladder signal is on; a target is taught nothing (a curse must not teach its victim)
+            if (id.getNamespace().equals(SupernaturalBloodlines.MODID)) {
+                if (performer != null) {
+                    RiteLearned.performed(performer, id.toString());
+                }
+            }
+            if (!SupernaturalConfig.riteCompleteSignal()) {
+                return;
             }
             TaskSignals.rite(performer, target != null ? target : performer, id.toString());
         } catch (RuntimeException e) {

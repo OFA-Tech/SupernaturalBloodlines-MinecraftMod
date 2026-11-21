@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.ofatech.supernaturalbloodlines.core.rite.RiteAdvancements;
+import net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +19,7 @@ import java.util.stream.Stream;
 
 /**
  * Writes this mod's chapter of Enchanted's book (a Modopedia book): one entry per rite file, built from the rite JSON (its circle) and the
- * {@code hub.rites.desc.<rite>.<n>} lang lines (what it does, who, the cost), so the book, the Rites page and the rite data cannot disagree.
+ * {@code hub.rites.desc.<rite>.<n>} lang lines (what it does, who, the cost), so the book and the rite data cannot disagree.
  * Output is committed under {@link #BOOK}; {@code RitesBookTest} fails when the committed files are not what this makes.
  * Regenerate with {@code RITES_BOOK_WRITE=1 ./gradlew test --tests '*RitesBookTest'}.
  */
@@ -25,6 +27,15 @@ final class RitesBook {
     static final String NS = "supernaturalbloodlines";
     static final String BOOK = "src/main/resources/assets/supernaturalbloodlines/modopedia/books/art_of_witchcraft/en_us";
     static final String RITES = "src/main/resources/data/supernaturalbloodlines/enchanted/circle_magic/rite";
+    /** The unlock advancements (generated with the book: {@code known/<rite>} and {@code sealed/<rite>}). */
+    static final String ADV = "src/main/resources/data/supernaturalbloodlines/advancement/rites";
+    /** What fits on one line of the book's entry list (its text is 100 pixels wide; the label is cut or wraps beyond this many characters). */
+    static final int LABEL_CHARS = 36;
+    static final String KIND = "supernaturalbloodlines.rites.kind.";
+    static final String KIND_SHORT = "supernaturalbloodlines.rites.kind_short.";
+    static final String LORE = "supernaturalbloodlines.rites.lore.";
+    static final String LORE_SHORT = "supernaturalbloodlines.rites.lore_short.";
+    static final String SEALED_TEXT = "supernaturalbloodlines.rites.sealed";
     static final String LANG = "src/main/resources/assets/supernaturalbloodlines/lang/en_us.json";
     static final String DESC = "supernaturalbloodlines.hub.rites.desc.";
 
@@ -43,22 +54,22 @@ final class RitesBook {
 
     static final List<Cat> CATS = List.of(
             new Cat("vampires", "Vampires and Hunters", "minecraft:redstone",
-                    "Rites of blood: making an Original, washing vampirism out, bottling an Original's blood, blood stones for altars and marking a Hunter of the Five.",
+                    "Rites of blood, and of the vampires who work them.",
                     List.of("immortality", "cleansing_blood", "original_blood", "blood_offering", "rite_of_the_five")),
             new Cat("werewolves", "Werewolves", "minecraft:bone",
-                    "Rites of the moon and the wolf: the gene, the hybrids, the silver cure, the Alpha Trial and the brothers of the pack.",
+                    "Rites of the moon and of the wolf.",
                     List.of("rite_of_lineage_reveal", "rite_of_lineage_awaken", "rite_of_the_moon", "silver_moon", "hybrid_blood", "werewolf_brother", "alpha_trial", "rite_of_the_frequency")),
             new Cat("witches", "Witchcraft", "minecraft:amethyst_shard",
-                    "Rites a witch works, or that call witchcraft awake: ancestral calling, hiding, linking, revealing genes, cutting a sire bond and drawing doppelg\u00e4nger blood.",
+                    "Rites a witch works, or that call witchcraft awake.",
                     List.of("ancestral_calling", "rite_of_revelation", "doppelganger_blood", "rite_of_severance", "rite_of_cloaking", "rite_of_linking", "rite_of_the_valet_pike")),
             new Cat("lines", "Lines of the Originals", "minecraft:white_dye",
-                    "Rites that free someone from the line of their Original, and the rite that makes The Cure.",
+                    "Rites that touch the line of an Original.",
                     List.of("rite_of_the_broken_line", "rite_of_the_imprisoned_original", "rite_of_the_cure")),
             new Cat("artifacts", "Wards and Tools", "minecraft:compass",
-                    "Rites that make rings and tools: the Sun Ring, the Moon Ring, the Resurrection Ring, the Vampire Compass and the Hearing Device.",
+                    "Rites that make rings and tools.",
                     List.of("ward_of_daylight", "ward_of_the_moon", "ward_of_return", "vampire_compass", "hearing_device")),
             new Cat("tensura", "Tensura", "minecraft:soul_sand",
-                    "Rites that need Tensura: two curses, an offering of magicules and the purification of the undead.",
+                    "Rites that need Tensura.",
                     List.of("curse_magicule_drain", "curse_skill_seal", "magicule_offering", "purification", "purification_holy_water")));
 
     /** The book entry's icon. Only {@code minecraft:} items: an icon from a mod that is not there would drop the whole entry. */
@@ -147,7 +158,11 @@ final class RitesBook {
 
     /** The {@code hub.rites.desc} lines of a rite, in order, until the first gap. */
     static List<String> desc(JsonObject lang, String path) {
-        return net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubRites.descKeys(NS + ":" + path, lang::has).stream().map(k -> lang.get(k).getAsString()).toList();
+        List<String> out = new ArrayList<>();
+        for (int i = 1; lang.has(DESC + path + "." + i); i++) {
+            out.add(lang.get(DESC + path + "." + i).getAsString());
+        }
+        return out;
     }
 
     /** "medium circle, infernal chalk" for each circle of the rite file, joined with "and". */
@@ -220,10 +235,15 @@ final class RitesBook {
         entry.addProperty("title", name);
         entry.add("icon", icon(ICON.get(path)));
         JsonArray assigned = new JsonArray();
-        if (MAKES.containsKey(path)) {
+        RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(path);
+        // the study key opens an entry from an item without asking for its advancement: a gated rite must not be reachable that way
+        if (MAKES.containsKey(path) && gate == null) {
             assigned.add(MAKES.get(path));
         }
         entry.add("assigned_items", assigned);
+        if (gate != null) {
+            entry.addProperty("advancement", RiteAdvancements.known(path));
+        }
         JsonArray pages = new JsonArray();
         for (String page : texts) {
             JsonObject c = component("modopedia:page/headered_text", "text", page);
@@ -235,6 +255,94 @@ final class RitesBook {
         pages.add(page(rite));
         entry.add("pages", pages);
         return entry;
+    }
+
+    /** The words of a list: "a, b or c". */
+    static String orList(List<String> items) {
+        if (items.size() <= 1) {
+            return String.join("", items);
+        }
+        return String.join(", ", items.subList(0, items.size() - 1)) + " or " + items.get(items.size() - 1);
+    }
+
+    /** How a sealed rite is learned, in a sentence: by becoming its kind, by its lore, or either. Names no rite. */
+    static String hint(JsonObject lang, String rite) {
+        RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(rite);
+        List<String> kinds = gate.kinds().stream().sorted().map(k -> lang.get(KIND + k.name().toLowerCase()).getAsString()).toList();
+        List<String> lore = gate.lore().stream().sorted().map(l -> lang.get(LORE + l).getAsString()).toList();
+        String how = kinds.isEmpty() ? orList(lore) : lore.isEmpty() ? "becoming " + orList(kinds) : "becoming " + orList(kinds) + ", or by " + orList(lore);
+        return "Unlocked by " + how + ".";
+    }
+
+    /** The label in the book's list: short, because the list line is one line. */
+    static String label(JsonObject lang, String rite) {
+        RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(rite);
+        List<String> parts = new ArrayList<>();
+        List<String> kinds = gate.kinds().stream().sorted().map(k -> lang.get(KIND_SHORT + k.name().toLowerCase()).getAsString()).toList();
+        // three kinds and a lore source do not fit one line: the lore, which is what a player can go and find, and the page says the rest
+        if (kinds.size() > 2 && !gate.lore().isEmpty()) {
+            kinds = List.of();
+        } else if (kinds.size() > 2) {
+            kinds = List.of(lang.get(KIND_SHORT + "several").getAsString());
+        }
+        parts.addAll(kinds);
+        gate.lore().stream().sorted().forEach(l -> parts.add(lang.get(LORE_SHORT + l).getAsString()));
+        return "??? \u00b7 " + orList(parts);
+    }
+
+    private static final String[] NUMERALS = {"I", "II", "III", "IV", "V", "VI"};
+
+    /**
+     * The list labels of one category, no two alike: rites that are learned the same way (two of Esther's, the two curses) get a numeral in the order of
+     * the list, so the lines of one list never read the same.
+     */
+    static Map<String, String> uniqueLabels(JsonObject lang, List<String> rites) {
+        Map<String, Integer> total = new java.util.HashMap<>();
+        for (String rite : rites) {
+            if (RiteUnlockTable.isGated(rite)) {
+                total.merge(label(lang, rite), 1, Integer::sum);
+            }
+        }
+        Map<String, Integer> seen = new java.util.HashMap<>();
+        Map<String, String> out = new java.util.LinkedHashMap<>();
+        for (String rite : rites) {
+            if (RiteUnlockTable.isGated(rite)) {
+                String base = label(lang, rite);
+                int n = seen.merge(base, 1, Integer::sum);
+                out.put(rite, total.get(base) > 1 ? base + " (" + NUMERALS[n - 1] + ")" : base);
+            }
+        }
+        return out;
+    }
+
+    /** The "???" entry that stands for a gated rite while it is sealed: how it is learned, and nothing of the rite (no name, circle or item). */
+    static JsonObject sealedEntry(JsonObject lang, String path, String title) {
+        JsonObject entry = new JsonObject();
+        entry.addProperty("title", title);
+        entry.add("icon", icon("minecraft:honeycomb"));
+        entry.add("assigned_items", new JsonArray());
+        entry.addProperty("advancement", RiteAdvancements.sealed(path));
+        JsonObject text = component("modopedia:page/headered_text", "text", hint(lang, path) + "\n\n" + lang.get(SEALED_TEXT).getAsString());
+        text.addProperty("header", "???");
+        JsonArray pages = new JsonArray();
+        pages.add(page(text));
+        entry.add("pages", pages);
+        return entry;
+    }
+    static String advancementJson() {
+        JsonObject criterion = new JsonObject();
+        criterion.addProperty("trigger", "minecraft:impossible");
+        JsonObject criteria = new JsonObject();
+        criteria.add(RiteAdvancements.CRITERION, criterion);
+        JsonObject adv = new JsonObject();
+        adv.add("criteria", criteria);
+        // without it the advancement has no requirement at all and can never be done (a datapack advancement does not build it from the criteria)
+        JsonArray requirements = new JsonArray();
+        JsonArray all = new JsonArray();
+        all.add(RiteAdvancements.CRITERION);
+        requirements.add(all);
+        adv.add("requirements", requirements);
+        return GSON.toJson(adv) + "\n";
     }
 
     private static JsonObject category(String title, String icon, String landing, List<String> children, List<String> entries, int sort, boolean front) {
@@ -280,6 +388,10 @@ final class RitesBook {
     static Map<String, String> generate(Path root) throws IOException {
         JsonObject lang = lang(root);
         Map<String, String> out = new TreeMap<>();
+        Map<String, String> titles = new java.util.HashMap<>();
+        for (Cat cat : CATS) {
+            titles.putAll(uniqueLabels(lang, cat.rites()));
+        }
         List<String> all = rites(root);
         List<String> listed = new ArrayList<>();
         List<String> kids = new ArrayList<>();
@@ -288,6 +400,10 @@ final class RitesBook {
             kids.add(id);
             List<String> entries = new ArrayList<>();
             for (String path : cat.rites()) {
+                // a gated rite is two entries side by side: the "???" one while it is sealed, its own once it is known (one of them shows)
+                if (RiteUnlockTable.isGated(path)) {
+                    entries.add(RiteAdvancements.sealedEntry(path));
+                }
                 entries.add(TOP + "/" + path);
                 listed.add(path);
             }
@@ -302,19 +418,26 @@ final class RitesBook {
                 throw new IllegalStateException(path + " is in no category of RitesBook.CATS");
             }
             out.put(BOOK + "/entries/" + TOP + "/" + path + ".json", GSON.toJson(entry(root, lang, path)) + "\n");
+            if (RiteUnlockTable.isGated(path)) {
+                out.put(BOOK + "/entries/" + RiteAdvancements.sealedEntry(path) + ".json", GSON.toJson(sealedEntry(lang, path, titles.get(path))) + "\n");
+                out.put(ADV + "/known/" + path + ".json", advancementJson());
+                out.put(ADV + "/sealed/" + path + ".json", advancementJson());
+            }
         }
         return out;
     }
 
     static Map<String, String> onDisk(Path root) throws IOException {
         Map<String, String> out = new LinkedHashMap<>();
-        Path base = root.resolve(BOOK);
-        if (!Files.isDirectory(base)) {
-            return out;
-        }
-        try (Stream<Path> files = Files.walk(base)) {
-            for (Path p : files.filter(Files::isRegularFile).toList()) {
-                out.put(root.relativize(p).toString().replace('\\', '/'), Files.readString(p).replace("\r\n", "\n"));
+        for (String dir : List.of(BOOK, ADV)) {
+            Path base = root.resolve(dir);
+            if (!Files.isDirectory(base)) {
+                continue;
+            }
+            try (Stream<Path> files = Files.walk(base)) {
+                for (Path p : files.filter(Files::isRegularFile).toList()) {
+                    out.put(root.relativize(p).toString().replace('\\', '/'), Files.readString(p).replace("\r\n", "\n"));
+                }
             }
         }
         return out;

@@ -44,6 +44,7 @@ public final class SupernaturalBloodlines {
         ModAttachments.register(modBus);
         ModNetwork.register(modBus);
         StalePartModifiers.register();
+        net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockFallback.register();
 
         ModList mods = ModList.get();
         // Config.COMMON is not loaded yet at construction, so read the file directly (see EarlySwitches)

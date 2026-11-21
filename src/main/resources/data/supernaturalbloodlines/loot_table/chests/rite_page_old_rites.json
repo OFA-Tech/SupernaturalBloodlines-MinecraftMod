@@ -1,0 +1,25 @@
+{
+    "type": "minecraft:chest",
+    "pools": [
+        {
+            "rolls": 1.0,
+            "conditions": [
+                { "condition": "minecraft:random_chance", "chance": 0.15 }
+            ],
+            "entries": [
+                {
+                    "type": "minecraft:item",
+                    "name": "supernaturalbloodlines:rite_page",
+                    "functions": [
+                        {
+                            "function": "minecraft:set_components",
+                            "components": {
+                                "supernaturalbloodlines:rite_lore": "old_rites"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

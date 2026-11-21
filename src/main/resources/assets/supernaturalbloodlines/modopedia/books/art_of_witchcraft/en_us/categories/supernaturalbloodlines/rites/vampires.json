@@ -2,16 +2,20 @@
   "children": [],
   "display_on_front_page": false,
   "entries": [
+    "supernaturalbloodlines/sealed/immortality",
     "supernaturalbloodlines/rites/immortality",
+    "supernaturalbloodlines/sealed/cleansing_blood",
     "supernaturalbloodlines/rites/cleansing_blood",
+    "supernaturalbloodlines/sealed/original_blood",
     "supernaturalbloodlines/rites/original_blood",
     "supernaturalbloodlines/rites/blood_offering",
+    "supernaturalbloodlines/sealed/rite_of_the_five",
     "supernaturalbloodlines/rites/rite_of_the_five"
   ],
   "icon": {
     "count": 1,
     "id": "minecraft:redstone"
   },
-  "landing_text": "Rites of blood: making an Original, washing vampirism out, bottling an Original's blood, blood stones for altars and marking a Hunter of the Five.",
+  "landing_text": "Rites of blood, and of the vampires who work them.",
   "title": "Vampires and Hunters"
 }

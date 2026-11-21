@@ -4,16 +4,21 @@
   "entries": [
     "supernaturalbloodlines/rites/ancestral_calling",
     "supernaturalbloodlines/rites/rite_of_revelation",
+    "supernaturalbloodlines/sealed/doppelganger_blood",
     "supernaturalbloodlines/rites/doppelganger_blood",
+    "supernaturalbloodlines/sealed/rite_of_severance",
     "supernaturalbloodlines/rites/rite_of_severance",
+    "supernaturalbloodlines/sealed/rite_of_cloaking",
     "supernaturalbloodlines/rites/rite_of_cloaking",
+    "supernaturalbloodlines/sealed/rite_of_linking",
     "supernaturalbloodlines/rites/rite_of_linking",
+    "supernaturalbloodlines/sealed/rite_of_the_valet_pike",
     "supernaturalbloodlines/rites/rite_of_the_valet_pike"
   ],
   "icon": {
     "count": 1,
     "id": "minecraft:amethyst_shard"
   },
-  "landing_text": "Rites a witch works, or that call witchcraft awake: ancestral calling, hiding, linking, revealing genes, cutting a sire bond and drawing doppelgänger blood.",
+  "landing_text": "Rites a witch works, or that call witchcraft awake.",
   "title": "Witchcraft"
 }

@@ -32,7 +32,7 @@ import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupe
  */
 public record WerewolfBrotherRiteFactory(String faction) implements RiteFactory {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "werewolf_brother");
-    /** {@code faction} is only what the Rites page reads to list it first for werewolves. */
+    /** {@code faction} is no longer read by anything (the Rites page it listed the rite on is gone). */
     public static final MapCodec<WerewolfBrotherRiteFactory> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             Codec.STRING.optionalFieldOf("faction", "werewolf").forGetter(WerewolfBrotherRiteFactory::faction)
     ).apply(i, WerewolfBrotherRiteFactory::new));

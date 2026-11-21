@@ -54,6 +54,12 @@ public final class ElijahEntity extends NpcOriginalBoss {
         return new ItemStack(BossItems.THE_ELIXIR.get());
     }
 
+    /** Elijah's Letter: the Rite of the Cure. */
+    @Override
+    protected java.util.List<ItemStack> extraRewards() {
+        return java.util.List.of(net.ofatech.supernaturalbloodlines.parts.species.unlock.RitePageItem.of(net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.ELIJAH));
+    }
+
     /** Whether an oath was broken: he fights every player. */
     public boolean hostileForGood() {
         return level() instanceof ServerLevel level && BossIndex.get(level.getServer()).of(BossId.ELIJAH).hostile;

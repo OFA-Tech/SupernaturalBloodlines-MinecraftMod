@@ -21,7 +21,23 @@ public final class HubHooks {
      * @param screenPackage the package of the screens it opens: while one of those is open the hub waits to come back; any other screen
      *                      (another mod's, the death screen) cancels the return
      */
-    public record Launcher(String id, String letter, int color, Component name, String screenPackage, BooleanSupplier available, Runnable open) {
+    public record Launcher(String id, String letter, int color, Component name, String screenPackage, BooleanSupplier available, Runnable open,
+                           Supplier<Component> blocked) {
+        public Launcher(String id, String letter, int color, Component name, String screenPackage, BooleanSupplier available, Runnable open) {
+            this(id, letter, color, name, screenPackage, available, open, () -> null);
+        }
+
+        /** The same seal drawn dimmed (a blocked one): its colour half way to grey. */
+        public Launcher dimmed() {
+            return new Launcher(id, letter, dim(color), name, screenPackage, available, open, blocked);
+        }
+
+        public static int dim(int argb) {
+            int r = (((argb >> 16) & 0xFF) * 3 + 0x60 * 7) / 10;
+            int g = (((argb >> 8) & 0xFF) * 3 + 0x60 * 7) / 10;
+            int b = ((argb & 0xFF) * 3 + 0x60 * 7) / 10;
+            return (argb & 0xFF000000) | (r << 16) | (g << 8) | b;
+        }
     }
 
     /** A hub theme a part brings, by the id {@code hub_theme} names (lower case). */

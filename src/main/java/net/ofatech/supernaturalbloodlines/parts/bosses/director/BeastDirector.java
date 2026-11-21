@@ -287,6 +287,7 @@ public final class BeastDirector {
         entry.spirit = spirit.getUUID();
         entry.spiritUntil = level.getGameTime() + BossesConfig.beastSpiritSeconds() * 20L;
         level.addFreshEntity(spirit);
+        dropNotes(level, beast);
         entry.witnesses.clear();
         for (ServerPlayer p : allPlayers(level.getServer())) {
             if (p.level() == level && p.blockPosition().distSqr(beast.blockPosition()) <= NEAR * NEAR) {
@@ -297,6 +298,17 @@ public final class BeastDirector {
         level.sendParticles(ParticleTypes.SOUL, beast.getX(), beast.getY() + 1.5, beast.getZ(), 40, 0.8, 1.0, 0.8, 0.03);
         level.playSound(null, beast.getX(), beast.getY(), beast.getZ(), SoundEvents.WITHER_DEATH, SoundSource.HOSTILE, 2.0F, 0.6F);
         tellNear(level, beast.blockPosition(), Component.translatable(COLLAPSE, BossesConfig.beastSpiritSeconds()));
+    }
+
+    /** The Valet's Notes (lore for the Rite of the Valet Pike, for a player who is not a witch), once per fall, where the Beast fell. Needs the species part (the page is its item). */
+    static void dropNotes(ServerLevel level, BeastEntity beast) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("species")) {
+            return;
+        }
+        ItemEntity notes = new ItemEntity(level, beast.getX(), beast.getY() + 0.5, beast.getZ(),
+                net.ofatech.supernaturalbloodlines.parts.species.unlock.RitePageItem.of(net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.BEAST));
+        notes.setUnlimitedLifetime();
+        level.addFreshEntity(notes);
     }
 
     // ---- the Spirit ----
