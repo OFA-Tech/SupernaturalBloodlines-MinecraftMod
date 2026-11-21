@@ -386,6 +386,9 @@ public final class PeterGameTests {
             helper.assertTrue(p.pouncing(), "he did not pounce at a target 3.5 blocks away: form " + p.form() + ", ground " + p.onGround() + ", target " + p.getTarget() + ", pause " + p.pauseLeft() + ", distance " + p.distanceToSqr(villager));
             run(p, 1); // the tick that started it had already moved him; from the next one he is held
             Vec3 start = p.position();
+            // whatever the navigation asks for, nothing of his own travel is added while the animation plays
+            p.travel(new Vec3(0.0, 0.0, 1.0));
+            helper.assertTrue(p.position().equals(start) && p.getDeltaMovement().lengthSqr() < 1.0E-6, "his own travel moved him during the pounce: " + p.position().subtract(start));
             helper.assertTrue(p.getDeltaMovement().horizontalDistanceSqr() < 1.0E-6, "he moves while the pounce plays (the root bone is what moves)");
             run(p, 8);
             helper.assertTrue(p.position().distanceToSqr(start.x, p.getY(), start.z) < 0.05 && p.pouncing(), "he walked during the pounce: " + p.position());
