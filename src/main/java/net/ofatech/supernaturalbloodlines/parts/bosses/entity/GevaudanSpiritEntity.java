@@ -98,14 +98,17 @@ public final class GevaudanSpiritEntity extends PathfinderMob {
             getNavigation().stop();
             return;
         }
-        Vec3 before = position();
+        capSpeed();
         super.travel(input);
-        Vec3 moved = position().subtract(before);
-        double length = moved.length();
+        capSpeed();
+    }
+
+    /** The velocity is cut to the cap before the entity moves, and again after (what the move added); never by putting it back where it was. */
+    private void capSpeed() {
+        Vec3 v = getDeltaMovement();
+        double length = v.length();
         if (length > BeastRules.SPIRIT_SPEED) {
-            double keep = BeastRules.spiritSpeed(length) / length;
-            setPos(before.add(moved.scale(keep)));
-            setDeltaMovement(getDeltaMovement().scale(keep));
+            setDeltaMovement(v.scale(BeastRules.spiritSpeed(length) / length));
         }
     }
 

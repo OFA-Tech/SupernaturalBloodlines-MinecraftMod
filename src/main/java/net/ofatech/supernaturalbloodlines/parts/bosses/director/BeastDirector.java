@@ -91,7 +91,13 @@ public final class BeastDirector {
         }
         BossIndex.Entry entry = index.of(boss);
         ServerLevel overworld = server.overworld();
-        if (BeastPhaseRules.bodyLost(entry.phase, index.state(boss) == BossState.LOST)) {
+        boolean lost = index.state(boss) == BossState.LOST;
+        if (!lost) {
+            entry.lostSince = BossIndex.Entry.NOT_LOST;
+        } else if (entry.lostSince == BossIndex.Entry.NOT_LOST) {
+            entry.lostSince = overworld.getGameTime();
+        }
+        if (BeastPhaseRules.bodyLost(entry.phase, lost, entry.lostSince == BossIndex.Entry.NOT_LOST ? 0 : overworld.getGameTime() - entry.lostSince)) {
             bodyLost(server, index, entry);
             return;
         }
@@ -144,6 +150,7 @@ public final class BeastDirector {
     /** The index says the body of the Host or of the Beast is gone: the night is lost, and those who were near where it stood are told. */
     private static void bodyLost(MinecraftServer server, BossIndex index, BossIndex.Entry entry) {
         entry.phase = BeastPhaseRules.after(entry.phase, BeastPhaseRules.Event.BODY_LOST);
+        entry.lostSince = BossIndex.Entry.NOT_LOST;
         entry.spirit = null;
         index.setDirty();
         tellNear(levelOf(server, entry.dimension), entry.pos, Component.translatable(FAILED));
@@ -290,7 +297,6 @@ public final class BeastDirector {
         level.sendParticles(ParticleTypes.SOUL, beast.getX(), beast.getY() + 1.5, beast.getZ(), 40, 0.8, 1.0, 0.8, 0.03);
         level.playSound(null, beast.getX(), beast.getY(), beast.getZ(), SoundEvents.WITHER_DEATH, SoundSource.HOSTILE, 2.0F, 0.6F);
         tellNear(level, beast.blockPosition(), Component.translatable(COLLAPSE, BossesConfig.beastSpiritSeconds()));
-        BossIndex.flush(level.getServer());
     }
 
     // ---- the Spirit ----
@@ -450,7 +456,16 @@ public final class BeastDirector {
         p.sendSystemMessage(Component.translatable(REWARD_LATE));
         index.setDirty();
         BossIndex.flush(server);
+        saver.accept(p); // the Mantle is in their inventory: it must not be lost to a crash before the player file is written
         return true;
+    }
+
+    private static final java.util.function.Consumer<ServerPlayer> SAVE_PLAYER = p -> p.getServer().getPlayerList().saveAll();
+    private static java.util.function.Consumer<ServerPlayer> saver = SAVE_PLAYER;
+
+    /** Tests: what saves a player once the Mantle is handed over. {@code null} puts the real one back. */
+    public static void useSaver(@Nullable java.util.function.Consumer<ServerPlayer> pinned) {
+        saver = pinned == null ? SAVE_PLAYER : pinned;
     }
 
     private static Component nameOf(MinecraftServer server, UUID id, @Nullable ServerPlayer online) {

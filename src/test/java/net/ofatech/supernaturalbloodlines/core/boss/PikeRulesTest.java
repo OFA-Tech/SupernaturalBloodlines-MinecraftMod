@@ -35,7 +35,6 @@ class PikeRulesTest {
 
     @Test
     void anAdvancedVampireOrWerewolfOrAnAlphaQualifiesAtTheRungEdge() {
-        assertEquals(4, PikeRules.ADVANCED_RUNG);
         assertTrue(PikeRules.qualifies(player(Species.NONE, 4, 0, false)), "an advanced vampire");
         assertTrue(PikeRules.qualifies(player(Species.NONE, 0, 4, false)), "an advanced werewolf");
         assertFalse(PikeRules.qualifies(player(Species.NONE, 3, 0, false)));

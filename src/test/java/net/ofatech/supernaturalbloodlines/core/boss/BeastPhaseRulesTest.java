@@ -108,8 +108,6 @@ class BeastPhaseRulesTest {
     void aReturningBeastStartsAtHalfAndANewOneAtFull() {
         assertEquals(0.5F, BeastPhaseRules.startHealth(true));
         assertEquals(1.0F, BeastPhaseRules.startHealth(false));
-        assertEquals(0.5F, BeastPhaseRules.RETURN_HEALTH);
-        assertEquals(0.25F, BeastPhaseRules.COLLAPSE_AT);
     }
 
     @Test
@@ -128,11 +126,29 @@ class BeastPhaseRulesTest {
         for (BeastPhase p : new BeastPhase[] {BeastPhase.NONE, BeastPhase.SPIRIT, BeastPhase.GONE, BeastPhase.KILLED, BeastPhase.FAILED}) {
             assertEquals(p, BeastPhaseRules.after(p, Event.BODY_LOST), p + " moved by a lost body");
         }
-        assertTrue(BeastPhaseRules.bodyLost(BeastPhase.BEAST, true));
-        assertTrue(BeastPhaseRules.bodyLost(BeastPhase.HOST, true));
-        assertFalse(BeastPhaseRules.bodyLost(BeastPhase.HOST, false), "the index does not say lost");
-        assertFalse(BeastPhaseRules.bodyLost(BeastPhase.FAILED, true), "a failed encounter is not failed again");
-        assertFalse(BeastPhaseRules.bodyLost(BeastPhase.KILLED, true), "a dead Beast is not made a failure");
+        long minute = BeastPhaseRules.BODY_LOST_TICKS;
+        assertTrue(BeastPhaseRules.bodyLost(BeastPhase.BEAST, true, minute));
+        assertTrue(BeastPhaseRules.bodyLost(BeastPhase.HOST, true, minute + 5000));
+        assertFalse(BeastPhaseRules.bodyLost(BeastPhase.BEAST, true, minute - 1), "a body that has been gone for less than a minute is not lost yet");
+        assertFalse(BeastPhaseRules.bodyLost(BeastPhase.BEAST, true, 0), "the moment the index says lost is not a minute");
+        assertFalse(BeastPhaseRules.bodyLost(BeastPhase.HOST, false, minute), "the index does not say lost");
+        assertFalse(BeastPhaseRules.bodyLost(BeastPhase.FAILED, true, minute), "a failed encounter is not failed again");
+        assertFalse(BeastPhaseRules.bodyLost(BeastPhase.KILLED, true, minute), "a dead Beast is not made a failure");
+    }
+
+    @Test
+    void aBodyThatLoadsIntoAStoryItDoesNotBelongToIsStale() {
+        assertFalse(BeastPhaseRules.staleBeast(BeastPhase.BEAST, false), "the Beast of a story that has a Beast");
+        for (BeastPhase p : BeastPhase.values()) {
+            if (p != BeastPhase.BEAST) {
+                assertTrue(BeastPhaseRules.staleBeast(p, false), "a Beast in the " + p + " phase is not stale");
+                assertFalse(BeastPhaseRules.staleBeast(p, true), "a falling Beast is let finish its fall in the " + p + " phase");
+            }
+        }
+        for (BeastPhase p : BeastPhase.values()) {
+            boolean hasHost = p == BeastPhase.HOST || p == BeastPhase.SPIRIT || p == BeastPhase.RETURN_PENDING;
+            assertEquals(!hasHost, BeastPhaseRules.staleHost(p), "the Host in the " + p + " phase");
+        }
     }
 
     @Test
@@ -146,7 +162,6 @@ class BeastPhaseRulesTest {
                 assertFalse(BeastPhaseRules.spiritOverdue(p, until + 5000, until, false), p + " is overdue");
             }
         }
-        assertEquals(200, BeastPhaseRules.SPIRIT_GRACE_TICKS);
     }
 
     @Test

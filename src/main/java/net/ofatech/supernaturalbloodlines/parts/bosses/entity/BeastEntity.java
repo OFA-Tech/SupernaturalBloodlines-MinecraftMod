@@ -25,7 +25,9 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.ofatech.supernaturalbloodlines.core.boss.BeastPhaseRules;
 import net.ofatech.supernaturalbloodlines.core.boss.BeastRules;
+import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossRegistries;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
@@ -113,6 +115,11 @@ public final class BeastEntity extends BossNpc implements GeoEntity {
         collapseTicks = 0;
         setNoAi(true);
         getNavigation().stop();
+    }
+
+    @Override
+    protected boolean stale() {
+        return BeastPhaseRules.staleBeast(BossIndex.get(level().getServer()).of(BossId.BEAST_OF_GEVAUDAN).phase, collapsing());
     }
 
     @Override

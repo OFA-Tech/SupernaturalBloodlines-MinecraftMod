@@ -39,6 +39,10 @@ public abstract class BossNpc extends PathfinderMob {
     public void tick() {
         super.tick();
         if (!level().isClientSide && tickCount % PERIOD == 0 && isAlive()) {
+            if (stale()) {
+                discard(); // a body of a story that has moved on (the one the index called lost, found again): it is not the boss any more
+                return;
+            }
             if (hasBar()) {
                 BossBars.update(this);
             } else {
@@ -60,6 +64,11 @@ public abstract class BossNpc extends PathfinderMob {
     /** Whether the hat layer of the man's skin is drawn (Deucalion's glasses go with the shift); the client reads it. */
     public boolean hatVisible() {
         return true;
+    }
+
+    /** Whether the story has no place for this body now, so it is discarded before the index is told it was seen. */
+    protected boolean stale() {
+        return false;
     }
 
     /** Whether this body shows a boss bar: a calm protected body and a falling one do not. */

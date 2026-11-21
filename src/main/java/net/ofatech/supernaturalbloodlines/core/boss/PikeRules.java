@@ -36,8 +36,8 @@ public final class PikeRules {
     }
 
     /**
-     * What the Spirit takes from a blow: only a <b>direct</b> blow of the Valet Pike (the pike in the striker's hand, not a snowball or an arrow thrown while holding it)
-     * hurts it.
+     * What the Spirit takes from a blow: only a <b>direct player attack</b> of the Valet Pike (the pike in the striker's hand, not a snowball or an arrow thrown while
+     * holding it, and not a mob that carries one) hurts it.
      */
     public static boolean hurtsSpirit(boolean directBlow, boolean valetPike) {
         return directBlow && valetPike;

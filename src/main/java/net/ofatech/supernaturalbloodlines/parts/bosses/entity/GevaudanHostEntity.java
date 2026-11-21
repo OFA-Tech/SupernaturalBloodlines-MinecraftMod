@@ -18,7 +18,9 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.ofatech.supernaturalbloodlines.core.boss.BeastPhaseRules;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
+import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossItems;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossRegistries;
 import net.ofatech.supernaturalbloodlines.parts.bosses.deal.Deals;
@@ -54,6 +56,11 @@ public final class GevaudanHostEntity extends BossNpc {
     @Override
     public String skin() {
         return "sebastien_valet";
+    }
+
+    @Override
+    protected boolean stale() {
+        return BeastPhaseRules.staleHost(BossIndex.get(level().getServer()).of(BossId.BEAST_OF_GEVAUDAN).phase);
     }
 
     @Override
@@ -99,6 +106,26 @@ public final class GevaudanHostEntity extends BossNpc {
     @Override
     public boolean canChangeDimensions(Level from, Level to) {
         return false;
+    }
+
+    /** Pistons, flowing water, explosions and shoves do not move him either. */
+    @Override
+    public net.minecraft.world.level.material.PushReaction getPistonPushReaction() {
+        return net.minecraft.world.level.material.PushReaction.IGNORE;
+    }
+
+    @Override
+    public boolean isPushedByFluid() {
+        return false;
+    }
+
+    @Override
+    public boolean ignoreExplosion(net.minecraft.world.level.Explosion explosion) {
+        return true;
+    }
+
+    @Override
+    public void push(double x, double y, double z) {
     }
 
     @Override

@@ -61,7 +61,7 @@ public final class BeastEvents {
      */
     public static boolean pike(DamageSource source) {
         ItemStack weapon = source.getWeaponItem();
-        return PikeRules.hurtsSpirit(source.isDirect(), weapon != null && weapon.is(BossItems.VALET_PIKE.get()));
+        return PikeRules.hurtsSpirit(source.isDirect() && source.is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK), weapon != null && weapon.is(BossItems.VALET_PIKE.get()));
     }
 
     private static void onIncoming(LivingIncomingDamageEvent e) {

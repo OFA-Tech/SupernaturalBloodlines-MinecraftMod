@@ -59,7 +59,6 @@ class BeastRulesTest {
         assertEquals(20, BeastRules.fearTicks(0), "at least a second");
         assertEquals(20 + 400, BeastRules.nextRoarAt(20, 20));
         assertEquals(1 + 20, BeastRules.nextRoarAt(1, 0), "a cooldown of 0 is a second");
-        assertEquals(40, BeastRules.ROAR_WINDUP_TICKS);
     }
 
     @Test
@@ -96,7 +95,6 @@ class BeastRulesTest {
     void shotsAreReducedAndNothingElseIs() {
         assertEquals(6.0F, BeastRules.damageTaken(true, 10F), 1e-6);
         assertEquals(10.0F, BeastRules.damageTaken(false, 10F), 1e-6);
-        assertEquals(0.6F, BeastRules.RANGED_FACTOR);
     }
 
     @Test

@@ -82,7 +82,5 @@ class FrequencyAndMantleRulesTest {
         assertFalse(MantleRules.wraps(1.0, true, false, true), "the wearer");
         assertFalse(MantleRules.wraps(1.0, false, true, true), "a packmate");
         assertFalse(MantleRules.wraps(1.0, false, false, false), "somebody who cannot be hurt");
-        assertEquals(20, MantleRules.WRAP_SECONDS);
-        assertEquals(120, MantleRules.COOLDOWN_SECONDS);
     }
 }

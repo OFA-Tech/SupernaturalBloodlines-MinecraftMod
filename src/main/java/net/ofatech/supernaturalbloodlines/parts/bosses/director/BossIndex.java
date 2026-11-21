@@ -64,6 +64,9 @@ public final class BossIndex extends SavedData {
         public final java.util.Set<UUID> witnesses = new java.util.LinkedHashSet<>();
         /** Who the Mantle of the Beast is kept for: the one who did the most, who was not here when it was paid. It is handed over when they log in. */
         public final java.util.Set<UUID> owed = new java.util.LinkedHashSet<>();
+        /** The game time at which the index began to say LOST (not saved; {@link #NOT_LOST} when it does not). */
+        public static final long NOT_LOST = Long.MIN_VALUE;
+        public long lostSince = NOT_LOST;
 
         CompoundTag save(BossId id) {
             CompoundTag t = new CompoundTag();

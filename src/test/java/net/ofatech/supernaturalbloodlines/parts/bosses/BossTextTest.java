@@ -385,7 +385,7 @@ class BossTextTest {
         assertEquals("Makes the waiting Host become the Beast now", lang.get("supernaturalbloodlines.hub.admin.act.boss_change.tip").getAsString());
         String guide = lang.get("supernaturalbloodlines.hub.guide.bosses.body").getAsString();
         String beast = guide.substring(guide.indexOf("has a man to wear") - 20, guide.indexOf("Nothing but white oak kills"));
-        for (String clause : new String[] {"a server can change the chance", "a server can change the range", "a server can let it walk through ash", "a server can change that", "a server can make the first escape final",
+        for (String clause : new String[] {"a server can change the chance", "a server can change the range", "a server can let it walk through ash", "a server can change how long", "a server can make the first escape final",
                 "direct blow", "even if they are away", "it waits for them until they log in"}) {
             assertTrue(beast.contains(clause), "the Guide's Beast chapter does not say \"" + clause + "\"");
         }
@@ -393,6 +393,9 @@ class BossTextTest {
             assertTrue(paragraph.length() < 520, "a paragraph of the Guide is not short: " + paragraph.length());
         }
         assertTrue(!guide.contains("no spark and no pike"), "the cryptic line is back");
+        // a number that a server can change is not written into the hub's Guide, which cannot know it
+        assertTrue(!beast.contains("16 blocks") && !beast.contains("a minute"), "the Guide gives a number the server can change");
+        assertTrue(lang.get("supernaturalbloodlines.hub.admin.confirm_boss_reset_beast").getAsString().contains("Mantle of the Beast is still kept for"), "the Forget confirmation does not mention the Mantle that is owed");
         assertTrue(lang.get("supernaturalbloodlines.boss.beast.gone").getAsString().contains("again") && !lang.get("supernaturalbloodlines.boss.beast.gone_final").getAsString().contains("again"),
                 "the two ends are not told in their own words");
         assertEquals("He does not feel it.", lang.get("supernaturalbloodlines.boss.beast.unfelt").getAsString());

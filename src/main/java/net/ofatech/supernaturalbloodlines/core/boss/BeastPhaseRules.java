@@ -48,9 +48,24 @@ public final class BeastPhaseRules {
         };
     }
 
-    /** Whether the encounter has lost its body: the Host or the Beast is what the boss index follows, and it says LOST. */
-    public static boolean bodyLost(BeastPhase phase, boolean indexSaysLost) {
-        return indexSaysLost && after(phase, Event.BODY_LOST) != phase;
+    /** How long the index must say LOST before the night is taken as failed: a minute, so a chunk that was only slow to load does not end the story. */
+    public static final int BODY_LOST_TICKS = 1200;
+
+    /**
+     * Whether the encounter has lost its body: the Host or the Beast is what the boss index follows, it says LOST, and it has said so for {@link #BODY_LOST_TICKS}
+     * (the index itself needs two empty looks, ten seconds, before it says LOST).
+     */
+    public static boolean bodyLost(BeastPhase phase, boolean indexSaysLost, long ticksLost) {
+        return indexSaysLost && ticksLost >= BODY_LOST_TICKS && after(phase, Event.BODY_LOST) != phase;
+    }
+
+    /** Whether a body that has just loaded is stale: the Beast of a story that is no longer in the BEAST phase, or the Host of one that has no Host. It is discarded. */
+    public static boolean staleBeast(BeastPhase phase, boolean falling) {
+        return phase != BeastPhase.BEAST && !falling;
+    }
+
+    public static boolean staleHost(BeastPhase phase) {
+        return !(phase == BeastPhase.HOST || phase == BeastPhase.SPIRIT || phase == BeastPhase.RETURN_PENDING);
     }
 
     /** Whether a Spirit nobody can find is taken as escaped now: its time and the grace after it are over, and no Spirit entity is alive. */
