@@ -245,7 +245,7 @@ public final class WolfsbaneStrains {
      * it), and the hybrid species whatever their faction. {@code Supernatural.isPrey} alone would also match vampires.
      */
     public static boolean isWerewolfType(Entity e) {
-        if (VampirismSupernatural.isWerewolf(e)) {
+        if (VampirismSupernatural.isWerewolf(e) || net.ofatech.supernaturalbloodlines.core.Supernatural.isWerewolfLike(e)) {
             return true;
         }
         if (e instanceof Player p) {

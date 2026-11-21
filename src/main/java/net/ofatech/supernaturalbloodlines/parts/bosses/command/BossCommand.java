@@ -19,6 +19,7 @@ import net.ofatech.supernaturalbloodlines.core.boss.BossState;
 import net.ofatech.supernaturalbloodlines.core.boss.DesiccationRules;
 import net.ofatech.supernaturalbloodlines.core.boss.SpawnRules;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
+import net.ofatech.supernaturalbloodlines.parts.bosses.director.BeastDirector;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossDirector;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.NpcOriginalBoss;
@@ -41,6 +42,7 @@ public final class BossCommand {
                         .then(Commands.literal("state").executes(c -> state(c)))
                         .then(Commands.literal("desiccate").executes(c -> desiccate(c)))
                         .then(Commands.literal("return").executes(c -> giveBack(c)))
+                        .then(Commands.literal("change").executes(c -> change(c)))
                         .then(Commands.literal("reset").executes(c -> reset(c))))));
     }
 
@@ -82,6 +84,7 @@ public final class BossCommand {
             case REBEKAH -> BossDirector.spawnRebekah(level, p.blockPosition(), null, null).isPresent();
             case KOL -> BossDirector.spawnKol(level, null, spot.get()).isPresent();
             case FINN -> BossDirector.spawnFinn(level, null, spot.get()).isPresent();
+            case BEAST_OF_GEVAUDAN -> BeastDirector.spawnHost(level, null, spot.get()).isPresent();
             default -> BossDirector.spawnMikael(level, null, spot.get()).isPresent();
         };
         if (!made) {
@@ -103,6 +106,9 @@ public final class BossCommand {
         long left = e.state == BossState.OPEN ? DesiccationRules.daysLeft(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossClock.today(overworld), e.returnDay) : 0;
         c.getSource().sendSuccess(() -> Component.translatable("supernaturalbloodlines.boss.cmd.state", name(boss),
                 Component.translatable("supernaturalbloodlines.boss.state." + e.state.name().toLowerCase(java.util.Locale.ROOT)), left, e.rewarded, e.appearances), false);
+        if (boss == BossId.BEAST_OF_GEVAUDAN) {
+            c.getSource().sendSuccess(() -> Component.translatable("supernaturalbloodlines.boss.cmd.beast_phase", e.phase.name().toLowerCase(java.util.Locale.ROOT), e.hostsMade, e.returned), false);
+        }
         return 1;
     }
 
@@ -129,6 +135,20 @@ public final class BossCommand {
         return 1;
     }
 
+    /** {@code boss beast_of_gevaudan change}: the waiting Host becomes the Beast now (the Admin page's button). */
+    private static int change(CommandContext<CommandSourceStack> c) {
+        Optional<BossId> id = boss(c);
+        if (id.isEmpty()) {
+            return 0;
+        }
+        if (id.get() != BossId.BEAST_OF_GEVAUDAN || !BeastDirector.change(c.getSource().getServer().overworld())) {
+            c.getSource().sendFailure(Component.translatable("supernaturalbloodlines.boss.cmd.cannot_change", name(id.get())));
+            return 0;
+        }
+        c.getSource().sendSuccess(() -> Component.translatable("supernaturalbloodlines.boss.cmd.changed", name(id.get())), true);
+        return 1;
+    }
+
     private static int reset(CommandContext<CommandSourceStack> c) {
         Optional<BossId> id = boss(c);
         if (id.isEmpty()) {
@@ -142,6 +162,9 @@ public final class BossCommand {
         }
         if (b != null) {
             b.discard();
+        }
+        if (boss == BossId.BEAST_OF_GEVAUDAN) {
+            BeastDirector.clear(server);
         }
         BossIndex.get(server).forget(boss);
         boss.npcOriginal().ifPresent(o -> {

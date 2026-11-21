@@ -49,6 +49,17 @@ public final class BossIndex extends SavedData {
         public int reminded;
         /** Elijah: an oath was broken, so he fights everybody for good and makes no more deals (R167). */
         public boolean hostile;
+        /** The Beast of Gevaudan's encounter (R184): where it is, how many Hosts were made, whether the Spirit already came back, and the day the Host was made or the Spirit got away. */
+        public net.ofatech.supernaturalbloodlines.core.boss.BeastPhase phase = net.ofatech.supernaturalbloodlines.core.boss.BeastPhase.NONE;
+        public int hostsMade;
+        public boolean returned;
+        public long phaseDay;
+        /** The Spirit entity and the game time at which it escapes. */
+        @Nullable
+        public UUID spirit;
+        public long spiritUntil;
+        /** Who did what to the Beast across the whole encounter (the Beast is replaced by the Host when it collapses, so the count cannot live on the entity). */
+        public final net.ofatech.supernaturalbloodlines.core.boss.DamageTally tally = new net.ofatech.supernaturalbloodlines.core.boss.DamageTally();
 
         CompoundTag save(BossId id) {
             CompoundTag t = new CompoundTag();
@@ -70,6 +81,23 @@ public final class BossIndex extends SavedData {
             t.putLong("arrive_at", arriveAt);
             t.putInt("reminded", reminded);
             t.putBoolean("hostile", hostile);
+            t.putString("phase", phase.name());
+            t.putInt("hosts_made", hostsMade);
+            t.putBoolean("returned", returned);
+            t.putLong("phase_day", phaseDay);
+            if (spirit != null) {
+                t.putUUID("spirit", spirit);
+            }
+            t.putLong("spirit_until", spiritUntil);
+            ListTag hits = new ListTag();
+            tally.entries().forEach((who, hit) -> {
+                CompoundTag h = new CompoundTag();
+                h.putUUID("who", who);
+                h.putFloat("amount", hit.amount());
+                h.putLong("seq", hit.seq());
+                hits.add(h);
+            });
+            t.put("tally", hits);
             return t;
         }
 
@@ -88,6 +116,18 @@ public final class BossIndex extends SavedData {
             e.arriveAt = t.contains("arrive_at") ? t.getLong("arrive_at") : -1;
             e.reminded = t.getInt("reminded");
             e.hostile = t.getBoolean("hostile");
+            e.phase = net.ofatech.supernaturalbloodlines.core.boss.BeastPhase.of(t.getString("phase"));
+            e.hostsMade = t.getInt("hosts_made");
+            e.returned = t.getBoolean("returned");
+            e.phaseDay = t.getLong("phase_day");
+            e.spirit = t.hasUUID("spirit") ? t.getUUID("spirit") : null;
+            e.spiritUntil = t.getLong("spirit_until");
+            for (Tag h : t.getList("tally", Tag.TAG_COMPOUND)) {
+                CompoundTag c = (CompoundTag) h;
+                if (c.hasUUID("who")) {
+                    e.tally.put(c.getUUID("who"), c.getFloat("amount"), c.getLong("seq"));
+                }
+            }
             return e;
         }
     }

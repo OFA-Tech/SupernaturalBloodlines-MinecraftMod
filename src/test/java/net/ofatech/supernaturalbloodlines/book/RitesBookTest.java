@@ -40,7 +40,7 @@ class RitesBookTest {
      * GameTests that run each of them at noon on the full-moon day ({@code moonRitesRefusedAtFullMoonNoon}, {@code aTrialThatDoesNotNeedTheFullMoonStillNeedsANight}),
      * so a rite whose code and file drift apart fails there, not here.
      */
-    private static final Set<String> FULL_MOON_BY_CODE = Set.of("alpha_trial", "immortality", "rite_of_severance", "rite_of_the_moon", "silver_moon");
+    private static final Set<String> FULL_MOON_BY_CODE = Set.of("alpha_trial", "immortality", "rite_of_severance", "rite_of_the_frequency", "rite_of_the_moon", "rite_of_the_valet_pike", "silver_moon");
 
     /** The rites that need a lunar eclipse (the factory asks {@code LunarEclipse.active}). */
     private static final Set<String> ECLIPSE_BY_CODE = Set.of("rite_of_the_broken_line", "rite_of_the_imprisoned_original");
