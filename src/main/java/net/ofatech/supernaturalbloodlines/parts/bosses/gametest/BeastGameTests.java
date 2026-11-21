@@ -1361,8 +1361,10 @@ public final class BeastGameTests {
             GevaudanHostEntity h = host(helper);
             h.setNoAi(true);
             // a source beside him and the block he stands in flowing: the water is a current that carries anything it can
-            helper.setBlock(new BlockPos(5, 1, 4), Blocks.WATER);
-            helper.setBlock(new BlockPos(4, 1, 4), Blocks.WATER.defaultBlockState().setValue(net.minecraft.world.level.block.LiquidBlock.LEVEL, 1));
+            BlockPos at = helper.relativePos(h.blockPosition());
+            helper.setBlock(at.east(), Blocks.WATER);
+            helper.setBlock(at, Blocks.WATER.defaultBlockState().setValue(net.minecraft.world.level.block.LiquidBlock.LEVEL, 1));
+            helper.setBlock(at.above(), Blocks.WATER.defaultBlockState().setValue(net.minecraft.world.level.block.LiquidBlock.LEVEL, 1));
             helper.assertTrue(h.getPistonPushReaction() == PushReaction.IGNORE, "a piston can push the Host");
             Vec3 start = h.position();
             h.push(2.0, 0.0, 2.0);
@@ -1371,8 +1373,9 @@ public final class BeastGameTests {
             helper.assertTrue(h.isAlive() && h.getDeltaMovement().horizontalDistanceSqr() < 1e-6, "an explosion moved or hurt the Host: " + h.getDeltaMovement());
             run(h, 60);
             helper.assertTrue(h.isAlive() && h.position().subtract(start).horizontalDistanceSqr() < 0.0001, "the Host was carried off by the water: " + h.position().subtract(start));
-            helper.setBlock(new BlockPos(5, 1, 4), Blocks.AIR);
-            helper.setBlock(new BlockPos(4, 1, 4), Blocks.AIR);
+            helper.setBlock(at.east(), Blocks.AIR);
+            helper.setBlock(at, Blocks.AIR);
+            helper.setBlock(at.above(), Blocks.AIR);
             sweep(helper, rig);
         }
         helper.succeed();

@@ -126,7 +126,9 @@ class BeastPhaseRulesTest {
         for (BeastPhase p : new BeastPhase[] {BeastPhase.NONE, BeastPhase.SPIRIT, BeastPhase.GONE, BeastPhase.KILLED, BeastPhase.FAILED}) {
             assertEquals(p, BeastPhaseRules.after(p, Event.BODY_LOST), p + " moved by a lost body");
         }
-        long minute = BeastPhaseRules.BODY_LOST_TICKS;
+        long minute = 1200; // a minute of game ticks, written out: the constant must be this
+        assertFalse(BeastPhaseRules.bodyLost(BeastPhase.BEAST, true, 1199), "one tick short of a minute");
+        assertTrue(BeastPhaseRules.bodyLost(BeastPhase.BEAST, true, 1200), "a minute");
         assertTrue(BeastPhaseRules.bodyLost(BeastPhase.BEAST, true, minute));
         assertTrue(BeastPhaseRules.bodyLost(BeastPhase.HOST, true, minute + 5000));
         assertFalse(BeastPhaseRules.bodyLost(BeastPhase.BEAST, true, minute - 1), "a body that has been gone for less than a minute is not lost yet");
