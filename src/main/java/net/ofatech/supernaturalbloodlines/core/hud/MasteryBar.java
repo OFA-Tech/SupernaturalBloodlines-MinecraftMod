@@ -5,30 +5,29 @@ import net.ofatech.supernaturalbloodlines.core.hud.SlotBadge.Look;
 
 /**
  * Where a slot's mastery bar stands and what colour it is, per hub theme. Tensura mode only (Supernatural mode has no mastery), where every slot is a square.
- * The bar runs along the top inside edge, clear of the key badge (Grimoire's seal and Blood Moon's plate are at the bottom; the Tensura theme's tab hangs off the
- * top left, so its bar starts to the right of the tab) and of the mode diamond outside the top right corner. Pure, so the boxes are tested not to cover those.
+ * The bar runs along the bottom edge inside the frame: a dark backing 4 px tall with a 2 px track inside it, filled left to right. The key badge and the
+ * cooldown's seconds that would stand there are lifted by {@link #LIFT} (see {@code SlotBadge}), so nothing covers the bar. Pure.
  */
 public final class MasteryBar {
     public static final int GOLD = 0xFFFFD36B;
     public static final int LEARNING = 0xFF8E8AA8;
     public static final int TRACK = 0xFF05080C;
+    /** The backing's height. */
+    public static final int HEIGHT = 4;
+    /** How far the key badge and the seconds are lifted: the backing and a pixel of air. */
+    public static final int LIFT = HEIGHT + 1;
 
     private MasteryBar() {
     }
 
-    /**
-     * The bar, 3 px tall on the slot's top edge: the top row is its dark backing (over the frame line), the two rows under it are the track and the fill. It
-     * ends above the first row of the cooldown's digits (the font leaves its first pixel row empty), which the Grimoire and Blood Moon themes draw at the top.
-     * {@code labelW} is the key text's width, which sets how wide the Tensura theme's tab is.
-     */
-    public static Box box(Look look, Box slot, int labelW) {
-        int left = look == Look.TENSURA ? Math.min(HudLayout.SLOT - 9, labelW + 4) : 4;
-        return new Box(slot.x() + left, slot.y(), HudLayout.SLOT - 3 - left, 3);
+    /** The dark backing: the slot's width less the frame and a pixel each side, a pixel above the bottom frame line. */
+    public static Box box(Box slot) {
+        return new Box(slot.x() + 2, slot.bottom() - 1 - HEIGHT, HudLayout.SLOT - 4, HEIGHT);
     }
 
-    /** The track inside the bar, 2 px tall. */
-    public static Box inner(Look look, Box slot, int labelW) {
-        Box b = box(look, slot, labelW);
+    /** The track inside the backing, 2 px tall; the fill runs along it. */
+    public static Box inner(Box slot) {
+        Box b = box(slot);
         return new Box(b.x() + 1, b.y() + 1, b.w() - 2, 2);
     }
 

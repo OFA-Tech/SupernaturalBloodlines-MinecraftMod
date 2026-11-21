@@ -79,9 +79,6 @@ public final class LineDeath {
                 discard(server, sirelines, m.id());
                 index.remove(m.id());
             } else if (SireCall.player(server, m.id()) instanceof ServerPlayer online) {
-                if (!Supernatural.is(online)) {
-                    continue; // only sired by a drink of blood so far (or cured): not a vampire yet, so there is nothing to kill
-                }
                 online.sendSystemMessage(Component.translatable("supernaturalbloodlines.line.death", Lines.shownName(server, online, root)));
                 if (slay(online)) {
                     index.remove(m.id());

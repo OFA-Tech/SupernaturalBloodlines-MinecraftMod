@@ -62,7 +62,7 @@ final class SlotArt {
                     // a small label over the dimmed icon: "4s", at three quarters of the text size, with the font's own shadow
                     String secs = SlotBadge.timeLabel(v.cooldownSeconds());
                     // opposite the key badge (SlotBadge): at the top, or at the bottom in the Tensura theme whose key tab hangs off the top left
-                    HudLayout.Box at = SlotBadge.seconds(SlotBadge.Look.valueOf(style.name()), b, font.width(secs));
+                    HudLayout.Box at = SlotBadge.seconds(SlotBadge.Look.valueOf(style.name()), b, font.width(secs), v.mastery() != null ? MasteryBar.LIFT : 0);
                     g.drawString(font, secs, at.x(), at.y(), fade(0xFFFFFFFF, alpha), true);
                     g.pose().popPose();
                 }
@@ -77,7 +77,7 @@ final class SlotArt {
         if (bloodRing >= 0f) {
             ring(g, b, bloodRing, alpha);
         }
-        key(g, font, style, b, v.keyLabel(), alpha);
+        key(g, font, style, b, v.keyLabel(), alpha, v.mastery() != null ? MasteryBar.LIFT : 0);
         if (shape.marked()) {
             mark(g, b, alpha);
         }
@@ -87,10 +87,8 @@ final class SlotArt {
     private static void masteryBar(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box slot, SlotView v, float alpha) {
         SlotBadge.Look look = SlotBadge.Look.valueOf(style.name());
         Mastery m = v.mastery();
-        String key = v.keyLabel().length() > 2 ? v.keyLabel().substring(0, 2) : v.keyLabel();
-        int labelW = key.isEmpty() ? 0 : font.width(key);
-        HudLayout.Box back = MasteryBar.box(look, slot, labelW);
-        HudLayout.Box in = MasteryBar.inner(look, slot, labelW);
+        HudLayout.Box back = MasteryBar.box(slot);
+        HudLayout.Box in = MasteryBar.inner(slot);
         g.fill(back.x(), back.y(), back.right(), back.bottom(), fade(0xC0000000 | MasteryBar.TRACK & 0xFFFFFF, alpha));
         g.fill(in.x(), in.y(), in.right(), in.bottom(), fade(0xFF2A2F36, alpha));
         int fill = MasteryBar.fill(m, in.w());
@@ -194,14 +192,14 @@ final class SlotArt {
             BakedTexture.blitTinted(g, part, x, y, RING_SIZE, RING_SIZE, fade(BLOOD, alpha));
         }
     }
-    private static void key(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box b, String label, float alpha) {
+    private static void key(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box b, String label, float alpha, int lift) {
         if (label.isEmpty()) {
             return;
         }
         // at the normal size (nothing is under 8 GUI pixels): a letter, or the first two characters of a longer key name
         String text = label.length() > 2 ? label.substring(0, 2) : label;
         int w = font.width(text);
-        HudLayout.Box badge = SlotBadge.key(SlotBadge.Look.valueOf(style.name()), b, w);
+        HudLayout.Box badge = SlotBadge.key(SlotBadge.Look.valueOf(style.name()), b, w, lift);
         switch (style) {
             case GRIMOIRE -> {
                 // a red wax badge in the corner of the tile

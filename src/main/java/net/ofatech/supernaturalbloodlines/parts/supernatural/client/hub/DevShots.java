@@ -192,6 +192,11 @@ public final class DevShots {
         }
         mc.options.tutorialStep = TutorialSteps.NONE;
         mc.getTutorial().setStep(TutorialSteps.NONE);
+        if (shots.stream().anyMatch(sh -> sh.hud() != null)) {
+            // the HUD shots are of the HUD: the demo player's aura (big yellow squares of particles) would cover it
+            mc.options.particles().set(net.minecraft.client.ParticleStatus.MINIMAL);
+            mc.particleEngine.setLevel(mc.level); // clears the live particles
+        }
         if (worldTicks++ < WORLD_TICKS) {
             return;
         }

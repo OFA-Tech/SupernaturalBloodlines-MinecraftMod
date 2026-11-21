@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.hud.client;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -14,28 +15,35 @@ class SlotLabelTest {
     }
 
     @Test
-    void theKeyAndNameComeFirstThenTheExtrasInOrder() {
-        assertEquals("R  Fireball", SlotLabel.text("R", "Fireball", null, null, null));
-        assertEquals("R  Fireball \u00b7 Blade mode \u00b7 Ready in 4 s \u00b7 Mastery 42%", SlotLabel.text("R", "Fireball", "Blade mode", "Ready in 4 s", "Mastery 42%"));
-        assertEquals("Fireball \u00b7 Mastered", SlotLabel.text("", "Fireball", " ", null, "Mastered"));
+    void theNameIsTheFirstLineAndTheSecondLineHoldsMasteryStateModeAndDescriptionInThatOrder() {
+        assertArrayEquals(new String[] {"Fireball", ""}, SlotLabel.lines("Fireball", null, null, null, null));
+        assertArrayEquals(new String[] {"Fireball", "42% \u00b7 Ready in 4 s \u00b7 Blade mode \u00b7 Throws fire"},
+                SlotLabel.lines("Fireball", "42%", "Ready in 4 s", "Blade mode", "Throws fire"));
+        assertArrayEquals(new String[] {"Fireball", "Mastered \u00b7 Throws fire"}, SlotLabel.lines("Fireball", "Mastered", " ", null, "Throws fire"));
     }
 
     @Test
-    void aLongLineIsCutWithAnEllipsisAndKeepsTheName() {
-        String text = SlotLabel.text("R", "Fireball", "Blade mode", "You cannot use this skill now.", "Mastery 42%");
-        String fitted = SlotLabel.fit(text, 100, SlotLabelTest::width);
-        assertTrue(width(fitted) <= 100, fitted);
-        assertTrue(fitted.endsWith("\u2026") && fitted.startsWith("R  Fireball"), fitted);
-        assertEquals("R  Fireball", SlotLabel.fit("R  Fireball", 100, SlotLabelTest::width));
+    void theNameIsKeptWholeWhenItFitsAndTheSecondLineLosesItsEndFirst() {
+        String[] lines = SlotLabel.lines("Poison Resistance", "42%", null, null, "Resists every kind of poison there is");
+        assertEquals("Poison Resistance", SlotLabel.fit(lines[0], 17 * 6, SlotLabelTest::width));
+        String second = SlotLabel.fit(lines[1], 100, SlotLabelTest::width);
+        assertTrue(width(second) <= 100 && second.startsWith("42% \u00b7 Resists") && second.endsWith("\u2026"), second);
+        // a name wider than the room is cut with an ellipsis, never run over
+        assertTrue(SlotLabel.fit("Poison Resistance", 60, SlotLabelTest::width).endsWith("\u2026"));
     }
 
     @Test
-    void everyLabelBoxHasRoomForTextAtEveryGuiScale() {
-        for (int[] s : new int[][] {{320, 180}, {427, 240}, {480, 270}, {640, 360}, {960, 540}, {213, 120}, {171, 96}}) {
+    void everyLabelBoxThatIsDrawnHasRoomForTextAndAnythingFitsIt() {
+        for (int[] s : new int[][] {{960, 540}, {640, 360}, {480, 270}, {427, 240}, {320, 180}, {171, 96}}) {
             for (HudLayout.Box b : HudLayout.labels(s[0], s[1])) {
-                assertTrue(b.w() - SlotLabel.PAD * 2 >= SlotLabel.MIN_ROOM, b + " on " + s[0] + "x" + s[1]);
-                String fitted = SlotLabel.fit(SlotLabel.text("R", "A very long skill name indeed", "Another long mode name", "Ready in 120 s", "Mastery 100%"), b.w() - SlotLabel.PAD * 2, SlotLabelTest::width);
-                assertTrue(width(fitted) + SlotLabel.PAD * 2 <= b.w(), fitted + " is wider than " + b);
+                int room = b.w() - SlotLabel.PAD * 2;
+                if (room < SlotLabel.MIN_ROOM) {
+                    assertEquals(0, b.w(), "a box that is too small is not drawn at all: " + b);
+                    continue;
+                }
+                for (String line : SlotLabel.lines("A very long skill name indeed", "100%", "Ready in 120 s", "Another long mode name", "A rather long description")) {
+                    assertTrue(width(SlotLabel.fit(line, room, SlotLabelTest::width)) <= room, line + " in " + b);
+                }
             }
         }
     }

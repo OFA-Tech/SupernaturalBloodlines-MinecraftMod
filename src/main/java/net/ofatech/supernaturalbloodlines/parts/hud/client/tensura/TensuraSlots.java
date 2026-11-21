@@ -66,7 +66,7 @@ public final class TensuraSlots {
         float fraction = SkillCooldown.fraction(left, PEAK[hudSlot]);
         String detail = skill instanceof TensuraSkill ts && inst.getModes() > 1 ? ts.getModeName(inst, mode).getString() : null;
         return new SlotView(skill.getSkillIcon(), key, fraction, SkillCooldown.seconds(left), inst.isToggled(),
-                inst.canInteractSkill(p) ? null : GREY_BLOCKED, name, detail, mastery(p, skill, inst));
+                inst.canInteractSkill(p) ? null : GREY_BLOCKED, name, detail, mastery(p, skill, inst), skill.getSkillDescription().getString());
     }
 
     /** The same two numbers Tensura's own skill HUD reads on the client: {@code getMastery} against {@code getMaxMastery}, below zero while a resist skill is still being learned. */

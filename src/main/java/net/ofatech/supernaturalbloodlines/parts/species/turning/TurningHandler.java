@@ -5,6 +5,7 @@ import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IFaction;
 import de.teamlapen.vampirism.api.event.BloodDrinkEvent;
 import java.util.UUID;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -101,7 +102,9 @@ public final class TurningHandler {
                 || BloodlineAccess.get(p).vampireBloodUntil() == 0) {
             return;
         }
-        apply(p, BloodlineEvent.DIED_WITH_VAMPIRE_BLOOD, null);
+        // Original's blood still in them names the sire they get if the turning completes (the attachment does not survive the death)
+        UUID source = p.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT) && p.hasData(SpeciesRegistries.BLOOD_SOURCE) ? p.getData(SpeciesRegistries.BLOOD_SOURCE) : null;
+        apply(p, BloodlineEvent.DIED_WITH_VAMPIRE_BLOOD, source);
         if (BloodlineAccess.get(p).inTurning()) {
             p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.started"));
         }

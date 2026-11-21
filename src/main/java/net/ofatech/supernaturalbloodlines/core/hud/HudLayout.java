@@ -73,33 +73,37 @@ public final class HudLayout {
         return new Box(x, screenH - PILL_ABOVE - (lifted ? ALT_LIFT : 0), w, PILL_H);
     }
 
-    public static final int LABEL_H = 10;
-    /** A label's row is this far below the one above it. */
-    public static final int LABEL_PITCH = LABEL_H + 1;
-    /** Air between a column and its labels, and between the labels and the middle of the screen. */
+    /** A label is two lines (the name, then mastery and a short description) and stands level with its slot: its centre is the slot's centre. */
+    public static final int LABEL_H = 20;
+    /** Air between a column and its labels. */
     public static final int LABEL_AIR = 3;
+    /** Air between a label and the screen's edge. */
+    public static final int LABEL_EDGE = 2;
+    /** A label narrower than this is not drawn (a window so small that the column leaves no room beside it): the slot is still there. */
+    public static final int LABEL_MIN_W = 32;
 
     /**
-     * The labels held Alt shows, one per slot in slot order, each on its own line beside its slot: right of the left column (left-aligned there), left of the
-     * right column (right-aligned there), both ending {@link #LABEL_AIR} short of the middle of the screen. The three rows stand together, the first just under
-     * the pill's row and the last just above the hotbar strip, so no label touches the pill, the action bar line, the mode panel above the right column, the
-     * hotbar, the offhand slot or the attack indicator; every label is the full width between the column and the middle.
+     * The labels held Alt shows, one per slot in slot order, each beside its own slot on the OUTER side: left of the left column (the text ends at the
+     * slot) and right of the right column (the text starts at the slot), centred on the slot's row. Nothing else of the HUD stands out there (the pill, the
+     * mode panel, the hotbar, the offhand slot and the attack indicator are all between or above the columns), and every label stays on screen. A column
+     * with no room outside it (a small window at a big GUI scale) gets a label of width 0, which is not drawn.
      */
     public static Box[] labels(int screenW, int screenH) {
         Box[] s = slots(screenW, screenH);
-        int top = screenH - PILL_ABOVE + PILL_H + 1;
-        int mid = screenW / 2;
         Box[] out = new Box[Loadout.SLOTS];
-        for (int row = 0; row < 3; row++) {
-            int y = top + row * LABEL_PITCH;
-            int leftX = s[row].right() + LABEL_AIR;
-            int rightEnd = s[3 + row].x() - LABEL_AIR;
-            out[row] = new Box(leftX, y, Math.max(0, mid - LABEL_AIR - leftX), LABEL_H);
-            out[3 + row] = new Box(mid + LABEL_AIR, y, Math.max(0, rightEnd - (mid + LABEL_AIR)), LABEL_H);
+        for (int i = 0; i < out.length; i++) {
+            int y = s[i].y() + (SLOT - LABEL_H) / 2;
+            if (i < 3) {
+                int w = s[i].x() - LABEL_AIR - LABEL_EDGE;
+                out[i] = w < LABEL_MIN_W ? new Box(Math.max(0, s[i].x() - LABEL_AIR), y, 0, LABEL_H) : new Box(LABEL_EDGE, y, w, LABEL_H);
+            } else {
+                int x = s[i].right() + LABEL_AIR;
+                int w = screenW - LABEL_EDGE - x;
+                out[i] = w < LABEL_MIN_W ? new Box(Math.min(x, screenW), y, 0, LABEL_H) : new Box(x, y, w, LABEL_H);
+            }
         }
         return out;
     }
-
     /** The action bar line of {@code textW} px (the vanilla one: item pickup, bed, and the HUD's own refusals). */
     public static Box actionBar(int screenW, int screenH, int textW) {
         return new Box(screenW / 2 - textW / 2, screenH - ACTION_BAR_ABOVE, textW, ACTION_BAR_H);

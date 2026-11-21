@@ -62,24 +62,37 @@ class MasteryTest {
     }
 
     @Test
-    void theBarIsInsideTheSlotAndClearOfTheKeyBadgeTheSecondsAndTheModeDiamond() {
+    void theBarIsOnTheBottomEdgeInsideTheSlotAtLeastTwoPixelsTallAndNothingCoversIt() {
         Box slot = new Box(100, 100, HudLayout.SLOT, HudLayout.SLOT);
+        Box bar = MasteryBar.box(slot);
+        Box in = MasteryBar.inner(slot);
+        assertTrue(bar.x() > slot.x() && bar.right() < slot.right() && bar.y() > slot.y() && bar.bottom() == slot.bottom() - 1, "inside the frame, on the bottom edge: " + bar);
+        assertTrue(in.h() >= 2, "the fill is at least 2 px tall");
+        assertTrue(in.x() > bar.x() && in.right() < bar.right() && in.y() > bar.y() && in.bottom() < bar.bottom(), "a dark track all round the fill");
+        assertTrue(in.w() >= 14);
         for (Look look : Look.values()) {
             for (int labelW : new int[] {5, 6, 11}) {
-                Box bar = MasteryBar.box(look, slot, labelW);
-                Box in = MasteryBar.inner(look, slot, labelW);
-                assertTrue(bar.x() >= slot.x() && bar.right() <= slot.right() && bar.y() >= slot.y() && bar.bottom() <= slot.bottom(), look + " " + bar);
-                assertTrue(in.x() > bar.x() && in.right() < bar.right() && in.y() > bar.y() && in.bottom() <= bar.bottom(), "the track is inside the backing");
-                assertTrue(in.w() >= 3, look + " leaves " + in.w() + " px of track for a " + labelW + " px key");
-                assertFalse(bar.overlaps(SlotBadge.key(look, slot, labelW)), look + " covers the key badge");
+                assertFalse(bar.overlaps(SlotBadge.key(look, slot, labelW, MasteryBar.LIFT)), look + " covers the key badge");
                 assertFalse(bar.overlaps(SlotBadge.tensuraMark(slot)), look + " covers the mode diamond");
                 // the cooldown's text box starts with a row the font leaves empty, so the digits themselves begin one row down
-                Box sec = SlotBadge.seconds(look, slot, 17);
+                Box sec = SlotBadge.seconds(look, slot, 17, MasteryBar.LIFT);
                 assertFalse(bar.overlaps(new Box(sec.x(), sec.y() + 1, sec.w(), sec.h() - 1)), look + " covers the seconds");
             }
         }
     }
 
+    @Test
+    void withoutABarTheBadgeAndTheSecondsStandWhereTheyAlwaysDid() {
+        Box slot = new Box(0, 0, HudLayout.SLOT, HudLayout.SLOT);
+        for (Look look : Look.values()) {
+            assertEquals(SlotBadge.key(look, slot, 6), SlotBadge.key(look, slot, 6, 0));
+            assertEquals(SlotBadge.seconds(look, slot, 11), SlotBadge.seconds(look, slot, 11, 0));
+        }
+        // the bar's lift moves only what stands at the bottom
+        assertEquals(SlotBadge.key(Look.TENSURA, slot, 6), SlotBadge.key(Look.TENSURA, slot, 6, MasteryBar.LIFT));
+        assertEquals(SlotBadge.seconds(Look.GRIMOIRE, slot, 11), SlotBadge.seconds(Look.GRIMOIRE, slot, 11, MasteryBar.LIFT));
+        assertEquals(SlotBadge.key(Look.BLOOD_MOON, slot, 6).y() - MasteryBar.LIFT, SlotBadge.key(Look.BLOOD_MOON, slot, 6, MasteryBar.LIFT).y());
+    }
     @Test
     void theFillIsAWholeNumberOfPixelsAndOnlyFullWhenMastered() {
         int w = 12;

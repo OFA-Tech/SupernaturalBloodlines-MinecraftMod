@@ -7,7 +7,7 @@ import net.ofatech.supernaturalbloodlines.core.hud.Mastery;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import org.jetbrains.annotations.Nullable;
 
-/** The one line a slot gets beside it while Alt is held (the text only; {@link HudChrome} draws it and {@code HudLayout.labels} places it). Pure. */
+/** The two lines a slot gets beside it while Alt is held (the text only; {@link HudChrome} draws them and {@code HudLayout.labels} places them). Pure. */
 final class SlotLabel {
     /** Air inside the label's box, each side. */
     static final int PAD = 4;
@@ -18,17 +18,21 @@ final class SlotLabel {
     private SlotLabel() {
     }
 
-    /** "R  Fireball . mode . why not . mastery": the key and name first, so a cut line loses the extras and never the name. */
-    static String text(String key, String name, @Nullable String detail, @Nullable String state, @Nullable String mastery) {
+    /**
+     * The name; then, on the second line, the mastery ("42%" or "Mastered"), why the slot cannot be used or its cooldown, the mode and a short description,
+     * in that order, so a cut line loses the description first.
+     */
+    static String[] lines(String name, @Nullable String mastery, @Nullable String state, @Nullable String detail, @Nullable String description) {
         List<String> parts = new ArrayList<>();
-        for (String p : new String[] {detail, state, mastery}) {
+        for (String p : new String[] {mastery, state, detail, description}) {
             if (p != null && !p.isBlank()) {
-                parts.add(p);
+                parts.add(p.strip());
             }
         }
-        return (key.isEmpty() ? "" : key + "  ") + name + (parts.isEmpty() ? "" : SEP + String.join(SEP, parts));
+        return new String[] {name, String.join(SEP, parts)};
     }
 
+    /** The first line is cut only when the name itself is wider than the room, the second whenever it does not fit. */
     static String fit(String text, int width, ToIntFunction<String> measure) {
         return LabelFit.cut(text, width, measure);
     }

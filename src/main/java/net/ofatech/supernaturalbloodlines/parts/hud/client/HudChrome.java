@@ -61,7 +61,7 @@ final class HudChrome {
     private static SlotMode pillMode;
     private static long pillTick = Long.MIN_VALUE;
 
-    private static final String[] LABELS = new String[6];
+    private static final String[][] LABELS = new String[6][];
     private static long labelsTick = Long.MIN_VALUE;
     private static int labelsWidth = -1;
     private static HudStyle.Style labelsStyle;
@@ -137,41 +137,43 @@ final class HudChrome {
         return y;
     }
     /**
-     * What each slot is, held Alt: one line per filled slot, beside the slot ({@link HudLayout#labels}): the key and name, then the mode, why it cannot be used or
-     * its cooldown, and its mastery. Right of the left column and left of the right column, so nothing is stacked above the slots; a line too long is cut with an ellipsis.
+     * What each slot is, held Alt: two lines beside each filled slot, on its outer side ({@link HudLayout#labels}), level with it: the name, then the mastery,
+     * why it cannot be used or its cooldown, the mode and a short description. The name is cut only when it is wider than the room; the second line is cut with
+     * an ellipsis. Nothing is stacked above the slots.
      */
     static void labels(GuiGraphics g, Font font, HudStyle.Style style, SlotView[] views, float alpha, boolean cacheable) {
         HudLayout.Box[] boxes = HudLayout.labels(g.guiWidth(), g.guiHeight());
         boolean fresh = !cacheable || labelsTick != tick() || labelsWidth != g.guiWidth() || labelsStyle != style;
         for (int i = 0; i < boxes.length; i++) {
             SlotView v = views[i];
-            if (v.isEmpty()) {
-                continue;
-            }
             int room = boxes[i].w() - SlotLabel.PAD * 2;
-            if (room < SlotLabel.MIN_ROOM) {
+            if (v.isEmpty() || room < SlotLabel.MIN_ROOM) {
                 continue;
             }
             if (fresh || LABELS[i] == null) {
-                LABELS[i] = SlotLabel.fit(label(v), room, font::width);
+                String[] raw = label(v);
+                LABELS[i] = new String[] {SlotLabel.fit(raw[0], room, font::width), SlotLabel.fit(raw[1], room, font::width)};
             }
-            String text = LABELS[i];
-            int w = font.width(text) + SlotLabel.PAD * 2;
-            int x = i < 3 ? boxes[i].x() : boxes[i].right() - w;
-            pillBox(g, style, x, boxes[i].y(), w, boxes[i].h(), Math.max(alpha, 0.95f));
-            g.drawString(font, text, x + SlotLabel.PAD, boxes[i].y() + 1, SlotArt.fade(v.greyed() ? 0xFFFF7A70 : ink(style), 1f), false);
+            String[] text = LABELS[i];
+            int w = Math.max(font.width(text[0]), font.width(text[1])) + SlotLabel.PAD * 2;
+            HudLayout.Box box = boxes[i];
+            int x = i < 3 ? box.right() - w : box.x();
+            pillBox(g, style, x, box.y(), w, box.h(), Math.max(alpha, 0.95f));
+            g.drawString(font, text[0], x + SlotLabel.PAD, box.y() + 2, SlotArt.fade(ink(style), 1f), false);
+            if (!text[1].isEmpty()) {
+                g.drawString(font, text[1], x + SlotLabel.PAD, box.y() + 11, SlotArt.fade(v.greyed() ? 0xFFFF7A70 : 0xFFB8B0B4, 1f), false);
+            }
         }
         labelsTick = tick();
         labelsWidth = g.guiWidth();
         labelsStyle = style;
     }
 
-    private static String label(SlotView v) {
+    private static String[] label(SlotView v) {
         String state = v.greyed() ? Component.translatable(v.greyedReason()).getString()
                 : v.cooldownSeconds() > 0 ? Component.translatable("supernaturalbloodlines.hud.slot.cooldown", v.cooldownSeconds()).getString() : null;
-        return SlotLabel.text(v.keyLabel(), v.name(), v.detail(), state, mastery(v.mastery()));
+        return SlotLabel.lines(v.name(), mastery(v.mastery()), state, v.detail(), v.description());
     }
-
     private static String mastery(net.ofatech.supernaturalbloodlines.core.hud.Mastery m) {
         if (m == null) {
             return null;
