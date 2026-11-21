@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased (plan 17h: the Beast of Gévaudan)
+
+### Added
+- **The Beast of Gévaudan** (part `bosses`; **needs Werewolves**; no Werewolves, no Beast): the **Host** (a man in an old soldier's coat and tricorn) is made once on a full moon night for an Alpha, a True Alpha or a Hunter of the Five (`beast_host_chance`, 0.25; the notice never names it), is invulnerable to everything but the void and `/kill`, and changes into the **Beast** (GeckoLib, 420 health) on a later full moon night. The Beast Roars (Alphas and True Alphas are immune), heals unless wolfsbane is on it, takes less from shots, and collapses at a quarter of its health or inside a closed ring of mountain ash. The **Spirit** that rises from it runs for `beast_spirit_seconds`: only the **Valet Pike** hurts it, and one blow ends the Beast for good. If it escapes it comes back once at half health, and the second time it is gone. The reward is the **Mantle of the Beast**, once, to the player who did the most damage over the whole encounter: no spark, no pike.
+- **The Valet Pike** is made by the **Rite of the Valet Pike** (a witch type, a full moon night, iron, wolfsbane, mountain ash dust and sire's blood; a plain player's blood is not enough, and every refusal is the same message at the same cost). **The Rite of the Frequency** (a werewolf, the pike back, a Hearing Device and an echo shard) brings the Host near you once, or makes the waiting Host change now.
+- **The Mantle of the Beast** wraps the enemies within 6 blocks in Weakness and Slowness for a shifted werewolf type who wears it (Curios back slot, or carried), every two minutes. **The Valet's Tricorn** is a cosmetic hat.
+- Config (`supernaturalbloodlines-bosses.toml`): `beast_host_chance` (0.25), `beast_respects_ash` (true), `beast_returns_once` (true), `beast_spirit_seconds` (60), `beast_roar_range` (16), `beast_roar_seconds` (6), `beast_roar_cooldown_seconds` (20). Every one has an Admin row; the Admin page's Bosses section has a Change button for the Beast (command `boss beast_of_gevaudan change`, row X6).
+- The Guide's bosses chapter has four paragraphs on it; the Rites page and the rites in Enchanted's book list the two new rites. `Supernatural.registerWerewolfLike`: a creature that wolfsbane works on though it has no werewolf faction.
+- **Fixed (own commit):** `aHuntWhoseBlowsLandOnSomebodyElse...` (Deucalion) failed now and then because a cow 30 blocks from the test was in a chunk the test world had not loaded; the test keeps its prey inside its own structure.
+
+### Rolling back
+Rolling back to a build without 17h loses the Host, the Beast and the Spirit (a Beast in the world is dropped), the Valet Pike and the Mantle in an inventory or a chest, and the encounter's record (its phase, how many Hosts were made, the damage tally) in the boss index; a Beast that was in the middle of the story is simply not there.
+
 ## Unreleased (plan 17g: Peter Hale and the Hale house)
 
 ### Added

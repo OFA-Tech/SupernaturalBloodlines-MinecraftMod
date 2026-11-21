@@ -120,6 +120,12 @@ public final class BeastEntity extends BossNpc implements GeoEntity {
         return !collapsing();
     }
 
+    /** Only how it looks (for the dev screenshots): the fall, as the model plays it, and the Roar's wind-up. No AI, no hitbox change. */
+    public void lookState(boolean collapsing, int roarTicks) {
+        entityData.set(COLLAPSING, collapsing);
+        entityData.set(ROAR_TICKS, roarTicks);
+    }
+
     /** The index follows a Beast that is on its feet; one that is falling has handed its place to the Host. */
     @Override
     protected boolean tracked() {

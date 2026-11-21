@@ -243,6 +243,19 @@ public final class BossShots {
                 list.add(new Panel("the wolf, three quarters", peter(mc, BossForm.BEAST, ShiftRules.END_TICK, true), 135f, 2.0f, 3.6f));
                 return list;
             }
+            if (boss.equals("beast")) {
+                columns = 4;
+                rows = 2;
+                list.add(new Panel("the Host, from the front", host(mc), 180f, 1.95f, 1.3f));
+                list.add(new Panel("the Host, from behind", host(mc), 0f, 1.95f, 1.3f));
+                list.add(new Panel("the Beast, from the front", beast(mc, false), 180f, 3.6f, 3.4f));
+                list.add(new Panel("the Beast, from the side", beast(mc, false), 90f, 3.6f, 5.6f));
+                list.add(new Panel("the Beast, from behind", beast(mc, false), 0f, 3.6f, 3.4f));
+                list.add(new Panel("the Beast, three quarters", beast(mc, false), 135f, 3.6f, 4.6f));
+                list.add(new Panel("the Beast, falling apart", beast(mc, true), 135f, 3.0f, 5.0f));
+                list.add(new Panel("the Host, from the side", host(mc), 90f, 1.95f, 1.3f));
+                return list;
+            }
             if (boss.equals("klaus")) {
                 columns = 4;
                 rows = 2;
@@ -277,6 +290,16 @@ public final class BossShots {
                 }
             }
             return list;
+        }
+
+        private static net.ofatech.supernaturalbloodlines.parts.bosses.entity.GevaudanHostEntity host(Minecraft mc) {
+            return net.ofatech.supernaturalbloodlines.parts.bosses.entity.GevaudanHostEntity.create(mc.level);
+        }
+
+        private static net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEntity beast(Minecraft mc, boolean falling) {
+            var b = net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEntity.create(mc.level);
+            b.lookState(falling, 0);
+            return b;
         }
 
         private static net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity deucalion(Minecraft mc, BossForm form, int ticks) {
