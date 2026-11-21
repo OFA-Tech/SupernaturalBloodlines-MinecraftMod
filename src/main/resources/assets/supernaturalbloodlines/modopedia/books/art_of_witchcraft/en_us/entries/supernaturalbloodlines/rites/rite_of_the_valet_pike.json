@@ -1,0 +1,47 @@
+{
+  "title": "Rite of the Valet Pike",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:iron_sword"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/rite_of_the_valet_pike",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Makes the Valet Pike, the only weapon that hurts the Spirit of the Beast, and only in a direct blow. A full-moon night only, in a medium circle: iron, wolfsbane, mountain ash dust and sire's blood.",
+          "header": "The Valet Pike"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Only a witch type can work it. The blood must be an NPC Original's, or of a Hunter of the Five, an Alpha, an Original, a hybrid or a tribrid, or at rung 4 or higher of the vampire or werewolf ladder.",
+          "header": "The Valet Pike"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "A refusal about the blood always reads the same and spends everything, so it cannot tell you what somebody is. A caster who is no witch type, or a night that is not a full moon night, gets everything back.",
+          "header": "The Valet Pike"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_the_valet_pike",
+          "header": "The Valet Pike"
+        }
+      ]
+    }
+  ]
+}

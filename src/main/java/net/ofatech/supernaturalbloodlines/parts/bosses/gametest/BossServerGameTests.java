@@ -143,6 +143,50 @@ public final class BossServerGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void theHostTheBeastAndTheSpiritLoadAndRunOnADedicatedServerWhereTheRenderersCannotLoad(GameTestHelper helper) {
+        helper.assertTrue(FMLEnvironment.dist == Dist.DEDICATED_SERVER, "this run is " + FMLEnvironment.dist + ", not a dedicated server");
+        for (String id : new String[] {"gevaudan_host", "beast_of_gevaudan", "gevaudan_spirit"}) {
+            helper.assertTrue(BuiltInRegistries.ENTITY_TYPE.containsKey(ResourceLocation.fromNamespaceAndPath(NS, id)), "the entity type " + id + " is not registered");
+        }
+        for (String id : new String[] {"valet_pike", "mantle_of_the_beast", "sebastien_tricorn"}) {
+            helper.assertTrue(BuiltInRegistries.ITEM.containsKey(ResourceLocation.fromNamespaceAndPath(NS, id)), "the item " + id + " is not registered");
+        }
+        helper.assertTrue(!loads("net.minecraft.client.Minecraft"), "client classes are present in this run, so it proves nothing");
+        for (String client : new String[] {"BeastRenderer", "SpiritRenderer", "HumanoidBossRenderer"}) {
+            helper.assertTrue(!loads("net.ofatech.supernaturalbloodlines.parts.bosses.client." + client), "the renderer " + client + " loads on the server");
+        }
+        helper.assertTrue(loads("net.ofatech.supernaturalbloodlines.parts.bosses.director.BeastDirector") && loads("net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEvents")
+                && loads("net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastRoar") && loads("net.ofatech.supernaturalbloodlines.parts.bosses.item.MantleEvents"), "the server side of the Beast does not load");
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            var host = net.ofatech.supernaturalbloodlines.parts.bosses.director.BeastDirector.spawnHost(helper.getLevel(), null, helper.absolutePos(new BlockPos(2, 1, 2))).orElseThrow();
+            for (int i = 0; i < 25; i++) {
+                host.tick();
+            }
+            helper.assertTrue(host.isAlive() && host.getType() == BossRegistries.GEVAUDAN_HOST.get(), "the Host did not survive its first second");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.bosses.director.BeastDirector.change(helper.getLevel()), "the Host did not change on a server");
+            var beast = (net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEntity) net.ofatech.supernaturalbloodlines.parts.bosses.director.BossDirector.anyBossBody(rig.server, net.ofatech.supernaturalbloodlines.core.boss.BossId.BEAST_OF_GEVAUDAN);
+            for (int i = 0; i < 25; i++) {
+                beast.tick();
+            }
+            helper.assertTrue(beast.isAlive() && beast.getType() == BossRegistries.BEAST.get(), "the Beast did not survive its first second");
+            helper.assertTrue(beast.getAnimatableInstanceCache() != null && beast.getAnimatableInstanceCache().getManagerForId(beast.getId()) != null, "GeckoLib's animation manager is not there");
+            net.ofatech.supernaturalbloodlines.parts.bosses.director.BeastDirector.collapse(helper.getLevel(), beast);
+            var spirit = helper.getLevel().getEntity(rig.index.of(net.ofatech.supernaturalbloodlines.core.boss.BossId.BEAST_OF_GEVAUDAN).spirit);
+            helper.assertTrue(spirit != null && spirit.getType() == BossRegistries.GEVAUDAN_SPIRIT.get(), "the Spirit is not there");
+            for (int i = 0; i < 25; i++) {
+                spirit.tick();
+            }
+            CompoundTag tag = new CompoundTag();
+            beast.saveWithoutId(tag);
+            var again = net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEntity.create(helper.getLevel());
+            again.load(tag);
+            helper.assertTrue(again.collapsing(), "the collapse was lost through a save");
+            net.ofatech.supernaturalbloodlines.parts.bosses.director.BeastDirector.clear(rig.server);
+            spirit.discard();
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void elijahRebekahAndTheDealLoadOnADedicatedServerWhereTheDialogCannot(GameTestHelper helper) {
         helper.assertTrue(FMLEnvironment.dist == Dist.DEDICATED_SERVER, "this run is " + FMLEnvironment.dist + ", not a dedicated server");
         helper.assertTrue(!loads("net.minecraft.client.gui.screens.Screen"), "client classes are present in this run, so it proves nothing");

@@ -14,10 +14,10 @@ class RiteUnlockTableTest {
     @Test
     void theNumbersOfThePlan() {
         assertEquals(8, RiteUnlockTable.OPEN.size());
-        assertEquals(23, RiteUnlockTable.GATED.size());
-        assertEquals(13, RiteUnlockTable.GATED.values().stream().filter(g -> g.lore().isEmpty()).count(), "kind only");
+        assertEquals(25, RiteUnlockTable.GATED.size());
+        assertEquals(14, RiteUnlockTable.GATED.values().stream().filter(g -> g.lore().isEmpty()).count(), "kind only");
         assertEquals(7, RiteUnlockTable.GATED.values().stream().filter(g -> g.kinds().isEmpty()).count(), "lore only");
-        assertEquals(3, RiteUnlockTable.GATED.values().stream().filter(g -> !g.kinds().isEmpty() && !g.lore().isEmpty()).count(), "kind or lore");
+        assertEquals(4, RiteUnlockTable.GATED.values().stream().filter(g -> !g.kinds().isEmpty() && !g.lore().isEmpty()).count(), "kind or lore");
     }
 
     @Test
@@ -45,7 +45,7 @@ class RiteUnlockTableTest {
         assertTrue(RiteUnlockTable.knows("alpha_trial", Set.of(RiteKind.WEREWOLF), Set.of()));
         assertFalse(RiteUnlockTable.knows("alpha_trial", Set.of(RiteKind.VAMPIRE, RiteKind.WITCH), Set.of()));
         assertFalse(RiteUnlockTable.knows("alpha_trial", Set.of(), Set.of()));
-        assertFalse(RiteUnlockTable.knows("no_such_rite", Set.of(RiteKind.values()), Set.of("kol", "esther", "finn", "elijah", "old_rites", "curses")));
+        assertFalse(RiteUnlockTable.knows("no_such_rite", Set.of(RiteKind.values()), Set.of("kol", "esther", "finn", "elijah", "old_rites", "curses", "beast")));
     }
 
     @Test
@@ -70,6 +70,7 @@ class RiteUnlockTableTest {
         assertEquals(List.of("rite_of_the_cure"), RiteUnlockTable.taughtBy(RiteUnlockTable.ELIJAH));
         assertEquals(List.of("immortality", "ward_of_return"), RiteUnlockTable.taughtBy(RiteUnlockTable.OLD_RITES));
         assertEquals(List.of("curse_magicule_drain", "curse_skill_seal"), RiteUnlockTable.taughtBy(RiteUnlockTable.CURSES));
+        assertEquals(List.of("rite_of_the_valet_pike"), RiteUnlockTable.taughtBy(RiteUnlockTable.BEAST));
         assertEquals(List.of(), RiteUnlockTable.taughtBy("nothing"));
     }
 
@@ -78,7 +79,7 @@ class RiteUnlockTableTest {
         for (String lore : RiteUnlockTable.loreIds()) {
             assertFalse(RiteUnlockTable.taughtBy(lore).isEmpty(), lore);
         }
-        assertEquals(Set.of("kol", "esther", "finn", "elijah", "old_rites", "curses"), RiteUnlockTable.loreIds());
+        assertEquals(Set.of("kol", "esther", "finn", "elijah", "old_rites", "curses", "beast"), RiteUnlockTable.loreIds());
     }
 
     @Test
@@ -107,5 +108,14 @@ class RiteUnlockTableTest {
         assertTrue(choices.containsAll(RiteUnlockTable.loreIds()), "a lore id is not offered");
         assertEquals(1 + RiteUnlockTable.GATED.size() + RiteUnlockTable.loreIds().size(), choices.size());
         assertFalse(choices.contains("purification"), "an open rite is not a choice: it cannot be learned or forgotten");
+    }
+
+    @Test
+    void theFrequencyIsAWerewolfTypesAndThePikeAWitchsOrTheBeastsLore() {
+        assertTrue(RiteUnlockTable.knows("rite_of_the_frequency", Set.of(RiteKind.WEREWOLF), Set.of()));
+        assertFalse(RiteUnlockTable.knows("rite_of_the_frequency", Set.of(RiteKind.WITCH, RiteKind.VAMPIRE), Set.of(RiteUnlockTable.BEAST)), "the Beast's lore does not teach the Frequency");
+        assertTrue(RiteUnlockTable.knows("rite_of_the_valet_pike", Set.of(RiteKind.WITCH), Set.of()));
+        assertTrue(RiteUnlockTable.knows("rite_of_the_valet_pike", Set.of(), Set.of(RiteUnlockTable.BEAST)));
+        assertFalse(RiteUnlockTable.knows("rite_of_the_valet_pike", Set.of(RiteKind.WEREWOLF, RiteKind.VAMPIRE), Set.of(RiteUnlockTable.KOL)));
     }
 }

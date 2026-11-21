@@ -21,6 +21,7 @@ public final class RiteUnlockTable {
     public static final String ELIJAH = "elijah";
     public static final String OLD_RITES = "old_rites";
     public static final String CURSES = "curses";
+    public static final String BEAST = "beast";
 
     /** A gated rite: the kinds that know it from the start of being one, and the lore that teaches it. */
     public record Gate(Set<RiteKind> kinds, Set<String> lore) {
@@ -42,6 +43,7 @@ public final class RiteUnlockTable {
         kind(m, "ward_of_daylight", RiteKind.VAMPIRE, RiteKind.WITCH);
         kind(m, "rite_of_the_five", RiteKind.HUNTER);
         kind(m, "alpha_trial", RiteKind.WEREWOLF);
+        kind(m, "rite_of_the_frequency", RiteKind.WEREWOLF);
         kind(m, "silver_moon", RiteKind.WEREWOLF);
         kind(m, "werewolf_brother", RiteKind.WEREWOLF);
         kind(m, "doppelganger_blood", RiteKind.WEREWOLF, RiteKind.HYBRID);
@@ -57,6 +59,7 @@ public final class RiteUnlockTable {
         lore(m, "rite_of_the_broken_line", FINN);
         lore(m, "rite_of_the_imprisoned_original", FINN);
         both(m, "rite_of_the_cure", Set.of(RiteKind.WITCH), ELIJAH);
+        both(m, "rite_of_the_valet_pike", Set.of(RiteKind.WITCH), BEAST);
         lore(m, "immortality", OLD_RITES);
         both(m, "ward_of_return", Set.of(RiteKind.WITCH), OLD_RITES);
         lore(m, "curse_magicule_drain", CURSES);

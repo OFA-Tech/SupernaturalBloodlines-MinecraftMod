@@ -20,11 +20,12 @@ import net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks;
 public final class RiteLoreBackfill {
     private static final String FLAG = "supernaturalbloodlines_rites_lore_backfilled";
 
-    /** The lore each boss's reward carries: Kol his grimoire, Finn Esther's Grimoire and his notes, Elijah his letter. */
+    /** The lore each boss's reward carries: Kol his grimoire, Finn Esther's Grimoire and his notes, Elijah his letter, the Beast the Valet's Notes. */
     static final Map<BossId, List<String>> LORE = Map.of(
             BossId.KOL, List.of(RiteUnlockTable.KOL),
             BossId.FINN, List.of(RiteUnlockTable.ESTHER, RiteUnlockTable.FINN),
-            BossId.ELIJAH, List.of(RiteUnlockTable.ELIJAH));
+            BossId.ELIJAH, List.of(RiteUnlockTable.ELIJAH),
+            BossId.BEAST_OF_GEVAUDAN, List.of(RiteUnlockTable.BEAST));
 
     private RiteLoreBackfill() {
     }

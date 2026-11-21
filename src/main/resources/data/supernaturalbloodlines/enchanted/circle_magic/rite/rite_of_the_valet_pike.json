@@ -1,0 +1,23 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "bosses" },
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" },
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" },
+        { "type": "neoforge:mod_loaded", "modid": "werewolves" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:sires_blood", "count": 1 },
+        { "id": "minecraft:iron_ingot", "count": 3 },
+        { "id": "werewolves:wolfsbane", "count": 2 },
+        { "id": "supernaturalbloodlines:mountain_ash_dust", "count": 2 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 7000,
+    "factory": {
+        "type": "supernaturalbloodlines:valet_pike",
+        "faction": "witch",
+        "requires_full_moon": true
+    }
+}

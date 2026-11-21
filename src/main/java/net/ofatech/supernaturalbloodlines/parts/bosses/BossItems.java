@@ -14,7 +14,9 @@ import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.EstherGrimoireItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.KlausBloodItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.KolGrimoireItem;
+import net.ofatech.supernaturalbloodlines.parts.bosses.item.MantleOfTheBeastItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem;
+import net.ofatech.supernaturalbloodlines.parts.bosses.item.SebastienTricornItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.TheElixirItem;
 import net.ofatech.supernaturalbloodlines.parts.bosses.item.TheTrueCureItem;
 
@@ -46,6 +48,19 @@ public final class BossItems {
     /** Peter's reward: the sire and the genes of a player who agrees to it, read on their Profile page (R182). */
     public static final DeferredItem<MemoryClawsItem> MEMORY_CLAWS = ITEMS.register("memory_claws", () -> new MemoryClawsItem(new Item.Properties()));
 
+    /** What hurts the Spirit of Gevaudan, and nothing else does (R188); made by a rite, never dropped. */
+    public static final DeferredItem<net.ofatech.supernaturalbloodlines.parts.bosses.item.PikeItem> VALET_PIKE = ITEMS.register("valet_pike",
+            () -> new net.ofatech.supernaturalbloodlines.parts.bosses.item.PikeItem(Tiers.IRON, new Item.Properties().attributes(SwordItem.createAttributes(Tiers.IRON, 4, -2.6F))
+                    .component(DataComponents.UNBREAKABLE, new Unbreakable(true))));
+
+    /** The Beast's one reward: a cloak whose Shadow Wrap a shifted werewolf type may use (R191). No spark, no pike. */
+    public static final DeferredItem<MantleOfTheBeastItem> MANTLE_OF_THE_BEAST = ITEMS.register("mantle_of_the_beast",
+            () -> new MantleOfTheBeastItem(new Item.Properties().stacksTo(1).fireResistant()));
+
+    /** The Host's hat: a cosmetic helmet with no armour value. */
+    public static final DeferredItem<SebastienTricornItem> SEBASTIEN_TRICORN = ITEMS.register("sebastien_tricorn",
+            () -> new SebastienTricornItem(new Item.Properties().stacksTo(1)));
+
     private BossItems() {
     }
 
@@ -54,6 +69,11 @@ public final class BossItems {
         modBus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.COMBAT) {
                 e.accept(MIKAELS_STAKE);
+                e.accept(VALET_PIKE);
+            }
+            if (e.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+                e.accept(MANTLE_OF_THE_BEAST);
+                e.accept(SEBASTIEN_TRICORN);
             }
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) {
                 e.accept(KLAUS_BLOOD);
