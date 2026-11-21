@@ -1,0 +1,23 @@
+// How the style guide page was drawn. Paste into a Code Mode `execute` after `python srv.py 8765 <png-out-dir>` is serving this folder.
+// Libraries live in the file's shared plugin data (namespace "sbl"), because a use_figma call is limited to 50,000 characters.
+const SID="<session id from create_session>", FK="USFBf74c4I2BWDyfmRxFZO";
+const txt = async (f) => await (await fetch('http://127.0.0.1:8765/'+f+'?'+Date.now())).text();
+const uf = (code,d) => tools.figma.use_figma({sessionId:SID,fileKey:FK,skillNames:'resource:figma-use',description:d,code});
+const hash = (s)=>{let h=5381;for(let i=0;i<s.length;i++)h=((h*33)^s.charCodeAt(i))>>>0;return s.length+':'+h;};
+const kk = (l)=>l.replace(/-/g,'_');
+const sync = async (libs) => { const T={}; for(const l of libs) T[l]=await txt(l+'.js');
+  const have = await uf('const o={};for(const k of '+JSON.stringify(libs)+')o[k]=figma.root.getSharedPluginData("sbl","h_"+k.replace(/-/g,"_"));return o;','read hashes');
+  for(const l of libs){ if(have[l]!==hash(T[l])) await uf('figma.root.setSharedPluginData("sbl","s_'+kk(l)+'",'+JSON.stringify(T[l])+');figma.root.setSharedPluginData("sbl","h_'+kk(l)+'","'+hash(T[l])+'");return 1;','upload '+l); } };
+const scene = async (libs, file, pre, d) => { const s = await txt(file);
+  const code = 'const L='+JSON.stringify(libs)+'.map(k=>figma.root.getSharedPluginData("sbl","s_"+k.replace(/-/g,"_"))).join("\\n");const AF=(async()=>{}).constructor;return await new AF("figma",'+JSON.stringify(pre||'')+'+L+"\\n"+'+JSON.stringify(s)+')(figma);';
+  return uf(code,d); };
+const shot = async (id,name,dim)=>{ const s = await tools.figma.get_screenshot({sessionId:SID,fileKey:FK,nodeId:id,maxDimension:dim}); const j = JSON.parse(s.split("\n")[0]); const b = await (await fetch(j.image_url)).arrayBuffer(); await fetch('http://127.0.0.1:8765/save?name='+name,{method:'POST',body:b}); };
+// usage:
+//   const LIBS=['lib-core','kit-common','kit-grimoire','kit-moon','kit-tensura','icons','boot','mock-common'];
+//   await sync(LIBS);
+//   await scene(LIBS,'sheet-kit.js',"const THEME='grimoire';",'kit grimoire');      // grimoire | moon | tensura
+//   await scene(LIBS,'sheet-shared.js','','shared sheets');                          // 00 read me, 10 icons, 11 motion
+//   await scene(LIBS,'scene-hud.js',"const THEME='moon', MODE='super';",'hud');     // MODE: super | tensura
+//   await scene(LIBS,'scene-home.js' | 'scene-skills.js' | 'scene-boss.js',"const THEME='tensura';",'...');
+//   await scene(LIBS,'scene-logo.js','','logo');
+// Each scene deletes the frame of the same name before it draws, so re-running does not duplicate.
