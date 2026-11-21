@@ -1,5 +1,6 @@
 {
     "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" },
         { "type": "supernaturalbloodlines:part_enabled", "part": "enchantedTensura" },
         { "type": "neoforge:mod_loaded", "modid": "tensura" }
     ],

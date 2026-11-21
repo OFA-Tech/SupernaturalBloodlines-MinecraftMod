@@ -46,6 +46,16 @@ public final class RiteLinks {
         return hasBook() ? null : Component.translatable(NEEDS_BOOK);
     }
 
+    /** The tooltip of a button that opens a rite: why it cannot be used (no book), or that the rite is still sealed, or {@code normal}. */
+    @Nullable
+    public static Component tip(String rite, @Nullable Component normal) {
+        return switch (decide(rite)) {
+            case NEED_BOOK -> Component.translatable(NEEDS_BOOK);
+            case SEALED -> Component.translatable("supernaturalbloodlines.rites.sealed_tip");
+            case ENTRY -> normal;
+        };
+    }
+
     /** What a link does now. */
     public static RiteLinkRule.Open decide(String rite) {
         return RiteLinkRule.decide(hasBook(), RiteUnlockTable.isGated(rite), known(rite));
@@ -55,9 +65,7 @@ public final class RiteLinks {
     public static void open(String rite) {
         String path = rite.substring(rite.indexOf(':') + 1);
         switch (decide(path)) {
-            // a toast, because the action bar is behind the hub's own screen
-            case NEED_BOOK -> net.minecraft.client.gui.components.toasts.SystemToast.add(Minecraft.getInstance().getToasts(),
-                    net.minecraft.client.gui.components.toasts.SystemToast.SystemToastId.PERIODIC_NOTIFICATION, Component.translatable(NEEDS_BOOK), null);
+            case NEED_BOOK -> EnchantedBook.tell(Component.translatable(NEEDS_BOOK));
             case ENTRY -> EnchantedBook.openRite(path);
             case SEALED -> EnchantedBook.openEntry(RiteAdvancements.sealedEntry(path));
         }

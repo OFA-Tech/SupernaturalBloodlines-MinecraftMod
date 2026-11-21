@@ -151,16 +151,16 @@ public final class LinePageSupport {
         boolean original = m.state() == LineRules.State.ORIGINAL || m.state() == LineRules.State.NOT_VAMPIRE;
         boolean canSever = sired && !snap.severed() && !original;
         b.action(new Detail.Action("severance", Component.translatable(KEY + "act.severance"), false, canSever && RiteLinks.hasBook(),
-                !canSever ? Component.translatable(KEY + (snap.severed() ? "act.why_severed" : "act.why_no_sire")) : RiteLinks.hasBook() ? Component.translatable(KEY + "act.severance_hint") : RiteLinks.blocked(),
+                !canSever ? Component.translatable(KEY + (snap.severed() ? "act.why_severed" : "act.why_no_sire")) : RiteLinks.tip("rite_of_severance", Component.translatable(KEY + "act.severance_hint")),
                 null, () -> RiteLinks.open("rite_of_severance")));
         boolean rootUnknown = (m.state() == LineRules.State.IN_LINE && o.root().isEmpty()) || (m.state() == LineRules.State.FREE && o.freedFrom().isEmpty());
         if (rootUnknown) {
-            b.action(new Detail.Action("revelation", Component.translatable(KEY + "act.revelation"), false, RiteLinks.hasBook(), RiteLinks.blocked(), null, () -> RiteLinks.open("rite_of_revelation")));
+            b.action(new Detail.Action("revelation", Component.translatable(KEY + "act.revelation"), false, RiteLinks.hasBook(), RiteLinks.tip("rite_of_revelation", null), null, () -> RiteLinks.open("rite_of_revelation")));
         }
         boolean free = m.state() == LineRules.State.FREE;
         boolean canBreak = m.state() == LineRules.State.IN_LINE;
         b.action(new Detail.Action("broken_line", Component.translatable(KEY + (free ? "act.broken_done" : "act.broken_line")), false, canBreak && RiteLinks.hasBook(),
-                !canBreak ? (free ? breakTooltip(o) : Component.translatable(KEY + "act.why_not_in_line")) : RiteLinks.hasBook() ? Component.translatable(KEY + "act.broken_line_hint") : RiteLinks.blocked(),
+                !canBreak ? (free ? breakTooltip(o) : Component.translatable(KEY + "act.why_not_in_line")) : RiteLinks.tip("rite_of_the_broken_line", Component.translatable(KEY + "act.broken_line_hint")),
                 null, () -> RiteLinks.open("rite_of_the_broken_line")));
         return b.build();
     }

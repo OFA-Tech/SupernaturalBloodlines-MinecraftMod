@@ -15,8 +15,8 @@ import net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 
 /**
- * A page torn from an old grimoire (plan {@code rites-unlock}). Right-click reads it: it teaches the rites of its lore, then crumbles. A page whose lore
- * teaches nothing (a stale one) is not used up.
+ * A page torn from an old grimoire (plan {@code rites-unlock}). Right-click reads it: it teaches the rites of its lore, every time, and is never used up
+ * (it works like the two grimoires, so it can be handed on). A page that teaches nothing says so.
  */
 public final class RitePageItem extends Item {
     public RitePageItem(Properties properties) {
@@ -40,23 +40,30 @@ public final class RitePageItem extends Item {
         if (level.isClientSide || !(player instanceof ServerPlayer p)) {
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         }
-        String lore = loreOf(stack);
-        if (RiteUnlockTable.taughtBy(lore).isEmpty()) {
-            return InteractionResultHolder.fail(stack);
-        }
-        int fresh = RiteUnlocks.learnLore(p, lore);
-        if (fresh == 0) {
+        if (RiteUnlocks.learnLore(p, loreOf(stack)) == 0) {
             p.displayClientMessage(Component.translatable("supernaturalbloodlines.rites.nothing_new"), true);
-            return InteractionResultHolder.success(stack);
         }
-        stack.shrink(1);
-        return InteractionResultHolder.consume(stack);
+        return InteractionResultHolder.success(stack);
+    }
+
+    /** The line that says what reading a page teaches: its rites by name, or that it is blank. */
+    public static Component teaches(String lore) {
+        List<String> rites = RiteUnlockTable.taughtBy(lore);
+        if (rites.isEmpty()) {
+            return Component.translatable("item.supernaturalbloodlines.rite_page.tooltip_blank");
+        }
+        Component list = Component.empty();
+        for (int i = 0; i < rites.size(); i++) {
+            list = ((net.minecraft.network.chat.MutableComponent) list).append(i == 0 ? Component.empty() : Component.literal(", "))
+                    .append(Component.translatable("rite.supernaturalbloodlines." + rites.get(i)));
+        }
+        return Component.translatable("item.supernaturalbloodlines.rite_page.tooltip", list);
     }
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
         String lore = loreOf(stack);
         lines.add(Component.translatable("item.supernaturalbloodlines.rite_page.lore." + (lore.isEmpty() ? "blank" : lore)).withStyle(ChatFormatting.GRAY));
-        lines.add(Component.translatable("item.supernaturalbloodlines.rite_page.tooltip").withStyle(ChatFormatting.DARK_GRAY));
+        lines.add(teaches(lore).copy().withStyle(ChatFormatting.DARK_GRAY));
     }
 }

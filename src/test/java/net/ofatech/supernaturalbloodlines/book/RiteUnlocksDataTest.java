@@ -96,21 +96,62 @@ class RiteUnlocksDataTest {
     }
 
     @Test
-    void everyHintAndTheSealedTextIsInTheLang() throws IOException {
+    void theHintsAreBuiltFromTheLangAndNameNoRite() throws IOException {
         JsonObject lang = RitesBook.lang(ROOT);
         assertTrue(lang.has(RitesBook.SEALED_TEXT));
-        RiteUnlockTable.GATED.forEach((rite, gate) -> assertTrue(lang.has(RitesBook.HINT + gate.hint()), rite + " has no hint " + gate.hint()));
+        for (String rite : RiteUnlockTable.GATED.keySet()) {
+            String hint = RitesBook.hint(lang, rite).toLowerCase();
+            String label = RitesBook.label(lang, rite).toLowerCase();
+            for (String other : RiteUnlockTable.GATED.keySet()) {
+                String name = lang.get("rite." + RitesBook.NS + "." + other).getAsString().toLowerCase();
+                assertFalse(hint.contains(name) || label.contains(name), rite + ": the hint or the label gives away " + other);
+            }
+            assertTrue(label.startsWith("??? \u00b7 "), rite + ": " + label);
+            // the list line is one line of the book: a label that is longer than this wraps or is cut
+            assertTrue(label.length() <= RitesBook.LABEL_CHARS, rite + ": the label is " + label.length() + " characters: " + label);
+        }
     }
 
     @Test
-    void aHintNamesNoRiteAndNoItem() throws IOException {
+    void aKindHintSaysBecomingThatKind() throws IOException {
         JsonObject lang = RitesBook.lang(ROOT);
-        for (var gate : RiteUnlockTable.GATED.entrySet()) {
-            String hint = lang.get(RitesBook.HINT + gate.getValue().hint()).getAsString().toLowerCase();
-            for (String rite : RiteUnlockTable.GATED.keySet()) {
-                assertFalse(hint.contains(lang.get("rite." + RitesBook.NS + "." + rite).getAsString().toLowerCase()), gate.getKey() + ": the hint gives away " + rite);
-            }
+        assertEquals("Unlocked by becoming a werewolf.", RitesBook.hint(lang, "silver_moon"));
+        assertEquals("Unlocked by becoming an Original.", RitesBook.hint(lang, "original_blood"));
+        assertEquals("Unlocked by becoming a vampire or a witch.", RitesBook.hint(lang, "ward_of_daylight"));
+    }
+
+    @Test
+    void aRiteWithTwoRoutesSaysBoth() throws IOException {
+        JsonObject lang = RitesBook.lang(ROOT);
+        String cure = RitesBook.hint(lang, "rite_of_the_cure");
+        assertTrue(cure.contains("becoming a witch") && cure.contains("Elijah's Letter"), cure);
+        String severance = RitesBook.hint(lang, "rite_of_severance");
+        assertTrue(severance.contains("a siphoner") && severance.contains("a tribrid") && severance.contains("Esther's Grimoire"), severance);
+        String label = RitesBook.label(lang, "rite_of_the_cure");
+        assertTrue(label.contains("witch") && label.contains("Elijah"), label);
+    }
+
+    @Test
+    void aLootHintNamesTheItemAndThePlaces() throws IOException {
+        JsonObject lang = RitesBook.lang(ROOT);
+        for (String rite : List.of("immortality", "curse_skill_seal")) {
+            String hint = RitesBook.hint(lang, rite);
+            assertTrue(hint.contains("Torn Page"), hint);
+            assertTrue(hint.contains("ancient cities") && hint.contains("woodland mansions") && hint.contains("stronghold libraries"), hint);
         }
+        assertTrue(RitesBook.label(lang, "immortality").contains("Torn Page"), RitesBook.label(lang, "immortality"));
+    }
+
+    /** The places the hint names are the chests the loot modifier puts the page in. */
+    @Test
+    void theLootPlacesTheHintNamesAreTheOnesTheModifierUses() throws IOException {
+        String mod = Files.readString(ROOT.resolve("src/main/resources/data/supernaturalbloodlines/loot_modifiers/old_rites_in_ancient_places.json"));
+        for (String table : List.of("chests/ancient_city", "chests/woodland_mansion", "chests/stronghold_library", "chests/hale_house")) {
+            assertTrue(mod.contains(table), table);
+        }
+        assertTrue(mod.contains("part_enabled") && mod.contains("species"), "the page is an item of the species part: the modifier needs the part");
+        assertTrue(Files.readString(ROOT.resolve("src/main/resources/data/supernaturalbloodlines/loot_modifiers/curses_in_ancient_places.json")).contains("\"part\": \"species\""),
+                "the curses' modifier needs the species part too");
     }
 
     @Test
@@ -138,14 +179,12 @@ class RiteUnlocksDataTest {
         }
     }
 
-    /** The study key opens an entry from an item without asking for the advancement, so a rite that lore teaches must not list the item it makes. */
+    /** The study key opens an entry from an item without asking for the advancement, so a gated rite must not list the item it makes. */
     @Test
-    void aLoreRiteIsNotOpenedByStudyingItsItem() throws IOException {
-        for (var gate : RiteUnlockTable.GATED.entrySet()) {
-            if (!gate.getValue().lore().isEmpty()) {
-                JsonArray assigned = read(RitesBook.BOOK + "/entries/" + RiteAdvancements.entry(gate.getKey()) + ".json").getAsJsonArray("assigned_items");
-                assertEquals(0, assigned.size(), gate.getKey() + " is taught by lore and must not be studied from an item");
-            }
+    void noGatedEntryIsOpenedByStudyingItsItem() throws IOException {
+        for (String rite : RiteUnlockTable.GATED.keySet()) {
+            JsonArray assigned = read(RitesBook.BOOK + "/entries/" + RiteAdvancements.entry(rite) + ".json").getAsJsonArray("assigned_items");
+            assertEquals(0, assigned.size(), rite + " is gated and must not be studied from an item");
         }
     }
 
@@ -154,7 +193,7 @@ class RiteUnlocksDataTest {
         JsonObject lang = RitesBook.lang(ROOT);
         for (String rite : RiteUnlockTable.GATED.keySet()) {
             JsonObject sealed = read(RitesBook.BOOK + "/entries/" + RiteAdvancements.sealedEntry(rite) + ".json");
-            assertEquals("???", sealed.get("title").getAsString());
+            assertTrue(sealed.get("title").getAsString().startsWith("??? \u00b7 "), rite + ": " + sealed.get("title"));
             sealed.remove("advancement"); // the id of the advancement is not shown
             String text = sealed.toString().toLowerCase();
             assertFalse(text.contains("page/rite"), rite + ": a circle in the sealed entry");
@@ -194,6 +233,58 @@ class RiteUnlocksDataTest {
                 assertEquals(List.of(List.of(RiteAdvancements.CRITERION)), adv.getAsJsonArray("requirements").asList().stream().map(a -> a.getAsJsonArray().asList().stream().map(JsonElement::getAsString).toList()).toList(),
                         rite + " " + kind + ": without a requirement the advancement can never be done");
                 assertEquals("minecraft:impossible", adv.getAsJsonObject("criteria").getAsJsonObject(RiteAdvancements.CRITERION).get("trigger").getAsString());
+            }
+        }
+    }
+
+    @Test
+    void theItemsTooltipsSayWhatReadingThemTeachesAndThatTheyAreKept() throws IOException {
+        JsonObject lang = RitesBook.lang(ROOT);
+        String esther = lang.get("item.supernaturalbloodlines.esther_grimoire.tooltip").getAsString();
+        assertTrue(esther.contains("teaches the Linking Spell and the Rite of Severance") && esther.contains("not used up"), esther);
+        for (String key : List.of("item.supernaturalbloodlines.kol_grimoire.tooltip", "item.supernaturalbloodlines.kol_grimoire.tooltip_read")) {
+            String kol = lang.get(key).getAsString();
+            assertTrue(kol.contains("teaches the Rite of Cloaking"), key + ": " + kol);
+        }
+        String page = lang.get("item.supernaturalbloodlines.rite_page.tooltip").getAsString();
+        assertTrue(page.contains("teaches %s") && page.contains("not used up"), page);
+        assertTrue(lang.get("item.supernaturalbloodlines.rite_page.tooltip_blank").getAsString().contains("teaches nothing"));
+    }
+
+    @Test
+    void noTextSendsAnyoneToARitesPage() throws IOException {
+        JsonObject lang = RitesBook.lang(ROOT);
+        for (var e : lang.entrySet()) {
+            String text = e.getValue().getAsString().toLowerCase();
+            assertFalse(text.contains("rites page") || text.contains("rites tab"), e.getKey() + " still says Rites page: " + e.getValue().getAsString());
+        }
+    }
+
+    @Test
+    void theGuideChapterSaysWhereTheRitesAreAndHowToGetTheBook() throws IOException {
+        String body = RitesBook.lang(ROOT).get("supernaturalbloodlines.hub.guide.rites.body").getAsString();
+        for (String needed : List.of("The Art of Witchcraft", "Supernatural Bloodlines", "???", "grimoire", "performing", "E seal", "belladonna")) {
+            assertTrue(body.contains(needed), "the Rites chapter does not say \"" + needed + "\": " + body);
+        }
+    }
+
+    @Test
+    void theBookRefusalSaysToCraftIt() throws IOException {
+        JsonObject lang = RitesBook.lang(ROOT);
+        String text = lang.get("supernaturalbloodlines.hub.launcher.needs_book").getAsString();
+        assertTrue(text.startsWith("You need The Art of Witchcraft") && text.contains("Craft it") && text.contains("belladonna"), text);
+        assertEquals("Open this rite in The Art of Witchcraft, then draw its circle at an altar.", lang.get("supernaturalbloodlines.hub.hint.rite").getAsString());
+        assertTrue(lang.get("supernaturalbloodlines.rites.sealed_tip").getAsString().startsWith("Sealed in the book"));
+    }
+
+    @Test
+    void theCategoryBlurbsNameNoSealedRite() throws IOException {
+        JsonObject lang = RitesBook.lang(ROOT);
+        for (var cat : RitesBook.CATS) {
+            String blurb = cat.landing().toLowerCase();
+            for (String rite : RiteUnlockTable.GATED.keySet()) {
+                String name = lang.get("rite." + RitesBook.NS + "." + rite).getAsString().toLowerCase();
+                assertFalse(blurb.contains(name), cat.id() + ": the blurb names " + rite);
             }
         }
     }

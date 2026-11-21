@@ -1,5 +1,5 @@
 {
-  "title": "???",
+  "title": "??? · vampire or witch",
   "icon": {
     "count": 1,
     "id": "minecraft:honeycomb"
@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Known to vampires.\n\nThe seal is unbroken.",
+          "text": "Unlocked by becoming a vampire or a witch.\n\nThe seal is unbroken.",
           "header": "???"
         }
       ]

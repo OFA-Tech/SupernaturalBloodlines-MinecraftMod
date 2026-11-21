@@ -245,8 +245,10 @@ public final class HubScreen extends Screen {
             // a seal that is blocked (The Art of Witchcraft is not in the inventory) says why in its tooltip and does nothing
             Component blocked = l.blocked().get();
             f.targets.add(new Target(id, r, null, true, blocked == null ? List.of(l.name(), Component.translatable("supernaturalbloodlines.hub.launcher.hint", l.name()))
-                    : List.of(l.name(), blocked.copy().withStyle(net.minecraft.ChatFormatting.RED)), blocked == null ? () -> HubClient.launch(l, page) : null));
-            theme.drawLauncher(g, r, l, r.contains(mouseX, mouseY) || f.focused(id));
+                    : List.of(l.name(), blocked.copy().withStyle(net.minecraft.ChatFormatting.RED)),
+                    blocked == null ? () -> HubClient.launch(l, page) : () -> net.minecraft.client.gui.components.toasts.SystemToast.add(net.minecraft.client.Minecraft.getInstance().getToasts(),
+                            net.minecraft.client.gui.components.toasts.SystemToast.SystemToastId.PERIODIC_NOTIFICATION, blocked, null)));
+            theme.drawLauncher(g, r, blocked == null ? l : l.dimmed(), r.contains(mouseX, mouseY) || f.focused(id));
             if (f.focused(id)) {
                 theme.drawFocus(g, r);
             }

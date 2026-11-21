@@ -52,6 +52,7 @@ public final class BossesPart {
         net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEvents.register();
         net.ofatech.supernaturalbloodlines.parts.bosses.entity.PeterEvents.register();
         net.ofatech.supernaturalbloodlines.parts.bosses.deal.BossEvents17d.register();
+        net.ofatech.supernaturalbloodlines.parts.bosses.RiteLoreBackfill.register();
         modBus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent e) -> {
             var registrar = e.registrar("1").optional();
             registrar.playToClient(net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload.STREAM_CODEC,

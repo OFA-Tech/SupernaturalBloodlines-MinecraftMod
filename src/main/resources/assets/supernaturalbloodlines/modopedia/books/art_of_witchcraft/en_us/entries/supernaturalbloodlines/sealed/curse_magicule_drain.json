@@ -1,5 +1,5 @@
 {
-  "title": "???",
+  "title": "??? · a Torn Page",
   "icon": {
     "count": 1,
     "id": "minecraft:honeycomb"
@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Written in a stranger's hand.\n\nThe seal is unbroken.",
+          "text": "Unlocked by reading a Torn Page found in ancient cities, woodland mansions, stronghold libraries and the Hale house (it only turns up with Tensura).\n\nThe seal is unbroken.",
           "header": "???"
         }
       ]

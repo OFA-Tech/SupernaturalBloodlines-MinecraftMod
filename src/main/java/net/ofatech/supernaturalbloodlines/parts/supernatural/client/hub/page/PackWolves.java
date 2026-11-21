@@ -90,7 +90,7 @@ public final class PackWolves {
         if (werewolf) {
             Component label = Component.translatable(KEY + "recruit");
             Rect b = new Rect(r.x(), y + 3, PageWidgets.widthOf(f.font(), label), PageWidgets.H);
-            PageWidgets.button(f, "pack:recruit", b, label, RiteLinks.hasBook(), false, RiteLinks.hasBook() ? Component.translatable(KEY + "recruit_tip") : RiteLinks.blocked(), () -> RiteLinks.open("werewolf_brother"));
+            PageWidgets.button(f, "pack:recruit", b, label, RiteLinks.hasBook(), false, RiteLinks.tip("werewolf_brother", Component.translatable(KEY + "recruit_tip")), () -> RiteLinks.open("werewolf_brother"));
             y = b.bottom() + 3;
         }
         return y;

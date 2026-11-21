@@ -26,6 +26,18 @@ public final class HubHooks {
         public Launcher(String id, String letter, int color, Component name, String screenPackage, BooleanSupplier available, Runnable open) {
             this(id, letter, color, name, screenPackage, available, open, () -> null);
         }
+
+        /** The same seal drawn dimmed (a blocked one): its colour half way to grey. */
+        public Launcher dimmed() {
+            return new Launcher(id, letter, dim(color), name, screenPackage, available, open, blocked);
+        }
+
+        public static int dim(int argb) {
+            int r = (((argb >> 16) & 0xFF) + 0x70) / 2;
+            int g = (((argb >> 8) & 0xFF) + 0x70) / 2;
+            int b = ((argb & 0xFF) + 0x70) / 2;
+            return (argb & 0xFF000000) | (r << 16) | (g << 8) | b;
+        }
     }
 
     /** A hub theme a part brings, by the id {@code hub_theme} names (lower case). */

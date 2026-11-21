@@ -27,20 +27,11 @@ public final class RiteUnlockCommand {
                 .then(Commands.literal("list").then(Commands.argument("player", EntityArgument.player())
                         .executes(c -> list(c.getSource(), EntityArgument.getPlayer(c, "player")))))
                 .then(Commands.literal("learn").then(Commands.argument("player", EntityArgument.player())
-                        .then(Commands.argument("rite", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(choices(), b))
+                        .then(Commands.argument("rite", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(RiteUnlockTable.choices(), b))
                                 .executes(c -> change(c.getSource(), EntityArgument.getPlayer(c, "player"), StringArgumentType.getString(c, "rite"), true)))))
                 .then(Commands.literal("forget").then(Commands.argument("player", EntityArgument.player())
-                        .then(Commands.argument("rite", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(choices(), b))
+                        .then(Commands.argument("rite", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(RiteUnlockTable.choices(), b))
                                 .executes(c -> change(c.getSource(), EntityArgument.getPlayer(c, "player"), StringArgumentType.getString(c, "rite"), false)))));
-    }
-
-    /** What {@code <rite>} takes: {@code all}, each gated rite and each lore id. */
-    public static List<String> choices() {
-        List<String> out = new ArrayList<>();
-        out.add("all");
-        out.addAll(RiteUnlockTable.GATED.keySet());
-        out.addAll(RiteUnlockTable.loreIds());
-        return out;
     }
 
     /** The gated rites {@code what} names; empty when it names nothing. */

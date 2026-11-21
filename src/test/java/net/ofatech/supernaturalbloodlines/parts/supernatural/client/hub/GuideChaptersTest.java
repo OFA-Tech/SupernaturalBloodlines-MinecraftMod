@@ -56,4 +56,16 @@ class GuideChaptersTest {
             }
         }
     }
+
+    @Test
+    void noGuideChapterSendsAnyoneToARitesPage() throws Exception {
+        JsonObject lang;
+        try (var in = new InputStreamReader(GuideChaptersTest.class.getResourceAsStream("/assets/supernaturalbloodlines/lang/en_us.json"), StandardCharsets.UTF_8)) {
+            lang = JsonParser.parseReader(in).getAsJsonObject();
+        }
+        for (var e : lang.entrySet()) {
+            assertFalse(e.getValue().getAsString().toLowerCase().contains("rites page"), e.getKey() + ": " + e.getValue().getAsString());
+        }
+        assertTrue(lang.get(GuideChapters.bodyKey("rites")).getAsString().contains("The Art of Witchcraft"), "the Rites chapter does not name the book");
+    }
 }

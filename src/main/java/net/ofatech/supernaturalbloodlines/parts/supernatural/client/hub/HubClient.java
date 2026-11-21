@@ -146,7 +146,7 @@ public final class HubClient {
      * Enchanted's book, The Art of Witchcraft, is a Modopedia book: opened the way its item opens it.
      * shortcut: by reflection, because Modopedia is not on our compile classpath; add it as compileOnly if more of its API is needed.
      */
-    private static void openEnchantedBook() {
+    public static void openEnchantedBook() {
         try {
             Class.forName("net.favouriteless.modopedia.client.BookOpenHandler").getMethod("tryOpenBook", ResourceLocation.class)
                     .invoke(null, ResourceLocation.fromNamespaceAndPath("enchanted", "art_of_witchcraft"));

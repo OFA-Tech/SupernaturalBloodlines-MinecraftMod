@@ -3,7 +3,7 @@ package net.ofatech.supernaturalbloodlines.shared.species;
 import java.util.function.BiConsumer;
 import net.minecraft.world.entity.player.Player;
 
-/** "This player performed or was the target of this rite": the supernatural part says it, the species part (which knows the unlocks) teaches it. */
+/** "This player performed this rite" (not "was its target": a curse must not teach its victim): the supernatural part says it, the species part, which knows the unlocks, teaches it. */
 public final class RiteLearned {
     private static volatile BiConsumer<Player, String> learner = (p, rite) -> {
     };

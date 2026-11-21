@@ -7,7 +7,10 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.rite.RiteAdvancements;
+import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossItems;
+import net.ofatech.supernaturalbloodlines.parts.bosses.RiteLoreBackfill;
+import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
 import net.ofatech.supernaturalbloodlines.parts.species.gametest.LineTestPlayer;
 import net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks;
 
@@ -49,6 +52,40 @@ public final class GrimoireLoreGameTests {
         helper.assertTrue(!RiteUnlocks.done(p, RiteAdvancements.known("rite_of_cloaking")), "it taught Kol's rite");
         grimoire.getItem().use(helper.getLevel(), p, InteractionHand.MAIN_HAND);
         helper.assertTrue(p.received("supernaturalbloodlines.rites.nothing_new"), "a second reading was not answered: " + p.heard());
+        helper.succeed();
+    }
+
+    /** A world that paid a boss before the rites were learnable: the first login teaches that boss's lore, once. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPlayerLearnsTheLoreOfTheBossesAlreadyRewardedOnceOnly(GameTestHelper helper) {
+        LineTestPlayer p = LineTestPlayer.createWithAdvancements(helper);
+        RiteUnlocks.reconcile(p);
+        BossIndex index = BossIndex.get(helper.getLevel().getServer());
+        boolean kol = index.of(BossId.KOL).rewarded;
+        boolean finn = index.of(BossId.FINN).rewarded;
+        boolean elijah = index.of(BossId.ELIJAH).rewarded;
+        try {
+            index.of(BossId.KOL).rewarded = false;
+            index.of(BossId.FINN).rewarded = true;
+            index.of(BossId.ELIJAH).rewarded = false;
+            int fresh = RiteLoreBackfill.backfill(p);
+            helper.assertTrue(fresh == 4, "Finn's reward teaches Esther's and Finn's four rites, not " + fresh + ": " + RiteUnlocks.known(p));
+            helper.assertTrue(RiteUnlocks.done(p, RiteAdvancements.known("rite_of_linking")) && RiteUnlocks.done(p, RiteAdvancements.known("rite_of_the_broken_line")), "Finn's lore is not known");
+            helper.assertTrue(!RiteUnlocks.done(p, RiteAdvancements.known("rite_of_cloaking")) && !RiteUnlocks.done(p, RiteAdvancements.known("rite_of_the_cure")), "a boss that was not rewarded taught its lore");
+            helper.assertTrue(p.count("supernaturalbloodlines.rites.learned") == 1, "four rites were not one line: " + p.heard());
+            // once: what an admin takes away later stays taken away
+            RiteUnlocks.forget(p, "rite_of_linking");
+            index.of(BossId.KOL).rewarded = true;
+            helper.assertTrue(RiteLoreBackfill.backfill(p) == 0 && !RiteUnlocks.done(p, RiteAdvancements.known("rite_of_linking")) && !RiteUnlocks.done(p, RiteAdvancements.known("rite_of_cloaking")),
+                    "the backfill ran twice");
+            // another player is a new login
+            LineTestPlayer q = LineTestPlayer.createWithAdvancements(helper);
+            helper.assertTrue(RiteLoreBackfill.backfill(q) >= 5, "a second player did not get the lore of Kol and Finn: " + RiteUnlocks.known(q));
+        } finally {
+            index.of(BossId.KOL).rewarded = kol;
+            index.of(BossId.FINN).rewarded = finn;
+            index.of(BossId.ELIJAH).rewarded = elijah;
+        }
         helper.succeed();
     }
 }

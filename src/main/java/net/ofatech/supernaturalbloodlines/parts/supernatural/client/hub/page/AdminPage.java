@@ -412,9 +412,7 @@ public final class AdminPage implements HubPageView {
         acts.add(new Act("gene_on", "B7", List.of("true")));
         acts.add(new Act("gene_off", "B7", List.of("false")));
         // what the player knows of the rites (plan rites-unlock): the rite is the parameter picked below
-        List<String> riteChoices = new ArrayList<>(List.of("all"));
-        riteChoices.addAll(net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.GATED.keySet());
-        riteChoices.addAll(net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.loreIds());
+        List<String> riteChoices = net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.choices();
         String riteNow = cycle(riteChoices, riteAt);
         acts.add(new Act("rites_list", "B8", List.of()));
         acts.add(new Act("rite_learn", "B9", List.of(riteNow)));

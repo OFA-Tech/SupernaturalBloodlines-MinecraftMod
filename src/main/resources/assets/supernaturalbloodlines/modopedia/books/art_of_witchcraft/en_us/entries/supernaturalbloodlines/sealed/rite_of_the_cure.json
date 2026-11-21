@@ -1,5 +1,5 @@
 {
-  "title": "???",
+  "title": "??? · witch or Elijah's Letter",
   "icon": {
     "count": 1,
     "id": "minecraft:honeycomb"
@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Carried by an honourable Original.\n\nThe seal is unbroken.",
+          "text": "Unlocked by becoming a witch, or by reading Elijah's Letter, a Torn Page Elijah leaves behind.\n\nThe seal is unbroken.",
           "header": "???"
         }
       ]

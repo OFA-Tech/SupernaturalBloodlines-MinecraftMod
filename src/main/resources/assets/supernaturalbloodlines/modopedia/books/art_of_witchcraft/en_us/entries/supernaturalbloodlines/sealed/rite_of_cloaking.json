@@ -1,5 +1,5 @@
 {
-  "title": "???",
+  "title": "??? · Kol's Grimoire",
   "icon": {
     "count": 1,
     "id": "minecraft:honeycomb"
@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Kept by one who hunts without being seen.\n\nThe seal is unbroken.",
+          "text": "Unlocked by reading Kol's Grimoire, which Kol leaves behind.\n\nThe seal is unbroken.",
           "header": "???"
         }
       ]

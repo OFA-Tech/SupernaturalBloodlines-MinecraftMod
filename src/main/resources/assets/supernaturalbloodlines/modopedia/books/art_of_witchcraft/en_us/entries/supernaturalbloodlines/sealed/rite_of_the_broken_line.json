@@ -1,5 +1,5 @@
 {
-  "title": "???",
+  "title": "??? · Finn's Notes",
   "icon": {
     "count": 1,
     "id": "minecraft:honeycomb"
@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Noted by one who works the eclipse.\n\nThe seal is unbroken.",
+          "text": "Unlocked by reading Finn's Notes, a Torn Page Finn leaves behind.\n\nThe seal is unbroken.",
           "header": "???"
         }
       ]

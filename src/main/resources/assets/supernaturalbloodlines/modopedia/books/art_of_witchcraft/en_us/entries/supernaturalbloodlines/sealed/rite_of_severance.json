@@ -1,5 +1,5 @@
 {
-  "title": "???",
+  "title": "??? · witch types or Esther's Grimoire",
   "icon": {
     "count": 1,
     "id": "minecraft:honeycomb"
@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Written in a witch's grimoire.\n\nThe seal is unbroken.",
+          "text": "Unlocked by becoming a witch, a siphoner or a tribrid, or by reading Esther's Grimoire, which Finn leaves behind.\n\nThe seal is unbroken.",
           "header": "???"
         }
       ]

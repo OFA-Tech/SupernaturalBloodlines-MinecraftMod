@@ -1,5 +1,5 @@
 {
-  "title": "???",
+  "title": "??? · hunter",
   "icon": {
     "count": 1,
     "id": "minecraft:honeycomb"
@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Known to hunters.\n\nThe seal is unbroken.",
+          "text": "Unlocked by becoming a hunter.\n\nThe seal is unbroken.",
           "header": "???"
         }
       ]

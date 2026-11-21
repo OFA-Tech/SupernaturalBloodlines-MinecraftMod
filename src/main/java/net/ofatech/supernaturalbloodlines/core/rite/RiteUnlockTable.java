@@ -22,8 +22,8 @@ public final class RiteUnlockTable {
     public static final String OLD_RITES = "old_rites";
     public static final String CURSES = "curses";
 
-    /** A gated rite: the kinds that know it from the start of being one, the lore that teaches it, and the id of its one-line hint (lang {@code rites.hint.<hint>}). */
-    public record Gate(Set<RiteKind> kinds, Set<String> lore, String hint) {
+    /** A gated rite: the kinds that know it from the start of being one, and the lore that teaches it. */
+    public record Gate(Set<RiteKind> kinds, Set<String> lore) {
         public Gate {
             kinds = Set.copyOf(kinds);
             lore = Set.copyOf(lore);
@@ -38,46 +38,46 @@ public final class RiteUnlockTable {
 
     static {
         Map<String, Gate> m = new LinkedHashMap<>();
-        kind(m, "cleansing_blood", "vampires", RiteKind.VAMPIRE);
-        kind(m, "ward_of_daylight", "vampires", RiteKind.VAMPIRE, RiteKind.WITCH);
-        kind(m, "rite_of_the_five", "hunters", RiteKind.HUNTER);
-        kind(m, "alpha_trial", "werewolves", RiteKind.WEREWOLF);
-        kind(m, "silver_moon", "werewolves", RiteKind.WEREWOLF);
-        kind(m, "werewolf_brother", "werewolves", RiteKind.WEREWOLF);
-        kind(m, "doppelganger_blood", "werewolves", RiteKind.WEREWOLF, RiteKind.HYBRID);
-        kind(m, "rite_of_lineage_reveal", "werewolves", RiteKind.WEREWOLF, RiteKind.WITCH);
-        kind(m, "rite_of_lineage_awaken", "werewolves", RiteKind.WEREWOLF, RiteKind.TRIBRID);
-        kind(m, "ward_of_the_moon", "werewolves", RiteKind.WEREWOLF, RiteKind.WITCH);
-        kind(m, "hybrid_blood", "hybrids", RiteKind.HYBRID);
-        kind(m, "original_blood", "originals", RiteKind.ORIGINAL);
-        kind(m, "rite_of_the_moon", "originals", RiteKind.ORIGINAL);
-        lore(m, "rite_of_cloaking", "kol", KOL);
-        lore(m, "rite_of_linking", "esther", ESTHER);
-        both(m, "rite_of_severance", "esther", Set.of(RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID), ESTHER);
-        lore(m, "rite_of_the_broken_line", "finn", FINN);
-        lore(m, "rite_of_the_imprisoned_original", "finn", FINN);
-        both(m, "rite_of_the_cure", "elijah", Set.of(RiteKind.WITCH), ELIJAH);
-        lore(m, "immortality", "old_rites", OLD_RITES);
-        both(m, "ward_of_return", "old_rites", Set.of(RiteKind.WITCH), OLD_RITES);
-        lore(m, "curse_magicule_drain", "curses", CURSES);
-        lore(m, "curse_skill_seal", "curses", CURSES);
+        kind(m, "cleansing_blood", RiteKind.VAMPIRE);
+        kind(m, "ward_of_daylight", RiteKind.VAMPIRE, RiteKind.WITCH);
+        kind(m, "rite_of_the_five", RiteKind.HUNTER);
+        kind(m, "alpha_trial", RiteKind.WEREWOLF);
+        kind(m, "silver_moon", RiteKind.WEREWOLF);
+        kind(m, "werewolf_brother", RiteKind.WEREWOLF);
+        kind(m, "doppelganger_blood", RiteKind.WEREWOLF, RiteKind.HYBRID);
+        kind(m, "rite_of_lineage_reveal", RiteKind.WEREWOLF, RiteKind.WITCH);
+        kind(m, "rite_of_lineage_awaken", RiteKind.WEREWOLF, RiteKind.TRIBRID);
+        kind(m, "ward_of_the_moon", RiteKind.WEREWOLF, RiteKind.WITCH);
+        kind(m, "hybrid_blood", RiteKind.HYBRID);
+        kind(m, "original_blood", RiteKind.ORIGINAL);
+        kind(m, "rite_of_the_moon", RiteKind.ORIGINAL);
+        lore(m, "rite_of_cloaking", KOL);
+        lore(m, "rite_of_linking", ESTHER);
+        both(m, "rite_of_severance", Set.of(RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID), ESTHER);
+        lore(m, "rite_of_the_broken_line", FINN);
+        lore(m, "rite_of_the_imprisoned_original", FINN);
+        both(m, "rite_of_the_cure", Set.of(RiteKind.WITCH), ELIJAH);
+        lore(m, "immortality", OLD_RITES);
+        both(m, "ward_of_return", Set.of(RiteKind.WITCH), OLD_RITES);
+        lore(m, "curse_magicule_drain", CURSES);
+        lore(m, "curse_skill_seal", CURSES);
         GATED = java.util.Collections.unmodifiableMap(m);
     }
 
     private RiteUnlockTable() {
     }
 
-    private static void kind(Map<String, Gate> m, String rite, String hint, RiteKind first, RiteKind... more) {
+    private static void kind(Map<String, Gate> m, String rite, RiteKind first, RiteKind... more) {
         Set<RiteKind> kinds = EnumSet.of(first, more);
-        m.put(rite, new Gate(kinds, Set.of(), hint));
+        m.put(rite, new Gate(kinds, Set.of()));
     }
 
-    private static void lore(Map<String, Gate> m, String rite, String hint, String lore) {
-        m.put(rite, new Gate(Set.of(), Set.of(lore), hint));
+    private static void lore(Map<String, Gate> m, String rite, String lore) {
+        m.put(rite, new Gate(Set.of(), Set.of(lore)));
     }
 
-    private static void both(Map<String, Gate> m, String rite, String hint, Set<RiteKind> kinds, String lore) {
-        m.put(rite, new Gate(kinds, Set.of(lore), hint));
+    private static void both(Map<String, Gate> m, String rite, Set<RiteKind> kinds, String lore) {
+        m.put(rite, new Gate(kinds, Set.of(lore)));
     }
 
     public static boolean isOpen(String rite) {
@@ -107,6 +107,15 @@ public final class RiteUnlockTable {
                 out.add(rite);
             }
         });
+        return out;
+    }
+
+    /** What {@code /bloodline rites learn|forget} and the Admin page take: {@code all}, each gated rite and each lore id. */
+    public static List<String> choices() {
+        List<String> out = new ArrayList<>();
+        out.add("all");
+        out.addAll(GATED.keySet());
+        out.addAll(loreIds());
         return out;
     }
 

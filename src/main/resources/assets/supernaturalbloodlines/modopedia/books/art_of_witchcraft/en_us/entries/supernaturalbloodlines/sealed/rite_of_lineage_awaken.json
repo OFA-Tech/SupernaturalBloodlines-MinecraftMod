@@ -1,5 +1,5 @@
 {
-  "title": "???",
+  "title": "??? · werewolf or tribrid",
   "icon": {
     "count": 1,
     "id": "minecraft:honeycomb"
@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Known to werewolves.\n\nThe seal is unbroken.",
+          "text": "Unlocked by becoming a werewolf or a tribrid.\n\nThe seal is unbroken.",
           "header": "???"
         }
       ]

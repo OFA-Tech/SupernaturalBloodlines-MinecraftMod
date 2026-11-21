@@ -24,8 +24,8 @@ public final class RiteUnlockGameTests {
 
     private RiteUnlockGameTests() {}
 
-    private static ServerPlayer player(GameTestHelper helper, Species species) {
-        ServerPlayer p = LineTestPlayer.createWithAdvancements(helper);
+    private static LineTestPlayer player(GameTestHelper helper, Species species) {
+        LineTestPlayer p = LineTestPlayer.createWithAdvancements(helper);
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(species).build());
         return p;
     }
@@ -145,23 +145,79 @@ public final class RiteUnlockGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aTornPageTeachesAndCrumblesOnlyWhenItTaught(GameTestHelper helper) {
-        ServerPlayer p = player(helper, Species.NONE);
+    public static void aTornPageTeachesEveryTimeAndIsNeverUsedUp(GameTestHelper helper) {
+        LineTestPlayer p = LineTestPlayer.createWithAdvancements(helper);
         RiteUnlocks.reconcile(p);
         var hand = net.minecraft.world.InteractionHand.MAIN_HAND;
         var page = RitePageItem.of(RiteUnlockTable.ELIJAH);
         p.setItemInHand(hand, page);
         page.getItem().use(helper.getLevel(), p, hand);
         helper.assertTrue(known(p, "rite_of_the_cure"), "the page did not teach the Cure");
-        helper.assertTrue(p.getItemInHand(hand).isEmpty(), "the page did not crumble");
-        var again = RitePageItem.of(RiteUnlockTable.ELIJAH);
-        p.setItemInHand(hand, again);
-        again.getItem().use(helper.getLevel(), p, hand);
-        helper.assertTrue(!p.getItemInHand(hand).isEmpty(), "a page that taught nothing crumbled");
+        helper.assertTrue(!p.getItemInHand(hand).isEmpty(), "the page was used up");
+        // a page that was read for a player who forgot teaches again, like a grimoire
+        RiteUnlocks.forget(p, "rite_of_the_cure");
+        page.getItem().use(helper.getLevel(), p, hand);
+        helper.assertTrue(known(p, "rite_of_the_cure") && !p.getItemInHand(hand).isEmpty(), "a kept page did not teach a second time");
+        // read when there is nothing new, it says so
+        page.getItem().use(helper.getLevel(), p, hand);
+        helper.assertTrue(p.received("supernaturalbloodlines.rites.nothing_new"), "a page with nothing new did not say so: " + p.heard());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBlankPageSaysItHasNothing(GameTestHelper helper) {
+        LineTestPlayer p = LineTestPlayer.createWithAdvancements(helper);
+        RiteUnlocks.reconcile(p);
+        var hand = net.minecraft.world.InteractionHand.MAIN_HAND;
         var blank = new net.minecraft.world.item.ItemStack(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.RITE_PAGE.get());
         p.setItemInHand(hand, blank);
         blank.getItem().use(helper.getLevel(), p, hand);
-        helper.assertTrue(!p.getItemInHand(hand).isEmpty() && broken(p) == null, "a blank page did something");
+        helper.assertTrue(p.received("supernaturalbloodlines.rites.nothing_new"), "a blank page said nothing: " + p.heard());
+        helper.assertTrue(!p.getItemInHand(hand).isEmpty() && RiteUnlocks.known(p).isEmpty(), "a blank page did something");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void severalRitesLearnedAtOnceAreOneLine(GameTestHelper helper) {
+        LineTestPlayer p = LineTestPlayer.createWithAdvancements(helper);
+        RiteUnlocks.reconcile(p);
+        helper.assertTrue(RiteUnlocks.learnLore(p, RiteUnlockTable.ESTHER) == 2, "control: Esther teaches two");
+        helper.assertTrue(p.count("supernaturalbloodlines.rites.learned") == 1, "two rites were two lines: " + p.heard());
+        helper.assertTrue(p.heard().contains("rite.supernaturalbloodlines.rite_of_linking") && p.heard().contains("rite.supernaturalbloodlines.rite_of_severance"), "the line does not name both: " + p.heard());
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void becomingAKindSaysSoOnlyWhenAskedAndOnlyWhenThereIsNews(GameTestHelper helper) {
+        LineTestPlayer p = player(helper, Species.NONE);
+        helper.assertTrue(RiteUnlocks.reconcile(p, true) == 0 && !p.received("supernaturalbloodlines.rites.new_kind"), "nothing is new for a human: " + p.heard());
+        BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
+        // the change itself already taught them, quietly (a player who has just joined is not told about the login catching up)
+        helper.assertTrue(known(p, "rite_of_severance"), "a witch learned nothing");
+        helper.assertTrue(!p.received("supernaturalbloodlines.rites.new_kind"), "the login said it: " + p.heard());
+        RiteUnlocks.forget(p, "rite_of_severance");
+        helper.assertTrue(RiteUnlocks.reconcile(p, true) == 1 && p.count("supernaturalbloodlines.rites.new_kind") == 1, "a rite that came back by kind was not announced once: " + p.heard());
+        helper.assertTrue(RiteUnlocks.reconcile(p, true) == 0 && p.count("supernaturalbloodlines.rites.new_kind") == 1, "an unchanged player was announced again");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theMovedNoticeIsForTheFirstLoginOnly(GameTestHelper helper) {
+        LineTestPlayer p = player(helper, Species.NONE);
+        helper.assertTrue(RiteUnlocks.firstTime(p), "a new player was not first");
+        helper.assertTrue(!RiteUnlocks.firstTime(p), "the same player was first twice");
+        helper.assertTrue(RiteUnlocks.firstTime(player(helper, Species.NONE)), "another player shares the flag");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void withTheSpeciesPartOffEveryRiteIsKnown(GameTestHelper helper) {
+        LineTestPlayer p = LineTestPlayer.createWithAdvancements(helper);
+        RiteUnlocks.reconcile(p);
+        helper.assertTrue(RiteUnlocks.known(p).isEmpty(), "control: a human knows a gated rite");
+        net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockFallback.knowAll(p);
+        helper.assertTrue(RiteUnlocks.known(p).size() == RiteUnlockTable.GATED.size(), "not every rite is known: " + RiteUnlocks.known(p));
+        helper.assertTrue(broken(p) == null, "known and sealed disagree: " + broken(p));
         helper.succeed();
     }
 

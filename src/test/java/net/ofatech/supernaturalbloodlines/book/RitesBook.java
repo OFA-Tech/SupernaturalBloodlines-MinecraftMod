@@ -29,7 +29,12 @@ final class RitesBook {
     static final String RITES = "src/main/resources/data/supernaturalbloodlines/enchanted/circle_magic/rite";
     /** The unlock advancements (generated with the book: {@code known/<rite>} and {@code sealed/<rite>}). */
     static final String ADV = "src/main/resources/data/supernaturalbloodlines/advancement/rites";
-    static final String HINT = "supernaturalbloodlines.rites.hint.";
+    /** What fits on one line of the book's entry list (its text is 100 pixels wide; the label is cut or wraps beyond this many characters). */
+    static final int LABEL_CHARS = 38;
+    static final String KIND = "supernaturalbloodlines.rites.kind.";
+    static final String KIND_SHORT = "supernaturalbloodlines.rites.kind_short.";
+    static final String LORE = "supernaturalbloodlines.rites.lore.";
+    static final String LORE_SHORT = "supernaturalbloodlines.rites.lore_short.";
     static final String SEALED_TEXT = "supernaturalbloodlines.rites.sealed";
     static final String LANG = "src/main/resources/assets/supernaturalbloodlines/lang/en_us.json";
     static final String DESC = "supernaturalbloodlines.hub.rites.desc.";
@@ -49,22 +54,22 @@ final class RitesBook {
 
     static final List<Cat> CATS = List.of(
             new Cat("vampires", "Vampires and Hunters", "minecraft:redstone",
-                    "Rites of blood: making an Original, washing vampirism out, bottling an Original's blood, blood stones for altars and marking a Hunter of the Five.",
+                    "Rites of blood, and of the vampires who work them.",
                     List.of("immortality", "cleansing_blood", "original_blood", "blood_offering", "rite_of_the_five")),
             new Cat("werewolves", "Werewolves", "minecraft:bone",
-                    "Rites of the moon and the wolf: the gene, the hybrids, the silver cure, the Alpha Trial and the brothers of the pack.",
+                    "Rites of the moon and of the wolf.",
                     List.of("rite_of_lineage_reveal", "rite_of_lineage_awaken", "rite_of_the_moon", "silver_moon", "hybrid_blood", "werewolf_brother", "alpha_trial")),
             new Cat("witches", "Witchcraft", "minecraft:amethyst_shard",
-                    "Rites a witch works, or that call witchcraft awake: ancestral calling, hiding, linking, revealing genes, cutting a sire bond and drawing doppelg\u00e4nger blood.",
+                    "Rites a witch works, or that call witchcraft awake.",
                     List.of("ancestral_calling", "rite_of_revelation", "doppelganger_blood", "rite_of_severance", "rite_of_cloaking", "rite_of_linking")),
             new Cat("lines", "Lines of the Originals", "minecraft:white_dye",
-                    "Rites that free someone from the line of their Original, and the rite that makes The Cure.",
+                    "Rites that touch the line of an Original.",
                     List.of("rite_of_the_broken_line", "rite_of_the_imprisoned_original", "rite_of_the_cure")),
             new Cat("artifacts", "Wards and Tools", "minecraft:compass",
-                    "Rites that make rings and tools: the Sun Ring, the Moon Ring, the Resurrection Ring, the Vampire Compass and the Hearing Device.",
+                    "Rites that make rings and tools.",
                     List.of("ward_of_daylight", "ward_of_the_moon", "ward_of_return", "vampire_compass", "hearing_device")),
             new Cat("tensura", "Tensura", "minecraft:soul_sand",
-                    "Rites that need Tensura: two curses, an offering of magicules and the purification of the undead.",
+                    "Rites that need Tensura.",
                     List.of("curse_magicule_drain", "curse_skill_seal", "magicule_offering", "purification", "purification_holy_water")));
 
     /** The book entry's icon. Only {@code minecraft:} items: an icon from a mod that is not there would drop the whole entry. */
@@ -230,8 +235,8 @@ final class RitesBook {
         entry.add("icon", icon(ICON.get(path)));
         JsonArray assigned = new JsonArray();
         RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(path);
-        // the study key opens an entry from an item without asking for its advancement: a rite that lore teaches must not be reachable that way
-        if (MAKES.containsKey(path) && (gate == null || gate.lore().isEmpty())) {
+        // the study key opens an entry from an item without asking for its advancement: a gated rite must not be reachable that way
+        if (MAKES.containsKey(path) && gate == null) {
             assigned.add(MAKES.get(path));
         }
         entry.add("assigned_items", assigned);
@@ -251,23 +256,51 @@ final class RitesBook {
         return entry;
     }
 
-    /** The "???" entry that stands for a gated rite while it is sealed: a hint, and nothing of the rite (no name, circle or item). */
+    /** The words of a list: "a, b or c". */
+    static String orList(List<String> items) {
+        if (items.size() <= 1) {
+            return String.join("", items);
+        }
+        return String.join(", ", items.subList(0, items.size() - 1)) + " or " + items.get(items.size() - 1);
+    }
+
+    /** How a sealed rite is learned, in a sentence: by becoming its kind, by its lore, or either. Names no rite. */
+    static String hint(JsonObject lang, String rite) {
+        RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(rite);
+        List<String> kinds = gate.kinds().stream().sorted().map(k -> lang.get(KIND + k.name().toLowerCase()).getAsString()).toList();
+        List<String> lore = gate.lore().stream().sorted().map(l -> lang.get(LORE + l).getAsString()).toList();
+        String how = kinds.isEmpty() ? orList(lore) : lore.isEmpty() ? "becoming " + orList(kinds) : "becoming " + orList(kinds) + ", or by " + orList(lore);
+        return "Unlocked by " + how + ".";
+    }
+
+    /** The label in the book's list: short, because the list line is one line. */
+    static String label(JsonObject lang, String rite) {
+        RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(rite);
+        List<String> parts = new ArrayList<>();
+        List<String> kinds = gate.kinds().stream().sorted().map(k -> lang.get(KIND_SHORT + k.name().toLowerCase()).getAsString()).toList();
+        if (kinds.size() > 2) {
+            parts.add(lang.get(KIND_SHORT + "several").getAsString());
+        } else {
+            parts.addAll(kinds);
+        }
+        gate.lore().stream().sorted().forEach(l -> parts.add(lang.get(LORE_SHORT + l).getAsString()));
+        return "??? \u00b7 " + orList(parts);
+    }
+
+    /** The "???" entry that stands for a gated rite while it is sealed: how it is learned, and nothing of the rite (no name, circle or item). */
     static JsonObject sealedEntry(JsonObject lang, String path) {
-        RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(path);
         JsonObject entry = new JsonObject();
-        entry.addProperty("title", "???");
+        entry.addProperty("title", label(lang, path));
         entry.add("icon", icon("minecraft:honeycomb"));
         entry.add("assigned_items", new JsonArray());
         entry.addProperty("advancement", RiteAdvancements.sealed(path));
-        JsonObject text = component("modopedia:page/headered_text", "text",
-                lang.get(HINT + gate.hint()).getAsString() + "\n\n" + lang.get(SEALED_TEXT).getAsString());
+        JsonObject text = component("modopedia:page/headered_text", "text", hint(lang, path) + "\n\n" + lang.get(SEALED_TEXT).getAsString());
         text.addProperty("header", "???");
         JsonArray pages = new JsonArray();
         pages.add(page(text));
         entry.add("pages", pages);
         return entry;
     }
-
     static String advancementJson() {
         JsonObject criterion = new JsonObject();
         criterion.addProperty("trigger", "minecraft:impossible");

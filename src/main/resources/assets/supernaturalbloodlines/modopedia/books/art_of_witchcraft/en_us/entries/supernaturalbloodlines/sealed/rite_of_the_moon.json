@@ -1,5 +1,5 @@
 {
-  "title": "???",
+  "title": "??? · Original",
   "icon": {
     "count": 1,
     "id": "minecraft:honeycomb"
@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Known to the Originals.\n\nThe seal is unbroken.",
+          "text": "Unlocked by becoming an Original.\n\nThe seal is unbroken.",
           "header": "???"
         }
       ]

@@ -7,7 +7,6 @@ final class DevBook {
     private DevBook() {
     }
 
-    /** {@code <rite path>} or {@code <rite path>_last}. */
     /**
      * {@code book:<rite>[:last]} the rite's own entry; {@code book:sealed-<rite>} its "???" entry; {@code book:category-<id>} a category of our chapter (the list shows
      * which entries are sealed); {@code -Dsupernaturalbloodlines.devshots.learn=<lore|rite|all>} teaches that first, as the command does.
