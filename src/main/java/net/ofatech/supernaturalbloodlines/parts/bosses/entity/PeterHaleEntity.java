@@ -181,9 +181,8 @@ public final class PeterHaleEntity extends BossNpc implements GeoEntity, ShiftBo
     public void tick() {
         ShiftCore.hold(this, this);
         if (!level().isClientSide && pounceTicks > 0) {
-            // travel is paused: the model's root bone is what moves while the pounce plays
+            // travel is paused (see travel): the model's root bone is what moves while the pounce plays
             getNavigation().stop();
-            setDeltaMovement(0.0, Math.min(0.0, getDeltaMovement().y), 0.0);
         }
         super.tick();
         if (level().isClientSide) {
@@ -195,7 +194,8 @@ public final class PeterHaleEntity extends BossNpc implements GeoEntity, ShiftBo
         }
         if (pounceTicks > 0) {
             pounceTick();
-        } else if (isAlive() && getTarget() != null && PeterRules.pounces(form(), distanceToSqr(getTarget()), onGround(), pauseLeft)) {
+        } else if (isAlive() && getTarget() != null && form() == BossForm.BEAST && onGround() && pauseLeft <= 0
+                && PeterRules.pounces(form(), distanceToSqr(getTarget()), onGround(), pauseLeft, hasLineOfSight(getTarget()))) {
             startPounce(getTarget());
         }
     }
@@ -229,7 +229,7 @@ public final class PeterHaleEntity extends BossNpc implements GeoEntity, ShiftBo
         }
         if (pounceTicks == PeterRules.POUNCE_LAND_TICK) {
             LivingEntity target = getTarget();
-            if (target != null && target.isAlive() && PeterRules.pounceLands(target.position().distanceToSqr(position().add(pounceDirection.scale(PeterRules.POUNCE_DISTANCE))))) {
+            if (target != null && target.isAlive() && PeterRules.pounceLands(target.position().distanceToSqr(position().add(pounceDirection.scale(PeterRules.POUNCE_DISTANCE))), hasLineOfSight(target))) {
                 pounceHit = true;
                 try {
                     doHurtTarget(target);

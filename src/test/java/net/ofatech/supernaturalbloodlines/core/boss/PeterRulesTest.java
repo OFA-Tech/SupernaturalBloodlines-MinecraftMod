@@ -1,6 +1,5 @@
 package net.ofatech.supernaturalbloodlines.core.boss;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,9 +33,16 @@ class PeterRulesTest {
     }
 
     @Test
-    void theScanGridCoversTheRadiusInStepsThatAHouseCannotSlipThrough() {
-        assertArrayEquals(new int[] {-20, -15, -10, -5, 0, 5, 10, 15, 20}, PeterRules.scanOffsets());
-        assertTrue(PeterRules.SCAN_STEP <= 5, "a piece is 5 or more blocks across");
+    void theDistanceToABoxIsZeroInsideItAndToTheNearestFaceOutsideIt() {
+        // the box of blocks 10..20 in x, 60..72 in y, 10..18 in z spans 10 to 21, 60 to 73, 10 to 19 in space
+        assertEquals(0.0, PeterRules.boxDistanceSquared(15, 65, 14, 10, 60, 10, 20, 72, 18), 1e-9, "inside");
+        assertEquals(0.0, PeterRules.boxDistanceSquared(20.9, 60, 10, 10, 60, 10, 20, 72, 18), 1e-9, "inside the last block");
+        assertEquals(9.0, PeterRules.boxDistanceSquared(24, 65, 14, 10, 60, 10, 20, 72, 18), 1e-9, "3 blocks past the far face, which is at max + 1");
+        assertEquals(16.0, PeterRules.boxDistanceSquared(6, 65, 14, 10, 60, 10, 20, 72, 18), 1e-9, "4 blocks before the near face");
+        assertEquals(9.0 + 16.0 + 4.0, PeterRules.boxDistanceSquared(7, 56, 21, 10, 60, 10, 20, 72, 18), 1e-9, "past three faces at once");
+        assertEquals(25.0, PeterRules.boxDistanceSquared(15, 78, 14, 10, 60, 10, 20, 72, 18), 1e-9, "above it");
+        assertTrue(PeterRules.near(PeterRules.boxDistanceSquared(10 - 24, 65, 14, 10, 60, 10, 20, 72, 18)), "24 blocks from a face is near");
+        assertFalse(PeterRules.near(PeterRules.boxDistanceSquared(10 - 24.5, 65, 14, 10, 60, 10, 20, 72, 18)), "24.5 blocks is not");
     }
 
     @Test
@@ -91,21 +97,23 @@ class PeterRulesTest {
     }
 
     @Test
-    void heLeapsFromThreeToFourPointThreeBlocksOnTheGroundAfterThePause() {
-        assertTrue(PeterRules.pounces(BossForm.BEAST, 3.0 * 3.0, true, 0));
-        assertTrue(PeterRules.pounces(BossForm.BEAST, 4.3 * 4.3, true, 0));
-        assertFalse(PeterRules.pounces(BossForm.BEAST, 2.9 * 2.9, true, 0), "too near");
-        assertFalse(PeterRules.pounces(BossForm.BEAST, 4.4 * 4.4, true, 0), "too far");
+    void heLeapsFromThreeToFourPointThreeBlocksOnTheGroundAfterThePauseAndOnlyAtWhatHeSees() {
+        assertTrue(PeterRules.pounces(BossForm.BEAST, 3.0 * 3.0, true, 0, true));
+        assertTrue(PeterRules.pounces(BossForm.BEAST, 4.3 * 4.3, true, 0, true));
+        assertFalse(PeterRules.pounces(BossForm.BEAST, 2.9 * 2.9, true, 0, true), "too near");
+        assertFalse(PeterRules.pounces(BossForm.BEAST, 4.4 * 4.4, true, 0, true), "too far");
         assertTrue(PeterRules.POUNCE_FARTHEST <= PeterRules.POUNCE_DISTANCE + PeterRules.POUNCE_REACH, "a pounce that starts must be able to land");
-        assertFalse(PeterRules.pounces(BossForm.BEAST, 16.0, false, 0), "in the air");
-        assertFalse(PeterRules.pounces(BossForm.BEAST, 16.0, true, 1), "still paused");
-        assertFalse(PeterRules.pounces(BossForm.HUMAN, 16.0, true, 0), "the man does not pounce");
+        assertFalse(PeterRules.pounces(BossForm.BEAST, 16.0, false, 0, true), "in the air");
+        assertFalse(PeterRules.pounces(BossForm.BEAST, 16.0, true, 1, true), "still paused");
+        assertFalse(PeterRules.pounces(BossForm.HUMAN, 16.0, true, 0, true), "the man does not pounce");
+        assertFalse(PeterRules.pounces(BossForm.BEAST, 16.0, true, 0, false), "not through a wall or a floor");
     }
 
     @Test
-    void aPounceLandsWhenTheTargetIsWithinReachOfWhereTheAnimationEnds() {
-        assertTrue(PeterRules.pounceLands(2.5 * 2.5));
-        assertFalse(PeterRules.pounceLands(2.5 * 2.5 + 0.01));
+    void aPounceLandsWhenTheTargetIsWithinReachOfWhereTheAnimationEndsAndHeStillSeesThem() {
+        assertTrue(PeterRules.pounceLands(2.5 * 2.5, true));
+        assertFalse(PeterRules.pounceLands(2.5 * 2.5 + 0.01, true));
+        assertFalse(PeterRules.pounceLands(1.0, false), "a wall that was put up in the meantime");
         assertEquals(30.0 / 16.0, PeterRules.POUNCE_DISTANCE, 1e-9, "the root bone of the pounce moves the model 30 pixels");
         assertTrue(PeterRules.POUNCE_LAND_TICK < PeterRules.POUNCE_TICKS);
     }
@@ -119,11 +127,5 @@ class PeterRulesTest {
         assertTrue(PeterRules.mayRespawn(true, 6, 5, 0), "zero days is one day");
         assertFalse(PeterRules.mayRespawn(true, 5, 5, 0), "zero days is one day, so the day he died is too early");
         assertFalse(PeterRules.mayRespawn(true, 5, 5, -3), "a negative number of days is one day");
-    }
-
-    @Test
-    void theHouseFloorAndTheSpawnSpotAgree() {
-        assertEquals(PeterRules.FLOOR_LAYER + 1, PeterRules.SPAWN_OFFSET);
-        assertEquals(24, PeterRules.HOUSE_RADIUS);
     }
 }

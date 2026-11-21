@@ -72,6 +72,16 @@ public final class HaleHouseBlueprint {
         cells.remove(key(x, y, z));
     }
 
+    /** A wall block of a house that burned: scorched planks, and a good part of it blackstone, basalt or coal. */
+    private String burnt() {
+        double r = random.nextDouble();
+        return r < 0.22 ? "minecraft:blackstone" : r < 0.34 ? "minecraft:basalt[axis=y]" : r < 0.40 ? "minecraft:coal_block" : "minecraft:dark_oak_planks";
+    }
+
+    private String charredPost() {
+        return chance(0.35) ? "minecraft:basalt[axis=y]" : "minecraft:stripped_dark_oak_log[axis=y]";
+    }
+
     private boolean chance(double p) {
         return random.nextDouble() < p;
     }
@@ -97,7 +107,7 @@ public final class HaleHouseBlueprint {
         for (int x = 0; x < W; x++) {
             for (int z = 0; z < D; z++) {
                 double r = random.nextDouble();
-                set(x, floor, z, r < 0.12 ? "minecraft:coal_block" : r < 0.3 ? "minecraft:blackstone" : r < 0.4 ? "minecraft:coarse_dirt" : "minecraft:dark_oak_planks");
+                set(x, floor, z, r < 0.2 ? "minecraft:coal_block" : r < 0.45 ? "minecraft:blackstone" : r < 0.55 ? "minecraft:coarse_dirt" : "minecraft:dark_oak_planks");
             }
         }
         set(3, floor, 4, "minecraft:ladder[facing=east]");
@@ -118,9 +128,9 @@ public final class HaleHouseBlueprint {
                         continue;
                     }
                     if (post) {
-                        set(x, y, z, "minecraft:stripped_dark_oak_log[axis=y]");
-                    } else if (!chance(0.28)) {
-                        set(x, y, z, chance(0.18) ? "minecraft:blackstone" : "minecraft:dark_oak_planks");
+                        set(x, y, z, charredPost());
+                    } else if (!chance(0.34)) {
+                        set(x, y, z, burnt());
                     }
                 }
             }
@@ -141,11 +151,12 @@ public final class HaleHouseBlueprint {
         chest.putString("id", "minecraft:chest");
         chest.putString("LootTable", CHEST_LOOT);
         set(8, floor + 1, 2, "minecraft:chest[facing=west,type=single,waterlogged=false]", chest);
-        for (int i = 0; i < 14; i++) {
+        for (int i = 0; i < 40; i++) {
             int x = 1 + random.nextInt(W - 2);
             int z = 1 + random.nextInt(D - 2);
             if (cellAt(x, floor + 1, z) == null && !(x == 3 && z == 4)) {
-                set(x, floor + 1, z, chance(0.5) ? "minecraft:gray_carpet" : "minecraft:cobweb");
+                double c = random.nextDouble();
+                set(x, floor + 1, z, c < 0.4 ? "minecraft:gray_carpet" : c < 0.75 ? "minecraft:black_carpet" : "minecraft:cobweb");
             }
         }
         // the ladder to the upper floor, on the west wall
@@ -157,7 +168,7 @@ public final class HaleHouseBlueprint {
         for (int x = 0; x < W; x++) {
             for (int z = 0; z < D; z++) {
                 if (x <= 5 && !(x == 1 && z == 4) && !chance(0.22)) {
-                    set(x, upper, z, chance(0.15) ? "minecraft:blackstone" : "minecraft:dark_oak_planks");
+                    set(x, upper, z, burnt());
                 } else if (x > 5 && x <= 7 && z == 0 && chance(0.5)) {
                     set(x, upper, z, "minecraft:dark_oak_planks");
                 }
@@ -174,7 +185,7 @@ public final class HaleHouseBlueprint {
                     boolean corner = (x == 0 || x == W - 1) && (z == 0 || z == D - 1);
                     double keep = corner ? 0.9 : y == upper + 1 ? 0.55 : y == upper + 2 ? 0.3 : 0.1;
                     if (random.nextDouble() < keep) {
-                        set(x, y, z, corner ? "minecraft:stripped_dark_oak_log[axis=y]" : chance(0.2) ? "minecraft:blackstone" : "minecraft:dark_oak_planks");
+                        set(x, y, z, corner ? charredPost() : burnt());
                     }
                 }
             }

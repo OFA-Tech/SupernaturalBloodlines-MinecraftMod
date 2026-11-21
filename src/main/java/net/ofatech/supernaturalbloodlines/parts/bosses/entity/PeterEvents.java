@@ -35,7 +35,8 @@ public final class PeterEvents {
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, true, LivingDamageEvent.Post.class, PeterEvents::onDamaged);
-        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, false, LivingDeathEvent.class, PeterEvents::onDeath);
+        // the last word on a death: a totem or the Elixir at any earlier priority that cancels it must leave him alive and unpaid
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, LivingDeathEvent.class, PeterEvents::onDeath);
     }
 
     private static void onDamaged(LivingDamageEvent.Post e) {

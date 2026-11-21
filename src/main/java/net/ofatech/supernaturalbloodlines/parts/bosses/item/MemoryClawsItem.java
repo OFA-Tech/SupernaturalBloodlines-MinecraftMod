@@ -17,15 +17,16 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.ofatech.supernaturalbloodlines.core.boss.LinkRules;
 import net.ofatech.supernaturalbloodlines.core.boss.MemoryClawsRules;
-import net.ofatech.supernaturalbloodlines.parts.species.profile.ProfileKnowledge;
-import net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Knowledge;
+import net.ofatech.supernaturalbloodlines.parts.species.profile.SpeciesProfiles;
 
 /**
- * Peter's reward (R182). Right-click another player who consents and the user learns that player's sire and genes: they are written into the user's own profile
- * knowledge (never the pack's pool), so what the user reads on that player's Profile page is what the discovery rules already show of them. The rules are
- * {@link MemoryClawsRules}; this class asks the world the questions and tells the people involved.
+ * Peter's reward (R183). Right-click another player who agrees on purpose (sneaking, a lead in the main hand, looking at you, PvP on, and you may hurt them) and you are
+ * given a snapshot of their sire and genes as they knew them then, shown on their Profile page. The rules are {@link MemoryClawsRules}; this class asks the world the
+ * questions and tells the people involved. The cooldown is kept here, first and with the same words for every target, because a vanilla cooldown stops a use of the item
+ * and not a use on somebody.
  */
 public final class MemoryClawsItem extends Item {
     public static final String LEARNED = "item.supernaturalbloodlines.memory_claws.learned";
@@ -40,37 +41,52 @@ public final class MemoryClawsItem extends Item {
         if (player.level().isClientSide || !(player instanceof ServerPlayer user) || !(user.level() instanceof ServerLevel level)) {
             return target instanceof Player ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
-        // a cooldown stops a use of the item, not a use on somebody: so it is asked here, first, and says the same to everybody
         if (user.getCooldowns().isOnCooldown(this)) {
-            user.displayClientMessage(Component.translatable(MemoryClawsRules.WAIT), true);
+            int seconds = MemoryClawsRules.secondsLeft(user.getCooldowns().getCooldownPercent(this, 0F));
+            user.displayClientMessage(Component.translatable(MemoryClawsRules.WAIT, Math.max(1, seconds)), true);
             return InteractionResult.SUCCESS;
         }
         MemoryClawsRules.Target kind = target instanceof ServerPlayer ? MemoryClawsRules.Target.PLAYER : MemoryClawsRules.Target.OTHER;
-        boolean consent = target instanceof ServerPlayer t
-                && LinkRules.consents(false, t.isShiftKeyDown(), t.getMainHandItem().is(Items.LEAD), level.getServer().isPvpAllowed());
-        boolean mayHarm = target instanceof ServerPlayer t && user.canHarmPlayer(t);
-        MemoryClawsRules.Verdict verdict = MemoryClawsRules.verdict(kind, target == user, consent, mayHarm);
+        boolean pvp = level.getServer().isPvpAllowed();
+        boolean consent = false;
+        boolean facing = false;
+        boolean mayHarm = false;
+        if (target instanceof ServerPlayer t && t != user) {
+            consent = LinkRules.consents(false, t.isShiftKeyDown(), t.getMainHandItem().is(Items.LEAD), pvp);
+            facing = looksAt(t, user);
+            mayHarm = user.canHarmPlayer(t);
+        }
+        MemoryClawsRules.Verdict verdict = MemoryClawsRules.verdict(kind, target == user, pvp, consent, facing, mayHarm);
         String refusal = MemoryClawsRules.message(verdict);
         if (refusal != null) {
             user.displayClientMessage(Component.translatable(refusal), true);
             return InteractionResult.SUCCESS;
         }
         ServerPlayer subject = (ServerPlayer) target;
-        // the user's own record only: no pack pool (null), so a pack-mate learns nothing from it
-        ProfileKnowledge.get(level).discover(null, user.getUUID(), subject.getUUID(), Knowledge.learnedBy(Knowledge.Ability.MEMORY_CLAWS));
+        SpeciesProfiles.snapshot(user, subject);
         user.displayClientMessage(Component.translatable(LEARNED, subject.getDisplayName()), true);
-        subject.displayClientMessage(Component.translatable(USED_ON, user.getDisplayName()), true);
+        Component told = Component.translatable(USED_ON, user.getDisplayName());
+        subject.displayClientMessage(told, true);
+        subject.sendSystemMessage(told);
         user.getCooldowns().addCooldown(this, MemoryClawsRules.COOLDOWN_TICKS);
         stack.hurtAndBreak(1, user, hand == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
         return InteractionResult.SUCCESS;
     }
 
-    /** Used on the air they say what they are for: nothing is spent. */
+    /** Whether {@code looker} is looking at {@code user}: the look and the way to their eyes agree, and there is a clear line. Standing on the same spot is looking. */
+    private static boolean looksAt(ServerPlayer looker, ServerPlayer user) {
+        Vec3 to = user.getEyePosition().subtract(looker.getEyePosition());
+        double length = to.length();
+        double dot = length < 1.0E-3 ? 1.0 : looker.getLookAngle().dot(to.scale(1.0 / length));
+        return MemoryClawsRules.facing(dot, looker.hasLineOfSight(user));
+    }
+
+    /** Used on the air they say how they are used: nothing is spent. */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (!level.isClientSide) {
-            player.displayClientMessage(Component.translatable(MemoryClawsRules.SELF), true);
+            player.displayClientMessage(Component.translatable(MemoryClawsRules.USAGE), true);
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
@@ -78,6 +94,6 @@ public final class MemoryClawsItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
         lines.add(Component.translatable("item.supernaturalbloodlines.memory_claws.tooltip").withStyle(ChatFormatting.GRAY));
-        lines.add(Component.translatable("item.supernaturalbloodlines.memory_claws.tooltip_consent").withStyle(ChatFormatting.DARK_GRAY));
+        lines.add(Component.translatable("item.supernaturalbloodlines.memory_claws.tooltip_consent").withStyle(ChatFormatting.GRAY));
     }
 }

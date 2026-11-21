@@ -62,12 +62,52 @@ class BossTextTest {
     void theGuideExplainsPeterTheHouseTheOnePeterTheFeralWolfTheRewardAndTheClawsConsent() throws Exception {
         String guide = lang().get("supernaturalbloodlines.hub.guide.bosses.body").getAsString();
         assertTrue(guide.contains("Peter Hale waits in a burned Hale house") && guide.contains("only one Peter"), "the Guide does not say there are many houses and one Peter");
-        assertTrue(guide.contains("feral") && guide.contains("not a boss") && guide.contains("3 to 4 blocks"), "the Guide does not say what feral means or how far he pounces");
+        assertTrue(guide.contains("/locate structure supernaturalbloodlines:hale_house") && guide.contains("book about the fire"), "the Guide does not say how to find a house");
+        assertTrue(guide.contains("feral") && guide.contains("not a boss") && guide.contains("3 to 4 blocks") && guide.contains("only at what he can see"), "the Guide does not say what feral means or how far he pounces");
         assertTrue(guide.contains("the most to bring him down") && guide.contains("True Alpha takes none") && guide.contains("a player who is no werewolf is told so"), "the Guide leaves out who is paid");
-        assertTrue(guide.contains("Memory Claws") && guide.contains("sneak with a lead in their main hand") && guide.contains("PvP must be on") && guide.contains("as far as that player knows them"), "the Guide leaves out how the claws are consented to and what they show");
+        assertTrue(guide.contains("Memory Claws") && guide.contains("they face you, sneak with a lead in their main hand") && guide.contains("PvP must be on") && guide.contains("allowed to hurt them (no teams)"),
+                "the Guide leaves out how the claws are consented to");
+        assertTrue(guide.contains("as they know them then") && guide.contains("never updated") && guide.contains("12 uses, 30 seconds apart"), "the Guide leaves out that the claws take a snapshot, and their limits");
         assertTrue(guide.contains("A server can switch the houses off") && guide.contains("A server can let him be found again"), "the Guide leaves out the settings");
+        String peter = guide.substring(guide.indexOf("Peter Hale waits"), guide.indexOf("Nothing but white oak kills"));
+        for (String paragraph : peter.split("\n\n")) {
+            assertTrue(paragraph.length() < 520, "a paragraph of the Guide is not short: " + paragraph.length());
+        }
     }
 
+    @Test
+    void thePeterNoticeNeverNamesHimAndTheClawsTextsSayWhatToDoWithoutSayingAnythingAboutTheTarget() throws Exception {
+        JsonObject lang = lang();
+        for (String key : new String[] {"supernaturalbloodlines.boss.notice.peter", "supernaturalbloodlines.boss.notice.peter.hint"}) {
+            String text = lang.get(key).getAsString().toLowerCase(java.util.Locale.ROOT);
+            assertTrue(!text.contains("peter") && !text.contains("hale"), "the notice names him: " + text);
+        }
+        String claws = "item.supernaturalbloodlines.memory_claws.";
+        String refused = lang.get(claws + "refused").getAsString();
+        assertTrue(refused.contains("face you") && refused.contains("sneak") && refused.contains("lead in their main hand") && refused.contains("PvP"), "the refusal does not say what the other player must do: " + refused);
+        assertTrue(lang.get(claws + "pvp_off").getAsString().contains("PvP is off"), "the claws do not say PvP is off");
+        assertTrue(lang.get(claws + "wait").getAsString().contains("%s"), "the wait does not give the seconds left");
+        assertTrue(lang.get(claws + "learned").getAsString().contains("Profile"), "the reader is not told where to look");
+        assertTrue(lang.get(claws + "tooltip_consent").getAsString().contains("face you") && lang.get(claws + "tooltip_consent").getAsString().contains("no teams"), "the tooltip leaves out the conditions");
+        assertTrue(lang.has(claws + "usage") && lang.has(claws + "used_on"), "a text of the claws is missing");
+        assertEquals("Peter: burned Hale houses generate (new chunks only)", lang.get("supernaturalbloodlines.hub.admin.key.supernaturalbloodlines-bosses.toml:peter_house_enabled").getAsString());
+    }
+
+    @Test
+    void theChestOfTheHouseHoldsABookWhoseTextHintsAtASurvivorWithoutNamingHim() throws Exception {
+        try (var in = BossTextTest.class.getResourceAsStream("/data/supernaturalbloodlines/loot_table/chests/hale_house.json")) {
+            JsonObject table = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
+            String json = table.toString();
+            assertTrue(json.contains("minecraft:written_book") && json.contains("The Hale Fire"), "the chest has no book about the fire");
+            JsonObject lang = lang();
+            for (String page : new String[] {"supernaturalbloodlines.lore.hale_fire.page1", "supernaturalbloodlines.lore.hale_fire.page2"}) {
+                assertTrue(json.contains(page), "the book does not use " + page);
+                String text = lang.get(page).getAsString().toLowerCase(java.util.Locale.ROOT);
+                assertTrue(!text.contains("peter") && !text.contains("werewolf"), "the book spoils who he is: " + text);
+            }
+            assertTrue(lang.get("supernaturalbloodlines.lore.hale_fire.page2").getAsString().contains("comes back"), "the book does not hint that somebody still walks");
+        }
+    }
     @Test
     void theWordsOfKolAndFinnNeverNameThemBeforeTheyAreDiscoveredAndTheLinkRefusalNamesNoOriginal() throws Exception {
         JsonObject lang = lang();

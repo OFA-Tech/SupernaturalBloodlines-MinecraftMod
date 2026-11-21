@@ -180,6 +180,8 @@ public final class PeterGameTests {
             near.setPos(OTHER_HOUSE.getCenter().getX(), OTHER_HOUSE.minY() + 4, OTHER_HOUSE.getCenter().getZ());
             BossDirector.check(rig.server);
             helper.assertTrue(rig.index.of(BossId.PETER_HALE).appearances == 1, "a second Peter came at the second house");
+            helper.assertTrue(near.count("supernaturalbloodlines.boss.notice.peter") == 1 && near.count("supernaturalbloodlines.boss.notice.peter.hint") == 1,
+                    "the one who called him was not told exactly once, on the action bar and in chat: " + near.heard());
             helper.assertTrue(helper.getLevel().getEntitiesOfClass(PeterHaleEntity.class, new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(400, 400, 400)).size() == 1, "there is more than one Peter in the world");
             p.discard();
         } finally {
@@ -412,7 +414,146 @@ public final class PeterGameTests {
         helper.succeed();
     }
 
+    // ---- he sees what he pounces at ----
+
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void heNeverStartsAPounceAtWhatIsUnderAFloorAndDoesAtWhatIsBesideHim(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer p0 = wolf(helper, Rank.OMEGA, 0, 2.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            floor(helper);
+            world(false, List::of, p0);
+            PeterHaleEntity p = peter(helper);
+            p.setForm(BossForm.BEAST);
+            p.setNoAi(true);
+            for (int x = 0; x < 8; x++) {
+                for (int z = 0; z < 8; z++) {
+                    helper.setBlock(new BlockPos(x, 2, z), net.minecraft.world.level.block.Blocks.STONE);
+                }
+            }
+            p.setPos(helper.absoluteVec(new Vec3(2.5, 3, 2.5)));
+            Villager under = helper.spawn(EntityType.VILLAGER, new BlockPos(5, 1, 2));
+            under.setNoAi(true);
+            p.setTarget(under);
+            p.setOnGround(true);
+            run(p, 1);
+            helper.assertTrue(!p.hasLineOfSight(under), "the platform does not hide the villager under it, or he is not standing on it " + why(p, under) + " ground " + p.onGround() + " at " + p.position());
+            for (int i = 0; i < 12; i++) {
+                p.setOnGround(true);
+                run(p, 1);
+                p.setTarget(under);
+                helper.assertTrue(!p.pouncing(), "he pounced at a villager under a floor, tick " + i + ": distance " + p.distanceToSqr(under));
+            }
+            // the same distance, with nothing between: he does
+            under.setPos(helper.absoluteVec(new Vec3(5.5, 3, 2.5)));
+            p.setTarget(under);
+            for (int i = 0; i < 10 && !p.pouncing(); i++) {
+                p.setOnGround(true);
+                run(p, 1);
+            }
+            helper.assertTrue(p.pouncing(), "he did not pounce at a villager beside him: " + p.distanceToSqr(under));
+            p.discard();
+            under.discard();
+        } finally {
+            clean(p0);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void aPounceDoesNotLandOnWhatAWallHidesFromHimByTheTimeItLands(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer p0 = wolf(helper, Rank.OMEGA, 0, 2.5);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            floor(helper);
+            world(false, List::of, p0);
+            PeterHaleEntity p = peter(helper);
+            p.setForm(BossForm.BEAST);
+            p.setNoAi(true);
+            p.setPos(helper.absoluteVec(new Vec3(2.5, 1, 2.5)));
+            Villager villager = helper.spawn(EntityType.VILLAGER, new BlockPos(6, 1, 2));
+            villager.setNoAi(true);
+            p.setTarget(villager);
+            for (int i = 0; i < 10 && !p.pouncing(); i++) {
+                p.setOnGround(true);
+                run(p, 1);
+            }
+            helper.assertTrue(p.pouncing(), "he did not start the pounce with a clear line " + why(p, villager) + " ground " + p.onGround() + " target " + p.getTarget() + " form " + p.form());
+            // a wall goes up between them while it plays
+            for (int y = 1; y <= 5; y++) {
+                for (int z = 0; z < 8; z++) {
+                    helper.setBlock(new BlockPos(4, y, z), net.minecraft.world.level.block.Blocks.STONE);
+                }
+            }
+            float before = villager.getHealth();
+            for (int i = 0; i < PeterRules.POUNCE_TICKS && p.pouncing(); i++) {
+                run(p, 1);
+            }
+            helper.assertTrue(villager.getHealth() == before, "the pounce hurt a villager behind a wall that went up: " + before + " to " + villager.getHealth());
+            p.discard();
+            villager.discard();
+        } finally {
+            clean(p0);
+        }
+        helper.succeed();
+    }
+
     // ---- who is paid ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDeathAnythingCancelsLaterPaysNothingAndWritesNothingDown(GameTestHelper helper) {
+        if (!werewolves()) {
+            helper.succeed();
+            return;
+        }
+        LineTestPlayer a = wolf(helper, Rank.ALPHA, 2, 2.5);
+        java.util.function.Consumer<LivingDeathEvent> cancel = e -> {
+            if (e.getEntity() instanceof PeterHaleEntity) {
+                e.setCanceled(true);
+            }
+        };
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            world(false, List::of, a);
+            PeterHaleEntity p = peter(helper);
+            hit(p, a.damageSources().playerAttack(a), 10F);
+            // something at the same priority as ours that was registered after us, as a totem or the Elixir is
+            NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW, false, LivingDeathEvent.class, cancel);
+            kill(p, a);
+            helper.assertTrue(rig.index.state(BossId.PETER_HALE) == BossState.ACTIVE && !rig.index.of(BossId.PETER_HALE).rewarded, "a cancelled death was written down or paid: " + rig.index.state(BossId.PETER_HALE));
+            helper.assertTrue(clawsNear(helper, p) == 0 && stack(a) == 2, "a cancelled death dropped the claws or paid a spark");
+            p.discard();
+        } finally {
+            NeoForge.EVENT_BUS.unregister(cancel);
+            clean(a);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theChestOfTheHouseGivesABookAboutTheFireEveryTime(GameTestHelper helper) {
+        if (!houseData(helper)) {
+            helper.succeed();
+            return;
+        }
+        var key = net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(NS, "chests/hale_house"));
+        var table = helper.getLevel().getServer().reloadableRegistries().getLootTable(key);
+        for (int i = 0; i < 8; i++) {
+            var params = new net.minecraft.world.level.storage.loot.LootParams.Builder(helper.getLevel())
+                    .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN, Vec3.ZERO).create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.CHEST);
+            var items = table.getRandomItems(params);
+            var book = items.stream().filter(s -> s.is(Items.WRITTEN_BOOK)).findFirst();
+            helper.assertTrue(book.isPresent(), "a roll of the chest had no book: " + items);
+            var content = book.get().get(net.minecraft.core.component.DataComponents.WRITTEN_BOOK_CONTENT);
+            helper.assertTrue(content != null && content.title().raw().equals("The Hale Fire") && content.pages().size() == 2, "the book is not the one about the fire: " + content);
+        }
+        helper.succeed();
+    }
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void hisDeathPaysOnceTheClawsForAnybodyAndOneSparkToTheOneWhoDidTheMostNotTheLastBlow(GameTestHelper helper) {
@@ -577,6 +718,20 @@ public final class PeterGameTests {
         return new ItemStack(BossItems.MEMORY_CLAWS.get());
     }
 
+    private static net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem clawsItem(ItemStack stack) {
+        return (net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem) stack.getItem();
+    }
+
+    private static final String CL = "item.supernaturalbloodlines.memory_claws.";
+
+    /** For a failure message: where two eyes are and what a clear line between them hits. */
+    private static String why(net.minecraft.world.entity.LivingEntity a, net.minecraft.world.entity.LivingEntity b) {
+        Vec3 from = new Vec3(a.getX(), a.getEyeY(), a.getZ());
+        Vec3 to = new Vec3(b.getX(), b.getEyeY(), b.getZ());
+        var hit = a.level().clip(new net.minecraft.world.level.ClipContext(from, to, net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, a));
+        return "[eyes " + from + " to " + to + ", clip " + hit.getType() + " " + (hit instanceof net.minecraft.world.phys.BlockHitResult bh ? bh.getBlockPos() + " " + a.level().getBlockState(bh.getBlockPos()).getBlock().getDescriptionId() : "") + ", los " + a.hasLineOfSight(b) + ", look " + a.getLookAngle() + "]";
+    }
+
     /** The server knows these players by id (a fake player is in nobody's list), so a profile can be read about them. */
     private static void known(GameTestHelper helper, ServerPlayer... ps) {
         // the GameTest server has PvP off; the claws are a rule about PvP, so the test says which it is and puts it back
@@ -593,37 +748,51 @@ public final class PeterGameTests {
 
     private static void restore(GameTestHelper helper) {
         SireCall.overridePlayerLookup(null);
+        LineTestPlayer.useRealHarm(false);
         if (pvpBefore != null) {
             helper.getLevel().getServer().setPvpAllowed(pvpBefore);
             pvpBefore = null;
         }
     }
 
+    /** The target agrees: sneaking, a lead in the main hand. */
     private static void agree(ServerPlayer target) {
         target.setShiftKeyDown(true);
         target.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.LEAD));
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
+    /** The target stands two blocks from the user, looking straight at them. */
+    private static void meet(GameTestHelper helper, ServerPlayer user, ServerPlayer target) {
+        Vec3 at = helper.absoluteVec(new Vec3(3.5, 1.0, 2.5));
+        target.setPos(at);
+        target.setYRot(0F);
+        target.setXRot(0F);
+        user.setPos(at.add(0.0, 0.0, 2.0));
+    }
+
+    @GameTest(template = "tall", templateNamespace = NS)
     public static void theClawsReadASiresAndGenesOnlyOfAPlayerWhoAgreesAndTellThemAndNothingMoreIsDiscovered(GameTestHelper helper) {
         LineTestPlayer user = LineTestPlayer.create(helper);
         LineTestPlayer target = LineTestPlayer.create(helper);
         BloodlineAccess.set(target, BloodlineAccess.get(target).toBuilder().doppelgangerGene(true).doppelgangerRolled(true).build());
         known(helper, user, target);
+        meet(helper, user, target);
         try {
             LineTestPlayer.useRealHarm(true);
             ItemStack stack = claws();
-            var item = (net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem) stack.getItem();
+            var item = clawsItem(stack);
+            helper.assertTrue(stack.getMaxDamage() == net.ofatech.supernaturalbloodlines.core.boss.MemoryClawsRules.USES, "the claws do not have 12 uses: " + stack.getMaxDamage());
             // no consent: refused, nothing read, nothing spent, the target is not told
             item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
-            helper.assertTrue(user.received("item.supernaturalbloodlines.memory_claws.refused") && stack.getDamageValue() == 0, "a refusal was not said, or cost a use: " + user.heard());
+            helper.assertTrue(user.received(CL + "refused") && stack.getDamageValue() == 0, "a refusal was not said, or cost a use: " + user.heard());
             helper.assertTrue(!ProfileService.of(user, target.getUUID()).facts().containsKey(Fact.GENES), "the claws read a player who did not agree");
             helper.assertTrue(target.received() == 0, "the target was told of a refused use");
             // consent
             agree(target);
             item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
-            helper.assertTrue(user.received(net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem.LEARNED) && stack.getDamageValue() == 1, "the user was not told, or no use was spent: damage " + stack.getDamageValue() + ", heard " + user.heard());
+            helper.assertTrue(user.received(net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem.LEARNED) && stack.getDamageValue() == 1, "the user was not told, or no use was spent: damage " + stack.getDamageValue() + ", heard " + user.heard() + why(target, user));
             helper.assertTrue(target.received(net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem.USED_ON), "the target was not told it was used on them");
+            helper.assertTrue(target.chat() == 1, "the target was not told in chat, where it stays: " + target.chat());
             helper.assertTrue(user.getCooldowns().isOnCooldown(item), "no cooldown after a use");
             var facts = ProfileService.of(user, target.getUUID()).facts();
             helper.assertTrue(facts.containsKey(Fact.GENES) && facts.containsKey(Fact.SIRE), "the claws did not teach the sire and the genes: " + facts.keySet());
@@ -635,107 +804,190 @@ public final class PeterGameTests {
             LineTestPlayer other = LineTestPlayer.create(helper);
             helper.assertTrue(!ProfileService.of(other, target.getUUID()).facts().containsKey(Fact.GENES), "somebody else learned from the user's claws");
         } finally {
-            LineTestPlayer.useRealHarm(false);
             restore(helper);
             BloodlineAccess.set(target, BloodlineState.NONE);
         }
         helper.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void whatTheClawsReadIsASnapshotThatNeverFollowsTheTargetAndASecondUseTakesANewOne(GameTestHelper helper) {
+        LineTestPlayer user = LineTestPlayer.create(helper);
+        LineTestPlayer target = LineTestPlayer.create(helper);
+        BloodlineAccess.set(target, BloodlineAccess.get(target).toBuilder().doppelgangerGene(true).doppelgangerRolled(true).build());
+        known(helper, user, target);
+        meet(helper, user, target);
+        try {
+            LineTestPlayer.useRealHarm(true);
+            agree(target);
+            ItemStack stack = claws();
+            var item = clawsItem(stack);
+            item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+            var before = ProfileService.of(user, target.getUUID()).facts().get(Fact.GENES);
+            helper.assertTrue(before != null && before.stream().allMatch(s -> s.endsWith(":unknown")), "the first read was not all unknown: " + before);
+            // the target discovers the gene afterwards: the user's page does not follow
+            BloodlineAccess.reveal(target, net.ofatech.supernaturalbloodlines.core.bloodline.Genes.DOPPELGANGER);
+            var later = ProfileService.of(user, target.getUUID()).facts().get(Fact.GENES);
+            helper.assertTrue(before.equals(later), "the user's page followed the target's later discovery: " + later);
+            // a second use, after the wait, takes a new snapshot
+            user.getCooldowns().removeCooldown(item);
+            item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+            var again = ProfileService.of(user, target.getUUID()).facts().get(Fact.GENES);
+            helper.assertTrue(again != null && !again.equals(before) && again.stream().anyMatch(s -> !s.endsWith(":unknown")), "a second use did not take a new snapshot: " + again);
+            helper.assertTrue(stack.getDamageValue() == 2, "two uses did not cost two: " + stack.getDamageValue());
+        } finally {
+            restore(helper);
+            BloodlineAccess.set(target, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void theTargetMustFaceTheUserAndSeeThemAndEveryRefusalSaysTheSame(GameTestHelper helper) {
+        LineTestPlayer user = LineTestPlayer.create(helper);
+        LineTestPlayer target = LineTestPlayer.create(helper);
+        known(helper, user, target);
+        meet(helper, user, target);
+        try {
+            LineTestPlayer.useRealHarm(true);
+            agree(target);
+            ItemStack stack = claws();
+            var item = clawsItem(stack);
+            // looking away
+            target.setYRot(180F);
+            item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+            helper.assertTrue(user.count(CL + "refused") == 1 && stack.getDamageValue() == 0 && target.received() == 0, "a target looking away was read: " + user.heard());
+            // looking at them, with a wall between
+            target.setYRot(0F);
+            helper.setBlock(new BlockPos(3, 2, 3), net.minecraft.world.level.block.Blocks.STONE);
+            item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+            helper.assertTrue(user.count(CL + "refused") == 2 && stack.getDamageValue() == 0, "a target behind a wall was read: " + user.heard());
+            // a look 30 degrees off: not facing
+            helper.setBlock(new BlockPos(3, 2, 3), net.minecraft.world.level.block.Blocks.AIR);
+            target.setYRot(30F);
+            item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+            helper.assertTrue(user.count(CL + "refused") == 3 && stack.getDamageValue() == 0, "a target looking 30 degrees off was read: " + user.heard());
+            // facing, sneaking, a lead, and a clear line
+            target.setYRot(0F);
+            item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+            helper.assertTrue(stack.getDamageValue() == 1 && user.count(CL + "refused") == 3, "a target who did everything was not read: " + user.heard());
+        } finally {
+            helper.setBlock(new BlockPos(3, 2, 3), net.minecraft.world.level.block.Blocks.AIR);
+            restore(helper);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void whereNoPlayerMayFightTheClawsSaySoInsteadOfRefusingTheTarget(GameTestHelper helper) {
+        LineTestPlayer user = LineTestPlayer.create(helper);
+        LineTestPlayer target = LineTestPlayer.create(helper);
+        known(helper, user, target);
+        meet(helper, user, target);
+        try {
+            LineTestPlayer.useRealHarm(true);
+            agree(target);
+            helper.getLevel().getServer().setPvpAllowed(false);
+            ItemStack stack = claws();
+            clawsItem(stack).interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+            helper.assertTrue(user.received(CL + "pvp_off") && !user.received(CL + "refused") && stack.getDamageValue() == 0 && !ProfileService.of(user, target.getUUID()).facts().containsKey(Fact.GENES),
+                    "the claws did not say PvP is off, or read where it is: " + user.heard());
+        } finally {
+            restore(helper);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "tall", templateNamespace = NS)
     public static void theClawsNeverNameAnNpcOriginalAsTheSireOrALine(GameTestHelper helper) {
         LineTestPlayer user = LineTestPlayer.create(helper);
         LineTestPlayer target = LineTestPlayer.create(helper);
         known(helper, user, target);
+        meet(helper, user, target);
         try {
             LineTestPlayer.useRealHarm(true);
             net.ofatech.supernaturalbloodlines.parts.species.sireline.SireRecorder.record(net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.KLAUS.uuid(), "Klaus", target);
             agree(target);
             ItemStack stack = claws();
-            ((net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem) stack.getItem()).interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+            clawsItem(stack).interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
             var facts = ProfileService.of(user, target.getUUID()).facts();
-            helper.assertTrue(stack.getDamageValue() == 1 && facts.containsKey(Fact.GENES), "the claws did not work on a player sired by an NPC Original: damage " + stack.getDamageValue() + ", facts " + facts + ", user heard " + user.heard() + ", target ok " + target.isShiftKeyDown() + " " + target.getMainHandItem());
+            helper.assertTrue(stack.getDamageValue() == 1 && facts.containsKey(Fact.GENES), "the claws did not work on a player sired by an NPC Original: damage " + stack.getDamageValue() + ", facts " + facts + ", user heard " + user.heard());
             helper.assertTrue(!facts.containsKey(Fact.SIRE) && !facts.containsKey(Fact.LINE), "the claws named an NPC Original as the sire or a line: " + facts);
             helper.assertTrue(facts.values().stream().flatMap(List::stream).noneMatch(s -> s.toLowerCase(java.util.Locale.ROOT).contains("klaus")), "the name of an NPC Original is in what the claws taught: " + facts);
         } finally {
-            LineTestPlayer.useRealHarm(false);
             restore(helper);
             net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(helper.getLevel()).remove(target.getUUID());
         }
         helper.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
+    @GameTest(template = "tall", templateNamespace = NS)
     public static void theClawsWaitHalfAMinuteBetweenUsesWhoeverIsTheTarget(GameTestHelper helper) {
         LineTestPlayer user = LineTestPlayer.create(helper);
         LineTestPlayer target = LineTestPlayer.create(helper);
         known(helper, user, target);
+        meet(helper, user, target);
         try {
             LineTestPlayer.useRealHarm(true);
             agree(target);
             ItemStack stack = claws();
-            var item = (net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem) stack.getItem();
+            var item = clawsItem(stack);
             item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
             helper.assertTrue(stack.getDamageValue() == 1 && user.getCooldowns().isOnCooldown(item), "the first use did not work or started no cooldown");
             item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
-            helper.assertTrue(stack.getDamageValue() == 1 && user.received(net.ofatech.supernaturalbloodlines.core.boss.MemoryClawsRules.WAIT), "a second use at once was not refused with the wait message: " + user.heard());
+            helper.assertTrue(stack.getDamageValue() == 1 && user.received(CL + "wait"), "a second use at once was not refused with the wait message: " + user.heard());
             // the wait is the same for a target who would be refused anyway: it tells nothing about them
             LineTestPlayer other = LineTestPlayer.create(helper);
             item.interactLivingEntity(stack, user, other, InteractionHand.MAIN_HAND);
-            helper.assertTrue(user.count(net.ofatech.supernaturalbloodlines.core.boss.MemoryClawsRules.WAIT) == 2 && !user.received(net.ofatech.supernaturalbloodlines.core.boss.MemoryClawsRules.REFUSED), "the wait did not come first: " + user.heard());
+            helper.assertTrue(user.count(CL + "wait") == 2 && !user.received(CL + "refused"), "the wait did not come first: " + user.heard());
         } finally {
-            LineTestPlayer.useRealHarm(false);
             restore(helper);
         }
         helper.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
-    public static void theClawsWorkOnNothingButAnotherPlayerAndNeverOnTheUserAndCostNothingWhenTheyFail(GameTestHelper helper) {
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void theClawsWorkOnNothingButAnotherPlayerAndNeverOnTheUserAndRightClickingTheAirSaysHowToUseThem(GameTestHelper helper) {
         LineTestPlayer user = LineTestPlayer.create(helper);
         known(helper, user);
         try {
             LineTestPlayer.useRealHarm(true);
             ItemStack stack = claws();
-            var item = (net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem) stack.getItem();
+            var item = clawsItem(stack);
             Villager villager = helper.spawn(EntityType.VILLAGER, new BlockPos(3, 1, 3));
             item.interactLivingEntity(stack, user, villager, InteractionHand.MAIN_HAND);
             helper.assertTrue(user.received(net.ofatech.supernaturalbloodlines.core.boss.MemoryClawsRules.NOT_THIS) && stack.getDamageValue() == 0, "a villager was read, or it cost a use: " + user.heard());
             agree(user);
             item.interactLivingEntity(stack, user, user, InteractionHand.MAIN_HAND);
             helper.assertTrue(user.received(net.ofatech.supernaturalbloodlines.core.boss.MemoryClawsRules.SELF) && stack.getDamageValue() == 0, "the user was read, or it cost a use");
+            // the air: a usage hint, not the line about themselves
+            user.setItemInHand(InteractionHand.MAIN_HAND, stack);
+            item.use(helper.getLevel(), user, InteractionHand.MAIN_HAND);
+            helper.assertTrue(user.received(net.ofatech.supernaturalbloodlines.core.boss.MemoryClawsRules.USAGE) && user.count(net.ofatech.supernaturalbloodlines.core.boss.MemoryClawsRules.SELF) == 1 && stack.getDamageValue() == 0,
+                    "right-clicking the air did not give the usage hint, or cost a use: " + user.heard());
             villager.discard();
         } finally {
-            LineTestPlayer.useRealHarm(false);
             restore(helper);
         }
         helper.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
-    public static void theClawsFollowPvpAndTheRightToHarm(GameTestHelper helper) {
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void theClawsFollowTheRightToHarmAndNeedBothSneakingAndALead(GameTestHelper helper) {
         LineTestPlayer user = LineTestPlayer.create(helper);
         LineTestPlayer target = LineTestPlayer.create(helper);
         known(helper, user, target);
+        meet(helper, user, target);
         try {
             agree(target);
             ItemStack stack = claws();
-            var item = (net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem) stack.getItem();
+            var item = clawsItem(stack);
             // a fake player never harms a player (the test's own default): the right to harm is missing, so a player who agrees is still refused
             LineTestPlayer.useRealHarm(false);
             item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
-            helper.assertTrue(user.received("item.supernaturalbloodlines.memory_claws.refused") && stack.getDamageValue() == 0 && !ProfileService.of(user, target.getUUID()).facts().containsKey(Fact.GENES),
+            helper.assertTrue(user.received(CL + "refused") && stack.getDamageValue() == 0 && !ProfileService.of(user, target.getUUID()).facts().containsKey(Fact.GENES),
                     "the claws read a player the user may not hurt");
-            // PvP off: refused even with the right to harm and consent
             LineTestPlayer.useRealHarm(true);
-            boolean pvp = helper.getLevel().getServer().isPvpAllowed();
-            helper.getLevel().getServer().setPvpAllowed(false);
-            try {
-                item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
-                helper.assertTrue(stack.getDamageValue() == 0 && !ProfileService.of(user, target.getUUID()).facts().containsKey(Fact.GENES), "the claws read a player where PvP is off");
-            } finally {
-                helper.getLevel().getServer().setPvpAllowed(pvp);
-            }
             // sneaking without a lead, and a lead without sneaking, are not consent
             target.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
             item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
@@ -745,32 +997,31 @@ public final class PeterGameTests {
             item.interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
             helper.assertTrue(stack.getDamageValue() == 0, "a lead alone was consent");
         } finally {
-            LineTestPlayer.useRealHarm(false);
             restore(helper);
         }
         helper.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
+    @GameTest(template = "tall", templateNamespace = NS)
     public static void everyRefusalOfTheClawsSaysTheSameWordsSoNothingIsLearnedFromTheWayItFails(GameTestHelper helper) {
         LineTestPlayer user = LineTestPlayer.create(helper);
         LineTestPlayer plain = LineTestPlayer.create(helper);
         LineTestPlayer rich = LineTestPlayer.create(helper);
         BloodlineAccess.set(rich, BloodlineAccess.get(rich).toBuilder().species(net.ofatech.supernaturalbloodlines.core.bloodline.Species.ORIGINAL).doppelgangerGene(true).doppelgangerRolled(true).build());
+        known(helper, user, plain, rich);
         try {
             LineTestPlayer.useRealHarm(true);
             ItemStack stack = claws();
-            var item = (net.ofatech.supernaturalbloodlines.parts.bosses.item.MemoryClawsItem) stack.getItem();
+            var item = clawsItem(stack);
             item.interactLivingEntity(stack, user, plain, InteractionHand.MAIN_HAND);
             item.interactLivingEntity(stack, user, rich, InteractionHand.MAIN_HAND);
-            helper.assertTrue(user.count("item.supernaturalbloodlines.memory_claws.refused") == 2 && user.received() == 2, "a refusal says different things for different players: " + user.heard());
+            helper.assertTrue(user.count(CL + "refused") == 2 && user.received() == 2, "a refusal says different things for different players: " + user.heard());
         } finally {
-            LineTestPlayer.useRealHarm(false);
+            restore(helper);
             BloodlineAccess.set(rich, BloodlineState.NONE);
         }
         helper.succeed();
     }
-
     // ---- the structure ----
 
     private static boolean houseData(GameTestHelper helper) {

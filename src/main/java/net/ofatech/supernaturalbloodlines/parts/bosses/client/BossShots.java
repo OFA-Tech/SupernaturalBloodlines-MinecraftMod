@@ -109,7 +109,8 @@ public final class BossShots {
     private static final String[][] HOUSE_VIEWS = {
         {"front", "tp @p 0.5 100 14.5 180 14"},
         {"corner", "tp @p 13.5 104 13.5 135 20"},
-        {"inside", "tp @p 0.5 100 3.5 180 6"}};
+        {"inside", "tp @p 0.5 100 3.5 180 6"},
+        {"cellar", "tp @p 0.5 96.2 0.5 90 12"}};
     private int houseStep = -1;
     private int houseWait;
 
@@ -129,8 +130,10 @@ public final class BossShots {
             return;
         }
         if (houseStep == -1) {
-            for (String c : new String[] {"gamemode creative @p", "time set 6000", "weather clear", "fill -16 90 -16 16 97 16 minecraft:stone", "fill -16 98 -16 16 98 16 minecraft:grass_block",
-                    "fill -16 99 -16 16 125 16 minecraft:air", "place template supernaturalbloodlines:hale_house -5 96 -4", HOUSE_VIEWS[0][1]}) {
+            // no HUD, no hand, no aura: a spectator sees the house and nothing of the mod's overlay; the template stands as the generator puts it, its floor layer in the ground's top block
+            mc.options.hideGui = true;
+            for (String c : new String[] {"gamemode spectator @p", "effect clear @p", "effect give @p minecraft:night_vision infinite 0 true", "time set 6000", "weather clear", "kill @e[type=!minecraft:player]", "fill -16 90 -16 16 97 16 minecraft:stone",
+                    "fill -16 98 -16 16 98 16 minecraft:grass_block", "fill -16 99 -16 16 125 16 minecraft:air", "place template supernaturalbloodlines:hale_house -5 95 -4", HOUSE_VIEWS[0][1]}) {
                 command(server, c);
             }
             houseStep = 0;

@@ -952,24 +952,33 @@ public final class BossDirector {
         return realHouse(level, from);
     }
 
-    /** A grid over the square of {@link PeterRules#HOUSE_RADIUS} around the point, at three heights, asked of the structure manager (a piece is 5 or more blocks across, so no house in range is missed). */
+    /**
+     * The house nearest to a point within {@link PeterRules#HOUSE_RADIUS} of one of its pieces, or nothing: the chunks that cover the square round the point are asked
+     * for the starts of a Hale house (one call each, 25 at most), and a piece counts by its distance to the point.
+     */
     private static Optional<net.minecraft.world.level.levelgen.structure.BoundingBox> realHouse(ServerLevel level, BlockPos from) {
         var manager = level.structureManager();
-        int[] offsets = PeterRules.scanOffsets();
-        for (int dx : offsets) {
-            for (int dz : offsets) {
-                if (!PeterRules.near((double) dx * dx + (double) dz * dz)) {
-                    continue;
-                }
-                for (int dy : new int[] {0, -8, 8}) {
-                    var start = manager.getStructureWithPieceAt(from.offset(dx, dy, dz), HALE_HOUSE);
-                    if (start.isValid()) {
-                        return Optional.of(start.getBoundingBox());
+        int r = PeterRules.HOUSE_RADIUS;
+        net.minecraft.world.level.levelgen.structure.BoundingBox best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (int cx = (from.getX() - r) >> 4; cx <= (from.getX() + r) >> 4; cx++) {
+            for (int cz = (from.getZ() - r) >> 4; cz <= (from.getZ() + r) >> 4; cz++) {
+                for (var start : manager.startsForStructure(new net.minecraft.world.level.ChunkPos(cx, cz), s -> s.type() == net.ofatech.supernaturalbloodlines.parts.bosses.world.HaleHouse.TYPE.get())) {
+                    if (!start.isValid()) {
+                        continue;
+                    }
+                    for (var piece : start.getPieces()) {
+                        var b = piece.getBoundingBox();
+                        double d = PeterRules.boxDistanceSquared(from.getX() + 0.5, from.getY(), from.getZ() + 0.5, b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ());
+                        if (PeterRules.near(d) && d < bestDistance) {
+                            best = start.getBoundingBox();
+                            bestDistance = d;
+                        }
                     }
                 }
             }
         }
-        return Optional.empty();
+        return Optional.ofNullable(best);
     }
 
     private static void peter(MinecraftServer server, BossIndex index) {
@@ -988,7 +997,11 @@ public final class BossDirector {
             Optional<net.minecraft.world.level.levelgen.structure.BoundingBox> house = p.level().dimension() == Level.OVERWORLD && !p.isSpectator()
                     ? houses.nearest(overworld, p.blockPosition()) : Optional.empty();
             if (PeterRules.calledBy(p.level().dimension() == Level.OVERWORLD, p.isSpectator(), house.isPresent())) {
-                spawnPeter(overworld, house.get());
+                if (spawnPeter(overworld, house.get()).isPresent()) {
+                    // once, to the one who called him, and never his name: the house is not empty
+                    p.displayClientMessage(net.minecraft.network.chat.Component.translatable("supernaturalbloodlines.boss.notice.peter"), true);
+                    p.sendSystemMessage(net.minecraft.network.chat.Component.translatable("supernaturalbloodlines.boss.notice.peter.hint"));
+                }
                 return;
             }
         }

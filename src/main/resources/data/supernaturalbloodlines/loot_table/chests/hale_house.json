@@ -2,6 +2,31 @@
     "type": "minecraft:chest",
     "pools": [
         {
+            "rolls": 1.0,
+            "entries": [
+                {
+                    "type": "minecraft:item",
+                    "name": "minecraft:written_book",
+                    "functions": [
+                        {
+                            "function": "minecraft:set_components",
+                            "components": {
+                                "minecraft:written_book_content": {
+                                    "title": "The Hale Fire",
+                                    "author": "Unsigned",
+                                    "pages": [
+                                        "{\"translate\":\"supernaturalbloodlines.lore.hale_fire.page1\"}",
+                                        "{\"translate\":\"supernaturalbloodlines.lore.hale_fire.page2\"}"
+                                    ],
+                                    "resolved": true
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "rolls": { "type": "minecraft:uniform", "min": 3.0, "max": 5.0 },
             "entries": [
                 { "type": "minecraft:item", "name": "minecraft:charcoal", "weight": 6, "functions": [ { "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 2.0, "max": 6.0 } } ] },

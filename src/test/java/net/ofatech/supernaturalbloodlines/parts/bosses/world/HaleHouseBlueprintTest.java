@@ -73,7 +73,7 @@ class HaleHouseBlueprintTest {
     void everyBlockIsAVanillaOneAndOnlyBurnedMaterials() {
         Set<String> allowed = Set.of("minecraft:cobblestone", "minecraft:mossy_cobblestone", "minecraft:air", "minecraft:coal_block", "minecraft:blackstone", "minecraft:coarse_dirt",
                 "minecraft:dark_oak_planks", "minecraft:ladder[facing=east]", "minecraft:stripped_dark_oak_log[axis=y]", "minecraft:gray_carpet", "minecraft:cobweb",
-                "minecraft:cobblestone_wall", "minecraft:dark_oak_log[axis=x]", "minecraft:chest[facing=west,type=single,waterlogged=false]",
+                "minecraft:cobblestone_wall", "minecraft:dark_oak_log[axis=x]", "minecraft:black_carpet", "minecraft:basalt[axis=y]", "minecraft:chest[facing=west,type=single,waterlogged=false]",
                 "minecraft:campfire[facing=south,lit=false,signal_fire=false,waterlogged=false]");
         for (var c : HOUSE.cells().values()) {
             assertTrue(allowed.contains(c.state()), "an unexpected block: " + c.state());
