@@ -242,8 +242,10 @@ public final class HubScreen extends Screen {
             HubHooks.Launcher l = launchers.get(i);
             Rect r = layout.seals().get(i);
             String id = "seal:" + l.id();
-            f.targets.add(new Target(id, r, null, true, List.of(l.name(), Component.translatable("supernaturalbloodlines.hub.launcher.hint", l.name())),
-                    () -> HubClient.launch(l, page)));
+            // a seal that is blocked (The Art of Witchcraft is not in the inventory) says why in its tooltip and does nothing
+            Component blocked = l.blocked().get();
+            f.targets.add(new Target(id, r, null, true, blocked == null ? List.of(l.name(), Component.translatable("supernaturalbloodlines.hub.launcher.hint", l.name()))
+                    : List.of(l.name(), blocked.copy().withStyle(net.minecraft.ChatFormatting.RED)), blocked == null ? () -> HubClient.launch(l, page) : null));
             theme.drawLauncher(g, r, l, r.contains(mouseX, mouseY) || f.focused(id));
             if (f.focused(id)) {
                 theme.drawFocus(g, r);
@@ -407,15 +409,8 @@ public final class HubScreen extends Screen {
             }
             case "profile_op" -> openProfile(DevDemo.id("Derek|op"), "Derek", true);
             case "true_alpha_dialog" -> warnTrueAlpha(() -> { });
-            // the real flow: the server's warning packet fires this hook, which opens the Rites page and the dialog (the answer packet goes nowhere in a screenshot run)
-            case "trial_warn" -> {
-                net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect(HubRites.TRIAL);
-                net.ofatech.supernaturalbloodlines.shared.hub.TrialWarnHook.fire();
-            }
-            case "rites_trial" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect(HubRites.TRIAL);
-            case "rites_brother" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:werewolf_brother");
-            case "rites_cloaking" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:rite_of_cloaking");
-            case "rites_linking" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:rite_of_linking");
+            // the real flow: the server's warning packet fires this hook, which opens Home and the dialog (the answer packet goes nowhere in a screenshot run)
+            case "trial_warn" -> net.ofatech.supernaturalbloodlines.shared.hub.TrialWarnHook.fire();
             case "pack_wolf" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackWolves.devSelect(1);
             case "pack_wolf_tensura" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackWolves.devSelect(3);
             case "pack_wolf_other" -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackWolves.devSelect(4);
@@ -426,11 +421,6 @@ public final class HubScreen extends Screen {
                         Component.translatable("supernaturalbloodlines.hub.confirm.stay"), Component.translatable("supernaturalbloodlines.hub.profile.action.heal"), () -> { });
             }
             default -> {
-                if (variant.startsWith("rites_")) {
-                    boolean circle = variant.endsWith("_circle"); // rites_<path>_circle: the Blood Moon and Tensura pages on their circle view
-                    net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageRitesPage.devCircle(circle);
-                    net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect("supernaturalbloodlines:" + variant.substring(6, variant.length() - (circle ? 7 : 0)));
-                }
                 if (variant.startsWith("guide_")) {
                     net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.GuideLinks.devChapter(variant.substring(6));
                 }

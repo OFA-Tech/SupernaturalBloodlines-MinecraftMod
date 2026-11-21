@@ -1,4 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -149,18 +150,18 @@ public final class LinePageSupport {
                 mayCall ? null : Component.translatable(KEY + "act.why_cannot_call"), null, () -> command("bloodline call")));
         boolean original = m.state() == LineRules.State.ORIGINAL || m.state() == LineRules.State.NOT_VAMPIRE;
         boolean canSever = sired && !snap.severed() && !original;
-        b.action(new Detail.Action("severance", Component.translatable(KEY + "act.severance"), false, canSever,
-                canSever ? Component.translatable(KEY + "act.severance_hint") : Component.translatable(KEY + (snap.severed() ? "act.why_severed" : "act.why_no_sire")),
-                null, () -> f.screen().setPage(HubPage.RITES)));
+        b.action(new Detail.Action("severance", Component.translatable(KEY + "act.severance"), false, canSever && RiteLinks.hasBook(),
+                !canSever ? Component.translatable(KEY + (snap.severed() ? "act.why_severed" : "act.why_no_sire")) : RiteLinks.hasBook() ? Component.translatable(KEY + "act.severance_hint") : RiteLinks.blocked(),
+                null, () -> RiteLinks.open("rite_of_severance")));
         boolean rootUnknown = (m.state() == LineRules.State.IN_LINE && o.root().isEmpty()) || (m.state() == LineRules.State.FREE && o.freedFrom().isEmpty());
         if (rootUnknown) {
-            b.action(new Detail.Action("revelation", Component.translatable(KEY + "act.revelation"), false, true, null, null, () -> f.screen().setPage(HubPage.RITES)));
+            b.action(new Detail.Action("revelation", Component.translatable(KEY + "act.revelation"), false, RiteLinks.hasBook(), RiteLinks.blocked(), null, () -> RiteLinks.open("rite_of_revelation")));
         }
         boolean free = m.state() == LineRules.State.FREE;
         boolean canBreak = m.state() == LineRules.State.IN_LINE;
-        b.action(new Detail.Action("broken_line", Component.translatable(KEY + (free ? "act.broken_done" : "act.broken_line")), false, canBreak,
-                canBreak ? Component.translatable(KEY + "act.broken_line_hint") : free ? breakTooltip(o) : Component.translatable(KEY + "act.why_not_in_line"),
-                null, () -> f.screen().setPage(HubPage.RITES)));
+        b.action(new Detail.Action("broken_line", Component.translatable(KEY + (free ? "act.broken_done" : "act.broken_line")), false, canBreak && RiteLinks.hasBook(),
+                !canBreak ? (free ? breakTooltip(o) : Component.translatable(KEY + "act.why_not_in_line")) : RiteLinks.hasBook() ? Component.translatable(KEY + "act.broken_line_hint") : RiteLinks.blocked(),
+                null, () -> RiteLinks.open("rite_of_the_broken_line")));
         return b.build();
     }
 

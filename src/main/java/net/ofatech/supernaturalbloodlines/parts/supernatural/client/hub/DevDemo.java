@@ -132,7 +132,7 @@ final class DevDemo {
             default -> f;
         };
         HubSnapshotPayload s = v.snapshot();
-        return new HubView(v.player(), v.bloodline(), v.state(), v.races(), v.ladders(), v.skills(), new HubSnapshotPayload(fam, s.pack(), s.fiveCount(), s.genes(), s.rites()), v.context());
+        return new HubView(v.player(), v.bloodline(), v.state(), v.races(), v.ladders(), v.skills(), new HubSnapshotPayload(fam, s.pack(), s.fiveCount(), s.genes()), v.context());
     }
 
     /** A Ghoul with 14:20 left to finish turning: Path and Guide open, the rest locked. */
@@ -147,8 +147,7 @@ final class DevDemo {
     /** Nothing yet: no pack, no sire or children, no open task (the three empty states). */
     private static HubView empty(HubView v) {
         HubSnapshotPayload.Family none = HubSnapshotPayload.Family.NONE;
-        HubSnapshotPayload snap = new HubSnapshotPayload(none, List.of(), 0, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),
-                v.snapshot().rites());
+        HubSnapshotPayload snap = new HubSnapshotPayload(none, List.of(), 0, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN));
         List<HubModel.LadderView> done = v.ladders().stream().map(l -> new HubModel.LadderView(l.race(), l.rungs(), Optional.empty(), List.of())).toList();
         return new HubView(v.player(), v.bloodline(), v.state().toBuilder().skills(Set.of()).build(), v.races(), done, v.skills(), snap, v.context());
     }
@@ -167,37 +166,10 @@ final class DevDemo {
         HubSnapshotPayload.Family family = new HubSnapshotPayload.Family(Optional.of("Klaus"), false, List.of("Tyler", "Ana", "Bo", "Cy", "Di"),
                 List.of("Mikael"), List.of(new HubSocial.Kin("Tyler", 0), new HubSocial.Kin("Ana", 0), new HubSocial.Kin("Bo", 0), new HubSocial.Kin("Cy", 0),
                         new HubSocial.Kin("Di", 0)), HubSocial.Origin.NONE);
-        List<HubSocial.Rite> rites = new ArrayList<>();
-        rites.addAll(v.snapshot().rites());
-        if (rites.stream().noneMatch(r -> r.id().equals(HubRites.TRIAL))) {
-            rites.add(new HubSocial.Rite(HubRites.TRIAL, 12000, List.of("1 supernaturalbloodlines:moonstone", "1 werewolves:silver_ingot", "8 minecraft:bone"),
-                    List.of("enchanted:medium_circle=enchanted:ritual_chalk"), "supernaturalbloodlines:alpha_trial", "werewolf", List.of(), true, 0));
-        }
-        if (rites.stream().noneMatch(r -> r.id().equals("supernaturalbloodlines:werewolf_brother"))) {
-            rites.add(new HubSocial.Rite("supernaturalbloodlines:werewolf_brother", 6000, List.of("1 supernaturalbloodlines:moonstone", "1 minecraft:beef", "1 werewolves:silver_nugget"),
-                    List.of("enchanted:small_circle=enchanted:ritual_chalk"), "supernaturalbloodlines:werewolf_brother", "werewolf"));
-        }
-        if (rites.stream().noneMatch(r -> r.id().equals("supernaturalbloodlines:rite_of_cloaking"))) {
-            rites.add(new HubSocial.Rite("supernaturalbloodlines:rite_of_cloaking", 4000, List.of("1 supernaturalbloodlines:kol_grimoire", "2 minecraft:phantom_membrane", "1 minecraft:ender_pearl"),
-                    List.of("enchanted:medium_circle=enchanted:ritual_chalk"), "supernaturalbloodlines:cloaking", "witch"));
-            rites.add(new HubSocial.Rite("supernaturalbloodlines:rite_of_linking", 5000, List.of("1 supernaturalbloodlines:esther_grimoire", "2 minecraft:lead", "2 minecraft:amethyst_shard"),
-                    List.of("enchanted:medium_circle=enchanted:ritual_chalk"), "supernaturalbloodlines:linking_spell", "witch"));
-        }
-        if (rites.stream().noneMatch(r -> r.id().equals("supernaturalbloodlines:curse_skill_seal"))) {
-            // the circles and facts the new Rites page draws: an infernal chalk curse, the large circle, a sacrifice on a full moon, a rite that costs no altar power
-            rites.add(new HubSocial.Rite("supernaturalbloodlines:curse_skill_seal", 2000, List.of("1 enchanted:taglock", "1 tensura:medium_quality_magic_crystal", "1 minecraft:soul_sand"),
-                    List.of("enchanted:medium_circle=enchanted:nether_chalk"), "enchanted:apply_curse", "", List.of(), false, 0));
-            rites.add(new HubSocial.Rite("supernaturalbloodlines:rite_of_the_imprisoned_original", 36000, List.of("1 supernaturalbloodlines:sires_blood", "3 supernaturalbloodlines:white_oak_ash", "2 enchanted:spirit_of_otherwhere"),
-                    List.of("enchanted:large_circle=enchanted:ritual_chalk"), "supernaturalbloodlines:imprisoned_original", "", List.of(), false, 0));
-            rites.add(new HubSocial.Rite("supernaturalbloodlines:rite_of_the_moon", 15000, List.of("1 supernaturalbloodlines:moonstone", "1 supernaturalbloodlines:original_blood"),
-                    List.of("enchanted:medium_circle=enchanted:ritual_chalk"), "supernaturalbloodlines:faction_rite", "vampire_or_werewolf", List.of("minecraft:wolf", "minecraft:villager"), true, 0));
-            rites.add(new HubSocial.Rite("supernaturalbloodlines:magicule_offering", 0, List.of("1 tensura:low_quality_magic_crystal", "1 minecraft:amethyst_shard"),
-                    List.of("enchanted:small_circle=enchanted:ritual_chalk"), "supernaturalbloodlines:magicule_offering", "", List.of(), false, 0));
-        }
         List<HubSocial.Person> people = new ArrayList<>(List.of(new HubSocial.Person("Klaus", id("Klaus"))));
         family.sired().forEach(n -> people.add(new HubSocial.Person(n, id(n))));
         HubSnapshotPayload snap = new HubSnapshotPayload(family, pack, 2, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),
-                rites, people, new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(true, true, "running".equals(System.getProperty("supernaturalbloodlines.devshots.demo.trial")) ? 2 : 1).withBossNear(new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.BossNear("fallen".equals(System.getProperty("supernaturalbloodlines.devshots.demo.boss")) ? 2 : 1, "mikael")), npcs());
+                people, new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(true, true, "running".equals(System.getProperty("supernaturalbloodlines.devshots.demo.trial")) ? 2 : 1).withBossNear(new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.BossNear("fallen".equals(System.getProperty("supernaturalbloodlines.devshots.demo.boss")) ? 2 : 1, "mikael")), npcs());
         // one person, everywhere: Dev is the hybrid werewolf who leads the demo pack as an Alpha with a bitten-then-born line
         var wolf = v.bloodline().wolf().toBuilder().lineage(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.BORN)
                 .rank("beta".equals(System.getProperty("supernaturalbloodlines.devshots.demo.rank")) ? net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.BETA

@@ -2,7 +2,9 @@
   "children": [],
   "display_on_front_page": false,
   "entries": [
+    "supernaturalbloodlines/sealed/curse_magicule_drain",
     "supernaturalbloodlines/rites/curse_magicule_drain",
+    "supernaturalbloodlines/sealed/curse_skill_seal",
     "supernaturalbloodlines/rites/curse_skill_seal",
     "supernaturalbloodlines/rites/magicule_offering",
     "supernaturalbloodlines/rites/purification",

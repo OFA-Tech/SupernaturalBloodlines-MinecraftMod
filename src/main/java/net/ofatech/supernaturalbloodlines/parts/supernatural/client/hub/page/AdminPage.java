@@ -69,6 +69,7 @@ public final class AdminPage implements HubPageView {
     private int speciesAt;
     private int eventAt;
     private int raceAt;
+    private int riteAt;
     private int bossAt;
     private int number = 100;
 
@@ -410,13 +411,21 @@ public final class AdminPage implements HubPageView {
         acts.add(new Act("rung", "D8", List.of(cycle(races, raceAt).id(), String.valueOf(Math.max(0, Math.min(20, number))))));
         acts.add(new Act("gene_on", "B7", List.of("true")));
         acts.add(new Act("gene_off", "B7", List.of("false")));
+        // what the player knows of the rites (plan rites-unlock): the rite is the parameter picked below
+        List<String> riteChoices = new ArrayList<>(List.of("all"));
+        riteChoices.addAll(net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.GATED.keySet());
+        riteChoices.addAll(net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.loreIds());
+        String riteNow = cycle(riteChoices, riteAt);
+        acts.add(new Act("rites_list", "B8", List.of()));
+        acts.add(new Act("rite_learn", "B9", List.of(riteNow)));
+        acts.add(new Act("rite_forget", "B10", List.of(riteNow)));
         if (net.neoforged.fml.ModList.get().isLoaded("werewolves")) {
             acts.add(new Act("npc_release", "D13", List.of()));
         }
         y = PageKit.wrapped(f, Component.translatable(KEY + "params").withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
         List<Component> pl = List.of(Component.literal(cycle(species, speciesAt).name()), Component.literal(cycle(events, eventAt).name()),
-                Component.literal(cycle(races, raceAt).id()), Component.literal(String.valueOf(number)));
-        List<Runnable> pr = List.of(() -> speciesAt++, () -> eventAt++, () -> raceAt++, () -> number = number >= 1000 ? -1000 : number + 100);
+                Component.literal(cycle(races, raceAt).id()), Component.literal(String.valueOf(number)), Component.literal(riteNow));
+        List<Runnable> pr = List.of(() -> speciesAt++, () -> eventAt++, () -> raceAt++, () -> number = number >= 1000 ? -1000 : number + 100, () -> riteAt++);
         Flow.Result pf = Flow.wrap(new Rect(r.x(), y, r.w(), 0), pl.stream().map(c -> PageWidgets.widthOf(f.font(), c)).toList(), PageWidgets.H, 3);
         for (int i = 0; i < pl.size(); i++) {
             PageWidgets.button(f, "stage:admin:param:" + i, pf.rects().get(i), pl.get(i), true, false, Component.translatable(KEY + "param_tip"), pr.get(i));

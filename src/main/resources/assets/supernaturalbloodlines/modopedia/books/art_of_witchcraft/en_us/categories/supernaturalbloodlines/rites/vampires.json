@@ -2,10 +2,14 @@
   "children": [],
   "display_on_front_page": false,
   "entries": [
+    "supernaturalbloodlines/sealed/immortality",
     "supernaturalbloodlines/rites/immortality",
+    "supernaturalbloodlines/sealed/cleansing_blood",
     "supernaturalbloodlines/rites/cleansing_blood",
+    "supernaturalbloodlines/sealed/original_blood",
     "supernaturalbloodlines/rites/original_blood",
     "supernaturalbloodlines/rites/blood_offering",
+    "supernaturalbloodlines/sealed/rite_of_the_five",
     "supernaturalbloodlines/rites/rite_of_the_five"
   ],
   "icon": {

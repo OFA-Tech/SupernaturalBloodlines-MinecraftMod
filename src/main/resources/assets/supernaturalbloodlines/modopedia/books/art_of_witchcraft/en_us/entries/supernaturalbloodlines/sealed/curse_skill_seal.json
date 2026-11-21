@@ -1,0 +1,20 @@
+{
+  "title": "???",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:honeycomb"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/sealed/curse_skill_seal",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Written in a stranger's hand.\n\nThe seal is unbroken.",
+          "header": "???"
+        }
+      ]
+    }
+  ]
+}

@@ -21,12 +21,12 @@ class HubPageVisibilityTest {
 
     @Test
     void allModsWerewolfSeesEveryPage() {
-        assertEquals(List.of(HOME, PATH, SKILLS, QUESTS, RITES, BLOODLINE, PACK, GUIDE, SETTINGS), visiblePages(ctx(WEREWOLF, true, true, false)));
+        assertEquals(List.of(HOME, PATH, SKILLS, QUESTS, BLOODLINE, PACK, GUIDE, SETTINGS), visiblePages(ctx(WEREWOLF, true, true, false)));
     }
 
     @Test
     void vampireWithNoPackHasNoPackPage() {
-        assertEquals(List.of(HOME, PATH, SKILLS, QUESTS, RITES, BLOODLINE, GUIDE, SETTINGS), visiblePages(ctx(VAMPIRE, true, true, false)));
+        assertEquals(List.of(HOME, PATH, SKILLS, QUESTS, BLOODLINE, GUIDE, SETTINGS), visiblePages(ctx(VAMPIRE, true, true, false)));
     }
 
     @Test
@@ -90,7 +90,7 @@ class HubPageVisibilityTest {
                 assertTrue(p.group() != HubPage.Group.NONE, p.name());
             }
         }
-        assertEquals(List.of(HOME, PATH, SKILLS, QUESTS, RITES, BLOODLINE, PACK, GUIDE, SETTINGS, ADMIN, LOADOUT), List.of(HubPage.values()));
+        assertEquals(List.of(HOME, PATH, SKILLS, QUESTS, BLOODLINE, PACK, GUIDE, SETTINGS, ADMIN, LOADOUT), List.of(HubPage.values()));
     }
 
     @Test

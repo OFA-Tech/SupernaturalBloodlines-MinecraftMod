@@ -92,6 +92,28 @@ public final class RiteSignalGameTests {
         helper.succeed();
     }
 
+    /** A rite that worked teaches itself to the one who performed it (plan rites-unlock): the world that already ran rites loses nothing. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aRiteThatWorkedIsLearnedByItsPerformer(GameTestHelper helper) {
+        if (missing(helper, "ward_of_return")) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer p = TestPlayers.create(helper);
+        BloodlineAccess.set(p, BloodlineState.NONE);
+        p.setPos(Vec3.atBottomCenterOf(centre(helper)));
+        helper.getLevel().addNewPlayer(p);
+        try {
+            net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks.reconcile(p);
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks.isKnown(p, "ward_of_return"), "control: a plain human knew the Ward of Return");
+            run(helper, "ward_of_return", p);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks.isKnown(p, "ward_of_return"), "the performer did not learn the rite they worked");
+        } finally {
+            leave(helper.getLevel(), p);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void anyRiteIsCountedExactlyOnce(GameTestHelper helper) {
         if (missing(helper, "ward_of_return")) {

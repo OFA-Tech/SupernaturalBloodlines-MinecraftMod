@@ -5,6 +5,7 @@
     "id": "minecraft:golden_apple"
   },
   "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/cleansing_blood",
   "pages": [
     {
       "components": [

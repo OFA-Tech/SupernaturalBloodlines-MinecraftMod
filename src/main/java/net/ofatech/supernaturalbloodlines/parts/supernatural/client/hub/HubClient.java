@@ -34,11 +34,11 @@ public final class HubClient {
     }
 
     /**
-     * The Alpha Trial was refused for an open True Alpha path (R147): the hub opens on the Rites page and shows the warning; "take the spark" answers the
+     * The Alpha Trial was refused for an open True Alpha path (R147): the hub opens on Home and shows the warning; "take the spark" answers the
      * server, which then lets the rite start. The screen is the same one the Rites page and the profile use ({@link HubScreen#warnTrueAlpha}).
      */
     static void onTrialWarning() {
-        open(HubPage.RITES);
+        open(HubPage.HOME);
         if (Minecraft.getInstance().screen instanceof HubScreen s) {
             // the answer goes to the server, and the hub closes: the server's reply is a chat line, which a screen would hide
             s.warnTrueAlpha(() -> {
@@ -98,7 +98,7 @@ public final class HubClient {
         }
         if (ModList.get().isLoaded("enchanted") && ModList.get().isLoaded("modopedia")) {
             HubHooks.addLauncher(new HubHooks.Launcher("enchanted", "E", 0xFFb7f0c4, Component.translatable("supernaturalbloodlines.hub.launcher.enchanted"),
-                    "net.favouriteless.", () -> true, HubClient::openEnchantedBook));
+                    "net.favouriteless.", () -> true, HubClient::openEnchantedBook, RiteLinks::blocked));
             net.ofatech.supernaturalbloodlines.parts.supernatural.client.book.EnchantedBook.register();
         }
     }
@@ -205,7 +205,6 @@ public final class HubClient {
 
     /** Back in the main menu: the next world starts a new session. */
     public static void newSession() {
-        net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect(null); // a dev-screenshot selection never outlives its world
         openedThisSession = false;
         lastPage = HubPage.HOME;
     }

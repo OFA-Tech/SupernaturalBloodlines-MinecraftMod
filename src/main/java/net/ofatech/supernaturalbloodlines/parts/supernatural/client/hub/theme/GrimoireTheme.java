@@ -11,7 +11,6 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.Gri
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookGuidePage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookPackPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookQuestsPage;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookRitesPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookSkillsPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PathPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
@@ -48,7 +47,6 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
     private final HubPageView path = new PathPage(true);
     private final HubPageView skills = new BookSkillsPage();
     private final HubPageView quests = new BookQuestsPage();
-    private final HubPageView rites = new BookRitesPage();
     private final HubPageView bloodline = new GrimoireBloodlinePage();
     private final HubPageView pack = new BookPackPage();
     private final HubPageView guide = new BookGuidePage();
@@ -64,7 +62,6 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
             case PATH -> path;
             case SKILLS -> skills;
             case QUESTS -> quests;
-            case RITES -> rites;
             case BLOODLINE -> bloodline;
             case PACK -> pack;
             case GUIDE -> guide;
@@ -144,7 +141,6 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
     public static int tabColor(HubPage.Group group, boolean selected) {
         return switch (group) {
             case NONE, ME -> selected ? 0xFF9A1820 : 0xFF6A1A20;
-            case MAGIC -> selected ? 0xFF6A2E8A : 0xFF45205C;
             case PEOPLE -> selected ? 0xFF8A5A14 : 0xFF5E3C10;
             case HELP -> selected ? 0xFF2E7A4A : 0xFF1F5232;
             case SYSTEM -> selected ? 0xFF5A5058 : 0xFF3C343C;

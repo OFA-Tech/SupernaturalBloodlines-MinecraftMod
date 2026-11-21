@@ -21,7 +21,11 @@ public final class HubHooks {
      * @param screenPackage the package of the screens it opens: while one of those is open the hub waits to come back; any other screen
      *                      (another mod's, the death screen) cancels the return
      */
-    public record Launcher(String id, String letter, int color, Component name, String screenPackage, BooleanSupplier available, Runnable open) {
+    public record Launcher(String id, String letter, int color, Component name, String screenPackage, BooleanSupplier available, Runnable open,
+                           Supplier<Component> blocked) {
+        public Launcher(String id, String letter, int color, Component name, String screenPackage, BooleanSupplier available, Runnable open) {
+            this(id, letter, color, name, screenPackage, available, open, () -> null);
+        }
     }
 
     /** A hub theme a part brings, by the id {@code hub_theme} names (lower case). */

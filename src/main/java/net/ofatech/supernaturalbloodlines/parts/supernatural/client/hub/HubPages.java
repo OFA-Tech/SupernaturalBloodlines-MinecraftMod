@@ -14,7 +14,6 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.Gui
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.LoadoutPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PathPage;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.SkillsPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PlaceholderPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.QuestsPage;
@@ -34,7 +33,6 @@ public final class HubPages {
         SHARED.put(HubPage.PATH, new PathPage());
         SHARED.put(HubPage.QUESTS, new QuestsPage());
         SHARED.put(HubPage.SKILLS, new SkillsPage());
-        SHARED.put(HubPage.RITES, new RitesPage());
         SHARED.put(HubPage.BLOODLINE, new BloodlinePage());
         SHARED.put(HubPage.PACK, new PackPage());
         SHARED.put(HubPage.GUIDE, new GuidePage());

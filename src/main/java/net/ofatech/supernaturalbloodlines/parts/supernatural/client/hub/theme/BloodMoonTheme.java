@@ -25,7 +25,6 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.Sta
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageGuidePage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageLoadoutPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageQuestsPage;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageRitesPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookPackPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookSkillsPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
@@ -61,7 +60,6 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     private final BookSkillsPage skills = new BookSkillsPage(true);
     private final HubPageView pack = new BookPackPage(BloodMoonLayout.RIGHT, BloodMoonLayout.MOON);
     private final HubPageView quests = new StageQuestsPage();
-    private final HubPageView rites = new StageRitesPage();
     private final HubPageView bloodline = new StageBloodlinePage(StageBloodlinePage.Look.MOON);
     private final HubPageView guide = new StageGuidePage();
     private final HubPageView loadout = new StageLoadoutPage();
@@ -88,7 +86,6 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
             case SKILLS -> skills;
             case PACK -> pack;
             case QUESTS -> quests;
-            case RITES -> rites;
             case BLOODLINE -> bloodline;
             case GUIDE -> guide;
             case LOADOUT -> loadout;

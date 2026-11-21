@@ -4,9 +4,13 @@
   "entries": [
     "supernaturalbloodlines/rites/ancestral_calling",
     "supernaturalbloodlines/rites/rite_of_revelation",
+    "supernaturalbloodlines/sealed/doppelganger_blood",
     "supernaturalbloodlines/rites/doppelganger_blood",
+    "supernaturalbloodlines/sealed/rite_of_severance",
     "supernaturalbloodlines/rites/rite_of_severance",
+    "supernaturalbloodlines/sealed/rite_of_cloaking",
     "supernaturalbloodlines/rites/rite_of_cloaking",
+    "supernaturalbloodlines/sealed/rite_of_linking",
     "supernaturalbloodlines/rites/rite_of_linking"
   ],
   "icon": {

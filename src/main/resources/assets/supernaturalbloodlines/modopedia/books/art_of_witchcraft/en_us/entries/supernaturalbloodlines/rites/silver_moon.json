@@ -5,6 +5,7 @@
     "id": "minecraft:iron_ingot"
   },
   "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/silver_moon",
   "pages": [
     {
       "components": [

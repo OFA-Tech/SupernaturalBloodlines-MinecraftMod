@@ -5,6 +5,7 @@
     "id": "minecraft:glass_bottle"
   },
   "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/original_blood",
   "pages": [
     {
       "components": [

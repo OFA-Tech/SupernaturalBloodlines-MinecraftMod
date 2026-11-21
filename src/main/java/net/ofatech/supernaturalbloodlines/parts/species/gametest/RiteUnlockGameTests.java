@@ -1,0 +1,184 @@
+package net.ofatech.supernaturalbloodlines.parts.species.gametest;
+
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.core.rite.RiteAdvancements;
+import net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable;
+import net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlockCommand;
+import net.ofatech.supernaturalbloodlines.parts.species.unlock.RitePageItem;
+import net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks;
+import net.ofatech.supernaturalbloodlines.shared.species.RiteLearned;
+
+/** Plan rites-unlock: what a player knows of the rites is two advancements per rite, and exactly one of them is done. */
+@PrefixGameTestTemplate(false)
+public final class RiteUnlockGameTests {
+    private static final String NS = SupernaturalBloodlines.MODID;
+
+    private RiteUnlockGameTests() {}
+
+    private static ServerPlayer player(GameTestHelper helper, Species species) {
+        ServerPlayer p = LineTestPlayer.create(helper);
+        BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(species).build());
+        return p;
+    }
+
+    private static boolean known(ServerPlayer p, String rite) {
+        return RiteUnlocks.done(p, RiteAdvancements.known(rite));
+    }
+
+    private static boolean sealed(ServerPlayer p, String rite) {
+        return RiteUnlocks.done(p, RiteAdvancements.sealed(rite));
+    }
+
+    private static AdvancementHolder holder(ServerPlayer p, String id) {
+        return p.server.getAdvancements().get(ResourceLocation.parse(id));
+    }
+
+    /** The invariant, for every gated rite: known xor sealed. */
+    private static String broken(ServerPlayer p) {
+        for (String rite : RiteUnlockTable.GATED.keySet()) {
+            if (known(p, rite) == sealed(p, rite)) {
+                return rite + " known=" + known(p, rite) + " sealed=" + sealed(p, rite);
+            }
+        }
+        return null;
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theAdvancementsAreLoaded(GameTestHelper helper) {
+        ServerPlayer p = player(helper, Species.NONE);
+        for (String rite : RiteUnlockTable.GATED.keySet()) {
+            helper.assertTrue(holder(p, RiteAdvancements.known(rite)) != null, rite + ": no known advancement in the datapack");
+            helper.assertTrue(holder(p, RiteAdvancements.sealed(rite)) != null, rite + ": no sealed advancement in the datapack");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aNewPlayerIsSealedOutOfEveryGatedRite(GameTestHelper helper) {
+        ServerPlayer p = player(helper, Species.NONE);
+        RiteUnlocks.reconcile(p);
+        helper.assertTrue(broken(p) == null, "known and sealed disagree: " + broken(p));
+        for (String rite : RiteUnlockTable.GATED.keySet()) {
+            helper.assertTrue(!known(p, rite), rite + " is known to a plain human");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void becomingAKindTeachesItsRites(GameTestHelper helper) {
+        ServerPlayer p = player(helper, Species.NONE);
+        RiteUnlocks.reconcile(p);
+        helper.assertTrue(!known(p, "rite_of_severance"), "control: Severance known before being a witch");
+        BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
+        RiteUnlocks.reconcile(p);
+        helper.assertTrue(known(p, "rite_of_severance") && known(p, "ward_of_return") && known(p, "rite_of_the_cure"), "a witch does not know the witch rites");
+        helper.assertTrue(!sealed(p, "rite_of_severance"), "a known rite is still sealed");
+        helper.assertTrue(!known(p, "rite_of_cloaking") && sealed(p, "rite_of_cloaking"), "a witch learned a lore rite by being a witch");
+        helper.assertTrue(!known(p, "alpha_trial"), "a witch learned a werewolf rite");
+        helper.assertTrue(broken(p) == null, "known and sealed disagree: " + broken(p));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void loreTeachesItsRitesOnce(GameTestHelper helper) {
+        ServerPlayer p = player(helper, Species.NONE);
+        RiteUnlocks.reconcile(p);
+        helper.assertTrue(RiteUnlocks.learnLore(p, RiteUnlockTable.FINN) == 2, "Finn's Notes did not teach two rites");
+        helper.assertTrue(known(p, "rite_of_the_broken_line") && known(p, "rite_of_the_imprisoned_original"), "the rites are not known");
+        helper.assertTrue(!sealed(p, "rite_of_the_broken_line"), "a learned rite is still sealed");
+        helper.assertTrue(!known(p, "rite_of_the_cure"), "another lore's rite was taught");
+        helper.assertTrue(RiteUnlocks.learnLore(p, RiteUnlockTable.FINN) == 0, "a second reading taught again");
+        helper.assertTrue(broken(p) == null, "known and sealed disagree: " + broken(p));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void performingARiteTeachesIt(GameTestHelper helper) {
+        ServerPlayer p = player(helper, Species.NONE);
+        RiteUnlocks.reconcile(p);
+        helper.assertTrue(!known(p, "immortality"), "control");
+        RiteLearned.performed(p, NS + ":immortality");
+        helper.assertTrue(known(p, "immortality") && !sealed(p, "immortality"), "the performer did not learn the rite");
+        RiteLearned.performed(p, NS + ":purification"); // an open rite teaches nothing and is not an error
+        RiteLearned.performed(p, "enchanted:something"); // another mod's rite likewise
+        helper.assertTrue(broken(p) == null, "known and sealed disagree: " + broken(p));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anAdminsGrantOrRevokeCannotLeaveBothOrNeither(GameTestHelper helper) {
+        ServerPlayer p = player(helper, Species.NONE);
+        RiteUnlocks.reconcile(p);
+        String rite = "immortality";
+        // /advancement grant on the sealed one of a rite that is known
+        RiteUnlocks.learn(p, rite, false);
+        p.getAdvancements().award(holder(p, RiteAdvancements.sealed(rite)), RiteAdvancements.CRITERION);
+        helper.assertTrue(known(p, rite) && !sealed(p, rite), "both: the sealed one was kept for a known rite");
+        // /advancement revoke on the known one: it is not known, so it is sealed again
+        p.getAdvancements().revoke(holder(p, RiteAdvancements.known(rite)), RiteAdvancements.CRITERION);
+        helper.assertTrue(!known(p, rite) && sealed(p, rite), "neither: the rite is neither known nor sealed");
+        // /advancement revoke on the sealed one of a rite that is not known
+        p.getAdvancements().revoke(holder(p, RiteAdvancements.sealed(rite)), RiteAdvancements.CRITERION);
+        helper.assertTrue(sealed(p, rite), "neither: the sealed one was not put back");
+        helper.assertTrue(broken(p) == null, "known and sealed disagree: " + broken(p));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void knowledgeIsKeptWhenTheKindIsLost(GameTestHelper helper) {
+        ServerPlayer p = player(helper, Species.WITCH);
+        RiteUnlocks.reconcile(p);
+        helper.assertTrue(known(p, "ward_of_return"), "control");
+        BloodlineAccess.set(p, BloodlineState.NONE);
+        RiteUnlocks.reconcile(p);
+        helper.assertTrue(known(p, "ward_of_return") && !sealed(p, "ward_of_return"), "a rite was forgotten with the kind");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTornPageTeachesAndCrumblesOnlyWhenItTaught(GameTestHelper helper) {
+        ServerPlayer p = player(helper, Species.NONE);
+        RiteUnlocks.reconcile(p);
+        var hand = net.minecraft.world.InteractionHand.MAIN_HAND;
+        var page = RitePageItem.of(RiteUnlockTable.ELIJAH);
+        p.setItemInHand(hand, page);
+        page.getItem().use(helper.getLevel(), p, hand);
+        helper.assertTrue(known(p, "rite_of_the_cure"), "the page did not teach the Cure");
+        helper.assertTrue(p.getItemInHand(hand).isEmpty(), "the page did not crumble");
+        var again = RitePageItem.of(RiteUnlockTable.ELIJAH);
+        p.setItemInHand(hand, again);
+        again.getItem().use(helper.getLevel(), p, hand);
+        helper.assertTrue(!p.getItemInHand(hand).isEmpty(), "a page that taught nothing crumbled");
+        var blank = new net.minecraft.world.item.ItemStack(net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries.RITE_PAGE.get());
+        p.setItemInHand(hand, blank);
+        blank.getItem().use(helper.getLevel(), p, hand);
+        helper.assertTrue(!p.getItemInHand(hand).isEmpty() && broken(p) == null, "a blank page did something");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theCommandTeachesAndForgets(GameTestHelper helper) {
+        ServerPlayer p = player(helper, Species.NONE);
+        RiteUnlocks.reconcile(p);
+        var source = p.createCommandSourceStack().withPermission(2);
+        helper.assertTrue(RiteUnlockCommand.change(source, p, "esther", true) == 2, "learning Esther's rites changed " + RiteUnlocks.known(p));
+        helper.assertTrue(known(p, "rite_of_linking") && known(p, "rite_of_severance"), "not learned");
+        helper.assertTrue(RiteUnlockCommand.change(source, p, "rite_of_linking", false) == 1, "forgetting one rite");
+        helper.assertTrue(!known(p, "rite_of_linking") && sealed(p, "rite_of_linking") && known(p, "rite_of_severance"), "the wrong rite was forgotten");
+        helper.assertTrue(RiteUnlockCommand.change(source, p, "all", true) == RiteUnlockTable.GATED.size() - 1, "all did not teach the rest");
+        helper.assertTrue(RiteUnlockCommand.change(source, p, "nonsense", true) == 0, "an unknown rite changed something");
+        helper.assertTrue(RiteUnlockCommand.change(source, p, "all", false) == RiteUnlockTable.GATED.size(), "forgetting all");
+        helper.assertTrue(broken(p) == null, "known and sealed disagree: " + broken(p));
+        helper.assertTrue(RiteUnlockCommand.list(source, p) == 0, "the list of a player who knows nothing");
+        helper.succeed();
+    }
+}

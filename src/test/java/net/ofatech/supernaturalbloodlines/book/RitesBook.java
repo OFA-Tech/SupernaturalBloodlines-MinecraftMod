@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.ofatech.supernaturalbloodlines.core.rite.RiteAdvancements;
+import net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +19,7 @@ import java.util.stream.Stream;
 
 /**
  * Writes this mod's chapter of Enchanted's book (a Modopedia book): one entry per rite file, built from the rite JSON (its circle) and the
- * {@code hub.rites.desc.<rite>.<n>} lang lines (what it does, who, the cost), so the book, the Rites page and the rite data cannot disagree.
+ * {@code hub.rites.desc.<rite>.<n>} lang lines (what it does, who, the cost), so the book and the rite data cannot disagree.
  * Output is committed under {@link #BOOK}; {@code RitesBookTest} fails when the committed files are not what this makes.
  * Regenerate with {@code RITES_BOOK_WRITE=1 ./gradlew test --tests '*RitesBookTest'}.
  */
@@ -25,6 +27,10 @@ final class RitesBook {
     static final String NS = "supernaturalbloodlines";
     static final String BOOK = "src/main/resources/assets/supernaturalbloodlines/modopedia/books/art_of_witchcraft/en_us";
     static final String RITES = "src/main/resources/data/supernaturalbloodlines/enchanted/circle_magic/rite";
+    /** The unlock advancements (generated with the book: {@code known/<rite>} and {@code sealed/<rite>}). */
+    static final String ADV = "src/main/resources/data/supernaturalbloodlines/advancement/rites";
+    static final String HINT = "supernaturalbloodlines.rites.hint.";
+    static final String SEALED_TEXT = "supernaturalbloodlines.rites.sealed";
     static final String LANG = "src/main/resources/assets/supernaturalbloodlines/lang/en_us.json";
     static final String DESC = "supernaturalbloodlines.hub.rites.desc.";
 
@@ -146,7 +152,11 @@ final class RitesBook {
 
     /** The {@code hub.rites.desc} lines of a rite, in order, until the first gap. */
     static List<String> desc(JsonObject lang, String path) {
-        return net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubRites.descKeys(NS + ":" + path, lang::has).stream().map(k -> lang.get(k).getAsString()).toList();
+        List<String> out = new ArrayList<>();
+        for (int i = 1; lang.has(DESC + path + "." + i); i++) {
+            out.add(lang.get(DESC + path + "." + i).getAsString());
+        }
+        return out;
     }
 
     /** "medium circle, infernal chalk" for each circle of the rite file, joined with "and". */
@@ -219,10 +229,15 @@ final class RitesBook {
         entry.addProperty("title", name);
         entry.add("icon", icon(ICON.get(path)));
         JsonArray assigned = new JsonArray();
-        if (MAKES.containsKey(path)) {
+        RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(path);
+        // the study key opens an entry from an item without asking for its advancement: a rite that lore teaches must not be reachable that way
+        if (MAKES.containsKey(path) && (gate == null || gate.lore().isEmpty())) {
             assigned.add(MAKES.get(path));
         }
         entry.add("assigned_items", assigned);
+        if (gate != null) {
+            entry.addProperty("advancement", RiteAdvancements.known(path));
+        }
         JsonArray pages = new JsonArray();
         for (String page : texts) {
             JsonObject c = component("modopedia:page/headered_text", "text", page);
@@ -234,6 +249,33 @@ final class RitesBook {
         pages.add(page(rite));
         entry.add("pages", pages);
         return entry;
+    }
+
+    /** The "???" entry that stands for a gated rite while it is sealed: a hint, and nothing of the rite (no name, circle or item). */
+    static JsonObject sealedEntry(JsonObject lang, String path) {
+        RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(path);
+        JsonObject entry = new JsonObject();
+        entry.addProperty("title", "???");
+        entry.add("icon", icon("minecraft:honeycomb"));
+        entry.add("assigned_items", new JsonArray());
+        entry.addProperty("advancement", RiteAdvancements.sealed(path));
+        JsonObject text = component("modopedia:page/headered_text", "text",
+                lang.get(HINT + gate.hint()).getAsString() + "\n\n" + lang.get(SEALED_TEXT).getAsString());
+        text.addProperty("header", "???");
+        JsonArray pages = new JsonArray();
+        pages.add(page(text));
+        entry.add("pages", pages);
+        return entry;
+    }
+
+    static String advancementJson() {
+        JsonObject criterion = new JsonObject();
+        criterion.addProperty("trigger", "minecraft:impossible");
+        JsonObject criteria = new JsonObject();
+        criteria.add(RiteAdvancements.CRITERION, criterion);
+        JsonObject adv = new JsonObject();
+        adv.add("criteria", criteria);
+        return GSON.toJson(adv) + "\n";
     }
 
     private static JsonObject category(String title, String icon, String landing, List<String> children, List<String> entries, int sort, boolean front) {
@@ -287,6 +329,10 @@ final class RitesBook {
             kids.add(id);
             List<String> entries = new ArrayList<>();
             for (String path : cat.rites()) {
+                // a gated rite is two entries side by side: the "???" one while it is sealed, its own once it is known (one of them shows)
+                if (RiteUnlockTable.isGated(path)) {
+                    entries.add(RiteAdvancements.sealedEntry(path));
+                }
                 entries.add(TOP + "/" + path);
                 listed.add(path);
             }
@@ -301,19 +347,26 @@ final class RitesBook {
                 throw new IllegalStateException(path + " is in no category of RitesBook.CATS");
             }
             out.put(BOOK + "/entries/" + TOP + "/" + path + ".json", GSON.toJson(entry(root, lang, path)) + "\n");
+            if (RiteUnlockTable.isGated(path)) {
+                out.put(BOOK + "/entries/" + RiteAdvancements.sealedEntry(path) + ".json", GSON.toJson(sealedEntry(lang, path)) + "\n");
+                out.put(ADV + "/known/" + path + ".json", advancementJson());
+                out.put(ADV + "/sealed/" + path + ".json", advancementJson());
+            }
         }
         return out;
     }
 
     static Map<String, String> onDisk(Path root) throws IOException {
         Map<String, String> out = new LinkedHashMap<>();
-        Path base = root.resolve(BOOK);
-        if (!Files.isDirectory(base)) {
-            return out;
-        }
-        try (Stream<Path> files = Files.walk(base)) {
-            for (Path p : files.filter(Files::isRegularFile).toList()) {
-                out.put(root.relativize(p).toString().replace('\\', '/'), Files.readString(p).replace("\r\n", "\n"));
+        for (String dir : List.of(BOOK, ADV)) {
+            Path base = root.resolve(dir);
+            if (!Files.isDirectory(base)) {
+                continue;
+            }
+            try (Stream<Path> files = Files.walk(base)) {
+                for (Path p : files.filter(Files::isRegularFile).toList()) {
+                    out.put(root.relativize(p).toString().replace('\\', '/'), Files.readString(p).replace("\r\n", "\n"));
+                }
             }
         }
         return out;

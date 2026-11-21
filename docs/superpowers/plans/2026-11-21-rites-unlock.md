@@ -87,7 +87,7 @@ Totals: 8 open, 13 kind, 10 lore (3 of them also kind). 23 rites carry the two a
 
 Lore items. One new item, **Torn Page** (`supernaturalbloodlines:rite_page`, stacks to 1, data component `rite_lore` = a lore id). Right-click reads it, consumes it, and teaches the lore's rites: "You learn the Rite of ...". The lore ids are `finn`, `elijah`, `old_rites`, `curses`. **Kol's and Esther's Grimoires teach through the same `RiteUnlocks.learnLore` call** (`kol`, `esther`) on the read they already have (Kol's) or get (Esther's), and are not consumed. Loot: a global loot modifier (the mechanism `vervain_seeds_in_villages` already uses) adds `old_rites` to ancient city, woodland mansion, stronghold library and the Hale house chests, and `curses` to the same tables under `mod_loaded tensura`. Boss pages are dropped by the same code that drops the grimoires today (`FinnEntity`, `KolEntity` give their reward stack; Elijah's reward is looked up the same way).
 
-**Performing teaches.** When a rite works (`RiteSignal.completed`, already called for every rite) the performer and the target learn it. This is the fallback for existing worlds (someone who already did a rite is not sealed out of it) and it is why refusing to perform (question 1) is not needed.
+**Performing teaches.** When a rite works (`RiteSignal.completed`, already called for every rite) the **performer** learns it (built: not the target, or a curse would teach its victim). This is the fallback for existing worlds (someone who already did a rite is not sealed out of it) and it is why refusing to perform (question 1) is not needed.
 
 ## 3. How a rite is unlocked: our own advancements, granted by the server
 

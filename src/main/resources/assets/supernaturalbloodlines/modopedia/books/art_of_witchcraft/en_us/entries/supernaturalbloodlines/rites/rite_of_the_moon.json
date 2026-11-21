@@ -5,6 +5,7 @@
     "id": "minecraft:clock"
   },
   "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/rite_of_the_moon",
   "pages": [
     {
       "components": [

@@ -1,4 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks;
 
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubDev;
 import java.util.ArrayList;
@@ -342,7 +343,7 @@ public final class HomePage implements HubPageView {
             if (!running) {
                 Component rites = Component.translatable(KEY + "open_trial");
                 Rect tb = new Rect(s.x(), y + 2, Math.min(s.w(), PageWidgets.widthOf(f.font(), rites)), PageWidgets.H);
-                PageWidgets.button(f, "stage:home:trial", tb, rites, true, false, null, () -> f.screen().setPage(HubPage.RITES));
+                PageWidgets.button(f, "stage:home:trial", tb, rites, RiteLinks.hasBook(), false, RiteLinks.blocked(), () -> RiteLinks.open("alpha_trial"));
                 y = tb.bottom() + 2;
             }
         }

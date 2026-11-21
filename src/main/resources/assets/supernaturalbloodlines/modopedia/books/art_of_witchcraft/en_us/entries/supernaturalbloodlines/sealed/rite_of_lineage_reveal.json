@@ -1,0 +1,20 @@
+{
+  "title": "???",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:honeycomb"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/sealed/rite_of_lineage_reveal",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Known to werewolves.\n\nThe seal is unbroken.",
+          "header": "???"
+        }
+      ]
+    }
+  ]
+}

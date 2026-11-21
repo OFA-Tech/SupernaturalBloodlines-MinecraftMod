@@ -68,6 +68,14 @@ public final class SpeciesRegistries {
     /** Electricity's mark (see {@code pack/Electricity}). */
     public static final DeferredHolder<MobEffect, ShockedEffect> SHOCKED = EFFECTS.register("shocked", ShockedEffect::new);
 
+    /** The lore a Torn Page carries ({@link net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable#loreIds}): what reading it teaches. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> RITE_LORE_COMPONENT =
+            COMPONENTS.registerComponentType("rite_lore", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
+
+    /** A page torn from an old grimoire: read once, it teaches the rites of its lore (plan rites-unlock). Found in loot and dropped by Finn and Elijah. */
+    public static final DeferredItem<net.ofatech.supernaturalbloodlines.parts.species.unlock.RitePageItem> RITE_PAGE =
+            ITEMS.register("rite_page", () -> new net.ofatech.supernaturalbloodlines.parts.species.unlock.RitePageItem(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.UNCOMMON)));
+
     /** Whose blood a bottle of Original's Blood is. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_SOURCE_NAME_COMPONENT =
             COMPONENTS.registerComponentType("blood_source_name", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
@@ -178,6 +186,13 @@ public final class SpeciesRegistries {
             if (e.getTabKey() == CreativeModeTabs.COMBAT) {
                 e.accept(TASER);
                 e.accept(SILVER_DAGGER);
+            }
+            if (e.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+                for (String lore : net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.loreIds()) {
+                    if (net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.isPage(lore)) {
+                        e.accept(net.ofatech.supernaturalbloodlines.parts.species.unlock.RitePageItem.of(lore));
+                    }
+                }
             }
         });
     }

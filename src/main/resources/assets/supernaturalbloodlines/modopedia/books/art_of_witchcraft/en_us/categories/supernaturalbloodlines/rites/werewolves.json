@@ -2,12 +2,19 @@
   "children": [],
   "display_on_front_page": false,
   "entries": [
+    "supernaturalbloodlines/sealed/rite_of_lineage_reveal",
     "supernaturalbloodlines/rites/rite_of_lineage_reveal",
+    "supernaturalbloodlines/sealed/rite_of_lineage_awaken",
     "supernaturalbloodlines/rites/rite_of_lineage_awaken",
+    "supernaturalbloodlines/sealed/rite_of_the_moon",
     "supernaturalbloodlines/rites/rite_of_the_moon",
+    "supernaturalbloodlines/sealed/silver_moon",
     "supernaturalbloodlines/rites/silver_moon",
+    "supernaturalbloodlines/sealed/hybrid_blood",
     "supernaturalbloodlines/rites/hybrid_blood",
+    "supernaturalbloodlines/sealed/werewolf_brother",
     "supernaturalbloodlines/rites/werewolf_brother",
+    "supernaturalbloodlines/sealed/alpha_trial",
     "supernaturalbloodlines/rites/alpha_trial"
   ],
   "icon": {

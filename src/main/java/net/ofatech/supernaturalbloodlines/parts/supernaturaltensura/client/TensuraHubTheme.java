@@ -19,7 +19,6 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.Sta
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageLoadoutPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StagePathPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageQuestsPage;
-import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageRitesPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubHooks;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
@@ -58,7 +57,6 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     private final HubPageView path = new StagePathPage();
     private final HubPageView skills = new BookSkillsPage(true, Shapes.Shape.HEX);
     private final HubPageView quests = new StageQuestsPage();
-    private final HubPageView rites = new StageRitesPage();
     private final HubPageView bloodline = new StageBloodlinePage(StageBloodlinePage.Look.TENSURA);
     private final HubPageView pack = new BookPackPage(BookPackPage.Style.TENSURA);
     private final HubPageView guide = new StageGuidePage();
@@ -92,7 +90,6 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
             case PATH -> path;
             case SKILLS -> skills;
             case QUESTS -> quests;
-            case RITES -> rites;
             case BLOODLINE -> bloodline;
             case PACK -> pack;
             case GUIDE -> guide;

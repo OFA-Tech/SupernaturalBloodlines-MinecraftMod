@@ -1,4 +1,5 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,7 +90,7 @@ public final class PackWolves {
         if (werewolf) {
             Component label = Component.translatable(KEY + "recruit");
             Rect b = new Rect(r.x(), y + 3, PageWidgets.widthOf(f.font(), label), PageWidgets.H);
-            PageWidgets.button(f, "pack:recruit", b, label, true, false, Component.translatable(KEY + "recruit_tip"), () -> f.screen().setPage(HubPage.RITES));
+            PageWidgets.button(f, "pack:recruit", b, label, RiteLinks.hasBook(), false, RiteLinks.hasBook() ? Component.translatable(KEY + "recruit_tip") : RiteLinks.blocked(), () -> RiteLinks.open("werewolf_brother"));
             y = b.bottom() + 3;
         }
         return y;

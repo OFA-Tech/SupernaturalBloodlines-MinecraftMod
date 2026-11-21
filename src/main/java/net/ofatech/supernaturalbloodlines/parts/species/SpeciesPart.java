@@ -155,6 +155,7 @@ public final class SpeciesPart {
         DoppelgangerVillagers.register();
         net.ofatech.supernaturalbloodlines.shared.species.DoppelgangerIndex.set(DoppelgangerVillagers::loaded); // for the Vampire Compass
         SpeciesRegistries.register(modBus);
+        net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks.register();
         SpeciesSupernatural.register();
         // what the supernatural part's tasks need from here, through shared hooks
         net.ofatech.supernaturalbloodlines.shared.supernatural.HumanLikeBlood.set(TurningHandler::isHumanLikeBlood);
@@ -276,6 +277,7 @@ public final class SpeciesPart {
             e.register(HunterInstinctGameTests.class);
             e.register(SirelineGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.SpeciesHubGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.RiteUnlockGameTests.class);
             e.register(SirelineCommandGameTests.class);
             e.register(SirelineCompulsionGameTests.class);
             e.register(LineGameTests.class);

@@ -39,9 +39,13 @@ public final class EnchantedBook {
 
     public static final String ENTRY_MISSING = "supernaturalbloodlines.book.entry_missing";
 
-    /** Opens the book on a rite's entry; when the book has no such entry (an old resource pack, another language) says so on the action bar and opens nothing. */
+    /** Opens the book on a rite's own entry (see {@link #openEntry}). */
     public static boolean openRite(String riteId) {
-        String entry = RiteLayout.bookEntry(riteId);
+        return openEntry(RiteLayout.bookEntry(riteId));
+    }
+
+    /** Opens the book on an entry; when the book has no such entry (an old resource pack, another language) says so on the action bar and opens nothing. */
+    public static boolean openEntry(String entry) {
         var content = BookContentRegistry.get().getContent(BOOK, Minecraft.getInstance().options.languageCode);
         // getContent(id, lang) is the language's own content, or en_us when the language has none: the entry must be in the one the book will open
         if (content == null || !content.hasEntry(entry)) {
