@@ -8,10 +8,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 
 /** Server to client: the player is now downed (open the Give up / Wait screen) or is not any more (close it). */
-public record DownedPayload(boolean downed) implements CustomPacketPayload {
+/** {@code mode} is {@code Downed.MODE_DYING} or {@code Downed.MODE_TURNING}: it picks the screen's text. */
+public record DownedPayload(boolean downed, int mode) implements CustomPacketPayload {
     public static final Type<DownedPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "downed"));
     public static final StreamCodec<ByteBuf, DownedPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.BOOL, DownedPayload::downed,
+            ByteBufCodecs.VAR_INT, DownedPayload::mode,
             DownedPayload::new);
 
     @Override

@@ -113,7 +113,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.gametest.SpeciesGameTest
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteHooks;
 
 public final class SpeciesPart {
-    private static final String NETWORK_VERSION = "1";
+    private static final String NETWORK_VERSION = "2";
 
     private SpeciesPart() {}
 
@@ -243,7 +243,7 @@ public final class SpeciesPart {
         }
         modBus.addListener((RegisterPayloadHandlersEvent e) -> {
             PayloadRegistrar registrar = e.registrar(NETWORK_VERSION).optional();
-            registrar.playToClient(DownedPayload.TYPE, DownedPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> DownedScreen.show(payload.downed())));
+            registrar.playToClient(DownedPayload.TYPE, DownedPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> DownedScreen.show(payload.downed(), payload.mode())));
             registrar.playToServer(DownedGiveUpPayload.TYPE, DownedGiveUpPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> {
                 if (ctx.player() instanceof ServerPlayer p) {
                     Downed.giveUp(p);

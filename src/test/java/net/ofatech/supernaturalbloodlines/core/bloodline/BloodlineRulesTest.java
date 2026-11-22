@@ -250,6 +250,33 @@ class BloodlineRulesTest {
         assertNoChange(run(BloodlineState.NONE, TURNING_FAILED, ctx()), BloodlineState.NONE);
     }
 
+    @Test
+    void gaveUpEndsTheTurningAndKillsNobody() {
+        BloodlineState marked = turning().toBuilder().pendingSire(U).vampireBloodUntil(99).build();
+        Outcome o = run(marked, TURNING_GAVE_UP, ctx());
+        assertEquals(0, o.state().turningTicksLeft());
+        assertEquals(0, o.state().vampireBloodUntil());
+        assertNull(o.state().pendingSire());
+        assertEquals(List.of(), o.actions(), "the death is the player's own, done by the caller");
+        assertFalse(o.refused());
+    }
+
+    @Test
+    void gaveUpOutsideTheTurningChangesNothing() {
+        assertNoChange(run(BloodlineState.NONE, TURNING_GAVE_UP, ctx()), BloodlineState.NONE);
+        BloodlineState marked = BloodlineState.NONE.toBuilder().vampireBloodUntil(99).build();
+        assertNoChange(run(marked, TURNING_GAVE_UP, ctx()), marked);
+    }
+
+    @Test
+    void gaveUpKeepsAGhoulAGhoulAndTheSire() {
+        BloodlineState ghoul = turning().toBuilder().ghoul(true).sire(U).build();
+        Outcome o = run(ghoul, TURNING_GAVE_UP, ctx().withFaction(BaseFaction.VAMPIRE));
+        assertTrue(o.state().ghoul());
+        assertEquals(U, o.state().sire());
+        assertEquals(0, o.state().turningTicksLeft());
+    }
+
     // ---- Immortality ----
 
     @Test

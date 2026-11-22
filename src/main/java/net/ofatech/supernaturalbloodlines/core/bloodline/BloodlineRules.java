@@ -60,6 +60,7 @@ public final class BloodlineRules {
             case DIED_WITH_VAMPIRE_BLOOD -> diedWithVampireBlood(s, c);
             case TURNING_FED -> turningFed(s, c);
             case TURNING_FAILED -> turningFailed(s, c);
+            case TURNING_GAVE_UP -> turningGaveUp(s);
         };
     }
 
@@ -109,6 +110,14 @@ public final class BloodlineRules {
             return unchanged(s);
         }
         return canTurn(s, c) ? Outcome.of(s.toBuilder().turningTicksLeft(0).pendingSire(null).build(), Action.KILL_PLAYER) : endedQuietly(s);
+    }
+
+    /** Give up in the dying state of the turning: the turning is over, with no kill action (the death is the player's own, done by the caller). A Ghoul stays one. */
+    private static Outcome turningGaveUp(BloodlineState s) {
+        if (!s.inTurning()) {
+            return unchanged(s);
+        }
+        return Outcome.of(s.toBuilder().turningTicksLeft(0).vampireBloodUntil(0).pendingSire(null).build());
     }
 
     /** Human-like blood drunk in the turning: a Ghoul only loses the flag, anyone else joins the vampires. */

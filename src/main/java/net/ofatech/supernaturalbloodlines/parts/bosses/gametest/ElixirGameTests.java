@@ -100,7 +100,11 @@ public final class ElixirGameTests {
         LineTestPlayer p = holder(helper, 1);
         try {
             BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().vampireBloodUntil(now + 1000).build());
-            helper.assertTrue(!saved(p, mob), "the Elixir undid the death that turns someone who drank vampire blood");
+            saved(p, mob); // the turning stands them up (it cancels the death itself): the Elixir must not be what did it
+            helper.assertTrue(elixirs(p) == 1 && !p.received(USED), "the Elixir undid the death that turns someone who drank vampire blood");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDyingForTurning(p), "the turning did not start");
+            net.ofatech.supernaturalbloodlines.parts.species.original.Downed.clearForTest(p);
+            p.setHealth(p.getMaxHealth());
             BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().vampireBloodUntil(Math.max(1, now - 1)).build());
             helper.assertTrue(saved(p, mob), "an old, ended vampire blood window kept the Elixir from working");
             p.getInventory().add(new ItemStack(BossItems.THE_ELIXIR.get()));

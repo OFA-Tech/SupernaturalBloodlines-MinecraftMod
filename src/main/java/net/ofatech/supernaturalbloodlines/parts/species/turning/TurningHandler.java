@@ -32,6 +32,8 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.Outcome;
 import net.ofatech.supernaturalbloodlines.parts.species.OutcomeExecutor;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesEligibility;
+import net.ofatech.supernaturalbloodlines.parts.species.original.Downed;
+import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionTimer;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +62,9 @@ public final class TurningHandler {
     public static void register() {
         // LOW and not receiving cancelled events, like the hybrid transition: a death something else prevented is not a death
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LivingDeathEvent.class, TurningHandler::onDeath);
+        // a Ghoul's death is caught by Vampirism's own dying state (a cancelled event): that is the dying of the turning for them
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, true, LivingDeathEvent.class, TurningHandler::onGhoulDying);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, LivingDeathEvent.class, TurningHandler::onGaveUpDying);
         NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> {
             if (e.getEntity() instanceof ServerPlayer p && TransitionTimer.secondIsUp(p)) {
                 secondPassed(p);
@@ -102,18 +107,49 @@ public final class TurningHandler {
                 || BloodlineAccess.get(p).vampireBloodUntil() == 0) {
             return;
         }
-        // Original's blood still in them names the sire they get if the turning completes (the attachment does not survive the death)
+        // Original's blood still in them names the sire they get if the turning completes (the pending sire is kept in the state, so the dying loses nothing)
         UUID source = p.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT) && p.hasData(SpeciesRegistries.BLOOD_SOURCE) ? p.getData(SpeciesRegistries.BLOOD_SOURCE) : null;
         apply(p, BloodlineEvent.DIED_WITH_VAMPIRE_BLOOD, source);
-        if (BloodlineAccess.get(p).inTurning()) {
-            p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.started"));
+        if (!BloodlineAccess.get(p).inTurning()) {
+            return;
         }
+        if (OriginalRules.bypassesProtection(e.getSource())) {
+            // void, /kill, white oak: a real death, they respawn in the turning
+            p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.started"));
+        } else {
+            // the blow is caught: they lie where they fell for the 30 s of the dying, then stand up at half health, still in the turning
+            e.setCanceled(true);
+            Downed.startDying(p, e.getSource());
+            p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.dying"));
+        }
+    }
+
+    private static void onGhoulDying(LivingDeathEvent e) {
+        if (e.isCanceled() && e.getEntity() instanceof ServerPlayer p && BloodlineAccess.get(p).ghoul() && BloodlineAccess.get(p).vampireBloodUntil() != 0
+                && VampirismAPI.vampirePlayer(p).isDBNO()) {
+            apply(p, BloodlineEvent.DIED_WITH_VAMPIRE_BLOOD, null);
+            if (BloodlineAccess.get(p).inTurning()) {
+                p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.dying"));
+            }
+        }
+    }
+
+    /** Vampirism's own Give up (its {@code vampirism:dbno} damage) ends the turning of a Ghoul just as ours does. */
+    private static void onGaveUpDying(LivingDeathEvent e) {
+        if (e.getEntity() instanceof ServerPlayer p && BloodlineAccess.get(p).inTurning() && e.getSource().typeHolder().is(ResourceLocation.fromNamespaceAndPath("vampirism", "dbno"))) {
+            apply(p, BloodlineEvent.TURNING_GAVE_UP, null);
+        }
+    }
+
+    /** The turning's clock stands still while they are dying (our state, or a Ghoul in Vampirism's): the 30 s are free. */
+    private static boolean isDying(ServerPlayer p) {
+        return Downed.isDyingForTurning(p) || BloodlineAccess.get(p).ghoul() && VampirismAPI.vampirePlayer(p).isDBNO();
     }
 
     /** 20 ticks of online time passed for a player. */
     public static void secondPassed(ServerPlayer p) {
         BloodlineState s = BloodlineAccess.get(p);
-        if (s.inTurning() && TransitionTimer.tick(p, s.turningTicksLeft(), left -> s.toBuilder().turningTicksLeft((int) left).build())) {
+        if (s.inTurning() && !isDying(p) && TransitionTimer.tick(p, s.turningTicksLeft(), left -> s.toBuilder().turningTicksLeft((int) left).build())) {
             Outcome out = apply(p, BloodlineEvent.TURNING_FAILED, null); // the rules ask for the kill
             if (out.actions().contains(Outcome.Action.KILL_PLAYER)) {
                 p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.failed"));
@@ -163,7 +199,8 @@ public final class TurningHandler {
         }
         ItemStack stack = e.getItemStack();
         BloodlineState s = BloodlineAccess.get(p);
-        if (s.inTransition() || !stack.is(TransitionHandler.BLOOD_DRINKS) || !s.inTurning() || !wouldComplete(p)) {
+        // a downed player can do nothing (Downed denies the click, but this runs first): the bottle is kept
+        if (Downed.isDowned(p) || s.inTransition() || !stack.is(TransitionHandler.BLOOD_DRINKS) || !s.inTurning() || !wouldComplete(p)) {
             return;
         }
         e.setCancellationResult(InteractionResult.CONSUME);

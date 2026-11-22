@@ -130,6 +130,10 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> DOWNED =
             ATTACHMENTS.register("downed", () -> AttachmentType.builder(() -> 0).serialize(Codec.INT).build());
 
+    /** Why the player is downed: {@code Downed.MODE_DYING} (an Original hybrid) or {@code Downed.MODE_TURNING} (vampire blood in them). Saved with {@link #DOWNED}. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> DOWNED_MODE =
+            ATTACHMENTS.register("downed_mode", () -> AttachmentType.builder(() -> 0).serialize(Codec.INT).build());
+
     /** Game time each of this player's timed actions is ready again, by action id (see {@code ActionClock}). Saved and kept through death. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<java.util.Map<String, Long>>> ACTION_READY =
             ATTACHMENTS.register("action_ready", () -> AttachmentType.<java.util.Map<String, Long>>builder(() -> new java.util.HashMap<String, Long>())
