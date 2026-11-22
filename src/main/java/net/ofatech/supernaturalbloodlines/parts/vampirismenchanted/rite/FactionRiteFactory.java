@@ -41,6 +41,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
     public static final String WRONG_FACTION = "supernaturalbloodlines.rite.wrong_faction";
     public static final String NEEDS_FULL_MOON = "supernaturalbloodlines.rite.needs_full_moon";
     public static final String NO_EFFECT = "supernaturalbloodlines.rite.no_effect";
+    public static final String RITE_TAKES_YOU = "supernaturalbloodlines.rite.takes_you";
     public static final String JOIN_DENIED = "supernaturalbloodlines.rite.join_denied";
     private static final ResourceLocation WEREWOLF_ID = ResourceLocation.parse("werewolves:werewolf");
 
@@ -241,6 +242,9 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
                 }
             }
 
+            if (consents && caster != target) {
+                tell(target, RITE_TAKES_YOU);
+            }
             FactionRiteHooks.run(target, BloodlineAccess.applyEvent(target, factory.event, ctx));
             return false;
         }

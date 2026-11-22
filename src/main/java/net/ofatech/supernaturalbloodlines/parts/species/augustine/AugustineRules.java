@@ -39,6 +39,9 @@ public final class AugustineRules {
         NeoForge.EVENT_BUS.addListener((de.teamlapen.vampirism.api.event.PlayerFactionEvent.FactionLevelChanged e) -> syncIfPlayer(e.getPlayer().getPlayer()));
         // LOWEST: after the bite's other rules (BloodEffects, the vervain refusal, the ash dagger's starving), so a bite something emptied stays 0
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, AugustineRules::noteVictimBlood);
+        // an entry is made and used within one bite; a bite that was cancelled in between must not leave one behind
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) -> VICTIM_BEFORE.clear());
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> VICTIM_BEFORE.clear());
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, AugustineRules::onDrinkBlood);
         AugustineGifts.register();
     }
@@ -79,7 +82,6 @@ public final class AugustineRules {
 
     /** Which bites of a feed are the first (the x3 is paid once per feed). Server thread only. */
     private static final AugustineBloodRules.FeedChain FEEDS = new AugustineBloodRules.FeedChain();
-    private static final java.util.UUID NOBODY = new java.util.UUID(0L, 0L);
     private static final String NOTED = "supernaturalbloodlines:augustine_diet_noted";
 
     /** What a vampire PLAYER who is bitten by an Augustine had before the bite's other rules (the Predator's Thirst drain among them) touched them, by event. */
@@ -105,9 +107,10 @@ public final class AugustineRules {
         LivingEntity source = e.getBloodSource().getEntity().orElse(null);
         boolean vampire = source != null && VampirismAPI.factionRegistry().getFaction(source) == VReference.VAMPIRE_FACTION; // a hybrid player counts (R2)
         // the x3 is the first bite of a feed's: the bites that follow it within the chain are paid as Vampirism gives them (a third from anyone else stays a third on every bite)
-        boolean first = FEEDS.firstBite(p.getUUID(), source == null ? NOBODY : source.getUUID(), p.level().getGameTime());
-        double fromVampire = first ? SpeciesConfig.augustineBloodFromVampire() : Math.min(1.0, SpeciesConfig.augustineBloodFromVampire());
         int given = e.getAmount();
+        // only a bite that gives something on a vampire counts as part of a feed: a refused bite must not start (or renew) the window of the next one
+        boolean first = FEEDS.startsFeed(given, vampire, p.getUUID(), vampire ? source.getUUID() : p.getUUID(), p.level().getGameTime());
+        double fromVampire = first ? SpeciesConfig.augustineBloodFromVampire() : Math.min(1.0, SpeciesConfig.augustineBloodFromVampire());
         int scaled = AugustineBloodRules.scale(given, vampire, fromVampire, SpeciesConfig.augustineBloodFromOther(), p.getRandom().nextDouble());
         e.setAmount(scaled);
         // nothing is made from nothing: a vampire PLAYER who is bitten pays all that the biter gets (what the drain already took counts, and what they cannot pay is not given),
@@ -124,6 +127,21 @@ public final class AugustineRules {
             p.getPersistentData().putBoolean(NOTED, true);
             p.displayClientMessage(net.minecraft.network.chat.Component.translatable("supernaturalbloodlines.augustine.diet"), true);
         }
+    }
+
+    /** For tests: makes the note a bite's first listener makes. */
+    public static void noteVictimBloodForTest(BloodDrinkEvent.PlayerDrinkBloodEvent e) {
+        noteVictimBlood(e);
+    }
+
+    /** For tests: how many bites are waiting to be settled. */
+    public static int pendingBitesForTest() {
+        return VICTIM_BEFORE.size();
+    }
+
+    /** For tests: what a tick end does to the notes. */
+    public static void clearPendingBitesForTest() {
+        VICTIM_BEFORE.clear();
     }
 
     /** For tests: forgets which bites started a feed. */

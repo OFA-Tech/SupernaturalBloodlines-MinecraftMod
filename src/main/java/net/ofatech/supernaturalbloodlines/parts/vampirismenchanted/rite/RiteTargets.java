@@ -47,6 +47,9 @@ public final class RiteTargets {
         return right ? null : new Told(FactionRiteFactory.NO_EFFECT, targetKey);
     }
 
+    /** What the one on the centre is told when a caster who is not them works a rite that changes them (the Rite of Lineage: Awaken) and they are not sneaking. */
+    public static final String SNEAK_TO_ACCEPT = "supernaturalbloodlines.rite.sneak_to_accept";
+
     /** What the one on the centre is told when a caster who is not them works the Rite of Augustine on them and they are not sneaking. */
     public static final String SNEAK_TO_BE_MADE_AUGUSTINE = "supernaturalbloodlines.rite.sneak_to_be_made_augustine";
 

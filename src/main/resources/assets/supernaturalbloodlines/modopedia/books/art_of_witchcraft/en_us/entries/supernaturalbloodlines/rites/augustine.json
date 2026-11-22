@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Circle: medium circle, ritual chalk.\n\nMakes the vampire on the centre an Augustine: +10% attack, +2 health; feeds 3× on vampires, ⅓ on others. Only a cure undoes it. Wes's Syringe does the same.",
+          "text": "Circle: medium circle, ritual chalk.\n\nMakes the vampire on the centre an Augustine: +10% attack, +2 health; feeds 3× on the first bite of a vampire, ⅓ on others. Only a cure undoes it. Wes's Syringe does the same.",
           "header": "Rite of Augustine"
         }
       ]

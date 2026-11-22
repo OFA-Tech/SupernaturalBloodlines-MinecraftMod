@@ -180,7 +180,9 @@ public final class DoppelgangerRiteGameTests {
             BloodlineAccess.set(vampire, BloodlineState.NONE.toBuilder().species(Species.ORIGINAL).doppelgangerGene(true).build());
             start(helper, "doppelganger_blood", caster, ingredients(taglock(vampire.getUUID())));
             helper.assertTrue(dropped(helper, BOTTLE) == 0, "human mode took a vampire's taglock");
-            helper.assertTrue(caster.receivedOnActionBar(DoppelgangerRiteRules.NOT_HUMAN_LIKE), "the caster was not told why");
+            helper.assertTrue(caster.receivedOnActionBar(net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory.NO_EFFECT) && !caster.receivedOnActionBar(DoppelgangerRiteRules.NOT_HUMAN_LIKE),
+                    "the caster was told what the taglocked player is, not just that it did nothing");
+            helper.assertTrue(vampire.receivedOnActionBar(DoppelgangerRiteRules.NOT_HUMAN_LIKE), "the taglocked player was not told why");
         } finally {
             SpeciesConfig.overrideDoppelgangerRiteHuman(null);
             remove(helper, caster);

@@ -71,6 +71,17 @@ class AugustineBloodRulesTest {
     }
 
     @Test
+    void aBiteThatGaveNothingOrWasNotOnAVampireDoesNotStartAFeed() {
+        AugustineBloodRules.FeedChain chain = new AugustineBloodRules.FeedChain();
+        UUID a = UUID.randomUUID();
+        UUID b = UUID.randomUUID();
+        assertFalse(chain.startsFeed(0, true, a, b, 0), "a refused bite starts nothing");
+        assertFalse(chain.startsFeed(5, false, a, b, 1), "a bite on a non-vampire starts nothing");
+        assertTrue(chain.startsFeed(3, true, a, b, 2), "the first bite that gave something on a vampire is still the first of its feed");
+        assertFalse(chain.startsFeed(3, true, a, b, 3), "and the next is not");
+    }
+
+    @Test
     void theExtraIsPaidOncePerFeedNotOncePerBite() {
         AugustineBloodRules.FeedChain chain = new AugustineBloodRules.FeedChain();
         UUID a = UUID.randomUUID();

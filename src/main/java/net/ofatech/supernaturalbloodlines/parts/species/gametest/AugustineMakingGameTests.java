@@ -163,6 +163,11 @@ public final class AugustineMakingGameTests {
                 vampire(helper, p);
                 BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().witchLayer(true).build());
             }
+            case 9 -> {
+                vampire(helper, p);
+                BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(Species.HERETIC).build());
+            }
+            case 8 -> helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.HUNTER_FACTION, 1), "could not make a hunter");
             default -> BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
         }
     }
@@ -190,6 +195,7 @@ public final class AugustineMakingGameTests {
                 start(helper, "augustine", caster, ingredients());
                 if (kind == 1) {
                     helper.assertTrue(BloodlineAccess.get(target).species() == Species.AUGUSTINE, "the plain vampire who agreed was not made one");
+                    helper.assertTrue(target.received(FactionRiteFactory.RITE_TAKES_YOU), "the one who agreed was not told the rite took them: " + target.heard());
                     continue;
                 }
                 helper.assertTrue(BloodlineAccess.get(target).species() != Species.AUGUSTINE || kind == 5, "kind " + kind + " became an Augustine");
@@ -336,6 +342,11 @@ public final class AugustineMakingGameTests {
             use(stack, user, target);
             helper.assertTrue(BloodlineAccess.get(target).species() == Species.NONE && stack.getCount() == 1, "the first use injected");
             helper.assertTrue(user.receivedOnActionBar(AugustineSyringeItem.ARMED) && target.receivedOnActionBar(AugustineSyringeItem.ASKED), "the first use did not arm and ask");
+            // the use key held down repeats within a few ticks: that is not a second decision
+            AugustineSyringeItem.skipTicksForTest(4);
+            use(stack, user, target);
+            helper.assertTrue(BloodlineAccess.get(target).species() == Species.NONE && stack.getCount() == 1, "a use 4 ticks later injected (the use key held down)");
+            AugustineSyringeItem.skipTicksForTest(net.ofatech.supernaturalbloodlines.core.bloodline.SyringeConfirm.MIN_TICKS);
             use(stack, user, target);
             helper.assertTrue(BloodlineAccess.get(target).species() == Species.AUGUSTINE, "the second use did not inject");
             helper.assertTrue(stack.isEmpty(), "the syringe was not used up: " + stack.getCount());
@@ -367,6 +378,82 @@ public final class AugustineMakingGameTests {
             helper.assertTrue(onPlayer.isCanceled() && inAir.isCanceled(), "a downed player''s click reached the syringe: on a player " + onPlayer.isCanceled() + ", in the air " + inAir.isCanceled());
         } finally {
             BloodlineAccess.set(user, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+    private static List<ItemStack> lineageItems() {
+        return List.of(new ItemStack(item("supernaturalbloodlines:moonstone")), new ItemStack(Items.BONE, 3));
+    }
+
+    /**
+     * The Rite of Lineage: Awaken changes the one on the centre: when someone else works it they must sneak, and whatever they are (an Augustine, a human, a
+     * hybrid) the caster hears the same thing. The target hears the reason.
+     */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theLineageRiteTellsItsCasterTheSameWhateverStandsOnTheCircle(GameTestHelper helper) {
+        if (type(helper, "rite_of_lineage_awaken") == null) {
+            helper.succeed(); // needs Werewolves and the species part
+            return;
+        }
+        for (int kind = 0; kind < 4; kind++) {
+            RecordingPlayer caster = RecordingPlayer.create(helper);
+            RecordingPlayer target = RecordingPlayer.create(helper);
+            caster.setPos(net.minecraft.world.phys.Vec3.atBottomCenterOf(centre(helper)).add(5, 1, 0));
+            helper.getLevel().addNewPlayer(caster);
+            place(helper, target);
+            try {
+                makeKind(helper, target, kind == 0 ? 5 : kind == 1 ? 8 : kind == 2 ? 2 : 9); // an Augustine, a hunter, a hybrid, a heretic
+                target.setShiftKeyDown(true);
+                clearDropped(helper);
+                start(helper, "rite_of_lineage_awaken", caster, lineageItems());
+                helper.assertTrue(caster.heard().equals(FactionRiteFactory.NO_EFFECT), "kind " + kind + ": the caster heard " + caster.heard());
+                helper.assertTrue(BloodlineAccess.get(target).species() != Species.AUGUSTINE || kind == 0, "kind " + kind + ": changed species");
+                helper.assertTrue(!target.heard().isEmpty(), "kind " + kind + ": the target was told nothing");
+                // not sneaking: the same one line for the caster, and the target is asked
+                RecordingPlayer caster2 = RecordingPlayer.create(helper);
+                caster2.setPos(net.minecraft.world.phys.Vec3.atBottomCenterOf(centre(helper)).add(5, 1, 0));
+                helper.getLevel().addNewPlayer(caster2);
+                RecordingPlayer asked = target;
+                target.setShiftKeyDown(false);
+                start(helper, "rite_of_lineage_awaken", caster2, lineageItems());
+                helper.assertTrue(caster2.heard().equals(FactionRiteFactory.NO_EFFECT), "kind " + kind + " not sneaking: the caster heard " + caster2.heard());
+                helper.assertTrue(asked.received(RiteTargets.SNEAK_TO_ACCEPT), "kind " + kind + ": the target was not asked to sneak");
+                remove(helper, caster2);
+            } finally {
+                clearDropped(helper);
+                remove(helper, caster);
+                remove(helper, target);
+                BloodlineAccess.set(target, BloodlineState.NONE);
+            }
+        }
+        helper.succeed();
+    }
+
+    /** Ancestral Calling refuses a vampire or someone who already has a species: the caster hears the same line for both, the one on the circle the reason. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void ancestralCallingTellsItsCasterNothingOfWhoStandsOnTheCircle(GameTestHelper helper) {
+        if (type(helper, "ancestral_calling") == null) {
+            helper.succeed();
+            return;
+        }
+        for (int kind : new int[] {5, 2, 3}) { // an Augustine, a hybrid, an Original
+            RecordingPlayer caster = RecordingPlayer.create(helper);
+            RecordingPlayer target = RecordingPlayer.create(helper);
+            caster.setPos(net.minecraft.world.phys.Vec3.atBottomCenterOf(centre(helper)).add(5, 1, 0));
+            helper.getLevel().addNewPlayer(caster);
+            place(helper, target);
+            try {
+                makeKind(helper, target, kind);
+                clearDropped(helper);
+                start(helper, "ancestral_calling", caster, List.of(new ItemStack(Items.BONE), new ItemStack(Items.AMETHYST_SHARD), new ItemStack(Items.LAPIS_LAZULI)));
+                helper.assertTrue(caster.heard().equals(FactionRiteFactory.NO_EFFECT), "kind " + kind + ": the caster heard " + caster.heard());
+                helper.assertTrue(!target.heard().isEmpty() && !target.heard().equals(FactionRiteFactory.NO_EFFECT), "kind " + kind + ": the target was not told why: " + target.heard());
+            } finally {
+                clearDropped(helper);
+                remove(helper, caster);
+                remove(helper, target);
+                BloodlineAccess.set(target, BloodlineState.NONE);
+            }
         }
         helper.succeed();
     }}

@@ -31,9 +31,17 @@ public final class AugustineSyringeItem extends Item {
     public static final String ASKED = "supernaturalbloodlines.syringe.asked";
     private static final net.ofatech.supernaturalbloodlines.core.bloodline.SyringeConfirm CONFIRM = new net.ofatech.supernaturalbloodlines.core.bloodline.SyringeConfirm();
 
-    /** For tests: forgets every arming. */
+    private static long clockOffsetForTest;
+
+    /** For tests: forgets every arming and the time skipped. */
     public static void forgetArmedForTest() {
         CONFIRM.clear();
+        clockOffsetForTest = 0;
+    }
+
+    /** For tests: a body cannot let game time pass, so it says that some did. */
+    public static void skipTicksForTest(long ticks) {
+        clockOffsetForTest += ticks;
     }
 
     public AugustineSyringeItem(Properties properties) {
@@ -80,7 +88,7 @@ public final class AugustineSyringeItem extends Item {
             return InteractionResult.sidedSuccess(false);
         }
         // the first use only arms it for 5 s and tells them; a species is judged by the second (so the answer to "who is a plain vampire?" is never given)
-        if (!CONFIRM.confirm(user.getUUID(), other.getUUID(), user.level().getGameTime())) {
+        if (!CONFIRM.confirm(user.getUUID(), other.getUUID(), user.level().getGameTime() + clockOffsetForTest)) {
             user.displayClientMessage(Component.translatable(ARMED), true);
             other.displayClientMessage(Component.translatable(ASKED, user.getDisplayName()), true);
             return InteractionResult.sidedSuccess(false);

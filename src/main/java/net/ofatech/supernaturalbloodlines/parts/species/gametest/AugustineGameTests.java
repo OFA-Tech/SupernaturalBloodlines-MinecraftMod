@@ -403,4 +403,22 @@ public final class AugustineGameTests {
             forget(p);
         }
         helper.succeed();
+    }
+    /** The note of what a bitten vampire player had is made and used within one bite: whatever a cancelled bite leaves is gone at the end of the tick. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLeftoverNoteOfABiteGoesAtTheEndOfTheTick(GameTestHelper helper) {
+        ServerPlayer biter = vampire(helper, Species.AUGUSTINE);
+        ServerPlayer victim = vampire(helper, Species.NONE);
+        try {
+            AugustineRules.clearPendingBitesForTest();
+            var event = new BloodDrinkEvent.PlayerDrinkBloodEvent(VampirismAPI.vampirePlayer(biter), 3, 0.5f, false, from(victim));
+            AugustineRules.noteVictimBloodForTest(event);
+            helper.assertTrue(AugustineRules.pendingBitesForTest() == 1, "no note was made: " + AugustineRules.pendingBitesForTest());
+            NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.tick.ServerTickEvent.Post(() -> true, helper.getLevel().getServer()));
+            helper.assertTrue(AugustineRules.pendingBitesForTest() == 0, "the note of a bite that never settled stayed: " + AugustineRules.pendingBitesForTest());
+        } finally {
+            AugustineRules.clearPendingBitesForTest();
+            forget(biter, victim);
+        }
+        helper.succeed();
     }}

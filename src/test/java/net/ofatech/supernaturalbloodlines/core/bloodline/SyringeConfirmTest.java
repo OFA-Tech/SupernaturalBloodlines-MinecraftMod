@@ -24,7 +24,18 @@ class SyringeConfirmTest {
         SyringeConfirm c = new SyringeConfirm();
         c.confirm(USER, A, 0);
         assertFalse(c.confirm(USER, A, SyringeConfirm.ARM_TICKS + 1), "too late: that is a first use again");
-        assertTrue(c.confirm(USER, A, SyringeConfirm.ARM_TICKS + 2), "and it armed the next one");
+        assertTrue(c.confirm(USER, A, SyringeConfirm.ARM_TICKS + 1 + SyringeConfirm.MIN_TICKS), "and it armed the next one");
+    }
+
+    @Test
+    void aHeldUseKeyOnlyArmsAgain() {
+        SyringeConfirm c = new SyringeConfirm();
+        assertFalse(c.confirm(USER, A, 0));
+        for (long t = 4; t < 60; t += 4) {
+            assertFalse(c.confirm(USER, A, t), "a use " + 4 + " ticks after the last is the key repeating (t=" + t + ")");
+        }
+        assertFalse(c.confirm(USER, A, 62), "still repeating");
+        assertTrue(c.confirm(USER, A, 62 + SyringeConfirm.MIN_TICKS), "let go and used again after a pause confirms");
     }
 
     @Test
@@ -33,6 +44,6 @@ class SyringeConfirmTest {
         c.confirm(USER, A, 0);
         assertFalse(c.confirm(USER, B, 10), "another player is a first use");
         assertFalse(c.confirm(UUID.randomUUID(), A, 20), "another user is a first use");
-        assertTrue(c.confirm(USER, B, 30), "the arming moved to B");
+        assertTrue(c.confirm(USER, B, 10 + SyringeConfirm.MIN_TICKS), "the arming moved to B");
     }
 }

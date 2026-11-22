@@ -47,6 +47,14 @@ public final class AugustineBloodRules {
             return before == null || now - before > CHAIN_TICKS;
         }
 
+        /**
+         * Whether this drink starts a feed (the x3 is paid): it must give something on a vampire, and be the first of its pair within the window. A drink that gave
+         * nothing, or was on someone who is not a vampire, never touches the window (a refused bite must not start the feed that follows).
+         */
+        public boolean startsFeed(int given, boolean victimIsVampire, UUID biter, UUID victim, long now) {
+            return given > 0 && victimIsVampire && firstBite(biter, victim, now);
+        }
+
         public void clear() {
             last.clear();
         }

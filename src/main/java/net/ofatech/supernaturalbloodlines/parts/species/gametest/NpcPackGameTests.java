@@ -136,6 +136,8 @@ public final class NpcPackGameTests {
     private static final net.minecraft.server.level.TicketType<net.minecraft.world.level.ChunkPos> TICKET =
             net.minecraft.server.level.TicketType.create("supernaturalbloodlines_npc_pack_test", java.util.Comparator.comparingLong(net.minecraft.world.level.ChunkPos::toLong));
     private static final int TICKET_RADIUS = 2;
+    /** The tests whose body has started: the delayed release is only for the ones that never got there. */
+    private static final java.util.Set<GameTestHelper> STARTED = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
 
     private static void release(GameTestHelper helper) {
         for (net.minecraft.world.level.ChunkPos cp : HELD.getOrDefault(helper, java.util.List.of())) {
@@ -173,13 +175,18 @@ public final class NpcPackGameTests {
             }
             helper.assertTrue(all, "the chunks are not loaded yet");
         }).thenExecute(guarded(helper, body));
-        // a test that times out never reaches its body or its clean-up: let the chunks go a few ticks before the runner gives up
-        helper.runAfterDelay(95, () -> release(helper));
+        // a test that times out never reaches its body or its clean-up: let the chunks go a few ticks before the runner gives up (not once the body has started: it lets them go itself)
+        helper.runAfterDelay(95, () -> {
+            if (!STARTED.contains(helper)) {
+                release(helper);
+            }
+        });
     }
 
     /** The body, and whatever way it ends (a failed assertion included) the chunks it held are let go: a failed test must not leave them forced for the next batch. */
     static Runnable guarded(GameTestHelper helper, Runnable body) {
         return () -> {
+            STARTED.add(helper);
             try {
                 body.run();
             } catch (RuntimeException | Error e) {
@@ -467,6 +474,7 @@ public final class NpcPackGameTests {
     public static void aTestThatFailsInsideItsBodyStillLetsItsChunksGo(GameTestHelper helper) {
         BlockPos at = helper.absolutePos(new BlockPos(96, 1, 2));
         net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(at);
+        int holdsBefore = HOLDS.getOrDefault(cp, 0);
         HOLDS.merge(cp, 1, Integer::sum);
         HELD.computeIfAbsent(helper, k -> new java.util.ArrayList<>()).add(cp);
         boolean threw = false;
@@ -479,7 +487,7 @@ public final class NpcPackGameTests {
         }
         helper.assertTrue(threw, "the failure of the body was swallowed");
         // this test's own bookkeeping only: a neighbouring test may hold the same chunk in the same run
-        helper.assertTrue(!HELD.containsKey(helper), "a failed body left its chunk held");
+        helper.assertTrue(!HELD.containsKey(helper) && HOLDS.getOrDefault(cp, 0) == holdsBefore, "a failed body left its chunk held: " + holdsBefore + " -> " + HOLDS.getOrDefault(cp, 0));
         helper.succeed();
     }
 
@@ -491,9 +499,12 @@ public final class NpcPackGameTests {
             try {
                 helper.assertTrue(helper.getLevel().getEntity(far.getUUID()) == far, "a mob placed far away is not in the level");
                 helper.assertTrue(!helper.getLevel().getEntitiesOfClass(Mob.class, far.getBoundingBox().inflate(4), m -> m == far).isEmpty(), "a mob placed far away is not found by a search");
+                net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(far.blockPosition());
+                int holdsBefore = HOLDS.getOrDefault(cp, 0);
+                helper.assertTrue(holdsBefore >= 1 && HELD.get(helper).contains(cp), "the test does not hold its chunk: " + holdsBefore);
                 clean(helper, List.of(far));
-                // a neighbouring test's structure may be there, held by the runner or by another test: what is ours is only this test's own bookkeeping
-                helper.assertTrue(!HELD.containsKey(helper), "the chunk was kept held after the test");
+                // a neighbouring test may hold the same chunk: what must be true is that this test's own hold, and only that, went
+                helper.assertTrue(HOLDS.getOrDefault(cp, 0) == holdsBefore - 1 && !HELD.containsKey(helper), "the hold did not go back by exactly one: " + holdsBefore + " -> " + HOLDS.getOrDefault(cp, 0));
             } finally {
                 clean(helper, List.of(far));
             }
