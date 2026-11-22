@@ -162,12 +162,18 @@ public final class AugustineGameTests {
     /** R20f: a vampire who bites a vampire gets nothing (Predator's Thirst lifts it); an Augustine is not refused. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void anAugustineBitingAVampireIsNotRefusedByR20f(GameTestHelper helper) {
-        ServerPlayer plain = vampire(helper, Species.NONE);
-        ServerPlayer augustine = vampire(helper, Species.AUGUSTINE);
+        TestPlayers.TalkingDuelist plain = TestPlayers.createTalkingDuelist(helper);
+        TestPlayers.TalkingDuelist augustine = TestPlayers.createTalkingDuelist(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(plain).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1)
+                && VampirismAPI.factionPlayerHandler(augustine).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make vampires");
+        BloodlineAccess.set(augustine, BloodlineState.NONE.toBuilder().species(Species.AUGUSTINE).build());
         LivingEntity vampireMob = mob(helper, "vampirism:vampire");
+        String refused = "supernaturalbloodlines.turning.vampire_blood_no_fill";
         try {
             helper.assertTrue(feed(plain, vampireMob, 3) == 0, "control: a plain vampire without Predator's Thirst was fed by a vampire");
+            helper.assertTrue(plain.receivedOnActionBar(refused) || plain.receivedOnActionBar(refused + "_free"), "control: the plain vampire was not told the bite gave nothing");
             helper.assertTrue(feed(augustine, vampireMob, 3) == 9, "an Augustine was refused or not scaled by a vampire's bite");
+            helper.assertTrue(!augustine.receivedOnActionBar(refused) && !augustine.receivedOnActionBar(refused + "_free"), "an Augustine was told its bite on a vampire gave nothing (R20f is lifted)");
             if (EnabledParts.isEnabled("supernatural")) {
                 helper.assertTrue(vampireMob.hasEffect(MobEffects.WEAKNESS) || vampireMob.getHealth() < vampireMob.getMaxHealth(),
                         "the bite did not drain the vampire (an Augustine drains without the skill)");

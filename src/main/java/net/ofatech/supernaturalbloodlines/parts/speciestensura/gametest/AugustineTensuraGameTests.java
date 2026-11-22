@@ -23,6 +23,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.MigrationRules;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
+import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.EvolutionBoost;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 
 /** Phase 18c Task 2b (R200, owner Q3): an Augustine gets a plain vampire's Tensura treatment: race, layer, undead, apex offer, ladder top. Runs with Tensura. */
@@ -104,6 +105,18 @@ public final class AugustineTensuraGameTests {
         species(augustine, Species.NONE);
         VampirismAPI.factionPlayerHandler(augustine).setFactionAndLevel(VReference.VAMPIRE_FACTION, 3);
         helper.assertTrue(has(augustine, "tensura:drain"), "a plain vampire (the Augustine, cured of the species) lost the layer");
+        helper.succeed();
+    }
+
+    /** A plain vampire has no species, so Tensura's x1.25 for a species does not apply to it: nor to an Augustine. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void augustineGetsNoEvolutionBoostLikeAPlainVampire(GameTestHelper helper) {
+        ServerPlayer augustine = vampireOf(helper, "tensura:elf", Species.AUGUSTINE);
+        ServerPlayer plain = vampireOf(helper, "tensura:elf", Species.NONE);
+        ServerPlayer hybrid = vampireOf(helper, "tensura:elf", Species.HYBRID);
+        helper.assertTrue(EvolutionBoost.boostedEp(plain, 100) == 100.0, "control: a plain vampire was boosted: " + EvolutionBoost.boostedEp(plain, 100));
+        helper.assertTrue(EvolutionBoost.boostedEp(augustine, 100) == 100.0, "an Augustine was boosted: " + EvolutionBoost.boostedEp(augustine, 100));
+        helper.assertTrue(EvolutionBoost.boostedEp(hybrid, 100) > 100.0, "control: a hybrid was not boosted: " + EvolutionBoost.boostedEp(hybrid, 100));
         helper.succeed();
     }
 
