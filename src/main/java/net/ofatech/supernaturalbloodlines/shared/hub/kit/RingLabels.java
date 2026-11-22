@@ -71,7 +71,8 @@ public final class RingLabels {
     public static final int LINE = 9;
 
     private static @Nullable Rect search(Request r, List<Rect> blocked, Rect bounds, int minWidth, int gap, List<Rect> placed) {
-        for (int w = r.w(); w >= minWidth; w--) {
+        // the minimum is for a name that has to be cut: a short name that fits whole is never left out for being shorter than it
+        for (int w = r.w(); w >= Math.min(minWidth, r.w()); w--) {
             for (int variant = 0; variant < 5; variant++) {
                 Rect cand = at(r, w, variant);
                 // kept inside the page by sliding, as a name at the page edge always was

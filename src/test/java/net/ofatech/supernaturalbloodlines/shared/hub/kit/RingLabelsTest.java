@@ -133,6 +133,20 @@ class RingLabelsTest {
     }
 
     @Test
+    void aShortNameThatFitsWholeIsKeptEvenWhenItIsNarrowerThanTheMinimumForACutName() {
+        List<Rect> out = RingLabels.place(List.of(new Request(100, 50, 20, 9, Anchor.LEFT)), List.of(), PAGE, 22, 2);
+        assertNotNull(out.get(0), "Liam fits in 20 px: the 22 px minimum is for names that are cut");
+        assertEquals(20, out.get(0).w());
+    }
+
+    @Test
+    void aNameThatHasToBeCutStillStopsAtTheMinimum() {
+        Rect wall = new Rect(110, 40, 80, 40);
+        List<Rect> out = RingLabels.place(List.of(new Request(100, 50, 60, 9, Anchor.LEFT)), List.of(wall), PAGE, 22, 2);
+        assertNull(out.get(0), "only 10 px are free: under the 22 px minimum it is left to the tooltip");
+    }
+
+    @Test
     void aNameIsNotMovedOrShortenedWhenItFitsWhereItWasAsked() {
         List<Rect> out = RingLabels.place(List.of(new Request(100, 50, 50, 18, Anchor.CENTER)), List.of(), PAGE, 12, 2);
         assertEquals(18, out.get(0).h());
