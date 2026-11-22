@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased (plan 18b: dying with vampire blood stands you up)
+
+### Changed
+- **Update the server and every client together.** The "downed" payload of the species part carries a mode now, and the species part's network version is 2. A client on the old version would not understand the dying screen of the turning.
+- **A lethal blow to someone with vampire blood in them no longer kills them (R209).** They lie where they fell for 30 seconds (the same dying state as an Original hybrid, 1 health, unable to act), the turning already begun and its clock standing still, and stand up at half health. **Give up** ends the turning and kills them with the original blow (they respawn as a plain human). **Wait** goes on into the turning: drink human blood in time, as before. A second real death after waking keeps the turning going, as before. The void, `/kill`, white oak and the `failed_transition` death are still real deaths at once (they respawn in the turning, as before). A Ghoul gets Vampirism's own dying state, and its Give up ends the turning too.
+- The turning clock does not run while someone is dying, and a bottle cannot be drunk while dying.
+- **A player who is mid-turning when the update lands** keeps their old clock; the new flow starts at their next lethal blow.
+
+### Rolling back
+Rolling back removes the dying of the turning: a lethal blow with vampire blood in the system kills and respawns them in the turning as before. Someone who is dying at that moment is left with a saved dying counter (`downed`, `downed_mode`) that the old build reads as a plain dying state: they wake at half health after the rest of their 30 s, and the turning goes on. The old build ignores the mode.
 ## Unreleased (plan 18a: blood bottles carry their source)
 
 ### Changed

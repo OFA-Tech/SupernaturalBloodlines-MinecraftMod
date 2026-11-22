@@ -275,6 +275,7 @@ public final class SpeciesPart {
         }
         if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
             net.ofatech.supernaturalbloodlines.client.BloodShots.registerIfRequested(); // development screenshots only: inert without its -D flag
+            net.ofatech.supernaturalbloodlines.client.DyingShots.registerIfRequested(); // the same, for the dying of the turning
         }
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(SpeciesGameTests.class);

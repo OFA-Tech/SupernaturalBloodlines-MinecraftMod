@@ -21,7 +21,6 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionBlood;
-import net.ofatech.supernaturalbloodlines.parts.species.original.Downed;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionHandler;
 import net.ofatech.supernaturalbloodlines.parts.species.line.Lines;
 import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
@@ -160,7 +159,7 @@ public final class BloodBottles {
             return;
         }
         ItemStack stack = e.getItemStack();
-        if (!stack.is(TurningHandler.VAMPIRE_BLOOD) || stack.getUseDuration(p) > 0 || Downed.isDowned(p)) {
+        if (!stack.is(TurningHandler.VAMPIRE_BLOOD) || stack.getUseDuration(p) > 0) {
             return;
         }
         BloodSource source = sourceOf(p.server, stack);

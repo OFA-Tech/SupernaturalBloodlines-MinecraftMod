@@ -199,8 +199,7 @@ public final class TurningHandler {
         }
         ItemStack stack = e.getItemStack();
         BloodlineState s = BloodlineAccess.get(p);
-        // a downed player can do nothing (Downed denies the click, but this runs first): the bottle is kept
-        if (Downed.isDowned(p) || s.inTransition() || !stack.is(TransitionHandler.BLOOD_DRINKS) || !s.inTurning() || !wouldComplete(p)) {
+        if (s.inTransition() || !stack.is(TransitionHandler.BLOOD_DRINKS) || !s.inTurning() || !wouldComplete(p)) {
             return;
         }
         e.setCancellationResult(InteractionResult.CONSUME);
