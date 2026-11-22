@@ -77,7 +77,8 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         boolean alt = src.alt();
         long nowTick = mc.level == null ? 0 : mc.level.getGameTime();
         altSince = AltHold.since(altSince, alt, nowTick);
-        boolean detail = AltHold.detailed(altSince, nowTick) || (net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on && net.ofatech.supernaturalbloodlines.shared.hud.DevHud.detail);
+        // a dev shot holds Alt for good: it says for itself whether the second has passed
+        boolean detail = net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on ? net.ofatech.supernaturalbloodlines.shared.hud.DevHud.detail : AltHold.detailed(altSince, nowTick);
         boolean busy = alt || HudModeState.justSwitched();
         for (SlotView v : views) {
             busy |= v.cooldown() > 0f || v.active();
