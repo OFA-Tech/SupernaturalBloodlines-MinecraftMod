@@ -1,24 +1,48 @@
 package net.ofatech.supernaturalbloodlines.shared.hub.kit.client;
 
+import com.mojang.blaze3d.platform.NativeImage;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.metadata.gui.GuiSpriteScaling;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitFaces;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Flat;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.NineSlicePlan;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.SpritePresence;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Draws the art kit: a theme's sprite by {@link Part} (the nine-slice and tiling come from the sprite's own {@code .mcmeta}, vanilla's {@code blitSprite}), and
- * the shared icons. One texture blit each, never a fill per pixel. A sprite a resource pack removed is drawn flat in the theme's colours, so a screen stays usable.
- * Client only.
+ * Draws the art kit: a theme's sprite by {@link Part}, and the shared icons. A nine-slice is drawn by {@link NineSlicePlan} (the edges tiled, a solid middle one
+ * fill, so a panel is tens of blits and not thousands); a tile or a plain sprite by vanilla's {@code blitSprite}. A sprite a resource pack removed is drawn flat
+ * in the theme's colours, so a screen stays usable. Everything that can be looked up once is kept until the packs reload. Client only.
  */
 public final class UiKit {
     private static final SpritePresence PRESENCE = new SpritePresence(UiKit::probe);
+    private static final Map<String, Entry[]> PARTS = new HashMap<>();
+    private static final Map<String, Icon> ICONS_16 = new HashMap<>();
+    private static final Map<String, Icon> ICONS_32 = new HashMap<>();
+    private static final Map<String, String> SKILLS = new HashMap<>();
+
+    /** A theme sprite: its id, whether it exists, and how to cut it when it is a nine-slice. */
+    private record Entry(ResourceLocation id, boolean present, @Nullable Slice slice) {
+    }
+
+    private record Slice(ResourceLocation atlas, int x, int y, int atlasW, int atlasH, int w, int h, int l, int t, int r, int b, @Nullable Integer middle) {
+    }
+
+    private record Icon(@Nullable ResourceLocation id, boolean present) {
+    }
 
     private UiKit() {
     }
@@ -28,20 +52,78 @@ public final class UiKit {
     }
 
     private static boolean probe(String sprite) {
+        // an invalid path throws ResourceLocationException: the presence cache turns that into "not there"
         return !Minecraft.getInstance().getGuiSprites().getSprite(id(sprite)).contents().name().equals(MissingTextureAtlasSprite.getLocation());
     }
 
-    /** Forget which sprites exist: the resource packs changed. */
+    /** Forget everything looked up: the resource packs changed. */
     public static void reload() {
         PRESENCE.clear();
+        PARTS.clear();
+        ICONS_16.clear();
+        ICONS_32.clear();
+        SKILLS.clear();
     }
 
     public static boolean has(String sprite) {
         return PRESENCE.has(sprite);
     }
 
+    public static boolean has(String kitName, Part part) {
+        return entry(kitName, part).present();
+    }
+
+    private static Entry entry(String kit, Part part) {
+        Entry[] row = PARTS.computeIfAbsent(kit, k -> new Entry[Part.values().length]);
+        Entry e = row[part.ordinal()];
+        if (e == null) {
+            String path = KitSprites.of(kit, part.sprite());
+            ResourceLocation id = id(path);
+            boolean present = has(path);
+            e = new Entry(id, present, present && KitSprites.SCALED.contains(part) ? slice(id, path) : null);
+            row[part.ordinal()] = e;
+        }
+        return e;
+    }
+
+    /** How a nine-slice sprite is cut, or null when it is not one (a tile and a plain sprite go through vanilla). */
+    @Nullable
+    private static Slice slice(ResourceLocation id, String path) {
+        TextureAtlasSprite sprite = Minecraft.getInstance().getGuiSprites().getSprite(id);
+        if (!(Minecraft.getInstance().getGuiSprites().getSpriteScaling(sprite) instanceof GuiSpriteScaling.NineSlice ns)) {
+            return null;
+        }
+        int w = ns.width();
+        int h = ns.height();
+        var b = ns.border();
+        int atlasW = Math.round(sprite.contents().width() / (sprite.getU1() - sprite.getU0()));
+        int atlasH = Math.round(sprite.contents().height() / (sprite.getV1() - sprite.getV0()));
+        return new Slice(sprite.atlasLocation(), sprite.getX(), sprite.getY(), atlasW, atlasH, w, h, b.left(), b.top(), b.right(), b.bottom(), middle(path, w, h, b));
+    }
+
+    /** The one colour the middle of the picture is (read once from the pack's PNG), or null when it is not one colour. */
+    @Nullable
+    private static Integer middle(String path, int w, int h, GuiSpriteScaling.NineSlice.Border b) {
+        ResourceLocation png = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/sprites/" + path + ".png");
+        try (InputStream in = Minecraft.getInstance().getResourceManager().open(png); NativeImage img = NativeImage.read(in)) {
+            if (img.getWidth() != w || img.getHeight() != h) {
+                return null;
+            }
+            int[] argb = new int[w * h];
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    int abgr = img.getPixelRGBA(x, y);
+                    argb[y * w + x] = (abgr & 0xFF00FF00) | ((abgr & 0xFF) << 16) | ((abgr >> 16) & 0xFF);
+                }
+            }
+            return NineSlicePlan.solidMiddle(argb, w, h, b.left(), b.top(), b.right(), b.bottom());
+        } catch (IOException | RuntimeException unreadable) {
+            return null;
+        }
+    }
+
     public static void draw(GuiGraphics g, HubTheme theme, Part part, Rect r) {
-        draw(g, theme, part, r.x(), r.y(), r.w(), r.h());
+        draw(g, theme, part, r.x(), r.y(), r.w(), r.h(), 1f);
     }
 
     /** {@code part} of the theme's kit stretched, sliced or tiled over the box; flat colours when its sprite is missing. */
@@ -53,14 +135,26 @@ public final class UiKit {
         if (w <= 0 || h <= 0) {
             return;
         }
-        String sprite = KitSprites.of(theme.kit(), part.sprite());
-        if (!has(sprite)) {
+        Entry e = entry(theme.kit(), part);
+        if (!e.present()) {
             flat(g, theme, part.flat(), x, y, w, h);
             return;
         }
         int m = part.margin();
         blend(g, alpha);
-        g.blitSprite(id(sprite), x - m, y - m, w + 2 * m, h + 2 * m);
+        if (e.slice() != null) {
+            Slice s = e.slice();
+            for (NineSlicePlan.Op op : NineSlicePlan.of(s.w(), s.h(), s.l(), s.t(), s.r(), s.b(), x - m, y - m, w + 2 * m, h + 2 * m, s.middle())) {
+                if (op.fill()) {
+                    int a = Math.round((op.color() >>> 24) * alpha);
+                    g.fill(op.x(), op.y(), op.x() + op.w(), op.y() + op.h(), a << 24 | (op.color() & 0xFFFFFF));
+                } else {
+                    g.blit(s.atlas(), op.x(), op.y(), op.w(), op.h(), (float) (s.x() + op.u()), (float) (s.y() + op.v()), op.w(), op.h(), s.atlasW(), s.atlasH());
+                }
+            }
+        } else {
+            g.blitSprite(e.id(), x - m, y - m, w + 2 * m, h + 2 * m);
+        }
         reset(g, alpha);
     }
 
@@ -101,9 +195,36 @@ public final class UiKit {
         }
     }
 
-    /** The kit's focus ring round {@code r}: two pixels outside it. */
+    /** The colour of the label on a kit button of {@code theme}: read on the picture when there is one, on the flat colours that replace it when there is not. */
+    public static int label(HubTheme theme, Part button) {
+        return entry(theme.kit(), button).present() ? KitFaces.label(theme.kit(), button, theme.ink())
+                : KitFaces.labelOn(KitFaces.flatFace(button.flat(), theme.paper(), theme.accent(), theme.muted()), theme.ink());
+    }
+
+    /** {@code preferred} for text on {@code part} while its picture is there; on the flat colours that replace a missing picture, white or black when {@code preferred} would not read on them. */
+    public static int labelOver(HubTheme theme, Part part, int preferred) {
+        return entry(theme.kit(), part).present() ? preferred : KitFaces.labelOn(KitFaces.flatFace(part.flat(), theme.paper(), theme.accent(), theme.muted()), preferred);
+    }
+
+    /** The focus ring round {@code r}: the kit's picture (two pixels outside it), or the theme's focus colour in a two pixel frame when the picture is gone. */
     public static void focus(GuiGraphics g, HubTheme theme, Rect r) {
-        draw(g, theme, Part.FOCUS, r.x() - 3, r.y() - 3, r.w() + 6, r.h() + 6);
+        if (entry(theme.kit(), Part.FOCUS).present()) {
+            draw(g, theme, Part.FOCUS, r.x() - 3, r.y() - 3, r.w() + 6, r.h() + 6);
+        } else {
+            flat(g, theme, Flat.RING, r.x() - 2, r.y() - 2, r.w() + 4, r.h() + 4);
+        }
+    }
+
+    private static Icon icon(int size, String name) {
+        return (size == 16 ? ICONS_16 : ICONS_32).computeIfAbsent(name, n -> {
+            String path = KitSprites.icon(size, n);
+            return KitSprites.validName(path) && has(path) ? new Icon(id(path), true) : new Icon(null, false);
+        });
+    }
+
+    /** The name of a skill's icon: its own picture, the "unknown" rune for a skill of another mod or one without a picture. */
+    public static String skillIconName(String skillId) {
+        return SKILLS.computeIfAbsent(skillId, s -> KitSprites.skillIcon(s, UiKit::has));
     }
 
     /**
@@ -113,19 +234,15 @@ public final class UiKit {
      */
     public static boolean icon(GuiGraphics g, String name, int x, int y, int box, int argb) {
         KitSprites.IconPlan plan = KitSprites.iconPlan(box);
-        String sprite = KitSprites.icon(plan.sprite(), name);
-        if (!has(sprite)) {
+        Icon icon = icon(plan.sprite(), name);
+        if (!icon.present()) {
             return false;
         }
         int alpha = argb >>> 24;
         float a = alpha == 0 ? 1f : alpha / 255f;
         blend(g, a);
-        g.blitSprite(id(sprite), x + (box - plan.draw()) / 2, y + (box - plan.draw()) / 2, plan.draw(), plan.draw());
+        g.blitSprite(icon.id(), x + (box - plan.draw()) / 2, y + (box - plan.draw()) / 2, plan.draw(), plan.draw());
         reset(g, a);
         return true;
-    }
-
-    public static boolean has(String kitName, Part part) {
-        return has(KitSprites.of(kitName, part.sprite()));
     }
 }

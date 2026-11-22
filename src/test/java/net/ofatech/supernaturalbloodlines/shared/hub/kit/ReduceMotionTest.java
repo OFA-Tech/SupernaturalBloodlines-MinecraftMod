@@ -48,4 +48,17 @@ class ReduceMotionTest {
             assertEquals(Motion.GLOW_HELD, Motion.glowPercent(tick, true), "tick " + tick);
         }
     }
-}
+
+    @Test
+    void theHudHaloBreathesWithMotionOnAndIsHeldAtItsBrightestWithItOff() {
+        float low = 1f;
+        float high = 0f;
+        for (long tick = 0; tick < 100; tick++) {
+            float p = Motion.pulse(tick, false);
+            low = Math.min(low, p);
+            high = Math.max(high, p);
+            assertEquals(1f, Motion.pulse(tick, true), 1e-6, "tick " + tick);
+        }
+        assertTrue(low < 0.1f && high > 0.9f, "the halo moves from " + low + " to " + high);
+        assertEquals(0.5f, Motion.pulse(0, false), 1e-6);
+    }}

@@ -20,7 +20,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class HubSkills {
     /** COVERED: the player already has what the skill stands for (Vampirism's own skill), so buying it would pay for nothing. */
-    public enum State { OWNED, BUYABLE, LOCKED, DORMANT, COVERED }
+    public enum State {
+        OWNED, BUYABLE, LOCKED, DORMANT, COVERED;
+
+        /** Whether a page offers to buy it: a skill the player has (or has the like of) is not offered again, one that is locked still shows why it cannot be. */
+        public boolean offersPurchase() {
+            return this != OWNED && this != COVERED;
+        }
+    }
 
     /**
      * @param race  the tree that lists it, null for a dormant skill no current tree lists

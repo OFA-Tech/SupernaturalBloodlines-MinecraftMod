@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.gui.screens.options.controls.ControlsScreen;
 import net.minecraft.network.chat.Component;
 import net.neoforged.fml.ModList;
@@ -123,6 +124,11 @@ public final class SettingsPage implements HubPageView {
         Component label = label(e);
         int top = y + 1;
         y = PageKit.wrapped(f, label, r.x() + 4, top, e.kind() == SettingKind.BOOL ? r.w() - 44 : r.w() - 4, t.ink());
+        String noteKey = KEY + "note." + e.dottedPath();
+        if (I18n.exists(noteKey)) {
+            // a line under the label that says what the setting changes
+            y = PageKit.wrapped(f, Component.translatable(noteKey), r.x() + 4, y, e.kind() == SettingKind.BOOL ? r.w() - 44 : r.w() - 4, t.muted());
+        }
         String id = "stage:settings:" + e.dottedPath();
         if (e.kind() == SettingKind.BOOL) {
             Rect b = new Rect(r.right() - 36, top - 1, 36, PageWidgets.H);

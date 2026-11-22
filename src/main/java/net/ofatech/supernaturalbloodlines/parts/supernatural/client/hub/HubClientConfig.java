@@ -31,8 +31,8 @@ public final class HubClientConfig {
                 .defineEnum("hub_theme", ThemeId.GRIMOIRE);
         OPEN_ON = b.comment("Which page the hub opens on: HOME (the first time in a session, and whenever a request waits) or LAST_PAGE (the page you left;",
                         "only a waiting request opens Home).").defineEnum("open_on", OpenOn.HOME);
-        REDUCE_MOTION = b.comment("Turn off the interface's own motion: page slides, press and unlock flourishes, glow pulses and our screen shake, in the hub, the HUD",
-                "and the boss bars. A change still lands at once. Cooldown sweeps stay (they are information); world animations (boss shifts, particles) are not touched.")
+        REDUCE_MOTION = b.comment("Turn off the interface's own motion: the hub's tab slide and the HUD's breathing halo (more as the interface gets it: flourishes, boss bars).",
+                "A change still lands at once. Cooldown sweeps stay (they are information); world animations (boss shifts, particles) are not touched.")
                 .define("reduce_motion", false);
         SPEC = b.build();
         // the HUD and the boss bars read it too, and may be built without the hub part

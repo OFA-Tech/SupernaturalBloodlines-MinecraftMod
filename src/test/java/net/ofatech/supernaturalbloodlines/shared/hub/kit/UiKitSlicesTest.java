@@ -29,10 +29,30 @@ class UiKitSlicesTest {
         }
     }
 
-    private static JsonObject mcmeta(String sprite) throws Exception {
+    static JsonObject mcmeta(String sprite) throws Exception {
         try (InputStream in = UiKitSlicesTest.class.getResourceAsStream(DIR + sprite + ".png.mcmeta")) {
             return in == null ? null : JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
         }
+    }
+
+    /** The border of a nine-slice sprite: left, top, right, bottom. */
+    static int[] border(String sprite) throws Exception {
+        JsonObject b = mcmeta(sprite).getAsJsonObject("gui").getAsJsonObject("scaling").getAsJsonObject("border");
+        return new int[] {b.get("left").getAsInt(), b.get("top").getAsInt(), b.get("right").getAsInt(), b.get("bottom").getAsInt()};
+    }
+
+    @Test
+    void everyPartThatIsDrawnAtAnotherSizeHasItsMcmeta() throws Exception {
+        List<String> missing = new ArrayList<>();
+        for (String kit : KitSprites.KITS) {
+            for (KitSprites.Part part : KitSprites.SCALED) {
+                String sprite = KitSprites.of(kit, part.sprite());
+                if (mcmeta(sprite) == null) {
+                    missing.add(sprite);
+                }
+            }
+        }
+        assertTrue(missing.isEmpty(), "drawn at another size but with no .mcmeta (vanilla would stretch it): " + missing);
     }
 
     @Test

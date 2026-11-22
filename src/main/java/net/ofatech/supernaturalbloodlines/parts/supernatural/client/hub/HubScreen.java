@@ -180,6 +180,12 @@ public final class HubScreen extends Screen {
     }
 
     @Override
+    protected void init() {
+        super.init();
+        net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit.reload();
+    }
+
+    @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         if (HubDev.quiet()) {
             mouseX = -1000;
@@ -269,11 +275,9 @@ public final class HubScreen extends Screen {
                 int offset = scroll.getOrDefault(e.getKey(), 0);
                 theme.drawScrollbar(g, vp, offset, e.getValue());
                 if (net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.moreBelow(offset, e.getValue())) {
+                    // in the strip the content was clipped above (ScrollHint.GUTTER): it never covers text
                     Component more = Component.literal("\u25BC ").append(Component.translatable("supernaturalbloodlines.hub.scroll_more"));
-                    int w = font.width(more) + 6;
-                    int x = vp.right() - w - 4;
-                    g.fill(x, vp.bottom() - 11, x + w, vp.bottom() - 1, (theme.paper() & 0xFFFFFF) | 0xE0000000);
-                    g.drawString(font, more, x + 3, vp.bottom() - 10, theme.muted(), false);
+                    g.drawString(font, more, vp.right() - font.width(more) - 4, vp.bottom() + 1, theme.muted(), false);
                 }
             }
         }
@@ -310,9 +314,12 @@ public final class HubScreen extends Screen {
     /** The part of a region that scrolls: the region less what the page reserved at its bottom. */
     private Rect viewport(String name) {
         Rect r = layout.region(name);
-        int keep = reserved.getOrDefault(name, 0);
-        return keep <= 0 ? r : new Rect(r.x(), r.y(), r.w(), Math.max(0, r.h() - keep));
+        int full = Math.max(0, r.h() - Math.max(0, reserved.getOrDefault(name, 0)));
+        return new Rect(r.x(), r.y(), r.w(), net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.clipHeight(full, overflowed.getOrDefault(name, false)));
     }
+
+    /** The regions whose content did not fit last frame: each keeps a strip under it for the "more below" marker. */
+    private final Map<String, Boolean> overflowed = new HashMap<>();
 
     /** The view of a page in the current theme; the page answers keys and drags first, see {@link #keyPressed}. */
     private HubPageView viewOf(HubPage p, HubView view) {
@@ -801,6 +808,8 @@ public final class HubScreen extends Screen {
     public void removed() {
         super.removed();
         lastView = null;
+        net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiMotion.clear();
+        KitDraw.activeTheme(null);
         net.ofatech.supernaturalbloodlines.shared.hub.AdminHandoff.take(); // an offer nobody took must not preselect a person in a later session
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackInvite.reset();
         HubClient.sendOpen(false);
@@ -921,6 +930,8 @@ public final class HubScreen extends Screen {
         public void end(int bottom) {
             g.disableScissor();
             int now = scroll.getOrDefault(region, 0);
+            int full = layout.region(region).h() - Math.max(0, reserved.getOrDefault(region, 0));
+            overflowed.put(region, net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.overflows(bottom + now - clip.y(), full));
             int max = Math.max(0, bottom + now - clip.bottom());
             maxScroll.put(region, max);
             scroll.put(region, Math.min(now, max));

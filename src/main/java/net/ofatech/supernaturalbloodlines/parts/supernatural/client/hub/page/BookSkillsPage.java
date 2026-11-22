@@ -98,10 +98,12 @@ public final class BookSkillsPage implements HubPageView {
         BookKit.moonHead(f, Component.translatable(PageKit.HUB + "page.skills"), chapter);
         tree(f, rows, chosen, BookKit.MOON);
         if (chosen != null) {
-            boolean known = chosen.state() == HubSkills.State.OWNED || chosen.state() == HubSkills.State.COVERED;
+            boolean known = !chosen.state().offersPurchase();
             String id = chosen.id();
             Detail.Builder d = Detail.of(SkillsPage.name(chosen)).pips(known ? 1 : 0, 1).body(SkillsPage.state(chosen));
-            d.action("buy", Component.translatable(BOOK + "learn_cost", chosen.cost()), true, chosen.state() == HubSkills.State.BUYABLE, () -> SkillsPage.buy(id));
+            if (chosen.state().offersPurchase()) { // a skill the player has is not offered again
+                d.action("buy", Component.translatable(BOOK + "learn_cost", chosen.cost()), true, chosen.state() == HubSkills.State.BUYABLE, () -> SkillsPage.buy(id));
+            }
             if (f.view.context().loadout()) {
                 d.action("hud", Component.translatable(BOOK + "hud_link"), false, true, () -> f.screen().setPage(HubPage.LOADOUT));
             }
@@ -137,10 +139,13 @@ public final class BookSkillsPage implements HubPageView {
     private void pinned(HubScreen.Frame f, Rect r, HubSkills.Row row) {
         int y = r.bottom() - BookKit.SEAL;
         String id = row.id();
-        BookKit.seal(f, "buy:" + id, Component.translatable(KEY + "buy"), row.state() == HubSkills.State.BUYABLE, r.x(), y, () -> SkillsPage.buy(id),
-                List.of(Component.translatable(KEY + "buy"), SkillsPage.state(row)));
+        boolean seal = row.state().offersPurchase(); // no LEARN seal on a skill the player has
+        if (seal) {
+            BookKit.seal(f, "buy:" + id, Component.translatable(KEY + "buy"), row.state() == HubSkills.State.BUYABLE, r.x(), y, () -> SkillsPage.buy(id),
+                    List.of(Component.translatable(KEY + "buy"), SkillsPage.state(row)));
+        }
         if (f.view.context().loadout()) {
-            BookKit.link(f, "link:hud", Component.translatable(BOOK + "hud_link"), r.x() + BookKit.SEAL + 8, y + BookKit.SEAL / 2 - 4,
+            BookKit.link(f, "link:hud", Component.translatable(BOOK + "hud_link"), r.x() + (seal ? BookKit.SEAL + 8 : 0), y + BookKit.SEAL / 2 - 4,
                     List.of(Component.translatable(BOOK + "hud_tip")), () -> f.screen().setPage(HubPage.LOADOUT));
         }
     }
@@ -214,15 +219,18 @@ public final class BookSkillsPage implements HubPageView {
         int height = lines.size() * 9;
         int ly = beside ? n.y() - height / 2 : n.y() >= cy ? n.y() + size / 2 + 2 : n.y() - size / 2 - 2 - height;
         int color = selected ? t.accent() : locked ? t.muted() : t.ink();
+        Rect hit = new Rect(n.x() - size / 2 - 2, n.y() - size / 2 - 2, size + 4, size + 4);
+        Rect target = hit;
         for (var line : lines) {
             int lw = f.font().width(line);
             int lx = beside ? (dx > 0 ? n.x() + size / 2 + 3 : n.x() - size / 2 - 3 - lw) : Math.max(page.x(), Math.min(page.right() - lw, n.x() - lw / 2));
             f.g.drawString(f.font(), line, lx, ly, color, false);
+            target = target.union(new Rect(lx, ly, lw, 9));
             ly += 9;
         }
-        Rect hit = new Rect(n.x() - size / 2 - 2, n.y() - size / 2 - 2, size + 4, size + 4);
         String id = "skill:" + row.id();
-        f.target(id, hit, List.of(SkillsPage.name(row), SkillsPage.state(row)), () -> legacy.select(row.id()));
+        // a name that was cut is read in full by pointing at it (its tooltip has the whole name); the focus ring stays round the node
+        f.target(id, net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.isCut(lines) ? target : hit, List.of(SkillsPage.name(row), SkillsPage.state(row)), () -> legacy.select(row.id()));
         if (f.focused(id)) {
             KitDraw.focusRing(f.g, hit, t.focusColor());
         }

@@ -34,6 +34,7 @@ public final class KitSprites {
 
         private final Flat flat;
         private final int margin;
+        private final String sprite;
 
         Part(Flat flat) {
             this(flat, 0);
@@ -43,6 +44,7 @@ public final class KitSprites {
         Part(Flat flat, int margin) {
             this.flat = flat;
             this.margin = margin;
+            this.sprite = name().toLowerCase(Locale.ROOT);
         }
 
         public int margin() {
@@ -54,8 +56,28 @@ public final class KitSprites {
         }
 
         public String sprite() {
-            return name().toLowerCase(Locale.ROOT);
+            return sprite;
         }
+    }
+
+    /** The parts a screen draws at a size other than the picture's own: each needs a {@code .mcmeta} (nine-slice or tile) next to its PNG, or vanilla would stretch it. */
+    public static final java.util.Set<Part> SCALED = java.util.EnumSet.of(Part.COVER, Part.PANEL, Part.INSET, Part.TOOLTIP, Part.DIVIDER, Part.SCROLL_TRACK, Part.SCROLL_THUMB,
+            Part.SCROLL_THUMB_HOVER, Part.TAB, Part.TAB_HOVER, Part.TAB_SELECTED, Part.TAB_DISABLED, Part.BUTTON_NORMAL, Part.BUTTON_HOVER, Part.BUTTON_PRESSED, Part.BUTTON_DISABLED,
+            Part.BUTTON_FOCUS, Part.BUTTON_PRIMARY_NORMAL, Part.BUTTON_PRIMARY_HOVER, Part.BUTTON_PRIMARY_PRESSED, Part.BUTTON_PRIMARY_DISABLED, Part.BUTTON_PRIMARY_FOCUS, Part.FOCUS,
+            Part.BAR_TRACK, Part.BAR_FILL, Part.PLATE, Part.CHIP, Part.CHIP_ON);
+
+    /** A sprite name a resource location can hold: a skill id of another mod ({@code mymod:fireball}) or one with a capital must never reach {@code ResourceLocation}. */
+    public static boolean validName(String name) {
+        if (name.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (!(c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_' || c == '-' || c == '.' || c == '/')) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private KitSprites() {
@@ -72,7 +94,7 @@ public final class KitSprites {
     /** The icon of a skill: its own picture (the sprite is named by the skill id, any case), the "unknown" rune when the skill has none. */
     public static String skillIcon(String skillId, java.util.function.Predicate<String> has16) {
         String name = skillId.toLowerCase(Locale.ROOT);
-        return has16.test(icon(16, name)) ? name : "unknown";
+        return validName(name) && has16.test(icon(16, name)) ? name : "unknown";
     }
 
     /** Which icon sprite, and at what size, fills a box: pixel art is only ever drawn at a whole multiple (or half) of its own size. */

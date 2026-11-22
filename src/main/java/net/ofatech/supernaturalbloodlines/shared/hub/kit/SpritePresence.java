@@ -17,7 +17,16 @@ public final class SpritePresence {
     }
 
     public boolean has(String sprite) {
-        return known.computeIfAbsent(sprite, probe::test);
+        return known.computeIfAbsent(sprite, this::ask);
+    }
+
+    /** A probe that cannot take the name (an invalid resource path) says the sprite is not there, it never throws into a frame. */
+    private boolean ask(String sprite) {
+        try {
+            return probe.test(sprite);
+        } catch (RuntimeException invalid) {
+            return false;
+        }
     }
 
     /** Forget every answer: the resource packs changed. */

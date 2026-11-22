@@ -373,11 +373,11 @@ public final class BookPackPage implements HubPageView {
         }
         if (pack.isEmpty() && f.view.snapshot().npcs().isEmpty()) {
             // nobody beside you: the empty state instead of an empty ring
-            EmptyState.render(f, s, top + Math.max(0, (s.bottom() - top - 150) / 2), "pack", HubPage.GUIDE);
+            int emptyBottom = EmptyState.render(f, s, top + Math.max(0, (s.bottom() - top - 150) / 2), "pack", HubPage.GUIDE);
             if (style == Style.BOOK) {
                 PackInvite.picker(f, new Rect(s.x(), top, s.w(), 0), top, true);
             }
-            f.end(s.bottom());
+            f.end(Math.max(s.bottom(), emptyBottom));
             return;
         }
         // on the Blood Moon stage the ledger card takes the right of it, so the ring is centred in what is left

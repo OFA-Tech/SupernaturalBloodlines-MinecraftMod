@@ -224,7 +224,9 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
 
     private static void row(GuiGraphics g, HubTheme theme, Rect r, boolean selected, boolean lit, String label, int labelColor, Runnable icon) {
         Font font = Minecraft.getInstance().font;
-        UiKit.draw(g, theme, selected ? Part.TAB_SELECTED : lit ? Part.TAB_HOVER : Part.TAB, r);
+        Part face = selected ? Part.TAB_SELECTED : lit ? Part.TAB_HOVER : Part.TAB;
+        UiKit.draw(g, theme, face, r);
+        labelColor = UiKit.labelOver(theme, face, labelColor);
         icon.run();
         if (r.w() > 40) { // an icon-only row on a narrow window (the tooltip has the name)
             String text = TensuraHubLayout.fit(label, r.w() - ICON_ROOM - 8, font::width);
@@ -348,7 +350,7 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
             Part part = KitFaces.button(a.primary(), a.enabled(), hot, false);
             UiKit.draw(g, this, part, b);
             String label = LabelFit.cut(a.label().getString(), b.w() - 8, font::width);
-            g.drawString(font, label, b.x() + (b.w() - font.width(label)) / 2, b.y() + (b.h() - 8) / 2, KitFaces.label(kit(), part, TEXT), false);
+            g.drawString(font, label, b.x() + (b.w() - font.width(label)) / 2, b.y() + (b.h() - 8) / 2, UiKit.label(this, part), false);
         }
         int limit = by - 2;
         int y = r.y() + 7;

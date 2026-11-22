@@ -168,4 +168,11 @@ class LabelFitTest {
         int height = guiWidth * 9 / 16;
         return net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.client.TensuraHubLayout.of(guiWidth, height, 8, 4);
     }
-}
+
+    @Test
+    void aNameThatWasCutIsToldFromOneThatFit() {
+        ToIntFunction<String> six = s -> s.length() * 6;
+        assertFalse(LabelFit.isCut(LabelFit.wrap("Moon Heart", 100, 2, six)));
+        assertTrue(LabelFit.isCut(LabelFit.wrap("Predator's Thirst of the Moon", 60, 2, six)));
+        assertFalse(LabelFit.isCut(List.of()));
+    }}

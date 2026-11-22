@@ -148,7 +148,10 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         }
         if (cards) {
             for (String region : List.of(HubLayout.MAIN, HubLayout.SIDE)) {
-                UiKit.draw(f.g, this, Part.PANEL, BloodMoonLayout.card(f.region(region)));
+                Rect c = BloodMoonLayout.card(f.region(region));
+                // the Guide's cards end above the floating bar, not under it
+                int cut = page == HubPage.GUIDE ? BloodMoonLayout.cardCut(f.region(region), f.layout().chrome().detail()) : 0;
+                UiKit.draw(f.g, this, Part.PANEL, new Rect(c.x(), c.y(), c.w(), c.h() - cut));
             }
         }
         if ((page == HubPage.PATH && !f.view.ghoul()) || (page == HubPage.PACK && f.screen().profile() == null)) {
@@ -237,7 +240,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
             Part morePart = KitFaces.button(false, true, hot || overflowOpen, false);
             UiKit.draw(g, this, morePart, more);
             String moreLabel = LabelFit.cut(Component.translatable("supernaturalbloodlines.hub.more").getString(), more.w() - 6, font::width);
-            g.drawString(font, moreLabel, more.x() + (more.w() - font.width(moreLabel)) / 2, more.y() + (more.h() - 8) / 2, KitFaces.label(kit(), morePart, ink()), false);
+            g.drawString(font, moreLabel, more.x() + (more.w() - font.width(moreLabel)) / 2, more.y() + (more.h() - 8) / 2, UiKit.label(this, morePart), false);
             ctx.target("detail:more", more, List.of(Component.translatable("supernaturalbloodlines.hub.more_actions")), () -> overflowOpen = !overflowOpen);
             if (overflowOpen) {
                 // the actions that did not fit, stacked above the bar
@@ -290,7 +293,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         Part part = KitFaces.button(a.primary(), a.enabled(), hot, false);
         UiKit.draw(g, this, part, pill);
         String label = LabelFit.cut(a.label().getString(), pill.w() - 6, font::width);
-        g.drawString(font, label, pill.x() + (pill.w() - font.width(label)) / 2, pill.y() + (pill.h() - 8) / 2, KitFaces.label(kit(), part, ink()), false);
+        g.drawString(font, label, pill.x() + (pill.w() - font.width(label)) / 2, pill.y() + (pill.h() - 8) / 2, UiKit.label(this, part), false);
     }
 
     /** Claimed tasks of the next rung out of its tasks; a full moon at the top of the ladder. */

@@ -33,8 +33,34 @@ public final class KitFaces {
 
     /** The label on a button: the theme's ink when it reads on the face (4.5:1), else white or black, whichever does. */
     public static int label(String kit, Part button, int ink) {
-        int face = face(kit, button);
+        return labelOn(face(kit, button), ink);
+    }
+
+    /** The label on any face: {@code ink} when it reads (4.5:1), else white or black. */
+    public static int labelOn(int face, int ink) {
         return Contrast.ratio(ink, face) >= 4.5 ? ink : Contrast.bestText(face);
+    }
+
+    /**
+     * The colour a part is when its sprite is missing and the theme's flat colours are drawn instead ({@code UiKit#flat}): a surface is the paper, an accent part the
+     * accent, a track the muted colour at half alpha over the paper.
+     */
+    public static int flatFace(KitSprites.Flat flat, int paper, int accent, int muted) {
+        return switch (flat) {
+            case ACCENT -> 0xFF000000 | accent;
+            case TRACK -> blend(muted, paper, 0x80);
+            default -> 0xFF000000 | paper;
+        };
+    }
+
+    private static int blend(int over, int under, int alpha) {
+        int out = 0xFF000000;
+        for (int shift = 16; shift >= 0; shift -= 8) {
+            int o = (over >> shift) & 0xFF;
+            int u = (under >> shift) & 0xFF;
+            out |= ((o * alpha + u * (255 - alpha)) / 255) << shift;
+        }
+        return out;
     }
 
     /** The button part of a state: primary or plain, enabled, hot (hovered or focused) and pressed. */

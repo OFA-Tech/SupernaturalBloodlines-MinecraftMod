@@ -64,7 +64,7 @@ public final class KitDraw {
 
     /** The picture of a skill: one for each skill id (the "unknown" rune for a skill of another mod). */
     public static void skillIcon(GuiGraphics g, String skillId, int x, int y, int size, int color) {
-        if (!UiKit.icon(g, KitSprites.skillIcon(skillId, UiKit::has), x, y, size, color)) {
+        if (!UiKit.icon(g, UiKit.skillIconName(skillId), x, y, size, color)) {
             atlasIcon(g, SkillIcons.of(skillId), x, y, size, color);
         }
     }
@@ -206,7 +206,7 @@ public final class KitDraw {
 
     /** The focus ring: a 2 px frame drawn 2 px outside {@code r}, in {@code color} (the theme's focus colour). */
     public static void focusRing(GuiGraphics g, Rect r, int color) {
-        if (active != null && UiKit.has(active.kit(), Part.FOCUS)) {
+        if (active != null) {
             UiKit.focus(g, active, r);
             return;
         }
@@ -305,7 +305,7 @@ public final class KitDraw {
             Part part = KitFaces.button(a.primary(), a.enabled(), hot, false);
             UiKit.draw(g, theme, part, b);
             String shown = LabelFit.cut(a.label().getString(), b.w() - 8, font::width);
-            g.drawString(font, shown, b.x() + (b.w() - font.width(shown)) / 2, b.y() + (b.h() - 8) / 2, KitFaces.label(theme.kit(), part, theme.ink()), false);
+            g.drawString(font, shown, b.x() + (b.w() - font.width(shown)) / 2, b.y() + (b.h() - 8) / 2, UiKit.label(theme, part), false);
         }
         detailActions(ctx, theme, rects, d);
     }
@@ -437,7 +437,7 @@ public final class KitDraw {
         Part part = KitFaces.button(primary, true, focused, false);
         UiKit.draw(g, theme, part, r);
         String shown = LabelFit.cut(label.getString(), r.w() - 8, font::width);
-        g.drawString(font, shown, r.x() + (r.w() - font.width(shown)) / 2, r.y() + (r.h() - 8) / 2, KitFaces.label(theme.kit(), part, theme.ink()), false);
+        g.drawString(font, shown, r.x() + (r.w() - font.width(shown)) / 2, r.y() + (r.h() - 8) / 2, UiKit.label(theme, part), false);
         if (focused) {
             UiKit.focus(g, theme, r);
         }

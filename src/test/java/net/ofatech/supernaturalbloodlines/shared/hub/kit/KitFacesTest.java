@@ -54,4 +54,28 @@ class KitFacesTest {
         assertEquals(Part.BUTTON_PRIMARY_HOVER, KitFaces.button(true, true, true, false));
         assertEquals(Part.BUTTON_PRIMARY_DISABLED, KitFaces.button(true, false, false, false));
     }
-}
+
+    @Test
+    void aMissingSpritesFlatColoursAreTheThemesOwnAndTheLabelReadsOnThem() {
+        // the Grimoire, Blood Moon and Tensura paper, accent, muted and ink
+        int[][] themes = {{0xFFE9DCBC, 0xFF7A1218, 0xFF5E4228, 0xFF3B2414}, {0xFF1A0A10, 0xFFFFD36B, 0xFFC9A0A8, 0xFFF0E0E0}, {0xFF12293F, 0xFF3FD0D6, 0xFF8FB2C4, 0xFFE6F3FB}};
+        for (int[] th : themes) {
+            for (KitSprites.Part button : KitFaces.BUTTONS) {
+                int face = KitFaces.flatFace(button.flat(), th[0], th[1], th[2]);
+                double ratio = Contrast.ratio(KitFaces.labelOn(face, th[3]), face);
+                assertTrue(ratio >= 4.5, button + " flat on #" + Integer.toHexString(face) + " label " + ratio);
+            }
+        }
+        assertEquals(0xFF7A1218, KitFaces.flatFace(KitSprites.Flat.ACCENT, 0xFFE9DCBC, 0xFF7A1218, 0xFF5E4228));
+        assertEquals(0xFFE9DCBC, KitFaces.flatFace(KitSprites.Flat.SURFACE, 0xFFE9DCBC, 0xFF7A1218, 0xFF5E4228));
+        // a track is the muted colour at half over the paper: neither of them
+        int track = KitFaces.flatFace(KitSprites.Flat.TRACK, 0xFF000000, 0xFF7A1218, 0xFFFFFFFF);
+        assertEquals(0xFF808080, track);
+    }
+
+    @Test
+    void anInkThatDoesNotReadOnAFaceGivesWayToWhiteOrBlack() {
+        assertEquals(0xFFFFFFFF, KitFaces.labelOn(0xFF101010, 0xFF202020));
+        assertEquals(0xFF000000, KitFaces.labelOn(0xFFF0F0F0, 0xFFE0E0E0));
+        assertEquals(0xFF202020, KitFaces.labelOn(0xFFF0F0F0, 0xFF202020));
+    }}

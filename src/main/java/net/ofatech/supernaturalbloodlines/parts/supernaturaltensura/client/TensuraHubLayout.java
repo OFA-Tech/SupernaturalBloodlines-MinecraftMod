@@ -25,6 +25,8 @@ public final class TensuraHubLayout {
     /** Room over the page list for its "Pages" caption, and over the mod list for "Other mods". */
     static final int CAPTION = 11;
     static final int GAP = 8;
+    /** Between the two columns: the main one's scroll bar (7 px, one off its edge) and a pixel of air on each side of it. */
+    static final int COLUMN_GAP = 10;
     /** Below this window width the page and mod lists show icons only. */
     static final int NARROW = 340;
 
@@ -94,9 +96,9 @@ public final class TensuraHubLayout {
         Rect pane = pane(frame);
         int left = nav.right() + GAP;
         Rect stage = new Rect(left, frame.y() + TITLE + INSET, pane.x() - GAP - left, frame.bottom() - INSET - (frame.y() + TITLE + INSET));
-        int mainW = (stage.w() - GAP) * 42 / 100;
+        int mainW = (stage.w() - COLUMN_GAP) * 42 / 100;
         Rect main = new Rect(stage.x(), stage.y(), mainW, stage.h());
-        Rect side = new Rect(stage.x() + mainW + GAP, stage.y(), stage.w() - mainW - GAP, stage.h());
+        Rect side = new Rect(stage.x() + mainW + COLUMN_GAP, stage.y(), stage.w() - mainW - COLUMN_GAP, stage.h());
         Rect close = new Rect(frame.right() - INSET - 14, frame.y() + 4, 14, 14);
         Rect themeButton = new Rect(close.x() - 6 - 52, frame.y() + 4, 52, 14);
         int counterW = Math.max(60, Math.min(250, themeButton.x() - (frame.x() + 150) - 8));

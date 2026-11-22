@@ -97,3 +97,7 @@
 
 66 hidden shots (3 themes x 10 pages x scales 2 and 4, plus the HUD in 3 themes x 2 scales) are in un-safeshots/final-shots/ (git-ignored); a selection is in docs/superpowers/design/ui-overhaul/phase3/, and 
 o-kit/ shows the flat fallback with the Grimoire sprites removed. The ability HUD is unchanged in this phase (its slot art is phase 4).
+
+## Review round
+
+Fixes after the PR panel: an icon name a resource location cannot hold (a skill of another mod) shows the unknown rune and never throws; a large nine-slice is drawn as its border plus one fill of its solid middle (`NineSlicePlan`, read once from the PNG), a few dozen draws and not thousands; the HUD halo honours `reduce_motion` (`Motion.pulse`); the "more below" marker has its own strip under the clipped content (`ScrollHint`); a skill the player has is not offered for purchase; the Blood Moon Guide lists end above the floating bar; the empty state drops its hexagon when the page is short (`EmptyFit`); the Blood Moon stage titles use the gothic font; the Tensura columns have a gap for the scroll bar; a cut skill name is read whole in a tooltip. The 12 GameTest runs of the first pass stayed green; this round changed only client drawing and pure helpers (CI runs them again).

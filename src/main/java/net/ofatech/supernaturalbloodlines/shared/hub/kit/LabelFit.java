@@ -51,6 +51,11 @@ public final class LabelFit {
         return lines;
     }
 
+    /** Whether the lines {@link #wrap} gave end in the ellipsis: the name was cut, and the full one belongs in a tooltip. */
+    public static boolean isCut(List<String> lines) {
+        return !lines.isEmpty() && lines.get(lines.size() - 1).endsWith(ELLIPSIS);
+    }
+
     /** {@code text} cut to {@code width} with an ellipsis, or whole when it fits. */
     public static String cut(String text, int width, ToIntFunction<String> measure) {
         if (measure.applyAsInt(text) <= width) {
