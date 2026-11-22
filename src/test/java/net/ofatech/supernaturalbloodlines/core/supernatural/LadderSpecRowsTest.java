@@ -50,7 +50,7 @@ class LadderSpecRowsTest {
             T L-AUG-2a level %V% 4
             T L-AUG-2b kill vampire 3
             R L-AUG-3 4 15000
-            T L-AUG-3a level %V% 8
+            T L-AUG-3a level %V% 10
             T L-AUG-3b signal compel 3
             R L-AUG-4 4 30000
             T L-AUG-4a level %V% 12
