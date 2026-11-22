@@ -92,6 +92,6 @@ class SupernaturalRaceTest {
             assertEquals(Optional.of(r), SupernaturalRace.byId(r.id()));
         }
         assertTrue(SupernaturalRace.byId("dragon").isEmpty());
-        assertEquals(12, values().length);
+        assertEquals(13, values().length);
     }
 }

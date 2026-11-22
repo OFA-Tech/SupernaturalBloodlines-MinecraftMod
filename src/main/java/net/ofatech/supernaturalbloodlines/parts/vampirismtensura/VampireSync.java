@@ -20,6 +20,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.ReentrancyGuard;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 
 /**
@@ -95,6 +96,6 @@ public final class VampireSync {
     }
 
     private static boolean isSyncable(ServerPlayer p) {
-        return BloodlineAccess.get(p).species() == Species.NONE;
+        return BloodlineRules.isPlainVampireLike(BloodlineAccess.get(p).species());
     }
 }

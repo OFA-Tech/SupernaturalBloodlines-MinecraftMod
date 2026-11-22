@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * A player has one creature race and at most one magic race (WITCH, SIPHONER). No game classes.
  */
 public enum SupernaturalRace {
-    HUMAN, GHOUL, VAMPIRE, ORIGINAL, HYBRID, ORIGINAL_HYBRID, TRIBRID, HERETIC, WITCH, SIPHONER, HUNTER, WEREWOLF;
+    HUMAN, GHOUL, VAMPIRE, ORIGINAL, HYBRID, ORIGINAL_HYBRID, TRIBRID, HERETIC, WITCH, SIPHONER, HUNTER, WEREWOLF, AUGUSTINE;
 
     public static final String VAMPIRE_FACTION = "vampirism:vampire";
     public static final String HUNTER_FACTION = "vampirism:hunter";
@@ -42,6 +42,7 @@ public enum SupernaturalRace {
             case TRIBRID: return TRIBRID;
             case HYBRID: return HYBRID;
             case HERETIC: return HERETIC;
+            case AUGUSTINE: return AUGUSTINE;
             case POTENTIAL, HUNTER_OF_THE_FIVE: return HUNTER;
             default: break;
         }

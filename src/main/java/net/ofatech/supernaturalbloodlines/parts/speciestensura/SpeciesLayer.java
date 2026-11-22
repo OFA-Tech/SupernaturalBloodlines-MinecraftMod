@@ -22,6 +22,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.supernatural.LayerSlice;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess;
@@ -75,7 +76,7 @@ public final class SpeciesLayer {
 
     public static LayerSpec spec(Player p) {
         Species species = BloodlineAccess.get(p).species();
-        boolean plainVampire = species == Species.NONE && VampirismAPI.factionPlayerHandler(p).isInFaction(VReference.VAMPIRE_FACTION);
+        boolean plainVampire = BloodlineRules.isPlainVampireLike(species) && VampirismAPI.factionPlayerHandler(p).isInFaction(VReference.VAMPIRE_FACTION);
         return SpeciesTensuraConfig.table().specFor(species, plainVampire);
     }
 

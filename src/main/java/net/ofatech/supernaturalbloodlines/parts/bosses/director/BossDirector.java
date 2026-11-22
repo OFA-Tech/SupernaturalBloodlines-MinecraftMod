@@ -259,7 +259,7 @@ public final class BossDirector {
     /** The ring is looked for last, and only for a player who passes everything else: it walks every block around them. */
     private static MikaelRules.Facts realFacts(ServerPlayer p) {
         boolean stakes = BossesConfig.mikaelStakesOriginals();
-        MikaelRules.Facts base = new MikaelRules.Facts(Supernatural.isVampiric(p), SupernaturalAccess.get(p).rung(SupernaturalRace.VAMPIRE), BossesConfig.mikaelMinRung(),
+        MikaelRules.Facts base = new MikaelRules.Facts(Supernatural.isVampiric(p), Math.max(SupernaturalAccess.get(p).rung(SupernaturalRace.VAMPIRE), SupernaturalAccess.get(p).rung(SupernaturalRace.AUGUSTINE)), BossesConfig.mikaelMinRung(), // an Augustine climbs its own ladder
                 MikaelRules.isNight(p.level().getDayTime()), p.level().dimension() == Level.OVERWORLD, p.onGround(), false, isOriginalPlayer(p), stakes);
         if (!MikaelRules.eligible(base) || !(p.level() instanceof ServerLevel l)) {
             return base;

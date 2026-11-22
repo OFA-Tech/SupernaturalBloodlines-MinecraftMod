@@ -112,7 +112,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
     /** Species that carry both layers or an Original's rules are judged by BloodlineRules, not by the faction. */
     private static boolean rulesDecide(Species s) {
         return switch (s) {
-            case ORIGINAL, ORIGINAL_HYBRID, HYBRID, TRIBRID, HERETIC -> true;
+            case ORIGINAL, ORIGINAL_HYBRID, HYBRID, TRIBRID, HERETIC, AUGUSTINE -> true;
             default -> false;
         };
     }

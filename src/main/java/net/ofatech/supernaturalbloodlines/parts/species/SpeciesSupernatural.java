@@ -23,7 +23,7 @@ public final class SpeciesSupernatural {
     /** Vampire traits: also the species that are prey (vampire and werewolf types). */
     static boolean isVampiric(Species s) {
         return switch (s) {
-            case ORIGINAL, ORIGINAL_HYBRID, HYBRID, TRIBRID, HERETIC -> true;
+            case ORIGINAL, ORIGINAL_HYBRID, HYBRID, TRIBRID, HERETIC, AUGUSTINE -> true;
             default -> false;
         };
     }

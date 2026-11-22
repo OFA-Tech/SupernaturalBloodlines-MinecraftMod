@@ -110,7 +110,7 @@ public final class ApexGameTests {
             case SIPHONER, HERETIC -> "void_siphon";
             case TRIBRID -> "tribrid_ascendant";
             case HUNTER_OF_THE_FIVE -> "eternal_hunter";
-            case NONE, POTENTIAL -> null;
+            case NONE, POTENTIAL, AUGUSTINE -> null; // an Augustine is offered what a plain vampire is (owner, Q3): by its faction line, not by species
         });
     }
 

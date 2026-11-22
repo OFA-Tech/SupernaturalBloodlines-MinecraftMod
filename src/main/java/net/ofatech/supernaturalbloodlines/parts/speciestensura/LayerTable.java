@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 
 /**
@@ -34,7 +35,7 @@ public final class LayerTable {
 
     /** A species wins over the vampire faction; the VAMPIRE entry is only for a player with no species. */
     public LayerSpec specFor(Species species, boolean plainVampire) {
-        if (species == Species.NONE) {
+        if (BloodlineRules.isPlainVampireLike(species)) { // an Augustine has no layer of its own: it is a plain vampire for this (R200, owner Q3)
             return plainVampire ? specs.getOrDefault(VAMPIRE, LayerSpec.NONE) : LayerSpec.NONE;
         }
         return specs.getOrDefault(species.name(), LayerSpec.NONE);
@@ -69,7 +70,7 @@ public final class LayerTable {
         }
         try {
             Species s = Species.valueOf(key);
-            return s != Species.NONE && s != Species.POTENTIAL;
+            return s != Species.NONE && s != Species.POTENTIAL && s != Species.AUGUSTINE; // an Augustine takes the VAMPIRE entry (R200)
         } catch (IllegalArgumentException e) {
             return false;
         }

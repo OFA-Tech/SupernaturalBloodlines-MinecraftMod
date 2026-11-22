@@ -199,7 +199,7 @@ public final class MigrationRules {
             case "ancestral_witch" -> List.of(SupernaturalRace.WITCH);
             case "void_siphon" -> List.of(SupernaturalRace.SIPHONER, SupernaturalRace.HERETIC);
             case "eternal_hunter" -> List.of(SupernaturalRace.HUNTER);
-            case "elder_vampire" -> List.of(SupernaturalRace.VAMPIRE);
+            case "elder_vampire" -> List.of(SupernaturalRace.VAMPIRE, SupernaturalRace.AUGUSTINE);
             case "alpha_primeval" -> List.of(SupernaturalRace.WEREWOLF);
             default -> List.of();
         };

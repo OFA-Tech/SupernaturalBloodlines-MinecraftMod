@@ -45,7 +45,7 @@ public final class RiteKinds {
                 out.add(RiteKind.HYBRID);
                 out.add(RiteKind.WEREWOLF);
             }
-            case HERETIC -> out.add(RiteKind.VAMPIRE);
+            case HERETIC, AUGUSTINE -> out.add(RiteKind.VAMPIRE);
             case WITCH -> out.add(RiteKind.WITCH);
             case SIPHONER -> out.add(RiteKind.SIPHONER);
             case HUNTER_OF_THE_FIVE -> out.add(RiteKind.HUNTER);

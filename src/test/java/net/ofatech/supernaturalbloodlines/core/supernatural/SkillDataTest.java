@@ -33,7 +33,8 @@ class SkillDataTest {
             Map.entry("S-WIT-1", 2), Map.entry("S-WIT-2", 2), Map.entry("S-WIT-3", 2), Map.entry("S-WIT-4", 3), Map.entry("S-WIT-5", 3),
             Map.entry("S-WIT-6", 4), Map.entry("S-WIT-7", 4),
             Map.entry("S-SIP-1", 2), Map.entry("S-SIP-2", 2), Map.entry("S-SIP-3", 3), Map.entry("S-SIP-4", 3), Map.entry("S-SIP-5", 4),
-            Map.entry("S-HUN-1", 2), Map.entry("S-HUN-2", 2), Map.entry("S-HUN-3", 3), Map.entry("S-HUN-4", 3), Map.entry("S-HUN-5", 4));
+            Map.entry("S-HUN-1", 2), Map.entry("S-HUN-2", 2), Map.entry("S-HUN-3", 3), Map.entry("S-HUN-4", 3), Map.entry("S-HUN-5", 4),
+            Map.entry("S-AUG-1", 3), Map.entry("S-AUG-2", 3));
 
     private static final Set<String> TENSURA = Set.of("S-VAM-5", "S-WOL-3", "S-WIT-5", "S-HUN-4");
 
@@ -59,14 +60,17 @@ class SkillDataTest {
             Map.entry(SupernaturalRace.HUNTER, List.of("S-HUM-2@1", "S-HUN-1@1", "S-HUM-3@2", "S-HUN-2@3", "S-HUN-3@3", "S-HUN-4@4>S-HUN-2",
                     "S-HUN-5@5>S-HUN-1")),
             Map.entry(SupernaturalRace.WEREWOLF, List.of("S-WOL-1@1", "S-WOL-2@1", "S-WOL-3@2", "S-WOL-4@3", "S-WOL-5@4", "S-WOL-6@4>S-WOL-5",
-                    "S-WOL-7@5>S-WOL-1")));
+                    "S-WOL-7@5>S-WOL-1")),
+            // no quest: an Augustine earns Predator's Thirst by growing (R200)
+            Map.entry(SupernaturalRace.AUGUSTINE, List.of("S-VAM-1@1", "S-VAM-2@2", "S-VAM-3@2", "S-VAM-4@3>S-VAM-2", "S-VAM-5@4", "S-VAM-6@2>S-VAM-1",
+                    "S-AUG-1@3>S-VAM-6", "S-AUG-2@4>S-VAM-6")));
 
     // race -> SP total of its tree, as the spec states it
     private static final Map<SupernaturalRace, Integer> SP = Map.ofEntries(
             Map.entry(SupernaturalRace.HUMAN, 5), Map.entry(SupernaturalRace.VAMPIRE, 19), Map.entry(SupernaturalRace.ORIGINAL, 21),
             Map.entry(SupernaturalRace.ORIGINAL_HYBRID, 22), Map.entry(SupernaturalRace.HYBRID, 19), Map.entry(SupernaturalRace.TRIBRID, 20),
             Map.entry(SupernaturalRace.WITCH, 20), Map.entry(SupernaturalRace.SIPHONER, 17), Map.entry(SupernaturalRace.HERETIC, 19),
-            Map.entry(SupernaturalRace.HUNTER, 18), Map.entry(SupernaturalRace.WEREWOLF, 18));
+            Map.entry(SupernaturalRace.HUNTER, 18), Map.entry(SupernaturalRace.WEREWOLF, 18), Map.entry(SupernaturalRace.AUGUSTINE, 21));
 
     private static Path dir() throws IOException {
         try {
@@ -103,7 +107,7 @@ class SkillDataTest {
     @Test
     void theCatalogueIsTheSpecs() {
         SkillTable t = load(mod -> true);
-        assertEquals(42, t.skills().size());
+        assertEquals(44, t.skills().size());
         for (Map.Entry<String, Integer> e : COSTS.entrySet()) {
             SkillSpec s = t.skill(e.getKey()).orElseThrow(() -> new AssertionError("missing " + e.getKey()));
             assertEquals(e.getValue(), s.cost(), e.getKey());
@@ -111,7 +115,7 @@ class SkillDataTest {
             assertEquals(TENSURA.contains(e.getKey()), s.kinds().contains(SkillSpec.Kind.TENSURA), e.getKey());
             assertTrue(!s.kinds().contains(SkillSpec.Kind.ATTR) || s.attr() != null, e.getKey());
         }
-        assertEquals(40, COSTS.size());
+        assertEquals(42, COSTS.size());
         SkillSpec primeval = t.skill("S-WOL-8").orElseThrow();
         assertTrue(primeval.grantedOnly());
         assertEquals(0, primeval.cost());
@@ -177,7 +181,7 @@ class SkillDataTest {
     @Test
     void withoutTensuraOnlyTheTensuraSkillsGo() {
         SkillTable t = load(mod -> !mod.equals("tensura"));
-        assertEquals(42 - TENSURA.size(), t.skills().size());
+        assertEquals(44 - TENSURA.size(), t.skills().size());
         for (String id : TENSURA) {
             assertFalse(t.skill(id).isPresent(), id);
             for (SupernaturalRace race : SupernaturalRace.values()) {
@@ -186,5 +190,6 @@ class SkillDataTest {
         }
         assertEquals(6, t.tree(SupernaturalRace.VAMPIRE).entries().size());
         assertEquals(6, t.tree(SupernaturalRace.WEREWOLF).entries().size());
+        assertEquals(7, t.tree(SupernaturalRace.AUGUSTINE).entries().size()); // its Blood Mist goes, as a plain vampire's does
     }
 }

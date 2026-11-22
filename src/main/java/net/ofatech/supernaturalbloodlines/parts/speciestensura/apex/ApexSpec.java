@@ -40,7 +40,7 @@ public record ApexSpec(String id, double health, double attack, double speed, Li
     /** The apex race of a supernatural race. Whether a given player may be offered it (a Potential is not a hunter of the Five) is {@code ApexOffer}'s. */
     public static Optional<ApexSpec> forRace(SupernaturalRace race) {
         return Optional.ofNullable(switch (race) {
-            case VAMPIRE -> ELDER_VAMPIRE;
+            case VAMPIRE, AUGUSTINE -> ELDER_VAMPIRE; // an Augustine is offered what a plain vampire is (owner, Q3)
             case ORIGINAL -> PRIMORDIAL_VAMPIRE;
             case ORIGINAL_HYBRID -> PRIMORDIAL_HYBRID;
             case HYBRID -> MOONBLOOD_HYBRID;
