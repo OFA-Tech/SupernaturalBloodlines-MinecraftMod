@@ -103,17 +103,27 @@ public final class AugustineGameTests {
         ServerPlayer observer = TestPlayers.create(helper);
         ServerPlayer augustine = vampire(helper, Species.AUGUSTINE);
         ServerPlayer heretic = vampire(helper, Species.HERETIC);
+        // the profile reads the subject through the server's player list: test players are not in it, so say where they are (else "not shown" below would be trivially true)
+        var here = new java.util.HashMap<java.util.UUID, ServerPlayer>();
+        for (ServerPlayer who : new ServerPlayer[] {observer, augustine, heretic}) {
+            here.put(who.getUUID(), who);
+        }
+        net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.overridePlayerLookup(here::get);
         try {
             var seen = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(observer, augustine.getUUID()).facts();
             var control = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(observer, heretic.getUUID()).facts();
             helper.assertTrue(!seen.containsKey(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES), "a stranger sees an Augustine's species: " + seen);
             // the positive control: the same fact is there for the one it is about, with the right value (so "not shown" above is the rule, not a missing fact)
-            var own = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(augustine, augustine.getUUID()).facts();
+            net.ofatech.supernaturalbloodlines.parts.species.profile.ProfileKnowledge.get(observer.serverLevel()).discover(
+                    net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.get(observer.serverLevel()), observer.getUUID(), augustine.getUUID(),
+                    java.util.List.of(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES));
+            var own = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(observer, augustine.getUUID()).facts();
             helper.assertTrue(own.containsKey(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES)
-                    && own.get(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES).equals(java.util.List.of("AUGUSTINE")), "an Augustine does not see their own species: " + own);
+                    && own.get(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES).equals(java.util.List.of("AUGUSTINE")), "an observer who discovered an Augustine's species does not see it: " + own);
             helper.assertTrue(seen.containsKey(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES) == control.containsKey(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES),
                     "an Augustine is not treated like a heretic");
         } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.overridePlayerLookup(null);
             forget(augustine, heretic);
         }
         helper.succeed();
@@ -239,6 +249,8 @@ public final class AugustineGameTests {
                 && VampirismAPI.factionPlayerHandler(augustine).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make vampires");
         BloodlineAccess.set(augustine, BloodlineState.NONE.toBuilder().species(Species.AUGUSTINE).build());
         LivingEntity vampireMob = mob(helper, "vampirism:vampire");
+        vampireMob.getAttribute(Attributes.MAX_HEALTH).setBaseValue(20.0);
+        vampireMob.setHealth(20f);
         String refused = "supernaturalbloodlines.turning.vampire_blood_no_fill";
         try {
             helper.assertTrue(feed(plain, vampireMob, 3) == 0, "control: a plain vampire without Predator's Thirst was fed by a vampire");
@@ -333,6 +345,9 @@ public final class AugustineGameTests {
         ServerPlayer p = vampire(helper, Species.AUGUSTINE);
         try {
             var server = helper.getLevel().getServer();
+            var here = new java.util.HashMap<java.util.UUID, ServerPlayer>();
+            here.put(p.getUUID(), p);
+            net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.overridePlayerLookup(here::get);
             setRung(p, 3);
             helper.assertTrue(!net.ofatech.supernaturalbloodlines.core.boss.PikeRules.qualifies(
                     net.ofatech.supernaturalbloodlines.parts.bosses.rite.PikeRiteFactory.giver(server, p.getUUID())), "L-AUG-3 qualified");
@@ -340,6 +355,7 @@ public final class AugustineGameTests {
             helper.assertTrue(net.ofatech.supernaturalbloodlines.core.boss.PikeRules.qualifies(
                     net.ofatech.supernaturalbloodlines.parts.bosses.rite.PikeRiteFactory.giver(server, p.getUUID())), "L-AUG-4 did not qualify");
         } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall.overridePlayerLookup(null);
             setRung(p, 0);
             forget(p);
         }

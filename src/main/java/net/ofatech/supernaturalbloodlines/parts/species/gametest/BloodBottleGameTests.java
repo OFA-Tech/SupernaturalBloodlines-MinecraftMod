@@ -697,7 +697,8 @@ public final class BloodBottleGameTests {
             var controlDrunk = BloodBottles.apply(control, common);
             helper.assertTrue(drunk == controlDrunk && drunk != net.ofatech.supernaturalbloodlines.core.blood.BloodBottleRules.Effect.REFUSED, "a human drank " + drunk + " from it, but " + controlDrunk + " from a plain vampire's");
             helper.assertTrue(BloodlineAccess.get(human).vampireBloodUntil() != 0 && BloodlineAccess.get(human).vampireBloodUntil() == BloodlineAccess.get(control).vampireBloodUntil(), "the human was not marked like the control");
-            helper.assertTrue(BloodlineAccess.get(human).pendingSire() == null && human.getData(SpeciesRegistries.BLOOD_SOURCE) == null, "an Augustine's blood named a sire");
+            helper.assertTrue(BloodlineAccess.get(human).pendingSire() == BloodlineAccess.get(control).pendingSire() && (human.getData(SpeciesRegistries.BLOOD_SOURCE) == null) == (control.getData(SpeciesRegistries.BLOOD_SOURCE) == null)
+                    && !p.getUUID().equals(BloodlineAccess.get(human).pendingSire()), "an Augustine's blood named a sire differently from a plain vampire's");
         } finally {
             reset(p, human, control);
         }

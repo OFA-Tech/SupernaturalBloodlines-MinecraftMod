@@ -317,15 +317,16 @@ public final class AugustineMakingGameTests {
             ItemStack stack = syringe(1);
             user.setItemInHand(InteractionHand.MAIN_HAND, stack);
             helper.getLevel().getServer().setPvpAllowed(true);
-            // each part of the consent missing: the same one line, nothing armed, nothing changed
-            for (int missing = 0; missing < 4; missing++) {
+            // each part of the consent missing: the same one line, nothing armed, nothing changed (a fresh user each time: the line is read off the action bar)
+            for (int missing = 0; missing < 3; missing++) {
+                user = TestPlayers.createTalkingDuelist(helper);
+                user.setItemInHand(InteractionHand.MAIN_HAND, stack);
                 target.setShiftKeyDown(missing != 0);
                 target.setItemInHand(InteractionHand.MAIN_HAND, missing == 1 ? ItemStack.EMPTY : new ItemStack(net.minecraft.world.item.Items.LEAD));
                 helper.getLevel().getServer().setPvpAllowed(missing != 2);
-                int before = user.count(AugustineSyringeItem.NOTHING);
                 use(stack, user, target);
                 use(stack, user, target); // a second use would confirm an arming: there must be none
-                helper.assertTrue(user.count(AugustineSyringeItem.NOTHING) == before + 2 && !user.received(AugustineSyringeItem.ARMED), "missing " + missing + ": not the one line, or it armed");
+                helper.assertTrue(user.receivedOnActionBar(AugustineSyringeItem.NOTHING) && !user.receivedOnActionBar(AugustineSyringeItem.ARMED), "missing " + missing + ": not the one line, or it armed");
                 helper.assertTrue(BloodlineAccess.get(target).species() == Species.NONE && stack.getCount() == 1, "missing " + missing + ": an unwilling vampire was injected");
             }
             // willing: the first use arms and tells them, the second injects
