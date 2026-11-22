@@ -96,9 +96,9 @@ class MasteryTest {
             assertEquals(SlotBadge.key(look, slot, 6), SlotBadge.key(look, slot, 6, 0));
             assertEquals(SlotBadge.seconds(look, slot, 11), SlotBadge.seconds(look, slot, 11, 0));
         }
-        // the bar's lift moves only what stands at the bottom
+        // the bar's lift moves only what stands at the bottom; the seconds at the top go smaller and up, to end above the lifted badge
         assertEquals(SlotBadge.key(Look.TENSURA, slot, 6), SlotBadge.key(Look.TENSURA, slot, 6, MasteryBar.LIFT));
-        assertEquals(SlotBadge.seconds(Look.GRIMOIRE, slot, 11), SlotBadge.seconds(Look.GRIMOIRE, slot, 11, MasteryBar.LIFT));
+        assertEquals(new Box(slot.x() + (HudLayout.SLOT - 8) / 2, slot.y() + 1, 8, SlotBadge.SECONDS_INK_SMALL), SlotBadge.seconds(Look.GRIMOIRE, slot, 8, MasteryBar.LIFT));
         assertEquals(SlotBadge.key(Look.BLOOD_MOON, slot, 6).y() - MasteryBar.LIFT, SlotBadge.key(Look.BLOOD_MOON, slot, 6, MasteryBar.LIFT).y());
     }
     @Test

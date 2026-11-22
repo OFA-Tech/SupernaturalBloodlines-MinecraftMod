@@ -30,7 +30,11 @@ public final class KitSprites {
         SEAL(Flat.ACCENT), SEAL_HOVER(Flat.ACCENT), SEAL_PRESSED(Flat.TRACK), STAMP(Flat.SURFACE), STAMP_LIT(Flat.ACCENT),
         RUNG_REACHED(Flat.ACCENT), RUNG_CURRENT(Flat.SURFACE), RUNG_LOCKED(Flat.TRACK),
         TASK_CLAIMABLE(Flat.ACCENT), TASK_OPEN(Flat.SURFACE), TASK_CLAIMED(Flat.TRACK), TASK_FROZEN(Flat.TRACK), TASK_UNAVAILABLE(Flat.TRACK),
-        PIP_ON(Flat.ACCENT), PIP_OFF(Flat.TRACK), GEM_GOLD(Flat.ACCENT);
+        PIP_ON(Flat.ACCENT), PIP_OFF(Flat.TRACK), GEM_GOLD(Flat.ACCENT),
+        // the HUD: a slot is 22 px in a 28 px picture (the 3 px round it are the glow), the badges are drawn at their picture's size
+        SLOT(Flat.SURFACE, 3), SLOT_ACTIVE(Flat.ACCENT, 3), SLOT_SQUARE(Flat.SURFACE, 3), SLOT_SQUARE_ACTIVE(Flat.ACCENT, 3),
+        KEY_BADGE(Flat.ACCENT), KEY_BADGE_WIDE(Flat.ACCENT), MASTERY_TRACK(Flat.TRACK), MASTERY_FILL(Flat.ACCENT), MASTERY_FILL_MASTERED(Flat.ACCENT),
+        MASTERY_FILL_LEARNING(Flat.ACCENT), HUD_PILL(Flat.SURFACE), HUD_LABEL(Flat.SURFACE);
 
         private final Flat flat;
         private final int margin;
@@ -64,7 +68,8 @@ public final class KitSprites {
     public static final java.util.Set<Part> SCALED = java.util.EnumSet.of(Part.COVER, Part.PANEL, Part.INSET, Part.TOOLTIP, Part.DIVIDER, Part.SCROLL_TRACK, Part.SCROLL_THUMB,
             Part.SCROLL_THUMB_HOVER, Part.TAB, Part.TAB_HOVER, Part.TAB_SELECTED, Part.TAB_DISABLED, Part.BUTTON_NORMAL, Part.BUTTON_HOVER, Part.BUTTON_PRESSED, Part.BUTTON_DISABLED,
             Part.BUTTON_FOCUS, Part.BUTTON_PRIMARY_NORMAL, Part.BUTTON_PRIMARY_HOVER, Part.BUTTON_PRIMARY_PRESSED, Part.BUTTON_PRIMARY_DISABLED, Part.BUTTON_PRIMARY_FOCUS, Part.FOCUS,
-            Part.BAR_TRACK, Part.BAR_FILL, Part.PLATE, Part.CHIP, Part.CHIP_ON);
+            Part.BAR_TRACK, Part.BAR_FILL, Part.PLATE, Part.CHIP, Part.CHIP_ON, Part.MASTERY_TRACK, Part.MASTERY_FILL, Part.MASTERY_FILL_MASTERED, Part.MASTERY_FILL_LEARNING,
+            Part.HUD_PILL, Part.HUD_LABEL, Part.KEY_BADGE_WIDE);
 
     /** A sprite name a resource location can hold: a skill id of another mod ({@code mymod:fireball}) or one with a capital must never reach {@code ResourceLocation}. */
     public static boolean validName(String name) {
@@ -79,6 +84,12 @@ public final class KitSprites {
         }
         return true;
     }
+
+    /** The shared sprites the HUD draws: the mark of Tensura mode (a teal diamond) and the drop of blood of the Supernatural mode. */
+    public static final String MODE_MARK = SHARED + "mode_mark";
+    public static final String BLOOD_FULL = SHARED + "blood_full";
+    /** The HUD's own 16 px icons: the slot's pictures with a pale outline, so a dark one reads on the dark slots. */
+    public static final String HUD_ICON = "icons/hud/";
 
     private KitSprites() {
     }

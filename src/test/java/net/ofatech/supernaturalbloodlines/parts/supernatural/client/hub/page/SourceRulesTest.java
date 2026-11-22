@@ -79,7 +79,7 @@ class SourceRulesTest {
 
     @Test
     void aFillOfANineSliceIsNotScaledByAlphaAgain() throws IOException {
-        String draw = body(source("shared/hub/kit/client/UiKit.java"), "public static void draw(GuiGraphics g, HubTheme theme, Part part, int x, int y, int w, int h, float alpha)");
+        String draw = body(source("shared/hub/kit/client/UiKit.java"), "public static void draw(GuiGraphics g, KitColors theme, Part part, int x, int y, int w, int h, float alpha)");
         assertTrue(draw.contains("op.color()"), "the fill takes the plan's colour");
         assertFalse(draw.contains(">>> 24"), "the shader colour set by blend() already carries the alpha: scaling it here too applies it twice");
     }
@@ -129,5 +129,17 @@ class SourceRulesTest {
     void wrappedTextNeverBreaksAWordInTheMiddle() throws IOException {
         String wrapped = body(source("parts/supernatural/client/hub/page/PageKit.java"), "static int wrapped(");
         assertTrue(wrapped.contains("LabelFit.hasOverlongWord(") && wrapped.contains("LabelFit.wrapWords("));
+    }
+
+    @Test
+    void theSlotsAreDrawnFromTheKitAndNoShapeIsFilledByHandAnymore() throws IOException {
+        String slot = source("parts/hud/client/SlotArt.java");
+        assertFalse(slot.contains("KitDraw.shape("), "a slot's frame, badge and ring are the kit's pictures");
+        assertFalse(slot.contains("BakedTexture"), "the pie and the ring are the kit's strips");
+        assertFalse(slot.contains("g.fill(b.x()") && slot.contains("PIE_STEPS"), "no hand-baked pie");
+        assertTrue(slot.contains("FrameStrip.SWEEP") && slot.contains("FrameStrip.RING"));
+        String chrome = source("parts/hud/client/HudChrome.java");
+        assertFalse(chrome.contains("pillBox("), "the pill, the labels and the tracker are the kit's boxes");
+        assertTrue(chrome.contains("Part.HUD_PILL") && chrome.contains("Part.HUD_LABEL"));
     }
 }

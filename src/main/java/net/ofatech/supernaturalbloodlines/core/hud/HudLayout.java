@@ -37,6 +37,13 @@ public final class HudLayout {
     }
 
     public static final int PILL_H = 14;
+    /** The Grimoire's pill picture has only 6 dark rows between its gold lines, too few for 7 rows of capitals: it is drawn 16 tall (its middle rows are one colour, so they stretch without a seam). */
+    public static final int PILL_H_TALL = 16;
+
+    /** The height the pill is drawn at in a look. */
+    public static int pillHeight(SlotBadge.Look look) {
+        return look == SlotBadge.Look.GRIMOIRE ? PILL_H_TALL : PILL_H;
+    }
     /** The pill's top edge is this far above the bottom of the screen. */
     public static final int PILL_ABOVE = 74;
     /** The vanilla action bar line stands 68 px above the bottom, its 9 px text starting 4 px above that, so it falls inside the pill's band. */
@@ -44,9 +51,17 @@ public final class HudLayout {
     public static final int ACTION_BAR_H = 9;
     /** The mode panel's width: six slots and a little air; it stays in the right half of the screen even at 480 GUI pixels. */
     public static final int PREVIEW_W = 6 * SLOT + 8;
+    /** The preview's slots start this far in from its left edge; the last mark then ends inside the panel's own edge. */
+    public static final int PREVIEW_INSET = 3;
+    /** Where the preview's slots start under its head: the mode mark stands 5 px over a slot's top edge, so the head's text must end above it. */
+    public static int previewSlotsTop(int headLines) {
+        return 11 + 9 * headLines;
+    }
+    /** The pill's room round its text: the mark (7 px) and the end caps of the kit's pill (up to 8 px each side) and a pixel of air. */
+    public static final int PILL_EXTRA = 26;
 
     /**
-     * The mode pill, centred above the hotbar between the two columns: its text plus 22 px of edge and diamond, narrowed (the text is cut) when the columns
+     * The mode pill, centred above the hotbar between the two columns: its text plus {@link #PILL_EXTRA} px of end caps and mark, narrowed (the text is cut) when the columns
      * stand closer than that.
      */
     public static Box pill(int screenW, int screenH, int textW) {
@@ -61,16 +76,20 @@ public final class HudLayout {
      * so it clears the message, the slots and the mode panel (which stands in the right half).
      */
     public static Box pill(int screenW, int screenH, int textW, boolean lifted) {
+        return pill(screenW, screenH, textW, lifted, PILL_H);
+    }
+
+    public static Box pill(int screenW, int screenH, int textW, boolean lifted, int height) {
         Box[] s = slots(screenW, screenH);
         int room = Math.max(PILL_H, s[3].x() - s[0].right() - 2 * MARGIN);
-        int w = Math.min(textW + 22, room);
+        int w = Math.min(textW + PILL_EXTRA, room);
         int x = screenW / 2 - w / 2;
         if (lifted) {
             // the left half only (the mode panel stands in the right half), and its text is cut to what fits
             w = Math.min(w, screenW / 2 - 2 - MARGIN);
             x = Math.max(MARGIN, screenW / 2 - 2 - w);
         }
-        return new Box(x, screenH - PILL_ABOVE - (lifted ? ALT_LIFT : 0), w, PILL_H);
+        return new Box(x, screenH - PILL_ABOVE - (lifted ? ALT_LIFT : 0), w, height);
     }
 
     /** A label is two lines (the name, then mastery and a short description) and stands level with its slot: its centre is the slot's centre. */
@@ -79,7 +98,42 @@ public final class HudLayout {
         return Math.max(2, columnTop - tooltipH - 6 - (lifted ? ALT_LIFT : 0));
     }
 
+    /** The full moon warning at the top right: its icon box, and the line of text under it (about 120 px wide at most, ending under the icon). */
+    public static Box moonBox(int screenW) {
+        return new Box(screenW - 36 - 120, 6, 120, 6 + 24 + 4 + 9 - 6);
+    }
+
+    /** The panel keeps this far from the moon warning. */
+    public static final int MOON_CLEAR = 8;
+    /** The top of the area the panels may use on the right: under the moon warning and its clearance. */
+    public static int panelFloor(int screenW) {
+        return moonBox(screenW).bottom() + MOON_CLEAR;
+    }
+
+    /** The most lines a panel can have in {@code room} px of height (its frame takes 8 px, a line 10). */
+    public static int panelLines(int room) {
+        return Math.max(0, (room - 8) / 10);
+    }
+
+    /**
+     * The room for a column's panel: for the left one, from the screen's top to {@code columnTop} (less the lift of the pill, and 6 px of air); for the right one,
+     * from under the moon warning to {@code stackTop} (the mode panel's top, or the column's).
+     */
+    public static int panelRoom(boolean right, int screenW, int stackTop, boolean lifted) {
+        return right ? stackTop - 6 - panelFloor(screenW) : stackTop - 6 - (lifted ? ALT_LIFT : 0) - 2;
+    }
+
+    /** The top of the right column's panel of height {@code h}: above {@code stackTop}, and never into the moon warning's clearance. */
+    public static int rightPanelTop(int screenW, int stackTop, int h) {
+        return Math.max(panelFloor(screenW), stackTop - h - 6);
+    }
+
     public static final int LABEL_H = 20;
+
+    /** The height a label of {@code lines} lines is drawn at: a pixel of air above and below, 9 px a line. Two lines are {@link #LABEL_H}. */
+    public static int drawnHeight(int lines) {
+        return 2 + 9 * lines;
+    }
     /** Air between a column and its labels. */
     public static final int LABEL_AIR = 3;
     /** Air between a label and the screen's edge. */
@@ -117,7 +171,7 @@ public final class HudLayout {
     /** The panel with the other mode's slots: above the right column, its head {@code headLines} (1 or 2) lines tall, never past the right edge. */
     public static Box preview(int screenW, int screenH, int headLines) {
         Box[] s = slots(screenW, screenH);
-        int h = 30 + 9 * headLines;
+        int h = previewSlotsTop(headLines) + SLOT + 4;
         int x = Math.max(4, Math.min(s[3].right() - PREVIEW_W, screenW - PREVIEW_W - 4));
         return new Box(x, s[3].y() - h - 4, PREVIEW_W, h);
     }

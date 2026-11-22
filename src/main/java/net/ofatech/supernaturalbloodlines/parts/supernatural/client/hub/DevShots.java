@@ -31,7 +31,7 @@ public final class DevShots {
     private static final int SETTLE_TICKS = 12;
     private static final int WORLD_TICKS = 100;
 
-    /** @param hud null for a hub page; otherwise "normal", "alt", "idle", "human" (Tensura mode, with mastery bars) or "humanalt": the ability HUD in game with demo slots, in the look of {@code theme} */
+    /** @param hud null for a hub page; otherwise "normal", "alt", "idle", "human" (Tensura mode, with mastery bars) "humanalt", "ready" and "humanready" (a slot that just became ready glows), "toast" and "humantoast" (the request toast): the ability HUD in game with demo slots, in the look of {@code theme} */
     private record Shot(String theme, HubPage page, int scale, boolean menu, String hud, String variant) {
         Shot(String theme, HubPage page, int scale, boolean menu) {
             this(theme, page, scale, menu, null, null);
@@ -203,6 +203,9 @@ public final class DevShots {
         if (index >= shots.size()) {
             done = true;
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on = false;
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.toast = false;
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.glow = false;
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.detail = false;
             SupernaturalBloodlines.LOGGER.warn("DEVSHOTS done");
             if (quit) {
                 mc.stop();
@@ -219,12 +222,16 @@ public final class DevShots {
             HubClientConfig.setTheme(theme);
             mc.setScreen(null);
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on = s.hud() != null;
-            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.alt = "alt".equals(s.hud()) || "humanalt".equals(s.hud());
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.alt = "alt".equals(s.hud()) || "humanalt".equals(s.hud()) || "altheld".equals(s.hud()) || "humanaltheld".equals(s.hud());
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.glow = s.hud() != null && s.hud().endsWith("ready");
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.detail = s.hud() != null && s.hud().endsWith("held");
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.toast = s.hud() != null && s.hud().endsWith("toast");
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.idle = "idle".equals(s.hud());
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.switched = "switched".equals(s.hud());
-            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.human = "human".equals(s.hud()) || "cooldown".equals(s.hud()) || "humanalt".equals(s.hud());
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.human = s.hud() != null && (s.hud().startsWith("human") || "cooldown".equals(s.hud()));
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.cooldown = "cooldown".equals(s.hud());
             if (s.hud() != null) {
+                mc.gui.getChat().clearMessages(false); // the world's welcome messages would sit over the slots
                 parkCursor(mc, 1, 1);
                 wait = 1;
                 return;

@@ -2,23 +2,29 @@ package net.ofatech.supernaturalbloodlines.parts.hud.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import net.ofatech.supernaturalbloodlines.core.hud.Mastery;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotShape;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
-import net.ofatech.supernaturalbloodlines.shared.hud.HudStyle;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
 import org.junit.jupiter.api.Test;
 
 class SlotArtShapeTest {
     @Test
     void tensuraModeIsASquareTileInEveryTheme() {
-        for (HudStyle.Style style : HudStyle.Style.values()) {
-            assertEquals(Shapes.Shape.SQUARE, SlotArt.shapeOf(style, SlotShape.SQUARE), style + " in Tensura mode");
-        }
+        // the frame picture is chosen by the mode only: each theme's kit has its own square tile
+        assertEquals(Part.SLOT_SQUARE, SlotArt.framePart(SlotShape.SQUARE, false));
+        assertEquals(Part.SLOT_SQUARE_ACTIVE, SlotArt.framePart(SlotShape.SQUARE, true));
     }
 
     @Test
     void supernaturalModeKeepsEachThemesOwnShape() {
-        assertEquals(Shapes.Shape.SQUARE, SlotArt.shapeOf(HudStyle.Style.GRIMOIRE, SlotShape.THEMED));
-        assertEquals(Shapes.Shape.ROUND, SlotArt.shapeOf(HudStyle.Style.BLOOD_MOON, SlotShape.THEMED));
-        assertEquals(Shapes.Shape.HEX, SlotArt.shapeOf(HudStyle.Style.TENSURA, SlotShape.THEMED));
+        assertEquals(Part.SLOT, SlotArt.framePart(SlotShape.THEMED, false));
+        assertEquals(Part.SLOT_ACTIVE, SlotArt.framePart(SlotShape.THEMED, true));
+    }
+
+    @Test
+    void eachMasteryStateHasItsOwnFill() {
+        assertEquals(Part.MASTERY_FILL, SlotArt.fillPart(Mastery.State.PROGRESS));
+        assertEquals(Part.MASTERY_FILL_MASTERED, SlotArt.fillPart(Mastery.State.MASTERED));
+        assertEquals(Part.MASTERY_FILL_LEARNING, SlotArt.fillPart(Mastery.State.LEARNING));
     }
 }
