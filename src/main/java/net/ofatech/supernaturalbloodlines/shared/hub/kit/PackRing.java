@@ -87,6 +87,17 @@ public final class PackRing {
         return new Layout(out, sorted.size() - shown, use);
     }
 
+    /** Whether a box (a line of text) stands clear of every portrait and its ring ({@code pad} px of air), so a line under the model never runs into a face. */
+    public static boolean clearOfFaces(Layout layout, int x, int y, int w, int h, int pad) {
+        for (Slot s : layout.slots()) {
+            int half = s.size() / 2 + 2 + pad;
+            if (x < s.x() + half && s.x() - half < x + w && y < s.y() + half && s.y() - half < y + h) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /** The y of the "+N more" line: under the lowest portrait and its ring, so it never sits on a face. */
     public static int moreLabelY(Layout layout, int cy) {
         int bottom = cy;

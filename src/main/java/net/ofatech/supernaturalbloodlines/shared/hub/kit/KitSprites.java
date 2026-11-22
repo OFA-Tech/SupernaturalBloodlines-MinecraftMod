@@ -64,6 +64,9 @@ public final class KitSprites {
         }
     }
 
+    /** The surface of a card or tile that can be any height: it needs edges on all four sides (the plate is a one-line pill whose picture would tile down a tall card). */
+    public static final Part CARD = Part.INSET;
+
     /** The parts a screen draws at a size other than the picture's own: each needs a {@code .mcmeta} (nine-slice or tile) next to its PNG, or vanilla would stretch it. */
     public static final java.util.Set<Part> SCALED = java.util.EnumSet.of(Part.COVER, Part.PANEL, Part.INSET, Part.TOOLTIP, Part.DIVIDER, Part.SCROLL_TRACK, Part.SCROLL_THUMB,
             Part.SCROLL_THUMB_HOVER, Part.TAB, Part.TAB_HOVER, Part.TAB_SELECTED, Part.TAB_DISABLED, Part.BUTTON_NORMAL, Part.BUTTON_HOVER, Part.BUTTON_PRESSED, Part.BUTTON_DISABLED,

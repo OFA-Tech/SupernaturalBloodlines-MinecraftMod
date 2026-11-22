@@ -167,9 +167,9 @@ public final class BookKit {
     }
 
     /** A small muted heading in capitals. */
-    /** A card or tile of the pill styles: the kit's plate, with a 1 px line in {@code edge} inside it for the one that is chosen or ready ({@code 0} for none). */
+    /** A card or tile of the pill styles: the kit's card surface (inset), with a 1 px line in {@code edge} inside it for the one that is chosen or ready ({@code 0} for none). */
     static void card(HubScreen.Frame f, Rect r, int edge) {
-        UiKit.draw(f.g, f.theme(), Part.PLATE, r);
+        UiKit.draw(f.g, f.theme(), net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.CARD, r);
         if (edge != 0) {
             f.g.renderOutline(r.x() + 1, r.y() + 1, r.w() - 2, r.h() - 2, edge);
         }

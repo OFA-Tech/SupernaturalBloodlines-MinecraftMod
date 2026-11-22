@@ -398,17 +398,18 @@ public final class BookPackPage implements HubPageView {
         int inner = Math.max(14, radius * 2 / 5);
         f.emblem(new Rect(cx - inner - 2, cy - inner - 2, 2 * inner + 4, 2 * inner + 4));
         Component you = Component.translatable(BOOK + "you", f.view.player().getName(), Component.translatable(KEY + "rank." + wolf.rank().name().toLowerCase(Locale.ROOT)));
-        if (radius >= 40) { // a small ring has no room under the model for the line (the ledger has the rank)
-            int yw = BookKit.smallWidth(f, you.getString());
+        PackRing.Layout ring = PackRing.layout(members, cx, cy, radius, face);
+        // the line under the model is for a ring with room: where a face stands in its way it is left out (the ledger has the rank)
+        int yw = BookKit.smallWidth(f, you.getString());
+        boolean showYou = radius >= 40 && PackRing.clearOfFaces(ring, cx - yw / 2, cy + inner + 4, yw + 4, 9, 2);
+        if (showYou) {
             BookKit.small(f, you, cx - yw / 2, cy + inner + 4, yw + 4, t.accent());
         }
-        PackRing.Layout ring = PackRing.layout(members, cx, cy, radius, face);
         boolean named = ring.slots().size() <= NAMED_MAX && radius >= 40; // a crowded or small ring keeps the faces and the tooltips (the ledger has the names)
         // what a name may not cover: every face with its ring, the emblem, and the "you" line under the model
         List<Rect> blocked = new ArrayList<>();
         blocked.add(new Rect(cx - inner - 2, cy - inner - 2, 2 * inner + 4, 2 * inner + 4));
-        if (radius >= 40) {
-            int yw = BookKit.smallWidth(f, you.getString());
+        if (showYou) {
             blocked.add(new Rect(cx - yw / 2, cy + inner + 4, yw + 4, 9));
         }
         List<RingLabels.Request> asked = new ArrayList<>();

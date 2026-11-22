@@ -106,6 +106,19 @@ class PackRingTest {
     }
 
     @Test
+    void aLineIsClearOfTheFacesOnlyWhenNoFaceOrRingTouchesIt() {
+        List<PackRing.Member> members = List.of(new PackRing.Member("a", PackRing.Role.ALPHA), new PackRing.Member("b", PackRing.Role.BETA), new PackRing.Member("c", PackRing.Role.BETA),
+                new PackRing.Member("d", PackRing.Role.PACKMATE));
+        PackRing.Layout layout = PackRing.layout(members, 100, 100, 60, 16);
+        // a line through the middle of the ring touches no face; one across the bottom face does
+        assertTrue(PackRing.clearOfFaces(layout, 90, 100, 20, 9, 2));
+        PackRing.Slot bottom = layout.slots().stream().max(java.util.Comparator.comparingInt(PackRing.Slot::y)).orElseThrow();
+        assertTrue(!PackRing.clearOfFaces(layout, bottom.x() - 20, bottom.y() - 4, 40, 9, 2), "a line across a face");
+        assertTrue(!PackRing.clearOfFaces(layout, bottom.x() + bottom.size() / 2 + 3, bottom.y(), 20, 9, 2), "a line within the ring and the air of a face");
+        assertTrue(PackRing.clearOfFaces(layout, 400, 400, 20, 9, 2), "far from every face");
+    }
+
+    @Test
     void aSmallPackKeepsTheFullSizeAndHidesNobody() {
         PackRing.Layout layout = PackRing.layout(PACK, 100, 100, 60, 20);
         assertEquals(20, layout.size());
