@@ -78,4 +78,19 @@ class KitFacesTest {
         assertEquals(0xFFFFFFFF, KitFaces.labelOn(0xFF101010, 0xFF202020));
         assertEquals(0xFF000000, KitFaces.labelOn(0xFFF0F0F0, 0xFFE0E0E0));
         assertEquals(0xFF202020, KitFaces.labelOn(0xFFF0F0F0, 0xFF202020));
-    }}
+    }
+
+    @Test
+    void theLetterOnAFlatSealReadsOnTheSealsFlatFace() {
+        // the Grimoire seal letter (cream) and the Blood Moon one (gold) on the themes' accent colours: the flat seal is the accent
+        int[][] sealThemes = {{0xFFE9DCBC, 0xFF7A1218, 0xFF5E4228, 0xFFF0DCB0}, {0xFF1A0A10, 0xFFFFD36B, 0xFFC9A0A8, 0xFFFFD36B}};
+        boolean someNeededTheFallback = false;
+        for (int[] th : sealThemes) {
+            int face = KitFaces.flatFace(KitSprites.Part.SEAL.flat(), th[0], th[1], th[2]);
+            int letter = KitFaces.labelOn(face, th[3]);
+            assertTrue(Contrast.ratio(letter, face) >= 4.5, "seal letter #" + Integer.toHexString(letter) + " on #" + Integer.toHexString(face));
+            someNeededTheFallback |= letter != th[3];
+        }
+        assertTrue(someNeededTheFallback, "the Blood Moon's gold letter on its gold accent is the case that was invisible");
+    }
+}

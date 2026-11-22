@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.TitleFont;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
@@ -70,6 +71,16 @@ final class PageKit {
 
     /** Draws {@code c} wrapped to {@code w}; returns the y under it. */
     static int wrapped(HubScreen.Frame f, Component c, int x, int y, int w, int color) {
+        net.minecraft.network.chat.Style style = c.getStyle();
+        java.util.function.ToIntFunction<String> measure = s -> f.font().width(Component.literal(s).withStyle(style));
+        if (LabelFit.hasOverlongWord(c.getString(), w, measure)) {
+            // vanilla would break such a word in the middle: it is cut with an ellipsis instead, and the rest wraps at its spaces
+            for (String line : LabelFit.wrapWords(c.getString(), w, measure)) {
+                f.g.drawString(f.font(), Component.literal(line).withStyle(style), x, y, color, false);
+                y += LINE;
+            }
+            return y;
+        }
         for (FormattedCharSequence line : f.font().split(c, w)) {
             f.g.drawString(f.font(), line, x, y, color, false);
             y += LINE;

@@ -138,4 +138,5 @@ class BloodMoonLayoutTest {
         assertEquals(0, BloodMoonLayout.cardCut(region, new Rect(320, 50, 100, 150)), "a pane to the right");
         assertEquals(0, BloodMoonLayout.cardCut(region, new Rect(100, 10, 200, 30)), "a bar above");
         assertEquals(0, BloodMoonLayout.cardCut(region, new Rect(100, 250, 200, 30)), "a bar well below");
-    }}
+    }
+}

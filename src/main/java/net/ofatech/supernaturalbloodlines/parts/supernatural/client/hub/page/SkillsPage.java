@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Plural;
 import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.VampirismSkillAccess;
@@ -170,7 +171,7 @@ public final class SkillsPage implements HubPageView {
     static Component state(HubSkills.Row row) {
         return switch (row.state()) {
             case OWNED -> Component.translatable(KEY + "state.owned");
-            case BUYABLE -> Component.translatable(KEY + "state.buyable", row.cost());
+            case BUYABLE -> Component.translatable(Plural.key(KEY + "state.buyable", row.cost()), row.cost());
             case DORMANT -> Component.translatable(KEY + "state.dormant");
             case COVERED -> Component.translatable(KEY + "state.covered");
             case LOCKED -> Component.translatable(row.why().langKey());
@@ -212,7 +213,7 @@ public final class SkillsPage implements HubPageView {
         if (I18n.exists(desc)) {
             y = PageKit.wrapped(f, Component.translatable(desc), r.x(), y, r.w(), t.ink()) + 3;
         }
-        y = PageKit.wrapped(f, Component.translatable(KEY + "cost_line", row.cost()), r.x(), y, r.w(), t.ink());
+        y = PageKit.wrapped(f, Component.translatable(Plural.key(KEY + "cost_line", row.cost()), row.cost()), r.x(), y, r.w(), t.ink());
         if (row.entry() != null && row.race() != null) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "needs_rung", PageKit.race(row.race()), row.entry().rung()), r.x(), y, r.w(), t.ink());
             if (row.entry().after() != null) {

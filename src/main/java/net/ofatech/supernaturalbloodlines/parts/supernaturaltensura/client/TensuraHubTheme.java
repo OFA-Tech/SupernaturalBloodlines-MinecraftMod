@@ -404,8 +404,9 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         }
         for (Detail.Row row : d.rows()) {
             int tagW = row.source() == null ? 0 : KitDraw.tagWidth(font, row.source()) + 4;
-            var lines = font.split(row.label(), w - tagW - 12);
-            int n = Math.min(2, Math.max(1, lines.size()));
+            // two lines at most; a task that does not fit ends its second line with an ellipsis
+            var lines = LabelFit.wrap(row.label().getString(), w - tagW - 12, 2, font::width);
+            int n = lines.size();
             int h = 16 + 10 * n;
             if (y + h + 2 > limit) {
                 break;

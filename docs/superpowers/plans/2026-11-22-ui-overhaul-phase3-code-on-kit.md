@@ -98,6 +98,20 @@
 66 hidden shots (3 themes x 10 pages x scales 2 and 4, plus the HUD in 3 themes x 2 scales) are in un-safeshots/final-shots/ (git-ignored); a selection is in docs/superpowers/design/ui-overhaul/phase3/, and 
 o-kit/ shows the flat fallback with the Grimoire sprites removed. The ability HUD is unchanged in this phase (its slot art is phase 4).
 
+### Found in the phase 3 review, older page code (not fixed here)
+
+| Phase | Where | What |
+|---|---|---|
+| 4 HUD | Tensura theme, any page with a request toast, scale 4 | The request toast sits over the top of Tensura's own HUD |
+| 5 Pages | Grimoire, Pack, scale 4 | The names round the ring collide: `Dev · Alpha` runs into Ashen and Deaton, and Lydia and Stiles run together |
+| 5 Pages | Tensura, Pack, scale 4 | The wheel's heads and names overlap |
+| 5 Pages | Grimoire, Guide, scale 4 | Every contents row reads `p. 14` (the page numbers are not per chapter) |
+| 5 Pages | Grimoire and Tensura, Skills, scale 4 | The ring labels are spaced unevenly and several are cut (`Stea…`, `Preda…`) with the full name only in the tooltip |
+| 5 Pages | Grimoire, Quests, scale 4 | The task checkbox touches the first letter of its text: it needs a gap |
+| 5 Pages | Blood Moon, Guide, scale 4 | The footer bar's hint is cut after two lines (`…leadi…`) |
+
 ## Review round
 
 Fixes after the PR panel: an icon name a resource location cannot hold (a skill of another mod) shows the unknown rune and never throws; a large nine-slice is drawn as its border plus one fill of its solid middle (`NineSlicePlan`, read once from the PNG), a few dozen draws and not thousands; the HUD halo honours `reduce_motion` (`Motion.pulse`); the "more below" marker has its own strip under the clipped content (`ScrollHint`); a skill the player has is not offered for purchase; the Blood Moon Guide lists end above the floating bar; the empty state drops its hexagon when the page is short (`EmptyFit`); the Blood Moon stage titles use the gothic font; the Tensura columns have a gap for the scroll bar; a cut skill name is read whole in a tooltip. The 12 GameTest runs of the first pass stayed green; this round changed only client drawing and pure helpers (CI runs them again).
+
+Round 2: a sprite whose picture is not the size of its `.mcmeta` (a hi-res pack) goes to vanilla's drawing, an unreadable kit PNG is logged once, wrapped text breaks only at spaces (a single too-long word is cut with an ellipsis, and a Settings hint with such a word goes under its toggle), the seal letters follow the flat seal when a kit is missing, the nine-slice fill is not tinted twice, a resize no longer drops the kit cache, a page change forgets the old page's overflow, "1 skill point" is singular, and the Tensura task rows end in an ellipsis. The default GameTest run (1548) and 1954 unit tests passed.

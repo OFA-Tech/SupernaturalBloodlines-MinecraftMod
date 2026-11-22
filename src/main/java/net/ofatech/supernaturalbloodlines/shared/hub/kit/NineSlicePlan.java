@@ -21,6 +21,14 @@ public final class NineSlicePlan {
     }
 
     /**
+     * Whether the picture is the size its .mcmeta nine-slice says it is. A resource pack that repaints a sprite at twice the size keeps the old .mcmeta: the borders
+     * would then be cut from the wrong place, so such a sprite is left to vanilla's own drawing, which scales the whole picture.
+     */
+    public static boolean sizesMatch(int pictureW, int pictureH, int sliceW, int sliceH) {
+        return pictureW == sliceW && pictureH == sliceH;
+    }
+
+    /**
      * The pieces of a sprite of {@code sw x sh} with borders {@code l, t, r, b} drawn over ({@code x}, {@code y}, {@code w}, {@code h}).
      *
      * @param middle the one colour (ARGB) the middle of the sprite is, 0 when it is empty, or null when it is not one colour (it is then tiled like vanilla)

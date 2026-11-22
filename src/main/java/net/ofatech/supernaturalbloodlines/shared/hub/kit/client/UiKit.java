@@ -33,6 +33,7 @@ public final class UiKit {
     private static final Map<String, Icon> ICONS_16 = new HashMap<>();
     private static final Map<String, Icon> ICONS_32 = new HashMap<>();
     private static final Map<String, String> SKILLS = new HashMap<>();
+    private static final java.util.Set<String> WARNED = new java.util.HashSet<>();
 
     /** A theme sprite: its id, whether it exists, and how to cut it when it is a nine-slice. */
     private record Entry(ResourceLocation id, boolean present, @Nullable Slice slice) {
@@ -95,6 +96,9 @@ public final class UiKit {
         }
         int w = ns.width();
         int h = ns.height();
+        if (!NineSlicePlan.sizesMatch(sprite.contents().width(), sprite.contents().height(), w, h)) {
+            return null; // a hi-res pack: vanilla's blitSprite draws it
+        }
         var b = ns.border();
         int atlasW = Math.round(sprite.contents().width() / (sprite.getU1() - sprite.getU0()));
         int atlasH = Math.round(sprite.contents().height() / (sprite.getV1() - sprite.getV0()));
@@ -118,6 +122,9 @@ public final class UiKit {
             }
             return NineSlicePlan.solidMiddle(argb, w, h, b.left(), b.top(), b.right(), b.bottom());
         } catch (IOException | RuntimeException unreadable) {
+            if (WARNED.add(path)) {
+                SupernaturalBloodlines.LOGGER.warn("Could not read the picture of the kit sprite {} ({}): its middle is drawn tile by tile", path, unreadable.toString());
+            }
             return null;
         }
     }
@@ -146,8 +153,7 @@ public final class UiKit {
             Slice s = e.slice();
             for (NineSlicePlan.Op op : NineSlicePlan.of(s.w(), s.h(), s.l(), s.t(), s.r(), s.b(), x - m, y - m, w + 2 * m, h + 2 * m, s.middle())) {
                 if (op.fill()) {
-                    int a = Math.round((op.color() >>> 24) * alpha);
-                    g.fill(op.x(), op.y(), op.x() + op.w(), op.y() + op.h(), a << 24 | (op.color() & 0xFFFFFF));
+                    g.fill(op.x(), op.y(), op.x() + op.w(), op.y() + op.h(), op.color()); // the shader colour set by blend() tints a fill too
                 } else {
                     g.blit(s.atlas(), op.x(), op.y(), op.w(), op.h(), (float) (s.x() + op.u()), (float) (s.y() + op.v()), op.w(), op.h(), s.atlasW(), s.atlasH());
                 }

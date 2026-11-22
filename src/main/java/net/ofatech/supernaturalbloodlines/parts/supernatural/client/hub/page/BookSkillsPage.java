@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Plural;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.resources.language.I18n;
@@ -122,7 +123,7 @@ public final class BookSkillsPage implements HubPageView {
         y = I18n.exists(desc) ? BookKit.dropCap(f, Component.translatable(desc), r.x(), y, r.w(), t.ink())
                 : PageKit.wrapped(f, SkillsPage.state(row), r.x(), y, r.w(), t.ink()) + 3;
         y += 4;
-        y = BookKit.leader(f, Component.translatable(BOOK + "cost"), Component.translatable(PageKit.HUB + "skills.cost_short", row.cost()), r.x(), y, r.w(), t.ink());
+        y = BookKit.leader(f, Component.translatable(BOOK + "cost"), Component.translatable(Plural.key(PageKit.HUB + "skills.cost_short", row.cost()), row.cost()), r.x(), y, r.w(), t.ink());
         if (row.entry() != null && row.race() != null) {
             boolean met = row.state() != HubSkills.State.LOCKED;
             Component need = Component.translatable(PageKit.HUB + "skills.needs_short", PageKit.race(row.race()), row.entry().rung());

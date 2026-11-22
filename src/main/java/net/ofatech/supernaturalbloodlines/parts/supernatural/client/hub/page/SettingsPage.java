@@ -6,6 +6,7 @@ import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.minecraft.client.gui.screens.options.controls.ControlsScreen;
 import net.minecraft.network.chat.Component;
 import net.neoforged.fml.ModList;
@@ -123,11 +124,14 @@ public final class SettingsPage implements HubPageView {
         ModConfigSpec.ConfigValue cv = AdminSpecs.value(e).orElseThrow();
         Component label = label(e);
         int top = y + 1;
-        y = PageKit.wrapped(f, label, r.x() + 4, top, e.kind() == SettingKind.BOOL ? r.w() - 44 : r.w() - 4, t.ink());
+        int column = e.kind() == SettingKind.BOOL ? r.w() - 44 : r.w() - 4;
+        y = PageKit.wrapped(f, label, r.x() + 4, top, column, t.ink());
         String noteKey = KEY + "note." + e.dottedPath();
-        if (I18n.exists(noteKey)) {
-            // a line under the label that says what the setting changes
-            y = PageKit.wrapped(f, Component.translatable(noteKey), r.x() + 4, y, e.kind() == SettingKind.BOOL ? r.w() - 44 : r.w() - 4, t.muted());
+        Component note = I18n.exists(noteKey) ? Component.translatable(noteKey) : null;
+        // a hint that does not fit the narrow column beside the toggle goes under the toggle, across the whole row
+        boolean noteBelow = note != null && e.kind() == SettingKind.BOOL && LabelFit.hasOverlongWord(note.getString(), column, f.font()::width);
+        if (note != null && !noteBelow) {
+            y = PageKit.wrapped(f, note, r.x() + 4, y, column, t.muted());
         }
         String id = "stage:settings:" + e.dottedPath();
         if (e.kind() == SettingKind.BOOL) {
@@ -137,7 +141,11 @@ public final class SettingsPage implements HubPageView {
                 cv.set(!on);
                 cv.save();
             });
-            return Math.max(y, b.bottom()) + 2;
+            int bottom = Math.max(y, b.bottom());
+            if (noteBelow) {
+                bottom = PageKit.wrapped(f, note, r.x() + 4, bottom, r.w() - 4, t.muted());
+            }
+            return bottom + 2;
         }
         Object current = cv.get();
         Object[] options = current instanceof Enum<?> en ? en.getDeclaringClass().getEnumConstants() : new Object[0];

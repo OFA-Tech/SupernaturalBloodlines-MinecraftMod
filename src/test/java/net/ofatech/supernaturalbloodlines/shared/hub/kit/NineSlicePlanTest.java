@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 
 class NineSlicePlanTest {
     private static final int FILL = 0xFF336699;
+    /** The big nine-slices (panel, inset, button) whose middle is not one colour. */
+    private static final java.util.Set<String> TEXTURED = new java.util.TreeSet<>(List.of("bloodmoon/button_normal", "bloodmoon/button_primary_normal"));
 
     /** How often each pixel of the target is covered by a piece, and that every copied piece lies inside the sprite. */
     private static int[][] cover(List<NineSlicePlan.Op> ops, int sw, int sh, int x, int y, int w, int h) {
@@ -116,8 +118,8 @@ class NineSlicePlanTest {
                 }
             }
         }
-        // a middle that is not solid is still drawn right (tiled); this only records which of the big ones are cheap
-        System.out.println("nine-slices with a textured middle: " + notSolid);
-        assertTrue(notSolid.size() <= 6, "most big middles are solid, or a panel costs thousands of draws again: " + notSolid);
+        // a middle that is not solid is still drawn right (tiled), but it costs a draw for every tile: the ones that do are named here, so a repaint that
+        // makes another panel textured shows up as a failure to look at, not as a slow screen
+        assertEquals(TEXTURED, new java.util.TreeSet<>(notSolid));
     }
 }

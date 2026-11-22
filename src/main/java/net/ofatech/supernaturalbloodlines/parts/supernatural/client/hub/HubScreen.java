@@ -100,7 +100,7 @@ public final class HubScreen extends Screen {
         }
         if (HubClientConfig.theme() != themeId) {
             applyTheme();
-            scroll.clear();
+            resetScroll();
         }
     }
 
@@ -123,7 +123,7 @@ public final class HubScreen extends Screen {
         HubPage origin = profile != null ? profile.origin() : page == HubPage.LOADOUT ? HubPage.SKILLS : page;
         moon = false;
         profile = new ProfileRoute(id, name, op, origin);
-        scroll.clear();
+        resetScroll();
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.ProfileClient.clear();
         HubClient.requestProfile(id, op);
         triggerImmediateNarration(true);
@@ -138,7 +138,7 @@ public final class HubScreen extends Screen {
         if (!moon) {
             moon = true;
             profile = null;
-            scroll.clear();
+            resetScroll();
             triggerImmediateNarration(true);
         }
     }
@@ -147,14 +147,14 @@ public final class HubScreen extends Screen {
     public boolean back() {
         if (moon) {
             moon = false;
-            scroll.clear();
+            resetScroll();
             triggerImmediateNarration(true);
             return true;
         }
         if (profile != null) {
             HubPage origin = profile.origin();
             profile = null;
-            scroll.clear();
+            resetScroll();
             if (origin != page) {
                 setPage(origin);
             }
@@ -168,21 +168,21 @@ public final class HubScreen extends Screen {
         return false;
     }
 
+    /** A page's content changed: its scroll is not the old one's, and neither is whether it overflowed (that decides how much room its viewport keeps for the marker). */
+    private void resetScroll() {
+        scroll.clear();
+        overflowed.clear();
+    }
+
     public void setPage(HubPage p) {
         if (p != page || profile != null || moon) {
             profile = null;
             moon = false;
             page = p;
-            scroll.clear();
+            resetScroll();
             HubClient.remember(p);
             triggerImmediateNarration(true);
         }
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-        net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit.reload();
     }
 
     @Override

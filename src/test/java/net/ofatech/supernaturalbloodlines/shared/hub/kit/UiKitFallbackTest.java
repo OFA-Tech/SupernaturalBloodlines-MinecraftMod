@@ -79,4 +79,12 @@ class UiKitFallbackTest {
         assertFalse(KitSprites.validName("Fireball"));
         assertFalse(KitSprites.validName("a b"));
     }
+
+    @Test
+    void aSpriteDrawnAtADifferentSizeThanItsMcmetaIsNotSliced() {
+        assertTrue(NineSlicePlan.sizesMatch(32, 32, 32, 32));
+        assertFalse(NineSlicePlan.sizesMatch(64, 64, 32, 32), "a pack repainted it at twice the size");
+        assertFalse(NineSlicePlan.sizesMatch(32, 64, 32, 32));
+        assertFalse(NineSlicePlan.sizesMatch(64, 32, 32, 32));
+    }
 }

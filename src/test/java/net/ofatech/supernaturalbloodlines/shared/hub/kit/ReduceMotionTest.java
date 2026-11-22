@@ -61,4 +61,5 @@ class ReduceMotionTest {
         }
         assertTrue(low < 0.1f && high > 0.9f, "the halo moves from " + low + " to " + high);
         assertEquals(0.5f, Motion.pulse(0, false), 1e-6);
-    }}
+    }
+}

@@ -341,7 +341,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     public void drawSeal(GuiGraphics g, Rect r, String letter, int color, boolean lit) {
         round(g, r, lit);
         Font font = Minecraft.getInstance().font;
-        g.drawString(font, letter, r.x() + (r.w() - font.width(letter)) / 2 + 1, r.y() + (r.h() - 8) / 2 + 1, GOLD, false);
+        g.drawString(font, letter, r.x() + (r.w() - font.width(letter)) / 2 + 1, r.y() + (r.h() - 8) / 2 + 1, UiKit.labelOver(this, lit ? Part.SEAL_HOVER : Part.SEAL, GOLD), false);
     }
 
     @Override

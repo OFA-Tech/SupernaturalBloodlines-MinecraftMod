@@ -103,4 +103,5 @@ class HubSkillsTest {
         // a locked or dormant one still shows its (disabled) button: it says why it cannot be learned
         assertEquals(true, HubSkills.State.LOCKED.offersPurchase());
         assertEquals(true, HubSkills.State.DORMANT.offersPurchase());
-    }}
+    }
+}

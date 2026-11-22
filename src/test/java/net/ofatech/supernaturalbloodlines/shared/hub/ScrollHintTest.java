@@ -23,4 +23,5 @@ class ScrollHintTest {
         assertEquals(100, ScrollHint.clipHeight(100, false));
         assertEquals(90, ScrollHint.clipHeight(100, true));
         assertEquals(0, ScrollHint.clipHeight(4, true), "never negative");
-    }}
+    }
+}

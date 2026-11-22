@@ -155,7 +155,7 @@ public final class GrimoireTheme implements HubTheme, HubThemeViews {
         int size = Math.min(r.w(), r.h());
         UiKit.draw(g, this, lit ? Part.SEAL_HOVER : Part.SEAL, r.x() + (size - SEAL_PX) / 2, r.y() + (size - SEAL_PX) / 2, SEAL_PX, SEAL_PX);
         Font font = Minecraft.getInstance().font;
-        g.drawString(font, letter, r.x() + (r.w() - font.width(letter)) / 2 + 1, r.y() + (r.h() - 8) / 2 + 1, 0xFFF0DCB0, false);
+        g.drawString(font, letter, r.x() + (r.w() - font.width(letter)) / 2 + 1, r.y() + (r.h() - 8) / 2 + 1, UiKit.labelOver(this, lit ? Part.SEAL_HOVER : Part.SEAL, 0xFFF0DCB0), false);
     }
 
     private static final int SEAL_PX = 20;
