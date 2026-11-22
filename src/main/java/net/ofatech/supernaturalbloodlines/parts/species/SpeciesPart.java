@@ -272,6 +272,9 @@ public final class SpeciesPart {
         if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT && ModList.get().isLoaded("werewolves")) {
             PackKeybinds.register(modBus);
         }
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
+            net.ofatech.supernaturalbloodlines.client.BloodShots.registerIfRequested(); // development screenshots only: inert without its -D flag
+        }
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(SpeciesGameTests.class);
             e.register(OriginalGameTests.class);

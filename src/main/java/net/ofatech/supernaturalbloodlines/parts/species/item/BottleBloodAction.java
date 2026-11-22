@@ -28,7 +28,8 @@ public final class BottleBloodAction implements ExtraActions.Action {
     public static final String NOTHING = "supernaturalbloodlines.bottle.nothing";
     public static final String COOLDOWN = "supernaturalbloodlines.bottle.cooldown";
     static final ResourceLocation BLOOD_BOTTLE = ResourceLocation.parse("vampirism:vampire_blood_bottle");
-    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hud/bottle_blood.png");
+    /** The placeholder until the art (textures/gui/hud/bottle_blood.png) lands. */
+    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hud/unknown.png");
 
     private BottleBloodAction() {
     }
