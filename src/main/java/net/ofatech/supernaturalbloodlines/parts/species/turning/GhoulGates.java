@@ -135,8 +135,8 @@ public final class GhoulGates {
                 || !TurningHandler.isFaction(source, VReference.VAMPIRE_FACTION)) {
             return;
         }
-        if (LadderQuery.owns(p, "S-VAM-6")) {
-            return; // Predator's Thirst (the supernatural part's BloodEffects) feeds the biter and drains the victim
+        if (LadderQuery.owns(p, "S-VAM-6") || BloodlineAccess.get(p).species() == net.ofatech.supernaturalbloodlines.core.bloodline.Species.AUGUSTINE) {
+            return; // Predator's Thirst (the supernatural part's BloodEffects) feeds the biter and drains the victim; R20f is lifted for an Augustine (R203)
         }
         e.setAmount(0);
         e.setSaturationModifier(0);

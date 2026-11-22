@@ -172,6 +172,7 @@ public final class SpeciesPart {
         // ORDER MATTERS: OriginalRules.register() also registers Downed's click denial, which must run before TurningHandler's and BloodBottles' click
         // handlers (below): a dying player cannot drink, and those handlers have no guard of their own (a listener does not see an event an earlier one cancelled)
         OriginalRules.register();
+        net.ofatech.supernaturalbloodlines.parts.species.augustine.AugustineRules.register();
         Siphoning.register();
         VampireJoin.register();
         HunterEvents.register(); // hunters need no Werewolves
@@ -282,6 +283,7 @@ public final class SpeciesPart {
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(SpeciesGameTests.class);
             e.register(OriginalGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AugustineGameTests.class);
             e.register(WitchGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CommandAliasGameTests.class);
             e.register(HunterGameTests.class);

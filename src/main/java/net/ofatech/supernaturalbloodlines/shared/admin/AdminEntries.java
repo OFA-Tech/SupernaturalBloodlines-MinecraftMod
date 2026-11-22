@@ -108,6 +108,10 @@ public final class AdminEntries {
         species(all, "bottle_blood_cooldown_seconds", INT);
         species(all, "bottle_blood_health_cost", DOUBLE);
         species(all, "bottle_blood_daily_limit", INT);
+        species(all, "augustine_attack_bonus", DOUBLE);
+        species(all, "augustine_extra_health", DOUBLE);
+        species(all, "augustine_blood_from_vampire_factor", DOUBLE);
+        species(all, "augustine_blood_from_other_factor", DOUBLE);
         species(all, "alpha_trial_enabled", BOOL);
         species(all, "alpha_trial_min_level", INT);
         species(all, "alpha_trial_hp_factor", DOUBLE);

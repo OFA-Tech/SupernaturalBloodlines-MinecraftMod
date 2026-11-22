@@ -115,6 +115,15 @@ public final class SpeciesConfig {
     public static final int DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT = 8;
     private static final ModConfigSpec.IntValue BOTTLE_BLOOD_DAILY_LIMIT;
 
+    public static final double DEFAULT_AUGUSTINE_ATTACK_BONUS = 0.10;
+    public static final double DEFAULT_AUGUSTINE_EXTRA_HEALTH = 2.0;
+    public static final double DEFAULT_AUGUSTINE_BLOOD_FROM_VAMPIRE = 3.0;
+    public static final double DEFAULT_AUGUSTINE_BLOOD_FROM_OTHER = 1.0 / 3.0;
+    private static final ModConfigSpec.DoubleValue AUGUSTINE_ATTACK_BONUS;
+    private static final ModConfigSpec.DoubleValue AUGUSTINE_EXTRA_HEALTH;
+    private static final ModConfigSpec.DoubleValue AUGUSTINE_BLOOD_FROM_VAMPIRE;
+    private static final ModConfigSpec.DoubleValue AUGUSTINE_BLOOD_FROM_OTHER;
+
     /** The numbers of the pack's NPC members (plan 15d, R148). */
     public record MemberTuning(boolean recruit, int perPlayer, int perPack, boolean huntTrips, int huntPeriodMinutes, boolean chestSort, double weightBrother,
                                double weightTensura, double bonusShare) {
@@ -291,6 +300,14 @@ public final class SpeciesConfig {
                 .defineInRange("bottle_blood_health_cost", DEFAULT_BOTTLE_BLOOD_HEALTH_COST, 0.0, 19.0);
         BOTTLE_BLOOD_DAILY_LIMIT = b.comment("R211: how many times one player may use Bottle my blood in one game day, counted in world time; sleeping or /time does not reset it. Vampire blood bottles are an ingredient (pure blood, vampire blood oil) and a task item of Vampirism, so they are not free.")
                 .defineInRange("bottle_blood_daily_limit", DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT, 1, 1000);
+        AUGUSTINE_ATTACK_BONUS = b.comment("R200: an Augustine's extra attack damage, as a fraction (0.10 = +10%; an Original has +20%).")
+                .defineInRange("augustine_attack_bonus", DEFAULT_AUGUSTINE_ATTACK_BONUS, 0.0, 1.0);
+        AUGUSTINE_EXTRA_HEALTH = b.comment("R200: an Augustine's extra maximum health, in half hearts (an Original has 4).")
+                .defineInRange("augustine_extra_health", DEFAULT_AUGUSTINE_EXTRA_HEALTH, 0.0, 20.0);
+        AUGUSTINE_BLOOD_FROM_VAMPIRE = b.comment("R203: how much more blood an Augustine takes from a vampire (3 = triple of what Vampirism gives).")
+                .defineInRange("augustine_blood_from_vampire_factor", DEFAULT_AUGUSTINE_BLOOD_FROM_VAMPIRE, 0.0, 10.0);
+        AUGUSTINE_BLOOD_FROM_OTHER = b.comment("R203: how much blood an Augustine takes from anyone who is not a vampire (a third of what Vampirism gives, never less than 1 from a bite that gives any).")
+                .defineInRange("augustine_blood_from_other_factor", DEFAULT_AUGUSTINE_BLOOD_FROM_OTHER, 0.0, 10.0);
         b.pop();
         SPEC = b.build();
     }
@@ -851,6 +868,42 @@ public final class SpeciesConfig {
             return BOTTLE_BLOOD_DAILY_LIMIT.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT;
+        }
+    }
+
+    /** {@code augustine_attack_bonus}. */
+    public static double augustineAttackBonus() {
+        try {
+            return AUGUSTINE_ATTACK_BONUS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_AUGUSTINE_ATTACK_BONUS;
+        }
+    }
+
+    /** {@code augustine_extra_health}. */
+    public static double augustineExtraHealth() {
+        try {
+            return AUGUSTINE_EXTRA_HEALTH.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_AUGUSTINE_EXTRA_HEALTH;
+        }
+    }
+
+    /** {@code augustine_blood_from_vampire_factor}. */
+    public static double augustineBloodFromVampire() {
+        try {
+            return AUGUSTINE_BLOOD_FROM_VAMPIRE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_AUGUSTINE_BLOOD_FROM_VAMPIRE;
+        }
+    }
+
+    /** {@code augustine_blood_from_other_factor}. */
+    public static double augustineBloodFromOther() {
+        try {
+            return AUGUSTINE_BLOOD_FROM_OTHER.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_AUGUSTINE_BLOOD_FROM_OTHER;
         }
     }
 
