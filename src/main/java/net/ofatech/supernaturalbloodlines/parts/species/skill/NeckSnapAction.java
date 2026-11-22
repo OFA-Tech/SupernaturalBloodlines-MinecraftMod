@@ -43,7 +43,7 @@ public final class NeckSnapAction implements ExtraActions.Action {
     public static final String COOLDOWN = KEY + "cooldown";
     public static final String REFUSED = KEY + "refused";
     public static final String DONE = KEY + "done";
-    /** The 0.01 damage that asks a claim or PvP mod whether this hit is allowed, without hurting anyone for real. */
+    /** The tiny hit a claim or PvP mod is asked about (as an event only: nothing is dealt, so a snap costs the target no health). */
     static final float PROBE = 0.01F;
     private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hud/unknown.png");
 
@@ -122,7 +122,7 @@ public final class NeckSnapAction implements ExtraActions.Action {
             if (!target.hurt(source, target.getHealth() + target.getAbsorptionAmount() + 1.0F)) {
                 return Component.translatable(REFUSED);
             }
-        } else if (result != NeckSnapRules.Result.NOTHING && !target.hurt(source, PROBE)) {
+        } else if (result != NeckSnapRules.Result.NOTHING && !TargetChecks.damageWouldLand(target, source, PROBE)) {
             return Component.translatable(REFUSED);
         }
         switch (result) {

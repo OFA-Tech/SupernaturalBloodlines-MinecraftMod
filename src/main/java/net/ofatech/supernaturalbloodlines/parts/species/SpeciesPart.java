@@ -287,6 +287,7 @@ public final class SpeciesPart {
             e.register(SpeciesGameTests.class);
             e.register(OriginalGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AugustineGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.TargetedSkillGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AugustineMakingGameTests.class);
             e.register(WitchGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CommandAliasGameTests.class);

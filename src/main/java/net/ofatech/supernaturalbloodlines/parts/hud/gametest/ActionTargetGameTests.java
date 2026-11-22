@@ -92,13 +92,13 @@ public final class ActionTargetGameTests {
 
     private static ServerPlayer player(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.createDuelist(helper);
-        p.setPos(helper.absoluteVec(new Vec3(1.5, 1, 1.5)));
+        p.setPos(helper.absoluteVec(new Vec3(1.5, 2, 1.5)));
         return p;
     }
 
     private static Zombie zombieAt(GameTestHelper helper, double x, double z) {
         Zombie z1 = EntityType.ZOMBIE.create(helper.getLevel());
-        z1.setPos(helper.absoluteVec(new Vec3(x, 1, z)));
+        z1.setPos(helper.absoluteVec(new Vec3(x, 2, z)));
         z1.setNoAi(true);
         helper.getLevel().addFreshEntity(z1);
         return z1;
@@ -122,7 +122,7 @@ public final class ActionTargetGameTests {
         Zombie z = zombieAt(helper, 1.5, 3.5);
         try {
             helper.assertTrue(ActionService.trigger(p, 2, z.getId(), false) == null, "the trigger was refused");
-            helper.assertTrue(r.runs == 1 && r.seen.get() == z && !r.throughOldMethod, "the action was given " + r.seen.get() + " (runs " + r.runs + ")");
+            helper.assertTrue(r.runs == 1 && r.seen.get() == z && !r.throughOldMethod, "the action was given " + r.seen.get() + " (runs " + r.runs + ", dist " + p.distanceTo(z) + ", los " + p.hasLineOfSight(z) + ", alive " + z.isAlive() + ", level " + (p.level() == z.level()) + ", p " + p.position() + ", z " + z.position() + ")");
             helper.assertTrue(HudTargets.resolve(p, z.getId()).orElse(null) == z, "HudTargets does not resolve a zombie in reach");
         } finally {
             z.discard();
