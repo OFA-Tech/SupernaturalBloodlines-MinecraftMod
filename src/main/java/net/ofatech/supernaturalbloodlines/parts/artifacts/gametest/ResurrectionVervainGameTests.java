@@ -180,6 +180,10 @@ public final class ResurrectionVervainGameTests {
         guarded.getInventory().items.set(5, ring(3));
         net.ofatech.supernaturalbloodlines.core.death.FinalDeath.run(guarded, () -> kill(guarded, mob(helper, "vampirism:vampire")));
         helper.assertTrue(guarded.isDeadOrDying() && charges(guarded.getInventory().items.get(5)) == 3, "the Ring took back a chosen death: dead " + guarded.isDeadOrDying());
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("species")) {
+            helper.succeed(); // the dying state is the species part's: without it there is no Give up to follow through
+            return;
+        }
         ServerPlayer victim = TestPlayers.createMortal(helper);
         victim.getInventory().items.set(5, ring(3));
         try {
