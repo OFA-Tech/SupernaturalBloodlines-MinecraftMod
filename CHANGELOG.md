@@ -9,6 +9,7 @@
 - Config (with Admin rows): `augustine_attack_bonus`, `augustine_extra_health`, `augustine_blood_from_vampire_factor`, `augustine_blood_from_other_factor`.
 
 ### Fixed
+- **Rites no longer say what stands on the circle.** The Rite of Lineage: Awaken now needs the target's sneak when someone else casts it, and Awaken, Ancestral Calling, Severance and Doppelgänger Blood (for a taglocked player) tell the caster only that it did nothing; the one on the circle hears the reason. The Rite of Augustine tells a consenting target "The Rite of Augustine takes you now". Wes's Syringe on another player ignores a second use less than 10 ticks after the first (the use key held down).
 - The Pike rite and Mikael count an Augustine's own ladder (`SupernaturalState.vampireRung`). Leaving the vampire faction through Vampirism takes the Augustine bonuses at once and ends the species (like a Ghoul).
 
 ### Migration
