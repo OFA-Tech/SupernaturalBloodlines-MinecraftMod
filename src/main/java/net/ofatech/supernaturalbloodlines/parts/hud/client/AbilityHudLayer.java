@@ -37,34 +37,31 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         return HudClientConfig.hudEnabled() && HudClientConfig.visibility() != net.ofatech.supernaturalbloodlines.core.hud.HudVisibility.HIDDEN && mc.player != null && !mc.options.hideGui && !mc.player.isSpectator() && HudModeState.current().isPresent();
     }
 
-    /** The cooldown each slot had the last time it was drawn, and the tick each became ready: a slot whose cooldown runs out glows for one loop. */
-    private final float[] before = new float[Loadout.SLOTS];
-    private final long[] readyAt = new long[Loadout.SLOTS];
+    private final ReadyGlow.Tracker glowTracker = new ReadyGlow.Tracker(Loadout.SLOTS);
+    private final float[] cooldowns = new float[Loadout.SLOTS];
+    private final boolean[] eligible = new boolean[Loadout.SLOTS];
+    private final float[] glow = new float[Loadout.SLOTS];
 
-    {
-        java.util.Arrays.fill(readyAt, Long.MIN_VALUE / 2);
-    }
-
-    private float[] glows(SlotView[] views, long time) {
+    /** What each slot glows with: a slot that turns ready glows once; a mode switch or a change of loadout starts the tracking over. */
+    private float[] glows(SlotMode mode, SlotView[] views, long time) {
         boolean reduce = ReduceMotion.on();
-        float[] out = new float[Loadout.SLOTS];
-        for (int i = 0; i < out.length; i++) {
-            float now = views[i].isEmpty() ? 0f : views[i].cooldown();
-            if (ReadyGlow.justReady(before[i], now)) {
-                readyAt[i] = time;
-            }
-            before[i] = now;
-            out[i] = ReadyGlow.alpha(time - readyAt[i], reduce);
+        int context = mode == null ? 0 : mode.ordinal() + 1;
+        for (int i = 0; i < glow.length; i++) {
+            SlotView v = views[i];
+            eligible[i] = !v.isEmpty() && !v.greyed();
+            cooldowns[i] = eligible[i] ? v.cooldown() : 0f;
+            context = 31 * context + (v.isEmpty() ? 0 : v.icon().hashCode() * 17 + v.name().hashCode());
         }
+        glowTracker.update(cooldowns, eligible, context, time, reduce, glow);
         if (net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on && net.ofatech.supernaturalbloodlines.shared.hud.DevHud.glow && !reduce) {
-            out[net.ofatech.supernaturalbloodlines.shared.hud.DevHud.human ? 0 : 3] = 0.6f; // the screenshots: one slot is ready, held at a fixed glow
+            glow[net.ofatech.supernaturalbloodlines.shared.hud.DevHud.human ? 0 : 3] = 0.6f; // the screenshots: one slot is ready, held at a fixed glow
         }
-        return out;
+        return glow;
     }
-
     @Override
     public void render(GuiGraphics g, DeltaTracker delta) {
         if (!shown()) {
+            glowTracker.reset();
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -80,7 +77,7 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         float alpha = HudActivity.alpha(busy);
         long time = mc.level == null ? 0 : mc.level.getGameTime();
         float pulse = Motion.pulse(time, ReduceMotion.on());
-        float[] glow = glows(views, time);
+        float[] glow = glows(src.mode(), views, time);
         int previewTop = -1;
         if (alpha > 0.01f) {
             float blood = src.blood();

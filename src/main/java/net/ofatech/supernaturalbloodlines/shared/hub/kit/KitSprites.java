@@ -85,6 +85,10 @@ public final class KitSprites {
         return true;
     }
 
+    /** The shared sprites the HUD draws: the mark of Tensura mode (a teal diamond) and the drop of blood of the Supernatural mode. */
+    public static final String MODE_MARK = SHARED + "mode_mark";
+    public static final String BLOOD_FULL = SHARED + "blood_full";
+
     private KitSprites() {
     }
 

@@ -29,6 +29,14 @@ public final class SlotBadge {
     private SlotBadge() {
     }
 
+    /**
+     * The look whose badge and seconds stand on a slot. The Blood Moon's plate sits at the bottom of a round slot; on the square slots of Tensura mode it would cover
+     * half of the icon, so there it hangs off the top left like the Tensura theme's tab.
+     */
+    public static Look placement(Look look, boolean squareMode) {
+        return look == Look.BLOOD_MOON && squareMode ? Look.TENSURA : look;
+    }
+
     /** The key badge: a round wax seal at the bottom right, a dark plate under the letter at the bottom, or a tab hanging off the top left. */
     public static Box key(Look look, Box slot, int labelW) {
         return key(look, slot, labelW, 0);
@@ -38,8 +46,8 @@ public final class SlotBadge {
     public static Box key(Look look, Box slot, int labelW, int lift) {
         int bw = badgeWidth(labelW);
         return switch (look) {
-            // a wax seal at the bottom right; lifted, its lower edge is what clears the bar
-            case GRIMOIRE -> new Box(slot.right() - bw - 1, slot.bottom() - lift - 12, bw, BADGE_H);
+            // a wax seal at the bottom right; lifted, it stands flush above the bar
+            case GRIMOIRE -> new Box(slot.right() - bw - 1, slot.bottom() - lift - (lift > 0 ? BADGE_H : BADGE_H + 1), bw, BADGE_H);
             // a plate at the bottom, centred
             case BLOOD_MOON -> new Box(slot.x() + (HudLayout.SLOT - bw) / 2, slot.bottom() - BADGE_H - lift, bw, BADGE_H);
             // a tab hanging off the top left
@@ -52,10 +60,26 @@ public final class SlotBadge {
         return seconds(look, slot, textW, 0);
     }
 
-    /** {@link #seconds(Look, Box, int)} standing {@code lift} px higher where it is at the bottom (the Tensura theme), to clear the mastery bar. */
+    /** What the seconds are drawn at when the badge is lifted over a mastery bar: at the top (Grimoire, Blood Moon) there is no room left for full size beside the badge. */
+    public static final float SECONDS_SCALE = 0.75f;
+    /** The rows of ink of a digit at that size (5 of the 7 it has at full size). */
+    public static final int SECONDS_INK_SMALL = 5;
+
+    /** The scale of the seconds' text: smaller only at the top of a slot whose badge is lifted. */
+    public static float secondsScale(Look look, int lift) {
+        return lift > 0 && look != Look.TENSURA ? SECONDS_SCALE : 1f;
+    }
+
+    /**
+     * {@link #seconds(Look, Box, int)} for a slot with a mastery bar ({@code lift} > 0): the Tensura theme's stand at the bottom, above the bar; the other two at
+     * the top, at {@link #SECONDS_SCALE} (pass the width at that scale), so they end above the badge, which is lifted by the bar.
+     */
     public static Box seconds(Look look, Box slot, int textW, int lift) {
         int x = slot.x() + (HudLayout.SLOT - textW) / 2;
-        return new Box(x, look == Look.TENSURA ? slot.bottom() - 10 - lift : slot.y() + 2, textW, TEXT_H);
+        if (look == Look.TENSURA) {
+            return new Box(x, slot.bottom() - 10 - lift, textW, TEXT_H);
+        }
+        return lift > 0 ? new Box(x, slot.y() + 1, textW, SECONDS_INK_SMALL) : new Box(x, slot.y() + 2, textW, TEXT_H);
     }
 
     /** The mark of Tensura mode: a small diamond on the top right corner, mostly outside the tile, above where the seconds stand. */
@@ -66,5 +90,26 @@ public final class SlotBadge {
     /** A cooldown of 100 seconds or more is shown in minutes, so it never grows wider than two digits and a letter. */
     public static String timeLabel(int seconds) {
         return seconds < 100 ? seconds + "s" : Math.min(99, (seconds + 59) / 60) + "m";
+    }
+
+    /**
+     * What the badge says for a key: one or two characters. A long key name is shortened to what the player knows it by: the initials of two words
+     * ("Left Shift" is LS), the first letter and the number of a numbered key ("Mouse Button 4" is M4, "Keypad 1" is K1), else its first two characters.
+     */
+    public static String shortKey(String label) {
+        String s = label.strip();
+        if (s.length() <= 2) {
+            return s;
+        }
+        String[] words = s.split("\\s+");
+        if (words.length == 1) {
+            return s.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + s.substring(1, 2);
+        }
+        String last = words[words.length - 1];
+        String initial = words[0].substring(0, 1).toUpperCase(java.util.Locale.ROOT);
+        if (last.chars().allMatch(Character::isDigit)) {
+            return initial + last.charAt(last.length() - 1);
+        }
+        return initial + last.substring(0, 1).toUpperCase(java.util.Locale.ROOT);
     }
 }

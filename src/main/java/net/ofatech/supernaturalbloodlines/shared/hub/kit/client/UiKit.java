@@ -66,6 +66,8 @@ public final class UiKit {
         ICONS_32.clear();
         SKILLS.clear();
         STRIPS.clear();
+        IDS.clear();
+        WARNED.clear();
     }
 
     public static boolean has(String sprite) {
@@ -166,9 +168,11 @@ public final class UiKit {
         reset(g, alpha);
     }
 
+    /** Blending is on and the normal blend function set for every kit blit, faded or not: another layer may have left it off or changed. Only the tint is skipped at full alpha. */
     private static void blend(GuiGraphics g, float alpha) {
+        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
         if (alpha < 1f) {
-            com.mojang.blaze3d.systems.RenderSystem.enableBlend();
             g.setColor(1f, 1f, 1f, alpha);
         }
     }
@@ -229,6 +233,8 @@ public final class UiKit {
 
     private static final Strip NO_STRIP = new Strip(null, 0, 0, 0, 0, 0, 0);
     private static final Map<String, Strip> STRIPS = new HashMap<>();
+    private static final Map<String, ResourceLocation> IDS = new HashMap<>();
+    private static final java.util.Set<String> WARNED = new java.util.HashSet<>();
 
     private static Strip strip(String sprite) {
         return STRIPS.computeIfAbsent(sprite, s -> {
@@ -248,7 +254,16 @@ public final class UiKit {
      */
     public static boolean frame(GuiGraphics g, String sprite, int frame, int size, int frames, int x, int y, float alpha) {
         Strip s = strip(sprite);
-        if (s == NO_STRIP || !FrameStrip.holds(s.w(), s.h(), size, frames) || frame < 0 || frame >= frames) {
+        if (s == NO_STRIP) {
+            return false;
+        }
+        if (!FrameStrip.holds(s.w(), s.h(), size, frames)) {
+            if (WARNED.add(sprite)) {
+                SupernaturalBloodlines.LOGGER.warn("{} is {} x {}, not {} frames of {} px (a resource pack?): the HUD draws its plain stand-in", sprite, s.w(), s.h(), frames, size);
+            }
+            return false;
+        }
+        if (frame < 0 || frame >= frames) {
             return false;
         }
         blend(g, alpha);
@@ -263,7 +278,7 @@ public final class UiKit {
             return false;
         }
         blend(g, alpha);
-        g.blitSprite(id(sprite), x, y, w, h);
+        g.blitSprite(IDS.computeIfAbsent(sprite, UiKit::id), x, y, w, h);
         reset(g, alpha);
         return true;
     }

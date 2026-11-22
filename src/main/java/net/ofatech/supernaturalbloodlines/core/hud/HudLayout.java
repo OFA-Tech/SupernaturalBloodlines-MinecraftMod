@@ -99,6 +99,11 @@ public final class HudLayout {
     }
 
     public static final int LABEL_H = 20;
+
+    /** The height a label of {@code lines} lines is drawn at: a pixel of air above and below, 9 px a line. Two lines are {@link #LABEL_H}. */
+    public static int drawnHeight(int lines) {
+        return 2 + 9 * lines;
+    }
     /** Air between a column and its labels. */
     public static final int LABEL_AIR = 3;
     /** Air between a label and the screen's edge. */

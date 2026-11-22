@@ -38,7 +38,7 @@ final class HudChrome {
     private static SlotMode pillMode;
     private static long pillTick = Long.MIN_VALUE;
 
-    private static final String[][] LABELS = new String[6][];
+    private static final SlotLabel.Label[] LABELS = new SlotLabel.Label[6];
     private static long labelsTick = Long.MIN_VALUE;
     private static int labelsWidth = -1;
     private static HudStyle.Style labelsStyle;
@@ -125,46 +125,46 @@ final class HudChrome {
     }
 
     /**
-     * What each slot is, held Alt: beside each filled slot, on its outer side ({@link HudLayout#labels}), level with it: the name, then why it cannot be used or its
-     * cooldown, the mastery, the mode and a short description (a blocked slot has a third line, so its reason is never cut). A column with no room outside it falls
-     * back to {@link #panels}, the panel above the column. Returns nothing.
+     * What each slot is, held Alt: beside each filled slot, on its outer side ({@link HudLayout#labels}), level with it: the name, then why it cannot be used,
+     * or its cooldown, mastery, mode and a short description. A label is at most two lines, so labels never cover each other. A column in which any label does
+     * not fit uncut (a name, a description or a reason is cut, or there is no room beside it) is shown as the wrapped panel above the column ({@link #panels})
+     * instead, whole.
      */
     static void labels(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box[] slots, SlotView[] views, int previewTop, float alpha, boolean cacheable, boolean lifted) {
         HudKit kit = HudKit.of(style);
         HudLayout.Box[] boxes = HudLayout.labels(g.guiWidth(), g.guiHeight());
         boolean fresh = !cacheable || labelsTick != tick() || labelsWidth != g.guiWidth() || labelsStyle != style;
+        if (fresh) {
+            for (int i = 0; i < boxes.length; i++) {
+                int room = boxes[i].w() - SlotLabel.PAD * 2;
+                LABELS[i] = views[i].isEmpty() ? null : room < SlotLabel.MIN_ROOM ? SlotLabel.TOO_NARROW : label(views[i], room, font::width);
+            }
+        }
         boolean[] fallback = new boolean[2];
-        // a blocked slot's label is the tall one (its reason wraps): drawn last, so it is never the one covered by its neighbour
-        for (int n = 0; n < boxes.length * 2; n++) {
-            int i = n % boxes.length;
-            SlotView v = views[i];
-            int room = boxes[i].w() - SlotLabel.PAD * 2;
-            if (v.isEmpty() || v.greyed() != (n >= boxes.length)) {
-                continue;
-            }
-            if (room < SlotLabel.MIN_ROOM) {
+        for (int i = 0; i < boxes.length; i++) {
+            if (LABELS[i] != null && LABELS[i].cut()) {
                 fallback[i / 3] = true;
+            }
+        }
+        for (int i = 0; i < boxes.length; i++) {
+            SlotLabel.Label label = LABELS[i];
+            if (label == null || fallback[i / 3]) {
                 continue;
             }
-            if (fresh || LABELS[i] == null) {
-                LABELS[i] = label(v, room, font::width);
-            }
-            String[] text = LABELS[i];
+            String[] text = label.lines();
             int widest = 0;
             for (String line : text) {
                 widest = Math.max(widest, font.width(line));
             }
             int w = widest + SlotLabel.PAD * 2;
-            int h = 2 + 9 * text.length;
+            int h = HudLayout.drawnHeight(text.length);
             HudLayout.Box box = boxes[i];
             int x = i < 3 ? box.right() - w : box.x();
             int y = box.y() + (box.h() - h) / 2;
             labelBox(g, kit, x, y, w, h, Math.max(alpha, 0.95f));
             g.drawString(font, text[0], x + SlotLabel.PAD, y + 2, SlotArt.fade(UiKit.labelOver(kit, Part.HUD_LABEL, HudFaces.labelName(kit)), 1f), false);
-            for (int k = 1; k < text.length; k++) {
-                int color = v.greyed() ? HudFaces.labelWarn(kit) : HudFaces.labelBody(kit);
-                g.drawString(font, text[k], x + SlotLabel.PAD, y + 2 + 9 * k, SlotArt.fade(UiKit.labelOver(kit, Part.HUD_LABEL, color), 1f), false);
-            }
+            int color = views[i].greyed() ? HudFaces.labelWarn(kit) : HudFaces.labelBody(kit);
+            g.drawString(font, text[1], x + SlotLabel.PAD, y + 2 + 9, SlotArt.fade(UiKit.labelOver(kit, Part.HUD_LABEL, color), 1f), false);
         }
         labelsTick = tick();
         labelsWidth = g.guiWidth();
@@ -173,11 +173,10 @@ final class HudChrome {
             panels(g, font, style, slots, views, previewTop, alpha, cacheable, lifted, fallback);
         }
     }
-
-    private static String[] label(SlotView v, int room, java.util.function.ToIntFunction<String> measure) {
+    private static SlotLabel.Label label(SlotView v, int room, java.util.function.ToIntFunction<String> measure) {
         String state = v.greyed() ? Component.translatable(v.greyedReason()).getString()
                 : v.cooldownSeconds() > 0 ? Component.translatable("supernaturalbloodlines.hud.slot.cooldown", v.cooldownSeconds()).getString() : null;
-        return SlotLabel.lines(v.name(), v.greyed(), state, mastery(v.mastery()), v.detail(), v.description(), room, measure);
+        return SlotLabel.of(v.name(), v.greyed(), state, mastery(v.mastery()), v.detail(), v.description(), room, measure);
     }
 
     private static String mastery(net.ofatech.supernaturalbloodlines.core.hud.Mastery m) {
@@ -240,6 +239,11 @@ final class HudChrome {
         panelsStyle = style;
     }
 
+    /** A blocked slot's full sentence (the panel has the room for it); a reason with no long form is shown as it is. */
+    private static String longReason(String key) {
+        return Component.translatable(net.minecraft.client.resources.language.I18n.exists(key + SlotLabel.LONG) ? key + SlotLabel.LONG : key).getString();
+    }
+
     /** The wrapped lines of one column's fallback panel (null for a column with nothing in it). */
     private static Panel column(Font font, HudKit kit, SlotView[] views, int col, HudLayout.Box top, int half, int screenW) {
         int limit = col == 0 ? Math.max(60, half - 2 - Math.max(4, top.x())) : Math.max(60, Math.min(screenW - 4, top.right()) - (half + 2));
@@ -262,7 +266,7 @@ final class HudChrome {
                 }
             }
             if (v.greyed()) {
-                for (String l : LabelFit.wrap(Component.translatable(v.greyedReason()).getString(), textW, 3, font::width)) {
+                for (String l : LabelFit.wrap(longReason(v.greyedReason()), textW, 3, font::width)) {
                     lines.add(l);
                     colors.add(HudFaces.labelWarn(kit));
                 }
