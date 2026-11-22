@@ -246,6 +246,29 @@ public final class TargetedSkillGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void ripHeartDoesNotKillABossAndSaysTheSame(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        LivingEntity boss = boss(helper, "deucalion");
+        if (boss == null) {
+            helper.succeed(); // the bosses part is off
+            return;
+        }
+        TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-8");
+        try {
+            boss.setHealth(4.0f);
+            helper.assertTrue(RipHeartAction.INSTANCE.trigger(user, boss) == null, "refused");
+            helper.assertTrue(boss.isAlive() && boss.getHealth() == 4.0f, "a boss was hurt by a heart-rip");
+            helper.assertTrue(user.receivedOnActionBar(RipHeartAction.DONE) && ActionClock.left(user, ExtraActions.RIP_HEART) > 0, "the user was told something else");
+        } finally {
+            boss.discard();
+            clean(user);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void ripHeartCannotBeUsedWithoutTheSkillAndNeedsATarget(GameTestHelper helper) {
         if (skipped(helper)) {
             return;
@@ -472,7 +495,12 @@ public final class TargetedSkillGameTests {
     }
 
     private static LivingEntity boss(GameTestHelper helper) {
-        var type = BuiltInRegistries.ENTITY_TYPE.getOptional(ResourceLocation.fromNamespaceAndPath(NS, "klaus"));
+        return boss(helper, "klaus");
+    }
+
+    /** A boss by its entity id; one without an Original root (a werewolf boss) shows the tag alone is what protects it. */
+    private static LivingEntity boss(GameTestHelper helper, String id) {
+        var type = BuiltInRegistries.ENTITY_TYPE.getOptional(ResourceLocation.fromNamespaceAndPath(NS, id));
         if (type.isEmpty()) {
             return null;
         }
