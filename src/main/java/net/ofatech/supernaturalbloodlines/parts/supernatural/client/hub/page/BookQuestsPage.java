@@ -96,6 +96,7 @@ public final class BookQuestsPage implements HubPageView {
         String hint = row.text().hint();
         y = hint != null && I18n.exists(hint) ? BookKit.dropCap(f, Component.translatable(hint), s.x(), y, s.w(), t.ink())
                 : PageKit.wrapped(f, QuestFilter.hintBody(row), s.x(), y, s.w(), t.ink()) + 3;
+        y = RiteTaskLink.add(f, row, s.x(), y, s.w());
         y = BookKit.caps(f, Component.translatable(BOOK + "progress"), s.x(), y + 4, t.muted());
         if (row.counted() && row.target() > 1) {
             if (row.target() <= 8) {

@@ -40,6 +40,8 @@ public final class KolGrimoireItem extends Item {
         if (level.isClientSide || !(player instanceof ServerPlayer p)) {
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         }
+        // reading it teaches the Rite of Cloaking, every time: a copy that was read for its skill points still teaches a player who has not learned it
+        net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks.learnLore(p, net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.KOL);
         int sp = KolRules.grimoireSp(isRead(stack), BossesConfig.kolGrimoireSp());
         if (sp <= 0) {
             p.displayClientMessage(Component.translatable("item.supernaturalbloodlines.kol_grimoire.already"), true);

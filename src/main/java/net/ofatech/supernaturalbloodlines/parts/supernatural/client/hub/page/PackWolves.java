@@ -11,6 +11,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpawnEggItem;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
@@ -89,7 +90,7 @@ public final class PackWolves {
         if (werewolf) {
             Component label = Component.translatable(KEY + "recruit");
             Rect b = new Rect(r.x(), y + 3, PageWidgets.widthOf(f.font(), label), PageWidgets.H);
-            PageWidgets.button(f, "pack:recruit", b, label, true, false, Component.translatable(KEY + "recruit_tip"), () -> f.screen().setPage(HubPage.RITES));
+            PageWidgets.button(f, "pack:recruit", b, label, RiteLinks.hasBook(), false, RiteLinks.tip("werewolf_brother", Component.translatable(KEY + "recruit_tip")), () -> RiteLinks.open("werewolf_brother"));
             y = b.bottom() + 3;
         }
         return y;

@@ -40,7 +40,7 @@ class RitesBookTest {
      * GameTests that run each of them at noon on the full-moon day ({@code moonRitesRefusedAtFullMoonNoon}, {@code aTrialThatDoesNotNeedTheFullMoonStillNeedsANight}),
      * so a rite whose code and file drift apart fails there, not here.
      */
-    private static final Set<String> FULL_MOON_BY_CODE = Set.of("alpha_trial", "immortality", "rite_of_severance", "rite_of_the_moon", "silver_moon");
+    private static final Set<String> FULL_MOON_BY_CODE = Set.of("alpha_trial", "immortality", "rite_of_severance", "rite_of_the_frequency", "rite_of_the_moon", "rite_of_the_valet_pike", "silver_moon");
 
     /** The rites that need a lunar eclipse (the factory asks {@code LunarEclipse.active}). */
     private static final Set<String> ECLIPSE_BY_CODE = Set.of("rite_of_the_broken_line", "rite_of_the_imprisoned_original");
@@ -57,11 +57,13 @@ class RitesBookTest {
     void committedBookIsWhatTheGeneratorMakes() throws IOException {
         Map<String, String> made = RitesBook.generate(ROOT);
         if (System.getenv("RITES_BOOK_WRITE") != null) {
-            Path dir = ROOT.resolve(RitesBook.BOOK);
-            if (Files.isDirectory(dir)) {
-                try (Stream<Path> old = Files.walk(dir)) {
-                    for (Path p : old.sorted(java.util.Comparator.reverseOrder()).toList()) {
-                        Files.delete(p);
+            for (String d : List.of(RitesBook.BOOK, RitesBook.ADV)) {
+                Path dir = ROOT.resolve(d);
+                if (Files.isDirectory(dir)) {
+                    try (Stream<Path> old = Files.walk(dir)) {
+                        for (Path p : old.sorted(java.util.Comparator.reverseOrder()).toList()) {
+                            Files.delete(p);
+                        }
                     }
                 }
             }
@@ -125,6 +127,9 @@ class RitesBookTest {
                     "a second language would hide Enchanted's own book (it only has en_us) for that language");
         }
         for (String file : RitesBook.onDisk(ROOT).keySet()) {
+            if (!file.startsWith(RitesBook.BOOK)) {
+                continue; // the unlock advancements are data, in our own namespace
+            }
             String id = file.substring(file.indexOf("/en_us/") + 7).replaceFirst("^(categories|entries)/", "");
             assertTrue(id.startsWith(RitesBook.NS + "/"), file + " could replace one of Enchanted's own pages: ids are matched by path only");
         }
@@ -180,17 +185,12 @@ class RitesBookTest {
     }
 
     @Test
-    void theHubAndTheBookShowTheSameLinesOfEveryRite() throws IOException {
+    void everyDescriptionLineIsInTheBookWithNoGap() throws IOException {
         JsonObject lang = RitesBook.lang(ROOT);
         for (String path : RitesBook.rites(ROOT)) {
-            List<String> hub = net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubRites.descKeys(RitesBook.NS + ":" + path, lang::has);
-            List<String> book = RitesBook.desc(lang, path);
-            assertEquals(hub.size(), book.size(), path + ": the hub and the book show a different number of lines");
-            for (int i = 0; i < hub.size(); i++) {
-                assertEquals(lang.get(hub.get(i)).getAsString(), book.get(i), path + " line " + (i + 1));
-            }
-            // and the hub shows all of them: a fourth line is not cut off by a page that stops at three
-            assertEquals(hub.size(), lang.keySet().stream().filter(k -> k.startsWith(RitesBook.DESC + path + ".")).count(), path + ": a line the hub never shows");
+            // the book reads the lines until the first gap: a line after a gap would never be shown
+            assertEquals(lang.keySet().stream().filter(k -> k.startsWith(RitesBook.DESC + path + ".")).count(), RitesBook.desc(lang, path).size(), path + ": a description line is after a gap");
+            assertTrue(!RitesBook.desc(lang, path).isEmpty(), path + " has no description");
         }
     }
 

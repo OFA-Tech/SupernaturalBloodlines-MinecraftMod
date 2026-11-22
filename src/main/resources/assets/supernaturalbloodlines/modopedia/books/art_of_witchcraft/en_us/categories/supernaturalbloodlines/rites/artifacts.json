@@ -2,8 +2,11 @@
   "children": [],
   "display_on_front_page": false,
   "entries": [
+    "supernaturalbloodlines/sealed/ward_of_daylight",
     "supernaturalbloodlines/rites/ward_of_daylight",
+    "supernaturalbloodlines/sealed/ward_of_the_moon",
     "supernaturalbloodlines/rites/ward_of_the_moon",
+    "supernaturalbloodlines/sealed/ward_of_return",
     "supernaturalbloodlines/rites/ward_of_return",
     "supernaturalbloodlines/rites/vampire_compass",
     "supernaturalbloodlines/rites/hearing_device"
@@ -12,6 +15,6 @@
     "count": 1,
     "id": "minecraft:compass"
   },
-  "landing_text": "Rites that make rings and tools: the Sun Ring, the Moon Ring, the Resurrection Ring, the Vampire Compass and the Hearing Device.",
+  "landing_text": "Rites that make rings and tools.",
   "title": "Wards and Tools"
 }

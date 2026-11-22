@@ -1,0 +1,20 @@
+{
+  "title": "??? · witch or a Torn Page",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:honeycomb"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/sealed/ward_of_return",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Unlocked by becoming a witch, or by reading a Torn Page found in ancient cities, woodland mansions, stronghold libraries and the Hale house.\n\nThe seal is unbroken.",
+          "header": "???"
+        }
+      ]
+    }
+  ]
+}

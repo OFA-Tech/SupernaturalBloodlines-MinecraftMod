@@ -77,7 +77,7 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         }
         src.tracked().ifPresent(l -> HudChrome.tracker(g, mc.font, style, l, Math.max(alpha, HudActivity.FADED), HudClientConfig.trackerAnchor(), src.bossBottom()));
         if (alt && alpha > 0.01f) {
-            HudChrome.tooltips(g, mc.font, style, boxes, views, previewTop, alpha, src.cacheable(), src.actionBar());
+            HudChrome.labels(g, mc.font, style, boxes, views, previewTop, alpha, src.cacheable(), src.actionBar());
         }
     }
 }

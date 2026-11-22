@@ -47,6 +47,13 @@ public final class BossesConfig {
     private static final ModConfigSpec.BooleanValue PETER_FERAL_FULL_MOON;
     private static final ModConfigSpec.BooleanValue PETER_RESPAWN;
     private static final ModConfigSpec.IntValue PETER_RESPAWN_DAYS;
+    private static final ModConfigSpec.DoubleValue BEAST_HOST_CHANCE;
+    private static final ModConfigSpec.BooleanValue BEAST_RESPECTS_ASH;
+    private static final ModConfigSpec.BooleanValue BEAST_RETURNS_ONCE;
+    private static final ModConfigSpec.IntValue BEAST_SPIRIT_SECONDS;
+    private static final ModConfigSpec.IntValue BEAST_ROAR_RANGE;
+    private static final ModConfigSpec.IntValue BEAST_ROAR_SECONDS;
+    private static final ModConfigSpec.IntValue BEAST_ROAR_COOLDOWN_SECONDS;
     private static final java.util.Map<BossId, ModConfigSpec.BooleanValue> ENABLED = new java.util.EnumMap<>(BossId.class);
 
     static {
@@ -120,6 +127,20 @@ public final class BossesConfig {
                 .define("peter_respawn", false);
         PETER_RESPAWN_DAYS = b.comment("In-game days after his death before he may be found again (only with peter_respawn on).")
                 .defineInRange("peter_respawn_days", 7, 1, 1000);
+        BEAST_HOST_CHANCE = b.comment("The chance, once on each full moon night while the Beast has not begun, that its Host appears to an Alpha, a True Alpha or a Hunter of the Five (needs Werewolves). A Host is made twice in a world at most.")
+                .defineInRange("beast_host_chance", 0.25, 0.0, 1.0);
+        BEAST_RESPECTS_ASH = b.comment("Whether a line of mountain ash stops the Beast of Gevaudan, and a closed ring of it round the Beast makes it collapse. Off: it walks through ash, and only its health collapses it.")
+                .define("beast_respects_ash", true);
+        BEAST_RETURNS_ONCE = b.comment("Whether the Spirit that escapes the Valet Pike returns once, at half health, on a later full moon night. Off: an escape is final.")
+                .define("beast_returns_once", true);
+        BEAST_SPIRIT_SECONDS = b.comment("Seconds the Spirit of Gevaudan flees before it escapes: only the Valet Pike can end it in that time.")
+                .defineInRange("beast_spirit_seconds", 60, 10, 600);
+        BEAST_ROAR_RANGE = b.comment("Blocks round the Beast that its Roar reaches.")
+                .defineInRange("beast_roar_range", 16, 4, 48);
+        BEAST_ROAR_SECONDS = b.comment("Seconds the Roar's fear (Weakness II and Darkness) lasts. Alphas and True Alphas are immune.")
+                .defineInRange("beast_roar_seconds", 6, 1, 60);
+        BEAST_ROAR_COOLDOWN_SECONDS = b.comment("Seconds between two Roars of the Beast.")
+                .defineInRange("beast_roar_cooldown_seconds", 20, 5, 300);
         SPEC = b.build();
     }
 
@@ -281,6 +302,34 @@ public final class BossesConfig {
 
     public static int peterRespawnDays() {
         return pick("peter_respawn_days", PETER_RESPAWN_DAYS);
+    }
+
+    public static double beastHostChance() {
+        return pick("beast_host_chance", BEAST_HOST_CHANCE);
+    }
+
+    public static boolean beastRespectsAsh() {
+        return pick("beast_respects_ash", BEAST_RESPECTS_ASH);
+    }
+
+    public static boolean beastReturnsOnce() {
+        return pick("beast_returns_once", BEAST_RETURNS_ONCE);
+    }
+
+    public static int beastSpiritSeconds() {
+        return pick("beast_spirit_seconds", BEAST_SPIRIT_SECONDS);
+    }
+
+    public static int beastRoarRange() {
+        return pick("beast_roar_range", BEAST_ROAR_RANGE);
+    }
+
+    public static int beastRoarSeconds() {
+        return pick("beast_roar_seconds", BEAST_ROAR_SECONDS);
+    }
+
+    public static int beastRoarCooldownSeconds() {
+        return pick("beast_roar_cooldown_seconds", BEAST_ROAR_COOLDOWN_SECONDS);
     }
 
     public static double linkDamageShare() {

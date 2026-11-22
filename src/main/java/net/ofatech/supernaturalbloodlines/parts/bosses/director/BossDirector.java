@@ -135,6 +135,15 @@ public final class BossDirector {
         MISSES.clear();
     }
 
+    /** The dice, the players of a level and its difficulty as the director sees them (the tests fix all three). */
+    static double nextRoll() {
+        return roll.getAsDouble();
+    }
+
+    static Difficulty difficultyIn(ServerLevel level) {
+        return difficulty.apply(level);
+    }
+
     /** One look at the world, as the tick does it; the tests call it directly. */
     public static void check(MinecraftServer server) {
         BossIndex index = BossIndex.get(server);
@@ -147,6 +156,7 @@ public final class BossDirector {
         klaus(server, index);
         deucalion(server, index);
         peter(server, index);
+        BeastDirector.tick(server, index);
         elijah(server, index);
         rebekah(server, index);
         kol(server, index);
@@ -156,7 +166,7 @@ public final class BossDirector {
     // ---- lost bosses ----
 
     @Nullable
-    private static Entity find(MinecraftServer server, UUID id) {
+    static Entity find(MinecraftServer server, UUID id) {
         for (ServerLevel level : server.getAllLevels()) {
             Entity e = level.getEntity(id);
             if (e != null) {

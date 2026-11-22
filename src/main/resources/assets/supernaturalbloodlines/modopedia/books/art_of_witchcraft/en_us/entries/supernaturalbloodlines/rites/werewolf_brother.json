@@ -5,6 +5,7 @@
     "id": "minecraft:beef"
   },
   "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/werewolf_brother",
   "pages": [
     {
       "components": [

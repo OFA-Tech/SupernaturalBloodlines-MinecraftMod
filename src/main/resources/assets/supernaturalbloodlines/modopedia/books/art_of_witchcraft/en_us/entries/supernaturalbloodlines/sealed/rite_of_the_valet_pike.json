@@ -1,0 +1,20 @@
+{
+  "title": "??? · witch or Valet's Notes",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:honeycomb"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/sealed/rite_of_the_valet_pike",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Unlocked by becoming a witch, or by reading the Valet's Notes, a Torn Page the Beast of Gévaudan leaves where it falls.\n\nThe seal is unbroken.",
+          "header": "???"
+        }
+      ]
+    }
+  ]
+}

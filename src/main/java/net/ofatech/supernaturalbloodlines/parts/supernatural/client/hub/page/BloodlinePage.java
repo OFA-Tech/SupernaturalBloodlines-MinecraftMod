@@ -87,14 +87,14 @@ public final class BloodlinePage implements HubPageView {
     private static int tree(HubScreen.Frame f, Rect r, int y, HubSnapshotPayload snap) {
         HubTheme t = f.theme();
         y = heading(f, r, y, KEY + "tree");
-        boolean hasSire = f.view.bloodline().sire() != null;
+        boolean hasSire = snap.hasSire();
         List<String> above = snap.family().ancestors();
         for (int i = above.size() - 1; i >= 0; i--) {
             y = PageKit.wrapped(f, name(above.get(i)), r.x() + 4, y, r.w() - 4, t.muted());
             y = arrow(f, r, y);
         }
         if (hasSire) {
-            Component sire = Component.translatable(KEY + "sire_line", snap.sire().map(n -> name(n)).orElse(Component.translatable(KEY + "sire_unknown")));
+            Component sire = Component.translatable(KEY + "sire_line", snap.sire().filter(n -> !n.isEmpty()).map(n -> name(n)).orElse(Component.translatable(KEY + "sire_unknown")));
             y = PageKit.wrapped(f, sire, r.x() + 4, y, r.w() - 4, t.ink());
             if (snap.severed()) {
                 y = PageKit.wrapped(f, Component.translatable(KEY + "severed"), r.x() + 8, y, r.w() - 8, t.muted());

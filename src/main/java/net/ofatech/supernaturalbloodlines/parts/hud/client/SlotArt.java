@@ -3,6 +3,8 @@ package net.ofatech.supernaturalbloodlines.parts.hud.client;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.ofatech.supernaturalbloodlines.core.hud.HudLayout;
+import net.ofatech.supernaturalbloodlines.core.hud.Mastery;
+import net.ofatech.supernaturalbloodlines.core.hud.MasteryBar;
 import net.ofatech.supernaturalbloodlines.core.hud.PieSweep;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotBadge;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotShape;
@@ -60,7 +62,7 @@ final class SlotArt {
                     // a small label over the dimmed icon: "4s", at three quarters of the text size, with the font's own shadow
                     String secs = SlotBadge.timeLabel(v.cooldownSeconds());
                     // opposite the key badge (SlotBadge): at the top, or at the bottom in the Tensura theme whose key tab hangs off the top left
-                    HudLayout.Box at = SlotBadge.seconds(SlotBadge.Look.valueOf(style.name()), b, font.width(secs));
+                    HudLayout.Box at = SlotBadge.seconds(SlotBadge.Look.valueOf(style.name()), b, font.width(secs), v.mastery() != null ? MasteryBar.LIFT : 0);
                     g.drawString(font, secs, at.x(), at.y(), fade(0xFFFFFFFF, alpha), true);
                     g.pose().popPose();
                 }
@@ -68,13 +70,30 @@ final class SlotArt {
             if (lock) {
                 KitDraw.icon(g, Icons.LOCK, b.x() + (s - 10) / 2, b.y() + (s - 10) / 2, 10, fade(0xFFE6E0D0, alpha));
             }
+            if (v.mastery() != null) {
+                masteryBar(g, font, style, b, v, alpha);
+            }
         }
         if (bloodRing >= 0f) {
             ring(g, b, bloodRing, alpha);
         }
-        key(g, font, style, b, v.keyLabel(), alpha);
+        key(g, font, style, b, v.keyLabel(), alpha, v.mastery() != null ? MasteryBar.LIFT : 0);
         if (shape.marked()) {
             mark(g, b, alpha);
+        }
+    }
+
+    /** The thin mastery bar of a Tensura skill: a dark backing, the track, and the fill in the theme's colour (gold once mastered, grey-violet while a resist skill is being learned). */
+    private static void masteryBar(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box slot, SlotView v, float alpha) {
+        SlotBadge.Look look = SlotBadge.Look.valueOf(style.name());
+        Mastery m = v.mastery();
+        HudLayout.Box back = MasteryBar.box(slot);
+        HudLayout.Box in = MasteryBar.inner(slot);
+        g.fill(back.x(), back.y(), back.right(), back.bottom(), fade(0xC0000000 | MasteryBar.TRACK & 0xFFFFFF, alpha));
+        g.fill(in.x(), in.y(), in.right(), in.bottom(), fade(MasteryBar.TRACK_INNER, alpha));
+        int fill = MasteryBar.fill(m, in.w());
+        if (fill > 0) {
+            g.fill(in.x(), in.y(), in.x() + fill, in.bottom(), fade(MasteryBar.color(look, m.state()), alpha));
         }
     }
 
@@ -173,14 +192,14 @@ final class SlotArt {
             BakedTexture.blitTinted(g, part, x, y, RING_SIZE, RING_SIZE, fade(BLOOD, alpha));
         }
     }
-    private static void key(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box b, String label, float alpha) {
+    private static void key(GuiGraphics g, Font font, HudStyle.Style style, HudLayout.Box b, String label, float alpha, int lift) {
         if (label.isEmpty()) {
             return;
         }
         // at the normal size (nothing is under 8 GUI pixels): a letter, or the first two characters of a longer key name
         String text = label.length() > 2 ? label.substring(0, 2) : label;
         int w = font.width(text);
-        HudLayout.Box badge = SlotBadge.key(SlotBadge.Look.valueOf(style.name()), b, w);
+        HudLayout.Box badge = SlotBadge.key(SlotBadge.Look.valueOf(style.name()), b, w, lift);
         switch (style) {
             case GRIMOIRE -> {
                 // a red wax badge in the corner of the tile

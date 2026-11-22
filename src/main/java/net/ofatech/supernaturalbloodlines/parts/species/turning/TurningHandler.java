@@ -5,6 +5,7 @@ import de.teamlapen.vampirism.api.VampirismAPI;
 import de.teamlapen.vampirism.api.entity.factions.IFaction;
 import de.teamlapen.vampirism.api.event.BloodDrinkEvent;
 import java.util.UUID;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -101,7 +102,9 @@ public final class TurningHandler {
                 || BloodlineAccess.get(p).vampireBloodUntil() == 0) {
             return;
         }
-        apply(p, BloodlineEvent.DIED_WITH_VAMPIRE_BLOOD, null);
+        // Original's blood still in them names the sire they get if the turning completes (the attachment does not survive the death)
+        UUID source = p.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT) && p.hasData(SpeciesRegistries.BLOOD_SOURCE) ? p.getData(SpeciesRegistries.BLOOD_SOURCE) : null;
+        apply(p, BloodlineEvent.DIED_WITH_VAMPIRE_BLOOD, source);
         if (BloodlineAccess.get(p).inTurning()) {
             p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.started"));
         }
@@ -131,15 +134,22 @@ public final class TurningHandler {
         if (!before.inTurning()) {
             return;
         }
+        boolean lineGone = PendingSire.settle(p, true);
+        BloodlineState settled = BloodlineAccess.get(p);
         Outcome[] out = new Outcome[1];
         GhoulGates.completing(p, () -> out[0] = apply(p, BloodlineEvent.TURNING_FED, null));
         boolean joins = out[0].actions().contains(Outcome.Action.JOIN_VAMPIRE);
         if (joins && VampirismAPI.factionPlayerHandler(p).getCurrentFaction() != VReference.VAMPIRE_FACTION) {
-            // the turning is over and what drank it is gone: Vampirism or another mod refused the join
+            // the turning is over and what drank it is gone: Vampirism or another mod refused the join, so the sire it gave goes too
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().sire(before.sire()).build());
+            if (before.sire() == null) {
+                net.ofatech.supernaturalbloodlines.parts.species.line.LineIndex.get(p.server).remove(p.getUUID()); // the line it gave goes with the sire
+            }
             SupernaturalBloodlines.LOGGER.warn("TurningHandler: {} drank human blood but could not join the vampires", p.getGameProfile().getName());
             p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.join_refused"));
         } else if (joins || before.ghoul() && !BloodlineAccess.get(p).ghoul()) {
             p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.completed"));
+            PendingSire.completed(p, settled, lineGone);
         }
     }
 

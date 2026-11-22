@@ -12,6 +12,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.ProfileClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.RequestsClient;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.RiteLinks;
 import net.ofatech.supernaturalbloodlines.shared.hub.profile.DuelChecks;
 import net.ofatech.supernaturalbloodlines.shared.hub.profile.DuelView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;
@@ -260,7 +261,7 @@ public final class ProfilePage implements HubPageView {
             Component why = a.disabled() == null ? null : Component.translatable(KEY + "disabled." + a.disabled());
             Runnable run = switch (a.kind()) {
                 case COMMAND -> () -> HubClient.runCommand(a.rowId(), a.args(route.id()));
-                case OPEN_RITES -> () -> f.screen().setPage(HubPage.RITES);
+                case OPEN_RITES -> () -> RiteLinks.open("rite_of_severance");
                 case OPEN_ADMIN -> () -> {
                     // only where Admin can be reached: an offer to a page that is not there would wait for a later visit
                     if (HubPage.visiblePages(f.view.context()).contains(HubPage.ADMIN)) {

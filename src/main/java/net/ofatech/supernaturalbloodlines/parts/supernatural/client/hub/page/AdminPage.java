@@ -69,6 +69,7 @@ public final class AdminPage implements HubPageView {
     private int speciesAt;
     private int eventAt;
     private int raceAt;
+    private int riteAt;
     private int bossAt;
     private int number = 100;
 
@@ -410,13 +411,19 @@ public final class AdminPage implements HubPageView {
         acts.add(new Act("rung", "D8", List.of(cycle(races, raceAt).id(), String.valueOf(Math.max(0, Math.min(20, number))))));
         acts.add(new Act("gene_on", "B7", List.of("true")));
         acts.add(new Act("gene_off", "B7", List.of("false")));
+        // what the player knows of the rites (plan rites-unlock): the rite is the parameter picked below
+        List<String> riteChoices = net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable.choices();
+        String riteNow = cycle(riteChoices, riteAt);
+        acts.add(new Act("rites_list", "B8", List.of()));
+        acts.add(new Act("rite_learn", "B9", List.of(riteNow)));
+        acts.add(new Act("rite_forget", "B10", List.of(riteNow)));
         if (net.neoforged.fml.ModList.get().isLoaded("werewolves")) {
             acts.add(new Act("npc_release", "D13", List.of()));
         }
         y = PageKit.wrapped(f, Component.translatable(KEY + "params").withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
         List<Component> pl = List.of(Component.literal(cycle(species, speciesAt).name()), Component.literal(cycle(events, eventAt).name()),
-                Component.literal(cycle(races, raceAt).id()), Component.literal(String.valueOf(number)));
-        List<Runnable> pr = List.of(() -> speciesAt++, () -> eventAt++, () -> raceAt++, () -> number = number >= 1000 ? -1000 : number + 100);
+                Component.literal(cycle(races, raceAt).id()), Component.literal(String.valueOf(number)), Component.literal(riteNow));
+        List<Runnable> pr = List.of(() -> speciesAt++, () -> eventAt++, () -> raceAt++, () -> number = number >= 1000 ? -1000 : number + 100, () -> riteAt++);
         Flow.Result pf = Flow.wrap(new Rect(r.x(), y, r.w(), 0), pl.stream().map(c -> PageWidgets.widthOf(f.font(), c)).toList(), PageWidgets.H, 3);
         for (int i = 0; i < pl.size(); i++) {
             PageWidgets.button(f, "stage:admin:param:" + i, pf.rects().get(i), pl.get(i), true, false, Component.translatable(KEY + "param_tip"), pr.get(i));
@@ -456,16 +463,21 @@ public final class AdminPage implements HubPageView {
         return net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("bosses") ? bosses(f, r, y + 4) : y;
     }
 
-    /** The bosses part's hands on the director (rows X1 to X5): pick a boss, then spawn it here, read its state, bring it down, bring it back, or forget it. */
+    /** The bosses part's hands on the director (rows X1 to X6): pick a boss, then spawn it here, read its state, bring it down, bring it back, or forget it. */
     private int bosses(HubScreen.Frame f, Rect r, int y) {
         HubTheme t = f.theme();
         List<net.ofatech.supernaturalbloodlines.core.boss.BossId> landed = java.util.Arrays.stream(net.ofatech.supernaturalbloodlines.core.boss.BossId.values())
                 .filter(net.ofatech.supernaturalbloodlines.core.boss.BossId::landed).toList();
         String pick = cycle(landed, bossAt).id();
         y = PageKit.wrapped(f, Component.translatable(KEY + "bosses").withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
-        List<Component> labels = List.of(Component.translatable("supernaturalbloodlines.boss.name." + pick), Component.translatable(KEY + "act.boss_spawn"),
+        // "Change" is the Beast's own: the waiting Host becomes the Beast now
+        boolean beast = pick.equals(net.ofatech.supernaturalbloodlines.core.boss.BossId.BEAST_OF_GEVAUDAN.id());
+        List<Component> labels = new java.util.ArrayList<>(List.of(Component.translatable("supernaturalbloodlines.boss.name." + pick), Component.translatable(KEY + "act.boss_spawn"),
                 Component.translatable(KEY + "act.boss_state"), Component.translatable(KEY + "act.boss_desiccate"), Component.translatable(KEY + "act.boss_return"),
-                Component.translatable(KEY + "act.boss_reset"));
+                Component.translatable(KEY + "act.boss_reset")));
+        if (beast) {
+            labels.add(Component.translatable(KEY + "act.boss_change"));
+        }
         Flow.Result flow = Flow.wrap(new Rect(r.x(), y, r.w(), 0), labels.stream().map(c -> PageWidgets.widthOf(f.font(), c)).toList(), PageWidgets.H, 3);
         PageWidgets.button(f, "stage:admin:boss:pick", flow.rects().get(0), labels.get(0), true, false, Component.translatable(KEY + "param_tip"), () -> bossAt++);
         PageWidgets.button(f, "stage:admin:act:boss_spawn", flow.rects().get(1), labels.get(1), true, false, null, () -> HubClient.runCommand("X1", List.of(pick)));
@@ -473,7 +485,11 @@ public final class AdminPage implements HubPageView {
         PageWidgets.button(f, "stage:admin:act:boss_desiccate", flow.rects().get(3), labels.get(3), true, false, null, () -> HubClient.runCommand("X3", List.of(pick)));
         PageWidgets.button(f, "stage:admin:act:boss_return", flow.rects().get(4), labels.get(4), true, false, null, () -> HubClient.runCommand("X4", List.of(pick)));
         PageWidgets.button(f, "stage:admin:act:boss_reset", flow.rects().get(5), labels.get(5), true, false, null,
-                () -> f.confirm(labels.get(5), Component.translatable(KEY + "confirm_boss_reset", labels.get(0)), labels.get(5), () -> HubClient.runCommand("X5", List.of(pick))));
+                () -> f.confirm(labels.get(5), Component.translatable(KEY + (beast ? "confirm_boss_reset_beast" : "confirm_boss_reset"), labels.get(0)), labels.get(5), () -> HubClient.runCommand("X5", List.of(pick))));
+        if (beast) {
+            PageWidgets.button(f, "stage:admin:act:boss_change", flow.rects().get(6), labels.get(6), true, false, Component.translatable(KEY + "act.boss_change.tip"),
+                    () -> HubClient.runCommand("X6", List.of(pick)));
+        }
         return flow.bottom();
     }
 

@@ -91,7 +91,9 @@ public final class BloodlineRules {
         if (!canTurn(s, c) || s.inTransition() || s.inTurning() || c.gameTime() >= s.vampireBloodUntil()) {
             return unchanged(s);
         }
-        return Outcome.of(s.toBuilder().vampireBloodUntil(0).turningTicksLeft((int) Math.min(Integer.MAX_VALUE, c.transitionTicks())).build());
+        // an Original's blood still in them (the context's source) is the sire they get if the turning completes
+        return Outcome.of(s.toBuilder().vampireBloodUntil(0).turningTicksLeft((int) Math.min(Integer.MAX_VALUE, c.transitionTicks()))
+                .pendingSire(c.bloodSource()).build());
     }
 
     /**
@@ -99,14 +101,14 @@ public final class BloodlineRules {
      * other way, while it ran) just ends: no join and no kill.
      */
     private static Outcome endedQuietly(BloodlineState s) {
-        return Outcome.of(s.toBuilder().turningTicksLeft(0).build());
+        return Outcome.of(s.toBuilder().turningTicksLeft(0).pendingSire(null).build());
     }
 
     private static Outcome turningFailed(BloodlineState s, BloodlineContext c) {
         if (!s.inTurning()) {
             return unchanged(s);
         }
-        return canTurn(s, c) ? Outcome.of(s.toBuilder().turningTicksLeft(0).build(), Action.KILL_PLAYER) : endedQuietly(s);
+        return canTurn(s, c) ? Outcome.of(s.toBuilder().turningTicksLeft(0).pendingSire(null).build(), Action.KILL_PLAYER) : endedQuietly(s);
     }
 
     /** Human-like blood drunk in the turning: a Ghoul only loses the flag, anyone else joins the vampires. */
@@ -117,7 +119,11 @@ public final class BloodlineRules {
         if (!canTurn(s, c)) {
             return endedQuietly(s);
         }
-        BloodlineState done = s.toBuilder().turningTicksLeft(0).ghoul(false).build();
+        BloodlineState.Builder finished = s.toBuilder().turningTicksLeft(0).ghoul(false).pendingSire(null);
+        if (s.pendingSire() != null && (s.sire() == null || s.bondBroken())) {
+            finished.sire(s.pendingSire()); // the first sire wins; a severed one is replaced, as SireRecorder does
+        }
+        BloodlineState done = finished.build();
         return c.faction() == BaseFaction.VAMPIRE ? Outcome.of(done) : Outcome.of(done, Action.JOIN_VAMPIRE);
     }
 
@@ -163,7 +169,7 @@ public final class BloodlineRules {
 
     /** Leaving the vampires for good (a cure, the faction left): no longer a Ghoul, and nothing of the turning is left to finish. */
     private static BloodlineState.Builder humanAgain(BloodlineState.Builder b) {
-        return b.ghoul(false).turningTicksLeft(0).vampireBloodUntil(0);
+        return b.ghoul(false).turningTicksLeft(0).vampireBloodUntil(0).pendingSire(null);
     }
 
     private static BloodlineState.Builder clearTransition(BloodlineState.Builder b) {

@@ -34,11 +34,11 @@ public final class HubClient {
     }
 
     /**
-     * The Alpha Trial was refused for an open True Alpha path (R147): the hub opens on the Rites page and shows the warning; "take the spark" answers the
-     * server, which then lets the rite start. The screen is the same one the Rites page and the profile use ({@link HubScreen#warnTrueAlpha}).
+     * The Alpha Trial was refused for an open True Alpha path (R147): the hub opens on Home and shows the warning; "take the spark" answers the
+     * server, which then lets the rite start. The screen is the same one the profile uses ({@link HubScreen#warnTrueAlpha}).
      */
     static void onTrialWarning() {
-        open(HubPage.RITES);
+        open(HubPage.HOME);
         if (Minecraft.getInstance().screen instanceof HubScreen s) {
             // the answer goes to the server, and the hub closes: the server's reply is a chat line, which a screen would hide
             s.warnTrueAlpha(() -> {
@@ -98,7 +98,7 @@ public final class HubClient {
         }
         if (ModList.get().isLoaded("enchanted") && ModList.get().isLoaded("modopedia")) {
             HubHooks.addLauncher(new HubHooks.Launcher("enchanted", "E", 0xFFb7f0c4, Component.translatable("supernaturalbloodlines.hub.launcher.enchanted"),
-                    "net.favouriteless.", () -> true, HubClient::openEnchantedBook));
+                    "net.favouriteless.", () -> true, HubClient::openEnchantedBook, RiteLinks::blocked));
             net.ofatech.supernaturalbloodlines.parts.supernatural.client.book.EnchantedBook.register();
         }
     }
@@ -146,7 +146,7 @@ public final class HubClient {
      * Enchanted's book, The Art of Witchcraft, is a Modopedia book: opened the way its item opens it.
      * shortcut: by reflection, because Modopedia is not on our compile classpath; add it as compileOnly if more of its API is needed.
      */
-    private static void openEnchantedBook() {
+    public static void openEnchantedBook() {
         try {
             Class.forName("net.favouriteless.modopedia.client.BookOpenHandler").getMethod("tryOpenBook", ResourceLocation.class)
                     .invoke(null, ResourceLocation.fromNamespaceAndPath("enchanted", "art_of_witchcraft"));
@@ -205,7 +205,6 @@ public final class HubClient {
 
     /** Back in the main menu: the next world starts a new session. */
     public static void newSession() {
-        net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.RitesPage.devSelect(null); // a dev-screenshot selection never outlives its world
         openedThisSession = false;
         lastPage = HubPage.HOME;
     }

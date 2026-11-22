@@ -20,7 +20,7 @@ class FocusWalkTest {
      * frame (a frame needs a {@code HubScreen} and so a running Minecraft): the ids copy the prefixes the pages register ({@code tab:}, {@code seal:}, {@code theme},
      * {@code close}, {@code ladder:}, {@code phase:}, {@code task:}, {@code detail:}), and if a page registers a new prefix, add it here and to {@code FocusOrder.zoneOf}.
      */
-    private static final List<String> FRAME = List.of("tab:PATH", "tab:SKILLS", "tab:QUESTS", "tab:RITES", "tab:BLOODLINE", "tab:PACK", "tab:GUIDE", "seal:tensura", "seal:enchanted",
+    private static final List<String> FRAME = List.of("tab:PATH", "tab:SKILLS", "tab:QUESTS", "tab:BLOODLINE", "tab:PACK", "tab:GUIDE", "seal:tensura", "seal:enchanted",
             "theme", "close", "ladder:0", "ladder:1", "phase:hybrid:awakened", "task:a", "task:b", "task:c", "line:root", "line:anc:0", "line:sire", "line:you",
             "line:down:0", "line:down:1", "detail:track", "detail:claim");
 

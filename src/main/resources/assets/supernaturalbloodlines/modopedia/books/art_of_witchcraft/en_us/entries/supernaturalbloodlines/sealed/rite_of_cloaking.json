@@ -1,0 +1,20 @@
+{
+  "title": "??? · Kol's Grimoire",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:honeycomb"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/sealed/rite_of_cloaking",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Unlocked by reading Kol's Grimoire, which Kol leaves behind.\n\nThe seal is unbroken.",
+          "header": "???"
+        }
+      ]
+    }
+  ]
+}

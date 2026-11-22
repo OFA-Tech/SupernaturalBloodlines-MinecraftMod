@@ -4,6 +4,10 @@ Things that **don't work the way you may expect**, or are **not finished or not 
 
 ## Not possible
 
+- **Switching the species part off and on again keeps every rite known.** With the `species` part off, every learnable rite counts as known (nothing could teach them), and turning the part back on does not take that away: knowledge is only ever added. `/bloodline rites forget <player> all` puts a player back to what their kind, their lore and their performed rites give.
+
+- **The rites are sealed in the book, not hidden from the files.** Every rite's name and text is in the mod's client files (the same jar every client has), so a player who unpacks it can read the rite entries and circles. The lock is for play, not secrecy. Lore items (grimoires, Torn Pages) can be handed from one player to another, and JEI lists Enchanted's rites as Enchanted does; both are left alone.
+
 - **Born werewolves can't unlock the four-legged form 5 levels sooner (R90).** Werewolves has no unlock for that form that a player can reach, so there is nothing to move. The "beast" form covers both beasts. A born wolf still gets half the forced full-moon shifts.
 - **Enchanted garlic does not hurt vampires.** It only counts as garlic in recipes and the cauldron colour. The garlic crop and the diffusers use Vampirism's own block, not the tag.
 - **A Werewolves bite does not burn on vervain, and is not a source of blood thirst** or "other blood" in the hybrid transition: Werewolves gives no hook for it.

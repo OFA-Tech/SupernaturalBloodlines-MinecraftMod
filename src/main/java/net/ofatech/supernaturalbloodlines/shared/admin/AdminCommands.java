@@ -112,6 +112,9 @@ public final class AdminCommands {
             row("B5", "bloodline compel <token> discount", 0, Ui.HUB_BUTTON, "REQUESTS"),
             row("B6", "bloodline compel <token> follow", 0, Ui.HUB_BUTTON, "REQUESTS"),
             row("B7", "bloodline gene doppelganger <player> <value>", 2, Ui.ADMIN_ACTION, "ADMIN"),
+            row("B8", "bloodline rites list <player>", 2, Ui.ADMIN_ACTION, "ADMIN"),
+            row("B9", "bloodline rites learn <player> <rite>", 2, Ui.ADMIN_ACTION, "ADMIN"),
+            row("B10", "bloodline rites forget <player> <rite>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("P1", "pack invite <player>", 0, Ui.HUB_BUTTON, "PACK"),
             row("P2", "pack accept [token]", 0, Ui.HUB_BUTTON, "REQUESTS"),
             row("P3", "pack leave", 0, Ui.HUB_BUTTON, "PACK"),
@@ -154,7 +157,8 @@ public final class AdminCommands {
             row("X2", BOSS + " <boss> state", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("X3", BOSS + " <boss> desiccate", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("X4", BOSS + " <boss> return", 2, Ui.ADMIN_ACTION, "ADMIN"),
-            row("X5", BOSS + " <boss> reset", 2, Ui.ADMIN_ACTION, "ADMIN"));
+            row("X5", BOSS + " <boss> reset", 2, Ui.ADMIN_ACTION, "ADMIN"),
+            row("X6", BOSS + " <boss> change", 2, Ui.ADMIN_ACTION, "ADMIN"));
 
     private AdminCommands() {}
 

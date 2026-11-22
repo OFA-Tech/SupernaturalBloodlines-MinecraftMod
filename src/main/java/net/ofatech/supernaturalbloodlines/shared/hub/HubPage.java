@@ -11,12 +11,12 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
  * permission. {@link #LOADOUT} is only an alias: it opens Skills on its Loadout tab and is never in the nav. Pure, no client classes.
  */
 public enum HubPage {
-    HOME(Group.NONE), PATH(Group.ME), SKILLS(Group.ME), QUESTS(Group.ME), RITES(Group.MAGIC), BLOODLINE(Group.PEOPLE), PACK(Group.PEOPLE),
+    HOME(Group.NONE), PATH(Group.ME), SKILLS(Group.ME), QUESTS(Group.ME), BLOODLINE(Group.PEOPLE), PACK(Group.PEOPLE),
     GUIDE(Group.HELP), SETTINGS(Group.SYSTEM), ADMIN(Group.OPERATOR), LOADOUT(Group.ME);
 
     /** What the nav groups pages under: Me, Magic, People, Help, System (Home stands alone); Admin is apart, under Operator. */
     public enum Group {
-        NONE, ME, MAGIC, PEOPLE, HELP, SYSTEM, OPERATOR;
+        NONE, ME, PEOPLE, HELP, SYSTEM, OPERATOR;
 
         public String langKey() {
             return "supernaturalbloodlines.hub.group." + name().toLowerCase(Locale.ROOT);
@@ -65,7 +65,6 @@ public enum HubPage {
             case HOME, PATH, SKILLS, QUESTS, BLOODLINE, GUIDE, SETTINGS -> true;
             // the alias of a Skills tab: never a page of its own
             case LOADOUT -> false;
-            case RITES -> c.enchanted();
             // in a pack (any race: a witch Emissary, a Packmate), or a werewolf-type race with Werewolves; a former werewolf with no pack keeps none
             case PACK -> c.inPack() || (c.werewolves() && wolfRace(c.creature()));
             case ADMIN -> c.op();

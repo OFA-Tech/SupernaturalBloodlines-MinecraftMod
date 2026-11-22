@@ -4,9 +4,8 @@
     "count": 1,
     "id": "minecraft:sunflower"
   },
-  "assigned_items": [
-    "supernaturalbloodlines:sun_ring"
-  ],
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/ward_of_daylight",
   "pages": [
     {
       "components": [

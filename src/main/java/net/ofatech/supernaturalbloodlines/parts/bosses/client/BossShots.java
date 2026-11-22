@@ -204,6 +204,7 @@ public final class BossShots {
 
     private static final class PanelScreen extends Screen {
         private final String boss;
+        private final float tilt = (float) Math.toRadians(Float.parseFloat(System.getProperty(PROPERTY + ".tilt", "0")));
         private List<Panel> panels;
         private int columns;
         private int rows;
@@ -243,6 +244,19 @@ public final class BossShots {
                 list.add(new Panel("the wolf, three quarters", peter(mc, BossForm.BEAST, ShiftRules.END_TICK, true), 135f, 2.0f, 3.6f));
                 return list;
             }
+            if (boss.equals("beast")) {
+                columns = 4;
+                rows = 2;
+                list.add(new Panel("the Host, from the front", host(mc), 180f, 1.95f, 1.3f));
+                list.add(new Panel("the Host, from behind", host(mc), 0f, 1.95f, 1.3f));
+                list.add(new Panel("the Beast, from the front", beast(mc, false), 180f, 3.6f, 3.4f));
+                list.add(new Panel("the Beast, from the side", beast(mc, false), 90f, 3.6f, 5.6f));
+                list.add(new Panel("the Beast, from behind", beast(mc, false), 0f, 3.6f, 3.4f));
+                list.add(new Panel("the Beast, three quarters", beast(mc, false), 135f, 3.6f, 4.6f));
+                list.add(new Panel("the Beast, falling apart", beast(mc, true), 135f, 3.0f, 5.0f));
+                list.add(new Panel("the Host, from the side", host(mc), 90f, 1.95f, 1.3f));
+                return list;
+            }
             if (boss.equals("klaus")) {
                 columns = 4;
                 rows = 2;
@@ -254,12 +268,14 @@ public final class BossShots {
                 list.add(new Panel("the wolf, from the front", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, false), 180f, 2.1f, 1.8f));
                 list.add(new Panel("the wolf, from the side", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, false), 90f, 2.1f, 4.4f));
                 list.add(new Panel("the wolf, from behind", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, false), 0f, 2.1f, 1.8f));
-                list.add(new Panel("the wolf, desiccated", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, true), 140f, 1.2f, 3.2f));
+                list.add(new Panel("the wolf, desiccated", klaus(mc, BossForm.BEAST, ShiftRules.END_TICK, true), 140f, 1.3f, 4.0f));
+                list.add(new Panel("the man, desiccated", klaus(mc, BossForm.HUMAN, 0, true), 135f, 0.6f, 2.2f));
+                columns = 5;
             } else {
                 columns = 4;
                 rows = 1;
                 String[] names = {"from the front", "from the side", "from behind", "desiccated"};
-                float[] yaws = {180f, 90f, 0f, 0f};
+                float[] yaws = {180f, 90f, 0f, 135f};
                 for (int i = 0; i < 4; i++) {
                     NpcOriginalBoss m = switch (boss) {
                         case "elijah" -> net.ofatech.supernaturalbloodlines.parts.bosses.entity.ElijahEntity.create(mc.level);
@@ -273,10 +289,20 @@ public final class BossShots {
                         }
                     };
                     m.lookDesiccated(i == 3);
-                    list.add(new Panel(names[i], m, yaws[i], i == 3 ? 0.9f : 1.95f, i == 3 ? 2.2f : 1.3f));
+                    list.add(new Panel(names[i], m, yaws[i], i == 3 ? 0.6f : 1.95f, i == 3 ? 2.2f : 1.3f));
                 }
             }
             return list;
+        }
+
+        private static net.ofatech.supernaturalbloodlines.parts.bosses.entity.GevaudanHostEntity host(Minecraft mc) {
+            return net.ofatech.supernaturalbloodlines.parts.bosses.entity.GevaudanHostEntity.create(mc.level);
+        }
+
+        private static net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEntity beast(Minecraft mc, boolean falling) {
+            var b = net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEntity.create(mc.level);
+            b.lookState(falling, 0);
+            return b;
         }
 
         private static net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity deucalion(Minecraft mc, BossForm form, int ticks) {
@@ -313,6 +339,8 @@ public final class BossShots {
             if (panels == null) {
                 panels = build(mc);
             }
+            // .hitbox=true draws the boxes as F3+B does; .tilt=<degrees> looks down on the body from above (a lying body is seen best that way)
+            mc.getEntityRenderDispatcher().setRenderHitBoxes(Boolean.getBoolean(PROPERTY + ".hitbox"));
             int cw = width / columns;
             int ch = height / rows;
             for (int i = 0; i < panels.size(); i++) {
@@ -331,7 +359,7 @@ public final class BossShots {
                 int cy = y0 + 16 + (ch - 16) / 2 + Math.round((p.modelHeight() - m.getBbHeight()) / 2f * scale);
                 g.enableScissor(x0, y0, x0 + cw, y0 + ch);
                 g.drawString(font, p.name(), x0 + 4, y0 + 4, 0xFFFFFF, false);
-                InventoryScreen.renderEntityInInventory(g, x0 + cw / 2, cy, scale, new Vector3f(0f, m.getBbHeight() / 2f, 0f), new Quaternionf().rotateZ((float) Math.PI), null, m);
+                InventoryScreen.renderEntityInInventory(g, x0 + cw / 2, cy, scale, new Vector3f(0f, m.getBbHeight() / 2f, 0f), new Quaternionf().rotateZ((float) Math.PI).rotateX(tilt), null, m);
                 g.disableScissor();
             }
         }

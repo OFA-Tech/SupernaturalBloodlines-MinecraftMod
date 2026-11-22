@@ -15,6 +15,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.bosses.BossesConfig;
+import net.ofatech.supernaturalbloodlines.parts.bosses.director.BeastDirector;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBars;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossClock;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossDirector;
@@ -73,7 +74,13 @@ final class BossTestRig implements AutoCloseable {
             oldPeter.discard();
         }
         index.forget(BossId.PETER_HALE);
-        for (String key : new String[] {"peter_hale_enabled", "peter_respawn", "peter_respawn_days", "peter_feral_full_moon", "peter_house_enabled", "peter_house_chance"}) {
+        BeastDirector.clear(server);
+        var oldBeast = BossDirector.anyBossBody(server, BossId.BEAST_OF_GEVAUDAN);
+        if (oldBeast != null) {
+            oldBeast.discard();
+        }
+        index.forget(BossId.BEAST_OF_GEVAUDAN);
+        for (String key : new String[] {"beast_of_gevaudan_enabled", "beast_host_chance", "beast_respects_ash", "beast_returns_once", "beast_spirit_seconds", "beast_roar_range", "beast_roar_seconds", "beast_roar_cooldown_seconds", "peter_hale_enabled", "peter_respawn", "peter_respawn_days", "peter_feral_full_moon", "peter_house_enabled", "peter_house_chance"}) {
             BossesConfig.override(key, null);
         }
         for (BossId other : new BossId[] {BossId.ELIJAH, BossId.REBEKAH, BossId.KOL, BossId.FINN}) {
@@ -128,6 +135,7 @@ final class BossTestRig implements AutoCloseable {
 
     /** Rebekah, made the way the director makes her (no prey), standing near the middle of the test. */
     net.ofatech.supernaturalbloodlines.parts.bosses.entity.RebekahEntity spawnRebekah() {
+        fixedGround(); // the director's own finder puts her 12 to 48 blocks off, in a chunk the test world may not have loaded (and her drops with her)
         return BossDirector.spawnRebekah(helper.getLevel(), helper.absolutePos(new BlockPos(2, 1, 2)), null, null).orElseThrow();
     }
 
@@ -182,6 +190,7 @@ final class BossTestRig implements AutoCloseable {
         BossDirector.useHouses(null);
         BossDirector.useMods(null);
         BossDirector.useMoon(null);
+        net.ofatech.supernaturalbloodlines.parts.bosses.item.MantleEvents.useShifted(null);
         BossDirector.useEclipse(null);
         BossDirector.useVillagers(null);
         SireCall.overridePlayerLookup(null);

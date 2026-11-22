@@ -39,8 +39,16 @@ public abstract class BossNpc extends PathfinderMob {
     public void tick() {
         super.tick();
         if (!level().isClientSide && tickCount % PERIOD == 0 && isAlive()) {
-            BossBars.update(this);
-            if (!BossIndex.get(level().getServer()).seen(boss(), getUUID(), level().dimension().location().toString(), blockPosition(), isOpenNow())) {
+            if (stale()) {
+                discard(); // a body of a story that has moved on (the one the index called lost, found again): it is not the boss any more
+                return;
+            }
+            if (hasBar()) {
+                BossBars.update(this);
+            } else {
+                BossBars.remove(getUUID());
+            }
+            if (tracked() && !BossIndex.get(level().getServer()).seen(boss(), getUUID(), level().dimension().location().toString(), blockPosition(), isOpenNow())) {
                 discard(); // the world has another one of this boss: this is the old one that came back
                 return;
             }
@@ -55,6 +63,21 @@ public abstract class BossNpc extends PathfinderMob {
 
     /** Whether the hat layer of the man's skin is drawn (Deucalion's glasses go with the shift); the client reads it. */
     public boolean hatVisible() {
+        return true;
+    }
+
+    /** Whether the story has no place for this body now, so it is discarded before the index is told it was seen. */
+    protected boolean stale() {
+        return false;
+    }
+
+    /** Whether this body shows a boss bar: a calm protected body and a falling one do not. */
+    protected boolean hasBar() {
+        return true;
+    }
+
+    /** Whether the index follows this body: false for a body that has already handed its place to another (the Beast that is falling). */
+    protected boolean tracked() {
         return true;
     }
 

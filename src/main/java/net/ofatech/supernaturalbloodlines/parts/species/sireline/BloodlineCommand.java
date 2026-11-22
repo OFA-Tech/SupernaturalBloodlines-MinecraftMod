@@ -44,6 +44,7 @@ public final class BloodlineCommand {
                         .then(Commands.argument("token", StringArgumentType.word())
                                 .then(Commands.literal("discount").executes(c -> compel(c, "discount")))
                                 .then(Commands.literal("follow").executes(c -> compel(c, "follow")))))
+                .then(net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlockCommand.node())
                 .then(Commands.literal("gene").requires(s -> s.hasPermission(2))
                         .then(Commands.literal("doppelganger")
                                 .then(Commands.argument("player", EntityArgument.player())

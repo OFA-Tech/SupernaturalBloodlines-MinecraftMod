@@ -25,19 +25,19 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook;
  * ranks and online flags of others; the genes are the subject's own, as their client may know them (unknown until discovered).
  */
 public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes,
-                                 List<HubSocial.Rite> rites, List<HubSocial.Person> people, WorldNowHook.Flags world, List<HubSocial.Npc> npcs) implements CustomPacketPayload {
+                                 List<HubSocial.Person> people, WorldNowHook.Flags world, List<HubSocial.Npc> npcs) implements CustomPacketPayload {
     public HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes,
-                              List<HubSocial.Rite> rites, List<HubSocial.Person> people, WorldNowHook.Flags world) {
-        this(family, pack, fiveCount, genes, rites, people, world, List.of());
+                              List<HubSocial.Person> people, WorldNowHook.Flags world) {
+        this(family, pack, fiveCount, genes, people, world, List.of());
     }
 
-    public HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes, List<HubSocial.Rite> rites) {
-        this(family, pack, fiveCount, genes, rites, List.of());
+    public HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes) {
+        this(family, pack, fiveCount, genes, List.of());
     }
 
     public HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes,
-                              List<HubSocial.Rite> rites, List<HubSocial.Person> people) {
-        this(family, pack, fiveCount, genes, rites, people, WorldNowHook.Flags.NONE);
+                              List<HubSocial.Person> people) {
+        this(family, pack, fiveCount, genes, people, WorldNowHook.Flags.NONE);
     }
 
     /**
@@ -58,7 +58,7 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
     public static final Type<HubSnapshotPayload> TYPE = new Type<>(
             ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "hub_snapshot"));
 
-    public static final HubSnapshotPayload EMPTY = new HubSnapshotPayload(Family.NONE, List.of(), 0, Map.of(), List.of());
+    public static final HubSnapshotPayload EMPTY = new HubSnapshotPayload(Family.NONE, List.of(), 0, Map.of());
 
     private static final int MAX_NAMES = 256;
     private static final StreamCodec<ByteBuf, String> NAME = ByteBufCodecs.stringUtf8(64);
@@ -80,32 +80,6 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
             NAME, HubSocial.Kin::name,
             ByteBufCodecs.VAR_INT, HubSocial.Kin::depth,
             HubSocial.Kin::new);
-
-    private static final StreamCodec<ByteBuf, List<String>> RITE_IDS = ID.apply(ByteBufCodecs.list(32));
-    private static final StreamCodec<ByteBuf, List<String>> RITE_SHAPES = ID.apply(ByteBufCodecs.list(8));
-    private static final StreamCodec<ByteBuf, String> RITE_FACTION = ByteBufCodecs.stringUtf8(64);
-
-    // more than the six fields StreamCodec.composite takes
-    private static final StreamCodec<ByteBuf, HubSocial.Rite> RITE = new StreamCodec<>() {
-        @Override
-        public HubSocial.Rite decode(ByteBuf b) {
-            return new HubSocial.Rite(ID.decode(b), ByteBufCodecs.VAR_INT.decode(b), RITE_IDS.decode(b), RITE_SHAPES.decode(b), ID.decode(b),
-                    RITE_FACTION.decode(b), RITE_IDS.decode(b), ByteBufCodecs.BOOL.decode(b), ByteBufCodecs.VAR_INT.decode(b));
-        }
-
-        @Override
-        public void encode(ByteBuf b, HubSocial.Rite r) {
-            ID.encode(b, r.id());
-            ByteBufCodecs.VAR_INT.encode(b, r.power());
-            RITE_IDS.encode(b, r.items());
-            RITE_SHAPES.encode(b, r.shapes());
-            ID.encode(b, r.factory());
-            RITE_FACTION.encode(b, r.faction());
-            RITE_IDS.encode(b, r.sacrifices());
-            ByteBufCodecs.BOOL.encode(b, r.fullMoon());
-            ByteBufCodecs.VAR_INT.encode(b, r.tickPower());
-        }
-    };
 
     private static final StreamCodec<ByteBuf, LineRules.State> LINE_STATE = ByteBufCodecs.stringUtf8(16).map(
             s -> {
@@ -180,29 +154,26 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
 
     private static final StreamCodec<ByteBuf, List<HubSocial.Member>> MEMBERS = MEMBER.apply(ByteBufCodecs.list(MAX_NAMES));
     private static final StreamCodec<ByteBuf, Map<String, Genes.Knowledge>> GENES = ByteBufCodecs.map(LinkedHashMap::new, ByteBufCodecs.stringUtf8(32), KNOWLEDGE, 8);
-    private static final StreamCodec<ByteBuf, List<HubSocial.Rite>> RITES = RITE.apply(ByteBufCodecs.list(MAX_NAMES));
     private static final StreamCodec<ByteBuf, List<HubSocial.Person>> PEOPLE = PERSON.apply(ByteBufCodecs.list(MAX_NAMES));
 
-    /** Eight fields: more than {@code StreamCodec.composite} takes, so written out, in this order. */
+    /** Seven fields: more than {@code StreamCodec.composite} takes, so written out, in this order. */
     public static final StreamCodec<ByteBuf, HubSnapshotPayload> STREAM_CODEC = StreamCodec.of(
             (buf, p) -> {
                 FAMILY.encode(buf, p.family());
                 MEMBERS.encode(buf, p.pack());
                 ByteBufCodecs.VAR_INT.encode(buf, p.fiveCount());
                 GENES.encode(buf, p.genes());
-                RITES.encode(buf, p.rites());
                 PEOPLE.encode(buf, p.people());
                 WORLD.encode(buf, p.world());
                 NPCS.encode(buf, p.npcs());
             },
             buf -> new HubSnapshotPayload(FAMILY.decode(buf), MEMBERS.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), GENES.decode(buf),
-                    RITES.decode(buf), PEOPLE.decode(buf), WORLD.decode(buf), NPCS.decode(buf)));
+                    PEOPLE.decode(buf), WORLD.decode(buf), NPCS.decode(buf)));
 
     public HubSnapshotPayload {
         // the codec caps a list: a sire of hundreds is cut, not a crash on the client
         pack = cap(pack);
         genes = Map.copyOf(genes);
-        rites = cap(rites);
         people = cap(people);
         npcs = List.copyOf(npcs.subList(0, Math.min(npcs.size(), HubSocial.MAX_NPCS)));
     }
@@ -244,6 +215,11 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
         return family.sire();
     }
 
+    /** Whether the player has a sire at all: a sire the client may not be told (a creature, an undiscovered NPC Original) is an empty name, not an absent one. */
+    public boolean hasSire() {
+        return family.sire().isPresent();
+    }
+
     public boolean severed() {
         return family.severed();
     }
@@ -260,7 +236,7 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
         Genes.ALL.forEach(g -> genes.put(g, Genes.ofClient(view, g)));
         HubSocial.Social social = HubSocial.of(p);
         return new HubSnapshotPayload(new Family(social.sire(), own.bondBroken(), social.sired(), social.ancestors(), social.line(), social.origin()),
-                social.pack(), social.fiveCount(), genes, social.rites(), social.people(), WorldNowHook.of(p), HubSocial.npcsOf(p));
+                social.pack(), social.fiveCount(), genes, social.people(), WorldNowHook.of(p), HubSocial.npcsOf(p));
     }
 
     @Override

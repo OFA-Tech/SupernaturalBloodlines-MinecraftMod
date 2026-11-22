@@ -18,7 +18,7 @@ class HubSnapshotIdsTest {
     void theIndexIsBuiltOnceAndThePeopleOutrankTheSameNameInThePack() {
         var snap = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE,
                 List.of(new HubSocial.Member("Klaus", "beta", true, Optional.of(MEMBER)), new HubSocial.Member("Derek", "beta", true, Optional.of(MEMBER)), new HubSocial.Member("Nobody", "beta", true, Optional.empty())),
-                0, Map.of(), List.of(), List.of(new HubSocial.Person("Klaus", SIRE)));
+                0, Map.of(), List.of(new HubSocial.Person("Klaus", SIRE)));
         assertEquals(Optional.of(SIRE), snap.idOf("Klaus"));
         assertEquals(Optional.of(MEMBER), snap.idOf("Derek"));
         assertTrue(snap.idOf("Nobody").isEmpty(), "a member with no id is not clickable");
@@ -28,8 +28,8 @@ class HubSnapshotIdsTest {
 
     @Test
     void theIdsAreNotPartOfTheWireFormat() {
-        var snap = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, Map.of(), List.of(), List.of(new HubSocial.Person("A", SIRE)));
-        assertEquals(snap, new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, Map.of(), List.of(), List.of(new HubSocial.Person("A", SIRE))));
+        var snap = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, Map.of(), List.of(new HubSocial.Person("A", SIRE)));
+        assertEquals(snap, new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, Map.of(), List.of(new HubSocial.Person("A", SIRE))));
         assertEquals(Map.of("A", SIRE), snap.ids());
     }
 }

@@ -4,9 +4,8 @@
     "count": 1,
     "id": "minecraft:amethyst_shard"
   },
-  "assigned_items": [
-    "supernaturalbloodlines:moon_ring"
-  ],
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/ward_of_the_moon",
   "pages": [
     {
       "components": [

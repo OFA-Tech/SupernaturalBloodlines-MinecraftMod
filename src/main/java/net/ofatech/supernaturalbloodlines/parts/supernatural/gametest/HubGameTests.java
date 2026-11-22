@@ -61,7 +61,7 @@ public final class HubGameTests {
             for (HubSocial.Origin origin : List.of(HubSocial.Origin.NONE,
                     new HubSocial.Origin(LineRules.State.FREE, Optional.of("npc:klaus"), Optional.of("npc:klaus"), HubSocial.FreedKind.IMPRISONED, List.of(true, false)),
                     new HubSocial.Origin(LineRules.State.IN_LINE, Optional.empty(), Optional.empty(), HubSocial.FreedKind.NONE, List.of()))) {
-                HubSocial.set(x -> new HubSocial.Social(Optional.empty(), List.of(), List.of(), 0, List.of("A", "B"), List.of(), List.of(), origin));
+                HubSocial.set(x -> new HubSocial.Social(Optional.empty(), List.of(), List.of(), 0, List.of("A", "B"), List.of(), origin));
                 HubSnapshotPayload payload = HubSnapshotPayload.of(p);
                 helper.assertTrue(payload.family().origin().equals(origin), "the origin changed on the way into the payload: " + payload.family().origin());
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
@@ -82,7 +82,7 @@ public final class HubGameTests {
         java.util.UUID sire = java.util.UUID.randomUUID();
         java.util.UUID mate = java.util.UUID.randomUUID();
         try {
-            HubSocial.set(x -> new HubSocial.Social(Optional.of("Klaus"), List.of(), List.of(new HubSocial.Member("Derek", "beta", true, Optional.of(mate))), 0, List.of(), List.of(), List.of(),
+            HubSocial.set(x -> new HubSocial.Social(Optional.of("Klaus"), List.of(), List.of(new HubSocial.Member("Derek", "beta", true, Optional.of(mate))), 0, List.of(), List.of(),
                     HubSocial.Origin.NONE, List.of(new HubSocial.Person("Klaus", sire))));
             HubSnapshotPayload s = HubSnapshotPayload.of(p);
             helper.assertTrue(s.idOf("Klaus").equals(Optional.of(sire)) && s.idOf("Derek").equals(Optional.of(mate)), "the ids of the named people are missing");
@@ -122,8 +122,8 @@ public final class HubGameTests {
             if (EnabledParts.isEnabled("species")) {
                 String childName = child.getGameProfile().getName();
                 helper.assertTrue(ofSire.sired().equals(List.of(childName)), "sired " + ofSire.sired());
-                // the sire's name is only known from a cache a GameTest server lacks: SpeciesHubGameTests names a sire through SireRecorder
-                helper.assertTrue(ofChild.sire().map(n -> n.equals(sire.getGameProfile().getName())).orElse(true), "sire " + ofChild.sire());
+                // the sire's name is only known from a cache a GameTest server lacks (then it is an empty name, still a sire): SpeciesHubGameTests names a sire through SireRecorder
+                helper.assertTrue(ofChild.sire().map(n -> n.isEmpty() || n.equals(sire.getGameProfile().getName())).orElse(false), "sire " + ofChild.sire());
             } else {
                 helper.assertTrue(ofSire.equals(new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, ofSire.genes(), List.of())),
                         "without the species part there is nobody to show: " + ofSire);
