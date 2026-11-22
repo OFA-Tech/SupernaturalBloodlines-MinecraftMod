@@ -35,10 +35,14 @@ public final class DyingShots {
         }
     }
 
+    /** {@code -Dsupernaturalbloodlines.devshots.dying.scale=4}: the GUI scale of the pictures (0 leaves it as it is). */
+    private static final int SCALE = Integer.getInteger(PROPERTY + ".scale", 0);
+
     private void shot(Minecraft mc, String name) {
+        String file = name + (SCALE > 0 ? "-s" + SCALE : "");
         new File(mc.gameDirectory, "screenshots/dyingshots").mkdirs();
-        Screenshot.grab(mc.gameDirectory, "dyingshots/" + name + ".png", mc.getMainRenderTarget(), c -> { });
-        SupernaturalBloodlines.LOGGER.warn("DYINGSHOTS dyingshots/{}.png", name);
+        Screenshot.grab(mc.gameDirectory, "dyingshots/" + file + ".png", mc.getMainRenderTarget(), c -> { });
+        SupernaturalBloodlines.LOGGER.warn("DYINGSHOTS dyingshots/{}.png ({}x{} GUI)", file, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
     }
 
     private void tick(ClientTickEvent.Post e) {
@@ -60,6 +64,13 @@ public final class DyingShots {
         if (server == null) {
             done = true;
             return;
+        }
+        if (ticks == 1 && SCALE > 0) {
+            mc.options.guiScale().set(SCALE);
+            mc.resizeDisplay();
+            if (mc.getWindow().getGuiScale() < SCALE) {
+                mc.getWindow().setGuiScale(SCALE); // the game stops at what the window allows (3 at 1280x720); the picture is of the scale asked for
+            }
         }
         if (ticks < 220) {
             mc.getToasts().clear(); // the recipe toast of a fresh world would sit over the pictures
