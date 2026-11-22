@@ -187,6 +187,13 @@ public final class TurningGameTests {
             helper.assertTrue(s.inTurning() && s.turningTicksLeft() == SpeciesConfig.transitionTicks(), "not in the turning: " + s);
             helper.assertTrue(s.vampireBloodUntil() == 0 && s.species() == Species.NONE && !s.inTransition(), "state is " + s);
             helper.assertTrue(handler(p).getCurrentFaction() == null, "joined a faction before drinking");
+            // the blow is caught (plan 18b): they lie dying for 30 s with the clock still, then wake and it runs
+            helper.assertTrue(!p.isDeadOrDying() && net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDyingForTurning(p), "the blow killed them");
+            TurningHandler.secondPassed(p);
+            helper.assertTrue(BloodlineAccess.get(p).turningTicksLeft() == SpeciesConfig.transitionTicks(), "the clock ran while dying: " + BloodlineAccess.get(p).turningTicksLeft());
+            for (int i = 0; i < net.ofatech.supernaturalbloodlines.parts.species.original.Downed.TICKS; i++) {
+                net.ofatech.supernaturalbloodlines.parts.species.original.Downed.tick(p);
+            }
             TurningHandler.secondPassed(p);
             helper.assertTrue(BloodlineAccess.get(p).turningTicksLeft() == SpeciesConfig.transitionTicks() - 20,
                     "the clock reads " + BloodlineAccess.get(p).turningTicksLeft());

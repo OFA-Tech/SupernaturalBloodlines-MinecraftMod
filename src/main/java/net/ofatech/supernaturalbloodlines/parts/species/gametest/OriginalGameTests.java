@@ -283,8 +283,13 @@ public final class OriginalGameTests {
             AttackEntityEvent attack = new AttackEntityEvent(p, z);
             NeoForge.EVENT_BUS.post(attack);
             helper.assertTrue(attack.isCanceled(), "the downed hybrid can still attack");
-            p.invulnerableTime = 0;
-            helper.assertTrue(!p.hurt(hitBy(helper, z), 1000f) && Downed.isDowned(p) && !p.isDeadOrDying(), "more damage finished off a downed hybrid");
+            // other kinds of damage, each with the hurt cooldown out of the way: none gets through, and health stays at 1
+            for (net.minecraft.world.damagesource.DamageSource other : new net.minecraft.world.damagesource.DamageSource[] {hitBy(helper, z), helper.getLevel().damageSources().magic(),
+                    helper.getLevel().damageSources().lava(), helper.getLevel().damageSources().drown()}) {
+                p.invulnerableTime = 0;
+                p.hurt(other, 1000f);
+                helper.assertTrue(Downed.isDowned(p) && !p.isDeadOrDying() && p.getHealth() == 1.0f, other.type().msgId() + " finished off a downed hybrid: health " + p.getHealth());
+            }
         } finally {
             reset(p);
         }

@@ -115,7 +115,9 @@ neoForge {
             gameDirectory = project.file('run-safeshots')
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
             systemProperty 'supernaturalbloodlines.devshots.hidden', 'true'
-            programArguments.addAll '--width', '1920', '--height', '1080'
+            // -PshotSize=1280x720 to check a smaller window (a screen that must fit it)
+            def shotSize = (project.findProperty('shotSize') ?: '1920x1080').toString().split('x')
+            programArguments.addAll '--width', shotSize[0], '--height', shotSize[1]
         }
 
         // This run config launches GameTestServer and runs all registered gametests, then exits.

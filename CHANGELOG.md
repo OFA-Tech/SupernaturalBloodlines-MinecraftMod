@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased (plan 18b: dying with vampire blood stands you up)
+
+### Changed
+- **Update the server and every client together.** The "downed" payload of the species part carries a mode now, and the species part's network version is 2. A client on the old version would not understand the dying screen of the turning.
+- **A lethal blow to someone with vampire blood in them no longer kills them (R209).** They lie where they fell for 30 seconds (the same dying state as an Original hybrid, 1 health, unable to act), the turning already begun and its clock standing still, and stand up at half health. **Give up** ends the turning and kills them with the original blow (they respawn as a plain human). **Wait** goes on into the turning: drink human blood in time, as before. A second real death after waking keeps the turning going, as before. The void, `/kill`, white oak and the `failed_transition` death are still real deaths at once (they respawn in the turning, as before). A Ghoul gets Vampirism's own dying state, and its Give up ends the turning too.
+- The turning clock does not run while someone is dying, and a bottle cannot be drunk while dying.
+- **Only the death that starts the turning is caught.** Vampire blood drunk while the turning already runs does nothing (the bottle is kept: "The turning already has you."), so no one can drink again after waking and be stood up a second time: the next lethal blow is a real death.
+- **Give up is final.** The Elixir and the Resurrection Ring do not take back a death the player chose.
+- **The dying screen says what Wait and Give up do**, with the seconds that are left (the payload carries them: the species network version stays 2, it is not released yet). Wait comes first and has the focus, and Give up asks twice (the first click arms it for 3 s). It fits a 1280x720 window at GUI scale 4.
+- **Waking** tells you in chat how many minutes the turning has left and how to finish it (a bottle of human blood or a bite), gives 5 s of Resistance V, puts the fire out, brings the air back, and moves you out of lava (or another harmful fluid) to the nearest safe spot within 8 blocks.
+- **A Ghoul** is told when Vampirism's dying state ends (and not a number of seconds that is Vampirism's). A blow Vampirism does not catch (a Neonatal Ghoul, a blow that kills vampires) is taken by our dying state instead. The turning of a mortal is caught before anything that counts deaths (kill credit, the mark, a duel) sees it.
+- **Round 3:** a Ghoul is woken (and given Resistance) only when the dying state that began its turning ends, never for a later one, and logging out or dying forgets it. The blow Vampirism misses is caught at HIGH. A void or `/kill` death puts vampire blood into the turning only at the very end and only if nothing saved the player on the way (a Totem beats the turning; the Elixir and the Ring do not). The wake-up rescue looks at most 3 blocks up and moves with `teleportTo`; it has **no claims check** (the mod has no helper for one). The dying screen reserves the room of the longest text, so the countdown never reflows into the buttons.
+- **An old client** (version 1 of the species network): the channel is optional and the versions do not match, so the server never sends it the dying screen. It has no buttons to press while dying: it waits the 30 s and wakes. Not verified with a real mixed-version pair.
+- **A player who is mid-turning when the update lands** keeps their old clock; the new flow starts at their next lethal blow.
+
+### Rolling back
+Rolling back removes the dying of the turning: a lethal blow with vampire blood in the system kills and respawns them in the turning as before. Someone who is dying at that moment is left with a saved dying counter (`downed`, `downed_mode`) that the old build reads as a plain dying state: they wake at half health after the rest of their 30 s, and the turning goes on. The old build ignores the mode.
 ## Unreleased (fix: compatibility with big Tensura packs, from the OFA Holy Packs audit)
 
 ### Fixed

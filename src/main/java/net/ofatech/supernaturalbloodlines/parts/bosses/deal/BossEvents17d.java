@@ -56,8 +56,8 @@ public final class BossEvents17d {
     }
 
     private static void onDeath(LivingDeathEvent e) {
-        if (!(e.getEntity() instanceof ServerPlayer p)) {
-            return;
+        if (!(e.getEntity() instanceof ServerPlayer p) || net.ofatech.supernaturalbloodlines.core.death.FinalDeath.is(p)) {
+            return; // a death the player chose (Give up) is final
         }
         Inventory inv = p.getInventory();
         ItemStack elixir = ItemStack.EMPTY;

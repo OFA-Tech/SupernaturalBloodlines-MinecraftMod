@@ -270,8 +270,20 @@ public final class PackDuel {
      */
     @Nullable
     public static BlockPos safeSpot(ServerLevel level, BlockPos from, Entity viewer) {
-        for (int radius = 0; radius <= 4; radius++) {
-            for (int dy = 0; dy <= 4; dy++) {
+        return safeSpot(level, from, viewer, 4);
+    }
+
+    /** The same, within {@code reach} blocks (and up as far). */
+    @Nullable
+    public static BlockPos safeSpot(ServerLevel level, BlockPos from, Entity viewer, int reach) {
+        return safeSpot(level, from, viewer, reach, reach);
+    }
+
+    /** The same, within {@code reach} blocks sideways and {@code up} blocks upwards. */
+    @Nullable
+    public static BlockPos safeSpot(ServerLevel level, BlockPos from, Entity viewer, int reach, int up) {
+        for (int radius = 0; radius <= reach; radius++) {
+            for (int dy = 0; dy <= up; dy++) {
                 for (int dx = -radius; dx <= radius; dx++) {
                     for (int dz = -radius; dz <= radius; dz++) {
                         if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {

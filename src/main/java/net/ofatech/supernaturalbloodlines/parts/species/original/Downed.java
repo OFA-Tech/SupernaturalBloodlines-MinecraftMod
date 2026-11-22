@@ -6,6 +6,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.material.FluidState;
+import net.ofatech.supernaturalbloodlines.core.death.FinalDeath;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
@@ -16,7 +26,12 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.ICancellableEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent;
+import net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
@@ -37,6 +52,10 @@ import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
  */
 public final class Downed {
     public static final int TICKS = 600;
+    /** Downed because a lethal blow found an Original hybrid (Give up kills). */
+    public static final int MODE_DYING = 0;
+    /** Downed because a lethal blow found vampire blood in a mortal (plan 18b): the clock of the turning stands still, Give up ends the turning too. */
+    public static final int MODE_TURNING = 1;
     private static final ResourceLocation MODIFIER_ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "downed");
 
     /** What downed each player; lost on relog, then giving up kills with a plain /kill source. */
@@ -50,7 +69,30 @@ public final class Downed {
         return p.getData(SpeciesRegistries.DOWNED) > 0;
     }
 
+    /** What the client is told: open (or close) the screen, and which text it shows. */
+    public static DownedPayload payload(Player p, boolean downed) {
+        return new DownedPayload(downed, mode(p), downed ? p.getData(SpeciesRegistries.DOWNED) : 0);
+    }
+
+    public static int mode(Player p) {
+        return p.getData(SpeciesRegistries.DOWNED_MODE);
+    }
+
+    /** Downed for the turning: they have vampire blood in them, died, and stand up where they fell. */
+    public static boolean isDyingForTurning(Player p) {
+        return isDowned(p) && mode(p) == MODE_TURNING;
+    }
+
+    public static void startDying(ServerPlayer p, DamageSource cause) {
+        start(p, cause, MODE_TURNING);
+    }
+
     static void start(ServerPlayer p, DamageSource cause) {
+        start(p, cause, MODE_DYING);
+    }
+
+    private static void start(ServerPlayer p, DamageSource cause, int mode) {
+        p.setData(SpeciesRegistries.DOWNED_MODE, mode);
         p.setData(SpeciesRegistries.DOWNED, TICKS);
         SOURCES.put(p.getUUID(), cause);
         p.setHealth(1.0F);
@@ -75,15 +117,54 @@ public final class Downed {
             return;
         }
         if (left == 1) {
+            boolean turning = isDyingForTurning(p);
             clear(p);
             p.setHealth(p.getMaxHealth() / 2.0F);
+            if (turning) {
+                woke(p);
+            }
             TaskSignals.fire(p, "dying_survived", 1);
         } else {
             p.setData(SpeciesRegistries.DOWNED, left - 1);
-            if (reopensScreenAt(left - 1) && canReceive(p)) {
-                PacketDistributor.sendToPlayer(p, new DownedPayload(true));
+            if (reopensScreenAt(left - 1)) {
+                send(p, payload(p, true));
             }
         }
+    }
+
+    /**
+     * They stand up in the turning (ours, or a Ghoul's end of Vampirism's dying state): told on the action bar and in chat how long the turning runs and
+     * how to finish it, 5 s of Resistance V, the fire out and the air back, and out of lava (or another harmful fluid) to the nearest spot within 8 blocks (3 up).
+     */
+    public static void woke(ServerPlayer p) {
+        p.displayClientMessage(Component.translatable("supernaturalbloodlines.turning.woke"), true);
+        int minutes = (int) Math.ceil(BloodlineAccess.get(p).turningTicksLeft() / 1200.0);
+        p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.woke_chat", minutes));
+        p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, WAKE_RESISTANCE_TICKS, 4));
+        p.clearFire();
+        p.setAirSupply(p.getMaxAirSupply());
+        p.fallDistance = 0;
+        if (inHarmfulFluid(p)) {
+            // within 8 blocks sideways and 3 up, in line of sight (the duel's rescue). There is no claims check: this mod has no helper for one (Open Parties and
+            // Claims is reflected for parties only), so a claim border near the lava can be crossed.
+            BlockPos safe = PackDuel.safeSpot(p.serverLevel(), p.blockPosition(), p, 8, 3);
+            if (safe != null) {
+                p.teleportTo(safe.getX() + 0.5, safe.getY(), safe.getZ() + 0.5);
+            }
+        }
+    }
+
+    public static final int WAKE_RESISTANCE_TICKS = 100;
+
+    /** In lava or any fluid that is not water (feet or head). */
+    private static boolean inHarmfulFluid(ServerPlayer p) {
+        for (BlockPos pos : new BlockPos[] {p.blockPosition(), BlockPos.containing(p.getEyePosition())}) {
+            FluidState fluid = p.level().getFluidState(pos);
+            if (!fluid.isEmpty() && !fluid.is(FluidTags.WATER)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The player chose to give up: they die from the blow that downed them. */
@@ -92,6 +173,9 @@ public final class Downed {
             return;
         }
         DamageSource cause = SOURCES.getOrDefault(p.getUUID(), p.damageSources().genericKill());
+        if (isDyingForTurning(p)) {
+            BloodlineAccess.applyEvent(p, BloodlineEvent.TURNING_GAVE_UP, SpeciesContext.of(p, null)); // a given-up turning is over: this death is a plain one
+        }
         clear(p);
         kill(p, cause);
     }
@@ -102,16 +186,23 @@ public final class Downed {
             return;
         }
         p.setData(SpeciesRegistries.DOWNED, 0);
+        p.setData(SpeciesRegistries.DOWNED_MODE, MODE_DYING);
         SOURCES.remove(p.getUUID());
         hold(p, false);
     }
 
+    /** Ends the state, for a test's cleanup. */
+    public static void clearForTest(ServerPlayer p) {
+        clear(p);
+    }
+
     /** Kills {@code p} with {@code cause}, past the Original rules. */
     static void kill(ServerPlayer p, DamageSource cause) {
-        letDie(p, () -> {
+        // Give up is final: the Elixir and the Resurrection Ring do not take it back
+        FinalDeath.run(p, () -> letDie(p, () -> {
             p.setHealth(0.0F);
             p.die(cause);
-        });
+        }));
     }
 
     static void letDie(ServerPlayer p, Runnable action) {
@@ -135,9 +226,7 @@ public final class Downed {
         lock(p, Attributes.MOVEMENT_SPEED, downed);
         lock(p, Attributes.JUMP_STRENGTH, downed);
         p.setForcedPose(downed ? Pose.SLEEPING : null);
-        if (canReceive(p)) {
-            PacketDistributor.sendToPlayer(p, new DownedPayload(downed));
-        }
+        send(p, payload(p, downed));
     }
 
     private static void lock(ServerPlayer p, net.minecraft.core.Holder<Attribute> attribute, boolean on) {
@@ -150,6 +239,23 @@ public final class Downed {
         } else if (!on) {
             a.removeModifier(MODIFIER_ID);
         }
+    }
+
+    private static volatile BiConsumer<ServerPlayer, DownedPayload> sender = Downed::sendToClient;
+
+    private static void send(ServerPlayer p, DownedPayload payload) {
+        sender.accept(p, payload);
+    }
+
+    private static void sendToClient(ServerPlayer p, DownedPayload payload) {
+        if (canReceive(p)) {
+            PacketDistributor.sendToPlayer(p, payload);
+        }
+    }
+
+    /** For tests: what is sent to the client goes to {@code to} instead (null puts the real sender back). */
+    public static void overrideSender(@Nullable BiConsumer<ServerPlayer, DownedPayload> to) {
+        sender = to == null ? Downed::sendToClient : to;
     }
 
     // fake and mock players have no connection to send to
@@ -169,6 +275,12 @@ public final class Downed {
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p && isDowned(p)) {
                 hold(p, true);
+            }
+        });
+        // a player dying for the turning who is killed for real (void, /kill): the state ends with them (an Original's own is ended by OriginalRules)
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LivingDeathEvent.class, e -> {
+            if (e.getEntity() instanceof ServerPlayer p && isDyingForTurning(p) && !isLettingDie(p) && OriginalRules.bypassesProtection(e.getSource())) {
+                clear(p);
             }
         });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> SOURCES.remove(e.getEntity().getUUID()));
