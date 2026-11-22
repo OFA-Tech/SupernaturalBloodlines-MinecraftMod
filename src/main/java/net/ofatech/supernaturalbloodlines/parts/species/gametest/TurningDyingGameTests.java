@@ -638,6 +638,13 @@ public final class TurningDyingGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aGhoulWhomVampirismDidNotCatchIsTakenByOurDying(GameTestHelper helper) {
         TestPlayers.TalkingDuelist p = (TestPlayers.TalkingDuelist) ghoul(helper);
+        int[] seen = new int[1];
+        Consumer<LivingDeathEvent> counter = e -> {
+            if (e.getEntity() == p) {
+                seen[0]++;
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, LivingDeathEvent.class, counter);
         try {
             var neonatal = BuiltInRegistries.MOB_EFFECT.getHolder(ResourceLocation.parse("vampirism:neonatal"));
             helper.assertTrue(neonatal.isPresent(), "setup: no neonatal effect");
@@ -645,8 +652,10 @@ public final class TurningDyingGameTests {
             lethal(helper, p);
             helper.assertTrue(!VampirismAPI.vampirePlayer(p).isDBNO(), "setup: Vampirism caught the blow anyway");
             assertDying(helper, p, "an uncaught Ghoul");
+            helper.assertTrue(seen[0] == 0, "a listener that counts deaths saw the blow the turning caught");
             helper.assertTrue(p.received("supernaturalbloodlines.turning.dying"), "no word of the 30 s");
         } finally {
+            NeoForge.EVENT_BUS.unregister(counter);
             p.removeAllEffects();
             VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
             reset(p);
@@ -793,11 +802,17 @@ public final class TurningDyingGameTests {
         }
         helper.setBlock(new net.minecraft.core.BlockPos(7, 4, 3), net.minecraft.world.level.block.Blocks.STONE);
         ServerPlayer viewer = marked(helper);
+        ServerPlayer victim = marked(helper);
         try {
             viewer.setPos(helper.absoluteVec(new Vec3(3.5, 6, 3.5))); // eyes above it all: the line of sight is clear
             net.minecraft.core.BlockPos from = helper.absolutePos(new net.minecraft.core.BlockPos(3, 1, 3));
             helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.safeSpot(level, from, viewer, 8, 3) == null, "a spot 4 blocks up was found by a 3-block search");
             helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.safeSpot(level, from, viewer, 8, 4) != null, "setup: no spot 4 blocks up");
+            // and the wake-up itself: a player lying in that lava has no spot within its reach, so it does not climb 4 blocks to the platform
+            victim.setPos(helper.absoluteVec(new Vec3(3.5, 1, 3.5)));
+            lethal(helper, victim);
+            wake(victim);
+            helper.assertTrue(victim.blockPosition().equals(from), "the wake-up moved them to " + victim.blockPosition() + " instead of leaving them where there is no spot in reach");
         } finally {
             for (int x = -6; x <= 12; x++) {
                 for (int z = -6; z <= 12; z++) {
@@ -806,7 +821,7 @@ public final class TurningDyingGameTests {
                 }
             }
             helper.setBlock(new net.minecraft.core.BlockPos(7, 4, 3), net.minecraft.world.level.block.Blocks.AIR);
-            reset(viewer);
+            reset(viewer, victim);
         }
         helper.succeed();
     }}
