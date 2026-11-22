@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Plural;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.resources.language.I18n;
@@ -98,10 +99,12 @@ public final class BookSkillsPage implements HubPageView {
         BookKit.moonHead(f, Component.translatable(PageKit.HUB + "page.skills"), chapter);
         tree(f, rows, chosen, BookKit.MOON);
         if (chosen != null) {
-            boolean known = chosen.state() == HubSkills.State.OWNED || chosen.state() == HubSkills.State.COVERED;
+            boolean known = !chosen.state().offersPurchase();
             String id = chosen.id();
             Detail.Builder d = Detail.of(SkillsPage.name(chosen)).pips(known ? 1 : 0, 1).body(SkillsPage.state(chosen));
-            d.action("buy", Component.translatable(BOOK + "learn_cost", chosen.cost()), true, chosen.state() == HubSkills.State.BUYABLE, () -> SkillsPage.buy(id));
+            if (chosen.state().offersPurchase()) { // a skill the player has is not offered again
+                d.action("buy", Component.translatable(BOOK + "learn_cost", chosen.cost()), true, chosen.state() == HubSkills.State.BUYABLE, () -> SkillsPage.buy(id));
+            }
             if (f.view.context().loadout()) {
                 d.action("hud", Component.translatable(BOOK + "hud_link"), false, true, () -> f.screen().setPage(HubPage.LOADOUT));
             }
@@ -120,7 +123,7 @@ public final class BookSkillsPage implements HubPageView {
         y = I18n.exists(desc) ? BookKit.dropCap(f, Component.translatable(desc), r.x(), y, r.w(), t.ink())
                 : PageKit.wrapped(f, SkillsPage.state(row), r.x(), y, r.w(), t.ink()) + 3;
         y += 4;
-        y = BookKit.leader(f, Component.translatable(BOOK + "cost"), Component.translatable(PageKit.HUB + "skills.cost_short", row.cost()), r.x(), y, r.w(), t.ink());
+        y = BookKit.leader(f, Component.translatable(BOOK + "cost"), Component.translatable(Plural.key(PageKit.HUB + "skills.cost_short", row.cost()), row.cost()), r.x(), y, r.w(), t.ink());
         if (row.entry() != null && row.race() != null) {
             boolean met = row.state() != HubSkills.State.LOCKED;
             Component need = Component.translatable(PageKit.HUB + "skills.needs_short", PageKit.race(row.race()), row.entry().rung());
@@ -137,10 +140,13 @@ public final class BookSkillsPage implements HubPageView {
     private void pinned(HubScreen.Frame f, Rect r, HubSkills.Row row) {
         int y = r.bottom() - BookKit.SEAL;
         String id = row.id();
-        BookKit.seal(f, "buy:" + id, Component.translatable(KEY + "buy"), row.state() == HubSkills.State.BUYABLE, r.x(), y, () -> SkillsPage.buy(id),
-                List.of(Component.translatable(KEY + "buy"), SkillsPage.state(row)));
+        boolean seal = row.state().offersPurchase(); // no LEARN seal on a skill the player has
+        if (seal) {
+            BookKit.seal(f, "buy:" + id, Component.translatable(KEY + "buy"), row.state() == HubSkills.State.BUYABLE, r.x(), y, () -> SkillsPage.buy(id),
+                    List.of(Component.translatable(KEY + "buy"), SkillsPage.state(row)));
+        }
         if (f.view.context().loadout()) {
-            BookKit.link(f, "link:hud", Component.translatable(BOOK + "hud_link"), r.x() + BookKit.SEAL + 8, y + BookKit.SEAL / 2 - 4,
+            BookKit.link(f, "link:hud", Component.translatable(BOOK + "hud_link"), r.x() + (seal ? BookKit.SEAL + 8 : 0), y + BookKit.SEAL / 2 - 4,
                     List.of(Component.translatable(BOOK + "hud_tip")), () -> f.screen().setPage(HubPage.LOADOUT));
         }
     }
@@ -191,17 +197,17 @@ public final class BookSkillsPage implements HubPageView {
             KitDraw.shape(f.g, shape, x - 3, y - 3, size + 6, t.accent());
             KitDraw.shape(f.g, shape, x - 2, y - 2, size + 4, t.paper());
         }
-        Icons icon = SkillIcons.of(row.id());
+        // the skill's own picture (16 px, in its own colours): a locked one is dimmed, never recoloured
         if (known) {
             KitDraw.shape(f.g, shape, x, y, size, t.good());
-            KitDraw.icon(f.g, icon, n.x() - 6, n.y() - 6, 12, t.paper());
+            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0xFFFFFFFF);
         } else if (locked) {
             KitDraw.tickRing(f.g, n.x(), n.y(), size / 2, 16, 0f, (t.muted() & 0xFFFFFF) | 0xA0000000, (t.muted() & 0xFFFFFF) | 0xA0000000);
-            KitDraw.icon(f.g, icon, n.x() - 6, n.y() - 6, 12, (t.muted() & 0xFFFFFF) | 0x80000000);
+            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0x70FFFFFF);
         } else {
             KitDraw.shape(f.g, shape, x, y, size, GOLD);
             KitDraw.shape(f.g, shape, x + 2, y + 2, size - 4, t.paper());
-            KitDraw.icon(f.g, icon, n.x() - 6, n.y() - 6, 12, t.ink());
+            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0xFFFFFFFF);
         }
         // by words, and a word that is too long ends in an ellipsis instead of being broken in the middle. A node on the sides of the ring has its name
         // beside it, outward (above or below it the name would run into the neighbour); the top and bottom ones keep it over or under
@@ -214,15 +220,18 @@ public final class BookSkillsPage implements HubPageView {
         int height = lines.size() * 9;
         int ly = beside ? n.y() - height / 2 : n.y() >= cy ? n.y() + size / 2 + 2 : n.y() - size / 2 - 2 - height;
         int color = selected ? t.accent() : locked ? t.muted() : t.ink();
+        Rect hit = new Rect(n.x() - size / 2 - 2, n.y() - size / 2 - 2, size + 4, size + 4);
+        Rect target = hit;
         for (var line : lines) {
             int lw = f.font().width(line);
             int lx = beside ? (dx > 0 ? n.x() + size / 2 + 3 : n.x() - size / 2 - 3 - lw) : Math.max(page.x(), Math.min(page.right() - lw, n.x() - lw / 2));
             f.g.drawString(f.font(), line, lx, ly, color, false);
+            target = target.union(new Rect(lx, ly, lw, 9));
             ly += 9;
         }
-        Rect hit = new Rect(n.x() - size / 2 - 2, n.y() - size / 2 - 2, size + 4, size + 4);
         String id = "skill:" + row.id();
-        f.target(id, hit, List.of(SkillsPage.name(row), SkillsPage.state(row)), () -> legacy.select(row.id()));
+        // a name that was cut is read in full by pointing at it (its tooltip has the whole name); the focus ring stays round the node
+        f.target(id, net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.isCut(lines) ? target : hit, List.of(SkillsPage.name(row), SkillsPage.state(row)), () -> legacy.select(row.id()));
         if (f.focused(id)) {
             KitDraw.focusRing(f.g, hit, t.focusColor());
         }

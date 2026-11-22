@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.ReduceMotion;
 
 /** The hub's client settings (each player picks their own look). The theme is never sent to or read by the server. */
 public final class HubClientConfig {
@@ -21,6 +22,7 @@ public final class HubClientConfig {
     public static final ModConfigSpec SPEC;
     private static final ModConfigSpec.EnumValue<ThemeId> HUB_THEME;
     private static final ModConfigSpec.EnumValue<OpenOn> OPEN_ON;
+    private static final ModConfigSpec.BooleanValue REDUCE_MOTION;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -29,7 +31,21 @@ public final class HubClientConfig {
                 .defineEnum("hub_theme", ThemeId.GRIMOIRE);
         OPEN_ON = b.comment("Which page the hub opens on: HOME (the first time in a session, and whenever a request waits) or LAST_PAGE (the page you left;",
                         "only a waiting request opens Home).").defineEnum("open_on", OpenOn.HOME);
+        REDUCE_MOTION = b.comment("Turn off the interface's own motion: the hub's tab slide and the HUD's breathing halo (more as the interface gets it: flourishes, boss bars).",
+                "A change still lands at once. Cooldown sweeps stay (they are information); world animations (boss shifts, particles) are not touched.")
+                .define("reduce_motion", false);
         SPEC = b.build();
+        // the HUD and the boss bars read it too, and may be built without the hub part
+        ReduceMotion.install(HubClientConfig::reduceMotion);
+    }
+
+    /** True when the player turned the interface's motion off. */
+    public static boolean reduceMotion() {
+        try {
+            return REDUCE_MOTION.get();
+        } catch (IllegalStateException notLoaded) {
+            return false;
+        }
     }
 
     private HubClientConfig() {

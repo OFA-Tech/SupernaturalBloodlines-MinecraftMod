@@ -51,6 +51,48 @@ public final class LabelFit {
         return lines;
     }
 
+    /** Whether some word of {@code text} (split at spaces) is wider than {@code width}: it cannot be wrapped, only cut. */
+    public static boolean hasOverlongWord(String text, int width, ToIntFunction<String> measure) {
+        for (String word : text.split("[ \n]")) {
+            if (!word.isEmpty() && measure.applyAsInt(word) > width) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * {@code text} wrapped at spaces (and at a newline) into as many lines as it takes, each at most {@code width} wide. A line is never broken in the middle of a
+     * word: only a single word wider than {@code width} is cut, and it ends in an ellipsis.
+     */
+    public static List<String> wrapWords(String text, int width, ToIntFunction<String> measure) {
+        List<String> out = new ArrayList<>();
+        for (String paragraph : text.split("\n", -1)) {
+            StringBuilder line = new StringBuilder();
+            for (String raw : paragraph.split(" ")) {
+                if (raw.isEmpty()) {
+                    continue;
+                }
+                String word = cut(raw, width, measure);
+                if (line.length() == 0) {
+                    line.append(word);
+                } else if (measure.applyAsInt(line + " " + word) <= width) {
+                    line.append(' ').append(word);
+                } else {
+                    out.add(line.toString());
+                    line = new StringBuilder(word);
+                }
+            }
+            out.add(line.toString());
+        }
+        return out;
+    }
+
+    /** Whether the lines {@link #wrap} gave end in the ellipsis: the name was cut, and the full one belongs in a tooltip. */
+    public static boolean isCut(List<String> lines) {
+        return !lines.isEmpty() && lines.get(lines.size() - 1).endsWith(ELLIPSIS);
+    }
+
     /** {@code text} cut to {@code width} with an ellipsis, or whole when it fits. */
     public static String cut(String text, int width, ToIntFunction<String> measure) {
         if (measure.applyAsInt(text) <= width) {

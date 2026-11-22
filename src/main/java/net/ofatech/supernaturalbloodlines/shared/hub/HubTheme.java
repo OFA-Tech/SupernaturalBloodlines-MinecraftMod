@@ -87,6 +87,16 @@ public interface HubTheme {
         KitDraw.detail(ctx, this, r, detail);
     }
 
+    /** Which art kit this theme draws (one of {@code KitSprites.KITS}): the sprites in {@code textures/gui/sprites/kit/<kit>/}. */
+    default String kit() {
+        return "grimoire";
+    }
+
+    /** The bitmap font the page titles are drawn in ({@code title_gothic}, {@code title}), or null for the normal font. */
+    default String titleFont() {
+        return null;
+    }
+
     /** The colour of the keyboard focus ring (a target outline, not text): 3:1 or more on {@link #paper()}. */
     default int focusColor() {
         return FocusRing.forPaper(paper());

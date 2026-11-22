@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.core;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import org.slf4j.Logger;
 
 /**
@@ -23,14 +24,23 @@ public final class LinkedMods {
         m.put("vampirism", "1.10.13");
         m.put("werewolves", "2.0.3");
         m.put("enchanted", "4.2.7");
-        m.put("curios", "9.5");
+        m.put("curios", "9.5,9.6"); // 9.6.0: every Curios class we call has the same public signatures as 9.5.1
         m.put("geckolib", "4.9");
         m.put("enhancedcelestials2core", "2.0.3");
         return Map.copyOf(m);
     }
 
-    /** True when {@code actual} is not the tested series {@code tested}. Pure. */
+    /** True when {@code actual} is none of the tested series in {@code tested} (comma-separated). Pure. */
     public static boolean untested(String actual, String tested) {
+        for (String series : tested.split(",")) {
+            if (!untestedSeries(actual, series.trim())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean untestedSeries(String actual, String tested) {
         if (actual.equals(tested)) {
             return false;
         }
@@ -41,13 +51,22 @@ public final class LinkedMods {
         return next != '.' && next != '-' && next != '+';
     }
 
+    /** Warns once when the Accessories compat layer and Curios are both installed: that pair is known to crash. Returns whether it warned. */
+    public static boolean warnCrashPair(Predicate<String> loaded, Logger log) {
+        if (!loaded.test("accessories_compat_layer") || !loaded.test("curios")) {
+            return false;
+        }
+        log.warn("accessories_compat_layer x Curios is a known crash pair; remove the compat layer.");
+        return true;
+    }
+
     /** Warns once per linked mod that is installed in an untested version; {@code versionOf} answers null for a mod that is not installed. */
     public static int warnUntested(Function<String, String> versionOf, Logger log) {
         int warned = 0;
         for (Map.Entry<String, String> e : TESTED.entrySet()) {
             String actual = versionOf.apply(e.getKey());
             if (actual != null && untested(actual, e.getValue())) {
-                log.warn("{} {} is not a version this build was tested with ({}.x); it loads, but a hook may be missing (see the log lines about mixins)",
+                log.warn("{} {} is not a version this build was tested with ({}); it loads, but a hook may be missing (see the log lines about mixins)",
                         e.getKey(), actual, e.getValue());
                 warned++;
             }

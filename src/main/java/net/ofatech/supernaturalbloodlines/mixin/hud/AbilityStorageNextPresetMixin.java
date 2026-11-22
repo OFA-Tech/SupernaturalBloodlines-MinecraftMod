@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * Reserved mixin (1) of the hud part. Tensura's server answers a skill activation with {@code isAbilityInActivePreset(slot, skill, mode)} and refuses
  * a skill that is not in the active preset, so a skill in the HUD's right column (preset N+1) would never fire (shown by {@code TensuraPresetGameTests},
  * red without this). At RETURN of the four overloads, a {@code false} answer becomes {@code true} when the skill is in the next preset at that slot and mode.
- * Same hooks as Tensura Slots' {@code IsAbilityInActivePresetMixin}, which the pack drops. Applied only with Tensura installed ({@code HudMixinPlugin});
+ * Same hooks as Tensura Slots' {@code IsAbilityInActivePresetMixin}, which a pack may keep: both run, and since each only turns false into true at RETURN the result is their union. Applied only with Tensura installed ({@code HudMixinPlugin});
  * {@code require = 0}; switch {@code next_preset_active}.
  */
 @Pseudo

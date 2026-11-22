@@ -5,6 +5,7 @@ import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.GuideChapters;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.BloodMoonLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
@@ -30,6 +31,9 @@ public final class StageGuidePage implements HubPageView {
             chapter = ids.get(0);
         }
         HubTheme t = f.theme();
+        // the lists end above the floating bar of the Blood Moon (the cards do too); a theme whose detail is a pane at the side keeps nothing
+        f.reserve(BookKit.MAIN, BloodMoonLayout.cardCut(f.region(BookKit.MAIN), f.layout().chrome().detail()));
+        f.reserve(BookKit.SIDE, BloodMoonLayout.cardCut(f.region(BookKit.SIDE), f.layout().chrome().detail()));
         BookKit.moonHead(f, Component.translatable(KEY + "title"), Component.translatable(KEY + "subtitle"));
         Rect r = f.region(BookKit.MAIN);
         int y = f.begin(BookKit.MAIN);

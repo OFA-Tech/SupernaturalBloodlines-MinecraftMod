@@ -15,6 +15,7 @@ public final class PlayerSettings {
     public static final List<SettingEntry> ENTRIES = List.of(
             SettingEntry.of(HUB_FILE, "look", "hub_theme", SettingKind.CHOICE),
             SettingEntry.of(HUB_FILE, "look", "open_on", SettingKind.CHOICE),
+            SettingEntry.of(HUB_FILE, "look", "reduce_motion", SettingKind.BOOL),
             SettingEntry.of(HUD_FILE, "hud", "hud_enabled", SettingKind.BOOL),
             SettingEntry.of(HUD_FILE, "hud", "hud_visibility", SettingKind.CHOICE),
             SettingEntry.of(HUD_FILE, "hud", "sprint_leap", SettingKind.BOOL),

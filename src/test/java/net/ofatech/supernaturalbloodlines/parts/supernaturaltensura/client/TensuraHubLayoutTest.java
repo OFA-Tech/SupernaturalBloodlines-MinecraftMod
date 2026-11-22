@@ -43,6 +43,16 @@ class TensuraHubLayoutTest {
     }
 
     @Test
+    void theGapBetweenTheColumnsHoldsTheScrollBarWithAirOnBothSides() {
+        for (int[] s : SCREENS) {
+            HubLayout l = TensuraHubLayout.of(s[0], s[1], 8, 4);
+            int gap = l.region(HubLayout.SIDE).x() - l.region(HubLayout.MAIN).right();
+            // the bar is drawn one pixel off the main column, 7 wide: a pixel of air must be left before the side column
+            assertTrue(gap >= 1 + net.ofatech.supernaturalbloodlines.shared.hub.kit.KitMetrics.SCROLL_W + 1, s[0] + "x" + s[1] + " gap " + gap);
+        }
+    }
+
+    @Test
     void theTwoColumnsSplitTheStage() {
         for (int[] s : SCREENS) {
             String at = s[0] + "x" + s[1];

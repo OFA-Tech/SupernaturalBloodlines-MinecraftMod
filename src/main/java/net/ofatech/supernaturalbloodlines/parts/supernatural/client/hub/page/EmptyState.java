@@ -6,6 +6,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScree
 import net.ofatech.supernaturalbloodlines.shared.hub.HubPage;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmptyFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 
@@ -32,11 +33,17 @@ public final class EmptyState {
         int w = Math.min(area.w() - 8, 200);
         int x = area.x() + (area.w() - w) / 2;
         int y = top + 6;
-        int hex = 34;
-        KitDraw.shape(f.g, Shapes.Shape.HEX, x + (w - hex) / 2, y, hex, t.muted());
-        KitDraw.shape(f.g, Shapes.Shape.HEX, x + (w - hex) / 2 + 2, y + 2, hex - 4, t.paper());
-        y += hex + 4;
-        if (net.minecraft.client.resources.language.I18n.exists(key + "caption")) {
+        int hex = EmptyFit.HEX;
+        boolean hasCaption = net.minecraft.client.resources.language.I18n.exists(key + "caption");
+        int bodyLines = f.font().split(Component.translatable(key + "body"), w).size();
+        // a small page (GUI scale 4) gives up the hexagon and its caption so the buttons are not cut off at the foot
+        boolean art = EmptyFit.showArt(top, area.bottom(), hasCaption, bodyLines, second != null && second.visible(f.view.context()));
+        if (art) {
+            KitDraw.shape(f.g, Shapes.Shape.HEX, x + (w - hex) / 2, y, hex, t.muted());
+            KitDraw.shape(f.g, Shapes.Shape.HEX, x + (w - hex) / 2 + 2, y + 2, hex - 4, t.paper());
+            y += hex + 4;
+        }
+        if (art && hasCaption) {
             Component caption = Component.translatable(key + "caption");
             f.g.drawString(f.font(), caption, x + (w - f.font().width(caption)) / 2, y, t.muted(), false);
             y += 10;

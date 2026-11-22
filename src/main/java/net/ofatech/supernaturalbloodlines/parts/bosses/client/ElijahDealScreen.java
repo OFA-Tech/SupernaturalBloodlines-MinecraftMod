@@ -127,7 +127,11 @@ public final class ElijahDealScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mx, int my, float partial) {
         Rect panel = layout.panel();
-        KitDraw.dialogFrame(g, width, height, panel, paper, accent);
+        if (theme != null) {
+            KitDraw.dialogFrame(g, width, height, panel, theme);
+        } else {
+            KitDraw.dialogFrame(g, width, height, panel, paper, accent);
+        }
         g.drawString(font, LabelFit.cut(title.getString(), panel.w() - 2 * ConfirmLayout.PAD, font::width), panel.x() + ConfirmLayout.PAD, panel.y() + ConfirmLayout.PAD, accent, false);
         int shown = Math.min(lines.size(), layout.textLines());
         int y = layout.text().y();
@@ -145,13 +149,20 @@ public final class ElijahDealScreen extends Screen {
         for (int row = 0; row < layout.rows(); row++) {
             int index = model.scroll() + row;
             Rect r = layout.row(row, scrolls);
-            KitDraw.dialogButton(g, font, r, label(index), true, model.focus() == index, paper, accent, ink, focusColor);
+            button(g, r, label(index), true, model.focus() == index);
         }
         if (scrolls && theme != null) {
             theme.drawScrollbar(g, layout.list(), model.scroll(), n - layout.rows());
         }
-        KitDraw.dialogButton(g, font, layout.decline(), Component.translatable("supernaturalbloodlines.boss.elijah.no_deal"), false,
-                model.focus() >= n, paper, accent, ink, focusColor);
+        button(g, layout.decline(), Component.translatable("supernaturalbloodlines.boss.elijah.no_deal"), false, model.focus() >= n);
+    }
+
+    private void button(GuiGraphics g, Rect r, Component label, boolean primary, boolean focused) {
+        if (theme != null) {
+            KitDraw.dialogButton(g, font, theme, r, label, primary, focused);
+        } else {
+            KitDraw.dialogButton(g, font, r, label, primary, focused, paper, accent, ink, focusColor);
+        }
     }
 
     @Override

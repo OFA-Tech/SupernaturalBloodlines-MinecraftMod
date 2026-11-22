@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Plural;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubDev;
 import net.ofatech.supernaturalbloodlines.shared.hub.RungStatus;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
@@ -210,8 +211,8 @@ public final class PathPage implements HubPageView {
     /** "Reward: +N skill points" (and EP with Tensura). Shared with the themes' own Path views. */
     public static Component reward(HubModel.RungRow row) {
         return row.ep() > 0 && ModList.get().isLoaded("tensura")
-                ? Component.translatable(KEY + "reward_ep", row.sp(), String.format("%,d", row.ep()))
-                : Component.translatable(KEY + "reward", row.sp());
+                ? Component.translatable(Plural.key(KEY + "reward_ep", row.sp()), row.sp(), String.format("%,d", row.ep()))
+                : Component.translatable(Plural.key(KEY + "reward", row.sp()), row.sp());
     }
 
     /** A Ghoul's turning: what it is and the time left. Returns the y under it. Shared with the themes' own Path views. */

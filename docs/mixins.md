@@ -42,7 +42,7 @@ Config `supernaturalbloodlines.hud.mixins.json`, plugin `HudMixinPlugin`, packag
 
 | Part | Mixin | Target | Why | Config switch |
 |---|---|---|---|---|
-| hud | (1) `AbilityStorageNextPresetMixin` (13b Task 2) **used** | RETURN of the four `AbilityStorage.isAbilityInActivePreset(...)` overloads (Tensura) | A right-column skill (preset N+1) is refused by Tensura's server without it (shown by `TensuraPresetGameTests`). Needs Tensura | `next_preset_active` |
+| hud | (1) `AbilityStorageNextPresetMixin` (13b Task 2) **used** | RETURN of the four `AbilityStorage.isAbilityInActivePreset(...)` overloads (Tensura) | A right-column skill (preset N+1) is refused by Tensura's server without it (shown by `TensuraPresetGameTests`). Needs Tensura. With Tensura Slots installed both mixins run (each only turns false into true at RETURN, so the result is the union) | `next_preset_active` |
 | hud | (2) `VampireRaceFeedMixin` (13c Task 2) **used** | the one `FoodData.needsFood()` call inside `VampireRace.onActivateAbility` (`@Redirect`, plus HEAD and RETURN injections to remember the player) | Tensura's race ability feeds only when hurt or `needsFood()`, and a Vampirism vampire's food is never short: `TensuraFeedGameTests.aThirstyHealthyVampireFeeds` was red without it. The credit itself needs no mixin (events). Needs Tensura and Vampirism | `tensura_feed_fills_blood` |
 | hud | (3) `KeyBindsListHideMixin` (13a Task 4) | Controls list entry build | Only if hiding covered keys on `ScreenEvent.Init.Post` fails. **Not needed:** `KeyHiding` also clears Controlling's `allEntries`, which its search rebuilds from (checked in a running client with Controlling 19.0.5: its search no longer finds a covered key) | `hide_in_controls_mixin` |
 

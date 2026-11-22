@@ -113,4 +113,30 @@ class BloodMoonLayoutTest {
             assertTrue(l.chrome().counters().right() <= l.chrome().themeButton().x());
         }
     }
+
+    @Test
+    void aGuideCardEndsAboveTheFloatingBarNotUnderIt() {
+        for (int[] s : SCREENS) {
+            HubLayout l = BloodMoonLayout.of(s[0], s[1], TABS, SEALS);
+            Rect bar = l.chrome().detail();
+            assertNotNull(bar);
+            for (String name : List.of(HubLayout.MAIN, HubLayout.SIDE)) {
+                Rect region = l.region(name);
+                int cut = BloodMoonLayout.cardCut(region, bar);
+                assertTrue(cut > 0, s[0] + "x" + s[1] + " " + name + ": the region runs down behind the bar, so something must be kept out");
+                Rect card = BloodMoonLayout.card(region);
+                assertTrue(card.bottom() - cut <= bar.y() - BloodMoonLayout.GAP, s[0] + "x" + s[1] + " the card still reaches the bar");
+                assertTrue(region.bottom() - cut + 5 <= bar.y() - BloodMoonLayout.GAP, "and so does the list");
+            }
+        }
+    }
+
+    @Test
+    void aPaneBesideTheRegionOrAboveItTakesNothingFromIt() {
+        Rect region = new Rect(100, 50, 200, 150);
+        assertEquals(0, BloodMoonLayout.cardCut(region, null));
+        assertEquals(0, BloodMoonLayout.cardCut(region, new Rect(320, 50, 100, 150)), "a pane to the right");
+        assertEquals(0, BloodMoonLayout.cardCut(region, new Rect(100, 10, 200, 30)), "a bar above");
+        assertEquals(0, BloodMoonLayout.cardCut(region, new Rect(100, 250, 200, 30)), "a bar well below");
+    }
 }
