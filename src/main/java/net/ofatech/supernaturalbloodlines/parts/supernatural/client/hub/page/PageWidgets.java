@@ -51,9 +51,9 @@ final class PageWidgets {
         draw(f, id, r, label, enabled, primary, what, Tip.ALWAYS, action);
     }
 
-    /** The kit part of a button in a state: a button that is off is never lit, whatever the pointer does. */
+    /** The kit part of a button in a state ({@link KitFaces#button} gives a button that is off its disabled picture whatever the pointer does). */
     static Part part(boolean enabled, boolean primary, boolean hot) {
-        return KitFaces.button(primary, enabled, enabled && hot, false);
+        return KitFaces.button(primary, enabled, hot, false);
     }
 
     private enum Tip { WHEN_OFF, ALWAYS, NAME }
