@@ -108,8 +108,11 @@ final class SlotArt {
 
     /** A slot that has just become ready: a white outline round its icon (gold would vanish on the Grimoire's gold frames) and a pale wash over it, for one breath. Its own look, not the active frame's. */
     private static void readyGlow(GuiGraphics g, HudLayout.Box b, float glow) {
-        g.fill(b.x() + 3, b.y() + 3, b.x() + 19, b.y() + 19, fade(0x80FFFFFF, glow * 0.5f));
-        g.renderOutline(b.x() + 2, b.y() + 2, 18, 18, fade(0xFFFFFFFF, Math.min(1f, glow * 1.6f)));
+        float line = Math.min(1f, glow * 1.6f);
+        g.fill(b.x() + 3, b.y() + 3, b.x() + 19, b.y() + 19, fade(0xC0FFFFFF, glow));
+        // a dark rim under the white line: the Grimoire's frame has a pale line there, which a white one alone would vanish into
+        g.renderOutline(b.x() + 1, b.y() + 1, 20, 20, fade(0xFF101010, line));
+        g.renderOutline(b.x() + 2, b.y() + 2, 18, 18, fade(0xFFFFFFFF, line));
     }
 
     /** The cooldown's seconds over the pie; smaller (and at the top) when the badge is lifted over a mastery bar, so they never share a row with it. */
