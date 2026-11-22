@@ -6,7 +6,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.material.FluidState;
+import net.ofatech.supernaturalbloodlines.core.death.FinalDeath;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
@@ -62,7 +71,7 @@ public final class Downed {
 
     /** What the client is told: open (or close) the screen, and which text it shows. */
     public static DownedPayload payload(Player p, boolean downed) {
-        return new DownedPayload(downed, mode(p));
+        return new DownedPayload(downed, mode(p), downed ? p.getData(SpeciesRegistries.DOWNED) : 0);
     }
 
     public static int mode(Player p) {
@@ -112,15 +121,51 @@ public final class Downed {
             clear(p);
             p.setHealth(p.getMaxHealth() / 2.0F);
             if (turning) {
-                p.displayClientMessage(Component.translatable("supernaturalbloodlines.turning.woke"), true);
+                woke(p);
             }
             TaskSignals.fire(p, "dying_survived", 1);
         } else {
             p.setData(SpeciesRegistries.DOWNED, left - 1);
-            if (reopensScreenAt(left - 1) && canReceive(p)) {
-                PacketDistributor.sendToPlayer(p, payload(p, true));
+            if (reopensScreenAt(left - 1)) {
+                send(p, payload(p, true));
             }
         }
+    }
+
+    /**
+     * They stand up in the turning (ours, or a Ghoul's end of Vampirism's dying state): told on the action bar and in chat how long the turning runs and
+     * how to finish it, 5 s of Resistance V, the fire out and the air back, and out of lava (or another harmful fluid) to the nearest spot within 8 blocks.
+     */
+    public static void woke(ServerPlayer p) {
+        p.displayClientMessage(Component.translatable("supernaturalbloodlines.turning.woke"), true);
+        int minutes = (int) Math.ceil(BloodlineAccess.get(p).turningTicksLeft() / 1200.0);
+        p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.woke_chat", minutes));
+        p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, WAKE_RESISTANCE_TICKS, 4));
+        p.clearFire();
+        p.setAirSupply(p.getMaxAirSupply());
+        p.fallDistance = 0;
+        if (inHarmfulFluid(p)) {
+            BlockPos safe = PackDuel.safeSpot(p.serverLevel(), p.blockPosition(), p, 8);
+            if (safe != null) {
+                p.moveTo(safe.getX() + 0.5, safe.getY(), safe.getZ() + 0.5, p.getYRot(), p.getXRot());
+                if (p.connection != null) {
+                    p.connection.teleport(p.getX(), p.getY(), p.getZ(), p.getYRot(), p.getXRot()); // the client is told
+                }
+            }
+        }
+    }
+
+    public static final int WAKE_RESISTANCE_TICKS = 100;
+
+    /** In lava or any fluid that is not water (feet or head). */
+    private static boolean inHarmfulFluid(ServerPlayer p) {
+        for (BlockPos pos : new BlockPos[] {p.blockPosition(), BlockPos.containing(p.getEyePosition())}) {
+            FluidState fluid = p.level().getFluidState(pos);
+            if (!fluid.isEmpty() && !fluid.is(FluidTags.WATER)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The player chose to give up: they die from the blow that downed them. */
@@ -154,10 +199,11 @@ public final class Downed {
 
     /** Kills {@code p} with {@code cause}, past the Original rules. */
     static void kill(ServerPlayer p, DamageSource cause) {
-        letDie(p, () -> {
+        // Give up is final: the Elixir and the Resurrection Ring do not take it back
+        FinalDeath.run(p, () -> letDie(p, () -> {
             p.setHealth(0.0F);
             p.die(cause);
-        });
+        }));
     }
 
     static void letDie(ServerPlayer p, Runnable action) {
@@ -181,9 +227,7 @@ public final class Downed {
         lock(p, Attributes.MOVEMENT_SPEED, downed);
         lock(p, Attributes.JUMP_STRENGTH, downed);
         p.setForcedPose(downed ? Pose.SLEEPING : null);
-        if (canReceive(p)) {
-            PacketDistributor.sendToPlayer(p, payload(p, downed));
-        }
+        send(p, payload(p, downed));
     }
 
     private static void lock(ServerPlayer p, net.minecraft.core.Holder<Attribute> attribute, boolean on) {
@@ -196,6 +240,23 @@ public final class Downed {
         } else if (!on) {
             a.removeModifier(MODIFIER_ID);
         }
+    }
+
+    private static volatile BiConsumer<ServerPlayer, DownedPayload> sender = Downed::sendToClient;
+
+    private static void send(ServerPlayer p, DownedPayload payload) {
+        sender.accept(p, payload);
+    }
+
+    private static void sendToClient(ServerPlayer p, DownedPayload payload) {
+        if (canReceive(p)) {
+            PacketDistributor.sendToPlayer(p, payload);
+        }
+    }
+
+    /** For tests: what is sent to the client goes to {@code to} instead (null puts the real sender back). */
+    public static void overrideSender(@Nullable BiConsumer<ServerPlayer, DownedPayload> to) {
+        sender = to == null ? Downed::sendToClient : to;
     }
 
     // fake and mock players have no connection to send to

@@ -169,6 +169,8 @@ public final class SpeciesPart {
         net.ofatech.supernaturalbloodlines.shared.supernatural.SireCount.set(
                 p -> net.ofatech.supernaturalbloodlines.parts.species.sireline.SirelineIndex.get(p.serverLevel()).childrenOf(p.getUUID()).size());
         SpeciesHub.register();
+        // ORDER MATTERS: OriginalRules.register() also registers Downed's click denial, which must run before TurningHandler's and BloodBottles' click
+        // handlers (below): a dying player cannot drink, and those handlers have no guard of their own (a listener does not see an event an earlier one cancelled)
         OriginalRules.register();
         Siphoning.register();
         VampireJoin.register();
@@ -243,7 +245,7 @@ public final class SpeciesPart {
         }
         modBus.addListener((RegisterPayloadHandlersEvent e) -> {
             PayloadRegistrar registrar = e.registrar(NETWORK_VERSION).optional();
-            registrar.playToClient(DownedPayload.TYPE, DownedPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> DownedScreen.show(payload.downed(), payload.mode())));
+            registrar.playToClient(DownedPayload.TYPE, DownedPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> DownedScreen.show(payload.downed(), payload.mode(), payload.ticksLeft())));
             registrar.playToServer(DownedGiveUpPayload.TYPE, DownedGiveUpPayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> {
                 if (ctx.player() instanceof ServerPlayer p) {
                     Downed.giveUp(p);

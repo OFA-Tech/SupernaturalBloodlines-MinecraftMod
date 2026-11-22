@@ -34,6 +34,7 @@ public final class BloodBottles {
     public static final String NO_EFFECT = "supernaturalbloodlines.bottle.no_effect";
     public static final String REFUSED = "supernaturalbloodlines.bottle.refused";
     public static final String MARKED = "supernaturalbloodlines.bottle.marked";
+    public static final String TURNING_HAS_YOU = "supernaturalbloodlines.bottle.turning_has_you";
     /** What a bottle with no readable source counts as. */
     public static final BloodSource UNSTAMPED = new BloodSource(Util.NIL_UUID, "", true, BloodKind.COMMON_VAMPIRE);
 
@@ -113,6 +114,9 @@ public final class BloodBottles {
     /** What the drinker is told when the bottle is kept: the explanation of the transition rule for a werewolf and an Original's blood, else one general line. */
     public static Component refusal(ServerPlayer p, BloodSource source) {
         Drinker d = drinkerOf(p);
+        if (d == Drinker.HUMAN && BloodlineAccess.get(p).inTurning()) {
+            return Component.translatable(TURNING_HAS_YOU); // the vampire blood they drank is already working in them: another bottle does nothing
+        }
         boolean werewolf = d == Drinker.WEREWOLF || d == Drinker.WEREWOLF_IN_TRANSITION;
         return Component.translatable(werewolf && source.kind().namesSire() ? OriginalBloodItem.REFUSED : REFUSED);
     }

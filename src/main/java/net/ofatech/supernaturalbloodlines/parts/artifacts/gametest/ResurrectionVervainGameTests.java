@@ -173,6 +173,29 @@ public final class ResurrectionVervainGameTests {
         helper.succeed();
     }
 
+    /** Give up in the dying state of the turning is final: the Ring does not take it back, and does not lose a charge to it. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void resurrectionRingDoesNotTakeBackAChosenDeath(GameTestHelper helper) {
+        ServerPlayer guarded = TestPlayers.createMortal(helper);
+        guarded.getInventory().items.set(5, ring(3));
+        net.ofatech.supernaturalbloodlines.core.death.FinalDeath.run(guarded, () -> kill(guarded, mob(helper, "vampirism:vampire")));
+        helper.assertTrue(guarded.isDeadOrDying() && charges(guarded.getInventory().items.get(5)) == 3, "the Ring took back a chosen death: dead " + guarded.isDeadOrDying());
+        ServerPlayer victim = TestPlayers.createMortal(helper);
+        victim.getInventory().items.set(5, ring(3));
+        try {
+            net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(victim, net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState.NONE.toBuilder()
+                    .vampireBloodUntil(helper.getLevel().getGameTime() + 1000).build());
+            kill(victim, mob(helper, "vampirism:vampire"));
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDyingForTurning(victim) && charges(victim.getInventory().items.get(5)) == 3,
+                    "setup: the blow was not caught, or the Ring was spent on it");
+            net.ofatech.supernaturalbloodlines.parts.species.original.Downed.giveUp(victim);
+            helper.assertTrue(victim.isDeadOrDying() && charges(victim.getInventory().items.get(5)) == 3, "Give up was taken back by the Ring: dead " + victim.isDeadOrDying());
+        } finally {
+            net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(victim, net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
     /** The faction half of the victim rule: a hunter is a human and is revived; a vampire is not, whatever its species says. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void resurrectionRingFollowsTheVictimsFaction(GameTestHelper helper) {

@@ -60,14 +60,20 @@ public final class TurningHandler {
     }
 
     public static void register() {
-        // LOW and not receiving cancelled events, like the hybrid transition: a death something else prevented is not a death
-        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LivingDeathEvent.class, TurningHandler::onDeath);
+        // A mortal's lethal blow is caught first of all (HIGHEST, never a death something else prevented), so nothing that counts deaths (kill credit,
+        // the mark, a duel) sees a death that did not happen. A Ghoul has Vampirism's own dying state, which gets its chance first (it cancels the event
+        // at its own priority): ours takes only the blow it did not catch.
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, LivingDeathEvent.class, e -> onDeath(e, false));
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LivingDeathEvent.class, e -> onDeath(e, true));
         // a Ghoul's death is caught by Vampirism's own dying state (a cancelled event): that is the dying of the turning for them
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, true, LivingDeathEvent.class, TurningHandler::onGhoulDying);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, LivingDeathEvent.class, TurningHandler::onGaveUpDying);
         NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> {
-            if (e.getEntity() instanceof ServerPlayer p && TransitionTimer.secondIsUp(p)) {
-                secondPassed(p);
+            if (e.getEntity() instanceof ServerPlayer p) {
+                watchGhoulDying(p);
+                if (TransitionTimer.secondIsUp(p)) {
+                    secondPassed(p);
+                }
             }
         });
         NeoForge.EVENT_BUS.addListener((LivingEntityUseItemEvent.Finish e) -> {
@@ -101,16 +107,18 @@ public final class TurningHandler {
         return VampirismAPI.factionRegistry().getFaction(e) == faction;
     }
 
-    private static void onDeath(LivingDeathEvent e) {
+    private static void onDeath(LivingDeathEvent e, boolean ghouls) {
         // a failed turning is the end of it, not a new dose
         if (!(e.getEntity() instanceof ServerPlayer p) || e.getSource().is(OutcomeExecutor.FAILED_TRANSITION)
-                || BloodlineAccess.get(p).vampireBloodUntil() == 0) {
+                || BloodlineAccess.get(p).vampireBloodUntil() == 0 || BloodlineAccess.get(p).ghoul() != ghouls) {
             return;
         }
+        // only the death that STARTS the turning is caught: drinking vampire blood again in it (the rule ignores it now) must not buy another life
+        boolean wasTurning = BloodlineAccess.get(p).inTurning();
         // Original's blood still in them names the sire they get if the turning completes (the pending sire is kept in the state, so the dying loses nothing)
         UUID source = p.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT) && p.hasData(SpeciesRegistries.BLOOD_SOURCE) ? p.getData(SpeciesRegistries.BLOOD_SOURCE) : null;
         apply(p, BloodlineEvent.DIED_WITH_VAMPIRE_BLOOD, source);
-        if (!BloodlineAccess.get(p).inTurning()) {
+        if (wasTurning || !BloodlineAccess.get(p).inTurning()) {
             return;
         }
         if (OriginalRules.bypassesProtection(e.getSource())) {
@@ -120,17 +128,32 @@ public final class TurningHandler {
             // the blow is caught: they lie where they fell for the 30 s of the dying, then stand up at half health, still in the turning
             e.setCanceled(true);
             Downed.startDying(p, e.getSource());
-            p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.dying"));
+            // a Ghoul that Vampirism's dying state did not catch (Neonatal, a blow that kills vampires, no level) is taken by ours, with its 30 s
+            p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.dying", Downed.TICKS / 20));
         }
     }
 
     private static void onGhoulDying(LivingDeathEvent e) {
         if (e.isCanceled() && e.getEntity() instanceof ServerPlayer p && BloodlineAccess.get(p).ghoul() && BloodlineAccess.get(p).vampireBloodUntil() != 0
-                && VampirismAPI.vampirePlayer(p).isDBNO()) {
+                && !BloodlineAccess.get(p).inTurning() && VampirismAPI.vampirePlayer(p).isDBNO()) {
             apply(p, BloodlineEvent.DIED_WITH_VAMPIRE_BLOOD, null);
             if (BloodlineAccess.get(p).inTurning()) {
-                p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.dying"));
+                p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.dying_ghoul")); // how long it lasts is Vampirism's
             }
+        }
+    }
+
+    /** Ghouls whose Vampirism dying state this handler has seen start, to tell them when it ends. */
+    private static final java.util.Set<UUID> GHOULS_DYING = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** A Ghoul in the turning whose dying state just ended with them alive wakes like anyone else (Vampirism has its own say on the way up, not on the turning). */
+    public static void watchGhoulDying(ServerPlayer p) {
+        BloodlineState s = BloodlineAccess.get(p);
+        boolean dying = s.ghoul() && s.inTurning() && VampirismAPI.vampirePlayer(p).isDBNO();
+        if (dying) {
+            GHOULS_DYING.add(p.getUUID());
+        } else if (!GHOULS_DYING.isEmpty() && GHOULS_DYING.remove(p.getUUID()) && p.isAlive() && s.inTurning()) {
+            Downed.woke(p);
         }
     }
 

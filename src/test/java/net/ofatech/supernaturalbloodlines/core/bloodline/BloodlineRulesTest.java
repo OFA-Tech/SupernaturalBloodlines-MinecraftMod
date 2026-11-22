@@ -262,6 +262,16 @@ class BloodlineRulesTest {
     }
 
     @Test
+    void vampireBloodInTheTurningDoesNothing() {
+        BloodlineState running = turning();
+        assertNoChange(run(running, DRANK_VAMPIRE_BLOOD, ctx().withGameTime(5)), running);
+        BloodlineState ghoul = turning().toBuilder().ghoul(true).build();
+        assertNoChange(run(ghoul, DRANK_VAMPIRE_BLOOD, ctx().withGameTime(5).withFaction(BaseFaction.VAMPIRE)), ghoul);
+        // and outside the turning it still marks
+        assertEquals(5 + ctx().vampireBloodTicks(), run(BloodlineState.NONE, DRANK_VAMPIRE_BLOOD, ctx().withGameTime(5)).state().vampireBloodUntil());
+    }
+
+    @Test
     void gaveUpOutsideTheTurningChangesNothing() {
         assertNoChange(run(BloodlineState.NONE, TURNING_GAVE_UP, ctx()), BloodlineState.NONE);
         BloodlineState marked = BloodlineState.NONE.toBuilder().vampireBloodUntil(99).build();

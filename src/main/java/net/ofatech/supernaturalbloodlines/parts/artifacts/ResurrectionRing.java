@@ -39,8 +39,8 @@ public final class ResurrectionRing {
     }
 
     private static void onDeath(LivingDeathEvent e) {
-        if (!(e.getEntity() instanceof ServerPlayer p)) {
-            return;
+        if (!(e.getEntity() instanceof ServerPlayer p) || net.ofatech.supernaturalbloodlines.core.death.FinalDeath.is(p)) {
+            return; // a death the player chose (Give up) is final
         }
         // read again here: the ring may have left the inventory since the damage was dealt
         Optional<ItemStack> ring = ring(p, e.getSource());

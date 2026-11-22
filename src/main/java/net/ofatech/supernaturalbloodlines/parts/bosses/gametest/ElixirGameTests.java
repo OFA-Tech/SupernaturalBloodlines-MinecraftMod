@@ -66,6 +66,27 @@ public final class ElixirGameTests {
         helper.succeed();
     }
 
+    /** Give up is final: a death the player chose is not one the Elixir takes back (the guard, and the whole way through the dying state). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void itDoesNotTakeBackAChosenDeath(GameTestHelper helper) {
+        LineTestPlayer holder = holder(helper, 1);
+        net.ofatech.supernaturalbloodlines.core.death.FinalDeath.run(holder, () ->
+                helper.assertTrue(!saved(holder, helper.getLevel().damageSources().lava()), "the Elixir saved a chosen death"));
+        helper.assertTrue(elixirs(holder) == 1, "the Elixir was spent on a chosen death");
+        ServerPlayer p = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.createMortal(helper);
+        p.getInventory().add(new ItemStack(BossItems.THE_ELIXIR.get()));
+        try {
+            BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().vampireBloodUntil(helper.getLevel().getGameTime() + 1000).build());
+            p.hurt(helper.getLevel().damageSources().lava(), 1000f);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDyingForTurning(p), "setup: not dying");
+            net.ofatech.supernaturalbloodlines.parts.species.original.Downed.giveUp(p);
+            helper.assertTrue(p.isDeadOrDying() && elixirs(p) == 1, "Give up was taken back by the Elixir: dead " + p.isDeadOrDying() + ", elixirs " + elixirs(p));
+        } finally {
+            BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void itDoesNotSaveFromALineDeathOrTheKillCommand(GameTestHelper helper) {
         LineTestPlayer p = holder(helper, 1);

@@ -123,7 +123,13 @@ public final class TurningDyingGameTests {
         ServerPlayer p = marked(helper);
         try {
             lethal(helper, p);
-            helper.assertTrue(!p.hurt(zombieBlow(helper), 1000f) && !p.isDeadOrDying() && Downed.isDowned(p), "a second blow killed a dying player");
+            // other kinds of damage, with the hurt cooldown out of the way: none gets through, and health stays at 1
+            for (DamageSource other : new DamageSource[] {helper.getLevel().damageSources().magic(), helper.getLevel().damageSources().explosion(null, null),
+                    helper.getLevel().damageSources().lava(), zombieBlow(helper), helper.getLevel().damageSources().drown()}) {
+                p.invulnerableTime = 0;
+                p.hurt(other, 1000f);
+                helper.assertTrue(!p.isDeadOrDying() && Downed.isDowned(p) && p.getHealth() == 1.0f, other.type().msgId() + " got through to a dying player: health " + p.getHealth());
+            }
         } finally {
             reset(p);
         }
@@ -343,6 +349,7 @@ public final class TurningDyingGameTests {
         try {
             lethal(helper, p);
             wake(p);
+            p.removeAllEffects(); // the 5 s of Resistance V of the wake-up are over
             lethal(helper, p);
             helper.assertTrue(p.isDeadOrDying() && !Downed.isDowned(p), "a second lethal blow after waking stood them up again, or left a state");
             BloodlineState s = BloodlineAccess.get(p);
@@ -381,7 +388,7 @@ public final class TurningDyingGameTests {
     }
 
     private static ServerPlayer ghoul(GameTestHelper helper) {
-        ServerPlayer p = TestPlayers.createMortal(helper);
+        ServerPlayer p = TestPlayers.createTalkingDuelist(helper);
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().ghoul(true).vampireBloodUntil(helper.getLevel().getGameTime() + 100000).build());
         return p;
@@ -418,4 +425,244 @@ public final class TurningDyingGameTests {
         }
         helper.succeed();
     }
-}
+
+    // ---- review fixes (plan 18b, round 2) ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void drinkingVampireBloodAgainInTheTurningBuysNoSecondLife(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist p = (TestPlayers.TalkingDuelist) marked(helper);
+        try {
+            lethal(helper, p);
+            wake(p);
+            p.removeAllEffects(); // the 5 s of Resistance V of the wake-up are over
+            ItemStack bottle = new ItemStack(item("vampirism:vampire_blood_bottle"));
+            p.setItemInHand(InteractionHand.MAIN_HAND, bottle);
+            helper.assertTrue(!click(p) && p.getMainHandItem() == bottle && bottle.getCount() == 1, "the bottle was drunk in the turning, or the click was taken over");
+            helper.assertTrue(p.receivedOnActionBar("supernaturalbloodlines.bottle.turning_has_you"), "the player was not told the turning has them");
+            helper.assertTrue(!TurningHandler.drankVampireBlood(p) && BloodlineAccess.get(p).vampireBloodUntil() == 0, "the rule marked a player already in the turning: " + BloodlineAccess.get(p));
+            // and a bottle drunk by a route that does not go through the click (the finish event, a bite) does nothing either
+            p.invulnerableTime = 0;
+            lethal(helper, p);
+            helper.assertTrue(p.isDeadOrDying() && !Downed.isDowned(p), "a lethal blow after drinking again stood them up a second time");
+            helper.assertTrue(BloodlineAccess.get(p).inTurning(), "the real death ended the turning");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDeathThatWasCaughtIsNotSeenByTheOnesThatCountDeaths(GameTestHelper helper) {
+        ServerPlayer p = marked(helper);
+        int[] seen = new int[1];
+        Consumer<LivingDeathEvent> counter = e -> {
+            if (e.getEntity() == p) {
+                seen[0]++;
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, false, LivingDeathEvent.class, counter);
+        try {
+            lethal(helper, p);
+            helper.assertTrue(seen[0] == 0, "a listener that counts deaths saw a death that was caught");
+            Downed.giveUp(p);
+            helper.assertTrue(seen[0] == 1 && p.isDeadOrDying(), "Give up was not a death for the others: " + seen[0]);
+        } finally {
+            NeoForge.EVENT_BUS.unregister(counter);
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void wakingGivesResistanceTellsTheTurningAndPutsOutTheFire(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist p = (TestPlayers.TalkingDuelist) marked(helper);
+        try {
+            lethal(helper, p);
+            p.setRemainingFireTicks(200);
+            p.setAirSupply(0);
+            wake(p);
+            var resistance = p.getEffect(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE);
+            helper.assertTrue(resistance != null && resistance.getAmplifier() == 4 && resistance.getDuration() > 0 && resistance.getDuration() <= Downed.WAKE_RESISTANCE_TICKS, "Resistance V for 5 s: " + resistance);
+            helper.assertTrue(p.getRemainingFireTicks() <= 0 && p.getAirSupply() == p.getMaxAirSupply(), "fire " + p.getRemainingFireTicks() + ", air " + p.getAirSupply());
+            var chat = p.message("supernaturalbloodlines.turning.woke_chat");
+            helper.assertTrue(chat != null && ((net.minecraft.network.chat.contents.TranslatableContents) chat.getContents()).getArgs()[0].equals((int) Math.ceil(SpeciesConfig.transitionTicks() / 1200.0)),
+                    "no chat line with the minutes left: " + chat);
+            helper.assertTrue(p.receivedOnActionBar("supernaturalbloodlines.turning.woke"), "no action bar line");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void wakingInLavaMovesThemOutAndWakingInWaterDoesNot(GameTestHelper helper) {
+        // the test box has a barrier ceiling two blocks up, and the eyes of a standing player are above it: open it over the floor so the line of sight is real
+        for (int x = 0; x <= 9; x++) {
+            for (int z = 0; z <= 4; z++) {
+                helper.setBlock(new net.minecraft.core.BlockPos(x, 2, z), net.minecraft.world.level.block.Blocks.AIR);
+            }
+        }
+        net.minecraft.core.BlockPos lava = new net.minecraft.core.BlockPos(2, 1, 2);
+        net.minecraft.core.BlockPos water = new net.minecraft.core.BlockPos(7, 1, 2);
+        for (int x = 0; x <= 9; x++) {
+            for (int z = 0; z <= 4; z++) {
+                helper.setBlock(new net.minecraft.core.BlockPos(x, 0, z), net.minecraft.world.level.block.Blocks.STONE);
+            }
+        }
+        helper.setBlock(lava, net.minecraft.world.level.block.Blocks.LAVA);
+        helper.setBlock(water, net.minecraft.world.level.block.Blocks.WATER);
+        ServerPlayer burning = marked(helper);
+        ServerPlayer swimming = marked(helper);
+        try {
+            burning.setPos(helper.absoluteVec(new Vec3(2.5, 1, 2.5)));
+            swimming.setPos(helper.absoluteVec(new Vec3(7.5, 1, 2.5)));
+            lethal(helper, burning);
+            lethal(helper, swimming);
+            burning.setRemainingFireTicks(300);
+            swimming.setAirSupply(0);
+            Vec3 waterAt = swimming.position();
+            wake(burning);
+            wake(swimming);
+            net.minecraft.core.BlockPos now = burning.blockPosition();
+            helper.assertTrue(burning.level().getFluidState(now).isEmpty() && burning.level().getFluidState(now.above()).isEmpty(), "they woke in the lava, at " + now + " (spot "
+                    + net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.safeSpot(helper.getLevel(), now, burning, 8) + ", pos " + burning.position() + ", feet-block " + helper.getLevel().getBlockState(now.west()) + " below " + helper.getLevel().getBlockState(now.west().below()) + ")");
+            helper.assertTrue(burning.position().distanceTo(helper.absoluteVec(new Vec3(2.5, 1, 2.5))) <= 8, "they were moved further than 8 blocks");
+            helper.assertTrue(burning.getRemainingFireTicks() <= 0, "still burning");
+            helper.assertTrue(swimming.position().equals(waterAt) && swimming.getAirSupply() == swimming.getMaxAirSupply(), "water moved them, or no air came back: " + swimming.position() + " " + swimming.getAirSupply());
+        } finally {
+            helper.setBlock(lava, net.minecraft.world.level.block.Blocks.AIR);
+            helper.setBlock(water, net.minecraft.world.level.block.Blocks.AIR);
+            for (int x = 0; x <= 9; x++) {
+                for (int z = 0; z <= 4; z++) {
+                    helper.setBlock(new net.minecraft.core.BlockPos(x, 2, z), net.minecraft.world.level.block.Blocks.BARRIER);
+                }
+            }
+            reset(burning, swimming);
+        }
+        helper.succeed();
+    }
+
+    /** The harness's fake players are refused by every vehicle (a mount event is cancelled for them), so the mount is put on by hand: the field and the vehicle's passenger list, as startRiding does. */
+    private static void mountByForce(ServerPlayer rider, net.minecraft.world.entity.Entity vehicle) {
+        try {
+            var field = net.minecraft.world.entity.Entity.class.getDeclaredField("vehicle");
+            field.setAccessible(true);
+            field.set(rider, vehicle);
+            var add = net.minecraft.world.entity.Entity.class.getDeclaredMethod("addPassenger", net.minecraft.world.entity.Entity.class);
+            add.setAccessible(true);
+            add.invoke(vehicle, rider);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @GameTest(template = "tall", templateNamespace = NS)
+    public static void aMountIsLeftWhenTheBlowIsCaught(GameTestHelper helper) {
+        ServerPlayer rider = TestPlayers.createMortal(helper);
+        try {
+            BloodlineAccess.set(rider, BloodlineState.NONE.toBuilder().vampireBloodUntil(helper.getLevel().getGameTime() + 100000).build());
+            var pig = helper.spawn(EntityType.PIG, new net.minecraft.core.BlockPos(4, 1, 1));
+            rider.setPos(pig.position());
+            mountByForce(rider, pig);
+            helper.assertTrue(rider.isPassenger() && rider.getVehicle() == pig, "setup: could not mount");
+            lethal(helper, rider);
+            helper.assertTrue(Downed.isDowned(rider) && !rider.isPassenger(), "they stayed on the mount");
+        } finally {
+            reset(rider);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theVoidStillKillsADyingPlayer(GameTestHelper helper) {
+        ServerPlayer dropped = marked(helper);
+        try {
+            // the void takes a dying player with the small blow it deals (4), not only with a huge one
+            lethal(helper, dropped);
+            dropped.invulnerableTime = 0;
+            dropped.hurt(helper.getLevel().damageSources().fellOutOfWorld(), 4f);
+            helper.assertTrue(dropped.isDeadOrDying() && !Downed.isDowned(dropped), "the void did not kill a dying player: health " + dropped.getHealth());
+        } finally {
+            reset(dropped);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theScreenIsSentAgainWhileTheyWaitWithTheTimeThatIsLeft(GameTestHelper helper) {
+        ServerPlayer p = marked(helper);
+        java.util.List<DownedPayload> sent = new java.util.ArrayList<>();
+        Downed.overrideSender((to, payload) -> {
+            if (to == p) {
+                sent.add(payload);
+            }
+        });
+        try {
+            lethal(helper, p);
+            for (int i = 0; i < 250; i++) {
+                Downed.tick(p);
+            }
+            java.util.List<Integer> left = sent.stream().filter(DownedPayload::downed).map(DownedPayload::ticksLeft).toList();
+            helper.assertTrue(left.equals(java.util.List.of(600, 500, 400)), "the screen was sent with " + left + " (expected 600, then every 100 ticks)");
+            helper.assertTrue(sent.stream().allMatch(s -> s.mode() == Downed.MODE_TURNING), "a payload had the wrong mode");
+            for (int i = 0; i < 350; i++) {
+                Downed.tick(p);
+            }
+            DownedPayload last = sent.get(sent.size() - 1);
+            helper.assertTrue(!last.downed() && last.ticksLeft() == 0, "the screen was not closed when they woke: " + last);
+        } finally {
+            Downed.overrideSender(null);
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aGhoulWhomVampirismDidNotCatchIsTakenByOurDying(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist p = (TestPlayers.TalkingDuelist) ghoul(helper);
+        try {
+            var neonatal = BuiltInRegistries.MOB_EFFECT.getHolder(ResourceLocation.parse("vampirism:neonatal"));
+            helper.assertTrue(neonatal.isPresent(), "setup: no neonatal effect");
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(neonatal.get(), 1000)); // Vampirism does not put a neonatal vampire in its dying state
+            lethal(helper, p);
+            helper.assertTrue(!VampirismAPI.vampirePlayer(p).isDBNO(), "setup: Vampirism caught the blow anyway");
+            assertDying(helper, p, "an uncaught Ghoul");
+            helper.assertTrue(p.received("supernaturalbloodlines.turning.dying"), "no word of the 30 s");
+        } finally {
+            p.removeAllEffects();
+            VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aGhoulIsToldWhenVampirismsDyingStateEnds(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist p = (TestPlayers.TalkingDuelist) ghoul(helper);
+        try {
+            lethal(helper, p);
+            helper.assertTrue(VampirismAPI.vampirePlayer(p).isDBNO(), "setup: no Vampirism dying");
+            helper.assertTrue(p.received("supernaturalbloodlines.turning.dying_ghoul") && !p.received("supernaturalbloodlines.turning.dying"), "the Ghoul was told a time that is Vampirism's: ");
+            TurningHandler.watchGhoulDying(p);
+            helper.assertTrue(!p.received("supernaturalbloodlines.turning.woke_chat"), "woke while dying");
+            // its timer runs out, and then it stands them up (the way its own tick does)
+            try {
+                var vampire = VampirismAPI.vampirePlayer(p);
+                var setTimer = vampire.getClass().getDeclaredMethod("setDBNOTimer", int.class);
+                setTimer.setAccessible(true);
+                setTimer.invoke(vampire, 0);
+            } catch (ReflectiveOperationException ex) {
+                throw new IllegalStateException(ex);
+            }
+            vampirePlayerCall(p, "tryResurrect");
+            helper.assertTrue(!VampirismAPI.vampirePlayer(p).isDBNO(), "setup: the dying did not end");
+            TurningHandler.watchGhoulDying(p);
+            helper.assertTrue(p.received("supernaturalbloodlines.turning.woke_chat") && p.receivedOnActionBar("supernaturalbloodlines.turning.woke"), "no wake lines when the dying ended");
+            TurningHandler.watchGhoulDying(p);
+            helper.assertTrue(p.count("supernaturalbloodlines.turning.woke_chat") == 1, "the wake line came twice");
+        } finally {
+            VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
+            reset(p);
+        }
+        helper.succeed();
+    }}

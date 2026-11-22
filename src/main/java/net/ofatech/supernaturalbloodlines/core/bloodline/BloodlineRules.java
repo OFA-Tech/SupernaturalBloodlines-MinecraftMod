@@ -55,7 +55,7 @@ public final class BloodlineRules {
             case HUNTER_CURSE_LIFTED -> Outcome.of(s.toBuilder().hunterCurse(false).build());
             case RITE_OF_SEVERANCE -> severance(s, c);
             case SANGUINARE_FINISHED -> sanguinareFinished(s, c);
-            case DRANK_VAMPIRE_BLOOD -> canTurn(s, c)
+            case DRANK_VAMPIRE_BLOOD -> canTurn(s, c) && !s.inTurning()
                     ? Outcome.of(s.toBuilder().vampireBloodUntil(c.gameTime() + c.vampireBloodTicks()).build()) : unchanged(s);
             case DIED_WITH_VAMPIRE_BLOOD -> diedWithVampireBlood(s, c);
             case TURNING_FED -> turningFed(s, c);
