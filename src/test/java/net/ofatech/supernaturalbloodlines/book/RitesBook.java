@@ -55,7 +55,7 @@ final class RitesBook {
     static final List<Cat> CATS = List.of(
             new Cat("vampires", "Vampires and Hunters", "minecraft:redstone",
                     "Rites of blood, and of the vampires who work them.",
-                    List.of("immortality", "cleansing_blood", "original_blood", "blood_offering", "rite_of_the_five")),
+                    List.of("immortality", "cleansing_blood", "augustine", "original_blood", "blood_offering", "rite_of_the_five")),
             new Cat("werewolves", "Werewolves", "minecraft:bone",
                     "Rites of the moon and of the wolf.",
                     List.of("rite_of_lineage_reveal", "rite_of_lineage_awaken", "rite_of_the_moon", "silver_moon", "hybrid_blood", "werewolf_brother", "alpha_trial", "rite_of_the_frequency")),
@@ -74,7 +74,7 @@ final class RitesBook {
 
     /** The book entry's icon. Only {@code minecraft:} items: an icon from a mod that is not there would drop the whole entry. */
     static final Map<String, String> ICON = Map.ofEntries(
-            Map.entry("alpha_trial", "minecraft:bone"), Map.entry("ancestral_calling", "minecraft:amethyst_shard"),
+            Map.entry("alpha_trial", "minecraft:bone"), Map.entry("ancestral_calling", "minecraft:amethyst_shard"), Map.entry("augustine", "minecraft:golden_apple"),
             Map.entry("blood_offering", "minecraft:glass_bottle"), Map.entry("cleansing_blood", "minecraft:golden_apple"),
             Map.entry("curse_magicule_drain", "minecraft:soul_sand"), Map.entry("curse_skill_seal", "minecraft:soul_sand"),
             Map.entry("doppelganger_blood", "minecraft:diamond"), Map.entry("hearing_device", "minecraft:note_block"),

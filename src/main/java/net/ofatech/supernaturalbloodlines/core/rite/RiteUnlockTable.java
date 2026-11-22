@@ -40,6 +40,7 @@ public final class RiteUnlockTable {
     static {
         Map<String, Gate> m = new LinkedHashMap<>();
         kind(m, "cleansing_blood", RiteKind.VAMPIRE);
+        kind(m, "augustine", RiteKind.VAMPIRE);
         kind(m, "ward_of_daylight", RiteKind.VAMPIRE, RiteKind.WITCH);
         kind(m, "rite_of_the_five", RiteKind.HUNTER);
         kind(m, "alpha_trial", RiteKind.WEREWOLF);

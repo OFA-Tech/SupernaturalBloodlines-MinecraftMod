@@ -1,0 +1,47 @@
+{
+  "title": "Rite of Augustine",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:golden_apple"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/augustine",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nTurns the vampire on the centre into an Augustine: a little stronger, a bad eater of anything but vampires.",
+          "header": "Rite of Augustine"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The target stands on the centre (the caster if nobody does) and must be a plain vampire: no species, not a Ghoul, not in a transition.",
+          "header": "Rite of Augustine"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Whoever else is on the centre, a hybrid, a heretic or an Original is refused. A refusal gives the ingredients back.",
+          "header": "Rite of Augustine"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:augustine",
+          "header": "Rite of Augustine"
+        }
+      ]
+    }
+  ]
+}

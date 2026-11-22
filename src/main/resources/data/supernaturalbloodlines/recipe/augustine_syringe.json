@@ -1,0 +1,15 @@
+{
+  "neoforge:conditions": [
+    { "type": "supernaturalbloodlines:part_enabled", "part": "species" },
+    { "type": "neoforge:mod_loaded", "modid": "vampirism" }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:glass_bottle" },
+    { "item": "minecraft:iron_ingot" },
+    { "item": "vampirism:vampire_blood_bottle" },
+    { "item": "vampirism:garlic" }
+  ],
+  "result": { "id": "supernaturalbloodlines:augustine_syringe", "count": 1 }
+}
