@@ -56,6 +56,8 @@ public final class Downed {
     public static final int MODE_DYING = 0;
     /** Downed because a lethal blow found vampire blood in a mortal (plan 18b): the clock of the turning stands still, Give up ends the turning too. */
     public static final int MODE_TURNING = 1;
+    /** Snapped by Neck Snap (plan 18d): out cold for a while, no health lost, wakes on their own at the health they had, no Give up. */
+    public static final int MODE_SNAPPED = 2;
     private static final ResourceLocation MODIFIER_ID = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "downed");
 
     /** What downed each player; lost on relog, then giving up kills with a plain /kill source. */
@@ -81,6 +83,22 @@ public final class Downed {
     /** Downed for the turning: they have vampire blood in them, died, and stand up where they fell. */
     public static boolean isDyingForTurning(Player p) {
         return isDowned(p) && mode(p) == MODE_TURNING;
+    }
+
+    public static boolean isSnapped(Player p) {
+        return isDowned(p) && mode(p) == MODE_SNAPPED;
+    }
+
+    /** Neck Snap: they lie as if dead for {@code ticks}, unhurt, and wake with the health they have now. */
+    public static void startSnapped(ServerPlayer p, int ticks) {
+        p.setData(SpeciesRegistries.DOWNED_MODE, MODE_SNAPPED);
+        p.setData(SpeciesRegistries.DOWNED, Math.max(2, ticks));
+        SOURCES.put(p.getUUID(), p.damageSources().genericKill());
+        p.stopUsingItem();
+        p.setSprinting(false);
+        p.stopRiding();
+        p.stopFallFlying();
+        hold(p, true);
     }
 
     public static void startDying(ServerPlayer p, DamageSource cause) {
@@ -118,7 +136,12 @@ public final class Downed {
         }
         if (left == 1) {
             boolean turning = isDyingForTurning(p);
+            boolean snapped = isSnapped(p);
             clear(p);
+            if (snapped) {
+                p.displayClientMessage(Component.translatable("supernaturalbloodlines.snapped.woke"), true); // with the health they had: a snap costs none
+                return;
+            }
             p.setHealth(p.getMaxHealth() / 2.0F);
             if (turning) {
                 woke(p);
@@ -169,8 +192,8 @@ public final class Downed {
 
     /** The player chose to give up: they die from the blow that downed them. */
     public static void giveUp(ServerPlayer p) {
-        if (!isDowned(p)) {
-            return;
+        if (!isDowned(p) || isSnapped(p)) {
+            return; // out cold: there is no choice to make
         }
         DamageSource cause = SOURCES.getOrDefault(p.getUUID(), p.damageSources().genericKill());
         if (isDyingForTurning(p)) {
@@ -279,7 +302,7 @@ public final class Downed {
         });
         // a player dying for the turning who is killed for real (void, /kill): the state ends with them (an Original's own is ended by OriginalRules)
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LivingDeathEvent.class, e -> {
-            if (e.getEntity() instanceof ServerPlayer p && isDyingForTurning(p) && !isLettingDie(p) && OriginalRules.bypassesProtection(e.getSource())) {
+            if (e.getEntity() instanceof ServerPlayer p && (isDyingForTurning(p) || isSnapped(p)) && !isLettingDie(p) && OriginalRules.bypassesProtection(e.getSource())) {
                 clear(p);
             }
         });

@@ -6,6 +6,8 @@
         { "skill": "S-VAM-3", "rung": 3 },
         { "skill": "S-VAM-4", "rung": 3 },
         { "skill": "S-VAM-6", "rung": 3, "after": "S-VAM-1", "quest": "Q-VAM-6" },
-        { "skill": "S-SIP-5", "rung": 4, "after": "S-SIP-3" }
+        { "skill": "S-SIP-5", "rung": 4, "after": "S-SIP-3" },
+        { "skill": "S-VAM-8", "rung": 4, "after": "S-VAM-6" },
+        { "skill": "S-VAM-9", "rung": 4, "after": "S-VAM-6" }
     ]
 }

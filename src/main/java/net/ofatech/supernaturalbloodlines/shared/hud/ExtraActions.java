@@ -18,6 +18,10 @@ import org.jetbrains.annotations.Nullable;
 public final class ExtraActions {
     public static final ResourceLocation ALPHA_ROAR = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "alpha_roar");
 
+    public static final ResourceLocation RIP_HEART = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "rip_heart");
+
+    public static final ResourceLocation NECK_SNAP = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "neck_snap");
+
     public static final ResourceLocation BOTTLE_BLOOD = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "bottle_blood");
 
     public interface Action {
@@ -36,6 +40,15 @@ public final class ExtraActions {
         /** Runs it. @return the refusal to show in the action bar, null when it happened */
         @Nullable
         Component trigger(ServerPlayer p);
+
+        /**
+         * Runs it with the creature the player's crosshair named, resolved by the server (same level, alive, in reach and in sight; null when there is none). An action
+         * that needs no target ignores it, so the old ones are untouched.
+         */
+        @Nullable
+        default Component trigger(ServerPlayer p, @Nullable net.minecraft.world.entity.LivingEntity target) {
+            return trigger(p);
+        }
 
         /** The cooldown the action just started, in ticks, for the slot's sweep. */
         int cooldownTicks(ServerPlayer p);
@@ -67,6 +80,30 @@ public final class ExtraActions {
     }
 
     private static final List<Action> ACTIONS = new CopyOnWriteArrayList<>();
+    private static final List<java.util.function.Predicate<ServerPlayer>> BLOCKERS = new CopyOnWriteArrayList<>();
+
+    /** A part says when a player cannot act at all (the species part: downed, snapped): no extra action runs for them, whoever owns it. */
+    public static void addBlocker(java.util.function.Predicate<ServerPlayer> blocked) {
+        BLOCKERS.add(blocked);
+    }
+
+    public static void removeBlocker(java.util.function.Predicate<ServerPlayer> blocked) {
+        BLOCKERS.remove(blocked);
+    }
+
+    /** Takes an action away again (a test's own). */
+    public static void remove(ResourceLocation id) {
+        ACTIONS.removeIf(x -> x.id().equals(id));
+    }
+
+    public static boolean blocked(ServerPlayer p) {
+        for (java.util.function.Predicate<ServerPlayer> b : BLOCKERS) {
+            if (b.test(p)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private ExtraActions() {
     }

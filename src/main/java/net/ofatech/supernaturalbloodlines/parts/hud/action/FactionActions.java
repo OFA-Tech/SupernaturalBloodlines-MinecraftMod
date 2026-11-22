@@ -82,11 +82,7 @@ public final class FactionActions {
         if (hit instanceof BlockHitResult b && hit.getType() == HitResult.Type.BLOCK) {
             block = Optional.of(b.getBlockPos());
         }
-        Optional<Entity> entity = Optional.empty();
-        Entity found = targetEntityId < 0 ? null : p.level().getEntity(targetEntityId);
-        if (found instanceof LivingEntity living && living.isAlive() && living != p && p.distanceTo(living) <= HudConfig.biteReach() && p.hasLineOfSight(living)) {
-            entity = Optional.of(living);
-        }
+        Optional<Entity> entity = HudTargets.resolve(p, targetEntityId).map(e -> (Entity) e);
         IAction.PERM perm = toggle(p, id, new Context(block, entity));
         return perm == null ? null : perm.name().toLowerCase(Locale.ROOT);
     }

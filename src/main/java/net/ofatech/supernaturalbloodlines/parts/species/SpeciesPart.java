@@ -113,7 +113,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.gametest.SpeciesGameTest
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteHooks;
 
 public final class SpeciesPart {
-    private static final String NETWORK_VERSION = "2";
+    private static final String NETWORK_VERSION = "3"; // 3: the downed screen has a third mode (snapped)
 
     private SpeciesPart() {}
 
@@ -190,6 +190,9 @@ public final class SpeciesPart {
         RankEffects.register(); // always, for the same reason
         PackBonus.register(); // always, for the same reason
         Electricity.register(); // always: Shocked and the Taser work on every supernatural
+        net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect.register();
+        net.ofatech.supernaturalbloodlines.parts.species.skill.RipHeartAction.register();
+        net.ofatech.supernaturalbloodlines.parts.species.skill.NeckSnapAction.register();
         TurningHandler.register(); // always: the turning is vampires only, no Werewolves needed
         GhoulGates.register();
         net.ofatech.supernaturalbloodlines.parts.species.item.BloodKeys.register();

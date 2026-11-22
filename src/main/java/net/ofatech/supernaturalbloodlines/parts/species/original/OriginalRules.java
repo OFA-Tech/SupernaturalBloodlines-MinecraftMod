@@ -126,7 +126,7 @@ public final class OriginalRules {
 
     /** What the protection never applies to. */
     public static boolean bypassesProtection(DamageSource source) {
-        return isWhiteOak(source) || source.is(DamageTypes.FELL_OUT_OF_WORLD) || source.is(DamageTypes.GENERIC_KILL)
+        return isWhiteOak(source) || source.is(net.ofatech.supernaturalbloodlines.parts.species.skill.RipHeartAction.DAMAGE) || source.is(DamageTypes.FELL_OUT_OF_WORLD) || source.is(DamageTypes.GENERIC_KILL)
                 || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(OutcomeExecutor.FAILED_TRANSITION);
     }
 

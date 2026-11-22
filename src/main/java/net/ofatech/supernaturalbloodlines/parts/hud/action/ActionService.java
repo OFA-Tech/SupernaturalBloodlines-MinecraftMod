@@ -72,7 +72,7 @@ public final class ActionService {
         }
         Optional<ExtraActions.Action> extra = ExtraActions.get(id.get());
         if (extra.isPresent()) {
-            return runExtra(p, extra.get());
+            return runExtra(p, extra.get(), targetEntityId);
         }
         if (!ModList.get().isLoaded("vampirism")) {
             return refuse(p, BiteService.KEY + "needs_vampirism");
@@ -90,14 +90,14 @@ public final class ActionService {
 
     /** An action another part owns (the Alpha Roar): it keeps its own checks; this only asks, shows its refusal, and tells the client the cooldown it started. */
     @Nullable
-    private static String runExtra(ServerPlayer p, ExtraActions.Action action) {
-        if (p.isSpectator() || !p.isAlive() || p.isSleeping()) {
+    private static String runExtra(ServerPlayer p, ExtraActions.Action action, int targetEntityId) {
+        if (p.isSpectator() || !p.isAlive() || p.isSleeping() || ExtraActions.blocked(p)) {
             return refuse(p, KEY + "cannot_act");
         }
         if (!action.available(p)) {
             return refuse(p, KEY + "not_unlocked");
         }
-        Component error = action.trigger(p);
+        Component error = action.trigger(p, HudTargets.resolve(p, targetEntityId).orElse(null));
         if (error != null) {
             p.displayClientMessage(error, true);
             return error.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t ? t.getKey() : KEY + "refused";

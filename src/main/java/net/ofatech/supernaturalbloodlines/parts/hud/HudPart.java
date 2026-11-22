@@ -66,6 +66,7 @@ public final class HudPart {
                     e.register(BiteWerewolfGameTests.class);
                     if (EnabledParts.isEnabled("species")) {
                         e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.ActionRoarGameTests.class);
+        e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.ActionTargetGameTests.class);
                     }
                 }
             }

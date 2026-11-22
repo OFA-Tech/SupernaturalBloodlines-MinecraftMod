@@ -29,7 +29,8 @@ public final class DownedScreen extends Screen {
     private int bottom;
 
     private DownedScreen(int mode, int ticksLeft) {
-        super(Component.translatable(mode == Downed.MODE_TURNING ? "supernaturalbloodlines.downed.turning.title" : "supernaturalbloodlines.downed.title"));
+        super(Component.translatable(mode == Downed.MODE_TURNING ? "supernaturalbloodlines.downed.turning.title"
+                : mode == Downed.MODE_SNAPPED ? "supernaturalbloodlines.downed.snapped.title" : "supernaturalbloodlines.downed.title"));
         this.mode = mode;
         this.ticksLeft = ticksLeft;
     }
@@ -55,14 +56,16 @@ public final class DownedScreen extends Screen {
     protected void init() {
         armed = 0;
         int textWidth = Math.min(width - 40, 300);
-        boolean hasBody = mode == Downed.MODE_TURNING;
+        boolean hasBody = mode == Downed.MODE_TURNING || mode == Downed.MODE_SNAPPED;
+        boolean hasButtons = mode != Downed.MODE_SNAPPED; // out cold: nothing to choose, no Give up
         body = new MultiLineTextWidget(hasBody ? bodyText() : Component.empty(), font).setMaxWidth(textWidth).setColor(0xDDDDDD).setCentered(true);
         shownSeconds = seconds();
         // the room is the height of the longest the text gets (a full countdown, two digits), so the countdown never reflows the text into the buttons
-        int bodyHeight = hasBody ? Math.max(body.getHeight(), new MultiLineTextWidget(bodyText(Downed.TICKS / 20), font).setMaxWidth(textWidth).getHeight()) : 0;
+        int longest = mode == Downed.MODE_SNAPPED ? 1800 : Downed.TICKS / 20;
+        int bodyHeight = hasBody ? Math.max(body.getHeight(), new MultiLineTextWidget(bodyText(longest), font).setMaxWidth(textWidth).getHeight()) : 0;
         boolean sideBySide = width >= 280;
-        int buttonsHeight = sideBySide ? 20 : 44;
-        int total = font.lineHeight + GAP + bodyHeight + GAP + buttonsHeight;
+        int buttonsHeight = !hasButtons ? 0 : sideBySide ? 20 : 44;
+        int total = font.lineHeight + GAP + bodyHeight + (hasButtons ? GAP + buttonsHeight : 0);
         top = (height - total) / 2;
         bottom = top + total;
         int y = top + font.lineHeight + GAP;
@@ -71,6 +74,9 @@ public final class DownedScreen extends Screen {
             addRenderableWidget(body);
         }
         y += bodyHeight + GAP;
+        if (!hasButtons) {
+            return;
+        }
         int bw = sideBySide ? 130 : 200;
         wait = Button.builder(Component.translatable("supernaturalbloodlines.downed.wait"), b -> onClose())
                 .bounds(sideBySide ? width / 2 - bw - 5 : width / 2 - bw / 2, y, bw, 20).build();
@@ -85,8 +91,8 @@ public final class DownedScreen extends Screen {
         return bodyText(seconds());
     }
 
-    private static Component bodyText(int seconds) {
-        return Component.translatable("supernaturalbloodlines.downed.turning.body", seconds);
+    private Component bodyText(int seconds) {
+        return Component.translatable(mode == Downed.MODE_SNAPPED ? "supernaturalbloodlines.downed.snapped.body" : "supernaturalbloodlines.downed.turning.body", seconds);
     }
 
     private void pressedGiveUp() {
@@ -104,11 +110,11 @@ public final class DownedScreen extends Screen {
         if (ticksLeft > 0) {
             ticksLeft--;
         }
-        if (mode == Downed.MODE_TURNING && seconds() != shownSeconds) {
+        if ((mode == Downed.MODE_TURNING || mode == Downed.MODE_SNAPPED) && seconds() != shownSeconds) {
             shownSeconds = seconds();
             body.setMessage(bodyText());
         }
-        if (armed > 0 && --armed == 0) {
+        if (giveUp != null && armed > 0 && --armed == 0) {
             giveUp.setMessage(Component.translatable("supernaturalbloodlines.downed.give_up"));
         }
     }

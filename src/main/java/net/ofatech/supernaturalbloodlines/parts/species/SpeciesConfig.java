@@ -123,6 +123,24 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue AUGUSTINE_EXTRA_HEALTH;
     private static final ModConfigSpec.DoubleValue AUGUSTINE_BLOOD_FROM_VAMPIRE;
     private static final ModConfigSpec.DoubleValue AUGUSTINE_BLOOD_FROM_OTHER;
+    public static final double DEFAULT_RIP_HEART_HEALTH = 10.0;
+    public static final int DEFAULT_RIP_HEART_COOLDOWN_SECONDS = 60;
+    public static final int DEFAULT_NECK_SNAP_COOLDOWN_SECONDS = 45;
+    public static final double DEFAULT_NECK_SNAP_KILL_HEALTH = 10.0;
+    public static final int DEFAULT_NECK_SNAP_STAGGER_TICKS = 60;
+    public static final int DEFAULT_NECK_SNAP_VAMPIRE_SECONDS = 60;
+    public static final int DEFAULT_NECK_SNAP_AUGUSTINE_SECONDS = 60;
+    public static final int DEFAULT_NECK_SNAP_HYBRID_SECONDS = 60;
+    public static final int DEFAULT_NECK_SNAP_ORIGINAL_SECONDS = 60;
+    private static final ModConfigSpec.DoubleValue RIP_HEART_HEALTH;
+    private static final ModConfigSpec.IntValue RIP_HEART_COOLDOWN_SECONDS;
+    private static final ModConfigSpec.IntValue NECK_SNAP_COOLDOWN_SECONDS;
+    private static final ModConfigSpec.DoubleValue NECK_SNAP_KILL_HEALTH;
+    private static final ModConfigSpec.IntValue NECK_SNAP_STAGGER_TICKS;
+    private static final ModConfigSpec.IntValue NECK_SNAP_VAMPIRE_SECONDS;
+    private static final ModConfigSpec.IntValue NECK_SNAP_AUGUSTINE_SECONDS;
+    private static final ModConfigSpec.IntValue NECK_SNAP_HYBRID_SECONDS;
+    private static final ModConfigSpec.IntValue NECK_SNAP_ORIGINAL_SECONDS;
 
     /** The numbers of the pack's NPC members (plan 15d, R148). */
     public record MemberTuning(boolean recruit, int perPlayer, int perPack, boolean huntTrips, int huntPeriodMinutes, boolean chestSort, double weightBrother,
@@ -308,6 +326,24 @@ public final class SpeciesConfig {
                 .defineInRange("augustine_blood_from_vampire_factor", DEFAULT_AUGUSTINE_BLOOD_FROM_VAMPIRE, 0.0, 10.0);
         AUGUSTINE_BLOOD_FROM_OTHER = b.comment("R203: how much blood an Augustine takes from anyone who is not a vampire (a third of what Vampirism gives, never less than 1 from a bite that gives any).")
                 .defineInRange("augustine_blood_from_other_factor", DEFAULT_AUGUSTINE_BLOOD_FROM_OTHER, 0.0, 10.0);
+        RIP_HEART_HEALTH = b.comment("R204: a target at or under this many health (half hearts) has its heart torn out by Rip Heart; above it the action is refused with no cooldown. Originals never die of it.")
+                .defineInRange("rip_heart_health", DEFAULT_RIP_HEART_HEALTH, 1.0, 40.0);
+        RIP_HEART_COOLDOWN_SECONDS = b.comment("R204: seconds before Rip Heart can be used again (a target that is too strong costs nothing).")
+                .defineInRange("rip_heart_cooldown_seconds", DEFAULT_RIP_HEART_COOLDOWN_SECONDS, 1, 3600);
+        NECK_SNAP_COOLDOWN_SECONDS = b.comment("R214: seconds before Neck Snap can be used again, whatever it did.")
+                .defineInRange("neck_snap_cooldown_seconds", DEFAULT_NECK_SNAP_COOLDOWN_SECONDS, 1, 3600);
+        NECK_SNAP_KILL_HEALTH = b.comment("R214: a mortal at or under this much health dies of a snapped neck; a healthier one only staggers.")
+                .defineInRange("neck_snap_kill_health", DEFAULT_NECK_SNAP_KILL_HEALTH, 1.0, 40.0);
+        NECK_SNAP_STAGGER_TICKS = b.comment("R214: how long a healthy mortal staggers (Slowness III and Weakness) after a snapped neck, in ticks.")
+                .defineInRange("neck_snap_stagger_ticks", DEFAULT_NECK_SNAP_STAGGER_TICKS, 0, 600);
+        NECK_SNAP_VAMPIRE_SECONDS = b.comment("R214: how long a snapped vampire (plain, heretic, Ghoul) lies as if dead. The four wake times are equal by default, so the length does not say what the target is.")
+                .defineInRange("neck_snap_vampire_seconds", DEFAULT_NECK_SNAP_VAMPIRE_SECONDS, 5, 1800);
+        NECK_SNAP_AUGUSTINE_SECONDS = b.comment("R214: how long a snapped Augustine lies unconscious.")
+                .defineInRange("neck_snap_augustine_seconds", DEFAULT_NECK_SNAP_AUGUSTINE_SECONDS, 5, 1800);
+        NECK_SNAP_HYBRID_SECONDS = b.comment("R214: how long a snapped hybrid or tribrid lies in temporary death.")
+                .defineInRange("neck_snap_hybrid_seconds", DEFAULT_NECK_SNAP_HYBRID_SECONDS, 5, 1800);
+        NECK_SNAP_ORIGINAL_SECONDS = b.comment("R214: how long a snapped Original or Original hybrid lies down. Keep it equal to the others, or an observer can tell an Original by the time.")
+                .defineInRange("neck_snap_original_seconds", DEFAULT_NECK_SNAP_ORIGINAL_SECONDS, 5, 1800);
         b.pop();
         SPEC = b.build();
     }
@@ -904,6 +940,87 @@ public final class SpeciesConfig {
             return AUGUSTINE_BLOOD_FROM_OTHER.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_AUGUSTINE_BLOOD_FROM_OTHER;
+        }
+    }
+
+    /** {@code rip_heart_health}. */
+    public static double ripHeartHealth() {
+        try {
+            return RIP_HEART_HEALTH.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_RIP_HEART_HEALTH;
+        }
+    }
+
+    /** {@code rip_heart_cooldown_seconds}. */
+    public static int ripHeartCooldownSeconds() {
+        try {
+            return RIP_HEART_COOLDOWN_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_RIP_HEART_COOLDOWN_SECONDS;
+        }
+    }
+
+    /** {@code neck_snap_cooldown_seconds}. */
+    public static int neckSnapCooldownSeconds() {
+        try {
+            return NECK_SNAP_COOLDOWN_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_NECK_SNAP_COOLDOWN_SECONDS;
+        }
+    }
+
+    /** {@code neck_snap_kill_health}. */
+    public static double neckSnapKillHealth() {
+        try {
+            return NECK_SNAP_KILL_HEALTH.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_NECK_SNAP_KILL_HEALTH;
+        }
+    }
+
+    /** {@code neck_snap_stagger_ticks}. */
+    public static int neckSnapStaggerTicks() {
+        try {
+            return NECK_SNAP_STAGGER_TICKS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_NECK_SNAP_STAGGER_TICKS;
+        }
+    }
+
+    /** {@code neck_snap_vampire_seconds}. */
+    public static int neckSnapVampireSeconds() {
+        try {
+            return NECK_SNAP_VAMPIRE_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_NECK_SNAP_VAMPIRE_SECONDS;
+        }
+    }
+
+    /** {@code neck_snap_augustine_seconds}. */
+    public static int neckSnapAugustineSeconds() {
+        try {
+            return NECK_SNAP_AUGUSTINE_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_NECK_SNAP_AUGUSTINE_SECONDS;
+        }
+    }
+
+    /** {@code neck_snap_hybrid_seconds}. */
+    public static int neckSnapHybridSeconds() {
+        try {
+            return NECK_SNAP_HYBRID_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_NECK_SNAP_HYBRID_SECONDS;
+        }
+    }
+
+    /** {@code neck_snap_original_seconds}. */
+    public static int neckSnapOriginalSeconds() {
+        try {
+            return NECK_SNAP_ORIGINAL_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_NECK_SNAP_ORIGINAL_SECONDS;
         }
     }
 

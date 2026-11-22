@@ -8,16 +8,16 @@
             ] },
             { "id": "L-HYB-1b", "detector": "level", "faction": "werewolves:werewolf", "n": 3, "mod": "werewolves" }
         ] },
-        { "id": "L-HYB-2", "name": "Thirst Mastered", "sp": 3, "ep": 10000, "tasks": [
+        { "id": "L-HYB-2", "name": "Thirst Mastered", "sp": 4, "ep": 10000, "tasks": [
             { "id": "L-HYB-2a", "detector": "thirst_days", "min": "15", "n": 3, "mod": "werewolves" },
             { "id": "L-HYB-2b", "detector": "level", "faction": "werewolves:werewolf", "n": 6, "mod": "werewolves" }
         ] },
-        { "id": "L-HYB-3", "name": "Venom", "sp": 4, "ep": 20000, "tasks": [
+        { "id": "L-HYB-3", "name": "Venom", "sp": 5, "ep": 20000, "tasks": [
             { "id": "L-HYB-3a", "detector": "signal", "signal": "venom_hit", "n": 3, "mod": "werewolves" },
             { "id": "L-HYB-3b", "detector": "rite", "rite": "supernaturalbloodlines:hybrid_blood", "role": "target" },
             { "id": "L-HYB-3c", "detector": "level", "faction": "werewolves:werewolf", "n": 8, "mod": "werewolves" }
         ] },
-        { "id": "L-HYB-4", "name": "Packbound", "sp": 4, "ep": 40000, "tasks": [
+        { "id": "L-HYB-4", "name": "Packbound", "sp": 5, "ep": 40000, "tasks": [
             { "id": "L-HYB-4a", "detector": "pack_days", "n": 7, "mod": "werewolves" },
             { "id": "L-HYB-4b", "detector": "level", "faction": "werewolves:werewolf", "n": 12, "mod": "werewolves" }
         ] },
