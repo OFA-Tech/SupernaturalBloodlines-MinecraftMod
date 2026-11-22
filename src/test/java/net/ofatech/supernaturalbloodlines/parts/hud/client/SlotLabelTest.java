@@ -134,6 +134,15 @@ class SlotLabelTest {
     }
 
     @Test
+    void aColumnWithACutLabelOrNoRoomShowsItsPanelAndTheOtherKeepsItsLabels() {
+        SlotLabel.Label fits = of("Bite", false, null, null, null, null, 200);
+        SlotLabel.Label cut = of("Poison Resistance", false, null, null, null, null, 60);
+        assertArrayEquals(new boolean[] {false, false}, SlotLabel.fallbackColumns(new SlotLabel.Label[] {fits, null, fits, fits, null, fits}));
+        assertArrayEquals(new boolean[] {true, false}, SlotLabel.fallbackColumns(new SlotLabel.Label[] {fits, cut, fits, fits, fits, fits}), "one cut label sends its whole column");
+        assertArrayEquals(new boolean[] {false, true}, SlotLabel.fallbackColumns(new SlotLabel.Label[] {fits, fits, fits, null, null, SlotLabel.TOO_NARROW}));
+    }
+
+    @Test
     void thePercentIsRounded() {
         assertEquals(42, SlotLabel.percent(Mastery.of(42.4, 100, 0, false)));
         assertEquals(100, SlotLabel.percent(Mastery.of(100, 100, 0, true)));

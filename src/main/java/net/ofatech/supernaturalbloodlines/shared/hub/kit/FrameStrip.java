@@ -38,4 +38,50 @@ public final class FrameStrip {
     public static boolean holds(int stripWidth, int stripHeight, int frameSize, int frames) {
         return stripWidth == frameSize && stripHeight == frameSize * frames;
     }
+
+    /**
+     * The ring of blood when a resource pack has changed the strip's size: the same share as the lit part of a one pixel outline of a {@code w x h} box, running
+     * clockwise from the top middle. The pieces are {@code {x, y, w, h}} rectangles, each a straight run.
+     */
+    public static java.util.List<int[]> outlineSegments(int w, int h, float share) {
+        int total = 2 * w + 2 * h - 4;
+        int lit = Math.max(0, Math.min(total, Math.round(share * total)));
+        java.util.List<int[]> out = new java.util.ArrayList<>();
+        int[][] path = new int[total][];
+        int n = 0;
+        for (int x = w / 2; x < w; x++) {
+            path[n++] = new int[] {x, 0};
+        }
+        for (int y = 1; y < h; y++) {
+            path[n++] = new int[] {w - 1, y};
+        }
+        for (int x = w - 2; x >= 0; x--) {
+            path[n++] = new int[] {x, h - 1};
+        }
+        for (int y = h - 2; y >= 0; y--) {
+            path[n++] = new int[] {0, y};
+        }
+        for (int x = 1; x < w / 2; x++) {
+            path[n++] = new int[] {x, 0};
+        }
+        int[] run = null;
+        for (int i = 0; i < lit; i++) {
+            int[] p = path[i];
+            if (run != null && p[0] == run[0] + run[2] && p[1] == run[1] && run[3] == 1) {
+                run[2]++;
+            } else if (run != null && p[0] == run[0] - 1 && p[1] == run[1] && run[3] == 1) {
+                run[0]--;
+                run[2]++;
+            } else if (run != null && p[0] == run[0] && run[2] == 1 && (p[1] == run[1] + run[3] || p[1] == run[1] - 1)) {
+                if (p[1] < run[1]) {
+                    run[1]--;
+                }
+                run[3]++;
+            } else {
+                run = new int[] {p[0], p[1], 1, 1};
+                out.add(run);
+            }
+        }
+        return out;
+    }
 }

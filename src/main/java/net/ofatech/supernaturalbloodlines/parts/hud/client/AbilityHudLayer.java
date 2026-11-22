@@ -60,6 +60,8 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
     }
     @Override
     public void render(GuiGraphics g, DeltaTracker delta) {
+        net.ofatech.supernaturalbloodlines.shared.hud.HudPlacement.trackerBox(null);
+        net.ofatech.supernaturalbloodlines.shared.hud.HudPlacement.toastAnchor(HudClientConfig.toastAnchor());
         if (!shown()) {
             glowTracker.reset();
             return;

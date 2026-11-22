@@ -10,6 +10,7 @@ import net.ofatech.supernaturalbloodlines.core.hud.SlotMode;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotShape;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit;
@@ -24,8 +25,6 @@ import net.ofatech.supernaturalbloodlines.shared.hud.TrackerAccess;
  * pictures (the pill, the label box) in the look of the hub's theme.
  */
 final class HudChrome {
-    private static final String MODE_MARK = "kit/shared/mode_mark";
-    private static final String BLOOD_MARK = "kit/shared/blood_full";
     /** The moon warning's box: a 16 px icon and the kit label's 4 px border round it. */
     static final int MOON_BOX = 24;
 
@@ -88,9 +87,9 @@ final class HudChrome {
         UiKit.draw(g, kit, Part.HUD_PILL, x, y, box.w(), box.h(), alpha);
         // the mark of the mode: Tensura's teal diamond, or a drop of blood
         if (mode == SlotMode.TENSURA) {
-            UiKit.shared(g, MODE_MARK, x + 8, y + (box.h() - 7) / 2, 7, 7, alpha);
+            UiKit.shared(g, KitSprites.MODE_MARK, x + 8, y + (box.h() - 7) / 2, 7, 7, alpha);
         } else {
-            UiKit.shared(g, BLOOD_MARK, x + 7, y + (box.h() - 9) / 2, 9, 9, alpha);
+            UiKit.shared(g, KitSprites.BLOOD_FULL, x + 7, y + (box.h() - 9) / 2, 9, 9, alpha);
         }
         // 7 rows of capitals in the dark rows of the picture: 3 from the top of the 14 px pills, 4 in the 16 px one
         g.drawString(font, text, x + 18, y + (box.h() - 8) / 2 + 1, SlotArt.fade(UiKit.labelOver(kit, Part.HUD_PILL, HudFaces.pillText(kit)), alpha), false);
@@ -140,12 +139,7 @@ final class HudChrome {
                 LABELS[i] = views[i].isEmpty() ? null : room < SlotLabel.MIN_ROOM ? SlotLabel.TOO_NARROW : label(views[i], room, font::width);
             }
         }
-        boolean[] fallback = new boolean[2];
-        for (int i = 0; i < boxes.length; i++) {
-            if (LABELS[i] != null && LABELS[i].cut()) {
-                fallback[i / 3] = true;
-            }
-        }
+        boolean[] fallback = SlotLabel.fallbackColumns(LABELS);
         for (int i = 0; i < boxes.length; i++) {
             SlotLabel.Label label = LABELS[i];
             if (label == null || fallback[i / 3]) {
@@ -311,6 +305,7 @@ final class HudChrome {
         int[] at = anchor.place(g.guiWidth(), g.guiHeight(), w, h, bossBottom);
         int x = at[0];
         int y = at[1];
+        net.ofatech.supernaturalbloodlines.shared.hud.HudPlacement.trackerBox(new HudLayout.Box(x, y, w, h));
         labelBox(g, kit, x, y, w, h, alpha);
         for (int i = 0; i < lines.size(); i++) {
             g.drawString(font, lines.get(i), x + 7, y + 4 + 9 * i, SlotArt.fade(UiKit.labelOver(kit, Part.HUD_LABEL, kit.ink()), alpha), false);

@@ -24,7 +24,8 @@ class DefaultsTest {
         assertEquals(true, clientDefault("hide_tensura_skill_hud"));
         assertEquals(true, clientDefault("blood_in_food_spot"));
         assertEquals(net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_CENTER, clientDefault("tracker_anchor"));
-        assertEquals(8, HudClientConfig.SPEC.getSpec().valueMap().size(), "a client setting was added or removed: decide its player-ready default and list it here");
+        assertEquals(net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_LEFT, clientDefault("toast_anchor"));
+        assertEquals(9, HudClientConfig.SPEC.getSpec().valueMap().size(), "a client setting was added or removed: decide its player-ready default and list it here");
     }
 
     @Test

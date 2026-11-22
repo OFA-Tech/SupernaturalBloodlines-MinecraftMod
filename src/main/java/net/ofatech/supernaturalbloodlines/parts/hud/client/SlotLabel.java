@@ -44,6 +44,17 @@ final class SlotLabel {
         return new Label(new String[] {first, shown}, !first.equals(name) || !shown.equals(second));
     }
 
+    /** Which of the two columns shows its wrapped panel instead of labels: one in which a label was cut, or had no room beside it. A slot with nothing in it has no label (null). */
+    static boolean[] fallbackColumns(Label[] labels) {
+        boolean[] out = new boolean[2];
+        for (int i = 0; i < labels.length; i++) {
+            if (labels[i] != null && labels[i].cut()) {
+                out[i / 3] = true;
+            }
+        }
+        return out;
+    }
+
     private static String join(@Nullable String... parts) {
         StringBuilder out = new StringBuilder();
         for (String p : parts) {

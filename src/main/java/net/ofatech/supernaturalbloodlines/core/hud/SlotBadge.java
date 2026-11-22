@@ -77,7 +77,7 @@ public final class SlotBadge {
     public static Box seconds(Look look, Box slot, int textW, int lift) {
         int x = slot.x() + (HudLayout.SLOT - textW) / 2;
         if (look == Look.TENSURA) {
-            return new Box(x, slot.bottom() - 10 - lift, textW, TEXT_H);
+            return new Box(x, slot.bottom() - (lift > 0 ? 9 : 10) - lift, textW, TEXT_H);
         }
         return lift > 0 ? new Box(x, slot.y() + 1, textW, SECONDS_INK_SMALL) : new Box(x, slot.y() + 2, textW, TEXT_H);
     }
@@ -94,7 +94,7 @@ public final class SlotBadge {
 
     /**
      * What the badge says for a key: one or two characters. A long key name is shortened to what the player knows it by: the initials of two words
-     * ("Left Shift" is LS), the first letter and the number of a numbered key ("Mouse Button 4" is M4, "Keypad 1" is K1), else its first two characters.
+     * ("Left Shift" is LS, "Mouse Button 4" is M4, "Keypad 1" is K1), else its first two characters.
      */
     public static String shortKey(String label) {
         String s = label.strip();
@@ -105,11 +105,6 @@ public final class SlotBadge {
         if (words.length == 1) {
             return s.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + s.substring(1, 2);
         }
-        String last = words[words.length - 1];
-        String initial = words[0].substring(0, 1).toUpperCase(java.util.Locale.ROOT);
-        if (last.chars().allMatch(Character::isDigit)) {
-            return initial + last.charAt(last.length() - 1);
-        }
-        return initial + last.substring(0, 1).toUpperCase(java.util.Locale.ROOT);
+        return words[0].substring(0, 1).toUpperCase(java.util.Locale.ROOT) + words[words.length - 1].substring(0, 1).toUpperCase(java.util.Locale.ROOT);
     }
 }

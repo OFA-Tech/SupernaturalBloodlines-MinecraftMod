@@ -18,6 +18,7 @@ public final class HudClientConfig {
     private static final ModConfigSpec.BooleanValue BLOOD_IN_FOOD_SPOT;
     private static final ModConfigSpec.EnumValue<Mode> MODE;
     private static final ModConfigSpec.EnumValue<net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor> TRACKER_ANCHOR;
+    private static final ModConfigSpec.EnumValue<net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor> TOAST_ANCHOR;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -35,6 +36,8 @@ public final class HudClientConfig {
                 .defineEnum("mode", Mode.AUTO);
         TRACKER_ANCHOR = b.comment("Where the tracked task shows: TOP_CENTER (under the boss bars), TOP_RIGHT (under the full moon warning), TOP_LEFT (under the corner",
                 "where Tensura and Vampirism draw your status) or ABOVE_MODE_PILL.").defineEnum("tracker_anchor", net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_CENTER);
+        TOAST_ANCHOR = b.comment("Where the request toast shows: TOP_LEFT (the default: the top left, under the status Tensura and Vampirism draw there), TOP_CENTER, TOP_RIGHT or ABOVE_MODE_PILL.",
+                "It moves under the tracked task's pill when the two would overlap.").defineEnum("toast_anchor", net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_LEFT);
         SPEC = b.build();
     }
 
@@ -73,6 +76,14 @@ public final class HudClientConfig {
             return TRACKER_ANCHOR.get();
         } catch (IllegalStateException notLoaded) {
             return net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_CENTER;
+        }
+    }
+
+    public static net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor toastAnchor() {
+        try {
+            return TOAST_ANCHOR.get();
+        } catch (IllegalStateException notLoaded) {
+            return net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_LEFT;
         }
     }
 

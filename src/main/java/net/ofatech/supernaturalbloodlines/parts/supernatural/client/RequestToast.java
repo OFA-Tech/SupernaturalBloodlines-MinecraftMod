@@ -17,6 +17,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit;
 import net.ofatech.supernaturalbloodlines.shared.hud.DevHud;
 import net.ofatech.supernaturalbloodlines.shared.hud.HudFaces;
 import net.ofatech.supernaturalbloodlines.shared.hud.HudKit;
+import net.ofatech.supernaturalbloodlines.shared.hud.HudPlacement;
 import net.ofatech.supernaturalbloodlines.shared.hud.HudStyle;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
 import net.neoforged.fml.ModList;
@@ -50,12 +51,17 @@ public final class RequestToast {
         return lines.stream().map(c -> net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(c.getString(), width, measure)).toList();
     }
 
+    /** Whether Tensura or Vampirism is installed (their status stands top left): asked once. */
+    private static Boolean statusCorner;
+
     /** The box: the kit's label in the HUD's look, under the status of Tensura and Vampirism when one of them is installed. */
     private static void draw(GuiGraphics g, Font font, List<Component> lines) {
         HudKit kit = HudKit.of(HudStyle.current());
         int h = lines.size() * 10 + 2 * PAD + 3;
-        boolean corner = ModList.get().isLoaded("tensura") || ModList.get().isLoaded("vampirism");
-        HudLayout.Box at = ToastPlace.place(g.guiWidth(), g.guiHeight(), W, h, corner);
+        if (statusCorner == null) {
+            statusCorner = ModList.get().isLoaded("tensura") || ModList.get().isLoaded("vampirism");
+        }
+        HudLayout.Box at = ToastPlace.place(g.guiWidth(), g.guiHeight(), W, h, statusCorner, HudPlacement.toastAnchor(), HudPlacement.trackerBox());
         UiKit.draw(g, kit, Part.HUD_LABEL, at.x(), at.y(), at.w(), at.h());
         List<String> shown = fitted(lines, W - 2 * PAD - 4, font::width);
         for (int i = 0; i < shown.size(); i++) {

@@ -234,7 +234,6 @@ public final class UiKit {
     private static final Strip NO_STRIP = new Strip(null, 0, 0, 0, 0, 0, 0);
     private static final Map<String, Strip> STRIPS = new HashMap<>();
     private static final Map<String, ResourceLocation> IDS = new HashMap<>();
-    private static final java.util.Set<String> WARNED = new java.util.HashSet<>();
 
     private static Strip strip(String sprite) {
         return STRIPS.computeIfAbsent(sprite, s -> {
