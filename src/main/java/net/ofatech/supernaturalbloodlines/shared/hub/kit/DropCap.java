@@ -24,11 +24,13 @@ public final class DropCap {
     public static List<Line> layout(String rest, int width, int indent, int capLines, ToIntFunction<String> measure) {
         List<Line> out = new ArrayList<>();
         StringBuilder line = new StringBuilder();
-        for (String word : rest.strip().split("\\s+")) {
-            if (word.isEmpty()) {
+        for (String raw : rest.strip().split("\\s+")) {
+            if (raw.isEmpty()) {
                 continue;
             }
             int in = out.size() < capLines ? indent : 0;
+            // one word wider than its line is cut with an ellipsis, never run out of the page
+            String word = LabelFit.cut(raw, Math.max(1, width - in), measure);
             String joined = line.length() == 0 ? word : line + " " + word;
             if (line.length() > 0 && measure.applyAsInt(joined) > width - in) {
                 out.add(new Line(in, line.toString()));

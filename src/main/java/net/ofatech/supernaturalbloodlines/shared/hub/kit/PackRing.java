@@ -107,6 +107,24 @@ public final class PackRing {
         return bottom + 3;
     }
 
+    /** Room the names beside the side portraits take, and the radius from which the names are shown at all. */
+    public static final int NAME_RESERVE = 52;
+    public static final int NAMED_RADIUS = 40;
+    public static final int MIN_RADIUS = 26;
+
+    /**
+     * The radius of the ring in an area {@code areaW} x {@code areaH}: with room for the names beside the side portraits when that leaves a ring of
+     * {@link #NAMED_RADIUS} or more, else the ring grows to the width of the area (the names on the top and bottom still fit, the rest are in the tooltips).
+     */
+    public static int radiusFor(int areaW, int areaH, int face) {
+        int byHeight = areaH / 2 - face / 2 - 12;
+        int withNames = Math.min(areaW / 2 - NAME_RESERVE, byHeight);
+        if (withNames >= NAMED_RADIUS) {
+            return withNames;
+        }
+        return Math.max(MIN_RADIUS, Math.min(areaW / 2 - face / 2 - 4, byHeight));
+    }
+
     /** The portraits of {@link #layout}. */
     public static List<Slot> ring(List<Member> members, int cx, int cy, int radius, int size) {
         return layout(members, cx, cy, radius, size).slots();

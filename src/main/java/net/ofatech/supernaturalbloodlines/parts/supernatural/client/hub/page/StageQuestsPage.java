@@ -81,8 +81,9 @@ public final class StageQuestsPage implements HubPageView {
             int pw = SourceTag.width(f.font().width(labels.get(i)));
             int fill = i == 0 ? t.accent() : t.sourceColor(QuestFilter.FILTERS.get(i - 1).source());
             Rect pill = new Rect(cx, y, pw, 13);
-            int text = BookKit.chip(f, pill, i == quests.filter() || f.hovered(pill));
-            f.g.fill(pill.x() + SourceTag.STRIPE_X, pill.y() + 3, pill.x() + SourceTag.STRIPE_X + SourceTag.STRIPE_W, pill.bottom() - 3, fill);
+            int text = BookKit.chip(f, pill, i == quests.filter(), f.hovered(pill));
+            int dotY = pill.y() + (pill.h() - SourceTag.STRIPE_H) / 2;
+            f.g.fill(pill.x() + SourceTag.STRIPE_X, dotY, pill.x() + SourceTag.STRIPE_X + SourceTag.STRIPE_W, dotY + SourceTag.STRIPE_H, fill);
             f.g.drawString(f.font(), labels.get(i), pill.x() + SourceTag.TEXT_X, pill.y() + 3, text, false);
             int idx = i;
             f.target("filter:" + i, pill, List.of(Component.literal(labels.get(i))), () -> quests.filter(idx));

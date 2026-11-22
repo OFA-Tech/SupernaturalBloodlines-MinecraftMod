@@ -30,4 +30,13 @@ class ScrollHintTest {
         org.junit.jupiter.api.Assertions.assertTrue(ScrollHint.rowFits(100, 20, 120));
         org.junit.jupiter.api.Assertions.assertFalse(ScrollHint.rowFits(101, 20, 120));
         org.junit.jupiter.api.Assertions.assertFalse(ScrollHint.rowFits(110, 20, 120));
+    }
+
+    @Test
+    void onlyTheLinesThatAreWholeAboveTheClipAreDrawn() {
+        // five lines of 9 from y=100, the clip at 140: 100..109, 109..118, 118..127, 127..136 are whole; the fifth would end at 145
+        assertEquals(4, ScrollHint.wholeLines(100, 9, 5, 140));
+        assertEquals(5, ScrollHint.wholeLines(100, 9, 5, 145));
+        assertEquals(0, ScrollHint.wholeLines(135, 9, 3, 140));
+        assertEquals(2, ScrollHint.wholeLines(100, 9, 2, 1000));
     }}

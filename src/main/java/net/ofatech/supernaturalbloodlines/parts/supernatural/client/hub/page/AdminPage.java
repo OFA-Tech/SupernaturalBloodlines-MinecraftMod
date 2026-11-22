@@ -240,7 +240,7 @@ public final class AdminPage implements HubPageView {
         switch (row.kind()) {
             case BOOL -> {
                 boolean on = Boolean.parseBoolean(AdminEdit.format(row.current()));
-                Rect b = new Rect(r.right() - 36, labelTop, 36, PageWidgets.H);
+                Rect b = PageWidgets.rightBox(r, labelTop, 36);
                 PageWidgets.toggle(f, id, b, on, Component.translatable(KEY + "toggle_tip"), () -> {
                     if (row.restart()) {
                         f.confirm(Component.translatable(KEY + "restart_title"), Component.translatable(KEY + "restart_body", label),

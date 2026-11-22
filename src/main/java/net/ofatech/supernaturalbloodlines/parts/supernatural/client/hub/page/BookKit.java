@@ -29,9 +29,19 @@ import org.jetbrains.annotations.Nullable;
 public final class BookKit {
     static final int SEAL = 44;
 
-    /** Under the Leave link beside the pack seal: where the line that says what the seal does stands, and that it stays inside the seal's height. */
-    static final int SEAL_NOTE_DY = 35;
+    /** The line that says what the pack seal accepts stands this far over it. */
+    static final int SEAL_NOTE_ABOVE = 10;
     static final int SEAL_NOTE_H = 9;
+
+    /** The y of the note over a seal at {@code sealY}. */
+    static int sealNoteY(int sealY) {
+        return sealY - SEAL_NOTE_ABOVE;
+    }
+
+    /** What the scrolled column gives up at its foot for the seal, the gap over it, the note and a pixel of air under the "more below" marker. */
+    static int sealReserve() {
+        return SEAL + 8 + SEAL_NOTE_ABOVE + 2;
+    }
     private static final int CAP = 16;
 
     private BookKit() {
@@ -60,8 +70,12 @@ public final class BookKit {
     /** Muted text at the normal size (nothing in the hub is under 8 GUI pixels), wrapped to {@code w}: subtitles, captions and legends. Returns the y under it. */
     static int small(HubScreen.Frame f, Component text, int x, int y, int w, int color) {
         int ly = y;
-        for (FormattedCharSequence line : f.font().split(text, Math.max(8, w))) {
-            f.g.drawString(f.font(), line, x, ly, color, false);
+        List<FormattedCharSequence> split = f.font().split(text, Math.max(8, w));
+        int whole = net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.wholeLines(y, 9, split.size(), f.clipBottom());
+        for (int i = 0; i < split.size(); i++) {
+            if (i < whole) {
+                f.g.drawString(f.font(), split.get(i), x, ly, color, false);
+            }
             ly += 9;
         }
         return ly + 1;
@@ -89,7 +103,7 @@ public final class BookKit {
         g.drawString(f.font(), first, 0, 0, t.accent(), false);
         pose.popPose();
         int ty = y;
-        List<net.ofatech.supernaturalbloodlines.shared.hub.kit.DropCap.Line> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.DropCap.layout(s.substring(1), Math.max(10, w), capW + 1, CAP_LINES, f.font()::width);
+        List<net.ofatech.supernaturalbloodlines.shared.hub.kit.DropCap.Line> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.dropCap(f.font(), s.substring(1), Math.max(10, w), capW + 1, CAP_LINES, f.font()::width);
         for (var line : lines) {
             g.drawString(f.font(), line.text(), x + line.indent(), ty, color, false);
             ty += 9;
@@ -109,6 +123,9 @@ public final class BookKit {
         String v = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(value.getString(), vw, font::width);
         int room = w - font.width(v) - 8;
         String l = lw > room ? net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(label.getString(), Math.max(8, room), font::width) : label.getString();
+        if (!f.whole(y, 10)) {
+            return y + 11;
+        }
         f.g.drawString(font, l, x, y, t.ink(), false);
         f.g.drawString(font, v, x + w - font.width(v), y, valueColor, false);
         int from = x + font.width(l) + 3;
@@ -155,10 +172,13 @@ public final class BookKit {
         Rect r = new Rect(x, y - 1, w, 11);
         boolean hot = f.hovered(r) || f.focused(id);
         int color = action == null ? t.muted() : hot ? lighten(t.accent()) : t.accent();
-        f.g.drawString(f.font(), label, x, y, color, false);
-        f.g.fill(x, y + 9, x + w, y + 10, color);
+        boolean drawn = f.whole(y - 1, 11);
+        if (drawn) {
+            f.g.drawString(f.font(), label, x, y, color, false);
+            f.g.fill(x, y + 9, x + w, y + 10, color);
+        }
         f.target(id, r, tooltip, action);
-        if (f.focused(id)) {
+        if (drawn && f.focused(id)) {
             KitDraw.focusRing(f.g, r, t.focusColor());
         }
         return w;
@@ -189,9 +209,17 @@ public final class BookKit {
 
     /** A small label chip (a filter, an identity tag): the kit's chip, the lit one when {@code on}. Returns the colour of its label. */
     static int chip(HubScreen.Frame f, Rect r, boolean on) {
-        Part part = on ? Part.CHIP_ON : Part.CHIP;
-        UiKit.draw(f.g, f.theme(), part, r);
-        return UiKit.label(f.theme(), part);
+        return chip(f, r, on, false);
+    }
+
+    /** The same, with the pointer over it: a chip that is not the chosen one gets an outline, never the lit picture. */
+    static int chip(HubScreen.Frame f, Rect r, boolean on, boolean hovered) {
+        var look = net.ofatech.supernaturalbloodlines.shared.hub.kit.ChipLook.of(on, hovered);
+        UiKit.draw(f.g, f.theme(), look.part(), r);
+        if (look.outline()) {
+            f.g.renderOutline(r.x(), r.y(), r.w(), r.h(), f.theme().accent());
+        }
+        return UiKit.label(f.theme(), look.part());
     }
 
     /** A box that is a field of text (a text area): the kit's inset. */
@@ -264,7 +292,7 @@ public final class BookKit {
             int pw = f.font().width(s) + 14;
             Rect pill = new Rect(cx, y, pw, 14);
             boolean on = i == chosen;
-            int text = chip(f, pill, on || f.hovered(pill));
+            int text = chip(f, pill, on, f.hovered(pill));
             f.g.drawString(f.font(), s, pill.x() + 7, pill.y() + 3, text, false);
             int idx = i;
             String id = "pill:" + i;

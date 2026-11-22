@@ -36,6 +36,11 @@ final class PageWidgets {
         return font.width(label) + 12;
     }
 
+    /** A button {@code w} wide at the right edge of {@code region}: its picture draws {@code margin} px past its box, so the box is that far in and the border is not clipped. */
+    static Rect rightBox(Rect region, int top, int w) {
+        return new Rect(region.right() - w - Part.BUTTON_NORMAL.margin(), top, w, H);
+    }
+
     /** A button: {@code primary} filled in the accent; {@code why} is shown instead of the action when it is off. */
     static void button(HubScreen.Frame f, String id, Rect r, Component label, boolean enabled, boolean primary, @Nullable Component why, @Nullable Runnable action) {
         draw(f, id, r, label, enabled, primary, why, Tip.WHEN_OFF, action);
@@ -60,18 +65,21 @@ final class PageWidgets {
 
     private static void draw(HubScreen.Frame f, String id, Rect r, Component label, boolean enabled, boolean primary, @Nullable Component why, Tip mode, @Nullable Runnable action) {
         HubTheme t = f.theme();
-        Part part = part(enabled, primary, f.hovered(r) || f.focused(id));
-        UiKit.draw(f.g, t, part, r);
-        int text = UiKit.label(t, part);
-        String shown = LabelFit.cut(label.getString(), r.w() - 6, f.font()::width);
-        f.g.drawString(f.font(), shown, r.x() + (r.w() - f.font().width(shown)) / 2, r.y() + (r.h() - 8) / 2, text, false);
+        boolean drawn = f.whole(r.y(), r.h());
+        if (drawn) {
+            Part part = part(enabled, primary, f.hovered(r) || f.focused(id));
+            UiKit.draw(f.g, t, part, r);
+            int text = UiKit.label(t, part);
+            String shown = net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.cut(f.font(), label.getString(), r.w() - 6, f.font()::width);
+            f.g.drawString(f.font(), shown, r.x() + (r.w() - f.font().width(shown)) / 2, r.y() + (r.h() - 8) / 2, text, false);
+        }
         boolean byHint = mode == Tip.NAME && why != null;
         List<Component> tip = new ArrayList<>(List.of(byHint ? why : label));
         if (!byHint && why != null && (mode == Tip.ALWAYS || !enabled)) {
             tip.add(why);
         }
         f.target(id, r, tip, enabled ? action : null);
-        if (f.focused(id)) {
+        if (drawn && f.focused(id)) {
             t.drawFocus(f.g, r);
         }
     }
@@ -90,6 +98,11 @@ final class PageWidgets {
     /** A box with the text being typed (a caret when {@code editing}), or the value when not. */
     static void field(HubScreen.Frame f, String id, Rect r, String text, int caret, boolean editing, boolean invalid, Component tip, Runnable open) {
         HubTheme t = f.theme();
+        boolean drawn = f.whole(r.y(), r.h());
+        if (!drawn) {
+            f.target(id, r, List.of(tip), open);
+            return;
+        }
         UiKit.draw(f.g, t, Part.INSET, r);
         // a refused value is outlined in the warning red, a box being typed in in the accent: a 1 px line over the inset
         String line = text.contains("\n") ? text.substring(0, text.indexOf('\n')) + " \u2026" : text;
@@ -98,6 +111,10 @@ final class PageWidgets {
         if (editing && caret <= shown.length() && (System.currentTimeMillis() / 500) % 2 == 0) {
             int cx = r.x() + 4 + f.font().width(shown.substring(0, Math.min(caret, shown.length())));
             f.g.fill(cx, r.y() + 3, cx + 1, r.bottom() - 3, t.ink());
+        }
+        int edge = net.ofatech.supernaturalbloodlines.shared.hub.kit.FieldEdge.colour(editing, invalid, warn(t), t.accent());
+        if (edge != 0) {
+            f.g.renderOutline(r.x(), r.y(), r.w(), r.h(), edge);
         }
         f.target(id, r, List.of(tip), open);
         if (f.focused(id)) {

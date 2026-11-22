@@ -12,17 +12,21 @@ public enum SourceTag {
         this.source = source;
     }
 
-    /** The chip is {@code HEIGHT} tall; its picture has a 4 px edge, so the mod's colour is a 2 px stripe just inside the left edge and the label starts after it. */
+    /**
+     * The chip is {@code HEIGHT} tall; the mod's colour is a small square just inside the chip's border (the Blood Moon's pill ends are the widest, 6 px) and the
+     * label starts after it. A square, not a bar: a bar next to "SB" reads as the letter I.
+     */
     public static final int HEIGHT = 10;
-    public static final int STRIPE_X = 4;
+    public static final int STRIPE_X = 6;
     public static final int STRIPE_Y = 3;
-    public static final int STRIPE_W = 2;
-    public static final int STRIPE_H = HEIGHT - 2 * STRIPE_Y;
-    public static final int TEXT_X = 8;
+    public static final int STRIPE_W = 3;
+    public static final int STRIPE_H = 3;
+    public static final int TEXT_X = 11;
+    public static final int RIGHT_PAD = 6;
 
-    /** The width of the chip for a label {@code labelWidth} wide: the label after the stripe, and the picture's right edge. */
+    /** The width of the chip for a label {@code labelWidth} wide: the label after the mark, and the picture's right edge. */
     public static int width(int labelWidth) {
-        return TEXT_X + labelWidth + 4;
+        return TEXT_X + labelWidth + RIGHT_PAD;
     }
 
     /** The source id {@code HubTheme.sourceColor} knows. */

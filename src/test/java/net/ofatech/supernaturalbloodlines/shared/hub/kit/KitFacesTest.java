@@ -87,9 +87,7 @@ class KitFacesTest {
 
     @Test
     void aMissingSpritesFlatColoursAreTheThemesOwnAndTheLabelReadsOnThem() {
-        // the Grimoire, Blood Moon and Tensura paper, accent, muted and ink
-        int[][] themes = {{0xFFE9DCBC, 0xFF7A1218, 0xFF5E4228, 0xFF3B2414}, {0xFF1A0A10, 0xFFFFD36B, 0xFFC9A0A8, 0xFFF0E0E0}, {0xFF12293F, 0xFF3FD0D6, 0xFF8FB2C4, 0xFFE6F3FB}};
-        for (int[] th : themes) {
+        for (int[] th : palettes()) {
             for (KitSprites.Part button : KitFaces.BUTTONS) {
                 int face = KitFaces.flatFace(button.flat(), th[0], th[1], th[2]);
                 double ratio = Contrast.ratio(KitFaces.labelOn(face, th[3]), face);
@@ -112,8 +110,9 @@ class KitFacesTest {
 
     @Test
     void theLetterOnAFlatSealReadsOnTheSealsFlatFace() {
-        // the Grimoire seal letter (cream) and the Blood Moon one (gold) on the themes' accent colours: the flat seal is the accent
-        int[][] sealThemes = {{0xFFE9DCBC, 0xFF7A1218, 0xFF5E4228, 0xFFF0DCB0}, {0xFF1A0A10, 0xFFFFD36B, 0xFFC9A0A8, 0xFFFFD36B}};
+        // the Grimoire seal letter (cream) and the Blood Moon one (gold) on the themes' own accent colours: the flat seal is the accent
+        int[][] palettes = palettes();
+        int[][] sealThemes = {{palettes[0][0], palettes[0][1], palettes[0][2], 0xFFF0DCB0}, {palettes[1][0], palettes[1][1], palettes[1][2], 0xFFFFD36B}};
         boolean someNeededTheFallback = false;
         for (int[] th : sealThemes) {
             int face = KitFaces.flatFace(KitSprites.Part.SEAL.flat(), th[0], th[1], th[2]);
@@ -126,22 +125,34 @@ class KitFacesTest {
 
     @Test
     void textUnderTheWashOfACardDrawnAfterItsContentStillReads() {
-        // paper, accent, muted, ink of the three themes; the wash is the card surface at CARD_OVER_ALPHA over both the text and the paper behind it
-        int[][] themes = {{0xFFE9DCBC, 0xFF7A1218, 0xFF5E4228, 0xFF3B2414}, {0xFF1A0A10, 0xFFFFD36B, 0xFFC9A0A8, 0xFFF0E0E0}, {0xFF12293F, 0xFF3FD0D6, 0xFF8FB2C4, 0xFFE6F3FB}};
+        // the wash is the card surface at CARD_OVER_ALPHA over both the text and the paper behind it, in each theme's own colours
+        int[][] themes = palettes();
         float a = KitSprites.CARD_OVER_ALPHA;
         List<String> bad = new ArrayList<>();
         for (int k = 0; k < themes.length; k++) {
-            int card = KitFaces.face(KitSprites.KITS.get(k), KitSprites.CARD);
+            int card = KitFaces.face(THEMES[k].kit(), KitSprites.CARD);
             int paper = blend(themes[k][0], card, a);
             for (int text : new int[] {themes[k][3], themes[k][2], themes[k][1]}) {
                 double ratio = Contrast.ratio(blend(text, card, a), paper);
                 if (ratio < 4.5) {
-                    bad.add(KitSprites.KITS.get(k) + " text #" + Integer.toHexString(text) + " " + String.format("%.2f", ratio));
+                    bad.add(THEMES[k].kit() + " text #" + Integer.toHexString(text) + " " + String.format("%.2f", ratio));
                 }
             }
         }
         assertTrue(a > 0f && a < 0.5f, "a wash, not a cover");
         assertTrue(bad.isEmpty(), "under the wash: " + bad);
+    }
+
+    private static final net.ofatech.supernaturalbloodlines.shared.hub.HubTheme[] THEMES = {new net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.GrimoireTheme(),
+            new net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.theme.BloodMoonTheme(), new net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.client.TensuraHubTheme()};
+
+    /** Paper, accent, muted and ink of the Grimoire, the Blood Moon and Tensura, read from the themes. */
+    private static int[][] palettes() {
+        int[][] out = new int[THEMES.length][];
+        for (int i = 0; i < THEMES.length; i++) {
+            out[i] = new int[] {THEMES[i].paper(), THEMES[i].accent(), THEMES[i].muted(), THEMES[i].ink()};
+        }
+        return out;
     }
 
     private static int blend(int under, int over, float a) {

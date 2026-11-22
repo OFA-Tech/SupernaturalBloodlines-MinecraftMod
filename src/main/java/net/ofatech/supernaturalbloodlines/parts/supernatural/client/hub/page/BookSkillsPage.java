@@ -17,6 +17,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.Radial;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.SkillIcons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.NodeLook;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.NodeSize;
 import org.jetbrains.annotations.Nullable;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.RingLabels;
@@ -201,7 +202,7 @@ public final class BookSkillsPage implements HubPageView {
             asked.add(l.request());
         }
         // a name that would run into a neighbour, a node or the model is cut shorter (and ends in an ellipsis) rather than printed over them
-        List<Rect> where = RingLabels.place(asked, blocked, new Rect(s.x(), top - 24, s.w(), s.bottom() - top + 24), NAME_MIN, 4);
+        List<Rect> where = net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.ring(asked, blocked, new Rect(s.x(), top - 24, s.w(), s.bottom() - top + 24), NAME_MIN, 4);
         for (int i = 0; i < rows.size(); i++) {
             node(f, rows.get(i), ring.get(i), rows.get(i) == chosen, labels.get(i), where.get(i));
         }
@@ -222,7 +223,7 @@ public final class BookSkillsPage implements HubPageView {
         // a node near the page edge has no room beside it for even a short name: it goes over or under the node instead of running off the page
         boolean beside = Math.abs(dx) * 2 > radius && sideRoom >= 30;
         int room = Math.max(24, Math.min(110, beside ? sideRoom : labelWidth));
-        List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(SkillsPage.name(row).getString(), room, 2, f.font()::width);
+        List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.wrap(f.font(), SkillsPage.name(row).getString(), room, 2, f.font()::width);
         int w = lines.stream().mapToInt(f.font()::width).max().orElse(0);
         int height = lines.size() * 9;
         int y = beside ? n.y() - height / 2 : n.y() >= cy ? n.y() + size / 2 + 2 : n.y() - size / 2 - 2 - height;
@@ -235,32 +236,41 @@ public final class BookSkillsPage implements HubPageView {
     /** One skill: owned is filled, available is ringed in gold, locked is a faint dotted ring; its icon inside and its name in up to two lines beside or under it. */
     private void node(HubScreen.Frame f, HubSkills.Row row, Radial.Node n, boolean selected, NodeLabel plan, @Nullable Rect at) {
         HubTheme t = f.theme();
-        boolean known = row.state() == HubSkills.State.OWNED || row.state() == HubSkills.State.COVERED;
-        boolean locked = row.state() == HubSkills.State.LOCKED || row.state() == HubSkills.State.DORMANT;
+        NodeLook.Look look = NodeLook.of(kindOf(row.state()), selected);
+        boolean locked = look.tickRing();
         int size = nodeSize;
         int x = n.x() - size / 2;
         int y = n.y() - size / 2;
+        int iconColor = look.dimIcon() ? 0x70FFFFFF : 0xFFFFFFFF;
+        int tick = (t.muted() & 0xFFFFFF) | 0xA0000000;
         if (size == NodeSize.BIG) {
-            // the kit's node: lit for a skill the player has, haloed for the chosen one, plain for the rest; the picture sits in its well
-            UiKit.draw(f.g, t, selected ? Part.NODE_SELECTED : known ? Part.NODE_ON : Part.NODE_OFF, x, y, size, size);
-            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, locked ? 0x70FFFFFF : 0xFFFFFFFF);
+            // the kit's node says the same things as the small one, round its picture: a halo for the chosen one, a gold rim for an available skill, a dotted ring for a locked one
+            if (look.halo()) {
+                KitDraw.shape(f.g, shape, x - 3, y - 3, size + 6, t.accent());
+            }
+            if (look.goldRing()) {
+                KitDraw.shape(f.g, shape, x - 1, y - 1, size + 2, GOLD);
+            }
+            UiKit.draw(f.g, t, look.filled() ? Part.NODE_ON : Part.NODE_OFF, x, y, size, size);
+            if (look.tickRing()) {
+                KitDraw.tickRing(f.g, n.x(), n.y(), size / 2, 16, 0f, tick, tick);
+            }
+            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, iconColor);
         } else {
-            if (selected) {
+            if (look.halo()) {
                 KitDraw.shape(f.g, shape, x - 3, y - 3, size + 6, t.accent());
                 KitDraw.shape(f.g, shape, x - 2, y - 2, size + 4, t.paper());
             }
             // the skill's own picture (16 px, in its own colours): a locked one is dimmed, never recoloured
-            if (known) {
+            if (look.filled()) {
                 KitDraw.shape(f.g, shape, x, y, size, t.good());
-                KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0xFFFFFFFF);
-            } else if (locked) {
-                KitDraw.tickRing(f.g, n.x(), n.y(), size / 2, 16, 0f, (t.muted() & 0xFFFFFF) | 0xA0000000, (t.muted() & 0xFFFFFF) | 0xA0000000);
-                KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0x70FFFFFF);
+            } else if (look.tickRing()) {
+                KitDraw.tickRing(f.g, n.x(), n.y(), size / 2, 16, 0f, tick, tick);
             } else {
                 KitDraw.shape(f.g, shape, x, y, size, GOLD);
                 KitDraw.shape(f.g, shape, x + 2, y + 2, size - 4, t.paper());
-                KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0xFFFFFFFF);
             }
+            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, iconColor);
         }
         int color = selected ? t.accent() : locked ? t.muted() : t.ink();
         Rect hit = new Rect(n.x() - size / 2 - 2, n.y() - size / 2 - 2, size + 4, size + 4);
@@ -268,7 +278,7 @@ public final class BookSkillsPage implements HubPageView {
         List<String> lines = List.of();
         if (at != null) {
             // wrapped again to the room it was given: by words, and a word that is too long ends in an ellipsis
-            lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(SkillsPage.name(row).getString(), at.w(), 2, f.font()::width);
+            lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.wrap(f.font(), SkillsPage.name(row).getString(), at.w(), Math.max(1, at.h() / RingLabels.LINE), f.font()::width);
             int ly = at.y();
             for (var line : lines) {
                 int lw = f.font().width(line);
@@ -286,6 +296,15 @@ public final class BookSkillsPage implements HubPageView {
             KitDraw.focusRing(f.g, hit, t.focusColor());
         }
     }
+    /** What a skill's state says on its node, in every size. */
+    static NodeLook.Kind kindOf(HubSkills.State state) {
+        return switch (state) {
+            case OWNED, COVERED -> NodeLook.Kind.OWNED;
+            case LOCKED, DORMANT -> NodeLook.Kind.LOCKED;
+            case BUYABLE -> NodeLook.Kind.AVAILABLE;
+        };
+    }
+
     private int tabs(HubScreen.Frame f, Rect s, int y) {
         List<SkillsPage.Tab> shown = new ArrayList<>(List.of(SkillsPage.Tab.OURS));
         var faction = SkillsPage.faction(f.view.player());

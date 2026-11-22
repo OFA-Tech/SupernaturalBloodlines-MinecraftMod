@@ -805,8 +805,15 @@ public final class HubScreen extends Screen {
     }
 
     @Override
+    protected void init() {
+        super.init();
+        net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.clear(); // a resize or a reload starts the cache again
+    }
+
+    @Override
     public void removed() {
         super.removed();
+        net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.clear();
         lastView = null;
         net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiMotion.clear();
         KitDraw.activeTheme(null);
@@ -929,6 +936,11 @@ public final class HubScreen extends Screen {
         /** Where the clip of the region being drawn ends (no limit outside a region): a row that would cross it is not drawn, see {@link net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint#rowFits}. */
         public int clipBottom() {
             return clip == null ? Integer.MAX_VALUE : clip.bottom();
+        }
+
+        /** Whether a row {@code h} tall at {@code y} is whole above the clip: the pages draw only such rows (their targets are registered either way). */
+        public boolean whole(int y, int h) {
+            return net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.rowFits(y, h, clipBottom());
         }
 
         /** Ends the region; {@code bottom} is where its content ended, which bounds its scroll. */

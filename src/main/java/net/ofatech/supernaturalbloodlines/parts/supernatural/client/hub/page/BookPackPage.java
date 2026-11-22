@@ -15,6 +15,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.PackRing;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.RingLabels;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 import org.jetbrains.annotations.Nullable;
@@ -205,7 +206,7 @@ public final class BookPackPage implements HubPageView {
         HubTheme t = f.theme();
         Rect r = f.region(ledgerRegion);
         if (style == Style.BOOK) {
-            f.reserve(ledgerRegion, BookKit.SEAL + 8); // the ACCEPT seal is pinned at the foot of the page
+            f.reserve(ledgerRegion, BookKit.sealReserve()); // the ACCEPT seal and the line that says what it accepts are pinned at the foot of the page
         }
         int y = BookKit.head(f, ledgerRegion, Component.translatable(KEY + "title"), Component.translatable(BOOK + "subtitle"));
         y = PageKit.title(f, Component.translatable(KEY + "rank", rankLabel(f, wolf)), r.x(), y, r.w(), t.accent());
@@ -302,8 +303,8 @@ public final class BookPackPage implements HubPageView {
                     List.of(Component.translatable(KEY + "accept")));
             PackInvite.buttons(f, new Rect(r.x() + BookKit.SEAL + 8, sy + 2, r.w() - BookKit.SEAL - 8, PageWidgets.H), sy + 2, mayInvite);
             // the seal says only ACCEPT: the line beside it says what it accepts
-            String note = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(Component.translatable(KEY + "accept").getString(), r.w() - BookKit.SEAL - 8, f.font()::width);
-            f.g.drawString(f.font(), note, r.x() + BookKit.SEAL + 8, sy + BookKit.SEAL_NOTE_DY, t.muted(), false);
+            String note = net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.cut(f.font(), Component.translatable(KEY + "accept").getString(), r.w(), f.font()::width);
+            f.g.drawString(f.font(), note, r.x(), BookKit.sealNoteY(sy), t.muted(), false);
             if (!pack.isEmpty()) {
                 BookKit.link(f, "pack:leave", Component.translatable(KEY + "leave"), r.x() + BookKit.SEAL + 8, sy + 24, List.of(Component.translatable(KEY + "leave")),
                         () -> f.confirm(Component.translatable(BOOK + "leave_title"), Component.translatable(BOOK + "leave_body"), Component.translatable(BOOK + "leave_yes"),
@@ -397,7 +398,7 @@ public final class BookPackPage implements HubPageView {
         f.view.snapshot().npcs().forEach(n -> members.add(new PackRing.Member(n.name(), role(n.source()))));
         int face = members.size() > 8 ? 12 : 16;
         // the faces sit on a ring; their names go outward (beside the side ones, over the top ones, under the bottom ones), small, inside the page
-        int radius = Math.max(26, Math.min(areaW / 2 - 52, (s.bottom() - legend - top) / 2 - face / 2 - 12));
+        int radius = PackRing.radiusFor(areaW, s.bottom() - legend - top, face);
         int inner = Math.max(14, radius * 2 / 5);
         f.emblem(new Rect(cx - inner - 2, cy - inner - 2, 2 * inner + 4, 2 * inner + 4));
         Component you = Component.translatable(BOOK + "you", f.view.player().getName(), Component.translatable(KEY + "rank." + wolf.rank().name().toLowerCase(Locale.ROOT)));
@@ -408,7 +409,7 @@ public final class BookPackPage implements HubPageView {
         if (showYou) {
             BookKit.small(f, you, cx - yw / 2, cy + inner + 4, yw + 4, t.accent());
         }
-        boolean named = ring.slots().size() <= NAMED_MAX && radius >= 40; // a crowded or small ring keeps the faces and the tooltips (the ledger has the names)
+        boolean named = ring.slots().size() <= NAMED_MAX && radius >= PackRing.NAMED_RADIUS; // a crowded or small ring keeps the faces and the tooltips (the ledger has the names)
         // what a name may not cover: every face with its ring, the emblem, and the "you" line under the model
         List<Rect> blocked = new ArrayList<>();
         blocked.add(new Rect(cx - inner - 2, cy - inner - 2, 2 * inner + 4, 2 * inner + 4));
@@ -420,7 +421,7 @@ public final class BookPackPage implements HubPageView {
             int size = slot.size();
             blocked.add(new Rect(slot.x() - size / 2 - 2, slot.y() - size / 2 - 2, size + 4, size + 4));
             if (named) {
-                String n = LabelFit.cut(slot.member().id(), 56, f.font()::width);
+                String n = TextCache.cut(f.font(), slot.member().id(), 56, f.font()::width);
                 int nw = BookKit.smallWidth(f, n);
                 int side = Math.abs(slot.x() - cx) > radius / 2 ? (slot.x() > cx ? 1 : -1) : 0;
                 int ny = side != 0 ? slot.y() - 3 : slot.y() < cy ? slot.y() - size / 2 - 11 : slot.y() + size / 2 + 3;
@@ -429,7 +430,7 @@ public final class BookPackPage implements HubPageView {
                         : new RingLabels.Request(slot.x() - size / 2 - 3, ny, nw, 9, RingLabels.Anchor.RIGHT));
             }
         }
-        List<Rect> where = RingLabels.place(asked, blocked, new Rect(s.x(), top - 12, areaW, s.bottom() - top + 12), RING_NAME_MIN, 2);
+        List<Rect> where = TextCache.ring(asked, blocked, new Rect(s.x(), top - 12, areaW, s.bottom() - top + 12), RING_NAME_MIN, 2);
         int named_i = 0;
         for (PackRing.Slot slot : ring.slots()) {
             int size = slot.size();
@@ -438,7 +439,7 @@ public final class BookPackPage implements HubPageView {
             if (named) {
                 Rect at = where.get(named_i++);
                 if (at != null) {
-                    String n = LabelFit.cut(slot.member().id(), Math.min(56, at.w()), f.font()::width);
+                    String n = TextCache.cut(f.font(), slot.member().id(), Math.min(56, at.w()), f.font()::width);
                     BookKit.small(f, Component.literal(n), at.x(), at.y(), at.w() + 4, slot.member().role().small() ? t.muted() : t.ink());
                 }
             }

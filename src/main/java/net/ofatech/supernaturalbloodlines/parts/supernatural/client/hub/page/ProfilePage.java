@@ -86,7 +86,8 @@ public final class ProfilePage implements HubPageView {
         if (route.op()) {
             Component banner = Component.translatable(KEY + "op_banner");
             int h = f.font().split(banner, r.w() - 8).size() * PageKit.LINE + 4;
-            int ink = BookKit.chip(f, new Rect(r.x(), y, r.w(), h), true);
+            BookKit.card(f, new Rect(r.x(), y, r.w(), h), t.accent());
+            int ink = net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit.label(t, net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.CARD);
             int yy = y + 2;
             for (var line : f.font().split(banner, r.w() - 8)) {
                 f.g.drawString(f.font(), line, r.x() + 4, yy, ink, false);
@@ -239,7 +240,8 @@ public final class ProfilePage implements HubPageView {
             DuelView v = duel.get();
             Component line = Component.translatable(v.langKey(), v.opponent().isEmpty() ? route.name() : v.opponent(), v.clock());
             int h = f.font().split(line, s.w() - 8).size() * PageKit.LINE + 4;
-            int ink = BookKit.chip(f, new Rect(s.x(), y, s.w(), h), true);
+            BookKit.card(f, new Rect(s.x(), y, s.w(), h), t.accent());
+            int ink = net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit.label(t, net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.CARD);
             int yy = y + 2;
             for (var l : f.font().split(line, s.w() - 8)) {
                 f.g.drawString(f.font(), l, s.x() + 4, yy, ink, false);

@@ -124,4 +124,17 @@ class PackRingTest {
         assertEquals(20, layout.size());
         assertEquals(0, layout.hidden());
     }
-}
+
+    @Test
+    void aNarrowAreaGrowsTheRingToItsWidthSoTheNamesOnTopAndBottomHaveRoom() {
+        // a middle column of Tensura's hub at scale 4: 137 wide, 130 tall, faces of 12
+        int radius = PackRing.radiusFor(137, 130, 12);
+        assertTrue(radius >= PackRing.NAMED_RADIUS, "the ring named nobody at " + radius);
+        assertTrue(radius + 12 / 2 + 2 <= 137 / 2, "the faces stay inside the area: " + radius);
+    }
+
+    @Test
+    void aWideAreaKeepsRoomBesideTheSidePortraitsForTheirNames() {
+        assertEquals(47, PackRing.radiusFor(400, 130, 12));
+        assertTrue(PackRing.radiusFor(200, 400, 16) <= 200 / 2 - PackRing.NAME_RESERVE);
+    }}

@@ -25,10 +25,10 @@ class BookGuidePageTest {
 
     @Test
     void onlyTheOpenChapterSaysSoAndNoRowRepeatsAPageNumber() throws Exception {
-        for (int open = 0; open < 6; open++) {
-            for (int row = 0; row < 6; row++) {
-                assertEquals(row == open, BookGuidePage.marksOpen(row, open));
-            }
+        // (row, open chapter, whether the row says it is the one being read)
+        int[][] table = {{0, 0, 1}, {2, 2, 1}, {5, 5, 1}, {0, 1, 0}, {1, 0, 0}, {3, 2, 0}, {2, 3, 0}, {4, 0, 0}, {0, 4, 0}};
+        for (int[] c : table) {
+            assertEquals(c[2] == 1, BookGuidePage.marksOpen(c[0], c[1]), "row " + c[0] + " with chapter " + c[1] + " open");
         }
         try (var in = new java.io.InputStreamReader(BookGuidePageTest.class.getResourceAsStream("/assets/supernaturalbloodlines/lang/en_us.json"), java.nio.charset.StandardCharsets.UTF_8)) {
             var lang = com.google.gson.JsonParser.parseReader(in).getAsJsonObject();

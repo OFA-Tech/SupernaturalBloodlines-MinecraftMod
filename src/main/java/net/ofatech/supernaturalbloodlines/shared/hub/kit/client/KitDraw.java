@@ -179,7 +179,7 @@ public final class KitDraw {
         int w = tagWidth(font, tag);
         UiKit.draw(g, theme, Part.CHIP, x, y, w, SourceTag.HEIGHT);
         // the picture is the same for every mod; the stripe inside it is the mod's colour, so SB, VMP, WW, ENC and TEN are still told apart at a glance
-        g.fill(x + SourceTag.STRIPE_X, y + SourceTag.STRIPE_Y, x + SourceTag.STRIPE_X + SourceTag.STRIPE_W, y + SourceTag.STRIPE_Y + SourceTag.STRIPE_H, theme.sourceColor(tag.source()));
+        g.fill(x + SourceTag.STRIPE_X, y + SourceTag.STRIPE_Y + 1, x + SourceTag.STRIPE_X + SourceTag.STRIPE_W, y + SourceTag.STRIPE_Y + 1 + SourceTag.STRIPE_H, theme.sourceColor(tag.source()));
         g.drawString(font, tag.label(), x + SourceTag.TEXT_X, y + 1, UiKit.labelOver(theme, Part.CHIP, theme.ink()), false);
         return w;
     }

@@ -50,28 +50,13 @@ public final class RingLabels {
     public static List<@Nullable Rect> place(List<Request> requests, List<Rect> blocked, Rect bounds, int minWidth, int gap) {
         List<Rect> placed = new ArrayList<>();
         List<Rect> out = new ArrayList<>();
-        for (Request r : requests) {
-            Rect found = null;
-            for (int w = r.w(); w >= minWidth && found == null; w--) {
-                for (int variant = 0; variant < 5 && found == null; variant++) {
-                    Rect cand = at(r, w, variant);
-                    // kept inside the page by sliding, as a name at the page edge always was
-                    int dx = Math.max(bounds.x() - cand.x(), Math.min(0, bounds.right() - cand.right()));
-                    cand = new Rect(cand.x() + dx, cand.y(), cand.w(), cand.h());
-                    if (!cand.inside(bounds)) {
-                        continue;
-                    }
-                    boolean clear = true;
-                    for (Rect b : blocked) {
-                        clear &= !cand.overlaps(b);
-                    }
-                    Rect padded = cand.inset(-gap / 2);
-                    for (Rect p : placed) {
-                        clear &= !padded.overlaps(p.inset(-gap / 2));
-                    }
-                    if (clear) {
-                        found = cand;
-                    }
+        for (Request asked : requests) {
+            Request r = asked;
+            Rect found = search(r, blocked, bounds, minWidth, gap, placed);
+            if (found == null && r.h() > LINE) {
+                // two lines do not fit where it stands: one line, cut with an ellipsis (the caller draws as many lines as the rectangle is tall), at the end of the block nearer the face first
+                for (int y : new int[] {r.y(), r.y() + r.h() - LINE}) {
+                    found = found != null ? found : search(new Request(r.x(), y, r.w(), LINE, r.anchor()), blocked, bounds, minWidth, gap, placed);
                 }
             }
             out.add(found);
@@ -80,5 +65,34 @@ public final class RingLabels {
             }
         }
         return out;
+    }
+
+    /** The height of one line of a name. */
+    public static final int LINE = 9;
+
+    private static @Nullable Rect search(Request r, List<Rect> blocked, Rect bounds, int minWidth, int gap, List<Rect> placed) {
+        for (int w = r.w(); w >= minWidth; w--) {
+            for (int variant = 0; variant < 5; variant++) {
+                Rect cand = at(r, w, variant);
+                // kept inside the page by sliding, as a name at the page edge always was
+                int dx = Math.max(bounds.x() - cand.x(), Math.min(0, bounds.right() - cand.right()));
+                cand = new Rect(cand.x() + dx, cand.y(), cand.w(), cand.h());
+                if (!cand.inside(bounds)) {
+                    continue;
+                }
+                boolean clear = true;
+                for (Rect b : blocked) {
+                    clear &= !cand.overlaps(b);
+                }
+                Rect padded = cand.inset(-gap / 2);
+                for (Rect p : placed) {
+                    clear &= !padded.overlaps(p.inset(-gap / 2));
+                }
+                if (clear) {
+                    return cand;
+                }
+            }
+        }
+        return null;
     }
 }

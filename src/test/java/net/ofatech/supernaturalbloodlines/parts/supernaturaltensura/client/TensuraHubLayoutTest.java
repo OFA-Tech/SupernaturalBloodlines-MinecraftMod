@@ -105,4 +105,15 @@ class TensuraHubLayoutTest {
             org.junit.jupiter.api.Assertions.assertTrue(side.x() - barRight >= net.ofatech.supernaturalbloodlines.shared.hub.kit.KitMetrics.SCROLL_AIR,
                     s[0] + "x" + s[1] + ": " + (side.x() - barRight) + " px between the bar and the next column");
         }
+    }
+
+    @Test
+    void theScrollBarOfTheSideColumnHasAirBeforeTheInfoPaneAtEveryScreen() {
+        for (int[] s : new int[][] {{320, 180}, {427, 240}, {480, 270}, {640, 360}, {960, 540}}) {
+            var layout = TensuraHubLayout.of(s[0], s[1], 10, 3);
+            var side = layout.region(HubLayout.SIDE);
+            int barRight = side.right() + 1 + net.ofatech.supernaturalbloodlines.shared.hub.kit.KitMetrics.SCROLL_W;
+            int air = layout.chrome().detail().x() - barRight;
+            assertTrue(air >= net.ofatech.supernaturalbloodlines.shared.hub.kit.KitMetrics.SCROLL_AIR, s[0] + "x" + s[1] + ": " + air + " px between the bar and the info pane");
+        }
     }}

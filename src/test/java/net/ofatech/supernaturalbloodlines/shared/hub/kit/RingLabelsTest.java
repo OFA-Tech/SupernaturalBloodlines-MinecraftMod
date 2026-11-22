@@ -122,4 +122,19 @@ class RingLabelsTest {
         assertEquals(50, out.get(0).w());
         assertEquals(50, out.get(1).w(), "it slid, it was not cut: " + out.get(1));
         assertFalse(out.get(0).inset(-1).overlaps(out.get(1)), out.get(0) + " and " + out.get(1));
+    }
+    @Test
+    void aTwoLineNameThatDoesNotFitAboveTheBottomEdgeIsKeptAsOneLineBeforeItIsDropped() {
+        // a name under the lowest node: its second line would stand below the page
+        List<Rect> out = RingLabels.place(List.of(new Request(100, 285, 50, 18, Anchor.CENTER)), List.of(), PAGE, 12, 2);
+        assertNotNull(out.get(0), "the name is not lost");
+        assertEquals(9, out.get(0).h(), "one line");
+        assertTrue(out.get(0).inside(PAGE), out.get(0).toString());
+    }
+
+    @Test
+    void aNameIsNotMovedOrShortenedWhenItFitsWhereItWasAsked() {
+        List<Rect> out = RingLabels.place(List.of(new Request(100, 50, 50, 18, Anchor.CENTER)), List.of(), PAGE, 12, 2);
+        assertEquals(18, out.get(0).h());
+        assertEquals(50, out.get(0).w());
     }}

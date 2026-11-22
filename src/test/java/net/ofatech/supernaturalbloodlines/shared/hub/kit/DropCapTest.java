@@ -32,7 +32,7 @@ class DropCapTest {
 
     @Test
     void noLineIsWiderThanItsRoomAndNoWordIsLostOrBroken() {
-        for (int width : new int[] {60, 90, 140, 200}) {
+        for (int width : new int[] {70, 90, 140, 200}) {
             List<DropCap.Line> lines = DropCap.layout(REST, width, 13, 2, DropCapTest::width);
             StringBuilder all = new StringBuilder();
             for (DropCap.Line l : lines) {
@@ -47,4 +47,11 @@ class DropCapTest {
     void anEmptyParagraphHasNoLines() {
         assertTrue(DropCap.layout("   ", 100, 13, 2, DropCapTest::width).isEmpty());
     }
-}
+
+    @Test
+    void oneWordWiderThanItsLineEndsInAnEllipsisInsteadOfRunningOffThePage() {
+        List<DropCap.Line> lines = DropCap.layout("Supercalifragilisticexpialidocious", 60, 13, 2, DropCapTest::width);
+        assertEquals(1, lines.size());
+        assertTrue(lines.get(0).text().endsWith("\u2026"), lines.get(0).text());
+        assertTrue(width(lines.get(0).text()) <= 60 - 13, lines.get(0).text());
+    }}

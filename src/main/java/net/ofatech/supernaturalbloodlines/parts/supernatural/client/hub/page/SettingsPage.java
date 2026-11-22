@@ -63,7 +63,7 @@ public final class SettingsPage implements HubPageView {
             Component label = Component.translatable(KEY + "protect");
             int top = y + 4;
             y = PageKit.wrapped(f, label, r.x() + 4, top, r.w() - 44, t.ink());
-            Rect b = new Rect(r.right() - 36, top - 1, 36, PageWidgets.H);
+            Rect b = PageWidgets.rightBox(r, top - 1, 36);
             boolean on = wolf.protectPath();
             PageWidgets.toggle(f, "stage:settings:protect", b, on, label, () -> {
                 ProfileActions.Action a = ProfileActions.protectAction(on); // the same action, and the same question, as the Profile
@@ -135,7 +135,7 @@ public final class SettingsPage implements HubPageView {
         }
         String id = "stage:settings:" + e.dottedPath();
         if (e.kind() == SettingKind.BOOL) {
-            Rect b = new Rect(r.right() - 36, top - 1, 36, PageWidgets.H);
+            Rect b = PageWidgets.rightBox(r, top - 1, 36);
             boolean on = (Boolean) cv.get();
             PageWidgets.toggle(f, id, b, on, label, () -> {
                 cv.set(!on);
