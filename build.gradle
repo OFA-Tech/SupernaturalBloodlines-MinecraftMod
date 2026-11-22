@@ -219,6 +219,10 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // -PtensuraSlotsJar=<path to tensuraslots-1.0.0.jar> adds Tensura Slots to the run classpath (it hooks the same methods as our next-preset mixin)
+    if (project.hasProperty('tensuraSlotsJar')) {
+        localRuntime files(project.property('tensuraSlotsJar'))
+    }
     if (linkedRuntime) {
         localRuntime("de.teamlapen.vampirism:Vampirism:${vampirism_version}") { transitive = false }
         localRuntime("net.favouriteless.enchanted:enchanted-neoforge-1.21.1:${enchanted_version}") { transitive = false }

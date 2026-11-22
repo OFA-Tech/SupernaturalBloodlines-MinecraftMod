@@ -56,7 +56,7 @@ public final class SupernaturalBloodlines {
         if (mods.isLoaded("vampirism")) {
             modBus.addListener((net.neoforged.neoforge.event.AddPackFindersEvent e) -> e.addPackFinders(
                     ResourceLocation.fromNamespaceAndPath(MODID, "resourcepacks/vampirism_blood"), PackType.SERVER_DATA,
-                    Component.literal("Supernatural Bloodlines: Vampirism blood values"), PackSource.BUILT_IN, true, Pack.Position.TOP));
+                    Component.literal("Supernatural Bloodlines: Vampirism blood values"), PackSource.BUILT_IN, true, Pack.Position.BOTTOM));
         }
         // Config.COMMON is not loaded yet at construction, so read the file directly (see EarlySwitches)
         net.ofatech.supernaturalbloodlines.core.LinkedMods.warnUntested(id -> mods.getModContainerById(id).map(c -> c.getModInfo().getVersion().toString()).orElse(null), LOGGER);
