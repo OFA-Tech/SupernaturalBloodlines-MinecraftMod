@@ -42,6 +42,14 @@ class KitMetricsTest {
     }
 
     @Test
+    void aBarBoxShorterThanSixPixelsKeepsToFlatColoursSoItNeverRunsIntoTheLinesAround() {
+        assertTrue(!KitMetrics.barFitsPicture(4));
+        assertTrue(!KitMetrics.barFitsPicture(5));
+        assertTrue(KitMetrics.barFitsPicture(6));
+        assertTrue(KitMetrics.barFitsPicture(8));
+    }
+
+    @Test
     void aFillIsProportionalAndNeverMoreThanTheTrack() {
         assertEquals(0, KitMetrics.barFill(50, 0f));
         assertEquals(25, KitMetrics.barFill(50, 0.5f));

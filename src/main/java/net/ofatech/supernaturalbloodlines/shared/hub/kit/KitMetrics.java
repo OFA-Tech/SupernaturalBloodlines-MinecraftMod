@@ -8,6 +8,16 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
 public final class KitMetrics {
     /** The height of the bar track picture; a bar is drawn at this height, centred on the box it was asked for. */
     public static final int BAR_H = 8;
+    /**
+     * A box shorter than this is not drawn with the 8 px track picture (it would run into the line above and below): it gets flat colours until the page
+     * that asks for it gives the bar room (phase 5).
+     */
+    public static final int MIN_BAR_BOX = 6;
+
+    public static boolean barFitsPicture(int boxHeight) {
+        return boxHeight >= MIN_BAR_BOX;
+    }
+
     /** The height of the bar fill picture, and the track's inset above and below it. */
     public static final int BAR_FILL_H = 4;
     /** The width of the scroll bar pictures. */

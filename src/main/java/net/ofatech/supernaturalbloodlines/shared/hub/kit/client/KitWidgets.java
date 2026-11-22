@@ -24,6 +24,11 @@ public final class KitWidgets {
 
     /** A progress bar: the track picture centred on {@code r} (it is 8 px tall; the box may be less) and the fill inside its edges. */
     public static void bar(GuiGraphics g, HubTheme theme, Rect r, float fraction) {
+        if (!KitMetrics.barFitsPicture(r.h())) {
+            g.fill(r.x(), r.y(), r.right(), r.bottom(), theme.muted() & 0xFFFFFF | 0x80000000);
+            g.fill(r.x(), r.y(), r.x() + KitMetrics.barFill(r.w(), fraction), r.bottom(), theme.accent());
+            return;
+        }
         int cy = r.y() + r.h() / 2;
         UiKit.draw(g, theme, Part.BAR_TRACK, r.x(), cy - KitMetrics.BAR_H / 2, r.w(), KitMetrics.BAR_H);
         int inset = KitMetrics.barInset(theme.kit());

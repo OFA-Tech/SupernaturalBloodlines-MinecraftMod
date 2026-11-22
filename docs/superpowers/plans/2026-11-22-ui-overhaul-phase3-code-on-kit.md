@@ -80,10 +80,10 @@
 
 ### Task 7: Verify
 
-- [ ] `./gradlew.bat test` green.
-- [ ] The 12 GameTest runs, one at a time with `--max-workers=2`: default, `-PnoWerewolves -PnoCurios`, `-PnoLinkedMods`, then `-PpartsOff=` with each of `species`, `artifacts`, `speciesTensura`, `supernatural`, `supernaturalTensura`, `hud`, `celestials`, `bosses`, and `species,artifacts`. Restore `run/config` after any killed run.
-- [ ] Hidden shots of every hub page in the three themes at GUI scales 2 and 4, plus the HUD; opened and checked for blur, misalignment and low contrast; fixes made.
-- [ ] Push, PR into `main`, green CI. Not merged.
+- [x] `./gradlew.bat test` green (1914 tests, 0 failures; each new rule was reverted once and its test failed).
+- [x] The 12 GameTest runs (all green: 1548, 1051, 29, 371, 1436, 1442, 1421, 1538, 1467, 1532, 1233, 270), one at a time with `--max-workers=2`: default, `-PnoWerewolves -PnoCurios`, `-PnoLinkedMods`, then `-PpartsOff=` with each of `species`, `artifacts`, `speciesTensura`, `supernatural`, `supernaturalTensura`, `hud`, `celestials`, `bosses`, and `species,artifacts`. Restore `run/config` after any killed run.
+- [x] Hidden shots of every hub page in the three themes at GUI scales 2 and 4, plus the HUD; opened and checked for blur, misalignment and low contrast; fixes made.
+- [x] Push, PR into `main`, green CI. Not merged.
 
 ## Left for phases 4 to 6 (listed, not built)
 
@@ -92,3 +92,8 @@
 | 4 HUD | `SlotArt` slot frames, key badges, mastery bars, the blood ring, the cooldown pie (sprites `slot*`, `key_badge*`, `mastery_*`, `shared/*` exist), `HudChrome`, Alt panels; `UiMotion.glowPercent` for the ready glow and the press pop |
 | 5 Hub screens | Every page's own drawing: source tags (`chip*`), the skill medallions and nodes (`node_*`), cards and rows still using `KitDraw.shape`, `emblem` and `cover_art`, corners and flourishes, page-turn and press motion, hover states of tabs (`tab_hover`), `button_pressed` and `tab_disabled`, the layout tests moving to the approved geometry, icon sizes of 16 where a page still asks for 12 |
 | 6 Boss bars | `boss_*` sprites, `BossBarView`, the health tween (`Motion.BOSS_HEALTH`) |
+
+## Shots
+
+66 hidden shots (3 themes x 10 pages x scales 2 and 4, plus the HUD in 3 themes x 2 scales) are in un-safeshots/final-shots/ (git-ignored); a selection is in docs/superpowers/design/ui-overhaul/phase3/, and 
+o-kit/ shows the flat fallback with the Grimoire sprites removed. The ability HUD is unchanged in this phase (its slot art is phase 4).
