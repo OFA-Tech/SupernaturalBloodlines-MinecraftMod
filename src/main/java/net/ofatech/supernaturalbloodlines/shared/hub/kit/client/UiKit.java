@@ -12,8 +12,9 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.metadata.gui.GuiSpriteScaling;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
-import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.FrameStrip;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitColors;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitFaces;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Flat;
@@ -64,6 +65,7 @@ public final class UiKit {
         ICONS_16.clear();
         ICONS_32.clear();
         SKILLS.clear();
+        STRIPS.clear();
     }
 
     public static boolean has(String sprite) {
@@ -129,16 +131,16 @@ public final class UiKit {
         }
     }
 
-    public static void draw(GuiGraphics g, HubTheme theme, Part part, Rect r) {
+    public static void draw(GuiGraphics g, KitColors theme, Part part, Rect r) {
         draw(g, theme, part, r.x(), r.y(), r.w(), r.h(), 1f);
     }
 
     /** {@code part} of the theme's kit stretched, sliced or tiled over the box; flat colours when its sprite is missing. */
-    public static void draw(GuiGraphics g, HubTheme theme, Part part, int x, int y, int w, int h) {
+    public static void draw(GuiGraphics g, KitColors theme, Part part, int x, int y, int w, int h) {
         draw(g, theme, part, x, y, w, h, 1f);
     }
 
-    public static void draw(GuiGraphics g, HubTheme theme, Part part, int x, int y, int w, int h, float alpha) {
+    public static void draw(GuiGraphics g, KitColors theme, Part part, int x, int y, int w, int h, float alpha) {
         if (w <= 0 || h <= 0) {
             return;
         }
@@ -178,7 +180,7 @@ public final class UiKit {
     }
 
     /** What a part looks like without its sprite: the theme's own colours, one fill and an outline, so it stays readable. */
-    public static void flat(GuiGraphics g, HubTheme theme, Flat kind, int x, int y, int w, int h) {
+    public static void flat(GuiGraphics g, KitColors theme, Flat kind, int x, int y, int w, int h) {
         switch (kind) {
             case NONE -> {
             }
@@ -202,23 +204,68 @@ public final class UiKit {
     }
 
     /** The colour of the label on a kit button of {@code theme}: read on the picture when there is one, on the flat colours that replace it when there is not. */
-    public static int label(HubTheme theme, Part button) {
+    public static int label(KitColors theme, Part button) {
         return entry(theme.kit(), button).present() ? KitFaces.label(theme.kit(), button, theme.ink())
                 : KitFaces.labelOn(KitFaces.flatFace(button.flat(), theme.paper(), theme.accent(), theme.muted()), theme.ink());
     }
 
     /** {@code preferred} for text on {@code part} while its picture is there; on the flat colours that replace a missing picture, white or black when {@code preferred} would not read on them. */
-    public static int labelOver(HubTheme theme, Part part, int preferred) {
+    public static int labelOver(KitColors theme, Part part, int preferred) {
         return entry(theme.kit(), part).present() ? preferred : KitFaces.labelOn(KitFaces.flatFace(part.flat(), theme.paper(), theme.accent(), theme.muted()), preferred);
     }
 
     /** The focus ring round {@code r}: the kit's picture (two pixels outside it), or the theme's focus colour in a two pixel frame when the picture is gone. */
-    public static void focus(GuiGraphics g, HubTheme theme, Rect r) {
+    public static void focus(GuiGraphics g, KitColors theme, Rect r) {
         if (entry(theme.kit(), Part.FOCUS).present()) {
             draw(g, theme, Part.FOCUS, r.x() - 3, r.y() - 3, r.w() + 6, r.h() + 6);
         } else {
             flat(g, theme, Flat.RING, r.x() - 2, r.y() - 2, r.w() + 4, r.h() + 4);
         }
+    }
+
+    /** A strip's place in the atlas; {@code NO_STRIP} for one that is missing. */
+    private record Strip(@Nullable ResourceLocation atlas, int x, int y, int atlasW, int atlasH, int w, int h) {
+    }
+
+    private static final Strip NO_STRIP = new Strip(null, 0, 0, 0, 0, 0, 0);
+    private static final Map<String, Strip> STRIPS = new HashMap<>();
+
+    private static Strip strip(String sprite) {
+        return STRIPS.computeIfAbsent(sprite, s -> {
+            if (!has(s)) {
+                return NO_STRIP;
+            }
+            TextureAtlasSprite sp = Minecraft.getInstance().getGuiSprites().getSprite(id(s));
+            int atlasW = Math.round(sp.contents().width() / (sp.getU1() - sp.getU0()));
+            int atlasH = Math.round(sp.contents().height() / (sp.getV1() - sp.getV0()));
+            return new Strip(sp.atlasLocation(), sp.getX(), sp.getY(), atlasW, atlasH, sp.contents().width(), sp.contents().height());
+        });
+    }
+
+    /**
+     * Frame {@code frame} of a strip of {@code frames} square frames of {@code size} (the cooldown pie, the ring of blood) at ({@code x}, {@code y}), faded by
+     * {@code alpha}. False when the strip is missing or is not that many frames of that size (a hi-res pack): the caller draws its stand-in.
+     */
+    public static boolean frame(GuiGraphics g, String sprite, int frame, int size, int frames, int x, int y, float alpha) {
+        Strip s = strip(sprite);
+        if (s == NO_STRIP || !FrameStrip.holds(s.w(), s.h(), size, frames) || frame < 0 || frame >= frames) {
+            return false;
+        }
+        blend(g, alpha);
+        g.blit(s.atlas(), x, y, size, size, (float) s.x(), (float) (s.y() + FrameStrip.top(frame, size)), size, size, s.atlasW(), s.atlasH());
+        reset(g, alpha);
+        return true;
+    }
+
+    /** A sprite of the kit that is not a theme's own (the shared ones) at its own size, faded; false when it is missing. */
+    public static boolean shared(GuiGraphics g, String sprite, int x, int y, int w, int h, float alpha) {
+        if (!has(sprite)) {
+            return false;
+        }
+        blend(g, alpha);
+        g.blitSprite(id(sprite), x, y, w, h);
+        reset(g, alpha);
+        return true;
     }
 
     private static Icon icon(int size, String name) {

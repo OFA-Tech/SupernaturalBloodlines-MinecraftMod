@@ -57,4 +57,39 @@ class SlotBadgeTest {
             assertTrue(plate.y() <= SLOT.bottom() - 9 && plate.bottom() >= SLOT.bottom() - 1, "and as tall");
         }
     }
+
+    @Test
+    void theKeyBadgeIsTheSizeOfTheKitsPictureInEveryTheme() {
+        for (Look look : Look.values()) {
+            Box one = SlotBadge.key(look, SLOT, SlotBadge.CHAR_W);
+            Box two = SlotBadge.key(look, SLOT, 2 * SlotBadge.CHAR_W);
+            assertEquals(11, one.w(), look + " one character");
+            assertEquals(11, one.h());
+            assertEquals(17, two.w(), look + " two characters");
+            assertEquals(11, two.h());
+        }
+    }
+
+    @Test
+    void theBadgeStaysOnTheSlotsOwnSideWhateverTheLift() {
+        for (int lift : new int[] {0, MasteryBar.LIFT}) {
+            Box bar = MasteryBar.box(SLOT);
+            for (Look look : new Look[] {Look.GRIMOIRE, Look.BLOOD_MOON}) {
+                Box badge = SlotBadge.key(look, SLOT, SlotBadge.CHAR_W, lift);
+                if (lift > 0) {
+                    assertFalse(badge.overlaps(bar), look + " badge on the mastery bar");
+                }
+                assertTrue(badge.bottom() <= SLOT.bottom(), look + " badge inside the slot's lower edge");
+            }
+        }
+    }
+
+    @Test
+    void theTensuraMarkIsTheSizeOfTheKitsDiamondAndSitsOnTheCorner() {
+        Box mark = SlotBadge.tensuraMark(SLOT);
+        assertEquals(7, mark.w());
+        assertEquals(7, mark.h());
+        assertTrue(mark.x() < SLOT.right() && mark.right() > SLOT.right(), "over the right edge");
+        assertTrue(mark.y() < SLOT.y(), "mostly above the slot");
+    }
 }

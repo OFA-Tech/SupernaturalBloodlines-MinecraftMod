@@ -9,6 +9,10 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.hud.HudLayout;
+import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.Motion;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.ReadyGlow;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.ReduceMotion;
 import net.ofatech.supernaturalbloodlines.core.hud.PillVisibility;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotShape;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
@@ -33,6 +37,31 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         return HudClientConfig.hudEnabled() && HudClientConfig.visibility() != net.ofatech.supernaturalbloodlines.core.hud.HudVisibility.HIDDEN && mc.player != null && !mc.options.hideGui && !mc.player.isSpectator() && HudModeState.current().isPresent();
     }
 
+    /** The cooldown each slot had the last time it was drawn, and the tick each became ready: a slot whose cooldown runs out glows for one loop. */
+    private final float[] before = new float[Loadout.SLOTS];
+    private final long[] readyAt = new long[Loadout.SLOTS];
+
+    {
+        java.util.Arrays.fill(readyAt, Long.MIN_VALUE / 2);
+    }
+
+    private float[] glows(SlotView[] views, long time) {
+        boolean reduce = ReduceMotion.on();
+        float[] out = new float[Loadout.SLOTS];
+        for (int i = 0; i < out.length; i++) {
+            float now = views[i].isEmpty() ? 0f : views[i].cooldown();
+            if (ReadyGlow.justReady(before[i], now)) {
+                readyAt[i] = time;
+            }
+            before[i] = now;
+            out[i] = ReadyGlow.alpha(time - readyAt[i], reduce);
+        }
+        if (net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on && net.ofatech.supernaturalbloodlines.shared.hud.DevHud.glow && !reduce) {
+            out[net.ofatech.supernaturalbloodlines.shared.hud.DevHud.human ? 0 : 3] = 0.6f; // the screenshots: one slot is ready, held at a fixed glow
+        }
+        return out;
+    }
+
     @Override
     public void render(GuiGraphics g, DeltaTracker delta) {
         if (!shown()) {
@@ -50,13 +79,14 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         }
         float alpha = HudActivity.alpha(busy);
         long time = mc.level == null ? 0 : mc.level.getGameTime();
-        float pulse = net.ofatech.supernaturalbloodlines.shared.hub.kit.Motion.pulse(time, net.ofatech.supernaturalbloodlines.shared.hub.kit.ReduceMotion.on());
+        float pulse = Motion.pulse(time, ReduceMotion.on());
+        float[] glow = glows(views, time);
         int previewTop = -1;
         if (alpha > 0.01f) {
             float blood = src.blood();
             for (int i = 0; i < boxes.length; i++) {
                 boolean bite = !views[i].isEmpty() && ClientLoadout.BITE_ICON.equals(views[i].icon());
-                SlotArt.draw(g, mc.font, style, SlotShape.of(src.mode()), boxes[i], views[i], alpha, bite ? blood : -1f, pulse);
+                SlotArt.draw(g, mc.font, style, SlotShape.of(src.mode()), boxes[i], views[i], alpha, bite ? blood : -1f, pulse, glow[i]);
             }
             SlotMode mode = src.mode();
             if (mode != null) {

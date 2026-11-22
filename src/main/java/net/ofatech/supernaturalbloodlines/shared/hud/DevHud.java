@@ -13,6 +13,10 @@ public final class DevHud {
     public static volatile boolean human;
     /** The demo shows a Tensura skill cooldown counting down. */
     public static volatile boolean cooldown;
+    /** One slot of the demo has just become ready: its glow is drawn at a fixed strength. */
+    public static volatile boolean glow;
+    /** The request toast of the demo is on screen (over the Tensura status HUD, when it is installed). */
+    public static volatile boolean toast;
 
     private DevHud() {
     }

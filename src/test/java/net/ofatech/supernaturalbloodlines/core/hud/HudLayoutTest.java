@@ -229,4 +229,46 @@ class HudLayoutTest {
             assertTrue(HudLayout.pill(s[0], s[1], 130, true).y() < HudLayout.pill(s[0], s[1], 130, false).y());
         }
     }
+
+    @Test
+    void theGrimoiresTallerPillClearsTheSlotsTheHotbarAndThePanelToo() {
+        assertEquals(16, HudLayout.pillHeight(SlotBadge.Look.GRIMOIRE));
+        assertEquals(14, HudLayout.pillHeight(SlotBadge.Look.BLOOD_MOON));
+        assertEquals(14, HudLayout.pillHeight(SlotBadge.Look.TENSURA));
+        for (int[] s : SCALES) {
+            Box hotbar = HudLayout.hotbar(s[0], s[1]);
+            for (boolean lifted : new boolean[] {false, true}) {
+                for (int textW : new int[] {60, 130, 200}) {
+                    Box pill = HudLayout.pill(s[0], s[1], textW, lifted, HudLayout.PILL_H_TALL);
+                    assertEquals(HudLayout.PILL_H_TALL, pill.h());
+                    assertFalse(pill.overlaps(hotbar), "tall pill on the hotbar " + s[0] + "x" + s[1]);
+                    for (Box slot : HudLayout.slots(s[0], s[1])) {
+                        assertFalse(pill.overlaps(slot), "tall pill on " + slot + " " + s[0] + "x" + s[1] + " text " + textW);
+                    }
+                    for (Box label : HudLayout.labels(s[0], s[1])) {
+                        assertFalse(pill.overlaps(label), "tall pill on a label " + s[0] + "x" + s[1]);
+                    }
+                    if (!lifted) {
+                        assertFalse(pill.overlaps(HudLayout.preview(s[0], s[1], 2)), "tall pill on the panel " + s[0] + "x" + s[1]);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    void thePreviewsModeMarksStandBelowItsHeadAndInsideItsFrame() {
+        for (int[] s : SCALES) {
+            for (int head : new int[] {1, 2}) {
+                Box panel = HudLayout.preview(s[0], s[1], head);
+                int headBottom = panel.y() + 5 + 9 * head;
+                int slotsTop = panel.y() + HudLayout.previewSlotsTop(head);
+                Box lastSlot = new Box(panel.x() + HudLayout.PREVIEW_INSET + 5 * HudLayout.SLOT, slotsTop, HudLayout.SLOT, HudLayout.SLOT);
+                Box mark = SlotBadge.tensuraMark(lastSlot);
+                assertTrue(mark.y() >= headBottom, "the mark (" + mark + ") is over the head text that ends at " + headBottom + " on " + s[0] + "x" + s[1]);
+                assertTrue(mark.right() < panel.right(), "the mark is inside the panel on " + s[0] + "x" + s[1]);
+                assertTrue(lastSlot.bottom() <= panel.bottom() - 4, "the slots are inside the frame");
+            }
+        }
+    }
 }

@@ -15,7 +15,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiContext;
  * {@code shared} so another part (Tensura's theme) can bring one without importing the supernatural part; a theme whose shape does not
  * fit the shared views also implements that part's {@code HubThemeViews}.
  */
-public interface HubTheme {
+public interface HubTheme extends net.ofatech.supernaturalbloodlines.shared.hub.kit.KitColors {
     HubLayout layout(int width, int height, int tabs, int seals);
 
     /** The layout for these visible pages: a theme that marks the nav groups overrides it (a gap, a divider, a heading). */

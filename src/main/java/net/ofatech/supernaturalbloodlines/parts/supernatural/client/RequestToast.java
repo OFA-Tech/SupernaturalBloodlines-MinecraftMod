@@ -10,7 +10,16 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.hud.HudLayout;
+import net.ofatech.supernaturalbloodlines.core.hud.ToastPlace;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit;
+import net.ofatech.supernaturalbloodlines.shared.hud.DevHud;
+import net.ofatech.supernaturalbloodlines.shared.hud.HudFaces;
+import net.ofatech.supernaturalbloodlines.shared.hud.HudKit;
+import net.ofatech.supernaturalbloodlines.shared.hud.HudStyle;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubRequests;
+import net.neoforged.fml.ModList;
 
 /**
  * A small box in the top left corner of the game screen for the newest open request: who, what and the seconds left, and the key that opens
@@ -41,9 +50,27 @@ public final class RequestToast {
         return lines.stream().map(c -> net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(c.getString(), width, measure)).toList();
     }
 
+    /** The box: the kit's label in the HUD's look, under the status of Tensura and Vampirism when one of them is installed. */
+    private static void draw(GuiGraphics g, Font font, List<Component> lines) {
+        HudKit kit = HudKit.of(HudStyle.current());
+        int h = lines.size() * 10 + 2 * PAD + 3;
+        boolean corner = ModList.get().isLoaded("tensura") || ModList.get().isLoaded("vampirism");
+        HudLayout.Box at = ToastPlace.place(g.guiWidth(), g.guiHeight(), W, h, corner);
+        UiKit.draw(g, kit, Part.HUD_LABEL, at.x(), at.y(), at.w(), at.h());
+        List<String> shown = fitted(lines, W - 2 * PAD - 4, font::width);
+        for (int i = 0; i < shown.size(); i++) {
+            int color = UiKit.labelOver(kit, Part.HUD_LABEL, i == 0 ? HudFaces.labelName(kit) : HudFaces.labelBody(kit));
+            g.drawString(font, shown.get(i), at.x() + PAD + 2, at.y() + PAD + 2 + i * 10, color, false);
+        }
+    }
+
     @SubscribeEvent
     public static void onRender(RenderGuiEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
+        if (DevHud.on && DevHud.toast && mc.player != null && mc.screen == null) {
+            draw(e.getGuiGraphics(), mc.font, List.of(Component.literal("Klaus: Sire's call"), Component.literal("1:55 left"), Component.literal("Press H to answer")));
+            return;
+        }
         List<HubRequests.Request> open = RequestsClient.requests();
         if (mc.screen != null || mc.player == null || open.isEmpty() || mc.options.hideGui) {
             return;
@@ -56,12 +83,7 @@ public final class RequestToast {
         GuiGraphics g = e.getGuiGraphics();
         Font font = mc.font;
         List<Component> lines = lines(r, (left + 19) / 20, HubKeybinds.ANSWER.isUnbound() ? HubKeybinds.HUB.getTranslatedKeyMessage() : HubKeybinds.ANSWER.getTranslatedKeyMessage());
-        int h = lines.size() * 10 + 2 * PAD - 1;
-        g.fill(X, Y, X + W, Y + h, PAPER);
-        List<String> shown = fitted(lines, W - 2 * PAD, font::width);
-        for (int i = 0; i < shown.size(); i++) {
-            g.drawString(font, shown.get(i), X + PAD, Y + PAD + i * 10, i == 0 ? INK : MUTED, false);
-        }
+        draw(g, font, lines);
     }
 }
 

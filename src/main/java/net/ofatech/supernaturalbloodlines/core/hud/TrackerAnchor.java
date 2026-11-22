@@ -22,6 +22,8 @@ public enum TrackerAnchor {
     /** The width of the status Tensura and Vampirism draw in the top left corner (about 130 pixels in the screenshots). */
     public static final int CORNER_W = 140;
     private static final int MOON_ROW = 6 + 26 + 10;
+    /** The height of that status: the corner is kept clear this far down. */
+    public static final int CORNER_H = 70;
 
     /** @param bossBottom the lowest pixel of the boss bars drawn last frame (0 for none) */
     public int[] place(int screenW, int screenH, int w, int h, int bossBottom) {
@@ -31,7 +33,7 @@ public enum TrackerAnchor {
             case TOP_LEFT -> {
                 // under the corner where Tensura and Vampirism draw their status (about 70 pixels tall)
                 x = 6;
-                y = TOP + 70;
+                y = TOP + CORNER_H;
             }
             case TOP_RIGHT -> {
                 x = screenW - 6 - w;
@@ -45,7 +47,7 @@ public enum TrackerAnchor {
                 x = screenW / 2 - w / 2;
                 y = Math.max(TOP, bossBottom + 4);
                 // on a narrow screen the centre is under the other mods' status corner: move right of it
-                if (y < TOP + 70) {
+                if (y < TOP + CORNER_H) {
                     x = Math.max(x, CORNER_W + 4);
                 }
             }
