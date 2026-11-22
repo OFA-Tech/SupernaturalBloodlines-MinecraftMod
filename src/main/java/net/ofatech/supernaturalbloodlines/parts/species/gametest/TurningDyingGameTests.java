@@ -30,7 +30,6 @@ import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
-import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrink;
@@ -49,7 +48,7 @@ public final class TurningDyingGameTests {
     }
 
     private static ServerPlayer marked(GameTestHelper helper) {
-        ServerPlayer p = RecordingPlayer.create(helper);
+        ServerPlayer p = TestPlayers.createTalkingDuelist(helper);
         p.setPos(helper.absoluteVec(new Vec3(1.5, 1, 1.5)));
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().vampireBloodUntil(helper.getLevel().getGameTime() + 100000).build());
         return p;
@@ -67,7 +66,13 @@ public final class TurningDyingGameTests {
     }
 
     private static void lethal(GameTestHelper helper, ServerPlayer p) {
+        p.invulnerableTime = 0; // the second blow of a test would otherwise be swallowed by the hurt cooldown
         p.hurt(zombieBlow(helper), 1000f);
+    }
+
+    private static void kill(GameTestHelper helper, ServerPlayer p) {
+        p.invulnerableTime = 0;
+        p.hurt(helper.getLevel().damageSources().genericKill(), 1000f);
     }
 
     private static Item item(String id) {
@@ -105,7 +110,7 @@ public final class TurningDyingGameTests {
             helper.assertTrue(s.vampireBloodUntil() == 0 && s.turningTicksLeft() == SpeciesConfig.transitionTicks(), "state " + s);
             helper.assertTrue(VampirismAPI.factionPlayerHandler(p).getCurrentFaction() == null, "joined a faction before drinking");
             helper.assertTrue(Downed.mode(p) == Downed.MODE_TURNING && p.getData(SpeciesRegistries.DOWNED) == Downed.TICKS && Downed.TICKS == 600, "the dying is not 30 s of the turning");
-            helper.assertTrue(((RecordingPlayer) p).received("supernaturalbloodlines.turning.dying"), "not told: " + ((RecordingPlayer) p).heard());
+            helper.assertTrue(((TestPlayers.TalkingDuelist) p).received("supernaturalbloodlines.turning.dying"), "not told");
             helper.assertTrue(p.getAttributeValue(Attributes.MOVEMENT_SPEED) == 0, "they can still move");
         } finally {
             reset(p);
@@ -167,6 +172,7 @@ public final class TurningDyingGameTests {
             ServerPlayer p = marked(helper);
             try {
                 DamageSource source = viaVoid ? helper.getLevel().damageSources().fellOutOfWorld() : helper.getLevel().damageSources().genericKill();
+                p.invulnerableTime = 0;
                 p.hurt(source, 1000f);
                 helper.assertTrue(p.isDeadOrDying() && !Downed.isDowned(p), (viaVoid ? "void" : "/kill") + " did not kill, or left a dying state: " + Downed.isDowned(p));
                 helper.assertTrue(BloodlineAccess.get(p).inTurning(), "the turning is gone after a real death: " + BloodlineAccess.get(p));
@@ -183,7 +189,7 @@ public final class TurningDyingGameTests {
         try {
             lethal(helper, p);
             assertDying(helper, p, "setup");
-            p.hurt(helper.getLevel().damageSources().genericKill(), 1000f);
+            kill(helper, p);
             helper.assertTrue(p.isDeadOrDying() && !Downed.isDowned(p), "a /kill of a dying player left the state, or did not kill: " + Downed.isDowned(p));
             helper.assertTrue(BloodlineAccess.get(p).inTurning(), "a real death of the dying ended the turning");
         } finally {
@@ -240,7 +246,7 @@ public final class TurningDyingGameTests {
             helper.assertTrue(p.getHealth() == p.getMaxHealth() / 2.0f && p.position().equals(where), "health " + p.getHealth() + " at " + p.position());
             BloodlineState s = BloodlineAccess.get(p);
             helper.assertTrue(s.inTurning() && s.turningTicksLeft() == SpeciesConfig.transitionTicks(), "the turning or its clock changed: " + s);
-            helper.assertTrue(((RecordingPlayer) p).receivedOnActionBar("supernaturalbloodlines.turning.woke"), "no wake line");
+            helper.assertTrue(((TestPlayers.TalkingDuelist) p).receivedOnActionBar("supernaturalbloodlines.turning.woke"), "no wake line");
             helper.assertTrue(p.getAttributeValue(Attributes.MOVEMENT_SPEED) > 0, "they cannot move after waking");
         } finally {
             reset(p);
@@ -311,7 +317,7 @@ public final class TurningDyingGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void afterWakingHumanBloodCompletesTheTurningAndTheSireIsTheOneDrunk(GameTestHelper helper) {
-        RecordingPlayer p = (RecordingPlayer) marked(helper);
+        TestPlayers.TalkingDuelist p = (TestPlayers.TalkingDuelist) marked(helper);
         try {
             BloodDrink.drank(p, MIKAEL, "ORIGINAL", false);
             lethal(helper, p);
@@ -323,7 +329,7 @@ public final class TurningDyingGameTests {
             helper.assertTrue(click(p), "the human blood was not drunk after waking");
             helper.assertTrue(VampirismAPI.factionPlayerHandler(p).getCurrentFaction() == VReference.VAMPIRE_FACTION, "they did not join the vampires");
             helper.assertTrue(MIKAEL.equals(BloodlineAccess.get(p).sire()) && !BloodlineAccess.get(p).inTurning(), "the sire is " + BloodlineAccess.get(p).sire());
-            helper.assertTrue(p.received("supernaturalbloodlines.turning.completed") && p.received(PendingSire.HIDDEN_LINE), "not told: " + p.heard());
+            helper.assertTrue(p.received("supernaturalbloodlines.turning.completed") && p.received(PendingSire.HIDDEN_LINE), "not told");
         } finally {
             VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
             reset(p);

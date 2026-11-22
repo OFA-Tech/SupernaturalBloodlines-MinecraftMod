@@ -304,6 +304,7 @@ public final class SpeciesPart {
             e.register(TurningGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.BloodBottleGameTests.class);
             e.register(GhoulGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.TurningDyingGameTests.class);
             e.register(GeneGameTests.class);
             e.register(DoppelgangerVillagerGameTests.class);
             e.register(RevelationGameTests.class);
