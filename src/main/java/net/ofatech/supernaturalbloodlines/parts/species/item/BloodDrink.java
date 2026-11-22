@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class BloodDrink {
     public static final String DRUNK = "supernaturalbloodlines.blood.drunk";
+    /** The same, for a drink that also puts vampire blood in a human: it says what that does. */
+    public static final String DRUNK_MARKED = "supernaturalbloodlines.blood.drunk_marked";
 
     private BloodDrink() {
     }
@@ -26,6 +28,11 @@ public final class BloodDrink {
      * @param literalName Klaus's Blood is named after him, so his name is printed as it is; any other blood names the source only once the drinker has discovered the line
      */
     public static void drank(ServerPlayer player, UUID source, @Nullable String species, boolean literalName) {
+        drank(player, source, species, literalName, false);
+    }
+
+    /** @param marks the drink also marks the drinker with vampire blood: the message warns what dying with it does */
+    public static void drank(ServerPlayer player, UUID source, @Nullable String species, boolean literalName, boolean marks) {
         player.setData(SpeciesRegistries.BLOOD_SOURCE, source);
         if (species == null) {
             player.removeData(SpeciesRegistries.BLOOD_SOURCE_SPECIES);
@@ -34,6 +41,10 @@ public final class BloodDrink {
         }
         player.addEffect(new MobEffectInstance(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT, OriginalBloodEffect.DURATION_TICKS));
         Component name = literalName ? Lines.rootName(player.server, source) : Lines.shownName(player.server, player, source);
-        player.sendSystemMessage(Component.translatable(DRUNK, name, OriginalBloodEffect.DURATION_TICKS / 1200));
+        if (marks) {
+            player.sendSystemMessage(Component.translatable(DRUNK_MARKED, name, OriginalBloodEffect.DURATION_TICKS / 1200, BloodBottles.vampireBloodMinutes()));
+        } else {
+            player.sendSystemMessage(Component.translatable(DRUNK, name, OriginalBloodEffect.DURATION_TICKS / 1200));
+        }
     }
 }

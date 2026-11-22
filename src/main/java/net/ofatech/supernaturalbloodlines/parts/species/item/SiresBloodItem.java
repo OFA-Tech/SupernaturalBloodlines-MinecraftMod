@@ -6,6 +6,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.ofatech.supernaturalbloodlines.core.blood.BloodKind;
+import net.ofatech.supernaturalbloodlines.core.blood.BloodSource;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,14 +23,16 @@ public final class SiresBloodItem extends Item {
 
     public static ItemStack of(UUID source, String name) {
         ItemStack stack = new ItemStack(SpeciesRegistries.SIRES_BLOOD.get());
-        stack.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT, source);
+        // sealed like every bottle (R210); its own public name stays: the taker took it from their own sire
+        BloodStamp.writeSeal(stack, new BloodSource(source, name, false, BloodKind.COMMON_VAMPIRE));
         stack.set(SpeciesRegistries.BLOOD_SOURCE_NAME_COMPONENT, name);
         return stack;
     }
 
     @Nullable
     public static UUID sourceOf(ItemStack stack) {
-        return stack.get(SpeciesRegistries.BLOOD_SOURCE_COMPONENT);
+        BloodStamp.migrate(stack); // an old Sire's Blood is sealed the moment a rite reads it
+        return BloodStamp.read(stack).map(BloodSource::id).orElse(null);
     }
 
     @Override

@@ -18,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
 public final class ExtraActions {
     public static final ResourceLocation ALPHA_ROAR = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "alpha_roar");
 
+    public static final ResourceLocation BOTTLE_BLOOD = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "bottle_blood");
+
     public interface Action {
         ResourceLocation id();
 

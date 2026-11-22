@@ -52,7 +52,7 @@ public final class TurningHandler {
     public static final TagKey<Item> VAMPIRE_BLOOD = TagKey.create(Registries.ITEM,
             ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "vampire_blood"));
 
-    private static final ResourceLocation WEREWOLF_ID = ResourceLocation.parse("werewolves:werewolf");
+    public static final ResourceLocation WEREWOLF_ID = ResourceLocation.parse("werewolves:werewolf");
 
     private TurningHandler() {
     }
@@ -154,8 +154,8 @@ public final class TurningHandler {
     }
 
     /**
-     * The click takes the item over: a blood bottle during the turning is human blood, and a vampire-blood item that cannot be drunk
-     * by itself marks the player. Either way one is used up and the click is consumed. The hybrid transition (R40) goes first.
+     * The click takes the item over: a blood bottle during the turning is human blood, and one is used up. The hybrid transition (R40) goes first. A
+     * vampire-blood bottle is taken over by {@code BloodBottles}, which applies the rules of its kind.
      */
     static void onRightClick(PlayerInteractEvent.RightClickItem e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) {
@@ -163,25 +163,13 @@ public final class TurningHandler {
         }
         ItemStack stack = e.getItemStack();
         BloodlineState s = BloodlineAccess.get(p);
-        if (s.inTransition()) {
+        if (s.inTransition() || !stack.is(TransitionHandler.BLOOD_DRINKS) || !s.inTurning() || !wouldComplete(p)) {
             return;
-        }
-        boolean human = stack.is(TransitionHandler.BLOOD_DRINKS) && s.inTurning() && wouldComplete(p);
-        boolean vampire = !human && stack.is(VAMPIRE_BLOOD) && stack.getUseDuration(p) <= 0;
-        if (!human && !vampire) {
-            return;
-        }
-        if (vampire && !wouldMark(p)) {
-            return; // nothing to gain: keep the item
         }
         e.setCancellationResult(InteractionResult.CONSUME);
         e.setCanceled(true);
         TransitionHandler.useUpBottle(p, stack);
-        if (human) {
-            drankHumanBlood(p);
-        } else {
-            drankVampireBlood(p);
-        }
+        drankHumanBlood(p);
     }
 
     /** The turning would do something for this player (a hunter or a werewolf in it would only end it quietly). */
@@ -191,7 +179,8 @@ public final class TurningHandler {
         return !out.actions().isEmpty() || out.state().ghoul() != s.ghoul();
     }
 
-    private static boolean wouldMark(ServerPlayer p) {
+    /** Vampire blood would change this player (a hunter or a werewolf is not marked). */
+    public static boolean wouldMark(ServerPlayer p) {
         BloodlineState s = BloodlineAccess.get(p);
         return !s.equals(BloodlineRules.apply(s, BloodlineEvent.DRANK_VAMPIRE_BLOOD, SpeciesContext.of(p, null)).state());
     }
