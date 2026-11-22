@@ -722,6 +722,7 @@ public final class TurningDyingGameTests {
             p.invulnerableTime = 0;
             lethal(helper, p);
             helper.assertTrue(VampirismAPI.vampirePlayer(p).isDBNO(), "setup: Vampirism did not catch the second blow");
+            TurningHandler.watchGhoulDying(p); // the player tick, while the second dying state runs
             endVampirismDying(p);
             TurningHandler.watchGhoulDying(p);
             TurningHandler.watchGhoulDying(p);
