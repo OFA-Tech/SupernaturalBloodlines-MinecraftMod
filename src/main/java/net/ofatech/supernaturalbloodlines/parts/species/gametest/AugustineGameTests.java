@@ -186,6 +186,10 @@ public final class AugustineGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void garlicIsDeniedOnlyToAnAugustineWithTheWard(GameTestHelper helper) {
+        if (!EnabledParts.isEnabled("supernatural")) {
+            helper.succeed(); // no skills without the supernatural part: the gifts are dormant, the species rules still work
+            return;
+        }
         ServerPlayer augustine = vampire(helper, Species.AUGUSTINE);
         ServerPlayer plain = vampire(helper, Species.NONE);
         var garlic = BuiltInRegistries.MOB_EFFECT.getHolder(GARLIC).orElseThrow();
@@ -219,6 +223,10 @@ public final class AugustineGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void holyWaterIsHalvedForAnAugustineWithBlessedSkin(GameTestHelper helper) {
+        if (!EnabledParts.isEnabled("supernatural")) {
+            helper.succeed(); // no skills without the supernatural part: the gifts are dormant, the species rules still work
+            return;
+        }
         ServerPlayer augustine = vampire(helper, Species.AUGUSTINE);
         ServerPlayer plain = vampire(helper, Species.NONE);
         try {
