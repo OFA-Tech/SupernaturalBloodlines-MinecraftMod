@@ -142,3 +142,4 @@ All numbers are drafts to tune after a playtest; each is a config key.
 |---|---|---|
 | `bottle_blood_cooldown_seconds` | 60 | One bottle a minute: a vampire can supply a friend, not a stockpile. |
 | `bottle_blood_health_cost` | 3 (1.5 hearts, never lethal) | Real enough to count in a fight, never a way to die. |
+| bottle_blood_daily_limit | 8 | Vampirism's vampire blood bottle is an ingredient (pure blood, vampire blood oil) and a task item: a day of bottling cannot supply a whole server. |

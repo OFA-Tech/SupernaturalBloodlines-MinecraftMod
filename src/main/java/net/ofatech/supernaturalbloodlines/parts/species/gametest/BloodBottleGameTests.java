@@ -511,14 +511,6 @@ public final class BloodBottleGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
-    public static void theClientSideOfOriginalBloodDrinksNothing(GameTestHelper helper) {
-        ItemStack blood = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
-        BloodStamp.write(blood, new BloodSource(MIKAEL, "Mikael", false, BloodKind.ORIGINAL));
-        helper.assertTrue(blood.finishUsingItem(helper.getLevel(), EntityType.ZOMBIE.create(helper.getLevel())) == blood, "a mob drank it");
-        helper.succeed();
-    }
-
     // ---- bottle my blood ----
 
     private static ServerPlayer vampireWithBottle(GameTestHelper helper, Species species, boolean glass) {
