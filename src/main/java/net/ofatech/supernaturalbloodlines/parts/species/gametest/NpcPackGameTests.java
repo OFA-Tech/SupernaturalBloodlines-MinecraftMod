@@ -128,16 +128,20 @@ public final class NpcPackGameTests {
      */
     private static final java.util.Map<GameTestHelper, java.util.List<net.minecraft.world.level.ChunkPos>> HELD = new java.util.HashMap<>();
     private static final java.util.Map<net.minecraft.world.level.ChunkPos, Integer> HOLDS = new java.util.HashMap<>();
-    /** The chunks this class forced itself: the test runner forces chunks too, and taking its force away leaves the tests of the next batch waiting for ever. */
-    private static final java.util.Set<net.minecraft.world.level.ChunkPos> OURS = new java.util.HashSet<>();
+    /**
+     * Our own ticket, never the runner's force: the runner forces the chunks of the structures it is running and lets them go when each one ends, so a chunk that "is
+     * already forced" when this test asks may be gone a tick later (the flake under load). A region ticket of this type is ours alone; radius 2 is the level of a
+     * forced chunk (entities found and ticking).
+     */
+    private static final net.minecraft.server.level.TicketType<net.minecraft.world.level.ChunkPos> TICKET =
+            net.minecraft.server.level.TicketType.create("supernaturalbloodlines_npc_pack_test", java.util.Comparator.comparingLong(net.minecraft.world.level.ChunkPos::toLong));
+    private static final int TICKET_RADIUS = 2;
 
     private static void release(GameTestHelper helper) {
         for (net.minecraft.world.level.ChunkPos cp : HELD.getOrDefault(helper, java.util.List.of())) {
             if (HOLDS.merge(cp, -1, Integer::sum) <= 0) {
                 HOLDS.remove(cp);
-                if (OURS.remove(cp)) {
-                    helper.getLevel().setChunkForced(cp.x, cp.z, false);
-                }
+                helper.getLevel().getChunkSource().removeRegionTicket(TICKET, cp, TICKET_RADIUS, cp);
             }
         }
         HELD.remove(helper);
@@ -149,9 +153,8 @@ public final class NpcPackGameTests {
         for (double x : xs) {
             BlockPos at = helper.absolutePos(new BlockPos((int) x, 1, 2));
             net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(at);
-            if (HOLDS.merge(cp, 1, Integer::sum) == 1 && !helper.getLevel().getForcedChunks().contains(cp.toLong())) {
-                helper.getLevel().setChunkForced(cp.x, cp.z, true);
-                OURS.add(cp);
+            if (HOLDS.merge(cp, 1, Integer::sum) == 1) {
+                helper.getLevel().getChunkSource().addRegionTicket(TICKET, cp, TICKET_RADIUS, cp); // always our own hold, whatever else holds the chunk
             }
             // the chunk's loading runs on other threads in real time while the test's own ticks come as fast as the server can make them, so waiting a number of ticks for it is a race under load: load it now
             helper.getLevel().getChunk(cp.x, cp.z);
@@ -475,7 +478,8 @@ public final class NpcPackGameTests {
             threw = true;
         }
         helper.assertTrue(threw, "the failure of the body was swallowed");
-        helper.assertTrue(!HOLDS.containsKey(cp) && !HELD.containsKey(helper), "a failed body left its chunk held");
+        // this test's own bookkeeping only: a neighbouring test may hold the same chunk in the same run
+        helper.assertTrue(!HELD.containsKey(helper), "a failed body left its chunk held");
         helper.succeed();
     }
 
@@ -487,10 +491,9 @@ public final class NpcPackGameTests {
             try {
                 helper.assertTrue(helper.getLevel().getEntity(far.getUUID()) == far, "a mob placed far away is not in the level");
                 helper.assertTrue(!helper.getLevel().getEntitiesOfClass(Mob.class, far.getBoundingBox().inflate(4), m -> m == far).isEmpty(), "a mob placed far away is not found by a search");
-                net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(far.blockPosition());
                 clean(helper, List.of(far));
-                // a neighbouring test's structure may be there and forced by the runner: what is ours to let go of is only what this class forced
-                helper.assertTrue(!OURS.contains(cp) && !HOLDS.containsKey(cp), "the chunk was kept loaded after the test");
+                // a neighbouring test's structure may be there, held by the runner or by another test: what is ours is only this test's own bookkeeping
+                helper.assertTrue(!HELD.containsKey(helper), "the chunk was kept held after the test");
             } finally {
                 clean(helper, List.of(far));
             }

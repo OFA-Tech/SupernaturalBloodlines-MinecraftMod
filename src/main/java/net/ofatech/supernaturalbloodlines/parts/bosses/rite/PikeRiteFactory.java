@@ -66,7 +66,7 @@ public record PikeRiteFactory(boolean requiresFullMoon) implements RiteFactory {
             return PikeRules.Giver.of(PikeRules.Kind.ABSENT);
         }
         var state = SupernaturalAccess.get(p);
-        return new PikeRules.Giver(PikeRules.Kind.PLAYER, BloodlineAccess.get(p).species(), state.rung(SupernaturalRace.VAMPIRE), state.rung(SupernaturalRace.WEREWOLF),
+        return new PikeRules.Giver(PikeRules.Kind.PLAYER, BloodlineAccess.get(p).species(), state.vampireRung(), state.rung(SupernaturalRace.WEREWOLF),
                 PackAccess.isAlpha(PackAccess.wolf(p).rank()));
     }
 

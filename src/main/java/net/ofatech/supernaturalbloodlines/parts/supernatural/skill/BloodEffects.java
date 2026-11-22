@@ -17,7 +17,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.SupernaturalConfig;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HumanLikeBlood;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
-import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineRules;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 
 /**
@@ -59,7 +59,7 @@ public final class BloodEffects {
             e.setAmount(e.getAmount() + extra);
         }
         // a bite that something emptied on purpose (a desiccated biter, a vervain victim) stays empty: no fallback blood, no drain
-        if (source != p && VampirismAPI.factionRegistry().getFaction(source) == VReference.VAMPIRE_FACTION && (LadderQuery.owns(p, "S-VAM-6") || BloodlineAccess.get(p).species() == Species.AUGUSTINE) // an Augustine drains vampires without the skill (R203)
+        if (source != p && VampirismAPI.factionRegistry().getFaction(source) == VReference.VAMPIRE_FACTION && (LadderQuery.owns(p, "S-VAM-6") || BloodlineRules.liftsVampireBiteRefusal(BloodlineAccess.get(p).species())) // an Augustine drains vampires without the skill (R203)
                 && !BiteProtection.protectedBite(p, source)) {
             predatorsThirst(e, source);
         }

@@ -95,7 +95,7 @@ final class RitesBook {
     static final Map<String, String> MAKES = Map.of(
             "ward_of_daylight", NS + ":sun_ring", "ward_of_the_moon", NS + ":moon_ring", "ward_of_return", NS + ":resurrection_ring",
             "vampire_compass", NS + ":vampire_compass", "hearing_device", NS + ":hearing_device", "rite_of_the_cure", NS + ":the_cure",
-            "blood_offering", NS + ":blood_stone", "magicule_offering", NS + ":condensed_magicule");
+            "blood_offering", NS + ":blood_stone", "magicule_offering", NS + ":condensed_magicule", "augustine", NS + ":augustine_syringe");
 
     /**
      * The width in pixels of a string in Minecraft's default font (the book draws its headers in it, centred in a 100 pixel line): most characters are 6

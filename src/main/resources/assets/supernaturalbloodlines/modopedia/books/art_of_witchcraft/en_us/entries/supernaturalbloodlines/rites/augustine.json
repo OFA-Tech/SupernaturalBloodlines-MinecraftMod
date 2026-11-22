@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Circle: medium circle, ritual chalk.\n\nTurns the vampire on the centre into an Augustine: a little stronger, a bad eater of anything but vampires.",
+          "text": "Circle: medium circle, ritual chalk.\n\nMakes the vampire on the centre an Augustine: +10% attack, +2 health; feeds 3× on vampires, ⅓ on others. Only a cure undoes it. Wes's Syringe does the same.",
           "header": "Rite of Augustine"
         }
       ]
@@ -20,7 +20,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "The target stands on the centre (the caster if nobody does) and must be a plain vampire: no species, not a Ghoul, not in a transition.",
+          "text": "The target (the caster if nobody stands there) must be a vampire with no bloodline: no species, not a Ghoul, not in a transition. If it is someone else they must sneak to accept.",
           "header": "Rite of Augustine"
         }
       ]
@@ -29,7 +29,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Whoever else is on the centre, a hybrid, a heretic or an Original is refused. A refusal gives the ingredients back.",
+          "text": "Whatever stands on the centre, the caster hears the same thing: it tells nothing of who it is. A refusal gives the ingredients back.",
           "header": "Rite of Augustine"
         }
       ]

@@ -36,9 +36,9 @@ public final class AugustineGifts {
         }
         var effect = e.getEffectInstance().getEffect();
         boolean garlic = effect.unwrapKey().map(k -> k.location().equals(GARLIC)).orElse(false);
-        boolean blind = effect.is(MobEffects.BLINDNESS)
-                && VampirismAPI.vampirePlayer(p).isGettingGarlicDamage(p.level(), false) == EnumStrength.STRONG;
-        if (garlic || blind) {
+        boolean blindness = effect.is(MobEffects.BLINDNESS);
+        if (net.ofatech.supernaturalbloodlines.core.bloodline.AugustineBloodRules.wardDenies(garlic, blindness,
+                blindness && VampirismAPI.vampirePlayer(p).isGettingGarlicDamage(p.level(), false) == EnumStrength.STRONG)) {
             e.setResult(MobEffectEvent.Applicable.Result.DO_NOT_APPLY);
         }
     }

@@ -83,6 +83,11 @@ public final class BloodlineRules {
         return isOriginal(sp) || sp == Species.HYBRID || sp == Species.TRIBRID || sp == Species.HERETIC || sp == Species.AUGUSTINE;
     }
 
+    /** R20f is lifted for this species (R203): its bite on a vampire feeds it and drains the victim without Predator's Thirst. The one place that says so. */
+    public static boolean liftsVampireBiteRefusal(Species sp) {
+        return sp == Species.AUGUSTINE;
+    }
+
     /** "A plain vampire" for the Tensura side (R200, owner Q3): no species, or an Augustine, who is a vampire on a diet and gets the same treatment. */
     public static boolean isPlainVampireLike(Species sp) {
         return sp == Species.NONE || sp == Species.AUGUSTINE;

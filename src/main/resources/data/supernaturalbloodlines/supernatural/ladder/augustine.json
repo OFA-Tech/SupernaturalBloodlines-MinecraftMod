@@ -10,7 +10,7 @@
             { "id": "L-AUG-2b", "detector": "kill", "category": "vampire", "n": 3 }
         ] },
         { "id": "L-AUG-3", "name": "Hunter-bred", "sp": 4, "ep": 15000, "tasks": [
-            { "id": "L-AUG-3a", "detector": "level", "faction": "vampirism:vampire", "n": 8 },
+            { "id": "L-AUG-3a", "detector": "level", "faction": "vampirism:vampire", "n": 10 },
             { "id": "L-AUG-3b", "detector": "signal", "signal": "compel", "n": 3, "part": "species" }
         ] },
         { "id": "L-AUG-4", "name": "Apex Predator", "sp": 4, "ep": 30000, "tasks": [

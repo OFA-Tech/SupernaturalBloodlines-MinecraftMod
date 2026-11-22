@@ -194,11 +194,25 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             if (factory.faction == Faction.WEREWOLF && !ModList.get().isLoaded("werewolves")) {
                 return cancel();
             }
+            // a rite that changes the target needs their consent when the caster is someone else, and says nothing of what they are (R201)
+            boolean consents = factory.event == BloodlineEvent.RITE_OF_AUGUSTINE;
+            if (consents) {
+                RiteTargets.Told asked = RiteTargets.consentAnswer(caster == target, target.isShiftKeyDown(), RiteTargets.SNEAK_TO_BE_MADE_AUGUSTINE);
+                if (asked != null) {
+                    tell(caster, asked.caster());
+                    tell(target, asked.target());
+                    return cancel();
+                }
+            }
             IFactionPlayerHandler h = VampirismAPI.factionPlayerHandler(target);
             BaseFaction current = baseFaction(h);
             BloodlineState before = BloodlineAccess.get(target);
             if (!factory.faction.accepts(current) && !rulesDecide(before.species())) {
-                tell(caster, WRONG_FACTION);
+                if (consents) {
+                    RiteTargets.refuseAbout(caster, target, WRONG_FACTION);
+                } else {
+                    tell(caster, WRONG_FACTION);
+                }
                 return cancel();
             }
 
@@ -206,7 +220,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             BloodlineContext ctx = FactionRiteHooks.context(target, current, level.getGameTime());
             Outcome preview = BloodlineRules.apply(before, factory.event, ctx);
             if (preview.refused()) {
-                if (factory.event == BloodlineEvent.RITE_OF_THE_MOON) {
+                if (factory.event == BloodlineEvent.RITE_OF_THE_MOON || consents) {
                     // the Moon rite's refusals (no gene, not an Original) are two answers to "do they carry the gene?": the target is told, the caster is not
                     RiteTargets.refuseAbout(caster, target, preview.refusalKey());
                 } else {

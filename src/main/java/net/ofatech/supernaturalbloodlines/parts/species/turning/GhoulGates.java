@@ -107,11 +107,11 @@ public final class GhoulGates {
     /**
      * Any way out of the vampire faction (cure, rite, command) ends the Ghoul and the turning that went with it (the rules do it, as
      * LEFT_BASE_FACTION from the vampire faction): a later vampire is not gated by an old flag, and a leftover clock does not kill
-     * someone who is human again. Only for a Ghoul: other vampires' species rules are not touched here.
+     * someone who is human again. Only for a Ghoul and an Augustine (whose bonuses and skills are a vampire's): other vampires' species rules are not touched here.
      */
     private static void endOnLeaving(PlayerFactionEvent.FactionLevelChanged e) {
         if (e.getOldFaction() == VReference.VAMPIRE_FACTION && e.getCurrentFaction() != VReference.VAMPIRE_FACTION
-                && e.getPlayer().getPlayer() instanceof ServerPlayer p && BloodlineAccess.get(p).ghoul()) {
+                && e.getPlayer().getPlayer() instanceof ServerPlayer p && (BloodlineAccess.get(p).ghoul() || BloodlineAccess.get(p).species() == net.ofatech.supernaturalbloodlines.core.bloodline.Species.AUGUSTINE)) {
             BloodlineAccess.applyEvent(p, BloodlineEvent.LEFT_BASE_FACTION,
                     SpeciesContext.of(p, BaseFaction.VAMPIRE, p.level().getGameTime(), null));
         }
@@ -135,7 +135,7 @@ public final class GhoulGates {
                 || !TurningHandler.isFaction(source, VReference.VAMPIRE_FACTION)) {
             return;
         }
-        if (LadderQuery.owns(p, "S-VAM-6") || BloodlineAccess.get(p).species() == net.ofatech.supernaturalbloodlines.core.bloodline.Species.AUGUSTINE) {
+        if (LadderQuery.owns(p, "S-VAM-6") || net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineRules.liftsVampireBiteRefusal(BloodlineAccess.get(p).species())) {
             return; // Predator's Thirst (the supernatural part's BloodEffects) feeds the biter and drains the victim; R20f is lifted for an Augustine (R203)
         }
         e.setAmount(0);

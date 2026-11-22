@@ -36,7 +36,9 @@ public final class AugustineRules {
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> syncIfPlayer(e.getEntity()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerRespawnEvent e) -> syncIfPlayer(e.getEntity()));
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerChangedDimensionEvent e) -> syncIfPlayer(e.getEntity()));
+        NeoForge.EVENT_BUS.addListener((de.teamlapen.vampirism.api.event.PlayerFactionEvent.FactionLevelChanged e) -> syncIfPlayer(e.getPlayer().getPlayer()));
         // LOWEST: after the bite's other rules (BloodEffects, the vervain refusal, the ash dagger's starving), so a bite something emptied stays 0
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, AugustineRules::noteVictimBlood);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, AugustineRules::onDrinkBlood);
         AugustineGifts.register();
     }
@@ -47,7 +49,8 @@ public final class AugustineRules {
 
     /** Idempotent: makes the player's attributes match their species and the config. */
     public static void sync(ServerPlayer p) {
-        boolean on = isAugustine(p);
+        // a species of the vampire side: out of the vampire faction (Vampirism's own cure, a command) the bonuses go at once, whatever the species still says
+        boolean on = isAugustine(p) && VampirismAPI.factionPlayerHandler(p).isInFaction(VReference.VAMPIRE_FACTION);
         apply(p, Attributes.MAX_HEALTH, SpeciesConfig.augustineExtraHealth(), AttributeModifier.Operation.ADD_VALUE, on);
         apply(p, Attributes.ATTACK_DAMAGE, SpeciesConfig.augustineAttackBonus(), AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL, on);
     }
@@ -74,12 +77,57 @@ public final class AugustineRules {
         }
     }
 
+    /** Which bites of a feed are the first (the x3 is paid once per feed). Server thread only. */
+    private static final AugustineBloodRules.FeedChain FEEDS = new AugustineBloodRules.FeedChain();
+    private static final java.util.UUID NOBODY = new java.util.UUID(0L, 0L);
+    private static final String NOTED = "supernaturalbloodlines:augustine_diet_noted";
+
+    /** What a vampire PLAYER who is bitten by an Augustine had before the bite's other rules (the Predator's Thirst drain among them) touched them, by event. */
+    private static final java.util.Map<BloodDrinkEvent.PlayerDrinkBloodEvent, Integer> VICTIM_BEFORE = new java.util.IdentityHashMap<>();
+
+    private static int bloodOf(ServerPlayer p) {
+        return VampirismAPI.vampirePlayer(p).getBloodStats().getBloodLevel();
+    }
+
+    private static void noteVictimBlood(BloodDrinkEvent.PlayerDrinkBloodEvent e) {
+        if (e.getVampire().getRepresentingEntity() instanceof ServerPlayer p && isAugustine(p)
+                && e.getBloodSource().getEntity().orElse(null) instanceof ServerPlayer victim && victim != p
+                && VampirismAPI.factionRegistry().getFaction(victim) == VReference.VAMPIRE_FACTION) {
+            VICTIM_BEFORE.put(e, bloodOf(victim));
+        }
+    }
+
     private static void onDrinkBlood(BloodDrinkEvent.PlayerDrinkBloodEvent e) {
+        Integer victimBefore = VICTIM_BEFORE.remove(e);
         if (!(e.getVampire().getRepresentingEntity() instanceof ServerPlayer p) || !isAugustine(p)) {
             return;
         }
         LivingEntity source = e.getBloodSource().getEntity().orElse(null);
         boolean vampire = source != null && VampirismAPI.factionRegistry().getFaction(source) == VReference.VAMPIRE_FACTION; // a hybrid player counts (R2)
-        e.setAmount(AugustineBloodRules.scale(e.getAmount(), vampire, SpeciesConfig.augustineBloodFromVampire(), SpeciesConfig.augustineBloodFromOther()));
+        // the x3 is the first bite of a feed's: the bites that follow it within the chain are paid as Vampirism gives them (a third from anyone else stays a third on every bite)
+        boolean first = FEEDS.firstBite(p.getUUID(), source == null ? NOBODY : source.getUUID(), p.level().getGameTime());
+        double fromVampire = first ? SpeciesConfig.augustineBloodFromVampire() : Math.min(1.0, SpeciesConfig.augustineBloodFromVampire());
+        int given = e.getAmount();
+        int scaled = AugustineBloodRules.scale(given, vampire, fromVampire, SpeciesConfig.augustineBloodFromOther(), p.getRandom().nextDouble());
+        e.setAmount(scaled);
+        // nothing is made from nothing: a vampire PLAYER who is bitten pays all that the biter gets (what the drain already took counts, and what they cannot pay is not given),
+        // so two Augustines cannot feed each other
+        if (victimBefore != null && source instanceof ServerPlayer victim) {
+            int drained = victimBefore - bloodOf(victim);
+            if (scaled > drained) {
+                VampirismAPI.vampirePlayer(victim).useBlood(scaled - drained, true);
+            }
+            e.setAmount(Math.min(scaled, Math.max(0, victimBefore - bloodOf(victim))));
+            scaled = e.getAmount();
+        }
+        if (given > 0 && scaled != given && !p.getPersistentData().getBoolean(NOTED)) {
+            p.getPersistentData().putBoolean(NOTED, true);
+            p.displayClientMessage(net.minecraft.network.chat.Component.translatable("supernaturalbloodlines.augustine.diet"), true);
+        }
+    }
+
+    /** For tests: forgets which bites started a feed. */
+    public static void forgetFeedsForTest() {
+        FEEDS.clear();
     }
 }

@@ -27,6 +27,14 @@ public final class AugustineSyringeItem extends Item {
     public static final String NOTHING = "supernaturalbloodlines.syringe.nothing";
     public static final String DONE = "supernaturalbloodlines.syringe.done";
     public static final String DONE_TO = "supernaturalbloodlines.syringe.done_to";
+    public static final String ARMED = "supernaturalbloodlines.syringe.armed";
+    public static final String ASKED = "supernaturalbloodlines.syringe.asked";
+    private static final net.ofatech.supernaturalbloodlines.core.bloodline.SyringeConfirm CONFIRM = new net.ofatech.supernaturalbloodlines.core.bloodline.SyringeConfirm();
+
+    /** For tests: forgets every arming. */
+    public static void forgetArmedForTest() {
+        CONFIRM.clear();
+    }
 
     public AugustineSyringeItem(Properties properties) {
         super(properties);
@@ -63,6 +71,19 @@ public final class AugustineSyringeItem extends Item {
         }
         if (!(player instanceof ServerPlayer user) || !(target instanceof ServerPlayer other)) {
             return InteractionResult.PASS; // only players take it
+        }
+        // the target agrees as a link does: sneaking, a lead in the main hand, and PvP on (a deliberate act, and the server's own rule for hurting a player)
+        boolean consent = net.ofatech.supernaturalbloodlines.core.boss.LinkRules.consents(false, other.isShiftKeyDown(),
+                other.getMainHandItem().is(net.minecraft.world.item.Items.LEAD), user.server.isPvpAllowed());
+        if (!consent) {
+            user.displayClientMessage(Component.translatable(NOTHING), true);
+            return InteractionResult.sidedSuccess(false);
+        }
+        // the first use only arms it for 5 s and tells them; a species is judged by the second (so the answer to "who is a plain vampire?" is never given)
+        if (!CONFIRM.confirm(user.getUUID(), other.getUUID(), user.level().getGameTime())) {
+            user.displayClientMessage(Component.translatable(ARMED), true);
+            other.displayClientMessage(Component.translatable(ASKED, user.getDisplayName()), true);
+            return InteractionResult.sidedSuccess(false);
         }
         if (inject(other)) {
             stack.consume(1, user);

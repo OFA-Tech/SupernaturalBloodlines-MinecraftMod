@@ -27,6 +27,8 @@ import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.item.AugustineSyringeItem;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.RiteTargets;
 
 /** Phase 18c Task 5 (R201, R202): the Rite of Augustine and Wes's syringe. */
 @PrefixGameTestTemplate(false)
@@ -77,6 +79,7 @@ public final class AugustineMakingGameTests {
         try {
             vampire(helper, caster);
             vampire(helper, patient);
+            patient.setShiftKeyDown(true); // their consent
             clearDropped(helper);
             start(helper, "augustine", caster, ingredients());
             helper.assertTrue(BloodlineAccess.get(patient).species() == Species.AUGUSTINE, "the one on the centre is " + BloodlineAccess.get(patient).species());
@@ -130,6 +133,100 @@ public final class AugustineMakingGameTests {
             clearDropped(helper);
             remove(helper, p);
             BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    private static void makeKind(GameTestHelper helper, ServerPlayer p, int kind) {
+        VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(null, 0);
+        BloodlineAccess.set(p, BloodlineState.NONE);
+        switch (kind) {
+            case 0 -> { } // a human
+            case 1 -> vampire(helper, p); // the one it works on: a plain vampire
+            case 2 -> {
+                vampire(helper, p);
+                BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(Species.HYBRID).build());
+            }
+            case 3 -> {
+                vampire(helper, p);
+                BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(Species.ORIGINAL).build());
+            }
+            case 4 -> {
+                vampire(helper, p);
+                BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().ghoul(true).build());
+            }
+            case 5 -> {
+                vampire(helper, p);
+                BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(Species.AUGUSTINE).build());
+            }
+            case 6 -> {
+                vampire(helper, p);
+                BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().witchLayer(true).build());
+            }
+            default -> BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
+        }
+    }
+
+    /**
+     * The caster of a rite who is not the target hears one thing whatever the target is (human, hybrid, Original, Ghoul, an Augustine, a witch), and the target is
+     * asked to sneak first. Only the one who works the rite on themselves, or whose target agreed AND is a plain vampire, gets anything done.
+     */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theCasterOfTheRiteLearnsNothingAboutWhoStandsOnTheCircle(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        String first = null;
+        for (int kind = 0; kind <= 7; kind++) {
+            RecordingPlayer caster = RecordingPlayer.create(helper);
+            RecordingPlayer target = RecordingPlayer.create(helper);
+            caster.setPos(net.minecraft.world.phys.Vec3.atBottomCenterOf(centre(helper)).add(5, 1, 0));
+            helper.getLevel().addNewPlayer(caster);
+            place(helper, target);
+            try {
+                makeKind(helper, target, kind);
+                target.setShiftKeyDown(true);
+                clearDropped(helper);
+                start(helper, "augustine", caster, ingredients());
+                if (kind == 1) {
+                    helper.assertTrue(BloodlineAccess.get(target).species() == Species.AUGUSTINE, "the plain vampire who agreed was not made one");
+                    continue;
+                }
+                helper.assertTrue(BloodlineAccess.get(target).species() != Species.AUGUSTINE || kind == 5, "kind " + kind + " became an Augustine");
+                String heard = caster.heard();
+                helper.assertTrue(heard.equals(FactionRiteFactory.NO_EFFECT), "kind " + kind + ": the caster heard " + heard);
+                if (first == null) {
+                    first = heard;
+                }
+                helper.assertTrue(heard.equals(first), "kind " + kind + ": the caster heard something else than for another kind");
+                helper.assertTrue(dropped(helper, "vampirism:garlic") == 4, "kind " + kind + ": the ingredients were not given back");
+            } finally {
+                clearDropped(helper);
+                remove(helper, caster);
+                remove(helper, target);
+                BloodlineAccess.set(target, BloodlineState.NONE);
+            }
+        }
+        // and a target who does not sneak: the same one answer, nothing changes, and they are asked
+        RecordingPlayer caster = RecordingPlayer.create(helper);
+        RecordingPlayer target = RecordingPlayer.create(helper);
+        caster.setPos(net.minecraft.world.phys.Vec3.atBottomCenterOf(centre(helper)).add(5, 1, 0));
+        helper.getLevel().addNewPlayer(caster);
+        place(helper, target);
+        try {
+            vampire(helper, target);
+            target.setShiftKeyDown(false);
+            clearDropped(helper);
+            start(helper, "augustine", caster, ingredients());
+            helper.assertTrue(BloodlineAccess.get(target).species() == Species.NONE, "an unwilling vampire was made an Augustine");
+            helper.assertTrue(caster.heard().equals(FactionRiteFactory.NO_EFFECT), "the caster heard " + caster.heard() + " of an unwilling target");
+            helper.assertTrue(target.receivedOnActionBar(RiteTargets.SNEAK_TO_BE_MADE_AUGUSTINE), "the target was not asked to sneak");
+            helper.assertTrue(dropped(helper, "vampirism:garlic") == 4, "the unwilling target's ingredients were not given back");
+        } finally {
+            clearDropped(helper);
+            remove(helper, caster);
+            remove(helper, target);
+            BloodlineAccess.set(target, BloodlineState.NONE);
         }
         helper.succeed();
     }
@@ -204,27 +301,71 @@ public final class AugustineMakingGameTests {
         helper.succeed();
     }
 
+    private static void use(ItemStack stack, ServerPlayer user, ServerPlayer target) {
+        stack.getItem().interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
+    }
+
+    /** On another player: they must sneak with a lead in hand and PvP must be on (as a link), and it takes two uses within 5 seconds. */
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void theSyringeOnAnotherPlayerNeedsTheirSneak(GameTestHelper helper) {
+    public static void theSyringeOnAnotherPlayerNeedsTheirConsentAndASecondUse(GameTestHelper helper) {
         TestPlayers.TalkingDuelist user = TestPlayers.createTalkingDuelist(helper);
         TestPlayers.TalkingDuelist target = TestPlayers.createTalkingDuelist(helper);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+        AugustineSyringeItem.forgetArmedForTest();
         try {
             vampire(helper, target);
             ItemStack stack = syringe(1);
             user.setItemInHand(InteractionHand.MAIN_HAND, stack);
-            target.setShiftKeyDown(false);
-            stack.getItem().interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
-            helper.assertTrue(BloodlineAccess.get(target).species() == Species.NONE && stack.getCount() == 1, "an unwilling vampire was injected");
-            helper.assertTrue(user.receivedOnActionBar(AugustineSyringeItem.NOTHING), "no line for the one who refused");
+            helper.getLevel().getServer().setPvpAllowed(true);
+            // each part of the consent missing: the same one line, nothing armed, nothing changed
+            for (int missing = 0; missing < 4; missing++) {
+                target.setShiftKeyDown(missing != 0);
+                target.setItemInHand(InteractionHand.MAIN_HAND, missing == 1 ? ItemStack.EMPTY : new ItemStack(net.minecraft.world.item.Items.LEAD));
+                helper.getLevel().getServer().setPvpAllowed(missing != 2);
+                int before = user.count(AugustineSyringeItem.NOTHING);
+                use(stack, user, target);
+                use(stack, user, target); // a second use would confirm an arming: there must be none
+                helper.assertTrue(user.count(AugustineSyringeItem.NOTHING) == before + 2 && !user.received(AugustineSyringeItem.ARMED), "missing " + missing + ": not the one line, or it armed");
+                helper.assertTrue(BloodlineAccess.get(target).species() == Species.NONE && stack.getCount() == 1, "missing " + missing + ": an unwilling vampire was injected");
+            }
+            // willing: the first use arms and tells them, the second injects
             target.setShiftKeyDown(true);
-            stack.getItem().interactLivingEntity(stack, user, target, InteractionHand.MAIN_HAND);
-            helper.assertTrue(BloodlineAccess.get(target).species() == Species.AUGUSTINE, "a consenting vampire was not injected");
+            target.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(net.minecraft.world.item.Items.LEAD));
+            helper.getLevel().getServer().setPvpAllowed(true);
+            use(stack, user, target);
+            helper.assertTrue(BloodlineAccess.get(target).species() == Species.NONE && stack.getCount() == 1, "the first use injected");
+            helper.assertTrue(user.receivedOnActionBar(AugustineSyringeItem.ARMED) && target.receivedOnActionBar(AugustineSyringeItem.ASKED), "the first use did not arm and ask");
+            use(stack, user, target);
+            helper.assertTrue(BloodlineAccess.get(target).species() == Species.AUGUSTINE, "the second use did not inject");
             helper.assertTrue(stack.isEmpty(), "the syringe was not used up: " + stack.getCount());
             helper.assertTrue(target.received(AugustineSyringeItem.DONE), "the target was not told");
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
+            AugustineSyringeItem.forgetArmedForTest();
             target.setShiftKeyDown(false);
             BloodlineAccess.set(target, BloodlineState.NONE);
         }
         helper.succeed();
     }
-}
+
+    /** A dying (downed) player cannot use it: Downed cancels the click before the item sees it. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDownedPlayerCannotUseTheSyringe(GameTestHelper helper) {
+        ServerPlayer user = TestPlayers.createMortal(helper);
+        ServerPlayer target = TestPlayers.createTalkingDuelist(helper);
+        try {
+            vampire(helper, target);
+            BloodlineAccess.set(user, BloodlineState.NONE.toBuilder().vampireBloodUntil(helper.getLevel().getGameTime() + 100000).build());
+            user.hurt(helper.getLevel().damageSources().generic(), 1000f);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDowned(user), "setup: not downed");
+            user.setItemInHand(InteractionHand.MAIN_HAND, syringe(1));
+            var onPlayer = new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract(user, InteractionHand.MAIN_HAND, target);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(onPlayer);
+            var inAir = new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickItem(user, InteractionHand.MAIN_HAND);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(inAir);
+            helper.assertTrue(onPlayer.isCanceled() && inAir.isCanceled(), "a downed player''s click reached the syringe: on a player " + onPlayer.isCanceled() + ", in the air " + inAir.isCanceled());
+        } finally {
+            BloodlineAccess.set(user, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }}

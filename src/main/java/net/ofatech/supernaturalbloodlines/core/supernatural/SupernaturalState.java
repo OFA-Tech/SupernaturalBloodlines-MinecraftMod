@@ -112,6 +112,11 @@ public record SupernaturalState(int schema, Map<String, Integer> rungs, Map<Stri
         return rungs.getOrDefault(race.id(), 0);
     }
 
+    /** How far this player has climbed as a vampire: the vampire ladder or the Augustine's, whichever they are on (a player is on one). Mikael and the Valet Pike ask this. */
+    public int vampireRung() {
+        return Math.max(rung(SupernaturalRace.VAMPIRE), rung(SupernaturalRace.AUGUSTINE));
+    }
+
     /** This state with the server-only tracking ({@code granted}, {@code vampirismGranted}, {@code backfill}) taken from {@code source}. */
     public SupernaturalState withTrackingOf(SupernaturalState source) {
         return toBuilder().granted(source.granted()).vampirismGranted(source.vampirismGranted()).backfill(source.backfill()).build();
