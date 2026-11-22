@@ -208,6 +208,7 @@ public final class AugustineGameTests {
                 int got = feed(biter, victim, 3);
                 int lost = victimBefore - VampirismAPI.vampirePlayer(victim).getBloodStats().getBloodLevel();
                 helper.assertTrue(got > 0 && lost > 0, "round " + round + ": the bite did nothing (" + got + ", " + lost + ")");
+                helper.assertTrue(got == (round < 2 ? 9 : 3), "round " + round + ": the biter got " + got + " (the first bite of a feed is tripled and paid for by the victim, the next are not)");
                 helper.assertTrue(got <= lost, "round " + round + ": the biter got " + got + " from a victim who lost " + lost);
                 gained += got;
                 paid += lost;
