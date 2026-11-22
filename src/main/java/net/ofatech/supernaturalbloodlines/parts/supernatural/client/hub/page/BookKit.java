@@ -13,6 +13,7 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScree
 import net.ofatech.supernaturalbloodlines.shared.hub.Contrast;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.TitleFont;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
@@ -197,6 +198,12 @@ public final class BookKit {
             return;
         }
         Rect h = f.region("head");
+        if (PageKit.themedTitle(f, title, h.x(), h.y() + 1, h.w(), f.theme().ink(), true)) {
+            if (subtitle != null) {
+                small(f, subtitle, h.x(), h.y() + 1 + TitleFont.HEIGHT + 1, h.w(), f.theme().muted());
+            }
+            return;
+        }
         // the title is large while it fits beside the points and the look button; a narrow window gets it at normal size, then cut with an ellipsis
         float scale = f.font().width(title) * 1.5f <= h.w() ? 1.5f : 1f;
         Component shown = scale == 1f && f.font().width(title) > h.w() ? Component.literal(net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(title.getString(), h.w(), f.font()::width)) : title;

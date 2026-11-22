@@ -19,9 +19,13 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.DetailLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitFaces;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.ModelDrag;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.SkillIcons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.SourceTag;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.TickRing;
 
@@ -38,8 +42,34 @@ public final class KitDraw {
     private KitDraw() {
     }
 
-    /** An icon tinted {@code color} at {@code size} pixels (16 draws it 1:1; 8, 12 and 24 are clean multiples or halves). */
+    private static HubTheme active;
+
+    /**
+     * The theme being drawn: its kit draws the focus ring and the pips of the shared widgets, which are given no theme of their own. A theme sets it at the
+     * start of every frame ({@code drawFrame}), so the widgets follow the look that is switched live.
+     */
+    public static void activeTheme(HubTheme theme) {
+        active = theme;
+    }
+
+    /**
+     * An icon at {@code size} pixels: the kit's own picture at 16 or 32 px, whole or halved ({@link net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites#iconPlan}),
+     * in its own colours (only the alpha of {@code color} is used). The old atlas, tinted, is the fallback for a sprite a pack removed.
+     */
     public static void icon(GuiGraphics g, Icons icon, int x, int y, int size, int color) {
+        if (!UiKit.icon(g, icon.id(), x, y, size, color)) {
+            atlasIcon(g, icon, x, y, size, color);
+        }
+    }
+
+    /** The picture of a skill: one for each skill id (the "unknown" rune for a skill of another mod). */
+    public static void skillIcon(GuiGraphics g, String skillId, int x, int y, int size, int color) {
+        if (!UiKit.icon(g, UiKit.skillIconName(skillId), x, y, size, color)) {
+            atlasIcon(g, SkillIcons.of(skillId), x, y, size, color);
+        }
+    }
+
+    private static void atlasIcon(GuiGraphics g, Icons icon, int x, int y, int size, int color) {
         RenderSystem.enableBlend();
         g.setColor(((color >> 16) & 0xFF) / 255f, ((color >> 8) & 0xFF) / 255f, (color & 0xFF) / 255f, ((color >>> 24) == 0 ? 255 : (color >>> 24)) / 255f);
         g.blit(ATLAS, x, y, size, size, icon.column() * Icons.CELL, icon.row() * Icons.CELL, Icons.CELL, Icons.CELL, ATLAS_W, ATLAS_H);
@@ -135,7 +165,11 @@ public final class KitDraw {
     /** Rank pips; the width they take. */
     public static int pips(GuiGraphics g, int x, int y, int total, int filled, int on, int off) {
         for (int i = 0; i < total; i++) {
-            g.fill(x + i * 6, y, x + i * 6 + 4, y + 4, i < filled ? on : off);
+            if (active != null && UiKit.has(active.kit(), i < filled ? Part.PIP_ON : Part.PIP_OFF)) {
+                UiKit.draw(g, active, i < filled ? Part.PIP_ON : Part.PIP_OFF, x + i * 6, y, 5, 5);
+            } else {
+                g.fill(x + i * 6, y, x + i * 6 + 4, y + 4, i < filled ? on : off);
+            }
         }
         return Math.max(0, total * 6 - 2);
     }
@@ -172,6 +206,10 @@ public final class KitDraw {
 
     /** The focus ring: a 2 px frame drawn 2 px outside {@code r}, in {@code color} (the theme's focus colour). */
     public static void focusRing(GuiGraphics g, Rect r, int color) {
+        if (active != null) {
+            UiKit.focus(g, active, r);
+            return;
+        }
         int x1 = r.x() - 2;
         int y1 = r.y() - 2;
         int x2 = r.right() + 2;
@@ -184,12 +222,9 @@ public final class KitDraw {
 
     /** A small square button with an icon: the theme switch, the close. */
     public static void button(GuiGraphics g, HubTheme theme, Rect r, Icons icon, boolean hot, boolean focused) {
-        int bg = hot ? theme.accent() : theme.paper();
-        int fg = hot ? theme.paper() : theme.accent();
-        g.fill(r.x(), r.y(), r.right(), r.bottom(), theme.accent());
-        g.fill(r.x() + 1, r.y() + 1, r.right() - 1, r.bottom() - 1, bg);
-        int is = Math.min(12, Math.min(r.w(), r.h()) - 2);
-        icon(g, icon, r.x() + (r.w() - is) / 2, r.y() + (r.h() - is) / 2, is, fg);
+        UiKit.draw(g, theme, KitFaces.button(false, true, hot, false), r);
+        int is = Math.min(r.w(), r.h()) - 4;
+        icon(g, icon, r.x() + (r.w() - is) / 2, r.y() + (r.h() - is) / 2, is, 0xFFFFFFFF);
         if (focused) {
             focusRing(g, r, theme.focusColor());
         }
@@ -267,13 +302,10 @@ public final class KitDraw {
             Detail.Action a = d.actions().get(i);
             Rect b = rects.get(i);
             boolean hot = a.enabled() && (ctx.hovered(b) || ctx.focused("detail:" + a.id()));
-            int fill = a.primary() ? (a.enabled() ? theme.accent() : theme.muted()) : theme.paper();
-            int label = a.primary() ? Contrast.bestText(fill) : a.enabled() ? theme.ink() : theme.muted();
-            g.fill(b.x(), b.y(), b.right(), b.bottom(), a.enabled() ? theme.accent() : theme.muted());
-            g.fill(b.x() + 1, b.y() + 1, b.right() - 1, b.bottom() - 1, hot && !a.primary() ? theme.good() : fill);
+            Part part = KitFaces.button(a.primary(), a.enabled(), hot, false);
+            UiKit.draw(g, theme, part, b);
             String shown = LabelFit.cut(a.label().getString(), b.w() - 8, font::width);
-            g.drawString(font, shown, b.x() + (b.w() - font.width(shown)) / 2, b.y() + 3,
-                    hot && !a.primary() ? Contrast.bestText(theme.good()) : label, false);
+            g.drawString(font, shown, b.x() + (b.w() - font.width(shown)) / 2, b.y() + (b.h() - 8) / 2, UiKit.label(theme, part), false);
         }
         detailActions(ctx, theme, rects, d);
     }
@@ -387,7 +419,7 @@ public final class KitDraw {
         GuiGraphics g = ctx.g();
         Font font = ctx.font();
         Rect panel = l.panel();
-        dialogFrame(g, screenW, screenH, panel, theme.paper(), theme.accent());
+        dialogFrame(g, screenW, screenH, panel, theme);
         g.drawString(font, LabelFit.cut(title.getString(), panel.w() - 2 * ConfirmLayout.PAD, font::width), panel.x() + ConfirmLayout.PAD, panel.y() + ConfirmLayout.PAD, theme.accent(), false);
         Rect text = l.text();
         int y = text.y();
@@ -400,11 +432,24 @@ public final class KitDraw {
         dialogButton(g, font, theme, l.confirm(), yes, true, confirmFocused);
     }
 
-    private static void dialogButton(GuiGraphics g, Font font, HubTheme theme, Rect r, Component label, boolean primary, boolean focused) {
-        dialogButton(g, font, r, label, primary, focused, theme.paper(), theme.accent(), theme.ink(), theme.focusColor());
+    /** A dialog button of the theme's kit: the plain or the primary picture, the label cut to fit, and the kit's focus ring. */
+    public static void dialogButton(GuiGraphics g, Font font, HubTheme theme, Rect r, Component label, boolean primary, boolean focused) {
+        Part part = KitFaces.button(primary, true, focused, false);
+        UiKit.draw(g, theme, part, r);
+        String shown = LabelFit.cut(label.getString(), r.w() - 8, font::width);
+        g.drawString(font, shown, r.x() + (r.w() - font.width(shown)) / 2, r.y() + (r.h() - 8) / 2, UiKit.label(theme, part), false);
+        if (focused) {
+            UiKit.focus(g, theme, r);
+        }
     }
 
-    /** The dim and the bordered panel of a dialog, in a theme's paper and accent. */
+    /** The dim and the panel of a dialog, in the theme's kit. */
+    public static void dialogFrame(GuiGraphics g, int screenW, int screenH, Rect panel, HubTheme theme) {
+        g.fill(0, 0, screenW, screenH, 0xB0000000);
+        UiKit.draw(g, theme, Part.PANEL, panel.x() - 3, panel.y() - 3, panel.w() + 6, panel.h() + 6);
+    }
+
+    /** The dim and the bordered panel of a dialog, in flat paper and accent (a dialog with no theme). */
     public static void dialogFrame(GuiGraphics g, int screenW, int screenH, Rect panel, int paper, int accent) {
         g.fill(0, 0, screenW, screenH, 0xB0000000);
         g.fill(panel.x() - 1, panel.y() - 1, panel.right() + 1, panel.bottom() + 1, accent);

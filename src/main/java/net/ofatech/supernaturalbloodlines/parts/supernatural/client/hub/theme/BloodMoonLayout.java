@@ -98,6 +98,18 @@ public final class BloodMoonLayout {
                 new HubLayout.Chrome(themeButton, close, stage, counters, bar), dividers);
     }
 
+    /**
+     * How many pixels of a card (a region grown by 5) run under the floating bar at the bottom: the card ends {@link #GAP} above the bar, and a page whose
+     * list would run down there keeps that much out of its content.
+     */
+    public static int cardCut(Rect region, Rect bar) {
+        // a bar beside the region (Tensura's pane) or above it is not under it
+        if (bar == null || bar.y() <= region.y() || bar.x() >= region.right() || bar.right() <= region.x()) {
+            return 0;
+        }
+        return Math.max(0, region.bottom() + 5 - (bar.y() - GAP));
+    }
+
     /** The card behind a content region. */
     static Rect card(Rect region) {
         return region.inset(-5);

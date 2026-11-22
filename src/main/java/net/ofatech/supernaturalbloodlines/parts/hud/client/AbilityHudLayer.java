@@ -50,7 +50,7 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         }
         float alpha = HudActivity.alpha(busy);
         long time = mc.level == null ? 0 : mc.level.getGameTime();
-        float pulse = 0.5f + 0.5f * (float) Math.sin(time * 0.25);
+        float pulse = net.ofatech.supernaturalbloodlines.shared.hub.kit.Motion.pulse(time, net.ofatech.supernaturalbloodlines.shared.hub.kit.ReduceMotion.on());
         int previewTop = -1;
         if (alpha > 0.01f) {
             float blood = src.blood();

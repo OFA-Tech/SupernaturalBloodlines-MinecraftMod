@@ -22,6 +22,13 @@ public record Rect(int x, int y, int w, int h) {
         return x >= o.x && y >= o.y && right() <= o.right() && bottom() <= o.bottom();
     }
 
+    /** The smallest rectangle that holds both. */
+    public Rect union(Rect o) {
+        int x0 = Math.min(x, o.x);
+        int y0 = Math.min(y, o.y);
+        return new Rect(x0, y0, Math.max(right(), o.right()) - x0, Math.max(bottom(), o.bottom()) - y0);
+    }
+
     public Rect inset(int d) {
         return new Rect(x + d, y + d, w - 2 * d, h - 2 * d);
     }

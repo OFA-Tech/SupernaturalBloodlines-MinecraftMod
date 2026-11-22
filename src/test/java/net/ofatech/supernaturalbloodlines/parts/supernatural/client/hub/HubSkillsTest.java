@@ -94,4 +94,14 @@ class HubSkillsTest {
             }
         }
     }
+
+    @Test
+    void aSkillThePlayerHasOrHasTheLikeOfIsNotOfferedAgain() {
+        assertEquals(false, HubSkills.State.OWNED.offersPurchase());
+        assertEquals(false, HubSkills.State.COVERED.offersPurchase());
+        assertEquals(true, HubSkills.State.BUYABLE.offersPurchase());
+        // a locked or dormant one still shows its (disabled) button: it says why it cannot be learned
+        assertEquals(true, HubSkills.State.LOCKED.offersPurchase());
+        assertEquals(true, HubSkills.State.DORMANT.offersPurchase());
+    }
 }

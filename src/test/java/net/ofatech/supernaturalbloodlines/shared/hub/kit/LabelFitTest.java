@@ -168,4 +168,37 @@ class LabelFitTest {
         int height = guiWidth * 9 / 16;
         return net.ofatech.supernaturalbloodlines.parts.supernaturaltensura.client.TensuraHubLayout.of(guiWidth, height, 8, 4);
     }
+
+    @Test
+    void aNameThatWasCutIsToldFromOneThatFit() {
+        ToIntFunction<String> six = s -> s.length() * 6;
+        assertFalse(LabelFit.isCut(LabelFit.wrap("Moon Heart", 100, 2, six)));
+        assertTrue(LabelFit.isCut(LabelFit.wrap("Predator's Thirst of the Moon", 60, 2, six)));
+        assertFalse(LabelFit.isCut(List.of()));
+    }
+
+    @Test
+    void textWrapsAtSpacesAndNeverBreaksAWordInTheMiddle() {
+        ToIntFunction<String> six = s -> s.length() * 6;
+        // the Tensura Settings hint at GUI scale 4: a 13 character column and a 11 character word
+        List<String> lines = LabelFit.wrapWords("No slides, pulses or flourishes.", 13 * 6, six);
+        assertEquals(List.of("No slides,", "pulses or", "flourishes."), lines);
+        for (String line : lines) {
+            assertTrue(six.applyAsInt(line) <= 13 * 6, line);
+        }
+        // a word wider than the column is cut with an ellipsis, on its own line, never split into two
+        assertEquals(List.of("Enchant\u2026"), LabelFit.wrapWords("Enchanted", 8 * 6, six));
+        assertEquals(List.of("A", "Enchant\u2026", "tensura"), LabelFit.wrapWords("A Enchanted tensura", 8 * 6, six));
+        assertEquals(List.of("one", "", "two"), LabelFit.wrapWords("one\n\ntwo", 60, six));
+        assertEquals(List.of(""), LabelFit.wrapWords("", 60, six));
+    }
+
+    @Test
+    void aWordWiderThanTheColumnIsFoundSoThePageCanChangeItsLayout() {
+        ToIntFunction<String> six = s -> s.length() * 6;
+        assertTrue(LabelFit.hasOverlongWord("No slides, pulses or flourishes.", 10 * 6, six), "flourishes. is 11 characters");
+        assertFalse(LabelFit.hasOverlongWord("No slides, pulses or flourishes.", 11 * 6, six));
+        assertTrue(LabelFit.hasOverlongWord("a\nsupercalifragilistic", 10 * 6, six), "a newline separates words too");
+        assertFalse(LabelFit.hasOverlongWord("", 6, six));
+    }
 }
