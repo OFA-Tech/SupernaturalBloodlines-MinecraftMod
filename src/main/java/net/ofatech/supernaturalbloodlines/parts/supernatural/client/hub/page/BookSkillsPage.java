@@ -16,7 +16,12 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Radial;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.SkillIcons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.NodeSize;
+import org.jetbrains.annotations.Nullable;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.RingLabels;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.VampirismSkillAccess;
 import org.lwjgl.glfw.GLFW;
 
@@ -53,6 +58,8 @@ public final class BookSkillsPage implements HubPageView {
     public boolean legacyActive() {
         return legacy.tab() != SkillsPage.Tab.OURS;
     }
+    /** The size of the nodes of the ring drawn last ({@link NodeSize}). */
+    private int nodeSize = NodeSize.SMALL;
     private List<Radial.Node> nodes = List.of();
     private List<String> ids = List.of();
 
@@ -162,6 +169,7 @@ public final class BookSkillsPage implements HubPageView {
         int cy = top + (s.bottom() - top) / 2;
         // a node is 16 to 20 px and its name takes two small lines under (or over) it; keep all of that inside the page, above the page number
         int radius = Math.max(26, Math.min(s.w() / 2 - 30, (s.bottom() - top) / 2 - 10 - 18));
+        nodeSize = NodeSize.of(radius, count);
         int inner = Math.max(14, radius * 9 / 20);
         Rect centre = new Rect(cx - inner - 2, cy - inner - 2, 2 * inner + 4, 2 * inner + 4);
         List<Radial.Node> ring = Radial.ring(cx, cy, radius, count);
@@ -174,64 +182,106 @@ public final class BookSkillsPage implements HubPageView {
                 int sx = cx + (int) Math.round((inner + 4) * Math.cos(a));
                 int sy = cy + (int) Math.round((inner + 4) * Math.sin(a));
                 boolean locked = rows.get(i).state() == HubSkills.State.LOCKED || rows.get(i).state() == HubSkills.State.DORMANT;
-                KitDraw.line(f.g, sx, sy, n.x() - (int) Math.round(9 * Math.cos(a)), n.y() - (int) Math.round(9 * Math.sin(a)), locked ? (t.muted() & 0xFFFFFF) | 0x70000000 : t.muted());
+                KitDraw.line(f.g, sx, sy, n.x() - (int) Math.round(nodeSize / 2 * Math.cos(a)), n.y() - (int) Math.round(nodeSize / 2 * Math.sin(a)), locked ? (t.muted() & 0xFFFFFF) | 0x70000000 : t.muted());
             }
         });
         f.emblem(centre);
         int labelWidth = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.radialWidth(radius, count, 36, 110);
+        List<NodeLabel> labels = new ArrayList<>();
+        List<RingLabels.Request> asked = new ArrayList<>();
+        List<Rect> blocked = new ArrayList<>();
+        blocked.add(centre);
         for (int i = 0; i < rows.size(); i++) {
-            node(f, s, rows.get(i), ring.get(i), cx, cy, radius, rows.get(i) == chosen, labelWidth);
+            Radial.Node n = ring.get(i);
+            blocked.add(new Rect(n.x() - nodeSize / 2 - 2, n.y() - nodeSize / 2 - 2, nodeSize + 4, nodeSize + 4));
+        }
+        for (int i = 0; i < rows.size(); i++) {
+            NodeLabel l = plan(f, s, rows.get(i), ring.get(i), cx, cy, radius, labelWidth);
+            labels.add(l);
+            asked.add(l.request());
+        }
+        // a name that would run into a neighbour, a node or the model is cut shorter (and ends in an ellipsis) rather than printed over them
+        List<Rect> where = RingLabels.place(asked, blocked, new Rect(s.x(), top - 24, s.w(), s.bottom() - top + 24), NAME_MIN, 4);
+        for (int i = 0; i < rows.size(); i++) {
+            node(f, rows.get(i), ring.get(i), rows.get(i) == chosen, labels.get(i), where.get(i));
         }
         f.end(s.bottom());
     }
 
-    /** One skill: owned is filled, available is ringed in gold, locked is a faint dotted ring; its icon inside and its name in two small lines. */
-    private void node(HubScreen.Frame f, Rect page, HubSkills.Row row, Radial.Node n, int cx, int cy, int radius, boolean selected, int labelWidth) {
-        HubTheme t = f.theme();
-        boolean known = row.state() == HubSkills.State.OWNED || row.state() == HubSkills.State.COVERED;
-        boolean locked = row.state() == HubSkills.State.LOCKED || row.state() == HubSkills.State.DORMANT;
-        int size = 18;
-        int x = n.x() - size / 2;
-        int y = n.y() - size / 2;
-        if (selected) {
-            KitDraw.shape(f.g, shape, x - 3, y - 3, size + 6, t.accent());
-            KitDraw.shape(f.g, shape, x - 2, y - 2, size + 4, t.paper());
-        }
-        // the skill's own picture (16 px, in its own colours): a locked one is dimmed, never recoloured
-        if (known) {
-            KitDraw.shape(f.g, shape, x, y, size, t.good());
-            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0xFFFFFFFF);
-        } else if (locked) {
-            KitDraw.tickRing(f.g, n.x(), n.y(), size / 2, 16, 0f, (t.muted() & 0xFFFFFF) | 0xA0000000, (t.muted() & 0xFFFFFF) | 0xA0000000);
-            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0x70FFFFFF);
-        } else {
-            KitDraw.shape(f.g, shape, x, y, size, GOLD);
-            KitDraw.shape(f.g, shape, x + 2, y + 2, size - 4, t.paper());
-            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0xFFFFFFFF);
-        }
-        // by words, and a word that is too long ends in an ellipsis instead of being broken in the middle. A node on the sides of the ring has its name
-        // beside it, outward (above or below it the name would run into the neighbour); the top and bottom ones keep it over or under
+    /** A name is kept while at least this many pixels of it fit clear of the nodes and the other names. */
+    private static final int NAME_MIN = 24;
+
+    /** Where a node's name would like to stand: beside the node on the sides of the ring, over or under it at the top and bottom. */
+    private record NodeLabel(RingLabels.Request request, boolean beside, int dx) {
+    }
+
+    private NodeLabel plan(HubScreen.Frame f, Rect page, HubSkills.Row row, Radial.Node n, int cx, int cy, int radius, int labelWidth) {
+        int size = nodeSize;
         int dx = n.x() - cx;
         int sideRoom = dx > 0 ? page.right() - (n.x() + size / 2 + 3) : n.x() - size / 2 - 3 - page.x();
         // a node near the page edge has no room beside it for even a short name: it goes over or under the node instead of running off the page
         boolean beside = Math.abs(dx) * 2 > radius && sideRoom >= 30;
-        int room = beside ? sideRoom : labelWidth;
-        List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(SkillsPage.name(row).getString(), Math.max(24, Math.min(110, room)), 2, f.font()::width);
+        int room = Math.max(24, Math.min(110, beside ? sideRoom : labelWidth));
+        List<String> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(SkillsPage.name(row).getString(), room, 2, f.font()::width);
+        int w = lines.stream().mapToInt(f.font()::width).max().orElse(0);
         int height = lines.size() * 9;
-        int ly = beside ? n.y() - height / 2 : n.y() >= cy ? n.y() + size / 2 + 2 : n.y() - size / 2 - 2 - height;
+        int y = beside ? n.y() - height / 2 : n.y() >= cy ? n.y() + size / 2 + 2 : n.y() - size / 2 - 2 - height;
+        RingLabels.Request req = beside
+                ? new RingLabels.Request(dx > 0 ? n.x() + size / 2 + 3 : n.x() - size / 2 - 3, y, w, height, dx > 0 ? RingLabels.Anchor.LEFT : RingLabels.Anchor.RIGHT)
+                : new RingLabels.Request(n.x(), y, w, height, RingLabels.Anchor.CENTER);
+        return new NodeLabel(req, beside, dx);
+    }
+
+    /** One skill: owned is filled, available is ringed in gold, locked is a faint dotted ring; its icon inside and its name in up to two lines beside or under it. */
+    private void node(HubScreen.Frame f, HubSkills.Row row, Radial.Node n, boolean selected, NodeLabel plan, @Nullable Rect at) {
+        HubTheme t = f.theme();
+        boolean known = row.state() == HubSkills.State.OWNED || row.state() == HubSkills.State.COVERED;
+        boolean locked = row.state() == HubSkills.State.LOCKED || row.state() == HubSkills.State.DORMANT;
+        int size = nodeSize;
+        int x = n.x() - size / 2;
+        int y = n.y() - size / 2;
+        if (size == NodeSize.BIG) {
+            // the kit's node: lit for a skill the player has, haloed for the chosen one, plain for the rest; the picture sits in its well
+            UiKit.draw(f.g, t, selected ? Part.NODE_SELECTED : known ? Part.NODE_ON : Part.NODE_OFF, x, y, size, size);
+            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, locked ? 0x70FFFFFF : 0xFFFFFFFF);
+        } else {
+            if (selected) {
+                KitDraw.shape(f.g, shape, x - 3, y - 3, size + 6, t.accent());
+                KitDraw.shape(f.g, shape, x - 2, y - 2, size + 4, t.paper());
+            }
+            // the skill's own picture (16 px, in its own colours): a locked one is dimmed, never recoloured
+            if (known) {
+                KitDraw.shape(f.g, shape, x, y, size, t.good());
+                KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0xFFFFFFFF);
+            } else if (locked) {
+                KitDraw.tickRing(f.g, n.x(), n.y(), size / 2, 16, 0f, (t.muted() & 0xFFFFFF) | 0xA0000000, (t.muted() & 0xFFFFFF) | 0xA0000000);
+                KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0x70FFFFFF);
+            } else {
+                KitDraw.shape(f.g, shape, x, y, size, GOLD);
+                KitDraw.shape(f.g, shape, x + 2, y + 2, size - 4, t.paper());
+                KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0xFFFFFFFF);
+            }
+        }
         int color = selected ? t.accent() : locked ? t.muted() : t.ink();
         Rect hit = new Rect(n.x() - size / 2 - 2, n.y() - size / 2 - 2, size + 4, size + 4);
         Rect target = hit;
-        for (var line : lines) {
-            int lw = f.font().width(line);
-            int lx = beside ? (dx > 0 ? n.x() + size / 2 + 3 : n.x() - size / 2 - 3 - lw) : Math.max(page.x(), Math.min(page.right() - lw, n.x() - lw / 2));
-            f.g.drawString(f.font(), line, lx, ly, color, false);
-            target = target.union(new Rect(lx, ly, lw, 9));
-            ly += 9;
+        List<String> lines = List.of();
+        if (at != null) {
+            // wrapped again to the room it was given: by words, and a word that is too long ends in an ellipsis
+            lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.wrap(SkillsPage.name(row).getString(), at.w(), 2, f.font()::width);
+            int ly = at.y();
+            for (var line : lines) {
+                int lw = f.font().width(line);
+                int lx = plan.beside() ? (plan.dx() > 0 ? at.x() : at.right() - lw) : at.x() + (at.w() - lw) / 2;
+                f.g.drawString(f.font(), line, lx, ly, color, false);
+                target = target.union(new Rect(lx, ly, lw, 9));
+                ly += 9;
+            }
         }
         String id = "skill:" + row.id();
-        // a name that was cut is read in full by pointing at it (its tooltip has the whole name); the focus ring stays round the node
-        f.target(id, net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.isCut(lines) ? target : hit, List.of(SkillsPage.name(row), SkillsPage.state(row)), () -> legacy.select(row.id()));
+        // a name that was cut, or left out, is read in full by pointing at it (its tooltip has the whole name); the focus ring stays round the node
+        boolean cut = at == null || net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.isCut(lines);
+        f.target(id, cut ? target : hit, List.of(SkillsPage.name(row), SkillsPage.state(row)), () -> legacy.select(row.id()));
         if (f.focused(id)) {
             KitDraw.focusRing(f.g, hit, t.focusColor());
         }

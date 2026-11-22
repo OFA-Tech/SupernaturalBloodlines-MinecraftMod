@@ -157,11 +157,11 @@ final class PageKit {
     static int taskRow(HubScreen.Frame f, HubModel.TaskRow row, int x, int y, int w, boolean stamps, @Nullable Runnable onSelect, boolean selected) {
         HubTheme t = f.theme();
         Font font = f.font();
-        Component tag = sourceTag(row.source());
-        int tagW = font.width(tag) + 4;
+        net.ofatech.supernaturalbloodlines.shared.hub.kit.SourceTag tag = net.ofatech.supernaturalbloodlines.shared.hub.kit.SourceTag.of(row.source());
+        int tagW = net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw.tagWidth(font, tag);
         boolean stamp = stamps && row.state() == TaskState.CLAIMABLE;
         int stampW = stamp ? HubTheme.STAMP + 2 : 0;
-        int textX = x + HubTheme.BOX + 3;
+        int textX = net.ofatech.supernaturalbloodlines.shared.hub.kit.KitMetrics.taskTextX(x, HubTheme.BOX, net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitWidgets.TASK_PX);
         int textW = Math.max(20, x + w - stampW - tagW - 2 - textX);
         MutableComponent words = text(row.text()).copy();
         if (row.counted() && row.target() > 1 && row.state() != TaskState.CLAIMED) {
@@ -181,9 +181,7 @@ final class PageKit {
             ly += LINE;
         }
         int tagX = x + w - stampW - tagW;
-        int sc = t.sourceColor(row.source());
-        f.g.renderOutline(tagX, y, tagW, 9, sc);
-        f.g.drawString(font, tag, tagX + 2, y + 1, sc, false);
+        net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw.sourceTag(f.g, font, t, tag, tagX, y);
         String rowId = "task:" + row.task().id();
         f.target(rowId, rowRect, tooltip(row), onSelect);
         if (f.focused(rowId)) {

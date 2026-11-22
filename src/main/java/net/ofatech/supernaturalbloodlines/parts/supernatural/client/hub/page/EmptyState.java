@@ -64,9 +64,9 @@ public final class EmptyState {
         Component label = Component.translatable(key + "button");
         Rect button = new Rect(x + (w - Math.min(w, f.font().width(label) + 24)) / 2, y + 8, Math.min(w, f.font().width(label) + 24), 16);
         boolean hot = f.hovered(button) || f.focused("empty:" + kind);
-        f.g.fill(button.x(), button.y(), button.right(), button.bottom(), t.accent());
-        f.g.fill(button.x() + 1, button.y() + 1, button.right() - 1, button.bottom() - 1, hot ? (t.accent() & 0xFFFFFF) | 0x44000000 : t.paper());
-        f.g.drawString(f.font(), label, button.x() + (button.w() - f.font().width(label)) / 2, button.y() + 4, t.accent(), false);
+        var part = PageWidgets.part(true, false, hot);
+        net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit.draw(f.g, t, part, button);
+        f.g.drawString(f.font(), label, button.x() + (button.w() - f.font().width(label)) / 2, button.y() + 4, net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit.label(t, part), false);
         f.target("empty:" + kind, button, List.of(label), () -> f.screen().setPage(open));
         if (f.focused("empty:" + kind)) {
             KitDraw.focusRing(f.g, button, t.focusColor());
@@ -78,9 +78,9 @@ public final class EmptyState {
             int w2 = Math.min(w, f.font().width(label2) + 24);
             Rect b2 = new Rect(x + (w - w2) / 2, bottom + 6, w2, 16);
             boolean hot2 = f.hovered(b2) || f.focused(id2);
-            f.g.fill(b2.x(), b2.y(), b2.right(), b2.bottom(), t.accent());
-            f.g.fill(b2.x() + 1, b2.y() + 1, b2.right() - 1, b2.bottom() - 1, hot2 ? (t.accent() & 0xFFFFFF) | 0x44000000 : t.paper());
-            f.g.drawString(f.font(), label2, b2.x() + (b2.w() - f.font().width(label2)) / 2, b2.y() + 4, t.accent(), false);
+            var part2 = PageWidgets.part(true, false, hot2);
+            net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit.draw(f.g, t, part2, b2);
+            f.g.drawString(f.font(), label2, b2.x() + (b2.w() - f.font().width(label2)) / 2, b2.y() + 4, net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit.label(t, part2), false);
             f.target(id2, b2, List.of(label2), () -> f.screen().setPage(second));
             if (f.focused(id2)) {
                 KitDraw.focusRing(f.g, b2, t.focusColor());

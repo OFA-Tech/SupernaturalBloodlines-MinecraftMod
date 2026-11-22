@@ -123,8 +123,8 @@ public final class HomePage implements HubPageView {
                 cx = tx;
                 cy += 12;
             }
-            f.g.fill(cx, cy, cx + w, cy + 11, (t.accent() & 0xFFFFFF) | 0x33000000);
-            f.g.drawString(f.font(), chip, cx + 4, cy + 2, t.ink(), false);
+            int text = BookKit.chip(f, new Rect(cx, cy, w, 11), false);
+            f.g.drawString(f.font(), chip, cx + 4, cy + 2, text, false);
             cx += w + 4;
         }
         y = Math.max(y + 2 + face + 4, cy + 14);
@@ -239,8 +239,7 @@ public final class HomePage implements HubPageView {
                 bottom = PageKit.wrapped(f, Component.translatable(KEY + "answer." + a.label() + ".tip"), x, bottom, w, t.muted()) + 1;
             }
         }
-        f.g.fill(r.x(), top, r.right(), bottom, (t.accent() & 0xFFFFFF) | 0x14000000);
-        f.g.renderOutline(r.x(), top, r.w(), bottom - top, (t.accent() & 0xFFFFFF) | 0x88000000);
+        BookKit.card(f, new Rect(r.x(), top, r.w(), bottom - top), t.accent());
         return bottom + 3;
     }
     /** The pack and the people of your line as faces: a click opens the Profile; the dot says who is online and the crown who leads. */

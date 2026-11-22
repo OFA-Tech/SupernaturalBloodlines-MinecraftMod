@@ -50,6 +50,17 @@ class KitMetricsTest {
     }
 
     @Test
+    void aTasksTextStartsAfterTheBoxThatIsDrawnNotAfterTheSquareItIsCenteredOn() {
+        int box = 7;
+        int px = 10;
+        int drawnRight = 100 + (box - px) / 2 + px;
+        assertEquals(drawnRight, KitMetrics.taskBoxRight(100, box, px));
+        assertTrue(KitMetrics.taskTextX(100, box, px) >= drawnRight + 4, "a gap between the box and the letter");
+        assertTrue(KitMetrics.taskTextX(100, box, px) > 100 + box + 3, "further right than the old text start, which touched the box");
+        assertEquals(100 + box + KitMetrics.TASK_GAP, KitMetrics.taskTextX(100, box, box), "a box no wider than its square needs no extra");
+    }
+
+    @Test
     void aFillIsProportionalAndNeverMoreThanTheTrack() {
         assertEquals(0, KitMetrics.barFill(50, 0f));
         assertEquals(25, KitMetrics.barFill(50, 0.5f));

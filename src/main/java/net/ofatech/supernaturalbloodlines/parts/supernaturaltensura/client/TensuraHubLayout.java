@@ -26,7 +26,7 @@ public final class TensuraHubLayout {
     static final int CAPTION = 11;
     static final int GAP = 8;
     /** Between the two columns: the main one's scroll bar (7 px, one off its edge) and a pixel of air on each side of it. */
-    static final int COLUMN_GAP = 10;
+    static final int COLUMN_GAP = net.ofatech.supernaturalbloodlines.shared.hub.kit.KitMetrics.SCROLL_W + 1 + net.ofatech.supernaturalbloodlines.shared.hub.kit.KitMetrics.SCROLL_AIR;
     /** Below this window width the page and mod lists show icons only. */
     static final int NARROW = 340;
 

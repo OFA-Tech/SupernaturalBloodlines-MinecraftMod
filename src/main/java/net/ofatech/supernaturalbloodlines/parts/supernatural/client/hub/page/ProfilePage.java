@@ -86,10 +86,10 @@ public final class ProfilePage implements HubPageView {
         if (route.op()) {
             Component banner = Component.translatable(KEY + "op_banner");
             int h = f.font().split(banner, r.w() - 8).size() * PageKit.LINE + 4;
-            f.g.fill(r.x(), y, r.right(), y + h, t.accent());
+            int ink = BookKit.chip(f, new Rect(r.x(), y, r.w(), h), true);
             int yy = y + 2;
             for (var line : f.font().split(banner, r.w() - 8)) {
-                f.g.drawString(f.font(), line, r.x() + 4, yy, Contrast.bestText(t.accent()), false);
+                f.g.drawString(f.font(), line, r.x() + 4, yy, ink, false);
                 yy += PageKit.LINE;
             }
             y += h + 4;
@@ -148,8 +148,8 @@ public final class ProfilePage implements HubPageView {
             String text = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(chip.getString(), r.right() - tx - 8, f.font()::width);
             int w = f.font().width(text) + 8;
             int cy = beside ? Math.max(ty + 1, y + face - 11) : ty + 1;
-            f.g.fill(tx, cy, tx + w, cy + 11, (t.accent() & 0xFFFFFF) | 0xFF000000);
-            f.g.drawString(f.font(), text, tx + 4, cy + 2, Contrast.bestText(t.accent()), false);
+            int ink = BookKit.chip(f, new Rect(tx, cy, w, 11), true);
+            f.g.drawString(f.font(), text, tx + 4, cy + 2, ink, false);
             bottom = beside ? ty : cy + 11;
         }
         return beside ? y + Math.max(face + 2, bottom - y) : bottom + 3;
@@ -216,8 +216,7 @@ public final class ProfilePage implements HubPageView {
         Component title = Component.translatable(KEY + "bonus_title");
         var lines = f.font().split(Component.literal(text), r.w() - 10);
         int h = 14 + lines.size() * PageKit.LINE + 4;
-        f.g.fill(r.x(), y, r.right(), y + h, (t.accent() & 0xFFFFFF) | 0x22000000);
-        f.g.renderOutline(r.x(), y, r.w(), h, t.accent());
+        BookKit.card(f, new Rect(r.x(), y, r.w(), h), t.accent());
         f.g.drawString(f.font(), title, r.x() + 5, y + 4, t.accent(), false);
         int ly = y + 14;
         for (var line : lines) {
@@ -240,10 +239,10 @@ public final class ProfilePage implements HubPageView {
             DuelView v = duel.get();
             Component line = Component.translatable(v.langKey(), v.opponent().isEmpty() ? route.name() : v.opponent(), v.clock());
             int h = f.font().split(line, s.w() - 8).size() * PageKit.LINE + 4;
-            f.g.fill(s.x(), y, s.right(), y + h, t.accent());
+            int ink = BookKit.chip(f, new Rect(s.x(), y, s.w(), h), true);
             int yy = y + 2;
             for (var l : f.font().split(line, s.w() - 8)) {
-                f.g.drawString(f.font(), l, s.x() + 4, yy, Contrast.bestText(t.accent()), false);
+                f.g.drawString(f.font(), l, s.x() + 4, yy, ink, false);
                 yy += PageKit.LINE;
             }
             f.target("panel:duel", new Rect(s.x(), y, s.w(), h), List.of(line), null);

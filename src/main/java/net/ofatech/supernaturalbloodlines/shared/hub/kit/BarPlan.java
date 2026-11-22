@@ -24,6 +24,21 @@ public record BarPlan(List<@Nullable Rect> pills, @Nullable Rect overflow, int t
     public static final int OVERFLOW_W = 34;
 
     /**
+     * The width the text of a bar wants: enough for {@code bodyWidth} (its natural, one line width) on two lines with a little to spare for where the words break,
+     * at least 45% of the bar (what it always had), and no more than leaves every button its place beside it (so a longer hint never pushes "Previous" behind "More").
+     */
+    public static int bodyWant(int bodyWidth, Rect bar, List<Integer> widths) {
+        int inner = bar.w() - 2 * PAD;
+        int pills = 0;
+        for (int w : widths) {
+            pills += Math.max(MIN_PILL, w + 14) + GAP;
+        }
+        int most = inner - pills - GAP;
+        int floor = bar.w() * 45 / 100;
+        return Math.max(floor, Math.min(bodyWidth * 11 / 20 + 24, most));
+    }
+
+    /**
      * @param widths  the width each action's label needs (without padding), in order
      * @param primary the index of the primary action, or -1 for none
      * @param titleW  the full width the title wants

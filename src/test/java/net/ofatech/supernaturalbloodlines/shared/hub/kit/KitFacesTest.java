@@ -29,6 +29,36 @@ class KitFacesTest {
     }
 
     @Test
+    void theSurfaceTableIsTheMiddleOfEachChipPlateAndInsetPicture() throws Exception {
+        List<String> drifted = new ArrayList<>();
+        for (String kit : KitSprites.KITS) {
+            for (Part surface : KitFaces.SURFACES) {
+                BufferedImage img = UiKitSlicesTest.png(KitSprites.of(kit, surface.sprite()));
+                int px = img.getRGB(img.getWidth() / 2, img.getHeight() / 2);
+                if (px != KitFaces.face(kit, surface)) {
+                    drifted.add(kit + "/" + surface.sprite() + " is #" + Integer.toHexString(px) + " in the picture, #" + Integer.toHexString(KitFaces.face(kit, surface)) + " in the table");
+                }
+            }
+        }
+        assertTrue(drifted.isEmpty(), drifted.toString());
+    }
+
+    @Test
+    void theInkOfEachThemeReadsOnItsChipsPlatesAndInsets() {
+        List<String> bad = new ArrayList<>();
+        for (int k = 0; k < KitSprites.KITS.size(); k++) {
+            String kit = KitSprites.KITS.get(k);
+            for (Part surface : KitFaces.SURFACES) {
+                double ratio = Contrast.ratio(KitFaces.label(kit, surface, INK[k]), KitFaces.face(kit, surface));
+                if (ratio < 4.5) {
+                    bad.add(kit + "/" + surface.sprite() + " " + String.format("%.2f", ratio));
+                }
+            }
+        }
+        assertTrue(bad.isEmpty(), "text below 4.5:1: " + bad);
+    }
+
+    @Test
     void everyButtonLabelIsReadableOnItsFace() {
         List<String> bad = new ArrayList<>();
         for (int k = 0; k < KitSprites.KITS.size(); k++) {

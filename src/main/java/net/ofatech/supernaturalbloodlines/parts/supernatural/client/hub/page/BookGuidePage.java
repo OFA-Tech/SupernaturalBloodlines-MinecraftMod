@@ -19,9 +19,12 @@ public final class BookGuidePage implements HubPageView {
     private static final String BOOK = PageKit.HUB + "book.guide.";
     private String chapter;
 
-    /** The page a chapter is on: every chapter is read on the Guide spread, so the Contents gives the spread's right-hand page, the one the footer shows. */
-    static int chapterPage() {
-        return 2 * HubPage.GUIDE.ordinal() + 2;
+    /**
+     * What the right of a Contents row says. Every chapter is read on the same spread, so a page number would be the same for all of them ("p. 14" on every row);
+     * the one that is open says so, and the rest just lead to the edge.
+     */
+    static boolean marksOpen(int row, int open) {
+        return row == open;
     }
 
     /** Where the chapter ends once the link to the Bloodline page is drawn under it: always lower than where its text ended. */
@@ -63,7 +66,7 @@ public final class BookGuidePage implements HubPageView {
             }
             Component name = Component.translatable(GuideChapters.titleKey(id));
             f.g.drawString(f.font(), roman(i + 1) + ".", r.x(), y, on ? t.accent() : t.muted(), false);
-            BookKit.leader(f, name, Component.translatable(BOOK + "page", chapterPage()), r.x() + 30, y, r.w() - 30, on ? t.accent() : t.muted());
+            BookKit.leader(f, name, marksOpen(i, ids.indexOf(chapter)) ? Component.translatable(BOOK + "reading") : Component.empty(), r.x() + 30, y, r.w() - 30, on ? t.accent() : t.muted());
             String target = "chapter:" + id;
             f.target(target, hit, List.of(name), () -> chapter = id);
             if (f.focused(target)) {

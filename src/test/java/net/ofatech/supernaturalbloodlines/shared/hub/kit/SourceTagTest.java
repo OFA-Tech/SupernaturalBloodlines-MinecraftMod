@@ -1,10 +1,23 @@
 package net.ofatech.supernaturalbloodlines.shared.hub.kit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
 class SourceTagTest {
+    @Test
+    void theStripeIsInsideTheChipsEdgeAndTheLabelStartsAfterIt() {
+        int edge = 4;
+        assertTrue(SourceTag.STRIPE_X >= edge, "the stripe is not on the picture's left edge");
+        assertTrue(SourceTag.STRIPE_Y >= 2 && SourceTag.STRIPE_Y + SourceTag.STRIPE_H <= SourceTag.HEIGHT - 2, "nor on its top or bottom edge");
+        assertTrue(SourceTag.TEXT_X > SourceTag.STRIPE_X + SourceTag.STRIPE_W, "the label does not touch the stripe");
+        for (SourceTag tag : SourceTag.values()) {
+            int label = tag.label().length() * 6;
+            assertEquals(label + SourceTag.TEXT_X + 4, SourceTag.width(label), tag + ": room for the stripe, the label and the right edge");
+        }
+    }
+
     @Test
     void everyModHasItsTag() {
         assertEquals(SourceTag.VMP, SourceTag.of("vampirism"));

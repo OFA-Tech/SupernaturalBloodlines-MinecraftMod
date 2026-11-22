@@ -24,9 +24,17 @@ class BookGuidePageTest {
     }
 
     @Test
-    void theContentsGivesThePageTheSpreadsFooterShows() {
-        // the Guide is the 7th page of the hub: its spread is 13 and 14, and every chapter is read on it, so the Contents says 14 and never 25
-        assertEquals(14, BookGuidePage.chapterPage());
+    void onlyTheOpenChapterSaysSoAndNoRowRepeatsAPageNumber() throws Exception {
+        for (int open = 0; open < 6; open++) {
+            for (int row = 0; row < 6; row++) {
+                assertEquals(row == open, BookGuidePage.marksOpen(row, open));
+            }
+        }
+        try (var in = new java.io.InputStreamReader(BookGuidePageTest.class.getResourceAsStream("/assets/supernaturalbloodlines/lang/en_us.json"), java.nio.charset.StandardCharsets.UTF_8)) {
+            var lang = com.google.gson.JsonParser.parseReader(in).getAsJsonObject();
+            assertTrue(lang.has("supernaturalbloodlines.hub.book.guide.reading"));
+            assertTrue(!lang.has("supernaturalbloodlines.hub.book.guide.page"), "the same page number on every row is gone");
+        }
     }
 
     @Test

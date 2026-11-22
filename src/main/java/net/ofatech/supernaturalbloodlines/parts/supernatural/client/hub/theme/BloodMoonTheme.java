@@ -223,7 +223,8 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
             }
         }
         // a line about the selection needs room to be read: the text keeps at least 45% of the bar and the buttons that do not fit go behind "..."
-        int want = Math.max(font.width(d.title()) + (d.pips() > 0 ? d.pips() * 6 + 6 : 0), d.body().isEmpty() ? 0 : r.w() * 45 / 100);
+        String bodyLine = d.body().stream().map(Component::getString).collect(java.util.stream.Collectors.joining(" \u00b7 "));
+        int want = Math.max(font.width(d.title()) + (d.pips() > 0 ? d.pips() * 6 + 6 : 0), d.body().isEmpty() ? 0 : BarPlan.bodyWant(font.width(bodyLine), r, widths));
         BarPlan plan = BarPlan.of(r, widths, primary, want);
         List<Detail.Action> shown = new ArrayList<>();
         List<Rect> rects = new ArrayList<>();

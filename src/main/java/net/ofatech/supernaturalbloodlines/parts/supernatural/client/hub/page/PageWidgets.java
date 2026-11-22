@@ -9,7 +9,10 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScree
 import net.ofatech.supernaturalbloodlines.shared.hub.Contrast;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitFaces;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit;
 import org.jetbrains.annotations.Nullable;
 
 /** The few controls the new pages share, drawn in the theme's colours: a button, a switch, a text box and the last reply of a command. */
@@ -48,16 +51,18 @@ final class PageWidgets {
         draw(f, id, r, label, enabled, primary, what, Tip.ALWAYS, action);
     }
 
+    /** The kit part of a button in a state: a button that is off is never lit, whatever the pointer does. */
+    static Part part(boolean enabled, boolean primary, boolean hot) {
+        return KitFaces.button(primary, enabled, enabled && hot, false);
+    }
+
     private enum Tip { WHEN_OFF, ALWAYS, NAME }
 
     private static void draw(HubScreen.Frame f, String id, Rect r, Component label, boolean enabled, boolean primary, @Nullable Component why, Tip mode, @Nullable Runnable action) {
         HubTheme t = f.theme();
-        boolean hot = enabled && (f.hovered(r) || f.focused(id));
-        int fill = primary ? (enabled ? t.accent() : t.muted()) : hot ? t.good() : t.paper();
-        int border = enabled ? t.accent() : t.muted();
-        f.g.fill(r.x(), r.y(), r.right(), r.bottom(), border);
-        f.g.fill(r.x() + 1, r.y() + 1, r.right() - 1, r.bottom() - 1, fill);
-        int text = primary || hot ? Contrast.bestText(fill) : enabled ? t.ink() : t.muted();
+        Part part = part(enabled, primary, f.hovered(r) || f.focused(id));
+        UiKit.draw(f.g, t, part, r);
+        int text = UiKit.label(t, part);
         String shown = LabelFit.cut(label.getString(), r.w() - 6, f.font()::width);
         f.g.drawString(f.font(), shown, r.x() + (r.w() - f.font().width(shown)) / 2, r.y() + (r.h() - 8) / 2, text, false);
         boolean byHint = mode == Tip.NAME && why != null;
@@ -85,9 +90,8 @@ final class PageWidgets {
     /** A box with the text being typed (a caret when {@code editing}), or the value when not. */
     static void field(HubScreen.Frame f, String id, Rect r, String text, int caret, boolean editing, boolean invalid, Component tip, Runnable open) {
         HubTheme t = f.theme();
-        int border = invalid ? warn(t) : editing ? t.accent() : t.muted();
-        f.g.fill(r.x(), r.y(), r.right(), r.bottom(), border);
-        f.g.fill(r.x() + 1, r.y() + 1, r.right() - 1, r.bottom() - 1, 0xFF000000 | t.paper());
+        UiKit.draw(f.g, t, Part.INSET, r);
+        // a refused value is outlined in the warning red, a box being typed in in the accent: a 1 px line over the inset
         String line = text.contains("\n") ? text.substring(0, text.indexOf('\n')) + " \u2026" : text;
         String shown = f.font().plainSubstrByWidth(line, r.w() - 8, true);
         f.g.drawString(f.font(), shown, r.x() + 4, r.y() + (r.h() - 8) / 2, t.ink(), false);

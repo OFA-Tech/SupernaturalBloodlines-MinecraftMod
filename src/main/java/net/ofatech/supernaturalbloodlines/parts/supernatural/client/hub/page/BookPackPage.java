@@ -14,6 +14,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.PackRing;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.RingLabels;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,8 @@ public final class BookPackPage implements HubPageView {
     private static final String BOOK = PageKit.HUB + "book.pack.";
     /** Past this many portraits on the ring the names are left out (the tooltip has them). */
     private static final int NAMED_MAX = 12;
+    /** A name round the ring is kept while at least this many pixels of it fit clear of the faces and the other names; below that it is left to the tooltip. */
+    private static final int RING_NAME_MIN = 14;
 
     @Nullable
     private String selected;
@@ -401,24 +404,46 @@ public final class BookPackPage implements HubPageView {
         }
         PackRing.Layout ring = PackRing.layout(members, cx, cy, radius, face);
         boolean named = ring.slots().size() <= NAMED_MAX && radius >= 40; // a crowded or small ring keeps the faces and the tooltips (the ledger has the names)
+        // what a name may not cover: every face with its ring, the emblem, and the "you" line under the model
+        List<Rect> blocked = new ArrayList<>();
+        blocked.add(new Rect(cx - inner - 2, cy - inner - 2, 2 * inner + 4, 2 * inner + 4));
+        if (radius >= 40) {
+            int yw = BookKit.smallWidth(f, you.getString());
+            blocked.add(new Rect(cx - yw / 2, cy + inner + 4, yw + 4, 9));
+        }
+        List<RingLabels.Request> asked = new ArrayList<>();
+        for (PackRing.Slot slot : ring.slots()) {
+            int size = slot.size();
+            blocked.add(new Rect(slot.x() - size / 2 - 2, slot.y() - size / 2 - 2, size + 4, size + 4));
+            if (named) {
+                String n = LabelFit.cut(slot.member().id(), 56, f.font()::width);
+                int nw = BookKit.smallWidth(f, n);
+                int side = Math.abs(slot.x() - cx) > radius / 2 ? (slot.x() > cx ? 1 : -1) : 0;
+                int ny = side != 0 ? slot.y() - 3 : slot.y() < cy ? slot.y() - size / 2 - 11 : slot.y() + size / 2 + 3;
+                asked.add(side == 0 ? new RingLabels.Request(slot.x(), ny, nw, 9, RingLabels.Anchor.CENTER)
+                        : side > 0 ? new RingLabels.Request(slot.x() + size / 2 + 3, ny, nw, 9, RingLabels.Anchor.LEFT)
+                        : new RingLabels.Request(slot.x() - size / 2 - 3, ny, nw, 9, RingLabels.Anchor.RIGHT));
+            }
+        }
+        List<Rect> where = RingLabels.place(asked, blocked, new Rect(s.x(), top - 12, areaW, s.bottom() - top + 12), RING_NAME_MIN, 2);
+        int named_i = 0;
         for (PackRing.Slot slot : ring.slots()) {
             int size = slot.size();
             int color = (slot.member().role().color() & 0xFFFFFF) | ((int) (slot.alpha() * 255) << 24);
             BookKit.portrait(f.g, slot.member().id(), slot.x(), slot.y(), size, color, t.paper());
             if (named) {
-                String n = LabelFit.cut(slot.member().id(), 56, f.font()::width);
-                int nw = BookKit.smallWidth(f, n);
-                int side = Math.abs(slot.x() - cx) > radius / 2 ? (slot.x() > cx ? 1 : -1) : 0;
-                int nx = side == 0 ? slot.x() - nw / 2 : side > 0 ? slot.x() + size / 2 + 3 : slot.x() - size / 2 - 3 - nw;
-                int ny = side != 0 ? slot.y() - 3 : slot.y() < cy ? slot.y() - size / 2 - 9 : slot.y() + size / 2 + 3;
-                BookKit.small(f, Component.literal(n), Math.max(s.x(), Math.min(s.x() + areaW - nw - 2, nx)), ny, nw + 4, slot.member().role().small() ? t.muted() : t.ink());
+                Rect at = where.get(named_i++);
+                if (at != null) {
+                    String n = LabelFit.cut(slot.member().id(), Math.min(56, at.w()), f.font()::width);
+                    BookKit.small(f, Component.literal(n), at.x(), at.y(), at.w() + 4, slot.member().role().small() ? t.muted() : t.ink());
+                }
             }
             f.target("ring:" + slot.member().id(), new Rect(slot.x() - size / 2 - 2, slot.y() - size / 2 - 2, size + 4, size + 4),
                     List.of(Component.literal(slot.member().id()), Component.translatable(KEY + "open_profile")), openProfile(f, slot.member().id()));
         }
         if (ring.hidden() > 0) {
             Component more = Component.translatable(BOOK + "ring_more", ring.hidden());
-            f.g.drawString(f.font(), more, cx - f.font().width(more) / 2, cy + inner + 14, t.muted(), false);
+            f.g.drawString(f.font(), more, cx - f.font().width(more) / 2, PackRing.moreLabelY(ring, cy), t.muted(), false);
         }
         BookKit.small(f, Component.translatable(BOOK + "legend"), s.x(), s.bottom() - legend + 1, areaW, t.muted());
         if (style == Style.BOOK) {

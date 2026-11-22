@@ -65,6 +65,47 @@ class PackRingTest {
     }
 
     @Test
+    void theRingsRoundTwoNeighboursNeverTouchWhateverTheCountOrTheRadius() {
+        for (int radius : new int[] {26, 33, 40, 55, 70}) {
+            for (int face : new int[] {12, 16}) {
+                for (int count = 1; count <= 24; count++) {
+                    List<PackRing.Member> members = new java.util.ArrayList<>();
+                    for (int i = 0; i < count; i++) {
+                        members.add(new PackRing.Member("m" + i, i % 3 == 0 ? PackRing.Role.ALPHA : i % 3 == 1 ? PackRing.Role.BETA : PackRing.Role.PACKMATE));
+                    }
+                    List<PackRing.Slot> ring = PackRing.layout(members, 0, 0, radius, face).slots();
+                    for (int i = 0; i < ring.size(); i++) {
+                        for (int j = i + 1; j < ring.size(); j++) {
+                            PackRing.Slot a = ring.get(i);
+                            PackRing.Slot b = ring.get(j);
+                            // the portrait is drawn with a ring 2 px outside its face: the two rings are at least 2 px apart
+                            double clear = Math.hypot(a.x() - b.x(), a.y() - b.y()) - (a.size() + b.size()) / 2.0 - 4;
+                            assertTrue(clear >= 1.5, "radius " + radius + " face " + face + " count " + count + ": heads " + i + " and " + j + " are " + clear + " px apart");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    void thePlusMoreLineIsUnderTheLowestFaceWhateverTheCountOrTheRadius() {
+        for (int radius : new int[] {26, 33, 40, 60}) {
+            for (int count = 5; count <= 30; count++) {
+                List<PackRing.Member> members = new java.util.ArrayList<>();
+                for (int i = 0; i < count; i++) {
+                    members.add(new PackRing.Member("m" + i, i < 2 ? PackRing.Role.ALPHA : PackRing.Role.BETA));
+                }
+                PackRing.Layout layout = PackRing.layout(members, 0, 0, radius, 12);
+                int y = PackRing.moreLabelY(layout, 0);
+                for (PackRing.Slot s : layout.slots()) {
+                    assertTrue(y >= s.y() + s.size() / 2 + 2, "radius " + radius + " count " + count + ": the line at " + y + " is on a face at " + s.y());
+                }
+            }
+        }
+    }
+
+    @Test
     void aSmallPackKeepsTheFullSizeAndHidesNobody() {
         PackRing.Layout layout = PackRing.layout(PACK, 100, 100, 60, 20);
         assertEquals(20, layout.size());
