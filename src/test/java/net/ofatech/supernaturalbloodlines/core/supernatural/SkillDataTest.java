@@ -115,7 +115,7 @@ class SkillDataTest {
             assertEquals(TENSURA.contains(e.getKey()), s.kinds().contains(SkillSpec.Kind.TENSURA), e.getKey());
             assertTrue(!s.kinds().contains(SkillSpec.Kind.ATTR) || s.attr() != null, e.getKey());
         }
-        assertEquals(42, COSTS.size());
+        assertEquals(44, COSTS.size());
         SkillSpec primeval = t.skill("S-WOL-8").orElseThrow();
         assertTrue(primeval.grantedOnly());
         assertEquals(0, primeval.cost());
