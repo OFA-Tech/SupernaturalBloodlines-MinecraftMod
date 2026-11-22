@@ -451,6 +451,24 @@ public final class TurningDyingGameTests {
         helper.succeed();
     }
 
+    /** Belt and braces for the same hole: a state that has vampire blood in it while the turning already runs (a world from before, an admin) is not caught again either. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPlayerInTheTurningWithVampireBloodStillInThemIsNotCaughtTwice(GameTestHelper helper) {
+        ServerPlayer p = marked(helper);
+        try {
+            lethal(helper, p);
+            wake(p);
+            p.removeAllEffects();
+            BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().vampireBloodUntil(helper.getLevel().getGameTime() + 100000).build());
+            lethal(helper, p);
+            helper.assertTrue(p.isDeadOrDying() && !Downed.isDowned(p), "they were stood up a second time");
+            helper.assertTrue(BloodlineAccess.get(p).inTurning(), "the real death ended the turning");
+        } finally {
+            reset(p);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aDeathThatWasCaughtIsNotSeenByTheOnesThatCountDeaths(GameTestHelper helper) {
         ServerPlayer p = marked(helper);
