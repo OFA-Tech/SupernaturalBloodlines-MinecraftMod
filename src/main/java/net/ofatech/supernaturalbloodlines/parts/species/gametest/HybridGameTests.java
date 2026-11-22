@@ -52,6 +52,7 @@ public final class HybridGameTests {
     }
 
     private static void drinkOriginalBlood(GameTestHelper helper, ServerPlayer p, UUID source) {
+        makeOriginal(source);
         ItemStack bottle = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
         bottle.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), source);
         p.setItemInHand(InteractionHand.MAIN_HAND, bottle.finishUsingItem(helper.getLevel(), p));
@@ -440,7 +441,13 @@ public final class HybridGameTests {
 
     // ---- hybrid_transition_blood (R40a) ----
 
+    /** The source of a test bottle is a real Original now: a bottle that names a sire only counts while its source still is one (R210). */
+    private static void makeOriginal(UUID source) {
+        net.ofatech.supernaturalbloodlines.parts.species.SpeciesData.get(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer()).setOriginal(source, true);
+    }
+
     private static ItemStack bottleOf(UUID source, Species species) {
+        makeOriginal(source);
         ItemStack bottle = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
         bottle.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), source);
         if (species != null) {
@@ -508,7 +515,7 @@ public final class HybridGameTests {
             drink(helper, p, bottle);
             ItemStack held = p.getMainHandItem();
             helper.assertTrue(held == bottle && held.is(SpeciesRegistries.ORIGINAL_BLOOD.get()) && held.getCount() == 1
-                            && held.has(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get()),
+                            && net.ofatech.supernaturalbloodlines.parts.species.item.BloodStamp.has(held),
                     "the refused bottle was used up or changed: " + held);
             killByAnything(helper, p);
             helper.assertTrue(!BloodlineAccess.get(p).inTransition(), "a refused bottle started a transition");

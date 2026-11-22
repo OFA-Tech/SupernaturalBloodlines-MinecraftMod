@@ -13,6 +13,9 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.blood.BloodKind;
+import net.ofatech.supernaturalbloodlines.core.blood.BloodSource;
+import net.ofatech.supernaturalbloodlines.parts.species.item.BloodStamp;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.RiteTargets;
@@ -64,8 +67,7 @@ public record OriginalBloodRiteFactory() implements RiteFactory {
             int bottles = (int) LadderQuery.value(target, "S-ORI-2", "bottles", 1);
             for (int i = 0; i < bottles; i++) {
                 ItemStack blood = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
-                blood.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), target.getUUID());
-                blood.set(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get(), BloodlineAccess.get(target).species().name());
+                BloodStamp.write(blood, new BloodSource(target.getUUID(), target.getGameProfile().getName(), false, BloodKind.of(BloodlineAccess.get(target).species())));
                 level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, blood));
             }
             return false;

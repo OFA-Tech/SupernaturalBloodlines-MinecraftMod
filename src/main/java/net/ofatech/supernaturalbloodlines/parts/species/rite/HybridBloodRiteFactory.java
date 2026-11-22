@@ -12,6 +12,9 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.blood.BloodKind;
+import net.ofatech.supernaturalbloodlines.core.blood.BloodSource;
+import net.ofatech.supernaturalbloodlines.parts.species.item.BloodStamp;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.HybridTraits;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.RiteTargets;
@@ -60,8 +63,9 @@ public record HybridBloodRiteFactory() implements RiteFactory {
             if (!RiteTargets.askForBlood(caster, target, HybridTraits.isHybrid(BloodlineAccess.get(target).species()), NOT_HYBRID, NO_HYBRID_BLOOD)) {
                 return cancel();
             }
-            level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5,
-                    new ItemStack(SpeciesRegistries.HYBRID_BLOOD.get())));
+            ItemStack blood = new ItemStack(SpeciesRegistries.HYBRID_BLOOD.get());
+            BloodStamp.write(blood, new BloodSource(target.getUUID(), target.getGameProfile().getName(), false, BloodKind.of(BloodlineAccess.get(target).species())));
+            level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, blood));
             return false;
         }
     }

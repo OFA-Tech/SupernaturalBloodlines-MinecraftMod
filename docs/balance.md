@@ -135,3 +135,11 @@ All numbers are drafts to tune after a playtest; each is a config key.
 - Spirits: 3 for 180 s, cooldown 90 s (Howling: 5 for 240 s, 60 s).
 - Brother (plan 15d): 2 per werewolf and 6 per pack (an Alpha with a full pack of Betas is at most 6 wolves, about a Beta each), weight 0.5 toward the pack bonus and the minimum of 3, their part of the sum capped at `npc_bonus_share` 0.4 of the 25% cap (2 steps), so wolves alone never give more than 10% and a lone Alpha with two Brothers gives nothing. Hunt every 10 minutes for 3 animals: a chest of food for a night's waiting, not a farm.
 - Tensura member: weight 0.25, 6 per pack, one step down only (a subordinate of a subordinate never joins), because a Tensura player can have dozens.
+
+## Plan 18a: bottle my blood (R211)
+
+| Number | Value | Why |
+|---|---|---|
+| `bottle_blood_cooldown_seconds` | 60 | One bottle a minute: a vampire can supply a friend, not a stockpile. |
+| `bottle_blood_health_cost` | 3 (1.5 hearts, never lethal) | Real enough to count in a fight, never a way to die. |
+| bottle_blood_daily_limit | 8 | Vampirism's vampire blood bottle is an ingredient (pure blood, vampire blood oil) and a task item: a day of bottling cannot supply a whole server. |

@@ -53,12 +53,40 @@ public final class LoadoutVampirismGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aNewVampireGetsBiteInSlotOne(GameTestHelper helper) {
         ServerPlayer p = vampire(helper);
+        // other parts' actions (Bottle my blood of the species part) have their own offer test: here they are already offered, so only Bite is placed
+        java.util.Set<ResourceLocation> offered = new java.util.HashSet<>(LoadoutService.get(p).offered());
+        net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.all().forEach(a -> offered.add(a.id()));
+        p.setData(net.ofatech.supernaturalbloodlines.core.attachment.ModAttachments.HUD_LOADOUT, new Loadout(LoadoutService.get(p).slots(), offered));
         LoadoutService.offerDefaults(p);
         Loadout l = LoadoutService.get(p);
         helper.assertTrue(l.get(0).equals(Optional.of(Loadout.BITE)), "slot 1 is " + l.get(0));
         for (int i = 1; i < Loadout.SLOTS; i++) {
             helper.assertTrue(l.get(i).isEmpty(), "slot " + (i + 1) + " is " + l.get(i));
         }
+        helper.succeed();
+    }
+
+    /** Bottle my blood (species part, R211) is offered once to a vampire who may use it, in the first free slot; an Original, who may not, is never offered it. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void bottleBloodIsOfferedInTheFirstFreeSlot(GameTestHelper helper) {
+        if (net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.get(net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.BOTTLE_BLOOD).isEmpty()) {
+            helper.succeed(); // the species part is off
+            return;
+        }
+        ServerPlayer p = vampire(helper);
+        LoadoutService.offerDefaults(p);
+        Loadout l = LoadoutService.get(p);
+        helper.assertTrue(l.get(0).equals(Optional.of(Loadout.BITE)) && l.get(1).equals(Optional.of(net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.BOTTLE_BLOOD)),
+                "slots are " + l.slots());
+        helper.assertTrue(LoadoutService.set(p, 1, null) == null, "the slot could not be cleared");
+        LoadoutService.offerDefaults(p);
+        helper.assertTrue(LoadoutService.get(p).get(1).isEmpty(), "a cleared action was put back");
+        ServerPlayer original = vampire(helper);
+        net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(original, net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState.NONE.toBuilder()
+                .species(net.ofatech.supernaturalbloodlines.core.bloodline.Species.ORIGINAL).build());
+        LoadoutService.offerDefaults(original);
+        helper.assertTrue(!LoadoutService.get(original).contains(net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.BOTTLE_BLOOD), "an Original was offered Bottle my blood");
+        net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(original, net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState.NONE);
         helper.succeed();
     }
 
