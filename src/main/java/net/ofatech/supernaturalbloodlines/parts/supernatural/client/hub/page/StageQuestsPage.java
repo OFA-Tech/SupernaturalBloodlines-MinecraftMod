@@ -78,12 +78,13 @@ public final class StageQuestsPage implements HubPageView {
         List<String> labels = quests.labels();
         int cx = x;
         for (int i = 0; i < labels.size(); i++) {
-            int pw = f.font().width(labels.get(i)) + 14;
+            int pw = SourceTag.width(f.font().width(labels.get(i)));
             int fill = i == 0 ? t.accent() : t.sourceColor(QuestFilter.FILTERS.get(i - 1).source());
             Rect pill = new Rect(cx, y, pw, 13);
-            f.g.fill(pill.x(), pill.y(), pill.right(), pill.bottom(), i == quests.filter() ? 0xFFFFFFFF : (t.paper() | 0xFF000000));
-            f.g.fill(pill.x() + 1, pill.y() + 1, pill.right() - 1, pill.bottom() - 1, i == quests.filter() || f.hovered(pill) ? fill : (fill & 0xFFFFFF) | 0xAA000000);
-            f.g.drawString(f.font(), labels.get(i), pill.x() + 7, pill.y() + 3, Contrast.bestText(fill), false);
+            int text = BookKit.chip(f, pill, i == quests.filter(), f.hovered(pill));
+            int dotY = pill.y() + (pill.h() - SourceTag.STRIPE_H) / 2;
+            f.g.fill(pill.x() + SourceTag.STRIPE_X, dotY, pill.x() + SourceTag.STRIPE_X + SourceTag.STRIPE_W, dotY + SourceTag.STRIPE_H, fill);
+            f.g.drawString(f.font(), labels.get(i), pill.x() + SourceTag.TEXT_X, pill.y() + 3, text, false);
             int idx = i;
             f.target("filter:" + i, pill, List.of(Component.literal(labels.get(i))), () -> quests.filter(idx));
             if (f.focused("filter:" + i)) {
@@ -98,8 +99,7 @@ public final class StageQuestsPage implements HubPageView {
         HubTheme t = f.theme();
         boolean claimable = row.state() == TaskState.CLAIMABLE;
         Rect box = new Rect(x, y, w, 24);
-        f.g.fill(box.x(), box.y(), box.right(), box.bottom(), TaskCard.border(t, row, QuestFilter.isChosen(chosen, row.task().id())));
-        f.g.fill(box.x() + 1, box.y() + 1, box.right() - 1, box.bottom() - 1, t.paper());
+        BookKit.card(f, box, TaskCard.edge(row.state(), QuestFilter.isChosen(chosen, row.task().id()), t.good(), t.accent()));
         int tw = KitDraw.sourceTag(f.g, f.font(), t, SourceTag.of(row.source()), box.x() + 5, box.y() + 7);
         float frac = TaskCard.fraction(row);
         String count = TaskCard.count(row);

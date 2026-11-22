@@ -65,9 +65,76 @@ class PackRingTest {
     }
 
     @Test
+    void theRingsRoundTwoNeighboursNeverTouchWhateverTheCountOrTheRadius() {
+        for (int radius : new int[] {26, 33, 40, 55, 70}) {
+            for (int face : new int[] {12, 16}) {
+                for (int count = 1; count <= 24; count++) {
+                    List<PackRing.Member> members = new java.util.ArrayList<>();
+                    for (int i = 0; i < count; i++) {
+                        members.add(new PackRing.Member("m" + i, i % 3 == 0 ? PackRing.Role.ALPHA : i % 3 == 1 ? PackRing.Role.BETA : PackRing.Role.PACKMATE));
+                    }
+                    List<PackRing.Slot> ring = PackRing.layout(members, 0, 0, radius, face).slots();
+                    for (int i = 0; i < ring.size(); i++) {
+                        for (int j = i + 1; j < ring.size(); j++) {
+                            PackRing.Slot a = ring.get(i);
+                            PackRing.Slot b = ring.get(j);
+                            // the portrait is drawn with a ring 2 px outside its face: the two rings are at least 2 px apart
+                            double clear = Math.hypot(a.x() - b.x(), a.y() - b.y()) - (a.size() + b.size()) / 2.0 - 4;
+                            assertTrue(clear >= 1.5, "radius " + radius + " face " + face + " count " + count + ": heads " + i + " and " + j + " are " + clear + " px apart");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    void thePlusMoreLineIsUnderTheLowestFaceWhateverTheCountOrTheRadius() {
+        for (int radius : new int[] {26, 33, 40, 60}) {
+            for (int count = 5; count <= 30; count++) {
+                List<PackRing.Member> members = new java.util.ArrayList<>();
+                for (int i = 0; i < count; i++) {
+                    members.add(new PackRing.Member("m" + i, i < 2 ? PackRing.Role.ALPHA : PackRing.Role.BETA));
+                }
+                PackRing.Layout layout = PackRing.layout(members, 0, 0, radius, 12);
+                int y = PackRing.moreLabelY(layout, 0);
+                for (PackRing.Slot s : layout.slots()) {
+                    assertTrue(y >= s.y() + s.size() / 2 + 2, "radius " + radius + " count " + count + ": the line at " + y + " is on a face at " + s.y());
+                }
+            }
+        }
+    }
+
+    @Test
+    void aLineIsClearOfTheFacesOnlyWhenNoFaceOrRingTouchesIt() {
+        List<PackRing.Member> members = List.of(new PackRing.Member("a", PackRing.Role.ALPHA), new PackRing.Member("b", PackRing.Role.BETA), new PackRing.Member("c", PackRing.Role.BETA),
+                new PackRing.Member("d", PackRing.Role.PACKMATE));
+        PackRing.Layout layout = PackRing.layout(members, 100, 100, 60, 16);
+        // a line through the middle of the ring touches no face; one across the bottom face does
+        assertTrue(PackRing.clearOfFaces(layout, 90, 100, 20, 9, 2));
+        PackRing.Slot bottom = layout.slots().stream().max(java.util.Comparator.comparingInt(PackRing.Slot::y)).orElseThrow();
+        assertTrue(!PackRing.clearOfFaces(layout, bottom.x() - 20, bottom.y() - 4, 40, 9, 2), "a line across a face");
+        assertTrue(!PackRing.clearOfFaces(layout, bottom.x() + bottom.size() / 2 + 3, bottom.y(), 20, 9, 2), "a line within the ring and the air of a face");
+        assertTrue(PackRing.clearOfFaces(layout, 400, 400, 20, 9, 2), "far from every face");
+    }
+
+    @Test
     void aSmallPackKeepsTheFullSizeAndHidesNobody() {
         PackRing.Layout layout = PackRing.layout(PACK, 100, 100, 60, 20);
         assertEquals(20, layout.size());
         assertEquals(0, layout.hidden());
     }
-}
+
+    @Test
+    void aNarrowAreaGrowsTheRingToItsWidthSoTheNamesOnTopAndBottomHaveRoom() {
+        // a middle column of Tensura's hub at scale 4: 137 wide, 130 tall, faces of 12
+        int radius = PackRing.radiusFor(137, 130, 12);
+        assertTrue(radius >= PackRing.NAMED_RADIUS, "the ring named nobody at " + radius);
+        assertTrue(radius + 12 / 2 + 2 <= 137 / 2, "the faces stay inside the area: " + radius);
+    }
+
+    @Test
+    void aWideAreaKeepsRoomBesideTheSidePortraitsForTheirNames() {
+        assertEquals(47, PackRing.radiusFor(400, 130, 12));
+        assertTrue(PackRing.radiusFor(200, 400, 16) <= 200 / 2 - PackRing.NAME_RESERVE);
+    }}

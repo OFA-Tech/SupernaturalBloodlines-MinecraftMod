@@ -26,7 +26,7 @@ public final class TensuraHubLayout {
     static final int CAPTION = 11;
     static final int GAP = 8;
     /** Between the two columns: the main one's scroll bar (7 px, one off its edge) and a pixel of air on each side of it. */
-    static final int COLUMN_GAP = 10;
+    static final int COLUMN_GAP = net.ofatech.supernaturalbloodlines.shared.hub.kit.KitMetrics.SCROLL_W + 1 + net.ofatech.supernaturalbloodlines.shared.hub.kit.KitMetrics.SCROLL_AIR;
     /** Below this window width the page and mod lists show icons only. */
     static final int NARROW = 340;
 
@@ -95,8 +95,9 @@ public final class TensuraHubLayout {
         }
         Rect pane = pane(frame);
         int left = nav.right() + GAP;
-        Rect stage = new Rect(left, frame.y() + TITLE + INSET, pane.x() - GAP - left, frame.bottom() - INSET - (frame.y() + TITLE + INSET));
-        int mainW = (stage.w() - COLUMN_GAP) * 42 / 100;
+        // the side column's scroll bar needs its room before the info pane, as the main one has before the side column
+        Rect stage = new Rect(left, frame.y() + TITLE + INSET, pane.x() - COLUMN_GAP - left, frame.bottom() - INSET - (frame.y() + TITLE + INSET));
+        int mainW = (stage.w() - COLUMN_GAP) * 44 / 100;
         Rect main = new Rect(stage.x(), stage.y(), mainW, stage.h());
         Rect side = new Rect(stage.x() + mainW + COLUMN_GAP, stage.y(), stage.w() - mainW - COLUMN_GAP, stage.h());
         Rect close = new Rect(frame.right() - INSET - 14, frame.y() + 4, 14, 14);

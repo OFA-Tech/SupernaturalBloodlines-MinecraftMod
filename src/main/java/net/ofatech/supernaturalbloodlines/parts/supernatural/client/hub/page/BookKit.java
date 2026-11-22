@@ -15,7 +15,9 @@ import net.ofatech.supernaturalbloodlines.shared.hub.HubLayout;
 import net.ofatech.supernaturalbloodlines.shared.hub.HubTheme;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.TitleFont;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +28,20 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class BookKit {
     static final int SEAL = 44;
+
+    /** The line that says what the pack seal accepts stands this far over it. */
+    static final int SEAL_NOTE_ABOVE = 10;
+    static final int SEAL_NOTE_H = 9;
+
+    /** The y of the note over a seal at {@code sealY}. */
+    static int sealNoteY(int sealY) {
+        return sealY - SEAL_NOTE_ABOVE;
+    }
+
+    /** What the scrolled column gives up at its foot for the seal, the gap over it, the note and a pixel of air under the "more below" marker. */
+    static int sealReserve() {
+        return SEAL + 8 + SEAL_NOTE_ABOVE + 2;
+    }
     private static final int CAP = 16;
 
     private BookKit() {
@@ -54,8 +70,12 @@ public final class BookKit {
     /** Muted text at the normal size (nothing in the hub is under 8 GUI pixels), wrapped to {@code w}: subtitles, captions and legends. Returns the y under it. */
     static int small(HubScreen.Frame f, Component text, int x, int y, int w, int color) {
         int ly = y;
-        for (FormattedCharSequence line : f.font().split(text, Math.max(8, w))) {
-            f.g.drawString(f.font(), line, x, ly, color, false);
+        List<FormattedCharSequence> split = f.font().split(text, Math.max(8, w));
+        int whole = net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.wholeLines(y, 9, split.size(), f.clipBottom());
+        for (int i = 0; i < split.size(); i++) {
+            if (i < whole) {
+                f.g.drawString(f.font(), split.get(i), x, ly, color, false);
+            }
             ly += 9;
         }
         return ly + 1;
@@ -66,7 +86,7 @@ public final class BookKit {
         return f.font().width(text);
     }
 
-    /** A paragraph with a drop cap: the first letter in a dark tile, the rest beside it. Returns the y under it. */
+    /** A paragraph with a drop cap: the first letter large in the accent, the rest of its word beside it on the same line, then the text, two lines of it beside the capital. Returns the y under it. */
     static int dropCap(HubScreen.Frame f, Component text, int x, int y, int w, int color) {
         HubTheme t = f.theme();
         String s = text.getString();
@@ -75,19 +95,24 @@ public final class BookKit {
         }
         String first = s.substring(0, 1).toUpperCase(java.util.Locale.ROOT);
         GuiGraphics g = f.g;
-        g.fill(x, y, x + CAP, y + CAP, t.accent());
-        g.renderOutline(x + 1, y + 1, CAP - 2, CAP - 2, t.paper());
-        g.drawString(f.font(), first, x + (CAP - f.font().width(first)) / 2 + 1, y + (CAP - 8) / 2 + 1, Contrast.bestText(t.accent()), false);
+        int capW = f.font().width(first) * 2;
+        var pose = g.pose();
+        pose.pushPose();
+        pose.translate(x, y, 0);
+        pose.scale(2f, 2f, 1f);
+        g.drawString(f.font(), first, 0, 0, t.accent(), false);
+        pose.popPose();
         int ty = y;
-        int lines = 0;
-        for (FormattedCharSequence line : f.font().split(Component.literal(s.substring(1).stripLeading()), Math.max(10, w - CAP - 4))) {
-            g.drawString(f.font(), line, x + CAP + 4, ty, color, false);
+        List<net.ofatech.supernaturalbloodlines.shared.hub.kit.DropCap.Line> lines = net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.dropCap(f.font(), s.substring(1), Math.max(10, w), capW + 1, CAP_LINES, f.font()::width);
+        for (var line : lines) {
+            g.drawString(f.font(), line.text(), x + line.indent(), ty, color, false);
             ty += 9;
-            lines++;
         }
-        return Math.max(y + CAP, ty) + 3;
+        return Math.max(y + CAP_LINES * 9, ty) + 3;
     }
 
+    /** The capital is as tall as this many lines of text (twice the font's 8 px, in 9 px lines). */
+    private static final int CAP_LINES = 2;
     /** "Label ........ value": dotted leaders between a label and a value. Returns the y under it. */
     static int leader(HubScreen.Frame f, Component label, Component value, int x, int y, int w, int valueColor) {
         HubTheme t = f.theme();
@@ -98,6 +123,9 @@ public final class BookKit {
         String v = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(value.getString(), vw, font::width);
         int room = w - font.width(v) - 8;
         String l = lw > room ? net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(label.getString(), Math.max(8, room), font::width) : label.getString();
+        if (!f.whole(y, 10)) {
+            return y + 11;
+        }
         f.g.drawString(font, l, x, y, t.ink(), false);
         f.g.drawString(font, v, x + w - font.width(v), y, valueColor, false);
         int from = x + font.width(l) + 3;
@@ -144,10 +172,13 @@ public final class BookKit {
         Rect r = new Rect(x, y - 1, w, 11);
         boolean hot = f.hovered(r) || f.focused(id);
         int color = action == null ? t.muted() : hot ? lighten(t.accent()) : t.accent();
-        f.g.drawString(f.font(), label, x, y, color, false);
-        f.g.fill(x, y + 9, x + w, y + 10, color);
+        boolean drawn = f.whole(y - 1, 11);
+        if (drawn) {
+            f.g.drawString(f.font(), label, x, y, color, false);
+            f.g.fill(x, y + 9, x + w, y + 10, color);
+        }
         f.target(id, r, tooltip, action);
-        if (f.focused(id)) {
+        if (drawn && f.focused(id)) {
             KitDraw.focusRing(f.g, r, t.focusColor());
         }
         return w;
@@ -160,10 +191,40 @@ public final class BookKit {
     }
 
     /** A small muted heading in capitals. */
-    /** A filled box with a one pixel border: the cards and tiles of the pill styles. */
-    static void outline(net.minecraft.client.gui.GuiGraphics g, Rect r, int fill, int border) {
-        g.fill(r.x(), r.y(), r.right(), r.bottom(), border);
-        g.fill(r.x() + 1, r.y() + 1, r.right() - 1, r.bottom() - 1, fill);
+    /** A card or tile of the pill styles: the kit's card surface (inset), with a 1 px line in {@code edge} inside it for the one that is chosen or ready ({@code 0} for none). */
+    static void card(HubScreen.Frame f, Rect r, int edge) {
+        UiKit.draw(f.g, f.theme(), net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.CARD, r);
+        if (edge != 0) {
+            f.g.renderOutline(r.x() + 1, r.y() + 1, r.w() - 2, r.h() - 2, edge);
+        }
+    }
+
+    /** A card whose height is known only after its content is drawn: the surface is washed over the content at {@link net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites#CARD_OVER_ALPHA}, so the content stays readable under it. */
+    static void cardOver(HubScreen.Frame f, Rect r, int edge) {
+        UiKit.draw(f.g, f.theme(), net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.CARD, r.x(), r.y(), r.w(), r.h(), net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.CARD_OVER_ALPHA);
+        if (edge != 0) {
+            f.g.renderOutline(r.x() + 1, r.y() + 1, r.w() - 2, r.h() - 2, edge);
+        }
+    }
+
+    /** A small label chip (a filter, an identity tag): the kit's chip, the lit one when {@code on}. Returns the colour of its label. */
+    static int chip(HubScreen.Frame f, Rect r, boolean on) {
+        return chip(f, r, on, false);
+    }
+
+    /** The same, with the pointer over it: a chip that is not the chosen one gets an outline, never the lit picture. */
+    static int chip(HubScreen.Frame f, Rect r, boolean on, boolean hovered) {
+        var look = net.ofatech.supernaturalbloodlines.shared.hub.kit.ChipLook.of(on, hovered);
+        UiKit.draw(f.g, f.theme(), look.part(), r);
+        if (look.outline()) {
+            f.g.renderOutline(r.x(), r.y(), r.w(), r.h(), f.theme().accent());
+        }
+        return UiKit.label(f.theme(), look.part());
+    }
+
+    /** A box that is a field of text (a text area): the kit's inset. */
+    static void inset(HubScreen.Frame f, Rect r) {
+        UiKit.draw(f.g, f.theme(), Part.INSET, r);
     }
 
     static int caps(HubScreen.Frame f, Component text, int x, int y, int color) {
@@ -231,11 +292,8 @@ public final class BookKit {
             int pw = f.font().width(s) + 14;
             Rect pill = new Rect(cx, y, pw, 14);
             boolean on = i == chosen;
-            boolean hot = f.hovered(pill);
-            int fill = on ? t.accent() : hot ? t.muted() & 0xFFFFFF | 0x40000000 : 0;
-            f.g.fill(pill.x(), pill.y(), pill.right(), pill.bottom(), on ? t.accent() : t.muted());
-            f.g.fill(pill.x() + 1, pill.y() + 1, pill.right() - 1, pill.bottom() - 1, on ? fill : t.paper());
-            f.g.drawString(f.font(), s, pill.x() + 7, pill.y() + 3, on ? Contrast.bestText(t.accent()) : t.ink(), false);
+            int text = chip(f, pill, on, f.hovered(pill));
+            f.g.drawString(f.font(), s, pill.x() + 7, pill.y() + 3, text, false);
             int idx = i;
             String id = "pill:" + i;
             f.target(id, pill, List.of(Component.literal(s)), () -> pick.accept(idx));

@@ -123,8 +123,8 @@ public final class HomePage implements HubPageView {
                 cx = tx;
                 cy += 12;
             }
-            f.g.fill(cx, cy, cx + w, cy + 11, (t.accent() & 0xFFFFFF) | 0x33000000);
-            f.g.drawString(f.font(), chip, cx + 4, cy + 2, t.ink(), false);
+            int text = BookKit.chip(f, new Rect(cx, cy, w, 11), false);
+            f.g.drawString(f.font(), chip, cx + 4, cy + 2, text, false);
             cx += w + 4;
         }
         y = Math.max(y + 2 + face + 4, cy + 14);
@@ -239,8 +239,7 @@ public final class HomePage implements HubPageView {
                 bottom = PageKit.wrapped(f, Component.translatable(KEY + "answer." + a.label() + ".tip"), x, bottom, w, t.muted()) + 1;
             }
         }
-        f.g.fill(r.x(), top, r.right(), bottom, (t.accent() & 0xFFFFFF) | 0x14000000);
-        f.g.renderOutline(r.x(), top, r.w(), bottom - top, (t.accent() & 0xFFFFFF) | 0x88000000);
+        BookKit.cardOver(f, new Rect(r.x(), top, r.w(), bottom - top), t.accent());
         return bottom + 3;
     }
     /** The pack and the people of your line as faces: a click opens the Profile; the dot says who is online and the crown who leads. */
@@ -261,17 +260,20 @@ public final class HomePage implements HubPageView {
             int fx = s.x() + (i % perRow) * step;
             int fy = y + 6 + (i / perRow) * (face + 8);
             Rect hit = new Rect(fx, fy, face, face);
-            BookKit.face(f.g, m.name(), fx, fy, face);
-            f.g.fill(fx + face - 4, fy + face + 1, fx + face, fy + face + 4, m.online() ? 0xFF2F6E4A : 0xFF9A8566);
-            if (i == 0 && !m.base().equals("ally")) {
-                BookPackPage.crown(f, fx + 4, fy - 6);
+            boolean drawn = f.whole(fy, face + 4);
+            if (drawn) {
+                BookKit.face(f.g, m.name(), fx, fy, face);
+                f.g.fill(fx + face - 4, fy + face + 1, fx + face, fy + face + 4, m.online() ? 0xFF2F6E4A : 0xFF9A8566);
+                if (i == 0 && !m.base().equals("ally")) {
+                    BookPackPage.crown(f, fx + 4, fy - 6);
+                }
             }
             online += m.online() ? 1 : 0;
             String tid = "stage:person:" + m.name();
             Component role = Component.translatableWithFallback(PageKit.HUB + "pack.member." + m.base(), HubModel.pretty(m.base()));
             UUID id = m.id().orElse(null);
             f.target(tid, hit, List.of(Component.literal(m.name()), role, Component.translatable(KEY + "open_profile")), id == null ? null : () -> f.screen().openProfile(id, m.name()));
-            if (f.focused(tid) || (id != null && f.hovered(hit))) {
+            if (drawn && (f.focused(tid) || (id != null && f.hovered(hit)))) {
                 t.drawFocus(f.g, hit);
             }
         }
@@ -292,12 +294,15 @@ public final class HomePage implements HubPageView {
     private int person(HubScreen.Frame f, Rect s, int y, String name, UUID id, Component role) {
         HubTheme t = f.theme();
         Rect row = new Rect(s.x(), y, s.w(), 18);
-        BookKit.face(f.g, name, s.x(), y + 1, 16);
+        boolean drawn = f.whole(y, 18);
         String tid = "stage:person:" + name;
-        f.g.drawString(f.font(), LabelFit.cut(name, s.w() - 24 - f.font().width(role), f.font()::width), s.x() + 20, y + 5, id != null && (f.hovered(row) || f.focused(tid)) ? t.accent() : t.ink(), false);
-        f.g.drawString(f.font(), role, row.right() - f.font().width(role), y + 5, t.muted(), false);
+        if (drawn) {
+            BookKit.face(f.g, name, s.x(), y + 1, 16);
+            f.g.drawString(f.font(), LabelFit.cut(name, s.w() - 24 - f.font().width(role), f.font()::width), s.x() + 20, y + 5, id != null && (f.hovered(row) || f.focused(tid)) ? t.accent() : t.ink(), false);
+            f.g.drawString(f.font(), role, row.right() - f.font().width(role), y + 5, t.muted(), false);
+        }
         f.target(tid, row, List.of(Component.literal(name), role), id == null ? null : () -> f.screen().openProfile(id, name));
-        if (f.focused(tid)) {
+        if (drawn && f.focused(tid)) {
             t.drawFocus(f.g, row);
         }
         return y + 20;

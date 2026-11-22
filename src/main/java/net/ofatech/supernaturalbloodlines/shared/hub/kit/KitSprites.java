@@ -30,7 +30,7 @@ public final class KitSprites {
         SEAL(Flat.ACCENT), SEAL_HOVER(Flat.ACCENT), SEAL_PRESSED(Flat.TRACK), STAMP(Flat.SURFACE), STAMP_LIT(Flat.ACCENT),
         RUNG_REACHED(Flat.ACCENT), RUNG_CURRENT(Flat.SURFACE), RUNG_LOCKED(Flat.TRACK),
         TASK_CLAIMABLE(Flat.ACCENT), TASK_OPEN(Flat.SURFACE), TASK_CLAIMED(Flat.TRACK), TASK_FROZEN(Flat.TRACK), TASK_UNAVAILABLE(Flat.TRACK),
-        PIP_ON(Flat.ACCENT), PIP_OFF(Flat.TRACK), GEM_GOLD(Flat.ACCENT),
+        PIP_ON(Flat.ACCENT), PIP_OFF(Flat.TRACK), GEM_GOLD(Flat.ACCENT), NODE_OFF(Flat.TRACK), NODE_ON(Flat.ACCENT), NODE_SELECTED(Flat.ACCENT),
         // the HUD: a slot is 22 px in a 28 px picture (the 3 px round it are the glow), the badges are drawn at their picture's size
         SLOT(Flat.SURFACE, 3), SLOT_ACTIVE(Flat.ACCENT, 3), SLOT_SQUARE(Flat.SURFACE, 3), SLOT_SQUARE_ACTIVE(Flat.ACCENT, 3),
         KEY_BADGE(Flat.ACCENT), KEY_BADGE_WIDE(Flat.ACCENT), MASTERY_TRACK(Flat.TRACK), MASTERY_FILL(Flat.ACCENT), MASTERY_FILL_MASTERED(Flat.ACCENT),
@@ -63,6 +63,12 @@ public final class KitSprites {
             return sprite;
         }
     }
+
+    /** The surface of a card or tile that can be any height: it needs edges on all four sides (the plate is a one-line pill whose picture would tile down a tall card). */
+    public static final Part CARD = Part.INSET;
+
+    /** How much of the card surface shows over text that was already drawn (a card that is as tall as its content, which is known only after the content is drawn). */
+    public static final float CARD_OVER_ALPHA = 0.15f;
 
     /** The parts a screen draws at a size other than the picture's own: each needs a {@code .mcmeta} (nine-slice or tile) next to its PNG, or vanilla would stretch it. */
     public static final java.util.Set<Part> SCALED = java.util.EnumSet.of(Part.COVER, Part.PANEL, Part.INSET, Part.TOOLTIP, Part.DIVIDER, Part.SCROLL_TRACK, Part.SCROLL_THUMB,

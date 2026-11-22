@@ -176,15 +176,16 @@ public final class KitDraw {
 
     /** A source tag chip (SB, VMP, WW, ENC, TEN) in the theme's colour for the mod; its width. */
     public static int sourceTag(GuiGraphics g, Font font, HubTheme theme, SourceTag tag, int x, int y) {
-        int bg = theme.sourceColor(tag.source());
         int w = tagWidth(font, tag);
-        g.fill(x, y, x + w, y + 10, bg);
-        g.drawString(font, tag.label(), x + 3, y + 1, Contrast.bestText(bg), false);
+        UiKit.draw(g, theme, Part.CHIP, x, y, w, SourceTag.HEIGHT);
+        // the picture is the same for every mod; the stripe inside it is the mod's colour, so SB, VMP, WW, ENC and TEN are still told apart at a glance
+        g.fill(x + SourceTag.STRIPE_X, y + SourceTag.STRIPE_Y + 1, x + SourceTag.STRIPE_X + SourceTag.STRIPE_W, y + SourceTag.STRIPE_Y + 1 + SourceTag.STRIPE_H, theme.sourceColor(tag.source()));
+        g.drawString(font, tag.label(), x + SourceTag.TEXT_X, y + 1, UiKit.labelOver(theme, Part.CHIP, theme.ink()), false);
         return w;
     }
 
     public static int tagWidth(Font font, SourceTag tag) {
-        return font.width(tag.label()) + 5;
+        return SourceTag.width(font.width(tag.label()));
     }
 
     /** The keyboard focus ring, one pixel outside {@code r}, two pixels wide. */

@@ -14,13 +14,17 @@ import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.TaskState;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.SourceTag;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit;
 
 /**
  * The Grimoire's Quests: a filter row (All and one per mod), the tasks grouped under the rung they belong to, then the skill quests, on the left;
  * the chosen task on the facing page with its source, a drop-cap line, its progress, its reward by a leader, the secondary links and the CLAIM seal.
  */
 public final class BookQuestsPage implements HubPageView {
+    /** The size a kit pip is drawn at: its 5 px picture doubled. */
+    private static final int PIP = 10;
     private static final String KEY = PageKit.HUB + "quests.";
     private static final String BOOK = PageKit.HUB + "book.quests.";
     private final QuestFilter quests = new QuestFilter();
@@ -100,9 +104,9 @@ public final class BookQuestsPage implements HubPageView {
         y = BookKit.caps(f, Component.translatable(BOOK + "progress"), s.x(), y + 4, t.muted());
         if (row.counted() && row.target() > 1) {
             if (row.target() <= 8) {
+                // the kit's pips, 2x so the pixels stay square: lit for each step done
                 for (int i = 0; i < row.target(); i++) {
-                    KitDraw.shape(f.g, Shapes.Shape.ROUND, s.x() + i * 11, y, 9, t.accent());
-                    KitDraw.shape(f.g, Shapes.Shape.ROUND, s.x() + i * 11 + 1, y + 1, 7, i < row.progress() ? t.accent() : t.paper());
+                    UiKit.draw(f.g, t, i < row.progress() ? Part.PIP_ON : Part.PIP_OFF, s.x() + i * 12, y, PIP, PIP);
                 }
                 y += 12;
             } else {

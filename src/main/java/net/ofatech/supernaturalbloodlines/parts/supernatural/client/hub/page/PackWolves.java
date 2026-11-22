@@ -18,6 +18,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Flow;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache;
 import net.ofatech.supernaturalbloodlines.shared.hub.profile.NpcActions;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.HubSocial;
 import org.jetbrains.annotations.Nullable;
@@ -61,30 +62,36 @@ public final class PackWolves {
             y = PageKit.wrapped(f, Component.translatable(KEY + "none"), r.x() + 4, y, r.w() - 4, t.muted());
         }
         HubSocial.Npc chosen = null;
-        for (HubSocial.Npc n : npcs) {
+        // every wolf keeps its row and its target (so Tab reaches the ones below the fold); one that is not whole above the "more below" marker is not drawn
+        List<net.ofatech.supernaturalbloodlines.shared.hub.kit.RowFit.Row> plan = net.ofatech.supernaturalbloodlines.shared.hub.kit.RowFit.plan(y - 1, ROW, ROW + 1, npcs.size(), f.clipBottom());
+        for (int i = 0; i < npcs.size(); i++) {
+            HubSocial.Npc n = npcs.get(i);
+            int ry = plan.get(i).y() + 1;
+            boolean drawn = plan.get(i).drawn();
             boolean on = n.token() == selected;
             if (on) {
                 chosen = n;
             }
-            Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, ROW);
-            if (on) {
-                f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
+            Rect hit = new Rect(r.x() - 1, ry - 1, r.w() + 2, ROW);
+            if (drawn) {
+                if (on) {
+                    f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
+                }
+                f.g.renderItem(icon(n), r.x() + 1, ry + 1);
+                int textX = r.x() + 21;
+                int barW = 34;
+                int room = r.w() - 22 - barW - 4;
+                f.g.drawString(f.font(), TextCache.cut(f.font(), n.name(), room, f.font()::width), textX, ry, t.ink(), false);
+                f.g.drawString(f.font(), TextCache.cut(f.font(), sub(n).getString(), room, f.font()::width), textX, ry + 10, t.muted(), false);
+                bar(f, r.right() - barW, ry + 4, barW, n);
             }
-            f.g.renderItem(icon(n), r.x() + 1, y + 1);
-            int textX = r.x() + 21;
-            int barW = 34;
-            int room = r.w() - 22 - barW - 4;
-            f.g.drawString(f.font(), LabelFit.cut(n.name(), room, f.font()::width), textX, y, t.ink(), false);
-            f.g.drawString(f.font(), LabelFit.cut(sub(n).getString(), room, f.font()::width), textX, y + 10, t.muted(), false);
-            bar(f, r.right() - barW, y + 4, barW, n);
             String id = "npc:" + n.token();
             f.target(id, hit, tooltip(n), () -> selected = on ? 0 : n.token());
-            if (f.focused(id)) {
+            if (drawn && f.focused(id)) {
                 t.drawFocus(f.g, hit);
             }
-            y += ROW + 1;
         }
-        if (chosen != null && inlineProfile) {
+        y += npcs.size() * (ROW + 1);        if (chosen != null && inlineProfile) {
             y = profile(f, r, y + 2, chosen);
         }
         if (werewolf) {

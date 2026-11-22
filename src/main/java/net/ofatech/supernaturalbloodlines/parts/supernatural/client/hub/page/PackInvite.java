@@ -105,8 +105,7 @@ public final class PackInvite {
         int none = people.isEmpty() ? f.font().split(Component.translatable(key + "pick_none"), in.w()).size() * PageKit.LINE : 0;
         int bottom = (people.isEmpty() ? in.y() + PageKit.LINE + 2 + none : pf.bottom()) + moreH + pad;
         if (card) {
-            f.g.fill(r.x(), y, r.right(), bottom, 0xFF000000 | t.paper());
-            f.g.renderOutline(r.x(), y, r.w(), bottom - y, t.accent());
+            BookKit.card(f, new Rect(r.x(), y, r.w(), bottom - y), t.accent());
         }
         f.g.drawString(f.font(), title.copy().withStyle(ChatFormatting.BOLD), in.x(), in.y(), t.accent(), false);
         if (people.isEmpty()) {

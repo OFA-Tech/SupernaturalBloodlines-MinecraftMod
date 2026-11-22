@@ -75,14 +75,22 @@ final class PageKit {
         java.util.function.ToIntFunction<String> measure = s -> f.font().width(Component.literal(s).withStyle(style));
         if (LabelFit.hasOverlongWord(c.getString(), w, measure)) {
             // vanilla would break such a word in the middle: it is cut with an ellipsis instead, and the rest wraps at its spaces
-            for (String line : LabelFit.wrapWords(c.getString(), w, measure)) {
-                f.g.drawString(f.font(), Component.literal(line).withStyle(style), x, y, color, false);
+            List<String> words = LabelFit.wrapWords(c.getString(), w, measure);
+            int whole = net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.wholeLines(y, LINE, words.size(), f.clipBottom());
+            for (int i = 0; i < words.size(); i++) {
+                if (i < whole) {
+                    f.g.drawString(f.font(), Component.literal(words.get(i)).withStyle(style), x, y, color, false);
+                }
                 y += LINE;
             }
             return y;
         }
-        for (FormattedCharSequence line : f.font().split(c, w)) {
-            f.g.drawString(f.font(), line, x, y, color, false);
+        List<FormattedCharSequence> split = f.font().split(c, w);
+        int whole = net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.wholeLines(y, LINE, split.size(), f.clipBottom());
+        for (int i = 0; i < split.size(); i++) {
+            if (i < whole) {
+                f.g.drawString(f.font(), split.get(i), x, y, color, false);
+            }
             y += LINE;
         }
         return y;
@@ -157,11 +165,11 @@ final class PageKit {
     static int taskRow(HubScreen.Frame f, HubModel.TaskRow row, int x, int y, int w, boolean stamps, @Nullable Runnable onSelect, boolean selected) {
         HubTheme t = f.theme();
         Font font = f.font();
-        Component tag = sourceTag(row.source());
-        int tagW = font.width(tag) + 4;
+        net.ofatech.supernaturalbloodlines.shared.hub.kit.SourceTag tag = net.ofatech.supernaturalbloodlines.shared.hub.kit.SourceTag.of(row.source());
+        int tagW = net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw.tagWidth(font, tag);
         boolean stamp = stamps && row.state() == TaskState.CLAIMABLE;
         int stampW = stamp ? HubTheme.STAMP + 2 : 0;
-        int textX = x + HubTheme.BOX + 3;
+        int textX = net.ofatech.supernaturalbloodlines.shared.hub.kit.KitMetrics.taskTextX(x, HubTheme.BOX, net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitWidgets.TASK_PX);
         int textW = Math.max(20, x + w - stampW - tagW - 2 - textX);
         MutableComponent words = text(row.text()).copy();
         if (row.counted() && row.target() > 1 && row.state() != TaskState.CLAIMED) {
@@ -170,31 +178,38 @@ final class PageKit {
         List<FormattedCharSequence> lines = font.split(words, textW);
         int h = Math.max(lines.size() * LINE, stamp ? HubTheme.STAMP : LINE);
         Rect rowRect = new Rect(x - 1, y - 1, w + 2, h + 1);
-        if (selected) {
+        boolean drawn = f.whole(y - 1, h + 1);
+        if (drawn && selected) {
             f.g.fill(rowRect.x(), rowRect.y(), rowRect.right(), rowRect.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
         }
-        t.drawTaskBox(f.g, x, y + 1, row.state());
+        if (drawn) {
+            t.drawTaskBox(f.g, x, y + 1, row.state());
+        }
         int color = row.state() == TaskState.CLAIMED ? t.muted() : t.ink();
         int ly = y + (h - lines.size() * LINE) / 2;
         for (FormattedCharSequence line : lines) {
-            f.g.drawString(font, line, textX, ly, color, false);
+            if (drawn) {
+                f.g.drawString(font, line, textX, ly, color, false);
+            }
             ly += LINE;
         }
         int tagX = x + w - stampW - tagW;
-        int sc = t.sourceColor(row.source());
-        f.g.renderOutline(tagX, y, tagW, 9, sc);
-        f.g.drawString(font, tag, tagX + 2, y + 1, sc, false);
+        if (drawn) {
+            net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw.sourceTag(f.g, font, t, tag, tagX, y);
+        }
         String rowId = "task:" + row.task().id();
         f.target(rowId, rowRect, tooltip(row), onSelect);
-        if (f.focused(rowId)) {
+        if (drawn && f.focused(rowId)) {
             t.drawFocus(f.g, rowRect);
         }
         if (stamp) {
             Rect s = new Rect(x + w - HubTheme.STAMP, y + (h - HubTheme.STAMP) / 2, HubTheme.STAMP, HubTheme.STAMP);
             String id = row.task().id();
-            t.drawStamp(f.g, s.x(), s.y(), f.hovered(s) || f.focused("stamp:" + id));
+            if (drawn) {
+                t.drawStamp(f.g, s.x(), s.y(), f.hovered(s) || f.focused("stamp:" + id));
+            }
             f.target("stamp:" + id, s, List.of(Component.translatable(HUB + "task.claim"), text(row.text())), () -> f.claim(id));
-            if (f.focused("stamp:" + id)) {
+            if (drawn && f.focused("stamp:" + id)) {
                 t.drawFocus(f.g, s);
             }
         }
