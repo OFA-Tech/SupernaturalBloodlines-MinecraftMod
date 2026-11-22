@@ -57,6 +57,7 @@ public final class SpeciesTensuraPart {
             e.register(SpeciesLayerGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.SpeciesTensuraSyncGameTests.class);
             e.register(ApexGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.AugustineTensuraGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.speciestensura.gametest.ApexUndeadSwitchGameTests.class);
             e.register(SirelineTensuraGameTests.class);
             e.register(GhoulTensuraGameTests.class);

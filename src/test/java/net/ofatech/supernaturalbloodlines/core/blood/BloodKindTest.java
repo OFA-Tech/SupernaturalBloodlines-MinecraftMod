@@ -53,4 +53,10 @@ class BloodKindTest {
             }
         }
     }
-}
+
+    @Test
+    void anAugustinesBloodIsCommonVampireBloodAndNeverASecretKind() {
+        assertEquals(BloodKind.COMMON_VAMPIRE, BloodKind.of(Species.AUGUSTINE));
+        assertEquals(BloodKind.COMMON_VAMPIRE, BloodKind.parse("AUGUSTINE"));
+        assertEquals(BloodKind.COMMON_VAMPIRE, BloodKind.of(Species.NONE));
+    }}

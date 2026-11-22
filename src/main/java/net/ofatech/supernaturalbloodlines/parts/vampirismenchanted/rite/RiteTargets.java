@@ -47,6 +47,21 @@ public final class RiteTargets {
         return right ? null : new Told(FactionRiteFactory.NO_EFFECT, targetKey);
     }
 
+    /** What the one on the centre is told when a caster who is not them works a rite that changes them (the Rite of Lineage: Awaken) and they are not sneaking. */
+    public static final String SNEAK_TO_ACCEPT = "supernaturalbloodlines.rite.sneak_to_accept";
+
+    /** What the one on the centre is told when a caster who is not them works the Rite of Augustine on them and they are not sneaking. */
+    public static final String SNEAK_TO_BE_MADE_AUGUSTINE = "supernaturalbloodlines.rite.sneak_to_be_made_augustine";
+
+    /**
+     * The consent of a rite that changes the target (the Rite of Augustine), or null when it goes ahead: a target who is not the caster must sneak on the centre.
+     * Without it the caster gets one answer ({@code NO_EFFECT}) whatever the target is, and the target is asked. After it, a refusal goes through
+     * {@link #refusalAbout} (the caster hears nothing about the target).
+     */
+    public static Told consentAnswer(boolean casterIsTarget, boolean sneaking, String askKey) {
+        return casterIsTarget || sneaking ? null : new Told(FactionRiteFactory.NO_EFFECT, askKey);
+    }
+
     /** Applies {@link #bloodAnswer} to the two players: true when the rite goes ahead, else both have been told and the rite should be cancelled. */
     public static boolean askForBlood(ServerPlayer caster, ServerPlayer target, boolean right, String selfKey, String targetKey) {
         Told told = bloodAnswer(caster == target, target.isShiftKeyDown(), right, selfKey, targetKey);

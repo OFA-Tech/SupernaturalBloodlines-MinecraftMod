@@ -30,6 +30,8 @@ class SupernaturalRaceTest {
         row(with(Species.ORIGINAL), VAMPIRE, ORIGINAL, null);
         row(with(Species.TRIBRID), WOLF, TRIBRID, null);
         row(with(Species.HYBRID), WOLF, HYBRID, null);
+        row(with(Species.AUGUSTINE), VAMPIRE, AUGUSTINE, null);
+        row(with(Species.AUGUSTINE), WOLF, AUGUSTINE, null); // the species is the race, whatever the faction says
         row(with(Species.HERETIC), VAMPIRE, HERETIC, null);
         row(with(Species.POTENTIAL), null, HUNTER, null);
         row(with(Species.HUNTER_OF_THE_FIVE), HUNTER_FACTION, HUNTER, null);
@@ -92,6 +94,6 @@ class SupernaturalRaceTest {
             assertEquals(Optional.of(r), SupernaturalRace.byId(r.id()));
         }
         assertTrue(SupernaturalRace.byId("dragon").isEmpty());
-        assertEquals(12, values().length);
+        assertEquals(13, values().length);
     }
 }

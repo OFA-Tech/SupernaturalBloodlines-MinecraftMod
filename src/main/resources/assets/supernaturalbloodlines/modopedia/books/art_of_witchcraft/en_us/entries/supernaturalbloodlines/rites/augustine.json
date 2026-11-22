@@ -1,0 +1,47 @@
+{
+  "title": "Rite of Augustine",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:golden_apple"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/augustine",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nMakes the vampire on the centre an Augustine: +10% attack, +2 health; feeds 3× on the first bite of a vampire, ⅓ on others. Only a cure undoes it. Wes's Syringe does the same.",
+          "header": "Rite of Augustine"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The target (the caster if nobody stands there) must be a vampire with no bloodline: no species, not a Ghoul, not in a transition. If it is someone else they must sneak to accept.",
+          "header": "Rite of Augustine"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Whatever stands on the centre, the caster hears the same thing: it tells nothing of who it is. A refusal gives the ingredients back.",
+          "header": "Rite of Augustine"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:augustine",
+          "header": "Rite of Augustine"
+        }
+      ]
+    }
+  ]
+}

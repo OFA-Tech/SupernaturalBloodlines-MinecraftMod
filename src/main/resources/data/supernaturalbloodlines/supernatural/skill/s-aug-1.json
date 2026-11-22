@@ -1,0 +1,6 @@
+{
+    "id": "S-AUG-1",
+    "name": "Garlic Ward",
+    "cost": 3,
+    "kinds": ["rule"]
+}

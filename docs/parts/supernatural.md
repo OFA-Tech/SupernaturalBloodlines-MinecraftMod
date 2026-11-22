@@ -12,6 +12,8 @@ Requires: `vampirism`. Optional: `enchanted` (rite tasks), `werewolves` (level s
 - **Access** (`core/supernatural/SupernaturalAccess`): `get`, `set` (stores, queues the sync, notifies listeners only when the state changed), `addListener`, `syncToSelf`. The sync (`SupernaturalSyncPayload`, to the owning player only) is sent once per server tick however often the state is set, and at login, respawn and dimension change. Known limit: a listener that calls `set` sees its change nested; there is no ordering queue like `BloodlineAccess` has.
 
 ## Ladders (data)
+Plan 18c adds the AUGUSTINE ladder (`L-AUG-0` to `L-AUG-6`, the last is the same Tensura rung as a plain vampire's), its tree (S-VAM-1 to S-VAM-6 minus S-VAM-7, with S-VAM-6 taken without a quest, then S-AUG-1 and S-AUG-2) and the two skills. See R200 to R203.
+
 
 One file per race: `data/supernaturalbloodlines/supernatural/ladder/<race>.json`, where `<race>` is `SupernaturalRace.id()` (`human`, `ghoul`, `vampire`, `original`, `original_hybrid`, `hybrid`, `tribrid`, `heretic`, `witch`, `siphoner`, `hunter`, `werewolf`). `LadderReloadListener` loads them on every data reload (only the `supernaturalbloodlines` namespace). The listener is only registered while the part is on, so the files carry no `part_enabled` condition. `LadderTable.parse` takes a file whole or rejects it with one log line (`Ladder rejected: <race>: <reason>`); the other files are unaffected and a rejected race has no ladder. Ids must be unique across all files.
 

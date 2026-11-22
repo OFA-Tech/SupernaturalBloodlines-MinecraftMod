@@ -45,6 +45,16 @@ class BloodlineStateTest {
     }
 
     @Test
+    void anAugustineRoundTripsAndOneRolledBackToABuildWithoutThemLoadsAsNone() {
+        BloodlineState s = BloodlineState.NONE.toBuilder().species(Species.AUGUSTINE).sire(java.util.UUID.fromString("00000000-0000-0000-0000-0000000000a1")).build();
+        JsonElement json = BloodlineState.CODEC.encodeStart(JsonOps.INSTANCE, s).getOrThrow();
+        assertEquals(s, BloodlineState.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());
+        assertEquals(Species.AUGUSTINE, decode("{\"species\":\"AUGUSTINE\"}").species());
+        // an older build knows no AUGUSTINE: its lenient codec reads an unknown species as NONE (see the next test)
+        assertEquals(Species.NONE, decode("{\"species\":\"AUGUSTINE_FROM_THE_FUTURE\"}").species());
+    }
+
+    @Test
     void unknownSpeciesDecodesToNone() {
         assertEquals(Species.NONE, decode("{\"species\":\"DRAGON\"}").species());
     }

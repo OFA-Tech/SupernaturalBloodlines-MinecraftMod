@@ -168,6 +168,20 @@ public final class DevShots {
         }
     }
 
+    /** {@code .species=AUGUSTINE}: the single-player player is made a vampire of that species on the integrated server (the pictures then show the real server state). */
+    private static void asSpecies(Minecraft mc, String name) {
+        var server = mc.getSingleplayerServer();
+        if (server == null) {
+            return;
+        }
+        server.execute(() -> {
+            var p = server.getPlayerList().getPlayers().get(0);
+            de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION, 5);
+            net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(p, net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState.NONE.toBuilder()
+                    .species(net.ofatech.supernaturalbloodlines.core.bloodline.Species.valueOf(name)).build());
+        });
+    }
+
     private void tick(ClientTickEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
         if (done) {
@@ -196,6 +210,9 @@ public final class DevShots {
             // the HUD shots are of the HUD: the demo player's aura (big yellow squares of particles) would cover it
             mc.options.particles().set(net.minecraft.client.ParticleStatus.MINIMAL);
             mc.particleEngine.setLevel(mc.level); // clears the live particles
+        }
+        if (worldTicks == 1 && System.getProperty(PROPERTY + ".species") != null) {
+            asSpecies(mc, System.getProperty(PROPERTY + ".species"));
         }
         if (worldTicks++ < WORLD_TICKS) {
             return;

@@ -110,6 +110,7 @@ public final class ApexGameTests {
             case SIPHONER, HERETIC -> "void_siphon";
             case TRIBRID -> "tribrid_ascendant";
             case HUNTER_OF_THE_FIVE -> "eternal_hunter";
+            case AUGUSTINE -> "elder_vampire"; // offered what a plain vampire is (owner, Q3), by its species
             case NONE, POTENTIAL -> null;
         });
     }

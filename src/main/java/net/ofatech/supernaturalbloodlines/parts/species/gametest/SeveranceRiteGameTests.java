@@ -168,7 +168,14 @@ public final class SeveranceRiteGameTests {
         BloodlineState before = BloodlineAccess.get(sired);
         try {
             atFullMoon(helper, fullMoon, () -> start(helper, RITE, witch, items(bloodOf)));
-            helper.assertTrue(witch.receivedOnActionBar(message), "the caster was not told " + message);
+            if (message.endsWith("wrong_sire_blood") || message.endsWith("bond_already_broken")) {
+                // about the one on the circle: they hear it, the caster only that it did nothing
+                helper.assertTrue(sired.receivedOnActionBar(message), "the one on the circle was not told " + message);
+                helper.assertTrue(witch.receivedOnActionBar(net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory.NO_EFFECT) && !witch.receivedOnActionBar(message),
+                        "the caster was told " + message + " about someone else");
+            } else {
+                helper.assertTrue(witch.receivedOnActionBar(message), "the caster was not told " + message);
+            }
             helper.assertTrue(BloodlineAccess.get(sired).equals(before), "a refused rite changed the state: " + BloodlineAccess.get(sired));
             helper.assertTrue(dropped(helper, OTHERWHERE) == 1, "the rare ingredient was not given back");
         } finally {

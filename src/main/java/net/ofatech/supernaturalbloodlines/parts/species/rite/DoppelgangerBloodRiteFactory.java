@@ -17,6 +17,7 @@ import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Genes;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
+import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.RiteTargets;
 import net.ofatech.supernaturalbloodlines.parts.species.doppelganger.DoppelgangerVillagers;
 import net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler;
 
@@ -66,7 +67,11 @@ public record DoppelgangerBloodRiteFactory() implements RiteFactory {
                     TurningHandler.isHumanLikeBlood(owner));
             if (refusal != null) {
                 if (findEntity(params.caster) instanceof ServerPlayer caster) {
-                    caster.displayClientMessage(Component.translatable(refusal), true);
+                    if (owner instanceof ServerPlayer who && id != null && refusal != DoppelgangerRiteRules.NO_OWNER && refusal != DoppelgangerRiteRules.OWNER_AWAY) {
+                        RiteTargets.refuseAbout(caster, who, refusal); // whether the taglocked player carries the gene is theirs to hear
+                    } else {
+                        caster.displayClientMessage(Component.translatable(refusal), true);
+                    }
                 }
                 return cancel();
             }

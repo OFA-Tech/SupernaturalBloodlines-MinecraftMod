@@ -25,7 +25,8 @@ class LadderDataTest {
             Map.entry(SupernaturalRace.SIPHONER, List.of("0:", "1:ab", "2:ab", "3:ab", "4:ab", "5:ab")),
             Map.entry(SupernaturalRace.HERETIC, List.of("0:", "1:ab", "2:ab", "3:abc", "4:ab", "5:ab")),
             Map.entry(SupernaturalRace.HUNTER, List.of("0:", "1:ab", "2:ab", "3:a", "4:ab", "5:ab")),
-            Map.entry(SupernaturalRace.WEREWOLF, List.of("0:", "1:ab", "2:ab", "3:ab", "4:ab", "5:a", "6:ab")));
+            Map.entry(SupernaturalRace.WEREWOLF, List.of("0:", "1:ab", "2:ab", "3:ab", "4:ab", "5:a", "6:ab")),
+            Map.entry(SupernaturalRace.AUGUSTINE, List.of("0:", "1:ab", "2:ab", "3:ab", "4:ab", "5:ab", "6:ab")));
 
     // race -> {rungs, SP total, EP total}
     private static final Map<SupernaturalRace, long[]> TOTALS = Map.ofEntries(
@@ -40,7 +41,8 @@ class LadderDataTest {
             Map.entry(SupernaturalRace.SIPHONER, new long[] {6, 19, 175_000}),
             Map.entry(SupernaturalRace.HERETIC, new long[] {6, 20, 210_000}),
             Map.entry(SupernaturalRace.HUNTER, new long[] {6, 18, 171_000}),
-            Map.entry(SupernaturalRace.WEREWOLF, new long[] {7, 22, 266_000}));
+            Map.entry(SupernaturalRace.WEREWOLF, new long[] {7, 22, 266_000}),
+            Map.entry(SupernaturalRace.AUGUSTINE, new long[] {7, 23, 212_000}));
 
     private static String prefix(SupernaturalRace race) {
         return switch (race) {
@@ -54,7 +56,7 @@ class LadderDataTest {
     void everyRaceHasAFileAndNoFileIsRejected() {
         LadderTable.Parsed parsed = LadderTable.parse(ShippedLadders.files(), mod -> true);
         assertEquals(List.of(), parsed.rejected());
-        assertEquals(12, ShippedLadders.files().size());
+        assertEquals(13, ShippedLadders.files().size());
     }
 
     @Test

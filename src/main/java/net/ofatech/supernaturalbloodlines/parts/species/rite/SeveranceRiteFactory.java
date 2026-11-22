@@ -92,7 +92,8 @@ public record SeveranceRiteFactory(boolean requiresFullMoon) implements RiteFact
             var ctx = SpeciesContext.of(target, bloodOf);
             Outcome preview = BloodlineRules.apply(BloodlineAccess.get(target), BloodlineEvent.RITE_OF_SEVERANCE, ctx);
             if (preview.refused()) {
-                return refuse(caster, preview.refusalKey());
+                RiteTargets.refuseAbout(caster, target, preview.refusalKey()); // a bond, a sire: the target's own, not the caster's to learn
+                return cancel();
             }
             BloodlineAccess.applyEvent(target, BloodlineEvent.RITE_OF_SEVERANCE, ctx);
             target.displayClientMessage(Component.translatable(DONE), true);

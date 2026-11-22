@@ -677,4 +677,30 @@ public final class BloodBottleGameTests {
         helper.assertTrue(ActionClock.ready(p, ResourceLocation.fromNamespaceAndPath(NS, "another")), "one clock holds up another action");
         helper.succeed();
     }
-}
+
+    /** An Augustine may bottle their blood (Q13: every vampire but an Original), and what they bottle is common vampire blood: nothing tells it from a plain vampire's. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anAugustineBottlesCommonVampireBloodThatActsLikeAnyCommonBottle(GameTestHelper helper) {
+        ServerPlayer p = vampireWithBottle(helper, Species.AUGUSTINE, true);
+        ServerPlayer human = TestPlayers.createMortal(helper);
+        ServerPlayer control = TestPlayers.createMortal(helper);
+        try {
+            helper.assertTrue(BottleBloodAction.INSTANCE.available(p) && BottleBloodAction.INSTANCE.trigger(p) == null, "an Augustine could not bottle their blood");
+            ItemStack out = found(p);
+            BloodSource s = BloodStamp.read(out).orElse(null);
+            helper.assertTrue(s != null && s.kind() == BloodKind.COMMON_VAMPIRE && s.id().equals(p.getUUID()), "the bottle is " + s);
+            helper.assertTrue(p.getGameProfile().getName().equals(out.get(SpeciesRegistries.BLOOD_LABEL_COMPONENT.get())),
+                    "an Augustine's bottle is labelled " + out.get(SpeciesRegistries.BLOOD_LABEL_COMPONENT.get()) + ", not like a plain vampire's");
+            helper.assertTrue(p.getHealth() == 20f - (float) SpeciesConfig.bottleBloodHealthCost() && glass(p) == 1, "the cost was not paid");
+            BloodSource common = new BloodSource(UUID.randomUUID(), "Someone", false, BloodKind.COMMON_VAMPIRE);
+            var drunk = BloodBottles.apply(human, s);
+            var controlDrunk = BloodBottles.apply(control, common);
+            helper.assertTrue(drunk == controlDrunk && drunk != net.ofatech.supernaturalbloodlines.core.blood.BloodBottleRules.Effect.REFUSED, "a human drank " + drunk + " from it, but " + controlDrunk + " from a plain vampire's");
+            helper.assertTrue(BloodlineAccess.get(human).vampireBloodUntil() != 0 && BloodlineAccess.get(human).vampireBloodUntil() == BloodlineAccess.get(control).vampireBloodUntil(), "the human was not marked like the control");
+            helper.assertTrue(BloodlineAccess.get(human).pendingSire() == BloodlineAccess.get(control).pendingSire() && (human.getData(SpeciesRegistries.BLOOD_SOURCE) == null) == (control.getData(SpeciesRegistries.BLOOD_SOURCE) == null)
+                    && !p.getUUID().equals(BloodlineAccess.get(human).pendingSire()), "an Augustine's blood named a sire differently from a plain vampire's");
+        } finally {
+            reset(p, human, control);
+        }
+        helper.succeed();
+    }}

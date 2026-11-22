@@ -5,6 +5,7 @@ import java.util.Map;
 /** The sprite each of our skills wears in the radial tree: one per skill id (any case: the files say S-VAM-1), by what the skill is about, SPARK for one this table does not know. Pure. */
 public final class SkillIcons {
     private static final Map<String, Icons> BY_ID = Map.ofEntries(
+            Map.entry("s-aug-1", Icons.SHIELD), Map.entry("s-aug-2", Icons.SUN), // placeholders: the shield and the sun, until the art lands
             Map.entry("s-hum-1", Icons.HEART), Map.entry("s-hum-2", Icons.SHIELD), Map.entry("s-hum-3", Icons.BOOT),
             Map.entry("s-hun-1", Icons.BOLT), Map.entry("s-hun-2", Icons.EYE), Map.entry("s-hun-3", Icons.SHIELD), Map.entry("s-hun-4", Icons.EYE),
             Map.entry("s-hun-5", Icons.CROWN),

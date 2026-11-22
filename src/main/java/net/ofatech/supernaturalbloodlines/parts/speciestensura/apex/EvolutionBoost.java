@@ -10,6 +10,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.LayerSpec;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.SpeciesLayer;
@@ -33,7 +34,7 @@ public final class EvolutionBoost {
 
     /** What the player is credited for {@code gain} EP: x1.25 (the config) with a species, as is without. The only boost entry point. */
     public static double boostedEp(Player p, double gain) {
-        boolean hasLayer = BloodlineAccess.get(p).species() != Species.NONE && !SpeciesLayer.spec(p).equals(LayerSpec.NONE);
+        boolean hasLayer = !BloodlineRules.isPlainVampireLike(BloodlineAccess.get(p).species()) && !SpeciesLayer.spec(p).equals(LayerSpec.NONE);
         return gain * factor(hasLayer, SpeciesTensuraConfig.evolutionMultiplier());
     }
 

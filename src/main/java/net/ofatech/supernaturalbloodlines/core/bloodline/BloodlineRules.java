@@ -61,6 +61,7 @@ public final class BloodlineRules {
             case TURNING_FED -> turningFed(s, c);
             case TURNING_FAILED -> turningFailed(s, c);
             case TURNING_GAVE_UP -> turningGaveUp(s);
+            case RITE_OF_AUGUSTINE, AUGUSTINE_SYRINGE -> madeAugustine(s, c);
         };
     }
 
@@ -77,9 +78,36 @@ public final class BloodlineRules {
         return Outcome.of(s.toBuilder().ghoul(true).build());
     }
 
-    /** The species of the vampire side: Originals, the hybrid types and heretics. */
+    /** The species of the vampire side: Originals, the hybrid types, heretics and Augustines. */
     public static boolean isVampireSpecies(Species sp) {
-        return isOriginal(sp) || sp == Species.HYBRID || sp == Species.TRIBRID || sp == Species.HERETIC;
+        return isOriginal(sp) || sp == Species.HYBRID || sp == Species.TRIBRID || sp == Species.HERETIC || sp == Species.AUGUSTINE;
+    }
+
+    /** R20f is lifted for this species (R203): its bite on a vampire feeds it and drains the victim without Predator's Thirst. The one place that says so. */
+    public static boolean liftsVampireBiteRefusal(Species sp) {
+        return sp == Species.AUGUSTINE;
+    }
+
+    /** "A plain vampire" for the Tensura side (R200, owner Q3): no species, or an Augustine, who is a vampire on a diet and gets the same treatment. */
+    public static boolean isPlainVampireLike(Species sp) {
+        return sp == Species.NONE || sp == Species.AUGUSTINE;
+    }
+
+    /** R200: a plain vampire (in the Vampirism vampire faction, no species, not a Ghoul, not in a transition) becomes an Augustine; the sire is kept. */
+    private static Outcome madeAugustine(BloodlineState s, BloodlineContext c) {
+        if (c.faction() != BaseFaction.VAMPIRE) {
+            return Outcome.refuse(s, "not_vampire");
+        }
+        if (s.species() != Species.NONE || s.witchLayer()) {
+            return Outcome.refuse(s, "has_species");
+        }
+        if (s.ghoul()) {
+            return Outcome.refuse(s, "ghoul");
+        }
+        if (s.inTransition()) {
+            return Outcome.refuse(s, "in_transition");
+        }
+        return Outcome.of(to(s, Species.AUGUSTINE, c).build());
     }
 
     /** Someone the turning can still make a vampire: in no faction, or a Ghoul (who is already in the vampire faction). */
@@ -212,7 +240,7 @@ public final class BloodlineRules {
     /** R81: vampires and werewolf types. Species wins over faction, so witches and siphoners are never prey. */
     private static boolean isPrey(BloodlineState s, BloodlineContext c) {
         return switch (s.species()) {
-            case ORIGINAL, ORIGINAL_HYBRID, HYBRID, HERETIC, TRIBRID -> true;
+            case ORIGINAL, ORIGINAL_HYBRID, HYBRID, HERETIC, TRIBRID, AUGUSTINE -> true;
             case NONE -> c.faction() == BaseFaction.VAMPIRE || c.faction() == BaseFaction.WEREWOLF;
             default -> false;
         };
@@ -287,6 +315,8 @@ public final class BloodlineRules {
             target = Species.ORIGINAL_HYBRID;
         } else if (s.species() == Species.HERETIC) {
             return Outcome.refuse(s, "siphoner_hybrid");
+        } else if (s.species() == Species.AUGUSTINE) {
+            return Outcome.refuse(s, "augustine_hybrid"); // Question 2: no Augustine hybrids
         } else if (s.species() == Species.NONE && c.faction() == BaseFaction.VAMPIRE) {
             target = Species.HYBRID;
         } else {
@@ -327,6 +357,7 @@ public final class BloodlineRules {
             case HYBRID -> Outcome.of(to(s, Species.NONE, c).sire(null).build());
             case TRIBRID -> Outcome.of(to(s, Species.WITCH, c).witchLayer(true).sire(null).build());
             case HERETIC -> Outcome.of(to(s, Species.SIPHONER, c).build(), Action.LEAVE_FACTION);
+            case AUGUSTINE -> Outcome.of(humanAgain(becomeNone(s, c)).build(), Action.LEAVE_FACTION); // cured like a vampire (R200)
             case NONE, WITCH, SIPHONER -> c.faction() == BaseFaction.VAMPIRE
                     ? Outcome.of(humanAgain(s.toBuilder()).build(), Action.LEAVE_FACTION) : unchanged(s);
             default -> unchanged(s);
@@ -350,7 +381,7 @@ public final class BloodlineRules {
                 .wolf(clearedWolf(s.wolf())).build();
         boolean leaves = c.faction() == BaseFaction.VAMPIRE || c.faction() == BaseFaction.WEREWOLF
                 || switch (s.species()) {
-                    case ORIGINAL, ORIGINAL_HYBRID, HYBRID, TRIBRID, HERETIC -> true;
+                    case ORIGINAL, ORIGINAL_HYBRID, HYBRID, TRIBRID, HERETIC, AUGUSTINE -> true;
                     default -> false;
                 };
         return leaves ? Outcome.of(cured, Action.LEAVE_FACTION) : Outcome.of(cured);
@@ -366,6 +397,7 @@ public final class BloodlineRules {
             case HERETIC -> Outcome.of(to(s, Species.SIPHONER, c).build());
             case TRIBRID -> Outcome.of(leaveWerewolf(s, to(s, Species.WITCH, c).witchLayer(true).sire(null)).build());
             case ORIGINAL, POTENTIAL, HUNTER_OF_THE_FIVE -> Outcome.of(becomeNone(s, c).build());
+            case AUGUSTINE -> Outcome.of(humanAgain(becomeNone(s, c)).build());
             case ORIGINAL_HYBRID, HYBRID -> Outcome.of(leaveWerewolf(s, becomeNone(s, c)).build());
             case NONE, WITCH, SIPHONER -> switch (c.faction()) {
                 case WEREWOLF -> Outcome.of(leaveWerewolf(s, s.toBuilder()).build());

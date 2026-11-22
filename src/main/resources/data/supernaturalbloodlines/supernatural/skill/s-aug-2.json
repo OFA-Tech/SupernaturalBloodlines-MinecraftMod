@@ -1,0 +1,7 @@
+{
+    "id": "S-AUG-2",
+    "name": "Blessed Skin",
+    "cost": 3,
+    "kinds": ["rule"],
+    "params": { "holy_reduction": 0.5 }
+}

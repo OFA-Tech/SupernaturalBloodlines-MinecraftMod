@@ -51,6 +51,10 @@ public final class SpeciesRegistries {
     public static final DeferredItem<HybridBloodItem> HYBRID_BLOOD =
             ITEMS.register("hybrid_blood", () -> new HybridBloodItem(new Item.Properties().stacksTo(16)));
 
+    /** Wes's syringe (R202): makes a plain vampire an Augustine. */
+    public static final DeferredItem<net.ofatech.supernaturalbloodlines.parts.species.item.AugustineSyringeItem> AUGUSTINE_SYRINGE =
+            ITEMS.register("augustine_syringe", () -> new net.ofatech.supernaturalbloodlines.parts.species.item.AugustineSyringeItem(new Item.Properties().stacksTo(16)));
+
     /** Ingredient of the Rite of the Moon (crafted: amethyst shard + Werewolves silver ingot; silver spawns as ore). */
     public static final DeferredItem<Item> MOONSTONE = ITEMS.registerSimpleItem("moonstone");
 

@@ -43,7 +43,7 @@ public final class ApexLines {
         }
         if (VAMPIRE.contains(tensuraRaceId)) {
             return switch (race) {
-                case VAMPIRE, ORIGINAL, HYBRID, ORIGINAL_HYBRID, HERETIC -> true;
+                case VAMPIRE, AUGUSTINE, ORIGINAL, HYBRID, ORIGINAL_HYBRID, HERETIC -> true;
                 default -> false;
             };
         }

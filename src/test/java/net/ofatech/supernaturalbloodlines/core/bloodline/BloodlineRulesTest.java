@@ -1081,4 +1081,126 @@ class BloodlineRulesTest {
     void aCuredOriginalLeavesTheirRecordedSireAloneSoNobodyIsRehomed() {
         BloodlineState s = st(Species.ORIGINAL).toBuilder().sire(null).knownLine(U).build();
         assertEquals(U, run(s, DRANK_THE_TRUE_CURE, ctx().withFaction(BaseFaction.VAMPIRE)).state().knownLine(), "what they discovered is theirs");
+    }
+    // ---- Augustines (plan 18c, R200) ----
+
+    @Test
+    void theRiteAndTheSyringeMakeAPlainVampireAnAugustine() {
+        for (BloodlineEvent e : List.of(RITE_OF_AUGUSTINE, AUGUSTINE_SYRINGE)) {
+            Outcome o = run(BloodlineState.NONE.toBuilder().sire(U).build(), e, ctx().withFaction(BaseFaction.VAMPIRE));
+            assertFalse(o.refused(), e.name());
+            assertEquals(Species.AUGUSTINE, o.state().species());
+            assertEquals(U, o.state().sire(), "the sire is kept");
+            assertEquals(List.of(), o.actions(), "no faction action: they are a vampire already");
+        }
+    }
+
+    @Test
+    void anAugustineIsRefusedWithTheRightKey() {
+        BloodlineContext vamp = ctx().withFaction(BaseFaction.VAMPIRE);
+        assertRefused(run(BloodlineState.NONE, RITE_OF_AUGUSTINE, ctx()), BloodlineState.NONE, "not_vampire");
+        assertRefused(run(BloodlineState.NONE, AUGUSTINE_SYRINGE, ctx().withFaction(BaseFaction.WEREWOLF)), BloodlineState.NONE, "not_vampire");
+        for (Species sp : List.of(Species.ORIGINAL, Species.ORIGINAL_HYBRID, Species.HYBRID, Species.HERETIC, Species.TRIBRID, Species.AUGUSTINE, Species.WITCH, Species.SIPHONER)) {
+            BloodlineState s = st(sp);
+            assertRefused(run(s, RITE_OF_AUGUSTINE, vamp), s, "has_species");
+        }
+        BloodlineState witchLayer = BloodlineState.NONE.toBuilder().witchLayer(true).build();
+        assertRefused(run(witchLayer, RITE_OF_AUGUSTINE, vamp), witchLayer, "has_species");
+        BloodlineState ghoul = BloodlineState.NONE.toBuilder().ghoul(true).build();
+        assertRefused(run(ghoul, AUGUSTINE_SYRINGE, vamp), ghoul, "ghoul");
+        BloodlineState moving = BloodlineState.NONE.toBuilder().inTransition(true).build();
+        assertTrue(run(moving, AUGUSTINE_SYRINGE, vamp).refused());
+    }
+
+    @Test
+    void theCuresTakeAnAugustineBackToAHuman() {
+        BloodlineState aug = st(Species.AUGUSTINE).toBuilder().sire(U).thirst(5).build();
+        BloodlineContext vamp = ctx().withFaction(BaseFaction.VAMPIRE);
+        Outcome cleansed = run(aug, RITE_OF_CLEANSING_BLOOD, vamp);
+        assertEquals(Species.NONE, cleansed.state().species());
+        assertNull(cleansed.state().sire());
+        assertEquals(List.of(Action.LEAVE_FACTION), cleansed.actions());
+        Outcome drank = run(aug, DRANK_THE_CURE, vamp);
+        assertEquals(Species.NONE, drank.state().species());
+        assertEquals(List.of(Action.LEAVE_FACTION), drank.actions());
+        Outcome left = run(aug, LEFT_BASE_FACTION, vamp);
+        assertEquals(Species.NONE, left.state().species());
+        assertNull(left.state().sire());
+        // the silver moon is for werewolves: it does nothing to an Augustine
+        assertNoChange(run(aug, RITE_OF_THE_SILVER_MOON, vamp), aug);
+    }
+
+    @Test
+    void anAugustineCannotAwakenAsAHybrid() {
+        BloodlineState aug = st(Species.AUGUSTINE).toBuilder().wolf(WolfState.NONE.toBuilder().latentGene(true).geneRolled(true).build()).build();
+        BloodlineContext vamp = ctx().withFaction(BaseFaction.VAMPIRE);
+        assertRefused(run(aug, RITE_OF_LINEAGE_AWAKEN, vamp), aug, "augustine_hybrid");
+        assertRefused(run(aug, GENE_AWAKENED_AS_VAMPIRE, vamp), aug, "augustine_hybrid");
+    }
+
+    @Test
+    void anAugustineIsPreyAndOfTheVampireSide() {
+        assertTrue(BloodlineRules.isVampireSpecies(Species.AUGUSTINE));
+        BloodlineState aug = st(Species.AUGUSTINE);
+        assertTrue(run(aug, KILLED_MARKED_HUNTER, ctx().withFaction(BaseFaction.VAMPIRE)).state().hunterCurse(), "an Augustine is prey (R81)");
+        assertTrue(BloodlineRules.isPlainVampireLike(Species.NONE) && BloodlineRules.isPlainVampireLike(Species.AUGUSTINE));
+        for (Species sp : Species.values()) {
+            if (sp != Species.NONE && sp != Species.AUGUSTINE) {
+                assertFalse(BloodlineRules.isPlainVampireLike(sp), sp.name());
+            }
+        }
+    }
+
+    @Test
+    void anAugustineKeepsTheirSpeciesThroughTheTurningAndSanguinare() {
+        BloodlineState aug = st(Species.AUGUSTINE);
+        assertNoChange(run(aug, SANGUINARE_FINISHED, ctx()), aug);
+        BloodlineState marked = run(aug, DRANK_VAMPIRE_BLOOD, ctx().withFaction(BaseFaction.VAMPIRE).withGameTime(5)).state();
+        assertEquals(aug, marked, "a vampire is not marked by vampire blood");
+    }
+    /** No event leaves an Augustine as something it should not be: it stays one, or goes back to nothing through a cure; never a hybrid or another species. */
+    @Test
+    void everyEventLeavesAnAugustineAnAugustineOrAHuman() {
+        BloodlineState aug = st(Species.AUGUSTINE).toBuilder().sire(U).build();
+        for (BloodlineEvent e : BloodlineEvent.values()) {
+            for (BaseFaction faction : List.of(BaseFaction.VAMPIRE, BaseFaction.NONE)) {
+                BloodlineContext c = ctx().withFaction(faction).withGameTime(5);
+                Outcome o = run(aug, e, c);
+                Species after = o.state().species();
+                assertTrue(after == Species.AUGUSTINE || after == Species.NONE, e + " in " + faction + " made an Augustine " + after);
+                if (e == RITE_OF_AUGUSTINE || e == AUGUSTINE_SYRINGE) {
+                    assertTrue(o.refused(), e + " made an Augustine of an Augustine");
+                }
+                assertEquals(after == Species.AUGUSTINE ? U : o.state().sire(), o.state().sire(), e + " lost the sire of an Augustine who stayed one");
+            }
+        }
+        // the cures end it; nothing else does
+        for (BloodlineEvent e : List.of(DRANK_THE_CURE, DRANK_THE_TRUE_CURE)) {
+            assertEquals(Species.NONE, run(aug, e, ctx().withFaction(BaseFaction.VAMPIRE)).state().species(), e + " did not end it");
+        }
+        for (BloodlineEvent e : List.of(DIED, RITE_OF_SEVERANCE, SANGUINARE_FINISHED, DIED_WITH_VAMPIRE_BLOOD, TURNING_FED, TURNING_FAILED, TURNING_GAVE_UP, DRANK_VAMPIRE_BLOOD, LEFT_BASE_FACTION)) {
+            Species after = run(aug, e, ctx().withFaction(BaseFaction.VAMPIRE).withGameTime(5).withBloodSource(U)).state().species();
+            if (e == LEFT_BASE_FACTION) {
+                assertEquals(Species.NONE, after, "leaving the vampires did not end the species");
+            } else {
+                assertEquals(Species.AUGUSTINE, after, e + " ended the species");
+            }
+        }
+    }
+
+    @Test
+    void theTurningEventsDoNothingToAnAugustineWhoIsNotInOne() {
+        BloodlineState aug = st(Species.AUGUSTINE);
+        for (BloodlineEvent e : List.of(TURNING_FED, TURNING_FAILED, TURNING_GAVE_UP)) {
+            assertNoChange(run(aug, e, ctx().withFaction(BaseFaction.VAMPIRE)), aug);
+        }
+        assertNoChange(run(aug, DIED_WITH_VAMPIRE_BLOOD, ctx().withFaction(BaseFaction.VAMPIRE).withGameTime(5)), aug);
+    }
+
+    @Test
+    void theSpeciesChangeKeepsTheSireAndTheLine() {
+        BloodlineState sired = BloodlineState.NONE.toBuilder().sire(U).turnedAt(7).build();
+        BloodlineState after = run(sired, RITE_OF_AUGUSTINE, ctx().withFaction(BaseFaction.VAMPIRE)).state();
+        assertEquals(Species.AUGUSTINE, after.species());
+        assertEquals(U, after.sire(), "the sire was lost");
     }}
