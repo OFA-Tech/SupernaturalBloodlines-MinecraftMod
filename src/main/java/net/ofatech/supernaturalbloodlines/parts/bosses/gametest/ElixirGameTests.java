@@ -66,6 +66,49 @@ public final class ElixirGameTests {
         helper.succeed();
     }
 
+    /** Give up is final: a death the player chose is not one the Elixir takes back (the guard, and the whole way through the dying state). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void itDoesNotTakeBackAChosenDeath(GameTestHelper helper) {
+        LineTestPlayer holder = holder(helper, 1);
+        net.ofatech.supernaturalbloodlines.core.death.FinalDeath.run(holder, () ->
+                helper.assertTrue(!saved(holder, helper.getLevel().damageSources().lava()), "the Elixir saved a chosen death"));
+        helper.assertTrue(elixirs(holder) == 1, "the Elixir was spent on a chosen death");
+        ServerPlayer p = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.createMortal(helper);
+        p.getInventory().add(new ItemStack(BossItems.THE_ELIXIR.get()));
+        try {
+            BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().vampireBloodUntil(helper.getLevel().getGameTime() + 1000).build());
+            p.hurt(helper.getLevel().damageSources().lava(), 1000f);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDyingForTurning(p), "setup: not dying");
+            net.ofatech.supernaturalbloodlines.parts.species.original.Downed.giveUp(p);
+            helper.assertTrue(p.isDeadOrDying() && elixirs(p) == 1, "Give up was taken back by the Elixir: dead " + p.isDeadOrDying() + ", elixirs " + elixirs(p));
+        } finally {
+            BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
+    /** A Ghoul whom Vampirism's dying state does not catch is taken by the turning before the Elixir is asked: the Elixir is not spent on a death that starts the turning. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aGhoulVampirismDidNotCatchKeepsItsElixirToTheTurning(GameTestHelper helper) {
+        ServerPlayer p = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.createMortal(helper);
+        p.getInventory().add(new ItemStack(BossItems.THE_ELIXIR.get()));
+        try {
+            helper.assertTrue(de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+            BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().ghoul(true).vampireBloodUntil(helper.getLevel().getGameTime() + 1000).build());
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT
+                    .getHolder(net.minecraft.resources.ResourceLocation.parse("vampirism:neonatal")).orElseThrow(), 1000)); // Vampirism puts no neonatal vampire in its dying state
+            p.hurt(helper.getLevel().damageSources().lava(), 1000f);
+            helper.assertTrue(!de.teamlapen.vampirism.api.VampirismAPI.vampirePlayer(p).isDBNO(), "setup: Vampirism caught the blow");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDyingForTurning(p) && elixirs(p) == 1, "the Elixir was spent on a death the turning takes: dying "
+                    + net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDyingForTurning(p) + ", elixirs " + elixirs(p));
+        } finally {
+            p.removeAllEffects();
+            de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
+            BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void itDoesNotSaveFromALineDeathOrTheKillCommand(GameTestHelper helper) {
         LineTestPlayer p = holder(helper, 1);
@@ -100,7 +143,11 @@ public final class ElixirGameTests {
         LineTestPlayer p = holder(helper, 1);
         try {
             BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().vampireBloodUntil(now + 1000).build());
-            helper.assertTrue(!saved(p, mob), "the Elixir undid the death that turns someone who drank vampire blood");
+            saved(p, mob); // the turning stands them up (it cancels the death itself): the Elixir must not be what did it
+            helper.assertTrue(elixirs(p) == 1 && !p.received(USED), "the Elixir undid the death that turns someone who drank vampire blood");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDyingForTurning(p), "the turning did not start");
+            net.ofatech.supernaturalbloodlines.parts.species.original.Downed.clearForTest(p);
+            p.setHealth(p.getMaxHealth());
             BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().vampireBloodUntil(Math.max(1, now - 1)).build());
             helper.assertTrue(saved(p, mob), "an old, ended vampire blood window kept the Elixir from working");
             p.getInventory().add(new ItemStack(BossItems.THE_ELIXIR.get()));

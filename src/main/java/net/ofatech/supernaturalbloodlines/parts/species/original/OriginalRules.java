@@ -125,7 +125,7 @@ public final class OriginalRules {
     }
 
     /** What the protection never applies to. */
-    static boolean bypassesProtection(DamageSource source) {
+    public static boolean bypassesProtection(DamageSource source) {
         return isWhiteOak(source) || source.is(DamageTypes.FELL_OUT_OF_WORLD) || source.is(DamageTypes.GENERIC_KILL)
                 || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(OutcomeExecutor.FAILED_TRANSITION);
     }
