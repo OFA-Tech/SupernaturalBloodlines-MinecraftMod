@@ -27,7 +27,11 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.Sta
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.StageQuestsPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookPackPage;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.BookSkillsPage;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitFaces;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitWidgets;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
@@ -95,9 +99,31 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
 
     /** The sky: a dark red wash, and a soft red glow behind the stage where the moon will be. */
     @Override
+    public String kit() {
+        return "bloodmoon";
+    }
+
+    @Override
+    public String titleFont() {
+        return "title_gothic";
+    }
+
+    /** The cover picture is the sky for its first 272 rows and its last band is the void: the rest of a taller screen is that band. */
+    private static final int COVER_H = 272;
+
+    @Override
     public void drawFrame(GuiGraphics g, HubLayout l) {
+        KitDraw.activeTheme(this);
         Rect s = l.frame();
-        g.fillGradient(s.x(), s.y(), s.right(), s.bottom(), SKY_TOP, SKY_BOTTOM);
+        if (UiKit.has(kit(), Part.COVER)) {
+            int h = Math.min(s.h(), COVER_H);
+            UiKit.draw(g, this, Part.COVER, s.x(), s.y(), s.w(), h);
+            if (s.h() > h) {
+                g.fill(s.x(), s.y() + h, s.right(), s.bottom(), SKY_BOTTOM);
+            }
+        } else {
+            g.fillGradient(s.x(), s.y(), s.right(), s.bottom(), SKY_TOP, SKY_BOTTOM);
+        }
         Rect stage = l.region(BloodMoonLayout.MOON);
         int cx = stage.x() + stage.w() * 2 / 5;
         int cy = stage.y() + stage.h() / 2;
@@ -122,15 +148,11 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         }
         if (cards) {
             for (String region : List.of(HubLayout.MAIN, HubLayout.SIDE)) {
-                Rect c = BloodMoonLayout.card(f.region(region));
-                f.g.fill(c.x(), c.y(), c.right(), c.bottom(), 0xE61a0a10);
-                f.g.renderOutline(c.x(), c.y(), c.w(), c.h(), EDGE);
+                UiKit.draw(f.g, this, Part.PANEL, BloodMoonLayout.card(f.region(region)));
             }
         }
         if ((page == HubPage.PATH && !f.view.ghoul()) || (page == HubPage.PACK && f.screen().profile() == null)) {
-            Rect c = BloodMoonLayout.card(f.region(BloodMoonLayout.RIGHT));
-            f.g.fill(c.x(), c.y(), c.right(), c.bottom(), 0xE61a0a10);
-            f.g.renderOutline(c.x(), c.y(), c.w(), c.h(), EDGE);
+            UiKit.draw(f.g, this, Part.PANEL, BloodMoonLayout.card(f.region(BloodMoonLayout.RIGHT)));
         }
     }
 
@@ -160,9 +182,8 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
 
     @Override
     public void drawThemeButton(GuiGraphics g, Rect r, boolean hot, boolean focused) {
-        KitDraw.shape(g, Shapes.Shape.ROUND, r.x(), r.y(), r.w(), hot ? RED : EDGE);
-        KitDraw.shape(g, Shapes.Shape.ROUND, r.x() + 1, r.y() + 1, r.w() - 2, hot ? 0xFF4a1520 : PILL);
-        KitDraw.icon(g, Icons.MOON_WAXING_CRESCENT, r.x() + (r.w() - 12) / 2, r.y() + (r.h() - 12) / 2, 12, RED);
+        round(g, r, hot);
+        KitDraw.icon(g, Icons.MOON_WAXING_CRESCENT, r.x(), r.y(), Math.min(r.w(), r.h()), 0xFFFFFFFF);
         if (focused) {
             KitDraw.focusRing(g, r, GOLD);
         }
@@ -170,10 +191,18 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
 
     @Override
     public void drawClose(GuiGraphics g, Rect r, boolean hot, boolean focused) {
-        KitDraw.icon(g, Icons.CLOSE, r.x() + (r.w() - 12) / 2 + 1, r.y() + (r.h() - 12) / 2, 12, hot ? GOLD : 0xFFf0e0e0);
+        round(g, r, hot);
+        KitDraw.icon(g, Icons.CLOSE, r.x(), r.y(), Math.min(r.w(), r.h()), 0xFFFFFFFF);
         if (focused) {
             KitDraw.focusRing(g, r, GOLD);
         }
+    }
+
+    private static final int SEAL_PX = 20;
+
+    /** The round ring of a rail button, launcher or switch: the seal picture (20 px) centred on the box, brighter when lit. */
+    private void round(GuiGraphics g, Rect r, boolean lit) {
+        UiKit.draw(g, this, lit ? Part.SEAL_HOVER : Part.SEAL, r.x() + (r.w() - SEAL_PX) / 2, r.y() + (r.h() - SEAL_PX) / 2, SEAL_PX, SEAL_PX);
     }
 
     /** The floating bar along the bottom: the selection's name and pips, a line about it, and its actions as pills on the right; what does not fit moves behind "...". */
@@ -181,8 +210,7 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     public void drawDetail(UiContext ctx, Rect r, Detail d) {
         GuiGraphics g = ctx.g();
         Font font = ctx.font();
-        g.fill(r.x(), r.y(), r.right(), r.bottom(), 0xEE140810);
-        g.renderOutline(r.x(), r.y(), r.w(), r.h(), EDGE);
+        UiKit.draw(g, this, Part.PANEL, r);
         List<Integer> widths = new ArrayList<>();
         int primary = -1;
         for (int i = 0; i < d.actions().size(); i++) {
@@ -206,10 +234,10 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
         if (plan.overflow() != null) {
             Rect more = plan.overflow();
             boolean hot = ctx.hovered(more) || ctx.focused("detail:more");
-            g.fill(more.x(), more.y(), more.right(), more.bottom(), EDGE);
-            g.fill(more.x() + 1, more.y() + 1, more.right() - 1, more.bottom() - 1, hot || overflowOpen ? 0xFF3a1822 : PILL);
+            Part morePart = KitFaces.button(false, true, hot || overflowOpen, false);
+            UiKit.draw(g, this, morePart, more);
             String moreLabel = LabelFit.cut(Component.translatable("supernaturalbloodlines.hub.more").getString(), more.w() - 6, font::width);
-            g.drawString(font, moreLabel, more.x() + (more.w() - font.width(moreLabel)) / 2, more.y() + 4, ink(), false);
+            g.drawString(font, moreLabel, more.x() + (more.w() - font.width(moreLabel)) / 2, more.y() + (more.h() - 8) / 2, KitFaces.label(kit(), morePart, ink()), false);
             ctx.target("detail:more", more, List.of(Component.translatable("supernaturalbloodlines.hub.more_actions")), () -> overflowOpen = !overflowOpen);
             if (overflowOpen) {
                 // the actions that did not fit, stacked above the bar
@@ -251,25 +279,18 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     }
 
     private static final int PILL_ROW = 16;
-    /** A disabled primary pill: a muted fill and the label on it (checked in the contrast test). */
-    private static final int DISABLED_FILL = 0xFF5a3a42;
-    private static final int DISABLED_TEXT = 0xFFd8b8c0;
     /** The glow behind the stage is baked at this radius in pixels (a 128 pixel diameter) and stretched to the real one. */
     private static final int GLOW_PX = 64;
-    /** The primary pill's fill: a red dark enough for the pale label (4.5:1), and its hovered step. */
-    private static final int PRIMARY = 0xFFb8281f;
-    private static final int PRIMARY_HOT = 0xFFcf3328;
     private boolean overflowOpen;
 
     private void pill(UiContext ctx, Rect pill, Detail.Action a) {
         GuiGraphics g = ctx.g();
         Font font = ctx.font();
         boolean hot = a.enabled() && (ctx.hovered(pill) || ctx.focused("detail:" + a.id()));
-        int fill = a.primary() ? (a.enabled() ? (hot ? PRIMARY_HOT : PRIMARY) : DISABLED_FILL) : (hot ? 0xFF3a1822 : PILL);
-        g.fill(pill.x(), pill.y(), pill.right(), pill.bottom(), a.primary() ? fill : EDGE);
-        g.fill(pill.x() + 1, pill.y() + 1, pill.right() - 1, pill.bottom() - 1, fill);
+        Part part = KitFaces.button(a.primary(), a.enabled(), hot, false);
+        UiKit.draw(g, this, part, pill);
         String label = LabelFit.cut(a.label().getString(), pill.w() - 6, font::width);
-        g.drawString(font, label, pill.x() + (pill.w() - font.width(label)) / 2, pill.y() + 4, a.enabled() ? (a.primary() ? 0xFFfff1ea : ink()) : DISABLED_TEXT, false);
+        g.drawString(font, label, pill.x() + (pill.w() - font.width(label)) / 2, pill.y() + (pill.h() - 8) / 2, KitFaces.label(kit(), part, ink()), false);
     }
 
     /** Claimed tasks of the next rung out of its tasks; a full moon at the top of the ladder. */
@@ -294,26 +315,18 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     /** A round rail button; the chosen page is filled red with its name in a flag beside it when the screen is wide enough. */
     @Override
     public void drawTab(GuiGraphics g, Rect r, HubPage page, boolean selected, boolean focused) {
-        KitDraw.shape(g, Shapes.Shape.ROUND, r.x(), r.y(), r.w(), selected ? 0xFFffb3a3 : EDGE);
-        KitDraw.shape(g, Shapes.Shape.ROUND, r.x() + 1, r.y() + 1, r.w() - 2, selected ? RED : CARD);
-        KitDraw.icon(g, Icons.of(page), r.x() + (r.w() - 12) / 2, r.y() + (r.h() - 12) / 2, 12, selected ? 0xFFfff1ea : 0xFF8A5966);
+        round(g, r, selected);
+        KitDraw.icon(g, Icons.of(page), r.x(), r.y(), Math.min(r.w(), r.h()), selected ? 0xFFFFFFFF : 0xB0FFFFFF);
         if (page.group() == HubPage.Group.OPERATOR) {
-            // a dashed gold ring: twelve dots round the button
-            double cx = r.x() + r.w() / 2.0;
-            double cy = r.y() + r.h() / 2.0;
-            double rad = r.w() / 2.0 - 1;
-            for (int k = 0; k < 12; k++) {
-                int dx = (int) Math.round(cx + Math.cos(k * Math.PI / 6) * rad);
-                int dy = (int) Math.round(cy + Math.sin(k * Math.PI / 6) * rad);
-                g.fill(dx - 1, dy - 1, dx + 1, dy + 1, GOLD);
-            }
+            // a gold gem on the ring: the operator's page is apart from the rest
+            UiKit.draw(g, this, Part.GEM_GOLD, r.right() - 8, r.y() - 2, 11, 11);
         }
         if (selected && g.guiWidth() >= BloodMoonLayout.FLAG_MIN_WIDTH) {
             Font font = Minecraft.getInstance().font;
             String label = Component.translatable(page.langKey()).getString();
-            int w = font.width(label) + 8;
-            g.fill(r.right() + 3, r.y() + 4, r.right() + 3 + w, r.y() + r.h() - 4, PILL);
-            g.drawString(font, label, r.right() + 7, r.y() + (r.h() - 8) / 2, RED, false);
+            int w = font.width(label) + 12;
+            UiKit.draw(g, this, Part.PLATE, r.right() + 3, r.y() + 3, w, r.h() - 6);
+            g.drawString(font, label, r.right() + 9, r.y() + (r.h() - 8) / 2, ink(), false);
         }
         if (focused) {
             KitDraw.focusRing(g, r, GOLD);
@@ -323,76 +336,45 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
     /** A round launcher: the other mod's letter. */
     @Override
     public void drawSeal(GuiGraphics g, Rect r, String letter, int color, boolean lit) {
-        KitDraw.shape(g, Shapes.Shape.ROUND, r.x(), r.y(), r.w(), lit ? GOLD : EDGE);
-        KitDraw.shape(g, Shapes.Shape.ROUND, r.x() + 1, r.y() + 1, r.w() - 2, lit ? 0xFF2a1a1c : CARD);
+        round(g, r, lit);
         Font font = Minecraft.getInstance().font;
         g.drawString(font, letter, r.x() + (r.w() - font.width(letter)) / 2 + 1, r.y() + (r.h() - 8) / 2 + 1, GOLD, false);
     }
+
     @Override
     public void drawRungMark(GuiGraphics g, int x, int y, RungStatus status) {
-        // a gem: a diamond of rows
-        int fill = switch (status) {
-            case REACHED -> RED;
-            case CURRENT -> 0xFF1a0a10;
-            case LOCKED -> 0xFF1a0a10;
-        };
-        int edge = switch (status) {
-            case REACHED -> 0xFFffb3a3;
-            case CURRENT -> GOLD;
-            case LOCKED -> 0xFF8a5a64; // 3.3:1 on the cards: a sealed rung must still be seen (WCAG 1.4.11)
-        };
-        for (int i = 0; i < MARK; i++) {
-            int half = 4 - Math.abs(4 - i);
-            g.fill(x + 4 - half, y + i, x + 5 + half, y + i + 1, edge);
-            if (half > 0) {
-                g.fill(x + 5 - half, y + i, x + 4 + half, y + i + 1, fill);
-            }
-        }
+        KitWidgets.rungMark(g, this, x, y, status);
     }
 
     @Override
     public void drawTaskBox(GuiGraphics g, int x, int y, TaskState state) {
-        g.renderOutline(x, y, BOX, BOX, state == TaskState.CLAIMABLE ? good() : muted());
-        if (state == TaskState.CLAIMABLE) {
-            g.fill(x + 1, y + 1, x + BOX - 1, y + BOX - 1, 0xFF3f8f5a);
-        } else if (state == TaskState.CLAIMED) {
-            g.fill(x + 2, y + 2, x + BOX - 2, y + BOX - 2, muted());
-        }
+        KitWidgets.taskBox(g, this, x, y, BOX, state);
     }
 
     @Override
     public void drawStamp(GuiGraphics g, int x, int y, boolean lit) {
-        disc(g, x + STAMP / 2, y + STAMP / 2, STAMP / 2, lit ? GOLD : 0xFFb07a1a);
-        disc(g, x + STAMP / 2, y + STAMP / 2, STAMP / 2 - 2, lit ? 0xFFd23a44 : 0xFF9a1820);
-        Font font = Minecraft.getInstance().font;
-        g.drawString(font, "\u2713", x + 4, y + 3, 0xFFfff1ea, false);
+        KitWidgets.stamp(g, this, x, y, lit);
     }
 
     @Override
     public void drawRule(GuiGraphics g, int x, int y, int w) {
-        g.fill(x, y, x + w, y + 1, EDGE);
+        KitWidgets.rule(g, this, x, y, w);
     }
 
     @Override
     public void drawBar(GuiGraphics g, Rect r, float fraction) {
-        g.fill(r.x(), r.y(), r.right(), r.bottom(), 0xFF3a1a22);
-        g.fill(r.x(), r.y(), r.x() + Math.round(r.w() * Math.max(0f, Math.min(1f, fraction))), r.bottom(), RED);
+        KitWidgets.bar(g, this, r, fraction);
     }
 
     @Override
     public void drawScrollbar(GuiGraphics g, Rect region, int offset, int max) {
-        int x = region.right() + 2;
-        g.fill(x, region.y(), x + 2, region.bottom(), 0xFF2a0d15);
-        int thumb = Math.max(8, region.h() * region.h() / (region.h() + max));
-        int y = region.y() + (region.h() - thumb) * offset / Math.max(1, max);
-        g.fill(x, y, x + 2, y + thumb, RED);
+        KitWidgets.scrollbar(g, this, region, offset, max);
     }
 
     @Override
     public void drawFocus(GuiGraphics g, Rect r) {
-        g.renderOutline(r.x() - 1, r.y() - 1, r.w() + 2, r.h() + 2, GOLD);
+        UiKit.focus(g, this, r);
     }
-
     @Override
     public int paper() {
         return CARD;
@@ -400,17 +382,19 @@ public final class BloodMoonTheme implements HubTheme, HubThemeViews {
 
     @Override
     public List<TextPair> textPairs() {
-        return List.of(new TextPair("moon count", COUNT, PILL),
+        List<TextPair> pairs = new ArrayList<>(List.of(new TextPair("moon count", COUNT, PILL),
                 new TextPair("race, gold, on the sky top", GOLD, SKY_TOP), new TextPair("race, gold, on the sky bottom", GOLD, SKY_BOTTOM),
                 new TextPair("next rung, muted, on the sky top", muted(), SKY_TOP), new TextPair("next rung, muted, on the sky bottom", muted(), SKY_BOTTOM),
                 new TextPair("EP, ink, on the sky top", ink(), SKY_TOP), new TextPair("EP, ink, on the sky bottom", ink(), SKY_BOTTOM),
-                // the floating bar and its pills
+                // the floating bar
                 new TextPair("bar title", 0xFFfff1ea, 0xFF140810), new TextPair("bar body, muted", muted(), 0xFF140810),
-                new TextPair("primary pill", 0xFFfff1ea, PRIMARY), new TextPair("primary pill, hovered", 0xFFfff1ea, PRIMARY_HOT), new TextPair("secondary pill", ink(), PILL),
-                new TextPair("disabled primary pill", DISABLED_TEXT, DISABLED_FILL), new TextPair("disabled secondary pill", DISABLED_TEXT, PILL),
-                new TextPair("gold on a card", GOLD, CARD), new TextPair("ink on a card", ink(), CARD));
+                new TextPair("gold on a card", GOLD, CARD), new TextPair("ink on a card", ink(), CARD)));
+        // the label of every kit button on its face (the pills of the floating bar)
+        for (Part button : KitFaces.BUTTONS) {
+            pairs.add(new TextPair("label on " + button.sprite(), KitFaces.label(kit(), button, ink()), KitFaces.face(kit(), button)));
+        }
+        return pairs;
     }
-
     @Override
     public int ink() {
         return 0xFFf0e0e0;

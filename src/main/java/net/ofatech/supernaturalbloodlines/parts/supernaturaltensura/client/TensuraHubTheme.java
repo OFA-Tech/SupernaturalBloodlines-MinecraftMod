@@ -30,9 +30,13 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.Counters;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Detail;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.EmblemData;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitFaces;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Shapes;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitWidgets;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +71,16 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     private Counters counters;
     private boolean detailDrawn;
     private boolean lockedNow;
+
+    @Override
+    public String kit() {
+        return "tensura";
+    }
+
+    @Override
+    public String titleFont() {
+        return "title";
+    }
 
     @Override
     public HubLayout layout(int width, int height, int tabs, int seals) {
@@ -112,26 +126,24 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         boolean panels = page == HubPage.GUIDE || page.locked(f.view.context());
         if (panels) {
             for (String region : List.of(HubLayout.MAIN, HubLayout.SIDE)) {
-                Rect r = TensuraHubLayout.panel(f.region(region));
-                box(f.g, r, PANEL, EDGE);
+                UiKit.draw(f.g, this, Part.PANEL, TensuraHubLayout.panel(f.region(region)));
             }
         }
     }
 
     @Override
     public void drawFrame(GuiGraphics g, HubLayout l) {
+        KitDraw.activeTheme(this);
         Rect f = l.frame();
         g.fill(f.x() - 2, f.y() - 2, f.right() + 2, f.bottom() + 2, 0xFF02080f);
-        g.fill(f.x(), f.y(), f.right(), f.bottom(), BG);
-        g.renderOutline(f.x(), f.y(), f.w(), f.h(), EDGE);
-        g.fill(f.x(), f.y() + TensuraHubLayout.TITLE, f.right(), f.y() + TensuraHubLayout.TITLE + 1, EDGE);
-        g.fill(f.x() + 1, f.y() + 1, f.right() - 1, f.y() + TensuraHubLayout.TITLE, 0xFF11304a);
+        UiKit.draw(g, this, Part.COVER, f);
+        // the title bar picture: its left 16 px are fixed, the rest repeats
+        UiKit.draw(g, this, Part.COVER_ART, f.x() + 4, f.y() + 4, f.w() - 8, 13);
         Rect pane = l.chrome().detail();
         if (pane != null) {
-            box(g, pane, PANEL, EDGE);
+            UiKit.draw(g, this, Part.PANEL, pane);
         }
     }
-
     private static void box(GuiGraphics g, Rect r, int face, int edge) {
         g.fill(r.x(), r.y(), r.right(), r.bottom(), face);
         g.renderOutline(r.x(), r.y(), r.w(), r.h(), edge);
@@ -210,21 +222,29 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
         g.drawString(font, text.getString().toUpperCase(java.util.Locale.ROOT), x, y, MUTED, false);
     }
 
-    private static void row(GuiGraphics g, Rect r, boolean selected, boolean lit, String label, int labelColor, Runnable icon) {
+    private static void row(GuiGraphics g, HubTheme theme, Rect r, boolean selected, boolean lit, String label, int labelColor, Runnable icon) {
         Font font = Minecraft.getInstance().font;
-        g.fill(r.x(), r.y(), r.right(), r.bottom(), selected ? PANEL_LIT : lit ? PANEL_LIT : PANEL);
-        g.renderOutline(r.x(), r.y(), r.w(), r.h(), selected ? TEAL : EDGE);
+        UiKit.draw(g, theme, selected ? Part.TAB_SELECTED : lit ? Part.TAB_HOVER : Part.TAB, r);
         icon.run();
         if (r.w() > 40) { // an icon-only row on a narrow window (the tooltip has the name)
-            String text = TensuraHubLayout.fit(label, r.w() - 22, font::width);
-            g.drawString(font, text, r.x() + 18, r.y() + (r.h() - 8) / 2, labelColor, false);
+            String text = TensuraHubLayout.fit(label, r.w() - ICON_ROOM - 8, font::width);
+            g.drawString(font, text, r.x() + ICON_ROOM, r.y() + (r.h() - 8) / 2, labelColor, false);
         }
+    }
+
+    /** The room an icon takes at the left of a row: a 16 px picture (3 px in), then a gap. */
+    private static final int ICON_ROOM = 22;
+
+    /** The icon of a row, as big as the row lets it be (the 16 px picture when the row is 14 px tall or more, else the halved one). */
+    private static void rowIcon(GuiGraphics g, Rect r, Icons icon, int alpha) {
+        int box = Math.min(16, r.h() - 2);
+        KitDraw.icon(g, icon, r.x() + 3 + (16 - box) / 2, r.y() + (r.h() - box) / 2, box, alpha);
     }
 
     @Override
     public void drawTab(GuiGraphics g, Rect r, HubPage page, boolean selected, boolean focused) {
-        row(g, r, selected, false, Component.translatable(page.langKey()).getString(), selected ? TEAL : TEXT, () ->
-                KitDraw.icon(g, Icons.of(page), r.x() + 4, r.y() + (r.h() - 10) / 2, 10, selected ? TEAL : TEXT));
+        row(g, this, r, selected, false, Component.translatable(page.langKey()).getString(), selected ? TEAL : TEXT, () ->
+                rowIcon(g, r, Icons.of(page), selected ? 0xFFFFFFFF : 0xD0FFFFFF));
         if (page.group() == HubPage.Group.OPERATOR) {
             KitDraw.dashed(g, r, GOLD);
         }
@@ -235,16 +255,16 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
 
     @Override
     public void drawSeal(GuiGraphics g, Rect r, String letter, int color, boolean lit) {
-        row(g, r, false, lit, letter, TEXT, () -> { });
+        row(g, this, r, false, lit, letter, TEXT, () -> { });
     }
 
     @Override
     public void drawLauncher(GuiGraphics g, Rect r, HubHooks.Launcher launcher, boolean lit) {
         // the mod's short name (the full one does not fit the list; the tooltip has it)
         Component label = Component.translatableWithFallback("supernaturalbloodlines.hub.launcher.short." + launcher.id(), launcher.id());
-        row(g, r, false, lit, label.getString(), GOLD, () -> {
+        row(g, this, r, false, lit, label.getString(), GOLD, () -> {
             if (r.w() > 40) {
-                KitDraw.icon(g, Icons.LAUNCH, r.x() + 4, r.y() + (r.h() - 10) / 2, 10, TEXT);
+                rowIcon(g, r, Icons.LAUNCH, 0xFFFFFFFF);
             } else {
                 g.drawString(Minecraft.getInstance().font, launcher.letter(), r.x() + (r.w() - 6) / 2, r.y() + (r.h() - 8) / 2, GOLD, false);
             }
@@ -254,7 +274,7 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
     @Override
     public void drawThemeButton(GuiGraphics g, Rect r, boolean hot, boolean focused) {
         Font font = Minecraft.getInstance().font;
-        box(g, r, hot ? PANEL_LIT : PANEL, TEAL);
+        UiKit.draw(g, this, hot ? Part.BUTTON_HOVER : Part.BUTTON_NORMAL, r);
         String label = Component.translatable("supernaturalbloodlines.hub.tensura.theme").getString();
         g.drawString(font, label, r.x() + (r.w() - font.width(label)) / 2, r.y() + (r.h() - 8) / 2, TEAL, false);
         if (focused) {
@@ -264,12 +284,8 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
 
     @Override
     public void drawClose(GuiGraphics g, Rect r, boolean hot, boolean focused) {
-        KitDraw.icon(g, Icons.CLOSE, r.x() + (r.w() - 12) / 2 + 1, r.y() + (r.h() - 12) / 2, 12, hot ? TEAL : TEXT);
-        if (focused) {
-            drawFocus(g, r);
-        }
+        KitDraw.button(g, this, r, Icons.CLOSE, hot, focused);
     }
-
     /** The stats are drawn with the title, in {@link #drawFooter}, so the two are fitted together; this only keeps the numbers. */
     @Override
     public void drawCounters(UiContext ctx, Rect r, Counters c) {
@@ -329,11 +345,10 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
             by -= 20;
             buttons.add(0, b);
             boolean hot = a.enabled() && (ctx.hovered(b) || ctx.focused("detail:" + a.id()));
-            int fill = a.primary() ? (a.enabled() ? (hot ? 0xFF6be4ea : TEAL) : 0xFF244a55) : (hot ? PANEL_LIT : BG);
-            g.fill(b.x(), b.y(), b.right(), b.bottom(), a.primary() ? fill : EDGE);
-            g.fill(b.x() + 1, b.y() + 1, b.right() - 1, b.bottom() - 1, fill);
+            Part part = KitFaces.button(a.primary(), a.enabled(), hot, false);
+            UiKit.draw(g, this, part, b);
             String label = LabelFit.cut(a.label().getString(), b.w() - 8, font::width);
-            g.drawString(font, label, b.x() + (b.w() - font.width(label)) / 2, b.y() + 4, a.primary() ? (a.enabled() ? 0xFF05202a : 0xFF6a8d97) : a.enabled() ? TEXT : 0xFF6a8d97, false);
+            g.drawString(font, label, b.x() + (b.w() - font.width(label)) / 2, b.y() + (b.h() - 8) / 2, KitFaces.label(kit(), part, TEXT), false);
         }
         int limit = by - 2;
         int y = r.y() + 7;
@@ -394,7 +409,10 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
                 break;
             }
             Rect card = new Rect(x, y, w, h);
-            box(g, card, PANEL_LIT, row.complete() ? GREEN : EDGE);
+            UiKit.draw(g, this, Part.INSET, card);
+            if (row.complete()) {
+                UiKit.draw(g, this, Part.TASK_CLAIMED, card.right() - 14, card.y() + 4, 10, 10);
+            }
             if (row.source() != null) {
                 KitDraw.sourceTag(g, font, this, row.source(), card.x() + 4, card.y() + 4);
             }
@@ -432,60 +450,38 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
 
     @Override
     public void drawRungMark(GuiGraphics g, int x, int y, RungStatus status) {
-        int edge = switch (status) {
-            case REACHED -> GREEN;
-            case CURRENT -> TEAL;
-            case LOCKED -> 0xFF3f6a80;
-        };
-        KitDraw.shape(g, Shapes.Shape.HEX, x - 1, y - 1, 10, edge);
-        KitDraw.shape(g, Shapes.Shape.HEX, x + 1, y + 1, 6, BG);
+        KitWidgets.rungMark(g, this, x, y, status);
     }
 
     @Override
     public void drawTaskBox(GuiGraphics g, int x, int y, TaskState state) {
-        g.renderOutline(x, y, 10, 10, state == TaskState.CLAIMABLE ? good() : muted());
-        if (state == TaskState.CLAIMABLE) {
-            g.fill(x + 1, y + 1, x + 9, y + 9, 0xFF2f8f5a);
-        } else if (state == TaskState.CLAIMED) {
-            g.fill(x + 2, y + 2, x + 8, y + 8, muted());
-        }
+        KitWidgets.taskBox(g, this, x, y, 10, state);
     }
 
     @Override
     public void drawStamp(GuiGraphics g, int x, int y, boolean lit) {
-        Rect r = new Rect(x, y, 14, 14);
-        box(g, r, lit ? TEAL : TEAL_DIM, EDGE);
-        g.drawString(Minecraft.getInstance().font, "\u2713", x + 4, y + 3, 0xFF05202a, false);
+        KitWidgets.stamp(g, this, x, y, lit);
     }
 
     @Override
     public void drawRule(GuiGraphics g, int x, int y, int w) {
-        g.fill(x, y, x + w, y + 1, EDGE);
+        KitWidgets.rule(g, this, x, y, w);
     }
 
     @Override
     public void drawBar(GuiGraphics g, Rect r, float fraction) {
-        g.fill(r.x(), r.y(), r.right(), r.bottom(), 0xFF1b3a50);
-        int w = Math.round(r.w() * Math.max(0f, Math.min(1f, fraction)));
-        if (w > 0) {
-            g.fill(r.x(), r.y(), r.x() + w, r.bottom(), fraction >= 1f ? GREEN : TEAL);
-        }
+        KitWidgets.bar(g, this, r, fraction);
     }
 
     @Override
     public void drawScrollbar(GuiGraphics g, Rect region, int offset, int max) {
-        int x = region.right() + 2;
-        g.fill(x, region.y(), x + 2, region.bottom(), BG);
-        int thumb = Math.max(8, region.h() * region.h() / (region.h() + max));
-        int y = region.y() + (region.h() - thumb) * offset / Math.max(1, max);
-        g.fill(x, y, x + 2, y + thumb, TEAL);
+        KitWidgets.scrollbar(g, this, region, offset, max);
     }
 
     @Override
     public void drawFocus(GuiGraphics g, Rect r) {
-        g.renderOutline(r.x() - 1, r.y() - 1, r.w() + 2, r.h() + 2, GOLD);
+        UiKit.focus(g, this, r);
     }
-
     @Override
     public int paper() {
         return PANEL;
@@ -493,13 +489,17 @@ public final class TensuraHubTheme implements HubTheme, HubThemeViews {
 
     @Override
     public List<TextPair> textPairs() {
-        return List.of(new TextPair("page labels", TEXT, PANEL), new TextPair("the chosen page", TEAL, PANEL_LIT), new TextPair("mod names", GOLD, PANEL),
-                new TextPair("the primary button", 0xFF05202a, TEAL), new TextPair("muted text", MUTED, PANEL),
+        List<TextPair> pairs = new ArrayList<>(List.of(new TextPair("page labels", TEXT, PANEL), new TextPair("the chosen page", TEAL, PANEL_LIT), new TextPair("mod names", GOLD, PANEL),
+                new TextPair("muted text", MUTED, PANEL),
                 // the title bar, the stage and the info pane
                 new TextPair("title, teal, on the bar", TEAL, BG), new TextPair("stats, text, on the bar", TEXT, BG), new TextPair("muted on the stage", MUTED, BG),
-                new TextPair("gold reward in the pane", GOLD, PANEL), new TextPair("good, green, in the pane", GREEN, PANEL), new TextPair("text on a lit row", TEXT, PANEL_LIT));
+                new TextPair("gold reward in the pane", GOLD, PANEL), new TextPair("good, green, in the pane", GREEN, PANEL), new TextPair("text on a lit row", TEXT, PANEL_LIT)));
+        // the label of every kit button on its face (the pane's buttons)
+        for (Part button : KitFaces.BUTTONS) {
+            pairs.add(new TextPair("label on " + button.sprite(), KitFaces.label(kit(), button, TEXT), KitFaces.face(kit(), button)));
+        }
+        return pairs;
     }
-
     @Override
     public int ink() {
         return TEXT;

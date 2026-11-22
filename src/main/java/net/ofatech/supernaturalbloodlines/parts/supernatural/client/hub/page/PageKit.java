@@ -13,7 +13,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.TitleFont;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import org.jetbrains.annotations.Nullable;
@@ -86,6 +88,16 @@ final class PageKit {
     /** A title at 1.5x when it fits the width, else at 1x. Returns the y under it. */
     static int title(HubScreen.Frame f, Component c, int x, int y, int w, int color) {
         Font font = f.font();
+        // the theme's own title font (16 px glyphs, never scaled) when every character is in it and it fits on one line
+        String face = f.theme().titleFont();
+        if (face != null && TitleFont.supports(c.getString())) {
+            Component styled = c.copy().withStyle(s -> s.withFont(ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, face)));
+            if (font.width(styled) <= w) {
+                // a bitmap font draws its glyph from the baseline up by its ascent: 7 puts the glyph's top at y
+                f.g.drawString(font, styled, x, y + 7, color, false);
+                return y + TitleFont.HEIGHT + 1;
+            }
+        }
         float scale = font.width(c) * 1.5f <= w ? 1.5f : 1f;
         if (scale == 1f) {
             return wrapped(f, c, x, y, w, color);

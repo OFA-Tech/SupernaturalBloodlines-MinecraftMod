@@ -809,6 +809,7 @@
   "supernaturalbloodlines.hub.settings.section.keys": "Key binds",
   "supernaturalbloodlines.hub.settings.key.hub_theme": "Look of the hub",
   "supernaturalbloodlines.hub.settings.key.open_on": "Open the hub on",
+  "supernaturalbloodlines.hub.settings.key.reduce_motion": "Reduce motion (no slides, pulses or flourishes)",
   "supernaturalbloodlines.hub.settings.choice.open_on.home": "Home",
   "supernaturalbloodlines.hub.settings.choice.open_on.last_page": "Last page",
   "supernaturalbloodlines.hub.settings.key.hud_visibility": "Show the ability HUD",

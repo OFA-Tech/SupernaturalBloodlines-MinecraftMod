@@ -17,6 +17,7 @@ public final class KitClient {
         modBus.addListener((RegisterClientReloadListenersEvent e) -> e.registerReloadListener((ResourceManagerReloadListener) rm -> {
             ClientIcons.reload();
             BakedTexture.clear();
+            UiKit.reload();
         }));
     }
 }

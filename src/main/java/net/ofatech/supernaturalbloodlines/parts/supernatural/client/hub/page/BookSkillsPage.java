@@ -191,17 +191,17 @@ public final class BookSkillsPage implements HubPageView {
             KitDraw.shape(f.g, shape, x - 3, y - 3, size + 6, t.accent());
             KitDraw.shape(f.g, shape, x - 2, y - 2, size + 4, t.paper());
         }
-        Icons icon = SkillIcons.of(row.id());
+        // the skill's own picture (16 px, in its own colours): a locked one is dimmed, never recoloured
         if (known) {
             KitDraw.shape(f.g, shape, x, y, size, t.good());
-            KitDraw.icon(f.g, icon, n.x() - 6, n.y() - 6, 12, t.paper());
+            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0xFFFFFFFF);
         } else if (locked) {
             KitDraw.tickRing(f.g, n.x(), n.y(), size / 2, 16, 0f, (t.muted() & 0xFFFFFF) | 0xA0000000, (t.muted() & 0xFFFFFF) | 0xA0000000);
-            KitDraw.icon(f.g, icon, n.x() - 6, n.y() - 6, 12, (t.muted() & 0xFFFFFF) | 0x80000000);
+            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0x70FFFFFF);
         } else {
             KitDraw.shape(f.g, shape, x, y, size, GOLD);
             KitDraw.shape(f.g, shape, x + 2, y + 2, size - 4, t.paper());
-            KitDraw.icon(f.g, icon, n.x() - 6, n.y() - 6, 12, t.ink());
+            KitDraw.skillIcon(f.g, row.id(), n.x() - 8, n.y() - 8, 16, 0xFFFFFFFF);
         }
         // by words, and a word that is too long ends in an ellipsis instead of being broken in the middle. A node on the sides of the ring has its name
         // beside it, outward (above or below it the name would run into the neighbour); the top and bottom ones keep it over or under
