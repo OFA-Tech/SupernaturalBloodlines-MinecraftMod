@@ -175,6 +175,14 @@ public final class BookKit {
         }
     }
 
+    /** A card whose height is known only after its content is drawn: the surface is washed over the content at {@link net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites#CARD_OVER_ALPHA}, so the content stays readable under it. */
+    static void cardOver(HubScreen.Frame f, Rect r, int edge) {
+        UiKit.draw(f.g, f.theme(), net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.CARD, r.x(), r.y(), r.w(), r.h(), net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.CARD_OVER_ALPHA);
+        if (edge != 0) {
+            f.g.renderOutline(r.x() + 1, r.y() + 1, r.w() - 2, r.h() - 2, edge);
+        }
+    }
+
     /** A small label chip (a filter, an identity tag): the kit's chip, the lit one when {@code on}. Returns the colour of its label. */
     static int chip(HubScreen.Frame f, Rect r, boolean on) {
         Part part = on ? Part.CHIP_ON : Part.CHIP;

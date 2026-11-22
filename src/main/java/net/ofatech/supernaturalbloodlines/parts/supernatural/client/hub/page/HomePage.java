@@ -239,7 +239,7 @@ public final class HomePage implements HubPageView {
                 bottom = PageKit.wrapped(f, Component.translatable(KEY + "answer." + a.label() + ".tip"), x, bottom, w, t.muted()) + 1;
             }
         }
-        BookKit.card(f, new Rect(r.x(), top, r.w(), bottom - top), t.accent());
+        BookKit.cardOver(f, new Rect(r.x(), top, r.w(), bottom - top), t.accent());
         return bottom + 3;
     }
     /** The pack and the people of your line as faces: a click opens the Profile; the dot says who is online and the crown who leads. */

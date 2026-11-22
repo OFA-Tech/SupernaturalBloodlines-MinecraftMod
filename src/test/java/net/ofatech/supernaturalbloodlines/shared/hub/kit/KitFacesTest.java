@@ -123,4 +123,30 @@ class KitFacesTest {
         }
         assertTrue(someNeededTheFallback, "the Blood Moon's gold letter on its gold accent is the case that was invisible");
     }
-}
+
+    @Test
+    void textUnderTheWashOfACardDrawnAfterItsContentStillReads() {
+        // paper, accent, muted, ink of the three themes; the wash is the card surface at CARD_OVER_ALPHA over both the text and the paper behind it
+        int[][] themes = {{0xFFE9DCBC, 0xFF7A1218, 0xFF5E4228, 0xFF3B2414}, {0xFF1A0A10, 0xFFFFD36B, 0xFFC9A0A8, 0xFFF0E0E0}, {0xFF12293F, 0xFF3FD0D6, 0xFF8FB2C4, 0xFFE6F3FB}};
+        float a = KitSprites.CARD_OVER_ALPHA;
+        List<String> bad = new ArrayList<>();
+        for (int k = 0; k < themes.length; k++) {
+            int card = KitFaces.face(KitSprites.KITS.get(k), KitSprites.CARD);
+            int paper = blend(themes[k][0], card, a);
+            for (int text : new int[] {themes[k][3], themes[k][2], themes[k][1]}) {
+                double ratio = Contrast.ratio(blend(text, card, a), paper);
+                if (ratio < 4.5) {
+                    bad.add(KitSprites.KITS.get(k) + " text #" + Integer.toHexString(text) + " " + String.format("%.2f", ratio));
+                }
+            }
+        }
+        assertTrue(a > 0f && a < 0.5f, "a wash, not a cover");
+        assertTrue(bad.isEmpty(), "under the wash: " + bad);
+    }
+
+    private static int blend(int under, int over, float a) {
+        int r = Math.round(((under >> 16) & 0xFF) * (1 - a) + ((over >> 16) & 0xFF) * a);
+        int g = Math.round(((under >> 8) & 0xFF) * (1 - a) + ((over >> 8) & 0xFF) * a);
+        int b = Math.round((under & 0xFF) * (1 - a) + (over & 0xFF) * a);
+        return 0xFF000000 | r << 16 | g << 8 | b;
+    }}
