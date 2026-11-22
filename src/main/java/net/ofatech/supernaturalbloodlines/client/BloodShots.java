@@ -113,8 +113,8 @@ public final class BloodShots {
                     continue;
                 }
                 List<Component> lines = new ArrayList<>(s.getTooltipLines(Item.TooltipContext.of(mc.level), mc.player, TooltipFlag.NORMAL));
-                int x = 6 + (col % 3) * (width / 3);
-                int y = 22 + (col / 3) * 60;
+                int x = 6 + (col % 2) * (width / 2);
+                int y = 22 + (col / 2) * 60;
                 g.renderItem(s, x, y - 20);
                 g.renderTooltip(font, lines, Optional.empty(), x, y);
                 col++;
