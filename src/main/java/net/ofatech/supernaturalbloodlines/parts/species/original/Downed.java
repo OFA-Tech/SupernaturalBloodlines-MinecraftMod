@@ -134,7 +134,7 @@ public final class Downed {
 
     /**
      * They stand up in the turning (ours, or a Ghoul's end of Vampirism's dying state): told on the action bar and in chat how long the turning runs and
-     * how to finish it, 5 s of Resistance V, the fire out and the air back, and out of lava (or another harmful fluid) to the nearest spot within 8 blocks.
+     * how to finish it, 5 s of Resistance V, the fire out and the air back, and out of lava (or another harmful fluid) to the nearest spot within 8 blocks (3 up).
      */
     public static void woke(ServerPlayer p) {
         p.displayClientMessage(Component.translatable("supernaturalbloodlines.turning.woke"), true);
@@ -145,12 +145,11 @@ public final class Downed {
         p.setAirSupply(p.getMaxAirSupply());
         p.fallDistance = 0;
         if (inHarmfulFluid(p)) {
-            BlockPos safe = PackDuel.safeSpot(p.serverLevel(), p.blockPosition(), p, 8);
+            // within 8 blocks sideways and 3 up, in line of sight (the duel's rescue). There is no claims check: this mod has no helper for one (Open Parties and
+            // Claims is reflected for parties only), so a claim border near the lava can be crossed.
+            BlockPos safe = PackDuel.safeSpot(p.serverLevel(), p.blockPosition(), p, 8, 3);
             if (safe != null) {
-                p.moveTo(safe.getX() + 0.5, safe.getY(), safe.getZ() + 0.5, p.getYRot(), p.getXRot());
-                if (p.connection != null) {
-                    p.connection.teleport(p.getX(), p.getY(), p.getZ(), p.getYRot(), p.getXRot()); // the client is told
-                }
+                p.teleportTo(safe.getX() + 0.5, safe.getY(), safe.getZ() + 0.5);
             }
         }
     }

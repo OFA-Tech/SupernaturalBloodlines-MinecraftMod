@@ -58,7 +58,8 @@ public final class DownedScreen extends Screen {
         boolean hasBody = mode == Downed.MODE_TURNING;
         body = new MultiLineTextWidget(hasBody ? bodyText() : Component.empty(), font).setMaxWidth(textWidth).setColor(0xDDDDDD).setCentered(true);
         shownSeconds = seconds();
-        int bodyHeight = hasBody ? body.getHeight() : 0;
+        // the room is the height of the longest the text gets (a full countdown, two digits), so the countdown never reflows the text into the buttons
+        int bodyHeight = hasBody ? Math.max(body.getHeight(), new MultiLineTextWidget(bodyText(Downed.TICKS / 20), font).setMaxWidth(textWidth).getHeight()) : 0;
         boolean sideBySide = width >= 280;
         int buttonsHeight = sideBySide ? 20 : 44;
         int total = font.lineHeight + GAP + bodyHeight + GAP + buttonsHeight;
@@ -81,7 +82,11 @@ public final class DownedScreen extends Screen {
     }
 
     private Component bodyText() {
-        return Component.translatable("supernaturalbloodlines.downed.turning.body", seconds());
+        return bodyText(seconds());
+    }
+
+    private static Component bodyText(int seconds) {
+        return Component.translatable("supernaturalbloodlines.downed.turning.body", seconds);
     }
 
     private void pressedGiveUp() {

@@ -87,6 +87,28 @@ public final class ElixirGameTests {
         helper.succeed();
     }
 
+    /** A Ghoul whom Vampirism's dying state does not catch is taken by the turning before the Elixir is asked: the Elixir is not spent on a death that starts the turning. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aGhoulVampirismDidNotCatchKeepsItsElixirToTheTurning(GameTestHelper helper) {
+        ServerPlayer p = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.createMortal(helper);
+        p.getInventory().add(new ItemStack(BossItems.THE_ELIXIR.get()));
+        try {
+            helper.assertTrue(de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+            BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().ghoul(true).vampireBloodUntil(helper.getLevel().getGameTime() + 1000).build());
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT
+                    .getHolder(net.minecraft.resources.ResourceLocation.parse("vampirism:neonatal")).orElseThrow(), 1000)); // Vampirism puts no neonatal vampire in its dying state
+            p.hurt(helper.getLevel().damageSources().lava(), 1000f);
+            helper.assertTrue(!de.teamlapen.vampirism.api.VampirismAPI.vampirePlayer(p).isDBNO(), "setup: Vampirism caught the blow");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDyingForTurning(p) && elixirs(p) == 1, "the Elixir was spent on a death the turning takes: dying "
+                    + net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDyingForTurning(p) + ", elixirs " + elixirs(p));
+        } finally {
+            p.removeAllEffects();
+            de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
+            BloodlineAccess.set(p, BloodlineState.NONE);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void itDoesNotSaveFromALineDeathOrTheKillCommand(GameTestHelper helper) {
         LineTestPlayer p = holder(helper, 1);

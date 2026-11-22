@@ -683,4 +683,130 @@ public final class TurningDyingGameTests {
             reset(p);
         }
         helper.succeed();
+    }
+    // ---- review fixes (plan 18b, round 3) ----
+
+    /** Ends Vampirism's dying state the way its own timer does: the timer reaches 0 and it stands the player up. */
+    private static void endVampirismDying(ServerPlayer p) {
+        try {
+            var vampire = VampirismAPI.vampirePlayer(p);
+            var setTimer = vampire.getClass().getDeclaredMethod("setDBNOTimer", int.class);
+            setTimer.setAccessible(true);
+            setTimer.invoke(vampire, 0);
+            vampire.getClass().getMethod("tryResurrect").invoke(vampire);
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSecondDbnoInTheTurningGivesNoWakeAndNoResistance(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist p = (TestPlayers.TalkingDuelist) ghoul(helper);
+        try {
+            lethal(helper, p);
+            helper.assertTrue(VampirismAPI.vampirePlayer(p).isDBNO() && BloodlineAccess.get(p).inTurning(), "setup: no first dying");
+            endVampirismDying(p);
+            TurningHandler.watchGhoulDying(p);
+            helper.assertTrue(p.count("supernaturalbloodlines.turning.woke_chat") == 1 && p.hasEffect(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE), "setup: the first wake-up did not happen");
+            p.removeAllEffects();
+            // the second blow: Vampirism catches it again, and nothing of ours may follow it up
+            p.invulnerableTime = 0;
+            lethal(helper, p);
+            helper.assertTrue(VampirismAPI.vampirePlayer(p).isDBNO(), "setup: Vampirism did not catch the second blow");
+            endVampirismDying(p);
+            TurningHandler.watchGhoulDying(p);
+            TurningHandler.watchGhoulDying(p);
+            helper.assertTrue(p.count("supernaturalbloodlines.turning.woke_chat") == 1, "a second dying state woke them again: " + p.count("supernaturalbloodlines.turning.woke_chat"));
+            helper.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE), "a second dying state gave Resistance again");
+        } finally {
+            VampirismAPI.factionPlayerHandler(p).leaveFaction(false);
+            reset(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aWakeUpIsNotWaitingForAGhoulWhoLoggedOutOrDied(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist out = (TestPlayers.TalkingDuelist) ghoul(helper);
+        TestPlayers.TalkingDuelist dead = (TestPlayers.TalkingDuelist) ghoul(helper);
+        try {
+            lethal(helper, out);
+            lethal(helper, dead);
+            helper.assertTrue(VampirismAPI.vampirePlayer(out).isDBNO() && VampirismAPI.vampirePlayer(dead).isDBNO(), "setup: no dying");
+            NeoForge.EVENT_BUS.post(new PlayerEvent.PlayerLoggedOutEvent(out));
+            NeoForge.EVENT_BUS.post(new LivingDeathEvent(dead, helper.getLevel().damageSources().generic())); // a death nothing cancelled
+            endVampirismDying(out);
+            endVampirismDying(dead);
+            TurningHandler.watchGhoulDying(out);
+            TurningHandler.watchGhoulDying(dead);
+            helper.assertTrue(!out.received("supernaturalbloodlines.turning.woke_chat"), "a Ghoul who logged out was woken when they came back");
+            helper.assertTrue(!dead.received("supernaturalbloodlines.turning.woke_chat"), "a Ghoul who died was woken");
+        } finally {
+            VampirismAPI.factionPlayerHandler(out).leaveFaction(false);
+            VampirismAPI.factionPlayerHandler(dead).leaveFaction(false);
+            reset(out, dead);
+        }
+        helper.succeed();
+    }
+
+    /** A saver that cancels the death on the way leaves the player as they were: the turning of a void or /kill death starts only if they really die. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVoidDeathSomethingSavedDoesNotStartTheTurning(GameTestHelper helper) {
+        ServerPlayer saved = marked(helper);
+        ServerPlayer lost = marked(helper);
+        Consumer<LivingDeathEvent> saver = e -> {
+            if (e.getEntity() == saved) {
+                e.setCanceled(true);
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, LivingDeathEvent.class, saver);
+        try {
+            long until = BloodlineAccess.get(saved).vampireBloodUntil();
+            saved.hurt(helper.getLevel().damageSources().genericKill(), 1000f);
+            helper.assertTrue(!BloodlineAccess.get(saved).inTurning() && BloodlineAccess.get(saved).vampireBloodUntil() == until, "a saved player was put in the turning: " + BloodlineAccess.get(saved));
+            lost.hurt(helper.getLevel().damageSources().genericKill(), 1000f);
+            helper.assertTrue(lost.isDeadOrDying() && BloodlineAccess.get(lost).inTurning(), "a player who really died was not put in the turning: " + BloodlineAccess.get(lost));
+        } finally {
+            NeoForge.EVENT_BUS.unregister(saver);
+            reset(saved, lost);
+        }
+        helper.succeed();
+    }
+
+    /** The rescue looks up at most 3 blocks: a spot 4 above is found by a 4-block search and not by the wake-up's. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theWakeRescueDoesNotLookMoreThanThreeBlocksUp(GameTestHelper helper) {
+        var level = helper.getLevel();
+        // lava over a floor as far as the search reaches (8 blocks each way of the lava at 3,1,3), so no spot at the level of the floor exists
+        for (int x = -6; x <= 12; x++) {
+            for (int z = -6; z <= 12; z++) {
+                helper.setBlock(new net.minecraft.core.BlockPos(x, 0, z), net.minecraft.world.level.block.Blocks.STONE);
+                helper.setBlock(new net.minecraft.core.BlockPos(x, 1, z), net.minecraft.world.level.block.Blocks.LAVA);
+            }
+        }
+        for (int x = -6; x <= 12; x++) {
+            for (int z = -6; z <= 12; z++) {
+                for (int y = 2; y <= 8; y++) {
+                    helper.setBlock(new net.minecraft.core.BlockPos(x, y, z), net.minecraft.world.level.block.Blocks.AIR); // the box's barrier ceiling is a floor to stand on, too
+                }
+            }
+        }
+        helper.setBlock(new net.minecraft.core.BlockPos(7, 4, 3), net.minecraft.world.level.block.Blocks.STONE);
+        ServerPlayer viewer = marked(helper);
+        try {
+            viewer.setPos(helper.absoluteVec(new Vec3(3.5, 6, 3.5))); // eyes above it all: the line of sight is clear
+            net.minecraft.core.BlockPos from = helper.absolutePos(new net.minecraft.core.BlockPos(3, 1, 3));
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.safeSpot(level, from, viewer, 8, 3) == null, "a spot 4 blocks up was found by a 3-block search");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.safeSpot(level, from, viewer, 8, 4) != null, "setup: no spot 4 blocks up");
+        } finally {
+            for (int x = -6; x <= 12; x++) {
+                for (int z = -6; z <= 12; z++) {
+                    helper.setBlock(new net.minecraft.core.BlockPos(x, 1, z), net.minecraft.world.level.block.Blocks.AIR);
+                    helper.setBlock(new net.minecraft.core.BlockPos(x, 2, z), net.minecraft.world.level.block.Blocks.BARRIER);
+                }
+            }
+            helper.setBlock(new net.minecraft.core.BlockPos(7, 4, 3), net.minecraft.world.level.block.Blocks.AIR);
+            reset(viewer);
+        }
+        helper.succeed();
     }}

@@ -146,6 +146,12 @@ public final class TestPlayers {
             return messages.stream().filter(m -> m.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().equals(key)).findFirst().orElse(null);
         }
 
+        /** A fake player ignores teleportTo; this one moves, so a test can see where a rescue put it. */
+        @Override
+        public void teleportTo(double x, double y, double z) {
+            moveTo(x, y, z, getYRot(), getXRot());
+        }
+
         private final java.util.List<String> actionBarKeys = new java.util.ArrayList<>();
 
         /** Whether a message with this key came on the action bar. */
