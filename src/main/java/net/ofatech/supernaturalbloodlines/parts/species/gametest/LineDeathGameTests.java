@@ -708,4 +708,33 @@ public final class LineDeathGameTests {
         }
         helper.succeed();
     }
-}
+
+    /** An Augustine made from a sired vampire keeps the line (the species change keeps the sire), and dies with it, healthy or in the dying state. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anAugustineKeepsTheLineAndDiesWithIt(GameTestHelper helper) {
+        for (boolean dying : new boolean[] {false, true}) {
+            ServerPlayer o = mortal(helper, Species.ORIGINAL);
+            ServerPlayer child = siredVampire(helper, o);
+            Zombie zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(1, 1, 1));
+            zombie.setNoAi(true);
+            try {
+                online(o, child);
+                BloodlineAccess.applyEvent(child, net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineEvent.AUGUSTINE_SYRINGE,
+                        net.ofatech.supernaturalbloodlines.parts.species.SpeciesContext.of(child, null));
+                helper.assertTrue(BloodlineAccess.get(child).species() == Species.AUGUSTINE, "setup: not an Augustine");
+                helper.assertTrue(o.getUUID().equals(BloodlineAccess.get(child).sire()), "the species change lost the sire: " + BloodlineAccess.get(child).sire());
+                helper.assertTrue(lines(helper).rootOf(child.getUUID()).filter(o.getUUID()::equals).isPresent(), "the species change left the line");
+                if (dying) {
+                    child.hurt(child.damageSources().mobAttack(zombie), 1000f);
+                    helper.assertTrue(VampirismAPI.vampirePlayer(child).isDBNO() && !dead(child), "the Augustine did not enter the dying state");
+                }
+                die(o, whiteOakBlow(helper));
+                checkDead(helper, child, dying ? "dying Augustine" : "healthy Augustine");
+            } finally {
+                zombie.discard();
+                VampirismAPI.factionPlayerHandler(child).leaveFaction(false);
+                forget(helper, o, child);
+            }
+        }
+        helper.succeed();
+    }}

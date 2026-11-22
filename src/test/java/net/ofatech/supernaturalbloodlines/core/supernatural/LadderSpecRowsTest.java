@@ -43,6 +43,24 @@ class LadderSpecRowsTest {
             R L-VAM-6 5 100000
             T L-VAM-6a tensura_tier - 1
             T L-VAM-6b days_as vampire 60
+            R L-AUG-1 2 2000
+            T L-AUG-1a level %V% 2
+            T L-AUG-1b feed - 10
+            R L-AUG-2 3 5000
+            T L-AUG-2a level %V% 4
+            T L-AUG-2b kill vampire 3
+            R L-AUG-3 4 15000
+            T L-AUG-3a level %V% 10
+            T L-AUG-3b signal compel 3
+            R L-AUG-4 4 30000
+            T L-AUG-4a level %V% 12
+            T L-AUG-4b kill hunter 10
+            R L-AUG-5 5 60000
+            T L-AUG-5a level %V% 14
+            T L-AUG-5b days_as augustine 30
+            R L-AUG-6 5 100000
+            T L-AUG-6a tensura_tier - 1
+            T L-AUG-6b days_as augustine 60
             R L-ORI-1 3 5000
             T L-ORI-1a level %V% 4
             T L-ORI-1b feed - 20

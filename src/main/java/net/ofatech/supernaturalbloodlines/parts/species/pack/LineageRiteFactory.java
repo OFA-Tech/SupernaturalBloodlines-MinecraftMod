@@ -118,10 +118,17 @@ public record LineageRiteFactory(Mode mode) implements RiteFactory {
                 BloodlineAccess.reveal(target, Genes.WEREWOLF);
                 return false;
             }
+            ServerPlayer caster = findEntity(params.caster) instanceof ServerPlayer p ? p : target;
+            // it changes the target, so it asks them first, and the caster is never told why it did not work (an Augustine, a hybrid and a human all answer the same)
+            RiteTargets.Told asked = RiteTargets.consentAnswer(caster == target, target.isShiftKeyDown(), RiteTargets.SNEAK_TO_ACCEPT);
+            if (asked != null) {
+                caster.displayClientMessage(Component.translatable(asked.caster()), true);
+                target.displayClientMessage(Component.translatable(asked.target()), true);
+                return cancel();
+            }
             String refusal = awaken(target, level.getGameTime());
             if (refusal != null) {
-                ServerPlayer caster = findEntity(params.caster) instanceof ServerPlayer p ? p : target;
-                caster.displayClientMessage(Component.translatable(refusal), true);
+                RiteTargets.refuseAbout(caster, target, refusal);
                 return cancel();
             }
             return false;

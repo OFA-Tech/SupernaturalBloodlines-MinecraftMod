@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased (plan 18c: Augustine vampires)
+
+### Added
+- **Augustines (R200 to R203).** A new species of the vampire side: a plain vampire who took Wes's serum is a little stronger (+10% attack, +2 health, configurable), takes triple blood from the first bite of a feed on a vampire (a vampire player who is bitten pays it, so two Augustines cannot feed each other) and a third from anyone else, a bottle or a station (rounded at random, so it is a third on average, never a floor of 1), and is not refused by R20f when it bites a vampire. Two skills of its own: Garlic Ward (no garlic effect, no blindness in strong garlic) and Blessed Skin (holy water halved). Its ladder is seven rungs; the last is a plain vampire's Tensura rung.
+- **How to make one:** the Rite of Augustine (four garlic, a holy water, a human heart, a golden apple, a medium circle, 16,000 power) or **Wes's Syringe** (glass bottle, iron ingot, a vampire blood bottle, garlic; sneak and use it in the air, or twice within 5 seconds on a player who sneaks with a lead in their hand while PvP is on). A syringe that does nothing, and a Rite of Augustine on someone else who does not sneak, always say the same line: nothing is learnt about who is a vampire with no bloodline. The first time an Augustine's blood factor is not 1 a one-time action-bar note says so.
+- **Tensura:** an Augustine gets a plain vampire's treatment (race on joining, layer, undead, apex race Elder Vampire, ladder).
+- Config (with Admin rows): `augustine_attack_bonus`, `augustine_extra_health`, `augustine_blood_from_vampire_factor`, `augustine_blood_from_other_factor`.
+
+### Fixed
+- **Rites no longer say what stands on the circle.** The Rite of Lineage: Awaken now needs the target's sneak when someone else casts it, and Awaken, Ancestral Calling, Severance and Doppelgänger Blood (for a taglocked player) tell the caster only that it did nothing; the one on the circle hears the reason. The Rite of Augustine tells a consenting target "The Rite of Augustine takes you now". Wes's Syringe on another player ignores a second use less than 10 ticks after the first (the use key held down).
+- The Pike rite and Mikael count an Augustine's own ladder (`SupernaturalState.vampireRung`). Leaving the vampire faction through Vampirism takes the Augustine bonuses at once and ends the species (like a Ghoul).
+
+### Migration
+- No existing player changes. A world saved with an Augustine and rolled back to an older build loads the Augustine as a player with no species (the codec reads an unknown species as none); their Augustine skills stay in the skills list, dormant. The attack and health modifiers an Augustine had are saved with the player: after a rollback they stay as two leftover attribute modifiers (`supernaturalbloodlines:augustine`) that nothing removes until the player is made an Augustine and cured again, or an operator clears them. No payload changed, so no network version is bumped.
+- The placeholder art: the syringe uses Hybrid's Blood's icon and the two skills use the shield and sun icons, until the art lands.
 ## Unreleased (plan 18b: dying with vampire blood stands you up)
 
 ### Changed

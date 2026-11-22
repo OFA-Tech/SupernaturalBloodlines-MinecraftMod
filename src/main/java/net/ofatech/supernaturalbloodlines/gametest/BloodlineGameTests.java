@@ -54,9 +54,11 @@ public final class BloodlineGameTests {
     public static void disabledPartsLoseTheirSavedModifiers(GameTestHelper helper) {
         ResourceLocation original = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "original");
         ResourceLocation foreign = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "something_else");
+        ResourceLocation augustine = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "augustine");
         ServerPlayer p = TestPlayers.create(helper);
         double health = p.getMaxHealth();
         double attack = p.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        p.getAttribute(Attributes.ARMOR_TOUGHNESS).addPermanentModifier(new AttributeModifier(augustine, 1.0, AttributeModifier.Operation.ADD_VALUE));
         p.getAttribute(Attributes.MAX_HEALTH).addPermanentModifier(new AttributeModifier(original, 4.0, AttributeModifier.Operation.ADD_VALUE));
         p.getAttribute(Attributes.ATTACK_DAMAGE).addPermanentModifier(new AttributeModifier(original, 0.2, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
         p.getAttribute(Attributes.ARMOR).addPermanentModifier(new AttributeModifier(foreign, 1.0, AttributeModifier.Operation.ADD_VALUE));
@@ -67,6 +69,7 @@ public final class BloodlineGameTests {
 
         StalePartModifiers.strip(p, EnumSet.noneOf(Part.class));
         helper.assertTrue(!p.getAttribute(Attributes.MAX_HEALTH).hasModifier(original), "the health modifier of a disabled part stayed");
+        helper.assertTrue(!p.getAttribute(Attributes.ARMOR_TOUGHNESS).hasModifier(augustine), "the Augustine modifier of a disabled species part stayed");
         helper.assertTrue(!p.getAttribute(Attributes.ATTACK_DAMAGE).hasModifier(original), "the attack modifier of a disabled part stayed");
         helper.assertTrue(p.getMaxHealth() == health && p.getAttributeValue(Attributes.ATTACK_DAMAGE) == attack, "values did not return to the base");
         helper.assertTrue(p.getHealth() <= p.getMaxHealth(), "health is above the maximum: " + p.getHealth());

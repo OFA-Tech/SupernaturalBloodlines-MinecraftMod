@@ -41,6 +41,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
     public static final String WRONG_FACTION = "supernaturalbloodlines.rite.wrong_faction";
     public static final String NEEDS_FULL_MOON = "supernaturalbloodlines.rite.needs_full_moon";
     public static final String NO_EFFECT = "supernaturalbloodlines.rite.no_effect";
+    public static final String RITE_TAKES_YOU = "supernaturalbloodlines.rite.takes_you";
     public static final String JOIN_DENIED = "supernaturalbloodlines.rite.join_denied";
     private static final ResourceLocation WEREWOLF_ID = ResourceLocation.parse("werewolves:werewolf");
 
@@ -112,7 +113,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
     /** Species that carry both layers or an Original's rules are judged by BloodlineRules, not by the faction. */
     private static boolean rulesDecide(Species s) {
         return switch (s) {
-            case ORIGINAL, ORIGINAL_HYBRID, HYBRID, TRIBRID, HERETIC -> true;
+            case ORIGINAL, ORIGINAL_HYBRID, HYBRID, TRIBRID, HERETIC, AUGUSTINE -> true;
             default -> false;
         };
     }
@@ -194,11 +195,25 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             if (factory.faction == Faction.WEREWOLF && !ModList.get().isLoaded("werewolves")) {
                 return cancel();
             }
+            // a rite that changes the target needs their consent when the caster is someone else, and says nothing of what they are (R201)
+            boolean consents = factory.event == BloodlineEvent.RITE_OF_AUGUSTINE;
+            if (consents) {
+                RiteTargets.Told asked = RiteTargets.consentAnswer(caster == target, target.isShiftKeyDown(), RiteTargets.SNEAK_TO_BE_MADE_AUGUSTINE);
+                if (asked != null) {
+                    tell(caster, asked.caster());
+                    tell(target, asked.target());
+                    return cancel();
+                }
+            }
             IFactionPlayerHandler h = VampirismAPI.factionPlayerHandler(target);
             BaseFaction current = baseFaction(h);
             BloodlineState before = BloodlineAccess.get(target);
             if (!factory.faction.accepts(current) && !rulesDecide(before.species())) {
-                tell(caster, WRONG_FACTION);
+                if (consents) {
+                    RiteTargets.refuseAbout(caster, target, WRONG_FACTION);
+                } else {
+                    tell(caster, WRONG_FACTION);
+                }
                 return cancel();
             }
 
@@ -206,7 +221,7 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
             BloodlineContext ctx = FactionRiteHooks.context(target, current, level.getGameTime());
             Outcome preview = BloodlineRules.apply(before, factory.event, ctx);
             if (preview.refused()) {
-                if (factory.event == BloodlineEvent.RITE_OF_THE_MOON) {
+                if (factory.event == BloodlineEvent.RITE_OF_THE_MOON || consents) {
                     // the Moon rite's refusals (no gene, not an Original) are two answers to "do they carry the gene?": the target is told, the caster is not
                     RiteTargets.refuseAbout(caster, target, preview.refusalKey());
                 } else {
@@ -227,6 +242,9 @@ public record FactionRiteFactory(BloodlineEvent event, Faction faction, boolean 
                 }
             }
 
+            if (consents && caster != target) {
+                tell(target, RITE_TAKES_YOU);
+            }
             FactionRiteHooks.run(target, BloodlineAccess.applyEvent(target, factory.event, ctx));
             return false;
         }

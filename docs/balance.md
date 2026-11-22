@@ -19,6 +19,7 @@ Every number the supernatural system pays or asks for, with the reason for it. T
 
 | Ladder | Rungs | SP | EP | Longest task (days) |
 |---|---|---|---|---|
+| augustine | 7 | 23 | 212,000 | 60 |
 | ghoul | 1 | 0 | 0 | - |
 | heretic | 6 | 20 | 210,000 | 60 |
 | human | 3 | 5 | 4,000 | - |
@@ -143,3 +144,7 @@ All numbers are drafts to tune after a playtest; each is a config key.
 | `bottle_blood_cooldown_seconds` | 60 | One bottle a minute: a vampire can supply a friend, not a stockpile. |
 | `bottle_blood_health_cost` | 3 (1.5 hearts, never lethal) | Real enough to count in a fight, never a way to die. |
 | bottle_blood_daily_limit | 8 | Vampirism's vampire blood bottle is an ingredient (pure blood, vampire blood oil) and a task item: a day of bottling cannot supply a whole server. |
+
+## Plan 18c: the Augustine (R200 to R203)
+
+The ladder pays what a plain vampire's does (7 rungs, 23 SP, 212,000 EP): an Augustine is a vampire on a diet, and the Tensura rung is the same (owner, Q3). Its tree costs 21 SP, 91% of the ladder (the vampire's costs 19), because two skills of its own (3 SP each) replace Elder's Skin and the quest of Predator's Thirst. The attack and health bonuses are half of an Original's (+10% and +2 against +20% and +4): the species is a little stronger than a vampire, never a hybrid's equal. The blood factors (x3 on the first bite of a feed on a vampire, paid by a vampire player who is bitten; x1/3 from anyone else, rounded at random so it is a third on average) make it a hunter of vampires: a village feeds it a third as well.

@@ -43,6 +43,7 @@ class RiteKindsTest {
         assertEquals(Set.of(RiteKind.SIPHONER), RiteKinds.of(Species.SIPHONER, false, false, false));
         assertEquals(Set.of(RiteKind.HUNTER), RiteKinds.of(Species.HUNTER_OF_THE_FIVE, false, false, false));
         assertEquals(Set.of(RiteKind.VAMPIRE), RiteKinds.of(Species.HERETIC, false, false, false));
+        assertEquals(Set.of(RiteKind.VAMPIRE), RiteKinds.of(Species.AUGUSTINE, false, false, false), "an Augustine is a vampire for the rites");
     }
 
     @Test

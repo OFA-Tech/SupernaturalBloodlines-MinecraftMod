@@ -49,4 +49,12 @@ class RiteTargetsTest {
         // the same neutral answer whatever the refusal is, so two refusals cannot be told apart
         assertEquals(told.caster(), RiteTargets.refusalAbout(false, "supernaturalbloodlines.refusal.not_original").caster());
     }
-}
+
+    @Test
+    void theRiteOfAugustineNeedsTheTargetsSneakAndAnswersTheCasterTheSameWhateverTheyAre() {
+        assertNull(RiteTargets.consentAnswer(true, false, "ask"), "a caster who is the target needs no consent");
+        assertNull(RiteTargets.consentAnswer(false, true, "ask"), "a sneaking target agrees");
+        RiteTargets.Told told = RiteTargets.consentAnswer(false, false, "ask");
+        assertEquals(FactionRiteFactory.NO_EFFECT, told.caster(), "the caster is told nothing about the target");
+        assertEquals("ask", told.target(), "the target is asked");
+    }}
