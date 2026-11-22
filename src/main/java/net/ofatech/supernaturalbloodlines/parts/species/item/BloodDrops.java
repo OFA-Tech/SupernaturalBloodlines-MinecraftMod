@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.species.item;
 
 import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.VampirismAPI;
+import java.util.Optional;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -14,8 +15,9 @@ import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler;
 
 /**
- * A vampire mob's blood bottle drop remembers whose blood it is (R210): a common vampire, or, for an NPC Original, an Original (Klaus: an Original hybrid).
- * Every other source of a bottle (loot, trades, task rewards) stays unstamped, which counts as common vampire blood.
+ * A drop of vampire blood from an NPC Original is stamped with that Original (R210): their root id (the one a sire is named by) and kind (Klaus an Original
+ * hybrid), so drinking it names them. A common vampire mob's drop is not stamped at all: unstamped is common vampire blood, and unstamped bottles keep
+ * stacking. Every other source of a bottle (loot, trades, task rewards) stays unstamped too.
  */
 public final class BloodDrops {
     private BloodDrops() {
@@ -30,20 +32,20 @@ public final class BloodDrops {
         if (victim.level().isClientSide || victim instanceof Player || VampirismAPI.factionRegistry().getFaction(victim) != VReference.VAMPIRE_FACTION) {
             return;
         }
-        BloodSource source = new BloodSource(victim.getUUID(), victim.getName().getString(), true, kindOf(victim));
+        Optional<NpcOriginal> original = originalOf(victim);
+        if (original.isEmpty()) {
+            return;
+        }
+        BloodKind kind = original.get() == NpcOriginal.KLAUS ? BloodKind.ORIGINAL_HYBRID : BloodKind.ORIGINAL;
+        BloodSource source = new BloodSource(original.get().uuid(), victim.getName().getString(), true, kind);
         for (ItemEntity drop : e.getDrops()) {
-            if (drop.getItem().is(TurningHandler.VAMPIRE_BLOOD) && !BloodStamp.read(drop.getItem()).isPresent()) {
+            if (drop.getItem().is(TurningHandler.VAMPIRE_BLOOD) && !BloodStamp.has(drop.getItem())) {
                 BloodStamp.write(drop.getItem(), source);
             }
         }
     }
 
-    static BloodKind kindOf(LivingEntity victim) {
-        if (!victim.hasData(SpeciesRegistries.ORIGINAL_ROOT)) {
-            return BloodKind.COMMON_VAMPIRE;
-        }
-        return NpcOriginal.byId(victim.getData(SpeciesRegistries.ORIGINAL_ROOT))
-                .map(o -> o == NpcOriginal.KLAUS ? BloodKind.ORIGINAL_HYBRID : BloodKind.ORIGINAL)
-                .orElse(BloodKind.COMMON_VAMPIRE);
+    static Optional<NpcOriginal> originalOf(LivingEntity victim) {
+        return victim.hasData(SpeciesRegistries.ORIGINAL_ROOT) ? NpcOriginal.byId(victim.getData(SpeciesRegistries.ORIGINAL_ROOT)) : Optional.empty();
     }
 }

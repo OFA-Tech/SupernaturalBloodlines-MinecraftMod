@@ -14,6 +14,7 @@ import net.ofatech.supernaturalbloodlines.core.Supernatural;
 import net.ofatech.supernaturalbloodlines.core.blood.BloodKind;
 import net.ofatech.supernaturalbloodlines.core.blood.BloodSource;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 import net.ofatech.supernaturalbloodlines.parts.species.skill.ActionClock;
 import net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,10 @@ public final class BottleBloodAction implements ExtraActions.Action {
     public static final BottleBloodAction INSTANCE = new BottleBloodAction();
     public static final String NOTHING = "supernaturalbloodlines.bottle.nothing";
     public static final String COOLDOWN = "supernaturalbloodlines.bottle.cooldown";
+    public static final String NEED_GLASS = "supernaturalbloodlines.bottle.need_glass";
+    public static final String TOO_WEAK = "supernaturalbloodlines.bottle.too_weak";
+    public static final String DAILY = "supernaturalbloodlines.bottle.daily";
+    public static final String DROPPED = "supernaturalbloodlines.bottle.dropped";
     static final ResourceLocation BLOOD_BOTTLE = ResourceLocation.parse("vampirism:vampire_blood_bottle");
     /** The placeholder until the art (textures/gui/hud/bottle_blood.png) lands. */
     private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hud/unknown.png");
@@ -46,7 +51,9 @@ public final class BottleBloodAction implements ExtraActions.Action {
 
     @Override
     public Component note() {
-        return Component.translatable("supernaturalbloodlines.hud.action.bottle_blood.note");
+        double cost = SpeciesConfig.bottleBloodHealthCost();
+        return Component.translatable("supernaturalbloodlines.hud.action.bottle_blood.note", cost == Math.rint(cost) ? Long.toString((long) cost) : Double.toString(cost),
+                SpeciesConfig.bottleBloodCooldownSeconds(), SpeciesConfig.bottleBloodDailyLimit());
     }
 
     @Override
@@ -56,32 +63,41 @@ public final class BottleBloodAction implements ExtraActions.Action {
 
     @Override
     public boolean available(Player p) {
-        return Supernatural.isVampiric(p) && !isOriginal(p);
-    }
-
-    private static boolean isOriginal(Player p) {
-        return BloodKind.of(BloodlineAccess.get(p).species()).namesSire();
+        return Supernatural.isVampiric(p) && !OriginalRules.isOriginal(BloodlineAccess.get(p).species());
     }
 
     @Nullable
     @Override
     public Component trigger(ServerPlayer p) {
         Item bottle = BuiltInRegistries.ITEM.get(BLOOD_BOTTLE);
-        if (!Supernatural.isVampiric(p) || isOriginal(p) || bottle == Items.AIR || !hasGlassBottle(p)) {
+        // an Original, or anyone who is not a vampire, hears the one vague line: it never says what they are
+        if (!Supernatural.isVampiric(p) || OriginalRules.isOriginal(BloodlineAccess.get(p).species()) || bottle == Items.AIR) {
             return Component.translatable(NOTHING);
+        }
+        if (!hasGlassBottle(p)) {
+            return Component.translatable(NEED_GLASS);
         }
         if (!ActionClock.ready(p, id())) {
             return Component.translatable(COOLDOWN);
         }
+        if (ActionClock.usesToday(p, id()) >= SpeciesConfig.bottleBloodDailyLimit()) {
+            return Component.translatable(DAILY);
+        }
+        float cost = (float) SpeciesConfig.bottleBloodHealthCost();
+        if (p.getHealth() <= cost) {
+            return Component.translatable(TOO_WEAK);
+        }
         if (!p.isCreative()) {
             useUpGlassBottle(p);
         }
-        p.setHealth(Math.max(1f, p.getHealth() - (float) SpeciesConfig.bottleBloodHealthCost()));
+        p.setHealth(p.getHealth() - cost);
         ItemStack blood = new ItemStack(bottle);
         BloodStamp.write(blood, new BloodSource(p.getUUID(), p.getGameProfile().getName(), false, BloodKind.of(BloodlineAccess.get(p).species())));
         if (!p.getInventory().add(blood)) {
             p.drop(blood, false);
+            p.displayClientMessage(Component.translatable(DROPPED), true);
         }
+        ActionClock.countUse(p, id());
         ActionClock.start(p, id(), cooldownTicks(p));
         return null;
     }

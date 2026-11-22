@@ -628,8 +628,8 @@ public final class OriginalGameTests {
                 }
             }
             helper.assertTrue(!found.isEmpty(), "no Original's Blood was made");
-            helper.assertTrue(original.getUUID().equals(found.get(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get())),
-                    "the blood names " + found.get(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get()));
+            var named = net.ofatech.supernaturalbloodlines.parts.species.item.BloodStamp.read(found);
+            helper.assertTrue(named.isPresent() && original.getUUID().equals(named.get().id()), "the blood names " + named);
         } finally {
             clearDropped(helper);
             remove(helper, original);
@@ -750,8 +750,8 @@ public final class OriginalGameTests {
                     }
                 }
                 helper.assertTrue(!found.isEmpty(), "no Original's Blood was made from " + s);
-                helper.assertTrue(s.name().equals(found.get(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get())),
-                        "the bottle records " + found.get(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get()) + ", expected " + s);
+                helper.assertTrue(!found.has(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get()) && !found.has(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get()),
+                        "the plain source is on the bottle");
                 var stamp = net.ofatech.supernaturalbloodlines.parts.species.item.BloodStamp.read(found).orElse(null);
                 helper.assertTrue(stamp != null && stamp.kind() == net.ofatech.supernaturalbloodlines.core.blood.BloodKind.of(s) && !stamp.npc()
                         && stamp.id().equals(source.getUUID()), "the stamp is " + stamp);

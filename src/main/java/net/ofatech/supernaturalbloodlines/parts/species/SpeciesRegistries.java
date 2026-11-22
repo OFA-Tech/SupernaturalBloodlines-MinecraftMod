@@ -81,23 +81,24 @@ public final class SpeciesRegistries {
             COMPONENTS.registerComponentType("blood_source_name", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
 
     /**
-     * The species ({@code Species} name) of the one a bottle of blood was taken from, written when the bottle is made (R40a, R210). A bottle without it was made before.
-     * Nothing about the source is secret-safe to send: the four source components keep their real saved value and sync as units (the client sees only that they
-     * exist), and {@link #BLOOD_LABEL_COMPONENT} is the one thing a tooltip may read.
+     * OLD plain form (R40a), never written any more: the species ({@code Species} name) of the one a bottle was taken from. A stack that still has it (and
+     * {@link #BLOOD_SOURCE_COMPONENT}) was made before sealing; {@code BloodStamp} reads it and moves it into {@link #BLOOD_SEAL_COMPONENT}. It syncs as
+     * nothing, so a client never sees it.
      */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_SOURCE_SPECIES_COMPONENT =
             COMPONENTS.registerComponentType("blood_source_species", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(unit("")));
 
+    /** OLD plain form, never written any more: the source's UUID (see {@link #BLOOD_SOURCE_SPECIES_COMPONENT}). Syncs as nothing. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>> BLOOD_SOURCE_COMPONENT =
             COMPONENTS.registerComponentType("blood_source", b -> b.persistent(UUIDUtil.CODEC).networkSynchronized(unit(Util.NIL_UUID)));
 
-    /** Whether the source was a mob (R210). Server-only value, unit-synced. */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> BLOOD_SOURCE_NPC_COMPONENT =
-            COMPONENTS.registerComponentType("blood_source_npc", b -> b.persistent(Codec.BOOL).networkSynchronized(unit(false)));
-
-    /** The source's real name, kept on the server so a bottle can be traced; never sent to a client. */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_SOURCE_PRIVATE_NAME_COMPONENT =
-            COMPONENTS.registerComponentType("blood_source_private_name", b -> b.persistent(Codec.STRING).networkSynchronized(unit("")));
+    /**
+     * Whose blood a bottle holds, sealed (R210): one opaque string (AES-GCM under the world's key, see {@code BloodSealCodec}). The only place the source lives
+     * on a stack, so the saved item, the wire, a decorated pot and a chat hover show nothing but ciphertext. {@code blood_source} and
+     * {@code blood_source_species} above are the old plain form: read and moved into a seal, never written.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_SEAL_COMPONENT =
+            COMPONENTS.registerComponentType("blood_seal", b -> b.persistent(Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
 
     /** What a tooltip shows: {@code "?"} for every secret kind, a common vampire's name otherwise. The only synced part of a stamped bottle. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BLOOD_LABEL_COMPONENT =

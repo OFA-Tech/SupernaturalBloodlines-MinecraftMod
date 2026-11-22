@@ -52,7 +52,7 @@ public final class TurningHandler {
     public static final TagKey<Item> VAMPIRE_BLOOD = TagKey.create(Registries.ITEM,
             ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "vampire_blood"));
 
-    private static final ResourceLocation WEREWOLF_ID = ResourceLocation.parse("werewolves:werewolf");
+    public static final ResourceLocation WEREWOLF_ID = ResourceLocation.parse("werewolves:werewolf");
 
     private TurningHandler() {
     }

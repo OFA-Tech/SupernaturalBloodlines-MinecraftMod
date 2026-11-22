@@ -13,6 +13,7 @@ import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.blood.BloodBottleRules;
+import net.ofatech.supernaturalbloodlines.core.blood.BloodSource;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.parts.species.hybrid.TransitionBlood;
@@ -42,19 +43,16 @@ public final class OriginalBloodItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (!stack.has(SpeciesRegistries.BLOOD_SOURCE_COMPONENT)) {
+        if (!BloodStamp.has(stack)) {
             return InteractionResultHolder.pass(stack); // blood from nobody
         }
         // the client is not told the source (R210), so it cannot judge the drink: the server decides and tells the player why
         if (level.isClientSide || !(player instanceof ServerPlayer sp)) {
             return ItemUtils.startUsingInstantly(level, player, hand);
         }
-        if (refuses(sp, stack)) {
-            // the bottle is kept; a werewolf is told why (R40a)
-            BloodBottleRules.Drinker drinker = BloodBottles.drinkerOf(sp);
-            if (drinker == BloodBottleRules.Drinker.WEREWOLF || drinker == BloodBottleRules.Drinker.WEREWOLF_IN_TRANSITION) {
-                player.displayClientMessage(Component.translatable(REFUSED), true);
-            }
+        BloodSource source = BloodBottles.sourceOf(sp.server, stack);
+        if (refuses(sp, source)) {
+            player.displayClientMessage(BloodBottles.refusal(sp, source), true); // the bottle is kept; the drinker is told why (R40a)
             return InteractionResultHolder.fail(stack);
         }
         return ItemUtils.startUsingInstantly(level, player, hand);
@@ -66,8 +64,8 @@ public final class OriginalBloodItem extends Item {
     }
 
     /** Original's Blood is for the blood of an Original: a bottle the rules would refuse, or do nothing with (a werewolf and common blood), is kept. */
-    private static boolean refuses(ServerPlayer p, ItemStack stack) {
-        BloodBottleRules.Effect e = BloodBottles.decide(p, BloodBottles.sourceOf(stack));
+    private static boolean refuses(ServerPlayer p, BloodSource source) {
+        BloodBottleRules.Effect e = BloodBottles.decide(p, source);
         return e == BloodBottleRules.Effect.REFUSED || e == BloodBottleRules.Effect.NO_EFFECT;
     }
 
@@ -79,19 +77,19 @@ public final class OriginalBloodItem extends Item {
         if (!(drinker instanceof Player p)) {
             return false;
         }
-        return !(p instanceof ServerPlayer sp) || !refuses(sp, stack);
+        return !(p instanceof ServerPlayer sp) || !refuses(sp, BloodBottles.sourceOf(sp.server, stack));
     }
 
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
-        if (entity instanceof ServerPlayer player) {
-            if (refuses(player, stack)) {
-                return stack; // not drunk by any other route either; nothing is used up
-            }
-            BloodBottles.apply(player, BloodBottles.sourceOf(stack));
-        } else if (!mayDrink(stack, entity)) {
-            return stack;
+        if (!(entity instanceof ServerPlayer player)) {
+            return stack; // the client never drinks: the server decides and sends the result
         }
-        return entity instanceof Player player ? ItemUtils.createFilledResult(stack, player, new ItemStack(Items.GLASS_BOTTLE)) : stack;
+        BloodSource source = BloodBottles.sourceOf(player.server, stack);
+        if (refuses(player, source)) {
+            return stack; // not drunk by any other route either; nothing is used up
+        }
+        BloodBottles.apply(player, source);
+        return ItemUtils.createFilledResult(stack, player, new ItemStack(Items.GLASS_BOTTLE));
     }
 }

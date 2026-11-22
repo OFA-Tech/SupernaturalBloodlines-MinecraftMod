@@ -726,7 +726,7 @@ public final class KlausGameTests {
         ServerPlayer p = talker(helper);
         try {
             helper.assertTrue(drink(helper, p, new ItemStack(BossItems.KLAUS_BLOOD.get())), "the drink did not start");
-            helper.assertTrue(told(p, net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrink.DRUNK), "the drinker was not told whose blood is in them");
+            helper.assertTrue(told(p, net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrink.DRUNK_MARKED), "the drinker was not told whose blood is in them");
         } finally {
             forgetAll(helper, p);
         }
@@ -934,12 +934,12 @@ public final class KlausGameTests {
         TestPlayers.TalkingDuelist klaus = (TestPlayers.TalkingDuelist) talker(helper);
         try {
             helper.assertTrue(drink(helper, p, originalsBlood(net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.ELIJAH.uuid(), Species.ORIGINAL)), "the drink did not start");
-            Object[] args = ((net.minecraft.network.chat.contents.TranslatableContents) p.message(net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrink.DRUNK).getContents()).getArgs();
+            Object[] args = ((net.minecraft.network.chat.contents.TranslatableContents) p.message(net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrink.DRUNK_MARKED).getContents()).getArgs();
             helper.assertTrue(args[0] instanceof net.minecraft.network.chat.Component c && c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
                     && t.getKey().equals("supernaturalbloodlines.line.unknown_original"), "the message names an undiscovered Original: " + args[0]);
             helper.assertTrue(Integer.valueOf(5).equals(args[1]), "the message does not say for 5 minutes: " + args[1]);
             helper.assertTrue(drink(helper, klaus, new ItemStack(BossItems.KLAUS_BLOOD.get())), "Klaus's drink did not start");
-            Object[] klausArgs = ((net.minecraft.network.chat.contents.TranslatableContents) klaus.message(net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrink.DRUNK).getContents()).getArgs();
+            Object[] klausArgs = ((net.minecraft.network.chat.contents.TranslatableContents) klaus.message(net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrink.DRUNK_MARKED).getContents()).getArgs();
             helper.assertTrue(klausArgs[0] instanceof net.minecraft.network.chat.Component c && c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
                     && t.getKey().equals(net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.KLAUS.translationKey()), "Klaus's Blood does not name Klaus: " + klausArgs[0]);
         } finally {

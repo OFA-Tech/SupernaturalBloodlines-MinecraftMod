@@ -78,6 +78,9 @@ public final class BloodShots {
                 sp.getInventory().add(bottle(SpeciesRegistries.HYBRID_BLOOD.get(), BloodKind.HYBRID, "Elena Gilbert"));
             });
         }
+        if (ticks >= 50 && ticks < 90) {
+            mc.getToasts().clear(); // the recipe toast of a fresh world would sit over the tooltips
+        }
         if (ticks == 50) {
             mc.setScreen(new Panel());
         }

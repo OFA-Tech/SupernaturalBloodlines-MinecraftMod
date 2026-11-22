@@ -112,6 +112,8 @@ public final class SpeciesConfig {
     public static final double DEFAULT_BOTTLE_BLOOD_HEALTH_COST = 3.0;
     private static final ModConfigSpec.IntValue BOTTLE_BLOOD_COOLDOWN_SECONDS;
     private static final ModConfigSpec.DoubleValue BOTTLE_BLOOD_HEALTH_COST;
+    public static final int DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT = 8;
+    private static final ModConfigSpec.IntValue BOTTLE_BLOOD_DAILY_LIMIT;
 
     /** The numbers of the pack's NPC members (plan 15d, R148). */
     public record MemberTuning(boolean recruit, int perPlayer, int perPack, boolean huntTrips, int huntPeriodMinutes, boolean chestSort, double weightBrother,
@@ -287,6 +289,8 @@ public final class SpeciesConfig {
                 .defineInRange("bottle_blood_cooldown_seconds", DEFAULT_BOTTLE_BLOOD_COOLDOWN_SECONDS, 1, 3600);
         BOTTLE_BLOOD_HEALTH_COST = b.comment("R211: health (in half hearts) Bottle my blood costs. It never kills: it stops at 1 health.")
                 .defineInRange("bottle_blood_health_cost", DEFAULT_BOTTLE_BLOOD_HEALTH_COST, 0.0, 19.0);
+        BOTTLE_BLOOD_DAILY_LIMIT = b.comment("R211: how many times one player may use Bottle my blood in one game day. Vampire blood bottles are an ingredient (pure blood, vampire blood oil) and a task item of Vampirism, so they are not free.")
+                .defineInRange("bottle_blood_daily_limit", DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT, 1, 1000);
         b.pop();
         SPEC = b.build();
     }
@@ -838,6 +842,15 @@ public final class SpeciesConfig {
             return BOTTLE_BLOOD_COOLDOWN_SECONDS.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_BOTTLE_BLOOD_COOLDOWN_SECONDS;
+        }
+    }
+
+    /** {@code bottle_blood_daily_limit}. */
+    public static int bottleBloodDailyLimit() {
+        try {
+            return BOTTLE_BLOOD_DAILY_LIMIT.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT;
         }
     }
 

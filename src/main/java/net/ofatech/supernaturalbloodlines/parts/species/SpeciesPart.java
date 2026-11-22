@@ -189,6 +189,7 @@ public final class SpeciesPart {
         Electricity.register(); // always: Shocked and the Taser work on every supernatural
         TurningHandler.register(); // always: the turning is vampires only, no Werewolves needed
         GhoulGates.register();
+        net.ofatech.supernaturalbloodlines.parts.species.item.BloodKeys.register();
         net.ofatech.supernaturalbloodlines.parts.species.item.BloodBottles.register();
         net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrops.register();
         net.ofatech.supernaturalbloodlines.parts.species.item.BloodTooltip.register();
