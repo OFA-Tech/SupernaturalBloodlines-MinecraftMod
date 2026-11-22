@@ -33,6 +33,15 @@ The frame, tabs, seals, scroll bars, rules, bars, task boxes, rung marks, stamps
 | Blood Moon, Guide | The footer bar's hint is cut after two lines while there is free space above | The bar grows upward to the lines the hint needs (`FooterFit`), as far as the free space |
 | Tensura, any two-column page, s4 | The scroll bar sits tight against the next column | 6 px gap between the bar and the column (`ColumnGap`) |
 
+## As built
+
+- **Cards** use the kit's inset (KitSprites.CARD): the plate is a one-line pill that bands when a card is tall. A card whose height is known only after its content (the Home request cards) is washed over the content at 15% (CARD_OVER_ALPHA, held to 4.5:1 by KitFacesTest).
+- **Skill nodes**: NodeSize picks the kit's 34 px node where the ring has the room; at the shot sizes every ring was too small, so the 18 px shapes stay (reskin only). The 
+ode_* sprites are wired and tested.
+- **Skill ring names** that do not fit beside a node are cut with an ellipsis (the tooltip has the full name); one that fits nowhere is left to its tooltip (Silver Tongue at Blood Moon scale 3).
+- **Pack ring** names are placed by RingLabels; the Dev · Alpha line is left out when a face stands in its way.
+- **Pips** are the kit's pip_on/pip_off at 2x.
+
 ## Left for phase 6
 
 Boss bars (`boss_*` sprites, `BossBarView`).
