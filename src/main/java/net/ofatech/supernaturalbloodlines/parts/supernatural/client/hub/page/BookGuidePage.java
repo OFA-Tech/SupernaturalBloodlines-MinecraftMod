@@ -61,15 +61,18 @@ public final class BookGuidePage implements HubPageView {
             String id = ids.get(i);
             boolean on = id.equals(chapter);
             Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, 12);
-            if (on) {
+            boolean drawn = f.whole(y - 1, 12);
+            if (drawn && on) {
                 f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
             }
             Component name = Component.translatable(GuideChapters.titleKey(id));
-            f.g.drawString(f.font(), roman(i + 1) + ".", r.x(), y, on ? t.accent() : t.muted(), false);
+            if (drawn) {
+                f.g.drawString(f.font(), roman(i + 1) + ".", r.x(), y, on ? t.accent() : t.muted(), false);
+            }
             BookKit.leader(f, name, marksOpen(i, ids.indexOf(chapter)) ? Component.translatable(BOOK + "reading") : Component.empty(), r.x() + 30, y, r.w() - 30, on ? t.accent() : t.muted());
             String target = "chapter:" + id;
             f.target(target, hit, List.of(name), () -> chapter = id);
-            if (f.focused(target)) {
+            if (drawn && f.focused(target)) {
                 KitDraw.focusRing(f.g, hit, t.focusColor());
             }
             y += 12;

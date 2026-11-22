@@ -34,7 +34,7 @@ public final class BookPackPage implements HubPageView {
     /** Past this many portraits on the ring the names are left out (the tooltip has them). */
     private static final int NAMED_MAX = 12;
     /** A name round the ring is kept while at least this many pixels of it fit clear of the faces and the other names; below that it is left to the tooltip. */
-    private static final int RING_NAME_MIN = 14;
+    private static final int RING_NAME_MIN = 22;
 
     @Nullable
     private String selected;
@@ -230,18 +230,22 @@ public final class BookPackPage implements HubPageView {
             boolean stacked = tight || (style == Style.TENSURA && f.font().width(m.name()) + f.font().width(rank) + 14 > r.w() - 8 - crown);
             // the row, and its tint, are as tall as what is drawn in it (20 pixels when the rank has a line of its own)
             Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, stacked ? 20 : 11);
-            if (m == chosen) {
+            // a row that is not whole above the "more below" marker is not drawn at all (its target is kept)
+            boolean drawn = f.whole(y - 1, hit.h());
+            if (drawn && m == chosen) {
                 f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
             }
-            f.g.fill(r.x(), y + 2, r.x() + 4, y + 6, m.online() ? 0xFF2F6E4A : 0xFF9A8566);
-            if (leads && crown > 0) {
-                crown(f, r.x() + 8, y + 1);
-            }
-            if (stacked) {
-                f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(m.name(), r.w() - 8 - crown, f.font()::width), r.x() + 8 + crown, y, t.ink(), false);
-                f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(rank.getString(), r.w() - 8 - crown, f.font()::width), r.x() + 8 + crown, y + 10, t.muted(), false);
-            } else {
-                BookKit.leader(f, Component.literal(nameFor(f, m.name(), rank, r.w() - 8 - crown)), rank, r.x() + 8 + crown, y, r.w() - 8 - crown, t.muted());
+            if (drawn) {
+                f.g.fill(r.x(), y + 2, r.x() + 4, y + 6, m.online() ? 0xFF2F6E4A : 0xFF9A8566);
+                if (leads && crown > 0) {
+                    crown(f, r.x() + 8, y + 1);
+                }
+                if (stacked) {
+                    f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.cut(f.font(), m.name(), r.w() - 8 - crown, f.font()::width), r.x() + 8 + crown, y, t.ink(), false);
+                    f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.cut(f.font(), rank.getString(), r.w() - 8 - crown, f.font()::width), r.x() + 8 + crown, y + 10, t.muted(), false);
+                } else {
+                    BookKit.leader(f, Component.literal(nameFor(f, m.name(), rank, r.w() - 8 - crown)), rank, r.x() + 8 + crown, y, r.w() - 8 - crown, t.muted());
+                }
             }
             String id = "member:" + m.name();
             List<Component> tip = new java.util.ArrayList<>(List.of(Component.literal(m.name()), rank, Component.translatable(KEY + (m.online() ? "online" : "offline"))));
@@ -250,7 +254,7 @@ public final class BookPackPage implements HubPageView {
             }
             tip.add(Component.translatable(KEY + "open_profile"));
             f.target(id, hit, tip, openProfile(f, m.name()));
-            if (f.focused(id)) {
+            if (drawn && f.focused(id)) {
                 KitDraw.focusRing(f.g, hit, t.focusColor());
             }
             y += stacked ? 21 : 11;
