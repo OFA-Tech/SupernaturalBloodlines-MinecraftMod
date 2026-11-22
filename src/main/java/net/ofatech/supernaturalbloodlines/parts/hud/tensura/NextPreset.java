@@ -8,7 +8,7 @@ import net.ofatech.supernaturalbloodlines.core.hud.PresetPair;
 
 /**
  * The rule of reserved mixin (1): a skill in preset N+1 (the HUD's right column) also counts as "in the active preset", so Tensura accepts its
- * activation packet and keeps its passive effect. Tensura Slots' mixin does the same; this is only reached when its answer was false, so both can be present.
+ * activation packet and keeps its passive effect. Tensura Slots' mixin does the same, so the mixin that calls this is not applied when Slots is installed.
  * Linked to Tensura; reached only from the mixin, which is applied only when Tensura is installed.
  */
 public final class NextPreset {

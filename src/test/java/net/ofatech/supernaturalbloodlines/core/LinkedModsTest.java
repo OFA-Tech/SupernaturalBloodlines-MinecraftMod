@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.slf4j.helpers.NOPLogger;
 
@@ -15,6 +16,7 @@ class LinkedModsTest {
         assertFalse(LinkedMods.untested("2.0.1.5", "2.0.1"));
         assertFalse(LinkedMods.untested("9.5.1+1.21.1", "9.5"));
         assertFalse(LinkedMods.untested("4.0.7-beta", "4.0"));
+        assertFalse(LinkedMods.untested("9.6.0+1.21.1", LinkedMods.TESTED.get("curios")));
     }
 
     @Test
@@ -24,6 +26,14 @@ class LinkedModsTest {
         assertTrue(LinkedMods.untested("2.1.0", "2.0.1"));
         assertTrue(LinkedMods.untested("1.10.14", "1.10.13"));
         assertTrue(LinkedMods.untested("2.0", "2.0.1"));
+        assertTrue(LinkedMods.untested("9.7.0", LinkedMods.TESTED.get("curios")));
+    }
+
+    @Test
+    void accessoriesLayerWithCuriosWarnsOnlyForThePair() {
+        assertTrue(LinkedMods.warnCrashPair(Set.of("accessories_compat_layer", "curios")::contains, NOPLogger.NOP_LOGGER));
+        assertFalse(LinkedMods.warnCrashPair(Set.of("curios")::contains, NOPLogger.NOP_LOGGER));
+        assertFalse(LinkedMods.warnCrashPair(Set.of("accessories_compat_layer")::contains, NOPLogger.NOP_LOGGER));
     }
 
     @Test

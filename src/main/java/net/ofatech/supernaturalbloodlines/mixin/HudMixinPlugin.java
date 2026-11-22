@@ -1,20 +1,15 @@
 package net.ofatech.supernaturalbloodlines.mixin;
 
-import java.util.List;
-import java.util.Map;
 import net.neoforged.fml.loading.LoadingModList;
 import net.ofatech.supernaturalbloodlines.core.Part;
+import net.ofatech.supernaturalbloodlines.core.hud.HudMixinRules;
 
 /**
  * The hud part's mixins (budget 3, 1 used: the next-preset one; the race-feed one and the Controls one are reserved). Each is listed in
- * {@link #REQUIRED_MODS} by its simple class name with the mods it targets (Tensura for the next-preset one, Tensura and Vampirism for the race-feed one),
- * and is applied only when they are all installed. {@link #postApply} checks that every hook landed, since {@code require = 0} skips a renamed method silently.
+ * {@link HudMixinRules#REQUIRED_MODS} by its simple class name with the mods it targets (Tensura for the next-preset one, Tensura and Vampirism for the race-feed one),
+ * and is applied only when they are all installed (and, for the next-preset one, Tensura Slots is not: see {@link HudMixinRules#SUPERSEDED_BY}). {@link #postApply} checks that every hook landed, since {@code require = 0} skips a renamed method silently.
  */
 public final class HudMixinPlugin extends PartMixinPlugin {
-    private static final Map<String, List<String>> REQUIRED_MODS = Map.of(
-            "AbilityStorageNextPresetMixin", List.of("tensura"),
-            "VampireRaceFeedMixin", List.of("tensura", "vampirism"));
-
     public HudMixinPlugin() {
         super(Part.HUD);
     }
@@ -51,6 +46,10 @@ public final class HudMixinPlugin extends PartMixinPlugin {
         }
         String simple = mixinClassName.substring(mixinClassName.lastIndexOf('.') + 1);
         LoadingModList mods = LoadingModList.get();
-        return REQUIRED_MODS.getOrDefault(simple, List.of()).stream().allMatch(id -> mods.getModFileById(id) != null);
+        boolean applies = HudMixinRules.applies(simple, id -> mods.getModFileById(id) != null);
+        if (!applies && mixinClassName.endsWith(".AbilityStorageNextPresetMixin") && mods.getModFileById("tensura") != null) {
+            log.info("AbilityStorageNextPresetMixin: Tensura Slots hooks the same four isAbilityInActivePreset overloads, so ours stays out");
+        }
+        return applies;
     }
 }
