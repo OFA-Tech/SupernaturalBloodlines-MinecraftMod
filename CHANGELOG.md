@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased (plan 18c: Augustine vampires)
+
+### Added
+- **Augustines (R200 to R203).** A new species of the vampire side: a plain vampire who took Wes's serum is a little stronger (+10% attack, +2 health, configurable), takes triple blood from vampires and a third from anyone else, and is not refused by R20f when it bites a vampire. Two skills of its own: Garlic Ward (no garlic effect, no blindness in strong garlic) and Blessed Skin (holy water halved). Its ladder is seven rungs; the last is a plain vampire's Tensura rung.
+- **How to make one:** the Rite of Augustine (four garlic, a holy water, a human heart, a golden apple, a medium circle, 16,000 power) or **Wes's Syringe** (glass bottle, iron ingot, a vampire blood bottle, garlic; sneak and use it in the air, or on a sneaking player). A syringe that does nothing always says the same line.
+- **Tensura:** an Augustine gets a plain vampire's treatment (race on joining, layer, undead, apex race Elder Vampire, ladder).
+- Config (with Admin rows): `augustine_attack_bonus`, `augustine_extra_health`, `augustine_blood_from_vampire_factor`, `augustine_blood_from_other_factor`.
+
+### Migration
+- No existing player changes. A world saved with an Augustine and rolled back to an older build loads the Augustine as a player with no species (the codec reads an unknown species as none); their Augustine skills stay in the skills list, dormant. No payload changed, so no network version is bumped.
+- The placeholder art: the syringe uses Hybrid's Blood's icon and the two skills use the shield and sun icons, until the art lands.
 ## Unreleased (plan 18b: dying with vampire blood stands you up)
 
 ### Changed

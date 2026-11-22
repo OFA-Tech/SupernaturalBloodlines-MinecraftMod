@@ -33,7 +33,7 @@ class PackAccessTest {
     @Test
     void originalsHereticsAndTheFiveAreLeftToTheBloodlineRules() {
         for (PackEvent e : LINEAGE_GIVING) {
-            for (Species s : new Species[]{Species.ORIGINAL, Species.HERETIC, Species.POTENTIAL, Species.HUNTER_OF_THE_FIVE}) {
+            for (Species s : new Species[]{Species.ORIGINAL, Species.HERETIC, Species.AUGUSTINE, Species.POTENTIAL, Species.HUNTER_OF_THE_FIVE}) {
                 assertEquals("wolf_wrong_species", PackAccess.blocked(BaseFaction.NONE, s, e), e + " " + s);
             }
         }

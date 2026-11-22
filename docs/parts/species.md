@@ -509,6 +509,12 @@ For plan 17 (bosses): **an NPC Original killed by white oak stays dead: `LineInd
 
 Tests: `LineRulesTest`, `RingFillTest`, `LineIndexTest`, `LineTreeTest`, `LineTreeLayoutTest`; GameTests `LineGameTests`, `LineDeathGameTests`, `LineDiscoveryGameTests`, `LineWarningGameTests`, `LineRiteGameTests`, `LineRiteRingGameTests`, `LineHubGameTests`.
 
+## Plan 18c: Augustines (R200 to R203)
+- **Code:** `core/bloodline/AugustineBloodRules` (pure), `BloodlineRules.madeAugustine` and `isPlainVampireLike`, `parts/species/augustine/AugustineRules` (modifiers, blood) and `AugustineGifts` (S-AUG-1, S-AUG-2), `parts/species/item/AugustineSyringeItem`, the rite `enchanted/circle_magic/rite/augustine.json` (`faction_rite`, event `rite_of_augustine`).
+- **Config** (`supernaturalbloodlines-species.toml`, all with Admin rows): `augustine_attack_bonus`, `augustine_extra_health`, `augustine_blood_from_vampire_factor`, `augustine_blood_from_other_factor`.
+- **Tensura:** one helper, `BloodlineRules.isPlainVampireLike`; the sites are `VampireSync.isSyncable`, `LayerTable.specFor`, `SpeciesLayer.spec`, `EvolutionBoost`, `ApexSpec.forRace`, `ApexLines`, `MigrationRules.apexRaces`. `LayerSlices.raceOf` stays null for an Augustine (it keeps the whole layer, as a plain vampire does).
+- **Tests:** `BloodlineRulesTest` (6), `AugustineBloodRulesTest`, `AugustineGameTests`, `AugustineMakingGameTests`, `AugustineTensuraGameTests`, plus the data tables (`LadderDataTest`, `SkillDataTest`, `LadderSpecRowsTest`).
+
 ## Plan 18a: blood bottles carry their source (R210, R211)
 
 - [x] **Pure rules** (`core/blood`): `BloodKind`, `BloodSource`, `BloodBottleRules.decide` (the drinking table; plus `NAME_SIRE` for a human already in the turning who drinks an Original's blood, and a werewolf in the transition is refused an Original's blood that may not start it, as `OriginalBloodItem.mayDrink` always did), `BloodSealCodec` (AES-256-GCM, fixed plaintext size, opens to nothing on any failure).

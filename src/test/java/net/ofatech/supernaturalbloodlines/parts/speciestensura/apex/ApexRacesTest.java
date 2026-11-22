@@ -54,6 +54,7 @@ class ApexRacesTest {
     void thePlainRacesHaveTheirOwnApex() {
         assertEquals(9, ApexSpec.ALL.size());
         assertSame(ApexSpec.ELDER_VAMPIRE, ApexSpec.forRace(SupernaturalRace.VAMPIRE).orElseThrow());
+        assertSame(ApexSpec.ELDER_VAMPIRE, ApexSpec.forRace(SupernaturalRace.AUGUSTINE).orElseThrow(), "an Augustine has a plain vampire's apex (owner, Q3)");
         assertSame(ApexSpec.ALPHA_PRIMEVAL, ApexSpec.forRace(SupernaturalRace.WEREWOLF).orElseThrow());
         assertEquals(900, ApexSpec.ELDER_VAMPIRE.health());
         assertEquals(List.of("tensura:self_regeneration"), ApexSpec.ELDER_VAMPIRE.intrinsicSkills());

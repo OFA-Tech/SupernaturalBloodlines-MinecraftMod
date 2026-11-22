@@ -84,7 +84,7 @@ public final class PackAccess {
             return "wolf_wrong_faction";
         }
         return switch (species) {
-            case ORIGINAL, HERETIC, POTENTIAL, HUNTER_OF_THE_FIVE -> "wolf_wrong_species";
+            case ORIGINAL, HERETIC, AUGUSTINE, POTENTIAL, HUNTER_OF_THE_FIVE -> "wolf_wrong_species";
             default -> null;
         };
     }

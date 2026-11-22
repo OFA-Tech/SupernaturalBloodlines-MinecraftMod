@@ -36,6 +36,18 @@ class LayerTableTest {
     }
 
     @Test
+    void anAugustineGetsThePlainVampiresEntryAndHasNoOfItsOwn() {
+        LayerTable t = LayerTable.parse(LayerTable.DEFAULTS).table();
+        assertEquals(t.specFor(Species.NONE, true), t.specFor(Species.AUGUSTINE, true));
+        assertTrue(t.specFor(Species.AUGUSTINE, true).treatAsUndead());
+        assertEquals(LayerSpec.NONE, t.specFor(Species.AUGUSTINE, false), "not a vampire any more: nothing");
+        // a config line for AUGUSTINE would never be used, so it is refused (the entry is the VAMPIRE one)
+        var parsed = LayerTable.parse(List.of("AUGUSTINE=drain,charm|0.5|0|true"));
+        assertEquals(List.of("AUGUSTINE=drain,charm|0.5|0|true"), parsed.rejected());
+        assertEquals(List.of("tensura:drain"), parsed.table().specFor(Species.AUGUSTINE, true).skills());
+    }
+
+    @Test
     void plainVampireOnlyCountsWithoutASpecies() {
         LayerTable t = LayerTable.parse(LayerTable.DEFAULTS).table();
         LayerSpec vampire = t.specFor(Species.NONE, true);

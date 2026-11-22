@@ -97,6 +97,24 @@ public final class AugustineGameTests {
         return (LivingEntity) BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse(id)).create(helper.getLevel());
     }
 
+    /** The species is a fact the viewer must have discovered (like a heretic): a stranger's profile of an Augustine does not show it. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aStrangersProfileOfAnAugustineDoesNotShowTheSpecies(GameTestHelper helper) {
+        ServerPlayer observer = TestPlayers.create(helper);
+        ServerPlayer augustine = vampire(helper, Species.AUGUSTINE);
+        ServerPlayer heretic = vampire(helper, Species.HERETIC);
+        try {
+            var seen = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(observer, augustine.getUUID()).facts();
+            var control = net.ofatech.supernaturalbloodlines.shared.supernatural.profile.ProfileService.of(observer, heretic.getUUID()).facts();
+            helper.assertTrue(!seen.containsKey(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES), "a stranger sees an Augustine's species: " + seen);
+            helper.assertTrue(seen.containsKey(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES) == control.containsKey(net.ofatech.supernaturalbloodlines.shared.supernatural.profile.Fact.SPECIES),
+                    "an Augustine is not treated like a heretic");
+        } finally {
+            forget(augustine, heretic);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void anAugustineHasTheBonusesAndTheyGoWithTheSpecies(GameTestHelper helper) {
         ServerPlayer p = vampire(helper, Species.NONE);
