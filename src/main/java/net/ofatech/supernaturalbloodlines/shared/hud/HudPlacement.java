@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public final class HudPlacement {
     private static volatile TrackerAnchor toastAnchor = TrackerAnchor.TOP_LEFT;
     private static volatile Box trackerBox;
+    private static volatile int bossBottom;
 
     private HudPlacement() {
     }
@@ -30,5 +31,20 @@ public final class HudPlacement {
 
     public static void trackerBox(@Nullable Box box) {
         trackerBox = box;
+    }
+
+    /** The lowest pixel of the boss bars drawn last frame (0 for none): the toast at the top centre stays under them. */
+    public static int bossBottom() {
+        return bossBottom;
+    }
+
+    public static void bossBottom(int y) {
+        bossBottom = y;
+    }
+
+    /** Start of a GUI frame: nothing of last frame's HUD is still there (a hidden GUI draws no layer to clear it). */
+    public static void beginFrame() {
+        trackerBox = null;
+        bossBottom = 0;
     }
 }

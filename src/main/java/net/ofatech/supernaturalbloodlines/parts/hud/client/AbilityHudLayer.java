@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.core.hud.AltHold;
 import net.ofatech.supernaturalbloodlines.core.hud.HudLayout;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Motion;
@@ -37,6 +38,8 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         return HudClientConfig.hudEnabled() && HudClientConfig.visibility() != net.ofatech.supernaturalbloodlines.core.hud.HudVisibility.HIDDEN && mc.player != null && !mc.options.hideGui && !mc.player.isSpectator() && HudModeState.current().isPresent();
     }
 
+    /** The tick Alt went down, or -1 while it is up: the panels follow a second later. */
+    private long altSince = -1;
     private final ReadyGlow.Tracker glowTracker = new ReadyGlow.Tracker(Loadout.SLOTS);
     private final float[] cooldowns = new float[Loadout.SLOTS];
     private final boolean[] eligible = new boolean[Loadout.SLOTS];
@@ -60,7 +63,6 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
     }
     @Override
     public void render(GuiGraphics g, DeltaTracker delta) {
-        net.ofatech.supernaturalbloodlines.shared.hud.HudPlacement.trackerBox(null);
         net.ofatech.supernaturalbloodlines.shared.hud.HudPlacement.toastAnchor(HudClientConfig.toastAnchor());
         if (!shown()) {
             glowTracker.reset();
@@ -68,10 +70,14 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         }
         Minecraft mc = Minecraft.getInstance();
         HudSource src = HudSource.current();
+        net.ofatech.supernaturalbloodlines.shared.hud.HudPlacement.bossBottom(src.bossBottom());
         HudStyle.Style style = HudStyle.current();
         HudLayout.Box[] boxes = HudLayout.slots(g.guiWidth(), g.guiHeight());
         SlotView[] views = src.views();
         boolean alt = src.alt();
+        long nowTick = mc.level == null ? 0 : mc.level.getGameTime();
+        altSince = AltHold.since(altSince, alt, nowTick);
+        boolean detail = AltHold.detailed(altSince, nowTick) || (net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on && net.ofatech.supernaturalbloodlines.shared.hud.DevHud.detail);
         boolean busy = alt || HudModeState.justSwitched();
         for (SlotView v : views) {
             busy |= v.cooldown() > 0f || v.active();
@@ -106,7 +112,7 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
         }
         src.tracked().ifPresent(l -> HudChrome.tracker(g, mc.font, style, l, Math.max(alpha, HudActivity.FADED), HudClientConfig.trackerAnchor(), src.bossBottom()));
         if (alt && alpha > 0.01f) {
-            HudChrome.labels(g, mc.font, style, boxes, views, previewTop, alpha, src.cacheable(), src.actionBar());
+            HudChrome.labels(g, mc.font, style, boxes, views, previewTop, alpha, src.cacheable(), src.actionBar(), detail);
         }
     }
 }

@@ -61,7 +61,7 @@ public final class RequestToast {
         if (statusCorner == null) {
             statusCorner = ModList.get().isLoaded("tensura") || ModList.get().isLoaded("vampirism");
         }
-        HudLayout.Box at = ToastPlace.place(g.guiWidth(), g.guiHeight(), W, h, statusCorner, HudPlacement.toastAnchor(), HudPlacement.trackerBox());
+        HudLayout.Box at = ToastPlace.place(g.guiWidth(), g.guiHeight(), W, h, statusCorner, HudPlacement.toastAnchor(), HudPlacement.trackerBox(), HudPlacement.bossBottom());
         UiKit.draw(g, kit, Part.HUD_LABEL, at.x(), at.y(), at.w(), at.h());
         List<String> shown = fitted(lines, W - 2 * PAD - 4, font::width);
         for (int i = 0; i < shown.size(); i++) {

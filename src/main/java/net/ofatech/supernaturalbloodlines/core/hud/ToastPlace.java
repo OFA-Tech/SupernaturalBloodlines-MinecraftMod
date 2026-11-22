@@ -23,25 +23,27 @@ public final class ToastPlace {
      * @param statusCorner whether Tensura or Vampirism is installed (their status stands top left)
      * @param anchor       the player's choice of corner; TOP_LEFT is the default
      * @param tracker      the tracked task's pill as it was drawn, or null when there is none
+     * @param bossBottom   the lowest pixel of the boss bars (0 for none): a toast at the top centre stands under them
      */
-    public static Box place(int screenW, int screenH, int w, int h, boolean statusCorner, TrackerAnchor anchor, @Nullable Box tracker) {
+    public static Box place(int screenW, int screenH, int w, int h, boolean statusCorner, TrackerAnchor anchor, @Nullable Box tracker, int bossBottom) {
         int x;
         int y;
         if (anchor == TrackerAnchor.TOP_LEFT) {
             x = X;
             y = statusCorner ? TrackerAnchor.TOP + TrackerAnchor.CORNER_H + GAP : Y;
         } else {
-            int[] at = anchor.place(screenW, screenH, w, h, 0);
+            int[] at = anchor.place(screenW, screenH, w, h, bossBottom);
             x = at[0];
             y = at[1];
         }
         Box b = clamp(screenW, screenH, x, y, w, h);
         if (tracker != null && b.overlaps(new Box(tracker.x() - GAP, tracker.y() - GAP, tracker.w() + 2 * GAP, tracker.h() + 2 * GAP))) {
-            b = clamp(screenW, screenH, b.x(), tracker.bottom() + GAP, w, h);
+            // a pill in the lower half of the screen (above the mode pill) is stacked over, one at the top is stacked under
+            boolean above = anchor == TrackerAnchor.ABOVE_MODE_PILL || tracker.y() > screenH / 2;
+            b = clamp(screenW, screenH, b.x(), above ? tracker.y() - GAP - h : tracker.bottom() + GAP, w, h);
         }
         return b;
     }
-
     private static Box clamp(int screenW, int screenH, int x, int y, int w, int h) {
         return new Box(Math.max(0, Math.min(x, screenW - w)), Math.max(0, Math.min(y, screenH - h)), w, h);
     }

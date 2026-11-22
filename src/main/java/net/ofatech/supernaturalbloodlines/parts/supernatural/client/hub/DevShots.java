@@ -205,6 +205,7 @@ public final class DevShots {
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on = false;
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.toast = false;
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.glow = false;
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.detail = false;
             SupernaturalBloodlines.LOGGER.warn("DEVSHOTS done");
             if (quit) {
                 mc.stop();
@@ -221,8 +222,9 @@ public final class DevShots {
             HubClientConfig.setTheme(theme);
             mc.setScreen(null);
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.on = s.hud() != null;
-            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.alt = "alt".equals(s.hud()) || "humanalt".equals(s.hud());
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.alt = "alt".equals(s.hud()) || "humanalt".equals(s.hud()) || "altheld".equals(s.hud()) || "humanaltheld".equals(s.hud());
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.glow = s.hud() != null && s.hud().endsWith("ready");
+            net.ofatech.supernaturalbloodlines.shared.hud.DevHud.detail = s.hud() != null && s.hud().endsWith("held");
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.toast = s.hud() != null && s.hud().endsWith("toast");
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.idle = "idle".equals(s.hud());
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.switched = "switched".equals(s.hud());

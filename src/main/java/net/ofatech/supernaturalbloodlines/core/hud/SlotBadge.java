@@ -21,20 +21,26 @@ public final class SlotBadge {
     /** The mark of Tensura mode: 7 x 7. */
     public static final int MARK = 7;
 
-    /** The badge's width: the one-character picture, or the wide one. */
+    /** The badge's width: the one-character picture, the wide one for two, and for three (F12, B10) the wide one stretched to hold them with a rim each side. */
     public static int badgeWidth(int labelW) {
-        return labelW <= CHAR_W ? BADGE_W : BADGE_WIDE;
+        return labelW <= CHAR_W ? BADGE_W : labelW <= 2 * CHAR_W ? BADGE_WIDE : labelW + 5;
     }
 
     private SlotBadge() {
     }
 
     /**
-     * The look whose badge and seconds stand on a slot. The Blood Moon's plate sits at the bottom of a round slot; on the square slots of Tensura mode it would cover
-     * half of the icon, so there it hangs off the top left like the Tensura theme's tab.
+     * The look whose badge and seconds stand on a slot. The Blood Moon's plate sits at the bottom of a slot and covers the lower half of its icon (and the lock,
+     * and a cooldown's seconds), on the round slots of Supernatural mode as on the square ones of Tensura mode: it hangs off the top left like the Tensura
+     * theme's tab instead.
      */
-    public static Look placement(Look look, boolean squareMode) {
-        return look == Look.BLOOD_MOON && squareMode ? Look.TENSURA : look;
+    public static Look placement(Look look) {
+        return look == Look.BLOOD_MOON ? Look.TENSURA : look;
+    }
+
+    /** A dark box a pixel round the seconds' text, so they read over a bright icon and the pie. */
+    public static Box secondsBacking(Box seconds) {
+        return new Box(seconds.x() - 1, seconds.y() - 1, seconds.w() + 2, seconds.h() + 2);
     }
 
     /** The key badge: a round wax seal at the bottom right, a dark plate under the letter at the bottom, or a tab hanging off the top left. */
@@ -82,6 +88,11 @@ public final class SlotBadge {
         return lift > 0 ? new Box(x, slot.y() + 1, textW, SECONDS_INK_SMALL) : new Box(x, slot.y() + 2, textW, TEXT_H);
     }
 
+    /** The lock on a slot that cannot be used: 10 x 10 in the middle, a pixel down and to the right so a hanging key tab at the top left only just touches it. */
+    public static Box lock(Box slot) {
+        return new Box(slot.x() + (HudLayout.SLOT - 10) / 2 + 1, slot.y() + (HudLayout.SLOT - 10) / 2 + 1, 10, 10);
+    }
+
     /** The mark of Tensura mode: a small diamond on the top right corner, mostly outside the tile, above where the seconds stand. */
     public static Box tensuraMark(Box slot) {
         return new Box(slot.right() - 3, slot.y() - 5, MARK, MARK);
@@ -103,8 +114,10 @@ public final class SlotBadge {
         }
         String[] words = s.split("\\s+");
         if (words.length == 1) {
-            return s.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + s.substring(1, 2);
+            return s.length() <= 3 && s.matches("[A-Za-z]\\d+") ? s : s.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + s.substring(1, 2);
         }
-        return words[0].substring(0, 1).toUpperCase(java.util.Locale.ROOT) + words[words.length - 1].substring(0, 1).toUpperCase(java.util.Locale.ROOT);
+        String last = words[words.length - 1];
+        String initial = words[0].substring(0, 1).toUpperCase(java.util.Locale.ROOT);
+        return last.length() <= 2 && last.chars().allMatch(Character::isDigit) ? initial + last : initial + last.substring(0, 1).toUpperCase(java.util.Locale.ROOT);
     }
 }

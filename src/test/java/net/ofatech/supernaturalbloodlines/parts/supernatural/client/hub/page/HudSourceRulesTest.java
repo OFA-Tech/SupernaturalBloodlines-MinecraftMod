@@ -9,7 +9,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
-/** Rules about how the HUD's drawing code is wired, which no pure test sees: each reverts to a visible bug. */
+/**
+ * The few rules about the HUD's drawing code that no behaviour test can reach, because they are about calls into the game's renderer and event bus. Everything
+ * that can be decided by a pure function has its test beside the function.
+ */
 class HudSourceRulesTest {
     private static String source(String file) throws IOException {
         Path at = Path.of("").toAbsolutePath();
@@ -29,44 +32,35 @@ class HudSourceRulesTest {
     }
 
     @Test
-    void theHudIconsAreTheOutlinedOnesAndTheReadyGlowIsNotTheActiveFrame() throws IOException {
-        String slot = source("parts/hud/client/SlotArt.java");
-        assertTrue(body(slot, "private static void icon(").contains("KitSprites.HUD_ICON"));
-        assertFalse(body(slot, "private static void readyGlow(").contains("framePart"), "the glow has its own look");
-        assertFalse(body(slot, "static void draw(").contains("alpha * glow"), "and the active frame is not faded in as the glow");
+    void aPackThatResizesAStripIsToldOnceAndTheHudDrawsItsStandIn() throws IOException {
+        String frame = body(source("shared/hub/kit/client/UiKit.java"), "public static boolean frame(");
+        assertTrue(frame.contains("WARNED.add(") && frame.contains("return false"));
     }
 
     @Test
-    void theSecondsAndTheKeyAreFittedToTheLiftedBadgeAndToLongKeyNames() throws IOException {
-        String slot = source("parts/hud/client/SlotArt.java");
-        assertTrue(body(slot, "private static void seconds(").contains("SlotBadge.secondsScale("));
-        assertTrue(body(slot, "private static void key(").contains("SlotBadge.shortKey("));
-        assertTrue(body(slot, "static void draw(").contains("SlotBadge.placement("), "Blood Moon's plate leaves the icon alone in Tensura mode");
-    }
-
-    @Test
-    void aPackThatResizesTheBloodRingStillGetsABar() throws IOException {
-        String ring = body(source("parts/hud/client/SlotArt.java"), "private static void bloodRing(");
-        assertTrue(ring.contains("FrameStrip.outlineSegments("));
-        assertTrue(body(source("shared/hub/kit/client/UiKit.java"), "public static boolean frame(").contains("WARNED.add("), "and says so once");
-    }
-
-    @Test
-    void theGlowIsTrackedByTheTrackerOnlyForFilledUsableSlotsAndStartsOverWhenTheHudIsHidden() throws IOException {
+    void theLayerFeedsTheTrackerOnlyUsableFilledSlotsAndStartsOverWhenTheHudIsHidden() throws IOException {
         String layer = source("parts/hud/client/AbilityHudLayer.java");
         assertTrue(body(layer, "private float[] glows(").contains("!v.isEmpty() && !v.greyed()"));
         assertTrue(body(layer, "public void render(").contains("glowTracker.reset()"));
+        assertTrue(body(layer, "public void render(").contains("AltHold.detailed("), "the panels follow Alt held");
     }
 
     @Test
-    void theToastLooksForTheOtherModsOnceAndAnchorsWhereTheHudSays() throws IOException {
+    void theToastAsksForTheOtherModsOnceAndAnchorsWhereTheHudSays() throws IOException {
         String toast = body(source("parts/supernatural/client/RequestToast.java"), "private static void draw(");
         assertTrue(toast.contains("statusCorner == null"), "the mod list is asked once");
-        assertTrue(toast.contains("HudPlacement.toastAnchor()") && toast.contains("HudPlacement.trackerBox()"));
+        assertTrue(toast.contains("HudPlacement.toastAnchor()") && toast.contains("HudPlacement.trackerBox()") && toast.contains("HudPlacement.bossBottom()"));
     }
 
     @Test
-    void aLabelThatDoesNotFitSendsItsColumnToThePanelAndTheModeMarkIsNamedOnce() throws IOException {
+    void theHudForgetsLastFramesPlacementBeforeEveryGuiFrameAndNotOnlyWhenItsLayerDraws() throws IOException {
+        String client = source("parts/hud/client/HudClient.java");
+        assertTrue(client.contains("RenderGuiEvent.Pre") && client.contains("HudPlacement.beginFrame()"));
+        assertFalse(body(source("parts/hud/client/AbilityHudLayer.java"), "public void render(").contains("trackerBox(null)"), "a hidden GUI draws no layer to clear it");
+    }
+
+    @Test
+    void aColumnWhoseLabelsDoNotFitShowsItsPanelAndTheModeMarkIsNamedOnce() throws IOException {
         String chrome = source("parts/hud/client/HudChrome.java");
         assertTrue(body(chrome, "static void labels(").contains("SlotLabel.fallbackColumns("));
         assertFalse(chrome.contains("\"kit/shared/mode_mark\"") || source("parts/hud/client/SlotArt.java").contains("\"kit/shared/mode_mark\""), "one constant: KitSprites.MODE_MARK");

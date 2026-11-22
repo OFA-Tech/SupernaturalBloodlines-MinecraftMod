@@ -13,6 +13,7 @@ import net.ofatech.supernaturalbloodlines.core.hud.SlotBadge;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotShape;
 import net.ofatech.supernaturalbloodlines.core.hud.SlotView;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.FrameStrip;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.GlowShape;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
@@ -60,7 +61,7 @@ final class SlotArt {
      */
     static void draw(GuiGraphics g, Font font, HudStyle.Style style, SlotShape shape, HudLayout.Box b, SlotView v, float alpha, float bloodRing, float pulse, float glow) {
         HudKit kit = HudKit.of(style);
-        SlotBadge.Look look = SlotBadge.placement(SlotBadge.Look.valueOf(style.name()), shape == SlotShape.SQUARE);
+        SlotBadge.Look look = SlotBadge.placement(SlotBadge.Look.valueOf(style.name()));
         int s = HudLayout.SLOT;
         if (v.active()) {
             UiKit.draw(g, kit, framePart(shape, true), b.x(), b.y(), s, s, alpha * (0.75f + 0.25f * pulse));
@@ -72,7 +73,7 @@ final class SlotArt {
             boolean lock = locked(v);
             icon(g, v.icon(), b, (lock ? 0.35f : v.greyed() ? 0.45f : 1f) * alpha);
             if (glow > 0f) {
-                readyGlow(g, b, glow * alpha);
+                readyGlow(g, b, glow * alpha, shape == SlotShape.THEMED && style == HudStyle.Style.BLOOD_MOON);
             }
             if (v.cooldown() > 0f) {
                 pie(g, b, v.cooldown(), alpha);
@@ -81,7 +82,8 @@ final class SlotArt {
                 }
             }
             if (lock) {
-                KitDraw.icon(g, Icons.LOCK, b.x() + (s - 10) / 2, b.y() + (s - 10) / 2, 10, fade(0xFFE6E0D0, alpha));
+                HudLayout.Box at = SlotBadge.lock(b);
+                KitDraw.icon(g, Icons.LOCK, at.x(), at.y(), at.w(), fade(0xFFE6E0D0, alpha));
             }
             if (v.mastery() != null) {
                 masteryBar(g, kit, look, b, v.mastery(), alpha);
@@ -107,12 +109,18 @@ final class SlotArt {
     }
 
     /** A slot that has just become ready: a white outline round its icon (gold would vanish on the Grimoire's gold frames) and a pale wash over it, for one breath. Its own look, not the active frame's. */
-    private static void readyGlow(GuiGraphics g, HudLayout.Box b, float glow) {
+    private static void readyGlow(GuiGraphics g, HudLayout.Box b, float glow, boolean round) {
         float line = Math.min(1f, glow * 1.6f);
-        g.fill(b.x() + 3, b.y() + 3, b.x() + 19, b.y() + 19, fade(0xC0FFFFFF, glow));
+        strips(g, GlowShape.fill(round, 16), b.x() + 3, b.y() + 3, fade(0xC0FFFFFF, glow));
         // a dark rim under the white line: the Grimoire's frame has a pale line there, which a white one alone would vanish into
-        g.renderOutline(b.x() + 1, b.y() + 1, 20, 20, fade(0xFF101010, line));
-        g.renderOutline(b.x() + 2, b.y() + 2, 18, 18, fade(0xFFFFFFFF, line));
+        strips(g, GlowShape.outline(round, 20), b.x() + 1, b.y() + 1, fade(0xFF101010, line));
+        strips(g, GlowShape.outline(round, 18), b.x() + 2, b.y() + 2, fade(0xFFFFFFFF, line));
+    }
+
+    private static void strips(GuiGraphics g, java.util.List<int[]> rects, int x, int y, int color) {
+        for (int[] r : rects) {
+            g.fill(x + r[0], y + r[1], x + r[0] + r[2], y + r[1] + r[3], color);
+        }
     }
 
     /** The cooldown's seconds over the pie; smaller (and at the top) when the badge is lifted over a mastery bar, so they never share a row with it. */
@@ -121,7 +129,13 @@ final class SlotArt {
         HudLayout.Box at = SlotBadge.seconds(look, b, Math.round(font.width(secs) * scale), lift);
         // lifted over the pie: text is drawn in its own pass, which would otherwise put the pie over the number
         g.pose().pushPose();
-        g.pose().translate(at.x(), at.y(), 200);
+        g.pose().translate(0, 0, 199);
+        if (scale < 1f) {
+            // shrunk text is not pixel-exact: a dark backing keeps it readable over a bright icon
+            HudLayout.Box back = SlotBadge.secondsBacking(at);
+            g.fill(back.x(), back.y(), back.right(), back.bottom(), fade(0x90000000, alpha));
+        }
+        g.pose().translate(at.x(), at.y(), 1);
         g.pose().scale(scale, scale, 1f);
         g.drawString(font, secs, 0, 0, fade(0xFFFFFFFF, alpha), true);
         g.pose().popPose();

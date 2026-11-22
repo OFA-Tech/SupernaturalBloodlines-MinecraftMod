@@ -98,6 +98,36 @@ public final class HudLayout {
         return Math.max(2, columnTop - tooltipH - 6 - (lifted ? ALT_LIFT : 0));
     }
 
+    /** The full moon warning at the top right: its icon box, and the line of text under it (about 120 px wide at most, ending under the icon). */
+    public static Box moonBox(int screenW) {
+        return new Box(screenW - 36 - 120, 6, 120, 6 + 24 + 4 + 9 - 6);
+    }
+
+    /** The panel keeps this far from the moon warning. */
+    public static final int MOON_CLEAR = 8;
+    /** The top of the area the panels may use on the right: under the moon warning and its clearance. */
+    public static int panelFloor(int screenW) {
+        return moonBox(screenW).bottom() + MOON_CLEAR;
+    }
+
+    /** The most lines a panel can have in {@code room} px of height (its frame takes 8 px, a line 10). */
+    public static int panelLines(int room) {
+        return Math.max(0, (room - 8) / 10);
+    }
+
+    /**
+     * The room for a column's panel: for the left one, from the screen's top to {@code columnTop} (less the lift of the pill, and 6 px of air); for the right one,
+     * from under the moon warning to {@code stackTop} (the mode panel's top, or the column's).
+     */
+    public static int panelRoom(boolean right, int screenW, int stackTop, boolean lifted) {
+        return right ? stackTop - 6 - panelFloor(screenW) : stackTop - 6 - (lifted ? ALT_LIFT : 0) - 2;
+    }
+
+    /** The top of the right column's panel of height {@code h}: above {@code stackTop}, and never into the moon warning's clearance. */
+    public static int rightPanelTop(int screenW, int stackTop, int h) {
+        return Math.max(panelFloor(screenW), stackTop - h - 6);
+    }
+
     public static final int LABEL_H = 20;
 
     /** The height a label of {@code lines} lines is drawn at: a pixel of air above and below, 9 px a line. Two lines are {@link #LABEL_H}. */
