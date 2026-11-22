@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.ofatech.supernaturalbloodlines.core.blood.DailyUses;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
 import net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions;
 
@@ -27,7 +28,7 @@ public final class ActionClock {
     /** How many times this action was used in the current game day (a day is 24000 ticks). */
     public static int usesToday(ServerPlayer p, ResourceLocation action) {
         Map<String, Long> m = p.getData(SpeciesRegistries.ACTION_READY);
-        return m.getOrDefault(action + "#day", -1L) == today(p) ? (int) (long) m.getOrDefault(action + "#uses", 0L) : 0;
+        return DailyUses.usesToday(m.getOrDefault(action + "#day", -1L), m.getOrDefault(action + "#uses", 0L), p.level().getGameTime());
     }
 
     /** Counts one use today. */
@@ -40,7 +41,7 @@ public final class ActionClock {
     }
 
     private static long today(ServerPlayer p) {
-        return p.level().getGameTime() / 24000L;
+        return DailyUses.dayOf(p.level().getGameTime());
     }
 
     public static int left(ServerPlayer p, ResourceLocation action) {

@@ -31,6 +31,7 @@ public final class SiresBloodItem extends Item {
 
     @Nullable
     public static UUID sourceOf(ItemStack stack) {
+        BloodStamp.migrate(stack); // an old Sire's Blood is sealed the moment a rite reads it
         return BloodStamp.read(stack).map(BloodSource::id).orElse(null);
     }
 

@@ -166,13 +166,14 @@ public final class BloodBottleGameTests {
         int sealLength = -1;
         for (BloodKind kind : SECRET) {
             ItemStack stack = stamped(kind, id, "Elena");
-            byte[][] sent = new byte[1][];
-            ItemStack client = overTheWire(helper, stack, sent);
+            ItemStack client = overTheWire(helper, stack, null);
             helper.assertTrue(!client.has(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get()) && !client.has(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get()),
                     kind + ": the client got a plain source");
             helper.assertTrue("?".equals(client.get(SpeciesRegistries.BLOOD_LABEL_COMPONENT.get())), kind + ": the label is " + client.get(SpeciesRegistries.BLOOD_LABEL_COMPONENT.get()));
-            helper.assertTrue(!contains(sent[0], uuidBytes(id)) && !contains(sent[0], "Elena".getBytes(StandardCharsets.UTF_8))
-                    && !contains(sent[0], kind.name().getBytes(StandardCharsets.UTF_8)), kind + ": the wire bytes hold a secret");
+            // the seal is base64 text, so the check that can fail is on what it decodes to: ciphertext holds none of the source's bytes
+            byte[] raw = java.util.Base64.getDecoder().decode(client.get(SpeciesRegistries.BLOOD_SEAL_COMPONENT.get()));
+            helper.assertTrue(!contains(raw, uuidBytes(id)) && !contains(raw, "Elena".getBytes(StandardCharsets.UTF_8))
+                    && !contains(raw, kind.name().getBytes(StandardCharsets.UTF_8)), kind + ": the decoded seal holds a secret in the clear");
             // what a client lacks is the key: with another one the stack it holds is no source at all
             byte[] real = BloodKeys.key();
             BloodKeys.overrideKey(BloodSealCodec.newKey());
@@ -252,6 +253,31 @@ public final class BloodBottleGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOldPlainBottleTakenFromAChestIsSealedWhenUsed(GameTestHelper helper) {
+        var server = helper.getLevel().getServer();
+        var ra = helper.getLevel().registryAccess();
+        UUID id = MIKAEL; // a real Original: an old bottle counts while its source still is one
+        ItemStack old = new ItemStack(bottleItem());
+        old.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), id);
+        old.set(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get(), "ORIGINAL");
+        helper.assertTrue(old.save(ra).toString().contains("[I;"), "control: the old bottle does not save its source in the clear");
+        BloodSource used = BloodBottles.sourceOf(server, old);
+        helper.assertTrue(used.id().equals(id) && used.kind() == BloodKind.ORIGINAL, "the old bottle was not believed once: " + used);
+        helper.assertTrue(BloodStamp.sealed(old) && !old.has(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get()), "using it did not seal it");
+        assertNoSecret(helper, "the used bottle", old.save(ra).toString(), id, "Elena");
+        ItemStack oldSires = new ItemStack(SpeciesRegistries.SIRES_BLOOD.get());
+        oldSires.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), id);
+        helper.assertTrue(id.equals(SiresBloodItem.sourceOf(oldSires)) && BloodStamp.sealed(oldSires), "a rite reading an old Sire's Blood did not seal it");
+        assertNoSecret(helper, "the read Sire's Blood", oldSires.save(ra).toString(), id, "Elena");
+        RecordingPlayer p = RecordingPlayer.create(helper);
+        ItemStack inEnderChest = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
+        inEnderChest.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), id);
+        p.getEnderChestInventory().setItem(0, inEnderChest);
+        helper.assertTrue(BloodBottles.sealOld(p) == 1 && BloodStamp.sealed(p.getEnderChestInventory().getItem(0)), "the login sweep skipped the ender chest");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void siresBloodIsSealedAndStillWorks(GameTestHelper helper) {
         UUID id = UUID.randomUUID();
         ItemStack sires = SiresBloodItem.of(id, "Damon");
@@ -265,7 +291,7 @@ public final class BloodBottleGameTests {
         old.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), id);
         old.set(SpeciesRegistries.BLOOD_SOURCE_NAME_COMPONENT.get(), "Damon");
         helper.assertTrue(id.equals(SiresBloodItem.sourceOf(old)), "an old Sire's Blood does not work");
-        helper.assertTrue(BloodStamp.migrate(old) && id.equals(SiresBloodItem.sourceOf(old)) && "Damon".equals(old.get(SpeciesRegistries.BLOOD_SOURCE_NAME_COMPONENT.get()))
+        helper.assertTrue(BloodStamp.sealed(old) && id.equals(SiresBloodItem.sourceOf(old)) && "Damon".equals(old.get(SpeciesRegistries.BLOOD_SOURCE_NAME_COMPONENT.get()))
                 && !old.has(SpeciesRegistries.BLOOD_LABEL_COMPONENT.get()), "an old Sire's Blood stopped working when sealed");
         helper.assertTrue(SiresBloodItem.sourceOf(new ItemStack(SpeciesRegistries.SIRES_BLOOD.get())) == null, "blood from nobody has a source");
         helper.succeed();

@@ -582,6 +582,7 @@ public final class OriginalGameTests {
 
     private static ItemStack blood(UUID source) {
         ItemStack s = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
+        net.ofatech.supernaturalbloodlines.parts.species.SpeciesData.get(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer()).setOriginal(source, true);
         s.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), source);
         return s;
     }

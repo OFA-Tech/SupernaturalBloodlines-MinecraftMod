@@ -8,6 +8,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.blood.BloodSealCodec;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -61,7 +62,13 @@ public final class BloodKeys extends SavedData {
 
     private static BloodKeys load(CompoundTag tag, HolderLookup.Provider registries) {
         byte[] stored = tag.contains(KEY) ? Base64.getDecoder().decode(tag.getString(KEY)) : new byte[0];
-        return stored.length == BloodSealCodec.KEY_BYTES ? new BloodKeys(stored) : fresh();
+        if (stored.length == BloodSealCodec.KEY_BYTES) {
+            return new BloodKeys(stored);
+        }
+        MinecraftServer s = server;
+        SupernaturalBloodlines.LOGGER.error("The blood key of world \"{}\" is {} bytes, not {}: a new one is made, and every sealed blood bottle of this world now reads as common vampire blood",
+                s == null ? "?" : s.getWorldData().getLevelName(), stored.length, BloodSealCodec.KEY_BYTES);
+        return fresh();
     }
 
     @Override

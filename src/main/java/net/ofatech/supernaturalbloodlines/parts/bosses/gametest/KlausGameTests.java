@@ -635,7 +635,7 @@ public final class KlausGameTests {
             helper.assertTrue(BloodlineAccess.get(p).sire() == null, "a drink alone made a sire: " + BloodlineAccess.get(p).sire());
             helper.assertTrue(LineIndex.get(helper.getLevel().getServer()).rootOf(p.getUUID()).isEmpty(), "a drink alone put them in a line");
             ItemStack bottle = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
-            bottle.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), UUID.randomUUID());
+            bottle.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal.KLAUS.uuid()); // an old bottle with no species counts as an Original hybrid's
             helper.assertTrue(drink(helper, p, bottle), "Original's Blood did not start");
             helper.assertTrue(BloodlineAccess.get(p).sire() == null, "Original's Blood alone made a sire");
         } finally {
@@ -715,6 +715,7 @@ public final class KlausGameTests {
     }
 
     private static ItemStack originalsBlood(UUID source, Species species) {
+        net.ofatech.supernaturalbloodlines.parts.species.SpeciesData.get(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer()).setOriginal(source, true);
         ItemStack bottle = new ItemStack(SpeciesRegistries.ORIGINAL_BLOOD.get());
         bottle.set(SpeciesRegistries.BLOOD_SOURCE_COMPONENT.get(), source);
         bottle.set(SpeciesRegistries.BLOOD_SOURCE_SPECIES_COMPONENT.get(), species.name());
@@ -822,7 +823,7 @@ public final class KlausGameTests {
         try {
             net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.drankVampireBlood(p);
             helper.assertTrue(drink(helper, p, new ItemStack(BossItems.KLAUS_BLOOD.get())), "the first drink did not start");
-            helper.assertTrue(drink(helper, p, originalsBlood(elijah, Species.ORIGINAL_HYBRID)), "the second drink did not start");
+            helper.assertTrue(drink(helper, p, originalsBlood(elijah, Species.ORIGINAL)), "the second drink did not start");
             die(helper, p);
             net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.drankHumanBlood(p);
             helper.assertTrue(elijah.equals(BloodlineAccess.get(p).sire()), "the sire is " + BloodlineAccess.get(p).sire());
@@ -871,7 +872,7 @@ public final class KlausGameTests {
             plain.hurt(helper.getLevel().damageSources().generic(), 1000f);
             helper.assertTrue(!BloodlineAccess.get(plain).inTransition(), "a plain Original's blood, drunk as a human, started the transition: " + BloodlineAccess.get(plain));
             // control: an Original hybrid's blood, the same way, does
-            helper.assertTrue(drink(helper, hybrid, originalsBlood(elijah, Species.ORIGINAL_HYBRID)), "the control drink did not start");
+            helper.assertTrue(drink(helper, hybrid, originalsBlood(BossTestRig.KLAUS, Species.ORIGINAL_HYBRID)), "the control drink did not start");
             helper.assertTrue(VampirismAPI.factionPlayerHandler(hybrid).setFactionAndLevel(WReference.WEREWOLF_FACTION, 1), "could not make a werewolf");
             hybrid.hurt(helper.getLevel().damageSources().generic(), 1000f);
             helper.assertTrue(BloodlineAccess.get(hybrid).inTransition(), "control: an Original hybrid's blood did not start the transition");

@@ -17,7 +17,7 @@ import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
  *
  * <p>Bottles made before sealing keep the old plain {@code blood_source} and {@code blood_source_species}. They are read as they were (an Original's Blood
  * bottle with no species as an Original hybrid's, so it is accepted under either {@code hybrid_transition_blood} setting) and moved into a seal by
- * {@link #migrate}, on a player's login and whenever the bottle is used.
+ * {@link #migrate}: on a player's login (inventory and ender chest), and whenever a drink or a rite reads the bottle, wherever it was found.
  */
 public final class BloodStamp {
     /** The label of every secret kind. */

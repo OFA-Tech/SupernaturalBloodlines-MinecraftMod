@@ -289,7 +289,7 @@ public final class SpeciesConfig {
                 .defineInRange("bottle_blood_cooldown_seconds", DEFAULT_BOTTLE_BLOOD_COOLDOWN_SECONDS, 1, 3600);
         BOTTLE_BLOOD_HEALTH_COST = b.comment("R211: health (in half hearts) Bottle my blood costs. It never kills: it stops at 1 health.")
                 .defineInRange("bottle_blood_health_cost", DEFAULT_BOTTLE_BLOOD_HEALTH_COST, 0.0, 19.0);
-        BOTTLE_BLOOD_DAILY_LIMIT = b.comment("R211: how many times one player may use Bottle my blood in one game day. Vampire blood bottles are an ingredient (pure blood, vampire blood oil) and a task item of Vampirism, so they are not free.")
+        BOTTLE_BLOOD_DAILY_LIMIT = b.comment("R211: how many times one player may use Bottle my blood in one game day, counted in world time; sleeping or /time does not reset it. Vampire blood bottles are an ingredient (pure blood, vampire blood oil) and a task item of Vampirism, so they are not free.")
                 .defineInRange("bottle_blood_daily_limit", DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT, 1, 1000);
         b.pop();
         SPEC = b.build();

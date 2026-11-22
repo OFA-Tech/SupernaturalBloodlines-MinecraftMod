@@ -50,10 +50,10 @@ public final class BloodBottles {
         });
     }
 
-    /** Seals the old plain sources on the stacks a player carries. @return how many stacks changed */
+    /** Seals the old plain sources on the stacks a player carries, in the inventory and the ender chest. @return how many stacks changed */
     public static int sealOld(ServerPlayer p) {
         int changed = 0;
-        for (var list : java.util.List.of(p.getInventory().items, p.getInventory().armor, p.getInventory().offhand)) {
+        for (var list : java.util.List.of(p.getInventory().items, p.getInventory().armor, p.getInventory().offhand, p.getEnderChestInventory().getItems())) {
             for (ItemStack s : list) {
                 if (BloodStamp.migrate(s)) {
                     changed++;
@@ -70,15 +70,17 @@ public final class BloodBottles {
     /**
      * The source of a bottle as the drink sees it. A sealed Original-kind bottle (one that names the drinker's sire) only counts while its source is still
      * that Original: an NPC Original of that kind, or a player who is one now (online, the exact species; offline, an Original). A cured Original's old
-     * bottle, or a forged one, is unstamped. A bottle in the old plain form predates the seal and is believed as it was.
+     * bottle, or a forged one, is unstamped. A bottle still in the old plain form is sealed in place first (so it is never saved or sent in the clear
+     * again) and then judged the same way: an old Original's bottle counts while that Original still is one.
      */
     public static BloodSource sourceOf(MinecraftServer server, ItemStack stack) {
+        BloodStamp.migrate(stack); // an old bottle found anywhere (a chest, the ground) is sealed the moment it is used
         Optional<BloodSource> read = BloodStamp.read(stack);
         if (read.isEmpty()) {
             return UNSTAMPED;
         }
         BloodSource s = read.get();
-        return BloodStamp.sealed(stack) && s.kind().namesSire() && !stillThatOriginal(server, s) ? UNSTAMPED : s;
+        return s.kind().namesSire() && !stillThatOriginal(server, s) ? UNSTAMPED : s;
     }
 
     private static boolean stillThatOriginal(MinecraftServer server, BloodSource s) {

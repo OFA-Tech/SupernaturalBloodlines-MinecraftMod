@@ -19,10 +19,12 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.blood.BloodKind;
+import net.ofatech.supernaturalbloodlines.core.blood.BloodSealCodec;
 import net.ofatech.supernaturalbloodlines.core.blood.BloodSource;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesRegistries;
+import net.ofatech.supernaturalbloodlines.parts.species.item.BloodKeys;
 import net.ofatech.supernaturalbloodlines.parts.species.item.BloodStamp;
 
 /**
@@ -69,13 +71,19 @@ public final class BloodShots {
                 ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
                 BloodlineAccess.set(sp, BloodlineState.NONE.toBuilder().species(Species.HYBRID).build());
                 sp.getInventory().clearContent();
-                sp.getInventory().add(new ItemStack(vampireBottle));
-                sp.getInventory().add(bottle(vampireBottle, BloodKind.COMMON_VAMPIRE, "Advanced Vampire"));
-                for (BloodKind k : List.of(BloodKind.ORIGINAL, BloodKind.HYBRID, BloodKind.ORIGINAL_HYBRID)) {
-                    sp.getInventory().add(bottle(vampireBottle, k, "Elena Gilbert"));
+                // a throwaway key: these pictures are about labels, and the world's own saved data is never touched from here
+                BloodKeys.overrideKey(BloodSealCodec.newKey());
+                try {
+                    sp.getInventory().add(new ItemStack(vampireBottle));
+                    sp.getInventory().add(bottle(vampireBottle, BloodKind.COMMON_VAMPIRE, "Advanced Vampire"));
+                    for (BloodKind k : List.of(BloodKind.ORIGINAL, BloodKind.HYBRID, BloodKind.ORIGINAL_HYBRID)) {
+                        sp.getInventory().add(bottle(vampireBottle, k, "Elena Gilbert"));
+                    }
+                    sp.getInventory().add(bottle(SpeciesRegistries.ORIGINAL_BLOOD.get(), BloodKind.ORIGINAL, "Elena Gilbert"));
+                    sp.getInventory().add(bottle(SpeciesRegistries.HYBRID_BLOOD.get(), BloodKind.HYBRID, "Elena Gilbert"));
+                } finally {
+                    BloodKeys.overrideKey(null);
                 }
-                sp.getInventory().add(bottle(SpeciesRegistries.ORIGINAL_BLOOD.get(), BloodKind.ORIGINAL, "Elena Gilbert"));
-                sp.getInventory().add(bottle(SpeciesRegistries.HYBRID_BLOOD.get(), BloodKind.HYBRID, "Elena Gilbert"));
             });
         }
         if (ticks >= 50 && ticks < 90) {
