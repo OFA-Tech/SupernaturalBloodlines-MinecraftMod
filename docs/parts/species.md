@@ -533,3 +533,9 @@ Tests: `LineRulesTest`, `RingFillTest`, `LineIndexTest`, `LineTreeTest`, `LineTr
 - **Round 2 of the review:** `FinalDeath` (core/death) makes Give up final for the Elixir and the Ring; `BloodlineRules` ignores vampire blood in the turning; `Downed.woke`; `DownedScreen` rewritten (body text with the countdown, Wait first, Give up asks twice); the dying is caught at HIGHEST for mortals.
 - **Tests:** `BloodlineRulesTest` (4), `TurningDyingGameTests` (29: the stand-up, void and /kill, give up, wait, relog, the clock, drinking refused and no second life, the order of the listeners, waking in lava and water, a mount, the void, the screen sent again, a Ghoul's dying, give up, wake-up and uncaught blow), `TurningGameTests.deathWithVampireBloodStartsTurning`, `ElixirGameTests` and `ResurrectionVervainGameTests` (give up is final).
 - **Not verified:** a real client''s screen over the network (the payload and its codec are tested; the screen was shot hidden).
+
+## Plan 18d: Rip Heart, Neck Snap and the snapped state (R204, R214)
+
+- `RipHeartAction` and `NeckSnapAction` (`parts/species/skill`) are `ExtraActions` that receive the creature the crosshair named (`HudTargets.resolve`, `ExtraActions.Action.trigger(player, target)`). Both ask `TargetChecks` (creative, already down, claims and PvP, bosses) and answer with one refusal whatever the reason; the pure rules are `core/hud/RipHeartRules` and `NeckSnapRules`.
+- `Downed.MODE_SNAPPED` (a third mode of the dying state) and the mob effect `snapped` (`SnappedEffect`) are the lying down. `ExtraActions.addBlocker` stops every extra action for a downed, snapped or Vampirism-dying player.
+- Data: skills `S-VAM-8` and `S-VAM-9` in the seven vampiric trees, damage types `rip_heart` and `neck_snap`, tag `snap_immune`. Species network version 3, hub protocol 10.

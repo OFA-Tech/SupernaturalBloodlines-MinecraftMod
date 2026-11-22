@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased (plan 18d: Rip Heart and Neck Snap)
+
+### Added
+- **Rip Heart (R204, skill S-VAM-8, 2 SP).** A HUD action for every vampire-like (rung 4 of the tree for all seven vampiric types; the two Tensura rungs stay untouched): tear the heart out of the creature you look at, if it has `rip_heart_health` (default 10, half hearts) health or less. It is final (the Elixir, the Resurrection Ring and a Totem do not take it back) and reaches a downed, dying or snapped target. An **Original is never killed by it, and neither is a boss**; the user gets the same "You tear into X" line and the same cooldown (`rip_heart_cooldown_seconds`, default 60) as for anyone, so nobody learns what the target is. A target that is too strong, a claim, PvP off, a creative player: one refusal line, no cooldown.
+- **Neck Snap (R214, skill S-VAM-9, 2 SP).** A HUD action: break the neck of the creature you look at. A vampire-type (a vampire, an Augustine, a hybrid, an Original) lies as if dead and wakes on its own with the health it had; a mortal at or under `neck_snap_kill_health` (10) dies, a healthier one staggers (Slowness III and Weakness). A boss is not moved. The four wake times default to 60 s each (`neck_snap_*_seconds`), so how long a target lies down does not say what it is; the snapper gets the same line and cooldown (`neck_snap_cooldown_seconds`, 45) for every result. A snapped Original is open to white oak and a heart-rip for the time it lies (a plain Neck Snap on an Original exposes it, and says so to its line, like a downed Original).
+- **The snapped state:** a player lies in the dying screen with no buttons (no Give up) and wakes at the health they had; a creature gets the new effect `snapped` (no AI for the time, given back as it was). Bosses of the `bosses` part are in the new entity tag `supernaturalbloodlines:snap_immune`.
+- **Extra actions have a target.** `ExtraActions.Action.trigger(player, target)` is given the creature the crosshair named (resolved on the server: same level, alive, in reach, in sight). Old actions are untouched. No extra action runs for a player who is downed, snapped or in Vampirism's dying state.
+- Config (all with Admin rows): `rip_heart_health`, `rip_heart_cooldown_seconds`, `neck_snap_cooldown_seconds`, `neck_snap_kill_health`, `neck_snap_stagger_ticks`, `neck_snap_vampire_seconds`, `neck_snap_augustine_seconds`, `neck_snap_hybrid_seconds`, `neck_snap_original_seconds`.
+
+### Changed
+- **Five ladders pay more SP** (heretic +1, original +3, original hybrid +3, hybrid +3, tribrid +2, spread over their rungs 1 to 5) so the two new skills fit the balance rule that a tree costs 80% to 110% of what its ladder pays. The plain vampire's and the Augustine's ladders are unchanged (their trees grow by 4 SP and fit). SP already earned is not touched; a rung not yet claimed pays the new amount.
+
+### Network
+- The species network version is 3 (the downed screen has a third mode) and the hub protocol is 10 (the admin snapshot has room for 192 rows). **Update the server and every client together.** An old client that meets a snapped player shows the plain dying screen with its buttons: Wait works, Give up is refused by the server.
+
+### Migration
+- No existing player changes. Rolled back to an older build, the two skills stay in the skills list, dormant, and a saved `snapped` effect is dropped with its mob.
 ## Unreleased (plan 18c: Augustine vampires)
 
 ### Added
