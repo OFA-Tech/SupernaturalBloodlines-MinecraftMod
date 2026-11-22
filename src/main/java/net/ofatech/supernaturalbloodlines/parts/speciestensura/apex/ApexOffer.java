@@ -60,15 +60,14 @@ public final class ApexOffer {
             List<String> ids = apexIdsFor(BloodlineAccess.get(player).species(), PlayerRaces.of(player), instance.getRaceId().toString(),
                     race -> LadderQuery.apexRungReached(player, race),
                     ApexFallbackRules.holds(BloodlineAccess.get(player).wolf().rank(), PlayerRaces.of(player).contains(SupernaturalRace.WEREWOLF)));
-            List<ManasRace> out = null;
+            List<ManasRace> apexes = new ArrayList<>();
             for (String id : ids) {
                 ManasRace apex = RaceAPI.getRaceRegistry().get(ResourceLocation.fromNamespaceAndPath(ApexSpec.RACE_NAMESPACE, id));
-                if (apex != null && !original.contains(apex)) {
-                    out = out == null ? new ArrayList<>(original) : out;
-                    out.add(apex);
+                if (apex != null) {
+                    apexes.add(apex);
                 }
             }
-            return out == null ? original : out;
+            return merged(original, apexes);
         } catch (RuntimeException e) {
             if (!failureLogged) {
                 failureLogged = true;
@@ -76,6 +75,17 @@ public final class ApexOffer {
             }
             return original;
         }
+    }
+
+    /** {@code original} plus the {@code extra} it lacks, in a new list; {@code original} itself when nothing is added. Never writes to {@code original}: addons hand back {@code List.of}. */
+    static <T> List<T> merged(List<T> original, List<T> extra) {
+        List<T> add = extra.stream().filter(t -> !original.contains(t)).distinct().toList();
+        if (add.isEmpty()) {
+            return original;
+        }
+        List<T> out = new ArrayList<>(original);
+        out.addAll(add);
+        return out;
     }
 
     /** The mixin is on {@code ManasRaceInstance}: false when it was not applied (a ManasCore update, or the part is off). */

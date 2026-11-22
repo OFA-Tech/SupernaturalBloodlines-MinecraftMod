@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased (fix: compatibility with big Tensura packs, from the OFA Holy Packs audit)
+
+### Fixed
+- **No more loot and tag errors without Vampirism.** The Torn Page loot tables (`rite_page_curses`, `rite_page_old_rites`) carry the `species` part condition, so a pack without that part no longer logs "No component with type rite_lore". The `silver_ingots` and `silver_blades` tags list every entry as optional. `DataGatingTest` fails when a loot file names a part's item or component without that part's condition, or a tag has a required entry outside vanilla.
+- **No more "non-existent data map type vampirism:entity_blood" warning.** The blood values are in a built-in data pack (`resourcepacks/vampirism_blood`) that is added only when Vampirism is loaded; a file condition cannot hide that warning, it is logged before conditions are read.
+- **Curios 9.6 no longer warns "not a version this build was tested with".** Every Curios class this mod calls has the same public signatures in 9.5.1 and 9.6.0 (checked with javap); the tested list is 9.5 and 9.6.
+- A startup WARN when `accessories_compat_layer` and Curios are both installed (a known crash pair; remove the compat layer). Nothing is blocked.
+- The apex evolution offer (`ApexOffer.merged`) was refactored and is tested with immutable lists (`List.of`); duplicate ids are removed. Werewolf race following is by race id (Ascension's Beastfolk `kitsune` branch is never touched or chosen).
+
 ## Unreleased (plan 18a: blood bottles carry their source)
 
 ### Changed

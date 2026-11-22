@@ -92,4 +92,13 @@ class ApexOfferTest {
         assertTrue(ApexOffer.apexIdsFor(Species.NONE, List.of(WEREWOLF), "tensura:spirit_beast", OPEN, false).isEmpty(), "a Beta or Omega, or a dormant True Alpha, was offered it");
         assertEquals(List.of("primordial_vampire"), ApexOffer.apexIdsFor(Species.ORIGINAL, List.of(ORIGINAL), "tensura:elf_saint", OPEN, false), "the spark gate is for the werewolf apex only");
     }
-}
+
+    @Test
+    void mergeNeverWritesToAnImmutableListFromAnotherAddon() {
+        List<String> theirs = List.of("tensura:beastfolk_evolution", "ascension:kitsune");
+        List<String> out = ApexOffer.merged(theirs, List.of("supernaturalbloodlines:alpha_primeval", "ascension:kitsune", "supernaturalbloodlines:alpha_primeval"));
+        assertEquals(List.of("tensura:beastfolk_evolution", "ascension:kitsune", "supernaturalbloodlines:alpha_primeval"), out);
+        assertEquals(2, theirs.size());
+        assertSame(theirs, ApexOffer.merged(theirs, List.of("ascension:kitsune")));
+        assertSame(theirs, ApexOffer.merged(theirs, List.of()));
+    }}

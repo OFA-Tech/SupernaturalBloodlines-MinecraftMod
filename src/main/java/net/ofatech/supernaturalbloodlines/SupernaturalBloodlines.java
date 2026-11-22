@@ -3,6 +3,11 @@ package net.ofatech.supernaturalbloodlines;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.MapCodec;
 import java.util.Set;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackSource;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -47,8 +52,15 @@ public final class SupernaturalBloodlines {
         net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockFallback.register();
 
         ModList mods = ModList.get();
+        // a data map file for a map type that does not exist logs a WARN before any condition is read, so Vampirism's blood values ride in a pack that exists only with Vampirism
+        if (mods.isLoaded("vampirism")) {
+            modBus.addListener((net.neoforged.neoforge.event.AddPackFindersEvent e) -> e.addPackFinders(
+                    ResourceLocation.fromNamespaceAndPath(MODID, "resourcepacks/vampirism_blood"), PackType.SERVER_DATA,
+                    Component.literal("Supernatural Bloodlines: Vampirism blood values"), PackSource.BUILT_IN, true, Pack.Position.BOTTOM));
+        }
         // Config.COMMON is not loaded yet at construction, so read the file directly (see EarlySwitches)
         net.ofatech.supernaturalbloodlines.core.LinkedMods.warnUntested(id -> mods.getModContainerById(id).map(c -> c.getModInfo().getVersion().toString()).orElse(null), LOGGER);
+        net.ofatech.supernaturalbloodlines.core.LinkedMods.warnCrashPair(mods::isLoaded, LOGGER);
         Set<Part> switches = EarlySwitches.enabled();
         Set<Part> parts = PartLoader.enabledParts(mods::isLoaded, switches::contains);
         for (Part p : Part.values()) {

@@ -75,6 +75,18 @@ class WerewolfRaceSyncTest {
     }
 
     @Test
+    void anAddonsBeastfolkBranchIsNeverTouchedAndNeverChosen() {
+        // Ascension adds a kitsune branch to Tensura's Beastfolk; the line is followed by id, never "the first next evolution"
+        for (String race : new String[] {"ascension:kitsune", "tensura:kitsune"}) {
+            for (Rank r : Rank.values()) {
+                assertEquals(Optional.empty(), target(race, r, true), race + " " + r);
+                assertEquals(Optional.empty(), target(race, r, false), race + " " + r);
+            }
+        }
+        assertEquals(Optional.of("tensura:beast_lord"), target("tensura:beastfolk", Rank.ALPHA, false));
+    }
+
+    @Test
     void noRaceIsLeftAlone() {
         assertEquals(Optional.empty(), target(null, Rank.TRUE_ALPHA, true));
     }
