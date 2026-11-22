@@ -84,4 +84,27 @@ class BarPlanTest {
             }
         }
     }
-}
+
+    private static int sixPerChar(String s) {
+        return s.length() * 6;
+    }
+
+    @Test
+    void aHintGetsAsMuchOfTheBarAsTwoLinesNeedWithoutPushingAButtonBehindMore() throws Exception {
+        String hint;
+        try (var in = new java.io.InputStreamReader(BarPlanTest.class.getResourceAsStream("/assets/supernaturalbloodlines/lang/en_us.json"), java.nio.charset.StandardCharsets.UTF_8)) {
+            hint = com.google.gson.JsonParser.parseReader(in).getAsJsonObject().get("supernaturalbloodlines.hub.book.guide.updates").getAsString();
+        }
+        List<Integer> pills = List.of(48, 26); // Previous, Next
+        for (int w : new int[] {300, 382, 480, 700, 1000}) {
+            Rect bar = new Rect(0, 0, w, 38);
+            int want = BarPlan.bodyWant(sixPerChar(hint), bar, pills);
+            assertTrue(want >= w * 45 / 100, "never less than before at " + w);
+            BarPlan plan = BarPlan.of(bar, pills, 1, want);
+            BarPlan before = BarPlan.of(bar, pills, 1, w * 45 / 100);
+            assertTrue(plan.hidden().size() <= before.hidden().size(), "the hint pushed a button behind More at " + w);
+            if (w >= 382) {
+                assertFalse(LabelFit.isCut(LabelFit.wrap(hint, plan.title(), 2, BarPlanTest::sixPerChar)), "at " + w + " the hint is cut: " + LabelFit.wrap(hint, plan.title(), 2, BarPlanTest::sixPerChar));
+            }
+        }
+    }}

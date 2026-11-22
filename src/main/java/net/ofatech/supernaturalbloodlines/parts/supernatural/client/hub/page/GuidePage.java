@@ -34,10 +34,13 @@ public final class GuidePage implements HubPageView {
             Component name = Component.translatable(GuideChapters.titleKey(id));
             boolean on = id.equals(chapter);
             Rect hit = new Rect(r.x(), y - 1, r.w(), PageKit.LINE + 1);
-            f.g.drawString(f.font(), on ? Component.literal("\u203a ").append(name) : name, r.x() + (on ? 0 : 6), y, on ? t.accent() : t.ink(), false);
+            boolean drawn = f.whole(y - 1, PageKit.LINE + 1);
+            if (drawn) {
+                f.g.drawString(f.font(), on ? Component.literal("\u203a ").append(name) : name, r.x() + (on ? 0 : 6), y, on ? t.accent() : t.ink(), false);
+            }
             String target = "chapter:" + id;
             f.target(target, hit, List.of(name), () -> chapter = id);
-            if (f.focused(target)) {
+            if (drawn && f.focused(target)) {
                 t.drawFocus(f.g, hit);
             }
             y += PageKit.LINE + 2;

@@ -240,7 +240,7 @@ public final class AdminPage implements HubPageView {
         switch (row.kind()) {
             case BOOL -> {
                 boolean on = Boolean.parseBoolean(AdminEdit.format(row.current()));
-                Rect b = new Rect(r.right() - 36, labelTop, 36, PageWidgets.H);
+                Rect b = PageWidgets.rightBox(r, labelTop, 36);
                 PageWidgets.toggle(f, id, b, on, Component.translatable(KEY + "toggle_tip"), () -> {
                     if (row.restart()) {
                         f.confirm(Component.translatable(KEY + "restart_title"), Component.translatable(KEY + "restart_body", label),
@@ -503,8 +503,8 @@ public final class AdminPage implements HubPageView {
             String[] lines = editor.text().split("\n", -1);
             int shownLines = Math.min(lines.length, 14);
             Rect box = new Rect(s.x(), y + 2, s.w(), shownLines * PageKit.LINE + 6);
-            f.g.fill(box.x(), box.y(), box.right(), box.bottom(), t.accent());
-            f.g.fill(box.x() + 1, box.y() + 1, box.right() - 1, box.bottom() - 1, 0xFF000000 | t.paper());
+            BookKit.inset(f, box);
+            f.g.renderOutline(box.x(), box.y(), box.w(), box.h(), t.accent());
             int caretLine = editor.text().substring(0, editor.caret()).split("\n", -1).length - 1;
             int first = Math.max(0, Math.min(caretLine - shownLines + 1, lines.length - shownLines));
             for (int i = 0; i < shownLines; i++) {

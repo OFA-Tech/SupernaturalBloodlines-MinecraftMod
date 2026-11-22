@@ -11,7 +11,7 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
 /** The small widgets every theme draws the same way from its own kit: the rule, the bar, the scroll bar, the rung mark, the task box and the stamp. Client only. */
 public final class KitWidgets {
     private static final int RUNG_PX = 12;
-    private static final int TASK_PX = 10;
+    public static final int TASK_PX = 10;
     private static final int STAMP_PX = 16;
 
     private KitWidgets() {

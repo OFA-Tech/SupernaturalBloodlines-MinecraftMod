@@ -77,7 +77,12 @@ public final class StageLoadoutPage implements HubPageView {
     private void slot(HubScreen.Frame f, Rect box, int i, Optional<ResourceLocation> id, Map<ResourceLocation, LoadoutAccess.Entry> byId) {
         HubTheme t = f.theme();
         boolean picked = Integer.valueOf(i).equals(model.pickedSlot());
-        BookKit.outline(f.g, box, t.paper(), picked ? t.accent() : (t.muted() & 0xFFFFFF) | 0x88000000);
+        boolean drawn = f.whole(box.y(), box.h() + 12);
+        if (!drawn) {
+            f.target("loadout:slot:" + i, box, List.of(id.isPresent() && byId.get(id.get()) != null ? byId.get(id.get()).name() : Component.translatable(KEY + "empty")), () -> apply(model.pickSlot(i)));
+            return;
+        }
+        BookKit.card(f, box, picked ? t.accent() : 0);
         Component label = Component.translatable(KEY + "empty");
         if (id.isPresent()) {
             LoadoutAccess.Entry e = byId.get(id.get());
@@ -100,7 +105,11 @@ public final class StageLoadoutPage implements HubPageView {
         HubTheme t = f.theme();
         boolean picked = e.id().equals(model.pickedAction());
         boolean grey = e.greyedReason() != null;
-        BookKit.outline(f.g, box, t.paper(), picked ? t.accent() : (t.muted() & 0xFFFFFF) | 0x66000000);
+        if (!f.whole(box.y(), box.h() + 12)) {
+            f.target("loadout:action:" + e.id(), box, List.of(e.name()), () -> apply(model.pickAction(e.id())));
+            return;
+        }
+        BookKit.card(f, box, picked ? t.accent() : 0);
         ClientIcons.draw(f.g, e.icon(), box.x() + (box.w() - 16) / 2, box.y() + (box.h() - 16) / 2, 16, grey ? 0.4f : 1f);
         String name = LabelFit.cut(e.name().getString(), box.w() + 10, f.font()::width);
         f.g.drawString(f.font(), name, box.x() + (box.w() - f.font().width(name)) / 2, box.bottom() + 3, grey ? t.muted() : t.ink(), false);

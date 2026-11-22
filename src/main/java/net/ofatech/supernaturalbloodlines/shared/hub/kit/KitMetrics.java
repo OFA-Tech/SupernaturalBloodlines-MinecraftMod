@@ -6,6 +6,19 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
 
 /** The numbers behind the kit's small widgets (bars, scroll bars, marks): where the picture's inside begins, how long a fill or a thumb is, which picture a state wears. Pure. */
 public final class KitMetrics {
+    /** The air between a task's box and the first letter of its text. */
+    public static final int TASK_GAP = 4;
+
+    /** The right edge of the task box the kit draws centred on a {@code box} square at {@code x}: the picture is {@code px} wide and may be wider than the square. */
+    public static int taskBoxRight(int x, int box, int px) {
+        return x + (box - px) / 2 + px;
+    }
+
+    /** Where the text of a task starts: {@link #TASK_GAP} after the drawn box, not after the square it is centred on. */
+    public static int taskTextX(int x, int box, int px) {
+        return taskBoxRight(x, box, px) + TASK_GAP;
+    }
+
     /** The height of the bar track picture; a bar is drawn at this height, centred on the box it was asked for. */
     public static final int BAR_H = 8;
     /**
@@ -22,6 +35,8 @@ public final class KitMetrics {
     public static final int BAR_FILL_H = 4;
     /** The width of the scroll bar pictures. */
     public static final int SCROLL_W = 7;
+    /** The air between a scroll bar (a pixel outside its region) and whatever stands to the right of it. */
+    public static final int SCROLL_AIR = 6;
     /** The height of the divider picture; a rule is its middle line. */
     public static final int DIVIDER_H = 7;
     /** A thumb shorter than its two ends would not look like one. */

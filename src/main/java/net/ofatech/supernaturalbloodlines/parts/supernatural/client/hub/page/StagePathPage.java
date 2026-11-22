@@ -111,7 +111,7 @@ public final class StagePathPage implements HubPageView {
     /** The next moons in a box with the days to the full moon. */
     private static void almanac(HubScreen.Frame f, Rect box) {
         HubTheme t = f.theme();
-        BookKit.outline(f.g, box, (t.paper() & 0xFFFFFF) | 0xCC000000, (t.muted() & 0xFFFFFF) | 0x77000000);
+        BookKit.card(f, box, 0);
         int phase = HubDev.moonPhase(f.view.player().level());
         var view = AlmanacEvents.view(f);
         int step = AlmanacEvents.step(view, 11, 8);

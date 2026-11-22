@@ -21,14 +21,26 @@ public final class KitFaces {
     public static final Part[] BUTTONS = {Part.BUTTON_NORMAL, Part.BUTTON_HOVER, Part.BUTTON_PRESSED, Part.BUTTON_DISABLED,
             Part.BUTTON_PRIMARY_NORMAL, Part.BUTTON_PRIMARY_HOVER, Part.BUTTON_PRIMARY_PRESSED, Part.BUTTON_PRIMARY_DISABLED};
 
+    /** The other surfaces text stands on: a chip, a lit chip, a plate and an inset (a text box). */
+    public static final Part[] SURFACES = {Part.CHIP, Part.CHIP_ON, Part.PLATE, Part.INSET};
+    private static final int[][] SURFACE_FACES = {
+            {0xFFE2D6B0, 0xFF9A1C22, 0xFFE9DDB8, 0xFFDCCD9E},
+            {0xFF1D0B13, 0xFFBF332B, 0xFF1D0B13, 0xFF10060A},
+            {0xFF17374E, 0xFF3FD0D6, 0xFF12293F, 0xFF0A1827}};
+
     public static int face(String kit, Part button) {
-        int k = KitSprites.KITS.indexOf(kit);
+        int k = Math.max(0, KitSprites.KITS.indexOf(kit));
         for (int i = 0; i < BUTTONS.length; i++) {
             if (BUTTONS[i] == button) {
-                return FACES[Math.max(0, k)][i];
+                return FACES[k][i];
             }
         }
-        throw new IllegalArgumentException(button + " is not a button");
+        for (int i = 0; i < SURFACES.length; i++) {
+            if (SURFACES[i] == button) {
+                return SURFACE_FACES[k][i];
+            }
+        }
+        throw new IllegalArgumentException(button + " is not a button or a surface");
     }
 
     /** The label on a button: the theme's ink when it reads on the face (4.5:1), else white or black, whichever does. */

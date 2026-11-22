@@ -41,16 +41,19 @@ public final class StageGuidePage implements HubPageView {
             String id = ids.get(i);
             boolean on = id.equals(chapter);
             Rect hit = new Rect(r.x(), y, r.w(), 15);
-            if (on) {
+            boolean drawn = f.whole(y, 15);
+            if (drawn && on) {
                 f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
                 f.g.fill(hit.x(), hit.y(), hit.x() + 2, hit.bottom(), t.accent());
             }
-            f.g.drawString(f.font(), String.format("%02d", i + 1), r.x() + 6, y + 4, t.muted(), false);
             Component name = Component.translatable(GuideChapters.titleKey(id));
-            f.g.drawString(f.font(), LabelFit.cut(name.getString(), r.w() - 34, f.font()::width), r.x() + 26, y + 4, on ? t.ink() : t.muted(), false);
+            if (drawn) {
+                f.g.drawString(f.font(), String.format("%02d", i + 1), r.x() + 6, y + 4, t.muted(), false);
+                f.g.drawString(f.font(), net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.cut(f.font(), name.getString(), r.w() - 34, f.font()::width), r.x() + 26, y + 4, on ? t.ink() : t.muted(), false);
+            }
             String target = "chapter:" + id;
             f.target(target, hit, List.of(name), () -> chapter = id);
-            if (f.focused(target)) {
+            if (drawn && f.focused(target)) {
                 KitDraw.focusRing(f.g, hit, t.focusColor());
             }
             y += 17;

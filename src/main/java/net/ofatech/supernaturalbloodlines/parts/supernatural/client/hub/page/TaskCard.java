@@ -20,6 +20,11 @@ final class TaskCard {
         return row.state() == TaskState.CLAIMABLE ? t.good() : chosen ? t.accent() : (t.muted() & 0xFFFFFF) | 0x66000000;
     }
 
+    /** The line inside a card's plate: green when it can be claimed, the accent when it is the chosen one, none ({@code 0}) otherwise. */
+    static int edge(TaskState state, boolean chosen, int good, int accent) {
+        return state == TaskState.CLAIMABLE ? good : chosen ? accent : 0;
+    }
+
     /** 0 to 1: the progress of a counted task, else done or not. */
     static float fraction(HubModel.TaskRow row) {
         boolean done = row.state() == TaskState.CLAIMED || row.state() == TaskState.CLAIMABLE;

@@ -151,4 +151,13 @@ class UiKitSlicesTest {
             assertTrue(p.draw() == p.sprite() / 2 || p.draw() == p.sprite() || p.draw() == p.sprite() * 2, "box " + box + " draws " + p);
         }
     }
-}
+
+    @Test
+    void theCardSurfaceHasEdgesOnAllFourSidesInEveryKitSoATallCardIsNotBandedLikeAPill() throws Exception {
+        for (String kit : KitSprites.KITS) {
+            int[] b = border(KitSprites.of(kit, KitSprites.CARD.sprite()));
+            for (int side : b) {
+                assertTrue(side > 0, kit + "/" + KitSprites.CARD.sprite() + " has a side with no edge: " + java.util.Arrays.toString(b));
+            }
+        }
+    }}
