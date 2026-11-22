@@ -1,6 +1,5 @@
 # Changelog
 
-<<<<<<< HEAD
 ## Unreleased (plan 18b: dying with vampire blood stands you up)
 
 ### Changed
@@ -18,7 +17,6 @@
 
 ### Rolling back
 Rolling back removes the dying of the turning: a lethal blow with vampire blood in the system kills and respawns them in the turning as before. Someone who is dying at that moment is left with a saved dying counter (`downed`, `downed_mode`) that the old build reads as a plain dying state: they wake at half health after the rest of their 30 s, and the turning goes on. The old build ignores the mode.
-=======
 ## Unreleased (fix: compatibility with big Tensura packs, from the OFA Holy Packs audit)
 
 ### Fixed
@@ -28,7 +26,6 @@ Rolling back removes the dying of the turning: a lethal blow with vampire blood 
 - A startup WARN when `accessories_compat_layer` and Curios are both installed (a known crash pair; remove the compat layer). Nothing is blocked.
 - The apex evolution offer (`ApexOffer.merged`) was refactored and is tested with immutable lists (`List.of`); duplicate ids are removed. Werewolf race following is by race id (Ascension's Beastfolk `kitsune` branch is never touched or chosen).
 
->>>>>>> origin/main
 ## Unreleased (plan 18a: blood bottles carry their source)
 
 ### Changed
