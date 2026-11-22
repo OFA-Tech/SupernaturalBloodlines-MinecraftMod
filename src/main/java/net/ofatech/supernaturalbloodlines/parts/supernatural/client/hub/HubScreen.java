@@ -926,6 +926,11 @@ public final class HubScreen extends Screen {
             return clip.y() - scroll.getOrDefault(name, 0);
         }
 
+        /** Where the clip of the region being drawn ends (no limit outside a region): a row that would cross it is not drawn, see {@link net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint#rowFits}. */
+        public int clipBottom() {
+            return clip == null ? Integer.MAX_VALUE : clip.bottom();
+        }
+
         /** Ends the region; {@code bottom} is where its content ended, which bounds its scroll. */
         public void end(int bottom) {
             g.disableScissor();

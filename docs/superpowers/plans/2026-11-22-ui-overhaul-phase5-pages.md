@@ -42,6 +42,8 @@ ode_* sprites are wired and tested.
 - **Pack ring** names are placed by RingLabels; the Dev · Alpha line is left out when a face stands in its way.
 - **Pips** are the kit's pip_on/pip_off at 2x.
 
+- **Pack, after the first review:** the Grimoire seal has a line under the Leave link saying what it accepts ("Accept an invitation"), a ring name tries the free side of its face at full width before it is cut (`RingLabels` variants 3 and 4), and Tensura's wolf rows are drawn only when whole above the "more below" marker (`ScrollHint.rowFits`).
+
 ## Left for phase 6
 
 Boss bars (`boss_*` sprites, `BossBarView`).

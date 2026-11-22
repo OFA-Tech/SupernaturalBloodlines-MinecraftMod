@@ -301,6 +301,9 @@ public final class BookPackPage implements HubPageView {
             BookKit.seal(f, "pack:accept", Component.translatable(BOOK + "accept"), true, r.x(), sy, () -> BloodlinePage.command("pack accept"),
                     List.of(Component.translatable(KEY + "accept")));
             PackInvite.buttons(f, new Rect(r.x() + BookKit.SEAL + 8, sy + 2, r.w() - BookKit.SEAL - 8, PageWidgets.H), sy + 2, mayInvite);
+            // the seal says only ACCEPT: the line beside it says what it accepts
+            String note = net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit.cut(Component.translatable(KEY + "accept").getString(), r.w() - BookKit.SEAL - 8, f.font()::width);
+            f.g.drawString(f.font(), note, r.x() + BookKit.SEAL + 8, sy + BookKit.SEAL_NOTE_DY, t.muted(), false);
             if (!pack.isEmpty()) {
                 BookKit.link(f, "pack:leave", Component.translatable(KEY + "leave"), r.x() + BookKit.SEAL + 8, sy + 24, List.of(Component.translatable(KEY + "leave")),
                         () -> f.confirm(Component.translatable(BOOK + "leave_title"), Component.translatable(BOOK + "leave_body"), Component.translatable(BOOK + "leave_yes"),

@@ -67,6 +67,10 @@ public final class PackWolves {
                 chosen = n;
             }
             Rect hit = new Rect(r.x() - 1, y - 1, r.w() + 2, ROW);
+            if (!net.ofatech.supernaturalbloodlines.shared.hub.ScrollHint.rowFits(y - 1, ROW, f.clipBottom())) {
+                y += ROW + 1; // under the "more below" marker: it shows when scrolled to
+                continue;
+            }
             if (on) {
                 f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
             }

@@ -112,4 +112,14 @@ class RingLabelsTest {
                 }
             }
         }
+    }
+    @Test
+    void aNameUnderAFaceSlidesToTheFreeSideBeforeItIsCut() {
+        // "Lydia" under a face 30 px from "Stiles's": both fit at their full width when one stands to the side of its face
+        List<Rect> out = RingLabels.place(List.of(new Request(100, 120, 50, 9, Anchor.CENTER), new Request(130, 120, 50, 9, Anchor.CENTER)), List.of(), PAGE, 12, 2);
+        assertNotNull(out.get(0));
+        assertNotNull(out.get(1));
+        assertEquals(50, out.get(0).w());
+        assertEquals(50, out.get(1).w(), "it slid, it was not cut: " + out.get(1));
+        assertFalse(out.get(0).inset(-1).overlaps(out.get(1)), out.get(0) + " and " + out.get(1));
     }}

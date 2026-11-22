@@ -17,6 +17,11 @@ public final class ScrollHint {
         return contentH > fullH;
     }
 
+    /** Whether a row {@code h} tall standing at {@code y} is whole above {@code clipBottom}: a row that is not is left to the scroll, not drawn half under the marker. */
+    public static boolean rowFits(int y, int h, int clipBottom) {
+        return y + h <= clipBottom;
+    }
+
     /** The height a viewport of {@code fullH} clips its content to. */
     public static int clipHeight(int fullH, boolean overflowed) {
         return overflowed ? Math.max(0, fullH - GUTTER) : fullH;

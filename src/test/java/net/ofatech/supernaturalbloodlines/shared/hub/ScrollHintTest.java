@@ -24,4 +24,10 @@ class ScrollHintTest {
         assertEquals(90, ScrollHint.clipHeight(100, true));
         assertEquals(0, ScrollHint.clipHeight(4, true), "never negative");
     }
-}
+
+    @Test
+    void aRowThatCrossesTheClipIsNotWholeAndOneThatEndsAtItIs() {
+        org.junit.jupiter.api.Assertions.assertTrue(ScrollHint.rowFits(100, 20, 120));
+        org.junit.jupiter.api.Assertions.assertFalse(ScrollHint.rowFits(101, 20, 120));
+        org.junit.jupiter.api.Assertions.assertFalse(ScrollHint.rowFits(110, 20, 120));
+    }}

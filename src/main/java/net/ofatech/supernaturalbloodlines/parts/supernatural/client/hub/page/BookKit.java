@@ -28,6 +28,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class BookKit {
     static final int SEAL = 44;
+
+    /** Under the Leave link beside the pack seal: where the line that says what the seal does stands, and that it stays inside the seal's height. */
+    static final int SEAL_NOTE_DY = 35;
+    static final int SEAL_NOTE_H = 9;
     private static final int CAP = 16;
 
     private BookKit() {

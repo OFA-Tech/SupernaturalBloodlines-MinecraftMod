@@ -21,7 +21,7 @@ public final class RingLabels {
     private RingLabels() {
     }
 
-    /** The name at width {@code w}: as asked for, or cut from its right end (the left edge stays) or from its left end (the right edge stays) where that clears a neighbour. */
+    /** The name at width {@code w}: as asked for, cut from its right end (the left edge stays) or from its left end (the right edge stays), or slid to the free side of its face where that clears a neighbour. */
     private static Rect at(Request r, int w, int variant) {
         int full = r.w();
         int left = switch (r.anchor()) {
@@ -32,6 +32,8 @@ public final class RingLabels {
         int x = switch (variant) {
             case 1 -> left;
             case 2 -> left + full - w;
+            case 3 -> r.anchor() == Anchor.CENTER ? r.x() - w : left + (full - w) / 2; // a name under its face may stand to the left of it
+            case 4 -> r.anchor() == Anchor.CENTER ? r.x() : left + (full - w) / 2; // or to the right of it, at its full width
             default -> switch (r.anchor()) {
                 case LEFT -> r.x();
                 case RIGHT -> r.x() - w;
@@ -51,7 +53,7 @@ public final class RingLabels {
         for (Request r : requests) {
             Rect found = null;
             for (int w = r.w(); w >= minWidth && found == null; w--) {
-                for (int variant = 0; variant < 3 && found == null; variant++) {
+                for (int variant = 0; variant < 5 && found == null; variant++) {
                     Rect cand = at(r, w, variant);
                     // kept inside the page by sliding, as a name at the page edge always was
                     int dx = Math.max(bounds.x() - cand.x(), Math.min(0, bounds.right() - cand.right()));
