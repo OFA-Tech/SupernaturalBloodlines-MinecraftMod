@@ -14,6 +14,7 @@ public final class HudClient {
     public static void register(IEventBus modBus) {
         modBus.addListener((RegisterKeyMappingsEvent e) -> HudKeys.register(e));
         modBus.addListener(AbilityHudLayer::register);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.RenderGuiEvent.Pre e) -> net.ofatech.supernaturalbloodlines.shared.hud.HudPlacement.beginFrame());
         LoadoutAccess.install(new ClientLoadout());
         HudSlots.register();
         BossBars.register();

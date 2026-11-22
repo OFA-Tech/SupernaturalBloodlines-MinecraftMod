@@ -11,9 +11,6 @@ import net.ofatech.supernaturalbloodlines.core.hud.SlotBadge.Look;
 public final class MasteryBar {
     public static final int GOLD = 0xFFFFD36B;
     public static final int LEARNING = 0xFF8E8AA8;
-    public static final int TRACK = 0xFF05080C;
-    /** The track the fill runs along; every fill colour is at least 3:1 against it ({@code MasteryTest}). */
-    public static final int TRACK_INNER = 0xFF2A2F36;
     /** The backing's height. */
     public static final int HEIGHT = 4;
     /** How far the key badge and the seconds are lifted: the backing and a pixel of air. */
@@ -31,6 +28,16 @@ public final class MasteryBar {
     public static Box inner(Box slot) {
         Box b = box(slot);
         return new Box(b.x() + 1, b.y() + 1, b.w() - 2, 2);
+    }
+
+    /** A learning bar is drawn hollow (every other pixel column), a mastered one gets a diamond at its start: so the state does not rest on the colour alone. */
+    public static boolean lit(Mastery.State state, int column) {
+        return state != Mastery.State.LEARNING || column % 2 == 0;
+    }
+
+    /** The diamond that marks a mastered bar: 5 x 5 on the bar's left end, rows clear of the badges above it. */
+    public static Box diamond(Box slot) {
+        return new Box(slot.x() + 1, inner(slot).y() - 1, 5, 5);
     }
 
     /** Whole pixels of {@code innerWidth} to fill: at least one for any progress at all, all of it only when mastered or the fraction is full. */
