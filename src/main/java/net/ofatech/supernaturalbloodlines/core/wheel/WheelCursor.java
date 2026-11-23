@@ -33,6 +33,16 @@ public final class WheelCursor {
         return Optional.ofNullable(focus);
     }
 
+    /**
+     * The list or the layout changed under a resting pointer: the cell it was over may be another power now (or none). Only a hover that the mouse set is looked at again; a
+     * focus that a key set is never taken back by a pointer that has not moved.
+     */
+    public void rehit(Hit under) {
+        if (hover != null) {
+            hover = under;
+        }
+    }
+
     /** The page or the open path changed under the pointer: the old cell is not the one it is over any more. */
     public void clearHover() {
         hover = null;

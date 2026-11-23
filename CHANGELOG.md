@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased (skill wheel, phase W4b: round-2 notes on the screen)
+
+### Fixed
+- **The side panel's lock box is as tall as what it says**, so a power locked for a one-line reason leaves the description a line more instead of being cut short; the narrator now reads the description after the name and what the power covers.
+- **The lock on a cell is the lock sprite's own gold**, checked at 3:1 against each theme's cell (the old unused `lockOnCell` colour, which the sprite never used, is gone).
+- **A wheel key bound by scan code** ends its pending press when the window stops being the active one (a release that went to another window never arrives).
+- **A resting pointer follows a changed list:** when the catalogue changes under it the cell it is over is looked at again; a focus a key set is never taken back.
+
+### Network
+No payload changed (hud network version 4).
+
+### Rolling back
+Nothing is saved or migrated; reverting the build restores the old panel.
 ## Unreleased (skill wheel, phase W4: the wheel screen)
 
 ### Added

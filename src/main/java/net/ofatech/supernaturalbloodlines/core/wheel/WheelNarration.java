@@ -32,6 +32,12 @@ public final class WheelNarration {
     /** As above, with what else the power stands for (rule C) said right after its name; empty for nothing. */
     public static List<String> lines(String mod, String group, String power, String cover, String mode, String state, String lockReason, int index, int total, int page, int pages,
             BiFunction<String, Object[], String> translate) {
+        return lines(mod, group, power, cover, "", mode, state, lockReason, index, total, page, pages, translate);
+    }
+
+    /** As above, with the power's own description read after what it covers: the side panel shows it, and no one who cannot see the panel should miss it. */
+    public static List<String> lines(String mod, String group, String power, String cover, String description, String mode, String state, String lockReason, int index, int total, int page,
+            int pages, BiFunction<String, Object[], String> translate) {
         List<String> out = new ArrayList<>();
         out.add(mod);
         if (group != null && !group.isEmpty()) {
@@ -44,6 +50,9 @@ public final class WheelNarration {
         out.add(power);
         if (cover != null && !cover.isEmpty()) {
             out.add(cover);
+        }
+        if (description != null && !description.isEmpty()) {
+            out.add(description);
         }
         if (mode != null && !mode.isEmpty()) {
             out.add(mode);

@@ -12,7 +12,9 @@ import net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache;
  */
 public final class WheelPanelText {
     public static final int LINE = 10;
-    public static final int LOCK_BOX = 42;
+    /** The lock box is a title line and its reason lines between 4 px of padding; the next block starts 4 px under it. */
+    public static final int LOCK_BOX_BASE = 18;
+    public static final int LOCK_BOX_GAP = 4;
     public static final int MAX_LINES = 4;
 
     /** The panel's text, cut and wrapped to fit. {@code description}, {@code mode} and {@code lock} are empty lists when there is nothing (or no room) for them. */
@@ -43,11 +45,16 @@ public final class WheelPanelText {
      * @param top       y where the description would start
      * @param bottom    y of the first row that must stay free (the slot row)
      * @param modeLines how many lines the mode text takes (0 for a power without modes)
-     * @param locked    the lock box is drawn
+     * @param lockLines how many lines of reason the lock box holds (0: no lock box)
      */
-    public static int descriptionLines(int top, int bottom, int modeLines, boolean locked) {
-        int free = bottom - top - modeLines * LINE - (locked ? LOCK_BOX : 0) - 2;
+    public static int descriptionLines(int top, int bottom, int modeLines, int lockLines) {
+        int free = bottom - top - modeLines * LINE - (lockLines > 0 ? lockBoxHeight(lockLines) + LOCK_BOX_GAP : 0) - 2;
         return Math.max(0, Math.min(MAX_LINES, free / LINE));
+    }
+
+    /** How tall the lock box is for {@code reasonLines} lines of reason: the box holds exactly what it says, so a one-line reason leaves a line more for the description. */
+    public static int lockBoxHeight(int reasonLines) {
+        return LOCK_BOX_BASE + LINE * Math.max(1, reasonLines);
     }
 
     /** {@code mode} and {@code lock} are empty strings when the power has no modes or is not locked. */
@@ -56,9 +63,9 @@ public final class WheelPanelText {
         return LINES.get(new LinesKey(font, width, top, bottom, name, where, cover, kind, description, mode, lock), () -> {
             List<String> coverLines = cover.isEmpty() ? List.of() : TextCache.wrap(font, cover, width, 2, measure);
             List<String> modeLines = mode.isEmpty() ? List.of() : TextCache.wrap(font, mode, width, 2, measure);
-            int room = descriptionLines(top + coverLines.size() * LINE, bottom, modeLines.size(), !lock.isEmpty());
-            List<String> desc = description.isEmpty() || room == 0 ? List.of() : TextCache.wrap(font, description, width, room, measure);
             List<String> lockLines = lock.isEmpty() ? List.of() : TextCache.wrap(font, lock, width - 22, 2, measure);
+            int room = descriptionLines(top + coverLines.size() * LINE, bottom, modeLines.size(), lockLines.size());
+            List<String> desc = description.isEmpty() || room == 0 ? List.of() : TextCache.wrap(font, description, width, room, measure);
             return new Lines(TextCache.cut(font, name, width, measure), TextCache.cut(font, where, width, measure), coverLines, TextCache.cut(font, kind, width, measure), desc, modeLines,
                     lockLines);
         });

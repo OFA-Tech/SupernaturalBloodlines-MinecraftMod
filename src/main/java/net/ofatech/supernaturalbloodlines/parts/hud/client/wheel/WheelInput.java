@@ -14,6 +14,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.core.wheel.GestureMachine;
 import net.ofatech.supernaturalbloodlines.core.wheel.GestureMachine.Effect;
 import net.ofatech.supernaturalbloodlines.core.wheel.GestureMachine.Input;
+import net.ofatech.supernaturalbloodlines.core.wheel.KeyPoll;
 import net.ofatech.supernaturalbloodlines.core.wheel.WheelPalette;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudClientConfig;
 import net.ofatech.supernaturalbloodlines.parts.hud.client.HudKeys;
@@ -153,7 +154,7 @@ public final class WheelInput {
             WheelActions.release();
         }
         if (machine.pending()) {
-            if (!live() || !physicallyDown(mc)) {
+            if (!live() || !physicallyDown(mc)) { // the poll and the window
                 machine = GestureMachine.IDLE;
                 return;
             }
@@ -167,11 +168,13 @@ public final class WheelInput {
         if (key.equals(InputConstants.UNKNOWN)) {
             return false;
         }
-        if (key.getType() == InputConstants.Type.MOUSE) {
-            return GLFW.glfwGetMouseButton(window, key.getValue()) == GLFW.GLFW_PRESS;
-        }
-        // a key bound by scan code cannot be polled by its code: the release event ends the press instead
-        return key.getType() != InputConstants.Type.KEYSYM || InputConstants.isKeyDown(window, key.getValue());
+        KeyPoll.Kind kind = key.getType() == InputConstants.Type.MOUSE ? KeyPoll.Kind.MOUSE : key.getType() == InputConstants.Type.KEYSYM ? KeyPoll.Kind.KEYSYM : KeyPoll.Kind.SCANCODE;
+        boolean polled = switch (kind) {
+            case MOUSE -> GLFW.glfwGetMouseButton(window, key.getValue()) == GLFW.GLFW_PRESS;
+            case KEYSYM -> InputConstants.isKeyDown(window, key.getValue());
+            case SCANCODE -> false; // not pollable by its code: the release event ends the press, or the window going inactive
+        };
+        return KeyPoll.pendingStillDown(kind, polled, mc.isWindowActive());
     }
 
     private static void step(Input in, boolean overPower) {

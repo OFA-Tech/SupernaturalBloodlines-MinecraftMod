@@ -154,6 +154,15 @@ class ClickAndNarrationTest {
     }
 
     @Test
+    void theDescriptionIsReadAfterTheNameAndWhatItCovers() {
+        assertEquals(List.of("Tensura", "Skills", "1 of 3", "Heat Wave", "Also covers: Vampirism Night Vision", "Scorching air.", "Devour", "ready"),
+                WheelNarration.lines("Tensura", "Skills", "Heat Wave", "Also covers: Vampirism Night Vision", "Scorching air.", "Devour", "ready", "", 1, 3, 1, 1, ClickAndNarrationTest::tr));
+        assertEquals(List.of("Tensura", "Skills", "1 of 3", "Heat Wave", "Scorching air.", "ready"),
+                WheelNarration.lines("Tensura", "Skills", "Heat Wave", "", "Scorching air.", "", "ready", "", 1, 3, 1, 1, ClickAndNarrationTest::tr));
+        assertEquals(List.of("Tensura", "Skills", "1 of 3", "Heat Wave", "ready"), WheelNarration.lines("Tensura", "Skills", "Heat Wave", "", "", "", "ready", "", 1, 3, 1, 1, ClickAndNarrationTest::tr));
+    }
+
+    @Test
     void stateIsWordsNotColour() {
         List<String> ready = WheelNarration.lines("Tensura", "Skills", "Coercion", "", "ready", "", 1, 3, 1, 1, ClickAndNarrationTest::tr);
         assertEquals("ready", ready.get(ready.size() - 1));

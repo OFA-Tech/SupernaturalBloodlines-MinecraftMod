@@ -225,7 +225,7 @@ final class WheelRenderer {
             }
             if (locked) {
                 UiKit.shared(g, KitSprites.WHEEL_LOCK_OUTLINE, c.x() - 3, c.y() - 3, 42, 42, 1f);
-                KitDraw.icon(g, Icons.LOCK, c.x() + 21, c.y() + 21, 14, f.pal().lockOnCell());
+                KitDraw.icon(g, Icons.LOCK, c.x() + 21, c.y() + 21, 14, 0xFFFFFFFF); // the sprite keeps its own gold: WheelContrastTest checks it on every cell
             }
             if (on) {
                 String t = text("on");
@@ -332,7 +332,7 @@ final class WheelRenderer {
             y += 10;
         }
         if (e.state().locked()) {
-            int bh = 38;
+            int bh = WheelPanelText.lockBoxHeight(t.lock().size());
             UiKit.draw(g, f.kit(), KitSprites.CARD, x - 2, y, w + 4, bh);
             KitDraw.icon(g, Icons.LOCK, x + 2, y + 12, 14, pal.warn());
             g.drawString(font, WheelStrings.bold(text("locked")), x + 20, y + 4, pal.warn(), false);

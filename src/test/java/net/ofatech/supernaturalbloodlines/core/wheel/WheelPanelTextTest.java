@@ -45,6 +45,17 @@ class WheelPanelTextTest {
     }
 
     @Test
+    void aShortLockReasonLeavesTheDescriptionItsFullLines() {
+        String text = "Scorching air burns everything near you and keeps burning whatever the wind does, for as long as the power stays on.";
+        WheelPanelText.Lines shortReason = WheelPanelText.lines(FONT, this::measure, 110, 50, 130, "Heat Wave", "Tensura", "", "Toggle", text, "", "Locked");
+        WheelPanelText.Lines longReason = WheelPanelText.lines(FONT, this::measure, 110, 50, 130, "Heat Wave", "Tensura", "", "Toggle", text, "",
+                "Needs Fire Resistance level 6 and a stronger body to use it");
+        assertEquals(1, shortReason.lock().size());
+        assertEquals(2, longReason.lock().size());
+        assertTrue(shortReason.description().size() > longReason.description().size(), "a box that holds one line is shorter: " + shortReason.description() + " vs " + longReason.description());
+    }
+
+    @Test
     void theCoverNoteIsWrappedUnderTheNameAndPushesTheDescriptionDown() {
         String cover = "Also covers: Vampirism Night Vision, Werewolves Sense";
         String text = "A long description that goes on and on and on for a while.";
