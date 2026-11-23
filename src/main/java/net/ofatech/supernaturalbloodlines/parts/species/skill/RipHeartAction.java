@@ -163,6 +163,11 @@ public final class RipHeartAction implements ExtraActions.Action {
         return hit[0];
     }
     @Override
+    public boolean aimed() {
+        return true;
+    }
+
+    @Override
     public int cooldownTicks(ServerPlayer p) {
         return SpeciesConfig.ripHeartCooldownSeconds() * 20;
     }

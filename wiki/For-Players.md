@@ -37,7 +37,8 @@ The Cure needs a *desiccated* Original: see [Rites](Rites#rite-of-the-cure).
 | Weakness | Hurts |
 |---|---|
 | **White oak** (the stake) | kills Originals at once |
-| **White Oak Ash Dagger** | desiccates an Original; hurts any supernatural who wields it |
+| **White Oak Ash Dagger** | desiccates an Original (not an Original hybrid); hurts any supernatural who wields it |
+| **Cursed White Oak Ash Dagger** | the same, and it also desiccates an Original hybrid; made only by the Rite of the Cursed Dagger |
 | **Vervain** (tea, offhand) | vampires who bite or hit you |
 | **Mountain ash** lines | vampire and werewolf types can't cross |
 | **Wolfsbane**, wolf lichen, silver | werewolf types |

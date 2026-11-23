@@ -45,6 +45,13 @@ public final class ModAttachments {
                     .copyOnDeath()
                     .build());
 
+    /** The mode the wheel last chose for a power that is in no Tensura slot (a slot keeps its own mode); kept on death. Skill id to mode index. */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<java.util.Map<net.minecraft.resources.ResourceLocation, Integer>>> WHEEL_MODES =
+            ATTACHMENTS.register("wheel_modes", () -> AttachmentType.<java.util.Map<net.minecraft.resources.ResourceLocation, Integer>>builder(() -> java.util.Map.of())
+                    .serialize(com.mojang.serialization.Codec.unboundedMap(net.minecraft.resources.ResourceLocation.CODEC, com.mojang.serialization.Codec.INT))
+                    .copyOnDeath()
+                    .build());
+
     /** The Tensura race this mod replaced (a werewolf's Beastfolk line), put back on a cure (plan 13d); kept on death. */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<RaceMemory>> RACE_MEMORY =
             ATTACHMENTS.register("race_memory", () -> AttachmentType.builder(() -> RaceMemory.NONE)

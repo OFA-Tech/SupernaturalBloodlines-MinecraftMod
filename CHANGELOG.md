@@ -21,6 +21,42 @@
 
 ### Migration
 - The pack index remembers who was hybrid-like when last seen (saved with it, nothing else changes). A pack led by an offline hybrid gives the gift once its leader has logged in after the update.
+## Unreleased (skill wheel, phase W1: catalogue and server path)
+
+Nothing is drawn yet: this phase is the server half of the skill wheel (`docs/superpowers/specs/2026-11-22-skill-wheel-design.md`). The wheel screen comes in a later phase.
+
+### Added
+- **A catalogue of every power a player has**, built on the server when the wheel opens and again only when it changes: ours (Bite and our actions), Vampirism's and Werewolves' unlocked actions, Vampirism's Vision, and Tensura's skills, spells, battlewill arts, passive switches and race ability. Each entry has a kind (instant, toggle, aimed, held), its state (on, cooldown, mode) and, when it cannot be used now, a reason.
+- **Four payloads** on the hud channel: `WheelViewPayload` (the wheel opened or closed), `WheelCataloguePayload` (the list, at most 512 entries), `UsePowerPayload` (use a power, or end it) and `SetPowerModePayload` (next or previous mode). The server looks every power up in what the player really has, re-checks it, and gives the same refusal the slot or key would.
+- **A cooldown is sent as an end time and its full length**, not as ticks left, so a running cooldown does not make the server resend the list; the client counts down on its own clock. The list is compared as a whole (not by hash code) before it is sent again.
+- **Using a Tensura skill that is in no slot.** A small scope on the existing next-preset hook lets the server start (and keep running) the one skill the wheel is using; nothing is parked in a hidden slot. Held skills, arts and spells with a cast time run past Tensura's one-second limit for a skill that is not slotted. Toggles are flipped through Tensura's own toggle, so they never need a slot.
+- **Modes from the wheel.** A Tensura skill in a slot changes mode through Tensura's own slot mode (every slot holding it); a skill in no slot keeps its mode in a new saved value (`wheel_modes`).
+- **Covered-key ids for the wheel** (Vampirism's action wheel and vision key, Tensura's race-ability key, Great Sage's menu, assess, scan, magic sense and thought acceleration keys, Infinity's wheel and soul control keys). They are **not covered yet**: nothing is covered until a build has a wheel screen, so no player is left with a hidden key and no way to use it.
+- Config (all with Admin rows): `wheel_enabled`, `wheel_catalogue_interval_ticks`, `wheel_unslotted_tensura`.
+
+### Changed
+- **The hud network version is 2. Update the server and every client together.** The payload registrar checks the version when a player joins, so a client on the old version is disconnected by a server on the new one (and the other way round); there is no half-working state to fall back to. The channel is optional only in the sense that a side that lacks it altogether (the hud part is off, or the mod is not there) still connects, and then nothing is sent to it and none of its keys is covered; a side that has it with another version does not.
+- The "cannot act" rule (a player who is downed, snapped, dying, asleep, dead or a spectator) is one shared function for the slots and the wheel; the slots behave as before.
+
+### Rolling back
+- **Roll the server and every client back together** (the network version goes back to 1; a mixed pair cannot connect). The saved `wheel_modes` value is dropped by an older build, which is harmless: it only held the mode of a Tensura skill that was in no slot. With `wheel_enabled = false` the wheel's server side answers an empty list and refuses every use, and the six slots are untouched.
+
+## Unreleased (art: the plan 18 icons)
+## Unreleased (plan 18g: the Cursed White Oak Ash Dagger)
+
+### Changed
+- **R33: the plain White Oak Ash Dagger no longer desiccates an Original hybrid.** It still desiccates an Original. A new item, the **Cursed White Oak Ash Dagger**, desiccates both. The two blades hit the same (2 damage, same speed), cost the wielder the same backlash, lodge for the same 30 minutes and drop as the stack that was used.
+- **No oracle:** a miss looks the same for everyone the dagger does not lodge in (the blow lands, the supernatural wielder takes the backlash, the dagger is kept, the wielder, a player too, is sent nothing), so a plain dagger that "does nothing" does not tell an Original hybrid from a human or a vampire; a lodge tells only what the rules make public.
+- Each dagger has a grey tooltip line ("Lodges in an Original" / "Lodges in an Original or an Original hybrid"). The Cursed one does not burn.
+- **NPC Original bosses (Klaus and the others) count a dagger only in a player's hand.** A mob holding one (a zombie) no longer desiccates a boss, which used to send the reward to nobody. Player Originals are unchanged.
+
+### Added
+- **Rite of the Cursed Dagger (R205, `cursed_dagger`).** A White Oak Ash Dagger, 2 white oak ash and an echo shard in a medium circle of ritual chalk (20,000 power) make a Cursed White Oak Ash Dagger. It is the only way to get one (no recipe, no loot; it is in the creative tab). The rite acts on nobody, so nothing needs a consent. Its book entry is sealed ("Unlocked by becoming a witch, a siphoner or a tribrid") and opens with the rite's unlock like the others. Needs the artifacts and species parts.
+- Placeholder art: the Cursed dagger is a purple tint of the plain dagger's textures and models (note for Fable in `art/items/CURSED_DAGGER.md`). No new setting, so no new Admin row.
+
+### Migration
+- Plain daggers keep working on Originals and are **not converted**. A plain dagger already lodged in an Original hybrid stays lodged until it is pulled, runs out (30 minutes) or the player dies. Players who relied on the plain dagger against an Original hybrid now need the rite. NPC Original fights (Klaus, Mikael, Rebekah, Elijah, Kol, Finn) are unchanged for players: either dagger works on them (a mob's dagger no longer does, see above). No payload or save format changed (no network bump); a world saved with a Cursed dagger and rolled back to an older build loses the item (unknown item ids are dropped) and a Cursed dagger lodged in a player vanishes from them.
+
 ## Unreleased (UI overhaul phase 6: boss bars)
 
 - The nine bosses draw their own boss bar on the art kit, in the look of the hub's theme: a card with a portrait for each form, a name plate, the health bar with ticks, the health in numbers and the form chips (Klaus, Deucalion and Peter: HUMAN, SHIFTING, BEAST; the Beast of Gevaudan: HOST, BEAST, SPIRIT). The bar is one row, one card tall: the boss you hit last (else the nearest) is the full card and every other boss is a small token beside it with a health ring and a form mark, with a "+N" token when the width runs out. Narration and tooltips list every boss. Another mod's bar stays vanilla and starts under the row at every GUI scale, unless it came before ours in the overlay (then it stays above, and the row follows it); the row stays clear of the Tensura/Vampirism status corner.
