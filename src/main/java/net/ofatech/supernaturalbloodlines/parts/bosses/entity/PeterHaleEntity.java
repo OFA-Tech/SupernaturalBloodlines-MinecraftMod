@@ -92,6 +92,11 @@ public final class PeterHaleEntity extends BossNpc implements GeoEntity, ShiftBo
     }
 
     @Override
+    public net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look barLook() {
+        return net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.shifter(form());
+    }
+
+    @Override
     public String skin() {
         return PeterRules.skin(entityData.get(MET_MOON));
     }
