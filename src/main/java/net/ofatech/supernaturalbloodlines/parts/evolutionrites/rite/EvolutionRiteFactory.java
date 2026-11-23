@@ -159,7 +159,7 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
             boolean enoughEp = grant.isEmpty() || MasteryRules.enoughEp(EnergyHelper.getBaseMaxEP(target) - EvoSkills.price(target, grant.get()), recipe.epCost());
             return new EvolutionRules.Facts(EvolutionRitesConfig.recipeOpen(recipe.id(), recipe.tier()), Recipes.modLoaded(recipe.requiresMod()), hooks, roadOpen,
                     SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), fullMoon, LunarEclipse.active(level.getServer()), caster == target,
-                    target.isShiftKeyDown(), holds, kindOk, needs, satisfied, owned, enoughEp);
+                    target.isShiftKeyDown(), holds, kindOk, needs, satisfied, owned, enoughEp, false);
         }
 
         private boolean refuse(ServerPlayer caster, ServerPlayer target, EvolutionRules.Reason reason) {

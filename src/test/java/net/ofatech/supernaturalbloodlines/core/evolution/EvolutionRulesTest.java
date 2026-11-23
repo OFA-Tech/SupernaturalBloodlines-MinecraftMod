@@ -18,7 +18,7 @@ class EvolutionRulesTest {
 
     /** Every check passes; a test breaks one thing at a time. */
     private static Facts good() {
-        return new Facts(true, true, true, true, true, true, false, false, true, false, true, true, true, false, true);
+        return new Facts(true, true, true, true, true, true, false, false, true, false, true, true, true, false, true, false);
     }
 
     private static Facts with(Facts f, java.util.function.UnaryOperator<Builder> change) {
@@ -27,18 +27,18 @@ class EvolutionRulesTest {
 
     private static final class Builder {
         boolean enabled, modLoaded, probeFound, roadOpen, casterWitch, fullMoonNight, eclipse, casterIsTarget, targetSneaking, holdsGrant, kindOk, holdsNeeds,
-                probeSatisfied, ownedByOther, enoughEp;
+                probeSatisfied, ownedByOther, enoughEp, retired;
 
         Builder(Facts f) {
             enabled = f.enabled(); modLoaded = f.modLoaded(); probeFound = f.probeFound(); roadOpen = f.roadOpen(); casterWitch = f.casterWitch();
             fullMoonNight = f.fullMoonNight(); eclipse = f.eclipse(); casterIsTarget = f.casterIsTarget(); targetSneaking = f.targetSneaking();
             holdsGrant = f.holdsGrant(); kindOk = f.kindOk(); holdsNeeds = f.holdsNeeds(); probeSatisfied = f.probeSatisfied();
-            ownedByOther = f.ownedByOther(); enoughEp = f.enoughEp();
+            ownedByOther = f.ownedByOther(); enoughEp = f.enoughEp(); retired = f.retired();
         }
 
         Facts build() {
             return new Facts(enabled, modLoaded, probeFound, roadOpen, casterWitch, fullMoonNight, eclipse, casterIsTarget, targetSneaking, holdsGrant,
-                    kindOk, holdsNeeds, probeSatisfied, ownedByOther, enoughEp);
+                    kindOk, holdsNeeds, probeSatisfied, ownedByOther, enoughEp, retired);
         }
     }
 
@@ -65,7 +65,7 @@ class EvolutionRulesTest {
 
     @Test
     void theChecksRunInTheSpecOrder() {
-        Facts all = new Facts(false, false, false, false, false, false, false, false, false, true, false, false, false, true, false);
+        Facts all = new Facts(false, false, false, false, false, false, false, false, false, true, false, false, false, true, false, true);
         List<Reason> seen = new java.util.ArrayList<>();
         EvolutionRecipe r = recipe(Tier.UNIQUE);
         Optional<Reason> reason;
@@ -78,7 +78,7 @@ class EvolutionRulesTest {
                 case WRONG_NIGHT -> b.fullMoonNight = true;
                 case NO_CONSENT -> b.targetSneaking = true;
                 case ALREADY -> b.holdsGrant = false;
-                case NOT_READY -> { b.kindOk = true; b.holdsNeeds = true; b.probeSatisfied = true; b.ownedByOther = false; b.enoughEp = true; }
+                case NOT_READY -> { b.kindOk = true; b.holdsNeeds = true; b.probeSatisfied = true; b.ownedByOther = false; b.enoughEp = true; b.retired = false; }
             }
         }
         assertEquals(List.of(Reason.CLOSED, Reason.NOT_WITCH, Reason.WRONG_NIGHT, Reason.NO_CONSENT, Reason.ALREADY, Reason.NOT_READY), seen);
@@ -99,12 +99,27 @@ class EvolutionRulesTest {
                 with(good(), b -> { b.holdsNeeds = false; return b; }),
                 with(good(), b -> { b.probeSatisfied = false; return b; }),
                 with(good(), b -> { b.ownedByOther = true; return b; }),
-                with(good(), b -> { b.enoughEp = false; return b; }));
+                with(good(), b -> { b.enoughEp = false; return b; }),
+                with(good(), b -> { b.retired = true; return b; }));
         for (Facts f : broken) {
             Reason r = EvolutionRules.check(recipe(Tier.UNIQUE), f).orElseThrow();
             assertTrue("NOT_READY".equals(r.name()), "a target requirement gave " + r + ", which tells the performer something else");
             assertTrue("supernaturalbloodlines.refusal.evolution.not_ready".equals(EvolutionRules.keyOf(r, Tier.UNIQUE)), "the key differs for " + r);
         }
+    }
+
+    @Test
+    void aRetiredGrantIsNotReadyAndAboutTheTarget() {
+        Reason r = EvolutionRules.check(recipe(Tier.ULTIMATE), with(good(), b -> { b.eclipse = true; b.retired = true; return b; })).orElseThrow();
+        assertEquals(Reason.NOT_READY, r);
+        assertTrue(EvolutionRules.aboutTarget(r));
+    }
+
+    @Test
+    void retiredNeverBeatsClosedOrTheNightOrConsent() {
+        assertEquals(Optional.of(Reason.CLOSED), EvolutionRules.check(recipe(Tier.UNIQUE), with(good(), b -> { b.roadOpen = false; b.retired = true; return b; })));
+        assertEquals(Optional.of(Reason.WRONG_NIGHT), EvolutionRules.check(recipe(Tier.UNIQUE), with(good(), b -> { b.fullMoonNight = false; b.retired = true; return b; })));
+        assertEquals(Optional.of(Reason.NO_CONSENT), EvolutionRules.check(recipe(Tier.UNIQUE), with(good(), b -> { b.targetSneaking = false; b.retired = true; return b; })));
     }
 
     @Test
