@@ -4,11 +4,12 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.OptionalInt;
+import java.util.Optional;
 
 /**
- * The shared clock of the groups of one player: for each group the side that is on (if any) and the game time its cooldown ends. Immutable, and saved with the player, so a relog keeps
- * the end tick ({@code now} is the game time).
+ * The shared clock of the groups of one player: for each group the side that is on (if any), the game time its cooldown ends and the length that cooldown started with (so a sweep
+ * progresses). Immutable, and saved with the player, so a relog keeps the end tick ({@code now} is the game time). A side is saved by <b>the key of its member</b>, never by its place
+ * in the table, so reordering the table file never moves a saved "on" to another power.
  * <p>
  * Rules (research section 6, risk 1; owner, 2026-11-22):
  * <ul>
@@ -19,11 +20,16 @@ import java.util.OptionalInt;
  * </ul>
  */
 public final class GroupClock {
-    public record State(int active, long cooldownEnd) {
-        public static final Codec<State> CODEC = RecordCodecBuilder.create(i -> i.group(Codec.INT.fieldOf("active").forGetter(State::active),
-                Codec.LONG.fieldOf("end").forGetter(State::cooldownEnd)).apply(i, State::new));
+    public record State(String active, long cooldownEnd, int total) {
+        public static final Codec<State> CODEC = RecordCodecBuilder.create(i -> i.group(Codec.STRING.optionalFieldOf("active", "").forGetter(State::active),
+                Codec.LONG.fieldOf("end").forGetter(State::cooldownEnd), Codec.INT.optionalFieldOf("total", 0).forGetter(State::total)).apply(i, State::new));
+
+        boolean on() {
+            return !active.isEmpty();
+        }
     }
 
+    private static final State NONE = new State("", 0L, 0);
     private static final GroupClock IDLE = new GroupClock(Map.of());
 
     public static final Codec<GroupClock> CODEC = Codec.unboundedMap(Codec.STRING, State.CODEC).xmap(GroupClock::new, c -> c.states);
@@ -38,31 +44,32 @@ public final class GroupClock {
         return IDLE;
     }
 
-    public GroupClock onEvent(String groupId, int side, SideEvent e, boolean lasting, int mainCooldownTicks, long now) {
-        State old = states.getOrDefault(groupId, new State(-1, 0L));
+    /** @param side the key of the member the event is about (never empty) */
+    public GroupClock onEvent(String groupId, String side, SideEvent e, boolean lasting, int mainCooldownTicks, long now) {
+        State old = states.getOrDefault(groupId, NONE);
+        boolean starts = mainCooldownTicks > 0;
+        long end = starts ? now + mainCooldownTicks : old.cooldownEnd;
+        int total = starts ? mainCooldownTicks : old.total;
         State next;
-        long start = mainCooldownTicks > 0 ? now + mainCooldownTicks : old.cooldownEnd;
         switch (e) {
-            case FIRED -> next = new State(old.active, mainCooldownTicks > 0 ? start : old.cooldownEnd);
-            case ON -> next = new State(side, lasting ? old.cooldownEnd : (mainCooldownTicks > 0 ? start : old.cooldownEnd));
+            case FIRED -> next = new State(old.active, end, total);
+            case ON -> next = lasting ? new State(side, old.cooldownEnd, old.total) : new State(side, end, total);
             case OFF -> {
-                if (old.active != side) {
+                if (!old.active.equals(side)) {
                     return this;
                 }
-                next = new State(-1, lasting && mainCooldownTicks > 0 ? start : old.cooldownEnd);
+                next = lasting ? new State("", end, total) : new State("", old.cooldownEnd, old.total);
             }
             default -> throw new IllegalStateException();
         }
         return with(groupId, next, now);
     }
 
+    /** Puts the state of one group in and drops every group that has nothing left (no side on, cooldown over), so the saved map never grows. */
     private GroupClock with(String groupId, State s, long now) {
         Map<String, State> m = new HashMap<>(states);
-        if (s.active < 0 && s.cooldownEnd <= now) {
-            m.remove(groupId);
-        } else {
-            m.put(groupId, s);
-        }
+        m.put(groupId, s);
+        m.values().removeIf(x -> !x.on() && x.cooldownEnd <= now);
         return new GroupClock(m);
     }
 
@@ -78,9 +85,16 @@ public final class GroupClock {
         return s == null ? 0L : s.cooldownEnd;
     }
 
-    public OptionalInt activeSide(String groupId) {
+    /** The length the running cooldown started with, in ticks (0 when none). */
+    public int cooldownTotal(String groupId) {
         State s = states.get(groupId);
-        return s == null || s.active < 0 ? OptionalInt.empty() : OptionalInt.of(s.active);
+        return s == null ? 0 : s.total;
+    }
+
+    /** The key of the member that is on in this group. */
+    public Optional<String> activeSide(String groupId) {
+        State s = states.get(groupId);
+        return s == null || !s.on() ? Optional.empty() : Optional.of(s.active);
     }
 
     public boolean isIdle() {

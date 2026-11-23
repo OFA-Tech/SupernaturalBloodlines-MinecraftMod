@@ -127,6 +127,30 @@ class DedupTest {
         assertEquals(multiMain, Dedup.apply(multiMain, SEED).shown());
     }
 
+    private record NotGroupable(PowerRef ref) implements Dedup.Item {
+        @Override
+        public int modeCount() {
+            return 1;
+        }
+
+        @Override
+        public boolean groupable() {
+            return false;
+        }
+    }
+
+    @Test
+    void anEntryThatIsNotGroupableIsNeverMatchedHiddenOrKept() {
+        // the race ability of a race that is not the vampire's: it is not a bat form nor a bite, so the bat and the bite stay and it stays
+        List<Dedup.Item> in = List.of(new E(ref(BAT), 1), new NotGroupable(ref(RACE)), new E(ref(BITE), 1));
+        Dedup.Result<Dedup.Item> r = Dedup.apply(in, SEED);
+        assertEquals(in, r.shown());
+        assertTrue(r.hidden().isEmpty());
+        // and as the entry that would be kept it does not hide the vampire's action either
+        List<Dedup.Item> main = List.of(new NotGroupable(ref(V_INVIS)), new E(ref(T_INVIS), 1));
+        assertEquals(main, Dedup.apply(main, SEED).shown());
+    }
+
     @Test
     void aRefInTwoGroupsIsHiddenOnceAndStaysHidden() {
         // the race ability is in bat_form (main: the bat) and in bite (main: our bite): a vampire with all three sees the bat and the bite, and the race ability once hidden

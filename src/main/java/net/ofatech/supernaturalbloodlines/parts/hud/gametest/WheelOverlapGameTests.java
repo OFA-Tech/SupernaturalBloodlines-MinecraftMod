@@ -6,16 +6,22 @@ import de.teamlapen.vampirism.api.entity.player.IFactionPlayer;
 import de.teamlapen.vampirism.api.entity.player.actions.IAction;
 import de.teamlapen.vampirism.api.entity.player.actions.IActionHandler;
 import de.teamlapen.vampirism.api.event.ActionEvent;
+import io.github.manasmods.manascore.race.api.ManasRaceInstance;
+import io.github.manasmods.manascore.race.api.RaceAPI;
+import io.github.manasmods.manascore.race.api.RaceEvents;
 import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
+import io.github.manasmods.manascore.network.api.util.Changeable;
 import io.github.manasmods.manascore.skill.api.SkillAPI;
+import io.github.manasmods.manascore.skill.api.SkillEvents;
 import io.github.manasmods.tensura.network.c2s.RequestAbilityModeChangePacket;
+import io.github.manasmods.tensura.race.vampire.VampireRace;
+import io.github.manasmods.tensura.registry.effect.TensuraMobEffects;
 import io.github.manasmods.tensura.storage.TensuraStorages;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.NeoForge;
@@ -34,6 +40,8 @@ import net.ofatech.supernaturalbloodlines.parts.hud.action.FactionActions;
 import net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService;
 import net.ofatech.supernaturalbloodlines.parts.hud.net.WheelEntry;
 import net.ofatech.supernaturalbloodlines.parts.hud.wheel.TensuraUse;
+import net.ofatech.supernaturalbloodlines.parts.hud.wheel.VampirismVision;
+import net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelClocks;
 import net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelCatalogue;
 import net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelGate;
 import net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelService;
@@ -61,6 +69,26 @@ public final class WheelOverlapGameTests {
         }
         String json = "{\"format\":1,\"groups\":[{\"id\":\"g\",\"research\":\"T\",\"confidence\":\"same\",\"main\":0,\"members\":[" + members + "]}]}";
         return OverlapTable.parse(JsonParser.parseString(json).getAsJsonObject());
+    }
+
+    /** A group of any id, members named by their full key (the first is the main side). */
+    private static OverlapTable tableOf(String groupId, String... members) {
+        StringBuilder list = new StringBuilder();
+        for (String m : members) {
+            list.append(list.length() == 0 ? "" : ",").append('"').append(m).append('"');
+        }
+        String json = "{\"format\":1,\"groups\":[{\"id\":\"" + groupId + "\",\"research\":\"T\",\"confidence\":\"same\",\"main\":0,\"members\":[" + list + "]}]}";
+        return OverlapTable.parse(JsonParser.parseString(json).getAsJsonObject());
+    }
+
+    /** Runs a test and puts the shared test seams back whatever happens in it (a failed assertion throws), so the next test never sees this one's table or clock. */
+    private static void guarded(GameTestHelper helper, java.util.function.Consumer<GameTestHelper> body) {
+        try {
+            body.accept(helper);
+        } finally {
+            WheelGate.setTableForTest(null);
+            WheelClocks.setNowForTest(null);
+        }
     }
 
     private static PowerRef ref(String key) {
@@ -144,6 +172,10 @@ public final class WheelOverlapGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void secondSideIsRefusedWhileTheFirstIsOn(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::secondSideIsRefusedWhileTheFirstIsOnBody);
+    }
+
+    private static void secondSideIsRefusedWhileTheFirstIsOnBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
         ResourceLocation x = lasting(helper, p, 0);
         WheelGate.setTableForTest(table(x.toString(), CHANT));
@@ -193,6 +225,10 @@ public final class WheelOverlapGameTests {
     }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void firstSideOffStartsTheGroupCooldownOnTheSecond(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::firstSideOffStartsTheGroupCooldownOnTheSecondBody);
+    }
+
+    private static void firstSideOffStartsTheGroupCooldownOnTheSecondBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
         ResourceLocation x = lasting(helper, p, 0);
         WheelGate.setTableForTest(table(x.toString(), CHANT));
@@ -217,6 +253,10 @@ public final class WheelOverlapGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void lastingEndCooldownIsRaisedToTheGroupFloor(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::lastingEndCooldownIsRaisedToTheGroupFloorBody);
+    }
+
+    private static void lastingEndCooldownIsRaisedToTheGroupFloorBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
         ResourceLocation a = lasting(helper, p, 0);
         ResourceLocation b = lasting(helper, p, 1);
@@ -245,6 +285,10 @@ public final class WheelOverlapGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void stackGuardOffAllowsBoth(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::stackGuardOffAllowsBothBody);
+    }
+
+    private static void stackGuardOffAllowsBothBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
         ResourceLocation x = lasting(helper, p, 0);
         WheelGate.setTableForTest(table(x.toString(), CHANT));
@@ -267,6 +311,10 @@ public final class WheelOverlapGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void dedupHidesTheNonMainEntryInTheCatalogue(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::dedupHidesTheNonMainEntryInTheCatalogueBody);
+    }
+
+    private static void dedupHidesTheNonMainEntryInTheCatalogueBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
         ResourceLocation x = lasting(helper, p, 0);
         WheelGate.setTableForTest(table(x.toString(), COERCION));
@@ -284,6 +332,10 @@ public final class WheelOverlapGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void dedupOffListsBoth(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::dedupOffListsBothBody);
+    }
+
+    private static void dedupOffListsBothBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
         ResourceLocation x = lasting(helper, p, 0);
         WheelGate.setTableForTest(table(x.toString(), COERCION));
@@ -305,6 +357,10 @@ public final class WheelOverlapGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void theSideThatIsOnStaysInTheCatalogueSoItCanBeTurnedOff(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::theSideThatIsOnStaysInTheCatalogueSoItCanBeTurnedOffBody);
+    }
+
+    private static void theSideThatIsOnStaysInTheCatalogueSoItCanBeTurnedOffBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
         ResourceLocation x = lasting(helper, p, 0);
         WheelGate.setTableForTest(table(x.toString(), CHANT));
@@ -330,6 +386,10 @@ public final class WheelOverlapGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void slotAndWheelShareTheSameGate(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::slotAndWheelShareTheSameGateBody);
+    }
+
+    private static void slotAndWheelShareTheSameGateBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
         ResourceLocation x = lasting(helper, p, 0);
         WheelCatalogueGameTests.TestAction ours = new WheelCatalogueGameTests.TestAction();
@@ -370,6 +430,10 @@ public final class WheelOverlapGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void tensuraSideIsRefusedFromAnyKey(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::tensuraSideIsRefusedFromAnyKeyBody);
+    }
+
+    private static void tensuraSideIsRefusedFromAnyKeyBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
         ResourceLocation x = lasting(helper, p, 0);
         WheelGate.setTableForTest(table(x.toString(), COERCION));
@@ -405,6 +469,10 @@ public final class WheelOverlapGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aRefusedTensuraPressLeavesNoGroupCooldown(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::aRefusedTensuraPressLeavesNoGroupCooldownBody);
+    }
+
+    private static void aRefusedTensuraPressLeavesNoGroupCooldownBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
         ResourceLocation x = lasting(helper, p, 0);
         WheelGate.setTableForTest(table(x.toString(), COERCION));
@@ -431,6 +499,10 @@ public final class WheelOverlapGameTests {
     }
     @GameTest(template = "empty", templateNamespace = NS)
     public static void playerDiesWhileLastingStartsOneCooldown(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::playerDiesWhileLastingStartsOneCooldownBody);
+    }
+
+    private static void playerDiesWhileLastingStartsOneCooldownBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
         ResourceLocation x = lasting(helper, p, 0);
         WheelGate.setTableForTest(table(x.toString(), CHANT));
@@ -456,24 +528,36 @@ public final class WheelOverlapGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void clockSurvivesRelog(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::clockSurvivesRelogBody);
+    }
+
+    private static void clockSurvivesRelogBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
+        ResourceLocation x = lasting(helper, p, 0);
+        WheelGate.setTableForTest(tableOf("g", "vampirism/" + x, CHANT, COERCION));
         WheelGate.resetForTest(p);
-        WheelGate.apply(p, ref("vampirism/vampirism:regen"), SideEvent.ON, true, 0);
-        WheelGate.setTableForTest(table("vampirism:regen", CHANT));
-        WheelGate.resetForTest(p);
-        WheelGate.apply(p, ref("vampirism/vampirism:regen"), SideEvent.ON, true, 0);
+        WheelGate.apply(p, ref("vampirism/" + x), SideEvent.ON, true, 0);
         WheelGate.apply(p, ref(CHANT), SideEvent.FIRED, false, 0);
         GroupClock before = WheelGate.clock(p);
-        // what a relog does: the attachment goes through its codec
-        Tag saved = GroupClock.CODEC.encodeStart(NbtOps.INSTANCE, before).getOrThrow();
-        GroupClock after = GroupClock.CODEC.parse(NbtOps.INSTANCE, saved).getOrThrow();
-        helper.assertTrue(before.equals(after) && after.activeSide("g").isPresent(), "the clock changed through its codec: " + before + " then " + after);
+        helper.assertTrue(before.activeSide("g").isPresent() && before.cooldownEnd("g") > 0 && before.cooldownTotal("g") > 0, "setup: the clock is not running: " + before);
+        // what a relog does: the player is written out with its attachments and read back, the clock having been lost in between
+        CompoundTag saved = p.saveWithoutId(new CompoundTag());
+        helper.assertTrue(saved.toString().contains("wheel_clock"), "the clock is not part of what is saved with the player");
+        WheelGate.resetForTest(p);
+        helper.assertTrue(WheelGate.clock(p).isIdle(), "setup: the clock was not cleared");
+        p.load(saved);
+        GroupClock after = WheelGate.clock(p);
+        helper.assertTrue(before.equals(after) && after.activeSide("g").isPresent(), "the clock changed through the player's save: " + before + " then " + after);
         done(helper, p);
     }
 
     /** The Tensura chain is also collapsed by the table (the highest owned tier stays), on top of Tensura's own kinds file. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void productionTableCollapsesTheRegenerationChain(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::productionTableCollapsesTheRegenerationChainBody);
+    }
+
+    private static void productionTableCollapsesTheRegenerationChainBody(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
         WheelGate.setTableForTest(null);
         WheelGate.resetForTest(p);
@@ -488,6 +572,10 @@ public final class WheelOverlapGameTests {
     /** A held skill that leaves its slot while it is held (the preset changed, the slot was cleared) is not cut off after a second: the hold bracket is open for every wheel hold. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aSlottedSkillHeldFromTheWheelSurvivesLeavingItsSlot(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::aSlottedSkillHeldFromTheWheelSurvivesLeavingItsSlotBody);
+    }
+
+    private static void aSlottedSkillHeldFromTheWheelSurvivesLeavingItsSlotBody(GameTestHelper helper) {
         ServerPlayer p = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.create(helper);
         ManasSkillInstance inst = WheelTestKit.learn(p, id("tensura:gravity_flight"));
         TensuraStorages.getAbilityFrom(p).setActivePreset(0);
@@ -502,8 +590,496 @@ public final class WheelOverlapGameTests {
         helper.succeed();
     }
 
+    private static final String FLIGHT = "tensura/tensura:gravity_flight";
+    private static final String BAT = "vampirism/vampirism:bat";
+    private static final String RACE_ABILITY = "tensura/tensura:race_ability";
+    private static final String WEREWOLF_RAGE = "werewolves/werewolves:rage";
+
+    private static int groupLeft(ServerPlayer p, String group) {
+        return WheelGate.clock(p).cooldownLeft(group, net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelClocks.now(p));
+    }
+
+    private static Optional<String> activeOf(ServerPlayer p, String group) {
+        return WheelGate.clock(p).activeSide(group);
+    }
+
+    /** Unlocks one Vampirism action of the vampire. @return its own cooldown */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static int unlock(ServerPlayer p, ResourceLocation action) {
+        IAction a = FactionActions.byId(action);
+        IFactionPlayer fp = VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow();
+        ((IActionHandler) fp.getActionHandler()).unlockActions(List.of(a));
+        return a.getCooldown(fp);
+    }
+
+    /** Tensura's vampire race ability the way ManasCore runs it: the activation event first, then the race's own code, then the end of the tick. */
+    private static dev.architectury.event.EventResult useRaceAbility(ServerPlayer p) {
+        ManasRaceInstance inst = RaceAPI.getRaceFrom(p).getRace().orElseThrow();
+        dev.architectury.event.EventResult result = RaceEvents.ACTIVATE_ABILITY.invoker().activateAbility(inst, p);
+        if (!result.isFalse()) {
+            ((VampireRace) inst.getRace()).onActivateAbility(inst, p);
+        }
+        WheelGate.settle(p);
+        return result;
+    }
+
+    private static boolean batsMode(ServerPlayer p) {
+        return p.hasEffect(TensuraMobEffects.getReference(TensuraMobEffects.BATS_MODE));
+    }
+
+    /** Bypass 1 (main side not owned): the shared cooldown was 0 because the main side belongs to a faction the player is not in. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMainSideThePlayerLacksStillStartsTheSharedCooldown(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = ActionGameTests.vampire(h);
+            ResourceLocation x = lasting(h, p, 0);
+            // the main side is a werewolf action: a vampire does not have it, so the first side they do have speaks for the group
+            WheelGate.setTableForTest(tableOf("g", WEREWOLF_RAGE, "vampirism/" + x));
+            WheelGate.resetForTest(p);
+            theirKey(p, x);
+            theirKey(p, x); // off
+            int own = mainCooldown(p, x);
+            if (own <= 0 || groupLeft(p, "g") != own) {
+                failWith(h, p, "the group cooldown is " + groupLeft(p, "g") + ", the side that was used has " + own);
+                return;
+            }
+            Optional<LockReason> werewolf = WheelGate.check(p, ref(WEREWOLF_RAGE));
+            if (werewolf.isEmpty() || werewolf.get() != LockReason.GROUP_COOLDOWN) {
+                failWith(h, p, "the other side was not held back by the shared cooldown: " + werewolf);
+                return;
+            }
+            done(h, p);
+        });
+    }
+
+    /** Bypass 2: a held Tensura skill is on while it is held, so no other side starts, and its end starts the cooldown. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aHeldTensuraSkillBlocksTheOtherSideUntilItIsReleased(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.create(h);
+            // the flight and, in its place for Ascension's angel wings (an addon the CI run does not have), another Tensura skill of the same group
+            WheelGate.setTableForTest(tableOf("g", FLIGHT, COERCION));
+            WheelGate.resetForTest(p);
+            ManasSkillInstance flight = WheelTestKit.learn(p, id("tensura:gravity_flight"));
+            ManasSkillInstance coercion = WheelTestKit.learn(p, id("tensura:coercion"));
+            TensuraStorages.getAbilityFrom(p).setActivePreset(0);
+            TensuraStorages.getAbilityFrom(p).setAbilitySlot(0, 1, flight.getSkill(), 0);
+            TensuraStorages.getAbilityFrom(p).setAbilitySlot(0, 0, coercion.getSkill(), 0);
+            h.assertTrue(TensuraUse.press(p, id("tensura:gravity_flight"), 0) == null, "setup: the press was refused");
+            WheelGate.settle(p);
+            h.assertTrue(io.github.manasmods.manascore.skill.impl.TickingSkill.isTickingSkill(p, flight.getSkill(), 0), "setup: the held skill is not held");
+            if (!activeOf(p, "g").equals(Optional.of(ref(FLIGHT).key()))) {
+                failWith(h, p, "a held skill is not on in the clock: " + WheelGate.clock(p));
+                return;
+            }
+            if (SkillAPI.getSkillsFrom(p).startHoldSkill(coercion, 0, 0)) {
+                failWith(h, p, "a second side started while the flight is held");
+                return;
+            }
+            TensuraUse.release(p, id("tensura:gravity_flight"), 0);
+            WheelGate.settle(p);
+            if (activeOf(p, "g").isPresent()) {
+                failWith(h, p, "the flight was released but is still on in the clock: " + WheelGate.clock(p));
+                return;
+            }
+            if (!SkillAPI.getSkillsFrom(p).startHoldSkill(coercion, 0, 0)) {
+                failWith(h, p, "the other side stayed refused after the flight ended (it has no cooldown)");
+                return;
+            }
+            SkillAPI.getSkillsFrom(p).handleSkillRelease(coercion, 0, 0, false);
+            done(h, p);
+        });
+    }
+
+    /** Bypass 3: Bats Mode is the bat form; the bat of Vampirism stays refused while it lasts, even after the cooldown the old "fired" record would have run out. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void batsModeBlocksTheBatEvenAfterTheCooldownAndItsEndStartsOne(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = tensuraVampire(h);
+            ResourceLocation bat = id("vampirism:bat");
+            int batCooldown = unlock(p, bat);
+            h.assertTrue(batCooldown > 0, "setup: the bat has no cooldown");
+            WheelGate.setTableForTest(tableOf("bat_form", BAT, RACE_ABILITY));
+            WheelGate.resetForTest(p);
+            if (useRaceAbility(p).isFalse() || !batsMode(p)) {
+                failWith(h, p, "setup: Bats Mode did not start");
+                return;
+            }
+            if (!activeOf(p, "bat_form").equals(Optional.of(ref(RACE_ABILITY).key()))) {
+                failWith(h, p, "Bats Mode is not on in the clock: " + WheelGate.clock(p));
+                return;
+            }
+            // the ten-tick check sees the effect still there and keeps the side on
+            WheelGate.reconcile(p);
+            if (!activeOf(p, "bat_form").equals(Optional.of(ref(RACE_ABILITY).key()))) {
+                failWith(h, p, "the check ended Bats Mode while the effect lasts: " + WheelGate.clock(p));
+                return;
+            }
+            // the time the bat's own cooldown would take passes: Bats Mode is still on, the bat is still out
+            long later = net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelClocks.now(p) + 100_000L;
+            net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelClocks.setNowForTest(() -> later);
+            Optional<LockReason> refusal = WheelGate.check(p, ref(BAT));
+            if (refusal.isEmpty() || refusal.get() != LockReason.GROUP_ACTIVE) {
+                failWith(h, p, "the bat was not refused while Bats Mode lasts: " + refusal);
+                return;
+            }
+            net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelClocks.setNowForTest(null);
+            theirKey(p, bat);
+            if (ActionGameTests.active(p, bat)) {
+                failWith(h, p, "Vampirism's own key started the bat while Bats Mode lasts");
+                return;
+            }
+            // the ability again ends Bats Mode: the bat's cooldown is the group's, and both sides wait
+            if (useRaceAbility(p).isFalse() || batsMode(p)) {
+                failWith(h, p, "the second press did not end Bats Mode");
+                return;
+            }
+            if (activeOf(p, "bat_form").isPresent() || groupLeft(p, "bat_form") != batCooldown) {
+                failWith(h, p, "the end of Bats Mode left " + WheelGate.clock(p) + ", the bat's own cooldown is " + batCooldown);
+                return;
+            }
+            if (!useRaceAbility(p).isFalse() || batsMode(p)) {
+                failWith(h, p, "the ability was not refused during the shared cooldown");
+                return;
+            }
+            // another race's ability is not a bat form: the same group in the same cooldown does not stop it
+            h.assertTrue(WheelGate.groupable(p, ref(RACE_ABILITY)), "the vampire race's ability is not part of the groups");
+            h.assertTrue(RaceAPI.getRaceFrom(p).setRace(id("tensura:human"), false), "setup: could not change the race");
+            ManasRaceInstance human = RaceAPI.getRaceFrom(p).getRace().orElseThrow();
+            if (RaceEvents.ACTIVATE_ABILITY.invoker().activateAbility(human, p).isFalse()) {
+                failWith(h, p, "a race that is not the vampire's was stopped by the bat form group");
+                return;
+            }
+            if (WheelGate.groupable(p, ref(RACE_ABILITY)) || !WheelGate.groupable(p, ref(FLIGHT))) {
+                failWith(h, p, "the ability of a race that is not the vampire's is part of the groups, or a skill is not");
+                return;
+            }
+            done(h, p);
+        });
+    }
+
+    /** A press that drains is the bite, not the bat form: only the bite group counts it, and Bats Mode is not on. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDrainOfTheRaceAbilityCountsInTheBiteGroupOnly(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = tensuraVampire(h);
+            WheelGate.setTableForTest(OverlapTable.parse(JsonParser.parseString("{\"format\":1,\"groups\":["
+                    + "{\"id\":\"bat_form\",\"research\":\"T\",\"confidence\":\"close\",\"main\":0,\"members\":[\"" + BAT + "\",\"" + RACE_ABILITY + "\"]},"
+                    + "{\"id\":\"bite\",\"research\":\"T\",\"confidence\":\"close\",\"main\":0,\"members\":[\"vampirism/vampirism:regen\",\"" + RACE_ABILITY + "\"]}]}").getAsJsonObject()));
+            WheelGate.resetForTest(p);
+            unlock(p, id("vampirism:regen"));
+            net.minecraft.world.entity.PathfinderMob victim = BiteGameTests.villager(h, 2.5);
+            // hurt, so Tensura's own test for a feed ("hurt or food not full") says yes
+            p.setHealth(10f);
+            lookEast(p);
+            useRaceAbility(p);
+            boolean drained = victim.getHealth() < victim.getMaxHealth();
+            victim.discard();
+            if (!drained || batsMode(p)) {
+                failWith(h, p, "setup: the press did not drain (drained " + drained + ", bats " + batsMode(p) + ")");
+                return;
+            }
+            if (activeOf(p, "bat_form").isPresent() || groupLeft(p, "bat_form") != 0) {
+                failWith(h, p, "a drain was counted in the bat form group: " + WheelGate.clock(p));
+                return;
+            }
+            if (groupLeft(p, "bite") <= 0) {
+                failWith(h, p, "a drain started no cooldown in the bite group: " + WheelGate.clock(p));
+                return;
+            }
+            done(h, p);
+        });
+    }
+
+    private static ServerPlayer tensuraVampire(GameTestHelper helper) {
+        ServerPlayer p = BiteGameTests.vampire(helper);
+        helper.assertTrue(RaceAPI.getRaceFrom(p).setRace(id("tensura:vampire"), false), "could not give the player Tensura's vampire race");
+        lookEast(p);
+        return p;
+    }
+
+    private static void lookEast(ServerPlayer p) {
+        p.setYRot(-90f);
+        p.setYHeadRot(-90f);
+        p.setXRot(0f);
+    }
+
+    /** Same tick: whatever another side did this tick (an on, or an instant that starts a cooldown) keeps this side out, though neither is in the clock yet. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void twoSidesInTheSameTickAreNotBothStarted(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = ActionGameTests.vampire(h);
+            ResourceLocation x = lasting(h, p, 0);
+            WheelGate.setTableForTest(table(x.toString(), CHANT, COERCION));
+            WheelGate.resetForTest(p);
+            WheelTestKit.learn(p, id("tensura:chant_annulment"));
+            ManasSkillInstance coercion = WheelTestKit.learn(p, id("tensura:coercion"));
+            TensuraStorages.getAbilityFrom(p).setActivePreset(0);
+            TensuraStorages.getAbilityFrom(p).setAbilitySlot(0, 0, coercion.getSkill(), 0);
+            // an "on" this tick (no settle between the two presses)
+            FactionActions.toggle(p, x, new IAction.ActivationContext() {
+                @Override
+                public Optional<net.minecraft.core.BlockPos> targetBlock() {
+                    return Optional.empty();
+                }
+
+                @Override
+                public Optional<net.minecraft.world.entity.Entity> targetEntity() {
+                    return Optional.empty();
+                }
+            });
+            String second = WheelService.use(p, ref(CHANT), 0, -1, false);
+            if (second == null || !second.endsWith("group_active") || chantOn(p)) {
+                failWith(h, p, "a second side started in the same tick as an 'on': " + second + " on=" + chantOn(p));
+                return;
+            }
+            WheelGate.resetForTest(p);
+            // an instant side fired this tick: its cooldown is not in the clock yet, the other side is refused all the same
+            if (!SkillAPI.getSkillsFrom(p).startHoldSkill(coercion, 0, 0)) {
+                failWith(h, p, "setup: the instant side did not start");
+                return;
+            }
+            Optional<LockReason> other = WheelGate.check(p, new PowerRef(PowerSource.VAMPIRISM, x));
+            if (other.isEmpty()) {
+                failWith(h, p, "a side started in the same tick as another that was counted as fired or held");
+                return;
+            }
+            done(h, p);
+        });
+    }
+
+    /** The HUD or the guard was off, or Vampirism's own vision key (it has no event) was used: the check every ten ticks finds what is on and makes it the active side. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void whatIsOnButWasNeverRecordedIsFoundByTheTenTickCheck(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = ActionGameTests.vampire(h);
+            WheelGate.setTableForTest(tableOf("g", "vampirism/vampirism:vision", CHANT));
+            WheelGate.resetForTest(p);
+            WheelTestKit.learn(p, id("tensura:chant_annulment"));
+            var visions = VampirismAPI.vampireVisionRegistry().getVisions();
+            h.assertTrue(!visions.isEmpty(), "setup: Vampirism has no vision");
+            VampirismAPI.vampirePlayer(p).unlockVision(visions.get(0));
+            VampirismAPI.vampirePlayer(p).activateVision(visions.get(0));
+            h.assertTrue(VampirismVision.active(p), "setup: the vision is not on");
+            if (!WheelGate.clock(p).isIdle()) {
+                failWith(h, p, "setup: the clock knew about a vision that had no event");
+                return;
+            }
+            p.tickCount = 9;
+            WheelGate.tick(p);
+            if (!WheelGate.clock(p).isIdle()) {
+                failWith(h, p, "the check ran on a tick that is not a multiple of ten");
+                return;
+            }
+            p.tickCount = 10;
+            WheelGate.tick(p);
+            if (!activeOf(p, "g").equals(Optional.of(ref("vampirism/vampirism:vision").key()))) {
+                failWith(h, p, "the vision that is on was not found by the check: " + WheelGate.clock(p));
+                return;
+            }
+            String refused = WheelService.use(p, ref(CHANT), 0, -1, false);
+            if (refused == null || !refused.endsWith("group_active") || chantOn(p)) {
+                failWith(h, p, "the other side started while the vision is on: " + refused);
+                return;
+            }
+            // the vision goes off with no event: the check ends it
+            VampirismAPI.vampirePlayer(p).activateVision(null);
+            p.tickCount = 20;
+            WheelGate.tick(p);
+            if (activeOf(p, "g").isPresent()) {
+                failWith(h, p, "a vision that went off is still on in the clock: " + WheelGate.clock(p));
+                return;
+            }
+            done(h, p);
+        });
+    }
+
+    /** The guard setting turned on while something was already on (the runtime toggle): the next check picks it up. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void turningTheGuardOnWhileASideIsOnMakesItTheActiveSide(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = ActionGameTests.vampire(h);
+            ResourceLocation x = lasting(h, p, 0);
+            WheelGate.setTableForTest(table(x.toString(), CHANT));
+            WheelGate.resetForTest(p);
+            WheelTestKit.learn(p, id("tensura:chant_annulment"));
+            HudConfig.WHEEL_STACK_GUARD_ENABLED.set(false);
+            try {
+                theirKey(p, x);
+            } finally {
+                HudConfig.WHEEL_STACK_GUARD_ENABLED.set(true);
+            }
+            h.assertTrue(ActionGameTests.active(p, x) && WheelGate.clock(p).isIdle(), "setup: the side is not on, or the clock saw it");
+            WheelGate.reconcile(p);
+            if (!activeOf(p, "g").equals(Optional.of(ref("vampirism/" + x).key()))) {
+                failWith(h, p, "the side that was on is not the active side: " + WheelGate.clock(p));
+                return;
+            }
+            String refused = WheelService.use(p, ref(CHANT), 0, -1, false);
+            if (refused == null || !refused.endsWith("group_active")) {
+                failWith(h, p, "the other side started while the first is on: " + refused);
+                return;
+            }
+            done(h, p);
+        });
+    }
+
+    /** The main side is a Tensura skill that was not the one pressed: its cooldown cannot be read, so the group gets the cooldown of the side that was (never 0 while it has one). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTensuraMainThatWasNotPressedGivesWayToTheSideThatWas(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.create(h);
+            WheelGate.setTableForTest(tableOf("g", FLIGHT, COERCION));
+            WheelGate.resetForTest(p);
+            WheelTestKit.learn(p, id("tensura:gravity_flight"));
+            ManasSkillInstance coercion = WheelTestKit.learn(p, id("tensura:coercion"));
+            TensuraStorages.getAbilityFrom(p).setActivePreset(0);
+            TensuraStorages.getAbilityFrom(p).setAbilitySlot(0, 0, coercion.getSkill(), 0);
+            h.assertTrue(SkillAPI.getSkillsFrom(p).startHoldSkill(coercion, 0, 0), "setup: the press was refused");
+            // the skill's own cooldown, as its code sets it right after the press (Tensura counts whole seconds)
+            coercion.setCoolDown(10, 0);
+            WheelGate.settle(p);
+            int own = 200;
+            if (groupLeft(p, "g") != own) {
+                failWith(h, p, "the group cooldown is " + groupLeft(p, "g") + ", the side that was pressed has " + own);
+                return;
+            }
+            done(h, p);
+        });
+    }
+
+    /** The catalogue shows what the gate knows: the other side is locked while a side is on, and carries the group's cooldown (and its length) once it ended. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theCatalogueLocksTheOtherSideAndCarriesTheGroupCooldown(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = ActionGameTests.vampire(h);
+            ResourceLocation x = lasting(h, p, 0);
+            WheelGate.setTableForTest(table(x.toString(), CHANT));
+            WheelGate.resetForTest(p);
+            WheelTestKit.learn(p, id("tensura:chant_annulment"));
+            HudConfig.WHEEL_DEDUP_ENABLED.set(false);
+            try {
+                theirKey(p, x);
+                WheelEntry chant = WheelCatalogue.build(p).stream().filter(e -> e.ref().equals(ref(CHANT))).findFirst().orElseThrow();
+                if (chant.state().lock() != LockReason.GROUP_ACTIVE) {
+                    failWith(h, p, "the other side is not locked while the first is on: " + chant.state().lock());
+                    return;
+                }
+                theirKey(p, x); // off
+                chant = WheelCatalogue.build(p).stream().filter(e -> e.ref().equals(ref(CHANT))).findFirst().orElseThrow();
+                int main = mainCooldown(p, x);
+                if (chant.state().lock() == LockReason.GROUP_ACTIVE || chant.state().cooldownEnd() != WheelGate.clock(p).cooldownEnd("g") || chant.state().cooldownTotal() != main) {
+                    failWith(h, p, "the other side shows lock " + chant.state().lock() + ", end " + chant.state().cooldownEnd() + " (clock " + WheelGate.clock(p).cooldownEnd("g")
+                            + "), length " + chant.state().cooldownTotal() + " (the main side's " + main + ")");
+                    return;
+                }
+            } finally {
+                HudConfig.WHEEL_DEDUP_ENABLED.set(true);
+            }
+            done(h, p);
+        });
+    }
+
+    /** A skill with several modes is not the same power as a whole one: it is never hidden, locked or counted (Gravity Field has three modes). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSkillWithModesIsNeverPartOfAGroup(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = ActionGameTests.vampire(h);
+            ResourceLocation x = lasting(h, p, 0);
+            String fieldKey = "tensura/tensura:gravity_field";
+            WheelGate.setTableForTest(table(x.toString(), fieldKey));
+            WheelGate.resetForTest(p);
+            ManasSkillInstance field = WheelTestKit.learn(p, id("tensura:gravity_field"));
+            h.assertTrue(field.getModes() > 1, "setup: the skill has no modes");
+            theirKey(p, x);
+            List<WheelEntry> list = WheelCatalogue.build(p);
+            Optional<WheelEntry> shown = list.stream().filter(e -> e.ref().equals(ref(fieldKey))).findFirst();
+            if (shown.isEmpty() || shown.get().state().lock() == LockReason.GROUP_ACTIVE || !shown.get().groupId().isEmpty()) {
+                failWith(h, p, "a skill with modes was treated as part of the group: " + shown.map(e -> e.state().lock() + " " + e.groupId()).orElse("hidden"));
+                return;
+            }
+            // and the gate lets its press through while the group is held by the other side
+            TensuraStorages.getAbilityFrom(p).setActivePreset(0);
+            TensuraStorages.getAbilityFrom(p).setAbilitySlot(0, 0, field.getSkill(), 0);
+            var result = SkillEvents.ACTIVATE_SKILL.invoker().activateSkill(Changeable.of(field), p, 0, 0);
+            if (result.isFalse()) {
+                failWith(h, p, "the press of a skill with modes was refused by a group");
+                return;
+            }
+            done(h, p);
+        });
+    }
+
+    /** A switch counts as off only once Tensura really switched it off: an event whose switch Tensura then refused leaves it on. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aToggleOffCountsOnlyOnceTensuraAppliedIt(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = ActionGameTests.vampire(h);
+            ResourceLocation x = lasting(h, p, 0);
+            WheelGate.setTableForTest(table(x.toString(), CHANT));
+            WheelGate.resetForTest(p);
+            ManasSkillInstance chant = WheelTestKit.learn(p, id("tensura:chant_annulment"));
+            if (WheelService.use(p, ref(CHANT), 0, -1, false) != null || !chantOn(p)) {
+                failWith(h, p, "setup: the switch did not turn on");
+                return;
+            }
+            WheelGate.settle(p);
+            // Tensura's event for a switch-off that then does not happen (another mod refuses it)
+            SkillEvents.TOGGLE_SKILL.invoker().toggleSkill(Changeable.of(chant), p);
+            WheelGate.settle(p);
+            if (!chantOn(p) || activeOf(p, "g").isEmpty()) {
+                failWith(h, p, "a switch-off that Tensura did not apply was counted: on=" + chantOn(p) + " " + WheelGate.clock(p));
+                return;
+            }
+            RequestAbilityModeChangePacket.toggleAbilityPacket(id("tensura:chant_annulment")).toggleAbility(p);
+            WheelGate.settle(p);
+            if (chantOn(p) || activeOf(p, "g").isPresent()) {
+                failWith(h, p, "a real switch-off was not counted: on=" + chantOn(p) + " " + WheelGate.clock(p));
+                return;
+            }
+            done(h, p);
+        });
+    }
+
+    /** The wheel's own vision cycle is recorded at once (no event of Vampirism's), and the cycle that turns it off ends the side. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theWheelsVisionCycleIsRecordedAsOnAndOff(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = ActionGameTests.vampire(h);
+            WheelGate.setTableForTest(tableOf("g", "vampirism/vampirism:vision", CHANT));
+            WheelGate.resetForTest(p);
+            WheelTestKit.learn(p, id("tensura:chant_annulment"));
+            var visions = VampirismAPI.vampireVisionRegistry().getVisions();
+            VampirismAPI.vampirePlayer(p).unlockVision(visions.get(0));
+            PowerRef vision = new PowerRef(PowerSource.VAMPIRISM, VampirismVision.ID);
+            String first = WheelService.use(p, vision, 0, -1, false);
+            if (first != null || !VampirismVision.active(p) || !activeOf(p, "g").equals(Optional.of(vision.key()))) {
+                failWith(h, p, "the vision cycle was not recorded as on: " + first + " " + WheelGate.clock(p));
+                return;
+            }
+            String refused = WheelService.use(p, ref(CHANT), 0, -1, false);
+            if (refused == null || !refused.endsWith("group_active")) {
+                failWith(h, p, "the other side started while the vision is on: " + refused);
+                return;
+            }
+            // cycle until it is off again (a vampire with one vision: the next press)
+            for (int i = 0; i < 4 && VampirismVision.active(p); i++) {
+                WheelService.use(p, vision, 0, -1, false);
+            }
+            if (VampirismVision.active(p) || activeOf(p, "g").isPresent()) {
+                failWith(h, p, "the vision is off but the clock says " + WheelGate.clock(p));
+                return;
+            }
+            done(h, p);
+        });
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aSkillSlottedInSlotTwoHeldFromTheWheelRunsSixtyTicks(GameTestHelper helper) {
+        guarded(helper, WheelOverlapGameTests::aSkillSlottedInSlotTwoHeldFromTheWheelRunsSixtyTicksBody);
+    }
+
+    private static void aSkillSlottedInSlotTwoHeldFromTheWheelRunsSixtyTicksBody(GameTestHelper helper) {
         ServerPlayer p = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.create(helper);
         ManasSkillInstance inst = WheelTestKit.learn(p, id("tensura:gravity_flight"));
         TensuraStorages.getAbilityFrom(p).setActivePreset(0);
