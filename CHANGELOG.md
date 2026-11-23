@@ -34,6 +34,32 @@ Turn `hide_covered_keys` or `hud_enabled` off in the hub (Settings) and every co
 
 ### Rolling back
 - **Roll the server and every client back together** (the network version goes back to 2). The saved `wheel_clock` is dropped by an older build, which is harmless: it only held a cooldown of at most a few minutes. With both settings off the wheel lists every side and no key is stopped.
+## Unreleased (plan 19a: the evolution rites engine and the Rite of Mastery)
+
+### Added
+- **New part `evolutionRites`** (needs Vampirism, Enchanted and Tensura; off by default only if you switch it off; `docs/parts/evolution_rites.md`). A witch-type performer (witch, siphoner, heretic, tribrid) opens a road to a skill that already exists, for the one on the circle who agrees by sneaking, or for herself. Uniques and below need a full-moon night, an Ultimate a lunar eclipse. Nothing is invented, and every refusal about the target is the same one line to the performer.
+- **Rite of the Great Sage** (`evolve_great_sage`): Sage, mastered, to Great Sage, through Tensura's own learn (its price and any addon's veto still apply). Sage stays. Costs altar power, rare items and 100,000 base Max EP, spent only after the skill is learned.
+- **Rite of Deus Sanguis** (`evolve_deus_sanguis`, only with Ascension installed): a vampire to Ascension's Deus Sanguis, if Ascension's own switch for the skill is on. 200,000 base Max EP.
+- **Rite of Mastery** (four rites, one per tier: Common, Extra, Unique, Ultimate): masters the one skill the target has chosen, through the real mastery call, so a skill's own evolution happens. A resistance, which has no mastery, has its learning finished. Refuses (and gives everything back) for a skill that is mastered, lent, of another tier, one of Ascension's System skills, in Rebalanced's retired tag, vetoed by another mod, or when the target cannot pay. One per target every 7 days. Default costs: 100,000 / 300,000 / 750,000 / 2,000,000 base Max EP (a lunar eclipse for the last) and the items of each rite file.
+- **Hub: Skills page, Mastery tab** (shown only with the part): choose, clear and show the skill for the rite. `/bloodline mastery`, `/bloodline mastery choose <skill>`, `/bloodline mastery clear`, with Admin rows B11 to B13. No payload changed, so the hub protocol number is the same.
+- **Book:** category "Evolution Rites", six sealed entries, unlocked by kind (the three witch kinds; a vampire also learns Deus Sanguis).
+- **Admin page:** section "Evolution rites", 15 settings (`supernaturalbloodlines-evolution_rites.toml`) and the part switch. `AdminEntries` is 186.
+- **Hub protocol 13** (was 12): the Admin snapshot now holds up to 256 settings rows (was 192; the sum of the plans passed 192). The bytes of a snapshot do not change, but a client that accepts only 192 would refuse a longer one, so server and clients update together. No other payload changed.
+- Ascension joins the tested series (`LinkedMods`: `ascension` 1.0, which is what its mods.toml declares for the 3.1.0 file).
+
+### Fixed
+- **A performer who left mid-rite no longer lets the target stand in for them** in the Rites of Augustine, Severance, Lineage, Hybrid Blood, Ancestral Calling, Original Blood, the bind-item wards and the two new rites: a rite that asks the target's consent only when performer and target differ used to change an unwilling target. Now it cancels and gives the ingredients back (unless the target IS the performer).
+
+### Changed
+- The Rite of Mastery's item counts are config (`mastery_sacrifice_<tier>`, Admin rows); the rite files name only the kinds.
+- `RiteUnlocks` and `/bloodline rites` only count rites whose unlock advancements are in the datapacks, so a rite of a part that is off or an addon that is not installed is neither known nor sealed.
+- The Rites book list label says "several kinds" for four kinds and "witch types" when a numeral would overflow the line.
+- CI runs the GameTests with the part off (`-PpartsOff=evolutionRites`).
+
+### Verified
+- Unit tests 2,422 pass. The 13-run GameTest matrix passes in every run (1,944 GameTests with everything on), and so does the same suite with eight real addon jars (Ascension, Great Sage, FoxAblaze, Mysticism, Horizons, Kumo Desu ga, Slime Throne Extras and what they need) and with the pack set; a real dedicated server boots with them and with the part off. 28 mutants, all caught.
+- Mysticism charges Soul Energy for every skill learned and vetoes when the player cannot pay: the rite keeps that rule and refuses cleanly (nothing taken).
+
 ## Unreleased (plan 18i: Vampirism tweaks)
 
 ### Added

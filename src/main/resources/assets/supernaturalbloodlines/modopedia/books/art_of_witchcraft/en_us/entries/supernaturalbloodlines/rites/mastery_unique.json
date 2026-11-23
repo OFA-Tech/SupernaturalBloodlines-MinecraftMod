@@ -1,0 +1,47 @@
+{
+  "title": "Rite of Mastery: Unique",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:nether_star"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/mastery_unique",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, infernal chalk.\n\nA witch-type performer brings the one skill the one on the circle has chosen to mastery, on a full-moon night. This one masters Unique skills.",
+          "header": "Mastery: Unique"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Choose the skill on the Skills page of the hub. Some skills are refused: those an addon rewrites by itself, and those a pack has retired.",
+          "header": "Mastery: Unique"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "By default costs 750,000 base Max EP, spent once it is mastered, and 5 nether stars and 5 netherite ingots. One rite per player every 7 days.",
+          "header": "Mastery: Unique"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:mastery_unique",
+          "header": "Mastery: Unique"
+        }
+      ]
+    }
+  ]
+}

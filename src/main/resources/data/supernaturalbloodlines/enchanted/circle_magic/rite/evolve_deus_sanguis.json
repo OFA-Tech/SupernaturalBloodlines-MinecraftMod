@@ -1,0 +1,25 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "evolutionRites" },
+        { "type": "neoforge:mod_loaded", "modid": "ascension" }
+    ],
+    "items": [
+        { "id": "minecraft:redstone_block", "count": 2 },
+        { "id": "minecraft:amethyst_shard", "count": 4 },
+        { "id": "enchanted:spirit_of_otherwhere", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:nether_chalk"
+    },
+    "power": 9000,
+    "factory": {
+        "type": "supernaturalbloodlines:evolution",
+        "recipe": "deus_sanguis",
+        "tier": "unique",
+        "grants": "ascension:deus_sanguis",
+        "requires_mod": "ascension",
+        "probe": "unique.road:com.simplygray.tensuraaddon.AddonSkillConfig#DEUS_SANGUIS_ENABLED",
+        "subject_kinds": [ "vampire" ],
+        "ep_cost": 200000.0
+    }
+}

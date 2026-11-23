@@ -1,0 +1,24 @@
+{
+  "children": [],
+  "display_on_front_page": false,
+  "entries": [
+    "supernaturalbloodlines/sealed/evolve_great_sage",
+    "supernaturalbloodlines/rites/evolve_great_sage",
+    "supernaturalbloodlines/sealed/evolve_deus_sanguis",
+    "supernaturalbloodlines/rites/evolve_deus_sanguis",
+    "supernaturalbloodlines/sealed/mastery_common",
+    "supernaturalbloodlines/rites/mastery_common",
+    "supernaturalbloodlines/sealed/mastery_extra",
+    "supernaturalbloodlines/rites/mastery_extra",
+    "supernaturalbloodlines/sealed/mastery_unique",
+    "supernaturalbloodlines/rites/mastery_unique",
+    "supernaturalbloodlines/sealed/mastery_ultimate",
+    "supernaturalbloodlines/rites/mastery_ultimate"
+  ],
+  "icon": {
+    "count": 1,
+    "id": "minecraft:nether_star"
+  },
+  "landing_text": "Rites that open a road to a skill that already exists, and bring one to mastery.",
+  "title": "Evolution Rites"
+}
