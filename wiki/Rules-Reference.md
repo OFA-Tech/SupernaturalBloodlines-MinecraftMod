@@ -41,7 +41,7 @@ The species rules, with their ids (the "R" numbers used in the code, the changel
 | **R30** | Rite of Immortality: human-like, no faction, full moon, 12,000 power, a villager sacrificed, a world cap (unlimited by default). |
 | **R31** | Vampire faction, +20% attack, +4 max health. Can make Original's Blood (someone else's blood needs their consent: they sneak on the centre; without it the caster is told only that the rite would change nothing). |
 | **R32** | Non-white-oak lethal damage puts the Original into **Vampirism's dying state** (or this mod's own downed state for an Original hybrid). A **white oak** hit kills instantly. Void and `/kill` still kill. |
-| **R33** | The White Oak Ash Dagger desiccates an Original (30 minutes, until pulled out). It hurts any non-human who wields it. |
+| **R33** | The White Oak Ash Dagger desiccates an Original, not an Original hybrid (30 minutes, until pulled out). The Cursed White Oak Ash Dagger (the Rite of the Cursed Dagger) desiccates both. Either hurts any non-human who wields it. A miss looks the same for everyone the dagger does not lodge in. NPC Original bosses take either dagger only from a player's hand. |
 | **R34** | Only The Cure works on Originals. |
 | **R35** | An **Original hybrid needs the gene**: a natural gene awakened by a kill (bound), or the gene from the Rite of Lineage (Awaken) (bound). The Rite of the Moon without the gene is refused. On a bound hybrid it breaks the curse. |
 | **R36** | Replaced by R122 (line death, on by default; the old `sireline_death` switch is gone). |
@@ -153,6 +153,19 @@ The species rules, with their ids (the "R" numbers used in the code, the changel
 | **R125** | **Rite of the Broken Line** (witch-type, lunar eclipse): frees only the target, who becomes the head of their own line (not an Original) and keeps their sire bond; the people they sired stay in the line. Wrong blood, a wrong Original and an open ring all give the same plain refusal, "The rite fails." |
 | **R126** | **Rite of the Imprisoned Original** (harder, lunar eclipse): the Original must be brought down (downed, in the dying state or desiccated) and stay inside a closed mountain ash circle for the whole rite; it frees the target's whole branch, never the Original's whole line. |
 | **R127** | `line_rites_enabled` switches both rites. A freed player's record says which rite freed them. |
+
+## Plan 18: Augustines, blood and the Cursed Dagger (R200 to R205)
+
+R192 to R199 are not used. The full text of each is in `docs/superpowers/specs/SPECIES-RULES.md`.
+
+| Id | Rule |
+|---|---|
+| **R200** | **Augustines** are plain vampires who took Wes's serum (`Species.AUGUSTINE`). Refused: not a vampire, already a species or a witch layer, a Ghoul, in a transition. Cleansing Blood, the cure and leaving the faction make one human again. An Augustine cannot awaken as a hybrid, is prey (R81), and on the Tensura side is treated as a plain vampire. |
+| **R201** | **Rite of Augustine:** four garlic, a holy water, a human heart and a golden apple, medium circle, 16,000 power. Acts on the vampire on the centre (the caster if nobody stands there); a refusal gives the ingredients back. Known to vampires. |
+| **R202** | **Wes's syringe** (glass bottle, iron ingot, vampire blood bottle, garlic): sneak and use it in the air, or on another player who sneaks. Whatever the reason a use does nothing, the player sees the same one line and keeps the syringe. |
+| **R203** | **An Augustine in play:** +10% attack and +2 health (an Original has +20% and +4), 3 times the blood from a vampire and a third from anyone else, Garlic Ward (no garlic effect) and Blessed Skin (half holy-water damage); both skills are dormant for anyone else. |
+| **R204** | **Rip Heart** (skill S-VAM-8): tear the heart out of the creature you look at when it has `rip_heart_health` (10) or less. Final, and it reaches a downed or snapped target. **An Original, an Original hybrid, an NPC Original and a boss are never killed**, and the user gets the same line and cooldown whatever the target is. |
+| **R205** | **Rite of the Cursed Dagger:** a White Oak Ash Dagger, 2 white oak ash and an echo shard, medium circle, 20,000 power, make a **Cursed White Oak Ash Dagger** (R33). The rite acts on nobody, so no one on the centre is touched, told or asked. Sealed in the book until you are a witch, a siphoner or a tribrid. Artifacts and species parts. |
 
 ## Apex races (R100)
 

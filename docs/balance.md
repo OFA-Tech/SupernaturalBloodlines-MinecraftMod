@@ -24,8 +24,8 @@ Every number the supernatural system pays or asks for, with the reason for it. T
 | heretic | 6 | 21 | 210,000 | 60 |
 | human | 3 | 5 | 4,000 | - |
 | hunter | 6 | 18 | 171,000 | - |
-| hybrid | 6 | 21 | 175,000 | 7 |
-| original_hybrid | 6 | 24 | 220,000 | 60 |
+| hybrid | 6 | 22 | 175,000 | 7 |
+| original_hybrid | 6 | 25 | 220,000 | 60 |
 | original | 6 | 23 | 210,000 | 60 |
 | siphoner | 6 | 19 | 175,000 | 60 |
 | tribrid | 6 | 22 | 230,000 | 60 |
@@ -145,6 +145,15 @@ All numbers are drafts to tune after a playtest; each is a config key.
 | `bottle_blood_health_cost` | 3 (1.5 hearts, never lethal) | Real enough to count in a fight, never a way to die. |
 | bottle_blood_daily_limit | 8 | Vampirism's vampire blood bottle is an ingredient (pure blood, vampire blood oil) and a task item: a day of bottling cannot supply a whole server. |
 
+## Plan 18f: Force-feed my blood and the blood's gifts (R207, R208)
+
+| Key | Default | Why |
+|---|---|---|
+| `give_blood_cooldown_seconds` | 120 | Twice a bottle's minute: it is a deliberate act on a person, not a supply line, and the cooldown starts whatever the blood did so it cannot be used to probe. |
+| `force_feed_health_limit` | 0.30 | An unwilling target must already be losing (or down); a healthy one is never made to drink. A sneaking target accepts at any health. |
+| `vampire_blood_buff_enabled` | true | Anyone the blood marks, a bottle included (owner). The switch lets a server take both gifts off. |
+| `vampire_blood_regen_cooldown_seconds` | 600 | Regeneration II (one health point every 1.25 s) lasts **90 s from the drink** and is given once per ten minutes per player, whatever the source: panel round of PR #75 found that 20 minutes of Regeneration II, refreshed by any bottle or forced feed, was permanent regeneration. The hunger ease (0.15 less exhaustion a second) still lasts the whole `vampire_blood_ticks` window. 0 makes every drink give it. |
+
 ## Plan 18c: the Augustine (R200 to R203)
 
 The ladder pays what a plain vampire's does (7 rungs, 23 SP, 212,000 EP): an Augustine is a vampire on a diet, and the Tensura rung is the same (owner, Q3). Its tree costs 21 SP, 91% of the ladder (the vampire's costs 19), because two skills of its own (3 SP each) replace Elder's Skin and the quest of Predator's Thirst. The attack and health bonuses are half of an Original's (+10% and +2 against +20% and +4): the species is a little stronger than a vampire, never a hybrid's equal. The blood factors (x3 on the first bite of a feed on a vampire, paid by a vampire player who is bitten; x1/3 from anyone else, rounded at random so it is a third on average) make it a hunter of vampires: a village feeds it a third as well.
@@ -162,3 +171,13 @@ The ladder pays what a plain vampire's does (7 rungs, 23 SP, 212,000 EP): an Aug
 | `neck_snap_*_seconds` | 60 each | The wiki gives no time; all four kinds are equal so the time never says what the target is. |
 
 The five ladders of the vampire-like types that were short pay 1 to 3 SP more over their rungs, so every tree stays at 80% to 110% of its ladder after the two skills (2 SP each).
+
+## Plan 18e: Hybrid Leap (R212)
+
+| Key | Default | Why |
+|---|---|---|
+| `hybrid_leap_range` | 12 blocks (2 to 16) | A leap, not a teleport: far enough to close a gap, short enough that a wall or a drop on the way still matters. 16 is the most a leap can carry (the speed is bounded); a longer range could be asked for and never land. |
+| `hybrid_leap_damage` | 6 (3 hearts) | Less than Rip Heart's threshold and a weapon's swing; the Weakness is the real effect. |
+| `hybrid_leap_weakness_ticks` | 100 (5 s) | Long enough to turn a fight, short enough to be a reply, not a lock. |
+| `hybrid_leap_cooldown_seconds` | 20 | Twice Surge's pace of nothing: a skill you can use every fight, not every swing. |
+| `S-HYB-3` cost | 1 SP | The plan said 4. A ladder can pay at most 25 SP (five rungs of 5, the apex always 5), and the Original hybrid's tree is 26 SP without it: at 1 SP it is 27 of 25 (108%), at 2 it is 28 of 25 (112%, over the 110% rule). The Hybrid's and the Original hybrid's first rungs pay 1 SP more (L-HYB-1 3, L-OHY-1 5), so the Hybrid's tree is 24 of 22 (109%). |

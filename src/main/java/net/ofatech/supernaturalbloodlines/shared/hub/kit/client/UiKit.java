@@ -209,13 +209,22 @@ public final class UiKit {
 
     /** The colour of the label on a kit button of {@code theme}: read on the picture when there is one, on the flat colours that replace it when there is not. */
     public static int label(KitColors theme, Part button) {
-        return entry(theme.kit(), button).present() ? KitFaces.label(theme.kit(), button, theme.ink())
+        return entry(theme.kit(), button).present() ? KitFaces.labelOn(faceOf(theme, button), theme.ink())
                 : KitFaces.labelOn(KitFaces.flatFace(button.flat(), theme.paper(), theme.accent(), theme.muted()), theme.ink());
     }
 
     /** {@code preferred} for text on {@code part} while its picture is there; on the flat colours that replace a missing picture, white or black when {@code preferred} would not read on them. */
     public static int labelOver(KitColors theme, Part part, int preferred) {
-        return entry(theme.kit(), part).present() ? preferred : KitFaces.labelOn(KitFaces.flatFace(part.flat(), theme.paper(), theme.accent(), theme.muted()), preferred);
+        if (entry(theme.kit(), part).present()) {
+            return KitFaces.knows(part) ? KitFaces.labelOn(faceOf(theme, part), preferred) : preferred;
+        }
+        return KitFaces.labelOn(KitFaces.flatFace(part.flat(), theme.paper(), theme.accent(), theme.muted()), preferred);
+    }
+
+    /** What a button or surface is in the pack in use: its picture's solid middle when it has one (a repainted sprite), else the shipped art's colour. */
+    private static int faceOf(KitColors theme, Part part) {
+        Slice s = entry(theme.kit(), part).slice();
+        return KitFaces.resolveFace(KitFaces.face(theme.kit(), part), s == null ? null : s.middle());
     }
 
     /** The focus ring round {@code r}: the kit's picture (two pixels outside it), or the theme's focus colour in a two pixel frame when the picture is gone. */

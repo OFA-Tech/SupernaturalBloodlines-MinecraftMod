@@ -73,7 +73,7 @@ Drinking Original's Blood gives the `Original's Blood` effect (5 minutes). A **w
 - **White Oak Stake** (the only weapon that kills them at once; skips the dying state). Any weapon in the `supernaturalbloodlines:white_oak` item tag counts.
 - Void damage and `/kill`.
 - With **line death** on (the default), killing an Original with white oak also kills everyone in their line. See [Original Bloodlines](Original-Bloodlines) and [Sirelines](Sirelines#line-death).
-- **White Oak Ash Dagger:** a hit leaves the dagger in them as the *Desiccated* effect for up to **30 minutes**: they cannot move, attack or use items until another player pulls it out (right click), it times out, it is removed, or they die.
+- **White Oak Ash Dagger** (an Original hybrid needs the **Cursed** one, from the Rite of the Cursed Dagger): a hit leaves the dagger in them as the *Desiccated* effect for up to **30 minutes**: they cannot move, attack or use items until another player pulls it out (right click), it times out, it is removed, or they die.
 
 ### How to cure an Original
 

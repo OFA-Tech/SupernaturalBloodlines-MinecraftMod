@@ -92,6 +92,11 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
     }
 
     @Override
+    public net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look barLook() {
+        return net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.shifter(form());
+    }
+
+    @Override
     public String skin() {
         return "deucalion_human";
     }

@@ -34,7 +34,10 @@ public final class KitSprites {
         // the HUD: a slot is 22 px in a 28 px picture (the 3 px round it are the glow), the badges are drawn at their picture's size
         SLOT(Flat.SURFACE, 3), SLOT_ACTIVE(Flat.ACCENT, 3), SLOT_SQUARE(Flat.SURFACE, 3), SLOT_SQUARE_ACTIVE(Flat.ACCENT, 3),
         KEY_BADGE(Flat.ACCENT), KEY_BADGE_WIDE(Flat.ACCENT), MASTERY_TRACK(Flat.TRACK), MASTERY_FILL(Flat.ACCENT), MASTERY_FILL_MASTERED(Flat.ACCENT),
-        MASTERY_FILL_LEARNING(Flat.ACCENT), HUD_PILL(Flat.SURFACE), HUD_LABEL(Flat.SURFACE);
+        MASTERY_FILL_LEARNING(Flat.ACCENT), HUD_PILL(Flat.SURFACE), HUD_LABEL(Flat.SURFACE),
+        // the boss bar: the card, its name plate, the health bar (its picture is 1 px past the body), the portrait plates (4 px of glow past the 34 px body) and the shifting chip
+        CHIP_SHIFTING(Flat.ACCENT, 1), BOSS_FRAME(Flat.SURFACE), BOSS_NAME_PLATE(Flat.SURFACE), BOSS_BAR_TRACK(Flat.TRACK, 1), BOSS_BAR_FILL(Flat.ACCENT), BOSS_BAR_FILL_SHIFTING(Flat.ACCENT),
+        BOSS_BAR_TICK(Flat.NONE), BOSS_PORTRAIT_PLATE(Flat.NONE, 4), BOSS_PORTRAIT_PLATE_SHIFTING(Flat.NONE, 4);
 
         private final Flat flat;
         private final int margin;
@@ -75,7 +78,7 @@ public final class KitSprites {
             Part.SCROLL_THUMB_HOVER, Part.TAB, Part.TAB_HOVER, Part.TAB_SELECTED, Part.TAB_DISABLED, Part.BUTTON_NORMAL, Part.BUTTON_HOVER, Part.BUTTON_PRESSED, Part.BUTTON_DISABLED,
             Part.BUTTON_FOCUS, Part.BUTTON_PRIMARY_NORMAL, Part.BUTTON_PRIMARY_HOVER, Part.BUTTON_PRIMARY_PRESSED, Part.BUTTON_PRIMARY_DISABLED, Part.BUTTON_PRIMARY_FOCUS, Part.FOCUS,
             Part.BAR_TRACK, Part.BAR_FILL, Part.PLATE, Part.CHIP, Part.CHIP_ON, Part.MASTERY_TRACK, Part.MASTERY_FILL, Part.MASTERY_FILL_MASTERED, Part.MASTERY_FILL_LEARNING,
-            Part.HUD_PILL, Part.HUD_LABEL, Part.KEY_BADGE_WIDE);
+            Part.HUD_PILL, Part.HUD_LABEL, Part.KEY_BADGE_WIDE, Part.CHIP_SHIFTING, Part.BOSS_FRAME, Part.BOSS_NAME_PLATE, Part.BOSS_BAR_TRACK, Part.BOSS_BAR_FILL, Part.BOSS_BAR_FILL_SHIFTING);
 
     /** A sprite name a resource location can hold: a skill id of another mod ({@code mymod:fireball}) or one with a capital must never reach {@code ResourceLocation}. */
     public static boolean validName(String name) {
