@@ -331,7 +331,12 @@ public final class SpeciesPart {
                 }
             }
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.FullMoonSleepGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GroupInviteGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GroupTypeSwitchGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GroupAbsenceGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GroupNoWerewolvesGameTests.class);
             if (ModList.get().isLoaded("werewolves")) {
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GroupWolfGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.MoonWerewolfGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.NpcPackGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.NpcMemberGameTests.class);
