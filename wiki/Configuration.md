@@ -267,3 +267,14 @@ All data a part ships (rites, recipes, loot, tags, EP, altar blocks) is loaded o
 | `npc_bonus_share` | `0.4` | 0 to 1 | The most of the bonus the wolves may give, as a share of its cap. |
 | `tensura_subordinates_join`, `max_tensura_members_per_pack` | `true`, `6` | 0 to 24 | In `supernaturalbloodlines-species_tensura.toml`: the subordinates of pack members join the pack, up to the cap. |
 | `delayed_awakening_nights` | `1` | 0 to 3 | A human's werewolf gene awakens at the next dusk (N dusks later) after the kill, not at once. 0 = at once. Admin > Species. |
+
+## groups: `supernaturalbloodlines-groups.toml`
+Part of the species part. All on the Admin page (section Groups).
+
+| Key | Default | What it does |
+|---|---|---|
+| `groups_enabled` | true | Off: nobody can found a new clan, coven or brotherhood (packs and existing groups stay). |
+| `clans_enabled` | true | Off: no new clan. |
+| `covens_enabled` | true | Off: no new coven. |
+| `open_founding` | false | On: anyone can found the group their own kind leads. |
+| `max_members` | 0 | Most members of a group, the leader not counted. 0 = no limit. |

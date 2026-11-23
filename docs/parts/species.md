@@ -557,3 +557,20 @@ Tests: `LineRulesTest`, `RingFillTest`, `LineIndexTest`, `LineTreeTest`, `LineTr
 
 - `HybridLeapAction` (`parts/species/skill`) is an `ExtraActions` action: it reuses `TargetChecks` (`inView`, `mayAttack`, `damageWouldLand`, `untouchable`, `lyingDown`) and `DamageProbe` from plan 18d, and the stopper list (a player put out of action ends the flight). The maths is the pure `core/hud/LeapMath`; the flight is a `PlayerTickEvent.Post` listener that holds the target of the flight and lands one blow.
 - Data: skill `S-HYB-3` in the `hybrid` and `original_hybrid` trees. No payload changed; `ExtraActions.Action.targetReach` lets a slot name a target farther than the bite reach.
+
+## Groups (plan 20a: the shared base)
+- [x] `core.group`: `GroupType`, `GroupTypes.of` (type from the leader), `GroupRank`, `GroupSwitch`, `GroupSuccession`, `GroupWire`.
+- [x] `GroupIndex` (`supernaturalbloodlines_groups.dat`), seeded once with one pack per leader, follows the leader through `PackIndex`; `PackIndex` is untouched.
+- [x] Type-agnostic stack registers without Werewolves (`GroupsRegistry`: last seen, notices, absence, Open Parties and Claims, alliance protection, `/group`).
+- [x] Founding gate, wording per type, `/group` tree with `/clan`, `/coven`, `/brotherhood`, `/sb group`.
+- [x] Type switch loses nobody; heir by type; Group page in the three themes; Profile "Group" fact.
+- [x] `GroupViewPayload` (hub protocol 14); Admin section Groups (5 rows).
+- [ ] Clan, coven and brotherhood perks (plans 20b to 20d).
+
+| Setting (`supernaturalbloodlines-groups.toml`) | Default |
+|---|---|
+| `groups_enabled`, `clans_enabled`, `covens_enabled` | true |
+| `open_founding` | false |
+| `max_members` (0 = unlimited) | 0 |
+
+What vanishes with `groups_enabled = false`: no new clan, coven or brotherhood. Existing groups, their rows and every pack stay.

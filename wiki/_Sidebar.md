@@ -23,6 +23,7 @@
 - [Witches and siphoners](Witches-And-Siphoners)
 - [Heretics and Tribrids](Heretics-And-Tribrids)
 - [Werewolves and packs](Werewolves-And-Packs)
+- [Groups: packs, clans, covens, brotherhoods](Groups)
 - [Hunters of the Five](Hunters-Of-The-Five)
 - [Sirelines](Sirelines)
 - [Original Bloodlines](Original-Bloodlines)

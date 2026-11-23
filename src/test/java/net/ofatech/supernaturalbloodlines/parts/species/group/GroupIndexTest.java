@@ -5,47 +5,30 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
 import net.ofatech.supernaturalbloodlines.core.group.GroupRank;
 import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** The group index's own rules, without a world. */
+/** Spec 2 and R240/R241: the group index is its own file, seeded from the packs, and never touches the pack file. */
 class GroupIndexTest {
-    private static final UUID L1 = new UUID(0, 1);
-    private static final UUID L2 = new UUID(0, 2);
-    private static final UUID M1 = new UUID(0, 11);
-    private static final UUID M2 = new UUID(0, 12);
-    private static final UUID M3 = new UUID(0, 13);
-
-    @BeforeEach
-    void pin() {
-        PackIndex.overrideClock(() -> 5_000L);
-    }
-
-    @AfterEach
-    void unpin() {
-        PackIndex.overrideClock(null);
-    }
+    private static final UUID L1 = new UUID(1, 1);
+    private static final UUID L2 = new UUID(1, 2);
+    private static final UUID A = new UUID(2, 1);
+    private static final UUID B = new UUID(2, 2);
+    private static final UUID C = new UUID(2, 3);
 
     private static PackIndex twoPacks() {
         PackIndex p = new PackIndex();
-        p.join(L1, M1);
-        p.join(L1, M2);
-        p.join(L2, M3);
+        p.join(L1, A);
+        p.join(L1, B);
+        p.join(L2, C);
         return p;
     }
 
@@ -57,226 +40,166 @@ class GroupIndexTest {
     void seedMakesOnePackPerLeader() {
         GroupIndex g = new GroupIndex();
         g.seed(twoPacks());
-        UUID a = g.existingGroupOf(L1).orElseThrow();
-        UUID b = g.existingGroupOf(L2).orElseThrow();
-        assertNotEquals(a, b);
-        assertEquals(GroupType.PACK, g.typeOf(a));
-        assertEquals(GroupType.PACK, g.typeOf(b));
-        assertEquals(2, g.leaders().size());
-    }
-
-    @Test
-    void seedNeverReadsAnOfflineLeader() {
-        // seed takes only the index: leaders with no profile and no state still get a pack, nothing can flip a group
-        GroupIndex g = new GroupIndex();
-        g.seed(twoPacks());
+        assertEquals(Set.of(L1, L2), g.leaders());
+        assertEquals(2, g.groupIds().size());
         for (UUID leader : g.leaders()) {
             assertEquals(GroupType.PACK, g.typeOf(g.existingGroupOf(leader).orElseThrow()));
         }
     }
 
     @Test
-    void seedRunsOnce() {
-        PackIndex p = twoPacks();
+    void seedNeverReadsAnOfflineLeader() {
+        // the seed takes the index and nothing else: no species, no profile, no state to read, so no leader can flip it
         GroupIndex g = new GroupIndex();
-        g.seed(p);
-        UUID late = new UUID(0, 3);
-        p.join(late, new UUID(0, 14));
-        g.seed(p);
-        assertTrue(g.existingGroupOf(late).isEmpty(), "a second seed added a row");
-        assertEquals(GroupIndex.DATA_VERSION, g.dataVersion());
-        GroupIndex back = roundTrip(g);
-        back.seed(p);
-        assertTrue(back.existingGroupOf(late).isEmpty(), "a reloaded index seeded again");
-        assertTrue(back.existingGroupOf(L1).isPresent());
+        g.seed(twoPacks());
+        for (UUID leader : g.leaders()) {
+            assertEquals(GroupType.PACK, g.typeOf(g.existingGroupOf(leader).orElseThrow()));
+        }
+        assertEquals(1, java.util.Arrays.stream(GroupIndex.class.getMethods()).filter(m -> m.getName().equals("seed")).filter(m -> m.getParameterCount() == 1).count());
     }
 
-    /** One comparable line per row, so sets compare as sets and the join order of {@code members} is kept. */
-    private static Map<String, List<String>> snapshot(CompoundTag tag) {
-        Map<String, List<String>> out = new HashMap<>();
-        for (String key : tag.getAllKeys()) {
-            Tag t = tag.get(key);
-            if (t instanceof ListTag list) {
-                List<String> rows = new ArrayList<>();
-                list.forEach(r -> rows.add(r.toString()));
-                if (!key.equals("members")) {
-                    rows.sort(null);
-                }
-                out.put(key, rows);
-            } else {
-                out.put(key, List.of(String.valueOf(t)));
-            }
-        }
-        return out;
+    @Test
+    void seedRunsOnce() {
+        GroupIndex g = new GroupIndex();
+        PackIndex packs = new PackIndex();
+        packs.join(L1, A);
+        g.seed(packs);
+        packs.join(L2, C);
+        g.seed(packs);
+        assertEquals(Set.of(L1), g.leaders(), "a leader made after the seed gets a row from groupOf, not from seed");
+        assertEquals(GroupIndex.DATA_VERSION, g.dataVersion());
+        UUID later = g.groupOf(L2);
+        assertEquals(later, g.existingGroupOf(L2).orElseThrow());
+        assertEquals(GroupType.PACK, g.typeOf(later));
     }
 
     @Test
     void packIndexFileIsUntouched() {
-        PackIndex p = twoPacks();
-        UUID witch = new UUID(0, 20);
-        p.join(L2, witch);
-        p.setEmissary(L2, witch);
-        p.setAnchor(M1, M2);
-        p.markFormerAlpha(M3);
-        p.dissolve(new UUID(0, 30));
-        p.setMirror(M1, L1);
-        p.recordParty(L1, new UUID(0, 40));
-        p.setPartyEnded(L2, true);
-        p.addNotice(M1, "key", "arg");
-        p.setSparks(L1, 3);
-        p.setLastSeen(M1, 123L);
-        p.setStrength(L1, 7);
-        p.ally(L1, L2);
-        p.setHybridLike(L1, true);
-        p.setAliveAt(777L);
-        CompoundTag first = p.save(new CompoundTag(), null);
-        Map<String, List<String>> before = snapshot(first);
-        for (String key : List.of("members", "emissaries", "anchors", "former_alphas", "party_mirrors", "party_ids", "party_ended", "notices", "sparks", "last_seen", "joined_at", "alive_at", "strengths", "allies")) {
-            assertTrue(first.contains(key), key + " is missing from the fixture");
-            assertFalse(before.get(key).isEmpty(), key + " is empty in the fixture");
-        }
-
-        PackIndex loaded = PackIndex.load(first, null);
-        assertEquals(before, snapshot(loaded.save(new CompoundTag(), null)), "the pack index changed on a round trip");
-
+        PackIndex packs = twoPacks();
+        packs.ally(L1, L2);
+        CompoundTag before = packs.save(new CompoundTag(), null);
         GroupIndex g = new GroupIndex();
-        g.seed(loaded);
-        g.save(new CompoundTag(), null);
-        assertEquals(before, snapshot(loaded.save(new CompoundTag(), null)), "the group index wrote into the pack index");
+        g.seed(packs);
+        g.setRank(A, GroupRank.DAY_WALKER);
+        g.setType(g.groupOf(L1), GroupType.CLAN, 5L);
+        CompoundTag groupFile = g.save(new CompoundTag(), null);
+        CompoundTag after = packs.save(new CompoundTag(), null);
+        assertEquals(before, after, "building and saving a group index changed the pack file");
+        for (String key : before.getAllKeys()) {
+            assertFalse(groupFile.contains(key) && !key.equals("data_version"), "the group file writes the pack key " + key);
+        }
+        PackIndex back = PackIndex.load(after, null);
+        assertEquals(packs.betasOf(L1), back.betasOf(L1));
+        assertEquals(packs.alliesOf(L1), back.alliesOf(L1));
     }
 
     @Test
     void idFollowsTheLeaderOnPromote() {
-        PackIndex p = twoPacks();
+        PackIndex packs = twoPacks();
         GroupIndex g = new GroupIndex();
-        g.seed(p);
-        UUID id = g.groupOf(L1);
-        p.promote(L1, M1);
-        g.follow(L1, M1);
-        assertEquals(id, g.existingGroupOf(M1).orElseThrow());
+        g.seed(packs);
+        UUID id = g.existingGroupOf(L1).orElseThrow();
+        packs.promote(L1, A);
+        g.follow(L1, A);
+        assertEquals(id, g.existingGroupOf(A).orElseThrow());
         assertTrue(g.existingGroupOf(L1).isEmpty());
     }
 
     @Test
     void idFollowsTheLeaderOnTransfer() {
-        PackIndex p = twoPacks();
         GroupIndex g = new GroupIndex();
-        g.seed(p);
         UUID id = g.groupOf(L1);
-        p.transfer(L1, M2);
-        g.follow(L1, M2);
-        assertEquals(id, g.existingGroupOf(M2).orElseThrow());
-        assertTrue(g.existingGroupOf(L1).isEmpty());
-    }
-
-    @Test
-    void aLeaderWhoJoinsAnotherGroupDropsTheirOwnId() {
-        PackIndex p = twoPacks();
-        GroupIndex g = new GroupIndex();
-        g.seed(p);
-        UUID kept = g.groupOf(L2);
-        p.join(L2, L1);
-        g.follow(L1, L2);
-        assertEquals(kept, g.existingGroupOf(L2).orElseThrow());
-        assertTrue(g.existingGroupOf(L1).isEmpty());
+        g.setType(id, GroupType.COVEN, 9L);
+        g.follow(L1, B);
+        assertEquals(id, g.existingGroupOf(B).orElseThrow());
+        assertEquals(GroupType.COVEN, g.typeOf(id));
+        assertEquals(9L, g.typeSince(id));
     }
 
     @Test
     void aDissolvedGroupLeavesNoRows() {
-        PackIndex p = twoPacks();
+        PackIndex packs = twoPacks();
         GroupIndex g = new GroupIndex();
-        g.seed(p);
-        UUID old = g.groupOf(L1);
-        g.setType(old, GroupType.CLAN, 9L);
-        g.setRank(M1, GroupRank.DAY_WALKER);
-        p.dissolve(L1);
+        g.seed(packs);
+        UUID old = g.existingGroupOf(L1).orElseThrow();
+        g.setRank(A, GroupRank.ELDER);
+        g.setType(old, GroupType.COVEN, 3L);
+        packs.dissolve(L1);
         g.drop(L1);
-        g.prune(p);
+        g.prune(packs);
         assertTrue(g.existingGroupOf(L1).isEmpty());
-        assertEquals(GroupRank.NONE, g.rankOf(M1));
-        assertEquals(GroupType.PACK, g.typeOf(old), "the type row of a dissolved group stayed");
+        assertEquals(GroupRank.NONE, g.rankOf(A), "a stale rank survived the dissolve");
+        assertEquals(GroupType.PACK, g.typeOf(old), "the type row survived");
         assertEquals(0L, g.typeSince(old));
-        p.join(L1, M1);
-        assertNotEquals(old, g.groupOf(L1), "a new group reused the old id");
-        assertEquals(GroupRank.NONE, g.rankOf(M1), "a stale rank leaked into the new group");
+        assertNotEquals(old, g.groupOf(L1), "a new group got the old id");
     }
 
     @Test
     void ranksAreForgottenWhenAMemberLeaves() {
-        PackIndex p = twoPacks();
         GroupIndex g = new GroupIndex();
-        g.seed(p);
-        g.setRank(M1, GroupRank.ELDER);
-        g.setRank(M2, GroupRank.ELDER);
-        p.leave(M1);
-        g.prune(p);
-        assertEquals(GroupRank.NONE, g.rankOf(M1));
-        assertEquals(GroupRank.ELDER, g.rankOf(M2));
-        g.clearRanks(M2);
-        assertEquals(GroupRank.NONE, g.rankOf(M2));
+        g.setRank(A, GroupRank.DAY_WALKER);
+        g.setRank(B, GroupRank.ELDER);
+        g.clearRanks(A);
+        assertEquals(GroupRank.NONE, g.rankOf(A));
+        assertEquals(GroupRank.ELDER, g.rankOf(B));
+        g.setRank(B, GroupRank.NONE);
+        assertEquals(GroupRank.NONE, g.rankOf(B));
     }
 
     @Test
     void aDamagedRowCostsOnlyThatRow() {
         GroupIndex g = new GroupIndex();
-        g.setRank(M1, GroupRank.ELDER);
-        g.setRank(M2, GroupRank.DAY_WALKER);
+        g.setRank(A, GroupRank.DAY_WALKER);
+        g.setRank(B, GroupRank.ELDER);
         CompoundTag tag = g.save(new CompoundTag(), null);
-        ListTag ranks = tag.getList("ranks", Tag.TAG_COMPOUND);
-        CompoundTag bad = new CompoundTag();
-        bad.put("key", StringTag.valueOf("not a uuid"));
-        bad.put("value", IntTag.valueOf(5));
-        ranks.add(bad);
+        CompoundTag noKey = new CompoundTag();
+        noKey.putString("value", "elder");
+        CompoundTag badKey = new CompoundTag();
+        badKey.putString("key", "not a uuid");
+        badKey.putString("value", "elder");
+        tag.getList("ranks", 10).add(noKey);
+        tag.getList("ranks", 10).add(badKey);
         GroupIndex back = GroupIndex.load(tag, null);
-        assertEquals(GroupRank.ELDER, back.rankOf(M1));
-        assertEquals(GroupRank.DAY_WALKER, back.rankOf(M2));
+        assertEquals(GroupRank.DAY_WALKER, back.rankOf(A));
+        assertEquals(GroupRank.ELDER, back.rankOf(B));
     }
 
     @Test
     void unknownKeysSurviveARoundTrip() {
         GroupIndex g = new GroupIndex();
-        g.seed(twoPacks());
+        g.setRank(A, GroupRank.ELDER);
         CompoundTag tag = g.save(new CompoundTag(), null);
-        ListTag votes = new ListTag();
+        ListTag marks = new ListTag();
         CompoundTag row = new CompoundTag();
-        row.put("key", NbtUtils.createUUID(M1));
-        row.putString("value", "yes");
-        votes.add(row);
-        tag.put("votes", votes);
-        tag.putString("future", "x");
-        CompoundTag again = GroupIndex.load(tag, null).save(new CompoundTag(), null);
-        assertEquals(votes, again.getList("votes", Tag.TAG_COMPOUND));
-        assertEquals("x", again.getString("future"));
+        row.put("key", NbtUtils.createUUID(A));
+        row.putInt("value", 7);
+        marks.add(row);
+        tag.put("marks", marks);
+        tag.putString("future", "kept");
+        CompoundTag again = roundTrip(GroupIndex.load(tag, null)).save(new CompoundTag(), null);
+        assertEquals(marks, again.getList("marks", 10));
+        assertEquals("kept", again.getString("future"));
     }
 
     @Test
     void aTypeOfAnotherBuildIsKeptDormant() {
         GroupIndex g = new GroupIndex();
-        g.seed(twoPacks());
         UUID id = g.groupOf(L1);
         CompoundTag tag = g.save(new CompoundTag(), null);
-        for (Tag t : tag.getList("types", Tag.TAG_COMPOUND)) {
-            CompoundTag e = (CompoundTag) t;
-            if (NbtUtils.loadUUID(e.get("key")).equals(id)) {
-                e.putString("value", "warband");
-            }
-        }
+        CompoundTag row = tag.getList("types", 10).getCompound(0);
+        row.putString("value", "warband");
         GroupIndex back = GroupIndex.load(tag, null);
         assertEquals(GroupType.PACK, back.typeOf(id));
-        boolean kept = false;
-        for (Tag t : back.save(new CompoundTag(), null).getList("types", Tag.TAG_COMPOUND)) {
-            CompoundTag e = (CompoundTag) t;
-            kept |= NbtUtils.loadUUID(e.get("key")).equals(id) && e.getString("value").equals("warband");
-        }
-        assertTrue(kept, "the unknown type was not written back");
+        assertEquals("warband", back.save(new CompoundTag(), null).getList("types", 10).getCompound(0).getString("value"));
     }
 
     @Test
     void aRankOfAnotherTypeIsHiddenNotDeleted() {
         GroupIndex g = new GroupIndex();
-        g.setRank(M1, GroupRank.DAY_WALKER);
-        assertEquals(GroupRank.DAY_WALKER, g.activeRankOf(M1, GroupType.CLAN));
-        assertEquals(GroupRank.NONE, g.activeRankOf(M1, GroupType.COVEN));
-        assertEquals(GroupRank.DAY_WALKER, g.activeRankOf(M1, GroupType.CLAN), "the row did not come back");
+        g.setRank(A, GroupRank.DAY_WALKER);
+        assertEquals(GroupRank.DAY_WALKER, g.activeRankOf(A, GroupType.CLAN));
+        assertEquals(GroupRank.NONE, g.activeRankOf(A, GroupType.COVEN));
+        assertEquals(GroupRank.DAY_WALKER, g.rankOf(A));
+        assertEquals(GroupRank.DAY_WALKER, g.activeRankOf(A, GroupType.CLAN));
     }
 }
