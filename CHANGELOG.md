@@ -123,13 +123,15 @@ Nothing is drawn yet: this phase is the server half of the skill wheel (`docs/su
 - Dev only: `-Dsupernaturalbloodlines.devshots.bosses=morph:<boss>` for hidden stills and clips of each morph.
 
 ### Changed
+- The man's pose can lean up to 45 degrees: a lean about the shoulder carries the hips back and up (`ManPoseTable.hipShiftZ`, `hipLift`) and the legs go with them, so the body is not torn at the waist (the old limit was about 14).
+- A boss cannot step or strike while he shifts, even with a target in front of him (`isImmobile`, which also stops every goal); the Beast cannot Roar while it changes or howls (to tick 84); a dying body is not counted or swapped; the shake at the swap is a damage event (the old entity event 2 does nothing on 1.21.1); a pose table is clamped to a body between 0.1 and 3 times and a squat of 2 blocks.
 - Deucalion's `drop_to_fours` and Peter's `rise_up` clips are gone: `shift_in` replaces them. Reduce motion is not read by any of this (it is for the interface only), and player werewolf forms are the Werewolves mod's and are not drawn by us.
 
 ### Network
 - **The network protocol is bumped from "1" to "2"** (`ModNetwork.PROTOCOL`), so a client of an older build is refused at login by NeoForge's version check, with its own screen. No payload changed, but the Beast has two more synced entity data entries (`FORM` and `SHIFT_TICKS`), and entity data ids are positional: an old client that is given an id it does not have reads past the end of its table and is kicked with an error nobody can read. **Update the server and every client together.**
 
 ### Rolling back
-- Reverting the PR restores the old shift. Saves are fine: the Beast''s `form` and `shift_ticks` tags are optional and ignored by the old build, and a Beast saved mid-change comes back a whole Beast.
+- Reverting the PR restores the old shift. Saves are fine: the Beast's `form` and `shift_ticks` tags are optional and ignored by the old build, and a Beast saved mid-change comes back a whole Beast. **A Beast saved during its first second still carries the Host's tricorn in its head slot** (it comes off at the swap, and on any load after the swap); the old build does not know the swap, so it keeps the hat on a wolf until the Beast is killed or collapses (the hat is never dropped: its drop chance is 0). Going back also puts the protocol back to "1".
 ## Unreleased (UI overhaul phase 8: logo, mod icon, store art)
 
 ### Added
