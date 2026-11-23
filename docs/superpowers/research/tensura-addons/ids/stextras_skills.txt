@@ -1,0 +1,8 @@
+stextras:beast_recall | Beast Recall |  | A brief reawakening of the old beast instincts once lost to degeneration.
+stextras:blacksmith | Blacksmith |  | Opens a smithing bench.
+stextras:darkness_domination | Darkness Domination | elemental_souls/dark_elemental_skills,elemental_domination | Boosts the power of darkness skills by a great amount.
+stextras:darkness_manipulation | Darkness Manipulation | elemental_souls/dark_elemental_skills,elemental_manipulation | Boosts the power of darkness skills by a decent amount.
+stextras:imitator | Imitator |  | It allows the user to use the unique skills of bosses and otherworlders they have killed.
+stextras:keen_nose | Keen Nose |  | Detects nearby valuables or rare materials.
+stextras:light_domination | Light Domination | elemental_souls/light_elemental_skills,elemental_domination | Boosts light attacks by a great amount and calls down Solar Rain arrows over nearby enemies.
+stextras:light_manipulation | Light Manipulation | elemental_souls/light_elemental_skills,elemental_manipulation | Boosts the power of light skills by a decent amount.

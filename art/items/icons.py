@@ -84,6 +84,24 @@ def the_cure():
     return c
 
 
+@icon
+def augustine_syringe():
+    """Wes's syringe, needle down: the barrel full of the serum, the plunger drawn back."""
+    c = Canvas()
+    c.pts("#c8d0d8", (1, 14), (2, 13), (3, 12), (4, 11))
+    c.pts("#7a8694", (5, 10))
+    for i in range(3):  # the barrel is three texels thick on the diagonal: glass, serum, the serum's shade
+        c.pts("#ffffff" if i < 2 else "#cfdde4", (6 + i, 8 - i))
+        c.pts("#d03040" if i == 0 else "#a0101c", (6 + i, 9 - i))
+        c.pts("#5c0810", (7 + i, 9 - i))
+    c.pts("#cfdde4", (9, 5), (10, 6))
+    c.pts("#3a4450", (9, 6))
+    c.pts("#9aa4b4", (9, 4), (10, 5), (11, 6), (13, 2), (14, 3))  # the finger flange, and the thumb rest two texels of rod away
+    c.pts("#e4eaf2", (11, 4), (12, 3), (12, 1))
+    c.outline("#20242e")
+    return c
+
+
 # ---------------------------------------------------------------- rings
 def ring(light, mid, dark, out, stone, cx=7.5, cy=11.0, orx=5.6, ory=4.6, irx=2.6, iry=2.0):
     """Small shank (hole shrunk) with a stone that dominates the top of the icon."""

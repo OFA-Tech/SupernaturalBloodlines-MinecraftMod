@@ -35,9 +35,6 @@ class HudIconsTest {
     void everyIconNamedHasItsPicturesInTheKitAndItsOutlinedTwinForTheHud() throws Exception {
         for (String name : HudIcons.OURS) {
             for (String dir : new String[] {"16/", "32/", "hud/"}) {
-                if (dir.equals("32/") && !name.equals("bite") && !name.equals("alpha_roar")) {
-                    continue; // the rune has no large picture
-                }
                 try (InputStream in = HudIconsTest.class.getResourceAsStream(SPRITES + dir + name + ".png")) {
                     assertNotNull(in, "icons/" + dir + name);
                 }
