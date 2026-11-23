@@ -932,12 +932,12 @@ public final class TargetedSkillGameTests {
             return;
         }
         boolean pvp = helper.getLevel().getServer().isPvpAllowed();
-        helper.getLevel().getServer().setPvpAllowed(false);
         try {
             ServerPlayer vamp = target(helper, Species.NONE, true);
             ServerPlayer mortal = target(helper, Species.NONE, false);
             ServerPlayer original = target(helper, Species.ORIGINAL, true);
             original.setHealth(5.0f);
+            helper.getLevel().getServer().setPvpAllowed(false);
             try {
                 for (Object[] k : new Object[][] {{"snap a vampire player", true, vamp}, {"stagger a mortal player", true, mortal}, {"rip an Original player", false, original}}) {
                     ServerPlayer user = TestPlayers.createPvpAware(helper);
