@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -52,6 +53,11 @@ public final class ProfilePage implements HubPageView {
     static Component value(Fact fact, List<String> values) {
         if (values.isEmpty()) {
             return Component.translatable(KEY + "none");
+        }
+        if (fact == Fact.PACK && values.size() == 2) {
+            // a group that is not a pack: "Clan: Name"
+            return GroupType.parse(values.get(1)).map(type -> (Component) Component.empty().append(GroupLabels.noun(type)).append(": " + values.get(0)))
+                    .orElse(Component.literal(values.get(0)));
         }
         List<Component> parts = new ArrayList<>();
         for (String v : values) {

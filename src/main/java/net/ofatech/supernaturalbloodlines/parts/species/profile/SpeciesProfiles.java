@@ -70,7 +70,7 @@ public final class SpeciesProfiles implements ProfileService.Source {
 
     @Nullable
     private static PackIndex packs(ServerPlayer p) {
-        return ModList.get().isLoaded("werewolves") ? PackIndex.get(p.serverLevel()) : null;
+        return PackIndex.get(p.serverLevel());
     }
 
     @Nullable
@@ -147,7 +147,7 @@ public final class SpeciesProfiles implements ProfileService.Source {
             case LEVEL -> Optional.ofNullable(who).map(w -> List.of(Integer.toString(VampirismAPI.factionPlayerHandler(w).getCurrentLevel())));
             case PACK_DAYS -> packs == null ? Optional.empty() : packs.inPackSince(subject).map(since -> List.of(Long.toString(daysSince(since))));
             case BONUS -> who == null ? Optional.empty() : RankEffects.bonusText(who).map(List::of);
-            case PACK -> packs == null ? Optional.empty() : Optional.of(packs.inPack(subject) ? List.of(String.valueOf(nameOf(server, packs.leaderOf(subject)))) : List.of());
+            case PACK -> packs == null ? Optional.empty() : Optional.of(packs.inPack(subject) ? groupFact(observer, packs.leaderOf(subject)) : List.of());
             case PRESENCE -> Optional.of(List.of(who != null ? "online" : "offline"));
             case SIRE -> remembered(observer, subject, relation, Fact.SIRE, MemorySnapshots.Memory::sire).orElseGet(() -> sire(observer, subject));
             case LINE -> line(observer, subject, relation);
@@ -199,6 +199,13 @@ public final class SpeciesProfiles implements ProfileService.Source {
     private static String nameOf(MinecraftServer server, UUID id) {
         String n = PackAccess.nameOf(server, id);
         return n != null ? n : SirelineIndex.get(server.overworld()).nameOf(id).orElse(null);
+    }
+
+    /** The leader's name, and the group's type when it is not a pack (a pack's fact is the name alone, as it always was). */
+    private static List<String> groupFact(ServerPlayer observer, UUID leader) {
+        String name = String.valueOf(nameOf(observer.server, leader));
+        var type = net.ofatech.supernaturalbloodlines.parts.species.group.Groups.typeOfGroup(observer.serverLevel(), leader);
+        return type == net.ofatech.supernaturalbloodlines.core.group.GroupType.PACK ? List.of(name) : List.of(name, type.id());
     }
 
     private static String rank(ServerPlayer w, @Nullable PackIndex packs) {

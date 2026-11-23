@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
  * {@code wrong_type} on another. Registered whether or not Werewolves is installed.
  */
 public final class GroupCommand {
-    /** Every literal path under {@code /group}, for the UI coverage test. */
-    public static final List<String> PATHS = List.of("invite", "accept", "leave", "kick", "ally invite", "ally accept", "ally remove", "info", "challenge");
-
     private GroupCommand() {
     }
 

@@ -56,6 +56,8 @@ public final class HubClient {
             case TENSURA -> net.ofatech.supernaturalbloodlines.shared.hud.HudStyle.Style.TENSURA;
             default -> net.ofatech.supernaturalbloodlines.shared.hud.HudStyle.Style.GRIMOIRE;
         });
+        net.ofatech.supernaturalbloodlines.shared.hub.HubPage.usePackKey(() -> net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.GroupLabels.tabKey(
+                net.ofatech.supernaturalbloodlines.parts.supernatural.client.GroupClient.view()));
         DevShots.registerIfRequested(); // development only: a no-op unless the JVM property is set
         // forget the last snapshot when leaving a world, so another world never shows its names
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> {

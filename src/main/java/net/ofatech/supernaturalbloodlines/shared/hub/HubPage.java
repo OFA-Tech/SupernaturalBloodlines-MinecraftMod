@@ -56,8 +56,15 @@ public enum HubPage {
         }
     }
 
+    private static volatile java.util.function.Supplier<String> packKey = () -> "supernaturalbloodlines.hub.page.pack";
+
+    /** The Pack page keeps its constant and its saved layouts; only its label follows the group the viewer is in (the client installs this). */
+    public static void usePackKey(java.util.function.Supplier<String> key) {
+        packKey = key == null ? () -> "supernaturalbloodlines.hub.page.pack" : key;
+    }
+
     public String langKey() {
-        return "supernaturalbloodlines.hub.page." + name().toLowerCase(Locale.ROOT);
+        return this == PACK ? packKey.get() : "supernaturalbloodlines.hub.page." + name().toLowerCase(Locale.ROOT);
     }
 
     public boolean visible(Context c) {

@@ -13,8 +13,8 @@ import net.ofatech.supernaturalbloodlines.core.group.GroupType;
 import org.junit.jupiter.api.Test;
 
 /** R248: the wording of the shared actions names the type. */
-class GroupTextTest {
-    static JsonObject lang() throws IOException {
+public class GroupTextTest {
+    public static JsonObject lang() throws IOException {
         try (InputStream in = GroupTextTest.class.getResourceAsStream("/assets/supernaturalbloodlines/lang/en_us.json")) {
             return JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
         }

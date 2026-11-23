@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Locale;
 import net.minecraft.network.chat.Component;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
+import net.ofatech.supernaturalbloodlines.core.group.GroupView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubModel;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubPageView;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
@@ -194,16 +195,36 @@ public final class BookPackPage implements HubPageView {
                 .findFirst().orElse(f.view.bloodline().wolf().sparks());
     }
 
-    private static Component rankName(HubSocial.Member m) {
+    private Component rankName(HubSocial.Member m) {
+        if (grp) {
+            return GroupLabels.memberRank(gv, m.base());
+        }
         Component name = Component.translatableWithFallback(KEY + "member." + m.base(), HubModel.pretty(m.base()));
         // an Alpha who stacked sparks (the Deucalion factor) is shown as "Alpha ×3"
         return m.sparks() > 1 ? Component.empty().append(name).append(" \u00d7" + m.sparks()) : name;
     }
 
+    /** The group the server says the viewer is in, read once per frame: a clan, a coven or a brotherhood leaves the wolf parts out and says its own words. */
+    private GroupView gv = GroupView.NONE;
+    private boolean grp;
+    private List<HubSocial.Member> members = List.of();
+
+    private Component t(String packKey, String name, Object... args) {
+        return GroupLabels.t(gv, packKey, name, args);
+    }
+
+    /** The viewer's own command, from the page: the pack's tree for a pack, the shared one for the rest. */
+    private String cmd(String tail) {
+        return GroupLabels.root(gv) + " " + tail;
+    }
+
     @Override
     public void render(HubScreen.Frame f) {
+        gv = GroupLabels.view();
+        grp = GroupLabels.active(gv);
         WolfState wolf = f.view.bloodline().wolf();
-        List<HubSocial.Member> pack = f.view.snapshot().pack();
+        List<HubSocial.Member> pack = grp ? GroupLabels.members(gv) : f.view.snapshot().pack();
+        members = pack;
         HubSocial.Member chosen = pack.stream().filter(m -> m.name().equals(selected)).findFirst().orElse(null);
         ledger(f, wolf, pack, chosen);
         ring(f, pack, wolf);
@@ -218,16 +239,16 @@ public final class BookPackPage implements HubPageView {
         if (style == Style.BOOK) {
             f.reserve(ledgerRegion, BookKit.sealReserve()); // the ACCEPT seal and the line that says what it accepts are pinned at the foot of the page
         }
-        int y = BookKit.head(f, ledgerRegion, Component.translatable(KEY + "title"), Component.translatable(BOOK + "subtitle"));
-        y = PageKit.title(f, Component.translatable(KEY + "rank", rankLabel(f, wolf)), r.x(), y, r.w(), t.accent());
-        if (weakLine(wolf).isPresent()) {
+        int y = BookKit.head(f, ledgerRegion, t(KEY + "title", "title"), t(BOOK + "subtitle", "subtitle"));
+        y = PageKit.title(f, Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv) : rankLabel(f, wolf)), r.x(), y, r.w(), t.accent());
+        if (!grp && weakLine(wolf).isPresent()) {
             y = PageKit.wrapped(f, weakLine(wolf).get(), r.x(), y, r.w(), t.muted()) + 2;
         }
-        if (perkLine(f).isPresent()) {
+        if (!grp && perkLine(f).isPresent()) {
             y = PageKit.wrapped(f, perkLine(f).get(), r.x(), y, r.w(), perkColor(t)) + 6;
         }
         if (pack.isEmpty()) {
-            y = PageKit.wrapped(f, Component.translatable(KEY + "alone"), r.x(), y + 2, r.w(), t.muted());
+            y = PageKit.wrapped(f, grp ? GroupLabels.alone(gv) : Component.translatable(KEY + "alone"), r.x(), y + 2, r.w(), t.muted());
         }
         for (HubSocial.Member m : pack) {
             Component rank = rankName(m);
@@ -263,7 +284,7 @@ public final class BookPackPage implements HubPageView {
             String id = "member:" + m.name();
             List<Component> tip = new java.util.ArrayList<>(List.of(Component.literal(m.name()), rank, Component.translatable(KEY + (m.online() ? "online" : "offline"))));
             if (leads) {
-                tip.add(1, Component.translatable(KEY + "leader"));
+                tip.add(1, t(KEY + "leader", "leader"));
             }
             tip.add(Component.translatable(KEY + "open_profile"));
             f.target(id, hit, tip, openProfile(f, m.name()));
@@ -272,7 +293,11 @@ public final class BookPackPage implements HubPageView {
             }
             y += stacked ? 21 : 11;
         }
-        y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, false);
+        if (!grp) {
+            y = wolves.render(f, r, y + 2, wolf.lineage() != WolfState.Lineage.NONE, false);
+        } else {
+            y += 2;
+        }
         t.drawRule(f.g, r.x(), y + 3, r.w());
         y += 9;
         if (style == Style.BOOK && chosen != null) {
@@ -280,19 +305,19 @@ public final class BookPackPage implements HubPageView {
             y = PageKit.title(f, Component.literal(chosen.name()), r.x(), y, r.w(), t.ink());
             y = PageKit.wrapped(f, Component.translatable(KEY + (chosen.online() ? "online" : "offline")), r.x(), y, r.w(), t.muted()) + 4;
             if (canKick(f, pack, chosen)) {
-                BookKit.link(f, "pack:kick", Component.translatable(KEY + "kick"), r.x(), y, List.of(Component.translatable(KEY + "kick_for", chosen.name())),
-                        () -> f.confirm(Component.translatable(KEY + "kick_title", chosen.name()), Component.translatable(KEY + "kick_body"), Component.translatable(KEY + "kick"),
-                                () -> BloodlinePage.command("pack kick " + chosen.name())));
+                BookKit.link(f, "pack:kick", t(KEY + "kick", "kick"), r.x(), y, List.of(t(KEY + "kick_for", "kick_for", chosen.name())),
+                        () -> f.confirm(t(KEY + "kick_title", "kick_title", chosen.name()), t(KEY + "kick_body", "kick_body"), t(KEY + "kick", "kick"),
+                                () -> BloodlinePage.command(cmd("kick " + chosen.name()))));
                 y += 13;
-            } else if (canChallenge(f, pack, wolf, chosen)) {
+            } else if (!grp && canChallenge(f, pack, wolf, chosen)) {
                 BookKit.link(f, "pack:challenge", Component.translatable(KEY + "challenge"), r.x(), y, List.of(Component.translatable(KEY + "challenge_for", chosen.name())),
                         () -> f.confirm(Component.translatable(KEY + "challenge_title", chosen.name()), Component.translatable(KEY + "challenge_body"),
                                 Component.translatable(KEY + "challenge"), () -> BloodlinePage.command("pack challenge " + chosen.name())));
                 y += 13;
             } else if (canEndAlliance(f, pack, chosen)) {
-                BookKit.link(f, "pack:ally_end", Component.translatable(KEY + "ally_end"), r.x(), y, List.of(Component.translatable(KEY + "ally_end_for", chosen.name())),
-                        () -> f.confirm(Component.translatable(KEY + "ally_end_title", chosen.name()), Component.translatable(KEY + "ally_end_body"),
-                                Component.translatable(KEY + "ally_end"), () -> BloodlinePage.command("pack ally remove " + chosen.name())));
+                BookKit.link(f, "pack:ally_end", t(KEY + "ally_end", "ally_end"), r.x(), y, List.of(t(KEY + "ally_end_for", "ally_end_for", chosen.name())),
+                        () -> f.confirm(t(KEY + "ally_end_title", "ally_end_title", chosen.name()), t(KEY + "ally_end_body", "ally_end_body"),
+                                t(KEY + "ally_end", "ally_end"), () -> BloodlinePage.command(cmd("ally remove " + chosen.name()))));
                 y += 13;
             }
         }
@@ -308,7 +333,8 @@ public final class BookPackPage implements HubPageView {
                     () -> BloodlinePage.command("pack challenge decline"));
             y = dy + 13;
         }
-        boolean mayInvite = leads(f, pack) || (pack.isEmpty() && (wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA));
+        boolean mayInvite = grp ? gv.viewerRank() == GroupView.LEADER
+                : leads(f, pack) || (pack.isEmpty() && (wolf.rank() == WolfState.Rank.ALPHA || wolf.rank() == WolfState.Rank.TRUE_ALPHA));
         if (style != Style.BOOK) {
             y = PackInvite.render(f, r, y + 2, mayInvite);
         }
@@ -316,23 +342,23 @@ public final class BookPackPage implements HubPageView {
         if (style == Style.BOOK) {
             // the foot of the page: the seal, the two invite buttons beside it and, under them, the way out
             int sy = r.bottom() - BookKit.SEAL;
-            BookKit.seal(f, "pack:accept", Component.translatable(BOOK + "accept"), true, r.x(), sy, () -> BloodlinePage.command("pack accept"),
-                    List.of(Component.translatable(KEY + "accept")));
+            BookKit.seal(f, "pack:accept", Component.translatable(BOOK + "accept"), true, r.x(), sy, () -> BloodlinePage.command(cmd("accept")),
+                    List.of(t(KEY + "accept", "accept")));
             PackInvite.buttons(f, new Rect(r.x() + BookKit.SEAL + 8, sy + 2, r.w() - BookKit.SEAL - 8, PageWidgets.H), sy + 2, mayInvite);
             // the seal says only ACCEPT: the line beside it says what it accepts
-            String note = net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.cut(f.font(), Component.translatable(KEY + "accept").getString(), r.w(), f.font()::width);
+            String note = net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.cut(f.font(), t(KEY + "accept", "accept").getString(), r.w(), f.font()::width);
             f.g.drawString(f.font(), note, r.x(), BookKit.sealNoteY(sy), t.muted(), false);
             if (!pack.isEmpty()) {
-                BookKit.link(f, "pack:leave", Component.translatable(KEY + "leave"), r.x() + BookKit.SEAL + 8, sy + 24, List.of(Component.translatable(KEY + "leave")),
-                        () -> f.confirm(Component.translatable(BOOK + "leave_title"), Component.translatable(BOOK + "leave_body"), Component.translatable(BOOK + "leave_yes"),
-                                () -> BloodlinePage.command("pack leave")));
+                BookKit.link(f, "pack:leave", t(KEY + "leave", "leave"), r.x() + BookKit.SEAL + 8, sy + 24, List.of(t(KEY + "leave", "leave")),
+                        () -> f.confirm(t(BOOK + "leave_title", "leave_title"), t(BOOK + "leave_body", "leave_body"), t(BOOK + "leave_yes", "leave_yes"),
+                                () -> BloodlinePage.command(cmd("leave"))));
             }
         }
     }
 
     /** A click on a member (portrait or ledger row) selects them and opens their Profile when the snapshot named an id for them. */
     private Runnable openProfile(HubScreen.Frame f, String name) {
-        java.util.UUID id = f.view.snapshot().pack().stream().filter(m -> m.name().equals(name)).flatMap(m -> m.id().stream()).findFirst().orElse(null);
+        java.util.UUID id = members.stream().filter(m -> m.name().equals(name)).flatMap(m -> m.id().stream()).findFirst().orElse(null);
         return () -> {
             selected = name;
             if (id != null) {
@@ -343,33 +369,33 @@ public final class BookPackPage implements HubPageView {
 
     /** The Blood Moon's floating bar and Tensura's info pane: the chosen member (or the pack) and what the command allows. */
     private void detail(HubScreen.Frame f, WolfState wolf, List<HubSocial.Member> pack, @Nullable HubSocial.Member chosen) {
-        HubSocial.Npc pickedWolf = wolves.chosen(f);
+        HubSocial.Npc pickedWolf = grp ? null : wolves.chosen(f);
         if (pickedWolf != null) {
             f.detail(wolves.detail(pickedWolf, style == Style.MOON));
             return;
         }
-        Component title = chosen != null ? Component.literal(chosen.name()) : Component.translatable(KEY + "title");
-        Component body = chosen != null ? Component.translatable(KEY + (chosen.online() ? "online" : "offline")) : Component.translatable(BOOK + "subtitle");
+        Component title = chosen != null ? Component.literal(chosen.name()) : t(KEY + "title", "title");
+        Component body = chosen != null ? Component.translatable(KEY + (chosen.online() ? "online" : "offline")) : t(BOOK + "subtitle", "subtitle");
         Detail.Builder d = Detail.of(title).body(body);
         if (style == Style.TENSURA) {
-            d.field(Component.translatable(KEY + "rank", rankLabel(f, wolf)), Component.empty());
+            d.field(Component.translatable(KEY + "rank", grp ? GroupLabels.myRank(gv) : rankLabel(f, wolf)), Component.empty());
             if (chosen != null && !pack.isEmpty() && chosen == pack.get(0) && !chosen.base().equals("ally")) {
-                d.field(Component.translatable(KEY + "role"), Component.translatable(KEY + "leader"));
+                d.field(Component.translatable(KEY + "role"), t(KEY + "leader", "leader"));
             }
         }
-        d.action("accept", Component.translatable(KEY + "accept"), true, true, () -> BloodlinePage.command("pack accept"));
+        d.action("accept", t(KEY + "accept", "accept"), true, true, () -> BloodlinePage.command(cmd("accept")));
         if (canKick(f, pack, chosen)) {
-            d.action(new Detail.Action("kick", Component.translatable(KEY + "kick"), false, true, null,
-                    new Detail.Confirm(Component.translatable(KEY + "kick_title", chosen.name()), Component.translatable(KEY + "kick_body")),
-                    () -> BloodlinePage.command("pack kick " + chosen.name())));
-        } else if (canChallenge(f, pack, wolf, chosen)) {
+            d.action(new Detail.Action("kick", t(KEY + "kick", "kick"), false, true, null,
+                    new Detail.Confirm(t(KEY + "kick_title", "kick_title", chosen.name()), t(KEY + "kick_body", "kick_body")),
+                    () -> BloodlinePage.command(cmd("kick " + chosen.name()))));
+        } else if (!grp && canChallenge(f, pack, wolf, chosen)) {
             d.action(new Detail.Action("challenge", Component.translatable(KEY + "challenge_btn", chosen.name()), false, true, null,
                     new Detail.Confirm(Component.translatable(KEY + "challenge_title", chosen.name()), Component.translatable(KEY + "challenge_body")),
                     () -> BloodlinePage.command("pack challenge " + chosen.name())));
         } else if (canEndAlliance(f, pack, chosen)) {
-            d.action(new Detail.Action("ally_end", Component.translatable(KEY + "ally_end"), false, true, null,
-                    new Detail.Confirm(Component.translatable(KEY + "ally_end_title", chosen.name()), Component.translatable(KEY + "ally_end_body")),
-                    () -> BloodlinePage.command("pack ally remove " + chosen.name())));
+            d.action(new Detail.Action("ally_end", t(KEY + "ally_end", "ally_end"), false, true, null,
+                    new Detail.Confirm(t(KEY + "ally_end_title", "ally_end_title", chosen.name()), t(KEY + "ally_end_body", "ally_end_body")),
+                    () -> BloodlinePage.command(cmd("ally remove " + chosen.name()))));
         }
         if (askedForTheLead(f, pack)) {
             d.action("duel_accept", Component.translatable(KEY + "duel_accept"), true, true, () -> BloodlinePage.command("pack challenge accept"));
@@ -377,8 +403,8 @@ public final class BookPackPage implements HubPageView {
             d.field(Component.translatable(KEY + "duel_asked"), Component.literal(challengerName(pack)));
         }
         if (!pack.isEmpty()) {
-            d.action(new Detail.Action("leave", Component.translatable(KEY + "leave"), false, true, null,
-                    new Detail.Confirm(Component.translatable(BOOK + "leave_title"), Component.translatable(BOOK + "leave_body")), () -> BloodlinePage.command("pack leave")));
+            d.action(new Detail.Action("leave", t(KEY + "leave", "leave"), false, true, null,
+                    new Detail.Confirm(t(BOOK + "leave_title", "leave_title"), t(BOOK + "leave_body", "leave_body")), () -> BloodlinePage.command(cmd("leave"))));
         }
         f.detail(d.build());
     }
@@ -387,7 +413,7 @@ public final class BookPackPage implements HubPageView {
         HubTheme t = f.theme();
         Rect s = f.region(ringRegion);
         int top = f.begin(ringRegion);
-        HubSocial.Npc pickedWolf = wolves.chosen(f);
+        HubSocial.Npc pickedWolf = grp ? null : wolves.chosen(f);
         if (style == Style.BOOK && pickedWolf != null) {
             // the Grimoire's ledger scrolls: the picked wolf's profile and orders are drawn on the right page, in full view, in place of the ring until it is closed
             int py = wolves.profile(f, new Rect(s.x(), top, s.w(), s.bottom() - top), top, pickedWolf);
@@ -395,9 +421,9 @@ public final class BookPackPage implements HubPageView {
             f.end(py + 18);
             return;
         }
-        if (pack.isEmpty() && f.view.snapshot().npcs().isEmpty()) {
+        if (pack.isEmpty() && (grp || f.view.snapshot().npcs().isEmpty())) {
             // nobody beside you: the empty state instead of an empty ring
-            int emptyBottom = EmptyState.render(f, s, top + Math.max(0, (s.bottom() - top - 150) / 2), "pack", HubPage.GUIDE);
+            int emptyBottom = EmptyState.render(f, s, top + Math.max(0, (s.bottom() - top - 150) / 2), grp ? GroupLabels.emptyName(gv) : "pack", HubPage.GUIDE);
             if (style == Style.BOOK) {
                 PackInvite.picker(f, new Rect(s.x(), top, s.w(), 0), top, true);
             }
@@ -407,18 +433,22 @@ public final class BookPackPage implements HubPageView {
         // on the Blood Moon stage the ledger card takes the right of it, so the ring is centred in what is left
         int areaW = style == Style.MOON ? Math.max(60, f.region("right").x() - 14 - s.x()) : s.w();
         // the legend is drawn at the width of that area, 9 pixels a line: the room kept for it is that many lines, whole
-        int legend = 9 * Math.max(1, f.font().split(Component.translatable(BOOK + "legend"), areaW).size()) + 3;
+        int legend = 9 * Math.max(1, f.font().split(t(BOOK + "legend", "legend"), areaW).size()) + 3;
         int cy = top + (s.bottom() - legend - top) / 2;
         int cx = s.x() + areaW / 2;
         List<PackRing.Member> members = new ArrayList<>();
-        pack.stream().filter(m -> !m.name().equals(f.view.player().getName().getString()) && !m.base().equals("ally")).forEach(m -> members.add(new PackRing.Member(m.name(), role(m.rank()))));
-        f.view.snapshot().npcs().forEach(n -> members.add(new PackRing.Member(n.name(), role(n.source()))));
+        pack.stream().filter(m -> !m.name().equals(f.view.player().getName().getString()) && !m.base().equals("ally"))
+                .forEach(m -> members.add(new PackRing.Member(m.name(), grp ? GroupLabels.role(gv.type(), m.base()) : role(m.rank()))));
+        if (!grp) {
+            f.view.snapshot().npcs().forEach(n -> members.add(new PackRing.Member(n.name(), role(n.source()))));
+        }
         int face = members.size() > 8 ? 12 : 16;
         // the faces sit on a ring; their names go outward (beside the side ones, over the top ones, under the bottom ones), small, inside the page
         int radius = PackRing.radiusFor(areaW, s.bottom() - legend - top, face);
         int inner = Math.max(14, radius * 2 / 5);
         f.emblem(new Rect(cx - inner - 2, cy - inner - 2, 2 * inner + 4, 2 * inner + 4));
-        Component you = Component.translatable(BOOK + "you", f.view.player().getName(), Component.translatable(KEY + "rank." + wolf.rank().name().toLowerCase(Locale.ROOT)));
+        Component you = Component.translatable(BOOK + "you", f.view.player().getName(),
+                grp ? GroupLabels.myRank(gv) : Component.translatable(KEY + "rank." + wolf.rank().name().toLowerCase(Locale.ROOT)));
         PackRing.Layout ring = PackRing.layout(members, cx, cy, radius, face);
         // the line under the model is for a ring with room: where a face stands in its way it is left out (the ledger has the rank)
         int yw = BookKit.smallWidth(f, you.getString());
@@ -467,7 +497,7 @@ public final class BookPackPage implements HubPageView {
             Component more = Component.translatable(BOOK + "ring_more", ring.hidden());
             f.g.drawString(f.font(), more, cx - f.font().width(more) / 2, PackRing.moreLabelY(ring, cy), t.muted(), false);
         }
-        BookKit.small(f, Component.translatable(BOOK + "legend"), s.x(), s.bottom() - legend + 1, areaW, t.muted());
+        BookKit.small(f, t(BOOK + "legend", "legend"), s.x(), s.bottom() - legend + 1, areaW, t.muted());
         if (style == Style.BOOK) {
             // the players to pick from, on a card over the top of the ring
             PackInvite.picker(f, new Rect(s.x(), top, s.w(), 0), top, true);
