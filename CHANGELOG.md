@@ -15,6 +15,55 @@
 ### Migration
 - Plain daggers keep working on Originals and are **not converted**. A plain dagger already lodged in an Original hybrid stays lodged until it is pulled, runs out (30 minutes) or the player dies. Players who relied on the plain dagger against an Original hybrid now need the rite. NPC Original fights (Klaus, Mikael, Rebekah, Elijah, Kol, Finn) are unchanged for players: either dagger works on them (a mob's dagger no longer does, see above). No payload or save format changed (no network bump); a world saved with a Cursed dagger and rolled back to an older build loses the item (unknown item ids are dropped) and a Cursed dagger lodged in a player vanishes from them.
 
+## Unreleased (plan 18f: Force-feed my blood)
+
+### Added
+- **Force-feed my blood (R208).** A HUD / hub Slots action for **every vampire type** (whoever the mod counts as vampiric: plain vampires, a Ghoul as with Bottle my blood, hybrids, heretics, Originals, Augustines; no skill): put your blood in the player you look at. It does what a bottle of your kind does to them (a human is marked with vampire blood for `vampire_blood_ticks`; a werewolf follows the existing rules, so one in the transition goes unstable). **A sneaking target accepts** at any health, and is told so ("you accepted it by sneaking": **do not sneak near a vampire you do not trust**). Anyone else needs **PvP on** and to be **down** or at or under `force_feed_health_limit` (30%) of their health. Consent is checked before **vervain**, which blocks even a willing target, and a **claim, duel or protection** blocks it (asked as a blow, never as a click). **Blood forced on someone who did not accept it never names a sire:** an Original's forced blood marks a human as common vampire blood, leaves a player in the turning with the pending sire they had, and does not start or hold a werewolf's transition; only an accepted drink does. The giver hears the same "You give X your blood" line and starts the same cooldown (`give_blood_cooldown_seconds`, 120) **whatever the blood did**, and **every refusal after a target is found costs that cooldown too**, so it cannot be used to find out who is human, protected or carrying vervain. The target is told who gave it (an Original's name only as the "unknown Original" line until they know that line), then what is in them.
+- **The blood's gifts (R207): Regeneration II for 90 seconds from the drink, once per `vampire_blood_regen_cooldown_seconds` (600), and a slower hunger for the whole 20-minute window.** This applies to **anyone the vampire blood marks, a plain Vampirism blood bottle included, not only to a forced feed**. Drinking more inside the ten minutes marks you again but does not renew the Regeneration. `vampire_blood_buff_enabled` (default on) turns both gifts off; the blood still marks.
+- Config (all with Admin rows): `give_blood_cooldown_seconds` (120), `force_feed_health_limit` (0.30), `vampire_blood_buff_enabled` (true), `vampire_blood_regen_cooldown_seconds` (600).
+
+### Changed
+- `TargetChecks` (Rip Heart, Neck Snap) is public so the blood action can reuse it; `BiteProtection` has a victim-only guard (`registerVictim`) that vervain registers. The marked messages list the perks.
+- **Known limit:** a claim mod that guards a player only through an interaction event (not the attack event) would not be asked.
+
+### Network
+- No payload changed: **no network version bump** (the action lists on the server and the hub from the installed `ExtraActions`).
+
+### Rolling back
+- The four config keys are ignored by an older build. A marked player keeps the `vampireBloodUntil` they already had (the same saved field as before) and simply loses the gifts. The action disappears from the Slots tab; a slot that held it is empty. The Regeneration clock is one extra entry in `action_ready`, which an older build ignores.
+
+### Art needed
+- `textures/gui/hud/give_blood.png` for Fable 5.2 (the action uses `unknown.png` until then).
+
+## Unreleased (UI overhaul phase 8: logo, mod icon, store art)
+
+### Added
+- **The mod icon is in the mod list.** `logoFile="logo.png"` (the 64 px "Drop" logo: a blood drop with the moon cut in, inside a red corona) and `logoBlur=false`, so the pixel art is drawn with hard edges. `pack.png` is the same picture.
+- **Store art in `docs/store/`**, made by `docs/store/build.py` from the hand-drawn logo at whole-number sizes only (nearest neighbour; nothing redrawn or generated): `avatar.png` (512 x 512, the CurseForge project avatar: square, at least 400 x 400), `banner.png` (1536 x 432, the logo lockup as drawn) and `readme-header.png` (672 x 204). CurseForge states no size for a header banner, so the banner is a plain wide picture.
+- The README and the wiki home start with the logo.
+
+### Changed
+- No in-game drawing changed: the design doc asks for the logo in the mod list and the store, not in the hub.
+
+## Unreleased (plan 18e: Hybrid Leap)
+
+### Added
+- **Hybrid Leap (R212, skill S-HYB-3, 1 SP).** A HUD action for the Hybrid and the Original hybrid (rung 3 of their trees): throw yourself at the creature you are looking at, up to `hybrid_leap_range` (12, at most 16) blocks away, from the ground only. If you reach it (and still see it) you strike it for `hybrid_leap_damage` (6, half hearts) and weaken it for `hybrid_leap_weakness_ticks` (100). It is an ordinary attack, so PvP, claims, duels, armour and totems apply, and an Original is hurt like anyone. It needs no werewolf form. The fall of the landing is eased for a moment (the first 8 blocks only). A refusal about the target says only that it cannot be done, whoever the target is, and costs nothing; a refusal about the leaper (riding, in the water, already leaping, not on the ground) says so; the cooldown is `hybrid_leap_cooldown_seconds` (20). Config (all with Admin rows): `hybrid_leap_range`, `hybrid_leap_damage`, `hybrid_leap_weakness_ticks`, `hybrid_leap_cooldown_seconds`.
+- **The leap and the sprint-leap share one guard.** Jump while sprinting (Werewolves' own leap, R212) does not arm for 20 ticks after a Hybrid Leap is asked for. The Settings note for it says the two are separate.
+- Slot actions can name a target farther than the bite reach (`ExtraActions.Action.targetReach`, `HudTargets.resolve(player, id, reach)`); every older action is untouched.
+
+### Hardened
+- **The server's PvP switch is asked directly** by every targeted skill (`TargetChecks.mayAttack`: Neck Snap, Rip Heart, Hybrid Leap). A real player's own `canHarmPlayer` already refuses with PvP off, so this is defence in depth for a player type that does not (the damage probe is an event, which never asks the switch). Nothing was exploitable before.
+
+### Changed
+- **The Hybrid's and the Original hybrid's first ladder rungs pay 1 SP more** (L-HYB-1 3, L-OHY-1 5), so that their trees, with the new skill, stay within 80% to 110% of what their ladders pay (24 of 22 and 27 of 25). Hybrid Leap costs 1 SP because no ladder can pay more than 25 SP and the Original hybrid's tree was already 26. Nothing already earned moves; a rung not yet claimed pays the new amount.
+
+### Network
+- No payload changed (the trigger carries the same target id), so no network version is bumped. The longer aim is a client choice: an old client keeps naming the 3-block target, and the server answers it with `no_target` or `too_far`, never a wrong blow.
+
+### Migration
+- No existing player changes. Rolled back to an older build the skill stays in the skills list, dormant.
+
 ## Unreleased (art: the plan 18 icons)
 
 ### Changed

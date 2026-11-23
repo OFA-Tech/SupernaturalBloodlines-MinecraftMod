@@ -196,3 +196,7 @@ What we built: `SprintLeapClient` (`parts/hud/client/werewolves`, client, with V
 ## Plan 18d: actions have a target
 
 `HudTargets.resolve(player, entityId)` is the one place that says whether a creature a client names counts (same level, alive, not the player, in `bite_reach`, in sight). `ActionService` hands it to `ExtraActions.Action.trigger(player, target)` (null when there is none); the bite uses it too. No extra action runs for a player an `ExtraActions.addBlocker` predicate names (the species part blocks downed, snapped and Vampirism-dying players).
+
+## Plan 18e: the Hybrid Leap and the sprint-leap
+
+- `HybridLeapGuard` (client) is armed when a trigger for `hybrid_leap` is sent; `SprintLeapClient` passes `HybridLeapGuard.inFlight` to `SprintLeap.shouldLeap` as its last parameter, so the two leaps share one guard. `LeapAim` casts the look ray as far as the leap reaches (the game's own pick stops at 3 blocks); the server still decides.

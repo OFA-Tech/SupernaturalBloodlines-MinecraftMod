@@ -22,6 +22,10 @@ public final class ExtraActions {
 
     public static final ResourceLocation NECK_SNAP = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "neck_snap");
 
+    public static final ResourceLocation GIVE_BLOOD = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "give_blood");
+
+    public static final ResourceLocation HYBRID_LEAP = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "hybrid_leap");
+
     public static final ResourceLocation BOTTLE_BLOOD = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "bottle_blood");
 
     public interface Action {
@@ -48,6 +52,14 @@ public final class ExtraActions {
         @Nullable
         default Component trigger(ServerPlayer p, @Nullable net.minecraft.world.entity.LivingEntity target) {
             return trigger(p);
+        }
+
+        /**
+         * How far (blocks) the creature it is aimed at may be for the server to name it as the target; 0 (the default) is the bite reach. The action still
+         * keeps its own, shorter, range and says "too far" itself.
+         */
+        default double targetReach() {
+            return 0.0;
         }
 
         /** The cooldown the action just started, in ticks, for the slot's sweep. */

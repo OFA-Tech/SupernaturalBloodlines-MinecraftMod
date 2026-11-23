@@ -193,6 +193,7 @@ public final class SpeciesPart {
         net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect.register();
         net.ofatech.supernaturalbloodlines.parts.species.skill.RipHeartAction.register();
         net.ofatech.supernaturalbloodlines.parts.species.skill.NeckSnapAction.register();
+        net.ofatech.supernaturalbloodlines.parts.species.skill.HybridLeapAction.register();
         TurningHandler.register(); // always: the turning is vampires only, no Werewolves needed
         GhoulGates.register();
         net.ofatech.supernaturalbloodlines.parts.species.item.BloodKeys.register();
@@ -200,6 +201,7 @@ public final class SpeciesPart {
         net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrops.register();
         net.ofatech.supernaturalbloodlines.parts.species.item.BloodTooltip.register();
         net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.install(net.ofatech.supernaturalbloodlines.parts.species.item.BottleBloodAction.INSTANCE);
+        net.ofatech.supernaturalbloodlines.parts.species.blood.GiveBloodAction.register();
         net.ofatech.supernaturalbloodlines.parts.species.moon.FullMoonSleep.register(); // no Werewolves needed: "everyone" works without it
         net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.set(p -> new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(
                 net.ofatech.supernaturalbloodlines.core.moon.SleepRules.appliesTo(SpeciesConfig.fullMoonSleep(),
@@ -288,6 +290,7 @@ public final class SpeciesPart {
             e.register(OriginalGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AugustineGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.TargetedSkillGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.HybridLeapGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AugustineMakingGameTests.class);
             e.register(WitchGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CommandAliasGameTests.class);
@@ -313,6 +316,7 @@ public final class SpeciesPart {
             e.register(SeveranceRiteGameTests.class);
             e.register(TurningGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.BloodBottleGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GiveBloodGameTests.class);
             e.register(GhoulGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.TurningDyingGameTests.class);
             e.register(GeneGameTests.class);
@@ -336,6 +340,7 @@ public final class SpeciesPart {
                 e.register(HunterWerewolfGameTests.class);
                 e.register(HybridGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.BloodBottleWerewolfGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GiveBloodWerewolfGameTests.class);
                 e.register(TurningWerewolfGameTests.class);
                 e.register(HybridTraitsGameTests.class);
                 e.register(OriginalHybridGameTests.class);
