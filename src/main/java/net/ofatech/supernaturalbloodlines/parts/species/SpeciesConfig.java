@@ -109,9 +109,17 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue NPC_BONUS_SHARE;
     private static volatile MemberTuning memberOverride;
     /** The shortest and longest a snapped neck may keep a target down (R214), for every one of the four wake-time keys. */
+    public static final double DEFAULT_HYBRID_LEAP_RANGE = 12.0;
+    public static final double DEFAULT_HYBRID_LEAP_DAMAGE = 6.0;
+    public static final int DEFAULT_HYBRID_LEAP_WEAKNESS_TICKS = 100;
+    public static final int DEFAULT_HYBRID_LEAP_COOLDOWN_SECONDS = 20;
     public static final int MIN_SNAP_SECONDS = 5;
     public static final int MAX_SNAP_SECONDS = 1800;
     public static final int DEFAULT_NECK_SNAP_GRACE_SECONDS = 30;
+    private static final ModConfigSpec.DoubleValue HYBRID_LEAP_RANGE;
+    private static final ModConfigSpec.DoubleValue HYBRID_LEAP_DAMAGE;
+    private static final ModConfigSpec.IntValue HYBRID_LEAP_WEAKNESS_TICKS;
+    private static final ModConfigSpec.IntValue HYBRID_LEAP_COOLDOWN_SECONDS;
     private static final ModConfigSpec.IntValue NECK_SNAP_GRACE_SECONDS;
     private static volatile SnapSeconds snapOverride;
 
@@ -133,6 +141,42 @@ public final class SpeciesConfig {
         return o != null ? o : new SnapSeconds(neckSnapVampireSeconds(), neckSnapAugustineSeconds(), neckSnapHybridSeconds(), neckSnapOriginalSeconds());
     }
 
+    /** {@code hybrid_leap_range}. */
+    public static double hybridLeapRange() {
+        try {
+            return HYBRID_LEAP_RANGE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_HYBRID_LEAP_RANGE;
+        }
+    }
+
+    /** {@code hybrid_leap_damage}. */
+    public static double hybridLeapDamage() {
+        try {
+            return HYBRID_LEAP_DAMAGE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_HYBRID_LEAP_DAMAGE;
+        }
+    }
+
+    /** {@code hybrid_leap_weakness_ticks}. */
+    public static int hybridLeapWeaknessTicks() {
+        try {
+            return HYBRID_LEAP_WEAKNESS_TICKS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_HYBRID_LEAP_WEAKNESS_TICKS;
+        }
+    }
+
+    /** {@code hybrid_leap_cooldown_seconds}. */
+    public static int hybridLeapCooldownSeconds() {
+        try {
+            return HYBRID_LEAP_COOLDOWN_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_HYBRID_LEAP_COOLDOWN_SECONDS;
+        }
+    }
+
     /** {@code neck_snap_grace_seconds}. */
     public static int neckSnapGraceSeconds() {
         try {
@@ -147,6 +191,14 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue BOTTLE_BLOOD_HEALTH_COST;
     public static final int DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT = 8;
     private static final ModConfigSpec.IntValue BOTTLE_BLOOD_DAILY_LIMIT;
+    public static final int DEFAULT_GIVE_BLOOD_COOLDOWN_SECONDS = 120;
+    public static final double DEFAULT_FORCE_FEED_HEALTH_LIMIT = 0.30;
+    public static final boolean DEFAULT_VAMPIRE_BLOOD_BUFF_ENABLED = true;
+    public static final int DEFAULT_VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS = 600;
+    private static final ModConfigSpec.IntValue VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS;
+    private static final ModConfigSpec.IntValue GIVE_BLOOD_COOLDOWN_SECONDS;
+    private static final ModConfigSpec.DoubleValue FORCE_FEED_HEALTH_LIMIT;
+    private static final ModConfigSpec.BooleanValue VAMPIRE_BLOOD_BUFF_ENABLED;
 
     public static final double DEFAULT_AUGUSTINE_ATTACK_BONUS = 0.10;
     public static final double DEFAULT_AUGUSTINE_EXTRA_HEALTH = 2.0;
@@ -372,6 +424,14 @@ public final class SpeciesConfig {
                 .defineInRange("bottle_blood_health_cost", DEFAULT_BOTTLE_BLOOD_HEALTH_COST, 0.0, 19.0);
         BOTTLE_BLOOD_DAILY_LIMIT = b.comment("R211: how many times one player may use Bottle my blood in one game day, counted in world time; sleeping or /time does not reset it. Vampire blood bottles are an ingredient (pure blood, vampire blood oil) and a task item of Vampirism, so they are not free.")
                 .defineInRange("bottle_blood_daily_limit", DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT, 1, 1000);
+        GIVE_BLOOD_COOLDOWN_SECONDS = b.comment("R208: seconds before a vampire can use Force-feed my blood again, whatever came of it.")
+                .defineInRange("give_blood_cooldown_seconds", DEFAULT_GIVE_BLOOD_COOLDOWN_SECONDS, 1, 3600);
+        FORCE_FEED_HEALTH_LIMIT = b.comment("R208: an unwilling player can be fed vampire blood only while PvP is on and they are down or at or under this fraction of their health (0.30 = 30%). A target who sneaks accepts at any health.")
+                .defineInRange("force_feed_health_limit", DEFAULT_FORCE_FEED_HEALTH_LIMIT, 0.0, 1.0);
+        VAMPIRE_BLOOD_BUFF_ENABLED = b.comment("R207: vampire blood in a player's system eases their hunger for the whole window (vampire_blood_ticks) and, once per vampire_blood_regen_cooldown_seconds, gives 90 seconds of Regeneration II. Anyone the blood marks gets it, a bottle included. Off: the blood only marks them.")
+                .define("vampire_blood_buff_enabled", DEFAULT_VAMPIRE_BLOOD_BUFF_ENABLED);
+        VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS = b.comment("R207: a player gets the 90 second Regeneration II pulse of vampire blood once per this many seconds, whatever the source (a forced feed, a bottle, a bite), so drinking more does not keep it going. 0 = every drink gives it.")
+                .defineInRange("vampire_blood_regen_cooldown_seconds", DEFAULT_VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS, 0, 86400);
         AUGUSTINE_ATTACK_BONUS = b.comment("R200: an Augustine's extra attack damage, as a fraction (0.10 = +10%; an Original has +20%).")
                 .defineInRange("augustine_attack_bonus", DEFAULT_AUGUSTINE_ATTACK_BONUS, 0.0, 1.0);
         AUGUSTINE_EXTRA_HEALTH = b.comment("R200: an Augustine's extra maximum health, in half hearts (an Original has 4).")
@@ -388,6 +448,14 @@ public final class SpeciesConfig {
                 .defineInRange("neck_snap_cooldown_seconds", DEFAULT_NECK_SNAP_COOLDOWN_SECONDS, 1, 3600);
         NECK_SNAP_GRACE_SECONDS = b.comment("R214: seconds after a snap ends in which the same player or creature cannot be snapped again (a refusal like any other, so it says nothing about the target). Kept through a logout. 0 turns it off.")
                 .defineInRange("neck_snap_grace_seconds", DEFAULT_NECK_SNAP_GRACE_SECONDS, 0, 3600);
+        HYBRID_LEAP_RANGE = b.comment("R212: how far (blocks) Hybrid Leap reaches. Further than this is refused as too far; the leap itself is a push, so a wall or a drop on the way still counts.")
+                .defineInRange("hybrid_leap_range", DEFAULT_HYBRID_LEAP_RANGE, 2.0, net.ofatech.supernaturalbloodlines.core.hud.LeapMath.MAX_RANGE);
+        HYBRID_LEAP_DAMAGE = b.comment("R212: the damage Hybrid Leap deals when it lands (half hearts), as an ordinary attack: PvP, claims, armour and totems apply. 0 deals none and keeps the Weakness.")
+                .defineInRange("hybrid_leap_damage", DEFAULT_HYBRID_LEAP_DAMAGE, 0.0, 40.0);
+        HYBRID_LEAP_WEAKNESS_TICKS = b.comment("R212: how long the Weakness lasts that a landed Hybrid Leap gives (ticks). Only when the blow landed.")
+                .defineInRange("hybrid_leap_weakness_ticks", DEFAULT_HYBRID_LEAP_WEAKNESS_TICKS, 0, 1200);
+        HYBRID_LEAP_COOLDOWN_SECONDS = b.comment("R212: seconds before Hybrid Leap can be used again. A refusal costs nothing.")
+                .defineInRange("hybrid_leap_cooldown_seconds", DEFAULT_HYBRID_LEAP_COOLDOWN_SECONDS, 1, 600);
         NECK_SNAP_KILL_HEALTH = b.comment("R214: a mortal at or under this much health dies of a snapped neck; a healthier one only staggers.")
                 .defineInRange("neck_snap_kill_health", DEFAULT_NECK_SNAP_KILL_HEALTH, 1.0, 40.0);
         NECK_SNAP_STAGGER_TICKS = b.comment("R214: how long a healthy mortal staggers (Slowness III and Weakness) after a snapped neck, in ticks.")
@@ -953,6 +1021,64 @@ public final class SpeciesConfig {
             return BOTTLE_BLOOD_COOLDOWN_SECONDS.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_BOTTLE_BLOOD_COOLDOWN_SECONDS;
+        }
+    }
+
+    /** {@code give_blood_cooldown_seconds}. */
+    public static int giveBloodCooldownSeconds() {
+        try {
+            return GIVE_BLOOD_COOLDOWN_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_GIVE_BLOOD_COOLDOWN_SECONDS;
+        }
+    }
+
+    /** {@code force_feed_health_limit}. */
+    public static double forceFeedHealthLimit() {
+        try {
+            return FORCE_FEED_HEALTH_LIMIT.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_FORCE_FEED_HEALTH_LIMIT;
+        }
+    }
+
+    private static volatile Boolean bloodBuffOverride;
+
+    /** For tests: pins {@link #vampireBloodBuffEnabled()}; null clears it. */
+    public static void overrideVampireBloodBuff(Boolean value) {
+        bloodBuffOverride = value;
+    }
+
+    /** {@code vampire_blood_regen_cooldown_seconds}. */
+    public static int vampireBloodRegenCooldownSeconds() {
+        Integer pinned = regenCooldownOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS;
+        }
+    }
+
+    private static volatile Integer regenCooldownOverride;
+
+    /** For tests: pins {@link #vampireBloodRegenCooldownSeconds()}; null clears it. */
+    public static void overrideVampireBloodRegenCooldown(Integer value) {
+        regenCooldownOverride = value;
+    }
+
+    /** {@code vampire_blood_buff_enabled}. */
+    public static boolean vampireBloodBuffEnabled() {
+        Boolean pinned = bloodBuffOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return VAMPIRE_BLOOD_BUFF_ENABLED.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_VAMPIRE_BLOOD_BUFF_ENABLED;
         }
     }
 

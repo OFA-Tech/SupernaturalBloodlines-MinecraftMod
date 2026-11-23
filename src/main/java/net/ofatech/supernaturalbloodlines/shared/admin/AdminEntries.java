@@ -108,10 +108,18 @@ public final class AdminEntries {
         species(all, "bottle_blood_cooldown_seconds", INT);
         species(all, "bottle_blood_health_cost", DOUBLE);
         species(all, "bottle_blood_daily_limit", INT);
+        species(all, "give_blood_cooldown_seconds", INT);
+        species(all, "force_feed_health_limit", DOUBLE);
+        species(all, "vampire_blood_buff_enabled", BOOL);
+        species(all, "vampire_blood_regen_cooldown_seconds", INT);
         species(all, "rip_heart_health", DOUBLE);
         species(all, "rip_heart_cooldown_seconds", INT);
         species(all, "neck_snap_cooldown_seconds", INT);
         species(all, "neck_snap_grace_seconds", INT);
+        species(all, "hybrid_leap_range", DOUBLE);
+        species(all, "hybrid_leap_damage", DOUBLE);
+        species(all, "hybrid_leap_weakness_ticks", INT);
+        species(all, "hybrid_leap_cooldown_seconds", INT);
         species(all, "neck_snap_kill_health", DOUBLE);
         species(all, "neck_snap_stagger_ticks", INT);
         species(all, "neck_snap_vampire_seconds", INT);

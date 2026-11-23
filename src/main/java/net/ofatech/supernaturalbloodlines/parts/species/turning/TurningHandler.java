@@ -207,7 +207,11 @@ public final class TurningHandler {
     public static boolean drankVampireBlood(ServerPlayer p) {
         BloodlineState before = BloodlineAccess.get(p);
         apply(p, BloodlineEvent.DRANK_VAMPIRE_BLOOD, null);
-        return !BloodlineAccess.get(p).equals(before);
+        boolean changed = !BloodlineAccess.get(p).equals(before);
+        if (changed) {
+            net.ofatech.supernaturalbloodlines.parts.species.blood.VampireBloodBuff.drank(p); // every way the blood goes in comes through here
+        }
+        return changed;
     }
 
     /** Human-like blood reached a player in the turning. */

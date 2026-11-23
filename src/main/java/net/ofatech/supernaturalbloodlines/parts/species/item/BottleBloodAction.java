@@ -33,8 +33,7 @@ public final class BottleBloodAction implements ExtraActions.Action {
     public static final String DAILY = "supernaturalbloodlines.bottle.daily";
     public static final String DROPPED = "supernaturalbloodlines.bottle.dropped";
     static final ResourceLocation BLOOD_BOTTLE = ResourceLocation.parse("vampirism:vampire_blood_bottle");
-    /** The placeholder until the art (textures/gui/hud/bottle_blood.png) lands. */
-    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hud/unknown.png");
+    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hud/bottle_blood.png");
 
     private BottleBloodAction() {
     }

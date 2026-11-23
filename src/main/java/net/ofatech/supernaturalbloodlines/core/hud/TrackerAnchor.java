@@ -19,8 +19,8 @@ public enum TrackerAnchor {
         return HEIGHT + 9 * (Math.max(1, lines) - 1);
     }
     /** The right edge of the full moon warning's corner (it takes 6 + 22 + 30 from the right) and its text row under it. */
-    /** The width of the status Tensura and Vampirism draw in the top left corner (about 130 pixels in the screenshots). */
-    public static final int CORNER_W = 140;
+    /** The width of the status Tensura and Vampirism draw in the top left corner (measured at 148 pixels in the screenshots: the right end of its outline, at every GUI scale). */
+    public static final int CORNER_W = 148;
     private static final int MOON_ROW = 6 + 26 + 10;
     /** The height of that status: the corner is kept clear this far down. */
     public static final int CORNER_H = 70;

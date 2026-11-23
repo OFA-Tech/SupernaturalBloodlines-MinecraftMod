@@ -37,6 +37,7 @@ Every rite in this mod is an **Enchanted circle-magic rite**: you draw a chalk c
 | [Rite of the Cure](#rite-of-the-cure) | medium | 20,000 | | artifacts |
 | [Rite of the Vampire Compass](#artifact-rites) | medium | 2,000 | | artifacts |
 | [Rite of the Hearing Device](#artifact-rites) | medium | 3,000 | | artifacts |
+| [Rite of the Cursed Dagger](#artifact-rites) | medium | 20,000 | | artifacts, species |
 | [Rite of Severance](#rite-of-severance) | medium | 6,000 | | species |
 | [Rite of Cloaking](#kols-and-esthers-grimoires) | medium | 4,000 | | bosses |
 | [Linking Spell](#kols-and-esthers-grimoires) | medium | 5,000 | | bosses |
@@ -157,6 +158,7 @@ All on a medium circle. See [Items and blocks](Items-And-Blocks#rings-and-wards)
 | **Ward of Return** | 8,000 | Totem of Undying, 4 Gold Ingots, Diamond | a **Resurrection Ring** |
 | **Rite of the Vampire Compass** | 2,000 | Compass, Vervain | a **Vampire Compass** |
 | **Rite of the Hearing Device** | 3,000 | Note Block, 2 Iron Ingots, Amethyst Shard | a **Hearing Device** |
+| **Rite of the Cursed Dagger** | 20,000 | White Oak Ash Dagger, 2 White Oak Ash, Echo Shard (needs species too) | a **Cursed White Oak Ash Dagger**, which also desiccates an Original hybrid. Acts on nobody on the circle. The book keeps it sealed until you are a witch, a siphoner or a tribrid. |
 
 A ward refuses (and returns the ingredients) if the wrong faction stands on the circle, the ring is missing ("The rite has nothing to bind."), or it is already bound ("That is already bound to someone.").
 

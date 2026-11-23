@@ -14,6 +14,32 @@ class KitFacesTest {
     private static final int[] INK = {0xFF3B2414, 0xFFF0E0E0, 0xFFE6F3FB};
 
     @Test
+    void aLabelReadsOnWhatTheRepaintedPictureIsAndNotOnTheShippedTable() {
+        int shipped = KitFaces.face("grimoire", Part.PLATE); // a pale parchment
+        int repainted = 0xFF1D0B13; // a pack that makes the plate near-black
+        int dark = INK[0];
+        assertTrue(Contrast.ratio(dark, shipped) >= 4.5 && Contrast.ratio(dark, repainted) < 4.5, "control: the dark ink reads on the parchment and not on the repaint");
+        int face = KitFaces.resolveFace(shipped, repainted);
+        assertEquals(repainted, face, "the picture's own middle wins");
+        assertTrue(Contrast.ratio(KitFaces.labelOn(face, dark), face) >= 4.5, "the label switches to one that reads on the repaint");
+        assertEquals(shipped, KitFaces.resolveFace(shipped, null), "no solid middle: the table");
+        assertEquals(shipped, KitFaces.resolveFace(shipped, 0x00112233), "a see-through middle is not a face: the table");
+        assertEquals(0xFF112233, KitFaces.resolveFace(shipped, 0xFF112233));
+        assertEquals(0xFF112233, KitFaces.resolveFace(shipped, 0xD0112233), "an almost opaque middle is read as opaque");
+    }
+
+    @Test
+    void theTableKnowsEveryButtonAndSurfaceAndNothingElse() {
+        for (Part p : KitFaces.BUTTONS) {
+            assertTrue(KitFaces.knows(p), p.toString());
+        }
+        for (Part p : KitFaces.SURFACES) {
+            assertTrue(KitFaces.knows(p), p.toString());
+        }
+        assertTrue(!KitFaces.knows(Part.SEAL) && !KitFaces.knows(Part.HUD_LABEL) && !KitFaces.knows(Part.KEY_BADGE), "no face to read on");
+    }
+
+    @Test
     void theTableIsTheMiddleOfEachButtonPicture() throws Exception {
         List<String> drifted = new ArrayList<>();
         for (String kit : KitSprites.KITS) {
