@@ -39,8 +39,9 @@ public final class RipHeartAction implements ExtraActions.Action {
     public static final String NO_TARGET = KEY + "no_target";
     public static final String COOLDOWN = KEY + "cooldown";
     public static final String REFUSED = KEY + "refused";
+    public static final String TOO_STRONG = KEY + "too_strong";
     public static final String DONE = KEY + "done";
-    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hud/unknown.png");
+    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hud/rip_heart.png");
 
     private RipHeartAction() {
     }
@@ -53,8 +54,6 @@ public final class RipHeartAction implements ExtraActions.Action {
                 e.setCanceled(true);
             }
         });
-        // a player who cannot act (downed, snapped, in Vampirism's dying state) runs no action at all, whoever owns it
-        ExtraActions.addBlocker(p -> Downed.isDowned(p) || TargetChecks.inVampirismDying(p));
     }
 
     @Override
@@ -69,11 +68,16 @@ public final class RipHeartAction implements ExtraActions.Action {
 
     @Override
     public Component note() {
-        return Component.translatable("supernaturalbloodlines.hud.action.rip_heart.note", health(), SpeciesConfig.ripHeartCooldownSeconds());
+        return Component.translatable("supernaturalbloodlines.hud.action.rip_heart.note", hearts(), SpeciesConfig.ripHeartCooldownSeconds());
     }
 
-    private static String health() {
-        double h = SpeciesConfig.ripHeartHealth();
+    static String hearts() {
+        return hearts(SpeciesConfig.ripHeartHealth());
+    }
+
+    /** A health in hearts (two health to a heart), as the texts show it. */
+    static String hearts(double health) {
+        double h = health / 2.0;
         return h == Math.rint(h) ? Long.toString((long) h) : Double.toString(h);
     }
 
@@ -96,7 +100,7 @@ public final class RipHeartAction implements ExtraActions.Action {
     @Nullable
     @Override
     public Component trigger(ServerPlayer p, @Nullable LivingEntity target) {
-        if (target == null) {
+        if (target == null || !TargetChecks.inView(p, target)) {
             return Component.translatable(NO_TARGET);
         }
         if (!ActionClock.ready(p, id())) {
@@ -107,15 +111,19 @@ public final class RipHeartAction implements ExtraActions.Action {
         }
         // from here on the answer for an Original (or a boss) and for anyone else is the same line, the same cooldown and the same checks
         RipHeartRules.Result result = RipHeartRules.decide(target.getHealth(), (float) SpeciesConfig.ripHeartHealth(), TargetChecks.isOriginal(target) || TargetChecks.isBoss(target));
-        if (result == RipHeartRules.Result.TOO_STRONG || !TargetChecks.mayAttack(p, target)) {
+        if (result == RipHeartRules.Result.TOO_STRONG) {
+            return Component.translatable(TOO_STRONG); // the same for everyone, an Original at full health too
+        }
+        if (!TargetChecks.mayAttack(p, target)) {
             return Component.translatable(REFUSED);
         }
         DamageSource source = new DamageSource(p.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DAMAGE), p);
         float blow = target.getHealth() + target.getAbsorptionAmount() + 1.0F;
         boolean inDying = TargetChecks.inVampirismDying(target);
         if (result == RipHeartRules.Result.NO_EFFECT) {
-            // nothing is done, but the damage is asked about all the same (a duel, an invulnerability, a claim): the answer must not say what the target is
-            if (!inDying && !TargetChecks.damageWouldLand(target, source, blow)) {
+            // nothing is done, but the damage is asked about all the same (a duel, an invulnerability, a claim), with a probe that deals nothing and counts nothing:
+            // the answer must not say what the target is
+            if (!inDying && !TargetChecks.damageWouldLand(target, source, TargetChecks.PROBE)) {
                 return Component.translatable(REFUSED);
             }
         } else if (!tear(p, target, source, blow, inDying)) {
@@ -124,25 +132,31 @@ public final class RipHeartAction implements ExtraActions.Action {
         p.level().playSound(null, target.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 0.8f, 0.5f);
         p.displayClientMessage(Component.translatable(DONE, target.getDisplayName()), true);
         ActionClock.start(p, id(), cooldownTicks(p));
-        if (result == RipHeartRules.Result.FINISH) {
+        if (result == RipHeartRules.Result.FINISH && !target.isAlive()) {
             TaskSignals.fire(p, "rip_heart", 1);
         }
         return null;
     }
 
-    /** The blow itself: past the Original rules (a downed or snapped target is reached), final, and into Vampirism's dying state when that holds the target. */
+    /**
+     * The blow itself: past the Original rules (a downed or snapped target is reached), final, and through Vampirism's dying state: a vampire who is already in
+     * it is killed there, and one whose death Vampirism catches only now (its hook starts the dying state instead of letting the blow kill) is finished at once.
+     */
     private static boolean tear(ServerPlayer p, LivingEntity target, DamageSource source, float blow, boolean inDying) {
         boolean[] hit = new boolean[1];
+        DamageSource kill = p.damageSources().source(DamageTypes.GENERIC_KILL, p);
         FinalDeath.run(target, () -> {
             if (inDying) {
-                hit[0] = OriginalRules.killThroughDying((ServerPlayer) target, p.damageSources().source(DamageTypes.GENERIC_KILL, p));
-            } else {
-                hit[0] = target.hurt(source, blow);
+                hit[0] = OriginalRules.killThroughDying((ServerPlayer) target, kill);
+                return;
+            }
+            hit[0] = target.hurt(source, blow);
+            if (hit[0] && target instanceof ServerPlayer sp && sp.isAlive() && TargetChecks.inVampirismDying(sp)) {
+                OriginalRules.killThroughDying(sp, kill);
             }
         });
         return hit[0];
     }
-
     @Override
     public int cooldownTicks(ServerPlayer p) {
         return SpeciesConfig.ripHeartCooldownSeconds() * 20;

@@ -28,7 +28,7 @@ public final class NeckSnapRules {
      * dies at once, and that has no vampire layer here); an Augustine; a heretic, a Ghoul, anyone in the vampire faction, anyone in the turning or the hybrid
      * transition (a vampire in the making lies down like one); everything else is mortal (humans, witches, siphoners, hunters, werewolves, creatures).
      */
-    public static Kind kindOf(Species s, boolean vampireFaction, boolean ghoul, boolean inTurningOrTransition, boolean werewolfFaction, boolean boss) {
+    public static Kind kindOf(Species s, boolean vampireFaction, boolean ghoul, boolean inTurningOrTransition, boolean boss) {
         if (boss) {
             return Kind.BOSS;
         }
@@ -38,6 +38,14 @@ public final class NeckSnapRules {
             case AUGUSTINE -> Kind.AUGUSTINE;
             default -> s == Species.HERETIC || ghoul || vampireFaction || inTurningOrTransition ? Kind.VAMPIRE : Kind.MORTAL;
         };
+    }
+
+    /**
+     * The cooldown in force, in seconds: the configured one, but never shorter than the longest wake time, so a snap cannot be renewed while it lasts.
+     * (The grace after it ends, {@code neck_snap_grace_seconds}, is on top of that.)
+     */
+    public static int cooldownSeconds(int configured, int vampireSec, int augustineSec, int hybridSec, int originalSec) {
+        return Math.max(configured, Math.max(Math.max(vampireSec, augustineSec), Math.max(hybridSec, originalSec)));
     }
 
     /** How long a snap lasts, in ticks, for each vampiric kind (config, seconds); 0 for the others (nothing lies down). */

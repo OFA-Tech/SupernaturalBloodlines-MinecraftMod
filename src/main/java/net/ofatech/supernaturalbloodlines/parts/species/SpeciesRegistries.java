@@ -76,9 +76,12 @@ public final class SpeciesRegistries {
     public static final DeferredHolder<MobEffect, net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect> SNAPPED =
             EFFECTS.register("snapped", net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect::new);
 
-    /** Whether the creature already had no AI when it was snapped, so the end of the snap gives back exactly what it had. */
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> SNAPPED_HAD_NO_AI =
-            ATTACHMENTS.register("snapped_had_no_ai", () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL).build());
+    /**
+     * Game time until which a player or creature whose snap just ended cannot be snapped again (R214, {@code neck_snap_grace_seconds}). Saved, so a logout does
+     * not end it. Not kept through death.
+     */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Long>> SNAP_GRACE_UNTIL =
+            ATTACHMENTS.register("snap_grace_until", () -> AttachmentType.builder(() -> 0L).serialize(Codec.LONG).build());
 
     /** The lore a Torn Page carries ({@link net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable#loreIds}): what reading it teaches. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> RITE_LORE_COMPONENT =

@@ -84,6 +84,7 @@ public final class TargetedSkillGameTests {
         for (ServerPlayer p : players) {
             Downed.clearForTest(p);
             p.removeAllEffects();
+            p.setData(SpeciesRegistries.SNAP_GRACE_UNTIL, 0L);
             BloodlineAccess.set(p, BloodlineState.NONE);
             SupernaturalAccess.set(p, SupernaturalAccess.get(p).toBuilder().skills(Set.of()).build());
             if (VampirismAPI.factionPlayerHandler(p).getCurrentFaction() != null) {
@@ -125,7 +126,7 @@ public final class TargetedSkillGameTests {
         TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-8");
         Zombie z = zombie(helper, 20.0f);
         try {
-            helper.assertTrue(RipHeartAction.REFUSED.equals(key(RipHeartAction.INSTANCE.trigger(user, z))), "a strong mob was not refused");
+            helper.assertTrue(RipHeartAction.TOO_STRONG.equals(key(RipHeartAction.INSTANCE.trigger(user, z))), "a strong mob was not told it is too healthy");
             helper.assertTrue(z.isAlive() && z.getHealth() == 20.0f, "the mob was hurt");
             helper.assertTrue(ActionClock.left(user, ExtraActions.RIP_HEART) == 0, "a refusal started the cooldown");
         } finally {
@@ -157,7 +158,7 @@ public final class TargetedSkillGameTests {
             // a healthy Original is refused like anyone healthy
             TestPlayers.TalkingDuelist userC = vampire(helper, "S-VAM-8");
             original.setHealth(20.0f);
-            helper.assertTrue(RipHeartAction.REFUSED.equals(key(RipHeartAction.INSTANCE.trigger(userC, original))), "a healthy Original was not refused");
+            helper.assertTrue(RipHeartAction.TOO_STRONG.equals(key(RipHeartAction.INSTANCE.trigger(userC, original))), "a healthy Original was not told too healthy, like anyone");
             clean(userC);
         } finally {
             z.discard();
@@ -386,36 +387,35 @@ public final class TargetedSkillGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aSnappedMobLiesDownThenGetsItsAiBack(GameTestHelper helper) {
+    public static void aSnappedMobLiesDownWithNothingSavedAndIsFreeAgain(GameTestHelper helper) {
         if (skipped(helper)) {
             return;
         }
         TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-9");
-        TestPlayers.TalkingDuelist user2 = vampire(helper, "S-VAM-9");
+        ServerPlayer victim = TestPlayers.createDuelist(helper);
         Zombie thinking = zombie(helper, 20.0f);
-        Zombie dumb = zombie(helper, 20.0f);
         thinking.setNoAi(false);
         thinking.setData(SpeciesRegistries.ORIGINAL_ROOT, java.util.UUID.randomUUID().toString());
-        dumb.setNoAi(true);
-        dumb.setData(SpeciesRegistries.ORIGINAL_ROOT, java.util.UUID.randomUUID().toString());
         try {
-            helper.assertTrue(NeckSnapAction.INSTANCE.trigger(user, thinking) == null && NeckSnapAction.INSTANCE.trigger(user2, dumb) == null, "refused");
-            helper.assertTrue(thinking.hasEffect(SpeciesRegistries.SNAPPED) && thinking.isNoAi(), "the mob was not snapped");
+            helper.assertTrue(NeckSnapAction.INSTANCE.trigger(user, thinking) == null, "refused");
+            helper.assertTrue(thinking.hasEffect(SpeciesRegistries.SNAPPED), "the mob was not snapped");
+            helper.assertTrue(thinking.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) == 0.0, "the snapped mob can still move: " + thinking.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED));
+            helper.assertTrue(!thinking.isNoAi() && !thinking.saveWithoutId(new net.minecraft.nbt.CompoundTag()).getBoolean("NoAI"), "a NoAI flag was set and would be saved with the mob");
             helper.assertTrue(thinking.getHealth() == 20.0f, "the snap itself cost the mob health: " + thinking.getHealth());
-            boolean hit = thinking.hurt(helper.getLevel().damageSources().generic(), 3.0f);
-            helper.assertTrue(!hit && thinking.getHealth() == 20.0f, "a snapped mob was hurt: hit " + hit + ", health " + thinking.getHealth() + ", effect " + thinking.hasEffect(SpeciesRegistries.SNAPPED));
+            helper.assertTrue(!thinking.hurt(helper.getLevel().damageSources().generic(), 3.0f) && thinking.getHealth() == 20.0f, "a snapped mob was hurt");
+            thinking.setTarget(victim);
+            helper.assertTrue(thinking.getTarget() == null, "a snapped mob took a target");
+            float before = victim.getHealth();
+            helper.assertTrue(!victim.hurt(helper.getLevel().damageSources().mobAttack(thinking), 5.0f) && victim.getHealth() == before, "a snapped mob struck");
             thinking.removeEffect(SpeciesRegistries.SNAPPED);
-            helper.assertTrue(!thinking.isNoAi(), "the mob did not get its AI back");
-            dumb.removeEffect(SpeciesRegistries.SNAPPED);
-            helper.assertTrue(dumb.isNoAi(), "a mob that had no AI was given some");
+            helper.assertTrue(thinking.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) > 0.0, "the mob did not get its speed back");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect.inGrace(thinking), "no grace after the snap");
         } finally {
             thinking.discard();
-            dumb.discard();
-            clean(user, user2);
+            clean(user, victim);
         }
         helper.succeed();
     }
-
     @GameTest(template = "empty", templateNamespace = NS)
     public static void neckSnapKillsAWeakMortalAndOnlyStaggersAHealthyOne(GameTestHelper helper) {
         if (skipped(helper)) {
@@ -557,5 +557,569 @@ public final class TargetedSkillGameTests {
             clean(user, owner);
         }
         helper.succeed();
+    }
+
+    // ================= review round 1 =================
+
+    private static void intoDbno(GameTestHelper helper, ServerPlayer p) {
+        Zombie hitter = zombie(helper, 20.0f);
+        p.invulnerableTime = 0;
+        p.hurt(helper.getLevel().damageSources().mobAttack(hitter), 1000f);
+        hitter.discard();
+        helper.assertTrue(VampirismAPI.vampirePlayer(p).isDBNO(), "setup: Vampirism's dying state did not start");
+        p.setHealth(5.0f);
+    }
+
+    private static net.minecraft.world.entity.PathfinderMob villager(GameTestHelper helper) {
+        var v = (net.minecraft.world.entity.PathfinderMob) EntityType.VILLAGER.create(helper.getLevel());
+        v.setNoAi(true);
+        v.setPos(helper.absoluteVec(new Vec3(1.5, 1, 2.5)));
+        helper.getLevel().addFreshEntity(v);
+        return v;
+    }
+
+    private static void assertRefused(GameTestHelper helper, String what, String expectedKey, Component got, ServerPlayer user, ResourceLocation action) {
+        helper.assertTrue(expectedKey.equals(key(got)), what + ": answered " + key(got));
+        helper.assertTrue(ActionClock.left(user, action) == 0, what + ": a refusal started the cooldown");
+    }
+
+    // ---- H1: a downed player acts at all ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSnappedVampireCannotBiteAndTheTargetIsUnbitten(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.createMortal(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        var v = villager(helper);
+        try {
+            helper.assertTrue(LoadoutService.set(p, 0, net.ofatech.supernaturalbloodlines.core.hud.Loadout.BITE) == null, "could not slot Bite");
+            int villagerBlood = VampirismAPI.getExtendedCreatureVampirism(v).map(c2 -> c2.getBlood()).orElse(0);
+            Downed.startSnapped(p, 200);
+            String refusal = net.ofatech.supernaturalbloodlines.parts.hud.action.ActionService.trigger(p, 0, v.getId(), false);
+            helper.assertTrue((net.ofatech.supernaturalbloodlines.parts.hud.action.ActionService.KEY + "cannot_act").equals(refusal), "a snapped vampire pressed Bite: " + refusal);
+            helper.assertTrue(VampirismAPI.getExtendedCreatureVampirism(v).map(c2 -> c2.getBlood()).orElse(0) == villagerBlood, "the villager was bitten");
+        } finally {
+            v.discard();
+            net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService.release(p);
+            clean(p);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVampirismDyingUserGetsCannotActAndKillsNothing(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        ServerPlayer user = TestPlayers.createDuelist(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(user).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        SupernaturalAccess.set(user, SupernaturalAccess.get(user).toBuilder().skills(Set.of("S-VAM-8")).build());
+        Zombie z = zombie(helper, 5.0f);
+        try {
+            helper.assertTrue(LoadoutService.set(user, 2, ExtraActions.RIP_HEART) == null, "could not slot Rip Heart");
+            intoDbno(helper, user);
+            String refusal = net.ofatech.supernaturalbloodlines.parts.hud.action.ActionService.trigger(user, 2, z.getId(), false);
+            helper.assertTrue((net.ofatech.supernaturalbloodlines.parts.hud.action.ActionService.KEY + "cannot_act").equals(refusal), "a player in Vampirism's dying state used a slot: " + refusal);
+            helper.assertTrue(z.isAlive(), "the target died");
+        } finally {
+            z.discard();
+            OriginalRulesProbe.endDying(user);
+            clean(user);
+        }
+        helper.succeed();
+    }
+
+    // ---- H2: stun-lock ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPlayerCannotBeSnappedAgainRightAfterWaking(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        ServerPlayer t = target(helper, Species.NONE, true);
+        TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-9");
+        try {
+            Downed.startSnapped(t, 40);
+            for (int i = 0; i < 40; i++) {
+                Downed.tick(t);
+            }
+            helper.assertTrue(!Downed.isDowned(t), "still down after the time");
+            assertRefused(helper, "re-snap in the grace", NeckSnapAction.REFUSED, NeckSnapAction.INSTANCE.trigger(user, t), user, ExtraActions.NECK_SNAP);
+            helper.assertTrue(!Downed.isSnapped(t), "the player was snapped in the grace");
+            t.setData(SpeciesRegistries.SNAP_GRACE_UNTIL, 0L);
+            helper.assertTrue(NeckSnapAction.INSTANCE.trigger(user, t) == null && Downed.isSnapped(t), "the grace did not end");
+            t.setData(SpeciesRegistries.SNAP_GRACE_UNTIL, 12345L);
+            var saved = t.saveWithoutId(new net.minecraft.nbt.CompoundTag());
+            helper.assertTrue(saved.getCompound("neoforge:attachments").contains(NS + ":snap_grace_until"), "the grace is not saved: a logout would end it: " + saved.getCompound("neoforge:attachments").getAllKeys());
+        } finally {
+            clean(user, t);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aCreatureCannotBeSnappedAgainRightAfterTheSnapEnds(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-9");
+        var mob = vampireMob(helper);
+        try {
+            helper.assertTrue(NeckSnapAction.INSTANCE.trigger(user, mob) == null && mob.hasEffect(SpeciesRegistries.SNAPPED), "a Vampirism vampire mob was not snapped");
+            mob.removeEffect(SpeciesRegistries.SNAPPED);
+            TestPlayers.TalkingDuelist user2 = vampire(helper, "S-VAM-9");
+            assertRefused(helper, "re-snap a mob in the grace", NeckSnapAction.REFUSED, NeckSnapAction.INSTANCE.trigger(user2, mob), user2, ExtraActions.NECK_SNAP);
+            helper.assertTrue(!mob.hasEffect(SpeciesRegistries.SNAPPED), "the mob was snapped in the grace");
+            clean(user2);
+        } finally {
+            mob.discard();
+            clean(user);
+        }
+        helper.succeed();
+    }
+
+    private static net.minecraft.world.entity.Mob vampireMob(GameTestHelper helper) {
+        var type = BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse("vampirism:vampire"));
+        var m = (net.minecraft.world.entity.Mob) type.create(helper.getLevel());
+        m.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.0)));
+        m.setNoAi(true);
+        helper.getLevel().addFreshEntity(m);
+        return m;
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theCooldownIsNeverShorterThanTheLongestSnap(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-9");
+        try {
+            SpeciesConfig.overrideSnapSeconds(new SpeciesConfig.SnapSeconds(11, 22, 33, 66));
+            helper.assertTrue(NeckSnapAction.INSTANCE.cooldownTicks(user) == Math.max(SpeciesConfig.neckSnapCooldownSeconds(), 66) * 20, "the cooldown is " + NeckSnapAction.INSTANCE.cooldownTicks(user));
+            helper.assertTrue(NeckSnapAction.INSTANCE.cooldownTicks(user) >= 66 * 20, "the cooldown is shorter than the longest snap");
+        } finally {
+            SpeciesConfig.overrideSnapSeconds(null);
+            clean(user);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void eachKindWakesAfterItsOwnConfiguredTime(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        try {
+            SpeciesConfig.overrideSnapSeconds(new SpeciesConfig.SnapSeconds(11, 22, 33, 44));
+            helper.assertTrue(snapTicks(helper, Species.NONE, true, "vampire") == 11 * 20, "vampire");
+            helper.assertTrue(snapTicks(helper, Species.AUGUSTINE, true, "augustine") == 22 * 20, "augustine");
+            helper.assertTrue(snapTicks(helper, Species.HYBRID, false, "hybrid") == 33 * 20, "hybrid");
+            helper.assertTrue(snapTicks(helper, Species.ORIGINAL, true, "original") == 44 * 20, "original");
+        } finally {
+            SpeciesConfig.overrideSnapSeconds(null);
+        }
+        helper.succeed();
+    }
+
+    // ---- H3: i-frames ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void ripHeartAfterAHitGivesTheSameAnswerForAnOriginalAndAnyoneElse(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist userA = vampire(helper, "S-VAM-8");
+        TestPlayers.TalkingDuelist userB = vampire(helper, "S-VAM-8");
+        Zombie z = zombie(helper, 6.0f);
+        ServerPlayer original = target(helper, Species.ORIGINAL, true);
+        try {
+            original.setHealth(6.0f);
+            z.hurt(helper.getLevel().damageSources().generic(), 0.5f);
+            original.hurt(helper.getLevel().damageSources().generic(), 0.5f);
+            helper.assertTrue(z.invulnerableTime > 10 && original.invulnerableTime > 10, "setup: the hit left no invulnerability frames");
+            helper.assertTrue(RipHeartAction.INSTANCE.trigger(userA, z) == null, "a hit mob refused the heart-rip");
+            helper.assertTrue(RipHeartAction.INSTANCE.trigger(userB, original) == null, "a hit Original refused: it would tell it from a mob");
+            helper.assertTrue(!z.isAlive(), "the hit mob lived (the i-frames swallowed the heart-rip)");
+            helper.assertTrue(original.isAlive(), "an Original died");
+            helper.assertTrue(userA.receivedOnActionBar(RipHeartAction.DONE) && userB.receivedOnActionBar(RipHeartAction.DONE)
+                    && ActionClock.left(userA, ExtraActions.RIP_HEART) == ActionClock.left(userB, ExtraActions.RIP_HEART), "the two answers differ");
+        } finally {
+            z.discard();
+            clean(userA, userB, original);
+        }
+        helper.succeed();
+    }
+
+    // ---- H4: Vampirism's dying state ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void ripHeartKillsAVampireInVampirismsDyingStateForGoodAndSparesAnOriginalThere(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist userA = vampire(helper, "S-VAM-8");
+        TestPlayers.TalkingDuelist userB = vampire(helper, "S-VAM-8");
+        ServerPlayer vamp = target(helper, Species.NONE, true);
+        ServerPlayer original = target(helper, Species.ORIGINAL, true);
+        boolean[] final_ = new boolean[1];
+        java.util.function.Consumer<net.neoforged.neoforge.event.entity.living.LivingDeathEvent> watch = e -> {
+            if (e.getEntity() == vamp) {
+                final_[0] = net.ofatech.supernaturalbloodlines.core.death.FinalDeath.is(vamp);
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, true, net.neoforged.neoforge.event.entity.living.LivingDeathEvent.class, watch);
+        try {
+            intoDbno(helper, vamp);
+            intoDbno(helper, original);
+            helper.assertTrue(RipHeartAction.INSTANCE.trigger(userA, vamp) == null && RipHeartAction.INSTANCE.trigger(userB, original) == null, "refused");
+            helper.assertTrue(vamp.isDeadOrDying(), "a vampire in Vampirism's dying state survived a heart-rip");
+            helper.assertTrue(final_[0], "the heart-rip was not a final death");
+            helper.assertTrue(!original.isDeadOrDying() && VampirismAPI.vampirePlayer(original).isDBNO(), "an Original in the dying state was killed");
+            helper.assertTrue(userA.receivedOnActionBar(RipHeartAction.DONE) && userB.receivedOnActionBar(RipHeartAction.DONE)
+                    && ActionClock.left(userA, ExtraActions.RIP_HEART) == ActionClock.left(userB, ExtraActions.RIP_HEART), "the two answers differ");
+        } finally {
+            NeoForge.EVENT_BUS.unregister(watch);
+            OriginalRulesProbe.endDying(original);
+            clean(userA, userB, vamp, original);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void ripHeartFinishesAVampireWhoseDeathVampirismWouldCatch(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-8");
+        ServerPlayer vamp = target(helper, Species.NONE, true);
+        try {
+            vamp.setHealth(5.0f);
+            helper.assertTrue(!VampirismAPI.vampirePlayer(vamp).isDBNO(), "setup: already in the dying state");
+            helper.assertTrue(RipHeartAction.INSTANCE.trigger(user, vamp) == null, "refused");
+            helper.runAfterDelay(2, () -> {
+                try {
+                    helper.assertTrue(!vamp.isAlive(), "the vampire was put in the dying state and not finished");
+                } finally {
+                    clean(user, vamp);
+                }
+                helper.succeed();
+            });
+        } catch (RuntimeException ex) {
+            clean(user, vamp);
+            throw ex;
+        }
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void neckSnapOnAPlayerInVampirismsDyingStateIsRefused(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-9");
+        ServerPlayer vamp = target(helper, Species.NONE, true);
+        try {
+            intoDbno(helper, vamp);
+            assertRefused(helper, "snap in the dying state", NeckSnapAction.REFUSED, NeckSnapAction.INSTANCE.trigger(user, vamp), user, ExtraActions.NECK_SNAP);
+            helper.assertTrue(!Downed.isSnapped(vamp), "a player in the dying state was snapped");
+        } finally {
+            OriginalRulesProbe.endDying(vamp);
+            clean(user, vamp);
+        }
+        helper.succeed();
+    }
+
+    // ---- the probe leaves no trace ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aProbeDoesNotDesiccateAnNpcOriginalAndOrdinaryDamageDoes(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        LivingEntity klaus = boss(helper);
+        if (!(klaus instanceof net.ofatech.supernaturalbloodlines.parts.bosses.entity.NpcOriginalBoss boss)) {
+            helper.succeed(); // the bosses part is off
+            return;
+        }
+        try {
+            boss.setHealth(1.0f);
+            var probe = new net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent(boss,
+                    new net.neoforged.neoforge.common.damagesource.DamageContainer(helper.getLevel().damageSources().generic(), 1000f));
+            net.ofatech.supernaturalbloodlines.core.death.DamageProbe.run(() -> NeoForge.EVENT_BUS.post(probe));
+            helper.assertTrue(probe.getAmount() == 1000f && !probe.isCanceled() && !boss.takePendingDesiccation() && !boss.isDesiccated(), "a probe changed the NPC Original: amount " + probe.getAmount());
+            var real = new net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent(boss,
+                    new net.neoforged.neoforge.common.damagesource.DamageContainer(helper.getLevel().damageSources().generic(), 1000f));
+            NeoForge.EVENT_BUS.post(real);
+            helper.assertTrue(real.getAmount() != 1000f || real.isCanceled() || boss.takePendingDesiccation() || boss.isDesiccated(), "setup: a real lethal blow changes nothing, so the probe check proves nothing");
+        } finally {
+            boss.discard();
+        }
+        helper.succeed();
+    }
+
+    // ---- claims, PvP and packs for every result ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anIncomingDamageCancellerRefusesEveryResultTheSame(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        java.util.function.Consumer<net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent> canceller = e -> e.setCanceled(true);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGH, canceller);
+        java.util.List<Runnable> cleanups = new java.util.ArrayList<>();
+        try {
+            ServerPlayer vamp = target(helper, Species.NONE, true);
+            ServerPlayer original = target(helper, Species.ORIGINAL, true);
+            original.setHealth(5.0f);
+            Zombie healthy = zombie(helper, 20.0f);
+            Zombie weak = zombie(helper, 5.0f);
+            LivingEntity klaus = boss(helper);
+            cleanups.add(() -> {
+                clean(vamp, original);
+                healthy.discard();
+                weak.discard();
+                if (klaus != null) {
+                    klaus.discard();
+                }
+            });
+            record Case(String what, boolean snap, LivingEntity target) {
+            }
+            java.util.List<Case> cases = new java.util.ArrayList<>(java.util.List.of(new Case("snap a vampire", true, vamp), new Case("stagger a healthy mortal", true, healthy),
+                    new Case("kill a weak mortal", true, weak), new Case("rip an Original", false, original), new Case("rip a weak mortal", false, weak)));
+            if (klaus != null) {
+                cases.add(new Case("snap a boss", true, klaus));
+            }
+            for (Case k : cases) {
+                TestPlayers.TalkingDuelist user = vampire(helper, k.snap() ? "S-VAM-9" : "S-VAM-8");
+                Component answer = k.snap() ? NeckSnapAction.INSTANCE.trigger(user, k.target()) : RipHeartAction.INSTANCE.trigger(user, k.target());
+                assertRefused(helper, k.what(), k.snap() ? NeckSnapAction.REFUSED : RipHeartAction.REFUSED, answer, user, k.snap() ? ExtraActions.NECK_SNAP : ExtraActions.RIP_HEART);
+                helper.assertTrue(k.target().isAlive() && !k.target().hasEffect(SpeciesRegistries.SNAPPED) && !(k.target() instanceof ServerPlayer sp && Downed.isDowned(sp)), k.what() + ": it acted anyway");
+                clean(user);
+            }
+        } finally {
+            NeoForge.EVENT_BUS.unregister(canceller);
+            cleanups.forEach(Runnable::run);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void pvpOffRefusesEveryResultAgainstAPlayer(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+        helper.getLevel().getServer().setPvpAllowed(false);
+        try {
+            ServerPlayer vamp = target(helper, Species.NONE, true);
+            ServerPlayer mortal = target(helper, Species.NONE, false);
+            ServerPlayer original = target(helper, Species.ORIGINAL, true);
+            original.setHealth(5.0f);
+            try {
+                for (Object[] k : new Object[][] {{"snap a vampire player", true, vamp}, {"stagger a mortal player", true, mortal}, {"rip an Original player", false, original}}) {
+                    ServerPlayer user = TestPlayers.createPvpAware(helper);
+                    helper.assertTrue(VampirismAPI.factionPlayerHandler(user).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+                    SupernaturalAccess.set(user, SupernaturalAccess.get(user).toBuilder().skills(Set.of((boolean) k[1] ? "S-VAM-9" : "S-VAM-8")).build());
+                    Component answer = (boolean) k[1] ? NeckSnapAction.INSTANCE.trigger(user, (LivingEntity) k[2]) : RipHeartAction.INSTANCE.trigger(user, (LivingEntity) k[2]);
+                    assertRefused(helper, (String) k[0], (boolean) k[1] ? NeckSnapAction.REFUSED : RipHeartAction.REFUSED, answer, user, (boolean) k[1] ? ExtraActions.NECK_SNAP : ExtraActions.RIP_HEART);
+                    clean(user);
+                }
+            } finally {
+                clean(vamp, mortal, original);
+            }
+        } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPackMateIsRefusedForEveryResult(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        if (!net.neoforged.fml.ModList.get().isLoaded("werewolves")) {
+            helper.succeed(); // no packs without Werewolves
+            return;
+        }
+        var index = net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex.get(helper.getLevel());
+        TestPlayers.TalkingDuelist leader = vampire(helper, "S-VAM-9", "S-VAM-8");
+        ServerPlayer mate = target(helper, Species.ORIGINAL, true);
+        mate.setHealth(5.0f);
+        try {
+            helper.assertTrue(index.join(leader.getUUID(), mate.getUUID()), "could not make the pack");
+            assertRefused(helper, "snap a pack-mate", NeckSnapAction.REFUSED, NeckSnapAction.INSTANCE.trigger(leader, mate), leader, ExtraActions.NECK_SNAP);
+            assertRefused(helper, "rip a pack-mate (an Original: the no-effect branch)", RipHeartAction.REFUSED, RipHeartAction.INSTANCE.trigger(leader, mate), leader, ExtraActions.RIP_HEART);
+            helper.assertTrue(!Downed.isSnapped(mate), "a pack-mate was snapped");
+        } finally {
+            index.leave(leader.getUUID());
+            index.leave(mate.getUUID());
+            index.takeDissolved(leader.getUUID());
+            index.takeDissolved(mate.getUUID());
+            clean(leader, mate);
+        }
+        helper.succeed();
+    }
+
+    // ---- the turning ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void neckSnapKillsIntoTheTurningButRipHeartDoesNot(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist snapper = vampire(helper, "S-VAM-9");
+        TestPlayers.TalkingDuelist ripper = vampire(helper, "S-VAM-8");
+        ServerPlayer a = TestPlayers.createTalkingDuelist(helper);
+        ServerPlayer b = TestPlayers.createTalkingDuelist(helper);
+        long until = helper.getLevel().getGameTime() + 100000;
+        try {
+            for (ServerPlayer m : new ServerPlayer[] {a, b}) {
+                m.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.0)));
+                BloodlineAccess.set(m, BloodlineState.NONE.toBuilder().vampireBloodUntil(until).build());
+                m.setHealth(5.0f);
+            }
+            helper.assertTrue(NeckSnapAction.INSTANCE.trigger(snapper, a) == null, "the snap was refused");
+            helper.assertTrue(!a.isDeadOrDying() && Downed.isDyingForTurning(a) && BloodlineAccess.get(a).inTurning(), "a snapped mortal with vampire blood did not start the turning: " + BloodlineAccess.get(a));
+            helper.assertTrue(RipHeartAction.INSTANCE.trigger(ripper, b) == null, "the heart-rip was refused");
+            helper.assertTrue(b.isDeadOrDying() && !BloodlineAccess.get(b).inTurning() && !Downed.isDowned(b), "a heart-rip started the turning: " + BloodlineAccess.get(b));
+        } finally {
+            clean(snapper, ripper, a, b);
+        }
+        helper.succeed();
+    }
+
+    // ---- snapped players ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSnappedPlayerWakesWithTheSafetyOfEveryWakeUp(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist t = TestPlayers.createTalkingDuelist(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(t).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        try {
+            Downed.startSnapped(t, 40);
+            helper.assertTrue(t.receivedOnActionBar("supernaturalbloodlines.snapped.body_short"), "an old client (no screen) was not told on the action bar");
+            t.setRemainingFireTicks(100);
+            t.setAirSupply(5);
+            for (int i = 0; i < 40; i++) {
+                Downed.tick(t);
+            }
+            helper.assertTrue(t.getRemainingFireTicks() == 0 && t.getAirSupply() == t.getMaxAirSupply(), "the fire or the air was not put right: fire " + t.getRemainingFireTicks() + ", air " + t.getAirSupply());
+            helper.assertTrue(t.hasEffect(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE), "no Resistance on waking");
+            helper.assertTrue(t.received("supernaturalbloodlines.snapped.woke") && t.receivedOnActionBar("supernaturalbloodlines.snapped.woke"), "the wake was not in chat and on the action bar");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect.inGrace(t), "no grace after waking");
+        } finally {
+            clean(t);
+        }
+        helper.succeed();
+    }
+
+    // ---- small things ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTargetBehindTheUserIsNoTarget(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-8", "S-VAM-9");
+        Zombie z = zombie(helper, 5.0f);
+        try {
+            user.setYRot(180.0f);
+            helper.assertTrue(RipHeartAction.NO_TARGET.equals(key(RipHeartAction.INSTANCE.trigger(user, z))), "Rip Heart reached a target behind the user");
+            helper.assertTrue(NeckSnapAction.NO_TARGET.equals(key(NeckSnapAction.INSTANCE.trigger(user, z))), "Neck Snap reached a target behind the user");
+            helper.assertTrue(z.isAlive() && ActionClock.left(user, ExtraActions.RIP_HEART) == 0, "it acted anyway");
+        } finally {
+            z.discard();
+            clean(user);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPlayerUnderRespawnProtectionIsRefused(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist userA = vampire(helper, "S-VAM-8");
+        TestPlayers.TalkingDuelist userB = vampire(helper, "S-VAM-9");
+        ServerPlayer original = target(helper, Species.ORIGINAL, true);
+        original.setHealth(5.0f);
+        try {
+            var field = ServerPlayer.class.getDeclaredField("spawnInvulnerableTime");
+            field.setAccessible(true);
+            field.setInt(original, 60);
+            assertRefused(helper, "rip a protected Original", RipHeartAction.REFUSED, RipHeartAction.INSTANCE.trigger(userA, original), userA, ExtraActions.RIP_HEART);
+            assertRefused(helper, "snap a protected Original", NeckSnapAction.REFUSED, NeckSnapAction.INSTANCE.trigger(userB, original), userB, ExtraActions.NECK_SNAP);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        } finally {
+            clean(userA, userB, original);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void everyBossEntityIsInTheSnapImmuneTagAndEveryTagEntryExists(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("bosses")) {
+            helper.succeed();
+            return;
+        }
+        try (var in = TargetedSkillGameTests.class.getResourceAsStream("/data/supernaturalbloodlines/tags/entity_type/snap_immune.json")) {
+            var root = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject();
+            java.util.Set<ResourceLocation> listed = new java.util.HashSet<>();
+            root.getAsJsonArray("values").forEach(v -> listed.add(ResourceLocation.parse(v.getAsJsonObject().get("id").getAsString())));
+            for (ResourceLocation id : listed) {
+                helper.assertTrue(BuiltInRegistries.ENTITY_TYPE.containsKey(id), "the snap_immune tag lists " + id + ", which does not exist");
+            }
+            for (var entry : BuiltInRegistries.ENTITY_TYPE.entrySet()) {
+                ResourceLocation id = entry.getKey().location();
+                if (!id.getNamespace().equals(NS)) {
+                    continue;
+                }
+                var e = entry.getValue().create(helper.getLevel());
+                if (e != null && e.getClass().getName().startsWith("net.ofatech.supernaturalbloodlines.parts.bosses.")) {
+                    helper.assertTrue(listed.contains(id), "the boss " + id + " is not in the snap_immune tag");
+                    e.discard();
+                }
+            }
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException(e);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSnappedMobThatRunsOutBecomesFreeAndGetsAGrace(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        Zombie z = zombie(helper, 20.0f);
+        z.setNoAi(false);
+        z.addEffect(new net.minecraft.world.effect.MobEffectInstance(SpeciesRegistries.SNAPPED, 5));
+        helper.assertTrue(z.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) == 0.0, "setup: the effect did not hold the mob");
+        helper.runAfterDelay(12, () -> {
+            try {
+                helper.assertTrue(!z.hasEffect(SpeciesRegistries.SNAPPED), "the effect did not run out");
+                helper.assertTrue(z.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) > 0.0, "the mob did not get its speed back");
+                helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect.inGrace(z), "no grace after the natural end");
+            } finally {
+                z.discard();
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Ends Vampirism's dying state by hand, for a test's cleanup. */
+    private static final class OriginalRulesProbe {
+        static void endDying(ServerPlayer p) {
+            var vampire = VampirismAPI.vampirePlayer(p);
+            if (vampire.isDBNO()) {
+                try {
+                    vampire.getClass().getMethod("giveUpDBNO").invoke(vampire);
+                } catch (ReflectiveOperationException e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+        }
     }
 }

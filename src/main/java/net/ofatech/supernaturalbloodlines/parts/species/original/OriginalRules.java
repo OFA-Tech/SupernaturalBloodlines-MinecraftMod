@@ -132,7 +132,7 @@ public final class OriginalRules {
 
     /** Vampirism blocks all damage to a player in its dying state, white oak included, so the blow is caught before that. */
     private static void onWhiteOakWhileDying(LivingIncomingDamageEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p && isOriginal(BloodlineAccess.get(p).species()) && !Downed.isLettingDie(p)
+        if (e.getEntity() instanceof ServerPlayer p && isOriginal(BloodlineAccess.get(p).species()) && !Downed.isLettingDie(p) && !net.ofatech.supernaturalbloodlines.core.death.DamageProbe.active()
                 && isWhiteOak(e.getSource()) && VampirismAPI.vampirePlayer(p).isDBNO()) {
             e.setCanceled(true);
             endVampirismDying(p, e.getSource());

@@ -41,26 +41,35 @@ class NeckSnapRulesTest {
 
     @Test
     void kindsFollowTheShow() {
-        assertEquals(BOSS, NeckSnapRules.kindOf(Species.ORIGINAL, true, false, false, false, true), "a boss is a boss first");
-        assertEquals(ORIGINAL, NeckSnapRules.kindOf(Species.ORIGINAL, true, false, false, false, false));
-        assertEquals(ORIGINAL, NeckSnapRules.kindOf(Species.ORIGINAL_HYBRID, false, false, false, true, false));
-        assertEquals(HYBRID, NeckSnapRules.kindOf(Species.HYBRID, true, false, false, true, false), "a hybrid in the werewolf faction is still a hybrid");
-        assertEquals(HYBRID, NeckSnapRules.kindOf(Species.TRIBRID, false, false, false, false, false));
-        assertEquals(AUGUSTINE, NeckSnapRules.kindOf(Species.AUGUSTINE, true, false, false, false, false));
-        assertEquals(VAMPIRE, NeckSnapRules.kindOf(Species.HERETIC, false, false, false, false, false));
-        assertEquals(VAMPIRE, NeckSnapRules.kindOf(Species.NONE, true, false, false, false, false), "a plain vampire");
-        assertEquals(VAMPIRE, NeckSnapRules.kindOf(Species.NONE, false, true, false, false, false), "a Ghoul");
-        assertEquals(VAMPIRE, NeckSnapRules.kindOf(Species.NONE, false, false, true, false, false), "a player in the turning or the transition");
+        assertEquals(BOSS, NeckSnapRules.kindOf(Species.ORIGINAL, true, false, false, true), "a boss is a boss first");
+        assertEquals(ORIGINAL, NeckSnapRules.kindOf(Species.ORIGINAL, true, false, false, false));
+        assertEquals(ORIGINAL, NeckSnapRules.kindOf(Species.ORIGINAL_HYBRID, false, false, false, false));
+        assertEquals(HYBRID, NeckSnapRules.kindOf(Species.HYBRID, true, false, false, false), "a hybrid in the werewolf faction is still a hybrid");
+        assertEquals(HYBRID, NeckSnapRules.kindOf(Species.TRIBRID, false, false, false, false));
+        assertEquals(AUGUSTINE, NeckSnapRules.kindOf(Species.AUGUSTINE, true, false, false, false));
+        assertEquals(VAMPIRE, NeckSnapRules.kindOf(Species.HERETIC, false, false, false, false));
+        assertEquals(VAMPIRE, NeckSnapRules.kindOf(Species.NONE, true, false, false, false), "a plain vampire");
+        assertEquals(VAMPIRE, NeckSnapRules.kindOf(Species.NONE, false, true, false, false), "a Ghoul");
+        assertEquals(VAMPIRE, NeckSnapRules.kindOf(Species.NONE, false, false, true, false), "a player in the turning or the transition");
     }
 
     @Test
     void everyoneElseIsMortal() {
-        assertEquals(MORTAL, NeckSnapRules.kindOf(Species.NONE, false, false, false, false, false), "a human");
-        assertEquals(MORTAL, NeckSnapRules.kindOf(Species.WITCH, false, false, false, false, false));
-        assertEquals(MORTAL, NeckSnapRules.kindOf(Species.SIPHONER, false, false, false, false, false));
-        assertEquals(MORTAL, NeckSnapRules.kindOf(Species.HUNTER_OF_THE_FIVE, false, false, false, false, false));
-        assertEquals(MORTAL, NeckSnapRules.kindOf(Species.NONE, false, false, false, true, false), "a werewolf: the wiki says they stay dead");
-        assertEquals(MORTAL, NeckSnapRules.kindOf(Species.WITCH, false, false, false, true, false), "a witch-werewolf with no vampire layer dies at once");
+        assertEquals(MORTAL, NeckSnapRules.kindOf(Species.NONE, false, false, false, false), "a human");
+        assertEquals(MORTAL, NeckSnapRules.kindOf(Species.WITCH, false, false, false, false));
+        assertEquals(MORTAL, NeckSnapRules.kindOf(Species.SIPHONER, false, false, false, false));
+        assertEquals(MORTAL, NeckSnapRules.kindOf(Species.HUNTER_OF_THE_FIVE, false, false, false, false));
+        assertEquals(MORTAL, NeckSnapRules.kindOf(Species.NONE, false, false, false, false), "a werewolf: the wiki says they stay dead");
+        assertEquals(MORTAL, NeckSnapRules.kindOf(Species.WITCH, false, false, false, false), "a witch-werewolf with no vampire layer dies at once");
+    }
+
+    @Test
+    void theCooldownIsNeverShorterThanTheLongestSnap() {
+        assertEquals(45, NeckSnapRules.cooldownSeconds(45, 10, 20, 30, 40));
+        assertEquals(60, NeckSnapRules.cooldownSeconds(45, 60, 20, 30, 40));
+        assertEquals(300, NeckSnapRules.cooldownSeconds(45, 10, 20, 300, 40));
+        assertEquals(1800, NeckSnapRules.cooldownSeconds(1, 5, 5, 5, 1800));
+        assertEquals(100, NeckSnapRules.cooldownSeconds(100, 100, 100, 100, 100));
     }
 
     @Test

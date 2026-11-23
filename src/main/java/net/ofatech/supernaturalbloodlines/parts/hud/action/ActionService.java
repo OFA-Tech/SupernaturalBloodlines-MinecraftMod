@@ -52,6 +52,10 @@ public final class ActionService {
             }
             mark(p, slot, false);
         }
+        // downed, snapped or in Vampirism's dying state: no slot does anything (Bite and the faction actions too, not only the extra ones); a release still ends a held key
+        if (!release && ExtraActions.blocked(p)) {
+            return refuse(p, KEY + "cannot_act");
+        }
         Optional<ResourceLocation> id = LoadoutService.effective(p).get(slot);
         if (id.isEmpty()) {
             return release ? null : refuse(p, KEY + "empty_slot");
@@ -91,7 +95,7 @@ public final class ActionService {
     /** An action another part owns (the Alpha Roar): it keeps its own checks; this only asks, shows its refusal, and tells the client the cooldown it started. */
     @Nullable
     private static String runExtra(ServerPlayer p, ExtraActions.Action action, int targetEntityId) {
-        if (p.isSpectator() || !p.isAlive() || p.isSleeping() || ExtraActions.blocked(p)) {
+        if (p.isSpectator() || !p.isAlive() || p.isSleeping()) {
             return refuse(p, KEY + "cannot_act");
         }
         if (!action.available(p)) {

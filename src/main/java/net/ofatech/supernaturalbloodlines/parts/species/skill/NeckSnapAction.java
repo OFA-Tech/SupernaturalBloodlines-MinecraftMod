@@ -43,9 +43,7 @@ public final class NeckSnapAction implements ExtraActions.Action {
     public static final String COOLDOWN = KEY + "cooldown";
     public static final String REFUSED = KEY + "refused";
     public static final String DONE = KEY + "done";
-    /** The tiny hit a claim or PvP mod is asked about (as an event only: nothing is dealt, so a snap costs the target no health). */
-    static final float PROBE = 0.01F;
-    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hud/unknown.png");
+    private static final ResourceLocation ICON = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "textures/gui/hud/neck_snap.png");
 
     private NeckSnapAction() {
     }
@@ -66,7 +64,7 @@ public final class NeckSnapAction implements ExtraActions.Action {
 
     @Override
     public Component note() {
-        return Component.translatable("supernaturalbloodlines.hud.action.neck_snap.note", SpeciesConfig.neckSnapVampireSeconds(), SpeciesConfig.neckSnapCooldownSeconds());
+        return Component.translatable("supernaturalbloodlines.hud.action.neck_snap.note", SpeciesConfig.snapSeconds().vampire(), RipHeartAction.hearts(SpeciesConfig.neckSnapKillHealth()), effectiveCooldownSeconds());
     }
 
     @Override
@@ -91,20 +89,19 @@ public final class NeckSnapAction implements ExtraActions.Action {
         if (target instanceof Player pl) {
             BloodlineState s = BloodlineAccess.get(pl);
             var faction = VampirismAPI.factionPlayerHandler(pl).getCurrentFaction();
-            boolean werewolf = faction != null && net.ofatech.supernaturalbloodlines.parts.species.turning.TurningHandler.WEREWOLF_ID.equals(faction.getID());
-            return NeckSnapRules.kindOf(s.species(), faction == VReference.VAMPIRE_FACTION, s.ghoul(), s.inTurning() || s.inTransition(), werewolf, boss);
+            return NeckSnapRules.kindOf(s.species(), faction == VReference.VAMPIRE_FACTION, s.ghoul(), s.inTurning() || s.inTransition(), boss);
         }
         if (TargetChecks.isOriginal(target)) {
             return boss ? NeckSnapRules.Kind.BOSS : NeckSnapRules.Kind.ORIGINAL;
         }
         boolean vampire = VampirismAPI.factionRegistry().getFaction(target) == VReference.VAMPIRE_FACTION;
-        return NeckSnapRules.kindOf(Species.NONE, vampire, false, false, false, boss);
+        return NeckSnapRules.kindOf(Species.NONE, vampire, false, false, boss);
     }
 
     @Nullable
     @Override
     public Component trigger(ServerPlayer p, @Nullable LivingEntity target) {
-        if (target == null) {
+        if (target == null || !TargetChecks.inView(p, target)) {
             return Component.translatable(NO_TARGET);
         }
         if (!ActionClock.ready(p, id())) {
@@ -122,7 +119,7 @@ public final class NeckSnapAction implements ExtraActions.Action {
             if (!target.hurt(source, target.getHealth() + target.getAbsorptionAmount() + 1.0F)) {
                 return Component.translatable(REFUSED);
             }
-        } else if (result != NeckSnapRules.Result.NOTHING && !TargetChecks.damageWouldLand(target, source, PROBE)) {
+        } else if (!TargetChecks.damageWouldLand(target, source, TargetChecks.PROBE)) { // a boss too: the answer must not depend on what the target is
             return Component.translatable(REFUSED);
         }
         switch (result) {
@@ -145,8 +142,8 @@ public final class NeckSnapAction implements ExtraActions.Action {
     }
 
     private static void snap(LivingEntity target, NeckSnapRules.Kind kind) {
-        int ticks = NeckSnapRules.ticks(kind, SpeciesConfig.neckSnapVampireSeconds(), SpeciesConfig.neckSnapAugustineSeconds(), SpeciesConfig.neckSnapHybridSeconds(),
-                SpeciesConfig.neckSnapOriginalSeconds());
+        SpeciesConfig.SnapSeconds s = SpeciesConfig.snapSeconds();
+        int ticks = NeckSnapRules.ticks(kind, s.vampire(), s.augustine(), s.hybrid(), s.original());
         if (target instanceof ServerPlayer sp) {
             Downed.startSnapped(sp, ticks);
         } else {
@@ -154,9 +151,15 @@ public final class NeckSnapAction implements ExtraActions.Action {
         }
     }
 
+    /** The configured cooldown, but never shorter than the longest wake time (a snap cannot be renewed while it lasts). */
+    static int effectiveCooldownSeconds() {
+        SpeciesConfig.SnapSeconds s = SpeciesConfig.snapSeconds();
+        return NeckSnapRules.cooldownSeconds(SpeciesConfig.neckSnapCooldownSeconds(), s.vampire(), s.augustine(), s.hybrid(), s.original());
+    }
+
     @Override
     public int cooldownTicks(ServerPlayer p) {
-        return SpeciesConfig.neckSnapCooldownSeconds() * 20;
+        return effectiveCooldownSeconds() * 20;
     }
 
     @Override

@@ -108,6 +108,39 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue NPC_WEIGHT_TENSURA;
     private static final ModConfigSpec.DoubleValue NPC_BONUS_SHARE;
     private static volatile MemberTuning memberOverride;
+    /** The shortest and longest a snapped neck may keep a target down (R214), for every one of the four wake-time keys. */
+    public static final int MIN_SNAP_SECONDS = 5;
+    public static final int MAX_SNAP_SECONDS = 1800;
+    public static final int DEFAULT_NECK_SNAP_GRACE_SECONDS = 30;
+    private static final ModConfigSpec.IntValue NECK_SNAP_GRACE_SECONDS;
+    private static volatile SnapSeconds snapOverride;
+
+    /** The four wake times, in seconds, by kind. */
+    public record SnapSeconds(int vampire, int augustine, int hybrid, int original) {
+        public int longest() {
+            return Math.max(Math.max(vampire, augustine), Math.max(hybrid, original));
+        }
+    }
+
+    /** A test's own wake times (null: back to the config). */
+    public static void overrideSnapSeconds(@org.jetbrains.annotations.Nullable SnapSeconds seconds) {
+        snapOverride = seconds;
+    }
+
+    /** The four wake times in force: a test's override, else the config. */
+    public static SnapSeconds snapSeconds() {
+        SnapSeconds o = snapOverride;
+        return o != null ? o : new SnapSeconds(neckSnapVampireSeconds(), neckSnapAugustineSeconds(), neckSnapHybridSeconds(), neckSnapOriginalSeconds());
+    }
+
+    /** {@code neck_snap_grace_seconds}. */
+    public static int neckSnapGraceSeconds() {
+        try {
+            return NECK_SNAP_GRACE_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_NECK_SNAP_GRACE_SECONDS;
+        }
+    }
     public static final int DEFAULT_BOTTLE_BLOOD_COOLDOWN_SECONDS = 60;
     public static final double DEFAULT_BOTTLE_BLOOD_HEALTH_COST = 3.0;
     private static final ModConfigSpec.IntValue BOTTLE_BLOOD_COOLDOWN_SECONDS;
@@ -330,20 +363,22 @@ public final class SpeciesConfig {
                 .defineInRange("rip_heart_health", DEFAULT_RIP_HEART_HEALTH, 1.0, 40.0);
         RIP_HEART_COOLDOWN_SECONDS = b.comment("R204: seconds before Rip Heart can be used again (a target that is too strong costs nothing).")
                 .defineInRange("rip_heart_cooldown_seconds", DEFAULT_RIP_HEART_COOLDOWN_SECONDS, 1, 3600);
-        NECK_SNAP_COOLDOWN_SECONDS = b.comment("R214: seconds before Neck Snap can be used again, whatever it did.")
+        NECK_SNAP_COOLDOWN_SECONDS = b.comment("R214: seconds before Neck Snap can be used again, whatever it did. It is never shorter than the longest of the four wake times (a snap must not be able to be renewed while it lasts), whatever is set here.")
                 .defineInRange("neck_snap_cooldown_seconds", DEFAULT_NECK_SNAP_COOLDOWN_SECONDS, 1, 3600);
+        NECK_SNAP_GRACE_SECONDS = b.comment("R214: seconds after a snap ends in which the same player or creature cannot be snapped again (a refusal like any other, so it says nothing about the target). Kept through a logout. 0 turns it off.")
+                .defineInRange("neck_snap_grace_seconds", DEFAULT_NECK_SNAP_GRACE_SECONDS, 0, 3600);
         NECK_SNAP_KILL_HEALTH = b.comment("R214: a mortal at or under this much health dies of a snapped neck; a healthier one only staggers.")
                 .defineInRange("neck_snap_kill_health", DEFAULT_NECK_SNAP_KILL_HEALTH, 1.0, 40.0);
         NECK_SNAP_STAGGER_TICKS = b.comment("R214: how long a healthy mortal staggers (Slowness III and Weakness) after a snapped neck, in ticks.")
                 .defineInRange("neck_snap_stagger_ticks", DEFAULT_NECK_SNAP_STAGGER_TICKS, 0, 600);
         NECK_SNAP_VAMPIRE_SECONDS = b.comment("R214: how long a snapped vampire (plain, heretic, Ghoul) lies as if dead. The four wake times are equal by default, so the length does not say what the target is.")
-                .defineInRange("neck_snap_vampire_seconds", DEFAULT_NECK_SNAP_VAMPIRE_SECONDS, 5, 1800);
+                .defineInRange("neck_snap_vampire_seconds", DEFAULT_NECK_SNAP_VAMPIRE_SECONDS, MIN_SNAP_SECONDS, MAX_SNAP_SECONDS);
         NECK_SNAP_AUGUSTINE_SECONDS = b.comment("R214: how long a snapped Augustine lies unconscious.")
-                .defineInRange("neck_snap_augustine_seconds", DEFAULT_NECK_SNAP_AUGUSTINE_SECONDS, 5, 1800);
+                .defineInRange("neck_snap_augustine_seconds", DEFAULT_NECK_SNAP_AUGUSTINE_SECONDS, MIN_SNAP_SECONDS, MAX_SNAP_SECONDS);
         NECK_SNAP_HYBRID_SECONDS = b.comment("R214: how long a snapped hybrid or tribrid lies in temporary death.")
-                .defineInRange("neck_snap_hybrid_seconds", DEFAULT_NECK_SNAP_HYBRID_SECONDS, 5, 1800);
+                .defineInRange("neck_snap_hybrid_seconds", DEFAULT_NECK_SNAP_HYBRID_SECONDS, MIN_SNAP_SECONDS, MAX_SNAP_SECONDS);
         NECK_SNAP_ORIGINAL_SECONDS = b.comment("R214: how long a snapped Original or Original hybrid lies down. Keep it equal to the others, or an observer can tell an Original by the time.")
-                .defineInRange("neck_snap_original_seconds", DEFAULT_NECK_SNAP_ORIGINAL_SECONDS, 5, 1800);
+                .defineInRange("neck_snap_original_seconds", DEFAULT_NECK_SNAP_ORIGINAL_SECONDS, MIN_SNAP_SECONDS, MAX_SNAP_SECONDS);
         b.pop();
         SPEC = b.build();
     }

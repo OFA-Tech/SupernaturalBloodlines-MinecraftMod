@@ -65,6 +65,9 @@ public final class BeastEvents {
     }
 
     private static void onIncoming(LivingIncomingDamageEvent e) {
+        if (net.ofatech.supernaturalbloodlines.core.death.DamageProbe.active()) {
+            return; // a probe (Neck Snap, Rip Heart) deals nothing: no Pike hit is counted, no damage is rescaled
+        }
         DamageSource source = e.getSource();
         if (e.getEntity() instanceof GevaudanSpiritEntity spirit) {
             if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {

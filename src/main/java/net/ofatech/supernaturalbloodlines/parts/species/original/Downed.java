@@ -89,6 +89,11 @@ public final class Downed {
         return isDowned(p) && mode(p) == MODE_SNAPPED;
     }
 
+    /** They can do nothing: downed (dying, for the turning, snapped) or in Vampirism's own dying state. No extra action and no bite runs for them. */
+    public static boolean cannotAct(Player p) {
+        return isDowned(p) || p instanceof ServerPlayer sp && de.teamlapen.vampirism.api.VampirismAPI.vampirePlayer(sp).isDBNO();
+    }
+
     /** Neck Snap: they lie as if dead for {@code ticks}, unhurt, and wake with the health they have now. */
     public static void startSnapped(ServerPlayer p, int ticks) {
         p.setData(SpeciesRegistries.DOWNED_MODE, MODE_SNAPPED);
@@ -99,6 +104,10 @@ public final class Downed {
         p.stopRiding();
         p.stopFallFlying();
         hold(p, true);
+        if (!canReceive(p)) {
+            // an old client has no screen for it: tell them on the action bar
+            p.displayClientMessage(Component.translatable("supernaturalbloodlines.snapped.body_short", Math.max(2, ticks) / 20), true);
+        }
     }
 
     public static void startDying(ServerPlayer p, DamageSource cause) {
@@ -139,7 +148,11 @@ public final class Downed {
             boolean snapped = isSnapped(p);
             clear(p);
             if (snapped) {
-                p.displayClientMessage(Component.translatable("supernaturalbloodlines.snapped.woke"), true); // with the health they had: a snap costs none
+                // with the health they had (a snap costs none), but with the same safety as the turning's wake: fire out, air back, a few seconds of Resistance, out of lava
+                p.displayClientMessage(Component.translatable("supernaturalbloodlines.snapped.woke"), true);
+                p.sendSystemMessage(Component.translatable("supernaturalbloodlines.snapped.woke"));
+                wakeSafety(p);
+                net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect.startGrace(p);
                 return;
             }
             p.setHealth(p.getMaxHealth() / 2.0F);
@@ -149,7 +162,7 @@ public final class Downed {
             TaskSignals.fire(p, "dying_survived", 1);
         } else {
             p.setData(SpeciesRegistries.DOWNED, left - 1);
-            if (reopensScreenAt(left - 1)) {
+            if (!isSnapped(p) && reopensScreenAt(left - 1)) { // a snapped player closed it by choice (Wait): no re-open spam
                 send(p, payload(p, true));
             }
         }
@@ -163,6 +176,11 @@ public final class Downed {
         p.displayClientMessage(Component.translatable("supernaturalbloodlines.turning.woke"), true);
         int minutes = (int) Math.ceil(BloodlineAccess.get(p).turningTicksLeft() / 1200.0);
         p.sendSystemMessage(Component.translatable("supernaturalbloodlines.turning.woke_chat", minutes));
+        wakeSafety(p);
+    }
+
+    /** What every wake-up gives: 5 s of Resistance V, the fire out, the air back, and out of lava (or another harmful fluid) to the nearest safe spot. */
+    private static void wakeSafety(ServerPlayer p) {
         p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, WAKE_RESISTANCE_TICKS, 4));
         p.clearFire();
         p.setAirSupply(p.getMaxAirSupply());
@@ -289,6 +307,8 @@ public final class Downed {
     // ---- events ----
 
     static void register() {
+        // a downed, snapped or Vampirism-dying player runs no extra action (the HUD asks), and no bite or faction action either (ActionService asks first of all)
+        net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.addBlocker(Downed::cannotAct);
         NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
                 tick(p);

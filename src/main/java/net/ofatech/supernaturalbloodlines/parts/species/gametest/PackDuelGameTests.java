@@ -1376,4 +1376,56 @@ public final class PackDuelGameTests {
         }
         helper.succeed();
     }
+
+    /** A heart-rip (or Give up) is final: the duel does not turn it into a defeat, it is called off and the death stands. A plain death in the duel is still a defeat. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aFinalDeathIsNotTurnedIntoADefeat(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        online(leader, second);
+        try {
+            helper.assertTrue(join(leader, second), "the pack could not be built");
+            helper.assertTrue(start(second, leader), "the duel did not start");
+            LivingDeathEvent[] e = new LivingDeathEvent[1];
+            net.ofatech.supernaturalbloodlines.core.death.FinalDeath.run(leader, () -> e[0] = finish(second, leader));
+            helper.assertTrue(!e[0].isCanceled(), "a final death was turned into a defeat by the duel");
+            PackDuel.reset();
+            helper.assertTrue(start(second, leader), "the second duel did not start");
+            helper.assertTrue(finish(second, leader).isCanceled(), "control: an ordinary death in a duel is not a defeat");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    /** What an outsider's Neck Snap asks (a probe of the damage) is answered by the duel like any hit: refused, and nothing happens to the duelist. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOutsidersNeckSnapOnADuelistIsRefused(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        TalkingDuelist outsider = TestPlayers.createTalkingDuelist(helper);
+        outsider.setPos(helper.absoluteVec(new Vec3(1.5, 1, 0.5)));
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(outsider).setFactionAndLevel(de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        online(leader, second, outsider);
+        try {
+            net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.set(outsider, net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.get(outsider).toBuilder().skills(java.util.Set.of("S-VAM-9")).build());
+            helper.assertTrue(join(leader, second), "the pack could not be built");
+            helper.assertTrue(start(second, leader), "the duel did not start");
+            leader.setPos(helper.absoluteVec(new Vec3(1.5, 1, 1.5)));
+            var answer = net.ofatech.supernaturalbloodlines.parts.species.skill.NeckSnapAction.INSTANCE.trigger(outsider, leader);
+            helper.assertTrue(answer != null && net.ofatech.supernaturalbloodlines.parts.species.skill.NeckSnapAction.REFUSED.equals(((net.minecraft.network.chat.contents.TranslatableContents) answer.getContents()).getKey()),
+                    "an outsider's snap on a duelist was not refused: " + answer);
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDowned(leader) && !leader.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS), "the duelist was touched");
+        } finally {
+            outsider.removeAllEffects();
+            net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.set(outsider, net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.get(outsider).toBuilder().skills(java.util.Set.of()).build());
+            VampirismAPI.factionPlayerHandler(outsider).leaveFaction(false);
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
 }

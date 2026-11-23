@@ -49,6 +49,7 @@ public final class HudPart {
             if (ModList.get().isLoaded("vampirism")) {
                 e.register(LoadoutVampirismGameTests.class);
                 e.register(ActionGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.ActionTargetGameTests.class);
                 if (ModList.get().isLoaded("werewolves")) {
                     e.register(ActionWerewolfGameTests.class);
                 }
@@ -66,7 +67,6 @@ public final class HudPart {
                     e.register(BiteWerewolfGameTests.class);
                     if (EnabledParts.isEnabled("species")) {
                         e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.ActionRoarGameTests.class);
-        e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.ActionTargetGameTests.class);
                     }
                 }
             }

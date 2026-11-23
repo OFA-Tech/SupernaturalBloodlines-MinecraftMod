@@ -57,15 +57,15 @@ public final class DownedScreen extends Screen {
         armed = 0;
         int textWidth = Math.min(width - 40, 300);
         boolean hasBody = mode == Downed.MODE_TURNING || mode == Downed.MODE_SNAPPED;
-        boolean hasButtons = mode != Downed.MODE_SNAPPED; // out cold: nothing to choose, no Give up
+        boolean hasGiveUp = mode != Downed.MODE_SNAPPED; // out cold: no Give up, only a way to close the screen and look around
         body = new MultiLineTextWidget(hasBody ? bodyText() : Component.empty(), font).setMaxWidth(textWidth).setColor(0xDDDDDD).setCentered(true);
         shownSeconds = seconds();
         // the room is the height of the longest the text gets (a full countdown, two digits), so the countdown never reflows the text into the buttons
         int longest = mode == Downed.MODE_SNAPPED ? 1800 : Downed.TICKS / 20;
         int bodyHeight = hasBody ? Math.max(body.getHeight(), new MultiLineTextWidget(bodyText(longest), font).setMaxWidth(textWidth).getHeight()) : 0;
         boolean sideBySide = width >= 280;
-        int buttonsHeight = !hasButtons ? 0 : sideBySide ? 20 : 44;
-        int total = font.lineHeight + GAP + bodyHeight + (hasButtons ? GAP + buttonsHeight : 0);
+        int buttonsHeight = !hasGiveUp || sideBySide ? 20 : 44;
+        int total = font.lineHeight + GAP + bodyHeight + GAP + buttonsHeight;
         top = (height - total) / 2;
         bottom = top + total;
         int y = top + font.lineHeight + GAP;
@@ -74,17 +74,17 @@ public final class DownedScreen extends Screen {
             addRenderableWidget(body);
         }
         y += bodyHeight + GAP;
-        if (!hasButtons) {
+        int bw = sideBySide ? 130 : 200;
+        wait = Button.builder(Component.translatable(hasGiveUp ? "supernaturalbloodlines.downed.wait" : "supernaturalbloodlines.downed.look_around"), b -> onClose())
+                .bounds(sideBySide && hasGiveUp ? width / 2 - bw - 5 : width / 2 - bw / 2, y, bw, 20).build();
+        addRenderableWidget(wait);
+        setInitialFocus(wait);
+        if (!hasGiveUp) {
             return;
         }
-        int bw = sideBySide ? 130 : 200;
-        wait = Button.builder(Component.translatable("supernaturalbloodlines.downed.wait"), b -> onClose())
-                .bounds(sideBySide ? width / 2 - bw - 5 : width / 2 - bw / 2, y, bw, 20).build();
         giveUp = Button.builder(Component.translatable("supernaturalbloodlines.downed.give_up"), b -> pressedGiveUp())
                 .bounds(sideBySide ? width / 2 + 5 : width / 2 - bw / 2, sideBySide ? y : y + 24, bw, 20).build();
-        addRenderableWidget(wait);
         addRenderableWidget(giveUp);
-        setInitialFocus(wait);
     }
 
     private Component bodyText() {
@@ -124,7 +124,7 @@ public final class DownedScreen extends Screen {
         super.renderBackground(graphics, mouseX, mouseY, partialTick);
         // a dark backing, so the text reads over any world
         int half = Math.min(width - 8, 320) / 2;
-        graphics.fill(width / 2 - half, top - PAD, width / 2 + half, bottom + PAD, 0xC0000000);
+        graphics.fill(width / 2 - half, top - PAD, width / 2 + half, bottom + PAD, 0xE0000000);
     }
 
     @Override

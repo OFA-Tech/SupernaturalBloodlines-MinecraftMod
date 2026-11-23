@@ -111,6 +111,7 @@ public final class AdminEntries {
         species(all, "rip_heart_health", DOUBLE);
         species(all, "rip_heart_cooldown_seconds", INT);
         species(all, "neck_snap_cooldown_seconds", INT);
+        species(all, "neck_snap_grace_seconds", INT);
         species(all, "neck_snap_kill_health", DOUBLE);
         species(all, "neck_snap_stagger_ticks", INT);
         species(all, "neck_snap_vampire_seconds", INT);

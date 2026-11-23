@@ -7,7 +7,7 @@ public final class HudIcons {
     private static final String PREFIX = "textures/gui/hud/";
     private static final String SUFFIX = ".png";
     /** The kit has icons of these. */
-    public static final Set<String> OURS = Set.of("bite", "alpha_roar", "unknown");
+    public static final Set<String> OURS = Set.of("bite", "alpha_roar", "unknown", "rip_heart", "neck_snap");
 
     /** The other pictures in the HUD's texture folder: not slot icons, so they have no outlined twin. A new picture there must be named in one of the two sets. */
     public static final Set<String> NOT_ICONS = Set.of("blood_empty", "blood_full", "slot_active");
