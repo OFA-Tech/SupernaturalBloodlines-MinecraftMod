@@ -39,13 +39,13 @@ public final class SupernaturalConfig {
                 .define("rite_complete_signal", true);
         VAMPIRE_FEED_BLOOD = b.comment("Predator's Thirst (S-VAM-6): the Vampirism blood a bite on a vampire gives when Vampirism gives none for that victim (it is also what a vampire player loses).")
                 .defineInRange("vampire_feed_blood", DEFAULT_VAMPIRE_FEED_BLOOD, 1, 20);
-        TWEAKS.put(Tweak.SUNLIGHT_IGNITES_VAMPIRES, b.comment("R213: a vampire player in sunlight is also set on fire (Vampirism turns fire into its own heavy vampire fire damage). Not with a Sun Ring, in water, in the shade, or in creative or spectator.")
+        TWEAKS.put(Tweak.SUNLIGHT_IGNITES_VAMPIRES, b.comment("R213: every time Vampirism's own sun damage hurts a player, they are also set on fire for 4 seconds (Vampirism turns fire into its own heavy vampire fire damage). Vampirism's rules decide who is hurt: its level gate, grace period, attributes, Sun Ring, poppet, umbrella and creative.")
                 .define(Tweak.SUNLIGHT_IGNITES_VAMPIRES.key, false));
-        TWEAKS.put(Tweak.CLEANSING_ALTAR_DISABLED, b.comment("R213: the cleansing altar cannot be used to leave the vampire faction (the click is refused on the server and on every client). A modified client can still send Vampirism's confirm packet: closing that needs a mixin.")
+        TWEAKS.put(Tweak.CLEANSING_ALTAR_DISABLED, b.comment("R213: the cleansing altar cannot be used to leave the vampire faction (the click is refused on the server and on every client that has this mod, and the server refuses the revert packet itself from any client). A player who sends that packet without the switch in mind still dies (Vampirism kills on leaving outside hardcore) but stays a vampire. Vampirism's med chair is not touched.")
                 .define(Tweak.CLEANSING_ALTAR_DISABLED.key, false));
-        TWEAKS.put(Tweak.HOSTILE_MOBS_ATTACK_VAMPIRES, b.comment("R213: zombies (husks, drowned, zombie villagers) and skeletons (strays) that join the world after this is on also attack vampire players, whatever Vampirism's own settings say. Creepers are not changed; mobs already loaded keep their goals.")
+        TWEAKS.put(Tweak.HOSTILE_MOBS_ATTACK_VAMPIRES, b.comment("R213: zombies, husks, drowned, zombie villagers, skeletons and strays also attack vampire players, whatever Vampirism's own settings say; it takes effect at once, also on mobs already loaded. Other mobs (creepers, zombified piglins, wither skeletons, bogged) are not changed.")
                 .define(Tweak.HOSTILE_MOBS_ATTACK_VAMPIRES.key, false));
-        TWEAKS.put(Tweak.SKELETONS_ATTACK_WEREWOLVES, b.comment("R213: skeletons and strays that join the world after this is on also attack werewolf players, whatever Werewolves' own setting says. Does nothing without Werewolves.")
+        TWEAKS.put(Tweak.SKELETONS_ATTACK_WEREWOLVES, b.comment("R213: skeletons and strays also attack werewolf players, whatever Werewolves' own setting says; it takes effect at once, also on mobs already loaded. Does nothing without Werewolves.")
                 .define(Tweak.SKELETONS_ATTACK_WEREWOLVES.key, false));
         SPEC = b.build();
     }

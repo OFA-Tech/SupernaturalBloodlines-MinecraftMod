@@ -20,7 +20,7 @@ class SupernaturalConfigTest {
     }
 
     @Test
-    void anUnloadedConfigAnswersOff() {
+    void beforeTheConfigLoadsTheFallbackAnswersOff() {
         for (Tweak t : Tweak.values()) {
             assertFalse(SupernaturalConfig.tweak(t), t.key);
         }

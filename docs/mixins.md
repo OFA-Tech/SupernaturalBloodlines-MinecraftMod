@@ -66,7 +66,7 @@ No mixin. The entities are plain PathfinderMobs; what a blow does to an NPC Orig
 
 ## Plan 18
 
-Plan 18 adds no mixin: species stays at 3 of 3 and supernatural at 1 of 3. The four Vampirism tweaks (R213) use events only (`PlayerTickEvent`, `PlayerInteractEvent.RightClickBlock`, `EntityJoinLevelEvent`).
+Plan 18 adds no mixin: species stays at 3 of 3 and supernatural at 1 of 3. The four Vampirism tweaks (R213) use events only (`LivingDamageEvent.Post`, `PlayerInteractEvent.RightClickBlock`, `PlayerFactionEvent.FactionLevelChangePre`, `EntityJoinLevelEvent`).
 
 ## Access transformers
 

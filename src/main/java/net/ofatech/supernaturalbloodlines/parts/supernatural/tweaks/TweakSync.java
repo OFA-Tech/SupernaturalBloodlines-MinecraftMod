@@ -46,11 +46,13 @@ public final class TweakSync {
         AdminSettings.onClientCopySaved(server -> server.execute(() -> server.getPlayerList().getPlayers().forEach(TweakSync::send)));
     }
 
-    static void send(ServerPlayer p) {
-        // a fake player's connection has no channel to ask
+    /** Sends the server's value to a player whose connection is open and has the channel; a fake player's has neither. Whether it was sent. */
+    public static boolean send(ServerPlayer p) {
         if (p.connection != null && p.connection.getConnection().isConnected() && p.connection.hasChannel(Payload.TYPE)) {
             PacketDistributor.sendToPlayer(p, Payload.ofLocal());
+            return true;
         }
+        return false;
     }
 
     /** Client side. */
