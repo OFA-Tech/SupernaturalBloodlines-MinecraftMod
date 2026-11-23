@@ -22,11 +22,11 @@ public final class KitFaces {
             Part.BUTTON_PRIMARY_NORMAL, Part.BUTTON_PRIMARY_HOVER, Part.BUTTON_PRIMARY_PRESSED, Part.BUTTON_PRIMARY_DISABLED};
 
     /** The other surfaces text stands on: a chip, a lit chip, a plate and an inset (a text box). */
-    public static final Part[] SURFACES = {Part.CHIP, Part.CHIP_ON, Part.PLATE, Part.INSET};
+    public static final Part[] SURFACES = {Part.CHIP, Part.CHIP_ON, Part.PLATE, Part.INSET, Part.CHIP_SHIFTING, Part.BOSS_FRAME, Part.BOSS_NAME_PLATE};
     private static final int[][] SURFACE_FACES = {
-            {0xFFE2D6B0, 0xFF9A1C22, 0xFFE9DDB8, 0xFFDCCD9E},
-            {0xFF1D0B13, 0xFFBF332B, 0xFF1D0B13, 0xFF10060A},
-            {0xFF17374E, 0xFF3FD0D6, 0xFF12293F, 0xFF0A1827}};
+            {0xFFE2D6B0, 0xFF9A1C22, 0xFFE9DDB8, 0xFFDCCD9E, 0xFFB8903A, 0xFFE9DDB8, 0xFF4A1717},
+            {0xFF1D0B13, 0xFFBF332B, 0xFF1D0B13, 0xFF10060A, 0xFFFFD36B, 0xFF1D0B13, 0xFF1D0B13},
+            {0xFF17374E, 0xFF3FD0D6, 0xFF12293F, 0xFF0A1827, 0xFFE8B33A, 0xFF12293F, 0xFF12293F}};
 
     public static int face(String kit, Part button) {
         int k = Math.max(0, KitSprites.KITS.indexOf(kit));
@@ -41,6 +41,22 @@ public final class KitFaces {
             }
         }
         throw new IllegalArgumentException(button + " is not a button or a surface");
+    }
+
+    /** The parts the tables name, in a set built once: asked for every label of every frame. */
+    private static final java.util.Set<Part> KNOWN = java.util.EnumSet.copyOf(java.util.stream.Stream.concat(java.util.Arrays.stream(BUTTONS), java.util.Arrays.stream(SURFACES)).toList());
+
+    /** Whether the table above has a face for {@code part} (a button or a surface); a label on any other part is not checked against a face. */
+    public static boolean knows(Part part) {
+        return KNOWN.contains(part);
+    }
+
+    /**
+     * The face to read a label on. The table holds the middle of the shipped art; a resource pack that repaints a sprite changes the middle, and the label must
+     * read on what is really drawn: the picture's own solid middle (read from the pack's PNG) when it has one and is opaque, else the table.
+     */
+    public static int resolveFace(int tableFace, @org.jetbrains.annotations.Nullable Integer pictureMiddle) {
+        return pictureMiddle != null && (pictureMiddle >>> 24) >= 0xC0 ? pictureMiddle | 0xFF000000 : tableFace;
     }
 
     /** The label on a button: the theme's ink when it reads on the face (4.5:1), else white or black, whichever does. */

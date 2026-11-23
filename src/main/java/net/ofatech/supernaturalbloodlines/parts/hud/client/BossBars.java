@@ -15,7 +15,8 @@ final class BossBars {
     }
 
     static void register() {
-        NeoForge.EVENT_BUS.addListener((CustomizeGuiOverlayEvent.BossEventProgress e) -> seen = Math.max(seen, e.getY() + e.getIncrement()));
+        // cancelled ones too: our own cards are cancelled and carry the height of the whole stack as their increment
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.NORMAL, true, CustomizeGuiOverlayEvent.BossEventProgress.class, e -> seen = Math.max(seen, e.getY() + e.getIncrement()));
     }
 
     /** The lowest pixel the boss bars used last frame, 0 with none. Call once per frame. */

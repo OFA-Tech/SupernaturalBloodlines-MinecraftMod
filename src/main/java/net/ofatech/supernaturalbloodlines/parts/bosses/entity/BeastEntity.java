@@ -85,6 +85,11 @@ public final class BeastEntity extends BossNpc implements GeoEntity {
     }
 
     @Override
+    public net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look barLook() {
+        return net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.host(1);
+    }
+
+    @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(COLLAPSING, false);
