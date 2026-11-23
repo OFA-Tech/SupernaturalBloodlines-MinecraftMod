@@ -67,7 +67,10 @@ public record AncestralCallingRiteFactory() implements RiteFactory {
             BloodlineState before = BloodlineAccess.get(target);
             Outcome preview = BloodlineRules.apply(before, event, ctx);
             if (preview.refused()) {
-                ServerPlayer caster = findEntity(params.caster) instanceof ServerPlayer p ? p : target;
+                ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
+            if (caster == null) {
+                return cancel(); // the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
+            }
                 RiteTargets.refuseAbout(caster, target, preview.refusalKey()); // what the one on the centre already is stays theirs to hear
                 return cancel();
             }

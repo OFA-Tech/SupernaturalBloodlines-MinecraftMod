@@ -44,7 +44,7 @@ public final class RiteUnlockGameTests {
 
     /** The invariant, for every gated rite: known xor sealed. */
     private static String broken(ServerPlayer p) {
-        for (String rite : RiteUnlockTable.GATED.keySet()) {
+        for (String rite : RiteUnlocks.presentRites(p)) {
             if (known(p, rite) == sealed(p, rite)) {
                 return rite + " known=" + known(p, rite) + " sealed=" + sealed(p, rite);
             }
@@ -56,8 +56,11 @@ public final class RiteUnlockGameTests {
     public static void theAdvancementsAreLoaded(GameTestHelper helper) {
         ServerPlayer p = player(helper, Species.NONE);
         for (String rite : RiteUnlockTable.GATED.keySet()) {
-            helper.assertTrue(holder(p, RiteAdvancements.known(rite)) != null, rite + ": no known advancement in the datapack");
-            helper.assertTrue(holder(p, RiteAdvancements.sealed(rite)) != null, rite + ": no sealed advancement in the datapack");
+            // the two advancements of a rite come and go together: a rite of a part that is off or an addon that is not there ships neither
+            helper.assertTrue((holder(p, RiteAdvancements.known(rite)) != null) == (holder(p, RiteAdvancements.sealed(rite)) != null), rite + ": only one of its advancements is in the datapack");
+            if (!rite.startsWith("evolve_") && !rite.startsWith("mastery_")) {
+                helper.assertTrue(holder(p, RiteAdvancements.known(rite)) != null, rite + ": no known advancement in the datapack");
+            }
         }
         helper.succeed();
     }
@@ -67,7 +70,7 @@ public final class RiteUnlockGameTests {
         ServerPlayer p = player(helper, Species.NONE);
         RiteUnlocks.reconcile(p);
         helper.assertTrue(broken(p) == null, "known and sealed disagree: " + broken(p));
-        for (String rite : RiteUnlockTable.GATED.keySet()) {
+        for (String rite : RiteUnlocks.presentRites(p)) {
             helper.assertTrue(!known(p, rite), rite + " is known to a plain human");
         }
         helper.succeed();
@@ -216,7 +219,7 @@ public final class RiteUnlockGameTests {
         RiteUnlocks.reconcile(p);
         helper.assertTrue(RiteUnlocks.known(p).isEmpty(), "control: a human knows a gated rite");
         net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockFallback.knowAll(p);
-        helper.assertTrue(RiteUnlocks.known(p).size() == RiteUnlockTable.GATED.size(), "not every rite is known: " + RiteUnlocks.known(p));
+        helper.assertTrue(RiteUnlocks.known(p).size() == RiteUnlocks.presentRites(p).size(), "not every rite is known: " + RiteUnlocks.known(p));
         helper.assertTrue(broken(p) == null, "known and sealed disagree: " + broken(p));
         helper.succeed();
     }
@@ -230,9 +233,9 @@ public final class RiteUnlockGameTests {
         helper.assertTrue(known(p, "rite_of_linking") && known(p, "rite_of_severance"), "not learned");
         helper.assertTrue(RiteUnlockCommand.change(source, p, "rite_of_linking", false) == 1, "forgetting one rite");
         helper.assertTrue(!known(p, "rite_of_linking") && sealed(p, "rite_of_linking") && known(p, "rite_of_severance"), "the wrong rite was forgotten");
-        helper.assertTrue(RiteUnlockCommand.change(source, p, "all", true) == RiteUnlockTable.GATED.size() - 1, "all did not teach the rest");
+        helper.assertTrue(RiteUnlockCommand.change(source, p, "all", true) == RiteUnlocks.presentRites(p).size() - 1, "all did not teach the rest");
         helper.assertTrue(RiteUnlockCommand.change(source, p, "nonsense", true) == 0, "an unknown rite changed something");
-        helper.assertTrue(RiteUnlockCommand.change(source, p, "all", false) == RiteUnlockTable.GATED.size(), "forgetting all");
+        helper.assertTrue(RiteUnlockCommand.change(source, p, "all", false) == RiteUnlocks.presentRites(p).size(), "forgetting all");
         helper.assertTrue(broken(p) == null, "known and sealed disagree: " + broken(p));
         helper.assertTrue(RiteUnlockCommand.list(source, p) == 0, "the list of a player who knows nothing");
         helper.succeed();

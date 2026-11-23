@@ -1,0 +1,47 @@
+{
+  "title": "Rite of Mastery: Extra",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:echo_shard"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/mastery_extra",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nA witch-type performer brings the one skill the one on the circle has chosen to mastery, on a full-moon night. This one masters Extra skills.",
+          "header": "Mastery: Extra"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Choose the skill on the Skills page of the hub. A skill that evolves when mastered evolves as it does in play, if its own conditions are met at that moment.",
+          "header": "Mastery: Extra"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "By default costs 300,000 base Max EP, spent once it is mastered, and 5 netherite ingots and 20 echo shards. One rite per player every 7 days.",
+          "header": "Mastery: Extra"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:mastery_extra",
+          "header": "Mastery: Extra"
+        }
+      ]
+    }
+  ]
+}

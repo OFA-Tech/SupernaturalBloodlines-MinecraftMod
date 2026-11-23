@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class AdminEntriesTest {
     @Test
     void sixtyFiveKeysWithUniqueIds() {
-        assertEquals(185, AdminEntries.ALL.size());
+        assertEquals(201, AdminEntries.ALL.size());
         org.junit.jupiter.api.Assertions.assertTrue(AdminEntries.ALL.size() <= net.ofatech.supernaturalbloodlines.parts.supernatural.net.AdminSnapshotPayload.MAX_ROWS, "the Admin snapshot has no room for every row: raise AdminSnapshotPayload.MAX_ROWS and the hub protocol"); 
         Set<String> seen = new HashSet<>();
         for (SettingEntry e : AdminEntries.ALL) {

@@ -53,6 +53,9 @@ public final class RiteUnlockCommand {
         }
         int changed = 0;
         for (String rite : rites) {
+            if (!RiteUnlocks.present(target, rite)) {
+                continue; // a rite of an addon or a part that is not there
+            }
             if (learn ? RiteUnlocks.learn(target, rite, false) : RiteUnlocks.forget(target, rite)) {
                 changed++;
             }
@@ -64,7 +67,7 @@ public final class RiteUnlockCommand {
 
     public static int list(CommandSourceStack source, ServerPlayer target) {
         List<String> known = RiteUnlocks.known(target);
-        source.sendSuccess(() -> Component.translatable(KEY + "list", target.getDisplayName(), known.size(), RiteUnlockTable.GATED.size(),
+        source.sendSuccess(() -> Component.translatable(KEY + "list", target.getDisplayName(), known.size(), RiteUnlocks.presentRites(target).size(),
                 known.isEmpty() ? Component.literal("-") : Component.literal(String.join(", ", known))), false);
         return known.size();
     }
