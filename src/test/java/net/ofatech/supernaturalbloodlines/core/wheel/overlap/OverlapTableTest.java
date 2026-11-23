@@ -135,6 +135,16 @@ class OverlapTableTest {
     }
 
     @Test
+    void everyTierOfAChainIsListedForAnyOfItsMembers() {
+        OverlapTable t = seed();
+        List<PowerRef> chain = List.of(ref("tensura/tensura:self_regeneration"), ref("tensura/tensura:ultraspeed_regeneration"), ref("tensura/tensura:infinite_regeneration"));
+        for (PowerRef tier : chain) {
+            assertEquals(chain, t.tiersOf(tier));
+        }
+        assertEquals(List.of(ref("vampirism/vampirism:regen")), t.tiersOf(ref("vampirism/vampirism:regen")), "a power in no chain is its own only tier");
+    }
+
+    @Test
     void aSideIsSavedByTheKeyOfItsMemberAndFoundAgainByIt() {
         OverlapTable t = seed();
         OverlapGroup regeneration = t.groups().get(2);

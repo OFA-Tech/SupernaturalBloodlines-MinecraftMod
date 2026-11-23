@@ -53,6 +53,19 @@ class DedupTest {
     }
 
     @Test
+    void theEntryThatStaysSaysWhatItCovers() {
+        Dedup.Result<E> r = Dedup.apply(list(I_INVIS, T_INVIS, V_INVIS, OTHER), SEED);
+        E kept = r.shown().get(0);
+        assertEquals(V_INVIS, kept.ref().key());
+        assertEquals(List.of(I_INVIS, T_INVIS), r.covers().get(kept).stream().map(e -> e.ref().key()).toList(), "in the order of the input");
+        assertTrue(r.covers().get(r.shown().get(1)) == null, "an entry in no group covers nothing");
+        // the side that is on is the one that stays, and it covers the main side
+        Dedup.Result<E> on = Dedup.apply(list(V_INVIS, T_INVIS), SEED, id -> id.equals("invisibility") ? 2 : -1);
+        assertEquals(List.of(V_INVIS), on.covers().get(on.shown().get(0)).stream().map(e -> e.ref().key()).toList());
+        assertTrue(Dedup.apply(list(T_INVIS, OTHER), SEED).covers().isEmpty());
+    }
+
+    @Test
     void m01SpellIsAThirdMemberAndIsHidden() {
         // for a vampire: the Vampirism action, the Tensura spell and an Infinity stone power are all there: one entry stays
         assertEquals(List.of(V_INVIS), shown(Dedup.apply(list(V_INVIS, T_INVIS, I_INVIS), SEED)));

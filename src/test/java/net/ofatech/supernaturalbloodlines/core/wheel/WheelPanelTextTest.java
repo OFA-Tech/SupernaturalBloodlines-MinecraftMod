@@ -23,7 +23,7 @@ class WheelPanelTextTest {
     }
 
     private WheelPanelText.Lines frame(String description, String lock) {
-        return WheelPanelText.lines(FONT, this::measure, 110, 50, 130, "Predator", "Tensura · Skills", "Instant", description, "Mode 1 of 3: Devour", lock);
+        return WheelPanelText.lines(FONT, this::measure, 110, 50, 130, "Predator", "Tensura · Skills", "", "Instant", description, "Mode 1 of 3: Devour", lock);
     }
 
     @Test
@@ -45,16 +45,29 @@ class WheelPanelTextTest {
     }
 
     @Test
+    void theCoverNoteIsWrappedUnderTheNameAndPushesTheDescriptionDown() {
+        String cover = "Also covers: Vampirism Night Vision, Werewolves Sense";
+        String text = "A long description that goes on and on and on for a while.";
+        WheelPanelText.Lines with = WheelPanelText.lines(FONT, this::measure, 110, 50, 130, "Sharp Sight", "Tensura · Skills", cover, "Instant", text, "", "");
+        WheelPanelText.Lines without = WheelPanelText.lines(FONT, this::measure, 110, 50, 130, "Sharp Sight", "Tensura · Skills", "", "Instant", text, "", "");
+        assertTrue(with.cover().size() >= 1 && with.cover().size() <= 2, "the note takes one or two lines: " + with.cover());
+        assertTrue(without.cover().isEmpty());
+        assertTrue(with.description().size() <= without.description().size(), "the note takes room from the description, never the other way");
+        WheelPanelText.Lines tight = WheelPanelText.lines(FONT, this::measure, 110, 50, 100, "Sharp Sight", "Tensura · Skills", cover, "Instant", text, "", "");
+        assertTrue(tight.description().size() < without.description().size(), "with little room the description gives way first");
+    }
+
+    @Test
     void anotherPowerAnotherWidthOrAnotherLanguageIsAnotherKey() {
         frame("Hold to charge.", "");
         int after = WheelPanelText.misses();
         frame("Hold to charge, then let go.", "");
         assertTrue(WheelPanelText.misses() > after, "another description is a new answer");
         after = WheelPanelText.misses();
-        WheelPanelText.lines(FONT, this::measure, 90, 50, 130, "Predator", "Tensura · Skills", "Instant", "Hold to charge.", "Mode 1 of 3: Devour", "");
+        WheelPanelText.lines(FONT, this::measure, 90, 50, 130, "Predator", "Tensura · Skills", "", "Instant", "Hold to charge.", "Mode 1 of 3: Devour", "");
         assertTrue(WheelPanelText.misses() > after, "another width is a new answer");
         after = WheelPanelText.misses();
-        WheelPanelText.lines(new Object(), this::measure, 110, 50, 130, "Predator", "Tensura · Skills", "Instant", "Hold to charge.", "Mode 1 of 3: Devour", "");
+        WheelPanelText.lines(new Object(), this::measure, 110, 50, 130, "Predator", "Tensura · Skills", "", "Instant", "Hold to charge.", "Mode 1 of 3: Devour", "");
         assertTrue(WheelPanelText.misses() > after, "another font (a resource reload) is a new answer");
     }
 

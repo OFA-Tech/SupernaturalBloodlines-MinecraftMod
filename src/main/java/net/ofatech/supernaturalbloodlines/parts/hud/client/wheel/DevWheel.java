@@ -84,6 +84,13 @@ public final class DevWheel {
             out.add(power(t, "spell_" + i, PowerGroup.MAGIC, i == 15 ? PowerKind.HELD : PowerKind.INSTANT, name, icon, s));
         }        out.add(power(t, "heavy_slash", PowerGroup.BATTLEWILL, PowerKind.INSTANT, "Heavy Slash", "claw", ready));
         out.add(power(t, "air_flight", PowerGroup.BATTLEWILL, PowerKind.HELD, "Air Flight", "boot", ready));
+        // two demo powers that stand for another mod's power as well (rule C), so the panel line is in the shots
+        for (int i = 0; i < out.size(); i++) {
+            String id = out.get(i).ref().id().getPath();
+            if (id.equals("heat_wave") || id.equals("predator")) {
+                out.set(i, out.get(i).withCoverNote(Component.literal("Also covers: Vampirism Night Vision")));
+            }
+        }
         return out;
     }
 

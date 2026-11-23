@@ -1,5 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.hud.wheel;
 
+import de.teamlapen.vampirism.api.VReference;
 import de.teamlapen.vampirism.api.entity.player.IFactionPlayer;
 import de.teamlapen.vampirism.api.entity.player.actions.IAction;
 import de.teamlapen.vampirism.api.entity.player.actions.IActionHandler;
@@ -82,7 +83,8 @@ final class VampirismSides {
     static int cooldownTicks(ServerPlayer p, ResourceLocation id) {
         Optional<? extends IFactionPlayer<?>> fp = FactionActions.current(p);
         if (VampirismVision.ID.equals(id)) {
-            return fp.isPresent() ? 0 : SharedCooldown.NOT_OWNED;
+            // Vampirism's vision is the vampire's: a werewolf or a hunter does not have it
+            return fp.isPresent() && VReference.VAMPIRE_FACTION.equals(fp.get().getFaction()) ? 0 : SharedCooldown.NOT_OWNED;
         }
         IAction action = FactionActions.byId(id);
         if (action == null || fp.isEmpty() || !FactionActions.unlocked(fp.get(), action)) {

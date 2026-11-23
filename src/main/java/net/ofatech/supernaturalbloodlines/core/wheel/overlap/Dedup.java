@@ -40,8 +40,9 @@ public final class Dedup {
      * @param hidden the entries a group hid, and the group
      * @param groupOf the group a shown entry stands for (the first one when it stands for two)
      * @param collapsed the lower tiers a chain hid
+     * @param covers for a shown entry, the entries a group hid behind it, in the input order (so the wheel can say what else it stands for)
      */
-    public record Result<E>(List<E> shown, Map<E, OverlapGroup> hidden, Map<E, OverlapGroup> groupOf, List<E> collapsed) {
+    public record Result<E>(List<E> shown, Map<E, OverlapGroup> hidden, Map<E, OverlapGroup> groupOf, List<E> collapsed, Map<E, List<E>> covers) {
     }
 
     /** No group has an active side. */
@@ -74,6 +75,7 @@ public final class Dedup {
         }
         Map<E, OverlapGroup> hidden = new IdentityHashMap<>();
         Map<E, OverlapGroup> groupOf = new IdentityHashMap<>();
+        Map<E, List<E>> covered = new IdentityHashMap<>();
         for (OverlapGroup g : table.groups()) {
             Map<Integer, E> bySide = new LinkedHashMap<>();
             for (E e : entries) {
@@ -99,6 +101,7 @@ public final class Dedup {
                 if (e != keep) {
                     out.add(e);
                     hidden.put(e, g);
+                    covered.computeIfAbsent(keep, k -> new ArrayList<>()).add(e);
                 }
             }
             groupOf.putIfAbsent(keep, g);
@@ -111,7 +114,13 @@ public final class Dedup {
         }
         Map<E, OverlapGroup> hiddenOrdered = new LinkedHashMap<>();
         Map<E, OverlapGroup> groupOrdered = new LinkedHashMap<>();
+        Map<E, List<E>> coversOrdered = new LinkedHashMap<>();
         for (E e : entries) {
+            if (covered.containsKey(e) && !out.contains(e)) {
+                List<E> list = new ArrayList<>(covered.get(e));
+                list.sort(java.util.Comparator.comparingInt(entries::indexOf));
+                coversOrdered.put(e, list);
+            }
             if (hidden.containsKey(e)) {
                 hiddenOrdered.put(e, hidden.get(e));
             }
@@ -119,7 +128,7 @@ public final class Dedup {
                 groupOrdered.put(e, groupOf.get(e));
             }
         }
-        return new Result<>(shown, hiddenOrdered, groupOrdered, collapsed);
+        return new Result<>(shown, hiddenOrdered, groupOrdered, collapsed, coversOrdered);
     }
 
 }

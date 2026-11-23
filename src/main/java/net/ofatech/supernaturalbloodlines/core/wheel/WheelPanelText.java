@@ -16,14 +16,14 @@ public final class WheelPanelText {
     public static final int MAX_LINES = 4;
 
     /** The panel's text, cut and wrapped to fit. {@code description}, {@code mode} and {@code lock} are empty lists when there is nothing (or no room) for them. */
-    public record Lines(String name, String where, String kind, List<String> description, List<String> mode, List<String> lock) {
+    public record Lines(String name, String where, List<String> cover, String kind, List<String> description, List<String> mode, List<String> lock) {
     }
 
     /** A help row: the key text, what it does, and where that text starts (after the key and a gap). */
     public record HelpRow(String key, String what, int whatX) {
     }
 
-    private record LinesKey(Object font, int width, int top, int bottom, String name, String where, String kind, String description, String mode, String lock) {
+    private record LinesKey(Object font, int width, int top, int bottom, String name, String where, String cover, String kind, String description, String mode, String lock) {
     }
 
     private record HelpKey(Object font, List<String> keys, List<String> whats, boolean bold) {
@@ -51,14 +51,16 @@ public final class WheelPanelText {
     }
 
     /** {@code mode} and {@code lock} are empty strings when the power has no modes or is not locked. */
-    public static Lines lines(Object font, ToIntFunction<String> measure, int width, int top, int bottom, String name, String where, String kind, String description, String mode,
-            String lock) {
-        return LINES.get(new LinesKey(font, width, top, bottom, name, where, kind, description, mode, lock), () -> {
+    public static Lines lines(Object font, ToIntFunction<String> measure, int width, int top, int bottom, String name, String where, String cover, String kind, String description,
+            String mode, String lock) {
+        return LINES.get(new LinesKey(font, width, top, bottom, name, where, cover, kind, description, mode, lock), () -> {
+            List<String> coverLines = cover.isEmpty() ? List.of() : TextCache.wrap(font, cover, width, 2, measure);
             List<String> modeLines = mode.isEmpty() ? List.of() : TextCache.wrap(font, mode, width, 2, measure);
-            int room = descriptionLines(top, bottom, modeLines.size(), !lock.isEmpty());
+            int room = descriptionLines(top + coverLines.size() * LINE, bottom, modeLines.size(), !lock.isEmpty());
             List<String> desc = description.isEmpty() || room == 0 ? List.of() : TextCache.wrap(font, description, width, room, measure);
             List<String> lockLines = lock.isEmpty() ? List.of() : TextCache.wrap(font, lock, width - 22, 2, measure);
-            return new Lines(TextCache.cut(font, name, width, measure), TextCache.cut(font, where, width, measure), TextCache.cut(font, kind, width, measure), desc, modeLines, lockLines);
+            return new Lines(TextCache.cut(font, name, width, measure), TextCache.cut(font, where, width, measure), coverLines, TextCache.cut(font, kind, width, measure), desc, modeLines,
+                    lockLines);
         });
     }
 

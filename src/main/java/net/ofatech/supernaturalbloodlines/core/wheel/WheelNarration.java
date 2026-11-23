@@ -26,6 +26,12 @@ public final class WheelNarration {
      */
     public static List<String> lines(String mod, String group, String power, String mode, String state, String lockReason, int index, int total, int page, int pages,
             BiFunction<String, Object[], String> translate) {
+        return lines(mod, group, power, "", mode, state, lockReason, index, total, page, pages, translate);
+    }
+
+    /** As above, with what else the power stands for (rule C) said right after its name; empty for nothing. */
+    public static List<String> lines(String mod, String group, String power, String cover, String mode, String state, String lockReason, int index, int total, int page, int pages,
+            BiFunction<String, Object[], String> translate) {
         List<String> out = new ArrayList<>();
         out.add(mod);
         if (group != null && !group.isEmpty()) {
@@ -36,6 +42,9 @@ public final class WheelNarration {
         }
         out.add(translate.apply(KEY_POSITION, new Object[] {index, total}));
         out.add(power);
+        if (cover != null && !cover.isEmpty()) {
+            out.add(cover);
+        }
         if (mode != null && !mode.isEmpty()) {
             out.add(mode);
         }

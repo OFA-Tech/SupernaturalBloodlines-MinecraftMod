@@ -643,7 +643,7 @@ public final class WheelScreen extends Screen {
         String state = WheelNarration.stateWord(e.state().on(), e.state().cooldownLeft(now), (key, args) -> Component.translatable(key, args).getString());
         String lock = e.state().locked() ? WheelRenderer.text("state.locked", WheelRenderer.reason(e.state().lock())) : "";
         List<String> lines = WheelNarration.lines(WheelRenderer.modName(source), groups.isEmpty() ? "" : WheelRenderer.text("group." + e.group().name().toLowerCase(Locale.ROOT)),
-                e.name().getString(), e.modeNames().size() > 1 ? e.modeName().getString() : "", state, lock, open.page() * WheelLayout.PAGE_SIZE + h.index() + 1, pageTotal,
+                e.name().getString(), e.coverNote().getString(), e.modeNames().size() > 1 ? e.modeName().getString() : "", state, lock, open.page() * WheelLayout.PAGE_SIZE + h.index() + 1, pageTotal,
                 open.page() + 1, layout.pageCount(), (key, args) -> Component.translatable(key, args).getString());
         out.add(NarratedElementType.TITLE, Component.literal(String.join(", ", lines)));
     }

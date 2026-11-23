@@ -305,13 +305,17 @@ final class WheelRenderer {
         boolean modes = e.modeNames().size() > 1;
         String where = modName(source) + (e.group() == net.ofatech.supernaturalbloodlines.core.wheel.PowerGroup.MAIN || f.model().groups(source).isEmpty() ? ""
                 : " · " + text("group." + e.group().name().toLowerCase(Locale.ROOT)));
-        WheelPanelText.Lines t = WheelPanelText.lines(font, font::width, w, p.y() + 49, rows - 6 * 10, WheelStrings.of(e.name()), where, text("kind." + e.kind().name().toLowerCase(Locale.ROOT)),
+        WheelPanelText.Lines t = WheelPanelText.lines(font, font::width, w, p.y() + 49, rows - 6 * 10, WheelStrings.of(e.name()), where, WheelStrings.of(e.coverNote()), text("kind." + e.kind().name().toLowerCase(Locale.ROOT)),
                 WheelDescriptions.of(e), modes ? text("panel.mode", e.state().mode() + 1, e.modeNames().size(), WheelStrings.of(e.modeName())) : "",
                 e.state().locked() ? reason(e.state().lock()) : "");
         g.drawString(font, WheelStrings.bold(t.name()), x, y, pal.ink(), false);
         y += 11;
         g.drawString(font, t.where(), x, y, pal.muted(), false);
         y += 12;
+        for (String line : t.cover()) {
+            g.drawString(font, line, x, y - 2, pal.muted(), false); // what else this power stands for (rule C), under its name
+            y += 10;
+        }
         UiKit.draw(g, f.kit(), Part.DIVIDER, x, y, w, 3);
         y += 6;
         g.drawString(font, WheelStrings.bold(t.kind()), x, y, pal.ink(), false);

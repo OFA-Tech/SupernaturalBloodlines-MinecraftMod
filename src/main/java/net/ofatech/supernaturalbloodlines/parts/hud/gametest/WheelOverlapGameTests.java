@@ -88,7 +88,160 @@ public final class WheelOverlapGameTests {
         } finally {
             WheelGate.setTableForTest(null);
             WheelClocks.setNowForTest(null);
+            HudConfig.WHEEL_STACK_GUARD_ENABLED.set(true);
+            HudConfig.WHEEL_DEDUP_ENABLED.set(true);
         }
+    }
+
+    private static final String SELF_REGEN = "tensura/tensura:self_regeneration";
+    private static final String ULTRA_REGEN = "tensura/tensura:ultraspeed_regeneration";
+
+    /** Switches a Tensura switch on the way its skill screen does, and counts it at the end of the tick. */
+    private static void switchOn(ServerPlayer p, String skill) {
+        RequestAbilityModeChangePacket.toggleAbilityPacket(id(skill)).toggleAbility(p);
+        WheelGate.settle(p);
+    }
+
+    private static void tickPlayer(ServerPlayer p, int ticks) {
+        for (int i = 0; i < ticks; i++) {
+            p.tickCount++;
+            WheelTestKit.tick(p);
+            // a player the tests make is a fake one, which the listener leaves alone: the gate's own tick
+            WheelGate.tick(p);
+        }
+    }
+
+    private static WheelEntry entryOf(ServerPlayer p, PowerRef ref) {
+        return WheelCatalogue.build(p).stream().filter(e -> e.ref().equals(ref)).findFirst().orElseThrow(() -> new IllegalStateException("not listed: " + ref));
+    }
+
+    /** A higher tier of a chain that is on is on for its group: the clock saves it as the first tier, so the check must look at the tier the player owns. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aHigherRegenerationTierThatIsOnKeepsVampireRegenOutPastTheCheck(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = ActionGameTests.vampire(h);
+            ResourceLocation regen = id("vampirism:regen");
+            unlock(p, regen);
+            WheelGate.setTableForTest(null);
+            WheelGate.resetForTest(p);
+            ManasSkillInstance ultra = WheelTestKit.learn(p, id("tensura:ultraspeed_regeneration"));
+            switchOn(p, "tensura:ultraspeed_regeneration");
+            h.assertTrue(ultra.isToggled(), "setup: the tier did not switch on");
+            if (!activeOf(p, "regeneration").equals(Optional.of(ref(SELF_REGEN).key()))) {
+                failWith(h, p, "the tier that is on is not the active side: " + WheelGate.clock(p));
+                return;
+            }
+            tickPlayer(p, 20);
+            if (!ultra.isToggled() || !activeOf(p, "regeneration").equals(Optional.of(ref(SELF_REGEN).key()))) {
+                failWith(h, p, "the check ended a tier that is still on: on=" + ultra.isToggled() + " " + WheelGate.clock(p));
+                return;
+            }
+            Optional<LockReason> refusal = WheelGate.check(p, new PowerRef(PowerSource.VAMPIRISM, regen));
+            theirKey(p, regen);
+            if (refusal.isEmpty() || refusal.get() != LockReason.GROUP_ACTIVE || ActionGameTests.active(p, regen)) {
+                failWith(h, p, "vampire regen was not kept out while ultraspeed regeneration is on: " + refusal + " active=" + ActionGameTests.active(p, regen));
+                return;
+            }
+            done(h, p);
+        });
+    }
+
+    /** The tier was switched on while the guard was off: the check finds it by the tier the player owns. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aHigherTierThatWasOnBeforeTheGuardIsFoundByTheCheck(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = ActionGameTests.vampire(h);
+            unlock(p, id("vampirism:regen"));
+            WheelGate.setTableForTest(null);
+            WheelGate.resetForTest(p);
+            ManasSkillInstance ultra = WheelTestKit.learn(p, id("tensura:ultraspeed_regeneration"));
+            HudConfig.WHEEL_STACK_GUARD_ENABLED.set(false);
+            try {
+                switchOn(p, "tensura:ultraspeed_regeneration");
+            } finally {
+                HudConfig.WHEEL_STACK_GUARD_ENABLED.set(true);
+            }
+            h.assertTrue(ultra.isToggled() && WheelGate.clock(p).isIdle(), "setup: the tier is not on, or the clock saw it");
+            WheelGate.reconcile(p);
+            if (!activeOf(p, "regeneration").equals(Optional.of(ref(SELF_REGEN).key()))) {
+                failWith(h, p, "the tier that is on was not found: " + WheelGate.clock(p));
+                return;
+            }
+            WheelGate.reconcile(p);
+            if (activeOf(p, "regeneration").isEmpty()) {
+                failWith(h, p, "the second check ended it: " + WheelGate.clock(p));
+                return;
+            }
+            done(h, p);
+        });
+    }
+
+    /** Vampirism's vision is the vampire's: for a hunter it is not an owned main side, so the group takes the cooldown of the side that was used. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void visionIsOwnedByTheVampireFactionOnly(GameTestHelper helper) {
+        guarded(helper, h -> {
+            int[] left = new int[2];
+            for (int who = 0; who < 2; who++) {
+                ServerPlayer p = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.create(h);
+                h.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(who == 0 ? de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION
+                        : de.teamlapen.vampirism.api.VReference.HUNTER_FACTION, 1), "setup: could not set the faction");
+                WheelGate.setTableForTest(tableOf("g", "vampirism/vampirism:vision", COERCION));
+                WheelGate.resetForTest(p);
+                ManasSkillInstance coercion = WheelTestKit.learn(p, id("tensura:coercion"));
+                TensuraStorages.getAbilityFrom(p).setActivePreset(0);
+                TensuraStorages.getAbilityFrom(p).setAbilitySlot(0, 0, coercion.getSkill(), 0);
+                h.assertTrue(SkillAPI.getSkillsFrom(p).startHoldSkill(coercion, 0, 0), "setup: the press was refused");
+                coercion.setCoolDown(10, 0);
+                WheelGate.settle(p);
+                left[who] = groupLeft(p, "g");
+            }
+            if (left[0] != 0 || left[1] != 200) {
+                failWith(h, ActionGameTests.vampire(h), "the group cooldown is " + left[0] + " for a vampire (vision has none, so none) and " + left[1] + " for a hunter (the side used has 200)");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Rule C: the side that is on stays the shown entry, and the entry says what else it covers, so nothing vanishes without a hint. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theShownEntryNamesTheSidesItCovers(GameTestHelper helper) {
+        guarded(helper, h -> {
+            ServerPlayer p = ActionGameTests.vampire(h);
+            ResourceLocation regen = id("vampirism:regen");
+            unlock(p, regen);
+            WheelGate.setTableForTest(null);
+            WheelGate.resetForTest(p);
+            WheelTestKit.learn(p, id("tensura:ultraspeed_regeneration"));
+            PowerRef vampireRegen = new PowerRef(PowerSource.VAMPIRISM, regen);
+            PowerRef ultra = ref(ULTRA_REGEN);
+            // the names of the two entries, from the list with nothing hidden
+            HudConfig.WHEEL_DEDUP_ENABLED.set(false);
+            String vampireName;
+            String ultraName;
+            try {
+                vampireName = entryOf(p, vampireRegen).name().getString();
+                ultraName = entryOf(p, ultra).name().getString();
+            } finally {
+                HudConfig.WHEEL_DEDUP_ENABLED.set(true);
+            }
+            // nothing on: the main side stays and says it covers the Tensura tier
+            WheelEntry main = entryOf(p, vampireRegen);
+            String expected = "Also covers: Tensura " + ultraName;
+            if (!main.coverNote().getString().equals(expected) || WheelCatalogue.build(p).stream().anyMatch(e -> e.ref().equals(ultra))) {
+                failWith(h, p, "the main side says '" + main.coverNote().getString() + "', expected '" + expected + "'");
+                return;
+            }
+            // the Tensura tier is on: it is the one shown, and says the other side is locked while it is on
+            switchOn(p, "tensura:ultraspeed_regeneration");
+            WheelEntry shown = entryOf(p, ultra);
+            expected = "Also covers: Vampirism " + vampireName + ", locked while this is on";
+            if (!shown.coverNote().getString().equals(expected) || WheelCatalogue.build(p).stream().anyMatch(e -> e.ref().equals(vampireRegen))) {
+                failWith(h, p, "the side that is on says '" + shown.coverNote().getString() + "', expected '" + expected + "'");
+                return;
+            }
+            done(h, p);
+        });
     }
 
     private static PowerRef ref(String key) {
