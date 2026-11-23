@@ -388,8 +388,11 @@ public final class MorphGameTests {
             BeastEntity b = changed(helper, rig);
             run(b, 1);
             Vec3 at = b.position();
-            b.setDeltaMovement(0.4, 0.0, 0.4);
-            run(b, ShiftRules.SHIFT_TICKS - 2);
+            for (int i = 0; i < ShiftRules.SHIFT_TICKS - 2; i++) {
+                b.setDeltaMovement(0.4, 0.0, 0.4); // pushed again every tick (a pack of hits, a gust): only the hold keeps it where it is
+                run(b, 1);
+                helper.assertTrue(Math.hypot(b.getDeltaMovement().x, b.getDeltaMovement().z) < 0.01, "the push is still in the Beast after tick " + b.shiftTicks() + ": " + b.getDeltaMovement());
+            }
             helper.assertTrue(Math.hypot(b.getX() - at.x, b.getZ() - at.z) < 0.5, "the Beast moved " + Math.hypot(b.getX() - at.x, b.getZ() - at.z) + " blocks while it changed");
         } finally {
             BeastEntity.observeSwap(null);
