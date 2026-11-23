@@ -7,7 +7,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.OwnableEntity;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.ofatech.supernaturalbloodlines.core.bloodline.NpcOriginal;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.core.boss.DealRules;
@@ -54,7 +53,7 @@ public final class Deals {
         }
         if (DealRules.offers(until, false, elijah.isDesiccated())) {
             DealOfferPayload offer = new DealOfferPayload(elijah.getId(), BossesConfig.elijahOathDays(), ids());
-            PacketDistributor.sendToPlayer(p, offer);
+            net.ofatech.supernaturalbloodlines.parts.bosses.director.BossNet.send(p, offer);
             elijah.listenFor(LISTEN_TICKS, p.getUUID());
             elijah.getLookControl().setLookAt(p);
             return offer;

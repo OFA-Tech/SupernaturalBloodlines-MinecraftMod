@@ -16,6 +16,7 @@ import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossIndex;
  */
 public abstract class BossNpc extends PathfinderMob {
     private static final int PERIOD = 10;
+    private int lastBarKey = -1;
 
     protected BossNpc(EntityType<? extends BossNpc> type, Level level) {
         super(type, level);
@@ -24,6 +25,17 @@ public abstract class BossNpc extends PathfinderMob {
     }
 
     public abstract BossId boss();
+
+    /** The form indicator of this boss's bar: no chips unless the boss has forms. */
+    public net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look barLook() {
+        return net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look.NONE;
+    }
+
+    /** What the bar shows of this boss besides its health: when it changes the bar is updated at once and not at the next pass. */
+    private int barKey() {
+        net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look look = barLook();
+        return look.set().ordinal() * 8 + look.active();
+    }
 
     @Override
     public boolean removeWhenFarAway(double distance) {
@@ -38,6 +50,14 @@ public abstract class BossNpc extends PathfinderMob {
     @Override
     public void tick() {
         super.tick();
+        if (!level().isClientSide) {
+            int key = barKey();
+            boolean looked = key != lastBarKey;
+            lastBarKey = key;
+            if (looked && tickCount % PERIOD != 0 && isAlive() && hasBar()) {
+                BossBars.update(this); // a shift begins or ends: the chip moves now, not up to half a second later
+            }
+        }
         if (!level().isClientSide && tickCount % PERIOD == 0 && isAlive()) {
             if (stale()) {
                 discard(); // a body of a story that has moved on (the one the index called lost, found again): it is not the boss any more

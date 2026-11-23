@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/OFA-Tech/SupernaturalBloodlines-MinecraftMod/main/docs/store/readme-header.png" width="672" alt="Supernatural Bloodlines"></p>
+
 # Supernatural Bloodlines
 
 **Supernatural Bloodlines** links **Tensura: Reincarnated**, **Enchanted**, **Vampirism** and **Werewolves** into one world, and adds the supernatural species and bloodlines that grow between them: Originals, hybrids, witches, werewolf packs, hunters, sirelines, rings and wards.

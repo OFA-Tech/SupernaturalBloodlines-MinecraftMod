@@ -12,6 +12,10 @@ final class DevBook {
      * which entries are sealed); {@code -Dsupernaturalbloodlines.devshots.learn=<lore|rite|all>} teaches that first, as the command does.
      */
     static void open(String spec) {
+        if (spec.equals("modlist")) {
+            DevModList.open(); // not a book: NeoForge's mod list (phase 8, the mod icon)
+            return;
+        }
         learn();
         String path = spec.endsWith("_last") ? spec.substring(0, spec.length() - 5) : spec;
         if (path.startsWith("category-")) {

@@ -1,0 +1,19 @@
+{
+    "neoforge:conditions": [
+        { "type": "supernaturalbloodlines:part_enabled", "part": "artifacts" },
+        { "type": "supernaturalbloodlines:part_enabled", "part": "species" }
+    ],
+    "items": [
+        { "id": "supernaturalbloodlines:white_oak_ash_dagger", "count": 1 },
+        { "id": "supernaturalbloodlines:white_oak_ash", "count": 2 },
+        { "id": "minecraft:echo_shard", "count": 1 }
+    ],
+    "shapes": {
+        "enchanted:medium_circle": "enchanted:ritual_chalk"
+    },
+    "power": 20000,
+    "factory": {
+        "type": "enchanted:create_item",
+        "items": [ { "id": "supernaturalbloodlines:cursed_white_oak_ash_dagger", "count": 1 } ]
+    }
+}

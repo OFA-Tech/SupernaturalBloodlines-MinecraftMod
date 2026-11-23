@@ -60,6 +60,7 @@ public final class RiteUnlockTable {
         for (String tier : List.of("common", "extra", "unique", "ultimate")) {
             kind(m, "mastery_" + tier, RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         }
+        kind(m, "cursed_dagger", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         lore(m, "rite_of_cloaking", KOL);
         lore(m, "rite_of_linking", ESTHER);
         both(m, "rite_of_severance", Set.of(RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID), ESTHER);

@@ -153,6 +153,20 @@ class RiteUnlocksDataTest {
         assertEquals("Unlocked by becoming a vampire or a witch.", RitesBook.hint(lang, "ward_of_daylight"));
     }
 
+    /** Plan 18g: three kinds and no lore are named in the title, not "several kinds"; and the dagger's words say what the rules say. */
+    @Test
+    void theCursedDaggerNamesItsKindsAndTellsTheTruth() throws IOException {
+        JsonObject lang = RitesBook.lang(ROOT);
+        assertEquals("??? \u00b7 witch, siphoner or tribrid", RitesBook.label(lang, "cursed_dagger"));
+        String d = RitesBook.DESC + "cursed_dagger.";
+        assertTrue(lang.get(d + "1").getAsString().contains("the plain one lodges only in an Original"), lang.get(d + "1").getAsString());
+        assertFalse(lang.get(d + "1").getAsString().contains("no longer"), "the book says what the plain dagger does, not what it used to do ('no longer' is a migration word)");
+        assertTrue(lang.get(d + "3").getAsString().contains("A miss looks the same for everyone the dagger does not lodge in; a lodge tells only what the rules make public."),
+                lang.get(d + "3").getAsString());
+        assertEquals("Lodges in an Original", lang.get("tooltip.supernaturalbloodlines.white_oak_ash_dagger").getAsString());
+        assertEquals("Lodges in an Original or an Original hybrid", lang.get("tooltip.supernaturalbloodlines.cursed_white_oak_ash_dagger").getAsString());
+    }
+
     @Test
     void aRiteWithTwoRoutesSaysBoth() throws IOException {
         JsonObject lang = RitesBook.lang(ROOT);

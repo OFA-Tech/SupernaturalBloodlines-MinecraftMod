@@ -18,6 +18,10 @@ public final class Motion {
     public static final int UNLOCK = 12;
     /** Phase 6: a boss bar's health easing. */
     public static final int BOSS_HEALTH = 10;
+    /** Phase 6: a form chip of a boss bar being lit. */
+    public static final int CHIP_SWAP = 4;
+    /** Phase 6: the boss row's card changing to another boss (4 ticks, 200 ms). */
+    public static final int BOSS_FOCUS = 4;
     /** Phase 5: tooltips appear after a delay and fade in. */
     public static final int TOOLTIP_DELAY = 10;
     public static final int TOOLTIP_FADE = 3;

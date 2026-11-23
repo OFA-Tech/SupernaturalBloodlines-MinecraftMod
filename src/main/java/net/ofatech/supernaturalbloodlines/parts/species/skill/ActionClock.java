@@ -19,10 +19,15 @@ public final class ActionClock {
 
     /** Starts the cooldown and tells the HUD slot. */
     public static void start(ServerPlayer p, ResourceLocation action, int ticks) {
-        Map<String, Long> next = new HashMap<>(p.getData(SpeciesRegistries.ACTION_READY));
-        next.put(action.toString(), p.level().getGameTime() + ticks);
-        p.setData(SpeciesRegistries.ACTION_READY, next);
+        startSilent(p, action, ticks);
         ExtraActions.cooldownStarted(p, action, ticks);
+    }
+
+    /** The same clock for something that is not a HUD action (a limit on an effect): nothing is told to a slot. */
+    public static void startSilent(ServerPlayer p, ResourceLocation key, int ticks) {
+        Map<String, Long> next = new HashMap<>(p.getData(SpeciesRegistries.ACTION_READY));
+        next.put(key.toString(), p.level().getGameTime() + ticks);
+        p.setData(SpeciesRegistries.ACTION_READY, next);
     }
 
     /** How many times this action was used in the current game day (a day is 24000 ticks). */
