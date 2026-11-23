@@ -792,24 +792,46 @@ public final class TargetedSkillGameTests {
         }
         TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-8");
         ServerPlayer vamp = target(helper, Species.NONE, true);
-        try {
+        boolean[] caught = new boolean[1];
+        // Vampirism does not catch a rip_heart blow by itself in this setup; what it does for another blow (cancel the death, start its dying state) is done by hand,
+        // so the heart-rip meets a vampire whose death was caught only now
+        java.util.function.Consumer<net.neoforged.neoforge.event.entity.living.LivingDeathEvent> watch = e -> {
+            if (e.getEntity() == vamp && !caught[0]) {
+                caught[0] = true;
+                e.setCanceled(true);
+                vamp.setHealth(1.0f);
+                try {
+                    var vampire = VampirismAPI.vampirePlayer(vamp);
+                    var setTimer = vampire.getClass().getDeclaredMethod("setDBNOTimer", int.class);
+                    setTimer.setAccessible(true);
+                    setTimer.invoke(vampire, 200);
+                } catch (ReflectiveOperationException ex) {
+                    throw new IllegalStateException(ex);
+                }
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, false, net.neoforged.neoforge.event.entity.living.LivingDeathEvent.class, watch);        try {
             vamp.setHealth(5.0f);
             helper.assertTrue(!VampirismAPI.vampirePlayer(vamp).isDBNO(), "setup: already in the dying state");
             helper.assertTrue(RipHeartAction.INSTANCE.trigger(user, vamp) == null, "refused");
+            helper.assertTrue(caught[0], "setup: the death was not caught, so this test would not reach the hotspot");
             helper.runAfterDelay(2, () -> {
                 try {
                     helper.assertTrue(!vamp.isAlive(), "the vampire was put in the dying state and not finished");
                 } finally {
+                    NeoForge.EVENT_BUS.unregister(watch);
+                    OriginalRulesProbe.endDying(vamp);
                     clean(user, vamp);
                 }
                 helper.succeed();
             });
         } catch (RuntimeException ex) {
+            NeoForge.EVENT_BUS.unregister(watch);
+            OriginalRulesProbe.endDying(vamp);
             clean(user, vamp);
             throw ex;
         }
     }
-
     @GameTest(template = "empty", templateNamespace = NS)
     public static void neckSnapOnAPlayerInVampirismsDyingStateIsRefused(GameTestHelper helper) {
         if (skipped(helper)) {
