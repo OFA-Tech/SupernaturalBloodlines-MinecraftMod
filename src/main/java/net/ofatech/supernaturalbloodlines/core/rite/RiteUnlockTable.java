@@ -64,6 +64,8 @@ public final class RiteUnlockTable {
         both(m, "rite_of_the_valet_pike", Set.of(RiteKind.WITCH), BEAST);
         lore(m, "immortality", OLD_RITES);
         both(m, "ward_of_return", Set.of(RiteKind.WITCH), OLD_RITES);
+        kind(m, "rite_of_the_ward", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
+        kind(m, "rite_of_the_door_ward", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         lore(m, "curse_magicule_drain", CURSES);
         lore(m, "curse_skill_seal", CURSES);
         GATED = java.util.Collections.unmodifiableMap(m);

@@ -70,6 +70,13 @@ public final class AdminEntries {
         all.add(SettingEntry.of(HUD_FILE, "hud", "mixins.hide_in_controls_mixin", BOOL).hide(RESERVED));
 
         all.add(SettingEntry.of(ARTIFACTS_FILE, "artifacts", "artifacts.compass_doppelganger_range", INT));
+        for (String ward : new String[] {"ward_enabled", "ward_falls_on_owner_death", "ward_affects_mobs", "ward_blocks_werewolves", "ward_expel_on_revoke",
+                "ward_spoken_invites", "ward_door_enabled", "ward_alert_owner", "ward_use_claims"}) {
+            all.add(SettingEntry.of(ARTIFACTS_FILE, "artifacts", "artifacts." + ward, BOOL));
+        }
+        for (String ward : new String[] {"ward_radius", "ward_max_per_owner", "ward_max_invites", "ward_expel_seconds"}) {
+            all.add(SettingEntry.of(ARTIFACTS_FILE, "artifacts", "artifacts." + ward, INT));
+        }
 
         species(all, "max_originals_per_world", INT);
         species(all, "transition_ticks", INT);

@@ -21,6 +21,12 @@ public final class WardRules {
             return x >= cx - half && x < cx + half + 1 && y >= cy - half && y < cy + half + 1 && z >= cz - half && z < cz + half + 1;
         }
 
+        /** Inside the box grown by {@code margin} blocks on every side (the owner's voice carries that far, R305). */
+        public boolean near(double x, double y, double z, double margin) {
+            return x >= cx - half - margin && x < cx + half + 1 + margin && y >= cy - half - margin && y < cy + half + 1 + margin
+                    && z >= cz - half - margin && z < cz + half + 1 + margin;
+        }
+
         double minX() {
             return cx - half;
         }

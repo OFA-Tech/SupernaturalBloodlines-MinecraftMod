@@ -46,6 +46,14 @@ class WardSpeechTest {
     }
 
     @Test
+    void aLookedAtPlayerExactlyAtEightBlocksCountsAndAtFiveNearCounts() {
+        UUID eight = UUID.randomUUID();
+        UUID five = UUID.randomUUID();
+        assertEquals(Optional.of(eight), WardSpeech.pick(List.of(new WardSpeech.Candidate(eight, 8.0, true))));
+        assertEquals(Optional.of(five), WardSpeech.pick(List.of(new WardSpeech.Candidate(five, 5.0, false))));
+    }
+
+    @Test
     void theNearestOfSeveralLookedAtIsPicked() {
         UUID a = UUID.randomUUID();
         UUID b = UUID.randomUUID();

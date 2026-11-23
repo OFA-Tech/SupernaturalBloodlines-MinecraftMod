@@ -61,7 +61,10 @@ final class RitesBook {
                     List.of("rite_of_lineage_reveal", "rite_of_lineage_awaken", "rite_of_the_moon", "silver_moon", "hybrid_blood", "werewolf_brother", "alpha_trial", "rite_of_the_frequency")),
             new Cat("witches", "Witchcraft", "minecraft:amethyst_shard",
                     "Rites a witch works, or that call witchcraft awake.",
-                    List.of("ancestral_calling", "rite_of_revelation", "doppelganger_blood", "rite_of_severance", "rite_of_cloaking", "rite_of_linking", "rite_of_the_valet_pike")),
+                    List.of("ancestral_calling", "rite_of_revelation", "doppelganger_blood", "rite_of_severance", "rite_of_cloaking", "rite_of_linking", "rite_of_the_valet_pike", "rite_of_the_ward")),
+            new Cat("homes", "Homes", "minecraft:iron_door",
+                    "Rites that keep an uninvited vampire out of a door.",
+                    List.of("rite_of_the_door_ward")),
             new Cat("lines", "Lines of the Originals", "minecraft:white_dye",
                     "Rites that touch the line of an Original.",
                     List.of("rite_of_the_broken_line", "rite_of_the_imprisoned_original", "rite_of_the_cure")),
@@ -89,7 +92,7 @@ final class RitesBook {
             Map.entry("rite_of_the_moon", "minecraft:clock"), Map.entry("silver_moon", "minecraft:iron_ingot"),
             Map.entry("vampire_compass", "minecraft:compass"), Map.entry("ward_of_daylight", "minecraft:sunflower"),
             Map.entry("ward_of_return", "minecraft:totem_of_undying"), Map.entry("ward_of_the_moon", "minecraft:amethyst_shard"),
-            Map.entry("werewolf_brother", "minecraft:beef"));
+            Map.entry("werewolf_brother", "minecraft:beef"), Map.entry("rite_of_the_ward", "minecraft:shield"), Map.entry("rite_of_the_door_ward", "minecraft:iron_door"));
 
     /** The items a rite makes: looking one up in the book opens the rite. */
     static final Map<String, String> MAKES = Map.of(
@@ -130,7 +133,8 @@ final class RitesBook {
             Map.entry("rite_of_the_broken_line", "The Broken Line"), Map.entry("cleansing_blood", "Cleansing Blood"),
             Map.entry("silver_moon", "The Silver Moon"), Map.entry("original_blood", "Original's Blood"),
             Map.entry("blood_offering", "Blood Offering"), Map.entry("hybrid_blood", "Hybrid's Blood"),
-            Map.entry("rite_of_the_frequency", "The Frequency"), Map.entry("rite_of_the_valet_pike", "The Valet Pike"));
+            Map.entry("rite_of_the_frequency", "The Frequency"), Map.entry("rite_of_the_valet_pike", "The Valet Pike"),
+            Map.entry("rite_of_the_door_ward", "The Door Ward"));
 
     static String header(String path, String name) {
         return width(name) <= HEADER_WIDTH ? name : SHORT.getOrDefault(path, name);

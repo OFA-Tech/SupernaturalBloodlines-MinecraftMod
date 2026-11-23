@@ -13,7 +13,9 @@
     "supernaturalbloodlines/sealed/rite_of_linking",
     "supernaturalbloodlines/rites/rite_of_linking",
     "supernaturalbloodlines/sealed/rite_of_the_valet_pike",
-    "supernaturalbloodlines/rites/rite_of_the_valet_pike"
+    "supernaturalbloodlines/rites/rite_of_the_valet_pike",
+    "supernaturalbloodlines/sealed/rite_of_the_ward",
+    "supernaturalbloodlines/rites/rite_of_the_ward"
   ],
   "icon": {
     "count": 1,

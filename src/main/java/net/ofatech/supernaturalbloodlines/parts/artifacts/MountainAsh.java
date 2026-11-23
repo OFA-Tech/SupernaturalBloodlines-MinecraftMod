@@ -85,6 +85,11 @@ public final class MountainAsh {
         MountainAshRules.ashwarden(entity);
     }
 
+    /** The push of Ashwarden for the ward (R303): {@code away} is a flat unit vector. */
+    public static void pushBack(net.minecraft.world.entity.LivingEntity entity, net.minecraft.world.phys.Vec3 away) {
+        MountainAshRules.pushBack(entity, away);
+    }
+
     /** For tests: lets a player the player list does not have (a fake player) own lines; unpin with {@link #unpinOwner}. */
     @org.jetbrains.annotations.VisibleForTesting
     public static void pinOwner(net.minecraft.world.entity.player.Player player) {

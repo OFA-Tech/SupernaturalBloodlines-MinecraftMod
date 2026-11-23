@@ -1,0 +1,38 @@
+{
+  "title": "Rite of the Ward",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:shield"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/rite_of_the_ward",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, ritual chalk.\n\nRaises a ward on the altar: a vampire who has not been invited cannot stay inside it. Whoever sneaks on the centre owns it (the caster if nobody stands there).",
+          "header": "Rite of the Ward"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "It turns away every kind of vampire, werewolves not. Only a witch, siphoner, heretic or tribrid can work it, and a vampire cannot own one. It falls if its owner dies or becomes a vampire.",
+          "header": "Rite of the Ward"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:rite_of_the_ward",
+          "header": "Rite of the Ward"
+        }
+      ]
+    }
+  ]
+}

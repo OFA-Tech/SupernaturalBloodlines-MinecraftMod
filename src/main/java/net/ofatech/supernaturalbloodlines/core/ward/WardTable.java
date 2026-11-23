@@ -95,6 +95,18 @@ public final class WardTable {
         return new ArrayList<>(wards.values());
     }
 
+    public boolean isEmpty() {
+        return wards.isEmpty();
+    }
+
+    /** The standing wards of one dimension (what the enforcement tick reads; an empty list costs nothing). */
+    public List<Ward> standingIn(String dimension) {
+        if (wards.isEmpty()) {
+            return List.of();
+        }
+        return wards.values().stream().filter(w -> !w.fallen() && w.dimension().equals(dimension)).toList();
+    }
+
     public Optional<Ward> get(String id) {
         return Optional.ofNullable(wards.get(id));
     }

@@ -47,6 +47,16 @@ class WardRulesTest {
     }
 
     @Test
+    void nearMeansInsideTheBoxGrownByTheMargin() {
+        WardRules.Box b = new WardRules.Box(0, 64, 0, 2);
+        assertTrue(b.near(7.9, 64, 0, 5));
+        assertFalse(b.near(8.1, 64, 0, 5));
+        assertTrue(b.near(-6.9, 64, 0, 5));
+        assertFalse(b.near(0, 72.1, 0, 5));
+        assertTrue(b.near(0, 64, 0, 0), "inside is near at no margin");
+    }
+
+    @Test
     void theNearestFaceIsTheWayOut() {
         WardRules.Box b = new WardRules.Box(0, 64, 0, 10);
         WardRules.Dir west = WardRules.pushDirection(b, -9.0, 0.5);
