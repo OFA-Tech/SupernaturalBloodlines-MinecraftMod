@@ -22,6 +22,16 @@
    "use": "gothic title font (Grimoire, Blood Moon), cells of 12 x 16"
   },
   {
+   "path": "assets/supernaturalbloodlines/textures/mob_effect/snapped.png",
+   "sprite": null,
+   "w": 18,
+   "h": 18,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "mob effect icon, 18 px"
+  },
+  {
    "path": "boss/beast_beast.png",
    "sprite": null,
    "w": 24,
@@ -172,6 +182,46 @@
    "use": "boss portrait, 24 x 24"
   },
   {
+   "path": "hud/bottle_blood.png",
+   "sprite": null,
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "HUD action texture (the Loadout tab), 16 px"
+  },
+  {
+   "path": "hud/hybrid_leap.png",
+   "sprite": null,
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "HUD action texture (the Loadout tab), 16 px"
+  },
+  {
+   "path": "hud/neck_snap.png",
+   "sprite": null,
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "HUD action texture (the Loadout tab), 16 px"
+  },
+  {
+   "path": "hud/rip_heart.png",
+   "sprite": null,
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "HUD action texture (the Loadout tab), 16 px"
+  },
+  {
    "path": "logo.png",
    "sprite": null,
    "w": 64,
@@ -270,6 +320,16 @@
    "slice": null,
    "glow": false,
    "use": "motifs icon, 16 px"
+  },
+  {
+   "path": "sprites/icons/16/bottle_blood.png",
+   "sprite": "icons/16/bottle_blood",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 16 px"
   },
   {
    "path": "sprites/icons/16/check.png",
@@ -380,6 +440,16 @@
    "slice": null,
    "glow": false,
    "use": "pages icon, 16 px"
+  },
+  {
+   "path": "sprites/icons/16/hybrid_leap.png",
+   "sprite": "icons/16/hybrid_leap",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 16 px"
   },
   {
    "path": "sprites/icons/16/info.png",
@@ -532,6 +602,16 @@
    "use": "actions icon, 16 px"
   },
   {
+   "path": "sprites/icons/16/neck_snap.png",
+   "sprite": "icons/16/neck_snap",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 16 px"
+  },
+  {
    "path": "sprites/icons/16/pack.png",
    "sprite": "icons/16/pack",
    "w": 16,
@@ -622,6 +702,16 @@
    "use": "ranks icon, 16 px"
   },
   {
+   "path": "sprites/icons/16/rip_heart.png",
+   "sprite": "icons/16/rip_heart",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 16 px"
+  },
+  {
    "path": "sprites/icons/16/rites.png",
    "sprite": "icons/16/rites",
    "w": 16,
@@ -630,6 +720,26 @@
    "slice": null,
    "glow": false,
    "use": "pages icon, 16 px"
+  },
+  {
+   "path": "sprites/icons/16/s-aug-1.png",
+   "sprite": "icons/16/s-aug-1",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "sprites/icons/16/s-aug-2.png",
+   "sprite": "icons/16/s-aug-2",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
   },
   {
    "path": "sprites/icons/16/s-hum-1.png",
@@ -724,6 +834,16 @@
   {
    "path": "sprites/icons/16/s-hyb-2.png",
    "sprite": "icons/16/s-hyb-2",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "sprites/icons/16/s-hyb-3.png",
+   "sprite": "icons/16/s-hyb-3",
    "w": 16,
    "h": 16,
    "scaling": "stretch",
@@ -884,6 +1004,26 @@
   {
    "path": "sprites/icons/16/s-vam-7.png",
    "sprite": "icons/16/s-vam-7",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "sprites/icons/16/s-vam-8.png",
+   "sprite": "icons/16/s-vam-8",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 16 px"
+  },
+  {
+   "path": "sprites/icons/16/s-vam-9.png",
+   "sprite": "icons/16/s-vam-9",
    "w": 16,
    "h": 16,
    "scaling": "stretch",
@@ -1422,6 +1562,16 @@
    "use": "motifs icon, 32 px"
   },
   {
+   "path": "sprites/icons/32/bottle_blood.png",
+   "sprite": "icons/32/bottle_blood",
+   "w": 32,
+   "h": 32,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 32 px"
+  },
+  {
    "path": "sprites/icons/32/check.png",
    "sprite": "icons/32/check",
    "w": 32,
@@ -1530,6 +1680,16 @@
    "slice": null,
    "glow": false,
    "use": "pages icon, 32 px"
+  },
+  {
+   "path": "sprites/icons/32/hybrid_leap.png",
+   "sprite": "icons/32/hybrid_leap",
+   "w": 32,
+   "h": 32,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 32 px"
   },
   {
    "path": "sprites/icons/32/info.png",
@@ -1682,6 +1842,16 @@
    "use": "actions icon, 32 px"
   },
   {
+   "path": "sprites/icons/32/neck_snap.png",
+   "sprite": "icons/32/neck_snap",
+   "w": 32,
+   "h": 32,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 32 px"
+  },
+  {
    "path": "sprites/icons/32/pack.png",
    "sprite": "icons/32/pack",
    "w": 32,
@@ -1772,6 +1942,16 @@
    "use": "ranks icon, 32 px"
   },
   {
+   "path": "sprites/icons/32/rip_heart.png",
+   "sprite": "icons/32/rip_heart",
+   "w": 32,
+   "h": 32,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "actions icon, 32 px"
+  },
+  {
    "path": "sprites/icons/32/rites.png",
    "sprite": "icons/32/rites",
    "w": 32,
@@ -1780,6 +1960,26 @@
    "slice": null,
    "glow": false,
    "use": "pages icon, 32 px"
+  },
+  {
+   "path": "sprites/icons/32/s-aug-1.png",
+   "sprite": "icons/32/s-aug-1",
+   "w": 32,
+   "h": 32,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "sprites/icons/32/s-aug-2.png",
+   "sprite": "icons/32/s-aug-2",
+   "w": 32,
+   "h": 32,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
   },
   {
    "path": "sprites/icons/32/s-hum-1.png",
@@ -1874,6 +2074,16 @@
   {
    "path": "sprites/icons/32/s-hyb-2.png",
    "sprite": "icons/32/s-hyb-2",
+   "w": 32,
+   "h": 32,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "sprites/icons/32/s-hyb-3.png",
+   "sprite": "icons/32/s-hyb-3",
    "w": 32,
    "h": 32,
    "scaling": "stretch",
@@ -2034,6 +2244,26 @@
   {
    "path": "sprites/icons/32/s-vam-7.png",
    "sprite": "icons/32/s-vam-7",
+   "w": 32,
+   "h": 32,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "sprites/icons/32/s-vam-8.png",
+   "sprite": "icons/32/s-vam-8",
+   "w": 32,
+   "h": 32,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "skills icon, 32 px"
+  },
+  {
+   "path": "sprites/icons/32/s-vam-9.png",
+   "sprite": "icons/32/s-vam-9",
    "w": 32,
    "h": 32,
    "scaling": "stretch",
@@ -2480,6 +2710,76 @@
    "slice": null,
    "glow": false,
    "use": "actions icon, 32 px"
+  },
+  {
+   "path": "sprites/icons/hud/alpha_roar.png",
+   "sprite": "icons/hud/alpha_roar",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot icon (pale outline), 16 px"
+  },
+  {
+   "path": "sprites/icons/hud/bite.png",
+   "sprite": "icons/hud/bite",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot icon (pale outline), 16 px"
+  },
+  {
+   "path": "sprites/icons/hud/bottle_blood.png",
+   "sprite": "icons/hud/bottle_blood",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot icon (pale outline), 16 px"
+  },
+  {
+   "path": "sprites/icons/hud/hybrid_leap.png",
+   "sprite": "icons/hud/hybrid_leap",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot icon (pale outline), 16 px"
+  },
+  {
+   "path": "sprites/icons/hud/neck_snap.png",
+   "sprite": "icons/hud/neck_snap",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot icon (pale outline), 16 px"
+  },
+  {
+   "path": "sprites/icons/hud/rip_heart.png",
+   "sprite": "icons/hud/rip_heart",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot icon (pale outline), 16 px"
+  },
+  {
+   "path": "sprites/icons/hud/unknown.png",
+   "sprite": "icons/hud/unknown",
+   "w": 16,
+   "h": 16,
+   "scaling": "stretch",
+   "slice": null,
+   "glow": false,
+   "use": "HUD slot icon (pale outline), 16 px"
   },
   {
    "path": "sprites/kit/bloodmoon/bar_fill.png",
