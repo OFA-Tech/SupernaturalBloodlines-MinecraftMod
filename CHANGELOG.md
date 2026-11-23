@@ -18,7 +18,13 @@
 
 ### Migration
 - No existing player changes. Rolled back to an older build the skill stays in the skills list, dormant.
-- The Hybrid Leap's icons are placeholders: a letter tile for the slot and the Hybrid's own second-skill art for the tree.
+`n## Unreleased (art: the plan 18 icons)
+
+### Changed
+- **Rip Heart, Neck Snap, Bottle my blood, Garlic Ward and Blessed Skin have their own pictures** (the heart in a clawed hand, a head knocked off its neck, an open bottle filling with blood, a garlic bulb behind a shield, holy water under a halo) instead of a letter on a tile, the unknown rune or another skill's icon. One picture for a skill and its HUD action, drawn at 32 px for the hub and at 16 px for the slots (with the pale outline of the other slot icons). Hybrid Leap's picture (`s-hyb-3`, `hybrid_leap`) is in the kit for plan 18e.
+- **Wes's Syringe** has its own item picture, and in the hand it is that picture (it was the bottle of Hybrid's Blood). The **Snapped** effect has its own icon (it was Shocked's).
+- The icons come from `docs/superpowers/design/ui-overhaul/phase2/src/icons.py` (`build.py icons`), which now also writes the HUD's pale-outlined copies; the contact sheet is `docs/superpowers/design/art-icons/contact-sheet.png`.
+
 ## Unreleased (plan 18d: Rip Heart and Neck Snap)
 
 ### Added
