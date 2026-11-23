@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/store/readme-header.png" width="672" alt="Supernatural Bloodlines: a blood drop with the moon cut in, inside a red corona"></p>
+
 # Supernatural Bloodlines
 
 A NeoForge 1.21.1 mod that links **Tensura: Reincarnated**, **Enchanted**, **Vampirism** and **Werewolves**, and adds supernatural species and bloodlines inspired by vampire and werewolf TV shows.
