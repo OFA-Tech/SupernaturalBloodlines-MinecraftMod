@@ -1,0 +1,186 @@
+mysticism:amped_guitar_wolf | Amped Guitar Wolf
+mysticism:ant | Ant
+mysticism:antumbra_spirit_wolf | Antumbra Spirit Wolf
+mysticism:arch_angel | Arch Angel
+mysticism:arch_doll | Arch Doll
+mysticism:arch_fallen | Arch Fallen
+mysticism:army_wasp | Army Wasp
+mysticism:army_wasp_insectar | Army Wasp Insectar
+mysticism:army_wasp_savant | Army Wasp Savant
+mysticism:ascended | Ascended
+mysticism:attuned_wyrm | Attuned Wyrm
+mysticism:beetle | Beetle
+mysticism:black_fang | Black Fang
+mysticism:blazing_scorch_wolf | Blazing Scorch Wolf
+mysticism:blue_centipede | Blue Centipede
+mysticism:blue_centipede_insectar | Blue Centipede Insectar
+mysticism:blue_centipede_savant | Blue Centipede Savant
+mysticism:blue_fang | Blue Fang
+mysticism:bound_enlightenment | Bound Enlightenment
+mysticism:brown_fang | Brown Fang
+mysticism:centipede | Centipede
+mysticism:chaos_doll | Chaos Doll
+mysticism:chaos_metalloid | Chaos Metalloid
+mysticism:charged_perforator | Charged Perforator
+mysticism:cherub | Cherub
+mysticism:corrosion_soul_insect | Corrosion Soul Insect
+mysticism:daemon_doll | Daemon Doll
+mysticism:darkness_fang | Darkness Fang
+mysticism:devil_doll | Devil Doll
+mysticism:direwolf | Direwolf
+mysticism:dissonance_deity | Dissonance Deity
+mysticism:divine_army_wasp | Divine Army Wasp
+mysticism:divine_blue_centipede | Divine Blue Centipede
+mysticism:divine_drone_beetle | Divine Drone Beetle
+mysticism:divine_elemental | Divine Elemental
+mysticism:divine_excelsius | Divine Excelsius
+mysticism:divine_fire_ant | Divine Fire Ant
+mysticism:divine_hardshell_ant | Divine Hardshell Ant
+mysticism:divine_inferius | Divine Inferius
+mysticism:divine_lixivant_mantis | Divine Lixivant Mantis
+mysticism:divine_loxodrome_scorpion | Divine Loxodrome Scorpion
+mysticism:divine_majin_elemental | Divine Majin Elemental
+mysticism:divine_preying_mantis | Divine Preying Mantis
+mysticism:divine_purple_centipede | Divine Purple Centipede
+mysticism:divine_queen_wasp | Divine Queen Wasp
+mysticism:divine_singularity_scorpion | Divine Singularity Scorpion
+mysticism:divine_stag_beetle | Divine Stag Beetle
+mysticism:divine_tengu | Divine Tengu
+mysticism:divine_wolf | Divine Wolf
+mysticism:divine_yellow_centipede | Divine Yellow Centipede
+mysticism:dragonoid | Dragonoid
+mysticism:drone_beetle | Drone Beetle
+mysticism:drone_beetle_insectar | Drone Beetle Insectar
+mysticism:drone_beetle_savant | Drone Beetle Savant
+mysticism:earth_soul_insect | Earth Soul Insect
+mysticism:elemental_lord | Elemental Lord
+mysticism:empty | Empty
+mysticism:enflamed_aberration | Enflamed Aberration
+mysticism:fallen | Fallen
+mysticism:fallen_arch_angel | Fallen Arch Angel
+mysticism:fallen_cherub | Fallen SoulAberration
+mysticism:fallen_greater_angel | Fallen Greater Angel
+mysticism:fallen_lesser_angel | Fallen Lesser Angel
+mysticism:fallen_lord | Fallen Lord
+mysticism:fallen_seraph | Fallen ReaperAberration
+mysticism:fantasy_soul_insect | Fantasy Soul Insect
+mysticism:field_officer | Field Officer
+mysticism:fire_ant | Fire Ant
+mysticism:fire_ant_insectar | Fire Ant Insectar
+mysticism:fire_ant_savant | Fire Ant Savant
+mysticism:flame_soul_insect | Flame Soul Insect
+mysticism:forgotten | Forgotten
+mysticism:frost_wolf | Frost Wolf
+mysticism:frostcoil_sea_serpent | Frostcoil Sea Serpent
+mysticism:frostwrought_leviathan | Frostwrought Leviathan
+mysticism:gale_spirit_wolf | Magic Spirit Wolf
+mysticism:general | General
+mysticism:glacier_spirit_wolf | Glacier Spirit Wolf
+mysticism:gravity_soul_insect | Gravity Soul Insect
+mysticism:greater_angel | Greater Angel
+mysticism:greater_doll | Greater Doll
+mysticism:greater_elemental | Greater Elemental
+mysticism:greater_fallen | Greater Fallen
+mysticism:greater_glacier_wyrm | Greater Glacier Wyrm
+mysticism:greater_pyre_wyrm | Greater Pyre Wyrm
+mysticism:green_fang | Green Fang
+mysticism:guitar_wolf | Guitar Wolf
+mysticism:hardshell_ant | Hardshell Ant
+mysticism:hardshell_ant_insectar | Hardshell Ant Insectar
+mysticism:hardshell_ant_savant | Hardshell Ant Savant
+mysticism:heavenly_restriction | Heavenly Restriction
+mysticism:insect | Insect
+mysticism:lesser_angel | Lesser Angel
+mysticism:lesser_elemental | Lesser Elemental
+mysticism:lesser_fallen | Lesser Fallen
+mysticism:lesser_glacier_wyrm | Lesser Glacier Wyrm
+mysticism:lesser_pyre_wyrm | Lesser Pyre Wyrm
+mysticism:light_fang | Light Fang
+mysticism:lightning_aberration | Lightning Aberration
+mysticism:lightning_soul_insect | Lightning Soul Insect
+mysticism:lixivant_mantis | Lixivant Mantis
+mysticism:lixivant_mantis_insectar | Lixivant Mantis Insectar
+mysticism:lixivant_mantis_savant | Lixivant Mantis Savant
+mysticism:loxodrome_scorpion | Loxodrome Scorpion
+mysticism:loxodrome_scorpion_insectar | Loxodrome Scorpion Insectar
+mysticism:loxodrome_scorpion_savant | Loxodrome Scorpion Savant
+mysticism:magic_spirit_wolf | Magic Spirit Wolf
+mysticism:magma_worm | Magma Worm
+mysticism:majin_lord | Majin Elemental Lord
+mysticism:mantis | Mantis
+mysticism:medium_elemental | Medium Elemental
+mysticism:molten_perforator | Molten Perforator
+mysticism:molten_spirit_wolf | Molten Spirit Wolf
+mysticism:mountain_spirit_wolf | Mountain Spirit Wolf
+mysticism:mystic_angel | Mystic Angel
+mysticism:mystical_black_fang | Mystical Black Fang
+mysticism:mystical_blue_fang | Mystical Black Fang
+mysticism:mystical_brown_fang | Mystical Brown Fang
+mysticism:mystical_darkness_fang | Mystical Darkness Fang
+mysticism:mystical_green_fang | Mystical Green Fang
+mysticism:mystical_light_fang | Mystical Light Fang
+mysticism:mystical_purple_fang | Mystical Purple Fang
+mysticism:mystical_red_fang | Mystical Red Fang
+mysticism:nivalis_frost_wolf | Nivalis Frost Wolf
+mysticism:ocean_spirit_wolf | Magic Spirit Wolf
+mysticism:overloading_worm | Overloading Worm
+mysticism:paralysis_soul_insect | Paralysis Soul Insect
+mysticism:penumbra_spirit_wolf | Penumbra Spirit Wolf
+mysticism:phantom | Phantom
+mysticism:planet_spirit_wolf | Planet Spirit Wolf
+mysticism:poison_soul_insect | Poison Soul Insect
+mysticism:preying_mantis | Preying Mantis
+mysticism:preying_mantis_insectar | Preying Mantis Insectar
+mysticism:preying_mantis_savant | Preying Mantis Savant
+mysticism:purple_centipede | Purple Centipede
+mysticism:purple_centipede_insectar | Purple Centipede Insectar
+mysticism:purple_centipede_savant | Purple Centipede Savant
+mysticism:purple_fang | Purple Fang
+mysticism:queen_wasp | Queen Wasp
+mysticism:queen_wasp_insectar | Queen Wasp Insectar
+mysticism:queen_wasp_savant | Queen Wasp Savant
+mysticism:reaper_aberration | Reaper Aberration
+mysticism:red_fang | Red Fang
+mysticism:remnant | Remnant
+mysticism:restricted_human | Restricted Human
+mysticism:restricted_saint | Restricted Saint
+mysticism:revenant | Revenant
+mysticism:rimeblight_hydra | Rimeblight Hydra
+mysticism:rimefang_drake | Rimefang Drake
+mysticism:scorch_wolf | Scorch Wolf
+mysticism:scorchtail_salamander | Scorchtail Salamander
+mysticism:scorchtalon_wyvern | Scorchtalon Wyvern
+mysticism:scorpion | Scorpion
+mysticism:sculk_worm | Sculk Worm
+mysticism:seraph | Seraph
+mysticism:singularity_scorpion | Singularity Scorpion
+mysticism:singularity_scorpion_insectar | Singularity Scorpion Insectar
+mysticism:singularity_scorpion_savant | Singularity Scorpion Savant
+mysticism:soul_aberration | Soul Aberration
+mysticism:soul_shrieker | Soul Shrieker
+mysticism:spatial_soul_insect | Spatial Soul Insect
+mysticism:staff_officer | Staff Officer
+mysticism:stag_beetle | Stag Beetle
+mysticism:stag_beetle_insectar | Stag Beetle Insectar
+mysticism:stag_beetle_savant | Stag Beetle Savant
+mysticism:star_soul_insect | Star Soul Insect
+mysticism:star_wolf | Star Wolf
+mysticism:steel_soul_insect | Steel Soul Insect
+mysticism:storm_spirit_wolf | Storm Spirit Wolf
+mysticism:string_spirit_wolf | String Spirit Wolf
+mysticism:sundeity_loong | Sundeity Loong
+mysticism:sunfire_lindwurm | Sunfire Lindwurm
+mysticism:tempest_star_wolf | Tempest Star Wolf
+mysticism:tengu | Tengu
+mysticism:tengu_saint | Tengu Saint
+mysticism:true_dragonoid | True Dragonoid
+mysticism:violence_deity | Violence Deity
+mysticism:volcanic_spirit_wolf | Volcanic Spirit Wolf
+mysticism:warden | Warden
+mysticism:wasp | Wasp
+mysticism:water_soul_insect | Water Soul Insect
+mysticism:whole | Whole
+mysticism:wind_soul_insect | Wind Soul Insect
+mysticism:yellow_centipede | Yellow Centipede
+mysticism:yellow_centipede_insectar | Yellow Centipede Insectar
+mysticism:yellow_centipede_savant | Yellow Centipede Savant

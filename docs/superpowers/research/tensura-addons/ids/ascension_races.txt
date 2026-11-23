@@ -1,0 +1,69 @@
+ascension:abyssal_dragonewt | Abyssal Dragonewt
+ascension:angel | Angel
+ascension:archangel | Archangel
+ascension:ascended_djinn | Ascended Djinn
+ascension:beholder | Beholder
+ascension:blood_noble | Blood Noble
+ascension:bog_ancient | Bog Ancient
+ascension:chaos_dragon | Chaos Dragon
+ascension:chaotic_deity | Chaotic Deity
+ascension:corrupted_dragon | Corrupted Dragon
+ascension:corrupted_dragonkin | Corrupted Dragonkin
+ascension:cosmic_deity | Cosmic Deity
+ascension:cursed_dragon | Cursed Dragon
+ascension:cursed_dreadnaught | Cursed Dreadnaught
+ascension:cursed_mariner | Cursed Mariner
+ascension:dark_lord_dullahan | Dark Lord Dullahan
+ascension:davy_jones | Davy Jones
+ascension:death_knight | Death Knight
+ascension:death_tyrant | Death Tyrant
+ascension:demon_dragon_god | Demon Dragon God
+ascension:demonic_dragon | Demonic Dragon
+ascension:divine_angel | Divine Angel
+ascension:divine_king | Divine King
+ascension:divine_kitsune | Divine Kitsune
+ascension:dullahan | Dullahan
+ascension:elder_bloodfiend | Elder Bloodfiend
+ascension:elder_lich | Elder Lich
+ascension:ender_dragonewt | Ender Dragonewt
+ascension:fallen_angel | Fallen Angel
+ascension:fledgling_bloodfiend | Fledgling Bloodfiend
+ascension:frog | Frog
+ascension:frog_monarch | Frog Monarch
+ascension:gauth | Gauth
+ascension:gazer | Gazer
+ascension:giant_frog | Giant Frog
+ascension:infinite_djinn | Infinite Djinn
+ascension:kindred_bloodfiend | Kindred Bloodfiend
+ascension:kitsune | Kitsune
+ascension:lich | Lich
+ascension:lich_king | Lich King
+ascension:mage_skeleton | Mage Skeleton
+ascension:mindwitness | Mindwitness
+ascension:monkey | Monkey
+ascension:monkey_king | Monkey King
+ascension:monkey_martial_artist | Monkey Martial Artist
+ascension:monkey_warrior | Monkey Warrior
+ascension:nine_tail_fox | 9 Tailed Fox
+ascension:omniversal_djinn | Omniversal Djinn
+ascension:phantom_corsair | Phantom Corsair
+ascension:phantom_djinn | Phantom Djinn
+ascension:poison_toad | Poison Toad
+ascension:primordial_djinn | Primordial Djinn
+ascension:progenitor_bloodfiend | Progenitor Bloodfiend
+ascension:royal_djinn | Royal Djinn
+ascension:seraphim | Seraphim
+ascension:six_tail_fox | 6 Tailed Fox
+ascension:skeleton_warrior | Skeleton Warrior
+ascension:sovereign_djinn | Sovereign Djinn
+ascension:spectator_gazer | Spectator
+ascension:sun_wukong | Sun Wukong
+ascension:swamp_sovereign | Swamp Sovereign
+ascension:three_tail_fox | 3 Tailed Fox
+ascension:trickster_djinn | Trickster Djinn
+ascension:undead_skeleton | Skeleton
+ascension:venom_lord | Venom Lord
+ascension:void_dragonewt | Void Dragonewt
+ascension:whisper_djinn | Whisper Djinn
+ascension:wishbound_djinn | Wishbound Djinn
+ascension:zombie | Zombie

@@ -1,0 +1,14 @@
+tensura_kumodesu:deadly_poison | Deadly Poison |  | Decently more lethal than Poison.
+tensura_kumodesu:deadly_spider_poison | Deadly Spider Poison |  | Highly lethal.
+tensura_kumodesu:determination | Determination |  | Don't let it end here.
+tensura_kumodesu:divine_magic_release | Divine Magic Control |  | Is this the pinnacle of magic control...?
+tensura_kumodesu:egg_laying | Egg Laying |  | Be a good mother.
+tensura_kumodesu:fatal_spider_poison | Fatal Spider Poison |  | Corrodes the victims body and spirit.
+tensura_kumodesu:height_of_occultism | Height of Occultism |  | The pinnacle of magic and sorcery.
+tensura_kumodesu:humanification | Humanification |  | Become more human-like.
+tensura_kumodesu:perseverance | Perseverance |  | Shine like a comet, until you burnout.
+tensura_kumodesu:resolve | Resolve |  | Keep going.
+tensura_kumodesu:spider_movement | Spider Movement |  | Grants the user night vision, cobweb immunity and special climbing.
+tensura_kumodesu:taboo | Taboo |  | What sins have you committed?.
+tensura_kumodesu:weapon_creation | Weapon Creation |  | Allows the user to create unique weapons to wield.
+tensura_kumodesu:wondrous_weapon_creation | Wondrous Weapon Creation |  | Allows the user to create wondrous weapons to wield.

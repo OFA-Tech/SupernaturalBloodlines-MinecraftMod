@@ -1,0 +1,32 @@
+foxablazeultimate:asmodeus | Asmodeus, Lord of Lust | Master the laws of life and death.
+foxablazeultimate:azathoth | Azathoth, God of the Void | It is said that an eternal void existed before the universe was born. When that void opened its eyes, even souls, spacetime, and existence itself beca
+foxablazeultimate:beelzebuth | Beelzebuth | Devour the form of all things, sink the souls of all beings into the depths of imaginary space, and turn every existence into power of one’s own.
+foxablazeultimate:ciel | Manas · Ciel | It silently recorded everything about its master until the moment it was given a name, when it finally allowed itself to step out of the shadows.
+foxablazeultimate:fortuna | Fortune King · Fortuna | Derive every chain of cause and effect through mathematical calculation.
+foxablazeultimate:hell_sniper | Hell Sniper | Nobody knows what she was aiming at. All they know is that, at that moment, the darkness in the distance found an echo. A sniper's profession is a lon
+foxablazeultimate:mammon | Greed King · Mammon | Whatever I desire shall ultimately become wealth that belongs to me alone.
+foxablazeultimate:raphael | Raphael | Listen to the principles of all things; in silence, deduce cause and effect; reduce the manifold powers into a single, true answer.
+foxablazeultimate:samael | Samael, Lord of Death Poison | Identify the weaknesses of living beings and create poison tailored to the target.
+foxablazeultimate:satanael | Wrath King · Satanael | Transform the endless grief born from losing a beloved into a demon lord's wrath capable of burning the world away.
+foxablazeultimate:shub_niggurath | Harvest King · Shub-Niggurath | The prayers and possibilities carried through countless Soul Corridors converge under Ciel's integration into a harvest authority capable of nurturing
+foxablazeultimate:uriel | Uriel | Bind the faith of all into a silent, unbreakable order, woven from invisible vows.
+foxablazeultimate:veldora | Veldora | Command storms and thunder, sweep through all with unyielding force, reducing every challenge to dust in the wind.
+foxablazeultimate:velgrynd | Velgrynd | The crimson true dragon who hides her flames in silence and turns the years into shackles, forever chasing one who is long gone from where he once sto
+foxablazeultimate:yog_sothoth | Time-Space Lord · Yog-Sothoth | The supreme sovereignty over time and space; even when the world falls still, nothing can bind its holder's steps.
+
+# SkillType scan (inferred)
+asmodeus ['ULTIMATE']
+azathoth ['ULTIMATE']
+beelzebub ['ULTIMATE']
+ciel []
+fortuna ['ULTIMATE']
+hellsniper ['ULTIMATE']
+mammon ['ULTIMATE', 'UNIQUE']
+raphael ['ULTIMATE']
+samael ['ULTIMATE']
+satanael ['ULTIMATE']
+shubniggurath ['ULTIMATE']
+uriel ['ULTIMATE']
+veldora ['ULTIMATE']
+velgrynd ['ULTIMATE']
+yogsothoth ['ULTIMATE']
