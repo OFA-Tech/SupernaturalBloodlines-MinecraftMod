@@ -28,7 +28,7 @@ class BossRowTest {
             assertTrue(p.slots().isEmpty());
             assertEquals(0, p.hidden());
         }
-        assertEquals(232, BossRow.plan(248, false, 0).cardW(), "a narrow screen leaves the margin on each side");
+        assertEquals(224, BossRow.plan(248, false, 0).cardW(), "a narrow screen leaves the margin on each side");
     }
 
     @Test
@@ -72,7 +72,7 @@ class BossRowTest {
 
     @Test
     void theLastTokenAndThePlusTokenKeepTheScreenMarginOnTheRightAsTheCardsDoOnTheLeft() {
-        assertTrue(BossRow.SCREEN_MARGIN >= 8, "a margin a token plate and its ring can show: " + BossRow.SCREEN_MARGIN);
+        assertTrue(BossRow.SCREEN_MARGIN >= 12, "a margin a token plate and its ring can show: " + BossRow.SCREEN_MARGIN);
         for (int guiW : SCREENS) {
             for (boolean corner : new boolean[] {false, true}) {
                 for (int tokens = 1; tokens <= 12; tokens++) {
@@ -157,15 +157,15 @@ class BossRowTest {
 
     @Test
     void theCardNarrowsToHoldTokensBeforeAnyIsCollapsedAndNeverBelowTheNarrowestCard() {
-        // 480 wide with the corner: a 250 card leaves room for one token, a 200 card for three
+        // 480 wide with the corner: a 250 card leaves room for one token, a narrower one for two
         assertEquals(1, BossRow.plan(480, true, 1).slots().size());
-        Plan three = BossRow.plan(480, true, 3);
-        assertEquals(0, three.hidden(), "three tokens fit once the card is narrower");
-        assertTrue(three.cardW() < 250 && three.cardW() >= BossRow.NARROWEST_CARD, "" + three.cardW());
+        Plan two = BossRow.plan(480, true, 2);
+        assertEquals(0, two.hidden(), "two tokens fit once the card is narrower");
+        assertTrue(two.cardW() < 250 && two.cardW() >= BossRow.NARROWEST_CARD, "" + two.cardW());
         Plan many = BossRow.plan(480, true, 9);
         assertEquals(BossRow.NARROWEST_CARD, many.cardW(), "when nothing helps the card is as narrow as it goes");
         assertTrue(many.hidden() > 0);
-        assertEquals(250, BossRow.plan(480, false, 3).cardW(), "no need to narrow it where the tokens fit");
+        assertEquals(250, BossRow.plan(480, false, 2).cardW(), "no need to narrow it where the tokens fit");
     }
 
     @Test
