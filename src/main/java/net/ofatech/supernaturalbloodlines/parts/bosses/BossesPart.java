@@ -96,6 +96,7 @@ public final class BossesPart {
         e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.GrimoireLoreGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.FinnGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.CloakLinkGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.bosses.gametest.MorphGameTests.class);
         });
         SupernaturalBloodlines.LOGGER.info("BossesPart enabled");
     }

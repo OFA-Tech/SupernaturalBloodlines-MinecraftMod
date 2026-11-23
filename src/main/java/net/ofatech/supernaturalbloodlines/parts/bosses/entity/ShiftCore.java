@@ -10,6 +10,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.ofatech.supernaturalbloodlines.core.boss.BossForm;
+import net.ofatech.supernaturalbloodlines.core.boss.MorphRules;
 import net.ofatech.supernaturalbloodlines.core.boss.ShiftRules;
 
 /** The shift the two shifting bosses share (plan 17c and 17f): standing still while it runs, counting its ticks, the swap and the end, and the beast's bonuses. */
@@ -29,6 +30,10 @@ final class ShiftCore {
     static void advance(ShiftBody body) {
         BossForm form = body.form();
         int before = body.shiftTicks();
+        // the cues of the tick that is about to be counted (growl at 0 ... landing at 32); none for one who is dying: the death clip wins
+        if (body instanceof LivingEntity living && !living.isDeadOrDying() && body.level() instanceof ServerLevel level) {
+            MorphCues.play(level, living, before, MorphRules.cues(form, before));
+        }
         int counted = ShiftRules.nextTicks(form, before);
         if (counted != before) {
             body.setShiftTicks(counted);
