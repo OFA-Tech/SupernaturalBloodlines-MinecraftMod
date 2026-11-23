@@ -22,6 +22,8 @@ public final class ExtraActions {
 
     public static final ResourceLocation NECK_SNAP = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "neck_snap");
 
+    public static final ResourceLocation GIVE_BLOOD = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "give_blood");
+
     public static final ResourceLocation HYBRID_LEAP = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "hybrid_leap");
 
     public static final ResourceLocation BOTTLE_BLOOD = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "bottle_blood");
