@@ -8,8 +8,18 @@ class HumanLikeLineTest {
     @Test
     void saintTierIsPartOfTheEvolvedRaces() {
         assertTrue(HumanLikeLine.EVOLVED.containsAll(HumanLikeLine.SAINT_OR_HIGHER));
-        assertEquals(15, HumanLikeLine.EVOLVED.size());
-        assertEquals(10, HumanLikeLine.SAINT_OR_HIGHER.size());
+        assertEquals(18, HumanLikeLine.EVOLVED.size());
+        assertEquals(13, HumanLikeLine.SAINT_OR_HIGHER.size());
+    }
+
+    /** Tensura Horizons' rung between saint and divine is past the saint tier: still offered the apex race, still on the line. */
+    @Test
+    void theHorizonsRungBetweenSaintAndDivineIsPastTheSaintTier() {
+        for (String id : new String[] {"tensurahorizons:ascendant_elf", "tensurahorizons:runeforged_dwarf", "tensurahorizons:tide_sovereign"}) {
+            assertTrue(HumanLikeLine.isSaintOrHigher(id), id);
+            assertTrue(HumanLikeLine.isEvolvedMember(id), id);
+            assertTrue(net.ofatech.supernaturalbloodlines.shared.tensura.ApexLines.HUMAN_LIKE.contains(id), id);
+        }
     }
 
     @Test

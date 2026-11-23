@@ -70,6 +70,18 @@ public final class RankSkillsGameTests {
         return RaceAPI.getRaceFrom(p).getRace().map(r -> r.getRaceId().toString()).orElse(null);
     }
 
+    /** Mysticism asks soul energy for a learned Tensura skill unless this one-shot switch is on; a grant sets it and leaves nothing of it behind. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aGrantLeavesNoSoulEnergySwitchBehind(GameTestHelper helper) {
+        ServerPlayer p = player(helper);
+        helper.assertTrue(net.ofatech.supernaturalbloodlines.shared.tensura.SkillOwners.grant(p, SkillAPI.getSkillRegistry().get(ResourceLocation.parse(SENSE))),
+                "the grant did not give the skill");
+        var tag = SkillAPI.getSkillsFrom(p).getSkill(ResourceLocation.parse(SENSE)).orElseThrow().getTag();
+        helper.assertTrue(tag != null && tag.getBoolean(net.ofatech.supernaturalbloodlines.shared.tensura.SkillOwners.GRANTED_TAG) && !tag.contains("NoSoulEnergyCost"),
+                "the skill carries the soul energy switch or no grant mark: " + tag);
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void alphaGetsRankSkills(GameTestHelper helper) {
         ServerPlayer p = werewolf(helper);

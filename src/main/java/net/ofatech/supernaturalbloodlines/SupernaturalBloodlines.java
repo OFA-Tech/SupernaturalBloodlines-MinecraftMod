@@ -50,6 +50,7 @@ public final class SupernaturalBloodlines {
         ModNetwork.register(modBus);
         StalePartModifiers.register();
         net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockFallback.register();
+        net.ofatech.supernaturalbloodlines.core.death.FinalDeath.register();
 
         ModList mods = ModList.get();
         // a data map file for a map type that does not exist logs a WARN before any condition is read, so Vampirism's blood values ride in a pack that exists only with Vampirism
