@@ -1371,6 +1371,10 @@ public final class TargetedSkillGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aBiteThatIsRunningEndsWhenThePlayerIsSnapped(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("hud")) {
+            helper.succeed(); // no Bite action without the hud part: nothing to stop
+            return;
+        }
         ServerPlayer p = TestPlayers.createMortal(helper);
         helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
         p.setPos(helper.absoluteVec(new Vec3(1.5, 2, 1.5)));
