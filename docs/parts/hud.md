@@ -224,3 +224,6 @@ Hooks verified with javap against Tensura 2.0.1.5 and ManasCore 4.0.0.2 before u
 - `isInstantCast` with chant annulment is checked on one spell only (`magic_wall`).
 - Whether Tensura's own `ACTIVATE_ABILITY` listeners refuse a race ability for some race is not checked (the 20 races with an ability start in the test for a harpy).
 - No game was started: nothing is drawn in W1.
+## Plan 18e: the Hybrid Leap and the sprint-leap
+
+- `HybridLeapGuard` (client) is armed when a trigger for `hybrid_leap` is sent; `SprintLeapClient` passes `HybridLeapGuard.inFlight` to `SprintLeap.shouldLeap` as its last parameter, so the two leaps share one guard. `LeapAim` casts the look ray as far as the leap reaches (the game's own pick stops at 3 blocks); the server still decides.

@@ -150,7 +150,7 @@ public final class ActionService {
         if (!action.available(p)) {
             return refuse(p, KEY + "not_unlocked");
         }
-        Component error = action.trigger(p, HudTargets.resolve(p, targetEntityId).orElse(null));
+        Component error = action.trigger(p, HudTargets.resolve(p, targetEntityId, action.targetReach()).orElse(null));
         if (error != null) {
             p.displayClientMessage(error, true);
             return error.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t ? t.getKey() : KEY + "refused";

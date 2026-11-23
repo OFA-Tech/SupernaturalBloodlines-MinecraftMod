@@ -115,6 +115,7 @@ public final class HudInput {
             PRESSED_IN[i] = null;
         }
         screenWasOpen = false;
+        HybridLeapGuard.reset();
         if (net.neoforged.fml.ModList.get().isLoaded("tensura")) {
             TensuraInput.reset();
         }
@@ -136,6 +137,11 @@ public final class HudInput {
                     BiteView.pressed();
                 }
                 Entity looked = Minecraft.getInstance().crosshairPickEntity;
+                if (net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.HYBRID_LEAP.equals(id.get())) {
+                    // the game's own pick stops at 3 blocks: the leap aims as far as it reaches, and arms the guard the sprint-leap shares
+                    looked = LeapAim.pick(p);
+                    HybridLeapGuard.thrown(p.level().getGameTime());
+                }
                 HudSend.send(new TriggerActionPayload(slot, looked == null ? -1 : looked.getId(), false));
             }
         }
