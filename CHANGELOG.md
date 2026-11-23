@@ -4,7 +4,7 @@
 
 ### Changed
 - **Werewolf venom goes through stages (R206).** Mild, then sick, then death. For the first `venom_sick_after_ticks` (4000 of the 12000) the venom is only its 1 damage a pulse that cannot kill. After that the vampire is sick: Nausea and Slowness I are kept up at every pulse, the hallucinations start (every 600 ticks, as before) and a line on the action bar says so once. The last tick still kills a non-Original. Originals keep Weakness II only, with no stages; the Venom Fang's 5 s of Slowness is unchanged. Hybrid's Blood and Klaus's Blood cure it at every stage.
-- **Downed and the turning.** Someone who cannot act (down for the turning or a Neck Snap, or in Vampirism's dying state) is spared the sickness, but the last tick is final: it ends the snap or the dying state with their death and leaves nothing set on the dead (before, a vampire in Vampirism's dying state could die with the state still set).
+- **Downed and the turning.** Someone who cannot act (down for the turning or a Neck Snap, or in Vampirism's dying state) is spared the sickness, but the last tick is final: it ends the snap or the dying state with their death (no change for the kill itself; now pinned by tests).
 - Config (with an Admin row, section `species`): `venom_sick_after_ticks` (0 sick from the start, 12000 never sick; default 4000).
 
 ### Migration

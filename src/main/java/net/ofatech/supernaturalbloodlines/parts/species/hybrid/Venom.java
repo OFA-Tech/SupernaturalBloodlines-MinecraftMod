@@ -3,7 +3,6 @@ package net.ofatech.supernaturalbloodlines.parts.species.hybrid;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.LadderQuery;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals;
 
-import de.teamlapen.vampirism.api.VampirismAPI;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -131,10 +130,6 @@ public final class Venom {
         target.hurt(source(target), Float.MAX_VALUE);
         if (target.isAlive()) {
             target.kill(); // something (a totem, another mod) kept it alive; also a player down or in Vampirism's dying state, which the blow above cannot reach
-        }
-        // the end of the venom ends Vampirism's dying state too, so nothing is left set on the dead
-        if (!target.isAlive() && target instanceof ServerPlayer sp && VampirismAPI.vampirePlayer(sp).isDBNO()) {
-            OriginalRules.clearDyingState(sp);
         }
     }
 }
