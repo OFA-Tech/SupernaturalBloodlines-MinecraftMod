@@ -36,6 +36,7 @@ public final class VervainRules {
 
     public static void register() {
         BiteProtection.register((biter, victim) -> AshDagger.isDesiccated(biter) || victim instanceof Player p && protects(p));
+        BiteProtection.registerVictim(v -> v instanceof Player p && protects(p));
         CompulsionImmunity.register(e -> e instanceof Player p && protects(p));
         // the event is abstract: a listener goes on each of its subclasses (players, other creatures)
         NeoForge.EVENT_BUS.addListener((BloodDrinkEvent.PlayerDrinkBloodEvent e) -> onBlood(e));

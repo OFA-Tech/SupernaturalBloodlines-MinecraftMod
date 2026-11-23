@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased (plan 18f: Force-feed my blood)
+
+### Added
+- **Force-feed my blood (R208).** A HUD / hub Slots action for **every vampire type** (whoever the mod counts as vampiric: plain vampires, a Ghoul as with Bottle my blood, hybrids, heretics, Originals, Augustines; no skill): put your blood in the player you look at. It does what a bottle of your kind does to them (a human is marked with vampire blood for `vampire_blood_ticks`; a werewolf follows the existing rules, so one in the transition goes unstable). **A sneaking target accepts** at any health, and is told so ("you accepted it by sneaking": **do not sneak near a vampire you do not trust**). Anyone else needs **PvP on** and to be **down** or at or under `force_feed_health_limit` (30%) of their health. Consent is checked before **vervain**, which blocks even a willing target, and a **claim, duel or protection** blocks it (asked as a blow, never as a click). **Blood forced on someone who did not accept it never names a sire:** an Original's forced blood marks a human as common vampire blood, leaves a player in the turning with the pending sire they had, and does not start or hold a werewolf's transition; only an accepted drink does. The giver hears the same "You give X your blood" line and starts the same cooldown (`give_blood_cooldown_seconds`, 120) **whatever the blood did**, and **every refusal after a target is found costs that cooldown too**, so it cannot be used to find out who is human, protected or carrying vervain. The target is told who gave it (an Original's name only as the "unknown Original" line until they know that line), then what is in them.
+- **The blood's gifts (R207): Regeneration II for 90 seconds from the drink, once per `vampire_blood_regen_cooldown_seconds` (600), and a slower hunger for the whole 20-minute window.** This applies to **anyone the vampire blood marks, a plain Vampirism blood bottle included, not only to a forced feed**. Drinking more inside the ten minutes marks you again but does not renew the Regeneration. `vampire_blood_buff_enabled` (default on) turns both gifts off; the blood still marks.
+- Config (all with Admin rows): `give_blood_cooldown_seconds` (120), `force_feed_health_limit` (0.30), `vampire_blood_buff_enabled` (true), `vampire_blood_regen_cooldown_seconds` (600).
+
+### Changed
+- `TargetChecks` (Rip Heart, Neck Snap) is public so the blood action can reuse it; `BiteProtection` has a victim-only guard (`registerVictim`) that vervain registers. The marked messages list the perks.
+- **Known limit:** a claim mod that guards a player only through an interaction event (not the attack event) would not be asked.
+
+### Network
+- No payload changed: **no network version bump** (the action lists on the server and the hub from the installed `ExtraActions`).
+
+### Rolling back
+- The four config keys are ignored by an older build. A marked player keeps the `vampireBloodUntil` they already had (the same saved field as before) and simply loses the gifts. The action disappears from the Slots tab; a slot that held it is empty. The Regeneration clock is one extra entry in `action_ready`, which an older build ignores.
+
+### Art needed
+- `textures/gui/hud/give_blood.png` for Fable 5.2 (the action uses `unknown.png` until then).
+
 ## Unreleased (UI overhaul phase 8: logo, mod icon, store art)
 
 ### Added
@@ -9,6 +29,7 @@
 
 ### Changed
 - No in-game drawing changed: the design doc asks for the logo in the mod list and the store, not in the hub.
+
 ## Unreleased (plan 18e: Hybrid Leap)
 
 ### Added
@@ -27,7 +48,8 @@
 
 ### Migration
 - No existing player changes. Rolled back to an older build the skill stays in the skills list, dormant.
-`n## Unreleased (art: the plan 18 icons)
+
+## Unreleased (art: the plan 18 icons)
 
 ### Changed
 - **Rip Heart, Neck Snap, Bottle my blood, Garlic Ward and Blessed Skin have their own pictures** (the heart in a clawed hand, a head knocked off its neck, an open bottle filling with blood, a garlic bulb behind a shield, holy water under a halo) instead of a letter on a tile, the unknown rune or another skill's icon. One picture for a skill and its HUD action, drawn at 32 px for the hub and at 16 px for the slots (with the pale outline of the other slot icons). Hybrid Leap's picture (`s-hyb-3`, `hybrid_leap`) is in the kit for plan 18e.
