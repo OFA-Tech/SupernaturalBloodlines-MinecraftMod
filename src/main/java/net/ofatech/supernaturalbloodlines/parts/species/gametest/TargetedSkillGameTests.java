@@ -61,6 +61,8 @@ public final class TargetedSkillGameTests {
     }
 
     private static ServerPlayer target(GameTestHelper helper, Species species, boolean vampire) {
+        // a player target needs the server's PvP switch on (a targeted skill refuses a player with it off); the tests that want it off turn it off after this
+        helper.getLevel().getServer().setPvpAllowed(true);
         ServerPlayer t = TestPlayers.createDuelist(helper);
         t.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.0)));
         if (vampire) {
@@ -964,12 +966,12 @@ public final class TargetedSkillGameTests {
             return;
         }
         boolean pvp = helper.getLevel().getServer().isPvpAllowed();
-        helper.getLevel().getServer().setPvpAllowed(false);
         try {
             ServerPlayer vamp = target(helper, Species.NONE, true);
             ServerPlayer mortal = target(helper, Species.NONE, false);
             ServerPlayer original = target(helper, Species.ORIGINAL, true);
             original.setHealth(5.0f);
+            helper.getLevel().getServer().setPvpAllowed(false);
             try {
                 for (Object[] k : new Object[][] {{"snap a vampire player", true, vamp}, {"stagger a mortal player", true, mortal}, {"rip an Original player", false, original}}) {
                     ServerPlayer user = TestPlayers.createPvpAware(helper);
@@ -1509,6 +1511,31 @@ public final class TargetedSkillGameTests {
             helper.assertTrue(spirit.pikeHit(), "control: a real Pike blow was not counted");
         } finally {
             spirit.discard();
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void neckSnapOnAPlayerWithPvpOffIsRefusedLikeAnyRefusal(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        // a user whose canHarmPlayer follows the server's PvP switch, as a real player's does
+        ServerPlayer user = TestPlayers.createPvpAware(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(user).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        SupernaturalAccess.set(user, SupernaturalAccess.get(user).toBuilder().skills(Set.of("S-VAM-9")).build());
+        ServerPlayer other = target(helper, Species.NONE, true);
+        Zombie z = zombie(helper, 20.0f);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+        helper.getLevel().getServer().setPvpAllowed(false);
+        try {
+            helper.assertTrue(NeckSnapAction.REFUSED.equals(key(NeckSnapAction.INSTANCE.trigger(user, other))), "PvP off did not refuse a Neck Snap of a player");
+            helper.assertTrue(!Downed.isSnapped(other) && ActionClock.left(user, ExtraActions.NECK_SNAP) == 0, "the refusal had an effect");
+            helper.assertTrue(NeckSnapAction.INSTANCE.trigger(user, z) == null, "PvP off refused a mob");
+        } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
+            z.discard();
+            clean(user, other);
         }
         helper.succeed();
     }

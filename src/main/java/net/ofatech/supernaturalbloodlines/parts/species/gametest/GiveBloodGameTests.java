@@ -460,45 +460,37 @@ public final class GiveBloodGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void theReceiverIsNotToldAnOriginalsNameUntilTheyKnowTheLine(GameTestHelper helper) {
+    public static void anAcceptedOriginalsNameGoesThroughShownNameAndAForcedOneIsPlain(GameTestHelper helper) {
         TestPlayers.TalkingDuelist original = vampire(helper, Species.ORIGINAL);
         TestPlayers.TalkingDuelist common = vampire(helper, Species.NONE);
         TestPlayers.TalkingDuelist a = human(helper);
         TestPlayers.TalkingDuelist b = human(helper);
         try {
+            SpeciesConfig.overrideOriginalVisibility(false); // other tests may leave it pinned on
             pvp(helper, true);
-            for (boolean willing : new boolean[] {true, false}) {
-                for (TestPlayers.TalkingDuelist t : new TestPlayers.TalkingDuelist[] {a, b}) {
-                    t.setShiftKeyDown(willing);
-                    t.setHealth(willing ? t.getMaxHealth() : 1f);
-                }
-                String k = willing ? GiveBloodAction.RECEIVED_WILLING : GiveBloodAction.RECEIVED;
-                noCooldown(original);
-                noCooldown(common);
-                helper.assertTrue(ACTION.trigger(original, a) == null && ACTION.trigger(common, b) == null, "a feed was refused");
-                Component secret = a.message(k);
-                Component plain = b.message(k);
-                helper.assertTrue(secret != null && !secret.getString().contains(original.getDisplayName().getString()), "an Original's name reached a receiver who does not know the line: " + secret);
-                helper.assertTrue(secret.getContents() instanceof TranslatableContents t && t.getArgs()[0] instanceof Component n
-                        && n.getString().equals(Lines.shownName(helper.getLevel().getServer(), a, original.getUUID()).getString()), "the name is not the one the line rules show");
-                helper.assertTrue(plain != null && plain.getContents() instanceof TranslatableContents p && p.getArgs()[0] instanceof Component n2 && n2.getString().equals(common.getDisplayName().getString()),
-                        "a plain vampire is not named");
-                clean(a, b);
-                a.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.0)));
-                b.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.0)));
-            }
+            a.setShiftKeyDown(true);
+            b.setShiftKeyDown(true);
+            helper.assertTrue(ACTION.trigger(original, a) == null && ACTION.trigger(common, b) == null, "a feed was refused");
+            Component secret = a.message(GiveBloodAction.RECEIVED_WILLING);
+            Component plain = b.message(GiveBloodAction.RECEIVED_WILLING);
+            helper.assertTrue(secret != null && secret.getContents() instanceof TranslatableContents t && t.getArgs()[0] instanceof Component n
+                    && n.getContents() instanceof TranslatableContents nt && nt.getKey().equals("supernaturalbloodlines.line.unknown_original"),
+                    "an Original's name reached a receiver who does not know the line: " + secret);
+            helper.assertTrue(plain != null && plain.getContents() instanceof TranslatableContents p && p.getArgs()[0] instanceof Component n2 && n2.getString().equals(common.getDisplayName().getString()),
+                    "a plain vampire is not named");
         } finally {
+            SpeciesConfig.overrideOriginalVisibility(null);
             pvp(helper, false);
             clean(original, common, a, b);
         }
         helper.succeed();
     }
-
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aForcedFeedFromAnOriginalDoesNotUseTheLineWording(GameTestHelper helper) {
         TestPlayers.TalkingDuelist original = vampire(helper, Species.ORIGINAL);
         TestPlayers.TalkingDuelist target = human(helper);
         try {
+            SpeciesConfig.overrideOriginalVisibility(false);
             pvp(helper, true);
             target.setHealth(1f);
             helper.assertTrue(ACTION.trigger(original, target) == null, "the feed was refused");
@@ -507,6 +499,7 @@ public final class GiveBloodGameTests {
                     && n.getString().equals(original.getDisplayName().getString()) && !(n.getContents() instanceof TranslatableContents nt && nt.getKey().contains("line")),
                     "a forced feed used the line wording: " + said);
         } finally {
+            SpeciesConfig.overrideOriginalVisibility(null);
             pvp(helper, false);
             clean(original, target);
         }

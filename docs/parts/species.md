@@ -550,3 +550,8 @@ Tests: `LineRulesTest`, `RingFillTest`, `LineIndexTest`, `LineTreeTest`, `LineTr
 - `Downed.MODE_SNAPPED` (a third mode of the dying state) and the mob effect `snapped` (`SnappedEffect`) are the lying down. `ExtraActions.addBlocker` stops every extra action for a downed, snapped or Vampirism-dying player.
 - `DamageProbe` (`core/death`) is active while a skill asks whether a hit would be allowed; our damage listeners with side effects return early (NPC Original desiccation, Deals, AlphaBite, the Beast's Pike counter, the Original white-oak catch). `SnappedEffect` holds creatures with attribute modifiers (no `NoAI`), and `SNAP_GRACE_UNTIL` (saved) is the grace after a snap.
 - Data: skills `S-VAM-8` and `S-VAM-9` in the seven vampiric trees, damage types `rip_heart` and `neck_snap`, tag `snap_immune`. Species network version 3, hub protocol 10.
+
+## Plan 18e: Hybrid Leap (R212)
+
+- `HybridLeapAction` (`parts/species/skill`) is an `ExtraActions` action: it reuses `TargetChecks` (`inView`, `mayAttack`, `damageWouldLand`, `untouchable`, `lyingDown`) and `DamageProbe` from plan 18d, and the stopper list (a player put out of action ends the flight). The maths is the pure `core/hud/LeapMath`; the flight is a `PlayerTickEvent.Post` listener that holds the target of the flight and lands one blow.
+- Data: skill `S-HYB-3` in the `hybrid` and `original_hybrid` trees. No payload changed; `ExtraActions.Action.targetReach` lets a slot name a target farther than the bite reach.
