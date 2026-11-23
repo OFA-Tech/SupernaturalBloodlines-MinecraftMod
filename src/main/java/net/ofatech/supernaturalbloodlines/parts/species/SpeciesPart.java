@@ -203,6 +203,7 @@ public final class SpeciesPart {
         net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.install(net.ofatech.supernaturalbloodlines.parts.species.item.BottleBloodAction.INSTANCE);
         net.ofatech.supernaturalbloodlines.parts.species.blood.GiveBloodAction.register();
         net.ofatech.supernaturalbloodlines.parts.species.moon.FullMoonSleep.register(); // no Werewolves needed: "everyone" works without it
+        Venom.registerEffectHooks(); // a command can give the venom without Werewolves
         net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.set(p -> new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(
                 net.ofatech.supernaturalbloodlines.core.moon.SleepRules.appliesTo(SpeciesConfig.fullMoonSleep(),
                         net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural.isWerewolf(p)),

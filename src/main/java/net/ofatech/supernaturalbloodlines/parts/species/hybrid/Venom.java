@@ -63,6 +63,10 @@ public final class Venom {
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener(Venom::onDamaged);
+    }
+
+    /** Needs no Werewolves: the effect can be given by a command, and the told flag must still go when it ends. */
+    public static void registerEffectHooks() {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, MobEffectEvent.Expired.class,
                 e -> ended(e.getEntity(), e.getEffectInstance() == null ? null : e.getEffectInstance().getEffect()));
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, MobEffectEvent.Remove.class, e -> ended(e.getEntity(), e.getEffect()));
