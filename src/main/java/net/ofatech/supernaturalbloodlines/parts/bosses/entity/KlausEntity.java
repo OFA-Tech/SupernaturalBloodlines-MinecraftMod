@@ -147,7 +147,8 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
         server.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE, getX(), getY() + 0.9, getZ(), 40, 0.4, 0.6, 0.4, 0.04);
         server.sendParticles(net.minecraft.core.particles.ParticleTypes.POOF, getX(), getY() + 0.6, getZ(), 20, 0.5, 0.4, 0.5, 0.08);
         server.playSound(null, getX(), getY(), getZ(), net.minecraft.sounds.SoundEvents.WOLF_HOWL, net.minecraft.sounds.SoundSource.HOSTILE, 2.0F, 0.6F);
-        server.broadcastEntityEvent(this, (byte) 2);
+        // the shake: a damage event (the old entity event 2 is not handled on 1.21.1), which plays the hurt tilt and the hurt sound on the clients
+        server.broadcastDamageEvent(this, damageSources().generic());
         java.util.function.Consumer<KlausEntity> o = swapObserver;
         if (o != null) {
             o.accept(this);

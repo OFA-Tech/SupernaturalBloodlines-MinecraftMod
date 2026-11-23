@@ -15,10 +15,18 @@ import net.ofatech.supernaturalbloodlines.core.boss.ShiftRules;
  * ones. Nothing here knows about the client.
  */
 public final class MorphCues {
+    /** What one tick's cues actually made: the mask, the sounds played and the particles sent (not what the mask says should have happened). */
+    public record Played(Entity boss, int shiftTick, int cues, int sounds, int particles) {
+    }
+
     /** Tests: told every cue that is played. */
     public interface Observer {
-        void played(Entity boss, int shiftTick, int cues);
+        void played(Played played);
     }
+
+    /** The smoke of one dust cue and the puff of the landing: a few particles, never a burst (the swap's own is the entity's). */
+    public static final int DUST_COUNT = 4;
+    public static final int LAND_COUNT = 12;
 
     private static volatile Observer observer;
 
@@ -38,24 +46,31 @@ public final class MorphCues {
         double x = boss.getX();
         double y = boss.getY();
         double z = boss.getZ();
+        int sounds = 0;
+        int particles = 0;
         if ((cues & MorphRules.GROWL) != 0) {
             level.playSound(null, x, y, z, SoundEvents.WOLF_GROWL, SoundSource.HOSTILE, 1.0F, 0.6F);
+            sounds++;
         }
         if ((cues & MorphRules.DUST) != 0) {
             // the smoke climbs from the feet to the shoulder as the tick goes on
             double height = 0.2 + 1.4 * Math.min(1.0, tick / (double) ShiftRules.SWAP_TICK);
-            level.sendParticles(ParticleTypes.SMOKE, x, y + height, z, 4, 0.25, 0.05, 0.25, 0.01);
+            level.sendParticles(ParticleTypes.SMOKE, x, y + height, z, DUST_COUNT, 0.25, 0.05, 0.25, 0.01);
+            particles += DUST_COUNT;
         }
         if ((cues & MorphRules.CRACK) != 0) {
             level.playSound(null, x, y, z, SoundEvents.BONE_BLOCK_BREAK, SoundSource.HOSTILE, 0.8F, 0.7F);
+            sounds++;
         }
         if ((cues & MorphRules.LAND) != 0) {
-            level.sendParticles(ParticleTypes.POOF, x, y + 0.1, z, 12, 0.4, 0.05, 0.4, 0.02);
+            level.sendParticles(ParticleTypes.POOF, x, y + 0.1, z, LAND_COUNT, 0.4, 0.05, 0.4, 0.02);
+            particles += LAND_COUNT;
             level.playSound(null, x, y, z, SoundEvents.WOLF_STEP, SoundSource.HOSTILE, 1.0F, 0.5F);
+            sounds++;
         }
         Observer o = observer;
         if (o != null) {
-            o.played(boss, tick, cues);
+            o.played(new Played(boss, tick, cues, sounds, particles));
         }
     }
 }

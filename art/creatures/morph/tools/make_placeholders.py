@@ -2,6 +2,7 @@
 
     python art/creatures/morph/tools/make_placeholders.py            (all four bosses)
     python art/creatures/morph/tools/make_placeholders.py klaus_hybrid
+    python art/creatures/morph/tools/make_placeholders.py --force    (only to start over: it overwrites a boss that already has a shift_in)
 
 For each boss it writes the clips the contract asks for, by the one tool the art uses (merge_clips.py), so the game files and the tool are exercised together:
   shift_in   1.0 s: the first `idle` pose, held (so it already ends on the idle pose, as the real clip must)
@@ -49,11 +50,13 @@ def stretch(clip, length):
     return out
 
 
-def make(model):
+def make(model, force=False, game_path=None, geo_path=None):
     howl, _removed, has_out = mc.MODELS[model]
-    game_path = os.path.join(mc.ASSETS, 'animations', 'entity', model + '.animation.json')
+    game_path = game_path or os.path.join(mc.ASSETS, 'animations', 'entity', model + '.animation.json')
     with open(game_path, encoding='utf-8') as f:
         animations = json.load(f)['animations']
+    if mc.clip_name(model, 'shift_in') in animations and not force:
+        raise SystemExit('%s already has a shift_in: these placeholders would overwrite the real clips (and make the howl a stretched copy again). Nothing written. Pass --force to do it anyway.' % model)
     idle = animations[mc.clip_name(model, 'idle')]
     source = animations[mc.clip_name(model, howl)]
     if abs(source['animation_length'] - mc.HOWL_LENGTH) < 1e-6:
@@ -67,9 +70,10 @@ def make(model):
         path = os.path.join(tmp, model + '.json')
         with open(path, 'w', encoding='utf-8') as f:
             json.dump({'format_version': '1.8.0', 'animations': clips}, f)
-        mc.merge(model, path)
+        mc.merge(model, path, game_path=game_path, geo_path=geo_path)
 
 
 if __name__ == '__main__':
-    for name in (sys.argv[1:] or list(mc.MODELS)):
-        make(name)
+    force = '--force' in sys.argv
+    for name in ([a for a in sys.argv[1:] if not a.startswith('--')] or list(mc.MODELS)):
+        make(name, force)

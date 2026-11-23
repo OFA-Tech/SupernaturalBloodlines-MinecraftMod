@@ -36,10 +36,21 @@ public final class ManPoseTable {
         this.match = match;
     }
 
-    /** A table that does nothing: every channel neutral at every tick. */
-    public static ManPoseTable neutral() {
+    /** The most the body may be scaled or squatted, whatever a file says: a pack that asks for a 50 times body gets 3 times. */
+    public static final float MIN_SCALE = 0.1F;
+    public static final float MAX_SCALE = 3.0F;
+    public static final float MAX_OFFSET = 2.0F;
+
+    private static final ManPoseTable NEUTRAL;
+
+    static {
         float[] n = neutralKey();
-        return new ManPoseTable(new int[] {0, ShiftRules.SWAP_TICK - 1}, new float[][] {n.clone(), n.clone()}, n.clone());
+        NEUTRAL = new ManPoseTable(new int[] {0, ShiftRules.SWAP_TICK - 1}, new float[][] {n.clone(), n.clone()}, n.clone());
+    }
+
+    /** A table that does nothing: every channel neutral at every tick. One shared instance (a table is never changed). */
+    public static ManPoseTable neutral() {
+        return NEUTRAL;
     }
 
     private static float[] neutralKey() {
@@ -77,6 +88,8 @@ public final class ManPoseTable {
                 k[i] = finite(o.get(CHANNELS[i]).getAsFloat(), k[i]);
             }
         }
+        k[SCALE] = Math.max(MIN_SCALE, Math.min(MAX_SCALE, k[SCALE]));
+        k[SIZE - 2] = Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, k[SIZE - 2]));
         return k;
     }
 

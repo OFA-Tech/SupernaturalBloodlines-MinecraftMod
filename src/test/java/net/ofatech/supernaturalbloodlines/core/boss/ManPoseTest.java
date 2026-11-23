@@ -91,6 +91,28 @@ class ManPoseTest {
     }
 
     @Test
+    void aTableCannotAskForAnAbsurdBody() {
+        ManPoseTable t = ManPoseTable.parse("{\"keys\":[{\"tick\":0,\"scale\":99,\"offset_y\":-50},{\"tick\":19,\"scale\":0,\"offset_y\":50}]}");
+        float[] out = new float[ManPoseTable.SIZE];
+        for (float p = 0.0F; p <= 1.0F; p += 0.05F) {
+            t.sample(p, out);
+            assertTrue(out[ManPoseTable.SCALE] >= ManPoseTable.MIN_SCALE && out[ManPoseTable.SCALE] <= ManPoseTable.MAX_SCALE, "scale " + out[ManPoseTable.SCALE]);
+            assertTrue(Math.abs(out[ManPoseTable.SIZE - 2]) <= ManPoseTable.MAX_OFFSET, "offset_y " + out[ManPoseTable.SIZE - 2]);
+        }
+        t.sample(0.0F, out);
+        assertEquals(3.0F, out[ManPoseTable.SCALE], 1e-6);
+        assertEquals(-2.0F, out[ManPoseTable.SIZE - 2], 1e-6);
+        t.sample(1.0F, out);
+        assertEquals(0.1F, out[ManPoseTable.SCALE], 1e-6);
+        assertEquals(2.0F, out[ManPoseTable.SIZE - 2], 1e-6);
+    }
+
+    @Test
+    void neutralIsOneSharedTableAndDoesNothing() {
+        assertSame(ManPoseTable.neutral(), ManPoseTable.neutral());
+    }
+
+    @Test
     void neutralDoesNothing() {
         float[] out = new float[ManPoseTable.SIZE];
         ManPoseTable.neutral().sample(0.7F, out);

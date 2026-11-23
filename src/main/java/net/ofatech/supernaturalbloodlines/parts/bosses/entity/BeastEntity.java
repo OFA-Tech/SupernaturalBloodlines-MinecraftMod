@@ -186,7 +186,8 @@ public final class BeastEntity extends BossNpc implements GeoEntity, ShiftBody {
         setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
         server.sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 1.2, getZ(), 60, 0.8, 1.0, 0.8, 0.05);
         server.playSound(null, getX(), getY(), getZ(), SoundEvents.WOLF_HOWL, SoundSource.HOSTILE, 4.0F, 0.3F);
-        server.broadcastEntityEvent(this, (byte) 2);
+        // the shake: a damage event (the old entity event 2 is not handled on 1.21.1), which plays the hurt tilt and the hurt sound on the clients
+        server.broadcastDamageEvent(this, damageSources().generic());
         java.util.function.Consumer<BeastEntity> o = swapObserver;
         if (o != null) {
             o.accept(this);
@@ -245,8 +246,13 @@ public final class BeastEntity extends BossNpc implements GeoEntity, ShiftBody {
         return !collapsing();
     }
 
+    /** It may Roar: on its feet and whole, not in the middle of the change (the man, the arrival) and not while the howl of the change is still going (to tick 84). */
+    public boolean mayRoar() {
+        return !collapsing() && form() == BossForm.BEAST && !ShiftRules.howling(form(), shiftTicks());
+    }
+
     public void roarNow(long gameTime) {
-        if (!collapsing() && roarTicks() == 0 && form() == BossForm.BEAST) {
+        if (mayRoar() && roarTicks() == 0) {
             entityData.set(ROAR_TICKS, 1);
             triggerAnim(CONTROLLER, REAR_UP);
             roarReadyAt = BeastRules.nextRoarAt(gameTime, BossesConfig.beastRoarCooldownSeconds());
@@ -348,7 +354,7 @@ public final class BeastEntity extends BossNpc implements GeoEntity, ShiftBody {
 
         @Override
         public boolean canUse() {
-            return beast.getTarget() != null && !beast.collapsing() && beast.form() == BossForm.BEAST && beast.roarTicks() == 0 && beast.roarReady(beast.level().getGameTime())
+            return beast.getTarget() != null && beast.mayRoar() && beast.roarTicks() == 0 && beast.roarReady(beast.level().getGameTime())
                     && BeastRules.roarInRange(beast.distanceToSqr(beast.getTarget()), BossesConfig.beastRoarRange());
         }
 
@@ -389,6 +395,9 @@ public final class BeastEntity extends BossNpc implements GeoEntity, ShiftBody {
         // the two tags are optional: a save from before the change has neither and is a whole Beast
         entityData.set(FORM, tag.contains("form") ? tag.getInt("form") : BossForm.BEAST.ordinal());
         entityData.set(SHIFT_TICKS, tag.contains("shift_ticks") ? tag.getInt("shift_ticks") : ShiftRules.END_TICK);
+        if (ShiftRules.showsBeast(form(), shiftTicks())) {
+            setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY); // the Host's hat comes off at the swap: a save from an older build of this phase may still carry it
+        }
         if (tag.getBoolean("collapsing")) {
             // a body that was falling when the world closed is gone: the Host and the Spirit were made when it fell
             entityData.set(COLLAPSING, true);

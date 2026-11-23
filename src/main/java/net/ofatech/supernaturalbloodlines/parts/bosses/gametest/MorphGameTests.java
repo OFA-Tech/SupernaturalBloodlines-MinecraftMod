@@ -97,14 +97,15 @@ public final class MorphGameTests {
             all = shifters(helper, rig);
             for (Shifter s : all) {
                 List<String> seen = new ArrayList<>();
-                MorphCues.observe((boss, tick, cues) -> {
-                    if (boss == s.mob()) {
-                        seen.add(tick + ":" + cues);
+                MorphCues.observe(played -> {
+                    if (played.boss() == s.mob()) {
+                        seen.add(played.shiftTick() + ":" + played.cues() + ":" + played.sounds() + ":" + played.particles());
                     }
                 });
                 s.start().run();
                 run(s.mob(), ShiftRules.END_TICK);
-                helper.assertTrue(seen.equals(List.of("0:1", "4:2", "7:4", "8:2", "12:2", "14:4", "16:2", "32:8")), s.name() + " played " + seen);
+                // tick:cue bit:sounds:particles, what was really made: the growl, four puffs of smoke that climb, a bone crack, the landing (a step and twelve puffs)
+                helper.assertTrue(seen.equals(List.of("0:1:1:0", "4:2:0:4", "7:4:1:0", "8:2:0:4", "12:2:0:4", "14:4:1:0", "16:2:0:4", "32:8:1:12")), s.name() + " played " + seen);
                 helper.assertTrue(s.body().form() == BossForm.BEAST, s.name() + " did not finish the shift");
             }
         } finally {
@@ -123,9 +124,9 @@ public final class MorphGameTests {
             all = shifters(helper, rig);
             for (Shifter s : all) {
                 List<Integer> ticks = new ArrayList<>();
-                MorphCues.observe((boss, tick, cues) -> {
-                    if (boss == s.mob()) {
-                        ticks.add(tick);
+                MorphCues.observe(played -> {
+                    if (played.boss() == s.mob()) {
+                        ticks.add(played.shiftTick());
                     }
                 });
                 s.start().run();
@@ -149,7 +150,7 @@ public final class MorphGameTests {
         try (BossTestRig rig = new BossTestRig(helper)) {
             KlausEntity k = rig.spawnKlaus();
             List<Integer> ticks = new ArrayList<>();
-            MorphCues.observe((boss, tick, cues) -> ticks.add(tick));
+            MorphCues.observe(played -> ticks.add(played.shiftTick()));
             k.startShift();
             run(k, 5);
             int before = ticks.size();
@@ -175,9 +176,9 @@ public final class MorphGameTests {
             all = shifters(helper, rig);
             for (Shifter s : all) {
                 List<Integer> ticks = new ArrayList<>();
-                MorphCues.observe((boss, tick, cues) -> {
-                    if (boss == s.mob()) {
-                        ticks.add(tick);
+                MorphCues.observe(played -> {
+                    if (played.boss() == s.mob()) {
+                        ticks.add(played.shiftTick());
                     }
                 });
                 s.start().run();
@@ -401,7 +402,7 @@ public final class MorphGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void noRoarWhileItChanges(GameTestHelper helper) {
+    public static void noRoarWhileItChangesOrHowls(GameTestHelper helper) {
         if (skipped(helper)) {
             return;
         }
@@ -411,13 +412,20 @@ public final class MorphGameTests {
             victim.setPos(b.getX() + 3.0, b.getY(), b.getZ());
             b.setTarget(victim);
             helper.assertTrue(b.roarReady(helper.getLevel().getGameTime()), "control: a new Beast may roar");
-            for (int i = 0; i < ShiftRules.SHIFT_TICKS; i++) {
+            // the change (0 to 39) and the howl of it (40 to 83): no Roar begins, by the goal or by being asked
+            for (int i = 0; i < ShiftRules.END_TICK; i++) {
                 run(b, 1);
                 b.setTarget(victim);
                 helper.assertTrue(b.roarTicks() == 0, "it began to Roar at tick " + b.shiftTicks() + " of the change");
+                helper.assertTrue(!b.mayRoar() || b.shiftTicks() >= ShiftRules.END_TICK, "it may Roar at tick " + b.shiftTicks());
+                if (i == 45 || i == 70) {
+                    b.roarNow(helper.getLevel().getGameTime());
+                    helper.assertTrue(b.roarTicks() == 0, "a Roar began while it howled, at tick " + b.shiftTicks());
+                }
             }
+            helper.assertTrue(b.shiftTicks() == ShiftRules.END_TICK && b.mayRoar(), "control: it may Roar when the howl is over: " + b.shiftTicks());
             b.roarNow(helper.getLevel().getGameTime());
-            helper.assertTrue(b.roarTicks() == 1, "control: it may Roar when the change is over");
+            helper.assertTrue(b.roarTicks() == 1, "control: it did not Roar when the howl was over");
         } finally {
             BeastEntity.observeSwap(null);
         }
@@ -581,9 +589,9 @@ public final class MorphGameTests {
         try (BossTestRig rig = new BossTestRig(helper)) {
             BeastEntity b = changed(helper, rig);
             List<String> seen = new ArrayList<>();
-            MorphCues.observe((boss, tick, cues) -> {
-                if (boss == b) {
-                    seen.add(tick + ":" + cues);
+            MorphCues.observe(played -> {
+                if (played.boss() == b) {
+                    seen.add(played.shiftTick() + ":" + played.cues() + ":" + played.sounds() + ":" + played.particles());
                 }
             });
             BeastEntity twin = BeastEntity.create(helper.getLevel());
@@ -598,7 +606,7 @@ public final class MorphGameTests {
                 helper.assertTrue(twin.getBbWidth() == b.getBbWidth() && twin.getBbHeight() == b.getBbHeight(), "tick " + t + ": a different box");
                 run(b, 1);
             }
-            helper.assertTrue(seen.equals(List.of("0:1", "4:2", "7:4", "8:2", "12:2", "14:4", "16:2", "32:8")), "the Beast played " + seen);
+            helper.assertTrue(seen.equals(List.of("0:1:1:0", "4:2:0:4", "7:4:1:0", "8:2:0:4", "12:2:0:4", "14:4:1:0", "16:2:0:4", "32:8:1:12")), "the Beast played " + seen);
         } finally {
             MorphCues.observe(null);
             BeastEntity.observeSwap(null);
@@ -659,4 +667,220 @@ public final class MorphGameTests {
         }
         helper.succeed();
     }
-}
+
+    // ---- review round 2 ----
+
+    private static net.minecraft.server.level.ServerPlayer near(GameTestHelper helper, Mob boss) {
+        net.minecraft.server.level.ServerPlayer p = TestPlayers.createDuelist(helper);
+        p.setPos(boss.getX() + 1.0, boss.getY(), boss.getZ());
+        return p;
+    }
+
+    /** A boss with a target at arm's length does not step and does not strike while he shifts: the goals do not run (isImmobile), the speed hold alone is not enough. */
+    private static void holdsWithATarget(GameTestHelper helper, Shifter s) {
+        net.ofatech.supernaturalbloodlines.parts.bosses.entity.BossNpc boss = (net.ofatech.supernaturalbloodlines.parts.bosses.entity.BossNpc) s.mob();
+        helper.assertTrue(s.body().form() == BossForm.SHIFTING, s.name() + ": not shifting");
+        net.minecraft.server.level.ServerPlayer victim = near(helper, boss);
+        helper.getLevel().addNewPlayer(victim);
+        try {
+            float before = victim.getHealth();
+            net.minecraft.world.phys.Vec3 at = boss.position();
+            for (int t = 0; t < ShiftRules.SHIFT_TICKS - 1; t++) {
+                boss.setTarget(victim);
+                boss.getNavigation().moveTo(victim, 1.5); // what the goals would do
+                victim.setPos(boss.getX() + 1.0, boss.getY(), boss.getZ());
+                run(boss, 1);
+                helper.assertTrue(boss.isImmobile(), s.name() + " is not immobile at tick " + s.body().shiftTicks());
+            }
+            helper.assertTrue(victim.getHealth() == before, s.name() + " struck the one in front of him while he shifted: " + before + " -> " + victim.getHealth());
+            helper.assertTrue(Math.hypot(boss.getX() - at.x, boss.getZ() - at.z) < 0.5, s.name() + " stepped " + Math.hypot(boss.getX() - at.x, boss.getZ() - at.z) + " blocks toward his target");
+        } finally {
+            helper.getLevel().removePlayerImmediately(victim, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+        }
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTargetCannotMakeAManStepOrStrikeWhileHeShifts(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        List<Shifter> all = List.of();
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            all = shifters(helper, rig);
+            for (Shifter s : all) {
+                s.start().run();
+                holdsWithATarget(helper, s);
+            }
+        } finally {
+            clear(all);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aTargetCannotMakeTheBeastStepOrStrikeWhileItChanges(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            BeastEntity beast = changed(helper, rig);
+            holdsWithATarget(helper, new Shifter("beast", beast, beast, () -> { }));
+        } finally {
+            BeastEntity.observeSwap(null);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBossThatIsNotShiftingIsNotHeldByTheShiftHold(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        List<Shifter> all = List.of();
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            all = shifters(helper, rig);
+            for (Shifter s : all) {
+                var boss = (net.ofatech.supernaturalbloodlines.parts.bosses.entity.BossNpc) s.mob();
+                helper.assertTrue(!boss.isImmobile(), s.name() + " is immobile before the shift");
+                s.start().run();
+                run(s.mob(), ShiftRules.SHIFT_TICKS);
+                helper.assertTrue(!boss.isImmobile(), s.name() + " is immobile after the shift: " + s.body().form());
+            }
+        } finally {
+            clear(all);
+        }
+        helper.succeed();
+    }
+
+    /** A body that dies in the middle of the shift is frozen there: the count stops, the swap never comes, no cue plays. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDyingBodyIsNotCountedOrSwapped(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        List<Shifter> all = List.of();
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            all = shifters(helper, rig);
+            for (Shifter s : all) {
+                s.start().run();
+                run(s.mob(), 12);
+                int at = s.body().shiftTicks();
+                s.mob().setHealth(0.0F);
+                run(s.mob(), 8);
+                helper.assertTrue(s.body().shiftTicks() <= at + 1 && s.body().form() == BossForm.SHIFTING, s.name() + " went on after death: " + s.body().form() + " " + s.body().shiftTicks() + " from " + at);
+            }
+        } finally {
+            clear(all);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theHatIsNotKeptPastTheSwapAfterALoad(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            BeastEntity b = changed(helper, rig);
+            run(b, 10);
+            CompoundTag early = new CompoundTag();
+            b.saveWithoutId(early);
+            BeastEntity before = BeastEntity.create(helper.getLevel());
+            before.load(early);
+            helper.assertTrue(!before.getItemBySlot(EquipmentSlot.HEAD).isEmpty(), "a Beast saved before the swap lost its hat on a load");
+            run(b, 15);
+            helper.assertTrue(b.getItemBySlot(EquipmentSlot.HEAD).isEmpty(), "control: the hat is off after the swap");
+            b.setItemSlot(EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(net.ofatech.supernaturalbloodlines.parts.bosses.BossItems.SEBASTIEN_TRICORN.get()));
+            CompoundTag late = new CompoundTag();
+            b.saveWithoutId(late); // a save of an earlier build of this phase, with the hat still in the slot
+            BeastEntity after = BeastEntity.create(helper.getLevel());
+            after.load(late);
+            helper.assertTrue(after.getItemBySlot(EquipmentSlot.HEAD).isEmpty(), "a wolf came back from a save wearing the Host's hat");
+        } finally {
+            BeastEntity.observeSwap(null);
+        }
+        helper.succeed();
+    }
+
+    // ---- the growing hitbox at the swap (Entity.fudgePositionAfterSizeChange moves a body that no longer fits) ----
+
+    /** A Host that stands against a wall of one block is moved out of it, never to the other side, when the box grows from 0.6 to 2.4 wide. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theGrowingBoxNeverCarriesTheBeastThroughAOneBlockWall(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            BossTestRig.fixedGround();
+            BlockPos wall = helper.absolutePos(new BlockPos(9, 1, 8)); // a wall one block thick, three high and seven wide, east of the Host
+            List<BlockPos> placed = new ArrayList<>();
+            for (int y = 0; y < 3; y++) {
+                for (int z = -3; z <= 3; z++) {
+                    BlockPos p = wall.offset(0, y, z);
+                    helper.getLevel().setBlockAndUpdate(p, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+                    placed.add(p);
+                }
+            }
+            try {
+                rig.close(); // the rig of this test only builds the world; each Host below has a rig of its own, so that the index is clean for each
+                for (double gap : new double[] {0.0, 0.05, 0.3}) { // how far the Host's own box is from the wall: none, a hair, a little
+                    try (BossTestRig each = new BossTestRig(helper)) {
+                        BeastEntity b = changed(helper, each); // made by the director, so the index knows it
+                        b.setPos(wall.getX() - 0.3 - gap, wall.getY(), wall.getZ() + 0.5);
+                        double x0 = b.getX();
+                        run(b, ShiftRules.SWAP_TICK + 2);
+                        helper.assertTrue(b.getBbWidth() > 2.0F && !b.isRemoved(), "the swap did not happen (removed: " + b.isRemoved() + ")");
+                        helper.assertTrue(b.getX() < wall.getX() + 1.0, "the Beast was carried through a wall of one block: it is at x " + b.getX() + " from " + x0 + ", the wall is x " + wall.getX() + " to " + (wall.getX() + 1));
+                    }
+                }
+            } finally {
+                placed.forEach(p -> helper.getLevel().setBlockAndUpdate(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()));
+            }
+        } finally {
+            BeastEntity.observeSwap(null);
+        }
+        helper.succeed();
+    }
+
+    /** A Host just inside a closed ring of mountain ash is still inside it, and so is caught by the ring, when his box grows. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theGrowingBoxNeverCarriesTheBeastOutOfARingOfMountainAsh(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        net.minecraft.world.level.block.Block ash = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(NS, "mountain_ash_line"));
+        if (ash == net.minecraft.world.level.block.Blocks.AIR) {
+            helper.succeed();
+            return;
+        }
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            BossTestRig.fixedGround();
+            BlockPos at = helper.absolutePos(new BlockPos(8, 1, 8));
+            List<BlockPos> ring = new ArrayList<>();
+            for (int d = -3; d <= 3; d++) {
+                for (BlockPos p : new BlockPos[] {at.offset(d, 0, -3), at.offset(d, 0, 3), at.offset(-3, 0, d), at.offset(3, 0, d)}) {
+                    helper.getLevel().setBlockAndUpdate(p, ash.defaultBlockState());
+                    ring.add(p);
+                }
+            }
+            try {
+                rig.close();
+                for (double inside : new double[] {0.45, 0.2}) { // how far the Host stands inside the ring's east line, toward the middle
+                    try (BossTestRig each = new BossTestRig(helper)) {
+                    BeastEntity b = changed(helper, each);
+                    b.setPos(at.getX() + 3.0 - inside, at.getY(), at.getZ() + 0.5);
+                    run(b, ShiftRules.SWAP_TICK + 2);
+                    helper.assertTrue(b.getBbWidth() > 2.0F && !b.isRemoved(), "the swap did not happen (removed: " + b.isRemoved() + ")");
+                    helper.assertTrue(b.getX() < at.getX() + 4.0, "the Beast is outside the ring after the swap, at x " + b.getX() + " (the ring's east line is x " + (at.getX() + 3) + " to " + (at.getX() + 4) + ")");
+                    helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.line.Imprisonment.ringClosed(helper.getLevel(), b.blockPosition(), net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.ringRadius()),
+                            "the ring does not hold the Beast any more at " + b.blockPosition());
+                    }
+                }
+            } finally {
+                ring.forEach(p -> helper.getLevel().setBlockAndUpdate(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()));
+            }
+        } finally {
+            BeastEntity.observeSwap(null);
+        }
+        helper.succeed();
+    }}

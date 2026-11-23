@@ -114,8 +114,18 @@ def merge(model, exported_path, check=False, game_path=None, geo_path=None):
         model, ', '.join(wanted), ', '.join(removed) or 'nothing', len(kept)))
     if check:
         return
-    with open(game_path, 'w', encoding='utf-8', newline='') as f:
-        f.write(out)
+    # written beside the file and moved over it, so that a failure half way leaves the game file as it was
+    tmp = game_path + '.tmp'
+    try:
+        with open(tmp, 'w', encoding='utf-8', newline='') as f:
+            f.write(out)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, game_path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+        raise
 
 
 if __name__ == '__main__':

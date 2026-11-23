@@ -44,10 +44,14 @@ final class ShiftCore {
 
     /** One more tick of the shift (server): the counter, the swap on its tick, and the end of the shift. */
     static void advance(ShiftBody body) {
+        // a dying body is not in the middle of anything: no count, no swap, no cue (the death clip wins)
+        if (body instanceof LivingEntity dying && dying.isDeadOrDying()) {
+            return;
+        }
         BossForm form = body.form();
         int before = body.shiftTicks();
         // the cues of the tick that is about to be counted (growl at 0 ... landing at 32); none for one who is dying: the death clip wins
-        if (body instanceof LivingEntity living && !living.isDeadOrDying() && body.level() instanceof ServerLevel level) {
+        if (body instanceof LivingEntity living && body.level() instanceof ServerLevel level) {
             MorphCues.play(level, living, before, MorphRules.cues(form, before));
         }
         int counted = ShiftRules.nextTicks(form, before);

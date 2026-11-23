@@ -91,6 +91,39 @@ class MergeTest(unittest.TestCase):
         mc.merge('deucalion_demon_wolf', path, game_path=self.game, geo_path=self.geo)
         self.assertEqual(self.before['animation.deucalion_demon_wolf.idle'], self.merged()['animation.deucalion_demon_wolf.idle'])
 
+    def test_the_file_is_replaced_in_one_move_from_a_temporary_one(self):
+        from unittest import mock
+        with open(self.game, encoding='utf-8', newline='') as f:
+            before = f.read()
+        real = os.replace
+        seen = {}
+
+        def spy(src, dst):
+            with open(dst, encoding='utf-8', newline='') as f:
+                seen['old'] = f.read()
+            with open(src, encoding='utf-8', newline='') as f:
+                seen['new'] = f.read()
+            seen['src'] = src
+            real(src, dst)
+
+        with mock.patch('os.replace', spy):
+            mc.merge('deucalion_demon_wolf', self.export(), game_path=self.game, geo_path=self.geo)
+        self.assertEqual(before, seen['old'], 'the game file was already changed when it was replaced')
+        self.assertNotEqual(before, seen['new'])
+        self.assertTrue(seen['src'].endswith('.tmp'))
+        self.assertFalse(os.path.exists(seen['src']), 'the temporary file was left behind')
+
+    def test_a_failure_while_replacing_leaves_the_file_and_no_temporary_one(self):
+        from unittest import mock
+        with open(self.game, encoding='utf-8', newline='') as f:
+            before = f.read()
+        with mock.patch('os.replace', side_effect=OSError('disk')):
+            with self.assertRaises(OSError):
+                mc.merge('deucalion_demon_wolf', self.export(), game_path=self.game, geo_path=self.geo)
+        with open(self.game, encoding='utf-8', newline='') as f:
+            self.assertEqual(before, f.read())
+        self.assertFalse(os.path.exists(self.game + '.tmp'))
+
     def test_a_missing_clip_is_refused(self):
         path = os.path.join(self.tmp, 'export.json')
         with open(path, 'w', encoding='utf-8') as f:
