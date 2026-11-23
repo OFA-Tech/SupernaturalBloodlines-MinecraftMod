@@ -43,5 +43,6 @@ player for several seconds; ours is 2 s and the boss stays hittable.
 
 ## Poses to hit, per boss
 
-Eight stills per boss (man peak, wolf first frame, landing, settle and the ones between), as frame numbers: `previews/<boss>/POSES.md`. Klaus's is written;
-Deucalion, Peter and the Beast follow with their own art.
+Eight stills per boss (man peak, wolf first frame, landing, settle and the ones between), as frame numbers: `previews/<boss>/POSES.md`, written for all
+four. What each takes from the notes above: Klaus the snap and the fall; Deucalion the standing change and one heavy hit (he stays upright, so his
+landing is a hand); Peter the dog that sets itself down, one paw then the other; the Beast the swelling in place, then weight arriving all at once.

@@ -17,10 +17,10 @@ late and settles once. Where Klaus falls, Peter lowers himself.
 | 4 | 20 | `shift_in` 0.00 | **Match (wolf first frame):** the alpha at half its size, reared 72 degrees on folded haunches, 29.2 px (1.83 blocks) tall and 11.63 px (0.73) wide, left claw higher, hind feet forward of their rest spots so that he stands where the man stood. |
 | 5 | 26 | `shift_in` 0.30 | Growing and tipping; the right hind foot has stepped back to its spot, the forelegs are opening. |
 | 6 | 32 | `shift_in` 0.60 | **Landing:** the right forepaw is set down (the LAND dust); the left is 4.9 px up and lands at 0.70 s. |
-| 7 | 35 | `shift_in` 0.75 | The weight arrives: the top of him is 3.3 px lower than at contact, the head low, the mane thrown forward. |
+| 7 | 34 | `shift_in` 0.70 | The weight arrives: the top of him is 3.3 px lower than at contact, the head low, the mane thrown forward. |
 | 8 | 40 | `shift_in` 1.00 | **Settle:** the first frame of `idle`, every bone. The roar starts and ends on this same pose. |
 
-The saved frames are the brief's ticks (0, 5, 10, 15, 19, 20, 25, 30, 32, 35, 39, 44); poses 1, 2, 5 and 8 fall on ticks between them.
+The saved frames are the brief's ticks (0, 5, 10, 15, 19, 20, 25, 30, 32, 35, 39, 44); poses 1, 2, 5, 7 and 8 fall on ticks between them.
 
 ## Measured (Blockbench, every tick of each clip)
 
