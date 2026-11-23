@@ -127,43 +127,56 @@ public final class NpcPackGameTests {
      * "added" but hidden, and nothing finds it.
      */
     private static final java.util.Map<GameTestHelper, java.util.List<net.minecraft.world.level.ChunkPos>> HELD = new java.util.HashMap<>();
-    private static final java.util.Map<net.minecraft.world.level.ChunkPos, Integer> HOLDS = new java.util.HashMap<>();
     /**
-     * Our own ticket, never the runner's force: the runner forces the chunks of the structures it is running and lets them go when each one ends, so a chunk that "is
-     * already forced" when this test asks may be gone a tick later (the flake under load). A region ticket of this type is ours alone; radius 2 is the level of a
-     * forced chunk (entities found and ticking).
+     * One ticket per test, never shared: the key is the test's own number. Two tests that hold the same chunk (a far spot of one can be the structure or the far spot of
+     * another) used to share one ticket behind a hand-kept count, and one count going wrong left the other without a hold. The runner's own force is no help either: it lets
+     * a chunk go when its structure ends. Radius 2 is the level of a forced chunk (entities found and ticking).
      */
-    private static final net.minecraft.server.level.TicketType<net.minecraft.world.level.ChunkPos> TICKET =
-            net.minecraft.server.level.TicketType.create("supernaturalbloodlines_npc_pack_test", java.util.Comparator.comparingLong(net.minecraft.world.level.ChunkPos::toLong));
+    private static final net.minecraft.server.level.TicketType<Long> TICKET =
+            net.minecraft.server.level.TicketType.create("supernaturalbloodlines_npc_pack_test", java.util.Comparator.<Long>naturalOrder());
     private static final int TICKET_RADIUS = 2;
-    /** The tests whose body has started: the delayed release is only for the ones that never got there. */
-    private static final java.util.Set<GameTestHelper> STARTED = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
+    private static final java.util.Map<GameTestHelper, Long> KEYS = new java.util.HashMap<>();
+    private static final java.util.concurrent.atomic.AtomicLong NEXT_KEY = new java.util.concurrent.atomic.AtomicLong();
+
+    private static long key(GameTestHelper helper) {
+        return KEYS.computeIfAbsent(helper, h -> NEXT_KEY.incrementAndGet());
+    }
+
+    /** Takes this test's own hold on a chunk. */
+    private static void hold(GameTestHelper helper, net.minecraft.world.level.ChunkPos cp) {
+        helper.getLevel().getChunkSource().addRegionTicket(TICKET, cp, TICKET_RADIUS, key(helper));
+        HELD.computeIfAbsent(helper, k -> new java.util.ArrayList<>()).add(cp);
+    }
 
     private static void release(GameTestHelper helper) {
+        Long k = KEYS.remove(helper);
         for (net.minecraft.world.level.ChunkPos cp : HELD.getOrDefault(helper, java.util.List.of())) {
-            if (HOLDS.merge(cp, -1, Integer::sum) <= 0) {
-                HOLDS.remove(cp);
-                helper.getLevel().getChunkSource().removeRegionTicket(TICKET, cp, TICKET_RADIUS, cp);
-            }
+            helper.getLevel().getChunkSource().removeRegionTicket(TICKET, cp, TICKET_RADIUS, k);
         }
         HELD.remove(helper);
     }
 
-    /** Holds the chunks at these x offsets, waits until something placed in each is found by a lookup (a tick or two), then runs {@code body}; {@link #clean} lets them go. */
+    /**
+     * How long, in real time, the chunks get to become usable. The loading and the entity storage run on other threads and only finish inside the server's ticks, so
+     * a number of ticks says nothing about it (the server makes them as fast as it can, and a loaded machine starves those threads): the wait is checked every tick and
+     * bounded by this wall-clock time, and the runner's own timeout in ticks is far out of the way.
+     */
+    private static final long LOAD_WAIT_NANOS = java.util.concurrent.TimeUnit.SECONDS.toNanos(120);
+    /** The runner's timeout in ticks for a test that waits: never what ends the wait (at 1000 ticks a second it would come in 17 minutes). */
+    private static final int LOAD_WAIT_TICKS = 1_000_000;
+
+    /**
+     * Holds the chunks at these x offsets, waits until something placed in each is found by a lookup (asked with a marker, every tick), then runs {@code body};
+     * {@link #clean} (or a failure of the body or of the wait) lets them go. A test that uses this needs {@code timeoutTicks = LOAD_WAIT_TICKS}.
+     */
     private static void whenLoaded(GameTestHelper helper, double[] xs, Runnable body) {
         List<BlockPos> spots = new java.util.ArrayList<>();
         for (double x : xs) {
             BlockPos at = helper.absolutePos(new BlockPos((int) x, 1, 2));
-            net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(at);
-            if (HOLDS.merge(cp, 1, Integer::sum) == 1) {
-                helper.getLevel().getChunkSource().addRegionTicket(TICKET, cp, TICKET_RADIUS, cp); // always our own hold, whatever else holds the chunk
-            }
-            // the chunk's loading runs on other threads in real time while the test's own ticks come as fast as the server can make them, so waiting a number of ticks for it is a race under load: load it now
-            helper.getLevel().getChunk(cp.x, cp.z);
-            HELD.computeIfAbsent(helper, k -> new java.util.ArrayList<>()).add(cp);
+            hold(helper, new net.minecraft.world.level.ChunkPos(at));
             spots.add(at);
         }
-        // the question that matters is whether something placed there is found: ask it with a marker, every tick, until the answer is yes
+        long deadline = System.nanoTime() + LOAD_WAIT_NANOS;
         helper.startSequence().thenWaitUntil(() -> {
             boolean all = true;
             for (BlockPos s : spots) {
@@ -173,20 +186,20 @@ public final class NpcPackGameTests {
                 all &= helper.getLevel().getEntity(probe.getUUID()) == probe;
                 probe.discard();
             }
-            helper.assertTrue(all, "the chunks are not loaded yet");
-        }).thenExecute(guarded(helper, body));
-        // a test that times out never reaches its body or its clean-up: let the chunks go a few ticks before the runner gives up (not once the body has started: it lets them go itself)
-        helper.runAfterDelay(95, () -> {
-            if (!STARTED.contains(helper)) {
-                release(helper);
+            if (all) {
+                return;
             }
-        });
+            if (System.nanoTime() > deadline) {
+                release(helper);
+                throw new IllegalStateException("the chunks did not become usable in " + java.util.concurrent.TimeUnit.NANOSECONDS.toSeconds(LOAD_WAIT_NANOS) + " s: "
+                        + spots.stream().map(s -> net.ofatech.supernaturalbloodlines.gametest.Diag.chunk(helper.getLevel(), s)).toList());
+            }
+            helper.assertTrue(false, "the chunks are not loaded yet");
+        }).thenExecute(guarded(helper, body));
     }
-
     /** The body, and whatever way it ends (a failed assertion included) the chunks it held are let go: a failed test must not leave them forced for the next batch. */
     static Runnable guarded(GameTestHelper helper, Runnable body) {
         return () -> {
-            STARTED.add(helper);
             try {
                 body.run();
             } catch (RuntimeException | Error e) {
@@ -195,7 +208,6 @@ public final class NpcPackGameTests {
             }
         };
     }
-
     private static Mob mob(GameTestHelper helper, String id, double x) {
         // placed, not just created: an Alpha beside a weak player is refused entry by the Werewolves mod unless it has a level (see NpcPackSpawner.place)
         Mob m = NpcPackSpawner.place(helper.getLevel(), NpcPackSpawner.asMob(type(id)), helper.absolutePos(new BlockPos((int) x, 1, 2)), NpcPackSpawner.HALF_LEVEL);
@@ -474,9 +486,7 @@ public final class NpcPackGameTests {
     public static void aTestThatFailsInsideItsBodyStillLetsItsChunksGo(GameTestHelper helper) {
         BlockPos at = helper.absolutePos(new BlockPos(96, 1, 2));
         net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(at);
-        int holdsBefore = HOLDS.getOrDefault(cp, 0);
-        HOLDS.merge(cp, 1, Integer::sum);
-        HELD.computeIfAbsent(helper, k -> new java.util.ArrayList<>()).add(cp);
+        hold(helper, cp);
         boolean threw = false;
         try {
             guarded(helper, () -> {
@@ -486,12 +496,11 @@ public final class NpcPackGameTests {
             threw = true;
         }
         helper.assertTrue(threw, "the failure of the body was swallowed");
-        // this test's own bookkeeping only: a neighbouring test may hold the same chunk in the same run
-        helper.assertTrue(!HELD.containsKey(helper) && HOLDS.getOrDefault(cp, 0) == holdsBefore, "a failed body left its chunk held: " + holdsBefore + " -> " + HOLDS.getOrDefault(cp, 0));
+        helper.assertTrue(!HELD.containsKey(helper) && !KEYS.containsKey(helper), "a failed body left its chunk held");
         helper.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = LOAD_WAIT_TICKS)
     public static void aMobFarFromTheStructureIsFoundOnceTheTestHoldsItsChunk(GameTestHelper helper) {
         // 96 blocks along: no structure of this test is near, so the test world has nothing loaded there until the test holds it
         whenLoaded(helper, new double[] {96}, () -> {
@@ -500,11 +509,9 @@ public final class NpcPackGameTests {
                 helper.assertTrue(helper.getLevel().getEntity(far.getUUID()) == far, "a mob placed far away is not in the level");
                 helper.assertTrue(!helper.getLevel().getEntitiesOfClass(Mob.class, far.getBoundingBox().inflate(4), m -> m == far).isEmpty(), "a mob placed far away is not found by a search");
                 net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(far.blockPosition());
-                int holdsBefore = HOLDS.getOrDefault(cp, 0);
-                helper.assertTrue(holdsBefore >= 1 && HELD.get(helper).contains(cp), "the test does not hold its chunk: " + holdsBefore);
+                helper.assertTrue(HELD.containsKey(helper) && HELD.get(helper).contains(cp), "the test does not hold its chunk");
                 clean(helper, List.of(far));
-                // a neighbouring test may hold the same chunk: what must be true is that this test's own hold, and only that, went
-                helper.assertTrue(HOLDS.getOrDefault(cp, 0) == holdsBefore - 1 && !HELD.containsKey(helper), "the hold did not go back by exactly one: " + holdsBefore + " -> " + HOLDS.getOrDefault(cp, 0));
+                helper.assertTrue(!HELD.containsKey(helper) && !KEYS.containsKey(helper), "the hold did not go");
             } finally {
                 clean(helper, List.of(far));
             }
@@ -512,7 +519,7 @@ public final class NpcPackGameTests {
         });
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
+    @GameTest(template = "empty", templateNamespace = NS, timeoutTicks = LOAD_WAIT_TICKS)
     public static void thePackHuntsTogether(GameTestHelper helper) {
         // the wolves are up to 45 blocks apart, which can be a chunk the test world did not load
         whenLoaded(helper, new double[] {-20, 0, 25}, () -> {

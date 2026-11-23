@@ -122,16 +122,20 @@ public final class TensuraFeedGameTests {
         BiteGameTests.place(helper, victim, 2.5);
         helper.getLevel().addNewPlayer(victim);
         boolean pvp = helper.getLevel().getServer().isPvpAllowed();
-        helper.getLevel().getServer().setPvpAllowed(true);
-        helper.assertTrue(VampirismAPI.vampirePlayer(p).useBlood(15, true), "could not empty the biter's blood");
-        p.setHealth(10f);
-        int theirs = blood(victim);
-        float health = victim.getHealth();
-        // the race ability's own target search is not what is under test (it may skip players); what it does to the victim is: the activation, then its blood_drain hit
-        RaceEvents.ACTIVATE_ABILITY.invoker().activateAbility(RaceAPI.getRaceFrom(p).getRace().orElseThrow(), p);
-        helper.assertTrue(victim.hurt(TensuraDamageTypes.getEntityDamageSource(helper.getLevel(), TensuraDamageTypes.BLOOD_DRAIN, p), 2f), "the drain hit did not land");
-        helper.assertTrue(victim.getHealth() < health, "the vampire victim was not hurt");
-        helper.getLevel().getServer().setPvpAllowed(pvp);
+        int theirs;
+        try {
+            helper.getLevel().getServer().setPvpAllowed(true);
+            helper.assertTrue(VampirismAPI.vampirePlayer(p).useBlood(15, true), "could not empty the biter's blood");
+            p.setHealth(10f);
+            theirs = blood(victim);
+            float health = victim.getHealth();
+            // the race ability's own target search is not what is under test (it may skip players); what it does to the victim is: the activation, then its blood_drain hit
+            RaceEvents.ACTIVATE_ABILITY.invoker().activateAbility(RaceAPI.getRaceFrom(p).getRace().orElseThrow(), p);
+            helper.assertTrue(victim.hurt(TensuraDamageTypes.getEntityDamageSource(helper.getLevel(), TensuraDamageTypes.BLOOD_DRAIN, p), 2f), "the drain hit did not land");
+            helper.assertTrue(victim.getHealth() < health, "the vampire victim was not hurt");
+        } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
+        }
         helper.assertTrue(blood(victim) == theirs, "the vampire victim lost blood without Predator's Thirst: " + blood(victim) + ", was " + theirs);
         helper.succeed();
     }
