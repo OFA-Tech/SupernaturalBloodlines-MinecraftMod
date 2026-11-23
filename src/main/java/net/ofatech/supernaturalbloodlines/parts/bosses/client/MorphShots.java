@@ -203,7 +203,12 @@ final class MorphShots {
             entity.yBodyRotO = yaw;
             entity.yHeadRot = yaw;
             entity.yHeadRotO = yaw;
-            float modelHeight = boss.equals("beast") ? 3.4f : 2.3f;
+            // the tallest body of the shift in blocks (Deucalion's wolf reaches 3.3 with its ears), so no head leaves the picture
+            float modelHeight = switch (boss) {
+                case "beast" -> 3.4f;
+                case "deucalion" -> 3.5f;
+                default -> 2.3f;
+            };
             float scale = 0.72f * height / modelHeight;
             // the box centre is what is placed at the point: shift it so that the feet stay on one line whatever the height of the body
             int cy = height / 2 + 6 + Math.round((modelHeight - entity.getBbHeight()) / 2f * scale);
