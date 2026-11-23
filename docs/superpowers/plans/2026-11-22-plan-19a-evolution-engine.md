@@ -192,7 +192,7 @@ Modify: `core/Part.java`, `shared/admin/AdminEntries.java`, `core/rite/RiteUnloc
 
 **Files:** Create `docs/parts/evolution_rites.md`. Modify `SPECIES-RULES.md`, `CHANGELOG.md`, README (the parts list), lang (one Guide paragraph).
 
-- [ ] **Step 1:** `docs/parts/evolution_rites.md`: checklist (ticked items of 19a), the verified hooks the part uses (copy the Tensura rows of `verified-hooks.md` that it calls, with the version), the disabled-part note (what vanishes with the part off; data conditions), the settings table, the manual checks (spec section 13), and "Booting with the addon jars" (Task 7).
+- [ ] **Step 1:** `docs/parts/evolution_rites.md` (first line **Mixin budget: 0 of 3 used**; the Raphael merge of 19b is an event, not a mixin): checklist (ticked items of 19a), the verified hooks the part uses (copy the Tensura rows of `verified-hooks.md` that it calls, with the version), the disabled-part note (what vanishes with the part off; data conditions), the settings table, the manual checks (spec section 13), and "Booting with the addon jars" (Task 7).
 - [ ] **Step 2:** `SPECIES-RULES.md`: E1 to E14 of the spec under the next free R-numbers; `CHANGELOG.md`: entry with a "Rolling back" paragraph (turning the part off removes the rite and its book entries; a Great Sage already granted stays, it is an ordinary Tensura skill).
 - [ ] **Step 3:** Guide paragraph in lang: the two nights and the consent, no spoilers.
 - [ ] **Step 4:** `./gradlew test` (all unit tests). Expected: PASS.
@@ -250,17 +250,19 @@ Modify: `core/Part.java`, `shared/admin/AdminEntries.java`, `core/rite/RiteUnloc
 
 ## Outline: 19b Great Sage and FoxAblaze (a plan of its own is written when 19a is merged)
 
-Gate: the owner answers Q1 (Raphael) and Q7 (retired skills). Branch `feature/plan-19b-great-sage-fox`.
-1. Hook probe rows for `CapstoneGate` (`eligible`, `available`, `OBTAINABLE`), `GreatSageGameRules.holdsRaphael`, `RaphaelFusion.isEligibleRace`/`isOwnedByOther`, FoxAblaze's game rule and `ITrulyUnique`; re-read the changed classes if a version moved.
-2. `GrantForm.FREE` (a `TensuraSkillInstance` with `NoMagiculeCost`), with its test and mutant.
-3. `GreatSageProbe` (calls `CapstoneGate.eligible` and `available`; `roadOpen` is `available`'s class constant read once) and `FoxAblazeProbe` (the single-owner reader: rule + `ITrulyUnique` of the overworld; either Raphael counts).
-4. The `raphael` recipe per Q1 (dormant unless `roadOpen`); lore gate; tests: owner elsewhere, either Raphael held, race flag, both skills mastered, closed road hides the book entry, FoxAblaze absent.
-5. `LinkedMods.TESTED` rows `greatsage` 0.0.7 and `foxablazeultimate` 1.0.6; retired-skill check (E14) if Q7 says yes.
-6. Matrix 1 to 13, mutants (owner check skipped, either-Raphael skipped, closed road granted), boots A and B.
+Gate: none open (Q1 decided as the Raphael merge, D14; Q7 decided yes). Branch `feature/plan-19b-great-sage-fox`. Mixin budget of the part stays **0 of 3**.
+1. Hook probe rows for `CapstoneGate` (`eligible`, `available`, `OBTAINABLE`), `GreatSageGameRules.holdsRaphael`/`ADDON_RAPHAELS`, `RaphaelFusion.isEligibleRace`/`isOwnedByOther`, FoxAblaze's game rule and `ITrulyUnique`, `SkillEvents.UNLOCK_SKILL`; re-read the changed classes if a version moved.
+2. **Read before building** (spec 8.3 items 6 and 7): Tensura's own `UNLOCK_SKILL` listeners (does a gifted FoxAblaze instance register an owner in `ITrulyUnique`?) and the order of listeners; a two-player GameTest records both. If the owner is not registered, `RaphaelMerge` registers it through `ITrulyUnique`'s write API (found in the same read) or the design goes back to the owner.
+3. `GrantForm.FREE` (a `TensuraSkillInstance` with `NoMagiculeCost` and `GiftedInstance`), with its test and mutant.
+4. `GreatSageProbe` (calls `CapstoneGate.eligible` and `available`; `roadOpen` reads `available`) and `FoxAblazeProbe` (the single-owner reader: rule + `ITrulyUnique` of the overworld; either Raphael counts); the `retired` fact (E14) with its source tag.
+5. **`parts.evolutionrites.merge.RaphaelMerge`** (D14, spec 8.3): an `UNLOCK_SKILL` listener, no mixin. With `foxablazeultimate` loaded: a learn of `greatsage:raphael` on a `ServerPlayer` returns `interruptFalse` and learns FoxAblaze's Raphael instead (free, gifted), subject to the single-owner rule; if refused, the listener re-learns `tensura:great_sage` and `tensura:degenerate` at default mastery and tells the player. A login sweep converts a held `greatsage:raphael` the same way. Without FoxAblaze it does nothing. Tests (GameTests; Great Sage and FoxAblaze jars needed, so under `-PaddonJars` and skipped otherwise): `greatSageRaphaelGrantBecomesFoxAblazes` (via `RaphaelEvolutionService.begin` on a test player), `aCommandGrantIsRedirectedToo`, `ownedByAnotherPlayerRefusesAndRestoresTheTwoSkills`, `loginConvertsAHeldGreatSageRaphael`, `eitherRaphaelHeldBlocksTheOther`, `greatSageFeaturesStillWorkWithOnlyFoxAblazesRaphael` (`GreatSageGameRules.carries/access/allowed` true), `withoutFoxAblazeNothingIsRedirected`, `noSecondCeremony`. Mutants: redirect also when FoxAblaze is absent, redirect skipped for the login sweep, restore skipped on refusal, single-owner skipped.
+6. The dormant `raphael` recipe (opens only when `roadOpen`; grants by the merge rule; lore gate); tests: owner elsewhere, either Raphael held, race flag, both skills mastered, closed road hides the book entry, FoxAblaze absent.
+7. `LinkedMods.TESTED` rows `greatsage` 0.0.7 and `foxablazeultimate` 1.0.6; `docs/parts/evolution_rites.md` records the merge, the hazard and "Mixin budget: 0 of 3 used".
+8. Matrix 1 to 13, mutants (owner check skipped, either-Raphael skipped, closed road granted), boots A and B.
 
 ## Outline: 19c Ascension
 
-Gate: Q5 answered. Branch `feature/plan-19c-ascension`.
+Gate: none open (Q5 decided: only the Deus Sanguis pair). Branch `feature/plan-19c-ascension`.
 1. Probe rows for `AwakeningRitual` helpers and `AddonConfig`/`AddonGameRules` fields; resolve the unverified items of `verified-hooks.md` (Shadow Monarch gate, `hasOtherBirdsMastered`, what `EpUtil.grantMaxEp` does to a rite's target, the exact registry id of the Ultimate Catalyst item).
 2. `GrantForm.PERMANENT` (`learnSkill(target, skill, -1)`).
 3. `AscensionProbe`: reads `doAscensionUltimate`, `minMaxEp`, `cooldownMinutes` live, `IExistence`, the pair from the addon's own table (`forcedAwakenings` shows the pairs the target can use), the extra gates through the public helpers; writes the cooldown tag on success and applies the addon's own consumption (`consumeSuppressionStoneOver400k`, `consumeDragonEssences30`).
@@ -270,7 +272,7 @@ Gate: Q5 answered. Branch `feature/plan-19c-ascension`.
 
 ## Outline: 19d the others and the race links
 
-Gate: Q6 answered. Branch `feature/plan-19d-others-and-races`.
+Gate: none open (Q6 decided: `great_mage`, `king_of_curses`, `butcher`, `imitator`). Branch `feature/plan-19d-others-and-races`.
 1. Read, then record in `verified-hooks.md`: `getNextEvolutions` of the five Bloodfiend races, of `mysticism:direwolf` and every `*_spirit_wolf`, the Beastfolk evolution Ascension's `MixinBeastfolkRace` adds (its id), and the addon races in `tensura:undead`.
 2. The generic `unique.road` probe (the addon's own on/off switch where one exists, nothing otherwise); `great_mage`, `king_of_curses`, `butcher`, `imitator` per Q6, each with its subject-kind rule.
 3. Race links (spec section 9) as data plus `ApexLines`/`RiteKinds` changes: Bloodfiend = vampire, Direwolf and Spirit Wolf = werewolf (the fang and guitar-wolf lines excluded), undead by tag, Beastfolk evolution picked by id; tests per link with the real id lists, and a test that no id outside the list is mapped.
