@@ -34,7 +34,7 @@ public final class BossEvents17d {
     }
 
     private static void onIncoming(LivingIncomingDamageEvent e) {
-        if (e.getEntity() instanceof NpcOriginalBoss victim && !victim.level().isClientSide && e.getAmount() > 0F) {
+        if (e.getEntity() instanceof NpcOriginalBoss victim && !victim.level().isClientSide && e.getAmount() > 0F && !net.ofatech.supernaturalbloodlines.core.death.DamageProbe.active()) {
             // a tamed animal or a minion strikes for whoever owns it: the oath is about what you set on them too
             ServerPlayer attacker = Deals.playerBehind(victim.level().getServer(), e.getSource().getEntity());
             if (attacker != null && Deals.counts(attacker, e.getSource().getEntity(), victim)) {

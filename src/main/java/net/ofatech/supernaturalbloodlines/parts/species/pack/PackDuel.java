@@ -200,6 +200,11 @@ public final class PackDuel {
         if (!(e.getEntity() instanceof ServerPlayer loser) || loser.level().isClientSide) {
             return;
         }
+        if (net.ofatech.supernaturalbloodlines.core.death.FinalDeath.is(loser)) {
+            // a heart-rip (or Give up) is final: a duel does not turn it into a defeat; the duel is off and the death stands
+            callOff(loser.server, loser.getUUID(), Reason.KILLED);
+            return;
+        }
         DuelBoard.Duel duel = BOARD.on(loser.getUUID()).orElse(null);
         if (duel == null) {
             callOff(loser.server, loser.getUUID(), Reason.KILLED); // a challenge nobody accepted yet, or no duel at all

@@ -1376,4 +1376,49 @@ public final class PackDuelGameTests {
         }
         helper.succeed();
     }
+
+    /** A heart-rip (or Give up) is final: the duel does not turn it into a defeat, it is called off and the death stands. A plain death in the duel is still a defeat. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aFinalDeathIsNotTurnedIntoADefeat(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        online(leader, second);
+        try {
+            helper.assertTrue(join(leader, second), "the pack could not be built");
+            helper.assertTrue(start(second, leader), "the duel did not start");
+            LivingDeathEvent[] e = new LivingDeathEvent[1];
+            net.ofatech.supernaturalbloodlines.core.death.FinalDeath.run(leader, () -> e[0] = finish(second, leader));
+            helper.assertTrue(!e[0].isCanceled(), "a final death was turned into a defeat by the duel");
+            PackDuel.reset();
+            helper.assertTrue(start(second, leader), "the second duel did not start");
+            helper.assertTrue(finish(second, leader).isCanceled(), "control: an ordinary death in a duel is not a defeat");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
+
+    /** The duel's guard (the winner's hits on the loser just defeated are stopped) answers a Neck Snap's probe like any hit: refused, and the loser is not touched. (A duel is inside a pack, so the pack-mate rule says the same.) */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theWinnerCannotSnapTheDefeatedDuelist(GameTestHelper helper) {
+        ServerPlayer leader = alpha(helper, 6, 1.5);
+        ServerPlayer second = alpha(helper, 3, 2.5);
+        online(leader, second);
+        try {
+            helper.assertTrue(join(leader, second), "the pack could not be built");
+            helper.assertTrue(start(second, leader), "the duel did not start");
+            helper.assertTrue(finish(second, leader).isCanceled(), "setup: the defeat did not happen");
+            // they are no pack-mates any more (the pack rule would refuse for its own reason): only the duel's guard on the defeated one is left to answer
+            PackIndex.get(helper.getLevel()).leave(leader.getUUID()); // the winner leads now, and the defeated one is their Beta
+            helper.assertTrue(!PackIndex.get(helper.getLevel()).samePackNow(second.getUUID(), leader.getUUID()), "setup: they are still pack-mates");
+            second.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, leader.getEyePosition());
+            var answer = net.ofatech.supernaturalbloodlines.parts.species.skill.NeckSnapAction.INSTANCE.trigger(second, leader);
+            helper.assertTrue(answer != null && net.ofatech.supernaturalbloodlines.parts.species.skill.NeckSnapAction.REFUSED.equals(((net.minecraft.network.chat.contents.TranslatableContents) answer.getContents()).getKey()),
+                    "the winner's snap on the defeated duelist was not refused: " + answer);
+            helper.assertTrue(!net.ofatech.supernaturalbloodlines.parts.species.original.Downed.isDowned(leader) && !leader.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS), "the duelist was touched");
+        } finally {
+            clean(helper, leader, second);
+        }
+        helper.succeed();
+    }
 }

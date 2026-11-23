@@ -154,6 +154,11 @@ public final class TestPlayers {
 
         private final java.util.List<String> actionBarKeys = new java.util.ArrayList<>();
 
+        /** How many times a message with this key came on the action bar. */
+        public int countOnActionBar(String key) {
+            return (int) actionBarKeys.stream().filter(key::equals).count();
+        }
+
         /** Whether a message with this key came on the action bar. */
         public boolean receivedOnActionBar(String key) {
             return actionBarKeys.contains(key);

@@ -64,10 +64,10 @@ class LadderSpecRowsTest {
             R L-ORI-1 3 5000
             T L-ORI-1a level %V% 4
             T L-ORI-1b feed - 20
-            R L-ORI-2 3 15000
+            R L-ORI-2 5 15000
             T L-ORI-2a rite %S%original_blood/target 1
             T L-ORI-2b level %V% 8
-            R L-ORI-3 4 30000
+            R L-ORI-3 5 30000
             T L-ORI-3a signal dying_survived 1
             T L-ORI-3b signal compel 5
             R L-ORI-4 5 60000
@@ -76,14 +76,14 @@ class LadderSpecRowsTest {
             R L-ORI-5 5 100000
             T L-ORI-5a tensura_tier - 1
             T L-ORI-5b days_as original 60
-            R L-OHY-1 3 10000
+            R L-OHY-1 4 10000
             T L-OHY-1a.1 rite %S%rite_of_the_moon/target 1
             T L-OHY-1a.2 state moon_unbound 1
             T L-OHY-1b level %W% 4
-            R L-OHY-2 4 20000
+            R L-OHY-2 5 20000
             T L-OHY-2a level %W% 8
             T L-OHY-2b signal venom_hit 3
-            R L-OHY-3 4 30000
+            R L-OHY-3 5 30000
             T L-OHY-3a rite %S%hybrid_blood/target 1
             T L-OHY-3b rite %S%original_blood/target 1
             R L-OHY-4 5 60000
@@ -96,14 +96,14 @@ class LadderSpecRowsTest {
             T L-HYB-1a.1 rite %S%rite_of_the_moon/target 1
             T L-HYB-1a.2 state moon_unbound 1
             T L-HYB-1b level %W% 3
-            R L-HYB-2 3 10000
+            R L-HYB-2 4 10000
             T L-HYB-2a thirst_days 15 3
             T L-HYB-2b level %W% 6
-            R L-HYB-3 4 20000
+            R L-HYB-3 5 20000
             T L-HYB-3a signal venom_hit 3
             T L-HYB-3b rite %S%hybrid_blood/target 1
             T L-HYB-3c level %W% 8
-            R L-HYB-4 4 40000
+            R L-HYB-4 5 40000
             T L-HYB-4a pack_days - 7
             T L-HYB-4b level %W% 12
             R L-HYB-5 5 100000
@@ -112,10 +112,10 @@ class LadderSpecRowsTest {
             R L-TRI-1 3 10000
             T L-TRI-1a rite any/performer 3
             T L-TRI-1b level %W% 4
-            R L-TRI-2 3 20000
+            R L-TRI-2 4 20000
             T L-TRI-2a signal venom_hit 3
             T L-TRI-2b rite %S%hybrid_blood/target 1
-            R L-TRI-3 4 40000
+            R L-TRI-3 5 40000
             T L-TRI-3a.1 state emissary 1
             T L-TRI-3a.2 state rank_alpha 1
             T L-TRI-3b level %W% 10
@@ -166,7 +166,7 @@ class LadderSpecRowsTest {
             R L-HER-2 3 15000
             T L-HER-2a signal siphon_entity 3
             T L-HER-2b feed - 15
-            R L-HER-3 4 30000
+            R L-HER-3 5 30000
             T L-HER-3a level %V% 10
             T L-HER-3b signal compel 3
             T L-HER-3c signal siphon_power 20000

@@ -5,11 +5,11 @@
             { "id": "L-ORI-1a", "detector": "level", "faction": "vampirism:vampire", "n": 4 },
             { "id": "L-ORI-1b", "detector": "feed", "n": 20 }
         ] },
-        { "id": "L-ORI-2", "name": "Bloodmaker", "sp": 3, "ep": 15000, "tasks": [
+        { "id": "L-ORI-2", "name": "Bloodmaker", "sp": 5, "ep": 15000, "tasks": [
             { "id": "L-ORI-2a", "detector": "rite", "rite": "supernaturalbloodlines:original_blood", "role": "target" },
             { "id": "L-ORI-2b", "detector": "level", "faction": "vampirism:vampire", "n": 8 }
         ] },
-        { "id": "L-ORI-3", "name": "Unbroken", "sp": 4, "ep": 30000, "tasks": [
+        { "id": "L-ORI-3", "name": "Unbroken", "sp": 5, "ep": 30000, "tasks": [
             { "id": "L-ORI-3a", "detector": "signal", "signal": "dying_survived" },
             { "id": "L-ORI-3b", "detector": "signal", "signal": "compel", "n": 5 }
         ] },

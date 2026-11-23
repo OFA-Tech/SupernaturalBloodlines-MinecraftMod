@@ -56,8 +56,8 @@ public final class NpcOriginalEvents {
     }
 
     private static void onDamage(LivingIncomingDamageEvent e) {
-        if (!(e.getEntity() instanceof NpcOriginalBoss boss) || boss.level().isClientSide) {
-            return;
+        if (!(e.getEntity() instanceof NpcOriginalBoss boss) || boss.level().isClientSide || net.ofatech.supernaturalbloodlines.core.death.DamageProbe.active()) {
+            return; // a probe deals nothing: it must not desiccate, spare or hint
         }
         boss.takePendingDesiccation(); // one a blow cancelled further down the line would otherwise go off on the next one
         DamageSource source = e.getSource();
