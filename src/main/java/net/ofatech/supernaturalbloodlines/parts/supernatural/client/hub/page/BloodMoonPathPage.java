@@ -158,6 +158,7 @@ public final class BloodMoonPathPage implements HubPageView {
             y += box.h() + 4;
         }
         y = BookKit.small(f, PathPage.reward(active), col.x(), y + 2, col.w(), t.accent());
+        y = WardCard.render(f, col.x(), y, col.w());
         f.end(y);
     }
 

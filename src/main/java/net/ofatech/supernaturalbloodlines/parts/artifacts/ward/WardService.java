@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.core.ward.WardRules;
 import net.ofatech.supernaturalbloodlines.core.ward.WardTable;
 import net.ofatech.supernaturalbloodlines.parts.artifacts.ArtifactsConfig;
+import net.ofatech.supernaturalbloodlines.shared.hub.WardHub;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -41,6 +42,18 @@ public final class WardService {
         return listed != null ? listed : level.getPlayerByUUID(id) instanceof ServerPlayer inLevel ? inLevel : null;
     }
 
+    static String nameOf(ServerLevel level, UUID id) {
+        return name(level, id);
+    }
+
+    private static void changed(ServerPlayer... people) {
+        for (ServerPlayer p : people) {
+            if (p != null) {
+                WardHub.changed(p);
+            }
+        }
+    }
+
     private static String name(ServerLevel level, UUID id) {
         MinecraftServer server = level.getServer();
         ServerPlayer online = find(level, id);
@@ -66,6 +79,7 @@ public final class WardService {
                 if (who != owner) {
                     who.sendSystemMessage(Component.translatable(INVITED_YOU, owner.getGameProfile().getName()));
                     owner.sendSystemMessage(Component.translatable(YOU_INVITED, who.getGameProfile().getName()));
+                    changed(owner, who);
                 }
             }
             default -> {
@@ -95,6 +109,7 @@ public final class WardService {
         if (who != null) {
             who.sendSystemMessage(Component.translatable(NOT_WELCOME));
         }
+        changed(owner, who);
         return null;
     }
 
@@ -105,6 +120,7 @@ public final class WardService {
         }
         WardEnforcer.forgetWard(id);
         owner.sendSystemMessage(Component.translatable(DROPPED));
+        changed(owner);
         return null;
     }
 

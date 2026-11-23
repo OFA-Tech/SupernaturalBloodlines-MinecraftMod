@@ -52,11 +52,12 @@ class AdminCommandsTest {
     }
 
     @Test
-    void rowsPerRootAreTenTwentyFiveAndNineteen() {
+    void rowsPerRootAreTenTwentyFiveNineteenAndFour() {
         assertEquals(10, AdminCommands.ALL.stream().filter(r -> r.root().equals("bloodline")).count());
         assertEquals(25, AdminCommands.ALL.stream().filter(r -> r.root().equals("pack")).count());
         assertEquals(19, AdminCommands.ALL.stream().filter(r -> r.root().equals("supernaturalbloodlines")).count());
-        assertEquals(54, AdminCommands.ALL.size());
+        assertEquals(4, AdminCommands.ALL.stream().filter(r -> r.root().equals("ward")).count());
+        assertEquals(58, AdminCommands.ALL.size());
     }
 
     @Test

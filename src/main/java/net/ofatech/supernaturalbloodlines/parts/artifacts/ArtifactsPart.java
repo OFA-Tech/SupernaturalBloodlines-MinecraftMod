@@ -60,6 +60,7 @@ public final class ArtifactsPart {
         WardEnforcer.register();
         WardChat.register();
         WardLifecycle.register();
+        net.ofatech.supernaturalbloodlines.shared.hub.WardHub.setSource(net.ofatech.supernaturalbloodlines.parts.artifacts.ward.WardView::of);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.RegisterCommandsEvent e) -> WardCommand.register(e.getDispatcher()));
         AshDagger.register();
         SunRing.register();
@@ -81,6 +82,7 @@ public final class ArtifactsPart {
             e.register(CompassGameTests.class);
             e.register(MountainAshGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.WardGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.artifacts.gametest.WardHomeGameTests.class);
             if (curios) {
                 e.register(CuriosSlotsGameTests.class);
             }

@@ -29,7 +29,7 @@ public final class WardChat {
             ServerPlayer speaker = e.getPlayer();
             boolean in = WardSpeech.matches(e.getRawText(), WardSpeech.COME_IN);
             boolean out = !in && WardSpeech.matches(e.getRawText(), WardSpeech.GET_OUT);
-            if ((in || out) && ArtifactsConfig.wardSpokenInvites()) {
+            if (in || out) {
                 speaker.server.execute(() -> speak(speaker, in));
             }
         });
@@ -37,6 +37,9 @@ public final class WardChat {
 
     /** The phrase said by {@code speaker}: {@code invite} for "come in", else "get out". Public for the tests. */
     public static void speak(ServerPlayer speaker, boolean invite) {
+        if (!ArtifactsConfig.wardSpokenInvites()) {
+            return;
+        }
         WardIndex index = WardIndex.get(speaker.serverLevel());
         List<WardTable.Ward> mine = index.table().standingOf(speaker.getUUID());
         String dimension = speaker.serverLevel().dimension().location().toString();

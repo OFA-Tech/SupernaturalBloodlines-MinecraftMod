@@ -93,6 +93,7 @@ public final class PathPage implements HubPageView {
         t.drawRule(f.g, r.x(), y, r.w());
         y += 4;
         y = PageKit.wrapped(f, Component.translatable(KEY + "sp", v.state().sp(), v.state().spEarned()), r.x(), y, r.w(), t.ink());
+        y = WardCard.render(f, r.x(), y, r.w());
         if (book && !pin) {
             y = almanac(f, r, y + 4);
         }
