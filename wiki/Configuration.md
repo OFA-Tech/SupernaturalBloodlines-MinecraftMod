@@ -258,6 +258,7 @@ All data a part ships (rites, recipes, loot, tags, EP, altar blocks) is loaded o
 | `weak_spark_max_held` | `2` | 1 to 5 | Weaker sparks one player may hold. |
 | `weak_spark_cooldown_days` | `3` | 0 to 30 | Game days between two weaker sparks for one player. |
 | `moonblood_surge_enabled`, `wolf_spirits_enabled` | `true` | | The two pack abilities. |
+| `hybrid_pack_moon_control` | `true` | | While a pack's current leader is a hybrid, an Original hybrid or a tribrid, its werewolf members have moon control (the pack's gift, R96). **Off:** no pack gift. |
 | `npc_recruit_enabled` | `true` | | The Werewolf Brother rite works. |
 | `max_npc_members_per_player`, `max_npc_members_per_pack` | `2`, `6` | 0 to 8, 0 to 24 | Brothers one werewolf may keep, and a whole pack. |
 | `npc_hunt_trips`, `npc_chest_sort` | `true` | | A Brother with Hunt on hunts on quiet nights; a Brother with Sort on tidies the chest by its post. |

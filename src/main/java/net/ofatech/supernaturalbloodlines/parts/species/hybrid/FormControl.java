@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.species.hybrid;
 
 import net.minecraft.world.entity.player.Player;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackMoonRules;
 import net.ofatech.supernaturalbloodlines.shared.werewolves.ForcedShift;
 import net.ofatech.supernaturalbloodlines.shared.werewolves.MoonControl;
 
@@ -17,7 +18,7 @@ public final class FormControl {
     public static void register() {
         ForcedShift.register();
         // R96: once unbound (a bound hybrid has no forms at all: ForcedShift blocks them until the Rite of the Moon)
-        MoonControl.addSource(p -> HybridTraits.isHybrid(BloodlineAccess.get(p).species()) && !BloodlineAccess.get(p).hybridCurseBound());
+        MoonControl.addSource(p -> PackMoonRules.hybridLike(BloodlineAccess.get(p).species(), BloodlineAccess.get(p).hybridCurseBound()));
     }
 
     public static void enterTick(Player p) {

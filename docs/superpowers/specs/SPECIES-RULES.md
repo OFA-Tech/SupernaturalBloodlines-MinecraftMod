@@ -128,6 +128,15 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
     - **hybrids, Original hybrids and tribrids** (once unbound): as with the Moon Ring
     - **Alphas and True Alphas**: as with the Moon Ring
     - **born werewolves with a bound anchor**: half transformations only
+    - **the pack's gift** (config `hybrid_pack_moon_control`, default on; inspired by The Originals): every **werewolf member** (Beta; not a Packmate who is no werewolf) of a pack whose **current leader is a hybrid, an Original hybrid or a tribrid** (curse not bound, like the hybrid source above) has control, as with the Moon Ring: half forms at will, full forms from Werewolves level 8 (same config)
+      - Only the **current leader** counts. A hybrid co-Alpha who does not lead gives nothing.
+      - It is **live**, read from the pack's state each time, never stored for the member: leaving, a kick, a dissolved pack or a change of leader ends it at once. A member who is in a form when it ends keeps that form until the next forced or normal change (as when a Moon Ring is taken off); the forced shift is the usual rule again from then on.
+      - It stops the forced full-moon shift like any other control. A leader who is offline still gives it: the index remembers whether they were hybrid-like when last seen (a pack from before this rule gives it once the leader has logged in after the update).
+      - A leader who has been away for `absent_leader_days` (7) real days or more gives nothing, from that moment, even before the pack passes the lead on (0 switches the absence off; the same limit and the same clock as the handover).
+      - **It does not earn the rung "Controlled" (L-WOL-3a, predicate `moon_control`, owner decision).** That task, and the migration that reads it, ask for the player's own control (`MoonControl.earned`: a Moon Ring, Free Will, an unbound hybrid, an Alpha, an anchor); the gift can be taken away at once, so it is given, not earned.
+      - It shows on the hub Pack page as the perk line "Your Alpha's blood frees you from the moon" (the server says so in the snapshot; the client decides nothing), and not at all while `moon_bound_werewolves` is off. The accent colour of the line is kept at 4.5:1 on each theme's paper. Moon control is otherwise shown in the hub only through the task above, which the gift does not touch.
+      - A member is told in one line when they gain it (half forms now, full forms from the configured level) and in one line when they lose it, the latter only when they have no other moon control left (said once per change, not at every check; nothing is said at login).
+      - "Hybrid-like" is one definition (`Species.hybridType()`: hybrid, Original hybrid, tribrid) for the control source, the gift and the ladder predicate `moon_unbound`. The predicate used to leave out the tribrid; no ladder read it for a tribrid, so nothing was wrong in play, and it now agrees.
   - The Moon Ring and the exemptions also stop the forced full-moon shift.
 
 ## Tensura links

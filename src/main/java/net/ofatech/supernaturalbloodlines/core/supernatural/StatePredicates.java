@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.core.supernatural;
 import java.util.List;
 import java.util.OptionalLong;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackMoonRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 
@@ -25,7 +26,7 @@ public final class StatePredicates {
         WolfState.Rank rank = s.wolf().rank();
         return switch (predicate) {
             // R24a: a hybrid is bound until the Rite of the Moon
-            case "moon_unbound" -> OptionalLong.of(isHybrid(s.species()) && !s.hybridCurseBound() ? 1 : 0);
+            case "moon_unbound" -> OptionalLong.of(PackMoonRules.hybridLike(s.species(), s.hybridCurseBound()) ? 1 : 0);
             case "emissary" -> OptionalLong.of(emissary ? 1 : 0);
             case "rank_beta" -> OptionalLong.of(rank == WolfState.Rank.BETA || isAlpha(rank) ? 1 : 0);
             // Alpha the R90 way, True Alpha only the R91 way: the rank is the proof either way
@@ -52,7 +53,4 @@ public final class StatePredicates {
         return rank == WolfState.Rank.ALPHA || rank == WolfState.Rank.TRUE_ALPHA;
     }
 
-    private static boolean isHybrid(Species s) {
-        return s == Species.HYBRID || s == Species.ORIGINAL_HYBRID;
-    }
 }
