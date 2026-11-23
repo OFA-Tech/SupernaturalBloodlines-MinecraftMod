@@ -18,6 +18,22 @@ final class ShiftCore {
     private ShiftCore() {
     }
 
+    /**
+     * The wolf's clips by the name {@code KlausRules.animation} gives, built once per boss (a {@code RawAnimation} is immutable and has equals, so the controller
+     * sees the same one every frame and allocates nothing): the death pose held, the howl clip (the model's {@code howl} or {@code roar}) once, the arrival
+     * {@code shift_in} once, and the three loops.
+     */
+    static java.util.Map<String, software.bernie.geckolib.animation.RawAnimation> clips(String model, String howlClip) {
+        String p = "animation." + model + ".";
+        return java.util.Map.of(
+                "death", software.bernie.geckolib.animation.RawAnimation.begin().thenPlayAndHold(p + "death"),
+                "howl", software.bernie.geckolib.animation.RawAnimation.begin().thenPlay(p + howlClip),
+                "shift_in", software.bernie.geckolib.animation.RawAnimation.begin().thenPlay(p + "shift_in"),
+                "idle", software.bernie.geckolib.animation.RawAnimation.begin().thenLoop(p + "idle"),
+                "walk", software.bernie.geckolib.animation.RawAnimation.begin().thenLoop(p + "walk"),
+                "run", software.bernie.geckolib.animation.RawAnimation.begin().thenLoop(p + "run"));
+    }
+
     /** Before the entity's own tick: he stands where he is while he shifts, so the tick cannot move him. */
     static void hold(Mob boss, ShiftBody body) {
         if (!boss.level().isClientSide && body.form() == BossForm.SHIFTING) {

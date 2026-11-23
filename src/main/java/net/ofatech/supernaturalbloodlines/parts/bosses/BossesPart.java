@@ -76,6 +76,7 @@ public final class BossesPart {
         WorldNowHook.setBossNear(BossDirector::near);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modBus.addListener(BossRenderers::register);
+            modBus.addListener(net.ofatech.supernaturalbloodlines.parts.bosses.client.ManPose::register);
             net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealClientHook.install(net.ofatech.supernaturalbloodlines.parts.bosses.client.ElijahDealScreen::open);
             modBus.addListener((FMLClientSetupEvent e) -> BossShots.registerIfRequested());
         }

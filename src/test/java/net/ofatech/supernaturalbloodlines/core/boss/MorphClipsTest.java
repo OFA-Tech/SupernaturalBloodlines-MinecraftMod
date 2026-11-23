@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
  * as JSON, no Minecraft. A boss's tests pass as its clips land; the placeholders that stand in until then satisfy all of them (a held idle pose, the old howl
  * stretched), so a regenerated file that breaks the contract fails here.
  */
-class MorphClipsTest {
+public class MorphClipsTest {
     private static final Path ASSETS = root().resolve("src/main/resources/assets/supernaturalbloodlines");
     private static final Path UNTOUCHED = root().resolve("art/creatures/morph/untouched.sha256");
 
