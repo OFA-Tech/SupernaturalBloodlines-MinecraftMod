@@ -32,6 +32,7 @@ import net.ofatech.supernaturalbloodlines.parts.hud.net.WheelEntry;
 import net.ofatech.supernaturalbloodlines.parts.hud.wheel.PowerProvider;
 import net.ofatech.supernaturalbloodlines.parts.hud.wheel.VampirismVision;
 import net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelCatalogue;
+import net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelClocks;
 import net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelService;
 import net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelSync;
 import net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions;
@@ -77,9 +78,12 @@ public final class WheelCatalogueGameTests {
             return available;
         }
 
+        volatile int runs;
+
         @Nullable
         @Override
         public Component trigger(ServerPlayer p) {
+            runs++;
             return null;
         }
 
@@ -314,7 +318,8 @@ public final class WheelCatalogueGameTests {
         List<WheelCataloguePayload> sent = capture();
         try {
             WheelSync.open(p);
-            for (int i = 0; i < 40; i++) {
+            for (int i = 1; i <= 40; i++) {
+                p.tickCount = i;
                 WheelSync.tick(p);
             }
             helper.assertTrue(sent.size() == 1, "payloads after 40 idle ticks: " + sent.size());
@@ -331,15 +336,62 @@ public final class WheelCatalogueGameTests {
         TestAction action = new TestAction();
         ExtraActions.install(action);
         List<WheelCataloguePayload> sent = capture();
+        long[] now = {1000};
+        WheelClocks.setNowForTest(() -> now[0]);
         try {
             WheelSync.open(p);
+            // the cooldown starts: one update, with a stable end and the full length
             action.left = 60;
+            p.tickCount = 5;
             WheelSync.tick(p);
-            WheelSync.tick(p);
-            helper.assertTrue(sent.size() == 2, "payloads after one change: " + sent.size());
+            helper.assertTrue(sent.size() == 2, "payloads after the cooldown began: " + sent.size());
             helper.assertTrue(sent.get(1).revision() > sent.get(0).revision(), "the revision did not grow");
             WheelEntry e = sent.get(1).entries().stream().filter(x -> x.ref().id().equals(TEST_ID)).findFirst().orElseThrow();
-            helper.assertTrue(e.state().cooldownLeft() == 60, "cooldown in the update: " + e.state().cooldownLeft());
+            helper.assertTrue(e.state().cooldownEnd() == 1060 && e.state().cooldownTotal() == 100, "end " + e.state().cooldownEnd() + " total " + e.state().cooldownTotal());
+            // it runs down: the game time moves and the ticks left fall, and nothing is sent
+            for (int t = 10; t < 60; t += 5) {
+                now[0] = 1000 + t;
+                action.left = 60 - t;
+                p.tickCount = t;
+                WheelSync.tick(p);
+            }
+            helper.assertTrue(sent.size() == 2, "a running cooldown was sent again: " + sent.size() + " payloads");
+            // it ends: exactly one more
+            now[0] = 1060;
+            action.left = 0;
+            p.tickCount = 60;
+            WheelSync.tick(p);
+            helper.assertTrue(sent.size() == 3, "payloads after the cooldown ended: " + sent.size());
+            helper.assertTrue(sent.get(2).entries().stream().filter(x -> x.ref().id().equals(TEST_ID)).findFirst().orElseThrow().state().cooldownEnd() == 0, "the end stayed");
+        } finally {
+            WheelClocks.setNowForTest(null);
+            WheelSync.resetSink();
+            WheelSync.close(p);
+            ExtraActions.remove(TEST_ID);
+        }
+        helper.succeed();
+    }
+
+    /** The server only checks an open wheel every {@code wheel_catalogue_interval_ticks} (5): of ticks 1 to 40 only the multiples of 5 build. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void onlyEveryFifthTickBuildsForAViewer(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        TestAction action = new TestAction();
+        ExtraActions.install(action);
+        List<WheelCataloguePayload> sent = capture();
+        try {
+            WheelSync.open(p);
+            int before = WheelCatalogue.builds();
+            for (int i = 1; i <= 40; i++) {
+                action.available = i % 2 == 0; // every build differs from the one before
+                p.tickCount = i;
+                int builtBefore = WheelCatalogue.builds();
+                WheelSync.tick(p);
+                boolean built = WheelCatalogue.builds() != builtBefore;
+                helper.assertTrue(built == (i % 5 == 0), "tick " + i + (built ? " built" : " did not build"));
+            }
+            helper.assertTrue(WheelCatalogue.builds() - before == 8, "builds in 40 ticks: " + (WheelCatalogue.builds() - before));
+            helper.assertTrue(sent.size() == 9, "payloads: " + sent.size());
         } finally {
             WheelSync.resetSink();
             WheelSync.close(p);
@@ -352,7 +404,8 @@ public final class WheelCatalogueGameTests {
     public static void closedPlayerIsNeverBuilt(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.create(helper);
         int before = WheelCatalogue.builds();
-        for (int i = 0; i < 40; i++) {
+        for (int i = 1; i <= 40; i++) {
+            p.tickCount = i;
             WheelSync.tick(p);
         }
         helper.assertTrue(WheelCatalogue.builds() == before, "the catalogue was built for a closed wheel");

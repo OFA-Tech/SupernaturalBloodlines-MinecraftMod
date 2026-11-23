@@ -1909,6 +1909,7 @@
   "supernaturalbloodlines.wheel.refused.bad_mode": "That mode does not exist.",
   "supernaturalbloodlines.wheel.refused.tensura": "Put that skill in a slot first.",
   "supernaturalbloodlines.wheel.refused.refused": "You cannot use that now.",
+  "supernaturalbloodlines.wheel.refused.already_held": "You are already using that.",
   "supernaturalbloodlines.wheel.refused.race": "You cannot use your race ability now.",
   "supernaturalbloodlines.wheel.refused.vision": "Vampire vision cannot be changed now.",
   "supernaturalbloodlines.wheel.refused.needs_vampirism": "That needs Vampirism."

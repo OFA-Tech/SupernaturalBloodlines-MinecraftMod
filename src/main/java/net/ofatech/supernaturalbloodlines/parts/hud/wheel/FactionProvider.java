@@ -58,13 +58,14 @@ public final class FactionProvider implements PowerProvider {
             }
             out.add(new WheelEntry(new PowerRef(sourceOf(action, id), id), PowerGroup.MAIN, kind, action.getName(), Component.empty(), List.of(),
                     ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "textures/actions/" + id.getPath() + ".png"),
-                    new PowerState(on, left, total, lock, 0, 1), true, -1f));
+                    new PowerState(on, 0L, 0, lock, 0, 1).withCooldown(WheelClocks.of(p).observe(new PowerRef(sourceOf(action, id), id).key(), WheelClocks.now(p), left, 3, total)),
+                    true, -1f));
         }
         if (fp.getFaction() == VReference.VAMPIRE_FACTION && VampirismVision.available()) {
             boolean active = VampirismVision.active(p);
             out.add(new WheelEntry(new PowerRef(PowerSource.VAMPIRISM, VampirismVision.ID), PowerGroup.MAIN, PowerKind.INSTANT,
                     Component.translatable("supernaturalbloodlines.wheel.vision"), VampirismVision.activeName(p), List.of(), VampirismVision.ICON,
-                    new PowerState(active, 0, 0, LockReason.NONE, 0, 1), false, -1f));
+                    new PowerState(active, 0L, 0, LockReason.NONE, 0, 1), false, -1f));
         }
         return out;
     }

@@ -44,7 +44,7 @@ public record WheelEntry(PowerRef ref, PowerGroup group, PowerKind kind, Compone
         STRING.encode(buf, e.icon.toString());
         PowerState s = e.state;
         buf.writeBoolean(s.on());
-        ByteBufCodecs.VAR_INT.encode(buf, s.cooldownLeft());
+        ByteBufCodecs.VAR_LONG.encode(buf, s.cooldownEnd());
         ByteBufCodecs.VAR_INT.encode(buf, s.cooldownTotal());
         ByteBufCodecs.VAR_INT.encode(buf, s.lock().ordinal());
         ByteBufCodecs.VAR_INT.encode(buf, s.mode());
@@ -79,13 +79,13 @@ public record WheelEntry(PowerRef ref, PowerGroup group, PowerKind kind, Compone
             throw new io.netty.handler.codec.DecoderException("bad icon");
         }
         boolean on = buf.readBoolean();
-        int left = ByteBufCodecs.VAR_INT.decode(buf);
+        long end = ByteBufCodecs.VAR_LONG.decode(buf);
         int total = ByteBufCodecs.VAR_INT.decode(buf);
         LockReason lock = enumAt(LockReason.values(), ByteBufCodecs.VAR_INT.decode(buf), "lock");
         int mode = ByteBufCodecs.VAR_INT.decode(buf);
         int modeCount = ByteBufCodecs.VAR_INT.decode(buf);
         boolean slottable = buf.readBoolean();
         float mastery = buf.readFloat();
-        return new WheelEntry(ref, group, kind, name, modeName, modes, icon, new PowerState(on, left, total, lock, mode, modeCount), slottable, mastery);
+        return new WheelEntry(ref, group, kind, name, modeName, modes, icon, new PowerState(on, end, total, lock, mode, modeCount), slottable, mastery);
     }
 }

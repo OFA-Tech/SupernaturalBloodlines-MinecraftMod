@@ -12,6 +12,8 @@ import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerKind;
+import net.ofatech.supernaturalbloodlines.core.wheel.PowerRef;
+import net.ofatech.supernaturalbloodlines.core.wheel.PowerSource;
 import net.ofatech.supernaturalbloodlines.parts.hud.tensura.WheelActivation;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,19 +45,18 @@ public final class TensuraUse {
         if (!ts.canBeSlotted(inst, p, 0) && !"infinity".equals(skillId.getNamespace())) {
             return TensuraProvider.isPassiveSwitch(ts, inst, p) ? flip(p, inst, skillId) : KEY + "refused";
         }
+        PowerKind kind = TensuraProvider.kindOf(inst, p);
         // a plain toggle is switched by Tensura's own toggle (its skill screen's button): the key press of a skill that does not override onPressed does not flip it (T6 probe)
-        if (TensuraProvider.kindOf(inst, p) == PowerKind.TOGGLE) {
+        if (kind == PowerKind.TOGGLE) {
             return flip(p, inst, skillId);
         }
         boolean unslotted = TensuraProvider.unslotted(p, ts);
-        if (unslotted) {
-            PowerKind kind = TensuraProvider.kindOf(inst, p);
-            if (TensuraProvider.needsSlot(p, inst, kind)) {
-                return KEY + "tensura";
-            }
+        if (unslotted && TensuraProvider.needsSlot(p, inst, kind)) {
+            return KEY + "tensura";
         }
-        boolean started = unslotted ? WheelActivation.scope(ts, mode, () -> storage.startHoldSkill(inst, WHEEL_KEY_NUMBER, mode))
-                : storage.startHoldSkill(inst, WHEEL_KEY_NUMBER, mode);
+        // always inside the scope: the wheel passes key number 0 and the mode it shows, and Tensura only accepts a skill in that very slot and mode of the active preset, so a skill
+        // in slot 2, or slotted in another mode, would be refused without it
+        boolean started = WheelActivation.scope(p.getUUID(), ts, mode, () -> storage.startHoldSkill(inst, WHEEL_KEY_NUMBER, mode));
         if (!started) {
             return KEY + "refused";
         }
@@ -64,12 +65,21 @@ public final class TensuraUse {
         }
         // a tap, as Tensura's own key sends: press then release at once. Tensura flips a toggle when the key comes up, and an instant skill has nothing to hold; a held
         // power (a held skill, a spell with a cast time) waits for the release the player sends
-        if (TensuraProvider.kindOf(inst, p) != PowerKind.HELD) {
+        if (kind != PowerKind.HELD) {
             release(p, skillId, mode);
+        } else {
+            noteCooldown(p, inst, skillId, mode);
         }
         return null;
     }
 
+    /** The cooldown a press or release just started is the full one: the wheel shows its sweep against it (ManasCore keeps only what is left). */
+    private static void noteCooldown(ServerPlayer p, ManasSkillInstance inst, ResourceLocation skillId, int mode) {
+        int left = inst.onCoolDown(mode) ? inst.getCoolDown(mode) * 20 : 0;
+        if (left > 0) {
+            WheelClocks.of(p).notePress(new PowerRef(PowerSource.TENSURA, skillId).key(), WheelClocks.now(p), left);
+        }
+    }
     /** True while ManasCore still has the skill in its held list (the wheel's release is then needed). */
     public static boolean skillHeld(ServerPlayer p, ResourceLocation skillId, int mode) {
         return SkillAPI.getSkillsFrom(p).getSkill(skillId).map(i -> TickingSkill.isTickingSkill(p, i.getSkill(), mode)).orElse(false);
@@ -93,22 +103,17 @@ public final class TensuraUse {
     public static void release(ServerPlayer p, ResourceLocation skillId, int mode) {
         SkillStorage storage = SkillAPI.getSkillsFrom(p);
         storage.getSkill(skillId).ifPresent(inst -> {
-            boolean unslotted = TensuraProvider.unslotted(p, inst.getSkill());
-            if (unslotted) {
-                WheelActivation.scope(inst.getSkill(), mode, () -> {
-                    storage.handleSkillRelease(inst, WHEEL_KEY_NUMBER, mode, false);
-                    return null;
-                });
-            } else {
+            WheelActivation.scope(p.getUUID(), inst.getSkill(), mode, () -> {
                 storage.handleSkillRelease(inst, WHEEL_KEY_NUMBER, mode, false);
-            }
+                return null;
+            });
+            noteCooldown(p, inst, skillId, mode);
             // a toggle stays bracketed while it is on; the next tick prunes it when it is not
             if (!inst.isToggled()) {
                 WheelActivation.stopHolding(p, inst.getSkill(), mode);
             }
         });
     }
-
     /** The race ability, held like Tensura's key does. @return the lang key of a refusal, null when it started */
     @Nullable
     public static String pressRace(ServerPlayer p) {

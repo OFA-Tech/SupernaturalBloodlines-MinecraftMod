@@ -51,6 +51,22 @@ public final class WheelTensuraGameTests {
         return e.get();
     }
 
+    /** The reflection that tells a held skill from an instant one runs once per class, not once per build. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theKindReflectionIsCachedPerClass(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        for (String path : List.of("coercion", "gravity_flight", "heavy_slash", "magic_wall", "gravity_field")) {
+            WheelTestKit.learn(p, id(path));
+        }
+        WheelCatalogue.build(p);
+        int warm = TensuraProvider.REFLECTIONS.get();
+        for (int i = 0; i < 5; i++) {
+            WheelCatalogue.build(p);
+        }
+        helper.assertTrue(TensuraProvider.REFLECTIONS.get() == warm, "class walks grew from " + warm + " to " + TensuraProvider.REFLECTIONS.get() + " over five builds");
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void coercionIsInstant(GameTestHelper helper) {
         ServerPlayer p = TestPlayers.create(helper);

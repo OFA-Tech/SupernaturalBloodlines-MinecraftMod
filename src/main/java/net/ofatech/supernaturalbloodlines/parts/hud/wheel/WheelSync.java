@@ -55,7 +55,7 @@ public final class WheelSync {
         Viewer v = new Viewer();
         VIEWERS.put(p.getUUID(), v);
         if (!HudConfig.wheelEnabled()) {
-            v.gate.offer(List.of().hashCode());
+            v.gate.offer(List.<WheelEntry>of());
             sink.accept(p, new WheelCataloguePayload(++v.revision, List.of()));
             return;
         }
@@ -76,7 +76,7 @@ public final class WheelSync {
 
     private static void push(ServerPlayer p, Viewer v) {
         List<WheelEntry> entries = WheelCatalogue.build(p);
-        if (v.gate.offer(entries.hashCode())) {
+        if (v.gate.offer(entries)) {
             sink.accept(p, new WheelCataloguePayload(++v.revision, entries));
         }
     }

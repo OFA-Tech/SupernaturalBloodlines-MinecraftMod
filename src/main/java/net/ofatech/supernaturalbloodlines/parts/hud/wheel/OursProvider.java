@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
+import net.ofatech.supernaturalbloodlines.core.wheel.CooldownClock;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerGroup;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerKind;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerRef;
@@ -24,18 +25,20 @@ public final class OursProvider implements PowerProvider {
     @Override
     public List<WheelEntry> list(ServerPlayer p) {
         List<WheelEntry> out = new ArrayList<>();
+        CooldownClock clock = WheelClocks.of(p);
+        long now = WheelClocks.now(p);
         if (BiteService.canBite(p)) {
-            int left = BiteService.cooldownLeft(p);
             out.add(entry(Loadout.BITE, PowerKind.HELD, Component.translatable("supernaturalbloodlines.hud.bite.name"), BITE_ICON,
-                    new PowerState(false, left, left > 0 ? BiteService.COOLDOWN_TICKS : 0, LockReason.NONE, 0, 1)));
+                    PowerState.READY.withCooldown(clock.observe(new PowerRef(PowerSource.BLOODLINE, Loadout.BITE).key(), now, BiteService.cooldownLeft(p), 1,
+                            BiteService.COOLDOWN_TICKS))));
         }
         for (ExtraActions.Action a : ExtraActions.all()) {
             if (!a.available(p)) {
                 continue;
             }
             int left = Math.max(0, a.cooldownLeft(p));
-            int total = left > 0 ? Math.max(left, a.cooldownTicks(p)) : 0;
-            out.add(entry(a.id(), a.aimed() ? PowerKind.AIMED : PowerKind.INSTANT, a.name(), a.icon(), new PowerState(false, left, total, LockReason.NONE, 0, 1)));
+            out.add(entry(a.id(), a.aimed() ? PowerKind.AIMED : PowerKind.INSTANT, a.name(), a.icon(),
+                    PowerState.READY.withCooldown(clock.observe(new PowerRef(PowerSource.BLOODLINE, a.id()).key(), now, left, 1, left > 0 ? a.cooldownTicks(p) : 0))));
         }
         return out;
     }

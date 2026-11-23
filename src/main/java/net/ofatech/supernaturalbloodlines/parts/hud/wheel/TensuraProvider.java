@@ -24,6 +24,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.hud.Mastery;
+import net.ofatech.supernaturalbloodlines.core.wheel.CooldownClock;
 import net.ofatech.supernaturalbloodlines.core.wheel.LockReason;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerGroup;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerKind;
@@ -68,8 +69,12 @@ public final class TensuraProvider implements PowerProvider {
         return skill instanceof Magic ? PowerGroup.MAGIC : skill instanceof Battlewill ? PowerGroup.BATTLEWILL : PowerGroup.SKILLS;
     }
 
+    /** How many class walks ran (a test checks that building the list twice does not walk again). */
+    public static final java.util.concurrent.atomic.AtomicInteger REFLECTIONS = new java.util.concurrent.atomic.AtomicInteger();
+
     /** True when the class chain of {@code type}, below {@code stop}, declares a method with this name. */
     static boolean declares(Class<?> type, Class<?> stop, String... names) {
+        REFLECTIONS.incrementAndGet();
         for (Class<?> c = type; c != null && c != stop && c != Object.class; c = c.getSuperclass()) {
             for (java.lang.reflect.Method m : c.getDeclaredMethods()) {
                 for (String n : names) {
@@ -82,6 +87,21 @@ public final class TensuraProvider implements PowerProvider {
         return false;
     }
 
+    /** Whether a skill class declares {@code onHeld} or {@code onRelease} below {@code TensuraSkill}: reflection, so it runs once per class, not once per build. */
+    private static final ClassValue<Boolean> DECLARES_HOLD = new ClassValue<>() {
+        @Override
+        protected Boolean computeValue(Class<?> type) {
+            return declares(type, TensuraSkill.class, "onHeld", "onRelease");
+        }
+    };
+    /** Whether a race class declares an ability below {@code ManasRace}, once per class. */
+    private static final ClassValue<Boolean> DECLARES_ABILITY = new ClassValue<>() {
+        @Override
+        protected Boolean computeValue(Class<?> type) {
+            return declares(type, ManasRace.class, "onActivateAbility", "onHeldAbility", "onReleaseAbility");
+        }
+    };
+
     public static PowerKind kindOf(ManasSkillInstance inst, ServerPlayer p) {
         ManasSkill skill = inst.getSkill();
         ResourceLocation id = inst.getSkillId();
@@ -92,7 +112,7 @@ public final class TensuraProvider implements PowerProvider {
         if (skill instanceof Magic m) {
             return m.isInstantCast(inst, p) ? PowerKind.INSTANT : PowerKind.HELD;
         }
-        if (declares(skill.getClass(), TensuraSkill.class, "onHeld", "onRelease")) {
+        if (DECLARES_HOLD.get(skill.getClass())) {
             return PowerKind.HELD;
         }
         return skill.canBeToggled(inst, p) ? PowerKind.TOGGLE : PowerKind.INSTANT;
@@ -157,7 +177,9 @@ public final class TensuraProvider implements PowerProvider {
         for (int m = 0; modes > 1 && m < Math.min(modes, 16); m++) {
             modeNames.add(ts.getModeName(inst, m));
         }
+        // ManasCore counts whole seconds and does not keep the full length: the clock keeps the end it first saw, and the press that started it noted the full length
         int left = inst.onCoolDown(mode) ? inst.getCoolDown(mode) * 20 : 0;
+        CooldownClock.Reading cooldown = WheelClocks.of(p).observe(new PowerRef(PowerSource.TENSURA, id).key(), WheelClocks.now(p), left, 20, 0);
         LockReason lock = LockReason.NONE;
         if (!inst.canInteractSkill(p) || !passiveSwitch && !ts.canActivateSkill(inst, p, mode)) {
             lock = LockReason.REFUSED_NOW;
@@ -168,7 +190,7 @@ public final class TensuraProvider implements PowerProvider {
         int learning = ts instanceof ResistSkill r ? r.getLearningPointRequirement() : 0;
         Mastery m = Mastery.of(inst.getMastery(), inst.getMaxMastery(), learning, inst.isMastered(p));
         return new WheelEntry(new PowerRef(PowerSource.TENSURA, id), groupOf(ts), kind, ts.getName(), modes > 1 ? ts.getModeName(inst, mode) : Component.empty(),
-                modeNames, ts.getSkillIcon(), new PowerState(inst.isToggled(), left, left, lock, mode, modes), slottable, m == null ? -1f : m.fraction());
+                modeNames, ts.getSkillIcon(), new PowerState(inst.isToggled(), 0L, 0, lock, mode, modes).withCooldown(cooldown), slottable, m == null ? -1f : m.fraction());
     }
 
     /** Whether a skill that is in no slot must be put in one first: the config says so, the hook is off, or the spike showed that kind does not survive. */
@@ -187,13 +209,14 @@ public final class TensuraProvider implements PowerProvider {
         }
         ManasRaceInstance inst = race.get();
         ManasRace r = inst.getRace();
-        if (!declares(r.getClass(), ManasRace.class, "onActivateAbility", "onHeldAbility", "onReleaseAbility")) {
+        if (!DECLARES_ABILITY.get(r.getClass())) {
             return Optional.empty();
         }
         LockReason lock = inst.canActivateAbility(p) ? LockReason.NONE : LockReason.REFUSED_NOW;
         int left = inst.isOnCooldown() ? Math.max(0, inst.getCooldown()) : 0;
+        CooldownClock.Reading cooldown = WheelClocks.of(p).observe(new PowerRef(PowerSource.TENSURA, RACE_ABILITY).key(), WheelClocks.now(p), left, 20, 0);
         return Optional.of(new WheelEntry(new PowerRef(PowerSource.TENSURA, RACE_ABILITY), PowerGroup.SKILLS, PowerKind.HELD, Component.translatable(
                 "supernaturalbloodlines.wheel.race_ability", r.getName()), Component.empty(), List.of(), r.getRaceIcon(),
-                new PowerState(false, left, left, lock, 0, 1), false, -1f));
+                PowerState.READY.withCooldown(cooldown).withLock(lock), false, -1f));
     }
 }

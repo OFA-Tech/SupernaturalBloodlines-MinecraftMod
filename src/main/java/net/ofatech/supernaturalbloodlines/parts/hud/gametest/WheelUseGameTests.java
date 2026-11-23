@@ -101,6 +101,26 @@ public final class WheelUseGameTests {
         helper.succeed();
     }
 
+    /** An action of ours that the player may not use now (the Alpha Roar of someone who is not an Alpha): named in a forged request, it must not run. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void forgedUseOfAnUnavailableBloodlineActionRefused(GameTestHelper helper) {
+        ServerPlayer p = net.ofatech.supernaturalbloodlines.gametest.TestPlayers.create(helper);
+        WheelCatalogueGameTests.TestAction action = new WheelCatalogueGameTests.TestAction();
+        ExtraActions.install(action);
+        try {
+            PowerRef ref = new PowerRef(PowerSource.BLOODLINE, action.id());
+            helper.assertTrue(WheelService.use(p, ref, 0, -1, false) == null && action.runs == 1, "setup: the available action did not run (" + action.runs + ")");
+            action.available = false;
+            String refusal = WheelService.use(p, ref, 0, -1, false);
+            helper.assertTrue(refusal != null && refusal.endsWith("not_unlocked"), "an unavailable action of ours: " + refusal);
+            helper.assertTrue(action.runs == 1, "an unavailable action ran");
+            helper.assertTrue(!WheelCatalogueGameTests.has(p, PowerSource.BLOODLINE, action.id()), "it is listed too");
+        } finally {
+            ExtraActions.remove(action.id());
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void wheelRefusalsEqualSlotRefusals(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);

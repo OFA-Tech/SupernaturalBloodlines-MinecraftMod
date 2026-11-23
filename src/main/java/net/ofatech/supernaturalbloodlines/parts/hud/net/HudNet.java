@@ -58,6 +58,7 @@ public final class HudNet {
             LIMITER.forget(e.getEntity().getUUID());
             if (e.getEntity() instanceof ServerPlayer sp) {
                 WheelService.forget(sp);
+                net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelClocks.forget(sp);
             }
         });
     }

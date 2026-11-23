@@ -31,6 +31,7 @@ import net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelService;
 @PrefixGameTestTemplate(false)
 public final class WheelTensuraUseGameTests {
     private static final String NS = SupernaturalBloodlines.MODID;
+    private static final java.util.UUID OWNER = java.util.UUID.nameUUIDFromBytes("wheel-test".getBytes());
 
     private WheelTensuraUseGameTests() {
     }
@@ -65,11 +66,11 @@ public final class WheelTensuraUseGameTests {
         ManasSkillInstance a = WheelTestKit.learn(p, id("coercion"));
         ManasSkillInstance b = WheelTestKit.learn(p, id("corrosion"));
         SkillStorage st = SkillAPI.getSkillsFrom(p);
-        boolean other = WheelActivation.scope(a.getSkill(), 0, () -> st.startHoldSkill(b, 0, 0));
+        boolean other = WheelActivation.scope(p.getUUID(), a.getSkill(), 0, () -> st.startHoldSkill(b, 0, 0));
         helper.assertTrue(!other, "inside a scope for coercion, corrosion was accepted");
         helper.assertTrue(!st.startHoldSkill(a, 0, 0), "after the scope closed, coercion was still accepted");
-        helper.assertTrue(WheelActivation.scope(a.getSkill(), 0, () -> st.startHoldSkill(a, 0, 0)), "inside its own scope coercion was refused");
-        helper.assertTrue(!WheelActivation.allows(a.getSkill(), 0, 0), "the scope leaked");
+        helper.assertTrue(WheelActivation.scope(p.getUUID(), a.getSkill(), 0, () -> st.startHoldSkill(a, 0, 0)), "inside its own scope coercion was refused");
+        helper.assertTrue(!WheelActivation.allows(p.getUUID(), a.getSkill(), 0, 0), "the scope leaked");
         helper.succeed();
     }
 
@@ -77,22 +78,22 @@ public final class WheelTensuraUseGameTests {
     public static void scopeIsRestoredAfterAnException(GameTestHelper helper) {
         ManasSkill s = skill("coercion");
         try {
-            WheelActivation.scope(s, 0, () -> {
+            WheelActivation.scope(OWNER, s, 0, () -> {
                 throw new IllegalStateException("boom");
             });
         } catch (IllegalStateException expected) {
             // the point is what happens next
         }
-        helper.assertTrue(!WheelActivation.allows(s, 0, 0), "the scope stayed open after an exception");
-        helper.assertTrue(WheelActivation.scope(s, 0, () -> WheelActivation.scope(skill("corrosion"), 1, () -> WheelActivation.allows(s, 0, 0))), "an outer scope was lost by a nested one");
-        helper.assertTrue(!WheelActivation.allows(s, 0, 0), "nested scopes leaked");
+        helper.assertTrue(!WheelActivation.allows(OWNER, s, 0, 0), "the scope stayed open after an exception");
+        helper.assertTrue(WheelActivation.scope(OWNER, s, 0, () -> WheelActivation.scope(OWNER, skill("corrosion"), 1, () -> WheelActivation.allows(OWNER, s, 0, 0))), "an outer scope was lost by a nested one");
+        helper.assertTrue(!WheelActivation.allows(OWNER, s, 0, 0), "nested scopes leaked");
         helper.succeed();
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aScopeForOneModeDoesNotAllowAnother(GameTestHelper helper) {
         ManasSkill s = skill("gravity_field");
-        helper.assertTrue(WheelActivation.scope(s, 1, () -> WheelActivation.allows(s, 0, 1) && WheelActivation.allows(s, 0, -1) && !WheelActivation.allows(s, 0, 2)), "mode rule");
+        helper.assertTrue(WheelActivation.scope(OWNER, s, 1, () -> WheelActivation.allows(OWNER, s, 0, 1) && WheelActivation.allows(OWNER, s, 0, -1) && !WheelActivation.allows(OWNER, s, 0, 2)), "mode rule");
         helper.succeed();
     }
 
@@ -278,6 +279,111 @@ public final class WheelTensuraUseGameTests {
             }
         }
         helper.assertTrue(dropped == 4, "dropped " + dropped);
+        helper.succeed();
+    }
+
+    /** The wheel passes key number 0 and its own mode: a skill slotted in slot 2, or slotted in another mode, must still start. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void slottedSkillInSlotTwoActivatesFromTheWheel(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        ManasSkillInstance inst = WheelTestKit.learn(p, id("coercion"));
+        SkillStorage st = SkillAPI.getSkillsFrom(p);
+        TensuraStorages.getAbilityFrom(p).setActivePreset(0);
+        TensuraStorages.getAbilityFrom(p).setAbilitySlot(0, 1, inst.getSkill(), 0);
+        helper.assertTrue(!TensuraProvider.unslotted(p, inst.getSkill()), "setup: the skill is not slotted");
+        helper.assertTrue(!st.startHoldSkill(inst, 0, 0), "the control: Tensura accepted key 0 for a skill in slot 2, so the test proves nothing");
+        String refusal = TensuraUse.press(p, id("coercion"), 0);
+        helper.assertTrue(refusal == null, "a skill in slot 2 was refused from the wheel: " + refusal);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSkillSlottedInAnotherModeActivatesFromTheWheel(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        ManasSkillInstance inst = WheelTestKit.learn(p, id("gravity_field"));
+        TensuraStorages.getAbilityFrom(p).setActivePreset(0);
+        TensuraStorages.getAbilityFrom(p).setAbilitySlot(0, 2, inst.getSkill(), 0);
+        helper.assertTrue(!SkillAPI.getSkillsFrom(p).startHoldSkill(inst, 0, 2), "the control: Tensura accepted another mode of the slotted skill");
+        String refusal = TensuraUse.press(p, id("gravity_field"), 2);
+        helper.assertTrue(refusal == null, "mode 2 of a skill slotted in mode 0 was refused from the wheel: " + refusal);
+        helper.succeed();
+    }
+
+    /** The scope is the first player's: a second player who has the same skill does not get it "in the slot". */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anotherPlayerWithTheSameSkillIsNotLetThrough(GameTestHelper helper) {
+        ServerPlayer one = TestPlayers.create(helper);
+        ServerPlayer two = TestPlayers.create(helper);
+        ManasSkillInstance a = WheelTestKit.learn(one, id("coercion"));
+        ManasSkillInstance b = WheelTestKit.learn(two, id("coercion"));
+        io.github.manasmods.tensura.storage.ability.IAbility abOne = TensuraStorages.getAbilityFrom(one);
+        io.github.manasmods.tensura.storage.ability.IAbility abTwo = TensuraStorages.getAbilityFrom(two);
+        boolean[] seen = new boolean[4];
+        WheelActivation.scope(one.getUUID(), a.getSkill(), 0, () -> {
+            seen[0] = abOne.isAbilityInActivePreset(0, a.getSkill(), 0);
+            seen[1] = abTwo.isAbilityInActivePreset(0, b.getSkill(), 0);
+            seen[2] = abTwo.isAbilityInActivePreset(b.getSkill());
+            seen[3] = SkillAPI.getSkillsFrom(two).startHoldSkill(b, 0, 0);
+            return null;
+        });
+        helper.assertTrue(seen[0], "the scoped player's own check was refused");
+        helper.assertTrue(!seen[1] && !seen[2] && !seen[3], "a second player with the same skill got it in the slot: " + java.util.Arrays.toString(seen));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theHoldBracketIsOnlyOpenAroundItsOwnPlayersTick(GameTestHelper helper) {
+        ServerPlayer one = TestPlayers.create(helper);
+        ServerPlayer two = TestPlayers.create(helper);
+        WheelTestKit.learn(one, id("gravity_flight"));
+        ManasSkillInstance b = WheelTestKit.learn(two, id("gravity_flight"));
+        helper.assertTrue(TensuraUse.press(one, id("gravity_flight"), 0) == null, "the press was refused");
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.tick.PlayerTickEvent.Pre(one));
+        boolean own = WheelActivation.allows(one.getUUID(), b.getSkill(), 0, 0);
+        boolean other = WheelActivation.allows(two.getUUID(), b.getSkill(), 0, 0);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.tick.PlayerTickEvent.Post(one));
+        helper.assertTrue(own, "the bracket is not open for the player who holds the skill");
+        helper.assertTrue(!other, "the bracket of one player is open for another who has the same skill");
+        TensuraUse.release(one, id("gravity_flight"), 0);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSecondPressOfAHeldPowerIsRefused(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        WheelTestKit.learn(p, id("gravity_flight"));
+        ManasSkill s = skill("gravity_flight");
+        helper.assertTrue(WheelService.use(p, ref("gravity_flight"), 0, -1, false) == null, "the first press was refused");
+        String second = WheelService.use(p, ref("gravity_flight"), 0, -1, false);
+        helper.assertTrue(second != null && second.endsWith("already_held"), "a second press of a held power: " + second);
+        // the release handle is still the first press's: one release ends it
+        WheelService.use(p, ref("gravity_flight"), 0, -1, true);
+        helper.assertTrue(!TickingSkill.isTickingSkill(p, s, 0), "one release did not end the hold after a refused second press");
+        helper.assertTrue(WheelService.use(p, ref("gravity_flight"), 0, -1, false) == null, "the power could not be used again after its release");
+        WheelService.use(p, ref("gravity_flight"), 0, -1, true);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theCooldownTheWheelShowsIsTheFullOneAndDoesNotMove(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.create(helper);
+        ManasSkillInstance inst = WheelTestKit.learn(p, id("coercion"));
+        long[] now = {2000};
+        net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelClocks.setNowForTest(() -> now[0]);
+        try {
+            net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelClocks.of(p).notePress(ref("coercion").key(), 2000, 400);
+            inst.setCoolDown(20, 0);
+            helper.assertTrue(inst.onCoolDown(0) && inst.getCoolDown(0) == 20, "setup: cooldown " + inst.getCoolDown(0));
+            var first = WheelTensuraGameTests.entry(p, id("coercion")).orElseThrow().state();
+            helper.assertTrue(first.cooldownEnd() == 2400 && first.cooldownTotal() == 400, "end " + first.cooldownEnd() + " total " + first.cooldownTotal());
+            now[0] = 2100;
+            inst.setCoolDown(15, 0);
+            var later = WheelTensuraGameTests.entry(p, id("coercion")).orElseThrow().state();
+            helper.assertTrue(later.equals(first), "a running cooldown changed the entry: " + first + " then " + later);
+            helper.assertTrue(later.cooldownLeft(2100) == 300, "left " + later.cooldownLeft(2100));
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelClocks.setNowForTest(null);
+        }
         helper.succeed();
     }
 

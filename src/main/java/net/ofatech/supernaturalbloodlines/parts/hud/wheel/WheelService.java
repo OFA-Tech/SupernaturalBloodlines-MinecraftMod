@@ -78,6 +78,15 @@ public final class WheelService {
     @Nullable
     private static String useTensura(ServerPlayer p, PowerRef ref, int mode) {
         String key = ref.key();
+        // a second press of a power that is still held would overwrite the mode its release must use: refuse it. An entry whose power ended by itself is stale and dropped.
+        Map<String, Integer> held = HELD.get(p.getUUID());
+        Integer heldMode = held == null ? null : held.get(key);
+        if (heldMode != null) {
+            if (TensuraGate.held(p, ref.id(), heldMode)) {
+                return refuse(p, KEY + "already_held");
+            }
+            held.remove(key);
+        }
         String refusal = TensuraGate.press(p, ref.id(), mode);
         if (refusal != null) {
             return refuse(p, refusal);

@@ -66,7 +66,7 @@ public final class WheelCatalogue {
             return e;
         }
         return new WheelEntry(e.ref(), e.group(), e.kind(), e.name(), e.modeName(), e.modeNames(), e.icon(),
-                new PowerState(s.on(), s.cooldownLeft(), s.cooldownTotal(), LockReason.CANNOT_ACT, s.mode(), s.modeCount()), e.slottable(), e.mastery());
+                new PowerState(s.on(), s.cooldownEnd(), s.cooldownTotal(), LockReason.CANNOT_ACT, s.mode(), s.modeCount()), e.slottable(), e.mastery());
     }
 
     private static void warnOnce(PowerProvider provider, Throwable ex) {
