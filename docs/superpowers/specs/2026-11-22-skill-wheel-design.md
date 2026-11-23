@@ -13,7 +13,15 @@ Players of the pack carry powers from many mods (ours, Vampirism, Werewolves, Te
 
 ## Goals
 
-- One wheel holding every usable power from every installed mod we support, in categories: **Bloodline** (ours), **Vampirism**, **Werewolves**, **Tensura** (Tensura plus its addons' skills), **Infinity Stones** (one group per carried stone), **Great Sage**. An empty category is hidden (Enchanted has no abilities today, so it never shows).
+- One wheel holding every usable power from every installed mod we support, in categories (mods): **Bloodline** (ours), **Vampirism**, **Werewolves**, **Tensura** (Tensura plus its addons' skills, **spells and battlewill arts**), **Infinity Stones** (one entry per carried stone; its powers are its modes, see the mode rule below), **Great Sage**. An empty category is hidden (Enchanted has no abilities today, so it never shows).
+- **Onion wheel, option A (owner, 2026-11-22):** the wheel is three rings.
+  - **Inner ring: the mods** (the categories above).
+  - **Middle ring: the groups of the hovered mod**, and it appears **only when that mod has more than one group** (after empty groups are hidden). Tensura has **Skills · Magic (spells) · Battlewill (arts)**; every other mod has one group and skips this ring.
+  - **Outer ring: the powers of the hovered group.**
+  - **Paging (owner, 2026-11-22):** a group with more than about 12 entries pages on the outer ring: scroll over the ring, or the arrows at the ring's ends (and Left/Right at the first and last cell).
+  - **Which scroll wins where (call):** (1) Alt held and the hovered power has modes: Alt + scroll cycles its mode (Alt stays mode-cycling only). (2) No Alt and the hovered power has variable levels (Infinity Stones): scroll changes its level. (3) No Alt, over the outer ring on empty space or a power without levels, and the group has more than one page: scroll turns the page. (4) Anywhere else (inner or middle ring, a one-page group): nothing.
+  - Alt keeps one job: **mode cycling**. It never opens or changes rings.
+- **Spells and battlewill arts are in scope (owner, 2026-11-22).** Both are Tensura skills (`Magic` and `Battlewill` extend `TensuraSkill`), listed from the player's skills and used through the same path as any Tensura skill. Spells are cast by holding (their cast time), so they are *held* powers unless the spell casts instantly. Tensura's own preset rules apply to them as to every Tensura skill.
 - **Left click uses** the power. **Right click puts it in a slot**: a row of the 6 slots pops up and the player clicks one; pressing a slot key (R/F/V…) while hovering also works.
 - **Three kinds of power:**
   - *instant*: fires, the wheel closes;
@@ -29,23 +37,31 @@ Players of the pack carry powers from many mods (ours, Vampirism, Werewolves, Te
 
 ## Deduplication — rule C
 
-- A data file lists pairs (or groups) of the *same* power across mods, each with a **main side**. The owner approves the list before it ships. Default main side: the side of the player's main kind (a vampire uses Vampirism's version; a Tensura race skill uses Tensura's).
+- A data file lists pairs (or groups) of the *same* power across mods, each with a **main side**. The owner approves the list before it ships (**owner accepted all picks of the research table, 2026-11-22**: `docs/superpowers/research/skill-overlaps.md`, main sides as proposed there). Default main side: the side of the player's main kind (a vampire uses Vampirism's version; a Tensura race skill uses Tensura's).
 - The player sees **one entry**. Using it runs the main side.
-- **Shared cooldown:** using it puts every side on cooldown.
+- **Shared cooldown:** using it puts every side on cooldown. **For a lasting action (Vampirism and Werewolves actions whose cooldown starts when they end), when the active side ends, the main side's cooldown applies to every side (owner, 2026-11-22).**
 - **No stacking:** while one side is on, the other cannot be turned on (from any key, ours or theirs).
 - Nothing changes in either mod's unlocks, levels, costs or mastery.
-- Only clear matches are deduplicated; "loose" matches stay separate.
+- Only clear matches are deduplicated; "loose" matches stay separate (**all 13 loose matches stay separate, owner, 2026-11-22**).
+- **Owner answers (2026-11-22):**
+  1. **Vampirism's vision key and Tensura's race-ability key move onto the wheel**, and both keys are covered. That enables rows M02 (night vision), M03 (bat form) and M12 (bite and drain).
+  2. **Spells and arts are in**: Tensura's Invisibility spell joins M01 as a close match; Vampirism stays the main side for vampires.
+  3. **No dedup for a mode inside a bigger skill.** Traveler's and Suppressor's teleport and the haki fear skills stay with their skill and are not group members.
+  4. **Tensura tiers** (self, ultraspeed, infinite regeneration): the wheel shows only the highest tier the player has.
+  5. **M09 (blood projectile): keep both**, because Ascension's version costs health.
+  6. The main sides are as proposed in the research table.
+  - *Consequence the owner should confirm (call):* the Infinity Stones members of M01, M02, M05 and M08 are single stone powers, which are modes of a stone's one entry. By answer 3 they are not matched, so those groups run between the other sides only.
 
 ## Keys
 
 - **Open the wheel: G** *(call: G is Great Sage's menu key in the pack; Great Sage's menu moves into the wheel)*. Hold or press G to open. While open: left click uses, right click slots, releasing G over a hovered power uses it, G again or Esc closes. A **quick tap** (under ~200 ms) repeats the last power used from the wheel.
-- **Covered keys (skill keys only):** Vampirism's action wheel and action 1–9 and suck; Werewolves bite and leap; Tensura skill slots 1–3; Infinity Stones' wheel (H) and its use/favourite keys; Great Sage's assess, scan, thought acceleration and magic sense. (Vampirism's default R wheel key currently clashes with our slot 1; covering it fixes that.)
-- **Left alone (not skill keys):** Tensura status screen, naming, dodge, mode switch, race-ability key; Vampirism vision and skill screen; Ascension codex; Horizons journal; Enchanted broomstick.
+- **Covered keys (skill keys only):** Vampirism's action wheel and action 1–9 and suck; **Vampirism's vision key (owner, 2026-11-22)**; Werewolves bite and leap; Tensura skill slots 1–3; **Tensura's race-ability key (owner, 2026-11-22)**; Infinity Stones' wheel (H) and its use/favourite keys; Great Sage's assess, scan, thought acceleration and magic sense. (Vampirism's default R wheel key currently clashes with our slot 1; covering it fixes that.)
+- **Left alone (not skill keys):** Tensura status screen, naming, dodge, mode switch; Vampirism skill screen; Ascension codex; Horizons journal; Enchanted broomstick.
 
 ## Infinity Stones compat
 
-- Each stone is a Tensura UNIQUE skill (`StoneSkill`) whose modes are the stone's unlocked powers. The Tensura category would already see them; with the compat they get their own category, one group per stone, **one entry per unlocked power** (no mode cycling).
-- *(Superseded by the owner's mode rule below: a stone is one entry, and its powers are picked with Alt + click.)*
+- Each stone is a Tensura UNIQUE skill (`StoneSkill`) whose modes are the stone's unlocked powers. The Tensura category would already see them; with the compat they get their own category.
+- *(Superseded by the owner's mode rule below: a stone is **one entry**, and its powers are picked with Alt + click. So Infinity Stones has one group and no middle ring.)*
 - The compat reads three small public parts of the friend's mod, by reflection, optional, no build dependency: which powers need aiming (`AbilityMeta.needsAim`), the second option of a dual power, and scroll-to-change levels (`VariableAbility`).
 - **Second option:** Shift + left click *(call: right click is already "put in a slot"; his mod already passes the second option as "sneaking")*.
 - **Variable levels:** scroll over the hovered power.
@@ -102,10 +118,15 @@ Players of the pack carry powers from many mods (ours, Vampirism, Werewolves, Te
   - **One mode setting:** the chosen mode is the skill's own mode, the one Tensura already stores. So the wheel, the slots and Tensura's own screens always agree. A slot holds the power, not a fixed mode, so changing the mode on the wheel also changes what the slot fires.
   - **Locked modes** are skipped when cycling, as Infinity Stones already does.
   - **Plain scroll** (no Alt) over a power with variable levels still changes its level.
-  - **Dedup** is keyed by power plus mode, so one mode of a skill can match another mod's power.
+  - **Dedup never looks inside a skill's modes (owner, 2026-11-22; replaces "keyed by power plus mode").** A group matches whole powers only. A skill with modes is never hidden, merged or flagged because one of its modes resembles another mod's power.
 - **Unslotted Tensura skills** *(call)*: first test against the Tensura jar whether `skillActivationPacket` accepts a skill that is in no preset slot. If it refuses, use the narrowest fix that changes nothing a player sees in Tensura: a small, documented mixin that lets our server path activate a skill the player owns, staying within the part's mixin budget. Never park the skill in a hidden preset slot.
 - **Great Sage menu key** *(call)*: covered too, since G is ours now. The build checks what else that menu does. Anything that isn't a power (pages, settings) stays reachable through an "Open Great Sage" button in its category, and through the hub's Other mods links.
 - **Main side for hybrids and everyone else** *(call)*: the main side is fixed per pair in the overlap data file that the owner approves. It isn't worked out per player, and there's no per-player switch.
+
+## Known limits (owner, 2026-11-22)
+
+- **Infinity Stones `soul.regen` clears every effect.** Turning that power off runs `effect clear @s`, which also removes Vampirism's and Werewolves' rage and ours. **We do not fix it and the wheel shows no warning for it.** It goes into `wiki/Known-Limits.md` and is written up as a bug report for the friend's mod (the report text is in the W5 plan task). Rule C's "no stacking" does not protect against it.
+- Great Sage's menu pages (analyse, archive, battle mode, allocation, settings) are not powers; they stay behind its "Open Great Sage" entry.
 
 ## Left to the builder
 
