@@ -23,6 +23,9 @@ public final class HudClient {
         net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.WheelInput.register();
         net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.DevWheel.install();
         modBus.addListener(net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.WheelInput::registerLayers);
+        // a language or resource pack change reloads resources: the descriptions, strings and measured text of the wheel are read again
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent e) -> e.registerReloadListener(
+                (net.minecraft.server.packs.resources.ResourceManagerReloadListener) rm -> net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.WheelInput.resourcesReloaded()));
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> HudModeState.reset());
         if (ModList.get().isLoaded("tensura")) {
             boolean blood = ModList.get().isLoaded("vampirism");

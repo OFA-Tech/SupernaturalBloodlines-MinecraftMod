@@ -66,8 +66,8 @@ class GestureMachineTest {
     void releaseOverAPowerUsesIt() {
         Step up = heldOpen().step(G_UP, 1600, TAP, true);
         assertEquals(USE_HOVERED, up.effect());
-        assertFalse(up.machine().open());
-        assertTrue(up.machine().sticky().open() == false, "sticky() on a closed machine stays closed");
+        assertTrue(up.machine().open(), "the screen closes itself after an instant use; the machine must not say closed while a toggle leaves the screen open");
+        assertFalse(GestureMachine.IDLE.sticky().open(), "sticky() on a closed machine stays closed");
     }
 
     @Test
@@ -78,13 +78,20 @@ class GestureMachineTest {
     }
 
     @Test
-    void aUseThatKeepsTheWheelOpenLeavesItOpen() {
-        GestureMachine used = heldOpen().step(G_UP, 1600, TAP, true).machine();
-        // the screen decided a toggle stays open: it asks for the wheel to be left open
-        GestureMachine reopened = heldOpen().sticky();
-        assertTrue(reopened.open());
-        assertFalse(used.open());
-        assertEquals(CLOSE, reopened.step(G_DOWN, 2000, TAP).effect());
+    void releasingGOverAToggleOrHeldPowerLeavesAWheelThatGAndAClickOutsideClose() {
+        Step released = heldOpen().step(G_UP, 1600, TAP, true);
+        assertEquals(USE_HOVERED, released.effect());
+        GestureMachine left = released.machine();
+        assertTrue(left.open(), "the screen is still open, so the machine is");
+        Step g = left.step(G_DOWN, 2000, TAP);
+        assertEquals(CLOSE, g.effect(), "G again closes it");
+        assertFalse(g.machine().open());
+        Step outside = left.step(CLICK_LEFT, 2000, TAP, false);
+        assertEquals(CLOSE, outside.effect(), "a click on nothing closes it");
+        assertFalse(outside.machine().open());
+        assertEquals(CLOSE, left.step(ESC, 2000, TAP).effect());
+        // a second release (key repeat) uses nothing more
+        assertEquals(NONE, left.step(G_UP, 2100, TAP, true).effect());
     }
 
     @Test

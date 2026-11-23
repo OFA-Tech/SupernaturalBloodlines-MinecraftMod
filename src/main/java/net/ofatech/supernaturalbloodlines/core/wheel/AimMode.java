@@ -21,8 +21,34 @@ public final class AimMode {
         this.sender = sender;
     }
 
+    /** Why an aim that is waiting must end by itself. */
+    public enum Cancel { NONE, GUI_HIDDEN, TIMED_OUT }
+
+    /** An aim waits for a click for this long (20 s) at most: a power left aimed behind a forgotten wheel would fire at the next click. */
+    public static final long TIMEOUT_TICKS = 400;
+
+    private long startedAt;
+
     public void start(PowerRef ref, int mode) {
+        start(ref, mode, 0);
+    }
+
+    public void start(PowerRef ref, int mode, long nowTick) {
         current = new Aim(ref, mode);
+        startedAt = nowTick;
+    }
+
+    /** Pure rule: the HUD is hidden (F1: the player cannot see what is aimed) or the aim has waited too long. */
+    public static Cancel cancelReason(boolean hideGui, long startedAtTick, long nowTick) {
+        if (hideGui) {
+            return Cancel.GUI_HIDDEN;
+        }
+        return nowTick - startedAtTick >= TIMEOUT_TICKS ? Cancel.TIMED_OUT : Cancel.NONE;
+    }
+
+    /** What to do now, or {@link Cancel#NONE}; the caller cancels and says so on the action bar. */
+    public Cancel check(boolean hideGui, long nowTick) {
+        return current == null ? Cancel.NONE : cancelReason(hideGui, startedAt, nowTick);
     }
 
     public boolean active() {

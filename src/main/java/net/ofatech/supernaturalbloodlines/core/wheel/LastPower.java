@@ -39,8 +39,12 @@ public final class LastPower {
     }
 
     public void set(PowerRef ref, int mode) {
+        Last next = new Last(ref, Math.max(0, mode));
+        if (loaded && next.equals(last)) {
+            return; // the same power again (a held key, a tap on repeat) is not worth a file write
+        }
         loaded = true;
-        last = new Last(ref, Math.max(0, mode));
+        last = next;
         if (remember.getAsBoolean()) {
             Map<String, String> m = new LinkedHashMap<>();
             m.put("power", ref.key());

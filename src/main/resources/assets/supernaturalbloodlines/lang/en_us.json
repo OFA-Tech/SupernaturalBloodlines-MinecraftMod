@@ -2038,6 +2038,8 @@
   "supernaturalbloodlines.wheel.narrate.page": "page %s of %s",
   "supernaturalbloodlines.wheel.narrate.position": "%s of %s",
   "supernaturalbloodlines.wheel.aim.hint": "Click to release · Right-click to cancel",
+  "supernaturalbloodlines.wheel.aim.cancelled_hidden": "Aim cancelled: the HUD is hidden",
+  "supernaturalbloodlines.wheel.aim.cancelled_timeout": "Aim cancelled: no click came in time",
   "supernaturalbloodlines.wheel.picker.title": "Put %s in a slot",
   "supernaturalbloodlines.wheel.picker.replaces": "Replaces %s",
   "supernaturalbloodlines.wheel.picker.empty": "Empty slot",

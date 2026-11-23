@@ -155,6 +155,17 @@ class ClickAndNarrationTest {
     }
 
     @Test
+    void stateWordsNeedNoLevelAndRoundTheCooldownUp() {
+        java.util.function.BiFunction<String, Object[], String> tr = (k, a) -> a.length == 0 ? k.substring(k.lastIndexOf(".") + 1) : k.substring(k.lastIndexOf(".") + 1) + " " + a[0];
+        assertEquals("on", WheelNarration.stateWord(true, 200, tr), "on wins over a cooldown");
+        assertEquals("cooling 1", WheelNarration.stateWord(false, 1, tr));
+        assertEquals("cooling 1", WheelNarration.stateWord(false, 20, tr));
+        assertEquals("cooling 2", WheelNarration.stateWord(false, 21, tr));
+        assertEquals("ready", WheelNarration.stateWord(false, 0, tr));
+        assertEquals("ready", WheelNarration.stateWord(false, -5, tr));
+    }
+
+    @Test
     void lockedReasonIsRead() {
         List<String> l = WheelNarration.lines("Tensura", "Skills", "Heat Wave", "", "ready", "Locked: Needs Fire Resistance level 6", 1, 3, 1, 1, ClickAndNarrationTest::tr);
         assertEquals("Locked: Needs Fire Resistance level 6", l.get(l.size() - 1));

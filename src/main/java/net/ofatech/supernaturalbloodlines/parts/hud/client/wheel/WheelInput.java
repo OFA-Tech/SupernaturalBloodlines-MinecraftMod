@@ -38,7 +38,17 @@ public final class WheelInput {
     }
 
     public static void register() {
-        NeoForge.EVENT_BUS.addListener((InputEvent.Key e) -> onKey(e.getKey(), e.getScanCode(), e.getAction()));
+        NeoForge.EVENT_BUS.addListener((InputEvent.Key e) -> {
+            if (HudKeys.WHEEL.matches(e.getKey(), e.getScanCode())) {
+                onWheelInput(e.getAction());
+            }
+        });
+        // the wheel key may be bound to a mouse button (a side button, the wheel click)
+        NeoForge.EVENT_BUS.addListener((InputEvent.MouseButton.Post e) -> {
+            if (e.getButton() > 1 && HudKeys.WHEEL.matchesMouse(e.getButton())) {
+                onWheelInput(e.getAction());
+            }
+        });
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick());
         NeoForge.EVENT_BUS.addListener((ScreenEvent.Opening e) -> {
             if (!(e.getNewScreen() instanceof WheelScreen)) {
@@ -58,6 +68,12 @@ public final class WheelInput {
 
     public static void registerLayers(RegisterGuiLayersEvent e) {
         e.registerAbove(VanillaGuiLayers.CROSSHAIR, AimLayer.ID, new AimLayer());
+    }
+
+    public static void resourcesReloaded() {
+        WheelDescriptions.reload();
+        WheelStrings.clear();
+        net.ofatech.supernaturalbloodlines.core.wheel.WheelPanelText.clear();
     }
 
     static void screenClosed(GestureMachine from) {
@@ -80,8 +96,8 @@ public final class WheelInput {
         return HudClientConfig.hudEnabled() && mc.player != null && mc.getConnection() != null && mc.screen == null && mc.getOverlay() == null;
     }
 
-    private static void onKey(int key, int scan, int action) {
-        if (action == GLFW.GLFW_REPEAT || !HudKeys.WHEEL.matches(key, scan)) {
+    private static void onWheelInput(int action) {
+        if (action == GLFW.GLFW_REPEAT) {
             return;
         }
         if (action == GLFW.GLFW_PRESS) {
@@ -111,14 +127,27 @@ public final class WheelInput {
         }
     }
 
+    private static boolean wasConnected;
+
     private static void tick() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.getConnection() == null) {
-            reset();
+        boolean connected = mc.getConnection() != null;
+        if (!connected) {
+            if (wasConnected) {
+                reset(); // the connection went from present to absent: nothing of the old world is kept (not on every tick of the title screen)
+            }
+            wasConnected = false;
             return;
         }
+        wasConnected = true;
         if (WheelActions.aim().active() && (mc.screen != null || mc.player == null || !mc.player.isAlive())) {
             WheelActions.aim().cancel();
+        }
+        var why = WheelActions.aim().check(mc.options.hideGui, mc.level == null ? 0 : mc.level.getGameTime());
+        if (why != net.ofatech.supernaturalbloodlines.core.wheel.AimMode.Cancel.NONE) {
+            WheelActions.aim().cancel();
+            mc.gui.setOverlayMessage(Component.translatable(why == net.ofatech.supernaturalbloodlines.core.wheel.AimMode.Cancel.GUI_HIDDEN ? "supernaturalbloodlines.wheel.aim.cancelled_hidden"
+                    : "supernaturalbloodlines.wheel.aim.cancelled_timeout"), false);
         }
         if (WheelActions.holding() && mc.screen == null && (mc.player == null || !mc.player.isAlive() || !mc.isWindowActive())) {
             WheelActions.release();
@@ -134,7 +163,15 @@ public final class WheelInput {
 
     private static boolean physicallyDown(Minecraft mc) {
         InputConstants.Key key = HudKeys.WHEEL.getKey();
-        return !key.equals(InputConstants.UNKNOWN) && InputConstants.isKeyDown(mc.getWindow().getWindow(), key.getValue());
+        long window = mc.getWindow().getWindow();
+        if (key.equals(InputConstants.UNKNOWN)) {
+            return false;
+        }
+        if (key.getType() == InputConstants.Type.MOUSE) {
+            return GLFW.glfwGetMouseButton(window, key.getValue()) == GLFW.GLFW_PRESS;
+        }
+        // a key bound by scan code cannot be polled by its code: the release event ends the press instead
+        return key.getType() != InputConstants.Type.KEYSYM || InputConstants.isKeyDown(window, key.getValue());
     }
 
     private static void step(Input in, boolean overPower) {

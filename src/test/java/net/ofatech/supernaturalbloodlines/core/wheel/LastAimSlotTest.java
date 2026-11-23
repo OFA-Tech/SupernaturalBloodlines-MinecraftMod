@@ -50,6 +50,22 @@ class LastAimSlotTest {
     }
 
     @Test
+    void theSamePowerAgainWritesNoFile(@TempDir Path dir) throws IOException {
+        LastPower l = last(dir, true);
+        l.set(COERCION, 1);
+        Path f = dir.resolve("wheel-last.json");
+        assertTrue(Files.exists(f));
+        Files.delete(f);
+        l.set(COERCION, 1);
+        assertFalse(Files.exists(f), "nothing changed: no write");
+        l.set(COERCION, 2);
+        assertTrue(Files.exists(f), "a new mode is written");
+        Files.delete(f);
+        l.set(new PowerRef(PowerSource.TENSURA, ResourceLocation.parse("tensura:other")), 2);
+        assertTrue(Files.exists(f), "a new power is written");
+    }
+
+    @Test
     void lastPowerOffSettingNeverWrites(@TempDir Path dir) throws IOException {
         LastPower off = last(dir, false);
         off.set(COERCION, 1);
@@ -71,6 +87,17 @@ class LastAimSlotTest {
         assertFalse(aim.confirm(42), "a second click sends nothing");
         assertFalse(aim.active());
         assertEquals(List.of(COERCION.key() + "@1>42"), sent);
+    }
+
+    @Test
+    void anAimEndsWhenTheHudIsHiddenOrItWaitedTooLong() {
+        AimMode aim = new AimMode((ref, mode, target) -> { });
+        assertEquals(AimMode.Cancel.NONE, aim.check(true, 5), "nothing is aimed: nothing to cancel");
+        aim.start(COERCION, 0, 100);
+        assertEquals(AimMode.Cancel.NONE, aim.check(false, 100 + AimMode.TIMEOUT_TICKS - 1));
+        assertEquals(AimMode.Cancel.TIMED_OUT, aim.check(false, 100 + AimMode.TIMEOUT_TICKS));
+        assertEquals(AimMode.Cancel.GUI_HIDDEN, aim.check(true, 101));
+        assertEquals(AimMode.Cancel.GUI_HIDDEN, AimMode.cancelReason(true, 0, 1));
     }
 
     @Test

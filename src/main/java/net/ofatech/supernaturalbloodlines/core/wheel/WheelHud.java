@@ -7,8 +7,8 @@ import java.util.Set;
  * Vampirism's status, the hotbar, the boss bars, the chat) would sit under its rings and pills. A layer of a mod added later is hidden too, with no list to keep up. Pure.
  */
 public final class WheelHud {
-    /** Drawn even while the wheel is open: the vignette, frost and pumpkin overlays, and the debug screen a developer asked for. */
-    public static final Set<String> KEPT = Set.of("minecraft:camera_overlays", "minecraft:debug_overlay");
+    /** Drawn even while the wheel is open: the vignette, frost and pumpkin overlays, the debug screen a developer asked for, and the subtitles (they are how a player who cannot hear knows what is happening). */
+    public static final Set<String> KEPT = Set.of("minecraft:camera_overlays", "minecraft:debug_overlay", "minecraft:subtitle_overlay");
 
     private WheelHud() {
     }

@@ -26,7 +26,8 @@ import net.ofatech.supernaturalbloodlines.parts.hud.net.WheelEntry;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.Icons;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.KitSprites.Part;
-import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
+import net.ofatech.supernaturalbloodlines.core.wheel.WheelPanelText;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.KitDraw;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.client.UiKit;
 import net.ofatech.supernaturalbloodlines.shared.hud.ClientIcons;
@@ -46,8 +47,10 @@ final class WheelRenderer {
     record Picker(WheelEntry entry, Cell anchor, List<SlotPicker.Slot> slots, List<WheelEntry> holds, int hoverSlot, boolean none) {
     }
 
-    private static final Map<String, List<Span>> SPANS = new HashMap<>();
+    private record SpanKey(int sides, int r0, int r1, int a0, int a1) {
+    }
 
+    private static final Map<SpanKey, List<Span>> SPANS = new HashMap<>();
     private WheelRenderer() {
     }
 
@@ -55,10 +58,9 @@ final class WheelRenderer {
         if (SPANS.size() > 512) {
             SPANS.clear();
         }
-        String key = shape.sides() + ":" + r0 + ":" + r1 + ":" + Math.round(a0 * 10) + ":" + Math.round(a1 * 10);
+        SpanKey key = new SpanKey(shape.sides(), (int) Math.round(r0 * 10), (int) Math.round(r1 * 10), (int) Math.round(a0 * 10), (int) Math.round(a1 * 10));
         return SPANS.computeIfAbsent(key, k -> Annulus.wedge(shape, r0, r1, a0, a1));
     }
-
     private static void fill(GuiGraphics g, List<Span> spans, int cx, int cy, int color) {
         for (Span s : spans) {
             g.fill(cx + s.x0(), cy + s.y(), cx + s.x1() + 1, cy + s.y() + 1, color);
@@ -66,9 +68,20 @@ final class WheelRenderer {
     }
 
     static String text(String key, Object... args) {
-        return Component.translatable("supernaturalbloodlines.wheel." + key, args).getString();
+        return WheelStrings.text(key, args);
     }
 
+    private static int w(Font font, String s) {
+        return WheelPanelText.width(font, s, font::width);
+    }
+
+    private static String cut(Font font, String s, int width) {
+        return TextCache.cut(font, s, width, font::width);
+    }
+
+    private static List<String> wrap(Font font, String s, int width, int lines) {
+        return TextCache.wrap(font, s, width, lines, font::width);
+    }
     static void draw(GuiGraphics g, Font font, Frame f) {
         Layout l = f.layout();
         WheelPalette pal = f.pal();
@@ -114,12 +127,12 @@ final class WheelRenderer {
         }
         fill(g, spans(outerShape, 125, 126.5, 0, 360), cx, cy, pal.rim());
         fill(g, spans(outerShape, 87, 88, 0, 360), cx, cy, pal.line());
-        fill(g, spans(shape, 51, 52, 0, 360), cx, cy, pal.line());
+        fill(g, spans(shape, 51, 52, 0, 360), cx, cy, pal.innerLine());
         fill(g, spans(shape, 0, 17, 0, 360), cx, cy, pal.hub());
-        fill(g, spans(shape, 16, 17, 0, 360), cx, cy, pal.line());
+        fill(g, spans(shape, 16, 17, 0, 360), cx, cy, pal.innerLine());
         fill(g, spans(shape, 0, 9, 0, 360), cx, cy, pal.seal());
-        String glyph = HudKeys.WHEEL.getTranslatedKeyMessage().getString();
-        g.drawString(font, glyph, cx - font.width(glyph) / 2, cy - 4, pal.hintInk(), false);
+        String glyph = WheelStrings.key(HudKeys.WHEEL);
+        g.drawString(font, glyph, cx - w(font, glyph) / 2, cy - 4, pal.hintInk(), false);
         // the carets of the open path
         if (!inner.isEmpty()) {
             caret(g, f, cx, cy, l.bearing(Ring.INNER, open), 50);
@@ -186,8 +199,8 @@ final class WheelRenderer {
         for (Cell c : middle) {
             boolean on = c.index() == open;
             UiKit.draw(g, f.kit(), on ? Part.CHIP_ON : Part.CHIP, c.x(), c.y(), c.w(), c.h());
-            String label = LabelFit.cut(text("group." + groups.get(c.index()).name().toLowerCase(Locale.ROOT)), c.w() - 4, font::width);
-            g.drawString(font, label, c.x() + (c.w() - font.width(label)) / 2, c.y() + 3, on ? f.pal().onPill() : f.pal().ink(), false);
+            String label = cut(font, text("group." + groups.get(c.index()).name().toLowerCase(Locale.ROOT)), c.w() - 4);
+            g.drawString(font, label, c.x() + (c.w() - w(font, label)) / 2, c.y() + 3, on ? f.pal().onPill() : f.pal().ink(), false);
         }
     }
 
@@ -212,22 +225,22 @@ final class WheelRenderer {
             }
             if (locked) {
                 UiKit.shared(g, KitSprites.WHEEL_LOCK_OUTLINE, c.x() - 3, c.y() - 3, 42, 42, 1f);
-                KitDraw.icon(g, Icons.LOCK, c.x() + 21, c.y() + 21, 14, 0xFFE8B84A);
+                KitDraw.icon(g, Icons.LOCK, c.x() + 21, c.y() + 21, 14, f.pal().lockOnCell());
             }
             if (on) {
                 String t = text("on");
-                int w = font.width(t) + 6;
+                int w = w(font, t) + 6;
                 UiKit.draw(g, f.kit(), Part.CHIP_ON, c.x() + 36 - w + 2, c.y() - 7, w, 11);
                 g.drawString(font, t, c.x() + 36 - w + 5, c.y() - 4, f.pal().onPill(), false);
             }
             if (cooling) {
                 String t = (left + 19) / 20 + " s";
-                int w = font.width(t) + 8;
+                int w = w(font, t) + 8;
                 UiKit.draw(g, f.kit(), Part.CHIP, c.x() + 18 - w / 2, c.y() + 37, w, 11);
-                g.drawString(font, t, c.x() + 18 - font.width(t) / 2, c.y() + 40, f.pal().ink(), false);
+                g.drawString(font, t, c.x() + 18 - w(font, t) / 2, c.y() + 40, f.pal().ink(), false);
             } else if (e.modeNames().size() > 1) {
-                String t = LabelFit.cut(e.modeName().getString(), 52, font::width);
-                int w = font.width(t) + 18;
+                String t = cut(font, WheelStrings.of(e.modeName()), 52);
+                int w = w(font, t) + 18;
                 UiKit.draw(g, f.kit(), Part.CHIP, c.x() + 18 - w / 2, c.y() + 37, w, 11);
                 UiKit.shared(g, KitSprites.MODE_MARK, c.x() + 18 - w / 2 + 5, c.y() + 40, 7, 7, 1f);
                 g.drawString(font, t, c.x() + 18 - w / 2 + 14, c.y() + 40, f.pal().ink(), false);
@@ -269,7 +282,7 @@ final class WheelRenderer {
         }
         String t = (l.page() + 1) + "/" + l.pageCount();
         Cell lab = l.pageLabel();
-        g.drawString(font, t, lab.x() + (lab.w() - font.width(t)) / 2, lab.y(), f.pal().ink(), false);
+        g.drawString(font, t, lab.x() + (lab.w() - w(font, t)) / 2, lab.y(), f.pal().ink(), false);
     }
 
     private static void panel(GuiGraphics g, Font font, Frame f) {
@@ -279,95 +292,90 @@ final class WheelRenderer {
         int x = p.x() + 9;
         int w = p.w() - 18;
         int y = p.y() + 9;
+        int rows = p.y() + p.h() - 9;
         WheelEntry e = f.power();
         var mods = f.model().mods();
         PowerSource source = e != null ? e.ref().source() : mods.isEmpty() ? null : mods.get(Math.max(0, Math.min(f.open().mod(), mods.size() - 1)));
         if (e == null) {
             String head = source == null ? text("hint.open") : modName(source);
-            g.drawString(font, Component.literal(LabelFit.cut(head, w, font::width)).withStyle(ChatFormatting.BOLD), x, y, pal.ink(), false);
-            helpLines(g, font, f, x, p.y() + p.h() - 9 - 4 * 10, w);
+            g.drawString(font, WheelStrings.bold(cut(font, head, w)), x, y, pal.ink(), false);
+            helpLines(g, font, f, x, rows - 4 * 10);
             return;
         }
-        g.drawString(font, Component.literal(LabelFit.cut(e.name().getString(), w, font::width)).withStyle(ChatFormatting.BOLD), x, y, pal.ink(), false);
-        y += 11;
+        boolean modes = e.modeNames().size() > 1;
         String where = modName(source) + (e.group() == net.ofatech.supernaturalbloodlines.core.wheel.PowerGroup.MAIN || f.model().groups(source).isEmpty() ? ""
                 : " · " + text("group." + e.group().name().toLowerCase(Locale.ROOT)));
-        g.drawString(font, LabelFit.cut(where, w, font::width), x, y, pal.muted(), false);
+        WheelPanelText.Lines t = WheelPanelText.lines(font, font::width, w, p.y() + 49, rows - 6 * 10, WheelStrings.of(e.name()), where, text("kind." + e.kind().name().toLowerCase(Locale.ROOT)),
+                WheelDescriptions.of(e), modes ? text("panel.mode", e.state().mode() + 1, e.modeNames().size(), WheelStrings.of(e.modeName())) : "",
+                e.state().locked() ? reason(e.state().lock()) : "");
+        g.drawString(font, WheelStrings.bold(t.name()), x, y, pal.ink(), false);
+        y += 11;
+        g.drawString(font, t.where(), x, y, pal.muted(), false);
         y += 12;
         UiKit.draw(g, f.kit(), Part.DIVIDER, x, y, w, 3);
         y += 6;
-        g.drawString(font, Component.literal(text("kind." + e.kind().name().toLowerCase(Locale.ROOT))).withStyle(ChatFormatting.BOLD), x, y, pal.ink(), false);
+        g.drawString(font, WheelStrings.bold(t.kind()), x, y, pal.ink(), false);
         y += 11;
-        String description = WheelDescriptions.of(e);
-        int descLines = net.ofatech.supernaturalbloodlines.core.wheel.WheelPanelText.descriptionLines(y, p.y() + p.h() - 9 - 6 * 10, e.modeNames().size() > 1 ? 2 : 0, e.state().locked());
-        if (!description.isEmpty() && descLines > 0) {
-            for (String line : LabelFit.wrap(description, w, descLines, font::width)) {
-                g.drawString(font, line, x, y, pal.ink(), false);
-                y += 10;
-            }
+        for (String line : t.description()) {
+            g.drawString(font, line, x, y, pal.ink(), false);
+            y += 10;
+        }
+        if (!t.description().isEmpty()) {
             y += 2;
         }
-        if (e.modeNames().size() > 1) {
-            String mode = text("panel.mode", e.state().mode() + 1, e.modeNames().size(), e.modeName().getString());
-            for (String line : LabelFit.wrap(mode, w, 2, font::width)) {
-                g.drawString(font, line, x, y, pal.muted(), false);
-                y += 10;
-            }
+        for (String line : t.mode()) {
+            g.drawString(font, line, x, y, pal.muted(), false);
+            y += 10;
         }
         if (e.state().locked()) {
             int bh = 38;
             UiKit.draw(g, f.kit(), KitSprites.CARD, x - 2, y, w + 4, bh);
-            KitDraw.icon(g, Icons.LOCK, x + 2, y + 12, 14, 0xFFE8B84A);
-            g.drawString(font, Component.literal(text("locked")).withStyle(ChatFormatting.BOLD), x + 20, y + 4, pal.warn(), false);
+            KitDraw.icon(g, Icons.LOCK, x + 2, y + 12, 14, pal.warn());
+            g.drawString(font, WheelStrings.bold(text("locked")), x + 20, y + 4, pal.warn(), false);
             int ly = y + 14;
-            for (String line : LabelFit.wrap(reason(e.state().lock()), w - 22, 2, font::width)) {
+            for (String line : t.lock()) {
                 g.drawString(font, line, x + 20, ly, pal.ink(), false);
                 ly += 10;
             }
-            y += bh + 4;
         }
         // the rows: where it is slotted and how well it is known
-        g.drawString(font, text("panel.slot"), x, p.y() + p.h() - 9 - 6 * 10, pal.muted(), false);
-        g.drawString(font, slotText(e, f), x + 46, p.y() + p.h() - 9 - 6 * 10, pal.ink(), false);
-        g.drawString(font, text("panel.mastery"), x, p.y() + p.h() - 9 - 5 * 10, pal.muted(), false);
+        g.drawString(font, text("panel.slot"), x, rows - 6 * 10, pal.muted(), false);
+        g.drawString(font, slotText(e, f), x + 46, rows - 6 * 10, pal.ink(), false);
+        g.drawString(font, text("panel.mastery"), x, rows - 5 * 10, pal.muted(), false);
         if (e.mastery() >= 0f) {
             int bw = w - 46 - 28;
-            UiKit.draw(g, f.kit(), Part.MASTERY_TRACK, x + 46, p.y() + p.h() - 9 - 5 * 10 + 1, bw, 6);
-            UiKit.draw(g, f.kit(), e.mastery() >= 1f ? Part.MASTERY_FILL_MASTERED : Part.MASTERY_FILL, x + 46, p.y() + p.h() - 9 - 5 * 10 + 1, Math.max(1, Math.round(bw * Math.min(1f, e.mastery()))), 6);
+            UiKit.draw(g, f.kit(), Part.MASTERY_TRACK, x + 46, rows - 5 * 10 + 1, bw, 6);
+            UiKit.draw(g, f.kit(), e.mastery() >= 1f ? Part.MASTERY_FILL_MASTERED : Part.MASTERY_FILL, x + 46, rows - 5 * 10 + 1, Math.max(1, Math.round(bw * Math.min(1f, e.mastery()))), 6);
             String pct = Math.round(Math.min(1f, e.mastery()) * 100) + "%";
-            g.drawString(font, pct, x + w - font.width(pct), p.y() + p.h() - 9 - 5 * 10, pal.ink(), false);
+            g.drawString(font, pct, x + w - w(font, pct), rows - 5 * 10, pal.ink(), false);
         } else {
-            g.drawString(font, "-", x + 46, p.y() + p.h() - 9 - 5 * 10, pal.ink(), false);
+            g.drawString(font, "-", x + 46, rows - 5 * 10, pal.ink(), false);
         }
-        helpLines(g, font, f, x, p.y() + p.h() - 9 - 4 * 10, w);
+        helpLines(g, font, f, x, rows - 4 * 10);
     }
-
     private static String slotText(WheelEntry e, Frame f) {
         String s = f.slotOf().apply(e);
         return s == null || s.isEmpty() ? text("panel.slot_none") : s;
     }
 
     static String reason(LockReason r) {
-        return Component.translatable("supernaturalbloodlines.wheel.lock." + r.name().toLowerCase(Locale.ROOT)).getString();
+        return text("lock." + r.name().toLowerCase(Locale.ROOT));
     }
 
-    private static void helpLines(GuiGraphics g, Font font, Frame f, int x, int y, int w) {
-        String[][] rows = {
-                {text("help.click"), text("help.click_use")},
-                {text("help.right"), text("help.right_slot")},
-                f.page().size() > 0 && f.layout().pageCount() > 1 ? new String[] {text("help.scroll"), text("help.scroll_page")} : new String[] {text("help.alt"), text("help.alt_mode")},
-                {text("help.close_keys"), text("help.close")}};
-        for (String[] row : rows) {
-            Component key = Component.literal(row[0]).withStyle(ChatFormatting.BOLD);
-            g.drawString(font, key, x, y, f.pal().ink(), false);
-            g.drawString(font, row[1], x + font.width(key) + 5, y, f.pal().muted(), false);
+    private static void helpLines(GuiGraphics g, Font font, Frame f, int x, int y) {
+        boolean paged = f.page().size() > 0 && f.layout().pageCount() > 1;
+        List<WheelPanelText.HelpRow> rows = WheelPanelText.help(font, s -> font.width(WheelStrings.bold(s)),
+                List.of(text("help.click"), text("help.right"), paged ? text("help.scroll") : text("help.alt"), text("help.close_keys")),
+                List.of(text("help.click_use"), text("help.right_slot"), paged ? text("help.scroll_page") : text("help.alt_mode"), text("help.close")));
+        for (WheelPanelText.HelpRow row : rows) {
+            g.drawString(font, WheelStrings.bold(row.key()), x, y, f.pal().ink(), false);
+            g.drawString(font, row.what(), x + row.whatX(), y, f.pal().muted(), false);
             y += 10;
         }
     }
-
     private static void hints(GuiGraphics g, Font font, Frame f) {
         Cell h = f.layout().gHint();
-        chip(g, font, f, h, HudKeys.WHEEL.getTranslatedKeyMessage().getString(), text("hint.open"));
+        chip(g, font, f, h, WheelStrings.key(HudKeys.WHEEL), text("hint.open"));
         if (f.alt()) {
             chip(g, font, f, f.layout().altHint(), "Alt", text("hint.alt"));
         }
@@ -377,7 +385,7 @@ final class WheelRenderer {
         UiKit.draw(g, f.kit(), Part.HUD_PILL, c.x(), c.y(), c.w(), c.h());
         int ink = UiKit.labelOver(f.kit(), Part.HUD_PILL, f.pal().hintInk());
         g.drawString(font, key, c.x() + 8, c.y() + 3, ink, false);
-        g.drawString(font, label, c.x() + 8 + font.width(key) + 6, c.y() + 3, ink, false);
+        g.drawString(font, label, c.x() + 8 + w(font, key) + 6, c.y() + 3, ink, false);
     }
 
     private static void modeLists(GuiGraphics g, Font font, Frame f) {
@@ -395,7 +403,7 @@ final class WheelRenderer {
                 if (current) {
                     UiKit.shared(g, KitSprites.MODE_MARK, a.x() + 5, a.y() + 7 + i * 12, 7, 7, 1f);
                 }
-                g.drawString(font, LabelFit.cut(e.modeNames().get(i).getString(), a.w() - 20, font::width), a.x() + 15, a.y() + 6 + i * 12, ink, false);
+                g.drawString(font, cut(font, WheelStrings.of(e.modeNames().get(i)), a.w() - 20), a.x() + 15, a.y() + 6 + i * 12, ink, false);
             }
         }
     }
@@ -405,7 +413,7 @@ final class WheelRenderer {
         Cell a = p.anchor();
         UiKit.draw(g, f.kit(), Part.TOOLTIP, a.x(), a.y(), a.w(), a.h());
         int ink = UiKit.labelOver(f.kit(), Part.TOOLTIP, f.pal().hintInk());
-        g.drawString(font, LabelFit.cut(text("picker.title", p.entry().name().getString()), a.w() - 12, font::width), a.x() + 8, a.y() + 5, ink, false);
+        g.drawString(font, cut(font, text("picker.title", WheelStrings.of(p.entry().name())), a.w() - 12), a.x() + 8, a.y() + 5, ink, false);
         if (p.none()) {
             g.drawString(font, text("picker.none"), a.x() + 8, a.y() + 30, ink, false);
             return;
@@ -420,14 +428,14 @@ final class WheelRenderer {
             } else {
                 UiKit.icon(g, "plus", sx + 6, sy + 6, 16, 0x80FFFFFF);
             }
-            String key = HudKeys.SLOTS[i].getTranslatedKeyMessage().getString();
+            String key = WheelStrings.key(HudKeys.SLOTS[i]);
             UiKit.draw(g, f.kit(), Part.KEY_BADGE, sx + 17, sy + 17, 11, 11);
-            g.drawString(font, key, sx + 17 + (11 - font.width(key)) / 2, sy + 19, UiKit.labelOver(f.kit(), Part.KEY_BADGE, f.pal().onPill()), false);
+            g.drawString(font, key, sx + 17 + (11 - w(font, key)) / 2, sy + 19, UiKit.labelOver(f.kit(), Part.KEY_BADGE, f.pal().onPill()), false);
         }
-        String bottom = p.hoverSlot() < 0 ? "" : p.holds().get(p.hoverSlot()) == null ? text("picker.empty") : text("picker.replaces", p.holds().get(p.hoverSlot()).name().getString());
-        g.drawString(font, LabelFit.cut(bottom, a.w() - 80, font::width), a.x() + 8, a.y() + a.h() - 12, ink, false);
+        String bottom = p.hoverSlot() < 0 ? "" : p.holds().get(p.hoverSlot()) == null ? text("picker.empty") : text("picker.replaces", WheelStrings.of(p.holds().get(p.hoverSlot()).name()));
+        g.drawString(font, cut(font, bottom, a.w() - 80), a.x() + 8, a.y() + a.h() - 12, ink, false);
         String esc = text("picker.cancel");
-        g.drawString(font, esc, a.x() + a.w() - 8 - font.width(esc), a.y() + a.h() - 12, ink, false);
+        g.drawString(font, esc, a.x() + a.w() - 8 - w(font, esc), a.y() + a.h() - 12, ink, false);
     }
 
     /** The aim hint under the crosshair and the power's icon under it (the wheel is closed). */
@@ -437,9 +445,9 @@ final class WheelRenderer {
         int x = screenW / 2 - w / 2;
         int y = screenH * 62 / 100;
         UiKit.draw(g, kit, Part.HUD_LABEL, x, y, w, 14);
-        g.drawString(font, LabelFit.cut(t, w - 8, font::width), x + (w - font.width(LabelFit.cut(t, w - 8, font::width))) / 2, y + 3, UiKit.labelOver(kit, Part.HUD_LABEL, pal.hintInk()), false);
+        g.drawString(font, cut(font, t, w - 8), x + (w - w(font, cut(font, t, w - 8))) / 2, y + 3, UiKit.labelOver(kit, Part.HUD_LABEL, pal.hintInk()), false);
         UiKit.draw(g, kit, Part.SLOT, x + w / 2 - 11 + 0, y + 18 + 3, 22, 22);
         ClientIcons.draw(g, icon, x + w / 2 - 8, y + 18 + 6, 16, 1f);
-        corners(g, screenW / 2 - 18, screenH / 2 - 18, 36, 36, 6, pal.line());
+        corners(g, screenW / 2 - 18, screenH / 2 - 18, 36, 36, 6, pal.innerLine());
     }
 }

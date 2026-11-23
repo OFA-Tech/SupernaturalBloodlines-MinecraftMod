@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.hud.client.wheel;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +88,7 @@ public final class WheelActions {
         }
         last().set(e.ref(), mode);
         if (e.kind() == PowerKind.AIMED) {
-            AIM.start(e.ref(), mode);
+            AIM.start(e.ref(), mode, Minecraft.getInstance().level == null ? 0 : Minecraft.getInstance().level.getGameTime());
             aimEntry = e;
             return true;
         }
@@ -137,7 +138,27 @@ public final class WheelActions {
     }
 
     /** What the six slots of the target hold, as entry ids (null for empty). */
+    private static final Map<String, String> SLOT_TEXT = new HashMap<>();
+    private static WheelRules.SlotTarget holdsTarget;
+    private static List<ResourceLocation> holdsCache;
+
+    /** One game tick has passed: what the slots hold may have changed, so it is read again on the next ask (and once per tick, not once per frame). */
+    static void nextTick() {
+        SLOT_TEXT.clear();
+        holdsCache = null;
+    }
+
     public static List<ResourceLocation> holds(WheelRules.SlotTarget target) {
+        if (holdsCache != null && holdsTarget == target) {
+            return holdsCache;
+        }
+        List<ResourceLocation> read = readHolds(target);
+        holdsTarget = target;
+        holdsCache = read;
+        return read;
+    }
+
+    private static List<ResourceLocation> readHolds(WheelRules.SlotTarget target) {
         if (DevWheel.devHolds() != null) {
             return DevWheel.devHolds();
         }
@@ -186,6 +207,10 @@ public final class WheelActions {
 
     /** The key of the slot a power is in now, for the panel's "Slot" row; empty when it is in none. */
     public static String slotOf(WheelEntry e) {
+        return SLOT_TEXT.computeIfAbsent(e.ref().key(), k -> readSlotOf(e));
+    }
+
+    private static String readSlotOf(WheelEntry e) {
         WheelRules.SlotTarget target = target(e);
         if (target == WheelRules.SlotTarget.NONE) {
             return "";

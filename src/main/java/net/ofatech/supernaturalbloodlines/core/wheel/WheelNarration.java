@@ -9,6 +9,9 @@ import java.util.function.BiFunction;
 public final class WheelNarration {
     public static final String KEY_PAGE = "supernaturalbloodlines.wheel.narrate.page";
     public static final String KEY_POSITION = "supernaturalbloodlines.wheel.narrate.position";
+    public static final String KEY_ON = "supernaturalbloodlines.wheel.state.on";
+    public static final String KEY_READY = "supernaturalbloodlines.wheel.state.ready";
+    public static final String KEY_COOLING = "supernaturalbloodlines.wheel.state.cooling";
 
     private WheelNarration() {
     }
@@ -38,6 +41,17 @@ public final class WheelNarration {
         }
         out.add(lockReason != null && !lockReason.isEmpty() ? lockReason : state);
         return out;
+    }
+
+    /** The state in words: on, how long a cooldown has left (whole seconds, rounded up), or ready. No colour carries it. */
+    public static String stateWord(boolean on, long cooldownLeftTicks, BiFunction<String, Object[], String> translate) {
+        if (on) {
+            return translate.apply(KEY_ON, new Object[0]);
+        }
+        if (cooldownLeftTicks > 0) {
+            return translate.apply(KEY_COOLING, new Object[] {(cooldownLeftTicks + 19) / 20});
+        }
+        return translate.apply(KEY_READY, new Object[0]);
     }
 
     /** Tab walks the mods and then the groups as one list, and wraps; Shift+Tab walks it back. {@code focus} is -1 before the first Tab. */

@@ -71,7 +71,9 @@ public final class GestureMachine {
                 return new Step(this, Effect.NONE);
             case HELD:
                 if (in == Input.G_UP) {
-                    return overPower ? new Step(IDLE, Effect.USE_HOVERED) : new Step(new GestureMachine(State.STICKY, downAt), Effect.NONE);
+                    // the wheel stays open either way: a use that closes it (an instant or aimed power) closes the screen itself, and one that does not (a toggle, a held power, a
+                    // refused one) must not leave a screen that is open with a machine that is not
+                    return new Step(new GestureMachine(State.STICKY, downAt), overPower ? Effect.USE_HOVERED : Effect.NONE);
                 }
                 if (in == Input.CLICK_LEFT && overPower) {
                     return new Step(this, Effect.USE_HOVERED);

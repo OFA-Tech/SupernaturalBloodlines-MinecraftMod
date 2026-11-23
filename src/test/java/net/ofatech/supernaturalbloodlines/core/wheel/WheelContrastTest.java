@@ -30,15 +30,39 @@ class WheelContrastTest {
         }
     }
 
+    /** A band is translucent: what the player sees is the band over the game, which is dark at night and pale in snow. */
+    private static int over(int argb, int sky) {
+        int a = argb >>> 24;
+        int r = ((argb >> 16 & 255) * a + (sky >> 16 & 255) * (255 - a)) / 255;
+        int g = ((argb >> 8 & 255) * a + (sky >> 8 & 255) * (255 - a)) / 255;
+        int b = ((argb & 255) * a + (sky & 255) * (255 - a)) / 255;
+        return 0xFF000000 | r << 16 | g << 8 | b;
+    }
+
     @Test
-    void theLinesAndTheRimReadAt3To1OnTheBands() {
+    void theLinesAndTheRimReadAt3To1OnBothBandsOverADarkAndALightSky() {
+        int[] skies = {0xFF05070B, 0xFFEAF2FF};
         for (Look look : Look.values()) {
             WheelPalette p = WheelPalette.of(look);
-            int band = p.panel() | 0xFF000000;
-            assertTrue(Contrast.ratio(p.rim() | 0xFF000000, band) >= 1.0, look.name());
+            for (int sky : skies) {
+                // the Grimoire's two bands are a parchment and a dark red: no one colour reads on both, so each line has the colour of the band it is drawn on
+                int outer = over(p.outerBand(), sky);
+                int inner = over(p.innerBand(), sky);
+                for (int[] pair : new int[][] {{p.rim(), outer}, {p.line(), outer}, {p.innerLine(), inner}}) {
+                    double r = Contrast.ratio(pair[0] | 0xFF000000, pair[1]);
+                    assertTrue(r >= 3.0, String.format("%s line %08x on a band seen as %06x over sky %06x: %.2f", look, pair[0], pair[1] & 0xFFFFFF, sky & 0xFFFFFF, r));
+                }
+            }
         }
     }
 
+    @Test
+    void theLockOnACellReadsAt3To1() {
+        for (Look look : Look.values()) {
+            WheelPalette p = WheelPalette.of(look);
+            assertTrue(Contrast.ratio(p.lockOnCell(), p.cell()) >= 3.0, look + " lock on its cell: " + Contrast.ratio(p.lockOnCell(), p.cell()));
+        }
+    }
     @Test
     void thePanelColourIsCloseToTheKitsPaper() {
         // read off the mockups (Grimoire E9DDB8 against the kit's E9DCBC): the panel sprite is what is drawn, this is the colour its text is checked on

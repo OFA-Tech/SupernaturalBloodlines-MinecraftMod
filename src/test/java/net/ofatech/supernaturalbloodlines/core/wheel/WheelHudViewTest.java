@@ -17,6 +17,7 @@ class WheelHudViewTest {
         }
         assertFalse(WheelHud.hides(true, "minecraft:camera_overlays"));
         assertFalse(WheelHud.hides(true, "minecraft:debug_overlay"));
+        assertFalse(WheelHud.hides(true, "minecraft:subtitle_overlay"), "the subtitles are an accessibility aid and stay");
     }
 
     @Test
