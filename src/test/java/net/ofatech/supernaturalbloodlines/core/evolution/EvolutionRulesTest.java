@@ -102,8 +102,8 @@ class EvolutionRulesTest {
                 with(good(), b -> { b.enoughEp = false; return b; }));
         for (Facts f : broken) {
             Reason r = EvolutionRules.check(recipe(Tier.UNIQUE), f).orElseThrow();
-            assertEquals("NOT_READY", r.name());
-            assertEquals("supernaturalbloodlines.refusal.evolution.not_ready", EvolutionRules.keyOf(r, Tier.UNIQUE));
+            assertTrue("NOT_READY".equals(r.name()), "a target requirement gave " + r + ", which tells the performer something else");
+            assertTrue("supernaturalbloodlines.refusal.evolution.not_ready".equals(EvolutionRules.keyOf(r, Tier.UNIQUE)), "the key differs for " + r);
         }
     }
 
