@@ -44,6 +44,7 @@ public final class SpeciesHub {
     static void register() {
         HubSocial.set(SpeciesHub::social);
         HubSocial.setNpcs(SpeciesHub::npcs);
+        HubSocial.setMoonGift(net.ofatech.supernaturalbloodlines.parts.species.pack.PackMoonGift::has);
         HubRequests.set(SpeciesHub::requests);
     }
 

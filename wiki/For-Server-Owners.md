@@ -119,6 +119,7 @@ A simple way: keep one `config/` folder in your modpack and ship it to everyone.
 | The Five | `max_five` | 5 | |
 | Line death | `original_line_death` | on | A white oak kill of one Original kills their whole line, offline players included. Replaces `sireline_death`. |
 | Moon control | `moon_bound_werewolves` | on | Off: everyone shifts at will. |
+| Pack moon gift | `hybrid_pack_moon_control` | on | Off: members of a hybrid-led pack get no moon control from it. |
 | Eclipse | `lunar_eclipse_chance` | 3% | 0 turns eclipses off. One flag for the whole server. |
 | Hidden gene | `latent_gene_chance` | 15% | rolled once per player at first login |
 | True Alpha farming | (design) | | The 300 defender kills can be farmed at a mob spawner beside a villager. |

@@ -23,7 +23,9 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackContext;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackEvent;
+import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackLeadership;
+import net.ofatech.supernaturalbloodlines.core.bloodline.PackMoonRules;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
@@ -52,6 +54,7 @@ public final class PackIndex extends SavedData {
     private static final String LAST_SEEN = "last_seen";
     private static final String JOINED_AT = "joined_at";
     private static final String ALIVE_AT = "alive_at";
+    private static final String HYBRID_LIKE = "hybrid_like";
     private static final String KEY = "key";
     private static final String VALUE = "value";
 
@@ -81,6 +84,8 @@ public final class PackIndex extends SavedData {
     private final Map<UUID, Long> lastSeen = new HashMap<>();
     // when a member joined the pack they are in now (wall-clock millis, {@link #now}); the hub shows it as days in the pack
     private final Map<UUID, Long> joinedAt = new HashMap<>();
+    // players who were hybrid-like (a hybrid type, curse not bound) the last time they were seen online: an offline leader still gives the pack gift (R96)
+    private final Set<UUID> hybridLike = new HashSet<>();
     // the last wall-clock time the server was known to be running (0: never recorded): the gap to the next start is downtime, not an absence
     private long aliveAt;
 
@@ -145,6 +150,7 @@ public final class PackIndex extends SavedData {
             if (before.rank() != after.rank() || before.lineage() != after.lineage() || before.sparks() != after.sparks()) {
                 PackLeader.refresh(p, after);
             }
+            index.setHybridLike(p.getUUID(), PackMoonRules.hybridLike(change.after().species(), change.after().hybridCurseBound()));
             // a dormant True Alpha (outside the faction) keeps its tombstone until it rejoins
             if (PackAccess.isAlpha(change.after().wolf().rank()) && VampirismSupernatural.isWerewolf(p)) {
                 get(p.serverLevel()).clearFormerAlpha(p.getUUID());
@@ -191,6 +197,8 @@ public final class PackIndex extends SavedData {
         }
         follow(p);
         PackLeader.refresh(p);
+        BloodlineState own = BloodlineAccess.get(p);
+        index.setHybridLike(p.getUUID(), PackMoonRules.hybridLike(own.species(), own.hybridCurseBound()));
     }
 
     private static void follow(ServerPlayer p) {
@@ -226,6 +234,17 @@ public final class PackIndex extends SavedData {
         out.add(leader);
         out.addAll(betasOf(leader));
         return out;
+    }
+
+    /** Whether {@code id} was hybrid-like (a hybrid type with the curse not bound) when they were last seen: the leader's half of the pack gift (R96). */
+    public boolean isHybridLike(UUID id) {
+        return hybridLike.contains(id);
+    }
+
+    public void setHybridLike(UUID id, boolean value) {
+        if (value ? hybridLike.add(id) : hybridLike.remove(id)) {
+            setDirty();
+        }
     }
 
     /** Whether {@code p} leads the pack they are in (a lone player leads their own). */
@@ -737,6 +756,7 @@ public final class PackIndex extends SavedData {
         read(tag, ANCHORS, i.anchorOf);
         readIds(tag, FORMER, i.formerAlphas);
         readIds(tag, DISSOLVED, i.dissolved);
+        readIds(tag, HYBRID_LIKE, i.hybridLike);
         read(tag, MIRRORS, i.mirrors);
         read(tag, PARTIES, i.parties);
         readIds(tag, ENDED, i.ended);
@@ -854,6 +874,7 @@ public final class PackIndex extends SavedData {
         write(tag, ANCHORS, anchorOf);
         writeIds(tag, FORMER, formerAlphas);
         writeIds(tag, DISSOLVED, dissolved);
+        writeIds(tag, HYBRID_LIKE, hybridLike);
         write(tag, MIRRORS, mirrors);
         write(tag, PARTIES, parties);
         writeIds(tag, ENDED, ended);

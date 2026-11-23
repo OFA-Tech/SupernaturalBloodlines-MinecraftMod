@@ -128,6 +128,12 @@ Round 3 (2026-11-11): R3, R20, R32, R35, R42, R81–R84, R91, R95, R96, R100 and
     - **hybrids, Original hybrids and tribrids** (once unbound): as with the Moon Ring
     - **Alphas and True Alphas**: as with the Moon Ring
     - **born werewolves with a bound anchor**: half transformations only
+    - **the pack's gift** (config `hybrid_pack_moon_control`, default on; inspired by The Originals): every **werewolf member** (Beta; not a Packmate who is no werewolf) of a pack whose **current leader is a hybrid, an Original hybrid or a tribrid** (curse not bound, like the hybrid source above) has control, as with the Moon Ring: half forms at will, full forms from Werewolves level 8 (same config)
+      - Only the **current leader** counts. A hybrid co-Alpha who does not lead gives nothing.
+      - It is **live**, read from the pack's state each time, never stored for the member: leaving, a kick, a dissolved pack or a change of leader ends it at once. A member who is in a form when it ends keeps that form until the next forced or normal change (as when a Moon Ring is taken off); the forced shift is the usual rule again from then on.
+      - It stops the forced full-moon shift like any other control. A leader who is offline still gives it: the index remembers whether they were hybrid-like when last seen (a pack from before this rule gives it once the leader has logged in).
+      - It shows on the hub Pack page as the perk line "Your Alpha's blood frees you from the moon" (the server says so in the snapshot; the client decides nothing). Moon control is otherwise shown in the hub only through the task "Control your shift under the full moon", which follows control from every source, this one included, as with the Moon Ring.
+      - A member is told in one line when they gain it and in one line when they lose it (said once per change, not at every check; nothing is said at login).
   - The Moon Ring and the exemptions also stop the forced full-moon shift.
 
 ## Tensura links

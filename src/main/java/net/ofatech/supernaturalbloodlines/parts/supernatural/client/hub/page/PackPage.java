@@ -39,6 +39,9 @@ public final class PackPage implements HubPageView {
         if (BookPackPage.weakLine(wolf).isPresent()) {
             y = PageKit.wrapped(f, BookPackPage.weakLine(wolf).get(), r.x(), y, r.w(), t.muted()) + 3;
         }
+        if (BookPackPage.perkLine(f).isPresent()) {
+            y = PageKit.wrapped(f, BookPackPage.perkLine(f).get(), r.x(), y, r.w(), t.accent()) + 3;
+        }
         y = PageKit.wrapped(f, Component.translatable(KEY + "members").withStyle(ChatFormatting.BOLD), r.x(), y, r.w(), t.accent());
         if (pack.isEmpty()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "alone"), r.x() + 4, y, r.w() - 4, t.muted());

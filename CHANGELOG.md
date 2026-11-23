@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased (pack moon gift)
+
+### Added
+- **The pack's gift (R96, `hybrid_pack_moon_control`, default on; needs Werewolves).** As in The Originals: while the **current leader** of a pack is a hybrid, an Original hybrid or a tribrid (curse not bound), every **werewolf member** of that pack has moon control, as with a Moon Ring: half forms at will, full forms from Werewolves level 8 (`full_form_level`), and the forced full-moon shift is skipped. It is read from the pack each time, so leaving, a kick, a dissolved pack or the lead passing to someone who is not hybrid-like ends it at once. A hybrid co-Alpha who does not lead gives nothing; Packmates who are no werewolves are not changed. A member who loses it mid-shift keeps the form they are in until the next forced or normal change (as with a Moon Ring taken off).
+- **Hub:** the Pack page shows the perk line "Your Alpha's blood frees you from the moon" while you have it (every theme; the server says so in the snapshot). The task "Control your shift under the full moon" follows it like any other control, as with the Moon Ring.
+- **Messages:** one line when a member gains the gift and one when they lose it.
+- **Admin:** `hybrid_pack_moon_control` has a row under Species.
+
+### Network
+- The hub snapshot carries one more flag (the gift), so the protocol is **11** (was 10). Clients and servers must match.
+
+### Migration
+- The pack index remembers who was hybrid-like when last seen (saved with it, nothing else changes). A pack led by an offline hybrid gives the gift once its leader has logged in after the update.
+
 ## Unreleased (UI overhaul phase 8: logo, mod icon, store art)
 
 ### Added

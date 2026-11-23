@@ -136,6 +136,17 @@ public final class HubSocial {
         }
     }
 
+    private static volatile java.util.function.Predicate<ServerPlayer> moonGift = p -> false;
+
+    /** The species part installs who has the pack's moon gift (R96: a werewolf in a pack led by a hybrid-like leader); without it the hub says nobody. */
+    public static void setMoonGift(java.util.function.Predicate<ServerPlayer> has) {
+        moonGift = has;
+    }
+
+    public static boolean moonGiftOf(ServerPlayer p) {
+        return moonGift.test(p);
+    }
+
     public static final int MAX_NPCS = 64;
 
     private static volatile Function<ServerPlayer, List<Npc>> npcSource = p -> List.of();
