@@ -169,7 +169,8 @@ final class DevDemo {
         List<HubSocial.Person> people = new ArrayList<>(List.of(new HubSocial.Person("Klaus", id("Klaus"))));
         family.sired().forEach(n -> people.add(new HubSocial.Person(n, id(n))));
         HubSnapshotPayload snap = new HubSnapshotPayload(family, pack, 2, Map.of(Genes.WEREWOLF, Genes.Knowledge.TRUE, Genes.DOPPELGANGER, Genes.Knowledge.UNKNOWN),
-                people, new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(true, true, "running".equals(System.getProperty("supernaturalbloodlines.devshots.demo.trial")) ? 2 : 1).withBossNear(new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.BossNear("fallen".equals(System.getProperty("supernaturalbloodlines.devshots.demo.boss")) ? 2 : 1, "mikael")), npcs());
+                people, new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(true, true, "running".equals(System.getProperty("supernaturalbloodlines.devshots.demo.trial")) ? 2 : 1).withBossNear(new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.BossNear("fallen".equals(System.getProperty("supernaturalbloodlines.devshots.demo.boss")) ? 2 : 1, "mikael")), npcs(),
+                "true".equals(System.getProperty("supernaturalbloodlines.devshots.demo.moongift"))); // demo.moongift=true: the pack's moon gift line
         // one person, everywhere: Dev is the hybrid werewolf who leads the demo pack as an Alpha with a bitten-then-born line
         var wolf = v.bloodline().wolf().toBuilder().lineage(net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage.BORN)
                 .rank("beta".equals(System.getProperty("supernaturalbloodlines.devshots.demo.rank")) ? net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank.BETA

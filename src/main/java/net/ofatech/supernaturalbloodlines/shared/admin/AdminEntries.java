@@ -133,6 +133,7 @@ public final class AdminEntries {
         species(all, "augustine_extra_health", DOUBLE);
         species(all, "augustine_blood_from_vampire_factor", DOUBLE);
         species(all, "augustine_blood_from_other_factor", DOUBLE);
+        species(all, "hybrid_pack_moon_control", BOOL);
         species(all, "alpha_trial_enabled", BOOL);
         species(all, "alpha_trial_min_level", INT);
         species(all, "alpha_trial_hp_factor", DOUBLE);
