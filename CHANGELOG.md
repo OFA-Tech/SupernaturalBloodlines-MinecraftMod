@@ -10,6 +10,7 @@
 - **Hub: Skills page, Mastery tab** (shown only with the part): choose, clear and show the skill for the rite. `/bloodline mastery`, `/bloodline mastery choose <skill>`, `/bloodline mastery clear`, with Admin rows B11 to B13. No payload changed, so the hub protocol number is the same.
 - **Book:** category "Evolution Rites", six sealed entries, unlocked by kind (the three witch kinds; a vampire also learns Deus Sanguis).
 - **Admin page:** section "Evolution rites", 11 settings (`supernaturalbloodlines-evolution_rites.toml`) and the part switch. `AdminEntries` is 186.
+- **Hub protocol 13** (was 12): the Admin snapshot now holds up to 256 settings rows (was 192; the sum of the plans passed 192). The bytes of a snapshot do not change, but a client that accepts only 192 would refuse a longer one, so server and clients update together. No other payload changed.
 - Ascension joins the tested series (`LinkedMods`: `ascension` 1.0, which is what its mods.toml declares for the 3.1.0 file).
 
 ### Changed
@@ -20,6 +21,77 @@
 ### Verified
 - 1,806 GameTests pass in every run of the 13-run matrix, with eight real addon jars (Ascension, Great Sage, FoxAblaze, Mysticism, Horizons, Kumo Desu ga, Slime Throne Extras and what they need) and with the pack set; a real dedicated server boots with them and with the part off. 28 mutants, all caught.
 - Mysticism charges Soul Energy for every skill learned and vetoes when the player cannot pay: the rite keeps that rule and refuses cleanly (nothing taken).
+
+## Unreleased (plan 18i: Vampirism tweaks)
+
+### Added
+- **Four optional Vampirism tweaks (R213), all off by default**, COMMON keys in `supernaturalbloodlines-supernatural.toml` with Admin rows: `tweak_sunlight_ignites_vampires` (every time Vampirism's own sun damage hurts a player they are also set on fire for 4 s, so its level gate, grace period, Sun Ring, umbrella and creative all still apply), `tweak_cleansing_altar_disabled` (the cleansing altar refuses its click on the server and on every client, and the server refuses the altar's revert packet from any client, with or without this mod; Vampirism's med chair is untouched), `tweak_hostile_mobs_attack_vampires` (zombies, husks, drowned, zombie villagers, skeletons and strays also attack vampire players) and `tweak_skeletons_attack_werewolves` (skeletons and strays also attack werewolf players; needs Werewolves). The mob switches work at once, also on mobs already loaded, in both directions.
+- **Limits:** a client that sends the altar's revert packet with the switch on is refused, but Vampirism's handler still kills a player outside hardcore, so **a cheater dies and stays a vampire**; zombified piglins, wither skeletons, bogged and creepers are unchanged.
+
+### Network
+`LadderNet.PROTOCOL` is now `"12"` (the pack moon gift took 11; a new optional payload carries the altar switch to clients). **Update the server and every client together**: a client on another number does not get the hub's data from the server.
+
+### Rolling back
+Turning a switch off, or rolling back, puts nothing permanent on a player, and the extra goals are not saved. Burning stops with the fire. **Protocol 12 to 11:** a build on 11 and a client on 12 (or the other way round) have no channel to each other, so the hub shows nothing from the server until both are on the same number; roll back the server and every client together. The old build does not know the four `tweak_*` keys in `supernaturalbloodlines-supernatural.toml` and removes them when it rewrites the file, so after rolling forward again they are back at `false`: set them again.
+## Unreleased (plan 18h: staged venom)
+
+### Changed
+- **Werewolf venom goes through stages (R206).** Mild, then sick, then death. For the first `venom_sick_after_ticks` (4000 of the 12000) the venom is only its 1 damage a pulse that cannot kill. After that the vampire is sick: Nausea and Slowness I are kept up at every pulse, the hallucinations start (every 600 ticks, as before) and a line on the action bar says so once. The last tick still kills a non-Original. Originals keep Weakness II only, with no stages; the Venom Fang's 5 s of Slowness is unchanged. Hybrid's Blood and Klaus's Blood cure it at every stage.
+- **Downed and the turning.** Someone who cannot act (down for the turning or a Neck Snap, or in Vampirism's dying state) is spared the sickness, but the last tick is final: it ends the snap or the dying state with their death (no change for the kill itself; now pinned by tests).
+- Config (with an Admin row, section `species`): `venom_sick_after_ticks` (0 sick from the start, 12000 never sick; default 4000).
+
+### Fixed
+- **The Elixir saves from the venom's last tick.** The kill that backs up the venom's blow now runs only while the venom is still on the player, so an Elixir (which clears every effect) is no longer undone by a second kill (vanilla's invulnerability window usually blocked that kill already; a mod that removes the window made it real). Downed and Vampirism's dying state still die.
+- **An infinite venom** (`/effect give ... hybrid_venom infinite`) no longer kills within two seconds: it has no clock, so it pulses as a fresh venom and never reaches the end.
+- **The "you feel sick" line** is shown at the first pulse where the sickness actually runs, also for someone who was down at the threshold or who logged in already past it (it is kept per player, not saved, and forgotten when the venom ends). Venom Slowness no longer has particles.
+
+### Migration
+A venom that is already running continues in the new stages: the clock is the effect's remaining time, so nothing was stored and nothing is converted. A vampire poisoned 9000 ticks ago is sick the moment they load this build. No network payload changed.
+
+### Rolling back
+Rolling back puts the old single stage back: the damage, the hallucinations from the first minute, and death at the end. Nothing is stored, so nothing is left on a player. The old build does not know `venom_sick_after_ticks` in `supernaturalbloodlines-species.toml` and removes the key when it rewrites the file: after rolling forward again it is back at the default (4000), so set your value again.
+## Unreleased (pack moon gift)
+
+### Added
+- **The pack's gift (R96, `hybrid_pack_moon_control`, default on; needs Werewolves).** As in The Originals: while the **current leader** of a pack is a hybrid, an Original hybrid or a tribrid (curse not bound), every **werewolf member** of that pack has moon control, as with a Moon Ring: half forms at will, full forms from Werewolves level 8 (`full_form_level`), and the forced full-moon shift is skipped. It is read from the pack each time, so leaving, a kick, a dissolved pack or the lead passing to someone who is not hybrid-like ends it at once. A hybrid co-Alpha who does not lead gives nothing; Packmates who are no werewolves are not changed. A member who loses it mid-shift keeps the form they are in until the next forced or normal change (as with a Moon Ring taken off).
+- **Hub:** the Pack page shows the perk line "Your Alpha's blood frees you from the moon" while you have it (every theme; the server says so in the snapshot). The task "Control your shift under the full moon" follows it like any other control, as with the Moon Ring.
+- **Messages:** one line when a member gains the gift and one when they lose it.
+- **Admin:** `hybrid_pack_moon_control` has a row under Species.
+
+### Changed (review of the pack gift)
+- **The gift does not earn the rung "Controlled" (L-WOL-3a).** That task and the migration ask for the player's own control (Moon Ring, Free Will, an unbound hybrid, an Alpha, an anchor); the gift can be taken away at once, so it never completes the rung (`MoonControl.earned`).
+- **A leader away for `absent_leader_days` (7) or more gives no gift** from that moment, before the pack passes the lead on (0 = off).
+- **The "lost" line is only sent when the member has no other moon control left.** The "gained" line says what it gives: half forms now, full forms from the configured level (`full_form_level`).
+- **The perk line is hidden while `moon_bound_werewolves` is off** (the server does not send it); its colour is tested at 4.5:1 on every theme.
+- **The pack index hears the hybrid curse being lifted** (`BloodlineAccess` listeners now see a change of `hybridCurseBound`), and sets its hybrid-like flag before it refreshes the strength.
+- **One definition of "hybrid type"** (`Species.hybridType()`), used by the control source, the gift, the ladder predicate and the bloodline rules. The `moon_unbound` predicate used to leave out the tribrid; no ladder read it for a tribrid, so nothing changed in play.
+
+### Network
+- The hub snapshot carries one more flag (the gift), so the protocol is **11** (was 10). Clients and servers must match.
+
+### Migration
+- The pack index remembers who was hybrid-like when last seen (saved with it, nothing else changes). A pack led by an offline hybrid gives the gift once its leader has logged in after the update.
+## Unreleased (skill wheel, phase W1: catalogue and server path)
+
+Nothing is drawn yet: this phase is the server half of the skill wheel (`docs/superpowers/specs/2026-11-22-skill-wheel-design.md`). The wheel screen comes in a later phase.
+
+### Added
+- **A catalogue of every power a player has**, built on the server when the wheel opens and again only when it changes: ours (Bite and our actions), Vampirism's and Werewolves' unlocked actions, Vampirism's Vision, and Tensura's skills, spells, battlewill arts, passive switches and race ability. Each entry has a kind (instant, toggle, aimed, held), its state (on, cooldown, mode) and, when it cannot be used now, a reason.
+- **Four payloads** on the hud channel: `WheelViewPayload` (the wheel opened or closed), `WheelCataloguePayload` (the list, at most 512 entries), `UsePowerPayload` (use a power, or end it) and `SetPowerModePayload` (next or previous mode). The server looks every power up in what the player really has, re-checks it, and gives the same refusal the slot or key would.
+- **A cooldown is sent as an end time and its full length**, not as ticks left, so a running cooldown does not make the server resend the list; the client counts down on its own clock. The list is compared as a whole (not by hash code) before it is sent again.
+- **Using a Tensura skill that is in no slot.** A small scope on the existing next-preset hook lets the server start (and keep running) the one skill the wheel is using; nothing is parked in a hidden slot. Held skills, arts and spells with a cast time run past Tensura's one-second limit for a skill that is not slotted. Toggles are flipped through Tensura's own toggle, so they never need a slot.
+- **Modes from the wheel.** A Tensura skill in a slot changes mode through Tensura's own slot mode (every slot holding it); a skill in no slot keeps its mode in a new saved value (`wheel_modes`).
+- **Covered-key ids for the wheel** (Vampirism's action wheel and vision key, Tensura's race-ability key, Great Sage's menu, assess, scan, magic sense and thought acceleration keys, Infinity's wheel and soul control keys). They are **not covered yet**: nothing is covered until a build has a wheel screen, so no player is left with a hidden key and no way to use it.
+- Config (all with Admin rows): `wheel_enabled`, `wheel_catalogue_interval_ticks`, `wheel_unslotted_tensura`.
+
+### Changed
+- **The hud network version is 2. Update the server and every client together.** The payload registrar checks the version when a player joins, so a client on the old version is disconnected by a server on the new one (and the other way round); there is no half-working state to fall back to. The channel is optional only in the sense that a side that lacks it altogether (the hud part is off, or the mod is not there) still connects, and then nothing is sent to it and none of its keys is covered; a side that has it with another version does not.
+- The "cannot act" rule (a player who is downed, snapped, dying, asleep, dead or a spectator) is one shared function for the slots and the wheel; the slots behave as before.
+
+### Rolling back
+- **Roll the server and every client back together** (the network version goes back to 1; a mixed pair cannot connect). The saved `wheel_modes` value is dropped by an older build, which is harmless: it only held the mode of a Tensura skill that was in no slot. With `wheel_enabled = false` the wheel's server side answers an empty list and refuses every use, and the six slots are untouched.
+
+## Unreleased (art: the plan 18 icons)
 ## Unreleased (plan 18g: the Cursed White Oak Ash Dagger)
 
 ### Changed

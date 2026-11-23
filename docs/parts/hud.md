@@ -197,6 +197,33 @@ What we built: `SprintLeapClient` (`parts/hud/client/werewolves`, client, with V
 
 `HudTargets.resolve(player, entityId)` is the one place that says whether a creature a client names counts (same level, alive, not the player, in `bite_reach`, in sight). `ActionService` hands it to `ExtraActions.Action.trigger(player, target)` (null when there is none); the bite uses it too. No extra action runs for a player an `ExtraActions.addBlocker` predicate names (the species part blocks downed, snapped and Vampirism-dying players).
 
+## Skill wheel, phase W1: catalogue and server path (plan `2026-11-22-skill-wheel`)
+
+Nothing is drawn yet. The server can list every power a player has, run it, and move its mode; the wheel screen (W4) will only ask. Network `HudNet.VERSION` is **2**.
+
+- **Catalogue** (`parts/hud/wheel`, built when a viewer opens the wheel and again only when it changed, never for a closed wheel): `OursProvider` (Bite, and every `ExtraActions` action the player may use; `aimed()` marks Rip Heart and Neck Snap), `FactionProvider` (the unlocked actions of the current faction: Vampirism or Werewolves, lasting actions are TOGGLE, `vampirism:teleport` is AIMED; plus Vampirism's **Vision** entry, run by `VampirePlayer.switchVision()` through a method handle, one warning and no entry if it is gone), `TensuraProvider` (skills, spells, arts, passive switches, the race ability). A provider that throws is logged once and skipped. A player who cannot act sees every usable power locked `CANNOT_ACT`.
+- **Payloads** (`HudNet`, all optional channel): `WheelViewPayload(open)` C2S, `WheelCataloguePayload(revision, entries)` S2C (at most 512 entries, 16 mode names, 256 chars a string), `UsePowerPayload(ref, mode, targetEntityId, release)` C2S, `SetPowerModePayload(ref, delta)` C2S. Presses and mode changes count against `rate_limit_per_second`; a release is free. The server looks the power up in what the player has: the ref text is only a name.
+- **Use** (`WheelService.use`): ours and the factions' go through `ActionService.triggerById` (the slot path's own body: same refusals, same held mark, keyed by id); Tensura through `TensuraUse` (ManasCore's `startHoldSkill`/`handleSkillRelease`, the calls Tensura's packet makes); Infinity and Great Sage are refused (`not_server_power`, they never reach the server). `ActRules.cannotAct` is the one "cannot act" rule, shared with the slots. `WheelService.forget` ends everything on logout, death, dimension change and when a part puts the player out of action.
+- **Mode** (`WheelService.changeMode`): a Tensura skill in a slot goes through Tensura's own `changeMode` for every slot that holds it; a skill in no slot asks `TensuraSkill.nextMode` and keeps the answer in `WheelModes` (attachment `wheel_modes`, kept on death). Only Tensura skills have modes in W1.
+- **Covered keys:** `CoveredKeyIds.WHEEL_IDS` are covered only when `WheelBuild.screenPresent()` (false until W4 T10), so no player is left with a hidden key and no way to use it. `all(sprintLeap)` is unchanged from before.
+- **Settings** (Admin rows): `wheel_enabled`, `wheel_catalogue_interval_ticks`, `wheel_unslotted_tensura`.
+
+### T6 decision (2026-11-22): using a Tensura skill that is in no slot
+
+Hooks verified with javap against Tensura 2.0.1.5 and ManasCore 4.0.0.2 before use. Tensura's `ACTIVATE_SKILL` listener refuses a skill not in the active preset; so `NextPreset.matches` (called by the existing mixin (1), no new mixin) is also true inside `WheelActivation.scope`, only for the one skill the wheel is starting. Tested with the real classes:
+
+- **Instant skills, arts and instant-cast spells: work in no slot** (`unslottedInstantSkillActivates`; the control proves Tensura refuses the same call without the scope).
+- **Held skills, arts and spells with a cast time: work in no slot, with the hold bracket.** `getMaxHeldTime` is 20 ticks for a skill not in the active preset and is asked while the skill ticks, so `WheelActivation` opens a scope around the player's own tick (`PlayerTickEvent.Pre` to `Post`, which contains ManasCore's living tick) for each skill the wheel started, and ends it on release, death, logout and dimension change. `withoutTheBracketAHeldSkillIsCutOff` proves the bracket is what keeps it alive; `unslottedHeldSkillRunsPastTwentyTicks` and `unslottedLongSpellCompletes` pass. The fallback (`TensuraProvider.HELD_NEEDS_SLOT`) is therefore **off**; it stays in the code as the switch to lock such powers "put it in a slot first".
+- **Toggles are not started by the key.** A skill that does not override `onPressed` is not flipped by `startHoldSkill` (read for all 117 toggle-capable skills by `TensuraKindProbe.writeTheToggleTable`): Tensura flips it with `RequestAbilityModeChangePacket.toggleAbility`, which is what its skill screen sends. The wheel does the same for every TOGGLE entry, so a toggle never needs a slot. This also covers the 56 skills Tensura does not let you slot but lets you switch (regeneration tiers, danger sense, strengthen body... listed as "passive switches"); resistances and nullifications are always on and are not listed.
+- **Race ability:** `RaceAPI.getRaceFrom(p).startHeldAbility()` / `releaseHeldAbility()`, no slot and no preset. 20 races have one.
+- **Kind table** (`tensura_kinds.json` plus the rule in `TensuraProvider.kindOf`): read from the registry by `TensuraKindProbe` (`WHEEL_PROBE=1`, run by hand): 119 spells (all with a cast time, none instant-cast by default; `chant_annulment` plus mastery makes them instant), 23 arts (8 instant, 15 held), 61 held, 56 instant and 38 toggle slottable skills. `WheelTensuraGameTests.theKindTableIdsStillExist` fails a Tensura update that renames a pinned id.
+
+### Hooks not verified in W1
+
+- Great Sage's functions and Infinity's classes (W4, W5).
+- `isInstantCast` with chant annulment is checked on one spell only (`magic_wall`).
+- Whether Tensura's own `ACTIVATE_ABILITY` listeners refuse a race ability for some race is not checked (the 20 races with an ability start in the test for a harpy).
+- No game was started: nothing is drawn in W1.
 ## Plan 18e: the Hybrid Leap and the sprint-leap
 
 - `HybridLeapGuard` (client) is armed when a trigger for `hybrid_leap` is sent; `SprintLeapClient` passes `HybridLeapGuard.inFlight` to `SprintLeap.shouldLeap` as its last parameter, so the two leaps share one guard. `LeapAim` casts the look ray as far as the leap reaches (the game's own pick stops at 3 blocks); the server still decides.

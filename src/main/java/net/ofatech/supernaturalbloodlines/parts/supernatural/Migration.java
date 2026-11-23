@@ -5,7 +5,6 @@ import de.teamlapen.vampirism.api.entity.factions.IPlayableFaction;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.ReentrancyGuard;
@@ -17,7 +16,6 @@ import net.ofatech.supernaturalbloodlines.parts.supernatural.task.TaskTracker;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.ApexRaceQuery;
 import net.ofatech.supernaturalbloodlines.shared.supernatural.SireCount;
 import net.ofatech.supernaturalbloodlines.shared.werewolves.EmissaryLines;
-import net.ofatech.supernaturalbloodlines.shared.werewolves.MoonControl;
 
 /**
  * Runs once per player, on login, when the schema is 0: gives a player who had a race before the ladders what that race proves (see
@@ -41,7 +39,7 @@ public final class Migration {
     private static void migrate(ServerPlayer p) {
         List<SupernaturalRace> races = TaskTracker.races(p);
         IPlayableFaction<?> faction = VampirismAPI.factionPlayerHandler(p).getCurrentFaction();
-        boolean moon = ModList.get().isLoaded("werewolves") && MoonControl.of(p) != MoonControl.Control.NONE;
+        boolean moon = TaskTracker.earnedMoonControl(p);
         MigrationRules.Facts facts = new MigrationRules.Facts(races.get(0), races.size() > 1 ? Optional.of(races.get(1)) : Optional.empty(),
                 BloodlineAccess.get(p), p.level().getGameTime(), faction == null ? null : faction.getID().toString(),
                 VampirismAPI.factionPlayerHandler(p).getCurrentLevel(), EmissaryLines.isEmissary(p), moon, SireCount.of(p),

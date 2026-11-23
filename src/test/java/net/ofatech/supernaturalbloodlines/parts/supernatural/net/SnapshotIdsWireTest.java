@@ -53,8 +53,8 @@ class SnapshotIdsWireTest {
      * misread each other's bytes). This pins the bytes of an empty snapshot with both flags set, and the protocol they belong to. If you change
      * the snapshot, this fails: raise {@code LadderNet.PROTOCOL} and update both constants here, in the same commit.
      */
-    private static final String GOLDEN_PROTOCOL = "10";
-    private static final String GOLDEN_HEX = "00000000000b4e4f545f56414d504952450000044e4f4e450000000000010100000000";
+    private static final String GOLDEN_PROTOCOL = "13";
+    private static final String GOLDEN_HEX = "00000000000b4e4f545f56414d504952450000044e4f4e45000000000001010000000000";
 
     @Test
     void theSnapshotWireFormatAndTheProtocolNumberChangeTogether() {
@@ -70,6 +70,18 @@ class SnapshotIdsWireTest {
         }
         assertEquals(GOLDEN_HEX, hex.toString(), "the snapshot's bytes changed: raise LadderNet.PROTOCOL and update GOLDEN_HEX and GOLDEN_PROTOCOL");
         assertEquals(GOLDEN_PROTOCOL, LadderNet.PROTOCOL, "the protocol number does not go with the snapshot's wire format");
+    }
+
+    @Test
+    void theMoonGiftSurvivesTheWire() {
+        for (boolean gift : new boolean[] {false, true}) {
+            HubSnapshotPayload s = new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>(), List.of(),
+                    net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags.NONE, List.of(), gift);
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            HubSnapshotPayload.STREAM_CODEC.encode(buf, s);
+            assertEquals(gift, HubSnapshotPayload.STREAM_CODEC.decode(buf).moonGift());
+        }
+        assertEquals(false, new HubSnapshotPayload(HubSnapshotPayload.Family.NONE, List.of(), 0, new LinkedHashMap<>()).moonGift(), "a snapshot built without it says no");
     }
 
     @Test

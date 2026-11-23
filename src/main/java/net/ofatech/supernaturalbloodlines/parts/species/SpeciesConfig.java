@@ -97,6 +97,8 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.IntValue WEAK_SPARK_MAX_HELD;
     private static final ModConfigSpec.IntValue WEAK_SPARK_COOLDOWN_DAYS;
     private static final ModConfigSpec.BooleanValue MOONBLOOD_SURGE_ENABLED;
+    private static final ModConfigSpec.BooleanValue HYBRID_PACK_MOON_CONTROL;
+    private static volatile Boolean hybridPackMoonOverride;
     private static final ModConfigSpec.BooleanValue WOLF_SPIRITS_ENABLED;
     private static final ModConfigSpec.BooleanValue NPC_RECRUIT_ENABLED;
     private static final ModConfigSpec.IntValue MAX_NPC_MEMBERS_PER_PLAYER;
@@ -226,6 +228,27 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.IntValue NECK_SNAP_AUGUSTINE_SECONDS;
     private static final ModConfigSpec.IntValue NECK_SNAP_HYBRID_SECONDS;
     private static final ModConfigSpec.IntValue NECK_SNAP_ORIGINAL_SECONDS;
+    public static final int DEFAULT_VENOM_SICK_AFTER_TICKS = 4000;
+    private static final ModConfigSpec.IntValue VENOM_SICK_AFTER_TICKS;
+    private static volatile Integer venomSickAfterOverride;
+
+    /** For tests: pins {@link #venomSickAfterTicks()}; null clears it. */
+    public static void overrideVenomSickAfterTicks(Integer value) {
+        venomSickAfterOverride = value;
+    }
+
+    /** {@code venom_sick_after_ticks}. */
+    public static int venomSickAfterTicks() {
+        Integer pinned = venomSickAfterOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return VENOM_SICK_AFTER_TICKS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_VENOM_SICK_AFTER_TICKS;
+        }
+    }
 
     /** The numbers of the pack's NPC members (plan 15d, R148). */
     public record MemberTuning(boolean recruit, int perPlayer, int perPack, boolean huntTrips, int huntPeriodMinutes, boolean chestSort, double weightBrother,
@@ -266,6 +289,25 @@ public final class SpeciesConfig {
     @VisibleForTesting
     public static void overrideTrial(TrialTuning value) {
         trialOverride = value;
+    }
+
+    /** R96: whether the werewolf members of a pack led by a hybrid-like leader have moon control ({@code hybrid_pack_moon_control}). */
+    public static boolean hybridPackMoonControl() {
+        Boolean pinned = hybridPackMoonOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return HYBRID_PACK_MOON_CONTROL.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
+    /** For tests: pins {@link #hybridPackMoonControl()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideHybridPackMoon(Boolean value) {
+        hybridPackMoonOverride = value;
     }
 
     public static TrialTuning trial() {
@@ -373,6 +415,8 @@ public final class SpeciesConfig {
                 .define("moonblood_surge_enabled", true);
         WOLF_SPIRITS_ENABLED = b.comment("R146: Wolf Spirits, an Alpha calls three spirit wolves that fight for the pack for three minutes (/pack spirits).")
                 .define("wolf_spirits_enabled", true);
+        HYBRID_PACK_MOON_CONTROL = b.comment("R96: while the pack's current leader is a hybrid, an Original hybrid or a tribrid, every werewolf member of the pack has moon control (as with a Moon Ring). Lost on leaving the pack or when the lead passes to someone else. Off: no pack gift.")
+                .define("hybrid_pack_moon_control", true);
         ALPHA_TRIAL_ENABLED = b.comment("R147: the Alpha Trial rite (a full-moon night, a transformed Beta or Omega) calls a boss; winning gives a new Alpha spark. Off: the rite refuses.")
                 .define("alpha_trial_enabled", true);
         ALPHA_TRIAL_MIN_LEVEL = b.comment("Lowest werewolf level that may try the Alpha Trial.")
@@ -447,6 +491,8 @@ public final class SpeciesConfig {
                 .defineInRange("neck_snap_hybrid_seconds", DEFAULT_NECK_SNAP_HYBRID_SECONDS, MIN_SNAP_SECONDS, MAX_SNAP_SECONDS);
         NECK_SNAP_ORIGINAL_SECONDS = b.comment("R214: how long a snapped Original or Original hybrid lies down. Keep it equal to the others, or an observer can tell an Original by the time.")
                 .defineInRange("neck_snap_original_seconds", DEFAULT_NECK_SNAP_ORIGINAL_SECONDS, MIN_SNAP_SECONDS, MAX_SNAP_SECONDS);
+        VENOM_SICK_AFTER_TICKS = b.comment("R206: how long into the 12000-tick werewolf venom the vampire starts to be sick (Nausea, Slowness I, hallucinations), in ticks. Before that only the 1 damage a pulse. 0 is sick from the start, 12000 never sick. Originals have no stages.")
+                .defineInRange("venom_sick_after_ticks", DEFAULT_VENOM_SICK_AFTER_TICKS, 0, 12000);
         b.pop();
         SPEC = b.build();
     }

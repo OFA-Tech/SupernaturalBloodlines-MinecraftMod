@@ -158,6 +158,11 @@ public final class NeckSnapAction implements ExtraActions.Action {
     }
 
     @Override
+    public boolean aimed() {
+        return true;
+    }
+
+    @Override
     public int cooldownTicks(ServerPlayer p) {
         return effectiveCooldownSeconds() * 20;
     }

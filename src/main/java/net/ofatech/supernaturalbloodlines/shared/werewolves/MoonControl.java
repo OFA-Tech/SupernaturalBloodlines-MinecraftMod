@@ -28,6 +28,7 @@ public final class MoonControl {
     private static final ResourceLocation WEREWOLF_ID = ResourceLocation.parse("werewolves:werewolf");
     private static final List<Function<ServerPlayer, Control>> SOURCES = new CopyOnWriteArrayList<>();
     private static final List<Predicate<ServerPlayer>> HALVERS = new CopyOnWriteArrayList<>();
+    private static final List<Predicate<ServerPlayer>> GIFTS = new CopyOnWriteArrayList<>();
     private static volatile Boolean moonBoundOverride;
 
     private MoonControl() {
@@ -55,13 +56,34 @@ public final class MoonControl {
         return HALVERS.stream().anyMatch(h -> h.test(p));
     }
 
+    /**
+     * A source that is given, not earned: it counts for {@link #of} (the shift gate and the forced shift) but not for {@link #earned}, which
+     * the rung "Controlled" asks. The pack's gift (R96) is one: it can be taken away at once.
+     */
+    public static void addGift(Predicate<ServerPlayer> gift) {
+        GIFTS.add(gift);
+    }
+
+    /** The control {@code p} has, gifts included: what the shift gate uses. */
     public static Control of(ServerPlayer p) {
+        return control(p, true);
+    }
+
+    /** The control {@code p} has of their own (no gift): a Moon Ring, Free Will, a hybrid, an Alpha, an anchor. What the ladder tasks ask. */
+    public static Control earned(ServerPlayer p) {
+        return control(p, false);
+    }
+
+    private static Control control(ServerPlayer p, boolean withGifts) {
         Control best = Control.NONE;
         for (Function<ServerPlayer, Control> s : SOURCES) {
             Control c = s.apply(p);
             if (c.ordinal() > best.ordinal()) {
                 best = c;
             }
+        }
+        if (withGifts && best != Control.FULL && GIFTS.stream().anyMatch(g -> g.test(p))) {
+            best = Control.FULL;
         }
         if (best == Control.NONE) {
             return Control.NONE;
