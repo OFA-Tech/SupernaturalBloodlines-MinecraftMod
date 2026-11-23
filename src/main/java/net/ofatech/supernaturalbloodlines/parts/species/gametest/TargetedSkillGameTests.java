@@ -818,20 +818,54 @@ public final class TargetedSkillGameTests {
             helper.runAfterDelay(2, () -> {
                 try {
                     helper.assertTrue(!vamp.isAlive(), "the vampire was put in the dying state and not finished");
+                    helper.assertTrue(!VampirismAPI.vampirePlayer(vamp).isDBNO(), "the vampire died with Vampirism's dying state still set");
                 } finally {
                     NeoForge.EVENT_BUS.unregister(watch);
-                    OriginalRulesProbe.endDying(vamp);
                     clean(user, vamp);
                 }
                 helper.succeed();
             });
         } catch (RuntimeException ex) {
             NeoForge.EVENT_BUS.unregister(watch);
-            OriginalRulesProbe.endDying(vamp);
             clean(user, vamp);
             throw ex;
         }
     }
+    /** A heart-rip is final: a save at NORMAL (another mod's revive) is taken back before the LOW listeners (marks, sparks, genes), not after them. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void ripHeartDeathReachesTheLowListenersWhateverSavedItAtNormal(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-8");
+        ServerPlayer vamp = target(helper, Species.NONE, true);
+        boolean[] seenAtLow = new boolean[1];
+        java.util.function.Consumer<net.neoforged.neoforge.event.entity.living.LivingDeathEvent> saver = e -> {
+            if (e.getEntity() == vamp) {
+                e.setCanceled(true);
+                vamp.setHealth(vamp.getMaxHealth());
+            }
+        };
+        java.util.function.Consumer<net.neoforged.neoforge.event.entity.living.LivingDeathEvent> low = e -> {
+            if (e.getEntity() == vamp) {
+                seenAtLow[0] = true;
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.NORMAL, false, net.neoforged.neoforge.event.entity.living.LivingDeathEvent.class, saver);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOW, false, net.neoforged.neoforge.event.entity.living.LivingDeathEvent.class, low);
+        try {
+            vamp.setHealth(5.0f);
+            helper.assertTrue(RipHeartAction.INSTANCE.trigger(user, vamp) == null, "refused");
+            helper.assertTrue(!vamp.isAlive(), "the save at NORMAL kept the vampire alive");
+            helper.assertTrue(seenAtLow[0], "a LOW listener never saw the death: the save was taken back only after them");
+        } finally {
+            NeoForge.EVENT_BUS.unregister(saver);
+            NeoForge.EVENT_BUS.unregister(low);
+            clean(user, vamp);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", templateNamespace = NS)
     public static void neckSnapOnAPlayerInVampirismsDyingStateIsRefused(GameTestHelper helper) {
         if (skipped(helper)) {
@@ -1083,6 +1117,12 @@ public final class TargetedSkillGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void everyBossEntityIsInTheSnapImmuneTagAndEveryTagEntryExists(GameTestHelper helper) {
+        // the entries of other mods' bosses: the vanilla ones by id, Tensura's Ifrit only through `#c:bosses` (it proves that the tag reference resolves)
+        var snapImmune = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(NS, "snap_immune"));
+        helper.assertTrue(net.minecraft.world.entity.EntityType.WITHER.is(snapImmune), "the wither is not snap immune");
+        helper.assertTrue(net.minecraft.world.entity.EntityType.ENDER_DRAGON.is(snapImmune), "the ender dragon is not snap immune");
+        BuiltInRegistries.ENTITY_TYPE.getOptional(ResourceLocation.parse("tensura:ifrit")).ifPresent(ifrit ->
+                helper.assertTrue(ifrit.is(snapImmune), "Ifrit (in #c:bosses) is not snap immune: the tag reference does not resolve"));
         if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("bosses")) {
             helper.succeed();
             return;

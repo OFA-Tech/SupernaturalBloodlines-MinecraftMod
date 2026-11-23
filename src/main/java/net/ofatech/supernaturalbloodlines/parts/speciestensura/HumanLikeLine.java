@@ -1,7 +1,10 @@
 package net.ofatech.supernaturalbloodlines.parts.speciestensura;
 
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import net.ofatech.supernaturalbloodlines.parts.speciestensura.apex.ApexSpec;
+import net.ofatech.supernaturalbloodlines.shared.tensura.ApexLines;
 
 /**
  * Tensura's {@code human_like} race tag holds only the five base races (human, dwarf, elf, merfolk, beastfolk), so a
@@ -18,11 +21,7 @@ public final class HumanLikeLine {
             "tensurahorizons:ascendant_elf", "tensurahorizons:runeforged_dwarf", "tensurahorizons:tide_sovereign");
 
     /** Tier 3 and 4 of a line: the "saint or higher" races that may be offered an apex race. */
-    public static final Set<String> SAINT_OR_HIGHER = Set.of(
-            "tensura:human_saint", "tensura:divine_human", "tensura:dwarf_saint", "tensura:divine_dwarf",
-            "tensura:elf_saint", "tensura:divine_elf", "tensura:merfolk_saint", "tensura:divine_fish",
-            "tensura:spirit_beast", "tensura:divine_beast",
-            "tensurahorizons:ascendant_elf", "tensurahorizons:runeforged_dwarf", "tensurahorizons:tide_sovereign");
+    public static final Set<String> SAINT_OR_HIGHER = Stream.concat(ApexLines.HUMAN_LIKE.stream(), ApexLines.BEASTFOLK.stream()).collect(Collectors.toUnmodifiableSet());
 
     private HumanLikeLine() {}
 

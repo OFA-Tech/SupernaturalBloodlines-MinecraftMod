@@ -6,7 +6,7 @@ import net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalRace;
 
 /**
  * The Tensura lines an apex race is offered from (D2), pure. The Saint-equivalent tier of each line: the saint and divine races of the
- * four human-like lines, {@code vampire_lord} and {@code divine_vampire} on the vampire line (Tensura's chain is vampire, overcomer,
+ * four human-like lines (and Tensura Horizons' rung between them for the elf, dwarf and merfolk lines), {@code vampire_lord} and {@code divine_vampire} on the vampire line (Tensura's chain is vampire, overcomer,
  * lord, divine: the lord is the third tier, like a saint), and {@code spirit_beast} and {@code divine_beast} on Beastfolk. Which supernatural
  * races may be offered from which line is the table below. Shared by species_tensura (the offer) and supernatural_tensura (the ladders'
  * {@code tensura_tier}); no game classes. See docs/parts/species_tensura.md.

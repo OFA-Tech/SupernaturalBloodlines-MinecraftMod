@@ -38,6 +38,10 @@ public final class FinalDeath {
      * all listeners, a chosen death that one of them cancelled is taken back and the health put back to zero, so the saver may have healed.
      */
     public static void register() {
+        // LOW first, and before the parts' own LOW listeners (this runs in the mod constructor, the parts after it): the listeners between NORMAL and LOWEST
+        // (marks, sparks, genes, the transition) must see the death as the final one. LOWEST stays for a saver that cancels after that.
+        // shortcut: an overridden addon save keeps its own side effects (a charge paid, a teleport, a cooldown); only the cancel is undone, upgrade if one matters
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, true, LivingDeathEvent.class, FinalDeath::takeBackSave);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, LivingDeathEvent.class, FinalDeath::takeBackSave);
     }
 
