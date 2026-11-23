@@ -290,6 +290,9 @@ final class RitesBook {
         // Three kinds alone fit ("witch, siphoner or tribrid"), so they are named.
         if (kinds.size() > 2 && !gate.lore().isEmpty()) {
             kinds = List.of();
+        } else if (kinds.size() > 3) {
+            // four kinds (Deus Sanguis: a vampire, or the three witch types) are longer than the line: the page names them
+            kinds = List.of(lang.get(KIND_SHORT + "several").getAsString());
         }
         parts.addAll(kinds);
         gate.lore().stream().sorted().forEach(l -> parts.add(lang.get(LORE_SHORT + l).getAsString()));
