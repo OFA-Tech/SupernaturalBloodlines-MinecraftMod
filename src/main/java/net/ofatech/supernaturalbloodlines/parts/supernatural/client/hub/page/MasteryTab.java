@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.network.chat.Component;
+import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubClient;
 import net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.HubScreen;
 import net.ofatech.supernaturalbloodlines.shared.hub.MasteryAccess;
 import net.ofatech.supernaturalbloodlines.shared.hub.Rect;
@@ -60,14 +61,14 @@ public final class MasteryTab {
         }
         y += 4;
         y = button(f, r, y, "choose", selected != null, () -> {
-            BloodlinePage.command("bloodline mastery choose " + selected);
+            HubClient.runCommand("B12", List.of(selected));
             chosenThisSession = selected;
         });
         y = button(f, r, y, "clear", true, () -> {
-            BloodlinePage.command("bloodline mastery clear");
+            HubClient.runCommand("B13", List.of());
             chosenThisSession = null;
         });
-        y = button(f, r, y, "show", true, () -> BloodlinePage.command("bloodline mastery"));
+        y = button(f, r, y, "show", true, () -> HubClient.runCommand("B11", List.of()));
         f.end(y);
     }
 

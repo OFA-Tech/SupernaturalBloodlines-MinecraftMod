@@ -115,7 +115,7 @@ public final class AdminCommands {
             row("B8", "bloodline rites list <player>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("B9", "bloodline rites learn <player> <rite>", 2, Ui.ADMIN_ACTION, "ADMIN"),
             row("B10", "bloodline rites forget <player> <rite>", 2, Ui.ADMIN_ACTION, "ADMIN"),
-            row("B11", "bloodline mastery", 0, Ui.PAGE, "SKILLS"),
+            row("B11", "bloodline mastery", 0, Ui.HUB_BUTTON, "SKILLS"),
             row("B12", "bloodline mastery choose <skill>", 0, Ui.HUB_BUTTON, "SKILLS"),
             row("B13", "bloodline mastery clear", 0, Ui.HUB_BUTTON, "SKILLS"),
             row("P1", "pack invite <player>", 0, Ui.HUB_BUTTON, "PACK"),
