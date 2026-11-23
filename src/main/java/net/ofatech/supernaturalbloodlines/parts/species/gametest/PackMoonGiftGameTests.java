@@ -29,6 +29,7 @@ import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Lineage;
 import net.ofatech.supernaturalbloodlines.core.bloodline.WolfState.Rank;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAbsence;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackAccess;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackCommand;
 import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
@@ -357,9 +358,10 @@ public final class PackMoonGiftGameTests {
         helper.succeed();
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static void giveFreeWill(ServerPlayer p) {
-        var skill = de.teamlapen.vampirism.api.VampirismRegistries.SKILL.get().get(net.minecraft.resources.ResourceLocation.parse("werewolves:free_will"));
-        VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow().getSkillHandler().enableSkill(skill, true);
+        de.teamlapen.vampirism.api.entity.player.skills.ISkill skill = de.teamlapen.vampirism.api.VampirismRegistries.SKILL.get().get(net.minecraft.resources.ResourceLocation.parse("werewolves:free_will"));
+        ((de.teamlapen.vampirism.api.entity.player.skills.ISkillHandler) VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow().getSkillHandler()).enableSkill(skill, true);
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
