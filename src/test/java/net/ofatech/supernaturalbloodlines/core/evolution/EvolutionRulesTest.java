@@ -102,7 +102,7 @@ class EvolutionRulesTest {
                 with(good(), b -> { b.enoughEp = false; return b; }));
         for (Facts f : broken) {
             Reason r = EvolutionRules.check(recipe(Tier.UNIQUE), f).orElseThrow();
-            assertEquals(Reason.NOT_READY, r);
+            assertEquals("NOT_READY", r.name());
             assertEquals("supernaturalbloodlines.refusal.evolution.not_ready", EvolutionRules.keyOf(r, Tier.UNIQUE));
         }
     }
