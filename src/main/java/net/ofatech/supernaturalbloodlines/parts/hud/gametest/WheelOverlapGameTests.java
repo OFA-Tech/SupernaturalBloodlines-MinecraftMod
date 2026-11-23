@@ -149,10 +149,34 @@ public final class WheelOverlapGameTests {
         WheelGate.setTableForTest(table(x.toString(), CHANT));
         WheelGate.resetForTest(p);
         WheelTestKit.learn(p, id("tensura:chant_annulment"));
-        // the main side is on (from its own key): the Tensura side is refused from the wheel and from Tensura's own toggle
+        // the Tensura side is on: Vampirism's own key is cancelled by its event (before the action was ever used, so no cooldown of its own is in the way)
+        if (WheelService.use(p, ref(CHANT), 0, -1, false) != null || !chantOn(p)) {
+            failWith(helper, p, "setup: the Tensura side did not start with nothing else on");
+            return;
+        }
+        WheelGate.settle(p);
+        theirKey(p, x);
+        if (ActionGameTests.active(p, x)) {
+            failWith(helper, p, "Vampirism's own key started the main side while the Tensura side is on (its event was not cancelled)");
+            return;
+        }
+        // from the wheel too
+        String viaWheel = WheelService.use(p, new PowerRef(PowerSource.VAMPIRISM, x), 0, -1, false);
+        if (viaWheel == null || !viaWheel.endsWith("group_active") || ActionGameTests.active(p, x)) {
+            failWith(helper, p, "the wheel started the main side while the Tensura side is on: " + viaWheel);
+            return;
+        }
+        // Tensura side off, main side on: the other way round, from the wheel and from Tensura's own toggle
+        RequestAbilityModeChangePacket.toggleAbilityPacket(id("tensura:chant_annulment")).toggleAbility(p);
+        WheelGate.settle(p);
+        if (chantOn(p)) {
+            failWith(helper, p, "setup: the Tensura side did not turn off");
+            return;
+        }
+        WheelGate.resetForTest(p);
         theirKey(p, x);
         if (!ActionGameTests.active(p, x)) {
-            failWith(helper, p, "setup: the main side did not start");
+            failWith(helper, p, "setup: the main side did not start with nothing else on");
             return;
         }
         String wheel = WheelService.use(p, ref(CHANT), 0, -1, false);
@@ -165,27 +189,8 @@ public final class WheelOverlapGameTests {
             failWith(helper, p, "Tensura's own toggle started the second side while the first is on");
             return;
         }
-        // and the other way round: Tensura's side is on, Vampirism's own key is cancelled by its event
-        theirKey(p, x);
-        WheelGate.settle(p);
-        if (ActionGameTests.active(p, x)) {
-            failWith(helper, p, "setup: the main side did not turn off");
-            return;
-        }
-        WheelGate.resetForTest(p);
-        if (WheelService.use(p, ref(CHANT), 0, -1, false) != null || !chantOn(p)) {
-            failWith(helper, p, "setup: the Tensura side did not start with nothing else on");
-            return;
-        }
-        WheelGate.settle(p);
-        theirKey(p, x);
-        if (ActionGameTests.active(p, x)) {
-            failWith(helper, p, "Vampirism's own key started the main side while the Tensura side is on (its event was not cancelled)");
-            return;
-        }
         done(helper, p);
     }
-
     @GameTest(template = "empty", templateNamespace = NS)
     public static void firstSideOffStartsTheGroupCooldownOnTheSecond(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
@@ -412,9 +417,18 @@ public final class WheelOverlapGameTests {
             failWith(helper, p, "a press Tensura refused left the clock at " + WheelGate.clock(p) + " (started " + started + ")");
             return;
         }
+        // in its slot but on its own cooldown: ManasCore refuses after the event, so only a check of ours keeps the clock clean
+        TensuraStorages.getAbilityFrom(p).setActivePreset(0);
+        TensuraStorages.getAbilityFrom(p).setAbilitySlot(0, 0, coercion.getSkill(), 0);
+        coercion.setCoolDown(10, 0);
+        started = SkillAPI.getSkillsFrom(p).startHoldSkill(coercion, 0, 0);
+        WheelGate.settle(p);
+        if (started || !WheelGate.clock(p).isIdle()) {
+            failWith(helper, p, "a press refused for its own cooldown left the clock at " + WheelGate.clock(p) + " (started " + started + ")");
+            return;
+        }
         done(helper, p);
     }
-
     @GameTest(template = "empty", templateNamespace = NS)
     public static void playerDiesWhileLastingStartsOneCooldown(GameTestHelper helper) {
         ServerPlayer p = ActionGameTests.vampire(helper);
