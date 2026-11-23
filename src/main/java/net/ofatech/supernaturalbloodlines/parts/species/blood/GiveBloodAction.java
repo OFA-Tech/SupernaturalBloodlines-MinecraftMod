@@ -116,6 +116,9 @@ public final class GiveBloodAction implements ExtraActions.Action {
         var refusal = ForceFeedRules.check(receiver != null, false, receiver != null && BiteProtection.victimProtected(receiver), willing,
                 p.server.isPvpAllowed(), target.getHealth() / target.getMaxHealth(), downed, (float) SpeciesConfig.forceFeedHealthLimit());
         if (refusal.isPresent()) {
+            if (refusal.get() == ForceFeedRules.Refusal.NOT_A_PLAYER) {
+                return Component.translatable(NOT_A_PLAYER); // a misclick on a creature: nothing to hide, nothing to charge
+            }
             return refuse(p, switch (refusal.get()) {
                 case NOT_A_PLAYER -> NOT_A_PLAYER;
                 case SELF -> SELF;
@@ -127,8 +130,8 @@ public final class GiveBloodAction implements ExtraActions.Action {
             return refuse(p, REFUSED);
         }
         BloodSource source = new BloodSource(p.getUUID(), p.getGameProfile().getName(), false, BloodKind.of(BloodlineAccess.get(p).species()));
-        // an Original's name is a secret of the line it would name: the same rule as the drink's own message
-        Component who = source.kind().namesSire() ? Lines.shownName(p.server, receiver, p.getUUID()) : p.getDisplayName();
+        // only an accepted drink of an Original's blood names a sire, so only then is the name the line's secret (the drink's own message); a forced one is a plain vampire's
+        Component who = willing && source.kind().namesSire() ? Lines.shownName(p.server, receiver, p.getUUID()) : p.getDisplayName();
         receiver.sendSystemMessage(Component.translatable(willing ? RECEIVED_WILLING : RECEIVED, who));
         Effect effect = willing ? BloodBottles.apply(receiver, source) : BloodBottles.applyWithoutConsent(receiver, source);
         if (effect == Effect.REFUSED) {
@@ -150,6 +153,7 @@ public final class GiveBloodAction implements ExtraActions.Action {
      * team and a pack do not count, but a claim or a duel still can: only the attack event and the damage probe are asked. A downed one is not probed: our own
      * dying rules cancel every blow, so the probe would only ever say no.
      */
+    // shortcut: onPlayerAttackTarget also calls the held item's onLeftClickEntity (as BiteService does), so a held item that reacts to a left click acts on a feed; fine while nothing of ours does, revisit if one starts to
     private static boolean allowedHere(ServerPlayer giver, ServerPlayer receiver, boolean willing, boolean downed) {
         boolean claims = willing ? CommonHooks.onPlayerAttackTarget(giver, receiver) : TargetChecks.mayAttack(giver, receiver);
         return claims && (downed || TargetChecks.damageWouldLand(receiver, giver.damageSources().playerAttack(giver), TargetChecks.PROBE));

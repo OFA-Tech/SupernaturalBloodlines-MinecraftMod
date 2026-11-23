@@ -324,8 +324,7 @@ public final class GiveBloodGameTests {
             pvp(helper, true);
             helper.assertTrue(GiveBloodAction.SELF.equals(key(ACTION.trigger(giver, giver))) && cooldown(giver) == 0, "self was not refused, or cost the cooldown");
             helper.assertTrue(GiveBloodAction.NO_TARGET.equals(key(ACTION.trigger(giver, null))) && cooldown(giver) == 0, "no target was not said, or cost the cooldown");
-            helper.assertTrue(GiveBloodAction.NOT_A_PLAYER.equals(key(ACTION.trigger(giver, z))) && cooldown(giver) > 0, "a mob was not refused");
-            noCooldown(giver);
+            helper.assertTrue(GiveBloodAction.NOT_A_PLAYER.equals(key(ACTION.trigger(giver, z))) && cooldown(giver) == 0, "a mob was not refused, or a misclick cost the cooldown");
             creative.setShiftKeyDown(true);
             creative.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
             helper.assertTrue(GiveBloodAction.REFUSED.equals(key(ACTION.trigger(giver, creative))) && !marked(creative), "a creative player was fed");
@@ -491,6 +490,25 @@ public final class GiveBloodGameTests {
         } finally {
             pvp(helper, false);
             clean(original, common, a, b);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aForcedFeedFromAnOriginalDoesNotUseTheLineWording(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist original = vampire(helper, Species.ORIGINAL);
+        TestPlayers.TalkingDuelist target = human(helper);
+        try {
+            pvp(helper, true);
+            target.setHealth(1f);
+            helper.assertTrue(ACTION.trigger(original, target) == null, "the feed was refused");
+            Component said = target.message(GiveBloodAction.RECEIVED);
+            helper.assertTrue(said != null && said.getContents() instanceof TranslatableContents t && t.getArgs()[0] instanceof Component n
+                    && n.getString().equals(original.getDisplayName().getString()) && !(n.getContents() instanceof TranslatableContents nt && nt.getKey().contains("line")),
+                    "a forced feed used the line wording: " + said);
+        } finally {
+            pvp(helper, false);
+            clean(original, target);
         }
         helper.succeed();
     }
