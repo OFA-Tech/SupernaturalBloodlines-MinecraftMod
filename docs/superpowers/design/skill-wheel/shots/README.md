@@ -1,0 +1,3 @@
+# Skill wheel, W4: screenshots of the screen
+
+Hidden-window shots (`runSafeShots`, `-Dsupernaturalbloodlines.devshots=wheel:<look>:<state>`, demo powers from `DevWheel`) at GUI scale 4 (a 480 x 270 GUI in a 1920 x 1080 picture, the size of the W3 mockups), plus `*-open-s2-compact.png` at scale 2. States: open, alt (Alt held, mode lists), page (Tensura > Magic, page 2 of 3), picker (right click on Black Lightning), aim (the wheel closed, the aim hint). Compared by eye with the Figma frames of page 115:2 (file USFBf74c4I2BWDyfmRxFZO): same rings, cells, chips, panel and states. The real game's HUD shows behind the wheel here (the mockups had a clean sky), and the panel has no description line (the catalogue carries none).
