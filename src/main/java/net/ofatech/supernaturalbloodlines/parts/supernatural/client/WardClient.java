@@ -29,6 +29,10 @@ public final class WardClient {
         view = made;
     }
 
+    public static boolean demo() {
+        return demo;
+    }
+
     public static void clear() {
         demo = false;
         view = WardHub.View.EMPTY;

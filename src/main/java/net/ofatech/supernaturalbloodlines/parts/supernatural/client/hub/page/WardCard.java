@@ -105,6 +105,9 @@ public final class WardCard {
 
     /** The players online who are not on the list yet, by name. */
     private static List<WardHub.Member> candidates(WardHub.Own ward) {
+        if (WardClient.demo()) { // the dev screenshots: made-up people online
+            return List.of(new WardHub.Member(new UUID(31, 1), "Caroline"), new WardHub.Member(new UUID(31, 2), "Damon"), new WardHub.Member(new UUID(31, 3), "Stefan"));
+        }
         var connection = Minecraft.getInstance().getConnection();
         if (connection == null || Minecraft.getInstance().player == null) {
             return List.of();
@@ -125,9 +128,12 @@ public final class WardCard {
     /** The same facts as the card for a theme whose Path page has a side panel: a field per ward and the withdraw and invite buttons. */
     public static void detail(Detail.Builder d) {
         WardHub.View v = WardClient.view();
+        boolean listed = false;
         for (WardHub.Own ward : v.own()) {
             d.field(Component.translatable(KEY + "title"), summary(ward));
-            if (!ward.fallen()) {
+            // an invitation goes into every ward of the owner, so the invite and withdraw buttons are shown once
+            if (!ward.fallen() && !listed) {
+                listed = true;
                 ward.invited().stream().limit(PEOPLE).forEach(m -> d.action("ward:withdraw:" + ward.id() + ":" + m.id(),
                         Component.translatable(KEY + "withdraw_tip", m.name()), false, true, () -> HubClient.runCommand("W2", List.of(m.id().toString()))));
                 candidates(ward).stream().limit(PEOPLE).forEach(m -> d.action("ward:invite:" + ward.id() + ":" + m.id(),
