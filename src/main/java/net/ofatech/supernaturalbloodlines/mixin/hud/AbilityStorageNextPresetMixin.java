@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.mixin.hud;
 import io.github.manasmods.manascore.skill.api.ManasSkill;
 import io.github.manasmods.tensura.storage.ability.AbilityPreset;
 import java.util.List;
+import net.minecraft.world.entity.LivingEntity;
 import net.ofatech.supernaturalbloodlines.parts.hud.HudConfig;
 import net.ofatech.supernaturalbloodlines.parts.hud.tensura.NextPreset;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,6 +27,8 @@ public abstract class AbilityStorageNextPresetMixin {
     private int activePreset;
     @Shadow
     private List<AbilityPreset> presets;
+    @Shadow
+    protected abstract LivingEntity getOwner();
 
     @Inject(method = "isAbilityInActivePreset(Lio/github/manasmods/manascore/skill/api/ManasSkill;)Z", at = @At("RETURN"), cancellable = true, require = 0)
     private void supernaturalbloodlines$nextPassive(ManasSkill skill, CallbackInfoReturnable<Boolean> cir) {
@@ -47,8 +50,13 @@ public abstract class AbilityStorageNextPresetMixin {
         supernaturalbloodlines$check(skill, slot, mode, cir);
     }
 
+    private java.util.UUID supernaturalbloodlines$ownerId() {
+        LivingEntity owner = getOwner();
+        return owner == null ? null : owner.getUUID();
+    }
+
     private void supernaturalbloodlines$check(ManasSkill skill, int slot, int mode, CallbackInfoReturnable<Boolean> cir) {
-        if (!cir.getReturnValueZ() && HudConfig.nextPresetActive() && NextPreset.matches(presets, activePreset, skill, slot, mode)) {
+        if (!cir.getReturnValueZ() && HudConfig.nextPresetActive() && NextPreset.matches(presets, activePreset, skill, slot, mode, supernaturalbloodlines$ownerId())) {
             cir.setReturnValue(true);
         }
     }

@@ -11,6 +11,17 @@ public final class CoveredKeyIds {
     /** Our own Alpha Roar key: the Roar is an action in a HUD slot while the HUD works, so the key is hidden then (it stays for a game or server without the HUD). */
     public static final String ALPHA_ROAR_KEY = "key.supernaturalbloodlines.alpha_roar";
 
+    /**
+     * The keys that move onto the skill wheel (spec, 2026-11-22). They are covered only once a build has a wheel screen ({@code wheelReady}): the owner moved
+     * Vampirism's vision key, Tensura's race-ability key and Infinity's soul control onto the wheel too. Left alone: Great Sage's voice and panic, Infinity's
+     * soul release, and every key that is not a skill key.
+     */
+    public static final List<String> WHEEL_IDS = List.of(
+            "keys.vampirism.action", "keys.vampirism.vision",
+            "key.greatsage.menu", "key.greatsage.assess", "key.greatsage.scan", "key.greatsage.magic_sense", "key.greatsage.thought_acceleration",
+            "key.infinity.wheel", "key.infinity.soul_control",
+            "tensura.keybinding.race_ability");
+
     private CoveredKeyIds() {
     }
 
@@ -18,11 +29,16 @@ public final class CoveredKeyIds {
         return all(true);
     }
 
+    /** The list while no wheel screen exists. */
+    public static List<String> all(boolean sprintLeap) {
+        return all(sprintLeap, false);
+    }
+
     /**
      * @param sprintLeap the client setting {@code sprint_leap}: Werewolves' leap key is covered only while the sprint leap replaces it. With it off the
      *                   key must work again, so it is left out of the list and {@code CoverRun} restores a recorded bind of an id no longer listed.
      */
-    public static List<String> all(boolean sprintLeap) {
+    public static List<String> all(boolean sprintLeap, boolean wheelReady) {
         List<String> ids = new ArrayList<>();
         for (int i = 1; i <= 3; i++) {
             ids.add("tensura.keybinding.ability.slot_" + i);
@@ -38,6 +54,9 @@ public final class CoveredKeyIds {
         ids.add(ALPHA_ROAR_KEY);
         if (sprintLeap) {
             ids.add(WEREWOLVES_LEAP);
+        }
+        if (wheelReady) {
+            ids.addAll(WHEEL_IDS);
         }
         return List.copyOf(ids);
     }

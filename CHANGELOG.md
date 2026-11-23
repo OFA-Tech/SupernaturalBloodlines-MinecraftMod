@@ -11,6 +11,27 @@
 
 ### Rolling back
 Turning a switch off, or rolling back, puts nothing permanent on a player, and the extra goals are not saved. Burning stops with the fire. **Protocol 11 to 10:** a build on 10 and a client on 11 (or the other way round) have no channel to each other, so the hub shows nothing from the server until both are on the same number; roll back the server and every client together. The old build does not know the four `tweak_*` keys in `supernaturalbloodlines-supernatural.toml` and removes them when it rewrites the file, so after rolling forward again they are back at `false`: set them again.
+## Unreleased (skill wheel, phase W1: catalogue and server path)
+
+Nothing is drawn yet: this phase is the server half of the skill wheel (`docs/superpowers/specs/2026-11-22-skill-wheel-design.md`). The wheel screen comes in a later phase.
+
+### Added
+- **A catalogue of every power a player has**, built on the server when the wheel opens and again only when it changes: ours (Bite and our actions), Vampirism's and Werewolves' unlocked actions, Vampirism's Vision, and Tensura's skills, spells, battlewill arts, passive switches and race ability. Each entry has a kind (instant, toggle, aimed, held), its state (on, cooldown, mode) and, when it cannot be used now, a reason.
+- **Four payloads** on the hud channel: `WheelViewPayload` (the wheel opened or closed), `WheelCataloguePayload` (the list, at most 512 entries), `UsePowerPayload` (use a power, or end it) and `SetPowerModePayload` (next or previous mode). The server looks every power up in what the player really has, re-checks it, and gives the same refusal the slot or key would.
+- **A cooldown is sent as an end time and its full length**, not as ticks left, so a running cooldown does not make the server resend the list; the client counts down on its own clock. The list is compared as a whole (not by hash code) before it is sent again.
+- **Using a Tensura skill that is in no slot.** A small scope on the existing next-preset hook lets the server start (and keep running) the one skill the wheel is using; nothing is parked in a hidden slot. Held skills, arts and spells with a cast time run past Tensura's one-second limit for a skill that is not slotted. Toggles are flipped through Tensura's own toggle, so they never need a slot.
+- **Modes from the wheel.** A Tensura skill in a slot changes mode through Tensura's own slot mode (every slot holding it); a skill in no slot keeps its mode in a new saved value (`wheel_modes`).
+- **Covered-key ids for the wheel** (Vampirism's action wheel and vision key, Tensura's race-ability key, Great Sage's menu, assess, scan, magic sense and thought acceleration keys, Infinity's wheel and soul control keys). They are **not covered yet**: nothing is covered until a build has a wheel screen, so no player is left with a hidden key and no way to use it.
+- Config (all with Admin rows): `wheel_enabled`, `wheel_catalogue_interval_ticks`, `wheel_unslotted_tensura`.
+
+### Changed
+- **The hud network version is 2. Update the server and every client together.** The payload registrar checks the version when a player joins, so a client on the old version is disconnected by a server on the new one (and the other way round); there is no half-working state to fall back to. The channel is optional only in the sense that a side that lacks it altogether (the hud part is off, or the mod is not there) still connects, and then nothing is sent to it and none of its keys is covered; a side that has it with another version does not.
+- The "cannot act" rule (a player who is downed, snapped, dying, asleep, dead or a spectator) is one shared function for the slots and the wheel; the slots behave as before.
+
+### Rolling back
+- **Roll the server and every client back together** (the network version goes back to 1; a mixed pair cannot connect). The saved `wheel_modes` value is dropped by an older build, which is harmless: it only held the mode of a Tensura skill that was in no slot. With `wheel_enabled = false` the wheel's server side answers an empty list and refuses every use, and the six slots are untouched.
+
+## Unreleased (art: the plan 18 icons)
 ## Unreleased (plan 18g: the Cursed White Oak Ash Dagger)
 
 ### Changed

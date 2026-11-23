@@ -28,7 +28,7 @@ import net.ofatech.supernaturalbloodlines.core.hud.RecordFile;
  * the cover policy changes ({@code hud_enabled}, {@code hide_covered_keys}, joining or leaving a world whose server has the HUD channel) or the Controls screen closes (its "Reset All" puts covered keys back on their defaults).
  * <p>
  * With the part off nothing of it would run, so the main class calls {@link #registerRestoreOnly()} then: the recorded binds come back.
- * Never touched: Tensura's {@code next_mode}, {@code race_ability} and {@code main_gui}, and Vampirism's action wheel, vision and skill screen.
+ * Never touched: Tensura's {@code next_mode} and {@code main_gui}, and Vampirism's skill screen. Once a build has a wheel screen ({@code WheelBuild}), Vampirism's action wheel and vision key, Tensura's race-ability key, Great Sage's menu, assess, scan, magic sense and thought acceleration keys and Infinity's wheel and soul control keys are covered too ({@code CoveredKeyIds.WHEEL_IDS}).
  */
 public final class KeyCover {
     public static final String FILE = SupernaturalBloodlines.MODID + "-hud-keys.json";
@@ -42,7 +42,7 @@ public final class KeyCover {
     }
 
     private static List<String> covered() {
-        return net.ofatech.supernaturalbloodlines.core.hud.CoveredKeyIds.all(HudClientConfig.sprintLeap());
+        return net.ofatech.supernaturalbloodlines.core.hud.CoveredKeyIds.all(HudClientConfig.sprintLeap(), net.ofatech.supernaturalbloodlines.core.wheel.WheelBuild.screenPresent());
     }
 
     /** The list the keys were last applied with: when {@code sprint_leap} changes, the plan runs again so the leap key is restored or covered at once. */

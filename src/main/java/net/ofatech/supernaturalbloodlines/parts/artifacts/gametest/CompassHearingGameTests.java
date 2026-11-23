@@ -136,7 +136,8 @@ public final class CompassHearingGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", templateNamespace = NS)
+    // its own batch: the compass finds any vampire in the level, and the hearing tests of this class put vampire players in it while they run, so beside them it sometimes points at one
+    @GameTest(template = "empty", templateNamespace = NS, batch = "compass_holder")
     public static void compassIgnoresItsHolderAndUpdatesOncePerSecond(GameTestHelper helper) {
         ServerPlayer vamp = vampirePlayer(helper);
         vamp.setPos(helper.absoluteVec(new Vec3(1.5, 1, 1.5)));
