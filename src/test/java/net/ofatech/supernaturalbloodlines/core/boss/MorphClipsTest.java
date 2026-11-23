@@ -120,6 +120,9 @@ public class MorphClipsTest {
             JsonObject o = channel.getAsJsonObject();
             if (o.has("vector") || o.has("post") || o.has("pre")) {
                 v = o.has("vector") ? o.get("vector") : o.has("post") ? o.get("post") : o.get("pre");
+                if (v.isJsonObject()) {
+                    return at(v, first); // a GeckoLib export nests it: {"post": {"vector": [..]}, "lerp_mode": "catmullrom"}
+                }
             } else {
                 String key = o.keySet().stream().reduce((a, c) -> (Double.parseDouble(a) <= Double.parseDouble(c)) == first ? a : c).orElseThrow();
                 return at(o.get(key), first);
@@ -167,6 +170,50 @@ public class MorphClipsTest {
             if (b.out()) {
                 assertEquals(1.0, length(clip(b, "shift_out")), 1e-6, b.model());
                 assertFalse(loops(clip(b, "shift_out")), b.model());
+            }
+        }
+    }
+
+    /** A key that is eased: GeckoLib's "easing" or Bedrock's "lerp_mode", other than linear (a GeckoLib export writes "easing": "linear" on every plain key). */
+    private static boolean isEased(JsonElement key) {
+        if (!key.isJsonObject()) {
+            return false;
+        }
+        JsonObject o = key.getAsJsonObject();
+        for (String field : List.of("easing", "lerp_mode")) {
+            if (o.has(field) && o.get(field).isJsonPrimitive() && !o.get(field).getAsString().equalsIgnoreCase("linear")) {
+                return true;
+            }
+        }
+        return (o.has("post") && isEased(o.get("post"))) || (o.has("pre") && isEased(o.get("pre")));
+    }
+
+    /**
+     * A clip that moves says how it is eased. A Blockbench whose GeckoLib plugin is half loaded exports every eased key as linear, and neither the lengths nor
+     * the bones change, so this is the only thing that notices. A held placeholder (two keys a channel) has nothing to ease and is let through.
+     */
+    @Test
+    void theClipsKeepTheirEasing() throws IOException {
+        for (Boss b : BOSSES) {
+            List<String> names = b.out() ? List.of("shift_in", "shift_out", b.howl()) : List.of("shift_in", b.howl());
+            for (String n : names) {
+                int eased = 0;
+                int densest = 0;
+                JsonObject bones = clip(b, n).has("bones") ? clip(b, n).getAsJsonObject("bones") : new JsonObject();
+                for (String bone : bones.keySet()) {
+                    for (JsonElement channel : bones.getAsJsonObject(bone).asMap().values()) {
+                        if (!channel.isJsonObject() || channel.getAsJsonObject().has("vector") || channel.getAsJsonObject().has("post")) {
+                            continue;
+                        }
+                        densest = Math.max(densest, channel.getAsJsonObject().size());
+                        for (JsonElement key : channel.getAsJsonObject().asMap().values()) {
+                            if (isEased(key)) {
+                                eased++;
+                            }
+                        }
+                    }
+                }
+                assertTrue(densest <= 2 || eased > 0, b.model() + " " + n + ": every key is linear, the easings were dropped on the way into the game file");
             }
         }
     }

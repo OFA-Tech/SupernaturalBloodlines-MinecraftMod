@@ -70,7 +70,7 @@ def make(model, force=False, game_path=None, geo_path=None):
         path = os.path.join(tmp, model + '.json')
         with open(path, 'w', encoding='utf-8') as f:
             json.dump({'format_version': '1.8.0', 'animations': clips}, f)
-        mc.merge(model, path, game_path=game_path, geo_path=geo_path)
+        mc.merge(model, path, game_path=game_path, geo_path=geo_path, allow_linear=True)
 
 
 if __name__ == '__main__':

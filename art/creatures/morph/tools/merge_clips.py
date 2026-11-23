@@ -11,7 +11,9 @@ What it does (UI overhaul phase 7, plan T6):
   - deletes `drop_to_fours` (Deucalion) and `rise_up` (Peter) once `shift_in` exists, because it replaces them;
   - keeps every other clip, key and key order exactly as it was, and writes the file in the style it had (indent 1 or 2, the trailing newline or not);
   - fails, writing nothing, when an animation name is not one of those above, when a bone is not a bone of the model's geo, or when a clip has the wrong length
-    (shift_in and shift_out 1.0 s, the howl 2.2 s) or loops.
+    (shift_in and shift_out 1.0 s, the howl 2.2 s) or loops;
+  - fails the same way when a clip has no eased key at all (no `easing`, no `lerp_mode`): a Blockbench whose GeckoLib plugin is half loaded exports every
+    eased key as linear, and nothing else notices. --allow-linear turns this one check off (the placeholders are held poses).
 With --check nothing is written: it only says what it would do.
 """
 import json
@@ -57,7 +59,20 @@ def clip_name(model, short):
     return 'animation.%s.%s' % (model, short)
 
 
-def merge(model, exported_path, check=False, game_path=None, geo_path=None):
+def eased(clip):
+    """How many keys of a clip are eased: GeckoLib's `easing` or Bedrock's `lerp_mode`, other than linear (a healthy GeckoLib export writes
+    `"easing": "linear"` on every plain key, and a catmullrom key as `{"post": {"vector": ..}, "lerp_mode": "catmullrom"}`)."""
+    def is_eased(key):
+        if not isinstance(key, dict):
+            return False
+        if str(key.get('easing', 'linear')).lower() != 'linear' or str(key.get('lerp_mode', 'linear')).lower() != 'linear':
+            return True
+        return any(is_eased(key.get(k)) for k in ('post', 'pre'))
+    return sum(1 for chans in clip.get('bones', {}).values() for chan in chans.values() if isinstance(chan, dict)
+               for key in chan.values() if is_eased(key))
+
+
+def merge(model, exported_path, check=False, game_path=None, geo_path=None, allow_linear=False):
     if model not in MODELS:
         raise SystemExit('unknown model %r (one of %s)' % (model, ', '.join(MODELS)))
     howl, removed, has_out = MODELS[model]
@@ -87,6 +102,8 @@ def merge(model, exported_path, check=False, game_path=None, geo_path=None):
         for bone in clip.get('bones', {}):
             if bone not in bones:
                 problems.append('%s: %r is not a bone of %s.geo.json' % (short, bone, model))
+        if not allow_linear and eased(clip) == 0:
+            problems.append('%s has no eased key: every key is linear (did the export drop the easings?)' % short)
         incoming[name] = clip
     for w in wanted:
         if clip_name(model, w) not in incoming:
@@ -132,4 +149,4 @@ if __name__ == '__main__':
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     if len(args) != 2:
         raise SystemExit(__doc__)
-    merge(args[0], args[1], '--check' in sys.argv)
+    merge(args[0], args[1], '--check' in sys.argv, allow_linear='--allow-linear' in sys.argv)
