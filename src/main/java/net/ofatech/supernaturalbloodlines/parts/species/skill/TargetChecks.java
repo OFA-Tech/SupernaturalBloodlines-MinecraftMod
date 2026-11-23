@@ -80,6 +80,11 @@ final class TargetChecks {
         return target instanceof ServerPlayer sp && (Downed.isDowned(sp) || inVampirismDying(sp)) || SnappedEffect.isSnapped(target) || SnappedEffect.inGrace(target);
     }
 
+    /** Down right now (ours, Vampirism's dying state, a snapped creature), which a blow would not reach: the grace after a snap is not counted. Visible anyway. */
+    static boolean lyingDown(LivingEntity target) {
+        return target instanceof ServerPlayer sp && (Downed.isDowned(sp) || inVampirismDying(sp)) || SnappedEffect.isSnapped(target);
+    }
+
     static final net.minecraft.tags.TagKey<net.minecraft.world.entity.EntityType<?>> SNAP_IMMUNE = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE,
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(net.ofatech.supernaturalbloodlines.SupernaturalBloodlines.MODID, "snap_immune"));
 

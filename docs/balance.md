@@ -12,7 +12,7 @@ Every number the supernatural system pays or asks for, with the reason for it. T
 | Longest wait | 60 game days (20 hours of play at 20 minutes a day) | Reachable in a week or two on a normal server; every apex rung asks 60 or less. |
 | Skill cost | 1 to 5 SP; only a granted skill (S-WOL-8) is free | Nothing is free, nothing costs a whole ladder rung. |
 | Skill cost by rung | a rung-1 skill costs at most 2, a rung-5 skill at least 4 | Costs rise with the rungs. |
-| A tree costs | 80% to 110% of what its ladder pays | A player who climbs the whole ladder can buy nearly the whole tree and carries little spare. |
+| A tree costs | 80% to 110% of what its ladder pays (125% for the Hybrid and the Original hybrid, who hold the skills of both lines, R212) | A player who climbs the whole ladder can buy nearly the whole tree and carries little spare. |
 | EP boost | x1.25 (config `ep_boost`), True Alpha x1.5 on `alpha_primeval` | Owner rules, unchanged. |
 
 ## Ladders

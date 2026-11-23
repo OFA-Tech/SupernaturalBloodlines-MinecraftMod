@@ -9,7 +9,7 @@ public final class SkillIcons {
             Map.entry("s-hum-1", Icons.HEART), Map.entry("s-hum-2", Icons.SHIELD), Map.entry("s-hum-3", Icons.BOOT),
             Map.entry("s-hun-1", Icons.BOLT), Map.entry("s-hun-2", Icons.EYE), Map.entry("s-hun-3", Icons.SHIELD), Map.entry("s-hun-4", Icons.EYE),
             Map.entry("s-hun-5", Icons.CROWN),
-            Map.entry("s-hyb-1", Icons.DROP), Map.entry("s-hyb-2", Icons.FANG),
+            Map.entry("s-hyb-1", Icons.DROP), Map.entry("s-hyb-2", Icons.FANG), Map.entry("s-hyb-3", Icons.BOOT),
             Map.entry("s-ori-1", Icons.DROP), Map.entry("s-ori-2", Icons.VIAL), Map.entry("s-ori-3", Icons.VOICE), Map.entry("s-ori-4", Icons.SPARK),
             Map.entry("s-sip-1", Icons.DROP), Map.entry("s-sip-2", Icons.BOLT), Map.entry("s-sip-3", Icons.HEART), Map.entry("s-sip-4", Icons.KEY),
             Map.entry("s-sip-5", Icons.SPARK),

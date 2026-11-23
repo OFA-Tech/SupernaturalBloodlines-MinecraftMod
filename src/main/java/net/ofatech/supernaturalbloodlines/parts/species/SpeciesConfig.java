@@ -109,9 +109,17 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue NPC_BONUS_SHARE;
     private static volatile MemberTuning memberOverride;
     /** The shortest and longest a snapped neck may keep a target down (R214), for every one of the four wake-time keys. */
+    public static final double DEFAULT_HYBRID_LEAP_RANGE = 12.0;
+    public static final double DEFAULT_HYBRID_LEAP_DAMAGE = 6.0;
+    public static final int DEFAULT_HYBRID_LEAP_WEAKNESS_TICKS = 100;
+    public static final int DEFAULT_HYBRID_LEAP_COOLDOWN_SECONDS = 20;
     public static final int MIN_SNAP_SECONDS = 5;
     public static final int MAX_SNAP_SECONDS = 1800;
     public static final int DEFAULT_NECK_SNAP_GRACE_SECONDS = 30;
+    private static final ModConfigSpec.DoubleValue HYBRID_LEAP_RANGE;
+    private static final ModConfigSpec.DoubleValue HYBRID_LEAP_DAMAGE;
+    private static final ModConfigSpec.IntValue HYBRID_LEAP_WEAKNESS_TICKS;
+    private static final ModConfigSpec.IntValue HYBRID_LEAP_COOLDOWN_SECONDS;
     private static final ModConfigSpec.IntValue NECK_SNAP_GRACE_SECONDS;
     private static volatile SnapSeconds snapOverride;
 
@@ -131,6 +139,42 @@ public final class SpeciesConfig {
     public static SnapSeconds snapSeconds() {
         SnapSeconds o = snapOverride;
         return o != null ? o : new SnapSeconds(neckSnapVampireSeconds(), neckSnapAugustineSeconds(), neckSnapHybridSeconds(), neckSnapOriginalSeconds());
+    }
+
+    /** {@code hybrid_leap_range}. */
+    public static double hybridLeapRange() {
+        try {
+            return HYBRID_LEAP_RANGE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_HYBRID_LEAP_RANGE;
+        }
+    }
+
+    /** {@code hybrid_leap_damage}. */
+    public static double hybridLeapDamage() {
+        try {
+            return HYBRID_LEAP_DAMAGE.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_HYBRID_LEAP_DAMAGE;
+        }
+    }
+
+    /** {@code hybrid_leap_weakness_ticks}. */
+    public static int hybridLeapWeaknessTicks() {
+        try {
+            return HYBRID_LEAP_WEAKNESS_TICKS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_HYBRID_LEAP_WEAKNESS_TICKS;
+        }
+    }
+
+    /** {@code hybrid_leap_cooldown_seconds}. */
+    public static int hybridLeapCooldownSeconds() {
+        try {
+            return HYBRID_LEAP_COOLDOWN_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_HYBRID_LEAP_COOLDOWN_SECONDS;
+        }
     }
 
     /** {@code neck_snap_grace_seconds}. */
@@ -367,6 +411,14 @@ public final class SpeciesConfig {
                 .defineInRange("neck_snap_cooldown_seconds", DEFAULT_NECK_SNAP_COOLDOWN_SECONDS, 1, 3600);
         NECK_SNAP_GRACE_SECONDS = b.comment("R214: seconds after a snap ends in which the same player or creature cannot be snapped again (a refusal like any other, so it says nothing about the target). Kept through a logout. 0 turns it off.")
                 .defineInRange("neck_snap_grace_seconds", DEFAULT_NECK_SNAP_GRACE_SECONDS, 0, 3600);
+        HYBRID_LEAP_RANGE = b.comment("R212: how far (blocks) Hybrid Leap reaches. Further than this is refused as too far; the leap itself is a push, so a wall or a drop on the way still counts.")
+                .defineInRange("hybrid_leap_range", DEFAULT_HYBRID_LEAP_RANGE, 2.0, 32.0);
+        HYBRID_LEAP_DAMAGE = b.comment("R212: the damage Hybrid Leap deals when it lands (half hearts), as an ordinary attack: PvP, claims, armour and totems apply. 0 deals none and keeps the Weakness.")
+                .defineInRange("hybrid_leap_damage", DEFAULT_HYBRID_LEAP_DAMAGE, 0.0, 40.0);
+        HYBRID_LEAP_WEAKNESS_TICKS = b.comment("R212: how long the Weakness lasts that a landed Hybrid Leap gives (ticks). Only when the blow landed.")
+                .defineInRange("hybrid_leap_weakness_ticks", DEFAULT_HYBRID_LEAP_WEAKNESS_TICKS, 0, 1200);
+        HYBRID_LEAP_COOLDOWN_SECONDS = b.comment("R212: seconds before Hybrid Leap can be used again. A refusal costs nothing.")
+                .defineInRange("hybrid_leap_cooldown_seconds", DEFAULT_HYBRID_LEAP_COOLDOWN_SECONDS, 1, 600);
         NECK_SNAP_KILL_HEALTH = b.comment("R214: a mortal at or under this much health dies of a snapped neck; a healthier one only staggers.")
                 .defineInRange("neck_snap_kill_health", DEFAULT_NECK_SNAP_KILL_HEALTH, 1.0, 40.0);
         NECK_SNAP_STAGGER_TICKS = b.comment("R214: how long a healthy mortal staggers (Slowness III and Weakness) after a snapped neck, in ticks.")

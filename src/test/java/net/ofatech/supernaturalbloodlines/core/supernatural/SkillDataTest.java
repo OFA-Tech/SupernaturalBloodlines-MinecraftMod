@@ -27,7 +27,7 @@ class SkillDataTest {
             Map.entry("S-VAM-1", 1), Map.entry("S-VAM-2", 2), Map.entry("S-VAM-3", 2), Map.entry("S-VAM-4", 3), Map.entry("S-VAM-5", 3),
             Map.entry("S-VAM-6", 4), Map.entry("S-VAM-7", 4), Map.entry("S-VAM-8", 2), Map.entry("S-VAM-9", 2),
             Map.entry("S-ORI-1", 3), Map.entry("S-ORI-2", 1), Map.entry("S-ORI-3", 3), Map.entry("S-ORI-4", 4),
-            Map.entry("S-HYB-1", 2), Map.entry("S-HYB-2", 3),
+            Map.entry("S-HYB-1", 2), Map.entry("S-HYB-2", 3), Map.entry("S-HYB-3", 3),
             Map.entry("S-WOL-1", 1), Map.entry("S-WOL-2", 2), Map.entry("S-WOL-3", 2), Map.entry("S-WOL-4", 2), Map.entry("S-WOL-5", 4),
             Map.entry("S-WOL-6", 3), Map.entry("S-WOL-7", 4),
             Map.entry("S-WIT-1", 2), Map.entry("S-WIT-2", 2), Map.entry("S-WIT-3", 2), Map.entry("S-WIT-4", 3), Map.entry("S-WIT-5", 3),
@@ -46,9 +46,9 @@ class SkillDataTest {
             Map.entry(SupernaturalRace.ORIGINAL, List.of("S-VAM-1@1", "S-ORI-1@2", "S-ORI-2@2", "S-VAM-3@2", "S-VAM-4@3>S-ORI-1",
                     "S-ORI-3@4>S-VAM-3", "S-VAM-6@3>S-VAM-1+Q", "S-ORI-4@5>S-VAM-4", "S-VAM-8@4>S-VAM-6", "S-VAM-9@4>S-VAM-6")),
             Map.entry(SupernaturalRace.ORIGINAL_HYBRID, List.of("S-VAM-1@1", "S-ORI-1@2", "S-HYB-1@2", "S-HYB-2@2", "S-VAM-3@3",
-                    "S-ORI-3@4>S-VAM-3", "S-VAM-6@3>S-VAM-1+Q", "S-WOL-7@5>S-HYB-2", "S-VAM-8@4>S-VAM-6", "S-VAM-9@4>S-VAM-6")),
+                    "S-ORI-3@4>S-VAM-3", "S-VAM-6@3>S-VAM-1+Q", "S-WOL-7@5>S-HYB-2", "S-VAM-8@4>S-VAM-6", "S-VAM-9@4>S-VAM-6", "S-HYB-3@3>S-HYB-2")),
             Map.entry(SupernaturalRace.HYBRID, List.of("S-VAM-1@1", "S-WOL-1@1", "S-HYB-1@2", "S-VAM-2@2", "S-HYB-2@3", "S-VAM-3@3",
-                    "S-VAM-6@4>S-VAM-1+Q", "S-WOL-7@5>S-HYB-2", "S-VAM-8@4>S-VAM-6", "S-VAM-9@4>S-VAM-6")),
+                    "S-VAM-6@4>S-VAM-1+Q", "S-WOL-7@5>S-HYB-2", "S-VAM-8@4>S-VAM-6", "S-VAM-9@4>S-VAM-6", "S-HYB-3@3>S-HYB-2")),
             Map.entry(SupernaturalRace.TRIBRID, List.of("S-WIT-1@1", "S-HYB-1@1", "S-WIT-2@2>S-WIT-1", "S-HYB-2@2", "S-WIT-4@3",
                     "S-VAM-6@3+Q", "S-WOL-7@5>S-HYB-2", "S-VAM-8@4>S-VAM-6", "S-VAM-9@4>S-VAM-6")),
             Map.entry(SupernaturalRace.WITCH, List.of("S-WIT-1@1", "S-WIT-2@1", "S-WIT-3@2", "S-WIT-4@3", "S-WIT-5@3", "S-WIT-6@4>S-WIT-1",
@@ -68,7 +68,7 @@ class SkillDataTest {
     // race -> SP total of its tree, as the spec states it
     private static final Map<SupernaturalRace, Integer> SP = Map.ofEntries(
             Map.entry(SupernaturalRace.HUMAN, 5), Map.entry(SupernaturalRace.VAMPIRE, 23), Map.entry(SupernaturalRace.ORIGINAL, 25),
-            Map.entry(SupernaturalRace.ORIGINAL_HYBRID, 26), Map.entry(SupernaturalRace.HYBRID, 23), Map.entry(SupernaturalRace.TRIBRID, 24),
+            Map.entry(SupernaturalRace.ORIGINAL_HYBRID, 29), Map.entry(SupernaturalRace.HYBRID, 26), Map.entry(SupernaturalRace.TRIBRID, 24),
             Map.entry(SupernaturalRace.WITCH, 20), Map.entry(SupernaturalRace.SIPHONER, 17), Map.entry(SupernaturalRace.HERETIC, 23),
             Map.entry(SupernaturalRace.HUNTER, 18), Map.entry(SupernaturalRace.WEREWOLF, 18), Map.entry(SupernaturalRace.AUGUSTINE, 25));
 
@@ -107,7 +107,7 @@ class SkillDataTest {
     @Test
     void theCatalogueIsTheSpecs() {
         SkillTable t = load(mod -> true);
-        assertEquals(46, t.skills().size());
+        assertEquals(47, t.skills().size());
         for (Map.Entry<String, Integer> e : COSTS.entrySet()) {
             SkillSpec s = t.skill(e.getKey()).orElseThrow(() -> new AssertionError("missing " + e.getKey()));
             assertEquals(e.getValue(), s.cost(), e.getKey());
@@ -115,7 +115,7 @@ class SkillDataTest {
             assertEquals(TENSURA.contains(e.getKey()), s.kinds().contains(SkillSpec.Kind.TENSURA), e.getKey());
             assertTrue(!s.kinds().contains(SkillSpec.Kind.ATTR) || s.attr() != null, e.getKey());
         }
-        assertEquals(44, COSTS.size());
+        assertEquals(45, COSTS.size());
         SkillSpec primeval = t.skill("S-WOL-8").orElseThrow();
         assertTrue(primeval.grantedOnly());
         assertEquals(0, primeval.cost());
@@ -181,7 +181,7 @@ class SkillDataTest {
     @Test
     void withoutTensuraOnlyTheTensuraSkillsGo() {
         SkillTable t = load(mod -> !mod.equals("tensura"));
-        assertEquals(46 - TENSURA.size(), t.skills().size());
+        assertEquals(47 - TENSURA.size(), t.skills().size());
         for (String id : TENSURA) {
             assertFalse(t.skill(id).isPresent(), id);
             for (SupernaturalRace race : SupernaturalRace.values()) {
