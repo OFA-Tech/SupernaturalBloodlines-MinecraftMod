@@ -50,12 +50,12 @@ Players of the pack carry powers from many mods (ours, Vampirism, Werewolves, Te
   4. **Tensura tiers** (self, ultraspeed, infinite regeneration): the wheel shows only the highest tier the player has.
   5. **M09 (blood projectile): keep both**, because Ascension's version costs health.
   6. The main sides are as proposed in the research table.
-  - *Consequence the owner should confirm (call):* the Infinity Stones members of M01, M02, M05 and M08 are single stone powers, which are modes of a stone's one entry. By answer 3 they are not matched, so those groups run between the other sides only.
+  - **Infinity stone powers stay separate from the dedup groups (owner, 2026-11-22).** A stone is one entry with modes, and its powers exist only because the player holds the stone. So the Infinity members of M01, M02, M05 and M08 are deliberately **not** deduplicated; those groups run between the other sides only.
 
 ## Keys
 
 - **Open the wheel: G** *(call: G is Great Sage's menu key in the pack; Great Sage's menu moves into the wheel)*. Hold or press G to open. While open: left click uses, right click slots, releasing G over a hovered power uses it, G again or Esc closes. A **quick tap** (under ~200 ms) repeats the last power used from the wheel.
-- **Covered keys (skill keys only):** Vampirism's action wheel and action 1–9 and suck; **Vampirism's vision key (owner, 2026-11-22)**; Werewolves bite and leap; Tensura skill slots 1–3; **Tensura's race-ability key (owner, 2026-11-22)**; Infinity Stones' wheel (H) and its use/favourite keys; Great Sage's assess, scan, thought acceleration and magic sense. (Vampirism's default R wheel key currently clashes with our slot 1; covering it fixes that.)
+- **Covered keys (skill keys only):** Vampirism's action wheel and action 1–9 and suck; **Vampirism's vision key (owner, 2026-11-22)**; Werewolves bite and leap; Tensura skill slots 1–3; **Tensura's race-ability key (owner, 2026-11-22)**; Infinity Stones' wheel (H) and its use/favourite keys, and **Infinity's soul control key (`key.infinity.soul_control`, default G; owner, 2026-11-22)**; Great Sage's assess, scan, thought acceleration and magic sense. (Vampirism's default R wheel key currently clashes with our slot 1; covering it fixes that.)
 - **Left alone (not skill keys):** Tensura status screen, naming, dodge, mode switch; Vampirism skill screen; Ascension codex; Horizons journal; Enchanted broomstick.
 
 ## Infinity Stones compat
@@ -63,6 +63,7 @@ Players of the pack carry powers from many mods (ours, Vampirism, Werewolves, Te
 - Each stone is a Tensura UNIQUE skill (`StoneSkill`) whose modes are the stone's unlocked powers. The Tensura category would already see them; with the compat they get their own category.
 - *(Superseded by the owner's mode rule below: a stone is **one entry**, and its powers are picked with Alt + click. So Infinity Stones has one group and no middle ring.)*
 - The compat reads three small public parts of the friend's mod, by reflection, optional, no build dependency: which powers need aiming (`AbilityMeta.needsAim`), the second option of a dual power, and scroll-to-change levels (`VariableAbility`).
+- **Soul control (owner, 2026-11-22):** `key.infinity.soul_control` is covered (it also frees G for the wheel). Soul control becomes a wheel entry in the Soul Stone's place in the Infinity Stones ring, shown only while a possession is running (it is "take over / give back", a second step). It sends his own action, not a key press. His release key (`soul_release`) is left alone.
 - **Second option:** Shift + left click *(call: right click is already "put in a slot"; his mod already passes the second option as "sneaking")*.
 - **Variable levels:** scroll over the hovered power.
 - If those parts change name or shape, the compat logs once and switches itself off; stones then show as plain Tensura skills. His mod is not changed.
@@ -71,6 +72,7 @@ Players of the pack carry powers from many mods (ours, Vampirism, Werewolves, Te
 
 - **Server trust:** the wheel only asks. Every use goes through the existing server paths (`ActionService` for our and Vampirism/Werewolves actions, Tensura's own skill packets for Tensura skills, his mod's own path for stones). The server re-checks that the player has and may use the power. New or changed payloads bump the network version, with a CHANGELOG note ("update server and clients together").
 - **Existing rules hold:** downed, snapped and dying players cannot use anything; targeted powers use the 18d target pipeline; no refusal may reveal what a target is.
+- **Held and cast-time powers that are in no Tensura slot (builder finding, 2026-11-22):** Tensura's `getMaxHeldTime` is 20 ticks for a skill that is not in the active preset (72000 when slotted, 7200 when staff-casting). A held art, or a spell with a cast time over one second, used from the wheel with no slot would be cut after one second. The plan keeps the skill counted as "in the preset" for the whole of its hold through the existing next-preset hook (no new mixin), tested first. **If that does not hold**, those powers are listed locked with "put it in a slot first" (the slot picker still works) and never run from a hidden slot; instant skills, instant-cast spells and instant arts are unaffected.
 - **Performance:** the entry list is built when the wheel opens and when the player's powers change, never per frame; text is measured once and cached.
 - **Accessibility:** keyboard (arrows/Tab move, Enter uses, a slot key assigns), screen-reader narration of category, power and state, 4.5:1 text contrast, state never shown by colour alone, "Reduce motion" turns off wheel animation.
 - **UI-first rule:** every new setting is reachable in the hub (Settings for client options, Admin for server options).
