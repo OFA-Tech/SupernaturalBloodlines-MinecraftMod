@@ -70,7 +70,7 @@ class EvolutionRulesTest {
         EvolutionRecipe r = recipe(Tier.UNIQUE);
         Optional<Reason> reason;
         Builder b = new Builder(all);
-        while ((reason = EvolutionRules.check(r, b.build())).isPresent()) {
+        while ((reason = EvolutionRules.check(r, b.build())).isPresent() && seen.size() < 12) {
             seen.add(reason.get());
             switch (reason.get()) {
                 case CLOSED -> { b.enabled = true; b.modLoaded = true; b.probeFound = true; b.roadOpen = true; }
