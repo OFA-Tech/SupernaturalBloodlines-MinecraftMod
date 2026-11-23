@@ -27,6 +27,13 @@ public final class LoadoutAccess {
 
         /** How the slot's key reads, for the right page of the tab. */
         String keyLabel(int slot);
+
+        /** The hub opened (or was set up again by a resize) and closed: the provider may ask the server for what it lists. */
+        default void hubOpened() {
+        }
+
+        default void hubClosed() {
+        }
     }
 
     private static volatile Provider provider;
@@ -56,6 +63,20 @@ public final class LoadoutAccess {
         Provider p = provider;
         if (p != null) {
             p.set(slot, id);
+        }
+    }
+
+    public static void hubOpened() {
+        Provider p = provider;
+        if (p != null) {
+            p.hubOpened();
+        }
+    }
+
+    public static void hubClosed() {
+        Provider p = provider;
+        if (p != null) {
+            p.hubClosed();
         }
     }
 

@@ -31,7 +31,7 @@ class HudKeysDefaultsTest {
         // the owner's live options.txt (plan 13, "OFA pack facts"): next_mode is Left Alt, race_ability [, great sage menu G, and Caps alone is the radio
         List<HudKeyDefaults.Key> live = List.of(new HudKeyDefaults.Key("next_mode", HudKeyDefaults.GLFW_LEFT_ALT, "NONE"),
                 new HudKeyDefaults.Key("race_ability", HudKeyDefaults.GLFW_LEFT_BRACKET, "NONE"),
-                new HudKeyDefaults.Key("greatsage.menu", HudKeyDefaults.GLFW_G, "NONE"),
+                // (Great Sage's menu is G too, and is covered while the wheel works: the owner chose G for the wheel and it moves onto it, CoveredKeyIds.WHEEL_IDS)
                 // the other addon keys that are set in the Holy Packs options.txt (Great Sage: assess H, magic sense Y, thought acceleration J;
                 // Tensura Trainer open L, Tensura's main GUI O, name period, dodge Left Ctrl). Great Sage's own default for assess is V, which is our slot 3:
                 // the pack moved it, a reset to defaults brings the clash back (docs/compat/tensura-addons.md)

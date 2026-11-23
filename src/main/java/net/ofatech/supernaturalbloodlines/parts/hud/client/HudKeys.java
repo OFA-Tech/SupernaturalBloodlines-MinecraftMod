@@ -18,6 +18,8 @@ import net.ofatech.supernaturalbloodlines.core.hud.HudKeyDefaults;
 public final class HudKeys {
     public static final KeyMapping[] SLOTS = HudKeyDefaults.SLOTS.stream().map(HudKeys::mapping).toArray(KeyMapping[]::new);
     public static final KeyMapping HUD_MODE = mapping(HudKeyDefaults.HUD_MODE);
+    /** Held to open the skill wheel: a tap repeats the last power. */
+    public static final KeyMapping WHEEL = mapping(HudKeyDefaults.WHEEL);
 
     private HudKeys() {
     }
@@ -32,5 +34,6 @@ public final class HudKeys {
             e.register(slot);
         }
         e.register(HUD_MODE);
+        e.register(WHEEL);
     }
 }
