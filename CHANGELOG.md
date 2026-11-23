@@ -7,10 +7,31 @@
 - **Limits:** a client that sends the altar's revert packet with the switch on is refused, but Vampirism's handler still kills a player outside hardcore, so **a cheater dies and stays a vampire**; zombified piglins, wither skeletons, bogged and creepers are unchanged.
 
 ### Network
-`LadderNet.PROTOCOL` is now `"11"` (a new optional payload carries the altar switch to clients). **Update the server and every client together**: a client on another number does not get the hub's data from the server.
+`LadderNet.PROTOCOL` is now `"12"` (the pack moon gift took 11; a new optional payload carries the altar switch to clients). **Update the server and every client together**: a client on another number does not get the hub's data from the server.
 
 ### Rolling back
-Turning a switch off, or rolling back, puts nothing permanent on a player, and the extra goals are not saved. Burning stops with the fire. **Protocol 11 to 10:** a build on 10 and a client on 11 (or the other way round) have no channel to each other, so the hub shows nothing from the server until both are on the same number; roll back the server and every client together. The old build does not know the four `tweak_*` keys in `supernaturalbloodlines-supernatural.toml` and removes them when it rewrites the file, so after rolling forward again they are back at `false`: set them again.
+Turning a switch off, or rolling back, puts nothing permanent on a player, and the extra goals are not saved. Burning stops with the fire. **Protocol 12 to 11:** a build on 11 and a client on 12 (or the other way round) have no channel to each other, so the hub shows nothing from the server until both are on the same number; roll back the server and every client together. The old build does not know the four `tweak_*` keys in `supernaturalbloodlines-supernatural.toml` and removes them when it rewrites the file, so after rolling forward again they are back at `false`: set them again.
+## Unreleased (pack moon gift)
+
+### Added
+- **The pack's gift (R96, `hybrid_pack_moon_control`, default on; needs Werewolves).** As in The Originals: while the **current leader** of a pack is a hybrid, an Original hybrid or a tribrid (curse not bound), every **werewolf member** of that pack has moon control, as with a Moon Ring: half forms at will, full forms from Werewolves level 8 (`full_form_level`), and the forced full-moon shift is skipped. It is read from the pack each time, so leaving, a kick, a dissolved pack or the lead passing to someone who is not hybrid-like ends it at once. A hybrid co-Alpha who does not lead gives nothing; Packmates who are no werewolves are not changed. A member who loses it mid-shift keeps the form they are in until the next forced or normal change (as with a Moon Ring taken off).
+- **Hub:** the Pack page shows the perk line "Your Alpha's blood frees you from the moon" while you have it (every theme; the server says so in the snapshot). The task "Control your shift under the full moon" follows it like any other control, as with the Moon Ring.
+- **Messages:** one line when a member gains the gift and one when they lose it.
+- **Admin:** `hybrid_pack_moon_control` has a row under Species.
+
+### Changed (review of the pack gift)
+- **The gift does not earn the rung "Controlled" (L-WOL-3a).** That task and the migration ask for the player's own control (Moon Ring, Free Will, an unbound hybrid, an Alpha, an anchor); the gift can be taken away at once, so it never completes the rung (`MoonControl.earned`).
+- **A leader away for `absent_leader_days` (7) or more gives no gift** from that moment, before the pack passes the lead on (0 = off).
+- **The "lost" line is only sent when the member has no other moon control left.** The "gained" line says what it gives: half forms now, full forms from the configured level (`full_form_level`).
+- **The perk line is hidden while `moon_bound_werewolves` is off** (the server does not send it); its colour is tested at 4.5:1 on every theme.
+- **The pack index hears the hybrid curse being lifted** (`BloodlineAccess` listeners now see a change of `hybridCurseBound`), and sets its hybrid-like flag before it refreshes the strength.
+- **One definition of "hybrid type"** (`Species.hybridType()`), used by the control source, the gift, the ladder predicate and the bloodline rules. The `moon_unbound` predicate used to leave out the tribrid; no ladder read it for a tribrid, so nothing changed in play.
+
+### Network
+- The hub snapshot carries one more flag (the gift), so the protocol is **11** (was 10). Clients and servers must match.
+
+### Migration
+- The pack index remembers who was hybrid-like when last seen (saved with it, nothing else changes). A pack led by an offline hybrid gives the gift once its leader has logged in after the update.
 ## Unreleased (skill wheel, phase W1: catalogue and server path)
 
 Nothing is drawn yet: this phase is the server half of the skill wheel (`docs/superpowers/specs/2026-11-22-skill-wheel-design.md`). The wheel screen comes in a later phase.

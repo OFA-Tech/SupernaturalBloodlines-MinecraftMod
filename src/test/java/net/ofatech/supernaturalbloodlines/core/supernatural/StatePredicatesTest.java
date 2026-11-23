@@ -54,6 +54,7 @@ class StatePredicatesTest {
         assertEquals(0, v("moon_unbound", bound));
         assertEquals(1, v("moon_unbound", bound.toBuilder().hybridCurseBound(false).build()));
         assertEquals(1, v("moon_unbound", bound.toBuilder().species(Species.ORIGINAL_HYBRID).hybridCurseBound(false).build()));
+        assertEquals(1, v("moon_unbound", bound.toBuilder().species(Species.TRIBRID).hybridCurseBound(false).build()), "a tribrid is a hybrid type like the other two");
         assertEquals(0, v("moon_unbound", BloodlineState.NONE));
     }
 

@@ -25,7 +25,13 @@ import net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook;
  * ranks and online flags of others; the genes are the subject's own, as their client may know them (unknown until discovered).
  */
 public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes,
-                                 List<HubSocial.Person> people, WorldNowHook.Flags world, List<HubSocial.Npc> npcs) implements CustomPacketPayload {
+                                 List<HubSocial.Person> people, WorldNowHook.Flags world, List<HubSocial.Npc> npcs,
+                                 boolean moonGift) implements CustomPacketPayload {
+    public HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes,
+                              List<HubSocial.Person> people, WorldNowHook.Flags world, List<HubSocial.Npc> npcs) {
+        this(family, pack, fiveCount, genes, people, world, npcs, false);
+    }
+
     public HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int fiveCount, Map<String, Genes.Knowledge> genes,
                               List<HubSocial.Person> people, WorldNowHook.Flags world) {
         this(family, pack, fiveCount, genes, people, world, List.of());
@@ -156,7 +162,7 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
     private static final StreamCodec<ByteBuf, Map<String, Genes.Knowledge>> GENES = ByteBufCodecs.map(LinkedHashMap::new, ByteBufCodecs.stringUtf8(32), KNOWLEDGE, 8);
     private static final StreamCodec<ByteBuf, List<HubSocial.Person>> PEOPLE = PERSON.apply(ByteBufCodecs.list(MAX_NAMES));
 
-    /** Seven fields: more than {@code StreamCodec.composite} takes, so written out, in this order. */
+    /** Eight fields: more than {@code StreamCodec.composite} takes, so written out, in this order. */
     public static final StreamCodec<ByteBuf, HubSnapshotPayload> STREAM_CODEC = StreamCodec.of(
             (buf, p) -> {
                 FAMILY.encode(buf, p.family());
@@ -166,9 +172,10 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
                 PEOPLE.encode(buf, p.people());
                 WORLD.encode(buf, p.world());
                 NPCS.encode(buf, p.npcs());
+                ByteBufCodecs.BOOL.encode(buf, p.moonGift());
             },
             buf -> new HubSnapshotPayload(FAMILY.decode(buf), MEMBERS.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), GENES.decode(buf),
-                    PEOPLE.decode(buf), WORLD.decode(buf), NPCS.decode(buf)));
+                    PEOPLE.decode(buf), WORLD.decode(buf), NPCS.decode(buf), ByteBufCodecs.BOOL.decode(buf)));
 
     public HubSnapshotPayload {
         // the codec caps a list: a sire of hundreds is cut, not a crash on the client
@@ -236,7 +243,7 @@ public record HubSnapshotPayload(Family family, List<HubSocial.Member> pack, int
         Genes.ALL.forEach(g -> genes.put(g, Genes.ofClient(view, g)));
         HubSocial.Social social = HubSocial.of(p);
         return new HubSnapshotPayload(new Family(social.sire(), own.bondBroken(), social.sired(), social.ancestors(), social.line(), social.origin()),
-                social.pack(), social.fiveCount(), genes, social.people(), WorldNowHook.of(p), HubSocial.npcsOf(p));
+                social.pack(), social.fiveCount(), genes, social.people(), WorldNowHook.of(p), HubSocial.npcsOf(p), HubSocial.moonGiftOf(p));
     }
 
     @Override

@@ -234,7 +234,7 @@ public final class BloodlineRules {
     }
 
     private static boolean isHybridType(Species sp) {
-        return sp == Species.HYBRID || sp == Species.ORIGINAL_HYBRID || sp == Species.TRIBRID;
+        return sp.hybridType();
     }
 
     /** R81: vampires and werewolf types. Species wins over faction, so witches and siphoners are never prey. */

@@ -85,6 +85,11 @@ public final class TaskTracker {
         });
     }
 
+    /** The rung "Controlled" (moon_control) is earned with the player's own control; the pack's gift (R96) does not count, it can be taken away at once. */
+    public static boolean earnedMoonControl(ServerPlayer p) {
+        return ModList.get().isLoaded("werewolves") && MoonControl.earned(p) != MoonControl.Control.NONE;
+    }
+
     private static int intArg(String v) {
         try {
             return Integer.parseInt(v);
@@ -103,7 +108,7 @@ public final class TaskTracker {
         BloodlineState b = BloodlineAccess.get(p);
         long now = p.level().getGameTime();
         boolean emissary = EmissaryLines.isEmissary(p);
-        boolean moon = ModList.get().isLoaded("werewolves") && MoonControl.of(p) != MoonControl.Control.NONE;
+        boolean moon = earnedMoonControl(p);
         for (String id : StatePredicates.IDS) {
             long value = StatePredicates.value(id, b, now, emissary, moon).orElse(0);
             if (value > 0) {
