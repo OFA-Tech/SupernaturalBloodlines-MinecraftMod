@@ -1,0 +1,6 @@
+{
+  "overrides": {},
+  "chains": [
+    ["tensura:self_regeneration", "tensura:ultraspeed_regeneration", "tensura:infinite_regeneration"]
+  ]
+}

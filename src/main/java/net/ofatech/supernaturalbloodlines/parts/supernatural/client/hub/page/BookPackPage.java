@@ -177,6 +177,16 @@ public final class BookPackPage implements HubPageView {
                 net.ofatech.supernaturalbloodlines.core.bloodline.WeakSparkRules.daysLeft(wolf.weak(), DEFAULT_GROW_TICKS)));
     }
 
+    /** The pack perk line "Your Alpha's blood frees you from the moon" while the server says the viewer has the pack's moon gift (R96); the client decides nothing. */
+    static java.util.Optional<Component> perkLine(HubScreen.Frame f) {
+        return f.view.snapshot().moonGift() ? java.util.Optional.of(Component.translatable(KEY + "moon_gift")) : java.util.Optional.empty();
+    }
+
+    /** The colour of the perk line: the theme's accent, which every theme keeps at 4.5:1 or more on its paper (a test checks the line itself). */
+    public static int perkColor(HubTheme t) {
+        return t.accent();
+    }
+
     /** The sparks the server counts for the viewer: their own row of the pack (a True Alpha's full count included), else the plain count. */
     static int ownSparks(HubScreen.Frame f) {
         java.util.UUID self = f.view.player().getUUID();
@@ -212,6 +222,9 @@ public final class BookPackPage implements HubPageView {
         y = PageKit.title(f, Component.translatable(KEY + "rank", rankLabel(f, wolf)), r.x(), y, r.w(), t.accent());
         if (weakLine(wolf).isPresent()) {
             y = PageKit.wrapped(f, weakLine(wolf).get(), r.x(), y, r.w(), t.muted()) + 2;
+        }
+        if (perkLine(f).isPresent()) {
+            y = PageKit.wrapped(f, perkLine(f).get(), r.x(), y, r.w(), perkColor(t)) + 6;
         }
         if (pack.isEmpty()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "alone"), r.x(), y + 2, r.w(), t.muted());

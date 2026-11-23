@@ -44,7 +44,7 @@ public final class HybridTraits {
     }
 
     public static boolean isHybrid(Species s) {
-        return s == Species.HYBRID || s == Species.ORIGINAL_HYBRID || s == Species.TRIBRID;
+        return s.hybridType();
     }
 
     /** 0 to 1. A {@code turnedAt} of 0 means "unset" and counts as fully grown. */

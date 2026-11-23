@@ -65,6 +65,7 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
     public static final String LOST_SCENT = "supernaturalbloodlines.boss.klaus.lost_scent";
     private static final String CONTROLLER = "main";
     private static final String ATTACK = "attack";
+    private static final java.util.Map<String, RawAnimation> CLIPS = ShiftCore.clips("klaus_hybrid", "howl");
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final HuntState hunt = new HuntState();
@@ -86,6 +87,11 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
     @Override
     public BossId boss() {
         return BossId.KLAUS;
+    }
+
+    @Override
+    public net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look barLook() {
+        return net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.shifter(form());
     }
 
     @Override
@@ -316,14 +322,9 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, CONTROLLER, 4, state -> {
             KlausEntity k = state.getAnimatable();
-            String name = KlausRules.animation(k.isDeadOrDying(), k.isDesiccated(), ShiftRules.howling(k.form(), k.shiftTicks()), state.isMoving(),
-                    k.getDeltaMovement().horizontalDistance());
-            RawAnimation animation = RawAnimation.begin();
-            return state.setAndContinue(switch (name) {
-                case "death" -> animation.thenPlayAndHold("animation.klaus_hybrid.death");
-                case "howl" -> animation.thenPlay("animation.klaus_hybrid.howl");
-                default -> animation.thenLoop("animation.klaus_hybrid." + name);
-            });
+            String name = KlausRules.animation(k.isDeadOrDying(), k.isDesiccated(), net.ofatech.supernaturalbloodlines.core.boss.MorphRules.arriving(k.form(), k.shiftTicks()),
+                    ShiftRules.howling(k.form(), k.shiftTicks()), state.isMoving(), k.getDeltaMovement().horizontalDistance());
+            return state.setAndContinue(CLIPS.get(name));
         }).triggerableAnim(ATTACK, RawAnimation.begin().thenPlay("animation.klaus_hybrid.attack_bite")));
     }
 }

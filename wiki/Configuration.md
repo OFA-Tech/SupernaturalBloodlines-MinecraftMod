@@ -65,6 +65,10 @@ All under `[species]`.
 | `bottle_blood_cooldown_seconds` | `60` | 1 to 3600 | Seconds before a vampire (not an Original or an Original hybrid) can use the **Bottle my blood** action again. |
 | `bottle_blood_health_cost` | `3.0` | 0 to 19 | Health the **Bottle my blood** action costs. It never kills: at or below the cost it refuses. |
 | `bottle_blood_daily_limit` | `8` | 1 to 1000 | How many times one player may use **Bottle my blood** in one game day. |
+| `give_blood_cooldown_seconds` | `120` | 1 to 3600 | Seconds before a vampire can use **Force-feed my blood** again, whatever came of it. |
+| `vampire_blood_regen_cooldown_seconds` | `600` | 0 to 86400 | A player gets the 90 second Regeneration II pulse of vampire blood once per this many seconds, whatever the source (a forced feed, a bottle, a bite). 0 = every drink gives it. |
+| `force_feed_health_limit` | `0.30` | 0 to 1 | An unwilling player can be force-fed vampire blood only with PvP on and while they are down or at or under this fraction of their health. A player who sneaks accepts at any health. Vervain and claims block it. Forced blood never names a sire. |
+| `vampire_blood_buff_enabled` | `true` | | Vampire blood in a player's system (a bottle, a bite or a forced drink) eases their hunger for the whole window and gives 90 seconds of Regeneration II once per `vampire_blood_regen_cooldown_seconds`. Off: the blood only marks them. |
 | `vampire_blood_ticks` | `24000` | 20 to 24,000,000 | How long vampire blood stays in a player's system, in game ticks. Dying while it is there starts the turning. |
 | `max_five` | `5` | 1 to 10000 | How many Hunters of the Five the world allows. Lowering it later removes nobody: the Five can stay above it until marks are lost, and no new Rite of the Five works until there are fewer than this. |
 | `max_stacked_sparks` | `5` | 1 to 20 | The most [Alpha sparks](Werewolves-And-Packs#stacked-sparks) one werewolf can hold (an Alpha who kills an Alpha from outside their pack takes the victim's on top of their own). Each past the first adds 10% to the Alpha bonuses and a tier to the Roar's Strength. 1 turns it off. **Lowering it clamps the effects at once**; a holder above the new cap drops to it at their next steal. |
@@ -254,6 +258,7 @@ All data a part ships (rites, recipes, loot, tags, EP, altar blocks) is loaded o
 | `weak_spark_max_held` | `2` | 1 to 5 | Weaker sparks one player may hold. |
 | `weak_spark_cooldown_days` | `3` | 0 to 30 | Game days between two weaker sparks for one player. |
 | `moonblood_surge_enabled`, `wolf_spirits_enabled` | `true` | | The two pack abilities. |
+| `hybrid_pack_moon_control` | `true` | | While a pack's current leader is a hybrid, an Original hybrid or a tribrid, its werewolf members have moon control (the pack's gift, R96). **Off:** no pack gift. |
 | `npc_recruit_enabled` | `true` | | The Werewolf Brother rite works. |
 | `max_npc_members_per_player`, `max_npc_members_per_pack` | `2`, `6` | 0 to 8, 0 to 24 | Brothers one werewolf may keep, and a whole pack. |
 | `npc_hunt_trips`, `npc_chest_sort` | `true` | | A Brother with Hunt on hunts on quiet nights; a Brother with Sort on tidies the chest by its post. |

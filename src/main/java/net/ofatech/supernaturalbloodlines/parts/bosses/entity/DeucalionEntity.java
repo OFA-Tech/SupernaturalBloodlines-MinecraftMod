@@ -64,7 +64,7 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
     private static final String CONTROLLER = "main";
     private static final String SWIPE = "swipe";
     private static final String BITE = "bite";
-    private static final String DROP = "drop";
+    private static final java.util.Map<String, RawAnimation> CLIPS = ShiftCore.clips("deucalion_demon_wolf", "roar");
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final HuntState hunt = new HuntState();
@@ -89,6 +89,11 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
     @Override
     public BossId boss() {
         return BossId.DEUCALION;
+    }
+
+    @Override
+    public net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look barLook() {
+        return net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.shifter(form());
     }
 
     @Override
@@ -175,13 +180,12 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
         ShiftCore.advance(this);
     }
 
-    /** The body is swapped: the hitbox is the wolf's from this tick, smoke hides the change, he drops to fours and roars. */
+    /** The body is swapped: the hitbox is the wolf's from this tick, smoke hides the change and he roars; the wolf arrives with its own {@code shift_in} clip. */
     @Override
     public void onSwap(ServerLevel server) {
         refreshDimensions();
         server.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE, getX(), getY() + 0.9, getZ(), 40, 0.4, 0.6, 0.4, 0.04);
         server.playSound(null, getX(), getY(), getZ(), net.minecraft.sounds.SoundEvents.WOLF_HOWL, net.minecraft.sounds.SoundSource.HOSTILE, 2.5F, 0.5F);
-        triggerAnim(CONTROLLER, DROP);
     }
 
     @Override
@@ -333,16 +337,10 @@ public final class DeucalionEntity extends BossNpc implements GeoEntity, ShiftBo
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, CONTROLLER, 4, state -> {
             DeucalionEntity d = state.getAnimatable();
-            String name = KlausRules.animation(d.isDeadOrDying(), false, ShiftRules.howling(d.form(), d.shiftTicks()), state.isMoving(),
-                    d.getDeltaMovement().horizontalDistance());
-            RawAnimation animation = RawAnimation.begin();
-            return state.setAndContinue(switch (name) {
-                case "death" -> animation.thenPlayAndHold("animation.deucalion_demon_wolf.death");
-                case "howl" -> animation.thenPlay("animation.deucalion_demon_wolf.roar");
-                default -> animation.thenLoop("animation.deucalion_demon_wolf." + name);
-            });
+            String name = KlausRules.animation(d.isDeadOrDying(), false, net.ofatech.supernaturalbloodlines.core.boss.MorphRules.arriving(d.form(), d.shiftTicks()),
+                    ShiftRules.howling(d.form(), d.shiftTicks()), state.isMoving(), d.getDeltaMovement().horizontalDistance());
+            return state.setAndContinue(CLIPS.get(name));
         }).triggerableAnim(SWIPE, RawAnimation.begin().thenPlay("animation.deucalion_demon_wolf.attack_swipe"))
-                .triggerableAnim(BITE, RawAnimation.begin().thenPlay("animation.deucalion_demon_wolf.attack_bite"))
-                .triggerableAnim(DROP, RawAnimation.begin().thenPlay("animation.deucalion_demon_wolf.drop_to_fours")));
+                .triggerableAnim(BITE, RawAnimation.begin().thenPlay("animation.deucalion_demon_wolf.attack_bite")));
     }
 }

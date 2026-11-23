@@ -235,6 +235,10 @@ public final class BeastDirector {
         BeastEntity beast = BeastEntity.create(where);
         beast.moveTo(host.getX(), host.getY(), host.getZ(), host.getYRot(), 0F);
         beast.applyFactors();
+        // the Host's hat is on him until the swap (it comes off at tick 20), and it is never dropped
+        beast.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, host.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).copy());
+        beast.setDropChance(net.minecraft.world.entity.EquipmentSlot.HEAD, 0F);
+        beast.beginMorph();
         beast.setHealth(beast.getMaxHealth() * BeastPhaseRules.startHealth(entry.returned));
         entry.phase = BeastPhaseRules.after(entry.phase, BeastPhaseRules.Event.CHANGE);
         entry.phaseDay = dayOf(level.getServer().overworld());
@@ -242,9 +246,6 @@ public final class BeastDirector {
         index.setDirty();
         where.addFreshEntity(beast);
         host.discard();
-        where.sendParticles(ParticleTypes.LARGE_SMOKE, beast.getX(), beast.getY() + 1.2, beast.getZ(), 60, 0.8, 1.0, 0.8, 0.05);
-        where.playSound(null, beast.getX(), beast.getY(), beast.getZ(), SoundEvents.WOLF_HOWL, SoundSource.HOSTILE, 4.0F, 0.3F);
-        beast.howl();
         tellNear(where, beast.blockPosition(), Component.translatable(CHANGE));
         return true;
     }

@@ -97,6 +97,8 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.IntValue WEAK_SPARK_MAX_HELD;
     private static final ModConfigSpec.IntValue WEAK_SPARK_COOLDOWN_DAYS;
     private static final ModConfigSpec.BooleanValue MOONBLOOD_SURGE_ENABLED;
+    private static final ModConfigSpec.BooleanValue HYBRID_PACK_MOON_CONTROL;
+    private static volatile Boolean hybridPackMoonOverride;
     private static final ModConfigSpec.BooleanValue WOLF_SPIRITS_ENABLED;
     private static final ModConfigSpec.BooleanValue NPC_RECRUIT_ENABLED;
     private static final ModConfigSpec.IntValue MAX_NPC_MEMBERS_PER_PLAYER;
@@ -191,6 +193,14 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue BOTTLE_BLOOD_HEALTH_COST;
     public static final int DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT = 8;
     private static final ModConfigSpec.IntValue BOTTLE_BLOOD_DAILY_LIMIT;
+    public static final int DEFAULT_GIVE_BLOOD_COOLDOWN_SECONDS = 120;
+    public static final double DEFAULT_FORCE_FEED_HEALTH_LIMIT = 0.30;
+    public static final boolean DEFAULT_VAMPIRE_BLOOD_BUFF_ENABLED = true;
+    public static final int DEFAULT_VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS = 600;
+    private static final ModConfigSpec.IntValue VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS;
+    private static final ModConfigSpec.IntValue GIVE_BLOOD_COOLDOWN_SECONDS;
+    private static final ModConfigSpec.DoubleValue FORCE_FEED_HEALTH_LIMIT;
+    private static final ModConfigSpec.BooleanValue VAMPIRE_BLOOD_BUFF_ENABLED;
 
     public static final double DEFAULT_AUGUSTINE_ATTACK_BONUS = 0.10;
     public static final double DEFAULT_AUGUSTINE_EXTRA_HEALTH = 2.0;
@@ -258,6 +268,25 @@ public final class SpeciesConfig {
     @VisibleForTesting
     public static void overrideTrial(TrialTuning value) {
         trialOverride = value;
+    }
+
+    /** R96: whether the werewolf members of a pack led by a hybrid-like leader have moon control ({@code hybrid_pack_moon_control}). */
+    public static boolean hybridPackMoonControl() {
+        Boolean pinned = hybridPackMoonOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return HYBRID_PACK_MOON_CONTROL.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
+    /** For tests: pins {@link #hybridPackMoonControl()}; null clears it. */
+    @VisibleForTesting
+    public static void overrideHybridPackMoon(Boolean value) {
+        hybridPackMoonOverride = value;
     }
 
     public static TrialTuning trial() {
@@ -365,6 +394,8 @@ public final class SpeciesConfig {
                 .define("moonblood_surge_enabled", true);
         WOLF_SPIRITS_ENABLED = b.comment("R146: Wolf Spirits, an Alpha calls three spirit wolves that fight for the pack for three minutes (/pack spirits).")
                 .define("wolf_spirits_enabled", true);
+        HYBRID_PACK_MOON_CONTROL = b.comment("R96: while the pack's current leader is a hybrid, an Original hybrid or a tribrid, every werewolf member of the pack has moon control (as with a Moon Ring). Lost on leaving the pack or when the lead passes to someone else. Off: no pack gift.")
+                .define("hybrid_pack_moon_control", true);
         ALPHA_TRIAL_ENABLED = b.comment("R147: the Alpha Trial rite (a full-moon night, a transformed Beta or Omega) calls a boss; winning gives a new Alpha spark. Off: the rite refuses.")
                 .define("alpha_trial_enabled", true);
         ALPHA_TRIAL_MIN_LEVEL = b.comment("Lowest werewolf level that may try the Alpha Trial.")
@@ -395,6 +426,14 @@ public final class SpeciesConfig {
                 .defineInRange("bottle_blood_health_cost", DEFAULT_BOTTLE_BLOOD_HEALTH_COST, 0.0, 19.0);
         BOTTLE_BLOOD_DAILY_LIMIT = b.comment("R211: how many times one player may use Bottle my blood in one game day, counted in world time; sleeping or /time does not reset it. Vampire blood bottles are an ingredient (pure blood, vampire blood oil) and a task item of Vampirism, so they are not free.")
                 .defineInRange("bottle_blood_daily_limit", DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT, 1, 1000);
+        GIVE_BLOOD_COOLDOWN_SECONDS = b.comment("R208: seconds before a vampire can use Force-feed my blood again, whatever came of it.")
+                .defineInRange("give_blood_cooldown_seconds", DEFAULT_GIVE_BLOOD_COOLDOWN_SECONDS, 1, 3600);
+        FORCE_FEED_HEALTH_LIMIT = b.comment("R208: an unwilling player can be fed vampire blood only while PvP is on and they are down or at or under this fraction of their health (0.30 = 30%). A target who sneaks accepts at any health.")
+                .defineInRange("force_feed_health_limit", DEFAULT_FORCE_FEED_HEALTH_LIMIT, 0.0, 1.0);
+        VAMPIRE_BLOOD_BUFF_ENABLED = b.comment("R207: vampire blood in a player's system eases their hunger for the whole window (vampire_blood_ticks) and, once per vampire_blood_regen_cooldown_seconds, gives 90 seconds of Regeneration II. Anyone the blood marks gets it, a bottle included. Off: the blood only marks them.")
+                .define("vampire_blood_buff_enabled", DEFAULT_VAMPIRE_BLOOD_BUFF_ENABLED);
+        VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS = b.comment("R207: a player gets the 90 second Regeneration II pulse of vampire blood once per this many seconds, whatever the source (a forced feed, a bottle, a bite), so drinking more does not keep it going. 0 = every drink gives it.")
+                .defineInRange("vampire_blood_regen_cooldown_seconds", DEFAULT_VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS, 0, 86400);
         AUGUSTINE_ATTACK_BONUS = b.comment("R200: an Augustine's extra attack damage, as a fraction (0.10 = +10%; an Original has +20%).")
                 .defineInRange("augustine_attack_bonus", DEFAULT_AUGUSTINE_ATTACK_BONUS, 0.0, 1.0);
         AUGUSTINE_EXTRA_HEALTH = b.comment("R200: an Augustine's extra maximum health, in half hearts (an Original has 4).")
@@ -982,6 +1021,64 @@ public final class SpeciesConfig {
             return BOTTLE_BLOOD_COOLDOWN_SECONDS.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_BOTTLE_BLOOD_COOLDOWN_SECONDS;
+        }
+    }
+
+    /** {@code give_blood_cooldown_seconds}. */
+    public static int giveBloodCooldownSeconds() {
+        try {
+            return GIVE_BLOOD_COOLDOWN_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_GIVE_BLOOD_COOLDOWN_SECONDS;
+        }
+    }
+
+    /** {@code force_feed_health_limit}. */
+    public static double forceFeedHealthLimit() {
+        try {
+            return FORCE_FEED_HEALTH_LIMIT.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_FORCE_FEED_HEALTH_LIMIT;
+        }
+    }
+
+    private static volatile Boolean bloodBuffOverride;
+
+    /** For tests: pins {@link #vampireBloodBuffEnabled()}; null clears it. */
+    public static void overrideVampireBloodBuff(Boolean value) {
+        bloodBuffOverride = value;
+    }
+
+    /** {@code vampire_blood_regen_cooldown_seconds}. */
+    public static int vampireBloodRegenCooldownSeconds() {
+        Integer pinned = regenCooldownOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_VAMPIRE_BLOOD_REGEN_COOLDOWN_SECONDS;
+        }
+    }
+
+    private static volatile Integer regenCooldownOverride;
+
+    /** For tests: pins {@link #vampireBloodRegenCooldownSeconds()}; null clears it. */
+    public static void overrideVampireBloodRegenCooldown(Integer value) {
+        regenCooldownOverride = value;
+    }
+
+    /** {@code vampire_blood_buff_enabled}. */
+    public static boolean vampireBloodBuffEnabled() {
+        Boolean pinned = bloodBuffOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return VAMPIRE_BLOOD_BUFF_ENABLED.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_VAMPIRE_BLOOD_BUFF_ENABLED;
         }
     }
 
