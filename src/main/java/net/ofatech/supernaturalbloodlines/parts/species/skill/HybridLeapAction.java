@@ -6,7 +6,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -55,12 +54,12 @@ public final class HybridLeapAction implements ExtraActions.Action {
 
     /** A leap in the air. */
     private static final class Flight {
-        final UUID target;
+        final LivingEntity target;
         int ticks;
         boolean leftGround;
         boolean landedBlow;
 
-        Flight(UUID target) {
+        Flight(LivingEntity target) {
             this.target = target;
         }
     }
@@ -189,7 +188,7 @@ public final class HybridLeapAction implements ExtraActions.Action {
         p.hurtMarked = true;
         p.hasImpulse = true;
         p.fallDistance = 0.0F;
-        FLIGHTS.put(p.getUUID(), new Flight(target.getUUID()));
+        FLIGHTS.put(p.getUUID(), new Flight(target));
         p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, 0.7f);
         p.displayClientMessage(Component.translatable(DONE, target.getDisplayName()), true);
         ActionClock.start(p, id(), cooldownTicks(p));
@@ -212,7 +211,8 @@ public final class HybridLeapAction implements ExtraActions.Action {
         }
         f.ticks++;
         f.leftGround |= !p.onGround();
-        if (!f.landedBlow && p.level() instanceof ServerLevel level && level.getEntity(f.target) instanceof LivingEntity target && target.isAlive()
+        LivingEntity target = f.target;
+        if (!f.landedBlow && target.isAlive() && target.level() == p.level()
                 && LeapMath.hits(p.getBoundingBox().getCenter().distanceTo(target.getBoundingBox().getCenter()), LeapMath.HIT_RADIUS)
                 // the line of sight the leap needed at the start is asked again at the landing: no blow through a wall or a floor
                 && p.hasLineOfSight(target)) {

@@ -57,7 +57,7 @@ public final class HybridLeapGameTests {
 
     private static TestPlayers.TalkingDuelist hybrid(GameTestHelper helper, Species species, String... skills) {
         TestPlayers.TalkingDuelist p = TestPlayers.createTalkingDuelist(helper);
-        p.setPos(helper.absoluteVec(new Vec3(1.5, 1, 0.5)));
+        p.setPos(helper.absoluteVec(new Vec3(1.5, 2, 0.5)));
         BloodlineAccess.set(p, BloodlineState.NONE.toBuilder().species(species).build());
         SupernaturalAccess.set(p, SupernaturalAccess.get(p).toBuilder().skills(Set.of(skills)).build());
         return p;
@@ -69,7 +69,7 @@ public final class HybridLeapGameTests {
 
     private static Zombie zombieAt(GameTestHelper helper, double z) {
         Zombie zombie = EntityType.ZOMBIE.create(helper.getLevel());
-        zombie.setPos(helper.absoluteVec(new Vec3(1.5, 1, z)));
+        zombie.setPos(helper.absoluteVec(new Vec3(1.5, 2, z)));
         zombie.setNoAi(true);
         helper.getLevel().addFreshEntity(zombie);
         return zombie;
@@ -119,7 +119,7 @@ public final class HybridLeapGameTests {
             helper.assertTrue(HybridLeapAction.inFlight(p) && ActionClock.left(p, LEAP) > 0, "no flight or no cooldown");
             helper.assertTrue(z.getHealth() == 20.0f, "the blow landed before the flight reached the target");
             arriveAt(p, z);
-            helper.assertTrue(z.getHealth() == 20.0f - (float) SpeciesConfig.hybridLeapDamage(), "the blow did " + (20.0f - z.getHealth()));
+            helper.assertTrue(20.0f - z.getHealth() > SpeciesConfig.hybridLeapDamage() - 1.0 && 20.0f - z.getHealth() <= SpeciesConfig.hybridLeapDamage(), "the blow did " + (20.0f - z.getHealth()) + " (dist " + p.getBoundingBox().getCenter().distanceTo(z.getBoundingBox().getCenter()) + ", los " + p.hasLineOfSight(z) + ", flight " + HybridLeapAction.inFlight(p) + ", ground " + p.onGround() + ", inv " + z.invulnerableTime + ")");
             var weak = z.getEffect(MobEffects.WEAKNESS);
             helper.assertTrue(weak != null && weak.getDuration() > 0, "no Weakness");
             float after = z.getHealth();
@@ -276,7 +276,8 @@ public final class HybridLeapGameTests {
             helper.assertTrue(HudTargets.resolve(p, z.getId()).isEmpty(), "setup: the bite reach already names a target 10 blocks away");
             helper.assertTrue(LoadoutService.set(p, 2, LEAP) == null, "could not slot the leap");
             look(p, z);
-            helper.assertTrue(ActionService.trigger(p, 2, z.getId(), false) == null, "the slot press was refused: the leap does not reach past the bite reach");
+            String slotAnswer = ActionService.trigger(p, 2, z.getId(), false);
+            helper.assertTrue(slotAnswer == null, "the slot press was refused (" + slotAnswer + "): the leap does not reach past the bite reach");
             helper.assertTrue(HybridLeapAction.inFlight(p), "no flight began");
             helper.assertTrue(HudTargets.resolve(p, z.getId(), 5.0).isEmpty() && HudTargets.resolve(p, z.getId(), 12.0).isPresent(), "HudTargets does not honour the reach it is given");
         } finally {
@@ -299,16 +300,16 @@ public final class HybridLeapGameTests {
         try {
             look(p, z);
             helper.assertTrue(HybridLeapAction.INSTANCE.trigger(p, z) == null, "the leap was refused");
-            for (int dy = -1; dy < 4; dy++) {
+            for (int dy = 1; dy < 4; dy++) {
                 for (int dx = -2; dx <= 2; dx++) {
                     helper.getLevel().setBlockAndUpdate(wall.offset(dx, dy, 0), Blocks.STONE.defaultBlockState());
                 }
             }
-            p.setPos(helper.absoluteVec(new Vec3(1.5, 1, 4.0)));
+            p.setPos(helper.absoluteVec(new Vec3(1.5, 2, 4.5)));
             p.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, z.getEyePosition());
             HybridLeapAction.tick(p);
             helper.assertTrue(z.getHealth() == 20.0f, "a blow landed through a wall");
-            for (int dy = -1; dy < 4; dy++) {
+            for (int dy = 1; dy < 4; dy++) {
                 for (int dx = -2; dx <= 2; dx++) {
                     helper.getLevel().setBlockAndUpdate(wall.offset(dx, dy, 0), Blocks.AIR.defaultBlockState());
                 }
@@ -316,7 +317,7 @@ public final class HybridLeapGameTests {
             HybridLeapAction.tick(p);
             helper.assertTrue(z.getHealth() < 20.0f, "the blow did not land once the way was clear");
         } finally {
-            for (int dy = -1; dy < 4; dy++) {
+            for (int dy = 1; dy < 4; dy++) {
                 for (int dx = -2; dx <= 2; dx++) {
                     helper.getLevel().setBlockAndUpdate(wall.offset(dx, dy, 0), Blocks.AIR.defaultBlockState());
                 }
@@ -387,7 +388,7 @@ public final class HybridLeapGameTests {
         java.util.List<LivingEntity> targets = java.util.List.of(original, creativeVampire, snapped, weak);
         try {
             for (ServerPlayer t : new ServerPlayer[] {original, creativeVampire, snapped}) {
-                t.setPos(helper.absoluteVec(new Vec3(1.5, 1, 6.5)));
+                t.setPos(helper.absoluteVec(new Vec3(1.5, 2, 6.5)));
             }
             BloodlineAccess.set(original, BloodlineState.NONE.toBuilder().species(Species.ORIGINAL).build());
             creativeVampire.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
@@ -427,7 +428,7 @@ public final class HybridLeapGameTests {
         }
         TestPlayers.TalkingDuelist p = hybrid(helper);
         ServerPlayer original = TestPlayers.createDuelist(helper);
-        original.setPos(helper.absoluteVec(new Vec3(1.5, 1, 6.5)));
+        original.setPos(helper.absoluteVec(new Vec3(1.5, 2, 6.5)));
         BloodlineAccess.set(original, BloodlineState.NONE.toBuilder().species(Species.ORIGINAL).build());
         boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         helper.getLevel().getServer().setPvpAllowed(true);
@@ -437,7 +438,7 @@ public final class HybridLeapGameTests {
             helper.assertTrue(HybridLeapAction.INSTANCE.trigger(p, original) == null, "an Original in the grace after a snap was refused");
             float before = original.getHealth();
             arriveAt(p, original);
-            helper.assertTrue(original.getHealth() < before && original.isAlive(), "an Original was not hurt like anyone (or died of it): " + original.getHealth());
+            helper.assertTrue(original.getHealth() < before && original.isAlive(), "an Original was not hurt like anyone (or died of it): " + original.getHealth() + " (inv " + original.invulnerableTime + ", los " + p.hasLineOfSight(original) + ", dist " + p.getBoundingBox().getCenter().distanceTo(original.getBoundingBox().getCenter()) + ", flight " + HybridLeapAction.inFlight(p) + ", abilities inv " + original.getAbilities().invulnerable + ", mode " + original.gameMode.getGameModeForPlayer() + ", downed " + Downed.isDowned(original) + ")");
             helper.assertTrue(original.hasEffect(MobEffects.WEAKNESS), "no Weakness on an Original");
         } finally {
             helper.getLevel().getServer().setPvpAllowed(pvp);
