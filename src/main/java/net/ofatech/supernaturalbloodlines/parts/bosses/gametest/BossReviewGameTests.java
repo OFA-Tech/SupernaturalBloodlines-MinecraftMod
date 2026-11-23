@@ -366,6 +366,28 @@ public final class BossReviewGameTests {
             helper.assertTrue(plain.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossHitPayload.class).isEmpty(), "and a payload was sent to it");
             helper.assertTrue(!BossBars.noteHit(far.player, m, t), "a player who is not watching the bar was told");
             helper.assertTrue(far.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossHitPayload.class).isEmpty(), "and was sent a payload");
+            helper.assertTrue(BossBars.hitsKept(hitter.player.getUUID()) == 1, "what is kept of the hits: " + BossBars.hitsKept(hitter.player.getUUID()));
+            BossBars.forgetPlayer(hitter.player.getUUID());
+            helper.assertTrue(BossBars.hitsKept(hitter.player.getUUID()) == 0, "a player who logged out is still kept");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aRealBlowFromAPlayerReachesTheHitHookAndTellsThemOnce(GameTestHelper helper) {
+        MockViewer hitter = MockViewer.of(helper, true);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            var klaus = rig.spawnKlaus();
+            hitter.player.setPos(klaus.getX() + 2, klaus.getY(), klaus.getZ());
+            BossBars.update(klaus, List.of(hitter.player));
+            boolean landed = klaus.hurt(helper.getLevel().damageSources().playerAttack(hitter.player), 1.0F);
+            helper.assertTrue(landed, "the blow did not land, so this does not test the hook");
+            var told = hitter.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossHitPayload.class);
+            helper.assertTrue(told.size() == 1 && told.get(0).bar().equals(BossBars.barOf(klaus.getUUID()).getId()), "a blow from a player was not told once through the damage event: " + told);
+            var another = MockViewer.of(helper, true);
+            another.player.setPos(klaus.getX() + 3, klaus.getY(), klaus.getZ());
+            BossBars.update(klaus, List.of(hitter.player, another.player));
+            helper.assertTrue(another.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossHitPayload.class).isEmpty(), "a player who did not hit the boss was told of someone else's blow");
         }
         helper.succeed();
     }

@@ -44,8 +44,16 @@ public final class BossBarLayout {
 
     /** Another mod's bar draws its name 9 px above itself: it starts this far under the card's top plus the card, so that name clears the card by two pixels. */
     public static final int VANILLA_HEAD = 11;
-    /** What the first of our bars tells vanilla it took, whatever the number of bosses (the row is one card tall): another mod's bar starts under the row. */
+    /** What the first of our bars tells vanilla it took, whatever the number of bosses (the row is one card tall). */
     public static final int ROW_INCREMENT = CARD_H + VANILLA_HEAD;
+
+    /**
+     * The increment our bar tells vanilla for its event: the whole row's height from the first of our bars, none from the others. So another mod's bar that comes after ours
+     * starts under the row, and vanilla's one-third rule cannot drop any of ours. (One that came before ours is drawn above, and pushes the row down.)
+     */
+    public static int increment(boolean firstOfOurs) {
+        return firstOfOurs ? ROW_INCREMENT : 0;
+    }
     /**
      * The card for a width and the widths of the chip texts ({@code active}: the lit chip). When the chips do not all fit on the name plate's width, only the lit
      * one is drawn, so a chip never leaves the plate and never covers the health.

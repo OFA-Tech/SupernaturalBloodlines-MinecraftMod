@@ -178,19 +178,49 @@ class BossFacesTest {
         assertTrue(faint.isEmpty(), "the pulse washes the fill into its track: " + faint);
     }
 
+    private static double lum(int argb) {
+        double[] c = new double[3];
+        for (int i = 0; i < 3; i++) {
+            double v = (argb >> (16 - 8 * i) & 0xFF) / 255.0;
+            c[i] = v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        }
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    }
+
+    /** The brightest opaque pixel in the outer band of a plate's picture: the colour of its rim. */
+    private static int rim(HudKit k, Part plate) throws Exception {
+        BufferedImage img = image(k, plate);
+        int best = 0;
+        double bestLum = -1;
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                boolean band = x < 6 || y < 6 || x >= img.getWidth() - 6 || y >= img.getHeight() - 6;
+                int argb = img.getRGB(x, y);
+                if (band && (argb >>> 24) > 0xC0 && lum(argb) > bestLum) {
+                    bestLum = lum(argb);
+                    best = argb | 0xFF000000;
+                }
+            }
+        }
+        return best;
+    }
+
     @Test
-    void theHealthRingsColoursAreTheKitsOwnBarColoursAndStandOutFromTheTrackAtThreeToOne() throws Exception {
+    void theHealthRingStandsOutFromItsTrackAndFromTheDimmedRimOfItsPlateAtThreeToOne() throws Exception {
+        int dim = Math.round(BossFaces.TOKEN_PLATE_ALPHA * 100);
         for (HudKit k : HudKit.values()) {
-            assertEquals(dominant(k, Part.BOSS_BAR_FILL), BossFaces.ringFill(k), k + " fill");
-            assertEquals(dominant(k, Part.BOSS_BAR_FILL_SHIFTING), BossFaces.ringShifting(k), k + " shifting");
-            assertEquals(dominant(k, Part.BOSS_BAR_TRACK), BossFaces.ringTrack(k), k + " track");
-            for (int fill : new int[] {BossFaces.ringFill(k), BossFaces.ringShifting(k)}) {
-                double r = Contrast.ratio(fill, BossFaces.ringTrack(k));
-                assertTrue(r >= 3.0, k + ": a ring of #" + Integer.toHexString(fill) + " on its track is " + String.format("%.2f", r) + ":1");
+            assertEquals(dominant(k, Part.BOSS_BAR_TRACK), BossFaces.ringTrack(k), k + " track is the kit's own");
+            Object[][] pairs = {{Part.BOSS_PORTRAIT_PLATE, BossFaces.ringFill(k), "fill"}, {Part.BOSS_PORTRAIT_PLATE_SHIFTING, BossFaces.ringShifting(k), "shifting"}};
+            for (Object[] pair : pairs) {
+                int ring = (int) pair[1];
+                double onTrack = Contrast.ratio(ring, BossFaces.ringTrack(k));
+                assertTrue(onTrack >= 3.0, k + " " + pair[2] + ": the ring on its track is " + String.format("%.2f", onTrack) + ":1");
+                int seenRim = blend(rim(k, (Part) pair[0]), BossFaces.ringTrack(k), dim);
+                double onRim = Contrast.ratio(ring, seenRim);
+                assertTrue(onRim >= 3.0, k + " " + pair[2] + ": the ring against its plate's rim (#" + Integer.toHexString(seenRim) + ") is " + String.format("%.2f", onRim) + ":1");
             }
         }
     }
-
     @Test
     void theCardsInkAndTheNameColourAreTheThemesOwn() {
         HubTheme[] themes = {new GrimoireTheme(), new BloodMoonTheme(), new TensuraHubTheme()};

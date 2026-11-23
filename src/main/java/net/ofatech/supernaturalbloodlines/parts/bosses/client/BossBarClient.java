@@ -32,7 +32,7 @@ import net.ofatech.supernaturalbloodlines.shared.hud.HudStyle;
 /**
  * Our boss bars on the client, as one row: the focus boss as the full card and every other boss as a token beside it ({@link BossRow}). The server tells what vanilla's packet
  * cannot ({@link BossBarInfoPayload}, {@link BossHitPayload}); here every bar of ours is cancelled and the row is drawn once, at the first of them, which tells vanilla
- * that the row is one card tall whatever the number of bosses, so another mod's bar always starts under it and vanilla's rule (stop once a bar would start below a third of the
+ * that the row is one card tall whatever the number of bosses, so another mod's bar that comes after ours starts under it (one that came first stays above, and pushes the row down) and vanilla's rule (stop once a bar would start below a third of the
  * screen) cannot take any of ours away. The focus is chosen once a tick ({@link BossFocus}). Narration and a hover tooltip list every boss. Client only.
  */
 public final class BossBarClient {
@@ -59,7 +59,7 @@ public final class BossBarClient {
     private static int plusHidden = -1;
     private static String plusText = "";
     private static int plusW;
-    private static List<UUID> narrated = List.of();
+    private static NarrationGate.State spoken;
 
     private static final BiConsumer<UUID, LerpingBossEvent> COLLECT = (id, event) -> {
         BossBarInfo info = INFOS.get(id);
@@ -114,7 +114,7 @@ public final class BossBarClient {
         focusId = null;
         prevFocusId = null;
         lastPlan = null;
-        narrated = List.of();
+        spoken = null;
         planKey = -1;
     }
 
@@ -185,7 +185,7 @@ public final class BossBarClient {
             var events = mc.gui.getBossOverlay().events;
             INFOS.keySet().removeIf(id -> !events.containsKey(id));
         }
-        narrate(mc);
+        narrate(mc, now);
     }
 
     private static void onBar(CustomizeGuiOverlayEvent.BossEventProgress e) {
@@ -204,7 +204,7 @@ public final class BossBarClient {
             }
         }
         e.setCanceled(true);
-        e.setIncrement(count > 0 && ORDER[0].event == event ? BossBarLayout.ROW_INCREMENT : 0);
+        e.setIncrement(BossBarLayout.increment(count > 0 && ORDER[0].event == event));
     }
 
     private static void drawRow(GuiGraphics g, Minecraft mc, int y, float partial) {
@@ -272,35 +272,44 @@ public final class BossBarClient {
         return Component.translatable(line.key(), line.args().toArray());
     }
 
-    /** Says the row aloud when who is in it, or who is the focus, changes (not for every change of health). */
-    private static void narrate(Minecraft mc) {
+    /**
+     * Says the row aloud: the whole row when who is in it changes, just the focus when only the focus changes and not within a hold ({@link NarrationGate}). It is decided from
+     * the ids alone; names, health and forms are looked up (and translated) only for what is actually said.
+     */
+    private static void narrate(Minecraft mc, long now) {
         BossBarInfo focus = focus();
         if (focus == null) {
-            narrated = List.of();
+            spoken = null;
             return;
         }
-        List<UUID> now = new ArrayList<>(count);
-        now.add(focus.bar);
-        List<BossNarration.Entry> others = new ArrayList<>(count);
+        java.util.Set<UUID> set = new java.util.HashSet<>();
         for (int k = 0; k < count; k++) {
-            if (ORDER[k] != focus) {
-                now.add(ORDER[k].bar);
-                others.add(entry(ORDER[k]));
-            }
+            set.add(ORDER[k].bar);
         }
-        if (now.equals(narrated)) {
+        NarrationGate.Say say = NarrationGate.decide(spoken, set, focus.bar, now);
+        if (say == NarrationGate.Say.NONE) {
             return;
         }
-        narrated = now;
-        if (mc.options.narrator().get().shouldNarrateSystem()) {
-            StringBuilder said = new StringBuilder();
+        spoken = NarrationGate.after(spoken, say, set, focus.bar, now);
+        if (!mc.options.narrator().get().shouldNarrateSystem()) {
+            return;
+        }
+        StringBuilder said = new StringBuilder();
+        if (say == NarrationGate.Say.FOCUS) {
+            said.append(text(BossNarration.focusOnly(entry(focus))).getString());
+        } else {
+            List<BossNarration.Entry> others = new ArrayList<>(count);
+            for (int k = 0; k < count; k++) {
+                if (ORDER[k] != focus) {
+                    others.add(entry(ORDER[k]));
+                }
+            }
             for (BossNarration.Line line : BossNarration.row(entry(focus), others)) {
                 said.append(text(line).getString()).append(". ");
             }
-            mc.getNarrator().sayNow(said.toString());
         }
+        mc.getNarrator().sayNow(said.toString());
     }
-
     /** The tooltip of a token, where the pointer is free (chat, a menu): the boss, or every boss the "+N" token holds. */
     private static void tooltip(ScreenEvent.Render.Post e) {
         if (lastPlan == null || UiMotion.tick() - lastDrawn > 2) {

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Vanilla's {@code BossHealthOverlay.render} walks the bars in order from y = 12 and, after each one, adds its increment and stops once {@code y >= guiHeight / 3}.
- * This is that loop, with our row answering as the code does (the first of our bars takes the whole row's increment, the others none), and the table of what it draws.
+ * This is that loop, with our bars answering through the same {@code BossBarLayout.increment} the client's event handler calls, and the table of what it draws.
  */
 class VanillaBossLoopTest {
     private static final int[] GUI_HEIGHTS = {540, 360, 270}; // GUI scales 2, 3 and 4 on a 1920 x 1080 window
@@ -41,7 +41,7 @@ class VanillaBossLoopTest {
         for (int i = 0; i < bars.size(); i++) {
             y[i] = j;
             Bar b = bars.get(i);
-            j += b.ours() ? (b.ourIndex() == 0 ? BossBarLayout.ROW_INCREMENT : 0) : VANILLA_INCREMENT;
+            j += b.ours() ? BossBarLayout.increment(b.ourIndex() == 0) : VANILLA_INCREMENT;
             if (j >= guiH / 3) {
                 break;
             }
@@ -57,7 +57,7 @@ class VanillaBossLoopTest {
     }
 
     @Test
-    void everyBossOfOursAndAnotherModsBarUnderThemAreDrawnAtEveryScaleWithOneToNineBosses() {
+    void everyBossOfOursAndAnotherModsBarThatComesAfterThemAreDrawnAtEveryScaleWithOneToNineBosses() {
         for (int guiH : GUI_HEIGHTS) {
             for (int n = 1; n <= 9; n++) {
                 List<Bar> bars = bars(0, n, 1);
@@ -70,20 +70,6 @@ class VanillaBossLoopTest {
                 assertTrue(y[n] >= START + BossBarLayout.CARD_H + BossBarLayout.VANILLA_HEAD - 9, "it starts under the card");
             }
         }
-    }
-
-    @Test
-    void theTableOfWhereTheOtherModsBarIsAtEachScale() {
-        // the row is 57 high, so the other bar is posted at y = 69: under a third of the screen at every scale (180, 120 and 90)
-        for (int guiH : GUI_HEIGHTS) {
-            assertTrue(START + BossBarLayout.ROW_INCREMENT < guiH / 3, "GUI " + guiH + ": the loop would stop before the other bar");
-        }
-    }
-
-    @Test
-    void theOldVerticalStackWasDroppedAtScaleThreeAndFourWhichIsWhyThereIsOneRow() {
-        int stackOfTwo = START + 2 * 52 + 11; // two cards of 46 with 6 between, and the room for a name
-        assertTrue(stackOfTwo >= 360 / 3 && stackOfTwo >= 270 / 3, "two stacked cards pushed the other bar past the third at scales 3 and 4");
     }
 
     @Test

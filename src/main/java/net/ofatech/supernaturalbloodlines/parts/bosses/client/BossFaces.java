@@ -16,16 +16,20 @@ public final class BossFaces {
     }
 
     /**
-     * The colours of a token's health ring: the filled part, the filled part while the boss shifts or lies fallen, and the empty track. They are the dominant colours of the kit's
-     * own bar pictures (held equal to them by {@code BossFacesTest}) and stand out from the track at 3:1 or more, so the ring reads without colour names.
+     * The colours of a token's health ring: the filled part, the filled part while the boss shifts or lies fallen, and the empty track (the track is the kit's own bar track).
+     * The filled colours are lighter than the plate's rim, which has the colour of the kit's bar: they stand out from the track and from the dimmed rim at 3:1 or more
+     * ({@code BossFacesTest}), so a boss that is nearly dead does not look full because of its plate.
      */
     public static int ringFill(HudKit k) {
         return switch (k) {
             case GRIMOIRE -> 0xFF8E1C22;
-            case BLOOD_MOON -> 0xFFBF332B;
-            case TENSURA -> 0xFF3FD0D6;
+            case BLOOD_MOON -> 0xFFFF6A5E;
+            case TENSURA -> 0xFF8FF3F7;
         };
     }
+
+    /** How opaque a token's plate is drawn over its backing: its rim has the colour of the kit's bar, and at full strength reads as a full ring whatever the health. */
+    public static final float TOKEN_PLATE_ALPHA = 0.4f;
 
     public static int ringShifting(HudKit k) {
         return switch (k) {

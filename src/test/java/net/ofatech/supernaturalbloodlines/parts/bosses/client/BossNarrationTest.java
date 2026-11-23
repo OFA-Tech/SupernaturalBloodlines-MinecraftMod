@@ -43,6 +43,14 @@ class BossNarrationTest {
     }
 
     @Test
+    void whenOnlyTheFocusChangesJustTheFocusIsSaidWithoutTheOthers() {
+        Line line = BossNarration.focusOnly(new Entry("Deucalion", 55, FORM));
+        assertEquals(BossNarration.KEY + "focus_alone_form", line.key());
+        assertEquals(List.of("Deucalion", 55, FORM), line.args());
+        assertEquals(BossNarration.KEY + "focus_alone", BossNarration.focusOnly(new Entry("Mikael", 9, null)).key());
+    }
+
+    @Test
     void thePlusTokensTooltipListsTheHiddenBossesOneLineEach() {
         List<Line> lines = BossNarration.hidden(List.of(new Entry("Kol", 30, null), new Entry("Peter", 60, FORM)));
         assertEquals(2, lines.size());

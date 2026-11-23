@@ -47,6 +47,11 @@ public final class BossNarration {
         return lines;
     }
 
+    /** Just the focus boss: what is said when only the focus changes. */
+    public static Line focusOnly(Entry e) {
+        return one(e, "focus_alone");
+    }
+
     /** One boss: the tooltip of a token, and the first line of the narration. */
     public static Line one(Entry e, String which) {
         if (e.form() == null) {

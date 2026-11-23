@@ -69,6 +69,16 @@ class BossFocusTest {
     }
 
     @Test
+    void aTieOnTheSameTickKeepsTheCurrentFocusWhateverItsId() {
+        // B is the current focus and has the higher id: two hits on the same tick, and two bosses at the same distance, do not take the focus from it
+        assertEquals(B, BossFocus.choose(List.of(c(A, 10, 90), c(B, 10, 90)), B, 50, 100), "the same hit tick");
+        assertEquals(B, BossFocus.choose(List.of(c(B, 10, 90), c(A, 10, 90)), B, 50, 100), "the same hit tick, other order");
+        assertEquals(B, BossFocus.choose(List.of(c(A, 10, NEVER), c(B, 10, NEVER)), B, 0, 1000), "the same distance");
+        assertEquals(A, BossFocus.choose(List.of(c(A, 10, NEVER), c(B, 10, NEVER)), A, 0, 1000));
+        assertEquals(A, BossFocus.choose(List.of(c(B, 10, 90), c(A, 10, 90)), C, 0, 100), "no current among them: the lower id, as before");
+    }
+
+    @Test
     void anUnknownDistanceIsFarAndTiesAreBrokenTheSameWayEveryTime() {
         assertEquals(B, BossFocus.choose(List.of(new Candidate(A, BossFocus.UNKNOWN, NEVER), c(B, 40, NEVER)), null, 0, 0));
         assertEquals(A, BossFocus.choose(List.of(c(B, 10, NEVER), c(A, 10, NEVER)), null, 0, 0), "equal distances: the lower id, whatever the order");

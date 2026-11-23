@@ -35,6 +35,7 @@ public final class BossBars {
             }
         });
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> reset());
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> forgetPlayer(e.getEntity().getUUID()));
         // the player who damages a boss is told, so the boss row makes that boss the full card (the one fact the client cannot know by itself)
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post e) -> {
             if (e.getEntity() instanceof BossNpc boss && e.getSource().getEntity() instanceof ServerPlayer hitter) {
@@ -107,6 +108,18 @@ public final class BossBars {
         }
         mine.put(boss.getUUID(), now);
         return true;
+    }
+
+    /** A player who logs out takes what was kept about their hits with them (it would otherwise stay, one entry per player who ever hit a boss). */
+    public static void forgetPlayer(UUID player) {
+        HIT_SENT.remove(player);
+    }
+
+    /** How many bosses this player is being throttled for: what is kept of them. */
+    @VisibleForTesting
+    public static int hitsKept(UUID player) {
+        Map<UUID, Long> mine = HIT_SENT.get(player);
+        return mine == null ? 0 : mine.size();
     }
 
     /** Whether a player who is watching a bar still may: in the boss's dimension, and still in the game. */
