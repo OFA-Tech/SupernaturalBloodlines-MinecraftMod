@@ -38,6 +38,7 @@ Checked with `javap` against the jars (Gradle cache and the pack's `mods` folder
 5. U5. The `HallucinationPayload` test spy's setter name (the field `spy` exists; the plan reads the class first).
 6. U6. Whether `AdminCommands` row ids starting with `W` are free (the table seen has B, P, D, X; the plan greps first).
 7. U7. Show canon: that hybrids and Originals need an invitation too, that revoking an invitation expels a vampire who is already inside (the owner asked for it; the show may only stop re-entry), that a locator needs the person's blood, and that a vampire's own home has no barrier (the owner's rule for who may own a ward). The design treats them as owner decisions, not canon.
+8. U8. The exact Vampirism event (or `FactionPlayerHandler` hook) that fires when a player joins the vampire faction, and whether it runs on the server thread; the turning and the hybrid transition both end in it. If there is none, the `BloodlineAccess` listener plus the login check (section 3.7) are the whole mechanism and the offline gap is the same.
 
 ## 2. Shared rules (R325 to R329)
 
@@ -69,7 +70,7 @@ The **owner** is the player who **sneaks on the circle's centre** when the rite 
 **Only a non-vampiric owner makes a ward (owner decision, show canon: a vampire's home has no barrier).** "Vampiric" is `Supernatural.isVampiric` on the owner: a vampire, an Original, a hybrid, an Original hybrid, a tribrid or a heretic (a Vampirism vampire faction player or one of those species). A vampiric owner is refused with the one generic message (R325). Consequences, all deliberate:
 
 - A witch-type **caster who is herself a tribrid or a heretic** (both are witch types and both are vampiric) cannot make a ward for herself; she can only make one for a non-vampiric player who sneaks on the centre. A witch, a siphoner or a plain witch-type human can.
-- The rule is checked **when the rite starts**. A ward whose owner **later** becomes vampiric (turning, a hybrid transition) is **not** taken down: the owner decided the rule for raising a ward, and "falls when its owner dies" is the only fall (R307). *Gap, left for the owner:* a vampire could be handed a ward by a friend and then turn; if that matters, a one-line follow-up makes such a ward fall too.
+- The rule is checked **when the rite starts**, and again for the life of the ward: **a ward falls when its owner becomes vampiric** (owner decision, show canon: turning means dying first, so it is the same as the owner's death, R307). That covers a turning that completes, a hybrid transition, a species change to a vampiric type and joining the Vampirism vampire faction.
 - `ward_owner_vampiric_ok` is **not** added: it is the owner's rule, not a setting.
 
 - The caster and the owner are on the invite list from the start.
@@ -104,7 +105,9 @@ An invite is **immediate** (the show's way: no accept step) and lasts until with
 
 ### 3.7 The dead-owner rule (R307)
 
-When the **owner dies** (`LivingDeathEvent` for the owner's UUID, any cause, any species), **every ward of theirs falls**: `fallen = true`, saved, effective at once even if the ward is in an unloaded chunk (the index is keyed by owner, not read from the chunk). `ward_falls_on_owner_death` (default on, it is the show's rule) can turn this off. A fallen ward is inert and shown as "fallen" on the owner's card until they drop it; it never comes back, a new rite raises a new one (the owner of a lost home is the one who needs the home again). An owner who is merely offline, or whose player data is gone, does **not** end the ward (they may come back); only death does.
+When the **owner dies** (`LivingDeathEvent` for the owner's UUID, any cause, any species), **every ward of theirs falls**: `fallen = true`, saved, effective at once even if the ward is in an unloaded chunk (the index is keyed by owner, not read from the chunk). `ward_falls_on_owner_death` (default on, it is the show's rule) can turn this off. A fallen ward is inert and shown as "fallen" on the owner's card until they drop it; it never comes back, a new rite raises a new one (the owner of a lost home is the one who needs the home again). An owner who is merely offline, or whose player data is gone, does **not** end the ward (they may come back).
+
+**The second fall: the owner becomes vampiric (owner decision).** "Becomes vampiric" is `Supernatural.isVampiric` turning from false to true for the owner (a completed turning, a finished hybrid transition, a species change, joining the vampire faction). Every ward of theirs falls, exactly as at death (`fallen = true`, saved, never comes back). **The death listener alone does not cover it:** a turning's lethal blow is cancelled and the player lies down (R20c, R209), so no real death event reaches `LivingDeathEvent` for it; the ward must fall on the *becoming*, not on a death. Two triggers, both feeding `WardIndex.fallAllOf(owner)`: (1) a `BloodlineAccess` change listener on the owner (species or hybrid-curse change, the same hook `PackIndex` uses) and Vampirism's faction-change event (UNVERIFIED U8, Task 0 finds the exact event and its thread); (2) a check at the owner's **login** for an owner who became vampiric while offline or in a way no listener saw (it reads `Supernatural.isVampiric(owner)` against each ward the index holds for them). An owner who is offline when it happens leaves the ward standing until their next login (the index cannot read an offline player's species); that gap is accepted and listed in the risks. Setting: `ward_falls_on_owner_death` covers both falls (one switch: "the ward is tied to its owner's life as a human"); there is no separate key.
 
 ### 3.8 The hub (R309, R310)
 
@@ -254,9 +257,9 @@ The first draft asked six questions with a recommended answer each. The owner ac
 3. **Ward targets and owners (changed by the owner).**
    - The ward blocks **every vampiric type**: vampire, Original, hybrid, Original hybrid, tribrid, heretic. **Werewolves are not blocked** (`ward_blocks_werewolves`, default off, is the only switch for it).
    - **Only a non-vampiric owner makes a ward** (show canon: a vampire's home has no barrier). A vampiric owner gets the one generic refusal (R301, R325).
-   - **The ward falls when its owner dies** (R307, `ward_falls_on_owner_death`, default on).
+   - **The ward falls when its owner dies** (R307, `ward_falls_on_owner_death`, default on), **and when its owner becomes vampiric** (owner decision, 2026-11-23, section 3.7: turning means dying first; the same switch).
 4. **Revoking an invitation expels the vampire** who is inside (R308). `ward_expel_on_revoke` is a setting, **default true**.
 5. **Both ward forms ship in 21a.** The door ward is the same record at half-size 1 plus a door-interaction cancel (R300, R303).
 6. **The ward and the locator are witch-type rites** (`isWitchType`). The two new curses join the existing **curse lore pages** (`CURSES`, with the two Tensura curses), so a Torn Page of curses teaches four.
 
-Still open (not asked of the owner yet): a ward whose owner *later* turns vampiric stays standing (section 3.2); the show's reach for hybrids and Originals and whether revoking expels or only blocks re-entry are unverified canon (U7).
+Accepted by the owner: the refusal of a vampiric owner is the same message and cost as every other ward refusal and can still be inferred by a caster who knows the other conditions hold (R325). Still open: the show's reach for hybrids and Originals and whether revoking expels or only blocks re-entry are unverified canon (U7).

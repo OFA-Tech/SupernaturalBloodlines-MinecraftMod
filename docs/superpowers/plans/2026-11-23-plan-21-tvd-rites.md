@@ -332,7 +332,7 @@ public final class WardSpeech {
   - `aVampiricOwnerCannotRaiseAWard`: the owner a vampire, an Original, a hybrid, an Original hybrid, a tribrid and a heretic (sneaking on the centre): no ward is created for any of them; a human, a witch, a siphoner and a werewolf each get one (werewolves are not vampiric).
   - `everyWardRefusalIsOneMessageAtOneCost`: a vampiric owner, a full cap (`ward_max_per_owner`), claimed ground, a non-witch caster and `ward_enabled = false` all give the **same message key** and the **same spent ingredients and power**. **This is the no-oracle test (R325): it must fail if the vampiric-owner refusal has its own text or cost.** (The one exception stays: a non-sneaking player on the centre cancels and refunds, R327.)
   - `aVampiricWitchCannotOwnButCanCastForAHuman`: a tribrid caster alone on the circle is refused (she would be the owner); the same tribrid with a sneaking human on the centre raises the ward for the human.
-  - `anOwnerWhoTurnsVampiricKeepsTheWard`: a standing ward whose owner becomes a vampire later is still standing (spec 3.2; the owner's rule gates raising only).
+  - (the fall when an owner becomes vampiric is Task 8, `aWardFallsWhenItsOwnerBecomesVampiric`.)
   - `theOwnerCapIsTheGenericRefusal`: the 4th ward for `ward_max_per_owner` 3 gives the same message and cost as any other refusal.
   - `aDoorWardMarksTheNearestDoorWithinFour`: the door cell is the ward's centre, half-size 1; none within 4 is the generic refusal.
   - `claimedGroundIsRefusedWithTheGenericMessage` (a fake `ClaimGuard` returning "somebody else's"), `unclaimedAndOwnClaimAndPartyClaimAreAllowed`.
@@ -359,6 +359,7 @@ public final class WardSpeech {
 
 - [ ] **Step 1: Failing GameTests:**
   - `ownerDeathFallsEveryWardAtOnce`; `ownerDeathFallsWardsInUnloadedChunks` (a ward whose chunk is not loaded: after the owner's `LivingDeathEvent` the index says fallen without loading it); `fallsOnDeathOffKeepsTheWard`; `aFallenWardNeverComesBack` (the owner respawns: still fallen).
+  - **Owner becomes vampiric (spec 3.7, second fall):** `aWardFallsWhenItsOwnerBecomesVampiric` (one test per way in: a completed turning through `TurningHandler`'s join, a finished hybrid transition, `BloodlineAccess.set` to a vampiric species, joining the vampire faction: every ward of theirs falls at once, other owners' wards stand); `aTurningWithoutADeathEventStillFallsTheWard` (the turning's lethal blow is cancelled, no `LivingDeathEvent` reaches the owner, and the ward falls anyway: **this is the test that proves the death listener alone is not enough**); `anOwnerWhoTurnedOfflineLosesTheWardAtLogin` (set the species with the player not in the list, then log in: fallen); `anOwnerWhoStaysNonVampiricKeepsTheWard` (a werewolf, a witch, a faction change to hunter: still standing); `theSameSwitchCoversBothFalls` (`ward_falls_on_owner_death = false` keeps the ward through a death **and** through becoming vampiric).
   - `uninvitingAVampireInsideThrowsThemOut` (with `ward_expel_on_revoke` true, the next enforcement tick pushes them), `…false` leaves them alone until they leave and re-enter; `theThrownOutOneIsToldOnce`.
   - `claimGuardFailsOpen`: a guard whose reflection throws five times is off, the rite is not refused for it, one warning is logged.
   - `noOpacMeansNoCheck`; `opacPartyMemberMayWardOnTheOwnersClaim` (with the fake guard).
