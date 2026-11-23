@@ -64,6 +64,10 @@ No mixin. The Blue Moon rite cost is one more factor in the species part's exist
 
 No mixin. The entities are plain PathfinderMobs; what a blow does to an NPC Original is a LivingIncomingDamageEvent and a LivingDamageEvent.Post listener, the line glue is the species part's own classes, and the hub reads the boss through the existing WorldNowHook.
 
+## Plan 18
+
+Plan 18 adds no mixin: species stays at 3 of 3 and supernatural at 1 of 3. The four Vampirism tweaks (R213) use events only (`LivingDamageEvent.Post`, `PlayerInteractEvent.RightClickBlock`, `PlayerFactionEvent.FactionLevelChangePre`, `EntityJoinLevelEvent`).
+
 ## Access transformers
 
 Not a mixin and not counted in the budget. `META-INF/accesstransformer.cfg` makes `Entity.setSharedFlag(int, boolean)` and `getSharedFlag(int)` public, so the species part's `client/HunterSenseClient` can outline entities on one client (see docs/parts/species.md, Hunters: instinct, sense).
