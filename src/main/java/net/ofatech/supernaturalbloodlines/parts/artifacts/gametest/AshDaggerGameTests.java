@@ -190,10 +190,11 @@ public final class AshDaggerGameTests {
             }
             String heardBefore = ears == null ? "" : ears.heard();
             List<Float> backlash = new ArrayList<>();
+            float healthBefore = wielder.getHealth(); // a mob's health is random: only what the hit took counts
             magicHits(wielder, backlash, () -> hit(victim, wielder, 1f));
             String heard = ears == null ? "" : ears.heard().substring(Math.min(heardBefore.length(), ears.heard().length()));
             List<String> effects = victim.getActiveEffects().stream().map(MobEffectInstance::toString).sorted().toList();
-            String text = "player=" + playerWielder + " backlash=" + backlash + " wielder=" + wielder.getMainHandItem() + " wielderHealth=" + wielder.getHealth()
+            String text = "player=" + playerWielder + " backlash=" + backlash + " wielder=" + wielder.getMainHandItem() + " wielderLost=" + (playerWielder ? String.valueOf(healthBefore - wielder.getHealth()) : "?") // a spawned mob's gear and health are random
                     + " heard=[" + heard + "] hurt=" + (victim.getHealth() < victim.getMaxHealth()) + " effects=" + effects + " lodged=" + AshDagger.lodged(victim);
             return text.replace("cursed_white_oak_ash_dagger", "DAGGER").replace("white_oak_ash_dagger", "DAGGER");
         } finally {

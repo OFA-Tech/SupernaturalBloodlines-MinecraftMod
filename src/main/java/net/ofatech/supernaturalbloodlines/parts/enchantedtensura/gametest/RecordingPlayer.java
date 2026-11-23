@@ -28,7 +28,7 @@ public final class RecordingPlayer extends FakePlayer {
     public static RecordingPlayer createVulnerable(GameTestHelper helper) {
         RecordingPlayer p = create(helper);
         p.vulnerable = true;
-        return p;
+        return (RecordingPlayer) net.ofatech.supernaturalbloodlines.gametest.TestPlayers.noSpawnProtection(helper, p); // the respawn protection only ticks down in tick()
     }
 
     @Override
