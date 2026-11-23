@@ -1,0 +1,38 @@
+{
+  "title": "Rite of Deus Sanguis",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:redstone_block"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/evolve_deus_sanguis",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, infernal chalk.\n\nOnly with Ascension. A witch-type performer opens the road to Deus Sanguis for a vampire on the circle, or for herself, on a full-moon night.",
+          "header": "Deus Sanguis"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "The vampire must agree by sneaking. The addon's own switch for the skill still decides whether the road is open.\n\nCosts rare items, altar power and 200,000 of their base Max EP, spent once the skill is learned.",
+          "header": "Deus Sanguis"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:evolve_deus_sanguis",
+          "header": "Deus Sanguis"
+        }
+      ]
+    }
+  ]
+}

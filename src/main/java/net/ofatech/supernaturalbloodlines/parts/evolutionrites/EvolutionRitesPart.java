@@ -1,9 +1,20 @@
 package net.ofatech.supernaturalbloodlines.parts.evolutionrites;
 
+import net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvolutionHookProbeGameTests;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvolutionRiteGameTests;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvolutionUnlockGameTests;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.MasteryGameTests;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.mastery.MasteryCommand;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.rite.EvolutionRiteFactory;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.rite.MasteryRiteFactory;
 import net.ofatech.supernaturalbloodlines.shared.admin.AdminSpecs;
 
 /**
@@ -17,6 +28,16 @@ public final class EvolutionRitesPart {
     public static void init(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, EvolutionRitesConfig.SPEC, EvolutionRitesConfig.FILE);
         AdminSpecs.register(EvolutionRitesConfig.FILE, EvolutionRitesConfig.SPEC);
+        // before the datapacks load, so the rite JSONs can name these factories
+        RiteFactoryRegistry.get().register(EvolutionRiteFactory.ID, EvolutionRiteFactory.CODEC);
+        RiteFactoryRegistry.get().register(MasteryRiteFactory.ID, MasteryRiteFactory.CODEC);
+        NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> MasteryCommand.register(e.getDispatcher()));
+        modBus.addListener((RegisterGameTestsEvent e) -> {
+            e.register(EvolutionHookProbeGameTests.class);
+            e.register(EvolutionRiteGameTests.class);
+            e.register(EvolutionUnlockGameTests.class);
+            e.register(MasteryGameTests.class);
+        });
         SupernaturalBloodlines.LOGGER.info("EvolutionRitesPart enabled");
     }
 }
