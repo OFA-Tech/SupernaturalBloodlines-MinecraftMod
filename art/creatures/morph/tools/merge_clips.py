@@ -60,9 +60,16 @@ def clip_name(model, short):
 
 
 def eased(clip):
-    """How many keys of a clip say how they are eased (GeckoLib's `easing` or Bedrock's `lerp_mode`)."""
+    """How many keys of a clip are eased: GeckoLib's `easing` or Bedrock's `lerp_mode`, other than linear (a healthy GeckoLib export writes
+    `"easing": "linear"` on every plain key, and a catmullrom key as `{"post": {"vector": ..}, "lerp_mode": "catmullrom"}`)."""
+    def is_eased(key):
+        if not isinstance(key, dict):
+            return False
+        if str(key.get('easing', 'linear')).lower() != 'linear' or str(key.get('lerp_mode', 'linear')).lower() != 'linear':
+            return True
+        return any(is_eased(key.get(k)) for k in ('post', 'pre'))
     return sum(1 for chans in clip.get('bones', {}).values() for chan in chans.values() if isinstance(chan, dict)
-               for key in chan.values() if isinstance(key, dict) and ('easing' in key or 'lerp_mode' in key))
+               for key in chan.values() if is_eased(key))
 
 
 def merge(model, exported_path, check=False, game_path=None, geo_path=None, allow_linear=False):

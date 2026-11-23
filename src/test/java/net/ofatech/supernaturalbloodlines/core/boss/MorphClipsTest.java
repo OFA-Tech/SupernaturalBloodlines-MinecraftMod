@@ -120,6 +120,9 @@ public class MorphClipsTest {
             JsonObject o = channel.getAsJsonObject();
             if (o.has("vector") || o.has("post") || o.has("pre")) {
                 v = o.has("vector") ? o.get("vector") : o.has("post") ? o.get("post") : o.get("pre");
+                if (v.isJsonObject()) {
+                    return at(v, first); // a GeckoLib export nests it: {"post": {"vector": [..]}, "lerp_mode": "catmullrom"}
+                }
             } else {
                 String key = o.keySet().stream().reduce((a, c) -> (Double.parseDouble(a) <= Double.parseDouble(c)) == first ? a : c).orElseThrow();
                 return at(o.get(key), first);
@@ -171,6 +174,20 @@ public class MorphClipsTest {
         }
     }
 
+    /** A key that is eased: GeckoLib's "easing" or Bedrock's "lerp_mode", other than linear (a GeckoLib export writes "easing": "linear" on every plain key). */
+    private static boolean isEased(JsonElement key) {
+        if (!key.isJsonObject()) {
+            return false;
+        }
+        JsonObject o = key.getAsJsonObject();
+        for (String field : List.of("easing", "lerp_mode")) {
+            if (o.has(field) && o.get(field).isJsonPrimitive() && !o.get(field).getAsString().equalsIgnoreCase("linear")) {
+                return true;
+            }
+        }
+        return (o.has("post") && isEased(o.get("post"))) || (o.has("pre") && isEased(o.get("pre")));
+    }
+
     /**
      * A clip that moves says how it is eased. A Blockbench whose GeckoLib plugin is half loaded exports every eased key as linear, and neither the lengths nor
      * the bones change, so this is the only thing that notices. A held placeholder (two keys a channel) has nothing to ease and is let through.
@@ -190,7 +207,7 @@ public class MorphClipsTest {
                         }
                         densest = Math.max(densest, channel.getAsJsonObject().size());
                         for (JsonElement key : channel.getAsJsonObject().asMap().values()) {
-                            if (key.isJsonObject() && (key.getAsJsonObject().has("easing") || key.getAsJsonObject().has("lerp_mode"))) {
+                            if (isEased(key)) {
                                 eased++;
                             }
                         }
