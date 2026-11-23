@@ -18,8 +18,22 @@ public final class RecordingPlayer extends FakePlayer {
         super(helper.getLevel(), new GameProfile(id, "test-" + id.toString().substring(0, 8)));
     }
 
+    private boolean vulnerable;
+
     public static RecordingPlayer create(GameTestHelper helper) {
         return new RecordingPlayer(helper, UUID.randomUUID());
+    }
+
+    /** One that can be hurt (a FakePlayer cannot), for a test that needs a wielder to take a backlash. */
+    public static RecordingPlayer createVulnerable(GameTestHelper helper) {
+        RecordingPlayer p = create(helper);
+        p.vulnerable = true;
+        return p;
+    }
+
+    @Override
+    public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
+        return !vulnerable && super.isInvulnerableTo(source);
     }
 
     public boolean received(String key) {

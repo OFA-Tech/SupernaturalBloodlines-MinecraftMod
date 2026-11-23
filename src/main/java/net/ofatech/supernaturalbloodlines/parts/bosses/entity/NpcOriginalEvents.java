@@ -10,7 +10,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
@@ -51,7 +50,8 @@ public final class NpcOriginalEvents {
     }
 
     static DefeatRules.Kind kindOf(DamageSource source) {
-        if (source.getEntity() instanceof LivingEntity a && ASH_DAGGERS.contains(BuiltInRegistries.ITEM.getKey(a.getMainHandItem().getItem()))
+        // only a player's dagger: a mob's (a zombie with one) would desiccate a boss and pay a reward to nobody
+        if (source.getEntity() instanceof net.minecraft.world.entity.player.Player a && ASH_DAGGERS.contains(BuiltInRegistries.ITEM.getKey(a.getMainHandItem().getItem()))
                 && source.getDirectEntity() == a) {
             return DefeatRules.Kind.ASH_DAGGER;
         }

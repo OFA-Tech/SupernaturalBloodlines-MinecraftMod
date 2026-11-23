@@ -143,23 +143,20 @@ public final class AshDaggerGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void plainDaggerStillDesiccatesAnOriginal(GameTestHelper helper) {
-        for (Species s : List.of(Species.ORIGINAL)) {
-            ServerPlayer victim = original(helper, s);
-            Zombie z = zombie(helper, dagger());
-            hit(victim, z, 1f);
-            MobEffectInstance effect = victim.getEffect(ArtifactItems.DESICCATED);
-            helper.assertTrue(effect != null && effect.getDuration() > 35900 && effect.getDuration() <= 36000,
-                    s + " was not desiccated for 36000 ticks: " + effect);
-            helper.assertTrue(AshDagger.lodged(victim).is(ArtifactItems.ASH_DAGGER.get()), s + " has no dagger lodged: " + AshDagger.lodged(victim));
-            helper.assertTrue(z.getMainHandItem().isEmpty(), "the wielder still holds the dagger");
-            helper.assertTrue(victim.getAttributeValue(Attributes.MOVEMENT_SPEED) == 0, "the victim can still move: " + victim.getAttributeValue(Attributes.MOVEMENT_SPEED));
+        ServerPlayer victim = original(helper, Species.ORIGINAL);
+        Zombie z = zombie(helper, dagger());
+        hit(victim, z, 1f);
+        MobEffectInstance effect = victim.getEffect(ArtifactItems.DESICCATED);
+        helper.assertTrue(effect != null && effect.getDuration() > 35900 && effect.getDuration() <= 36000, "an Original was not desiccated for 36000 ticks: " + effect);
+        helper.assertTrue(AshDagger.lodged(victim).is(ArtifactItems.ASH_DAGGER.get()), "no dagger lodged: " + AshDagger.lodged(victim));
+        helper.assertTrue(z.getMainHandItem().isEmpty(), "the wielder still holds the dagger");
+        helper.assertTrue(victim.getAttributeValue(Attributes.MOVEMENT_SPEED) == 0, "the victim can still move: " + victim.getAttributeValue(Attributes.MOVEMENT_SPEED));
 
-            // a second dagger does not swallow the first
-            Zombie second = zombie(helper, dagger());
-            hit(victim, second, 1f);
-            helper.assertTrue(second.getMainHandItem().is(ArtifactItems.ASH_DAGGER.get()), "a second dagger was taken from its wielder");
-            helper.assertTrue(AshDagger.lodged(victim).getCount() == 1, "the lodged stack changed: " + AshDagger.lodged(victim));
-        }
+        // a second dagger does not swallow the first
+        Zombie second = zombie(helper, dagger());
+        hit(victim, second, 1f);
+        helper.assertTrue(second.getMainHandItem().is(ArtifactItems.ASH_DAGGER.get()), "a second dagger was taken from its wielder");
+        helper.assertTrue(AshDagger.lodged(victim).getCount() == 1, "the lodged stack changed: " + AshDagger.lodged(victim));
         helper.succeed();
     }
 
@@ -169,16 +166,39 @@ public final class AshDaggerGameTests {
      * What one hit left behind, as something an onlooker could see: the wielder's backlash and dagger, the victim's health and effects and the
      * lodged stack. The dagger's name is blanked so the plain and the Cursed one can be compared.
      */
-    private static String aftermath(GameTestHelper helper, Species victimSpecies, ItemStack weapon) {
-        ServerPlayer victim = original(helper, victimSpecies);
-        Mob wielder = vampireMob(helper);
-        wielder.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, weapon);
-        List<Float> backlash = new ArrayList<>();
-        magicHits(wielder, backlash, () -> hit(victim, wielder, 1f));
-        List<String> effects = victim.getActiveEffects().stream().map(MobEffectInstance::toString).sorted().toList();
-        String text = "backlash=" + backlash + " wielder=" + wielder.getMainHandItem() + " hurt=" + (victim.getHealth() < victim.getMaxHealth())
-                + " effects=" + effects + " lodged=" + AshDagger.lodged(victim);
-        return text.replace("cursed_white_oak_ash_dagger", "DAGGER").replace("white_oak_ash_dagger", "DAGGER");
+    private static String aftermath(GameTestHelper helper, Species victimSpecies, ItemStack weapon, boolean playerWielder) {
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        boolean pvp = server.isPvpAllowed();
+        server.setPvpAllowed(true);
+        try {
+            ServerPlayer victim;
+            LivingEntity wielder;
+            RecordingPlayer ears = null;
+            if (playerWielder) {
+                // a player is told things and hears things: whatever the wielder is sent is part of what the hit looks like
+                victim = TestPlayers.createDuelist(helper);
+                BloodlineAccess.set(victim, BloodlineState.NONE.toBuilder().species(victimSpecies).build());
+                ears = RecordingPlayer.createVulnerable(helper);
+                helper.assertTrue(VampirismAPI.factionPlayerHandler(ears).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+                ears.setItemInHand(InteractionHand.MAIN_HAND, weapon);
+                wielder = ears;
+            } else {
+                victim = original(helper, victimSpecies);
+                Mob mob = vampireMob(helper);
+                mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, weapon);
+                wielder = mob;
+            }
+            String heardBefore = ears == null ? "" : ears.heard();
+            List<Float> backlash = new ArrayList<>();
+            magicHits(wielder, backlash, () -> hit(victim, wielder, 1f));
+            String heard = ears == null ? "" : ears.heard().substring(Math.min(heardBefore.length(), ears.heard().length()));
+            List<String> effects = victim.getActiveEffects().stream().map(MobEffectInstance::toString).sorted().toList();
+            String text = "player=" + playerWielder + " backlash=" + backlash + " wielder=" + wielder.getMainHandItem() + " wielderHealth=" + wielder.getHealth()
+                    + " heard=[" + heard + "] hurt=" + (victim.getHealth() < victim.getMaxHealth()) + " effects=" + effects + " lodged=" + AshDagger.lodged(victim);
+            return text.replace("cursed_white_oak_ash_dagger", "DAGGER").replace("white_oak_ash_dagger", "DAGGER");
+        } finally {
+            server.setPvpAllowed(pvp);
+        }
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
@@ -247,24 +267,28 @@ public final class AshDaggerGameTests {
     /** Review focus: whether the dagger works must not say whether the victim is an Original hybrid. A miss is a miss for everyone it does not lodge in. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aMissLooksTheSameForAnOriginalHybridAndForAHuman(GameTestHelper helper) {
-        String hybrid = aftermath(helper, Species.ORIGINAL_HYBRID, dagger());
-        String human = aftermath(helper, Species.NONE, dagger());
-        String plainHybrid = aftermath(helper, Species.HYBRID, dagger());
-        helper.assertTrue(hybrid.equals(human), "a plain dagger on an Original hybrid is told apart from one on a human:\n" + hybrid + "\n" + human);
-        helper.assertTrue(plainHybrid.equals(human), "a plain dagger on a hybrid is told apart from one on a human:\n" + plainHybrid + "\n" + human);
-        helper.assertTrue(hybrid.contains("backlash=[10.0]") && hybrid.contains("hurt=true"), "control: the blow and the backlash happened: " + hybrid);
+        for (boolean player : List.of(false, true)) {
+            String hybrid = aftermath(helper, Species.ORIGINAL_HYBRID, dagger(), player);
+            String human = aftermath(helper, Species.NONE, dagger(), player);
+            String plainHybrid = aftermath(helper, Species.HYBRID, dagger(), player);
+            helper.assertTrue(hybrid.equals(human), "a plain dagger on an Original hybrid is told apart from one on a human:\n" + hybrid + "\n" + human);
+            helper.assertTrue(plainHybrid.equals(human), "a plain dagger on a hybrid is told apart from one on a human:\n" + plainHybrid + "\n" + human);
+            helper.assertTrue(hybrid.contains("backlash=[10.0]") && hybrid.contains("hurt=true"), "control: the blow and the backlash happened: " + hybrid);
+        }
         helper.succeed();
     }
 
     /** A hit that lodges is the same hit whichever dagger and whichever of the two species: same time, same effect, same stack. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aHitThatLodgesLooksTheSameForBothDaggersAndBothSpecies(GameTestHelper helper) {
-        String plainOriginal = aftermath(helper, Species.ORIGINAL, dagger());
-        String cursedOriginal = aftermath(helper, Species.ORIGINAL, cursed());
-        String cursedHybrid = aftermath(helper, Species.ORIGINAL_HYBRID, cursed());
-        helper.assertTrue(cursedOriginal.equals(cursedHybrid), "the cursed dagger is told apart by who it lodges in:\n" + cursedOriginal + "\n" + cursedHybrid);
-        helper.assertTrue(plainOriginal.equals(cursedOriginal), "the two daggers lodge differently:\n" + plainOriginal + "\n" + cursedOriginal);
-        helper.assertTrue(cursedHybrid.contains("desiccated"), "control: it did lodge: " + cursedHybrid);
+        for (boolean player : List.of(false, true)) {
+            String plainOriginal = aftermath(helper, Species.ORIGINAL, dagger(), player);
+            String cursedOriginal = aftermath(helper, Species.ORIGINAL, cursed(), player);
+            String cursedHybrid = aftermath(helper, Species.ORIGINAL_HYBRID, cursed(), player);
+            helper.assertTrue(cursedOriginal.equals(cursedHybrid), "the cursed dagger is told apart by who it lodges in:\n" + cursedOriginal + "\n" + cursedHybrid);
+            helper.assertTrue(plainOriginal.equals(cursedOriginal), "the two daggers lodge differently:\n" + plainOriginal + "\n" + cursedOriginal);
+            helper.assertTrue(cursedHybrid.contains("desiccated"), "control: it did lodge: " + cursedHybrid);
+        }
         helper.succeed();
     }
 
@@ -275,8 +299,25 @@ public final class AshDaggerGameTests {
         var modifiers = net.minecraft.core.component.DataComponents.ATTRIBUTE_MODIFIERS;
         helper.assertTrue(plain.get(modifiers).equals(cursed.get(modifiers)), "the two daggers hit differently");
         helper.assertTrue(plain.getMaxStackSize() == cursed.getMaxStackSize(), "the stack sizes differ");
+        var fire = net.minecraft.core.component.DataComponents.FIRE_RESISTANT;
+        helper.assertTrue(cursed.has(fire) && !plain.has(fire), "only the cursed dagger does not burn: cursed " + cursed.has(fire) + ", plain " + plain.has(fire));
         var whiteOak = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, ResourceLocation.fromNamespaceAndPath(NS, "white_oak"));
         helper.assertTrue(!cursed.is(whiteOak) && !plain.is(whiteOak), "a dagger is white oak: it would kill an Original outright (R158)");
+        helper.succeed();
+    }
+
+    /** One grey line each, and they must differ: it is the one thing the two daggers tell. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void eachDaggerSaysWhoItLodgesIn(GameTestHelper helper) {
+        List<String> keys = new ArrayList<>();
+        for (ItemStack stack : List.of(dagger(), cursed())) {
+            List<net.minecraft.network.chat.Component> lines = new ArrayList<>();
+            stack.getItem().appendHoverText(stack, net.minecraft.world.item.Item.TooltipContext.EMPTY, lines, net.minecraft.world.item.TooltipFlag.NORMAL);
+            helper.assertTrue(lines.size() == 1, "expected one tooltip line, got " + lines.size());
+            helper.assertTrue(lines.get(0).getStyle().getColor() != null && lines.get(0).getStyle().getColor().equals(net.minecraft.network.chat.TextColor.fromLegacyFormat(net.minecraft.ChatFormatting.GRAY)), "the line is not grey");
+            keys.add(((net.minecraft.network.chat.contents.TranslatableContents) lines.get(0).getContents()).getKey());
+        }
+        helper.assertTrue(keys.equals(List.of("tooltip." + NS + ".white_oak_ash_dagger", "tooltip." + NS + ".cursed_white_oak_ash_dagger")), "the tooltips are " + keys);
         helper.succeed();
     }
 

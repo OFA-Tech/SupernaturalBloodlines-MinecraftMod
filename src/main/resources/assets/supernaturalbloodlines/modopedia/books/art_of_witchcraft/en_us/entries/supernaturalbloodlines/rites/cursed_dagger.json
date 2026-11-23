@@ -11,7 +11,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Curses a White Oak Ash Dagger into a Cursed one. Only the Cursed Dagger lodges in an Original hybrid as well as an Original; the plain one no longer does. Needs the dagger, 2 white oak ash and an echo shard.",
+          "text": "Curses a White Oak Ash Dagger into a Cursed one. Only the Cursed Dagger lodges in an Original hybrid as well as an Original; the plain one lodges only in an Original. Needs the dagger, 2 white oak ash and an echo shard.",
           "header": "Cursed Dagger"
         }
       ]
@@ -29,7 +29,7 @@
       "components": [
         {
           "template": "modopedia:page/headered_text",
-          "text": "Both daggers hurt a supernatural wielder alike, and a dagger that finds nothing to lodge in does not say why, so a miss never tells you what someone is.",
+          "text": "Both daggers hurt a supernatural wielder alike. A miss looks the same for everyone the dagger does not lodge in; a lodge tells only what the rules make public.",
           "header": "Cursed Dagger"
         }
       ]

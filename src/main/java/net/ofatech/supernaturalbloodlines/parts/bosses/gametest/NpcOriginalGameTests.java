@@ -199,22 +199,32 @@ public final class NpcOriginalGameTests {
         helper.succeed();
     }
 
-    /** R158 beside R33: an open Original is killed by white oak a player holds, never by a dagger, and a mob holding a dagger is no different. */
+    /**
+     * Plan 18g decision (R33): a dagger counts against an NPC Original only in a player's hand. A zombie with one would desiccate a boss and send the
+     * reward to nobody, so its blow is just a blow (it hurts and does nothing else); the same dagger in a player's hand desiccates.
+     */
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void aMobWithACursedDaggerDoesNotKillAnOpenOne(GameTestHelper helper) {
-        Item dagger = BuiltInRegistries.ITEM.getOptional(ResourceLocation.fromNamespaceAndPath(NS, "cursed_white_oak_ash_dagger")).orElse(null);
-        if (dagger == null) {
-            helper.succeed();
-            return;
-        }
-        try (BossTestRig rig = new BossTestRig(helper)) {
-            MikaelEntity m = rig.spawn();
-            m.desiccate();
-            net.minecraft.world.entity.monster.Zombie z = helper.spawn(net.minecraft.world.entity.EntityType.ZOMBIE, new net.minecraft.core.BlockPos(1, 1, 1));
-            z.setNoAi(true);
-            z.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new net.minecraft.world.item.ItemStack(dagger));
-            m.hurt(helper.getLevel().damageSources().mobAttack(z), 10000F);
-            helper.assertTrue(m.isAlive() && m.getHealth() == 1.0F, "a mob's dagger killed an open Original: " + m.getHealth());
+    public static void aMobsDaggerIsNoDaggerToAnNpcOriginal(GameTestHelper helper) {
+        for (String name : List.of("white_oak_ash_dagger", "cursed_white_oak_ash_dagger")) {
+            Item dagger = BuiltInRegistries.ITEM.getOptional(ResourceLocation.fromNamespaceAndPath(NS, name)).orElse(null);
+            if (dagger == null) {
+                helper.succeed(); // the artifacts part is off: there is no dagger
+                return;
+            }
+            try (BossTestRig rig = new BossTestRig(helper)) {
+                MikaelEntity m = rig.spawn();
+                net.minecraft.world.entity.monster.Zombie z = helper.spawn(net.minecraft.world.entity.EntityType.ZOMBIE, new net.minecraft.core.BlockPos(1, 1, 1));
+                z.setNoAi(true);
+                z.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new net.minecraft.world.item.ItemStack(dagger));
+                float before = m.getHealth();
+                m.hurt(helper.getLevel().damageSources().mobAttack(z), 1F);
+                helper.assertTrue(!m.isDesiccated(), "a zombie's " + name + " desiccated an NPC Original");
+                helper.assertTrue(m.getHealth() < before, "control: the zombie's blow did not even hurt: " + m.getHealth());
+
+                m.invulnerableTime = 0;
+                m.hurt(rig.blowWith(dagger), 1F);
+                helper.assertTrue(m.isDesiccated(), "control: a player's " + name + " did not desiccate him");
+            }
         }
         helper.succeed();
     }

@@ -279,11 +279,10 @@ final class RitesBook {
         RiteUnlockTable.Gate gate = RiteUnlockTable.GATED.get(rite);
         List<String> parts = new ArrayList<>();
         List<String> kinds = gate.kinds().stream().sorted().map(k -> lang.get(KIND_SHORT + k.name().toLowerCase()).getAsString()).toList();
-        // three kinds and a lore source do not fit one line: the lore, which is what a player can go and find, and the page says the rest
+        // three kinds and a lore source do not fit one line: the lore, which is what a player can go and find, and the page says the rest.
+        // Three kinds alone fit ("witch, siphoner or tribrid"), so they are named.
         if (kinds.size() > 2 && !gate.lore().isEmpty()) {
             kinds = List.of();
-        } else if (kinds.size() > 2) {
-            kinds = List.of(lang.get(KIND_SHORT + "several").getAsString());
         }
         parts.addAll(kinds);
         gate.lore().stream().sorted().forEach(l -> parts.add(lang.get(LORE_SHORT + l).getAsString()));
