@@ -225,6 +225,11 @@ dependencies {
     if (project.hasProperty('tensuraSlotsJar')) {
         localRuntime files(project.property('tensuraSlotsJar'))
     }
+    // -PaddonJars=<folder> puts every jar in it on the dev run classpath: the Tensura addons of a pack and what they need, for the GameTests
+    // against real addons (docs/compat/tensura-addons.md). Off by default, so CI never has them.
+    if (project.hasProperty('addonJars')) {
+        localRuntime(fileTree(dir: project.property('addonJars'), include: '*.jar'))
+    }
     if (linkedRuntime) {
         localRuntime("de.teamlapen.vampirism:Vampirism:${vampirism_version}") { transitive = false }
         localRuntime("net.favouriteless.enchanted:enchanted-neoforge-1.21.1:${enchanted_version}") { transitive = false }

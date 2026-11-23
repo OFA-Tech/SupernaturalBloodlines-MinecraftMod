@@ -14,13 +14,15 @@ public final class HumanLikeLine {
             "tensura:enlightened_dwarf", "tensura:dwarf_saint", "tensura:divine_dwarf",
             "tensura:enlightened_elf", "tensura:elf_saint", "tensura:divine_elf",
             "tensura:enlightened_merfolk", "tensura:merfolk_saint", "tensura:divine_fish",
-            "tensura:beast_lord", "tensura:spirit_beast", "tensura:divine_beast");
+            "tensura:beast_lord", "tensura:spirit_beast", "tensura:divine_beast",
+            "tensurahorizons:ascendant_elf", "tensurahorizons:runeforged_dwarf", "tensurahorizons:tide_sovereign");
 
     /** Tier 3 and 4 of a line: the "saint or higher" races that may be offered an apex race. */
     public static final Set<String> SAINT_OR_HIGHER = Set.of(
             "tensura:human_saint", "tensura:divine_human", "tensura:dwarf_saint", "tensura:divine_dwarf",
             "tensura:elf_saint", "tensura:divine_elf", "tensura:merfolk_saint", "tensura:divine_fish",
-            "tensura:spirit_beast", "tensura:divine_beast");
+            "tensura:spirit_beast", "tensura:divine_beast",
+            "tensurahorizons:ascendant_elf", "tensurahorizons:runeforged_dwarf", "tensurahorizons:tide_sovereign");
 
     private HumanLikeLine() {}
 

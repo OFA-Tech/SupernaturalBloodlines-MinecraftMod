@@ -22,7 +22,14 @@ class HudKeysDefaultsTest {
         // the owner's live options.txt (plan 13, "OFA pack facts"): next_mode is Left Alt, race_ability [, great sage menu G, and Caps alone is the radio
         List<HudKeyDefaults.Key> live = List.of(new HudKeyDefaults.Key("next_mode", HudKeyDefaults.GLFW_LEFT_ALT, "NONE"),
                 new HudKeyDefaults.Key("race_ability", HudKeyDefaults.GLFW_LEFT_BRACKET, "NONE"),
-                new HudKeyDefaults.Key("greatsage.menu", HudKeyDefaults.GLFW_G, "NONE"));
+                new HudKeyDefaults.Key("greatsage.menu", HudKeyDefaults.GLFW_G, "NONE"),
+                // the other addon keys that are set in the Holy Packs options.txt (Great Sage: assess H, magic sense Y, thought acceleration J;
+                // Tensura Trainer open L, Tensura's main GUI O, name period, dodge Left Ctrl). Great Sage's own default for assess is V, which is our slot 3:
+                // the pack moved it, a reset to defaults brings the clash back (docs/compat/tensura-addons.md)
+                new HudKeyDefaults.Key("greatsage.assess", 72, "NONE"), new HudKeyDefaults.Key("greatsage.magic_sense", 89, "NONE"),
+                new HudKeyDefaults.Key("greatsage.thought_acceleration", 74, "NONE"), new HudKeyDefaults.Key("trainer.open", 76, "NONE"),
+                new HudKeyDefaults.Key("tensura.main_gui", 79, "NONE"), new HudKeyDefaults.Key("tensura.name", 46, "NONE"),
+                new HudKeyDefaults.Key("tensura.dodge", 341, "NONE"));
         // the radio left Caps for plan 16f (the mode key is plain Caps Lock now): the pack's staged keymap moves it, see OFA-notes/KEYMAP.md
         for (HudKeyDefaults.Key ours : HudKeyDefaults.ALL) {
             for (HudKeyDefaults.Key other : live) {
