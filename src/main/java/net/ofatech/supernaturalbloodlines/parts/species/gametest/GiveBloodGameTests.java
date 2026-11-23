@@ -258,11 +258,11 @@ public final class GiveBloodGameTests {
             helper.assertTrue(GiveBloodAction.NOT_A_PLAYER.equals(key(ACTION.trigger(giver, z))), "a mob was not refused");
             helper.assertTrue(GiveBloodAction.NO_TARGET.equals(key(ACTION.trigger(giver, null))), "no target was not said");
             creative.setShiftKeyDown(true);
-            creative.getAbilities().instabuild = true;
+            creative.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
             helper.assertTrue(GiveBloodAction.REFUSED.equals(key(ACTION.trigger(giver, creative))) && !marked(creative), "a creative player was fed");
             helper.assertTrue(ActionClock.left(giver, ExtraActions.GIVE_BLOOD) == 0, "a refusal started the cooldown");
         } finally {
-            creative.getAbilities().instabuild = false;
+            creative.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             z.discard();
             pvp(helper, false);
             clean(giver, creative);
