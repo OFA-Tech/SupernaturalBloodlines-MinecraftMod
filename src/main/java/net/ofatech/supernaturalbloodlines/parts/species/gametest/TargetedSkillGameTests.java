@@ -61,6 +61,8 @@ public final class TargetedSkillGameTests {
     }
 
     private static ServerPlayer target(GameTestHelper helper, Species species, boolean vampire) {
+        // a player target needs the server's PvP switch on (a targeted skill refuses a player with it off); the tests that want it off turn it off after this
+        helper.getLevel().getServer().setPvpAllowed(true);
         ServerPlayer t = TestPlayers.createDuelist(helper);
         t.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.0)));
         if (vampire) {
