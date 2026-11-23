@@ -584,7 +584,9 @@ public final class HybridLeapGameTests {
             Downed.startSnapped(p, 200);
             helper.assertTrue(HybridLeapAction.CANNOT_ACT.equals(key(HybridLeapAction.INSTANCE.trigger(p, z))), "snapped keeps the vague line");
             Downed.clearForTest(p);
-            helper.assertTrue(HybridLeapAction.CANNOT_RIDING.equals(HybridLeapAction.cannotLeapBecauseForTest(p, true)), "riding");
+            helper.assertTrue(HybridLeapAction.CANNOT_RIDING.equals(HybridLeapAction.cannotLeapBecauseForTest(p, true, false)), "riding");
+            helper.assertTrue(HybridLeapAction.CANNOT_SWIMMING.equals(HybridLeapAction.cannotLeapBecauseForTest(p, false, true)), "in a fluid");
+            helper.assertTrue(HybridLeapAction.cannotLeapBecauseForTest(p, false, false) == null, "control: on dry ground, free");
         } finally {
             z.discard();
             clean(p);

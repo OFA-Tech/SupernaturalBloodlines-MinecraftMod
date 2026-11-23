@@ -165,22 +165,22 @@ public final class HybridLeapAction implements ExtraActions.Action {
      * mid-air would be a free way to stop a fall.
      */
     static String cannotLeapBecause(ServerPlayer p) {
-        return because(p, p.isPassenger());
+        return because(p, p.isPassenger(), p.isInWater() || p.isInLava() || p.isEyeInFluid(FluidTags.WATER) || p.isEyeInFluid(FluidTags.LAVA));
     }
 
-    /** For tests: the same, with riding given (a fake player cannot board a vehicle). */
-    public static String cannotLeapBecauseForTest(ServerPlayer p, boolean riding) {
-        return because(p, riding);
+    /** For tests: the same, with riding and being in a fluid given (a fake player is never moved by the game's physics, so it cannot board a vehicle or get wet). */
+    public static String cannotLeapBecauseForTest(ServerPlayer p, boolean riding, boolean inFluid) {
+        return because(p, riding, inFluid);
     }
 
-    private static String because(ServerPlayer p, boolean riding) {
+    private static String because(ServerPlayer p, boolean riding, boolean inFluid) {
         if (Downed.cannotAct(p) || p.isSleeping()) {
             return CANNOT_ACT;
         }
         if (riding) {
             return CANNOT_RIDING;
         }
-        if (p.isInWater() || p.isInLava() || p.isEyeInFluid(FluidTags.WATER) || p.isEyeInFluid(FluidTags.LAVA)) {
+        if (inFluid) {
             return CANNOT_SWIMMING;
         }
         if (inFlight(p)) {
