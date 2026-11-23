@@ -28,7 +28,7 @@ class BossRowTest {
             assertTrue(p.slots().isEmpty());
             assertEquals(0, p.hidden());
         }
-        assertEquals(240, BossRow.plan(248, false, 0).cardW(), "a narrow screen leaves 4 px on each side");
+        assertEquals(232, BossRow.plan(248, false, 0).cardW(), "a narrow screen leaves the margin on each side");
     }
 
     @Test
@@ -65,6 +65,27 @@ class BossRowTest {
                         seen.add(t);
                         assertTrue(t.y() >= 0 && t.bottom() <= BossBarLayout.CARD_H, at + " is outside the card's row");
                     }
+                }
+            }
+        }
+    }
+
+    @Test
+    void theLastTokenAndThePlusTokenKeepTheScreenMarginOnTheRightAsTheCardsDoOnTheLeft() {
+        assertTrue(BossRow.SCREEN_MARGIN >= 8, "a margin a token plate and its ring can show: " + BossRow.SCREEN_MARGIN);
+        for (int guiW : SCREENS) {
+            for (boolean corner : new boolean[] {false, true}) {
+                for (int tokens = 1; tokens <= 12; tokens++) {
+                    Plan p = BossRow.plan(guiW, corner, tokens);
+                    int right = p.cardX() + p.cardW();
+                    int left = p.cardX();
+                    for (Slot s : p.slots()) {
+                        right = Math.max(right, s.x() + BossRow.TOKEN);
+                        left = Math.min(left, s.x());
+                    }
+                    String at = guiW + "/" + corner + "/" + tokens;
+                    assertTrue(guiW - right >= BossRow.SCREEN_MARGIN, at + ": the row ends " + (guiW - right) + " px from the right edge");
+                    assertTrue(left >= BossRow.leftClear(guiW, corner), at + ": the row starts " + left + ", inside the clearance");
                 }
             }
         }

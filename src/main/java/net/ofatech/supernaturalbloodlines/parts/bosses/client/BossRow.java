@@ -14,7 +14,7 @@ public final class BossRow {
     public static final int TOKEN = 38;
     public static final int TOKEN_GAP = 2;
     private static final int SLOT = TOKEN + TOKEN_GAP;
-    public static final int SCREEN_MARGIN = 4;
+    public static final int SCREEN_MARGIN = 8;
     /** The row stands this far from the left edge when another mod's status corner (Tensura, Vampirism) is there. */
     public static final int STATUS_CLEAR = TrackerAnchor.CORNER_W + 4;
     /** A card beside the corner is not worth making narrower than this screen leaves room for. */

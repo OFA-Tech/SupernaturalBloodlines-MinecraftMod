@@ -112,8 +112,9 @@ final class BossBarInfo {
             mark = n == 0 ? "" : FormMark.of(labels[look.active()]);
             markW = font.width(mark);
             cardW = width;
-            geo = BossBarLayout.geometry(width, chipTextW, look.active());
-            hpShown = BossBarLayout.healthText(BossBarLayout.health(hp, max, BossBarLayout.localeOf(lang)), geo.hpMaxW(), font::width);
+            BossBarLayout.Health health = BossBarLayout.health(hp, max, BossBarLayout.localeOf(lang));
+            geo = BossBarLayout.geometry(width, chipTextW, look.active(), font.width(health.full()));
+            hpShown = BossBarLayout.healthText(health, geo.hpMaxW(), font::width);
             nameRef = null;
             dirty = false;
         }

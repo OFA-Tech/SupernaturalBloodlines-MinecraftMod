@@ -84,6 +84,32 @@ class BossBarLayoutTest {
     }
 
     @Test
+    void theChipsDropToTheLitOneBeforeTheHealthLosesItsMaximum() {
+        int full = width("1,640 / 2,000"); // 66 with this test font
+        // the widest card where all three chips and the whole health fit, and the first card narrower than that
+        int lastAll = -1;
+        for (int cardW = 200; cardW <= 250; cardW++) {
+            Geometry g = BossBarLayout.geometry(cardW, SHIFTER, 1, full);
+            boolean all = g.chipW()[0] > 0 && g.chipW()[2] > 0;
+            String at = "card " + cardW;
+            if (all) {
+                assertTrue(g.hpMaxW() >= full, at + ": all three chips are drawn but the health no longer fits whole (" + g.hpMaxW() + " < " + full + ")");
+                lastAll = cardW;
+            } else {
+                assertEquals(0, g.chipW()[0], at);
+                assertTrue(g.chipW()[1] > 0, at + ": the lit chip stays");
+                assertTrue(g.hpMaxW() >= full || cardW < 215, at + ": the maximum was dropped (" + g.hpMaxW() + " < " + full + ") while the chips could still have been cut down");
+            }
+        }
+        assertTrue(lastAll >= 0, "no card shows all three chips with the whole health");
+        Geometry roomy = BossBarLayout.geometry(250, SHIFTER, 1, full);
+        assertTrue(roomy.chipW()[0] > 0 && roomy.chipW()[2] > 0 && roomy.hpMaxW() >= full, "the approved card shows both");
+        Geometry tight = BossBarLayout.geometry(lastAll - 6, SHIFTER, 1, full);
+        assertEquals(0, tight.chipW()[0], "a few pixels narrower: the chips go first");
+        assertTrue(tight.hpMaxW() >= full, "and the whole health stays");
+    }
+
+    @Test
     void aCardTooNarrowForAllThreeChipsDrawsOnlyTheLitOne() {
         Geometry narrow = BossBarLayout.geometry(200, SHIFTER, 2);
         assertEquals(0, narrow.chipW()[0]);

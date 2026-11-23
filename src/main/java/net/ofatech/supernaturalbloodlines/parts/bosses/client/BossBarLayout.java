@@ -51,6 +51,14 @@ public final class BossBarLayout {
      * one is drawn, so a chip never leaves the plate and never covers the health.
      */
     public static Geometry geometry(int cardW, int[] chipTextW, int active) {
+        return geometry(cardW, chipTextW, active, MIN_HEALTH_W);
+    }
+
+    /**
+     * @param healthW the width of the health in full ("1,640 / 2,000"): the chips are all drawn only when it still fits beside them; otherwise only the lit chip is drawn,
+     *                and only when even that leaves no room is the maximum dropped from the health (see {@link #healthText})
+     */
+    public static Geometry geometry(int cardW, int[] chipTextW, int active, int healthW) {
         int nameW = cardW - BODY_X - 5;
         int[] chipX = new int[chipTextW.length];
         int[] chipW = new int[chipTextW.length];
@@ -60,8 +68,8 @@ public final class BossBarLayout {
             total += w + CHIP_PAD + CHIP_GAP;
         }
         total = Math.max(0, total - CHIP_GAP);
-        // the health text keeps at least a short number's room: chips that would take it all are cut down to the lit one
-        boolean all = total <= nameW - 4 - MIN_HEALTH_W;
+        // the health text keeps its whole room: chips that would push it into losing its maximum are cut down to the lit one first
+        boolean all = right - total - HP_GAP - (BODY_X + 2) >= healthW;
         int left = right;
         for (int i = chipTextW.length - 1; i >= 0; i--) {
             boolean shown = all || i == active;
