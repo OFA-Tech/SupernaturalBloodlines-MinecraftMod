@@ -809,6 +809,7 @@ public final class HubScreen extends Screen {
     protected void init() {
         super.init();
         net.ofatech.supernaturalbloodlines.shared.hub.kit.TextCache.clear(); // a resize or a reload starts the cache again
+        net.ofatech.supernaturalbloodlines.shared.hud.LoadoutAccess.hubOpened(); // the Loadout page lists what the server sends the wheel
     }
 
     @Override
@@ -821,6 +822,7 @@ public final class HubScreen extends Screen {
         net.ofatech.supernaturalbloodlines.shared.hub.AdminHandoff.take(); // an offer nobody took must not preselect a person in a later session
         net.ofatech.supernaturalbloodlines.parts.supernatural.client.hub.page.PackInvite.reset();
         HubClient.sendOpen(false);
+        net.ofatech.supernaturalbloodlines.shared.hud.LoadoutAccess.hubClosed();
     }
 
     @Override

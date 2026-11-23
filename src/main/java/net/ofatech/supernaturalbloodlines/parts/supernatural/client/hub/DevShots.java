@@ -110,6 +110,13 @@ public final class DevShots {
                 }
                 continue;
             }
+            if (parts[0].equalsIgnoreCase("wheel")) {
+                // wheel:<look>:<state>, states open, alt, page, picker, aim, closed: the skill wheel with demo powers (the HUD part's DevWheel)
+                for (int scale : scales) {
+                    shots.add(new Shot(parts[1].toLowerCase(Locale.ROOT), HubPage.PATH, scale, false, null, "wheel_" + (parts.length > 2 ? parts[2].toLowerCase(Locale.ROOT) : "open")));
+                }
+                continue;
+            }
             if (parts[0].equalsIgnoreCase("hud")) {
                 // hud:<look>[:alt|idle], for example hud:blood_moon:alt
                 for (int scale : scales) {
@@ -220,7 +227,7 @@ public final class DevShots {
         }
         mc.options.tutorialStep = TutorialSteps.NONE;
         mc.getTutorial().setStep(TutorialSteps.NONE);
-        if (shots.stream().anyMatch(sh -> sh.hud() != null || sh.variant() != null && sh.variant().startsWith("boss_"))) {
+        if (shots.stream().anyMatch(sh -> sh.hud() != null || sh.variant() != null && (sh.variant().startsWith("boss_") || sh.variant().startsWith("wheel_")))) {
             // the HUD shots are of the HUD: the demo player's aura (big yellow squares of particles) would cover it
             mc.options.particles().set(net.minecraft.client.ParticleStatus.MINIMAL);
             mc.particleEngine.setLevel(mc.level); // clears the live particles
@@ -264,6 +271,13 @@ public final class DevShots {
             net.ofatech.supernaturalbloodlines.shared.hud.DevHud.cooldown = "cooldown".equals(s.hud());
             boolean bossShot = s.variant() != null && s.variant().startsWith("boss_");
             net.ofatech.supernaturalbloodlines.shared.hud.DevBossBars.demo = bossShot ? s.variant().substring(5) : null;
+            if (s.variant() != null && s.variant().startsWith("wheel_") && net.ofatech.supernaturalbloodlines.shared.hud.DevHud.wheelShow != null) {
+                mc.gui.getChat().clearMessages(false);
+                parkCursor(mc, 1, 1);
+                net.ofatech.supernaturalbloodlines.shared.hud.DevHud.wheelShow.accept(s.variant().substring(6));
+                wait = 1;
+                return;
+            }
             if (bossShot) {
                 mc.gui.getChat().clearMessages(false);
                 parkCursor(mc, 1, 1);

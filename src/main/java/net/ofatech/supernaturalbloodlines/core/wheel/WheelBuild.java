@@ -5,8 +5,8 @@ public final class WheelBuild {
     private WheelBuild() {
     }
 
-    /** Flipped by the screen's own phase (W4, T10). */
+    /** This build has the wheel screen (W4): the other mods' skill keys it replaces are covered while the HUD works. */
     public static boolean screenPresent() {
-        return false;
+        return true;
     }
 }

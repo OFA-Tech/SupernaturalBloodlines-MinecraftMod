@@ -15,6 +15,8 @@ public final class HudConfig {
     public static final ModConfigSpec.BooleanValue WHEEL_ENABLED;
     private static final ModConfigSpec.IntValue WHEEL_CATALOGUE_INTERVAL_TICKS;
     public static final ModConfigSpec.BooleanValue WHEEL_UNSLOTTED_TENSURA;
+    public static final ModConfigSpec.BooleanValue WHEEL_DEDUP_ENABLED;
+    public static final ModConfigSpec.BooleanValue WHEEL_STACK_GUARD_ENABLED;
     public static final ModConfigSpec.BooleanValue NEXT_PRESET_ACTIVE;
     public static final ModConfigSpec.BooleanValue TENSURA_FEED_FILLS_BLOOD;
     public static final ModConfigSpec.BooleanValue HIDE_IN_CONTROLS_MIXIN;
@@ -31,6 +33,10 @@ public final class HudConfig {
                 .defineInRange("wheel_catalogue_interval_ticks", 5, 1, 40);
         WHEEL_UNSLOTTED_TENSURA = b.comment("Let the wheel use a Tensura skill, spell or art that is in no preset slot (through the next-preset hook, only while it runs). Off: such powers are listed locked, put it in a slot first.")
                 .define("wheel_unslotted_tensura", true);
+        WHEEL_DEDUP_ENABLED = b.comment("Rule C: a power that several mods give (Vampirism's and Werewolves' rage, invisibility and so on) is one entry on the wheel, the main side's. Off: every side is listed. The approved list is data/supernaturalbloodlines/wheel/overlaps.json.")
+                .define("wheel_dedup_enabled", true);
+        WHEEL_STACK_GUARD_ENABLED = b.comment("Rule C: while one side of such a power is on, the others cannot be turned on (from any key), and using one puts every side on the main side's cooldown. Off: no key is stopped and the shared clock is not read.")
+                .define("wheel_stack_guard_enabled", true);
         b.comment("Switches of the hud part's mixins (each is applied only with the mods it targets). next_preset_active and tensura_feed_fills_blood guard a mixin each; hide_in_controls_mixin is reserved and does nothing.").push("mixins");
         NEXT_PRESET_ACTIVE = b.define("next_preset_active", true);
         TENSURA_FEED_FILLS_BLOOD = b.define("tensura_feed_fills_blood", true);
@@ -79,6 +85,22 @@ public final class HudConfig {
             return WHEEL_CATALOGUE_INTERVAL_TICKS.get();
         } catch (IllegalStateException notLoaded) {
             return 5;
+        }
+    }
+
+    public static boolean wheelDedupEnabled() {
+        try {
+            return WHEEL_DEDUP_ENABLED.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
+    public static boolean wheelStackGuardEnabled() {
+        try {
+            return WHEEL_STACK_GUARD_ENABLED.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
         }
     }
 

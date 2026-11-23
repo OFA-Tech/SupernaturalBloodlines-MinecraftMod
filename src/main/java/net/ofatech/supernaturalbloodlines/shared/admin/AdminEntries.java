@@ -67,6 +67,8 @@ public final class AdminEntries {
         all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_enabled", BOOL));
         all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_catalogue_interval_ticks", INT));
         all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_unslotted_tensura", BOOL));
+        all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_dedup_enabled", BOOL));
+        all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_stack_guard_enabled", BOOL));
         all.add(SettingEntry.of(HUD_FILE, "hud", "mixins.next_preset_active", BOOL));
         all.add(SettingEntry.of(HUD_FILE, "hud", "mixins.tensura_feed_fills_blood", BOOL));
         all.add(SettingEntry.of(HUD_FILE, "hud", "mixins.hide_in_controls_mixin", BOOL).hide(RESERVED));

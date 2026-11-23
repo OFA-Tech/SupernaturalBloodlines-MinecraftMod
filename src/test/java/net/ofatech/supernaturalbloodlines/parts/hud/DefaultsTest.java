@@ -25,7 +25,9 @@ class DefaultsTest {
         assertEquals(true, clientDefault("blood_in_food_spot"));
         assertEquals(net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_CENTER, clientDefault("tracker_anchor"));
         assertEquals(net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor.TOP_LEFT, clientDefault("toast_anchor"));
-        assertEquals(9, HudClientConfig.SPEC.getSpec().valueMap().size(), "a client setting was added or removed: decide its player-ready default and list it here");
+        assertEquals(200, clientDefault("wheel_tap_ms"));
+        assertEquals(true, clientDefault("wheel_remember_last"));
+        assertEquals(11, HudClientConfig.SPEC.getSpec().valueMap().size(), "a client setting was added or removed: decide its player-ready default and list it here");
     }
 
     @Test

@@ -972,13 +972,14 @@ public final class DeucalionGameTests {
             return;
         }
         LineTestPlayer.useRealHarm(true);
-        helper.getLevel().getServer().setPvpAllowed(true);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         LineTestPlayer roarer = wolf(helper, Rank.ALPHA, 4, false, 2.5);
         LineTestPlayer rival = wolf(helper, Rank.ALPHA, 1, false, 6.5);
         LineTestPlayer beta = wolf(helper, Rank.BETA, 0, false, 5.5);
         LineTestPlayer far = wolf(helper, Rank.ALPHA, 1, false, 2.5);
         LineTestPlayer mate = wolf(helper, Rank.ALPHA, 1, false, 4.5);
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // the Roar follows PvP; put back in the finally
             far.setPos(roarer.position().add(DemonRoarRules.RANGE + 1, 0, 0));
             night(roarer, rival, beta, far, mate);
             helper.assertTrue(PackCommand.invite(roarer, mate) == null
@@ -987,6 +988,7 @@ public final class DeucalionGameTests {
             var picked = DemonRoar.targets(roarer, List.of(roarer, rival, beta, far, mate));
             helper.assertTrue(picked.equals(List.of(rival)), "the Roar picks " + picked.size() + " players, not the one rival Alpha");
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             PackIndex.get(helper.getLevel()).leave(mate.getUUID());
             PackIndex.get(helper.getLevel()).leave(roarer.getUUID());
             LineTestPlayer.useRealHarm(false);
@@ -1003,10 +1005,11 @@ public final class DeucalionGameTests {
             return;
         }
         LineTestPlayer.useRealHarm(true);
-        helper.getLevel().getServer().setPvpAllowed(true);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         LineTestPlayer roarer = wolf(helper, Rank.ALPHA, 4, false, 2.5);
         LineTestPlayer rival = wolf(helper, Rank.ALPHA, 1, false, 22.5);
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // the Roar follows PvP; put back in the finally
             helper.assertTrue(VampirismAPI.factionPlayerHandler(rival).setFactionAndLevel(WReference.WEREWOLF_FACTION, 14), "the rival could not be levelled");
             night(roarer, rival);
             unlockForms(rival);
@@ -1019,6 +1022,7 @@ public final class DeucalionGameTests {
             helper.assertTrue(refusal == null, "the Alpha Roar from its slot was refused: " + refusal);
             helper.assertTrue(inForm(rival) && rival.received(SHIFTED), "the Demon Wolf Roar did not shift the rival from the slot: " + rival.heard());
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             AlphaRoar.reset();
             LineTestPlayer.useRealHarm(false);
             clean(roarer, rival);
@@ -1033,12 +1037,13 @@ public final class DeucalionGameTests {
             return;
         }
         LineTestPlayer.useRealHarm(true);
-        helper.getLevel().getServer().setPvpAllowed(true);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
         LineTestPlayer roarer = wolf(helper, Rank.ALPHA, 4, false, 2.5);
         // 20 blocks away: out of the ordinary roar's 16 (which forces other werewolves out of their form), inside the Demon Wolf Roar's 32
         LineTestPlayer rival = wolf(helper, Rank.ALPHA, 1, false, 22.5);
         LineTestPlayer beta = wolf(helper, Rank.BETA, 0, false, 21.5);
         try {
+            helper.getLevel().getServer().setPvpAllowed(true); // the Roar follows PvP; put back in the finally
             helper.assertTrue(VampirismAPI.factionPlayerHandler(rival).setFactionAndLevel(WReference.WEREWOLF_FACTION, 14), "the rival could not be levelled");
             night(roarer, rival, beta);
             unlockForms(rival);
@@ -1069,6 +1074,7 @@ public final class DeucalionGameTests {
             helper.assertTrue(roarer.count("supernaturalbloodlines.pack.demon_roar_cooldown") == 1, "the Roar was still on its cooldown after 2400 ticks: " + roarer.heard());
             DemonRoar.reset();
         } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
             LineTestPlayer.useRealHarm(false);
             clean(roarer, rival, beta);
         }

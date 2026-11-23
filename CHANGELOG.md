@@ -9,7 +9,7 @@
 - **Commands:** `/group invite|accept|leave|kick|ally ...|info|challenge`, with `/clan`, `/coven`, `/brotherhood` and `/sb group` as the same tree. `/pack` is unchanged. A challenge in anything but a pack answers `wrong_type` until its own plan.
 - **Leader absence by type** (7 days): a clan passes to its longest Day Walker who is here, a coven to its longest Elder, a brotherhood to the online member with the highest mark; the old leader stays one rank down.
 - **Hub:** the Pack page is the **Group** page: its tab, title, ranks, legend and buttons say the group's own word in all three themes; the wolf-only parts (wolves, Roar, duels, anchor) show only for a pack. The Profile's pack fact is "Group" and names the type. The shared buttons run `/group` when the group is not a pack.
-- **Admin page:** section "Groups", 5 settings (`supernaturalbloodlines-groups.toml`: `groups_enabled`, `clans_enabled`, `covens_enabled`, `open_founding`, `max_members`). `AdminEntries` is 204.
+- **Admin page:** section "Groups", 5 settings (`supernaturalbloodlines-groups.toml`: `groups_enabled`, `clans_enabled`, `covens_enabled`, `open_founding`, `max_members`). `AdminEntries` is 206.
 - Rules **R240 to R249** in `SPECIES-RULES.md`; wiki page "Groups".
 
 ### Changed
@@ -22,6 +22,49 @@ Delete `supernaturalbloodlines_groups.dat`. The pack file `supernaturalbloodline
 
 ### Verified
 - Unit tests 2,499 pass. The 12-run GameTest matrix passes in every run (1,994 with everything on; 1,456 with `-PnoWerewolves -PnoCurios`; 30 with `-PnoLinkedMods`; 494, 1,871, 1,826, 1,844, 1,984, 1,825, 1,978, 1,667 and 382 for the part-off runs). 16 mutants of the groups rules, all caught.
+
+## Unreleased (skill wheel, phase W4: the wheel screen)
+
+### Added
+- **The skill wheel.** Hold G (key `Skill wheel (hold)`, default G, in our key category) and the wheel opens: the mods in the inner ring (Bloodline, Vampirism, Werewolves, Tensura, Infinity Stones, Great Sage: only those that are installed and have a power), Tensura's groups (Skills, Magic, Battlewill) in the middle ring when it has at least two, and the powers of the open group in the outer ring, 12 to a page. Let go of G over a power to use it, or over nothing to keep it open (a click, G or Esc closes it). A tap shorter than `wheel_tap_ms` (default 200) opens nothing and repeats the last power. Left click uses; right click opens the slot picker (our Loadout, or Tensura's active and next preset, saved through Tensura); Alt + click or Alt + scroll cycles a power's mode; scroll turns the page; arrows, Tab and Enter work without a mouse and every state is read to the narrator in words. A held power is released wherever the pointer is, and when the screen closes, loses focus or the player dies. An aimed power closes the wheel and waits for a click at the crosshair (right click, Esc or a tap of G cancels).
+- Three looks (Grimoire, Blood Moon, Tensura) in the hub's theme, on the art kit sprites of #81; the wheel follows `reduce_motion`.
+- Great Sage's powers (Magic Sense, Assess, Scan, Thought Acceleration, its menu) are on the wheel through its client calls; they appear only when Great Sage allows the player to use it.
+- Client settings (hub, Settings page): `wheel_tap_ms` (100 to 500) and `wheel_remember_last` (the tap's power is kept in `config/supernaturalbloodlines-wheel-last.json`).
+- The hub's Loadout page offers the powers the wheel offers once the wheel has been opened in the session.
+- Development: `-Dsupernaturalbloodlines.devshots=wheel:<look>:<open|alt|page|picker|aim|closed>`.
+
+### Changed
+- **Keys that moved onto the wheel are covered while the HUD works** (hidden and unbound, and put back when `hide_covered_keys` is off, `hud_enabled` is off or the server has no HUD channel): Vampirism's action wheel and vision key, Tensura's race-ability key, Great Sage's menu, assess, scan, magic sense and thought acceleration keys, and Infinity Stones' wheel and soul control keys. Great Sage's voice and panic keys and Infinity's soul release are left alone.
+- **While the wheel is open every other on-screen layer is hidden**, ours, Vampirism's and Werewolves' overlays, the hotbar, health, chat and boss bars (only the camera overlays and the debug screen stay), through NeoForge's `RenderGuiLayerEvent.Pre`. Tensura draws its status and bars from its own mixin, not a layer, so its public `OverlayHandler.setShouldHudRender` is lowered while the wheel is open and given back as it was.
+- The side panel shows the power's own description (Tensura's skill text, Vampirism's and Werewolves' `.desc` lang keys, our actions' notes, our lang file for Great Sage), wrapped and cut with an ellipsis.
+- The hub's Loadout page asks the server for the catalogue when the hub opens (it shares one request with the wheel), so it lists the same powers as the wheel without the wheel having been opened.
+
+### Fixed (review of the wheel screen)
+- Letting go of G over a toggle or held power no longer leaves a wheel that only Esc can close: the gesture is open until the screen closes, so G again or a click outside closes it.
+- A held power started by letting go of G, or by the tap, is pressed and released at once; one started by Enter or Space is released when that key goes up (the mouse still holds it while the button is down).
+- Text is worked out once per input, not every frame: wrapped description, help rows, cut names, label widths, strings, slots (once per tick) and ring spans.
+- The pointer decides the hot cell only when it moves; a key that moves the focus keeps it until the pointer moves again. The wheel key can be bound to a mouse button.
+- The last power is not written again when it did not change; the subtitles stay on while the wheel is open; the lines and the rim read at 3:1 on the bands over a dark or a pale sky; the lock is drawn in the theme's own colour.
+- An aimed power is cancelled when the HUD is hidden (F1) or after 20 seconds, with a line on the action bar. The slot picker follows its power across catalogue updates. The narrator no longer fails when a power has a cooldown and no world is loaded, and a power that covers another mod's says so (rule C): under its name in the side panel and in the narration.
+### Network
+W4 changes no payload (the hud network version is 4, from W2 round 3).
+
+### Rolling back
+Turn `hide_covered_keys` or `hud_enabled` off in the hub (Settings) and every covered key is back at once. The saved last power is one small file and can be deleted.
+## Unreleased (skill wheel, phase W2: rule C, one entry per duplicated power)
+
+### Added
+- **One entry for a power that several mods give.** The approved list (`data/supernaturalbloodlines/wheel/overlaps.json`: invisibility, night vision, bat form, flight, regeneration, rage, fear, teleport, sense, appraisal and bite) is shown once on the wheel, as the main side's. The tiers of one Tensura skill (the three regenerations) show only the highest tier owned. Nothing changes in either mod's unlocks, levels, costs or mastery. A skill with several modes is never merged, and no Infinity Stones power is in a group.
+- **No stacking, one shared cooldown, from every key.** While one side of such a power is on, the other cannot be turned on from the wheel, our slots, Vampirism's or Werewolves' own keys or Tensura's own keys and screens. Using a side puts every side on **the main side's own cooldown**; a lasting side (rage, invisibility...) starts it when it ends, however it ends (turned off, ran out, death, logout). It survives a relog.
+- Config (Admin rows): `wheel_dedup_enabled`, `wheel_stack_guard_enabled`.
+
+### Changed
+- **The hud network version is 4 (was 2). Update the server and every client together.** The wheel entry carries the id of its group (3) and a note of what else it covers (4: "Also covers: Vampirism Regeneration, locked while this is on", for the tooltip and the side panel); a client on another version is disconnected.
+- The hold bracket for a Tensura skill started from the wheel is now open for every hold, not only for a skill in no slot: a held skill that leaves its slot while it is held is no longer cut off after a second.
+
+### Rolling back
+- **Roll the server and every client back together** (the network version goes back to 2). The saved `wheel_clock` is dropped by an older build, which is harmless: it only held a cooldown of at most a few minutes. With both settings off the wheel lists every side and no key is stopped.
+
 ## Unreleased (plan 19a: the evolution rites engine and the Rite of Mastery)
 
 ### Added
