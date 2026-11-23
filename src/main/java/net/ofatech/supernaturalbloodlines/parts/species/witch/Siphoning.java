@@ -92,7 +92,7 @@ public final class Siphoning {
 
     private static void onEntity(PlayerInteractEvent.EntityInteract e) {
         Player p = e.getEntity();
-        if (e.getHand() != InteractionHand.MAIN_HAND || !(e.getTarget() instanceof LivingEntity target) || !ready(p)) {
+        if (e.getHand() != InteractionHand.MAIN_HAND || net.ofatech.supernaturalbloodlines.core.death.DamageProbe.active() || !(e.getTarget() instanceof LivingEntity target) || !ready(p)) {
             return;
         }
         if (target instanceof net.minecraft.world.item.trading.Merchant || target instanceof net.minecraft.world.MenuProvider) {

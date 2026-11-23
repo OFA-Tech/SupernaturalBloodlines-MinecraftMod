@@ -147,6 +147,12 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue BOTTLE_BLOOD_HEALTH_COST;
     public static final int DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT = 8;
     private static final ModConfigSpec.IntValue BOTTLE_BLOOD_DAILY_LIMIT;
+    public static final int DEFAULT_GIVE_BLOOD_COOLDOWN_SECONDS = 120;
+    public static final double DEFAULT_FORCE_FEED_HEALTH_LIMIT = 0.30;
+    public static final boolean DEFAULT_VAMPIRE_BLOOD_BUFF_ENABLED = true;
+    private static final ModConfigSpec.IntValue GIVE_BLOOD_COOLDOWN_SECONDS;
+    private static final ModConfigSpec.DoubleValue FORCE_FEED_HEALTH_LIMIT;
+    private static final ModConfigSpec.BooleanValue VAMPIRE_BLOOD_BUFF_ENABLED;
 
     public static final double DEFAULT_AUGUSTINE_ATTACK_BONUS = 0.10;
     public static final double DEFAULT_AUGUSTINE_EXTRA_HEALTH = 2.0;
@@ -351,6 +357,12 @@ public final class SpeciesConfig {
                 .defineInRange("bottle_blood_health_cost", DEFAULT_BOTTLE_BLOOD_HEALTH_COST, 0.0, 19.0);
         BOTTLE_BLOOD_DAILY_LIMIT = b.comment("R211: how many times one player may use Bottle my blood in one game day, counted in world time; sleeping or /time does not reset it. Vampire blood bottles are an ingredient (pure blood, vampire blood oil) and a task item of Vampirism, so they are not free.")
                 .defineInRange("bottle_blood_daily_limit", DEFAULT_BOTTLE_BLOOD_DAILY_LIMIT, 1, 1000);
+        GIVE_BLOOD_COOLDOWN_SECONDS = b.comment("R208: seconds before a vampire can use Force-feed my blood again, whatever came of it.")
+                .defineInRange("give_blood_cooldown_seconds", DEFAULT_GIVE_BLOOD_COOLDOWN_SECONDS, 1, 3600);
+        FORCE_FEED_HEALTH_LIMIT = b.comment("R208: an unwilling player can be fed vampire blood only while PvP is on and they are down or at or under this fraction of their health (0.30 = 30%). A target who sneaks accepts at any health.")
+                .defineInRange("force_feed_health_limit", DEFAULT_FORCE_FEED_HEALTH_LIMIT, 0.0, 1.0);
+        VAMPIRE_BLOOD_BUFF_ENABLED = b.comment("R207: while vampire blood is in a player's system (for vampire_blood_ticks) they get Regeneration II, a little less hunger, and heal faster. Anyone with the blood in them gets it, a bottle included. Off: the blood only marks them.")
+                .define("vampire_blood_buff_enabled", DEFAULT_VAMPIRE_BLOOD_BUFF_ENABLED);
         AUGUSTINE_ATTACK_BONUS = b.comment("R200: an Augustine's extra attack damage, as a fraction (0.10 = +10%; an Original has +20%).")
                 .defineInRange("augustine_attack_bonus", DEFAULT_AUGUSTINE_ATTACK_BONUS, 0.0, 1.0);
         AUGUSTINE_EXTRA_HEALTH = b.comment("R200: an Augustine's extra maximum health, in half hearts (an Original has 4).")
@@ -930,6 +942,44 @@ public final class SpeciesConfig {
             return BOTTLE_BLOOD_COOLDOWN_SECONDS.get();
         } catch (IllegalStateException notLoaded) {
             return DEFAULT_BOTTLE_BLOOD_COOLDOWN_SECONDS;
+        }
+    }
+
+    /** {@code give_blood_cooldown_seconds}. */
+    public static int giveBloodCooldownSeconds() {
+        try {
+            return GIVE_BLOOD_COOLDOWN_SECONDS.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_GIVE_BLOOD_COOLDOWN_SECONDS;
+        }
+    }
+
+    /** {@code force_feed_health_limit}. */
+    public static double forceFeedHealthLimit() {
+        try {
+            return FORCE_FEED_HEALTH_LIMIT.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_FORCE_FEED_HEALTH_LIMIT;
+        }
+    }
+
+    private static volatile Boolean bloodBuffOverride;
+
+    /** For tests: pins {@link #vampireBloodBuffEnabled()}; null clears it. */
+    public static void overrideVampireBloodBuff(Boolean value) {
+        bloodBuffOverride = value;
+    }
+
+    /** {@code vampire_blood_buff_enabled}. */
+    public static boolean vampireBloodBuffEnabled() {
+        Boolean pinned = bloodBuffOverride;
+        if (pinned != null) {
+            return pinned;
+        }
+        try {
+            return VAMPIRE_BLOOD_BUFF_ENABLED.get();
+        } catch (IllegalStateException notLoaded) {
+            return DEFAULT_VAMPIRE_BLOOD_BUFF_ENABLED;
         }
     }
 

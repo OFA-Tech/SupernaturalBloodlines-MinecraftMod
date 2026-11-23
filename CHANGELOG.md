@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased (plan 18f: Force-feed my blood)
+
+### Added
+- **Force-feed my blood (R208).** A HUD / hub Slots action for **every vampire type** (whoever the mod counts as vampiric: plain vampires, hybrids, heretics, Originals, Augustines; no skill): put your blood in the player you look at. It does what a bottle of your kind does to them (a human is marked with vampire blood for `vampire_blood_ticks`; an Original's or Original hybrid's blood also names you their pending sire, through the same message and rules as drinking one; a werewolf follows the existing rules, so one in the transition goes unstable). **A sneaking target accepts** at any health. Anyone else needs **PvP on** and to be **down** or at or under `force_feed_health_limit` (30%) of their health. **Vervain blocks it**, even for a willing target, and **a claim blocks it** (asked as a blow for an unwilling target, as a click for a willing one). Refusals say why for the rules (not a player, yourself, vervain, they do not accept); the rest is one line. The giver hears the same "You give X your blood" line and starts the same cooldown (`give_blood_cooldown_seconds`, 120) **whatever the blood did**, so it cannot be used to find out who is human. The target is told who gave it, then what is in them.
+- **The blood's gifts (R207).** While vampire blood is in a player's system (the 20 minutes of `vampire_blood_ticks`) they have **Regeneration II** and a little less hunger. **This applies to anyone with the blood in them, a plain Vampirism blood bottle included, not only to a forced feed.** `vampire_blood_buff_enabled` (default on) turns the gifts off; the blood still marks. If 20 minutes of Regeneration II is too much, shorten `vampire_blood_ticks` (it also sets the turning's mark window).
+- Config (all with Admin rows): `give_blood_cooldown_seconds` (120), `force_feed_health_limit` (0.30), `vampire_blood_buff_enabled` (true).
+
+### Changed
+- `TargetChecks` (Rip Heart, Neck Snap) is public so the blood action can reuse it; `BiteProtection` has a victim-only guard (`registerVictim`) that vervain registers. A probe of a posted click (`DamageProbe.active()`) now also keeps the dagger pull, siphoning and compulsion click listeners out.
+
+### Network
+- No payload changed: **no network version bump** (the action lists on the server and the hub from the installed `ExtraActions`).
+
+### Rolling back
+- The three config keys are ignored by an older build. A marked player keeps the `vampireBloodUntil` they already had (the same saved field as before) and simply loses the Regeneration II. The action disappears from the Slots tab; a slot that held it is empty.
+
+### Art needed
+- `textures/gui/hud/give_blood.png` (the action uses `unknown.png` until then).
+
 ## Unreleased (plan 18d: Rip Heart and Neck Snap)
 
 ### Added

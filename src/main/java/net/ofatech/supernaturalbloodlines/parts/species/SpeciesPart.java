@@ -200,6 +200,7 @@ public final class SpeciesPart {
         net.ofatech.supernaturalbloodlines.parts.species.item.BloodDrops.register();
         net.ofatech.supernaturalbloodlines.parts.species.item.BloodTooltip.register();
         net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.install(net.ofatech.supernaturalbloodlines.parts.species.item.BottleBloodAction.INSTANCE);
+        net.ofatech.supernaturalbloodlines.parts.species.blood.GiveBloodAction.register();
         net.ofatech.supernaturalbloodlines.parts.species.moon.FullMoonSleep.register(); // no Werewolves needed: "everyone" works without it
         net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.set(p -> new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(
                 net.ofatech.supernaturalbloodlines.core.moon.SleepRules.appliesTo(SpeciesConfig.fullMoonSleep(),
@@ -313,6 +314,7 @@ public final class SpeciesPart {
             e.register(SeveranceRiteGameTests.class);
             e.register(TurningGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.BloodBottleGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GiveBloodGameTests.class);
             e.register(GhoulGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.TurningDyingGameTests.class);
             e.register(GeneGameTests.class);
@@ -336,6 +338,7 @@ public final class SpeciesPart {
                 e.register(HunterWerewolfGameTests.class);
                 e.register(HybridGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.BloodBottleWerewolfGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GiveBloodWerewolfGameTests.class);
                 e.register(TurningWerewolfGameTests.class);
                 e.register(HybridTraitsGameTests.class);
                 e.register(OriginalHybridGameTests.class);

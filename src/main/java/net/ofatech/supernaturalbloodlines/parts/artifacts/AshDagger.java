@@ -133,8 +133,8 @@ public final class AshDagger {
     // ---- the end ----
 
     private static void onPull(PlayerInteractEvent.EntityInteract e) {
-        if (e.getLevel().isClientSide() || !(e.getTarget() instanceof ServerPlayer victim) || e.getEntity() == victim
-                || !isDesiccated(victim)) {
+        if (e.getLevel().isClientSide() || net.ofatech.supernaturalbloodlines.core.death.DamageProbe.active() || !(e.getTarget() instanceof ServerPlayer victim)
+                || e.getEntity() == victim || !isDesiccated(victim)) {
             return;
         }
         // the Cure wins over a pull: the feeder drinks it for the victim, the dagger drops either way

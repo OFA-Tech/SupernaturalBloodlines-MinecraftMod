@@ -525,6 +525,16 @@ Tests: `LineRulesTest`, `RingFillTest`, `LineIndexTest`, `LineTreeTest`, `LineTr
 - **Tests:** `BloodKindTest`, `BloodBottleRulesTest`, `BloodSealCodecTest`; GameTests `BloodBottleGameTests`, `BloodBottleWerewolfGameTests`, `OriginalGameTests` (the two rites), `KlausGameTests.klausBloodAlsoPutsVampireBloodInAHuman`, `LoadoutVampirismGameTests.bottleBloodIsOfferedInTheFirstFreeSlot`.
 - **Not verified:** a real dedicated server and client pair over the network (the wire is checked by encoding with `ItemStack.STREAM_CODEC`).
 
+## Plan 18f: Force-feed my blood (R207, R208)
+
+- [x] **Pure rule** (`core/blood/ForceFeedRules`): not a player, self, vervain (even willing), willing (sneaking), else PvP on and (downed or health fraction at or under `force_feed_health_limit`).
+- [x] **Action** (`blood/GiveBloodAction`, `ExtraActions.GIVE_BLOOD`): available to `Supernatural.isVampiric` (every vampire type). Reuses 18d's `TargetChecks` (made public: `inView`, `untouchable`, `mayAttack`, `damageWouldLand`) and `HudTargets` through `ActionService`; applies `BloodBottles.apply(target, source of the giver)`, so a human is marked, an Original names the pending sire (`BloodDrink`), a werewolf follows R210. The giver always gets `give_blood.done` and the same cooldown (`ActionClock`), whatever the blood did. Claims: an unwilling target is asked as a blow (`AttackEntityEvent` through `mayAttack`, plus the damage probe unless the target is down: our dying rules cancel every blow); a willing one as a click (a posted `EntityInteract` inside `DamageProbe`, so our click listeners that pull a dagger, siphon or compel return early).
+- [x] **Vervain:** `BiteProtection.registerVictim`/`victimProtected` (shared); the artifacts part registers it, so the species part does not import artifacts. Without the artifacts part nothing is protected.
+- [x] **The buff** (`blood/VampireBloodBuff`): every 20 ticks of a player whose `vampireBloodUntil` is in the future: Regeneration II (60 ticks, ambient, no particles) and 0.15 less exhaustion; config `vampire_blood_buff_enabled`.
+- [x] Config `give_blood_cooldown_seconds`, `force_feed_health_limit`, `vampire_blood_buff_enabled` (`AdminEntries` rows). No payload changes: no network version bump.
+- **Tests:** `ForceFeedRulesTest`; GameTests `GiveBloodGameTests` (skip with `species` off), `GiveBloodWerewolfGameTests` (needs Werewolves).
+- **Not verified:** a real claim mod (Open Parties and Claims) cancelling the posted events; art (`give_blood.png` is the placeholder `unknown.png`).
+
 ## Plan 18b: dying with vampire blood stands you up (R209)
 
 - [x] **Rule** (core/bloodline): BloodlineEvent.TURNING_GAVE_UP -> BloodlineRules.turningGaveUp (clears the turning, the vampire blood and the pending sire; no kill action; a Ghoul stays one).

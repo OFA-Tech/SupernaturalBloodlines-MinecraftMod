@@ -145,6 +145,14 @@ All numbers are drafts to tune after a playtest; each is a config key.
 | `bottle_blood_health_cost` | 3 (1.5 hearts, never lethal) | Real enough to count in a fight, never a way to die. |
 | bottle_blood_daily_limit | 8 | Vampirism's vampire blood bottle is an ingredient (pure blood, vampire blood oil) and a task item: a day of bottling cannot supply a whole server. |
 
+## Plan 18f: Force-feed my blood and the blood's gifts (R207, R208)
+
+| Key | Default | Why |
+|---|---|---|
+| `give_blood_cooldown_seconds` | 120 | Twice a bottle's minute: it is a deliberate act on a person, not a supply line, and the cooldown starts whatever the blood did so it cannot be used to probe. |
+| `force_feed_health_limit` | 0.30 | An unwilling target must already be losing (or down); a healthy one is never made to drink. A sneaking target accepts at any health. |
+| `vampire_blood_buff_enabled` | true | Regeneration II (one health point every 1.25 s) and 0.15 less exhaustion a second, for the `vampire_blood_ticks` window (20 minutes). The owner asked for it for anyone with the blood in them, a bottle included; the switch lets a server take it off. |
+
 ## Plan 18c: the Augustine (R200 to R203)
 
 The ladder pays what a plain vampire's does (7 rungs, 23 SP, 212,000 EP): an Augustine is a vampire on a diet, and the Tensura rung is the same (owner, Q3). Its tree costs 21 SP, 91% of the ladder (the vampire's costs 19), because two skills of its own (3 SP each) replace Elder's Skin and the quest of Predator's Thirst. The attack and health bonuses are half of an Original's (+10% and +2 against +20% and +4): the species is a little stronger than a vampire, never a hybrid's equal. The blood factors (x3 on the first bite of a feed on a vampire, paid by a vampire player who is bitten; x1/3 from anyone else, rounded at random so it is a third on average) make it a hunter of vampires: a village feeds it a third as well.
