@@ -29,9 +29,10 @@ public final class AdminEntries {
     public static final String SPECIES_TENSURA_FILE = MOD + "-species_tensura.toml";
     public static final String CELESTIALS_FILE = MOD + "-celestials.toml";
     public static final String BOSSES_FILE = MOD + "-bosses.toml";
+    public static final String EVOLUTION_RITES_FILE = MOD + "-evolution_rites.toml";
 
     /** The section ids, in the order the page lists them. */
-    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "species", "speciesTensura", "celestials", "bosses");
+    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "species", "speciesTensura", "celestials", "bosses", "evolutionRites");
 
     public static final String RESERVED = "reserved: the key does nothing";
 
@@ -196,6 +197,16 @@ public final class AdminEntries {
         all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_roar_range", INT));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_roar_seconds", INT));
         all.add(SettingEntry.of(BOSSES_FILE, bo, "beast_roar_cooldown_seconds", INT));
+        String er = "evolutionRites";
+        for (String key : List.of("rites_enabled", "ultimate_rites_enabled", "announce_ultimates", "mastery_enabled")) {
+            all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, key, BOOL));
+        }
+        all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, "disabled_recipes", LIST));
+        for (String key : List.of("mastery_ep_common", "mastery_ep_extra", "mastery_ep_unique", "mastery_ep_ultimate")) {
+            all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, key, DOUBLE));
+        }
+        all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, "mastery_cooldown_days", INT));
+        all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, "mastery_refused_skills", LIST));
         ALL = List.copyOf(all);
     }
 
