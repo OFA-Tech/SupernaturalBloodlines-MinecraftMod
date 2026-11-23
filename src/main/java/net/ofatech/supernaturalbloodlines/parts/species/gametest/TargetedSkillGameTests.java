@@ -1434,4 +1434,29 @@ public final class TargetedSkillGameTests {
         }
         helper.succeed();
     }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aProbeDoesNotCountAPikeHitOnTheSpiritButARealBlowDoes(GameTestHelper helper) {
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("bosses")) {
+            helper.succeed();
+            return;
+        }
+        ServerPlayer striker = TestPlayers.createDuelist(helper);
+        var type = BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.fromNamespaceAndPath(NS, "gevaudan_spirit"));
+        var spirit = (net.ofatech.supernaturalbloodlines.parts.bosses.entity.GevaudanSpiritEntity) type.create(helper.getLevel());
+        try {
+            striker.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(net.ofatech.supernaturalbloodlines.parts.bosses.BossItems.VALET_PIKE.get()));
+            var source = striker.damageSources().playerAttack(striker);
+            var probe = new net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent(spirit, new net.neoforged.neoforge.common.damagesource.DamageContainer(source, 1.0f));
+            net.ofatech.supernaturalbloodlines.core.death.DamageProbe.run(() -> NeoForge.EVENT_BUS.post(probe));
+            helper.assertTrue(!spirit.pikeHit(), "a probe was counted as a Pike hit");
+            helper.assertTrue(!probe.isCanceled(), "a probe of a Pike blow was cancelled: the answer must be the same as for a real one");
+            var real = new net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent(spirit, new net.neoforged.neoforge.common.damagesource.DamageContainer(source, 1.0f));
+            NeoForge.EVENT_BUS.post(real);
+            helper.assertTrue(spirit.pikeHit(), "control: a real Pike blow was not counted");
+        } finally {
+            spirit.discard();
+        }
+        helper.succeed();
+    }
 }
