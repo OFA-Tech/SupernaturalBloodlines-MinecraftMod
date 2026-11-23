@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased (plan 18e: Hybrid Leap)
+
+### Added
+- **Hybrid Leap (R212, skill S-HYB-3, 3 SP).** A HUD action for the Hybrid and the Original hybrid (rung 3 of their trees): throw yourself at the creature you are looking at, up to `hybrid_leap_range` (12) blocks away. If you reach it (and still see it) you strike it for `hybrid_leap_damage` (6, half hearts) and weaken it for `hybrid_leap_weakness_ticks` (100). It is an ordinary attack, so PvP, claims, duels, armour and totems apply, and an Original is hurt like anyone. It needs no werewolf form. The fall of the landing is eased for a moment (the first 8 blocks only). A refusal says only that it cannot be done, whoever the target is, and costs nothing; the cooldown is `hybrid_leap_cooldown_seconds` (20). Config (all with Admin rows): `hybrid_leap_range`, `hybrid_leap_damage`, `hybrid_leap_weakness_ticks`, `hybrid_leap_cooldown_seconds`.
+- **The leap and the sprint-leap share one guard.** Jump while sprinting (Werewolves' own leap, R212) does not arm for 20 ticks after a Hybrid Leap is asked for. The Settings note for it says the two are separate.
+- Slot actions can name a target farther than the bite reach (`ExtraActions.Action.targetReach`, `HudTargets.resolve(player, id, reach)`); every older action is untouched.
+
+### Changed
+- **The Hybrid's and Original hybrid's trees now cost 26 and 29 SP** (their ladders pay 21 and 24). The balance rule that a tree costs 80% to 110% of its ladder is 125% for those two (they hold the skills of both their lines), see `docs/balance.md`. No ladder changed, so nothing already earned moves.
+
+### Network
+- No payload changed (the trigger carries the same target id), so no network version is bumped. The longer aim is a client choice: an old client keeps naming the 3-block target, and the server answers it with `no_target` or `too_far`, never a wrong blow.
+
+### Migration
+- No existing player changes. Rolled back to an older build the skill stays in the skills list, dormant.
+- The Hybrid Leap's icons are placeholders: a letter tile for the slot and the Hybrid's own second-skill art for the tree.
 ## Unreleased (plan 18d: Rip Heart and Neck Snap)
 
 ### Added

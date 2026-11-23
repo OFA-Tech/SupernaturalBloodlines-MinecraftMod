@@ -482,4 +482,30 @@ public final class HybridLeapGameTests {
         }
         helper.succeed();
     }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void pvpOffRefusesAPlayerTargetTheSameWayAndAMobIsStillFair(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist p = hybrid(helper);
+        ServerPlayer other = TestPlayers.createDuelist(helper);
+        other.setPos(helper.absoluteVec(new Vec3(1.5, 2, 6.5)));
+        Zombie z = zombieAt(helper, 6.5);
+        z.setPos(helper.absoluteVec(new Vec3(3.5, 2, 6.5)));
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+        helper.getLevel().getServer().setPvpAllowed(false);
+        try {
+            look(p, other);
+            helper.assertTrue(HybridLeapAction.REFUSED.equals(key(HybridLeapAction.INSTANCE.trigger(p, other))), "PvP off did not refuse a player target");
+            helper.assertTrue(ActionClock.left(p, LEAP) == 0 && !HybridLeapAction.inFlight(p), "the refusal had an effect");
+            look(p, z);
+            helper.assertTrue(HybridLeapAction.INSTANCE.trigger(p, z) == null, "PvP off refused a mob");
+        } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
+            z.discard();
+            clean(p, other);
+        }
+        helper.succeed();
+    }
 }

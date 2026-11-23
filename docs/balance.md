@@ -162,3 +162,13 @@ The ladder pays what a plain vampire's does (7 rungs, 23 SP, 212,000 EP): an Aug
 | `neck_snap_*_seconds` | 60 each | The wiki gives no time; all four kinds are equal so the time never says what the target is. |
 
 The five ladders of the vampire-like types that were short pay 1 to 3 SP more over their rungs, so every tree stays at 80% to 110% of its ladder after the two skills (2 SP each).
+
+## Plan 18e: Hybrid Leap (R212)
+
+| Key | Default | Why |
+|---|---|---|
+| `hybrid_leap_range` | 12 blocks | A leap, not a teleport: far enough to close a gap, short enough that a wall or a drop on the way still matters. |
+| `hybrid_leap_damage` | 6 (3 hearts) | Less than Rip Heart's threshold and a weapon's swing; the Weakness is the real effect. |
+| `hybrid_leap_weakness_ticks` | 100 (5 s) | Long enough to turn a fight, short enough to be a reply, not a lock. |
+| `hybrid_leap_cooldown_seconds` | 20 | Twice Surge's pace of nothing: a skill you can use every fight, not every swing. |
+| `S-HYB-3` cost | 3 SP | A rung-3 skill, as S-HYB-2. The plan said 4; at 4 the Original hybrid's tree would be 130% of its ladder. |
