@@ -1,8 +1,6 @@
 package net.ofatech.supernaturalbloodlines.parts.evolutionrites.rite;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
 import io.github.manasmods.tensura.util.EnergyHelper;
 import java.util.List;
@@ -15,6 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
+import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRecipeCodec;
 import net.ofatech.supernaturalbloodlines.core.evolution.MasteryRules;
 import net.ofatech.supernaturalbloodlines.core.evolution.Tier;
 import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
@@ -35,11 +34,7 @@ public record MasteryRiteFactory(Tier tier) implements RiteFactory {
     public static final String DONE = "supernaturalbloodlines.rite.mastery_done";
     public static final String DONE_CASTER = "supernaturalbloodlines.rite.mastery_done_caster";
 
-    public static final MapCodec<MasteryRiteFactory> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-            Codec.STRING.comapFlatMap(s -> Tier.parse(s).map(com.mojang.serialization.DataResult::success)
-                    .orElseGet(() -> com.mojang.serialization.DataResult.error(() -> "unknown mastery tier \"" + s + "\"")), Tier::id)
-                    .fieldOf("tier").forGetter(MasteryRiteFactory::tier)
-    ).apply(i, MasteryRiteFactory::new));
+    public static final MapCodec<MasteryRiteFactory> CODEC = EvolutionRecipeCodec.MASTERY_TIER.xmap(MasteryRiteFactory::new, MasteryRiteFactory::tier);
 
     @Override
     public Rite create(Rite.BaseRiteParams base, Rite.RiteParams params) {

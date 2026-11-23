@@ -1,19 +1,13 @@
 package net.ofatech.supernaturalbloodlines.parts.evolutionrites.rite;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.manasmods.manascore.skill.api.ManasSkill;
 import io.github.manasmods.manascore.skill.api.ManasSkillInstance;
 import io.github.manasmods.manascore.skill.api.SkillAPI;
 import io.github.manasmods.tensura.ability.SkillHelper;
 import io.github.manasmods.tensura.util.EnergyHelper;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 import net.favouriteless.enchanted.api.circle_magic.RiteFactory;
 import net.favouriteless.enchanted.common.enchanted.circle_magic.rites.Rite;
 import net.minecraft.network.chat.Component;
@@ -23,11 +17,10 @@ import net.minecraft.world.item.ItemStack;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRecipe;
+import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRecipeCodec;
 import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRules;
-import net.ofatech.supernaturalbloodlines.core.evolution.GrantForm;
 import net.ofatech.supernaturalbloodlines.core.evolution.Tier;
 import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
-import net.ofatech.supernaturalbloodlines.core.rite.RiteKind;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoSkills;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.Recipes;
@@ -51,58 +44,33 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
     /** A test seam: runs between the last check and the grant, where another mod could have given the target the skill. */
     public static volatile Runnable beforeGrant = () -> { };
 
-    private static DataResult<Tier> tier(String s) {
-        return Tier.parse(s).filter(t -> t != Tier.COMMON).map(DataResult::success).orElseGet(() -> DataResult.error(() -> "unknown evolution tier \"" + s + "\""));
-    }
-
-    private static DataResult<Set<RiteKind>> kinds(List<String> names) {
-        Set<RiteKind> out = EnumSet.noneOf(RiteKind.class);
-        for (String n : names) {
-            try {
-                out.add(RiteKind.valueOf(n.toUpperCase(Locale.ROOT)));
-            } catch (IllegalArgumentException e) {
-                return DataResult.error(() -> "unknown rite kind \"" + n + "\"");
-            }
-        }
-        return DataResult.success(out);
-    }
-
-    private static final Codec<EvolutionRecipe.Need> NEED = RecordCodecBuilder.create(i -> i.group(
-            Codec.STRING.fieldOf("skill").forGetter(EvolutionRecipe.Need::skill),
-            Codec.BOOL.optionalFieldOf("mastered", false).forGetter(EvolutionRecipe.Need::mastered)
-    ).apply(i, EvolutionRecipe.Need::new));
-
-    public static final MapCodec<EvolutionRiteFactory> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-            Codec.STRING.fieldOf("recipe").forGetter(f -> f.recipe.id()),
-            Codec.STRING.comapFlatMap(EvolutionRiteFactory::tier, Tier::id).fieldOf("tier").forGetter(f -> f.recipe.tier()),
-            Codec.STRING.fieldOf("grants").forGetter(f -> f.recipe.grants()),
-            Codec.STRING.comapFlatMap(s -> GrantForm.parse(s).map(DataResult::success).orElseGet(() -> DataResult.error(() -> "unknown grant form \"" + s + "\"")),
-                    f -> f.name().toLowerCase(Locale.ROOT)).optionalFieldOf("grant_form", GrantForm.DEFAULT).forGetter(f -> f.recipe.grantForm()),
-            Codec.STRING.listOf().optionalFieldOf("consumes", List.of()).forGetter(f -> f.recipe.consumes()),
-            NEED.listOf().optionalFieldOf("needs", List.of()).forGetter(f -> f.recipe.needs()),
-            Codec.STRING.fieldOf("requires_mod").forGetter(f -> f.recipe.requiresMod()),
-            Codec.STRING.fieldOf("probe").forGetter(f -> f.recipe.probe()),
-            Codec.STRING.listOf().comapFlatMap(EvolutionRiteFactory::kinds, s -> s.stream().map(k -> k.name().toLowerCase(Locale.ROOT)).toList())
-                    .optionalFieldOf("subject_kinds", Set.of()).forGetter(f -> f.recipe.subjectKinds()),
-            Codec.DOUBLE.optionalFieldOf("ep_cost", 0.0).forGetter(f -> f.recipe.epCost())
-    ).apply(i, (id, tier, grants, form, consumes, needs, mod, probe, kinds, ep) ->
-            new EvolutionRiteFactory(new EvolutionRecipe(id, tier, grants, form, consumes, needs, mod, probe, kinds, ep))));
+    public static final MapCodec<EvolutionRiteFactory> CODEC = EvolutionRecipeCodec.RECIPE.xmap(EvolutionRiteFactory::new, EvolutionRiteFactory::recipe);
 
     public enum Grant { DONE, ALREADY, VETOED }
 
     /**
      * The one place a skill changes hands (E6, E8, E15): learn it, and only when that is confirmed forget what the recipe consumes and spend its EP. A target
-     * who holds the skill by now (a third mod gave it) is {@code ALREADY}; a learn that a listener vetoed is {@code VETOED} and costs nothing.
+     * who holds the skill by now (a third mod gave it) is {@code ALREADY}; a learn that a listener vetoed, or that leaves too little EP, is {@code VETOED} and
+     * costs nothing. Tensura's own price for the skill is charged by the learn itself and is not the rite's EP cost.
      */
     public static Grant grant(ServerPlayer target, EvolutionRecipe recipe, ManasSkill skill) {
         beforeGrant.run();
         if (EvoSkills.held(target, skill).isPresent()) {
             return Grant.ALREADY;
         }
+        // Tensura charges the skill's own price (from base Max EP) inside its unlock listener, which may run before another listener's veto: a refused learn gives it back
+        double epBefore = EnergyHelper.getBaseMaxEP(target);
+        var skills = SkillAPI.getSkillsFrom(target);
         if (!SkillHelper.learnSkill(target, skill)) {
+            EnergyHelper.setBaseMaxEP(target, epBefore);
             return Grant.VETOED;
         }
-        var skills = SkillAPI.getSkillsFrom(target);
+        if (recipe.epCost() > 0 && EnergyHelper.getBaseMaxEP(target) <= recipe.epCost()) {
+            // the learn took its price and left too little to pay the rite's own: undo it all
+            skills.forgetSkill(skill);
+            EnergyHelper.setBaseMaxEP(target, epBefore);
+            return Grant.VETOED;
+        }
         for (String id : recipe.consumes()) {
             ResourceLocation rl = ResourceLocation.tryParse(id);
             if (rl != null) {

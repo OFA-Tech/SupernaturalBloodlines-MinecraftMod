@@ -6,6 +6,7 @@ import static net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.E
 import static net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvoTestSupport.onTheCircle;
 import static net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvoTestSupport.performer;
 import static net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvoTestSupport.stacks;
+import static net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport.centre;
 import static net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport.clearDropped;
 import static net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport.dropped;
 import static net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport.remove;
@@ -33,6 +34,7 @@ import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRecipe;
 import net.ofatech.supernaturalbloodlines.core.evolution.GrantForm;
 import net.ofatech.supernaturalbloodlines.core.evolution.Tier;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
+import net.ofatech.supernaturalbloodlines.parts.species.gametest.LineTestPlayer;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoSkills;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.Recipes;
@@ -66,9 +68,23 @@ public final class EvolutionRiteGameTests {
         return stacks("minecraft:amethyst_shard", 4, "minecraft:ender_eye", 2, "enchanted:spirit_of_otherwhere", 1);
     }
 
-    private static void clean(GameTestHelper helper, RecordingPlayer... ps) {
+    /** What Tensura itself takes from base Max EP for learning Great Sage with no free switch (a control learn on a player of the same EP). */
+    private static double tensuraPrice(GameTestHelper helper) {
+        RecordingPlayer control = onTheCircle(helper, false, EP);
+        try {
+            ManasSkill greatSage = SkillAPI.getSkillRegistry().get(ResourceLocation.parse(GREAT_SAGE));
+            helper.assertTrue(io.github.manasmods.tensura.ability.SkillHelper.learnSkill(control, greatSage), "the control learn failed");
+            return EP - EnergyHelper.getBaseMaxEP(control);
+        } finally {
+            EvoTestSupport.forgetAll(control);
+            remove(helper, control);
+            BloodlineAccess.set(control, BloodlineState.NONE);
+        }
+    }
+
+    private static void clean(GameTestHelper helper, net.minecraft.server.level.ServerPlayer... ps) {
         clearDropped(helper);
-        for (RecordingPlayer p : ps) {
+        for (var p : ps) {
             EvoTestSupport.forgetAll(p);
             remove(helper, p);
             BloodlineAccess.set(p, BloodlineState.NONE);
@@ -103,7 +119,8 @@ public final class EvolutionRiteGameTests {
             helper.assertTrue(has(target, SAGE), "Sage was taken");
             helper.assertTrue(target.received(EvolutionRiteFactory.DONE), "the target was not told: " + target.heard());
             helper.assertTrue(caster.received(EvolutionRiteFactory.DONE_CASTER), "the performer was not told: " + caster.heard());
-            helper.assertTrue(Math.abs(EnergyHelper.getBaseMaxEP(target) - (EP - 100_000)) < 1, "base max EP is " + EnergyHelper.getBaseMaxEP(target));
+            double price = tensuraPrice(helper);
+            helper.assertTrue(Math.abs(EnergyHelper.getBaseMaxEP(target) - (EP - 100_000 - price)) < 1, "base max EP is " + EnergyHelper.getBaseMaxEP(target) + ", Tensura's price is " + price);
             helper.assertTrue(dropped(helper, "minecraft:ender_eye") == 0, "a good rite gave the ingredients back");
         } finally {
             clean(helper, caster, target);
@@ -301,7 +318,8 @@ public final class EvolutionRiteGameTests {
             helper.assertTrue(result == EvolutionRiteFactory.Grant.DONE, "the result was " + result);
             helper.assertTrue(has(target, GREAT_SAGE), "no Great Sage");
             helper.assertTrue(!has(target, SAGE), "Sage, which the recipe consumes, stayed");
-            helper.assertTrue(Math.abs(EnergyHelper.getBaseMaxEP(target) - (EP - 1000)) < 1, "EP is " + EnergyHelper.getBaseMaxEP(target));
+            double price = tensuraPrice(helper);
+            helper.assertTrue(Math.abs(EnergyHelper.getBaseMaxEP(target) - (EP - 1000 - price)) < 1, "EP is " + EnergyHelper.getBaseMaxEP(target) + ", Tensura's price is " + price);
         } finally {
             clean(helper, target);
         }
@@ -367,9 +385,14 @@ public final class EvolutionRiteGameTests {
         if (noRite(helper)) {
             return;
         }
-        RecordingPlayer caster = performer(helper, Species.WITCH);
+        // real advancements: the rite unlocks are advancements, and a plain fake player's do nothing
+        LineTestPlayer caster = LineTestPlayer.createWithAdvancements(helper);
+        BloodlineAccess.set(caster, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
+        caster.setPos(net.minecraft.world.phys.Vec3.atBottomCenterOf(centre(helper)).add(5, 1, 0));
+        helper.getLevel().addNewPlayer(caster);
         RecordingPlayer target = onTheCircle(helper, true, EP);
         try {
+            RiteUnlocks.reconcile(caster);
             RiteUnlocks.forget(caster, RITE); // a witch knows it from being one: take it away, so only performing can teach it
             helper.assertTrue(!RiteUnlocks.known(caster).contains(RITE), "could not forget the rite");
             give(target, SAGE, 500);

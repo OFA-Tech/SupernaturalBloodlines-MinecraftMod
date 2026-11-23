@@ -12,7 +12,6 @@ import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState;
 import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
 import net.ofatech.supernaturalbloodlines.core.rite.RiteAdvancements;
-import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
 import net.ofatech.supernaturalbloodlines.parts.species.unlock.RiteUnlocks;
 
 /** The evolution rites in the book's unlock table: sealed until known, unlocked by kind, and absent with their addon or part (spec 10). */
@@ -34,8 +33,8 @@ public final class EvolutionUnlockGameTests {
             helper.succeed();
             return;
         }
-        RecordingPlayer witch = RecordingPlayer.create(helper);
-        RecordingPlayer human = RecordingPlayer.create(helper);
+        var witch = net.ofatech.supernaturalbloodlines.parts.species.gametest.LineTestPlayer.createWithAdvancements(helper);
+        var human = net.ofatech.supernaturalbloodlines.parts.species.gametest.LineTestPlayer.createWithAdvancements(helper);
         try {
             BloodlineAccess.set(witch, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
             RiteUnlocks.reconcile(witch);
@@ -62,8 +61,11 @@ public final class EvolutionUnlockGameTests {
         helper.assertTrue((type(helper, "evolve_deus_sanguis") != null) == ascension, "the rite is registered: " + (type(helper, "evolve_deus_sanguis") != null) + ", Ascension is loaded: " + ascension);
         helper.assertTrue(advancementExists(helper, RiteAdvancements.known("evolve_deus_sanguis")) == ascension, "the known advancement follows Ascension");
         helper.assertTrue(advancementExists(helper, RiteAdvancements.sealed("evolve_deus_sanguis")) == ascension, "the sealed advancement follows Ascension");
+        for (String rite : new String[] {RITE, "mastery_common", "mastery_extra", "mastery_unique", "mastery_ultimate", "evolve_deus_sanguis"}) {
+            helper.assertTrue(advancementExists(helper, RiteAdvancements.known(rite)) == (type(helper, rite) != null), rite + ": its advancements and its rite disagree");
+        }
         if (!ascension) {
-            RecordingPlayer vampire = RecordingPlayer.create(helper);
+            var vampire = net.ofatech.supernaturalbloodlines.parts.species.gametest.LineTestPlayer.createWithAdvancements(helper);
             try {
                 RiteUnlocks.reconcile(vampire);
                 helper.assertTrue(!RiteUnlocks.known(vampire).contains("evolve_deus_sanguis"), "a rite of a missing addon is known");

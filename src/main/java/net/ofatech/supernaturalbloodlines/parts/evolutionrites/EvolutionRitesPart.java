@@ -1,9 +1,11 @@
 package net.ofatech.supernaturalbloodlines.parts.evolutionrites;
 
 import net.favouriteless.enchanted.api.circle_magic.RiteFactoryRegistry;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
@@ -38,6 +40,9 @@ public final class EvolutionRitesPart {
             e.register(EvolutionUnlockGameTests.class);
             e.register(MasteryGameTests.class);
         });
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            net.ofatech.supernaturalbloodlines.parts.evolutionrites.client.MasteryClient.install();
+        }
         SupernaturalBloodlines.LOGGER.info("EvolutionRitesPart enabled");
     }
 }
