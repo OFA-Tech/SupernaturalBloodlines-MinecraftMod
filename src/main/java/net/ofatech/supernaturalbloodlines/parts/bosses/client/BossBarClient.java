@@ -35,6 +35,7 @@ public final class BossBarClient {
     private static int shown;
     private static GuiGraphics frame;
     private static String demoShown;
+    private static Boolean statusCorner;
     private static final BiConsumer<UUID, LerpingBossEvent> COLLECT = (id, event) -> {
         BossBarInfo info = INFOS.get(id);
         if (info != null && count < MAX_BARS) {
@@ -125,7 +126,7 @@ public final class BossBarClient {
             return; // beyond what fits: vanilla's bar
         }
         e.setCanceled(true);
-        e.setIncrement(index == 0 ? BossBarLayout.stackHeight(shown) : 0);
+        e.setIncrement(index == 0 ? BossBarLayout.increment(shown) : 0);
     }
 
     private static void drawStack(GuiGraphics g, Minecraft mc, CustomizeGuiOverlayEvent.BossEventProgress e, int base) {
@@ -133,8 +134,11 @@ public final class BossBarClient {
         boolean reduce = ReduceMotion.on();
         long tick = UiMotion.tick();
         double now = tick + e.getPartialTick().getGameTimeDeltaPartialTick(false);
-        int cardW = BossBarLayout.cardWidth(g.guiWidth());
-        int x = BossBarLayout.cardX(g.guiWidth(), cardW);
+        if (statusCorner == null) {
+            statusCorner = net.neoforged.fml.ModList.get().isLoaded("tensura") || net.neoforged.fml.ModList.get().isLoaded("vampirism");
+        }
+        int cardW = BossBarLayout.cardWidth(g.guiWidth(), statusCorner);
+        int x = BossBarLayout.cardX(g.guiWidth(), cardW, statusCorner);
         for (int k = 0; k < shown; k++) {
             BossBarInfo info = COLLECTED[k];
             LerpingBossEvent event = EVENTS[k];

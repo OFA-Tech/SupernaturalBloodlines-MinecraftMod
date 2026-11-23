@@ -40,6 +40,39 @@ class BossBarLayoutTest {
     }
 
     @Test
+    void withAStatusCornerTheStackStandsToItsRightWhereTheScreenHasRoom() {
+        for (int guiW : new int[] {480, 427, 342, 320}) {
+            int w = BossBarLayout.cardWidth(guiW, true);
+            int x = BossBarLayout.cardX(guiW, w, true);
+            assertTrue(x >= BossBarLayout.STATUS_CLEAR, guiW + ": the card starts at " + x + ", over the corner");
+            assertTrue(x + w <= guiW - BossBarLayout.SCREEN_MARGIN, guiW + ": the card ends at " + (x + w) + ", off the screen");
+            assertTrue(w >= BossBarLayout.MIN_CARD_W, guiW + ": " + w);
+        }
+        assertEquals(250, BossBarLayout.cardWidth(480, true), "the approved size is kept where it fits");
+        assertEquals(144, BossBarLayout.cardX(480, 250, true));
+        assertEquals(115, BossBarLayout.cardX(480, 250, false), "with no corner it is centred");
+        assertEquals(195, BossBarLayout.cardX(640, 250, true), "at scale 3 the centred card already clears the corner");
+        assertEquals(BossBarLayout.cardX(960, 250, false), BossBarLayout.cardX(960, 250, true));
+    }
+
+    @Test
+    void aScreenTooNarrowForACardBesideTheCornerKeepsTheCardCentred() {
+        assertEquals(BossBarLayout.SCREEN_MARGIN, BossBarLayout.leftClear(300, true));
+        assertEquals(250, BossBarLayout.cardWidth(300, true));
+        assertEquals(25, BossBarLayout.cardX(300, 250, true));
+    }
+
+    @Test
+    void anotherModsBarUnderTheStackHasRoomForItsNameAboveIt() {
+        for (int n = 1; n <= 4; n++) {
+            int nextBar = BossBarLayout.cardY(12, 0) + BossBarLayout.increment(n);
+            int lastCardBottom = BossBarLayout.cardY(12, n - 1) + BossBarLayout.CARD_H;
+            assertTrue(nextBar - 9 >= lastCardBottom + 2, n + " cards: its name (9 px above it) starts at " + (nextBar - 9) + ", the card ends at " + lastCardBottom);
+        }
+        assertEquals(0, BossBarLayout.increment(0));
+    }
+
+    @Test
     void cardsStackWithASixPixelGapAndTheIncrementPutsAnotherModsBarUnderThemAll() {
         assertEquals(12, BossBarLayout.cardY(12, 0));
         assertEquals(12 + 52, BossBarLayout.cardY(12, 1));

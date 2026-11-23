@@ -3,6 +3,7 @@ package net.ofatech.supernaturalbloodlines.parts.bosses.client;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.function.ToIntFunction;
+import net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor;
 
 /**
  * Where everything of a boss bar goes (the approved card of the style guide): a 250 x 46 card with the portrait plate on the left, the name plate over the
@@ -48,12 +49,38 @@ public final class BossBarLayout {
                            int fillX, int fillY, int fillMaxW, int[] tickX, int hpX, int hpY, int hpMaxW, int chipY, int[] chipX, int[] chipW) {
     }
 
+    /** Another mod's status corner (Tensura's and Vampirism's bars, top left) is this wide, with a gap; the stack stands to its right when the screen has room. */
+    public static final int STATUS_CLEAR = TrackerAnchor.CORNER_W + 4;
+    /** Narrower than this a card is not worth making: it then stays centred and may reach over the corner. */
+    public static final int MIN_CARD_W = 170;
+    /** Another mod's bar draws its name 9 px above itself: it needs this much under the last card (two pixels of air). */
+    public static final int VANILLA_HEAD = 11;
+
+    /** How far from the left edge the stack may start: clear of the status corner when it is there and the screen is wide enough for a card beside it. */
+    public static int leftClear(int guiW, boolean statusCorner) {
+        return statusCorner && guiW - STATUS_CLEAR - SCREEN_MARGIN >= MIN_CARD_W ? STATUS_CLEAR : SCREEN_MARGIN;
+    }
+
+    public static int cardWidth(int guiW, boolean statusCorner) {
+        return Math.min(CARD_W, guiW - leftClear(guiW, statusCorner) - SCREEN_MARGIN);
+    }
+
+    /** Centred, but never nearer the left edge than {@link #leftClear}. */
+    public static int cardX(int guiW, int cardW, boolean statusCorner) {
+        return Math.max((guiW - cardW) / 2, leftClear(guiW, statusCorner));
+    }
+
     public static int cardWidth(int guiW) {
-        return Math.min(CARD_W, guiW - 2 * SCREEN_MARGIN);
+        return cardWidth(guiW, false);
     }
 
     public static int cardX(int guiW, int cardW) {
-        return (guiW - cardW) / 2;
+        return cardX(guiW, cardW, false);
+    }
+
+    /** What the first card tells vanilla it took, for {@code bars} cards: the next bar of another mod starts under the last card with room for its name above it. */
+    public static int increment(int bars) {
+        return bars <= 0 ? 0 : (bars - 1) * (CARD_H + GAP) + CARD_H + VANILLA_HEAD;
     }
 
     public static int cardY(int base, int index) {

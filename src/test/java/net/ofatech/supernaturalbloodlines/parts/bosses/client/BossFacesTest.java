@@ -121,6 +121,36 @@ class BossFacesTest {
         }
     }
 
+    /** The colour that most of the opaque pixels of a picture are: what a bar looks like at a glance. */
+    private static int dominant(HudKit k, Part part) throws Exception {
+        BufferedImage img = image(k, part);
+        java.util.Map<Integer, Integer> count = new java.util.HashMap<>();
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                int argb = img.getRGB(x, y);
+                if ((argb >>> 24) > 0xC0) {
+                    count.merge(argb, 1, Integer::sum);
+                }
+            }
+        }
+        return java.util.Collections.max(count.entrySet(), java.util.Map.Entry.comparingByValue()).getKey();
+    }
+
+    @Test
+    void theHealthFillAndTheShiftingFillStandOutFromTheirTrackAtThreeToOne() throws Exception {
+        List<String> faint = new ArrayList<>();
+        for (HudKit k : HudKit.values()) {
+            int track = dominant(k, Part.BOSS_BAR_TRACK);
+            for (Part fill : new Part[] {Part.BOSS_BAR_FILL, Part.BOSS_BAR_FILL_SHIFTING}) {
+                double r = Contrast.ratio(dominant(k, fill), track);
+                if (r < 3.0) {
+                    faint.add(k + " " + fill + " " + String.format("%.2f", r) + ":1");
+                }
+            }
+        }
+        assertTrue(faint.isEmpty(), "a fill the eye cannot tell from its track: " + faint);
+    }
+
     @Test
     void theCardsInkAndTheNameColourAreTheThemesOwn() {
         HubTheme[] themes = {new GrimoireTheme(), new BloodMoonTheme(), new TensuraHubTheme()};
