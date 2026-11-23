@@ -54,6 +54,7 @@ public final class RiteUnlockTable {
         kind(m, "hybrid_blood", RiteKind.HYBRID);
         kind(m, "original_blood", RiteKind.ORIGINAL);
         kind(m, "rite_of_the_moon", RiteKind.ORIGINAL);
+        kind(m, "cursed_dagger", RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID);
         lore(m, "rite_of_cloaking", KOL);
         lore(m, "rite_of_linking", ESTHER);
         both(m, "rite_of_severance", Set.of(RiteKind.WITCH, RiteKind.SIPHONER, RiteKind.TRIBRID), ESTHER);

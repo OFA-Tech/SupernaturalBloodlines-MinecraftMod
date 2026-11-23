@@ -22,6 +22,8 @@ public final class ExtraActions {
 
     public static final ResourceLocation NECK_SNAP = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "neck_snap");
 
+    public static final ResourceLocation GIVE_BLOOD = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "give_blood");
+
     public static final ResourceLocation HYBRID_LEAP = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "hybrid_leap");
 
     public static final ResourceLocation BOTTLE_BLOOD = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "bottle_blood");
@@ -50,6 +52,11 @@ public final class ExtraActions {
         @Nullable
         default Component trigger(ServerPlayer p, @Nullable net.minecraft.world.entity.LivingEntity target) {
             return trigger(p);
+        }
+
+        /** True when the action waits for the player to aim at a creature and confirm (the wheel shows an aim hint); the default is an action that fires at once. */
+        default boolean aimed() {
+            return false;
         }
 
         /**

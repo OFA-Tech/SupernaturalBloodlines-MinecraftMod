@@ -27,12 +27,14 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.Supernatural;
-import net.ofatech.supernaturalbloodlines.core.bloodline.Species;
+import net.ofatech.supernaturalbloodlines.core.boss.DaggerRules;
+import net.ofatech.supernaturalbloodlines.parts.artifacts.item.AshDaggerItem;
 
 /**
- * R33: a hit with the White Oak Ash Dagger leaves it in an Original ({@code desiccated}, the stack kept in the
- * {@code lodged_dagger} attachment) until another player pulls it, the effect runs out or is removed, or the Original
- * dies. Anyone supernatural who hits with it takes {@link #BACKLASH}.
+ * R33: a hit with the White Oak Ash Dagger leaves it in an Original, and with the Cursed one (R205) also in an Original hybrid
+ * ({@link DaggerRules}; {@code desiccated}, the stack kept in the {@code lodged_dagger} attachment) until another player pulls it, the effect runs
+ * out or is removed, or the Original dies. Anyone supernatural who hits with either takes {@link #BACKLASH}, whoever they hit. Both daggers
+ * lodge for the same time and drop as the stack that was used.
  */
 public final class AshDagger {
     /** Heavy: half of a player's health. */
@@ -91,11 +93,6 @@ public final class AshDagger {
         }
     }
 
-    private static boolean isOriginal(ServerPlayer p) {
-        Species s = BloodlineAccess.get(p).species();
-        return s == Species.ORIGINAL || s == Species.ORIGINAL_HYBRID;
-    }
-
     private static boolean isMelee(DamageSource s) {
         return s.is(DamageTypes.PLAYER_ATTACK) || s.is(DamageTypes.MOB_ATTACK) || s.is(DamageTypes.MOB_ATTACK_NO_AGGRO);
     }
@@ -105,10 +102,12 @@ public final class AshDagger {
     private static void onHit(LivingDamageEvent.Post e) {
         DamageSource source = e.getSource();
         if (!isMelee(source) || !(source.getDirectEntity() instanceof LivingEntity wielder) || wielder != source.getEntity()
-                || !wielder.getMainHandItem().is(ArtifactItems.ASH_DAGGER.get())) {
+                || !(wielder.getMainHandItem().getItem() instanceof AshDaggerItem dagger)) {
             return;
         }
-        if (e.getEntity() instanceof ServerPlayer victim && isOriginal(victim) && !isDesiccated(victim)) {
+        // R33: whether it lodges depends on the victim and the dagger; the backlash below on the wielder only, so a hit that does not lodge looks the
+        // same for an Original hybrid as for anyone else
+        if (e.getEntity() instanceof ServerPlayer victim && DaggerRules.lodges(dagger.cursed(), BloodlineAccess.get(victim).species()) && !isDesiccated(victim)) {
             lodge(victim, wielder);
         }
         if (Supernatural.is(wielder)) {

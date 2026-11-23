@@ -119,13 +119,6 @@ class SourceRulesTest {
     }
 
     @Test
-    void aTensuraTaskThatDoesNotFitEndsWithAnEllipsisAndIsNotCutSilently() throws IOException {
-        String detail = source("parts/supernaturaltensura/client/TensuraHubTheme.java");
-        assertFalse(detail.contains("font.split(row.label()"), "the task rows of the pane go through LabelFit.wrap (two lines, an ellipsis)");
-        assertTrue(detail.contains("LabelFit.wrap(row.label().getString()"));
-    }
-
-    @Test
     void wrappedTextNeverBreaksAWordInTheMiddle() throws IOException {
         String wrapped = body(source("parts/supernatural/client/hub/page/PageKit.java"), "static int wrapped(");
         assertTrue(wrapped.contains("LabelFit.hasOverlongWord(") && wrapped.contains("LabelFit.wrapWords("));

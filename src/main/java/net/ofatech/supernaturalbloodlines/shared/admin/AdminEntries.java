@@ -58,6 +58,9 @@ public final class AdminEntries {
 
         all.add(SettingEntry.of(HUD_FILE, "hud", "rate_limit_per_second", INT));
         all.add(SettingEntry.of(HUD_FILE, "hud", "bite_reach", DOUBLE));
+        all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_enabled", BOOL));
+        all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_catalogue_interval_ticks", INT));
+        all.add(SettingEntry.of(HUD_FILE, "hud", "wheel_unslotted_tensura", BOOL));
         all.add(SettingEntry.of(HUD_FILE, "hud", "mixins.next_preset_active", BOOL));
         all.add(SettingEntry.of(HUD_FILE, "hud", "mixins.tensura_feed_fills_blood", BOOL));
         all.add(SettingEntry.of(HUD_FILE, "hud", "mixins.hide_in_controls_mixin", BOOL).hide(RESERVED));
@@ -108,6 +111,10 @@ public final class AdminEntries {
         species(all, "bottle_blood_cooldown_seconds", INT);
         species(all, "bottle_blood_health_cost", DOUBLE);
         species(all, "bottle_blood_daily_limit", INT);
+        species(all, "give_blood_cooldown_seconds", INT);
+        species(all, "force_feed_health_limit", DOUBLE);
+        species(all, "vampire_blood_buff_enabled", BOOL);
+        species(all, "vampire_blood_regen_cooldown_seconds", INT);
         species(all, "rip_heart_health", DOUBLE);
         species(all, "rip_heart_cooldown_seconds", INT);
         species(all, "neck_snap_cooldown_seconds", INT);

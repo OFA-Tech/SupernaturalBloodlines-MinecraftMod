@@ -90,6 +90,11 @@ public final class KlausEntity extends NpcOriginalBoss implements GeoEntity, Shi
     }
 
     @Override
+    public net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look barLook() {
+        return net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.shifter(form());
+    }
+
+    @Override
     protected ItemStack reward() {
         return new ItemStack(BossItems.KLAUS_BLOOD.get());
     }

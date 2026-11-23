@@ -60,7 +60,11 @@ public final class BossesPart {
         net.ofatech.supernaturalbloodlines.parts.bosses.deal.BossEvents17d.register();
         net.ofatech.supernaturalbloodlines.parts.bosses.RiteLoreBackfill.register();
         modBus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent e) -> {
-            var registrar = e.registrar("1").optional();
+            var registrar = e.registrar("2").optional();
+            registrar.playToClient(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarInfoPayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarInfoPayload.STREAM_CODEC,
+                    (payload, ctx) -> ctx.enqueueWork(() -> net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarClientHook.accept(payload)));
+            registrar.playToClient(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossHitPayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.director.BossHitPayload.STREAM_CODEC,
+                    (payload, ctx) -> ctx.enqueueWork(() -> net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarClientHook.hit(payload)));
             registrar.playToClient(net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload.STREAM_CODEC,
                     (payload, ctx) -> ctx.enqueueWork(() -> net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealClientHook.open(payload)));
             registrar.playToServer(net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealChoicePayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealChoicePayload.STREAM_CODEC,
@@ -79,6 +83,7 @@ public final class BossesPart {
             modBus.addListener(net.ofatech.supernaturalbloodlines.parts.bosses.client.ManPose::register);
             net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealClientHook.install(net.ofatech.supernaturalbloodlines.parts.bosses.client.ElijahDealScreen::open);
             modBus.addListener((FMLClientSetupEvent e) -> BossShots.registerIfRequested());
+            net.ofatech.supernaturalbloodlines.parts.bosses.client.BossBarClient.register();
         }
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(BossServerGameTests.class);
