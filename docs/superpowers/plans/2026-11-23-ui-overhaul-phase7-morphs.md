@@ -62,7 +62,9 @@ The man is the vanilla player model with a skin (`HumanoidBossRenderer`), not a 
 
 **Why the howl clip is re-timed:** `ShiftRules.howling` is true from tick 20 to 84 (64 ticks, unchanged, tested). `shift_in` takes the first 20 of those, so the howl clip gets the last 44 ticks (2.2 s). Klaus's `howl` is 3.2 s today, Deucalion's, Peter's and the Beast's `roar` are 2.6 s. 1.0 + 2.2 = 3.2 s = `HOWL_TICKS`. No rule changes.
 
-**`shift_out`:** shifts are one way and the Beast leaves through `collapse`, so nothing plays `shift_out` today. It is authored for the four models as ready art (the brief asks for it) and wired only if the owner accepts T11.
+**`shift_out` (decided):** shifts are one way and the Beast leaves through `collapse`, so nothing plays `shift_out`. It is authored for Klaus, Deucalion and Peter as ready art and **wired to nothing** in this phase. T11 is not part of this phase.
+
+**Howl re-time (decided):** yes, the howl clips are re-timed to 2.2 s as above. The owner can overrule both decisions.
 
 ### Scope: players who shift (werewolf forms)
 
@@ -79,7 +81,7 @@ The man is the vanilla player model with a skin (`HumanoidBossRenderer`), not a 
 
 Phase 6 (`feature/ui-p6`, not on main when this was written) already sends the form: `BossBarForms.shifter(form)` for Klaus, Deucalion and Peter (chip 0 Human, 1 Shifting, 2 Beast) and `BossBarForms.host(stage)` for the Beast. `BossNpc.tick` pushes the bar the same tick `barLook()` changes. So the chip goes to **Shifting at tick 0 and Beast at tick 40**, and the gold look means "can be hit". This phase adds no payload field. The Beast's `barLook()` becomes: Host (0) while the man is drawn (ticks 0 to 19), Beast (1) from the swap, Spirit (2) when it collapses.
 
-**Dependency:** T4 and the bar tests need phase 6. Branch from `feature/ui-p6` and rebase once it is merged; the other tasks do not touch it.
+**Dependency (decided):** T4 and the bar tests need phase 6. Phase 7 is built after PR #73 (phase 6) merges, from `main`. It is not stacked on `feature/ui-p6`.
 
 ## Files
 
@@ -156,7 +158,7 @@ Cues, vanilla assets only: GROWL `WOLF_GROWL` pitch 0.6 volume 1.0 (`SoundSource
 
 `MorphClipsTest` reads the four `animation.json` files and the four `geo.json` files with Gson (no Minecraft).
 
-- [ ] **Step 1: Write the failing tests:** `shiftInIsOneSecond` (`animation_length` is `(SHIFT_TICKS - SWAP_TICK) / 20.0` and `loop` is false or absent); `howlFitsTheRest` (`shift_in + howl` equals `HOWL_TICKS / 20.0`; for Deucalion, Peter and the Beast the clip is `roar`); `everyBoneExists` (each bone named in `shift_in`, `shift_out` and the re-timed clip is a bone of the model's geo); `shiftInEndsInTheIdlePose` (for every bone, the last `shift_in` keyframe equals the first `idle` keyframe within 1 degree and 0.02 blocks, so the blend into the howl is seamless); `shiftOutExists` and is 1.0 s; `otherClipsAreUntouched` (a hash of every other animation, taken from `main` before the art lands and stored in `art/creatures/morph/untouched.sha256`); `noRootDrift` (the root bone's position in `shift_in` stays within 0.3 blocks, because the entity does not move).
+- [ ] **Step 1: Write the failing tests:** `shiftInIsOneSecond` (`animation_length` is `(SHIFT_TICKS - SWAP_TICK) / 20.0` and `loop` is false or absent); `howlFitsTheRest` (`shift_in + howl` equals `HOWL_TICKS / 20.0`; for Deucalion, Peter and the Beast the clip is `roar`); `everyBoneExists` (each bone named in `shift_in`, `shift_out` and the re-timed clip is a bone of the model's geo); `shiftInEndsInTheIdlePose` (for every bone, the last `shift_in` keyframe equals the first `idle` keyframe within 1 degree and 0.02 blocks, so the blend into the howl is seamless); `shiftOutExists` and is 1.0 s (Klaus, Deucalion, Peter only; the Beast has none); `otherClipsAreUntouched` (a hash of every other animation, taken from `main` before the art lands and stored in `art/creatures/morph/untouched.sha256`); `noRootDrift` (the root bone's position in `shift_in` stays within 0.3 blocks, because the entity does not move).
 - [ ] **Step 2: Run** `./gradlew.bat test --tests "*MorphClipsTest"`: FAIL. They pass one boss at a time as A2 to A5 land.
 - [ ] **Step 3: Commit** `test(boss): what a shift clip must satisfy`.
 
@@ -204,9 +206,9 @@ the three wolf controllers and the Beast's use static `RawAnimation` constants a
 - [ ] `docs/parts/bosses.md`: R161 gets the new text (the swap at 20 is the cut; the arrival runs 20 to 39; the howl clip runs 40 to 83; the cues), a line that the Beast is a shifter now, and a line that player werewolf forms are the Werewolves mod's. `CHANGELOG.md`: entry and "Rolling back" (revert the PR; saves are fine because the tags are optional).
 - [ ] Commit `docs(boss): the morph rules`.
 
-### T11 (optional, only if the owner says yes): `shift_out` at dawn
+### T11 (declined for this phase, kept as a note): `shift_out` at dawn
 
-At dawn or when the hunt is lost the wolf plays `shift_out` and a puff, then goes. `KlausEntity.withdraw` and the same in Deucalion and Peter wait 20 ticks (saved counter, still hittable, still tracked) before `hunt.leave` and `discard()`. Tests: `leavesAfterTheClip`, `diesDuringTheLeave`, `savedWhileLeaving`. Not started without the answer.
+At dawn or when the hunt is lost the wolf plays `shift_out` and a puff, then goes. `KlausEntity.withdraw` and the same in Deucalion and Peter wait 20 ticks (saved counter, still hittable, still tracked) before `hunt.leave` and `discard()`. Tests: `leavesAfterTheClip`, `diesDuringTheLeave`, `savedWhileLeaving`. Not built unless the owner asks later.
 
 ## Fable art tasks
 
