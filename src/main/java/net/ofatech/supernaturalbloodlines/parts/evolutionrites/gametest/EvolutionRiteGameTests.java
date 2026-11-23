@@ -383,7 +383,11 @@ public final class EvolutionRiteGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void performingTeachesThePerformer(GameTestHelper helper) {
         // performing is signalled by the supernatural part's hook on Rite.start: with that part off nothing teaches the performer, by design
-        if (noRite(helper) || !net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+        if (noRite(helper)) {
+            return;
+        }
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
+            helper.succeed();
             return;
         }
         // real advancements: the rite unlocks are advancements, and a plain fake player's do nothing
