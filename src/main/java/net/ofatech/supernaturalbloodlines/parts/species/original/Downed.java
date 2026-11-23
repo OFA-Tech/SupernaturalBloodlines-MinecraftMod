@@ -89,6 +89,17 @@ public final class Downed {
         return isDowned(p) && mode(p) == MODE_SNAPPED;
     }
 
+    /**
+     * Everything the player had going ends: Vampirism's and Werewolves' lasting actions (a bat form, rage), flying, and a bite that is running. Their own keys
+     * are refused while they are down (see the listener in {@link #register}), so nothing starts again.
+     */
+    private static void stopWhatTheyWereDoing(ServerPlayer p) {
+        p.getAbilities().flying = false;
+        p.onUpdateAbilities();
+        de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().ifPresent(f -> f.getActionHandler().deactivateAllActions());
+        net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.stop(p);
+    }
+
     /** They can do nothing: downed (dying, for the turning, snapped) or in Vampirism's own dying state. No extra action and no bite runs for them. */
     public static boolean cannotAct(Player p) {
         return isDowned(p) || p instanceof ServerPlayer sp && de.teamlapen.vampirism.api.VampirismAPI.vampirePlayer(sp).isDBNO();
@@ -103,6 +114,7 @@ public final class Downed {
         p.setSprinting(false);
         p.stopRiding();
         p.stopFallFlying();
+        stopWhatTheyWereDoing(p);
         hold(p, true);
         if (!canReceive(p)) {
             // an old client has no screen for it: tell them on the action bar
@@ -127,6 +139,7 @@ public final class Downed {
         p.setSprinting(false);
         p.stopRiding();
         p.stopFallFlying();
+        stopWhatTheyWereDoing(p);
         hold(p, true);
     }
 
@@ -164,6 +177,9 @@ public final class Downed {
             p.setData(SpeciesRegistries.DOWNED, left - 1);
             if (!isSnapped(p) && reopensScreenAt(left - 1)) { // a snapped player closed it by choice (Wait): no re-open spam
                 send(p, payload(p, true));
+            } else if (isSnapped(p) && reopensScreenAt(left - 1) && !canReceive(p)) {
+                // an old client has no screen: the action-bar line is the only thing they see, and it fades, so it is said again
+                p.displayClientMessage(Component.translatable("supernaturalbloodlines.snapped.body_short", (left - 1 + 19) / 20), true);
             }
         }
     }
@@ -309,6 +325,12 @@ public final class Downed {
     static void register() {
         // a downed, snapped or Vampirism-dying player runs no extra action (the HUD asks), and no bite or faction action either (ActionService asks first of all)
         net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.addBlocker(Downed::cannotAct);
+        // Vampirism's and Werewolves' own keys (a bat form, rage, ...) go through this event: none starts for a player who cannot act
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, (de.teamlapen.vampirism.api.event.ActionEvent.ActionActivatedEvent e) -> {
+            if (e.getFactionPlayer().getRepresentingPlayer() instanceof ServerPlayer sp && cannotAct(sp)) {
+                e.setCanceled(true);
+            }
+        });
         NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> {
             if (e.getEntity() instanceof ServerPlayer p) {
                 tick(p);

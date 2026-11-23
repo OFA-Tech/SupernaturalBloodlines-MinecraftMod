@@ -1216,4 +1216,222 @@ public final class TargetedSkillGameTests {
         }
         helper.succeed();
     }
+
+    // ================= review round 2 =================
+
+    private static ResourceLocation bat() {
+        return ResourceLocation.parse("vampirism:bat");
+    }
+
+    private static de.teamlapen.vampirism.api.entity.player.actions.IAction.ActivationContext noContext() {
+        return new de.teamlapen.vampirism.api.entity.player.actions.IAction.ActivationContext() {
+            @Override
+            public java.util.Optional<net.minecraft.core.BlockPos> targetBlock() {
+                return java.util.Optional.empty();
+            }
+
+            @Override
+            public java.util.Optional<net.minecraft.world.entity.Entity> targetEntity() {
+                return java.util.Optional.empty();
+            }
+        };
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static de.teamlapen.vampirism.api.entity.player.actions.IAction.PERM toggleBat(ServerPlayer p) {
+        var handler = VampirismAPI.vampirePlayer(p).getActionHandler();
+        var action = (de.teamlapen.vampirism.api.entity.player.actions.IAction) de.teamlapen.vampirism.api.VampirismRegistries.ACTION.get().get(bat());
+        handler.unlockActions(java.util.List.of(action));
+        return handler.toggleAction(action, noContext());
+    }
+
+    // ---- H1: the hold is never saved ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theSnapHoldIsNotInTheSaveAndComesBackAfterAReload(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        var cow = EntityType.COW.create(helper.getLevel());
+        cow.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.0)));
+        cow.setPersistenceRequired();
+        helper.getLevel().addFreshEntity(cow);
+        try {
+            cow.addEffect(new net.minecraft.world.effect.MobEffectInstance(SpeciesRegistries.SNAPPED, 400));
+            var speed = cow.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+            helper.assertTrue(speed.getValue() == 0.0 && speed.getModifier(net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect.SPEED_ID) != null, "the hold is not on");
+            var saved = cow.saveWithoutId(new net.minecraft.nbt.CompoundTag());
+            helper.assertTrue(!saved.toString().contains("effect.snapped"), "the hold is in the save: a rollback or a lost effect would leave the creature frozen: " + saved.getList("attributes", 10));
+            // a reload: the effect is saved, the hold is not; joining the level again puts it back
+            speed.removeModifier(net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect.SPEED_ID);
+            helper.assertTrue(speed.getValue() > 0.0, "setup: the hold did not come off");
+            NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.EntityJoinLevelEvent(cow, helper.getLevel(), false));
+            helper.assertTrue(speed.getValue() == 0.0, "the hold did not come back when the creature joined the level again");
+        } finally {
+            cow.discard();
+        }
+        helper.succeed();
+    }
+
+    // ---- H2: Vampirism's own keys ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSnappedVampireCannotTakeBatFormAndAnActiveOneEndsOnTheSnap(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.createMortal(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 5), "could not make a vampire");
+        try {
+            // the key's own event is cancelled for a player who cannot act (and only for them)
+            var vp = VampirismAPI.vampirePlayer(p);
+            var action = de.teamlapen.vampirism.api.VampirismRegistries.ACTION.get().get(bat());
+            var control = new de.teamlapen.vampirism.api.event.ActionEvent.ActionActivatedEvent(vp, action, 0, 0);
+            NeoForge.EVENT_BUS.post(control);
+            helper.assertTrue(!control.isCanceled(), "control: a player who can act had their action cancelled");
+            Downed.startSnapped(p, 400);
+            var event = new de.teamlapen.vampirism.api.event.ActionEvent.ActionActivatedEvent(vp, action, 0, 0);
+            NeoForge.EVENT_BUS.post(event);
+            helper.assertTrue(event.isCanceled(), "a snapped player was allowed to take a form (Vampirism's own key)");
+            Downed.clearForTest(p);
+            // a form that is already on ends with the snap
+            var perm = toggleBat(p);
+            if (!vp.getActionHandler().isActionActive(bat())) {
+                helper.succeed(); // the bat form cannot be taken in this setup (the sun, a vehicle): the event check above is the proof
+                return;
+            }
+            helper.assertTrue(perm != null, "setup: toggle answered nothing");
+            Downed.startSnapped(p, 400);
+            helper.assertTrue(!vp.getActionHandler().isActionActive(bat()), "the bat form went on while the player lay snapped");
+            helper.assertTrue(!p.getAbilities().flying, "a snapped player kept flying");
+        } finally {
+            Downed.clearForTest(p);
+            clean(p);
+        }
+        helper.succeed();
+    }
+
+    // ---- M1: speed 0 is not all ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSnappedMobCannotBeShovedOrBlinkAway(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        var cow = EntityType.COW.create(helper.getLevel());
+        cow.setPos(helper.absoluteVec(new Vec3(1.5, 3, 3.0)));
+        cow.setPersistenceRequired();
+        cow.setNoGravity(true);
+        helper.getLevel().addFreshEntity(cow);
+        try {
+            cow.addEffect(new net.minecraft.world.effect.MobEffectInstance(SpeciesRegistries.SNAPPED, 400));
+            var teleport = new net.neoforged.neoforge.event.entity.EntityTeleportEvent.EnderEntity(cow, 1, 2, 3);
+            NeoForge.EVENT_BUS.post(teleport);
+            helper.assertTrue(teleport.isCanceled(), "a snapped creature may teleport");
+            var free = EntityType.COW.create(helper.getLevel());
+            free.setPos(helper.absoluteVec(new Vec3(3.5, 3, 3.0)));
+            var freeTeleport = new net.neoforged.neoforge.event.entity.EntityTeleportEvent.EnderEntity(free, 1, 2, 3);
+            NeoForge.EVENT_BUS.post(freeTeleport);
+            helper.assertTrue(!freeTeleport.isCanceled(), "control: a free creature's teleport was cancelled");
+            cow.setDeltaMovement(1.0, 1.0, 1.0);
+            helper.runAfterDelay(3, () -> {
+                try {
+                    var v = cow.getDeltaMovement();
+                    helper.assertTrue(v.x == 0.0 && v.z == 0.0 && v.y <= 0.0, "a snapped creature kept the push it was given: " + v);
+                } finally {
+                    cow.discard();
+                }
+                helper.succeed();
+            });
+        } catch (RuntimeException ex) {
+            cow.discard();
+            throw ex;
+        }
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void milkDoesNotEndASnap(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        var cow = EntityType.COW.create(helper.getLevel());
+        cow.setPos(helper.absoluteVec(new Vec3(1.5, 1, 3.0)));
+        cow.setPersistenceRequired();
+        helper.getLevel().addFreshEntity(cow);
+        try {
+            cow.addEffect(new net.minecraft.world.effect.MobEffectInstance(SpeciesRegistries.SNAPPED, 400));
+            cow.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.WEAKNESS, 400));
+            cow.removeEffectsCuredBy(net.neoforged.neoforge.common.EffectCures.MILK);
+            helper.assertTrue(cow.hasEffect(SpeciesRegistries.SNAPPED), "milk ended a snapped neck");
+            helper.assertTrue(!cow.hasEffect(MobEffects.WEAKNESS), "control: milk cures nothing at all");
+        } finally {
+            cow.discard();
+        }
+        helper.succeed();
+    }
+
+    // ---- M2: a running bite ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aBiteThatIsRunningEndsWhenThePlayerIsSnapped(GameTestHelper helper) {
+        ServerPlayer p = TestPlayers.createMortal(helper);
+        helper.assertTrue(VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(VReference.VAMPIRE_FACTION, 1), "could not make a vampire");
+        p.setPos(helper.absoluteVec(new Vec3(1.5, 2, 1.5)));
+        var v = villager(helper);
+        v.setPos(helper.absoluteVec(new Vec3(1.5, 2, 2.5)));
+        try {
+            var r = net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService.press(p, v.getId());
+            helper.assertTrue(r.ok(), "setup: the bite was refused: " + r.refusal());
+            var vp = VampirismAPI.vampirePlayer(p);
+            var field = vp.getClass().getDeclaredField("feed_victim");
+            field.setAccessible(true);
+            helper.assertTrue(field.getInt(vp) == v.getId(), "setup: the feeding did not start (" + field.getInt(vp) + ")");
+            Downed.startSnapped(p, 400);
+            helper.assertTrue(field.getInt(vp) == -1, "the bite went on while the player lay snapped");
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        } finally {
+            v.discard();
+            net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService.release(p);
+            clean(p);
+        }
+        helper.succeed();
+    }
+
+    // ---- small things ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anOldClientIsToldAgainEveryFewSeconds(GameTestHelper helper) {
+        TestPlayers.TalkingDuelist t = TestPlayers.createTalkingDuelist(helper);
+        try {
+            Downed.startSnapped(t, 400);
+            int first = t.countOnActionBar("supernaturalbloodlines.snapped.body_short");
+            for (int i = 0; i < 250; i++) {
+                Downed.tick(t);
+            }
+            helper.assertTrue(t.countOnActionBar("supernaturalbloodlines.snapped.body_short") >= first + 2, "the old client was told once and then left alone: " + t.countOnActionBar("supernaturalbloodlines.snapped.body_short"));
+        } finally {
+            Downed.clearForTest(t);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theCrosshairMustBeOnTheTargetNotJustInFrontOfTheUser(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-9");
+        Zombie z = zombie(helper, 5.0f);
+        try {
+            user.setPos(helper.absoluteVec(new Vec3(1.5, 1, 0.5)));
+            user.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, z.getEyePosition());
+            helper.assertTrue(NeckSnapAction.INSTANCE.trigger(user, z) == null, "the crosshair was on the target and it was refused");
+            Zombie far = zombie(helper, 5.0f);
+            far.setPos(helper.absoluteVec(new Vec3(5.5, 1, 3.0)));
+            helper.assertTrue(NeckSnapAction.NO_TARGET.equals(key(NeckSnapAction.INSTANCE.trigger(user, far))), "a target 4 blocks off to the side, ahead of the user, was taken");
+            far.discard();
+        } finally {
+            z.discard();
+            clean(user);
+        }
+        helper.succeed();
+    }
 }

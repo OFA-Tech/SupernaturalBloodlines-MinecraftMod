@@ -27,8 +27,8 @@ import net.ofatech.supernaturalbloodlines.parts.species.pack.PackIndex;
 final class TargetChecks {
     /** The tiny amount a claim or PvP mod is asked about; nothing of it is ever dealt. */
     static final float PROBE = 0.01F;
-    /** How far the crosshair may be from the target (the cosine of the angle): the client names the target, the server checks it is where they look. */
-    static final double MIN_AIM = 0.5;
+    /** How far (blocks) outside the target's box the crosshair may be: lag, and a creature that moved a little. */
+    static final double AIM_SLACK = 0.4;
 
     private static final Field SPAWN_INVULNERABLE = spawnField();
 
@@ -60,10 +60,16 @@ final class TargetChecks {
         return false;
     }
 
-    /** The target is in front of the user (within 60 degrees of where they look), whoever the client says it is. */
+    /**
+     * Where the user looks is on the target: the look ray, as long as the distance to the target (and a block more), clips the target's box inflated by
+     * {@link #AIM_SLACK}. The client names the target, the server checks the crosshair really was on it, so a target behind the user, or off to the side,
+     * is no target; a big creature seen from close up and a small one far away are judged by the box they really fill.
+     */
     static boolean inView(ServerPlayer user, LivingEntity target) {
-        Vec3 to = target.getEyePosition().subtract(user.getEyePosition());
-        return to.lengthSqr() < 1.0E-6 || user.getLookAngle().dot(to.normalize()) > MIN_AIM;
+        Vec3 eye = user.getEyePosition();
+        double reach = Math.sqrt(target.distanceToSqr(eye)) + 1.0;
+        Vec3 end = eye.add(user.getLookAngle().scale(reach));
+        return target.getBoundingBox().inflate(AIM_SLACK).contains(eye) || target.getBoundingBox().inflate(AIM_SLACK).clip(eye, end).isPresent();
     }
 
     /**

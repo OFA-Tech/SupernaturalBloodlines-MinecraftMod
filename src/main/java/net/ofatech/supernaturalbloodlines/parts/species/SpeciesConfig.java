@@ -158,7 +158,7 @@ public final class SpeciesConfig {
     private static final ModConfigSpec.DoubleValue AUGUSTINE_BLOOD_FROM_OTHER;
     public static final double DEFAULT_RIP_HEART_HEALTH = 10.0;
     public static final int DEFAULT_RIP_HEART_COOLDOWN_SECONDS = 60;
-    public static final int DEFAULT_NECK_SNAP_COOLDOWN_SECONDS = 45;
+    public static final int DEFAULT_NECK_SNAP_COOLDOWN_SECONDS = 60;
     public static final double DEFAULT_NECK_SNAP_KILL_HEALTH = 10.0;
     public static final int DEFAULT_NECK_SNAP_STAGGER_TICKS = 60;
     public static final int DEFAULT_NECK_SNAP_VAMPIRE_SECONDS = 60;

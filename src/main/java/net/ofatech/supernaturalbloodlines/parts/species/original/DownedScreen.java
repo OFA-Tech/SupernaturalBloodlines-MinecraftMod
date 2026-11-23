@@ -61,7 +61,7 @@ public final class DownedScreen extends Screen {
         body = new MultiLineTextWidget(hasBody ? bodyText() : Component.empty(), font).setMaxWidth(textWidth).setColor(0xDDDDDD).setCentered(true);
         shownSeconds = seconds();
         // the room is the height of the longest the text gets (a full countdown, two digits), so the countdown never reflows the text into the buttons
-        int longest = mode == Downed.MODE_SNAPPED ? 1800 : Downed.TICKS / 20;
+        int longest = mode == Downed.MODE_SNAPPED ? net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig.MAX_SNAP_SECONDS : Downed.TICKS / 20;
         int bodyHeight = hasBody ? Math.max(body.getHeight(), new MultiLineTextWidget(bodyText(longest), font).setMaxWidth(textWidth).getHeight()) : 0;
         boolean sideBySide = width >= 280;
         int buttonsHeight = !hasGiveUp || sideBySide ? 20 : 44;

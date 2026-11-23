@@ -96,6 +96,20 @@ public final class ExtraActions {
         ACTIONS.removeIf(x -> x.id().equals(id));
     }
 
+    private static final List<java.util.function.Consumer<ServerPlayer>> STOPPERS = new CopyOnWriteArrayList<>();
+
+    /** A part says what must end when a player is put out of action (downed, snapped): the hud part ends a bite that is running. */
+    public static void addStopper(java.util.function.Consumer<ServerPlayer> stop) {
+        STOPPERS.add(stop);
+    }
+
+    /** The player was put out of action: everything a part registered with {@link #addStopper} ends. */
+    public static void stop(ServerPlayer p) {
+        for (java.util.function.Consumer<ServerPlayer> s : STOPPERS) {
+            s.accept(p);
+        }
+    }
+
     public static boolean blocked(ServerPlayer p) {
         for (java.util.function.Predicate<ServerPlayer> b : BLOCKERS) {
             if (b.test(p)) {

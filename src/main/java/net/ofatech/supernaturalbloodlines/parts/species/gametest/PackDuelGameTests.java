@@ -1408,6 +1408,9 @@ public final class PackDuelGameTests {
             helper.assertTrue(join(leader, second), "the pack could not be built");
             helper.assertTrue(start(second, leader), "the duel did not start");
             helper.assertTrue(finish(second, leader).isCanceled(), "setup: the defeat did not happen");
+            // they are no pack-mates any more (the pack rule would refuse for its own reason): only the duel's guard on the defeated one is left to answer
+            PackIndex.get(helper.getLevel()).leave(leader.getUUID()); // the winner leads now, and the defeated one is their Beta
+            helper.assertTrue(!PackIndex.get(helper.getLevel()).samePackNow(second.getUUID(), leader.getUUID()), "setup: they are still pack-mates");
             second.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, leader.getEyePosition());
             var answer = net.ofatech.supernaturalbloodlines.parts.species.skill.NeckSnapAction.INSTANCE.trigger(second, leader);
             helper.assertTrue(answer != null && net.ofatech.supernaturalbloodlines.parts.species.skill.NeckSnapAction.REFUSED.equals(((net.minecraft.network.chat.contents.TranslatableContents) answer.getContents()).getKey()),
