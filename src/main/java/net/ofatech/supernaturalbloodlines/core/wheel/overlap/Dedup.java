@@ -28,6 +28,11 @@ public final class Dedup {
         PowerRef ref();
 
         int modeCount();
+
+        /** Whether this entry may be matched, hidden or kept by a group: a skill with modes never is. A power that is not the same thing for this player (another race's ability) overrides it. */
+        default boolean groupable() {
+            return modeCount() <= 1;
+        }
     }
 
     /**
@@ -72,7 +77,7 @@ public final class Dedup {
         for (OverlapGroup g : table.groups()) {
             Map<Integer, E> bySide = new LinkedHashMap<>();
             for (E e : entries) {
-                if (out.contains(e) || e.modeCount() > 1) {
+                if (out.contains(e) || !e.groupable()) {
                     continue;
                 }
                 int side = table.sideOf(g, e.ref());

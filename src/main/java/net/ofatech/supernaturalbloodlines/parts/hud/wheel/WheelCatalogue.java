@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.hud.wheel;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.server.level.ServerPlayer;
 import net.ofatech.supernaturalbloodlines.SupernaturalBloodlines;
 import net.ofatech.supernaturalbloodlines.core.wheel.LockReason;
-import net.ofatech.supernaturalbloodlines.core.wheel.CooldownClock;
+import net.ofatech.supernaturalbloodlines.core.wheel.PowerRef;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerState;
 import net.ofatech.supernaturalbloodlines.core.wheel.overlap.Dedup;
 import net.ofatech.supernaturalbloodlines.core.wheel.overlap.GroupClock;
@@ -80,34 +81,47 @@ public final class WheelCatalogue {
         }
         GroupClock clock = WheelGate.clock(p);
         long now = WheelClocks.now(p);
-        List<WheelEntry> shown = entries;
-        Map<WheelEntry, OverlapGroup> groupOf = Map.of();
+        List<Cand> cands = new ArrayList<>(entries.size());
+        for (WheelEntry e : entries) {
+            cands.add(new Cand(e, e.modeCount() <= 1 && WheelGate.groupable(p, e.ref())));
+        }
+        List<Cand> shown = cands;
+        Map<Cand, OverlapGroup> groupOf = Map.of();
         if (HudConfig.wheelDedupEnabled()) {
-            Dedup.Result<WheelEntry> r = Dedup.apply(entries, table, id -> clock.activeSide(id).orElse(-1));
+            Map<String, OverlapGroup> byId = new HashMap<>();
+            table.groups().forEach(g -> byId.put(g.id(), g));
+            Dedup.Result<Cand> r = Dedup.apply(cands, table, id -> {
+                OverlapGroup g = byId.get(id);
+                return g == null ? -1 : clock.activeSide(id).map(key -> table.sideOfKey(g, key)).orElse(-1);
+            });
             shown = r.shown();
             groupOf = r.groupOf();
         }
         List<WheelEntry> out = new ArrayList<>(shown.size());
-        for (WheelEntry e : shown) {
-            WheelEntry now2 = e;
-            if (HudConfig.wheelStackGuardEnabled()) {
+        for (Cand c : shown) {
+            WheelEntry e = c.entry;
+            if (HudConfig.wheelStackGuardEnabled() && c.groupable) {
                 for (OverlapGroup g : table.groupsOf(e.ref())) {
-                    PowerState s = now2.state();
-                    int side = table.sideOf(g, e.ref());
-                    long end = clock.cooldownEnd(g.id());
-                    if (end > now && end > s.cooldownEnd()) {
-                        s = s.withCooldown(new CooldownClock.Reading(end, Math.max(s.cooldownTotal(), (int) Math.min(end - now, Integer.MAX_VALUE))));
-                    }
-                    if (s.lock() == LockReason.NONE && StackRules.mayStart(clock, g.id(), side, now).filter(r -> r == LockReason.GROUP_ACTIVE).isPresent()) {
-                        s = s.withLock(LockReason.GROUP_ACTIVE);
-                    }
-                    now2 = now2.withState(s);
+                    e = e.withState(StackRules.overlay(e.state(), clock, g.id(), table.sideKey(g, e.ref()), now));
                 }
             }
-            OverlapGroup stands = groupOf.get(e);
-            out.add(stands == null ? now2 : now2.withGroup(stands.id()));
+            OverlapGroup stands = groupOf.get(c);
+            out.add(stands == null ? e : e.withGroup(stands.id()));
         }
         return out;
+    }
+
+    /** An entry as the groups see it: {@code groupable} is false for a skill with modes and for the race ability of a race that is not the vampire's. */
+    private record Cand(WheelEntry entry, boolean groupable) implements Dedup.Item {
+        @Override
+        public PowerRef ref() {
+            return entry.ref();
+        }
+
+        @Override
+        public int modeCount() {
+            return entry.modeCount();
+        }
     }
 
     private static WheelEntry lockedForCannotAct(WheelEntry e) {

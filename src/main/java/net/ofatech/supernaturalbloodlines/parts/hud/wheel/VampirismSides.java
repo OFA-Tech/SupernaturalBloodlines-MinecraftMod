@@ -12,6 +12,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.ofatech.supernaturalbloodlines.core.wheel.LockReason;
 import net.ofatech.supernaturalbloodlines.core.wheel.PowerRef;
+import net.ofatech.supernaturalbloodlines.core.wheel.overlap.SharedCooldown;
 import net.ofatech.supernaturalbloodlines.core.wheel.overlap.SideEvent;
 import net.ofatech.supernaturalbloodlines.parts.hud.HudConfig;
 import net.ofatech.supernaturalbloodlines.parts.hud.action.FactionActions;
@@ -76,13 +77,16 @@ final class VampirismSides {
         e.setCooldown(Math.max(e.getCooldown(), groupLeft));
     }
 
-    /** The cooldown the player's action has, 0 when they do not have it unlocked (or it is the vision pseudo power). */
+    /** The cooldown the player's action has (0 for none; the vision pseudo power has none), {@link SharedCooldown#NOT_OWNED} when they do not have it unlocked in their current faction. */
     @SuppressWarnings({"unchecked", "rawtypes"})
     static int cooldownTicks(ServerPlayer p, ResourceLocation id) {
-        IAction action = FactionActions.byId(id);
         Optional<? extends IFactionPlayer<?>> fp = FactionActions.current(p);
+        if (VampirismVision.ID.equals(id)) {
+            return fp.isPresent() ? 0 : SharedCooldown.NOT_OWNED;
+        }
+        IAction action = FactionActions.byId(id);
         if (action == null || fp.isEmpty() || !FactionActions.unlocked(fp.get(), action)) {
-            return 0;
+            return SharedCooldown.NOT_OWNED;
         }
         return Math.max(0, action.getCooldown(fp.get()));
     }

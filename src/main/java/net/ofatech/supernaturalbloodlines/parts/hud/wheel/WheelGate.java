@@ -24,6 +24,7 @@ import net.ofatech.supernaturalbloodlines.core.wheel.PowerSource;
 import net.ofatech.supernaturalbloodlines.core.wheel.overlap.GroupClock;
 import net.ofatech.supernaturalbloodlines.core.wheel.overlap.OverlapGroup;
 import net.ofatech.supernaturalbloodlines.core.wheel.overlap.OverlapTable;
+import net.ofatech.supernaturalbloodlines.core.wheel.overlap.SharedCooldown;
 import net.ofatech.supernaturalbloodlines.core.wheel.overlap.SideEvent;
 import net.ofatech.supernaturalbloodlines.core.wheel.overlap.StackRules;
 import net.ofatech.supernaturalbloodlines.parts.hud.HudConfig;
@@ -48,7 +49,14 @@ public final class WheelGate {
     private static volatile OverlapTable table;
     private static volatile boolean warned;
 
-    private record Pending(PowerRef ref, SideEvent event, boolean lasting, int mode) {
+    /** Tensura's race ability, which has no skill id. */
+    public static final ResourceLocation RACE_ABILITY_ID = ResourceLocation.fromNamespaceAndPath("tensura", "race_ability");
+    /** The two groups the vampire race ability is in: Bats Mode is the bat form, a drain is the bite. */
+    static final String BAT_GROUP = "bat_form";
+    static final String BITE_GROUP = "bite";
+
+    /** {@code only}: the one group this is counted in, null for every group of the power. */
+    private record Pending(PowerRef ref, SideEvent event, boolean lasting, int mode, @Nullable String only) {
     }
 
     private static final Map<UUID, List<Pending>> PENDING = new ConcurrentHashMap<>();
@@ -129,13 +137,39 @@ public final class WheelGate {
 
     // ---- the gate ----
 
+    static boolean isRaceAbility(PowerRef ref) {
+        return ref.source() == PowerSource.TENSURA && RACE_ABILITY_ID.equals(ref.id());
+    }
+
+    /**
+     * The groups a power counts in for this player. The race ability is the vampire race's only: another race's ability is not a bat form nor a bite. {@code only} narrows it to one
+     * group (the race ability's press ends as a bat form or as a bite, never both).
+     */
+    private static List<OverlapGroup> groupsFor(ServerPlayer p, PowerRef ref, @Nullable String only) {
+        List<OverlapGroup> all = table().groupsOf(ref);
+        if (all.isEmpty() || isRaceAbility(ref) && !TensuraGate.vampireRace(p)) {
+            return List.of();
+        }
+        return only == null ? all : all.stream().filter(g -> g.id().equals(only)).toList();
+    }
+
+    /** Whether the power is the same power for this player in every group it is listed in (false for another race's ability). */
+    public static boolean groupable(ServerPlayer p, PowerRef ref) {
+        return !isRaceAbility(ref) || TensuraGate.vampireRace(p);
+    }
+
+    /** True when the power is in at least one group for this player. */
+    static boolean inAnyGroup(ServerPlayer p, PowerRef ref) {
+        return !groupsFor(p, ref, null).isEmpty();
+    }
+
     /** @return why this power may not start now, empty when it may (or is in no group, or the guard is off) */
     public static Optional<LockReason> check(ServerPlayer p, PowerRef ref) {
         if (!HudConfig.wheelStackGuardEnabled()) {
             return Optional.empty();
         }
         OverlapTable t = table();
-        List<OverlapGroup> groups = t.groupsOf(ref);
+        List<OverlapGroup> groups = groupsFor(p, ref, null);
         if (groups.isEmpty()) {
             return Optional.empty();
         }
@@ -143,15 +177,15 @@ public final class WheelGate {
         long now = WheelClocks.now(p);
         List<Pending> pending = PENDING.getOrDefault(p.getUUID(), List.of());
         for (OverlapGroup g : groups) {
-            int side = t.sideOf(g, ref);
-            Optional<LockReason> r = StackRules.mayStart(c, g.id(), side, now);
+            List<StackRules.Intent> others = new ArrayList<>();
+            for (Pending other : pending) {
+                if ((other.only == null || other.only.equals(g.id())) && t.sideOf(g, other.ref) >= 0) {
+                    others.add(new StackRules.Intent(t.sideKey(g, other.ref), other.event));
+                }
+            }
+            Optional<LockReason> r = StackRules.mayStart(c, g.id(), t.sideKey(g, ref), now, others);
             if (r.isPresent()) {
                 return r;
-            }
-            for (Pending other : pending) {
-                if (other.event == SideEvent.ON && t.sideOf(g, other.ref) >= 0 && t.sideOf(g, other.ref) != side) {
-                    return Optional.of(LockReason.GROUP_ACTIVE);
-                }
             }
         }
         return Optional.empty();
@@ -198,12 +232,16 @@ public final class WheelGate {
 
     // ---- recording ----
 
-    /** A side is about to start: counted at the end of the tick if it really did. */
+    /** A side is about to start (or end): counted at the end of the tick if it really did. */
     static void intend(ServerPlayer p, PowerRef ref, SideEvent event, boolean lasting, int mode) {
-        if (!HudConfig.wheelStackGuardEnabled() || table().groupsOf(ref).isEmpty()) {
+        intend(p, ref, event, lasting, mode, null);
+    }
+
+    static void intend(ServerPlayer p, PowerRef ref, SideEvent event, boolean lasting, int mode, @Nullable String only) {
+        if (!HudConfig.wheelStackGuardEnabled() || groupsFor(p, ref, only).isEmpty()) {
             return;
         }
-        PENDING.computeIfAbsent(p.getUUID(), k -> new ArrayList<>()).add(new Pending(ref, event, lasting, mode));
+        PENDING.computeIfAbsent(p.getUUID(), k -> new ArrayList<>()).add(new Pending(ref, event, lasting, mode, only));
     }
 
     /**
@@ -212,11 +250,15 @@ public final class WheelGate {
      * @return the longest shared cooldown now running in those groups, in ticks
      */
     public static int apply(ServerPlayer p, PowerRef ref, SideEvent event, boolean lasting, int mode) {
+        return apply(p, ref, event, lasting, mode, null);
+    }
+
+    static int apply(ServerPlayer p, PowerRef ref, SideEvent event, boolean lasting, int mode, @Nullable String only) {
         if (!HudConfig.wheelStackGuardEnabled()) {
             return 0;
         }
         OverlapTable t = table();
-        List<OverlapGroup> groups = t.groupsOf(ref);
+        List<OverlapGroup> groups = groupsFor(p, ref, only);
         if (groups.isEmpty()) {
             return 0;
         }
@@ -230,50 +272,75 @@ public final class WheelGate {
         long now = WheelClocks.now(p);
         int longest = 0;
         for (OverlapGroup g : groups) {
-            int side = t.sideOf(g, ref);
             int cooldown = event == SideEvent.ON && lasting ? 0 : mainCooldown(p, g, ref, mode);
-            c = c.onEvent(g.id(), side, event, lasting, cooldown, now);
+            c = c.onEvent(g.id(), t.sideKey(g, ref), event, lasting, cooldown, now);
             longest = Math.max(longest, c.cooldownLeft(g.id(), now));
         }
         setClock(p, c);
         return longest;
     }
 
-    /** Counts what was intended this tick, if it happened. */
+    /** Counts what was intended this tick, as far as it happened. */
     public static void settle(ServerPlayer p) {
         List<Pending> pending = PENDING.remove(p.getUUID());
         if (pending == null) {
             return;
         }
         for (Pending x : pending) {
-            if (confirmed(p, x)) {
-                apply(p, x.ref, x.event, x.lasting, x.mode);
+            SideEvent happened = outcome(p, x);
+            if (happened != null) {
+                apply(p, x.ref, happened, x.lasting && happened != SideEvent.FIRED, x.mode, x.only);
             }
         }
     }
 
-    private static boolean confirmed(ServerPlayer p, Pending x) {
+    /** What an intended event turned into: itself when it happened, another event when it happened in another way (a held spell that already ended), null when it did not. */
+    @Nullable
+    private static SideEvent outcome(ServerPlayer p, Pending x) {
+        if (x.event == SideEvent.OFF) {
+            return stillOn(p, x.ref) ? null : SideEvent.OFF;
+        }
         return switch (x.ref.source()) {
-            case VAMPIRISM, WEREWOLVES -> !VampirismGate.loaded() || VampirismSides.confirmed(p, x.ref.id(), x.lasting);
-            case TENSURA -> !TensuraGate.loaded() || x.event != SideEvent.ON || TensuraSides.toggled(p, x.ref.id());
-            default -> true;
+            case VAMPIRISM, WEREWOLVES -> !VampirismGate.loaded() || VampirismSides.confirmed(p, x.ref.id(), x.lasting) ? x.event : null;
+            case TENSURA -> TensuraGate.loaded() ? TensuraSides.outcome(p, x.ref.id(), x.event, x.mode) : x.event;
+            default -> x.event;
         };
     }
 
-    /** Clears every side that is no longer on (the mod ended it without an event, the player died or left): its cooldown starts now. */
+    /** One tick of the gate for a player: what was intended is counted, and every ten ticks the clock is made to agree with what is really on. */
+    public static void tick(ServerPlayer p) {
+        settle(p);
+        if (StackRules.reconcileDue(p.tickCount)) {
+            reconcile(p);
+        }
+    }
+
+    /**
+     * Makes the clock agree with what is really on: a side that is no longer on is ended (the mod ended it without an event, the player died or left: its cooldown starts now), and a
+     * side that is on but was never recorded is marked as the active side (the HUD or the guard was off when it started, Vampirism's own vision key has no event).
+     */
     public static void reconcile(ServerPlayer p) {
-        GroupClock c = clock(p);
-        if (c.isIdle()) {
+        reconcile(p, true);
+    }
+
+    private static void reconcile(ServerPlayer p, boolean discover) {
+        if (!HudConfig.wheelStackGuardEnabled()) {
             return;
         }
         OverlapTable t = table();
         for (OverlapGroup g : t.groups()) {
-            var active = c.activeSide(g.id());
-            if (active.isPresent() && active.getAsInt() < g.members().size()) {
-                PowerRef ref = g.members().get(active.getAsInt());
-                if (!stillOn(p, ref)) {
-                    apply(p, ref, SideEvent.OFF, true, 0);
-                    c = clock(p);
+            var active = clock(p).activeSide(g.id());
+            if (active.isPresent()) {
+                int side = t.sideOfKey(g, active.get());
+                if (side < 0 || !stillOnIn(p, g.members().get(side), g)) {
+                    setClock(p, clock(p).onEvent(g.id(), active.get(), SideEvent.OFF, true, side < 0 ? 0 : mainCooldown(p, g, g.members().get(side), 0), WheelClocks.now(p)));
+                }
+            } else if (discover) {
+                for (PowerRef member : g.members()) {
+                    if (stillOnIn(p, member, g)) {
+                        apply(p, member, SideEvent.ON, true, 0, g.id());
+                        break;
+                    }
                 }
             }
         }
@@ -282,7 +349,7 @@ public final class WheelGate {
     /** The player died, left or changed dimension: whatever was on is over. */
     public static void endAll(ServerPlayer p) {
         PENDING.remove(p.getUUID());
-        reconcile(p);
+        reconcile(p, false);
     }
 
     /** True when the power is on right now (so using it again turns it off, which no group may stop). */
@@ -298,33 +365,43 @@ public final class WheelGate {
         };
     }
 
-    /** The shared cooldown a use of {@code used} starts: the main side's own, 0 when the main side has none or the player does not have it. */
+    /** On in this group: the race ability is on in the bat form group only (Bats Mode), never in the bite one. */
+    private static boolean stillOnIn(ServerPlayer p, PowerRef ref, OverlapGroup g) {
+        return (!isRaceAbility(ref) || BAT_GROUP.equals(g.id())) && stillOn(p, ref);
+    }
+
+    /** The shared cooldown a use of {@code used} starts: see {@link SharedCooldown#pick}. */
     static int mainCooldown(ServerPlayer p, OverlapGroup g, PowerRef used, int mode) {
-        PowerRef main = g.mainMember();
-        OverlapTable t = table();
-        return switch (main.source()) {
-            case BLOODLINE -> ourCooldown(p, main.id());
-            case VAMPIRISM, WEREWOLVES -> VampirismGate.loaded() ? VampirismSides.cooldownTicks(p, main.id()) : 0;
-            // Tensura gives no cooldown before a press: the value is read from the instance right after the main side was pressed; for another side it is unknown (no cooldown)
-            case TENSURA -> TensuraGate.loaded() && t.canonical(used).equals(t.canonical(main)) ? TensuraSides.cooldownTicks(p, main.id(), mode) : 0;
-            default -> 0;
+        int usedSide = table().sideOf(g, used);
+        int[] own = new int[g.members().size()];
+        for (int i = 0; i < own.length; i++) {
+            own[i] = ownCooldown(p, g.members().get(i), i == usedSide, mode);
+        }
+        return SharedCooldown.pick(own, g.main(), usedSide);
+    }
+
+    /** One member's own cooldown in ticks, {@link SharedCooldown#NOT_OWNED} when the player does not have it or it cannot be read. */
+    private static int ownCooldown(ServerPlayer p, PowerRef member, boolean isUsed, int mode) {
+        return switch (member.source()) {
+            case BLOODLINE -> ourCooldown(p, member.id());
+            case VAMPIRISM, WEREWOLVES -> VampirismGate.loaded() ? VampirismSides.cooldownTicks(p, member.id()) : SharedCooldown.NOT_OWNED;
+            // Tensura gives no cooldown before a press: the value is read from the instance right after the side was pressed; for another side it is unknown
+            case TENSURA -> TensuraGate.loaded() && isUsed ? TensuraSides.cooldownTicks(p, member.id(), mode) : SharedCooldown.NOT_OWNED;
+            default -> SharedCooldown.NOT_OWNED;
         };
     }
 
     private static int ourCooldown(ServerPlayer p, ResourceLocation id) {
         if (Loadout.BITE.equals(id)) {
-            return BiteService.canBite(p) ? BiteService.COOLDOWN_TICKS : 0;
+            return BiteService.canBite(p) ? BiteService.COOLDOWN_TICKS : SharedCooldown.NOT_OWNED;
         }
-        return ExtraActions.get(id).filter(a -> a.available(p)).map(a -> Math.max(0, a.cooldownTicks(p))).orElse(0);
+        return ExtraActions.get(id).filter(a -> a.available(p)).map(a -> Math.max(0, a.cooldownTicks(p))).orElse(SharedCooldown.NOT_OWNED);
     }
 
     private static void onTick(PlayerTickEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer p) || p instanceof net.neoforged.neoforge.common.util.FakePlayer) {
             return;
         }
-        settle(p);
-        if (p.tickCount % 10 == 0) {
-            reconcile(p);
-        }
+        tick(p);
     }
 }

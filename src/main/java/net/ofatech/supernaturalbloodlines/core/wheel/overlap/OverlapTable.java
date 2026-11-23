@@ -72,6 +72,27 @@ public final class OverlapTable {
         return -1;
     }
 
+    /** The key a group saves a side by: the key of its member (the first tier of a chain), whatever place it has in the file. */
+    public String sideKey(OverlapGroup g, int side) {
+        return canonical(g.members().get(side)).key();
+    }
+
+    /** The key of the side this power is in the group, empty when it is not a member. */
+    public String sideKey(OverlapGroup g, PowerRef ref) {
+        int side = sideOf(g, ref);
+        return side < 0 ? "" : sideKey(g, side);
+    }
+
+    /** The place of the member saved under this key, -1 when the group has no such member (the file changed). */
+    public int sideOfKey(OverlapGroup g, String key) {
+        for (int i = 0; i < g.members().size(); i++) {
+            if (sideKey(g, i).equals(key)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public static OverlapTable parse(JsonObject root) {
         if (!root.has("format") || root.get("format").getAsInt() != 1) {
             throw new IllegalArgumentException("overlap table: format must be 1");

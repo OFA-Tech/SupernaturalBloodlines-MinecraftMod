@@ -134,6 +134,33 @@ class OverlapTableTest {
         assertEquals(1, t.sideOf(t.groups().get(2), infinite));
     }
 
+    @Test
+    void aSideIsSavedByTheKeyOfItsMemberAndFoundAgainByIt() {
+        OverlapTable t = seed();
+        OverlapGroup regeneration = t.groups().get(2);
+        String regen = "vampirism/vampirism:regen";
+        assertEquals(regen, t.sideKey(regeneration, 0));
+        assertEquals(regen, t.sideKey(regeneration, ref(regen)));
+        // a tier of the chain is saved as the first tier, whichever tier the player has
+        assertEquals("tensura/tensura:self_regeneration", t.sideKey(regeneration, ref("tensura/tensura:infinite_regeneration")));
+        assertEquals(1, t.sideOfKey(regeneration, "tensura/tensura:self_regeneration"));
+        assertEquals(0, t.sideOfKey(regeneration, regen));
+        assertEquals(-1, t.sideOfKey(regeneration, "tensura/tensura:coercion"), "a key the file no longer has");
+        assertEquals("", t.sideKey(regeneration, ref("tensura/tensura:coercion")));
+    }
+
+    @Test
+    void aGroupThatNamesALaterTierIsSavedByTheFirstTier() {
+        // the file names the second tier; the clock must save the same key whichever tier the file or the player has, or a saved "on" would not find its side again
+        OverlapTable t = OverlapTable.parse(json("{\"format\":1,\"chains\":[[\"tensura/tensura:self_regeneration\",\"tensura/tensura:ultraspeed_regeneration\"]],"
+                + "\"groups\":[{\"id\":\"r\",\"research\":\"T\",\"confidence\":\"same\",\"main\":0,\"members\":[\"vampirism/vampirism:regen\",\"tensura/tensura:ultraspeed_regeneration\"]}]}"));
+        OverlapGroup g = t.groups().get(0);
+        assertEquals("tensura/tensura:self_regeneration", t.sideKey(g, 1));
+        assertEquals("tensura/tensura:self_regeneration", t.sideKey(g, ref("tensura/tensura:ultraspeed_regeneration")));
+        assertEquals(1, t.sideOfKey(g, "tensura/tensura:self_regeneration"));
+        assertEquals(-1, t.sideOfKey(g, "tensura/tensura:ultraspeed_regeneration"), "only the first tier is a key");
+    }
+
     // ---- the production table against the research ----
 
     private static final Pattern BACKTICKED = Pattern.compile("`([a-z0-9_]+):([a-z0-9_./\\-]+)`");
