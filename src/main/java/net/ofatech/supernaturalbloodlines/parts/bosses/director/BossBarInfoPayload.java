@@ -14,16 +14,17 @@ import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 
 /**
  * Server to client: what vanilla's boss bar packet cannot say about one of our bars. The bar has a random UUID and carries only a name and a fraction, so this
- * names the boss, its form chips and the health in numbers, for the bar with the UUID {@code bar}. Sent before the bar is added, and again whenever any of it changes.
+ * names the boss, its form chips and the health in numbers, for the bar with the UUID {@code bar}, and gives the boss's entity id so the client can tell how near it is (it picks the focus of the boss row). Sent before the bar is added, and again whenever any of it changes.
  * {@code packed}: the boss (its ordinal plus one, 0 for none) in bits 0 to 7, the row of chips in 8 to 11, the lit chip in 12 to 15 and the fallen flag in bit 16.
  */
-public record BossBarInfoPayload(UUID bar, int packed, int hp, int max) implements CustomPacketPayload {
+public record BossBarInfoPayload(UUID bar, int packed, int hp, int max, int entity) implements CustomPacketPayload {
     public static final Type<BossBarInfoPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "boss_bar_info"));
     public static final StreamCodec<ByteBuf, BossBarInfoPayload> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, BossBarInfoPayload::bar,
             ByteBufCodecs.VAR_INT, BossBarInfoPayload::packed,
             ByteBufCodecs.VAR_INT, BossBarInfoPayload::hp,
             ByteBufCodecs.VAR_INT, BossBarInfoPayload::max,
+            ByteBufCodecs.VAR_INT, BossBarInfoPayload::entity,
             BossBarInfoPayload::new);
 
     /** The most health a bar shows: a number out of range is held here, so a forged payload cannot make the client format a huge string. */
@@ -32,11 +33,15 @@ public record BossBarInfoPayload(UUID bar, int packed, int hp, int max) implemen
     public BossBarInfoPayload {
         hp = Math.max(0, Math.min(LIMIT, hp));
         max = Math.max(1, Math.min(LIMIT, max));
+        entity = Math.max(NO_ENTITY, entity);
     }
 
-    public static BossBarInfoPayload of(UUID bar, BossId boss, BossBarForms.Look look, boolean fallen, int hp, int max) {
+    /** The entity id of a bar that is not of a living boss (the dev demo), and the least an id can be. */
+    public static final int NO_ENTITY = -1;
+
+    public static BossBarInfoPayload of(UUID bar, BossId boss, BossBarForms.Look look, boolean fallen, int hp, int max, int entity) {
         int packed = (boss.ordinal() + 1) & 0xFF | (look.set().ordinal() & 0xF) << 8 | (look.active() & 0xF) << 12 | (fallen ? 1 << 16 : 0);
-        return new BossBarInfoPayload(bar, packed, hp, max);
+        return new BossBarInfoPayload(bar, packed, hp, max, entity);
     }
 
     public Optional<BossId> boss() {

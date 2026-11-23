@@ -179,6 +179,19 @@ class BossFacesTest {
     }
 
     @Test
+    void theHealthRingsColoursAreTheKitsOwnBarColoursAndStandOutFromTheTrackAtThreeToOne() throws Exception {
+        for (HudKit k : HudKit.values()) {
+            assertEquals(dominant(k, Part.BOSS_BAR_FILL), BossFaces.ringFill(k), k + " fill");
+            assertEquals(dominant(k, Part.BOSS_BAR_FILL_SHIFTING), BossFaces.ringShifting(k), k + " shifting");
+            assertEquals(dominant(k, Part.BOSS_BAR_TRACK), BossFaces.ringTrack(k), k + " track");
+            for (int fill : new int[] {BossFaces.ringFill(k), BossFaces.ringShifting(k)}) {
+                double r = Contrast.ratio(fill, BossFaces.ringTrack(k));
+                assertTrue(r >= 3.0, k + ": a ring of #" + Integer.toHexString(fill) + " on its track is " + String.format("%.2f", r) + ":1");
+            }
+        }
+    }
+
+    @Test
     void theCardsInkAndTheNameColourAreTheThemesOwn() {
         HubTheme[] themes = {new GrimoireTheme(), new BloodMoonTheme(), new TensuraHubTheme()};
         HudKit[] kits = {HudKit.GRIMOIRE, HudKit.BLOOD_MOON, HudKit.TENSURA};

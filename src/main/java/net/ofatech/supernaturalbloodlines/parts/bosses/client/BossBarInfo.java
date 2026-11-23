@@ -3,19 +3,20 @@ package net.ofatech.supernaturalbloodlines.parts.bosses.client;
 import java.util.UUID;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
-import net.ofatech.supernaturalbloodlines.core.boss.BossBarForms;
 import net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarInfoPayload;
 import net.ofatech.supernaturalbloodlines.shared.hub.kit.LabelFit;
+import net.ofatech.supernaturalbloodlines.shared.hub.kit.ReduceMotion;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * What the client knows of one of our bars: the boss, its chips, its health and the fill's easing, and everything that is worked out from them (the card's
- * geometry, the chips' words and widths, the health text, the cut name), kept until a fact, the card's width or the language changes, so a frame measures
- * and allocates nothing. Client only.
+ * What the client knows of one of our bars: the boss, its chips, its health and the fill's easing, the entity (for the distance that picks the focus), the last hit,
+ * and everything that is worked out from them (the card's geometry, the chips' words and widths, the health text, the cut name, the token's form mark), kept until a
+ * fact, the card's width or the language changes, so a frame measures and allocates nothing of it. Client only.
  */
 final class BossBarInfo {
     private static final int[] NO_CHIPS = new int[0];
@@ -27,7 +28,13 @@ final class BossBarInfo {
     boolean fallen;
     int hp = 1;
     int max = 1;
+    int entity = BossBarInfoPayload.NO_ENTITY;
+    /** The tick of the UI clock this player last hit the boss, or {@link BossFocus#NEVER}. */
+    long lastHit = BossFocus.NEVER;
     final BossBarMotion.Tween health;
+    /** The vanilla bar of this boss (its name), set each time the overlay is read. */
+    @Nullable
+    LerpingBossEvent event;
     /** The chip lit before the last change (-1 for none) and when the change was seen: the lit one fades in and the old one out. */
     int prevActive = -1;
     double activeSince = Double.NEGATIVE_INFINITY;
@@ -41,6 +48,9 @@ final class BossBarInfo {
     final String[] labels = {"", "", ""};
     BossBarLayout.Geometry geo;
     String hpShown = "";
+    /** The first letter of the lit chip's word: the token's form mark, so the form is not told by colour alone. Empty for a boss whose chips are not drawn. */
+    String mark = "";
+    int markW;
     @Nullable
     private Component nameRef;
     String nameShown = "";
@@ -63,8 +73,9 @@ final class BossBarInfo {
         fallen = p.fallen();
         hp = p.hp();
         max = p.max();
+        entity = p.entity();
         if (!first) {
-            health.target(hp / (float) max, now, net.ofatech.supernaturalbloodlines.shared.hub.kit.ReduceMotion.on());
+            health.target(hp / (float) max, now, ReduceMotion.on());
         }
         portrait = boss == null ? null : BossPortraits.of(boss, next);
         dirty = true;
@@ -75,6 +86,11 @@ final class BossBarInfo {
         dirty = true;
         lang = null;
         nameRef = null;
+    }
+
+    /** The share of health, 0 to 1, as the server last said it (the fill eases towards it). */
+    float share() {
+        return hp / (float) max;
     }
 
     /** Works out what a frame needs, when something it depends on has changed. */
@@ -93,6 +109,8 @@ final class BossBarInfo {
                 labels[i] = I18n.get(look.set().chipKey(i));
                 chipTextW[i] = font.width(labels[i]);
             }
+            mark = n == 0 ? "" : FormMark.of(labels[look.active()]);
+            markW = font.width(mark);
             cardW = width;
             geo = BossBarLayout.geometry(width, chipTextW, look.active());
             hpShown = BossBarLayout.healthText(BossBarLayout.health(hp, max, BossBarLayout.localeOf(lang)), geo.hpMaxW(), font::width);

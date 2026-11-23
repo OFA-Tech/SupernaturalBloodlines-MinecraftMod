@@ -33,6 +33,11 @@ public final class BossBarMotion {
         return Motion.progress(since, now, Motion.CHIP_SWAP, Easing.OUT_QUAD, reduce);
     }
 
+    /** How far the boss row's card has come in changing to another boss (0 to 1): 1 with reduce motion, so the card just changes. */
+    public static float focusFade(double since, double now, boolean reduce) {
+        return Motion.progress(since, now, Motion.BOSS_FOCUS, Easing.OUT_QUAD, reduce);
+    }
+
     /** A health fill easing from where it was to where it is going; start one with the first health and it begins at rest. */
     public static final class Tween {
         private float from;

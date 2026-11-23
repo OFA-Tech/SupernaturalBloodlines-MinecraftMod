@@ -35,6 +35,12 @@ public final class BossBars {
             }
         });
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> reset());
+        // the player who damages a boss is told, so the boss row makes that boss the full card (the one fact the client cannot know by itself)
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post e) -> {
+            if (e.getEntity() instanceof BossNpc boss && e.getSource().getEntity() instanceof ServerPlayer hitter) {
+                noteHit(hitter, boss, boss.level().getGameTime());
+            }
+        });
     }
 
     public static void update(BossNpc boss) {
@@ -83,6 +89,26 @@ public final class BossBars {
         }
     }
 
+    /** When each player last was told of a hit on each boss (game time), so a flurry is one message per {@link HitThrottle#MIN_GAP} ticks. */
+    private static final Map<UUID, Map<UUID, Long>> HIT_SENT = new ConcurrentHashMap<>();
+
+    /** Tells {@code hitter} that they have just hit {@code boss}, unless they were told a moment ago, or the boss has no bar they can see, or they cannot receive it. */
+    public static boolean noteHit(ServerPlayer hitter, BossNpc boss, long now) {
+        ServerBossEvent bar = BARS.get(boss.getUUID());
+        if (bar == null || !bar.getPlayers().contains(hitter)) {
+            return false;
+        }
+        Map<UUID, Long> mine = HIT_SENT.computeIfAbsent(hitter.getUUID(), id -> new ConcurrentHashMap<>());
+        if (!HitThrottle.allow(mine.getOrDefault(boss.getUUID(), HitThrottle.NEVER), now)) {
+            return false;
+        }
+        if (!BossNet.send(hitter, new BossHitPayload(bar.getId()))) {
+            return false;
+        }
+        mine.put(boss.getUUID(), now);
+        return true;
+    }
+
     /** Whether a player who is watching a bar still may: in the boss's dimension, and still in the game. */
     static boolean stillViewing(boolean sameLevel, boolean removed) {
         return sameLevel && !removed;
@@ -105,7 +131,7 @@ public final class BossBars {
 
     /** What a card shows that the vanilla packet cannot say: the boss, the chips, the health in numbers. */
     public static BossBarInfoPayload info(BossNpc boss, UUID bar, boolean fallen) {
-        return BossBarInfoPayload.of(bar, boss.boss(), boss.barLook(), fallen, shownHealth(boss.getHealth()), shownHealth(boss.getMaxHealth()));
+        return BossBarInfoPayload.of(bar, boss.boss(), boss.barLook(), fallen, shownHealth(boss.getHealth()), shownHealth(boss.getMaxHealth()), boss.getId());
     }
 
     /** The bar's name: the boss's own, and "(desiccated)" while an Original lies open to white oak. */
@@ -120,6 +146,7 @@ public final class BossBars {
 
     public static void remove(UUID boss) {
         SENT.remove(boss);
+        HIT_SENT.values().forEach(m -> m.remove(boss));
         ServerBossEvent bar = BARS.remove(boss);
         if (bar != null) {
             bar.removeAllPlayers();
@@ -130,6 +157,7 @@ public final class BossBars {
         BARS.values().forEach(ServerBossEvent::removeAllPlayers);
         BARS.clear();
         SENT.clear();
+        HIT_SENT.clear();
     }
 
     @VisibleForTesting

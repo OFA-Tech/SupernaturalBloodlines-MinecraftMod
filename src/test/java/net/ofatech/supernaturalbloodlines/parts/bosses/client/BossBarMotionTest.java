@@ -87,6 +87,17 @@ class BossBarMotionTest {
     }
 
     @Test
+    void theCardChangesToAnotherBossOverFourTicksAndInOneFrameWithReduceMotion() {
+        assertEquals(0f, BossBarMotion.focusFade(10, 10, false), 1e-6f);
+        float mid = BossBarMotion.focusFade(10, 12, false);
+        assertTrue(mid > 0f && mid < 1f, "" + mid);
+        assertEquals(1f, BossBarMotion.focusFade(10, 10 + Motion.BOSS_FOCUS, false), 1e-6f);
+        assertEquals(1f, BossBarMotion.focusFade(10, 10, true), 1e-6f, "reduce motion: it just changes");
+        assertEquals(1f, BossBarMotion.focusFade(Double.NEGATIVE_INFINITY, 10, false), 1e-6f, "no earlier change: a card at rest");
+        assertEquals(4, Motion.BOSS_FOCUS, "4 ticks are 200 ms");
+    }
+
+    @Test
     void aChipIsLitOverFourTicksAndInOneFrameWithReduceMotion() {
         assertEquals(0f, BossBarMotion.chipFade(10, 10, false), 1e-6f);
         float mid = BossBarMotion.chipFade(10, 12, false);

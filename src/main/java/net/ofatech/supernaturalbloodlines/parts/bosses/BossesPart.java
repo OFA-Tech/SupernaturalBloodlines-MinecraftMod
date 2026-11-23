@@ -63,6 +63,8 @@ public final class BossesPart {
             var registrar = e.registrar("2").optional();
             registrar.playToClient(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarInfoPayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarInfoPayload.STREAM_CODEC,
                     (payload, ctx) -> ctx.enqueueWork(() -> net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarClientHook.accept(payload)));
+            registrar.playToClient(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossHitPayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.director.BossHitPayload.STREAM_CODEC,
+                    (payload, ctx) -> ctx.enqueueWork(() -> net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarClientHook.hit(payload)));
             registrar.playToClient(net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealOfferPayload.STREAM_CODEC,
                     (payload, ctx) -> ctx.enqueueWork(() -> net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealClientHook.open(payload)));
             registrar.playToServer(net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealChoicePayload.TYPE, net.ofatech.supernaturalbloodlines.parts.bosses.deal.DealChoicePayload.STREAM_CODEC,

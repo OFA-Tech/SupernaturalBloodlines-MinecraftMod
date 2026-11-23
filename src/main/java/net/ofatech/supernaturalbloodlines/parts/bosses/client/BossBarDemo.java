@@ -21,6 +21,12 @@ import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBarInfoPaylo
  */
 final class BossBarDemo {
     private static final List<UUID> SHOWN = new ArrayList<>();
+    private static UUID focus;
+
+    /** The bar the demo makes the focus (a demo has no player to hit a boss), or null when no demo is shown. */
+    static UUID focus() {
+        return focus;
+    }
 
     private BossBarDemo() {
     }
@@ -32,7 +38,25 @@ final class BossBarDemo {
             BossBarClient.forget(id);
         }
         SHOWN.clear();
+        focus = null;
         if (want == null) {
+            return;
+        }
+        if (want.equals("n2")) {
+            add(mc, BossId.KLAUS, BossBarForms.shifter(BossForm.HUMAN), false, 1640, 2000);
+            add(mc, BossId.DEUCALION, BossBarForms.shifter(BossForm.SHIFTING), false, 1100, 2000);
+            return;
+        }
+        if (want.equals("n9")) {
+            add(mc, BossId.KLAUS, BossBarForms.shifter(BossForm.HUMAN), false, 1640, 2000);
+            add(mc, BossId.DEUCALION, BossBarForms.shifter(BossForm.SHIFTING), false, 1100, 2000);
+            add(mc, BossId.PETER_HALE, BossBarForms.shifter(BossForm.BEAST), false, 900, 2000);
+            add(mc, BossId.BEAST_OF_GEVAUDAN, BossBarForms.host(1), false, 620, 2000);
+            add(mc, BossId.MIKAEL, Look.NONE, false, 1900, 2000);
+            add(mc, BossId.ELIJAH, Look.NONE, false, 1500, 2000);
+            add(mc, BossId.KOL, Look.NONE, false, 700, 2000);
+            add(mc, BossId.REBEKAH, Look.NONE, false, 300, 2000);
+            add(mc, BossId.FINN, Look.NONE, false, 40, 2000);
             return;
         }
         if (want.startsWith("stack3")) {
@@ -67,7 +91,10 @@ final class BossBarDemo {
         UUID id = UUID.randomUUID();
         Component name = Component.translatable("entity.supernaturalbloodlines." + boss.id());
         mc.gui.getBossOverlay().events.put(id, new LerpingBossEvent(id, name, hp / (float) max, BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS, false, false, false));
-        BossBarClient.accept(BossBarInfoPayload.of(id, boss, look, fallen, hp, max));
+        BossBarClient.accept(BossBarInfoPayload.of(id, boss, look, fallen, hp, max, BossBarInfoPayload.NO_ENTITY));
+        if (focus == null) {
+            focus = id;
+        }
         SHOWN.add(id);
     }
 }

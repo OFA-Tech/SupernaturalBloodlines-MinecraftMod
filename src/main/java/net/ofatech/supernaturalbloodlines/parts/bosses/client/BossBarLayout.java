@@ -3,19 +3,15 @@ package net.ofatech.supernaturalbloodlines.parts.bosses.client;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.function.ToIntFunction;
-import net.ofatech.supernaturalbloodlines.core.hud.TrackerAnchor;
 
 /**
  * Where everything of a boss bar goes (the approved card of the style guide): a 250 x 46 card with the portrait plate on the left, the name plate over the
- * health bar, and under the bar the health in numbers on the left and the form chips on the right; cards stack with a 6 px gap. Every coordinate is relative to the
+ * health bar, and under the bar the health in numbers on the left and the form chips on the right. Every coordinate is relative to the
  * card's top left corner. Pure, so the client computes a card's {@link Geometry} once and not every frame.
  */
 public final class BossBarLayout {
     public static final int CARD_W = 250;
     public static final int CARD_H = 46;
-    public static final int GAP = 6;
-    /** The screen keeps this much clear of a card's sides. */
-    public static final int SCREEN_MARGIN = 4;
     /** The portrait plate's body, and the portrait inside it. */
     public static final int PLATE = 34;
     public static final int ART = 24;
@@ -26,9 +22,6 @@ public final class BossBarLayout {
     /** A chip is its text and this much (3 px each side). */
     public static final int CHIP_PAD = 6;
     public static final int CHIP_GAP = 2;
-    /** The stack takes at most this share of the screen's height (3/5): vanilla's own limit is a third, too little for three cards. */
-    private static final int SHARE_NUM = 3;
-    private static final int SHARE_DEN = 5;
     /** The card's left edge to the name plate and the bar: the portrait plate and its air. */
     private static final int BODY_X = 45;
 
@@ -49,49 +42,10 @@ public final class BossBarLayout {
                            int fillX, int fillY, int fillMaxW, int[] tickX, int hpX, int hpY, int hpMaxW, int chipY, int[] chipX, int[] chipW) {
     }
 
-    /** Another mod's status corner (Tensura's and Vampirism's bars, top left) is this wide, with a gap; the stack stands to its right when the screen has room. */
-    public static final int STATUS_CLEAR = TrackerAnchor.CORNER_W + 4;
-    /** Narrower than this a card is not worth making: it then stays centred and may reach over the corner. */
-    public static final int MIN_CARD_W = 170;
-    /** Another mod's bar draws its name 9 px above itself: it needs this much under the last card (two pixels of air). */
+    /** Another mod's bar draws its name 9 px above itself: it starts this far under the card's top plus the card, so that name clears the card by two pixels. */
     public static final int VANILLA_HEAD = 11;
-
-    /** How far from the left edge the stack may start: clear of the status corner when it is there and the screen is wide enough for a card beside it. */
-    public static int leftClear(int guiW, boolean statusCorner) {
-        return statusCorner && guiW - STATUS_CLEAR - SCREEN_MARGIN >= MIN_CARD_W ? STATUS_CLEAR : SCREEN_MARGIN;
-    }
-
-    public static int cardWidth(int guiW, boolean statusCorner) {
-        return Math.min(CARD_W, guiW - leftClear(guiW, statusCorner) - SCREEN_MARGIN);
-    }
-
-    /** Centred, but never nearer the left edge than {@link #leftClear}. */
-    public static int cardX(int guiW, int cardW, boolean statusCorner) {
-        return Math.max((guiW - cardW) / 2, leftClear(guiW, statusCorner));
-    }
-
-    public static int cardWidth(int guiW) {
-        return cardWidth(guiW, false);
-    }
-
-    public static int cardX(int guiW, int cardW) {
-        return cardX(guiW, cardW, false);
-    }
-
-    /** What the first card tells vanilla it took, for {@code bars} cards: the next bar of another mod starts under the last card with room for its name above it. */
-    public static int increment(int bars) {
-        return bars <= 0 ? 0 : (bars - 1) * (CARD_H + GAP) + CARD_H + VANILLA_HEAD;
-    }
-
-    public static int cardY(int base, int index) {
-        return base + index * (CARD_H + GAP);
-    }
-
-    /** How many cards fit in the top share of a screen {@code guiH} high when the stack starts at {@code base}; one at least. */
-    public static int barsThatFit(int guiH, int base) {
-        return Math.max(1, (guiH * SHARE_NUM / SHARE_DEN - base + GAP) / (CARD_H + GAP));
-    }
-
+    /** What the first of our bars tells vanilla it took, whatever the number of bosses (the row is one card tall): another mod's bar starts under the row. */
+    public static final int ROW_INCREMENT = CARD_H + VANILLA_HEAD;
     /**
      * The card for a width and the widths of the chip texts ({@code active}: the lit chip). When the chips do not all fit on the name plate's width, only the lit
      * one is drawn, so a chip never leaves the plate and never covers the health.
@@ -100,7 +54,7 @@ public final class BossBarLayout {
         int nameW = cardW - BODY_X - 5;
         int[] chipX = new int[chipTextW.length];
         int[] chipW = new int[chipTextW.length];
-        int right = BODY_X + nameW - 4;
+        int right = BODY_X + nameW - 2;
         int total = 0;
         for (int w : chipTextW) {
             total += w + CHIP_PAD + CHIP_GAP;
@@ -128,8 +82,8 @@ public final class BossBarLayout {
 
     /** The health text keeps at least this much width before chips are cut down to the lit one. */
     public static final int MIN_HEALTH_W = 36;
-    /** The air between the end of the health text and the first chip: with the default font "1,640 / 2,000" (66 px) just fits beside three chips on the approved card. */
-    public static final int HP_GAP = 2;
+    /** The air between the end of the health text and the first chip: with the default font "1,640 / 2,000" (66 px) still fits beside three chips on the approved card (the chips end 2 px inside the name plate). */
+    public static final int HP_GAP = 4;
 
     /** The width of a fill for a fraction of the bar: none for no health, a sliver for any, all of it for full. */
     public static int fillWidth(int maxW, float progress) {

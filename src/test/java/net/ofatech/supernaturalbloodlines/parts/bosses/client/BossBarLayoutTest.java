@@ -21,80 +21,6 @@ class BossBarLayoutTest {
     private static final int[] SHIFTER = {width("HUMAN"), width("SHIFTING"), width("BEAST")};
 
     @Test
-    void theCardIsTheApprovedSizeOnAnyScreenThatHasRoomAndNarrowerOnOneThatHasNot() {
-        assertEquals(250, BossBarLayout.cardWidth(960));
-        assertEquals(250, BossBarLayout.cardWidth(480));
-        assertEquals(250, BossBarLayout.cardWidth(258));
-        assertEquals(240, BossBarLayout.cardWidth(248), "4 px of the screen are left on each side");
-        assertEquals(355, BossBarLayout.cardX(960, 250));
-    }
-
-    @Test
-    void aCardIsCentredOnTheScreen() {
-        for (int guiW : new int[] {480, 640, 960, 427, 320}) {
-            int w = BossBarLayout.cardWidth(guiW);
-            int x = BossBarLayout.cardX(guiW, w);
-            assertTrue(Math.abs((guiW - (x + w)) - x) <= 1, guiW + ": the margins are equal");
-            assertTrue(x >= BossBarLayout.SCREEN_MARGIN, guiW + " " + x);
-        }
-    }
-
-    @Test
-    void withAStatusCornerTheStackStandsToItsRightWhereTheScreenHasRoom() {
-        for (int guiW : new int[] {480, 427, 342, 320}) {
-            int w = BossBarLayout.cardWidth(guiW, true);
-            int x = BossBarLayout.cardX(guiW, w, true);
-            assertTrue(x >= BossBarLayout.STATUS_CLEAR, guiW + ": the card starts at " + x + ", over the corner");
-            assertTrue(x + w <= guiW - BossBarLayout.SCREEN_MARGIN, guiW + ": the card ends at " + (x + w) + ", off the screen");
-            assertTrue(w >= BossBarLayout.MIN_CARD_W, guiW + ": " + w);
-        }
-        assertEquals(250, BossBarLayout.cardWidth(480, true), "the approved size is kept where it fits");
-        assertEquals(144, BossBarLayout.cardX(480, 250, true));
-        assertEquals(115, BossBarLayout.cardX(480, 250, false), "with no corner it is centred");
-        assertEquals(195, BossBarLayout.cardX(640, 250, true), "at scale 3 the centred card already clears the corner");
-        assertEquals(BossBarLayout.cardX(960, 250, false), BossBarLayout.cardX(960, 250, true));
-    }
-
-    @Test
-    void aScreenTooNarrowForACardBesideTheCornerKeepsTheCardCentred() {
-        assertEquals(BossBarLayout.SCREEN_MARGIN, BossBarLayout.leftClear(300, true));
-        assertEquals(250, BossBarLayout.cardWidth(300, true));
-        assertEquals(25, BossBarLayout.cardX(300, 250, true));
-    }
-
-    @Test
-    void anotherModsBarUnderTheStackHasRoomForItsNameAboveIt() {
-        for (int n = 1; n <= 4; n++) {
-            int nextBar = BossBarLayout.cardY(12, 0) + BossBarLayout.increment(n);
-            int lastCardBottom = BossBarLayout.cardY(12, n - 1) + BossBarLayout.CARD_H;
-            assertTrue(nextBar - 9 >= lastCardBottom + 2, n + " cards: its name (9 px above it) starts at " + (nextBar - 9) + ", the card ends at " + lastCardBottom);
-        }
-        assertEquals(0, BossBarLayout.increment(0));
-    }
-
-    @Test
-    void cardsStackWithASixPixelGapAndTheIncrementPutsAnotherModsBarUnderThemAll() {
-        assertEquals(12, BossBarLayout.cardY(12, 0));
-        assertEquals(12 + 52, BossBarLayout.cardY(12, 1));
-        assertEquals(12 + 104, BossBarLayout.cardY(12, 2));
-        for (int n = 1; n <= 5; n++) {
-            int lastBottom = BossBarLayout.cardY(12, n - 1) + BossBarLayout.CARD_H;
-            assertEquals(lastBottom - 12 + BossBarLayout.VANILLA_HEAD, BossBarLayout.increment(n), n + " cards: another mod's bar starts under the last, with room for its name");
-        }
-        assertEquals(0, BossBarLayout.increment(0));
-    }
-
-    @Test
-    void threeCardsFitAtGuiScaleFourOnAFullHdScreenAndAtLeastOneAlwaysShows() {
-        assertTrue(BossBarLayout.barsThatFit(270, 12) >= 3, "scale 4 (480 x 270): vanilla's own limit would show two");
-        assertTrue(BossBarLayout.barsThatFit(360, 12) >= 3);
-        assertTrue(BossBarLayout.barsThatFit(540, 12) >= 3);
-        assertEquals(1, BossBarLayout.barsThatFit(100, 12), "a tiny screen still shows the first");
-        int n = BossBarLayout.barsThatFit(270, 12);
-        assertTrue(BossBarLayout.cardY(12, n - 1) + BossBarLayout.CARD_H <= 270 * 3 / 5, "the shown cards end inside the share of the screen");
-    }
-
-    @Test
     void everyPartOfACardIsInsideItAndNothingOverlapsThatShouldNot() {
         for (int cardW : new int[] {250, 240, 210, 200}) {
             Geometry g = BossBarLayout.geometry(cardW, SHIFTER, 1);
@@ -128,7 +54,6 @@ class BossBarLayoutTest {
         assertEquals(9, BossBarLayout.TRACK_H);
         assertEquals(10, BossBarLayout.CHIP_H);
         assertEquals(46, BossBarLayout.CARD_H);
-        assertEquals(6, BossBarLayout.GAP);
         assertEquals(50, g.tickX()[0] - g.trackX(), "a tick at 25 %");
         assertEquals(100, g.tickX()[1] - g.trackX(), "at 50 %");
         assertEquals(150, g.tickX()[2] - g.trackX(), "at 75 %");

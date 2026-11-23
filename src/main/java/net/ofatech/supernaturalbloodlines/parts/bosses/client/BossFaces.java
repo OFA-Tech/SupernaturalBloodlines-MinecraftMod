@@ -15,6 +15,34 @@ public final class BossFaces {
         return k == HudKit.GRIMOIRE ? 0xFFF4E2C0 : k.ink();
     }
 
+    /**
+     * The colours of a token's health ring: the filled part, the filled part while the boss shifts or lies fallen, and the empty track. They are the dominant colours of the kit's
+     * own bar pictures (held equal to them by {@code BossFacesTest}) and stand out from the track at 3:1 or more, so the ring reads without colour names.
+     */
+    public static int ringFill(HudKit k) {
+        return switch (k) {
+            case GRIMOIRE -> 0xFF8E1C22;
+            case BLOOD_MOON -> 0xFFBF332B;
+            case TENSURA -> 0xFF3FD0D6;
+        };
+    }
+
+    public static int ringShifting(HudKit k) {
+        return switch (k) {
+            case GRIMOIRE -> 0xFF6A4A0E;
+            case BLOOD_MOON -> 0xFFFFD36B;
+            case TENSURA -> 0xFFE8B33A;
+        };
+    }
+
+    public static int ringTrack(HudKit k) {
+        return switch (k) {
+            case GRIMOIRE -> 0xFFCBB985;
+            case BLOOD_MOON -> 0xFF10060A;
+            case TENSURA -> 0xFF06121F;
+        };
+    }
+
     /** The health in numbers, on the card. */
     public static int health(HudKit k) {
         return k.muted();

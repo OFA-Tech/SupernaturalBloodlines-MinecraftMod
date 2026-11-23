@@ -346,6 +346,31 @@ public final class BossReviewGameTests {
     }
 
     @GameTest(template = "empty", templateNamespace = NS)
+    public static void aPlayerWhoHitsABossIsToldOncePerHalfSecondAndOnlyIfTheyWatchItAndCanReceiveIt(GameTestHelper helper) {
+        MockViewer hitter = MockViewer.of(helper, true);
+        MockViewer plain = MockViewer.of(helper, false);
+        MockViewer far = MockViewer.of(helper, true);
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            MikaelEntity m = rig.spawn();
+            hitter.player.setPos(m.getX() + 5, m.getY(), m.getZ());
+            plain.player.setPos(m.getX() + 5, m.getY(), m.getZ());
+            BossBars.update(m, List.of(hitter.player, plain.player));
+            long t = 1000;
+            helper.assertTrue(BossBars.noteHit(hitter.player, m, t), "the first hit was not told");
+            var told = hitter.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossHitPayload.class);
+            helper.assertTrue(told.size() == 1 && told.get(0).bar().equals(BossBars.barOf(m.getUUID()).getId()), "one payload naming the boss's bar: " + told);
+            helper.assertTrue(!BossBars.noteHit(hitter.player, m, t + 5), "a second blow within half a second was told again");
+            helper.assertTrue(BossBars.noteHit(hitter.player, m, t + 10), "a blow after half a second was not told");
+            helper.assertTrue(hitter.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossHitPayload.class).size() == 2, "two payloads in all");
+            helper.assertTrue(!BossBars.noteHit(plain.player, m, t), "a client without the channel was told");
+            helper.assertTrue(plain.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossHitPayload.class).isEmpty(), "and a payload was sent to it");
+            helper.assertTrue(!BossBars.noteHit(far.player, m, t), "a player who is not watching the bar was told");
+            helper.assertTrue(far.payloads(net.ofatech.supernaturalbloodlines.parts.bosses.director.BossHitPayload.class).isEmpty(), "and was sent a payload");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
     public static void aViewerWhoLeftTheDimensionOrTheGameIsTakenFromTheBar(GameTestHelper helper) {
         MockViewer gone = MockViewer.of(helper, true);
         MockViewer away = MockViewer.of(helper, true);
