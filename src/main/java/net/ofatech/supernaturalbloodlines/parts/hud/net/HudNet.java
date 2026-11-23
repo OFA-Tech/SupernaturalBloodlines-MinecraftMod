@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * limit is dropped without an answer (a flood must not make the server talk back).
  */
 public final class HudNet {
-    private static final String VERSION = "2";
+    private static final String VERSION = "4"; // 4: a wheel entry carries a note of what else it covers (rule C)
     /** The refusal of a payload over the rate limit; never shown, since nothing is sent back. */
     public static final String RATE_LIMITED = "supernaturalbloodlines.hud.rate_limited";
 
@@ -97,8 +97,7 @@ public final class HudNet {
             }
         }));
         // the wheel screen comes with W4; until then the catalogue is dropped on arrival
-        registrar.playToClient(WheelCataloguePayload.TYPE, WheelCataloguePayload.STREAM_CODEC, (payload, ctx) -> {
-        });
+        registrar.playToClient(WheelCataloguePayload.TYPE, WheelCataloguePayload.STREAM_CODEC, (payload, ctx) -> ctx.enqueueWork(() -> ClientCatalogue.accept(payload)));
         registrar.playToClient(LoadoutSyncPayload.TYPE, LoadoutSyncPayload.STREAM_CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> ctx.player().setData(ModAttachments.HUD_LOADOUT, payload.loadout())));
         registrar.playToClient(ActionCooldownPayload.TYPE, ActionCooldownPayload.STREAM_CODEC,

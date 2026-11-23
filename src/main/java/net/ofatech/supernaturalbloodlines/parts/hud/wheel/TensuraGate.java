@@ -14,6 +14,11 @@ final class TensuraGate {
         return ModList.get().isLoaded("tensura");
     }
 
+    /** True when the player's Tensura race is the vampire race (the only one whose ability is a bat form and a bite). */
+    static boolean vampireRace(ServerPlayer p) {
+        return loaded() && TensuraSides.vampireRace(p);
+    }
+
     @Nullable
     static String press(ServerPlayer p, ResourceLocation id, int mode) {
         if (!loaded()) {

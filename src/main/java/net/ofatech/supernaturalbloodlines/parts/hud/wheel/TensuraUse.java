@@ -60,9 +60,9 @@ public final class TensuraUse {
         if (!started) {
             return KEY + "refused";
         }
-        if (unslotted) {
-            WheelActivation.holding(p, ts, mode);
-        }
+        // the hold bracket is open for every wheel hold, slotted or not: a skill that leaves its slot while it is held (the preset changed, the slot was cleared) would else be cut off
+        // after one second
+        WheelActivation.holding(p, ts, mode);
         // a tap, as Tensura's own key sends: press then release at once. Tensura flips a toggle when the key comes up, and an instant skill has nothing to hold; a held
         // power (a held skill, a spell with a cast time) waits for the release the player sends
         if (kind != PowerKind.HELD) {

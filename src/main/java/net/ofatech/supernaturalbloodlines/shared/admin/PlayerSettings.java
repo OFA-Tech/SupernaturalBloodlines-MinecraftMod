@@ -24,7 +24,9 @@ public final class PlayerSettings {
             SettingEntry.of(HUD_FILE, "hud", "blood_in_food_spot", SettingKind.BOOL),
             SettingEntry.of(HUD_FILE, "hud", "mode", SettingKind.CHOICE),
             SettingEntry.of(HUD_FILE, "hud", "tracker_anchor", SettingKind.CHOICE),
-            SettingEntry.of(HUD_FILE, "hud", "toast_anchor", SettingKind.CHOICE));
+            SettingEntry.of(HUD_FILE, "hud", "toast_anchor", SettingKind.CHOICE),
+            SettingEntry.of(HUD_FILE, "hud", "wheel_tap_ms", SettingKind.INT),
+            SettingEntry.of(HUD_FILE, "hud", "wheel_remember_last", SettingKind.BOOL));
 
     public static final List<String> ALL = ENTRIES.stream().map(SettingEntry::id).toList();
 

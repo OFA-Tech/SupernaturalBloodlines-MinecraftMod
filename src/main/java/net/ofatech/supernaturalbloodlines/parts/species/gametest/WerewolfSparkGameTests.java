@@ -806,10 +806,13 @@ public final class WerewolfSparkGameTests {
         try {
             net.minecraft.server.MinecraftServer server = victim.getServer();
             boolean pvp = server.isPvpAllowed();
-            server.setPvpAllowed(true);
-            victim.invulnerableTime = 0;
-            victim.hurt(alpha.damageSources().playerAttack(alpha), 1f);
-            server.setPvpAllowed(pvp);
+            try {
+                server.setPvpAllowed(true);
+                victim.invulnerableTime = 0;
+                victim.hurt(alpha.damageSources().playerAttack(alpha), 1f);
+            } finally {
+                server.setPvpAllowed(pvp);
+            }
             victim.addEffect(new MobEffectInstance(LUPUS, 600));
             helper.assertTrue(victim.getData(SpeciesRegistries.PENDING_ALPHA).equals(alpha.getUUID()), "the Alpha was not remembered");
             // the Alpha loses the spark before the effect runs out

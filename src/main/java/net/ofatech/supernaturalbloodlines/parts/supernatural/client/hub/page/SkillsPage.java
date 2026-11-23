@@ -37,13 +37,14 @@ import org.jetbrains.annotations.Nullable;
 public final class SkillsPage implements HubPageView {
     private static final String KEY = PageKit.HUB + "skills.";
 
-    enum Tab { OURS, FACTION, LOADOUT }
+    enum Tab { OURS, FACTION, LOADOUT, MASTERY }
 
     /** One skill of the faction's own tree, as the mod's client-side handler sees it. */
     private record ModSkill(String id, Component name, Component description, int cost, ISkillHandler.Result result) {
     }
 
     private final LoadoutTab loadout = new LoadoutTab();
+    private final MasteryTab mastery = new MasteryTab();
     private Tab tab = Tab.OURS;
     private List<ModSkill> cached = List.of();
     private long cachedAt = Long.MIN_VALUE;
@@ -74,7 +75,7 @@ public final class SkillsPage implements HubPageView {
     @Override
     public void render(HubScreen.Frame f) {
         Optional<IPlayableFaction<?>> faction = faction(f.view.player());
-        if (tab == Tab.FACTION && faction.isEmpty() || tab == Tab.LOADOUT && !LoadoutTab.available()) {
+        if (tab == Tab.FACTION && faction.isEmpty() || tab == Tab.LOADOUT && !LoadoutTab.available() || tab == Tab.MASTERY && !MasteryTab.available()) {
             tab = Tab.OURS;
         }
         Rect r = f.region(HubLayout.MAIN);
@@ -84,6 +85,7 @@ public final class SkillsPage implements HubPageView {
             case OURS -> ours(f, r, y);
             case FACTION -> modSkills(f, r, y, faction.orElseThrow());
             case LOADOUT -> loadout.render(f, r, y);
+            case MASTERY -> mastery.render(f, r, y);
         }
     }
 
@@ -93,6 +95,9 @@ public final class SkillsPage implements HubPageView {
         faction.ifPresent(fa -> shown.add(Tab.FACTION));
         if (LoadoutTab.available()) {
             shown.add(Tab.LOADOUT);
+        }
+        if (MasteryTab.available()) {
+            shown.add(Tab.MASTERY);
         }
         for (Tab t : shown) {
             Component full = t == Tab.FACTION ? faction.orElseThrow().getName() : Component.translatable(KEY + "tab." + t.name().toLowerCase(Locale.ROOT));

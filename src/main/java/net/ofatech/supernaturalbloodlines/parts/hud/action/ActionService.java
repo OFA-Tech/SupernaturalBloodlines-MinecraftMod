@@ -8,6 +8,7 @@ import net.neoforged.fml.ModList;
 import net.ofatech.supernaturalbloodlines.core.hud.Loadout;
 import net.ofatech.supernaturalbloodlines.core.wheel.ActRules;
 import net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService;
+import net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelGate;
 import net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,6 +111,12 @@ public final class ActionService {
     private static String run(ServerPlayer p, ResourceLocation id, int slot, int targetEntityId, boolean release) {
         if (release) {
             markId(p, id, false);
+        } else {
+            // rule C: no stacking and the shared cooldown, whichever path asks (Vampirism's own event is the backstop for its keys)
+            String blocked = WheelGate.checkAction(p, id);
+            if (blocked != null) {
+                return blocked;
+            }
         }
         if (Loadout.BITE.equals(id)) {
             if (release) {
@@ -122,6 +129,7 @@ public final class ActionService {
                     mark(p, slot, true);
                 }
                 markId(p, id, true);
+                WheelGate.ranOurs(p, id);
             }
             return refusal;
         }
@@ -156,6 +164,7 @@ public final class ActionService {
             return error.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t ? t.getKey() : KEY + "refused";
         }
         // the cooldown reaches the slot through ExtraActions.cooldownStarted, from the owner of the action, whichever path started it
+        WheelGate.ranOurs(p, action.id());
         return null;
     }
 

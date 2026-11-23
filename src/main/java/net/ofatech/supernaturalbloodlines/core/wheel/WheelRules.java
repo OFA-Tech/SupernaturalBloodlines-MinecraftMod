@@ -8,6 +8,17 @@ public final class WheelRules {
     private WheelRules() {
     }
 
+    /** The powers the hub's Loadout page offers: the ones the wheel puts in our Loadout (a right click on them), in the wheel's order. */
+    public static java.util.List<PowerRef> loadoutPowers(java.util.List<PowerRef> all) {
+        java.util.List<PowerRef> out = new java.util.ArrayList<>();
+        for (PowerRef r : all) {
+            if (slotTarget(r.source(), true) == SlotTarget.LOADOUT) {
+                out.add(r);
+            }
+        }
+        return out;
+    }
+
     public static SlotTarget slotTarget(PowerSource source, boolean slottable) {
         return switch (source) {
             case BLOODLINE, VAMPIRISM, WEREWOLVES -> SlotTarget.LOADOUT;
