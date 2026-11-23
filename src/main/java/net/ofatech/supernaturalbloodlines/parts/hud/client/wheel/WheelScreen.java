@@ -87,16 +87,17 @@ public final class WheelScreen extends Screen {
 
     @Override
     protected void init() {
-        WheelActions.view(true);
+        WheelActions.view(net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState.Viewer.WHEEL, true);
     }
 
     @Override
     public void removed() {
         DevWheel.active = false;
+        WheelDescriptions.demo = null;
         DevWheel.alt = false;
         net.ofatech.supernaturalbloodlines.parts.hud.net.ClientCatalogue.frozen = false;
         WheelActions.release();
-        WheelActions.view(false);
+        WheelActions.view(net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState.Viewer.WHEEL, false);
         heldByMouse = null;
         WheelInput.screenClosed(machine);
     }

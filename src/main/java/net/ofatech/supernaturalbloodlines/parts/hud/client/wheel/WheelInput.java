@@ -47,6 +47,11 @@ public final class WheelInput {
             }
         });
         NeoForge.EVENT_BUS.addListener((InputEvent.InteractionKeyMappingTriggered e) -> onInteraction(e));
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.RenderGuiLayerEvent.Pre e) -> {
+            if (net.ofatech.supernaturalbloodlines.core.wheel.WheelHud.hides(Minecraft.getInstance().screen instanceof WheelScreen, e.getName().toString())) {
+                e.setCanceled(true);
+            }
+        });
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> reset());
     }
 

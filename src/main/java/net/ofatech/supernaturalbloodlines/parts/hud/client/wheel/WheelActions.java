@@ -70,9 +70,11 @@ public final class WheelActions {
         HudSend.send(new UsePowerPayload(ref.key(), mode, target, release));
     }
 
-    /** Tells the server whether this player looks at the wheel (it only sends the catalogue to a viewer). */
-    public static void view(boolean open) {
-        HudSend.send(new WheelViewPayload(open));
+    private static final net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState VIEW = new net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState();
+
+    /** Tells the server whether a screen that lists the powers is open (it only sends the catalogue to a viewer): the wheel and the hub share one request. */
+    public static void view(net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState.Viewer viewer, boolean open) {
+        VIEW.set(viewer, open).ifPresent(on -> HudSend.send(new WheelViewPayload(on)));
     }
 
     /**
@@ -199,6 +201,7 @@ public final class WheelActions {
 
     /** A new world, a lost connection or the player's death: nothing held or aimed carries over. */
     public static void reset() {
+        VIEW.clear();
         HELD.releaseAll();
         heldScan = false;
         AIM.cancel();

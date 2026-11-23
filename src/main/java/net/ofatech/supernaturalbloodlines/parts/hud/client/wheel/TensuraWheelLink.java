@@ -18,6 +18,12 @@ final class TensuraWheelLink {
     private TensuraWheelLink() {
     }
 
+    /** The skill's own description (empty when there is none or the id is not a skill). */
+    static String description(ResourceLocation id) {
+        ManasSkill skill = io.github.manasmods.manascore.skill.api.SkillAPI.getSkillRegistry().get(id);
+        return skill == null ? "" : skill.getSkillDescription().getString();
+    }
+
     static int activePreset(LocalPlayer p) {
         return TensuraStorages.getAbilityFrom(p).getActivePreset();
     }

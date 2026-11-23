@@ -63,9 +63,6 @@ public final class AbilityHudLayer implements LayeredDraw.Layer {
     }
     @Override
     public void render(GuiGraphics g, DeltaTracker delta) {
-        if (Minecraft.getInstance().screen instanceof net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.WheelScreen) {
-            return; // the wheel lists the same powers: the six slots would only sit under its rings
-        }
         net.ofatech.supernaturalbloodlines.shared.hud.HudPlacement.toastAnchor(HudClientConfig.toastAnchor());
         if (!shown()) {
             glowTracker.reset();

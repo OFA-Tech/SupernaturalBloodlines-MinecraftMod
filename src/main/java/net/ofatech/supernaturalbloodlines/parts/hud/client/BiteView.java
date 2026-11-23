@@ -33,7 +33,7 @@ public final class BiteView {
 
     /** What Bite does for the player's form now, for the hub's Loadout tab and the Alt tooltip. */
     @Nullable
-    static Component note() {
+    public static Component note() {
         return Component.translatable(BiteService.KEY + "tooltip." + action().name().toLowerCase(Locale.ROOT));
     }
 

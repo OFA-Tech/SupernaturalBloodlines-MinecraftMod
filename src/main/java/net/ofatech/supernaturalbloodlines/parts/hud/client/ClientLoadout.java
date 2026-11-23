@@ -37,10 +37,20 @@ public final class ClientLoadout implements LoadoutAccess.Provider {
     }
 
     @Override
+    public void hubOpened() {
+        net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.WheelActions.view(net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState.Viewer.HUB, true);
+    }
+
+    @Override
+    public void hubClosed() {
+        net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.WheelActions.view(net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState.Viewer.HUB, false);
+    }
+
+    @Override
     public List<LoadoutAccess.Entry> assignable() {
         List<LoadoutAccess.Entry> list = new ArrayList<>();
-        var catalogue = net.ofatech.supernaturalbloodlines.parts.hud.net.ClientCatalogue.entries();
-        if (!catalogue.isEmpty() && net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.WheelList.current() == catalogue) {
+        var catalogue = net.ofatech.supernaturalbloodlines.parts.hud.client.wheel.WheelList.current();
+        if (!catalogue.isEmpty()) {
             // the wheel has been opened: the page offers what the wheel offers (one entry per power, rule C), not a second list
             var refs = net.ofatech.supernaturalbloodlines.core.wheel.WheelRules.loadoutPowers(catalogue.stream().map(e -> e.ref()).toList());
             for (var e : catalogue) {

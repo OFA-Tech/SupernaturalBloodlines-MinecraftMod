@@ -70,6 +70,7 @@ public final class WheelList {
     }
 
     public static void reset() {
+        WheelDescriptions.reload();
         rawSeen = null;
         builtAt = Long.MIN_VALUE;
         cached = List.of();

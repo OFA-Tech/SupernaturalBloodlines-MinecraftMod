@@ -298,6 +298,15 @@ final class WheelRenderer {
         y += 6;
         g.drawString(font, Component.literal(text("kind." + e.kind().name().toLowerCase(Locale.ROOT))).withStyle(ChatFormatting.BOLD), x, y, pal.ink(), false);
         y += 11;
+        String description = WheelDescriptions.of(e);
+        int descLines = net.ofatech.supernaturalbloodlines.core.wheel.WheelPanelText.descriptionLines(y, p.y() + p.h() - 9 - 6 * 10, e.modeNames().size() > 1 ? 2 : 0, e.state().locked());
+        if (!description.isEmpty() && descLines > 0) {
+            for (String line : LabelFit.wrap(description, w, descLines, font::width)) {
+                g.drawString(font, line, x, y, pal.ink(), false);
+                y += 10;
+            }
+            y += 2;
+        }
         if (e.modeNames().size() > 1) {
             String mode = text("panel.mode", e.state().mode() + 1, e.modeNames().size(), e.modeName().getString());
             for (String line : LabelFit.wrap(mode, w, 2, font::width)) {

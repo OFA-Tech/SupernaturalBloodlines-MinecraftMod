@@ -2,6 +2,7 @@ package net.ofatech.supernaturalbloodlines.parts.hud.client.wheel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -95,6 +96,8 @@ public final class DevWheel {
         alt = "alt".equals(state);
         holds = null;
         WheelActions.reset();
+        WheelDescriptions.demo = Map.of("heat_wave", "Scorching air burns everything near you.", "predator", "Devour a target to copy its body and skills. The mode picks what it does.",
+                "black_lightning", "Call down black lightning on the spot you aim at.", "spell_15", "Hold to charge, then let go to throw a spear of lightning.");
         ClientCatalogue.frozen = true;
         ClientCatalogue.set(new WheelCataloguePayload(1, demo(now)));
         WheelList.reset();
