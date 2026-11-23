@@ -114,7 +114,9 @@ public final class ArtifactItems {
             ATTACHMENTS.register("lodged_dagger", () -> AttachmentType.builder(() -> ItemStack.EMPTY).serialize(ItemStack.OPTIONAL_CODEC).build());
 
     public static final DeferredItem<Item> WHITE_OAK_ASH = ITEMS.register("white_oak_ash", () -> new Item(new Item.Properties()));
-    public static final DeferredItem<AshDaggerItem> ASH_DAGGER = ITEMS.register("white_oak_ash_dagger", AshDaggerItem::new);
+    public static final DeferredItem<AshDaggerItem> ASH_DAGGER = ITEMS.register("white_oak_ash_dagger", () -> new AshDaggerItem(false));
+    /** R205: made only by the Rite of the Cursed Dagger (no recipe, no loot). */
+    public static final DeferredItem<AshDaggerItem> CURSED_ASH_DAGGER = ITEMS.register("cursed_white_oak_ash_dagger", () -> new AshDaggerItem(true));
     public static final DeferredItem<TheCureItem> THE_CURE = ITEMS.register("the_cure", TheCureItem::new);
 
     // ---- compass and hearing device ----
@@ -139,6 +141,7 @@ public final class ArtifactItems {
                 }
                 e.accept(RESURRECTION_RING);
                 e.accept(ASH_DAGGER);
+                e.accept(CURSED_ASH_DAGGER);
                 e.accept(VAMPIRE_COMPASS);
                 e.accept(HEARING_DEVICE);
             } else if (e.getTabKey() == CreativeModeTabs.NATURAL_BLOCKS) {

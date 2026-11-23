@@ -31,7 +31,10 @@ import net.ofatech.supernaturalbloodlines.parts.species.original.OriginalRules;
 
 /** What a blow does to an NPC Original ({@link DefeatRules}), and what their death does to the world ({@link LineDeath}). */
 public final class NpcOriginalEvents {
-    private static final ResourceLocation ASH_DAGGER = ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "white_oak_ash_dagger");
+    /** Either dagger: an NPC Original is never an Original hybrid to R33 (Klaus included), so the plain one works on him as it always did. */
+    private static final java.util.Set<ResourceLocation> ASH_DAGGERS = java.util.Set.of(
+            ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "white_oak_ash_dagger"),
+            ResourceLocation.fromNamespaceAndPath(SupernaturalBloodlines.MODID, "cursed_white_oak_ash_dagger"));
     /** When each player was last told that white oak needs a fallen Original (game ticks). */
     private static final Map<UUID, Long> HINTED = new ConcurrentHashMap<>();
 
@@ -48,7 +51,7 @@ public final class NpcOriginalEvents {
     }
 
     static DefeatRules.Kind kindOf(DamageSource source) {
-        if (source.getEntity() instanceof LivingEntity a && BuiltInRegistries.ITEM.getKey(a.getMainHandItem().getItem()).equals(ASH_DAGGER)
+        if (source.getEntity() instanceof LivingEntity a && ASH_DAGGERS.contains(BuiltInRegistries.ITEM.getKey(a.getMainHandItem().getItem()))
                 && source.getDirectEntity() == a) {
             return DefeatRules.Kind.ASH_DAGGER;
         }

@@ -67,7 +67,7 @@ final class RitesBook {
                     List.of("rite_of_the_broken_line", "rite_of_the_imprisoned_original", "rite_of_the_cure")),
             new Cat("artifacts", "Wards and Tools", "minecraft:compass",
                     "Rites that make rings and tools.",
-                    List.of("ward_of_daylight", "ward_of_the_moon", "ward_of_return", "vampire_compass", "hearing_device")),
+                    List.of("ward_of_daylight", "ward_of_the_moon", "ward_of_return", "vampire_compass", "hearing_device", "cursed_dagger")),
             new Cat("tensura", "Tensura", "minecraft:soul_sand",
                     "Rites that need Tensura.",
                     List.of("curse_magicule_drain", "curse_skill_seal", "magicule_offering", "purification", "purification_holy_water")));
@@ -76,7 +76,7 @@ final class RitesBook {
     static final Map<String, String> ICON = Map.ofEntries(
             Map.entry("alpha_trial", "minecraft:bone"), Map.entry("ancestral_calling", "minecraft:amethyst_shard"), Map.entry("augustine", "minecraft:golden_apple"),
             Map.entry("blood_offering", "minecraft:glass_bottle"), Map.entry("cleansing_blood", "minecraft:golden_apple"),
-            Map.entry("curse_magicule_drain", "minecraft:soul_sand"), Map.entry("curse_skill_seal", "minecraft:soul_sand"),
+            Map.entry("curse_magicule_drain", "minecraft:soul_sand"), Map.entry("curse_skill_seal", "minecraft:soul_sand"), Map.entry("cursed_dagger", "minecraft:iron_sword"),
             Map.entry("doppelganger_blood", "minecraft:diamond"), Map.entry("hearing_device", "minecraft:note_block"),
             Map.entry("hybrid_blood", "minecraft:glass_bottle"), Map.entry("immortality", "minecraft:golden_apple"),
             Map.entry("magicule_offering", "minecraft:amethyst_shard"), Map.entry("original_blood", "minecraft:glass_bottle"),
@@ -122,7 +122,7 @@ final class RitesBook {
 
     /** A shorter header for the rites whose name does not fit; the entry's title (in the lists) is always the whole name. */
     static final Map<String, String> SHORT = Map.ofEntries(
-            Map.entry("purification_holy_water", "Holy Purification"), Map.entry("rite_of_the_imprisoned_original", "Imprisoned Original"),
+            Map.entry("cursed_dagger", "Cursed Dagger"), Map.entry("purification_holy_water", "Holy Purification"), Map.entry("rite_of_the_imprisoned_original", "Imprisoned Original"),
             Map.entry("vampire_compass", "Vampire Compass"), Map.entry("doppelganger_blood", "Doppelg\u00e4nger"),
             Map.entry("hearing_device", "Hearing Device"), Map.entry("rite_of_lineage_awaken", "Lineage: Awaken"),
             Map.entry("rite_of_lineage_reveal", "Lineage: Reveal"), Map.entry("magicule_offering", "Magicule Offering"),

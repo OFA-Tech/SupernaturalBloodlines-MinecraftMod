@@ -9,7 +9,9 @@
     "supernaturalbloodlines/sealed/ward_of_return",
     "supernaturalbloodlines/rites/ward_of_return",
     "supernaturalbloodlines/rites/vampire_compass",
-    "supernaturalbloodlines/rites/hearing_device"
+    "supernaturalbloodlines/rites/hearing_device",
+    "supernaturalbloodlines/sealed/cursed_dagger",
+    "supernaturalbloodlines/rites/cursed_dagger"
   ],
   "icon": {
     "count": 1,
