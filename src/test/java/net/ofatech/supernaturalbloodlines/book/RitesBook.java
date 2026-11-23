@@ -318,7 +318,12 @@ final class RitesBook {
             if (RiteUnlockTable.isGated(rite)) {
                 String base = label(lang, rite);
                 int n = seen.merge(base, 1, Integer::sum);
-                out.put(rite, total.get(base) > 1 ? base + " (" + NUMERALS[n - 1] + ")" : base);
+                String numbered = base + " (" + NUMERALS[n - 1] + ")";
+                if (total.get(base) > 1 && numbered.length() > LABEL_CHARS) {
+                    // the three witch kinds and a numeral do not fit one line (plan 19's four masteries): "witch types" is the short name of the three
+                    numbered = base.replace("witch, siphoner or tribrid", "witch types") + " (" + NUMERALS[n - 1] + ")";
+                }
+                out.put(rite, total.get(base) > 1 ? numbered : base);
             }
         }
         return out;
