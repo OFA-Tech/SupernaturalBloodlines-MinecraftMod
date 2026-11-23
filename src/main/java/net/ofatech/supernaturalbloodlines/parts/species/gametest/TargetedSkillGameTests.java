@@ -1090,8 +1090,17 @@ public final class TargetedSkillGameTests {
         try (var in = TargetedSkillGameTests.class.getResourceAsStream("/data/supernaturalbloodlines/tags/entity_type/snap_immune.json")) {
             var root = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject();
             java.util.Set<ResourceLocation> listed = new java.util.HashSet<>();
-            root.getAsJsonArray("values").forEach(v -> listed.add(ResourceLocation.parse(v.getAsJsonObject().get("id").getAsString())));
+            // entries of other mods (Milim, Leon, `#c:bosses`, all "required": false) are there for the pack and may be absent
+            root.getAsJsonArray("values").forEach(v -> {
+                String id = v.getAsJsonObject().get("id").getAsString();
+                if (!id.startsWith("#")) {
+                    listed.add(ResourceLocation.parse(id));
+                }
+            });
             for (ResourceLocation id : listed) {
+                if (!id.getNamespace().equals(NS) && !id.getNamespace().equals("minecraft")) {
+                    continue;
+                }
                 helper.assertTrue(BuiltInRegistries.ENTITY_TYPE.containsKey(id), "the snap_immune tag lists " + id + ", which does not exist");
             }
             for (var entry : BuiltInRegistries.ENTITY_TYPE.entrySet()) {

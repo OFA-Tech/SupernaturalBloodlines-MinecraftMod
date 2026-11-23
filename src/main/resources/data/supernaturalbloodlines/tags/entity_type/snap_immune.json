@@ -11,6 +11,12 @@
         { "id": "supernaturalbloodlines:peter_hale", "required": false },
         { "id": "supernaturalbloodlines:gevaudan_host", "required": false },
         { "id": "supernaturalbloodlines:beast_of_gevaudan", "required": false },
-        { "id": "supernaturalbloodlines:gevaudan_spirit", "required": false }
+        { "id": "supernaturalbloodlines:gevaudan_spirit", "required": false },
+        { "id": "#c:bosses", "required": false },
+        { "id": "minecraft:ender_dragon", "required": false },
+        { "id": "minecraft:wither", "required": false },
+        { "id": "foxboss:milim", "required": false },
+        { "id": "foxboss_leon_cromwell:leon_cromwell", "required": false },
+        { "id": "ascension:halo_vessel", "required": false }
     ]
 }
