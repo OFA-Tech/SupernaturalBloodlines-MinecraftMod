@@ -318,10 +318,11 @@ public final class BossReviewGameTests {
             var k = rig.spawnKlaus();
             BossBars.update(k, List.of());
             helper.assertTrue(BossBars.sentOf(k.getUUID()).look().equals(human), "Klaus walks as a man: " + BossBars.sentOf(k.getUUID()));
-            while (k.tickCount % 10 != 4) {
-                k.tick();
-            }
+            // tickCount is counted by the level when it ticks an entity, not by tick() itself: a loop on tick() alone would never end, so the count is moved by hand
+            k.tickCount = 4;
+            k.tick();
             k.setForm(net.ofatech.supernaturalbloodlines.core.boss.BossForm.SHIFTING);
+            k.tickCount = 5;
             k.tick(); // the tick after, one that is not a pass of ten: the chip must not wait for the next pass
             helper.assertTrue(k.tickCount % 10 != 0 && BossBars.sentOf(k.getUUID()).look().shifting(), "the chip did not move with the shift: " + BossBars.sentOf(k.getUUID()));
         }

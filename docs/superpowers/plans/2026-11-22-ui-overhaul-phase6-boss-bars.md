@@ -36,6 +36,10 @@
 10. **Phase 5 leftovers.** (a) A label's colour on a surface comes from the pixel of the pack's own picture, not from a table of the shipped art (`UiKit` samples it once per part), so a recoloured pack still reads at 4.5:1; the table stays the fallback. (b) The Tensura Path pane lists every task of the next step: a row that does not fit whole is not drawn half, and the pane ends in "+N more".
 11. **Dev shots:** `boss:<look>:<variant>` with `klaus_human|klaus_shifting|klaus_beast`, the same for `deucalion` and `peter`, `beast_host|beast_beast|beast_spirit`, `mikael`, `elijah`, `kol`, `rebekah`, `finn`, `stack3` (Klaus, Deucalion shifting, the Beast) and `stack3_other` (the same with another mod's vanilla bar), with the chat cleared first.
 
+## Known limit
+
+- Vanilla stops walking the bars once a bar would start below a third of the screen's height. Three of our cards are taller than that at GUI scales 3 and 4, so **another mod's bar is not drawn below a stack of three** at those scales (it is, at scale 2, and below one or two cards at every scale). Our cards are never dropped: that was the point of drawing the stack at the first bar. Drawing the other mods' bars ourselves was left out: it would mean reading what each mod's bar looks like.
+
 ## Not in this phase
 
 - The transformation animations (phase 7). The shifting portrait here is a seam, not a morph.
