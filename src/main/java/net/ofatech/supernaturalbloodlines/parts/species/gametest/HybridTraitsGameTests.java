@@ -369,7 +369,7 @@ public final class HybridTraitsGameTests {
     public static void venomKillsNonOriginalAfterTimer(GameTestHelper helper) {
         ServerPlayer victim = vampire(helper);
         float before = victim.getHealth();
-        Venom.pulse(victim, 40);
+        Venom.pulse(victim, Venom.DURATION_TICKS - 100); // still mild (R206): the damage only
         helper.assertTrue(before - victim.getHealth() > 0.5f && before - victim.getHealth() <= 1f, "no 1 damage per pulse: " + victim.getHealth());
         helper.assertTrue(!victim.hasEffect(MobEffects.CONFUSION), "hallucination too early");
         Venom.pulse(victim, 600);

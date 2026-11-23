@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class AdminEntriesTest {
     @Test
     void sixtyFiveKeysWithUniqueIds() {
-        assertEquals(178, AdminEntries.ALL.size());
+        assertEquals(183, AdminEntries.ALL.size());
         org.junit.jupiter.api.Assertions.assertTrue(AdminEntries.ALL.size() <= net.ofatech.supernaturalbloodlines.parts.supernatural.net.AdminSnapshotPayload.MAX_ROWS, "the Admin snapshot has no room for every row: raise AdminSnapshotPayload.MAX_ROWS and the hub protocol"); 
         Set<String> seen = new HashSet<>();
         for (SettingEntry e : AdminEntries.ALL) {
@@ -37,8 +37,8 @@ class AdminEntriesTest {
     @Test
     void theClientCopiesAreTheThreeTensuraKeys() {
         Set<String> copies = AdminEntries.ALL.stream().filter(SettingEntry::clientCopy).map(SettingEntry::dottedPath).collect(Collectors.toSet());
-        assertEquals(Set.of("layers", "undead_treatment_enabled", "apex_evolutions_enabled"), copies);
-        assertTrue(AdminEntries.ALL.stream().filter(SettingEntry::clientCopy).allMatch(e -> e.file().equals(AdminEntries.SPECIES_TENSURA_FILE)));
+        assertEquals(Set.of("layers", "undead_treatment_enabled", "apex_evolutions_enabled", "tweak_cleansing_altar_disabled"), copies);
+        assertTrue(AdminEntries.ALL.stream().filter(SettingEntry::clientCopy).allMatch(e -> e.file().equals(e.dottedPath().startsWith("tweak_") ? AdminEntries.SUPERNATURAL_FILE : AdminEntries.SPECIES_TENSURA_FILE)));
     }
 
     @Test

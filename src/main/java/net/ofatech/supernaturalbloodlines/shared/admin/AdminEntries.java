@@ -55,6 +55,10 @@ public final class AdminEntries {
 
         all.add(SettingEntry.of(SUPERNATURAL_FILE, "supernatural", "rite_complete_signal", BOOL));
         all.add(SettingEntry.of(SUPERNATURAL_FILE, "supernatural", "vampire_feed_blood", INT));
+        all.add(SettingEntry.of(SUPERNATURAL_FILE, "supernatural", "tweak_sunlight_ignites_vampires", BOOL));
+        all.add(SettingEntry.of(SUPERNATURAL_FILE, "supernatural", "tweak_cleansing_altar_disabled", BOOL).withClientCopy());
+        all.add(SettingEntry.of(SUPERNATURAL_FILE, "supernatural", "tweak_hostile_mobs_attack_vampires", BOOL));
+        all.add(SettingEntry.of(SUPERNATURAL_FILE, "supernatural", "tweak_skeletons_attack_werewolves", BOOL));
 
         all.add(SettingEntry.of(HUD_FILE, "hud", "rate_limit_per_second", INT));
         all.add(SettingEntry.of(HUD_FILE, "hud", "bite_reach", DOUBLE));
@@ -129,6 +133,7 @@ public final class AdminEntries {
         species(all, "neck_snap_augustine_seconds", INT);
         species(all, "neck_snap_hybrid_seconds", INT);
         species(all, "neck_snap_original_seconds", INT);
+        species(all, "venom_sick_after_ticks", INT);
         species(all, "augustine_attack_bonus", DOUBLE);
         species(all, "augustine_extra_health", DOUBLE);
         species(all, "augustine_blood_from_vampire_factor", DOUBLE);
