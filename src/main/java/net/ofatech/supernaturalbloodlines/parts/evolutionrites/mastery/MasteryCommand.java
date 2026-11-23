@@ -20,17 +20,13 @@ public final class MasteryCommand {
     }
 
     /**
-     * {@code /bloodline mastery ...}, and {@code /sb bloodline mastery ...} too: the species part registers {@code /sb bloodline} as a redirect to its own
-     * {@code bloodline} node, and a redirect shows only the target's children, so the node is added to that target as well when it is not already there.
+     * {@code /bloodline mastery ...} and, because {@code /sb bloodline} redirects to the same node, {@code /sb bloodline mastery ...}. The species part registers
+     * {@code bloodline} first and its redirect points at the node it got back; Brigadier merges a second {@code bloodline} into the first node, so ours must be
+     * registered AFTER the species part's (see the LOWEST priority in the part): registered first, ours would be the tree node and the species part's redirect
+     * would point at a node that never gets {@code mastery}.
      */
     public static void register(CommandDispatcher<CommandSourceStack> d) {
         d.register(Commands.literal("bloodline").then(node()));
-        var sb = d.getRoot().getChild("sb");
-        var sbBloodline = sb == null ? null : sb.getChild("bloodline");
-        var target = sbBloodline == null ? null : sbBloodline.getRedirect();
-        if (target != null && target.getChild("mastery") == null) {
-            target.addChild(node().build());
-        }
     }
 
     static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> node() {

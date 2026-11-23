@@ -59,6 +59,7 @@ public final class CasterLeavesGameTests {
         }
         RecordingPlayer caster = gone(helper, Species.WITCH);
         RecordingPlayer target = onTheCircle(helper, false, EP);
+        BloodlineAccess.set(target, BloodlineState.NONE.toBuilder().species(Species.WITCH).build()); // a witch too: the old stand-in would have passed the witch check
         try {
             give(target, "tensura:sage", 500);
             clearDropped(helper);
@@ -70,6 +71,7 @@ public final class CasterLeavesGameTests {
             clearDropped(helper);
             EvoTestSupport.forgetAll(target);
             remove(helper, target);
+            BloodlineAccess.set(target, BloodlineState.NONE);
         }
         helper.succeed();
     }
@@ -81,6 +83,7 @@ public final class CasterLeavesGameTests {
         }
         RecordingPlayer caster = gone(helper, Species.WITCH);
         RecordingPlayer target = onTheCircle(helper, false, EP);
+        BloodlineAccess.set(target, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
         try {
             ManasSkillInstance inst = give(target, "tensura:anti_skill", 0);
             MasteryChoice.choose(target, ResourceLocation.parse("tensura:anti_skill"));
@@ -95,6 +98,7 @@ public final class CasterLeavesGameTests {
             clearDropped(helper);
             EvoTestSupport.forgetAll(target);
             remove(helper, target);
+            BloodlineAccess.set(target, BloodlineState.NONE);
         }
         helper.succeed();
     }
