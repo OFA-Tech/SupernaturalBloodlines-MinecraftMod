@@ -73,6 +73,21 @@ final class EvoTestSupport {
         return p;
     }
 
+    /**
+     * Whether Tensura's own learn of this skill goes through for a fresh player in this run. An installed addon can close it by its own rule (Mysticism
+     * charges Soul Energy for every skill learned and vetoes when the player cannot pay): the rite keeps that rule, so then it must refuse cleanly.
+     */
+    static boolean learnOpen(GameTestHelper helper, String id) {
+        RecordingPlayer control = onTheCircle(helper, false, 5_000_000);
+        try {
+            var skill = SkillAPI.getSkillRegistry().get(ResourceLocation.parse(id));
+            return skill != null && io.github.manasmods.tensura.ability.SkillHelper.learnSkill(control, skill);
+        } finally {
+            forgetAll(control);
+            net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport.remove(helper, control);
+        }
+    }
+
     /** Gives the player the skill (free, with our mark) at this mastery. */
     static ManasSkillInstance give(ServerPlayer p, String id, double mastery) {
         var skill = SkillAPI.getSkillRegistry().get(ResourceLocation.parse(id));
