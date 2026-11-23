@@ -1,15 +1,6 @@
 {
-  "loader": "neoforge:separate_transforms",
-  "gui_light": "front",
-  "base": {
-    "parent": "supernaturalbloodlines:item/hybrid_blood_3d"
-  },
-  "perspectives": {
-    "gui": {
-      "parent": "minecraft:item/generated",
-      "textures": {
-        "layer0": "supernaturalbloodlines:item/augustine_syringe"
-      }
-    }
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "supernaturalbloodlines:item/augustine_syringe"
   }
 }
