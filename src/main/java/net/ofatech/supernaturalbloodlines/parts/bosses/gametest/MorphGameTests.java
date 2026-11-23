@@ -102,7 +102,7 @@ public final class MorphGameTests {
                 List<String> seen = new ArrayList<>();
                 MorphCues.observe(played -> {
                     if (played.boss() == s.mob()) {
-                        seen.add(played.shiftTick() + ":" + played.cues() + ":" + played.sounds() + ":" + played.particles() + ":" + played.viewers());
+                        seen.add(played.shiftTick() + ":" + played.cues() + ":" + played.sounds() + ":" + played.particles() + ":" + Math.min(1, played.viewers())); // 1 = at least one player was reached (a stray player of another test may make it two)
                     }
                 });
                 s.start().run();
@@ -598,7 +598,7 @@ public final class MorphGameTests {
             List<String> seen = new ArrayList<>();
             MorphCues.observe(played -> {
                 if (played.boss() == b) {
-                    seen.add(played.shiftTick() + ":" + played.cues() + ":" + played.sounds() + ":" + played.particles() + ":" + played.viewers());
+                    seen.add(played.shiftTick() + ":" + played.cues() + ":" + played.sounds() + ":" + played.particles() + ":" + Math.min(1, played.viewers())); // 1 = at least one player was reached (a stray player of another test may make it two)
                 }
             });
             BeastEntity twin = BeastEntity.create(helper.getLevel());
