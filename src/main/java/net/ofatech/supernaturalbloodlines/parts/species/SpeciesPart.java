@@ -193,6 +193,7 @@ public final class SpeciesPart {
         net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect.register();
         net.ofatech.supernaturalbloodlines.parts.species.skill.RipHeartAction.register();
         net.ofatech.supernaturalbloodlines.parts.species.skill.NeckSnapAction.register();
+        net.ofatech.supernaturalbloodlines.parts.species.skill.HybridLeapAction.register();
         TurningHandler.register(); // always: the turning is vampires only, no Werewolves needed
         GhoulGates.register();
         net.ofatech.supernaturalbloodlines.parts.species.item.BloodKeys.register();
@@ -288,6 +289,7 @@ public final class SpeciesPart {
             e.register(OriginalGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AugustineGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.TargetedSkillGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.HybridLeapGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.AugustineMakingGameTests.class);
             e.register(WitchGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.CommandAliasGameTests.class);
