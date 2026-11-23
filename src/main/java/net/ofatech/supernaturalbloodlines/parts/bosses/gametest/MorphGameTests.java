@@ -20,7 +20,9 @@ import net.ofatech.supernaturalbloodlines.core.boss.BossForm;
 import net.ofatech.supernaturalbloodlines.core.boss.BossId;
 import net.ofatech.supernaturalbloodlines.core.boss.ShiftRules;
 import net.ofatech.supernaturalbloodlines.gametest.TestPlayers;
+import net.ofatech.supernaturalbloodlines.core.boss.BossBarForms;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BeastDirector;
+import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossBars;
 import net.ofatech.supernaturalbloodlines.parts.bosses.director.BossDirector;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.BeastEntity;
 import net.ofatech.supernaturalbloodlines.parts.bosses.entity.DeucalionEntity;
@@ -596,6 +598,60 @@ public final class MorphGameTests {
             helper.assertTrue(seen.equals(List.of("0:1", "4:2", "7:4", "8:2", "12:2", "14:4", "16:2", "32:8")), "the Beast played " + seen);
         } finally {
             MorphCues.observe(null);
+            BeastEntity.observeSwap(null);
+        }
+        helper.succeed();
+    }
+
+    // ---- the boss bar follows the form (phase 6 sends it; this phase does not add a field) ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theBarShowsTheForm(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        List<Shifter> all = List.of();
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            all = shifters(helper, rig);
+            for (Shifter s : all) {
+                var boss = (net.ofatech.supernaturalbloodlines.parts.bosses.entity.BossNpc) s.mob();
+                BossBars.update(boss, List.of());
+                helper.assertTrue(BossBars.sentOf(boss.getUUID()).look().equals(BossBarForms.shifter(BossForm.HUMAN)), s.name() + ": a man before the shift: " + BossBars.sentOf(boss.getUUID()));
+                s.start().run();
+                BossBars.update(boss, List.of());
+                helper.assertTrue(BossBars.sentOf(boss.getUUID()).look().shifting(), s.name() + ": the chip is not Shifting at tick 0: " + BossBars.sentOf(boss.getUUID()));
+                run(s.mob(), ShiftRules.SHIFT_TICKS - 1);
+                BossBars.update(boss, List.of());
+                helper.assertTrue(BossBars.sentOf(boss.getUUID()).look().shifting(), s.name() + ": the chip left Shifting before tick 40");
+                run(s.mob(), 1);
+                BossBars.update(boss, List.of());
+                helper.assertTrue(BossBars.sentOf(boss.getUUID()).look().equals(BossBarForms.shifter(BossForm.BEAST)), s.name() + ": the chip is not Beast at tick 40: " + BossBars.sentOf(boss.getUUID()));
+            }
+        } finally {
+            clear(all);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void barChipsHostThenBeastThenSpirit(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        try (BossTestRig rig = new BossTestRig(helper)) {
+            BeastEntity b = changed(helper, rig);
+            helper.assertTrue(b.barLook().equals(BossBarForms.host(0)), "the man is the Host: " + b.barLook());
+            run(b, ShiftRules.SWAP_TICK - 1);
+            helper.assertTrue(b.barLook().equals(BossBarForms.host(0)), "tick 19 is still the Host: " + b.barLook());
+            run(b, 1);
+            helper.assertTrue(b.barLook().equals(BossBarForms.host(1)), "tick 20 is the Beast: " + b.barLook());
+            BeastDirector.collapse(helper.getLevel(), b);
+            helper.assertTrue(b.barLook().equals(BossBarForms.host(2)), "a falling Beast is the Spirit: " + b.barLook());
+            // and the bar notices the change on the tick it happens, not on the next pass
+            BeastEntity again = changed2(helper, rig);
+            BossBars.update(again, List.of());
+            helper.assertTrue(BossBars.sentOf(again.getUUID()).look().equals(BossBarForms.host(0)), "the sent look is " + BossBars.sentOf(again.getUUID()));
+        } finally {
             BeastEntity.observeSwap(null);
         }
         helper.succeed();

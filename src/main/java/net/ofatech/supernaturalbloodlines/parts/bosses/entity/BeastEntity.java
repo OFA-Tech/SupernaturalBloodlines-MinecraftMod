@@ -108,7 +108,8 @@ public final class BeastEntity extends BossNpc implements GeoEntity, ShiftBody {
 
     @Override
     public net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.Look barLook() {
-        return net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.host(1);
+        // the Host while the man is drawn (the first 20 ticks of the change), the Beast from the swap, the Spirit when it falls
+        return net.ofatech.supernaturalbloodlines.core.boss.BossBarForms.host(collapsing() ? 2 : MorphRules.manHalf(form(), shiftTicks()) ? 0 : 1);
     }
 
     @Override

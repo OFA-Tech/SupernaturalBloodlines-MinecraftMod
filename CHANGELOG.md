@@ -65,6 +65,22 @@ Nothing is drawn yet: this phase is the server half of the skill wheel (`docs/su
 ### Art needed
 - `textures/gui/hud/give_blood.png` for Fable 5.2 (the action uses `unknown.png` until then).
 
+## Unreleased (UI overhaul phase 7: transformation animations)
+
+### Added
+- **Klaus, Deucalion, Peter Hale and the Beast of Gevaudan change body in a 2 second morph** (R161). For the first second the man bends (a pose table per boss, anticipation, a hunch that is not mirrored, a held breath) with a growl, dust climbing his body and two bone cracks; at the midpoint the wolf arrives (the same body swap as before, hidden by smoke) and plays a new `shift_in` clip, landing on its forepaws at 0.6 s with a puff of dust; then the howl clip plays, re-timed to 2.2 s. Everything is drawn from the form and ticks the server already syncs, and the shift itself (2 s, swap at 20, the same 64 tick howl) did not change.
+- **The Beast changes like the others.** The Host becomes the Beast in a shift of its own instead of at once: a man in the tricorn for a second, then the wolf. It stands still and cannot Roar while it changes, can be hit all the time, and a Beast from an old save or `/summon` is whole as before. Its boss bar shows the Host chip for the man, the Beast from the swap and the Spirit when it falls; the three men's bars show Shifting from tick 0 and Beast from tick 40.
+- `shift_out` is authored for Klaus, Deucalion and Peter and wired to nothing.
+- Dev only: `-Dsupernaturalbloodlines.devshots.bosses=morph:<boss>` for hidden stills and clips of each morph.
+
+### Changed
+- Deucalion's `drop_to_fours` and Peter's `rise_up` clips are gone: `shift_in` replaces them. Reduce motion is not read by any of this (it is for the interface only), and player werewolf forms are the Werewolves mod's and are not drawn by us.
+
+### Network
+- No payload changed and no network version was bumped. The three men already synced `FORM` and `SHIFT_TICKS`; the Beast has those two entity data entries now. A client of an older build does not know them and would draw the Beast as a wolf all the time, even in its first second as a man: update the server and the clients together.
+
+### Rolling back
+- Reverting the PR restores the old shift. Saves are fine: the Beast''s `form` and `shift_ticks` tags are optional and ignored by the old build, and a Beast saved mid-change comes back a whole Beast.
 ## Unreleased (UI overhaul phase 8: logo, mod icon, store art)
 
 ### Added
