@@ -38,6 +38,9 @@ public final class DyingShots {
     /** {@code -Dsupernaturalbloodlines.devshots.dying.scale=4}: the GUI scale of the pictures (0 leaves it as it is). */
     private static final int SCALE = Integer.getInteger(PROPERTY + ".scale", 0);
 
+    /** {@code -Dsupernaturalbloodlines.devshots.dying.snapped=true}: photograph the "Out cold" screen of a snapped neck instead of the dying one. */
+    private static final boolean SNAPPED = Boolean.getBoolean(PROPERTY + ".snapped");
+
     private void shot(Minecraft mc, String name) {
         String file = name + (SCALE > 0 ? "-s" + SCALE : "");
         new File(mc.gameDirectory, "screenshots/dyingshots").mkdirs();
@@ -76,6 +79,23 @@ public final class DyingShots {
             mc.getToasts().clear(); // the recipe toast of a fresh world would sit over the pictures
             mc.gui.getChat().clearMessages(true);
             mc.options.particles().set(net.minecraft.client.ParticleStatus.MINIMAL);
+        }
+        if (ticks == 100 && SNAPPED) {
+            server.execute(() -> {
+                ServerPlayer sp = server.getPlayerList().getPlayers().get(0);
+                sp.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+                Downed.startSnapped(sp, 600);
+            });
+        }
+        if (ticks == 140 && SNAPPED) {
+            shot(mc, "snapped");
+        }
+        if (SNAPPED) {
+            if (ticks == 150) {
+                done = true;
+                mc.stop();
+            }
+            return;
         }
         if (ticks == 100) {
             server.execute(() -> {

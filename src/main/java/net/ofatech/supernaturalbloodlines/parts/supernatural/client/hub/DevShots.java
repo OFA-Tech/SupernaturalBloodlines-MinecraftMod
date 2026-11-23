@@ -179,6 +179,12 @@ public final class DevShots {
             de.teamlapen.vampirism.api.VampirismAPI.factionPlayerHandler(p).setFactionAndLevel(de.teamlapen.vampirism.api.VReference.VAMPIRE_FACTION, 5);
             net.ofatech.supernaturalbloodlines.core.BloodlineAccess.set(p, net.ofatech.supernaturalbloodlines.core.bloodline.BloodlineState.NONE.toBuilder()
                     .species(net.ofatech.supernaturalbloodlines.core.bloodline.Species.valueOf(name)).build());
+            String skills = System.getProperty(PROPERTY + ".skills");
+            if (skills != null && !skills.isBlank()) {
+                // {@code .skills=S-VAM-8,S-VAM-9}: bought, so the Loadout tab lists the actions they unlock
+                net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.set(p, net.ofatech.supernaturalbloodlines.core.supernatural.SupernaturalAccess.get(p).toBuilder()
+                        .skills(java.util.Set.of(skills.split(","))).build());
+            }
         });
     }
 
