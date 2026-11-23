@@ -219,7 +219,7 @@ public final class BookPackPage implements HubPageView {
             y = PageKit.wrapped(f, weakLine(wolf).get(), r.x(), y, r.w(), t.muted()) + 2;
         }
         if (perkLine(f).isPresent()) {
-            y = PageKit.wrapped(f, perkLine(f).get(), r.x(), y, r.w(), t.accent()) + 2;
+            y = PageKit.wrapped(f, perkLine(f).get(), r.x(), y, r.w(), t.accent()) + 6;
         }
         if (pack.isEmpty()) {
             y = PageKit.wrapped(f, Component.translatable(KEY + "alone"), r.x(), y + 2, r.w(), t.muted());
