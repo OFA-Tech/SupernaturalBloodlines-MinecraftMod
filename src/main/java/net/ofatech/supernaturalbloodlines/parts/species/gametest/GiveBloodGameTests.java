@@ -100,8 +100,21 @@ public final class GiveBloodGameTests {
         return ActionClock.left(p, ExtraActions.GIVE_BLOOD);
     }
 
+    /** What the server's PvP was before the test touched it: other tests may rely on it being left as it was. */
+    private static Boolean pvpBefore;
+
     private static void pvp(GameTestHelper helper, boolean on) {
+        if (pvpBefore == null) {
+            pvpBefore = helper.getLevel().getServer().isPvpAllowed();
+        }
         helper.getLevel().getServer().setPvpAllowed(on);
+    }
+
+    private static void restorePvp(GameTestHelper helper) {
+        if (pvpBefore != null) {
+            helper.getLevel().getServer().setPvpAllowed(pvpBefore);
+            pvpBefore = null;
+        }
     }
 
     // ---- who may be fed ----
@@ -120,7 +133,7 @@ public final class GiveBloodGameTests {
             helper.assertTrue(target.message(GiveBloodAction.RECEIVED).getContents() instanceof TranslatableContents t && t.getArgs()[0] instanceof Component c && c.getString().equals(giver.getDisplayName().getString()),
                     "the target was not told who");
         } finally {
-            pvp(helper, false);
+            restorePvp(helper);
             clean(giver, target);
         }
         helper.succeed();
@@ -139,7 +152,7 @@ public final class GiveBloodGameTests {
             Downed.startSnapped(target, 600);
             helper.assertTrue(GiveBloodAction.NOT_WILLING.equals(key(ACTION.trigger(giver, target))) && !marked(target), "a downed target was fed with pvp off");
         } finally {
-            pvp(helper, false);
+            restorePvp(helper);
             clean(giver, target);
         }
         helper.succeed();
@@ -159,7 +172,7 @@ public final class GiveBloodGameTests {
             target.setHealth((float) (target.getMaxHealth() * SpeciesConfig.forceFeedHealthLimit()));
             helper.assertTrue(ACTION.trigger(giver, target) == null && marked(target), "a target at the limit exactly was not fed");
         } finally {
-            pvp(helper, false);
+            restorePvp(helper);
             clean(giver, target);
         }
         helper.succeed();
@@ -175,7 +188,7 @@ public final class GiveBloodGameTests {
             helper.assertTrue(Downed.isDowned(target), "the target is not down");
             helper.assertTrue(ACTION.trigger(giver, target) == null && marked(target), "a downed target was not fed");
         } finally {
-            pvp(helper, false);
+            restorePvp(helper);
             clean(giver, target);
         }
         helper.succeed();
@@ -191,7 +204,7 @@ public final class GiveBloodGameTests {
             helper.assertTrue(ACTION.trigger(giver, target) == null && marked(target), "a sneaking target did not accept");
             helper.assertTrue(target.received(GiveBloodAction.RECEIVED_WILLING) && !target.received(GiveBloodAction.RECEIVED), "the target was not told they accepted: " + target.keys());
         } finally {
-            pvp(helper, false);
+            restorePvp(helper);
             clean(giver, target);
         }
         helper.succeed();
@@ -220,7 +233,7 @@ public final class GiveBloodGameTests {
             target.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
             helper.assertTrue(ACTION.trigger(giver, target) == null && marked(target), "without vervain the same target was not fed");
         } finally {
-            pvp(helper, false);
+            restorePvp(helper);
             clean(giver, target);
         }
         helper.succeed();
@@ -245,7 +258,7 @@ public final class GiveBloodGameTests {
             helper.assertTrue(ACTION.trigger(giver, target) == null && marked(target), "without a claim the feed did not happen");
         } finally {
             NeoForge.EVENT_BUS.unregister(claim);
-            pvp(helper, false);
+            restorePvp(helper);
             clean(giver, target);
         }
         helper.succeed();
@@ -280,7 +293,7 @@ public final class GiveBloodGameTests {
         } finally {
             NeoForge.EVENT_BUS.unregister(protection);
             NeoForge.EVENT_BUS.unregister(click);
-            pvp(helper, false);
+            restorePvp(helper);
             clean(giver, target);
         }
         helper.succeed();
@@ -306,7 +319,7 @@ public final class GiveBloodGameTests {
             helper.assertTrue(ACTION.trigger(giver, target) == null && marked(target), "a team mate who sneaks was refused");
         } finally {
             board.removePlayerTeam(team);
-            pvp(helper, false);
+            restorePvp(helper);
             clean(giver, target);
         }
         helper.succeed();
@@ -332,7 +345,7 @@ public final class GiveBloodGameTests {
         } finally {
             creative.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             z.discard();
-            pvp(helper, false);
+            restorePvp(helper);
             clean(giver, creative);
         }
         helper.succeed();
@@ -396,7 +409,7 @@ public final class GiveBloodGameTests {
             helper.assertTrue(giverA.countOnActionBar(GiveBloodAction.DONE) == 1 && giverB.countOnActionBar(GiveBloodAction.DONE) == 1, "the done lines differ");
             helper.assertTrue(cooldown(giverA) == cooldown(giverB) && cooldown(giverA) > 0, "the cooldowns differ");
         } finally {
-            pvp(helper, false);
+            restorePvp(helper);
             clean(giverA, giverB, human, vampire);
         }
         helper.succeed();
@@ -453,7 +466,7 @@ public final class GiveBloodGameTests {
             plain.hurt(helper.getLevel().damageSources().generic(), 1000f);
             helper.assertTrue(BloodlineAccess.get(plain).inTurning() && BloodlineAccess.get(plain).pendingSire() == null, "the turning has a sire: " + BloodlineAccess.get(plain));
         } finally {
-            pvp(helper, false);
+            restorePvp(helper);
             clean(giverB, control, inTurning, plain);
         }
         helper.succeed();
@@ -480,7 +493,7 @@ public final class GiveBloodGameTests {
                     "a plain vampire is not named");
         } finally {
             SpeciesConfig.overrideOriginalVisibility(null);
-            pvp(helper, false);
+            restorePvp(helper);
             clean(original, common, a, b);
         }
         helper.succeed();
@@ -500,7 +513,7 @@ public final class GiveBloodGameTests {
                     "a forced feed used the line wording: " + said);
         } finally {
             SpeciesConfig.overrideOriginalVisibility(null);
-            pvp(helper, false);
+            restorePvp(helper);
             clean(original, target);
         }
         helper.succeed();
@@ -552,7 +565,7 @@ public final class GiveBloodGameTests {
             p.setData(SpeciesRegistries.ACTION_READY, new HashMap<String, Long>());
             helper.assertTrue(TurningHandler.drankVampireBlood(p) && regen(p) != null && regen(p).getDuration() == 90 * 20, "no pulse after the ten minutes");
         } finally {
-            pvp(helper, false);
+            restorePvp(helper);
             clean(p, giver);
         }
         helper.succeed();

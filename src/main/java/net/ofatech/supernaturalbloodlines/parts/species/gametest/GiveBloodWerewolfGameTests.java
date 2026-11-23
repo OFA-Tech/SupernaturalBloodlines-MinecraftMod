@@ -78,6 +78,7 @@ public final class GiveBloodWerewolfGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void forcedOriginalBloodDoesNotTouchAWerewolfButASneakingOneAcceptsIt(GameTestHelper helper) {
         SpeciesConfig.overrideTransitionBloodAnyOriginal(true);
+        boolean pvpBefore = helper.getLevel().getServer().isPvpAllowed();
         TestPlayers.TalkingDuelist original = giver(helper);
         TestPlayers.TalkingDuelist control = giver(helper);
         TestPlayers.TalkingDuelist forced = wolf(helper);
@@ -94,7 +95,7 @@ public final class GiveBloodWerewolfGameTests {
             helper.assertTrue(control.getUUID().equals(accepting.getData(SpeciesRegistries.BLOOD_SOURCE)), "a sneaking werewolf did not take the blood as transition blood");
             helper.assertTrue(original.countOnActionBar(GiveBloodAction.DONE) == control.countOnActionBar(GiveBloodAction.DONE) && cooldown(original) == cooldown(control), "the givers heard or paid different things");
         } finally {
-            helper.getLevel().getServer().setPvpAllowed(false);
+            helper.getLevel().getServer().setPvpAllowed(pvpBefore);
             SpeciesConfig.overrideTransitionBloodAnyOriginal(null);
             clean(original, control, forced, accepting);
         }
