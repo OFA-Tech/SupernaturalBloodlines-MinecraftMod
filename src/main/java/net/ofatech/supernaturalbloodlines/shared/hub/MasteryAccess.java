@@ -12,11 +12,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class MasteryAccess {
     /** One skill the player holds. {@code greyed} is why it cannot be chosen (known on the client), or null. */
-    public record Entry(String id, Component name, Component tier, @Nullable Component greyed) {
+    public record Entry(String id, Component name, Component tier, int tierOrder, @Nullable Component greyed) {
     }
 
     public interface Provider {
         List<Entry> entries();
+
+        /** The skill the server last said is chosen, or null: the hub marks only what the server has accepted. */
+        @Nullable
+        String chosen();
     }
 
     private static volatile Provider provider;
@@ -30,6 +34,12 @@ public final class MasteryAccess {
 
     public static boolean available() {
         return provider != null;
+    }
+
+    @Nullable
+    public static String chosen() {
+        Provider p = provider;
+        return p == null ? null : p.chosen();
     }
 
     public static List<Entry> entries() {

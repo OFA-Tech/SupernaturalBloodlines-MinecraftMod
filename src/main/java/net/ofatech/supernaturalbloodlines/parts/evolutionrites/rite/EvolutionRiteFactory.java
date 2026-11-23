@@ -19,6 +19,7 @@ import net.ofatech.supernaturalbloodlines.core.BloodlineAccess;
 import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRecipe;
 import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRecipeCodec;
 import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRules;
+import net.ofatech.supernaturalbloodlines.core.evolution.MasteryRules;
 import net.ofatech.supernaturalbloodlines.core.evolution.Tier;
 import net.ofatech.supernaturalbloodlines.core.moon.MoonRule;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoSkills;
@@ -113,7 +114,10 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
                 return cancel();
             }
             ServerPlayer target = found.get();
-            ServerPlayer caster = findEntity(params.caster) instanceof ServerPlayer p ? p : target;
+            ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
+            if (caster == null) {
+                return cancel(); // the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
+            }
 
             Optional<AddonProbe> probe = Recipes.usableProbe(recipe, Recipes::modLoaded);
             Optional<ManasSkill> grant = EvoSkills.skill(recipe.grants());
@@ -151,7 +155,8 @@ public record EvolutionRiteFactory(EvolutionRecipe recipe) implements RiteFactor
                     .filter(inst -> !n.mastered() || inst.isMastered(target)).isPresent());
             boolean satisfied = probe.map(p -> p.satisfied(target, recipe)).orElse(false);
             boolean owned = probe.map(p -> p.ownedByOther(target, recipe)).orElse(false);
-            boolean enoughEp = recipe.epCost() <= 0 || EnergyHelper.getBaseMaxEP(target) > recipe.epCost();
+            // Tensura charges its own price for the skill from the same base Max EP inside the learn: both must fit, checked before anything is learned
+            boolean enoughEp = grant.isEmpty() || MasteryRules.enoughEp(EnergyHelper.getBaseMaxEP(target) - EvoSkills.price(target, grant.get()), recipe.epCost());
             return new EvolutionRules.Facts(EvolutionRitesConfig.recipeOpen(recipe.id(), recipe.tier()), Recipes.modLoaded(recipe.requiresMod()), hooks, roadOpen,
                     SeveranceRiteFactory.isWitchType(BloodlineAccess.get(caster).species()), fullMoon, LunarEclipse.active(level.getServer()), caster == target,
                     target.isShiftKeyDown(), holds, kindOk, needs, satisfied, owned, enoughEp);

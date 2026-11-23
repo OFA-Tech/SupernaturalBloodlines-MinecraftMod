@@ -27,6 +27,14 @@ public final class EvolutionRitesConfig {
     private static final ModConfigSpec.DoubleValue MASTERY_EP_ULTIMATE;
     private static final ModConfigSpec.IntValue MASTERY_COOLDOWN_DAYS;
     private static final ModConfigSpec.ConfigValue<List<? extends String>> MASTERY_REFUSED_SKILLS;
+    private static final Map<Tier, ModConfigSpec.ConfigValue<List<? extends String>>> MASTERY_SACRIFICE = new java.util.EnumMap<>(Tier.class);
+
+    /** The sacrifice of each tier of the Rite of Mastery: item kinds and counts. The rite files name the same kinds (the circle must see each one thrown on it). */
+    public static final Map<Tier, List<String>> DEFAULT_SACRIFICE = Map.of(
+            Tier.COMMON, List.of("minecraft:diamond_block:5", "minecraft:echo_shard:5"),
+            Tier.EXTRA, List.of("minecraft:netherite_ingot:5", "minecraft:echo_shard:20"),
+            Tier.UNIQUE, List.of("minecraft:nether_star:5", "minecraft:netherite_ingot:5"),
+            Tier.ULTIMATE, List.of("minecraft:nether_star:5", "minecraft:dragon_breath:5", "minecraft:netherite_ingot:10"));
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -47,9 +55,15 @@ public final class EvolutionRitesConfig {
         MASTERY_COOLDOWN_DAYS = b.comment("In-game days before the same player may have another Rite of Mastery worked on them.").defineInRange("mastery_cooldown_days", 7, 0, 1000);
         MASTERY_REFUSED_SKILLS = b.comment("Skills the Rite of Mastery refuses. The default is Ascension's System skills, which the addon rewrites from the player's System level.")
                 .defineListAllowEmpty("mastery_refused_skills", DEFAULT_REFUSED, () -> "", o -> o instanceof String);
+        for (Tier t : Tier.values()) {
+            MASTERY_SACRIFICE.put(t, b.comment("What the Rite of Mastery for " + t.id() + " skills takes from the circle, as item:count (for example minecraft:nether_star:5). Only the kinds the rite file names count; "
+                    + "a kind missing here is taken once. A line that is not item:count is ignored.")
+                    .defineListAllowEmpty("mastery_sacrifice_" + t.id(), DEFAULT_SACRIFICE.get(t), () -> "", o -> o instanceof String));
+        }
         SPEC = b.build();
     }
 
+    private static final String MASTERY_SACRIFICE_KEY = "mastery_sacrifice_";
     private static final Map<String, Object> OVERRIDES = new ConcurrentHashMap<>();
 
     private EvolutionRitesConfig() {
@@ -76,6 +90,10 @@ public final class EvolutionRitesConfig {
     private static <T> T pick(String key, ModConfigSpec.ConfigValue<T> v) {
         Object pinned = OVERRIDES.get(key);
         return pinned != null ? (T) pinned : read(v);
+    }
+
+    private static List<String> list(String key, ModConfigSpec.ConfigValue<List<? extends String>> v) {
+        return pick(key, v).stream().map(String::valueOf).toList();
     }
 
     private static Set<String> set(String key, ModConfigSpec.ConfigValue<List<? extends String>> v) {
@@ -109,6 +127,11 @@ public final class EvolutionRitesConfig {
             case UNIQUE -> pick("mastery_ep_unique", MASTERY_EP_UNIQUE);
             case ULTIMATE -> pick("mastery_ep_ultimate", MASTERY_EP_ULTIMATE);
         };
+    }
+
+    /** The item kinds and counts of a tier's sacrifice, in order. */
+    public static Map<String, Integer> masterySacrifice(Tier tier) {
+        return net.ofatech.supernaturalbloodlines.core.evolution.Sacrifice.parse(list(MASTERY_SACRIFICE_KEY + tier.id(), MASTERY_SACRIFICE.get(tier)));
     }
 
     public static int masteryCooldownDays() {

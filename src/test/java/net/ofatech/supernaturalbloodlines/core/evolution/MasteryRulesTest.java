@@ -76,9 +76,9 @@ class MasteryRulesTest {
 
     @Test
     void onlyTargetReasonsAreAboutTheTarget() {
+        List<Reason> notAbout = List.of(Reason.CLOSED, Reason.NOT_WITCH, Reason.WRONG_NIGHT, Reason.NO_CONSENT);
         for (Reason r : Reason.values()) {
-            boolean target = r.ordinal() >= Reason.NO_CHOICE.ordinal();
-            assertEquals(target, MasteryRules.aboutTarget(r), r.name());
+            assertEquals(!notAbout.contains(r), MasteryRules.aboutTarget(r), r.name());
         }
     }
 
@@ -93,6 +93,25 @@ class MasteryRulesTest {
             keys.add(MasteryRules.keyOf(r, Tier.UNIQUE));
         }
         assertEquals(keys.size(), keys.stream().distinct().count());
+    }
+
+    @Test
+    void aCostOfZeroIsFreeAndAnyOtherCostNeedsStrictlyMore() {
+        assertTrue(MasteryRules.enoughEp(0, 0), "a free rite for someone with no EP");
+        assertTrue(MasteryRules.enoughEp(5, -1));
+        assertTrue(MasteryRules.enoughEp(101, 100));
+        assertFalse(MasteryRules.enoughEp(100, 100), "exactly the cost leaves nothing");
+        assertFalse(MasteryRules.enoughEp(0, 1));
+    }
+
+    @Test
+    void theMasteryPointsAreFarMoreThanAnySkillNeeds() {
+        // the cap is addMasteryPoint's own: min(current + points, max); a negative start and an odd max must still land on the max
+        for (double current : new double[] {-1000, -1, 0, 50, 999}) {
+            for (int max : new int[] {1, 100, 1000, 100_000}) {
+                assertEquals(max, Math.min(current + MasteryRules.POINTS, max), current + " / " + max);
+            }
+        }
     }
 
     @Test

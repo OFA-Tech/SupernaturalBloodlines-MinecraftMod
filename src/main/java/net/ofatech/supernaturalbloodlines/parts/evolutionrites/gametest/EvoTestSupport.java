@@ -28,6 +28,21 @@ final class EvoTestSupport {
     private EvoTestSupport() {
     }
 
+    /**
+     * Whether a test of the rites should be skipped because the part is off. The rite data is there exactly when the part is on, so a part that is ON with a rite
+     * file missing (or one that is OFF with the file present) FAILS the test: a skip must never hide missing data.
+     */
+    static boolean skipped(GameTestHelper helper, String rite) {
+        boolean on = net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("evolutionRites");
+        boolean there = net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.gametest.RiteTestSupport.type(helper, rite) != null;
+        helper.assertTrue(on == there, "the part is " + (on ? "on" : "off") + " but the rite " + rite + " is " + (there ? "loaded" : "missing"));
+        if (!on) {
+            helper.succeed();
+            return true;
+        }
+        return false;
+    }
+
     /** Runs {@code body} at a full-moon night ({@code full}) or an ordinary one, and restores the time. */
     static void atNight(GameTestHelper helper, boolean full, Runnable body) {
         ServerLevel level = helper.getLevel();
@@ -102,6 +117,33 @@ final class EvoTestSupport {
 
     static boolean has(ServerPlayer p, String id) {
         return SkillAPI.getSkillsFrom(p).getSkill(ResourceLocation.parse(id)).isPresent();
+    }
+
+    /** Drops {@code count} of an item as a loose entity on the ground, {@code dx} blocks east of the circle centre (the offering lies loose on the circle). */
+    static void lay(GameTestHelper helper, String itemId, int count, double dx) {
+        var at = Vec3.atBottomCenterOf(centre(helper)).add(dx, 1, 0);
+        helper.getLevel().addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(helper.getLevel(), at.x, at.y, at.z, new ItemStack(item(itemId), count)));
+    }
+
+    /** How many of an item lie loose within the rite's offering radius of the centre. */
+    static int lying(GameTestHelper helper, String itemId) {
+        int n = 0;
+        for (var e : helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                new net.minecraft.world.phys.AABB(centre(helper)).inflate(net.ofatech.supernaturalbloodlines.parts.evolutionrites.rite.MasteryRiteFactory.OFFERING_RADIUS, 3,
+                        net.ofatech.supernaturalbloodlines.parts.evolutionrites.rite.MasteryRiteFactory.OFFERING_RADIUS))) {
+            if (e.getItem().is(item(itemId))) {
+                n += e.getItem().getCount();
+            }
+        }
+        return n;
+    }
+
+    static void clearLying(GameTestHelper helper) {
+        for (var e : helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                new net.minecraft.world.phys.AABB(centre(helper)).inflate(net.ofatech.supernaturalbloodlines.parts.evolutionrites.rite.MasteryRiteFactory.OFFERING_RADIUS, 3,
+                        net.ofatech.supernaturalbloodlines.parts.evolutionrites.rite.MasteryRiteFactory.OFFERING_RADIUS))) {
+            e.discard();
+        }
     }
 
     static void forgetAll(ServerPlayer p) {

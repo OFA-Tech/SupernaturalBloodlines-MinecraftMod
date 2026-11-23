@@ -1,6 +1,8 @@
 package net.ofatech.supernaturalbloodlines.core.evolution;
 
+import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Set;
 
 /** The Rite of Mastery's order of checks (spec 8.5, E16) and its refusals. Pure. */
 public final class MasteryRules {
@@ -15,7 +17,19 @@ public final class MasteryRules {
                         boolean retired, boolean enoughEp, boolean onCooldown) {
     }
 
+    /** The refusals that are about the target's own skills and state: they are told to the target, never to the performer (through {@code refuseAbout}). */
+    private static final Set<Reason> ABOUT_TARGET = EnumSet.of(Reason.NO_CHOICE, Reason.NOT_HELD, Reason.TEMPORARY, Reason.ALREADY, Reason.WRONG_TIER, Reason.SYSTEM,
+            Reason.RETIRED, Reason.NO_EP, Reason.COOLDOWN);
+
+    /** Mastery points handed to {@code addMasteryPoint}: far more than any skill needs, so the method's own cap decides where mastery ends (not a number we compute). */
+    public static final double POINTS = 1.0e9;
+
     private MasteryRules() {
+    }
+
+    /** Whether the target can pay: a cost of 0 or less is free, else the base Max EP must be strictly more than the cost. */
+    public static boolean enoughEp(double baseMaxEp, double cost) {
+        return cost <= 0 || baseMaxEp > cost;
     }
 
     public static Optional<Reason> check(Facts f) {
@@ -63,7 +77,7 @@ public final class MasteryRules {
 
     /** Everything from the choice on is about the target's own skills: it goes through {@code refuseAbout}. */
     public static boolean aboutTarget(Reason r) {
-        return r.ordinal() >= Reason.NO_CHOICE.ordinal();
+        return ABOUT_TARGET.contains(r);
     }
 
     public static String keyOf(Reason r, Tier riteTier) {

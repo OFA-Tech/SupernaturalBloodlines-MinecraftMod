@@ -3,9 +3,9 @@
         { "type": "supernaturalbloodlines:part_enabled", "part": "evolutionRites" }
     ],
     "items": [
-        { "id": "minecraft:nether_star", "count": 5 },
-        { "id": "minecraft:dragon_breath", "count": 5 },
-        { "id": "minecraft:netherite_ingot", "count": 10 }
+        { "id": "minecraft:nether_star", "count": 1 },
+        { "id": "minecraft:dragon_breath", "count": 1 },
+        { "id": "minecraft:netherite_ingot", "count": 1 }
     ],
     "shapes": {
         "enchanted:large_circle": "enchanted:ritual_chalk"

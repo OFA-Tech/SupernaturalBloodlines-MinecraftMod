@@ -33,12 +33,15 @@ public final class EvolutionRitesPart {
         // before the datapacks load, so the rite JSONs can name these factories
         RiteFactoryRegistry.get().register(EvolutionRiteFactory.ID, EvolutionRiteFactory.CODEC);
         RiteFactoryRegistry.get().register(MasteryRiteFactory.ID, MasteryRiteFactory.CODEC);
-        NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> MasteryCommand.register(e.getDispatcher()));
+        // last, so the species part's /sb bloodline redirect exists when the node is added to its target
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, (RegisterCommandsEvent e) -> MasteryCommand.register(e.getDispatcher()));
         modBus.addListener((RegisterGameTestsEvent e) -> {
             e.register(EvolutionHookProbeGameTests.class);
             e.register(EvolutionRiteGameTests.class);
             e.register(EvolutionUnlockGameTests.class);
             e.register(MasteryGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.CasterLeavesGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.evolutionrites.gametest.EvolutionCommandGameTests.class);
         });
         if (FMLEnvironment.dist == Dist.CLIENT) {
             net.ofatech.supernaturalbloodlines.parts.evolutionrites.client.MasteryClient.install();

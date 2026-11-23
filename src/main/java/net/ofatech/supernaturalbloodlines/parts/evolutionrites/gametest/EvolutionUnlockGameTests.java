@@ -29,8 +29,7 @@ public final class EvolutionUnlockGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void aWitchKnowsTheRitesFromBeingOneAndAHumanSeesThemSealed(GameTestHelper helper) {
-        if (type(helper, RITE) == null) {
-            helper.succeed();
+        if (EvoTestSupport.skipped(helper, RITE)) {
             return;
         }
         var witch = net.ofatech.supernaturalbloodlines.parts.species.gametest.LineTestPlayer.createWithAdvancements(helper);
@@ -53,8 +52,7 @@ public final class EvolutionUnlockGameTests {
     /** E10 / spec 10.3: a recipe whose addon is not loaded has neither its rite nor its book advancements, so nothing is known or sealed for it. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void deusSanguisExistsOnlyWhereAscensionIs(GameTestHelper helper) {
-        if (type(helper, RITE) == null) {
-            helper.succeed();
+        if (EvoTestSupport.skipped(helper, RITE)) {
             return;
         }
         boolean ascension = ModList.get().isLoaded("ascension");

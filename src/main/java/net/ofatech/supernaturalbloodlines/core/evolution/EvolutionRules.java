@@ -1,6 +1,8 @@
 package net.ofatech.supernaturalbloodlines.core.evolution;
 
+import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Set;
 
 /** The order of checks of an evolution rite (spec 6.4) and what each refusal says. Pure. */
 public final class EvolutionRules {
@@ -19,6 +21,8 @@ public final class EvolutionRules {
                         boolean eclipse, boolean casterIsTarget, boolean targetSneaking, boolean holdsGrant, boolean kindOk, boolean holdsNeeds,
                         boolean probeSatisfied, boolean ownedByOther, boolean enoughEp) {
     }
+
+    private static final Set<Reason> ABOUT_TARGET = EnumSet.of(Reason.ALREADY, Reason.NOT_READY);
 
     private EvolutionRules() {
     }
@@ -52,7 +56,7 @@ public final class EvolutionRules {
 
     /** Whether the answer depends on the target: those go through {@code RiteTargets.refuseAbout}, never straight to the performer. */
     public static boolean aboutTarget(Reason r) {
-        return r == Reason.ALREADY || r == Reason.NOT_READY;
+        return ABOUT_TARGET.contains(r);
     }
 
     public static String keyOf(Reason r, Tier tier) {

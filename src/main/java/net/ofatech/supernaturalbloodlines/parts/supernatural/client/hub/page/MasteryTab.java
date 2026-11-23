@@ -21,7 +21,6 @@ public final class MasteryTab {
     private static final int ROW = 12;
 
     private String selected;
-    private String chosenThisSession;
 
     public static boolean available() {
         return MasteryAccess.available();
@@ -42,7 +41,7 @@ public final class MasteryTab {
             if (picked) {
                 f.g.fill(hit.x(), hit.y(), hit.right(), hit.bottom(), (t.accent() & 0xFFFFFF) | 0x22000000);
             }
-            String mark = e.id().equals(chosenThisSession) ? "> " : "";
+            String mark = e.id().equals(MasteryAccess.chosen()) ? "> " : "";
             String text = LabelFit.cut(mark + e.name().getString() + " \u00b7 " + e.tier().getString(), r.w() - 4, f.font()::width);
             f.g.drawString(f.font(), text, r.x(), y + 2, grey ? t.muted() : t.ink(), false);
             List<Component> tip = new ArrayList<>(List.of(e.name()));
@@ -50,7 +49,12 @@ public final class MasteryTab {
                 tip.add(e.greyed());
             }
             String id = "mastery:skill:" + e.id();
-            f.target(id, hit, tip, () -> selected = e.id());
+            // a row the client already knows is refused cannot be selected: it shows why on hover and nothing else
+            f.target(id, hit, tip, () -> {
+                if (!grey) {
+                    selected = e.id();
+                }
+            });
             if (f.focused(id)) {
                 t.drawFocus(f.g, hit);
             }
@@ -62,11 +66,9 @@ public final class MasteryTab {
         y += 4;
         y = button(f, r, y, "choose", selected != null, () -> {
             HubClient.runCommand("B12", List.of(selected));
-            chosenThisSession = selected;
         });
         y = button(f, r, y, "clear", true, () -> {
             HubClient.runCommand("B13", List.of());
-            chosenThisSession = null;
         });
         y = button(f, r, y, "show", true, () -> HubClient.runCommand("B11", List.of()));
         f.end(y);

@@ -46,6 +46,19 @@ public final class EvoSkills {
         return Tier.ofSkillType("", false);
     }
 
+    /**
+     * What Tensura takes from the learner's base Max EP for learning this skill by its default instance: the skill's acquiring cost scaled by the game rule
+     * {@code MP_SKILL_COST} (percent), the way the learn's own listener reads it. 0 for a skill that is not a Tensura skill. A GameTest compares it with a real learn.
+     */
+    public static double price(net.minecraft.world.entity.LivingEntity learner, ManasSkill skill) {
+        if (!(skill instanceof io.github.manasmods.tensura.ability.TensuraSkill tensura)) {
+            return 0;
+        }
+        double cost = tensura.getAcquiringMagiculeCost(skill.createDefaultInstance());
+        int percent = learner.level().getGameRules().getInt(io.github.manasmods.tensura.world.TensuraGameRules.MP_SKILL_COST);
+        return cost * percent / 100.0;
+    }
+
     public static boolean isResistance(ManasSkill skill) {
         return skill instanceof Skill s && s.getType() == Skill.SkillType.RESISTANCE;
     }

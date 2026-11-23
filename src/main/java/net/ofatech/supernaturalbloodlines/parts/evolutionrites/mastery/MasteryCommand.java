@@ -19,15 +19,29 @@ public final class MasteryCommand {
     private MasteryCommand() {
     }
 
+    /**
+     * {@code /bloodline mastery ...}, and {@code /sb bloodline mastery ...} too: the species part registers {@code /sb bloodline} as a redirect to its own
+     * {@code bloodline} node, and a redirect shows only the target's children, so the node is added to that target as well when it is not already there.
+     */
     public static void register(CommandDispatcher<CommandSourceStack> d) {
-        d.register(Commands.literal("bloodline").then(Commands.literal("mastery")
+        d.register(Commands.literal("bloodline").then(node()));
+        var sb = d.getRoot().getChild("sb");
+        var sbBloodline = sb == null ? null : sb.getChild("bloodline");
+        var target = sbBloodline == null ? null : sbBloodline.getRedirect();
+        if (target != null && target.getChild("mastery") == null) {
+            target.addChild(node().build());
+        }
+    }
+
+    static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> node() {
+        return (Commands.literal("mastery")
                 .executes(c -> show(c.getSource().getPlayerOrException(), c.getSource()))
                 .then(Commands.literal("clear").executes(c -> clear(c.getSource().getPlayerOrException(), c.getSource())))
                 .then(Commands.literal("choose").then(Commands.argument("skill", StringArgumentType.greedyString())
                         .suggests((c, b) -> c.getSource().getPlayer() == null ? b.buildFuture()
                                 : SharedSuggestionProvider.suggest(MasteryChoice.options(c.getSource().getPlayerOrException()).stream()
                                         .filter(o -> o.refusal().isEmpty()).map(o -> o.skill().toString()), b))
-                        .executes(c -> choose(c.getSource().getPlayerOrException(), c.getSource(), StringArgumentType.getString(c, "skill")))))));
+                        .executes(c -> choose(c.getSource().getPlayerOrException(), c.getSource(), StringArgumentType.getString(c, "skill"))))));
     }
 
     static int show(ServerPlayer p, CommandSourceStack source) {

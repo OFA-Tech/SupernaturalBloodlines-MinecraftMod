@@ -33,7 +33,9 @@ import net.ofatech.supernaturalbloodlines.core.evolution.Tier;
 import net.ofatech.supernaturalbloodlines.parts.enchantedtensura.gametest.RecordingPlayer;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvoSkills;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.mastery.MasteryApply;
 import net.ofatech.supernaturalbloodlines.parts.evolutionrites.mastery.MasteryChoice;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.rite.MasteryRiteFactory;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.rite.FactionRiteFactory;
 
 /** The Rite of Mastery (plan 19a, spec 8.5): one stuck skill of each kind is mastered, and every refusal gives everything back. */
@@ -50,11 +52,7 @@ public final class MasteryGameTests {
     }
 
     private static boolean noRite(GameTestHelper helper) {
-        if (type(helper, rite(Tier.COMMON)) == null) {
-            helper.succeed();
-            return true;
-        }
-        return false;
+        return EvoTestSupport.skipped(helper, rite(Tier.COMMON));
     }
 
     private static List<ItemStack> items(Tier t) {
@@ -230,8 +228,7 @@ public final class MasteryGameTests {
     /** Sage cannot be mastered by play, and the Sage to Great Sage rite needs it mastered: the Rite of Mastery makes the road reachable. */
     @GameTest(template = "empty", templateNamespace = NS)
     public static void masteringSageMakesGreatSageReachable(GameTestHelper helper) {
-        if (noRite(helper) || type(helper, "evolve_great_sage") == null) {
-            helper.succeed();
+        if (noRite(helper)) {
             return;
         }
         RecordingPlayer caster = performer(helper, Species.WITCH);
@@ -519,13 +516,12 @@ public final class MasteryGameTests {
         helper.succeed();
     }
 
+    /** The Ultimate rite refuses in an eclipse exactly as the others do when nothing is chosen: the night is right, so it gets as far as the choice. */
     @GameTest(template = "empty", templateNamespace = NS)
-    public static void anEclipseMastersAnUltimate(GameTestHelper helper) {
-        if (noRite(helper) || EvoSkills.skill("tensura:great_sage").isEmpty()) {
-            helper.succeed();
+    public static void theEclipseNightReachesTheChoiceCheckOfTheUltimateRite(GameTestHelper helper) {
+        if (noRite(helper)) {
             return;
         }
-        // no Ultimate skill ships in Tensura's base game that this test can hold safely; the night is what is tested: the Ultimate rite works only in an eclipse
         RecordingPlayer caster = performer(helper, Species.WITCH);
         RecordingPlayer target = onTheCircle(helper, true, EP);
         try {
@@ -533,6 +529,291 @@ public final class MasteryGameTests {
             atEclipse(helper, () -> start(helper, rite(Tier.ULTIMATE), caster, items(Tier.ULTIMATE)));
             helper.assertTrue(target.received("supernaturalbloodlines.refusal.mastery.no_choice"), "in an eclipse the rite runs as far as the choice: " + target.heard());
             helper.assertTrue(dropped(helper, firstItem(Tier.ULTIMATE)) == 10, "the ingredients were not given back");
+        } finally {
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
+    /** The first Ultimate skill of Tensura itself (a skill the rite must be able to master, found by its type, not by a name). */
+    private static String anUltimate(GameTestHelper helper) {
+        for (var key : io.github.manasmods.manascore.skill.api.SkillAPI.getSkillRegistry().getIds()) {
+            if (key.getNamespace().equals("tensura") && EvoSkills.skill(key).map(EvoSkills::tierOf).orElse(Tier.COMMON) == Tier.ULTIMATE
+                    && !EvolutionRitesConfig.masteryRefusedSkills().contains(key.toString())) {
+                return key.toString();
+            }
+        }
+        helper.fail("Tensura has no Ultimate skill in the registry: the Ultimate rite cannot be tested");
+        return "";
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void anUltimateIsMasteredInAnEclipseAndNotOnAPlainFullMoon(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        try {
+            String id = anUltimate(helper);
+            ManasSkillInstance inst = give(target, id, 0);
+            helper.assertTrue(MasteryChoice.choose(target, ResourceLocation.parse(id)).isEmpty(), "could not choose " + id);
+            atNight(helper, true, () -> start(helper, rite(Tier.ULTIMATE), caster, items(Tier.ULTIMATE)));
+            helper.assertTrue(!inst.isMastered(target) && caster.received("supernaturalbloodlines.rite.needs_eclipse"), "a plain full moon mastered an Ultimate: " + caster.heard());
+            clearDropped(helper);
+            work(helper, Tier.ULTIMATE, caster);
+            helper.assertTrue(inst.isMastered(target), id + " was not mastered in an eclipse: " + target.heard() + " / " + caster.heard());
+            helper.assertTrue(Math.abs(EnergyHelper.getBaseMaxEP(target) - (EP - 2_000_000)) < 1, "EP is " + EnergyHelper.getBaseMaxEP(target));
+            helper.assertTrue(dropped(helper, "minecraft:nether_star") == 0, "a good rite gave the ingredients back");
+        } finally {
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
+    /** A resistance's learning goes through Tensura's own completion, so a listener that vetoes the unlock stops it: nothing is taken, the old mastery is back. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aVetoOnAResistanceIsRefusedAndNothingIsTaken(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        SkillEvents.UnlockSkillEvent veto = (inst, entity, msg) ->
+                inst.getSkillId().toString().equals("tensura:corrosion_resistance") ? EventResult.interruptFalse() : EventResult.pass();
+        SkillEvents.UNLOCK_SKILL.register(veto);
+        try {
+            ManasSkillInstance inst = give(target, "tensura:corrosion_resistance", -100);
+            helper.assertTrue(MasteryChoice.choose(target, ResourceLocation.parse("tensura:corrosion_resistance")).isEmpty(), "could not choose it");
+            clearDropped(helper);
+            work(helper, Tier.COMMON, caster);
+            helper.assertTrue(inst.getMastery() == -100, "the learning was finished although a listener vetoed it: mastery " + inst.getMastery());
+            helper.assertTrue(target.received(MasteryRules.VETOED), "the target heard " + target.heard());
+            helper.assertTrue(caster.heard().equals(FactionRiteFactory.NO_EFFECT), "the performer heard " + caster.heard());
+            helper.assertTrue(EnergyHelper.getBaseMaxEP(target) == EP, "EP was spent: " + EnergyHelper.getBaseMaxEP(target));
+            helper.assertTrue(dropped(helper, "minecraft:diamond_block") == 5, "the ingredients were not given back");
+            helper.assertTrue(MasteryChoice.lastRite(target) == -1, "a refusal started the cooldown");
+        } finally {
+            SkillEvents.UNLOCK_SKILL.unregister(veto);
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
+    /** Something throws after the mastery is confirmed: the skill is mastered, so the EP and the cooldown are charged all the same. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aMasteredSkillIsPaidForEvenIfSomethingThrowsAfterwards(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        try {
+            ManasSkillInstance inst = give(target, "tensura:anti_skill", 0);
+            MasteryChoice.choose(target, ResourceLocation.parse("tensura:anti_skill"));
+            clearDropped(helper);
+            MasteryApply.afterConfirm = () -> {
+                throw new IllegalStateException("EXPECTED: deliberate failure after the mastery");
+            };
+            work(helper, Tier.UNIQUE, caster);
+            helper.assertTrue(inst.isMastered(target), "not mastered: " + target.heard());
+            helper.assertTrue(Math.abs(EnergyHelper.getBaseMaxEP(target) - (EP - 750_000)) < 1, "a mastered skill was not paid for: EP is " + EnergyHelper.getBaseMaxEP(target));
+            helper.assertTrue(MasteryChoice.lastRite(target) >= 0, "the cooldown was not started");
+            helper.assertTrue(dropped(helper, "minecraft:nether_star") == 0, "the ingredients were given back for a rite that worked");
+        } finally {
+            MasteryApply.afterConfirm = () -> { };
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
+    /** And when it throws BEFORE the mastery is confirmed, nothing is taken and the ingredients come back. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aThrowBeforeTheMasteryTakesNothing(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        SkillEvents.SkillMasteryEvent boom = (inst, entity, amount) -> {
+            throw new IllegalStateException("EXPECTED: deliberate failure of a mastery listener");
+        };
+        SkillEvents.SKILL_MASTERY.register(boom);
+        try {
+            ManasSkillInstance inst = give(target, "tensura:anti_skill", 0);
+            MasteryChoice.choose(target, ResourceLocation.parse("tensura:anti_skill"));
+            clearDropped(helper);
+            work(helper, Tier.UNIQUE, caster);
+            helper.assertTrue(!inst.isMastered(target), "mastered although a listener threw");
+            helper.assertTrue(EnergyHelper.getBaseMaxEP(target) == EP, "EP was spent: " + EnergyHelper.getBaseMaxEP(target));
+            helper.assertTrue(MasteryChoice.lastRite(target) == -1, "the cooldown was started");
+            helper.assertTrue(dropped(helper, "minecraft:nether_star") == 5, "the ingredients were not given back");
+        } finally {
+            SkillEvents.SKILL_MASTERY.unregister(boom);
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aCostOfZeroIsFree(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, 1);
+        try {
+            EvolutionRitesConfig.override("mastery_ep_unique", 0.0);
+            ManasSkillInstance inst = give(target, "tensura:anti_skill", 0);
+            MasteryChoice.choose(target, ResourceLocation.parse("tensura:anti_skill"));
+            double before = EnergyHelper.getBaseMaxEP(target);
+            work(helper, Tier.UNIQUE, caster);
+            helper.assertTrue(inst.isMastered(target), "a free rite did not work: " + target.heard());
+            helper.assertTrue(EnergyHelper.getBaseMaxEP(target) == before, "a free rite took EP: " + EnergyHelper.getBaseMaxEP(target));
+        } finally {
+            EvolutionRitesConfig.override("mastery_ep_unique", null);
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
+    // ---- the offering: the rite file names the kinds, the config says how many (E16) ----
+
+    private static void unique(GameTestHelper helper, RecordingPlayer caster, RecordingPlayer target, List<ItemStack> thrown) {
+        atNight(helper, true, () -> start(helper, rite(Tier.UNIQUE), caster, thrown));
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theCircleTakesTheConfiguredCountFromWhatLiesOnIt(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        try {
+            EvolutionRitesConfig.override("mastery_sacrifice_unique", List.of("minecraft:nether_star:3", "minecraft:netherite_ingot:2"));
+            ManasSkillInstance inst = give(target, "tensura:anti_skill", 0);
+            MasteryChoice.choose(target, ResourceLocation.parse("tensura:anti_skill"));
+            clearDropped(helper);
+            EvoTestSupport.clearLying(helper);
+            EvoTestSupport.lay(helper, "minecraft:nether_star", 5, 3);
+            EvoTestSupport.lay(helper, "minecraft:netherite_ingot", 4, -3);
+            unique(helper, caster, target, stacks("minecraft:nether_star", 1, "minecraft:netherite_ingot", 1));
+            helper.assertTrue(inst.isMastered(target), "not mastered: " + target.heard() + " / " + caster.heard());
+            helper.assertTrue(EvoTestSupport.lying(helper, "minecraft:nether_star") == 3 && EvoTestSupport.lying(helper, "minecraft:netherite_ingot") == 3,
+                    "the circle took the wrong count: " + EvoTestSupport.lying(helper, "minecraft:nether_star") + " stars and " + EvoTestSupport.lying(helper, "minecraft:netherite_ingot")
+                            + " ingots lie there (3 of 5 and 3 of 4 should be left: 2 more stars and 1 more ingot were taken, 1 of each came with the rite)");
+            helper.assertTrue(dropped(helper, "minecraft:nether_star") == 0, "a good rite gave something back");
+        } finally {
+            EvolutionRitesConfig.override("mastery_sacrifice_unique", null);
+            EvoTestSupport.clearLying(helper);
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aShortOfferingTakesNothingAndTellsOnlyThePerformer(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        for (boolean sneaking : new boolean[] {true, false}) {
+            RecordingPlayer caster = performer(helper, Species.WITCH);
+            RecordingPlayer target = onTheCircle(helper, sneaking, EP);
+            try {
+                ManasSkillInstance inst = give(target, "tensura:anti_skill", 0);
+                if (sneaking) {
+                    MasteryChoice.choose(target, ResourceLocation.parse("tensura:anti_skill"));
+                } // the other target chose nothing and does not consent: the answer must be the same
+                clearDropped(helper);
+                EvoTestSupport.clearLying(helper);
+                EvoTestSupport.lay(helper, "minecraft:nether_star", 2, 3);
+                unique(helper, caster, target, stacks("minecraft:nether_star", 1, "minecraft:netherite_ingot", 1));
+                helper.assertTrue(!inst.isMastered(target), "mastered on a short offering");
+                helper.assertTrue(caster.heard().equals(MasteryRiteFactory.SHORT_OFFERING), "sneaking " + sneaking + ": the performer heard " + caster.heard());
+                helper.assertTrue(target.heard().isEmpty(), "sneaking " + sneaking + ": the target heard " + target.heard());
+                helper.assertTrue(EvoTestSupport.lying(helper, "minecraft:nether_star") == 2, "loose items were taken: " + EvoTestSupport.lying(helper, "minecraft:nether_star"));
+                helper.assertTrue(dropped(helper, "minecraft:netherite_ingot") == 1, "what the rite took was not given back");
+            } finally {
+                EvoTestSupport.clearLying(helper);
+                clean(helper, caster, target);
+            }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void moreThanTheOfferingWentInGoesBack(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        try {
+            ManasSkillInstance inst = give(target, "tensura:anti_skill", 0);
+            MasteryChoice.choose(target, ResourceLocation.parse("tensura:anti_skill"));
+            clearDropped(helper);
+            EvoTestSupport.clearLying(helper);
+            unique(helper, caster, target, stacks("minecraft:nether_star", 5, "minecraft:netherite_ingot", 9)); // Enchanted took a whole stack: 4 ingots too many
+            helper.assertTrue(inst.isMastered(target), "not mastered: " + target.heard());
+            helper.assertTrue(dropped(helper, "minecraft:netherite_ingot") == 4, "the surplus was not given back: " + dropped(helper, "minecraft:netherite_ingot"));
+            helper.assertTrue(dropped(helper, "minecraft:nether_star") == 0, "a kind with no surplus gave something back");
+        } finally {
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
+    /** A rite refused for another reason after the extras were taken gives them back too. */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aRefusalAfterTheTakingGivesTheExtrasBackToo(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        try {
+            MasteryChoice.clear(target); // nothing chosen: refused after the offering was taken
+            clearDropped(helper);
+            EvoTestSupport.clearLying(helper);
+            EvoTestSupport.lay(helper, "minecraft:nether_star", 4, 3);
+            EvoTestSupport.lay(helper, "minecraft:netherite_ingot", 4, -3);
+            unique(helper, caster, target, stacks("minecraft:nether_star", 1, "minecraft:netherite_ingot", 1));
+            helper.assertTrue(target.received("supernaturalbloodlines.refusal.mastery.no_choice"), "the target heard " + target.heard());
+            helper.assertTrue(dropped(helper, "minecraft:nether_star") == 5 && dropped(helper, "minecraft:netherite_ingot") == 5,
+                    "the circle lost items on a refusal: " + dropped(helper, "minecraft:nether_star") + " stars, " + dropped(helper, "minecraft:netherite_ingot") + " ingots back");
+        } finally {
+            EvoTestSupport.clearLying(helper);
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
+    // ---- the seven days, across a respawn ----
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theSevenDayLimitSurvivesARespawn(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        try {
+            long[] now = {1_000_000};
+            MasteryChoice.clock = () -> now[0];
+            Tier tier = tierOf("tensura:self_regeneration");
+            ManasSkillInstance inst = give(target, "tensura:self_regeneration", 0);
+            MasteryChoice.choose(target, ResourceLocation.parse("tensura:self_regeneration"));
+            work(helper, tier, caster);
+            helper.assertTrue(inst.isMastered(target) && MasteryChoice.lastRite(target) == 1_000_000, "the first rite did not work: " + target.heard());
+            // death and respawn: the game builds a new player and calls restoreFrom(old) (the Clone event), which is what carries the persisted data over
+            RecordingPlayer reborn = RecordingPlayer.create(helper);
+            reborn.restoreFrom(target, false);
+            helper.assertTrue(MasteryChoice.lastRite(reborn) == 1_000_000, "the rite time did not survive the respawn: " + MasteryChoice.lastRite(reborn));
+            now[0] = 1_000_000 + 24000L * 6;
+            helper.assertTrue(MasteryChoice.onCooldown(reborn), "the limit was gone after a respawn (day 6)");
+            now[0] = 1_000_000 + 24000L * 7;
+            helper.assertTrue(!MasteryChoice.onCooldown(reborn), "the limit did not end on day 7");
         } finally {
             clean(helper, caster, target);
         }

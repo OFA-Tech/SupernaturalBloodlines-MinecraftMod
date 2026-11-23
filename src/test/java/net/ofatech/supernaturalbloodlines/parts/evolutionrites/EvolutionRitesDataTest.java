@@ -21,6 +21,7 @@ import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRecipe;
 import net.ofatech.supernaturalbloodlines.core.evolution.Tier;
 import net.ofatech.supernaturalbloodlines.core.rite.RiteAdvancements;
 import net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable;
+import net.ofatech.supernaturalbloodlines.parts.evolutionrites.EvolutionRitesConfig;
 import net.ofatech.supernaturalbloodlines.core.evolution.EvolutionRecipeCodec;
 import org.junit.jupiter.api.Test;
 
@@ -122,27 +123,31 @@ class EvolutionRitesDataTest {
     }
 
     @Test
-    void theMasteryFilesAreOnePerTierWithTheOwnersSacrifice() throws IOException {
+    void theMasteryFilesNameTheKindsOnceAndTheConfigHoldsTheOwnersCounts() throws IOException {
         Object[][] table = {
-                {"common", 6000, List.of("minecraft:diamond_block:5", "minecraft:echo_shard:5")},
-                {"extra", 9000, List.of("minecraft:netherite_ingot:5", "minecraft:echo_shard:20")},
-                {"unique", 12000, List.of("minecraft:nether_star:5", "minecraft:netherite_ingot:5")},
-                {"ultimate", 20000, List.of("minecraft:nether_star:5", "minecraft:dragon_breath:5", "minecraft:netherite_ingot:10")}};
+                {"common", 6000, java.util.Map.of("minecraft:diamond_block", 5, "minecraft:echo_shard", 5)},
+                {"extra", 9000, java.util.Map.of("minecraft:netherite_ingot", 5, "minecraft:echo_shard", 20)},
+                {"unique", 12000, java.util.Map.of("minecraft:nether_star", 5, "minecraft:netherite_ingot", 5)},
+                {"ultimate", 20000, java.util.Map.of("minecraft:nether_star", 5, "minecraft:dragon_breath", 5, "minecraft:netherite_ingot", 10)}};
         for (Object[] row : table) {
             JsonObject rite = read(ROOT.resolve(RITES).resolve("mastery_" + row[0] + ".json"));
             assertEquals("supernaturalbloodlines:mastery", rite.getAsJsonObject("factory").get("type").getAsString());
             assertEquals(row[0], rite.getAsJsonObject("factory").get("tier").getAsString());
             assertEquals(row[1], rite.get("power").getAsInt(), row[0] + " power");
-            List<String> items = new ArrayList<>();
+            java.util.Set<String> kinds = new java.util.TreeSet<>();
             for (JsonElement e : rite.getAsJsonArray("items")) {
-                items.add(e.getAsJsonObject().get("id").getAsString() + ":" + e.getAsJsonObject().get("count").getAsInt());
+                assertEquals(1, e.getAsJsonObject().get("count").getAsInt(), row[0] + ": the file names a kind, the config says how many");
+                kinds.add(e.getAsJsonObject().get("id").getAsString());
             }
-            assertEquals(row[2], items, row[0] + " sacrifice");
-            // no ingredient names the target's state, so the circle's own matching tells a caster nothing
-            assertFalse(items.stream().anyMatch(s -> s.contains("supernaturalbloodlines:")), String.valueOf(row[0]));
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Integer> owners = (java.util.Map<String, Integer>) row[2];
+            Tier tier = Tier.parse((String) row[0]).orElseThrow();
+            java.util.Map<String, Integer> defaults = net.ofatech.supernaturalbloodlines.core.evolution.Sacrifice.parse(EvolutionRitesConfig.DEFAULT_SACRIFICE.get(tier));
+            assertEquals(owners, defaults, row[0] + ": the default sacrifice is the owner's");
+            assertEquals(new java.util.TreeSet<>(owners.keySet()), kinds, row[0] + ": the rite file and the default sacrifice name the same kinds, or the circle never starts the rite");
+            assertFalse(kinds.stream().anyMatch(s -> s.contains("supernaturalbloodlines:")), String.valueOf(row[0]));
         }
     }
-
     @Test
     void theEclipseRitesAreExactlyTheUltimateOnes() throws IOException {
         assertEquals(Tier.Night.ECLIPSE, Tier.ULTIMATE.night());

@@ -80,11 +80,7 @@ public final class EvolutionRiteGameTests {
     }
 
     private static boolean noRite(GameTestHelper helper) {
-        if (type(helper, RITE) == null) {
-            helper.succeed(); // the rite's data needs the part
-            return true;
-        }
-        return false;
+        return EvoTestSupport.skipped(helper, RITE);
     }
 
     private static List<net.minecraft.world.item.ItemStack> items() {
@@ -122,6 +118,7 @@ public final class EvolutionRiteGameTests {
         if (noRite(helper)) {
             return;
         }
+        helper.assertTrue(type(helper, RITE) != null, "the Rite of the Great Sage did not load with the part on");
         var type = type(helper, RITE);
         helper.assertTrue(type.getPower() == 9000, "power is " + type.getPower());
         helper.assertTrue(type.getItems().size() == 3, "the ingredients: " + type.getItems());
@@ -441,6 +438,74 @@ public final class EvolutionRiteGameTests {
             helper.assertTrue(has(target, GREAT_SAGE), "the rite did not work");
             helper.assertTrue(RiteUnlocks.known(caster).contains(RITE), "the performer did not learn the rite");
         } finally {
+            clean(helper, caster, target);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void thePriceThePreCheckUsesIsWhatTensuraCharges(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        if (closedByAnAddon(helper)) {
+            helper.succeed(); // an installed addon closes the learn (Mysticism's Soul Energy price): there is nothing charged to compare
+            return;
+        }
+        RecordingPlayer probe = onTheCircle(helper, false, EP);
+        try {
+            ManasSkill greatSage = SkillAPI.getSkillRegistry().get(ResourceLocation.parse(GREAT_SAGE));
+            double predicted = EvoSkills.price(probe, greatSage);
+            double measured = tensuraPrice(helper);
+            helper.assertTrue(Math.abs(predicted - measured) < 1e-6, "the price read before the learn is " + predicted + ", Tensura took " + measured);
+        } finally {
+            clean(helper, probe);
+        }
+        helper.succeed();
+    }
+
+    /** The EP is checked before the learn: with exactly the price plus the cost nothing is learned and no unlock event fires (a check after the learn would have fired it). */
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void notEnoughEpForThePriceAndTheCostRefusesBeforeAnythingIsLearned(GameTestHelper helper) {
+        if (noRite(helper)) {
+            return;
+        }
+        if (closedByAnAddon(helper)) {
+            helper.succeed();
+            return;
+        }
+        ManasSkill greatSage = SkillAPI.getSkillRegistry().get(ResourceLocation.parse(GREAT_SAGE));
+        int[] unlocks = {0};
+        io.github.manasmods.manascore.skill.api.SkillEvents.UnlockSkillEvent count = (inst, entity, msg) -> {
+            if (inst.getSkillId().equals(greatSage.getRegistryName())) {
+                unlocks[0]++;
+            }
+            return dev.architectury.event.EventResult.pass();
+        };
+        io.github.manasmods.manascore.skill.api.SkillEvents.UNLOCK_SKILL.register(count);
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        try {
+            double price = EvoSkills.price(target, greatSage);
+            helper.assertTrue(price > 0, "the price of Great Sage is " + price + ": this test would prove nothing");
+            double base = price + 100_000; // exactly: the cost must be strictly less than what is left
+            EnergyHelper.setBaseMaxEP(target, base);
+            give(target, SAGE, 500);
+            clearDropped(helper);
+            atNight(helper, true, () -> start(helper, RITE, caster, items()));
+            helper.assertTrue(!has(target, GREAT_SAGE), "learned on exactly the price plus the cost");
+            helper.assertTrue(unlocks[0] == 0, "the learn was tried (" + unlocks[0] + " unlock events) and then undone: the check must come first");
+            helper.assertTrue(EnergyHelper.getBaseMaxEP(target) == base, "EP changed: " + EnergyHelper.getBaseMaxEP(target));
+            helper.assertTrue(target.received(NOT_READY) && caster.heard().equals(FactionRiteFactory.NO_EFFECT), "the target heard " + target.heard() + ", the performer " + caster.heard());
+            helper.assertTrue(dropped(helper, "minecraft:ender_eye") == 2, "the ingredients were not given back");
+            // one more point of EP and it goes through
+            EnergyHelper.setBaseMaxEP(target, base + 1);
+            clearDropped(helper);
+            atNight(helper, true, () -> start(helper, RITE, caster, items()));
+            helper.assertTrue(has(target, GREAT_SAGE), "did not learn with one point to spare: " + target.heard());
+            helper.assertTrue(unlocks[0] == 1, "unlock events: " + unlocks[0]);
+        } finally {
+            io.github.manasmods.manascore.skill.api.SkillEvents.UNLOCK_SKILL.unregister(count);
             clean(helper, caster, target);
         }
         helper.succeed();

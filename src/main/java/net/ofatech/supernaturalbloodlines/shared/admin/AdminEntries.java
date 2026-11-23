@@ -224,6 +224,9 @@ public final class AdminEntries {
         }
         all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, "mastery_cooldown_days", INT));
         all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, "mastery_refused_skills", LIST));
+        for (String tier : List.of("common", "extra", "unique", "ultimate")) {
+            all.add(SettingEntry.of(EVOLUTION_RITES_FILE, er, "mastery_sacrifice_" + tier, LIST));
+        }
         ALL = List.copyOf(all);
     }
 

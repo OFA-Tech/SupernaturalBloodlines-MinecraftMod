@@ -1563,6 +1563,7 @@
   "supernaturalbloodlines.rite.evolution_announce": "%s has been given a power by a rite of the eclipse.",
   "supernaturalbloodlines.rite.mastery_done": "The rite takes. The skill you chose is yours, fully.",
   "supernaturalbloodlines.rite.mastery_done_caster": "The rite is done.",
+  "supernaturalbloodlines.rite.mastery_offering": "The offering on the circle is short of what this rite takes.",
   "supernaturalbloodlines.refusal.mastery.no_choice": "You have not chosen a skill. Choose one on the Skills page of the hub, or with /bloodline mastery choose.",
   "supernaturalbloodlines.refusal.mastery.not_held": "You no longer hold the skill you chose.",
   "supernaturalbloodlines.refusal.mastery.temporary": "A skill that is only lent cannot be mastered.",
