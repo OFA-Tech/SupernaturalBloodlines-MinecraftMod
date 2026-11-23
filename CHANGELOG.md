@@ -8,6 +8,12 @@
 - One access transformer line makes `BossHealthOverlay.events` public; the mod only reads it.
 - Tensura's Path pane lists every task of the next step: one line each when the pane is short, and "+N more tasks" for the rest. A label on a kit button or surface reads on the pack's own picture, so a recoloured pack keeps its 4.5:1.
 - The Grimoire's boss name plate has seven rows of leather for its text (the brass lines inside it were removed). The health on a card is rounded up (a boss that is alive never reads 0) and grouped by the player's language. A boss's card is taken from a player who changes dimension or logs out.
+## Unreleased (art: the plan 18 icons)
+
+### Changed
+- **Rip Heart, Neck Snap, Bottle my blood, Garlic Ward and Blessed Skin have their own pictures** (the heart in a clawed hand, a head knocked off its neck, an open bottle filling with blood, a garlic bulb behind a shield, holy water under a halo) instead of a letter on a tile, the unknown rune or another skill's icon. One picture for a skill and its HUD action, drawn at 32 px for the hub and at 16 px for the slots (with the pale outline of the other slot icons). Hybrid Leap's picture (`s-hyb-3`, `hybrid_leap`) is in the kit for plan 18e.
+- **Wes's Syringe** has its own item picture, and in the hand it is that picture (it was the bottle of Hybrid's Blood). The **Snapped** effect has its own icon (it was Shocked's).
+- The icons come from `docs/superpowers/design/ui-overhaul/phase2/src/icons.py` (`build.py icons`), which now also writes the HUD's pale-outlined copies; the contact sheet is `docs/superpowers/design/art-icons/contact-sheet.png`.
 
 ## Unreleased (plan 18d: Rip Heart and Neck Snap)
 
