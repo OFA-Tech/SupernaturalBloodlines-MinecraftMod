@@ -64,6 +64,10 @@ No mixin. The Blue Moon rite cost is one more factor in the species part's exist
 
 No mixin. The entities are plain PathfinderMobs; what a blow does to an NPC Original is a LivingIncomingDamageEvent and a LivingDamageEvent.Post listener, the line glue is the species part's own classes, and the hub reads the boss through the existing WorldNowHook.
 
+## evolution_rites (0 of 3)
+
+No mixin. The rites are Enchanted rite factories, the addons are reached by reflection (`Hooks`), the Rite of Mastery goes through `addMasteryPoint` so Tensura's own events fire, and the hub's Mastery tab uses the existing command rows. Plan 19b's Raphael merge is a ManasCore `UNLOCK_SKILL` listener, not a mixin.
+
 ## Access transformers
 
 Not a mixin and not counted in the budget. `META-INF/accesstransformer.cfg` makes `Entity.setSharedFlag(int, boolean)` and `getSharedFlag(int)` public, so the species part's `client/HunterSenseClient` can outline entities on one client (see docs/parts/species.md, Hunters: instinct, sense).
