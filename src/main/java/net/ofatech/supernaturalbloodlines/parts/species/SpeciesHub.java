@@ -44,7 +44,9 @@ public final class SpeciesHub {
     static void register() {
         HubSocial.set(SpeciesHub::social);
         HubSocial.setNpcs(SpeciesHub::npcs);
-        HubSocial.setMoonGift(net.ofatech.supernaturalbloodlines.parts.species.pack.PackMoonGift::has);
+        // with moon_bound_werewolves off nobody needs control, so there is no perk to show
+        HubSocial.setMoonGift(p -> net.ofatech.supernaturalbloodlines.shared.werewolves.MoonControl.moonBound()
+                && net.ofatech.supernaturalbloodlines.parts.species.pack.PackMoonGift.has(p));
         HubRequests.set(SpeciesHub::requests);
     }
 

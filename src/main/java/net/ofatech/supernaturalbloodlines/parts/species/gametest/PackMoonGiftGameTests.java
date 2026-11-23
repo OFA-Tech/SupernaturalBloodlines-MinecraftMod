@@ -78,6 +78,9 @@ public final class PackMoonGiftGameTests {
     private static void clean(ServerPlayer... players) {
         SireCall.overridePlayerLookup(null);
         SpeciesConfig.overrideHybridPackMoon(null);
+        SpeciesConfig.overrideAbsentLeaderDays(null);
+        PackIndex.overrideClock(null);
+        MoonControl.overrideMoonBound(null);
         PackMoonGift.reset();
         for (ServerPlayer p : players) {
             if (VampirismAPI.factionPlayerHandler(p).getCurrentFaction() != null) {
@@ -350,6 +353,216 @@ public final class PackMoonGiftGameTests {
             index.leave(mate.getUUID());
             index.leave(member.getUUID());
             clean(lead, member, omega);
+        }
+        helper.succeed();
+    }
+
+    private static void giveFreeWill(ServerPlayer p) {
+        var skill = de.teamlapen.vampirism.api.VampirismRegistries.SKILL.get().get(net.minecraft.resources.ResourceLocation.parse("werewolves:free_will"));
+        VampirismAPI.factionPlayerHandler(p).getCurrentFactionPlayer().orElseThrow().getSkillHandler().enableSkill(skill, true);
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theGiftDoesNotEarnTheControlledRung(GameTestHelper helper) {
+        LineTestPlayer lead = leader(helper, Species.HYBRID, 1.5);
+        LineTestPlayer gifted = beta(helper, lead, 8, 3.5);
+        LineTestPlayer plainLead = leader(helper, Species.NONE, 5.5);
+        LineTestPlayer own = beta(helper, plainLead, 8, 7.5);
+        online(lead, gifted, plainLead, own);
+        try {
+            helper.assertTrue(MoonControl.of(gifted) == Control.FULL, "setup: the gift gives no control");
+            helper.assertTrue(MoonControl.earned(gifted) == Control.NONE, "the gift counts as earned control: " + MoonControl.earned(gifted));
+            helper.assertFalse(net.ofatech.supernaturalbloodlines.parts.supernatural.task.TaskTracker.earnedMoonControl(gifted), "a werewolf in a hybrid-led pack completes 'Controlled'");
+            giveFreeWill(own);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.supernatural.task.TaskTracker.earnedMoonControl(own), "control: Free Will does not earn 'Controlled'");
+            giveFreeWill(gifted);
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.supernatural.task.TaskTracker.earnedMoonControl(gifted), "own control on top of the gift does not earn it");
+        } finally {
+            clean(lead, gifted, plainLead, own);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theLostLineIsSilentWhileAnotherControlHolds(GameTestHelper helper) {
+        LineTestPlayer lead = leader(helper, Species.HYBRID, 1.5);
+        LineTestPlayer free = beta(helper, lead, 8, 3.5);
+        LineTestPlayer bare = beta(helper, lead, 8, 4.5);
+        online(lead, free, bare);
+        try {
+            giveFreeWill(free);
+            helper.assertTrue(PackMoonGift.check(free) == null && PackMoonGift.check(bare) == null, "setup: the first checks said something");
+            helper.assertTrue(PackCommand.kick(lead, free.getUUID(), "free") == null && PackCommand.kick(lead, bare.getUUID(), "bare") == null, "a kick was refused");
+            helper.assertTrue(PackMoonGift.check(free) == null && free.count(PackMoonGift.LOST) == 0, "a member with Free Will was told the moon holds them again: " + free.heard());
+            helper.assertTrue(PackMoonGift.LOST.equals(PackMoonGift.check(bare)) && bare.count(PackMoonGift.LOST) == 1, "a member with no other control was not told");
+        } finally {
+            clean(lead, free, bare);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theGainedLineSaysWhatItGivesAndFromWhichLevel(GameTestHelper helper) {
+        LineTestPlayer lead = leader(helper, Species.HYBRID, 1.5);
+        LineTestPlayer omega = wolf(helper, Rank.OMEGA, Species.NONE, false, null, 8, 3.5);
+        online(lead, omega);
+        try {
+            PackMoonGift.check(omega);
+            BloodlineAccess.set(omega, BloodlineAccess.get(omega).toBuilder().wolf(PackAccess.wolf(omega).toBuilder().rank(Rank.BETA).packAlpha(lead.getUUID()).build()).build());
+            helper.assertTrue(PackMoonGift.GAINED.equals(PackMoonGift.check(omega)), "no 'gained' line");
+            helper.assertTrue(omega.heard().contains(String.valueOf(MoonControl.fullFormLevel())), "the line does not name the full-form level " + MoonControl.fullFormLevel() + ": " + omega.heard());
+        } finally {
+            clean(lead, omega);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aLeaderLongGoneGivesNothingButAnOfflineOneWithinTheWindowDoes(GameTestHelper helper) {
+        UUID goneId = UUID.randomUUID();
+        LineTestPlayer member = wolf(helper, Rank.BETA, Species.NONE, false, null, 8, 3.5);
+        online(member);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        long now = 1_000 * PackAbsence.DAY_MILLIS;
+        PackIndex.overrideClock(() -> now);
+        try {
+            index.join(goneId, member.getUUID());
+            index.setHybridLike(goneId, true);
+            index.setLastSeen(goneId, now - 3 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackMoonGift.has(member), "an offline hybrid leader seen 3 days ago gave nothing");
+            index.setLastSeen(goneId, now - 6 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackMoonGift.has(member), "an offline hybrid leader seen 6 days ago gave nothing");
+            index.setLastSeen(goneId, now - 8 * PackAbsence.DAY_MILLIS);
+            helper.assertFalse(PackMoonGift.has(member), "a hybrid leader gone for 8 days still gave the gift");
+            helper.assertTrue(beastCancelledAtWill(member), "the member shifted at will under a leader who is long gone");
+            SpeciesConfig.overrideAbsentLeaderDays(0);
+            helper.assertTrue(PackMoonGift.has(member), "absent_leader_days = 0 did not switch the absence off");
+            SpeciesConfig.overrideAbsentLeaderDays(30);
+            helper.assertTrue(PackMoonGift.has(member), "8 days of 30 took the gift away");
+        } finally {
+            index.leave(member.getUUID());
+            index.setHybridLike(goneId, false);
+            clean(member);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theSevenDayHandoverEndsTheGiftWithTheLead(GameTestHelper helper) {
+        UUID goneId = UUID.randomUUID();
+        LineTestPlayer strong = wolf(helper, Rank.ALPHA, Species.NONE, false, goneId, 9, 2.5);
+        LineTestPlayer member = wolf(helper, Rank.BETA, Species.NONE, false, null, 8, 3.5);
+        online(strong, member);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+        long now = 1_000 * PackAbsence.DAY_MILLIS;
+        PackIndex.overrideClock(() -> now);
+        try {
+            index.join(goneId, strong.getUUID());
+            index.join(goneId, member.getUUID());
+            index.setHybridLike(goneId, true);
+            index.setStrength(strong.getUUID(), 1009);
+            index.setLastSeen(goneId, now - 6 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackAbsence.check(server, now) == 0 && PackMoonGift.has(member), "at 6 days the lead moved or the gift was gone");
+            index.setLastSeen(goneId, now - 8 * PackAbsence.DAY_MILLIS);
+            helper.assertTrue(PackAbsence.check(server, now) == 1, "the absent leader was not deposed");
+            helper.assertTrue(index.isLeader(strong.getUUID()) && index.leaderOf(member.getUUID()).equals(strong.getUUID()), "the plain Alpha does not lead");
+            helper.assertFalse(PackMoonGift.has(member), "the gift outlived the handover");
+            helper.assertTrue(beastCancelledAtWill(member), "the member shifted at will under the new leader");
+        } finally {
+            index.leave(member.getUUID());
+            index.leave(goneId);
+            index.leave(strong.getUUID());
+            index.setHybridLike(goneId, false);
+            index.takeNotices(goneId);
+            clean(strong, member);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aDuelWonByAPlainAlphaEndsTheGiftOfTheLosersPack(GameTestHelper helper) {
+        LineTestPlayer hybrid = leader(helper, Species.HYBRID, 1.5);
+        LineTestPlayer challenger = wolf(helper, Rank.ALPHA, Species.NONE, false, hybrid.getUUID(), 8, 2.5);
+        LineTestPlayer member = beta(helper, hybrid, 8, 3.5);
+        online(hybrid, challenger, member);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            index.join(hybrid.getUUID(), challenger.getUUID());
+            helper.assertTrue(PackMoonGift.has(member), "setup: no gift under the hybrid");
+            helper.assertTrue(net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.challenge(challenger, hybrid.getUUID().toString()) == null
+                    && net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.accept(hybrid) == null, "the duel did not start");
+            var death = new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(hybrid, challenger.damageSources().playerAttack(challenger));
+            NeoForge.EVENT_BUS.post(death);
+            helper.assertTrue(death.isCanceled() && index.isLeader(challenger.getUUID()), "the challenger does not lead after the duel");
+            helper.assertFalse(PackMoonGift.has(member), "the gift outlived a lead won by a plain Alpha");
+            helper.assertTrue(beastCancelledAtWill(member), "the member shifted at will under the duel winner");
+        } finally {
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackDuel.reset();
+            index.leave(challenger.getUUID());
+            index.leave(hybrid.getUUID());
+            index.leave(member.getUUID());
+            clean(hybrid, challenger, member);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theLeaderIsTheIndexsAndNotTheMembersOwnRecord(GameTestHelper helper) {
+        LineTestPlayer hybrid = leader(helper, Species.HYBRID, 1.5);
+        LineTestPlayer plain = wolf(helper, Rank.ALPHA, Species.NONE, false, hybrid.getUUID(), 8, 3.5);
+        LineTestPlayer member = beta(helper, hybrid, 8, 5.5);
+        online(hybrid, plain, member);
+        PackIndex index = PackIndex.get(helper.getLevel());
+        try {
+            index.join(hybrid.getUUID(), plain.getUUID());
+            index.promote(hybrid.getUUID(), plain.getUUID());
+            helper.assertTrue(hybrid.getUUID().equals(PackAccess.wolf(member).packAlpha()), "setup: the member's own record changed");
+            helper.assertFalse(PackMoonGift.has(member), "the gift followed the member's own packAlpha, not the index");
+            // and the other way round: the member's record names the plain Alpha, the index says the hybrid leads
+            index.promote(plain.getUUID(), hybrid.getUUID());
+            BloodlineAccess.set(member, BloodlineAccess.get(member).toBuilder().wolf(PackAccess.wolf(member).toBuilder().packAlpha(plain.getUUID()).build()).build());
+            index.leave(member.getUUID());
+            helper.assertTrue(index.join(hybrid.getUUID(), member.getUUID()), "setup: the index did not take the member back");
+            helper.assertTrue(plain.getUUID().equals(PackAccess.wolf(member).packAlpha()) && index.leaderOf(member.getUUID()).equals(hybrid.getUUID()), "setup: the two records agree");
+            helper.assertTrue(PackMoonGift.has(member), "the gift followed the member's own packAlpha, not the index");
+        } finally {
+            index.leave(plain.getUUID());
+            index.leave(member.getUUID());
+            index.leave(hybrid.getUUID());
+            clean(hybrid, plain, member);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theHybridLikeFlagSurvivesTheSavedIndex(GameTestHelper helper) {
+        var registries = helper.getLevel().registryAccess();
+        UUID yes = UUID.randomUUID();
+        UUID no = UUID.randomUUID();
+        PackIndex fresh = new PackIndex();
+        fresh.setHybridLike(yes, true);
+        fresh.setHybridLike(no, true);
+        fresh.setHybridLike(no, false);
+        PackIndex loaded = PackIndex.load(fresh.save(new net.minecraft.nbt.CompoundTag(), registries), registries);
+        helper.assertTrue(loaded.isHybridLike(yes), "the flag was not saved or not loaded");
+        helper.assertFalse(loaded.isHybridLike(no), "a cleared flag came back");
+        helper.assertFalse(new PackIndex().isHybridLike(yes), "control: a fresh index knows the id");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theHubSaysNothingWhenTheMoonBindsNobody(GameTestHelper helper) {
+        LineTestPlayer lead = leader(helper, Species.HYBRID, 1.5);
+        LineTestPlayer member = beta(helper, lead, 8, 3.5);
+        online(lead, member);
+        try {
+            helper.assertTrue(HubSocial.moonGiftOf(member), "control: the hub does not say the member has it");
+            MoonControl.overrideMoonBound(false);
+            helper.assertFalse(HubSocial.moonGiftOf(member), "the hub shows a perk for a moon that binds nobody");
+            helper.assertFalse(HubSnapshotPayload.of(member).moonGift(), "the snapshot carries it with moon_bound_werewolves off");
+        } finally {
+            clean(lead, member);
         }
         helper.succeed();
     }

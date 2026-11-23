@@ -147,10 +147,11 @@ public final class PackIndex extends SavedData {
             } else if (!Objects.equals(before.packAlpha(), after.packAlpha())) {
                 follow(p);
             }
+            // before the strength is refreshed: whatever reads the pack from there must see the new flag
+            index.setHybridLike(p.getUUID(), PackMoonRules.hybridLike(change.after().species(), change.after().hybridCurseBound()));
             if (before.rank() != after.rank() || before.lineage() != after.lineage() || before.sparks() != after.sparks()) {
                 PackLeader.refresh(p, after);
             }
-            index.setHybridLike(p.getUUID(), PackMoonRules.hybridLike(change.after().species(), change.after().hybridCurseBound()));
             // a dormant True Alpha (outside the faction) keeps its tombstone until it rejoins
             if (PackAccess.isAlpha(change.after().wolf().rank()) && VampirismSupernatural.isWerewolf(p)) {
                 get(p.serverLevel()).clearFormerAlpha(p.getUUID());
@@ -196,9 +197,9 @@ public final class PackIndex extends SavedData {
             BloodlineAccess.set(p, BloodlineAccess.get(p).toBuilder().wolf(w.toBuilder().packAlpha(indexed).build()).build());
         }
         follow(p);
-        PackLeader.refresh(p);
         BloodlineState own = BloodlineAccess.get(p);
         index.setHybridLike(p.getUUID(), PackMoonRules.hybridLike(own.species(), own.hybridCurseBound()));
+        PackLeader.refresh(p);
     }
 
     private static void follow(ServerPlayer p) {

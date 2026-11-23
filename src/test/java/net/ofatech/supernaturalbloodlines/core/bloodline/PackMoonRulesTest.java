@@ -55,6 +55,20 @@ class PackMoonRulesTest {
         assertFalse(gift(true, wolf(Lineage.BITTEN, Rank.OMEGA), true, false, true));
     }
 
+    private static final long DAY = 24L * 60 * 60 * 1000;
+
+    @Test
+    void aLeaderAwayForTheAbsentDaysGivesNothing() {
+        long now = 100 * DAY;
+        assertTrue(PackMoonRules.leaderGives(true, false, now - 6 * DAY, now, 7), "away for 6 of 7 days");
+        assertFalse(PackMoonRules.leaderGives(true, false, now - 7 * DAY, now, 7), "away for the 7 days: the pack passes the lead on at the same limit");
+        assertFalse(PackMoonRules.leaderGives(true, false, now - 30 * DAY, now, 7));
+        assertTrue(PackMoonRules.leaderGives(true, true, now - 30 * DAY, now, 7), "online is here, whatever the stored time");
+        assertTrue(PackMoonRules.leaderGives(true, false, now - 30 * DAY, now, 0), "absent_leader_days = 0 switches the absence off");
+        assertTrue(PackMoonRules.leaderGives(true, false, -1, now, 7), "a leader the index never saw is not known to be away");
+        assertFalse(PackMoonRules.leaderGives(false, true, now, now, 7), "not hybrid-like gives nothing, online or not");
+    }
+
     @Test
     void hybridLikeMeansAnUnboundHybridType() {
         assertTrue(PackMoonRules.hybridLike(Species.HYBRID, false));

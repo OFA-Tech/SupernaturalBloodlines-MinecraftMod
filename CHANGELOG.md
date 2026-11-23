@@ -8,6 +8,14 @@
 - **Messages:** one line when a member gains the gift and one when they lose it.
 - **Admin:** `hybrid_pack_moon_control` has a row under Species.
 
+### Changed (review of the pack gift)
+- **The gift does not earn the rung "Controlled" (L-WOL-3a).** That task and the migration ask for the player's own control (Moon Ring, Free Will, an unbound hybrid, an Alpha, an anchor); the gift can be taken away at once, so it never completes the rung (`MoonControl.earned`).
+- **A leader away for `absent_leader_days` (7) or more gives no gift** from that moment, before the pack passes the lead on (0 = off).
+- **The "lost" line is only sent when the member has no other moon control left.** The "gained" line says what it gives: half forms now, full forms from the configured level (`full_form_level`).
+- **The perk line is hidden while `moon_bound_werewolves` is off** (the server does not send it); its colour is tested at 4.5:1 on every theme.
+- **The pack index hears the hybrid curse being lifted** (`BloodlineAccess` listeners now see a change of `hybridCurseBound`), and sets its hybrid-like flag before it refreshes the strength.
+- **One definition of "hybrid type"** (`Species.hybridType()`), used by the control source, the gift, the ladder predicate and the bloodline rules. The `moon_unbound` predicate used to leave out the tribrid; no ladder read it for a tribrid, so nothing changed in play.
+
 ### Network
 - The hub snapshot carries one more flag (the gift), so the protocol is **11** (was 10). Clients and servers must match.
 

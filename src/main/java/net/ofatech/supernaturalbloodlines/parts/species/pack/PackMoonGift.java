@@ -12,6 +12,7 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.ofatech.supernaturalbloodlines.core.bloodline.PackMoonRules;
 import net.ofatech.supernaturalbloodlines.parts.species.SpeciesConfig;
+import net.ofatech.supernaturalbloodlines.parts.species.sireline.SireCall;
 import net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural;
 import net.ofatech.supernaturalbloodlines.shared.werewolves.ForcedShift;
 import net.ofatech.supernaturalbloodlines.shared.werewolves.MoonControl;
@@ -35,7 +36,7 @@ public final class PackMoonGift {
 
     public static void register() {
         ForcedShift.register();
-        MoonControl.addSource(PackMoonGift::has);
+        MoonControl.addGift(PackMoonGift::has);
         NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> {
             if (e.getEntity() instanceof ServerPlayer p && p.tickCount % CHECK_TICKS == 0) {
                 check(p);
@@ -49,11 +50,17 @@ public final class PackMoonGift {
     public static boolean has(ServerPlayer p) {
         PackIndex index = PackIndex.get(p.serverLevel());
         Optional<UUID> leader = index.alphaOf(p.getUUID());
+        // the leader is the index's, never the player's own packAlpha; a leader who is hybrid-like but long gone (the pack passes the lead on at the same limit) gives nothing
+        boolean leaderGives = leader.isPresent() && PackMoonRules.leaderGives(index.isHybridLike(leader.get()),
+                SireCall.player(p.server, leader.get()) != null, index.lastSeen(leader.get()).orElse(-1L), PackIndex.now(), SpeciesConfig.absentLeaderDays());
         return PackMoonRules.gift(SpeciesConfig.hybridPackMoonControl(), PackAccess.wolf(p), VampirismSupernatural.isWerewolf(p),
-                leader.isPresent(), leader.isPresent() && index.isHybridLike(leader.get()));
+                leader.isPresent(), leaderGives);
     }
 
-    /** One line when {@code p} gains or loses the gift since the last check (the key sent, else null); the first check of a session only records it. */
+    /**
+     * One line when {@code p} gains the gift since the last check, one when they lose it and have no other control left (the key sent, else
+     * null); the first check of a session only records it.
+     */
     @Nullable
     public static String check(ServerPlayer p) {
         boolean now = has(p);
@@ -61,9 +68,15 @@ public final class PackMoonGift {
         if (before == null || before == now) {
             return null;
         }
-        String key = now ? GAINED : LOST;
-        p.sendSystemMessage(Component.translatable(key));
-        return key;
+        if (now) {
+            p.sendSystemMessage(Component.translatable(GAINED, MoonControl.fullFormLevel()));
+            return GAINED;
+        }
+        if (MoonControl.of(p) != MoonControl.Control.NONE) {
+            return null;
+        }
+        p.sendSystemMessage(Component.translatable(LOST));
+        return LOST;
     }
 
     @VisibleForTesting
