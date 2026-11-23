@@ -25,13 +25,14 @@ public final class AdminEntries {
     public static final String SUPERNATURAL_FILE = MOD + "-supernatural.toml";
     public static final String HUD_FILE = MOD + "-hud.toml";
     public static final String ARTIFACTS_FILE = MOD + "-artifacts.toml";
+    public static final String VAMPIRISM_ENCHANTED_FILE = MOD + "-vampirism_enchanted.toml";
     public static final String SPECIES_FILE = MOD + "-species.toml";
     public static final String SPECIES_TENSURA_FILE = MOD + "-species_tensura.toml";
     public static final String CELESTIALS_FILE = MOD + "-celestials.toml";
     public static final String BOSSES_FILE = MOD + "-bosses.toml";
 
     /** The section ids, in the order the page lists them. */
-    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "species", "speciesTensura", "celestials", "bosses");
+    public static final List<String> SECTIONS = List.of("core", "vampirismTensura", "supernatural", "hud", "artifacts", "vampirismEnchanted", "species", "speciesTensura", "celestials", "bosses");
 
     public static final String RESERVED = "reserved: the key does nothing";
 
@@ -76,6 +77,12 @@ public final class AdminEntries {
         }
         for (String ward : new String[] {"ward_radius", "ward_max_per_owner", "ward_max_invites", "ward_expel_seconds"}) {
             all.add(SettingEntry.of(ARTIFACTS_FILE, "artifacts", "artifacts." + ward, INT));
+        }
+        for (String curse : new String[] {"insanity_enabled", "susceptibility_enabled"}) {
+            all.add(SettingEntry.of(VAMPIRISM_ENCHANTED_FILE, "vampirismEnchanted", "vampirism_enchanted." + curse, BOOL));
+        }
+        for (String curse : new String[] {"insanity_interval_seconds", "susceptibility_extra_percent", "susceptibility_max_percent"}) {
+            all.add(SettingEntry.of(VAMPIRISM_ENCHANTED_FILE, "vampirismEnchanted", "vampirism_enchanted." + curse, INT));
         }
 
         species(all, "max_originals_per_world", INT);

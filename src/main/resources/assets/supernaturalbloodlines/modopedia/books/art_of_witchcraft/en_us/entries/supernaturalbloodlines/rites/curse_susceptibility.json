@@ -1,0 +1,38 @@
+{
+  "title": "Curse of Susceptibility",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:soul_sand"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/curse_susceptibility",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, infernal chalk.\n\nCurses the owner of the taglock: they take 25% more damage, 50% at strength 1, 75% at strength 2, and never more than double.",
+          "header": "Susceptibility"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Anyone can cast it, with a bottle of vampire blood. A blow that cannot be survived anyway (the void, a command) is not raised.\n\nThe curse ends when the target dies. It needs infernal chalk, not ritual chalk.",
+          "header": "Susceptibility"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:curse_susceptibility",
+          "header": "Susceptibility"
+        }
+      ]
+    }
+  ]
+}

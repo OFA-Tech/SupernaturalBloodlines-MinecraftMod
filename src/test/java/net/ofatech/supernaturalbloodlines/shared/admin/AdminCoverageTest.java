@@ -41,6 +41,8 @@ class AdminCoverageTest {
             new Known(SupernaturalConfig.FILE, SupernaturalConfig.SPEC, true, "SupernaturalConfig.java"),
             new Known(HudConfig.FILE, HudConfig.SPEC, true, "HudConfig.java"),
             new Known(ArtifactsConfig.FILE, ArtifactsConfig.SPEC, true, "ArtifactsConfig.java"),
+            new Known(net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismEnchantedConfig.FILE,
+                    net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismEnchantedConfig.SPEC, true, "VampirismEnchantedConfig.java"),
             new Known(SpeciesConfig.FILE, SpeciesConfig.SPEC, true, "SpeciesConfig.java"),
             new Known(SpeciesTensuraConfig.FILE, SpeciesTensuraConfig.SPEC, true, "SpeciesTensuraConfig.java"),
             new Known(CelestialsConfig.FILE, CelestialsConfig.SPEC, true, "CelestialsConfig.java"),

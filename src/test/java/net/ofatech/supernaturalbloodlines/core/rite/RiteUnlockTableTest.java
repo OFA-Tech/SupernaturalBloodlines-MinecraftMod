@@ -14,9 +14,9 @@ class RiteUnlockTableTest {
     @Test
     void theNumbersOfThePlan() {
         assertEquals(8, RiteUnlockTable.OPEN.size());
-        assertEquals(29, RiteUnlockTable.GATED.size());
+        assertEquals(31, RiteUnlockTable.GATED.size());
         assertEquals(18, RiteUnlockTable.GATED.values().stream().filter(g -> g.lore().isEmpty()).count(), "kind only");
-        assertEquals(7, RiteUnlockTable.GATED.values().stream().filter(g -> g.kinds().isEmpty()).count(), "lore only");
+        assertEquals(9, RiteUnlockTable.GATED.values().stream().filter(g -> g.kinds().isEmpty()).count(), "lore only");
         assertEquals(4, RiteUnlockTable.GATED.values().stream().filter(g -> !g.kinds().isEmpty() && !g.lore().isEmpty()).count(), "kind or lore");
     }
 
@@ -69,7 +69,7 @@ class RiteUnlockTableTest {
         assertEquals(List.of("rite_of_the_broken_line", "rite_of_the_imprisoned_original"), RiteUnlockTable.taughtBy(RiteUnlockTable.FINN));
         assertEquals(List.of("rite_of_the_cure"), RiteUnlockTable.taughtBy(RiteUnlockTable.ELIJAH));
         assertEquals(List.of("immortality", "ward_of_return"), RiteUnlockTable.taughtBy(RiteUnlockTable.OLD_RITES));
-        assertEquals(List.of("curse_magicule_drain", "curse_skill_seal"), RiteUnlockTable.taughtBy(RiteUnlockTable.CURSES));
+        assertEquals(List.of("curse_magicule_drain", "curse_skill_seal", "curse_insanity", "curse_susceptibility"), RiteUnlockTable.taughtBy(RiteUnlockTable.CURSES));
         assertEquals(List.of("rite_of_the_valet_pike"), RiteUnlockTable.taughtBy(RiteUnlockTable.BEAST));
         assertEquals(List.of(), RiteUnlockTable.taughtBy("nothing"));
     }

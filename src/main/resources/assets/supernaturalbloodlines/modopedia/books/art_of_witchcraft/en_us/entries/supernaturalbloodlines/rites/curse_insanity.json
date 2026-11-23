@@ -1,0 +1,38 @@
+{
+  "title": "Curse of Insanity",
+  "icon": {
+    "count": 1,
+    "id": "minecraft:fermented_spider_eye"
+  },
+  "assigned_items": [],
+  "advancement": "supernaturalbloodlines:rites/known/curse_insanity",
+  "pages": [
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Circle: medium circle, infernal chalk.\n\nCurses the owner of the taglock: every half minute or so they see something that is not there (a figure, a whisper, a darkening). It shortens with the curse's strength.",
+          "header": "Curse of Insanity"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "modopedia:page/headered_text",
+          "text": "Anyone can cast it. The target is the owner of the taglock. It only draws on their own screen: nothing on the server changes.\n\nThe curse ends when the target dies. It needs infernal chalk, not ritual chalk.",
+          "header": "Curse of Insanity"
+        }
+      ]
+    },
+    {
+      "components": [
+        {
+          "template": "supernaturalbloodlines:page/rite",
+          "rite": "supernaturalbloodlines:curse_insanity",
+          "header": "Curse of Insanity"
+        }
+      ]
+    }
+  ]
+}

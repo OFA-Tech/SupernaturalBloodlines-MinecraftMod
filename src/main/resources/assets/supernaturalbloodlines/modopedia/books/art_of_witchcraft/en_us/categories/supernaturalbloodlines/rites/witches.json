@@ -15,7 +15,11 @@
     "supernaturalbloodlines/sealed/rite_of_the_valet_pike",
     "supernaturalbloodlines/rites/rite_of_the_valet_pike",
     "supernaturalbloodlines/sealed/rite_of_the_ward",
-    "supernaturalbloodlines/rites/rite_of_the_ward"
+    "supernaturalbloodlines/rites/rite_of_the_ward",
+    "supernaturalbloodlines/sealed/curse_insanity",
+    "supernaturalbloodlines/rites/curse_insanity",
+    "supernaturalbloodlines/sealed/curse_susceptibility",
+    "supernaturalbloodlines/rites/curse_susceptibility"
   ],
   "icon": {
     "count": 1,
