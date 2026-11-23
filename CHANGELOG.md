@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased (plan 18g: the Cursed White Oak Ash Dagger)
+
+### Changed
+- **R33: the plain White Oak Ash Dagger no longer desiccates an Original hybrid.** It still desiccates an Original. A new item, the **Cursed White Oak Ash Dagger**, desiccates both. The two blades hit the same (2 damage, same speed), cost the wielder the same backlash, lodge for the same 30 minutes and drop as the stack that was used.
+- **No oracle:** a dagger that does not lodge does the same thing whoever it hit (the blow lands, the supernatural wielder takes the backlash, the dagger is kept, no message), so a plain dagger that "does nothing" does not tell an Original hybrid from a human or a vampire.
+
+### Added
+- **Rite of the Cursed Dagger (R205, `cursed_dagger`).** A White Oak Ash Dagger, 2 white oak ash and an echo shard in a medium circle of ritual chalk (20,000 power) make a Cursed White Oak Ash Dagger. It is the only way to get one (no recipe, no loot; it is in the creative tab). The rite acts on nobody, so nothing needs a consent. Its book entry is sealed ("Unlocked by becoming a witch, a siphoner or a tribrid") and opens with the rite's unlock like the others. Needs the artifacts and species parts.
+- Placeholder art: the Cursed dagger is a purple tint of the plain dagger's textures and models (note for Fable in `art/items/CURSED_DAGGER.md`). No new setting, so no new Admin row.
+
+### Migration
+- Plain daggers keep working on Originals and are **not converted**. A plain dagger already lodged in an Original hybrid stays lodged until it is pulled, runs out (30 minutes) or the player dies. Players who relied on the plain dagger against an Original hybrid now need the rite. NPC Original fights (Klaus, Mikael, Rebekah, Elijah, Kol, Finn) are unchanged: either dagger works on them. No payload or save format changed (no network bump); a world saved with a Cursed dagger and rolled back to an older build loses the item (unknown item ids are dropped) and a Cursed dagger lodged in a player vanishes from them.
+
 ## Unreleased (plan 18d: Rip Heart and Neck Snap)
 
 ### Added
