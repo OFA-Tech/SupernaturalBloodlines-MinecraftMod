@@ -203,6 +203,7 @@ public final class SpeciesPart {
         net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.install(net.ofatech.supernaturalbloodlines.parts.species.item.BottleBloodAction.INSTANCE);
         net.ofatech.supernaturalbloodlines.parts.species.blood.GiveBloodAction.register();
         net.ofatech.supernaturalbloodlines.parts.species.moon.FullMoonSleep.register(); // no Werewolves needed: "everyone" works without it
+        Venom.registerEffectHooks(); // a command can give the venom without Werewolves
         net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.set(p -> new net.ofatech.supernaturalbloodlines.shared.supernatural.WorldNowHook.Flags(
                 net.ofatech.supernaturalbloodlines.core.moon.SleepRules.appliesTo(SpeciesConfig.fullMoonSleep(),
                         net.ofatech.supernaturalbloodlines.parts.vampirismenchanted.VampirismSupernatural.isWerewolf(p)),
@@ -214,6 +215,7 @@ public final class SpeciesPart {
             LunarEclipse.register();
             Anchors.register();
             AlphaRoar.register();
+            net.ofatech.supernaturalbloodlines.parts.species.pack.PackMoonGift.register();
             net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.install(net.ofatech.supernaturalbloodlines.parts.species.pack.AlphaRoarAction.INSTANCE);
             Emissary.register();
             TransitionHandler.register();
@@ -319,6 +321,7 @@ public final class SpeciesPart {
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.GiveBloodGameTests.class);
             e.register(GhoulGameTests.class);
             e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.TurningDyingGameTests.class);
+            e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.VenomStageGameTests.class);
             e.register(GeneGameTests.class);
             e.register(DoppelgangerVillagerGameTests.class);
             e.register(RevelationGameTests.class);
@@ -353,6 +356,7 @@ public final class SpeciesPart {
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.SparkRulesGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.PackDuelGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.FreeWillGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.species.gametest.PackMoonGiftGameTests.class);
                 e.register(EclipseElectricityGameTests.class);
             }
         });

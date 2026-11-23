@@ -13,6 +13,44 @@
 
 ### Rolling back
 - **Roll the server and every client back together** (the network version goes back to 2). The saved `wheel_clock` is dropped by an older build, which is harmless: it only held a cooldown of at most a few minutes. With both settings off the wheel lists every side and no key is stopped.
+## Unreleased (plan 18h: staged venom)
+
+### Changed
+- **Werewolf venom goes through stages (R206).** Mild, then sick, then death. For the first `venom_sick_after_ticks` (4000 of the 12000) the venom is only its 1 damage a pulse that cannot kill. After that the vampire is sick: Nausea and Slowness I are kept up at every pulse, the hallucinations start (every 600 ticks, as before) and a line on the action bar says so once. The last tick still kills a non-Original. Originals keep Weakness II only, with no stages; the Venom Fang's 5 s of Slowness is unchanged. Hybrid's Blood and Klaus's Blood cure it at every stage.
+- **Downed and the turning.** Someone who cannot act (down for the turning or a Neck Snap, or in Vampirism's dying state) is spared the sickness, but the last tick is final: it ends the snap or the dying state with their death (no change for the kill itself; now pinned by tests).
+- Config (with an Admin row, section `species`): `venom_sick_after_ticks` (0 sick from the start, 12000 never sick; default 4000).
+
+### Fixed
+- **The Elixir saves from the venom's last tick.** The kill that backs up the venom's blow now runs only while the venom is still on the player, so an Elixir (which clears every effect) is no longer undone by a second kill (vanilla's invulnerability window usually blocked that kill already; a mod that removes the window made it real). Downed and Vampirism's dying state still die.
+- **An infinite venom** (`/effect give ... hybrid_venom infinite`) no longer kills within two seconds: it has no clock, so it pulses as a fresh venom and never reaches the end.
+- **The "you feel sick" line** is shown at the first pulse where the sickness actually runs, also for someone who was down at the threshold or who logged in already past it (it is kept per player, not saved, and forgotten when the venom ends). Venom Slowness no longer has particles.
+
+### Migration
+A venom that is already running continues in the new stages: the clock is the effect's remaining time, so nothing was stored and nothing is converted. A vampire poisoned 9000 ticks ago is sick the moment they load this build. No network payload changed.
+
+### Rolling back
+Rolling back puts the old single stage back: the damage, the hallucinations from the first minute, and death at the end. Nothing is stored, so nothing is left on a player. The old build does not know `venom_sick_after_ticks` in `supernaturalbloodlines-species.toml` and removes the key when it rewrites the file: after rolling forward again it is back at the default (4000), so set your value again.
+## Unreleased (pack moon gift)
+
+### Added
+- **The pack's gift (R96, `hybrid_pack_moon_control`, default on; needs Werewolves).** As in The Originals: while the **current leader** of a pack is a hybrid, an Original hybrid or a tribrid (curse not bound), every **werewolf member** of that pack has moon control, as with a Moon Ring: half forms at will, full forms from Werewolves level 8 (`full_form_level`), and the forced full-moon shift is skipped. It is read from the pack each time, so leaving, a kick, a dissolved pack or the lead passing to someone who is not hybrid-like ends it at once. A hybrid co-Alpha who does not lead gives nothing; Packmates who are no werewolves are not changed. A member who loses it mid-shift keeps the form they are in until the next forced or normal change (as with a Moon Ring taken off).
+- **Hub:** the Pack page shows the perk line "Your Alpha's blood frees you from the moon" while you have it (every theme; the server says so in the snapshot). The task "Control your shift under the full moon" follows it like any other control, as with the Moon Ring.
+- **Messages:** one line when a member gains the gift and one when they lose it.
+- **Admin:** `hybrid_pack_moon_control` has a row under Species.
+
+### Changed (review of the pack gift)
+- **The gift does not earn the rung "Controlled" (L-WOL-3a).** That task and the migration ask for the player's own control (Moon Ring, Free Will, an unbound hybrid, an Alpha, an anchor); the gift can be taken away at once, so it never completes the rung (`MoonControl.earned`).
+- **A leader away for `absent_leader_days` (7) or more gives no gift** from that moment, before the pack passes the lead on (0 = off).
+- **The "lost" line is only sent when the member has no other moon control left.** The "gained" line says what it gives: half forms now, full forms from the configured level (`full_form_level`).
+- **The perk line is hidden while `moon_bound_werewolves` is off** (the server does not send it); its colour is tested at 4.5:1 on every theme.
+- **The pack index hears the hybrid curse being lifted** (`BloodlineAccess` listeners now see a change of `hybridCurseBound`), and sets its hybrid-like flag before it refreshes the strength.
+- **One definition of "hybrid type"** (`Species.hybridType()`), used by the control source, the gift, the ladder predicate and the bloodline rules. The `moon_unbound` predicate used to leave out the tribrid; no ladder read it for a tribrid, so nothing changed in play.
+
+### Network
+- The hub snapshot carries one more flag (the gift), so the protocol is **11** (was 10). Clients and servers must match.
+
+### Migration
+- The pack index remembers who was hybrid-like when last seen (saved with it, nothing else changes). A pack led by an offline hybrid gives the gift once its leader has logged in after the update.
 ## Unreleased (skill wheel, phase W1: catalogue and server path)
 
 Nothing is drawn yet: this phase is the server half of the skill wheel (`docs/superpowers/specs/2026-11-22-skill-wheel-design.md`). The wheel screen comes in a later phase.

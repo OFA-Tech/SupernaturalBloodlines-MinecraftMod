@@ -23,6 +23,15 @@ class BloodlineListenerTest {
     private static final BloodlineState SIPHONER = NONE.toBuilder().species(Species.SIPHONER).build();
 
     @Test
+    void theHybridCurseBeingLiftedIsHeard() {
+        List<BloodlineAccess.BloodlineChange> seen = new ArrayList<>();
+        List<BiConsumer<Object, BloodlineAccess.BloodlineChange>> listeners = List.of((p, c) -> seen.add(c));
+        BloodlineState bound = NONE.toBuilder().species(Species.HYBRID).hybridCurseBound(true).build();
+        BloodlineAccess.notifyListeners(listeners, null, UUID.randomUUID(), bound, bound.toBuilder().hybridCurseBound(false).build());
+        assertEquals(1, seen.size(), "the pack's moon gift follows the curse: the index must hear it");
+    }
+
+    @Test
     void listenerNotifiedOnSpeciesLineageOrRankChangeOnly() {
         List<BloodlineAccess.BloodlineChange> seen = new ArrayList<>();
         List<BiConsumer<Object, BloodlineAccess.BloodlineChange>> listeners = List.of((p, c) -> seen.add(c));

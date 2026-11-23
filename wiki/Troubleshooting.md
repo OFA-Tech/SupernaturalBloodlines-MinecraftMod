@@ -56,7 +56,7 @@ See [Rites](Rites). A rite that needs Werewolves doesn't exist without it.
 
 ## A werewolf can't shift
 
-With `moon_bound_werewolves` on (the default), a werewolf can only shift **when the full moon forces it**, unless they have **moon control**: an Alpha or True Alpha, a **Moon Ring** bound to them, an unbound hybrid, or a born wolf with an anchor (half only). See [moon control](Werewolves-And-Packs#moon-control). Also check:
+With `moon_bound_werewolves` on (the default), a werewolf can only shift **when the full moon forces it**, unless they have **moon control**: an Alpha or True Alpha, a **Moon Ring** bound to them, an unbound hybrid, a member of a pack whose leader is a hybrid (`hybrid_pack_moon_control`), or a born wolf with an anchor (half only). See [moon control](Werewolves-And-Packs#moon-control). Also check:
 
 - an **eclipse** is running: no form actions at all until dawn;
 - they are **Shocked**, or hit by **wolf lichen**;
