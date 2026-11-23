@@ -56,6 +56,29 @@ public final class EvolutionRiteGameTests {
     private EvolutionRiteGameTests() {
     }
 
+    /** An installed addon closes Tensura's own learn of Great Sage (Mysticism's Soul Energy price): the rite keeps that rule and must say no without taking anything. */
+    private static boolean closedByAnAddon(GameTestHelper helper) {
+        return !EvoTestSupport.learnOpen(helper, GREAT_SAGE);
+    }
+
+    private static void refusedWhereAnAddonCloses(GameTestHelper helper) {
+        RecordingPlayer caster = performer(helper, Species.WITCH);
+        RecordingPlayer target = onTheCircle(helper, true, EP);
+        try {
+            give(target, SAGE, 500);
+            clearDropped(helper);
+            atNight(helper, true, () -> start(helper, RITE, caster, items()));
+            helper.assertTrue(!has(target, GREAT_SAGE), "Great Sage was learned although an addon closes it");
+            helper.assertTrue(has(target, SAGE), "Sage was taken");
+            helper.assertTrue(EnergyHelper.getBaseMaxEP(target) == EP, "EP changed: " + EnergyHelper.getBaseMaxEP(target));
+            helper.assertTrue(target.received(NOT_READY), "the target heard " + target.heard());
+            helper.assertTrue(caster.heard().equals(FactionRiteFactory.NO_EFFECT), "the performer heard " + caster.heard());
+            helper.assertTrue(dropped(helper, "minecraft:ender_eye") == 2, "the ingredients were not given back");
+        } finally {
+            clean(helper, caster, target);
+        }
+    }
+
     private static boolean noRite(GameTestHelper helper) {
         if (type(helper, RITE) == null) {
             helper.succeed(); // the rite's data needs the part
@@ -108,6 +131,11 @@ public final class EvolutionRiteGameTests {
     @GameTest(template = "empty", templateNamespace = NS)
     public static void greatSageIsGrantedToAConsentingTargetOnAFullMoon(GameTestHelper helper) {
         if (noRite(helper)) {
+            return;
+        }
+        if (closedByAnAddon(helper)) {
+            refusedWhereAnAddonCloses(helper);
+            helper.succeed();
             return;
         }
         RecordingPlayer caster = performer(helper, Species.WITCH);
@@ -227,6 +255,10 @@ public final class EvolutionRiteGameTests {
         if (noRite(helper)) {
             return;
         }
+        if (closedByAnAddon(helper)) {
+            helper.succeed(); // the refusal path of an addon-closed learn is the test above
+            return;
+        }
         RecordingPlayer both = onTheCircle(helper, false, EP);
         BloodlineAccess.set(both, BloodlineState.NONE.toBuilder().species(Species.WITCH).build());
         try {
@@ -310,6 +342,10 @@ public final class EvolutionRiteGameTests {
 
     @GameTest(template = "empty", templateNamespace = NS)
     public static void consumesAreForgottenOnlyAfterTheLearn(GameTestHelper helper) {
+        if (closedByAnAddon(helper)) {
+            helper.succeed(); // aVetoedLearnConsumesNothing covers a closed learn
+            return;
+        }
         RecordingPlayer target = onTheCircle(helper, true, EP);
         ManasSkill greatSage = SkillAPI.getSkillRegistry().get(ResourceLocation.parse(GREAT_SAGE));
         try {
@@ -386,8 +422,8 @@ public final class EvolutionRiteGameTests {
         if (noRite(helper)) {
             return;
         }
-        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural")) {
-            helper.succeed();
+        if (!net.ofatech.supernaturalbloodlines.core.EnabledParts.isEnabled("supernatural") || closedByAnAddon(helper)) {
+            helper.succeed(); // a closed learn is refused, so nothing was performed to be learned from
             return;
         }
         // real advancements: the rite unlocks are advancements, and a plain fake player's do nothing
