@@ -75,7 +75,10 @@ public record SeveranceRiteFactory(boolean requiresFullMoon) implements RiteFact
                 return cancel();
             }
             ServerPlayer target = found.get();
-            ServerPlayer caster = findEntity(params.caster) instanceof ServerPlayer p ? p : target;
+            ServerPlayer caster = RiteTargets.performer(findEntity(params.caster), params.caster, target).orElse(null);
+            if (caster == null) {
+                return cancel(); // the performer left: only the performer may stand for themselves, so nobody is asked and nobody is changed
+            }
 
             if (requiresFullMoon && !MoonRule.isFullMoonNight(level.dimensionType().hasFixedTime(), level.getMoonPhase(), level.getDayTime())) {
                 return refuse(caster, FactionRiteFactory.NEEDS_FULL_MOON);

@@ -30,6 +30,8 @@ public final class HudKeyDefaults {
     public static final Key HUD_MODE = new Key("key.supernaturalbloodlines.hud_mode", GLFW_CAPS_LOCK, "NONE");
     /** Registered by the supernatural part ({@code HubKeybinds}); listed so the clash test sees it. */
     public static final Key HUB = new Key("key.supernaturalbloodlines.hub", GLFW_HOME, "NONE");
+    /** Held to open the skill wheel (owner decision, 2026-11-22). */
+    public static final Key WHEEL = new Key("key.supernaturalbloodlines.wheel", GLFW_G, "NONE");
     public static final List<Key> ALL = all();
 
     private HudKeyDefaults() {
@@ -47,6 +49,7 @@ public final class HudKeyDefaults {
         List<Key> keys = new ArrayList<>(SLOTS);
         keys.add(HUD_MODE);
         keys.add(HUB);
+        keys.add(WHEEL);
         return List.copyOf(keys);
     }
 }

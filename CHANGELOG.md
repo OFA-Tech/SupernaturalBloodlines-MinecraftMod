@@ -13,10 +13,77 @@
 - `Species.hybridType()` and `Species.witchType()` are the one definition of those groups (the hybrid check in `StatePredicates` left out tribrids; no ladder read it for a tribrid, so nothing changed in play).
 
 ### Network
-`LadderNet.PROTOCOL` is now `"13"` (a new optional payload, `ward_view`, carries the viewer's own wards to the Path page; the Admin snapshot's row cap is 224). **Update the server and every client together**; a client on 12 and a server on 13 cannot talk, so the hub shows nothing from the server.
+`LadderNet.PROTOCOL` is now `"14"` (main was on 13; a new optional payload, `ward_view`, carries the viewer's own wards to the Path page). **Update the server and every client together**; a client on 12 and a server on 13 cannot talk, so the hub shows nothing from the server.
 
 ### Rolling back
-A ward is kept in the world's `supernaturalbloodlines_wards` data and does nothing without the mod; the compass's new components are ignored by 12. **Protocol 13 to 12:** update all sides together.
+A ward is kept in the world's `supernaturalbloodlines_wards` data and does nothing without the mod; the compass's new components are ignored by 12. **Protocol 14 to 13:** update all sides together.
+## Unreleased (skill wheel, phase W4: the wheel screen)
+
+### Added
+- **The skill wheel.** Hold G (key `Skill wheel (hold)`, default G, in our key category) and the wheel opens: the mods in the inner ring (Bloodline, Vampirism, Werewolves, Tensura, Infinity Stones, Great Sage: only those that are installed and have a power), Tensura's groups (Skills, Magic, Battlewill) in the middle ring when it has at least two, and the powers of the open group in the outer ring, 12 to a page. Let go of G over a power to use it, or over nothing to keep it open (a click, G or Esc closes it). A tap shorter than `wheel_tap_ms` (default 200) opens nothing and repeats the last power. Left click uses; right click opens the slot picker (our Loadout, or Tensura's active and next preset, saved through Tensura); Alt + click or Alt + scroll cycles a power's mode; scroll turns the page; arrows, Tab and Enter work without a mouse and every state is read to the narrator in words. A held power is released wherever the pointer is, and when the screen closes, loses focus or the player dies. An aimed power closes the wheel and waits for a click at the crosshair (right click, Esc or a tap of G cancels).
+- Three looks (Grimoire, Blood Moon, Tensura) in the hub's theme, on the art kit sprites of #81; the wheel follows `reduce_motion`.
+- Great Sage's powers (Magic Sense, Assess, Scan, Thought Acceleration, its menu) are on the wheel through its client calls; they appear only when Great Sage allows the player to use it.
+- Client settings (hub, Settings page): `wheel_tap_ms` (100 to 500) and `wheel_remember_last` (the tap's power is kept in `config/supernaturalbloodlines-wheel-last.json`).
+- The hub's Loadout page offers the powers the wheel offers once the wheel has been opened in the session.
+- Development: `-Dsupernaturalbloodlines.devshots=wheel:<look>:<open|alt|page|picker|aim|closed>`.
+
+### Changed
+- **Keys that moved onto the wheel are covered while the HUD works** (hidden and unbound, and put back when `hide_covered_keys` is off, `hud_enabled` is off or the server has no HUD channel): Vampirism's action wheel and vision key, Tensura's race-ability key, Great Sage's menu, assess, scan, magic sense and thought acceleration keys, and Infinity Stones' wheel and soul control keys. Great Sage's voice and panic keys and Infinity's soul release are left alone.
+- **While the wheel is open every other on-screen layer is hidden**, ours, Vampirism's and Werewolves' overlays, the hotbar, health, chat and boss bars (only the camera overlays and the debug screen stay), through NeoForge's `RenderGuiLayerEvent.Pre`. Tensura draws its status and bars from its own mixin, not a layer, so its public `OverlayHandler.setShouldHudRender` is lowered while the wheel is open and given back as it was.
+- The side panel shows the power's own description (Tensura's skill text, Vampirism's and Werewolves' `.desc` lang keys, our actions' notes, our lang file for Great Sage), wrapped and cut with an ellipsis.
+- The hub's Loadout page asks the server for the catalogue when the hub opens (it shares one request with the wheel), so it lists the same powers as the wheel without the wheel having been opened.
+
+### Fixed (review of the wheel screen)
+- Letting go of G over a toggle or held power no longer leaves a wheel that only Esc can close: the gesture is open until the screen closes, so G again or a click outside closes it.
+- A held power started by letting go of G, or by the tap, is pressed and released at once; one started by Enter or Space is released when that key goes up (the mouse still holds it while the button is down).
+- Text is worked out once per input, not every frame: wrapped description, help rows, cut names, label widths, strings, slots (once per tick) and ring spans.
+- The pointer decides the hot cell only when it moves; a key that moves the focus keeps it until the pointer moves again. The wheel key can be bound to a mouse button.
+- The last power is not written again when it did not change; the subtitles stay on while the wheel is open; the lines and the rim read at 3:1 on the bands over a dark or a pale sky; the lock is drawn in the theme's own colour.
+- An aimed power is cancelled when the HUD is hidden (F1) or after 20 seconds, with a line on the action bar. The slot picker follows its power across catalogue updates. The narrator no longer fails when a power has a cooldown and no world is loaded, and a power that covers another mod's says so (rule C): under its name in the side panel and in the narration.
+### Network
+W4 changes no payload (the hud network version is 4, from W2 round 3).
+
+### Rolling back
+Turn `hide_covered_keys` or `hud_enabled` off in the hub (Settings) and every covered key is back at once. The saved last power is one small file and can be deleted.
+## Unreleased (skill wheel, phase W2: rule C, one entry per duplicated power)
+
+### Added
+- **One entry for a power that several mods give.** The approved list (`data/supernaturalbloodlines/wheel/overlaps.json`: invisibility, night vision, bat form, flight, regeneration, rage, fear, teleport, sense, appraisal and bite) is shown once on the wheel, as the main side's. The tiers of one Tensura skill (the three regenerations) show only the highest tier owned. Nothing changes in either mod's unlocks, levels, costs or mastery. A skill with several modes is never merged, and no Infinity Stones power is in a group.
+- **No stacking, one shared cooldown, from every key.** While one side of such a power is on, the other cannot be turned on from the wheel, our slots, Vampirism's or Werewolves' own keys or Tensura's own keys and screens. Using a side puts every side on **the main side's own cooldown**; a lasting side (rage, invisibility...) starts it when it ends, however it ends (turned off, ran out, death, logout). It survives a relog.
+- Config (Admin rows): `wheel_dedup_enabled`, `wheel_stack_guard_enabled`.
+
+### Changed
+- **The hud network version is 4 (was 2). Update the server and every client together.** The wheel entry carries the id of its group (3) and a note of what else it covers (4: "Also covers: Vampirism Regeneration, locked while this is on", for the tooltip and the side panel); a client on another version is disconnected.
+- The hold bracket for a Tensura skill started from the wheel is now open for every hold, not only for a skill in no slot: a held skill that leaves its slot while it is held is no longer cut off after a second.
+
+### Rolling back
+- **Roll the server and every client back together** (the network version goes back to 2). The saved `wheel_clock` is dropped by an older build, which is harmless: it only held a cooldown of at most a few minutes. With both settings off the wheel lists every side and no key is stopped.
+
+## Unreleased (plan 19a: the evolution rites engine and the Rite of Mastery)
+
+### Added
+- **New part `evolutionRites`** (needs Vampirism, Enchanted and Tensura; off by default only if you switch it off; `docs/parts/evolution_rites.md`). A witch-type performer (witch, siphoner, heretic, tribrid) opens a road to a skill that already exists, for the one on the circle who agrees by sneaking, or for herself. Uniques and below need a full-moon night, an Ultimate a lunar eclipse. Nothing is invented, and every refusal about the target is the same one line to the performer.
+- **Rite of the Great Sage** (`evolve_great_sage`): Sage, mastered, to Great Sage, through Tensura's own learn (its price and any addon's veto still apply). Sage stays. Costs altar power, rare items and 100,000 base Max EP, spent only after the skill is learned.
+- **Rite of Deus Sanguis** (`evolve_deus_sanguis`, only with Ascension installed): a vampire to Ascension's Deus Sanguis, if Ascension's own switch for the skill is on. 200,000 base Max EP.
+- **Rite of Mastery** (four rites, one per tier: Common, Extra, Unique, Ultimate): masters the one skill the target has chosen, through the real mastery call, so a skill's own evolution happens. A resistance, which has no mastery, has its learning finished. Refuses (and gives everything back) for a skill that is mastered, lent, of another tier, one of Ascension's System skills, in Rebalanced's retired tag, vetoed by another mod, or when the target cannot pay. One per target every 7 days. Default costs: 100,000 / 300,000 / 750,000 / 2,000,000 base Max EP (a lunar eclipse for the last) and the items of each rite file.
+- **Hub: Skills page, Mastery tab** (shown only with the part): choose, clear and show the skill for the rite. `/bloodline mastery`, `/bloodline mastery choose <skill>`, `/bloodline mastery clear`, with Admin rows B11 to B13. No payload changed, so the hub protocol number is the same.
+- **Book:** category "Evolution Rites", six sealed entries, unlocked by kind (the three witch kinds; a vampire also learns Deus Sanguis).
+- **Admin page:** section "Evolution rites", 15 settings (`supernaturalbloodlines-evolution_rites.toml`) and the part switch. `AdminEntries` is 186.
+- **Hub protocol 13** (was 12): the Admin snapshot now holds up to 256 settings rows (was 192; the sum of the plans passed 192). The bytes of a snapshot do not change, but a client that accepts only 192 would refuse a longer one, so server and clients update together. No other payload changed.
+- Ascension joins the tested series (`LinkedMods`: `ascension` 1.0, which is what its mods.toml declares for the 3.1.0 file).
+
+### Fixed
+- **A performer who left mid-rite no longer lets the target stand in for them** in the Rites of Augustine, Severance, Lineage, Hybrid Blood, Ancestral Calling, Original Blood, the bind-item wards and the two new rites: a rite that asks the target's consent only when performer and target differ used to change an unwilling target. Now it cancels and gives the ingredients back (unless the target IS the performer).
+
+### Changed
+- The Rite of Mastery's item counts are config (`mastery_sacrifice_<tier>`, Admin rows); the rite files name only the kinds.
+- `RiteUnlocks` and `/bloodline rites` only count rites whose unlock advancements are in the datapacks, so a rite of a part that is off or an addon that is not installed is neither known nor sealed.
+- The Rites book list label says "several kinds" for four kinds and "witch types" when a numeral would overflow the line.
+- CI runs the GameTests with the part off (`-PpartsOff=evolutionRites`).
+
+### Verified
+- Unit tests 2,422 pass. The 13-run GameTest matrix passes in every run (1,944 GameTests with everything on), and so does the same suite with eight real addon jars (Ascension, Great Sage, FoxAblaze, Mysticism, Horizons, Kumo Desu ga, Slime Throne Extras and what they need) and with the pack set; a real dedicated server boots with them and with the part off. 28 mutants, all caught.
+- Mysticism charges Soul Energy for every skill learned and vetoes when the player cannot pay: the rite keeps that rule and refuses cleanly (nothing taken).
 
 ## Unreleased (plan 18i: Vampirism tweaks)
 

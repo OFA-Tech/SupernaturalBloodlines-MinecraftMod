@@ -189,3 +189,7 @@ No balance number changes. Three server settings were added to `supernaturalbloo
 | `hybrid_leap_weakness_ticks` | 100 (5 s) | Long enough to turn a fight, short enough to be a reply, not a lock. |
 | `hybrid_leap_cooldown_seconds` | 20 | Twice Surge's pace of nothing: a skill you can use every fight, not every swing. |
 | `S-HYB-3` cost | 1 SP | The plan said 4. A ladder can pay at most 25 SP (five rungs of 5, the apex always 5), and the Original hybrid's tree is 26 SP without it: at 1 SP it is 27 of 25 (108%), at 2 it is 28 of 25 (112%, over the 110% rule). The Hybrid's and the Original hybrid's first rungs pay 1 SP more (L-HYB-1 3, L-OHY-1 5), so the Hybrid's tree is 24 of 22 (109%). |
+
+## Skill wheel, phase W2 (hud part)
+
+No balance number changes: a power that several mods give is shown once and shares one cooldown, the **main side's own** (the owner's rule), so using another side never makes the power cheaper or dearer than its main side. Two server settings were added to `supernaturalbloodlines-hud.toml`, both with Admin rows: `wheel_dedup_enabled` (true: one entry per duplicated power) and `wheel_stack_guard_enabled` (true: no second side while one is on, and the shared cooldown). The approved list is data (`data/supernaturalbloodlines/wheel/overlaps.json`).

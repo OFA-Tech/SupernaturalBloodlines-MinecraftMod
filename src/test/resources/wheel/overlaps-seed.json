@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "chains": [
+    ["tensura/tensura:self_regeneration", "tensura/tensura:ultraspeed_regeneration", "tensura/tensura:infinite_regeneration"]
+  ],
+  "groups": [
+    {"id": "invisibility", "research": "M01", "confidence": "same", "main": 0,
+     "members": ["vampirism/vampirism:vampire_invisibility", "infinity/infinity:reality.invisibility", "tensura/tensura:invisible"]},
+    {"id": "rage", "research": "M06", "confidence": "same", "main": 0,
+     "members": ["vampirism/vampirism:vampire_rage", "werewolves/werewolves:rage"]},
+    {"id": "regeneration", "research": "M05", "confidence": "close", "main": 0,
+     "members": ["vampirism/vampirism:regen", "tensura/tensura:self_regeneration"]},
+    {"id": "bat_form", "research": "M03", "confidence": "close", "main": 0,
+     "members": ["vampirism/vampirism:bat", "tensura/tensura:race_ability"]},
+    {"id": "bite", "research": "M12", "confidence": "close", "main": 0,
+     "members": ["bloodline/supernaturalbloodlines:bite", "tensura/tensura:race_ability"]}
+  ]
+}

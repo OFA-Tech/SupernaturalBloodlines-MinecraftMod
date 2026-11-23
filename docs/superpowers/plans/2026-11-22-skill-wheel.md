@@ -425,7 +425,7 @@ Branch `docs/wheel-w3-mockups`. No game code. Figma file `USFBf74c4I2BWDyfmRxFZO
 
 # Phase W4: the wheel screen in three themes
 
-Branch `feature/wheel-w4-screen`, from W2 (W3 only supplies the README numbers). Client only: no payload change (network stays `"3"`). Settings (client, `PlayerSettings` rows in the `hud` section): `wheel_tap_ms` (INT 100 to 500, default 200), `wheel_remember_last` (BOOL, true). "Reduce motion" reuses the hub's existing `reduce_motion` through `ReduceMotion.on()`.
+Branch `feature/wheel-w4-screen`, from W2 (W3 only supplies the README numbers). Client only: no payload change (network stays `"3"`). **Cooldowns (W1 review, 2026-11-23):** an entry carries `PowerState.cooldownEnd` (a server game time) and `cooldownTotal`; the screen counts the sweep with `state.cooldownLeft(ClientLevel.getGameTime())`, never with a client tick counter and never with the server time of another level. A Tensura cooldown first seen part-way (the wheel opened after the press) starts its sweep full: cosmetic, accepted. Settings (client, `PlayerSettings` rows in the `hud` section): `wheel_tap_ms` (INT 100 to 500, default 200), `wheel_remember_last` (BOOL, true). "Reduce motion" reuses the hub's existing `reduce_motion` through `ReduceMotion.on()`.
 
 ### Task 1: Geometry from the approved numbers
 

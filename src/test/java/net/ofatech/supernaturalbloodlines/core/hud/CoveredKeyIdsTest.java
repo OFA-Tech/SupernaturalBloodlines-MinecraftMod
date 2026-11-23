@@ -38,14 +38,35 @@ class CoveredKeyIdsTest {
     }
 
     @Test
-    void wheelIdsAreAbsentWhileNoScreenExists() {
-        assertFalse(WheelBuild.screenPresent(), "W1 to W3 have no wheel screen: nothing may be covered for it");
+    void wheelIdsCoveredNowThatTheScreenExists() {
+        assertTrue(WheelBuild.screenPresent(), "W4 has the wheel screen: the keys it replaces are covered");
+        // what KeyCover asks for
+        List<String> covered = CoveredKeyIds.all(true, WheelBuild.screenPresent());
+        for (String id : SPEC_WHEEL_IDS) {
+            assertTrue(covered.contains(id), id);
+        }
+        assertTrue(covered.contains("keys.vampirism.vision"));
+        assertTrue(covered.contains("tensura.keybinding.race_ability"));
+        // the lists without a screen still leave them alone (a build, a server or a setting without the wheel)
         assertEquals(CoveredKeyIds.all(true, false), CoveredKeyIds.all(true));
-        assertEquals(CoveredKeyIds.all(false, false), CoveredKeyIds.all(false));
         for (String id : SPEC_WHEEL_IDS) {
             assertFalse(CoveredKeyIds.all(true).contains(id), id);
-            assertFalse(CoveredKeyIds.all().contains(id), id);
         }
+    }
+
+    @Test
+    void hudPartOffAndAServerWithoutTheChannelRestoreEveryWheelKey() {
+        // CoverRun restores a recorded bind of an id that is no longer listed: with the wheel keys left out of the list they all come back
+        assertFalse(CoveredKeyIds.all(true, false).stream().anyMatch(SPEC_WHEEL_IDS::contains));
+        assertTrue(CoveredKeyIds.all(true, true).containsAll(SPEC_WHEEL_IDS));
+    }
+
+    @Test
+    void modOffRestoresItsKeyAlone() {
+        // a mod that is not installed has no key to set, and the other mods' keys stay covered
+        List<String> covered = CoveredKeyIds.all(true, true);
+        assertTrue(covered.contains("key.greatsage.scan") && covered.contains("keys.vampirism.vision"));
+        assertTrue(covered.stream().filter(id -> id.startsWith("key.greatsage.")).count() == 5);
     }
 
     @Test

@@ -37,7 +37,10 @@ public final class KitSprites {
         MASTERY_FILL_LEARNING(Flat.ACCENT), HUD_PILL(Flat.SURFACE), HUD_LABEL(Flat.SURFACE),
         // the boss bar: the card, its name plate, the health bar (its picture is 1 px past the body), the portrait plates (4 px of glow past the 34 px body) and the shifting chip
         CHIP_SHIFTING(Flat.ACCENT, 1), BOSS_FRAME(Flat.SURFACE), BOSS_NAME_PLATE(Flat.SURFACE), BOSS_BAR_TRACK(Flat.TRACK, 1), BOSS_BAR_FILL(Flat.ACCENT), BOSS_BAR_FILL_SHIFTING(Flat.ACCENT),
-        BOSS_BAR_TICK(Flat.NONE), BOSS_PORTRAIT_PLATE(Flat.NONE, 4), BOSS_PORTRAIT_PLATE_SHIFTING(Flat.NONE, 4);
+        BOSS_BAR_TICK(Flat.NONE), BOSS_PORTRAIT_PLATE(Flat.NONE, 4), BOSS_PORTRAIT_PLATE_SHIFTING(Flat.NONE, 4),
+        // the skill wheel: a 36 px power cell (the 32 px icon goes at +2, +2), the halo of a power that is on (52 px, 8 px past the cell), the mark of a ring's open path
+        // (it points up: turn it in code) and the edge piece at the end of a divider
+        WHEEL_CELL_36(Flat.SURFACE), WHEEL_CELL_36_ACTIVE(Flat.ACCENT), CELL_GLOW_52(Flat.NONE, 8), WHEEL_CARET(Flat.ACCENT), WHEEL_EDGE(Flat.NONE);
 
         private final Flat flat;
         private final int margin;
@@ -97,6 +100,9 @@ public final class KitSprites {
     /** The shared sprites the HUD draws: the mark of Tensura mode (a teal diamond) and the drop of blood of the Supernatural mode. */
     public static final String MODE_MARK = SHARED + "mode_mark";
     public static final String BLOOD_FULL = SHARED + "blood_full";
+    /** The wheel's shared sprites: the cooldown sweep (33 frames of 32 px) and the dashed outline of a locked cell (nine-slice, 42 px). */
+    public static final String WHEEL_SWEEP = SHARED + "cooldown_sweep_32";
+    public static final String WHEEL_LOCK_OUTLINE = SHARED + "lock_outline_42";
     /** The HUD's own 16 px icons: the slot's pictures with a pale outline, so a dark one reads on the dark slots. */
     public static final String HUD_ICON = "icons/hud/";
 

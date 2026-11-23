@@ -69,8 +69,23 @@ public final class WheelService {
             return refuse(p, KEY + "unknown_power");
         }
         if (id.equals(VISION_ID)) {
+            boolean was = WheelGate.isOn(p, ref);
+            if (!was) {
+                var blocked = WheelGate.check(p, ref);
+                if (blocked.isPresent()) {
+                    return WheelGate.tell(p, blocked.get());
+                }
+            }
             String refusal = VampirismGate.cycleVision(p);
-            return refusal == null ? null : refuse(p, KEY + refusal);
+            if (refusal != null) {
+                return refuse(p, KEY + refusal);
+            }
+            boolean now = WheelGate.isOn(p, ref);
+            if (now != was) {
+                // Vampirism has no event for the vision key: the wheel says so itself
+                WheelGate.apply(p, ref, now ? net.ofatech.supernaturalbloodlines.core.wheel.overlap.SideEvent.ON : net.ofatech.supernaturalbloodlines.core.wheel.overlap.SideEvent.OFF, true, 0);
+            }
+            return null;
         }
         return ActionService.triggerById(p, id, targetEntityId, false);
     }
@@ -78,6 +93,12 @@ public final class WheelService {
     @Nullable
     private static String useTensura(ServerPlayer p, PowerRef ref, int mode) {
         String key = ref.key();
+        if (!WheelGate.isOn(p, ref)) {
+            var blocked = WheelGate.check(p, ref);
+            if (blocked.isPresent()) {
+                return WheelGate.tell(p, blocked.get());
+            }
+        }
         // a second press of a power that is still held would overwrite the mode its release must use: refuse it. An entry whose power ended by itself is stale and dropped.
         Map<String, Integer> held = HELD.get(p.getUUID());
         Integer heldMode = held == null ? null : held.get(key);
@@ -138,6 +159,7 @@ public final class WheelService {
                 PowerRef.parse(e.getKey()).ifPresent(ref -> TensuraGate.release(p, ref.id(), e.getValue()));
             }
         }
+        WheelGate.endAll(p);
         TensuraGate.forget(p);
         if (ActionService.heldId(p, Loadout.BITE)) {
             net.ofatech.supernaturalbloodlines.parts.hud.bite.BiteService.release(p);

@@ -57,7 +57,8 @@ public final class CommandCoverageGameTests {
             if (root.getChild(r.root()) == null || (r.form().contains(" debug eclipse") && !has(root, r.root(), "debug", "eclipse"))
                     || (r.form().contains(" debug npcpack") && !has(root, r.root(), "debug", "npcpack"))
                     || (r.form().contains(" debug npcs ") && !has(root, r.root(), "debug", "npcs"))
-                    || (r.form().contains(" boss ") && !has(root, r.root(), "boss"))) {
+                    || (r.form().contains(" boss ") && !has(root, r.root(), "boss"))
+                    || (r.form().startsWith("bloodline mastery") && !has(root, "bloodline", "mastery"))) { // the evolution rites part (plan 19) registers it
                 continue;
             }
             for (String shape : r.shapes()) {

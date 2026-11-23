@@ -52,6 +52,13 @@ public final class HudPart {
             net.ofatech.supernaturalbloodlines.parts.hud.tensura.WheelActivation.register();
         }
         net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelSync.register();
+        net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelGate.register();
+        if (ModList.get().isLoaded("vampirism")) {
+            net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelGate.installVampirism();
+        }
+        if (ModList.get().isLoaded("tensura")) {
+            net.ofatech.supernaturalbloodlines.parts.hud.wheel.WheelGate.installTensura();
+        }
         net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService.register();
         if (ModList.get().isLoaded("tensura") && ModList.get().isLoaded("vampirism")) {
             net.ofatech.supernaturalbloodlines.parts.hud.bite.TensuraFeed.register();
@@ -73,6 +80,9 @@ public final class HudPart {
             if (ModList.get().isLoaded("vampirism")) {
                 e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.WheelCatalogueGameTests.class);
                 e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.WheelUseGameTests.class);
+                if (ModList.get().isLoaded("tensura")) {
+                    e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.WheelOverlapGameTests.class);
+                }
                 if (ModList.get().isLoaded("werewolves")) {
                     e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.WheelWerewolfGameTests.class);
                 }

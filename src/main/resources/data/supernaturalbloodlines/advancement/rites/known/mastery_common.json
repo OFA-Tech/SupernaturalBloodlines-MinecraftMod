@@ -1,0 +1,18 @@
+{
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "unlock"
+    ]
+  ],
+  "neoforge:conditions": [
+    {
+      "type": "supernaturalbloodlines:part_enabled",
+      "part": "evolutionRites"
+    }
+  ]
+}
