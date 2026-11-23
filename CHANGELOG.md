@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased (UI overhaul phase 8: logo, mod icon, store art)
+
+### Added
+- **The mod icon is in the mod list.** `logoFile="logo.png"` (the 64 px "Drop" logo: a blood drop with the moon cut in, inside a red corona) and `logoBlur=false`, so the pixel art is drawn with hard edges. `pack.png` is the same picture.
+- **Store art in `docs/store/`**, made by `docs/store/build.py` from the hand-drawn logo at whole-number sizes only (nearest neighbour; nothing redrawn or generated): `avatar.png` (512 x 512, the CurseForge project avatar: square, at least 400 x 400), `banner.png` (1536 x 432, the logo lockup as drawn) and `readme-header.png` (672 x 204). CurseForge states no size for a header banner, so the banner is a plain wide picture.
+- The README and the wiki home start with the logo.
+
+### Changed
+- No in-game drawing changed: the design doc asks for the logo in the mod list and the store, not in the hub.
 ## Unreleased (plan 18e: Hybrid Leap)
 
 ### Added
