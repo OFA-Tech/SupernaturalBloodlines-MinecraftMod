@@ -7,6 +7,9 @@
 - **The leap and the sprint-leap share one guard.** Jump while sprinting (Werewolves' own leap, R212) does not arm for 20 ticks after a Hybrid Leap is asked for. The Settings note for it says the two are separate.
 - Slot actions can name a target farther than the bite reach (`ExtraActions.Action.targetReach`, `HudTargets.resolve(player, id, reach)`); every older action is untouched.
 
+### Fixed
+- **Neck Snap worked on a player with PvP off.** The check that asks claim and PvP mods whether a hit is allowed is an event, which the server's own PvP switch never answers; the switch is now asked directly (`TargetChecks.mayAttack`), for Neck Snap, Rip Heart and Hybrid Leap alike. A mob is still a fair target.
+
 ### Changed
 - **The Hybrid's and Original hybrid's trees now cost 26 and 29 SP** (their ladders pay 21 and 24). The balance rule that a tree costs 80% to 110% of its ladder is 125% for those two (they hold the skills of both their lines), see `docs/balance.md`. No ladder changed, so nothing already earned moves.
 

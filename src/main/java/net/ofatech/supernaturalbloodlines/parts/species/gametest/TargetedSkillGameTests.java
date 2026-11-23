@@ -1463,4 +1463,26 @@ public final class TargetedSkillGameTests {
         }
         helper.succeed();
     }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void neckSnapOnAPlayerWithPvpOffIsRefusedLikeAnyRefusal(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-9");
+        ServerPlayer other = target(helper, Species.NONE, true);
+        Zombie z = zombie(helper, 20.0f);
+        boolean pvp = helper.getLevel().getServer().isPvpAllowed();
+        helper.getLevel().getServer().setPvpAllowed(false);
+        try {
+            helper.assertTrue(NeckSnapAction.REFUSED.equals(key(NeckSnapAction.INSTANCE.trigger(user, other))), "PvP off did not refuse a Neck Snap of a player");
+            helper.assertTrue(!Downed.isSnapped(other) && ActionClock.left(user, ExtraActions.NECK_SNAP) == 0, "the refusal had an effect");
+            helper.assertTrue(NeckSnapAction.INSTANCE.trigger(user, z) == null, "PvP off refused a mob");
+        } finally {
+            helper.getLevel().getServer().setPvpAllowed(pvp);
+            z.discard();
+            clean(user, other);
+        }
+        helper.succeed();
+    }
 }

@@ -104,7 +104,8 @@ final class TargetChecks {
      */
     static boolean mayAttack(ServerPlayer user, LivingEntity target) {
         if (target instanceof ServerPlayer other) {
-            if (!user.canHarmPlayer(other) || packMates(user, other)) {
+            // the server's PvP switch is asked by a real hit (ServerPlayer.hurt), which the damage probe never makes: without this a Neck Snap or a Hybrid Leap works on a player with PvP off
+            if (!user.server.isPvpAllowed() || !user.canHarmPlayer(other) || packMates(user, other)) {
                 return false;
             }
         }
