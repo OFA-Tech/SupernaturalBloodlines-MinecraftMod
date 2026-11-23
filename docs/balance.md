@@ -155,6 +155,7 @@ The ladder pays what a plain vampire's does (7 rungs, 23 SP, 212,000 EP): an Aug
 |---|---|---|
 | `rip_heart_health` | 10 (5 hearts) | A creature that is clearly losing, never a full-health kill. |
 | `rip_heart_cooldown_seconds` | 60 | A finisher, not a rotation; a refusal is free so nobody guesses by paying. |
+| `neck_snap_grace_seconds` | 30 | After a snap ends the target cannot be snapped again for this long: it bounds Neck Snap as on-demand invulnerability (0 turns it off, which is not recommended). |
 | `neck_snap_cooldown_seconds` | 45 | Shorter than Rip Heart: it ends nothing for good, except for a weak mortal. |
 | `neck_snap_kill_health` | 10 | The Rip Heart number: a snapped neck of a weak mortal is a kill, of a healthy one a stagger. |
 | `neck_snap_stagger_ticks` | 60 (3 s) | Enough to run or hit once, short enough that it is never a lock. |

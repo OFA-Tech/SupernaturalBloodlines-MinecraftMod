@@ -729,12 +729,13 @@ public final class TargetedSkillGameTests {
         }
         TestPlayers.TalkingDuelist userA = vampire(helper, "S-VAM-8");
         TestPlayers.TalkingDuelist userB = vampire(helper, "S-VAM-8");
-        Zombie z = zombie(helper, 6.0f);
+        Zombie z = zombie(helper, 20.0f);
         ServerPlayer original = target(helper, Species.ORIGINAL, true);
         try {
-            original.setHealth(6.0f);
-            z.hurt(helper.getLevel().damageSources().generic(), 0.5f);
-            original.hurt(helper.getLevel().damageSources().generic(), 0.5f);
+            // 11 of 20 health: 9 are left, so the heart-rip's blow (9 + 1) is not above the 11 the i-frames remember, and without bypasses_cooldown it would be swallowed
+            z.hurt(helper.getLevel().damageSources().generic(), 11.0f);
+            original.hurt(helper.getLevel().damageSources().generic(), 11.0f);
+            helper.assertTrue(z.getHealth() == 9.0f && original.getHealth() > 9.0f && original.getHealth() <= 10.0f, "setup: health " + z.getHealth() + " / " + original.getHealth());
             helper.assertTrue(z.invulnerableTime > 10 && original.invulnerableTime > 10, "setup: the hit left no invulnerability frames");
             helper.assertTrue(RipHeartAction.INSTANCE.trigger(userA, z) == null, "a hit mob refused the heart-rip");
             helper.assertTrue(RipHeartAction.INSTANCE.trigger(userB, original) == null, "a hit Original refused: it would tell it from a mob");
@@ -1124,5 +1125,73 @@ public final class TargetedSkillGameTests {
                 }
             }
         }
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void aSnappedPlayerIsNotSentTheScreenAgainAndAMortalDyingOneIs(GameTestHelper helper) {
+        ServerPlayer snapped = TestPlayers.createDuelist(helper);
+        ServerPlayer dying = TestPlayers.createDuelist(helper);
+        int[] sent = new int[2];
+        Downed.overrideSender((p, payload) -> {
+            if (payload.downed()) {
+                sent[p == snapped ? 0 : 1]++;
+            }
+        });
+        try {
+            Downed.startSnapped(snapped, 300);
+            Downed.startDying(dying, helper.getLevel().damageSources().generic());
+            int first0 = sent[0];
+            int first1 = sent[1];
+            for (int i = 0; i < 250; i++) {
+                Downed.tick(snapped);
+                Downed.tick(dying);
+            }
+            helper.assertTrue(sent[0] == first0, "a snapped player was sent the screen again " + (sent[0] - first0) + " times (they chose Wait)");
+            helper.assertTrue(sent[1] > first1, "control: a dying player is not sent the screen again");
+        } finally {
+            Downed.overrideSender(null);
+            Downed.clearForTest(snapped);
+            Downed.clearForTest(dying);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", templateNamespace = NS)
+    public static void theRipHeartSignalFiresOnlyWhenTheTargetDied(GameTestHelper helper) {
+        if (skipped(helper)) {
+            return;
+        }
+        TestPlayers.TalkingDuelist user = vampire(helper, "S-VAM-8");
+        Zombie saved = zombie(helper, 5.0f);
+        Zombie plain = zombie(helper, 5.0f);
+        int[] fired = new int[1];
+        net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals.Listener counter = (p, id, amount, attrs) -> {
+            if ("rip_heart".equals(id)) {
+                fired[0]++;
+            }
+        };
+        net.ofatech.supernaturalbloodlines.shared.supernatural.TaskSignals.addListener(counter);
+        // another mod saves one of them: the death is cancelled and it stands up with 1 health
+        java.util.function.Consumer<net.neoforged.neoforge.event.entity.living.LivingDeathEvent> save = e -> {
+            if (e.getEntity() == saved) {
+                e.setCanceled(true);
+                saved.setHealth(1.0f);
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, save);
+        try {
+            helper.assertTrue(RipHeartAction.INSTANCE.trigger(user, saved) == null, "refused");
+            helper.assertTrue(saved.isAlive(), "setup: the other mod did not save the target");
+            helper.assertTrue(fired[0] == 0, "the Rip Heart signal fired for a target that lived");
+            ActionClock.start(user, ExtraActions.RIP_HEART, 0);
+            helper.assertTrue(RipHeartAction.INSTANCE.trigger(user, plain) == null && !plain.isAlive(), "the control heart-rip failed");
+            helper.assertTrue(fired[0] == 1, "the Rip Heart signal did not fire for a kill: " + fired[0]);
+        } finally {
+            NeoForge.EVENT_BUS.unregister(save);
+            saved.discard();
+            plain.discard();
+            clean(user);
+        }
+        helper.succeed();
     }
 }
