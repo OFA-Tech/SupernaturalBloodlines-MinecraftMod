@@ -245,9 +245,15 @@ public final class MasteryGameTests {
             Tier tier = tierOf("tensura:sage");
             helper.assertTrue(MasteryChoice.choose(target, ResourceLocation.parse("tensura:sage")).isEmpty(), "could not choose Sage");
             work(helper, tier, caster);
+            helper.assertTrue(EvoSkills.held(target, ResourceLocation.parse("tensura:sage")).map(i -> i.isMastered(target)).orElse(false), "Sage was not mastered: " + target.heard());
             clearDropped(helper);
             atNight(helper, true, () -> start(helper, "evolve_great_sage", caster, greatSageItems));
-            helper.assertTrue(has(target, "tensura:great_sage"), "Great Sage did not become reachable: " + target.heard() + " / " + caster.heard());
+            // the rite's own checks now pass; an installed addon may still close the learn by its own rule (Mysticism's Soul Energy price depends on the player):
+            // that is said to the target and costs nothing, so the road is open exactly when no addon says no
+            boolean learned = has(target, "tensura:great_sage");
+            boolean addonSaidNo = target.received("mysticism.soulEnergy.no_skill");
+            helper.assertTrue(learned || addonSaidNo, "Great Sage did not become reachable and no addon said no: " + target.heard() + " / " + caster.heard());
+            helper.assertTrue(learned || has(target, "tensura:sage"), "Sage was taken by a refused rite");
         } finally {
             clean(helper, caster, target);
         }
