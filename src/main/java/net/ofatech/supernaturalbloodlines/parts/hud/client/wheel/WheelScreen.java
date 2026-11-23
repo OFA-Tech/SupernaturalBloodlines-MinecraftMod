@@ -87,11 +87,17 @@ public final class WheelScreen extends Screen {
 
     @Override
     protected void init() {
+        if (net.neoforged.fml.ModList.get().isLoaded("tensura")) {
+            TensuraHudHold.open();
+        }
         WheelActions.view(net.ofatech.supernaturalbloodlines.core.wheel.WheelViewState.Viewer.WHEEL, true);
     }
 
     @Override
     public void removed() {
+        if (net.neoforged.fml.ModList.get().isLoaded("tensura")) {
+            TensuraHudHold.close();
+        }
         DevWheel.active = false;
         WheelDescriptions.demo = null;
         DevWheel.alt = false;

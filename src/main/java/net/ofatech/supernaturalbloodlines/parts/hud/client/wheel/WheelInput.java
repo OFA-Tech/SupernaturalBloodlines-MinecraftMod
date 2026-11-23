@@ -47,7 +47,8 @@ public final class WheelInput {
             }
         });
         NeoForge.EVENT_BUS.addListener((InputEvent.InteractionKeyMappingTriggered e) -> onInteraction(e));
-        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.RenderGuiLayerEvent.Pre e) -> {
+        // first in line: Tensura draws its own status bars from its own listener of this event, and a listener that runs after a cancel is skipped
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, (net.neoforged.neoforge.client.event.RenderGuiLayerEvent.Pre e) -> {
             if (net.ofatech.supernaturalbloodlines.core.wheel.WheelHud.hides(Minecraft.getInstance().screen instanceof WheelScreen, e.getName().toString())) {
                 e.setCanceled(true);
             }
@@ -64,6 +65,9 @@ public final class WheelInput {
     }
 
     public static void reset() {
+        if (net.neoforged.fml.ModList.get().isLoaded("tensura")) {
+            TensuraHudHold.close();
+        }
         machine = GestureMachine.IDLE;
         toldNoChannel = false;
         WheelActions.reset();

@@ -50,4 +50,28 @@ class WheelHudViewTest {
         assertFalse(s.any());
         assertEquals(Optional.of(true), s.set(Viewer.HUB, true), "after a new world the hub asks again");
     }
-}
+
+    @Test
+    void anotherModsSwitchIsLoweredOnceAndGivenBackAsItWas() {
+        LowerWhileOpen l = new LowerWhileOpen();
+        assertEquals(Optional.of(false), l.open(true, false));
+        assertEquals(Optional.empty(), l.open(false, false), "a second open writes nothing and keeps what was saved");
+        assertEquals(Optional.of(true), l.close(false, false), "the value it had");
+        assertEquals(Optional.empty(), l.close(true, false), "a second close writes nothing");
+        assertFalse(l.isLowered());
+    }
+
+    @Test
+    void aSwitchThatWasAlreadyOffStaysOff() {
+        LowerWhileOpen l = new LowerWhileOpen();
+        assertEquals(Optional.empty(), l.open(false, false));
+        assertEquals(Optional.empty(), l.close(false, false));
+    }
+
+    @Test
+    void aValueTheOtherModChangedMeanwhileIsNotOverwritten() {
+        LowerWhileOpen l = new LowerWhileOpen();
+        l.open(true, false);
+        assertEquals(Optional.empty(), l.close(true, false), "it was turned back on by someone else: nothing to restore");
+        assertEquals(Optional.empty(), new LowerWhileOpen().close(true, true), "a close without an open writes nothing, whatever it would lower to");
+    }}

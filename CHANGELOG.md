@@ -12,7 +12,9 @@
 
 ### Changed
 - **Keys that moved onto the wheel are covered while the HUD works** (hidden and unbound, and put back when `hide_covered_keys` is off, `hud_enabled` is off or the server has no HUD channel): Vampirism's action wheel and vision key, Tensura's race-ability key, Great Sage's menu, assess, scan, magic sense and thought acceleration keys, and Infinity Stones' wheel and soul control keys. Great Sage's voice and panic keys and Infinity's soul release are left alone.
-- The six ability slots are not drawn while the wheel is open (it lists the same powers).
+- **While the wheel is open every other on-screen layer is hidden**, ours, Vampirism's and Werewolves' overlays, the hotbar, health, chat and boss bars (only the camera overlays and the debug screen stay), through NeoForge's `RenderGuiLayerEvent.Pre`. Tensura draws its status and bars from its own mixin, not a layer, so its public `OverlayHandler.setShouldHudRender` is lowered while the wheel is open and given back as it was.
+- The side panel shows the power's own description (Tensura's skill text, Vampirism's and Werewolves' `.desc` lang keys, our actions' notes, our lang file for Great Sage), wrapped and cut with an ellipsis.
+- The hub's Loadout page asks the server for the catalogue when the hub opens (it shares one request with the wheel), so it lists the same powers as the wheel without the wheel having been opened.
 
 ### Network
 No payload changed: the hud network version stays at 3.
