@@ -1,0 +1,13 @@
+stextras:divine_fox | Divine Fox
+stextras:divine_kobold | Divine Kobold
+stextras:divine_wisp | Divine Wisp
+stextras:gale_wisp | Gale Wisp
+stextras:kobold | Kobold
+stextras:kobold_chieftain | Kobold Chieftain
+stextras:kobold_trader | Kobold Trader
+stextras:kobold_warrior | Kobold Warrior
+stextras:mystic_fox | Mystic Fox
+stextras:ninetail | Ninetail
+stextras:soul_beast | Soul Beast
+stextras:wispfolk | Wispfolk
+stextras:zephyr_wisp | Zephyr Wisp

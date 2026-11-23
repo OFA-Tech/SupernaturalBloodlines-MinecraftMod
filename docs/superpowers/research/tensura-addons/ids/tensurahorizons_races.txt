@@ -1,0 +1,87 @@
+tensurahorizons:abyss_chimera | Abyss Chimera
+tensurahorizons:adamant_chimera | Adamant Chimera
+tensurahorizons:adamant_colossus | Adamant Colossus
+tensurahorizons:adaptive_chimeran | Adaptive Chimeran
+tensurahorizons:ancient_dragon | Ancient Dragon
+tensurahorizons:ancient_nature_spirit | Ancient Nature Spirit
+tensurahorizons:apex_chimera | Apex Chimera
+tensurahorizons:arachne | Arachne
+tensurahorizons:arachnid | Arachnid
+tensurahorizons:arcane_chimera | Arcane Chimera
+tensurahorizons:ascendant_elf | Ascendant Elf
+tensurahorizons:aspect_dragon | Aspect Dragon
+tensurahorizons:astral_archon | Astral Archon
+tensurahorizons:astral_chimera | Astral Chimera
+tensurahorizons:balanced_dragon | Balanced Dragon
+tensurahorizons:blazing_phoenix | Blazing Phoenix
+tensurahorizons:brood_sovereign | Brood Sovereign
+tensurahorizons:calamity_chimera | Calamity Chimera
+tensurahorizons:carapace_chimeran | Carapace Chimeran
+tensurahorizons:celestial_dragon | Celestial Dragon
+tensurahorizons:chimera_overlord | Chimera Overlord
+tensurahorizons:chimeran | Chimeran
+tensurahorizons:clay_golem | Clay Golem
+tensurahorizons:coil_guardian | Coil Guardian
+tensurahorizons:crowned_basilisk | Crowned Basilisk
+tensurahorizons:dawn_phoenix | Dawn Phoenix
+tensurahorizons:divine_automaton | Divine Automaton
+tensurahorizons:dragon | Dragon
+tensurahorizons:dryad | Dryad
+tensurahorizons:eclipse_broodmother | Eclipse Broodmother
+tensurahorizons:elder_dragon | Elder Dragon
+tensurahorizons:empyrean_chimera | Empyrean Chimera
+tensurahorizons:eternal_behemoth | Eternal Behemoth
+tensurahorizons:eternal_colossus | Eternal Colossus
+tensurahorizons:eternal_phoenix | Eternal Phoenix
+tensurahorizons:ether_chimera | Ether Chimera
+tensurahorizons:fate_weaver | Fate Weaver
+tensurahorizons:feral_chimeran | Feral Chimeran
+tensurahorizons:flame_dragon | Flame Dragon
+tensurahorizons:frost_dragon | Frost Dragon
+tensurahorizons:grand_automaton | Grand Automaton
+tensurahorizons:greater_arachnid | Greater Arachnid
+tensurahorizons:greater_giant | Greater Giant
+tensurahorizons:greater_phoenix | Greater Phoenix
+tensurahorizons:greater_serpentfolk | Greater Serpentfolk
+tensurahorizons:greater_slime | Greater Slime
+tensurahorizons:greater_wyvern | Greater Wyvern
+tensurahorizons:harpy_empress | Harpy Empress
+tensurahorizons:ice_dragon | Ice Dragon
+tensurahorizons:inferno_phoenix | Inferno Phoenix
+tensurahorizons:iron_colossus | Iron Colossus
+tensurahorizons:lesser_phoenix | Lesser Phoenix
+tensurahorizons:lesser_wyvern | Lesser Wyvern
+tensurahorizons:leviathan_chimera | Leviathan Chimera
+tensurahorizons:lightning_dragon | Lightning Dragon
+tensurahorizons:living_construct | Living Construct
+tensurahorizons:magic_golem | Magic Golem
+tensurahorizons:mystic_chimeran | Mystic Chimeran
+tensurahorizons:naga | Naga
+tensurahorizons:phoenix | Phoenix
+tensurahorizons:plague_chimera | Plague Chimera
+tensurahorizons:predator_chimera | Predator Chimera
+tensurahorizons:primordial_chimera | Primordial Chimera
+tensurahorizons:radiant_phoenix | Radiant Phoenix
+tensurahorizons:regenerator_chimera | Regenerator Chimera
+tensurahorizons:runeforged_dwarf | Runeforged Dwarf
+tensurahorizons:scorch_dragon | Scorch Dragon
+tensurahorizons:serpentfolk | Serpentfolk
+tensurahorizons:siege_chimera | Siege Chimera
+tensurahorizons:silk_sovereign | Silk Sovereign
+tensurahorizons:sky_chimera | Sky Chimera
+tensurahorizons:sky_dragon | Sky Dragon
+tensurahorizons:solar_phoenix | Solar Phoenix
+tensurahorizons:soul_chimera | Soul Chimera
+tensurahorizons:sproutling | Sproutling
+tensurahorizons:star_king_dragon | Star King Dragon
+tensurahorizons:storm_dragon | Storm Dragon
+tensurahorizons:tempest_chimera | Tempest Chimera
+tensurahorizons:tempest_leviathan | Tempest Leviathan
+tensurahorizons:tide_sovereign | Tide Sovereign
+tensurahorizons:titan | Titan
+tensurahorizons:treant | Treant
+tensurahorizons:undying_chimera | Undying Chimera
+tensurahorizons:venom_chimera | Venom Chimera
+tensurahorizons:venom_sovereign | Venom Sovereign
+tensurahorizons:world_serpent | World Serpent
+tensurahorizons:world_tree_guardian | World Tree Guardian
