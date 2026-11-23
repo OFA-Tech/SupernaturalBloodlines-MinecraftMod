@@ -21,14 +21,14 @@ Every number the supernatural system pays or asks for, with the reason for it. T
 |---|---|---|---|---|
 | augustine | 7 | 23 | 212,000 | 60 |
 | ghoul | 1 | 0 | 0 | - |
-| heretic | 6 | 20 | 210,000 | 60 |
+| heretic | 6 | 21 | 210,000 | 60 |
 | human | 3 | 5 | 4,000 | - |
 | hunter | 6 | 18 | 171,000 | - |
-| hybrid | 6 | 18 | 175,000 | 7 |
-| original_hybrid | 6 | 21 | 220,000 | 60 |
-| original | 6 | 20 | 210,000 | 60 |
+| hybrid | 6 | 21 | 175,000 | 7 |
+| original_hybrid | 6 | 24 | 220,000 | 60 |
+| original | 6 | 23 | 210,000 | 60 |
 | siphoner | 6 | 19 | 175,000 | 60 |
-| tribrid | 6 | 20 | 230,000 | 60 |
+| tribrid | 6 | 22 | 230,000 | 60 |
 | vampire | 7 | 23 | 212,000 | 60 |
 | werewolf | 7 | 22 | 266,000 | 60 |
 | witch | 6 | 19 | 175,000 | - |
@@ -148,3 +148,17 @@ All numbers are drafts to tune after a playtest; each is a config key.
 ## Plan 18c: the Augustine (R200 to R203)
 
 The ladder pays what a plain vampire's does (7 rungs, 23 SP, 212,000 EP): an Augustine is a vampire on a diet, and the Tensura rung is the same (owner, Q3). Its tree costs 21 SP, 91% of the ladder (the vampire's costs 19), because two skills of its own (3 SP each) replace Elder's Skin and the quest of Predator's Thirst. The attack and health bonuses are half of an Original's (+10% and +2 against +20% and +4): the species is a little stronger than a vampire, never a hybrid's equal. The blood factors (x3 on the first bite of a feed on a vampire, paid by a vampire player who is bitten; x1/3 from anyone else, rounded at random so it is a third on average) make it a hunter of vampires: a village feeds it a third as well.
+
+## Plan 18d: Rip Heart and Neck Snap (R204, R214)
+
+| Key | Default | Why |
+|---|---|---|
+| `rip_heart_health` | 10 (5 hearts) | A creature that is clearly losing, never a full-health kill. |
+| `rip_heart_cooldown_seconds` | 60 | A finisher, not a rotation; a refusal is free so nobody guesses by paying. |
+| `neck_snap_grace_seconds` | 30 | After a snap ends the target cannot be snapped again for this long: it bounds Neck Snap as on-demand invulnerability (0 turns it off, which is not recommended). |
+| `neck_snap_cooldown_seconds` | 60 | The same as Rip Heart, and never shorter than the longest wake time (60 by default): it ends nothing for good, except for a weak mortal. |
+| `neck_snap_kill_health` | 10 | The Rip Heart number: a snapped neck of a weak mortal is a kill, of a healthy one a stagger. |
+| `neck_snap_stagger_ticks` | 60 (3 s) | Enough to run or hit once, short enough that it is never a lock. |
+| `neck_snap_*_seconds` | 60 each | The wiki gives no time; all four kinds are equal so the time never says what the target is. |
+
+The five ladders of the vampire-like types that were short pay 1 to 3 SP more over their rungs, so every tree stays at 80% to 110% of its ladder after the two skills (2 SP each).

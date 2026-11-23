@@ -142,7 +142,8 @@ public final class TurningHandler {
             return;
         }
         GHOULS_DYING.remove(p.getUUID()); // dead: no wake-up is waiting
-        if (e.getSource().is(OutcomeExecutor.FAILED_TRANSITION) || !OriginalRules.bypassesProtection(e.getSource()) || BloodlineAccess.get(p).vampireBloodUntil() == 0) {
+        if (e.getSource().is(OutcomeExecutor.FAILED_TRANSITION) || !OriginalRules.bypassesProtection(e.getSource()) || BloodlineAccess.get(p).vampireBloodUntil() == 0
+                || net.ofatech.supernaturalbloodlines.core.death.FinalDeath.is(p)) { // a final death (a heart-rip, Give up) starts no turning
             return;
         }
         UUID source = p.hasEffect(SpeciesRegistries.ORIGINAL_BLOOD_EFFECT) && p.hasData(SpeciesRegistries.BLOOD_SOURCE) ? p.getData(SpeciesRegistries.BLOOD_SOURCE) : null;

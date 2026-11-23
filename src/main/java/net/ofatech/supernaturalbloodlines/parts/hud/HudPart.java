@@ -36,6 +36,11 @@ public final class HudPart {
             HudClient.register(modBus);
         }
         BiteService.register();
+        // a player who is put out of action (downed, snapped) stops biting: the feeding is Vampirism's own and would go on otherwise
+        net.ofatech.supernaturalbloodlines.shared.hud.ExtraActions.addStopper(p -> {
+            BiteService.release(p);
+            net.ofatech.supernaturalbloodlines.parts.hud.action.ActionService.forget(p);
+        });
         net.ofatech.supernaturalbloodlines.parts.hud.action.LoadoutService.register();
         if (ModList.get().isLoaded("tensura") && ModList.get().isLoaded("vampirism")) {
             net.ofatech.supernaturalbloodlines.parts.hud.bite.TensuraFeed.register();
@@ -49,6 +54,7 @@ public final class HudPart {
             if (ModList.get().isLoaded("vampirism")) {
                 e.register(LoadoutVampirismGameTests.class);
                 e.register(ActionGameTests.class);
+                e.register(net.ofatech.supernaturalbloodlines.parts.hud.gametest.ActionTargetGameTests.class);
                 if (ModList.get().isLoaded("werewolves")) {
                     e.register(ActionWerewolfGameTests.class);
                 }

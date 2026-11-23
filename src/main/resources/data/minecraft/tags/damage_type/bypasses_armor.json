@@ -3,6 +3,8 @@
     "values": [
         { "id": "supernaturalbloodlines:venom", "required": false },
         { "id": "supernaturalbloodlines:wolfsbane_poison", "required": false },
-        { "id": "supernaturalbloodlines:sireline", "required": false }
+        { "id": "supernaturalbloodlines:sireline", "required": false },
+        { "id": "supernaturalbloodlines:rip_heart", "required": false },
+        { "id": "supernaturalbloodlines:neck_snap", "required": false }
     ]
 }

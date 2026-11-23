@@ -71,7 +71,9 @@ public final class BeastEvents {
                 return;
             }
             if (pike(source)) {
-                spirit.markPikeHit();
+                if (!net.ofatech.supernaturalbloodlines.core.death.DamageProbe.active()) {
+                    spirit.markPikeHit(); // a probe deals nothing: no Pike hit is counted (the answer, the amount and the cancel, are the same)
+                }
                 e.setAmount(Math.max(e.getAmount(), spirit.getMaxHealth()));
             } else {
                 e.setCanceled(true);

@@ -72,6 +72,17 @@ public final class SpeciesRegistries {
     /** Electricity's mark (see {@code pack/Electricity}). */
     public static final DeferredHolder<MobEffect, ShockedEffect> SHOCKED = EFFECTS.register("shocked", ShockedEffect::new);
 
+    /** A snapped neck on a creature that is not a player (R214): it lies down for the duration. */
+    public static final DeferredHolder<MobEffect, net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect> SNAPPED =
+            EFFECTS.register("snapped", net.ofatech.supernaturalbloodlines.parts.species.item.SnappedEffect::new);
+
+    /**
+     * Game time until which a player or creature whose snap just ended cannot be snapped again (R214, {@code neck_snap_grace_seconds}). Saved, so a logout does
+     * not end it. Not kept through death.
+     */
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Long>> SNAP_GRACE_UNTIL =
+            ATTACHMENTS.register("snap_grace_until", () -> AttachmentType.builder(() -> 0L).serialize(Codec.LONG).build());
+
     /** The lore a Torn Page carries ({@link net.ofatech.supernaturalbloodlines.core.rite.RiteUnlockTable#loreIds}): what reading it teaches. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> RITE_LORE_COMPONENT =
             COMPONENTS.registerComponentType("rite_lore", b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
